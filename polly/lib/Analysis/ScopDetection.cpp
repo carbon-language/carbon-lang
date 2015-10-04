@@ -300,71 +300,79 @@ bool ScopDetection::addOverApproximatedRegion(Region *AR,
 }
 
 bool ScopDetection::isValidSwitch(BasicBlock &BB, SwitchInst *SI,
-                                  Value *Condition,
+                                  Value *Condition, bool IsLoopBranch,
                                   DetectionContext &Context) const {
   Region &CurRegion = Context.CurRegion;
 
   Loop *L = LI->getLoopFor(&BB);
   const SCEV *ConditionSCEV = SE->getSCEVAtScope(Condition, L);
 
-  if (!isAffineExpr(&CurRegion, ConditionSCEV, *SE))
-    if (!AllowNonAffineSubRegions ||
-        !addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
-      return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB,
-                                         ConditionSCEV, ConditionSCEV, SI);
+  if (isAffineExpr(&CurRegion, ConditionSCEV, *SE))
+    return true;
 
-  return true;
+  if (!IsLoopBranch && AllowNonAffineSubRegions &&
+      addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
+    return true;
+
+  if (IsLoopBranch)
+    return false;
+
+  return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB,
+                                     ConditionSCEV, ConditionSCEV, SI);
 }
 
 bool ScopDetection::isValidBranch(BasicBlock &BB, BranchInst *BI,
-                                  Value *Condition,
+                                  Value *Condition, bool IsLoopBranch,
                                   DetectionContext &Context) const {
   Region &CurRegion = Context.CurRegion;
 
   // Non constant conditions of branches need to be ICmpInst.
   if (!isa<ICmpInst>(Condition)) {
-    if (!AllowNonAffineSubRegions ||
-        !addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
-      return invalid<ReportInvalidCond>(Context, /*Assert=*/true, BI, &BB);
+    if (!IsLoopBranch && AllowNonAffineSubRegions &&
+        addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
+      return true;
+    return invalid<ReportInvalidCond>(Context, /*Assert=*/true, BI, &BB);
   }
 
-  if (ICmpInst *ICmp = dyn_cast<ICmpInst>(Condition)) {
-    // Unsigned comparisons are not allowed. They trigger overflow problems
-    // in the code generation.
-    //
-    // TODO: This is not sufficient and just hides bugs. However it does pretty
-    // well.
-    if (ICmp->isUnsigned() && !AllowUnsigned)
-      return invalid<ReportUnsignedCond>(Context, /*Assert=*/true, BI, &BB);
+  ICmpInst *ICmp = cast<ICmpInst>(Condition);
+  // Unsigned comparisons are not allowed. They trigger overflow problems
+  // in the code generation.
+  //
+  // TODO: This is not sufficient and just hides bugs. However it does pretty
+  //       well.
+  if (ICmp->isUnsigned() && !AllowUnsigned)
+    return invalid<ReportUnsignedCond>(Context, /*Assert=*/true, BI, &BB);
 
-    // Are both operands of the ICmp affine?
-    if (isa<UndefValue>(ICmp->getOperand(0)) ||
-        isa<UndefValue>(ICmp->getOperand(1)))
-      return invalid<ReportUndefOperand>(Context, /*Assert=*/true, &BB, ICmp);
+  // Are both operands of the ICmp affine?
+  if (isa<UndefValue>(ICmp->getOperand(0)) ||
+      isa<UndefValue>(ICmp->getOperand(1)))
+    return invalid<ReportUndefOperand>(Context, /*Assert=*/true, &BB, ICmp);
 
-    // TODO: FIXME: IslExprBuilder is not capable of producing valid code
-    //              for arbitrary pointer expressions at the moment. Until
-    //              this is fixed we disallow pointer expressions completely.
-    if (ICmp->getOperand(0)->getType()->isPointerTy())
-      return false;
+  // TODO: FIXME: IslExprBuilder is not capable of producing valid code
+  //              for arbitrary pointer expressions at the moment. Until
+  //              this is fixed we disallow pointer expressions completely.
+  if (ICmp->getOperand(0)->getType()->isPointerTy())
+    return false;
 
-    Loop *L = LI->getLoopFor(ICmp->getParent());
-    const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
-    const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
+  Loop *L = LI->getLoopFor(ICmp->getParent());
+  const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
+  const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
 
-    if (!isAffineExpr(&CurRegion, LHS, *SE) ||
-        !isAffineExpr(&CurRegion, RHS, *SE)) {
-      if (!AllowNonAffineSubRegions ||
-          !addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
-        return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB, LHS,
-                                           RHS, ICmp);
-    }
-  }
+  if (isAffineExpr(&CurRegion, LHS, *SE) && isAffineExpr(&CurRegion, RHS, *SE))
+    return true;
 
-  return true;
+  if (!IsLoopBranch && AllowNonAffineSubRegions &&
+      addOverApproximatedRegion(RI->getRegionFor(&BB), Context))
+    return true;
+
+  if (IsLoopBranch)
+    return false;
+
+  return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB, LHS, RHS,
+                                     ICmp);
 }
 
-bool ScopDetection::isValidCFG(BasicBlock &BB,
+bool ScopDetection::isValidCFG(BasicBlock &BB, bool IsLoopBranch,
                                DetectionContext &Context) const {
   Region &CurRegion = Context.CurRegion;
 
@@ -388,12 +396,12 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
     return true;
 
   if (BranchInst *BI = dyn_cast<BranchInst>(TI))
-    return isValidBranch(BB, BI, Condition, Context);
+    return isValidBranch(BB, BI, Condition, IsLoopBranch, Context);
 
   SwitchInst *SI = dyn_cast<SwitchInst>(TI);
   assert(SI && "Terminator was neither branch nor switch");
 
-  return isValidSwitch(BB, SI, Condition, Context);
+  return isValidSwitch(BB, SI, Condition, IsLoopBranch, Context);
 }
 
 bool ScopDetection::isValidCallInst(CallInst &CI) {
@@ -735,7 +743,7 @@ bool ScopDetection::canUseISLTripCount(Loop *L,
   L->getLoopLatches(LoopControlBlocks);
   L->getExitingBlocks(LoopControlBlocks);
   for (BasicBlock *ControlBB : LoopControlBlocks) {
-    if (!isValidCFG(*ControlBB, Context))
+    if (!isValidCFG(*ControlBB, true, Context))
       return false;
   }
 
@@ -751,9 +759,11 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
 
   if (AllowNonAffineSubLoops && AllowNonAffineSubRegions) {
     Region *R = RI->getRegionFor(L->getHeader());
-    if (R->contains(L))
-      if (addOverApproximatedRegion(R, Context))
-        return true;
+    while (R != &Context.CurRegion && !R->contains(L))
+      R = R->getParent();
+
+    if (addOverApproximatedRegion(R, Context))
+      return true;
   }
 
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
@@ -948,7 +958,7 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
     if (isErrorBlock(*BB))
       continue;
 
-    if (!isValidCFG(*BB, Context) && !KeepGoing)
+    if (!isValidCFG(*BB, false, Context) && !KeepGoing)
       return false;
     for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ++I)
       if (!isValidInstruction(*I, Context) && !KeepGoing)
