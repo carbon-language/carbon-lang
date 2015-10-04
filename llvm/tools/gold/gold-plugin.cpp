@@ -32,6 +32,7 @@
 #include "llvm/Linker/Linker.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Object/IRObjectFile.h"
+#include "llvm/Object/FunctionIndexObjectFile.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -103,6 +104,10 @@ namespace options {
   static std::string extra_library_path;
   static std::string triple;
   static std::string mcpu;
+  // When the thinlto plugin option is specified, only read the function
+  // the information from intermediate files and write a combined
+  // global index for the ThinLTO backends.
+  static bool thinlto = false;
   // Additional options to pass into the code generator.
   // Note: This array will contain all plugin options which are not claimed
   // as plugin exclusive to pass to the code generator.
@@ -132,6 +137,8 @@ namespace options {
       TheOutputType = OT_SAVE_TEMPS;
     } else if (opt == "disable-output") {
       TheOutputType = OT_DISABLE;
+    } else if (opt == "thinlto") {
+      thinlto = true;
     } else if (opt.size() == 2 && opt[0] == 'O') {
       if (opt[1] < '0' || opt[1] > '3')
         message(LDPL_FATAL, "Optimization level must be between 0 and 3");
@@ -376,6 +383,10 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 
   cf.handle = file->handle;
 
+  // If we are doing ThinLTO compilation, don't need to process the symbols.
+  // Later we simply build a combined index file after all files are claimed.
+  if (options::thinlto) return LDPS_OK;
+
   for (auto &Sym : Obj->symbols()) {
     uint32_t Symflags = Sym.getFlags();
     if (shouldSkip(Symflags))
@@ -589,6 +600,30 @@ static void freeSymName(ld_plugin_symbol &Sym) {
   free(Sym.comdat_key);
   Sym.name = nullptr;
   Sym.comdat_key = nullptr;
+}
+
+static std::unique_ptr<FunctionInfoIndex> getFunctionIndexForFile(
+    LLVMContext &Context, claimed_file &F, ld_plugin_input_file &Info) {
+
+  if (get_symbols(F.handle, F.syms.size(), &F.syms[0]) != LDPS_OK)
+    message(LDPL_FATAL, "Failed to get symbol information");
+
+  const void *View;
+  if (get_view(F.handle, &View) != LDPS_OK)
+    message(LDPL_FATAL, "Failed to get a view of file");
+
+  MemoryBufferRef BufferRef(StringRef((const char *)View, Info.filesize),
+                            Info.name);
+  ErrorOr<std::unique_ptr<object::FunctionIndexObjectFile>> ObjOrErr =
+      object::FunctionIndexObjectFile::create(BufferRef, Context);
+
+  if (std::error_code EC = ObjOrErr.getError())
+    message(LDPL_FATAL, "Could not read function index bitcode from file : %s",
+            EC.message().c_str());
+
+  object::FunctionIndexObjectFile &Obj = **ObjOrErr;
+
+  return Obj.takeIndex();
 }
 
 static std::unique_ptr<Module>
@@ -856,6 +891,35 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
 
   LLVMContext Context;
   Context.setDiagnosticHandler(diagnosticHandler, nullptr, true);
+
+  // If we are doing ThinLTO compilation, simply build the combined
+  // function index/summary and emit it. We don't need to parse the modules
+  // and link them in this case.
+  if (options::thinlto) {
+    std::unique_ptr<FunctionInfoIndex> CombinedIndex(new FunctionInfoIndex());
+    uint64_t NextModuleId = 0;
+    for (claimed_file &F : Modules) {
+      ld_plugin_input_file File;
+      if (get_input_file(F.handle, &File) != LDPS_OK)
+        message(LDPL_FATAL, "Failed to get file information");
+
+      std::unique_ptr<FunctionInfoIndex> Index =
+          getFunctionIndexForFile(Context, F, File);
+      CombinedIndex->mergeFrom(std::move(Index), ++NextModuleId);
+    }
+
+    std::error_code EC;
+    raw_fd_ostream OS(output_name + ".thinlto.bc", EC,
+                      sys::fs::OpenFlags::F_None);
+    if (EC)
+      message(LDPL_FATAL, "Unable to open %s.thinlto.bc for writing: %s",
+              output_name.data(), EC.message().c_str());
+    WriteFunctionSummaryToFile(CombinedIndex.get(), OS);
+    OS.close();
+
+    cleanup_hook();
+    exit(0);
+  }
 
   std::unique_ptr<Module> Combined(new Module("ld-temp.o", Context));
   Linker L(Combined.get());

@@ -150,6 +150,20 @@ namespace bitc {
     VST_CODE_ENTRY   = 1,   // VST_ENTRY: [valueid, namechar x N]
     VST_CODE_BBENTRY = 2,   // VST_BBENTRY: [bbid, namechar x N]
     VST_CODE_FNENTRY = 3,   // VST_FNENTRY: [valueid, offset, namechar x N]
+    // VST_COMBINED_FNENTRY: [offset, namechar x N]
+    VST_CODE_COMBINED_FNENTRY = 4
+  };
+
+  // The module path symbol table only has one code (MST_CODE_ENTRY).
+  enum ModulePathSymtabCodes {
+    MST_CODE_ENTRY   = 1,  // MST_ENTRY: [modid, namechar x N]
+  };
+
+  // The function summary section uses different codes in the per-module
+  // and combined index cases.
+  enum FunctionSummarySymtabCodes {
+    FS_CODE_PERMODULE_ENTRY = 1,  // FS_ENTRY: [valueid, islocal, instcount]
+    FS_CODE_COMBINED_ENTRY  = 2,  // FS_ENTRY: [modid, instcount]
   };
 
   enum MetadataCodes {

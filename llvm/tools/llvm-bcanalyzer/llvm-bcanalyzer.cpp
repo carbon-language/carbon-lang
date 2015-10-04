@@ -114,6 +114,9 @@ static const char *GetBlockName(unsigned BlockID,
   case bitc::METADATA_BLOCK_ID:        return "METADATA_BLOCK";
   case bitc::METADATA_ATTACHMENT_ID:   return "METADATA_ATTACHMENT_BLOCK";
   case bitc::USELIST_BLOCK_ID:         return "USELIST_BLOCK_ID";
+  case bitc::FUNCTION_SUMMARY_BLOCK_ID:
+                                       return "FUNCTION_SUMMARY_BLOCK";
+  case bitc::MODULE_STRTAB_BLOCK_ID:   return "MODULE_STRTAB_BLOCK";
   }
 }
 
@@ -268,6 +271,18 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     STRINGIFY_CODE(VST_CODE, ENTRY)
     STRINGIFY_CODE(VST_CODE, BBENTRY)
     STRINGIFY_CODE(VST_CODE, FNENTRY)
+    STRINGIFY_CODE(VST_CODE, COMBINED_FNENTRY)
+    }
+  case bitc::MODULE_STRTAB_BLOCK_ID:
+    switch (CodeID) {
+    default: return nullptr;
+    STRINGIFY_CODE(MST_CODE, ENTRY)
+    }
+  case bitc::FUNCTION_SUMMARY_BLOCK_ID:
+    switch (CodeID) {
+    default: return nullptr;
+    STRINGIFY_CODE(FS_CODE, PERMODULE_ENTRY)
+    STRINGIFY_CODE(FS_CODE, COMBINED_ENTRY)
     }
   case bitc::METADATA_ATTACHMENT_ID:
     switch(CodeID) {

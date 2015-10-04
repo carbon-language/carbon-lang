@@ -95,6 +95,9 @@ public:
   /// \brief Retrieve the current position in the stream, in bits.
   uint64_t GetCurrentBitNo() const { return GetBufferOffset() * 8 + CurBit; }
 
+  /// \brief Retrieve the number of bits currently used to encode an abbrev ID.
+  unsigned GetAbbrevIDWidth() const { return CurCodeSize; }
+
   //===--------------------------------------------------------------------===//
   // Basic Primitives for emitting bits to the stream.
   //===--------------------------------------------------------------------===//

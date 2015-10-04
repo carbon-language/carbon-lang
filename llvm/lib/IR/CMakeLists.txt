@@ -39,6 +39,7 @@ add_llvm_library(LLVMCore
   PassManager.cpp
   PassRegistry.cpp
   Statepoint.cpp
+  FunctionInfo.cpp
   Type.cpp
   TypeFinder.cpp
   Use.cpp

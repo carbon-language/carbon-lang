@@ -15,6 +15,7 @@
 #define LLVM_BITCODE_READERWRITER_H
 
 #include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/FunctionInfo.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -58,6 +59,30 @@ namespace llvm {
   parseBitcodeFile(MemoryBufferRef Buffer, LLVMContext &Context,
                    DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
+  /// Check if the given bitcode buffer contains a function summary block.
+  bool hasFunctionSummary(MemoryBufferRef Buffer, LLVMContext &Context,
+                          DiagnosticHandlerFunction DiagnosticHandler);
+
+  /// Parse the specified bitcode buffer, returning the function info index.
+  /// If IsLazy is true, parse the entire function summary into
+  /// the index. Otherwise skip the function summary section, and only create
+  /// an index object with a map from function name to function summary offset.
+  /// The index is used to perform lazy function summary reading later.
+  ErrorOr<std::unique_ptr<FunctionInfoIndex>> getFunctionInfoIndex(
+      MemoryBufferRef Buffer, LLVMContext &Context,
+      DiagnosticHandlerFunction DiagnosticHandler, bool IsLazy = false);
+
+  /// This method supports lazy reading of function summary data from the
+  /// combined index during function importing. When reading the combined index
+  /// file, getFunctionInfoIndex is first invoked with IsLazy=true.
+  /// Then this method is called for each function considered for importing,
+  /// to parse the summary information for the given function name into
+  /// the index.
+  std::error_code readFunctionSummary(
+      MemoryBufferRef Buffer, LLVMContext &Context,
+      DiagnosticHandlerFunction DiagnosticHandler, StringRef FunctionName,
+      std::unique_ptr<FunctionInfoIndex> Index);
+
   /// \brief Write the specified module to the specified raw output stream.
   ///
   /// For streams where it matters, the given stream should be in "binary"
@@ -66,8 +91,18 @@ namespace llvm {
   /// If \c ShouldPreserveUseListOrder, encode the use-list order for each \a
   /// Value in \c M.  These will be reconstructed exactly when \a M is
   /// deserialized.
+  ///
+  /// If \c EmitFunctionSummary, emit the function summary index (currently
+  /// for use in ThinLTO optimization).
   void WriteBitcodeToFile(const Module *M, raw_ostream &Out,
-                          bool ShouldPreserveUseListOrder = false);
+                          bool ShouldPreserveUseListOrder = false,
+                          bool EmitFunctionSummary = false);
+
+  /// Write the specified function summary index to the given raw output stream,
+  /// where it will be written in a new bitcode block. This is used when
+  /// writing the combined index file for ThinLTO.
+  void WriteFunctionSummaryToFile(const FunctionInfoIndex *Index,
+                                  raw_ostream &Out);
 
   /// isBitcodeWrapper - Return true if the given bytes are the magic bytes
   /// for an LLVM IR bitcode wrapper.
