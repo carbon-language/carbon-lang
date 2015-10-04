@@ -39,8 +39,6 @@ class ScalarEvolution;
 
 namespace polly {
 class Scop;
-typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueMapT;
-typedef llvm::SmallVector<ValueMapT, 8> VectorValueMapT;
 
 /// Temporary Hack for extended regiontree.
 ///
@@ -102,10 +100,11 @@ void splitEntryBlockForAlloca(llvm::BasicBlock *EntryBlock, llvm::Pass *P);
 /// @param E    The expression for which code is actually generated.
 /// @param Ty   The type of the resulting code.
 /// @param IP   The insertion point for the new code.
-llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
-                           const llvm::DataLayout &DL, const char *Name,
-                           const llvm::SCEV *E, llvm::Type *Ty,
-                           llvm::Instruction *IP, ValueMapT *VMap = nullptr);
+llvm::Value *expandCodeFor(
+    Scop &S, llvm::ScalarEvolution &SE, const llvm::DataLayout &DL,
+    const char *Name, const llvm::SCEV *E, llvm::Type *Ty,
+    llvm::Instruction *IP,
+    llvm::DenseMap<const llvm::Value *, llvm::Value *> *VMap = nullptr);
 
 /// @brief Check if the block is a error block.
 ///

@@ -153,7 +153,8 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
 
     const SCEV *DimSCEV = SAI->getDimensionSize(u - 1);
 
-    DimSCEV = SCEVParameterRewriter::rewrite(DimSCEV, SE, GlobalMap);
+    llvm::ValueToValueMap Map(GlobalMap.begin(), GlobalMap.end());
+    DimSCEV = SCEVParameterRewriter::rewrite(DimSCEV, SE, Map);
     Value *DimSize =
         expandCodeFor(S, SE, DL, "polly", DimSCEV, DimSCEV->getType(),
                       Builder.GetInsertPoint());

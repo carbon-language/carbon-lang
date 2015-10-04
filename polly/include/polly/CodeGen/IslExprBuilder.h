@@ -12,6 +12,7 @@
 #ifndef POLLY_ISL_EXPR_BUILDER_H
 #define POLLY_ISL_EXPR_BUILDER_H
 
+#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/IRBuilder.h"
 #include "llvm/ADT/MapVector.h"
 #include "isl/ast.h"
@@ -81,7 +82,7 @@ class IslExprBuilder {
 public:
   /// @brief A map from isl_ids to llvm::Values.
   typedef llvm::MapVector<isl_id *, llvm::AssertingVH<llvm::Value>> IDToValueTy;
-  typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueToValueMap;
+  typedef BlockGenerator::ValueMapT ValueToValueMap;
 
   /// @brief Construct an IslExprBuilder.
   ///

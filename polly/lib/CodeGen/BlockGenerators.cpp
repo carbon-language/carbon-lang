@@ -93,7 +93,7 @@ BlockGenerator::BlockGenerator(PollyIRBuilder &B, LoopInfo &LI,
                                ScalarAllocaMapTy &ScalarMap,
                                ScalarAllocaMapTy &PHIOpMap,
                                EscapeUsersAllocaMapTy &EscapeMap,
-                               ValueToValueMap &GlobalMap,
+                               ValueMapT &GlobalMap,
                                IslExprBuilder *ExprBuilder)
     : Builder(B), LI(LI), SE(SE), ExprBuilder(ExprBuilder), DT(DT),
       EntryBB(nullptr), PHIOpMap(PHIOpMap), ScalarMap(ScalarMap),
@@ -107,7 +107,7 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, const Value *Old,
     if (const SCEV *Scev = SE.getSCEVAtScope(const_cast<Value *>(Old), L)) {
       if (!isa<SCEVCouldNotCompute>(Scev)) {
         const SCEV *NewScev = apply(Scev, LTS, SE);
-        ValueToValueMap VTV;
+        llvm::ValueToValueMap VTV;
         VTV.insert(BBMap.begin(), BBMap.end());
         VTV.insert(GlobalMap.begin(), GlobalMap.end());
 

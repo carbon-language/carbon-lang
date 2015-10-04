@@ -240,6 +240,8 @@ void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {
 struct ScopExpander : SCEVVisitor<ScopExpander, const SCEV *> {
   friend struct SCEVVisitor<ScopExpander, const SCEV *>;
 
+  typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueMapT;
+
   explicit ScopExpander(const Region &R, ScalarEvolution &SE,
                         const DataLayout &DL, const char *Name, ValueMapT *VMap)
       : Expander(SCEVExpander(SE, DL, Name)), SE(SE), Name(Name), R(R),
@@ -340,9 +342,10 @@ private:
   ///}
 };
 
-Value *polly::expandCodeFor(Scop &S, ScalarEvolution &SE, const DataLayout &DL,
-                            const char *Name, const SCEV *E, Type *Ty,
-                            Instruction *IP, ValueMapT *VMap) {
+Value *
+polly::expandCodeFor(Scop &S, ScalarEvolution &SE, const DataLayout &DL,
+                     const char *Name, const SCEV *E, Type *Ty, Instruction *IP,
+                     llvm::DenseMap<const llvm::Value *, llvm::Value *> *VMap) {
   ScopExpander Expander(S.getRegion(), SE, DL, Name, VMap);
   return Expander.expandCodeFor(E, Ty, IP);
 }

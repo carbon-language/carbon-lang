@@ -175,7 +175,7 @@ struct SubtreeReferences {
   LoopInfo &LI;
   ScalarEvolution &SE;
   Region &R;
-  ValueMapT &GlobalMap;
+  polly::BlockGenerator::ValueMapT &GlobalMap;
   SetVector<Value *> &Values;
   SetVector<const SCEV *> &SCEVs;
   BlockGenerator &BlockGen;
@@ -601,7 +601,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   Builder.SetInsertPoint(LoopBody);
 
   // Save the current values.
-  ValueMapT ValueMapCopy = ValueMap;
+  auto ValueMapCopy = ValueMap;
   IslExprBuilder::IDToValueTy IDToValueCopy = IDToValue;
 
   updateValues(NewValues);

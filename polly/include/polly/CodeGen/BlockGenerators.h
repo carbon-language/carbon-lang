@@ -67,6 +67,9 @@ public:
   /// @see The ScalarMap and PHIOpMap member.
   using ScalarAllocaMapTy = DenseMap<AssertingVH<Value>, AssertingVH<Value>>;
 
+  typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueMapT;
+  typedef llvm::SmallVector<ValueMapT, 8> VectorValueMapT;
+
   /// @brief Simple vector of instructions to store escape users.
   using EscapeUserVectorTy = SmallVector<Instruction *, 4>;
 
@@ -98,8 +101,7 @@ public:
   BlockGenerator(PollyIRBuilder &Builder, LoopInfo &LI, ScalarEvolution &SE,
                  DominatorTree &DT, ScalarAllocaMapTy &ScalarMap,
                  ScalarAllocaMapTy &PHIOpMap, EscapeUsersAllocaMapTy &EscapeMap,
-                 ValueToValueMap &GlobalMap,
-                 IslExprBuilder *ExprBuilder = nullptr);
+                 ValueMapT &GlobalMap, IslExprBuilder *ExprBuilder = nullptr);
 
   /// @brief Copy the basic block.
   ///
@@ -310,7 +312,7 @@ protected:
   /// @brief A map from llvm::Values referenced in the old code to a new set of
   ///        llvm::Values, which is used to replace these old values during
   ///        code generation.
-  ValueToValueMap &GlobalMap;
+  ValueMapT &GlobalMap;
 
   /// @brief Split @p BB to create a new one we can use to clone @p BB in.
   BasicBlock *splitBB(BasicBlock *BB);
