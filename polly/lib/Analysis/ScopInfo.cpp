@@ -1820,9 +1820,11 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
       // in a non-affine subregion or if the surrounding loop stays the same.
       Loop *SuccBBLoop = LI.getLoopFor(SuccBB);
       Region *SuccRegion = RI.getRegionFor(SuccBB);
-      if (BBLoop != SuccBBLoop && !RN->isSubRegion() &&
-          !(SD.isNonAffineSubRegion(SuccRegion, &getRegion()) &&
-            SuccRegion->contains(SuccBBLoop))) {
+      if (SD.isNonAffineSubRegion(SuccRegion, &getRegion()))
+        while (SuccBBLoop && SuccRegion->contains(SuccBBLoop))
+          SuccBBLoop = SuccBBLoop->getParentLoop();
+
+      if (BBLoop != SuccBBLoop) {
 
         // Check if the edge to SuccBB is a loop entry or exit edge. If so
         // adjust the dimensionality accordingly. Lastly, if we leave a loop
@@ -1855,8 +1857,8 @@ void Scop::buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
         SuccDomain = isl_set_union(SuccDomain, CondSet);
 
       SuccDomain = isl_set_coalesce(SuccDomain);
-      DEBUG(dbgs() << "\tSet SuccBB: " << SuccBB->getName() << " : " << Domain
-                   << "\n");
+      DEBUG(dbgs() << "\tSet SuccBB: " << SuccBB->getName() << " : "
+                   << SuccDomain << "\n");
     }
   }
 }
