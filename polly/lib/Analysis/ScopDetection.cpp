@@ -729,12 +729,13 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 
 bool ScopDetection::canUseISLTripCount(Loop *L,
                                        DetectionContext &Context) const {
-  // Ensure the loop has valid exiting blocks, otherwise we need to
-  // overapproximate it as a boxed loop.
-  SmallVector<BasicBlock *, 4> ExitingBlocks;
-  L->getExitingBlocks(ExitingBlocks);
-  for (BasicBlock *ExitingBB : ExitingBlocks) {
-    if (!isValidCFG(*ExitingBB, Context))
+  // Ensure the loop has valid exiting blocks as well as latches, otherwise we
+  // need to overapproximate it as a boxed loop.
+  SmallVector<BasicBlock *, 4> LoopControlBlocks;
+  L->getLoopLatches(LoopControlBlocks);
+  L->getExitingBlocks(LoopControlBlocks);
+  for (BasicBlock *ControlBB : LoopControlBlocks) {
+    if (!isValidCFG(*ControlBB, Context))
       return false;
   }
 
