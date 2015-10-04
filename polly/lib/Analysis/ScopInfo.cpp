@@ -2373,7 +2373,10 @@ void Scop::simplifySCoP(bool RemoveIgnoredStmts) {
                          ? Stmt.getRegion()->getNode()
                          : getRegion().getBBNode(Stmt.getBasicBlock());
 
-    if (StmtIt->isEmpty() || (RemoveIgnoredStmts && isIgnored(RN))) {
+    if (StmtIt->isEmpty() ||
+        isl_set_is_empty(DomainMap[getRegionNodeBasicBlock(RN)]) ||
+        (RemoveIgnoredStmts && isIgnored(RN))) {
+
       // Remove the statement because it is unnecessary.
       if (Stmt.isRegionStmt())
         for (BasicBlock *BB : Stmt.getRegion()->blocks())

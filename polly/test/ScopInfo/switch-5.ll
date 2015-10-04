@@ -19,10 +19,8 @@
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_for_body[0] : N >= 1 };
 ; CHECK:            Schedule :=
-; CHECK:                [N] -> { Stmt_for_body[i0] -> [0, 0] };
-; CHECK:      Stmt_sw_bb
-; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_sw_bb[i0] : 1 = 0 };
+; CHECK:                [N] -> { Stmt_for_body[i0] -> [0] };
+; CHECK-NOT:  Stmt_sw_bb
 ; CHECK:    }
 ;
 ; AST:    if (N >= 1)

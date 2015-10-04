@@ -22,9 +22,7 @@
 ;    }
 ;
 ; CHECK:    Statements {
-; CHECK:      Stmt_sw_default
-; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_sw_default[i0] : 1 = 0 };
+; CHECK-NOT:  Stmt_sw_default
 ; CHECK:      Stmt_sw_bb
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_sw_bb[i0] : exists (e0 = floor((i0)/4): 4e0 = i0 and i0 >= 0 and i0 <= -1 + N) };
