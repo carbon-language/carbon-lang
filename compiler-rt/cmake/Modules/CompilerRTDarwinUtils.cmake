@@ -198,7 +198,6 @@ function(darwin_lipo_libs name)
   add_dependencies(${LIB_PARENT_TARGET} ${name})
   install(FILES ${LIB_OUTPUT_DIR}/lib${name}.a
     DESTINATION ${LIB_INSTALL_DIR})
-  message("LIB_INSTALL_DIR: ${LIB_INSTALL_DIR}")
 endfunction()
 
 # Filter out generic versions of routines that are re-implemented in
