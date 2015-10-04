@@ -240,7 +240,7 @@ Value *BlockGenerator::generateScalarLoad(ScopStmt &Stmt, const LoadInst *Load,
   if (Value *PreloadLoad = GlobalMap.lookup(Load))
     return PreloadLoad;
 
-  const Value *Pointer = Load->getPointerOperand();
+  auto *Pointer = Load->getPointerOperand();
   Value *NewPointer =
       generateLocationAccessed(Stmt, Load, Pointer, BBMap, LTS, NewAccesses);
   Value *ScalarLoad = Builder.CreateAlignedLoad(
@@ -256,7 +256,7 @@ Value *BlockGenerator::generateScalarLoad(ScopStmt &Stmt, const LoadInst *Load,
 void BlockGenerator::generateScalarStore(ScopStmt &Stmt, const StoreInst *Store,
                                          ValueMapT &BBMap, LoopToScevMapT &LTS,
                                          isl_id_to_ast_expr *NewAccesses) {
-  const Value *Pointer = Store->getPointerOperand();
+  auto *Pointer = Store->getPointerOperand();
   Value *NewPointer =
       generateLocationAccessed(Stmt, Store, Pointer, BBMap, LTS, NewAccesses);
   Value *ValueOperand = getNewValue(Stmt, Store->getValueOperand(), BBMap, LTS,
@@ -288,7 +288,7 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
     return;
   }
 
-  if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
+  if (auto *Load = dyn_cast<LoadInst>(Inst)) {
     Value *NewLoad = generateScalarLoad(Stmt, Load, BBMap, LTS, NewAccesses);
     // Compute NewLoad before its insertion in BBMap to make the insertion
     // deterministic.
@@ -296,12 +296,12 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
     return;
   }
 
-  if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
+  if (auto *Store = dyn_cast<StoreInst>(Inst)) {
     generateScalarStore(Stmt, Store, BBMap, LTS, NewAccesses);
     return;
   }
 
-  if (const PHINode *PHI = dyn_cast<PHINode>(Inst)) {
+  if (auto *PHI = dyn_cast<PHINode>(Inst)) {
     copyPHIInstruction(Stmt, PHI, BBMap, LTS);
     return;
   }
@@ -677,7 +677,7 @@ Value *VectorBlockGenerator::generateStrideOneLoad(
     ScopStmt &Stmt, const LoadInst *Load, VectorValueMapT &ScalarMaps,
     __isl_keep isl_id_to_ast_expr *NewAccesses, bool NegativeStride = false) {
   unsigned VectorWidth = getVectorWidth();
-  const Value *Pointer = Load->getPointerOperand();
+  auto *Pointer = Load->getPointerOperand();
   Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
   unsigned Offset = NegativeStride ? VectorWidth - 1 : 0;
 
@@ -707,7 +707,7 @@ Value *VectorBlockGenerator::generateStrideOneLoad(
 Value *VectorBlockGenerator::generateStrideZeroLoad(
     ScopStmt &Stmt, const LoadInst *Load, ValueMapT &BBMap,
     __isl_keep isl_id_to_ast_expr *NewAccesses) {
-  const Value *Pointer = Load->getPointerOperand();
+  auto *Pointer = Load->getPointerOperand();
   Type *VectorPtrType = getVectorPtrTy(Pointer, 1);
   Value *NewPointer = generateLocationAccessed(Stmt, Load, Pointer, BBMap,
                                                VLTS[0], NewAccesses);
@@ -733,7 +733,7 @@ Value *VectorBlockGenerator::generateUnknownStrideLoad(
 
     ) {
   int VectorWidth = getVectorWidth();
-  const Value *Pointer = Load->getPointerOperand();
+  auto *Pointer = Load->getPointerOperand();
   VectorType *VectorType = VectorType::get(
       dyn_cast<PointerType>(Pointer->getType())->getElementType(), VectorWidth);
 
@@ -823,7 +823,7 @@ void VectorBlockGenerator::copyStore(
     VectorValueMapT &ScalarMaps, __isl_keep isl_id_to_ast_expr *NewAccesses) {
   const MemoryAccess &Access = Stmt.getAccessFor(Store);
 
-  const Value *Pointer = Store->getPointerOperand();
+  auto *Pointer = Store->getPointerOperand();
   Value *Vector = getVectorValue(Stmt, Store->getValueOperand(), VectorMap,
                                  ScalarMaps, getLoopForInst(Store));
 
@@ -931,23 +931,23 @@ void VectorBlockGenerator::copyInstruction(
   if (canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion()))
     return;
 
-  if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
+  if (auto *Load = dyn_cast<LoadInst>(Inst)) {
     generateLoad(Stmt, Load, VectorMap, ScalarMaps, NewAccesses);
     return;
   }
 
   if (hasVectorOperands(Inst, VectorMap)) {
-    if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
+    if (auto *Store = dyn_cast<StoreInst>(Inst)) {
       copyStore(Stmt, Store, VectorMap, ScalarMaps, NewAccesses);
       return;
     }
 
-    if (const UnaryInstruction *Unary = dyn_cast<UnaryInstruction>(Inst)) {
+    if (auto *Unary = dyn_cast<UnaryInstruction>(Inst)) {
       copyUnaryInst(Stmt, Unary, VectorMap, ScalarMaps);
       return;
     }
 
-    if (const BinaryOperator *Binary = dyn_cast<BinaryOperator>(Inst)) {
+    if (auto *Binary = dyn_cast<BinaryOperator>(Inst)) {
       copyBinaryInst(Stmt, Binary, VectorMap, ScalarMaps);
       return;
     }
