@@ -5,6 +5,35 @@
 ; EXTRQI
 ;
 
+; A length of zero is equivalent to a bit length of 64.
+define <2 x i64> @extrqi_len0_idx0(<2 x i64> %a) {
+; ALL-LABEL: extrqi_len0_idx0:
+; ALL:       # BB#0:
+; ALL-NEXT:    extrq {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5,6,7,u,u,u,u,u,u,u,u]
+; ALL-NEXT:    retq
+  %1 = tail call <2 x i64> @llvm.x86.sse4a.extrqi(<2 x i64> %a, i8 0, i8 0)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @extrqi_len8_idx16(<2 x i64> %a) {
+; ALL-LABEL: extrqi_len8_idx16:
+; ALL:       # BB#0:
+; ALL-NEXT:    extrq {{.*#+}} xmm0 = xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[u,u,u,u,u,u,u,u]
+; ALL-NEXT:    retq
+  %1 = tail call <2 x i64> @llvm.x86.sse4a.extrqi(<2 x i64> %a, i8 8, i8 16)
+  ret <2 x i64> %1
+}
+
+; If the length + index exceeds the bottom 64 bits the result is undefined.
+define <2 x i64> @extrqi_len32_idx48(<2 x i64> %a) {
+; ALL-LABEL: extrqi_len32_idx48:
+; ALL:       # BB#0:
+; ALL-NEXT:    extrq {{.*#+}} xmm0 = xmm0[u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u]
+; ALL-NEXT:    retq
+  %1 = tail call <2 x i64> @llvm.x86.sse4a.extrqi(<2 x i64> %a, i8 32, i8 48)
+  ret <2 x i64> %1
+}
+
 define <16 x i8> @shuf_0zzzuuuuuuuuuuuu(<16 x i8> %a0) {
 ; BTVER1-LABEL: shuf_0zzzuuuuuuuuuuuu:
 ; BTVER1:       # BB#0:
@@ -157,6 +186,35 @@ define <4 x i32> @shuf_0z1z(<4 x i32> %a0) {
 ; INSERTQI
 ;
 
+; A length of zero is equivalent to a bit length of 64.
+define <2 x i64> @insertqi_len0_idx0(<2 x i64> %a, <2 x i64> %b) {
+; ALL-LABEL: insertqi_len0_idx0:
+; ALL:       # BB#0:
+; ALL-NEXT:    insertq {{.*#+}} xmm0 = xmm1[0,1,2,3,4,5,6,7],xmm0[u,u,u,u,u,u,u,u]
+; ALL-NEXT:    retq
+  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %a, <2 x i64> %b, i8 0, i8 0)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @insertqi_len8_idx16(<2 x i64> %a, <2 x i64> %b) {
+; ALL-LABEL: insertqi_len8_idx16:
+; ALL:       # BB#0:
+; ALL-NEXT:    insertq {{.*#+}} xmm0 = xmm0[0,1],xmm1[0],xmm0[3,4,5,6,7,u,u,u,u,u,u,u,u]
+; ALL-NEXT:    retq
+  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %a, <2 x i64> %b, i8 8, i8 16)
+  ret <2 x i64> %1
+}
+
+; If the length + index exceeds the bottom 64 bits the result is undefined
+define <2 x i64> @insertqi_len32_idx48(<2 x i64> %a, <2 x i64> %b) {
+; ALL-LABEL: insertqi_len32_idx48:
+; ALL:       # BB#0:
+; ALL-NEXT:    insertq {{.*#+}} xmm0 = xmm0[u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u]
+; ALL-NEXT:    retq
+  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %a, <2 x i64> %b, i8 32, i8 48)
+  ret <2 x i64> %1
+}
+
 define <16 x i8> @shuf_0_0_2_3_uuuu_uuuu_uuuu(<16 x i8> %a0, <16 x i8> %a1) {
 ; ALL-LABEL: shuf_0_0_2_3_uuuu_uuuu_uuuu:
 ; ALL:       # BB#0:
@@ -237,3 +295,6 @@ define <8 x i16> @shuf_089uuuuu(<8 x i16> %a0, <8 x i16> %a1) {
   %s = shufflevector <8 x i16> %a0, <8 x i16> %a1, <8 x i32> <i32 0, i32 8, i32 9, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x i16> %s
 }
+
+declare <2 x i64> @llvm.x86.sse4a.extrqi(<2 x i64>, i8, i8) nounwind
+declare <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64>, <2 x i64>, i8, i8) nounwind
