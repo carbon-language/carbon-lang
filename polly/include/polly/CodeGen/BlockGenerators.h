@@ -67,7 +67,7 @@ public:
   /// @see The ScalarMap and PHIOpMap member.
   using ScalarAllocaMapTy = DenseMap<AssertingVH<Value>, AssertingVH<Value>>;
 
-  typedef llvm::DenseMap<const llvm::Value *, llvm::Value *> ValueMapT;
+  typedef llvm::DenseMap<llvm::Value *, llvm::Value *> ValueMapT;
   typedef llvm::SmallVector<ValueMapT, 8> VectorValueMapT;
 
   /// @brief Simple vector of instructions to store escape users.
@@ -429,9 +429,8 @@ protected:
   ///
   /// @returns  o A newly synthesized value.
   ///           o NULL, if synthesizing the value failed.
-  Value *trySynthesizeNewValue(ScopStmt &Stmt, const Value *Old,
-                               ValueMapT &BBMap, LoopToScevMapT &LTS,
-                               Loop *L) const;
+  Value *trySynthesizeNewValue(ScopStmt &Stmt, Value *Old, ValueMapT &BBMap,
+                               LoopToScevMapT &LTS, Loop *L) const;
 
   /// @brief Get the new version of a value.
   ///
@@ -457,10 +456,10 @@ protected:
   /// @returns  o The old value, if it is still valid.
   ///           o The new value, if available.
   ///           o NULL, if no value is found.
-  Value *getNewValue(ScopStmt &Stmt, const Value *Old, ValueMapT &BBMap,
+  Value *getNewValue(ScopStmt &Stmt, Value *Old, ValueMapT &BBMap,
                      LoopToScevMapT &LTS, Loop *L) const;
 
-  void copyInstScalar(ScopStmt &Stmt, const Instruction *Inst, ValueMapT &BBMap,
+  void copyInstScalar(ScopStmt &Stmt, Instruction *Inst, ValueMapT &BBMap,
                       LoopToScevMapT &LTS);
 
   /// @brief Get the innermost loop that surrounds an instruction.
@@ -474,22 +473,22 @@ protected:
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
   Value *generateLocationAccessed(ScopStmt &Stmt, const Instruction *Inst,
-                                  const Value *Pointer, ValueMapT &BBMap,
+                                  Value *Pointer, ValueMapT &BBMap,
                                   LoopToScevMapT &LTS,
                                   isl_id_to_ast_expr *NewAccesses);
 
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  Value *generateScalarLoad(ScopStmt &Stmt, const LoadInst *load,
-                            ValueMapT &BBMap, LoopToScevMapT &LTS,
+  Value *generateScalarLoad(ScopStmt &Stmt, LoadInst *load, ValueMapT &BBMap,
+                            LoopToScevMapT &LTS,
                             isl_id_to_ast_expr *NewAccesses);
 
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  void generateScalarStore(ScopStmt &Stmt, const StoreInst *store,
-                           ValueMapT &BBMap, LoopToScevMapT &LTS,
+  void generateScalarStore(ScopStmt &Stmt, StoreInst *store, ValueMapT &BBMap,
+                           LoopToScevMapT &LTS,
                            isl_id_to_ast_expr *NewAccesses);
 
   /// @brief Copy a single PHI instruction.
@@ -498,7 +497,7 @@ protected:
   /// subclasses to handle PHIs different.
   ///
   /// @returns The nullptr as the BlockGenerator does not copy PHIs.
-  virtual Value *copyPHIInstruction(ScopStmt &, const PHINode *, ValueMapT &,
+  virtual Value *copyPHIInstruction(ScopStmt &, PHINode *, ValueMapT &,
                                     LoopToScevMapT &) {
     return nullptr;
   }
@@ -522,9 +521,8 @@ protected:
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  void copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
-                       ValueMapT &BBMap, LoopToScevMapT &LTS,
-                       isl_id_to_ast_expr *NewAccesses);
+  void copyInstruction(ScopStmt &Stmt, Instruction *Inst, ValueMapT &BBMap,
+                       LoopToScevMapT &LTS, isl_id_to_ast_expr *NewAccesses);
 
   /// @brief Helper to get the newest version of @p ScalarValue.
   ///
@@ -605,7 +603,7 @@ private:
 
   int getVectorWidth();
 
-  Value *getVectorValue(ScopStmt &Stmt, const Value *Old, ValueMapT &VectorMap,
+  Value *getVectorValue(ScopStmt &Stmt, Value *Old, ValueMapT &VectorMap,
                         VectorValueMapT &ScalarMaps, Loop *L);
 
   Type *getVectorPtrTy(const Value *V, int Width);
@@ -628,7 +626,7 @@ private:
   /// @param NewAccesses    A map from memory access ids to new ast
   ///                       expressions, which may contain new access
   ///                       expressions for certain memory accesses.
-  Value *generateStrideOneLoad(ScopStmt &Stmt, const LoadInst *Load,
+  Value *generateStrideOneLoad(ScopStmt &Stmt, LoadInst *Load,
                                VectorValueMapT &ScalarMaps,
                                __isl_keep isl_id_to_ast_expr *NewAccesses,
                                bool NegativeStride);
@@ -646,7 +644,7 @@ private:
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  Value *generateStrideZeroLoad(ScopStmt &Stmt, const LoadInst *Load,
+  Value *generateStrideZeroLoad(ScopStmt &Stmt, LoadInst *Load,
                                 ValueMapT &BBMap,
                                 __isl_keep isl_id_to_ast_expr *NewAccesses);
 
@@ -664,34 +662,34 @@ private:
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  Value *generateUnknownStrideLoad(ScopStmt &Stmt, const LoadInst *Load,
+  Value *generateUnknownStrideLoad(ScopStmt &Stmt, LoadInst *Load,
                                    VectorValueMapT &ScalarMaps,
                                    __isl_keep isl_id_to_ast_expr *NewAccesses);
 
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  void generateLoad(ScopStmt &Stmt, const LoadInst *Load, ValueMapT &VectorMap,
+  void generateLoad(ScopStmt &Stmt, LoadInst *Load, ValueMapT &VectorMap,
                     VectorValueMapT &ScalarMaps,
                     __isl_keep isl_id_to_ast_expr *NewAccesses);
 
-  void copyUnaryInst(ScopStmt &Stmt, const UnaryInstruction *Inst,
+  void copyUnaryInst(ScopStmt &Stmt, UnaryInstruction *Inst,
                      ValueMapT &VectorMap, VectorValueMapT &ScalarMaps);
 
-  void copyBinaryInst(ScopStmt &Stmt, const BinaryOperator *Inst,
+  void copyBinaryInst(ScopStmt &Stmt, BinaryOperator *Inst,
                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps);
 
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  void copyStore(ScopStmt &Stmt, const StoreInst *Store, ValueMapT &VectorMap,
+  void copyStore(ScopStmt &Stmt, StoreInst *Store, ValueMapT &VectorMap,
                  VectorValueMapT &ScalarMaps,
                  __isl_keep isl_id_to_ast_expr *NewAccesses);
 
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  void copyInstScalarized(ScopStmt &Stmt, const Instruction *Inst,
+  void copyInstScalarized(ScopStmt &Stmt, Instruction *Inst,
                           ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
                           __isl_keep isl_id_to_ast_expr *NewAccesses);
 
@@ -703,8 +701,8 @@ private:
   /// @param NewAccesses A map from memory access ids to new ast expressions,
   ///                    which may contain new access expressions for certain
   ///                    memory accesses.
-  void copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
-                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
+  void copyInstruction(ScopStmt &Stmt, Instruction *Inst, ValueMapT &VectorMap,
+                       VectorValueMapT &ScalarMaps,
                        __isl_keep isl_id_to_ast_expr *NewAccesses);
 
   /// @param NewAccesses A map from memory access ids to new ast expressions,
@@ -797,7 +795,7 @@ private:
   /// @param LTS       A map from old loops to new induction variables as SCEVs.
   ///
   /// @returns The copied instruction or nullptr if no copy was made.
-  virtual Value *copyPHIInstruction(ScopStmt &Stmt, const PHINode *Inst,
+  virtual Value *copyPHIInstruction(ScopStmt &Stmt, PHINode *Inst,
                                     ValueMapT &BBMap,
                                     LoopToScevMapT &LTS) override;
 };
