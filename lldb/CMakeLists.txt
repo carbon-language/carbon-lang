@@ -24,6 +24,12 @@ if (NOT LLDB_DISABLE_PYTHON)
     # We depend on liblldb being built before we can do this step.
     add_dependencies(finish_swig liblldb argdumper)
 
+    # If we build the readline module, we depend on that happening
+    # first.
+    if (TARGET readline)
+        add_dependencies(finish_swig readline)
+    endif()
+
     # Ensure we do the python post-build step when building lldb.
     add_dependencies(lldb finish_swig)
 
