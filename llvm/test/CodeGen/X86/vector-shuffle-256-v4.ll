@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mcpu=x86-64 -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mcpu=knl -mattr=+avx512vl | FileCheck %s --check-prefix=AVX512VL
 
 target triple = "x86_64-unknown-unknown"
 
@@ -133,6 +134,11 @@ define <4 x double> @shuffle_v4f64_0023(<4 x double> %a, <4 x double> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[0,0,2,3]
 ; ALL-NEXT:    retq
+
+; AVX512VL-LABEL: shuffle_v4f64_0023:
+; AVX512VL:       # BB#0:
+; AVX512VL-NEXT:    vpermilpd $8, %ymm0, %ymm0
+; AVX512VL-NEXT:    retq
   %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 0, i32 2, i32 3>
   ret <4 x double> %shuffle
 }
