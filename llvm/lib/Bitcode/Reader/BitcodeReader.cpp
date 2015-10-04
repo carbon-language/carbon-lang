@@ -400,7 +400,6 @@ private:
 /// Class to manage reading and parsing function summary index bitcode
 /// files/sections.
 class FunctionIndexBitcodeReader {
-  LLVMContext &Context;
   DiagnosticHandlerFunction DiagnosticHandler;
 
   /// Eventually points to the function index built during parsing.
@@ -5170,8 +5169,7 @@ FunctionIndexBitcodeReader::FunctionIndexBitcodeReader(
     MemoryBuffer *Buffer, LLVMContext &Context,
     DiagnosticHandlerFunction DiagnosticHandler, bool IsLazy,
     bool CheckFuncSummaryPresenceOnly)
-    : Context(Context),
-      DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
+    : DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
       Buffer(Buffer),
       IsLazy(IsLazy),
       CheckFuncSummaryPresenceOnly(CheckFuncSummaryPresenceOnly) {}
@@ -5179,8 +5177,7 @@ FunctionIndexBitcodeReader::FunctionIndexBitcodeReader(
 FunctionIndexBitcodeReader::FunctionIndexBitcodeReader(
     LLVMContext &Context, DiagnosticHandlerFunction DiagnosticHandler,
     bool IsLazy, bool CheckFuncSummaryPresenceOnly)
-    : Context(Context),
-      DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
+    : DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
       Buffer(nullptr),
       IsLazy(IsLazy),
       CheckFuncSummaryPresenceOnly(CheckFuncSummaryPresenceOnly) {}
