@@ -103,7 +103,7 @@ unreachable:                                      ; preds = %catch, %entry
 ; CHECK: retq
 
 
-define void @test3() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
+define void @test3(i1 %V) #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   invoke void @g()
           to label %try.cont unwind label %catch.dispatch
@@ -128,7 +128,15 @@ catchendblock:                                    ; preds = %catch.dispatch.1
   catchendpad unwind to caller
 
 try.cont:                                         ; preds = %entry
-  ret void
+  br i1 %V, label %exit_one, label %exit_two
+
+exit_one:
+  tail call void @exit(i32 0)
+  unreachable
+
+exit_two:
+  tail call void @exit(i32 0)
+  unreachable
 }
 
 ; CHECK-LABEL: test3:
@@ -136,15 +144,20 @@ try.cont:                                         ; preds = %entry
 ; The entry funclet contains %entry and %try.cont
 ; CHECK: # %entry
 ; CHECK: # %try.cont
-; CHECK: retq
+; CHECK: callq exit
+; CHECK-NOT: # exit_one
+; CHECK-NOT: # exit_two
+; CHECK: ud2
 
 ; The catch(int) funclet contains %catch.2
 ; CHECK: # %catch.2
 ; CHECK: callq exit
+; CHECK: ud2
 
 ; The catch(...) funclet contains %catch
 ; CHECK: # %catch{{$}}
 ; CHECK: callq exit
+; CHECK: ud2
 
 declare void @exit(i32) noreturn nounwind
 declare void @_CxxThrowException(i8*, %eh.ThrowInfo*)

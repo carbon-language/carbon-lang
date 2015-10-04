@@ -21,6 +21,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -94,10 +95,8 @@ bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
 
   TargetPassConfig *PassConfig = &getAnalysis<TargetPassConfig>();
   // TailMerge can create jump into if branches that make CFG irreducible for
-  // HW that requires structurized CFG.  It can also cause BBs to get shared
-  // between funclets.
+  // HW that requires structurized CFG.
   bool EnableTailMerge = !MF.getTarget().requiresStructuredCFG() &&
-                         !MF.getMMI().hasEHFunclets() &&
                          PassConfig->getEnableTailMerge();
   BranchFolder Folder(EnableTailMerge, /*CommonHoist=*/true,
                       getAnalysis<MachineBlockFrequencyInfo>(),
@@ -135,6 +134,7 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
 
   // Remove the block.
   MF->erase(MBB);
+  FuncletMembership.erase(MBB);
 }
 
 /// OptimizeImpDefsBlock - If a basic block is just a bunch of implicit_def
@@ -221,6 +221,9 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
       MadeChange |= MBB.CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
     MadeChange |= OptimizeImpDefsBlock(&MBB);
   }
+
+  // Recalculate funclet membership.
+  FuncletMembership = getFuncletMembership(MF);
 
   bool MadeChangeThisIteration = true;
   while (MadeChangeThisIteration) {
@@ -448,6 +451,11 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
   // For targets that use the register scavenger, we must maintain LiveIns.
   MaintainLiveIns(&CurMBB, NewMBB);
 
+  // Add the new block to the funclet.
+  const auto &FuncletI = FuncletMembership.find(&CurMBB);
+  if (FuncletI != FuncletMembership.end())
+    FuncletMembership[NewMBB] = FuncletI->second;
+
   return NewMBB;
 }
 
@@ -552,14 +560,23 @@ static unsigned CountTerminators(MachineBasicBlock *MBB,
 /// and decide if it would be profitable to merge those tails.  Return the
 /// length of the common tail and iterators to the first common instruction
 /// in each block.
-static bool ProfitableToMerge(MachineBasicBlock *MBB1,
-                              MachineBasicBlock *MBB2,
-                              unsigned minCommonTailLength,
-                              unsigned &CommonTailLen,
-                              MachineBasicBlock::iterator &I1,
-                              MachineBasicBlock::iterator &I2,
-                              MachineBasicBlock *SuccBB,
-                              MachineBasicBlock *PredBB) {
+static bool
+ProfitableToMerge(MachineBasicBlock *MBB1, MachineBasicBlock *MBB2,
+                  unsigned minCommonTailLength, unsigned &CommonTailLen,
+                  MachineBasicBlock::iterator &I1,
+                  MachineBasicBlock::iterator &I2, MachineBasicBlock *SuccBB,
+                  MachineBasicBlock *PredBB,
+                  DenseMap<const MachineBasicBlock *, int> &FuncletMembership) {
+  // It is never profitable to tail-merge blocks from two different funclets.
+  if (!FuncletMembership.empty()) {
+    auto Funclet1 = FuncletMembership.find(MBB1);
+    assert(Funclet1 != FuncletMembership.end());
+    auto Funclet2 = FuncletMembership.find(MBB2);
+    assert(Funclet2 != FuncletMembership.end());
+    if (Funclet1->second != Funclet2->second)
+      return false;
+  }
+
   CommonTailLen = ComputeCommonTailLength(MBB1, MBB2, I1, I2);
   if (CommonTailLen == 0)
     return false;
@@ -636,7 +653,8 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
       if (ProfitableToMerge(CurMPIter->getBlock(), I->getBlock(),
                             minCommonTailLength,
                             CommonTailLen, TrialBBI1, TrialBBI2,
-                            SuccBB, PredBB)) {
+                            SuccBB, PredBB,
+                            FuncletMembership)) {
         if (CommonTailLen > maxCommonTailLength) {
           SameTails.clear();
           maxCommonTailLength = CommonTailLen;
@@ -1099,6 +1117,8 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
 
   // Make sure blocks are numbered in order
   MF.RenumberBlocks();
+  // Renumbering blocks alters funclet membership, recalculate it.
+  FuncletMembership = getFuncletMembership(MF);
 
   for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
        I != E; ) {
@@ -1112,6 +1132,7 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
       ++NumDeadBlocks;
     }
   }
+
   return MadeChange;
 }
 
@@ -1171,11 +1192,22 @@ ReoptimizeBlock:
   MachineFunction::iterator FallThrough = MBB;
   ++FallThrough;
 
+  // Make sure MBB and FallThrough belong to the same funclet.
+  bool SameFunclet = true;
+  if (!FuncletMembership.empty() && FallThrough != MF.end()) {
+    auto MBBFunclet = FuncletMembership.find(MBB);
+    assert(MBBFunclet != FuncletMembership.end());
+    auto FallThroughFunclet = FuncletMembership.find(FallThrough);
+    assert(FallThroughFunclet != FuncletMembership.end());
+    SameFunclet = MBBFunclet->second == FallThroughFunclet->second;
+  }
+
   // If this block is empty, make everyone use its fall-through, not the block
   // explicitly.  Landing pads should not do this since the landing-pad table
   // points to this block.  Blocks with their addresses taken shouldn't be
   // optimized away.
-  if (IsEmptyBlock(MBB) && !MBB->isEHPad() && !MBB->hasAddressTaken()) {
+  if (IsEmptyBlock(MBB) && !MBB->isEHPad() && !MBB->hasAddressTaken() &&
+      SameFunclet) {
     // Dead block?  Leave for cleanup later.
     if (MBB->pred_empty()) return MadeChange;
 

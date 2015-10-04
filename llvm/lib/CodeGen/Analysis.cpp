@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -25,6 +26,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 
@@ -642,4 +644,87 @@ bool llvm::canBeOmittedFromSymbolTable(const GlobalValue *GV) {
     return false;
 
   return !GS.IsCompared;
+}
+
+static void collectFuncletMembers(
+    DenseMap<const MachineBasicBlock *, int> &FuncletMembership, int Funclet,
+    const MachineBasicBlock *MBB) {
+  // Don't revisit blocks.
+  if (FuncletMembership.count(MBB) > 0) {
+    if (FuncletMembership[MBB] != Funclet) {
+      assert(false && "MBB is part of two funclets!");
+      report_fatal_error("MBB is part of two funclets!");
+    }
+    return;
+  }
+
+  // Add this MBB to our funclet.
+  FuncletMembership[MBB] = Funclet;
+
+  bool IsReturn = false;
+  int NumTerminators = 0;
+  for (const MachineInstr &MI : MBB->terminators()) {
+    IsReturn |= MI.isReturn();
+    ++NumTerminators;
+  }
+  assert((!IsReturn || NumTerminators == 1) &&
+         "Expected only one terminator when a return is present!");
+
+  // Returns are boundaries where funclet transfer can occur, don't follow
+  // successors.
+  if (IsReturn)
+    return;
+
+  for (const MachineBasicBlock *SMBB : MBB->successors())
+    if (!SMBB->isEHPad())
+      collectFuncletMembers(FuncletMembership, Funclet, SMBB);
+}
+
+DenseMap<const MachineBasicBlock *, int>
+llvm::getFuncletMembership(const MachineFunction &MF) {
+  DenseMap<const MachineBasicBlock *, int> FuncletMembership;
+
+  // We don't have anything to do if there aren't any EH pads.
+  if (!MF.getMMI().hasEHFunclets())
+    return FuncletMembership;
+
+  bool IsSEH = isAsynchronousEHPersonality(
+      classifyEHPersonality(MF.getFunction()->getPersonalityFn()));
+
+  const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
+  SmallVector<const MachineBasicBlock *, 16> FuncletBlocks;
+  SmallVector<std::pair<const MachineBasicBlock *, int>, 16> CatchRetSuccessors;
+  for (const MachineBasicBlock &MBB : MF) {
+    if (MBB.isEHFuncletEntry())
+      FuncletBlocks.push_back(&MBB);
+
+    MachineBasicBlock::const_iterator MBBI = MBB.getFirstTerminator();
+    // CatchPads are not funclets for SEH so do not consider CatchRet to
+    // transfer control to another funclet.
+    if (IsSEH || MBBI->getOpcode() != TII->getCatchReturnOpcode())
+      continue;
+
+    const MachineBasicBlock *Successor = MBBI->getOperand(0).getMBB();
+    const MachineBasicBlock *SuccessorColor = MBBI->getOperand(1).getMBB();
+    CatchRetSuccessors.push_back({Successor, SuccessorColor->getNumber()});
+  }
+
+  // We don't have anything to do if there aren't any EH pads.
+  if (FuncletBlocks.empty())
+    return FuncletMembership;
+
+  // Identify all the basic blocks reachable from the function entry.
+  collectFuncletMembers(FuncletMembership, MF.front().getNumber(), MF.begin());
+  // Next, identify all the blocks inside the funclets.
+  for (const MachineBasicBlock *MBB : FuncletBlocks)
+    collectFuncletMembers(FuncletMembership, MBB->getNumber(), MBB);
+  // Finally, identify all the targets of a catchret.
+  for (std::pair<const MachineBasicBlock *, int> CatchRetPair :
+       CatchRetSuccessors)
+    collectFuncletMembers(FuncletMembership, CatchRetPair.second,
+                          CatchRetPair.first);
+  // All blocks not part of a funclet are in the parent function.
+  for (const MachineBasicBlock &MBB : MF)
+    FuncletMembership.insert({&MBB, MF.front().getNumber()});
+  return FuncletMembership;
 }
