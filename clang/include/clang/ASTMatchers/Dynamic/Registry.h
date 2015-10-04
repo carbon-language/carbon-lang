@@ -106,7 +106,7 @@ public:
   ///   the signature.  In that case \c Error will contain the description of
   ///   the error.
   static VariantMatcher constructMatcher(MatcherCtor Ctor,
-                                         const SourceRange &NameRange,
+                                         SourceRange NameRange,
                                          ArrayRef<ParserValue> Args,
                                          Diagnostics *Error);
 
@@ -117,7 +117,7 @@ public:
   /// If the matcher is not bindable, it sets an error in \c Error and returns
   /// a null matcher.
   static VariantMatcher constructBoundMatcher(MatcherCtor Ctor,
-                                              const SourceRange &NameRange,
+                                              SourceRange NameRange,
                                               StringRef BindID,
                                               ArrayRef<ParserValue> Args,
                                               Diagnostics *Error);

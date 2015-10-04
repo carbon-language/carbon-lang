@@ -2830,7 +2830,7 @@ namespace {
 typedef SmallVector<SourceRange, 4> RefNamePieces;
 RefNamePieces
 buildPieces(unsigned NameFlags, bool IsMemberRefExpr,
-            const DeclarationNameInfo &NI, const SourceRange &QLoc,
+            const DeclarationNameInfo &NI, SourceRange QLoc,
             const ASTTemplateArgumentListInfo *TemplateArgs = nullptr) {
   const bool WantQualifier = NameFlags & CXNameRange_WantQualifier;
   const bool WantTemplateArgs = NameFlags & CXNameRange_WantTemplateArgs;

@@ -68,7 +68,7 @@ bool Sema::isLibstdcxxEagerExceptionSpecHack(const Declarator &D) {
 ///
 /// \param[in,out] T  The exception type. This will be decayed to a pointer type
 ///                   when the input is an array or a function type.
-bool Sema::CheckSpecifiedExceptionType(QualType &T, const SourceRange &Range) {
+bool Sema::CheckSpecifiedExceptionType(QualType &T, SourceRange Range) {
   // C++11 [except.spec]p2:
   //   A type cv T, "array of T", or "function returning T" denoted
   //   in an exception-specification is adjusted to type T, "pointer to T", or

@@ -6913,7 +6913,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   return Context.getFunctionType(Context.VoidTy, None, EPI);
 }
 
-static void extendLeft(SourceRange &R, const SourceRange &Before) {
+static void extendLeft(SourceRange &R, SourceRange Before) {
   if (Before.isInvalid())
     return;
   R.setBegin(Before.getBegin());
@@ -6921,7 +6921,7 @@ static void extendLeft(SourceRange &R, const SourceRange &Before) {
     R.setEnd(Before.getEnd());
 }
 
-static void extendRight(SourceRange &R, const SourceRange &After) {
+static void extendRight(SourceRange &R, SourceRange After) {
   if (After.isInvalid())
     return;
   if (R.getBegin().isInvalid())

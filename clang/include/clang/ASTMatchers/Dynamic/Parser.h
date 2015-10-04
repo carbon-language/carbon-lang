@@ -81,7 +81,7 @@ public:
     ///   matcher if an error occurred. In that case, \c Error will contain a
     ///   description of the error.
     virtual VariantMatcher actOnMatcherExpression(MatcherCtor Ctor,
-                                                  const SourceRange &NameRange,
+                                                  SourceRange NameRange,
                                                   StringRef BindID,
                                                   ArrayRef<ParserValue> Args,
                                                   Diagnostics *Error) = 0;
@@ -129,7 +129,7 @@ public:
     lookupMatcherCtor(StringRef MatcherName) override;
 
     VariantMatcher actOnMatcherExpression(MatcherCtor Ctor,
-                                          const SourceRange &NameRange,
+                                          SourceRange NameRange,
                                           StringRef BindID,
                                           ArrayRef<ParserValue> Args,
                                           Diagnostics *Error) override;

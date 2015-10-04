@@ -26,7 +26,7 @@ operator()(const Change &C1, const Change &C2) const {
 }
 
 WhitespaceManager::Change::Change(
-    bool CreateReplacement, const SourceRange &OriginalWhitespaceRange,
+    bool CreateReplacement, SourceRange OriginalWhitespaceRange,
     unsigned IndentLevel, int Spaces, unsigned StartOfTokenColumn,
     unsigned NewlinesBefore, StringRef PreviousLinePostfix,
     StringRef CurrentLinePrefix, tok::TokenKind Kind, bool ContinuesPPDirective,
@@ -510,7 +510,7 @@ void WhitespaceManager::generateChanges() {
   }
 }
 
-void WhitespaceManager::storeReplacement(const SourceRange &Range,
+void WhitespaceManager::storeReplacement(SourceRange Range,
                                          StringRef Text) {
   unsigned WhitespaceLength = SourceMgr.getFileOffset(Range.getEnd()) -
                               SourceMgr.getFileOffset(Range.getBegin());

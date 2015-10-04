@@ -42,7 +42,7 @@ public:
   unsigned getBitWidth() const { return Val.getBitWidth(); }
   bool isUnsigned() const { return Val.isUnsigned(); }
 
-  const SourceRange &getRange() const { return Range; }
+  SourceRange getRange() const { return Range; }
 
   void setRange(SourceLocation L) { Range.setBegin(L); Range.setEnd(L); }
   void setRange(SourceLocation B, SourceLocation E) {

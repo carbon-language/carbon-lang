@@ -10365,7 +10365,7 @@ Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
 // returns true if 'complain' is set.
 bool Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
                       ExprResult &SrcExpr, bool doFunctionPointerConverion,
-                   bool complain, const SourceRange& OpRangeForComplaining, 
+                      bool complain, SourceRange OpRangeForComplaining, 
                                            QualType DestTypeForComplaining, 
                                             unsigned DiagIDForComplaining) {
   assert(SrcExpr.get()->getType() == Context.OverloadTy);

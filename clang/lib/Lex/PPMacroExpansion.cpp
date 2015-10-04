@@ -871,7 +871,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         DiagnosticBuilder DB =
             Diag(MacroName,
                  diag::note_init_list_at_beginning_of_macro_argument);
-        for (const SourceRange &Range : InitLists)
+        for (SourceRange Range : InitLists)
           DB << Range;
       }
       return nullptr;
@@ -880,7 +880,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       return nullptr;
 
     DiagnosticBuilder DB = Diag(MacroName, diag::note_suggest_parens_for_macro);
-    for (const SourceRange &ParenLocation : ParenHints) {
+    for (SourceRange ParenLocation : ParenHints) {
       DB << FixItHint::CreateInsertion(ParenLocation.getBegin(), "(");
       DB << FixItHint::CreateInsertion(ParenLocation.getEnd(), ")");
     }

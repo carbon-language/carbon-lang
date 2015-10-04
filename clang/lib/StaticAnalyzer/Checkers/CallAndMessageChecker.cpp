@@ -89,7 +89,7 @@ private:
       BT.reset(new BuiltinBug(this, desc));
   }
   bool uninitRefOrPointer(CheckerContext &C, const SVal &V,
-                          const SourceRange &ArgRange,
+                          SourceRange ArgRange,
                           const Expr *ArgEx, std::unique_ptr<BugType> &BT,
                           const ParmVarDecl *ParamDecl, const char *BD) const;
 };
@@ -138,7 +138,7 @@ static StringRef describeUninitializedArgumentInCall(const CallEvent &Call,
 
 bool CallAndMessageChecker::uninitRefOrPointer(CheckerContext &C,
                                                const SVal &V,
-                                               const SourceRange &ArgRange,
+                                               SourceRange ArgRange,
                                                const Expr *ArgEx,
                                                std::unique_ptr<BugType> &BT,
                                                const ParmVarDecl *ParamDecl,

@@ -534,7 +534,7 @@ Parser::RegistrySema::lookupMatcherCtor(StringRef MatcherName) {
 }
 
 VariantMatcher Parser::RegistrySema::actOnMatcherExpression(
-    MatcherCtor Ctor, const SourceRange &NameRange, StringRef BindID,
+    MatcherCtor Ctor, SourceRange NameRange, StringRef BindID,
     ArrayRef<ParserValue> Args, Diagnostics *Error) {
   if (BindID.empty()) {
     return Registry::constructMatcher(Ctor, NameRange, Args, Error);

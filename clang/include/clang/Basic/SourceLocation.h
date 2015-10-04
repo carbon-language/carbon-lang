@@ -253,7 +253,7 @@ public:
   
   SourceLocation getBegin() const { return Range.getBegin(); }
   SourceLocation getEnd() const { return Range.getEnd(); }
-  const SourceRange &getAsRange() const { return Range; }
+  SourceRange getAsRange() const { return Range; }
  
   void setBegin(SourceLocation b) { Range.setBegin(b); }
   void setEnd(SourceLocation e) { Range.setEnd(e); }

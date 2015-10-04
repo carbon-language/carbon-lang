@@ -117,7 +117,7 @@ std::unique_ptr<PathDiagnosticPiece> BugReporterVisitor::getDefaultEndPath(
   // special ranges for this report.
   auto P = llvm::make_unique<PathDiagnosticEventPiece>(
       L, BR.getDescription(), Ranges.begin() == Ranges.end());
-  for (const SourceRange &Range : Ranges)
+  for (SourceRange Range : Ranges)
     P->addRange(Range);
 
   return std::move(P);

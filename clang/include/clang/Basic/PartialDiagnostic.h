@@ -377,7 +377,7 @@ public:
   }
 
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                                    const SourceRange &R) {
+                                                    SourceRange R) {
     PD.AddSourceRange(CharSourceRange::getTokenRange(R));
     return PD;
   }

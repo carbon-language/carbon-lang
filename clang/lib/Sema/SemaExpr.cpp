@@ -3852,7 +3852,7 @@ Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
 ExprResult
 Sema::ActOnUnaryExprOrTypeTraitExpr(SourceLocation OpLoc,
                                     UnaryExprOrTypeTrait ExprKind, bool IsType,
-                                    void *TyOrEx, const SourceRange &ArgRange) {
+                                    void *TyOrEx, SourceRange ArgRange) {
   // If error parsing type, ignore.
   if (!TyOrEx) return ExprError();
 

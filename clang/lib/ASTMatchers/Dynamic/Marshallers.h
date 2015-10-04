@@ -104,7 +104,7 @@ public:
 class MatcherDescriptor {
 public:
   virtual ~MatcherDescriptor() {}
-  virtual VariantMatcher create(const SourceRange &NameRange,
+  virtual VariantMatcher create(SourceRange NameRange,
                                 ArrayRef<ParserValue> Args,
                                 Diagnostics *Error) const = 0;
 
@@ -162,7 +162,7 @@ class FixedArgCountMatcherDescriptor : public MatcherDescriptor {
 public:
   typedef VariantMatcher (*MarshallerType)(void (*Func)(),
                                            StringRef MatcherName,
-                                           const SourceRange &NameRange,
+                                           SourceRange NameRange,
                                            ArrayRef<ParserValue> Args,
                                            Diagnostics *Error);
 
@@ -180,7 +180,7 @@ public:
         RetKinds(RetKinds.begin(), RetKinds.end()),
         ArgKinds(ArgKinds.begin(), ArgKinds.end()) {}
 
-  VariantMatcher create(const SourceRange &NameRange,
+  VariantMatcher create(SourceRange NameRange,
                         ArrayRef<ParserValue> Args,
                         Diagnostics *Error) const override {
     return Marshaller(Func, MatcherName, NameRange, Args, Error);
@@ -279,7 +279,7 @@ struct BuildReturnTypeVector<ast_matchers::internal::BindableMatcher<T> > {
 template <typename ResultT, typename ArgT,
           ResultT (*Func)(ArrayRef<const ArgT *>)>
 VariantMatcher
-variadicMatcherDescriptor(StringRef MatcherName, const SourceRange &NameRange,
+variadicMatcherDescriptor(StringRef MatcherName, SourceRange NameRange,
                           ArrayRef<ParserValue> Args, Diagnostics *Error) {
   ArgT **InnerArgs = new ArgT *[Args.size()]();
 
@@ -320,7 +320,7 @@ variadicMatcherDescriptor(StringRef MatcherName, const SourceRange &NameRange,
 class VariadicFuncMatcherDescriptor : public MatcherDescriptor {
 public:
   typedef VariantMatcher (*RunFunc)(StringRef MatcherName,
-                                    const SourceRange &NameRange,
+                                    SourceRange NameRange,
                                     ArrayRef<ParserValue> Args,
                                     Diagnostics *Error);
 
@@ -334,7 +334,7 @@ public:
     BuildReturnTypeVector<ResultT>::build(RetKinds);
   }
 
-  VariantMatcher create(const SourceRange &NameRange,
+  VariantMatcher create(SourceRange NameRange,
                         ArrayRef<ParserValue> Args,
                         Diagnostics *Error) const override {
     return Func(MatcherName, NameRange, Args, Error);
@@ -414,7 +414,7 @@ private:
 /// \brief 0-arg marshaller function.
 template <typename ReturnType>
 static VariantMatcher matcherMarshall0(void (*Func)(), StringRef MatcherName,
-                                       const SourceRange &NameRange,
+                                       SourceRange NameRange,
                                        ArrayRef<ParserValue> Args,
                                        Diagnostics *Error) {
   typedef ReturnType (*FuncType)();
@@ -425,7 +425,7 @@ static VariantMatcher matcherMarshall0(void (*Func)(), StringRef MatcherName,
 /// \brief 1-arg marshaller function.
 template <typename ReturnType, typename ArgType1>
 static VariantMatcher matcherMarshall1(void (*Func)(), StringRef MatcherName,
-                                       const SourceRange &NameRange,
+                                       SourceRange NameRange,
                                        ArrayRef<ParserValue> Args,
                                        Diagnostics *Error) {
   typedef ReturnType (*FuncType)(ArgType1);
@@ -438,7 +438,7 @@ static VariantMatcher matcherMarshall1(void (*Func)(), StringRef MatcherName,
 /// \brief 2-arg marshaller function.
 template <typename ReturnType, typename ArgType1, typename ArgType2>
 static VariantMatcher matcherMarshall2(void (*Func)(), StringRef MatcherName,
-                                       const SourceRange &NameRange,
+                                       SourceRange NameRange,
                                        ArrayRef<ParserValue> Args,
                                        Diagnostics *Error) {
   typedef ReturnType (*FuncType)(ArgType1, ArgType2);
@@ -493,7 +493,7 @@ public:
 
   ~OverloadedMatcherDescriptor() override {}
 
-  VariantMatcher create(const SourceRange &NameRange,
+  VariantMatcher create(SourceRange NameRange,
                         ArrayRef<ParserValue> Args,
                         Diagnostics *Error) const override {
     std::vector<VariantMatcher> Constructed;
@@ -567,7 +567,7 @@ public:
       : MinCount(MinCount), MaxCount(MaxCount), Op(Op),
         MatcherName(MatcherName) {}
 
-  VariantMatcher create(const SourceRange &NameRange,
+  VariantMatcher create(SourceRange NameRange,
                         ArrayRef<ParserValue> Args,
                         Diagnostics *Error) const override {
     if (Args.size() < MinCount || MaxCount < Args.size()) {

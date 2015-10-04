@@ -106,7 +106,7 @@ private:
     ///
     /// \p StartOfTokenColumn and \p InPPDirective will be used to lay out
     /// trailing comments and escaped newlines.
-    Change(bool CreateReplacement, const SourceRange &OriginalWhitespaceRange,
+    Change(bool CreateReplacement, SourceRange OriginalWhitespaceRange,
            unsigned IndentLevel, int Spaces, unsigned StartOfTokenColumn,
            unsigned NewlinesBefore, StringRef PreviousLinePostfix,
            StringRef CurrentLinePrefix, tok::TokenKind Kind,
@@ -200,7 +200,7 @@ private:
   void generateChanges();
 
   /// \brief Stores \p Text as the replacement for the whitespace in \p Range.
-  void storeReplacement(const SourceRange &Range, StringRef Text);
+  void storeReplacement(SourceRange Range, StringRef Text);
   void appendNewlineText(std::string &Text, unsigned Newlines);
   void appendNewlineText(std::string &Text, unsigned Newlines,
                          unsigned PreviousEndOfTokenColumn,

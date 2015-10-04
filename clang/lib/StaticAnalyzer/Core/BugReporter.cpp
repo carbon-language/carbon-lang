@@ -2579,9 +2579,7 @@ void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
     hash.AddPointer(GetCurrentOrPreviousStmt(ErrorNode));
   }
 
-  for (SmallVectorImpl<SourceRange>::const_iterator I =
-      Ranges.begin(), E = Ranges.end(); I != E; ++I) {
-    const SourceRange range = *I;
+  for (SourceRange range : Ranges) {
     if (!range.isValid())
       continue;
     hash.AddInteger(range.getBegin().getRawEncoding());
@@ -3431,7 +3429,7 @@ void BugReporter::FlushReport(BugReport *exampleReport,
     PathDiagnosticLocation L = exampleReport->getLocation(getSourceManager());
     auto piece = llvm::make_unique<PathDiagnosticEventPiece>(
         L, exampleReport->getDescription());
-    for (const SourceRange &Range : exampleReport->getRanges())
+    for (SourceRange Range : exampleReport->getRanges())
       piece->addRange(Range);
     D->setEndOfPath(std::move(piece));
   }
