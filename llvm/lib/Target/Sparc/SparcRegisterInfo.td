@@ -102,6 +102,22 @@ def PSR : SparcCtrlReg<0, "PSR">;
 def WIM : SparcCtrlReg<0, "WIM">;
 def TBR : SparcCtrlReg<0, "TBR">;
 
+def TPC : SparcCtrlReg<0, "TPC">;
+def TNPC : SparcCtrlReg<1, "TNPC">;
+def TSTATE : SparcCtrlReg<2, "TSTATE">;
+def TT : SparcCtrlReg<3, "TT">;
+def TICK : SparcCtrlReg<4, "TICK">;
+def TBA : SparcCtrlReg<5, "TBA">;
+def PSTATE : SparcCtrlReg<6, "PSTATE">;
+def TL : SparcCtrlReg<7, "TL">;
+def PIL : SparcCtrlReg<8, "PIL">;
+def CWP : SparcCtrlReg<9, "CWP">;
+def CANSAVE : SparcCtrlReg<10, "CANSAVE">;
+def CANRESTORE : SparcCtrlReg<11, "CANRESTORE">;
+def CLEANWIN : SparcCtrlReg<12, "CLEANWIN">;
+def OTHERWIN : SparcCtrlReg<13, "OTHERWIN">;
+def WSTATE : SparcCtrlReg<14, "WSTATE">;
+
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
 def G1 : Ri< 1, "G1">, DwarfRegNum<[1]>;
@@ -285,3 +301,8 @@ def ASRRegs : RegisterClass<"SP", [i32], 32,
                             (add Y, (sequence "ASR%u", 1, 31))> {
   let isAllocatable = 0;
 }
+
+// Privileged Registers
+def PRRegs : RegisterClass<"SP", [i64], 64,
+    (add TPC, TNPC, TSTATE, TT, TICK, TBA, PSTATE, TL, PIL, CWP,
+         CANSAVE, CANRESTORE, CLEANWIN, OTHERWIN, WSTATE)>;

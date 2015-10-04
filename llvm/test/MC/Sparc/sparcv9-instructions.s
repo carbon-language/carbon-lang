@@ -110,3 +110,186 @@
         ! V8-NEXT: stx %fsr,[%g2 + %i5]
         ! V9: stx %fsr, [%g2+%i5]   ! encoding: [0xc3,0x28,0x80,0x1d]
         stx %fsr,[%g2 + %i5]
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%tpc
+        ! V9: wrpr %g6, %fp, %tpc        ! encoding: [0x81,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%tpc
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%tnpc
+        ! V9: wrpr %g6, %fp, %tnpc       ! encoding: [0x83,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%tnpc
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%tstate
+        ! V9: wrpr %g6, %fp, %tstate     ! encoding: [0x85,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%tstate
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%tt
+        ! V9: wrpr %g6, %fp, %tt         ! encoding: [0x87,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%tt
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%tick
+        ! V9: wrpr %g6, %fp, %tick       ! encoding: [0x89,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%tick
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%tba
+        ! V9: wrpr %g6, %fp, %tba        ! encoding: [0x8b,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%tba
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%pstate
+        ! V9: wrpr %g6, %fp, %pstate     ! encoding: [0x8d,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%pstate
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%tl
+        ! V9: wrpr %g6, %fp, %tl         ! encoding: [0x8f,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%tl
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%pil
+        ! V9: wrpr %g6, %fp, %pil        ! encoding: [0x91,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%pil
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%cwp
+        ! V9: wrpr %g6, %fp, %cwp        ! encoding: [0x93,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%cwp
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%cansave
+        ! V9: wrpr %g6, %fp, %cansave    ! encoding: [0x95,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%cansave
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%canrestore
+        ! V9: wrpr %g6, %fp, %canrestore ! encoding: [0x97,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%canrestore
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%cleanwin
+        ! V9: wrpr %g6, %fp, %cleanwin   ! encoding: [0x99,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%cleanwin
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%otherwin
+        ! V9: wrpr %g6, %fp, %otherwin   ! encoding: [0x9b,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%otherwin
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,%i6,%wstate
+        ! V9: wrpr %g6, %fp, %wstate     ! encoding: [0x9d,0x91,0x80,0x1e]
+        wrpr %g6,%i6,%wstate
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%tpc
+        ! V9: wrpr %g6, 255, %tpc        ! encoding: [0x81,0x91,0xa0,0xff]
+        wrpr %g6,255,%tpc
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%tnpc
+        ! V9: wrpr %g6, 255, %tnpc       ! encoding: [0x83,0x91,0xa0,0xff]
+        wrpr %g6,255,%tnpc
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%tstate
+        ! V9: wrpr %g6, 255, %tstate     ! encoding: [0x85,0x91,0xa0,0xff]
+        wrpr %g6,255,%tstate
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%tt
+        ! V9: wrpr %g6, 255, %tt         ! encoding: [0x87,0x91,0xa0,0xff]
+        wrpr %g6,255,%tt
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%tick
+        ! V9: wrpr %g6, 255, %tick       ! encoding: [0x89,0x91,0xa0,0xff]
+        wrpr %g6,255,%tick
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%tba
+        ! V9: wrpr %g6, 255, %tba        ! encoding: [0x8b,0x91,0xa0,0xff]
+        wrpr %g6,255,%tba
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%pstate
+        ! V9: wrpr %g6, 255, %pstate     ! encoding: [0x8d,0x91,0xa0,0xff]
+        wrpr %g6,255,%pstate
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%tl
+        ! V9: wrpr %g6, 255, %tl         ! encoding: [0x8f,0x91,0xa0,0xff]
+        wrpr %g6,255,%tl
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%pil
+        ! V9: wrpr %g6, 255, %pil        ! encoding: [0x91,0x91,0xa0,0xff]
+        wrpr %g6,255,%pil
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%cwp
+        ! V9: wrpr %g6, 255, %cwp        ! encoding: [0x93,0x91,0xa0,0xff]
+        wrpr %g6,255,%cwp
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%cansave
+        ! V9: wrpr %g6, 255, %cansave    ! encoding: [0x95,0x91,0xa0,0xff]
+        wrpr %g6,255,%cansave
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%canrestore
+        ! V9: wrpr %g6, 255, %canrestore ! encoding: [0x97,0x91,0xa0,0xff]
+        wrpr %g6,255,%canrestore
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%cleanwin
+        ! V9: wrpr %g6, 255, %cleanwin   ! encoding: [0x99,0x91,0xa0,0xff]
+        wrpr %g6,255,%cleanwin
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%otherwin
+        ! V9: wrpr %g6, 255, %otherwin   ! encoding: [0x9b,0x91,0xa0,0xff]
+        wrpr %g6,255,%otherwin
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: wrpr %g6,255,%wstate
+        ! V9: wrpr %g6, 255, %wstate     ! encoding: [0x9d,0x91,0xa0,0xff]
+        wrpr %g6,255,%wstate
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %tpc,%i5
+        ! V9: rdpr %tpc, %i5            ! encoding: [0xbb,0x50,0x00,0x00]
+        rdpr %tpc,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %tnpc,%i5
+        ! V9: rdpr %tnpc, %i5           ! encoding: [0xbb,0x50,0x40,0x00]
+        rdpr %tnpc,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %tstate,%i5
+        ! V9: rdpr %tstate, %i5         ! encoding: [0xbb,0x50,0x80,0x00]
+        rdpr %tstate,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %tt,%i5
+        ! V9: rdpr %tt, %i5             ! encoding: [0xbb,0x50,0xc0,0x00]
+        rdpr %tt,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %tick,%i5
+        ! V9: rdpr %tick, %i5           ! encoding: [0xbb,0x51,0x00,0x00]
+        rdpr %tick,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %tba,%i5
+        ! V9: rdpr %tba, %i5            ! encoding: [0xbb,0x51,0x40,0x00]
+        rdpr %tba,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %pstate,%i5
+        ! V9: rdpr %pstate, %i5         ! encoding: [0xbb,0x51,0x80,0x00]
+        rdpr %pstate,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %tl,%i5
+        ! V9: rdpr %tl, %i5             ! encoding: [0xbb,0x51,0xc0,0x00]
+        rdpr %tl,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %pil,%i5
+        ! V9: rdpr %pil, %i5            ! encoding: [0xbb,0x52,0x00,0x00]
+        rdpr %pil,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %cwp,%i5
+        ! V9: rdpr %cwp, %i5            ! encoding: [0xbb,0x52,0x40,0x00]
+        rdpr %cwp,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %cansave,%i5
+        ! V9: rdpr %cansave, %i5        ! encoding: [0xbb,0x52,0x80,0x00]
+        rdpr %cansave,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %canrestore,%i5
+        ! V9: rdpr %canrestore, %i5     ! encoding: [0xbb,0x52,0xc0,0x00]
+        rdpr %canrestore,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %cleanwin,%i5
+        ! V9: rdpr %cleanwin, %i5       ! encoding: [0xbb,0x53,0x00,0x00]
+        rdpr %cleanwin,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %otherwin,%i5
+        ! V9: rdpr %otherwin, %i5       ! encoding: [0xbb,0x53,0x40,0x00]
+        rdpr %otherwin,%i5
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: rdpr %wstate,%i5
+        ! V9: rdpr %wstate, %i5         ! encoding: [0xbb,0x53,0x80,0x00]
+        rdpr %wstate,%i5

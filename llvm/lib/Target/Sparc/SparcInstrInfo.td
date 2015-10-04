@@ -1327,6 +1327,25 @@ let hasSideEffects = 1 in {
 }
 }
 
+
+// Section A.43 - Read Privileged Register Instructions
+let Predicates = [HasV9] in {
+let rs2 = 0 in
+  def RDPR : F3_1<2, 0b101010,
+                 (outs IntRegs:$rd), (ins PRRegs:$rs1),
+                 "rdpr $rs1, $rd", []>;
+}
+
+// Section A.62 - Write Privileged Register Instructions
+let Predicates = [HasV9] in {
+  def WRPRrr : F3_1<2, 0b110010,
+                   (outs PRRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
+                   "wrpr $rs1, $rs2, $rd", []>;
+  def WRPRri : F3_2<2, 0b110010,
+                   (outs PRRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
+                   "wrpr $rs1, $simm13, $rd", []>;
+}
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//

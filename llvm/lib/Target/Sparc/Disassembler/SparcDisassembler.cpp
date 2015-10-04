@@ -117,6 +117,12 @@ static const unsigned ASRRegDecoderTable[] = {
   SP::ASR24, SP::ASR25, SP::ASR26, SP::ASR27,
   SP::ASR28, SP::ASR29, SP::ASR30, SP::ASR31};
 
+static const unsigned PRRegDecoderTable[] = {
+  SP::TPC, SP::TNPC, SP::TSTATE, SP::TT, SP::TICK, SP::TBA, SP::PSTATE,
+  SP::TL, SP::PIL, SP::CWP, SP::CANSAVE, SP::CANRESTORE, SP::CLEANWIN,
+  SP::OTHERWIN, SP::WSTATE
+};
+
 static const uint16_t IntPairDecoderTable[] = {
   SP::G0_G1, SP::G2_G3, SP::G4_G5, SP::G6_G7,
   SP::O0_O1, SP::O2_O3, SP::O4_O5, SP::O6_O7,
@@ -200,6 +206,15 @@ static DecodeStatus DecodeASRRegsRegisterClass(MCInst &Inst, unsigned RegNo,
   if (RegNo > 31)
     return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::createReg(ASRRegDecoderTable[RegNo]));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodePRRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  if (RegNo >= array_lengthof(PRRegDecoderTable))
+    return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::createReg(PRRegDecoderTable[RegNo]));
   return MCDisassembler::Success;
 }
 

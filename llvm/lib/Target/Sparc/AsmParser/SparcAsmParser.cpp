@@ -1024,6 +1024,82 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
       RegKind = SparcOperand::rk_IntReg;
       return true;
     }
+
+    if (name.equals("tpc")) {
+      RegNo = Sparc::TPC;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("tnpc")) {
+      RegNo = Sparc::TNPC;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("tstate")) {
+      RegNo = Sparc::TSTATE;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("tt")) {
+      RegNo = Sparc::TT;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("tick")) {
+      RegNo = Sparc::TICK;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("tba")) {
+      RegNo = Sparc::TBA;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("pstate")) {
+      RegNo = Sparc::PSTATE;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("tl")) {
+      RegNo = Sparc::TL;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("pil")) {
+      RegNo = Sparc::PIL;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("cwp")) {
+      RegNo = Sparc::CWP;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("cansave")) {
+      RegNo = Sparc::CANSAVE;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("canrestore")) {
+      RegNo = Sparc::CANRESTORE;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("cleanwin")) {
+      RegNo = Sparc::CLEANWIN;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("otherwin")) {
+      RegNo = Sparc::OTHERWIN;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+    if (name.equals("wstate")) {
+      RegNo = Sparc::WSTATE;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
   }
   return false;
 }
