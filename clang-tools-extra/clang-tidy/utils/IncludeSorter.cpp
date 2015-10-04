@@ -243,11 +243,11 @@ std::vector<FixItHint> IncludeSorter::GetEdits() {
   std::string CurrentText;
   std::vector<FixItHint> Fixes;
   for (const auto &LineEdit : Edits) {
-    const SourceRange &EditRange = LineEdit.second.first;
     // If the current edit is on the next line after the previous edit, add it
     // to the current block edit.
     if (LineEdit.first == CurrentEndLine + 1 &&
         CurrentRange.getBegin() != CurrentRange.getEnd()) {
+      SourceRange EditRange = LineEdit.second.first;
       if (EditRange.getBegin() != EditRange.getEnd()) {
         ++CurrentEndLine;
         CurrentRange.setEnd(EditRange.getEnd());
@@ -260,7 +260,7 @@ std::vector<FixItHint> IncludeSorter::GetEdits() {
       }
 
       CurrentEndLine = LineEdit.first;
-      CurrentRange = EditRange;
+      CurrentRange = LineEdit.second.first;
       CurrentText = LineEdit.second.second;
     }
   }

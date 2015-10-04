@@ -811,7 +811,7 @@ void LoopFixer::doConversion(ASTContext *Context,
     AliasVarIsRef = AliasVar->getType()->isReferenceType();
 
     // We keep along the entire DeclStmt to keep the correct range here.
-    const SourceRange &ReplaceRange = AliasDecl->getSourceRange();
+    SourceRange ReplaceRange = AliasDecl->getSourceRange();
 
     std::string ReplacementText;
     if (AliasUseRequired)
