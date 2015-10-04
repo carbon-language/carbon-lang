@@ -60,9 +60,6 @@ public:
   RegionInfo *RI;
   ///}
 
-  /// @brief The loop annotator to generate llvm.loop metadata.
-  ScopAnnotator Annotator;
-
   /// @brief Build the runtime condition.
   ///
   /// Build the condition that evaluates at run-time to true iff all
@@ -125,6 +122,7 @@ public:
     Region *R = &S.getRegion();
     assert(!R->isTopLevelRegion() && "Top level regions are not supported");
 
+    ScopAnnotator Annotator;
     Annotator.buildAliasScopes(S);
 
     simplifyRegion(R, DT, LI, RI);
