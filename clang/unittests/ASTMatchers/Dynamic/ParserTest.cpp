@@ -50,7 +50,7 @@ public:
   }
 
   VariantMatcher actOnMatcherExpression(MatcherCtor Ctor,
-                                        const SourceRange &NameRange,
+                                        SourceRange NameRange,
                                         StringRef BindID,
                                         ArrayRef<ParserValue> Args,
                                         Diagnostics *Error) override {
@@ -102,7 +102,7 @@ TEST(ParserTest, ParseString) {
   EXPECT_EQ("1:1: Error parsing string token: <\"Baz>", Sema.Errors[2]);
 }
 
-bool matchesRange(const SourceRange &Range, unsigned StartLine,
+bool matchesRange(SourceRange Range, unsigned StartLine,
                   unsigned EndLine, unsigned StartColumn, unsigned EndColumn) {
   EXPECT_EQ(StartLine, Range.Start.Line);
   EXPECT_EQ(EndLine, Range.End.Line);
