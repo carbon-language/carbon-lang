@@ -267,6 +267,26 @@ static uint64_t AArch64GetPage(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
+static void handle_ABS16(uint8_t *Location, uint64_t S, int64_t A) {
+  uint64_t X = S + A;
+  if (!isInt<16>(X)) // -2^15 <= X < 2^16
+    error("Relocation R_AARCH64_ABS16 out of range");
+  write16le(Location, read32le(Location) | X);
+}
+
+static void handle_ABS32(uint8_t *Location, uint64_t S, int64_t A) {
+  uint64_t X = S + A;
+  if (!isInt<32>(X)) // -2^31 <= X < 2^32
+    error("Relocation R_AARCH64_ABS32 out of range");
+  write32le(Location, read32le(Location) | X);
+}
+
+static void handle_ABS64(uint8_t *Location, uint64_t S, int64_t A) {
+  uint64_t X = S + A;
+  // No overflow check.
+  write64le(Location, read32le(Location) | X);
+}
+
 static void handle_ADD_ABS_LO12_NC(uint8_t *Location, uint64_t S, int64_t A) {
   // No overflow check.
   uint64_t X = ((S + A) & 0xFFF) << 10;
@@ -300,6 +320,15 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   int64_t A = Rel.r_addend;
   uint64_t P = BaseAddr + Rel.r_offset;
   switch (Type) {
+  case R_AARCH64_ABS16:
+    handle_ABS16(Location, S, A);
+    break;
+  case R_AARCH64_ABS32:
+    handle_ABS32(Location, S, A);
+    break;
+  case R_AARCH64_ABS64:
+    handle_ABS64(Location, S, A);
+    break;
   case R_AARCH64_ADD_ABS_LO12_NC:
     handle_ADD_ABS_LO12_NC(Location, S, A);
     break;
