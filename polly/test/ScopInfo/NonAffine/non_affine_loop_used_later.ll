@@ -1,4 +1,5 @@
-; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s --check-prefix=PROFIT
 ;
 ; Verify that we over approximate the read acces of A[j] in the last statement as j is
 ; computed in a non-affine loop we do not model.
@@ -58,6 +59,8 @@
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [N] -> { Stmt_bb23[i0] -> MemRef_j_0__phi[] };
 ; CHECK:    }
+;
+; PROFIT-NOT: Statements
 ;
 ;    void f(int *A, int N, int M) {
 ;      int i = 0, j = 0;

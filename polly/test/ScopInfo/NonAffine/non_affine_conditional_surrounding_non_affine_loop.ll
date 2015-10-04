@@ -1,9 +1,12 @@
 ; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=INNERMOST
-; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine \
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine -polly-detect-unprofitable \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALL
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine \
+; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
+; RUN:     -analyze < %s | FileCheck %s --check-prefix=PROFIT
 ;
 ; INNERMOST:    Function: f
 ; INNERMOST:    Region: %bb9---%bb18
@@ -61,6 +64,8 @@
 ; ALL:            MayWriteAccess := [Reduction Type: NONE] [Scalar: 0]
 ; ALL:                { Stmt_bb4__TO__bb18[i0] -> MemRef_A[o0] : o0 <= 2199023254526 and o0 >= 0 };
 ; ALL:    }
+;
+; PROFIT-NOT: Statements
 ;
 ;    void f(int *A, int N) {
 ;      for (int i = 0; i < 1024; i++)

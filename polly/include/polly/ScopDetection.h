@@ -171,9 +171,6 @@ private:
     /// @brief The region has at least one store instruction.
     bool hasStores;
 
-    /// @brief The region has at least one loop that is not overapproximated.
-    bool hasAffineLoops;
-
     /// @brief The set of non-affine subregions in the region we analyze.
     NonAffineSubRegionSetTy &NonAffineSubRegionSet;
 
@@ -184,8 +181,7 @@ private:
                      NonAffineSubRegionSetTy &NASRS, BoxedLoopsSetTy &BLS,
                      bool Verify)
         : CurRegion(R), AST(AA), Verifying(Verify), Log(&R), hasLoads(false),
-          hasStores(false), hasAffineLoops(false), NonAffineSubRegionSet(NASRS),
-          BoxedLoopsSet(BLS) {}
+          hasStores(false), NonAffineSubRegionSet(NASRS), BoxedLoopsSet(BLS) {}
   };
 
   // Remember the valid regions
@@ -321,10 +317,10 @@ private:
   /// @return True if the loop is valid in the region.
   bool isValidLoop(Loop *L, DetectionContext &Context) const;
 
-  /// @brief Check if a region contains more than one loop.
+  /// @brief Count the number of beneficial loops in @p R.
   ///
   /// @param R The region to check
-  bool hasMoreThanOneLoop(Region *R) const;
+  int countBeneficialLoops(Region *R) const;
 
   /// @brief Check if the function @p F is marked as invalid.
   ///

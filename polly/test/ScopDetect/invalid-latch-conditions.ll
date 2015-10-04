@@ -1,11 +1,13 @@
 ; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-allow-nonaffine-loops -polly-detect -analyze < %s | FileCheck %s --check-prefix=NALOOPS
+; RUN: opt %loadPolly -polly-allow-nonaffine-loops -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s --check-prefix=NALOOPS
+; RUN: opt %loadPolly -polly-allow-nonaffine-loops -polly-detect -analyze < %s | FileCheck %s --check-prefix=PROFIT
 
 ; The latch conditions of the outer loop are not affine, thus the loop cannot
 ; handled by the domain generation and needs to be overapproximated.
 
-; CHECK-NOT: Valid
-; NALOOPS:   Valid Region for Scop: for.body.6 => for.end.45
+; CHECK-NOT:  Valid
+; NALOOPS:    Valid Region for Scop: for.body.6 => for.end.45
+; PROFIT-NOT: Valid
 
 ; ModuleID = '/home/johannes/Downloads/bug.ll'
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

@@ -1,4 +1,5 @@
-; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s -check-prefix=SCALAR
+; RUN: opt %loadPolly -basicaa -polly-detect-unprofitable -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s -check-prefix=SCALAR
+; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s -check-prefix=PROFIT
 ;
 ; SCALAR:    Function: f
 ; SCALAR:    Region: %bb1---%bb13
@@ -27,6 +28,7 @@
 ; SCALAR:                { Stmt_bb3__TO__bb11[i0] -> MemRef_A[o0] : o0 <= 2147483645 and o0 >= -2147483648 };
 ; SCALAR:    }
 
+; PROFIT-NOT: Statements
 ;
 ;    void f(int * restrict A, int * restrict C) {
 ;      int j;

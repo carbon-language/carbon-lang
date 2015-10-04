@@ -1,10 +1,10 @@
-; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=false -polly-detect-unprofitable \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=REJECTNONAFFINELOOPS
-; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
-; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine \
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
 ; RUN:     -polly-detect-unprofitable -analyze < %s \
 ; RUN:     | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES

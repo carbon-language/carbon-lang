@@ -1,6 +1,7 @@
-; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=false -analyze < %s | FileCheck %s --check-prefix=REJECTNONAFFINELOOPS
-; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
-; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES
+; RUN: opt %loadPolly -basicaa -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=false -analyze < %s | FileCheck %s --check-prefix=REJECTNONAFFINELOOPS
+; RUN: opt %loadPolly -basicaa -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
+; RUN: opt %loadPolly -basicaa -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES
+; RUN: opt %loadPolly -basicaa -polly-detect -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s --check-prefix=PROFIT
 ;
 ; Here we have a non-affine loop but also a non-affine access which should
 ; be rejected as long as -polly-allow-nonaffine isn't given.
@@ -8,6 +9,7 @@
 ; REJECTNONAFFINELOOPS-NOT:       Valid
 ; ALLOWNONAFFINELOOPS-NOT:        Valid
 ; ALLOWNONAFFINELOOPSANDACCESSES: Valid Region for Scop: bb1 => bb13
+; PROFIT-NOT:                     Valid
 ;
 ;    void f(int * restrict A, int * restrict C) {
 ;      int j;

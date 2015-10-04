@@ -752,10 +752,8 @@ bool ScopDetection::canUseISLTripCount(Loop *L,
 }
 
 bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
-  if (canUseISLTripCount(L, Context)) {
-    Context.hasAffineLoops = true;
+  if (canUseISLTripCount(L, Context))
     return true;
-  }
 
   if (AllowNonAffineSubLoops && AllowNonAffineSubRegions) {
     Region *R = RI->getRegionFor(L->getHeader());
@@ -772,22 +770,23 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
 
 /// @brief Return the number of loops in @p L (incl. @p L) that have a trip
 ///        count that is not known to be less than MIN_LOOP_TRIP_COUNT.
-static unsigned countBeneficialLoops(Loop *L, ScalarEvolution &SE) {
+static int countBeneficialSubLoops(Loop *L, ScalarEvolution &SE) {
   auto *TripCount = SE.getBackedgeTakenCount(L);
 
-  auto count = 1;
+  int count = 1;
   if (auto *TripCountC = dyn_cast<SCEVConstant>(TripCount))
-    if (TripCountC->getValue()->getZExtValue() < MIN_LOOP_TRIP_COUNT)
-      count -= 1;
+    if (TripCountC->getType()->getScalarSizeInBits() <= 64)
+      if (TripCountC->getValue()->getZExtValue() < MIN_LOOP_TRIP_COUNT)
+        count -= 1;
 
   for (auto &SubLoop : *L)
-    count += countBeneficialLoops(SubLoop, SE);
+    count += countBeneficialSubLoops(SubLoop, SE);
 
   return count;
 }
 
-bool ScopDetection::hasMoreThanOneLoop(Region *R) const {
-  auto LoopNum = 0;
+int ScopDetection::countBeneficialLoops(Region *R) const {
+  int LoopNum = 0;
 
   auto L = LI->getLoopFor(R->getEntry());
   L = L ? R->outermostLoopInRegion(L) : nullptr;
@@ -797,13 +796,10 @@ bool ScopDetection::hasMoreThanOneLoop(Region *R) const {
       L ? L->getSubLoopsVector() : std::vector<Loop *>(LI->begin(), LI->end());
 
   for (auto &SubLoop : SubLoops)
-    if (R->contains(SubLoop)) {
-      LoopNum += countBeneficialLoops(SubLoop, *SE);
+    if (R->contains(SubLoop))
+      LoopNum += countBeneficialSubLoops(SubLoop, *SE);
 
-      if (LoopNum >= 2)
-        return true;
-    }
-  return false;
+  return LoopNum;
 }
 
 Region *ScopDetection::expandRegion(Region &R) {
@@ -1003,7 +999,8 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
       &(CurRegion.getEntry()->getParent()->getEntryBlock()))
     return invalid<ReportEntry>(Context, /*Assert=*/true, CurRegion.getEntry());
 
-  if (!DetectUnprofitable && !hasMoreThanOneLoop(&CurRegion))
+  int NumLoops = countBeneficialLoops(&CurRegion);
+  if (!DetectUnprofitable && NumLoops < 2)
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   if (!allBlocksValid(Context))
@@ -1014,9 +1011,9 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   if (!DetectUnprofitable && (!Context.hasStores || !Context.hasLoads))
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
-  // Check if there was at least one non-overapproximated loop in the region or
-  // we allow regions without loops.
-  if (!DetectUnprofitable && !Context.hasAffineLoops)
+  // Check if there are sufficent non-overapproximated loops.
+  int NumAffineLoops = NumLoops - Context.BoxedLoopsSet.size();
+  if (!DetectUnprofitable && NumAffineLoops < 2)
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   DEBUG(dbgs() << "OK\n");

@@ -1,13 +1,21 @@
-; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=false -polly-detect-unprofitable \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=REJECTNONAFFINELOOPS
-; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
-; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
+; RUN:     -polly-allow-nonaffine-loops=false -polly-allow-nonaffine \
+; RUN:     -analyze < %s | FileCheck %s \
+; RUN:     --check-prefix=ALLOWNONAFFINEREGIONSANDACCESSES
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-allow-nonaffine \
 ; RUN:     -analyze < %s | FileCheck %s \
 ; RUN:     --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES
+; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
+; RUN:     -polly-allow-nonaffine-loops=true -polly-allow-nonaffine \
+; RUN:     -analyze < %s | FileCheck %s \
+; RUN:     --check-prefix=PROFIT
 ;
 ; This function/region does contain a loop, however it is non-affine, hence the access
 ; A[i] is also. Furthermore, it is the only loop, thus when we over approximate
@@ -19,9 +27,11 @@
 ;        A[-1]++;
 ;    }
 ;
-; REJECTNONAFFINELOOPS-NOT:                 Valid
-; ALLOWNONAFFINELOOPS-NOT:                  Valid
-; ALLOWNONAFFINELOOPSANDACCESSES-NOT:       Valid
+; REJECTNONAFFINELOOPS-NOT:              Valid
+; ALLOWNONAFFINELOOPS-NOT:               Valid
+; ALLOWNONAFFINEREGIONSANDACCESSES-NOT:  Valid
+; ALLOWNONAFFINELOOPSANDACCESSES:        Valid
+; PROFIT-NOT:                            Valid
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
