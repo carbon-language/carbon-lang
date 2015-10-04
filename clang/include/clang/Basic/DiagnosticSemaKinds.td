@@ -6202,6 +6202,9 @@ def err_atomic_op_needs_atomic : Error<
 def err_atomic_op_needs_non_const_atomic : Error<
   "address argument to atomic operation must be a pointer to non-const _Atomic "
   "type (%0 invalid)">;
+def err_atomic_op_needs_non_const_pointer : Error<
+  "address argument to atomic operation must be a pointer to non-const "
+  "type (%0 invalid)">;
 def err_atomic_op_needs_trivial_copy : Error<
   "address argument to atomic operation must be a pointer to a "
   "trivially-copyable type (%0 invalid)">;

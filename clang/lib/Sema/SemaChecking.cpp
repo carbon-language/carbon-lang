@@ -1644,6 +1644,12 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
       return ExprError();
     }
     ValType = AtomTy->getAs<AtomicType>()->getValueType();
+  } else if (Form != Load && Op != AtomicExpr::AO__atomic_load) {
+    if (ValType.isConstQualified()) {
+      Diag(DRE->getLocStart(), diag::err_atomic_op_needs_non_const_pointer)
+        << Ptr->getType() << Ptr->getSourceRange();
+      return ExprError();
+    }
   }
 
   // For an arithmetic operation, the implied arithmetic must be well-formed.
@@ -1681,9 +1687,6 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
     return ExprError();
   }
 
-  // FIXME: For any builtin other than a load, the ValType must not be
-  // const-qualified.
-
   switch (ValType.getObjCLifetime()) {
   case Qualifiers::OCL_None:
   case Qualifiers::OCL_ExplicitNone:
@@ -1715,6 +1718,10 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
   QualType ByValType = ValType; // 'CP'
   if (!IsC11 && !IsN)
     ByValType = Ptr->getType();
+
+  // FIXME: __atomic_load allows the first argument to be a a pointer to const
+  // but not the second argument. We need to manually remove possible const
+  // qualifiers.
 
   // The first argument --- the pointer --- has a fixed type; we
   // deduce the types of the rest of the arguments accordingly.  Walk
