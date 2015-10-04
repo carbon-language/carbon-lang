@@ -2731,7 +2731,7 @@ void CGDebugInfo::EmitFunctionDecl(GlobalDecl GD, SourceLocation Loc,
 
   unsigned Flags = 0;
   llvm::DIFile *Unit = getOrCreateFile(Loc);
-  llvm::DIScope *FDContext = Unit;
+  llvm::DIScope *FDContext = getDeclContextDescriptor(D);
   llvm::DINodeArray TParamsArray;
   if (isa<FunctionDecl>(D)) {
     // If there is a DISubprogram for this function available then use it.
