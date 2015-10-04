@@ -1215,7 +1215,7 @@ findUnwindDestinations(FunctionLoweringInfo &FuncInfo,
       // Stop on landingpads. They are not funclets.
       UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
       break;
-    } else if (isa<CleanupPadInst>(Pad) || isa<LandingPadInst>(Pad)) {
+    } else if (isa<CleanupPadInst>(Pad)) {
       // Stop on cleanup pads. Cleanups are always funclet entries for all known
       // personalities.
       UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
