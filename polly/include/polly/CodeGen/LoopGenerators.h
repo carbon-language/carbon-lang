@@ -96,7 +96,8 @@ Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
 ///   }
 class ParallelLoopGenerator {
 public:
-  using ValueToValueMapTy = llvm::ValueMap<Value *, Value *>;
+  using ValueToValueMapTy =
+      llvm::DenseMap<AssertingVH<Value>, AssertingVH<Value>>;
 
   /// @brief Create a parallel loop generator for the current function.
   ParallelLoopGenerator(PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,

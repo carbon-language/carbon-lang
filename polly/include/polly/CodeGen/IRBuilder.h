@@ -72,7 +72,8 @@ public:
   ///
   /// @param NewMap A map from new base pointers to original base pointers.
   void addAlternativeAliasBases(
-      llvm::ValueMap<llvm::Value *, llvm::Value *> &NewMap) {
+      llvm::DenseMap<llvm::AssertingVH<llvm::Value>,
+                     llvm::AssertingVH<llvm::Value>> &NewMap) {
     AlternativeAliasBases.insert(NewMap.begin(), NewMap.end());
   }
 
@@ -93,12 +94,14 @@ private:
   llvm::MDNode *AliasScopeDomain;
 
   /// @brief A map from base pointers to its alias scope.
-  llvm::DenseMap<llvm::Value *, llvm::MDNode *> AliasScopeMap;
+  llvm::DenseMap<llvm::AssertingVH<llvm::Value>, llvm::MDNode *> AliasScopeMap;
 
   /// @brief A map from base pointers to an alias scope list of other pointers.
-  llvm::DenseMap<llvm::Value *, llvm::MDNode *> OtherAliasScopeListMap;
+  llvm::DenseMap<llvm::AssertingVH<llvm::Value>, llvm::MDNode *>
+      OtherAliasScopeListMap;
 
-  llvm::ValueMap<llvm::Value *, llvm::Value *> AlternativeAliasBases;
+  llvm::DenseMap<llvm::AssertingVH<llvm::Value>, llvm::AssertingVH<llvm::Value>>
+      AlternativeAliasBases;
 };
 
 /// @brief Add Polly specifics when running IRBuilder.
