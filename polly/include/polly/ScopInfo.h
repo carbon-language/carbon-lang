@@ -63,25 +63,6 @@ class MemoryAccess;
 class Scop;
 class ScopStmt;
 class ScopInfo;
-class Comparison;
-class SCEVAffFunc;
-
-class Comparison {
-  const SCEV *LHS;
-  const SCEV *RHS;
-
-  ICmpInst::Predicate Pred;
-
-public:
-  Comparison(const SCEV *LHS, const SCEV *RHS, ICmpInst::Predicate Pred)
-      : LHS(LHS), RHS(RHS), Pred(Pred) {}
-
-  const SCEV *getLHS() const { return LHS; }
-  const SCEV *getRHS() const { return RHS; }
-
-  ICmpInst::Predicate getPred() const { return Pred; }
-  void print(raw_ostream &OS) const;
-};
 
 //===---------------------------------------------------------------------===//
 

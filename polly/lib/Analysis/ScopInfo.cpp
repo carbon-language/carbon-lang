@@ -93,11 +93,6 @@ static cl::opt<bool> DetectReductions("polly-detect-reductions",
                                       cl::init(true), cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
-/// Helper Classes
-
-void Comparison::print(raw_ostream &OS) const {
-  // Not yet implemented.
-}
 
 // Create a sequence of two schedules. Either argument may be null and is
 // interpreted as the empty schedule. Can also return null if both schedules are
