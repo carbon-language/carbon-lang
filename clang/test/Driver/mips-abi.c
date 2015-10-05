@@ -99,6 +99,12 @@
 // MIPS-ARCH-32R2: "-target-abi" "o32"
 //
 // RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:        -march=p5600 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-P5600 %s
+// MIPS-ARCH-P5600: "-target-cpu" "p5600"
+// MIPS-ARCH-P5600: "-target-abi" "o32"
+//
+// RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:        -march=mips64 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ARCH-3264 %s
 // MIPS-ARCH-3264: "-target-cpu" "mips64"

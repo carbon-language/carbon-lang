@@ -6312,6 +6312,7 @@ public:
         .Case("mips64r5", true)
         .Case("mips64r6", true)
         .Case("octeon", true)
+        .Case("p5600", true)
         .Default(false);
   }
   const std::string& getCPU() const { return CPU; }

@@ -58,6 +58,11 @@
 // RUN:   | FileCheck -check-prefix=MIPS-32R2 %s
 // MIPS-32R2: as{{(.exe)?}}" "-march" "mips32r2" "-mabi" "32" "-mno-shared" "-call_nonpic" "-EB"
 //
+// RUN: %clang -target mips-linux-gnu -march=p5600 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-P5600 %s
+// MIPS-P5600: as{{(.exe)?}}" "-march" "p5600" "-mabi" "32" "-mno-shared" "-call_nonpic" "-EB"
+//
 // RUN: %clang -target mips64-linux-gnu -march=octeon -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-OCTEON %s

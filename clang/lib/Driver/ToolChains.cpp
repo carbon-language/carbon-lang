@@ -1809,7 +1809,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   addMultilibFlag(isMips16(Args), "mips16", Flags);
   addMultilibFlag(CPUName == "mips32", "march=mips32", Flags);
   addMultilibFlag(CPUName == "mips32r2" || CPUName == "mips32r3" ||
-                      CPUName == "mips32r5",
+                      CPUName == "mips32r5" || CPUName == "p5600",
                   "march=mips32r2", Flags);
   addMultilibFlag(CPUName == "mips32r6", "march=mips32r6", Flags);
   addMultilibFlag(CPUName == "mips64", "march=mips64", Flags);
