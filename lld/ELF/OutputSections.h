@@ -44,7 +44,10 @@ getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 
 bool includeInDynamicSymtab(const SymbolBody &B);
-bool shouldKeepInSymtab(StringRef SymName);
+
+template <class ELFT>
+bool shouldKeepInSymtab(
+    StringRef Name, const typename llvm::object::ELFFile<ELFT>::Elf_Sym &Sym);
 
 // This represents a section in an output file.
 // Different sub classes represent different types of sections. Some contain

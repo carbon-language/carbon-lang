@@ -407,7 +407,12 @@ bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   return B.isUsedInDynamicReloc();
 }
 
-bool lld::elf2::shouldKeepInSymtab(StringRef SymName) {
+template <class ELFT>
+bool lld::elf2::shouldKeepInSymtab(StringRef SymName,
+                                   const typename ELFFile<ELFT>::Elf_Sym &Sym) {
+  if (Sym.getType() == STT_SECTION)
+    return false;
+
   if (Config->DiscardNone)
     return true;
 
@@ -451,7 +456,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
     Elf_Sym_Range Syms = File.getLocalSymbols();
     for (const Elf_Sym &Sym : Syms) {
       ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
-      if (SymName && !shouldKeepInSymtab(*SymName))
+      if (SymName && !shouldKeepInSymtab<ELFT>(*SymName, Sym))
         continue;
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
       Buf += sizeof(*ESym);
@@ -630,5 +635,14 @@ template bool includeInSymtab<ELF32LE>(const SymbolBody &);
 template bool includeInSymtab<ELF32BE>(const SymbolBody &);
 template bool includeInSymtab<ELF64LE>(const SymbolBody &);
 template bool includeInSymtab<ELF64BE>(const SymbolBody &);
+
+template bool shouldKeepInSymtab<ELF32LE>(StringRef,
+                                          const ELFFile<ELF32LE>::Elf_Sym &);
+template bool shouldKeepInSymtab<ELF32BE>(StringRef,
+                                          const ELFFile<ELF32BE>::Elf_Sym &);
+template bool shouldKeepInSymtab<ELF64LE>(StringRef,
+                                          const ELFFile<ELF64LE>::Elf_Sym &);
+template bool shouldKeepInSymtab<ELF64BE>(StringRef,
+                                          const ELFFile<ELF64BE>::Elf_Sym &);
 }
 }
