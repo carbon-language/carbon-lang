@@ -495,7 +495,7 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
         // End of the path, create a new file.
         // FIXME: expose the status details in the interface.
         Status Stat(Path, getNextVirtualUniqueID(),
-                    llvm::sys::TimeValue(ModificationTime), 0, 0,
+                    llvm::sys::TimeValue(ModificationTime, 0), 0, 0,
                     Buffer->getBufferSize(),
                     llvm::sys::fs::file_type::regular_file,
                     llvm::sys::fs::all_all);
@@ -508,9 +508,9 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
       // FIXME: expose the status details in the interface.
       Status Stat(
           StringRef(Path.str().begin(), Name.end() - Path.str().begin()),
-          getNextVirtualUniqueID(), llvm::sys::TimeValue(ModificationTime), 0,
-          0, Buffer->getBufferSize(), llvm::sys::fs::file_type::directory_file,
-          llvm::sys::fs::all_all);
+          getNextVirtualUniqueID(), llvm::sys::TimeValue(ModificationTime, 0),
+          0, 0, Buffer->getBufferSize(),
+          llvm::sys::fs::file_type::directory_file, llvm::sys::fs::all_all);
       Dir = cast<detail::InMemoryDirectory>(Dir->addChild(
           Name, llvm::make_unique<detail::InMemoryDirectory>(std::move(Stat))));
       continue;
