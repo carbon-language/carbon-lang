@@ -15,6 +15,13 @@
 @CHECK-OBJ-NEXT: TagName: FP_arch
 @CHECK-OBJ-NEXT: Description: VFPv3-D16
 
+.eabi_attribute  Tag_Advanced_SIMD_arch, 4
+@CHECK:   .eabi_attribute 12, 4
+@CHECK-OBJ: Tag: 12
+@CHECK-OBJ-NEXT: Value: 4
+@CHECK-OBJ-NEXT: TagName: Advanced_SIMD_arch
+@CHECK-OBJ-NEXT: Description: ARMv8.1-a NEON
+
 .eabi_attribute  Tag_PCS_config, 4
 @CHECK:   .eabi_attribute 13, 4
 @CHECK-OBJ: Tag: 13

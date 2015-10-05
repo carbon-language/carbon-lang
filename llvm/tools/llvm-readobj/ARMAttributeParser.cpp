@@ -193,7 +193,7 @@ void ARMAttributeParser::WMMX_arch(AttrType Tag, const uint8_t *Data,
 void ARMAttributeParser::Advanced_SIMD_arch(AttrType Tag, const uint8_t *Data,
                                             uint32_t &Offset) {
   static const char *Strings[] = {
-    "Not Permitted", "NEONv1", "NEONv2+FMA", "ARMv8-a NEON"
+    "Not Permitted", "NEONv1", "NEONv2+FMA", "ARMv8-a NEON", "ARMv8.1-a NEON"
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
