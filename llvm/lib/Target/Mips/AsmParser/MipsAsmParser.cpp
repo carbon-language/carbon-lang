@@ -980,6 +980,9 @@ public:
       && (getConstantMemOff() % 4 == 0) && getMemBase()->isRegIdx()
       && (getMemBase()->getGPR32Reg() == Mips::SP);
   }
+  bool isUImm5Lsl2() const {
+    return (isImm() && isConstantImm() && isShiftedUInt<5, 2>(getConstantImm()));
+  }
   bool isRegList16() const {
     if (!isRegList())
       return false;
@@ -2085,7 +2088,7 @@ bool MipsAsmParser::expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
       JalrInst.setOpcode(Mips::JALRS16_MM);
       JalrInst.addOperand(FirstRegOp);
     } else if (inMicroMipsMode()) {
-      JalrInst.setOpcode(Mips::JALR16_MM);
+      JalrInst.setOpcode(hasMips32r6() ? Mips::JALRC16_MMR6 : Mips::JALR16_MM);
       JalrInst.addOperand(FirstRegOp);
     } else {
       JalrInst.setOpcode(Mips::JALR);
@@ -2104,9 +2107,12 @@ bool MipsAsmParser::expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
   }
   Instructions.push_back(JalrInst);
 
-  // If .set reorder is active, emit a NOP after it.
-  if (AssemblerOptions.back()->isReorder())
+  // If .set reorder is active and branch instruction has a delay slot,
+  // emit a NOP after it.
+  const MCInstrDesc &MCID = getInstDesc(JalrInst.getOpcode());
+  if (MCID.hasDelaySlot() && AssemblerOptions.back()->isReorder()) {
     createNop(hasShortDelaySlot(JalrInst.getOpcode()), IDLoc, Instructions);
+  }
 
   return false;
 }

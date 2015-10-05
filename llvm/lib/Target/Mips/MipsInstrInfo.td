@@ -267,6 +267,9 @@ class ISA_MICROMIPS32R6 {
 class ISA_MICROMIPS64R6 {
   list<Predicate> InsnPredicates = [HasMicroMips64r6];
 }
+class ISA_MICROMIPS32_NOT_MIPS32R6 {
+  list<Predicate> InsnPredicates = [InMicroMips, NotMips32r6];
+}
 
 class INSN_EVA { list<Predicate> InsnPredicates = [HasEVA]; }
 class INSN_EVA_NOT_32R6_64R6 {

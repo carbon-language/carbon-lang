@@ -79,3 +79,12 @@
   break 1024, 1024  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   wait 1024         # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   prefx 33, $8($5) # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  jraddiusp 1       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 2       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 3       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 10      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 18      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 31      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 33      # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 125     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  jraddiusp 132     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction

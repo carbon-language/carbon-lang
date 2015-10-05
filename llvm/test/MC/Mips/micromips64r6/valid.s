@@ -112,5 +112,8 @@ a:
         cachee 1, 8($5)          # CHECK: cachee 1, 8($5)     # encoding: [0x60,0x25,0xa6,0x08]
         wrpgpr $3, $4            # CHECK: wrpgpr $3, $4       # encoding: [0x00,0x64,0xf1,0x7c]
         wsbh $3, $4              # CHECK: wsbh $3, $4         # encoding: [0x00,0x64,0x7b,0x3c]
+        jalr $9                  # CHECK: jalr $9             # encoding: [0x45,0x2b]
+        jrc16 $9                 # CHECK: jrc16 $9            # encoding: [0x45,0x23]
+        jrcaddiusp 20            # CHECK: jrcaddiusp 20       # encoding: [0x44,0xb3]
 
 1:

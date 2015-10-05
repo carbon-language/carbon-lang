@@ -13,9 +13,17 @@ def simm12 : Operand<i32> {
   let DecoderMethod = "DecodeSimm12";
 }
 
+def MipsUimm5Lsl2AsmOperand : AsmOperandClass {
+  let Name = "Uimm5Lsl2";
+  let RenderMethod = "addImmOperands";
+  let ParserMethod = "parseImm";
+  let PredicateMethod = "isUImm5Lsl2";
+}
+
 def uimm5_lsl2 : Operand<OtherVT> {
   let EncoderMethod = "getUImm5Lsl2Encoding";
   let DecoderMethod = "DecodeUImm5lsl2";
+  let ParserMatchClass = MipsUimm5Lsl2AsmOperand;
 }
 
 def uimm6_lsl2 : Operand<i32> {
@@ -401,7 +409,7 @@ class LoadImmMM16<string opstr, Operand Od, RegisterOperand RO> :
 // 16-bit Jump and Link (Call)
 class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
-           [(MipsJmpLink RO:$rs)], II_JALR, FrmR> {
+           [(MipsJmpLink RO:$rs)], II_JALR, FrmR>, PredicateControl {
   let isCall = 1;
   let hasDelaySlot = 1;
   let Defs = [RA];
@@ -613,7 +621,8 @@ def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
 def MOVEP_MM : MovePMM16<"movep", GPRMM16OpndMoveP>, MOVEP_FM_MM16;
 def LI16_MM : LoadImmMM16<"li16", li_simm7, GPRMM16Opnd>, LI_FM_MM16,
               IsAsCheapAsAMove;
-def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
+def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>,
+                ISA_MICROMIPS32_NOT_MIPS32R6;
 def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;
 def JRC16_MM : JumpRegCMM16<"jrc", GPR32Opnd>, JALR_FM_MM16<0x0d>;
 def JRADDIUSP : JumpRAddiuStackMM16, JRADDIUSP_FM_MM16<0x18>;

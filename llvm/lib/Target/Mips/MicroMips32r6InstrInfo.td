@@ -48,8 +48,11 @@ class EHB_MMR6_ENC : BARRIER_MMR6_ENC<"ehb", 0x3>;
 class EI_MMR6_ENC : EIDI_MMR6_ENC<"ei", 0x15d>;
 class ERET_MMR6_ENC : ERET_FM_MMR6<"eret">;
 class ERETNC_MMR6_ENC : ERETNC_FM_MMR6<"eretnc">;
+class JALRC16_MMR6_ENC : POOL16C_JALRC_FM_MM16R6<0xb>;
 class JIALC_MMR6_ENC : JMP_IDX_COMPACT_FM<0b100000>;
 class JIC_MMR6_ENC   : JMP_IDX_COMPACT_FM<0b101000>;
+class JRC16_MMR6_ENC: POOL16C_JALRC_FM_MM16R6<0x3>;
+class JRCADDIUSP_MMR6_ENC : POOL16C_JRCADDIUSP_FM_MM16R6<0x13>;
 class LSA_MMR6_ENC : POOL32A_LSA_FM<0b001111>;
 class LWPC_MMR6_ENC  : PCREL19_FM_MMR6<0b01>;
 class MOD_MMR6_ENC : ARITH_FM_MMR6<"mod", 0x158>;
@@ -292,6 +295,16 @@ class EI_MMR6_DESC : DEI_FT<"ei", GPR32Opnd>;
 class ERET_MMR6_DESC : ER_FT<"eret">;
 class ERETNC_MMR6_DESC : ER_FT<"eretnc">;
 
+class JALRC16_MMR6_DESC_BASE<string opstr, RegisterOperand RO>
+    : MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
+                      [(MipsJmpLink RO:$rs)], II_JALR, FrmR>,
+      MMR6Arch<opstr>, MicroMipsR6Inst16 {
+  let isCall = 1;
+  let hasDelaySlot = 0;
+  let Defs = [RA];
+}
+class JALRC16_MMR6_DESC : JALRC16_MMR6_DESC_BASE<"jalr", GPR32Opnd>;
+
 class JMP_MMR6_IDX_COMPACT_DESC_BASE<string opstr, DAGOperand opnd,
                                      RegisterOperand GPROpnd>
     : MMR6Arch<opstr> {
@@ -312,6 +325,27 @@ class JIC_MMR6_DESC : JMP_MMR6_IDX_COMPACT_DESC_BASE<"jic", jmpoffset16,
                                                      GPR32Opnd> {
   bit isBarrier = 1;
   list<Register> Defs = [AT];
+}
+
+class JRC16_MMR6_DESC_BASE<string opstr, RegisterOperand RO>
+    : MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
+                      [], II_JR, FrmR>,
+      MMR6Arch<opstr>, MicroMipsR6Inst16 {
+  let hasDelaySlot = 0;
+  let isBranch = 1;
+  let isIndirectBranch = 1;
+}
+class JRC16_MMR6_DESC : JRC16_MMR6_DESC_BASE<"jrc16", GPR32Opnd>;
+
+class JRCADDIUSP_MMR6_DESC
+    : MicroMipsInst16<(outs), (ins uimm5_lsl2:$imm), "jrcaddiusp\t$imm",
+                      [], II_JRADDIUSP, FrmR>,
+      MMR6Arch<"jrcaddiusp">, MicroMipsR6Inst16 {
+  let hasDelaySlot = 0;
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let isBranch = 1;
+  let isIndirectBranch = 1;
 }
 
 class ALIGN_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
@@ -745,8 +779,13 @@ def EI_MMR6 : StdMMR6Rel, EI_MMR6_DESC, EI_MMR6_ENC, ISA_MICROMIPS32R6;
 def ERET_MMR6 : R6MMR6Rel, ERET_MMR6_DESC, ERET_MMR6_ENC, ISA_MICROMIPS32R6;
 def ERETNC_MMR6 : R6MMR6Rel, ERETNC_MMR6_DESC, ERETNC_MMR6_ENC,
                   ISA_MICROMIPS32R6;
+def JALRC16_MMR6 : R6MMR6Rel, JALRC16_MMR6_DESC, JALRC16_MMR6_ENC,
+                   ISA_MICROMIPS32R6;
 def JIALC_MMR6 : R6MMR6Rel, JIALC_MMR6_ENC, JIALC_MMR6_DESC, ISA_MICROMIPS32R6;
 def JIC_MMR6 : R6MMR6Rel, JIC_MMR6_ENC, JIC_MMR6_DESC, ISA_MICROMIPS32R6;
+def JRC16_MMR6 : R6MMR6Rel, JRC16_MMR6_DESC, JRC16_MMR6_ENC, ISA_MICROMIPS32R6;
+def JRCADDIUSP_MMR6 : R6MMR6Rel, JRCADDIUSP_MMR6_DESC, JRCADDIUSP_MMR6_ENC,
+                      ISA_MICROMIPS32R6;
 def LSA_MMR6 : R6MMR6Rel, LSA_MMR6_ENC, LSA_MMR6_DESC, ISA_MICROMIPS32R6;
 def LWPC_MMR6 : R6MMR6Rel, LWPC_MMR6_ENC, LWPC_MMR6_DESC, ISA_MICROMIPS32R6;
 def MOD_MMR6 : R6MMR6Rel, MOD_MMR6_DESC, MOD_MMR6_ENC, ISA_MICROMIPS32R6;
