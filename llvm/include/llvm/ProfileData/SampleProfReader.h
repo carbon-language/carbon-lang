@@ -224,8 +224,6 @@ protected:
                                  uint64_t Count);
   std::error_code readOneFunctionProfile(const SourceStack &Stack, bool Update);
   std::error_code readFunctionProfiles();
-  std::error_code readModuleGroup();
-  std::error_code readWorkingSet();
   std::error_code skipNextWord();
   template <typename T> ErrorOr<T> readNumber();
   ErrorOr<StringRef> readString();
