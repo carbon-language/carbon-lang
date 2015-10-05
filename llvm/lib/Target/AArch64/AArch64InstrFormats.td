@@ -408,6 +408,7 @@ def vecshiftR64Narrow : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm1_32Operand;
 }
 
+def Imm0_1Operand : AsmImmRange<0, 1>;
 def Imm0_7Operand : AsmImmRange<0, 7>;
 def Imm0_15Operand : AsmImmRange<0, 15>;
 def Imm0_31Operand : AsmImmRange<0, 31>;
@@ -536,6 +537,13 @@ def imm32_0_31 : Operand<i32>, ImmLeaf<i32, [{
   return ((uint64_t)Imm) < 32;
 }]> {
   let ParserMatchClass = Imm0_31Operand;
+}
+
+// imm0_1 predicate - True if the immediate is in the range [0,1]
+def imm0_1 : Operand<i64>, ImmLeaf<i64, [{
+  return ((uint64_t)Imm) < 2;
+}]> {
+  let ParserMatchClass = Imm0_1Operand;
 }
 
 // imm0_15 predicate - True if the immediate is in the range [0,15]
@@ -905,19 +913,19 @@ class MSRI : RtSystemI<0, (outs), (ins msr_sysreg_op:$systemreg, GPR64:$Rt),
   let Inst{20-5} = systemreg;
 }
 
-def SystemPStateFieldOperand : AsmOperandClass {
-  let Name = "SystemPStateField";
+def SystemPStateFieldWithImm0_15Operand : AsmOperandClass {
+  let Name = "SystemPStateFieldWithImm0_15";
   let ParserMethod = "tryParseSysReg";
 }
-def pstatefield_op : Operand<i32> {
-  let ParserMatchClass = SystemPStateFieldOperand;
+def pstatefield4_op : Operand<i32> {
+  let ParserMatchClass = SystemPStateFieldWithImm0_15Operand;
   let PrintMethod = "printSystemPStateField";
 }
 
 let Defs = [NZCV] in
-class MSRpstateI
-  : SimpleSystemI<0, (ins pstatefield_op:$pstate_field, imm0_15:$imm),
-                  "msr", "\t$pstate_field, $imm">,
+class MSRpstateImm0_15
+  : SimpleSystemI<0, (ins pstatefield4_op:$pstatefield, imm0_15:$imm),
+                  "msr", "\t$pstatefield, $imm">,
     Sched<[WriteSys]> {
   bits<6> pstatefield;
   bits<4> imm;
@@ -925,6 +933,34 @@ class MSRpstateI
   let Inst{18-16} = pstatefield{5-3};
   let Inst{15-12} = 0b0100;
   let Inst{11-8} = imm;
+  let Inst{7-5} = pstatefield{2-0};
+
+  let DecoderMethod = "DecodeSystemPStateInstruction";
+  // MSRpstateI aliases with MSRI. When the MSRpstateI decoder method returns
+  // Fail the decoder should attempt to decode the instruction as MSRI.
+  let hasCompleteDecoder = 0;
+}
+
+def SystemPStateFieldWithImm0_1Operand : AsmOperandClass {
+  let Name = "SystemPStateFieldWithImm0_1";
+  let ParserMethod = "tryParseSysReg";
+}
+def pstatefield1_op : Operand<i32> {
+  let ParserMatchClass = SystemPStateFieldWithImm0_1Operand;
+  let PrintMethod = "printSystemPStateField";
+}
+
+let Defs = [NZCV] in
+class MSRpstateImm0_1
+  : SimpleSystemI<0, (ins pstatefield1_op:$pstatefield, imm0_1:$imm),
+                  "msr", "\t$pstatefield, $imm">,
+    Sched<[WriteSys]> {
+  bits<6> pstatefield;
+  bit imm;
+  let Inst{20-19} = 0b00;
+  let Inst{18-16} = pstatefield{5-3};
+  let Inst{15-9} = 0b0100000;
+  let Inst{8} = imm;
   let Inst{7-5} = pstatefield{2-0};
 
   let DecoderMethod = "DecodeSystemPStateInstruction";

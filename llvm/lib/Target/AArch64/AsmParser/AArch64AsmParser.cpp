@@ -497,6 +497,15 @@ public:
     return (Val % Scale) == 0 && Val >= 0 && (Val / Scale) < 0x1000;
   }
 
+  bool isImm0_1() const {
+    if (!isImm())
+      return false;
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    if (!MCE)
+      return false;
+    int64_t Val = MCE->getValue();
+    return (Val >= 0 && Val < 2);
+  }
   bool isImm0_7() const {
     if (!isImm())
       return false;
@@ -876,12 +885,14 @@ public:
   }
   bool isMSRSystemRegister() const {
     if (!isSysReg()) return false;
-
     return SysReg.MSRReg != -1U;
   }
-  bool isSystemPStateField() const {
+  bool isSystemPStateFieldWithImm0_1() const {
     if (!isSysReg()) return false;
-
+    return SysReg.PStateField == AArch64PState::PAN;
+  }
+  bool isSystemPStateFieldWithImm0_15() const {
+    if (!isSysReg() || isSystemPStateFieldWithImm0_1()) return false;
     return SysReg.PStateField != -1U;
   }
   bool isReg() const override { return Kind == k_Register && !Reg.isVector; }
@@ -1304,6 +1315,12 @@ public:
     Inst.addOperand(MCOperand::createImm(MCE->getValue() / 16));
   }
 
+  void addImm0_1Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::createImm(MCE->getValue()));
+  }
+
   void addImm0_7Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
@@ -1491,7 +1508,13 @@ public:
     Inst.addOperand(MCOperand::createImm(SysReg.MSRReg));
   }
 
-  void addSystemPStateFieldOperands(MCInst &Inst, unsigned N) const {
+  void addSystemPStateFieldWithImm0_1Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    Inst.addOperand(MCOperand::createImm(SysReg.PStateField));
+  }
+
+  void addSystemPStateFieldWithImm0_15Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
     Inst.addOperand(MCOperand::createImm(SysReg.PStateField));
@@ -3601,6 +3624,8 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "index must be a multiple of 8 in range [0, 32760].");
   case Match_InvalidMemoryIndexed16:
     return Error(Loc, "index must be a multiple of 16 in range [0, 65520].");
+  case Match_InvalidImm0_1:
+    return Error(Loc, "immediate must be an integer in range [0, 1].");
   case Match_InvalidImm0_7:
     return Error(Loc, "immediate must be an integer in range [0, 7].");
   case Match_InvalidImm0_15:
@@ -4029,6 +4054,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidMemoryIndexed8SImm7:
   case Match_InvalidMemoryIndexed16SImm7:
   case Match_InvalidMemoryIndexedSImm9:
+  case Match_InvalidImm0_1:
   case Match_InvalidImm0_7:
   case Match_InvalidImm0_15:
   case Match_InvalidImm0_31:

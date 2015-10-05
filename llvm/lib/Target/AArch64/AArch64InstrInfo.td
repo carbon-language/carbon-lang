@@ -399,7 +399,8 @@ def : InstAlias<"isb", (ISB 0xf)>;
 
 def MRS    : MRSI;
 def MSR    : MSRI;
-def MSRpstate: MSRpstateI;
+def MSRpstateImm1 : MSRpstateImm0_1;
+def MSRpstateImm4 : MSRpstateImm0_15;
 
 // The thread pointer (on Linux, at least, where this has been implemented) is
 // TPIDR_EL0.

@@ -2265,7 +2265,15 @@ SDNode *AArch64DAGToDAGISel::SelectWriteRegister(SDNode *N) {
     assert (isa<ConstantSDNode>(N->getOperand(2))
               && "Expected a constant integer expression.");
     uint64_t Immed = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
-    return CurDAG->getMachineNode(AArch64::MSRpstate, DL, MVT::Other,
+    unsigned State;
+    if (Reg == AArch64PState::PAN) {
+      assert(Immed < 2 && "Bad imm");
+      State = AArch64::MSRpstateImm1;
+    } else {
+      assert(Immed < 16 && "Bad imm");
+      State = AArch64::MSRpstateImm4;
+    }
+    return CurDAG->getMachineNode(State, DL, MVT::Other,
                                   CurDAG->getTargetConstant(Reg, DL, MVT::i32),
                                   CurDAG->getTargetConstant(Immed, DL, MVT::i16),
                                   N->getOperand(0));
