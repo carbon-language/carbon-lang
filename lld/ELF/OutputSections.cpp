@@ -81,12 +81,13 @@ PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
 template <class ELFT>
 RelocationSection<ELFT>::RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
                                            const GotSection<ELFT> &GotSec,
+                                           const OutputSection<ELFT> &BssSec,
                                            bool IsRela)
     : OutputSectionBase<ELFT::Is64Bits>(IsRela ? ".rela.dyn" : ".rel.dyn",
                                         IsRela ? llvm::ELF::SHT_RELA
                                                : llvm::ELF::SHT_REL,
                                         llvm::ELF::SHF_ALLOC),
-      DynSymSec(DynSymSec), GotSec(GotSec), IsRela(IsRela) {
+      DynSymSec(DynSymSec), GotSec(GotSec), BssSec(BssSec), IsRela(IsRela) {
   this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
@@ -120,9 +121,10 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       } else {
         P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
         if (IsRela) {
-          Addent += C.getOutputSectionOff() + Out->getVA();
           if (Body)
-            Addent += cast<DefinedRegular<ELFT>>(Body)->Sym.st_value;
+            Addent += getSymVA(cast<ELFSymbolBody<ELFT>>(*Body), BssSec);
+          else
+            Addent += C.getOutputSectionOff() + Out->getVA();
         }
       }
       if (IsRela)

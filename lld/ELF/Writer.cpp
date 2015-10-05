@@ -84,8 +84,9 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   Writer(SymbolTable *T)
       : SymTabSec(*T, StrTabSec, BssSec), DynSymSec(*T, DynStrSec, BssSec),
-        RelaDynSec(DynSymSec, GotSec, T->shouldUseRela()), PltSec(GotSec),
-        HashSec(DynSymSec), DynamicSec(*T, HashSec, RelaDynSec, BssSec),
+        RelaDynSec(DynSymSec, GotSec, BssSec, T->shouldUseRela()),
+        PltSec(GotSec), HashSec(DynSymSec),
+        DynamicSec(*T, HashSec, RelaDynSec, BssSec),
         BssSec(PltSec, GotSec, BssSec, ".bss", SHT_NOBITS,
                SHF_ALLOC | SHF_WRITE) {}
   void run();

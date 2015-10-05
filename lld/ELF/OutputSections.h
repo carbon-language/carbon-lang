@@ -193,7 +193,8 @@ class RelocationSection final : public OutputSectionBase<ELFT::Is64Bits> {
 
 public:
   RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
-                    const GotSection<ELFT> &GotSec, bool IsRela);
+                    const GotSection<ELFT> &GotSec,
+                    const OutputSection<ELFT> &BssSec, bool IsRela);
   void addReloc(const DynamicReloc<ELFT> &Reloc) { Relocs.push_back(Reloc); }
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
@@ -204,6 +205,7 @@ private:
   std::vector<DynamicReloc<ELFT>> Relocs;
   SymbolTableSection<ELFT> &DynSymSec;
   const GotSection<ELFT> &GotSec;
+  const OutputSection<ELFT> &BssSec;
   const bool IsRela;
 };
 

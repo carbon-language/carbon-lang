@@ -10,6 +10,7 @@
 // CHECK-NEXT:     0x[[FOO_ADDR:.*]] R_X86_64_RELATIVE - 0x[[FOO_ADDR]]
 // CHECK-NEXT:     0x[[BAR_ADDR:.*]] R_X86_64_RELATIVE - 0x[[BAR_ADDR]]
 // CHECK-NEXT:     0x2010 R_X86_64_RELATIVE - 0x2009
+// CHECK-NEXT:     0x{{.*}} R_X86_64_RELATIVE - 0x[[ZED_ADDR:.*]]
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -18,6 +19,8 @@
 // CHECK-NEXT:   Value: 0x[[FOO_ADDR]]
 // CHECK:        Name: bar
 // CHECK-NEXT:   Value: 0x[[BAR_ADDR]]
+// CHECK:        Name: zed
+// CHECK-NEXT:   Value: 0x[[ZED_ADDR]]
 // CHECK:      ]
 
 // CHECK:      DynamicSymbols [
@@ -40,3 +43,7 @@ foo:
 bar:
         .quad bar
         .quad bar + 1
+
+        .hidden zed
+        .comm zed,1
+        .quad zed
