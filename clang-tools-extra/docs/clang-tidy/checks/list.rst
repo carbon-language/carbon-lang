@@ -2,6 +2,7 @@ List of clang-tidy Checks
 =========================
 
 .. toctree::
+   cert-variadic-function-def
    google-build-explicit-make-pair
    google-build-namespaces
    google-build-using-namespace

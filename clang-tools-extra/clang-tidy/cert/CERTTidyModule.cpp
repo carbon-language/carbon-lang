@@ -15,6 +15,7 @@
 #include "../misc/NewDeleteOverloadsCheck.h"
 #include "../misc/NonCopyableObjects.h"
 #include "../misc/StaticAssertCheck.h"
+#include "VariadicFunctionDefCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -25,6 +26,8 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     // C++ checkers
     // DCL
+    CheckFactories.registerCheck<VariadicFunctionDefCheck>(
+        "cert-dcl50-cpp");
     CheckFactories.registerCheck<misc::NewDeleteOverloadsCheck>(
         "cert-dcl54-cpp");
     CheckFactories.registerCheck<google::build::UnnamedNamespaceInHeaderCheck>(
