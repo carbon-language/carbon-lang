@@ -151,6 +151,9 @@ public:
   Value *EmitScalarConversion(Value *Src, QualType SrcTy, QualType DstTy,
                               SourceLocation Loc);
 
+  Value *EmitScalarConversion(Value *Src, QualType SrcTy, QualType DstTy,
+                              SourceLocation Loc, bool TreatBooleanAsSigned);
+
   /// Emit a conversion from the specified complex type to the specified
   /// destination type, where the destination type is an LLVM scalar type.
   Value *EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
@@ -733,6 +736,13 @@ void ScalarExprEmitter::EmitFloatConversionCheck(
 Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
                                                QualType DstType,
                                                SourceLocation Loc) {
+  return EmitScalarConversion(Src, SrcType, DstType, Loc, false);
+}
+
+Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
+                                               QualType DstType,
+                                               SourceLocation Loc,
+                                               bool TreatBooleanAsSigned) {
   SrcType = CGF.getContext().getCanonicalType(SrcType);
   DstType = CGF.getContext().getCanonicalType(DstType);
   if (SrcType == DstType) return Src;
@@ -807,7 +817,8 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   if (DstType->isExtVectorType() && !SrcType->isVectorType()) {
     // Cast the scalar to element type
     QualType EltTy = DstType->getAs<ExtVectorType>()->getElementType();
-    llvm::Value *Elt = EmitScalarConversion(Src, SrcType, EltTy, Loc);
+    llvm::Value *Elt = EmitScalarConversion(
+        Src, SrcType, EltTy, Loc, CGF.getContext().getLangOpts().OpenCL);
 
     // Splat the element across to all elements
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
@@ -847,6 +858,9 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   if (isa<llvm::IntegerType>(SrcTy)) {
     bool InputSigned = SrcType->isSignedIntegerOrEnumerationType();
+    if (SrcType->isBooleanType() && TreatBooleanAsSigned) {
+      InputSigned = true;
+    }
     if (isa<llvm::IntegerType>(DstTy))
       Res = Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
     else if (InputSigned)
@@ -1531,10 +1545,14 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   }
   case CK_VectorSplat: {
     llvm::Type *DstTy = ConvertType(DestTy);
-    Value *Elt = Visit(const_cast<Expr*>(E));
-    Elt = EmitScalarConversion(Elt, E->getType(),
+    // Need an IgnoreImpCasts here as by default a boolean will be promoted to
+    // an int, which will not perform the sign extension, so if we know we are
+    // going to cast to a vector we have to strip the implicit cast off.
+    Value *Elt = Visit(const_cast<Expr*>(E->IgnoreImpCasts()));
+    Elt = EmitScalarConversion(Elt, E->IgnoreImpCasts()->getType(),
                                DestTy->getAs<VectorType>()->getElementType(),
-                               CE->getExprLoc());
+                               CE->getExprLoc(), 
+                               CGF.getContext().getLangOpts().OpenCL);
 
     // Splat the element across to all elements
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
