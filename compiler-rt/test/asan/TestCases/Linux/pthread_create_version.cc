@@ -3,7 +3,6 @@
 // pthread_attr_init is not intercepted and binds to the new abi
 // pthread_create is intercepted; dlsym always returns the oldest version.
 // This results in a crash inside pthread_create in libc.
-// UNSUPPORTED: mips
 
 #include <pthread.h>
 #include <stdlib.h>
