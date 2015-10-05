@@ -7,16 +7,16 @@
 
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
-// CHECK-NEXT:     [[FOO_ADDR:.*]] R_X86_64_RELATIVE - [[FOO_ADDR]]
-// CHECK-NEXT:     [[BAR_ADDR:.*]] R_X86_64_RELATIVE - [[BAR_ADDR]]
+// CHECK-NEXT:     0x[[FOO_ADDR:.*]] R_X86_64_RELATIVE - 0x[[FOO_ADDR]]
+// CHECK-NEXT:     0x[[BAR_ADDR:.*]] R_X86_64_RELATIVE - 0x[[BAR_ADDR]]
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
 // CHECK:      Symbols [
 // CHECK:        Name: foo
-// CHECK-NEXT:   Value: [[FOO_ADDR]]
+// CHECK-NEXT:   Value: 0x[[FOO_ADDR]]
 // CHECK:        Name: bar
-// CHECK-NEXT:   Value: [[BAR_ADDR]]
+// CHECK-NEXT:   Value: 0x[[BAR_ADDR]]
 // CHECK:      ]
 
 // CHECK:      DynamicSymbols [
