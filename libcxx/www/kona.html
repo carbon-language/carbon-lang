@@ -59,7 +59,7 @@
   <table id="issues" border="1">
 	<tr><th>Issue #</th><th>Issue Name</th><th>Meeting</th><th>Status</th></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#1169">1169</a></td><td><tt>num_get</tt> not fully compatible with <tt>strto*</tt></td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2072">2072</a></td><td>Unclear wording about capacity of temporary buffers</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2072">2072</a></td><td>Unclear wording about capacity of temporary buffers</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2101">2101</a></td><td>Some transformation types can produce impossible types</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2111">2111</a></td><td>Which <tt>unexpected</tt>&#47;<tt>terminate</tt> handler is called from the exception handling runtime?</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2119">2119</a></td><td>Missing <tt>hash</tt> specializations for extended integer types</td><td>Kona</td><td></td></tr>
@@ -104,7 +104,7 @@
 <h3>Comments about the issues</h3>
 <ul>
 <li>1169 - We currently have a single function __num_get_float that calls strtold_l, and then casts down to the appropriate floating point type.  That will have to change.</li>
-<li>2072 - I don't think there's anything to do here; this is just making the wording better.</li>
+<li><i>2072 - We already do this; this is just making the wording better.</i></li>
 <li>2101 - Need to write some careful test cases. In particular, need to check function types with/without const/ref qualifiers.  Currently we get this wrong. Installing metashell to play with these.</li>
 <li><i>2111 - Resolved an ambiguity by calling it out. No code change required.</i></li>
 <li>2119 - Hashes for all integral and enumeration types. Research needed</li>
