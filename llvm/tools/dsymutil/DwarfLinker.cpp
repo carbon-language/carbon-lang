@@ -1807,6 +1807,9 @@ static bool analyzeContextInfo(const DWARFDebugInfoEntryMinimal *DIE,
                 DIE->getAttributeValueAsUnsignedConstant(
                     &CU.getOrigUnit(), dwarf::DW_AT_declaration, 0);
 
+  // Don't prune it if there is no definition for the DIE.
+  Info.Prune &= Info.Ctxt && Info.Ctxt->getCanonicalDIEOffset();
+
   return Info.Prune;
 }
 
@@ -3338,20 +3341,22 @@ bool DwarfLinker::link(const DebugMap &Map) {
     DWARFContextInMemory DwarfContext(*ErrOrObj);
     startDebugObject(DwarfContext, *Obj);
 
-    // In a first phase, just read in the debug info and store the DIE
-    // parent links that we will use during the next phase.
+    // In a first phase, just read in the debug info and load all clang modules.
     for (const auto &CU : DwarfContext.compile_units()) {
       auto *CUDie = CU->getUnitDIE(false);
       if (Options.Verbose) {
         outs() << "Input compilation unit:";
         CUDie->dump(outs(), CU.get(), 0);
       }
-      if (!registerModuleReference(*CUDie, *CU, ModuleMap)) {
+
+      if (!registerModuleReference(*CUDie, *CU, ModuleMap))
         Units.emplace_back(*CU, UnitID++, !Options.NoODR, "");
-        analyzeContextInfo(CUDie, 0, Units.back(), &ODRContexts.getRoot(),
-                           StringPool, ODRContexts);
-      }
     }
+
+    // Now build the DIE parent links that we will use during the next phase.
+    for (auto &CurrentUnit : Units)
+      analyzeContextInfo(CurrentUnit.getOrigUnit().getUnitDIE(), 0, CurrentUnit,
+                         &ODRContexts.getRoot(), StringPool, ODRContexts);
 
     // Then mark all the DIEs that need to be present in the linked
     // output and collect some information about them. Note that this
