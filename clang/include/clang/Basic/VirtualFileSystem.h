@@ -45,14 +45,18 @@ public:
 public:
   Status() : Type(llvm::sys::fs::file_type::status_error) {}
   Status(const llvm::sys::fs::file_status &Status);
-  Status(StringRef Name, StringRef RealName, llvm::sys::fs::UniqueID UID,
+  Status(StringRef Name, llvm::sys::fs::UniqueID UID,
          llvm::sys::TimeValue MTime, uint32_t User, uint32_t Group,
          uint64_t Size, llvm::sys::fs::file_type Type,
          llvm::sys::fs::perms Perms);
 
+  /// Get a copy of a Status with a different name.
+  static Status copyWithNewName(const Status &In, StringRef NewName);
+  static Status copyWithNewName(const llvm::sys::fs::file_status &In,
+                                StringRef NewName);
+
   /// \brief Returns the name that should be used for this file or directory.
   StringRef getName() const { return Name; }
-  void setName(StringRef N) { Name = N; }
 
   /// @name Status interface from llvm::sys::fs
   /// @{
@@ -92,8 +96,6 @@ public:
             bool RequiresNullTerminator = true, bool IsVolatile = false) = 0;
   /// \brief Closes the file.
   virtual std::error_code close() = 0;
-  /// \brief Sets the name to use for this file.
-  virtual void setName(StringRef Name) = 0;
 };
 
 namespace detail {

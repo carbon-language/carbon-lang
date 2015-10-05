@@ -35,11 +35,23 @@ Status::Status(const file_status &Status)
       User(Status.getUser()), Group(Status.getGroup()), Size(Status.getSize()),
       Type(Status.type()), Perms(Status.permissions()), IsVFSMapped(false)  {}
 
-Status::Status(StringRef Name, StringRef ExternalName, UniqueID UID,
-               sys::TimeValue MTime, uint32_t User, uint32_t Group,
-               uint64_t Size, file_type Type, perms Perms)
+Status::Status(StringRef Name, UniqueID UID, sys::TimeValue MTime,
+               uint32_t User, uint32_t Group, uint64_t Size, file_type Type,
+               perms Perms)
     : Name(Name), UID(UID), MTime(MTime), User(User), Group(Group), Size(Size),
       Type(Type), Perms(Perms), IsVFSMapped(false) {}
+
+Status Status::copyWithNewName(const Status &In, StringRef NewName) {
+  return Status(NewName, In.getUniqueID(), In.getLastModificationTime(),
+                In.getUser(), In.getGroup(), In.getSize(), In.getType(),
+                In.getPermissions());
+}
+
+Status Status::copyWithNewName(const file_status &In, StringRef NewName) {
+  return Status(NewName, In.getUniqueID(), In.getLastModificationTime(),
+                In.getUser(), In.getGroup(), In.getSize(), In.type(),
+                In.permissions());
+}
 
 bool Status::equivalent(const Status &Other) const {
   return getUniqueID() == Other.getUniqueID();
@@ -87,7 +99,9 @@ class RealFile : public File {
   int FD;
   Status S;
   friend class RealFileSystem;
-  RealFile(int FD) : FD(FD) {
+  RealFile(int FD, StringRef NewName)
+      : FD(FD), S(NewName, {}, {}, {}, {}, {},
+                  llvm::sys::fs::file_type::status_error, {}) {
     assert(FD >= 0 && "Invalid or inactive file descriptor");
   }
 
@@ -99,7 +113,6 @@ public:
             bool RequiresNullTerminator = true,
             bool IsVolatile = false) override;
   std::error_code close() override;
-  void setName(StringRef Name) override;
 };
 } // end anonymous namespace
 RealFile::~RealFile() { close(); }
@@ -110,9 +123,7 @@ ErrorOr<Status> RealFile::status() {
     file_status RealStatus;
     if (std::error_code EC = sys::fs::status(FD, RealStatus))
       return EC;
-    Status NewS(RealStatus);
-    NewS.setName(S.getName());
-    S = std::move(NewS);
+    S = Status::copyWithNewName(RealStatus, S.getName());
   }
   return S;
 }
@@ -142,10 +153,6 @@ std::error_code RealFile::close() {
   return std::error_code();
 }
 
-void RealFile::setName(StringRef Name) {
-  S.setName(Name);
-}
-
 namespace {
 /// \brief The file system according to your operating system.
 class RealFileSystem : public FileSystem {
@@ -160,9 +167,7 @@ ErrorOr<Status> RealFileSystem::status(const Twine &Path) {
   sys::fs::file_status RealStatus;
   if (std::error_code EC = sys::fs::status(Path, RealStatus))
     return EC;
-  Status Result(RealStatus);
-  Result.setName(Path.str());
-  return Result;
+  return Status::copyWithNewName(RealStatus, Path.str());
 }
 
 ErrorOr<std::unique_ptr<File>>
@@ -170,9 +175,7 @@ RealFileSystem::openFileForRead(const Twine &Name) {
   int FD;
   if (std::error_code EC = sys::fs::openFileForRead(Name, FD))
     return EC;
-  std::unique_ptr<File> Result(new RealFile(FD));
-  Result->setName(Name.str());
-  return std::move(Result);
+  return std::unique_ptr<File>(new RealFile(FD, Name.str()));
 }
 
 IntrusiveRefCntPtr<FileSystem> vfs::getRealFileSystem() {
@@ -190,10 +193,8 @@ public:
     if (!EC && Iter != llvm::sys::fs::directory_iterator()) {
       llvm::sys::fs::file_status S;
       EC = Iter->status(S);
-      if (!EC) {
-        CurrentEntry = Status(S);
-        CurrentEntry.setName(Iter->path());
-      }
+      if (!EC)
+        CurrentEntry = Status::copyWithNewName(S, Iter->path());
     }
   }
 
@@ -207,8 +208,7 @@ public:
     } else {
       llvm::sys::fs::file_status S;
       EC = Iter->status(S);
-      CurrentEntry = Status(S);
-      CurrentEntry.setName(Iter->path());
+      CurrentEntry = Status::copyWithNewName(S, Iter->path());
     }
     return EC;
   }
@@ -725,9 +725,10 @@ class VFSFromYAMLParser {
                              UseExternalName);
       break;
     case EK_Directory:
-      Result = new DirectoryEntry(LastComponent, std::move(EntryArrayContents),
-          Status("", "", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0,
-                 0, file_type::directory_file, sys::fs::all_all));
+      Result = new DirectoryEntry(
+          LastComponent, std::move(EntryArrayContents),
+          Status("", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0, 0,
+                 file_type::directory_file, sys::fs::all_all));
       break;
     }
 
@@ -739,9 +740,10 @@ class VFSFromYAMLParser {
     for (sys::path::reverse_iterator I = sys::path::rbegin(Parent),
                                      E = sys::path::rend(Parent);
          I != E; ++I) {
-      Result = new DirectoryEntry(*I, llvm::makeArrayRef(Result),
-          Status("", "", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0,
-                 0, file_type::directory_file, sys::fs::all_all));
+      Result = new DirectoryEntry(
+          *I, llvm::makeArrayRef(Result),
+          Status("", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0, 0,
+                 file_type::directory_file, sys::fs::all_all));
     }
     return Result;
   }
@@ -923,15 +925,13 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path, Entry *E) {
     ErrorOr<Status> S = ExternalFS->status(F->getExternalContentsPath());
     assert(!S || S->getName() == F->getExternalContentsPath());
     if (S && !F->useExternalName(UseExternalNames))
-      S->setName(PathStr);
+      *S = Status::copyWithNewName(*S, PathStr);
     if (S)
       S->IsVFSMapped = true;
     return S;
   } else { // directory
     DirectoryEntry *DE = cast<DirectoryEntry>(E);
-    Status S = DE->getStatus();
-    S.setName(PathStr);
-    return S;
+    return Status::copyWithNewName(DE->getStatus(), PathStr);
   }
 }
 
@@ -955,8 +955,34 @@ ErrorOr<std::unique_ptr<File>> VFSFromYAML::openFileForRead(const Twine &Path) {
   if (!Result)
     return Result;
 
-  if (!F->useExternalName(UseExternalNames))
-    (*Result)->setName(Path.str());
+  if (!F->useExternalName(UseExternalNames)) {
+    // Provide a file wrapper that returns the external name when asked.
+    class NamedFileAdaptor : public File {
+      std::unique_ptr<File> InnerFile;
+      std::string NewName;
+
+    public:
+      NamedFileAdaptor(std::unique_ptr<File> InnerFile, std::string NewName)
+          : InnerFile(std::move(InnerFile)), NewName(std::move(NewName)) {}
+
+      llvm::ErrorOr<Status> status() override {
+        auto InnerStatus = InnerFile->status();
+        if (InnerStatus)
+          return Status::copyWithNewName(*InnerStatus, NewName);
+        return InnerStatus.getError();
+      }
+      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
+      getBuffer(const Twine &Name, int64_t FileSize = -1,
+                bool RequiresNullTerminator = true,
+                bool IsVolatile = false) override {
+        return InnerFile->getBuffer(Name, FileSize, RequiresNullTerminator,
+                                    IsVolatile);
+      }
+      std::error_code close() override { return InnerFile->close(); }
+    };
+    return std::unique_ptr<File>(
+        new NamedFileAdaptor(std::move(*Result), Path.str()));
+  }
 
   return Result;
 }
