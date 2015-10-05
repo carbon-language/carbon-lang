@@ -688,25 +688,36 @@ llvm::getFuncletMembership(const MachineFunction &MF) {
   if (!MF.getMMI().hasEHFunclets())
     return FuncletMembership;
 
+  int EntryBBNumber = MF.front().getNumber();
   bool IsSEH = isAsynchronousEHPersonality(
       classifyEHPersonality(MF.getFunction()->getPersonalityFn()));
 
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   SmallVector<const MachineBasicBlock *, 16> FuncletBlocks;
+  SmallVector<const MachineBasicBlock *, 16> UnreachableBlocks;
+  SmallVector<const MachineBasicBlock *, 16> SEHCatchPads;
   SmallVector<std::pair<const MachineBasicBlock *, int>, 16> CatchRetSuccessors;
   for (const MachineBasicBlock &MBB : MF) {
-    if (MBB.isEHFuncletEntry())
+    if (MBB.isEHFuncletEntry()) {
       FuncletBlocks.push_back(&MBB);
+    } else if (IsSEH && MBB.isEHPad()) {
+      SEHCatchPads.push_back(&MBB);
+    } else if (MBB.pred_empty()) {
+      UnreachableBlocks.push_back(&MBB);
+    }
 
     MachineBasicBlock::const_iterator MBBI = MBB.getFirstTerminator();
     // CatchPads are not funclets for SEH so do not consider CatchRet to
     // transfer control to another funclet.
-    if (IsSEH || MBBI->getOpcode() != TII->getCatchReturnOpcode())
+    if (MBBI->getOpcode() != TII->getCatchReturnOpcode())
       continue;
 
+    // FIXME: SEH CatchPads are not necessarily in the parent function:
+    // they could be inside a finally block.
     const MachineBasicBlock *Successor = MBBI->getOperand(0).getMBB();
     const MachineBasicBlock *SuccessorColor = MBBI->getOperand(1).getMBB();
-    CatchRetSuccessors.push_back({Successor, SuccessorColor->getNumber()});
+    CatchRetSuccessors.push_back(
+        {Successor, IsSEH ? EntryBBNumber : SuccessorColor->getNumber()});
   }
 
   // We don't have anything to do if there aren't any EH pads.
@@ -714,17 +725,20 @@ llvm::getFuncletMembership(const MachineFunction &MF) {
     return FuncletMembership;
 
   // Identify all the basic blocks reachable from the function entry.
-  collectFuncletMembers(FuncletMembership, MF.front().getNumber(), MF.begin());
+  collectFuncletMembers(FuncletMembership, EntryBBNumber, MF.begin());
+  // All blocks not part of a funclet are in the parent function.
+  for (const MachineBasicBlock *MBB : UnreachableBlocks)
+    collectFuncletMembers(FuncletMembership, EntryBBNumber, MBB);
   // Next, identify all the blocks inside the funclets.
   for (const MachineBasicBlock *MBB : FuncletBlocks)
     collectFuncletMembers(FuncletMembership, MBB->getNumber(), MBB);
+  // SEH CatchPads aren't really funclets, handle them separately.
+  for (const MachineBasicBlock *MBB : SEHCatchPads)
+    collectFuncletMembers(FuncletMembership, EntryBBNumber, MBB);
   // Finally, identify all the targets of a catchret.
   for (std::pair<const MachineBasicBlock *, int> CatchRetPair :
        CatchRetSuccessors)
     collectFuncletMembers(FuncletMembership, CatchRetPair.second,
                           CatchRetPair.first);
-  // All blocks not part of a funclet are in the parent function.
-  for (const MachineBasicBlock &MBB : MF)
-    FuncletMembership.insert({&MBB, MF.front().getNumber()});
   return FuncletMembership;
 }

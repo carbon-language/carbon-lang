@@ -1088,6 +1088,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
       MBB.removeSuccessor(TargetMBB);
       MBB.addSuccessor(RestoreMBB);
       RestoreMBB->addSuccessor(TargetMBB);
+      MBBI->getOperand(0).setMBB(RestoreMBB);
     }
 
     // Fill EAX/RAX with the address of the target block.

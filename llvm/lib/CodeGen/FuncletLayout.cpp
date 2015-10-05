@@ -42,8 +42,12 @@ bool FuncletLayout::runOnMachineFunction(MachineFunction &F) {
   if (FuncletMembership.empty())
     return false;
 
-  F.sort([&](MachineBasicBlock &x, MachineBasicBlock &y) {
-    return FuncletMembership[&x] < FuncletMembership[&y];
+  F.sort([&](MachineBasicBlock &X, MachineBasicBlock &Y) {
+    auto FuncletX = FuncletMembership.find(&X);
+    auto FuncletY = FuncletMembership.find(&Y);
+    assert(FuncletX != FuncletMembership.end());
+    assert(FuncletY != FuncletMembership.end());
+    return FuncletX->second < FuncletY->second;
   });
 
   // Conservatively assume we changed something.
