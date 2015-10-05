@@ -16,12 +16,12 @@
 // CHECK-BE-HF-32R2-SAME: "-isysroot" "{{.*}}mips_mti_linux/sysroot"
 // CHECK-BE-HF-32R2: "{{[^"]*}}lld{{[^"]*}}" "-flavor" "gnu" "-target" "mips-mti-linux"
 // CHECK-BE-HF-32R2-SAME: "--sysroot=[[SYSROOT:[^"]+]]" {{.*}} "-dynamic-linker" "/lib/ld-musl-mips.so.1"
-// CHECK-BE-HF-32R2-SAME: "[[SYSROOT]]/mips-r2-hard-musl/usr/lib/crt1.o"
-// CHECK-BE-HF-32R2-SAME: "[[SYSROOT]]/mips-r2-hard-musl/usr/lib/crti.o"
+// CHECK-BE-HF-32R2-SAME: "[[SYSROOT]]/mips-r2-hard-musl/usr/lib{{/|\\\\}}crt1.o"
+// CHECK-BE-HF-32R2-SAME: "[[SYSROOT]]/mips-r2-hard-musl/usr/lib{{/|\\\\}}crti.o"
 // CHECK-BE-HF-32R2-SAME: "-L[[SYSROOT]]/mips-r2-hard-musl/usr/lib"
 // CHECK-BE-HF-32R2-SAME: "{{[^"]+}}/mips-r2-hard-musl/lib/linux/libclang_rt.builtins-mips.a"
 // CHECK-BE-HF-32R2-SAME: "-lc"
-// CHECK-BE-HF-32R2-SAME: "[[SYSROOT]]/mips-r2-hard-musl/usr/lib/crtn.o"
+// CHECK-BE-HF-32R2-SAME: "[[SYSROOT]]/mips-r2-hard-musl/usr/lib{{/|\\\\}}crtn.o"
 
 // = Little-endian, mips32r2, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -34,9 +34,9 @@
 // CHECK-LE-HF-32R2-SAME: "-isysroot" "{{.*}}mips_mti_linux/sysroot"
 // CHECK-LE-HF-32R2: "{{[^"]*}}lld{{[^"]*}}" "-flavor" "gnu" "-target" "mipsel-mti-linux"
 // CHECK-LE-HF-32R2-SAME: "--sysroot=[[SYSROOT:[^"]+]]" {{.*}} "-dynamic-linker" "/lib/ld-musl-mipsel.so.1"
-// CHECK-LE-HF-32R2-SAME: "[[SYSROOT]]/mipsel-r2-hard-musl/usr/lib/crt1.o"
-// CHECK-LE-HF-32R2-SAME: "[[SYSROOT]]/mipsel-r2-hard-musl/usr/lib/crti.o"
+// CHECK-LE-HF-32R2-SAME: "[[SYSROOT]]/mipsel-r2-hard-musl/usr/lib{{/|\\\\}}crt1.o"
+// CHECK-LE-HF-32R2-SAME: "[[SYSROOT]]/mipsel-r2-hard-musl/usr/lib{{/|\\\\}}crti.o"
 // CHECK-LE-HF-32R2-SAME: "-L[[SYSROOT]]/mipsel-r2-hard-musl/usr/lib"
 // CHECK-LE-HF-32R2-SAME: "{{[^"]+}}/mipsel-r2-hard-musl/lib/linux/libclang_rt.builtins-mipsel.a"
 // CHECK-LE-HF-32R2-SAME: "-lc"
-// CHECK-LE-HF-32R2-SAME: "[[SYSROOT]]/mipsel-r2-hard-musl/usr/lib/crtn.o"
+// CHECK-LE-HF-32R2-SAME: "[[SYSROOT]]/mipsel-r2-hard-musl/usr/lib{{/|\\\\}}crtn.o"
