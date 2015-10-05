@@ -586,6 +586,28 @@ the configuration (without a prefix: ``Auto``).
 
 .. END_FORMAT_STYLE_OPTIONS
 
+Adding additional style options
+===============================
+
+Each additional style option adds costs to the clang-format project. Some of
+these costs affect the clang-format developement itself, as we need to make
+sure that any given combination of options work and that new features don't
+break any of the existing options in any way. There are also costs for end users
+as options become less discoverable and people have to think about and make a
+decision on options they don't really care about.
+
+The goal of the clang-format project is more on the side of supporting a
+limited set of styles really well as opposed to supporting every single style
+used by a codebase somewhere in the wild. Of course, we do want to support all
+major projects and thus have established the following bar for adding style
+options. Each new style option must ..
+
+  * .. be used in a project of significant size (have dozens of contributors)
+  * .. have a publicly accessible style guide
+  * .. have a person willing to contribute and maintain patches
+
+At least two out of these three need to be met.
+
 Examples
 ========
 
