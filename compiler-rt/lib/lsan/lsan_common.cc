@@ -119,6 +119,8 @@ static inline bool CanBeAHeapPointer(uptr p) {
   return ((p >> 47) == 0);
 #elif defined(__mips64)
   return ((p >> 40) == 0);
+#elif defined(__aarch64__)
+  return ((p >> SANITIZER_AARCH64_VMA) == 0);
 #else
   return true;
 #endif

@@ -32,7 +32,7 @@ struct ChunkMetadata {
   u32 stack_trace_id;
 };
 
-#if defined(__mips64)
+#if defined(__mips64) || defined(__aarch64__)
 static const uptr kMaxAllowedMallocSize = 4UL << 30;
 static const uptr kRegionSizeLog = 20;
 static const uptr kNumRegions = SANITIZER_MMAP_RANGE_SIZE >> kRegionSizeLog;
