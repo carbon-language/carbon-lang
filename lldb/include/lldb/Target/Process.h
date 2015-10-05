@@ -239,7 +239,8 @@ public:
         m_wait_for_launch (false),
         m_ignore_existing (true),
         m_continue_once_attached (false),
-        m_detach_on_error (true)
+        m_detach_on_error (true),
+        m_async (false)
     {
     }
 
@@ -252,7 +253,8 @@ public:
         m_wait_for_launch (false),
         m_ignore_existing (true),
         m_continue_once_attached (false),
-        m_detach_on_error(true)
+        m_detach_on_error (true),
+        m_async (false)
     {
         ProcessInfo::operator= (launch_info);
         SetProcessPluginName (launch_info.GetProcessPluginName());
@@ -272,6 +274,18 @@ public:
     SetWaitForLaunch (bool b)
     {
         m_wait_for_launch = b;
+    }
+
+    bool
+    GetAsync () const
+    {
+        return m_async;
+    }
+
+    void
+    SetAsync (bool b)
+    {
+        m_async = b;
     }
 
     bool
@@ -400,6 +414,7 @@ protected:
     bool m_ignore_existing;
     bool m_continue_once_attached; // Supports the use-case scenario of immediately continuing the process once attached.
     bool m_detach_on_error;  // If we are debugging remotely, instruct the stub to detach rather than killing the target on error.
+    bool m_async; // Use an async attach where we start the attach and return immediately (used by GUI programs with --waitfor so they can call SBProcess::Stop() to cancel attach)
 };
 
 class ProcessLaunchCommandOptions : public Options

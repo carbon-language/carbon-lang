@@ -18,6 +18,8 @@ public:
 
     SBAttachInfo (const char *path, bool wait_for);
 
+    SBAttachInfo (const char *path, bool wait_for, bool async);
+
     SBAttachInfo (const lldb::SBAttachInfo &rhs);
 
     lldb::pid_t
@@ -37,6 +39,9 @@ public:
 
     void
     SetWaitForLaunch (bool b);
+
+    void
+    SetWaitForLaunch (bool b, bool async);
 
     bool
     GetIgnoreExisting ();

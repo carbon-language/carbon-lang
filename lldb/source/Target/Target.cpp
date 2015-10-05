@@ -3124,9 +3124,6 @@ Target::Attach (ProcessAttachInfo &attach_info, Stream *stream)
         }
     }
 
-    ListenerSP hijack_listener_sp (new Listener ("lldb.Target.Attach.attach.hijack"));
-    attach_info.SetHijackListener (hijack_listener_sp);
-
     const ModuleSP old_exec_module_sp = GetExecutableModule ();
 
     // If no process info was specified, then use the target executable
@@ -3143,6 +3140,13 @@ Target::Attach (ProcessAttachInfo &attach_info, Stream *stream)
     }
 
     const auto platform_sp = GetDebugger ().GetPlatformList ().GetSelectedPlatform ();
+    ListenerSP hijack_listener_sp;
+    const bool async = attach_info.GetAsync();
+    if (async == false)
+    {
+        hijack_listener_sp.reset (new Listener ("lldb.Target.Attach.attach.hijack"));
+        attach_info.SetHijackListener (hijack_listener_sp);
+    }
 
     Error error;
     if (state != eStateConnected && platform_sp != nullptr && platform_sp->CanDebugProcess ())
@@ -3162,11 +3166,12 @@ Target::Attach (ProcessAttachInfo &attach_info, Stream *stream)
                 return error;
             }
         }
-        process_sp->HijackProcessEvents (hijack_listener_sp.get ());
+        if (hijack_listener_sp)
+            process_sp->HijackProcessEvents (hijack_listener_sp.get ());
         error = process_sp->Attach (attach_info);
     }
 
-    if (error.Success () && process_sp)
+    if (error.Success () && process_sp && async == false)
     {
         state = process_sp->WaitForProcessToStop (nullptr, nullptr, false, attach_info.GetHijackListener ().get (), stream);
         process_sp->RestoreProcessEvents ();
@@ -3175,9 +3180,9 @@ Target::Attach (ProcessAttachInfo &attach_info, Stream *stream)
         {
             const char *exit_desc = process_sp->GetExitDescription ();
             if (exit_desc)
-                error.SetErrorStringWithFormat ("attach failed: %s", exit_desc);
+                error.SetErrorStringWithFormat ("%s", exit_desc);
             else
-                error.SetErrorString ("attach failed: process did not stop (no such process or permission problem?)");
+                error.SetErrorString ("process did not stop (no such process or permission problem?)");
             process_sp->Destroy (false);
         }
     }

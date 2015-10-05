@@ -36,6 +36,15 @@ SBAttachInfo::SBAttachInfo (const char *path, bool wait_for) :
     m_opaque_sp->SetWaitForLaunch (wait_for);
 }
 
+SBAttachInfo::SBAttachInfo (const char *path, bool wait_for, bool async) :
+    m_opaque_sp (new ProcessAttachInfo())
+{
+    if (path && path[0])
+        m_opaque_sp->GetExecutableFile().SetFile(path, false);
+    m_opaque_sp->SetWaitForLaunch (wait_for);
+    m_opaque_sp->SetAsync(async);
+}
+
 SBAttachInfo::SBAttachInfo (const SBAttachInfo &rhs) :
     m_opaque_sp (new ProcessAttachInfo())
 {
@@ -125,6 +134,13 @@ void
 SBAttachInfo::SetWaitForLaunch (bool b)
 {
     m_opaque_sp->SetWaitForLaunch (b);
+}
+
+void
+SBAttachInfo::SetWaitForLaunch (bool b, bool async)
+{
+    m_opaque_sp->SetWaitForLaunch (b);
+    m_opaque_sp->SetAsync(async);
 }
 
 bool
