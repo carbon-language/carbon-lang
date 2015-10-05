@@ -76,4 +76,10 @@ int main()
          S("12345678901234567890"));
     }
 #endif
+#if __cplusplus > 201402L
+    {
+    typedef std::string S;
+    static_assert(noexcept(S().assign(S())), "");  // LWG#2063
+    }
+#endif
 }
