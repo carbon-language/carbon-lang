@@ -2,7 +2,10 @@
 
 namespace std {
 
-template <typename type>
+template <typename T>
+class default_delete {};
+
+template <typename type, typename Deleter = std::default_delete<type>>
 class unique_ptr {
 public:
   unique_ptr(type *ptr);

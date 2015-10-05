@@ -29,10 +29,18 @@ void MakeUniqueCheck::registerMatchers(MatchFinder *Finder) {
             cxxConstructExpr(
                 hasType(qualType(hasDeclaration(classTemplateSpecializationDecl(
                     matchesName("::std::unique_ptr"),
-                    templateArgumentCountIs(1),
+                    templateArgumentCountIs(2),
+                    hasTemplateArgument(0, templateArgument(refersToType(
+                                               qualType().bind(PointerType)))),
                     hasTemplateArgument(
-                        0, templateArgument(
-                               refersToType(qualType().bind(PointerType)))))))),
+                        1, templateArgument(refersToType(qualType(
+                               hasDeclaration(classTemplateSpecializationDecl(
+                                   matchesName("::std::default_delete"),
+                                   templateArgumentCountIs(1),
+                                   hasTemplateArgument(
+                                       0, templateArgument(refersToType(
+                                              qualType(equalsBoundNode(
+                                                  PointerType))))))))))))))),
                 argumentCountIs(1),
                 hasArgument(0, cxxNewExpr(hasType(pointsTo(qualType(
                                               equalsBoundNode(PointerType)))))
