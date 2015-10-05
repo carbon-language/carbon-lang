@@ -241,6 +241,27 @@ public:
   iterator overlays_end() { return FSList.rend(); }
 };
 
+namespace detail {
+class InMemoryDirectory;
+} // end namespace detail
+
+/// An in-memory file system.
+class InMemoryFileSystem : public FileSystem {
+  std::unique_ptr<detail::InMemoryDirectory> Root;
+
+public:
+  InMemoryFileSystem();
+  ~InMemoryFileSystem() override;
+  void addFile(const Twine &Path, time_t ModificationTime,
+               std::unique_ptr<llvm::MemoryBuffer> Buffer);
+  StringRef toString() const;
+
+  llvm::ErrorOr<Status> status(const Twine &Path) override;
+  llvm::ErrorOr<std::unique_ptr<File>>
+  openFileForRead(const Twine &Path) override;
+  directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override;
+};
+
 /// \brief Get a globally unique ID for a virtual file or directory.
 llvm::sys::fs::UniqueID getNextVirtualUniqueID();
 
