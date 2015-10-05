@@ -33,10 +33,9 @@ CodeGenABITypes::CodeGenABITypes(ASTContext &C, llvm::Module &M,
       CGM(new CodeGen::CodeGenModule(C, *HSO, *PPO, *CGO, M, C.getDiagnostics(),
                                      CoverageInfo)) {}
 
-CodeGenABITypes::~CodeGenABITypes()
-{
-  delete CGM;
-}
+// Explicitly out-of-line because ~CodeGenModule() is private but
+// CodeGenABITypes.h is part of clang's API.
+CodeGenABITypes::~CodeGenABITypes() = default;
 
 const CGFunctionInfo &
 CodeGenABITypes::arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,

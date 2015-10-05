@@ -80,7 +80,7 @@ private:
   std::unique_ptr<PreprocessorOptions> PPO;
 
   /// The CodeGenModule we use get to the CodeGenTypes object.
-  CodeGen::CodeGenModule *CGM;
+  std::unique_ptr<CodeGen::CodeGenModule> CGM;
 };
 
 }  // end namespace CodeGen
