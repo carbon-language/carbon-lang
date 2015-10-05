@@ -528,9 +528,9 @@ protected:
 
 TEST_F(InMemoryFileSystemTest, IsEmpty) {
   auto Stat = FS.status("/a");
-  ASSERT_EQ(errc::no_such_file_or_directory, Stat.getError()) << FS.toString();
+  ASSERT_EQ(Stat.getError(),errc::no_such_file_or_directory) << FS.toString();
   Stat = FS.status("/");
-  ASSERT_EQ(errc::no_such_file_or_directory, Stat.getError()) << FS.toString();
+  ASSERT_EQ(Stat.getError(), errc::no_such_file_or_directory) << FS.toString();
 }
 
 TEST_F(InMemoryFileSystemTest, WindowsPath) {
@@ -560,9 +560,9 @@ TEST_F(InMemoryFileSystemTest, OpenFileForRead) {
   File = FS.openFileForRead("/a"); // Open again.
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/");
-  ASSERT_EQ(errc::invalid_argument, File.getError()) << FS.toString();
+  ASSERT_EQ(File.getError(), errc::invalid_argument) << FS.toString();
   File = FS.openFileForRead("/b");
-  ASSERT_EQ(errc::no_such_file_or_directory, File.getError()) << FS.toString();
+  ASSERT_EQ(File.getError(), errc::no_such_file_or_directory) << FS.toString();
 }
 
 TEST_F(InMemoryFileSystemTest, DirectoryIteration) {
