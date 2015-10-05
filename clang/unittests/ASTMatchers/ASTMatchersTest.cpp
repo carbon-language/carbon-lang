@@ -1172,6 +1172,13 @@ TEST(Matcher, SubstNonTypeTemplateParm) {
                       substNonTypeTemplateParmExpr()));
 }
 
+TEST(Matcher, NonTypeTemplateParmDecl) {
+  EXPECT_TRUE(matches("template <int N> void f();",
+                      nonTypeTemplateParmDecl(hasName("N"))));
+  EXPECT_TRUE(
+      notMatches("template <typename T> void f();", nonTypeTemplateParmDecl()));
+}
+
 TEST(Matcher, UserDefinedLiteral) {
   EXPECT_TRUE(matches("constexpr char operator \"\" _inc (const char i) {"
                       "  return i + 1;"
