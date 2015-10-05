@@ -1122,6 +1122,7 @@ class VOPProfile <list<ValueType> _ArgVT> {
   field RegisterOperand Src1RC64 = getVOP3SrcForVT<Src1VT>.ret;
   field RegisterOperand Src2RC64 = getVOP3SrcForVT<Src2VT>.ret;
 
+  field bit HasDst32 = !if(!eq(DstVT, untyped), 0, 1);
   field int NumSrcArgs = getNumSrcArgs<Src1VT, Src2VT>.ret;
   field bit HasModifiers = hasModifiers<Src0VT>.ret;
 
@@ -1210,6 +1211,8 @@ def VOP3b_F64_I1_F64_F64_F64 : VOP3b_Profile<f64> {
 // an explicit $dst.
 class VOPC_Profile<ValueType vt0, ValueType vt1 = vt0> : VOPProfile <[i1, vt0, vt1, untyped]> {
   let Asm32 = "vcc, $src0, $src1";
+  // The destination for 32-bit encoding is implicit.
+  let HasDst32 = 0;
 }
 
 class VOPC_Class_Profile<ValueType vt> : VOPC_Profile<vt, i32> {
@@ -1250,10 +1253,52 @@ def VOP_F64_F64_F64_F64 : VOPProfile <[f64, f64, f64, f64]>;
 def VOP_I32_I32_I32_I32 : VOPProfile <[i32, i32, i32, i32]>;
 def VOP_I64_I32_I32_I64 : VOPProfile <[i64, i32, i32, i64]>;
 
-class SIInstAlias <string asm, dag result> : InstAlias <asm, result>,
-                                             PredicateControl {
+class SIInstAlias <string asm, Instruction inst, VOPProfile p> :
+    InstAlias <asm, (inst)>, PredicateControl {
+
   field bit isCompare;
   field bit isCommutable;
+
+  let ResultInst =
+    !if (p.HasDst32,
+      !if (!eq(p.NumSrcArgs, 0),
+        // 1 dst, 0 src
+        (inst p.DstRC:$dst),
+      !if (!eq(p.NumSrcArgs, 1),
+        // 1 dst, 1 src
+        (inst p.DstRC:$dst, p.Src0RC32:$src0),
+      !if (!eq(p.NumSrcArgs, 2),
+        // 1 dst, 2 src
+        (inst p.DstRC:$dst, p.Src0RC32:$src0, p.Src1RC32:$src1),
+      // else - unreachable
+        (inst)))),
+    // else
+      !if (!eq(p.NumSrcArgs, 2),
+        // 0 dst, 2 src
+        (inst p.Src0RC32:$src0, p.Src1RC32:$src1),
+      !if (!eq(p.NumSrcArgs, 1),
+        // 0 dst, 1 src
+        (inst p.Src0RC32:$src1),
+      // else
+        // 0 dst, 0 src
+        (inst))));
+}
+
+class SIInstAliasSI <string asm, string op_name, VOPProfile p> :
+  SIInstAlias <asm, !cast<Instruction>(op_name#"_e32_si"), p> {
+  let AssemblerPredicate = SIAssemblerPredicate;
+}
+
+class SIInstAliasVI <string asm, string op_name, VOPProfile p> :
+  SIInstAlias <asm, !cast<Instruction>(op_name#"_e32_vi"), p> {
+  let AssemblerPredicates = [isVI];
+}
+
+multiclass SIInstAliasBuilder <string asm, VOPProfile p> {
+
+  def : SIInstAliasSI <asm, NAME, p>;
+
+  def : SIInstAliasVI <asm, NAME, p>;
 }
 
 class VOP <string opName> {
@@ -1712,11 +1757,6 @@ multiclass VOPC_m <vopc op, dag ins, string op_asm, list<dag> pattern,
       let SchedRW = sched;
     }
 
-    def : SIInstAlias <
-      alias_asm,
-      (!cast<Instruction>(NAME#"_e32_si") p.Src0RC32:$src0, p.Src1RC32:$src1)
-    >;
-
   } // End AssemblerPredicates = [isSICI]
 
   let AssemblerPredicates = [isVI] in {
@@ -1727,11 +1767,9 @@ multiclass VOPC_m <vopc op, dag ins, string op_asm, list<dag> pattern,
       let SchedRW = sched;
     }
 
-    def : SIInstAlias <
-      alias_asm,
-      (!cast<Instruction>(NAME#"_e32_vi") p.Src0RC32:$src0, p.Src1RC32:$src1)
-    >;
   } // End AssemblerPredicates = [isVI]
+
+  defm : SIInstAliasBuilder<alias_asm, p>;
 }
 
 multiclass VOPC_Helper <vopc op, string opName,
