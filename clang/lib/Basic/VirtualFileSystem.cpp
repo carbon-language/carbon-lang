@@ -19,8 +19,16 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/YAMLParser.h"
+#include "llvm/Config/llvm-config.h"
 #include <atomic>
 #include <memory>
+
+// For chdir.
+#ifdef LLVM_ON_WIN32
+#  include <direct.h>
+#else
+#  include <unistd.h>
+#endif
 
 using namespace clang;
 using namespace clang::vfs;
