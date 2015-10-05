@@ -150,6 +150,16 @@ public:
     return true;
   }
 
+  bool TraverseInitListExpr(InitListExpr *S) {
+    // Only go through the semantic form of the InitListExpr, because
+    // ImplicitCast might not appear in the syntactic form, and this results in
+    // finding usages of the macro argument that don't have a ImplicitCast as an
+    // ancestor (thus invalidating the replacement) when they actually have.
+    return RecursiveASTVisitor<MacroArgUsageVisitor>::
+        TraverseSynOrSemInitListExpr(
+            S->isSemanticForm() ? S : S->getSemanticForm());
+  }
+
   bool foundInvalid() const { return InvalidFound; }
 
 private:
@@ -273,7 +283,7 @@ private:
     // Visit children of this containing parent looking for the least-descended
     // nodes of the containing parent which are macro arg expansions that expand
     // from the given arg location.
-    // Visitor needs: arg loc
+    // Visitor needs: arg loc.
     MacroArgUsageVisitor ArgUsageVisitor(SM.getFileLoc(CastLoc), SM);
     if (const auto *D = ContainingAncestor.get<Decl>())
       ArgUsageVisitor.TraverseDecl(const_cast<Decl *>(D));
@@ -345,8 +355,8 @@ private:
   /// also handled.
   ///
   /// False means either:
-  /// - TestLoc is not from a macro expansion
-  /// - TestLoc is from a different macro expansion
+  /// - TestLoc is not from a macro expansion.
+  /// - TestLoc is from a different macro expansion.
   bool expandsFrom(SourceLocation TestLoc, SourceLocation TestMacroLoc) {
     if (TestLoc.isFileID()) {
       return false;
@@ -399,8 +409,7 @@ private:
                               ast_type_traits::DynTypedNode &Result) {
     // Below we're only following the first parent back up the AST. This should
     // be fine since for the statements we care about there should only be one
-    // parent as far up as we care. If this assumption doesn't hold, need to
-    // revisit what to do here.
+    // parent, except for the case specified below.
 
     assert(MacroLoc.isFileID());
 
@@ -408,8 +417,16 @@ private:
       const auto &Parents = Context.getParents(Start);
       if (Parents.empty())
         return false;
-      assert(Parents.size() == 1 &&
-             "Found an ancestor with more than one parent!");
+      if (Parents.size() > 1) {
+        // If there are more than one parents, don't do the replacement unless
+        // they are InitListsExpr (semantic and syntactic form). In this case we
+        // can choose any one here, and the ASTVisitor will take care of
+        // traversing the right one.
+        for (const auto &Parent : Parents) {
+          if (!Parent.get<InitListExpr>())
+            return false;
+        }
+      }
 
       const ast_type_traits::DynTypedNode &Parent = Parents[0];
 

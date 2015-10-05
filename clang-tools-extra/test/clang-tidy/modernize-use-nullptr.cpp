@@ -174,4 +174,13 @@ void test_macro_args() {
 #define CALL(X) X
   OPTIONAL_CODE(NOT_NULL);
   CALL(NOT_NULL);
+
+#define ENTRY(X) {X}
+  struct A {
+    int *Ptr;
+  } a[2] = {ENTRY(0), {0}};
+  // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: use nullptr
+  // CHECK-MESSAGES: :[[@LINE-2]]:24: warning: use nullptr
+  // CHECK-FIXES: a[2] = {ENTRY(nullptr), {nullptr}};
+#undef ENTRY
 }
