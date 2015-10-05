@@ -292,6 +292,7 @@ const MCExpr *WinException::getLabelPlusOne(MCSymbol *Label) {
                                  Asm->OutContext);
 }
 
+namespace {
 /// Information describing an invoke range.
 struct InvokeRange {
   MCSymbol *BeginLabel = nullptr;
@@ -329,6 +330,7 @@ private:
   MachineBasicBlock::const_iterator MBBIEnd;
   InvokeRange CurRange;
 };
+} // end anonymous namespace
 
 /// Invoke label range iteration logic. Increment MBBI until we find the next
 /// EH_LABEL pair, and then update MBBI to point after the end label.
