@@ -2341,14 +2341,11 @@ bool MipsAsmParser::loadAndAddSymbolAddress(
     SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
   warnIfNoMacro(IDLoc);
 
-  // FIXME: The way we're handling symbols right now prevents simple expressions
-  //        like foo+8. We'll be able to fix this once our unary operators (%hi
-  //        and similar) are treated as operators rather than as fixup types.
-  const MCSymbolRefExpr *Symbol = cast<MCSymbolRefExpr>(SymExpr);
-  const MCSymbolRefExpr *HiExpr = MCSymbolRefExpr::create(
-      &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_ABS_HI, getContext());
-  const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::create(
-      &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_ABS_LO, getContext());
+  const MCExpr *Symbol = cast<MCExpr>(SymExpr);
+  const MipsMCExpr *HiExpr = MipsMCExpr::create(
+      MCSymbolRefExpr::VK_Mips_ABS_HI, Symbol, getContext());
+  const MipsMCExpr *LoExpr = MipsMCExpr::create(
+      MCSymbolRefExpr::VK_Mips_ABS_LO, Symbol, getContext());
 
   bool UseSrcReg = SrcReg != Mips::NoRegister;
 
@@ -2360,10 +2357,10 @@ bool MipsAsmParser::loadAndAddSymbolAddress(
     if (!ATReg)
       return true;
 
-    const MCSymbolRefExpr *HighestExpr = MCSymbolRefExpr::create(
-        &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_HIGHEST, getContext());
-    const MCSymbolRefExpr *HigherExpr = MCSymbolRefExpr::create(
-        &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_HIGHER, getContext());
+    const MipsMCExpr *HighestExpr = MipsMCExpr::create(
+        MCSymbolRefExpr::VK_Mips_HIGHEST, Symbol, getContext());
+    const MipsMCExpr *HigherExpr = MipsMCExpr::create(
+        MCSymbolRefExpr::VK_Mips_HIGHER, Symbol, getContext());
 
     if (UseSrcReg && (DstReg == SrcReg)) {
       // If $rs is the same as $rd:

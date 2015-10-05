@@ -8,10 +8,10 @@
 # Load address, done by MipsAsmParser::expandLoadAddressReg()
 # and MipsAsmParser::expandLoadAddressImm():
   la $8, 1f
-# CHECK-LE: lui     $8, %hi($tmp0)      # encoding: [A,A,0x08,0x3c]
-# CHECK-LE:                             #   fixup A - offset: 0, value: ($tmp0)@ABS_HI, kind: fixup_Mips_HI16
-# CHECK-LE: addiu   $8, $8, %lo($tmp0)  # encoding: [A,A,0x08,0x25]
-# CHECK-LE:                             #   fixup A - offset: 0, value: ($tmp0)@ABS_LO, kind: fixup_Mips_LO16
+# CHECK-LE: lui     $8, %hi(($tmp0))      # encoding: [A,A,0x08,0x3c]
+# CHECK-LE:                             #   fixup A - offset: 0, value: %hi(($tmp0)), kind: fixup_Mips_HI16
+# CHECK-LE: addiu   $8, $8, %lo(($tmp0))  # encoding: [A,A,0x08,0x25]
+# CHECK-LE:                             #   fixup A - offset: 0, value: %lo(($tmp0)), kind: fixup_Mips_LO16
 
 # LW/SW and LDC1/SDC1 of symbol address, done by MipsAsmParser::expandMemInst():
   .set noat
