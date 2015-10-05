@@ -33,6 +33,9 @@ page <http://llvm.org/releases/>`_.
 
 Non-comprehensive list of changes in this release
 =================================================
+* With this release, the minimum Windows version required for running LLVM is
+  Windows 7. Earlier versions, including Windows Vista and XP are no longer
+  supported.
 
 .. NOTE
    For small 1-3 sentence descriptions, just add an entry at the end of
