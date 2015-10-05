@@ -286,7 +286,7 @@ static void handle_ABS16(uint8_t *Location, uint64_t S, int64_t A) {
   uint64_t X = S + A;
   if (!isInt<16>(X)) // -2^15 <= X < 2^16
     error("Relocation R_AARCH64_ABS16 out of range");
-  write16le(Location, read32le(Location) | X);
+  write16le(Location, read16le(Location) | X);
 }
 
 static void handle_ABS32(uint8_t *Location, uint64_t S, int64_t A) {
@@ -299,7 +299,7 @@ static void handle_ABS32(uint8_t *Location, uint64_t S, int64_t A) {
 static void handle_ABS64(uint8_t *Location, uint64_t S, int64_t A) {
   uint64_t X = S + A;
   // No overflow check.
-  write64le(Location, read32le(Location) | X);
+  write64le(Location, read64le(Location) | X);
 }
 
 static void handle_ADD_ABS_LO12_NC(uint8_t *Location, uint64_t S, int64_t A) {
