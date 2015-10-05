@@ -321,7 +321,7 @@ public:
     return reg_bundle_nodbg_iterator(nullptr);
   }
 
-  inline iterator_range<reg_bundle_nodbg_iterator> 
+  inline iterator_range<reg_bundle_nodbg_iterator>
   reg_nodbg_bundles(unsigned Reg) const {
     return iterator_range<reg_bundle_nodbg_iterator>(reg_bundle_nodbg_begin(Reg),
                                                      reg_bundle_nodbg_end());

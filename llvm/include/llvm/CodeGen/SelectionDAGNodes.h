@@ -2053,7 +2053,7 @@ public:
 
   ISD::LoadExtType getExtensionType() const {
     return ISD::LoadExtType(SubclassData & 3);
-  } 
+  }
   const SDValue &getSrc0() const { return getOperand(3); }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::MLOAD;
@@ -2120,7 +2120,7 @@ public:
 class MaskedGatherSDNode : public MaskedGatherScatterSDNode {
 public:
   friend class SelectionDAG;
-  MaskedGatherSDNode(unsigned Order, DebugLoc dl, ArrayRef<SDValue> Operands, 
+  MaskedGatherSDNode(unsigned Order, DebugLoc dl, ArrayRef<SDValue> Operands,
                      SDVTList VTs, EVT MemVT, MachineMemOperand *MMO)
     : MaskedGatherScatterSDNode(ISD::MGATHER, Order, dl, Operands, VTs, MemVT,
                                 MMO) {
@@ -2129,7 +2129,7 @@ public:
     assert(getMask().getValueType().getVectorNumElements() == 
            getValueType(0).getVectorNumElements() && 
            "Vector width mismatch between mask and data");
-    assert(getMask().getValueType().getScalarType() == MVT::i1 && 
+    assert(getMask().getValueType().getScalarType() == MVT::i1 &&
            "Vector width mismatch between mask and data");
   }
 
@@ -2151,7 +2151,7 @@ public:
     assert(getMask().getValueType().getVectorNumElements() == 
            getValue().getValueType().getVectorNumElements() && 
            "Vector width mismatch between mask and data");
-    assert(getMask().getValueType().getScalarType() == MVT::i1 && 
+    assert(getMask().getValueType().getScalarType() == MVT::i1 &&
            "Vector width mismatch between mask and data");
   }
 

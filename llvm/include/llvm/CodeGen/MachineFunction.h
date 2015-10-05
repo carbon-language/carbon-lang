@@ -495,7 +495,7 @@ public:
   /// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
   /// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
   /// normal 'L' label is returned.
-  MCSymbol *getJTISymbol(unsigned JTI, MCContext &Ctx, 
+  MCSymbol *getJTISymbol(unsigned JTI, MCContext &Ctx,
                          bool isLinkerPrivate = false) const;
 
   /// getPICBaseSymbol - Return a function-local symbol to represent the PIC
