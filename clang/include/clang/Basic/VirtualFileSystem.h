@@ -199,6 +199,25 @@ public:
   /// \note The 'end' iterator is directory_iterator().
   virtual directory_iterator dir_begin(const Twine &Dir,
                                        std::error_code &EC) = 0;
+
+  /// Set the working directory. This will affect all following operations on
+  /// this file system and may propagate down for nested file systems.
+  virtual std::error_code setCurrentWorkingDirectory(const Twine &Path) = 0;
+  /// Get the working directory of this file system.
+  virtual llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const = 0;
+
+  /// Make \a Path an absolute path.
+  ///
+  /// Makes \a Path absolute using the current directory if it is not already.
+  /// An empty \a Path will result in the current directory.
+  ///
+  /// /absolute/path   => /absolute/path
+  /// relative/../path => <current-directory>/relative/../path
+  ///
+  /// \param Path A path that is modified to be an absolute path.
+  /// \returns success if \a path has been made absolute, otherwise a
+  ///          platform-specific error_code.
+  std::error_code makeAbsolute(SmallVectorImpl<char> &Path) const;
 };
 
 /// \brief Gets an \p vfs::FileSystem for the 'real' file system, as seen by
@@ -230,6 +249,8 @@ public:
   llvm::ErrorOr<std::unique_ptr<File>>
   openFileForRead(const Twine &Path) override;
   directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override;
+  llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const override;
+  std::error_code setCurrentWorkingDirectory(const Twine &Path) override;
 
   typedef FileSystemList::reverse_iterator iterator;
   
@@ -248,6 +269,7 @@ class InMemoryDirectory;
 /// An in-memory file system.
 class InMemoryFileSystem : public FileSystem {
   std::unique_ptr<detail::InMemoryDirectory> Root;
+  std::string WorkingDirectory;
 
 public:
   InMemoryFileSystem();
@@ -260,6 +282,13 @@ public:
   llvm::ErrorOr<std::unique_ptr<File>>
   openFileForRead(const Twine &Path) override;
   directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override;
+  llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const override {
+    return WorkingDirectory;
+  }
+  std::error_code setCurrentWorkingDirectory(const Twine &Path) override {
+    WorkingDirectory = Path.str();
+    return std::error_code();
+  }
 };
 
 /// \brief Get a globally unique ID for a virtual file or directory.

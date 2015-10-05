@@ -89,6 +89,14 @@ FileSystem::getBufferForFile(const llvm::Twine &Name, int64_t FileSize,
   return (*F)->getBuffer(Name, FileSize, RequiresNullTerminator, IsVolatile);
 }
 
+std::error_code FileSystem::makeAbsolute(SmallVectorImpl<char> &Path) const {
+  auto WorkingDir = getCurrentWorkingDirectory();
+  if (!WorkingDir)
+    return WorkingDir.getError();
+
+  return llvm::sys::fs::make_absolute(WorkingDir.get(), Path);
+}
+
 //===-----------------------------------------------------------------------===/
 // RealFileSystem implementation
 //===-----------------------------------------------------------------------===/
@@ -160,6 +168,9 @@ public:
   ErrorOr<Status> status(const Twine &Path) override;
   ErrorOr<std::unique_ptr<File>> openFileForRead(const Twine &Path) override;
   directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override;
+
+  llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const override;
+  std::error_code setCurrentWorkingDirectory(const Twine &Path) override;
 };
 } // end anonymous namespace
 
@@ -176,6 +187,28 @@ RealFileSystem::openFileForRead(const Twine &Name) {
   if (std::error_code EC = sys::fs::openFileForRead(Name, FD))
     return EC;
   return std::unique_ptr<File>(new RealFile(FD, Name.str()));
+}
+
+llvm::ErrorOr<std::string> RealFileSystem::getCurrentWorkingDirectory() const {
+  SmallString<256> Dir;
+  if (std::error_code EC = llvm::sys::fs::current_path(Dir))
+    return EC;
+  return Dir.str().str();
+}
+
+std::error_code RealFileSystem::setCurrentWorkingDirectory(const Twine &Path) {
+  // FIXME: chdir is thread hostile; on the other hand, creating the same
+  // behavior as chdir is complex: chdir resolves the path once, thus
+  // guaranteeing that all subsequent relative path operations work
+  // on the same path the original chdir resulted in. This makes a
+  // difference for example on network filesystems, where symlinks might be
+  // switched during runtime of the tool. Fixing this depends on having a
+  // file system abstraction that allows openat() style interactions.
+  SmallString<256> Storage;
+  StringRef Dir = Path.toNullTerminatedStringRef(Storage);
+  if (int Err = ::chdir(Dir.data()))
+    return std::error_code(Err, std::generic_category());
+  return std::error_code();
 }
 
 IntrusiveRefCntPtr<FileSystem> vfs::getRealFileSystem() {
@@ -224,11 +257,14 @@ directory_iterator RealFileSystem::dir_begin(const Twine &Dir,
 // OverlayFileSystem implementation
 //===-----------------------------------------------------------------------===/
 OverlayFileSystem::OverlayFileSystem(IntrusiveRefCntPtr<FileSystem> BaseFS) {
-  pushOverlay(BaseFS);
+  FSList.push_back(BaseFS);
 }
 
 void OverlayFileSystem::pushOverlay(IntrusiveRefCntPtr<FileSystem> FS) {
   FSList.push_back(FS);
+  // Synchronize added file systems by duplicating the working directory from
+  // the first one in the list.
+  FS->setCurrentWorkingDirectory(getCurrentWorkingDirectory().get());
 }
 
 ErrorOr<Status> OverlayFileSystem::status(const Twine &Path) {
@@ -250,6 +286,19 @@ OverlayFileSystem::openFileForRead(const llvm::Twine &Path) {
       return Result;
   }
   return make_error_code(llvm::errc::no_such_file_or_directory);
+}
+
+llvm::ErrorOr<std::string>
+OverlayFileSystem::getCurrentWorkingDirectory() const {
+  // All file systems are synchronized, just take the first working directory.
+  return FSList.front()->getCurrentWorkingDirectory();
+}
+std::error_code
+OverlayFileSystem::setCurrentWorkingDirectory(const Twine &Path) {
+  for (auto &FS : FSList)
+    if (std::error_code EC = FS->setCurrentWorkingDirectory(Path))
+      return EC;
+  return std::error_code();
 }
 
 clang::vfs::detail::DirIterImpl::~DirIterImpl() { }
@@ -431,7 +480,7 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
   P.toVector(Path);
 
   // Fix up relative paths. This just prepends the current working directory.
-  std::error_code EC = sys::fs::make_absolute(Path);
+  std::error_code EC = makeAbsolute(Path);
   assert(!EC);
   (void)EC;
 
@@ -473,12 +522,13 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
 }
 
 static ErrorOr<detail::InMemoryNode *>
-lookupInMemoryNode(detail::InMemoryDirectory *Dir, const Twine &P) {
+lookupInMemoryNode(const InMemoryFileSystem &FS, detail::InMemoryDirectory *Dir,
+                   const Twine &P) {
   SmallString<128> Path;
   P.toVector(Path);
 
   // Fix up relative paths. This just prepends the current working directory.
-  std::error_code EC = sys::fs::make_absolute(Path);
+  std::error_code EC = FS.makeAbsolute(Path);
   assert(!EC);
   (void)EC;
 
@@ -504,7 +554,7 @@ lookupInMemoryNode(detail::InMemoryDirectory *Dir, const Twine &P) {
 }
 
 llvm::ErrorOr<Status> InMemoryFileSystem::status(const Twine &Path) {
-  auto Node = lookupInMemoryNode(Root.get(), Path);
+  auto Node = lookupInMemoryNode(*this, Root.get(), Path);
   if (Node)
     return (*Node)->getStatus();
   return Node.getError();
@@ -512,7 +562,7 @@ llvm::ErrorOr<Status> InMemoryFileSystem::status(const Twine &Path) {
 
 llvm::ErrorOr<std::unique_ptr<File>>
 InMemoryFileSystem::openFileForRead(const Twine &Path) {
-  auto Node = lookupInMemoryNode(Root.get(), Path);
+  auto Node = lookupInMemoryNode(*this, Root.get(), Path);
   if (!Node)
     return Node.getError();
 
@@ -551,7 +601,7 @@ public:
 
 directory_iterator InMemoryFileSystem::dir_begin(const Twine &Dir,
                                                  std::error_code &EC) {
-  auto Node = lookupInMemoryNode(Root.get(), Dir);
+  auto Node = lookupInMemoryNode(*this, Root.get(), Dir);
   if (!Node) {
     EC = Node.getError();
     return directory_iterator(std::make_shared<InMemoryDirIterator>());
@@ -741,6 +791,13 @@ public:
 
   ErrorOr<Status> status(const Twine &Path) override;
   ErrorOr<std::unique_ptr<File>> openFileForRead(const Twine &Path) override;
+
+  llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const override {
+    return ExternalFS->getCurrentWorkingDirectory();
+  }
+  std::error_code setCurrentWorkingDirectory(const Twine &Path) override {
+    return ExternalFS->setCurrentWorkingDirectory(Path);
+  }
 
   directory_iterator dir_begin(const Twine &Dir, std::error_code &EC) override{
     ErrorOr<Entry *> E = lookupPath(Dir);
@@ -1114,7 +1171,7 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(const Twine &Path_) {
   Path_.toVector(Path);
 
   // Handle relative paths
-  if (std::error_code EC = sys::fs::make_absolute(Path))
+  if (std::error_code EC = makeAbsolute(Path))
     return EC;
 
   if (Path.empty())

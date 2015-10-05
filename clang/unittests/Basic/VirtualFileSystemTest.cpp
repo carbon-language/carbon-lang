@@ -43,6 +43,12 @@ public:
   openFileForRead(const Twine &Path) override {
     llvm_unreachable("unimplemented");
   }
+  llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const override {
+    return std::string();
+  }
+  std::error_code setCurrentWorkingDirectory(const Twine &Path) override {
+    return std::error_code();
+  }
 
   struct DirIterImpl : public clang::vfs::detail::DirIterImpl {
     std::map<std::string, vfs::Status> &FilesAndDirs;
