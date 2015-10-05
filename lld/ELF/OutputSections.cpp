@@ -110,17 +110,23 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
                           Target->getGotReloc(), IsMips64EL);
     } else {
       P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
+      uintX_t Addent = 0;
+      if (IsRela)
+        Addent = static_cast<const Elf_Rela &>(RI).r_addend;
+
       if (Body && Body->isShared()) {
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
                             IsMips64EL);
-        if (IsRela)
-          static_cast<Elf_Rela *>(P)->r_addend =
-              static_cast<const Elf_Rela &>(RI).r_addend;
       } else {
         P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
-        if (IsRela)
-          static_cast<Elf_Rela *>(P)->r_addend = P->r_offset;
+        if (IsRela) {
+          Addent += C.getOutputSectionOff() + Out->getVA();
+          if (Body)
+            Addent += cast<DefinedRegular<ELFT>>(Body)->Sym.st_value;
+        }
       }
+      if (IsRela)
+        static_cast<Elf_Rela *>(P)->r_addend = Addent;
     }
   }
 }

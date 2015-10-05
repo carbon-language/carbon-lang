@@ -9,6 +9,7 @@
 // CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
 // CHECK-NEXT:     0x[[FOO_ADDR:.*]] R_X86_64_RELATIVE - 0x[[FOO_ADDR]]
 // CHECK-NEXT:     0x[[BAR_ADDR:.*]] R_X86_64_RELATIVE - 0x[[BAR_ADDR]]
+// CHECK-NEXT:     0x2010 R_X86_64_RELATIVE - 0x2009
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -38,3 +39,4 @@ foo:
         .global bar
 bar:
         .quad bar
+        .quad bar + 1

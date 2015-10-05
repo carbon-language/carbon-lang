@@ -189,6 +189,7 @@ template <class ELFT>
 class RelocationSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
   RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
