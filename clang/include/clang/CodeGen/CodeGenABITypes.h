@@ -52,6 +52,7 @@ class CodeGenABITypes
 public:
   CodeGenABITypes(ASTContext &C, llvm::Module &M,
                   CoverageSourceInfo *CoverageInfo = nullptr);
+  ~CodeGenABITypes();
 
   /// These methods all forward to methods in the private implementation class
   /// CodeGenTypes.
@@ -79,7 +80,7 @@ private:
   std::unique_ptr<PreprocessorOptions> PPO;
 
   /// The CodeGenModule we use get to the CodeGenTypes object.
-  std::unique_ptr<CodeGen::CodeGenModule> CGM;
+  CodeGen::CodeGenModule *CGM;
 };
 
 }  // end namespace CodeGen
