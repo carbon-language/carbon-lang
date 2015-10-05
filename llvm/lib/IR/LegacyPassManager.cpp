@@ -784,15 +784,8 @@ void PMTopLevelManager::initializeAllAnalysisInfo() {
 
   for (DenseMap<Pass *, Pass *>::iterator DMI = LastUser.begin(),
         DME = LastUser.end(); DMI != DME; ++DMI) {
-    DenseMap<Pass *, SmallPtrSet<Pass *, 8> >::iterator InvDMI =
-      InversedLastUser.find(DMI->second);
-    if (InvDMI != InversedLastUser.end()) {
-      SmallPtrSet<Pass *, 8> &L = InvDMI->second;
-      L.insert(DMI->first);
-    } else {
-      SmallPtrSet<Pass *, 8> L; L.insert(DMI->first);
-      InversedLastUser[DMI->second] = L;
-    }
+    SmallPtrSet<Pass *, 8> &L = InversedLastUser[DMI->second];
+    L.insert(DMI->first);
   }
 }
 
