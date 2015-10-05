@@ -99,7 +99,7 @@ public:
   /// RegFixups - Registers which need to be replaced after isel is done.
   DenseMap<unsigned, unsigned> RegFixups;
 
-  /// StatepointStackSlots - A list of temporary stack slots (frame indices) 
+  /// StatepointStackSlots - A list of temporary stack slots (frame indices)
   /// used to spill values at a statepoint.  We store them here to enable
   /// reuse of the same stack slots across different statepoints in different
   /// basic blocks.

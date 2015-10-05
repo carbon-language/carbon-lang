@@ -110,13 +110,13 @@ public:
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
   /// so.  The return values are:
-  /// 
+  ///
   ///  0: This constant pool entry is guaranteed to never have a relocation
   ///     applied to it (because it holds a simple constant like '4').
   ///  1: This entry has relocations, but the entries are guaranteed to be
   ///     resolvable by the static linker, so the dynamic linker will never see
   ///     them.
-  ///  2: This entry may have arbitrary relocations. 
+  ///  2: This entry may have arbitrary relocations.
   unsigned getRelocationInfo() const;
 
   SectionKind getSectionKind(const DataLayout *DL) const;

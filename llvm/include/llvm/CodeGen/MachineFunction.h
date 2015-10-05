@@ -204,7 +204,7 @@ public:
   MachineFrameInfo *getFrameInfo() { return FrameInfo; }
   const MachineFrameInfo *getFrameInfo() const { return FrameInfo; }
 
-  /// getJumpTableInfo - Return the jump table info object for the current 
+  /// getJumpTableInfo - Return the jump table info object for the current
   /// function.  This object contains information about jump tables in the
   /// current function.  If the current function has no jump tables, this will
   /// return null.

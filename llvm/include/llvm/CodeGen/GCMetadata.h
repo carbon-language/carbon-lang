@@ -160,7 +160,7 @@ class GCModuleInfo : public ImmutablePass {
 public:
   /// Lookup the GCStrategy object associated with the given gc name.
   /// Objects are owned internally; No caller should attempt to delete the
-  /// returned objects. 
+  /// returned objects.
   GCStrategy *getGCStrategy(const StringRef Name);
 
   /// List of per function info objects.  In theory, Each of these
