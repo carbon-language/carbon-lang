@@ -606,8 +606,6 @@ options. Each new style option must ..
   * .. have a publicly accessible style guide
   * .. have a person willing to contribute and maintain patches
 
-At least two out of these three need to be met.
-
 Examples
 ========
 
