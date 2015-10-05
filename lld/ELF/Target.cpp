@@ -30,6 +30,8 @@ TargetInfo::~TargetInfo() {}
 
 bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
 
+bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
+
 X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
@@ -87,6 +89,7 @@ X86_64TargetInfo::X86_64TargetInfo() {
   PCRelReloc = R_X86_64_PC32;
   GotReloc = R_X86_64_GLOB_DAT;
   GotRefReloc = R_X86_64_PC32;
+  RelativeReloc = R_X86_64_RELATIVE;
 }
 
 void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -136,6 +139,18 @@ bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
     // R_386_JMP_SLOT, etc).
     return S.isShared();
   case R_X86_64_PLT32:
+    return true;
+  }
+}
+
+bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
+  switch (Type) {
+  default:
+    return false;
+  case R_X86_64_PC64:
+  case R_X86_64_PC32:
+  case R_X86_64_PC16:
+  case R_X86_64_PC8:
     return true;
   }
 }

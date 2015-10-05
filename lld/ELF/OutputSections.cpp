@@ -104,16 +104,23 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     const SymbolBody *Body = C.getFile()->getSymbolBody(SymIndex);
     uint32_t Type = RI.getType(IsMips64EL);
-    if (Target->relocNeedsGot(Type, *Body)) {
+    if (Body && Target->relocNeedsGot(Type, *Body)) {
       P->r_offset = GotSec.getEntryAddr(*Body);
       P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
                           Target->getGotReloc(), IsMips64EL);
     } else {
       P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
-      P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type, IsMips64EL);
-      if (IsRela)
-        static_cast<Elf_Rela *>(P)->r_addend =
-            static_cast<const Elf_Rela &>(RI).r_addend;
+      if (Body && Body->isShared()) {
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
+                            IsMips64EL);
+        if (IsRela)
+          static_cast<Elf_Rela *>(P)->r_addend =
+              static_cast<const Elf_Rela &>(RI).r_addend;
+      } else {
+        P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
+        if (IsRela)
+          static_cast<Elf_Rela *>(P)->r_addend = P->r_offset;
+      }
     }
   }
 }

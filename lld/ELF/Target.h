@@ -23,9 +23,11 @@ public:
   llvm::StringRef getDefaultEntry() const { return DefaultEntry; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
-  unsigned getGotRefReloc() const { return GotRefReloc; };
+  unsigned getGotRefReloc() const { return GotRefReloc; }
+  unsigned getRelativeReloc() const { return RelativeReloc; }
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                              uint64_t PltEntryAddr) const = 0;
+  virtual bool isRelRelative(uint32_t Type) const;
   virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
   virtual bool relocPointsToGot(uint32_t Type) const;
   virtual bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const = 0;
@@ -39,6 +41,7 @@ protected:
   unsigned PCRelReloc;
   unsigned GotRefReloc;
   unsigned GotReloc;
+  unsigned RelativeReloc;
   llvm::StringRef DefaultEntry = "_start";
 };
 
@@ -65,6 +68,7 @@ public:
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                    uint64_t BaseAddr, uint64_t SymVA,
                    uint64_t GotVA) const override;
+  bool isRelRelative(uint32_t Type) const override;
 };
 
 class PPC64TargetInfo final : public TargetInfo {

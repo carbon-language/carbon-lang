@@ -217,22 +217,29 @@ void Writer<ELFT>::scanRelocs(
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     SymbolBody *Body = File.getSymbolBody(SymIndex);
-    if (!Body)
-      continue;
     uint32_t Type = RI.getType(IsMips64EL);
-    if (Target->relocNeedsPlt(Type, *Body)) {
-      if (Body->isInPlt())
+    if (Body) {
+      if (Target->relocNeedsPlt(Type, *Body)) {
+        if (Body->isInPlt())
+          continue;
+        PltSec.addEntry(Body);
+      }
+      if (Target->relocNeedsGot(Type, *Body)) {
+        if (Body->isInGot())
+          continue;
+        GotSec.addEntry(Body);
+        Body->setUsedInDynamicReloc();
+        RelaDynSec.addReloc({C, RI});
         continue;
-      PltSec.addEntry(Body);
+      }
+      if (Body->isShared()) {
+        Body->setUsedInDynamicReloc();
+        RelaDynSec.addReloc({C, RI});
+        continue;
+      }
     }
-    if (Target->relocNeedsGot(Type, *Body)) {
-      if (Body->isInGot())
-        continue;
-      GotSec.addEntry(Body);
-    } else if (!isa<SharedSymbol<ELFT>>(Body))
-      continue;
-    Body->setUsedInDynamicReloc();
-    RelaDynSec.addReloc({C, RI});
+    if (Config->Shared && !Target->isRelRelative(Type))
+      RelaDynSec.addReloc({C, RI});
   }
 }
 
