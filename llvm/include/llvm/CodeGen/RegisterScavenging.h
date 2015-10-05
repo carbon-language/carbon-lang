@@ -104,10 +104,8 @@ public:
     MBBI = I;
   }
 
-  MachineBasicBlock::iterator getCurrentPosition() const {
-    return MBBI;
-  }
-  
+  MachineBasicBlock::iterator getCurrentPosition() const { return MBBI; }
+
   /// Return if a specific register is currently used.
   bool isRegUsed(unsigned Reg, bool includeReserved = true) const;
 

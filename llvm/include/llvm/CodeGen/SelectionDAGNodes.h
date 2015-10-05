@@ -2020,9 +2020,9 @@ class MaskedLoadStoreSDNode : public MemSDNode {
 public:
   friend class SelectionDAG;
   MaskedLoadStoreSDNode(ISD::NodeType NodeTy, unsigned Order, DebugLoc dl,
-                   SDValue *Operands, unsigned numOperands, 
-                   SDVTList VTs, EVT MemVT, MachineMemOperand *MMO)
-    : MemSDNode(NodeTy, Order, dl, VTs, MemVT, MMO) {
+                        SDValue *Operands, unsigned numOperands, SDVTList VTs,
+                        EVT MemVT, MachineMemOperand *MMO)
+      : MemSDNode(NodeTy, Order, dl, VTs, MemVT, MMO) {
     InitOperands(Ops, Operands, numOperands);
   }
 
@@ -2126,8 +2126,8 @@ public:
                                 MMO) {
     assert(getValue().getValueType() == getValueType(0) &&
            "Incompatible type of the PathThru value in MaskedGatherSDNode");
-    assert(getMask().getValueType().getVectorNumElements() == 
-           getValueType(0).getVectorNumElements() && 
+    assert(getMask().getValueType().getVectorNumElements() ==
+               getValueType(0).getVectorNumElements() &&
            "Vector width mismatch between mask and data");
     assert(getMask().getValueType().getScalarType() == MVT::i1 &&
            "Vector width mismatch between mask and data");
@@ -2146,10 +2146,10 @@ public:
   friend class SelectionDAG;
   MaskedScatterSDNode(unsigned Order, DebugLoc dl,ArrayRef<SDValue> Operands,
                       SDVTList VTs, EVT MemVT, MachineMemOperand *MMO)
-    : MaskedGatherScatterSDNode(ISD::MSCATTER, Order, dl, Operands, VTs, MemVT,
-                                MMO) {
-    assert(getMask().getValueType().getVectorNumElements() == 
-           getValue().getValueType().getVectorNumElements() && 
+      : MaskedGatherScatterSDNode(ISD::MSCATTER, Order, dl, Operands, VTs,
+                                  MemVT, MMO) {
+    assert(getMask().getValueType().getVectorNumElements() ==
+               getValue().getValueType().getVectorNumElements() &&
            "Vector width mismatch between mask and data");
     assert(getMask().getValueType().getScalarType() == MVT::i1 &&
            "Vector width mismatch between mask and data");

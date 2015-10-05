@@ -88,9 +88,9 @@ public:
     Val.ConstVal = V;
   }
   MachineConstantPoolEntry(MachineConstantPoolValue *V, unsigned A)
-    : Alignment(A) {
-    Val.MachineCPVal = V; 
-    Alignment |= 1U << (sizeof(unsigned)*CHAR_BIT-1);
+      : Alignment(A) {
+    Val.MachineCPVal = V;
+    Alignment |= 1U << (sizeof(unsigned) * CHAR_BIT - 1);
   }
 
   /// isMachineConstantPoolEntry - Return true if the MachineConstantPoolEntry
@@ -100,8 +100,8 @@ public:
     return (int)Alignment < 0;
   }
 
-  int getAlignment() const { 
-    return Alignment & ~(1 << (sizeof(unsigned)*CHAR_BIT-1));
+  int getAlignment() const {
+    return Alignment & ~(1 << (sizeof(unsigned) * CHAR_BIT - 1));
   }
 
   Type *getType() const;
@@ -155,8 +155,9 @@ public:
   /// an existing one.  User must specify the minimum required alignment for
   /// the object.
   unsigned getConstantPoolIndex(const Constant *C, unsigned Alignment);
-  unsigned getConstantPoolIndex(MachineConstantPoolValue *V,unsigned Alignment);
-  
+  unsigned getConstantPoolIndex(MachineConstantPoolValue *V,
+                                unsigned Alignment);
+
   /// isEmpty - Return true if this constant pool contains no constants.
   bool isEmpty() const { return Constants.empty(); }
 

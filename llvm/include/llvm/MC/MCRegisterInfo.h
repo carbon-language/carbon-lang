@@ -652,10 +652,8 @@ public:
     }
   }
 
-  bool isValid() const {
-    return RI.isValid();
-  }
-  
+  bool isValid() const { return RI.isValid(); }
+
   unsigned operator*() const {
     assert (SI.isValid() && "Cannot dereference an invalid iterator.");
     return *SI;

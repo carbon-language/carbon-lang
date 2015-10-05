@@ -33,13 +33,13 @@ public:
   typedef Pass *(*TargetMachineCtor_t)(TargetMachine *);
 
 private:
-  const char      *const PassName;     // Nice name for Pass
-  const char      *const PassArgument; // Command Line argument to run this pass
-  const void *PassID;      
-  const bool IsCFGOnlyPass;            // Pass only looks at the CFG.
-  const bool IsAnalysis;               // True if an analysis pass.
-  const bool IsAnalysisGroup;          // True if an analysis group.
-  std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
+  const char *const PassName;     // Nice name for Pass
+  const char *const PassArgument; // Command Line argument to run this pass
+  const void *PassID;
+  const bool IsCFGOnlyPass;              // Pass only looks at the CFG.
+  const bool IsAnalysis;                 // True if an analysis pass.
+  const bool IsAnalysisGroup;            // True if an analysis group.
+  std::vector<const PassInfo *> ItfImpl; // Interfaces implemented by this pass
 
   NormalCtor_t NormalCtor;
   TargetMachineCtor_t TargetMachineCtor;
@@ -50,18 +50,16 @@ public:
   PassInfo(const char *name, const char *arg, const void *pi,
            NormalCtor_t normal, bool isCFGOnly, bool is_analysis,
            TargetMachineCtor_t machine = nullptr)
-    : PassName(name), PassArgument(arg), PassID(pi), 
-      IsCFGOnlyPass(isCFGOnly), 
-      IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal),
-      TargetMachineCtor(machine) {}
+      : PassName(name), PassArgument(arg), PassID(pi), IsCFGOnlyPass(isCFGOnly),
+        IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal),
+        TargetMachineCtor(machine) {}
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass. This version is for use by analysis groups; it
   /// does not auto-register the pass.
   PassInfo(const char *name, const void *pi)
-    : PassName(name), PassArgument(""), PassID(pi), 
-      IsCFGOnlyPass(false), 
-      IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(nullptr),
-      TargetMachineCtor(nullptr) {}
+      : PassName(name), PassArgument(""), PassID(pi), IsCFGOnlyPass(false),
+        IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(nullptr),
+        TargetMachineCtor(nullptr) {}
 
   /// getPassName - Return the friendly name for the pass, never returns null
   ///
@@ -78,10 +76,8 @@ public:
   const void *getTypeInfo() const { return PassID; }
 
   /// Return true if this PassID implements the specified ID pointer.
-  bool isPassID(const void *IDPtr) const {
-    return PassID == IDPtr;
-  }
-  
+  bool isPassID(const void *IDPtr) const { return PassID == IDPtr; }
+
   /// isAnalysisGroup - Return true if this is an analysis group, not a normal
   /// pass.
   ///

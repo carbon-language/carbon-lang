@@ -33,9 +33,8 @@ public:
   static MachinePassRegistry Registry;
 
   RegisterRegAlloc(const char *N, const char *D, FunctionPassCtor C)
-  : MachinePassRegistryNode(N, D, (MachinePassCtor)C)
-  { 
-     Registry.Add(this); 
+      : MachinePassRegistryNode(N, D, (MachinePassCtor)C) {
+    Registry.Add(this);
   }
   ~RegisterRegAlloc() { Registry.Remove(this); }
 
