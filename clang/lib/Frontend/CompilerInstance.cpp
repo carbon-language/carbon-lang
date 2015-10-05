@@ -641,7 +641,7 @@ std::unique_ptr<llvm::raw_pwrite_stream> CompilerInstance::createOutputFile(
       if (llvm::sys::fs::exists(Status)) {
         // Fail early if we can't write to the final destination.
         if (!llvm::sys::fs::can_write(OutputPath)) {
-          Error = std::make_error_code(std::errc::operation_not_permitted);
+          Error = make_error_code(llvm::errc::operation_not_permitted);
           return nullptr;
         }
 
