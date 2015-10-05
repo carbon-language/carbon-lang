@@ -63,7 +63,7 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2101">2101</a></td><td>Some transformation types can produce impossible types</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2111">2111</a></td><td>Which <tt>unexpected</tt>&#47;<tt>terminate</tt> handler is called from the exception handling runtime?</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2119">2119</a></td><td>Missing <tt>hash</tt> specializations for extended integer types</td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2127">2127</a></td><td>Move-construction with <tt>raw_storage_iterator</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2127">2127</a></td><td>Move-construction with <tt>raw_storage_iterator</tt></td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2133">2133</a></td><td>Attitude to overloaded comma for iterators</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2156">2156</a></td><td>Unordered containers' <tt>reserve(n)</tt> reserves for <tt>n-1</tt> elements</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2181">2181</a></td><td>Exceptions from <em>seed sequence</em> operations</td><td>Kona</td><td></td></tr>
@@ -108,7 +108,7 @@
 <li>2101 - Need to write some careful test cases. In particular, need to check function types with/without const/ref qualifiers.  Currently we get this wrong. Installing metashell to play with these.</li>
 <li><i>2111 - Resolved an ambiguity by calling it out. No code change required.</i></li>
 <li>2119 - Hashes for all integral and enumeration types. Research needed</li>
-<li>2127 - Add a new member to raw_storage_iterator. Looks simple.</li>
+<li><i>2127 - Add a new member to raw_storage_iterator. Looks simple.</i></li>
 <li><i>2133 - We do this already; thanks Eric.</i></li>
 <li>2156 - check and make sure that we already do this. Write a test.</li>
 <li>2181 - I suspect that this will not require any code changes, but will need to be read carefully.</li>
