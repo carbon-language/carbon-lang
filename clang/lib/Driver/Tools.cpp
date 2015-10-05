@@ -834,7 +834,8 @@ static void getARMTargetFeatures(const ToolChain &TC,
     // The above behavior is consistent with GCC.
     int VersionNum = getARMSubArchVersionNumber(Triple);
     if (Triple.isOSDarwin() || Triple.isOSNetBSD()) {
-      if (VersionNum < 6)
+      if (VersionNum < 6 ||
+          Triple.getSubArch() == llvm::Triple::SubArchType::ARMSubArch_v6m)
         Features.push_back("+strict-align");
     } else if (Triple.isOSLinux() || Triple.isOSNaCl()) {
       if (VersionNum < 7)

@@ -4452,10 +4452,6 @@ public:
       if (Feature[0] == '+')
         Features[Feature+1] = true; 
 
-    if (ArchVersion < 6  || 
-       (ArchVersion == 6 && ArchProfile == llvm::ARM::PK_M))
-      Features["strict-align"] = true;
-
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
 

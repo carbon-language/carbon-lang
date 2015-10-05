@@ -59,6 +59,12 @@
 // RUN: %clang -target armv6-unknown-nacl-gnueabihf -### %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ALIGNED-ARM < %t %s
 
+// RUN: %clang -target armv6m-apple-darwin -### %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-ALIGNED-ARM < %t %s
+
+// RUN: %clang -target armv6m-netbsd-eabi -### %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-ALIGNED-ARM < %t %s
+
 // RUN: %clang -target aarch64-none-gnueabi -mno-unaligned-access -### %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ALIGNED-AARCH64 < %t %s
 
