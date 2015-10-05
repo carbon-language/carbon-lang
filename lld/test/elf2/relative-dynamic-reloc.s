@@ -11,6 +11,7 @@
 // CHECK-NEXT:     0x[[BAR_ADDR:.*]] R_X86_64_RELATIVE - 0x[[BAR_ADDR]]
 // CHECK-NEXT:     0x2010 R_X86_64_RELATIVE - 0x2009
 // CHECK-NEXT:     0x{{.*}} R_X86_64_RELATIVE - 0x[[ZED_ADDR:.*]]
+// CHECK-NEXT:     0x{{.*}} R_X86_64_RELATIVE - 0x[[FOO_ADDR]]
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -47,3 +48,6 @@ bar:
         .hidden zed
         .comm zed,1
         .quad zed
+
+        .section abc,"a"
+        .quad foo

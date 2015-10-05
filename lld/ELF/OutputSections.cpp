@@ -103,7 +103,10 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     const Elf_Rel &RI = Rel.RI;
     OutputSection<ELFT> *Out = C.getOutputSection();
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
-    const SymbolBody *Body = C.getFile()->getSymbolBody(SymIndex);
+    const ObjectFile<ELFT> &File = *C.getFile();
+    const SymbolBody *Body = File.getSymbolBody(SymIndex);
+    const ELFFile<ELFT> &Obj = File.getObj();
+
     uint32_t Type = RI.getType(IsMips64EL);
     if (Body && Target->relocNeedsGot(Type, *Body)) {
       P->r_offset = GotSec.getEntryAddr(*Body);
@@ -124,7 +127,8 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
           if (Body)
             Addent += getSymVA(cast<ELFSymbolBody<ELFT>>(*Body), BssSec);
           else
-            Addent += C.getOutputSectionOff() + Out->getVA();
+            Addent += getLocalSymVA(
+                Obj.getRelocationSymbol(&RI, File.getSymbolTable()), File);
         }
       }
       if (IsRela)
