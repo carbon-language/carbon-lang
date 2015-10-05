@@ -602,9 +602,9 @@ used by a codebase somewhere in the wild. Of course, we do want to support all
 major projects and thus have established the following bar for adding style
 options. Each new style option must ..
 
-  * .. be used in a project of significant size (have dozens of contributors)
-  * .. have a publicly accessible style guide
-  * .. have a person willing to contribute and maintain patches
+  * be used in a project of significant size (have dozens of contributors)
+  * have a publicly accessible style guide
+  * have a person willing to contribute and maintain patches
 
 Examples
 ========
