@@ -46,13 +46,12 @@ public:
   ///
   Type *getType() const { return Ty; }
 
-  
   /// getRelocationInfo - This method classifies the entry according to
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
   /// so.  The return values are the same as Constant::getRelocationInfo().
   virtual unsigned getRelocationInfo() const = 0;
-  
+
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
                                         unsigned Alignment) = 0;
 
@@ -67,7 +66,6 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   V.print(OS);
   return OS;
 }
-  
 
 /// This class is a data container for one entry in a MachineConstantPool.
 /// It contains a pointer to the value and an offset from the start of
@@ -107,7 +105,7 @@ public:
   }
 
   Type *getType() const;
-  
+
   /// getRelocationInfo - This method classifies the entry according to
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
@@ -123,7 +121,7 @@ public:
 
   SectionKind getSectionKind(const DataLayout *DL) const;
 };
-  
+
 /// The MachineConstantPool class keeps track of constants referenced by a
 /// function which must be spilled to memory.  This is used for constants which
 /// are unable to be used directly as operands to instructions, which typically
@@ -148,11 +146,11 @@ public:
   explicit MachineConstantPool(const DataLayout &DL)
       : PoolAlignment(1), DL(DL) {}
   ~MachineConstantPool();
-    
+
   /// getConstantPoolAlignment - Return the alignment required by
   /// the whole constant pool, of which the first element must be aligned.
   unsigned getConstantPoolAlignment() const { return PoolAlignment; }
-  
+
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
   /// an existing one.  User must specify the minimum required alignment for
   /// the object.

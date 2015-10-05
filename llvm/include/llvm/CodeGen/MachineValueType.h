@@ -87,7 +87,7 @@ class MVT {
       v8i64          =  40,   //  8 x i64
       v16i64         =  41,   // 16 x i64
       v1i128         =  42,   //  1 x i128
-      
+
       FIRST_INTEGER_VECTOR_VALUETYPE = v2i1,
       LAST_INTEGER_VECTOR_VALUETYPE = v1i128,
 

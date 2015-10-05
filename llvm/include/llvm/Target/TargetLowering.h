@@ -885,7 +885,7 @@ public:
   bool allowsMemoryAccess(LLVMContext &Context, const DataLayout &DL, EVT VT,
                           unsigned AddrSpace = 0, unsigned Alignment = 1,
                           bool *Fast = nullptr) const;
-  
+
   /// Returns the target specific optimal type for load and store operations as
   /// a result of memset, memcpy, and memmove lowering.
   ///

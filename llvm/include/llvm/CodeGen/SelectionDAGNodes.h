@@ -333,7 +333,7 @@ private:
   bool NoInfs : 1;
   bool NoSignedZeros : 1;
   bool AllowReciprocal : 1;
-  
+
 public:
   /// Default constructor turns off all optimization flags.
   SDNodeFlags() {
@@ -346,7 +346,7 @@ public:
     NoSignedZeros = false;
     AllowReciprocal = false;
   }
-  
+
   // These are mutators for each flag.
   void setNoUnsignedWrap(bool b) { NoUnsignedWrap = b; }
   void setNoSignedWrap(bool b) { NoSignedWrap = b; }
@@ -356,7 +356,7 @@ public:
   void setNoInfs(bool b) { NoInfs = b; }
   void setNoSignedZeros(bool b) { NoSignedZeros = b; }
   void setAllowReciprocal(bool b) { AllowReciprocal = b; }
-  
+
   // These are accessors for each flag.
   bool hasNoUnsignedWrap() const { return NoUnsignedWrap; }
   bool hasNoSignedWrap() const { return NoSignedWrap; }
@@ -366,7 +366,7 @@ public:
   bool hasNoInfs() const { return NoInfs; }
   bool hasNoSignedZeros() const { return NoSignedZeros; }
   bool hasAllowReciprocal() const { return AllowReciprocal; }
-  
+
   /// Return a raw encoding of the flags.
   /// This function should only be used to add data to the NodeID value.
   unsigned getRawFlags() const {
@@ -704,7 +704,7 @@ public:
   /// This could be defined as a virtual function and implemented more simply
   /// and directly, but it is not to avoid creating a vtable for this class.
   const SDNodeFlags *getFlags() const;
-  
+
   /// Return the number of values defined/returned by this operator.
   unsigned getNumValues() const { return NumValues; }
 

@@ -204,7 +204,7 @@ namespace llvm {
 
     /// This class encapsulates options for reciprocal-estimate code generation.
     TargetRecip Reciprocals;
-    
+
     /// JTType - This flag specifies the type of jump-instruction table to
     /// create for functions that have the jumptable attribute.
     JumpTable::JumpTableType JTType;

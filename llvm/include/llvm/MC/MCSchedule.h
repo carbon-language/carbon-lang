@@ -183,7 +183,7 @@ struct MCSchedModel {
   // takes to recover from a branch misprediction.
   unsigned MispredictPenalty;
   static const unsigned DefaultMispredictPenalty = 10;
-  
+
   bool PostRAScheduler; // default value is false
 
   bool CompleteModel;

@@ -161,9 +161,9 @@ public:
   }
 
   unsigned CreateReg(MVT VT);
-  
+
   unsigned CreateRegs(Type *Ty);
-  
+
   unsigned InitializeRegForValue(const Value *V) {
     // Tokens never live in vregs.
     if (V->getType()->isTokenTy())

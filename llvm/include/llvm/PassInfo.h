@@ -91,7 +91,7 @@ public:
   /// isCFGOnlyPass - return true if this pass only looks at the CFG for the
   /// function.
   bool isCFGOnlyPass() const { return IsCFGOnlyPass; }
-  
+
   /// getNormalCtor - Return a pointer to a function, that when called, creates
   /// an instance of the pass and returns it.  This pointer may be null if there
   /// is no default constructor for the pass.

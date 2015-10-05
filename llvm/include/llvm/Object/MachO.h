@@ -116,7 +116,7 @@ public:
   bool operator==(const MachORebaseEntry &) const;
 
   void moveNext();
-  
+
 private:
   friend class MachOObjectFile;
   void moveToFirst();
@@ -521,4 +521,3 @@ inline const ObjectFile *DiceRef::getObjectFile() const {
 }
 
 #endif
-

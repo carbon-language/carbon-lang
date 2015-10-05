@@ -528,7 +528,7 @@ public:
   /// apply sub registers to ToReg in order to obtain a final/proper physical
   /// register.
   void replaceRegWith(unsigned FromReg, unsigned ToReg);
-  
+
   /// getVRegDef - Return the machine instr that defines the specified virtual
   /// register or null if none is found.  This assumes that the code is in SSA
   /// form, so there should only be one definition.

@@ -632,7 +632,7 @@ private:
   unsigned Reg;
   const MCRegisterInfo *MCRI;
   bool IncludeSelf;
-  
+
   MCRegUnitIterator RI;
   MCRegUnitRootIterator RRI;
   MCSuperRegIterator SI;

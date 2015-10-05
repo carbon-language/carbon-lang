@@ -38,7 +38,6 @@ public:
      Registry.Add(this); 
   }
   ~RegisterRegAlloc() { Registry.Remove(this); }
-  
 
   // Accessors.
   //
@@ -57,7 +56,6 @@ public:
   static void setListener(MachinePassRegistryListener *L) {
     Registry.setListener(L);
   }
-  
 };
 
 } // end namespace llvm

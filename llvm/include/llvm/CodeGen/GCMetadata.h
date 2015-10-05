@@ -162,7 +162,7 @@ public:
   /// Objects are owned internally; No caller should attempt to delete the
   /// returned objects. 
   GCStrategy *getGCStrategy(const StringRef Name);
-  
+
   /// List of per function info objects.  In theory, Each of these
   /// may be associated with a different GC.
   typedef std::vector<std::unique_ptr<GCFunctionInfo>> FuncInfoVec;
