@@ -1511,6 +1511,13 @@ TEST(Function, MatchesFunctionDeclarations) {
       notMatches("void f(int);"
                  "template <typename T> struct S { void g(T t) { f(t); } };",
                  CallFunctionF));
+
+  EXPECT_TRUE(matches("void f(...);", functionDecl(isVariadic())));
+  EXPECT_TRUE(notMatches("void f(int);", functionDecl(isVariadic())));
+  EXPECT_TRUE(notMatches("template <typename... Ts> void f(Ts...);",
+                         functionDecl(isVariadic())));
+  EXPECT_TRUE(notMatches("void f();", functionDecl(isVariadic())));
+  EXPECT_TRUE(notMatchesC("void f();", functionDecl(isVariadic())));
 }
 
 TEST(FunctionTemplate, MatchesFunctionTemplateDeclarations) {

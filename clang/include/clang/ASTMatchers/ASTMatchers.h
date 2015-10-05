@@ -3255,6 +3255,20 @@ AST_POLYMORPHIC_MATCHER(isDefinition,
   return Node.isThisDeclarationADefinition();
 }
 
+/// \brief Matches if a function declaration is variadic.
+///
+/// Example matches f, but not g or h. The function i will not match, even when
+/// compiled in C mode.
+/// \code
+///   void f(...);
+///   void g(int);
+///   template <typename... Ts> void h(Ts...);
+///   void i();
+/// \endcode
+AST_MATCHER(FunctionDecl, isVariadic) {
+  return Node.isVariadic();
+}
+
 /// \brief Matches the class declaration that the given method declaration
 /// belongs to.
 ///
