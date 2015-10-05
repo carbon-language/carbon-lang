@@ -477,6 +477,7 @@ void LoopConvertCheck::doConversion(
   std::string VarName;
   bool VarNameFromAlias = (Usages.size() == 1) && AliasDecl;
   bool AliasVarIsRef = false;
+  bool CanCopy = true;
 
   if (VarNameFromAlias) {
     const auto *AliasVar = cast<VarDecl>(AliasDecl->getSingleDecl());
@@ -525,6 +526,16 @@ void LoopConvertCheck::doConversion(
             // and parenthesis around a simple DeclRefExpr can always be
             // removed.
             Range = Paren->getSourceRange();
+          } else if (const auto *UOP = Parents[0].get<UnaryOperator>()) {
+            // If we are taking the address of the loop variable, then we must
+            // not use a copy, as it would mean taking the address of the loop's
+            // local index instead.
+            // FIXME: This won't catch cases where the address is taken outside
+            // of the loop's body (for instance, in a function that got the
+            // loop's index as a const reference parameter), or where we take
+            // the address of a member (like "&Arr[i].A.B.C").
+            if (UOP->getOpcode() == UO_AddrOf)
+              CanCopy = false;
           }
         }
       } else {
@@ -548,8 +559,10 @@ void LoopConvertCheck::doConversion(
   // If the new variable name is from the aliased variable, then the reference
   // type for the new variable should only be used if the aliased variable was
   // declared as a reference.
-  bool UseCopy = (VarNameFromAlias && !AliasVarIsRef) ||
-                 (Descriptor.DerefByConstRef && Descriptor.IsTriviallyCopyable);
+  bool UseCopy =
+      CanCopy &&
+      ((VarNameFromAlias && !AliasVarIsRef) ||
+       (Descriptor.DerefByConstRef && Descriptor.IsTriviallyCopyable));
 
   if (!UseCopy) {
     if (Descriptor.DerefByConstRef) {

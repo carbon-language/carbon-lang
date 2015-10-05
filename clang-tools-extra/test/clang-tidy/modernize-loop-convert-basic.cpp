@@ -97,7 +97,7 @@ void f() {
   // CHECK-FIXES-NEXT: Tea.g();
 }
 
-void constArray() {
+const int *constArray() {
   for (int I = 0; I < N; ++I) {
     printf("2 * %d = %d\n", ConstArr[I], ConstArr[I] + ConstArr[I]);
   }
@@ -112,6 +112,16 @@ void constArray() {
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (const auto & Elem : NonCopy)
   // CHECK-FIXES-NEXT: printf("2 * %d = %d\n", Elem.X, Elem.X + Elem.X);
+
+  bool Something = false;
+  for (int I = 0; I < N; ++I) {
+    if (Something)
+      return &ConstArr[I];
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (const auto & Elem : ConstArr)
+  // CHECK-FIXES-NEXT: if (Something)
+  // CHECK-FIXES-NEXT: return &Elem;
 }
 
 struct HasArr {
