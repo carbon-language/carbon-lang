@@ -817,14 +817,6 @@ namespace {
     QualType TransformSubstTemplateTypeParmPackType(TypeLocBuilder &TLB,
                                            SubstTemplateTypeParmPackTypeLoc TL);
 
-    ExprResult TransformCallExpr(CallExpr *CE) {
-      getSema().CallsUndergoingInstantiation.push_back(CE);
-      ExprResult Result =
-          TreeTransform<TemplateInstantiator>::TransformCallExpr(CE);
-      getSema().CallsUndergoingInstantiation.pop_back();
-      return Result;
-    }
-
     ExprResult TransformLambdaExpr(LambdaExpr *E) {
       LocalInstantiationScope Scope(SemaRef, /*CombineWithOuterScope=*/true);
       return TreeTransform<TemplateInstantiator>::TransformLambdaExpr(E);
