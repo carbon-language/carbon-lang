@@ -61,6 +61,8 @@ public:
     return EntrySym->getReplacement();
   }
 
+  void addUndefinedSym(StringRef Name);
+
   template <class ELFT>
   void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
@@ -73,6 +75,7 @@ private:
   void addELFFile(ELFFileBase *File);
   void addLazy(Lazy *New);
   void addMemberFile(Lazy *Body);
+  template <class ELFT> void addUndefinedSym(StringRef Name);
 
   template <class ELFT> void init(uint16_t EMachine);
   template <class ELFT> void resolve(SymbolBody *Body);

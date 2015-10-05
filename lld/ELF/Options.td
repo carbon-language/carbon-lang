@@ -61,6 +61,9 @@ def soname : Joined<["-"], "soname=">,
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
 
+def undefined : Joined<["--"], "undefined=">,
+  HelpText<"Force undefined symbol during linking">;
+
 def whole_archive : Flag<["--"], "whole-archive">,
   HelpText<"Force load of all members in a static library">;
 
@@ -78,6 +81,7 @@ def alias_l__library : Joined<["--"], "library=">, Alias<l>;
 def alias_rpath_rpath : Joined<["-"], "rpath=">, Alias<rpath>;
 def alias_soname_h : Separate<["-"], "h">, Alias<soname>;
 def alias_soname_soname : Separate<["-"], "soname">, Alias<soname>;
+def alias_undefined_u : Separate<["-"], "u">, Alias<undefined>;
 
 // Options listed below are silently ignored now.
 def O3 : Flag<["-"], "O3">;

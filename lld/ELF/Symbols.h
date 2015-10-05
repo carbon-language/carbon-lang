@@ -53,7 +53,6 @@ public:
   bool isWeak() const { return IsWeak; }
   bool isUndefined() const { return SymbolKind == UndefinedKind; }
   bool isDefined() const { return SymbolKind <= DefinedLast; }
-  bool isStrongUndefined() const { return !IsWeak && isUndefined(); }
   bool isCommon() const { return SymbolKind == DefinedCommonKind; }
   bool isLazy() const { return SymbolKind == LazyKind; }
   bool isShared() const { return SymbolKind == SharedKind; }
@@ -235,7 +234,8 @@ template <class ELFT> class Undefined : public ELFSymbolBody<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  static Elf_Sym Synthetic;
+  static Elf_Sym SyntheticRequired;
+  static Elf_Sym SyntheticOptional;
 
   Undefined(StringRef N, const Elf_Sym &Sym)
       : ELFSymbolBody<ELFT>(Base::UndefinedKind, N, Sym) {}
@@ -243,10 +243,14 @@ public:
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::UndefinedKind;
   }
+
+  bool canKeepUndefined() const { return &this->Sym == &SyntheticOptional; }
 };
 
 template <class ELFT>
-typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Synthetic;
+typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::SyntheticRequired;
+template <class ELFT>
+typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::SyntheticOptional;
 
 template <class ELFT> class SharedSymbol : public Defined<ELFT> {
   typedef Defined<ELFT> Base;

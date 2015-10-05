@@ -70,6 +70,29 @@ static TargetInfo *createTarget(uint16_t EMachine) {
   error("Unknown target machine");
 }
 
+void SymbolTable::addUndefinedSym(StringRef Name) {
+  switch (getFirstELF()->getELFKind()) {
+  case ELF32LEKind:
+    addUndefinedSym<ELF32LE>(Name);
+    break;
+  case ELF32BEKind:
+    addUndefinedSym<ELF32BE>(Name);
+    break;
+  case ELF64LEKind:
+    addUndefinedSym<ELF64LE>(Name);
+    break;
+  case ELF64BEKind:
+    addUndefinedSym<ELF64BE>(Name);
+    break;
+  }
+}
+
+template <class ELFT> void SymbolTable::addUndefinedSym(StringRef Name) {
+  Undefined<ELFT>::SyntheticOptional.setVisibility(STV_HIDDEN);
+  resolve<ELFT>(new (Alloc)
+                    Undefined<ELFT>(Name, Undefined<ELFT>::SyntheticOptional));
+}
+
 template <class ELFT>
 void SymbolTable::addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
                                   typename ELFFile<ELFT>::uintX_t Value) {
@@ -94,7 +117,7 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
     return;
   EntrySym = new (Alloc) Undefined<ELFT>(
       Config->Entry.empty() ? Target->getDefaultEntry() : Config->Entry,
-      Undefined<ELFT>::Synthetic);
+      Undefined<ELFT>::SyntheticRequired);
   resolve<ELFT>(EntrySym);
 
   // In the assembly for 32 bit x86 the _GLOBAL_OFFSET_TABLE_ symbol is magical

@@ -157,6 +157,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Symtab.getObjectFiles().empty())
     error("no input files.");
 
+  for (auto *Arg : Args.filtered(OPT_undefined))
+    Symtab.addUndefinedSym(Arg->getValue());
+
   // Write the result.
   const ELFFileBase *FirstObj = Symtab.getFirstELF();
   switch (FirstObj->getELFKind()) {
