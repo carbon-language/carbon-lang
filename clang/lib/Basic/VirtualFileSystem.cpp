@@ -942,6 +942,33 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
   return status(Path, *Result);
 }
 
+namespace {
+/// Provide a file wrapper that returns the external name when asked.
+class NamedFileAdaptor : public File {
+  std::unique_ptr<File> InnerFile;
+  std::string NewName;
+
+public:
+  NamedFileAdaptor(std::unique_ptr<File> InnerFile, std::string NewName)
+      : InnerFile(std::move(InnerFile)), NewName(std::move(NewName)) {}
+
+  llvm::ErrorOr<Status> status() override {
+    auto InnerStatus = InnerFile->status();
+    if (InnerStatus)
+      return Status::copyWithNewName(*InnerStatus, NewName);
+    return InnerStatus.getError();
+  }
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
+  getBuffer(const Twine &Name, int64_t FileSize = -1,
+            bool RequiresNullTerminator = true,
+            bool IsVolatile = false) override {
+    return InnerFile->getBuffer(Name, FileSize, RequiresNullTerminator,
+                                IsVolatile);
+  }
+  std::error_code close() override { return InnerFile->close(); }
+};
+} // end anonymous namespace
+
 ErrorOr<std::unique_ptr<File>> VFSFromYAML::openFileForRead(const Twine &Path) {
   ErrorOr<Entry *> E = lookupPath(Path);
   if (!E)
@@ -955,34 +982,9 @@ ErrorOr<std::unique_ptr<File>> VFSFromYAML::openFileForRead(const Twine &Path) {
   if (!Result)
     return Result;
 
-  if (!F->useExternalName(UseExternalNames)) {
-    // Provide a file wrapper that returns the external name when asked.
-    class NamedFileAdaptor : public File {
-      std::unique_ptr<File> InnerFile;
-      std::string NewName;
-
-    public:
-      NamedFileAdaptor(std::unique_ptr<File> InnerFile, std::string NewName)
-          : InnerFile(std::move(InnerFile)), NewName(std::move(NewName)) {}
-
-      llvm::ErrorOr<Status> status() override {
-        auto InnerStatus = InnerFile->status();
-        if (InnerStatus)
-          return Status::copyWithNewName(*InnerStatus, NewName);
-        return InnerStatus.getError();
-      }
-      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
-      getBuffer(const Twine &Name, int64_t FileSize = -1,
-                bool RequiresNullTerminator = true,
-                bool IsVolatile = false) override {
-        return InnerFile->getBuffer(Name, FileSize, RequiresNullTerminator,
-                                    IsVolatile);
-      }
-      std::error_code close() override { return InnerFile->close(); }
-    };
+  if (!F->useExternalName(UseExternalNames))
     return std::unique_ptr<File>(
         new NamedFileAdaptor(std::move(*Result), Path.str()));
-  }
 
   return Result;
 }
