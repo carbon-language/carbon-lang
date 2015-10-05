@@ -320,7 +320,8 @@ class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
 
 public:
   DynamicSection(SymbolTable &SymTab, HashTableSection<ELFT> &HashSec,
-                 RelocationSection<ELFT> &RelaDynSec);
+                 RelocationSection<ELFT> &RelaDynSec,
+                 const OutputSection<ELFT> &BssSec);
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
 
@@ -333,7 +334,10 @@ private:
   SymbolTableSection<ELFT> &DynSymSec;
   StringTableSection<ELFT::Is64Bits> &DynStrSec;
   RelocationSection<ELFT> &RelaDynSec;
+  const OutputSection<ELFT> &BssSec;
   SymbolTable &SymTab;
+  const ELFSymbolBody<ELFT> *InitSym = nullptr;
+  const ELFSymbolBody<ELFT> *FiniSym = nullptr;
 };
 }
 }

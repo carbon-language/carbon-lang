@@ -170,13 +170,14 @@ template <class ELFT> void HashTableSection<ELFT>::addSymbol(SymbolBody *S) {
 template <class ELFT>
 DynamicSection<ELFT>::DynamicSection(SymbolTable &SymTab,
                                      HashTableSection<ELFT> &HashSec,
-                                     RelocationSection<ELFT> &RelaDynSec)
+                                     RelocationSection<ELFT> &RelaDynSec,
+                                     const OutputSection<ELFT> &BssSec)
     : OutputSectionBase<ELFT::Is64Bits>(".dynamic", llvm::ELF::SHT_DYNAMIC,
                                         llvm::ELF::SHF_ALLOC |
                                             llvm::ELF::SHF_WRITE),
       HashSec(HashSec), DynSymSec(HashSec.getDynSymSec()),
       DynStrSec(DynSymSec.getStrTabSec()), RelaDynSec(RelaDynSec),
-      SymTab(SymTab) {
+      BssSec(BssSec), SymTab(SymTab) {
   typename Base::HeaderT &Header = this->Header;
   Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
   Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
@@ -223,6 +224,16 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
     DynStrSec.add(File->getSoName());
   NumEntries += SharedFiles.size();
+
+  if (Symbol *S = SymTab.getSymbols().lookup(Config->Init))
+    InitSym = dyn_cast<ELFSymbolBody<ELFT>>(S->Body);
+  if (Symbol *S = SymTab.getSymbols().lookup(Config->Fini))
+    FiniSym = dyn_cast<ELFSymbolBody<ELFT>>(S->Body);
+
+  if (InitSym)
+    ++NumEntries; // DT_INIT
+  if (FiniSym)
+    ++NumEntries; // DT_FINI
 
   ++NumEntries; // DT_NULL
 
@@ -279,6 +290,11 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
       SymTab.getSharedFiles();
   for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
     WriteVal(DT_NEEDED, DynStrSec.getFileOff(File->getSoName()));
+
+  if (InitSym)
+    WritePtr(DT_INIT, getSymVA(*InitSym, BssSec));
+  if (FiniSym)
+    WritePtr(DT_FINI, getSymVA(*FiniSym, BssSec));
 
   WriteVal(DT_NULL, 0);
 }

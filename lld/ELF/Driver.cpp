@@ -117,6 +117,12 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (auto *Arg = Args.getLastArg(OPT_entry))
     Config->Entry = Arg->getValue();
 
+  if (auto *Arg = Args.getLastArg(OPT_fini))
+    Config->Fini = Arg->getValue();
+
+  if (auto *Arg = Args.getLastArg(OPT_init))
+    Config->Init = Arg->getValue();
+
   if (auto *Arg = Args.getLastArg(OPT_soname))
     Config->SoName = Arg->getValue();
 

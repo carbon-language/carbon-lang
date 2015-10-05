@@ -20,6 +20,8 @@ namespace elf2 {
 struct Configuration {
   llvm::StringRef DynamicLinker;
   llvm::StringRef Entry;
+  llvm::StringRef Fini = "_fini";
+  llvm::StringRef Init = "_init";
   llvm::StringRef OutputFile = "a.out";
   llvm::StringRef SoName;
   llvm::StringRef Sysroot;

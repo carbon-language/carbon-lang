@@ -32,6 +32,12 @@ def entry : Separate<["--", "-"], "entry">, MetaVarName<"<entry>">,
 def export_dynamic : Flag<["--", "-"], "export-dynamic">,
   HelpText<"Put symbols in the dynamic symbol table">;
 
+def fini : Separate<["-"], "fini">, MetaVarName<"<symbol>">,
+  HelpText<"Specify a finalizer function">;
+
+def init : Separate<["-"], "init">, MetaVarName<"<symdol>">,
+  HelpText<"Specify an initializer function">;
+
 def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
   HelpText<"Root name of library to use">;
 
@@ -77,6 +83,8 @@ def alias_L__library_path : Joined<["--"], "library-path=">, Alias<L>;
 def alias_discard_all_x: Flag<["-"], "x">, Alias<discard_all>;
 def alias_discard_locals_X: Flag<["-"], "X">, Alias<discard_locals>;
 def alias_entry_e : Separate<["-"], "e">, Alias<entry>;
+def alias_fini_fini : Joined<["-"], "fini=">, Alias<fini>;
+def alias_init_init : Joined<["-"], "init=">, Alias<init>;
 def alias_l__library : Joined<["--"], "library=">, Alias<l>;
 def alias_rpath_rpath : Joined<["-"], "rpath=">, Alias<rpath>;
 def alias_soname_h : Separate<["-"], "h">, Alias<soname>;

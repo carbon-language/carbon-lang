@@ -85,7 +85,7 @@ public:
   Writer(SymbolTable *T)
       : SymTabSec(*T, StrTabSec, BssSec), DynSymSec(*T, DynStrSec, BssSec),
         RelaDynSec(DynSymSec, GotSec, T->shouldUseRela()), PltSec(GotSec),
-        HashSec(DynSymSec), DynamicSec(*T, HashSec, RelaDynSec),
+        HashSec(DynSymSec), DynamicSec(*T, HashSec, RelaDynSec, BssSec),
         BssSec(PltSec, GotSec, BssSec, ".bss", SHT_NOBITS,
                SHF_ALLOC | SHF_WRITE) {}
   void run();
