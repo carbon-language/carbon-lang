@@ -150,6 +150,10 @@ TEST(Support, Path) {
 
     path::native(*i, temp_store);
   }
+
+  SmallString<32> Relative("foo.cpp");
+  ASSERT_NO_ERROR(sys::fs::make_absolute("/root", Relative));
+  ASSERT_EQ("/root/foo.cpp", Relative);
 }
 
 TEST(Support, RelativePathIterator) {

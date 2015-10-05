@@ -740,7 +740,9 @@ std::error_code createUniqueDirectory(const Twine &Prefix,
                             true, 0, FS_Dir);
 }
 
-std::error_code make_absolute(SmallVectorImpl<char> &path) {
+static std::error_code make_absolute(const Twine &current_directory,
+                                     SmallVectorImpl<char> &path,
+                                     bool use_current_directory) {
   StringRef p(path.data(), path.size());
 
   bool rootDirectory = path::has_root_directory(p),
@@ -756,7 +758,9 @@ std::error_code make_absolute(SmallVectorImpl<char> &path) {
 
   // All of the following conditions will need the current directory.
   SmallString<128> current_dir;
-  if (std::error_code ec = current_path(current_dir))
+  if (use_current_directory)
+    current_directory.toVector(current_dir);
+  else if (std::error_code ec = current_path(current_dir))
     return ec;
 
   // Relative path. Prepend the current directory.
@@ -791,6 +795,15 @@ std::error_code make_absolute(SmallVectorImpl<char> &path) {
 
   llvm_unreachable("All rootName and rootDirectory combinations should have "
                    "occurred above!");
+}
+
+std::error_code make_absolute(const Twine &current_directory,
+                              SmallVectorImpl<char> &path) {
+  return make_absolute(current_directory, path, true);
+}
+
+std::error_code make_absolute(SmallVectorImpl<char> &path) {
+  return make_absolute(Twine(), path, false);
 }
 
 std::error_code create_directories(const Twine &Path, bool IgnoreExisting,
