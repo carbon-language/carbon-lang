@@ -124,10 +124,10 @@ class RealFile : public File {
 public:
   ~RealFile() override;
   ErrorOr<Status> status() override;
-  ErrorOr<std::unique_ptr<MemoryBuffer>>
-  getBuffer(const Twine &Name, int64_t FileSize = -1,
-            bool RequiresNullTerminator = true,
-            bool IsVolatile = false) override;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> getBuffer(const Twine &Name,
+                                                   int64_t FileSize,
+                                                   bool RequiresNullTerminator,
+                                                   bool IsVolatile) override;
   std::error_code close() override;
 };
 } // end anonymous namespace
@@ -424,9 +424,8 @@ public:
 
   llvm::ErrorOr<Status> status() override { return Node.getStatus(); }
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
-  getBuffer(const Twine &Name, int64_t FileSize = -1,
-            bool RequiresNullTerminator = true,
-            bool IsVolatile = false) override {
+  getBuffer(const Twine &Name, int64_t FileSize, bool RequiresNullTerminator,
+            bool IsVolatile) override {
     llvm::MemoryBuffer *Buf = Node.getBuffer();
     return llvm::MemoryBuffer::getMemBuffer(
         Buf->getBuffer(), Buf->getBufferIdentifier(), RequiresNullTerminator);
@@ -1270,9 +1269,8 @@ public:
     return InnerStatus.getError();
   }
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
-  getBuffer(const Twine &Name, int64_t FileSize = -1,
-            bool RequiresNullTerminator = true,
-            bool IsVolatile = false) override {
+  getBuffer(const Twine &Name, int64_t FileSize, bool RequiresNullTerminator,
+            bool IsVolatile) override {
     return InnerFile->getBuffer(Name, FileSize, RequiresNullTerminator,
                                 IsVolatile);
   }
