@@ -164,6 +164,9 @@ class GlobalNumberState {
         NextNumber++;
       return MapIter->second;
     }
+    void clear() {
+      GlobalNumbers.clear();
+    }
 };
 
 /// FunctionComparator - Compares two functions to determine whether or not
@@ -1546,6 +1549,7 @@ bool MergeFunctions::runOnModule(Module &M) {
   } while (!Deferred.empty());
 
   FnTree.clear();
+  GlobalNumbers.clear();
 
   return Changed;
 }
