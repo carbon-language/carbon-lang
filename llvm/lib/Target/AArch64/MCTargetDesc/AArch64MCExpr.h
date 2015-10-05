@@ -149,7 +149,7 @@ public:
 
   void visitUsedExpr(MCStreamer &Streamer) const override;
 
-  MCSection *findAssociatedSection() const override;
+  MCFragment *findAssociatedFragment() const override;
 
   bool evaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout,
                                  const MCFixup *Fixup) const override;

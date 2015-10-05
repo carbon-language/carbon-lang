@@ -245,8 +245,6 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   getAssembler().registerSymbol(*Symbol);
   Symbol->setExternal(false);
 
-  AssignSection(Symbol, Section);
-
   if (ByteAlignment != 1)
     new MCAlignFragment(ByteAlignment, /*Value=*/0, /*ValueSize=*/0,
                         ByteAlignment, Section);

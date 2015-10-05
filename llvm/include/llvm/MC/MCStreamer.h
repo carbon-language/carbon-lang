@@ -358,7 +358,7 @@ public:
   ///
   /// Each emitted symbol will be tracked in the ordering table,
   /// so we can sort on them later.
-  void AssignSection(MCSymbol *Symbol, MCSection *Section);
+  void AssignFragment(MCSymbol *Symbol, MCFragment *Fragment);
 
   /// \brief Emit a label for \p Symbol into the current section.
   ///

@@ -56,19 +56,17 @@ protected:
     SymContentsCommon,
   };
 
-  // Special sentinal value for the absolute pseudo section.
-  //
-  // FIXME: Use a PointerInt wrapper for this?
-  static MCSection *AbsolutePseudoSection;
+  // Special sentinal value for the absolute pseudo fragment.
+  static MCFragment *AbsolutePseudoFragment;
 
   /// If a symbol has a Fragment, the section is implied, so we only need
   /// one pointer.
+  /// The special AbsolutePseudoFragment value is for absolute symbols.
+  /// If this is a variable symbol, this caches the variable value's fragment.
   /// FIXME: We might be able to simplify this by having the asm streamer create
   /// dummy fragments.
   /// If this is a section, then it gives the symbol is defined in. This is null
-  /// for undefined symbols, and the special AbsolutePseudoSection value for
-  /// absolute symbols. If this is a variable symbol, this caches the variable
-  /// value's section.
+  /// for undefined symbols.
   ///
   /// If this is a fragment, then it gives the fragment this symbol's value is
   /// relative to, if any.
@@ -76,8 +74,7 @@ protected:
   /// For the 'HasName' integer, this is true if this symbol is named.
   /// A named symbol will have a pointer to the name allocated in the bytes
   /// immediately prior to the MCSymbol.
-  mutable PointerIntPair<PointerUnion<MCSection *, MCFragment *>, 1>
-      SectionOrFragmentAndHasName;
+  mutable PointerIntPair<MCFragment *, 1> FragmentAndHasName;
 
   /// IsTemporary - True if this is an assembler temporary label, which
   /// typically does not survive in the .o file's symbol table.  Usually
@@ -155,7 +152,7 @@ protected: // MCContext creates and uniques these.
         Kind(Kind), IsUsedInReloc(false), SymbolContents(SymContentsUnset),
         CommonAlignLog2(0), Flags(0) {
     Offset = 0;
-    SectionOrFragmentAndHasName.setInt(!!Name);
+    FragmentAndHasName.setInt(!!Name);
     if (Name)
       getNameEntryPtr() = Name;
   }
@@ -180,19 +177,16 @@ private:
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
   MCSection *getSectionPtr(bool SetUsed = true) const {
-    if (MCFragment *F = getFragment())
+    if (MCFragment *F = getFragment(SetUsed)) {
+      assert(F != AbsolutePseudoFragment);
       return F->getParent();
-    const auto &SectionOrFragment = SectionOrFragmentAndHasName.getPointer();
-    assert(!SectionOrFragment.is<MCFragment *>() && "Section or null expected");
-    MCSection *Section = SectionOrFragment.dyn_cast<MCSection *>();
-    if (Section || !isVariable())
-      return Section;
-    return Section = getVariableValue(SetUsed)->findAssociatedSection();
+    }
+    return nullptr;
   }
 
   /// \brief Get a reference to the name field.  Requires that we have a name
   const StringMapEntry<bool> *&getNameEntryPtr() {
-    assert(SectionOrFragmentAndHasName.getInt() && "Name is required");
+    assert(FragmentAndHasName.getInt() && "Name is required");
     NameEntryStorageTy *Name = reinterpret_cast<NameEntryStorageTy *>(this);
     return (*(Name - 1)).NameEntry;
   }
@@ -203,7 +197,7 @@ private:
 public:
   /// getName - Get the symbol name.
   StringRef getName() const {
-    if (!SectionOrFragmentAndHasName.getInt())
+    if (!FragmentAndHasName.getInt())
       return StringRef();
 
     return getNameEntryPtr()->first();
@@ -249,7 +243,7 @@ public:
   ///
   /// Defined symbols are either absolute or in some section.
   bool isDefined(bool SetUsed = true) const {
-    return getSectionPtr(SetUsed) != nullptr;
+    return getFragment(SetUsed) != nullptr;
   }
 
   /// isInSection - Check if this symbol is defined in some section (i.e., it
@@ -263,7 +257,7 @@ public:
 
   /// isAbsolute - Check if this is an absolute symbol.
   bool isAbsolute(bool SetUsed = true) const {
-    return getSectionPtr(SetUsed) == AbsolutePseudoSection;
+    return getFragment(SetUsed) == AbsolutePseudoFragment;
   }
 
   /// Get the section associated with a defined, non-absolute symbol.
@@ -272,19 +266,14 @@ public:
     return *getSectionPtr(SetUsed);
   }
 
-  /// Mark the symbol as defined in the section \p S.
-  void setSection(MCSection &S) {
-    assert(!isVariable() && "Cannot set section of variable");
-    assert(!SectionOrFragmentAndHasName.getPointer().is<MCFragment *>() &&
-           "Section or null expected");
-    SectionOrFragmentAndHasName.setPointer(&S);
+  /// Mark the symbol as defined in the fragment \p F.
+  void setFragment(MCFragment *F) const {
+    assert(!isVariable() && "Cannot set fragment of variable");
+    FragmentAndHasName.setPointer(F);
   }
 
   /// Mark the symbol as undefined.
-  void setUndefined() {
-    SectionOrFragmentAndHasName.setPointer(
-        PointerUnion<MCSection *, MCFragment *>());
-  }
+  void setUndefined() { FragmentAndHasName.setPointer(nullptr); }
 
   bool isELF() const { return Kind == SymbolKindELF; }
 
@@ -385,11 +374,13 @@ public:
     return SymbolContents == SymContentsCommon;
   }
 
-  MCFragment *getFragment() const {
-    return SectionOrFragmentAndHasName.getPointer().dyn_cast<MCFragment *>();
-  }
-  void setFragment(MCFragment *Value) const {
-    SectionOrFragmentAndHasName.setPointer(Value);
+  MCFragment *getFragment(bool SetUsed = true) const {
+    MCFragment *Fragment = FragmentAndHasName.getPointer();
+    if (Fragment || !isVariable())
+      return Fragment;
+    Fragment = getVariableValue(SetUsed)->findAssociatedFragment();
+    FragmentAndHasName.setPointer(Fragment);
+    return Fragment;
   }
 
   bool isExternal() const { return IsExternal; }

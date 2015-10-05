@@ -447,9 +447,6 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
                                   uint32_t StringIndex, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   const auto &Symbol = cast<MCSymbolELF>(*MSD.Symbol);
-  assert((!Symbol.getFragment() ||
-          (Symbol.getFragment()->getParent() == &Symbol.getSection())) &&
-         "The symbol's section doesn't match the fragment's symbol");
   const MCSymbolELF *Base =
       cast_or_null<MCSymbolELF>(Layout.getBaseSymbol(Symbol));
 

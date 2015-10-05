@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Support/Compiler.h"
 
@@ -92,6 +93,8 @@ private:
 
   unsigned IsRegistered : 1;
 
+  MCDummyFragment DummyFragment;
+
   FragmentListType Fragments;
 
   /// Mapping from subsection number to insertion point for subsection numbers
@@ -151,6 +154,9 @@ public:
   const MCSection::FragmentListType &getFragmentList() const {
     return const_cast<MCSection *>(this)->getFragmentList();
   }
+
+  const MCDummyFragment &getDummyFragment() const { return DummyFragment; }
+  MCDummyFragment &getDummyFragment() { return DummyFragment; }
 
   MCSection::iterator begin();
   MCSection::const_iterator begin() const {

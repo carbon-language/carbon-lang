@@ -21,9 +21,9 @@ weak_aliased_to_external = external2
         .long weak_aliased_to_external
 
 // CHECK:      Relocations [
-// CHECK:        0x0 IMAGE_REL_I386_DIR32 local1
+// CHECK:        0x0 IMAGE_REL_I386_DIR32 external_aliased_to_local
 // CHECK:        0x4 IMAGE_REL_I386_DIR32 external1
-// CHECK:        0x8 IMAGE_REL_I386_DIR32 local2
+// CHECK:        0x8 IMAGE_REL_I386_DIR32 global_aliased_to_local
 // CHECK:        0xC IMAGE_REL_I386_DIR32 external2
 // CHECK:      ]
 // CHECK:      Symbols [

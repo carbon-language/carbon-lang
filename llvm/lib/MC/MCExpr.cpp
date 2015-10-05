@@ -477,7 +477,8 @@ static void AttemptToFoldSymbolOffsetDifference(
   if (!Asm->getWriter().isSymbolRefDifferenceFullyResolved(*Asm, A, B, InSet))
     return;
 
-  if (SA.getFragment() == SB.getFragment()) {
+  if (SA.getFragment() == SB.getFragment() && !SA.isVariable() &&
+      !SB.isVariable()) {
     Addend += (SA.getOffset() - SB.getOffset());
 
     // Pointers to Thumb symbols need to have their low-bit set to allow
@@ -606,7 +607,7 @@ bool MCExpr::evaluateAsValue(MCValue &Res, const MCAsmLayout &Layout) const {
                                    true);
 }
 
-static bool canExpand(const MCSymbol &Sym, const MCAssembler *Asm, bool InSet) {
+static bool canExpand(const MCSymbol &Sym, bool InSet) {
   const MCExpr *Expr = Sym.getVariableValue();
   const auto *Inner = dyn_cast<MCSymbolRefExpr>(Expr);
   if (Inner) {
@@ -616,9 +617,7 @@ static bool canExpand(const MCSymbol &Sym, const MCAssembler *Asm, bool InSet) {
 
   if (InSet)
     return true;
-  if (!Asm)
-    return false;
-  return !Asm->getWriter().isWeak(Sym);
+  return !Sym.isInSection();
 }
 
 bool MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
@@ -643,7 +642,7 @@ bool MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
 
     // Evaluate recursively if this is a variable.
     if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None &&
-        canExpand(Sym, Asm, InSet)) {
+        canExpand(Sym, InSet)) {
       bool IsMachO = SRE->hasSubsectionsViaSymbols();
       if (Sym.getVariableValue()->evaluateAsRelocatableImpl(
               Res, Asm, Layout, Fixup, Addrs, InSet || IsMachO)) {
@@ -775,45 +774,41 @@ bool MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
   llvm_unreachable("Invalid assembly expression kind!");
 }
 
-MCSection *MCExpr::findAssociatedSection() const {
+MCFragment *MCExpr::findAssociatedFragment() const {
   switch (getKind()) {
   case Target:
     // We never look through target specific expressions.
-    return cast<MCTargetExpr>(this)->findAssociatedSection();
+    return cast<MCTargetExpr>(this)->findAssociatedFragment();
 
   case Constant:
-    return MCSymbol::AbsolutePseudoSection;
+    return MCSymbol::AbsolutePseudoFragment;
 
   case SymbolRef: {
     const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(this);
     const MCSymbol &Sym = SRE->getSymbol();
-
-    if (Sym.isDefined())
-      return &Sym.getSection();
-
-    return nullptr;
+    return Sym.getFragment();
   }
 
   case Unary:
-    return cast<MCUnaryExpr>(this)->getSubExpr()->findAssociatedSection();
+    return cast<MCUnaryExpr>(this)->getSubExpr()->findAssociatedFragment();
 
   case Binary: {
     const MCBinaryExpr *BE = cast<MCBinaryExpr>(this);
-    MCSection *LHS_S = BE->getLHS()->findAssociatedSection();
-    MCSection *RHS_S = BE->getRHS()->findAssociatedSection();
+    MCFragment *LHS_F = BE->getLHS()->findAssociatedFragment();
+    MCFragment *RHS_F = BE->getRHS()->findAssociatedFragment();
 
-    // If either section is absolute, return the other.
-    if (LHS_S == MCSymbol::AbsolutePseudoSection)
-      return RHS_S;
-    if (RHS_S == MCSymbol::AbsolutePseudoSection)
-      return LHS_S;
+    // If either is absolute, return the other.
+    if (LHS_F == MCSymbol::AbsolutePseudoFragment)
+      return RHS_F;
+    if (RHS_F == MCSymbol::AbsolutePseudoFragment)
+      return LHS_F;
 
     // Not always correct, but probably the best we can do without more context.
     if (BE->getOpcode() == MCBinaryExpr::Sub)
-      return MCSymbol::AbsolutePseudoSection;
+      return MCSymbol::AbsolutePseudoFragment;
 
-    // Otherwise, return the first non-null section.
-    return LHS_S ? LHS_S : RHS_S;
+    // Otherwise, return the first non-null fragment.
+    return LHS_F ? LHS_F : RHS_F;
   }
   }
 

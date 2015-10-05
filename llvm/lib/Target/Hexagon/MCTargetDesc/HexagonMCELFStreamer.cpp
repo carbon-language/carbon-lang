@@ -114,7 +114,7 @@ void HexagonMCELFStreamer::HexagonMCEmitCommonSymbol(MCSymbol *Symbol,
     MCSection *Section = getAssembler().getContext().getELFSection(
         SectionName, ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
     SwitchSection(Section);
-    AssignSection(Symbol, Section);
+    AssignFragment(Symbol, getCurrentFragment());
 
     MCELFStreamer::EmitCommonSymbol(Symbol, Size, ByteAlignment);
     SwitchSection(CrntSection);

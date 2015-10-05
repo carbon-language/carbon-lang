@@ -63,8 +63,8 @@ public:
     return false;
   }
   void visitUsedExpr(MCStreamer &Streamer) const override;
-  MCSection *findAssociatedSection() const override {
-    return getSubExpr()->findAssociatedSection();
+  MCFragment *findAssociatedFragment() const override {
+    return getSubExpr()->findAssociatedFragment();
   }
 
   // There are no TLS ARMMCExprs at the moment.

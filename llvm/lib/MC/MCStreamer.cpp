@@ -188,9 +188,9 @@ void MCStreamer::InitSections(bool NoExecStack) {
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
-void MCStreamer::AssignSection(MCSymbol *Symbol, MCSection *Section) {
-  assert(Section);
-  Symbol->setSection(*Section);
+void MCStreamer::AssignFragment(MCSymbol *Symbol, MCFragment *Fragment) {
+  assert(Fragment);
+  Symbol->setFragment(Fragment);
 
   // As we emit symbols into a section, track the order so that they can
   // be sorted upon later. Zero is reserved to mean 'unemitted'.
@@ -200,7 +200,8 @@ void MCStreamer::AssignSection(MCSymbol *Symbol, MCSection *Section) {
 void MCStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(getCurrentSection().first && "Cannot emit before setting section!");
-  AssignSection(Symbol, getCurrentSection().first);
+  assert(!Symbol->getFragment() && "Unexpected fragment on symbol data!");
+  Symbol->setFragment(&getCurrentSectionOnly()->getDummyFragment());
 
   MCTargetStreamer *TS = getTargetStreamer();
   if (TS)

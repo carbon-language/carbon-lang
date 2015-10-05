@@ -52,7 +52,8 @@ public:
     FT_Dwarf,
     FT_DwarfFrame,
     FT_LEB,
-    FT_SafeSEH
+    FT_SafeSEH,
+    FT_Dummy
   };
 
 private:
@@ -136,7 +137,17 @@ public:
   /// and only some fragments have a meaningful implementation.
   void setBundlePadding(uint8_t N) { BundlePadding = N; }
 
+  /// \brief Return true if given frgment has FT_Dummy type.
+  bool isDummy() const { return Kind == FT_Dummy; }
+
   void dump();
+};
+
+class MCDummyFragment : public MCFragment {
+public:
+  explicit MCDummyFragment(MCSection *Sec)
+      : MCFragment(FT_Dummy, false, 0, Sec){};
+  static bool classof(const MCFragment *F) { return F->getKind() == FT_Dummy; }
 };
 
 /// Interface implemented by fragments that contain encoded instructions and/or

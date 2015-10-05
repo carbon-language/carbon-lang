@@ -277,7 +277,7 @@ MCFragment::MCFragment(FragmentType Kind, bool HasInstructions,
     : Kind(Kind), HasInstructions(HasInstructions), AlignToBundleEnd(false),
       BundlePadding(BundlePadding), Parent(Parent), Atom(nullptr),
       Offset(~UINT64_C(0)) {
-  if (Parent)
+  if (Parent && !isDummy())
     Parent->getFragmentList().push_back(this);
 }
 
@@ -318,6 +318,9 @@ void MCFragment::destroy() {
       return;
     case FT_SafeSEH:
       delete cast<MCSafeSEHFragment>(this);
+      return;
+    case FT_Dummy:
+      delete cast<MCDummyFragment>(this);
       return;
   }
 }
@@ -411,7 +414,7 @@ const MCSymbol *MCAssembler::getAtom(const MCSymbol &S) const {
     return &S;
 
   // Absolute and undefined symbols have no defining atom.
-  if (!S.getFragment())
+  if (!S.isInSection())
     return nullptr;
 
   // Non-linker visible symbols in sections which can't be atomized have no
@@ -547,6 +550,8 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
     return cast<MCDwarfLineAddrFragment>(F).getContents().size();
   case MCFragment::FT_DwarfFrame:
     return cast<MCDwarfCallFrameFragment>(F).getContents().size();
+  case MCFragment::FT_Dummy:
+    llvm_unreachable("Should not have been added");
   }
 
   llvm_unreachable("invalid fragment kind");
@@ -780,6 +785,8 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     OW->writeBytes(CF.getContents());
     break;
   }
+  case MCFragment::FT_Dummy:
+    llvm_unreachable("Should not have been added");
   }
 
   assert(OW->getStream().tell() - Start == FragmentSize &&
@@ -1147,6 +1154,9 @@ void MCFragment::dump() {
   case MCFragment::FT_DwarfFrame: OS << "MCDwarfCallFrameFragment"; break;
   case MCFragment::FT_LEB:   OS << "MCLEBFragment"; break;
   case MCFragment::FT_SafeSEH:    OS << "MCSafeSEHFragment"; break;
+  case MCFragment::FT_Dummy:
+    OS << "MCDummyFragment";
+    break;
   }
 
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
@@ -1245,6 +1255,8 @@ void MCFragment::dump() {
     OS << " Sym:" << F->getSymbol();
     break;
   }
+  case MCFragment::FT_Dummy:
+    break;
   }
   OS << ">";
 }

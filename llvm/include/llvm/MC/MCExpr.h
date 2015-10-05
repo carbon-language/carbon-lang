@@ -20,6 +20,7 @@ class MCAsmLayout;
 class MCAssembler;
 class MCContext;
 class MCFixup;
+class MCFragment;
 class MCSection;
 class MCStreamer;
 class MCSymbol;
@@ -115,7 +116,7 @@ public:
   /// currently defined as the absolute section for constants, or
   /// otherwise the section associated with the first defined symbol in the
   /// expression.
-  MCSection *findAssociatedSection() const;
+  MCFragment *findAssociatedFragment() const;
 
   /// @}
 };
@@ -556,7 +557,7 @@ public:
                                          const MCAsmLayout *Layout,
                                          const MCFixup *Fixup) const = 0;
   virtual void visitUsedExpr(MCStreamer& Streamer) const = 0;
-  virtual MCSection *findAssociatedSection() const = 0;
+  virtual MCFragment *findAssociatedFragment() const = 0;
 
   virtual void fixELFSymbolsInTLSFixups(MCAssembler &) const = 0;
 

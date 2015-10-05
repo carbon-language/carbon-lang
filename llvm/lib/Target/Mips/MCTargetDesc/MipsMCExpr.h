@@ -51,8 +51,8 @@ public:
                                  const MCAsmLayout *Layout,
                                  const MCFixup *Fixup) const override;
   void visitUsedExpr(MCStreamer &Streamer) const override;
-  MCSection *findAssociatedSection() const override {
-    return getSubExpr()->findAssociatedSection();
+  MCFragment *findAssociatedFragment() const override {
+    return getSubExpr()->findAssociatedFragment();
   }
 
   // There are no TLS MipsMCExprs at the moment.

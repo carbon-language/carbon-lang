@@ -111,7 +111,7 @@ void MCELFStreamer::EmitLabel(MCSymbol *S) {
   MCObjectStreamer::EmitLabel(Symbol);
 
   const MCSectionELF &Section =
-    static_cast<const MCSectionELF&>(Symbol->getSection());
+      static_cast<const MCSectionELF &>(*getCurrentSectionOnly());
   if (Section.getFlags() & ELF::SHF_TLS)
     Symbol->setType(ELF::STT_TLS);
 }
@@ -311,11 +311,6 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *S, uint64_t Size,
   Symbol->setType(ELF::STT_OBJECT);
 
   if (Symbol->getBinding() == ELF::STB_LOCAL) {
-    MCSection *Section = getAssembler().getContext().getELFSection(
-        ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
-
-    AssignSection(Symbol, Section);
-
     struct LocalCommon L = {Symbol, Size, ByteAlignment};
     LocalCommons.push_back(L);
   } else {
@@ -630,7 +625,8 @@ void MCELFStreamer::Flush() {
     const MCSymbol &Symbol = *i->Symbol;
     uint64_t Size = i->Size;
     unsigned ByteAlignment = i->ByteAlignment;
-    MCSection &Section = Symbol.getSection();
+    MCSection &Section = *getAssembler().getContext().getELFSection(
+        ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
 
     getAssembler().registerSection(Section);
     new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &Section);
