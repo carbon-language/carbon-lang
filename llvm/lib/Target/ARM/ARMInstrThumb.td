@@ -740,6 +740,7 @@ def tLDMIA : T1I<(outs), (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
 // Writeback version is just a pseudo, as there's no encoding difference.
 // Writeback happens iff the base register is not in the destination register
 // list.
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 def tLDMIA_UPD :
     InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain,
                  "$Rn = $wb", IIC_iLoad_mu>,

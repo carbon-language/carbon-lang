@@ -73,6 +73,10 @@ def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
 
 def SDT_WIN__DBZCHK : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 
+def SDT_ARMMEMCPY  : SDTypeProfile<2, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
+                                          SDTCisVT<2, i32>, SDTCisVT<3, i32>,
+                                          SDTCisVT<4, i32>]>;
+
 def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
                                             [SDTCisSameAs<0, 2>,
                                              SDTCisSameAs<0, 3>,
@@ -178,6 +182,10 @@ def ARMtcret         : SDNode<"ARMISD::TC_RETURN", SDT_ARMTCRET,
                         [SDNPHasChain,  SDNPOptInGlue, SDNPVariadic]>;
 
 def ARMbfi           : SDNode<"ARMISD::BFI", SDT_ARMBFI>;
+
+def ARMmemcopy : SDNode<"ARMISD::MEMCPY", SDT_ARMMEMCPY,
+                        [SDNPHasChain, SDNPInGlue, SDNPOutGlue,
+                         SDNPMayStore, SDNPMayLoad]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
@@ -4575,6 +4583,19 @@ let usesCustomInserter = 1 in {
       (outs), (ins GPR:$dst, GPR:$src, i32imm:$size, i32imm:$alignment),
       NoItinerary,
       [(ARMcopystructbyval GPR:$dst, GPR:$src, imm:$size, imm:$alignment)]>;
+}
+
+let hasPostISelHook = 1, Constraints = "$newdst = $dst, $newsrc = $src" in {
+    // %newsrc, %newdst = MEMCPY %dst, %src, N, ...N scratch regs...
+    // Copies N registers worth of memory from address %src to address %dst
+    // and returns the incremented addresses.  N scratch register will
+    // be attached for the copy to use.
+    def MEMCPY : PseudoInst<
+      (outs GPR:$newdst, GPR:$newsrc),
+      (ins GPR:$dst, GPR:$src, i32imm:$nreg, variable_ops),
+      NoItinerary,
+      [(set GPR:$newdst, GPR:$newsrc,
+            (ARMmemcopy GPR:$dst, GPR:$src, imm:$nreg))]>;
 }
 
 def ldrex_1 : PatFrag<(ops node:$ptr), (int_arm_ldrex node:$ptr), [{

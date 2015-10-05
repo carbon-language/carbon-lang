@@ -185,6 +185,10 @@ namespace llvm {
       // Vector bitwise select
       VBSL,
 
+      // Pseudo-instruction representing a memory copy using ldm/stm
+      // instructions.
+      MEMCPY,
+
       // Vector load N-element structure to all lanes:
       VLD2DUP = ISD::FIRST_TARGET_MEMORY_OPCODE,
       VLD3DUP,

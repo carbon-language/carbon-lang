@@ -6,7 +6,7 @@
 define void @test_base_kill(i32 %v0, i32 %v1, i32* %addr) {
 ; CHECK-LABEL: test_base_kill:
 ; CHECK: adds [[NEWBASE:r[0-9]+]], r2, #4
-; CHECK: stm.w [[NEWBASE]], {r0, r1, r2}
+; CHECK: stm [[NEWBASE]]!, {r0, r1, r2}
 
   %addr.1 = getelementptr i32, i32* %addr, i32 1
   store i32 %v0, i32* %addr.1
@@ -27,7 +27,7 @@ define void @test_base_kill(i32 %v0, i32 %v1, i32* %addr) {
 define void @test_base_kill_mid(i32 %v0, i32* %addr, i32 %v1) {
 ; CHECK-LABEL: test_base_kill_mid:
 ; CHECK: adds [[NEWBASE:r[0-9]+]], r1, #4
-; CHECK: stm.w [[NEWBASE]], {r0, r1, r2}
+; CHECK: stm [[NEWBASE]]!, {r0, r1, r2}
 
   %addr.1 = getelementptr i32, i32* %addr, i32 1
   store i32 %v0, i32* %addr.1

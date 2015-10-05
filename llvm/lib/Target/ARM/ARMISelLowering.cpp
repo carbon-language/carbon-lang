@@ -1178,6 +1178,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VORRIMM:       return "ARMISD::VORRIMM";
   case ARMISD::VBICIMM:       return "ARMISD::VBICIMM";
   case ARMISD::VBSL:          return "ARMISD::VBSL";
+  case ARMISD::MEMCPY:        return "ARMISD::MEMCPY";
   case ARMISD::VLD2DUP:       return "ARMISD::VLD2DUP";
   case ARMISD::VLD3DUP:       return "ARMISD::VLD3DUP";
   case ARMISD::VLD4DUP:       return "ARMISD::VLD4DUP";
@@ -8072,8 +8073,41 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
 }
 
+/// \brief Attaches vregs to MEMCPY that it will use as scratch registers
+/// when it is expanded into LDM/STM. This is done as a post-isel lowering
+/// instead of as a custom inserter because we need the use list from the SDNode.
+static void attachMEMCPYScratchRegs(const ARMSubtarget *Subtarget,
+                                   MachineInstr *MI, const SDNode *Node) {
+  bool isThumb1 = Subtarget->isThumb1Only();
+
+  DebugLoc DL = MI->getDebugLoc();
+  MachineFunction *MF = MI->getParent()->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  MachineInstrBuilder MIB(*MF, MI);
+
+  // If the new dst/src is unused mark it as dead.
+  if (!Node->hasAnyUseOfValue(0)) {
+    MI->getOperand(0).setIsDead(true);
+  }
+  if (!Node->hasAnyUseOfValue(1)) {
+    MI->getOperand(1).setIsDead(true);
+  }
+
+  // The MEMCPY both defines and kills the scratch registers.
+  for (unsigned I = 0; I != MI->getOperand(4).getImm(); ++I) {
+    unsigned TmpReg = MRI.createVirtualRegister(isThumb1 ? &ARM::tGPRRegClass
+                                                         : &ARM::GPRRegClass);
+    MIB.addReg(TmpReg, RegState::Define|RegState::Dead);
+  }
+}
+
 void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                       SDNode *Node) const {
+  if (MI->getOpcode() == ARM::MEMCPY) {
+    attachMEMCPYScratchRegs(Subtarget, MI, Node);
+    return;
+  }
+
   const MCInstrDesc *MCID = &MI->getDesc();
   // Adjust potentially 's' setting instructions after isel, i.e. ADC, SBC, RSB,
   // RSC. Coming out of isel, they have an implicit CPSR def, but the optional

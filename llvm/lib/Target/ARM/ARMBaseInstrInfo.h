@@ -352,6 +352,8 @@ private:
   virtual void expandLoadStackGuard(MachineBasicBlock::iterator MI,
                                     Reloc::Model RM) const = 0;
 
+  void expandMEMCPY(MachineBasicBlock::iterator) const;
+
 private:
   /// Modeling special VFP / NEON fp MLA / MLS hazards.
 
