@@ -86,12 +86,12 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2473">2473</a></td><td><tt>basic_filebuf</tt>'s relation to C <tt>FILE</tt> semantics</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2476">2476</a></td><td><tt>scoped_allocator_adaptor</tt> is not assignable</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2477">2477</a></td><td>Inconsistency of wordings in <tt>std::vector::erase()</tt> and <tt>std::deque::erase()</tt></td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2483">2483</a></td><td><tt>throw_with_nested()</tt> should use <tt>is_final</tt></td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2484">2484</a></td><td><tt>rethrow_if_nested()</tt> is doubly unimplementable</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2483">2483</a></td><td><tt>throw_with_nested()</tt> should use <tt>is_final</tt></td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2484">2484</a></td><td><tt>rethrow_if_nested()</tt> is doubly unimplementable</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2485">2485</a></td><td><tt>get()</tt> should be overloaded for <tt>const tuple&amp;&amp;</tt></td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2486">2486</a></td><td><tt>mem_fn()</tt> should be required to use perfect forwarding</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2487">2487</a></td><td><tt>bind()</tt> should be <tt>const</tt>-overloaded, not <i>cv</i>-overloaded</td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2489">2489</a></td><td><tt>mem_fn()</tt> should be <tt>noexcept</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2489">2489</a></td><td><tt>mem_fn()</tt> should be <tt>noexcept</tt></td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2492">2492</a></td><td>Clarify requirements for <tt>comp</tt></td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2494">2494</a></td><td>[fund.ts.v2] <tt>ostream_joiner</tt> needs <tt>noexcept</tt></td><td>Kona</td><td></td></tr>
 
@@ -131,12 +131,12 @@
 <li>2473 - I suspect this is just wording cleanup, but it needs a closer look.</li>
 <li>2476 - Simple change; need tests.</li>
 <li>2477 - Definitely wording cleanup, but check the tests.</li>
-<li>2483 - We already do this.</li>
-<li>2484 - We already do this.</li>
+<li><i>2483 - We already do this.</i></li>
+<li><i>2484 - We already do this.</i></li>
 <li>2485 - Ask Eric to do it. </li>
 <li>2486 - Lots of code changes, all mechanical. Tests will be sizable.</li>
 <li>2487 - <b>Don't know</b></li>
-<li>2489 - Looks easy. Just add some NOEXCEPT, and tests.</li>
+<li><i>2489 - Looks easy. Just add some NOEXCEPT, and tests.</i></li>
 <li><i>2492 - Wording cleanup; no code changes needed.</i></li>
 <li>2494 - My implementation of this (not checked in) already has these.</li>
 </ul>
