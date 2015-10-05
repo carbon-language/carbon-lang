@@ -384,18 +384,25 @@ void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
   memcpy(Buf, Data.data(), Data.size());
 }
 
-bool lld::elf2::includeInSymtab(const SymbolBody &B) {
+template <class ELFT> bool lld::elf2::includeInSymtab(const SymbolBody &B) {
   if (B.isLazy())
     return false;
   if (!B.isUsedInRegularObj())
     return false;
-  uint8_t V = B.getMostConstrainingVisibility();
-  if (V != STV_DEFAULT && V != STV_PROTECTED)
-    return false;
+
+  // Don't include synthetic symbols like __init_array_start in every output.
+  if (auto *U = dyn_cast<DefinedAbsolute<ELFT>>(&B))
+    if (&U->Sym == &DefinedAbsolute<ELFT>::IgnoreUndef)
+      return false;
+
   return true;
 }
 
 bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
+  uint8_t V = B.getMostConstrainingVisibility();
+  if (V != STV_DEFAULT && V != STV_PROTECTED)
+    return false;
+
   if (Config->ExportDynamic || Config->Shared)
     return true;
   return B.isUsedInDynamicReloc();
@@ -475,11 +482,12 @@ template <class ELFT>
 void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
   // Write the internal symbol table contents to the output symbol table
   // pointed by Buf.
+  uint8_t *Start = Buf;
   for (const std::pair<StringRef, Symbol *> &P : Table.getSymbols()) {
     StringRef Name = P.first;
     Symbol *Sym = P.second;
     SymbolBody *Body = Sym->Body;
-    if (!includeInSymtab(*Body))
+    if (!includeInSymtab<ELFT>(*Body))
       continue;
     if (StrTabSec.isDynamic() && !includeInDynamicSymtab(*Body))
       continue;
@@ -511,9 +519,14 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
       llvm_unreachable("Lazy symbol got to output symbol table!");
     }
 
-    ESym->setBindingAndType(InputSym.getBinding(), InputSym.getType());
+    unsigned char Binding = InputSym.getBinding();
+    unsigned char Visibility = EBody.getMostConstrainingVisibility();
+    if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
+      Binding = STB_LOCAL;
+
+    ESym->setBindingAndType(Binding, InputSym.getType());
     ESym->st_size = InputSym.st_size;
-    ESym->setVisibility(EBody.getMostConstrainingVisibility());
+    ESym->setVisibility(Visibility);
     if (InputSym.isAbsolute()) {
       ESym->st_shndx = SHN_ABS;
       ESym->st_value = InputSym.st_value;
@@ -527,6 +540,12 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
     if (Out)
       ESym->st_shndx = Out->getSectionIndex();
   }
+  if (!StrTabSec.isDynamic())
+    std::stable_sort(
+        reinterpret_cast<Elf_Sym *>(Start), reinterpret_cast<Elf_Sym *>(Buf),
+        [](const Elf_Sym &A, const Elf_Sym &B) -> bool {
+          return A.getBinding() == STB_LOCAL && B.getBinding() != STB_LOCAL;
+        });
 }
 
 namespace lld {
@@ -607,5 +626,10 @@ getLocalSymVA(const ELFFile<ELF64LE>::Elf_Sym *, const ObjectFile<ELF64LE> &);
 
 template ELFFile<ELF64BE>::uintX_t
 getLocalSymVA(const ELFFile<ELF64BE>::Elf_Sym *, const ObjectFile<ELF64BE> &);
+
+template bool includeInSymtab<ELF32LE>(const SymbolBody &);
+template bool includeInSymtab<ELF32BE>(const SymbolBody &);
+template bool includeInSymtab<ELF64LE>(const SymbolBody &);
+template bool includeInSymtab<ELF64BE>(const SymbolBody &);
 }
 }

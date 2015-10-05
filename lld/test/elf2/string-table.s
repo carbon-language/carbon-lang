@@ -6,10 +6,6 @@
 .global _start
 _start:
 
-.global hidden
-.hidden hidden
-hidden:
-
 .section        foobar,"",@progbits,unique,1
 .section        foobar,"T",@progbits,unique,2
 .section        foobar,"",@nobits,unique,3
@@ -46,8 +42,7 @@ hidden:
 
 // CHECK-NOT:  Name: foobar
 
-// Test that the sting "bar" is merged into "foobar" and that we don't output
-// the name of a hidden symbol.
+// Test that the string "bar" is merged into "foobar".
 
 // CHECK:      Section {
 // CHECK:        Index:

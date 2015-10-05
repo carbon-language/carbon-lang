@@ -41,7 +41,8 @@ typename llvm::object::ELFFile<ELFT>::uintX_t
 getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
               const ObjectFile<ELFT> &File);
 
-bool includeInSymtab(const SymbolBody &B);
+template <class ELFT> bool includeInSymtab(const SymbolBody &B);
+
 bool includeInDynamicSymtab(const SymbolBody &B);
 bool shouldKeepInSymtab(StringRef SymName);
 

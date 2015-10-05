@@ -80,6 +80,24 @@ internal:
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
+// CHECK-NEXT: Symbol {
+// CHECK-NEXT:     Name: hidden
+// CHECK-NEXT:     Value: 0x11008
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 2
+// CHECK-NEXT:     Section: foobar
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: internal
+// CHECK-NEXT:     Value: 0x11008
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 1
+// CHECK-NEXT:     Section: foobar
+// CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: _start
 // CHECK-NEXT:     Value: 0x12000

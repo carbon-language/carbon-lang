@@ -341,7 +341,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
-    if (!includeInSymtab(*Body))
+    if (!includeInSymtab<ELFT>(*Body))
       continue;
     SymTabSec.addSymbol(Name);
 
