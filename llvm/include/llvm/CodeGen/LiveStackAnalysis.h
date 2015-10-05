@@ -25,76 +25,74 @@
 
 namespace llvm {
 
-  class LiveStacks : public MachineFunctionPass {
-    const TargetRegisterInfo *TRI;
+class LiveStacks : public MachineFunctionPass {
+  const TargetRegisterInfo *TRI;
 
-    /// Special pool allocator for VNInfo's (LiveInterval val#).
-    ///
-    VNInfo::Allocator VNInfoAllocator;
+  /// Special pool allocator for VNInfo's (LiveInterval val#).
+  ///
+  VNInfo::Allocator VNInfoAllocator;
 
-    /// S2IMap - Stack slot indices to live interval mapping.
-    ///
-    typedef std::unordered_map<int, LiveInterval> SS2IntervalMap;
-    SS2IntervalMap S2IMap;
+  /// S2IMap - Stack slot indices to live interval mapping.
+  ///
+  typedef std::unordered_map<int, LiveInterval> SS2IntervalMap;
+  SS2IntervalMap S2IMap;
 
-    /// S2RCMap - Stack slot indices to register class mapping.
-    std::map<int, const TargetRegisterClass*> S2RCMap;
-    
-  public:
-    static char ID; // Pass identification, replacement for typeid
-    LiveStacks() : MachineFunctionPass(ID) {
-      initializeLiveStacksPass(*PassRegistry::getPassRegistry());
-    }
+  /// S2RCMap - Stack slot indices to register class mapping.
+  std::map<int, const TargetRegisterClass *> S2RCMap;
 
-    typedef SS2IntervalMap::iterator iterator;
-    typedef SS2IntervalMap::const_iterator const_iterator;
-    const_iterator begin() const { return S2IMap.begin(); }
-    const_iterator end() const { return S2IMap.end(); }
-    iterator begin() { return S2IMap.begin(); }
-    iterator end() { return S2IMap.end(); }
+public:
+  static char ID; // Pass identification, replacement for typeid
+  LiveStacks() : MachineFunctionPass(ID) {
+    initializeLiveStacksPass(*PassRegistry::getPassRegistry());
+  }
 
-    unsigned getNumIntervals() const { return (unsigned)S2IMap.size(); }
+  typedef SS2IntervalMap::iterator iterator;
+  typedef SS2IntervalMap::const_iterator const_iterator;
+  const_iterator begin() const { return S2IMap.begin(); }
+  const_iterator end() const { return S2IMap.end(); }
+  iterator begin() { return S2IMap.begin(); }
+  iterator end() { return S2IMap.end(); }
 
-    LiveInterval &getOrCreateInterval(int Slot, const TargetRegisterClass *RC);
+  unsigned getNumIntervals() const { return (unsigned)S2IMap.size(); }
 
-    LiveInterval &getInterval(int Slot) {
-      assert(Slot >= 0 && "Spill slot indice must be >= 0");
-      SS2IntervalMap::iterator I = S2IMap.find(Slot);
-      assert(I != S2IMap.end() && "Interval does not exist for stack slot");
-      return I->second;
-    }
+  LiveInterval &getOrCreateInterval(int Slot, const TargetRegisterClass *RC);
 
-    const LiveInterval &getInterval(int Slot) const {
-      assert(Slot >= 0 && "Spill slot indice must be >= 0");
-      SS2IntervalMap::const_iterator I = S2IMap.find(Slot);
-      assert(I != S2IMap.end() && "Interval does not exist for stack slot");
-      return I->second;
-    }
+  LiveInterval &getInterval(int Slot) {
+    assert(Slot >= 0 && "Spill slot indice must be >= 0");
+    SS2IntervalMap::iterator I = S2IMap.find(Slot);
+    assert(I != S2IMap.end() && "Interval does not exist for stack slot");
+    return I->second;
+  }
 
-    bool hasInterval(int Slot) const {
-      return S2IMap.count(Slot);
-    }
+  const LiveInterval &getInterval(int Slot) const {
+    assert(Slot >= 0 && "Spill slot indice must be >= 0");
+    SS2IntervalMap::const_iterator I = S2IMap.find(Slot);
+    assert(I != S2IMap.end() && "Interval does not exist for stack slot");
+    return I->second;
+  }
 
-    const TargetRegisterClass *getIntervalRegClass(int Slot) const {
-      assert(Slot >= 0 && "Spill slot indice must be >= 0");
-      std::map<int, const TargetRegisterClass*>::const_iterator
-        I = S2RCMap.find(Slot);
-      assert(I != S2RCMap.end() &&
-             "Register class info does not exist for stack slot");
-      return I->second;
-    }
+  bool hasInterval(int Slot) const { return S2IMap.count(Slot); }
 
-    VNInfo::Allocator& getVNInfoAllocator() { return VNInfoAllocator; }
+  const TargetRegisterClass *getIntervalRegClass(int Slot) const {
+    assert(Slot >= 0 && "Spill slot indice must be >= 0");
+    std::map<int, const TargetRegisterClass *>::const_iterator I =
+        S2RCMap.find(Slot);
+    assert(I != S2RCMap.end() &&
+           "Register class info does not exist for stack slot");
+    return I->second;
+  }
 
-    void getAnalysisUsage(AnalysisUsage &AU) const override;
-    void releaseMemory() override;
+  VNInfo::Allocator &getVNInfoAllocator() { return VNInfoAllocator; }
 
-    /// runOnMachineFunction - pass entry point
-    bool runOnMachineFunction(MachineFunction&) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void releaseMemory() override;
 
-    /// print - Implement the dump method.
-    void print(raw_ostream &O, const Module* = nullptr) const override;
-  };
+  /// runOnMachineFunction - pass entry point
+  bool runOnMachineFunction(MachineFunction &) override;
+
+  /// print - Implement the dump method.
+  void print(raw_ostream &O, const Module * = nullptr) const override;
+};
 }
 
 #endif /* LLVM_CODEGEN_LIVESTACK_ANALYSIS_H */
