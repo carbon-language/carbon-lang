@@ -490,6 +490,10 @@ set(LIBCLANG_LIBRARY_VERSION
     "Version number that will be placed into the libclang library , in the form XX.YY")
 mark_as_advanced(CLANG_EXECUTABLE_VERSION LIBCLANG_LIBRARY_VERSION)
 
+option(CLANG_INCLUDE_TESTS
+       "Generate build targets for the Clang unit tests."
+       ${LLVM_INCLUDE_TESTS})
+
 add_subdirectory(utils/TableGen)
 
 add_subdirectory(include)
@@ -509,10 +513,6 @@ else()
   set(ENABLE_CLANG_EXAMPLES "0")
 endif()
 add_subdirectory(examples)
-
-option(CLANG_INCLUDE_TESTS
-       "Generate build targets for the Clang unit tests."
-       ${LLVM_INCLUDE_TESTS})
 
 if( CLANG_INCLUDE_TESTS )
   if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include/gtest/gtest.h)
