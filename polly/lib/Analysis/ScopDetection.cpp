@@ -73,10 +73,13 @@ using namespace polly;
 
 #define DEBUG_TYPE "polly-detect"
 
-static cl::opt<bool> DetectUnprofitable("polly-detect-unprofitable",
-                                        cl::desc("Detect unprofitable scops"),
-                                        cl::Hidden, cl::init(false),
-                                        cl::ZeroOrMore, cl::cat(PollyCategory));
+bool polly::PollyProcessUnprofitable;
+static cl::opt<bool, true> XPollyProcessUnprofitable(
+    "polly-process-unprofitable",
+    cl::desc(
+        "Process scops that are unlikely to benefit from Polly optimizations."),
+    cl::location(PollyProcessUnprofitable), cl::init(false), cl::ZeroOrMore,
+    cl::cat(PollyCategory));
 
 static cl::opt<std::string> OnlyFunction(
     "polly-only-func",
@@ -881,7 +884,7 @@ void ScopDetection::findScops(Region &R) {
                            false /*verifying*/);
 
   bool RegionIsValid = false;
-  if (!DetectUnprofitable && regionWithoutLoops(R, LI)) {
+  if (!PollyProcessUnprofitable && regionWithoutLoops(R, LI)) {
     removeCachedResults(R);
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &R);
   } else
@@ -1000,7 +1003,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
     return invalid<ReportEntry>(Context, /*Assert=*/true, CurRegion.getEntry());
 
   int NumLoops = countBeneficialLoops(&CurRegion);
-  if (!DetectUnprofitable && NumLoops < 2)
+  if (!PollyProcessUnprofitable && NumLoops < 2)
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   if (!allBlocksValid(Context))
@@ -1008,12 +1011,12 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
 
   // We can probably not do a lot on scops that only write or only read
   // data.
-  if (!DetectUnprofitable && (!Context.hasStores || !Context.hasLoads))
+  if (!PollyProcessUnprofitable && (!Context.hasStores || !Context.hasLoads))
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   // Check if there are sufficent non-overapproximated loops.
   int NumAffineLoops = NumLoops - Context.BoxedLoopsSet.size();
-  if (!DetectUnprofitable && NumAffineLoops < 2)
+  if (!PollyProcessUnprofitable && NumAffineLoops < 2)
     invalid<ReportUnprofitable>(Context, /*Assert=*/true, &CurRegion);
 
   DEBUG(dbgs() << "OK\n");
@@ -1069,7 +1072,7 @@ void ScopDetection::emitMissedRemarksForLeaves(const Function &F,
 bool ScopDetection::runOnFunction(llvm::Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
-  if (!DetectUnprofitable && LI->empty())
+  if (!PollyProcessUnprofitable && LI->empty())
     return false;
 
   AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();

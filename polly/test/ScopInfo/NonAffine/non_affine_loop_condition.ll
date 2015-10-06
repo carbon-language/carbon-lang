@@ -2,7 +2,7 @@
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops \
 ; RUN:     -analyze < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine-branches \
-; RUN:     -polly-detect-unprofitable=false \
+; RUN:     -polly-process-unprofitable=false \
 ; RUN:     -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s \
 ; RUN:     --check-prefix=PROFIT
 

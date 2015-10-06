@@ -3,7 +3,7 @@
 ; RUN:     -polly-allow-nonaffine-loops=true -analyze < %s | FileCheck %s \
 ; RUN:     -check-prefix=SCALAR
 ; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine \
-; RUN:     -polly-detect-unprofitable=false \
+; RUN:     -polly-process-unprofitable=false \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
 ; RUN:     -analyze < %s | FileCheck %s -check-prefix=PROFIT
 ;

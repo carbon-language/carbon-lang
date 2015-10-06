@@ -7,7 +7,7 @@
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-detect -analyze \
 ; RUN:     < %s 2>&1| FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
 ; RUN: opt %loadPolly -pass-remarks-missed="polly-detect" \
-; RUN:     -polly-detect-unprofitable=false \
+; RUN:     -polly-process-unprofitable=false \
 ; RUN:     -polly-detect-track-failures -polly-allow-nonaffine-loops=true \
 ; RUN:     -polly-allow-nonaffine -polly-detect -analyze < %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=ALLOWNONAFFINEALL

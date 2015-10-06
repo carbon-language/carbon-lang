@@ -1,8 +1,8 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable=false \
+; RUN: opt %loadPolly -polly-process-unprofitable=false \
 ; RUN: -polly-code-generator=isl \
 ; RUN: -polly-detect -analyze < %s | FileCheck %s
 
-; RUN: opt %loadPolly -polly-detect-unprofitable=true \
+; RUN: opt %loadPolly -polly-process-unprofitable=true \
 ; RUN: -polly-code-generator=isl \
 ; RUN: -polly-detect -analyze < %s | FileCheck %s
 

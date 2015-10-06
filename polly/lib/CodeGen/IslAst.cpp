@@ -71,11 +71,6 @@ static cl::opt<bool> DetectParallel("polly-ast-detect-parallel",
                                     cl::init(false), cl::ZeroOrMore,
                                     cl::cat(PollyCategory));
 
-static cl::opt<bool> NoEarlyExit(
-    "polly-no-early-exit",
-    cl::desc("Do not exit early if no benefit of the Polly version was found."),
-    cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
-
 namespace polly {
 class IslAst {
 public:
@@ -370,8 +365,7 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
 ///       original as well as optimized SCoP (e.g., #stride-one-accesses).
 static bool benefitsFromPolly(Scop *Scop, bool PerformParallelTest) {
 
-  // First check the user choice.
-  if (NoEarlyExit)
+  if (PollyProcessUnprofitable)
     return true;
 
   // Check if nothing interesting happened.

@@ -108,6 +108,7 @@ typedef std::map<const SCEVUnknown *, const SCEV *> BaseToElSize;
 extern bool PollyTrackFailures;
 extern bool PollyDelinearize;
 extern bool PollyUseRuntimeAliasChecks;
+extern bool PollyProcessUnprofitable;
 
 /// @brief A function attribute which will cause Polly to skip the function
 extern llvm::StringRef PollySkipFnAttr;

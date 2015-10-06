@@ -1,11 +1,11 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable=false \
+; RUN: opt %loadPolly -polly-process-unprofitable=false \
 ; RUN:     -polly-detect -analyze < %s | FileCheck %s
 
 ; RUN: opt %loadPolly -polly-allow-nonaffine-loops \
 ; RUN:     -polly-detect -analyze < %s | FileCheck %s --check-prefix=NALOOPS
 
 ; RUN: opt %loadPolly -polly-allow-nonaffine-loops -polly-detect -analyze \
-; RUN:     -polly-detect-unprofitable=false < %s | \
+; RUN:     -polly-process-unprofitable=false < %s | \
 ; RUN:     FileCheck %s --check-prefix=PROFIT
 
 ; The latch conditions of the outer loop are not affine, thus the loop cannot

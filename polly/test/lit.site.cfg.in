@@ -36,13 +36,11 @@ if config.link_polly_into_tools == '' or \
    config.link_polly_into_tools.lower() == 'link_polly_into_tools-notfound':
     config.substitutions.append(('%loadPolly', '-load '
                                  + config.polly_lib_dir + '/LLVMPolly@LLVM_SHLIBEXT@'
-                                 + ' -polly-detect-unprofitable '
-                                 + ' -polly-no-early-exit '
+                                 + ' -polly-process-unprofitable '
                                  ))
 else:
     config.substitutions.append(('%loadPolly', ''
-                                 + ' -polly-detect-unprofitable '
-                                 + ' -polly-no-early-exit '
+                                 + ' -polly-process-unprofitable '
                                  ))
 
 # Let the main config do the real work.

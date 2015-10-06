@@ -1,7 +1,7 @@
 ; RUN: opt %loadPolly \
 ; RUN:   -polly-detect -polly-allow-nonaffine-loops -analyze \
 ; RUN:   < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable=false \
+; RUN: opt %loadPolly -polly-process-unprofitable=false \
 ; RUN:   -polly-detect -polly-allow-nonaffine-loops -analyze \
 ; RUN:   < %s | FileCheck %s --check-prefix=PROFIT
 ;
