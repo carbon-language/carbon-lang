@@ -1358,6 +1358,12 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
       switch (II->getIntrinsicID()) {
       default: break;
+      case Intrinsic::bswap:
+        computeKnownBits(I->getOperand(0), KnownZero2, KnownOne2, DL,
+                         Depth + 1, Q);
+        KnownZero |= KnownZero2.byteSwap();
+        KnownOne |= KnownOne2.byteSwap();
+        break;
       case Intrinsic::ctlz:
       case Intrinsic::cttz: {
         unsigned LowBits = Log2_32(BitWidth)+1;
