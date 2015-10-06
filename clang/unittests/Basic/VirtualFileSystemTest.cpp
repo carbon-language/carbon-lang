@@ -536,7 +536,9 @@ TEST_F(InMemoryFileSystemTest, IsEmpty) {
 TEST_F(InMemoryFileSystemTest, WindowsPath) {
   FS.addFile("c:/windows/system128/foo.cpp", 0, MemoryBuffer::getMemBuffer(""));
   auto Stat = FS.status("c:");
+#if !defined(_WIN32)
   ASSERT_FALSE(Stat.getError()) << Stat.getError() << FS.toString();
+#endif
   Stat = FS.status("c:/windows/system128/foo.cpp");
   ASSERT_FALSE(Stat.getError()) << Stat.getError() << FS.toString();
   FS.addFile("d:/windows/foo.cpp", 0, MemoryBuffer::getMemBuffer(""));
