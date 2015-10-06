@@ -3890,7 +3890,11 @@ CXString clang_Cursor_getMangling(CXCursor C) {
 
   std::string FrontendBuf;
   llvm::raw_string_ostream FrontendBufOS(FrontendBuf);
-  MC->mangleName(ND, FrontendBufOS);
+  if (MC->shouldMangleDeclName(ND)) {
+    MC->mangleName(ND, FrontendBufOS);
+  } else {
+    ND->printName(FrontendBufOS);
+  }
 
   // Now apply backend mangling.
   std::unique_ptr<llvm::DataLayout> DL(

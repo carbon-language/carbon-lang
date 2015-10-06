@@ -29,3 +29,8 @@ int foo(S, S&);
 // ITANIUM: mangled=_Z3foo1SRS_
 // MACHO: mangled=__Z3foo1SRS_
 // MICROSOFT: mangled=?foo@@YAHUS
+
+extern "C" int foo(int);
+// ITANIUM: mangled=foo
+// MACHO: mangled=_foo
+// MICROSOFT: mangled=_foo

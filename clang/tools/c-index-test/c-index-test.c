@@ -1429,6 +1429,8 @@ static enum CXChildVisitResult PrintTypeSize(CXCursor cursor, CXCursor p,
 
 static enum CXChildVisitResult PrintMangledName(CXCursor cursor, CXCursor p,
                                                 CXClientData d) {
+  if (clang_isInvalid(clang_getCursorKind(cursor)))
+    return CXChildVisit_Recurse;
   CXString MangledName;
   PrintCursor(cursor, NULL);
   MangledName = clang_Cursor_getMangling(cursor);
