@@ -22,7 +22,7 @@ class ExprCommandCallUserDefinedFunction(TestBase):
         # Find the line number to break for main.c.
         self.line = line_number('main.cpp',
                                 '// Please test these expressions while stopped at this line:')
-    @expectedFailureDarwin("llvm.org/pr20274", debug_info=["dsym"]) # intermittent failure on MacOSX
+    @expectedFlakeyDarwin("llvm.org/pr20274") # intermittent failure on MacOSX, dsym only
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     def test(self):
         """Test return values of user defined function calls."""
