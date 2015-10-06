@@ -501,7 +501,7 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
       if (I == E) {
         // End of the path, create a new file.
         // FIXME: expose the status details in the interface.
-        Status Stat(Path, getNextVirtualUniqueID(),
+        Status Stat(P.str(), getNextVirtualUniqueID(),
                     llvm::sys::TimeValue(ModificationTime, 0), 0, 0,
                     Buffer->getBufferSize(),
                     llvm::sys::fs::file_type::regular_file,

@@ -602,6 +602,19 @@ TEST_F(InMemoryFileSystemTest, DirectoryIteration) {
   ASSERT_EQ(vfs::directory_iterator(), I);
 }
 
+TEST_F(InMemoryFileSystemTest, WorkingDirectory) {
+  FS.setCurrentWorkingDirectory("/b");
+  FS.addFile("c", 0, MemoryBuffer::getMemBuffer(""));
+
+  auto Stat = FS.status("/b/c");
+  ASSERT_FALSE(Stat.getError()) << Stat.getError() << "\n" << FS.toString();
+  ASSERT_EQ("c", Stat->getName());
+  ASSERT_EQ("/b", *FS.getCurrentWorkingDirectory());
+
+  Stat = FS.status("c");
+  ASSERT_FALSE(Stat.getError()) << Stat.getError() << "\n" << FS.toString();
+}
+
 // NOTE: in the tests below, we use '//root/' as our root directory, since it is
 // a legal *absolute* path on Windows as well as *nix.
 class VFSFromYAMLTest : public ::testing::Test {
