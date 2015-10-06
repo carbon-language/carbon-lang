@@ -410,17 +410,17 @@ private:
         Ptr = SI->getPointerOperand();
       }
     }
-    bool isLoad() { return Load; }
-    bool isStore() { return Store; }
-    bool isVolatile() { return Vol; }
-    bool isMatchingMemLoc(const ParseMemoryInst &Inst) {
+    bool isLoad() const { return Load; }
+    bool isStore() const { return Store; }
+    bool isVolatile() const { return Vol; }
+    bool isMatchingMemLoc(const ParseMemoryInst &Inst) const {
       return Ptr == Inst.Ptr && MatchingId == Inst.MatchingId;
     }
-    bool isValid() { return Ptr != nullptr; }
-    int getMatchingId() { return MatchingId; }
-    Value *getPtr() { return Ptr; }
-    bool mayReadFromMemory() { return MayReadFromMemory; }
-    bool mayWriteToMemory() { return MayWriteToMemory; }
+    bool isValid() const { return Ptr != nullptr; }
+    int getMatchingId() const { return MatchingId; }
+    Value *getPtr() const { return Ptr; }
+    bool mayReadFromMemory() const { return MayReadFromMemory; }
+    bool mayWriteToMemory() const { return MayWriteToMemory; }
 
   private:
     bool Load;
