@@ -14,6 +14,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 #include <map>
+
 using namespace clang;
 using namespace llvm;
 using llvm::sys::fs::UniqueID;
@@ -285,7 +286,7 @@ struct ScopedDir {
   }
   operator StringRef() { return Path.str(); }
 };
-}
+} // end anonymous namespace
 
 TEST(VirtualFileSystemTest, BasicRealFSIteration) {
   ScopedDir TestDirectory("virtual-file-system-test", /*Unique*/true);
@@ -1006,7 +1007,7 @@ TEST_F(VFSFromYAMLTest, DirectoryIteration) {
                     "]\n"
                     "}",
                     Lower);
-  ASSERT_TRUE(FS.get() != NULL);
+  ASSERT_TRUE(FS.get() != nullptr);
 
   IntrusiveRefCntPtr<vfs::OverlayFileSystem> O(
       new vfs::OverlayFileSystem(Lower));

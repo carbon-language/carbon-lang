@@ -970,7 +970,6 @@ protected:
   
   llvm::Constant *getBitmapBlockLayout(bool ComputeByrefLayout);
   
-
   /// GetIvarLayoutName - Returns a unique constant for the given
   /// ivar layout bitmap.
   llvm::Constant *GetIvarLayoutName(IdentifierInfo *Ident,
@@ -6718,7 +6717,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CodeGenFunction &CGF,
 llvm::Value *CGObjCNonFragileABIMac::EmitNSAutoreleasePoolClassRef(
                                                     CodeGenFunction &CGF) {
   IdentifierInfo *II = &CGM.getContext().Idents.get("NSAutoreleasePool");
-  return EmitClassRefFromId(CGF, II, false, 0);
+  return EmitClassRefFromId(CGF, II, false, nullptr);
 }
 
 llvm::Value *

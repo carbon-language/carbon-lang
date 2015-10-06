@@ -67,7 +67,7 @@ TEST(BufferSourceTest, EmitCXXGlobalInitFunc) {
             compiler.getCodeGenOpts(),
             llvm::getGlobalContext())));
 
-    compiler.createSema(clang::TU_Prefix,NULL);
+    compiler.createSema(clang::TU_Prefix, nullptr);
 
     clang::SourceManager &sm = compiler.getSourceManager();
     sm.setMainFileID(sm.createFileID(
@@ -76,4 +76,4 @@ TEST(BufferSourceTest, EmitCXXGlobalInitFunc) {
     clang::ParseAST(compiler.getSema(), false, false);
 }
 
-}
+} // end anonymous namespace

@@ -1,4 +1,4 @@
-//===--- CGClass.cpp - Emit LLVM Code for C++ classes ---------------------===//
+//===--- CGClass.cpp - Emit LLVM Code for C++ classes -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -508,7 +508,7 @@ namespace {
     // external code might potentially access the vtable.
     void VisitCXXThisExpr(const CXXThisExpr *E) { UsesThis = true; }
   };
-}
+} // end anonymous namespace
 
 static bool BaseInitializerUsesThis(ASTContext &C, const Expr *Init) {
   DynamicThisUseChecker Checker(C);
@@ -930,7 +930,7 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
     return;
   }
 
-  const FunctionDecl *Definition = 0;
+  const FunctionDecl *Definition = nullptr;
   Stmt *Body = Ctor->getBody(Definition);
   assert(Definition == Ctor && "emitting wrong constructor body");
 
@@ -987,7 +987,7 @@ namespace {
     SanitizerSet OldSanOpts;
   };
 }
-
+ 
 namespace {
   class FieldMemcpyizer {
   public:
@@ -1342,8 +1342,7 @@ namespace {
       emitAggregatedStmts();
     }
   };
-
-}
+} // end anonymous namespace
 
 static bool isInitializerOfDynamicClass(const CXXCtorInitializer *BaseInit) {
   const Type *BaseType = BaseInit->getBaseClass();
@@ -1802,7 +1801,7 @@ namespace {
       EmitSanitizerDtorCallback(CGF, VTablePtr, PoisonSize);
     }
  };
-}
+} // end anonymous namespace
 
 /// \brief Emit all code that comes at the end of class's
 /// destructor. This is to call destructors on members and base classes
@@ -1941,7 +1940,6 @@ void CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
                                                  Address arrayBase,
                                                  const CXXConstructExpr *E,
                                                  bool zeroInitialize) {
-
   // It's legal for numElements to be zero.  This can happen both
   // dynamically, because x can be zero in 'new A[x]', and statically,
   // because of GCC extensions that permit zero-length arrays.  There
@@ -2240,7 +2238,7 @@ namespace {
                                 /*Delegating=*/true, Addr);
     }
   };
-}
+} // end anonymous namespace
 
 void
 CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor,
@@ -2520,7 +2518,7 @@ void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T,
   if (!SanOpts.has(SanitizerKind::CFICastStrict))
     ClassDecl = LeastDerivedClassWithSameLayout(ClassDecl);
 
-  llvm::BasicBlock *ContBlock = 0;
+  llvm::BasicBlock *ContBlock = nullptr;
 
   if (MayBeNull) {
     llvm::Value *DerivedNotNull =

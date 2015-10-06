@@ -1,4 +1,4 @@
-//===--- CGException.cpp - Emit LLVM Code for C++ exceptions --------------===//
+//===--- CGException.cpp - Emit LLVM Code for C++ exceptions ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -346,7 +346,7 @@ namespace {
       CGF.EmitNounwindRuntimeCall(getFreeExceptionFn(CGF.CGM), exn);
     }
   };
-}
+} // end anonymous namespace
 
 // Emits an exception expression into the given location.  This
 // differs from EmitAnyExprToMem only in that, if a final copy-ctor
@@ -1191,7 +1191,7 @@ namespace {
       CGF.EnsureInsertPoint();
     }
   };
-}
+} // end anonymous namespace
 
 /// Enters a finally block for an implementation using zero-cost
 /// exceptions.  This is mostly general, but hard-codes some
@@ -1313,7 +1313,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
       llvm::StructType::get(Int8PtrTy, Int32Ty, nullptr), 0);
   LPadInst->addClause(getCatchAllValue(*this));
 
-  llvm::Value *Exn = 0;
+  llvm::Value *Exn = nullptr;
   if (getLangOpts().CPlusPlus)
     Exn = Builder.CreateExtractValue(LPadInst, 0);
   llvm::CallInst *terminateCall =
@@ -1341,7 +1341,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
       EHPersonality::get(*this).isMSVCPersonality()) {
     Builder.CreateTerminatePad(/*UnwindBB=*/nullptr, CGM.getTerminateFn());
   } else {
-    llvm::Value *Exn = 0;
+    llvm::Value *Exn = nullptr;
     if (getLangOpts().CPlusPlus)
       Exn = getExceptionFromSlot();
     llvm::CallInst *terminateCall =
@@ -1465,7 +1465,7 @@ struct PerformSEHFinally final : EHScopeStack::Cleanup {
                                                CleanupEndBB);
   }
 };
-}
+} // end anonymous namespace
 
 namespace {
 /// Find all local variable captures in the statement.
@@ -1524,7 +1524,7 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
     }
   }
 };
-}
+} // end anonymous namespace
 
 Address CodeGenFunction::recoverAddrOfEscapedLocal(
     CodeGenFunction &ParentCGF, Address ParentVar, llvm::Value *ParentFP) {

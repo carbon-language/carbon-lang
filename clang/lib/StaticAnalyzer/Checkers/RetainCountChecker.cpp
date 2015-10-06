@@ -234,6 +234,7 @@ public:
     return RefVal(getKind(), getObjKind(), getCount(), getAutoreleaseCount(),
                   getType(), IvarAccessHistory::AccessedDirectly);
   }
+
   RefVal releaseViaIvar() const {
     assert(getIvarAccessHistory() == IvarAccessHistory::AccessedDirectly);
     return RefVal(getKind(), getObjKind(), getCount(), getAutoreleaseCount(),
@@ -484,7 +485,7 @@ public:
   IdentifierInfo *getIdentifier() const { return II; }
   Selector getSelector() const { return S; }
 };
-}
+} // end anonymous namespace
 
 namespace llvm {
 template <> struct DenseMapInfo<ObjCSummaryKey> {
@@ -985,7 +986,6 @@ void RetainSummaryManager::updateSummaryForCall(const RetainSummary *&S,
         ModifiableSummaryTemplate->setRetEffect(RetEffect::MakeNoRet());
       }
     }
-
   }
 }
 
@@ -2414,7 +2414,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts,
   // FIXME: This will crash the analyzer if an allocation comes from an
   // implicit call (ex: a destructor call).
   // (Currently there are no such allocations in Cocoa, though.)
-  const Stmt *AllocStmt = 0;
+  const Stmt *AllocStmt = nullptr;
   ProgramPoint P = AllocNode->getLocation();
   if (Optional<CallExitEnd> Exit = P.getAs<CallExitEnd>())
     AllocStmt = Exit->getCalleeContext()->getCallSite();
@@ -3129,7 +3129,6 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
   }
 }
 
-
 ProgramStateRef
 RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
                                  RefVal V, ArgEffect E, RefVal::Kind &hasErr,
@@ -3531,7 +3530,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
                                                   ExplodedNode *Pred,
                                                   RetEffect RE, RefVal X,
                                                   SymbolRef Sym,
-                                              ProgramStateRef state) const {
+                                                  ProgramStateRef state) const {
   // HACK: Ignore retain-count issues on values accessed through ivars,
   // because of cases like this:
   //   [_contentView retain];
@@ -3669,7 +3668,6 @@ void RetainCountChecker::checkBind(SVal loc, SVal val, const Stmt *S,
 ProgramStateRef RetainCountChecker::evalAssume(ProgramStateRef state,
                                                    SVal Cond,
                                                    bool Assumption) const {
-
   // FIXME: We may add to the interface of evalAssume the list of symbols
   //  whose assumptions have changed.  For now we just iterate through the
   //  bindings and check if any of the tracked symbols are NULL.  This isn't
@@ -3993,7 +3991,9 @@ void ento::registerRetainCountChecker(CheckerManager &Mgr) {
 // Implementation of the CallEffects API.
 //===----------------------------------------------------------------------===//
 
-namespace clang { namespace ento { namespace objc_retain {
+namespace clang {
+namespace ento {
+namespace objc_retain {
 
 // This is a bit gross, but it allows us to populate CallEffects without
 // creating a bunch of accessors.  This kind is very localized, so the
@@ -4022,4 +4022,6 @@ CallEffects CallEffects::getEffect(const FunctionDecl *FD) {
 
 #undef createCallEffect
 
-}}}
+} // end namespace objc_retain
+} // end namespace ento
+} // end namespace clang

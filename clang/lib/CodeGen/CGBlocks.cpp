@@ -1,4 +1,4 @@
-//===--- CGBlocks.cpp - Emit LLVM Code for declarations -------------------===//
+//===--- CGBlocks.cpp - Emit LLVM Code for declarations ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -78,7 +78,7 @@ static llvm::Constant *buildBlockDescriptor(CodeGenModule &CGM,
   ASTContext &C = CGM.getContext();
 
   llvm::Type *ulong = CGM.getTypes().ConvertType(C.UnsignedLongTy);
-  llvm::Type *i8p = NULL;
+  llvm::Type *i8p = nullptr;
   if (CGM.getLangOpts().OpenCL)
     i8p = 
       llvm::Type::getInt8PtrTy(
@@ -232,7 +232,7 @@ namespace {
 
     return getPrefOrder(left) < getPrefOrder(right);
   }
-}
+} // end anonymous namespace
 
 /// Determines if the given type is safe for constant capture in C++.
 static bool isSafeForCXXConstantCapture(QualType type) {
@@ -943,7 +943,6 @@ llvm::Type *CodeGenModule::getGenericBlockLiteralType() {
   return GenericBlockLiteralType;
 }
 
-
 RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr *E, 
                                           ReturnValueSlot ReturnValue) {
   const BlockPointerType *BPT =
@@ -1304,7 +1303,6 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
       note.flag = BLOCK_FIELD_IS_OBJECT;
     }
  */
-
 
 /// Generate the copy-helper function for a block closure object:
 ///   static void block_copy_helper(block_t *dst, block_t *src);
@@ -2252,7 +2250,7 @@ namespace {
       CGF.BuildBlockRelease(Addr, BLOCK_FIELD_IS_BYREF);
     }
   };
-}
+} // end anonymous namespace
 
 /// Enter a cleanup to destroy a __block variable.  Note that this
 /// cleanup should be a no-op if the variable hasn't left the stack

@@ -26,6 +26,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/Support/SaveAndRestore.h"
+
 using namespace clang;
 using namespace clang::serialization;
 
@@ -160,7 +161,7 @@ namespace clang {
     public:
       FindExistingResult(ASTReader &Reader)
           : Reader(Reader), New(nullptr), Existing(nullptr), AddResult(false),
-            AnonymousDeclNumber(0), TypedefNameForLinkage(0) {}
+            AnonymousDeclNumber(0), TypedefNameForLinkage(nullptr) {}
 
       FindExistingResult(ASTReader &Reader, NamedDecl *New, NamedDecl *Existing,
                          unsigned AnonymousDeclNumber,
@@ -370,7 +371,7 @@ namespace clang {
       }
     }
   };
-}
+} // end namespace clang
 
 namespace {
 /// Iterator over the redeclarations of a declaration that have already
@@ -406,7 +407,8 @@ public:
     return A.Current != B.Current;
   }
 };
-}
+} // end anonymous namespace
+
 template<typename DeclT>
 llvm::iterator_range<MergedRedeclIterator<DeclT>> merged_redecls(DeclT *D) {
   return llvm::iterator_range<MergedRedeclIterator<DeclT>>(
@@ -1095,7 +1097,6 @@ void ASTDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
     D->IvarInitializers = Reader.ReadCXXCtorInitializersRef(F, Record, Idx);
 }
 
-
 void ASTDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   VisitDecl(D);
   D->setAtLoc(ReadSourceLocation(Record, Idx));
@@ -1294,7 +1295,6 @@ void ASTDeclReader::VisitLabelDecl(LabelDecl *D) {
   VisitNamedDecl(D);
   D->setLocStart(ReadSourceLocation(Record, Idx));
 }
-
 
 void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   RedeclarableResult Redecl = VisitRedeclarable(D);
@@ -2741,12 +2741,12 @@ static NamedDecl *getDeclForMerging(NamedDecl *Found,
   // declaration, then we want that inner declaration. Declarations from
   // AST files are handled via ImportedTypedefNamesForLinkage.
   if (Found->isFromASTFile())
-    return 0;
+    return nullptr;
 
   if (auto *TND = dyn_cast<TypedefNameDecl>(Found))
     return TND->getAnonDeclWithTypedefName();
 
-  return 0;
+  return nullptr;
 }
 
 NamedDecl *ASTDeclReader::getAnonymousDeclForMerging(ASTReader &Reader,
@@ -2916,6 +2916,7 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
   D->RedeclLink.setPrevious(cast<DeclT>(Previous));
   D->First = cast<DeclT>(Previous)->First;
 }
+
 namespace clang {
 template<>
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
@@ -2961,7 +2962,8 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
           std::make_pair(Canon, IsUnresolved ? PrevFD : FD));
   }
 }
-}
+} // end namespace clang
+
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader, ...) {
   llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
 }
@@ -3539,7 +3541,7 @@ namespace {
       return true;
     }
   };
-}
+} // end anonymous namespace
 
 void ASTReader::loadObjCCategories(serialization::GlobalDeclID ID,
                                    ObjCInterfaceDecl *D,

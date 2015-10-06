@@ -1,4 +1,4 @@
-//===--- ASTUnit.cpp - ASTUnit utility ------------------------------------===//
+//===--- ASTUnit.cpp - ASTUnit utility --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -47,6 +47,7 @@
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
+
 using namespace clang;
 
 using llvm::TimeRecord;
@@ -973,7 +974,7 @@ public:
   }
 };
 
-}
+} // anonymous namespace
 
 std::unique_ptr<ASTConsumer>
 PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
@@ -2120,7 +2121,7 @@ namespace {
       return Next.getCodeCompletionTUInfo();
     }
   };
-}
+} // anonymous namespace
 
 /// \brief Helper function that computes which global names are hidden by the
 /// local code-completion results.
@@ -2205,7 +2206,6 @@ static void CalculateHiddenNames(const CodeCompletionContext &Context,
       HiddenNames.insert(Name.getAsString());
   }
 }
-
 
 void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
                                             CodeCompletionContext Context,
@@ -2840,9 +2840,9 @@ void ASTUnit::ConcurrencyState::finish() {
 
 #else // NDEBUG
 
-ASTUnit::ConcurrencyState::ConcurrencyState() { Mutex = 0; }
+ASTUnit::ConcurrencyState::ConcurrencyState() { Mutex = nullptr; }
 ASTUnit::ConcurrencyState::~ConcurrencyState() {}
 void ASTUnit::ConcurrencyState::start() {}
 void ASTUnit::ConcurrencyState::finish() {}
 
-#endif
+#endif // NDEBUG

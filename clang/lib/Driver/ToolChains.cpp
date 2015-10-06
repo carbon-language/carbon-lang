@@ -1,4 +1,4 @@
-//===--- ToolChains.cpp - ToolChain Implementations -----------------------===//
+//===--- ToolChains.cpp - ToolChain Implementations -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -142,7 +142,7 @@ StringRef MachO::getMachOArchName(const ArgList &Args) const {
     return "arm64";
 
   case llvm::Triple::thumb:
-  case llvm::Triple::arm: {
+  case llvm::Triple::arm:
     if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
       if (const char *Arch = ArmMachOArchName(A->getValue()))
         return Arch;
@@ -152,7 +152,6 @@ StringRef MachO::getMachOArchName(const ArgList &Args) const {
         return Arch;
 
     return "arm";
-  }
   }
 }
 
@@ -572,7 +571,7 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     CmdArgs.push_back("-lc++");
     break;
 
-  case ToolChain::CST_Libstdcxx: {
+  case ToolChain::CST_Libstdcxx:
     // Unfortunately, -lstdc++ doesn't always exist in the standard search path;
     // it was previously found in the gcc lib dir. However, for all the Darwin
     // platforms we care about it was -lstdc++.6, so we search for that
@@ -605,7 +604,6 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     // Otherwise, let the linker search.
     CmdArgs.push_back("-lstdc++");
     break;
-  }
   }
 }
 
@@ -1464,7 +1462,6 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
     LibDirs.append(begin(SystemZLibDirs), end(SystemZLibDirs));
     TripleAliases.append(begin(SystemZTriples), end(SystemZTriples));
     break;
-
   default:
     // By default, just rely on the standard lib directories and the original
     // triple.
@@ -2217,7 +2214,7 @@ const char *HexagonToolChain::GetSmallDataThreshold(const ArgList &Args) {
   if (A)
     return "0";
 
-  return 0;
+  return nullptr;
 }
 
 bool HexagonToolChain::UsesG0(const char *smallDataThreshold) {
@@ -2436,34 +2433,30 @@ NaClToolChain::NaClToolChain(const Driver &D, const llvm::Triple &Triple,
   std::string ToolPath(getDriver().ResourceDir + "/lib/");
 
   switch (Triple.getArch()) {
-  case llvm::Triple::x86: {
+  case llvm::Triple::x86:
     file_paths.push_back(FilePath + "x86_64-nacl/lib32");
     file_paths.push_back(FilePath + "i686-nacl/usr/lib");
     prog_paths.push_back(ProgPath + "x86_64-nacl/bin");
     file_paths.push_back(ToolPath + "i686-nacl");
     break;
-  }
-  case llvm::Triple::x86_64: {
+  case llvm::Triple::x86_64:
     file_paths.push_back(FilePath + "x86_64-nacl/lib");
     file_paths.push_back(FilePath + "x86_64-nacl/usr/lib");
     prog_paths.push_back(ProgPath + "x86_64-nacl/bin");
     file_paths.push_back(ToolPath + "x86_64-nacl");
     break;
-  }
-  case llvm::Triple::arm: {
+  case llvm::Triple::arm:
     file_paths.push_back(FilePath + "arm-nacl/lib");
     file_paths.push_back(FilePath + "arm-nacl/usr/lib");
     prog_paths.push_back(ProgPath + "arm-nacl/bin");
     file_paths.push_back(ToolPath + "arm-nacl");
     break;
-  }
-  case llvm::Triple::mipsel: {
+  case llvm::Triple::mipsel:
     file_paths.push_back(FilePath + "mipsel-nacl/lib");
     file_paths.push_back(FilePath + "mipsel-nacl/usr/lib");
     prog_paths.push_back(ProgPath + "bin");
     file_paths.push_back(ToolPath + "mipsel-nacl");
     break;
-  }
   default:
     break;
   }
