@@ -29,13 +29,13 @@ template<typename TPtr>
 void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 ::setSymTabObject(TPtr *Dest, TPtr Src) {
   // Get the old symtab and value list before doing the assignment.
-  ValueSymbolTable *OldST = TraitsClass::getSymTab(getListOwner());
+  ValueSymbolTable *OldST = getSymTab(getListOwner());
 
   // Do it.
   *Dest = Src;
   
   // Get the new SymTab object.
-  ValueSymbolTable *NewST = TraitsClass::getSymTab(getListOwner());
+  ValueSymbolTable *NewST = getSymTab(getListOwner());
   
   // If there is nothing to do, quick exit.
   if (OldST == NewST) return;
@@ -69,7 +69,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
   ItemParentClass *Owner = getListOwner();
   V->setParent(Owner);
   if (V->hasName())
-    if (ValueSymbolTable *ST = TraitsClass::getSymTab(Owner))
+    if (ValueSymbolTable *ST = getSymTab(Owner))
       ST->reinsertValue(V);
 }
 
@@ -78,7 +78,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 ::removeNodeFromList(ValueSubClass *V) {
   V->setParent(nullptr);
   if (V->hasName())
-    if (ValueSymbolTable *ST = TraitsClass::getSymTab(getListOwner()))
+    if (ValueSymbolTable *ST = getSymTab(getListOwner()))
       ST->removeValueName(V->getValueName());
 }
 
@@ -93,8 +93,8 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 
   // We only have to update symbol table entries if we are transferring the
   // instructions to a different symtab object...
-  ValueSymbolTable *NewST = TraitsClass::getSymTab(NewIP);
-  ValueSymbolTable *OldST = TraitsClass::getSymTab(OldIP);
+  ValueSymbolTable *NewST = getSymTab(NewIP);
+  ValueSymbolTable *OldST = getSymTab(OldIP);
   if (NewST != OldST) {
     for (; first != last; ++first) {
       ValueSubClass &V = *first;

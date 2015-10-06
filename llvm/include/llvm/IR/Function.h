@@ -46,8 +46,6 @@ template<> struct ilist_traits<Argument>
   Argument *ensureHead(Argument*) const { return createSentinel(); }
   static void noteHead(Argument*, Argument*) {}
 
-  static ValueSymbolTable *getSymTab(Function *ItemParent);
-
 private:
   mutable ilist_half_node<Argument> Sentinel;
 };
@@ -625,16 +623,6 @@ private:
 
   void clearMetadata();
 };
-
-inline ValueSymbolTable *
-ilist_traits<BasicBlock>::getSymTab(Function *F) {
-  return F ? &F->getValueSymbolTable() : nullptr;
-}
-
-inline ValueSymbolTable *
-ilist_traits<Argument>::getSymTab(Function *F) {
-  return F ? &F->getValueSymbolTable() : nullptr;
-}
 
 template <>
 struct OperandTraits<Function> : public OptionalOperandTraits<Function> {};

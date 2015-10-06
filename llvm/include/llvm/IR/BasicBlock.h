@@ -40,8 +40,6 @@ template<> struct ilist_traits<BasicBlock>
   BasicBlock *provideInitialHead() const { return createSentinel(); }
   BasicBlock *ensureHead(BasicBlock*) const { return createSentinel(); }
   static void noteHead(BasicBlock*, BasicBlock*) {}
-
-  static ValueSymbolTable *getSymTab(Function *ItemParent);
 private:
   mutable ilist_half_node<BasicBlock> Sentinel;
 };

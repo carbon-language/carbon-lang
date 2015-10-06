@@ -58,10 +58,12 @@ public:
     return Par->*(Par->getSublistAccess((ValueSubClass*)nullptr));
   }
 
+private:
   static ValueSymbolTable *getSymTab(ItemParentClass *Par) {
     return Par ? toPtr(Par->getValueSymbolTable()) : nullptr;
   }
 
+public:
   void addNodeToList(ValueSubClass *V);
   void removeNodeFromList(ValueSubClass *V);
   void transferNodesFromList(ilist_traits<ValueSubClass> &L2,
