@@ -35,7 +35,7 @@ def export_dynamic : Flag<["--", "-"], "export-dynamic">,
 def fini : Separate<["-"], "fini">, MetaVarName<"<symbol>">,
   HelpText<"Specify a finalizer function">;
 
-def init : Separate<["-"], "init">, MetaVarName<"<symdol>">,
+def init : Separate<["-"], "init">, MetaVarName<"<symbol>">,
   HelpText<"Specify an initializer function">;
 
 def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
