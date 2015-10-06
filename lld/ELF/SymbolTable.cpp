@@ -133,6 +133,13 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
   // Given that the symbol is effectively unused, we just create a dummy
   // hidden one to avoid the undefined symbol error.
   addIgnoredSym<ELFT>("_GLOBAL_OFFSET_TABLE_");
+
+  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
+  // static linking the linker is required to optimize away any references to
+  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
+  // to avoid the undefined symbol error.
+  if (Config->Static)
+    addIgnoredSym<ELFT>("__tls_get_addr");
 }
 
 template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
