@@ -959,8 +959,7 @@ def skipUnlessGoInstalled(func):
                         "not meet minimum go version {}".format(
                             compiler_strict_version,
                             min_strict_version))
-            if not skip_test:
-                func(*args, **kwargs)
+            func(*args, **kwargs)
     return wrapper
 
 def getPlatform():
