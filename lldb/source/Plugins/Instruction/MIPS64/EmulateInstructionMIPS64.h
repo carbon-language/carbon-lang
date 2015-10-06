@@ -63,12 +63,6 @@ public:
     virtual lldb_private::ConstString
     GetPluginName();
 
-    virtual lldb_private::ConstString
-    GetShortPluginName()
-    {
-        return GetPluginNameStatic();
-    }
-
     virtual uint32_t
     GetPluginVersion()
     {

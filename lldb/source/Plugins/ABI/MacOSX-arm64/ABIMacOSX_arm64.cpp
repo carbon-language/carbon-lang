@@ -36,7 +36,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 static const char *pluginDesc = "Mac OS X ABI for arm64 targets";
-static const char *pluginShort = "abi.macosx-arm64";
 
 
 static RegisterInfo g_register_infos[] = 
@@ -1090,12 +1089,6 @@ ABIMacOSX_arm64::GetPluginNameStatic()
 {
     static ConstString g_plugin_name("ABIMacOSX_arm64");
     return g_plugin_name;
-}
-
-const char *
-ABIMacOSX_arm64::GetShortPluginName()
-{
-    return pluginShort;
 }
 
 uint32_t

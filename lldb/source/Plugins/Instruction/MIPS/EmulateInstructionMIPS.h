@@ -63,12 +63,6 @@ public:
     lldb_private::ConstString
     GetPluginName() override;
 
-    virtual lldb_private::ConstString
-    GetShortPluginName()
-    {
-        return GetPluginNameStatic();
-    }
-
     uint32_t
     GetPluginVersion() override
     {

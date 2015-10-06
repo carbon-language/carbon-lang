@@ -106,9 +106,6 @@ public:
         return GetPluginNameStatic();
     }
 
-    virtual const char *
-    GetShortPluginName();
-    
     virtual uint32_t
     GetPluginVersion();
     
