@@ -436,13 +436,13 @@ public:
     CheckLazyArguments();
     return ArgumentList;
   }
-  static iplist<Argument> Function::*getSublistAccess(Argument*) {
+  static ArgumentListType Function::*getSublistAccess(Argument*) {
     return &Function::ArgumentList;
   }
 
   const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
         BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
-  static iplist<BasicBlock> Function::*getSublistAccess(BasicBlock*) {
+  static BasicBlockListType Function::*getSublistAccess(BasicBlock*) {
     return &Function::BasicBlocks;
   }
 

@@ -253,7 +253,7 @@ public:
         InstListType &getInstList()       { return InstList; }
 
   /// \brief Returns a pointer to a member of the instruction list.
-  static iplist<Instruction> BasicBlock::*getSublistAccess(Instruction*) {
+  static InstListType BasicBlock::*getSublistAccess(Instruction*) {
     return &BasicBlock::InstList;
   }
 
