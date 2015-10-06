@@ -85,7 +85,7 @@ public:
   Writer(SymbolTable *T)
       : SymTabSec(*T, StrTabSec, BssSec), DynSymSec(*T, DynStrSec, BssSec),
         RelaDynSec(DynSymSec, GotSec, BssSec, T->shouldUseRela()),
-        PltSec(GotSec), HashSec(DynSymSec),
+        GotSec(BssSec), PltSec(GotSec), HashSec(DynSymSec),
         DynamicSec(*T, HashSec, RelaDynSec, BssSec),
         BssSec(PltSec, GotSec, BssSec, ".bss", SHT_NOBITS,
                SHF_ALLOC | SHF_WRITE) {}
@@ -230,18 +230,14 @@ void Writer<ELFT>::scanRelocs(
         if (Body->isInGot())
           continue;
         GotSec.addEntry(Body);
-        Body->setUsedInDynamicReloc();
-        RelaDynSec.addReloc({C, RI});
-        continue;
-      }
-      if (Body->isShared()) {
-        Body->setUsedInDynamicReloc();
-        RelaDynSec.addReloc({C, RI});
-        continue;
       }
     }
-    if (Config->Shared && !Target->isRelRelative(Type))
+    if (canBePreempted(Body)) {
+      Body->setUsedInDynamicReloc();
       RelaDynSec.addReloc({C, RI});
+    } else if (Config->Shared && !Target->isRelRelative(Type)) {
+      RelaDynSec.addReloc({C, RI});
+    }
   }
 }
 

@@ -14,6 +14,7 @@
 
 using namespace llvm;
 using namespace llvm::object;
+using namespace llvm::support::endian;
 using namespace llvm::ELF;
 
 using namespace lld;
@@ -29,10 +30,11 @@ OutputSectionBase<Is64Bits>::OutputSectionBase(StringRef Name, uint32_t sh_type,
 }
 
 template <class ELFT>
-GotSection<ELFT>::GotSection()
+GotSection<ELFT>::GotSection(const OutputSection<ELFT> &BssSec)
     : OutputSectionBase<ELFT::Is64Bits>(".got", llvm::ELF::SHT_PROGBITS,
                                         llvm::ELF::SHF_ALLOC |
-                                            llvm::ELF::SHF_WRITE) {
+                                            llvm::ELF::SHF_WRITE),
+      BssSec(BssSec) {
   this->Header.sh_addralign = this->getAddrSize();
 }
 
@@ -45,6 +47,16 @@ template <class ELFT>
 typename GotSection<ELFT>::uintX_t
 GotSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
   return this->getVA() + B.getGotIndex() * this->getAddrSize();
+}
+
+template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
+  for (const SymbolBody *B : Entries) {
+    if (canBePreempted(B))
+      continue; // The dynamic linker will take care of it.
+    uintX_t VA = getSymVA(*B, BssSec);
+    write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Buf, VA);
+    Buf += sizeof(uintX_t);
+  }
 }
 
 template <class ELFT>
@@ -397,6 +409,16 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
   InputSection<ELFT> *Section = Sections[SecIndex];
   OutputSection<ELFT> *Out = Section->getOutputSection();
   return Out->getVA() + Section->getOutputSectionOff() + Sym->st_value;
+}
+
+bool lld::elf2::canBePreempted(const SymbolBody *Body) {
+  if (!Body)
+    return false;
+  if (Body->isShared() || Body->isUndefined())
+    return true;
+  if (!Config->Shared)
+    return false;
+  return true;
 }
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {

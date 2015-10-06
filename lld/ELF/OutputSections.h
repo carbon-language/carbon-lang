@@ -40,7 +40,7 @@ template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t
 getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
               const ObjectFile<ELFT> &File);
-
+bool canBePreempted(const SymbolBody *Body);
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 
 bool includeInDynamicSymtab(const SymbolBody &B);
@@ -103,17 +103,18 @@ class GotSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename Base::uintX_t uintX_t;
 
 public:
-  GotSection();
+  GotSection(const OutputSection<ELFT> &BssSec);
   void finalize() override {
     this->Header.sh_size = Entries.size() * this->getAddrSize();
   }
-  void writeTo(uint8_t *Buf) override {}
+  void writeTo(uint8_t *Buf) override;
   void addEntry(SymbolBody *Sym);
   bool empty() const { return Entries.empty(); }
   uintX_t getEntryAddr(const SymbolBody &B) const;
 
 private:
   std::vector<const SymbolBody *> Entries;
+  const OutputSection<ELFT> &BssSec;
 };
 
 template <class ELFT>
