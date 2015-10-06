@@ -13,6 +13,3 @@
 // ENABLE:   0x000000000000001D RUNPATH              /somepath
 // ENABLE-NOT: RPATH
 // ENABLE: ]
-
-.global _start
-_start:

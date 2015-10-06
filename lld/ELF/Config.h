@@ -31,7 +31,7 @@ struct Configuration {
   bool DiscardAll;
   bool DiscardLocals;
   bool DiscardNone;
-  bool EnableNewDtags = true;
+  bool EnableNewDtags;
   bool ExportDynamic;
   bool NoInhibitExec;
   bool NoUndefined;
