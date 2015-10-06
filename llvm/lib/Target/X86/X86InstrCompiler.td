@@ -1322,7 +1322,6 @@ def : Pat<(and GR64:$src, 0x00000000FFFFFFFF),
                          (MOV32rr (EXTRACT_SUBREG GR64:$src, sub_32bit)),
                          sub_32bit)>;
 // r & (2^16-1) ==> movz
-let AddedComplexity = 1 in // Give priority over i64immZExt32.
 def : Pat<(and GR64:$src, 0xffff),
           (SUBREG_TO_REG (i64 0),
                       (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR64:$src, sub_16bit))),
