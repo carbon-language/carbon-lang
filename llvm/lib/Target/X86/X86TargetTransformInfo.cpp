@@ -1078,6 +1078,13 @@ int X86TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   case Instruction::Store:
     ImmIdx = 0;
     break;
+  case Instruction::And:
+    // We support 64-bit ANDs with immediates with 32-bits of leading zeroes
+    // by using a 32-bit operation with implicit zero extension. Detect such
+    // immediates here as the normal path expects bit 31 to be sign extended.
+    if (Idx == 1 && Imm.getBitWidth() == 64 && isUInt<32>(Imm.getZExtValue()))
+      return TTI::TCC_Free;
+    // Fallthrough
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::Mul:
@@ -1085,7 +1092,6 @@ int X86TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   case Instruction::SDiv:
   case Instruction::URem:
   case Instruction::SRem:
-  case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
   case Instruction::ICmp:
