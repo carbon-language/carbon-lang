@@ -9646,6 +9646,8 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("NamespaceIndentation: All", NamespaceIndentation,
               FormatStyle::NI_All);
 
+  // FIXME: This is required because parsing a configuration simply overwrites
+  // the first N elements of the list instead of resetting it.
   Style.ForEachMacros.clear();
   std::vector<std::string> BoostForeach;
   BoostForeach.push_back("BOOST_FOREACH");
@@ -9655,6 +9657,16 @@ TEST_F(FormatTest, ParsesConfiguration) {
   BoostAndQForeach.push_back("Q_FOREACH");
   CHECK_PARSE("ForEachMacros: [BOOST_FOREACH, Q_FOREACH]", ForEachMacros,
               BoostAndQForeach);
+
+  Style.IncludeCategories.clear();
+  std::vector<FormatStyle::IncludeCategory> ExpectedCategories = {{"abc/.*", 2},
+                                                                  {".*", 1}};
+  CHECK_PARSE("IncludeCategories:\n"
+              "  - Regex: abc/.*\n"
+              "    Priority: 2\n"
+              "  - Regex: .*\n"
+              "    Priority: 1",
+              IncludeCategories, ExpectedCategories);
 }
 
 TEST_F(FormatTest, ParsesConfigurationWithLanguages) {

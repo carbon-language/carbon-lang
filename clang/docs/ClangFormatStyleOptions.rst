@@ -155,21 +155,29 @@ the configuration (without a prefix: ``Auto``).
 
   This applies to round brackets (parentheses), angle brackets and square
   brackets. This will result in formattings like
-  \code
-  someLongFunction(argument1,
-  argument2);
-  \endcode
+  .. code-block:: c++
+    someLongFunction(argument1,
+                     argument2);
 
 **AlignConsecutiveAssignments** (``bool``)
   If ``true``, aligns consecutive assignments.
 
   This will align the assignment operators of consecutive lines. This
   will result in formattings like
-  \code
-  int aaaa = 12;
-  int b    = 23;
-  int ccc  = 23;
-  \endcode
+  .. code-block:: c++
+    int aaaa = 12;
+    int b    = 23;
+    int ccc  = 23;
+
+**AlignConsecutiveDeclarations** (``bool``)
+  If ``true``, aligns consecutive declarations.
+
+  This will align the declaration names of consecutive lines. This
+  will result in formattings like
+  .. code-block:: c++
+    int         aaaa = 12;
+    float       b = 23;
+    std::string ccc = 23;
 
 **AlignEscapedNewlinesLeft** (``bool``)
   If ``true``, aligns escaped newlines as far left as possible.
@@ -381,14 +389,17 @@ the configuration (without a prefix: ``Auto``).
   instead of as function calls.
 
   These are expected to be macros of the form:
-  \code
-  FOREACH(<variable-declaration>, ...)
-  <loop-body>
-  \endcode
+  .. code-block:: c++
+    FOREACH(<variable-declaration>, ...)
+      <loop-body>
+
+  In the .clang-format configuration file, this can be configured like:
+  .. code-block:: c++
+    ForEachMacros: ['RANGES_FOR', 'FOREACH']
 
   For example: BOOST_FOREACH.
 
-**IncludeCategories** (``std::vector<std::pair<std::string, unsigned>>``)
+**IncludeCategories** (``std::vector<IncludeCategory>``)
   Regular expressions denoting the different #include categories used
   for ordering #includes.
 
@@ -402,6 +413,16 @@ the configuration (without a prefix: ``Auto``).
   category. The main header for a source file automatically gets category 0,
   so that it is kept at the beginning of the #includes
   (http://llvm.org/docs/CodingStandards.html#include-style).
+
+  To configure this in the .clang-format file, use:
+  .. code-block:: c++
+    IncludeCategories:
+      - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
+        Priority:        2
+      - Regex:           '^(<|"(gtest|isl|json)/)'
+        Priority:        3
+      - Regex:           '.\*'
+        Priority:        1
 
 **IndentCaseLabels** (``bool``)
   Indent case labels one level from the switch statement.

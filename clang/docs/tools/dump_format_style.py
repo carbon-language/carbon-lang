@@ -86,7 +86,11 @@ class EnumValue:
         doxygen2rst(indent(self.comment, 2)))
 
 def clean_comment_line(line):
-  return line[3:].strip() + '\n'
+  if line == '/// \\code':
+    return '.. code-block:: c++\n'
+  if line == '/// \\endcode':
+    return ''
+  return line[4:] + '\n'
 
 def read_options(header):
   class State:
@@ -139,8 +143,6 @@ def read_options(header):
       elif line == '};':
         state = State.InStruct
         nested_structs[nested_struct.name] = nested_struct
-      else:
-        raise Exception('Invalid format, expected struct field comment or };')
     elif state == State.InNestedFieldComent:
       if line.startswith('///'):
         comment += clean_comment_line(line)
@@ -168,7 +170,7 @@ def read_options(header):
   for option in options:
     if not option.type in ['bool', 'unsigned', 'int', 'std::string',
                            'std::vector<std::string>',
-                           'std::vector<std::pair<std::string, unsigned>>']:
+                           'std::vector<IncludeCategory>']:
       if enums.has_key(option.type):
         option.enum = enums[option.type]
       elif nested_structs.has_key(option.type):

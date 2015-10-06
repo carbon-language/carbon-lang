@@ -37,6 +37,7 @@
 using clang::format::FormatStyle;
 
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(std::string)
+LLVM_YAML_IS_SEQUENCE_VECTOR(clang::format::FormatStyle::IncludeCategory)
 
 namespace llvm {
 namespace yaml {
@@ -247,6 +248,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("ExperimentalAutoDetectBinPacking",
                    Style.ExperimentalAutoDetectBinPacking);
     IO.mapOptional("ForEachMacros", Style.ForEachMacros);
+    IO.mapOptional("IncludeCategories", Style.IncludeCategories);
     IO.mapOptional("IndentCaseLabels", Style.IndentCaseLabels);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("IndentWrappedFunctionNames",
@@ -304,6 +306,13 @@ template <> struct MappingTraits<FormatStyle::BraceWrappingFlags> {
     IO.mapOptional("BeforeCatch", Wrapping.BeforeCatch);
     IO.mapOptional("BeforeElse", Wrapping.BeforeElse);
     IO.mapOptional("IndentBraces", Wrapping.IndentBraces);
+  }
+};
+
+template <> struct MappingTraits<FormatStyle::IncludeCategory> {
+  static void mapping(IO &IO, FormatStyle::IncludeCategory &Category) {
+    IO.mapOptional("Regex", Category.Regex);
+    IO.mapOptional("Priority", Category.Priority);
   }
 };
 
@@ -1737,8 +1746,8 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
 
   // Create pre-compiled regular expressions for the #include categories.
   SmallVector<llvm::Regex, 4> CategoryRegexs;
-  for (const auto &IncludeBlock : Style.IncludeCategories)
-    CategoryRegexs.emplace_back(IncludeBlock.first);
+  for (const auto &Category : Style.IncludeCategories)
+    CategoryRegexs.emplace_back(Category.Regex);
 
   for (;;) {
     auto Pos = Code.find('\n', SearchFrom);
@@ -1753,7 +1762,7 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
           Category = UINT_MAX;
           for (unsigned i = 0, e = CategoryRegexs.size(); i != e; ++i) {
             if (CategoryRegexs[i].match(Matches[1])) {
-              Category = Style.IncludeCategories[i].second;
+              Category = Style.IncludeCategories[i].Priority;
               break;
             }
           }
