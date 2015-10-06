@@ -1076,11 +1076,10 @@ bool ASTUnit::Parse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
   // Configure the various subsystems.
   LangOpts = Clang->getInvocation().LangOpts;
   FileSystemOpts = Clang->getFileSystemOpts();
-  IntrusiveRefCntPtr<vfs::FileSystem> VFS =
-      createVFSFromCompilerInvocation(Clang->getInvocation(), getDiagnostics());
-  if (!VFS)
-    return true;
-  FileMgr = new FileManager(FileSystemOpts, VFS);
+  if (!FileMgr) {
+    Clang->createFileManager();
+    FileMgr = &Clang->getFileManager();
+  }
   SourceMgr = new SourceManager(getDiagnostics(), *FileMgr,
                                 UserFilesAreVolatile);
   TheSema.reset();
@@ -1892,8 +1891,8 @@ bool ASTUnit::LoadFromCompilerInvocation(
 std::unique_ptr<ASTUnit> ASTUnit::LoadFromCompilerInvocation(
     CompilerInvocation *CI,
     std::shared_ptr<PCHContainerOperations> PCHContainerOps,
-    IntrusiveRefCntPtr<DiagnosticsEngine> Diags, bool OnlyLocalDecls,
-    bool CaptureDiagnostics, bool PrecompilePreamble,
+    IntrusiveRefCntPtr<DiagnosticsEngine> Diags, FileManager *FileMgr,
+    bool OnlyLocalDecls, bool CaptureDiagnostics, bool PrecompilePreamble,
     TranslationUnitKind TUKind, bool CacheCodeCompletionResults,
     bool IncludeBriefCommentsInCodeCompletion, bool UserFilesAreVolatile) {
   // Create the AST unit.
@@ -1907,12 +1906,8 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromCompilerInvocation(
   AST->IncludeBriefCommentsInCodeCompletion
     = IncludeBriefCommentsInCodeCompletion;
   AST->Invocation = CI;
-  AST->FileSystemOpts = CI->getFileSystemOpts();
-  IntrusiveRefCntPtr<vfs::FileSystem> VFS =
-      createVFSFromCompilerInvocation(*CI, *Diags);
-  if (!VFS)
-    return nullptr;
-  AST->FileMgr = new FileManager(AST->FileSystemOpts, VFS);
+  AST->FileSystemOpts = FileMgr->getFileSystemOpts();
+  AST->FileMgr = FileMgr;
   AST->UserFilesAreVolatile = UserFilesAreVolatile;
   
   // Recover resources if we crash before exiting this method.
@@ -2043,6 +2038,7 @@ bool ASTUnit::Reparse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
         getMainBufferWithPrecompiledPreamble(PCHContainerOps, *Invocation);
 
   // Clear out the diagnostics state.
+  FileMgr.reset();
   getDiagnostics().Reset();
   ProcessWarningOptions(getDiagnostics(), Invocation->getDiagnosticOpts());
   if (OverrideMainBuffer)

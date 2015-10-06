@@ -418,12 +418,12 @@ public:
   bool runInvocation(CompilerInvocation *Invocation, FileManager *Files,
                      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
                      DiagnosticConsumer *DiagConsumer) override {
-    // FIXME: This should use the provided FileManager.
     std::unique_ptr<ASTUnit> AST = ASTUnit::LoadFromCompilerInvocation(
         Invocation, PCHContainerOps,
         CompilerInstance::createDiagnostics(&Invocation->getDiagnosticOpts(),
                                             DiagConsumer,
-                                            /*ShouldOwnClient=*/false));
+                                            /*ShouldOwnClient=*/false),
+        Files);
     if (!AST)
       return false;
 

@@ -805,9 +805,9 @@ public:
   static std::unique_ptr<ASTUnit> LoadFromCompilerInvocation(
       CompilerInvocation *CI,
       std::shared_ptr<PCHContainerOperations> PCHContainerOps,
-      IntrusiveRefCntPtr<DiagnosticsEngine> Diags, bool OnlyLocalDecls = false,
-      bool CaptureDiagnostics = false, bool PrecompilePreamble = false,
-      TranslationUnitKind TUKind = TU_Complete,
+      IntrusiveRefCntPtr<DiagnosticsEngine> Diags, FileManager *FileMgr,
+      bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,
+      bool PrecompilePreamble = false, TranslationUnitKind TUKind = TU_Complete,
       bool CacheCodeCompletionResults = false,
       bool IncludeBriefCommentsInCodeCompletion = false,
       bool UserFilesAreVolatile = false);
