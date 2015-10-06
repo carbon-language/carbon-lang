@@ -10,6 +10,7 @@
 // The machine combiner pass uses machine trace metrics to ensure the combined
 // instructions does not lengthen the critical path or the resource depth.
 //===----------------------------------------------------------------------===//
+
 #define DEBUG_TYPE "machine-combiner"
 
 #include "llvm/ADT/Statistic.h"
@@ -122,7 +123,6 @@ unsigned
 MachineCombiner::getDepth(SmallVectorImpl<MachineInstr *> &InsInstrs,
                           DenseMap<unsigned, unsigned> &InstrIdxForVirtReg,
                           MachineTraceMetrics::Trace BlockTrace) {
-
   SmallVector<unsigned, 16> InstrDepth;
   assert(TSchedModel.hasInstrSchedModelOrItineraries() &&
          "Missing machine model\n");
@@ -181,7 +181,6 @@ MachineCombiner::getDepth(SmallVectorImpl<MachineInstr *> &InsInstrs,
 /// \returns Latency of \p NewRoot
 unsigned MachineCombiner::getLatency(MachineInstr *Root, MachineInstr *NewRoot,
                                      MachineTraceMetrics::Trace BlockTrace) {
-
   assert(TSchedModel.hasInstrSchedModelOrItineraries() &&
          "Missing machine model\n");
 
@@ -229,7 +228,6 @@ bool MachineCombiner::improvesCriticalPathLen(
     SmallVectorImpl<MachineInstr *> &InsInstrs,
     DenseMap<unsigned, unsigned> &InstrIdxForVirtReg,
     bool NewCodeHasLessInsts) {
-
   assert(TSchedModel.hasInstrSchedModelOrItineraries() &&
          "Missing machine model\n");
   // NewRoot is the last instruction in the \p InsInstrs vector.
@@ -274,6 +272,7 @@ void MachineCombiner::instr2instrSC(
     InstrsSC.push_back(SC);
   }
 }
+
 /// True when the new instructions do not increase resource length
 bool MachineCombiner::preservesResourceLen(
     MachineBasicBlock *MBB, MachineTraceMetrics::Trace BlockTrace,
@@ -425,7 +424,7 @@ bool MachineCombiner::runOnMachineFunction(MachineFunction &MF) {
   TSchedModel.init(SchedModel, &STI, TII);
   MRI = &MF.getRegInfo();
   Traces = &getAnalysis<MachineTraceMetrics>();
-  MinInstr = 0;
+  MinInstr = nullptr;
   OptSize = MF.getFunction()->optForSize();
 
   DEBUG(dbgs() << getPassName() << ": " << MF.getName() << '\n');

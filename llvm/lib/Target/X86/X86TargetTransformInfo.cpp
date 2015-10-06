@@ -21,6 +21,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "x86tti"
@@ -62,8 +63,8 @@ unsigned X86TTIImpl::getRegisterBitWidth(bool Vector) {
 
   if (ST->is64Bit())
     return 64;
-  return 32;
 
+  return 32;
 }
 
 unsigned X86TTIImpl::getMaxInterleaveFactor(unsigned VF) {
@@ -880,7 +881,7 @@ int X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
     // Scalarization
     int MaskSplitCost = getScalarizationOverhead(MaskTy, false, true);
     int ScalarCompareCost = getCmpSelInstrCost(
-        Instruction::ICmp, Type::getInt8Ty(getGlobalContext()), NULL);
+        Instruction::ICmp, Type::getInt8Ty(getGlobalContext()), nullptr);
     int BranchCost = getCFInstrCost(Instruction::Br);
     int MaskCmpCost = NumElem * (BranchCost + ScalarCompareCost);
 
@@ -898,8 +899,8 @@ int X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
   if (LT.second != TLI->getValueType(DL, SrcVTy).getSimpleVT() &&
       LT.second.getVectorNumElements() == NumElem)
     // Promotion requires expand/truncate for data and a shuffle for mask.
-    Cost += getShuffleCost(TTI::SK_Alternate, SrcVTy, 0, 0) +
-            getShuffleCost(TTI::SK_Alternate, MaskTy, 0, 0);
+    Cost += getShuffleCost(TTI::SK_Alternate, SrcVTy, 0, nullptr) +
+            getShuffleCost(TTI::SK_Alternate, MaskTy, 0, nullptr);
 
   else if (LT.second.getVectorNumElements() > NumElem) {
     VectorType *NewMaskTy = VectorType::get(MaskTy->getVectorElementType(),

@@ -216,8 +216,6 @@ static void ComputeUnsignedMinMaxValuesFromKnownBits(const APInt &KnownZero,
   Max = KnownOne|UnknownBits;
 }
 
-
-
 /// FoldCmpLoadFromIndexedGlobal - Called we see this pattern:
 ///   cmp pred (load (gep GV, ...)), cmpcst
 /// where GV is a global variable with a constant initializer.  Try to simplify
@@ -371,7 +369,6 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
       }
     }
 
-
     // If this element is in range, update our magic bitvector.
     if (i < 64 && IsTrueForElt)
       MagicBitvector |= 1ULL << i;
@@ -469,7 +466,6 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     return new ICmpInst(ICmpInst::ICMP_UGT, Idx, End);
   }
 
-
   // If a magic bitvector captures the entire comparison state
   // of this load, replace it with computation that does:
   //   ((magic_cst >> i) & 1) != 0
@@ -495,7 +491,6 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
 
   return nullptr;
 }
-
 
 /// EvaluateGEPOffsetExpression - Return a value that can be used to compare
 /// the *offset* implied by a GEP to zero.  For example, if we have &A[i], we
@@ -561,8 +556,6 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC,
       Offset += Size*CI->getSExtValue();
     }
   }
-
-
 
   // Okay, we know we have a single variable index, which must be a
   // pointer/array/vector index.  If there is no offset, life is simple, return
@@ -851,7 +844,6 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
       // to the same result value.
       HiOverflow = AddWithOverflow(HiBound, LoBound, RangeSize, false);
     }
-
   } else if (DivRHS->getValue().isStrictlyPositive()) { // Divisor is > 0.
     if (CmpRHSV == 0) {       // (X / pos) op 0
       // Can't overflow.  e.g.  X/2 op 0 --> [-1, 2)
@@ -995,7 +987,6 @@ Instruction *InstCombiner::FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *Shr,
     assert(Res && "This div/cst should have folded!");
     return Res;
   }
-
 
   // If we are comparing against bits always shifted out, the
   // comparison cannot succeed.
@@ -2514,7 +2505,6 @@ static APInt DemandedBitsLHSMask(ICmpInst &I,
   default:
     return APInt::getAllOnesValue(BitWidth);
   }
-
 }
 
 /// \brief Check if the order of \p Op0 and \p Op1 as operand in an ICmpInst
@@ -2951,7 +2941,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                               ConstantInt::get(X->getType(),
                                                CI->countTrailingZeros()));
       }
-
       break;
     }
     case ICmpInst::ICMP_NE: {
@@ -2996,7 +2985,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                               ConstantInt::get(X->getType(),
                                                CI->countTrailingZeros()));
       }
-
       break;
     }
     case ICmpInst::ICMP_ULT:
@@ -3149,7 +3137,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // comparison into the select arms, which will cause one to be
         // constant folded and the select turned into a bitwise or.
         Value *Op1 = nullptr, *Op2 = nullptr;
-        ConstantInt *CI = 0;
+        ConstantInt *CI = nullptr;
         if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
           Op1 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
           CI = dyn_cast<ConstantInt>(Op1);

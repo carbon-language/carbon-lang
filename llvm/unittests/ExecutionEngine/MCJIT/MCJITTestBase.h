@@ -1,4 +1,4 @@
-//===- MCJITTestBase.h - Common base class for MCJIT Unit tests  ----------===//
+//===- MCJITTestBase.h - Common base class for MCJIT Unit tests -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,6 @@
 // systems.
 //
 //===----------------------------------------------------------------------===//
-
 
 #ifndef LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTBASE_H
 #define LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTBASE_H
@@ -160,10 +159,10 @@ protected:
   //   }
   // NOTE: if Helper is left as the default parameter, Helper == recursive_add.
   Function *insertAccumulateFunction(Module *M,
-                                              Function *Helper = 0,
-                                              StringRef Name = "accumulate") {
+                                     Function *Helper = nullptr,
+                                     StringRef Name = "accumulate") {
     Function *Result = startFunction<int32_t(int32_t)>(M, Name);
-    if (Helper == 0)
+    if (!Helper)
       Helper = Result;
 
     BasicBlock *BaseCase = BasicBlock::Create(Context, "", Result);
@@ -199,7 +198,7 @@ protected:
                                       Function *&FB1, Function *&FB2) {
     // Define FB1 in B.
     B.reset(createEmptyModule("B"));
-    FB1 = insertAccumulateFunction(B.get(), 0, "FB1");
+    FB1 = insertAccumulateFunction(B.get(), nullptr, "FB1");
 
     // Declare FB1 in A (as an external).
     A.reset(createEmptyModule("A"));
@@ -233,7 +232,6 @@ protected:
     Function *FBExtern_in_C = insertExternalReferenceToFunction(C.get(), FB);
     FC = insertSimpleCallFunction<int32_t(int32_t, int32_t)>(C.get(), FBExtern_in_C);
   }
-
 
   // Module A { Function FA },
   // Populates Modules A and B:
@@ -278,7 +276,6 @@ protected:
     FC = insertSimpleCallFunction<int32_t(int32_t, int32_t)>(C.get(), FAExtern_in_C);
   }
 };
-
 
 class MCJITTestBase : public MCJITTestAPICommon, public TrivialModuleBuilder {
 protected:
@@ -348,4 +345,4 @@ protected:
 
 } // namespace llvm
 
-#endif
+#endif // LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTBASE_H

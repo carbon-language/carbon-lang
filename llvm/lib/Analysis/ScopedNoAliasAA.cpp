@@ -41,6 +41,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+
 using namespace llvm;
 
 // A handy option for disabling scoped no-alias functionality. The same effect
@@ -57,7 +58,7 @@ class AliasScopeNode {
   const MDNode *Node;
 
 public:
-  AliasScopeNode() : Node(0) {}
+  AliasScopeNode() : Node(nullptr) {}
   explicit AliasScopeNode(const MDNode *N) : Node(N) {}
 
   /// getNode - Get the MDNode for this AliasScopeNode.
@@ -70,7 +71,7 @@ public:
     return dyn_cast_or_null<MDNode>(Node->getOperand(1));
   }
 };
-} // End of anonymous namespace
+} // end of anonymous namespace
 
 AliasResult ScopedNoAliasAAResult::alias(const MemoryLocation &LocA,
                                          const MemoryLocation &LocB) {

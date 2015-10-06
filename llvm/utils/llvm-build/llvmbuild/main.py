@@ -411,11 +411,15 @@ subdirectories = %s
         f.write('} AvailableComponents[%d] = {\n' % len(entries))
         for name,library_name,required_names,is_installed in entries:
             if library_name is None:
-                library_name_as_cstr = '0'
+                library_name_as_cstr = 'nullptr'
             else:
                 library_name_as_cstr = '"lib%s.a"' % library_name
-            f.write('  { "%s", %s, %d, { %s } },\n' % (
-                name, library_name_as_cstr, is_installed,
+            if is_installed:
+                is_installed_as_cstr = 'true'
+            else:
+                is_installed_as_cstr = 'false'
+            f.write('  { "%s", %s, %s, { %s } },\n' % (
+                name, library_name_as_cstr, is_installed_as_cstr,
                 ', '.join('"%s"' % dep
                           for dep in required_names)))
         f.write('};\n')

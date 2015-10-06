@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <cstdlib>
+
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -80,7 +81,6 @@ RandomNumberGenerator *Module::createRNG(const Pass* P) const {
 
   return new RandomNumberGenerator(Salt);
 }
-
 
 /// getNamedValue - Return the first global value in the module with
 /// the specified name, of arbitrary type.  This method returns null
@@ -481,7 +481,7 @@ Comdat *Module::getOrInsertComdat(StringRef Name) {
 PICLevel::Level Module::getPICLevel() const {
   auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("PIC Level"));
 
-  if (Val == NULL)
+  if (!Val)
     return PICLevel::Default;
 
   return static_cast<PICLevel::Level>(

@@ -41,6 +41,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
+
 using namespace llvm;
 
 static cl::opt<bool>
@@ -121,7 +122,7 @@ namespace {
       }
     }
   };
-}
+} // anonymous namespace
 
 /// Get or create a target for the branch from ResumeInsts.
 BasicBlock *LandingPadInliningInfo::getInnerResumeDest() {
@@ -613,7 +614,7 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
       for (unsigned i = 0, ie = PtrArgs.size(); i != ie; ++i) {
         SmallVector<Value *, 4> Objects;
         GetUnderlyingObjects(const_cast<Value*>(PtrArgs[i]),
-                             Objects, DL, /* MaxLookup = */ 0);
+                             Objects, DL, /* LI = */ nullptr);
 
         for (Value *O : Objects)
           ObjSet.insert(O);
@@ -1450,7 +1451,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
         PHI->addIncoming(RI->getReturnValue(), RI->getParent());
       }
     }
-
 
     // Add a branch to the merge points and remove return instructions.
     DebugLoc Loc;

@@ -1,4 +1,4 @@
-//===- MCJITTest.cpp - Unit tests for the MCJIT ---------------------------===//
+//===- MCJITTest.cpp - Unit tests for the MCJIT -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -196,7 +196,7 @@ TEST_F(MCJITTest, multiple_decl_lookups) {
   void *A = TheJIT->getPointerToFunction(Foo);
   void *B = TheJIT->getPointerToFunction(Foo);
 
-  EXPECT_TRUE(A != 0) << "Failed lookup - test not correctly configured.";
+  EXPECT_TRUE(A != nullptr) << "Failed lookup - test not correctly configured.";
   EXPECT_EQ(A, B) << "Repeat calls to getPointerToFunction fail.";
 }
 
@@ -281,4 +281,4 @@ TEST_F(MCJITTest, lazy_function_creator_lambda) {
   EXPECT_FALSE(std::find(I, E, "Foo2") == E);
 }
 
-}
+} // end anonymous namespace

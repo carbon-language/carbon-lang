@@ -44,6 +44,7 @@
 #include <cstring>
 #include <system_error>
 #include <vector>
+
 using namespace llvm;
 using namespace object;
 
@@ -159,7 +160,7 @@ bool MultipleFiles = false;
 bool HadError = false;
 
 std::string ToolName;
-}
+} // anonymous namespace
 
 static void error(Twine Message, Twine Path = Twine()) {
   HadError = true;
@@ -182,7 +183,7 @@ struct NMSymbol {
   StringRef Name;
   BasicSymbolRef Sym;
 };
-}
+} // anonymous namespace
 
 static bool compareSymbolAddress(const NMSymbol &A, const NMSymbol &B) {
   bool ADefined = !(A.Sym.getFlags() & SymbolRef::SF_Undefined);
@@ -439,13 +440,14 @@ static const struct DarwinStabName DarwinStabNames[] = {
     {MachO::N_ECOMM, "ECOMM"},
     {MachO::N_ECOML, "ECOML"},
     {MachO::N_LENG, "LENG"},
-    {0, 0}};
+    {0, nullptr}};
+
 static const char *getDarwinStabString(uint8_t NType) {
   for (unsigned i = 0; DarwinStabNames[i].Name; i++) {
     if (DarwinStabNames[i].NType == NType)
       return DarwinStabNames[i].Name;
   }
-  return 0;
+  return nullptr;
 }
 
 // darwinPrintStab() prints the n_sect, n_desc along with a symbolic name of
@@ -1150,7 +1152,6 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     return;
   }
   error("unrecognizable file type", Filename);
-  return;
 }
 
 int main(int argc, char **argv) {

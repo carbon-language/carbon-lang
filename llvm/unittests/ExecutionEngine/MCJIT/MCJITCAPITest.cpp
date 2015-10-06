@@ -1,4 +1,4 @@
-//===- MCJITTest.cpp - Unit tests for the MCJIT ---------------------------===//
+//===- MCJITTest.cpp - Unit tests for the MCJIT -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -479,14 +479,14 @@ TEST_F(MCJITCAPITest, addGlobalMapping) {
 
   Module = LLVMModuleCreateWithName("testModule");
   LLVMSetTarget(Module, HostTriple.c_str());
-  LLVMTypeRef FunctionType = LLVMFunctionType(LLVMInt32Type(), NULL, 0, 0);
+  LLVMTypeRef FunctionType = LLVMFunctionType(LLVMInt32Type(), nullptr, 0, 0);
   LLVMValueRef MappedFn = LLVMAddFunction(Module, "mapped_fn", FunctionType);
 
   Function = LLVMAddFunction(Module, "test_fn", FunctionType);
   LLVMBasicBlockRef Entry = LLVMAppendBasicBlock(Function, "");
   LLVMBuilderRef Builder = LLVMCreateBuilder();
   LLVMPositionBuilderAtEnd(Builder, Entry);
-  LLVMValueRef RetVal = LLVMBuildCall(Builder, MappedFn, NULL, 0, "");
+  LLVMValueRef RetVal = LLVMBuildCall(Builder, MappedFn, nullptr, 0, "");
   LLVMBuildRet(Builder, RetVal);
   LLVMDisposeBuilder(Builder);
 

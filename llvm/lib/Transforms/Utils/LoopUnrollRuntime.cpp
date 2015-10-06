@@ -150,7 +150,7 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
   Function *F = Header->getParent();
   LoopBlocksDFS::RPOIterator BlockBegin = LoopBlocks.beginRPO();
   LoopBlocksDFS::RPOIterator BlockEnd = LoopBlocks.endRPO();
-  Loop *NewLoop = 0;
+  Loop *NewLoop = nullptr;
   Loop *ParentLoop = L->getParentLoop();
   if (!UnrollProlog) {
     NewLoop = new Loop();

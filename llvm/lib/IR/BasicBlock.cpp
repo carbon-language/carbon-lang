@@ -21,6 +21,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Type.h"
 #include <algorithm>
+
 using namespace llvm;
 
 ValueSymbolTable *BasicBlock::getValueSymbolTable() {
@@ -36,7 +37,6 @@ LLVMContext &BasicBlock::getContext() const {
 // Explicit instantiation of SymbolTableListTraits since some of the methods
 // are not in the public header file...
 template class llvm::SymbolTableListTraits<Instruction, BasicBlock>;
-
 
 BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
@@ -245,12 +245,12 @@ BasicBlock *BasicBlock::getSingleSuccessor() {
 
 BasicBlock *BasicBlock::getUniqueSuccessor() {
   succ_iterator SI = succ_begin(this), E = succ_end(this);
-  if (SI == E) return NULL; // No successors
+  if (SI == E) return nullptr; // No successors
   BasicBlock *SuccBB = *SI;
   ++SI;
   for (;SI != E; ++SI) {
     if (*SI != SuccBB)
-      return NULL;
+      return nullptr;
     // The same successor appears multiple times in the successor list.
     // This is OK.
   }

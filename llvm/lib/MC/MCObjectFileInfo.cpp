@@ -17,6 +17,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/COFF.h"
+
 using namespace llvm;
 
 static bool useCompactUnwind(const Triple &T) {
@@ -259,7 +260,6 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(Triple T) {
     FDECFIEncoding = dwarf::DW_EH_PE_pcrel |
                      ((CMModel == CodeModel::Large) ? dwarf::DW_EH_PE_sdata8
                                                     : dwarf::DW_EH_PE_sdata4);
-
     break;
   default:
     FDECFIEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
@@ -577,7 +577,7 @@ void MCObjectFileInfo::initCOFFMCObjectFileInfo(Triple T) {
   assert(T.isOSWindows() && "Windows is the only supported COFF target");
   if (T.getArch() == Triple::x86_64) {
     // On Windows 64 with SEH, the LSDA is emitted into the .xdata section
-    LSDASection = 0;
+    LSDASection = nullptr;
   } else {
     LSDASection = Ctx->getCOFFSection(".gcc_except_table",
                                       COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |

@@ -107,7 +107,6 @@ void BitSetInfo::print(raw_ostream &OS) const {
   for (uint64_t B : Bits)
     OS << B << ' ';
   OS << "}\n";
-  return;
 }
 
 BitSetInfo BitSetBuilder::build() {
@@ -262,7 +261,7 @@ struct LowerBitSets : public ModulePass {
   bool runOnModule(Module &M) override;
 };
 
-} // namespace
+} // anonymous namespace
 
 INITIALIZE_PASS_BEGIN(LowerBitSets, "lowerbitsets",
                 "Lower bitset metadata", false, false)
@@ -610,7 +609,7 @@ void LowerBitSets::lowerBitSetCalls(
       BSI.print(dbgs());
     });
 
-    ByteArrayInfo *BAI = 0;
+    ByteArrayInfo *BAI = nullptr;
 
     // Lower each call to llvm.bitset.test for this bitset.
     for (CallInst *CI : BitSetTestCallSites[BS]) {

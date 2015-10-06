@@ -1,4 +1,4 @@
-//===- MCJITMultipeModuleTest.cpp - Unit tests for the MCJIT---------------===//
+//===- MCJITMultipeModuleTest.cpp - Unit tests for the MCJIT-----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -223,7 +223,7 @@ TEST_F(MCJITMultipleModuleTest, two_module_global_variables_case) {
   EXPECT_EQ(GVA, TheJIT->FindGlobalVariableNamed("GVA"));
   EXPECT_EQ(GVB, TheJIT->FindGlobalVariableNamed("GVB"));
   EXPECT_EQ(GVC, TheJIT->FindGlobalVariableNamed("GVC",true));
-  EXPECT_EQ(NULL, TheJIT->FindGlobalVariableNamed("GVC"));
+  EXPECT_EQ(nullptr, TheJIT->FindGlobalVariableNamed("GVC"));
 
   uint64_t FBPtr = TheJIT->getFunctionAddress(FB->getName().str());
   TheJIT->finalizeObject();
@@ -420,4 +420,4 @@ TEST_F(MCJITMultipleModuleTest, FindFunctionNamed_test) {
   EXPECT_EQ(FB1, TheJIT->FindFunctionNamed(FB1->getName().data()));
 }
 
-}
+} // end anonymous namespace

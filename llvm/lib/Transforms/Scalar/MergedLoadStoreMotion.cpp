@@ -92,6 +92,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <vector>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "mldst-motion"
@@ -238,7 +239,6 @@ bool MergedLoadStoreMotion::isDiamondHead(BasicBlock *BB) {
 /// being loaded or protect against the load from happening
 /// it is considered a hoist barrier.
 ///
-
 bool MergedLoadStoreMotion::isLoadHoistBarrierInRange(const Instruction& Start, 
                                                       const Instruction& End,
                                                       LoadInst* LI) {
@@ -396,7 +396,6 @@ bool MergedLoadStoreMotion::mergeLoads(BasicBlock *BB) {
 /// value being stored or protect against the store from
 /// happening it is considered a sink barrier.
 ///
-
 bool MergedLoadStoreMotion::isStoreSinkBarrierInRange(const Instruction &Start,
                                                       const Instruction &End,
                                                       MemoryLocation Loc) {
@@ -440,7 +439,7 @@ StoreInst *MergedLoadStoreMotion::canSinkFromBlock(BasicBlock *BB1,
 PHINode *MergedLoadStoreMotion::getPHIOperand(BasicBlock *BB, StoreInst *S0,
                                               StoreInst *S1) {
   // Create a phi if the values mismatch.
-  PHINode *NewPN = 0;
+  PHINode *NewPN = nullptr;
   Value *Opd1 = S0->getValueOperand();
   Value *Opd2 = S1->getValueOperand();
   if (Opd1 != Opd2) {
@@ -561,6 +560,7 @@ bool MergedLoadStoreMotion::mergeStores(BasicBlock *T) {
   }
   return MergedStores;
 }
+
 ///
 /// \brief Run the transformation for each function
 ///

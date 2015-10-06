@@ -113,6 +113,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "mergefunc"
@@ -465,9 +466,9 @@ public:
     F = G;
   }
 
-  void release() { F = 0; }
+  void release() { F = nullptr; }
 };
-}
+} // end anonymous namespace
 
 int FunctionComparator::cmpNumbers(uint64_t L, uint64_t R) const {
   if (L < R) return -1;
@@ -535,6 +536,7 @@ int FunctionComparator::cmpAttrs(const AttributeSet L,
   }
   return 0;
 }
+
 int FunctionComparator::cmpRangeMetadata(const MDNode* L,
                                          const MDNode* R) const {
   if (L == R)
@@ -770,7 +772,6 @@ int FunctionComparator::cmpGlobalValues(GlobalValue *L, GlobalValue* R) {
 /// defines total ordering among the types set.
 /// See method declaration comments for more details.
 int FunctionComparator::cmpTypes(Type *TyL, Type *TyR) const {
-
   PointerType *PTyL = dyn_cast<PointerType>(TyL);
   PointerType *PTyR = dyn_cast<PointerType>(TyR);
 
@@ -1164,7 +1165,6 @@ int FunctionComparator::cmpBasicBlocks(const BasicBlock *BBL,
 
 // Test whether the two functions have equivalent behaviour.
 int FunctionComparator::compare() {
-
   sn_mapL.clear();
   sn_mapR.clear();
 
@@ -1400,7 +1400,7 @@ private:
   bool HasGlobalAliases;
 };
 
-}  // end anonymous namespace
+} // end anonymous namespace
 
 char MergeFunctions::ID = 0;
 INITIALIZE_PASS(MergeFunctions, "mergefunc", "Merge Functions", false, false)

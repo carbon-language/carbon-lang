@@ -96,7 +96,7 @@ private:
 };
 
 static void Warning(const Twine &Msg) { errs() << "warning: " + Msg + "\n"; }
-}
+} // anonymous namespace
 
 /// Reset the parser state coresponding to the current object
 /// file. This is to be called after an object file is finished
@@ -185,14 +185,14 @@ static const struct DarwinStabName DarwinStabNames[] = {
     {MachO::N_LBRAC, "N_LBRAC"},  {MachO::N_EXCL, "N_EXCL"},
     {MachO::N_RBRAC, "N_RBRAC"},  {MachO::N_BCOMM, "N_BCOMM"},
     {MachO::N_ECOMM, "N_ECOMM"},  {MachO::N_ECOML, "N_ECOML"},
-    {MachO::N_LENG, "N_LENG"},    {0, 0}};
+    {MachO::N_LENG, "N_LENG"},    {0, nullptr}};
 
 static const char *getDarwinStabString(uint8_t NType) {
   for (unsigned i = 0; DarwinStabNames[i].Name; i++) {
     if (DarwinStabNames[i].NType == NType)
       return DarwinStabNames[i].Name;
   }
-  return 0;
+  return nullptr;
 }
 
 void MachODebugMapParser::dumpSymTabHeader(raw_ostream &OS, StringRef Arch) {
@@ -209,7 +209,6 @@ void MachODebugMapParser::dumpSymTabEntry(raw_ostream &OS, uint64_t Index,
                                           uint32_t StringIndex, uint8_t Type,
                                           uint8_t SectionIndex, uint16_t Flags,
                                           uint64_t Value) {
-
   // Index
   OS << '[' << format_decimal(Index, 6) << "] "
      // n_strx
@@ -471,5 +470,5 @@ bool dumpStab(StringRef InputFile, ArrayRef<std::string> Archs,
   MachODebugMapParser Parser(InputFile, Archs, PrependPath, false);
   return Parser.dumpStab();
 }
-}
-}
+} // namespace dsymutil
+} // namespace llvm

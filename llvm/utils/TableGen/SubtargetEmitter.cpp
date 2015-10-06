@@ -26,6 +26,7 @@
 #include <map>
 #include <string>
 #include <vector>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "subtarget-emitter"
@@ -105,9 +106,8 @@ public:
     Records(R), SchedModels(TGT.getSchedModels()), Target(TGT.getName()) {}
 
   void run(raw_ostream &o);
-
 };
-} // End anonymous namespace
+} // end anonymous namespace
 
 //
 // Enumeration - Emit the specified class as an enumeration.
@@ -1199,7 +1199,8 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
          << "  " << (SchedModels.schedClassEnd()
                      - SchedModels.schedClassBegin()) << ",\n";
     else
-      OS << "  0, 0, 0, 0, // No instruction-level machine model.\n";
+      OS << "  nullptr, nullptr, 0, 0,"
+         << " // No instruction-level machine model.\n";
     if (PI->hasItineraries())
       OS << "  " << PI->ItinsDef->getName() << "};\n";
     else
@@ -1414,7 +1415,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   OS << "namespace llvm {\n";
   Enumeration(OS, "SubtargetFeature");
-  OS << "} // End llvm namespace \n";
+  OS << "} // end llvm namespace\n";
   OS << "#endif // GET_SUBTARGETINFO_ENUM\n\n";
 
   OS << "\n#ifdef GET_SUBTARGETINFO_MC_DESC\n";
@@ -1461,7 +1462,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << "0, 0, 0";
   OS << ");\n}\n\n";
 
-  OS << "} // End llvm namespace \n";
+  OS << "} // end llvm namespace\n";
 
   OS << "#endif // GET_SUBTARGETINFO_MC_DESC\n\n";
 
@@ -1491,7 +1492,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
      << "  DFAPacketizer *createDFAPacketizer(const InstrItineraryData *IID)"
      << " const;\n"
      << "};\n";
-  OS << "} // End llvm namespace \n";
+  OS << "} // end llvm namespace\n";
 
   OS << "#endif // GET_SUBTARGETINFO_HEADER\n\n";
 
@@ -1543,7 +1544,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   EmitSchedModelHelpers(ClassName, OS);
 
-  OS << "} // End llvm namespace \n";
+  OS << "} // end llvm namespace\n";
 
   OS << "#endif // GET_SUBTARGETINFO_CTOR\n\n";
 }
@@ -1555,4 +1556,4 @@ void EmitSubtarget(RecordKeeper &RK, raw_ostream &OS) {
   SubtargetEmitter(RK, CGTarget).run(OS);
 }
 
-} // End llvm namespace
+} // end llvm namespace

@@ -66,7 +66,6 @@ public:
   static inline bool classof(const ELFObjectFile<ELFT> *v) {
     return v->isDyldType();
   }
-
 };
 
 
@@ -187,7 +186,7 @@ LoadedELFObjectInfo::getObjectForDebug(const ObjectFile &Obj) const {
   return createELFDebugObject(Obj, *this);
 }
 
-} // namespace
+} // anonymous namespace
 
 namespace llvm {
 
@@ -772,7 +771,7 @@ void RuntimeDyldELF::findPPC64TOCSection(const ELFObjectFileBase &Obj,
   // relocation) without a .toc directive.  In this case just use the
   // first section (which is usually the .odp) since the code won't
   // reference the .toc base directly.
-  Rel.SymbolName = NULL;
+  Rel.SymbolName = nullptr;
   Rel.SectionID = 0;
 
   // The TOC consists of sections .got, .toc, .tocbss, .plt in that
@@ -1737,7 +1736,7 @@ uint64_t RuntimeDyldELF::allocateGOTEntries(unsigned SectionID, unsigned no)
     GOTSectionID = Sections.size();
     // Reserve a section id. We'll allocate the section later
     // once we know the total size
-    Sections.push_back(SectionEntry(".got", 0, 0, 0));
+    Sections.push_back(SectionEntry(".got", nullptr, 0, 0));
   }
   uint64_t StartOffset = CurrentGOTIndex * getGOTEntrySize();
   CurrentGOTIndex += no;
