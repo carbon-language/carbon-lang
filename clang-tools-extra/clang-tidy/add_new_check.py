@@ -29,7 +29,7 @@ def adapt_cmake(module_path, check_name_camel):
       return False
 
   print('Updating %s...' % filename)
-  with open(filename, 'w') as f:
+  with open(filename, 'wb') as f:
     cpp_found = False
     file_added = False
     for line in lines:
@@ -49,7 +49,7 @@ def write_header(module_path, module, check_name, check_name_camel):
   check_name_dashes = module + '-' + check_name
   filename = os.path.join(module_path, check_name_camel) + '.h'
   print('Creating %s...' % filename)
-  with open(filename, 'w') as f:
+  with open(filename, 'wb') as f:
     header_guard = ('LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_' + module.upper() +
                     '_' + check_name.upper().replace('-', '_') + '_H')
     f.write('//===--- ')
@@ -100,7 +100,7 @@ public:
 def write_implementation(module_path, check_name_camel):
   filename = os.path.join(module_path, check_name_camel) + '.cpp'
   print('Creating %s...' % filename)
-  with open(filename, 'w') as f:
+  with open(filename, 'wb') as f:
     f.write('//===--- ')
     f.write(os.path.basename(filename))
     f.write(' - clang-tidy')
@@ -153,7 +153,7 @@ def adapt_module(module_path, module, check_name, check_name_camel):
     lines = f.readlines()
 
   print('Updating %s...' % filename)
-  with open(filename, 'w') as f:
+  with open(filename, 'wb') as f:
     header_added = False
     header_found = False
     check_added = False
@@ -191,7 +191,7 @@ def write_test(module_path, module, check_name):
       os.path.join(module_path, '../../test/clang-tidy',
                    check_name_dashes + '.cpp'))
   print('Creating %s...' % filename)
-  with open(filename, 'w') as f:
+  with open(filename, 'wb') as f:
     f.write(
 """// RUN: %%python %%S/check_clang_tidy.py %%s %(check_name_dashes)s %%t
 
@@ -222,7 +222,7 @@ def update_checks_list(module_path):
   checks.sort()
 
   print('Updating %s...' % filename)
-  with open(filename, 'w') as f:
+  with open(filename, 'wb') as f:
     for line in lines:
       f.write(line)
       if line.startswith('.. toctree::'):
@@ -236,7 +236,7 @@ def write_docs(module_path, module, check_name):
       os.path.join(module_path, '../../docs/clang-tidy/checks/',
                    check_name_dashes + '.rst'))
   print('Creating %s...' % filename)
-  with open(filename, 'w') as f:
+  with open(filename, 'wb') as f:
     f.write(
 """%(check_name_dashes)s
 %(underline)s
