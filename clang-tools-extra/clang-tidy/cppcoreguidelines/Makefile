@@ -1,4 +1,4 @@
-##===- tools/extra/clang-tidy/Makefile ---------------------*- Makefile -*-===##
+##===- clang-tidy/cppcoreguidelines/Makefile ----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,11 +6,7 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
-CLANG_LEVEL := ../../..
-LIBRARYNAME := clangTidy
-include $(CLANG_LEVEL)/../../Makefile.config
-
-DIRS = utils cert cppcoreguidelines readability llvm google misc modernize tool
+CLANG_LEVEL := ../../../..
+LIBRARYNAME := clangTidyCppCoreGuidelinesModule
 
 include $(CLANG_LEVEL)/Makefile

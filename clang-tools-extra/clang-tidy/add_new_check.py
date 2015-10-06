@@ -147,7 +147,8 @@ void %(check_name)s::check(const MatchFinder::MatchResult &Result) {
 
 # Modifies the module to include the new check.
 def adapt_module(module_path, module, check_name, check_name_camel):
-  filename = os.path.join(module_path, module.capitalize() + 'TidyModule.cpp')
+  modulecpp = filter(lambda p: p.lower() == module.lower() + "tidymodule.cpp", os.listdir(module_path))[0]
+  filename = os.path.join(module_path, modulecpp)
   with open(filename, 'r') as f:
     lines = f.readlines()
 

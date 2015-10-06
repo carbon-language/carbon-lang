@@ -3,6 +3,7 @@ List of clang-tidy Checks
 
 .. toctree::
    cert-variadic-function-def
+   cppcoreguidelines-pro-type-reinterpret-cast
    google-build-explicit-make-pair
    google-build-namespaces
    google-build-using-namespace
