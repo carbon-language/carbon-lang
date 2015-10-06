@@ -329,13 +329,24 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   DynamicSec.FiniArraySec =
       Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC});
 
-  if (OutputSection<ELFT> *OS = DynamicSec.InitArraySec) {
-    Symtab.addSyntheticSym<ELFT>("__init_array_start", *OS, 0);
-    Symtab.addSyntheticSym<ELFT>("__init_array_end", *OS, OS->getSize());
-  } else {
-    Symtab.addIgnoredSym<ELFT>("__init_array_start");
-    Symtab.addIgnoredSym<ELFT>("__init_array_end");
-  }
+  auto addStartEnd = [&Symtab](StringRef StartName, StringRef EndName,
+    OutputSection<ELFT> *OS) {
+    if (OS) {
+      Symtab.addSyntheticSym<ELFT>(StartName, *OS, 0);
+      Symtab.addSyntheticSym<ELFT>(EndName, *OS, OS->getSize());
+    }
+    else {
+      Symtab.addIgnoredSym<ELFT>(StartName);
+      Symtab.addIgnoredSym<ELFT>(EndName);
+    }
+  };
+
+  addStartEnd("__preinit_array_start", "__preinit_array_end",
+    DynamicSec.PreInitArraySec);
+  addStartEnd("__init_array_start", "__init_array_end",
+    DynamicSec.InitArraySec);
+  addStartEnd("__fini_array_start", "__fini_array_end",
+    DynamicSec.FiniArraySec);
 
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
