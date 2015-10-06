@@ -68,6 +68,8 @@ namespace {
 
     Value *foldIVUser(Instruction *UseInst, Instruction *IVOperand);
 
+    bool eliminateIdentitySCEV(Instruction *UseInst, Instruction *IVOperand);
+
     bool eliminateIVUser(Instruction *UseInst, Instruction *IVOperand);
     void eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
     void eliminateIVRemainder(BinaryOperator *Rem, Value *IVOperand,
@@ -277,9 +279,9 @@ void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
   DeadInsts.emplace_back(Rem);
 }
 
-/// Eliminate an operation that consumes a simple IV and has
-/// no observable side-effect given the range of IV values.
-/// IVOperand is guaranteed SCEVable, but UseInst may not be.
+/// Eliminate an operation that consumes a simple IV and has no observable
+/// side-effect given the range of IV values.  IVOperand is guaranteed SCEVable,
+/// but UseInst may not be.
 bool SimplifyIndvar::eliminateIVUser(Instruction *UseInst,
                                      Instruction *IVOperand) {
   if (ICmpInst *ICmp = dyn_cast<ICmpInst>(UseInst)) {
@@ -294,7 +296,15 @@ bool SimplifyIndvar::eliminateIVUser(Instruction *UseInst,
     }
   }
 
-  // Eliminate any operation that SCEV can prove is an identity function.
+  if (eliminateIdentitySCEV(UseInst, IVOperand))
+    return true;
+
+  return false;
+}
+
+/// Eliminate any operation that SCEV can prove is an identity function.
+bool SimplifyIndvar::eliminateIdentitySCEV(Instruction *UseInst,
+                                           Instruction *IVOperand) {
   if (!SE->isSCEVable(UseInst->getType()) ||
       (UseInst->getType() != IVOperand->getType()) ||
       (SE->getSCEV(UseInst) != SE->getSCEV(IVOperand)))
