@@ -455,8 +455,10 @@ std::unique_ptr<ASTUnit> buildASTFromCodeWithArgs(
 
   std::vector<std::unique_ptr<ASTUnit>> ASTs;
   ASTBuilderAction Action(ASTs);
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
+      new FileManager(FileSystemOptions()));
   ToolInvocation Invocation(getSyntaxOnlyToolArgs(Args, FileNameRef), &Action,
-                            nullptr, PCHContainerOps);
+                            Files.get(), PCHContainerOps);
 
   SmallString<1024> CodeStorage;
   Invocation.mapVirtualFile(FileNameRef,
