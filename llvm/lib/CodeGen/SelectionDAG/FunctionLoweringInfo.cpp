@@ -292,6 +292,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
   else if (isAsynchronousEHPersonality(Personality))
     calculateSEHStateNumbers(WinEHParentFn, EHInfo);
+  else if (Personality == EHPersonality::CoreCLR)
+    calculateClrEHStateNumbers(WinEHParentFn, EHInfo);
 
   calculateCatchReturnSuccessorColors(WinEHParentFn, EHInfo);
 
@@ -315,6 +317,10 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   for (SEHUnwindMapEntry &UME : EHInfo.SEHUnwindMap) {
     const BasicBlock *BB = UME.Handler.get<const BasicBlock *>();
     UME.Handler = MBBMap[BB];
+  }
+  for (ClrEHUnwindMapEntry &CME : EHInfo.ClrEHUnwindMap) {
+    const BasicBlock *BB = CME.Handler.get<const BasicBlock *>();
+    CME.Handler = MBBMap[BB];
   }
 
   // If there's an explicit EH registration node on the stack, record its

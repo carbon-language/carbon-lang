@@ -2864,6 +2864,91 @@ void llvm::calculateWinCXXEHStateNumbers(const Function *Fn,
   }
 }
 
+static int addClrEHHandler(WinEHFuncInfo &FuncInfo, int ParentState,
+                           ClrHandlerType HandlerType, uint32_t TypeToken,
+                           const BasicBlock *Handler) {
+  ClrEHUnwindMapEntry Entry;
+  Entry.Parent = ParentState;
+  Entry.Handler = Handler;
+  Entry.HandlerType = HandlerType;
+  Entry.TypeToken = TypeToken;
+  FuncInfo.ClrEHUnwindMap.push_back(Entry);
+  return FuncInfo.ClrEHUnwindMap.size() - 1;
+}
+
+void llvm::calculateClrEHStateNumbers(const Function *Fn,
+                                      WinEHFuncInfo &FuncInfo) {
+  // Return if it's already been done.
+  if (!FuncInfo.EHPadStateMap.empty())
+    return;
+
+  SmallVector<std::pair<const Instruction *, int>, 8> Worklist;
+
+  // Each pad needs to be able to refer to its parent, so scan the function
+  // looking for top-level handlers and seed the worklist with them.
+  for (const BasicBlock &BB : *Fn) {
+    if (!BB.isEHPad())
+      continue;
+    if (BB.isLandingPad())
+      report_fatal_error("CoreCLR EH cannot use landingpads");
+    const Instruction *FirstNonPHI = BB.getFirstNonPHI();
+    if (!doesEHPadUnwindToCaller(FirstNonPHI))
+      continue;
+    // queue this with sentinel parent state -1 to mean unwind to caller.
+    Worklist.emplace_back(FirstNonPHI, -1);
+  }
+
+  while (!Worklist.empty()) {
+    const Instruction *Pad;
+    int ParentState;
+    std::tie(Pad, ParentState) = Worklist.pop_back_val();
+
+    int PredState;
+    if (const CleanupEndPadInst *EndPad = dyn_cast<CleanupEndPadInst>(Pad)) {
+      FuncInfo.EHPadStateMap[EndPad] = ParentState;
+      // Queue the cleanuppad, in case it doesn't have a cleanupret.
+      Worklist.emplace_back(EndPad->getCleanupPad(), ParentState);
+      // Preds of the endpad should get the parent state.
+      PredState = ParentState;
+    } else if (const CleanupPadInst *Cleanup = dyn_cast<CleanupPadInst>(Pad)) {
+      // A cleanup can have multiple exits; don't re-process after the first.
+      if (FuncInfo.EHPadStateMap.count(Pad))
+        continue;
+      // CoreCLR personality uses arity to distinguish faults from finallies.
+      const BasicBlock *PadBlock = Cleanup->getParent();
+      ClrHandlerType HandlerType =
+          (Cleanup->getNumOperands() ? ClrHandlerType::Fault
+                                     : ClrHandlerType::Finally);
+      int NewState =
+          addClrEHHandler(FuncInfo, ParentState, HandlerType, 0, PadBlock);
+      FuncInfo.EHPadStateMap[Cleanup] = NewState;
+      // Propagate the new state to all preds of the cleanup
+      PredState = NewState;
+    } else if (const CatchEndPadInst *EndPad = dyn_cast<CatchEndPadInst>(Pad)) {
+      FuncInfo.EHPadStateMap[EndPad] = ParentState;
+      // Preds of the endpad should get the parent state.
+      PredState = ParentState;
+    } else if (const CatchPadInst *Catch = dyn_cast<CatchPadInst>(Pad)) {
+      const BasicBlock *Handler = Catch->getNormalDest();
+      uint32_t TypeToken = static_cast<uint32_t>(
+          cast<ConstantInt>(Catch->getArgOperand(0))->getZExtValue());
+      int NewState = addClrEHHandler(FuncInfo, ParentState,
+                                     ClrHandlerType::Catch, TypeToken, Handler);
+      FuncInfo.EHPadStateMap[Catch] = NewState;
+      // Preds of the catch get its state
+      PredState = NewState;
+    } else {
+      llvm_unreachable("Unexpected EH pad");
+    }
+
+    // Queue all predecessors with the given state
+    for (const BasicBlock *Pred : predecessors(Pad->getParent())) {
+      if ((Pred = getEHPadFromPredecessor(Pred)))
+        Worklist.emplace_back(Pred->getFirstNonPHI(), PredState);
+    }
+  }
+}
+
 void WinEHPrepare::replaceTerminatePadWithCleanup(Function &F) {
   if (Personality != EHPersonality::MSVC_CXX)
     return;
