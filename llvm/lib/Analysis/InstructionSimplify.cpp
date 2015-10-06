@@ -2129,18 +2129,25 @@ static Constant *computePointerICmp(const DataLayout &DL,
 }
 
 /// Return true if B is known to be implied by A.  A & B must be i1 (boolean)
-/// values. Note that the truth table for implication is the same as <=u on i1
-/// values (but not <=s!).  The truth table for both is:
+/// values or a vector of such values. Note that the truth table for
+/// implication is the same as <=u on i1 values (but not <=s!).  The truth
+/// table for both is: 
 ///    | T | F (B)
 ///  T | T | F
 ///  F | T | T
 /// (A)
 static bool implies(Value *A, Value *B) {
-  // TODO: Consider extending this to vector of i1?
-  assert(A->getType()->isIntegerTy(1) && B->getType()->isIntegerTy(1));
+  assert(A->getType() == B->getType() && "mismatched type");
+  Type *OpTy = A->getType();
+  assert(OpTy->getScalarType()->isIntegerTy(1));
   
   // A ==> A by definition
   if (A == B) return true;
+
+  if (OpTy->isVectorTy())
+    // TODO: extending the code below to handle vectors
+    return false;
+  assert(OpTy->isIntegerTy(1) && "implied by above");
 
   ICmpInst::Predicate APred, BPred;
   Value *I;

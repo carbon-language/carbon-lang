@@ -75,3 +75,19 @@ define i1 @test4(i32 %length.i, i32 %i) {
   %res = icmp ule i1 %var30, %var29
   ret i1 %res
 }
+
+; A ==> A for vectors
+define <4 x i1> @test5(<4 x i1> %vec) {
+; CHECK-LABEL: @test5
+; CHECK: ret <4 x i1> <i1 true, i1 true, i1 true, i1 true>
+  %res = icmp ule <4 x i1> %vec, %vec
+  ret <4 x i1> %res
+}
+
+; Don't crash on vector inputs - pr25040
+define <4 x i1> @test6(<4 x i1> %a, <4 x i1> %b) {
+; CHECK-LABEL: @test6
+; CHECK: ret <4 x i1> %res
+  %res = icmp ule <4 x i1> %a, %b
+  ret <4 x i1> %res
+}
