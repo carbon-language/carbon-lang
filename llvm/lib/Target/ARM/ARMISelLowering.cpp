@@ -9845,7 +9845,6 @@ static SDValue PerformVCVTCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   uint64_t C;
-  SDValue N0 = Op->getOperand(0);
   SDValue ConstVec = Op->getOperand(1);
   bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
 
@@ -9854,10 +9853,11 @@ static SDValue PerformVCVTCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   MVT FloatTy = Op.getSimpleValueType().getVectorElementType();
+  uint32_t FloatBits = FloatTy.getSizeInBits();
   MVT IntTy = N->getSimpleValueType(0).getVectorElementType();
+  uint32_t IntBits = IntTy.getSizeInBits();
   unsigned NumLanes = Op.getValueType().getVectorNumElements();
-  if (FloatTy.getSizeInBits() != 32 || IntTy.getSizeInBits() > 32 ||
-      NumLanes > 4) {
+  if (FloatBits != 32 || IntBits > 32 || NumLanes > 4) {
     // These instructions only exist converting from f32 to i32. We can handle
     // smaller integers by generating an extra truncate, but larger ones would
     // be lossy. We also can't handle more then 4 lanes, since these intructions
@@ -9868,13 +9868,12 @@ static SDValue PerformVCVTCombine(SDNode *N, SelectionDAG &DAG,
   SDLoc dl(N);
   unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfp2fxs :
     Intrinsic::arm_neon_vcvtfp2fxu;
-  SDValue FixConv =  DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl,
-                                 NumLanes == 2 ? MVT::v2i32 : MVT::v4i32,
-                                 DAG.getConstant(IntrinsicOpcode, dl, MVT::i32),
-                                 N0,
-                                 DAG.getConstant(Log2_64(C), dl, MVT::i32));
+  SDValue FixConv = DAG.getNode(
+      ISD::INTRINSIC_WO_CHAIN, dl, NumLanes == 2 ? MVT::v2i32 : MVT::v4i32,
+      DAG.getConstant(IntrinsicOpcode, dl, MVT::i32), Op->getOperand(0),
+      DAG.getConstant(Log2_64(C), dl, MVT::i32));
 
-  if (IntTy.getSizeInBits() < FloatTy.getSizeInBits())
+  if (IntBits < FloatBits)
     FixConv = DAG.getNode(ISD::TRUNCATE, dl, N->getValueType(0), FixConv);
 
   return FixConv;
