@@ -6,11 +6,6 @@ else()
   set(LLDB_DEFAULT_DISABLE_LIBEDIT 0)
 endif ()
 
-set(LLDB_DISABLE_LIBEDIT ${LLDB_DEFAULT_DISABLE_LIBEDIT} CACHE BOOL "Disables the use of editline.")
-if (LLDB_DISABLE_LIBEDIT)
-  add_definitions( -DLLDB_DISABLE_LIBEDIT )
-endif()
-
 if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
 include_directories(
   Plugins/Process/Linux

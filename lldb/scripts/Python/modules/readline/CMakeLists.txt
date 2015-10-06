@@ -7,7 +7,11 @@ SET(PYTHON_DIRECTORY python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-
 include_directories(${PYTHON_INCLUDE_DIR})
 add_library(readline SHARED readline.cpp)
 
-target_link_libraries(readline ${PYTHON_LIBRARY})
+if (NOT LLDB_DISABLE_LIBEDIT)
+  target_link_libraries(readline ${PYTHON_LIBRARY} edit)
+else()
+  target_link_libraries(readline ${PYTHON_LIBRARY})
+endif()
 
 # FIXME: the LIBRARY_OUTPUT_PATH seems to be ignored - this is not a
 # functional issue for the build dir, though, since the shared lib dir
