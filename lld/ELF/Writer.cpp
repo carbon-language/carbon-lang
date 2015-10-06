@@ -329,15 +329,14 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   DynamicSec.FiniArraySec =
       Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC});
 
-  auto addStartEnd = [&Symtab](StringRef StartName, StringRef EndName,
-    OutputSection<ELFT> *OS) {
+  auto addStartEnd = [&Symtab](StringRef Start, StringRef End,
+                               OutputSection<ELFT> *OS) {
     if (OS) {
-      Symtab.addSyntheticSym<ELFT>(StartName, *OS, 0);
-      Symtab.addSyntheticSym<ELFT>(EndName, *OS, OS->getSize());
-    }
-    else {
-      Symtab.addIgnoredSym<ELFT>(StartName);
-      Symtab.addIgnoredSym<ELFT>(EndName);
+      Symtab.addSyntheticSym<ELFT>(Start, *OS, 0);
+      Symtab.addSyntheticSym<ELFT>(End, *OS, OS->getSize());
+    } else {
+      Symtab.addIgnoredSym<ELFT>(Start);
+      Symtab.addIgnoredSym<ELFT>(End);
     }
   };
 
