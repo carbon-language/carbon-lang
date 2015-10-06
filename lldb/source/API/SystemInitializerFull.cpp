@@ -49,6 +49,7 @@
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h"
+#include "Plugins/LanguageRuntime/Go/GoLanguageRuntime.h"
 #include "Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime/RenderScriptRuntime.h"
 #include "Plugins/MemoryHistory/asan/MemoryHistoryASan.h"
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
@@ -289,6 +290,7 @@ SystemInitializerFull::Initialize()
     AppleObjCRuntimeV1::Initialize();
     SystemRuntimeMacOSX::Initialize();
     RenderScriptRuntime::Initialize();
+    GoLanguageRuntime::Initialize();
     
     CPlusPlusLanguage::Initialize();
     ObjCLanguage::Initialize();

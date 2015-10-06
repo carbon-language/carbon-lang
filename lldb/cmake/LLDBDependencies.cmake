@@ -47,6 +47,7 @@ set( LLDB_USED_LIBS
   lldbPluginUnwindAssemblyX86
   lldbPluginAppleObjCRuntime
   lldbPluginRenderScriptRuntime
+  lldbPluginLanguageRuntimeGo
   lldbPluginCXXItaniumABI
   lldbPluginABIMacOSX_arm
   lldbPluginABIMacOSX_arm64
