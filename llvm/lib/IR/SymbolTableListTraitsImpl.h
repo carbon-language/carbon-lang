@@ -41,7 +41,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
   if (OldST == NewST) return;
   
   // Move all the elements from the old symtab to the new one.
-  iplist<ValueSubClass> &ItemList = TraitsClass::getList(getListOwner());
+  iplist<ValueSubClass> &ItemList = getList(getListOwner());
   if (ItemList.empty()) return;
   
   if (OldST) {

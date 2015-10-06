@@ -39,11 +39,10 @@ template <typename Ty> struct ilist_traits;
 //
 template<typename ValueSubClass, typename ItemParentClass>
 class SymbolTableListTraits : public ilist_default_traits<ValueSubClass> {
-  typedef ilist_traits<ValueSubClass> TraitsClass;
-
 public:
   SymbolTableListTraits() {}
 
+private:
   /// getListOwner - Return the object that owns this list.  If this is a list
   /// of instructions, it returns the BasicBlock that owns them.
   ItemParentClass *getListOwner() {
@@ -58,7 +57,6 @@ public:
     return Par->*(Par->getSublistAccess((ValueSubClass*)nullptr));
   }
 
-private:
   static ValueSymbolTable *getSymTab(ItemParentClass *Par) {
     return Par ? toPtr(Par->getValueSymbolTable()) : nullptr;
   }
