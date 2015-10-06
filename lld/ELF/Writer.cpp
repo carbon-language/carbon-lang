@@ -105,9 +105,10 @@ private:
     return !SymTabSec.getSymTable().getSharedFiles().empty() &&
            !Config->DynamicLinker.empty();
   }
-  bool needsDynamicSections() const {
+  bool isOutputDynamic() const {
     return !SymTabSec.getSymTable().getSharedFiles().empty() || Config->Shared;
   }
+  bool needsDynamicSections() const { return isOutputDynamic(); }
   unsigned getVAStart() const { return Config->Shared ? 0 : VAStart; }
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
@@ -346,6 +347,13 @@ template <class ELFT> void Writer<ELFT>::createSections() {
               DynamicSec.InitArraySec);
   AddStartEnd("__fini_array_start", "__fini_array_end",
               DynamicSec.FiniArraySec);
+
+  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
+  // static linking the linker is required to optimize away any references to
+  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
+  // to avoid the undefined symbol error.
+  if (!isOutputDynamic())
+    Symtab.addIgnoredSym<ELFT>("__tls_get_addr");
 
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
