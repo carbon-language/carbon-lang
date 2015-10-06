@@ -60,8 +60,8 @@ public:
         return false;
     }
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
     virtual lldb_private::ConstString
     GetShortPluginName()
@@ -69,49 +69,49 @@ public:
         return GetPluginNameStatic();
     }
 
-    virtual uint32_t
-    GetPluginVersion()
+    uint32_t
+    GetPluginVersion() override
     {
         return 1;
     }
 
     bool
-    SetTargetTriple (const lldb_private::ArchSpec &arch);
+    SetTargetTriple (const lldb_private::ArchSpec &arch) override;
     
     EmulateInstructionMIPS (const lldb_private::ArchSpec &arch);
 
-    virtual bool
-    SupportsEmulatingInstructionsOfType (lldb_private::InstructionType inst_type)
+    bool
+    SupportsEmulatingInstructionsOfType (lldb_private::InstructionType inst_type) override
     {
         return SupportsEmulatingInstructionsOfTypeStatic (inst_type);
     }
 
-    virtual bool 
-    ReadInstruction ();
+    bool
+    ReadInstruction () override;
     
-    virtual bool
-    EvaluateInstruction (uint32_t evaluate_options);
+    bool
+    EvaluateInstruction (uint32_t evaluate_options) override;
 
     bool
     SetInstruction (const lldb_private::Opcode &insn_opcode, 
                     const lldb_private::Address &inst_addr, 
                     lldb_private::Target *target) override;
 
-    virtual bool
+    bool
     TestEmulation (lldb_private::Stream *out_stream, 
                    lldb_private::ArchSpec &arch, 
-                   lldb_private::OptionValueDictionary *test_data)
+                   lldb_private::OptionValueDictionary *test_data) override
     {
         return false;
     }
 
-    virtual bool
+    bool
     GetRegisterInfo (lldb::RegisterKind reg_kind,
                      uint32_t reg_num, 
-                     lldb_private::RegisterInfo &reg_info);
+                     lldb_private::RegisterInfo &reg_info) override;
 
-    virtual bool
-    CreateFunctionEntryUnwind (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateFunctionEntryUnwind (lldb_private::UnwindPlan &unwind_plan) override;
 
 
 protected:
