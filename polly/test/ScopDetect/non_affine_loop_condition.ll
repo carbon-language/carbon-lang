@@ -1,5 +1,9 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s --check-prefix=PROFIT
+; RUN: opt %loadPolly -polly-detect-unprofitable \
+; RUN:   -polly-detect -polly-allow-nonaffine-loops -analyze \
+; RUN:   < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable=false \
+; RUN:   -polly-detect -polly-allow-nonaffine-loops -analyze \
+; RUN:   < %s | FileCheck %s --check-prefix=PROFIT
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++) {

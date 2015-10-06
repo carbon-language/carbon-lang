@@ -12,7 +12,8 @@
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-allow-nonaffine \
 ; RUN:     -analyze < %s | FileCheck %s \
 ; RUN:     --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES
-; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect-unprofitable=false \
+; RUN:     -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-allow-nonaffine \
 ; RUN:     -analyze < %s | FileCheck %s \
 ; RUN:     --check-prefix=PROFIT

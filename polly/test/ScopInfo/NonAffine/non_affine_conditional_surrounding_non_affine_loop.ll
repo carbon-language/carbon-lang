@@ -1,10 +1,12 @@
 ; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=INNERMOST
-; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine -polly-detect-unprofitable \
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine \
+; RUN:     -polly-detect-unprofitable \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALL
 ; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine \
+; RUN:     -polly-detect-unprofitable=false \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=PROFIT
 ;
