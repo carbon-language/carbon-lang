@@ -27,9 +27,15 @@ namespace llvm {
 class WebAssemblyFunctionInfo final : public MachineFunctionInfo {
   MachineFunction &MF;
 
+  unsigned NumArguments;
+
 public:
-  explicit WebAssemblyFunctionInfo(MachineFunction &MF) : MF(MF) {}
+  explicit WebAssemblyFunctionInfo(MachineFunction &MF)
+      : MF(MF), NumArguments(0) {}
   ~WebAssemblyFunctionInfo() override;
+
+  void setNumArguments(unsigned N) { NumArguments = N; }
+  unsigned getNumArguments() const { return NumArguments; }
 };
 
 } // end namespace llvm

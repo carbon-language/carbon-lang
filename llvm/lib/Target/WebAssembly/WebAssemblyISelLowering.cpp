@@ -370,6 +370,10 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
     ++ArgNo;
   }
 
+  // Record the number of arguments, since argument indices and local variable
+  // indices are in the same index space.
+  MF.getInfo<WebAssemblyFunctionInfo>()->setNumArguments(ArgNo);
+
   return Chain;
 }
 
@@ -450,5 +454,6 @@ SDValue WebAssemblyTargetLowering::LowerBR_JT(SDValue Op,
 MCSection *WebAssemblyTargetObjectFile::SelectSectionForGlobal(
     const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
     const TargetMachine &TM) const {
-  return getDataSection();
+  // TODO: Be more sophisticated than this.
+  return isa<Function>(GV) ? getTextSection() : getDataSection();
 }

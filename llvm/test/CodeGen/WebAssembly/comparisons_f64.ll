@@ -6,80 +6,104 @@
 target datalayout = "e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
 
-; CHECK-LABEL: (func $ord_f64
-; CHECK-NEXT: (param f64) (param f64) (result i32)
-; CHECK-NEXT: (set_local @0 (argument 0))
-; CHECK-NEXT: (set_local @1 (argument 1))
-; CHECK-NEXT: (set_local @2 (eq @1 @1))
-; CHECK-NEXT: (set_local @3 (eq @0 @0))
-; CHECK-NEXT: (set_local @4 (and @3 @2))
-; CHECK-NEXT: (return @4)
+; CHECK-LABEL: ord_f64:
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .result i32{{$}}
+; CHECK-NEXT: @0{{$}}
+; CHECK-NEXT: set_local @2, pop{{$}}
+; CHECK-NEXT: @1{{$}}
+; CHECK-NEXT: set_local @3, pop{{$}}
+; CHECK-NEXT: eq @3, @3{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
+; CHECK-NEXT: eq @2, @2{{$}}
+; CHECK-NEXT: set_local @5, pop{{$}}
+; CHECK-NEXT: and @5, @4{{$}}
+; CHECK-NEXT: set_local @6, pop{{$}}
+; CHECK-NEXT: return @6{{$}}
 define i32 @ord_f64(double %x, double %y) {
   %a = fcmp ord double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $uno_f64
-; CHECK-NEXT: (param f64) (param f64) (result i32)
-; CHECK-NEXT: (set_local @0 (argument 0))
-; CHECK-NEXT: (set_local @1 (argument 1))
-; CHECK-NEXT: (set_local @2 (ne @1 @1))
-; CHECK-NEXT: (set_local @3 (ne @0 @0))
-; CHECK-NEXT: (set_local @4 (ior @3 @2))
-; CHECK-NEXT: (return @4)
+; CHECK-LABEL: uno_f64:
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .result i32{{$}}
+; CHECK-NEXT: @0{{$}}
+; CHECK-NEXT: set_local @2, pop{{$}}
+; CHECK-NEXT: @1{{$}}
+; CHECK-NEXT: set_local @3, pop{{$}}
+; CHECK-NEXT: ne @3, @3{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
+; CHECK-NEXT: ne @2, @2{{$}}
+; CHECK-NEXT: set_local @5, pop{{$}}
+; CHECK-NEXT: ior @5, @4{{$}}
+; CHECK-NEXT: set_local @6, pop{{$}}
+; CHECK-NEXT: return @6{{$}}
 define i32 @uno_f64(double %x, double %y) {
   %a = fcmp uno double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $oeq_f64
-; CHECK-NEXT: (param f64) (param f64) (result i32)
-; CHECK-NEXT: (set_local @0 (argument 1))
-; CHECK-NEXT: (set_local @1 (argument 0))
-; CHECK-NEXT: (set_local @2 (eq @1 @0))
-; CHECK-NEXT: (return @2)
+; CHECK-LABEL: oeq_f64:
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .result i32{{$}}
+; CHECK-NEXT: @1{{$}}
+; CHECK-NEXT: set_local @2, pop{{$}}
+; CHECK-NEXT: @0{{$}}
+; CHECK-NEXT: set_local @3, pop{{$}}
+; CHECK-NEXT: eq @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
+; CHECK-NEXT: return @4{{$}}
 define i32 @oeq_f64(double %x, double %y) {
   %a = fcmp oeq double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $une_f64
-; CHECK: (set_local @2 (ne @1 @0))
+; CHECK-LABEL: une_f64:
+; CHECK: ne @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @une_f64(double %x, double %y) {
   %a = fcmp une double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $olt_f64
-; CHECK: (set_local @2 (lt @1 @0))
+; CHECK-LABEL: olt_f64:
+; CHECK: lt @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @olt_f64(double %x, double %y) {
   %a = fcmp olt double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $ole_f64
-; CHECK: (set_local @2 (le @1 @0))
+; CHECK-LABEL: ole_f64:
+; CHECK: le @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @ole_f64(double %x, double %y) {
   %a = fcmp ole double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $ogt_f64
-; CHECK: (set_local @2 (gt @1 @0))
+; CHECK-LABEL: ogt_f64:
+; CHECK: gt @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @ogt_f64(double %x, double %y) {
   %a = fcmp ogt double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $oge_f64
-; CHECK: (set_local @2 (ge @1 @0))
+; CHECK-LABEL: oge_f64:
+; CHECK: ge @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @oge_f64(double %x, double %y) {
   %a = fcmp oge double %x, %y
   %b = zext i1 %a to i32
@@ -88,56 +112,70 @@ define i32 @oge_f64(double %x, double %y) {
 
 ; Expanded comparisons, which also check for NaN.
 
-; CHECK-LABEL: (func $ueq_f64
-; CHECK-NEXT: (param f64) (param f64) (result i32)
-; CHECK-NEXT: (set_local @0 (argument 1))
-; CHECK-NEXT: (set_local @1 (argument 0))
-; CHECK-NEXT: (set_local @2 (eq @1 @0))
-; CHECK-NEXT: (set_local @3 (ne @0 @0))
-; CHECK-NEXT: (set_local @4 (ne @1 @1))
-; CHECK-NEXT: (set_local @5 (ior @4 @3))
-; CHECK-NEXT: (set_local @6 (ior @2 @5))
-; CHECK-NEXT: (return @6)
+; CHECK-LABEL: ueq_f64:
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .param f64{{$}}
+; CHECK-NEXT: .result i32{{$}}
+; CHECK-NEXT: @1{{$}}
+; CHECK-NEXT: set_local @2, pop{{$}}
+; CHECK-NEXT: @0{{$}}
+; CHECK-NEXT: set_local @3, pop{{$}}
+; CHECK-NEXT: eq @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
+; CHECK-NEXT: ne @2, @2{{$}}
+; CHECK-NEXT: set_local @5, pop{{$}}
+; CHECK-NEXT: ne @3, @3{{$}}
+; CHECK-NEXT: set_local @6, pop{{$}}
+; CHECK-NEXT: ior @6, @5{{$}}
+; CHECK-NEXT: set_local @7, pop{{$}}
+; CHECK-NEXT: ior @4, @7{{$}}
+; CHECK-NEXT: set_local @8, pop{{$}}
+; CHECK-NEXT: return @8{{$}}
 define i32 @ueq_f64(double %x, double %y) {
   %a = fcmp ueq double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $one_f64
-; CHECK: (set_local @2 (ne @1 @0))
+; CHECK-LABEL: one_f64:
+; CHECK: ne @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @one_f64(double %x, double %y) {
   %a = fcmp one double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $ult_f64
-; CHECK: (set_local @2 (lt @1 @0))
+; CHECK-LABEL: ult_f64:
+; CHECK: lt @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @ult_f64(double %x, double %y) {
   %a = fcmp ult double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $ule_f64
-; CHECK: (set_local @2 (le @1 @0))
+; CHECK-LABEL: ule_f64:
+; CHECK: le @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @ule_f64(double %x, double %y) {
   %a = fcmp ule double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $ugt_f64
-; CHECK: (set_local @2 (gt @1 @0))
+; CHECK-LABEL: ugt_f64:
+; CHECK: gt @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @ugt_f64(double %x, double %y) {
   %a = fcmp ugt double %x, %y
   %b = zext i1 %a to i32
   ret i32 %b
 }
 
-; CHECK-LABEL: (func $uge_f64
-; CHECK: (set_local @2 (ge @1 @0))
+; CHECK-LABEL: uge_f64:
+; CHECK: ge @3, @2{{$}}
+; CHECK-NEXT: set_local @4, pop{{$}}
 define i32 @uge_f64(double %x, double %y) {
   %a = fcmp uge double %x, %y
   %b = zext i1 %a to i32
