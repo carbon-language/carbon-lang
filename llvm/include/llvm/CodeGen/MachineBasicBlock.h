@@ -78,7 +78,7 @@ public:
         : PhysReg(PhysReg), LaneMask(LaneMask) {}
   };
 
-protected:
+private:
   typedef ilist<MachineInstr> Instructions;
   Instructions Insts;
   const BasicBlock *BB;
