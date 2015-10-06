@@ -143,21 +143,24 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
 }
 
 template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
-  if (const ELFFileBase *Old = getFirstELF()) {
-    if (!Old->isCompatibleWith(*File))
-      error(Twine(Old->getName() + " is incompatible with " + File->getName()));
-  } else {
+  const ELFFileBase *Old = getFirstELF();
+  if (Old && !Old->isCompatibleWith(*File))
+    error(Twine(Old->getName() + " is incompatible with " + File->getName()));
+
+  if (auto *O = dyn_cast<ObjectFileBase>(File))
+    ObjectFiles.emplace_back(O);
+  else if (auto *S = dyn_cast<SharedFile<ELFT>>(File))
+    SharedFiles.emplace_back(S);
+
+  if (!Old)
     init<ELFT>(File->getEMachine());
-  }
 
   if (auto *O = dyn_cast<ObjectFileBase>(File)) {
-    ObjectFiles.emplace_back(O);
     for (SymbolBody *Body : O->getSymbols())
       resolve<ELFT>(Body);
   }
 
   if (auto *S = dyn_cast<SharedFile<ELFT>>(File)) {
-    SharedFiles.emplace_back(S);
     for (SharedSymbol<ELFT> &Body : S->getSharedSymbols())
       resolve<ELFT>(&Body);
   }

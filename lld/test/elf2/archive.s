@@ -23,3 +23,11 @@
 # CHECK-NEXT: T bar
 # CHECK-NEXT: T end
 # CHECK-NEXT: w foo
+
+
+# Test that the hitting the first object file after having a lazy symbol for
+# _start is handled correctly.
+# RUN: lld -flavor gnu2 %tar %t -o %tout
+# RUN: llvm-nm %tout | FileCheck --check-prefix=AR-FIRST %s
+
+# AR-FIRST: T _start
