@@ -17,6 +17,7 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/Tool.h"
+#include "clang/Driver/ToolChain.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -160,6 +161,31 @@ std::string getAbsolutePath(StringRef File) {
   (void)EC;
   llvm::sys::path::native(AbsolutePath);
   return AbsolutePath.str();
+}
+
+void addTargetAndModeForProgramName(std::vector<std::string> &CommandLine,
+                                    StringRef InvokedAs) {
+  if (!CommandLine.empty() && !InvokedAs.empty()) {
+    bool AlreadyHasTarget = false;
+    bool AlreadyHasMode = false;
+    // Skip CommandLine[0].
+    for (auto Token = ++CommandLine.begin(); Token != CommandLine.end();
+         ++Token) {
+      StringRef TokenRef(*Token);
+      AlreadyHasTarget |=
+          (TokenRef == "-target" || TokenRef.startswith("-target="));
+      AlreadyHasMode |= (TokenRef == "--driver-mode" ||
+                         TokenRef.startswith("--driver-mode="));
+    }
+    auto TargetMode =
+        clang::driver::ToolChain::getTargetAndModeFromProgramName(InvokedAs);
+    if (!AlreadyHasMode && !TargetMode.second.empty()) {
+      CommandLine.insert(++CommandLine.begin(), TargetMode.second);
+    }
+    if (!AlreadyHasTarget && !TargetMode.first.empty()) {
+      CommandLine.insert(++CommandLine.begin(), {"-target", TargetMode.first});
+    }
+  }
 }
 
 namespace {

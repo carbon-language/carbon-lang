@@ -18,6 +18,8 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <string>
@@ -289,6 +291,84 @@ TEST(ClangToolTest, ArgumentAdjusters) {
   Tool.run(Action.get());
   EXPECT_TRUE(Ran);
   EXPECT_FALSE(Found);
+}
+
+namespace {
+/// Find a target name such that looking for it in TargetRegistry by that name
+/// returns the same target. We expect that there is at least one target
+/// configured with this property.
+std::string getAnyTarget() {
+  llvm::InitializeAllTargets();
+  for (const auto &Target : llvm::TargetRegistry::targets()) {
+    std::string Error;
+    if (llvm::TargetRegistry::lookupTarget(Target.getName(), Error) ==
+        &Target) {
+      return Target.getName();
+    }
+  }
+  return "";
+}
+}
+
+TEST(addTargetAndModeForProgramName, AddsTargetAndMode) {
+  std::string Target = getAnyTarget();
+  ASSERT_FALSE(Target.empty());
+
+  std::vector<std::string> Args = {"clang", "-foo"};
+  addTargetAndModeForProgramName(Args, "");
+  EXPECT_EQ((std::vector<std::string>{"clang", "-foo"}), Args);
+  addTargetAndModeForProgramName(Args, Target + "-g++");
+  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target,
+                                      "--driver-mode=g++", "-foo"}),
+            Args);
+}
+
+TEST(addTargetAndModeForProgramName, PathIgnored) {
+  std::string Target = getAnyTarget();
+  ASSERT_FALSE(Target.empty());
+
+  SmallString<32> ToolPath;
+  llvm::sys::path::append(ToolPath, "foo", "bar", Target + "-g++");
+
+  std::vector<std::string> Args = {"clang", "-foo"};
+  addTargetAndModeForProgramName(Args, ToolPath);
+  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target,
+                                      "--driver-mode=g++", "-foo"}),
+            Args);
+}
+
+TEST(addTargetAndModeForProgramName, IgnoresExistingTarget) {
+  std::string Target = getAnyTarget();
+  ASSERT_FALSE(Target.empty());
+
+  std::vector<std::string> Args = {"clang", "-foo", "-target", "something"};
+  addTargetAndModeForProgramName(Args, Target + "-g++");
+  EXPECT_EQ((std::vector<std::string>{"clang", "--driver-mode=g++", "-foo",
+                                      "-target", "something"}),
+            Args);
+
+  std::vector<std::string> ArgsAlt = {"clang", "-foo", "-target=something"};
+  addTargetAndModeForProgramName(ArgsAlt, Target + "-g++");
+  EXPECT_EQ((std::vector<std::string>{"clang", "--driver-mode=g++", "-foo",
+                                      "-target=something"}),
+            ArgsAlt);
+}
+
+TEST(addTargetAndModeForProgramName, IgnoresExistingMode) {
+  std::string Target = getAnyTarget();
+  ASSERT_FALSE(Target.empty());
+
+  std::vector<std::string> Args = {"clang", "-foo", "--driver-mode=abc"};
+  addTargetAndModeForProgramName(Args, Target + "-g++");
+  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target, "-foo",
+                                      "--driver-mode=abc"}),
+            Args);
+
+  std::vector<std::string> ArgsAlt = {"clang", "-foo", "--driver-mode", "abc"};
+  addTargetAndModeForProgramName(ArgsAlt, Target + "-g++");
+  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target, "-foo",
+                                      "--driver-mode", "abc"}),
+            ArgsAlt);
 }
 
 #ifndef LLVM_ON_WIN32
