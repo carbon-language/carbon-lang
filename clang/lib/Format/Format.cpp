@@ -1792,18 +1792,17 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
   if (Style.DisableFormat)
     return tooling::Replacements();
 
-  FileManager Files((FileSystemOptions()));
+  IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new vfs::InMemoryFileSystem);
+  FileManager Files(FileSystemOptions(), InMemoryFileSystem);
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
       new DiagnosticOptions);
   SourceManager SourceMgr(Diagnostics, Files);
-  std::unique_ptr<llvm::MemoryBuffer> Buf =
-      llvm::MemoryBuffer::getMemBuffer(Code, FileName);
-  const clang::FileEntry *Entry =
-      Files.getVirtualFile(FileName, Buf->getBufferSize(), 0);
-  SourceMgr.overrideFileContents(Entry, std::move(Buf));
-  FileID ID =
-      SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
+  InMemoryFileSystem->addFile(FileName, 0,
+                              llvm::MemoryBuffer::getMemBuffer(Code, FileName));
+  FileID ID = SourceMgr.createFileID(Files.getFile(FileName), SourceLocation(),
+                                     clang::SrcMgr::C_User);
   SourceLocation StartOfFile = SourceMgr.getLocForStartOfFile(ID);
   std::vector<CharSourceRange> CharRanges;
   for (const tooling::Range &Range : Ranges) {

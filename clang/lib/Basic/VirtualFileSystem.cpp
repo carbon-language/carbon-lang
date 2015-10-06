@@ -528,6 +528,13 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
   }
 }
 
+void InMemoryFileSystem::addFileNoOwn(const Twine &P, time_t ModificationTime,
+                                      llvm::MemoryBuffer *Buffer) {
+  return addFile(P, ModificationTime,
+                 llvm::MemoryBuffer::getMemBuffer(
+                     Buffer->getBuffer(), Buffer->getBufferIdentifier()));
+}
+
 static ErrorOr<detail::InMemoryNode *>
 lookupInMemoryNode(const InMemoryFileSystem &FS, detail::InMemoryDirectory *Dir,
                    const Twine &P) {
@@ -541,6 +548,15 @@ lookupInMemoryNode(const InMemoryFileSystem &FS, detail::InMemoryDirectory *Dir,
 
   auto I = llvm::sys::path::begin(Path), E = llvm::sys::path::end(Path);
   while (true) {
+    // Skip over ".".
+    // FIXME: Also handle "..".
+    if (*I == ".") {
+      ++I;
+      if (I == E)
+        return Dir;
+      continue;
+    }
+
     detail::InMemoryNode *Node = Dir->getChild(*I);
     ++I;
     if (!Node)

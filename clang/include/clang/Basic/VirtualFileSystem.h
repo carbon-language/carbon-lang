@@ -274,8 +274,12 @@ class InMemoryFileSystem : public FileSystem {
 public:
   InMemoryFileSystem();
   ~InMemoryFileSystem() override;
+  /// Add a buffer to the VFS with a path. The VFS owns the buffer.
   void addFile(const Twine &Path, time_t ModificationTime,
                std::unique_ptr<llvm::MemoryBuffer> Buffer);
+  /// Add a buffer to the VFS with a path. The VFS does not own the buffer.
+  void addFileNoOwn(const Twine &Path, time_t ModificationTime,
+                    llvm::MemoryBuffer *Buffer);
   StringRef toString() const;
 
   llvm::ErrorOr<Status> status(const Twine &Path) override;
