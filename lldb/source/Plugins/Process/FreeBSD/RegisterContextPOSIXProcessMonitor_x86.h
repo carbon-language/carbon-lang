@@ -91,6 +91,7 @@ protected:
 private:
     ProcessMonitor &
     GetMonitor();
+    uint32_t m_fctrl_offset_in_userarea;  // Offset of 'fctrl' in 'UserArea' Structure
 };
 
 #endif
