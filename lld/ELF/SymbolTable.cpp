@@ -222,6 +222,12 @@ template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {
 
   if (Lazy *L = dyn_cast<Lazy>(Existing)) {
     if (New->isUndefined()) {
+      if (New->isWeak()) {
+        // See the explanation in SymbolTable::addLazy
+        L->setUsedInRegularObj();
+        L->setWeak();
+        return;
+      }
       addMemberFile(L);
       return;
     }

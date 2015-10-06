@@ -30,4 +30,7 @@
 # RUN: lld -flavor gnu2 %tar %t -o %tout
 # RUN: llvm-nm %tout | FileCheck --check-prefix=AR-FIRST %s
 
-# AR-FIRST: T _start
+# AR-FIRST:      T _start
+# AR-FIRST-NEXT: w bar
+# AR-FIRST-NEXT: T end
+# AR-FIRST-NEXT: w foo
