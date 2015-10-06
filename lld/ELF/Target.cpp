@@ -59,10 +59,10 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return Type == R_386_PLT32;
 }
 
-static void add32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
-static void or16le(uint8_t *P, int16_t V) { write16le(P, read16le(P) | V); }
-static void or32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) | V); }
-static void or64le(uint8_t *P, int64_t V) { write64le(P, read64le(P) | V); }
+static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }
+static void or16le(uint8_t *L, int16_t V) { write16le(L, read16le(L) | V); }
+static void or32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) | V); }
+static void or64le(uint8_t *L, int64_t V) { write64le(L, read64le(L) | V); }
 
 void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA,
@@ -71,16 +71,16 @@ void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
   auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
 
   uint32_t Offset = Rel.r_offset;
-  uint8_t *Location = Buf + Offset;
+  uint8_t *Loc = Buf + Offset;
   switch (Type) {
   case R_386_GOT32:
-    add32le(Location, SymVA - GotVA);
+    add32le(Loc, SymVA - GotVA);
     break;
   case R_386_PC32:
-    add32le(Location, SymVA - (BaseAddr + Offset));
+    add32le(Loc, SymVA - (BaseAddr + Offset));
     break;
   case R_386_32:
-    add32le(Location, SymVA);
+    add32le(Loc, SymVA);
     break;
   default:
     error(Twine("unrecognized reloc ") + Twine(Type));
@@ -165,14 +165,14 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
   uint64_t Offset = Rel.r_offset;
-  uint8_t *Location = Buf + Offset;
+  uint8_t *Loc = Buf + Offset;
   switch (Type) {
   case R_X86_64_PC32:
   case R_X86_64_GOTPCREL:
-    write32le(Location, SymVA + Rel.r_addend - (BaseAddr + Offset));
+    write32le(Loc, SymVA + Rel.r_addend - (BaseAddr + Offset));
     break;
   case R_X86_64_64:
-    write64le(Location, SymVA + Rel.r_addend);
+    write64le(Loc, SymVA + Rel.r_addend);
     break;
   case R_X86_64_32: {
   case R_X86_64_32S:
@@ -182,7 +182,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
     else if (!isInt<32>(VA))
       error("R_X86_64_32S out of range");
 
-    write32le(Location, VA);
+    write32le(Loc, VA);
     break;
   }
   default:
@@ -210,10 +210,10 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
   uint64_t Offset = Rel.r_offset;
-  uint8_t *Location = Buf + Offset;
+  uint8_t *Loc = Buf + Offset;
   switch (Type) {
   case R_PPC64_ADDR64:
-    write64be(Location, SymVA + Rel.r_addend);
+    write64be(Loc, SymVA + Rel.r_addend);
     break;
   case R_PPC64_TOC:
     // We don't create a TOC yet.
@@ -271,11 +271,11 @@ bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
   return false;
 }
 
-static void AArch64UpdateAdr(uint8_t *Location, uint64_t Imm) {
+static void AArch64UpdateAdr(uint8_t *L, uint64_t Imm) {
   uint32_t ImmLo = (Imm & 0x3) << 29;
   uint32_t ImmHi = ((Imm & 0x1FFFFC) >> 2) << 5;
   uint64_t Mask = (0x3 << 29) | (0x7FFFF << 5);
-  write32le(Location, (read32le(Location) & ~Mask) | ImmLo | ImmHi);
+  write32le(L, (read32le(L) & ~Mask) | ImmLo | ImmHi);
 }
 
 // Page(Expr) is the page address of the expression Expr, defined
@@ -285,46 +285,44 @@ static uint64_t AArch64GetPage(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
-static void handle_ABS16(uint8_t *Location, uint64_t S, int64_t A) {
+static void handle_ABS16(uint8_t *L, uint64_t S, int64_t A) {
   uint64_t X = S + A;
-  if (!isInt<16>(X)) // -2^15 <= X < 2^16
+  if (!isInt<16>(X))
     error("Relocation R_AARCH64_ABS16 out of range");
-  or16le(Location, X);
+  or16le(L, X);
 }
 
-static void handle_ABS32(uint8_t *Location, uint64_t S, int64_t A) {
+static void handle_ABS32(uint8_t *L, uint64_t S, int64_t A) {
   uint64_t X = S + A;
-  if (!isInt<32>(X)) // -2^31 <= X < 2^32
+  if (!isInt<32>(X))
     error("Relocation R_AARCH64_ABS32 out of range");
-  or32le(Location, X);
+  or32le(L, X);
 }
 
-static void handle_ABS64(uint8_t *Location, uint64_t S, int64_t A) {
-  uint64_t X = S + A;
-  // No overflow check.
-  or64le(Location, X);
+static void handle_ABS64(uint8_t *L, uint64_t S, int64_t A) {
+  // No overflow check needed.
+  or64le(L, S + A);
 }
 
-static void handle_ADD_ABS_LO12_NC(uint8_t *Location, uint64_t S, int64_t A) {
-  // No overflow check.
-  uint64_t X = ((S + A) & 0xFFF) << 10;
-  or32le(Location, X);
+static void handle_ADD_ABS_LO12_NC(uint8_t *L, uint64_t S, int64_t A) {
+  // No overflow check needed.
+  or32le(L, ((S + A) & 0xFFF) << 10);
 }
 
-static void handle_ADR_PREL_LO21(uint8_t *Location, uint64_t S, int64_t A,
+static void handle_ADR_PREL_LO21(uint8_t *L, uint64_t S, int64_t A,
                                  uint64_t P) {
   uint64_t X = S + A - P;
   if (!isInt<21>(X))
     error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
-  AArch64UpdateAdr(Location, X & 0x1FFFFF);
+  AArch64UpdateAdr(L, X & 0x1FFFFF);
 }
 
-static void handle_ADR_PREL_PG_HI21(uint8_t *Location, uint64_t S, int64_t A,
+static void handle_ADR_PREL_PG_HI21(uint8_t *L, uint64_t S, int64_t A,
                                     uint64_t P) {
   uint64_t X = AArch64GetPage(S + A) - AArch64GetPage(P);
   if (!isInt<33>(X))
     error("Relocation R_AARCH64_ADR_PREL_PG_HI21 out of range");
-  AArch64UpdateAdr(Location, (X >> 12) & 0x1FFFFF); // X[32:12]
+  AArch64UpdateAdr(L, (X >> 12) & 0x1FFFFF); // X[32:12]
 }
 
 void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
@@ -333,28 +331,28 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
-  uint8_t *Location = Buf + Rel.r_offset;
+  uint8_t *Loc = Buf + Rel.r_offset;
   uint64_t S = SymVA;
   int64_t A = Rel.r_addend;
   uint64_t P = BaseAddr + Rel.r_offset;
   switch (Type) {
   case R_AARCH64_ABS16:
-    handle_ABS16(Location, S, A);
+    handle_ABS16(Loc, S, A);
     break;
   case R_AARCH64_ABS32:
-    handle_ABS32(Location, S, A);
+    handle_ABS32(Loc, S, A);
     break;
   case R_AARCH64_ABS64:
-    handle_ABS64(Location, S, A);
+    handle_ABS64(Loc, S, A);
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
-    handle_ADD_ABS_LO12_NC(Location, S, A);
+    handle_ADD_ABS_LO12_NC(Loc, S, A);
     break;
   case R_AARCH64_ADR_PREL_LO21:
-    handle_ADR_PREL_LO21(Location, S, A, P);
+    handle_ADR_PREL_LO21(Loc, S, A, P);
     break;
   case R_AARCH64_ADR_PREL_PG_HI21:
-    handle_ADR_PREL_PG_HI21(Location, S, A, P);
+    handle_ADR_PREL_PG_HI21(Loc, S, A, P);
     break;
   default:
     error(Twine("unrecognized reloc ") + Twine(Type));
