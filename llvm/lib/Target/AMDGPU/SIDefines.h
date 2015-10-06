@@ -37,7 +37,8 @@ enum {
   MIMG = 1 << 18,
   FLAT = 1 << 19,
   WQM = 1 << 20,
-  VGPRSpill = 1 << 21
+  VGPRSpill = 1 << 21,
+  VOPAsmPrefer32Bit = 1 << 22
 };
 }
 

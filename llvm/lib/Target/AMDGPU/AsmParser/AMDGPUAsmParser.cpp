@@ -347,6 +347,11 @@ private:
   bool ParseSectionDirectiveHSAText();
 
 public:
+public:
+  enum AMDGPUMatchResultTy {
+    Match_PreferE32 = FIRST_TARGET_MATCH_RESULT_TY
+  };
+
   AMDGPUAsmParser(MCSubtargetInfo &STI, MCAsmParser &_Parser,
                const MCInstrInfo &MII,
                const MCTargetOptions &Options)
@@ -556,6 +561,11 @@ unsigned AMDGPUAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
       (getForcedEncodingSize() == 64 && !(TSFlags & SIInstrFlags::VOP3)))
     return Match_InvalidOperand;
 
+  if ((TSFlags & SIInstrFlags::VOP3) &&
+      (TSFlags & SIInstrFlags::VOPAsmPrefer32Bit) &&
+      getForcedEncodingSize() != 64)
+    return Match_PreferE32;
+
   return Match_Success;
 }
 
@@ -614,6 +624,9 @@ bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       }
       return Error(ErrorLoc, "invalid operand for instruction");
     }
+    case Match_PreferE32:
+      return Error(IDLoc, "internal error: instruction without _e64 suffix "
+                          "should be encoded as e32");
   }
   llvm_unreachable("Implement any new match types added!");
 }
@@ -1701,8 +1714,12 @@ AMDGPUAsmParser::parseVOP3OptionalOps(OperandVector &Operands) {
 }
 
 void AMDGPUAsmParser::cvtVOP3(MCInst &Inst, const OperandVector &Operands) {
-  ((AMDGPUOperand &)*Operands[1]).addRegOperands(Inst, 1);
-  unsigned i = 2;
+
+  unsigned i = 1;
+  const MCInstrDesc &Desc = MII.get(Inst.getOpcode());
+  if (Desc.getNumDefs() > 0) {
+    ((AMDGPUOperand &)*Operands[i++]).addRegOperands(Inst, 1);
+  }
 
   std::map<enum AMDGPUOperand::ImmTy, unsigned> OptionalIdx;
 

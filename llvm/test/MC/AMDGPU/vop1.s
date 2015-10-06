@@ -8,6 +8,25 @@
 // RUN: not llvm-mc -arch=amdgcn -mcpu=bonaire -show-encoding %s 2>&1 | FileCheck %s --check-prefix=NOSICI
 // RUN: not llvm-mc -arch=amdgcn -mcpu=tonga -show-encoding %s 2>&1 | FileCheck %s -check-prefix=NOVI
 
+// Force 32-bit encoding
+
+// GCN: v_mov_b32_e32 v1, v2 ; encoding: [0x02,0x03,0x02,0x7e]
+v_mov_b32_e32 v1, v2
+
+// Force 32-bit encoding for special instructions
+// FIXME: We should be printing _e32 suffixes for these:
+
+// GCN: v_nop ; encoding: [0x00,0x00,0x00,0x7e]
+v_nop_e32
+
+// SICI: v_clrexcp ; encoding: [0x00,0x82,0x00,0x7e]
+// VI:   v_clrexcp ; encoding: [0x00,0x6a,0x00,0x7e]
+v_clrexcp_e32
+
+//===----------------------------------------------------------------------===//
+// Instructions
+//===----------------------------------------------------------------------===//
+
 
 // GCN: v_nop ; encoding: [0x00,0x00,0x00,0x7e]
 v_nop

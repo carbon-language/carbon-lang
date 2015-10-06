@@ -1156,8 +1156,8 @@ defm IMAGE_SAMPLE_C_CD_CL_O : MIMG_Sampler <0x0000006f, "image_sample_c_cd_cl_o"
 // VOP1 Instructions
 //===----------------------------------------------------------------------===//
 
-let vdst = 0, src0 = 0 in {
-defm V_NOP : VOP1_m <vop1<0x0>, (outs), (ins), "v_nop", [], "v_nop">;
+let vdst = 0, src0 = 0, VOPAsmPrefer32Bit = 1 in {
+defm V_NOP : VOP1Inst <vop1<0x0>, "v_nop", VOP_NONE>;
 }
 
 let isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
@@ -1332,10 +1332,8 @@ defm V_FREXP_EXP_I32_F32 : VOP1Inst <vop1<0x3f, 0x33>, "v_frexp_exp_i32_f32",
 defm V_FREXP_MANT_F32 : VOP1Inst <vop1<0x40, 0x34>, "v_frexp_mant_f32",
   VOP_F32_F32
 >;
-let vdst = 0, src0 = 0 in {
-defm V_CLREXCP : VOP1_m <vop1<0x41,0x35>, (outs), (ins), "v_clrexcp", [],
-  "v_clrexcp"
->;
+let vdst = 0, src0 = 0, VOPAsmPrefer32Bit = 1 in {
+defm V_CLREXCP : VOP1Inst <vop1<0x41,0x35>, "v_clrexcp", VOP_NONE>;
 }
 defm V_MOVRELD_B32 : VOP1Inst <vop1<0x42, 0x36>, "v_movreld_b32", VOP_I32_I32>;
 defm V_MOVRELS_B32 : VOP1Inst <vop1<0x43, 0x37>, "v_movrels_b32", VOP_I32_I32>;
