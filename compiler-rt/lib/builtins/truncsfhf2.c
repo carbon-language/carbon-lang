@@ -13,7 +13,7 @@
 
 // Use a forwarding definition and noinline to implement a poor man's alias,
 // as there isn't a good cross-platform way of defining one.
-COMPILER_RT_ABI __attribute__((noinline)) uint16_t __truncsfhf2(float a) {
+COMPILER_RT_ABI NOINLINE uint16_t __truncsfhf2(float a) {
     return __truncXfYf2__(a);
 }
 

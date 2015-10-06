@@ -35,11 +35,21 @@
 # define COMPILER_RT_ABI __attribute__((pcs("aapcs")))
 #else
 # define ARM_EABI_FNALIAS(aeabi_name, name)
-# if defined(__arm__) && defined(_WIN32)
+# if defined(__arm__) && defined(_WIN32) && (!defined(_MSC_VER) || defined(__clang__))
 #   define COMPILER_RT_ABI __attribute__((pcs("aapcs")))
 # else
 #   define COMPILER_RT_ABI
 # endif
+#endif
+
+#ifdef _MSC_VER
+#define NOINLINE __declspec(noinline)
+#define NORETURN __declspec(noreturn)
+#define UNUSED
+#else
+#define NOINLINE __attribute__((noinline))
+#define NORETURN __attribute__((noreturn))
+#define UNUSED __attribute__((unused))
 #endif
 
 #if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
