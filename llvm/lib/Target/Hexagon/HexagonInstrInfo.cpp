@@ -684,7 +684,7 @@ void HexagonInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 }
 bool
 HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
-  const HexagonRegisterInfo &TRI = getRegisterInfo();
+  const HexagonRegisterInfo &HRI = getRegisterInfo();
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   MachineBasicBlock &MBB = *MI->getParent();
   DebugLoc DL = MI->getDebugLoc();
@@ -693,7 +693,7 @@ HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   switch (Opc) {
     case Hexagon::ALIGNA:
       BuildMI(MBB, MI, DL, get(Hexagon::A2_andir), MI->getOperand(0).getReg())
-          .addReg(TRI.getFrameRegister())
+          .addReg(HRI.getFrameRegister())
           .addImm(-MI->getOperand(1).getImm());
       MBB.erase(MI);
       return true;
@@ -718,15 +718,15 @@ HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
       unsigned DstReg = MI->getOperand(0).getReg();
       unsigned Src1Reg = MI->getOperand(1).getReg();
       unsigned Src2Reg = MI->getOperand(2).getReg();
-      unsigned Src1SubHi = TRI.getSubReg(Src1Reg, Hexagon::subreg_hireg);
-      unsigned Src1SubLo = TRI.getSubReg(Src1Reg, Hexagon::subreg_loreg);
-      unsigned Src2SubHi = TRI.getSubReg(Src2Reg, Hexagon::subreg_hireg);
-      unsigned Src2SubLo = TRI.getSubReg(Src2Reg, Hexagon::subreg_loreg);
+      unsigned Src1SubHi = HRI.getSubReg(Src1Reg, Hexagon::subreg_hireg);
+      unsigned Src1SubLo = HRI.getSubReg(Src1Reg, Hexagon::subreg_loreg);
+      unsigned Src2SubHi = HRI.getSubReg(Src2Reg, Hexagon::subreg_hireg);
+      unsigned Src2SubLo = HRI.getSubReg(Src2Reg, Hexagon::subreg_loreg);
       BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_mpyi),
-              TRI.getSubReg(DstReg, Hexagon::subreg_hireg)).addReg(Src1SubHi)
+              HRI.getSubReg(DstReg, Hexagon::subreg_hireg)).addReg(Src1SubHi)
           .addReg(Src2SubHi);
       BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_mpyi),
-              TRI.getSubReg(DstReg, Hexagon::subreg_loreg)).addReg(Src1SubLo)
+              HRI.getSubReg(DstReg, Hexagon::subreg_loreg)).addReg(Src1SubLo)
           .addReg(Src2SubLo);
       MBB.erase(MI);
       MRI.clearKillFlags(Src1SubHi);
@@ -741,17 +741,17 @@ HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
       unsigned Src1Reg = MI->getOperand(1).getReg();
       unsigned Src2Reg = MI->getOperand(2).getReg();
       unsigned Src3Reg = MI->getOperand(3).getReg();
-      unsigned Src1SubHi = TRI.getSubReg(Src1Reg, Hexagon::subreg_hireg);
-      unsigned Src1SubLo = TRI.getSubReg(Src1Reg, Hexagon::subreg_loreg);
-      unsigned Src2SubHi = TRI.getSubReg(Src2Reg, Hexagon::subreg_hireg);
-      unsigned Src2SubLo = TRI.getSubReg(Src2Reg, Hexagon::subreg_loreg);
-      unsigned Src3SubHi = TRI.getSubReg(Src3Reg, Hexagon::subreg_hireg);
-      unsigned Src3SubLo = TRI.getSubReg(Src3Reg, Hexagon::subreg_loreg);
+      unsigned Src1SubHi = HRI.getSubReg(Src1Reg, Hexagon::subreg_hireg);
+      unsigned Src1SubLo = HRI.getSubReg(Src1Reg, Hexagon::subreg_loreg);
+      unsigned Src2SubHi = HRI.getSubReg(Src2Reg, Hexagon::subreg_hireg);
+      unsigned Src2SubLo = HRI.getSubReg(Src2Reg, Hexagon::subreg_loreg);
+      unsigned Src3SubHi = HRI.getSubReg(Src3Reg, Hexagon::subreg_hireg);
+      unsigned Src3SubLo = HRI.getSubReg(Src3Reg, Hexagon::subreg_loreg);
       BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_maci),
-              TRI.getSubReg(DstReg, Hexagon::subreg_hireg)).addReg(Src1SubHi)
+              HRI.getSubReg(DstReg, Hexagon::subreg_hireg)).addReg(Src1SubHi)
           .addReg(Src2SubHi).addReg(Src3SubHi);
       BuildMI(MBB, MI, MI->getDebugLoc(), get(Hexagon::M2_maci),
-              TRI.getSubReg(DstReg, Hexagon::subreg_loreg)).addReg(Src1SubLo)
+              HRI.getSubReg(DstReg, Hexagon::subreg_loreg)).addReg(Src1SubLo)
           .addReg(Src2SubLo).addReg(Src3SubLo);
       MBB.erase(MI);
       MRI.clearKillFlags(Src1SubHi);
@@ -760,6 +760,30 @@ HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
       MRI.clearKillFlags(Src2SubLo);
       MRI.clearKillFlags(Src3SubHi);
       MRI.clearKillFlags(Src3SubLo);
+      return true;
+    }
+    case Hexagon::MUX64_rr: {
+      const MachineOperand &Op0 = MI->getOperand(0);
+      const MachineOperand &Op1 = MI->getOperand(1);
+      const MachineOperand &Op2 = MI->getOperand(2);
+      const MachineOperand &Op3 = MI->getOperand(3);
+      unsigned Rd = Op0.getReg();
+      unsigned Pu = Op1.getReg();
+      unsigned Rs = Op2.getReg();
+      unsigned Rt = Op3.getReg();
+      DebugLoc DL = MI->getDebugLoc();
+      unsigned K1 = getKillRegState(Op1.isKill());
+      unsigned K2 = getKillRegState(Op2.isKill());
+      unsigned K3 = getKillRegState(Op3.isKill());
+      if (Rd != Rs)
+        BuildMI(MBB, MI, DL, get(Hexagon::A2_tfrpt), Rd)
+          .addReg(Pu, (Rd == Rt) ? K1 : 0)
+          .addReg(Rs, K2);
+      if (Rd != Rt)
+        BuildMI(MBB, MI, DL, get(Hexagon::A2_tfrpf), Rd)
+          .addReg(Pu, K1)
+          .addReg(Rt, K3);
+      MBB.erase(MI);
       return true;
     }
     case Hexagon::TCRETURNi:
@@ -1285,7 +1309,44 @@ bool HexagonInstrInfo::isValidOffset(unsigned Opcode, int Offset,
   case Hexagon::TFR_FIA:
   case Hexagon::INLINEASM:
     return true;
-  }
+
+  case Hexagon::L2_ploadrbt_io:
+  case Hexagon::L2_ploadrbf_io:
+  case Hexagon::L2_ploadrubt_io:
+  case Hexagon::L2_ploadrubf_io:
+  case Hexagon::S2_pstorerbt_io:
+  case Hexagon::S2_pstorerbf_io:
+  case Hexagon::S4_storeirb_io:
+  case Hexagon::S4_storeirbt_io:
+  case Hexagon::S4_storeirbf_io:
+    return isUInt<6>(Offset);
+
+  case Hexagon::L2_ploadrht_io:
+  case Hexagon::L2_ploadrhf_io:
+  case Hexagon::L2_ploadruht_io:
+  case Hexagon::L2_ploadruhf_io:
+  case Hexagon::S2_pstorerht_io:
+  case Hexagon::S2_pstorerhf_io:
+  case Hexagon::S4_storeirh_io:
+  case Hexagon::S4_storeirht_io:
+  case Hexagon::S4_storeirhf_io:
+    return isShiftedUInt<6,1>(Offset);
+
+  case Hexagon::L2_ploadrit_io:
+  case Hexagon::L2_ploadrif_io:
+  case Hexagon::S2_pstorerit_io:
+  case Hexagon::S2_pstorerif_io:
+  case Hexagon::S4_storeiri_io:
+  case Hexagon::S4_storeirit_io:
+  case Hexagon::S4_storeirif_io:
+    return isShiftedUInt<6,2>(Offset);
+
+  case Hexagon::L2_ploadrdt_io:
+  case Hexagon::L2_ploadrdf_io:
+  case Hexagon::S2_pstorerdt_io:
+  case Hexagon::S2_pstorerdf_io:
+    return isShiftedUInt<6,3>(Offset);
+  } // switch
 
   llvm_unreachable("No offset range is defined for this opcode. "
                    "Please define it in the above switch statement!");

@@ -37,6 +37,9 @@ static cl::opt<bool> EnableExpandCondsets("hexagon-expand-condsets",
   cl::init(true), cl::Hidden, cl::ZeroOrMore,
   cl::desc("Early expansion of MUX"));
 
+static cl::opt<bool> EnableEarlyIf("hexagon-eif", cl::init(true), cl::Hidden,
+  cl::ZeroOrMore, cl::desc("Enable early if-conversion"));
+
 static cl::opt<bool> EnableGenInsert("hexagon-insert", cl::init(true),
   cl::Hidden, cl::desc("Generate \"insert\" instructions"));
 
@@ -78,6 +81,7 @@ namespace llvm {
   FunctionPass *createHexagonCFGOptimizer();
   FunctionPass *createHexagonCommonGEP();
   FunctionPass *createHexagonCopyToCombine();
+  FunctionPass *createHexagonEarlyIfConversion();
   FunctionPass *createHexagonExpandCondsets();
   FunctionPass *createHexagonExpandPredSpillCode();
   FunctionPass *createHexagonFixupHwLoops();
@@ -214,6 +218,8 @@ bool HexagonPassConfig::addInstSelector() {
     printAndVerify("After hexagon peephole pass");
     if (EnableGenInsert)
       addPass(createHexagonGenInsert(), false);
+    if (EnableEarlyIf)
+      addPass(createHexagonEarlyIfConversion(), false);
   }
 
   return false;
