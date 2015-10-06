@@ -1265,6 +1265,13 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
     return true;
   }
 
+  // If we commuted, regB may have changed so we should re-sample it to avoid
+  // confusing the three address conversion below.
+  if (Commuted) {
+    regB = MI.getOperand(SrcIdx).getReg();
+    regBKilled = isKilled(MI, regB, MRI, TII, LIS, true);
+  }
+
   if (MI.isConvertibleTo3Addr()) {
     // This instruction is potentially convertible to a true
     // three-address instruction.  Check if it is profitable.

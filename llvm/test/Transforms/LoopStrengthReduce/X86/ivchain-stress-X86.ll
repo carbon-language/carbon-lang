@@ -23,7 +23,7 @@
 ; X32: add
 ; X32: add
 ; X32: add
-; X32: leal
+; X32: add
 ; X32: %for.body.3
 define void @sharedidx(i8* nocapture %a, i8* nocapture %b, i8* nocapture %c, i32 %s, i32 %len) nounwind ssp {
 entry:
