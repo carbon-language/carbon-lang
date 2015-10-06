@@ -1057,7 +1057,13 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     APInt LeftDemanded(DemandedElts), RightDemanded(DemandedElts);
     if (ConstantVector* CV = dyn_cast<ConstantVector>(I->getOperand(0))) {
       for (unsigned i = 0; i < VWidth; i++) {
-        if (CV->getAggregateElement(i)->isNullValue())
+        Constant *CElt = CV->getAggregateElement(i);
+        // Method isNullValue always returns false when called on a
+        // ConstantExpr. If CElt is a ConstantExpr then skip it in order to
+        // to avoid propagating incorrect information.
+        if (isa<ConstantExpr>(CElt))
+          continue;
+        if (CElt->isNullValue())
           LeftDemanded.clearBit(i);
         else
           RightDemanded.clearBit(i);

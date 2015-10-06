@@ -253,3 +253,16 @@ define <4 x double> @test_vpermilvar_pd_256_zero(<4 x double> %v) {
   %a = tail call <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double> %v, <4 x i64> zeroinitializer)
   ret <4 x double> %a
 }
+
+define <2 x i64> @PR24922(<2 x i64> %v) {
+; CHECK-LABEL: @PR24922
+; CHECK: select <2 x i1> 
+;
+; Check that instcombine doesn't wrongly fold the select statement into a
+; ret <2 x i64> %v
+;
+; FIXME: We should be able to simplify the ConstantExpr in the select mask.
+entry:
+  %result = select <2 x i1> <i1 icmp eq (i64 extractelement (<2 x i64> bitcast (<4 x i32> <i32 15, i32 15, i32 15, i32 15> to <2 x i64>), i64 0), i64 0), i1 true>, <2 x i64> %v, <2 x i64> zeroinitializer
+  ret <2 x i64> %result
+}
