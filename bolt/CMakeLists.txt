@@ -14,4 +14,5 @@ add_llvm_tool(llvm-flo
   llvm-flo.cpp
   BinaryBasicBlock.cpp
   BinaryFunction.cpp
+  DataReader.cpp
   )

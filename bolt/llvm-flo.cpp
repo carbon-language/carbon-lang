@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "DataReader.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
@@ -81,6 +82,10 @@ static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
                      cl::desc("eliminate unreachable code"),
                      cl::Optional);
+
+static cl::opt<bool>
+DumpData("dump-data", cl::desc("dump parsed flo data (debugging)"),
+         cl::Hidden);
 
 static StringRef ToolName;
 
@@ -686,6 +691,20 @@ int main(int argc, char **argv) {
 
   if (!sys::fs::exists(InputFilename))
     report_error(InputFilename, errc::no_such_file_or_directory);
+
+  if (!sys::fs::exists(InputDataFilename))
+    report_error(InputDataFilename, errc::no_such_file_or_directory);
+
+  // Attempt to read input flo data
+  ErrorOr<std::unique_ptr<flo::DataReader>> ReaderOrErr =
+      flo::DataReader::readPerfData(InputDataFilename, errs());
+  if (std::error_code EC = ReaderOrErr.getError())
+    report_error(InputDataFilename, EC);
+  flo::DataReader &DR = *ReaderOrErr.get().get();
+  if (DumpData) {
+    DR.dump();
+    return EXIT_SUCCESS;
+  }
 
   // Attempt to open the binary.
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(InputFilename);
