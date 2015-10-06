@@ -1,4 +1,8 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-move-constructor-init %t
+// RUN: %python %S/check_clang_tidy.py %s misc-move-constructor-init %t -- -std=c++11 -isystem %S/Inputs/Headers
+
+#include <s.h>
+
+// CHECK-FIXES: #include <utility>
 
 template <class T> struct remove_reference      {typedef T type;};
 template <class T> struct remove_reference<T&>  {typedef T type;};
@@ -24,8 +28,8 @@ struct D : B {
   D() : B() {}
   D(const D &RHS) : B(RHS) {}
   // CHECK-MESSAGES: :[[@LINE+3]]:16: warning: move constructor initializes base class by calling a copy constructor [misc-move-constructor-init]
-  // CHECK-MESSAGES: 19:3: note: copy constructor being called
-  // CHECK-MESSAGES: 20:3: note: candidate move constructor here
+  // CHECK-MESSAGES: 23:3: note: copy constructor being called
+  // CHECK-MESSAGES: 24:3: note: candidate move constructor here
   D(D &&RHS) : B(RHS) {}
 };
 
@@ -75,4 +79,67 @@ struct M {
 struct N {
   B Mem;
   N(N &&RHS) : Mem(move(RHS.Mem)) {}
+};
+
+struct Movable {
+  Movable(Movable &&) = default;
+  Movable(const Movable &) = default;
+  Movable &operator=(const Movable &) = default;
+  ~Movable() {}
+};
+
+struct TriviallyCopyable {
+  TriviallyCopyable() = default;
+  TriviallyCopyable(TriviallyCopyable &&) = default;
+  TriviallyCopyable(const TriviallyCopyable &) = default;
+};
+
+struct Positive {
+  Positive(Movable M) : M_(M) {}
+  // CHECK-MESSAGES: [[@LINE-1]]:28: warning: value argument can be moved to avoid copy [misc-move-constructor-init]
+  // CHECK-FIXES: Positive(Movable M) : M_(std::move(M)) {}
+  Movable M_;
+};
+
+struct NegativeMultipleInitializerReferences {
+  NegativeMultipleInitializerReferences(Movable M) : M_(M), n_(M) {}
+  Movable M_;
+  Movable n_;
+};
+
+struct NegativeReferencedInConstructorBody {
+  NegativeReferencedInConstructorBody(Movable M) : M_(M) { M_ = M; }
+  Movable M_;
+};
+
+struct NegativeParamTriviallyCopyable {
+  NegativeParamTriviallyCopyable(TriviallyCopyable T) : T_(T) {}
+  NegativeParamTriviallyCopyable(int I) : I_(I) {}
+
+  TriviallyCopyable T_;
+  int I_;
+};
+
+template <typename T> struct NegativeDependentType {
+  NegativeDependentType(T Value) : T_(Value) {}
+  T T_;
+};
+
+struct NegativeNotPassedByValue {
+  NegativeNotPassedByValue(const Movable &M) : M_(M) {}
+  NegativeNotPassedByValue(const Movable M) : M_(M) {}
+  NegativeNotPassedByValue(Movable &M) : M_(M) {}
+  NegativeNotPassedByValue(Movable *M) : M_(*M) {}
+  NegativeNotPassedByValue(const Movable *M) : M_(*M) {}
+  Movable M_;
+};
+
+struct Immovable {
+  Immovable(const Immovable &) = default;
+  Immovable(Immovable &&) = delete;
+};
+
+struct NegativeImmovableParameter {
+  NegativeImmovableParameter(Immovable I) : I_(I) {}
+  Immovable I_;
 };

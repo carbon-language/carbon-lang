@@ -25,6 +25,12 @@ public:
   // Supported include styles.
   enum IncludeStyle { IS_LLVM = 0, IS_Google = 1 };
 
+  // Converts "llvm" to IS_LLVM, otherwise returns IS_Google.
+  static IncludeStyle parseIncludeStyle(const std::string &Value);
+
+  // Converts IncludeStyle to string representation.
+  static StringRef toString(IncludeStyle Style);
+
   // The classifications of inclusions, in the order they should be sorted.
   enum IncludeKinds {
     IK_MainTUInclude = 0,    // e.g. #include "foo.h" when editing foo.cc

@@ -118,12 +118,11 @@ collectParamDecls(const CXXConstructorDecl *Ctor,
 
 PassByValueCheck::PassByValueCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
-      IncludeStyle(Options.get("IncludeStyle", "llvm") == "llvm" ?
-                   IncludeSorter::IS_LLVM : IncludeSorter::IS_Google) {}
+      IncludeStyle(IncludeSorter::parseIncludeStyle(
+          Options.get("IncludeStyle", "llvm"))) {}
 
 void PassByValueCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
-  Options.store(Opts, "IncludeStyle",
-                IncludeStyle == IncludeSorter::IS_LLVM ? "llvm" : "google");
+  Options.store(Opts, "IncludeStyle", IncludeSorter::toString(IncludeStyle));
 }
 
 void PassByValueCheck::registerMatchers(MatchFinder *Finder) {

@@ -285,5 +285,14 @@ FixItHint IncludeSorter::CreateFixIt(SourceRange EditRange,
   return Fix;
 }
 
+IncludeSorter::IncludeStyle
+IncludeSorter::parseIncludeStyle(const std::string &Value) {
+  return Value == "llvm" ? IS_LLVM : IS_Google;
+}
+
+StringRef IncludeSorter::toString(IncludeStyle Style) {
+  return Style == IS_LLVM ? "llvm" : "google";
+}
+
 } // namespace tidy
 } // namespace clang
