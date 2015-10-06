@@ -83,17 +83,16 @@
 
 using namespace llvm;
 
-static cl::opt<bool> EnableHexagonBP("enable-hexagon-br-prob", cl::Hidden,
-  cl::init(false), cl::ZeroOrMore, cl::desc("Enable branch probability info"));
-
 namespace llvm {
   FunctionPass *createHexagonEarlyIfConversion();
   void initializeHexagonEarlyIfConversionPass(PassRegistry& Registry);
 }
 
 namespace {
+  cl::opt<bool> EnableHexagonBP("enable-hexagon-br-prob", cl::Hidden,
+    cl::init(false), cl::desc("Enable branch probability info"));
   cl::opt<unsigned> SizeLimit("eif-limit", cl::init(6), cl::Hidden,
-    cl::ZeroOrMore, cl::desc("Size limit in Hexagon early if-conversion"));
+    cl::desc("Size limit in Hexagon early if-conversion"));
 
   struct PrintMB {
     PrintMB(const MachineBasicBlock *B) : MB(B) {}
