@@ -237,7 +237,7 @@ TEST(BracesAroundStatementsCheck, If) {
 
 TEST(BracesAroundStatementsCheck, IfElseWithShortStatements) {
   ClangTidyOptions Options;
-  Options.CheckOptions["test-check.ShortStatementLines"] = "1";
+  Options.CheckOptions["test-check-0.ShortStatementLines"] = "1";
 
   EXPECT_EQ("int main() {\n"
             "  if (true) return 1;\n"

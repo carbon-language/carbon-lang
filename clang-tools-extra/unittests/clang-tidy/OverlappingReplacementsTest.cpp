@@ -1,0 +1,379 @@
+//===---- OverlappingReplacementsTest.cpp - clang-tidy --------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#include "ClangTidyTest.h"
+#include "clang/AST/RecursiveASTVisitor.h"
+#include "gtest/gtest.h"
+
+namespace clang {
+namespace tidy {
+namespace test {
+namespace {
+
+const char BoundDecl[] = "decl";
+const char BoundIf[] = "if";
+
+// We define a reduced set of very small checks that allow to test different
+// overlapping situations (no overlapping, replacements partially overlap, etc),
+// as well as different kinds of diagnostics (one check produces several errors,
+// several replacement ranges in an error, etc).
+class UseCharCheck : public ClangTidyCheck {
+public:
+  UseCharCheck(StringRef CheckName, ClangTidyContext *Context)
+      : ClangTidyCheck(CheckName, Context) {}
+  void registerMatchers(ast_matchers::MatchFinder *Finder) override {
+    using namespace ast_matchers;
+    Finder->addMatcher(varDecl(hasType(isInteger())).bind(BoundDecl), this);
+  }
+  void check(const ast_matchers::MatchFinder::MatchResult &Result) override {
+    auto *VD = Result.Nodes.getNodeAs<VarDecl>(BoundDecl);
+    diag(VD->getLocStart(), "use char") << FixItHint::CreateReplacement(
+        CharSourceRange::getTokenRange(VD->getLocStart(), VD->getLocStart()),
+        "char");
+  }
+};
+
+class IfFalseCheck : public ClangTidyCheck {
+public:
+  IfFalseCheck(StringRef CheckName, ClangTidyContext *Context)
+      : ClangTidyCheck(CheckName, Context) {}
+  void registerMatchers(ast_matchers::MatchFinder *Finder) override {
+    using namespace ast_matchers;
+    Finder->addMatcher(ifStmt().bind(BoundIf), this);
+  }
+  void check(const ast_matchers::MatchFinder::MatchResult &Result) override {
+    auto *If = Result.Nodes.getNodeAs<IfStmt>(BoundIf);
+    auto *Cond = If->getCond();
+    SourceRange Range = Cond->getSourceRange();
+    if (auto *D = If->getConditionVariable()) {
+      Range = SourceRange(D->getLocStart(), D->getLocEnd());
+    }
+    diag(Range.getBegin(), "the cake is a lie") << FixItHint::CreateReplacement(
+        CharSourceRange::getTokenRange(Range), "false");
+  }
+};
+
+class RefactorCheck : public ClangTidyCheck {
+public:
+  RefactorCheck(StringRef CheckName, ClangTidyContext *Context)
+      : ClangTidyCheck(CheckName, Context), NamePattern("::$") {}
+  RefactorCheck(StringRef CheckName, ClangTidyContext *Context,
+                StringRef NamePattern)
+      : ClangTidyCheck(CheckName, Context), NamePattern(NamePattern) {}
+  virtual std::string newName(StringRef OldName) = 0;
+
+  void registerMatchers(ast_matchers::MatchFinder *Finder) final {
+    using namespace ast_matchers;
+    Finder->addMatcher(varDecl(matchesName(NamePattern)).bind(BoundDecl), this);
+  }
+
+  void check(const ast_matchers::MatchFinder::MatchResult &Result) final {
+    auto *VD = Result.Nodes.getNodeAs<VarDecl>(BoundDecl);
+    std::string NewName = newName(VD->getName());
+
+    auto Diag = diag(VD->getLocation(), "refactor")
+                << FixItHint::CreateReplacement(
+                    CharSourceRange::getTokenRange(VD->getLocation(),
+                                                   VD->getLocation()),
+                    NewName);
+
+    class UsageVisitor : public RecursiveASTVisitor<UsageVisitor> {
+    public:
+      UsageVisitor(const ValueDecl *VD, StringRef NewName,
+                   DiagnosticBuilder &Diag)
+          : VD(VD), NewName(NewName), Diag(Diag) {}
+      bool VisitDeclRefExpr(DeclRefExpr *E) {
+        if (const ValueDecl *D = E->getDecl()) {
+          if (VD->getCanonicalDecl() == D->getCanonicalDecl()) {
+            Diag << FixItHint::CreateReplacement(
+                CharSourceRange::getTokenRange(E->getSourceRange()), NewName);
+          }
+        }
+        return RecursiveASTVisitor<UsageVisitor>::VisitDeclRefExpr(E);
+      }
+
+    private:
+      const ValueDecl *VD;
+      StringRef NewName;
+      DiagnosticBuilder &Diag;
+    };
+
+    UsageVisitor(VD, NewName, Diag)
+        .TraverseDecl(Result.Context->getTranslationUnitDecl());
+  }
+
+protected:
+  const std::string NamePattern;
+};
+
+class StartsWithPotaCheck : public RefactorCheck {
+public:
+  StartsWithPotaCheck(StringRef CheckName, ClangTidyContext *Context)
+      : RefactorCheck(CheckName, Context, "::pota") {}
+
+  std::string newName(StringRef OldName) override {
+    return "toma" + OldName.substr(4).str();
+  }
+};
+
+class EndsWithTatoCheck : public RefactorCheck {
+public:
+  EndsWithTatoCheck(StringRef CheckName, ClangTidyContext *Context)
+      : RefactorCheck(CheckName, Context, "tato$") {}
+
+  std::string newName(StringRef OldName) override {
+    return OldName.substr(0, OldName.size() - 4).str() + "melo";
+  }
+};
+
+} // namespace
+
+TEST(OverlappingReplacementsTest, UseCharCheckTest) {
+  const char Code[] =
+      R"(void f() {
+  int a = 0;
+  if (int b = 0) {
+    int c = a;
+  }
+})";
+
+  const char CharFix[] =
+      R"(void f() {
+  char a = 0;
+  if (char b = 0) {
+    char c = a;
+  }
+})";
+  EXPECT_EQ(CharFix, runCheckOnCode<UseCharCheck>(Code));
+}
+
+TEST(OverlappingReplacementsTest, IfFalseCheckTest) {
+  const char Code[] =
+      R"(void f() {
+  int potato = 0;
+  if (int b = 0) {
+    int c = potato;
+  } else if (true) {
+    int d = 0;
+  }
+})";
+
+  const char IfFix[] =
+      R"(void f() {
+  int potato = 0;
+  if (false) {
+    int c = potato;
+  } else if (false) {
+    int d = 0;
+  }
+})";
+  EXPECT_EQ(IfFix, runCheckOnCode<IfFalseCheck>(Code));
+}
+
+TEST(OverlappingReplacementsTest, StartsWithCheckTest) {
+  const char Code[] =
+      R"(void f() {
+  int a = 0;
+  int potato = 0;
+  if (int b = 0) {
+    int c = potato;
+  } else if (true) {
+    int d = 0;
+  }
+})";
+
+  const char StartsFix[] =
+      R"(void f() {
+  int a = 0;
+  int tomato = 0;
+  if (int b = 0) {
+    int c = tomato;
+  } else if (true) {
+    int d = 0;
+  }
+})";
+  EXPECT_EQ(StartsFix, runCheckOnCode<StartsWithPotaCheck>(Code));
+}
+
+TEST(OverlappingReplacementsTest, EndsWithCheckTest) {
+  const char Code[] =
+      R"(void f() {
+  int a = 0;
+  int potato = 0;
+  if (int b = 0) {
+    int c = potato;
+  } else if (true) {
+    int d = 0;
+  }
+})";
+
+  const char EndsFix[] =
+      R"(void f() {
+  int a = 0;
+  int pomelo = 0;
+  if (int b = 0) {
+    int c = pomelo;
+  } else if (true) {
+    int d = 0;
+  }
+})";
+  EXPECT_EQ(EndsFix, runCheckOnCode<EndsWithTatoCheck>(Code));
+}
+
+TEST(OverlappingReplacementTest, ReplacementsDoNotOverlap) {
+  std::string Res;
+  const char Code[] =
+      R"(void f() {
+  int potassium = 0;
+  if (true) {
+    int Potato = potassium;
+  }
+})";
+
+  const char CharIfFix[] =
+      R"(void f() {
+  char potassium = 0;
+  if (false) {
+    char Potato = potassium;
+  }
+})";
+  Res = runCheckOnCode<UseCharCheck, IfFalseCheck>(Code);
+  EXPECT_EQ(CharIfFix, Res);
+
+  const char StartsEndsFix[] =
+      R"(void f() {
+  int tomassium = 0;
+  if (true) {
+    int Pomelo = tomassium;
+  }
+})";
+  Res = runCheckOnCode<StartsWithPotaCheck, EndsWithTatoCheck>(Code);
+  EXPECT_EQ(StartsEndsFix, Res);
+
+  const char CharIfStartsEndsFix[] =
+      R"(void f() {
+  char tomassium = 0;
+  if (false) {
+    char Pomelo = tomassium;
+  }
+})";
+  Res = runCheckOnCode<UseCharCheck, IfFalseCheck, StartsWithPotaCheck,
+                       EndsWithTatoCheck>(Code);
+  EXPECT_EQ(CharIfStartsEndsFix, Res);
+}
+
+TEST(OverlappingReplacementsTest, ReplacementInsideOtherReplacement) {
+  std::string Res;
+  const char Code[] =
+      R"(void f() {
+  if (char potato = 0) {
+  } else if (int a = 0) {
+    char potato = 0;
+    if (potato) potato;
+  }
+})";
+
+  // Apply the UseCharCheck together with the IfFalseCheck.
+  //
+  // The 'If' fix is bigger, so that is the one that has to be applied.
+  // } else if (int a = 0) {
+  //            ^^^ -> char
+  //            ~~~~~~~~~ -> false
+  const char CharIfFix[] =
+      R"(void f() {
+  if (false) {
+  } else if (false) {
+    char potato = 0;
+    if (false) potato;
+  }
+})";
+  Res = runCheckOnCode<UseCharCheck, IfFalseCheck>(Code);
+  // FIXME: EXPECT_EQ(CharIfFix, Res);
+
+  // Apply the IfFalseCheck with the StartsWithPotaCheck.
+  //
+  // The 'If' replacement is bigger here.
+  // if (char potato = 0) {
+  //          ^^^^^^ -> tomato
+  //     ~~~~~~~~~~~~~~~ -> false
+  //
+  // But the refactoring is bigger here:
+  // char potato = 0;
+  //      ^^^^^^ -> tomato
+  // if (potato) potato;
+  //     ^^^^^^  ^^^^^^ -> tomato, tomato
+  //     ~~~~~~ -> false
+  const char IfStartsFix[] =
+      R"(void f() {
+  if (false) {
+  } else if (false) {
+    char tomato = 0;
+    if (tomato) tomato;
+  }
+})";
+  Res = runCheckOnCode<IfFalseCheck, StartsWithPotaCheck>(Code);
+  // FIXME: EXPECT_EQ(IfStartsFix, Res);
+
+  // Silence warnings.
+  (void)CharIfFix;
+  (void)IfStartsFix;
+}
+
+TEST(OverlappingReplacementsTest, ApplyFullErrorOrNothingWhenOverlapping) {
+  std::string Res;
+  const char Code[] =
+      R"(void f() {
+  int potato = 0;
+  potato += potato * potato;
+  if (char this_name_make_this_if_really_long = potato) potato;
+})";
+
+  // StartsWithPotaCheck will try to refactor 'potato' into 'tomato',
+  // and EndsWithTatoCheck will try to use 'pomelo'. We have to apply
+  // either all conversions from one check, or all from the other.
+  const char StartsFix[] =
+      R"(void f() {
+  int tomato = 0;
+  tomato += tomato * tomato;
+  if (char this_name_make_this_if_really_long = tomato) tomato;
+})";
+  const char EndsFix[] =
+      R"(void f() {
+  int pomelo = 0;
+  pomelo += pomelo * pomelo;
+  if (char this_name_make_this_if_really_long = pomelo) pomelo;
+})";
+  // In case of overlapping, we will prioritize the biggest fix. However, these
+  // two fixes have the same size and position, so we don't know yet which one
+  // will have preference.
+  Res = runCheckOnCode<StartsWithPotaCheck, EndsWithTatoCheck>(Code);
+  // FIXME: EXPECT_TRUE(Res == StartsFix || Res == EndsFix);
+
+  // StartsWithPotaCheck will try to refactor 'potato' into 'tomato', but
+  // replacing the 'if' condition is a bigger change than all the refactoring
+  // changes together (48 vs 36), so this is the one that is going to be
+  // applied.
+  const char IfFix[] =
+      R"(void f() {
+  int potato = 0;
+  potato += potato * potato;
+  if (true) potato;
+})";
+  Res = runCheckOnCode<StartsWithPotaCheck, IfFalseCheck>(Code);
+  // FIXME: EXPECT_EQ(IfFix, Res);
+
+  // Silence warnings.
+  (void)StartsFix;
+  (void)EndsFix;
+  (void)IfFix;
+}
+
+} // namespace test
+} // namespace tidy
+} // namespace clang

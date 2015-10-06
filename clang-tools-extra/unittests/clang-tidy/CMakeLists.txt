@@ -13,6 +13,7 @@ add_extra_unittest(ClangTidyTests
   GoogleModuleTest.cpp
   LLVMModuleTest.cpp
   MiscModuleTest.cpp
+  OverlappingReplacementsTest.cpp
   ReadabilityModuleTest.cpp)
 
 target_link_libraries(ClangTidyTests
