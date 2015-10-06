@@ -9844,12 +9844,13 @@ static SDValue PerformVCVTCombine(SDNode *N, SelectionDAG &DAG,
   if (!Op.getValueType().isVector() || Op.getOpcode() != ISD::FMUL)
     return SDValue();
 
-  uint64_t C;
   SDValue ConstVec = Op->getOperand(1);
-  bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
+  if (!isa<BuildVectorSDNode>(ConstVec))
+    return SDValue();
 
-  if (ConstVec.getOpcode() != ISD::BUILD_VECTOR ||
-      !isConstVecPow2(ConstVec, isSigned, C))
+  uint64_t C;
+  bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
+  if (!isConstVecPow2(ConstVec, isSigned, C))
     return SDValue();
 
   MVT FloatTy = Op.getSimpleValueType().getVectorElementType();
@@ -9899,12 +9900,13 @@ static SDValue PerformVDIVCombine(SDNode *N, SelectionDAG &DAG,
       (OpOpcode != ISD::SINT_TO_FP && OpOpcode != ISD::UINT_TO_FP))
     return SDValue();
 
-  uint64_t C;
   SDValue ConstVec = N->getOperand(1);
-  bool isSigned = OpOpcode == ISD::SINT_TO_FP;
+  if (!isa<BuildVectorSDNode>(ConstVec))
+    return SDValue();
 
-  if (ConstVec.getOpcode() != ISD::BUILD_VECTOR ||
-      !isConstVecPow2(ConstVec, isSigned, C))
+  uint64_t C;
+  bool isSigned = OpOpcode == ISD::SINT_TO_FP;
+  if (!isConstVecPow2(ConstVec, isSigned, C))
     return SDValue();
 
   MVT FloatTy = N->getSimpleValueType(0).getVectorElementType();
