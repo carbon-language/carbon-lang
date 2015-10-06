@@ -34,7 +34,7 @@ template <class ELFT> class ELFSymbolBody;
 
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t
-getSymVA(const ELFSymbolBody<ELFT> &S, const OutputSection<ELFT> &BssSec);
+getSymVA(const SymbolBody &S, const OutputSection<ELFT> &BssSec);
 
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t

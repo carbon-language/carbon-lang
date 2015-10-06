@@ -349,13 +349,14 @@ void OutputSection<ELFT>::addSection(InputSection<ELFT> *C) {
 
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
-lld::elf2::getSymVA(const ELFSymbolBody<ELFT> &S,
-                    const OutputSection<ELFT> &BssSec) {
+lld::elf2::getSymVA(const SymbolBody &S, const OutputSection<ELFT> &BssSec) {
   switch (S.kind()) {
-  case SymbolBody::DefinedSyntheticKind:
-    return cast<DefinedSynthetic<ELFT>>(S).Section.getVA() + S.Sym.st_value;
+  case SymbolBody::DefinedSyntheticKind: {
+    auto &D = cast<DefinedSynthetic<ELFT>>(S);
+    return D.Section.getVA() + D.Sym.st_value;
+  }
   case SymbolBody::DefinedAbsoluteKind:
-    return S.Sym.st_value;
+    return cast<DefinedAbsolute<ELFT>>(S).Sym.st_value;
   case SymbolBody::DefinedRegularKind: {
     const auto &DR = cast<DefinedRegular<ELFT>>(S);
     const InputSection<ELFT> *SC = &DR.Section;
@@ -368,9 +369,9 @@ lld::elf2::getSymVA(const ELFSymbolBody<ELFT> &S,
   case SymbolBody::UndefinedKind:
     return 0;
   case SymbolBody::LazyKind:
-    break;
+    assert(S.isUsedInRegularObj() && "Lazy symbol reached writer");
+    return 0;
   }
-  llvm_unreachable("Lazy symbol reached writer");
 }
 
 template <class ELFT>
@@ -409,8 +410,6 @@ void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT> bool lld::elf2::includeInSymtab(const SymbolBody &B) {
-  if (B.isLazy())
-    return false;
   if (!B.isUsedInRegularObj())
     return false;
 
@@ -521,21 +520,20 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
     if (StrTabSec.isDynamic() && !includeInDynamicSymtab(*Body))
       continue;
 
-    const auto &EBody = *cast<ELFSymbolBody<ELFT>>(Body);
-    const Elf_Sym &InputSym = EBody.Sym;
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     Buf += sizeof(*ESym);
+
     ESym->st_name = StrTabSec.getFileOff(Name);
 
     const OutputSection<ELFT> *Out = nullptr;
     const InputSection<ELFT> *Section = nullptr;
 
-    switch (EBody.kind()) {
+    switch (Body->kind()) {
     case SymbolBody::DefinedSyntheticKind:
       Out = &cast<DefinedSynthetic<ELFT>>(Body)->Section;
       break;
     case SymbolBody::DefinedRegularKind:
-      Section = &cast<DefinedRegular<ELFT>>(EBody).Section;
+      Section = &cast<DefinedRegular<ELFT>>(Body)->Section;
       break;
     case SymbolBody::DefinedCommonKind:
       Out = &BssSec;
@@ -543,25 +541,33 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
     case SymbolBody::UndefinedKind:
     case SymbolBody::DefinedAbsoluteKind:
     case SymbolBody::SharedKind:
-      break;
     case SymbolBody::LazyKind:
-      llvm_unreachable("Lazy symbol got to output symbol table!");
+      break;
     }
 
-    unsigned char Binding = InputSym.getBinding();
-    unsigned char Visibility = EBody.getMostConstrainingVisibility();
+    unsigned char Binding = Body->isWeak() ? STB_WEAK : STB_GLOBAL;
+    unsigned char Type = STT_NOTYPE;
+    uintX_t Size = 0;
+    if (const auto *EBody = dyn_cast<ELFSymbolBody<ELFT>>(Body)) {
+      const Elf_Sym &InputSym = EBody->Sym;
+      Binding = InputSym.getBinding();
+      Type = InputSym.getType();
+      Size = InputSym.st_size;
+    }
+
+    unsigned char Visibility = Body->getMostConstrainingVisibility();
     if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
       Binding = STB_LOCAL;
 
-    ESym->setBindingAndType(Binding, InputSym.getType());
-    ESym->st_size = InputSym.st_size;
+    ESym->setBindingAndType(Binding, Type);
+    ESym->st_size = Size;
     ESym->setVisibility(Visibility);
-    ESym->st_value = getSymVA(EBody, BssSec);
+    ESym->st_value = getSymVA(*Body, BssSec);
 
     if (Section)
       Out = Section->getOutputSection();
 
-    if (InputSym.isAbsolute())
+    if (isa<DefinedAbsolute<ELFT>>(Body))
       ESym->st_shndx = SHN_ABS;
     else if (Out)
       ESym->st_shndx = Out->getSectionIndex();
@@ -629,17 +635,14 @@ template class SymbolTableSection<ELF32BE>;
 template class SymbolTableSection<ELF64LE>;
 template class SymbolTableSection<ELF64BE>;
 
-template ELFFile<ELF32LE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF32LE> &, const OutputSection<ELF32LE> &);
-
-template ELFFile<ELF32BE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF32BE> &, const OutputSection<ELF32BE> &);
-
-template ELFFile<ELF64LE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF64LE> &, const OutputSection<ELF64LE> &);
-
-template ELFFile<ELF64BE>::uintX_t
-getSymVA(const ELFSymbolBody<ELF64BE> &, const OutputSection<ELF64BE> &);
+template ELFFile<ELF32LE>::uintX_t getSymVA(const SymbolBody &,
+                                            const OutputSection<ELF32LE> &);
+template ELFFile<ELF32BE>::uintX_t getSymVA(const SymbolBody &,
+                                            const OutputSection<ELF32BE> &);
+template ELFFile<ELF64LE>::uintX_t getSymVA(const SymbolBody &,
+                                            const OutputSection<ELF64LE> &);
+template ELFFile<ELF64BE>::uintX_t getSymVA(const SymbolBody &,
+                                            const OutputSection<ELF64BE> &);
 
 template ELFFile<ELF32LE>::uintX_t
 getLocalSymVA(const ELFFile<ELF32LE>::Elf_Sym *, const ObjectFile<ELF32LE> &);

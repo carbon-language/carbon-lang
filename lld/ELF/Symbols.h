@@ -103,7 +103,7 @@ protected:
   }
 
   const unsigned SymbolKind : 8;
-  const unsigned IsWeak : 1;
+  unsigned IsWeak : 1;
   unsigned MostConstrainingVisibility : 2;
   unsigned IsUsedInRegularObj : 1;
   unsigned IsUsedInDynamicReloc : 1;
@@ -281,6 +281,9 @@ public:
   // Returns an object file for this symbol, or a nullptr if the file
   // was already returned.
   std::unique_ptr<InputFile> getMember();
+
+  void setWeak() { IsWeak = true; }
+  void setUsedInRegularObj() { IsUsedInRegularObj = true; }
 
 private:
   ArchiveFile *File;

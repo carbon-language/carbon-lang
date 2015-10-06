@@ -49,8 +49,7 @@ void InputSection<ELFT>::relocate(
         continue;
       SymVA = getLocalSymVA(Sym, File);
     } else {
-      const auto &Body =
-          *cast<ELFSymbolBody<ELFT>>(File.getSymbolBody(SymIndex));
+      SymbolBody &Body = *File.getSymbolBody(SymIndex);
       SymVA = getSymVA<ELFT>(Body, BssSec);
       if (Target->relocNeedsPlt(Type, Body)) {
         SymVA = PltSec.getEntryAddr(Body);

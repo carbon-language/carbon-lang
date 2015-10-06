@@ -256,10 +256,23 @@ void SymbolTable::addLazy(Lazy *New) {
   if (Sym->Body == New)
     return;
   SymbolBody *Existing = Sym->Body;
-  if (Existing->isDefined() || Existing->isLazy() || Existing->isWeak())
+  if (Existing->isDefined() || Existing->isLazy())
     return;
   Sym->Body = New;
   assert(Existing->isUndefined() && "Unexpected symbol kind.");
+
+  // Weak undefined symbols should not fetch members from archives.
+  // If we were to keep old symbol we would not know that an archive member was
+  // available if a strong undefined symbol shows up afterwards in the link.
+  // If a strong undefined symbol never shows up, this lazy symbol will
+  // get to the end of the link and must be treated as the weak undefined one.
+  // We set UsedInRegularObj in a similar way to what is done with shared
+  // symbols and mark it as weak to reduce how many special cases are needed.
+  if (Existing->isWeak()) {
+    New->setUsedInRegularObj();
+    New->setWeak();
+    return;
+  }
   addMemberFile(New);
 }
 
