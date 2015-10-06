@@ -113,6 +113,11 @@ RUN:   FileCheck --check-prefix=ELEMENT-TYPE %s
 
 ELEMENT-TYPE: Invalid type
 
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-cast.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-CAST %s
+
+INVALID-CAST: Invalid cast
+
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-op-not-2nd-to-last.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=ARRAY-NOT-2LAST %s
 

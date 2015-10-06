@@ -3863,7 +3863,10 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
           CurBB->getInstList().push_back(Temp);
         }
       } else {
-        I = CastInst::Create((Instruction::CastOps)Opc, Op, ResTy);
+        auto CastOp = (Instruction::CastOps)Opc;
+        if (!CastInst::castIsValid(CastOp, Op, ResTy))
+          return error("Invalid cast");
+        I = CastInst::Create(CastOp, Op, ResTy);
       }
       InstructionList.push_back(I);
       break;
