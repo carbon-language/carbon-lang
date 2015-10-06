@@ -39,7 +39,5 @@ if config.link_polly_into_tools == '' or \
 else:
     config.substitutions.append(('%loadPolly', ''))
 
-config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
-
 # Let the main config do the real work.
 lit_config.load_config(config, "@POLLY_SOURCE_DIR@/test/lit.cfg")
