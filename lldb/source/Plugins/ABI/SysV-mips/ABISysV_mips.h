@@ -74,13 +74,11 @@ public:
     }
 
     virtual bool
-    CodeAddressIsValid (lldb::addr_t pc)//must- check
+    CodeAddressIsValid (lldb::addr_t pc)
     {
-       if (pc & (4ull - 1ull))
-           return false;   // Not 4 byte aligned
-        
-        // Anything else if fair game..
-        return true;
+        // Just make sure the address is a valid 32 bit address. Bit zero
+        // might be set due to MicroMIPS function calls, so don't enforce alignment.
+        return (pc <= UINT32_MAX);
     }
 
     virtual const lldb_private::RegisterInfo *

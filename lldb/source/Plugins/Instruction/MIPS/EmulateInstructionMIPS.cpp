@@ -29,6 +29,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Target/Target.h"
 
 #include "llvm/ADT/STLExtras.h"
 
@@ -132,10 +133,6 @@ EmulateInstructionMIPS::EmulateInstructionMIPS (const lldb_private::ArchSpec &ar
         features += "+dsp,";
     if (arch_flags & ArchSpec::eMIPSAse_dspr2)
         features += "+dspr2,";
-    if (arch_flags & ArchSpec::eMIPSAse_mips16)
-        features += "+mips16,";
-    if (arch_flags & ArchSpec::eMIPSAse_micromips)
-        features += "+micromips,";
 
     m_reg_info.reset (target->createMCRegInfo (triple.getTriple()));
     assert (m_reg_info.get());
@@ -152,6 +149,21 @@ EmulateInstructionMIPS::EmulateInstructionMIPS (const lldb_private::ArchSpec &ar
 
     m_disasm.reset (target->createMCDisassembler (*m_subtype_info, *m_context));
     assert (m_disasm.get());
+
+    /* Create alternate disassembler for microMIPS */
+    if (arch_flags & ArchSpec::eMIPSAse_mips16)
+        features += "+mips16,";
+    else if (arch_flags & ArchSpec::eMIPSAse_micromips)
+        features += "+micromips,";
+
+    m_alt_subtype_info.reset (target->createMCSubtargetInfo (triple.getTriple(), cpu, features));
+    assert (m_alt_subtype_info.get());
+
+    m_alt_disasm.reset (target->createMCDisassembler (*m_alt_subtype_info, *m_context));
+    assert (m_alt_disasm.get());
+
+    m_next_inst_size = 0;
+    m_use_alt_disaasm = false;
 }
 
 void
@@ -485,8 +497,22 @@ EmulateInstructionMIPS::GetOpcodeForInstruction (const char *op_name)
         { "ADDiu",      &EmulateInstructionMIPS::Emulate_ADDiu,       "ADDIU rt,rs,immediate"    },
         { "SW",         &EmulateInstructionMIPS::Emulate_SW,          "SW rt,offset(rs)"         },
         { "LW",         &EmulateInstructionMIPS::Emulate_LW,          "LW rt,offset(base)"       },
-
         //----------------------------------------------------------------------
+        // MicroMIPS Prologue/Epilogue instructions
+        //----------------------------------------------------------------------
+        { "ADDIUSP_MM", &EmulateInstructionMIPS::Emulate_ADDIUSP,     "ADDIU immediate"            },
+        { "ADDIUS5_MM", &EmulateInstructionMIPS::Emulate_ADDIUS5,     "ADDIUS5 rd,immediate"       },
+        { "SWSP_MM",    &EmulateInstructionMIPS::Emulate_SWSP,        "SWSP rt,offset(sp)"         },
+        { "SWM16_MM",   &EmulateInstructionMIPS::Emulate_SWM16_32,    "SWM16 reglist,offset(sp)"   },
+        { "SWM32_MM",   &EmulateInstructionMIPS::Emulate_SWM16_32,    "SWM32 reglist,offset(base)" },
+        { "SWP_MM",     &EmulateInstructionMIPS::Emulate_SWM16_32,    "SWP rs1,offset(base)"       },
+        { "LWSP_MM",    &EmulateInstructionMIPS::Emulate_LWSP,        "LWSP rt,offset(sp)"         },
+        { "LWM16_MM",   &EmulateInstructionMIPS::Emulate_LWM16_32,    "LWM16 reglist,offset(sp)"   },
+        { "LWM32_MM",   &EmulateInstructionMIPS::Emulate_LWM16_32,    "LWM32 reglist,offset(base)" },
+        { "LWP_MM",     &EmulateInstructionMIPS::Emulate_LWM16_32,    "LWP rd,offset(base)"        },
+        { "JRADDIUSP",  &EmulateInstructionMIPS::Emulate_JRADDIUSP,   "JRADDIUSP immediate"        },
+        //----------------------------------------------------------------------
+
         // Load/Store  instructions
         //----------------------------------------------------------------------
         /* Following list of emulated instructions are required by implementation of hardware watchpoint
@@ -615,6 +641,24 @@ EmulateInstructionMIPS::GetOpcodeForInstruction (const char *op_name)
         { "BZ_D",       &EmulateInstructionMIPS::Emulate_BZD,         "BZ.d wt,s16"               },
         { "BNZ_V",      &EmulateInstructionMIPS::Emulate_BNZV,        "BNZ.V wt,s16"              },
         { "BZ_V",       &EmulateInstructionMIPS::Emulate_BZV,         "BZ.V wt,s16"               },
+
+        //----------------------------------------------------------------------
+        // MicroMIPS Branch instructions
+        //----------------------------------------------------------------------
+        { "B16_MM",     &EmulateInstructionMIPS::Emulate_B16_MM,        "B16 offset"              },
+        { "BEQZ16_MM",  &EmulateInstructionMIPS::Emulate_Branch_MM,     "BEQZ16 rs, offset"       },
+        { "BNEZ16_MM",  &EmulateInstructionMIPS::Emulate_Branch_MM,     "BNEZ16 rs, offset"       },
+        { "BEQZC_MM",   &EmulateInstructionMIPS::Emulate_Branch_MM,     "BEQZC rs, offset"        },
+        { "BNEZC_MM",   &EmulateInstructionMIPS::Emulate_Branch_MM,     "BNEZC rs, offset"        },
+        { "BGEZALS_MM", &EmulateInstructionMIPS::Emulate_Branch_MM,     "BGEZALS rs, offset"      },
+        { "BLTZALS_MM", &EmulateInstructionMIPS::Emulate_Branch_MM,     "BLTZALS rs, offset"      },
+        { "JALR16_MM",  &EmulateInstructionMIPS::Emulate_JALRx16_MM,    "JALR16 rs"               },
+        { "JALRS16_MM", &EmulateInstructionMIPS::Emulate_JALRx16_MM,    "JALRS16 rs"              },
+        { "JR16_MM",    &EmulateInstructionMIPS::Emulate_JR,            "JR16 rs rs"              },
+        { "JRC16_MM",   &EmulateInstructionMIPS::Emulate_JR,            "JRC16 rs rs"             },
+        { "JALS_MM",    &EmulateInstructionMIPS::Emulate_JALx,          "JALS target"             },
+        { "JALX_MM",    &EmulateInstructionMIPS::Emulate_JALx,          "JALX target"             },
+        { "JALRS_MM",   &EmulateInstructionMIPS::Emulate_JALRS,         "JALRS rt, rs"            },
     };
 
     static const size_t k_num_mips_opcodes = llvm::array_lengthof(g_opcodes);
@@ -626,6 +670,76 @@ EmulateInstructionMIPS::GetOpcodeForInstruction (const char *op_name)
     }
 
     return NULL;
+}
+
+uint32_t
+EmulateInstructionMIPS::GetSizeOfInstruction (lldb_private::DataExtractor& data, uint64_t inst_addr)
+{
+    uint64_t next_inst_size = 0;
+    llvm::MCInst mc_insn;
+    llvm::MCDisassembler::DecodeStatus decode_status;
+    llvm::ArrayRef<uint8_t> raw_insn (data.GetDataStart(), data.GetByteSize());
+
+    if (m_use_alt_disaasm)
+        decode_status = m_alt_disasm->getInstruction (mc_insn, next_inst_size, raw_insn, inst_addr, llvm::nulls(), llvm::nulls());
+    else
+        decode_status = m_disasm->getInstruction (mc_insn, next_inst_size, raw_insn, inst_addr, llvm::nulls(), llvm::nulls());
+
+    if (decode_status != llvm::MCDisassembler::Success)
+        return false;
+    
+    return m_insn_info->get(mc_insn.getOpcode()).getSize();
+}
+
+bool
+EmulateInstructionMIPS::SetInstruction (const Opcode &insn_opcode, const Address &inst_addr, Target *target)
+{
+    m_use_alt_disaasm = false;
+
+    if (EmulateInstruction::SetInstruction (insn_opcode, inst_addr, target))
+    {
+        if (inst_addr.GetAddressClass() == eAddressClassCodeAlternateISA)
+        {
+            Error error;
+            lldb::addr_t load_addr = LLDB_INVALID_ADDRESS;
+
+            /* 
+             * The address belongs to microMIPS function. To find the size of
+             * next instruction use microMIPS disassembler.
+            */
+             m_use_alt_disaasm = true;
+
+            uint32_t current_inst_size = insn_opcode.GetByteSize();
+            uint8_t buf[sizeof(uint32_t)];
+            uint64_t next_inst_addr = (m_addr & (~1ull)) + current_inst_size;
+            Address next_addr (next_inst_addr);
+
+            const size_t bytes_read = target->ReadMemory (next_addr,      /* Address of next instruction */
+                                                          true,           /* prefer_file_cache */
+                                                          buf,
+                                                          sizeof(uint32_t), 
+                                                          error,
+                                                          &load_addr);
+
+            if (bytes_read == 0)
+                return true;
+
+            DataExtractor data (buf, sizeof(uint32_t), GetByteOrder(), GetAddressByteSize());
+            m_next_inst_size = GetSizeOfInstruction (data, next_inst_addr);
+            return true;
+        }
+        else
+        {
+            /* 
+             * If the address class is not eAddressClassCodeAlternateISA then
+             * the function is not microMIPS. In this case instruction size is 
+             * always 4 bytes.
+            */
+            m_next_inst_size = 4;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool 
@@ -658,7 +772,11 @@ EmulateInstructionMIPS::EvaluateInstruction (uint32_t evaluate_options)
     {
         llvm::MCDisassembler::DecodeStatus decode_status;
         llvm::ArrayRef<uint8_t> raw_insn (data.GetDataStart(), data.GetByteSize());
-        decode_status = m_disasm->getInstruction (mc_insn, insn_size, raw_insn, m_addr, llvm::nulls(), llvm::nulls());
+        if (m_use_alt_disaasm)
+            decode_status = m_alt_disasm->getInstruction (mc_insn, insn_size, raw_insn, m_addr, llvm::nulls(), llvm::nulls());
+        else
+            decode_status = m_disasm->getInstruction (mc_insn, insn_size, raw_insn, m_addr, llvm::nulls(), llvm::nulls());
+
         if (decode_status != llvm::MCDisassembler::Success)
             return false;
     }
@@ -736,6 +854,7 @@ EmulateInstructionMIPS::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
     unwind_plan.SetSourceName ("EmulateInstructionMIPS");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
+    unwind_plan.SetReturnAddressRegister (dwarf_ra_mips);
 
     return true;
 }
@@ -815,11 +934,11 @@ EmulateInstructionMIPS::Emulate_SW (llvm::MCInst& insn)
     src = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
     base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
 
-    if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips64 + base, reg_info_base))
+    if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + base, reg_info_base))
         return false;
 
     /* read base register */
-    address = (int32_t)ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips64 + base, 0, &success);
+    address = (int32_t)ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
     if (!success)
         return false;
 
@@ -828,7 +947,7 @@ EmulateInstructionMIPS::Emulate_SW (llvm::MCInst& insn)
 
     /* Set the bad_vaddr register with base address used in the instruction */
     bad_vaddr_context.type = eContextInvalid;
-    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, dwarf_bad_mips64, address);
+    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, dwarf_bad_mips, address);
 
     /* We look for sp based non-volatile register stores */
     if (base == dwarf_sp_mips && nonvolatile_reg_p (src))
@@ -875,11 +994,11 @@ EmulateInstructionMIPS::Emulate_LW (llvm::MCInst& insn)
     imm = insn.getOperand(2).getImm();
 
     RegisterInfo reg_info_base;
-    if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips64 + base, reg_info_base))
+    if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + base, reg_info_base))
         return false;
 
     /* read base register */
-    address = (int32_t)ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips64 + base, 0, &success);
+    address = (int32_t)ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
     if (!success)
         return false;
 
@@ -888,7 +1007,7 @@ EmulateInstructionMIPS::Emulate_LW (llvm::MCInst& insn)
 
     /* Set the bad_vaddr register with base address used in the instruction */
     bad_vaddr_context.type = eContextInvalid;
-    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, dwarf_bad_mips64, address);
+    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, dwarf_bad_mips, address);
 
     if (base == dwarf_sp_mips && nonvolatile_reg_p (src))
     {
@@ -899,7 +1018,8 @@ EmulateInstructionMIPS::Emulate_LW (llvm::MCInst& insn)
             return false;
 
         Context context;
-        context.type = eContextRegisterLoad;
+        context.type = eContextPopRegisterOffStack;
+        context.SetAddress (address);
 
         if (!WriteRegister (context, &reg_info_src, data_src))
             return false;
@@ -908,6 +1028,329 @@ EmulateInstructionMIPS::Emulate_LW (llvm::MCInst& insn)
     }
 
     return false;
+}
+
+bool
+EmulateInstructionMIPS::Emulate_ADDIUSP (llvm::MCInst& insn)
+{
+    bool success = false;
+    const uint32_t imm9 = insn.getOperand(0).getImm();
+    uint64_t result;
+
+    // This instruction operates implicitly on stack pointer, so read <sp> register.
+    uint64_t src_opd_val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_sp_mips, 0, &success);
+    if (!success)
+        return false;
+
+    result = src_opd_val + imm9;
+
+    Context context;
+    RegisterInfo reg_info_sp;
+    if (GetRegisterInfo (eRegisterKindDWARF, dwarf_sp_mips, reg_info_sp))
+        context.SetRegisterPlusOffset (reg_info_sp, imm9);
+
+    // We are adjusting the stack.
+    context.type = eContextAdjustStackPointer;
+
+    WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_sp_mips, result);
+    return true;
+}
+
+bool
+EmulateInstructionMIPS::Emulate_ADDIUS5 (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t base;
+    const uint32_t imm4 = insn.getOperand(2).getImm();
+    uint64_t result;
+
+    // The source and destination register is same for this instruction.
+    base = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+
+    // We are looking for stack adjustment only
+    if (base == dwarf_sp_mips)
+    {
+        // Read stack pointer register
+        uint64_t src_opd_val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
+        if (!success)
+            return false;
+
+        result = src_opd_val + imm4;
+
+        Context context;
+        RegisterInfo reg_info_sp;
+        if (GetRegisterInfo (eRegisterKindDWARF, dwarf_sp_mips, reg_info_sp))
+            context.SetRegisterPlusOffset (reg_info_sp, imm4);
+
+        // We are adjusting the stack.
+        context.type = eContextAdjustStackPointer;
+
+        WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_sp_mips, result);
+    }
+
+    return true;
+}
+
+bool
+EmulateInstructionMIPS::Emulate_SWSP (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t imm5 = insn.getOperand(2).getImm();
+    uint32_t src, base;
+
+    src = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+    base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
+
+    // We look for sp based non-volatile register stores.
+    if (base == dwarf_sp_mips && nonvolatile_reg_p (src))
+    {
+        uint32_t address;
+        RegisterInfo reg_info_base;
+        RegisterInfo reg_info_src;
+
+        if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + base, reg_info_base)
+            || !GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + src, reg_info_src))
+            return false;
+
+        // read SP
+        address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
+        if (!success)
+            return false;
+
+        // destination address
+        address = address + imm5;
+
+        Context context;
+        RegisterValue data_src;
+        context.type = eContextPushRegisterOnStack;
+        context.SetRegisterToRegisterPlusOffset (reg_info_src, reg_info_base, 0);
+
+        uint8_t buffer [RegisterValue::kMaxRegisterByteSize];
+        Error error;
+
+        if (!ReadRegister (&reg_info_base, data_src))
+            return false;
+
+        if (data_src.GetAsMemoryData (&reg_info_src, buffer, reg_info_src.byte_size, eByteOrderLittle, error) == 0)
+            return false;
+
+        if (!WriteMemory (context, address, buffer, reg_info_src.byte_size))
+            return false;
+
+        return true;
+    }
+
+    return false;
+}
+
+/* Emulate SWM16,SWM32 and SWP instruction.
+
+   SWM16 always has stack pointer as a base register (but it is still available in MCInst as an operand).
+   SWM32 and SWP can have base register other than stack pointer.
+*/
+bool
+EmulateInstructionMIPS::Emulate_SWM16_32 (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t src, base;
+    uint32_t num_operands = insn.getNumOperands();  // No of operands vary based on no of regs to store.
+
+    // Base register is second last operand of the instruction.
+    base = m_reg_info->getEncodingValue (insn.getOperand(num_operands-2).getReg());
+
+    // We are looking for sp based stores so if base is not a stack pointer then don't proceed.
+    if (base != dwarf_sp_mips)
+        return false;
+
+    // offset is always the last operand.
+    uint32_t offset = insn.getOperand(num_operands-1).getImm(); 
+
+    RegisterInfo reg_info_base;
+    RegisterInfo reg_info_src;
+    
+    if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + base, reg_info_base))
+        return false;
+
+    // read SP
+    uint32_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
+    if (!success)
+        return false;
+
+    // Resulting base addrss
+    base_address = base_address + offset;
+
+    // Total no of registers to be stored are num_operands-2.
+    for (uint32_t i = 0; i < num_operands - 2; i++)
+    {
+        // Get the register number to be stored.
+        src = m_reg_info->getEncodingValue (insn.getOperand(i).getReg());
+
+        /* 
+            Record only non-volatile stores.
+            This check is required for SWP instruction because source operand could be any register.
+            SWM16 and SWM32 instruction always has saved registers as source operands.
+        */
+        if (!nonvolatile_reg_p (src))
+            return false;
+
+        if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + src, reg_info_src))
+            return false;
+
+        Context context;
+        RegisterValue data_src;
+        context.type = eContextPushRegisterOnStack;
+        context.SetRegisterToRegisterPlusOffset (reg_info_src, reg_info_base, 0);
+
+        uint8_t buffer [RegisterValue::kMaxRegisterByteSize];
+        Error error;
+
+        if (!ReadRegister (&reg_info_base, data_src))
+            return false;
+
+        if (data_src.GetAsMemoryData (&reg_info_src, buffer, reg_info_src.byte_size, eByteOrderLittle, error) == 0)
+            return false;
+
+        if (!WriteMemory (context, base_address, buffer, reg_info_src.byte_size))
+            return false;
+
+        // Stack address for next register
+        base_address = base_address + reg_info_src.byte_size;
+    }
+    return true;
+}
+
+bool
+EmulateInstructionMIPS::Emulate_LWSP (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t src = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+    uint32_t base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
+    uint32_t imm5 = insn.getOperand(2).getImm();
+
+    if (base == dwarf_sp_mips && nonvolatile_reg_p (src))
+    {
+        RegisterValue data_src;
+        RegisterInfo reg_info_src;
+
+        if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + src, reg_info_src))
+            return false;
+
+        uint32_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
+        if (!success)
+            return false;
+
+        base_address = base_address + imm5;
+
+        Context context;
+        context.type = eContextPopRegisterOffStack;
+        context.SetAddress (base_address);
+
+        if (!WriteRegister (context, &reg_info_src, data_src))
+            return false;
+
+        return true;
+    }
+
+    return false;
+}
+
+/* Emulate LWM16, LWM32 and LWP instructions.
+
+   LWM16 always has stack pointer as a base register (but it is still available in MCInst as an operand).
+   LWM32 and LWP can have base register other than stack pointer.
+*/
+bool
+EmulateInstructionMIPS::Emulate_LWM16_32 (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t dst, base;
+    uint32_t num_operands = insn.getNumOperands();  // No of operands vary based on no of regs to store.
+    uint32_t imm = insn.getOperand(num_operands-1).getImm();    // imm is the last operand in the instruction.
+    
+    // Base register is second last operand of the instruction.
+    base = m_reg_info->getEncodingValue (insn.getOperand(num_operands-2).getReg());
+
+    // We are looking for sp based loads so if base is not a stack pointer then don't proceed.
+    if (base != dwarf_sp_mips)
+        return false;
+
+    uint32_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
+    if (!success)
+        return false;
+
+    base_address = base_address + imm;
+
+    RegisterValue data_dst;
+    RegisterInfo reg_info_dst;
+
+    // Total no of registers to be re-stored are num_operands-2.
+    for (uint32_t i = 0; i < num_operands - 2; i++)
+    {
+        // Get the register number to be re-stored.
+        dst = m_reg_info->getEncodingValue (insn.getOperand(i).getReg());
+
+        /*
+            Record only non-volatile loads.
+            This check is required for LWP instruction because destination operand could be any register.
+            LWM16 and LWM32 instruction always has saved registers as destination operands.
+        */
+        if (!nonvolatile_reg_p (dst))
+            return false;
+        
+        if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + dst, reg_info_dst))
+            return false;
+
+        Context context;
+        context.type = eContextPopRegisterOffStack;
+        context.SetAddress (base_address + (i*4));
+
+        if (!WriteRegister (context, &reg_info_dst, data_dst))
+            return false;
+    }
+
+    return true;
+}
+
+bool
+EmulateInstructionMIPS::Emulate_JRADDIUSP (llvm::MCInst& insn)
+{
+    bool success = false;
+    int32_t imm5 = insn.getOperand(0).getImm();
+
+    /* JRADDIUSP immediate
+    *       PC <- RA
+    *       SP <- SP + zero_extend(Immediate << 2)
+    */
+    
+    // This instruction operates implicitly on stack pointer, so read <sp> register.
+    int32_t src_opd_val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_sp_mips, 0, &success);
+    if (!success)
+        return false;
+
+    int32_t ra_val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_ra_mips, 0, &success);
+    if (!success)
+        return false;
+    
+    int32_t result = src_opd_val + imm5;
+
+    Context context;
+
+    // Update the PC
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, ra_val))
+        return false;
+    
+    RegisterInfo reg_info_sp;
+    if (GetRegisterInfo (eRegisterKindDWARF, dwarf_sp_mips, reg_info_sp))
+        context.SetRegisterPlusOffset (reg_info_sp, imm5);
+
+    // We are adjusting stack
+    context.type = eContextAdjustStackPointer;
+
+    // update SP
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_sp_mips, result))
+        return false;
+
+    return true;
 }
 
 bool
@@ -950,6 +1393,263 @@ EmulateInstructionMIPS::Emulate_BEQ (llvm::MCInst& insn)
     if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, target))
         return false;
 
+    return true;
+}
+
+bool
+EmulateInstructionMIPS::Emulate_B16_MM (llvm::MCInst& insn)
+{
+    bool success = false;
+    int32_t offset, pc, target;
+    uint32_t current_inst_size = m_insn_info->get(insn.getOpcode()).getSize();
+
+    offset = insn.getOperand(0).getImm();
+
+    pc = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc_mips, 0, &success);
+    if (!success)
+        return false;
+
+    // unconditional branch
+    target = pc + offset;
+
+    Context context;
+    context.type = eContextRelativeBranchImmediate;
+    context.SetImmediate (current_inst_size + offset);
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, target))
+        return false;
+
+    return true;
+}
+
+/*
+   BEQZC, BNEZC are 32 bit compact instructions without a delay slot.
+   BEQZ16, BNEZ16 are 16 bit instructions with delay slot.
+   BGEZALS, BLTZALS are 16 bit instructions with short (2-byte) delay slot.
+*/
+bool
+EmulateInstructionMIPS::Emulate_Branch_MM (llvm::MCInst& insn)
+{
+    bool success = false;
+    int32_t target = 0;
+    uint32_t current_inst_size = m_insn_info->get(insn.getOpcode()).getSize();
+    const char *op_name = m_insn_info->getName (insn.getOpcode ());
+    bool update_ra = false;
+    uint32_t ra_offset = 0;
+
+    /*
+     * BEQZ16 rs, offset
+     *      condition <- (GPR[rs] = 0)
+     *      if condition then
+     *          PC = PC + sign_ext (offset || 0)
+     *
+     * BNEZ16 rs, offset
+     *      condition <- (GPR[rs] != 0)
+     *      if condition then
+     *          PC = PC + sign_ext (offset || 0)
+     *
+     * BEQZC rs, offset     (compact instruction: No delay slot)
+     *      condition <- (GPR[rs] == 0)
+     *      if condition then
+     *         PC = PC + 4 + sign_ext (offset || 0)
+    */
+
+    uint32_t rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+    int32_t offset = insn.getOperand(1).getImm();
+
+    int32_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc_mips, 0, &success);
+    if (!success)
+        return false;
+
+    int32_t rs_val = (int32_t) ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + rs, 0, &success);
+    if (!success)
+        return false;
+
+    if (!strcasecmp (op_name, "BEQZ16_MM"))
+    {
+        if (rs_val == 0)
+            target = pc + offset;
+        else
+            target = pc + current_inst_size + m_next_inst_size; // Skip delay slot instruction.
+    }
+    else if (!strcasecmp (op_name, "BNEZ16_MM"))
+    {
+        if (rs_val != 0)
+            target = pc + offset;
+        else
+            target = pc + current_inst_size + m_next_inst_size; // Skip delay slot instruction.
+    }
+    else if (!strcasecmp (op_name, "BEQZC_MM"))
+    {
+        if (rs_val == 0)
+            target = pc + 4 + offset;
+        else
+            target = pc + 4;         // 32 bit instruction and does not have delay slot instruction.
+    }
+    else if (!strcasecmp (op_name, "BNEZC_MM"))
+    {
+        if (rs_val != 0)
+            target = pc + 4 + offset;
+        else
+            target = pc + 4;         // 32 bit instruction and does not have delay slot instruction.
+    }
+    else if (!strcasecmp (op_name, "BGEZALS_MM"))
+    {
+        if (rs_val >= 0)
+            target = pc + offset;
+        else
+            target = pc + 6;        // 32 bit instruction with short (2-byte) delay slot
+        
+        update_ra = true;
+        ra_offset = 6;
+    }
+    else if (!strcasecmp (op_name, "BLTZALS_MM"))
+    {
+        if (rs_val >= 0)
+            target = pc + offset;
+        else
+            target = pc + 6;        // 32 bit instruction with short (2-byte) delay slot
+        
+        update_ra = true;
+        ra_offset = 6;
+    }
+
+    Context context;
+    context.type = eContextRelativeBranchImmediate;
+    context.SetImmediate (current_inst_size + offset);
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, target))
+        return false;
+
+    if (update_ra)
+    {
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_ra_mips, pc + ra_offset))
+            return false;
+    }
+    return true;
+}
+
+/* Emulate micromips jump instructions.
+   JALR16,JALRS16
+*/
+bool
+EmulateInstructionMIPS::Emulate_JALRx16_MM (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t ra_offset = 0;
+    const char *op_name = m_insn_info->getName (insn.getOpcode ());
+
+    uint32_t rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+
+    uint32_t pc = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc_mips, 0, &success);
+    if (!success)
+        return false;
+
+    uint32_t rs_val = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + rs, 0, &success);
+    if (!success)
+        return false;
+
+    if (!strcasecmp (op_name, "JALR16_MM"))
+        ra_offset = 6;      // 2-byte instruction with 4-byte delay slot.
+    else if (!strcasecmp (op_name, "JALRS16_MM"))
+        ra_offset = 4;      // 2-byte instruction with 2-byte delay slot.
+
+    Context context;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, rs_val))
+        return false;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_ra_mips, pc + ra_offset))
+        return false;
+
+    return true;
+}
+
+/* Emulate JALS and JALX instructions.
+    JALS 32 bit instruction with short (2-byte) delay slot.
+    JALX 32 bit instruction with 4-byte delay slot.
+*/
+bool
+EmulateInstructionMIPS::Emulate_JALx (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t offset=0, target=0, pc=0, ra_offset=0;
+    const char *op_name = m_insn_info->getName (insn.getOpcode ());
+    
+    /* 
+     * JALS target
+     *      RA = PC + 6
+     *      offset = sign_ext (offset << 1)
+     *      PC = PC[31-27] | offset
+     * JALX target
+     *      RA = PC + 8
+     *      offset = sign_ext (offset << 2)
+     *      PC = PC[31-28] | offset
+    */
+    offset = insn.getOperand(0).getImm();
+
+    pc = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc_mips, 0, &success);
+    if (!success)
+        return false;
+
+    // These are PC-region branches and not PC-relative.
+    if (!strcasecmp (op_name, "JALS_MM"))
+    {
+        // target address is in the “current” 128 MB-aligned region
+        target = (pc & 0xF8000000UL) | offset;
+        ra_offset = 6;
+    }
+    else if (!strcasecmp (op_name, "JALX_MM"))
+    {
+        // target address is in the “current” 256 MB-aligned region
+        target = (pc & 0xF0000000UL) | offset;
+        ra_offset = 8;
+    }
+
+    Context context;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, target))
+        return false;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_ra_mips, pc + ra_offset))
+        return false;
+
+    return true;
+}
+
+bool
+EmulateInstructionMIPS::Emulate_JALRS (llvm::MCInst& insn)
+{
+    bool success = false;
+    uint32_t rs=0, rt=0;
+    int32_t pc=0, rs_val=0;
+    
+    /*
+        JALRS rt, rs
+            GPR[rt] <- PC + 6
+            PC <- GPR[rs]
+    */
+
+    rt = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
+    rs = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
+
+    rs_val = (int32_t) ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + rs, 0, &success);
+    if (!success)
+        return false;
+
+    pc = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc_mips, 0, &success);
+    if (!success)
+        return false;
+    
+    Context context;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc_mips, rs_val))
+        return false;
+
+    // This is 4-byte instruction with 2-byte delay slot.
+    if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_zero_mips + rt, pc + 6))
+        return false;
+    
     return true;
 }
 

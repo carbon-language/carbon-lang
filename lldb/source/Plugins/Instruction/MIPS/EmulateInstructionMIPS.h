@@ -91,7 +91,12 @@ public:
     
     virtual bool
     EvaluateInstruction (uint32_t evaluate_options);
-    
+
+    bool
+    SetInstruction (const lldb_private::Opcode &insn_opcode, 
+                    const lldb_private::Address &inst_addr, 
+                    lldb_private::Target *target) override;
+
     virtual bool
     TestEmulation (lldb_private::Stream *out_stream, 
                    lldb_private::ArchSpec &arch, 
@@ -121,6 +126,9 @@ protected:
     static MipsOpcode*
     GetOpcodeForInstruction (const char *op_name);
 
+    uint32_t
+    GetSizeOfInstruction (lldb_private::DataExtractor& data, uint64_t inst_addr);
+
     bool
     Emulate_ADDiu (llvm::MCInst& insn);
 
@@ -129,6 +137,27 @@ protected:
 
     bool
     Emulate_LW (llvm::MCInst& insn);
+
+    bool
+    Emulate_ADDIUSP (llvm::MCInst& insn);
+
+    bool
+    Emulate_ADDIUS5 (llvm::MCInst& insn);
+
+    bool
+    Emulate_SWSP (llvm::MCInst& insn);
+
+    bool
+    Emulate_SWM16_32 (llvm::MCInst& insn);
+
+    bool
+    Emulate_LWSP (llvm::MCInst& insn);
+
+    bool
+    Emulate_LWM16_32 (llvm::MCInst& insn);
+
+    bool
+    Emulate_JRADDIUSP (llvm::MCInst& insn);
 
     bool
     Emulate_LDST_Imm (llvm::MCInst& insn);
@@ -338,6 +367,21 @@ protected:
     Emulate_MSA_Branch_V (llvm::MCInst& insn, bool bnz);
 
     bool
+    Emulate_B16_MM (llvm::MCInst& insn);
+
+    bool
+    Emulate_Branch_MM (llvm::MCInst& insn);
+
+    bool
+    Emulate_JALRx16_MM (llvm::MCInst& insn);
+
+    bool
+    Emulate_JALx (llvm::MCInst& insn);
+
+    bool
+    Emulate_JALRS (llvm::MCInst& insn);
+
+    bool
     nonvolatile_reg_p (uint32_t regnum);
 
     const char *
@@ -345,11 +389,15 @@ protected:
 
 private:
     std::unique_ptr<llvm::MCDisassembler>   m_disasm;
+    std::unique_ptr<llvm::MCDisassembler>   m_alt_disasm;
     std::unique_ptr<llvm::MCSubtargetInfo>  m_subtype_info;
+    std::unique_ptr<llvm::MCSubtargetInfo>  m_alt_subtype_info;
     std::unique_ptr<llvm::MCRegisterInfo>   m_reg_info;
     std::unique_ptr<llvm::MCAsmInfo>        m_asm_info;
     std::unique_ptr<llvm::MCContext>        m_context;
     std::unique_ptr<llvm::MCInstrInfo>      m_insn_info;
+    uint32_t                                m_next_inst_size;
+    bool                                    m_use_alt_disaasm;
 };
 
 #endif  // EmulateInstructionMIPS_h_
