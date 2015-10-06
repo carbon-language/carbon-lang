@@ -556,17 +556,14 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
     ESym->setBindingAndType(Binding, InputSym.getType());
     ESym->st_size = InputSym.st_size;
     ESym->setVisibility(Visibility);
-    if (InputSym.isAbsolute()) {
-      ESym->st_shndx = SHN_ABS;
-      ESym->st_value = InputSym.st_value;
-    }
+    ESym->st_value = getSymVA(EBody, BssSec);
 
     if (Section)
       Out = Section->getOutputSection();
 
-    ESym->st_value = getSymVA(EBody, BssSec);
-
-    if (Out)
+    if (InputSym.isAbsolute())
+      ESym->st_shndx = SHN_ABS;
+    else if (Out)
       ESym->st_shndx = Out->getSectionIndex();
   }
   if (!StrTabSec.isDynamic())
