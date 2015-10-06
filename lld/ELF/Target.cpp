@@ -271,7 +271,7 @@ bool AArch64TargetInfo::relocNeedsPlt(uint32_t Type,
   return false;
 }
 
-static void AArch64UpdateAdr(uint8_t *L, uint64_t Imm) {
+static void updateAArch64Adr(uint8_t *L, uint64_t Imm) {
   uint32_t ImmLo = (Imm & 0x3) << 29;
   uint32_t ImmHi = ((Imm & 0x1FFFFC) >> 2) << 5;
   uint64_t Mask = (0x3 << 29) | (0x7FFFF << 5);
@@ -281,7 +281,7 @@ static void AArch64UpdateAdr(uint8_t *L, uint64_t Imm) {
 // Page(Expr) is the page address of the expression Expr, defined
 // as (Expr & ~0xFFF). (This applies even if the machine page size
 // supported by the platform has a different value.)
-static uint64_t AArch64GetPage(uint64_t Expr) {
+static uint64_t getAArch64Page(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
@@ -314,15 +314,15 @@ static void handle_ADR_PREL_LO21(uint8_t *L, uint64_t S, int64_t A,
   uint64_t X = S + A - P;
   if (!isInt<21>(X))
     error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
-  AArch64UpdateAdr(L, X & 0x1FFFFF);
+  updateAArch64Adr(L, X & 0x1FFFFF);
 }
 
 static void handle_ADR_PREL_PG_HI21(uint8_t *L, uint64_t S, int64_t A,
                                     uint64_t P) {
-  uint64_t X = AArch64GetPage(S + A) - AArch64GetPage(P);
+  uint64_t X = getAArch64Page(S + A) - getAArch64Page(P);
   if (!isInt<33>(X))
     error("Relocation R_AARCH64_ADR_PREL_PG_HI21 out of range");
-  AArch64UpdateAdr(L, (X >> 12) & 0x1FFFFF); // X[32:12]
+  updateAArch64Adr(L, (X >> 12) & 0x1FFFFF); // X[32:12]
 }
 
 void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
