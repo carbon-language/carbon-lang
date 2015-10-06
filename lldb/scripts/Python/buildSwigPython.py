@@ -123,7 +123,7 @@ def get_header_files( vDictArgs ):
 						"/include/lldb/API/SBValue.h",
 						"/include/lldb/API/SBValueList.h",
 						"/include/lldb/API/SBWatchpoint.h" ];
-	bDebug = vDictArgs.has_key( "-d" );
+	bDebug = "-d" in vDictArgs;
 	strRt = vDictArgs[ "--srcRoot" ];
 	strRt = os.path.normcase( strRt );
 	
@@ -133,8 +133,8 @@ def get_header_files( vDictArgs ):
 		strHeaderFiles += " %s%s" % (strRt, strHdr);
 	
 	if bDebug:
-		print strMsgHdrFiles;
- 		print strHeaderFiles;
+		print(strMsgHdrFiles);
+		print(strHeaderFiles);
 		
 	vDictArgs[ "--headerFiles" ] = strHeaderFiles;
 	
@@ -201,7 +201,7 @@ def get_interface_files( vDictArgs ):
 						"/scripts/interface/SBValue.i",
 						"/scripts/interface/SBValueList.i",
 						"/scripts/interface/SBWatchpoint.i" ];	
-	bDebug = vDictArgs.has_key( "-d" );
+	bDebug = "-d" in vDictArgs;
 	strRt = vDictArgs[ "--srcRoot" ];
 	strRt = os.path.normcase( strRt );
 	
@@ -211,8 +211,8 @@ def get_interface_files( vDictArgs ):
 		strInterfaceFiles += " %s%s" % (strRt, strIFace);
 	
 	if bDebug:
-		print strMsgIFaceFiles;
-		print strInterfaceFiles;
+		print(strMsgIFaceFiles);
+		print(strInterfaceFiles);
 	
 	vDictArgs[ "--ifaceFiles" ] = strInterfaceFiles;
 		
@@ -251,12 +251,12 @@ def which_file_is_newer( vFile1, vFile2 ):
 #--
 def check_file_exists( vDictArgs, vstrFileNamePath ):
 	bExists = False;
-	bDebug = vDictArgs.has_key( "-d" );
+	bDebug = "-d" in vDictArgs;
 	
 	if os.path.exists( vstrFileNamePath ):
 		bExists = True;
 	elif bDebug:
-		print strMsgFileNotExist % vstrFileNamePath;
+		print(strMsgFileNotExist % vstrFileNamePath);
 	
 	return bExists;
 
@@ -271,7 +271,7 @@ def check_file_exists( vDictArgs, vstrFileNamePath ):
 #--
 def check_newer_file( vDictArgs, vstrSwigOpFileNamePath, vstrFileNamePath ):
 	bNeedUpdate = False;
-	bDebug = vDictArgs.has_key( "-d" );
+	bDebug = "-d" in vDictArgs;
 	
 	strMsg = "";
 	nResult = which_file_is_newer( vstrFileNamePath, vstrSwigOpFileNamePath );
@@ -284,7 +284,7 @@ def check_newer_file( vDictArgs, vstrSwigOpFileNamePath, vstrFileNamePath ):
 		bNeedUpdate = True;
 	
 	if bNeedUpdate and bDebug:
-		print strMsg;
+		print(strMsg);
 	
 	return bNeedUpdate;
 
@@ -328,7 +328,7 @@ def get_framework_python_dir_windows( vDictArgs ):
 	# on the system other stuff may need to be put here as well.
 	from distutils.sysconfig import get_python_lib;
 	strPythonInstallDir = "";
-	bHaveArgPrefix = vDictArgs.has_key( "--prefix" );
+	bHaveArgPrefix = "--prefix" in vDictArgs;
 	if bHaveArgPrefix: 
 		strPythonInstallDir = vDictArgs[ "--prefix" ];
 	if strPythonInstallDir.__len__() != 0:
@@ -354,9 +354,9 @@ def get_framework_python_dir_other_platforms( vDictArgs ):
 	bOk = True;
 	strWkDir = "";
 	strErrMsg = "";
-	bDbg = vDictArgs.has_key( "-d" );
+	bDbg = "-d" in vDictArgs;
 	
-	bMakeFileCalled = vDictArgs.has_key( "-m" );
+	bMakeFileCalled = "-m" in vDictArgs;
 	if bMakeFileCalled:
 		dbg.dump_text( "Built by LLVM" );
 		return get_framework_python_dir_windows( vDictArgs );
@@ -368,7 +368,7 @@ def get_framework_python_dir_other_platforms( vDictArgs ):
 		strWkDir += "/LLDB.framework";
 		if os.path.exists( strWkDir ):
 			if bDbg:
-				print strMsgFoundLldbFrameWkDir % strWkDir;
+				print(strMsgFoundLldbFrameWkDir % strWkDir);
 			strWkDir += "/Resources/Python/lldb";
 			strWkDir = os.path.normcase( strWkDir );
 		else:
@@ -420,7 +420,7 @@ def get_config_build_dir( vDictArgs, vstrFrameworkPythonDir ):
 	strErrMsg = "";
 	
 	strConfigBldDir = "";
-	bHaveConfigBldDir = vDictArgs.has_key( "--cfgBldDir" );
+	bHaveConfigBldDir = "--cfgBldDir" in vDictArgs;
 	if bHaveConfigBldDir:
 		strConfigBldDir = vDictArgs[ "--cfgBldDir" ];
 	if (bHaveConfigBldDir == False) or (strConfigBldDir.__len__() == 0):
@@ -463,8 +463,8 @@ def do_swig_rebuild( vDictArgs, vstrSwigDepFile, vstrCfgBldDir,
 	dbg = utilsDebug.CDebugFnVerbose( "Python script do_swig_rebuild()" );
 	bOk = True;
 	strMsg = "";
-	bDbg = vDictArgs.has_key( "-d" );
-	bGenDependencies = vDictArgs.has_key( "-M" );
+	bDbg = "-d" in vDictArgs;
+	bGenDependencies = "-M" in vDictArgs;
 	strSwigExePath = vDictArgs[ "--swigExePath" ];
 	strSwigExeName = vDictArgs[ "--swigExeName" ];
 	strSrcRoot = vDictArgs[ "--srcRoot" ];
@@ -502,7 +502,7 @@ def do_swig_rebuild( vDictArgs, vstrSwigDepFile, vstrCfgBldDir,
 	strCmd += "-o \"%s\" " % strOp;
 	strCmd += "\"%s\" " % strIp;
 	if bDbg:
-		print strMsgSwigExecute % strCmd;
+		print(strMsgSwigExecute % strCmd);
 
 	# Execute SWIG
 	process = subprocess.Popen( strCmd, stdout=subprocess.PIPE, 
@@ -547,7 +547,7 @@ def run_python_script( vDictArgs, vstrArgs ):
 	dbg = utilsDebug.CDebugFnVerbose( "Python script run_python_script()" );
 	bOk = True;
 	strMsg = "";
-	bDbg = vDictArgs.has_key( "-d" );
+	bDbg = "-d" in vDictArgs;
 	
 	strPy = "%s %s" % (sys.executable, vstrArgs);
 	process = subprocess.Popen( strPy, shell=True );
@@ -583,7 +583,7 @@ def do_modify_python_lldb( vDictArgs, vstrCfgBldDir ):
 	dbg = utilsDebug.CDebugFnVerbose( "Python script do_modify_python_lldb()" );
 	bOk = True;
 	strMsg = "";
-	bDbg = vDictArgs.has_key( "-d" );
+	bDbg = "-d" in vDictArgs;
 	strCwd = vDictArgs[ "--srcRoot" ]; # /llvm/tools/lldb
 	strCwd += "/scripts/Python";
 	strPyScript = "modify-python-lldb.py";
@@ -654,22 +654,22 @@ def main( vDictArgs ):
 	strMsg = "";
 	strErrMsgProgFail = "";
 	
-	if not( vDictArgs.has_key( "--swigExePath" ) and vDictArgs.has_key( "--swigExeName" ) ):
+	if not("--swigExePath" in vDictArgs) and ("--swigExeName" in vDictArgs):
 		strErrMsgProgFail += strErrMsgSwigParamsMissing;
 		return (-100, strErrMsgProgFail );	
 	
-	bDebug = vDictArgs.has_key( "-d" );
+	bDebug = "-d" in vDictArgs;
 	
 	strSwigDepFile = "";
 	strSwigDepOptions = "";
-	bGenDependencies = vDictArgs.has_key( "-M" );
+	bGenDependencies = "-M" in vDictArgs;
 	if bGenDependencies:
 		strSwigDepFile = vDictArgs[ "--targetDir" ] + "/LLDBWrapPython.cpp.d";
 		strSwigDepOptions = "-MMD -MF \"%s.tmp\"" % strSwigDepFile;
 		strSwigDepFile = os.path.normcase( strSwigDepFile );
 		strSwigDepOptions = os.path.normcase( strSwigDepOptions );
 		
-	bMakeFileCalled = vDictArgs.has_key( "-m" );			
+	bMakeFileCalled = "-m" in vDictArgs;
 	strSwigOutputFile = ""
 	if bMakeFileCalled:
 		strSwigOutputFile = vDictArgs[ "--targetDir" ] + "/LLDBWrapPython.cpp";
@@ -760,7 +760,7 @@ def main( vDictArgs ):
 	if bOk and (bNeedUpdate == False):
 		strInitPiPath = strFrameworkPythonDir + "/__init__.py";
 		strInitPiPath = os.path.normcase( strInitPiPath );
-		print strInitPiPath
+		print(strInitPiPath)
 		bNeedUpdate = not check_file_exists( vDictArgs, strInitPiPath );
 		dbg.dump_object( "check_file_exists( vDictArgs, strInitPiPath ), bNeedUpdate =", bNeedUpdate);
 		
@@ -769,12 +769,12 @@ def main( vDictArgs ):
 			strMsg = strMsgNotNeedUpdate;
 			return (0, strMsg );
 		else:
-			print strMsgSwigNeedRebuild;
+			print(strMsgSwigNeedRebuild);
 			bOk, strMsg, nExitResult = do_swig_rebuild( vDictArgs, strSwigDepFile, 
 														strCfgBldDir, 
 														strSwigOutputFile,
 														strSwigInputFile );
-			bGenDependencies = vDictArgs.has_key( "-M" );
+			bGenDependencies = "-M" in vDictArgs;
 			if bGenDependencies == True:
 				return (nExitResult, strMsg);
 				   	
@@ -794,5 +794,5 @@ def main( vDictArgs ):
 # This script can be called by another Python script by calling the main() 
 # function directly
 if __name__ == "__main__":
-	print "Script cannot be called directly, called by buildSwigWrapperClasses.py";
+	print("Script cannot be called directly, called by buildSwigWrapperClasses.py");
 	

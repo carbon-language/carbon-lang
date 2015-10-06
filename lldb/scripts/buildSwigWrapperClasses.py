@@ -126,7 +126,7 @@ def program_exit_success( vnResult, vMsg ):
 
     if vMsg.__len__() != 0:
         strMsg = "%s: %s (%d)" % (strExitMsgSuccess, vMsg, vnResult);
-        print strMsg;
+        print(strMsg);
 
     sys.exit( vnResult );
 
@@ -139,7 +139,7 @@ def program_exit_success( vnResult, vMsg ):
 # Throws:   None.
 #--
 def program_exit_on_failure( vnResult, vMsg ):
-    print "%s%s (%d)" % (strExitMsgError, vMsg, vnResult);
+    print("%s%s (%d)" % (strExitMsgError, vMsg, vnResult));
     sys.exit( vnResult );
 
 #++---------------------------------------------------------------------------
@@ -170,7 +170,7 @@ def print_out_input_parameters( vDictArgs ):
         if val.__len__() != 0:
             strEqs = " =";
             strQ = "\"";
-        print "%s%s%s %s%s%s\n" % (strParameter, arg, strEqs, strQ, val, strQ);
+        print("%s%s%s %s%s%s\n" % (strParameter, arg, strEqs, strQ, val, strQ));
 
 #++---------------------------------------------------------------------------
 # Details:  Locate the lldb.swig file. No checking for path correctness is
@@ -193,7 +193,7 @@ def check_lldb_swig_file_exists( vstrSrcRoot, veOSType ):
     bOk = os.path.isfile( strFullPath );
     if bOk:
         if gbDbgFlag:
-            print strSwigFileFound;
+            print(strSwigFileFound);
     else:
         strStatusMsg = strSwigFileFoundNotFound % strFullPath;
 
@@ -227,8 +227,8 @@ def run_swig( vStrScriptLang, vSwigBuildFileName, vDictArgs ):
         return (-9, strStatusMsg);
 
     if gbDbgFlag:
-        print strSwigScriptLangFound % vStrScriptLang;
-        print strSwigExecuteMsg % vStrScriptLang;
+        print(strSwigScriptLangFound % vStrScriptLang);
+        print(strSwigExecuteMsg % vStrScriptLang);
 
     # Change where Python looks for our modules
     strDir = os.path.normcase( strScriptFileDir );
@@ -287,16 +287,18 @@ def run_swig_for_each_script_supported( vDictArgs ):
         listDirs.remove('.svn')
 
     if gbDbgFlag:
-        print strSwigScriptLangsFound,
+        sys.stdout.write(strSwigScriptLangsFound)
         for dir in listDirs:
-            print dir,
-        print "\n";
+            sys.stdout.write(dir)
+        print("\n");
 
     # Iterate script directory find any script language directories
     for scriptLang in listDirs:
-        dbg.dump_text( "Executing language script for \'%s\'" % scriptLang );
-        nResult, strStatusMsg = run_swig( scriptLang, strSwigBuildFileName,
-                                          vDictArgs );
+        # __pycache__ is a magic directory in Python 3 that holds .pyc files
+        if scriptLang != "__pycache__":
+            dbg.dump_text( "Executing language script for \'%s\'" % scriptLang );
+            nResult, strStatusMsg = run_swig( scriptLang, strSwigBuildFileName,
+                                              vDictArgs );
         if nResult < 0:
             break;
 
@@ -503,7 +505,7 @@ def main( vArgv ):
         program_exit( -4, strMsgErrorOsTypeUnknown );
 
     global gbDbgFlag;
-    gbDbgFlag = dictArgs.has_key( "-d" );
+    gbDbgFlag = "-d" in dictArgs;
     if gbDbgFlag:
         print_out_input_parameters( dictArgs );
 
@@ -513,8 +515,8 @@ def main( vArgv ):
     # called by this program
     global gbMakeFileFlag;
     global gbSwigGenDepFileFlag;
-    gbMakeFileFlag = dictArgs.has_key( "-m" );
-    gbSwigGenDepFileFlag = dictArgs.has_key( "-M" );
+    gbMakeFileFlag = "-m" in dictArgs;
+    gbSwigGenDepFileFlag = "-M" in dictArgs;
 
     bOk, strMsg = check_lldb_swig_file_exists( dictArgs[ "--srcRoot" ], eOSType );
     if bOk == False:

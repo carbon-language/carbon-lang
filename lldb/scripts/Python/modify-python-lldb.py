@@ -21,7 +21,11 @@
 # subsystem.
 #
 
-import sys, re, StringIO
+import sys, re
+if sys.version_info.major >= 3:
+    import io as StringIO
+else:
+    import StringIO
 
 if len (sys.argv) != 2:
     output_name = "./lldb.py"
@@ -269,7 +273,7 @@ class NewContent(StringIO.StringIO):
     def add_line(self, a_line):
         """Add a line to the content, if there is a previous line, commit it."""
         if self.prev_line != None:
-            print >> self, self.prev_line
+            self.write(self.prev_line + "\n")
         self.prev_line = a_line
     def del_line(self):
         """Forget about the previous line, do not commit it."""
@@ -281,7 +285,7 @@ class NewContent(StringIO.StringIO):
     def finish(self):
         """Call this when you're finished with populating content."""
         if self.prev_line != None:
-            print >> self, self.prev_line
+            self.write(self.prev_line + "\n")
         self.prev_line = None
 
 # The new content will have the iteration protocol defined for our lldb objects.

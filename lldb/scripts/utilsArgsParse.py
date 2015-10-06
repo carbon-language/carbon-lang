@@ -87,7 +87,7 @@ def parse( vArgv, vstrListArgs, vListLongArgs, vDictArgReq, vstrHelpInfo ):
 	
 	# Count the number of mandatory args required (if any one found)
 	countMandatory = 0;
-	for opt, man in vDictArgReq.iteritems():
+	for opt, man in vDictArgReq.items():
 		if man == "m":
 		  countMandatory = countMandatory + 1;
 	
