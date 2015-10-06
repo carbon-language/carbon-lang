@@ -285,75 +285,49 @@ static uint64_t getAArch64Page(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
-static void handle_ABS16(uint8_t *L, uint64_t S, int64_t A) {
-  uint64_t X = S + A;
-  if (!isInt<16>(X))
-    error("Relocation R_AARCH64_ABS16 out of range");
-  or16le(L, X);
-}
-
-static void handle_ABS32(uint8_t *L, uint64_t S, int64_t A) {
-  uint64_t X = S + A;
-  if (!isInt<32>(X))
-    error("Relocation R_AARCH64_ABS32 out of range");
-  or32le(L, X);
-}
-
-static void handle_ABS64(uint8_t *L, uint64_t S, int64_t A) {
-  // No overflow check needed.
-  or64le(L, S + A);
-}
-
-static void handle_ADD_ABS_LO12_NC(uint8_t *L, uint64_t S, int64_t A) {
-  // No overflow check needed.
-  or32le(L, ((S + A) & 0xFFF) << 10);
-}
-
-static void handle_ADR_PREL_LO21(uint8_t *L, uint64_t S, int64_t A,
-                                 uint64_t P) {
-  uint64_t X = S + A - P;
-  if (!isInt<21>(X))
-    error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
-  updateAArch64Adr(L, X & 0x1FFFFF);
-}
-
-static void handle_ADR_PREL_PG_HI21(uint8_t *L, uint64_t S, int64_t A,
-                                    uint64_t P) {
-  uint64_t X = getAArch64Page(S + A) - getAArch64Page(P);
-  if (!isInt<33>(X))
-    error("Relocation R_AARCH64_ADR_PREL_PG_HI21 out of range");
-  updateAArch64Adr(L, (X >> 12) & 0x1FFFFF); // X[32:12]
-}
-
 void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
                                     uint32_t Type, uint64_t BaseAddr,
                                     uint64_t SymVA, uint64_t GotVA) const {
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
-  uint8_t *Loc = Buf + Rel.r_offset;
+  uint8_t *L = Buf + Rel.r_offset;
   uint64_t S = SymVA;
   int64_t A = Rel.r_addend;
   uint64_t P = BaseAddr + Rel.r_offset;
   switch (Type) {
   case R_AARCH64_ABS16:
-    handle_ABS16(Loc, S, A);
+    if (!isInt<16>(S + A))
+      error("Relocation R_AARCH64_ABS16 out of range");
+    or16le(L, S + A);
     break;
   case R_AARCH64_ABS32:
-    handle_ABS32(Loc, S, A);
+    if (!isInt<32>(S + A))
+      error("Relocation R_AARCH64_ABS32 out of range");
+    or32le(L, S + A);
     break;
   case R_AARCH64_ABS64:
-    handle_ABS64(Loc, S, A);
+    // No overflow check needed.
+    or64le(L, S + A);
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
-    handle_ADD_ABS_LO12_NC(Loc, S, A);
+    // No overflow check needed.
+    or32le(L, ((S + A) & 0xFFF) << 10);
     break;
-  case R_AARCH64_ADR_PREL_LO21:
-    handle_ADR_PREL_LO21(Loc, S, A, P);
+  case R_AARCH64_ADR_PREL_LO21: {
+    uint64_t X = S + A - P;
+    if (!isInt<21>(X))
+      error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
+    updateAArch64Adr(L, X & 0x1FFFFF);
     break;
-  case R_AARCH64_ADR_PREL_PG_HI21:
-    handle_ADR_PREL_PG_HI21(Loc, S, A, P);
+  }
+  case R_AARCH64_ADR_PREL_PG_HI21: {
+    uint64_t X = getAArch64Page(S + A) - getAArch64Page(P);
+    if (!isInt<33>(X))
+      error("Relocation R_AARCH64_ADR_PREL_PG_HI21 out of range");
+    updateAArch64Adr(L, (X >> 12) & 0x1FFFFF); // X[32:12]
     break;
+  }
   default:
     error(Twine("unrecognized reloc ") + Twine(Type));
     break;
