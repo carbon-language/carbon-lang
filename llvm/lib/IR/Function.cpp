@@ -929,12 +929,36 @@ bool Function::callsFunctionThatReturnsTwice() const {
   return false;
 }
 
+static Constant *
+getFunctionData(const Function *F,
+                const LLVMContextImpl::FunctionDataMapTy &Map) {
+  const auto &Entry = Map.find(F);
+  assert(Entry != Map.end());
+  return cast<Constant>(Entry->second->getReturnValue());
+}
+
+/// setFunctionData - Set "Map[F] = Data". Return an updated SubclassData value
+/// in which Bit is low iff Data is null.
+static unsigned setFunctionData(Function *F,
+                                LLVMContextImpl::FunctionDataMapTy &Map,
+                                Constant *Data, unsigned SCData, unsigned Bit) {
+  ReturnInst *&Holder = Map[F];
+  if (Data) {
+    if (Holder)
+      Holder->setOperand(0, Data);
+    else
+      Holder = ReturnInst::Create(F->getContext(), Data);
+    return SCData | (1 << Bit);
+  } else {
+    delete Holder;
+    Map.erase(F);
+    return SCData & ~(1 << Bit);
+  }
+}
+
 Constant *Function::getPrefixData() const {
   assert(hasPrefixData());
-  const LLVMContextImpl::PrefixDataMapTy &PDMap =
-      getContext().pImpl->PrefixDataMap;
-  assert(PDMap.find(this) != PDMap.end());
-  return cast<Constant>(PDMap.find(this)->second->getReturnValue());
+  return getFunctionData(this, getContext().pImpl->PrefixDataMap);
 }
 
 void Function::setPrefixData(Constant *PrefixData) {
@@ -942,49 +966,24 @@ void Function::setPrefixData(Constant *PrefixData) {
     return;
 
   unsigned SCData = getSubclassDataFromValue();
-  LLVMContextImpl::PrefixDataMapTy &PDMap = getContext().pImpl->PrefixDataMap;
-  ReturnInst *&PDHolder = PDMap[this];
-  if (PrefixData) {
-    if (PDHolder)
-      PDHolder->setOperand(0, PrefixData);
-    else
-      PDHolder = ReturnInst::Create(getContext(), PrefixData);
-    SCData |= (1<<1);
-  } else {
-    delete PDHolder;
-    PDMap.erase(this);
-    SCData &= ~(1<<1);
-  }
+  SCData = setFunctionData(this, getContext().pImpl->PrefixDataMap, PrefixData,
+                           SCData, /*Bit=*/1);
   setValueSubclassData(SCData);
 }
 
 Constant *Function::getPrologueData() const {
   assert(hasPrologueData());
-  const LLVMContextImpl::PrologueDataMapTy &SOMap =
-      getContext().pImpl->PrologueDataMap;
-  assert(SOMap.find(this) != SOMap.end());
-  return cast<Constant>(SOMap.find(this)->second->getReturnValue());
+  return getFunctionData(this, getContext().pImpl->PrologueDataMap);
 }
 
 void Function::setPrologueData(Constant *PrologueData) {
   if (!PrologueData && !hasPrologueData())
     return;
 
-  unsigned PDData = getSubclassDataFromValue();
-  LLVMContextImpl::PrologueDataMapTy &PDMap = getContext().pImpl->PrologueDataMap;
-  ReturnInst *&PDHolder = PDMap[this];
-  if (PrologueData) {
-    if (PDHolder)
-      PDHolder->setOperand(0, PrologueData);
-    else
-      PDHolder = ReturnInst::Create(getContext(), PrologueData);
-    PDData |= (1<<2);
-  } else {
-    delete PDHolder;
-    PDMap.erase(this);
-    PDData &= ~(1<<2);
-  }
-  setValueSubclassData(PDData);
+  unsigned SCData = getSubclassDataFromValue();
+  SCData = setFunctionData(this, getContext().pImpl->PrologueDataMap,
+                           PrologueData, SCData, /*Bit=*/2);
+  setValueSubclassData(SCData);
 }
 
 void Function::setEntryCount(uint64_t Count) {
