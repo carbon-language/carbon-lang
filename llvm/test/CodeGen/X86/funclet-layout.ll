@@ -93,13 +93,14 @@ unreachable:                                      ; preds = %catch, %entry
 ; CHECK: # %try.cont.5
 ; CHECK: retq
 
-; The inner catch funclet contains %catch.3
-; CHECK: # %catch.3
-; CHECK: retq
+; The outer catch funclet contains %catch.dispatch
+; CHECK: # %catch.dispatch{{$}}
+; CHECK: callq _CxxThrowException
+; CHECK: # %unreachable
+; CHECK: ud2
 
-; The outer catch funclet contains %catch and %try.cont
-; CHECK: # %catch{{$}}
-; CHECK: # %try.cont{{$}}
+; The inner catch funclet contains %catch.dispatch.1
+; CHECK: # %catch.dispatch.1
 ; CHECK: retq
 
 
@@ -149,13 +150,13 @@ exit_two:
 ; CHECK-NOT: # exit_two
 ; CHECK: ud2
 
-; The catch(int) funclet contains %catch.2
-; CHECK: # %catch.2
+; The catch(...) funclet contains %catch.dispatch
+; CHECK: # %catch.dispatch{{$}}
 ; CHECK: callq exit
 ; CHECK: ud2
 
-; The catch(...) funclet contains %catch
-; CHECK: # %catch{{$}}
+; The catch(int) funclet contains %catch.dispatch.1
+; CHECK: # %catch.dispatch.1
 ; CHECK: callq exit
 ; CHECK: ud2
 

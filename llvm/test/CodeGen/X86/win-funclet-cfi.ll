@@ -70,7 +70,7 @@ declare i32 @__CxxFrameHandler3(...)
 ; CHECK: "?catch$[[catch:[0-9]+]]@?0??f@@YAXXZ@4HA":
 ; CHECK: .seh_proc "?catch$[[catch]]@?0??f@@YAXXZ@4HA"
 ; CHECK-NEXT: .seh_handler __CxxFrameHandler3, @unwind, @except
-; CHECK: LBB0_[[catch]]: # %catch{{$}}
+; CHECK: LBB0_[[catch]]: # %catch.dispatch{{$}}
 
 ; Emit CFI for pushing RBP.
 ; CHECK: movq    %rdx, 16(%rsp)

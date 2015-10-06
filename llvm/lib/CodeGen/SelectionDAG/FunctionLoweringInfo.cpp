@@ -216,14 +216,17 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     // are really data, and no instructions can live here.
     if (BB->isEHPad()) {
       const Instruction *I = BB->getFirstNonPHI();
+      // FIXME: Don't mark SEH functions without __finally blocks as having
+      // funclets.
       if (!isa<LandingPadInst>(I))
         MMI.setHasEHFunclets(true);
-      if (isa<CatchPadInst>(I) || isa<CatchEndPadInst>(I) ||
-          isa<CleanupEndPadInst>(I)) {
+      if (isa<CatchEndPadInst>(I) || isa<CleanupEndPadInst>(I)) {
         assert(&*BB->begin() == I &&
                "WinEHPrepare failed to remove PHIs from imaginary BBs");
         continue;
       }
+      if (isa<CatchPadInst>(I) || isa<CleanupPadInst>(I))
+        assert(&*BB->begin() == I && "WinEHPrepare failed to demote PHIs");
     }
 
     MachineBasicBlock *MBB = mf.CreateMachineBasicBlock(BB);

@@ -2612,7 +2612,7 @@ static void addTryBlockMapEntry(WinEHFuncInfo &FuncInfo, int TryLow,
     else
       HT.TypeDescriptor = cast<GlobalVariable>(TypeInfo->stripPointerCasts());
     HT.Adjectives = cast<ConstantInt>(CPI->getArgOperand(1))->getZExtValue();
-    HT.Handler = CPI->getNormalDest();
+    HT.Handler = CPI->getParent();
     HT.CatchObjRecoverIdx = -2;
     if (isa<ConstantPointerNull>(CPI->getArgOperand(2)))
       HT.CatchObj.Alloca = nullptr;
@@ -2770,8 +2770,7 @@ static void calculateExplicitSEHStateNumbers(WinEHFuncInfo &FuncInfo,
     const Function *Filter = dyn_cast<Function>(FilterOrNull);
     assert((Filter || FilterOrNull->isNullValue()) &&
            "unexpected filter value");
-    int TryState =
-        addSEHExcept(FuncInfo, ParentState, Filter, CPI->getNormalDest());
+    int TryState = addSEHExcept(FuncInfo, ParentState, Filter, CatchPadBB);
 
     // Everything in the __try block uses TryState as its parent state.
     FuncInfo.EHPadStateMap[CPI] = TryState;

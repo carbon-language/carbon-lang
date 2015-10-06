@@ -1160,13 +1160,53 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
 }
 
 void SelectionDAGBuilder::visitCatchPad(const CatchPadInst &I) {
-  llvm_unreachable("should never codegen catchpads");
+  auto Pers = classifyEHPersonality(FuncInfo.Fn->getPersonalityFn());
+  bool IsMSVCCXX = Pers == EHPersonality::MSVC_CXX;
+  bool IsSEH = isAsynchronousEHPersonality(Pers);
+  MachineBasicBlock *CatchPadMBB = FuncInfo.MBB;
+  // In MSVC C++, catchblocks are funclets and need prologues.
+  if (IsMSVCCXX)
+    CatchPadMBB->setIsEHFuncletEntry();
+
+  MachineBasicBlock *NormalDestMBB = FuncInfo.MBBMap[I.getNormalDest()];
+
+  // Update machine-CFG edge.
+  FuncInfo.MBB->addSuccessor(NormalDestMBB);
+
+  // CatchPads in SEH are not funclets, they are merely markers which indicate
+  // where to insert register restoration code.
+  if (IsSEH) {
+    DAG.setRoot(DAG.getNode(ISD::CATCHRET, getCurSDLoc(), MVT::Other,
+                            getControlRoot(), DAG.getBasicBlock(NormalDestMBB),
+                            DAG.getBasicBlock(FuncInfo.MF->begin())));
+    return;
+  }
+
+  // If this is not a fall-through branch or optimizations are switched off,
+  // emit the branch.
+  if (NormalDestMBB != NextBlock(CatchPadMBB) ||
+      TM.getOptLevel() == CodeGenOpt::None)
+    DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other,
+                            getControlRoot(),
+                            DAG.getBasicBlock(NormalDestMBB)));
 }
 
 void SelectionDAGBuilder::visitCatchRet(const CatchReturnInst &I) {
   // Update machine-CFG edge.
   MachineBasicBlock *TargetMBB = FuncInfo.MBBMap[I.getSuccessor()];
   FuncInfo.MBB->addSuccessor(TargetMBB);
+
+  auto Pers = classifyEHPersonality(FuncInfo.Fn->getPersonalityFn());
+  bool IsSEH = isAsynchronousEHPersonality(Pers);
+  if (IsSEH) {
+    // If this is not a fall-through branch or optimizations are switched off,
+    // emit the branch.
+    if (TargetMBB != NextBlock(FuncInfo.MBB) ||
+        TM.getOptLevel() == CodeGenOpt::None)
+      DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other,
+                              getControlRoot(), DAG.getBasicBlock(TargetMBB)));
+    return;
+  }
 
   // Figure out the funclet membership for the catchret's successor.
   // This will be used by the FuncletLayout pass to determine how to order the
@@ -1225,8 +1265,8 @@ findUnwindDestinations(FunctionLoweringInfo &FuncInfo,
       break;
     } else if (const auto *CPI = dyn_cast<CatchPadInst>(Pad)) {
       // Add the catchpad handler to the possible destinations.
-      UnwindDests.push_back(FuncInfo.MBBMap[CPI->getNormalDest()]);
-      // In MSVC C++ and CoreCLR, catchblocks are funclets and need prologues.
+      UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
+      // In MSVC C++, catchblocks are funclets and need prologues.
       if (IsMSVCCXX || IsCoreCLR)
         UnwindDests.back()->setIsEHFuncletEntry();
       EHPadBB = CPI->getUnwindDest();

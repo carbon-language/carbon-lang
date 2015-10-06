@@ -197,6 +197,35 @@ entry:
   ret i32 1
 }
 
+define void @code_in_catchpad() #0 personality i8* bitcast (i32 (...)* @_except_handler3 to i8*) {
+entry:
+  invoke void @f(i32 1) #3
+          to label %__except unwind label %catch.dispatch
+
+catch.dispatch:                                   ; preds = %entry
+  %0 = catchpad [i8* bitcast (i32 ()* @try_except_filter_catchall to i8*)] to label %__except.ret unwind label %catchendblock
+
+__except.ret:                                     ; preds = %catch.dispatch
+  call void @f(i32 2)
+  catchret %0 to label %__except
+
+__except:
+  ret void
+
+catchendblock:                                    ; preds = %catch.dispatch
+  catchendpad unwind to caller
+}
+
+; CHECK-LABEL: _code_in_catchpad:
+; CHECK: # %catch.dispatch
+; CHECK-NEXT:         movl    -24(%ebp), %esp
+; CHECK-NEXT:         addl    $12, %ebp
+; CHECK: # %__except.ret
+; CHECK-NEXT:         movl    $-1, -16(%ebp)
+; CHECK-NEXT:         movl    $2, (%esp)
+; CHECK-NEXT:         calll   _f
+
+
 ; Function Attrs: nounwind readnone
 declare i8* @llvm.frameaddress(i32) #1
 
