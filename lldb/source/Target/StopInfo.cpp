@@ -757,9 +757,12 @@ protected:
                 {
                     WatchpointSP wp_hit_sp = thread_sp->CalculateTarget()->GetWatchpointList().FindByAddress(m_watch_hit_addr);
                     if (!wp_hit_sp)
+                    {
                         m_should_stop = false;
+                        wp_sp->IncrementFalseAlarmsAndReviseHitCount();
+                    }
                 }
-                
+
                 if (m_should_stop && wp_sp->GetConditionText() != NULL)
                 {
                     // We need to make sure the user sees any parse errors in their condition, so we'll hook the
