@@ -353,11 +353,8 @@ def FNEG_S : MMRel, ABSS_FT<"neg.s", FGR32Opnd, FGR32Opnd, II_NEG, fneg>,
 defm FABS : ABSS_M<"abs.d", II_ABS, fabs>, ABSS_FM<0x5, 17>;
 defm FNEG : ABSS_M<"neg.d", II_NEG, fneg>, ABSS_FM<0x7, 17>;
 
-let AdditionalPredicates = [NotInMicroMips] in {
-def FSQRT_S : MMRel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd, II_SQRT_S, fsqrt>,
-              ABSS_FM<0x4, 16>, ISA_MIPS2;
-}
-
+def FSQRT_S : MMRel, StdMMR6Rel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd,
+              II_SQRT_S, fsqrt>, ABSS_FM<0x4, 16>, ISA_MIPS2;
 defm FSQRT : ABSS_M<"sqrt.d", II_SQRT_D, fsqrt>, ABSS_FM<0x4, 17>, ISA_MIPS2;
 
 // The odd-numbered registers are only referenced when doing loads,
