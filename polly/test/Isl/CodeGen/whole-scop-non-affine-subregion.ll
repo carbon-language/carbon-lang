@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: opt %loadPolly \
 ; RUN: -polly-codegen -S < %s | FileCheck %s
 
 ; CHECK: polly.start

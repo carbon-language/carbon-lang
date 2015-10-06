@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-codegen -polly-no-early-exit \
-; RUN:     -polly-detect-unprofitable -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen \
+; RUN:     -S < %s | FileCheck %s
 
 define void @foo(float* %A, i1 %cond0, i1 %cond1) {
 entry:

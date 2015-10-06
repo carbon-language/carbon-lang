@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen -polly-no-early-exit -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -S < %s | FileCheck %s
 ;
 ; CHECK: polly.merge_new_and_old:
 ; CHECK:   %result.ph.merge = phi float [ %result.ph.final_reload, %polly.merge ], [ %result.ph, %next.region_exiting ]

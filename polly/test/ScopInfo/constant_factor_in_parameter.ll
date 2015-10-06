@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -analyze -polly-scops -polly-detect-unprofitable < %s | FileCheck %s
+; RUN: opt %loadPolly -analyze -polly-scops < %s | FileCheck %s
 ;
 ; Check that the constant part of the N * M * 4 expression is not part of the
 ; parameter but explicit in the access function. This can avoid existentially

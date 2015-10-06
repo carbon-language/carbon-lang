@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
 ; Check that the contstraints on the paramater derived from the
 ; __wrapping__ range metadata (see bottom of the file) are present:

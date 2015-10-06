@@ -1,6 +1,6 @@
 
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-ast -analyze -polly-ignore-aliasing < %s | FileCheck %s -check-prefix=SCALAR
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -polly-ignore-aliasing -disable-output < %s
+; RUN: opt %loadPolly -polly-ast -analyze -polly-ignore-aliasing < %s | FileCheck %s -check-prefix=SCALAR
+; RUN: opt %loadPolly -polly-codegen -polly-ignore-aliasing -disable-output < %s
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 ; SCALAR: if (

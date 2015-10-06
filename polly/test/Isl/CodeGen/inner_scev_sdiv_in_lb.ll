@@ -1,6 +1,6 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable \
+; RUN: opt %loadPolly \
 ; RUN:     -polly-scops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: opt %loadPolly \
 ; RUN:      -S -polly-codegen < %s | FileCheck %s --check-prefix=CODEGEN
 ;
 ; CHECK: [N] -> { Stmt_bb11[i0, i1] : i0 <= -1 + N and i1 >= 0 and 3i1 <= -3 + i0 };

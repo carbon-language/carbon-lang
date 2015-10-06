@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: opt %loadPolly \
 ; RUN: -polly-codegen -S < %s | FileCheck %s
 
 ; This test ensures that the expression N + 1 that is stored in the phi-node

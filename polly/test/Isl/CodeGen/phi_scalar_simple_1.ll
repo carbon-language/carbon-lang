@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -S -polly-detect-unprofitable -polly-no-early-exit -polly-codegen < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-codegen < %s | FileCheck %s
 ;
 ;    int jd(int *restrict A, int x, int N) {
 ;      for (int i = 1; i < N; i++)

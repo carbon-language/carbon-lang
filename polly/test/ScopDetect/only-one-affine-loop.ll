@@ -1,7 +1,7 @@
 ; RUN: opt %loadPolly -polly-detect -polly-detect-unprofitable=false -analyze \
 ; RUN:     -polly-allow-nonaffine-loops < %s | FileCheck %s
 ;
-; RUN: opt %loadPolly -polly-detect -polly-detect-unprofitable -analyze \
+; RUN: opt %loadPolly -polly-detect -analyze \
 ; RUN:     -polly-allow-nonaffine-loops < %s | FileCheck %s --check-prefix=UNPROFIT
 ;
 ; Even if we allow non-affine loops we can only model the outermost loop, all

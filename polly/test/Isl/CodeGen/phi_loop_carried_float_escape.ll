@@ -1,7 +1,7 @@
-; RUN: opt %loadPolly -S -polly-no-early-exit -polly-detect-unprofitable \
+; RUN: opt %loadPolly -S \
 ; RUN: -polly-analyze-read-only-scalars=false -polly-codegen < %s | FileCheck %s
 
-; RUN: opt %loadPolly -S -polly-no-early-exit -polly-detect-unprofitable \
+; RUN: opt %loadPolly -S \
 ; RUN: -polly-analyze-read-only-scalars=true -polly-codegen < %s | FileCheck %s
 ;
 ;    float f(float *A, int N) {

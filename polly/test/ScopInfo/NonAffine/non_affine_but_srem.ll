@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable \
+; RUN: opt %loadPolly -polly-scops \
 ; RUN:                -analyze < %s | FileCheck %s
 ;
 ;    void pos(float *A, long n) {

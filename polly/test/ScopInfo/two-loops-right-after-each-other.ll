@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze \
+; RUN: opt %loadPolly -polly-scops -analyze \
 ; RUN: < %s | FileCheck %s
 
 ; CHECK: Stmt_loop_1

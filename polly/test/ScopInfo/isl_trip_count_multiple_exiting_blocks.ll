@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
 ; CHECK: Domain :=
 ; CHECK:   { Stmt_if_end[i0] : i0 <= 1024 and i0 >= 0 };

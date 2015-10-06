@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -analyze -polly-scops -polly-detect-unprofitable \
+; RUN: opt %loadPolly -analyze -polly-scops \
 ; RUN: < %s | FileCheck %s
 ;
 ;    float foo(float sum, float A[]) {

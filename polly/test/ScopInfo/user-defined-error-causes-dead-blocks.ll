@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable -polly-error-functions=timer_start,timer_stop -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -polly-error-functions=timer_start,timer_stop -analyze < %s | FileCheck %s
 ;
 ; Error blocks are skipped during SCoP detection. Hence, we have to skip
 ; them during SCoP too as they might contain accesses or branches we cannot

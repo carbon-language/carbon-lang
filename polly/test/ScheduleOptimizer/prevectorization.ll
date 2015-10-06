@@ -1,7 +1,7 @@
-; RUN: opt -S %loadPolly -polly-detect-unprofitable -basicaa -polly-opt-isl -polly-vectorizer=polly -polly-ast -analyze < %s | FileCheck %s 
-; RUN: opt -S %loadPolly -polly-detect-unprofitable -basicaa -polly-opt-isl -polly-vectorizer=stripmine -polly-ast -analyze < %s | FileCheck %s
+; RUN: opt -S %loadPolly -basicaa -polly-opt-isl -polly-vectorizer=polly -polly-ast -analyze < %s | FileCheck %s 
+; RUN: opt -S %loadPolly -basicaa -polly-opt-isl -polly-vectorizer=stripmine -polly-ast -analyze < %s | FileCheck %s
 
-; RUN: opt -S %loadPolly -polly-detect-unprofitable -basicaa -polly-opt-isl \
+; RUN: opt -S %loadPolly -basicaa -polly-opt-isl \
 ; RUN:                   -polly-vectorizer=polly -polly-ast -analyze \
 ; RUN:                   -polly-prevect-width=16 < %s | \
 ; RUN:                   FileCheck %s -check-prefix=VEC16

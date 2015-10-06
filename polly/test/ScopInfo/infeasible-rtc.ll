@@ -1,7 +1,7 @@
-; RUN: opt %loadPolly -polly-detect -analyze -polly-detect-unprofitable < %s \
+; RUN: opt %loadPolly -polly-detect -analyze < %s \
 ; RUN:  | FileCheck %s -check-prefix=DETECT
 
-; RUN: opt %loadPolly -polly-scops -analyze -polly-detect-unprofitable < %s \
+; RUN: opt %loadPolly -polly-scops -analyze < %s \
 ; RUN:  | FileCheck %s -check-prefix=SCOPS
 
 ; DETECT: Valid Region for Scop: header => exit

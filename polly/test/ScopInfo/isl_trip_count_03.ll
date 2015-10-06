@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
 ; Test comes from a bug (15771) or better a feature request. It was not allowed
 ; in Polly in the old domain generation as ScalarEvolution cannot figure out the

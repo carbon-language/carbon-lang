@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable \
+; RUN: opt %loadPolly \
 ; RUN:   -polly-detect -polly-allow-nonaffine-loops -analyze \
 ; RUN:   < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-detect-unprofitable=false \

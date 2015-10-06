@@ -1,6 +1,6 @@
-; RUN: opt %loadPolly -polly-codegen -polly-no-early-exit \
+; RUN: opt %loadPolly -polly-codegen \
 ; RUN:     -polly-allow-nonaffine-branches -S -verify-dom-info \
-; RUN:     -polly-detect-unprofitable < %s | FileCheck %s
+; RUN:     < %s | FileCheck %s
 ;
 ;    void f(float *A) {
 ;      for (int i = 0; i < 1024; i++)

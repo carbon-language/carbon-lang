@@ -1,8 +1,8 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable \
+; RUN: opt %loadPolly \
 ; RUN:     -pass-remarks-missed="polly-detect" -polly-detect-track-failures \
 ; RUN:     -polly-allow-nonaffine-loops=false -polly-detect -analyze \
 ; RUN:     < %s 2>&1| FileCheck %s --check-prefix=REJECTNONAFFINELOOPS
-; RUN: opt %loadPolly -polly-detect-unprofitable \
+; RUN: opt %loadPolly \
 ; RUN:     -pass-remarks-missed="polly-detect" -polly-detect-track-failures \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-detect -analyze \
 ; RUN:     < %s 2>&1| FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS

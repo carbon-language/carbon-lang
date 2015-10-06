@@ -1,7 +1,7 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-codegen \
+; RUN: opt %loadPolly -basicaa -polly-codegen \
 ; RUN: -polly-vectorizer=polly -dce -S < %s | FileCheck %s
 
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-codegen -polly-vectorizer=stripmine -dce -S < %s | FileCheck %s --check-prefix=STRIPMINE
+; RUN: opt %loadPolly -basicaa -polly-codegen -polly-vectorizer=stripmine -dce -S < %s | FileCheck %s --check-prefix=STRIPMINE
 
 ;#define N 1024
 ;float A[N];

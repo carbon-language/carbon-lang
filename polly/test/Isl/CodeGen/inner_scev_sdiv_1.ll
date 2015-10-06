@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -S -polly-no-early-exit -polly-detect-unprofitable -polly-codegen < %s
+; RUN: opt %loadPolly -S -polly-codegen < %s
 ;
 ; Excerpt from the test-suite's oggenc reduced using bugpoint.
 ;

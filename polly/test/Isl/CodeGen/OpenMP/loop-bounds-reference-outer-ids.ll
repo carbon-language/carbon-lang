@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-parallel -polly-codegen -S < %s | FileCheck %s -check-prefix=IR
+; RUN: opt %loadPolly -polly-parallel -polly-ast -analyze < %s | FileCheck %s -check-prefix=AST
+; RUN: opt %loadPolly -polly-parallel -polly-codegen -S < %s | FileCheck %s -check-prefix=IR
 ;
 ; float A[100];
 ;

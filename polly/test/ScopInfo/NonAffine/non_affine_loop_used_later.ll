@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops \
+; RUN: opt %loadPolly -polly-scops \
 ; RUN:     -polly-allow-nonaffine -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine \

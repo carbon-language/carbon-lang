@@ -1,8 +1,8 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: opt %loadPolly \
 ; RUN: -polly-analyze-read-only-scalars=false -polly-codegen -S < %s | \
 ; RUN: FileCheck %s
 
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: opt %loadPolly \
 ; RUN: -polly-analyze-read-only-scalars=true -polly-codegen -S < %s | \
 ; RUN: FileCheck %s
 

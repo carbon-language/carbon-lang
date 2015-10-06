@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-codegen -polly-delinearize \
-; RUN:     -polly-detect-unprofitable -S < %s | FileCheck %s
+; RUN:     -S < %s | FileCheck %s
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 ; CHECK: sext i32 %indvar.init to i64

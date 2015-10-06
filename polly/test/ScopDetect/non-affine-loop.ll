@@ -1,14 +1,14 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
-; RUN:     -polly-allow-nonaffine-loops=false -polly-detect-unprofitable \
+; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
+; RUN:     -polly-allow-nonaffine-loops=false \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=REJECTNONAFFINELOOPS
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
-; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
+; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
+; RUN:     -polly-allow-nonaffine-loops=true \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=ALLOWNONAFFINELOOPS
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=false -polly-allow-nonaffine \
 ; RUN:     -analyze < %s | FileCheck %s \
 ; RUN:     --check-prefix=ALLOWNONAFFINEREGIONSANDACCESSES
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-allow-nonaffine-branches \
+; RUN: opt %loadPolly -polly-detect -polly-allow-nonaffine-branches \
 ; RUN:     -polly-allow-nonaffine-loops=true -polly-allow-nonaffine \
 ; RUN:     -analyze < %s | FileCheck %s \
 ; RUN:     --check-prefix=ALLOWNONAFFINELOOPSANDACCESSES

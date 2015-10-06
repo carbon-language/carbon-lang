@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen -polly-detect-unprofitable -analyze < %s
+; RUN: opt %loadPolly -polly-codegen -analyze < %s
 ;
 ;
 ;    void f(int *A) {

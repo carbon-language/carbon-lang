@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops \
+; RUN: opt %loadPolly -polly-scops \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops \
 ; RUN:     -analyze < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine-branches \
@@ -9,7 +9,7 @@
 
 ; RUN: opt %loadPolly -polly-scops -polly-detect-reductions \
 ; RUN:                -polly-allow-nonaffine-branches \
-; RUN:                -polly-detect-unprofitable \
+; RUN:                \
 ; RUN:                -polly-allow-nonaffine-loops -analyze < %s \
 ; RUN:                -polly-detect-reductions=false \
 ; RUN: | FileCheck %s -check-prefix=NO-REDUCTION

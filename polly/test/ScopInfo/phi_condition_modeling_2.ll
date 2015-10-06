@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -analyze -polly-scops < %s | FileCheck %s
+; RUN: opt %loadPolly -analyze -polly-scops < %s | FileCheck %s
 ;
 ;    void f(int *A, int c, int N) {
 ;      int tmp;

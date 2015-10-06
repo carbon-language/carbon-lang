@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -polly-allow-nonaffine -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine -analyze < %s | FileCheck %s
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 128; i++)

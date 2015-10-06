@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-allow-nonaffine-branches -polly-detect \
-; RUN:     -polly-detect-unprofitable -analyze < %s | FileCheck %s
+; RUN:     -analyze < %s | FileCheck %s
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)

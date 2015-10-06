@@ -1,7 +1,7 @@
-; RUN: opt %loadPolly -analyze -polly-detect-unprofitable -polly-ast -polly-vectorizer=polly < %s | \
+; RUN: opt %loadPolly -analyze -polly-ast -polly-vectorizer=polly < %s | \
 ; RUN:     FileCheck %s -check-prefix=AST
 
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen -polly-vectorizer=polly -S < %s | \
+; RUN: opt %loadPolly -polly-codegen -polly-vectorizer=polly -S < %s | \
 ; RUN:     FileCheck %s
 ;
 ;    void foo(float *A) {

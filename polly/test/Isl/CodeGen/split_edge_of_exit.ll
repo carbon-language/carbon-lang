@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -verify-region-info -analyze < %s
+; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -verify-region-info -analyze < %s
 ;
 ; This is a scop directly precedented by a region, i.e. the scop's entry is the
 ; region's exit block. This test is to ensure that the RegionInfo is correctly

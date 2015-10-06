@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-allow-non-scev-backedge-taken-count -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-allow-non-scev-backedge-taken-count -polly-scops -analyze < %s | FileCheck %s
 ;
 ; TODO: We do not allow unbounded loops at the moment.
 ;

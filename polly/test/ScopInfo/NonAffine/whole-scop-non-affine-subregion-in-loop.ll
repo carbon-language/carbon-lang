@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s
 ;
 ; Regression test that triggered a memory leak at some point (24947).
 ;

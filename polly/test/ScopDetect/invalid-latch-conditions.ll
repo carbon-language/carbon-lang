@@ -1,7 +1,7 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable=false \
 ; RUN:     -polly-detect -analyze < %s | FileCheck %s
 
-; RUN: opt %loadPolly -polly-allow-nonaffine-loops -polly-detect-unprofitable \
+; RUN: opt %loadPolly -polly-allow-nonaffine-loops \
 ; RUN:     -polly-detect -analyze < %s | FileCheck %s --check-prefix=NALOOPS
 
 ; RUN: opt %loadPolly -polly-allow-nonaffine-loops -polly-detect -analyze \

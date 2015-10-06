@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-import-jscop \
-; RUN: -polly-import-jscop-dir=%S -polly-no-early-exit \
+; RUN: opt %loadPolly -polly-import-jscop \
+; RUN: -polly-import-jscop-dir=%S \
 ; RUN: -polly-codegen -S < %s | FileCheck %s
 ;
 ;    void foo(float A[], float B[]) {

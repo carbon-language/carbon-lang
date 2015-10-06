@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -S -polly-codegen -polly-no-early-exit \
-; RUN:     -polly-detect-unprofitable < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-codegen \
+; RUN:     < %s | FileCheck %s
 ;
 ; Check that this will not crash our code generation.
 ;

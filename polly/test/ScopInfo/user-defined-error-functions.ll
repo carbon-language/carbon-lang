@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable -polly-error-functions=timer_start,timer_stop -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -polly-error-functions=timer_start,timer_stop -analyze < %s | FileCheck %s
 ;
 ; Allow the user to define function names that are treated as
 ; error functions and assumed not to be executed.

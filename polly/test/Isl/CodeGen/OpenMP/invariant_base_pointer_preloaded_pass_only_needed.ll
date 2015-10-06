@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-codegen -polly-parallel \
-; RUN: -polly-parallel-force -polly-detect-unprofitable -S < %s | FileCheck %s
+; RUN: -polly-parallel-force -S < %s | FileCheck %s
 ;
 ; Test to verify that we hand down the preloaded A[0] to the OpenMP subfunction but
 ; not B[0] as it is not needed

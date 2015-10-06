@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: opt %loadPolly \
 ; RUN:     -polly-codegen -S < %s | FileCheck %s
 
 ; This test cases used to crash the scalar code generation. Check that we

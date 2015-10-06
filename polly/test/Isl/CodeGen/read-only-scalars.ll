@@ -1,8 +1,8 @@
 ; RUN: opt %loadPolly -polly-analyze-read-only-scalars=false -polly-codegen \
-; RUN:     -polly-no-early-exit -polly-detect-unprofitable \
+; RUN:     \
 ; RUN:     -S < %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-analyze-read-only-scalars=true -polly-codegen \
-; RUN:     -polly-no-early-exit -polly-detect-unprofitable \
+; RUN:     \
 ; RUN:     -S < %s | FileCheck %s -check-prefix=SCALAR
 
 ; CHECK-NOT: alloca

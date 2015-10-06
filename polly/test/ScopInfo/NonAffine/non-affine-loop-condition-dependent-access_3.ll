@@ -1,8 +1,8 @@
 ; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine-branches \
-; RUN:     -polly-allow-nonaffine-loops=false -polly-detect-unprofitable \
+; RUN:     -polly-allow-nonaffine-loops=false \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=INNERMOST
 ; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine-branches \
-; RUN:     -polly-allow-nonaffine-loops=true -polly-detect-unprofitable \
+; RUN:     -polly-allow-nonaffine-loops=true \
 ; RUN:      -analyze < %s | FileCheck %s --check-prefix=INNERMOST
 ; RUN: opt %loadPolly -basicaa -polly-scops -polly-allow-nonaffine \
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \

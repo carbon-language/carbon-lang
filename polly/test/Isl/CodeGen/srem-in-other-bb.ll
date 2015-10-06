@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-codegen -S -polly-no-early-exit \
-; RUN:     -polly-detect-unprofitable < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -S \
+; RUN:     < %s | FileCheck %s
 ;
 ;    void pos(float *A, long n) {
 ;      for (long i = 0; i < 100; i++)

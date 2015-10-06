@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN: opt %loadPolly \
 ; RUN: -S -polly-codegen < %s | FileCheck %s
 ;
 ;    void f(int *A, int N) {

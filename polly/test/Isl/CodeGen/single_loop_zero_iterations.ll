@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-ast -analyze -S < %s | FileCheck %s -check-prefix=SCALAR
+; RUN: opt %loadPolly -polly-ast -analyze -S < %s | FileCheck %s -check-prefix=SCALAR
 
 ;#define N 20
 ;

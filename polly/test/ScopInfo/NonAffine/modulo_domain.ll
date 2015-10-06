@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -polly-detect-unprofitable -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
 ; TODO: The new domain generation cannot handle modulo domain constraints,
 ;       hence modulo handling has been disabled completely. Once this is

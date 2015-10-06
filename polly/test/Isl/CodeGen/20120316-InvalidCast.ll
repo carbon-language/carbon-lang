@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-codegen -polly-no-early-exit < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-codegen < %s | FileCheck %s
 
 ; TODO: FIXME: IslExprBuilder is not capable of producing valid code
 ;              for arbitrary pointer expressions at the moment. Until
