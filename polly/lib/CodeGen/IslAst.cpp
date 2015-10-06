@@ -545,6 +545,11 @@ void IslAstInfo::printScop(raw_ostream &OS, Scop &S) const {
 
   if (!RootNode) {
     OS << ":: isl ast generation and code generation was skipped!\n\n";
+    OS << ":: This is either because no useful optimizations could be applied "
+          "(use -polly-process-unprofitable to enforce code generation) or "
+          "because earlier passes such as dependence analysis timed out (use "
+          "-polly-dependences-computeout=0 to set dependence analysis timeout "
+          "to infinity)\n\n";
     return;
   }
 
