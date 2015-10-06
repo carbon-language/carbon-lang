@@ -202,10 +202,10 @@ elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
     # since the default ABI differs between gcc and clang.
     # FIXME: Ideally, we would build the N32 library too.
     test_target_arch(mipsel "" "-mips32r2" "--target=mipsel-linux-gnu")
-    test_target_arch(mips64el "" "-mips64r2" "-mabi=n64")
+    test_target_arch(mips64el "" "-mips64r2" "--target=mips64el-linux-gnu" "-mabi=n64")
   elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "mips")
     test_target_arch(mips "" "-mips32r2" "--target=mips-linux-gnu")
-    test_target_arch(mips64 "" "-mips64r2" "-mabi=n64")
+    test_target_arch(mips64 "" "-mips64r2" "--target=mips64-linux-gnu" "-mabi=n64")
   elseif("${COMPILER_RT_DEFAULT_TARGET_ARCH}" MATCHES "arm")
     test_target_arch(arm "" "-march=armv7-a" "-mfloat-abi=soft")
     test_target_arch(armhf "" "-march=armv7-a" "-mfloat-abi=hard")
@@ -260,7 +260,8 @@ if(APPLE)
   set(X86_64 x86_64 x86_64h)
 endif()
 
-set(ALL_BUILTIN_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64})
+set(ALL_BUILTIN_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64}
+    ${MIPS32} ${MIPS64})
 set(ALL_SANITIZER_COMMON_SUPPORTED_ARCH ${X86} ${X86_64} ${PPC64}
     ${ARM32} ${ARM64} ${MIPS32} ${MIPS64})
 set(ALL_ASAN_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64}

@@ -323,6 +323,11 @@ set(armv6m_SOURCES ${GENERIC_SOURCES})
 set(armv7m_SOURCES ${arm_SOURCES})
 set(armv7em_SOURCES ${arm_SOURCES})
 
+set(mips_SOURCES ${GENERIC_SOURCES})
+set(mipsel_SOURCES ${mips_SOURCES})
+set(mips64_SOURCES ${mips_SOURCES})
+set(mips64el_SOURCES ${mips_SOURCES})
+
 add_custom_target(builtins)
 
 if (APPLE)
