@@ -21,8 +21,8 @@
 #define HAVE_SYSCONF 1
 
 #ifdef _WIN32
-#include <windef.h>
-#include <winbase.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #else
 #ifndef __APPLE__
 #include <unistd.h>
