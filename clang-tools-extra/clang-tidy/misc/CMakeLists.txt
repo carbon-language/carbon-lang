@@ -29,4 +29,5 @@ add_clang_library(clangTidyMiscModule
   clangBasic
   clangLex
   clangTidy
+  clangTidyUtils
   )
