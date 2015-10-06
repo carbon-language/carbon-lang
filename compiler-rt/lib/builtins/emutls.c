@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "int_lib.h"
 #include "int_util.h"
 
 /* Default is not to use posix_memalign, so systems like Android
