@@ -25,7 +25,7 @@
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Target/RegisterContext.h"
-
+#include "lldb/Expression/UserExpression.h"
 #include "lldb/Symbol/VariableList.h"
 
 using namespace lldb;
@@ -130,26 +130,116 @@ struct RenderScriptRuntime::ScriptDetails
 // allocation instance.
 struct RenderScriptRuntime::AllocationDetails
 {
-    ~AllocationDetails () {};
+   // Taken from rsDefines.h
+   enum DataKind
+   {
+       RS_KIND_USER,
+       RS_KIND_PIXEL_L = 7,
+       RS_KIND_PIXEL_A,
+       RS_KIND_PIXEL_LA,
+       RS_KIND_PIXEL_RGB,
+       RS_KIND_PIXEL_RGBA,
+       RS_KIND_PIXEL_DEPTH,
+       RS_KIND_PIXEL_YUV,
+       RS_KIND_INVALID = 100
+   };
 
-    enum DataType
-    {
-        eInt,
+   // Taken from rsDefines.h
+   enum DataType
+   {
+       RS_TYPE_NONE = 0,
+       RS_TYPE_FLOAT_16,
+       RS_TYPE_FLOAT_32,
+       RS_TYPE_FLOAT_64,
+       RS_TYPE_SIGNED_8,
+       RS_TYPE_SIGNED_16,
+       RS_TYPE_SIGNED_32,
+       RS_TYPE_SIGNED_64,
+       RS_TYPE_UNSIGNED_8,
+       RS_TYPE_UNSIGNED_16,
+       RS_TYPE_UNSIGNED_32,
+       RS_TYPE_UNSIGNED_64,
+       RS_TYPE_BOOLEAN
     };
 
-    enum Dimension
+    struct Dimension
     {
-        e1d,
-        e2d,
-        e3d,
-        eCubeMap,
+        uint32_t dim_1;
+        uint32_t dim_2;
+        uint32_t dim_3;
+        uint32_t cubeMap;
+
+        Dimension()
+        {
+             dim_1 = 0;
+             dim_2 = 0;
+             dim_3 = 0;
+             cubeMap = 0;
+        }
     };
 
-    empirical_type<DataType> type;
-    empirical_type<Dimension> dimension;
-    empirical_type<lldb::addr_t> address;
-    empirical_type<lldb::addr_t> dataPtr;
-    empirical_type<lldb::addr_t> context;
+    // Monotonically increasing from 1
+    static unsigned int ID;
+
+    // Maps Allocation DataType enum and vector size to printable strings
+    // using mapping from RenderScript numerical types summary documentation
+    static const char* RsDataTypeToString[][4];
+
+    // Maps Allocation DataKind enum to printable strings
+    static const char* RsDataKindToString[];
+
+    // Give each allocation an ID as a way
+    // for commands to reference it.
+    const unsigned int id;
+
+    empirical_type<DataType> type;            // Type of each data pointer stored by the allocation
+    empirical_type<DataKind> type_kind;       // Defines pixel type if Allocation is created from an image
+    empirical_type<uint32_t> type_vec_size;   // Vector size of each data point, e.g '4' for uchar4
+    empirical_type<Dimension> dimension;      // Dimensions of the Allocation
+    empirical_type<lldb::addr_t> address;     // Pointer to address of the RS Allocation
+    empirical_type<lldb::addr_t> data_ptr;    // Pointer to the data held by the Allocation
+    empirical_type<lldb::addr_t> type_ptr;    // Pointer to the RS Type of the Allocation
+    empirical_type<lldb::addr_t> element_ptr; // Pointer to the RS Element of the Type
+    empirical_type<lldb::addr_t> context;     // Pointer to the RS Context of the Allocation
+
+    // Give each allocation an id, so we can reference it in user commands.
+    AllocationDetails(): id(ID++)
+    {
+    }
+
+};
+
+unsigned int RenderScriptRuntime::AllocationDetails::ID = 1;
+
+const char* RenderScriptRuntime::AllocationDetails::RsDataKindToString[] =
+{
+   "User",
+   "Undefined", "Undefined", "Undefined", // Enum jumps from 0 to 7
+   "Undefined", "Undefined", "Undefined",
+   "L Pixel",
+   "A Pixel",
+   "LA Pixel",
+   "RGB Pixel",
+   "RGBA Pixel",
+   "Pixel Depth",
+   "YUV Pixel"
+};
+
+const char* RenderScriptRuntime::AllocationDetails::RsDataTypeToString[][4] =
+{
+    {"None", "None", "None", "None"},
+    {"half", "half2", "half3", "half4"},
+    {"float", "float2", "float3", "float4"},
+    {"double", "double2", "double3", "double4"},
+    {"char", "char2", "char3", "char4"},
+    {"short", "short2", "short3", "short4"},
+    {"int", "int2", "int3", "int4"},
+    {"long", "long2", "long3", "long4"},
+    {"uchar", "uchar2", "uchar3", "uchar4"},
+    {"ushort", "ushort2", "ushort3", "ushort4"},
+    {"uint", "uint2", "uint3", "uint4"},
+    {"ulong", "ulong2", "ulong3", "ulong4"},
+    {"bool", "bool2", "bool3", "bool4"}
 };
 
 //------------------------------------------------------------------
@@ -250,7 +340,7 @@ RenderScriptRuntime::GetModuleKind(const lldb::ModuleSP &module_sp)
             return eModuleKindDriver;
         }
 
-        const ConstString rs_cpureflib("libRSCPURef.so");
+        const ConstString rs_cpureflib("libRSCpuRef.so");
         if (module_sp->GetFileSpec().GetFilename() == rs_cpureflib)
         {
             return eModuleKindImpl;
@@ -820,6 +910,330 @@ RenderScriptRuntime::FixupScriptDetails(RSModuleDescriptorSP rsmodule_sp)
     }
 }
 
+// Uses the Target API to evaluate the expression passed as a parameter to the function
+// The result of that expression is returned an unsigned 64 bit int, via the result* paramter.
+// Function returns true on success, and false on failure
+bool
+RenderScriptRuntime::EvalRSExpression(const char* expression, StackFrame* frame_ptr, uint64_t* result)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+    if (log)
+        log->Printf("RenderScriptRuntime::EvalRSExpression(%s)", expression);
+
+    ValueObjectSP expr_result;
+    // Perform the actual expression evaluation
+    GetProcess()->GetTarget().EvaluateExpression(expression, frame_ptr, expr_result);
+
+    if (!expr_result)
+    {
+       if (log)
+           log->Printf("RenderScriptRuntime::EvalRSExpression -  Error: Couldn't evaluate expression");
+       return false;
+    }
+
+    // The result of the expression is invalid
+    if (!expr_result->GetError().Success())
+    {
+        Error err = expr_result->GetError();
+        if (err.GetError() == UserExpression::kNoResult) // Expression returned void, so this is actually a success
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::EvalRSExpression - Expression returned void");
+
+            result = nullptr;
+            return true;
+        }
+
+        if (log)
+            log->Printf("RenderScriptRuntime::EvalRSExpression - Error evaluating expression result: %s", err.AsCString());
+        return false;
+    }
+
+    bool success = false;
+    *result = expr_result->GetValueAsUnsigned(0, &success); // We only read the result as an unsigned int.
+
+    if (!success)
+    {
+       if (log)
+           log->Printf("RenderScriptRuntime::EvalRSExpression -  Error: Couldn't convert expression result to unsigned int");
+       return false;
+    }
+
+    return true;
+}
+
+// Used to index expression format strings
+enum ExpressionStrings
+{
+   eExprGetOffsetPtr = 0,
+   eExprAllocGetType,
+   eExprTypeDimX,
+   eExprTypeDimY,
+   eExprTypeDimZ,
+   eExprTypeElemPtr,
+   eExprElementType,
+   eExprElementKind,
+   eExprElementVec
+};
+
+// Format strings containing the expressions we may need to evaluate.
+const char runtimeExpressions[][256] =
+{
+ // Mangled GetOffsetPointer(Allocation*, xoff, yoff, zoff, lod, cubemap)
+ "(int*)_Z12GetOffsetPtrPKN7android12renderscript10AllocationEjjjj23RsAllocationCubemapFace(0x%lx, %u, %u, %u, 0, 0)",
+
+ // Type* rsaAllocationGetType(Context*, Allocation*)
+ "(void*)rsaAllocationGetType(0x%lx, 0x%lx)",
+
+ // rsaTypeGetNativeData(Context*, Type*, void* typeData, size)
+ // Pack the data in the following way mHal.state.dimX; mHal.state.dimY; mHal.state.dimZ;
+ // mHal.state.lodCount; mHal.state.faces; mElement; into typeData
+ // Need to specify 32 or 64 bit for uint_t since this differs between devices
+ "uint%u_t data[6]; (void*)rsaTypeGetNativeData(0x%lx, 0x%lx, data, 6); data[0]", // X dim
+ "uint%u_t data[6]; (void*)rsaTypeGetNativeData(0x%lx, 0x%lx, data, 6); data[1]", // Y dim
+ "uint%u_t data[6]; (void*)rsaTypeGetNativeData(0x%lx, 0x%lx, data, 6); data[2]", // Z dim
+ "uint%u_t data[6]; (void*)rsaTypeGetNativeData(0x%lx, 0x%lx, data, 6); data[5]", // Element ptr
+
+ // rsaElementGetNativeData(Context*, Element*, uint32_t* elemData,size)
+ // Pack mType; mKind; mNormalized; mVectorSize; NumSubElements into elemData
+ "uint32_t data[6]; (void*)rsaElementGetNativeData(0x%lx, 0x%lx, data, 5); data[0]", // Type
+ "uint32_t data[6]; (void*)rsaElementGetNativeData(0x%lx, 0x%lx, data, 5); data[1]", // Kind
+ "uint32_t data[6]; (void*)rsaElementGetNativeData(0x%lx, 0x%lx, data, 5); data[3]"  // Vector Size
+};
+
+// JITs the RS runtime for the internal data pointer of an allocation.
+// Is passed x,y,z coordinates for the pointer to a specific element.
+// Then sets the data_ptr member in Allocation with the result.
+// Returns true on success, false otherwise
+bool
+RenderScriptRuntime::JITDataPointer(AllocationDetails* allocation, StackFrame* frame_ptr,
+                                    unsigned int x, unsigned int y, unsigned int z)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    if (!allocation->address.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITDataPointer - Failed to find allocation details");
+        return false;
+    }
+
+    const char* expr_cstr = runtimeExpressions[eExprGetOffsetPtr];
+    const int max_expr_size = 512; // Max expression size
+    char buffer[max_expr_size];
+
+    int chars_written = snprintf(buffer, max_expr_size, expr_cstr, *allocation->address.get(), x, y, z);
+    if (chars_written < 0)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITDataPointer - Encoding error in snprintf()");
+        return false;
+    }
+    else if (chars_written >= max_expr_size)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITDataPointer - Expression too long");
+        return false;
+    }
+
+    uint64_t result = 0;
+    if (!EvalRSExpression(buffer, frame_ptr, &result))
+        return false;
+
+    addr_t mem_ptr = static_cast<lldb::addr_t>(result);
+    allocation->data_ptr = mem_ptr;
+
+    return true;
+}
+
+// JITs the RS runtime for the internal pointer to the RS Type of an allocation
+// Then sets the type_ptr member in Allocation with the result.
+// Returns true on success, false otherwise
+bool
+RenderScriptRuntime::JITTypePointer(AllocationDetails* allocation, StackFrame* frame_ptr)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    if (!allocation->address.isValid() || !allocation->context.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITTypePointer - Failed to find allocation details");
+        return false;
+    }
+
+    const char* expr_cstr = runtimeExpressions[eExprAllocGetType];
+    const int max_expr_size = 512; // Max expression size
+    char buffer[max_expr_size];
+
+    int chars_written = snprintf(buffer, max_expr_size, expr_cstr, *allocation->context.get(), *allocation->address.get());
+    if (chars_written < 0)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITDataPointer - Encoding error in snprintf()");
+        return false;
+    }
+    else if (chars_written >= max_expr_size)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITTypePointer - Expression too long");
+        return false;
+    }
+
+    uint64_t result = 0;
+    if (!EvalRSExpression(buffer, frame_ptr, &result))
+        return false;
+
+    addr_t type_ptr = static_cast<lldb::addr_t>(result);
+    allocation->type_ptr = type_ptr;
+
+    return true;
+}
+
+// JITs the RS runtime for information about the dimensions and type of an allocation
+// Then sets dimension and element_ptr members in Allocation with the result.
+// Returns true on success, false otherwise
+bool
+RenderScriptRuntime::JITTypePacked(AllocationDetails* allocation, StackFrame* frame_ptr)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    if (!allocation->type_ptr.isValid() || !allocation->context.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITTypePacked - Failed to find allocation details");
+        return false;
+    }
+
+    // Expression is different depending on if device is 32 or 64 bit
+    uint32_t archByteSize = GetProcess()->GetTarget().GetArchitecture().GetAddressByteSize();
+    const unsigned int bits = archByteSize == 4 ? 32 : 64;
+
+    // We want 4 elements from packed data
+    const unsigned int num_exprs = 4;
+    assert(num_exprs == (eExprTypeElemPtr - eExprTypeDimX + 1) && "Invalid number of expressions");
+
+    const int max_expr_size = 512; // Max expression size
+    char buffer[num_exprs][max_expr_size];
+    uint64_t results[num_exprs];
+
+    for (unsigned int i = 0; i < num_exprs; ++i)
+    {
+        int chars_written = snprintf(buffer[i], max_expr_size, runtimeExpressions[eExprTypeDimX + i], bits,
+                                     *allocation->context.get(), *allocation->type_ptr.get());
+        if (chars_written < 0)
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::JITDataPointer - Encoding error in snprintf()");
+            return false;
+        }
+        else if (chars_written >= max_expr_size)
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::JITTypePacked - Expression too long");
+            return false;
+        }
+
+        // Perform expression evaluation
+        if (!EvalRSExpression(buffer[i], frame_ptr, &results[i]))
+            return false;
+    }
+
+    // Assign results to allocation members
+    AllocationDetails::Dimension dims;
+    dims.dim_1 = static_cast<uint32_t>(results[0]);
+    dims.dim_2 = static_cast<uint32_t>(results[1]);
+    dims.dim_3 = static_cast<uint32_t>(results[2]);
+    allocation->dimension = dims;
+
+    addr_t elem_ptr = static_cast<lldb::addr_t>(results[3]);
+    allocation->element_ptr = elem_ptr;
+
+    if (log)
+        log->Printf("RenderScriptRuntime::JITTypePacked - dims (%u, %u, %u) Element*: 0x%" PRIx64,
+                    dims.dim_1, dims.dim_2, dims.dim_3, elem_ptr);
+
+    return true;
+}
+
+// JITs the RS runtime for information about the Element of an allocation
+// Then sets type, type_vec_size, and type_kind members in Allocation with the result.
+// Returns true on success, false otherwise
+bool
+RenderScriptRuntime::JITElementPacked(AllocationDetails* allocation, StackFrame* frame_ptr)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    if (!allocation->element_ptr.isValid() || !allocation->context.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITElementPacked - Failed to find allocation details");
+        return false;
+    }
+
+    // We want 3 elements from packed data
+    const unsigned int num_exprs = 3;
+    assert(num_exprs == (eExprElementVec - eExprElementType + 1) && "Invalid number of expressions");
+
+    const int max_expr_size = 512; // Max expression size
+    char buffer[num_exprs][max_expr_size];
+    uint64_t results[num_exprs];
+
+    for (unsigned int i = 0; i < num_exprs; i++)
+    {
+        int chars_written = snprintf(buffer[i], max_expr_size, runtimeExpressions[eExprElementType + i], *allocation->context.get(), *allocation->element_ptr.get());
+        if (chars_written < 0)
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::JITDataPointer - Encoding error in snprintf()");
+            return false;
+        }
+        else if (chars_written >= max_expr_size)
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::JITElementPacked - Expression too long");
+            return false;
+        }
+
+        // Perform expression evaluation
+        if (!EvalRSExpression(buffer[i], frame_ptr, &results[i]))
+            return false;
+    }
+
+    // Assign results to allocation members
+    allocation->type = static_cast<RenderScriptRuntime::AllocationDetails::DataType>(results[0]);
+    allocation->type_kind = static_cast<RenderScriptRuntime::AllocationDetails::DataKind>(results[1]);
+    allocation->type_vec_size = static_cast<uint32_t>(results[2]);
+
+    if (log)
+        log->Printf("RenderScriptRuntime::JITElementPacked - data type %u, pixel type %u, vector size %u",
+                    *allocation->type.get(), *allocation->type_kind.get(), *allocation->type_vec_size.get());
+
+    return true;
+}
+
+// JIT all the current runtime info regarding an allocation
+bool
+RenderScriptRuntime::RefreshAllocation(AllocationDetails* allocation, StackFrame* frame_ptr)
+{
+    // GetOffsetPointer()
+    if (!JITDataPointer(allocation, frame_ptr))
+        return false;
+
+    // rsaAllocationGetType()
+    if (!JITTypePointer(allocation, frame_ptr))
+        return false;
+
+    // rsaTypeGetNativeData()
+    if (!JITTypePacked(allocation, frame_ptr))
+        return false;
+
+    // rsaElementGetNativeData()
+    if (!JITElementPacked(allocation, frame_ptr))
+        return false;
+
+    return true;
+}
+
 bool
 RenderScriptRuntime::LoadModule(const lldb::ModuleSP &module_sp)
 {
@@ -1110,6 +1524,89 @@ RenderScriptRuntime::DumpKernels(Stream &strm) const
             strm.Indent(kernel.m_name.AsCString());
             strm.EOL();
         }
+    }
+    strm.IndentLess();
+}
+
+// Prints infomation regarding all the currently loaded allocations.
+// These details are gathered by jitting the runtime, which has as latency.
+void
+RenderScriptRuntime::ListAllocations(Stream &strm, StackFrame* frame_ptr, bool recompute)
+{
+    strm.Printf("RenderScript Allocations:");
+    strm.EOL();
+    strm.IndentMore();
+
+    for (auto &alloc : m_allocations)
+    {
+        // JIT the allocation info if we haven't done it, or the user forces us to.
+        bool do_refresh = !alloc->data_ptr.isValid() || recompute;
+
+        // JIT current allocation information
+        if (do_refresh && !RefreshAllocation(alloc.get(), frame_ptr))
+        {
+            strm.Printf("Error: Couldn't evaluate details for allocation %u\n", alloc->id);
+            continue;
+        }
+
+        strm.Printf("%u:\n",alloc->id);
+        strm.IndentMore();
+
+        strm.Indent("Context: ");
+        if (!alloc->context.isValid())
+            strm.Printf("unknown\n");
+        else
+            strm.Printf("0x%" PRIx64 "\n", *alloc->context.get());
+
+        strm.Indent("Address: ");
+        if (!alloc->address.isValid())
+            strm.Printf("unknown\n");
+        else
+            strm.Printf("0x%" PRIx64 "\n", *alloc->address.get());
+
+        strm.Indent("Data pointer: ");
+        if (!alloc->data_ptr.isValid())
+            strm.Printf("unknown\n");
+        else
+            strm.Printf("0x%" PRIx64 "\n", *alloc->data_ptr.get());
+
+        strm.Indent("Dimensions: ");
+        if (!alloc->dimension.isValid())
+            strm.Printf("unknown\n");
+        else
+            strm.Printf("(%d, %d, %d)\n", alloc->dimension.get()->dim_1,
+                                          alloc->dimension.get()->dim_2,
+                                          alloc->dimension.get()->dim_3);
+
+        strm.Indent("Data Type: ");
+        if (!alloc->type.isValid() || !alloc->type_vec_size.isValid())
+            strm.Printf("unknown\n");
+        else
+        {
+            const int vector_size = *alloc->type_vec_size.get();
+            const AllocationDetails::DataType type = *alloc->type.get();
+
+            if (vector_size > 4 || vector_size < 1 ||
+                type < AllocationDetails::RS_TYPE_NONE || type > AllocationDetails::RS_TYPE_BOOLEAN)
+                strm.Printf("invalid type\n");
+            else
+                strm.Printf("%s\n", AllocationDetails::RsDataTypeToString[static_cast<unsigned int>(type)][vector_size-1]);
+        }
+
+        strm.Indent("Data Kind: ");
+        if (!alloc->type_kind.isValid())
+            strm.Printf("unknown\n");
+        else
+        {
+            const AllocationDetails::DataKind kind = *alloc->type_kind.get();
+            if (kind < AllocationDetails::RS_KIND_USER || kind > AllocationDetails::RS_KIND_PIXEL_YUV)
+                strm.Printf("invalid kind\n");
+            else
+                strm.Printf("%s\n", AllocationDetails::RsDataKindToString[static_cast<unsigned int>(kind)]);
+        }
+
+        strm.EOL();
+        strm.IndentLess();
     }
     strm.IndentLess();
 }
@@ -1608,6 +2105,108 @@ class CommandObjectRenderScriptRuntimeContext : public CommandObjectMultiword
     ~CommandObjectRenderScriptRuntimeContext() {}
 };
 
+class CommandObjectRenderScriptRuntimeAllocationList : public CommandObjectParsed
+{
+  public:
+    CommandObjectRenderScriptRuntimeAllocationList(CommandInterpreter &interpreter)
+        : CommandObjectParsed(interpreter, "renderscript allocation list",
+                              "List renderscript allocations and their information.", "renderscript allocation list",
+                              eCommandRequiresProcess | eCommandProcessMustBeLaunched), m_options(interpreter)
+    {
+    }
+
+    virtual Options*
+    GetOptions()
+    {
+        return &m_options;
+    }
+
+    class CommandOptions : public Options
+    {
+      public:
+        CommandOptions(CommandInterpreter &interpreter) : Options(interpreter), m_refresh(false)
+        {
+        }
+
+        virtual
+        ~CommandOptions()
+        {
+        }
+
+        virtual Error
+        SetOptionValue(uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'r':
+                    m_refresh = true;
+                    break;
+                default:
+                    error.SetErrorStringWithFormat("unrecognized option '%c'", short_option);
+                    break;
+            }
+            return error;
+        }
+
+        void
+        OptionParsingStarting()
+        {
+            m_refresh = false;
+        }
+
+        const OptionDefinition*
+        GetDefinitions()
+        {
+            return g_option_table;
+        }
+
+        static OptionDefinition g_option_table[];
+        bool m_refresh;
+    };
+
+    ~CommandObjectRenderScriptRuntimeAllocationList() {}
+
+    bool
+    DoExecute(Args &command, CommandReturnObject &result)
+    {
+        RenderScriptRuntime *runtime =
+          static_cast<RenderScriptRuntime *>(m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript));
+        runtime->ListAllocations(result.GetOutputStream(), m_exe_ctx.GetFramePtr(), m_options.m_refresh);
+        result.SetStatus(eReturnStatusSuccessFinishResult);
+        return true;
+    }
+
+  private:
+    CommandOptions m_options;
+};
+
+OptionDefinition
+CommandObjectRenderScriptRuntimeAllocationList::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "refresh", 'r', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
+      "Recompute allocation details."},
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+};
+
+
+class CommandObjectRenderScriptRuntimeAllocation : public CommandObjectMultiword
+{
+  private:
+  public:
+    CommandObjectRenderScriptRuntimeAllocation(CommandInterpreter &interpreter)
+        : CommandObjectMultiword(interpreter, "renderscript allocation", "Commands that deal with renderscript allocations.",
+                                 NULL)
+    {
+        LoadSubCommand("list", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationList(interpreter)));
+    }
+
+    ~CommandObjectRenderScriptRuntimeAllocation() {}
+};
+
+
 class CommandObjectRenderScriptRuntimeStatus : public CommandObjectParsed
 {
   private:
@@ -1643,6 +2242,7 @@ class CommandObjectRenderScriptRuntime : public CommandObjectMultiword
         LoadSubCommand("status", CommandObjectSP(new CommandObjectRenderScriptRuntimeStatus(interpreter)));
         LoadSubCommand("kernel", CommandObjectSP(new CommandObjectRenderScriptRuntimeKernel(interpreter)));
         LoadSubCommand("context", CommandObjectSP(new CommandObjectRenderScriptRuntimeContext(interpreter)));
+        LoadSubCommand("allocation", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocation(interpreter)));
     }
 
     ~CommandObjectRenderScriptRuntime() {}

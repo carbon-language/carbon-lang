@@ -202,6 +202,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     void DumpKernels(Stream &strm) const;
 
+    void ListAllocations(Stream &strm, StackFrame* frame_ptr, bool recompute);
+
     void AttemptBreakpointAtKernelName(Stream &strm, const char *name, Error &error, lldb::TargetSP target);
 
     void SetBreakAllKernels(bool do_break, lldb::TargetSP target);
@@ -220,6 +222,9 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     
   protected:
 
+    struct ScriptDetails;
+    struct AllocationDetails;
+
     void InitSearchFilter(lldb::TargetSP target)
     {
         if (!m_filtersp)
@@ -229,6 +234,10 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     void FixupScriptDetails(lldb_renderscript::RSModuleDescriptorSP rsmodule_sp);
 
     void LoadRuntimeHooks(lldb::ModuleSP module, ModuleKind kind);
+
+    bool RefreshAllocation(AllocationDetails* allocation, StackFrame* frame_ptr);
+
+    bool EvalRSExpression(const char* expression, StackFrame* frame_ptr, uint64_t* result);
 
     lldb::BreakpointSP CreateKernelBreakpoint(const ConstString& name);
 
@@ -255,9 +264,6 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     };
     
     typedef std::shared_ptr<RuntimeHook> RuntimeHookSP;
-
-    struct ScriptDetails;
-    struct AllocationDetails;
 
     lldb::ModuleSP m_libRS;
     lldb::ModuleSP m_libRSDriver;
@@ -291,6 +297,18 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     void CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext& context);
     void CaptureAllocationInit1(RuntimeHook* hook_info, ExecutionContext& context);
     void CaptureSetGlobalVar1(RuntimeHook* hook_info, ExecutionContext& context);
+
+    //
+    // Helper functions for jitting the runtime
+    //
+    bool JITDataPointer(AllocationDetails* allocation, StackFrame* frame_ptr,
+                        unsigned int x = 0, unsigned int y = 0, unsigned int z = 0);
+
+    bool JITTypePointer(AllocationDetails* allocation, StackFrame* frame_ptr);
+
+    bool JITTypePacked(AllocationDetails* allocation, StackFrame* frame_ptr);
+
+    bool JITElementPacked(AllocationDetails* allocation, StackFrame* frame_ptr);
 
     // Search for a script detail object using a target address.
     // If a script does not currently exist this function will return nullptr.
