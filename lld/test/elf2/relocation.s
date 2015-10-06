@@ -91,7 +91,7 @@ R_X86_64_64:
 .section .R_X86_64_GOTPCREL,"a",@progbits
 .global R_X86_64_GOTPCREL
 R_X86_64_GOTPCREL:
- .long R_X86_64_GOTPCREL@gotpcrel
+ .long zed@gotpcrel
 
 // 0x130A8 - 0x11008 = 8352
 // 8352 = 0x80200000   in little endian

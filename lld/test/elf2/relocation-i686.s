@@ -67,7 +67,7 @@ R_386_GOTPC:
 .section .R_386_GOT32,"ax",@progbits
 .global R_386_GOT32
 R_386_GOT32:
-        movl R_386_GOT32@GOT, %eax
+        movl zed@GOT, %eax
 // This is the second symbol in the got, so the offset is 4.
 // CHECK:      Disassembly of section .R_386_GOT32:
 // CHECK-NEXT: R_386_GOT32:
