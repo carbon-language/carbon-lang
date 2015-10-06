@@ -72,7 +72,7 @@ check_c_source_compiles("
 
 check_c_source_compiles_numeric("
   #include <strings.h>
-  int main() { ffs(0); return 0; }
+  int main() { (void)ffs(0); return 0; }
   " HAVE_DECL_FFS)
 
 check_c_source_compiles_numeric("
@@ -93,7 +93,7 @@ endif ()
 
 check_c_source_compiles_numeric("
   #include <strings.h>
-  int main() { strcasecmp(\"\", \"\"); return 0; }
+  int main() { (void)strcasecmp(\"\", \"\"); return 0; }
   " HAVE_DECL_STRCASECMP)
 
 check_c_source_compiles_numeric("
@@ -108,7 +108,7 @@ endif ()
 
 check_c_source_compiles_numeric("
   #include <strings.h>
-  int main() { strncasecmp(\"\", \"\", 0); return 0; }
+  int main() { (void)strncasecmp(\"\", \"\", 0); return 0; }
   " HAVE_DECL_STRNCASECMP)
 
 check_c_source_compiles_numeric("
