@@ -301,9 +301,11 @@ std::string getAnyTarget() {
   llvm::InitializeAllTargets();
   for (const auto &Target : llvm::TargetRegistry::targets()) {
     std::string Error;
-    if (llvm::TargetRegistry::lookupTarget(Target.getName(), Error) ==
-        &Target) {
-      return Target.getName();
+    StringRef TargetName(Target.getName());
+    if (TargetName == "x86-64")
+      TargetName = "x86_64";
+    if (llvm::TargetRegistry::lookupTarget(TargetName, Error) == &Target) {
+      return TargetName;
     }
   }
   return "";
