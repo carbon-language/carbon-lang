@@ -265,19 +265,18 @@ bool applyAllReplacements(const std::vector<Replacement> &Replaces,
 }
 
 std::string applyAllReplacements(StringRef Code, const Replacements &Replaces) {
-  FileManager Files((FileSystemOptions()));
+  IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new vfs::InMemoryFileSystem);
+  FileManager Files(FileSystemOptions(), InMemoryFileSystem);
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
       new DiagnosticOptions);
   SourceManager SourceMgr(Diagnostics, Files);
   Rewriter Rewrite(SourceMgr, LangOptions());
-  std::unique_ptr<llvm::MemoryBuffer> Buf =
-      llvm::MemoryBuffer::getMemBuffer(Code, "<stdin>");
-  const clang::FileEntry *Entry =
-      Files.getVirtualFile("<stdin>", Buf->getBufferSize(), 0);
-  SourceMgr.overrideFileContents(Entry, std::move(Buf));
-  FileID ID =
-      SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
+  InMemoryFileSystem->addFile(
+      "<stdin>", 0, llvm::MemoryBuffer::getMemBuffer(Code, "<stdin>"));
+  FileID ID = SourceMgr.createFileID(Files.getFile("<stdin>"), SourceLocation(),
+                                     clang::SrcMgr::C_User);
   for (Replacements::const_iterator I = Replaces.begin(), E = Replaces.end();
        I != E; ++I) {
     Replacement Replace("<stdin>", I->getOffset(), I->getLength(),
