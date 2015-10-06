@@ -218,9 +218,7 @@ TypeCategoryMap::AnyMatches (ConstString type_name,
 }
 
 lldb::TypeFormatImplSP
-TypeCategoryMap::GetFormat (ValueObject& valobj,
-                            lldb::DynamicValueType use_dynamic,
-                            FormattersMatchVector matches)
+TypeCategoryMap::GetFormat (FormattersMatchData& match_data)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -231,7 +229,7 @@ TypeCategoryMap::GetFormat (ValueObject& valobj,
     
     if (log)
     {
-        for (auto match : matches)
+        for (auto match : match_data.GetMatchesVector())
         {
             log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
                         match.GetTypeName().GetCString(),
@@ -248,7 +246,7 @@ TypeCategoryMap::GetFormat (ValueObject& valobj,
         lldb::TypeFormatImplSP current_format;
         if (log)
             log->Printf("[TypeCategoryMap::GetFormat] Trying to use category %s", category_sp->GetName());
-        if (!category_sp->Get(valobj, matches, current_format, &reason_why))
+        if (!category_sp->Get(match_data.GetValueObject(), match_data.GetMatchesVector(), current_format, &reason_why))
             continue;
         return current_format;
     }
@@ -258,9 +256,7 @@ TypeCategoryMap::GetFormat (ValueObject& valobj,
 }
 
 lldb::TypeSummaryImplSP
-TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
-                                   lldb::DynamicValueType use_dynamic,
-                                   FormattersMatchVector matches)
+TypeCategoryMap::GetSummaryFormat (FormattersMatchData& match_data)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -271,7 +267,7 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
     
     if (log)
     {
-        for (auto match : matches)
+        for (auto match : match_data.GetMatchesVector())
         {
             log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
                         match.GetTypeName().GetCString(),
@@ -288,7 +284,7 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
         lldb::TypeSummaryImplSP current_format;
         if (log)
             log->Printf("[CategoryMap::GetSummaryFormat] Trying to use category %s", category_sp->GetName());
-        if (!category_sp->Get(valobj, matches, current_format, &reason_why))
+        if (!category_sp->Get(match_data.GetValueObject(), match_data.GetMatchesVector(), current_format, &reason_why))
             continue;
         return current_format;
     }
@@ -299,9 +295,7 @@ TypeCategoryMap::GetSummaryFormat (ValueObject& valobj,
 
 #ifndef LLDB_DISABLE_PYTHON
 lldb::SyntheticChildrenSP
-TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
-                                       lldb::DynamicValueType use_dynamic,
-                                       FormattersMatchVector matches)
+TypeCategoryMap::GetSyntheticChildren (FormattersMatchData& match_data)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -313,7 +307,7 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
     
     if (log)
     {
-        for (auto match : matches)
+        for (auto match : match_data.GetMatchesVector())
         {
             log->Printf("[CategoryMap::GetSummaryFormat] candidate match = %s %s %s %s reason = %" PRIu32,
                         match.GetTypeName().GetCString(),
@@ -330,7 +324,7 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
         lldb::SyntheticChildrenSP current_format;
         if (log)
             log->Printf("[CategoryMap::GetSyntheticChildren] Trying to use category %s", category_sp->GetName());
-        if (!category_sp->Get(valobj, matches, current_format, &reason_why))
+        if (!category_sp->Get(match_data.GetValueObject(), match_data.GetMatchesVector(), current_format, &reason_why))
             continue;
         return current_format;
     }
@@ -341,9 +335,7 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
 #endif
 
 lldb::TypeValidatorImplSP
-TypeCategoryMap::GetValidator (ValueObject& valobj,
-                               lldb::DynamicValueType use_dynamic,
-                               FormattersMatchVector matches)
+TypeCategoryMap::GetValidator (FormattersMatchData& match_data)
 {
     Mutex::Locker locker(m_map_mutex);
     
@@ -354,7 +346,7 @@ TypeCategoryMap::GetValidator (ValueObject& valobj,
     
     if (log)
     {
-        for (auto match : matches)
+        for (auto match : match_data.GetMatchesVector())
         {
             log->Printf("[CategoryMap::GetValidator] candidate match = %s %s %s %s reason = %" PRIu32,
                         match.GetTypeName().GetCString(),
@@ -371,7 +363,7 @@ TypeCategoryMap::GetValidator (ValueObject& valobj,
         lldb::TypeValidatorImplSP current_format;
         if (log)
             log->Printf("[CategoryMap::GetValidator] Trying to use category %s", category_sp->GetName());
-        if (!category_sp->Get(valobj, matches, current_format, &reason_why))
+        if (!category_sp->Get(match_data.GetValueObject(), match_data.GetMatchesVector(), current_format, &reason_why))
             continue;
         return current_format;
     }

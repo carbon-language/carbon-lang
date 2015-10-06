@@ -45,9 +45,7 @@ LanguageCategory::LanguageCategory (lldb::LanguageType lang_type) :
 }
 
 bool
-LanguageCategory::Get (ValueObject& valobj,
-                       lldb::DynamicValueType dynamic,
-                       FormattersMatchVector matches,
+LanguageCategory::Get (FormattersMatchData& match_data,
                        lldb::TypeFormatImplSP& format_sp)
 {
     if (!m_category_sp)
@@ -56,24 +54,23 @@ LanguageCategory::Get (ValueObject& valobj,
     if (!IsEnabled())
         return false;
 
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
-    if (type_name)
+    if (match_data.GetTypeForCache())
     {
-        if (m_format_cache.GetFormat(type_name, format_sp))
+        if (m_format_cache.GetFormat(match_data.GetTypeForCache(), format_sp))
             return format_sp.get() != nullptr;
     }
-    bool result = m_category_sp->Get(valobj, matches, format_sp);
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+
+    ValueObject& valobj(match_data.GetValueObject());
+    bool result = m_category_sp->Get(valobj, match_data.GetMatchesVector(), format_sp);
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetFormat(type_name, format_sp);
+        m_format_cache.SetFormat(match_data.GetTypeForCache(), format_sp);
     }
     return result;
 }
 
 bool
-LanguageCategory::Get (ValueObject& valobj,
-                       lldb::DynamicValueType dynamic,
-                       FormattersMatchVector matches,
+LanguageCategory::Get (FormattersMatchData& match_data,
                        lldb::TypeSummaryImplSP& format_sp)
 {
     if (!m_category_sp)
@@ -82,24 +79,23 @@ LanguageCategory::Get (ValueObject& valobj,
     if (!IsEnabled())
         return false;
 
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
-    if (type_name)
+    if (match_data.GetTypeForCache())
     {
-        if (m_format_cache.GetSummary(type_name, format_sp))
+        if (m_format_cache.GetSummary(match_data.GetTypeForCache(), format_sp))
             return format_sp.get() != nullptr;
     }
-    bool result = m_category_sp->Get(valobj, matches, format_sp);
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+    
+    ValueObject& valobj(match_data.GetValueObject());
+    bool result = m_category_sp->Get(valobj, match_data.GetMatchesVector(), format_sp);
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetSummary(type_name, format_sp);
+        m_format_cache.SetSummary(match_data.GetTypeForCache(), format_sp);
     }
     return result;
 }
 
 bool
-LanguageCategory::Get (ValueObject& valobj,
-                       lldb::DynamicValueType dynamic,
-                       FormattersMatchVector matches,
+LanguageCategory::Get (FormattersMatchData& match_data,
                        lldb::SyntheticChildrenSP& format_sp)
 {
     if (!m_category_sp)
@@ -108,24 +104,23 @@ LanguageCategory::Get (ValueObject& valobj,
     if (!IsEnabled())
         return false;
 
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
-    if (type_name)
+    if (match_data.GetTypeForCache())
     {
-        if (m_format_cache.GetSynthetic(type_name, format_sp))
+        if (m_format_cache.GetSynthetic(match_data.GetTypeForCache(), format_sp))
             return format_sp.get() != nullptr;
     }
-    bool result = m_category_sp->Get(valobj, matches, format_sp);
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+    
+    ValueObject& valobj(match_data.GetValueObject());
+    bool result = m_category_sp->Get(valobj, match_data.GetMatchesVector(), format_sp);
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetSynthetic(type_name, format_sp);
+        m_format_cache.SetSynthetic(match_data.GetTypeForCache(), format_sp);
     }
     return result;
 }
 
 bool
-LanguageCategory::Get (ValueObject& valobj,
-                       lldb::DynamicValueType dynamic,
-                       FormattersMatchVector matches,
+LanguageCategory::Get (FormattersMatchData& match_data,
                        lldb::TypeValidatorImplSP& format_sp)
 {
     if (!m_category_sp)
@@ -134,108 +129,109 @@ LanguageCategory::Get (ValueObject& valobj,
     if (!IsEnabled())
         return false;
 
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, dynamic);
-    if (type_name)
+    if (match_data.GetTypeForCache())
     {
-        if (m_format_cache.GetValidator(type_name, format_sp))
+        if (m_format_cache.GetValidator(match_data.GetTypeForCache(), format_sp))
             return format_sp.get() != nullptr;
     }
-    bool result = m_category_sp->Get(valobj, matches, format_sp);
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+    
+    ValueObject& valobj(match_data.GetValueObject());
+    bool result = m_category_sp->Get(valobj, match_data.GetMatchesVector(), format_sp);
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetValidator(type_name, format_sp);
+        m_format_cache.SetValidator(match_data.GetTypeForCache(), format_sp);
     }
     return result;
 }
 
 bool
-LanguageCategory::GetHardcoded (ValueObject& valobj,
-                                lldb::DynamicValueType use_dynamic,
-                                FormatManager& fmt_mgr,
+LanguageCategory::GetHardcoded (FormatManager& fmt_mgr,
+                                FormattersMatchData& match_data,
                                 lldb::TypeFormatImplSP& format_sp)
 {
     if (!IsEnabled())
         return false;
 
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, use_dynamic);
-
+    ValueObject& valobj(match_data.GetValueObject());
+    lldb::DynamicValueType use_dynamic(match_data.GetDynamicValueType());
+    
     for (auto& candidate : m_hardcoded_formats)
     {
         if ((format_sp = candidate(valobj, use_dynamic, fmt_mgr)))
             break;
     }
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetFormat(type_name, format_sp);
+        m_format_cache.SetFormat(match_data.GetTypeForCache(), format_sp);
     }
     return format_sp.get() != nullptr;
 }
 
 bool
-LanguageCategory::GetHardcoded (ValueObject& valobj,
-                                lldb::DynamicValueType use_dynamic,
-                                FormatManager& fmt_mgr,
+LanguageCategory::GetHardcoded (FormatManager& fmt_mgr,
+                                FormattersMatchData& match_data,
                                 lldb::TypeSummaryImplSP& format_sp)
 {
     if (!IsEnabled())
         return false;
-
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, use_dynamic);
     
+    ValueObject& valobj(match_data.GetValueObject());
+    lldb::DynamicValueType use_dynamic(match_data.GetDynamicValueType());
+
     for (auto& candidate : m_hardcoded_summaries)
     {
         if ((format_sp = candidate(valobj, use_dynamic, fmt_mgr)))
             break;
     }
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetSummary(type_name, format_sp);
+        m_format_cache.SetSummary(match_data.GetTypeForCache(), format_sp);
     }
     return format_sp.get() != nullptr;
 }
 
 bool
-LanguageCategory::GetHardcoded (ValueObject& valobj,
-                                lldb::DynamicValueType use_dynamic,
-                                FormatManager& fmt_mgr,
+LanguageCategory::GetHardcoded (FormatManager& fmt_mgr,
+                                FormattersMatchData& match_data,
                                 lldb::SyntheticChildrenSP& format_sp)
 {
     if (!IsEnabled())
         return false;
 
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, use_dynamic);
+    ValueObject& valobj(match_data.GetValueObject());
+    lldb::DynamicValueType use_dynamic(match_data.GetDynamicValueType());
     
     for (auto& candidate : m_hardcoded_synthetics)
     {
         if ((format_sp = candidate(valobj, use_dynamic, fmt_mgr)))
             break;
     }
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetSynthetic(type_name, format_sp);
+        m_format_cache.SetSynthetic(match_data.GetTypeForCache(), format_sp);
     }
     return format_sp.get() != nullptr;
 }
 
 bool
-LanguageCategory::GetHardcoded (ValueObject& valobj,
-                                lldb::DynamicValueType use_dynamic,
-                                FormatManager& fmt_mgr,
+LanguageCategory::GetHardcoded (FormatManager& fmt_mgr,
+                                FormattersMatchData& match_data,
                                 lldb::TypeValidatorImplSP& format_sp)
 {
     if (!IsEnabled())
         return false;
 
-    ConstString type_name = FormatManager::GetTypeForCache(valobj, use_dynamic);
+    ValueObject& valobj(match_data.GetValueObject());
+    lldb::DynamicValueType use_dynamic(match_data.GetDynamicValueType());
     
     for (auto& candidate : m_hardcoded_validators)
     {
         if ((format_sp = candidate(valobj, use_dynamic, fmt_mgr)))
             break;
     }
-    if (type_name && (!format_sp || !format_sp->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!format_sp || !format_sp->NonCacheable()))
     {
-        m_format_cache.SetValidator(type_name, format_sp);
+        m_format_cache.SetValidator(match_data.GetTypeForCache(), format_sp);
     }
     return format_sp.get() != nullptr;
 }

@@ -31,51 +31,39 @@ public:
     LanguageCategory (lldb::LanguageType lang_type);
     
     bool
-    Get (ValueObject& valobj,
-         lldb::DynamicValueType dynamic,
-         FormattersMatchVector matches,
+    Get (FormattersMatchData& match_data,
          lldb::TypeFormatImplSP& format_sp);
 
     bool
-    Get (ValueObject& valobj,
-         lldb::DynamicValueType dynamic,
-         FormattersMatchVector matches,
+    Get (FormattersMatchData& match_data,
          lldb::TypeSummaryImplSP& format_sp);
 
     bool
-    Get (ValueObject& valobj,
-         lldb::DynamicValueType dynamic,
-         FormattersMatchVector matches,
+    Get (FormattersMatchData& match_data,
          lldb::SyntheticChildrenSP& format_sp);
 
     bool
-    Get (ValueObject& valobj,
-         lldb::DynamicValueType dynamic,
-         FormattersMatchVector matches,
+    Get (FormattersMatchData& match_data,
          lldb::TypeValidatorImplSP& format_sp);
 
     bool
-    GetHardcoded (ValueObject& valobj,
-                  lldb::DynamicValueType use_dynamic,
-                  FormatManager& fmt_mgr,
+    GetHardcoded (FormatManager& fmt_mgr,
+                  FormattersMatchData& match_data,
                   lldb::TypeFormatImplSP& format_sp);
 
     bool
-    GetHardcoded (ValueObject& valobj,
-                  lldb::DynamicValueType use_dynamic,
-                  FormatManager& fmt_mgr,
+    GetHardcoded (FormatManager& fmt_mgr,
+                  FormattersMatchData& match_data,
                   lldb::TypeSummaryImplSP& format_sp);
     
     bool
-    GetHardcoded (ValueObject& valobj,
-                  lldb::DynamicValueType use_dynamic,
-                  FormatManager& fmt_mgr,
+    GetHardcoded (FormatManager& fmt_mgr,
+                  FormattersMatchData& match_data,
                   lldb::SyntheticChildrenSP& format_sp);
     
     bool
-    GetHardcoded (ValueObject& valobj,
-                  lldb::DynamicValueType use_dynamic,
-                  FormatManager& fmt_mgr,
+    GetHardcoded (FormatManager& fmt_mgr,
+                  FormattersMatchData& match_data,
                   lldb::TypeValidatorImplSP& format_sp);
     
     lldb::TypeCategoryImplSP

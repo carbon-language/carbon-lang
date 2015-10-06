@@ -118,6 +118,36 @@ private:
 };
 
 typedef std::vector<FormattersMatchCandidate> FormattersMatchVector;
+typedef std::vector<lldb::LanguageType> CandidateLanguagesVector;
+
+class FormattersMatchData
+{
+public:
+    FormattersMatchData (ValueObject&,
+                         lldb::DynamicValueType);
+    
+    FormattersMatchVector
+    GetMatchesVector ();
+    
+    ConstString
+    GetTypeForCache ();
+    
+    CandidateLanguagesVector
+    GetCandidateLanguages ();
+    
+    ValueObject&
+    GetValueObject ();
+    
+    lldb::DynamicValueType
+    GetDynamicValueType ();
+    
+private:
+    ValueObject& m_valobj;
+    lldb::DynamicValueType m_dynamic_value_type;
+    std::pair<FormattersMatchVector,bool> m_formatters_match_vector;
+    ConstString m_type_for_cache;
+    CandidateLanguagesVector m_candidate_languages;
+};
     
 class TypeNameSpecifierImpl
 {

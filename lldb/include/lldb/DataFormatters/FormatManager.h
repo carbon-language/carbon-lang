@@ -311,16 +311,16 @@ private:
     ConstString m_vectortypes_category_name;
     
     lldb::TypeFormatImplSP
-    GetHardcodedFormat (ValueObject&,lldb::DynamicValueType);
+    GetHardcodedFormat (FormattersMatchData&);
     
     lldb::TypeSummaryImplSP
-    GetHardcodedSummaryFormat (ValueObject&,lldb::DynamicValueType);
+    GetHardcodedSummaryFormat (FormattersMatchData&);
 
     lldb::SyntheticChildrenSP
-    GetHardcodedSyntheticChildren (ValueObject&,lldb::DynamicValueType);
+    GetHardcodedSyntheticChildren (FormattersMatchData&);
     
     lldb::TypeValidatorImplSP
-    GetHardcodedValidator (ValueObject&,lldb::DynamicValueType);
+    GetHardcodedValidator (FormattersMatchData&);
     
     TypeCategoryMap&
     GetCategories ()
@@ -338,6 +338,8 @@ private:
     
     void
     LoadVectorFormatters ();
+    
+    friend class FormattersMatchData;
 };
     
 } // namespace lldb_private

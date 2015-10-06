@@ -697,16 +697,15 @@ FormatManager::GetCategoryForLanguage (lldb::LanguageType lang_type)
 }
 
 lldb::TypeFormatImplSP
-FormatManager::GetHardcodedFormat (ValueObject& valobj,
-                                   lldb::DynamicValueType use_dynamic)
+FormatManager::GetHardcodedFormat (FormattersMatchData& match_data)
 {
     TypeFormatImplSP retval_sp;
     
-    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+    for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
     {
         if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
         {
-            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+            if (lang_category->GetHardcoded(*this, match_data, retval_sp))
                 break;
         }
     }
@@ -718,14 +717,15 @@ lldb::TypeFormatImplSP
 FormatManager::GetFormat (ValueObject& valobj,
                           lldb::DynamicValueType use_dynamic)
 {
+    FormattersMatchData match_data(valobj, use_dynamic);
+    
     TypeFormatImplSP retval;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
-    if (valobj_type)
+    if (match_data.GetTypeForCache())
     {
         if (log)
-            log->Printf("\n\n[FormatManager::GetFormat] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
-        if (m_format_cache.GetFormat(valobj_type,retval))
+            log->Printf("\n\n[FormatManager::GetFormat] Looking into cache for type %s", match_data.GetTypeForCache().AsCString("<invalid>"));
+        if (m_format_cache.GetFormat(match_data.GetTypeForCache(),retval))
         {
             if (log)
             {
@@ -739,18 +739,16 @@ FormatManager::GetFormat (ValueObject& valobj,
             log->Printf("[FormatManager::GetFormat] Cache search failed. Going normal route");
     }
     
-    FormattersMatchVector matches = GetPossibleMatches(valobj, use_dynamic);
-    
-    retval = m_categories_map.GetFormat(valobj, use_dynamic, matches);
+    retval = m_categories_map.GetFormat(match_data);
     if (!retval)
     {
         if (log)
             log->Printf("[FormatManager::GetFormat] Search failed. Giving language a chance.");
-        for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+        for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
         {
             if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
             {
-                if (lang_category->Get(valobj, use_dynamic, matches, retval))
+                if (lang_category->Get(match_data, retval))
                     break;
             }
         }
@@ -765,16 +763,16 @@ FormatManager::GetFormat (ValueObject& valobj,
     {
         if (log)
             log->Printf("[FormatManager::GetFormat] Search failed. Giving hardcoded a chance.");
-        retval = GetHardcodedFormat(valobj, use_dynamic);
+        retval = GetHardcodedFormat(match_data);
     }
     
-    if (valobj_type && (!retval || !retval->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!retval || !retval->NonCacheable()))
     {
         if (log)
             log->Printf("[FormatManager::GetFormat] Caching %p for type %s",
                         static_cast<void*>(retval.get()),
-                        valobj_type.AsCString("<invalid>"));
-        m_format_cache.SetFormat(valobj_type,retval);
+                        match_data.GetTypeForCache().AsCString("<invalid>"));
+        m_format_cache.SetFormat(match_data.GetTypeForCache(),retval);
     }
     if (log && log->GetDebug())
         log->Printf("[FormatManager::GetFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
@@ -782,16 +780,15 @@ FormatManager::GetFormat (ValueObject& valobj,
 }
 
 lldb::TypeSummaryImplSP
-FormatManager::GetHardcodedSummaryFormat (ValueObject& valobj,
-                                          lldb::DynamicValueType use_dynamic)
+FormatManager::GetHardcodedSummaryFormat (FormattersMatchData& match_data)
 {
     TypeSummaryImplSP retval_sp;
     
-    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+    for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
     {
         if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
         {
-            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+            if (lang_category->GetHardcoded(*this, match_data, retval_sp))
                 break;
         }
     }
@@ -803,14 +800,15 @@ lldb::TypeSummaryImplSP
 FormatManager::GetSummaryFormat (ValueObject& valobj,
                                  lldb::DynamicValueType use_dynamic)
 {
+    FormattersMatchData match_data(valobj, use_dynamic);
+    
     TypeSummaryImplSP retval;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
-    if (valobj_type)
+    if (match_data.GetTypeForCache())
     {
         if (log)
-            log->Printf("\n\n[FormatManager::GetSummaryFormat] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
-        if (m_format_cache.GetSummary(valobj_type,retval))
+            log->Printf("\n\n[FormatManager::GetSummaryFormat] Looking into cache for type %s", match_data.GetTypeForCache().AsCString("<invalid>"));
+        if (m_format_cache.GetSummary(match_data.GetTypeForCache(),retval))
         {
             if (log)
             {
@@ -824,18 +822,16 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
             log->Printf("[FormatManager::GetSummaryFormat] Cache search failed. Going normal route");
     }
     
-    FormattersMatchVector matches = GetPossibleMatches(valobj, use_dynamic);
-    
-    retval = m_categories_map.GetSummaryFormat(valobj, use_dynamic, matches);
+    retval = m_categories_map.GetSummaryFormat(match_data);
     if (!retval)
     {
         if (log)
             log->Printf("[FormatManager::GetSummaryFormat] Search failed. Giving language a chance.");
-        for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+        for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
         {
             if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
             {
-                if (lang_category->Get(valobj, use_dynamic, matches, retval))
+                if (lang_category->Get(match_data, retval))
                     break;
             }
         }
@@ -850,16 +846,16 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
     {
         if (log)
             log->Printf("[FormatManager::GetSummaryFormat] Search failed. Giving hardcoded a chance.");
-        retval = GetHardcodedSummaryFormat(valobj, use_dynamic);
+        retval = GetHardcodedSummaryFormat(match_data);
     }
     
-    if (valobj_type && (!retval || !retval->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!retval || !retval->NonCacheable()))
     {
         if (log)
             log->Printf("[FormatManager::GetSummaryFormat] Caching %p for type %s",
                         static_cast<void*>(retval.get()),
-                        valobj_type.AsCString("<invalid>"));
-        m_format_cache.SetSummary(valobj_type,retval);
+                        match_data.GetTypeForCache().AsCString("<invalid>"));
+        m_format_cache.SetSummary(match_data.GetTypeForCache(),retval);
     }
     if (log && log->GetDebug())
         log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
@@ -868,16 +864,15 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
 
 #ifndef LLDB_DISABLE_PYTHON
 lldb::SyntheticChildrenSP
-FormatManager::GetHardcodedSyntheticChildren (ValueObject& valobj,
-                                              lldb::DynamicValueType use_dynamic)
+FormatManager::GetHardcodedSyntheticChildren (FormattersMatchData& match_data)
 {
     SyntheticChildrenSP retval_sp;
     
-    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+    for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
     {
         if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
         {
-            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+            if (lang_category->GetHardcoded(*this, match_data, retval_sp))
                 break;
         }
     }
@@ -889,14 +884,15 @@ lldb::SyntheticChildrenSP
 FormatManager::GetSyntheticChildren (ValueObject& valobj,
                                      lldb::DynamicValueType use_dynamic)
 {
+    FormattersMatchData match_data(valobj, use_dynamic);
+    
     SyntheticChildrenSP retval;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
-    if (valobj_type)
+    if (match_data.GetTypeForCache())
     {
         if (log)
-            log->Printf("\n\n[FormatManager::GetSyntheticChildren] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
-        if (m_format_cache.GetSynthetic(valobj_type,retval))
+            log->Printf("\n\n[FormatManager::GetSyntheticChildren] Looking into cache for type %s", match_data.GetTypeForCache().AsCString("<invalid>"));
+        if (m_format_cache.GetSynthetic(match_data.GetTypeForCache(),retval))
         {
             if (log)
             {
@@ -910,18 +906,16 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
             log->Printf("[FormatManager::GetSyntheticChildren] Cache search failed. Going normal route");
     }
     
-    FormattersMatchVector matches = GetPossibleMatches(valobj, use_dynamic);
-    
-    retval = m_categories_map.GetSyntheticChildren(valobj, use_dynamic, matches);
+    retval = m_categories_map.GetSyntheticChildren(match_data);
     if (!retval)
     {
         if (log)
             log->Printf("[FormatManager::GetSyntheticChildren] Search failed. Giving language a chance.");
-        for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+        for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
         {
             if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
             {
-                if (lang_category->Get(valobj, use_dynamic, matches, retval))
+                if (lang_category->Get(match_data, retval))
                     break;
             }
         }
@@ -936,16 +930,16 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
     {
         if (log)
             log->Printf("[FormatManager::GetSyntheticChildren] Search failed. Giving hardcoded a chance.");
-        retval = GetHardcodedSyntheticChildren(valobj, use_dynamic);
+        retval = GetHardcodedSyntheticChildren(match_data);
     }
     
-    if (valobj_type && (!retval || !retval->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!retval || !retval->NonCacheable()))
     {
         if (log)
             log->Printf("[FormatManager::GetSyntheticChildren] Caching %p for type %s",
                         static_cast<void*>(retval.get()),
-                        valobj_type.AsCString("<invalid>"));
-        m_format_cache.SetSynthetic(valobj_type,retval);
+                        match_data.GetTypeForCache().AsCString("<invalid>"));
+        m_format_cache.SetSynthetic(match_data.GetTypeForCache(),retval);
     }
     if (log && log->GetDebug())
         log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
@@ -957,14 +951,15 @@ lldb::TypeValidatorImplSP
 FormatManager::GetValidator (ValueObject& valobj,
                              lldb::DynamicValueType use_dynamic)
 {
+    FormattersMatchData match_data(valobj, use_dynamic);
+    
     TypeValidatorImplSP retval;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
-    if (valobj_type)
+    if (match_data.GetTypeForCache())
     {
         if (log)
-            log->Printf("\n\n[FormatManager::GetValidator] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
-        if (m_format_cache.GetValidator(valobj_type,retval))
+            log->Printf("\n\n[FormatManager::GetValidator] Looking into cache for type %s", match_data.GetTypeForCache().AsCString("<invalid>"));
+        if (m_format_cache.GetValidator(match_data.GetTypeForCache(),retval))
         {
             if (log)
             {
@@ -978,18 +973,16 @@ FormatManager::GetValidator (ValueObject& valobj,
             log->Printf("[FormatManager::GetValidator] Cache search failed. Going normal route");
     }
     
-    FormattersMatchVector matches = GetPossibleMatches(valobj, use_dynamic);
-    
-    retval = m_categories_map.GetValidator(valobj, use_dynamic, matches);
+    retval = m_categories_map.GetValidator(match_data);
     if (!retval)
     {
         if (log)
             log->Printf("[FormatManager::GetValidator] Search failed. Giving language a chance.");
-        for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+        for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
         {
             if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
             {
-                if (lang_category->Get(valobj, use_dynamic, matches, retval))
+                if (lang_category->Get(match_data, retval))
                     break;
             }
         }
@@ -1004,16 +997,16 @@ FormatManager::GetValidator (ValueObject& valobj,
     {
         if (log)
             log->Printf("[FormatManager::GetValidator] Search failed. Giving hardcoded a chance.");
-        retval = GetHardcodedValidator(valobj, use_dynamic);
+        retval = GetHardcodedValidator(match_data);
     }
     
-    if (valobj_type && (!retval || !retval->NonCacheable()))
+    if (match_data.GetTypeForCache() && (!retval || !retval->NonCacheable()))
     {
         if (log)
             log->Printf("[FormatManager::GetValidator] Caching %p for type %s",
                         static_cast<void*>(retval.get()),
-                        valobj_type.AsCString("<invalid>"));
-        m_format_cache.SetValidator(valobj_type,retval);
+                        match_data.GetTypeForCache().AsCString("<invalid>"));
+        m_format_cache.SetValidator(match_data.GetTypeForCache(),retval);
     }
     if (log && log->GetDebug())
         log->Printf("[FormatManager::GetValidator] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
@@ -1021,16 +1014,15 @@ FormatManager::GetValidator (ValueObject& valobj,
 }
 
 lldb::TypeValidatorImplSP
-FormatManager::GetHardcodedValidator (ValueObject& valobj,
-                                      lldb::DynamicValueType use_dynamic)
+FormatManager::GetHardcodedValidator (FormattersMatchData& match_data)
 {
     TypeValidatorImplSP retval_sp;
     
-    for (lldb::LanguageType lang_type : GetCandidateLanguages(valobj))
+    for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages())
     {
         if (LanguageCategory* lang_category = GetCategoryForLanguage(lang_type))
         {
-            if (lang_category->GetHardcoded(valobj, use_dynamic, *this, retval_sp))
+            if (lang_category->GetHardcoded(*this, match_data, retval_sp))
                 break;
         }
     }
