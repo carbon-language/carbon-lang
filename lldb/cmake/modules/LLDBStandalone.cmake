@@ -48,9 +48,8 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(AddLLVM)
   include(HandleLLVMOptions)
 
-  # Verify that we can find a Python 2 interpreter.  Python 3 is unsupported.
   if (PYTHON_EXECUTABLE STREQUAL "")
-    set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
+    set(Python_ADDITIONAL_VERSIONS 3.5 3.4 3.3 3.2 3.1 3.0 2.7 2.6 2.5)
     include(FindPythonInterp)
     if( NOT PYTHONINTERP_FOUND )
       message(FATAL_ERROR
