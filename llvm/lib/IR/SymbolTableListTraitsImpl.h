@@ -46,16 +46,14 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
   
   if (OldST) {
     // Remove all entries from the previous symtab.
-    for (typename iplist<ValueSubClass>::iterator I = ItemList.begin();
-         I != ItemList.end(); ++I)
+    for (auto I = ItemList.begin(); I != ItemList.end(); ++I)
       if (I->hasName())
         OldST->removeValueName(I->getValueName());
   }
 
   if (NewST) {
     // Add all of the items to the new symtab.
-    for (typename iplist<ValueSubClass>::iterator I = ItemList.begin();
-         I != ItemList.end(); ++I)
+    for (auto I = ItemList.begin(); I != ItemList.end(); ++I)
       if (I->hasName())
         NewST->reinsertValue(I);
   }
