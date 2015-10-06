@@ -92,6 +92,12 @@ RelocationSection<ELFT>::RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
   this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
 
+static bool isLocalDefinition(const SymbolBody *Body) {
+  if (!Body)
+    return true;
+  return !Body->isShared() && !Body->isUndefined();
+}
+
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
   const unsigned EntrySize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   bool IsMips64EL = Relocs[0].C.getFile()->getObj().isMips64EL();
@@ -118,7 +124,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       if (IsRela)
         Addent = static_cast<const Elf_Rela &>(RI).r_addend;
 
-      if (Body && Body->isShared()) {
+      if (!isLocalDefinition(Body)) {
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
                             IsMips64EL);
       } else {

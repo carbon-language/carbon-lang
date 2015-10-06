@@ -12,6 +12,7 @@
 // CHECK-NEXT:     0x2010 R_X86_64_RELATIVE - 0x2009
 // CHECK-NEXT:     0x{{.*}} R_X86_64_RELATIVE - 0x[[ZED_ADDR:.*]]
 // CHECK-NEXT:     0x{{.*}} R_X86_64_RELATIVE - 0x[[FOO_ADDR]]
+// CHECK-NEXT:     0x1008 R_X86_64_64 external 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -34,6 +35,15 @@
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: external@
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Undefined
+// CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
 foo:
@@ -51,3 +61,5 @@ bar:
 
         .section abc,"a"
         .quad foo
+
+        .quad external
