@@ -433,8 +433,8 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   // Classify the personality to see what kind of preparation we need.
   Personality = classifyEHPersonality(Fn.getPersonalityFn());
 
-  // Do nothing if this is not an MSVC personality.
-  if (!isMSVCEHPersonality(Personality))
+  // Do nothing if this is not a funclet-based personality.
+  if (!isFuncletEHPersonality(Personality))
     return false;
 
   SmallVector<LandingPadInst *, 4> LPads;

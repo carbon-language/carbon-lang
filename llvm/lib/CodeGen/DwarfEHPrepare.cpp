@@ -192,9 +192,9 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
   if (Resumes.empty())
     return false;
 
-  // Check the personality, don't do anything if it's for MSVC.
+  // Check the personality, don't do anything if it's funclet-based.
   EHPersonality Pers = classifyEHPersonality(Fn.getPersonalityFn());
-  if (isMSVCEHPersonality(Pers))
+  if (isFuncletEHPersonality(Pers))
     return false;
 
   LLVMContext &Ctx = Fn.getContext();

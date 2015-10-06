@@ -941,7 +941,7 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
   BuildMI(*MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
     .addSym(Label);
 
-  // If this is an MSVC-style personality function, we need to split the landing
+  // If this personality function uses funclets, we need to split the landing
   // pad into several BBs.
   const BasicBlock *LLVMBB = MBB->getBasicBlock();
   const Constant *Personality = MF->getFunction()->getPersonalityFn();
@@ -949,7 +949,7 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
     MF->getMMI().addPersonality(PF);
   EHPersonality PersonalityType = classifyEHPersonality(Personality);
 
-  if (isMSVCEHPersonality(PersonalityType)) {
+  if (isFuncletEHPersonality(PersonalityType)) {
     SmallVector<MachineBasicBlock *, 4> ClauseBBs;
     const IntrinsicInst *ActionsCall =
         dyn_cast<IntrinsicInst>(LLVMBB->getFirstInsertionPt());

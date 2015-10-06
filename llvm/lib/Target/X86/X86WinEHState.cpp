@@ -156,7 +156,7 @@ bool WinEHStatePass::runOnFunction(Function &F) {
   if (WinEHParentName != F.getName() && !WinEHParentName.empty())
     return false;
 
-  // Check the personality. Do nothing if this is not an MSVC personality.
+  // Check the personality. Do nothing if this personality doesn't use funclets.
   if (!F.hasPersonalityFn())
     return false;
   PersonalityFn =
@@ -164,7 +164,7 @@ bool WinEHStatePass::runOnFunction(Function &F) {
   if (!PersonalityFn)
     return false;
   Personality = classifyEHPersonality(PersonalityFn);
-  if (!isMSVCEHPersonality(Personality))
+  if (!isFuncletEHPersonality(Personality))
     return false;
 
   // Skip this function if there are no EH pads and we aren't using IR-level

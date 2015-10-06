@@ -113,10 +113,10 @@ void WinException::endFunction(const MachineFunction *MF) {
   if (F->hasPersonalityFn())
     Per = classifyEHPersonality(F->getPersonalityFn());
 
-  // Get rid of any dead landing pads if we're not using a Windows EH scheme. In
-  // Windows EH schemes, the landing pad is not actually reachable. It only
-  // exists so that we can emit the right table data.
-  if (!isMSVCEHPersonality(Per))
+  // Get rid of any dead landing pads if we're not using funclets. In funclet
+  // schemes, the landing pad is not actually reachable. It only exists so
+  // that we can emit the right table data.
+  if (!isFuncletEHPersonality(Per))
     MMI->TidyLandingPads();
 
   endFunclet();

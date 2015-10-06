@@ -1207,8 +1207,10 @@ static void
 findUnwindDestinations(FunctionLoweringInfo &FuncInfo,
                        const BasicBlock *EHPadBB,
                        SmallVectorImpl<MachineBasicBlock *> &UnwindDests) {
-  bool IsMSVCCXX = classifyEHPersonality(FuncInfo.Fn->getPersonalityFn()) ==
-                   EHPersonality::MSVC_CXX;
+  EHPersonality Personality =
+    classifyEHPersonality(FuncInfo.Fn->getPersonalityFn());
+  bool IsMSVCCXX = Personality == EHPersonality::MSVC_CXX;
+  bool IsCoreCLR = Personality == EHPersonality::CoreCLR;
   while (EHPadBB) {
     const Instruction *Pad = EHPadBB->getFirstNonPHI();
     if (isa<LandingPadInst>(Pad)) {
@@ -1224,8 +1226,8 @@ findUnwindDestinations(FunctionLoweringInfo &FuncInfo,
     } else if (const auto *CPI = dyn_cast<CatchPadInst>(Pad)) {
       // Add the catchpad handler to the possible destinations.
       UnwindDests.push_back(FuncInfo.MBBMap[CPI->getNormalDest()]);
-      // In MSVC C++, catchblocks are funclets and need prologues.
-      if (IsMSVCCXX)
+      // In MSVC C++ and CoreCLR, catchblocks are funclets and need prologues.
+      if (IsMSVCCXX || IsCoreCLR)
         UnwindDests.back()->setIsEHFuncletEntry();
       EHPadBB = CPI->getUnwindDest();
     } else if (const auto *CEPI = dyn_cast<CatchEndPadInst>(Pad)) {

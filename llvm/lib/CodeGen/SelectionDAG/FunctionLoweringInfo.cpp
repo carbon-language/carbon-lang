@@ -273,11 +273,11 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       LPads.push_back(LPI);
   }
 
-  // If this is an MSVC EH personality, we need to do a bit more work.
+  // If this personality uses funclets, we need to do a bit more work.
   if (!Fn->hasPersonalityFn())
     return;
   EHPersonality Personality = classifyEHPersonality(Fn->getPersonalityFn());
-  if (!isMSVCEHPersonality(Personality))
+  if (!isFuncletEHPersonality(Personality))
     return;
 
   if (Personality == EHPersonality::MSVC_Win64SEH ||
