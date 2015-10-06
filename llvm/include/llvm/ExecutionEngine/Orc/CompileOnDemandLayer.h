@@ -217,6 +217,10 @@ private:
       if (!GV.isDeclaration())
         cloneGlobalVariableDecl(*GVsAndStubsM, GV, &VMap);
 
+    // And the aliases.
+    for (auto &Alias : SrcM->aliases())
+      cloneGlobalAlias(*GVsAndStubsM, Alias, VMap, &GDMat);
+
     // Then clone the initializers.
     for (auto &GV : SrcM->globals())
       if (!GV.isDeclaration())

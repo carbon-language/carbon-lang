@@ -289,6 +289,10 @@ void moveGlobalVariableInitializer(GlobalVariable &OrigGV,
                                    ValueMaterializer *Materializer = nullptr,
                                    GlobalVariable *NewGV = nullptr);
 
+GlobalAlias* cloneGlobalAlias(Module &Dst, const GlobalAlias &OrigA,
+                              ValueToValueMapTy &VMap,
+                              ValueMaterializer *Materializer = nullptr);
+
 } // End namespace orc.
 } // End namespace llvm.
 
