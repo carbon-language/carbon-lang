@@ -155,6 +155,7 @@ the configuration (without a prefix: ``Auto``).
 
   This applies to round brackets (parentheses), angle brackets and square
   brackets. This will result in formattings like
+
   .. code-block:: c++
     someLongFunction(argument1,
                      argument2);
@@ -164,6 +165,7 @@ the configuration (without a prefix: ``Auto``).
 
   This will align the assignment operators of consecutive lines. This
   will result in formattings like
+
   .. code-block:: c++
     int aaaa = 12;
     int b    = 23;
@@ -174,6 +176,7 @@ the configuration (without a prefix: ``Auto``).
 
   This will align the declaration names of consecutive lines. This
   will result in formattings like
+
   .. code-block:: c++
     int         aaaa = 12;
     float       b = 23;
@@ -389,11 +392,13 @@ the configuration (without a prefix: ``Auto``).
   instead of as function calls.
 
   These are expected to be macros of the form:
+
   .. code-block:: c++
     FOREACH(<variable-declaration>, ...)
       <loop-body>
 
   In the .clang-format configuration file, this can be configured like:
+
   .. code-block:: c++
     ForEachMacros: ['RANGES_FOR', 'FOREACH']
 
@@ -415,6 +420,7 @@ the configuration (without a prefix: ``Auto``).
   (http://llvm.org/docs/CodingStandards.html#include-style).
 
   To configure this in the .clang-format file, use:
+
   .. code-block:: c++
     IncludeCategories:
       - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
