@@ -1,11 +1,15 @@
-; RUN: opt %loadPolly -basicaa -sroa -instcombine -simplifycfg -tailcallopt -simplifycfg -reassociate -loop-rotate -instcombine -indvars       -polly-prepare -print-function -polly-scops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -basicaa -sroa -instcombine -simplifycfg -tailcallopt -simplifycfg -reassociate -loop-rotate -instcombine -indvars -licm -polly-prepare -print-function -polly-scops -analyze < %s | FileCheck %s
-;
-; XFAIL: *
-;
-; This one doesn't even detext scops without LICM. Interestingly clang with
-; --polly-position=early does.
-;
+; RUN: opt %loadPolly -basicaa -sroa -instcombine -simplifycfg -tailcallopt \
+; RUN:    -simplifycfg -reassociate -loop-rotate -instcombine -indvars \
+; RUN:    -polly-prepare -polly-scops -analyze < %s \
+; RUN:    -polly-detect-unprofitable \
+; RUN:     | FileCheck %s --check-prefix=NOLICM
+
+; RUN: opt %loadPolly -basicaa -sroa -instcombine -simplifycfg -tailcallopt \
+; RUN:    -simplifycfg -reassociate -loop-rotate -instcombine -indvars -licm \
+; RUN:    -polly-prepare -polly-scops -analyze < %s \
+; RUN:    -polly-detect-unprofitable \
+; RUN:     | FileCheck %s --check-prefix=LICM
+
 ;    void foo(int n, float A[static const restrict n], float x) {
 ;      //      (0)
 ;      for (int i = 0; i < 5; i += 1) {
@@ -16,7 +20,10 @@
 ;      }
 ;      // (4)
 ;    }
-;
+
+; LICM:   Statements
+; NOLICM: Statements
+
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 define void @foo(i32 %n, float* noalias nonnull %A, float %x) {
