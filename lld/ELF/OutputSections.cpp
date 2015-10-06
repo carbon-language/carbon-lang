@@ -228,7 +228,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   ++NumEntries; // DT_HASH
 
   if (!Config->RPath.empty()) {
-    ++NumEntries; // DT_RUNPATH
+    ++NumEntries; // DT_RUNPATH / DT_RPATH
     DynStrSec.add(Config->RPath);
   }
 
@@ -294,7 +294,17 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   WritePtr(DT_HASH, HashSec.getVA());
 
   if (!Config->RPath.empty())
-    WriteVal(DT_RUNPATH, DynStrSec.getFileOff(Config->RPath));
+
+    // If --enable-new-dtags is set lld emits DT_RUNPATH
+    // instead of DT_RPATH. The two tags are functionally
+    // equivalent except for the following:
+    // - DT_RUNPATH is searched after LD_LIBRARY_PATH, while
+    // DT_RPATH is searched before.
+    // - DT_RUNPATH is used only to search for direct
+    // dependencies of the object it's contained in, while
+    // DT_RPATH is used for indirect dependencies as well.
+    WriteVal(Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
+             DynStrSec.getFileOff(Config->RPath));
 
   if (!Config->SoName.empty())
     WriteVal(DT_SONAME, DynStrSec.getFileOff(Config->SoName));

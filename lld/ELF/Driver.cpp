@@ -130,6 +130,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->DiscardAll = Args.hasArg(OPT_discard_all);
   Config->DiscardLocals = Args.hasArg(OPT_discard_locals);
   Config->DiscardNone = Args.hasArg(OPT_discard_none);
+  Config->EnableNewDtags = !Args.hasArg(OPT_disable_new_dtags);
   Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);

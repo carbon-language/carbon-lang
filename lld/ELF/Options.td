@@ -14,6 +14,9 @@ def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
 
 def allow_shlib_undefined : Flag<["--", "-"], "allow-shlib-undefined">;
 
+def disable_new_dtags : Flag<["--"], "disable-new-dtags">,
+  HelpText<"Disable new dynamic tags">;
+
 def discard_all : Flag<["-"], "discard-all">,
   HelpText<"Delete all local symbols">;
 
@@ -25,6 +28,9 @@ def discard_none : Flag<["-"], "discard-none">,
 
 def dynamic_linker : Separate<["--", "-"], "dynamic-linker">,
   HelpText<"Which dynamic linker to use">;
+
+def enable_new_dtags : Flag<["--"], "enable-new-dtags">,
+  HelpText<"Enable new dynamic tags">;
 
 def entry : Separate<["--", "-"], "entry">, MetaVarName<"<entry>">,
   HelpText<"Name of entry point symbol">;
@@ -96,7 +102,6 @@ def O3 : Flag<["-"], "O3">;
 def as_needed : Flag<["--"], "as-needed">;
 def build_id : Flag<["--"], "build-id">;
 def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
-def enable_new_dtags : Flag<["--"], "enable-new-dtags">;
 def end_group : Flag<["--"], "end-group">;
 def gc_sections : Flag<["--"], "gc-sections">;
 def hash_style : Joined<["--"], "hash-style=">;
