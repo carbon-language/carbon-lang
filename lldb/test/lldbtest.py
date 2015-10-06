@@ -938,7 +938,29 @@ def skipUnlessGoInstalled(func):
         if not compiler:
             self.skipTest("skipping because go compiler not found")
         else:
-            func(*args, **kwargs)
+            # Ensure the version is the minimum version supported by
+            # the go tests.  Empirically this is *not* version go1.2.1
+            # that comes with Ubuntu 14.04.  Go maintainers should
+            # verify, or possibly extend this decorator to provide
+            # min go versions that can vary by test.
+            match_version = re.search(r"(\d+\.\d+(\.\d+)?)", compiler)
+            if not match_version:
+                # Couldn't determine version.
+                self.skipTest(
+                    "skipping because go version could not be parsed "
+                    "out of {}".format(compiler))
+            else:
+                from distutils.version import StrictVersion
+                min_strict_version = StrictVersion("1.3.0")
+                compiler_strict_version = StrictVersion(match_version.group(1))
+                if compiler_strict_version < min_strict_version:
+                    self.skipTest(
+                        "skipping because available go version ({}) does "
+                        "not meet minimum go version {}".format(
+                            compiler_strict_version,
+                            min_strict_version))
+            if not skip_test:
+                func(*args, **kwargs)
     return wrapper
 
 def getPlatform():
