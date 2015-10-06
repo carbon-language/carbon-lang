@@ -1,13 +1,10 @@
-; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -S -polly-codegen < %s | FileCheck %s --check-prefix=CODEGEN
+; RUN: opt %loadPolly -polly-detect-unprofitable \
+; RUN:     -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit \
+; RUN:      -S -polly-codegen < %s | FileCheck %s --check-prefix=CODEGEN
 ;
-; TODO: This is a negative test.
-;
-;       Once we use isl to come up with loop bounds this should work
-;       and hopefully not break 
-;
-; CHECK-NOT: Valid Region
-; CODEGEN-NOT: polly
+; CHECK: [N] -> { Stmt_bb11[i0, i1] : i0 <= -1 + N and i1 >= 0 and 3i1 <= -3 + i0 };
+; CODEGEN: polly
 ;
 ;    void f(int *A, int N) {
 ;      for (int i = 0; i < N; i++)
