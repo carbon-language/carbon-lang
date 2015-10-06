@@ -148,6 +148,7 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
                 else if (0 == ::strcasecmp(arg, "os"))          flag_bits &= ~LIBLLDB_LOG_OS;
                 else if (0 == ::strcasecmp(arg, "jit"))         flag_bits &= ~LIBLLDB_LOG_JIT_LOADER;
                 else if (0 == ::strcasecmp(arg, "language"))    flag_bits &= ~LIBLLDB_LOG_LANGUAGE;
+                else if (0 == ::strncasecmp(arg, "formatters", 10))   flag_bits &= ~LIBLLDB_LOG_DATAFORMATTERS;
                 else
                 {
                     feedback_strm->Printf ("error:  unrecognized log category '%s'\n", arg);
@@ -224,6 +225,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else if (0 == ::strncasecmp(arg, "watch", 5))   flag_bits |= LIBLLDB_LOG_WATCHPOINTS;
             else if (0 == ::strcasecmp(arg, "jit"))         flag_bits |= LIBLLDB_LOG_JIT_LOADER;
             else if (0 == ::strcasecmp(arg, "language"))    flag_bits |= LIBLLDB_LOG_LANGUAGE;
+            else if (0 == ::strncasecmp(arg, "formatters", 10))   flag_bits |= LIBLLDB_LOG_DATAFORMATTERS;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
@@ -254,6 +256,7 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  dyld - log shared library related activities\n"
                  "  events - log broadcaster, listener and event queue activities\n"
                  "  expr - log expressions\n"
+                 "  formatters - log data formatters related activities\n"
                  "  host - log host activities\n"
                  "  jit - log JIT events in the target\n"
                  "  language - log language runtime events\n"

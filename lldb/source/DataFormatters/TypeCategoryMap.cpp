@@ -225,7 +225,7 @@ TypeCategoryMap::GetFormat (FormattersMatchData& match_data)
     uint32_t reason_why;
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     
     if (log)
     {
@@ -263,7 +263,7 @@ TypeCategoryMap::GetSummaryFormat (FormattersMatchData& match_data)
     uint32_t reason_why;
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     
     if (log)
     {
@@ -303,7 +303,7 @@ TypeCategoryMap::GetSyntheticChildren (FormattersMatchData& match_data)
     
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     
     if (log)
     {
@@ -342,7 +342,7 @@ TypeCategoryMap::GetValidator (FormattersMatchData& match_data)
     uint32_t reason_why;
     ActiveCategoriesIterator begin, end = m_active_categories.end();
     
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     
     if (log)
     {

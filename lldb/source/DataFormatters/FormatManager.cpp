@@ -720,7 +720,7 @@ FormatManager::GetFormat (ValueObject& valobj,
     FormattersMatchData match_data(valobj, use_dynamic);
     
     TypeFormatImplSP retval;
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     if (match_data.GetTypeForCache())
     {
         if (log)
@@ -803,7 +803,7 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
     FormattersMatchData match_data(valobj, use_dynamic);
     
     TypeSummaryImplSP retval;
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     if (match_data.GetTypeForCache())
     {
         if (log)
@@ -887,7 +887,7 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
     FormattersMatchData match_data(valobj, use_dynamic);
     
     SyntheticChildrenSP retval;
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     if (match_data.GetTypeForCache())
     {
         if (log)
@@ -954,7 +954,7 @@ FormatManager::GetValidator (ValueObject& valobj,
     FormattersMatchData match_data(valobj, use_dynamic);
     
     TypeValidatorImplSP retval;
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_DATAFORMATTERS));
     if (match_data.GetTypeForCache())
     {
         if (log)
