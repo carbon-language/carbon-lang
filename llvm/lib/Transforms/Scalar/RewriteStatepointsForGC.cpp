@@ -1338,11 +1338,6 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
   assert(isStatepoint(CS) &&
          "This method expects to be rewriting a statepoint");
 
-  BasicBlock *BB = CS.getInstruction()->getParent();
-  Function *F = BB->getParent();
-  Module *M = F->getParent();
-  assert(M && "must be set");
-
   // We're not changing the function signature of the statepoint since the gc
   // arguments go into the var args section.
   Function *GCStatepointDecl = CS.getCalledFunction();
