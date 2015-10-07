@@ -147,6 +147,8 @@ getString(opt::InputArgList &Args, unsigned Key, StringRef Default = "") {
 }
 
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
+  initSymbols();
+
   // Parse command line options.
   opt::InputArgList Args = Parser.parse(ArgsArr);
 

@@ -90,7 +90,6 @@ void SymbolTable::addUndefinedSym(StringRef Name) {
 }
 
 template <class ELFT> void SymbolTable::addUndefinedSym(StringRef Name) {
-  Undefined<ELFT>::SyntheticOptional.setVisibility(STV_HIDDEN);
   resolve<ELFT>(new (Alloc)
                     Undefined<ELFT>(Name, Undefined<ELFT>::SyntheticOptional));
 }

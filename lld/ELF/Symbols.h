@@ -25,6 +25,10 @@ class SymbolBody;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
 
+// Initializes global objects defined in this file.
+// Called at the beginning of main().
+void initSymbols();
+
 // A real symbol object, SymbolBody, is usually accessed indirectly
 // through a Symbol. There's always one Symbol for each symbol name.
 // The resolver updates SymbolBody pointers as it resolves symbols.
