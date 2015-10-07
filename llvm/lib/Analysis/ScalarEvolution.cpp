@@ -3904,6 +3904,11 @@ const SCEV *ScalarEvolution::createNodeForSelectOrPHI(Instruction *I,
                                                       Value *Cond,
                                                       Value *TrueVal,
                                                       Value *FalseVal) {
+  // Handle "constant" branch or select. This can occur for instance when a
+  // loop pass transforms an inner loop and moves on to process the outer loop.
+  if (auto *CI = dyn_cast<ConstantInt>(Cond))
+    return getSCEV(CI->isOne() ? TrueVal : FalseVal);
+
   // Try to match some simple smax or umax patterns.
   auto *ICI = dyn_cast<ICmpInst>(Cond);
   if (!ICI)
