@@ -236,30 +236,34 @@ unsigned MipsFastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
     std::swap(LHS, RHS);
 
   unsigned Opc;
-  if (ISDOpc == ISD::AND) {
-    Opc = Mips::AND;
-  } else if (ISDOpc == ISD::OR) {
-    Opc = Mips::OR;
-  } else if (ISDOpc == ISD::XOR) {
-    Opc = Mips::XOR;
-  } else
+  switch (ISDOpc) {
+    case ISD::AND:
+      Opc = Mips::AND;
+      break;
+    case ISD::OR:
+      Opc = Mips::OR;
+      break;
+    case ISD::XOR:
+      Opc = Mips::XOR;
+      break;
+    default:
     llvm_unreachable("unexpected opcode");
+  }
 
   unsigned LHSReg = getRegForValue(LHS);
-  unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
-  if (!ResultReg)
-    return 0;
-
-  unsigned RHSReg;
   if (!LHSReg)
     return 0;
 
+  unsigned RHSReg;
   if (const auto *C = dyn_cast<ConstantInt>(RHS))
     RHSReg = materializeInt(C, MVT::i32);
   else
     RHSReg = getRegForValue(RHS);
-
   if (!RHSReg)
+    return 0;
+
+  unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
+  if (!ResultReg)
     return 0;
 
   emitInst(Opc, ResultReg).addReg(LHSReg).addReg(RHSReg);
