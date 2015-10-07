@@ -1,4 +1,4 @@
-//===--- ProTypeReinterpretCastCheck.cpp - clang-tidy--------------------------===//
+//===--- ProTypeReinterpretCastCheck.cpp - clang-tidy----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,11 +23,11 @@ void ProTypeReinterpretCastCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(cxxReinterpretCastExpr().bind("cast"), this);
 }
 
-void ProTypeReinterpretCastCheck::check(const MatchFinder::MatchResult &Result) {
+void ProTypeReinterpretCastCheck::check(
+    const MatchFinder::MatchResult &Result) {
   const auto *MatchedCast =
       Result.Nodes.getNodeAs<CXXReinterpretCastExpr>("cast");
-  diag(MatchedCast->getOperatorLoc(),
-       "do not use reinterpret_cast");
+  diag(MatchedCast->getOperatorLoc(), "do not use reinterpret_cast");
 }
 
 } // namespace tidy

@@ -17,7 +17,7 @@ namespace clang {
 namespace tidy {
 
 void ProTypeConstCastCheck::registerMatchers(MatchFinder *Finder) {
-  if(!getLangOpts().CPlusPlus)
+  if (!getLangOpts().CPlusPlus)
     return;
 
   Finder->addMatcher(cxxConstCastExpr().bind("cast"), this);
@@ -30,4 +30,3 @@ void ProTypeConstCastCheck::check(const MatchFinder::MatchResult &Result) {
 
 } // namespace tidy
 } // namespace clang
-
