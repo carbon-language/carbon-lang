@@ -4566,25 +4566,25 @@ void NVPTXTargetLowering::ReplaceNodeResults(
 void NVPTXSection::anchor() {}
 
 NVPTXTargetObjectFile::~NVPTXTargetObjectFile() {
-  delete static_cast<NVPTXSection*>(TextSection);
-  delete static_cast<NVPTXSection*>(DataSection);
-  delete static_cast<NVPTXSection*>(BSSSection);
-  delete static_cast<NVPTXSection*>(ReadOnlySection);
+  delete static_cast<NVPTXSection *>(TextSection);
+  delete static_cast<NVPTXSection *>(DataSection);
+  delete static_cast<NVPTXSection *>(BSSSection);
+  delete static_cast<NVPTXSection *>(ReadOnlySection);
 
-  delete static_cast<NVPTXSection*>(StaticCtorSection);
-  delete static_cast<NVPTXSection*>(StaticDtorSection);
-  delete static_cast<NVPTXSection*>(LSDASection);
-  delete static_cast<NVPTXSection*>(EHFrameSection);
-  delete static_cast<NVPTXSection*>(DwarfAbbrevSection);
-  delete static_cast<NVPTXSection*>(DwarfInfoSection);
-  delete static_cast<NVPTXSection*>(DwarfLineSection);
-  delete static_cast<NVPTXSection*>(DwarfFrameSection);
-  delete static_cast<NVPTXSection*>(DwarfPubTypesSection);
-  delete static_cast<const NVPTXSection*>(DwarfDebugInlineSection);
-  delete static_cast<NVPTXSection*>(DwarfStrSection);
-  delete static_cast<NVPTXSection*>(DwarfLocSection);
-  delete static_cast<NVPTXSection*>(DwarfARangesSection);
-  delete static_cast<NVPTXSection*>(DwarfRangesSection);
+  delete static_cast<NVPTXSection *>(StaticCtorSection);
+  delete static_cast<NVPTXSection *>(StaticDtorSection);
+  delete static_cast<NVPTXSection *>(LSDASection);
+  delete static_cast<NVPTXSection *>(EHFrameSection);
+  delete static_cast<NVPTXSection *>(DwarfAbbrevSection);
+  delete static_cast<NVPTXSection *>(DwarfInfoSection);
+  delete static_cast<NVPTXSection *>(DwarfLineSection);
+  delete static_cast<NVPTXSection *>(DwarfFrameSection);
+  delete static_cast<NVPTXSection *>(DwarfPubTypesSection);
+  delete static_cast<const NVPTXSection *>(DwarfDebugInlineSection);
+  delete static_cast<NVPTXSection *>(DwarfStrSection);
+  delete static_cast<NVPTXSection *>(DwarfLocSection);
+  delete static_cast<NVPTXSection *>(DwarfARangesSection);
+  delete static_cast<NVPTXSection *>(DwarfRangesSection);
 }
 
 MCSection *

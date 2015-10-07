@@ -27,7 +27,7 @@ class MCSymbol;
 
 /// This represents a section on linux, lots of unix variants and some bare
 /// metal systems.
-class MCSectionELF final  : public MCSection {
+class MCSectionELF final : public MCSection {
   /// This is the name of the section.  The referenced memory is owned by
   /// TargetLoweringObjectFileELF's ELFUniqueMap.
   StringRef SectionName;
