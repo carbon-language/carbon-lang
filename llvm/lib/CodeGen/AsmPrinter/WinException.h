@@ -63,6 +63,12 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
   const MCExpr *create32bitRef(const Value *V);
   const MCExpr *getLabelPlusOne(MCSymbol *Label);
 
+  /// Gets the offset that we should use in a table for a stack object with the
+  /// given index. For targets using CFI (Win64, etc), this is relative to the
+  /// established SP at the end of the prologue. For targets without CFI (Win32
+  /// only), it is relative to the frame pointer.
+  int getFrameIndexOffset(int FrameIndex);
+
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.

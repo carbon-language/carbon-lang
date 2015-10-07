@@ -147,7 +147,6 @@ struct WinEHHandlerType {
   /// index, and after PEI, becomes a raw offset.
   union {
     const AllocaInst *Alloca;
-    int FrameOffset;
     int FrameIndex;
   } CatchObj = {};
   GlobalVariable *TypeDescriptor;
@@ -180,7 +179,6 @@ struct WinEHFuncInfo {
   SmallVector<SEHUnwindMapEntry, 4> SEHUnwindMap;
   SmallVector<ClrEHUnwindMapEntry, 4> ClrEHUnwindMap;
   int UnwindHelpFrameIdx = INT_MAX;
-  int UnwindHelpFrameOffset = -1;
 
   int getLastStateNumber() const { return UnwindMap.size() - 1; }
 

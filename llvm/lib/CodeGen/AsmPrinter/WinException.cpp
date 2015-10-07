@@ -38,6 +38,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 WinException::WinException(AsmPrinter *A) : EHStreamer(A) {
@@ -290,6 +291,14 @@ const MCExpr *WinException::getLabelPlusOne(MCSymbol *Label) {
   return MCBinaryExpr::createAdd(create32bitRef(Label),
                                  MCConstantExpr::create(1, Asm->OutContext),
                                  Asm->OutContext);
+}
+
+int WinException::getFrameIndexOffset(int FrameIndex) {
+  const TargetFrameLowering &TFI = *Asm->MF->getSubtarget().getFrameLowering();
+  unsigned UnusedReg;
+  if (Asm->MAI->usesWindowsCFI())
+    return TFI.getFrameIndexReferenceFromSP(*Asm->MF, FrameIndex, UnusedReg);
+  return TFI.getFrameIndexReference(*Asm->MF, FrameIndex, UnusedReg);
 }
 
 namespace {
@@ -599,6 +608,10 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
     emitEHRegistrationOffsetLabel(FuncInfo, FuncLinkageName);
   }
 
+  int UnwindHelpOffset = 0;
+  if (Asm->MAI->usesWindowsCFI())
+    UnwindHelpOffset = getFrameIndexOffset(FuncInfo.UnwindHelpFrameIdx);
+
   MCSymbol *UnwindMapXData = nullptr;
   MCSymbol *TryBlockMapXData = nullptr;
   MCSymbol *IPToStateXData = nullptr;
@@ -637,7 +650,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   OS.EmitIntValue(IPToStateTable.size(), 4);           // IPMapEntries
   OS.EmitValue(create32bitRef(IPToStateXData), 4);     // IPToStateMap
   if (Asm->MAI->usesWindowsCFI())
-    OS.EmitIntValue(FuncInfo.UnwindHelpFrameOffset, 4); // UnwindHelp
+    OS.EmitIntValue(UnwindHelpOffset, 4);              // UnwindHelp
   OS.EmitIntValue(0, 4);                               // ESTypeList
   OS.EmitIntValue(1, 4);                               // EHFlags
 
@@ -714,8 +727,8 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
                   FuncLinkageName, HT.CatchObjRecoverIdx);
           FrameAllocOffsetRef = MCSymbolRefExpr::create(
               FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
-        } else if (HT.CatchObj.FrameOffset != INT_MAX) {
-          int Offset = HT.CatchObj.FrameOffset;
+        } else if (HT.CatchObj.FrameIndex != INT_MAX) {
+          int Offset = getFrameIndexOffset(HT.CatchObj.FrameIndex);
           // For 32-bit, the catch object offset is relative to the end of the
           // EH registration node. For 64-bit, it's relative to SP at the end of
           // the prologue.

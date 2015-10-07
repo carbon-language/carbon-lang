@@ -807,28 +807,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   const TargetFrameLowering &TFI = *Fn.getSubtarget().getFrameLowering();
   if (!TFI.needsFrameIndexResolution(Fn)) return;
 
-  MachineModuleInfo &MMI = Fn.getMMI();
-  const Function *F = Fn.getFunction();
-  const Function *ParentF = MMI.getWinEHParent(F);
-  unsigned FrameReg;
-  if (F == ParentF) {
-    WinEHFuncInfo &FuncInfo = MMI.getWinEHFuncInfo(Fn.getFunction());
-    // FIXME: This should be unconditional but we have bugs in the preparation
-    // pass.
-    if (FuncInfo.UnwindHelpFrameIdx != INT_MAX)
-      FuncInfo.UnwindHelpFrameOffset = TFI.getFrameIndexReferenceFromSP(
-          Fn, FuncInfo.UnwindHelpFrameIdx, FrameReg);
-    for (WinEHTryBlockMapEntry &TBME : FuncInfo.TryBlockMap) {
-      for (WinEHHandlerType &H : TBME.HandlerArray) {
-        if (H.CatchObj.FrameIndex == INT_MAX)
-          H.CatchObj.FrameOffset = INT_MAX;
-        else
-          H.CatchObj.FrameOffset = TFI.getFrameIndexReferenceFromSP(
-              Fn, H.CatchObj.FrameIndex, FrameReg);
-      }
-    }
-  }
-
   // Store SPAdj at exit of a basic block.
   SmallVector<int, 8> SPState;
   SPState.resize(Fn.getNumBlockIDs());

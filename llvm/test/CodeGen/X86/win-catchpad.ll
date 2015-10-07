@@ -120,7 +120,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: $handlerMap$0$try_catch_catch:
 ; X86-NEXT:   .long   0
 ; X86-NEXT:   .long   "??_R0H@8"
-; X86-NEXT:   .long   24
+; X86-NEXT:   .long   -20
 ; X86-NEXT:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"
 ; X86-NEXT:   .long   64
 ; X86-NEXT:   .long   0
