@@ -224,22 +224,6 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
 
-  // Write the result.
-  const ELFFileBase *FirstObj = Symtab.getFirstELF();
-  switch (FirstObj->getELFKind()) {
-  case ELF32LEKind:
-    writeResult<object::ELF32LE>(&Symtab);
-    return;
-  case ELF32BEKind:
-    writeResult<object::ELF32BE>(&Symtab);
-    return;
-  case ELF64LEKind:
-    writeResult<object::ELF64LE>(&Symtab);
-    return;
-  case ELF64BEKind:
-    writeResult<object::ELF64BE>(&Symtab);
-    return;
-  default:
-    llvm_unreachable("Invalid kind");
-  }
+  // Write the result to the file.
+  writeResult(&Symtab);
 }

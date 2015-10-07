@@ -15,7 +15,6 @@ namespace elf2 {
 
 class SymbolTable;
 
-template <class ELFT>
 void writeResult(SymbolTable *Symtab);
 
 }

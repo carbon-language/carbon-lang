@@ -148,19 +148,24 @@ private:
 };
 } // anonymous namespace
 
-namespace lld {
-namespace elf2 {
-
-template <class ELFT>
-void writeResult(SymbolTable *Symtab) { Writer<ELFT>(Symtab).run(); }
-
-template void writeResult<ELF32LE>(SymbolTable *);
-template void writeResult<ELF32BE>(SymbolTable *);
-template void writeResult<ELF64LE>(SymbolTable *);
-template void writeResult<ELF64BE>(SymbolTable *);
-
-} // namespace elf2
-} // namespace lld
+void lld::elf2::writeResult(SymbolTable *Symtab) {
+  switch (Symtab->getFirstELF()->getELFKind()) {
+  case ELF32LEKind:
+    Writer<object::ELF32LE>(Symtab).run();
+    return;
+  case ELF32BEKind:
+    Writer<object::ELF32BE>(Symtab).run();
+    return;
+  case ELF64LEKind:
+    Writer<object::ELF64LE>(Symtab).run();
+    return;
+  case ELF64BEKind:
+    Writer<object::ELF64BE>(Symtab).run();
+    return;
+  default:
+    llvm_unreachable("Invalid kind");
+  }
+}
 
 // The main function of the writer.
 template <class ELFT> void Writer<ELFT>::run() {
