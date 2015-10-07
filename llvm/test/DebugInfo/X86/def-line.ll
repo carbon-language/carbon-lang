@@ -42,8 +42,6 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   DW_AT_specification {{.*}}f3
 
-$_ZN3foo2f1Ev = comdat any
-
 ; Function Attrs: uwtable
 define void @_ZN3foo2f2Ev() #0 align 2 {
 entry:
@@ -52,7 +50,7 @@ entry:
 }
 
 ; Function Attrs: nounwind uwtable
-define linkonce_odr void @_ZN3foo2f1Ev() #1 comdat align 2 {
+define linkonce_odr void @_ZN3foo2f1Ev() #1 align 2 {
 entry:
   ret void, !dbg !21
 }
