@@ -2473,12 +2473,17 @@ class TestBase(Base):
             if error.Success():
                 lldb.remote_platform.SetWorkingDirectory(remote_test_dir)
 
-                def remove_working_dir():
+                # This function removes all files from the current working directory while leaving
+                # the directories in place. The cleaup is required to reduce the disk space required
+                # by the test suit while leaving the directories untached is neccessary because
+                # sub-directories might belong to an other test
+                def clean_working_directory():
                     # TODO: Make it working on Windows when we need it for remote debugging support
-                    # TODO: Add a command to SBPlatform/Platform to remove a (non empty) directory
-                    shell_cmd = lldb.SBPlatformShellCommand("rm -rf %s" % remote_test_dir)
+                    # TODO: Replace the heuristic to remove the files with a logic what collects the
+                    # list of files we have to remove during test runs.
+                    shell_cmd = lldb.SBPlatformShellCommand("rm %s/*" % remote_test_dir)
                     lldb.remote_platform.Run(shell_cmd)
-                self.addTearDownHook(remove_working_dir)
+                self.addTearDownHook(clean_working_directory)
             else:
                 print "error: making remote directory '%s': %s" % (remote_test_dir, error)
     
