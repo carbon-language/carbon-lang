@@ -615,6 +615,10 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                             // so lets use it and cache the fact that we found
                             // a complete type for this die
                             dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
+                            clang::DeclContext *defn_decl_ctx = GetCachedClangDeclContextForDIE(
+                                dwarf->DebugInfo()->GetDIE(DIERef(type_sp->GetID())));
+                            if (defn_decl_ctx)
+                                LinkDeclContextToDIE(defn_decl_ctx, die);
                             return type_sp;
                         }
                     }
@@ -1101,8 +1105,11 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                 Type *class_type = dwarf->ResolveType (decl_ctx_die);
                                 if (class_type)
                                 {
+                                    bool alternate_defn = false;
                                     if (class_type->GetID() != decl_ctx_die.GetID())
                                     {
+                                        alternate_defn = true;
+
                                         // We uniqued the parent class of this function to another class
                                         // so we now need to associate all dies under "decl_ctx_die" to
                                         // DIEs in the DIE for "class_type"...
@@ -1193,13 +1200,8 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                         CompilerType class_opaque_type = class_type->GetForwardCompilerType ();
                                         if (ClangASTContext::IsCXXClassType(class_opaque_type))
                                         {
-                                            if (class_opaque_type.IsBeingDefined ())
+                                            if (class_opaque_type.IsBeingDefined () || alternate_defn)
                                             {
-                                                // Neither GCC 4.2 nor clang++ currently set a valid accessibility
-                                                // in the DWARF for C++ methods... Default to public for now...
-                                                if (accessibility == eAccessNone)
-                                                    accessibility = eAccessPublic;
-
                                                 if (!is_static && !die.HasChildren())
                                                 {
                                                     // We have a C++ member function with no children (this pointer!)
@@ -1209,52 +1211,87 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                                                 }
                                                 else
                                                 {
-                                                    clang::CXXMethodDecl *cxx_method_decl;
-                                                    // REMOVE THE CRASH DESCRIPTION BELOW
-                                                    Host::SetCrashDescriptionWithFormat ("SymbolFileDWARF::ParseType() is adding a method %s to class %s in DIE 0x%8.8" PRIx64 " from %s",
-                                                                                         type_name_cstr,
-                                                                                         class_type->GetName().GetCString(),
-                                                                                         die.GetID(),
-                                                                                         dwarf->GetObjectFile()->GetFileSpec().GetPath().c_str());
-
-                                                    const bool is_attr_used = false;
-
-                                                    cxx_method_decl = m_ast.AddMethodToCXXRecordType (class_opaque_type.GetOpaqueQualType(),
-                                                                                                      type_name_cstr,
-                                                                                                      clang_type,
-                                                                                                      accessibility,
-                                                                                                      is_virtual,
-                                                                                                      is_static,
-                                                                                                      is_inline,
-                                                                                                      is_explicit,
-                                                                                                      is_attr_used,
-                                                                                                      is_artificial);
-
-                                                    type_handled = cxx_method_decl != NULL;
-
-                                                    if (type_handled)
+                                                    bool add_method = true;
+                                                    if (alternate_defn)
                                                     {
-                                                        LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
-
-                                                        Host::SetCrashDescription (NULL);
-
-
-                                                        ClangASTMetadata metadata;
-                                                        metadata.SetUserID(die.GetID());
-
-                                                        if (!object_pointer_name.empty())
+                                                        // If an alternate definition for the class exists, then add the method only if an
+                                                        // equivalent is not already present.
+                                                        clang::CXXRecordDecl *record_decl = m_ast.GetAsCXXRecordDecl(class_opaque_type.GetOpaqueQualType());
+                                                        if (record_decl)
                                                         {
-                                                            metadata.SetObjectPtrName(object_pointer_name.c_str());
-                                                            if (log)
-                                                                log->Printf ("Setting object pointer name: %s on method object %p.\n",
-                                                                             object_pointer_name.c_str(),
-                                                                             static_cast<void*>(cxx_method_decl));
+                                                            for (auto method_iter = record_decl->method_begin();
+                                                                 method_iter != record_decl->method_end();
+                                                                 method_iter++)
+                                                            {
+                                                                clang::CXXMethodDecl *method_decl = *method_iter;
+                                                                if (method_decl->getNameInfo().getAsString() == std::string(type_name_cstr))
+                                                                {
+                                                                    if (method_decl->getType() == ClangASTContext::GetQualType(clang_type))
+                                                                    {
+                                                                        add_method = false;
+                                                                        LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(method_decl), die);
+                                                                        type_handled = true;
+
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
                                                         }
-                                                        m_ast.SetMetadata (cxx_method_decl, metadata);
                                                     }
-                                                    else
+
+                                                    if (add_method)
                                                     {
-                                                        ignore_containing_context = true;
+                                                        // REMOVE THE CRASH DESCRIPTION BELOW
+                                                        Host::SetCrashDescriptionWithFormat ("SymbolFileDWARF::ParseType() is adding a method %s to class %s in DIE 0x%8.8" PRIx64 " from %s",
+                                                                                             type_name_cstr,
+                                                                                             class_type->GetName().GetCString(),
+                                                                                             die.GetID(),
+                                                                                             dwarf->GetObjectFile()->GetFileSpec().GetPath().c_str());
+    
+                                                        const bool is_attr_used = false;
+                                                        // Neither GCC 4.2 nor clang++ currently set a valid accessibility
+                                                        // in the DWARF for C++ methods... Default to public for now...
+                                                        if (accessibility == eAccessNone)
+                                                            accessibility = eAccessPublic;
+    
+                                                        clang::CXXMethodDecl *cxx_method_decl;
+                                                        cxx_method_decl = m_ast.AddMethodToCXXRecordType (class_opaque_type.GetOpaqueQualType(),
+                                                                                                          type_name_cstr,
+                                                                                                          clang_type,
+                                                                                                          accessibility,
+                                                                                                          is_virtual,
+                                                                                                          is_static,
+                                                                                                          is_inline,
+                                                                                                          is_explicit,
+                                                                                                          is_attr_used,
+                                                                                                          is_artificial);
+    
+                                                        type_handled = cxx_method_decl != NULL;
+    
+                                                        if (type_handled)
+                                                        {
+                                                            LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
+    
+                                                            Host::SetCrashDescription (NULL);
+    
+    
+                                                            ClangASTMetadata metadata;
+                                                            metadata.SetUserID(die.GetID());
+    
+                                                            if (!object_pointer_name.empty())
+                                                            {
+                                                                metadata.SetObjectPtrName(object_pointer_name.c_str());
+                                                                if (log)
+                                                                    log->Printf ("Setting object pointer name: %s on method object %p.\n",
+                                                                                 object_pointer_name.c_str(),
+                                                                                 static_cast<void*>(cxx_method_decl));
+                                                            }
+                                                            m_ast.SetMetadata (cxx_method_decl, metadata);
+                                                        }
+                                                        else
+                                                        {
+                                                            ignore_containing_context = true;
+                                                        }
                                                     }
                                                 }
                                             }
