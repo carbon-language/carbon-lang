@@ -13,7 +13,6 @@
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Symbol/TaggedASTType.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Pass.h"
 

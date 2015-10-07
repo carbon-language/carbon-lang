@@ -12,7 +12,7 @@
 
 #include "clang/Sema/SemaConsumer.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Symbol/TaggedASTType.h"
+#include "lldb/Target/Target.h"
 
 namespace lldb_private {
 

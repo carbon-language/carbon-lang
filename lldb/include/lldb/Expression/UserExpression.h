@@ -16,10 +16,6 @@
 #include <map>
 #include <vector>
 
-// Other libraries and framework includes
-
-#include "llvm/ADT/ArrayRef.h"
-
 // Project includes
 
 #include "lldb/lldb-forward.h"
@@ -27,7 +23,6 @@
 #include "lldb/Core/Address.h"
 #include "lldb/Expression/Expression.h"
 #include "lldb/Expression/Materializer.h"
-#include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/ExecutionContext.h"
 
 namespace lldb_private

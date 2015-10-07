@@ -32,7 +32,6 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/UserExpression.h"
 #include "lldb/Expression/Materializer.h"
-#include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/ExecutionContext.h"
 
 namespace lldb_private

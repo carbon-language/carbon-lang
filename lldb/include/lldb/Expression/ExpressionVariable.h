@@ -10,11 +10,6 @@
 #ifndef liblldb_ExpressionVariable_h_
 #define liblldb_ExpressionVariable_h_
 
-// C Includes
-#include <signal.h>
-#include <stdint.h>
-#include <string.h>
-
 // C++ Includes
 #include <vector>
 

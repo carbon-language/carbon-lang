@@ -17,19 +17,14 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Address.h"
-#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Value.h"
-#include "lldb/Core/ValueObjectList.h"
 #include "lldb/Expression/Expression.h"
 #include "lldb/Expression/ExpressionParser.h"
 #include "lldb/Symbol/CompilerType.h"
-#include "lldb/Target/Process.h"
 
 namespace lldb_private
 {
     
-class ClangExpressionParser;
-
 //----------------------------------------------------------------------
 /// @class FunctionCaller FunctionCaller.h "lldb/Expression/FunctionCaller.h"
 /// @brief Encapsulates a function that can be called.

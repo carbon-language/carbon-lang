@@ -14,6 +14,7 @@
 #include "ClangExpressionDeclMap.h"
 #include "ClangModulesDeclVendor.h"
 #include "ClangPersistentVariables.h"
+#include "IRForTarget.h"
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
