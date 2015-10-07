@@ -90,17 +90,21 @@ runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
   ArgCXX11.push_back(Filename.str());
 
   ast_matchers::MatchFinder Finder;
+  llvm::IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new vfs::InMemoryFileSystem);
   llvm::IntrusiveRefCntPtr<FileManager> Files(
-      new FileManager(FileSystemOptions()));
+      new FileManager(FileSystemOptions(), InMemoryFileSystem));
 
   SmallVector<std::unique_ptr<ClangTidyCheck>, 1> Checks;
   CheckFactory<CheckList...>::createChecks(&Context, Checks);
   tooling::ToolInvocation Invocation(
       ArgCXX11, new TestClangTidyAction(Checks, Finder, Context), Files.get());
-  Invocation.mapVirtualFile(Filename.str(), Code);
+  InMemoryFileSystem->addFile(Filename, 0,
+                              llvm::MemoryBuffer::getMemBuffer(Code));
   for (const auto &FileContent : PathsToContent) {
-    Invocation.mapVirtualFile(Twine("include/" + FileContent.first).str(),
-                              FileContent.second);
+    InMemoryFileSystem->addFile(
+        Twine("include/") + FileContent.first, 0,
+        llvm::MemoryBuffer::getMemBuffer(FileContent.second));
   }
   Invocation.setDiagnosticConsumer(&DiagConsumer);
   if (!Invocation.run()) {
