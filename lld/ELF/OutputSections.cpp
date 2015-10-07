@@ -269,6 +269,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     ++NumEntries; // DT_INIT
   if (FiniSym)
     ++NumEntries; // DT_FINI
+  if (Config->ZNow)
+    ++NumEntries; // DT_FLAGS_1
 
   ++NumEntries; // DT_NULL
 
@@ -340,6 +342,9 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     WritePtr(DT_INIT, getSymVA(*InitSym, BssSec));
   if (FiniSym)
     WritePtr(DT_FINI, getSymVA(*FiniSym, BssSec));
+
+  if (Config->ZNow)
+    WriteVal(DT_FLAGS_1, DF_1_NOW);
 
   WriteVal(DT_NULL, 0);
 }

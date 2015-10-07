@@ -186,6 +186,11 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->Shared = Args.hasArg(OPT_shared);
 
+  for (auto *Arg : Args.filtered(OPT_z)) {
+    if (Arg->getValue() == StringRef("now"))
+      Config->ZNow = true;
+  }
+
   for (auto *Arg : Args) {
     switch (Arg->getOption().getID()) {
     case OPT_l:

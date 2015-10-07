@@ -82,6 +82,9 @@ def undefined : Joined<["--"], "undefined=">,
 def whole_archive : Flag<["--"], "whole-archive">,
   HelpText<"Force load of all members in a static library">;
 
+def z : JoinedOrSeparate<["-"], "z">, MetaVarName<"<option>">,
+  HelpText<"Linker option extensions">;
+
 // Aliases
 def alias_Bdynamic_call_shared: Flag<["-"], "call_shared">, Alias<Bdynamic>;
 def alias_Bdynamic_dy: Flag<["-"], "dy">, Alias<Bdynamic>;
@@ -114,4 +117,3 @@ def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;
 def start_group : Flag<["--"], "start-group">;
 def strip_all : Flag<["--"], "strip-all">;
 def version_script : Separate<["--"], "version-script">;
-def z : Separate<["-"], "z">;

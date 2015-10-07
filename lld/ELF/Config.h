@@ -44,6 +44,7 @@ struct Configuration {
   bool ExportDynamic;
   bool NoInhibitExec;
   bool NoUndefined;
+  bool ZNow = false;
   bool Shared;
   bool Static = false;
   bool WholeArchive = false;
