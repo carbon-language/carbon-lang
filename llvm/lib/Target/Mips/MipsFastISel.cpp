@@ -1604,19 +1604,23 @@ bool MipsFastISel::emitIntSExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
 
 bool MipsFastISel::emitIntZExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                                unsigned DestReg) {
+  int64_t Imm;
+
   switch (SrcVT.SimpleTy) {
   default:
     return false;
   case MVT::i1:
-    emitInst(Mips::ANDi, DestReg).addReg(SrcReg).addImm(1);
+    Imm = 1;
     break;
   case MVT::i8:
-    emitInst(Mips::ANDi, DestReg).addReg(SrcReg).addImm(0xff);
+    Imm = 0xff;
     break;
   case MVT::i16:
-    emitInst(Mips::ANDi, DestReg).addReg(SrcReg).addImm(0xffff);
+    Imm = 0xffff;
     break;
   }
+
+  emitInst(Mips::ANDi, DestReg).addReg(SrcReg).addImm(Imm);
   return true;
 }
 
