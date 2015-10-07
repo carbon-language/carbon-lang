@@ -60,9 +60,7 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
 }
 
 static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }
-static void or16le(uint8_t *L, int16_t V) { write16le(L, read16le(L) | V); }
 static void or32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) | V); }
-static void or64le(uint8_t *L, int64_t V) { write64le(L, read64le(L) | V); }
 
 void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA,
