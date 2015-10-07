@@ -21,7 +21,7 @@ namespace llvm {
 class MCSymbol;
 
 /// This represents a section on Windows
-class MCSectionCOFF : public MCSection {
+class MCSectionCOFF final : public MCSection {
   // The memory for this string is stored in the same MCContext as *this.
   StringRef SectionName;
 
@@ -51,9 +51,10 @@ private:
     assert((Characteristics & 0x00F00000) == 0 &&
            "alignment must not be set upon section creation");
   }
-  ~MCSectionCOFF() override;
 
 public:
+  ~MCSectionCOFF();
+
   /// Decides whether a '.section' directive should be printed before the
   /// section name
   bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;

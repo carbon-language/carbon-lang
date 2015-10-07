@@ -105,10 +105,9 @@ protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin);
   SectionVariant Variant;
   SectionKind Kind;
+  ~MCSection();
 
 public:
-  virtual ~MCSection();
-
   SectionKind getKind() const { return Kind; }
 
   SectionVariant getVariant() const { return Variant; }

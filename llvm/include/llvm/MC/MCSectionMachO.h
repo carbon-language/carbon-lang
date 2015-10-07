@@ -22,7 +22,7 @@ namespace llvm {
 
 /// This represents a section on a Mach-O system (used by Mac OS X).  On a Mac
 /// system, these are also described in /usr/include/mach-o/loader.h.
-class MCSectionMachO : public MCSection {
+class MCSectionMachO final : public MCSection {
   char SegmentName[16];  // Not necessarily null terminated!
   char SectionName[16];  // Not necessarily null terminated!
 
