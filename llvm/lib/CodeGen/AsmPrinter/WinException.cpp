@@ -477,7 +477,8 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
             const MCExpr *ExceptOrNull;
             auto *Handler = UME.Handler.get<MachineBasicBlock *>();
             if (UME.IsFinally) {
-              FilterOrFinally = create32bitRef(Handler->getSymbol());
+              FilterOrFinally =
+                  create32bitRef(getMCSymbolForMBBOrGV(Asm, Handler));
               ExceptOrNull = MCConstantExpr::create(0, Ctx);
             } else {
               // For an except, the filter can be 1 (catch-all) or a function

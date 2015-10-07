@@ -140,7 +140,7 @@ ehcleanup.end:                                    ; preds = %ehcleanup
 ; CHECK-NEXT:         .long   .LBB1_[[except2bb]]@IMGREL
 ; CHECK-NEXT:         .long   .Ltmp2@IMGREL
 ; CHECK-NEXT:         .long   .Ltmp3@IMGREL+1
-; CHECK-NEXT:         .long   .LBB1_[[finbb:[0-9]+]]@IMGREL
+; CHECK-NEXT:         .long   "?dtor$[[finbb:[0-9]+]]@?0?main@4HA"@IMGREL
 ; CHECK-NEXT:         .long   0
 ; CHECK-NEXT:         .long   .Ltmp2@IMGREL
 ; CHECK-NEXT:         .long   .Ltmp3@IMGREL+1
