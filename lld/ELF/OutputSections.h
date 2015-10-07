@@ -153,7 +153,6 @@ public:
 
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
-  SymbolTable &getSymTable() const { return Table; }
   void addSymbol(StringRef Name, bool isLocal = false);
   StringTableSection<ELFT::Is64Bits> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }

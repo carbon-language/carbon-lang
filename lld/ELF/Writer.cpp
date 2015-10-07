@@ -82,6 +82,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
+  Writer(SymbolTable &S) : Symtab(S) {}
   void run();
 
 private:
@@ -95,12 +96,10 @@ private:
   void writeHeader();
   void writeSections();
   bool needsInterpSection() const {
-    return !Out<ELFT>::SymTab->getSymTable().getSharedFiles().empty() &&
-           !Config->DynamicLinker.empty();
+    return !Symtab.getSharedFiles().empty() && !Config->DynamicLinker.empty();
   }
   bool isOutputDynamic() const {
-    return !Out<ELFT>::SymTab->getSymTable().getSharedFiles().empty() ||
-           Config->Shared;
+    return !Symtab.getSharedFiles().empty() || Config->Shared;
   }
   bool needsDynamicSections() const { return isOutputDynamic(); }
   unsigned getVAStart() const { return Config->Shared ? 0 : VAStart; }
@@ -112,6 +111,7 @@ private:
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
   llvm::BumpPtrAllocator PAlloc;
+  SymbolTable &Symtab;
   std::vector<ProgramHeader<ELFT> *> PHDRs;
   ProgramHeader<ELFT> FileHeaderPHDR{PT_LOAD, PF_R, 0, 0};
   ProgramHeader<ELFT> InterpPHDR{PT_INTERP, 0, 0, 0};
@@ -149,7 +149,7 @@ template <class ELFT> static void doWriteResult(SymbolTable *Symtab) {
   DynamicSection<ELFT> Dynamic(*Symtab);
   Out<ELFT>::Dynamic = &Dynamic;
 
-  Writer<ELFT>().run();
+  Writer<ELFT>(*Symtab).run();
 }
 
 void lld::elf2::writeResult(SymbolTable *Symtab) {
@@ -301,8 +301,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Map[{Out<ELFT>::Bss->getName(), Out<ELFT>::Bss->getType(),
        Out<ELFT>::Bss->getFlags()}] = Out<ELFT>::Bss;
 
-  SymbolTable &Symtab = Out<ELFT>::SymTab->getSymTable();
-
   // Declare linker generated symbols.
   // This must be done before the relocation scan to make sure we can correctly
   // decide if a dynamic relocation is needed or not.
@@ -353,8 +351,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Out<ELFT>::Dynamic->FiniArraySec =
       Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC});
 
-  auto AddStartEnd = [&Symtab](StringRef Start, StringRef End,
-                               OutputSection<ELFT> *OS) {
+  auto AddStartEnd = [&](StringRef Start, StringRef End,
+                         OutputSection<ELFT> *OS) {
     if (OS) {
       Symtab.addSyntheticSym<ELFT>(Start, *OS, 0);
       Symtab.addSyntheticSym<ELFT>(End, *OS, OS->getSize());
@@ -567,7 +565,6 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
                                : ELFDATA2MSB;
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
 
-  const SymbolTable &Symtab = Out<ELFT>::SymTab->getSymTable();
   auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
   EHdr->e_ident[EI_OSABI] = FirstObj.getOSABI();
 
