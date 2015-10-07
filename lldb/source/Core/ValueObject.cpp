@@ -4259,6 +4259,13 @@ ValueObject::SetPreferredDisplayLanguage (lldb::LanguageType lt)
     m_preferred_display_language = lt;
 }
 
+void
+ValueObject::SetPreferredDisplayLanguageIfNeeded (lldb::LanguageType lt)
+{
+    if (m_preferred_display_language == lldb::eLanguageTypeUnknown)
+        SetPreferredDisplayLanguage(lt);
+}
+
 bool
 ValueObject::CanProvideValue ()
 {

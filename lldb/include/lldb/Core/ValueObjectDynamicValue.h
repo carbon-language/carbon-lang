@@ -105,6 +105,12 @@ public:
     virtual TypeImpl
     GetTypeImpl ();
     
+    virtual lldb::LanguageType
+    GetPreferredDisplayLanguage ();
+    
+    void
+    SetPreferredDisplayLanguage (lldb::LanguageType);
+    
     virtual bool
     GetDeclaration (Declaration &decl);
 

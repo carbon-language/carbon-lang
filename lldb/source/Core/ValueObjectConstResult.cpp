@@ -374,5 +374,7 @@ ValueObjectConstResult::Cast (const CompilerType &compiler_type)
 lldb::LanguageType
 ValueObjectConstResult::GetPreferredDisplayLanguage ()
 {
-    return lldb::eLanguageTypeUnknown;
+    if (m_preferred_display_language != lldb::eLanguageTypeUnknown)
+        return m_preferred_display_language;
+    return GetCompilerTypeImpl().GetMinimumLanguage();
 }

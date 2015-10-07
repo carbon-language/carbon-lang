@@ -61,6 +61,7 @@ struct DumpValueObjectOptions
     lldb::Format m_format = lldb::eFormatDefault;
     lldb::TypeSummaryImplSP m_summary_sp;
     std::string m_root_valobj_name;
+    lldb::LanguageType m_varformat_language = lldb::eLanguageTypeUnknown;
     PointerDepth m_max_ptr_depth;
     bool m_use_synthetic : 1;
     bool m_scope_already_checked : 1;
@@ -249,6 +250,13 @@ struct DumpValueObjectOptions
     SetHideValue (bool hide_value = false)
     {
         m_hide_value = hide_value;
+        return *this;
+    }
+    
+    DumpValueObjectOptions&
+    SetVariableFormatDisplayLanguage (lldb::LanguageType lang = lldb::eLanguageTypeUnknown)
+    {
+        m_varformat_language = lang;
         return *this;
     }
     

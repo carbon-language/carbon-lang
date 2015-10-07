@@ -223,6 +223,7 @@ ValueObjectSynthetic::GetChildAtIndex (size_t idx, bool can_create)
             if (!synth_guy)
                 return synth_guy;
             m_children_byindex.SetValueForKey(idx, synth_guy.get());
+            synth_guy->SetPreferredDisplayLanguageIfNeeded(GetPreferredDisplayLanguage());
             return synth_guy;
         }
         else
@@ -313,6 +314,27 @@ ValueObjectSynthetic::SetFormat (lldb::Format format)
     }
     this->ValueObject::SetFormat(format);
     this->ClearUserVisibleData(eClearUserVisibleDataItemsAll);
+}
+
+void
+ValueObjectSynthetic::SetPreferredDisplayLanguage (lldb::LanguageType lang)
+{
+    this->ValueObject::SetPreferredDisplayLanguage(lang);
+    if (m_parent)
+        m_parent->SetPreferredDisplayLanguage(lang);
+}
+
+lldb::LanguageType
+ValueObjectSynthetic::GetPreferredDisplayLanguage ()
+{
+    if (m_preferred_display_language == lldb::eLanguageTypeUnknown)
+    {
+        if (m_parent)
+            return m_parent->GetPreferredDisplayLanguage();
+        return lldb::eLanguageTypeUnknown;
+    }
+    else
+        return m_preferred_display_language;
 }
 
 bool

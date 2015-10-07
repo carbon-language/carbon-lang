@@ -387,7 +387,6 @@ class ObjCDataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         # check formatters for common Objective-C types
-        self.runCmd("log timers enable")
         expect_strings = ['(CFGregorianUnits) cf_greg_units = 1 years, 3 months, 5 days, 12 hours, 5 minutes 7 seconds',
          '(CFRange) cf_range = location=4 length=4',
          '(NSPoint) ns_point = (x = 4, y = 4)',
@@ -414,7 +413,6 @@ class ObjCDataFormatterTestCase(TestBase):
             
         self.expect("frame variable",
              substrs = expect_strings)
-        self.runCmd('log timers dump')
 
 
     def kvo_data_formatter_commands(self):

@@ -335,6 +335,7 @@ CommandObjectExpression::EvaluateExpression
                         result_valobj_sp->SetFormat (format);
 
                     DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions(m_command_options.m_verbosity,format));
+                    options.SetVariableFormatDisplayLanguage(result_valobj_sp->GetPreferredDisplayLanguage());
 
                     result_valobj_sp->Dump(*output_stream,options);
                     

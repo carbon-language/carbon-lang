@@ -391,6 +391,27 @@ ValueObjectDynamicValue::SetData (DataExtractor &data, Error &error)
     return ret_val;
 }
 
+void
+ValueObjectDynamicValue::SetPreferredDisplayLanguage (lldb::LanguageType lang)
+{
+    this->ValueObject::SetPreferredDisplayLanguage(lang);
+    if (m_parent)
+        m_parent->SetPreferredDisplayLanguage(lang);
+}
+
+lldb::LanguageType
+ValueObjectDynamicValue::GetPreferredDisplayLanguage ()
+{
+    if (m_preferred_display_language == lldb::eLanguageTypeUnknown)
+    {
+        if (m_parent)
+            return m_parent->GetPreferredDisplayLanguage();
+        return lldb::eLanguageTypeUnknown;
+    }
+    else
+        return m_preferred_display_language;
+}
+
 bool
 ValueObjectDynamicValue::GetDeclaration (Declaration &decl)
 {

@@ -152,6 +152,12 @@ public:
     virtual void
     SetFormat (lldb::Format format);
     
+    virtual lldb::LanguageType
+    GetPreferredDisplayLanguage ();
+    
+    void
+    SetPreferredDisplayLanguage (lldb::LanguageType);
+    
     virtual bool
     GetDeclaration (Declaration &decl);
 

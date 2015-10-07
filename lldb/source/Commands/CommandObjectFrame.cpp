@@ -500,6 +500,7 @@ protected:
                             }
                             
                             options.SetFormat(format);
+                            options.SetVariableFormatDisplayLanguage(valobj_sp->GetPreferredDisplayLanguage());
 
                             Stream &output_stream = result.GetOutputStream();
                             options.SetRootValueObjectName(valobj_sp->GetParent() ? name_cstr : NULL);
@@ -586,6 +587,7 @@ protected:
                                     }
                                     
                                     options.SetFormat(format);
+                                    options.SetVariableFormatDisplayLanguage(valobj_sp->GetPreferredDisplayLanguage());
                                     options.SetRootValueObjectName(name_cstr);
                                     valobj_sp->Dump(result.GetOutputStream(),options);
                                 }

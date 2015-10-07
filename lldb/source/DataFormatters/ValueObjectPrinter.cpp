@@ -26,6 +26,7 @@ DumpValueObjectOptions()
 {
     m_use_dynamic = valobj.GetDynamicValueType();
     m_use_synthetic = valobj.IsSynthetic();
+    m_varformat_language = valobj.GetPreferredDisplayLanguage();
 }
 
 ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
@@ -354,10 +355,10 @@ ValueObjectPrinter::GetValueSummaryError (std::string& value,
         {
             TypeSummaryImpl* entry = GetSummaryFormatter();
             if (entry)
-                m_valobj->GetSummaryAsCString(entry, summary);
+                m_valobj->GetSummaryAsCString(entry, summary, options.m_varformat_language);
             else
             {
-                const char* sum_cstr = m_valobj->GetSummaryAsCString();
+                const char* sum_cstr = m_valobj->GetSummaryAsCString(options.m_varformat_language);
                 if (sum_cstr)
                     summary.assign(sum_cstr);
             }

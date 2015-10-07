@@ -1242,6 +1242,9 @@ protected:
     bool
     IsChecksumEmpty ();
     
+    void
+    SetPreferredDisplayLanguageIfNeeded (lldb::LanguageType);
+    
 private:
     //------------------------------------------------------------------
     // For ValueObject only
