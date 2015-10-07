@@ -1459,6 +1459,15 @@ SymbolFileDWARFDebugMap::GetDeclContextContainingUID (lldb::user_id_t type_uid)
     return CompilerDeclContext();
 }
 
+void
+SymbolFileDWARFDebugMap::ParseDeclsForContext (lldb_private::CompilerDeclContext decl_ctx)
+{
+    ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
+        oso_dwarf->ParseDeclsForContext (decl_ctx);
+        return true; // Keep iterating
+    });
+}
+
 bool
 SymbolFileDWARFDebugMap::AddOSOFileRange (CompileUnitInfo *cu_info,
                                           lldb::addr_t exe_file_addr,
