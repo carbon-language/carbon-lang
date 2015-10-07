@@ -51,11 +51,12 @@ GotSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
 
 template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
   for (const SymbolBody *B : Entries) {
+    uint8_t *Entry = Buf;
+    Buf += sizeof(uintX_t);
     if (canBePreempted(B))
       continue; // The dynamic linker will take care of it.
     uintX_t VA = getSymVA(*B, BssSec);
-    write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Buf, VA);
-    Buf += sizeof(uintX_t);
+    write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, VA);
   }
 }
 
