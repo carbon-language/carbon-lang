@@ -63,4 +63,13 @@ int main()
         is.seekg(-1);
         assert(is.fail());
     }
+    {
+        testbuf<char> sb(" 123456789");
+        std::istream is(&sb);
+        is.setstate(std::ios_base::eofbit);
+        assert(is.eof());
+        is.seekg(5);
+        assert(is.good());
+        assert(!is.eof());
+    }
 }
