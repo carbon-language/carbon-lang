@@ -140,5 +140,22 @@ typedef union
     long double f;
 } long_double_bits;
 
+#if __STDC_VERSION__ >= 199901L
+typedef float _Complex Fcomplex;
+typedef double _Complex Dcomplex;
+typedef long double _Complex Lcomplex;
+
+#define COMPLEX_REAL(x) __real__(x)
+#define COMPLEX_IMAGINARY(x) __imag__(x)
+#else
+typedef struct { float real, imaginary; } Fcomplex;
+
+typedef struct { double real, imaginary; } Dcomplex;
+
+typedef struct { long double real, imaginary; } Lcomplex;
+
+#define COMPLEX_REAL(x) (x).real
+#define COMPLEX_IMAGINARY(x) (x).imaginary
+#endif
 #endif /* INT_TYPES_H */
 

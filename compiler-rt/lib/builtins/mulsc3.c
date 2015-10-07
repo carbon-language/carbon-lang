@@ -17,17 +17,17 @@
 
 /* Returns: the product of a + ib and c + id */
 
-COMPILER_RT_ABI float _Complex
+COMPILER_RT_ABI Fcomplex
 __mulsc3(float __a, float __b, float __c, float __d)
 {
     float __ac = __a * __c;
     float __bd = __b * __d;
     float __ad = __a * __d;
     float __bc = __b * __c;
-    float _Complex z;
-    __real__ z = __ac - __bd;
-    __imag__ z = __ad + __bc;
-    if (crt_isnan(__real__ z) && crt_isnan(__imag__ z))
+    Fcomplex z;
+    COMPLEX_REAL(z) = __ac - __bd;
+    COMPLEX_IMAGINARY(z) = __ad + __bc;
+    if (crt_isnan(COMPLEX_REAL(z)) && crt_isnan(COMPLEX_IMAGINARY(z)))
     {
         int __recalc = 0;
         if (crt_isinf(__a) || crt_isinf(__b))
@@ -65,8 +65,8 @@ __mulsc3(float __a, float __b, float __c, float __d)
         }
         if (__recalc)
         {
-            __real__ z = CRT_INFINITY * (__a * __c - __b * __d);
-            __imag__ z = CRT_INFINITY * (__a * __d + __b * __c);
+            COMPLEX_REAL(z) = CRT_INFINITY * (__a * __c - __b * __d);
+            COMPLEX_IMAGINARY(z) = CRT_INFINITY * (__a * __d + __b * __c);
         }
     }
     return z;

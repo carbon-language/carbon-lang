@@ -17,7 +17,7 @@
 
 /* Returns: the quotient of (a + ib) / (c + id) */
 
-COMPILER_RT_ABI float _Complex
+COMPILER_RT_ABI Fcomplex
 __divsc3(float __a, float __b, float __c, float __d)
 {
     int __ilogbw = 0;
@@ -29,31 +29,31 @@ __divsc3(float __a, float __b, float __c, float __d)
         __d = crt_scalbnf(__d, -__ilogbw);
     }
     float __denom = __c * __c + __d * __d;
-    float _Complex z;
-    __real__ z = crt_scalbnf((__a * __c + __b * __d) / __denom, -__ilogbw);
-    __imag__ z = crt_scalbnf((__b * __c - __a * __d) / __denom, -__ilogbw);
-    if (crt_isnan(__real__ z) && crt_isnan(__imag__ z))
+    Fcomplex z;
+    COMPLEX_REAL(z) = crt_scalbnf((__a * __c + __b * __d) / __denom, -__ilogbw);
+    COMPLEX_IMAGINARY(z) = crt_scalbnf((__b * __c - __a * __d) / __denom, -__ilogbw);
+    if (crt_isnan(COMPLEX_REAL(z)) && crt_isnan(COMPLEX_IMAGINARY(z)))
     {
         if ((__denom == 0) && (!crt_isnan(__a) || !crt_isnan(__b)))
         {
-            __real__ z = crt_copysignf(CRT_INFINITY, __c) * __a;
-            __imag__ z = crt_copysignf(CRT_INFINITY, __c) * __b;
+            COMPLEX_REAL(z) = crt_copysignf(CRT_INFINITY, __c) * __a;
+            COMPLEX_IMAGINARY(z) = crt_copysignf(CRT_INFINITY, __c) * __b;
         }
         else if ((crt_isinf(__a) || crt_isinf(__b)) &&
                  crt_isfinite(__c) && crt_isfinite(__d))
         {
             __a = crt_copysignf(crt_isinf(__a) ? 1 : 0, __a);
             __b = crt_copysignf(crt_isinf(__b) ? 1 : 0, __b);
-            __real__ z = CRT_INFINITY * (__a * __c + __b * __d);
-            __imag__ z = CRT_INFINITY * (__b * __c - __a * __d);
+            COMPLEX_REAL(z) = CRT_INFINITY * (__a * __c + __b * __d);
+            COMPLEX_IMAGINARY(z) = CRT_INFINITY * (__b * __c - __a * __d);
         }
         else if (crt_isinf(__logbw) && __logbw > 0 &&
                  crt_isfinite(__a) && crt_isfinite(__b))
         {
             __c = crt_copysignf(crt_isinf(__c) ? 1 : 0, __c);
             __d = crt_copysignf(crt_isinf(__d) ? 1 : 0, __d);
-            __real__ z = 0 * (__a * __c + __b * __d);
-            __imag__ z = 0 * (__b * __c - __a * __d);
+            COMPLEX_REAL(z) = 0 * (__a * __c + __b * __d);
+            COMPLEX_IMAGINARY(z) = 0 * (__b * __c - __a * __d);
         }
     }
     return z;
