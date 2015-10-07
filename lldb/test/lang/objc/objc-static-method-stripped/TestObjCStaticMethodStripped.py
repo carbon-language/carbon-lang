@@ -19,6 +19,8 @@ class TestObjCStaticMethodStripped(TestBase):
 
     @skipUnlessDarwin
     @python_api_test
+    @skipIfDwarf    # This test requires a stripped binary and a dSYM
+    @skipIfDWO      # This test requires a stripped binary and a dSYM
     #<rdar://problem/12042992>
     def test_with_python_api(self):
         """Test calling functions in static methods with a stripped binary."""
