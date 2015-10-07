@@ -573,7 +573,7 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
     StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(extractor);
     options.SetStream(&stream);
-    options.SetPrefixToken('L');
+    options.SetPrefixToken("L");
     options.SetQuote('"');
     options.SetSourceSize(size);
     options.SetBinaryZeroIsTerminator(false);

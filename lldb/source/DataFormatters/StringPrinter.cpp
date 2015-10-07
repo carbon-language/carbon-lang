@@ -272,7 +272,7 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
 {
     Stream &stream(*dump_options.GetStream());
     if (dump_options.GetPrefixToken() != 0)
-        stream.Printf("%c",dump_options.GetPrefixToken());
+        stream.Printf("%s",dump_options.GetPrefixToken());
     if (dump_options.GetQuote() != 0)
         stream.Printf("%c",dump_options.GetQuote());
     auto data(dump_options.GetData());
@@ -372,6 +372,8 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
     }
     if (dump_options.GetQuote() != 0)
         stream.Printf("%c",dump_options.GetQuote());
+    if (dump_options.GetSuffixToken() != 0)
+        stream.Printf("%s",dump_options.GetSuffixToken());
     return true;
 }
 
@@ -392,6 +394,7 @@ lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStreamOptions::ReadB
 {
     SetStream(options.GetStream());
     SetPrefixToken(options.GetPrefixToken());
+    SetSuffixToken(options.GetSuffixToken());
     SetQuote(options.GetQuote());
     SetEscapeNonPrintables(options.GetEscapeNonPrintables());
     SetBinaryZeroIsTerminator(options.GetBinaryZeroIsTerminator());
@@ -433,11 +436,11 @@ StringPrinter::ReadStringAndDumpToStream<StringPrinter::StringElementType::ASCII
     if (my_error.Fail())
         return false;
 
-    char prefix_token = options.GetPrefixToken();
+    const char* prefix_token = options.GetPrefixToken();
     char quote = options.GetQuote();
 
     if (prefix_token != 0)
-        options.GetStream()->Printf("%c%c",prefix_token,quote);
+        options.GetStream()->Printf("%s%c",prefix_token,quote);
     else if (quote != 0)
         options.GetStream()->Printf("%c",quote);
 
@@ -481,8 +484,12 @@ StringPrinter::ReadStringAndDumpToStream<StringPrinter::StringElementType::ASCII
             data++;
         }
     }
-
-    if (quote != 0)
+    
+    const char* suffix_token = options.GetSuffixToken();
+    
+    if (suffix_token != 0)
+        options.GetStream()->Printf("%c%s",quote, suffix_token);
+    else if (quote != 0)
         options.GetStream()->Printf("%c",quote);
 
     return true;

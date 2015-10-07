@@ -156,7 +156,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             options.SetLocation(location);
             options.SetProcessSP(process_sp);
             options.SetStream(&stream);
-            options.SetPrefixToken('@');
+            options.SetPrefixToken("@");
             options.SetQuote('"');
             options.SetSourceSize(explicit_length);
             options.SetNeedsZeroTermination(false);
@@ -171,7 +171,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             options.SetLocation(location+1);
             options.SetProcessSP(process_sp);
             options.SetStream(&stream);
-            options.SetPrefixToken('@');
+            options.SetPrefixToken("@");
             options.SetSourceSize(explicit_length);
             options.SetNeedsZeroTermination(false);
             options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
@@ -188,7 +188,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken('@');
+        options.SetPrefixToken("@");
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
@@ -218,7 +218,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken('@');
+        options.SetPrefixToken("@");
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
@@ -237,7 +237,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken('@');
+        options.SetPrefixToken("@");
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
@@ -265,7 +265,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken('@');
+        options.SetPrefixToken("@");
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(!has_explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
@@ -287,7 +287,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
-        options.SetPrefixToken('@');
+        options.SetPrefixToken("@");
         options.SetStream(&stream);
         options.SetSourceSize(explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);

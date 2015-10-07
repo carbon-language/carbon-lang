@@ -53,7 +53,7 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
     options.SetLocation(valobj_addr);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
-    options.SetPrefixToken('u');
+    options.SetPrefixToken("u");
     
     if (!StringPrinter::ReadStringAndDumpToStream<StringPrinter::StringElementType::UTF16>(options))
     {
@@ -79,7 +79,7 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     options.SetLocation(valobj_addr);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
-    options.SetPrefixToken('U');
+    options.SetPrefixToken("U");
     
     if (!StringPrinter::ReadStringAndDumpToStream<StringPrinter::StringElementType::UTF32>(options))
     {
@@ -113,7 +113,7 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     options.SetLocation(valobj_addr);
     options.SetProcessSP(process_sp);
     options.SetStream(&stream);
-    options.SetPrefixToken('L');
+    options.SetPrefixToken("L");
     
     switch (wchar_size)
     {
@@ -148,7 +148,7 @@ lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& st
     StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(data);
     options.SetStream(&stream);
-    options.SetPrefixToken('u');
+    options.SetPrefixToken("u");
     options.SetQuote('\'');
     options.SetSourceSize(1);
     options.SetBinaryZeroIsTerminator(false);
@@ -174,7 +174,7 @@ lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& st
     StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(data);
     options.SetStream(&stream);
-    options.SetPrefixToken('U');
+    options.SetPrefixToken("U");
     options.SetQuote('\'');
     options.SetSourceSize(1);
     options.SetBinaryZeroIsTerminator(false);
@@ -195,7 +195,7 @@ lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& str
     StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(data);
     options.SetStream(&stream);
-    options.SetPrefixToken('L');
+    options.SetPrefixToken("L");
     options.SetQuote('\'');
     options.SetSourceSize(1);
     options.SetBinaryZeroIsTerminator(false);
