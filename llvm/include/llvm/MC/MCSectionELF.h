@@ -25,25 +25,24 @@ namespace llvm {
 
 class MCSymbol;
 
-/// MCSectionELF - This represents a section on linux, lots of unix variants
-/// and some bare metal systems.
-class MCSectionELF : public MCSection {
-  /// SectionName - This is the name of the section.  The referenced memory is
-  /// owned by TargetLoweringObjectFileELF's ELFUniqueMap.
+/// This represents a section on linux, lots of unix variants and some bare
+/// metal systems.
+class MCSectionELF final : public MCSection {
+  /// This is the name of the section.  The referenced memory is owned by
+  /// TargetLoweringObjectFileELF's ELFUniqueMap.
   StringRef SectionName;
 
-  /// Type - This is the sh_type field of a section, drawn from the enums below.
+  /// This is the sh_type field of a section, drawn from the enums below.
   unsigned Type;
 
-  /// Flags - This is the sh_flags field of a section, drawn from the enums.
-  /// below.
+  /// This is the sh_flags field of a section, drawn from the enums below.
   unsigned Flags;
 
   unsigned UniqueID;
 
-  /// EntrySize - The size of each entry in this section. This size only
-  /// makes sense for sections that contain fixed-sized entries. If a
-  /// section does not contain fixed-sized entries 'EntrySize' will be 0.
+  /// The size of each entry in this section. This size only makes sense for
+  /// sections that contain fixed-sized entries. If a section does not contain
+  /// fixed-sized entries 'EntrySize' will be 0.
   unsigned EntrySize;
 
   const MCSymbolELF *Group;
@@ -67,9 +66,8 @@ private:
   void setSectionName(StringRef Name) { SectionName = Name; }
 
 public:
-
-  /// ShouldOmitSectionDirective - Decides whether a '.section' directive
-  /// should be printed before the section name
+  /// Decides whether a '.section' directive should be printed before the
+  /// section name
   bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
   StringRef getSectionName() const { return SectionName; }
