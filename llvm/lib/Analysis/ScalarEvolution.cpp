@@ -5724,8 +5724,7 @@ Constant *
 ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
                                                    const APInt &BEs,
                                                    const Loop *L) {
-  DenseMap<PHINode*, Constant*>::const_iterator I =
-    ConstantEvolutionLoopExitValue.find(PN);
+  auto I = ConstantEvolutionLoopExitValue.find(PN);
   if (I != ConstantEvolutionLoopExitValue.end())
     return I->second;
 
@@ -5742,10 +5741,10 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
   // entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
-  PHINode *PHI = nullptr;
-  for (BasicBlock::iterator I = Header->begin();
-       (PHI = dyn_cast<PHINode>(I)); ++I) {
-    Constant *StartCST =
+  for (auto &I : *Header) {
+    PHINode *PHI = dyn_cast<PHINode>(&I);
+    if (!PHI) break;
+    auto *StartCST =
       dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
     if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
@@ -5781,23 +5780,21 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     // cease to be able to evaluate one of them or if they stop evolving,
     // because that doesn't necessarily prevent us from computing PN.
     SmallVector<std::pair<PHINode *, Constant *>, 8> PHIsToCompute;
-    for (DenseMap<Instruction *, Constant *>::const_iterator
-           I = CurrentIterVals.begin(), E = CurrentIterVals.end(); I != E; ++I){
-      PHINode *PHI = dyn_cast<PHINode>(I->first);
+    for (const auto &I : CurrentIterVals) {
+      PHINode *PHI = dyn_cast<PHINode>(I.first);
       if (!PHI || PHI == PN || PHI->getParent() != Header) continue;
-      PHIsToCompute.push_back(std::make_pair(PHI, I->second));
+      PHIsToCompute.emplace_back(PHI, I.second);
     }
     // We use two distinct loops because EvaluateExpression may invalidate any
     // iterators into CurrentIterVals.
-    for (SmallVectorImpl<std::pair<PHINode *, Constant*> >::const_iterator
-             I = PHIsToCompute.begin(), E = PHIsToCompute.end(); I != E; ++I) {
-      PHINode *PHI = I->first;
+    for (const auto &I : PHIsToCompute) {
+      PHINode *PHI = I.first;
       Constant *&NextPHI = NextIterVals[PHI];
       if (!NextPHI) {   // Not already computed.
         Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
         NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, &TLI);
       }
-      if (NextPHI != I->second)
+      if (NextPHI != I.second)
         StoppedEvolving = false;
     }
 
@@ -5832,11 +5829,12 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   // One entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
-  PHINode *PHI = nullptr;
-  for (BasicBlock::iterator I = Header->begin();
-       (PHI = dyn_cast<PHINode>(I)); ++I) {
-    Constant *StartCST =
-      dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
+  for (auto &I : *Header) {
+    PHINode *PHI = dyn_cast<PHINode>(&I);
+    if (!PHI)
+      break;
+    auto *StartCST =
+        dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
     if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
   }
@@ -5849,7 +5847,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
   const DataLayout &DL = F.getParent()->getDataLayout();
   for (unsigned IterationNum = 0; IterationNum != MaxIterations;++IterationNum){
-    ConstantInt *CondVal = dyn_cast_or_null<ConstantInt>(
+    auto *CondVal = dyn_cast_or_null<ConstantInt>(
         EvaluateExpression(Cond, L, CurrentIterVals, DL, &TLI));
 
     // Couldn't symbolically evaluate.
@@ -5867,15 +5865,12 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
     // calling EvaluateExpression on them because that may invalidate iterators
     // into CurrentIterVals.
     SmallVector<PHINode *, 8> PHIsToCompute;
-    for (DenseMap<Instruction *, Constant *>::const_iterator
-           I = CurrentIterVals.begin(), E = CurrentIterVals.end(); I != E; ++I){
-      PHINode *PHI = dyn_cast<PHINode>(I->first);
+    for (const auto &I : CurrentIterVals) {
+      PHINode *PHI = dyn_cast<PHINode>(I.first);
       if (!PHI || PHI->getParent() != Header) continue;
       PHIsToCompute.push_back(PHI);
     }
-    for (SmallVectorImpl<PHINode *>::const_iterator I = PHIsToCompute.begin(),
-             E = PHIsToCompute.end(); I != E; ++I) {
-      PHINode *PHI = *I;
+    for (PHINode *PHI : PHIsToCompute) {
       Constant *&NextPHI = NextIterVals[PHI];
       if (NextPHI) continue;    // Already computed!
 
