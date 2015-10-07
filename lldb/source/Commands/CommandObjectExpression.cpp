@@ -299,16 +299,7 @@ CommandObjectExpression::EvaluateExpression
         options.SetUseDynamic(m_varobj_options.use_dynamic);
         options.SetTryAllThreads(m_command_options.try_all_threads);
         options.SetDebug(m_command_options.debug);
-        
-        // If the language was not specified in the expression command,
-        // set it to the language in the target's properties if
-        // specified, else default to the language for the frame.
-        if (m_command_options.language != eLanguageTypeUnknown)
-            options.SetLanguage(m_command_options.language);
-        else if (target->GetLanguage() != eLanguageTypeUnknown)
-            options.SetLanguage(target->GetLanguage());
-        else if (frame)
-            options.SetLanguage(frame->GetLanguage());
+        options.SetLanguage(m_command_options.language);
 
         // If there is any chance we are going to stop and want to see
         // what went wrong with our expression, we should generate debug info
