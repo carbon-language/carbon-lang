@@ -1187,6 +1187,11 @@ def VOP2b_I32_I1_I32_I32 : VOPProfile<[i32, i32, i32, untyped]> {
 // Write out to vcc or arbitrary SGPR and read in from vcc or
 // arbitrary SGPR.
 def VOP2b_I32_I1_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1]> {
+  // We use VCSrc_32 to exclude literal constants, even though the
+  // encoding normally allows them since the implicit VCC use means
+  // using one would always violate the constant bus
+  // restriction. SGPRs are still allowed because it should
+  // technically be possible to use VCC again as src0.
   let Src0RC32 = VCSrc_32;
   let Asm32 = "$dst, vcc, $src0, $src1, vcc";
   let Asm64 = "$dst, $sdst, $src0, $src1, $src2";
