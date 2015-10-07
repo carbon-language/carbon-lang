@@ -86,15 +86,14 @@ public:
     {
     }
     
-    virtual
-    ~OptionPermissions ()
+    ~OptionPermissions () override
     {
     }
     
-    virtual lldb_private::Error
+    lldb_private::Error
     SetOptionValue (CommandInterpreter &interpreter,
                     uint32_t option_idx,
-                    const char *option_arg)
+                    const char *option_arg) override
     {
         Error error;
         char short_option = (char) GetDefinitions()[option_idx].short_option;
@@ -155,19 +154,19 @@ public:
     }
     
     void
-    OptionParsingStarting (CommandInterpreter &interpreter)
+    OptionParsingStarting (CommandInterpreter &interpreter) override
     {
         m_permissions = 0;
     }
     
-    virtual uint32_t
-    GetNumDefinitions ()
+    uint32_t
+    GetNumDefinitions () override
     {
         return llvm::array_lengthof(g_permissions_options);
     }
     
     const lldb_private::OptionDefinition*
-    GetDefinitions ()
+    GetDefinitions () override
     {
         return g_permissions_options;
     }
@@ -198,19 +197,18 @@ public:
         m_option_group.Finalize();
     }
 
-    virtual
-    ~CommandObjectPlatformSelect ()
+    ~CommandObjectPlatformSelect () override
     {
     }
 
-    virtual int
+    int
     HandleCompletion (Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
                       bool &word_complete,
-                      StringList &matches)
+                      StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
@@ -225,15 +223,15 @@ public:
         return matches.GetSize();
     }
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_option_group;
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         if (args.GetArgumentCount() == 1)
         {
@@ -291,14 +289,13 @@ public:
     {
     }
 
-    virtual
-    ~CommandObjectPlatformList ()
+    ~CommandObjectPlatformList () override
     {
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         Stream &ostrm = result.GetOutputStream();
         ostrm.Printf("Available platforms:\n");
@@ -346,14 +343,13 @@ public:
     {
     }
 
-    virtual
-    ~CommandObjectPlatformStatus ()
+    ~CommandObjectPlatformStatus () override
     {
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         Stream &ostrm = result.GetOutputStream();      
         
@@ -396,14 +392,13 @@ public:
     {
     }
 
-    virtual
-    ~CommandObjectPlatformConnect ()
+    ~CommandObjectPlatformConnect () override
     {
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         Stream &ostrm = result.GetOutputStream();      
         
@@ -430,8 +425,8 @@ protected:
         return result.Succeeded();
     }
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         OptionGroupOptions* m_platform_options = NULL;
@@ -461,14 +456,13 @@ public:
     {
     }
 
-    virtual
-    ~CommandObjectPlatformDisconnect ()
+    ~CommandObjectPlatformDisconnect () override
     {
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -543,14 +537,13 @@ public:
         m_options.Append (&m_option_working_dir, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
     }
     
-    virtual
-    ~CommandObjectPlatformSettings ()
+    ~CommandObjectPlatformSettings () override
     {
     }
     
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -566,8 +559,8 @@ protected:
         return result.Succeeded();
     }
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         if (m_options.DidFinalize() == false)
             m_options.Finalize();
@@ -597,13 +590,12 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformMkDir ()
+    ~CommandObjectPlatformMkDir () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -635,8 +627,8 @@ public:
         return result.Succeeded();
     }
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         if (m_options.DidFinalize() == false)
         {
@@ -665,13 +657,12 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformFOpen ()
+    ~CommandObjectPlatformFOpen () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -708,8 +699,8 @@ public:
         }
         return result.Succeeded();
     }
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         if (m_options.DidFinalize() == false)
         {
@@ -736,13 +727,12 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformFClose ()
+    ~CommandObjectPlatformFClose () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -788,13 +778,12 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformFRead ()
+    ~CommandObjectPlatformFRead () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -816,8 +805,8 @@ public:
         }
         return result.Succeeded();
     }
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -832,13 +821,12 @@ protected:
         {
         }
         
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -866,14 +854,14 @@ protected:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_offset = 0;
             m_count = 1;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -914,13 +902,12 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformFWrite ()
+    ~CommandObjectPlatformFWrite () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -944,8 +931,8 @@ public:
         }
         return result.Succeeded();
     }
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -960,13 +947,12 @@ protected:
         {
         }
         
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -992,14 +978,14 @@ protected:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_offset = 0;
             m_data.clear();
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1041,8 +1027,7 @@ public:
         LoadSubCommand ("write", CommandObjectSP (new CommandObjectPlatformFWrite  (interpreter)));
     }
     
-    virtual
-    ~CommandObjectPlatformFile ()
+    ~CommandObjectPlatformFile () override
     {
     }
     
@@ -1094,13 +1079,12 @@ R"(Examples:
         m_arguments.push_back (arg2);
     }
     
-    virtual
-    ~CommandObjectPlatformGetFile ()
+    ~CommandObjectPlatformGetFile () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         // If the number of arguments is incorrect, issue an error message.
         if (args.GetArgumentCount() != 2)
@@ -1172,13 +1156,12 @@ R"(Examples:
         m_arguments.push_back (arg1);
     }
     
-    virtual
-    ~CommandObjectPlatformGetSize ()
+    ~CommandObjectPlatformGetSize () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         // If the number of arguments is incorrect, issue an error message.
         if (args.GetArgumentCount() != 1)
@@ -1228,13 +1211,12 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformPutFile ()
+    ~CommandObjectPlatformPutFile () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         const char* src = args.GetArgumentAtIndex(0);
         const char* dst = args.GetArgumentAtIndex(1);
@@ -1281,20 +1263,19 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformProcessLaunch ()
+    ~CommandObjectPlatformProcessLaunch () override
     {
     }
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
     
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         PlatformSP platform_sp;
@@ -1398,20 +1379,19 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformProcessList ()
+    ~CommandObjectPlatformProcessList () override
     {
     }
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
     
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         PlatformSP platform_sp;
@@ -1524,13 +1504,12 @@ protected:
         {
         }
         
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1620,7 +1599,7 @@ protected:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             match_info.Clear();
             show_args = false;
@@ -1628,7 +1607,7 @@ protected:
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1698,14 +1677,13 @@ public:
         m_arguments.push_back (arg);
     }
     
-    virtual
-    ~CommandObjectPlatformProcessInfo ()
+    ~CommandObjectPlatformProcessInfo () override
     {
     }
     
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         PlatformSP platform_sp;
@@ -1793,12 +1771,12 @@ public:
             OptionParsingStarting ();
         }
         
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
         
         Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -1839,18 +1817,18 @@ public:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             attach_info.Clear();
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
         
-        virtual bool
+        bool
         HandleOptionArgumentCompletion (Args &input,
                                         int cursor_index,
                                         int char_pos,
@@ -1859,7 +1837,7 @@ public:
                                         int match_start_point,
                                         int max_return_elements,
                                         bool &word_complete,
-                                        StringList &matches)
+                                        StringList &matches) override
         {
             int opt_arg_pos = opt_element_vector[opt_element_index].opt_arg_pos;
             int opt_defs_index = opt_element_vector[opt_element_index].opt_defs_index;
@@ -1921,13 +1899,13 @@ public:
     {
     }
     
-    ~CommandObjectPlatformProcessAttach ()
+    ~CommandObjectPlatformProcessAttach () override
     {
     }
     
     bool
     DoExecute (Args& command,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
@@ -1957,7 +1935,7 @@ public:
     }
     
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1998,8 +1976,7 @@ public:
 
     }
     
-    virtual
-    ~CommandObjectPlatformProcess ()
+    ~CommandObjectPlatformProcess () override
     {
     }
     
@@ -2027,8 +2004,7 @@ public:
         {
         }
         
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
         
@@ -2038,15 +2014,15 @@ public:
             return 1;
         }
         
-        virtual const OptionDefinition*
-        GetDefinitions ()
+        const OptionDefinition*
+        GetDefinitions () override
         {
             return g_option_table;
         }
         
-        virtual Error
+        Error
         SetOptionValue (uint32_t option_idx,
-                        const char *option_value)
+                        const char *option_value) override
         {
             Error error;
             
@@ -2070,8 +2046,8 @@ public:
             return error;
         }
         
-        virtual void
-        OptionParsingStarting ()
+        void
+        OptionParsingStarting () override
         {
         }
         
@@ -2091,20 +2067,18 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformShell ()
+    ~CommandObjectPlatformShell () override
     {
     }
     
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
     
-    virtual bool
-    DoExecute (const char *raw_command_line, CommandReturnObject &result)
+    bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result) override
     {
         m_options.NotifyOptionParsingStarting();
         
@@ -2218,13 +2192,12 @@ public:
     {
     }
     
-    virtual
-    ~CommandObjectPlatformInstall ()
+    ~CommandObjectPlatformInstall () override
     {
     }
     
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         if (args.GetArgumentCount() != 2)
         {

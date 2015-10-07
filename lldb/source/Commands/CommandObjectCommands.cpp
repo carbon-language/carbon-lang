@@ -47,10 +47,10 @@ public:
     {
     }
 
-    ~CommandObjectCommandsHistory () {}
+    ~CommandObjectCommandsHistory () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -70,11 +70,10 @@ protected:
         {
         }
 
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -109,7 +108,7 @@ protected:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_start_idx.Clear();
             m_stop_idx.Clear();
@@ -118,7 +117,7 @@ protected:
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -136,7 +135,7 @@ protected:
     };
     
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         if (m_options.m_clear.GetCurrentValue() && m_options.m_clear.OptionWasSet())
         {
@@ -259,15 +258,15 @@ public:
         m_arguments.push_back (arg);
     }
 
-    ~CommandObjectCommandsSource () {}
+    ~CommandObjectCommandsSource () override {}
 
-    virtual const char*
-    GetRepeatCommand (Args &current_command_args, uint32_t index)
+    const char*
+    GetRepeatCommand (Args &current_command_args, uint32_t index) override
     {
         return "";
     }
     
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -275,7 +274,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
@@ -291,8 +290,8 @@ public:
         return matches.GetSize();
     }
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -311,11 +310,10 @@ protected:
         {
         }
 
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -343,7 +341,7 @@ protected:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_stop_on_error.Clear();
             m_silent_run.Clear();
@@ -351,7 +349,7 @@ protected:
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -368,7 +366,7 @@ protected:
     };
     
     bool
-    DoExecute(Args& command, CommandReturnObject &result)
+    DoExecute(Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc == 1)
@@ -553,13 +551,13 @@ rather than using a positional placeholder:" R"(
         m_arguments.push_back (arg3);
     }
 
-    ~CommandObjectCommandsAlias ()
+    ~CommandObjectCommandsAlias () override
     {
     }
 
 protected:
-    virtual bool
-    DoExecute (const char *raw_command_line, CommandReturnObject &result)
+    bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result) override
     {
         Args args (raw_command_line);
         std::string raw_command_string (raw_command_line);
@@ -820,13 +818,13 @@ public:
         m_arguments.push_back (arg);
     }
 
-    ~CommandObjectCommandsUnalias()
+    ~CommandObjectCommandsUnalias() override
     {
     }
 
 protected:
     bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         CommandObject::CommandMap::iterator pos;
         CommandObject *cmd_obj;
@@ -913,13 +911,13 @@ public:
         m_arguments.push_back (arg);
     }
 
-    ~CommandObjectCommandsDelete()
+    ~CommandObjectCommandsDelete() override
     {
     }
 
 protected:
     bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         CommandObject::CommandMap::iterator pos;
 
@@ -1000,7 +998,7 @@ a number follows 'f':" R"(
         );
     }
     
-    ~CommandObjectCommandsAddRegex()
+    ~CommandObjectCommandsAddRegex() override
     {
     }
     
@@ -1250,11 +1248,10 @@ private:
          {
          }
          
-         virtual
-         ~CommandOptions (){}
+         ~CommandOptions () override {}
          
-         virtual Error
-         SetOptionValue (uint32_t option_idx, const char *option_arg)
+         Error
+         SetOptionValue (uint32_t option_idx, const char *option_arg) override
          {
              Error error;
              const int short_option = m_getopt_table[option_idx].val;
@@ -1277,14 +1274,14 @@ private:
          }
          
          void
-         OptionParsingStarting ()
+         OptionParsingStarting () override
          {
              m_help.clear();
              m_syntax.clear();
          }
          
          const OptionDefinition*
-         GetDefinitions ()
+         GetDefinitions () override
          {
              return g_option_table;
          }
@@ -1363,13 +1360,12 @@ public:
         }
     }
     
-    virtual
-    ~CommandObjectPythonFunction ()
+    ~CommandObjectPythonFunction () override
     {
     }
     
-    virtual bool
-    IsRemovable () const
+    bool
+    IsRemovable () const override
     {
         return true;
     }
@@ -1386,8 +1382,8 @@ public:
         return m_synchro;
     }
     
-    virtual const char *
-    GetHelpLong ()
+    const char *
+    GetHelpLong () override
     {
         if (!m_fetched_help_long)
         {
@@ -1404,8 +1400,8 @@ public:
     }
     
 protected:
-    virtual bool
-    DoExecute (const char *raw_command_line, CommandReturnObject &result)
+    bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result) override
     {
         ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
         
@@ -1470,13 +1466,12 @@ public:
             GetFlags().Set(scripter->GetFlagsForCommandObject(cmd_obj_sp));
     }
     
-    virtual
-    ~CommandObjectScriptingObject ()
+    ~CommandObjectScriptingObject () override
     {
     }
     
-    virtual bool
-    IsRemovable () const
+    bool
+    IsRemovable () const override
     {
         return true;
     }
@@ -1493,8 +1488,8 @@ public:
         return m_synchro;
     }
 
-    virtual const char *
-    GetHelp ()
+    const char *
+    GetHelp () override
     {
         if (!m_fetched_help_short)
         {
@@ -1510,8 +1505,8 @@ public:
         return CommandObjectRaw::GetHelp();
     }
     
-    virtual const char *
-    GetHelpLong ()
+    const char *
+    GetHelpLong () override
     {
         if (!m_fetched_help_long)
         {
@@ -1528,8 +1523,8 @@ public:
     }
     
 protected:
-    virtual bool
-    DoExecute (const char *raw_command_line, CommandReturnObject &result)
+    bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result) override
     {
         ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
         
@@ -1592,11 +1587,11 @@ public:
         m_arguments.push_back (arg1);
     }
     
-    ~CommandObjectCommandsScriptImport ()
+    ~CommandObjectCommandsScriptImport () override
     {
     }
     
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -1604,7 +1599,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
@@ -1620,8 +1615,8 @@ public:
         return matches.GetSize();
     }
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1637,11 +1632,10 @@ protected:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1660,13 +1654,13 @@ protected:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_allow_reload = true;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1681,7 +1675,7 @@ protected:
     };
 
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         if (m_interpreter.GetDebugger().GetScriptLanguage() != lldb::eScriptLanguagePython)
         {
@@ -1772,12 +1766,12 @@ public:
         m_arguments.push_back (arg1);
     }
     
-    ~CommandObjectCommandsScriptAdd ()
+    ~CommandObjectCommandsScriptAdd () override
     {
     }
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1797,11 +1791,10 @@ protected:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1834,7 +1827,7 @@ protected:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_class_name.clear();
             m_funct_name.clear();
@@ -1843,7 +1836,7 @@ protected:
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1860,8 +1853,8 @@ protected:
         ScriptedCommandSynchronicity m_synchronicity;
     };
 
-    virtual void
-    IOHandlerActivated (IOHandler &io_handler)
+    void
+    IOHandlerActivated (IOHandler &io_handler) override
     {
         StreamFileSP output_sp(io_handler.GetOutputStreamFile());
         if (output_sp)
@@ -1872,8 +1865,8 @@ protected:
     }
     
 
-    virtual void
-    IOHandlerInputComplete (IOHandler &io_handler, std::string &data)
+    void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &data) override
     {
         StreamFileSP error_sp = io_handler.GetErrorStreamFile();
         
@@ -1935,7 +1928,7 @@ protected:
 
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         
         if (m_interpreter.GetDebugger().GetScriptLanguage() != lldb::eScriptLanguagePython)
@@ -2064,12 +2057,12 @@ public:
     {
     }
     
-    ~CommandObjectCommandsScriptList ()
+    ~CommandObjectCommandsScriptList () override
     {
     }
     
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         
         m_interpreter.GetHelp(result,
@@ -2100,13 +2093,13 @@ public:
     {
     }
     
-    ~CommandObjectCommandsScriptClear ()
+    ~CommandObjectCommandsScriptClear () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         
         m_interpreter.RemoveAllUser();
@@ -2144,13 +2137,13 @@ public:
         m_arguments.push_back (arg1);
     }
     
-    ~CommandObjectCommandsScriptDelete ()
+    ~CommandObjectCommandsScriptDelete () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         
         size_t argc = command.GetArgumentCount();
@@ -2202,7 +2195,7 @@ public:
         LoadSubCommand ("import", CommandObjectSP (new CommandObjectCommandsScriptImport (interpreter)));
     }
 
-    ~CommandObjectMultiwordCommandsScript ()
+    ~CommandObjectMultiwordCommandsScript () override
     {
     }
     

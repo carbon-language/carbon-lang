@@ -77,11 +77,10 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectBreakpointSet () {}
+    ~CommandObjectBreakpointSet () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -120,11 +119,10 @@ public:
         }
 
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -356,7 +354,7 @@ public:
             return error;
         }
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_condition.clear();
             m_filenames.Clear();
@@ -388,7 +386,7 @@ public:
         }
     
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -430,9 +428,9 @@ public:
     };
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& command,
-              CommandReturnObject &result)
+              CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
 
@@ -854,11 +852,10 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectBreakpointModify () {}
+    ~CommandObjectBreakpointModify () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -888,11 +885,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -993,7 +989,7 @@ public:
             return error;
         }
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_ignore_count = 0;
             m_thread_id = LLDB_INVALID_THREAD_ID;
@@ -1013,7 +1009,7 @@ public:
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1045,8 +1041,8 @@ public:
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
         if (target == NULL)
@@ -1173,12 +1169,11 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectBreakpointEnable () {}
+    ~CommandObjectBreakpointEnable () override {}
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
@@ -1293,12 +1288,11 @@ the second re-enables the first location."
     }
 
 
-    virtual
-    ~CommandObjectBreakpointDisable () {}
+    ~CommandObjectBreakpointDisable () override {}
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
@@ -1403,11 +1397,10 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectBreakpointList () {}
+    ~CommandObjectBreakpointList () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1423,11 +1416,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1458,7 +1450,7 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_level = lldb::eDescriptionLevelFull;
             m_internal = false;
@@ -1466,7 +1458,7 @@ public:
         }
 
         const OptionDefinition *
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1484,8 +1476,8 @@ public:
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
 
@@ -1600,11 +1592,10 @@ public:
     {
     }
 
-    virtual
-    ~CommandObjectBreakpointClear () {}
+    ~CommandObjectBreakpointClear () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1620,11 +1611,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1648,14 +1638,14 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_filename.clear();
             m_line_num = 0;
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1672,8 +1662,8 @@ public:
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget();
         if (target == NULL)
@@ -1800,11 +1790,10 @@ public:
         m_arguments.push_back (arg);   
     }
 
-    virtual
-    ~CommandObjectBreakpointDelete () {}
+    ~CommandObjectBreakpointDelete () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1820,11 +1809,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1848,14 +1836,14 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_use_dummy = false;
             m_force = false;
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1870,8 +1858,8 @@ public:
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
 
@@ -1990,27 +1978,26 @@ public:
 
     }
 
-    virtual
-    ~BreakpointNameOptionGroup ()
+    ~BreakpointNameOptionGroup () override
     {
     }
     
-    virtual uint32_t
-    GetNumDefinitions ()
+    uint32_t
+    GetNumDefinitions () override
     {
       return sizeof (g_breakpoint_name_options) / sizeof (OptionDefinition);
     }
 
-    virtual const OptionDefinition*
-    GetDefinitions ()
+    const OptionDefinition*
+    GetDefinitions () override
     {
         return g_breakpoint_name_options;
     }
 
-    virtual Error
+    Error
     SetOptionValue (CommandInterpreter &interpreter,
                     uint32_t option_idx,
-                    const char *option_value)
+                    const char *option_value) override
     {
         Error error;
         const int short_option = g_breakpoint_name_options[option_idx].short_option;
@@ -2038,8 +2025,8 @@ public:
         return error;
     }
 
-    virtual void
-    OptionParsingStarting (CommandInterpreter &interpreter)
+    void
+    OptionParsingStarting (CommandInterpreter &interpreter) override
     {
         m_name.Clear();
         m_breakpoint.Clear();
@@ -2076,18 +2063,17 @@ public:
             m_option_group.Finalize();
         }
 
-    virtual
-    ~CommandObjectBreakpointNameAdd () {}
+    ~CommandObjectBreakpointNameAdd () override {}
 
   Options *
-  GetOptions ()
+  GetOptions () override
   {
     return &m_option_group;
   }
   
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         if (!m_name_options.m_name.OptionWasSet())
         {
@@ -2172,18 +2158,17 @@ public:
         m_option_group.Finalize();
     }
 
-    virtual
-    ~CommandObjectBreakpointNameDelete () {}
+    ~CommandObjectBreakpointNameDelete () override {}
 
   Options *
-  GetOptions ()
+  GetOptions () override
   {
     return &m_option_group;
   }
   
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         if (!m_name_options.m_name.OptionWasSet())
         {
@@ -2257,18 +2242,17 @@ public:
         m_option_group.Finalize();
     }
 
-    virtual
-    ~CommandObjectBreakpointNameList () {}
+    ~CommandObjectBreakpointNameList () override {}
 
   Options *
-  GetOptions ()
+  GetOptions () override
   {
     return &m_option_group;
   }
   
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget(m_name_options.m_use_dummy.GetCurrentValue());
 
@@ -2353,8 +2337,7 @@ public:
 
     }
 
-    virtual
-    ~CommandObjectBreakpointName ()
+    ~CommandObjectBreakpointName () override
     {
     }
 

@@ -41,7 +41,7 @@ public:
         m_arguments.push_back (arg1);
     }
     
-    ~CommandObjectPluginLoad ()
+    ~CommandObjectPluginLoad () override
     {
     }
     
@@ -53,7 +53,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
         completion_str.erase (cursor_char_position);
@@ -71,7 +71,7 @@ public:
 
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         size_t argc = command.GetArgumentCount();
         

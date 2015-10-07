@@ -71,13 +71,13 @@ public:
     {
     }
 
-    ~CommandObjectFrameInfo ()
+    ~CommandObjectFrameInfo () override
     {
     }
 
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         m_exe_ctx.GetFrameRef().DumpUsingSettingsFormat (&result.GetOutputStream());
         result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -105,13 +105,12 @@ public:
             OptionParsingStarting ();
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             bool success = false;
@@ -133,13 +132,13 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             relative_frame_offset = INT32_MIN;
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -175,13 +174,12 @@ public:
         m_arguments.push_back (arg);
     }
 
-    ~CommandObjectFrameSelect ()
+    ~CommandObjectFrameSelect () override
     {
     }
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
@@ -189,7 +187,7 @@ public:
 
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         // No need to check "thread" for validity as eCommandRequiresThread ensures it is valid
         Thread *thread = m_exe_ctx.GetThreadPtr();
@@ -342,20 +340,18 @@ public:
         m_option_group.Finalize();
     }
 
-    virtual
-    ~CommandObjectFrameVariable ()
+    ~CommandObjectFrameVariable () override
     {
     }
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_option_group;
     }
     
     
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -363,7 +359,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         // Arguments are the standard source file completer.
         std::string completion_str (input.GetArgumentAtIndex(cursor_index));
@@ -381,8 +377,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         // No need to check "frame" for validity as eCommandRequiresFrame ensures it is valid
         StackFrame *frame = m_exe_ctx.GetFramePtr();

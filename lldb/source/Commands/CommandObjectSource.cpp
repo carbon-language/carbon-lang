@@ -49,12 +49,12 @@ class CommandObjectSourceInfo : public CommandObjectParsed
         {
         }
 
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
         Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = g_option_table[option_idx].short_option;
@@ -79,7 +79,7 @@ class CommandObjectSourceInfo : public CommandObjectParsed
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             file_spec.Clear();
             file_name.clear();
@@ -87,7 +87,7 @@ class CommandObjectSourceInfo : public CommandObjectParsed
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -110,20 +110,20 @@ public:
     {
     }
 
-    ~CommandObjectSourceInfo ()
+    ~CommandObjectSourceInfo () override
     {
     }
 
 
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
 
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         result.AppendError ("Not yet implemented");
         result.SetStatus (eReturnStatusFailed);
@@ -157,12 +157,12 @@ class CommandObjectSourceList : public CommandObjectParsed
         {
         }
 
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
         Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = g_option_table[option_idx].short_option;
@@ -213,7 +213,7 @@ class CommandObjectSourceList : public CommandObjectParsed
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             file_spec.Clear();
             file_name.clear();
@@ -227,7 +227,7 @@ class CommandObjectSourceList : public CommandObjectParsed
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -256,19 +256,19 @@ public:
     {
     }
 
-    ~CommandObjectSourceList ()
+    ~CommandObjectSourceList () override
     {
     }
 
 
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
 
-    virtual const char *
-    GetRepeatCommand (Args &current_command_args, uint32_t index)
+    const char *
+    GetRepeatCommand (Args &current_command_args, uint32_t index) override
     {
         // This is kind of gross, but the command hasn't been parsed yet so we can't look at the option
         // values for this invocation...  I have to scan the arguments directly.
@@ -507,7 +507,7 @@ protected:
     }
 
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
 

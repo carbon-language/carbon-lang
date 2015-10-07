@@ -178,17 +178,16 @@ are no syntax errors may indicate that a function was declared but never called.
         m_arguments.push_back (arg);
     }
 
-    virtual
-    ~CommandObjectBreakpointCommandAdd () {}
+    ~CommandObjectBreakpointCommandAdd () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
 
-    virtual void
-    IOHandlerActivated (IOHandler &io_handler)
+    void
+    IOHandlerActivated (IOHandler &io_handler) override
     {
         StreamFileSP output_sp(io_handler.GetOutputStreamFile());
         if (output_sp)
@@ -199,8 +198,8 @@ are no syntax errors may indicate that a function was declared but never called.
     }
     
     
-    virtual void
-    IOHandlerInputComplete (IOHandler &io_handler, std::string &line)
+    void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &line) override
     {
         io_handler.SetIsDone(true);
         
@@ -315,11 +314,10 @@ are no syntax errors may indicate that a function was declared but never called.
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -374,7 +372,7 @@ are no syntax errors may indicate that a function was declared but never called.
             return error;
         }
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_use_commands = true;
             m_use_script_language = false;
@@ -388,7 +386,7 @@ are no syntax errors may indicate that a function was declared but never called.
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -412,8 +410,8 @@ are no syntax errors may indicate that a function was declared but never called.
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
 
@@ -596,11 +594,10 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectBreakpointCommandDelete () {}
+    ~CommandObjectBreakpointCommandDelete () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -615,11 +612,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -639,13 +635,13 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_use_dummy = false;
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -659,8 +655,8 @@ public:
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = GetSelectedOrDummyTarget(m_options.m_use_dummy);
 
@@ -764,13 +760,12 @@ public:
         m_arguments.push_back (arg);
     }
 
-    virtual
-    ~CommandObjectBreakpointCommandList () {}
+    ~CommandObjectBreakpointCommandList () override {}
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& command,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
 

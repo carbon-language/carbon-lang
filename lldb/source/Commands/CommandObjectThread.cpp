@@ -58,9 +58,10 @@ public:
     {
     }
 
-    virtual ~CommandObjectIterateOverThreads() {}
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    ~CommandObjectIterateOverThreads() override {}
+
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {        
         result.SetStatus (m_success_return);
 
@@ -162,13 +163,12 @@ public:
             OptionParsingStarting ();
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -211,7 +211,7 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_count = UINT32_MAX;
             m_start = 0;
@@ -219,7 +219,7 @@ public:
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -248,12 +248,12 @@ public:
     {
     }
 
-    ~CommandObjectThreadBacktrace()
+    ~CommandObjectThreadBacktrace() override
     {
     }
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -285,8 +285,8 @@ protected:
         }
     }
 
-    virtual bool
-    HandleOneThread (Thread &thread, CommandReturnObject &result)
+    bool
+    HandleOneThread (Thread &thread, CommandReturnObject &result) override
     {
         Stream &strm = result.GetOutputStream();
 
@@ -343,13 +343,12 @@ public:
             OptionParsingStarting ();
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -426,7 +425,7 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_step_in_avoid_no_debug = eLazyBoolCalculate;
             m_step_out_avoid_no_debug = eLazyBoolCalculate;
@@ -444,7 +443,7 @@ public:
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -493,21 +492,19 @@ public:
         m_arguments.push_back (arg);
     }
 
-    virtual
-    ~CommandObjectThreadStepWithTypeAndScope ()
+    ~CommandObjectThreadStepWithTypeAndScope () override
     {
     }
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Process *process = m_exe_ctx.GetProcessPtr();
         bool synchronous_execution = m_interpreter.GetSynchronous();
@@ -780,13 +777,12 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectThreadContinue ()
+    ~CommandObjectThreadContinue () override
     {
     }
 
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         bool synchronous_execution = m_interpreter.GetSynchronous ();
 
@@ -980,13 +976,12 @@ public:
             OptionParsingStarting ();
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1042,7 +1037,7 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_thread_idx = LLDB_INVALID_THREAD_ID;
             m_frame_idx = 0;
@@ -1051,7 +1046,7 @@ public:
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1093,21 +1088,19 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectThreadUntil ()
+    ~CommandObjectThreadUntil () override
     {
     }
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         bool synchronous_execution = m_interpreter.GetSynchronous ();
 
@@ -1371,14 +1364,13 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectThreadSelect ()
+    ~CommandObjectThreadSelect () override
     {
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Process *process = m_exe_ctx.GetProcessPtr();
         if (process == NULL)
@@ -1434,13 +1426,13 @@ public:
     {
     }
 
-    ~CommandObjectThreadList()
+    ~CommandObjectThreadList() override
     {
     }
 
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Stream &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
@@ -1492,19 +1484,18 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_json_thread = false;
             m_json_stopinfo = false;
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             const int short_option = m_getopt_table[option_idx].val;
             Error error;
@@ -1527,7 +1518,7 @@ public:
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1538,21 +1529,18 @@ public:
         static OptionDefinition g_option_table[];
     };
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
 
-
-    virtual
-    ~CommandObjectThreadInfo ()
+    ~CommandObjectThreadInfo () override
     {
     }
 
-    virtual bool
-    HandleOneThread (Thread &thread, CommandReturnObject &result)
+    bool
+    HandleOneThread (Thread &thread, CommandReturnObject &result) override
     {
         Stream &strm = result.GetOutputStream();
         if (!thread.GetDescription (strm, eDescriptionLevelFull, m_options.m_json_thread, m_options.m_json_stopinfo))
@@ -1597,13 +1585,12 @@ public:
             OptionParsingStarting ();
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1631,13 +1618,13 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_from_expression = false;
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1651,9 +1638,8 @@ public:
         // Instance variables to hold the values for command options.
     };
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1686,17 +1672,14 @@ public:
         
     }
     
-    ~CommandObjectThreadReturn()
+    ~CommandObjectThreadReturn() override
     {
     }
     
 protected:
 
-    bool DoExecute
-    (
-        const char *command,
-        CommandReturnObject &result
-    )
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         // I am going to handle this by hand, because I don't want you to have to say:
         // "thread return -- -5".
@@ -1810,7 +1793,7 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_filenames.Clear();
             m_line_num = 0;
@@ -1819,13 +1802,12 @@ public:
             m_force = false;
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             bool success;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1866,7 +1848,7 @@ public:
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1880,9 +1862,8 @@ public:
         static OptionDefinition g_option_table[];
     };
 
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1900,13 +1881,13 @@ public:
     {
     }
 
-    ~CommandObjectThreadJump()
+    ~CommandObjectThreadJump() override
     {
     }
 
 protected:
 
-    bool DoExecute (Args& args, CommandReturnObject &result)
+    bool DoExecute (Args& args, CommandReturnObject &result) override
     {
         RegisterContext *reg_ctx = m_exe_ctx.GetRegisterContext();
         StackFrame *frame = m_exe_ctx.GetFramePtr();
@@ -2017,13 +1998,12 @@ public:
             OptionParsingStarting ();
         }
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -2049,14 +2029,14 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_verbose = false;
             m_internal = false;
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -2085,19 +2065,19 @@ public:
     {
     }
 
-    ~CommandObjectThreadPlanList ()
+    ~CommandObjectThreadPlanList () override
     {
     }
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
 
 protected:
-    virtual bool
-    HandleOneThread (Thread &thread, CommandReturnObject &result)
+    bool
+    HandleOneThread (Thread &thread, CommandReturnObject &result) override
     {
         Stream &strm = result.GetOutputStream();
         DescriptionLevel desc_level = eDescriptionLevelFull;
@@ -2148,10 +2128,10 @@ public:
         m_arguments.push_back (arg);
     }
 
-    virtual ~CommandObjectThreadPlanDiscard () {}
+    ~CommandObjectThreadPlanDiscard () override {}
 
     bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         Thread *thread = m_exe_ctx.GetThreadPtr();
         if (args.GetArgumentCount() != 1)
@@ -2211,7 +2191,7 @@ public:
         LoadSubCommand ("discard", CommandObjectSP (new CommandObjectThreadPlanDiscard (interpreter)));
     }
 
-    virtual ~CommandObjectMultiwordThreadPlan () {}
+    ~CommandObjectMultiwordThreadPlan () override {}
 
 
 };

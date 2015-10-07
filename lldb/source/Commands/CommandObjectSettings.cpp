@@ -83,15 +83,14 @@ insert-before or insert-after."
     }
 
 
-    virtual
-    ~CommandObjectSettingsSet () {}
+    ~CommandObjectSettingsSet () override {}
 
     // Overrides base class's behavior where WantsCompletion = !WantsRawCommandString.
-    virtual bool
-    WantsCompletion() { return true; }
+    bool
+    WantsCompletion() override { return true; }
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -106,11 +105,10 @@ insert-before or insert-after."
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -129,13 +127,13 @@ insert-before or insert-after."
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_global = false;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -149,7 +147,7 @@ insert-before or insert-after."
         bool m_global;
     };
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -157,7 +155,7 @@ insert-before or insert-after."
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -215,8 +213,8 @@ insert-before or insert-after."
     }
     
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         Args cmd_args(command);
 
@@ -321,11 +319,10 @@ public:
         m_arguments.push_back (arg1);
     }
 
-    virtual
-    ~CommandObjectSettingsShow () {}
+    ~CommandObjectSettingsShow () override {}
 
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -333,7 +330,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -349,8 +346,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishResult);
 
@@ -414,10 +411,9 @@ public:
         m_arguments.push_back (arg);
     }
 
-    virtual
-    ~CommandObjectSettingsList () {}
+    ~CommandObjectSettingsList () override {}
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -425,7 +421,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -441,8 +437,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& args, CommandReturnObject &result)
+    bool
+    DoExecute (Args& args, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishResult);
 
@@ -521,10 +517,9 @@ public:
         m_arguments.push_back (arg2);
     }
 
-    virtual
-    ~CommandObjectSettingsRemove () {}
+    ~CommandObjectSettingsRemove () override {}
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -532,7 +527,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -551,8 +546,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
      
@@ -652,14 +647,13 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectSettingsReplace () {}
+    ~CommandObjectSettingsReplace () override {}
 
     // Overrides base class's behavior where WantsCompletion = !WantsRawCommandString.
-    virtual bool
-    WantsCompletion() { return true; }
+    bool
+    WantsCompletion() override { return true; }
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -667,7 +661,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -686,8 +680,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
 
@@ -773,14 +767,13 @@ public:
         m_arguments.push_back (arg3);
     }
 
-    virtual
-    ~CommandObjectSettingsInsertBefore () {}
+    ~CommandObjectSettingsInsertBefore () override {}
 
     // Overrides base class's behavior where WantsCompletion = !WantsRawCommandString.
-    virtual bool
-    WantsCompletion() { return true; }
+    bool
+    WantsCompletion() override { return true; }
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -788,7 +781,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -807,8 +800,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
 
@@ -897,14 +890,13 @@ public:
         m_arguments.push_back (arg3);
     }
 
-    virtual
-    ~CommandObjectSettingsInsertAfter () {}
+    ~CommandObjectSettingsInsertAfter () override {}
 
     // Overrides base class's behavior where WantsCompletion = !WantsRawCommandString.
-    virtual bool
-    WantsCompletion() { return true; }
+    bool
+    WantsCompletion() override { return true; }
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -912,7 +904,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -931,8 +923,8 @@ public:
     }
     
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
 
@@ -1011,14 +1003,13 @@ public:
         m_arguments.push_back (arg2);
     }
 
-    virtual
-    ~CommandObjectSettingsAppend () {}
+    ~CommandObjectSettingsAppend () override {}
 
     // Overrides base class's behavior where WantsCompletion = !WantsRawCommandString.
-    virtual bool
-    WantsCompletion() { return true; }
+    bool
+    WantsCompletion() override { return true; }
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -1026,7 +1017,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -1045,8 +1036,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         Args cmd_args(command);
@@ -1117,10 +1108,9 @@ public:
         m_arguments.push_back (arg);
     }
 
-    virtual
-    ~CommandObjectSettingsClear () {}
+    ~CommandObjectSettingsClear () override {}
 
-    virtual int
+    int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
                               int &cursor_char_position,
@@ -1128,7 +1118,7 @@ public:
                               int match_start_point,
                               int max_return_elements,
                               bool &word_complete,
-                              StringList &matches)
+                              StringList &matches) override
     {
         std::string completion_str (input.GetArgumentAtIndex (cursor_index), cursor_char_position);
 
@@ -1147,8 +1137,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         const size_t argc = command.GetArgumentCount ();

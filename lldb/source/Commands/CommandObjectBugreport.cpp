@@ -43,7 +43,7 @@ public:
         m_option_group.Finalize();
     }
 
-    ~CommandObjectBugreportUnwind()
+    ~CommandObjectBugreportUnwind() override
     {
     }
 

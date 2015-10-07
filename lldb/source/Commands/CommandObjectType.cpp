@@ -147,17 +147,16 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg);
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override;
         
         void
-        OptionParsingStarting ();
+        OptionParsingStarting () override;
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -180,8 +179,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -203,12 +202,12 @@ public:
     
     CommandObjectTypeSummaryAdd (CommandInterpreter &interpreter);
     
-    ~CommandObjectTypeSummaryAdd ()
+    ~CommandObjectTypeSummaryAdd () override
     {
     }
     
-    virtual void
-    IOHandlerActivated (IOHandler &io_handler)
+    void
+    IOHandlerActivated (IOHandler &io_handler) override
     {
         static const char *g_summary_addreader_instructions = "Enter your Python command(s). Type 'DONE' to end.\n"
         "def function (valobj,internal_dict):\n"
@@ -224,8 +223,8 @@ public:
     }
     
     
-    virtual void
-    IOHandlerInputComplete (IOHandler &io_handler, std::string &data)
+    void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &data) override
     {
         StreamFileSP error_sp = io_handler.GetErrorStreamFile();
         
@@ -356,7 +355,7 @@ public:
                Error* error = NULL);
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result);
+    DoExecute (Args& command, CommandReturnObject &result) override;
     
 };
 
@@ -386,11 +385,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -431,7 +429,7 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_cascade = true;
             m_class_name = "";
@@ -444,7 +442,7 @@ private:
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -472,8 +470,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -486,7 +484,7 @@ private:
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         WarnOnPotentialUnquotedUnsignedType(command, result);
         
@@ -502,8 +500,8 @@ protected:
         }
     }
     
-    virtual void
-    IOHandlerActivated (IOHandler &io_handler)
+    void
+    IOHandlerActivated (IOHandler &io_handler) override
     {
         StreamFileSP output_sp(io_handler.GetOutputStreamFile());
         if (output_sp)
@@ -514,8 +512,8 @@ protected:
     }
     
     
-    virtual void
-    IOHandlerInputComplete (IOHandler &io_handler, std::string &data)
+    void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &data) override
     {
         StreamFileSP error_sp = io_handler.GetErrorStreamFile();
         
@@ -629,7 +627,7 @@ public:
     
     CommandObjectTypeSynthAdd (CommandInterpreter &interpreter);
     
-    ~CommandObjectTypeSynthAdd ()
+    ~CommandObjectTypeSynthAdd () override
     {
     }
     
@@ -659,22 +657,21 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
         
-        virtual uint32_t
-        GetNumDefinitions ();
+        uint32_t
+        GetNumDefinitions () override;
         
-        virtual const OptionDefinition*
-        GetDefinitions ()
+        const OptionDefinition*
+        GetDefinitions () override
         {
             return g_option_table;
         }
         
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter)
+        void
+        OptionParsingStarting (CommandInterpreter &interpreter) override
         {
             m_cascade = true;
             m_skip_pointers = false;
@@ -683,10 +680,10 @@ private:
             m_category.assign("default");
             m_custom_type_name.clear();
         }
-        virtual Error
+        Error
         SetOptionValue (CommandInterpreter &interpreter,
                         uint32_t option_idx,
-                        const char *option_value)
+                        const char *option_value) override
         {
             Error error;
             const int short_option = g_option_table[option_idx].short_option;
@@ -740,8 +737,8 @@ private:
     OptionGroupFormat m_format_options;
     CommandOptions m_command_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_option_group;
     }
@@ -809,13 +806,13 @@ pointers to floats.  Nor will it change the default display for Afloat and Bfloa
 
     }
     
-    ~CommandObjectTypeFormatAdd ()
+    ~CommandObjectTypeFormatAdd () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -926,11 +923,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -952,14 +948,14 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
             m_category = "default";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -977,8 +973,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1012,13 +1008,13 @@ public:
         
     }
     
-    ~CommandObjectTypeFormatDelete ()
+    ~CommandObjectTypeFormatDelete () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -1093,11 +1089,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1116,13 +1111,13 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1139,8 +1134,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1165,13 +1160,13 @@ public:
     {
     }
     
-    ~CommandObjectTypeFormatClear ()
+    ~CommandObjectTypeFormatClear () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         if (m_options.m_delete_all)
             DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
@@ -1232,11 +1227,10 @@ class CommandObjectTypeFormatList : public CommandObjectParsed
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1255,13 +1249,13 @@ class CommandObjectTypeFormatList : public CommandObjectParsed
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_category_regex = "";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -1278,8 +1272,8 @@ class CommandObjectTypeFormatList : public CommandObjectParsed
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -1303,13 +1297,13 @@ public:
         m_arguments.push_back (type_arg);
     }
     
-    ~CommandObjectTypeFormatList ()
+    ~CommandObjectTypeFormatList () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -1950,11 +1944,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -1976,14 +1969,14 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
             m_category = "default";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -2001,8 +1994,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -2036,13 +2029,13 @@ public:
         
     }
     
-    ~CommandObjectTypeSummaryDelete ()
+    ~CommandObjectTypeSummaryDelete () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2113,11 +2106,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -2136,13 +2128,13 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -2159,8 +2151,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -2185,13 +2177,13 @@ public:
     {
     }
     
-    ~CommandObjectTypeSummaryClear ()
+    ~CommandObjectTypeSummaryClear () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         
         if (m_options.m_delete_all)
@@ -2257,11 +2249,10 @@ class CommandObjectTypeSummaryList : public CommandObjectParsed
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -2280,13 +2271,13 @@ class CommandObjectTypeSummaryList : public CommandObjectParsed
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_category_regex = "";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -2303,8 +2294,8 @@ class CommandObjectTypeSummaryList : public CommandObjectParsed
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -2328,13 +2319,13 @@ public:
         m_arguments.push_back (type_arg);
     }
     
-    ~CommandObjectTypeSummaryList ()
+    ~CommandObjectTypeSummaryList () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2471,11 +2462,10 @@ class CommandObjectTypeCategoryDefine : public CommandObjectParsed
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -2497,14 +2487,14 @@ class CommandObjectTypeCategoryDefine : public CommandObjectParsed
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_define_enabled.Clear();
             m_cate_language.Clear();
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -2523,8 +2513,8 @@ class CommandObjectTypeCategoryDefine : public CommandObjectParsed
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -2549,13 +2539,13 @@ public:
         
     }
     
-    ~CommandObjectTypeCategoryDefine ()
+    ~CommandObjectTypeCategoryDefine () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2607,11 +2597,10 @@ class CommandObjectTypeCategoryEnable : public CommandObjectParsed
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -2635,13 +2624,13 @@ class CommandObjectTypeCategoryEnable : public CommandObjectParsed
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_language = lldb::eLanguageTypeUnknown;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -2658,8 +2647,8 @@ class CommandObjectTypeCategoryEnable : public CommandObjectParsed
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -2684,13 +2673,13 @@ public:
         
     }
     
-    ~CommandObjectTypeCategoryEnable ()
+    ~CommandObjectTypeCategoryEnable () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2772,13 +2761,13 @@ public:
         
     }
     
-    ~CommandObjectTypeCategoryDelete ()
+    ~CommandObjectTypeCategoryDelete () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2835,11 +2824,10 @@ class CommandObjectTypeCategoryDisable : public CommandObjectParsed
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -2863,13 +2851,13 @@ class CommandObjectTypeCategoryDisable : public CommandObjectParsed
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_language = lldb::eLanguageTypeUnknown;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -2886,8 +2874,8 @@ class CommandObjectTypeCategoryDisable : public CommandObjectParsed
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -2912,13 +2900,13 @@ public:
         
     }
     
-    ~CommandObjectTypeCategoryDisable ()
+    ~CommandObjectTypeCategoryDisable () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -3023,13 +3011,13 @@ public:
         m_arguments.push_back (type_arg);
     }
     
-    ~CommandObjectTypeCategoryList ()
+    ~CommandObjectTypeCategoryList () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         RegularExpression* regex = NULL;
@@ -3090,11 +3078,10 @@ class CommandObjectTypeFilterList : public CommandObjectParsed
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3113,13 +3100,13 @@ class CommandObjectTypeFilterList : public CommandObjectParsed
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_category_regex = "";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -3136,8 +3123,8 @@ class CommandObjectTypeFilterList : public CommandObjectParsed
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -3161,13 +3148,13 @@ public:
         m_arguments.push_back (type_arg);
     }
     
-    ~CommandObjectTypeFilterList ()
+    ~CommandObjectTypeFilterList () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -3303,11 +3290,10 @@ class CommandObjectTypeSynthList : public CommandObjectParsed
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3326,13 +3312,13 @@ class CommandObjectTypeSynthList : public CommandObjectParsed
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_category_regex = "";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -3349,8 +3335,8 @@ class CommandObjectTypeSynthList : public CommandObjectParsed
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -3374,13 +3360,13 @@ public:
         m_arguments.push_back (type_arg);
     }
     
-    ~CommandObjectTypeSynthList ()
+    ~CommandObjectTypeSynthList () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -3500,11 +3486,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3526,14 +3511,14 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
             m_category = "default";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -3551,8 +3536,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -3585,13 +3570,13 @@ public:
         
     }
     
-    ~CommandObjectTypeFilterDelete ()
+    ~CommandObjectTypeFilterDelete () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -3666,11 +3651,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3692,14 +3676,14 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
             m_category = "default";
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -3717,8 +3701,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -3751,13 +3735,13 @@ public:
         
     }
     
-    ~CommandObjectTypeSynthDelete ()
+    ~CommandObjectTypeSynthDelete () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -3833,11 +3817,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3856,13 +3839,13 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -3879,8 +3862,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -3904,13 +3887,13 @@ public:
     {
     }
     
-    ~CommandObjectTypeFilterClear ()
+    ~CommandObjectTypeFilterClear () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         
         if (m_options.m_delete_all)
@@ -3962,11 +3945,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3985,13 +3967,13 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_delete_all = false;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -4008,8 +3990,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -4033,13 +4015,13 @@ public:
     {
     }
     
-    ~CommandObjectTypeSynthClear ()
+    ~CommandObjectTypeSynthClear () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         
         if (m_options.m_delete_all)
@@ -4273,11 +4255,10 @@ private:
         {
         }
         
-        virtual
-        ~CommandOptions (){}
+        ~CommandOptions () override {}
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -4315,7 +4296,7 @@ private:
         }
         
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_cascade = true;
             m_skip_pointers = false;
@@ -4327,7 +4308,7 @@ private:
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -4354,8 +4335,8 @@ private:
     
     CommandOptions m_options;
     
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -4467,13 +4448,13 @@ all children of my_foo as if no filter was defined:" R"(
         );
     }
     
-    ~CommandObjectTypeFilterAdd ()
+    ~CommandObjectTypeFilterAdd () override
     {
     }
     
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -4575,25 +4556,24 @@ protected:
         m_language(eLanguageTypeUnknown)
         {}
         
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
         
-        virtual uint32_t
-        GetNumDefinitions ()
+        uint32_t
+        GetNumDefinitions () override
         {
             return 3;
         }
         
-        virtual const OptionDefinition*
-        GetDefinitions ()
+        const OptionDefinition*
+        GetDefinitions () override
         {
             return g_option_table;
         }
         
-        virtual Error
+        Error
         SetOptionValue (CommandInterpreter &interpreter,
                         uint32_t option_idx,
-                        const char *option_value)
+                        const char *option_value) override
         {
             Error error;
             
@@ -4617,8 +4597,8 @@ protected:
             return error;
         }
         
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter)
+        void
+        OptionParsingStarting (CommandInterpreter &interpreter) override
         {
             m_show_help = false;
             m_language = eLanguageTypeUnknown;
@@ -4649,20 +4629,18 @@ public:
         m_option_group.Finalize();
     }
     
-    virtual
-    ~CommandObjectTypeLookup ()
+    ~CommandObjectTypeLookup () override
     {
     }
     
-    virtual
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_option_group;
     }
     
-    virtual bool
-    DoExecute (const char *raw_command_line, CommandReturnObject &result)
+    bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result) override
     {
         if (!raw_command_line || !raw_command_line[0])
         {
@@ -4797,14 +4775,13 @@ public:
         SetSyntax(syntax.GetData());
     }
     
-    virtual
-    ~CommandObjectFormatterInfo ()
+    ~CommandObjectFormatterInfo () override
     {
     }
     
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override
     {
         auto target_sp = m_interpreter.GetDebugger().GetSelectedTarget();
         auto frame_sp = target_sp->GetProcessSP()->GetThreadList().GetSelectedThread()->GetSelectedFrame();
@@ -4869,7 +4846,7 @@ public:
     }
 
 
-    ~CommandObjectTypeFormat ()
+    ~CommandObjectTypeFormat () override
     {
     }
 };
@@ -4897,7 +4874,7 @@ public:
     }
     
     
-    ~CommandObjectTypeSynth ()
+    ~CommandObjectTypeSynth () override
     {
     }
 };
@@ -4920,7 +4897,7 @@ public:
     }
     
     
-    ~CommandObjectTypeFilter ()
+    ~CommandObjectTypeFilter () override
     {
     }
 };
@@ -4942,7 +4919,7 @@ public:
     }
     
     
-    ~CommandObjectTypeCategory ()
+    ~CommandObjectTypeCategory () override
     {
     }
 };
@@ -4968,7 +4945,7 @@ public:
     }
     
     
-    ~CommandObjectTypeSummary ()
+    ~CommandObjectTypeSummary () override
     {
     }
 };

@@ -178,11 +178,10 @@ public:
         m_arguments.push_back(arg);
     }
 
-    virtual
-    ~CommandObjectWatchpointList () {}
+    ~CommandObjectWatchpointList () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -197,11 +196,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -226,13 +224,13 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_level = lldb::eDescriptionLevelFull;
         }
 
         const OptionDefinition *
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -248,8 +246,8 @@ public:
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
@@ -361,13 +359,12 @@ public:
         m_arguments.push_back(arg);
     }
 
-    virtual
-    ~CommandObjectWatchpointEnable () {}
+    ~CommandObjectWatchpointEnable () override {}
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& command,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (!CheckTargetForWatchpointOperations(target, result))
@@ -441,12 +438,11 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectWatchpointDisable () {}
+    ~CommandObjectWatchpointDisable () override {}
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (!CheckTargetForWatchpointOperations(target, result))
@@ -524,12 +520,11 @@ public:
         m_arguments.push_back(arg);
     }
 
-    virtual
-    ~CommandObjectWatchpointDelete () {}
+    ~CommandObjectWatchpointDelete () override {}
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (!CheckTargetForWatchpointOperations(target, result))
@@ -607,11 +602,10 @@ public:
         m_arguments.push_back(arg);
     }
 
-    virtual
-    ~CommandObjectWatchpointIgnore () {}
+    ~CommandObjectWatchpointIgnore () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -626,11 +620,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -653,13 +646,13 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_ignore_count = 0;
         }
 
         const OptionDefinition *
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -675,9 +668,9 @@ public:
     };
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& command,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (!CheckTargetForWatchpointOperations(target, result))
@@ -763,11 +756,10 @@ public:
         m_arguments.push_back (arg);   
     }
 
-    virtual
-    ~CommandObjectWatchpointModify () {}
+    ~CommandObjectWatchpointModify () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_options;
     }
@@ -783,11 +775,10 @@ public:
         {
         }
 
-        virtual
-        ~CommandOptions () {}
+        ~CommandOptions () override {}
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -810,14 +801,14 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             m_condition.clear();
             m_condition_passed = false;
         }
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -833,8 +824,8 @@ public:
     };
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (!CheckTargetForWatchpointOperations(target, result))
@@ -958,11 +949,10 @@ corresponding to the byte size of the data type."
         m_option_group.Finalize();
     }
 
-    virtual
-    ~CommandObjectWatchpointSetVariable () {}
+    ~CommandObjectWatchpointSetVariable () override {}
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_option_group;
     }
@@ -983,8 +973,8 @@ protected:
         return 0;
     }
     
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         StackFrame *frame = m_exe_ctx.GetFramePtr();
@@ -1169,22 +1159,21 @@ Examples:
     }
 
 
-    virtual
-    ~CommandObjectWatchpointSetExpression () {}
+    ~CommandObjectWatchpointSetExpression () override {}
 
     // Overrides base class's behavior where WantsCompletion = !WantsRawCommandString.
-    virtual bool
-    WantsCompletion() { return true; }
+    bool
+    WantsCompletion() override { return true; }
 
-    virtual Options *
-    GetOptions ()
+    Options *
+    GetOptions () override
     {
         return &m_option_group;
     }
 
 protected:
-    virtual bool
-    DoExecute (const char *raw_command, CommandReturnObject &result)
+    bool
+    DoExecute (const char *raw_command, CommandReturnObject &result) override
     {
         m_option_group.NotifyOptionParsingStarting(); // This is a raw command, so notify the option group
         
@@ -1345,8 +1334,7 @@ public:
     }
 
 
-    virtual
-    ~CommandObjectWatchpointSet () {}
+    ~CommandObjectWatchpointSet () override {}
 
 };
 

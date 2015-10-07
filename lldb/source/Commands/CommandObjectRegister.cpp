@@ -74,13 +74,12 @@ public:
 
     }
 
-    virtual
-    ~CommandObjectRegisterRead ()
+    ~CommandObjectRegisterRead () override
     {
     }
 
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_option_group;
     }
@@ -170,8 +169,8 @@ public:
     }
 
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
     {
         Stream &strm = result.GetOutputStream();
         RegisterContext *reg_ctx = m_exe_ctx.GetRegisterContext ();
@@ -271,33 +270,32 @@ protected:
         {
         }
         
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
         
         
-        virtual uint32_t
-        GetNumDefinitions ();
+        uint32_t
+        GetNumDefinitions () override;
 
-        virtual const OptionDefinition*
-        GetDefinitions ()
+        const OptionDefinition*
+        GetDefinitions () override
         {
             return g_option_table;
         }
         
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter)
+        void
+        OptionParsingStarting (CommandInterpreter &interpreter) override
         {
             set_indexes.Clear();
             dump_all_sets.Clear();
             alternate_name.Clear();
         }
 
-        virtual Error
+        Error
         SetOptionValue (CommandInterpreter &interpreter,
                         uint32_t option_idx,
-                        const char *option_value)
+                        const char *option_value) override
         {
             Error error;
             const int short_option = g_option_table[option_idx].short_option;
@@ -404,14 +402,13 @@ public:
         m_arguments.push_back (arg2);
     }
 
-    virtual
-    ~CommandObjectRegisterWrite ()
+    ~CommandObjectRegisterWrite () override
     {
     }
 
 protected:
-    virtual bool
-    DoExecute(Args& command, CommandReturnObject &result)
+    bool
+    DoExecute(Args& command, CommandReturnObject &result) override
     {
         DataExtractor reg_data;
         RegisterContext *reg_ctx = m_exe_ctx.GetRegisterContext ();

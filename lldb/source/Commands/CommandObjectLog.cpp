@@ -77,13 +77,12 @@ public:
         m_arguments.push_back (arg2);
     }
 
-    virtual
-    ~CommandObjectLogEnable()
+    ~CommandObjectLogEnable() override
     {
     }
 
     Options *
-    GetOptions ()
+    GetOptions () override
     {
         return &m_options;
     }
@@ -122,13 +121,12 @@ public:
         }
 
 
-        virtual
-        ~CommandOptions ()
+        ~CommandOptions () override
         {
         }
 
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -154,14 +152,14 @@ public:
         }
 
         void
-        OptionParsingStarting ()
+        OptionParsingStarting () override
         {
             log_file.Clear();
             log_options = 0;
         }
 
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions () override
         {
             return g_option_table;
         }
@@ -177,9 +175,9 @@ public:
     };
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& args,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         if (args.GetArgumentCount() < 2)
         {
@@ -260,15 +258,14 @@ public:
         m_arguments.push_back (arg2);
     }
 
-    virtual
-    ~CommandObjectLogDisable()
+    ~CommandObjectLogDisable() override
     {
     }
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& args,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         const size_t argc = args.GetArgumentCount();
         if (argc == 0)
@@ -332,15 +329,14 @@ public:
         m_arguments.push_back (arg);
     }
 
-    virtual
-    ~CommandObjectLogList()
+    ~CommandObjectLogList() override
     {
     }
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& args,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         const size_t argc = args.GetArgumentCount();
         if (argc == 0)
@@ -396,15 +392,14 @@ public:
     {
     }
 
-    virtual
-    ~CommandObjectLogTimer()
+    ~CommandObjectLogTimer() override
     {
     }
 
 protected:
-    virtual bool
+    bool
     DoExecute (Args& args,
-             CommandReturnObject &result)
+             CommandReturnObject &result) override
     {
         const size_t argc = args.GetArgumentCount();
         result.SetStatus(eReturnStatusFailed);
