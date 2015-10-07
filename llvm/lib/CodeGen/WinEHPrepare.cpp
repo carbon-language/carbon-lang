@@ -3222,6 +3222,10 @@ void WinEHPrepare::cloneCommonBlocks(
       Orig2Clone[BB] = CBB;
     }
 
+    // If nothing was cloned, we're done cloning in this funclet.
+    if (Orig2Clone.empty())
+      continue;
+
     // Update our color mappings to reflect that one block has lost a color and
     // another has gained a color.
     for (auto &BBMapping : Orig2Clone) {
@@ -3235,12 +3239,13 @@ void WinEHPrepare::cloneCommonBlocks(
       BlockColors[OldBlock].erase(FuncletPadBB);
     }
 
-    // Loop over all of the instructions in the function, fixing up operand
+    // Loop over all of the instructions in this funclet, fixing up operand
     // references as we go.  This uses VMap to do all the hard work.
     for (BasicBlock *BB : BlocksInFunclet)
       // Loop over all instructions, fixing each one as we find it...
       for (Instruction &I : *BB)
-        RemapInstruction(&I, VMap, RF_IgnoreMissingEntries);
+        RemapInstruction(&I, VMap,
+                         RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
 
     // Check to see if SuccBB has PHI nodes. If so, we need to add entries to
     // the PHI nodes for NewBB now.

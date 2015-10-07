@@ -452,3 +452,44 @@ exit:
 ; CHECK:      %inner = cleanuppad []
 ; CHECK-NEXT: call void @f()
 ; CHECK-NEXT: unreachable
+
+define void @test12() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  invoke void @f()
+    to label %cont unwind label %left, !dbg !8
+cont:
+  invoke void @f()
+    to label %exit unwind label %right
+left:
+  cleanuppad []
+  br label %join
+right:
+  cleanuppad []
+  br label %join
+join:
+  ; This call will get cloned; make sure we can handle cloning
+  ; instructions with debug metadata attached.
+  call void @f(), !dbg !9
+  unreachable
+exit:
+  ret void
+}
+
+; Make sure the DISubprogram doesn't get cloned
+; CHECK-LABEL: !llvm.module.flags
+; CHECK-NOT: !DISubprogram
+; CHECK: !{{[0-9]+}} = distinct !DISubprogram(name: "test12"
+; CHECK-NOT: !DISubprogram
+!llvm.module.flags = !{!0}
+!llvm.dbg.cu = !{!1}
+
+!0 = !{i32 2, !"Debug Info Version", i32 3}
+!1 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !2, producer: "compiler", isOptimized: false, runtimeVersion: 0, emissionKind: 1, enums: !3, subprograms: !4)
+!2 = !DIFile(filename: "test.cpp", directory: ".")
+!3 = !{}
+!4 = !{!5}
+!5 = distinct !DISubprogram(name: "test12", scope: !2, file: !2, type: !6, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @test12, variables: !3)
+!6 = !DISubroutineType(types: !7)
+!7 = !{null}
+!8 = !DILocation(line: 1, scope: !5)
+!9 = !DILocation(line: 2, scope: !5)
