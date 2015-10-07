@@ -29,15 +29,13 @@ template <class ELFT>
 template <bool isRela>
 void InputSection<ELFT>::relocate(
     uint8_t *Buf, iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
-    const ObjectFile<ELFT> &File, uintX_t BaseAddr,
-    const OutputSection<ELFT> &BssSec, const PltSection<ELFT> &PltSec,
-    const GotSection<ELFT> &GotSec) {
+    const ObjectFile<ELFT> &File, uintX_t BaseAddr) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   bool IsMips64EL = File.getObj().isMips64EL();
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     uint32_t Type = RI.getType(IsMips64EL);
-    uintX_t GotVA = GotSec.getVA();
+    uintX_t GotVA = Out<ELFT>::Got->getVA();
     uintX_t SymVA;
 
     // Handle relocations for local symbols -- they never get
@@ -50,12 +48,12 @@ void InputSection<ELFT>::relocate(
       SymVA = getLocalSymVA(Sym, File);
     } else {
       SymbolBody &Body = *File.getSymbolBody(SymIndex);
-      SymVA = getSymVA<ELFT>(Body, BssSec);
+      SymVA = getSymVA<ELFT>(Body);
       if (Target->relocNeedsPlt(Type, Body)) {
-        SymVA = PltSec.getEntryAddr(Body);
+        SymVA = Out<ELFT>::Plt->getEntryAddr(Body);
         Type = Target->getPCRelReloc();
       } else if (Target->relocNeedsGot(Type, Body)) {
-        SymVA = GotSec.getEntryAddr(Body);
+        SymVA = Out<ELFT>::Got->getEntryAddr(Body);
         Type = Target->getGotRefReloc();
       } else if (Target->relocPointsToGot(Type)) {
         SymVA = GotVA;
@@ -70,11 +68,7 @@ void InputSection<ELFT>::relocate(
   }
 }
 
-template <class ELFT>
-void InputSection<ELFT>::writeTo(uint8_t *Buf,
-                                 const OutputSection<ELFT> &BssSec,
-                                 const PltSection<ELFT> &PltSec,
-                                 const GotSection<ELFT> &GotSec) {
+template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   if (Header->sh_type == SHT_NOBITS)
     return;
   // Copy section contents from source object file to output file.
@@ -88,11 +82,9 @@ void InputSection<ELFT>::writeTo(uint8_t *Buf,
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
-      relocate(Base, EObj.relas(RelSec), *File, BaseAddr, BssSec, PltSec,
-               GotSec);
+      relocate(Base, EObj.relas(RelSec), *File, BaseAddr);
     else
-      relocate(Base, EObj.rels(RelSec), *File, BaseAddr, BssSec, PltSec,
-               GotSec);
+      relocate(Base, EObj.rels(RelSec), *File, BaseAddr);
   }
 }
 

@@ -33,8 +33,7 @@ template <class ELFT> class DefinedRegular;
 template <class ELFT> class ELFSymbolBody;
 
 template <class ELFT>
-typename llvm::object::ELFFile<ELFT>::uintX_t
-getSymVA(const SymbolBody &S, const OutputSection<ELFT> &BssSec);
+typename llvm::object::ELFFile<ELFT>::uintX_t getSymVA(const SymbolBody &S);
 
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t
@@ -103,7 +102,7 @@ class GotSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename Base::uintX_t uintX_t;
 
 public:
-  GotSection(const OutputSection<ELFT> &BssSec);
+  GotSection();
   void finalize() override {
     this->Header.sh_size = Entries.size() * this->getAddrSize();
   }
@@ -114,7 +113,6 @@ public:
 
 private:
   std::vector<const SymbolBody *> Entries;
-  const OutputSection<ELFT> &BssSec;
 };
 
 template <class ELFT>
@@ -123,7 +121,7 @@ class PltSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename Base::uintX_t uintX_t;
 
 public:
-  PltSection(const GotSection<ELFT> &GotSec);
+  PltSection();
   void finalize() override {
     this->Header.sh_size = Entries.size() * EntrySize;
   }
@@ -135,7 +133,6 @@ public:
 
 private:
   std::vector<const SymbolBody *> Entries;
-  const GotSection<ELFT> &GotSec;
 };
 
 template <class ELFT> struct DynamicReloc {
@@ -152,8 +149,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   SymbolTableSection(SymbolTable &Table,
-                     StringTableSection<ELFT::Is64Bits> &StrTabSec,
-                     const OutputSection<ELFT> &BssSec);
+                     StringTableSection<ELFT::Is64Bits> &StrTabSec);
 
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
@@ -170,7 +166,6 @@ private:
   StringTableSection<ELFT::Is64Bits> &StrTabSec;
   unsigned NumVisible = 0;
   unsigned NumLocals = 0;
-  const OutputSection<ELFT> &BssSec;
 };
 
 template <class ELFT>
@@ -180,9 +175,7 @@ class RelocationSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
-  RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
-                    const GotSection<ELFT> &GotSec,
-                    const OutputSection<ELFT> &BssSec, bool IsRela);
+  RelocationSection(bool IsRela);
   void addReloc(const DynamicReloc<ELFT> &Reloc) { Relocs.push_back(Reloc); }
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
@@ -191,9 +184,6 @@ public:
 
 private:
   std::vector<DynamicReloc<ELFT>> Relocs;
-  SymbolTableSection<ELFT> &DynSymSec;
-  const GotSection<ELFT> &GotSec;
-  const OutputSection<ELFT> &BssSec;
   const bool IsRela;
 };
 
@@ -205,17 +195,12 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
-  OutputSection(const PltSection<ELFT> &PltSec, const GotSection<ELFT> &GotSec,
-                const OutputSection<ELFT> &BssSec, StringRef Name,
-                uint32_t sh_type, uintX_t sh_flags);
+  OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags);
   void addSection(InputSection<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
 
 private:
   std::vector<InputSection<ELFT> *> Sections;
-  const PltSection<ELFT> &PltSec;
-  const GotSection<ELFT> &GotSec;
-  const OutputSection<ELFT> &BssSec;
 };
 
 template <bool Is64Bits>
@@ -253,11 +238,10 @@ class HashTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
 
 public:
-  HashTableSection(SymbolTableSection<ELFT> &DynSymSec);
+  HashTableSection();
   void addSymbol(SymbolBody *S);
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
-  SymbolTableSection<ELFT> &getDynSymSec() { return DynSymSec; }
 
 private:
   uint32_t hash(StringRef Name) {
@@ -271,7 +255,6 @@ private:
     }
     return H;
   }
-  SymbolTableSection<ELFT> &DynSymSec;
   std::vector<uint32_t> Hashes;
 };
 
@@ -285,9 +268,7 @@ class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
 
 public:
-  DynamicSection(SymbolTable &SymTab, HashTableSection<ELFT> &HashSec,
-                 RelocationSection<ELFT> &RelaDynSec,
-                 const OutputSection<ELFT> &BssSec);
+  DynamicSection(SymbolTable &SymTab);
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
 
@@ -296,14 +277,26 @@ public:
   OutputSection<ELFT> *FiniArraySec = nullptr;
 
 private:
-  HashTableSection<ELFT> &HashSec;
-  SymbolTableSection<ELFT> &DynSymSec;
-  StringTableSection<ELFT::Is64Bits> &DynStrSec;
-  RelocationSection<ELFT> &RelaDynSec;
-  const OutputSection<ELFT> &BssSec;
   SymbolTable &SymTab;
   const ELFSymbolBody<ELFT> *InitSym = nullptr;
   const ELFSymbolBody<ELFT> *FiniSym = nullptr;
+};
+
+// All output sections that are hadnled by the linker specially are
+// globally accessible. Writer initializes them, so don't use them
+// until Writer is initialized.
+template <class ELFT> struct Out {
+  static DynamicSection<ELFT> *Dynamic;
+  static GotSection<ELFT> *Got;
+  static HashTableSection<ELFT> *HashTab;
+  static InterpSection<ELFT::Is64Bits> *Interp;
+  static OutputSection<ELFT> *Bss;
+  static PltSection<ELFT> *Plt;
+  static RelocationSection<ELFT> *RelaDyn;
+  static StringTableSection<ELFT::Is64Bits> *DynStrTab;
+  static StringTableSection<ELFT::Is64Bits> *StrTab;
+  static SymbolTableSection<ELFT> *DynSymTab;
+  static SymbolTableSection<ELFT> *SymTab;
 };
 }
 }
