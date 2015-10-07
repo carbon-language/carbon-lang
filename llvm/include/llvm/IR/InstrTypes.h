@@ -16,6 +16,7 @@
 #ifndef LLVM_IR_INSTRTYPES_H
 #define LLVM_IR_INSTRTYPES_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instruction.h"
@@ -1203,6 +1204,34 @@ public:
     ArrayRef<Use> Inputs(op_begin + BOI->Begin, op_begin + BOI->End);
     return OperandBundleUse(BOI->Tag->getKey(), Inputs);
   }
+
+  /// \brief Return the number of operand bundles with the tag Name attached to
+  /// this instruction.
+  unsigned countOperandBundlesOfType(StringRef Name) const {
+    unsigned Count = 0;
+    for (unsigned i = 0, e = getNumOperandBundles(); i != e; ++i)
+      if (getOperandBundle(i).Tag == Name)
+        Count++;
+
+    return Count;
+  }
+
+  /// \brief Return an operand bundle by name, if present.
+  ///
+  /// It is an error to call this for operand bundle types that may have
+  /// multiple instances of them on the same instruction.
+  Optional<OperandBundleUse> getOperandBundle(StringRef Name) const {
+    assert(countOperandBundlesOfType(Name) < 2 && "Precondition violated!");
+
+    for (unsigned i = 0, e = getNumOperandBundles(); i != e; ++i) {
+      OperandBundleUse U = getOperandBundle(i);
+      if (U.Tag == Name)
+        return U;
+    }
+
+    return None;
+  }
+
 
 protected:
   /// \brief Used to keep track of an operand bundle.  See the main comment on

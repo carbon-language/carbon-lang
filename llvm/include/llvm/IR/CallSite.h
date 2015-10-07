@@ -333,6 +333,10 @@ public:
     CALLSITE_DELEGATE_GETTER(getOperandBundle(Index));
   }
 
+  Optional<OperandBundleUse> getOperandBundle(StringRef Name) const {
+    CALLSITE_DELEGATE_GETTER(getOperandBundle(Name));
+  }
+
 #undef CALLSITE_DELEGATE_GETTER
 #undef CALLSITE_DELEGATE_SETTER
 
