@@ -568,6 +568,7 @@ TEST_F(InMemoryFileSystemTest, OverlayFileNoOwn) {
 
 TEST_F(InMemoryFileSystemTest, OpenFileForRead) {
   FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a"));
+  FS.addFile("././c", 0, MemoryBuffer::getMemBuffer("c"));
   auto File = FS.openFileForRead("/a");
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/a"); // Open again.
@@ -578,6 +579,8 @@ TEST_F(InMemoryFileSystemTest, OpenFileForRead) {
   ASSERT_EQ(File.getError(), errc::invalid_argument) << FS.toString();
   File = FS.openFileForRead("/b");
   ASSERT_EQ(File.getError(), errc::no_such_file_or_directory) << FS.toString();
+  File = FS.openFileForRead("./c");
+  ASSERT_EQ("c", (*(*File)->getBuffer("ignored"))->getBuffer());
 }
 
 TEST_F(InMemoryFileSystemTest, DirectoryIteration) {

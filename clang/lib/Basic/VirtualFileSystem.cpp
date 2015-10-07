@@ -495,6 +495,13 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
   auto I = llvm::sys::path::begin(Path), E = llvm::sys::path::end(Path);
   while (true) {
     StringRef Name = *I;
+    // Skip over ".".
+    // FIXME: Also handle "..".
+    if (Name == ".") {
+      ++I;
+      continue;
+    }
+
     detail::InMemoryNode *Node = Dir->getChild(Name);
     ++I;
     if (!Node) {
