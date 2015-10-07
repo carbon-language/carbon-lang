@@ -265,4 +265,25 @@ void finally_capture_twice(int x) {
 // CHECK-NEXT:    store i32 [[T0]], i32* [[Z]], align 4
 // CHECK-NEXT:    ret void
 
+int exception_code_in_except(void) {
+  __try {
+    try_body(0, 0, 0);
+  } __except(1) {
+    return _exception_code();
+  }
+}
+
+// CHECK-LABEL: define i32 @exception_code_in_except()
+// CHECK: %[[ret_slot:[^ ]*]] = alloca i32
+// CHECK: %[[code_slot:[^ ]*]] = alloca i32
+// CHECK: invoke void @try_body(i32 0, i32 0, i32* null)
+// CHECK: %[[pad:[^ ]*]] = catchpad
+// CHECK: catchret %[[pad]]
+// X64: %[[code:[^ ]*]] = call i32 @llvm.eh.exceptioncode(token %[[pad]])
+// X64: store i32 %[[code]], i32* %[[code_slot]]
+// CHECK: %[[ret1:[^ ]*]] = load i32, i32* %[[code_slot]]
+// CHECK: store i32 %[[ret1]], i32* %[[ret_slot]]
+// CHECK: %[[ret2:[^ ]*]] = load i32, i32* %[[ret_slot]]
+// CHECK: ret i32 %[[ret2]]
+
 // CHECK: attributes #[[NOINLINE]] = { {{.*noinline.*}} }

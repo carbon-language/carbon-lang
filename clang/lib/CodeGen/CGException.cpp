@@ -1898,14 +1898,21 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
     ExceptBB = createBasicBlock("__except");
     Builder.CreateCatchRet(CPI, ExceptBB);
     EmitBlock(ExceptBB);
-  }
-
-  // On Win64, the exception pointer is the exception code. Copy it to the slot.
-  if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86) {
-    llvm::Value *Code =
-        Builder.CreatePtrToInt(getExceptionFromSlot(), IntPtrTy);
-    Code = Builder.CreateTrunc(Code, Int32Ty);
-    Builder.CreateStore(Code, SEHCodeSlotStack.back());
+    // On Win64, the exception code is returned in EAX. Copy it into the slot.
+    if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86) {
+      llvm::Function *SEHCodeIntrin =
+          CGM.getIntrinsic(llvm::Intrinsic::eh_exceptioncode);
+      llvm::Value *Code = Builder.CreateCall(SEHCodeIntrin, {CPI});
+      Builder.CreateStore(Code, SEHCodeSlotStack.back());
+    }
+  } else {
+    // On Win64, the exception pointer is the exception code. Copy it to the slot.
+    if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86) {
+      llvm::Value *Code =
+          Builder.CreatePtrToInt(getExceptionFromSlot(), IntPtrTy);
+      Code = Builder.CreateTrunc(Code, Int32Ty);
+      Builder.CreateStore(Code, SEHCodeSlotStack.back());
+    }
   }
 
   // Emit the __except body.
