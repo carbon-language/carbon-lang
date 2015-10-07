@@ -85,7 +85,6 @@ private:
     typedef std::function<RuntimeDyld::SymbolInfo(const std::string&)>
       SymbolResolverFtor;
     SymbolResolverFtor ExternalSymbolResolver;
-    PartitioningFtor Partitioner;
   };
 
   typedef LogicalDylib<BaseLayerT, LogicalModuleResources,
@@ -100,8 +99,10 @@ public:
 
   /// @brief Construct a compile-on-demand layer instance.
   CompileOnDemandLayer(BaseLayerT &BaseLayer, CompileCallbackMgrT &CallbackMgr,
-                       bool CloneStubsIntoPartitions)
+                       PartitioningFtor Partition,
+                       bool CloneStubsIntoPartitions = true)
       : BaseLayer(BaseLayer), CompileCallbackMgr(CallbackMgr),
+        Partition(Partition),
         CloneStubsIntoPartitions(CloneStubsIntoPartitions) {}
 
   /// @brief Add a module to the compile-on-demand layer.
@@ -120,13 +121,6 @@ public:
     LDResources.ExternalSymbolResolver =
       [Resolver](const std::string &Name) {
         return Resolver->findSymbol(Name);
-      };
-
-    LDResources.Partitioner =
-      [](Function &F) {
-        std::set<Function*> Partition;
-        Partition.insert(&F);
-        return Partition;
       };
 
     // Process each of the modules in this module set.
@@ -265,14 +259,14 @@ private:
     // Grab the name of the function being called here.
     std::string CalledFnName = Mangle(F.getName(), SrcM.getDataLayout());
 
-    auto Partition = LD.getDylibResources().Partitioner(F);
-    auto PartitionH = emitPartition(LD, LMH, Partition);
+    auto Part = Partition(F);
+    auto PartH = emitPartition(LD, LMH, Part);
 
     TargetAddress CalledAddr = 0;
-    for (auto *SubF : Partition) {
+    for (auto *SubF : Part) {
       std::string FName = SubF->getName();
       auto FnBodySym =
-        BaseLayer.findSymbolIn(PartitionH, Mangle(FName, SrcM.getDataLayout()),
+        BaseLayer.findSymbolIn(PartH, Mangle(FName, SrcM.getDataLayout()),
                                false);
       auto FnPtrSym =
         BaseLayer.findSymbolIn(*LD.moduleHandlesBegin(LMH),
@@ -300,13 +294,13 @@ private:
   template <typename PartitionT>
   BaseLayerModuleSetHandleT emitPartition(CODLogicalDylib &LD,
                                           LogicalModuleHandle LMH,
-                                          const PartitionT &Partition) {
+                                          const PartitionT &Part) {
     auto &LMResources = LD.getLogicalModuleResources(LMH);
     Module &SrcM = *LMResources.SourceModule;
 
     // Create the module.
     std::string NewName = SrcM.getName();
-    for (auto *F : Partition) {
+    for (auto *F : Part) {
       NewName += ".";
       NewName += F->getName();
     }
@@ -317,11 +311,11 @@ private:
     GlobalDeclMaterializer GDM(*M, &LMResources.StubsToClone);
 
     // Create decls in the new module.
-    for (auto *F : Partition)
+    for (auto *F : Part)
       cloneFunctionDecl(*M, *F, &VMap);
 
     // Move the function bodies.
-    for (auto *F : Partition)
+    for (auto *F : Part)
       moveFunctionBody(*F, VMap, &GDM);
 
     // Create memory manager and symbol resolver.
@@ -348,6 +342,7 @@ private:
   BaseLayerT &BaseLayer;
   CompileCallbackMgrT &CompileCallbackMgr;
   LogicalDylibList LogicalDylibs;
+  PartitioningFtor Partition;
   bool CloneStubsIntoPartitions;
 };
 

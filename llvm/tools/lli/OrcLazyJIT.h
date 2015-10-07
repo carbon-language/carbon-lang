@@ -54,7 +54,7 @@ public:
         CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
         IRDumpLayer(CompileLayer, createDebugDumper()),
         CCMgr(BuildCallbackMgr(IRDumpLayer, CCMgrMemMgr, Context)),
-        CODLayer(IRDumpLayer, *CCMgr, false),
+        CODLayer(IRDumpLayer, *CCMgr, extractSingleFunction, false),
         CXXRuntimeOverrides(
             [this](const std::string &S) { return mangle(S); }) {}
 
@@ -132,6 +132,7 @@ public:
   }
 
 private:
+
   std::string mangle(const std::string &Name) {
     std::string MangledName;
     {
@@ -139,6 +140,12 @@ private:
       Mangler::getNameWithPrefix(MangledNameStream, Name, DL);
     }
     return MangledName;
+  }
+
+  static std::set<Function*> extractSingleFunction(Function &F) {
+    std::set<Function*> Partition;
+    Partition.insert(&F);
+    return Partition;
   }
 
   static TransformFtor createDebugDumper();
