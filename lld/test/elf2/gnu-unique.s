@@ -1,5 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t
-// RUN: lld -flavor gnu2 %t -shared -o %tout.so
+// RUN: ld.lld2 %t -shared -o %tout.so
 // RUN: llvm-readobj -dyn-symbols %tout.so | FileCheck %s
 // REQUIRES: x86
 
