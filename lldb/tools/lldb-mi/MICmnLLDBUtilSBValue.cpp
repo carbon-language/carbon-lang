@@ -9,6 +9,7 @@
 
 // Third party headers:
 #include <cinttypes>
+#include "lldb/API/SBTypeSummary.h"
 
 // In-house headers:
 #include "MICmnLLDBUtilSBValue.h"
@@ -165,6 +166,14 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
             return MIstatus::success;
         }
     }
+    else
+    {
+        // Treat composite value which has registered summary
+        // (for example with AddCXXSummary) as simple value
+        vwrValue = GetValueSummary();
+        if (!vwrValue.empty())
+            return MIstatus::success;
+    }
 
     // Composite variable type i.e. struct
     return MIstatus::failure;
@@ -180,6 +189,10 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
 CMIUtilString
 CMICmnLLDBUtilSBValue::GetSimpleValueChar() const
 {
+    const CMIUtilString& summary = GetValueSummary();
+    if (!summary.empty())
+        return summary;
+
     const uint64_t value = m_rValue.GetValueAsUnsigned();
     if (value == 0)
     {
@@ -223,6 +236,10 @@ CMICmnLLDBUtilSBValue::GetSimpleValueChar() const
 CMIUtilString
 CMICmnLLDBUtilSBValue::GetSimpleValueCStringPointer() const
 {
+    const CMIUtilString& summary = GetValueSummary();
+    if (!summary.empty())
+        return summary;
+
     const char *value = m_rValue.GetValue();
     if (value == nullptr)
         return m_pUnkwn;
@@ -266,6 +283,10 @@ CMICmnLLDBUtilSBValue::GetSimpleValueCStringPointer() const
 CMIUtilString
 CMICmnLLDBUtilSBValue::GetSimpleValueCStringArray() const
 {
+    const CMIUtilString& summary = GetValueSummary();
+    if (!summary.empty())
+        return summary;
+
     const MIuint nChildren = m_rValue.GetNumChildren();
     lldb::SBValue child = m_rValue.GetChildAtIndex(0);
     const lldb::BasicType eType = child.GetType().GetBasicType();
@@ -345,6 +366,30 @@ CMICmnLLDBUtilSBValue::GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIV
     }
 
     return MIstatus::success;
+}
+
+CMIUtilString
+CMICmnLLDBUtilSBValue::GetValueSummary() const
+{
+    CMIUtilString valSummary;
+    if (m_rValue.IsValid())
+    {
+        const char *c_str = m_rValue.GetSummary();
+        if (c_str && c_str[0])
+        {
+            valSummary = c_str;
+            lldb::SBTypeSummary summary = m_rValue.GetTypeSummary();
+            if (summary.IsValid() && summary.DoesPrintValue(m_rValue))
+            {
+                c_str = m_rValue.GetValue();
+                if (c_str && c_str[0])
+                {
+                    valSummary.insert(0, std::string(c_str) + " ");
+                }
+            }
+        }
+    }
+    return valSummary;
 }
 
 //++ ------------------------------------------------------------------------------------

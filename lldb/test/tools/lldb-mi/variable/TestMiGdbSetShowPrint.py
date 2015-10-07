@@ -1,3 +1,4 @@
+#coding=utf8
 """
 Test lldb-mi -gdb-set and -gdb-show commands for 'print option-name'.
 """
@@ -9,6 +10,17 @@ import unittest2
 class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
+
+    # evaluates array when char-array-as-string is off
+    def eval_and_check_array(self, var, typ, length):
+        self.runCmd("-var-create - * %s" % var)
+        self.expect('\^done,name="var\d+",numchild="%d",value="\[%d\]",type="%s \[%d\]",thread-id="1",has_more="0"' % (length, length, typ, length))
+
+    # evaluates any type which can be represented as string of characters
+    def eval_and_match_string(self, var, value, typ):
+        value=value.replace("\\", "\\\\").replace("\"", "\\\"")
+        self.runCmd("-var-create - * " + var)
+        self.expect('\^done,name="var\d+",numchild="[0-9]+",value="%s",type="%s",thread-id="1",has_more="0"' % (value, typ))
 
     @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
@@ -35,29 +47,23 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-gdb-show print char-array-as-string")
         self.expect("\^done,value=\"off\"")
 
-        # Test that an char* is expanded to string when print char-array-as-string is "off"
-        self.runCmd("-var-create - * cp")
-        self.expect("\^done,name=\"var\d+\",numchild=\"1\",value=\"0x[0-9a-f]+ \\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char \*\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char* is expanded to string when print char-array-as-string is "off"
+        self.eval_and_match_string("cp", r'0x[0-9a-f]+ \"\\t\\\"hello\\\"\\n\"', r'const char \*')
 
-        # Test that an char[] isn't expanded to string when print char-array-as-string is "off"
-        self.runCmd("-var-create - * ca")
-        self.expect("\^done,name=\"var\d+\",numchild=\"10\",value=\"\[10\]\",type=\"const char \[10\]\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char[] isn't expanded to string when print char-array-as-string is "off"
+        self.eval_and_check_array("ca", "const char", 10);
 
-        # Test that an char16_t* is expanded to string when print char-array-as-string is "off"
-        self.runCmd("-var-create - * u16p")
-        self.expect("\^done,name=\"var\d+\",numchild=\"1\",value=\"0x[0-9a-f]+ u\\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char16_t \*\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char16_t* is expanded to string when print char-array-as-string is "off"
+        self.eval_and_match_string("u16p", r'0x[0-9a-f]+ u\"\\t\\\"hello\\\"\\n\"', r'const char16_t \*')
 
-        # Test that an char16_t[] isn't expanded to string when print char-array-as-string is "off"
-        self.runCmd("-var-create - * u16a")
-        self.expect("\^done,name=\"var\d+\",numchild=\"10\",value=\"\[10\]\",type=\"const char16_t \[10\]\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char16_t[] isn't expanded to string when print char-array-as-string is "off"
+        self.eval_and_check_array("u16a", "const char16_t", 10);
 
-        # Test that an char32_t* is expanded to string when print char-array-as-string is "off"
-        self.runCmd("-var-create - * u32p")
-        self.expect("\^done,name=\"var\d+\",numchild=\"1\",value=\"0x[0-9a-f]+ U\\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char32_t \*\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char32_t* is expanded to string when print char-array-as-string is "off"
+        self.eval_and_match_string("u32p", r'0x[0-9a-f]+ U\"\\t\\\"hello\\\"\\n\"', r'const char32_t \*')
 
-        # Test that an char32_t[] isn't expanded to string when print char-array-as-string is "off"
-        self.runCmd("-var-create - * u32a")
-        self.expect("\^done,name=\"var\d+\",numchild=\"10\",value=\"\[10\]\",type=\"const char32_t \[10\]\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char32_t[] isn't expanded to string when print char-array-as-string is "off"
+        self.eval_and_check_array("u32a", "const char32_t", 10);
 
         # Test that -gdb-set can set print char-array-as-string flag
         self.runCmd("-gdb-set print char-array-as-string on")
@@ -67,29 +73,29 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-gdb-show print char-array-as-string")
         self.expect("\^done,value=\"on\"")
 
-        # Test that an char* with escape chars is expanded to string when print char-array-as-string is "on"
-        self.runCmd("-var-create - * cp")
-        self.expect("\^done,name=\"var\d+\",numchild=\"1\",value=\"0x[0-9a-f]+ \\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char \*\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char* with escape chars is expanded to string when print char-array-as-string is "on"
+        self.eval_and_match_string("cp", r'0x[0-9a-f]+ \"\\t\\\"hello\\\"\\n\"', r'const char \*')
         
-        # Test that an char[] with escape chars is expanded to string when print char-array-as-string is "on"
-        self.runCmd("-var-create - * ca")
-        self.expect("\^done,name=\"var\d+\",numchild=\"10\",value=\"\\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char \[10\]\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char[] with escape chars is expanded to string when print char-array-as-string is "on"
+        self.eval_and_match_string("ca", r'\"\\t\\\"hello\\\"\\n\"', r'const char \[10\]')
         
-        # Test that an char16_t* with esc1ape chars is expanded to string when print char-array-as-string is "on"
-        self.runCmd("-var-create - * u16p")
-        self.expect("\^done,name=\"var\d+\",numchild=\"1\",value=\"0x[0-9a-f]+ u\\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char16_t \*\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char16_t* with escape chars is expanded to string when print char-array-as-string is "on"
+        self.eval_and_match_string("u16p", r'0x[0-9a-f]+ u\"\\t\\\"hello\\\"\\n\"', r'const char16_t \*')
         
-        # Test that an char16_t[] with escape chars is expanded to string when print char-array-as-string is "on"
-        self.runCmd("-var-create - * u16a")
-        self.expect("\^done,name=\"var\d+\",numchild=\"10\",value=\"u\\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char16_t \[10\]\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char16_t[] with escape chars is expanded to string when print char-array-as-string is "on"
+        self.eval_and_match_string("u16a", r'u\"\\t\\\"hello\\\"\\n\"', r'const char16_t \[10\]')
         
-        # Test that an char32_t* with escape chars is expanded to string when print char-array-as-string is "on"
-        self.runCmd("-var-create - * u32p")
-        self.expect("\^done,name=\"var\d+\",numchild=\"1\",value=\"0x[0-9a-f]+ U\\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char32_t \*\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char32_t* with escape chars is expanded to string when print char-array-as-string is "on"
+        self.eval_and_match_string("u32p", r'0x[0-9a-f]+ U\"\\t\\\"hello\\\"\\n\"', r'const char32_t \*')
         
-        # Test that an char32_t[] with escape chars is expanded to string when print char-array-as-string is "on"
-        self.runCmd("-var-create - * u32a")
-        self.expect("\^done,name=\"var\d+\",numchild=\"10\",value=\"U\\\\\\\"\\\\\\\\t\\\\\\\\\\\\\"hello\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\"\",type=\"const char32_t \[10\]\",thread-id=\"1\",has_more=\"0\"")
+        # Test that a char32_t[] with escape chars is expanded to string when print char-array-as-string is "on"
+        self.eval_and_match_string("u32a", r'U\"\\t\\\"hello\\\"\\n\"', r'const char32_t \[10\]')
+
+        # Test russian unicode strings
+        self.eval_and_match_string("u16p_rus", r'0x[0-9a-f]+ u\"\\\\Аламо-сквер\"', r'const char16_t \*')
+        self.eval_and_match_string("u16a_rus", r'u\"\\\\Бейвью\"', r'const char16_t \[8\]')
+        self.eval_and_match_string("u32p_rus", r'0x[0-9a-f]+ U\"\\\\Чайнатаун\"', r'const char32_t \*')
+        self.eval_and_match_string("u32a_rus", r'U\"\\\\Догпатч\"', r'const char32_t \[9\]')
 
         # Test that -gdb-set print char-array-as-string fails if "on"/"off" isn't specified
         self.runCmd("-gdb-set print char-array-as-string")
@@ -129,8 +135,7 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,name=\"var1\",numchild=\"3\",value=\"{\.\.\.}\",type=\"complex_type\",thread-id=\"1\",has_more=\"0\"")
 
         # Test that composite type[] isn't expanded when print expand-aggregates is "off"
-        self.runCmd("-var-create var2 * complx_array")
-        self.expect("\^done,name=\"var2\",numchild=\"2\",value=\"\[2\]\",type=\"complex_type \[2\]\",thread-id=\"1\",has_more=\"0\"")
+        self.eval_and_check_array("complx_array", "complex_type", 2)
 
         # Test that a struct with a char first element is not formatted as a string
         self.runCmd("-var-create - * &nstr")

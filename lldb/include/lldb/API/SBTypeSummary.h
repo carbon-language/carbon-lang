@@ -126,6 +126,9 @@ namespace lldb {
         operator = (const lldb::SBTypeSummary &rhs);
         
         bool
+        DoesPrintValue (lldb::SBValue value);
+        
+        bool
         IsEqualTo (lldb::SBTypeSummary &rhs);
 
         bool

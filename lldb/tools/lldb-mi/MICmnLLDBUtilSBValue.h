@@ -55,6 +55,7 @@ class CMICmnLLDBUtilSBValue
     CMIUtilString GetSimpleValueCStringPointer() const;
     CMIUtilString GetSimpleValueCStringArray() const;
     bool GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIValueTuple &vwrMiValueTuple, const MIuint vnDepth = 1) const;
+    CMIUtilString GetValueSummary() const;
 
     // Statics:
   private:

@@ -8,9 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBTypeSummary.h"
-
 #include "lldb/API/SBStream.h"
-
+#include "lldb/API/SBValue.h"
 #include "lldb/DataFormatters/DataVisualization.h"
 
 using namespace lldb;
@@ -282,6 +281,15 @@ SBTypeSummary::GetDescription (lldb::SBStream &description,
                            m_opaque_sp->GetDescription().c_str());
         return true;
     }
+}
+
+bool
+SBTypeSummary::DoesPrintValue (lldb::SBValue value)
+{
+    if (!IsValid())
+        return false;
+    lldb::ValueObjectSP value_sp = value.GetSP();
+    return m_opaque_sp->DoesPrintValue(value_sp.get());
 }
 
 lldb::SBTypeSummary &

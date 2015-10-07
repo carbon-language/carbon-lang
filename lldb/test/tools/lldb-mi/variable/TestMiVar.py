@@ -329,5 +329,30 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-list-children 0 var_complx 0")
         self.expect("\^error,msg=\"Command 'var-list-children'. Variable children range invalid\"")
 
+    @lldbmi_test
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
+    def test_lldbmi_var_create_for_stl_types(self):
+        """Test that 'lldb-mi --interpreter' print summary for STL types."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to BP_gdb_set_show_print_char_array_as_string_test
+        line = line_number('main.cpp', '// BP_cpp_stl_types_test')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test for std::string
+        self.runCmd("-var-create - * std_string")
+        self.expect('\^done,name="var\d+",numchild="[0-9]+",value="\\\\"hello\\\\"",type="std::[\S]*?string",thread-id="1",has_more="0"')
+
 if __name__ == '__main__':
     unittest2.main()

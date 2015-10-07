@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdint>
+#include <string>
 
 struct complex_type
 {
@@ -64,7 +65,19 @@ gdb_set_show_print_char_array_as_string_test(void)
     const char32_t *u32p = U"\t\"hello\"\n";
     const char32_t u32a[] = U"\t\"hello\"\n";
 
+    const char16_t* u16p_rus = u"\\Аламо-сквер";
+    const char16_t  u16a_rus[] = u"\\Бейвью";
+    const char32_t* u32p_rus = U"\\Чайнатаун";
+    const char32_t  u32a_rus[] = U"\\Догпатч";
+
     // BP_gdb_set_show_print_char_array_as_string_test
+}
+
+void
+cpp_stl_types_test(void)
+{
+    std::string std_string = "hello";
+    // BP_cpp_stl_types_test
 }
 
 struct not_str
@@ -105,6 +118,7 @@ main(int argc, char const *argv[])
     var_update_test();
     var_list_children_test();
     gdb_set_show_print_char_array_as_string_test();
+    cpp_stl_types_test();
     gdb_set_show_print_expand_aggregates();
     gdb_set_show_print_aggregate_field_names();
     return 0; // BP_return
