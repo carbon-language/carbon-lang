@@ -38,7 +38,7 @@ ilvl.d, pckev.d:
 
 ilvr.d, ilvod.d, pckod.d:
         It is not possible to emit ilvr.d, or pckod.d since ilvod.d covers the
-        same shuffle. ilvod.d will be emitted instead.
+        same shuffle. ilvod.d will be emitted instead. 
 
 splat.[bhwd]
         The intrinsic will work as expected. However, unlike other intrinsics
