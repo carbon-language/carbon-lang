@@ -124,32 +124,36 @@ void ScopAnnotator::annotate(Instruction *Inst) {
   if (!Inst->mayReadOrWriteMemory())
     return;
 
+  if (!ParallelLoops.empty())
+    Inst->setMetadata("llvm.mem.parallel_loop_access", ParallelLoops.back());
+
   // TODO: Use the ScopArrayInfo once available here.
-  if (AliasScopeDomain) {
-    Value *BasePtr = nullptr;
-    if (isa<StoreInst>(Inst) || isa<LoadInst>(Inst)) {
-      const SCEV *PtrSCEV = SE->getSCEV(getPointerOperand(*Inst));
-      const SCEV *BaseSCEV = SE->getPointerBase(PtrSCEV);
-      if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(BaseSCEV))
-        BasePtr = SU->getValue();
-    }
-
-    if (BasePtr) {
-      auto *AliasScope = AliasScopeMap[BasePtr];
-
-      if (!AliasScope)
-        BasePtr = AlternativeAliasBases[BasePtr];
-
-      AliasScope = AliasScopeMap[BasePtr];
-      auto *OtherAliasScopeList = OtherAliasScopeListMap[BasePtr];
-
-      Inst->setMetadata("alias.scope", AliasScope);
-      Inst->setMetadata("noalias", OtherAliasScopeList);
-    }
-  }
-
-  if (ParallelLoops.empty())
+  if (!AliasScopeDomain)
     return;
 
-  Inst->setMetadata("llvm.mem.parallel_loop_access", ParallelLoops.back());
+  if (!(isa<StoreInst>(Inst) || isa<LoadInst>(Inst)))
+    return;
+
+  auto *PtrSCEV = SE->getSCEV(getPointerOperand(*Inst));
+  auto *BaseSCEV = SE->getPointerBase(PtrSCEV);
+  auto *SU = dyn_cast<SCEVUnknown>(BaseSCEV);
+
+  if (!SU)
+    return;
+
+  auto *BasePtr = SU->getValue();
+
+  if (!BasePtr)
+    return;
+
+  auto *AliasScope = AliasScopeMap[BasePtr];
+
+  if (!AliasScope)
+    BasePtr = AlternativeAliasBases[BasePtr];
+
+  AliasScope = AliasScopeMap[BasePtr];
+  auto *OtherAliasScopeList = OtherAliasScopeListMap[BasePtr];
+
+  Inst->setMetadata("alias.scope", AliasScope);
+  Inst->setMetadata("noalias", OtherAliasScopeList);
 }
