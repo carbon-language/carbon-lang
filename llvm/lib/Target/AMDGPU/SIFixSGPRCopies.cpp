@@ -85,14 +85,6 @@ class SIFixSGPRCopies : public MachineFunctionPass {
 
 private:
   static char ID;
-  const TargetRegisterClass *inferRegClassFromUses(const SIRegisterInfo *TRI,
-                                           const MachineRegisterInfo &MRI,
-                                           unsigned Reg,
-                                           unsigned SubReg) const;
-  const TargetRegisterClass *inferRegClassFromDef(const SIRegisterInfo *TRI,
-                                                 const MachineRegisterInfo &MRI,
-                                                 unsigned Reg,
-                                                 unsigned SubReg) const;
   bool isVGPRToSGPRCopy(const MachineInstr &Copy, const SIRegisterInfo *TRI,
                         const MachineRegisterInfo &MRI) const;
 
@@ -130,53 +122,6 @@ static bool hasVGPROperands(const MachineInstr &MI, const SIRegisterInfo *TRI) {
       return true;
   }
   return false;
-}
-
-/// This functions walks the use list of Reg until it finds an Instruction
-/// that isn't a COPY returns the register class of that instruction.
-/// \return The register defined by the first non-COPY instruction.
-const TargetRegisterClass *SIFixSGPRCopies::inferRegClassFromUses(
-                                                 const SIRegisterInfo *TRI,
-                                                 const MachineRegisterInfo &MRI,
-                                                 unsigned Reg,
-                                                 unsigned SubReg) const {
-
-  const TargetRegisterClass *RC
-    = TargetRegisterInfo::isVirtualRegister(Reg) ?
-    MRI.getRegClass(Reg) :
-    TRI->getPhysRegClass(Reg);
-
-  RC = TRI->getSubRegClass(RC, SubReg);
-  for (MachineRegisterInfo::use_instr_iterator
-       I = MRI.use_instr_begin(Reg), E = MRI.use_instr_end(); I != E; ++I) {
-    switch (I->getOpcode()) {
-    case AMDGPU::COPY:
-      RC = TRI->getCommonSubClass(RC, inferRegClassFromUses(TRI, MRI,
-                                  I->getOperand(0).getReg(),
-                                  I->getOperand(0).getSubReg()));
-      break;
-    }
-  }
-
-  return RC;
-}
-
-const TargetRegisterClass *SIFixSGPRCopies::inferRegClassFromDef(
-                                                 const SIRegisterInfo *TRI,
-                                                 const MachineRegisterInfo &MRI,
-                                                 unsigned Reg,
-                                                 unsigned SubReg) const {
-  if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
-    const TargetRegisterClass *RC = TRI->getPhysRegClass(Reg);
-    return TRI->getSubRegClass(RC, SubReg);
-  }
-  MachineInstr *Def = MRI.getVRegDef(Reg);
-  if (Def->getOpcode() != AMDGPU::COPY) {
-    return TRI->getSubRegClass(MRI.getRegClass(Reg), SubReg);
-  }
-
-  return inferRegClassFromDef(TRI, MRI, Def->getOperand(1).getReg(),
-                                   Def->getOperand(1).getSubReg());
 }
 
 bool SIFixSGPRCopies::isVGPRToSGPRCopy(const MachineInstr &Copy,
@@ -229,22 +174,7 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
       }
       case AMDGPU::PHI: {
         DEBUG(dbgs() << "Fixing PHI: " << MI);
-
-        for (unsigned i = 1; i < MI.getNumOperands(); i += 2) {
-          const MachineOperand &Op = MI.getOperand(i);
-          unsigned Reg = Op.getReg();
-          const TargetRegisterClass *RC
-            = inferRegClassFromDef(TRI, MRI, Reg, Op.getSubReg());
-
-          MRI.constrainRegClass(Op.getReg(), RC);
-        }
         unsigned Reg = MI.getOperand(0).getReg();
-        const TargetRegisterClass *RC = inferRegClassFromUses(TRI, MRI, Reg,
-                                                  MI.getOperand(0).getSubReg());
-        if (TRI->getCommonSubClass(RC, &AMDGPU::VGPR_32RegClass)) {
-          MRI.constrainRegClass(Reg, &AMDGPU::VGPR_32RegClass);
-        }
-
         if (!TRI->isSGPRClass(MRI.getRegClass(Reg)))
           break;
 
