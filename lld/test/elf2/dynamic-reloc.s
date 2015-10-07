@@ -59,4 +59,6 @@
 .global _start
 _start:
 .quad bar + 0x42
+.weak foo
+.quad foo
 call main

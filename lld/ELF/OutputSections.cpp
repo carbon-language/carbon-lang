@@ -413,7 +413,9 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
 bool lld::elf2::canBePreempted(const SymbolBody *Body) {
   if (!Body)
     return false;
-  if (Body->isShared() || Body->isUndefined())
+  if (Body->isShared())
+    return true;
+  if (Body->isUndefined() && !Body->isWeak())
     return true;
   if (!Config->Shared)
     return false;
