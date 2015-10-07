@@ -203,6 +203,36 @@ template <class ELFT> void HashTableSection<ELFT>::addSymbol(SymbolBody *S) {
   S->setDynamicSymbolTableIndex(Hashes.size());
 }
 
+template <class ELFT> void HashTableSection<ELFT>::finalize() {
+  this->Header.sh_link = DynSymSec.getSectionIndex();
+
+  assert(DynSymSec.getNumSymbols() == Hashes.size() + 1);
+  unsigned NumEntries = 2;                 // nbucket and nchain.
+  NumEntries += DynSymSec.getNumSymbols(); // The chain entries.
+
+  // Create as many buckets as there are symbols.
+  // FIXME: This is simplistic. We can try to optimize it, but implementing
+  // support for SHT_GNU_HASH is probably even more profitable.
+  NumEntries += DynSymSec.getNumSymbols();
+  this->Header.sh_size = NumEntries * sizeof(Elf_Word);
+}
+
+template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
+  unsigned NumSymbols = DynSymSec.getNumSymbols();
+  auto *P = reinterpret_cast<Elf_Word *>(Buf);
+  *P++ = NumSymbols; // nbucket
+  *P++ = NumSymbols; // nchain
+
+  Elf_Word *Buckets = P;
+  Elf_Word *Chains = P + NumSymbols;
+
+  for (unsigned I = 1; I < NumSymbols; ++I) {
+    uint32_t Hash = Hashes[I - 1] % NumSymbols;
+    Chains[I] = Buckets[Hash];
+    Buckets[Hash] = I;
+  }
+}
+
 template <class ELFT>
 DynamicSection<ELFT>::DynamicSection(SymbolTable &SymTab,
                                      HashTableSection<ELFT> &HashSec,
@@ -497,6 +527,20 @@ SymbolTableSection<ELFT>::SymbolTableSection(
 
   Header.sh_entsize = sizeof(Elf_Sym);
   Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+}
+
+template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
+  this->Header.sh_size = getNumSymbols() * sizeof(Elf_Sym);
+  this->Header.sh_link = StrTabSec.getSectionIndex();
+  this->Header.sh_info = NumLocals + 1;
+}
+
+template <class ELFT>
+void SymbolTableSection<ELFT>::addSymbol(StringRef Name, bool isLocal) {
+  StrTabSec.add(Name);
+  ++NumVisible;
+  if (isLocal)
+    ++NumLocals;
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {

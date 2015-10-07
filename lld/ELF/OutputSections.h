@@ -155,23 +155,10 @@ public:
                      StringTableSection<ELFT::Is64Bits> &StrTabSec,
                      const OutputSection<ELFT> &BssSec);
 
-  void finalize() override {
-    this->Header.sh_size = getNumSymbols() * sizeof(Elf_Sym);
-    this->Header.sh_link = StrTabSec.getSectionIndex();
-    this->Header.sh_info = NumLocals + 1;
-  }
-
+  void finalize() override;
   void writeTo(uint8_t *Buf) override;
-
   SymbolTable &getSymTable() const { return Table; }
-
-  void addSymbol(StringRef Name, bool isLocal = false) {
-    StrTabSec.add(Name);
-    ++NumVisible;
-    if (isLocal)
-      ++NumLocals;
-  }
-
+  void addSymbol(StringRef Name, bool isLocal = false);
   StringTableSection<ELFT::Is64Bits> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }
 
@@ -268,37 +255,8 @@ class HashTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   HashTableSection(SymbolTableSection<ELFT> &DynSymSec);
   void addSymbol(SymbolBody *S);
-
-  void finalize() override {
-    this->Header.sh_link = DynSymSec.getSectionIndex();
-
-    assert(DynSymSec.getNumSymbols() == Hashes.size() + 1);
-    unsigned NumEntries = 2;                 // nbucket and nchain.
-    NumEntries += DynSymSec.getNumSymbols(); // The chain entries.
-
-    // Create as many buckets as there are symbols.
-    // FIXME: This is simplistic. We can try to optimize it, but implementing
-    // support for SHT_GNU_HASH is probably even more profitable.
-    NumEntries += DynSymSec.getNumSymbols();
-    this->Header.sh_size = NumEntries * sizeof(Elf_Word);
-  }
-
-  void writeTo(uint8_t *Buf) override {
-    unsigned NumSymbols = DynSymSec.getNumSymbols();
-    auto *P = reinterpret_cast<Elf_Word *>(Buf);
-    *P++ = NumSymbols; // nbucket
-    *P++ = NumSymbols; // nchain
-
-    Elf_Word *Buckets = P;
-    Elf_Word *Chains = P + NumSymbols;
-
-    for (unsigned I = 1; I < NumSymbols; ++I) {
-      uint32_t Hash = Hashes[I - 1] % NumSymbols;
-      Chains[I] = Buckets[Hash];
-      Buckets[Hash] = I;
-    }
-  }
-
+  void finalize() override;
+  void writeTo(uint8_t *Buf) override;
   SymbolTableSection<ELFT> &getDynSymSec() { return DynSymSec; }
 
 private:
