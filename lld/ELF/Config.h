@@ -22,7 +22,7 @@ struct Configuration {
   llvm::StringRef Entry;
   llvm::StringRef Fini = "_fini";
   llvm::StringRef Init = "_init";
-  llvm::StringRef OutputFile = "a.out";
+  llvm::StringRef OutputFile;
   llvm::StringRef SoName;
   llvm::StringRef Sysroot;
   std::string RPath;

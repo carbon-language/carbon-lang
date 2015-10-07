@@ -38,6 +38,7 @@ private:
 
   void readAsNeeded();
   void readGroup();
+  void readOutput();
   void readOutputFormat();
 
   std::vector<StringRef> Tokens;
@@ -50,6 +51,8 @@ void LinkerScript::run() {
     StringRef Tok = next();
     if (Tok == "GROUP") {
       readGroup();
+    } else if (Tok == "OUTPUT") {
+      readOutput();
     } else if (Tok == "OUTPUT_FORMAT") {
       readOutputFormat();
     } else {
@@ -140,6 +143,15 @@ void LinkerScript::readGroup() {
     }
     Driver->addFile(Tok);
   }
+}
+
+void LinkerScript::readOutput() {
+  // -o <file> takes predecence over OUTPUT(<file>).
+  expect("(");
+  StringRef Tok = next();
+  if (Config->OutputFile.empty())
+    Config->OutputFile = Tok;
+  expect(")");
 }
 
 void LinkerScript::readOutputFormat() {

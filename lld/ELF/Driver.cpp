@@ -167,6 +167,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   for (auto *Arg : Args.filtered(OPT_undefined))
     Symtab.addUndefinedSym(Arg->getValue());
 
+  if (Config->OutputFile.empty())
+    Config->OutputFile = "a.out";
+
   // Write the result.
   const ELFFileBase *FirstObj = Symtab.getFirstELF();
   switch (FirstObj->getELFKind()) {

@@ -18,6 +18,11 @@
 # RUN: lld -flavor gnu2 -o %t2 %t.script
 # RUN: llvm-readobj %t2 > /dev/null
 
+# RUN: rm -f %t.out
+# RUN: echo "OUTPUT(" %t.out ")" > %t.script
+# RUN: lld -flavor gnu2 %t.script %t
+# RUN: llvm-readobj %t.out > /dev/null
+
 # RUN: echo "FOO(BAR)" > %t.script
 # RUN: not lld -flavor gnu2 -o foo %t.script > %t.log 2>&1
 # RUN: FileCheck -check-prefix=ERR1 %s < %t.log
