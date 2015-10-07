@@ -75,9 +75,7 @@ ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
 ToolChain::~ToolChain() {
 }
 
-const Driver &ToolChain::getDriver() const {
- return D;
-}
+vfs::FileSystem &ToolChain::getVFS() const { return getDriver().getVFS(); }
 
 bool ToolChain::useIntegratedAs() const {
   return Args.hasFlag(options::OPT_fintegrated_as,

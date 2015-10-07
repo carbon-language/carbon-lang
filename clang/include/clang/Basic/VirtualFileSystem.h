@@ -206,6 +206,9 @@ public:
   /// Get the working directory of this file system.
   virtual llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const = 0;
 
+  /// Check whether a file exists. Provided for convenience.
+  bool exists(const Twine &Path);
+
   /// Make \a Path an absolute path.
   ///
   /// Makes \a Path absolute using the current directory if it is not already.

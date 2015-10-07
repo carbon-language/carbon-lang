@@ -78,6 +78,7 @@ public:
   class GCCInstallationDetector {
     bool IsValid;
     llvm::Triple GCCTriple;
+    const Driver &D;
 
     // FIXME: These might be better as path objects.
     std::string GCCInstallPath;
@@ -99,9 +100,8 @@ public:
     MultilibSet Multilibs;
 
   public:
-    GCCInstallationDetector() : IsValid(false) {}
-    void init(const Driver &D, const llvm::Triple &TargetTriple,
-              const llvm::opt::ArgList &Args,
+    explicit GCCInstallationDetector(const Driver &D) : IsValid(false), D(D) {}
+    void init(const llvm::Triple &TargetTriple, const llvm::opt::ArgList &Args,
               ArrayRef<std::string> ExtraTripleAliases = None);
 
     /// \brief Check whether we detected a valid GCC install.
@@ -161,15 +161,15 @@ protected:
 
   class CudaInstallationDetector {
     bool IsValid;
+    const Driver &D;
     std::string CudaInstallPath;
     std::string CudaLibPath;
     std::string CudaLibDevicePath;
     std::string CudaIncludePath;
 
   public:
-    CudaInstallationDetector() : IsValid(false) {}
-    void init(const Driver &D, const llvm::Triple &TargetTriple,
-              const llvm::opt::ArgList &Args);
+    CudaInstallationDetector(const Driver &D) : IsValid(false), D(D) {}
+    void init(const llvm::Triple &TargetTriple, const llvm::opt::ArgList &Args);
 
     /// \brief Check whether we detected a valid Cuda install.
     bool isValid() const { return IsValid; }
@@ -733,13 +733,12 @@ protected:
   Tool *buildLinker() const override;
 
 private:
-  static bool addLibStdCXXIncludePaths(Twine Base, Twine Suffix,
-                                       StringRef GCCTriple,
-                                       StringRef GCCMultiarchTriple,
-                                       StringRef TargetMultiarchTriple,
-                                       Twine IncludeSuffix,
-                                       const llvm::opt::ArgList &DriverArgs,
-                                       llvm::opt::ArgStringList &CC1Args);
+  bool addLibStdCXXIncludePaths(Twine Base, Twine Suffix, StringRef GCCTriple,
+                                StringRef GCCMultiarchTriple,
+                                StringRef TargetMultiarchTriple,
+                                Twine IncludeSuffix,
+                                const llvm::opt::ArgList &DriverArgs,
+                                llvm::opt::ArgStringList &CC1Args) const;
 
   std::string computeSysRoot() const;
 };
@@ -777,8 +776,8 @@ public:
 
   StringRef GetGCCLibAndIncVersion() const { return GCCLibAndIncVersion.Text; }
 
-  static std::string GetGnuDir(const std::string &InstalledDir,
-                               const llvm::opt::ArgList &Args);
+  std::string GetGnuDir(const std::string &InstalledDir,
+                        const llvm::opt::ArgList &Args) const;
 
   static StringRef GetTargetCPU(const llvm::opt::ArgList &Args);
 

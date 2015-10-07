@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_clang_unittest(ClangDriverTests
+  ToolChainTest.cpp
   MultilibTest.cpp
   )
 

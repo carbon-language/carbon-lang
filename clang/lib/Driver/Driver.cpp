@@ -11,6 +11,7 @@
 #include "InputInfo.h"
 #include "ToolChains.h"
 #include "clang/Basic/Version.h"
+#include "clang/Basic/VirtualFileSystem.h"
 #include "clang/Config/config.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Compilation.h"
@@ -46,8 +47,9 @@ using namespace clang;
 using namespace llvm::opt;
 
 Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
-               DiagnosticsEngine &Diags)
-    : Opts(createDriverOptTable()), Diags(Diags), Mode(GCCMode),
+               DiagnosticsEngine &Diags,
+               IntrusiveRefCntPtr<vfs::FileSystem> VFS)
+    : Opts(createDriverOptTable()), Diags(Diags), VFS(VFS), Mode(GCCMode),
       SaveTemps(SaveTempsNone), ClangExecutable(ClangExecutable),
       SysRoot(DEFAULT_SYSROOT), UseStdLib(true),
       DefaultTargetTriple(DefaultTargetTriple),
@@ -56,6 +58,10 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
       CCCPrintBindings(false), CCPrintHeaders(false), CCLogDiagnostics(false),
       CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
       CCCUsePCH(true), SuppressMissingInputWarning(false) {
+
+  // Provide a sane fallback if no VFS is specified.
+  if (!this->VFS)
+    this->VFS = vfs::getRealFileSystem();
 
   Name = llvm::sys::path::filename(ClangExecutable);
   Dir = llvm::sys::path::parent_path(ClangExecutable);

@@ -10,6 +10,7 @@
 #include "ToolChains.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Version.h"
+#include "clang/Basic/VirtualFileSystem.h"
 #include "clang/Config/config.h" // for GCC_INSTALL_PREFIX
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
@@ -275,7 +276,7 @@ void MachO::AddLinkRuntimeLib(const ArgList &Args, ArgStringList &CmdArgs,
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build (unless
   // we explicitly force linking with this library).
-  if (AlwaysLink || llvm::sys::fs::exists(P))
+  if (AlwaysLink || getVFS().exists(P))
     CmdArgs.push_back(Args.MakeArgString(P));
 
   // Adding the rpaths might negatively interact when other rpaths are involved,
@@ -424,13 +425,13 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   // isysroot.
   if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
     // Warn if the path does not exist.
-    if (!llvm::sys::fs::exists(A->getValue()))
+    if (!getVFS().exists(A->getValue()))
       getDriver().Diag(clang::diag::warn_missing_sysroot) << A->getValue();
   } else {
     if (char *env = ::getenv("SDKROOT")) {
       // We only use this value as the default if it is an absolute path,
       // exists, and it is not the root path.
-      if (llvm::sys::path::is_absolute(env) && llvm::sys::fs::exists(env) &&
+      if (llvm::sys::path::is_absolute(env) && getVFS().exists(env) &&
           StringRef(env) != "/") {
         Args.append(Args.MakeSeparateArg(
             nullptr, Opts.getOption(options::OPT_isysroot), env));
@@ -582,10 +583,10 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
       SmallString<128> P(A->getValue());
       llvm::sys::path::append(P, "usr", "lib", "libstdc++.dylib");
 
-      if (!llvm::sys::fs::exists(P)) {
+      if (!getVFS().exists(P)) {
         llvm::sys::path::remove_filename(P);
         llvm::sys::path::append(P, "libstdc++.6.dylib");
-        if (llvm::sys::fs::exists(P)) {
+        if (getVFS().exists(P)) {
           CmdArgs.push_back(Args.MakeArgString(P));
           return;
         }
@@ -595,8 +596,8 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     // Otherwise, look in the root.
     // FIXME: This should be removed someday when we don't have to care about
     // 10.6 and earlier, where /usr/lib/libstdc++.dylib does not exist.
-    if (!llvm::sys::fs::exists("/usr/lib/libstdc++.dylib") &&
-        llvm::sys::fs::exists("/usr/lib/libstdc++.6.dylib")) {
+    if (!getVFS().exists("/usr/lib/libstdc++.dylib") &&
+        getVFS().exists("/usr/lib/libstdc++.6.dylib")) {
       CmdArgs.push_back("/usr/lib/libstdc++.6.dylib");
       return;
     }
@@ -626,7 +627,7 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
 
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build.
-  if (llvm::sys::fs::exists(P))
+  if (getVFS().exists(P))
     CmdArgs.push_back(Args.MakeArgString(P));
 }
 
@@ -1166,7 +1167,7 @@ static llvm::StringRef getGCCToolchainDir(const ArgList &Args) {
 /// necessary because the driver doesn't store the final version of the target
 /// triple.
 void Generic_GCC::GCCInstallationDetector::init(
-    const Driver &D, const llvm::Triple &TargetTriple, const ArgList &Args,
+    const llvm::Triple &TargetTriple, const ArgList &Args,
     ArrayRef<std::string> ExtraTripleAliases) {
   llvm::Triple BiarchVariantTriple = TargetTriple.isArch32Bit()
                                          ? TargetTriple.get64BitArchVariant()
@@ -1209,11 +1210,11 @@ void Generic_GCC::GCCInstallationDetector::init(
   // installation available. GCC installs are ranked by version number.
   Version = GCCVersion::Parse("0.0.0");
   for (const std::string &Prefix : Prefixes) {
-    if (!llvm::sys::fs::exists(Prefix))
+    if (!D.getVFS().exists(Prefix))
       continue;
     for (StringRef Suffix : CandidateLibDirs) {
       const std::string LibDir = Prefix + Suffix.str();
-      if (!llvm::sys::fs::exists(LibDir))
+      if (!D.getVFS().exists(LibDir))
         continue;
       for (StringRef Candidate : ExtraTripleAliases) // Try these first.
         ScanLibDirForGCCTriple(TargetTriple, Args, LibDir, Candidate);
@@ -1222,7 +1223,7 @@ void Generic_GCC::GCCInstallationDetector::init(
     }
     for (StringRef Suffix : CandidateBiarchLibDirs) {
       const std::string LibDir = Prefix + Suffix.str();
-      if (!llvm::sys::fs::exists(LibDir))
+      if (!D.getVFS().exists(LibDir))
         continue;
       for (StringRef Candidate : CandidateBiarchTripleAliases)
         ScanLibDirForGCCTriple(TargetTriple, Args, LibDir, Candidate,
@@ -1480,10 +1481,8 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
 // \brief -- try common CUDA installation paths looking for files we need for
 // CUDA compilation.
 
-void
-Generic_GCC::CudaInstallationDetector::init(const Driver &D,
-                                            const llvm::Triple &TargetTriple,
-                                            const llvm::opt::ArgList &Args) {
+void Generic_GCC::CudaInstallationDetector::init(
+    const llvm::Triple &TargetTriple, const llvm::opt::ArgList &Args) {
   SmallVector<std::string, 4> CudaPathCandidates;
 
   if (Args.hasArg(options::OPT_cuda_path_EQ))
@@ -1495,7 +1494,7 @@ Generic_GCC::CudaInstallationDetector::init(const Driver &D,
   }
 
   for (const auto &CudaPath : CudaPathCandidates) {
-    if (CudaPath.empty() || !llvm::sys::fs::exists(CudaPath))
+    if (CudaPath.empty() || !D.getVFS().exists(CudaPath))
       continue;
 
     CudaInstallPath = CudaPath;
@@ -1504,9 +1503,9 @@ Generic_GCC::CudaInstallationDetector::init(const Driver &D,
     CudaLibPath =
         CudaInstallPath + (TargetTriple.isArch64Bit() ? "/lib64" : "/lib");
 
-    if (!(llvm::sys::fs::exists(CudaIncludePath) &&
-          llvm::sys::fs::exists(CudaLibPath) &&
-          llvm::sys::fs::exists(CudaLibDevicePath)))
+    if (!(D.getVFS().exists(CudaIncludePath) &&
+          D.getVFS().exists(CudaLibPath) &&
+          D.getVFS().exists(CudaLibDevicePath)))
       continue;
 
     IsValid = true;
@@ -1967,13 +1966,13 @@ void Generic_GCC::GCCInstallationDetector::scanLibDirForGCCTripleSolaris(
   // /usr/gcc/<major>.<minor>/lib/gcc/<triple>/<major>.<minor>.<patch>/, so we
   // need to iterate twice.
   std::error_code EC;
-  for (llvm::sys::fs::directory_iterator LI(LibDir, EC), LE; !EC && LI != LE;
-       LI = LI.increment(EC)) {
-    StringRef VersionText = llvm::sys::path::filename(LI->path());
+  for (vfs::directory_iterator LI = D.getVFS().dir_begin(LibDir, EC), LE;
+       !EC && LI != LE; LI = LI.increment(EC)) {
+    StringRef VersionText = llvm::sys::path::filename(LI->getName());
     GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
 
     if (CandidateVersion.Major != -1) // Filter obviously bad entries.
-      if (!CandidateGCCInstallPaths.insert(LI->path()).second)
+      if (!CandidateGCCInstallPaths.insert(LI->getName()).second)
         continue; // Saw this path before; no need to look at it again.
     if (CandidateVersion.isOlderThan(4, 1, 1))
       continue;
@@ -1982,16 +1981,18 @@ void Generic_GCC::GCCInstallationDetector::scanLibDirForGCCTripleSolaris(
 
     GCCInstallPath =
         LibDir + "/" + VersionText.str() + "/lib/gcc/" + CandidateTriple.str();
-    if (!llvm::sys::fs::exists(GCCInstallPath))
+    if (!D.getVFS().exists(GCCInstallPath))
       continue;
 
     // If we make it here there has to be at least one GCC version, let's just
     // use the latest one.
     std::error_code EEC;
-    for (llvm::sys::fs::directory_iterator LLI(GCCInstallPath, EEC), LLE;
+    for (vfs::directory_iterator
+             LLI = D.getVFS().dir_begin(GCCInstallPath, EEC),
+             LLE;
          !EEC && LLI != LLE; LLI = LLI.increment(EEC)) {
 
-      StringRef SubVersionText = llvm::sys::path::filename(LLI->path());
+      StringRef SubVersionText = llvm::sys::path::filename(LLI->getName());
       GCCVersion CandidateSubVersion = GCCVersion::Parse(SubVersionText);
 
       if (CandidateSubVersion > Version)
@@ -2048,12 +2049,14 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
   for (unsigned i = 0; i < NumLibSuffixes; ++i) {
     StringRef LibSuffix = LibAndInstallSuffixes[i][0];
     std::error_code EC;
-    for (llvm::sys::fs::directory_iterator LI(LibDir + LibSuffix, EC), LE;
+    for (vfs::directory_iterator
+             LI = D.getVFS().dir_begin(LibDir + LibSuffix, EC),
+             LE;
          !EC && LI != LE; LI = LI.increment(EC)) {
-      StringRef VersionText = llvm::sys::path::filename(LI->path());
+      StringRef VersionText = llvm::sys::path::filename(LI->getName());
       GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
       if (CandidateVersion.Major != -1) // Filter obviously bad entries.
-        if (!CandidateGCCInstallPaths.insert(LI->path()).second)
+        if (!CandidateGCCInstallPaths.insert(LI->getName()).second)
           continue; // Saw this path before; no need to look at it again.
       if (CandidateVersion.isOlderThan(4, 1, 1))
         continue;
@@ -2065,9 +2068,9 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // Debian mips multilibs behave more like the rest of the biarch ones,
       // so handle them there
       if (isMipsArch(TargetArch)) {
-        if (!findMIPSMultilibs(TargetTriple, LI->path(), Args, Detected))
+        if (!findMIPSMultilibs(TargetTriple, LI->getName(), Args, Detected))
           continue;
-      } else if (!findBiarchMultilibs(TargetTriple, LI->path(), Args,
+      } else if (!findBiarchMultilibs(TargetTriple, LI->getName(), Args,
                                       NeedsBiarchSuffix, Detected)) {
         continue;
       }
@@ -2090,7 +2093,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
 
 Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple &Triple,
                          const ArgList &Args)
-    : ToolChain(D, Triple, Args), GCCInstallation(), CudaInstallation() {
+    : ToolChain(D, Triple, Args), GCCInstallation(D), CudaInstallation(D) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -2183,7 +2186,7 @@ void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
 /// Hexagon Toolchain
 
 std::string HexagonToolChain::GetGnuDir(const std::string &InstalledDir,
-                                        const ArgList &Args) {
+                                        const ArgList &Args) const {
   // Locate the rest of the toolchain ...
   std::string GccToolchain = getGCCToolchainDir(Args);
 
@@ -2191,11 +2194,11 @@ std::string HexagonToolChain::GetGnuDir(const std::string &InstalledDir,
     return GccToolchain;
 
   std::string InstallRelDir = InstalledDir + "/../../gnu";
-  if (llvm::sys::fs::exists(InstallRelDir))
+  if (getVFS().exists(InstallRelDir))
     return InstallRelDir;
 
   std::string PrefixRelDir = std::string(LLVM_PREFIX) + "/../gnu";
-  if (llvm::sys::fs::exists(PrefixRelDir))
+  if (getVFS().exists(PrefixRelDir))
     return PrefixRelDir;
 
   return InstallRelDir;
@@ -2221,7 +2224,8 @@ bool HexagonToolChain::UsesG0(const char *smallDataThreshold) {
   return smallDataThreshold && smallDataThreshold[0] == '0';
 }
 
-static void GetHexagonLibraryPaths(const ArgList &Args, const std::string &Ver,
+static void GetHexagonLibraryPaths(const HexagonToolChain &TC,
+                                   const ArgList &Args, const std::string &Ver,
                                    const std::string &MarchString,
                                    const std::string &InstalledDir,
                                    ToolChain::path_list *LibPaths) {
@@ -2240,8 +2244,7 @@ static void GetHexagonLibraryPaths(const ArgList &Args, const std::string &Ver,
   const std::string MarchSuffix = "/" + MarchString;
   const std::string G0Suffix = "/G0";
   const std::string MarchG0Suffix = MarchSuffix + G0Suffix;
-  const std::string RootDir =
-      HexagonToolChain::GetGnuDir(InstalledDir, Args) + "/";
+  const std::string RootDir = TC.GetGnuDir(InstalledDir, Args) + "/";
 
   // lib/gcc/hexagon/...
   std::string LibGCCHexagonDir = RootDir + "lib/gcc/hexagon/";
@@ -2269,21 +2272,21 @@ HexagonToolChain::HexagonToolChain(const Driver &D, const llvm::Triple &Triple,
                                    const ArgList &Args)
     : Linux(D, Triple, Args) {
   const std::string InstalledDir(getDriver().getInstalledDir());
-  const std::string GnuDir = HexagonToolChain::GetGnuDir(InstalledDir, Args);
+  const std::string GnuDir = GetGnuDir(InstalledDir, Args);
 
   // Note: Generic_GCC::Generic_GCC adds InstalledDir and getDriver().Dir to
   // program paths
   const std::string BinDir(GnuDir + "/bin");
-  if (llvm::sys::fs::exists(BinDir))
+  if (D.getVFS().exists(BinDir))
     getProgramPaths().push_back(BinDir);
 
   // Determine version of GCC libraries and headers to use.
   const std::string HexagonDir(GnuDir + "/lib/gcc/hexagon");
   std::error_code ec;
   GCCVersion MaxVersion = GCCVersion::Parse("0.0.0");
-  for (llvm::sys::fs::directory_iterator di(HexagonDir, ec), de;
+  for (vfs::directory_iterator di = D.getVFS().dir_begin(HexagonDir, ec), de;
        !ec && di != de; di = di.increment(ec)) {
-    GCCVersion cv = GCCVersion::Parse(llvm::sys::path::filename(di->path()));
+    GCCVersion cv = GCCVersion::Parse(llvm::sys::path::filename(di->getName()));
     if (MaxVersion < cv)
       MaxVersion = cv;
   }
@@ -2296,8 +2299,8 @@ HexagonToolChain::HexagonToolChain(const Driver &D, const llvm::Triple &Triple,
   // support 'linux' we'll need to fix this up
   LibPaths->clear();
 
-  GetHexagonLibraryPaths(Args, GetGCCLibAndIncVersion(), GetTargetCPU(Args),
-                         InstalledDir, LibPaths);
+  GetHexagonLibraryPaths(*this, Args, GetGCCLibAndIncVersion(),
+                         GetTargetCPU(Args), InstalledDir, LibPaths);
 }
 
 HexagonToolChain::~HexagonToolChain() {}
@@ -2319,7 +2322,7 @@ void HexagonToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     return;
 
   std::string Ver(GetGCCLibAndIncVersion());
-  std::string GnuDir = HexagonToolChain::GetGnuDir(D.InstalledDir, DriverArgs);
+  std::string GnuDir = GetGnuDir(D.InstalledDir, DriverArgs);
   std::string HexagonDir(GnuDir + "/lib/gcc/hexagon/" + Ver);
   addExternCSystemInclude(DriverArgs, CC1Args, HexagonDir + "/include");
   addExternCSystemInclude(DriverArgs, CC1Args, HexagonDir + "/include-fixed");
@@ -2334,8 +2337,7 @@ void HexagonToolChain::AddClangCXXStdlibIncludeArgs(
 
   const Driver &D = getDriver();
   std::string Ver(GetGCCLibAndIncVersion());
-  SmallString<128> IncludeDir(
-      HexagonToolChain::GetGnuDir(D.InstalledDir, DriverArgs));
+  SmallString<128> IncludeDir(GetGnuDir(D.InstalledDir, DriverArgs));
 
   llvm::sys::path::append(IncludeDir, "hexagon/include/c++/");
   llvm::sys::path::append(IncludeDir, Ver);
@@ -2742,7 +2744,7 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple &Triple,
   // back to '/usr/lib' if it doesn't exist.
   if ((Triple.getArch() == llvm::Triple::x86 ||
        Triple.getArch() == llvm::Triple::ppc) &&
-      llvm::sys::fs::exists(getDriver().SysRoot + "/usr/lib32/crt1.o"))
+      D.getVFS().exists(getDriver().SysRoot + "/usr/lib32/crt1.o"))
     getFilePaths().push_back(getDriver().SysRoot + "/usr/lib32");
   else
     getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
@@ -2952,8 +2954,9 @@ Tool *Minix::buildAssembler() const {
 
 Tool *Minix::buildLinker() const { return new tools::minix::Linker(*this); }
 
-static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
-  if (llvm::sys::fs::exists(Path))
+static void addPathIfExists(const Driver &D, const Twine &Path,
+                            ToolChain::path_list &Paths) {
+  if (D.getVFS().exists(Path))
     Paths.push_back(Path.str());
 }
 
@@ -2963,17 +2966,17 @@ Solaris::Solaris(const Driver &D, const llvm::Triple &Triple,
                  const ArgList &Args)
     : Generic_GCC(D, Triple, Args) {
 
-  GCCInstallation.init(D, Triple, Args);
+  GCCInstallation.init(Triple, Args);
 
   path_list &Paths = getFilePaths();
   if (GCCInstallation.isValid())
-    addPathIfExists(GCCInstallation.getInstallPath(), Paths);
+    addPathIfExists(D, GCCInstallation.getInstallPath(), Paths);
 
-  addPathIfExists(getDriver().getInstalledDir(), Paths);
+  addPathIfExists(D, getDriver().getInstalledDir(), Paths);
   if (getDriver().getInstalledDir() != getDriver().Dir)
-    addPathIfExists(getDriver().Dir, Paths);
+    addPathIfExists(D, getDriver().Dir, Paths);
 
-  addPathIfExists(getDriver().SysRoot + getDriver().Dir + "/../lib", Paths);
+  addPathIfExists(D, getDriver().SysRoot + getDriver().Dir + "/../lib", Paths);
 
   std::string LibPath = "/usr/lib/";
   switch (Triple.getArch()) {
@@ -2990,7 +2993,7 @@ Solaris::Solaris(const Driver &D, const llvm::Triple &Triple,
     llvm_unreachable("Unsupported architecture");
   }
 
-  addPathIfExists(getDriver().SysRoot + LibPath, Paths);
+  addPathIfExists(D, getDriver().SysRoot + LibPath, Paths);
 }
 
 Tool *Solaris::buildAssembler() const {
@@ -3076,7 +3079,7 @@ static bool IsUbuntu(enum Distro Distro) {
   return Distro >= UbuntuHardy && Distro <= UbuntuWily;
 }
 
-static Distro DetectDistro(llvm::Triple::ArchType Arch) {
+static Distro DetectDistro(const Driver &D, llvm::Triple::ArchType Arch) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
       llvm::MemoryBuffer::getFile("/etc/lsb-release");
   if (File) {
@@ -3142,13 +3145,13 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  if (llvm::sys::fs::exists("/etc/SuSE-release"))
+  if (D.getVFS().exists("/etc/SuSE-release"))
     return OpenSUSE;
 
-  if (llvm::sys::fs::exists("/etc/exherbo-release"))
+  if (D.getVFS().exists("/etc/exherbo-release"))
     return Exherbo;
 
-  if (llvm::sys::fs::exists("/etc/arch-release"))
+  if (D.getVFS().exists("/etc/arch-release"))
     return ArchLinux;
 
   return UnknownDistro;
@@ -3160,7 +3163,8 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
 /// a target-triple directory in the library and header search paths.
 /// Unfortunately, this triple does not align with the vanilla target triple,
 /// so we provide a rough mapping here.
-static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
+static std::string getMultiarchTriple(const Driver &D,
+                                      const llvm::Triple &TargetTriple,
                                       StringRef SysRoot) {
   llvm::Triple::EnvironmentType TargetEnvironment = TargetTriple.getEnvironment();
 
@@ -3177,85 +3181,85 @@ static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     if (TargetEnvironment == llvm::Triple::GNUEABIHF) {
-      if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabihf"))
+      if (D.getVFS().exists(SysRoot + "/lib/arm-linux-gnueabihf"))
         return "arm-linux-gnueabihf";
     } else {
-      if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabi"))
+      if (D.getVFS().exists(SysRoot + "/lib/arm-linux-gnueabi"))
         return "arm-linux-gnueabi";
     }
     break;
   case llvm::Triple::armeb:
   case llvm::Triple::thumbeb:
     if (TargetEnvironment == llvm::Triple::GNUEABIHF) {
-      if (llvm::sys::fs::exists(SysRoot + "/lib/armeb-linux-gnueabihf"))
+      if (D.getVFS().exists(SysRoot + "/lib/armeb-linux-gnueabihf"))
         return "armeb-linux-gnueabihf";
     } else {
-      if (llvm::sys::fs::exists(SysRoot + "/lib/armeb-linux-gnueabi"))
+      if (D.getVFS().exists(SysRoot + "/lib/armeb-linux-gnueabi"))
         return "armeb-linux-gnueabi";
     }
     break;
   case llvm::Triple::x86:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/i386-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/i386-linux-gnu"))
       return "i386-linux-gnu";
     break;
   case llvm::Triple::x86_64:
     // We don't want this for x32, otherwise it will match x86_64 libs
     if (TargetEnvironment != llvm::Triple::GNUX32 &&
-        llvm::sys::fs::exists(SysRoot + "/lib/x86_64-linux-gnu"))
+        D.getVFS().exists(SysRoot + "/lib/x86_64-linux-gnu"))
       return "x86_64-linux-gnu";
     break;
   case llvm::Triple::aarch64:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/aarch64-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/aarch64-linux-gnu"))
       return "aarch64-linux-gnu";
     break;
   case llvm::Triple::aarch64_be:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/aarch64_be-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/aarch64_be-linux-gnu"))
       return "aarch64_be-linux-gnu";
     break;
   case llvm::Triple::mips:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/mips-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/mips-linux-gnu"))
       return "mips-linux-gnu";
     break;
   case llvm::Triple::mipsel:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/mipsel-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/mipsel-linux-gnu"))
       return "mipsel-linux-gnu";
     break;
   case llvm::Triple::mips64:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/mips64-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/mips64-linux-gnu"))
       return "mips64-linux-gnu";
-    if (llvm::sys::fs::exists(SysRoot + "/lib/mips64-linux-gnuabi64"))
+    if (D.getVFS().exists(SysRoot + "/lib/mips64-linux-gnuabi64"))
       return "mips64-linux-gnuabi64";
     break;
   case llvm::Triple::mips64el:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/mips64el-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/mips64el-linux-gnu"))
       return "mips64el-linux-gnu";
-    if (llvm::sys::fs::exists(SysRoot + "/lib/mips64el-linux-gnuabi64"))
+    if (D.getVFS().exists(SysRoot + "/lib/mips64el-linux-gnuabi64"))
       return "mips64el-linux-gnuabi64";
     break;
   case llvm::Triple::ppc:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc-linux-gnuspe"))
+    if (D.getVFS().exists(SysRoot + "/lib/powerpc-linux-gnuspe"))
       return "powerpc-linux-gnuspe";
-    if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/powerpc-linux-gnu"))
       return "powerpc-linux-gnu";
     break;
   case llvm::Triple::ppc64:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/powerpc64-linux-gnu"))
       return "powerpc64-linux-gnu";
     break;
   case llvm::Triple::ppc64le:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64le-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/powerpc64le-linux-gnu"))
       return "powerpc64le-linux-gnu";
     break;
   case llvm::Triple::sparc:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/sparc-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/sparc-linux-gnu"))
       return "sparc-linux-gnu";
     break;
   case llvm::Triple::sparcv9:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/sparc64-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/sparc64-linux-gnu"))
       return "sparc64-linux-gnu";
     break;
   case llvm::Triple::systemz:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/s390x-linux-gnu"))
+    if (D.getVFS().exists(SysRoot + "/lib/s390x-linux-gnu"))
       return "s390x-linux-gnu";
     break;
   }
@@ -3294,8 +3298,8 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
 
 Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     : Generic_ELF(D, Triple, Args) {
-  GCCInstallation.init(D, Triple, Args);
-  CudaInstallation.init(D, Triple, Args);
+  GCCInstallation.init(Triple, Args);
+  CudaInstallation.init(Triple, Args);
   Multilibs = GCCInstallation.getMultilibs();
   llvm::Triple::ArchType Arch = Triple.getArch();
   std::string SysRoot = computeSysRoot();
@@ -3315,7 +3319,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   Linker = GetLinkerPath();
 
-  Distro Distro = DetectDistro(Arch);
+  Distro Distro = DetectDistro(D, Arch);
 
   if (IsOpenSUSE(Distro) || IsUbuntu(Distro)) {
     ExtraOpts.push_back("-z");
@@ -3365,7 +3369,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   path_list &Paths = getFilePaths();
 
   const std::string OSLibDir = getOSLibDir(Triple, Args);
-  const std::string MultiarchTriple = getMultiarchTriple(Triple, SysRoot);
+  const std::string MultiarchTriple = getMultiarchTriple(D, Triple, SysRoot);
 
   // Add the multilib suffixed paths where they are available.
   if (GCCInstallation.isValid()) {
@@ -3375,7 +3379,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
     // Sourcery CodeBench MIPS toolchain holds some libraries under
     // a biarch-like suffix of the GCC installation.
-    addPathIfExists((GCCInstallation.getInstallPath() + Multilib.gccSuffix()),
+    addPathIfExists(D, GCCInstallation.getInstallPath() + Multilib.gccSuffix(),
                     Paths);
 
     // GCC cross compiling toolchains will install target libraries which ship
@@ -3396,8 +3400,8 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     //
     // Note that this matches the GCC behavior. See the below comment for where
     // Clang diverges from GCC's behavior.
-    addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" + OSLibDir +
-                        Multilib.osSuffix(),
+    addPathIfExists(D, LibPath + "/../" + GCCTriple.str() + "/lib/../" +
+                           OSLibDir + Multilib.osSuffix(),
                     Paths);
 
     // If the GCC installation we found is inside of the sysroot, we want to
@@ -3410,8 +3414,8 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     // configurations but this seems somewhere between questionable and simply
     // a bug.
     if (StringRef(LibPath).startswith(SysRoot)) {
-      addPathIfExists(LibPath + "/" + MultiarchTriple, Paths);
-      addPathIfExists(LibPath + "/../" + OSLibDir, Paths);
+      addPathIfExists(D, LibPath + "/" + MultiarchTriple, Paths);
+      addPathIfExists(D, LibPath + "/../" + OSLibDir, Paths);
     }
   }
 
@@ -3421,27 +3425,29 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   // FIXME: It's not clear whether we should use the driver's installed
   // directory ('Dir' below) or the ResourceDir.
   if (StringRef(D.Dir).startswith(SysRoot)) {
-    addPathIfExists(D.Dir + "/../lib/" + MultiarchTriple, Paths);
-    addPathIfExists(D.Dir + "/../" + OSLibDir, Paths);
+    addPathIfExists(D, D.Dir + "/../lib/" + MultiarchTriple, Paths);
+    addPathIfExists(D, D.Dir + "/../" + OSLibDir, Paths);
   }
 
-  addPathIfExists(SysRoot + "/lib/" + MultiarchTriple, Paths);
-  addPathIfExists(SysRoot + "/lib/../" + OSLibDir, Paths);
-  addPathIfExists(SysRoot + "/usr/lib/" + MultiarchTriple, Paths);
-  addPathIfExists(SysRoot + "/usr/lib/../" + OSLibDir, Paths);
+  addPathIfExists(D, SysRoot + "/lib/" + MultiarchTriple, Paths);
+  addPathIfExists(D, SysRoot + "/lib/../" + OSLibDir, Paths);
+  addPathIfExists(D, SysRoot + "/usr/lib/" + MultiarchTriple, Paths);
+  addPathIfExists(D, SysRoot + "/usr/lib/../" + OSLibDir, Paths);
 
   // Try walking via the GCC triple path in case of biarch or multiarch GCC
   // installations with strange symlinks.
   if (GCCInstallation.isValid()) {
-    addPathIfExists(SysRoot + "/usr/lib/" + GCCInstallation.getTriple().str() +
+    addPathIfExists(D,
+                    SysRoot + "/usr/lib/" + GCCInstallation.getTriple().str() +
                         "/../../" + OSLibDir,
                     Paths);
 
     // Add the 'other' biarch variant path
     Multilib BiarchSibling;
     if (GCCInstallation.getBiarchSibling(BiarchSibling)) {
-      addPathIfExists(
-          GCCInstallation.getInstallPath() + BiarchSibling.gccSuffix(), Paths);
+      addPathIfExists(D, GCCInstallation.getInstallPath() +
+                             BiarchSibling.gccSuffix(),
+                      Paths);
     }
 
     // See comments above on the multilib variant for details of why this is
@@ -3449,14 +3455,14 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     const std::string &LibPath = GCCInstallation.getParentLibPath();
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
     const Multilib &Multilib = GCCInstallation.getMultilib();
-    addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib" +
-                        Multilib.osSuffix(),
+    addPathIfExists(D, LibPath + "/../" + GCCTriple.str() + "/lib" +
+                           Multilib.osSuffix(),
                     Paths);
 
     // See comments above on the multilib variant for details of why this is
     // only included from within the sysroot.
     if (StringRef(LibPath).startswith(SysRoot))
-      addPathIfExists(LibPath, Paths);
+      addPathIfExists(D, LibPath, Paths);
   }
 
   // Similar to the logic for GCC above, if we are currently running Clang
@@ -3465,10 +3471,10 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   // FIXME: It's not clear whether we should use the driver's installed
   // directory ('Dir' below) or the ResourceDir.
   if (StringRef(D.Dir).startswith(SysRoot))
-    addPathIfExists(D.Dir + "/../lib", Paths);
+    addPathIfExists(D, D.Dir + "/../lib", Paths);
 
-  addPathIfExists(SysRoot + "/lib", Paths);
-  addPathIfExists(SysRoot + "/usr/lib", Paths);
+  addPathIfExists(D, SysRoot + "/lib", Paths);
+  addPathIfExists(D, SysRoot + "/usr/lib", Paths);
 }
 
 bool Linux::HasNativeLLVMSupport() const { return true; }
@@ -3498,12 +3504,12 @@ std::string Linux::computeSysRoot() const {
       (InstallDir + "/../../../../" + TripleStr + "/libc" + Multilib.osSuffix())
           .str();
 
-  if (llvm::sys::fs::exists(Path))
+  if (getVFS().exists(Path))
     return Path;
 
   Path = (InstallDir + "/../../../../sysroot" + Multilib.osSuffix()).str();
 
-  if (llvm::sys::fs::exists(Path))
+  if (getVFS().exists(Path))
     return Path;
 
   return std::string();
@@ -3651,7 +3657,7 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     break;
   }
   for (StringRef Dir : MultiarchIncludeDirs) {
-    if (llvm::sys::fs::exists(SysRoot + Dir)) {
+    if (D.getVFS().exists(SysRoot + Dir)) {
       addExternCSystemInclude(DriverArgs, CC1Args, SysRoot + Dir);
       break;
     }
@@ -3669,11 +3675,11 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 }
 
 /// \brief Helper to add the variant paths of a libstdc++ installation.
-/*static*/ bool Linux::addLibStdCXXIncludePaths(
+bool Linux::addLibStdCXXIncludePaths(
     Twine Base, Twine Suffix, StringRef GCCTriple, StringRef GCCMultiarchTriple,
     StringRef TargetMultiarchTriple, Twine IncludeSuffix,
-    const ArgList &DriverArgs, ArgStringList &CC1Args) {
-  if (!llvm::sys::fs::exists(Base + Suffix))
+    const ArgList &DriverArgs, ArgStringList &CC1Args) const {
+  if (!getVFS().exists(Base + Suffix))
     return false;
 
   addSystemInclude(DriverArgs, CC1Args, Base + Suffix);
@@ -3682,7 +3688,7 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   // that path exists or we have neither a GCC nor target multiarch triple, use
   // this vanilla search path.
   if ((GCCMultiarchTriple.empty() && TargetMultiarchTriple.empty()) ||
-      llvm::sys::fs::exists(Base + Suffix + "/" + GCCTriple + IncludeSuffix)) {
+      getVFS().exists(Base + Suffix + "/" + GCCTriple + IncludeSuffix)) {
     addSystemInclude(DriverArgs, CC1Args,
                      Base + Suffix + "/" + GCCTriple + IncludeSuffix);
   } else {
@@ -3720,7 +3726,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
         // FIXME: We should really remove this. It doesn't make any sense.
         getDriver().SysRoot + "/usr/include/c++/v1"};
     for (const auto &IncludePath : LibCXXIncludePathCandidates) {
-      if (!llvm::sys::fs::exists(IncludePath))
+      if (!getVFS().exists(IncludePath))
         continue;
       // Add the first candidate that exists.
       addSystemInclude(DriverArgs, CC1Args, IncludePath);
@@ -3741,10 +3747,10 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   StringRef InstallDir = GCCInstallation.getInstallPath();
   StringRef TripleStr = GCCInstallation.getTriple().str();
   const Multilib &Multilib = GCCInstallation.getMultilib();
-  const std::string GCCMultiarchTriple =
-      getMultiarchTriple(GCCInstallation.getTriple(), getDriver().SysRoot);
+  const std::string GCCMultiarchTriple = getMultiarchTriple(
+      getDriver(), GCCInstallation.getTriple(), getDriver().SysRoot);
   const std::string TargetMultiarchTriple =
-      getMultiarchTriple(getTriple(), getDriver().SysRoot);
+      getMultiarchTriple(getDriver(), getTriple(), getDriver().SysRoot);
   const GCCVersion &Version = GCCInstallation.getVersion();
 
   // The primary search for libstdc++ supports multiarch variants.
@@ -3821,7 +3827,7 @@ DragonFly::DragonFly(const Driver &D, const llvm::Triple &Triple,
 
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
-  if (llvm::sys::fs::exists("/usr/lib/gcc47"))
+  if (D.getVFS().exists("/usr/lib/gcc47"))
     getFilePaths().push_back("/usr/lib/gcc47");
   else
     getFilePaths().push_back("/usr/lib/gcc44");
@@ -3973,7 +3979,7 @@ MyriadToolChain::MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
   case llvm::Triple::sparc:
   case llvm::Triple::sparcel:
   case llvm::Triple::shave:
-    GCCInstallation.init(D, Triple, Args, {"sparc-myriad-elf"});
+    GCCInstallation.init(Triple, Args, {"sparc-myriad-elf"});
   }
 }
 

@@ -105,6 +105,11 @@ std::error_code FileSystem::makeAbsolute(SmallVectorImpl<char> &Path) const {
   return llvm::sys::fs::make_absolute(WorkingDir.get(), Path);
 }
 
+bool FileSystem::exists(const Twine &Path) {
+  auto Status = status(Path);
+  return Status && Status->exists();
+}
+
 //===-----------------------------------------------------------------------===/
 // RealFileSystem implementation
 //===-----------------------------------------------------------------------===/
