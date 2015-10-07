@@ -159,7 +159,8 @@ struct GCPtrLivenessData {
 // types, then update all the second type to the first type
 typedef DenseMap<Value *, Value *> DefiningValueMapTy;
 typedef DenseSet<Value *> StatepointLiveSetTy;
-typedef DenseMap<Instruction *, Value *> RematerializedValueMapTy;
+typedef DenseMap<AssertingVH<Instruction>, AssertingVH<Value>>
+  RematerializedValueMapTy;
 
 struct PartiallyConstructedSafepointRecord {
   /// The set of values known to be live across this safepoint
