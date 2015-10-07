@@ -2733,7 +2733,7 @@ MachineInstrBuilder SIInstrInfo::buildIndirectRead(
   unsigned IndirectBaseReg = AMDGPU::VGPR_32RegClass.getRegister(
                                       getIndirectIndexBegin(*MBB->getParent()));
 
-  return BuildMI(*MBB, I, DL, get(AMDGPU::SI_INDIRECT_SRC))
+  return BuildMI(*MBB, I, DL, get(AMDGPU::SI_INDIRECT_SRC_V1))
           .addOperand(I->getOperand(0))
           .addOperand(I->getOperand(1))
           .addReg(IndirectBaseReg)

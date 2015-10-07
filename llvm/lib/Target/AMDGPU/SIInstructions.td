@@ -1967,9 +1967,9 @@ def SI_RegisterStore : SIRegStore<(outs SReg_64:$temp)>;
 
 } // End UseNamedOperandTable = 1
 
-def SI_INDIRECT_SRC : InstSI <
+class SI_INDIRECT_SRC<RegisterClass rc> : InstSI <
   (outs VGPR_32:$dst, SReg_64:$temp),
-  (ins unknown:$src, VSrc_32:$idx, i32imm:$off),
+  (ins rc:$src, VSrc_32:$idx, i32imm:$off),
   "si_indirect_src $dst, $temp, $src, $idx, $off",
   []
 >;
@@ -1982,6 +1982,13 @@ class SI_INDIRECT_DST<RegisterClass rc> : InstSI <
 > {
   let Constraints = "$src = $dst";
 }
+
+// TODO: We can support indirect SGPR access.
+def SI_INDIRECT_SRC_V1 : SI_INDIRECT_SRC<VGPR_32>;
+def SI_INDIRECT_SRC_V2 : SI_INDIRECT_SRC<VReg_64>;
+def SI_INDIRECT_SRC_V4 : SI_INDIRECT_SRC<VReg_128>;
+def SI_INDIRECT_SRC_V8 : SI_INDIRECT_SRC<VReg_256>;
+def SI_INDIRECT_SRC_V16 : SI_INDIRECT_SRC<VReg_512>;
 
 def SI_INDIRECT_DST_V1 : SI_INDIRECT_DST<VGPR_32>;
 def SI_INDIRECT_DST_V2 : SI_INDIRECT_DST<VReg_64>;
@@ -3021,42 +3028,42 @@ def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 /**********   Indirect adressing   **********/
 /********** ====================== **********/
 
-multiclass SI_INDIRECT_Pattern <ValueType vt, ValueType eltvt, SI_INDIRECT_DST IndDst> {
+multiclass SI_INDIRECT_Pattern <ValueType vt, ValueType eltvt, string VecSize> {
 
   // 1. Extract with offset
   def : Pat<
     (eltvt (vector_extract vt:$vec, (add i32:$idx, imm:$off))),
-    (SI_INDIRECT_SRC $vec, $idx, imm:$off)
+    (!cast<Instruction>("SI_INDIRECT_SRC_"#VecSize) $vec, $idx, imm:$off)
   >;
 
   // 2. Extract without offset
   def : Pat<
     (eltvt (vector_extract vt:$vec, i32:$idx)),
-    (SI_INDIRECT_SRC $vec, $idx, 0)
+    (!cast<Instruction>("SI_INDIRECT_SRC_"#VecSize) $vec, $idx, 0)
   >;
 
   // 3. Insert with offset
   def : Pat<
     (vector_insert vt:$vec, eltvt:$val, (add i32:$idx, imm:$off)),
-    (IndDst $vec, $idx, imm:$off, $val)
+    (!cast<Instruction>("SI_INDIRECT_DST_"#VecSize) $vec, $idx, imm:$off, $val)
   >;
 
   // 4. Insert without offset
   def : Pat<
     (vector_insert vt:$vec, eltvt:$val, i32:$idx),
-    (IndDst $vec, $idx, 0, $val)
+    (!cast<Instruction>("SI_INDIRECT_DST_"#VecSize) $vec, $idx, 0, $val)
   >;
 }
 
-defm : SI_INDIRECT_Pattern <v2f32, f32, SI_INDIRECT_DST_V2>;
-defm : SI_INDIRECT_Pattern <v4f32, f32, SI_INDIRECT_DST_V4>;
-defm : SI_INDIRECT_Pattern <v8f32, f32, SI_INDIRECT_DST_V8>;
-defm : SI_INDIRECT_Pattern <v16f32, f32, SI_INDIRECT_DST_V16>;
+defm : SI_INDIRECT_Pattern <v2f32, f32, "V2">;
+defm : SI_INDIRECT_Pattern <v4f32, f32, "V4">;
+defm : SI_INDIRECT_Pattern <v8f32, f32, "V8">;
+defm : SI_INDIRECT_Pattern <v16f32, f32, "V16">;
 
-defm : SI_INDIRECT_Pattern <v2i32, i32, SI_INDIRECT_DST_V2>;
-defm : SI_INDIRECT_Pattern <v4i32, i32, SI_INDIRECT_DST_V4>;
-defm : SI_INDIRECT_Pattern <v8i32, i32, SI_INDIRECT_DST_V8>;
-defm : SI_INDIRECT_Pattern <v16i32, i32, SI_INDIRECT_DST_V16>;
+defm : SI_INDIRECT_Pattern <v2i32, i32, "V2">;
+defm : SI_INDIRECT_Pattern <v4i32, i32, "V4">;
+defm : SI_INDIRECT_Pattern <v8i32, i32, "V8">;
+defm : SI_INDIRECT_Pattern <v16i32, i32, "V16">;
 
 //===----------------------------------------------------------------------===//
 // Conversion Patterns
