@@ -112,7 +112,7 @@ just_do_benchmarks_test = False
 
 dont_do_dsym_test = False
 dont_do_dwarf_test = False
-dont_do_dwo_test = False
+dont_do_dwo_test = sys.platform == 'darwin'
 
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
 # testclass's and/or testclass.testmethod's.
