@@ -47,6 +47,32 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
+declare align 8 i8* @get()
+
+; Check that redundant align assume is removed
+; CHECK-LABEL: @test
+; CHECK-NOT: call void @llvm.assume
+define void @test1() {
+  %p = call align 8 i8* @get()
+  %ptrint = ptrtoint i8* %p to i64
+  %maskedptr = and i64 %ptrint, 7
+  %maskcond = icmp eq i64 %maskedptr, 0
+  call void @llvm.assume(i1 %maskcond)
+  ret void
+}
+
+; Check that redundant align assume is removed
+; CHECK-LABEL: @test
+; CHECK-NOT: call void @llvm.assume
+define void @test3() {
+  %p = alloca i8, align 8
+  %ptrint = ptrtoint i8* %p to i64
+  %maskedptr = and i64 %ptrint, 7
+  %maskcond = icmp eq i64 %maskedptr, 0
+  call void @llvm.assume(i1 %maskcond)
+  ret void
+}
+
 ; Function Attrs: nounwind
 declare void @llvm.assume(i1) #1
 

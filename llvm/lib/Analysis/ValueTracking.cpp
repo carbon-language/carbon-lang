@@ -1415,7 +1415,7 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
   }
 }
 
-static unsigned getAlignment(Value *V, const DataLayout &DL) {
+static unsigned getAlignment(const Value *V, const DataLayout &DL) {
   unsigned Align = 0;
   if (auto *GO = dyn_cast<GlobalObject>(V)) {
     Align = GO->getAlignment();
@@ -1433,7 +1433,7 @@ static unsigned getAlignment(Value *V, const DataLayout &DL) {
         }
       }
     }
-  } else if (Argument *A = dyn_cast<Argument>(V)) {
+  } else if (const Argument *A = dyn_cast<Argument>(V)) {
     Align = A->getType()->isPointerTy() ? A->getParamAlignment() : 0;
 
     if (!Align && A->hasStructRetAttr()) {
@@ -1442,7 +1442,16 @@ static unsigned getAlignment(Value *V, const DataLayout &DL) {
       if (EltTy->isSized())
         Align = DL.getABITypeAlignment(EltTy);
     }
-  }
+  } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(V))
+    Align = AI->getAlignment();
+  else if (auto CS = ImmutableCallSite(V))
+    Align = CS.getAttributes().getParamAlignment(AttributeSet::ReturnIndex);
+  else if (const LoadInst *LI = dyn_cast<LoadInst>(V))
+    if (MDNode *MD = LI->getMetadata(LLVMContext::MD_align)) {
+      ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(0));
+      Align = CI->getLimitedValue();
+    }
+
   return Align;
 }
 
