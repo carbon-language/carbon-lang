@@ -1,8 +1,10 @@
-; RUN: llc < %s -march=x86 | not grep movsd
-; RUN: llc < %s -march=x86 | grep movw
-; RUN: llc < %s -march=x86 | grep addw
+; RUN: llc < %s -march=x86 | FileCheck %s
 ; These transforms are turned off for load volatiles and stores.
 ; Check that they weren't turned off for all loads and stores!
+; CHECK-LABEL: f:
+; CHECK-NOT: movsd
+; CHECK: movw
+; CHECK: addw
 
 @atomic = global double 0.000000e+00		; <double*> [#uses=1]
 @atomic2 = global double 0.000000e+00		; <double*> [#uses=1]
