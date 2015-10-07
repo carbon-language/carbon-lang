@@ -2472,6 +2472,13 @@ class TestBase(Base):
             error = lldb.remote_platform.MakeDirectory(remote_test_dir, 0700)
             if error.Success():
                 lldb.remote_platform.SetWorkingDirectory(remote_test_dir)
+
+                def remove_working_dir():
+                    # TODO: Make it working on Windows when we need it for remote debugging support
+                    # TODO: Add a command to SBPlatform/Platform to remove a (non empty) directory
+                    shell_cmd = lldb.SBPlatformShellCommand("rm -rf %s" % remote_test_dir)
+                    lldb.remote_platform.Run(shell_cmd)
+                self.addTearDownHook(remove_working_dir)
             else:
                 print "error: making remote directory '%s': %s" % (remote_test_dir, error)
     
