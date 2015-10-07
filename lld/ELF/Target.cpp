@@ -56,7 +56,7 @@ bool X86TargetInfo::relocPointsToGot(uint32_t Type) const {
 }
 
 bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
-  return Type == R_386_PLT32;
+  return Type == R_386_PLT32 || (Type == R_386_PC32 && S.isShared());
 }
 
 static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }

@@ -62,7 +62,7 @@ R_386_GOTPC:
         call bar+4
 // CHECK:      Disassembly of section .dynamic_reloc:
 // CHECK-NEXT: .dynamic_reloc:
-// CHECK-NEXT:   12019:  e8 00 00 00 00  calll  0
+// CHECK-NEXT:   12019:  e8 16 00 00 00 calll 22
 
 .section .R_386_GOT32,"ax",@progbits
 .global R_386_GOT32
