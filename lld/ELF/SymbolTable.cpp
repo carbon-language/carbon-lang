@@ -179,7 +179,7 @@ void SymbolTable::addELFFile(ELFFileBase *File) {
 }
 
 template <class ELFT>
-void SymbolTable::dupError(const SymbolBody &Old, const SymbolBody &New) {
+void SymbolTable::reportConflict(const SymbolBody &Old, const SymbolBody &New) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
@@ -239,7 +239,7 @@ template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {
   if (comp < 0)
     Sym->Body = New;
   else if (comp == 0)
-    dupError<ELFT>(*Existing, *New);
+    reportConflict<ELFT>(*Existing, *New);
 }
 
 Symbol *SymbolTable::insert(SymbolBody *New) {
