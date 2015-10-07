@@ -1147,6 +1147,11 @@ void FrameEmitterImpl::EmitCFIInstruction(MCObjectStreamer &Streamer,
     Streamer.EmitIntValue(dwarf::DW_CFA_restore | Reg, 1);
     return;
   }
+  case MCCFIInstruction::OpGnuArgsSize: {
+    Streamer.EmitIntValue(dwarf::DW_CFA_GNU_args_size, 1);
+    Streamer.EmitULEB128IntValue(Instr.getOffset());
+    return;
+  }
   case MCCFIInstruction::OpEscape:
     Streamer.EmitBytes(Instr.getValues());
     return;

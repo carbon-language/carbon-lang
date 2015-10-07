@@ -246,6 +246,12 @@ void AsmPrinter::emitCFIInstruction(const MCCFIInstruction &Inst) const {
   case MCCFIInstruction::OpSameValue:
     OutStreamer->EmitCFISameValue(Inst.getRegister());
     break;
+  case MCCFIInstruction::OpGnuArgsSize:
+    OutStreamer->EmitCFIGnuArgsSize(Inst.getOffset());
+    break;
+  case MCCFIInstruction::OpEscape:
+    OutStreamer->EmitCFIEscape(Inst.getValues());
+    break;
   }
 }
 

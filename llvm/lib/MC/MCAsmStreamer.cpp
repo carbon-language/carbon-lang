@@ -29,6 +29,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Path.h"
 #include <cctype>
@@ -210,6 +211,8 @@ public:
   void EmitCFISameValue(int64_t Register) override;
   void EmitCFIRelOffset(int64_t Register, int64_t Offset) override;
   void EmitCFIAdjustCfaOffset(int64_t Adjustment) override;
+  void EmitCFIEscape(StringRef Values) override;
+  void EmitCFIGnuArgsSize(int64_t Size) override;
   void EmitCFISignalFrame() override;
   void EmitCFIUndefined(int64_t Register) override;
   void EmitCFIRegister(int64_t Register1, int64_t Register2) override;
@@ -1007,6 +1010,32 @@ void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
 void MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
   MCStreamer::EmitCFIDefCfaOffset(Offset);
   OS << "\t.cfi_def_cfa_offset " << Offset;
+  EmitEOL();
+}
+
+static void PrintCFIEscape(llvm::formatted_raw_ostream &OS, StringRef Values) {
+  OS << "\t.cfi_escape ";
+  if (!Values.empty()) {
+    size_t e = Values.size() - 1;
+    for (size_t i = 0; i < e; ++i)
+      OS << format("0x%02x", uint8_t(Values[i])) << ", ";
+    OS << format("0x%02x", uint8_t(Values[e]));
+  }
+}
+
+void MCAsmStreamer::EmitCFIEscape(StringRef Values) {
+  MCStreamer::EmitCFIEscape(Values);
+  PrintCFIEscape(OS, Values);
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFIGnuArgsSize(int64_t Size) {
+  MCStreamer::EmitCFIGnuArgsSize(Size);
+  
+  uint8_t Buffer[16] = { dwarf::DW_CFA_GNU_args_size };
+  unsigned Len = encodeULEB128(Size, Buffer + 1) + 1;
+  
+  PrintCFIEscape(OS, StringRef((const char *)&Buffer[0], Len));
   EmitEOL();
 }
 

@@ -359,6 +359,14 @@ void MCStreamer::EmitCFIEscape(StringRef Values) {
   CurFrame->Instructions.push_back(Instruction);
 }
 
+void MCStreamer::EmitCFIGnuArgsSize(int64_t Size) {
+  MCSymbol *Label = EmitCFICommon();
+  MCCFIInstruction Instruction = 
+    MCCFIInstruction::createGnuArgsSize(Label, Size);
+  MCDwarfFrameInfo *CurFrame = getCurrentDwarfFrameInfo();
+  CurFrame->Instructions.push_back(Instruction);
+}
+
 void MCStreamer::EmitCFISignalFrame() {
   EnsureValidDwarfFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentDwarfFrameInfo();

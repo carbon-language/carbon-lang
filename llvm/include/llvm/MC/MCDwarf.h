@@ -340,7 +340,8 @@ public:
     OpRestore,
     OpUndefined,
     OpRegister,
-    OpWindowSave
+    OpWindowSave,
+    OpGnuArgsSize
   };
 
 private:
@@ -454,6 +455,11 @@ public:
     return MCCFIInstruction(OpEscape, L, 0, 0, Vals);
   }
 
+  /// \brief A special wrapper for .cfi_escape that indicates GNU_ARGS_SIZE
+  static MCCFIInstruction createGnuArgsSize(MCSymbol *L, int Size) {
+    return MCCFIInstruction(OpGnuArgsSize, L, 0, Size, "");
+  }
+
   OpType getOperation() const { return Operation; }
   MCSymbol *getLabel() const { return Label; }
 
@@ -473,7 +479,7 @@ public:
   int getOffset() const {
     assert(Operation == OpDefCfa || Operation == OpOffset ||
            Operation == OpRelOffset || Operation == OpDefCfaOffset ||
-           Operation == OpAdjustCfaOffset);
+           Operation == OpAdjustCfaOffset || Operation == OpGnuArgsSize);
     return Offset;
   }
 
