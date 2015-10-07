@@ -114,7 +114,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
 
     const InputSection<ELFT> &C = Rel.C;
     const Elf_Rel &RI = Rel.RI;
-    OutputSection<ELFT> *Out = C.getOutputSection();
+    OutputSection<ELFT> *OutSec = C.getOutputSection();
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     const ObjectFile<ELFT> &File = *C.getFile();
     const SymbolBody *Body = File.getSymbolBody(SymIndex);
@@ -143,7 +143,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     } else {
       if (IsRela)
         Addend += static_cast<const Elf_Rela &>(RI).r_addend;
-      P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
+      P->r_offset = RI.r_offset + C.getOutputSectionOff() + OutSec->getVA();
       if (CanBePreempted)
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
                             IsMips64EL);
@@ -442,8 +442,8 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
         Sym, File.getSymbolTable(), File.getSymbolTableShndx());
   ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
   InputSection<ELFT> *Section = Sections[SecIndex];
-  OutputSection<ELFT> *Out = Section->getOutputSection();
-  return Out->getVA() + Section->getOutputSectionOff() + Sym->st_value;
+  OutputSection<ELFT> *OutSec = Section->getOutputSection();
+  return OutSec->getVA() + Section->getOutputSectionOff() + Sym->st_value;
 }
 
 bool lld::elf2::canBePreempted(const SymbolBody *Body) {
@@ -580,9 +580,9 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
               &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
         ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
         const InputSection<ELFT> *Section = Sections[SecIndex];
-        const OutputSection<ELFT> *Out = Section->getOutputSection();
-        ESym->st_shndx = Out->getSectionIndex();
-        VA += Out->getVA() + Section->getOutputSectionOff();
+        const OutputSection<ELFT> *OutSec = Section->getOutputSection();
+        ESym->st_shndx = OutSec->getSectionIndex();
+        VA += OutSec->getVA() + Section->getOutputSectionOff();
       }
       ESym->st_value = VA;
     }
@@ -608,18 +608,18 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
 
     ESym->st_name = StrTabSec.getFileOff(Name);
 
-    const OutputSection<ELFT> *Out = nullptr;
+    const OutputSection<ELFT> *OutSec = nullptr;
     const InputSection<ELFT> *Section = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::DefinedSyntheticKind:
-      Out = &cast<DefinedSynthetic<ELFT>>(Body)->Section;
+      OutSec = &cast<DefinedSynthetic<ELFT>>(Body)->Section;
       break;
     case SymbolBody::DefinedRegularKind:
       Section = &cast<DefinedRegular<ELFT>>(Body)->Section;
       break;
     case SymbolBody::DefinedCommonKind:
-      Out = &BssSec;
+      OutSec = &BssSec;
       break;
     case SymbolBody::UndefinedKind:
     case SymbolBody::DefinedAbsoluteKind:
@@ -648,12 +648,12 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
     ESym->st_value = getSymVA(*Body, BssSec);
 
     if (Section)
-      Out = Section->getOutputSection();
+      OutSec = Section->getOutputSection();
 
     if (isa<DefinedAbsolute<ELFT>>(Body))
       ESym->st_shndx = SHN_ABS;
-    else if (Out)
-      ESym->st_shndx = Out->getSectionIndex();
+    else if (OutSec)
+      ESym->st_shndx = OutSec->getSectionIndex();
   }
   if (!StrTabSec.isDynamic())
     std::stable_sort(

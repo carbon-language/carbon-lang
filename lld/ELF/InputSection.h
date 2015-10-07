@@ -53,8 +53,8 @@ public:
   }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 
-  void setOutputSection(OutputSection<ELFT> *O) { Out = O; }
-  OutputSection<ELFT> *getOutputSection() const { return Out; }
+  void setOutputSection(OutputSection<ELFT> *O) { OutSec = O; }
+  OutputSection<ELFT> *getOutputSection() const { return OutSec; }
 
   // Relocation sections that refer to this one.
   SmallVector<const Elf_Shdr *, 1> RelocSections;
@@ -75,7 +75,7 @@ private:
   // The file this section is from.
   ObjectFile<ELFT> *File;
 
-  OutputSection<ELFT> *Out = nullptr;
+  OutputSection<ELFT> *OutSec = nullptr;
 
   const Elf_Shdr *Header;
 };
