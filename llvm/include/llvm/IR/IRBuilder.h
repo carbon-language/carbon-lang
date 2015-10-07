@@ -25,6 +25,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Statepoint.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueHandle.h"
@@ -445,6 +446,16 @@ public:
                                    ArrayRef<Value *> GCArgs,
                                    const Twine &Name = "");
 
+  /// \brief Create a call to the experimental.gc.statepoint intrinsic to
+  /// start a new statepoint sequence.
+  CallInst *CreateGCStatepointCall(uint64_t ID, uint32_t NumPatchBytes,
+                                   Value *ActualCallee, StatepointFlags Flags,
+                                   ArrayRef<Use> CallArgs,
+                                   ArrayRef<Use> TransitionArgs,
+                                   ArrayRef<Use> DeoptArgs,
+                                   ArrayRef<Value *> GCArgs,
+                                   const Twine &Name = "");
+
   // \brief Conveninence function for the common case when CallArgs are filled
   // in using makeArrayRef(CS.arg_begin(), CS.arg_end()); Use needs to be
   // .get()'ed to get the Value pointer.
@@ -462,6 +473,15 @@ public:
                            BasicBlock *UnwindDest, ArrayRef<Value *> InvokeArgs,
                            ArrayRef<Value *> DeoptArgs,
                            ArrayRef<Value *> GCArgs, const Twine &Name = "");
+
+  /// brief Create an invoke to the experimental.gc.statepoint intrinsic to
+  /// start a new statepoint sequence.
+  InvokeInst *CreateGCStatepointInvoke(
+      uint64_t ID, uint32_t NumPatchBytes, Value *ActualInvokee,
+      BasicBlock *NormalDest, BasicBlock *UnwindDest, StatepointFlags Flags,
+      ArrayRef<Use> InvokeArgs, ArrayRef<Use> TransitionArgs,
+      ArrayRef<Use> DeoptArgs, ArrayRef<Value *> GCArgs,
+      const Twine &Name = "");
 
   // Conveninence function for the common case when CallArgs are filled in using
   // makeArrayRef(CS.arg_begin(), CS.arg_end()); Use needs to be .get()'ed to
