@@ -115,7 +115,7 @@ protected:
   ///
   /// When generating new code for a ScopStmt this map is used to map certain
   /// llvm::Values to new llvm::Values.
-  polly::BlockGenerator::ValueMapT ValueMap;
+  ValueMapT ValueMap;
 
   /// @brief Materialize code for @p Id if it was not done before.
   void materializeValue(__isl_take isl_id *Id);
@@ -191,7 +191,7 @@ protected:
   /// pass down certain values.
   ///
   /// @param NewValues A map that maps certain llvm::Values to new llvm::Values.
-  void updateValues(ParallelLoopGenerator::ValueToValueMapTy &NewValues);
+  void updateValues(ValueMapT &NewValues);
 
   /// @brief Generate code for a marker now.
   ///

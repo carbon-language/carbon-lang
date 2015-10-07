@@ -146,7 +146,7 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
 
 Value *ParallelLoopGenerator::createParallelLoop(
     Value *LB, Value *UB, Value *Stride, SetVector<Value *> &UsedValues,
-    ValueToValueMapTy &Map, BasicBlock::iterator *LoopBody) {
+    ValueMapT &Map, BasicBlock::iterator *LoopBody) {
   Function *SubFn;
 
   AllocaInst *Struct = storeValuesIntoStruct(UsedValues);
@@ -305,8 +305,7 @@ ParallelLoopGenerator::storeValuesIntoStruct(SetVector<Value *> &Values) {
 }
 
 void ParallelLoopGenerator::extractValuesFromStruct(
-    SetVector<Value *> OldValues, Type *Ty, Value *Struct,
-    ValueToValueMapTy &Map) {
+    SetVector<Value *> OldValues, Type *Ty, Value *Struct, ValueMapT &Map) {
   for (unsigned i = 0; i < OldValues.size(); i++) {
     Value *Address = Builder.CreateStructGEP(Ty, Struct, i);
     Value *NewValue = Builder.CreateLoad(Address);
@@ -317,8 +316,7 @@ void ParallelLoopGenerator::extractValuesFromStruct(
 
 Value *ParallelLoopGenerator::createSubFn(Value *Stride, AllocaInst *StructData,
                                           SetVector<Value *> Data,
-                                          ValueToValueMapTy &Map,
-                                          Function **SubFnPtr) {
+                                          ValueMapT &Map, Function **SubFnPtr) {
   BasicBlock *PrevBB, *HeaderBB, *ExitBB, *CheckNextBB, *PreHeaderBB, *AfterBB;
   Value *LBPtr, *UBPtr, *UserContext, *Ret1, *HasNextSchedule, *LB, *UB, *IV;
   Function *SubFn = createSubFnDefinition();

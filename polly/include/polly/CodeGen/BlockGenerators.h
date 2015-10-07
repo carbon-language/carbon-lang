@@ -60,16 +60,14 @@ bool isIgnoredIntrinsic(const llvm::Value *V);
 /// @brief Generate a new basic block for a polyhedral statement.
 class BlockGenerator {
 public:
+  typedef llvm::SmallVector<ValueMapT, 8> VectorValueMapT;
+
   /// @brief Map types to resolve scalar dependences.
   ///
   ///@{
 
   /// @see The ScalarMap and PHIOpMap member.
   using ScalarAllocaMapTy = DenseMap<AssertingVH<Value>, AssertingVH<Value>>;
-
-  typedef llvm::DenseMap<AssertingVH<llvm::Value>, AssertingVH<llvm::Value>>
-      ValueMapT;
-  typedef llvm::SmallVector<ValueMapT, 8> VectorValueMapT;
 
   /// @brief Simple vector of instructions to store escape users.
   using EscapeUserVectorTy = SmallVector<Instruction *, 4>;

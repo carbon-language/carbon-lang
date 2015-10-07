@@ -15,6 +15,8 @@
 #define POLLY_LOOP_GENERATORS_H
 
 #include "polly/CodeGen/IRBuilder.h"
+#include "polly/Support/ScopHelper.h"
+
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/ValueMap.h"
 
@@ -96,9 +98,6 @@ Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
 ///   }
 class ParallelLoopGenerator {
 public:
-  using ValueToValueMapTy =
-      llvm::DenseMap<AssertingVH<Value>, AssertingVH<Value>>;
-
   /// @brief Create a parallel loop generator for the current function.
   ParallelLoopGenerator(PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
                         DominatorTree &DT, const DataLayout &DL)
@@ -123,7 +122,7 @@ public:
   ///
   /// @return The newly created induction variable for this loop.
   Value *createParallelLoop(Value *LB, Value *UB, Value *Stride,
-                            SetVector<Value *> &Values, ValueToValueMapTy &VMap,
+                            SetVector<Value *> &Values, ValueMapT &VMap,
                             BasicBlock::iterator *LoopBody);
 
 private:
@@ -190,7 +189,7 @@ private:
   /// @param VMap   A map to associate every element of @p Values with the
   ///               new llvm value loaded from the @p Struct.
   void extractValuesFromStruct(SetVector<Value *> Values, Type *Ty,
-                               Value *Struct, ValueToValueMapTy &VMap);
+                               Value *Struct, ValueMapT &VMap);
 
   /// @brief Create the definition of the parallel subfunction.
   Function *createSubFnDefinition();
@@ -207,7 +206,7 @@ private:
   ///
   /// @return The newly created induction variable.
   Value *createSubFn(Value *Stride, AllocaInst *Struct,
-                     SetVector<Value *> UsedValues, ValueToValueMapTy &VMap,
+                     SetVector<Value *> UsedValues, ValueMapT &VMap,
                      Function **SubFn);
 };
 } // end namespace polly

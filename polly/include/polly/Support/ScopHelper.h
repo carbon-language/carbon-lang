@@ -15,6 +15,7 @@
 #define POLLY_SUPPORT_IRHELPER_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 
 namespace llvm {
@@ -39,6 +40,10 @@ class ScalarEvolution;
 
 namespace polly {
 class Scop;
+
+/// @brief Type to remap values.
+using ValueMapT = llvm::DenseMap<llvm::AssertingVH<llvm::Value>,
+                                 llvm::AssertingVH<llvm::Value>>;
 
 /// Temporary Hack for extended regiontree.
 ///

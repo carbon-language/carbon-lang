@@ -175,7 +175,7 @@ struct SubtreeReferences {
   LoopInfo &LI;
   ScalarEvolution &SE;
   Region &R;
-  polly::BlockGenerator::ValueMapT &GlobalMap;
+  ValueMapT &GlobalMap;
   SetVector<Value *> &Values;
   SetVector<const SCEV *> &SCEVs;
   BlockGenerator &BlockGen;
@@ -311,8 +311,7 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
   });
 }
 
-void IslNodeBuilder::updateValues(
-    ParallelLoopGenerator::ValueToValueMapTy &NewValues) {
+void IslNodeBuilder::updateValues(ValueMapT &NewValues) {
   SmallPtrSet<Value *, 5> Inserted;
 
   for (const auto &I : IDToValue) {
@@ -592,7 +591,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
     SubtreeValues.insert(V);
   }
 
-  ParallelLoopGenerator::ValueToValueMapTy NewValues;
+  ValueMapT NewValues;
   ParallelLoopGenerator ParallelLoopGen(Builder, P, LI, DT, DL);
 
   IV = ParallelLoopGen.createParallelLoop(ValueLB, ValueUB, ValueInc,
@@ -607,7 +606,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   updateValues(NewValues);
   IDToValue[IteratorID] = IV;
 
-  ParallelLoopGenerator::ValueToValueMapTy NewValuesReverse;
+  ValueMapT NewValuesReverse;
 
   for (auto P : NewValues)
     NewValuesReverse[P.second] = P.first;
