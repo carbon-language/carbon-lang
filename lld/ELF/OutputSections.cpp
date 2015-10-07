@@ -393,6 +393,7 @@ lld::elf2::getSymVA(const SymbolBody &S, const OutputSection<ELFT> &BssSec) {
     assert(S.isUsedInRegularObj() && "Lazy symbol reached writer");
     return 0;
   }
+  llvm_unreachable("Invalid symbol kind");
 }
 
 template <class ELFT>
