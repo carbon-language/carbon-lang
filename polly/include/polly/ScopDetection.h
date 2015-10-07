@@ -121,35 +121,14 @@ class ScopDetection : public FunctionPass {
 public:
   typedef SetVector<const Region *> RegionSet;
 
+  // Remember the valid regions
+  RegionSet ValidRegions;
+
   /// @brief Set of loops (used to remember loops in non-affine subregions).
   using BoxedLoopsSetTy = SetVector<const Loop *>;
 
-private:
-  //===--------------------------------------------------------------------===//
-  ScopDetection(const ScopDetection &) = delete;
-  const ScopDetection &operator=(const ScopDetection &) = delete;
-
-  /// @brief Analysis passes used.
-  //@{
-  const DominatorTree *DT;
-  ScalarEvolution *SE;
-  LoopInfo *LI;
-  RegionInfo *RI;
-  AliasAnalysis *AA;
-  //@}
-
   /// @brief Set to remember non-affine branches in regions.
   using NonAffineSubRegionSetTy = RegionSet;
-  using NonAffineSubRegionMapTy =
-      DenseMap<const Region *, NonAffineSubRegionSetTy>;
-  NonAffineSubRegionMapTy NonAffineSubRegionMap;
-
-  /// @brief Map to remeber loops in non-affine regions.
-  using BoxedLoopsMapTy = DenseMap<const Region *, BoxedLoopsSetTy>;
-  BoxedLoopsMapTy BoxedLoopsMap;
-
-  /// @brief Map to remember loads that are required to be invariant.
-  DenseMap<const Region *, InvariantLoadsSetTy> RequiredInvariantLoadsMap;
 
   /// @brief Context variables for SCoP detection.
   struct DetectionContext {
@@ -178,24 +157,51 @@ private:
     bool hasStores;
 
     /// @brief The set of non-affine subregions in the region we analyze.
-    NonAffineSubRegionSetTy &NonAffineSubRegionSet;
+    NonAffineSubRegionSetTy NonAffineSubRegionSet;
 
     /// @brief The set of loops contained in non-affine regions.
-    BoxedLoopsSetTy &BoxedLoopsSet;
+    BoxedLoopsSetTy BoxedLoopsSet;
 
     /// @brief Loads that need to be invariant during execution.
-    InvariantLoadsSetTy &RequiredILS;
+    InvariantLoadsSetTy RequiredILS;
 
-    DetectionContext(Region &R, AliasAnalysis &AA,
-                     NonAffineSubRegionSetTy &NASRS, BoxedLoopsSetTy &BLS,
-                     InvariantLoadsSetTy &RequiredILS, bool Verify)
+    /// @brief Initialize a DetectionContext from scratch.
+    DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
         : CurRegion(R), AST(AA), Verifying(Verify), Log(&R), hasLoads(false),
-          hasStores(false), NonAffineSubRegionSet(NASRS), BoxedLoopsSet(BLS),
-          RequiredILS(RequiredILS) {}
+          hasStores(false) {}
+
+    /// @brief Initialize a DetectionContext with the data from @p DC.
+    DetectionContext(const DetectionContext &&DC)
+        : CurRegion(DC.CurRegion), AST(DC.AST.getAliasAnalysis()),
+          Verifying(DC.Verifying), Log(std::move(DC.Log)),
+          Accesses(std::move(DC.Accesses)),
+          NonAffineAccesses(std::move(DC.NonAffineAccesses)),
+          ElementSize(std::move(DC.ElementSize)), hasLoads(DC.hasLoads),
+          hasStores(DC.hasStores),
+          NonAffineSubRegionSet(std::move(DC.NonAffineSubRegionSet)),
+          BoxedLoopsSet(std::move(DC.BoxedLoopsSet)),
+          RequiredILS(std::move(DC.RequiredILS)) {
+      AST.add(DC.AST);
+    }
   };
 
-  // Remember the valid regions
-  RegionSet ValidRegions;
+private:
+  //===--------------------------------------------------------------------===//
+  ScopDetection(const ScopDetection &) = delete;
+  const ScopDetection &operator=(const ScopDetection &) = delete;
+
+  /// @brief Analysis passes used.
+  //@{
+  const DominatorTree *DT;
+  ScalarEvolution *SE;
+  LoopInfo *LI;
+  RegionInfo *RI;
+  AliasAnalysis *AA;
+  //@}
+
+  /// @brief Map to remember detection contexts for valid regions.
+  using DetectionContextMapTy = DenseMap<const Region *, DetectionContext>;
+  DetectionContextMapTy DetectionContextMap;
 
   // Remember a list of errors for every region.
   mutable RejectLogsContainer RejectLogs;
@@ -399,6 +405,9 @@ public:
   /// @return Return true if R is the maximum Region in a Scop, false otherwise.
   bool isMaxRegionInScop(const Region &R, bool Verify = true) const;
 
+  /// @brief Return the detection context for @p R, nullptr if @p R was invalid.
+  const DetectionContext *getDetectionContext(const Region *R) const;
+
   /// @brief Return the set of loops in non-affine subregions for @p R.
   const BoxedLoopsSetTy *getBoxedLoops(const Region *R) const;
 
@@ -459,9 +468,7 @@ public:
   /// detected Scops.
   ///
   /// @param F The function to emit remarks for.
-  /// @param ValidRegions The set of valid regions to emit remarks for.
-  void emitMissedRemarksForValidRegions(const Function &F,
-                                        const RegionSet &ValidRegions);
+  void emitMissedRemarksForValidRegions(const Function &F);
 
   /// @brief Mark the function as invalid so we will not extract any scop from
   ///        the function.

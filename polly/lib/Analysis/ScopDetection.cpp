@@ -255,12 +255,7 @@ bool ScopDetection::isMaxRegionInScop(const Region &R, bool Verify) const {
     return false;
 
   if (Verify) {
-    BoxedLoopsSetTy DummyBoxedLoopsSet;
-    NonAffineSubRegionSetTy DummyNonAffineSubRegionSet;
-    InvariantLoadsSetTy DummyILS;
-    DetectionContext Context(const_cast<Region &>(R), *AA,
-                             DummyNonAffineSubRegionSet, DummyBoxedLoopsSet,
-                             DummyILS, false /*verifying*/);
+    DetectionContext Context(const_cast<Region &>(R), *AA, false /*verifying*/);
     return isValidRegion(Context);
   }
 
@@ -830,10 +825,10 @@ Region *ScopDetection::expandRegion(Region &R) {
   DEBUG(dbgs() << "\tExpanding " << R.getNameStr() << "\n");
 
   while (ExpandedRegion) {
-    DetectionContext Context(
-        *ExpandedRegion, *AA, NonAffineSubRegionMap[ExpandedRegion.get()],
-        BoxedLoopsMap[ExpandedRegion.get()],
-        RequiredInvariantLoadsMap[ExpandedRegion.get()], false /* verifying */);
+    const auto &It = DetectionContextMap.insert(std::make_pair(
+        ExpandedRegion.get(),
+        DetectionContext(*ExpandedRegion, *AA, false /*verifying*/)));
+    DetectionContext &Context = It.first->second;
     DEBUG(dbgs() << "\t\tTrying " << ExpandedRegion->getNameStr() << "\n");
     // Only expand when we did not collect errors.
 
@@ -857,6 +852,7 @@ Region *ScopDetection::expandRegion(Region &R) {
 
     } else {
       // Create and test the next greater region (if any)
+      removeCachedResults(*ExpandedRegion);
       ExpandedRegion =
           std::unique_ptr<Region>(ExpandedRegion->getExpandedRegion());
     }
@@ -893,14 +889,13 @@ unsigned ScopDetection::removeCachedResultsRecursively(const Region &R) {
 
 void ScopDetection::removeCachedResults(const Region &R) {
   ValidRegions.remove(&R);
-  BoxedLoopsMap.erase(&R);
-  NonAffineSubRegionMap.erase(&R);
-  RequiredInvariantLoadsMap.erase(&R);
+  DetectionContextMap.erase(&R);
 }
 
 void ScopDetection::findScops(Region &R) {
-  DetectionContext Context(R, *AA, NonAffineSubRegionMap[&R], BoxedLoopsMap[&R],
-                           RequiredInvariantLoadsMap[&R], false /*verifying*/);
+  const auto &It = DetectionContextMap.insert(
+      std::make_pair(&R, DetectionContext(R, *AA, false /*verifying*/)));
+  DetectionContext &Context = It.first->second;
 
   bool RegionIsValid = false;
   if (!PollyProcessUnprofitable && regionWithoutLoops(R, LI)) {
@@ -1061,8 +1056,7 @@ void ScopDetection::printLocations(llvm::Function &F) {
   }
 }
 
-void ScopDetection::emitMissedRemarksForValidRegions(
-    const Function &F, const RegionSet &ValidRegions) {
+void ScopDetection::emitMissedRemarksForValidRegions(const Function &F) {
   for (const Region *R : ValidRegions) {
     const Region *Parent = R->getParent();
     if (Parent && !Parent->isTopLevelRegion() && RejectLogs.count(Parent))
@@ -1073,7 +1067,7 @@ void ScopDetection::emitMissedRemarksForValidRegions(
 void ScopDetection::emitMissedRemarksForLeaves(const Function &F,
                                                const Region *R) {
   for (const std::unique_ptr<Region> &Child : *R) {
-    bool IsValid = ValidRegions.count(Child.get());
+    bool IsValid = DetectionContextMap.count(Child.get());
     if (IsValid)
       continue;
 
@@ -1111,7 +1105,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
 
   // Only makes sense when we tracked errors.
   if (PollyTrackFailures) {
-    emitMissedRemarksForValidRegions(F, ValidRegions);
+    emitMissedRemarksForValidRegions(F);
     emitMissedRemarksForLeaves(F, TopRegion);
   }
 
@@ -1121,43 +1115,44 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   if (ReportLevel)
     printLocations(F);
 
-  assert(ValidRegions.size() == BoxedLoopsMap.size() &&
-         "Cached more results than valid regions");
-  assert(ValidRegions.size() == NonAffineSubRegionMap.size() &&
+  assert(ValidRegions.size() == DetectionContextMap.size() &&
          "Cached more results than valid regions");
   return false;
 }
 
 bool ScopDetection::isNonAffineSubRegion(const Region *SubR,
                                          const Region *ScopR) const {
-  return NonAffineSubRegionMap.lookup(ScopR).count(SubR);
+  const DetectionContext *DC = getDetectionContext(ScopR);
+  assert(DC && "ScopR is no valid region!");
+  return DC->NonAffineSubRegionSet.count(SubR);
+}
+
+const ScopDetection::DetectionContext *
+ScopDetection::getDetectionContext(const Region *R) const {
+  auto DCMIt = DetectionContextMap.find(R);
+  if (DCMIt == DetectionContextMap.end())
+    return nullptr;
+  return &DCMIt->second;
 }
 
 const ScopDetection::BoxedLoopsSetTy *
 ScopDetection::getBoxedLoops(const Region *R) const {
-  auto BLMIt = BoxedLoopsMap.find(R);
-  if (BLMIt == BoxedLoopsMap.end())
-    return nullptr;
-  return &BLMIt->second;
+  const DetectionContext *DC = getDetectionContext(R);
+  assert(DC && "ScopR is no valid region!");
+  return &DC->BoxedLoopsSet;
 }
 
 const InvariantLoadsSetTy *
 ScopDetection::getRequiredInvariantLoads(const Region *R) const {
-  auto I = RequiredInvariantLoadsMap.find(R);
-  if (I == RequiredInvariantLoadsMap.end())
-    return nullptr;
-  return &I->second;
+  const DetectionContext *DC = getDetectionContext(R);
+  assert(DC && "ScopR is no valid region!");
+  return &DC->RequiredILS;
 }
 
 void polly::ScopDetection::verifyRegion(const Region &R) const {
   assert(isMaxRegionInScop(R) && "Expect R is a valid region.");
 
-  BoxedLoopsSetTy DummyBoxedLoopsSet;
-  NonAffineSubRegionSetTy DummyNonAffineSubRegionSet;
-  InvariantLoadsSetTy DummyILS;
-  DetectionContext Context(const_cast<Region &>(R), *AA,
-                           DummyNonAffineSubRegionSet, DummyBoxedLoopsSet,
-                           DummyILS, true /*verifying*/);
+  DetectionContext Context(const_cast<Region &>(R), *AA, true /*verifying*/);
   isValidRegion(Context);
 }
 
@@ -1190,9 +1185,7 @@ void ScopDetection::releaseMemory() {
   RejectLogs.clear();
   ValidRegions.clear();
   InsnToMemAcc.clear();
-  BoxedLoopsMap.clear();
-  NonAffineSubRegionMap.clear();
-  RequiredInvariantLoadsMap.clear();
+  DetectionContextMap.clear();
 
   // Do not clear the invalid function set.
 }
