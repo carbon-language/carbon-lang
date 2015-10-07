@@ -9808,32 +9808,6 @@ static SDValue PerformSTORECombine(SDNode *N,
   return SDValue();
 }
 
-// isConstVecPow2 - Return true if each vector element is a power of 2, all
-// elements are the same constant, C, and Log2(C) ranges from 1 to 32.
-static bool isConstVecPow2(SDValue ConstVec, bool isSigned, uint64_t &C)
-{
-  integerPart cN;
-  integerPart c0 = 0;
-  for (unsigned I = 0, E = ConstVec.getValueType().getVectorNumElements();
-       I != E; I++) {
-    ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(ConstVec.getOperand(I));
-    if (!C)
-      return false;
-
-    bool isExact;
-    APFloat APF = C->getValueAPF();
-    if (APF.convertToInteger(&cN, 64, isSigned, APFloat::rmTowardZero, &isExact)
-        != APFloat::opOK || !isExact)
-      return false;
-
-    c0 = (I == 0) ? cN : c0;
-    if (!isPowerOf2_64(cN) || c0 != cN || Log2_64(c0) < 1 || Log2_64(c0) > 32)
-      return false;
-  }
-  C = c0;
-  return true;
-}
-
 /// PerformVCVTCombine - VCVT (floating-point to fixed-point, Advanced SIMD)
 /// can replace combinations of VMUL and VCVT (floating-point to integer)
 /// when the VMUL has a constant operand that is a power of 2.
@@ -9869,18 +9843,20 @@ static SDValue PerformVCVTCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
   }
 
-  uint64_t C;
-  bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
-  if (!isConstVecPow2(ConstVec, isSigned, C))
+  BitVector UndefElements;
+  BuildVectorSDNode *BV = cast<BuildVectorSDNode>(ConstVec);
+  int32_t C = BV->getConstantFPSplatPow2ToLog2Int(&UndefElements, 33);
+  if (C == -1 || C == 0 || C > 32)
     return SDValue();
 
   SDLoc dl(N);
+  bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
   unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfp2fxs :
     Intrinsic::arm_neon_vcvtfp2fxu;
   SDValue FixConv = DAG.getNode(
       ISD::INTRINSIC_WO_CHAIN, dl, NumLanes == 2 ? MVT::v2i32 : MVT::v4i32,
       DAG.getConstant(IntrinsicOpcode, dl, MVT::i32), Op->getOperand(0),
-      DAG.getConstant(Log2_64(C), dl, MVT::i32));
+      DAG.getConstant(C, dl, MVT::i32));
 
   if (IntBits < FloatBits)
     FixConv = DAG.getNode(ISD::TRUNCATE, dl, N->getValueType(0), FixConv);
@@ -9925,12 +9901,14 @@ static SDValue PerformVDIVCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
   }
 
-  uint64_t C;
-  bool isSigned = OpOpcode == ISD::SINT_TO_FP;
-  if (!isConstVecPow2(ConstVec, isSigned, C))
+  BitVector UndefElements;
+  BuildVectorSDNode *BV = cast<BuildVectorSDNode>(ConstVec);
+  int32_t C = BV->getConstantFPSplatPow2ToLog2Int(&UndefElements, 33);
+  if (C == -1 || C == 0 || C > 32)
     return SDValue();
 
   SDLoc dl(N);
+  bool isSigned = OpOpcode == ISD::SINT_TO_FP;
   SDValue ConvInput = Op.getOperand(0);
   if (IntBits < FloatBits)
     ConvInput = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
@@ -9942,7 +9920,7 @@ static SDValue PerformVDIVCombine(SDNode *N, SelectionDAG &DAG,
   return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl,
                      Op.getValueType(),
                      DAG.getConstant(IntrinsicOpcode, dl, MVT::i32),
-                     ConvInput, DAG.getConstant(Log2_64(C), dl, MVT::i32));
+                     ConvInput, DAG.getConstant(C, dl, MVT::i32));
 }
 
 /// Getvshiftimm - Check if this is a valid build_vector for the immediate

@@ -1714,6 +1714,14 @@ public:
   ConstantFPSDNode *
   getConstantFPSplatNode(BitVector *UndefElements = nullptr) const;
 
+  /// \brief If this is a constant FP splat and the splatted constant FP is an
+  /// exact power or 2, return the log base 2 integer value.  Otherwise,
+  /// return -1.
+  ///
+  /// The BitWidth specifies the necessary bit precision.
+  int32_t getConstantFPSplatPow2ToLog2Int(BitVector *UndefElements,
+                                          uint32_t BitWidth) const;
+
   bool isConstant() const;
 
   static inline bool classof(const SDNode *N) {

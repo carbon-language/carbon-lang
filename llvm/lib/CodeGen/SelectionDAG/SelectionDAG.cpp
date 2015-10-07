@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "SDNodeDbgValue.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -7188,6 +7189,24 @@ BuildVectorSDNode::getConstantSplatNode(BitVector *UndefElements) const {
 ConstantFPSDNode *
 BuildVectorSDNode::getConstantFPSplatNode(BitVector *UndefElements) const {
   return dyn_cast_or_null<ConstantFPSDNode>(getSplatValue(UndefElements));
+}
+
+int32_t
+BuildVectorSDNode::getConstantFPSplatPow2ToLog2Int(BitVector *UndefElements,
+                                                   uint32_t BitWidth) const {
+  if (ConstantFPSDNode *CN =
+          dyn_cast_or_null<ConstantFPSDNode>(getSplatValue(UndefElements))) {
+    bool IsExact;
+    APSInt IntVal(BitWidth);
+    APFloat APF = CN->getValueAPF();
+    if (APF.convertToInteger(IntVal, APFloat::rmTowardZero, &IsExact) !=
+            APFloat::opOK ||
+        !IsExact)
+      return -1;
+
+    return IntVal.exactLogBase2();
+  }
+  return -1;
 }
 
 bool BuildVectorSDNode::isConstant() const {
