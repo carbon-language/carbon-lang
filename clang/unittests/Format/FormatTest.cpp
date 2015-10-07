@@ -7446,6 +7446,19 @@ TEST_F(FormatTest, ObjCSnippets) {
                "@import baz;");
 }
 
+TEST_F(FormatTest, ObjCForIn) {
+  verifyFormat("- (void)test {\n"
+               "  for (NSString *n in arrayOfStrings) {\n"
+               "    foo(n);\n"
+               "  }\n"
+               "}");
+  verifyFormat("- (void)test {\n"
+               "  for (NSString *n in (__bridge NSArray *)arrayOfStrings) {\n"
+               "    foo(n);\n"
+               "  }\n"
+               "}");
+}
+
 TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("@\"String\"");
   verifyFormat("@1");
