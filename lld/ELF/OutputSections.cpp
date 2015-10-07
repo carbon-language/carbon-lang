@@ -104,12 +104,6 @@ RelocationSection<ELFT>::RelocationSection(SymbolTableSection<ELFT> &DynSymSec,
   this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
 }
 
-static bool isLocalDefinition(const SymbolBody *Body) {
-  if (!Body)
-    return true;
-  return !Body->isShared() && !Body->isUndefined();
-}
-
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
   const unsigned EntrySize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   bool IsMips64EL = Relocs[0].C.getFile()->getObj().isMips64EL();
@@ -126,32 +120,36 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     const ELFFile<ELFT> &Obj = File.getObj();
 
     uint32_t Type = RI.getType(IsMips64EL);
+
+    bool CanBePreempted = canBePreempted(Body);
+    uintX_t Addend = 0;
+    if (!CanBePreempted) {
+      if (IsRela) {
+        if (Body)
+          Addend += getSymVA(cast<ELFSymbolBody<ELFT>>(*Body), BssSec);
+        else
+          Addend += getLocalSymVA(
+              Obj.getRelocationSymbol(&RI, File.getSymbolTable()), File);
+      }
+      P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
+    }
+
     if (Body && Target->relocNeedsGot(Type, *Body)) {
       P->r_offset = GotSec.getEntryAddr(*Body);
-      P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
-                          Target->getGotReloc(), IsMips64EL);
+      if (CanBePreempted)
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                            Target->getGotReloc(), IsMips64EL);
     } else {
-      P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
-      uintX_t Addend = 0;
       if (IsRela)
-        Addend = static_cast<const Elf_Rela &>(RI).r_addend;
-
-      if (!isLocalDefinition(Body)) {
+        Addend += static_cast<const Elf_Rela &>(RI).r_addend;
+      P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
+      if (CanBePreempted)
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
                             IsMips64EL);
-      } else {
-        P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
-        if (IsRela) {
-          if (Body)
-            Addend += getSymVA(cast<ELFSymbolBody<ELFT>>(*Body), BssSec);
-          else
-            Addend += getLocalSymVA(
-                Obj.getRelocationSymbol(&RI, File.getSymbolTable()), File);
-        }
-      }
-      if (IsRela)
-        static_cast<Elf_Rela *>(P)->r_addend = Addend;
     }
+
+    if (IsRela)
+      static_cast<Elf_Rela *>(P)->r_addend = Addend;
   }
 }
 
@@ -418,7 +416,7 @@ bool lld::elf2::canBePreempted(const SymbolBody *Body) {
     return true;
   if (!Config->Shared)
     return false;
-  return true;
+  return Body->getMostConstrainingVisibility() == STV_DEFAULT;
 }
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
