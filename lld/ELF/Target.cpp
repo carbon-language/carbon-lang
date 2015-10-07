@@ -299,16 +299,16 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   case R_AARCH64_ABS16:
     if (!isInt<16>(S + A))
       error("Relocation R_AARCH64_ABS16 out of range");
-    or16le(L, S + A);
+    write16le(L, S + A);
     break;
   case R_AARCH64_ABS32:
     if (!isInt<32>(S + A))
       error("Relocation R_AARCH64_ABS32 out of range");
-    or32le(L, S + A);
+    write32le(L, S + A);
     break;
   case R_AARCH64_ABS64:
     // No overflow check needed.
-    or64le(L, S + A);
+    write64le(L, S + A);
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
     // No overflow check needed.
