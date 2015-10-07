@@ -11825,9 +11825,9 @@ bool ARMTargetLowering::lowerInterleavedLoad(
   unsigned VecSize = DL.getTypeAllocSizeInBits(VecTy);
   bool EltIs64Bits = DL.getTypeAllocSizeInBits(EltTy) == 64;
 
-  // Skip illegal vector types and vector types of i64/f64 element (vldN doesn't
-  // support i64/f64 element).
-  if ((VecSize != 64 && VecSize != 128) || EltIs64Bits)
+  // Skip if we do not have NEON and skip illegal vector types and vector types
+  // with i64/f64 elements (vldN doesn't support i64/f64 elements).
+  if (!Subtarget->hasNEON() || (VecSize != 64 && VecSize != 128) || EltIs64Bits)
     return false;
 
   // A pointer vector can not be the return type of the ldN intrinsics. Need to
@@ -11915,9 +11915,10 @@ bool ARMTargetLowering::lowerInterleavedStore(StoreInst *SI,
   unsigned SubVecSize = DL.getTypeAllocSizeInBits(SubVecTy);
   bool EltIs64Bits = DL.getTypeAllocSizeInBits(EltTy) == 64;
 
-  // Skip illegal sub vector types and vector types of i64/f64 element (vstN
-  // doesn't support i64/f64 element).
-  if ((SubVecSize != 64 && SubVecSize != 128) || EltIs64Bits)
+  // Skip if we do not have NEON and skip illegal vector types and vector types
+  // with i64/f64 elements (vstN doesn't support i64/f64 elements).
+  if (!Subtarget->hasNEON() || (SubVecSize != 64 && SubVecSize != 128) ||
+      EltIs64Bits)
     return false;
 
   Value *Op0 = SVI->getOperand(0);

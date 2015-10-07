@@ -6987,8 +6987,8 @@ bool AArch64TargetLowering::lowerInterleavedLoad(
   VectorType *VecTy = Shuffles[0]->getType();
   unsigned VecSize = DL.getTypeAllocSizeInBits(VecTy);
 
-  // Skip illegal vector types.
-  if (VecSize != 64 && VecSize != 128)
+  // Skip if we do not have NEON and skip illegal vector types.
+  if (!Subtarget->hasNEON() || (VecSize != 64 && VecSize != 128))
     return false;
 
   // A pointer vector can not be the return type of the ldN intrinsics. Need to
@@ -7073,8 +7073,8 @@ bool AArch64TargetLowering::lowerInterleavedStore(StoreInst *SI,
   const DataLayout &DL = SI->getModule()->getDataLayout();
   unsigned SubVecSize = DL.getTypeAllocSizeInBits(SubVecTy);
 
-  // Skip illegal vector types.
-  if (SubVecSize != 64 && SubVecSize != 128)
+  // Skip if we do not have NEON and skip illegal vector types.
+  if (!Subtarget->hasNEON() || (SubVecSize != 64 && SubVecSize != 128))
     return false;
 
   Value *Op0 = SVI->getOperand(0);
