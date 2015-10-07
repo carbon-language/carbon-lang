@@ -19,12 +19,15 @@ namespace llvm {
 
 template<typename NodeTy>
 struct ilist_traits;
+template <typename NodeTy> struct ilist_embedded_sentinel_traits;
+template <typename NodeTy> struct ilist_half_embedded_sentinel_traits;
 
 /// ilist_half_node - Base class that provides prev services for sentinels.
 ///
 template<typename NodeTy>
 class ilist_half_node {
   friend struct ilist_traits<NodeTy>;
+  friend struct ilist_half_embedded_sentinel_traits<NodeTy>;
   NodeTy *Prev;
 protected:
   NodeTy *getPrev() { return Prev; }
@@ -43,6 +46,8 @@ template<typename NodeTy>
 class ilist_node : private ilist_half_node<NodeTy> {
   friend struct ilist_nextprev_traits<NodeTy>;
   friend struct ilist_traits<NodeTy>;
+  friend struct ilist_half_embedded_sentinel_traits<NodeTy>;
+  friend struct ilist_embedded_sentinel_traits<NodeTy>;
   NodeTy *Next;
   NodeTy *getNext() { return Next; }
   const NodeTy *getNext() const { return Next; }

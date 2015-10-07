@@ -38,9 +38,9 @@ using namespace llvm;
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file.
-template class llvm::SymbolTableListTraits<Function, Module>;
-template class llvm::SymbolTableListTraits<GlobalVariable, Module>;
-template class llvm::SymbolTableListTraits<GlobalAlias, Module>;
+template class llvm::SymbolTableListTraits<Function>;
+template class llvm::SymbolTableListTraits<GlobalVariable>;
+template class llvm::SymbolTableListTraits<GlobalAlias>;
 
 //===----------------------------------------------------------------------===//
 // Primitive Module methods.

@@ -104,6 +104,53 @@ struct ilist_sentinel_traits {
   }
 };
 
+template <typename NodeTy> class ilist_half_node;
+template <typename NodeTy> class ilist_node;
+
+/// Traits with an embedded ilist_node as a sentinel.
+///
+/// FIXME: The downcast in createSentinel() is UB.
+template <typename NodeTy> struct ilist_embedded_sentinel_traits {
+  /// Get hold of the node that marks the end of the list.
+  NodeTy *createSentinel() const {
+    // Since i(p)lists always publicly derive from their corresponding traits,
+    // placing a data member in this class will augment the i(p)list.  But since
+    // the NodeTy is expected to be publicly derive from ilist_node<NodeTy>,
+    // there is a legal viable downcast from it to NodeTy. We use this trick to
+    // superimpose an i(p)list with a "ghostly" NodeTy, which becomes the
+    // sentinel. Dereferencing the sentinel is forbidden (save the
+    // ilist_node<NodeTy>), so no one will ever notice the superposition.
+    return static_cast<NodeTy *>(&Sentinel);
+  }
+  static void destroySentinel(NodeTy *) {}
+
+  NodeTy *provideInitialHead() const { return createSentinel(); }
+  NodeTy *ensureHead(NodeTy *) const { return createSentinel(); }
+  static void noteHead(NodeTy *, NodeTy *) {}
+
+private:
+  mutable ilist_node<NodeTy> Sentinel;
+};
+
+/// Trait with an embedded ilist_half_node as a sentinel.
+///
+/// FIXME: The downcast in createSentinel() is UB.
+template <typename NodeTy> struct ilist_half_embedded_sentinel_traits {
+  /// Get hold of the node that marks the end of the list.
+  NodeTy *createSentinel() const {
+    // See comment in ilist_embedded_sentinel_traits::createSentinel().
+    return static_cast<NodeTy *>(&Sentinel);
+  }
+  static void destroySentinel(NodeTy *) {}
+
+  NodeTy *provideInitialHead() const { return createSentinel(); }
+  NodeTy *ensureHead(NodeTy *) const { return createSentinel(); }
+  static void noteHead(NodeTy *, NodeTy *) {}
+
+private:
+  mutable ilist_half_node<NodeTy> Sentinel;
+};
+
 /// ilist_node_traits - A fragment for template traits for intrusive list
 /// that provides default node related operations.
 ///

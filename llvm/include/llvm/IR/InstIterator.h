@@ -115,13 +115,10 @@ private:
   }
 };
 
-
-typedef InstIterator<iplist<BasicBlock>,
-                     Function::iterator, BasicBlock::iterator,
-                     Instruction> inst_iterator;
-typedef InstIterator<const iplist<BasicBlock>,
-                     Function::const_iterator,
-                     BasicBlock::const_iterator,
+typedef InstIterator<SymbolTableList<BasicBlock>, Function::iterator,
+                     BasicBlock::iterator, Instruction> inst_iterator;
+typedef InstIterator<const SymbolTableList<BasicBlock>,
+                     Function::const_iterator, BasicBlock::const_iterator,
                      const Instruction> const_inst_iterator;
 typedef iterator_range<inst_iterator> inst_range;
 typedef iterator_range<const_inst_iterator> const_inst_range;

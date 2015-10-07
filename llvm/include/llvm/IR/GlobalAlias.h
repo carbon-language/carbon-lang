@@ -23,11 +23,10 @@
 namespace llvm {
 
 class Module;
-template<typename ValueSubClass, typename ItemParentClass>
-  class SymbolTableListTraits;
+template <typename ValueSubClass> class SymbolTableListTraits;
 
 class GlobalAlias : public GlobalValue, public ilist_node<GlobalAlias> {
-  friend class SymbolTableListTraits<GlobalAlias, Module>;
+  friend class SymbolTableListTraits<GlobalAlias>;
   void operator=(const GlobalAlias &) = delete;
   GlobalAlias(const GlobalAlias &) = delete;
 

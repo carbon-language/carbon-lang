@@ -34,26 +34,14 @@ class FunctionType;
 class LLVMContext;
 class DISubprogram;
 
-template<> struct ilist_traits<Argument>
-  : public SymbolTableListTraits<Argument, Function> {
-
-  Argument *createSentinel() const {
-    return static_cast<Argument*>(&Sentinel);
-  }
-  static void destroySentinel(Argument*) {}
-
-  Argument *provideInitialHead() const { return createSentinel(); }
-  Argument *ensureHead(Argument*) const { return createSentinel(); }
-  static void noteHead(Argument*, Argument*) {}
-
-private:
-  mutable ilist_half_node<Argument> Sentinel;
-};
+template <>
+struct SymbolTableListSentinelTraits<Argument>
+    : public ilist_half_embedded_sentinel_traits<Argument> {};
 
 class Function : public GlobalObject, public ilist_node<Function> {
 public:
-  typedef iplist<Argument> ArgumentListType;
-  typedef iplist<BasicBlock> BasicBlockListType;
+  typedef SymbolTableList<Argument> ArgumentListType;
+  typedef SymbolTableList<BasicBlock> BasicBlockListType;
 
   // BasicBlock iterators...
   typedef BasicBlockListType::iterator iterator;
@@ -90,7 +78,7 @@ private:
                                 (Value ? Mask : 0u));
   }
 
-  friend class SymbolTableListTraits<Function, Module>;
+  friend class SymbolTableListTraits<Function>;
 
   void setParent(Module *parent);
 
