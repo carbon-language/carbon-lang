@@ -136,3 +136,11 @@ define <2 x double> @fix_i64_to_double(<2 x i64> %in) {
     ret <2 x double> %shift
 }
 
+; Don't combine with 8 lanes.  Just make sure things don't crash.
+; CHECK-LABEL: test7
+define <8 x float> @test7(<8 x i32> %in) nounwind {
+entry:
+  %vcvt.i = sitofp <8 x i32> %in to <8 x float>
+  %div.i = fdiv <8 x float> %vcvt.i, <float 8.0, float 8.0, float 8.0, float 8.0, float 8.0, float 8.0, float 8.0, float 8.0>
+  ret <8 x float> %div.i
+}

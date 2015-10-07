@@ -9908,10 +9908,12 @@ static SDValue PerformVDIVCombine(SDNode *N, SelectionDAG &DAG,
   uint32_t FloatBits = FloatTy.getSizeInBits();
   MVT IntTy = Op.getOperand(0).getSimpleValueType().getVectorElementType();
   uint32_t IntBits = IntTy.getSizeInBits();
-  if (FloatBits != 32 || IntBits > 32) {
+  unsigned NumLanes = Op.getValueType().getVectorNumElements();
+  if (FloatBits != 32 || IntBits > 32 || NumLanes > 4) {
     // These instructions only exist converting from i32 to f32. We can handle
     // smaller integers by generating an extra extend, but larger ones would
-    // be lossy.
+    // be lossy. We also can't handle more then 4 lanes, since these intructions
+    // only support v2i32/v4i32 types.
     return SDValue();
   }
 
@@ -9922,7 +9924,6 @@ static SDValue PerformVDIVCombine(SDNode *N, SelectionDAG &DAG,
 
   SDLoc dl(N);
   SDValue ConvInput = Op.getOperand(0);
-  unsigned NumLanes = Op.getValueType().getVectorNumElements();
   if (IntBits < FloatBits)
     ConvInput = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
                             dl, NumLanes == 2 ? MVT::v2i32 : MVT::v4i32,
