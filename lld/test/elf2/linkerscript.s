@@ -24,7 +24,7 @@
 # RUN: llvm-readobj %t.out > /dev/null
 
 # RUN: echo "FOO(BAR)" > %t.script
-# RUN: not ld.lld2 -o foo %t.script > %t.log 2>&1
+# RUN: not lld -flavor gnu2 -o foo %t.script > %t.log 2>&1
 # RUN: FileCheck -check-prefix=ERR1 %s < %t.log
 
 # ERR1: unknown directive: FOO

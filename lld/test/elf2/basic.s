@@ -184,27 +184,27 @@ _start:
 # RUN: llvm-readobj -file-headers -sections -program-headers -symbols %t2 \
 # RUN:   | FileCheck %s
 
-# RUN: not ld.lld2 %t.foo -o %t2 2>&1 | \
+# RUN: not lld -flavor gnu2 %t.foo -o %t2 2>&1 | \
 # RUN:  FileCheck --check-prefix=MISSING %s
 # MISSING: cannot open {{.*}}.foo: {{[Nn]}}o such file or directory
 
-# RUN: not ld.lld2 -o %t2 2>&1 | \
+# RUN: not lld -flavor gnu2 -o %t2 2>&1 | \
 # RUN:  FileCheck --check-prefix=NO_INPUT %s
 # NO_INPUT: no input files.
 
-# RUN: not ld.lld2 %t.no.such.file -o %t2 2>&1 | \
+# RUN: not lld -flavor gnu2 %t.no.such.file -o %t2 2>&1 | \
 # RUN:  FileCheck --check-prefix=CANNOT_OPEN %s
 # CANNOT_OPEN: cannot open {{.*}}.no.such.file: {{[Nn]}}o such file or directory
 
-# RUN: not ld.lld2 %t -o 2>&1 | FileCheck --check-prefix=NO_O_VAL %s
+# RUN: not lld -flavor gnu2 %t -o 2>&1 | FileCheck --check-prefix=NO_O_VAL %s
 # NO_O_VAL: missing arg value for "-o", expected 1 argument.
 
-# RUN: not ld.lld2 --foo 2>&1 | FileCheck --check-prefix=UNKNOWN %s
+# RUN: not lld -flavor gnu2 --foo 2>&1 | FileCheck --check-prefix=UNKNOWN %s
 # UNKNOWN: unknown argument: --foo
 
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
-# RUN: not ld.lld2 %t %t -o %t2 2>&1 | FileCheck --check-prefix=DUP %s
+# RUN: not lld -flavor gnu2 %t %t -o %t2 2>&1 | FileCheck --check-prefix=DUP %s
 # DUP: duplicate symbol: _start in {{.*}} and {{.*}}
 
-# RUN: not ld.lld2 %t -o %t -m wrong_emul 2>&1 | FileCheck --check-prefix=UNKNOWN_EMUL %s
+# RUN: not lld -flavor gnu2 %t -o %t -m wrong_emul 2>&1 | FileCheck --check-prefix=UNKNOWN_EMUL %s
 # UNKNOWN_EMUL: Unknown emulation: wrong_emul
