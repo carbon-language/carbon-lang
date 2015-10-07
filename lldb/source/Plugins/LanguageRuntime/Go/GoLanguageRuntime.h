@@ -78,11 +78,11 @@ namespace lldb_private {
         //------------------------------------------------------------------
         // PluginInterface protocol
         //------------------------------------------------------------------
-        virtual lldb_private::ConstString
-        GetPluginName();
+        lldb_private::ConstString
+        GetPluginName() override;
         
-        virtual uint32_t
-        GetPluginVersion();
+        uint32_t
+        GetPluginVersion() override;
         
     private:
         GoLanguageRuntime(Process *process) : lldb_private::LanguageRuntime(process) { } // Call CreateInstance instead.
