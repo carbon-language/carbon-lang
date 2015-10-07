@@ -1005,6 +1005,7 @@ private:
   Scop(const Scop &) = delete;
   const Scop &operator=(const Scop &) = delete;
 
+  LoopInfo &LI;
   DominatorTree &DT;
   ScalarEvolution *SE;
 
@@ -1138,39 +1139,31 @@ private:
 
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
   Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
-       ScalarEvolution &SE, DominatorTree &DT, isl_ctx *ctx,
+       ScalarEvolution &SE, DominatorTree &DT, LoopInfo &LI, isl_ctx *ctx,
        unsigned MaxLoopDepth);
 
   /// @brief Initialize this ScopInfo .
-  void init(LoopInfo &LI, AliasAnalysis &AA);
+  void init(AliasAnalysis &AA);
 
   /// @brief Add loop carried constraints to the header block of the loop @p L.
   ///
   /// @param L  The loop to process.
-  /// @param LI The LoopInfo analysis.
-  void addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI);
+  void addLoopBoundsToHeaderDomain(Loop *L);
 
   /// @brief Compute the branching constraints for each basic block in @p R.
   ///
   /// @param R  The region we currently build branching conditions for.
-  /// @param LI The LoopInfo analysis to obtain the number of iterators.
-  /// @param DT The dominator tree of the current function.
-  void buildDomainsWithBranchConstraints(Region *R, LoopInfo &LI,
-                                         DominatorTree &DT);
+  void buildDomainsWithBranchConstraints(Region *R);
 
   /// @brief Propagate the domain constraints through the region @p R.
   ///
   /// @param R  The region we currently build branching conditions for.
-  /// @param LI The LoopInfo analysis to obtain the number of iterators.
-  /// @param DT The dominator tree of the current function.
-  void propagateDomainConstraints(Region *R, LoopInfo &LI, DominatorTree &DT);
+  void propagateDomainConstraints(Region *R);
 
   /// @brief Compute the domain for each basic block in @p R.
   ///
   /// @param R  The region we currently traverse.
-  /// @param LI The LoopInfo analysis to argue about the number of iterators.
-  /// @param DT The dominator tree of the current function.
-  void buildDomains(Region *R, LoopInfo &LI, DominatorTree &DT);
+  void buildDomains(Region *R);
 
   /// @brief Check if a region part should be represented in the SCoP or not.
   ///
@@ -1248,10 +1241,9 @@ private:
   /// @brief Build Schedule and ScopStmts.
   ///
   /// @param R              The current region traversed.
-  /// @param LI             The LoopInfo object.
   /// @param LoopSchedules  Map from loops to their schedule and progress.
   void buildSchedule(
-      Region *R, LoopInfo &LI,
+      Region *R,
       DenseMap<Loop *, std::pair<isl_schedule *, unsigned>> &LoopSchedules);
 
   /// @name Helper function for printing the Scop.
