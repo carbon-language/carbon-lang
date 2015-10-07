@@ -5327,6 +5327,8 @@ TEST_F(FormatTest, UnderstandsOverloadedOperators) {
   verifyGoogleFormat("operator ::A();");
 
   verifyFormat("using A::operator+;");
+  verifyFormat("inline A operator^(const A &lhs, const A &rhs) {}\n"
+               "int i;");
 }
 
 TEST_F(FormatTest, UnderstandsFunctionRefQualification) {

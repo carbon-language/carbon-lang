@@ -855,6 +855,11 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::l_paren:
       parseParens();
       break;
+    case tok::kw_operator:
+      nextToken();
+      if (FormatTok->isBinaryOperator())
+        nextToken();
+      break;
     case tok::caret:
       nextToken();
       if (FormatTok->Tok.isAnyIdentifier() ||
