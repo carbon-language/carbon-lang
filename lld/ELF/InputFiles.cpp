@@ -38,13 +38,9 @@ uint16_t ELFFileBase::getEMachine() const {
     return ::getEMachine<ELF64BE>(*this);
   case ELF64LEKind:
     return ::getEMachine<ELF64LE>(*this);
+  default:
+    llvm_unreachable("Invalid kind");
   }
-  llvm_unreachable("Invalid kind");
-}
-
-bool ELFFileBase::isCompatibleWith(const ELFFileBase &Other) const {
-  return getELFKind() == Other.getELFKind() &&
-         getEMachine() == Other.getEMachine();
 }
 
 namespace {

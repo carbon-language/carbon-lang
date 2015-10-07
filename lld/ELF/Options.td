@@ -47,6 +47,9 @@ def init : Separate<["-"], "init">, MetaVarName<"<symbol>">,
 def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
   HelpText<"Root name of library to use">;
 
+def m : Separate<["-"], "m">,
+  HelpText<"Set target emulation">;
+
 def no_allow_shlib_undefined : Flag<["--"], "no-allow-shlib-undefined">;
 
 def no_whole_archive : Flag<["--"], "no-whole-archive">,
@@ -105,7 +108,6 @@ def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def end_group : Flag<["--"], "end-group">;
 def gc_sections : Flag<["--"], "gc-sections">;
 def hash_style : Joined<["--"], "hash-style=">;
-def m : Separate<["-"], "m">;
 def no_add_needed : Flag<["--"], "no-add-needed">;
 def no_as_needed : Flag<["--"], "no-as-needed">;
 def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;

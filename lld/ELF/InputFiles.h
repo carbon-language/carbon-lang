@@ -10,6 +10,7 @@
 #ifndef LLD_ELF_INPUT_FILES_H
 #define LLD_ELF_INPUT_FILES_H
 
+#include "Config.h"
 #include "InputSection.h"
 #include "Error.h"
 #include "Symbols.h"
@@ -49,8 +50,6 @@ private:
   const Kind FileKind;
 };
 
-enum ELFKind { ELF32LEKind, ELF32BEKind, ELF64LEKind, ELF64BEKind };
-
 class ELFFileBase : public InputFile {
 public:
   ELFFileBase(Kind K, ELFKind EKind, MemoryBufferRef M)
@@ -60,7 +59,6 @@ public:
     return K == ObjectKind || K == SharedKind;
   }
 
-  bool isCompatibleWith(const ELFFileBase &Other) const;
   ELFKind getELFKind() const { return EKind; }
 
   uint16_t getEMachine() const;

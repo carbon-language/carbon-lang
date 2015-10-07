@@ -84,6 +84,8 @@ void SymbolTable::addUndefinedSym(StringRef Name) {
   case ELF64BEKind:
     addUndefinedSym<ELF64BE>(Name);
     break;
+  default:
+    llvm_unreachable("Invalid kind");
   }
 }
 
@@ -138,9 +140,6 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
 
 template <class ELFT> void SymbolTable::addELFFile(ELFFileBase *File) {
   const ELFFileBase *Old = getFirstELF();
-  if (Old && !Old->isCompatibleWith(*File))
-    error(Twine(Old->getName() + " is incompatible with " + File->getName()));
-
   if (auto *O = dyn_cast<ObjectFileBase>(File))
     ObjectFiles.emplace_back(O);
   else if (auto *S = dyn_cast<SharedFile<ELFT>>(File))
@@ -174,6 +173,8 @@ void SymbolTable::addELFFile(ELFFileBase *File) {
   case ELF64BEKind:
     addELFFile<ELF64BE>(File);
     break;
+  default:
+    llvm_unreachable("Invalid kind");
   }
 }
 

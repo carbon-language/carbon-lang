@@ -205,3 +205,6 @@ _start:
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 # RUN: not lld -flavor gnu2 %t %t -o %t2 2>&1 | FileCheck --check-prefix=DUP %s
 # DUP: duplicate symbol: _start in {{.*}} and {{.*}}
+
+# RUN: not lld -flavor gnu2 %t -o %t -m wrong_emul 2>&1 | FileCheck --check-prefix=UNKNOWN_EMUL %s
+# UNKNOWN_EMUL: Unknown emulation: wrong_emul

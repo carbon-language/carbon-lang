@@ -38,6 +38,9 @@ public:
   void addFile(StringRef Path);
 
 private:
+  template <template <class> class T>
+  std::unique_ptr<ELFFileBase> createELFInputFile(MemoryBufferRef MB);
+
   SymbolTable Symtab;
   ArgParser Parser;
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;

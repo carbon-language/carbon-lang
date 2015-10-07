@@ -11,11 +11,20 @@
 #define LLD_ELF_CONFIG_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ELF.h"
 
 #include <vector>
 
 namespace lld {
 namespace elf2 {
+
+enum ELFKind {
+  ELFNoneKind,
+  ELF32LEKind,
+  ELF32BEKind,
+  ELF64LEKind,
+  ELF64BEKind
+};
 
 struct Configuration {
   llvm::StringRef DynamicLinker;
@@ -38,6 +47,8 @@ struct Configuration {
   bool Shared;
   bool Static = false;
   bool WholeArchive = false;
+  ELFKind ElfKind = ELFNoneKind;
+  uint16_t EMachine = llvm::ELF::EM_NONE;
 };
 
 extern Configuration *Config;
