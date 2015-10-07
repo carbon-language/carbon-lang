@@ -22,6 +22,8 @@ class HiddenIvarsTestCase(TestBase):
         self.shlib_names = ["InternalDefiner"]
 
     @skipUnlessDarwin
+    @skipIfDwarf    # This test requires a stripped binary and a dSYM
+    @skipIfDWO      # This test requires a stripped binary and a dSYM
     def test_expr_stripped(self):
         if self.getArchitecture() == 'i386':
             self.skipTest("requires modern objc runtime")
@@ -38,6 +40,8 @@ class HiddenIvarsTestCase(TestBase):
             self.expr(False)
 
     @skipUnlessDarwin
+    @skipIfDwarf    # This test requires a stripped binary and a dSYM
+    @skipIfDWO      # This test requires a stripped binary and a dSYM
     def test_frame_variable_stripped(self):
         if self.getArchitecture() == 'i386':
             self.skipTest("requires modern objc runtime")
