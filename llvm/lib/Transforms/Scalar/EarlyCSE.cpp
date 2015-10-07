@@ -290,12 +290,19 @@ public:
   /// current generation count.  The current generation count is incremented
   /// after every possibly writing memory operation, which ensures that we only
   /// CSE loads with other loads that have no intervening store.
-  typedef RecyclingAllocator<
-      BumpPtrAllocator,
-      ScopedHashTableVal<Value *, std::pair<Value *, unsigned>>>
+  struct LoadValue {
+    Value *data;
+    unsigned generation;
+    int matchingId;
+    LoadValue() : data(nullptr), generation(0), matchingId(-1) {}
+    LoadValue(Value *data, unsigned generation, unsigned matchingId)
+        : data(data), generation(generation), matchingId(matchingId) {}
+  };
+  typedef RecyclingAllocator<BumpPtrAllocator,
+                             ScopedHashTableVal<Value *, LoadValue>>
       LoadMapAllocator;
-  typedef ScopedHashTable<Value *, std::pair<Value *, unsigned>,
-                          DenseMapInfo<Value *>, LoadMapAllocator> LoadHTType;
+  typedef ScopedHashTable<Value *, LoadValue, DenseMapInfo<Value *>,
+                          LoadMapAllocator> LoadHTType;
   LoadHTType AvailableLoads;
 
   /// \brief A scoped hash table of the current values of read-only call
@@ -560,13 +567,13 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
       // If we have an available version of this load, and if it is the right
       // generation, replace this instruction.
-      std::pair<Value *, unsigned> InVal =
-          AvailableLoads.lookup(MemInst.getPtr());
-      if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
-        Value *Op = getOrCreateResult(InVal.first, Inst->getType());
+      LoadValue InVal = AvailableLoads.lookup(MemInst.getPtr());
+      if (InVal.data != nullptr && InVal.generation == CurrentGeneration &&
+          InVal.matchingId == MemInst.getMatchingId()) {
+        Value *Op = getOrCreateResult(InVal.data, Inst->getType());
         if (Op != nullptr) {
           DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst
-                       << "  to: " << *InVal.first << '\n');
+                       << "  to: " << *InVal.data << '\n');
           if (!Inst->use_empty())
             Inst->replaceAllUsesWith(Op);
           Inst->eraseFromParent();
@@ -577,8 +584,9 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
 
       // Otherwise, remember that we have this instruction.
-      AvailableLoads.insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
-                                                  Inst, CurrentGeneration));
+      AvailableLoads.insert(
+          MemInst.getPtr(),
+          LoadValue(Inst, CurrentGeneration, MemInst.getMatchingId()));
       LastStore = nullptr;
       continue;
     }
@@ -652,8 +660,9 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         // version of the pointer.  It is safe to forward from volatile stores
         // to non-volatile loads, so we don't have to check for volatility of
         // the store.
-        AvailableLoads.insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
-                                                    Inst, CurrentGeneration));
+        AvailableLoads.insert(
+            MemInst.getPtr(),
+            LoadValue(Inst, CurrentGeneration, MemInst.getMatchingId()));
 
         // Remember that this was the last store we saw for DSE.
         if (!MemInst.isVolatile())
