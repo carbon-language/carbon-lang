@@ -5423,6 +5423,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("return (int **&)a;");
   verifyIndependentOfContext("f((*PointerToArray)[10]);");
   verifyFormat("void f(Type (*parameter)[10]) {}");
+  verifyFormat("void f(Type (&parameter)[10]) {}");
   verifyGoogleFormat("return sizeof(int**);");
   verifyIndependentOfContext("Type **A = static_cast<Type **>(P);");
   verifyGoogleFormat("Type** A = static_cast<Type**>(P);");

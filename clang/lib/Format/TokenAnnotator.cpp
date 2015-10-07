@@ -155,7 +155,7 @@ private:
       Left->Type = TT_ObjCMethodExpr;
     }
 
-    bool MightBeFunctionType = CurrentToken->is(tok::star);
+    bool MightBeFunctionType = CurrentToken->isOneOf(tok::star, tok::amp);
     bool HasMultipleLines = false;
     bool HasMultipleParametersOnALine = false;
     bool MightBeObjCForRangeLoop =
