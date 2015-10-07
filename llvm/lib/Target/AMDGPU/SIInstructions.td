@@ -187,10 +187,14 @@ defm S_XNOR_SAVEEXEC_B64 : SOP1_64 <sop1<0x2b, 0x27>, "s_xnor_saveexec_b64", []>
 
 defm S_QUADMASK_B32 : SOP1_32 <sop1<0x2c, 0x28>, "s_quadmask_b32", []>;
 defm S_QUADMASK_B64 : SOP1_64 <sop1<0x2d, 0x29>, "s_quadmask_b64", []>;
+
+let Uses = [M0] in {
 defm S_MOVRELS_B32 : SOP1_32 <sop1<0x2e, 0x2a>, "s_movrels_b32", []>;
 defm S_MOVRELS_B64 : SOP1_64 <sop1<0x2f, 0x2b>, "s_movrels_b64", []>;
 defm S_MOVRELD_B32 : SOP1_32 <sop1<0x30, 0x2c>, "s_movreld_b32", []>;
 defm S_MOVRELD_B64 : SOP1_64 <sop1<0x31, 0x2d>, "s_movreld_b64", []>;
+} // End Uses = [M0]
+
 defm S_CBRANCH_JOIN : SOP1_1 <sop1<0x32, 0x2e>, "s_cbranch_join", []>;
 defm S_MOV_REGRD_B32 : SOP1_32 <sop1<0x33, 0x2f>, "s_mov_regrd_b32", []>;
 let Defs = [SCC] in {
@@ -1335,9 +1339,12 @@ defm V_FREXP_MANT_F32 : VOP1Inst <vop1<0x40, 0x34>, "v_frexp_mant_f32",
 let vdst = 0, src0 = 0, VOPAsmPrefer32Bit = 1 in {
 defm V_CLREXCP : VOP1Inst <vop1<0x41,0x35>, "v_clrexcp", VOP_NONE>;
 }
+
+let Uses = [M0, EXEC] in {
 defm V_MOVRELD_B32 : VOP1Inst <vop1<0x42, 0x36>, "v_movreld_b32", VOP_I32_I32>;
 defm V_MOVRELS_B32 : VOP1Inst <vop1<0x43, 0x37>, "v_movrels_b32", VOP_I32_I32>;
 defm V_MOVRELSD_B32 : VOP1Inst <vop1<0x44, 0x38>, "v_movrelsd_b32", VOP_I32_I32>;
+} // End Uses = [M0, EXEC]
 
 // These instruction only exist on SI and CI
 let SubtargetPredicate = isSICI in {
