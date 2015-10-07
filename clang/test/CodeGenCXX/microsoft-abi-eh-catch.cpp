@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -triple=x86_64-pc-windows-msvc \
 // RUN:     -mconstructor-aliases -fexceptions -fcxx-exceptions -fnew-ms-eh \
+// RUN:     -O1 -disable-llvm-optzns \
 // RUN:     | FileCheck -check-prefix WIN64 %s
 
 extern "C" void might_throw();
@@ -47,8 +48,17 @@ extern "C" void catch_int() {
 
 // WIN64-LABEL: define void @catch_int()
 // WIN64: catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i32* %[[e_addr:[^\]]*]]]
+//
+// The catchpad instruction starts the lifetime of 'e'. Unfortunately, that
+// leaves us with nowhere to put lifetime.start, so we don't emit lifetime
+// markers for now.
+// WIN64-NOT: lifetime.start
+//
 // WIN64: %[[e_i8:[^ ]*]] = bitcast i32* %[[e_addr]] to i8*
-// WIN64: call void @handle_exception(i8* %[[e_i8]])
+// WIN64-NOT: lifetime.start
+// WIN64: call void @handle_exception
+// WIN64-SAME: (i8* %[[e_i8]])
+// WIN64-NOT: lifetime.end
 // WIN64: catchret
 
 extern "C" void catch_int_unnamed() {
