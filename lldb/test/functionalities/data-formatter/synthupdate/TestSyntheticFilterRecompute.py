@@ -52,7 +52,7 @@ class SyntheticFilterRecomputingTestCase(TestBase):
         if self.TraceOn():
             self.runCmd("expr --dynamic-type run-target --ptr-depth 1 -- x")
 
-        self.assertTrue(id_x.GetSummary() == '@"5 objects"', "array does not get correct summary")
+        self.assertTrue(id_x.GetSummary() == '@"5 elements"', "array does not get correct summary")
 
         self.runCmd("next")
         self.runCmd("frame select 0")

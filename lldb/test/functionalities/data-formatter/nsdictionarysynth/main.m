@@ -22,7 +22,7 @@ int main (int argc, const char * argv[])
 	[mutabledict setObject:@"123" forKey:@23];
 	[mutabledict setObject:[NSURL URLWithString:@"http://www.apple.com"] forKey:@"foobar"];
 	[mutabledict setObject:@[@"a",@12] forKey:@57];
-	[mutabledict setObject:dictionary forKey:@"puartist"];
+	[mutabledict setObject:dictionary forKey:@"sourceofstuff"];
 
     [pool drain];// Set break point at this line.
     return 0;

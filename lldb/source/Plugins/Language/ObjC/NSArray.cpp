@@ -18,6 +18,7 @@
 #include "lldb/Expression/FunctionCaller.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntime.h"
 #include "lldb/Target/Target.h"
@@ -230,6 +231,8 @@ namespace  lldb_private {
 bool
 lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
+    static ConstString g_TypeHint("NSArray");
+    
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
         return false;
@@ -285,16 +288,29 @@ lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& s
             return false;
     }
     
-    stream.Printf("@\"%" PRIu64 " object%s\"",
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(options.GetLanguage()))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%" PRIu64 " %s%s%s",
+                  prefix.c_str(),
                   value,
-                  value == 1 ? "" : "s");
+                  "element",
+                  value == 1 ? "" : "s",
+                  suffix.c_str());
     return true;
 }
 
 lldb_private::formatters::NSArrayMSyntheticFrontEnd::NSArrayMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp),
-    m_exe_ctx_ref(),
-    m_ptr_size(8),
+m_exe_ctx_ref(),
+m_ptr_size(8),
 m_id_type(),
 m_children()
 {
@@ -524,11 +540,11 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd_1010::~NSArrayMSyntheticFron
 }
 
 lldb_private::formatters::NSArrayISyntheticFrontEnd::NSArrayISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
-    SyntheticChildrenFrontEnd (*valobj_sp.get()),
-    m_exe_ctx_ref (),
-    m_ptr_size (8),
-    m_items (0),
-    m_data_ptr (0)
+SyntheticChildrenFrontEnd (*valobj_sp.get()),
+m_exe_ctx_ref (),
+m_ptr_size (8),
+m_items (0),
+m_data_ptr (0)
 {
     if (valobj_sp)
     {
@@ -686,7 +702,10 @@ lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetChildAtIndex (
     idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     lldb::ValueObjectSP valobj_sp = CallSelectorOnObject(m_backend,"id","objectAtIndex:",idx);
     if (valobj_sp)
+    {
+        valobj_sp->SetPreferredDisplayLanguage(m_backend.GetPreferredDisplayLanguage());
         valobj_sp->SetName(ConstString(idx_name.GetData()));
+    }
     return valobj_sp;
 }
 

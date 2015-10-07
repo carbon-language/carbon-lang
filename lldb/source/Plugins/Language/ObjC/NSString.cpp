@@ -18,6 +18,7 @@
 #include "lldb/DataFormatters/StringPrinter.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/ProcessStructReader.h"
 
@@ -55,6 +56,8 @@ GetNSPathStore2Type (Target &target)
 bool
 lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& summary_options)
 {
+    static ConstString g_TypeHint("NSString");
+    
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
         return false;
@@ -85,7 +88,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     bool is_tagged_ptr = (0 == strcmp(class_name,"NSTaggedPointerString")) && descriptor->GetTaggedPointerInfo();
     // for a tagged pointer, the descriptor has everything we need
     if (is_tagged_ptr)
-        return NSTaggedString_SummaryProvider(descriptor, stream);
+        return NSTaggedString_SummaryProvider(valobj, descriptor, stream, summary_options);
     
     auto& additionals_map(NSString_Additionals::GetAdditionalSummaries());
     auto iter = additionals_map.find(class_name_cs), end = additionals_map.end();
@@ -144,6 +147,20 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         return true;
     }
     
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(summary_options.GetLanguage()))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
+    options.SetPrefixToken(prefix);
+    options.SetSuffixToken(suffix);
+    
     if (is_mutable)
     {
         uint64_t location = 2 * ptr_size + valobj_addr;
@@ -152,11 +169,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             return false;
         if (has_explicit_length && is_unicode)
         {
-            StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
             options.SetLocation(location);
             options.SetProcessSP(process_sp);
             options.SetStream(&stream);
-            options.SetPrefixToken("@");
             options.SetQuote('"');
             options.SetSourceSize(explicit_length);
             options.SetNeedsZeroTermination(false);
@@ -167,11 +182,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         }
         else
         {
-            StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
             options.SetLocation(location+1);
             options.SetProcessSP(process_sp);
             options.SetStream(&stream);
-            options.SetPrefixToken("@");
             options.SetSourceSize(explicit_length);
             options.SetNeedsZeroTermination(false);
             options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
@@ -184,11 +197,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     {
         uint64_t location = 3 * ptr_size + valobj_addr;
         
-        StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken("@");
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
@@ -214,11 +225,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             if (error.Fail())
                 return false;
         }
-        StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken("@");
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
@@ -233,11 +242,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         explicit_length = reader.GetField<uint32_t>(ConstString("lengthAndRef")) >> 20;
         lldb::addr_t location = valobj.GetValueAsUnsigned(0) + ptr_size + 4;
         
-        StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken("@");
         options.SetQuote('"');
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(has_explicit_length == false);
@@ -261,11 +268,9 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
                 has_explicit_length = true;
             location++;
         }
-        StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
-        options.SetPrefixToken("@");
         options.SetSourceSize(explicit_length);
         options.SetNeedsZeroTermination(!has_explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
@@ -284,10 +289,8 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             return false;
         if (has_explicit_length && !has_null)
             explicit_length++; // account for the fact that there is no NULL and we need to have one added
-        StringPrinter::ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
-        options.SetPrefixToken("@");
         options.SetStream(&stream);
         options.SetSourceSize(explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
@@ -331,8 +334,10 @@ lldb_private::formatters::NSMutableAttributedStringSummaryProvider (ValueObject&
 }
 
 bool
-lldb_private::formatters::NSTaggedString_SummaryProvider (ObjCLanguageRuntime::ClassDescriptorSP descriptor, Stream& stream)
+lldb_private::formatters::NSTaggedString_SummaryProvider (ValueObject& valobj, ObjCLanguageRuntime::ClassDescriptorSP descriptor, Stream& stream, const TypeSummaryOptions& summary_options)
 {
+    static ConstString g_TypeHint("NSString");
+    
     if (!descriptor)
         return false;
     uint64_t len_bits = 0, data_bits = 0;
@@ -348,13 +353,25 @@ lldb_private::formatters::NSTaggedString_SummaryProvider (ObjCLanguageRuntime::C
     if (len_bits > g_fiveBitMaxLen)
         return false;
     
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(summary_options.GetLanguage()))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
     // this is a fairly ugly trick - pretend that the numeric value is actually a char*
     // this works under a few assumptions:
     // little endian architecture
     // sizeof(uint64_t) > g_MaxNonBitmaskedLen
     if (len_bits <= g_MaxNonBitmaskedLen)
     {
-        stream.Printf("@\"%s\"",(const char*)&data_bits);
+        stream.Printf("%s",prefix.c_str());
+        stream.Printf("\"%s\"",(const char*)&data_bits);
+        stream.Printf("%s",suffix.c_str());
         return true;
     }
     
@@ -381,6 +398,8 @@ lldb_private::formatters::NSTaggedString_SummaryProvider (ObjCLanguageRuntime::C
         bytes.insert(bytes.begin(), sixBitToCharLookup[packed]);
     }
     
-    stream.Printf("@\"%s\"",&bytes[0]);
+    stream.Printf("%s",prefix.c_str());
+    stream.Printf("\"%s\"",&bytes[0]);
+    stream.Printf("%s",suffix.c_str());
     return true;
 }

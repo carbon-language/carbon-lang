@@ -315,6 +315,13 @@ Language::TypeScavenger::Find (ExecutionContextScope *exe_scope,
     return 0;
 }
 
+bool
+Language::GetFormatterPrefixSuffix (ValueObject& valobj, ConstString type_hint,
+                                    std::string& prefix, std::string& suffix)
+{
+    return false;
+}
+
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------

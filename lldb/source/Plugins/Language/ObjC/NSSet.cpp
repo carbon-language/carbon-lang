@@ -17,6 +17,7 @@
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
@@ -198,6 +199,8 @@ template<bool cf_style>
 bool
 lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
+    static ConstString g_TypeHint("NSSet");
+    
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
         return false;
@@ -245,26 +248,26 @@ lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& str
         value &= (is_64bit ? ~0xFC00000000000000UL : ~0xFC000000U);
     }
     /*else if (!strcmp(class_name,"__NSCFSet"))
-    {
-        Error error;
-        value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + (is_64bit ? 20 : 12), 4, 0, error);
-        if (error.Fail())
-            return false;
-        if (is_64bit)
-            value &= ~0x1fff000000000000UL;
-    }
-    else if (!strcmp(class_name,"NSCountedSet"))
-    {
-        Error error;
-        value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + ptr_size, ptr_size, 0, error);
-        if (error.Fail())
-            return false;
-        value = process_sp->ReadUnsignedIntegerFromMemory(value + (is_64bit ? 20 : 12), 4, 0, error);
-        if (error.Fail())
-            return false;
-        if (is_64bit)
-            value &= ~0x1fff000000000000UL;
-    }*/
+     {
+     Error error;
+     value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + (is_64bit ? 20 : 12), 4, 0, error);
+     if (error.Fail())
+     return false;
+     if (is_64bit)
+     value &= ~0x1fff000000000000UL;
+     }
+     else if (!strcmp(class_name,"NSCountedSet"))
+     {
+     Error error;
+     value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + ptr_size, ptr_size, 0, error);
+     if (error.Fail())
+     return false;
+     value = process_sp->ReadUnsignedIntegerFromMemory(value + (is_64bit ? 20 : 12), 4, 0, error);
+     if (error.Fail())
+     return false;
+     if (is_64bit)
+     value &= ~0x1fff000000000000UL;
+     }*/
     else
     {
         auto& map(NSSet_Additionals::GetAdditionalSummaries());
@@ -275,11 +278,22 @@ lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& str
             return false;
     }
     
-    stream.Printf("%s%" PRIu64 " %s%s",
-                  (cf_style ? "@\"" : ""),
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(options.GetLanguage()))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%" PRIu64 " %s%s%s",
+                  prefix.c_str(),
                   value,
-                  (cf_style ? (value == 1 ? "value" : "values") : (value == 1 ? "object" : "objects")),
-                  (cf_style ? "\"" : ""));
+                  "element",
+                  value == 1 ? "" : "s",
+                  suffix.c_str());
     return true;
 }
 
@@ -292,7 +306,10 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSSetSyntheticFrontEndCreat
     if (!runtime)
         return NULL;
     
-    if (!valobj_sp->IsPointerType())
+    CompilerType valobj_type(valobj_sp->GetCompilerType());
+    Flags flags(valobj_type.GetTypeInfo());
+    
+    if (flags.IsClear(eTypeIsPointer))
     {
         Error error;
         valobj_sp = valobj_sp->AddressOf(error);
@@ -492,10 +509,10 @@ lldb_private::formatters::NSSetISyntheticFrontEnd::GetChildAtIndex (size_t idx)
                            process_sp->GetAddressByteSize());
         
         set_item.valobj_sp =
-            CreateValueObjectFromData(idx_name.GetData(),
-                                      data,
-                                      m_exe_ctx_ref,
-                                      m_backend.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
+        CreateValueObjectFromData(idx_name.GetData(),
+                                  data,
+                                  m_exe_ctx_ref,
+                                  m_backend.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
     }
     return set_item.valobj_sp;
 }
@@ -590,7 +607,7 @@ lldb::ValueObjectSP
 lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     lldb::addr_t m_objs_addr = (m_data_32 ? m_data_32->_objs_addr : m_data_64->_objs_addr);
-
+    
     uint32_t num_children = CalculateNumChildren();
     
     if (idx >= num_children)
@@ -660,10 +677,10 @@ lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
                            process_sp->GetAddressByteSize());
         
         set_item.valobj_sp =
-            CreateValueObjectFromData(idx_name.GetData(),
-                                      data,
-                                      m_exe_ctx_ref,
-                                      m_backend.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
+        CreateValueObjectFromData(idx_name.GetData(),
+                                  data,
+                                  m_exe_ctx_ref,
+                                  m_backend.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID));
     }
     return set_item.valobj_sp;
 }
@@ -740,3 +757,4 @@ lldb_private::formatters::NSSetSummaryProvider<true> (ValueObject& valobj, Strea
 
 template bool
 lldb_private::formatters::NSSetSummaryProvider<false> (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
+

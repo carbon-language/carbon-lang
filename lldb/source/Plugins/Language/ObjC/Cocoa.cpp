@@ -20,6 +20,7 @@
 #include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"
@@ -64,7 +65,7 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
     {
         uint64_t offset = 5 * ptr_size;
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID), true));
-
+        
         StreamString summary_stream;
         bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream, options);
         if (was_nsstring_ok && summary_stream.GetSize() > 0)
@@ -295,6 +296,145 @@ lldb_private::formatters::NSIndexSetSummaryProvider (ValueObject& valobj, Stream
     return true;
 }
 
+static void
+NSNumber_FormatChar (ValueObject& valobj,
+                     Stream& stream,
+                     char value,
+                     lldb::LanguageType lang)
+{
+    static ConstString g_TypeHint("NSNumber:char");
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(lang))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%hhd%s",
+                  prefix.c_str(),
+                  value,
+                  suffix.c_str());
+}
+static void
+NSNumber_FormatShort (ValueObject& valobj,
+                      Stream& stream,
+                      short value,
+                      lldb::LanguageType lang)
+{
+    static ConstString g_TypeHint("NSNumber:short");
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(lang))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%hd%s",
+                  prefix.c_str(),
+                  value,
+                  suffix.c_str());
+}
+static void
+NSNumber_FormatInt (ValueObject& valobj,
+                    Stream& stream,
+                    int value,
+                    lldb::LanguageType lang)
+{
+    static ConstString g_TypeHint("NSNumber:int");
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(lang))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%d%s",
+                  prefix.c_str(),
+                  value,
+                  suffix.c_str());
+}
+static void
+NSNumber_FormatLong (ValueObject& valobj,
+                     Stream& stream,
+                     uint64_t value,
+                     lldb::LanguageType lang)
+{
+    static ConstString g_TypeHint("NSNumber:long");
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(lang))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%" PRId64 "%s",
+                  prefix.c_str(),
+                  value,
+                  suffix.c_str());
+}
+static void
+NSNumber_FormatFloat (ValueObject& valobj,
+                      Stream& stream,
+                      float value,
+                      lldb::LanguageType lang)
+{
+    static ConstString g_TypeHint("NSNumber:float");
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(lang))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%f%s",
+                  prefix.c_str(),
+                  value,
+                  suffix.c_str());
+}
+static void
+NSNumber_FormatDouble (ValueObject& valobj,
+                       Stream& stream,
+                       double value,
+                       lldb::LanguageType lang)
+{
+    static ConstString g_TypeHint("NSNumber:double");
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(lang))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%g%s",
+                  prefix.c_str(),
+                  value,
+                  suffix.c_str());
+}
+
 bool
 lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
@@ -333,19 +473,19 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
             switch (i_bits)
             {
                 case 0:
-                    stream.Printf("(char)%hhd",(char)value);
+                    NSNumber_FormatChar(valobj, stream, (char)value, options.GetLanguage());
                     break;
                 case 1:
                 case 4:
-                    stream.Printf("(short)%hd",(short)value);
+                    NSNumber_FormatShort(valobj, stream, (short)value, options.GetLanguage());
                     break;
                 case 2:
                 case 8:
-                    stream.Printf("(int)%d",(int)value);
+                    NSNumber_FormatInt(valobj, stream, (int)value, options.GetLanguage());
                     break;
                 case 3:
                 case 12:
-                    stream.Printf("(long)%" PRId64,value);
+                    NSNumber_FormatLong(valobj, stream, value, options.GetLanguage());
                     break;
                 default:
                     return false;
@@ -366,19 +506,19 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
                     value = process_sp->ReadUnsignedIntegerFromMemory(data_location, 1, 0, error);
                     if (error.Fail())
                         return false;
-                    stream.Printf("(char)%hhd",(char)value);
+                    NSNumber_FormatChar(valobj, stream, (char)value, options.GetLanguage());
                     break;
                 case 2: // 0B0010
                     value = process_sp->ReadUnsignedIntegerFromMemory(data_location, 2, 0, error);
                     if (error.Fail())
                         return false;
-                    stream.Printf("(short)%hd",(short)value);
+                    NSNumber_FormatShort(valobj, stream, (short)value, options.GetLanguage());
                     break;
                 case 3: // 0B0011
                     value = process_sp->ReadUnsignedIntegerFromMemory(data_location, 4, 0, error);
                     if (error.Fail())
                         return false;
-                    stream.Printf("(int)%d",(int)value);
+                    NSNumber_FormatInt(valobj, stream, (int)value, options.GetLanguage());
                     break;
                 case 17: // 0B10001
                     data_location += 8;
@@ -386,7 +526,7 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
                     value = process_sp->ReadUnsignedIntegerFromMemory(data_location, 8, 0, error);
                     if (error.Fail())
                         return false;
-                    stream.Printf("(long)%" PRId64,value);
+                    NSNumber_FormatLong(valobj, stream, value, options.GetLanguage());
                     break;
                 case 5: // 0B0101
                 {
@@ -394,7 +534,7 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
                     if (error.Fail())
                         return false;
                     float flt_value = *((float*)&flt_as_int);
-                    stream.Printf("(float)%f",flt_value);
+                    NSNumber_FormatFloat(valobj, stream, flt_value, options.GetLanguage());
                     break;
                 }
                 case 6: // 0B0110
@@ -403,7 +543,7 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
                     if (error.Fail())
                         return false;
                     double dbl_value = *((double*)&dbl_as_lng);
-                    stream.Printf("(double)%g",dbl_value);
+                    NSNumber_FormatDouble(valobj, stream, dbl_value, options.GetLanguage());
                     break;
                 }
                 default:

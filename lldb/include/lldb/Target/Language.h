@@ -79,7 +79,7 @@ public:
     virtual lldb::LanguageType
     GetLanguageType () const = 0;
     
-    bool
+    virtual bool
     IsTopLevelFunction (Function& function);
     
     virtual lldb::TypeCategoryImplSP
@@ -105,6 +105,13 @@ public:
     
     virtual std::unique_ptr<TypeScavenger>
     GetTypeScavenger ();
+    
+    // if an individual data formatter can apply to several types and cross a language boundary
+    // it makes sense for individual languages to want to customize the printing of values of that
+    // type by appending proper prefix/suffix information in language-specific ways
+    virtual bool
+    GetFormatterPrefixSuffix (ValueObject& valobj, ConstString type_hint,
+                              std::string& prefix, std::string& suffix);
     
     // These are accessors for general information about the Languages lldb knows about:
     

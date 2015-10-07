@@ -22,7 +22,7 @@ namespace lldb_private {
         NSStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
         
         bool
-        NSTaggedString_SummaryProvider (ObjCLanguageRuntime::ClassDescriptorSP descriptor, Stream& stream);
+        NSTaggedString_SummaryProvider (ValueObject& valobj, ObjCLanguageRuntime::ClassDescriptorSP descriptor, Stream& stream, const TypeSummaryOptions& summary_options);
         
         bool
         NSAttributedStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);

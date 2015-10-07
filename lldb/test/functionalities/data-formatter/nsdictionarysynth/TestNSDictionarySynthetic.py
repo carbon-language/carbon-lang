@@ -54,13 +54,13 @@ class NSDictionarySyntheticTestCase(TestBase):
         self.expect('frame variable mutabledict --ptr-depth 1',
                     substrs = ['4 key/value pairs','[0] = ','key = 0x','value = 0x','[1] = ','[2] = ','[3] = '])
         self.expect('frame variable dictionary --ptr-depth 1 --dynamic-type no-run-target',
-                    substrs = ['3 key/value pairs','@"bar"','@"2 objects"','@"baz"','2 key/value pairs'])
+                    substrs = ['3 key/value pairs','@"bar"','@"2 elements"','@"baz"','2 key/value pairs'])
         self.expect('frame variable mutabledict --ptr-depth 1 --dynamic-type no-run-target',
-                    substrs = ['4 key/value pairs','(int)23','@"123"','@"http://www.apple.com"','@"puartist"','3 key/value pairs'])
+                    substrs = ['4 key/value pairs','(int)23','@"123"','@"http://www.apple.com"','@"sourceofstuff"','3 key/value pairs'])
         self.expect('frame variable mutabledict --ptr-depth 2 --dynamic-type no-run-target',
-        substrs = ['4 key/value pairs','(int)23','@"123"','@"http://www.apple.com"','@"puartist"','3 key/value pairs','@"bar"','@"2 objects"'])
+        substrs = ['4 key/value pairs','(int)23','@"123"','@"http://www.apple.com"','@"sourceofstuff"','3 key/value pairs','@"bar"','@"2 elements"'])
         self.expect('frame variable mutabledict --ptr-depth 3 --dynamic-type no-run-target',
-        substrs = ['4 key/value pairs','(int)23','@"123"','@"http://www.apple.com"','@"puartist"','3 key/value pairs','@"bar"','@"2 objects"','(int)1','@"two"'])
+        substrs = ['4 key/value pairs','(int)23','@"123"','@"http://www.apple.com"','@"sourceofstuff"','3 key/value pairs','@"bar"','@"2 elements"','(int)1','@"two"'])
 
         self.assertTrue(self.frame().FindVariable("dictionary").MightHaveChildren(), "dictionary says it does not have children!")
         self.assertTrue(self.frame().FindVariable("mutabledict").MightHaveChildren(), "mutable says it does not have children!")

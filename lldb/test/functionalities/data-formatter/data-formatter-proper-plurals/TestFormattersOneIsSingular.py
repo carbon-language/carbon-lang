@@ -50,13 +50,13 @@ class DataFormatterOneIsSingularTestCase(TestBase):
 
         # Now check that we are displaying Cocoa classes correctly
         self.expect('frame variable key',
-                    substrs = ['@"1 object"'])
+                    substrs = ['@"1 element"'])
         self.expect('frame variable key', matching=False,
-                    substrs = ['1 objects'])
+                    substrs = ['1 elements'])
         self.expect('frame variable value',
-                    substrs = ['@"1 object"'])
+                    substrs = ['@"1 element"'])
         self.expect('frame variable value', matching=False,
-                    substrs = ['1 objects'])
+                    substrs = ['1 elements'])
         self.expect('frame variable dict',
                     substrs = ['1 key/value pair'])
         self.expect('frame variable dict', matching=False,
@@ -66,9 +66,9 @@ class DataFormatterOneIsSingularTestCase(TestBase):
         self.expect('frame variable mutable_bag_ref', matching=False,
                     substrs = ['1 values'])
         self.expect('frame variable nscounted_set',
-                    substrs = ['1 object'])
+                    substrs = ['1 element'])
         self.expect('frame variable nscounted_set', matching=False,
-                    substrs = ['1 objects'])
+                    substrs = ['1 elements'])
         self.expect('frame variable imset',
                     substrs = ['1 index'])
         self.expect('frame variable imset', matching=False,
@@ -78,9 +78,9 @@ class DataFormatterOneIsSingularTestCase(TestBase):
         self.expect('frame variable binheap_ref', matching=False,
                     substrs = ['1 items'])
         self.expect('frame variable nsset',
-                    substrs = ['1 object'])
+                    substrs = ['1 element'])
         self.expect('frame variable nsset', matching=False,
-                    substrs = ['1 objects'])
+                    substrs = ['1 elements'])
         self.expect('frame variable immutableData',
                     substrs = ['1 byte'])
         self.expect('frame variable immutableData', matching=False,

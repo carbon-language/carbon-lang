@@ -770,3 +770,84 @@ ObjCLanguage::GetTypeScavenger ()
     
     return std::unique_ptr<TypeScavenger>(new ObjCTypeScavenger());
 }
+
+bool
+ObjCLanguage::GetFormatterPrefixSuffix (ValueObject& valobj, ConstString type_hint,
+                                        std::string& prefix, std::string& suffix)
+{
+    static ConstString g_CFBag("CFBag");
+    static ConstString g_CFBinaryHeap("CFBinaryHeap");
+    
+    static ConstString g_NSNumberChar("NSNumber:char");
+    static ConstString g_NSNumberShort("NSNumber:short");
+    static ConstString g_NSNumberInt("NSNumber:int");
+    static ConstString g_NSNumberLong("NSNumber:long");
+    static ConstString g_NSNumberFloat("NSNumber:float");
+    static ConstString g_NSNumberDouble("NSNumber:double");
+    
+    static ConstString g_NSData("NSData");
+    static ConstString g_NSArray("NSArray");
+    static ConstString g_NSString("NSString");
+    static ConstString g_NSStringStar("NSString*");
+    
+    if (type_hint.IsEmpty())
+        return false;
+    
+    prefix.clear();
+    suffix.clear();
+    
+    if (type_hint == g_CFBag ||
+        type_hint == g_CFBinaryHeap)
+    {
+        prefix = "@";
+        return true;
+    }
+    
+    if (type_hint == g_NSNumberChar)
+    {
+        prefix = "(char)";
+        return true;
+    }
+    if (type_hint == g_NSNumberShort)
+    {
+        prefix = "(short)";
+        return true;
+    }
+    if (type_hint == g_NSNumberInt)
+    {
+        prefix = "(int)";
+        return true;
+    }
+    if (type_hint == g_NSNumberLong)
+    {
+        prefix = "(long)";
+        return true;
+    }
+    if (type_hint == g_NSNumberFloat)
+    {
+        prefix = "(float)";
+        return true;
+    }
+    if (type_hint == g_NSNumberDouble)
+    {
+        prefix = "(double)";
+        return true;
+    }
+    
+    if (type_hint == g_NSData ||
+        type_hint == g_NSArray)
+    {
+        prefix = "@\"";
+        suffix = "\"";
+        return true;
+    }
+    
+    if (type_hint == g_NSString ||
+        type_hint == g_NSStringStar)
+    {
+        prefix = "@";
+        return true;
+    }
+    
+    return false;
+}

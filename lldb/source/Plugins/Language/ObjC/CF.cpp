@@ -17,6 +17,7 @@
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
@@ -42,6 +43,8 @@ lldb_private::formatters::CFAbsoluteTimeSummaryProvider (ValueObject& valobj, St
 bool
 lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
+    static ConstString g_TypeHint("CFBag");
+    
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
         return false;
@@ -84,7 +87,9 @@ lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& str
         ValueObjectSP count_sp;
         StreamString expr;
         expr.Printf("(int)CFBagGetCount((void*)0x%" PRIx64 ")",valobj.GetPointerValue());
-        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp) != eExpressionCompleted)
+        EvaluateExpressionOptions options;
+        options.SetResultIsInternal(true);
+        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp, options) != eExpressionCompleted)
             return false;
         if (!count_sp)
             return false;
@@ -98,8 +103,21 @@ lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& str
         if (error.Fail())
             return false;
     }
-    stream.Printf("@\"%u value%s\"",
-                  count,(count == 1 ? "" : "s"));
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(options.GetLanguage()))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s\"%u value%s\"%s",
+                  prefix.c_str(),
+                  count,(count == 1 ? "" : "s"),
+                  suffix.c_str());
     return true;
 }
 
@@ -236,6 +254,8 @@ lldb_private::formatters::CFBitVectorSummaryProvider (ValueObject& valobj, Strea
 bool
 lldb_private::formatters::CFBinaryHeapSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
+    static ConstString g_TypeHint("CFBinaryHeap");
+    
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
         return false;
@@ -278,7 +298,9 @@ lldb_private::formatters::CFBinaryHeapSummaryProvider (ValueObject& valobj, Stre
         ValueObjectSP count_sp;
         StreamString expr;
         expr.Printf("(int)CFBinaryHeapGetCount((void*)0x%" PRIx64 ")",valobj.GetPointerValue());
-        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp) != eExpressionCompleted)
+        EvaluateExpressionOptions options;
+        options.SetResultIsInternal(true);
+        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp, options) != eExpressionCompleted)
             return false;
         if (!count_sp)
             return false;
@@ -292,7 +314,20 @@ lldb_private::formatters::CFBinaryHeapSummaryProvider (ValueObject& valobj, Stre
         if (error.Fail())
             return false;
     }
-    stream.Printf("@\"%u item%s\"",
-                  count,(count == 1 ? "" : "s"));
+    
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(options.GetLanguage()))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s\"%u item%s\"%s",
+                  prefix.c_str(),
+                  count,(count == 1 ? "" : "s"),
+                  suffix.c_str());
     return true;
 }

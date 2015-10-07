@@ -46,29 +46,29 @@ class NSSetSyntheticTestCase(TestBase):
 
         # Now check that we are displaying Cocoa classes correctly
         self.expect('frame variable set',
-                    substrs = ['4 objects'])
+                    substrs = ['4 elements'])
         self.expect('frame variable mutable',
-                    substrs = ['9 objects'])
+                    substrs = ['9 elements'])
         self.expect('frame variable set --ptr-depth 1 -d run -T',
-                    substrs = ['4 objects','[0]','[1]','[2]','[3]','hello','world','(int)1','(int)2'])
+                    substrs = ['4 elements','[0]','[1]','[2]','[3]','hello','world','(int)1','(int)2'])
         self.expect('frame variable mutable --ptr-depth 1 -d run -T',
-                    substrs = ['9 objects','(int)5','@"3 objects"','@"www.apple.com"','(int)3','@"world"','(int)4'])
+                    substrs = ['9 elements','(int)5','@"3 elements"','@"www.apple.com"','(int)3','@"world"','(int)4'])
 
         self.runCmd("next")
         self.expect('frame variable mutable',
-                    substrs = ['0 objects'])
+                    substrs = ['0 elements'])
 
         self.runCmd("next")
         self.expect('frame variable mutable',
-                    substrs = ['4 objects'])
+                    substrs = ['4 elements'])
         self.expect('frame variable mutable --ptr-depth 1 -d run -T',
-                    substrs = ['4 objects','[0]','[1]','[2]','[3]','hello','world','(int)1','(int)2'])
+                    substrs = ['4 elements','[0]','[1]','[2]','[3]','hello','world','(int)1','(int)2'])
 
         self.runCmd("next")
         self.expect('frame variable mutable',
-                    substrs = ['4 objects'])
+                    substrs = ['4 elements'])
         self.expect('frame variable mutable --ptr-depth 1 -d run -T',
-                    substrs = ['4 objects','[0]','[1]','[2]','[3]','hello','world','(int)1','(int)2'])
+                    substrs = ['4 elements','[0]','[1]','[2]','[3]','hello','world','(int)1','(int)2'])
 
 if __name__ == '__main__':
     import atexit

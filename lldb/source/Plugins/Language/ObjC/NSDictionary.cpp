@@ -17,6 +17,7 @@
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
@@ -46,13 +47,13 @@ static CompilerType
 GetLLDBNSPairType (TargetSP target_sp)
 {
     CompilerType compiler_type;
-
+    
     ClangASTContext *target_ast_context = target_sp->GetScratchClangASTContext();
-
+    
     if (target_ast_context)
     {
         ConstString g___lldb_autogen_nspair("__lldb_autogen_nspair");
-
+        
         compiler_type = target_ast_context->GetTypeForIdentifier<clang::CXXRecordDecl>(g___lldb_autogen_nspair);
         
         if (!compiler_type)
@@ -213,6 +214,7 @@ template<bool name_entries>
 bool
 lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
+    static ConstString g_TypeHint("NSDictionary");
     ProcessSP process_sp = valobj.GetProcessSP();
     if (!process_sp)
         return false;
@@ -260,14 +262,14 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
         value &= (is_64bit ? ~0xFC00000000000000UL : ~0xFC000000U);
     }
     /*else if (!strcmp(class_name,"__NSCFDictionary"))
-    {
-        Error error;
-        value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + (is_64bit ? 20 : 12), 4, 0, error);
-        if (error.Fail())
-            return false;
-        if (is_64bit)
-            value &= ~0x0f1f000000000000UL;
-    }*/
+     {
+     Error error;
+     value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + (is_64bit ? 20 : 12), 4, 0, error);
+     if (error.Fail())
+     return false;
+     if (is_64bit)
+     value &= ~0x0f1f000000000000UL;
+     }*/
     else
     {
         auto& map(NSDictionary_Additionals::GetAdditionalSummaries());
@@ -278,11 +280,22 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
             return false;
     }
     
-    stream.Printf("%s%" PRIu64 " %s%s",
-                  (name_entries ? "@\"" : ""),
+    std::string prefix,suffix;
+    if (Language* language = Language::FindPlugin(options.GetLanguage()))
+    {
+        if (!language->GetFormatterPrefixSuffix(valobj, g_TypeHint, prefix, suffix))
+        {
+            prefix.clear();
+            suffix.clear();
+        }
+    }
+    
+    stream.Printf("%s%" PRIu64 " %s%s%s",
+                  prefix.c_str(),
                   value,
-                  (name_entries ? (value == 1 ? "entry" : "entries") : (value == 1 ? "key/value pair" : "key/value pairs")),
-                  (name_entries ? "\"" : ""));
+                  "key/value pair",
+                  value == 1 ? "" : "s",
+                  suffix.c_str());
     return true;
 }
 
@@ -295,7 +308,10 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSDictionarySyntheticFrontE
     if (!runtime)
         return NULL;
     
-    if (!valobj_sp->IsPointerType())
+    CompilerType valobj_type(valobj_sp->GetCompilerType());
+    Flags flags(valobj_type.GetTypeInfo());
+    
+    if (flags.IsClear(eTypeIsPointer))
     {
         Error error;
         valobj_sp = valobj_sp->AddressOf(error);
@@ -359,6 +375,8 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIn
     lldb::ValueObjectSP child_sp;
     EvaluateExpressionOptions options;
     options.SetKeepInMemory(true);
+    options.SetLanguage(lldb::eLanguageTypeObjC_plus_plus);
+    options.SetResultIsInternal(true);
     m_backend.GetTargetSP()->EvaluateExpression(object_fetcher_expr.GetData(),
                                                 GetViableFrame(m_backend.GetTargetSP().get()),
                                                 child_sp,
