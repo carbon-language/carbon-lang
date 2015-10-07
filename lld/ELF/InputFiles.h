@@ -143,7 +143,7 @@ public:
     uint32_t FirstNonLocal = this->Symtab->sh_info;
     if (SymbolIndex < FirstNonLocal)
       return nullptr;
-    return SymbolBodies[SymbolIndex - FirstNonLocal]->getReplacement();
+    return SymbolBodies[SymbolIndex - FirstNonLocal]->repl();
   }
 
   Elf_Sym_Range getLocalSymbols();

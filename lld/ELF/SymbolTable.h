@@ -58,7 +58,7 @@ public:
   SymbolBody *getEntrySym() const {
     if (!EntrySym)
       return nullptr;
-    return EntrySym->getReplacement();
+    return EntrySym->repl();
   }
 
   void addUndefinedSym(StringRef Name);
