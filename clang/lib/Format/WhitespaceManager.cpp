@@ -153,6 +153,9 @@ void WhitespaceManager::calculateLineBreakInformation() {
 // a "=" is found on a line, extend the current sequence. If the current line
 // cannot be part of a sequence, e.g. because there is an empty line before it
 // or it contains non-assignments, finalize the previous sequence.
+//
+// FIXME: The code between assignment and declaration alignment is mostly
+// duplicated and would benefit from factorization.
 void WhitespaceManager::alignConsecutiveAssignments() {
   if (!Style.AlignConsecutiveAssignments)
     return;
@@ -162,6 +165,7 @@ void WhitespaceManager::alignConsecutiveAssignments() {
   unsigned StartOfSequence = 0;
   unsigned EndOfSequence = 0;
   bool FoundAssignmentOnLine = false;
+  bool FoundLeftBraceOnLine = false;
   bool FoundLeftParenOnLine = false;
 
   // Aligns a sequence of assignment tokens, on the MinColumn column.
@@ -181,11 +185,13 @@ void WhitespaceManager::alignConsecutiveAssignments() {
   };
 
   for (unsigned i = 0, e = Changes.size(); i != e; ++i) {
-    if (Changes[i].NewlinesBefore > 0) {
+    if (Changes[i].NewlinesBefore != 0) {
       EndOfSequence = i;
-      // If there is a blank line or if the last line didn't contain any
-      // assignment, the sequence ends here.
-      if (Changes[i].NewlinesBefore > 1 || !FoundAssignmentOnLine) {
+      // If there is a blank line, if the last line didn't contain any
+      // assignment, or if we found an open brace or paren, the sequence ends
+      // here.
+      if (Changes[i].NewlinesBefore > 1 || !FoundAssignmentOnLine ||
+          FoundLeftBraceOnLine || FoundLeftParenOnLine) {
         // NB: In the latter case, the sequence should end at the beggining of
         // the previous line, but it doesn't really matter as there is no
         // assignment on it
@@ -193,6 +199,7 @@ void WhitespaceManager::alignConsecutiveAssignments() {
       }
 
       FoundAssignmentOnLine = false;
+      FoundLeftBraceOnLine = false;
       FoundLeftParenOnLine = false;
     }
 
@@ -202,14 +209,24 @@ void WhitespaceManager::alignConsecutiveAssignments() {
         (FoundAssignmentOnLine || Changes[i].NewlinesBefore > 0 ||
          Changes[i + 1].NewlinesBefore > 0)) {
       AlignSequence();
-    } else if (!FoundLeftParenOnLine && Changes[i].Kind == tok::r_paren) {
-      AlignSequence();
+    } else if (Changes[i].Kind == tok::r_brace) {
+      if (!FoundLeftBraceOnLine)
+        AlignSequence();
+      FoundLeftBraceOnLine = false;
+    } else if (Changes[i].Kind == tok::l_brace) {
+      FoundLeftBraceOnLine = true;
+      if (!FoundAssignmentOnLine)
+        AlignSequence();
+    } else if (Changes[i].Kind == tok::r_paren) {
+      if (!FoundLeftParenOnLine)
+        AlignSequence();
+      FoundLeftParenOnLine = false;
     } else if (Changes[i].Kind == tok::l_paren) {
       FoundLeftParenOnLine = true;
       if (!FoundAssignmentOnLine)
         AlignSequence();
-    } else if (!FoundAssignmentOnLine && !FoundLeftParenOnLine &&
-               Changes[i].Kind == tok::equal) {
+    } else if (!FoundAssignmentOnLine && !FoundLeftBraceOnLine &&
+               !FoundLeftParenOnLine && Changes[i].Kind == tok::equal) {
       FoundAssignmentOnLine = true;
       if (StartOfSequence == 0)
         StartOfSequence = i;
@@ -267,6 +284,9 @@ void WhitespaceManager::alignConsecutiveAssignments(unsigned Start,
 // current line cannot be part of a sequence, e.g. because there is an empty
 // line before it or it contains non-declarations, finalize the previous
 // sequence.
+//
+// FIXME: The code between assignment and declaration alignment is mostly
+// duplicated and would benefit from factorization.
 void WhitespaceManager::alignConsecutiveDeclarations() {
   if (!Style.AlignConsecutiveDeclarations)
     return;
