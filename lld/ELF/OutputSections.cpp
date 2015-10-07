@@ -132,9 +132,9 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
                           Target->getGotReloc(), IsMips64EL);
     } else {
       P->r_offset = RI.r_offset + C.getOutputSectionOff() + Out->getVA();
-      uintX_t Addent = 0;
+      uintX_t Addend = 0;
       if (IsRela)
-        Addent = static_cast<const Elf_Rela &>(RI).r_addend;
+        Addend = static_cast<const Elf_Rela &>(RI).r_addend;
 
       if (!isLocalDefinition(Body)) {
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
@@ -143,14 +143,14 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
         P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
         if (IsRela) {
           if (Body)
-            Addent += getSymVA(cast<ELFSymbolBody<ELFT>>(*Body), BssSec);
+            Addend += getSymVA(cast<ELFSymbolBody<ELFT>>(*Body), BssSec);
           else
-            Addent += getLocalSymVA(
+            Addend += getLocalSymVA(
                 Obj.getRelocationSymbol(&RI, File.getSymbolTable()), File);
         }
       }
       if (IsRela)
-        static_cast<Elf_Rela *>(P)->r_addend = Addent;
+        static_cast<Elf_Rela *>(P)->r_addend = Addend;
     }
   }
 }
