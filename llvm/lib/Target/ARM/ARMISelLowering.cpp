@@ -9848,11 +9848,6 @@ static SDValue PerformVCVTCombine(SDNode *N, SelectionDAG &DAG,
   if (!isa<BuildVectorSDNode>(ConstVec))
     return SDValue();
 
-  uint64_t C;
-  bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
-  if (!isConstVecPow2(ConstVec, isSigned, C))
-    return SDValue();
-
   MVT FloatTy = Op.getSimpleValueType().getVectorElementType();
   uint32_t FloatBits = FloatTy.getSizeInBits();
   MVT IntTy = N->getSimpleValueType(0).getVectorElementType();
@@ -9865,6 +9860,11 @@ static SDValue PerformVCVTCombine(SDNode *N, SelectionDAG &DAG,
     // only support v2i32/v4i32 types.
     return SDValue();
   }
+
+  uint64_t C;
+  bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
+  if (!isConstVecPow2(ConstVec, isSigned, C))
+    return SDValue();
 
   SDLoc dl(N);
   unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfp2fxs :
@@ -9904,11 +9904,6 @@ static SDValue PerformVDIVCombine(SDNode *N, SelectionDAG &DAG,
   if (!isa<BuildVectorSDNode>(ConstVec))
     return SDValue();
 
-  uint64_t C;
-  bool isSigned = OpOpcode == ISD::SINT_TO_FP;
-  if (!isConstVecPow2(ConstVec, isSigned, C))
-    return SDValue();
-
   MVT FloatTy = N->getSimpleValueType(0).getVectorElementType();
   uint32_t FloatBits = FloatTy.getSizeInBits();
   MVT IntTy = Op.getOperand(0).getSimpleValueType().getVectorElementType();
@@ -9919,6 +9914,11 @@ static SDValue PerformVDIVCombine(SDNode *N, SelectionDAG &DAG,
     // be lossy.
     return SDValue();
   }
+
+  uint64_t C;
+  bool isSigned = OpOpcode == ISD::SINT_TO_FP;
+  if (!isConstVecPow2(ConstVec, isSigned, C))
+    return SDValue();
 
   SDLoc dl(N);
   SDValue ConvInput = Op.getOperand(0);
