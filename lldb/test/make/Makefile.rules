@@ -185,6 +185,10 @@ else
 	CFLAGS_NO_DEBUG = -O0 $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS) $(TRIPLE_CFLAGS)
 endif
 
+ifeq "$(MAKE_DWO)" "YES"
+	CFLAGS += -gsplit-dwarf
+endif
+
 CXXFLAGS += -std=c++11
 CXXFLAGS += $(CFLAGS)
 LD = $(CC)

@@ -112,6 +112,7 @@ just_do_benchmarks_test = False
 
 dont_do_dsym_test = False
 dont_do_dwarf_test = False
+dont_do_dwo_test = False
 
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
 # testclass's and/or testclass.testmethod's.
@@ -469,6 +470,7 @@ def parseOptionsAndInitTestdirs():
     global just_do_benchmarks_test
     global dont_do_dsym_test
     global dont_do_dwarf_test
+    global dont_do_dwo_test
     global blacklist
     global blacklistConfig
     global categoriesList
@@ -599,6 +601,8 @@ def parseOptionsAndInitTestdirs():
     # argparse makes sure we have correct options
     if args.N == 'dwarf':
         dont_do_dwarf_test = True
+    elif args.N == 'dwo':
+        dont_do_dwo_test = True
     elif args.N == 'dsym':
         dont_do_dsym_test = True
 

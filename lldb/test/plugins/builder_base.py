@@ -113,6 +113,17 @@ def buildDwarf(sender=None, architecture=None, compiler=None, dictionary=None, c
     # True signifies that we can handle building dwarf.
     return True
 
+def buildDwo(sender=None, architecture=None, compiler=None, dictionary=None, clean=True):
+    """Build the binaries with dwarf debug info."""
+    commands = []
+    if clean:
+        commands.append([getMake(), "clean", getCmdLine(dictionary)])
+    commands.append([getMake(), "MAKE_DSYM=NO", "MAKE_DWO=YES", getArchSpec(architecture), getCCSpec(compiler), getCmdLine(dictionary)])
+
+    lldbtest.system(commands, sender=sender)
+    # True signifies that we can handle building dwo.
+    return True
+
 def cleanup(sender=None, dictionary=None):
     """Perform a platform-specific cleanup after the test."""
     #import traceback

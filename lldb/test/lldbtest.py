@@ -567,6 +567,23 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
+def dwo_test(func):
+    """Decorate the item as a dwo test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@dwo_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.dont_do_dwo_test:
+                self.skipTest("dwo tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__dwo_test__ = True
+    return wrapper
+
 def debugserver_test(func):
     """Decorate the item as a debugserver test."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -657,10 +674,13 @@ def expectedFailureAll(bugnumber=None, oslist=None, compiler=None, compiler_vers
     return expectedFailure(fn, bugnumber)
 
 def expectedFailureDwarf(bugnumber=None):
-    return expectedFailureAll(bugnumber==bugnumber, debug_info="dwarf")
+    return expectedFailureAll(bugnumber=bugnumber, debug_info="dwarf")
+
+def expectedFailureDwo(bugnumber=None):
+    return expectedFailureAll(bugnumber=bugnumber, debug_info="dwo")
 
 def expectedFailureDsym(bugnumber=None):
-    return expectedFailureAll(bugnumber==bugnumber, debug_info="dsym")
+    return expectedFailureAll(bugnumber=bugnumber, debug_info="dsym")
 
 def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
     if compiler_version is None:
@@ -2141,6 +2161,16 @@ class Base(unittest2.TestCase):
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
+    def buildDwo(self, architecture=None, compiler=None, dictionary=None, clean=True):
+        """Platform specific way to build binaries with dwarf maps."""
+        if lldb.skip_build_and_cleanup:
+            return
+        module = builder_module()
+        if target_is_android():
+            dictionary = append_android_envs(dictionary)
+        if not module.buildDwo(self, architecture, compiler, dictionary, clean):
+            raise Exception("Don't know how to build binary with dwo")
+
     def buildGo(self):
         """Build the default go binary.
         """
@@ -2258,6 +2288,14 @@ class LLDBTestCaseFactory(type):
                 dwarf_method_name = attrname + "_dwarf"
                 dwarf_test_method.__name__ = dwarf_method_name
                 newattrs[dwarf_method_name] = dwarf_test_method
+                
+                @dwo_test
+                def dwo_test_method(self, attrvalue=attrvalue):
+                    self.debug_info = "dwo"
+                    return attrvalue(self)
+                dwo_method_name = attrname + "_dwo"
+                dwo_test_method.__name__ = dwo_method_name
+                newattrs[dwo_method_name] = dwo_test_method
             else:
                 newattrs[attrname] = attrvalue
         return super(LLDBTestCaseFactory, cls).__new__(cls, name, bases, newattrs)
@@ -2793,6 +2831,10 @@ class TestBase(Base):
             return self.buildDsym(architecture, compiler, dictionary, clean)
         elif self.debug_info == "dwarf":
             return self.buildDwarf(architecture, compiler, dictionary, clean)
+        elif self.debug_info == "dwo":
+            return self.buildDwo(architecture, compiler, dictionary, clean)
+        else:
+            self.fail("Can't build for debug info: %s" % self.debug_info)
 
     # =================================================
     # Misc. helper methods for debugging test execution

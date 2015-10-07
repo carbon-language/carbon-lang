@@ -60,7 +60,7 @@ def create_parser():
 
     # Test filtering options
     group = parser.add_argument_group('Test filtering options')
-    group.add_argument('-N', choices=['dwarf', 'dsym'], help="Don't do test cases marked with the @dsym decorator by passing 'dsym' as the option arg, or don't do test cases marked with the @dwarf decorator by passing 'dwarf' as the option arg")
+    group.add_argument('-N', choices=['dwarf', 'dwo', 'dsym'], help="Don't do test cases marked with the @dsym_test/@dwarf_test/@dwo_test decorator by passing dsym/dwarf/dwo as the option arg")
     X('-a', "Don't do lldb Python API tests")
     X('+a', "Just do lldb Python API tests. Do not specify along with '-a'", dest='plus_a')
     X('+b', 'Just do benchmark tests', dest='plus_b')
