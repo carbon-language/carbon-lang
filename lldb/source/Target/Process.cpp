@@ -3916,52 +3916,52 @@ Process::Halt (bool clear_thread_plans)
 }
 
 Error
-Process::HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp)
+Process::StopForDestroyOrDetach(lldb::EventSP &exit_event_sp)
 {
     Error error;
     if (m_public_state.GetValue() == eStateRunning)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
         if (log)
-            log->Printf("Process::%s() About to halt.", __FUNCTION__);
-        error = Halt();
-        if (error.Success())
-        {
-            // Consume the halt event.
-            TimeValue timeout (TimeValue::Now());
-            timeout.OffsetWithSeconds(1);
-            StateType state = WaitForProcessToStop (&timeout, &exit_event_sp);
-            
-            // If the process exited while we were waiting for it to stop, put the exited event into
-            // the shared pointer passed in and return.  Our caller doesn't need to do anything else, since
-            // they don't have a process anymore...
-            
-            if (state == eStateExited || m_private_state.GetValue() == eStateExited)
-            {
-                if (log)
-                    log->Printf("Process::HaltForDestroyOrDetach() Process exited while waiting to Halt.");
-                return error;
-            }
-            else
-                exit_event_sp.reset(); // It is ok to consume any non-exit stop events
-    
-            if (state != eStateStopped)
-            {
-                if (log)
-                    log->Printf("Process::HaltForDestroyOrDetach() Halt failed to stop, state is: %s", StateAsCString(state));
-                // If we really couldn't stop the process then we should just error out here, but if the
-                // lower levels just bobbled sending the event and we really are stopped, then continue on.
-                StateType private_state = m_private_state.GetValue();
-                if (private_state != eStateStopped)
-                {
-                    return error;
-                }
-            }
-        }
-        else
+            log->Printf("Process::%s() About to stop.", __FUNCTION__);
+
+        ListenerSP listener_sp (new Listener("lldb.Process.StopForDestroyOrDetach.hijack"));
+        HijackProcessEvents(listener_sp.get());
+
+        SendAsyncInterrupt();
+
+        // Consume the interrupt event.
+        TimeValue timeout (TimeValue::Now());
+        timeout.OffsetWithSeconds(10);
+
+        StateType state = WaitForProcessToStop (&timeout, &exit_event_sp, true, listener_sp.get());
+
+        RestoreProcessEvents();
+
+        // If the process exited while we were waiting for it to stop, put the exited event into
+        // the shared pointer passed in and return.  Our caller doesn't need to do anything else, since
+        // they don't have a process anymore...
+
+        if (state == eStateExited || m_private_state.GetValue() == eStateExited)
         {
             if (log)
-                log->Printf("Process::HaltForDestroyOrDetach() Halt got error: %s", error.AsCString());
+                log->Printf("Process::%s() Process exited while waiting to stop.", __FUNCTION__);
+            return error;
+        }
+        else
+            exit_event_sp.reset(); // It is ok to consume any non-exit stop events
+
+        if (state != eStateStopped)
+        {
+            if (log)
+                log->Printf("Process::%s() failed to stop, state is: %s", __FUNCTION__, StateAsCString(state));
+            // If we really couldn't stop the process then we should just error out here, but if the
+            // lower levels just bobbled sending the event and we really are stopped, then continue on.
+            StateType private_state = m_private_state.GetValue();
+            if (private_state != eStateStopped)
+            {
+                return error;
+            }
         }
     }
     return error;
@@ -3980,7 +3980,7 @@ Process::Detach (bool keep_stopped)
     {
         if (DetachRequiresHalt())
         {
-            error = HaltForDestroyOrDetach (exit_event_sp);
+            error = StopForDestroyOrDetach (exit_event_sp);
             if (!error.Success())
             {
                 m_destroy_in_process = false;
@@ -4054,7 +4054,7 @@ Process::Destroy (bool force_kill)
         EventSP exit_event_sp;
         if (DestroyRequiresHalt())
         {
-            error = HaltForDestroyOrDetach(exit_event_sp);
+            error = StopForDestroyOrDetach(exit_event_sp);
         }
         
         if (m_public_state.GetValue() != eStateRunning)
@@ -5231,7 +5231,7 @@ public:
                                 break;
                             case 'i':
                                 if (StateIsRunningState(m_process->GetState()))
-                                    m_process->Halt();
+                                    m_process->SendAsyncInterrupt();
                                 break;
                         }
                     }
@@ -5256,8 +5256,8 @@ public:
         // Do only things that are safe to do in an interrupt context (like in
         // a SIGINT handler), like write 1 byte to a file descriptor. This will
         // interrupt the IOHandlerProcessSTDIO::Run() and we can look at the byte
-        // that was written to the pipe and then call m_process->Halt() from a
-        // much safer location in code.
+        // that was written to the pipe and then call m_process->SendAsyncInterrupt()
+        // from a much safer location in code.
         if (m_active)
         {
             char ch = 'i'; // Send 'i' for interrupt
