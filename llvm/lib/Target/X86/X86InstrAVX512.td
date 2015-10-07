@@ -1842,7 +1842,6 @@ multiclass avx512_vector_fpclass<bits<8> opc, string OpcodeStr, SDNode OpNode,
   }
 }
 
-
 multiclass avx512_vector_fpclass_all<string OpcodeStr,
             AVX512VLVectorVTInfo _, bits<8> opc, SDNode OpNode, Predicate prd, 
                                                               string broadcast>{
@@ -4149,9 +4148,9 @@ defm VPSHUFD : avx512_shift_rmi_sizes<0x70, MRMSrcReg, MRMSrcMem, "vpshufd",
                              X86PShufd, avx512vl_i32_info>,
                              EVEX, AVX512BIi8Base, EVEX_CD8<32, CD8VF>;
 defm VPSHUFH : avx512_shift_rmi_w<0x70, MRMSrcReg, MRMSrcMem, "vpshufhw",
-                                  X86PShufhw>, EVEX, AVX512XSIi8Base, VEX_W;
+                                  X86PShufhw>, EVEX, AVX512XSIi8Base;
 defm VPSHUFL : avx512_shift_rmi_w<0x70, MRMSrcReg, MRMSrcMem, "vpshuflw",
-                                  X86PShuflw>, EVEX, AVX512XDIi8Base, VEX_W;
+                                  X86PShuflw>, EVEX, AVX512XDIi8Base;
 
 multiclass avx512_pshufb_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode> {
   let Predicates = [HasBWI] in
