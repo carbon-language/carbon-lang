@@ -401,7 +401,7 @@ protected:
 
                         if (process_sp)
                         {
-                            // Seems wierd that we Launch a core file, but that is
+                            // Seems weird that we Launch a core file, but that is
                             // what we do!
                             error = process_sp->LoadCore();
 
@@ -1290,7 +1290,7 @@ protected:
         if (target)
         {
             size_t argc = command.GetArgumentCount();
-            // check for at least 3 arguments and an odd nubmer of parameters
+            // check for at least 3 arguments and an odd number of parameters
             if (argc >= 3 && argc & 1)
             {
                 bool success = false;

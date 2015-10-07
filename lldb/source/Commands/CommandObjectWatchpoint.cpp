@@ -104,7 +104,7 @@ CommandObjectMultiwordWatchpoint::VerifyWatchpointIDs(Target *target, Args &args
     std::pair<llvm::StringRef, llvm::StringRef> Pair;
     size_t i;
     int32_t idx;
-    // Go through the argments and make a canonical form of arg list containing
+    // Go through the arguments and make a canonical form of arg list containing
     // only numbers with possible "-" in between.
     for (i = 0; i < args.GetArgumentCount(); ++i) {
         llvm::StringRef Arg(args.GetArgumentAtIndex(i));

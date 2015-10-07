@@ -302,7 +302,7 @@ CommandObjectExpression::EvaluateExpression
         
         // If the language was not specified in the expression command,
         // set it to the language in the target's properties if
-        // specified, else default to the langage for the frame.
+        // specified, else default to the language for the frame.
         if (m_command_options.language != eLanguageTypeUnknown)
             options.SetLanguage(m_command_options.language);
         else if (target->GetLanguage() != eLanguageTypeUnknown)
