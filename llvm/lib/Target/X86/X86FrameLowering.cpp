@@ -1057,6 +1057,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   bool IsWin64Prologue = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   bool NeedsWinCFI =
       IsWin64Prologue && MF.getFunction()->needsUnwindTableEntry();
+  bool IsFunclet = isFuncletReturnInstr(MBBI);
 
   // Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI->getStackSize();
@@ -1170,8 +1171,10 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
   // If dynamic alloca is used, then reset esp to point to the last callee-saved
   // slot before popping them off! Same applies for the case, when stack was
-  // realigned.
-  if (TRI->needsStackRealignment(MF) || MFI->hasVarSizedObjects()) {
+  // realigned. Don't do this if this was a funclet epilogue, since the funclets
+  // will not do realignment or dynamic stack allocation.
+  if ((TRI->needsStackRealignment(MF) || MFI->hasVarSizedObjects()) &&
+      !IsFunclet) {
     if (TRI->needsStackRealignment(MF))
       MBBI = FirstCSPop;
     unsigned SEHFrameOffset = calculateSetFPREG(SEHStackAllocAmt);
