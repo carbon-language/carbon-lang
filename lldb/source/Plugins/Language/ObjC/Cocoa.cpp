@@ -75,7 +75,7 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
     }
     // this is either an unknown subclass or an NSBundle that comes from [NSBundle mainBundle]
     // which is encoded differently and needs to be handled by running code
-    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "bundlePath", stream);
+    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "bundlePath", stream, options.GetLanguage());
 }
 
 bool
@@ -119,7 +119,7 @@ lldb_private::formatters::NSTimeZoneSummaryProvider (ValueObject& valobj, Stream
             return true;
         }
     }
-    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "name", stream);
+    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "name", stream, options.GetLanguage());
 }
 
 bool
@@ -165,7 +165,7 @@ lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, St
     }
     // this is either an unknown subclass or an NSBundle that comes from [NSBundle mainBundle]
     // which is encoded differently and needs to be handled by running code
-    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "name", stream);
+    return ExtractSummaryFromObjCExpression(valobj, "NSString*", "name", stream, options.GetLanguage());
 }
 
 bool
@@ -414,7 +414,7 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
     }
     else
     {
-        return ExtractSummaryFromObjCExpression(valobj, "NSString*", "stringValue", stream);
+        return ExtractSummaryFromObjCExpression(valobj, "NSString*", "stringValue", stream, options.GetLanguage());
     }
 }
 
@@ -478,7 +478,7 @@ lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& str
     }
     else
     {
-        return ExtractSummaryFromObjCExpression(valobj, "NSString*", "description", stream);
+        return ExtractSummaryFromObjCExpression(valobj, "NSString*", "description", stream, options.GetLanguage());
     }
     return false;
 }

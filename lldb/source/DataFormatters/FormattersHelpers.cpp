@@ -187,7 +187,8 @@ bool
 lldb_private::formatters::ExtractSummaryFromObjCExpression (ValueObject &valobj,
                                                             const char* target_type,
                                                             const char* selector,
-                                                            Stream &stream)
+                                                            Stream &stream,
+                                                            lldb::LanguageType lang_type)
 {
     if (!target_type || !*target_type)
         return false;
@@ -206,6 +207,8 @@ lldb_private::formatters::ExtractSummaryFromObjCExpression (ValueObject &valobj,
     options.SetCoerceToId(false);
     options.SetUnwindOnError(true);
     options.SetKeepInMemory(true);
+    options.SetLanguage(lldb::eLanguageTypeObjC_plus_plus);
+    options.SetResultIsInternal(true);
     options.SetUseDynamic(lldb::eDynamicCanRunTarget);
     
     target->EvaluateExpression(expr.GetData(),
@@ -214,7 +217,7 @@ lldb_private::formatters::ExtractSummaryFromObjCExpression (ValueObject &valobj,
                                options);
     if (!result_sp)
         return false;
-    stream.Printf("%s",result_sp->GetSummaryAsCString());
+    stream.Printf("%s",result_sp->GetSummaryAsCString(lang_type));
     return true;
 }
 

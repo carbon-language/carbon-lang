@@ -89,7 +89,8 @@ namespace lldb_private {
         ExtractSummaryFromObjCExpression (ValueObject &valobj,
                                           const char* target_type,
                                           const char* selector,
-                                          Stream &stream);
+                                          Stream &stream,
+                                          lldb::LanguageType lang_type);
         
         lldb::ValueObjectSP
         CallSelectorOnObject (ValueObject &valobj,

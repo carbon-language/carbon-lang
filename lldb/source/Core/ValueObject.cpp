@@ -874,9 +874,10 @@ ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_
 
 bool
 ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
-                                  std::string& destination)
+                                  std::string& destination,
+                                  lldb::LanguageType lang)
 {
-    return GetSummaryAsCString(summary_ptr, destination, TypeSummaryOptions());
+    return GetSummaryAsCString(summary_ptr, destination, TypeSummaryOptions().SetLanguage(lang));
 }
 
 bool
@@ -885,7 +886,7 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
                                   const TypeSummaryOptions& options)
 {
     destination.clear();
-
+    
     // ideally we would like to bail out if passing NULL, but if we do so
     // we end up not providing the summary for function pointers anymore
     if (/*summary_ptr == NULL ||*/ m_is_getting_summary)
@@ -893,31 +894,38 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
     
     m_is_getting_summary = true;
     
+    TypeSummaryOptions actual_options(options);
+    
+    if (actual_options.GetLanguage() == lldb::eLanguageTypeUnknown)
+        actual_options.SetLanguage(GetPreferredDisplayLanguage());
+    
     // this is a hot path in code and we prefer to avoid setting this string all too often also clearing out other
     // information that we might care to see in a crash log. might be useful in very specific situations though.
     /*Host::SetCrashDescriptionWithFormat("Trying to fetch a summary for %s %s. Summary provider's description is %s",
-                                        GetTypeName().GetCString(),
-                                        GetName().GetCString(),
-                                        summary_ptr->GetDescription().c_str());*/
+     GetTypeName().GetCString(),
+     GetName().GetCString(),
+     summary_ptr->GetDescription().c_str());*/
     
     if (UpdateValueIfNeeded (false) && summary_ptr)
     {
         if (HasSyntheticValue())
             m_synthetic_value->UpdateValueIfNeeded(); // the summary might depend on the synthetic children being up-to-date (e.g. ${svar%#})
-        summary_ptr->FormatObject(this, destination, options);
+        summary_ptr->FormatObject(this, destination, actual_options);
     }
     m_is_getting_summary = false;
     return !destination.empty();
 }
 
 const char *
-ValueObject::GetSummaryAsCString ()
+ValueObject::GetSummaryAsCString (lldb::LanguageType lang)
 {
     if (UpdateValueIfNeeded(true) && m_summary_str.empty())
     {
+        TypeSummaryOptions summary_options;
+        summary_options.SetLanguage(lang);
         GetSummaryAsCString(GetSummaryFormat().get(),
                             m_summary_str,
-                            TypeSummaryOptions());
+                            summary_options);
     }
     if (m_summary_str.empty())
         return NULL;
@@ -929,8 +937,8 @@ ValueObject::GetSummaryAsCString (std::string& destination,
                                   const TypeSummaryOptions& options)
 {
     return GetSummaryAsCString(GetSummaryFormat().get(),
-                        destination,
-                        options);
+                               destination,
+                               options);
 }
 
 bool
