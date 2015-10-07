@@ -1163,9 +1163,10 @@ void SelectionDAGBuilder::visitCatchPad(const CatchPadInst &I) {
   auto Pers = classifyEHPersonality(FuncInfo.Fn->getPersonalityFn());
   bool IsMSVCCXX = Pers == EHPersonality::MSVC_CXX;
   bool IsSEH = isAsynchronousEHPersonality(Pers);
+  bool IsCoreCLR = Pers == EHPersonality::CoreCLR;
   MachineBasicBlock *CatchPadMBB = FuncInfo.MBB;
-  // In MSVC C++, catchblocks are funclets and need prologues.
-  if (IsMSVCCXX)
+  // In MSVC C++ and CoreCLR, catchblocks are funclets and need prologues.
+  if (IsMSVCCXX || IsCoreCLR)
     CatchPadMBB->setIsEHFuncletEntry();
 
   MachineBasicBlock *NormalDestMBB = FuncInfo.MBBMap[I.getNormalDest()];

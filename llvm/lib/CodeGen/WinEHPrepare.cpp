@@ -2928,11 +2928,11 @@ void llvm::calculateClrEHStateNumbers(const Function *Fn,
       // Preds of the endpad should get the parent state.
       PredState = ParentState;
     } else if (const CatchPadInst *Catch = dyn_cast<CatchPadInst>(Pad)) {
-      const BasicBlock *Handler = Catch->getNormalDest();
+      const BasicBlock *PadBlock = Catch->getParent();
       uint32_t TypeToken = static_cast<uint32_t>(
           cast<ConstantInt>(Catch->getArgOperand(0))->getZExtValue());
       int NewState = addClrEHHandler(FuncInfo, ParentState,
-                                     ClrHandlerType::Catch, TypeToken, Handler);
+                                     ClrHandlerType::Catch, TypeToken, PadBlock);
       FuncInfo.EHPadStateMap[Catch] = NewState;
       // Preds of the catch get its state
       PredState = NewState;
