@@ -146,12 +146,22 @@ void ScopAnnotator::annotate(Instruction *Inst) {
   if (!BasePtr)
     return;
 
-  auto *AliasScope = AliasScopeMap[BasePtr];
+  auto AliasScopeIterator = AliasScopeMap.find(BasePtr);
 
-  if (!AliasScope)
-    BasePtr = AlternativeAliasBases[BasePtr];
+  if (AliasScopeIterator == AliasScopeMap.end()) {
+    auto I = AlternativeAliasBases.find(BasePtr);
+    if (I == AlternativeAliasBases.end())
+      return;
 
-  AliasScope = AliasScopeMap[BasePtr];
+    BasePtr = I->second;
+    AliasScopeIterator = AliasScopeMap.find(BasePtr);
+    if (AliasScopeIterator == AliasScopeMap.end())
+      return;
+  }
+
+  auto AliasScope = AliasScopeIterator->second;
+  assert(OtherAliasScopeListMap.count(BasePtr) &&
+         "BasePtr either expected in AliasScopeMap and OtherAlias...Map");
   auto *OtherAliasScopeList = OtherAliasScopeListMap[BasePtr];
 
   Inst->setMetadata("alias.scope", AliasScope);
