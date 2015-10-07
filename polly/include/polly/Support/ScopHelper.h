@@ -121,13 +121,20 @@ llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
 /// the following conditions:
 ///
 ///  - It is terminated by an unreachable instruction
-///  - It contains a call to a function listed in the command line argument
-///     --polly-error-functions=name1,name2,name3
+///  - It contains a call to a non-pure function that is not immediately
+///    dominated by a loop header and that does not dominate the region exit.
+///    This is a heuristic to pick only error blocks that are conditionally
+///    executed and can be assumed to be not executed at all without the domains
+///    beeing available.
 ///
 /// @param BB The block to check.
+/// @param R  The analyzed region.
+/// @param LI The loop info analysis.
+/// @param DT The dominator tree of the function.
 ///
 /// @return True if the block is a error block, false otherwise.
-bool isErrorBlock(llvm::BasicBlock &BB);
+bool isErrorBlock(llvm::BasicBlock &BB, const llvm::Region &R,
+                  llvm::LoopInfo &LI, const llvm::DominatorTree &DT);
 
 /// @brief Return the condition for the terminator @p TI.
 ///

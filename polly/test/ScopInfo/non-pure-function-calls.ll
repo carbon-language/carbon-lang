@@ -1,27 +1,21 @@
-; RUN: opt %loadPolly -polly-scops -polly-error-functions=timer_start,timer_stop -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; Error blocks are skipped during SCoP detection. Hence, we have to skip
-; them during SCoP too as they might contain accesses or branches we cannot
-; handle. Additionally, some blocks might be only reachable via error blocks.
-; Such blocks should not be considered to be valid and therefor ignored.
+; Allow the user to define function names that are treated as
+; error functions and assumed not to be executed.
 ;
 ;    void timer_start(void);
 ;    void timer_stop(void);
 ;    void kernel(int *A, int *B, int timeit, int N) {
 ;
-;      if (timeit) {
+;      if (timeit)
 ;        timer_start();
-;        // split BB
-;        A[0] = 0;                 // Do not create a statement for this block
-;      }
 ;
 ;      for (int i = 0; i < N; i++)
 ;        A[i] += B[i];
 ;
 ;      if (timeit) {
 ;        timer_stop();
-;        if (invalid float branch) // Do not crash on the float branch
-;          timer_start();
+;        timer_start();
 ;      }
 ;
 ;      for (int i = 0; i < N; i++)
@@ -31,47 +25,32 @@
 ;        timer_stop();
 ;    }
 ;
-;  The assumed context is empty because all statements are executed only
-;  if timeit != 0. This is due to the fact that they are not "reached"
-;  by the error blocks that are executed for timeit == 0.
-;
-; CHECK:    Region: %entry.split---%if.end.20
+; CHECK:    Region: %for.cond---%if.end.20
 ; CHECK:    Assumed Context:
-; CHECK-NEXT:    [timeit, N] -> { : }
+; CHECK:    [N, timeit] -> {  : timeit = 0 }
 ; CHECK:    Statements {
-; CHECK-NOT:  Stmt_if_then_split
-; CHECK:      Stmt_for_body
-; CHECK-NOT:  Stmt_if_then_split
-; CHECK:      Stmt_for_body_9
-; CHECK-NOT:  Stmt_if_then_split
+; CHECK:      Stmt
+; CHECK:      Stmt
+; CHECK-NOT   Stmt
 ; CHECK:    }
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 define void @kernel(i32* %A, i32* %B, i32 %timeit, i32 %N) {
 entry:
-  br label %entry.split
-
-entry.split:
   %tobool = icmp eq i32 %timeit, 0
-  br i1 %tobool, label %for.cond.pre, label %if.then
+  br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
   call void @timer_start()
-  br label %if.then.split
+  br label %if.end
 
-; Dead block if we assume if.then not to be executed because of the call
-if.then.split:                                           ; preds = %if.then
-  %A0 = getelementptr inbounds i32, i32* %A, i64 0
-  store i32 0, i32* %A0, align 4
-  br label %for.cond.pre
-
-for.cond.pre:
+if.end:                                           ; preds = %entry, %if.then
   %tmp = sext i32 %N to i64
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %if.end
-  %indvars.iv1 = phi i64 [ %indvars.iv.next2, %for.inc ], [ 0, %for.cond.pre ]
+  %indvars.iv1 = phi i64 [ %indvars.iv.next2, %for.inc ], [ 0, %if.end ]
   %cmp = icmp slt i64 %indvars.iv1, %tmp
   br i1 %cmp, label %for.body, label %for.end
 
@@ -94,10 +73,6 @@ for.end:                                          ; preds = %for.cond
 
 if.then.4:                                        ; preds = %for.end
   call void @timer_stop()
-  %na = fcmp one float 4.0, 5.0
-  br i1 %na, label %if.end.5, label %if.then.4.rem
-
-if.then.4.rem:                                        ; preds = %for.end
   call void @timer_start()
   br label %if.end.5
 

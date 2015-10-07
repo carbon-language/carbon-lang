@@ -973,7 +973,7 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
 
   for (BasicBlock *BB : CurRegion.blocks()) {
     // Do not check exception blocks as we will never include them in the SCoP.
-    if (isErrorBlock(*BB))
+    if (isErrorBlock(*BB, CurRegion, *LI, *DT))
       continue;
 
     if (!isValidCFG(*BB, false, Context) && !KeepGoing)
@@ -1096,6 +1096,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
 
   AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   Region *TopRegion = RI->getTopLevelRegion();
 
   releaseMemory();
@@ -1171,6 +1172,7 @@ void polly::ScopDetection::verifyAnalysis() const {
 void ScopDetection::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<ScalarEvolutionWrapperPass>();
+  AU.addRequired<DominatorTreeWrapperPass>();
   // We also need AA and RegionInfo when we are verifying analysis.
   AU.addRequiredTransitive<AAResultsWrapperPass>();
   AU.addRequiredTransitive<RegionInfoPass>();
@@ -1205,6 +1207,7 @@ INITIALIZE_PASS_BEGIN(ScopDetection, "polly-detect",
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
 INITIALIZE_PASS_END(ScopDetection, "polly-detect",
                     "Polly - Detect static control parts (SCoPs)", false, false)

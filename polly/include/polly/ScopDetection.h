@@ -131,6 +131,7 @@ private:
 
   /// @brief Analysis passes used.
   //@{
+  const DominatorTree *DT;
   ScalarEvolution *SE;
   LoopInfo *LI;
   RegionInfo *RI;

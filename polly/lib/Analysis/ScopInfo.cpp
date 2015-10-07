@@ -1698,11 +1698,12 @@ static inline unsigned getNumBlocksInRegionNode(RegionNode *RN) {
   return NumBlocks;
 }
 
-static bool containsErrorBlock(RegionNode *RN) {
+static bool containsErrorBlock(RegionNode *RN, const Region &R, LoopInfo &LI,
+                               const DominatorTree &DT) {
   if (!RN->isSubRegion())
-    return isErrorBlock(*RN->getNodeAs<BasicBlock>());
+    return isErrorBlock(*RN->getNodeAs<BasicBlock>(), R, LI, DT);
   for (BasicBlock *BB : RN->getNodeAs<Region>()->blocks())
-    if (isErrorBlock(*BB))
+    if (isErrorBlock(*BB, R, LI, DT))
       return true;
   return false;
 }
@@ -1785,7 +1786,7 @@ void Scop::buildDomainsWithBranchConstraints(Region *R) {
     // the predecessors and can therefor look at the domain of a error block.
     // That allows us to generate the assumptions needed for them not to be
     // executed at runtime.
-    if (containsErrorBlock(RN))
+    if (containsErrorBlock(RN, getRegion(), LI, DT))
       continue;
 
     BasicBlock *BB = getRegionNodeBasicBlock(RN);
@@ -1993,7 +1994,7 @@ void Scop::propagateDomainConstraints(Region *R) {
       addLoopBoundsToHeaderDomain(BBLoop);
 
     // Add assumptions for error blocks.
-    if (containsErrorBlock(RN)) {
+    if (containsErrorBlock(RN, getRegion(), LI, DT)) {
       IsOptimized = true;
       isl_set *DomPar = isl_set_params(isl_set_copy(Domain));
       addAssumption(isl_set_complement(DomPar));
@@ -2888,7 +2889,7 @@ bool Scop::isIgnored(RegionNode *RN) {
     return true;
 
   // Check if error blocks are contained.
-  if (containsErrorBlock(RN))
+  if (containsErrorBlock(RN, getRegion(), LI, DT))
     return true;
 
   return false;

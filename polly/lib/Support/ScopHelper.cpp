@@ -28,11 +28,6 @@ using namespace polly;
 
 #define DEBUG_TYPE "polly-scop-helper"
 
-static cl::list<std::string>
-    ErrorFunctions("polly-error-functions",
-                   cl::desc("A list of error functions"), cl::Hidden,
-                   cl::ZeroOrMore, cl::CommaSeparated, cl::cat(PollyCategory));
-
 Value *polly::getPointerOperand(Instruction &Inst) {
   if (LoadInst *load = dyn_cast<LoadInst>(&Inst))
     return load->getPointerOperand();
@@ -346,22 +341,36 @@ Value *polly::expandCodeFor(Scop &S, ScalarEvolution &SE, const DataLayout &DL,
   return Expander.expandCodeFor(E, Ty, IP);
 }
 
-bool polly::isErrorBlock(BasicBlock &BB) {
+bool polly::isErrorBlock(BasicBlock &BB, const Region &R, LoopInfo &LI,
+                         const DominatorTree &DT) {
 
   if (isa<UnreachableInst>(BB.getTerminator()))
     return true;
 
-  if (ErrorFunctions.empty())
+  if (LI.isLoopHeader(&BB))
+    return false;
+
+  if (DT.dominates(&BB, R.getExit()))
+    return false;
+
+  // FIXME: This is a simple heuristic to determine if the load is executed
+  //        in a conditional. However, we actually would need the control
+  //        condition, i.e., the post dominance frontier. Alternatively we
+  //        could walk up the dominance tree until we find a block that is
+  //        not post dominated by the load and check if it is a conditional
+  //        or a loop header.
+  auto *DTNode = DT.getNode(&BB);
+  auto *IDomBB = DTNode->getIDom()->getBlock();
+  if (LI.isLoopHeader(IDomBB))
     return false;
 
   for (Instruction &Inst : BB)
-    if (CallInst *CI = dyn_cast<CallInst>(&Inst))
-      if (Function *F = CI->getCalledFunction()) {
-        const auto &FnName = F->getName();
-        for (const auto &ErrorFn : ErrorFunctions)
-          if (FnName.equals(ErrorFn))
-            return true;
-      }
+    if (CallInst *CI = dyn_cast<CallInst>(&Inst)) {
+      if (!CI->doesNotAccessMemory())
+        return true;
+      if (CI->doesNotReturn())
+        return true;
+    }
 
   return false;
 }
