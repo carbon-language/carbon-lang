@@ -913,37 +913,37 @@ MatchFinder::~MatchFinder() {}
 void MatchFinder::addMatcher(const DeclarationMatcher &NodeMatch,
                              MatchCallback *Action) {
   Matchers.DeclOrStmt.emplace_back(NodeMatch, Action);
-  Matchers.AllCallbacks.push_back(Action);
+  Matchers.AllCallbacks.insert(Action);
 }
 
 void MatchFinder::addMatcher(const TypeMatcher &NodeMatch,
                              MatchCallback *Action) {
   Matchers.Type.emplace_back(NodeMatch, Action);
-  Matchers.AllCallbacks.push_back(Action);
+  Matchers.AllCallbacks.insert(Action);
 }
 
 void MatchFinder::addMatcher(const StatementMatcher &NodeMatch,
                              MatchCallback *Action) {
   Matchers.DeclOrStmt.emplace_back(NodeMatch, Action);
-  Matchers.AllCallbacks.push_back(Action);
+  Matchers.AllCallbacks.insert(Action);
 }
 
 void MatchFinder::addMatcher(const NestedNameSpecifierMatcher &NodeMatch,
                              MatchCallback *Action) {
   Matchers.NestedNameSpecifier.emplace_back(NodeMatch, Action);
-  Matchers.AllCallbacks.push_back(Action);
+  Matchers.AllCallbacks.insert(Action);
 }
 
 void MatchFinder::addMatcher(const NestedNameSpecifierLocMatcher &NodeMatch,
                              MatchCallback *Action) {
   Matchers.NestedNameSpecifierLoc.emplace_back(NodeMatch, Action);
-  Matchers.AllCallbacks.push_back(Action);
+  Matchers.AllCallbacks.insert(Action);
 }
 
 void MatchFinder::addMatcher(const TypeLocMatcher &NodeMatch,
                              MatchCallback *Action) {
   Matchers.TypeLoc.emplace_back(NodeMatch, Action);
-  Matchers.AllCallbacks.push_back(Action);
+  Matchers.AllCallbacks.insert(Action);
 }
 
 bool MatchFinder::addDynamicMatcher(const internal::DynTypedMatcher &NodeMatch,

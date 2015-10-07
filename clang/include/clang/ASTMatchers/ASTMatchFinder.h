@@ -42,6 +42,7 @@
 #define LLVM_CLANG_ASTMATCHERS_ASTMATCHFINDER_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Timer.h"
 
@@ -208,7 +209,7 @@ public:
         NestedNameSpecifierLoc;
     std::vector<std::pair<TypeLocMatcher, MatchCallback *>> TypeLoc;
     /// \brief All the callbacks in one container to simplify iteration.
-    std::vector<MatchCallback *> AllCallbacks;
+    llvm::SmallPtrSet<MatchCallback *, 16> AllCallbacks;
   };
 
 private:
