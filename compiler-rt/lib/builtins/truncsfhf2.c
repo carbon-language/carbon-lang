@@ -11,6 +11,8 @@
 #define DST_HALF
 #include "fp_trunc_impl.inc"
 
+ARM_EABI_FNALIAS(f2h, truncsfhf2)
+
 // Use a forwarding definition and noinline to implement a poor man's alias,
 // as there isn't a good cross-platform way of defining one.
 COMPILER_RT_ABI NOINLINE uint16_t __truncsfhf2(float a) {
