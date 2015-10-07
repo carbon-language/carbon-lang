@@ -18,6 +18,8 @@ class TestObjCIvarStripped(TestBase):
         self.stop_line = line_number(self.main_source, '// Set breakpoint here.')
 
     @skipUnlessDarwin
+    @skipIfDwarf    # This test requires a stripped binary and a dSYM
+    @skipIfDWO      # This test requires a stripped binary and a dSYM
     @python_api_test
     def test_with_python_api(self):
         """Test that we can find stripped Objective-C ivars in the runtime"""

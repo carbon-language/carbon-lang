@@ -1099,6 +1099,9 @@ def skipIf(bugnumber=None, oslist=None, compiler=None, compiler_version=None, ar
 def skipIfDebugInfo(bugnumber=None, debug_info=None):
     return skipIf(bugnumber=bugnumber, debug_info=debug_info)
 
+def skipIfDWO(bugnumber=None):
+    return skipIfDebugInfo(bugnumber, ["dwo"])
+
 def skipIfDwarf(bugnumber=None):
     return skipIfDebugInfo(bugnumber, ["dwarf"])
 
