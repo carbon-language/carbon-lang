@@ -1060,22 +1060,16 @@ bool MipsFastISel::selectFPToInt(const Instruction *I, bool IsSigned) {
   // entirely within FPRs.
   unsigned DestReg = createResultReg(&Mips::GPR32RegClass);
   unsigned TempReg = createResultReg(&Mips::FGR32RegClass);
-  unsigned Opc;
-
-  if (SrcVT == MVT::f32)
-    Opc = Mips::TRUNC_W_S;
-  else
-    Opc = Mips::TRUNC_W_D32;
+  unsigned Opc = (SrcVT == MVT::f32) ? Mips::TRUNC_W_S : Mips::TRUNC_W_D32;
 
   // Generate the convert.
   emitInst(Opc, TempReg).addReg(SrcReg);
-
   emitInst(Mips::MFC1, DestReg).addReg(TempReg);
 
   updateValueMap(I, DestReg);
   return true;
 }
-//
+
 bool MipsFastISel::processCallArgs(CallLoweringInfo &CLI,
                                    SmallVectorImpl<MVT> &OutVTs,
                                    unsigned &NumBytes) {
