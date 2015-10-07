@@ -48,7 +48,7 @@
  */
 #if __has_builtin(__builtin_isfinite)
 #  define crt_isfinite(x) __builtin_isfinite((x))
-#elif defined(__GNU__)
+#elif defined(__GNUC__)
 #  define crt_isfinite(x) \
   __extension__(({ \
       __typeof((x)) x_ = (x); \
