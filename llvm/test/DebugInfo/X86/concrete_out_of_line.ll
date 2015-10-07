@@ -18,12 +18,14 @@
 ; CHECK:     DW_AT_name {{.*}} "~nsAutoRefCnt"
 
 ; CHECK: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_decl_line {{.*}}18
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name {{.*}}D2
 ; CHECK-NEXT:     DW_AT_specification {{.*}} "~nsAutoRefCnt"
 ; CHECK-NEXT:     DW_AT_inline
 ; CHECK-NOT:      DW_AT
 ; CHECK: DW_TAG
 ; CHECK: DW_TAG_subprogram
+; CHECK-NEXT:     DW_AT_decl_line {{.*}}18
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name {{.*}}D1
 ; CHECK-NEXT:     DW_AT_specification {{.*}} "~nsAutoRefCnt"
 ; CHECK-NEXT:     DW_AT_inline
