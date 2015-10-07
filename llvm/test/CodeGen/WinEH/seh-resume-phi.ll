@@ -55,7 +55,7 @@ eh.resume:
 ; CHECK-NEXT: indirectbr {{.*}} [label %__except]
 ;
 ; CHECK: __except:
-; CHECK: call i32 @llvm.eh.exceptioncode()
+; CHECK: call i32 @llvm.eh.exceptioncode.old()
 ; CHECK: invoke void @might_crash(i8* %{{.*}})
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: cleanup

@@ -72,7 +72,10 @@ public:
   /// ValueMap - Since we emit code for the function a basic block at a time,
   /// we must remember which virtual registers hold the values for
   /// cross-basic-block values.
-  DenseMap<const Value*, unsigned> ValueMap;
+  DenseMap<const Value *, unsigned> ValueMap;
+
+  /// Track virtual registers created for exception pointers.
+  DenseMap<const Value *, unsigned> CatchPadExceptionPointers;
 
   // Keep track of frame indices allocated for statepoints as they could be used
   // across basic block boundaries.
@@ -233,6 +236,9 @@ public:
 
   /// getArgumentFrameIndex - Get frame index for the byval argument.
   int getArgumentFrameIndex(const Argument *A);
+
+  unsigned getCatchPadExceptionPointerVReg(const Value *CPI,
+                                           const TargetRegisterClass *RC);
 
 private:
   void addSEHHandlersForLPads(ArrayRef<const LandingPadInst *> LPads);

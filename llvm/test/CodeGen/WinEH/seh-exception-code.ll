@@ -52,13 +52,13 @@ __try.cont:                                       ; preds = %invoke.cont, %__exc
 ; CHECK: landingpad
 ; CHECK: indirectbr i8* %{{[^,]*}}, [label %[[except_split1:.*]]]
 ; CHECK: [[except_split1]]:
-; CHECK: call i32 @llvm.eh.exceptioncode()
+; CHECK: call i32 @llvm.eh.exceptioncode.old()
 ; CHECK: br label %__except
 ;
 ; CHECK: landingpad
 ; CHECK: indirectbr i8* %{{[^,]*}}, [label %[[except_split2:.*]]]
 ; CHECK: [[except_split2]]:
-; CHECK: call i32 @llvm.eh.exceptioncode()
+; CHECK: call i32 @llvm.eh.exceptioncode.old()
 ; CHECK: br label %__except
 ;
 ; CHECK: __except:

@@ -441,10 +441,14 @@ def int_eh_endcatch : Intrinsic<[], []>;
 def int_eh_exceptionpointer : Intrinsic<[llvm_anyptr_ty], [llvm_token_ty],
                                         [IntrNoMem]>;
 
+// Gets the exception code from a catchpad token. Only used on some platforms.
+def int_eh_exceptioncode : Intrinsic<[llvm_i32_ty], [llvm_token_ty], [IntrNoMem]>;
+
 // Represents the list of actions to take when an exception is thrown.
 def int_eh_actions : Intrinsic<[llvm_ptr_ty], [llvm_vararg_ty], []>;
 
-def int_eh_exceptioncode : Intrinsic<[llvm_i32_ty], [], [IntrReadMem]>;
+// FIXME: Remove this when landing pad EH can be removed.
+def int_eh_exceptioncode_old : Intrinsic<[llvm_i32_ty], [], [IntrReadMem]>;
 
 // __builtin_unwind_init is an undocumented GCC intrinsic that causes all
 // callee-saved registers to be saved and restored (regardless of whether they

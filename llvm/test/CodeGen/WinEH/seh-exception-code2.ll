@@ -87,5 +87,5 @@ entry:
 ; CHECK-NEXT: indirectbr i8* %{{[^,]*}}, [label %__except]
 ;
 ; CHECK: __except:
-; CHECK: call i32 @llvm.eh.exceptioncode()
+; CHECK: call i32 @llvm.eh.exceptioncode.old()
 ; CHECK: call i32 (i8*, ...) @printf

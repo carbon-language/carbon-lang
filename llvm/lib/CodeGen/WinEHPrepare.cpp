@@ -1614,7 +1614,7 @@ void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
   }
   IRBuilder<> Builder(HandlerBB->getFirstInsertionPt());
   Function *EHCodeFn = Intrinsic::getDeclaration(
-      StartBB->getParent()->getParent(), Intrinsic::eh_exceptioncode);
+      StartBB->getParent()->getParent(), Intrinsic::eh_exceptioncode_old);
   Value *Code = Builder.CreateCall(EHCodeFn, {}, "sehcode");
   Code = Builder.CreateIntToPtr(Code, SEHExceptionCodeSlot->getAllocatedType());
   Builder.CreateStore(Code, SEHExceptionCodeSlot);
@@ -3019,12 +3019,11 @@ colorFunclets(Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks,
       // Mark this as a funclet head as a member of itself.
       FuncletBlocks[Visiting].insert(Visiting);
       // Queue exits with the parent color.
-      for (User *Exit : VisitingHead->users()) {
-        for (BasicBlock *Succ :
-             successors(cast<Instruction>(Exit)->getParent())) {
-          if (BlockColors[Succ].insert(Color).second) {
-            Worklist.push_back({Succ, Color});
-          }
+      for (User *U : VisitingHead->users()) {
+        if (auto *Exit = dyn_cast<TerminatorInst>(U)) {
+          for (BasicBlock *Succ : successors(Exit->getParent()))
+            if (BlockColors[Succ].insert(Color).second)
+              Worklist.push_back({Succ, Color});
         }
       }
       // Handle CatchPad specially since its successors need different colors.
@@ -3124,7 +3123,9 @@ void llvm::calculateCatchReturnSuccessorColors(const Function *Fn,
 
     // The users of a catchpad are always catchrets.
     for (User *Exit : CatchPad->users()) {
-      auto *CatchReturn = cast<CatchReturnInst>(Exit);
+      auto *CatchReturn = dyn_cast<CatchReturnInst>(Exit);
+      if (!CatchReturn)
+        continue;
       BasicBlock *CatchRetSuccessor = CatchReturn->getSuccessor();
       std::set<BasicBlock *> &SuccessorColors = BlockColors[CatchRetSuccessor];
       assert(SuccessorColors.size() == 1 && "Expected BB to be monochrome!");

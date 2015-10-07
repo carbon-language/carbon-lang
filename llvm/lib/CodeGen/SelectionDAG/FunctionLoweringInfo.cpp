@@ -577,6 +577,17 @@ int FunctionLoweringInfo::getArgumentFrameIndex(const Argument *A) {
   return 0;
 }
 
+unsigned FunctionLoweringInfo::getCatchPadExceptionPointerVReg(
+    const Value *CPI, const TargetRegisterClass *RC) {
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  auto I = CatchPadExceptionPointers.insert({CPI, 0});
+  unsigned &VReg = I.first->second;
+  if (I.second)
+    VReg = MRI.createVirtualRegister(RC);
+  assert(VReg && "null vreg in exception pointer table!");
+  return VReg;
+}
+
 /// ComputeUsesVAFloatArgument - Determine if any floating-point values are
 /// being passed to this variadic function, and set the MachineModuleInfo's
 /// usesVAFloatArgument flag if so. This flag is used to emit an undefined

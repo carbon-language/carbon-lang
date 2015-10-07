@@ -5240,13 +5240,27 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_begincatch:
   case Intrinsic::eh_endcatch:
     llvm_unreachable("begin/end catch intrinsics not lowered in codegen");
-  case Intrinsic::eh_exceptioncode: {
+  case Intrinsic::eh_exceptioncode_old: {
     unsigned Reg = TLI.getExceptionPointerRegister();
     assert(Reg && "cannot get exception code on this platform");
     MVT PtrVT = TLI.getPointerTy(DAG.getDataLayout());
     const TargetRegisterClass *PtrRC = TLI.getRegClassFor(PtrVT);
     assert(FuncInfo.MBB->isEHPad() && "eh.exceptioncode in non-lpad");
     unsigned VReg = FuncInfo.MBB->addLiveIn(Reg, PtrRC);
+    SDValue N =
+        DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(), VReg, PtrVT);
+    N = DAG.getZExtOrTrunc(N, getCurSDLoc(), MVT::i32);
+    setValue(&I, N);
+    return nullptr;
+  }
+
+  case Intrinsic::eh_exceptionpointer:
+  case Intrinsic::eh_exceptioncode: {
+    // Get the exception pointer vreg, copy from it, and resize it to fit.
+    const auto *CPI = cast<CatchPadInst>(I.getArgOperand(0));
+    MVT PtrVT = TLI.getPointerTy(DAG.getDataLayout());
+    const TargetRegisterClass *PtrRC = TLI.getRegClassFor(PtrVT);
+    unsigned VReg = FuncInfo.getCatchPadExceptionPointerVReg(CPI, PtrRC);
     SDValue N =
         DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(), VReg, PtrVT);
     N = DAG.getZExtOrTrunc(N, getCurSDLoc(), MVT::i32);
