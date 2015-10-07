@@ -11,7 +11,8 @@ class TestQueues(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
-    @python_api_test
+    @python_api_test      
+    @unittest2.expectedFailure("rdar://22531180")
     def test_with_python_api(self):
         """Test queues inspection SB APIs."""
         self.build()
