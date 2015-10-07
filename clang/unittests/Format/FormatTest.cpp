@@ -2332,8 +2332,8 @@ TEST_F(FormatTest, IncompleteTryCatchBlocks) {
 
 TEST_F(FormatTest, FormatTryCatchBraceStyles) {
   FormatStyle Style = getLLVMStyle();
-  for (auto BraceStyle :
-       {FormatStyle::BS_Attach, FormatStyle::BS_Mozilla, FormatStyle::BS_WebKit}) {
+  for (auto BraceStyle : {FormatStyle::BS_Attach, FormatStyle::BS_Mozilla,
+                          FormatStyle::BS_WebKit}) {
     Style.BreakBeforeBraces = BraceStyle;
     verifyFormat("try {\n"
                  "  // something\n"
@@ -2383,6 +2383,15 @@ TEST_F(FormatTest, FormatTryCatchBraceStyles) {
                "  {\n"
                "    // something\n"
                "  }",
+               Style);
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.BeforeCatch = true;
+  verifyFormat("try {\n"
+               "  // something\n"
+               "}\n"
+               "catch (...) {\n"
+               "  // something\n"
+               "}",
                Style);
 }
 

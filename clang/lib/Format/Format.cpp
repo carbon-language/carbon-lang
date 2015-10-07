@@ -372,6 +372,8 @@ std::string ParseErrorCategory::message(int EV) const {
 }
 
 static FormatStyle expandPresets(const FormatStyle &Style) {
+  if (Style.BreakBeforeBraces == FormatStyle::BS_Custom)
+    return Style;
   FormatStyle Expanded = Style;
   Expanded.BraceWrapping = {false, false, false, false, false, false,
                             false, false, false, false, false};
@@ -442,6 +444,8 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.BreakBeforeBinaryOperators = FormatStyle::BOS_None;
   LLVMStyle.BreakBeforeTernaryOperators = true;
   LLVMStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
+  LLVMStyle.BraceWrapping = {false, false, false, false, false, false,
+                             false, false, false, false, false};
   LLVMStyle.BreakConstructorInitializersBeforeComma = false;
   LLVMStyle.ColumnLimit = 80;
   LLVMStyle.CommentPragmas = "^ IWYU pragma:";
