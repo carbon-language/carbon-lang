@@ -333,6 +333,9 @@ bool SimplifyIndvar::eliminateIdentitySCEV(Instruction *UseInst,
     if (!DT || !DT->dominates(IVOperand, UseInst))
       return false;
 
+  if (!LI->replacementPreservesLCSSAForm(UseInst, IVOperand))
+    return false;
+
   DEBUG(dbgs() << "INDVARS: Eliminated identity: " << *UseInst << '\n');
 
   UseInst->replaceAllUsesWith(IVOperand);
