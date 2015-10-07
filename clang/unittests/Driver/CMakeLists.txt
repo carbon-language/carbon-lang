@@ -9,4 +9,5 @@ add_clang_unittest(ClangDriverTests
 
 target_link_libraries(ClangDriverTests
   clangDriver
+  clangBasic
   )
