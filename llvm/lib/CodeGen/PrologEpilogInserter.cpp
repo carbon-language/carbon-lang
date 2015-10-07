@@ -820,12 +820,11 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           Fn, FuncInfo.UnwindHelpFrameIdx, FrameReg);
     for (WinEHTryBlockMapEntry &TBME : FuncInfo.TryBlockMap) {
       for (WinEHHandlerType &H : TBME.HandlerArray) {
-        unsigned UnusedReg;
         if (H.CatchObj.FrameIndex == INT_MAX)
           H.CatchObj.FrameOffset = INT_MAX;
         else
-          H.CatchObj.FrameOffset =
-              TFI.getFrameIndexReference(Fn, H.CatchObj.FrameIndex, UnusedReg);
+          H.CatchObj.FrameOffset = TFI.getFrameIndexReferenceFromSP(
+              Fn, H.CatchObj.FrameIndex, FrameReg);
       }
     }
   }

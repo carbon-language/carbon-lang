@@ -120,7 +120,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: $handlerMap$0$try_catch_catch:
 ; X86-NEXT:   .long   0
 ; X86-NEXT:   .long   "??_R0H@8"
-; X86-NEXT:   .long   -20
+; X86-NEXT:   .long   24
 ; X86-NEXT:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"
 ; X86-NEXT:   .long   64
 ; X86-NEXT:   .long   0
@@ -156,7 +156,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: .seh_endprologue
 ; X64-DAG: .Ltmp4
 ; X64-DAG: leaq -[[local_offs]](%rbp), %rdx
-; X64-DAG: movl [[e_addr:[-0-9]+]](%rbp), %ecx
+; X64-DAG: movl -4(%rbp), %ecx
 ; X64: callq f
 ; X64: leaq [[contbb]](%rip), %rax
 ; X64-NEXT: addq $32, %rsp
@@ -204,7 +204,7 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-NEXT:   .long   0
 ; X64-NEXT:   .long   "??_R0H@8"@IMGREL
 ; FIXME: This should probably be offset from rsp, not rbp.
-; X64-NEXT:   .long   [[e_addr]]
+; X64-NEXT:   .long   44
 ; X64-NEXT:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"@IMGREL
 ; X64-NEXT:   .long   56
 ; X64-NEXT:   .long   64
@@ -216,9 +216,9 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64: $ip2state$try_catch_catch:
 ; X64-NEXT: .long   .Lfunc_begin0@IMGREL
 ; X64-NEXT: .long   -1
-; X64-NEXT: .long   .Ltmp0@IMGREL
+; X64-NEXT: .long   .Ltmp0@IMGREL+1
 ; X64-NEXT: .long   0
-; X64-NEXT: .long   .Ltmp4@IMGREL
+; X64-NEXT: .long   .Ltmp4@IMGREL+1
 ; X64-NEXT: .long   1
 ; X64-NEXT: .long   .Ltmp3@IMGREL+1
 ; X64-NEXT: .long   -1
@@ -353,7 +353,7 @@ catchendblock:
 ; X64-LABEL: $ip2state$branch_to_normal_dest:
 ; X64-NEXT: .long   .Lfunc_begin1@IMGREL
 ; X64-NEXT: .long   -1
-; X64-NEXT: .long   .Ltmp[[before_call]]@IMGREL
+; X64-NEXT: .long   .Ltmp[[before_call]]@IMGREL+1
 ; X64-NEXT: .long   0
 ; X64-NEXT: .long   .Ltmp[[after_call]]@IMGREL+1
 ; X64-NEXT: .long   -1

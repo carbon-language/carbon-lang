@@ -791,7 +791,7 @@ void WinException::computeIP2StateTable(
       // Emit an entry indicating that PCs after 'Label' have this EH state.
       if (I.State != LastEHState)
         IPToStateTable.push_back(
-            std::make_pair(create32bitRef(I.BeginLabel), I.State));
+            std::make_pair(getLabelPlusOne(I.BeginLabel), I.State));
       LastEHState = I.State;
       LastEndLabel = I.EndLabel;
     }
