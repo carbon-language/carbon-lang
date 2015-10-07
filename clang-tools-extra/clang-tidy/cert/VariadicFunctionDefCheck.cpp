@@ -20,9 +20,12 @@ void VariadicFunctionDefCheck::registerMatchers(MatchFinder *Finder) {
   if (!getLangOpts().CPlusPlus)
     return;
 
-  // We only care about function *definitions* that are variadic.
-  Finder->addMatcher(functionDecl(isDefinition(), isVariadic()).bind("func"),
-                     this);
+  // We only care about function *definitions* that are variadic, and do not
+  // have extern "C" language linkage.
+  Finder->addMatcher(
+      functionDecl(isDefinition(), isVariadic(), unless(isExternC()))
+          .bind("func"),
+      this);
 }
 
 void VariadicFunctionDefCheck::check(const MatchFinder::MatchResult &Result) {
