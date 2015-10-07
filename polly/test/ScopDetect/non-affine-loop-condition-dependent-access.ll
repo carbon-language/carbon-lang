@@ -15,9 +15,9 @@
 ; PROFIT-NOT:                     Valid
 ;
 ;    void f(int * restrict A, int * restrict C) {
-;      int j;
+;      int j = 0;
 ;      for (int i = 0; i < 1024; i++) {
-;        while ((j = C[i]))
+;        while ((j = C[j]))
 ;          A[j]++;
 ;      }
 ;    }
@@ -37,7 +37,8 @@ bb2:                                              ; preds = %bb1
   br label %bb3
 
 bb3:                                              ; preds = %bb6, %bb2
-  %tmp = getelementptr inbounds i32, i32* %C, i64 %indvars.iv
+  %indvars.j = phi i32 [ %tmp4, %bb6 ], [ 0, %bb2 ]
+  %tmp = getelementptr inbounds i32, i32* %C, i32 %indvars.j
   %tmp4 = load i32, i32* %tmp, align 4
   %tmp5 = icmp eq i32 %tmp4, 0
   br i1 %tmp5, label %bb11, label %bb6

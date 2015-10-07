@@ -834,11 +834,8 @@ void IslNodeBuilder::materializeParameters(isl_set *Set, bool All) {
   }
 }
 
-/// @brief Create the actual preload memory access for @p MA.
-static inline Value *createPreloadLoad(Scop &S, const MemoryAccess &MA,
-                                       isl_ast_build *Build,
-                                       IslExprBuilder &ExprBuilder) {
-  isl_set *AccessRange = isl_map_range(MA.getAccessRelation());
+Value *IslNodeBuilder::preloadUnconditionally(isl_set *AccessRange,
+                                              isl_ast_build *Build) {
   isl_pw_multi_aff *PWAccRel = isl_pw_multi_aff_from_set(AccessRange);
   PWAccRel = isl_pw_multi_aff_gist_params(PWAccRel, S.getContext());
   isl_ast_expr *Access =
@@ -850,15 +847,19 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
                                             isl_set *Domain,
                                             isl_ast_build *Build) {
 
+  isl_set *AccessRange = isl_map_range(MA.getAccessRelation());
+  materializeParameters(AccessRange, false);
+
   isl_set *Universe = isl_set_universe(isl_set_get_space(Domain));
   bool AlwaysExecuted = isl_set_is_equal(Domain, Universe);
   isl_set_free(Universe);
 
   if (AlwaysExecuted) {
     isl_set_free(Domain);
-    return createPreloadLoad(S, MA, Build, ExprBuilder);
+    return preloadUnconditionally(AccessRange, Build);
   } else {
 
+    materializeParameters(Domain, false);
     isl_ast_expr *DomainCond = isl_ast_build_expr_from_set(Build, Domain);
 
     Value *Cond = ExprBuilder.create(DomainCond);
@@ -891,7 +892,7 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
     Builder.SetInsertPoint(ExecBB->getTerminator());
     Instruction *AccInst = MA.getAccessInstruction();
     Type *AccInstTy = AccInst->getType();
-    Value *PreAccInst = createPreloadLoad(S, MA, Build, ExprBuilder);
+    Value *PreAccInst = preloadUnconditionally(AccessRange, Build);
 
     Builder.SetInsertPoint(MergeBB->getTerminator());
     auto *MergePHI = Builder.CreatePHI(
@@ -994,5 +995,5 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
 Value *IslNodeBuilder::generateSCEV(const SCEV *Expr) {
   Instruction *InsertLocation = --(Builder.GetInsertBlock()->end());
   return expandCodeFor(S, SE, DL, "polly", Expr, Expr->getType(),
-                       InsertLocation);
+                       InsertLocation, &ValueMap);
 }

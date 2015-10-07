@@ -29,7 +29,7 @@ return:
 }
 
 ; CHECK-LABEL: base_pointer_in_condition
-; CHECK: Valid Region for Scop: for.i => then
+; CHECK: Valid Region for Scop: pre => return
 
 define void @base_pointer_is_argument(float* %A, i64 %n) {
 entry:
@@ -292,4 +292,4 @@ exit:
 }
 
 ; CHECK: base_pointer_is_ptr2ptr
-; CHECK-NOT: Valid Region for Scop
+; CHECK: Valid Region for Scop: for.j => for.i.inc

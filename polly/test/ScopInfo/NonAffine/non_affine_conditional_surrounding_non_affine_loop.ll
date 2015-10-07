@@ -10,35 +10,19 @@
 ; RUN:     -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops=true \
 ; RUN:     -analyze < %s | FileCheck %s --check-prefix=PROFIT
 ;
-; INNERMOST:    Function: f
-; INNERMOST:    Region: %bb9---%bb18
-; INNERMOST:    Max Loop Depth:  1
-; INNERMOST:    Context:
-; INNERMOST:    [p_0] -> {  :
-; INNERMOST-DAG:   p_0 >= -2199023255552
-; INNERMOST-DAG:    and 
-; INNERMOST-DAG:   p_0 <= 2199023254528
-; INNERMOST:             }
-; INNERMOST:    Assumed Context:
-; INNERMOST:    [p_0] -> {  :  }
-; INNERMOST:    p0: {0,+,(sext i32 %N to i64)}<%bb3>
-; INNERMOST:    Alias Groups (0):
-; INNERMOST:        n/a
-; INNERMOST:    Statements {
-; INNERMOST:      Stmt_bb12
-; INNERMOST:            Domain :=
-; INNERMOST:                [p_0] -> { Stmt_bb12[i0] :
-; INNERMOST-DAG:                i0 >= 0
-; INNERMOST-DAG:              and
-; INNERMOST-DAG:                i0 <= -1 + p_0
-; INNERMOST:                  }
-; INNERMOST:            Schedule :=
-; INNERMOST:                [p_0] -> { Stmt_bb12[i0] -> [i0] };
-; INNERMOST:            ReadAccess := [Reduction Type: +] [Scalar: 0]
-; INNERMOST:                [p_0] -> { Stmt_bb12[i0] -> MemRef_A[i0] };
-; INNERMOST:            MustWriteAccess :=  [Reduction Type: +] [Scalar: 0]
-; INNERMOST:                [p_0] -> { Stmt_bb12[i0] -> MemRef_A[i0] };
-; INNERMOST:    }
+; Negative test for INNERMOST.
+; At the moment we will optimistically assume A[i] in the conditional before the inner
+; loop might be invariant and expand the SCoP from the loop to include the conditional. However,
+; during SCoP generation we will realize that A[i] is in fact not invariant (in this region = the body
+; of the outer loop) and bail.
+;
+; Possible solutions could be:
+;   - Do not optimistically assume it to be invariant (as before this commit), however we would loose
+;     a lot of invariant cases due to possible aliasing.
+;   - Reduce the size of the SCoP if an assumed invariant access is in fact not invariant instead of
+;     rejecting the whole region.
+;
+; INNERMOST-NOT:    Function: f
 ;
 ; ALL:    Function: f
 ; ALL:    Region: %bb3---%bb20

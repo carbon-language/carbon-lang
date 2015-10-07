@@ -13,7 +13,7 @@
 ; RUN:     | FileCheck %s --check-prefix=ALLOWNONAFFINEALL
 
 ; void f(int A[], int n) {
-;   for (int i = 0; i < A[n]; i++)
+;   for (int i = 0; i < A[n+i]; i++)
 ;     A[i] = 0;
 ; }
 
@@ -62,7 +62,8 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %inc = trunc i64 %1 to i32, !dbg !21
   store i32 0, i32* %arrayidx2, align 4, !dbg !24
   tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !18, metadata !DIExpression()), !dbg !20
-  %2 = load i32, i32* %arrayidx, align 4, !dbg !21
+  %arrayidx3 = getelementptr inbounds i32, i32* %arrayidx, i64 %indvar, !dbg !21
+  %2 = load i32, i32* %arrayidx3, align 4, !dbg !21
   %cmp = icmp slt i32 %inc, %2, !dbg !21
   %indvar.next = add i64 %indvar, 1, !dbg !21
   br i1 %cmp, label %for.body, label %for.cond.for.end_crit_edge, !dbg !21

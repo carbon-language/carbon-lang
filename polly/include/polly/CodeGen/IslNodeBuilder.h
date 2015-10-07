@@ -203,6 +203,10 @@ protected:
   virtual void createMark(__isl_take isl_ast_node *Marker);
   virtual void createFor(__isl_take isl_ast_node *For);
 
+  /// @brief Preload the memory access at @p AccessRange with @p Build.
+  Value *preloadUnconditionally(__isl_take isl_set *AccessRange,
+                                isl_ast_build *Build);
+
   /// @brief Preload the memory load access @p MA.
   ///
   /// If @p MA is not always executed it will be conditionally loaded and

@@ -14,7 +14,8 @@ bb:
 
 loop:
   %indvar = phi i64 [ %indvar.next, %loop ], [ 0, %bb ]
-  %tmp12 = load i64, i64* %tmp1
+  %gep = getelementptr inbounds i64, i64* %tmp1, i64 %indvar
+  %tmp12 = load i64, i64* %gep
   %tmp13 = mul nsw i64 %tmp12, %tmp4
   %ptr = getelementptr inbounds float, float* %B, i64 %tmp13
   %val = load float, float* %ptr

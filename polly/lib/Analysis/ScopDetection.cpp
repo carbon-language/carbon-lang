@@ -51,7 +51,6 @@
 #include "polly/ScopDetection.h"
 #include "polly/ScopDetectionDiagnostic.h"
 #include "polly/Support/SCEVValidator.h"
-#include "polly/Support/ScopHelper.h"
 #include "polly/Support/ScopLocation.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -258,9 +257,10 @@ bool ScopDetection::isMaxRegionInScop(const Region &R, bool Verify) const {
   if (Verify) {
     BoxedLoopsSetTy DummyBoxedLoopsSet;
     NonAffineSubRegionSetTy DummyNonAffineSubRegionSet;
+    InvariantLoadsSetTy DummyILS;
     DetectionContext Context(const_cast<Region &>(R), *AA,
                              DummyNonAffineSubRegionSet, DummyBoxedLoopsSet,
-                             false /*verifying*/);
+                             DummyILS, false /*verifying*/);
     return isValidRegion(Context);
   }
 
@@ -302,15 +302,39 @@ bool ScopDetection::addOverApproximatedRegion(Region *AR,
   return (AllowNonAffineSubLoops || Context.BoxedLoopsSet.empty());
 }
 
+bool ScopDetection::onlyValidRequiredInvariantLoads(
+    InvariantLoadsSetTy &RequiredILS, DetectionContext &Context) const {
+  Region &CurRegion = Context.CurRegion;
+
+  for (LoadInst *Load : RequiredILS)
+    if (!isHoistableLoad(Load, CurRegion, *LI, *SE))
+      return false;
+
+  Context.RequiredILS.insert(RequiredILS.begin(), RequiredILS.end());
+
+  return true;
+}
+
+bool ScopDetection::isAffine(const SCEV *S, DetectionContext &Context,
+                             Value *BaseAddress) const {
+
+  InvariantLoadsSetTy AccessILS;
+  if (!isAffineExpr(&Context.CurRegion, S, *SE, BaseAddress, &AccessILS))
+    return false;
+
+  if (!onlyValidRequiredInvariantLoads(AccessILS, Context))
+    return false;
+
+  return true;
+}
+
 bool ScopDetection::isValidSwitch(BasicBlock &BB, SwitchInst *SI,
                                   Value *Condition, bool IsLoopBranch,
                                   DetectionContext &Context) const {
-  Region &CurRegion = Context.CurRegion;
-
   Loop *L = LI->getLoopFor(&BB);
   const SCEV *ConditionSCEV = SE->getSCEVAtScope(Condition, L);
 
-  if (isAffineExpr(&CurRegion, ConditionSCEV, *SE))
+  if (isAffine(ConditionSCEV, Context))
     return true;
 
   if (!IsLoopBranch && AllowNonAffineSubRegions &&
@@ -327,8 +351,6 @@ bool ScopDetection::isValidSwitch(BasicBlock &BB, SwitchInst *SI,
 bool ScopDetection::isValidBranch(BasicBlock &BB, BranchInst *BI,
                                   Value *Condition, bool IsLoopBranch,
                                   DetectionContext &Context) const {
-  Region &CurRegion = Context.CurRegion;
-
   // Non constant conditions of branches need to be ICmpInst.
   if (!isa<ICmpInst>(Condition)) {
     if (!IsLoopBranch && AllowNonAffineSubRegions &&
@@ -361,7 +383,7 @@ bool ScopDetection::isValidBranch(BasicBlock &BB, BranchInst *BI,
   const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
   const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
 
-  if (isAffineExpr(&CurRegion, LHS, *SE) && isAffineExpr(&CurRegion, RHS, *SE))
+  if (isAffine(LHS, Context) && isAffine(RHS, Context))
     return true;
 
   if (!IsLoopBranch && AllowNonAffineSubRegions &&
@@ -452,18 +474,6 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
     if (!isInvariant(*Operand, Reg))
       return false;
 
-  // When the instruction is a load instruction, check that no write to memory
-  // in the region aliases with the load.
-  if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    auto Loc = MemoryLocation::get(LI);
-
-    // Check if any basic block in the region can modify the location pointed to
-    // by 'Loc'.  If so, 'Val' is (likely) not invariant in the region.
-    for (const BasicBlock *BB : Reg.blocks())
-      if (AA->canBasicBlockModify(*BB, Loc))
-        return false;
-  }
-
   return true;
 }
 
@@ -547,7 +557,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
         const Instruction *Insn = Pair.first;
         const SCEV *AF = Pair.second;
 
-        if (!isAffineExpr(&CurRegion, AF, *SE, BaseValue)) {
+        if (!isAffine(AF, Context, BaseValue)) {
           invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF, Insn,
                                          BaseValue);
           if (!KeepGoing)
@@ -574,7 +584,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
       MemAcc *Acc = &TempMemoryAccesses.find(Insn)->second;
 
       if (!AF) {
-        if (isAffineExpr(&CurRegion, Pair.second, *SE, BaseValue))
+        if (isAffine(Pair.second, Context, BaseValue))
           Acc->DelinearizedSubscripts.push_back(Pair.second);
         else
           IsNonAffine = true;
@@ -584,7 +594,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
         if (Acc->DelinearizedSubscripts.size() == 0)
           IsNonAffine = true;
         for (const SCEV *S : Acc->DelinearizedSubscripts)
-          if (!isAffineExpr(&CurRegion, S, *SE, BaseValue))
+          if (!isAffine(S, Context, BaseValue))
             IsNonAffine = true;
       }
 
@@ -655,11 +665,11 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   if (PollyDelinearize && !isVariantInNonAffineLoop) {
     Context.Accesses[BasePointer].push_back({&Inst, AccessFunction});
 
-    if (!isAffineExpr(&CurRegion, AccessFunction, *SE, BaseValue))
+    if (!isAffine(AccessFunction, Context, BaseValue))
       Context.NonAffineAccesses.insert(BasePointer);
   } else if (!AllowNonAffine) {
     if (isVariantInNonAffineLoop ||
-        !isAffineExpr(&CurRegion, AccessFunction, *SE, BaseValue))
+        !isAffine(AccessFunction, Context, BaseValue))
       return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
                                             AccessFunction, &Inst, BaseValue);
   }
@@ -693,9 +703,16 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
       // the beginning of the SCoP. This breaks if the base pointer is defined
       // inside the scop. Hence, we can only create a run-time check if we are
       // sure the base pointer is not an instruction defined inside the scop.
+      // However, we can ignore loads that will be hoisted.
       for (const auto &Ptr : AS) {
         Instruction *Inst = dyn_cast<Instruction>(Ptr.getValue());
         if (Inst && CurRegion.contains(Inst)) {
+          auto *Load = dyn_cast<LoadInst>(Inst);
+          if (Load && isHoistableLoad(Load, CurRegion, *LI, *SE)) {
+            Context.RequiredILS.insert(Load);
+            continue;
+          }
+
           CanBuildRunTimeCheck = false;
           break;
         }
@@ -815,7 +832,8 @@ Region *ScopDetection::expandRegion(Region &R) {
   while (ExpandedRegion) {
     DetectionContext Context(
         *ExpandedRegion, *AA, NonAffineSubRegionMap[ExpandedRegion.get()],
-        BoxedLoopsMap[ExpandedRegion.get()], false /* verifying */);
+        BoxedLoopsMap[ExpandedRegion.get()],
+        RequiredInvariantLoadsMap[ExpandedRegion.get()], false /* verifying */);
     DEBUG(dbgs() << "\t\tTrying " << ExpandedRegion->getNameStr() << "\n");
     // Only expand when we did not collect errors.
 
@@ -877,11 +895,12 @@ void ScopDetection::removeCachedResults(const Region &R) {
   ValidRegions.remove(&R);
   BoxedLoopsMap.erase(&R);
   NonAffineSubRegionMap.erase(&R);
+  RequiredInvariantLoadsMap.erase(&R);
 }
 
 void ScopDetection::findScops(Region &R) {
   DetectionContext Context(R, *AA, NonAffineSubRegionMap[&R], BoxedLoopsMap[&R],
-                           false /*verifying*/);
+                           RequiredInvariantLoadsMap[&R], false /*verifying*/);
 
   bool RegionIsValid = false;
   if (!PollyProcessUnprofitable && regionWithoutLoops(R, LI)) {
@@ -1121,14 +1140,23 @@ ScopDetection::getBoxedLoops(const Region *R) const {
   return &BLMIt->second;
 }
 
+const InvariantLoadsSetTy *
+ScopDetection::getRequiredInvariantLoads(const Region *R) const {
+  auto I = RequiredInvariantLoadsMap.find(R);
+  if (I == RequiredInvariantLoadsMap.end())
+    return nullptr;
+  return &I->second;
+}
+
 void polly::ScopDetection::verifyRegion(const Region &R) const {
   assert(isMaxRegionInScop(R) && "Expect R is a valid region.");
 
   BoxedLoopsSetTy DummyBoxedLoopsSet;
   NonAffineSubRegionSetTy DummyNonAffineSubRegionSet;
+  InvariantLoadsSetTy DummyILS;
   DetectionContext Context(const_cast<Region &>(R), *AA,
                            DummyNonAffineSubRegionSet, DummyBoxedLoopsSet,
-                           true /*verifying*/);
+                           DummyILS, true /*verifying*/);
   isValidRegion(Context);
 }
 
@@ -1162,6 +1190,7 @@ void ScopDetection::releaseMemory() {
   InsnToMemAcc.clear();
   BoxedLoopsMap.clear();
   NonAffineSubRegionMap.clear();
+  RequiredInvariantLoadsMap.clear();
 
   // Do not clear the invalid function set.
 }

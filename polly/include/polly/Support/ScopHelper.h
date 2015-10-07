@@ -15,12 +15,13 @@
 #define POLLY_SUPPORT_IRHELPER_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 
 namespace llvm {
 class Type;
 class Instruction;
+class LoadInst;
 class LoopInfo;
 class Loop;
 class ScalarEvolution;
@@ -44,6 +45,9 @@ class Scop;
 /// @brief Type to remap values.
 using ValueMapT = llvm::DenseMap<llvm::AssertingVH<llvm::Value>,
                                  llvm::AssertingVH<llvm::Value>>;
+
+/// @brief Type for a set of invariant loads.
+using InvariantLoadsSetTy = llvm::SetVector<llvm::AssertingVH<llvm::LoadInst>>;
 
 /// Temporary Hack for extended regiontree.
 ///
@@ -105,11 +109,11 @@ void splitEntryBlockForAlloca(llvm::BasicBlock *EntryBlock, llvm::Pass *P);
 /// @param E    The expression for which code is actually generated.
 /// @param Ty   The type of the resulting code.
 /// @param IP   The insertion point for the new code.
-llvm::Value *expandCodeFor(
-    Scop &S, llvm::ScalarEvolution &SE, const llvm::DataLayout &DL,
-    const char *Name, const llvm::SCEV *E, llvm::Type *Ty,
-    llvm::Instruction *IP,
-    llvm::DenseMap<const llvm::Value *, llvm::Value *> *VMap = nullptr);
+/// @param VMap A remaping of values used in @p E.
+llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
+                           const llvm::DataLayout &DL, const char *Name,
+                           const llvm::SCEV *E, llvm::Type *Ty,
+                           llvm::Instruction *IP, ValueMapT *VMap = nullptr);
 
 /// @brief Check if the block is a error block.
 ///
@@ -133,5 +137,16 @@ bool isErrorBlock(llvm::BasicBlock &BB);
 ///
 /// @return The condition of @p TI and nullptr if none could be extracted.
 llvm::Value *getConditionFromTerminator(llvm::TerminatorInst *TI);
+
+/// @brief Check if @p LInst can be hoisted in @p R.
+///
+/// @param LInst The load to check.
+/// @param R     The analyzed region.
+/// @param LI    The loop info.
+/// @param SE    The scalar evolution analysis.
+///
+/// @return True if @p LInst can be hoisted in @p R.
+bool isHoistableLoad(llvm::LoadInst *LInst, llvm::Region &R, llvm::LoopInfo &LI,
+                     llvm::ScalarEvolution &SE);
 }
 #endif

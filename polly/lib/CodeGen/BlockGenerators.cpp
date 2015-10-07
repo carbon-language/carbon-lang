@@ -107,7 +107,7 @@ Value *BlockGenerator::trySynthesizeNewValue(ScopStmt &Stmt, Value *Old,
     if (const SCEV *Scev = SE.getSCEVAtScope(const_cast<Value *>(Old), L)) {
       if (!isa<SCEVCouldNotCompute>(Scev)) {
         const SCEV *NewScev = apply(Scev, LTS, SE);
-        llvm::ValueToValueMap VTV;
+        ValueMapT VTV;
         VTV.insert(BBMap.begin(), BBMap.end());
         VTV.insert(GlobalMap.begin(), GlobalMap.end());
 
@@ -728,9 +728,7 @@ Value *VectorBlockGenerator::generateStrideZeroLoad(
 
 Value *VectorBlockGenerator::generateUnknownStrideLoad(
     ScopStmt &Stmt, LoadInst *Load, VectorValueMapT &ScalarMaps,
-    __isl_keep isl_id_to_ast_expr *NewAccesses
-
-    ) {
+    __isl_keep isl_id_to_ast_expr *NewAccesses) {
   int VectorWidth = getVectorWidth();
   auto *Pointer = Load->getPointerOperand();
   VectorType *VectorType = VectorType::get(

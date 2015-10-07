@@ -6,7 +6,7 @@
 ;
 ; void a(struct b *A) {
 ;   for (int i=0; i<32; i++)
-;     A->b[i] = 0;
+;     A[i].b[i] = 0;
 ; }
 
 ; CHECK: remark: ReportVariantBasePtr01.c:6:8: The following errors keep this region from being a Scop.
@@ -23,11 +23,11 @@ entry:
 entry.split:                                      ; preds = %entry
   tail call void @llvm.dbg.value(metadata %struct.b* %A, i64 0, metadata !16, metadata !DIExpression()), !dbg !23
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !17, metadata !DIExpression()), !dbg !25
-  %b = getelementptr inbounds %struct.b, %struct.b* %A, i64 0, i32 0, !dbg !26
   br label %for.body, !dbg !27
 
 for.body:                                         ; preds = %for.body, %entry.split
   %indvar4 = phi i64 [ %indvar.next, %for.body ], [ 0, %entry.split ]
+  %b = getelementptr inbounds %struct.b, %struct.b* %A, i64 %indvar4, i32 0, !dbg !26
   %0 = mul i64 %indvar4, 4, !dbg !26
   %1 = add i64 %0, 3, !dbg !26
   %2 = add i64 %0, 2, !dbg !26

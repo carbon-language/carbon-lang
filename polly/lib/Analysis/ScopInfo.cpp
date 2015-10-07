@@ -1066,6 +1066,10 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
   isl_local_space *LSpace = isl_local_space_from_space(getDomainSpace());
   Type *Ty = GEP->getPointerOperandType();
   ScalarEvolution &SE = *Parent.getSE();
+  ScopDetection &SD = Parent.getSD();
+
+  // The set of loads that are required to be invariant.
+  auto &ScopRIL = *SD.getRequiredInvariantLoads(&Parent.getRegion());
 
   std::vector<const SCEV *> Subscripts;
   std::vector<int> Sizes;
@@ -1084,7 +1088,16 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
     auto Expr = Subscripts[i + IndexOffset];
     auto Size = Sizes[i];
 
-    if (!isAffineExpr(&Parent.getRegion(), Expr, SE))
+    InvariantLoadsSetTy AccessILS;
+    if (!isAffineExpr(&Parent.getRegion(), Expr, SE, nullptr, &AccessILS))
+      continue;
+
+    bool NonAffine = false;
+    for (LoadInst *LInst : AccessILS)
+      if (!ScopRIL.count(LInst))
+        NonAffine = true;
+
+    if (NonAffine)
       continue;
 
     isl_pw_aff *AccessOffset = getPwAff(Expr);
@@ -2398,7 +2411,9 @@ void Scop::hoistInvariantLoads() {
 
     // TODO: Loads that are not loop carried, hence are in a statement with
     //       zero iterators, are by construction invariant, though we
-    //       currently "hoist" them anyway.
+    //       currently "hoist" them anyway. This is necessary because we allow
+    //       them to be treated as parameters (e.g., in conditions) and our code
+    //       generation would otherwise use the old value.
 
     BasicBlock *BB = Stmt.isBlockStmt() ? Stmt.getBasicBlock()
                                         : Stmt.getRegion()->getEntry();
@@ -2452,6 +2467,76 @@ void Scop::hoistInvariantLoads() {
 
   if (!InvariantAccesses.empty())
     IsOptimized = true;
+
+  // Check required invariant loads that were tagged during SCoP detection.
+  for (LoadInst *LI : *SD.getRequiredInvariantLoads(&getRegion())) {
+    assert(LI && getRegion().contains(LI));
+    ScopStmt *Stmt = getStmtForBasicBlock(LI->getParent());
+    if (Stmt && Stmt->lookupAccessesFor(LI) != nullptr) {
+      DEBUG(dbgs() << "\n\nWARNING: Load (" << *LI
+                   << ") is required to be invariant but was not marked as "
+                      "such. SCoP for "
+                   << getRegion() << " will be dropped\n\n");
+      addAssumption(isl_set_empty(getParamSpace()));
+      return;
+    }
+  }
+
+  // We want invariant accesses to be sorted in a "natural order" because there
+  // might be dependences between invariant loads. These can be caused by
+  // indirect loads but also because an invariant load is only conditionally
+  // executed and the condition is dependent on another invariant load. As we
+  // want to do code generation in a straight forward way, e.g., preload the
+  // accesses in the list one after another, we sort them such that the
+  // preloaded values needed in the conditions will always be in front. Before
+  // we already ordered the accesses such that indirect loads can be resolved,
+  // thus we use a stable sort here.
+
+  auto compareInvariantAccesses = [this](const InvariantAccessTy &IA0,
+                                         const InvariantAccessTy &IA1) {
+    Instruction *AI0 = IA0.first->getAccessInstruction();
+    Instruction *AI1 = IA1.first->getAccessInstruction();
+
+    const SCEV *S0 =
+        SE->isSCEVable(AI0->getType()) ? SE->getSCEV(AI0) : nullptr;
+    const SCEV *S1 =
+        SE->isSCEVable(AI1->getType()) ? SE->getSCEV(AI1) : nullptr;
+
+    isl_id *Id0 = getIdForParam(S0);
+    isl_id *Id1 = getIdForParam(S1);
+
+    if (Id0 && !Id1) {
+      isl_id_free(Id0);
+      isl_id_free(Id1);
+      return true;
+    }
+
+    if (!Id0) {
+      isl_id_free(Id0);
+      isl_id_free(Id1);
+      return false;
+    }
+
+    assert(Id0 && Id1);
+
+    isl_set *Dom0 = IA0.second;
+    isl_set *Dom1 = IA1.second;
+
+    int Dim0 = isl_set_find_dim_by_id(Dom0, isl_dim_param, Id0);
+    int Dim1 = isl_set_find_dim_by_id(Dom0, isl_dim_param, Id1);
+
+    bool Involves0Id1 = isl_set_involves_dims(Dom0, isl_dim_param, Dim1, 1);
+    bool Involves1Id0 = isl_set_involves_dims(Dom1, isl_dim_param, Dim0, 1);
+    assert(!(Involves0Id1 && Involves1Id0));
+
+    isl_id_free(Id0);
+    isl_id_free(Id1);
+
+    return Involves1Id0;
+  };
+
+  std::stable_sort(InvariantAccesses.begin(), InvariantAccesses.end(),
+                   compareInvariantAccesses);
 }
 
 const ScopArrayInfo *
@@ -3091,7 +3176,8 @@ extern MapInsnToMemAcc InsnToMemAcc;
 
 void ScopInfo::buildMemoryAccess(
     Instruction *Inst, Loop *L, Region *R,
-    const ScopDetection::BoxedLoopsSetTy *BoxedLoops) {
+    const ScopDetection::BoxedLoopsSetTy *BoxedLoops,
+    const InvariantLoadsSetTy &ScopRIL) {
   unsigned Size;
   Type *SizeType;
   Value *Val;
@@ -3138,11 +3224,18 @@ void ScopInfo::buildMemoryAccess(
       std::vector<const SCEV *> SizesSCEV;
 
       bool AllAffineSubcripts = true;
-      for (auto Subscript : Subscripts)
-        if (!isAffineExpr(R, Subscript, *SE)) {
-          AllAffineSubcripts = false;
+      for (auto Subscript : Subscripts) {
+        InvariantLoadsSetTy AccessILS;
+        AllAffineSubcripts =
+            isAffineExpr(R, Subscript, *SE, nullptr, &AccessILS);
+
+        for (LoadInst *LInst : AccessILS)
+          if (!ScopRIL.count(LInst))
+            AllAffineSubcripts = false;
+
+        if (!AllAffineSubcripts)
           break;
-        }
+      }
 
       if (AllAffineSubcripts && Sizes.size() > 0) {
         for (auto V : Sizes)
@@ -3176,8 +3269,14 @@ void ScopInfo::buildMemoryAccess(
         isVariantInNonAffineLoop = true;
   }
 
-  bool IsAffine = !isVariantInNonAffineLoop &&
-                  isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue());
+  InvariantLoadsSetTy AccessILS;
+  bool IsAffine =
+      !isVariantInNonAffineLoop &&
+      isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue(), &AccessILS);
+
+  for (LoadInst *LInst : AccessILS)
+    if (!ScopRIL.count(LInst))
+      IsAffine = false;
 
   // FIXME: Size of the number of bytes of an array element, not the number of
   // elements as probably intended here.
@@ -3230,6 +3329,9 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
   // The set of loops contained in non-affine subregions that are part of R.
   const ScopDetection::BoxedLoopsSetTy *BoxedLoops = SD->getBoxedLoops(&R);
 
+  // The set of loads that are required to be invariant.
+  auto &ScopRIL = *SD->getRequiredInvariantLoads(&R);
+
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
     Instruction *Inst = I;
 
@@ -3241,10 +3343,19 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
     if (!PHI && IsExitBlock)
       break;
 
+    // TODO: At this point we only know that elements of ScopRIL have to be
+    //       invariant and will be hoisted for the SCoP to be processed. Though,
+    //       there might be other invariant accesses that will be hoisted and
+    //       that would allow to make a non-affine access affine.
     if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst))
-      buildMemoryAccess(Inst, L, &R, BoxedLoops);
+      buildMemoryAccess(Inst, L, &R, BoxedLoops, ScopRIL);
 
     if (isIgnoredIntrinsic(Inst))
+      continue;
+
+    // Do not build scalar dependences for required invariant loads as we will
+    // hoist them later on anyway or drop the SCoP if we cannot.
+    if (ScopRIL.count(dyn_cast<LoadInst>(Inst)))
       continue;
 
     if (buildScalarDependences(Inst, &R, NonAffineSubRegion)) {

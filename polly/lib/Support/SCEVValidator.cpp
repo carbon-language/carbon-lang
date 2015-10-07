@@ -8,6 +8,7 @@
 #include <vector>
 
 using namespace llvm;
+using namespace polly;
 
 #define DEBUG_TYPE "polly-scev-validator"
 
@@ -125,10 +126,12 @@ private:
   const Region *R;
   ScalarEvolution &SE;
   const Value *BaseAddress;
+  InvariantLoadsSetTy *ILS;
 
 public:
-  SCEVValidator(const Region *R, ScalarEvolution &SE, const Value *BaseAddress)
-      : R(R), SE(SE), BaseAddress(BaseAddress) {}
+  SCEVValidator(const Region *R, ScalarEvolution &SE, const Value *BaseAddress,
+                InvariantLoadsSetTy *ILS)
+      : R(R), SE(SE), BaseAddress(BaseAddress), ILS(ILS) {}
 
   class ValidatorResult visitConstant(const SCEVConstant *Constant) {
     return ValidatorResult(SCEVType::INT);
@@ -335,6 +338,15 @@ public:
     return ValidatorResult(SCEVType::PARAM, S);
   }
 
+  ValidatorResult visitLoadInstruction(Instruction *I, const SCEV *S) {
+    if (R->contains(I) && ILS) {
+      ILS->insert(cast<LoadInst>(I));
+      return ValidatorResult(SCEVType::PARAM, S);
+    }
+
+    return visitGenericInst(I, S);
+  }
+
   ValidatorResult visitSDivInstruction(Instruction *SDiv, const SCEV *S) {
     assert(SDiv->getOpcode() == Instruction::SDiv &&
            "Assumed SDiv instruction!");
@@ -391,6 +403,8 @@ public:
 
     if (Instruction *I = dyn_cast<Instruction>(Expr->getValue())) {
       switch (I->getOpcode()) {
+      case Instruction::Load:
+        return visitLoadInstruction(I, Expr);
       case Instruction::SDiv:
         return visitSDivInstruction(I, Expr);
       case Instruction::SRem:
@@ -550,11 +564,11 @@ bool hasScalarDepsInsideRegion(const SCEV *Expr, const Region *R) {
 }
 
 bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
-                  const Value *BaseAddress) {
+                  const Value *BaseAddress, InvariantLoadsSetTy *ILS) {
   if (isa<SCEVCouldNotCompute>(Expr))
     return false;
 
-  SCEVValidator Validator(R, SE, BaseAddress);
+  SCEVValidator Validator(R, SE, BaseAddress, ILS);
   DEBUG({
     dbgs() << "\n";
     dbgs() << "Expr: " << *Expr << "\n";
@@ -580,7 +594,8 @@ std::vector<const SCEV *> getParamsInAffineExpr(const Region *R,
   if (isa<SCEVCouldNotCompute>(Expr))
     return std::vector<const SCEV *>();
 
-  SCEVValidator Validator(R, SE, BaseAddress);
+  InvariantLoadsSetTy ILS;
+  SCEVValidator Validator(R, SE, BaseAddress, &ILS);
   ValidatorResult Result = Validator.visit(Expr);
   assert(Result.isValid() && "Requested parameters for an invalid SCEV!");
 

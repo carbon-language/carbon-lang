@@ -39,8 +39,10 @@
 ;    void f(int * restrict A, int * restrict C) {
 ;      int j;
 ;      for (int i = 0; i < 1024; i++) {
-;        while ((j = C[i]))
+;        while ((j = C[i++])) {
 ;          A[j]++;
+;          if (true) break;
+;        }
 ;      }
 ;    }
 ;
@@ -70,7 +72,7 @@ bb6:                                              ; preds = %bb3
   %tmp9 = load i32, i32* %tmp8, align 4
   %tmp10 = add nsw i32 %tmp9, 1
   store i32 %tmp10, i32* %tmp8, align 4
-  br label %bb3
+  br i1 true, label %bb11, label %bb3
 
 bb11:                                             ; preds = %bb3
   br label %bb12

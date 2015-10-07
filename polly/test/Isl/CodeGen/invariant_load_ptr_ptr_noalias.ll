@@ -1,28 +1,14 @@
-; RUN: opt %loadPolly -tbaa -polly-scops -polly-ignore-aliasing \
-; RUN:                -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-process-unprofitable -polly-codegen -polly-ignore-aliasing -S  < %s | FileCheck %s
 ;
-; Note: The order of the invariant accesses is important because A is the
-;       base pointer of tmp3 and we will generate code in the same order as
-;       the invariant accesses are listed here.
+; CHECK-LABEL: polly.preload.begin:
+; CHECK:   %polly.access.A = getelementptr i32**, i32*** %A, i64 42
+; CHECK:   %polly.access.A.load = load i32**, i32*** %polly.access.A
+; CHECK:   %polly.access.polly.access.A.load = getelementptr i32*, i32** %polly.access.A.load, i64 32
+; CHECK:   %polly.access.polly.access.A.load.load = load i32*, i32** %polly.access.polly.access.A.load
 ;
-; CHECK: Invariant Accesses: {
-; CHECK:    ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK:         MemRef_A[42]
-; CHECK:    ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK:         MemRef_tmp3[32]
-; CHECK: }
-;
-; CHECK: Arrays {
-; CHECK:   i32** MemRef_A[*][8]
-; CHECK:   i32* MemRef_tmp3[*][8] [BasePtrOrigin: MemRef_A]
-; CHECK:   i32 MemRef_tmp5[*][4] [BasePtrOrigin: MemRef_tmp3]
-; CHECK: }
-;
-; CHECK: Arrays (Bounds as pw_affs) {
-; CHECK:   i32** MemRef_A[*][ { [] -> [(8)] } ]
-; CHECK:   i32* MemRef_tmp3[*][ { [] -> [(8)] } ] [BasePtrOrigin: MemRef_A]
-; CHECK:   i32 MemRef_tmp5[*][ { [] -> [(4)] } ] [BasePtrOrigin: MemRef_tmp3]
-; CHECK: }
+; CHECK: polly.stmt.bb2:
+; CHECK:   %p_tmp6 = getelementptr inbounds i32, i32* %polly.access.polly.access.A.load.load, i64 %polly.indvar
+; CHECK:   store i32 0, i32* %p_tmp6, align 4
 ;
 ;    void f(int ***A) {
 ;      for (int i = 0; i < 1024; i++)

@@ -142,9 +142,15 @@ public:
     BasicBlock *StartBlock =
         executeScopConditionally(S, this, Builder.getTrue());
     auto SplitBlock = StartBlock->getSinglePredecessor();
+
+    // First generate code for the hoisted invariant loads and transitively the
+    // parameters they reference. Afterwards, for the remaining parameters that
+    // might reference the hoisted loads. Finally, build the runtime check
+    // that might reference both hoisted loads as well as parameters.
     Builder.SetInsertPoint(SplitBlock->getTerminator());
-    NodeBuilder.addParameters(S.getContext());
     NodeBuilder.preloadInvariantLoads();
+    NodeBuilder.addParameters(S.getContext());
+
     Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
     Builder.GetInsertBlock()->getTerminator()->setOperand(0, RTC);
     Builder.SetInsertPoint(StartBlock->begin());

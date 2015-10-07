@@ -48,6 +48,7 @@
 #define POLLY_SCOP_DETECTION_H
 
 #include "polly/ScopDetectionDiagnostic.h"
+#include "polly/Support/ScopHelper.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
@@ -146,6 +147,9 @@ private:
   using BoxedLoopsMapTy = DenseMap<const Region *, BoxedLoopsSetTy>;
   BoxedLoopsMapTy BoxedLoopsMap;
 
+  /// @brief Map to remember loads that are required to be invariant.
+  DenseMap<const Region *, InvariantLoadsSetTy> RequiredInvariantLoadsMap;
+
   /// @brief Context variables for SCoP detection.
   struct DetectionContext {
     Region &CurRegion;   // The region to check.
@@ -178,11 +182,15 @@ private:
     /// @brief The set of loops contained in non-affine regions.
     BoxedLoopsSetTy &BoxedLoopsSet;
 
+    /// @brief Loads that need to be invariant during execution.
+    InvariantLoadsSetTy &RequiredILS;
+
     DetectionContext(Region &R, AliasAnalysis &AA,
                      NonAffineSubRegionSetTy &NASRS, BoxedLoopsSetTy &BLS,
-                     bool Verify)
+                     InvariantLoadsSetTy &RequiredILS, bool Verify)
         : CurRegion(R), AST(AA), Verifying(Verify), Log(&R), hasLoads(false),
-          hasStores(false), NonAffineSubRegionSet(NASRS), BoxedLoopsSet(BLS) {}
+          hasStores(false), NonAffineSubRegionSet(NASRS), BoxedLoopsSet(BLS),
+          RequiredILS(RequiredILS) {}
   };
 
   // Remember the valid regions
@@ -240,6 +248,18 @@ private:
   /// @param CI The call instruction to check.
   /// @return True if the call instruction is valid, false otherwise.
   static bool isValidCallInst(CallInst &CI);
+
+  /// @brief Check if the given loads could be invariant and can be hoisted.
+  ///
+  /// If true is returned the loads are added to the required invariant loads
+  /// contained in the @p Context.
+  ///
+  /// @param RequiredILS The loads to check.
+  /// @param Context     The current detection context.
+  ///
+  /// @return True if all loads can be assumed invariant.
+  bool onlyValidRequiredInvariantLoads(InvariantLoadsSetTy &RequiredILS,
+                                       DetectionContext &Context) const;
 
   /// @brief Check if a value is invariant in the region Reg.
   ///
@@ -299,6 +319,18 @@ private:
   /// @return True if the branch @p BI is valid.
   bool isValidBranch(BasicBlock &BB, BranchInst *BI, Value *Condition,
                      bool IsLoopBranch, DetectionContext &Context) const;
+
+  /// @brief Check if the SCEV @p S is affine in the current @p Context.
+  ///
+  /// This will also use a heuristic to decide if we want to require loads to be
+  /// invariant to make the expression affine or if we want to treat is as
+  /// non-affine.
+  ///
+  /// @param S           The expression to be checked.
+  /// @param Context     The context of scop detection.
+  /// @param BaseAddress The base address of the expression @p S (if any).
+  bool isAffine(const SCEV *S, DetectionContext &Context,
+                Value *BaseAddress = nullptr) const;
 
   /// @brief Check if the control flow in a basic block is valid.
   ///
@@ -368,6 +400,9 @@ public:
 
   /// @brief Return the set of loops in non-affine subregions for @p R.
   const BoxedLoopsSetTy *getBoxedLoops(const Region *R) const;
+
+  /// @brief Return the set of required invariant loads for @p R.
+  const InvariantLoadsSetTy *getRequiredInvariantLoads(const Region *R) const;
 
   /// @brief Return true if @p SubR is a non-affine subregion in @p ScopR.
   bool isNonAffineSubRegion(const Region *SubR, const Region *ScopR) const;
