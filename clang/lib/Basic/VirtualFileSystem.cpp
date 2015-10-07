@@ -647,7 +647,7 @@ directory_iterator InMemoryFileSystem::dir_begin(const Twine &Dir,
 }
 
 //===-----------------------------------------------------------------------===/
-// VFSFromYAML implementation
+// RedirectingFileSystem implementation
 //===-----------------------------------------------------------------------===/
 
 namespace {
@@ -670,16 +670,16 @@ public:
 };
 
 class DirectoryEntry : public Entry {
-  std::vector<Entry *> Contents;
+  std::vector<std::unique_ptr<Entry>> Contents;
   Status S;
 
 public:
-  ~DirectoryEntry() override;
-  DirectoryEntry(StringRef Name, std::vector<Entry *> Contents, Status S)
+  DirectoryEntry(StringRef Name, std::vector<std::unique_ptr<Entry>> Contents,
+                 Status S)
       : Entry(EK_Directory, Name), Contents(std::move(Contents)),
         S(std::move(S)) {}
   Status getStatus() { return S; }
-  typedef std::vector<Entry *>::iterator iterator;
+  typedef decltype(Contents)::iterator iterator;
   iterator contents_begin() { return Contents.begin(); }
   iterator contents_end() { return Contents.end(); }
   static bool classof(const Entry *E) { return E->getKind() == EK_Directory; }
@@ -708,14 +708,14 @@ public:
   static bool classof(const Entry *E) { return E->getKind() == EK_File; }
 };
 
-class VFSFromYAML;
+class RedirectingFileSystem;
 
 class VFSFromYamlDirIterImpl : public clang::vfs::detail::DirIterImpl {
   std::string Dir;
-  VFSFromYAML &FS;
+  RedirectingFileSystem &FS;
   DirectoryEntry::iterator Current, End;
 public:
-  VFSFromYamlDirIterImpl(const Twine &Path, VFSFromYAML &FS,
+  VFSFromYamlDirIterImpl(const Twine &Path, RedirectingFileSystem &FS,
                          DirectoryEntry::iterator Begin,
                          DirectoryEntry::iterator End, std::error_code &EC);
   std::error_code increment() override;
@@ -774,8 +774,9 @@ public:
 /// In both cases, the 'name' field may contain multiple path components (e.g.
 /// /path/to/file). However, any directory that contains more than one child
 /// must be uniquely represented by a directory entry.
-class VFSFromYAML : public vfs::FileSystem {
-  std::vector<Entry *> Roots; ///< The root(s) of the virtual file system.
+class RedirectingFileSystem : public vfs::FileSystem {
+  /// The root(s) of the virtual file system.
+  std::vector<std::unique_ptr<Entry>> Roots;
   /// \brief The file system to use for external references.
   IntrusiveRefCntPtr<FileSystem> ExternalFS;
 
@@ -792,10 +793,10 @@ class VFSFromYAML : public vfs::FileSystem {
   bool UseExternalNames;
   /// @}
 
-  friend class VFSFromYAMLParser;
+  friend class RedirectingFileSystemParser;
 
 private:
-  VFSFromYAML(IntrusiveRefCntPtr<FileSystem> ExternalFS)
+  RedirectingFileSystem(IntrusiveRefCntPtr<FileSystem> ExternalFS)
       : ExternalFS(ExternalFS), CaseSensitive(true), UseExternalNames(true) {}
 
   /// \brief Looks up \p Path in \c Roots.
@@ -810,14 +811,12 @@ private:
   ErrorOr<Status> status(const Twine &Path, Entry *E);
 
 public:
-  ~VFSFromYAML() override;
-
   /// \brief Parses \p Buffer, which is expected to be in YAML format and
   /// returns a virtual file system representing its contents.
-  static VFSFromYAML *create(std::unique_ptr<MemoryBuffer> Buffer,
-                             SourceMgr::DiagHandlerTy DiagHandler,
-                             void *DiagContext,
-                             IntrusiveRefCntPtr<FileSystem> ExternalFS);
+  static RedirectingFileSystem *
+  create(std::unique_ptr<MemoryBuffer> Buffer,
+         SourceMgr::DiagHandlerTy DiagHandler, void *DiagContext,
+         IntrusiveRefCntPtr<FileSystem> ExternalFS);
 
   ErrorOr<Status> status(const Twine &Path) override;
   ErrorOr<std::unique_ptr<File>> openFileForRead(const Twine &Path) override;
@@ -853,7 +852,7 @@ public:
 };
 
 /// \brief A helper class to hold the common YAML parsing state.
-class VFSFromYAMLParser {
+class RedirectingFileSystemParser {
   yaml::Stream &Stream;
 
   void error(yaml::Node *N, const Twine &Msg) {
@@ -929,7 +928,7 @@ class VFSFromYAMLParser {
     return true;
   }
 
-  Entry *parseEntry(yaml::Node *N) {
+  std::unique_ptr<Entry> parseEntry(yaml::Node *N) {
     yaml::MappingNode *M = dyn_cast<yaml::MappingNode>(N);
     if (!M) {
       error(N, "expected mapping node for file or directory entry");
@@ -948,7 +947,7 @@ class VFSFromYAMLParser {
         &Fields[0], Fields + sizeof(Fields)/sizeof(Fields[0]));
 
     bool HasContents = false; // external or otherwise
-    std::vector<Entry *> EntryArrayContents;
+    std::vector<std::unique_ptr<Entry>> EntryArrayContents;
     std::string ExternalContentsPath;
     std::string Name;
     FileEntry::NameKind UseExternalName = FileEntry::NK_NotSet;
@@ -1000,8 +999,8 @@ class VFSFromYAMLParser {
         for (yaml::SequenceNode::iterator I = Contents->begin(),
                                           E = Contents->end();
              I != E; ++I) {
-          if (Entry *E = parseEntry(&*I))
-            EntryArrayContents.push_back(E);
+          if (std::unique_ptr<Entry> E = parseEntry(&*I))
+            EntryArrayContents.push_back(std::move(E));
           else
             return nullptr;
         }
@@ -1051,14 +1050,14 @@ class VFSFromYAMLParser {
     // Get the last component
     StringRef LastComponent = sys::path::filename(Trimmed);
 
-    Entry *Result = nullptr;
+    std::unique_ptr<Entry> Result;
     switch (Kind) {
     case EK_File:
-      Result = new FileEntry(LastComponent, std::move(ExternalContentsPath),
-                             UseExternalName);
+      Result = llvm::make_unique<FileEntry>(
+          LastComponent, std::move(ExternalContentsPath), UseExternalName);
       break;
     case EK_Directory:
-      Result = new DirectoryEntry(
+      Result = llvm::make_unique<DirectoryEntry>(
           LastComponent, std::move(EntryArrayContents),
           Status("", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0, 0,
                  file_type::directory_file, sys::fs::all_all));
@@ -1073,8 +1072,10 @@ class VFSFromYAMLParser {
     for (sys::path::reverse_iterator I = sys::path::rbegin(Parent),
                                      E = sys::path::rend(Parent);
          I != E; ++I) {
-      Result = new DirectoryEntry(
-          *I, llvm::makeArrayRef(Result),
+      std::vector<std::unique_ptr<Entry>> Entries;
+      Entries.push_back(std::move(Result));
+      Result = llvm::make_unique<DirectoryEntry>(
+          *I, std::move(Entries),
           Status("", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0, 0,
                  file_type::directory_file, sys::fs::all_all));
     }
@@ -1082,10 +1083,10 @@ class VFSFromYAMLParser {
   }
 
 public:
-  VFSFromYAMLParser(yaml::Stream &S) : Stream(S) {}
+  RedirectingFileSystemParser(yaml::Stream &S) : Stream(S) {}
 
   // false on error
-  bool parse(yaml::Node *Root, VFSFromYAML *FS) {
+  bool parse(yaml::Node *Root, RedirectingFileSystem *FS) {
     yaml::MappingNode *Top = dyn_cast<yaml::MappingNode>(Root);
     if (!Top) {
       error(Root, "expected mapping node");
@@ -1122,8 +1123,8 @@ public:
 
         for (yaml::SequenceNode::iterator I = Roots->begin(), E = Roots->end();
              I != E; ++I) {
-          if (Entry *E = parseEntry(&*I))
-            FS->Roots.push_back(E);
+          if (std::unique_ptr<Entry> E = parseEntry(&*I))
+            FS->Roots.push_back(std::move(E));
           else
             return false;
         }
@@ -1166,15 +1167,11 @@ public:
 };
 } // end of anonymous namespace
 
-Entry::~Entry() {}
-DirectoryEntry::~DirectoryEntry() { llvm::DeleteContainerPointers(Contents); }
+Entry::~Entry() = default;
 
-VFSFromYAML::~VFSFromYAML() { llvm::DeleteContainerPointers(Roots); }
-
-VFSFromYAML *VFSFromYAML::create(std::unique_ptr<MemoryBuffer> Buffer,
-                                 SourceMgr::DiagHandlerTy DiagHandler,
-                                 void *DiagContext,
-                                 IntrusiveRefCntPtr<FileSystem> ExternalFS) {
+RedirectingFileSystem *RedirectingFileSystem::create(
+    std::unique_ptr<MemoryBuffer> Buffer, SourceMgr::DiagHandlerTy DiagHandler,
+    void *DiagContext, IntrusiveRefCntPtr<FileSystem> ExternalFS) {
 
   SourceMgr SM;
   yaml::Stream Stream(Buffer->getMemBufferRef(), SM);
@@ -1187,16 +1184,17 @@ VFSFromYAML *VFSFromYAML::create(std::unique_ptr<MemoryBuffer> Buffer,
     return nullptr;
   }
 
-  VFSFromYAMLParser P(Stream);
+  RedirectingFileSystemParser P(Stream);
 
-  std::unique_ptr<VFSFromYAML> FS(new VFSFromYAML(ExternalFS));
+  std::unique_ptr<RedirectingFileSystem> FS(
+      new RedirectingFileSystem(ExternalFS));
   if (!P.parse(Root, FS.get()))
     return nullptr;
 
   return FS.release();
 }
 
-ErrorOr<Entry *> VFSFromYAML::lookupPath(const Twine &Path_) {
+ErrorOr<Entry *> RedirectingFileSystem::lookupPath(const Twine &Path_) {
   SmallString<256> Path;
   Path_.toVector(Path);
 
@@ -1209,18 +1207,17 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(const Twine &Path_) {
 
   sys::path::const_iterator Start = sys::path::begin(Path);
   sys::path::const_iterator End = sys::path::end(Path);
-  for (std::vector<Entry *>::iterator I = Roots.begin(), E = Roots.end();
-       I != E; ++I) {
-    ErrorOr<Entry *> Result = lookupPath(Start, End, *I);
+  for (const std::unique_ptr<Entry> &Root : Roots) {
+    ErrorOr<Entry *> Result = lookupPath(Start, End, Root.get());
     if (Result || Result.getError() != llvm::errc::no_such_file_or_directory)
       return Result;
   }
   return make_error_code(llvm::errc::no_such_file_or_directory);
 }
 
-ErrorOr<Entry *> VFSFromYAML::lookupPath(sys::path::const_iterator Start,
-                                         sys::path::const_iterator End,
-                                         Entry *From) {
+ErrorOr<Entry *>
+RedirectingFileSystem::lookupPath(sys::path::const_iterator Start,
+                                  sys::path::const_iterator End, Entry *From) {
   if (Start->equals("."))
     ++Start;
 
@@ -1241,17 +1238,16 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(sys::path::const_iterator Start,
   if (!DE)
     return make_error_code(llvm::errc::not_a_directory);
 
-  for (DirectoryEntry::iterator I = DE->contents_begin(),
-                                E = DE->contents_end();
-       I != E; ++I) {
-    ErrorOr<Entry *> Result = lookupPath(Start, End, *I);
+  for (const std::unique_ptr<Entry> &DirEntry :
+       llvm::make_range(DE->contents_begin(), DE->contents_end())) {
+    ErrorOr<Entry *> Result = lookupPath(Start, End, DirEntry.get());
     if (Result || Result.getError() != llvm::errc::no_such_file_or_directory)
       return Result;
   }
   return make_error_code(llvm::errc::no_such_file_or_directory);
 }
 
-ErrorOr<Status> VFSFromYAML::status(const Twine &Path, Entry *E) {
+ErrorOr<Status> RedirectingFileSystem::status(const Twine &Path, Entry *E) {
   assert(E != nullptr);
   std::string PathStr(Path.str());
   if (FileEntry *F = dyn_cast<FileEntry>(E)) {
@@ -1268,7 +1264,7 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path, Entry *E) {
   }
 }
 
-ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
+ErrorOr<Status> RedirectingFileSystem::status(const Twine &Path) {
   ErrorOr<Entry *> Result = lookupPath(Path);
   if (!Result)
     return Result.getError();
@@ -1301,7 +1297,8 @@ public:
 };
 } // end anonymous namespace
 
-ErrorOr<std::unique_ptr<File>> VFSFromYAML::openFileForRead(const Twine &Path) {
+ErrorOr<std::unique_ptr<File>>
+RedirectingFileSystem::openFileForRead(const Twine &Path) {
   ErrorOr<Entry *> E = lookupPath(Path);
   if (!E)
     return E.getError();
@@ -1325,8 +1322,8 @@ IntrusiveRefCntPtr<FileSystem>
 vfs::getVFSFromYAML(std::unique_ptr<MemoryBuffer> Buffer,
                     SourceMgr::DiagHandlerTy DiagHandler, void *DiagContext,
                     IntrusiveRefCntPtr<FileSystem> ExternalFS) {
-  return VFSFromYAML::create(std::move(Buffer), DiagHandler, DiagContext,
-                             ExternalFS);
+  return RedirectingFileSystem::create(std::move(Buffer), DiagHandler,
+                                       DiagContext, ExternalFS);
 }
 
 UniqueID vfs::getNextVirtualUniqueID() {
@@ -1472,7 +1469,7 @@ void YAMLVFSWriter::write(llvm::raw_ostream &OS) {
 }
 
 VFSFromYamlDirIterImpl::VFSFromYamlDirIterImpl(const Twine &_Path,
-                                               VFSFromYAML &FS,
+                                               RedirectingFileSystem &FS,
                                                DirectoryEntry::iterator Begin,
                                                DirectoryEntry::iterator End,
                                                std::error_code &EC)
