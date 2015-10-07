@@ -1204,15 +1204,6 @@ public:
     return OperandBundleUse(BOI->Tag->getKey(), Inputs);
   }
 
-  /// \brief Return the operand bundle at a specific index.
-  OperandBundleUse getOperandBundle(unsigned Index) {
-    assert(Index < getNumOperandBundles() && "Index out of bounds!");
-    auto *BOI = bundle_op_info_begin() + Index;
-    auto op_begin = static_cast<InstrTy *>(this)->op_begin();
-    ArrayRef<Use> Inputs(op_begin + BOI->Begin, op_begin + BOI->End);
-    return OperandBundleUse(BOI->Tag->getKey(), Inputs);
-  }
-
 protected:
   /// \brief Used to keep track of an operand bundle.  See the main comment on
   /// OperandBundleUser above.
