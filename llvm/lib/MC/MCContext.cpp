@@ -74,12 +74,9 @@ MCContext::~MCContext() {
 
 void MCContext::reset() {
   // Call the destructors so the fragments are freed
-  for (auto &I : ELFUniquingMap)
-    I.second->~MCSectionELF();
-  for (auto &I : COFFUniquingMap)
-    I.second->~MCSectionCOFF();
-  for (auto &I : MachOUniquingMap)
-    I.second->~MCSectionMachO();
+  COFFAllocator.DestroyAll();
+  ELFAllocator.DestroyAll();
+  MachOAllocator.DestroyAll();
 
   UsedNames.clear();
   Symbols.clear();
@@ -294,8 +291,8 @@ MCSectionMachO *MCContext::getMachOSection(StringRef Segment, StringRef Section,
     Begin = createTempSymbol(BeginSymName, false);
 
   // Otherwise, return a new section.
-  return Entry = new (*this) MCSectionMachO(Segment, Section, TypeAndAttributes,
-                                            Reserved2, Kind, Begin);
+  return Entry = new (MachOAllocator.Allocate()) MCSectionMachO(
+             Segment, Section, TypeAndAttributes, Reserved2, Kind, Begin);
 }
 
 void MCContext::renameELFSection(MCSectionELF *Section, StringRef Name) {
@@ -322,7 +319,7 @@ MCSectionELF *MCContext::createELFRelSection(StringRef Name, unsigned Type,
   bool Inserted;
   std::tie(I, Inserted) = ELFRelSecNames.insert(std::make_pair(Name, true));
 
-  return new (*this)
+  return new (ELFAllocator.Allocate())
       MCSectionELF(I->getKey(), Type, Flags, SectionKind::getReadOnly(),
                    EntrySize, Group, true, nullptr, Associated);
 }
@@ -367,15 +364,15 @@ MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
   if (BeginSymName)
     Begin = createTempSymbol(BeginSymName, false);
 
-  MCSectionELF *Result =
-      new (*this) MCSectionELF(CachedName, Type, Flags, Kind, EntrySize,
-                               GroupSym, UniqueID, Begin, Associated);
+  MCSectionELF *Result = new (ELFAllocator.Allocate())
+      MCSectionELF(CachedName, Type, Flags, Kind, EntrySize, GroupSym, UniqueID,
+                   Begin, Associated);
   Entry.second = Result;
   return Result;
 }
 
 MCSectionELF *MCContext::createELFGroupSection(const MCSymbolELF *Group) {
-  MCSectionELF *Result = new (*this)
+  MCSectionELF *Result = new (ELFAllocator.Allocate())
       MCSectionELF(".group", ELF::SHT_GROUP, 0, SectionKind::getReadOnly(), 4,
                    Group, ~0, nullptr, nullptr);
   return Result;
@@ -404,7 +401,7 @@ MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
     Begin = createTempSymbol(BeginSymName, false);
 
   StringRef CachedName = Iter->first.SectionName;
-  MCSectionCOFF *Result = new (*this) MCSectionCOFF(
+  MCSectionCOFF *Result = new (COFFAllocator.Allocate()) MCSectionCOFF(
       CachedName, Characteristics, COMDATSymbol, Selection, Kind, Begin);
 
   Iter->second = Result;

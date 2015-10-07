@@ -71,6 +71,10 @@ namespace llvm {
     /// objects.
     BumpPtrAllocator Allocator;
 
+    SpecificBumpPtrAllocator<MCSectionCOFF> COFFAllocator;
+    SpecificBumpPtrAllocator<MCSectionELF> ELFAllocator;
+    SpecificBumpPtrAllocator<MCSectionMachO> MachOAllocator;
+
     /// Bindings of names to symbols.
     SymbolTable Symbols;
 
