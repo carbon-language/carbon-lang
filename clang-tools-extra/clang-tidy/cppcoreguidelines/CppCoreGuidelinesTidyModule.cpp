@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "ProTypeConstCastCheck.h"
 #include "ProTypeReinterpretCastCheck.h"
 
 namespace clang {
@@ -19,6 +20,8 @@ namespace cppcoreguidelines {
 class CppCoreGuidelinesModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<ProTypeConstCastCheck>(
+        "cppcoreguidelines-pro-type-const-cast");
     CheckFactories.registerCheck<ProTypeReinterpretCastCheck>(
         "cppcoreguidelines-pro-type-reinterpret-cast");
   }
