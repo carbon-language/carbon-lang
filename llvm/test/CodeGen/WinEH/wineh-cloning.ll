@@ -475,6 +475,17 @@ exit:
   ret void
 }
 
+; CHECK-LABEL: define void @test13()
+; CHECK: ret void
+define void @test13() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  ret void
+
+unreachable:
+  cleanuppad []
+  unreachable
+}
+
 ; Make sure the DISubprogram doesn't get cloned
 ; CHECK-LABEL: !llvm.module.flags
 ; CHECK-NOT: !DISubprogram

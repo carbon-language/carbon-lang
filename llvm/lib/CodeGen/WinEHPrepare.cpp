@@ -437,6 +437,11 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   if (!isFuncletEHPersonality(Personality))
     return false;
 
+  // Remove unreachable blocks.  It is not valuable to assign them a color and
+  // their existence can trick us into thinking values are alive when they are
+  // not.
+  removeUnreachableBlocks(Fn);
+
   SmallVector<LandingPadInst *, 4> LPads;
   SmallVector<ResumeInst *, 4> Resumes;
   SmallVector<BasicBlock *, 4> EntryBlocks;
@@ -3408,11 +3413,6 @@ void WinEHPrepare::verifyPreparedFunclets(Function &F) {
 
 bool WinEHPrepare::prepareExplicitEH(
     Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks) {
-  // Remove unreachable blocks.  It is not valuable to assign them a color and
-  // their existence can trick us into thinking values are alive when they are
-  // not.
-  removeUnreachableBlocks(F);
-
   replaceTerminatePadWithCleanup(F);
 
   // Determine which blocks are reachable from which funclet entries.
