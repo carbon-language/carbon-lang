@@ -69,7 +69,7 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2181">2181</a></td><td>Exceptions from <em>seed sequence</em> operations</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2218">2218</a></td><td>Unclear how containers use <tt>allocator_traits::construct()</tt></td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2219">2219</a></td><td><tt><i>INVOKE</i></tt>-ing a pointer to member with a <tt>reference_wrapper</tt> as the object expression</td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2244">2244</a></td><td>Issue on <tt>basic_istream::seekg</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2244">2244</a></td><td>Issue on <tt>basic_istream::seekg</tt></td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2250">2250</a></td><td>Follow-up On Library Issue 2207</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2259">2259</a></td><td>Issues in 17.6.5.5 rules for member functions</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2336">2336</a></td><td><tt>is_trivially_constructible/is_trivially_assignable</tt> traits are always false</td><td>Kona</td><td></td></tr>
@@ -85,12 +85,12 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2469">2469</a></td><td>Wrong specification of Requires clause of <tt>operator[]</tt> for <tt>map</tt> and <tt>unordered_map</tt></td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2473">2473</a></td><td><tt>basic_filebuf</tt>'s relation to C <tt>FILE</tt> semantics</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2476">2476</a></td><td><tt>scoped_allocator_adaptor</tt> is not assignable</td><td>Kona</td><td>Patch Ready</td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2477">2477</a></td><td>Inconsistency of wordings in <tt>std::vector::erase()</tt> and <tt>std::deque::erase()</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2477">2477</a></td><td>Inconsistency of wordings in <tt>std::vector::erase()</tt> and <tt>std::deque::erase()</tt></td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2483">2483</a></td><td><tt>throw_with_nested()</tt> should use <tt>is_final</tt></td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2484">2484</a></td><td><tt>rethrow_if_nested()</tt> is doubly unimplementable</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2485">2485</a></td><td><tt>get()</tt> should be overloaded for <tt>const tuple&amp;&amp;</tt></td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2486">2486</a></td><td><tt>mem_fn()</tt> should be required to use perfect forwarding</td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2487">2487</a></td><td><tt>bind()</tt> should be <tt>const</tt>-overloaded, not <i>cv</i>-overloaded</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2487">2487</a></td><td><tt>bind()</tt> should be <tt>const</tt>-overloaded, not <i>cv</i>-overloaded</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2489">2489</a></td><td><tt>mem_fn()</tt> should be <tt>noexcept</tt></td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2492">2492</a></td><td>Clarify requirements for <tt>comp</tt></td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2494">2494</a></td><td>[fund.ts.v2] <tt>ostream_joiner</tt> needs <tt>noexcept</tt></td><td>Kona</td><td></td></tr>
@@ -114,7 +114,7 @@
 <li>2181 - I suspect that this will not require any code changes, but will need to be read carefully.</li>
 <li>2218 - Shouldn't require any code changes.</li>
 <li>2219 - Sizable changes required. INVOKE needs 2 additional overloads and plenty of tests. I'm not going to back port this to C++03. (Eric)</li>
-<li>2244 - We don't do this; easy fix; think about how to test it.</li>
+<li><i>2244 - We don't do this; easy fix. <b>Patch Available</b></i></li>
 <li>2250 - Looks like wording cleanup. Need to check more closely, but I think there's no code changes here.</li>
 <li><i>2259 - No code changes needed here.</i></li>
 <li>2336 - <b>Check later</b></li>
@@ -129,13 +129,13 @@
 <li><i>2466 - Simple change; need a test.</i> <b>Patch Available</b></li>
 <li>2469 - This is a followon to 2464, which we're done. This restates a bunch of operations in terms of newer ops. Probably refactoring to do here, but tests shouldn't change.</li>
 <li><i>2473 - There are two changes here; one to <tt>filebuf::seekpos</tt> and the other to <tt>filebuf::sync</tt>. We do both of these already.</i></li>
-<li><I>2476 - Just needed tests.</i> <b>Patch Available</b></li>
-<li>2477 - Definitely wording cleanup, but check the tests.</li>
+<li><i>2476 - Just needed tests.</i> <b>Patch Available</b></li>
+<li><i>2477 - Wording cleanup.</i></li>
 <li><i>2483 - We already do this.</i></li>
 <li><i>2484 - We already do this.</i></li>
 <li>2485 - Ask Eric to do it. </li>
 <li>2486 - Lots of code changes, all mechanical. Tests will be sizable.</li>
-<li>2487 - <b>Don't know</b></li>
+<li><i>2487 - This is removing a requirement on bind(), which we don't currently satisfy. So, nothing to do.</i></li>
 <li><i>2489 - Looks easy. Just add some NOEXCEPT, and tests.</i> <b>Patch Available</b></li>
 <li><i>2492 - Wording cleanup; no code changes needed.</i></li>
 <li>2494 - My implementation of this (not checked in) already has these.</li>
