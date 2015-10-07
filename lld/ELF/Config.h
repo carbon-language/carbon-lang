@@ -29,8 +29,8 @@ enum ELFKind {
 struct Configuration {
   llvm::StringRef DynamicLinker;
   llvm::StringRef Entry;
-  llvm::StringRef Fini = "_fini";
-  llvm::StringRef Init = "_init";
+  llvm::StringRef Fini;
+  llvm::StringRef Init;
   llvm::StringRef OutputFile;
   llvm::StringRef SoName;
   llvm::StringRef Sysroot;

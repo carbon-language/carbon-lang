@@ -139,39 +139,25 @@ void LinkerDriver::addFile(StringRef Path) {
   }
 }
 
+static StringRef
+getString(opt::InputArgList &Args, unsigned Key, StringRef Default = "") {
+  if (auto *Arg = Args.getLastArg(Key))
+    return Arg->getValue();
+  return Default;
+}
+
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Parse command line options.
   opt::InputArgList Args = Parser.parse(ArgsArr);
 
-  if (auto *Arg = Args.getLastArg(OPT_output))
-    Config->OutputFile = Arg->getValue();
-
-  if (auto *Arg = Args.getLastArg(OPT_dynamic_linker))
-    Config->DynamicLinker = Arg->getValue();
-
-  if (auto *Arg = Args.getLastArg(OPT_sysroot))
-    Config->Sysroot = Arg->getValue();
+  for (auto *Arg : Args.filtered(OPT_L))
+    Config->InputSearchPaths.push_back(Arg->getValue());
 
   std::vector<StringRef> RPaths;
   for (auto *Arg : Args.filtered(OPT_rpath))
     RPaths.push_back(Arg->getValue());
   if (!RPaths.empty())
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
-
-  for (auto *Arg : Args.filtered(OPT_L))
-    Config->InputSearchPaths.push_back(Arg->getValue());
-
-  if (auto *Arg = Args.getLastArg(OPT_entry))
-    Config->Entry = Arg->getValue();
-
-  if (auto *Arg = Args.getLastArg(OPT_fini))
-    Config->Fini = Arg->getValue();
-
-  if (auto *Arg = Args.getLastArg(OPT_init))
-    Config->Init = Arg->getValue();
-
-  if (auto *Arg = Args.getLastArg(OPT_soname))
-    Config->SoName = Arg->getValue();
 
   if (auto *Arg = Args.getLastArg(OPT_m))
     setELFType(Arg->getValue());
@@ -185,6 +171,14 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->Shared = Args.hasArg(OPT_shared);
+
+  Config->DynamicLinker = getString(Args, OPT_dynamic_linker);
+  Config->Entry = getString(Args, OPT_entry);
+  Config->Fini = getString(Args, OPT_fini, "_fini");
+  Config->Init = getString(Args, OPT_init, "_init");
+  Config->OutputFile = getString(Args, OPT_output);
+  Config->SoName = getString(Args, OPT_soname);
+  Config->Sysroot = getString(Args, OPT_sysroot);
 
   for (auto *Arg : Args.filtered(OPT_z))
     if (Arg->getValue() == StringRef("now"))
