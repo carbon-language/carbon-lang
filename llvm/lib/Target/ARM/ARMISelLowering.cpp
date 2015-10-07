@@ -396,6 +396,14 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setLibcallCallingConv(RTLIB::FPEXT_F16_F32, CallingConv::ARM_APCS);
   }
 
+  // In EABI, these functions have an __aeabi_ prefix, but in GNUEABI they have
+  // a __gnu_ prefix (which is the default).
+  if (Subtarget->isTargetAEABI()) {
+    setLibcallName(RTLIB::FPROUND_F32_F16, "__aeabi_f2h");
+    setLibcallName(RTLIB::FPROUND_F64_F16, "__aeabi_d2h");
+    setLibcallName(RTLIB::FPEXT_F16_F32,   "__aeabi_h2f");
+  }
+
   if (Subtarget->isThumb1Only())
     addRegisterClass(MVT::i32, &ARM::tGPRRegClass);
   else
