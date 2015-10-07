@@ -292,6 +292,23 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Map[{BssSec.getName(), BssSec.getType(), BssSec.getFlags()}] = &BssSec;
 
   SymbolTable &Symtab = SymTabSec.getSymTable();
+
+  // Declare linker generated symbols.
+  // This must be done before the relocation scan to make sure we can correctly
+  // decide if a dynamic relocation is needed or not.
+  // FIXME: Make this more declarative.
+  for (StringRef Name :
+       {"__preinit_array_start", "__preinit_array_end", "__init_array_start",
+        "__init_array_end", "__fini_array_start", "__fini_array_end"})
+    Symtab.addIgnoredSym<ELFT>(Name);
+
+  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
+  // static linking the linker is required to optimize away any references to
+  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
+  // to avoid the undefined symbol error.
+  if (!isOutputDynamic())
+    Symtab.addIgnoredSym<ELFT>("__tls_get_addr");
+
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     if (!Config->DiscardAll) {
@@ -331,9 +348,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (OS) {
       Symtab.addSyntheticSym<ELFT>(Start, *OS, 0);
       Symtab.addSyntheticSym<ELFT>(End, *OS, OS->getSize());
-    } else {
-      Symtab.addIgnoredSym<ELFT>(Start);
-      Symtab.addIgnoredSym<ELFT>(End);
     }
   };
 
@@ -343,13 +357,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
               DynamicSec.InitArraySec);
   AddStartEnd("__fini_array_start", "__fini_array_end",
               DynamicSec.FiniArraySec);
-
-  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
-  // static linking the linker is required to optimize away any references to
-  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
-  // to avoid the undefined symbol error.
-  if (!isOutputDynamic())
-    Symtab.addIgnoredSym<ELFT>("__tls_get_addr");
 
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;

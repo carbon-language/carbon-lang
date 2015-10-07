@@ -2,7 +2,7 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %p/Inputs/shared.s -o %t2
 // RUN: lld -flavor gnu2 %t2 -o %t2.so -shared
 // RUN: lld -flavor gnu2 %t %t2.so -o %t2
-// RUN: llvm-readobj -symbols -sections -dynamic-table %t2 | FileCheck %s
+// RUN: llvm-readobj -r -symbols -sections -dynamic-table %t2 | FileCheck %s
 // RUN: llvm-objdump -d %t2 | FileCheck --check-prefix=DISASM %s
 // REQUIRES: x86
 
@@ -59,12 +59,15 @@ _start:
 // CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: [[FINI_SIZE:.*]]
 
+// CHECK:      Relocations [
+// CHECK-NEXT: ]
+
 // CHECK:        Name: __fini_array_end
 // CHECK-NEXT:   Value: 0x1301B
 // CHECK-NEXT:   Size: 0
 // CHECK-NEXT:   Binding: Local
 // CHECK-NEXT:   Type: None
-// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Other: 2
 // CHECK-NEXT:   Section: .fini_array
 // CHECK-NEXT: }
 // CHECK-NEXT: Symbol {
@@ -73,7 +76,7 @@ _start:
 // CHECK-NEXT:   Size: 0
 // CHECK-NEXT:   Binding: Local
 // CHECK-NEXT:   Type: None
-// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Other: 2
 // CHECK-NEXT:   Section: .fini_array
 // CHECK-NEXT: }
 // CHECK-NEXT: Symbol {
@@ -82,7 +85,7 @@ _start:
 // CHECK-NEXT:   Size: 0
 // CHECK-NEXT:   Binding: Local
 // CHECK-NEXT:   Type: None
-// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Other: 2
 // CHECK-NEXT:   Section: .init_array
 // CHECK-NEXT: }
 // CHECK-NEXT: Symbol {
@@ -91,7 +94,7 @@ _start:
 // CHECK-NEXT:   Size: 0
 // CHECK-NEXT:   Binding: Local
 // CHECK-NEXT:   Type: None
-// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Other: 2
 // CHECK-NEXT:   Section: .init_array
 // CHECK-NEXT: }
 // CHECK-NEXT: Symbol {
@@ -100,7 +103,7 @@ _start:
 // CHECK-NEXT:   Size: 0
 // CHECK-NEXT:   Binding: Local
 // CHECK-NEXT:   Type: None
-// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Other: 2
 // CHECK-NEXT:   Section: .preinit_array
 // CHECK-NEXT: }
 // CHECK-NEXT: Symbol {
@@ -109,7 +112,7 @@ _start:
 // CHECK-NEXT:   Size: 0
 // CHECK-NEXT:   Binding: Local
 // CHECK-NEXT:   Type: None
-// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Other: 2
 // CHECK-NEXT:   Section: .preinit_array
 // CHECK-NEXT: }
 
