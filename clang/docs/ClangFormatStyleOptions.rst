@@ -157,6 +157,7 @@ the configuration (without a prefix: ``Auto``).
   brackets. This will result in formattings like
 
   .. code-block:: c++
+
     someLongFunction(argument1,
                      argument2);
 
@@ -167,6 +168,7 @@ the configuration (without a prefix: ``Auto``).
   will result in formattings like
 
   .. code-block:: c++
+
     int aaaa = 12;
     int b    = 23;
     int ccc  = 23;
@@ -178,6 +180,7 @@ the configuration (without a prefix: ``Auto``).
   will result in formattings like
 
   .. code-block:: c++
+
     int         aaaa = 12;
     float       b = 23;
     std::string ccc = 23;
@@ -394,12 +397,14 @@ the configuration (without a prefix: ``Auto``).
   These are expected to be macros of the form:
 
   .. code-block:: c++
+
     FOREACH(<variable-declaration>, ...)
       <loop-body>
 
   In the .clang-format configuration file, this can be configured like:
 
   .. code-block:: c++
+
     ForEachMacros: ['RANGES_FOR', 'FOREACH']
 
   For example: BOOST_FOREACH.
@@ -422,6 +427,7 @@ the configuration (without a prefix: ``Auto``).
   To configure this in the .clang-format file, use:
 
   .. code-block:: c++
+
     IncludeCategories:
       - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
         Priority:        2

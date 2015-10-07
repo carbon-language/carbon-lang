@@ -87,7 +87,7 @@ class EnumValue:
 
 def clean_comment_line(line):
   if line == '/// \\code':
-    return '\n.. code-block:: c++\n'
+    return '\n.. code-block:: c++\n\n'
   if line == '/// \\endcode':
     return ''
   return line[4:] + '\n'
