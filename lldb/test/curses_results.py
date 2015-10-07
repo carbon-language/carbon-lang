@@ -29,7 +29,6 @@ class Curses(test_results.ResultsFormatter):
         self.jobs = [None] * 64
         self.job_tests = [None] * 64
         self.results = list()
-        self.saved_first_responder = None
         try:
             self.main_window = lldbcurses.intialize_curses()         
             self.main_window.add_key_action('\t', self.main_window.select_next_first_responder, "Switch between views that can respond to keyboard input")
@@ -82,8 +81,7 @@ class Curses(test_results.ResultsFormatter):
             else:
                 self.info_panel.show()
             
-            self.saved_first_responder = self.main_window.first_responder  
-            self.main_window.set_first_responder(self.info_panel)
+            self.main_window.push_first_responder(self.info_panel)
             test_start = self.results[selected_idx][0]
             test_result = self.results[selected_idx][1]
             self.info_panel.set_line(0, "File: %s" % (test_start['test_filename']))
@@ -92,9 +90,8 @@ class Curses(test_results.ResultsFormatter):
             self.info_panel.set_line(3, "Status: %s" % (test_result['status']))
 
     def hide_info_panel(self):
-        self.info_panel.resign_first_responder(remove_from_parent=True, new_first_responder=self.saved_first_responder)
+        self.main_window.pop_first_responder(self.info_panel)
         self.info_panel.hide()        
-        self.saved_first_responder = None
         self.main_window.refresh()
         
     def toggle_status(self, status):
