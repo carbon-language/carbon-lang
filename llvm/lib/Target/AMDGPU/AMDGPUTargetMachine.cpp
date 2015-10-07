@@ -45,6 +45,8 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
 
   PassRegistry *PR = PassRegistry::getPassRegistry();
   initializeSIFixSGPRLiveRangesPass(*PR);
+  initializeSIFixControlFlowLiveIntervalsPass(*PR);
+  initializeSILoadStoreOptimizerPass(*PR);
 }
 
 static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
@@ -284,7 +286,6 @@ void GCNPassConfig::addPreRegAlloc() {
   // earlier passes might recompute live intervals.
   // TODO: handle CodeGenOpt::None; fast RA ignores spill weights set by the pass
   if (getOptLevel() > CodeGenOpt::None) {
-    initializeSIFixControlFlowLiveIntervalsPass(*PassRegistry::getPassRegistry());
     insertPass(&MachineSchedulerID, &SIFixControlFlowLiveIntervalsID);
   }
 
@@ -294,7 +295,6 @@ void GCNPassConfig::addPreRegAlloc() {
 
     // This should be run after scheduling, but before register allocation. It
     // also need extra copies to the address operand to be eliminated.
-    initializeSILoadStoreOptimizerPass(*PassRegistry::getPassRegistry());
     insertPass(&MachineSchedulerID, &SILoadStoreOptimizerID);
     insertPass(&MachineSchedulerID, &RegisterCoalescerID);
   }
