@@ -84,18 +84,12 @@ protected:
 class SampleProfileWriterText : public SampleProfileWriter {
 public:
   SampleProfileWriterText(StringRef F, std::error_code &EC)
-      : SampleProfileWriter(F, EC, sys::fs::F_Text), Indent(0) {}
+      : SampleProfileWriter(F, EC, sys::fs::F_Text) {}
 
   bool write(StringRef FName, const FunctionSamples &S) override;
   bool write(const Module &M, StringMap<FunctionSamples> &P) {
     return SampleProfileWriter::write(M, P);
   }
-
-private:
-  /// Indent level to use when writing.
-  ///
-  /// This is used when printing inlined callees.
-  unsigned Indent;
 };
 
 /// \brief Sample-based profile writer (binary format).

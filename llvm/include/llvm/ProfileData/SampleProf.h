@@ -208,7 +208,7 @@ typedef DenseMap<CallsiteLocation, FunctionSamples> CallsiteSampleMap;
 class FunctionSamples {
 public:
   FunctionSamples() : TotalSamples(0), TotalHeadSamples(0) {}
-  void print(raw_ostream &OS = dbgs(), unsigned Indent = 0) const;
+  void print(raw_ostream &OS = dbgs());
   void addTotalSamples(unsigned Num) { TotalSamples += Num; }
   void addHeadSamples(unsigned Num) { TotalHeadSamples += Num; }
   void addBodySamples(int LineOffset, unsigned Discriminator, unsigned Num) {
@@ -302,22 +302,6 @@ private:
   /// are an offset from the start of the function.
   BodySampleMap BodySamples;
 
-  /// Map call sites to collected samples for the called function.
-  ///
-  /// Each entry in this map corresponds to all the samples
-  /// collected for the inlined function call at the given
-  /// location. For example, given:
-  ///
-  ///     void foo() {
-  ///  1    bar();
-  ///  ...
-  ///  8    baz();
-  ///     }
-  ///
-  /// If the bar() and baz() calls were inlined inside foo(), this
-  /// map will contain two entries.  One for all the samples collected
-  /// in the call to bar() at line offset 1, the other for all the samples
-  /// collected in the call to baz() at line offset 8.
   CallsiteSampleMap CallsiteSamples;
 };
 
