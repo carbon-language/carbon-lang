@@ -1065,7 +1065,8 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
   }
   case Instruction::BitCast: {
     Type *SrcTy = I->getOperand(0)->getType();
-    if ((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
+    if ((SrcTy->isIntegerTy() || SrcTy->isPointerTy() ||
+         SrcTy->isFloatingPointTy()) &&
         // TODO: For now, not handling conversions like:
         // (bitcast i64 %x to <2 x i32>)
         !I->getType()->isVectorTy()) {
@@ -1378,6 +1379,12 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
         KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
         break;
       }
+      case Intrinsic::fabs: {
+        Type *Ty = II->getType();
+        APInt SignBit = APInt::getSignBit(Ty->getScalarSizeInBits());
+        KnownZero |= APInt::getSplat(Ty->getPrimitiveSizeInBits(), SignBit);
+        break;
+      }
       case Intrinsic::x86_sse42_crc32_64_64:
         KnownZero |= APInt::getHighBitsSet(64, 32);
         break;
@@ -1477,8 +1484,9 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   unsigned BitWidth = KnownZero.getBitWidth();
 
   assert((V->getType()->isIntOrIntVectorTy() ||
+          V->getType()->isFPOrFPVectorTy() ||
           V->getType()->getScalarType()->isPointerTy()) &&
-         "Not integer or pointer type!");
+         "Not integer, floating point, or pointer type!");
   assert((DL.getTypeSizeInBits(V->getType()->getScalarType()) == BitWidth) &&
          (!V->getType()->isIntOrIntVectorTy() ||
           V->getType()->getScalarSizeInBits() == BitWidth) &&
