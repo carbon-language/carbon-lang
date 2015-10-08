@@ -1410,10 +1410,8 @@ void CodeGenFunction::EmitSEHTryStmt(const SEHTryStmt &S) {
 namespace {
 struct PerformSEHFinally final : EHScopeStack::Cleanup {
   llvm::Function *OutlinedFinally;
-  EHScopeStack::stable_iterator EnclosingScope;
-  PerformSEHFinally(llvm::Function *OutlinedFinally,
-                    EHScopeStack::stable_iterator EnclosingScope)
-      : OutlinedFinally(OutlinedFinally), EnclosingScope(EnclosingScope) {}
+  PerformSEHFinally(llvm::Function *OutlinedFinally)
+      : OutlinedFinally(OutlinedFinally) {}
 
   void Emit(CodeGenFunction &CGF, Flags F) override {
     ASTContext &Context = CGF.getContext();
@@ -1438,28 +1436,7 @@ struct PerformSEHFinally final : EHScopeStack::Cleanup {
         CGM.getTypes().arrangeFreeFunctionCall(Args, FPT,
                                                /*chainCall=*/false);
 
-    // If this is the normal cleanup, just emit the call.
-    if (!F.isForEHCleanup()) {
-      CGF.EmitCall(FnInfo, OutlinedFinally, ReturnValueSlot(), Args);
-      return;
-    }
-
-    // Build a cleanupendpad to unwind through.
-    llvm::BasicBlock *CleanupBB = CGF.Builder.GetInsertBlock();
-    llvm::BasicBlock *CleanupEndBB = CGF.createBasicBlock("ehcleanup.end");
-    llvm::Instruction *PadInst = CleanupBB->getFirstNonPHI();
-    auto *CPI = cast<llvm::CleanupPadInst>(PadInst);
-    CGBuilderTy(CGF, CleanupEndBB)
-        .CreateCleanupEndPad(CPI, CGF.getEHDispatchBlock(EnclosingScope));
-
-    // Push and pop the cleanupendpad around the call.
-    CGF.EHStack.pushPadEnd(CleanupEndBB);
     CGF.EmitCall(FnInfo, OutlinedFinally, ReturnValueSlot(), Args);
-    CGF.EHStack.popPadEnd();
-
-    // Insert the catchendpad block here.
-    CGF.CurFn->getBasicBlockList().insertAfter(CGF.Builder.GetInsertBlock(),
-                                               CleanupEndBB);
   }
 };
 } // end anonymous namespace
@@ -1815,8 +1792,7 @@ void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
         HelperCGF.GenerateSEHFinallyFunction(*this, *Finally);
 
     // Push a cleanup for __finally blocks.
-    EHStack.pushCleanup<PerformSEHFinally>(NormalAndEHCleanup, FinallyFunc,
-                                           EHStack.getInnermostEHScope());
+    EHStack.pushCleanup<PerformSEHFinally>(NormalAndEHCleanup, FinallyFunc);
     return;
   }
 

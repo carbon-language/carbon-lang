@@ -521,15 +521,6 @@ static void EmitCleanup(CodeGenFunction &CGF,
                         EHScopeStack::Cleanup *Fn,
                         EHScopeStack::Cleanup::Flags flags,
                         Address ActiveFlag) {
-  // Itanium EH cleanups occur within a terminate scope. Microsoft SEH doesn't
-  // have this behavior, and the Microsoft C++ runtime will call terminate for
-  // us if the cleanup throws.
-  bool PushedTerminate = false;
-  if (flags.isForEHCleanup() && !CGF.getTarget().getCXXABI().isMicrosoft()) {
-    CGF.EHStack.pushTerminate();
-    PushedTerminate = true;
-  }
-
   // If there's an active flag, load it and skip the cleanup if it's
   // false.
   llvm::BasicBlock *ContBB = nullptr;
@@ -549,10 +540,6 @@ static void EmitCleanup(CodeGenFunction &CGF,
   // Emit the continuation block if there was an active flag.
   if (ActiveFlag.isValid())
     CGF.EmitBlock(ContBB);
-
-  // Leave the terminate scope.
-  if (PushedTerminate)
-    CGF.EHStack.popTerminate();
 }
 
 static void ForwardPrebranchedFallthrough(llvm::BasicBlock *Exit,
@@ -931,10 +918,28 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
     CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
 
     EmitBlock(EHEntry);
+
+    // Push terminate scopes around the potentially throwing destructor calls.
+    // We don't emit these when using funclets, because the runtime does it for
+    // us as part of unwinding out of a cleanuppad.
+    bool PushedTerminate = false;
+    if (!EHPersonality::get(*this).usesFuncletPads()) {
+      EHStack.pushTerminate();
+      PushedTerminate = true;
+    }
+
     llvm::CleanupPadInst *CPI = nullptr;
+    llvm::BasicBlock *CleanupEndBB = nullptr;
     llvm::BasicBlock *NextAction = getEHDispatchBlock(EHParent);
-    if (EHPersonality::get(*this).usesFuncletPads())
+    if (EHPersonality::get(*this).usesFuncletPads()) {
       CPI = Builder.CreateCleanupPad({});
+
+      // Build a cleanupendpad to unwind through. Our insertion point should be
+      // in the cleanuppad block.
+      CleanupEndBB = createBasicBlock("ehcleanup.end");
+      CGBuilderTy(*this, CleanupEndBB).CreateCleanupEndPad(CPI, NextAction);
+      EHStack.pushPadEnd(CleanupEndBB);
+    }
 
     // We only actually emit the cleanup code if the cleanup is either
     // active or was used before it was deactivated.
@@ -947,6 +952,21 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       Builder.CreateCleanupRet(CPI, NextAction);
     else
       Builder.CreateBr(NextAction);
+
+    // Insert the cleanupendpad block here, if it has any uses.
+    if (CleanupEndBB) {
+      EHStack.popPadEnd();
+      if (CleanupEndBB->hasNUsesOrMore(1)) {
+        CurFn->getBasicBlockList().insertAfter(Builder.GetInsertBlock(),
+                                               CleanupEndBB);
+      } else {
+        delete CleanupEndBB;
+      }
+    }
+
+    // Leave the terminate scope.
+    if (PushedTerminate)
+      EHStack.popTerminate();
 
     Builder.restoreIP(SavedIP);
 

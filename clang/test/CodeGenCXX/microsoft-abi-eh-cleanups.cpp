@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -mconstructor-aliases -fexceptions -fcxx-exceptions -fno-rtti | FileCheck -check-prefix WIN32 %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -triple=i386-pc-win32 -mconstructor-aliases -fexceptions -fcxx-exceptions -fno-rtti | FileCheck -check-prefix WIN32 %s
 
 struct A {
   A();
@@ -54,14 +54,14 @@ int HasDeactivatedCleanups() {
 //
 // WIN32:   invoke i32 @"\01?TakesTwo@@YAHUA@@0@Z"([[argmem_ty]]* inalloca %[[argmem]])
 //        Destroy the two const ref temporaries.
-// WIN32:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"
+// WIN32:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"
 // WIN32:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"
 // WIN32:   ret i32
 //
 //        Conditionally destroy arg1.
 // WIN32:   %[[cond:.*]] = load i1, i1* %[[isactive]]
 // WIN32:   br i1 %[[cond]]
-// WIN32:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %[[arg1]])
+// WIN32:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %[[arg1]])
 // WIN32: }
 
 // Test putting the cleanups inside a conditional.
@@ -118,14 +118,14 @@ int HasConditionalDeactivatedCleanups(bool cond) {
 //        False condition.
 // WIN32:   invoke i32 @"\01?CouldThrow@@YAHXZ"()
 //        Two normal cleanups for TakeRef args.
-// WIN32:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"
+// WIN32:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"
 // WIN32-NOT:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"
 // WIN32:   ret i32
 //
 //        Somewhere in the landing pad soup, we conditionally destroy arg1.
 // WIN32:   %[[isactive:.*]] = load i1, i1* %[[arg1_cond]]
 // WIN32:   br i1 %[[isactive]]
-// WIN32:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"
+// WIN32:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"
 // WIN32: }
 
 namespace crash_on_partial_destroy {
@@ -155,7 +155,7 @@ C::C() { foo(); }
 // WIN32:      getelementptr i8, i8* %{{.*}}, i32 4
 // WIN32-NOT:  load
 // WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::B"*
-// WIN32:      invoke x86_thiscallcc void @"\01??1B@crash_on_partial_destroy@@UAE@XZ"
+// WIN32:      call x86_thiscallcc void @"\01??1B@crash_on_partial_destroy@@UAE@XZ"
 //
 // WIN32-NOT:  load
 // WIN32:      bitcast %"struct.crash_on_partial_destroy::C"* %{{.*}} to i8*
@@ -188,3 +188,21 @@ void f() {
 // WIN32-NEXT: cleanuppad
 // WIN32: call x86_thiscallcc void @"\01??1C@dont_call_terminate@@QAE@XZ"({{.*}})
 }
+
+namespace noexcept_false_dtor {
+struct D {
+  ~D() noexcept(false);
+};
+void f() {
+  D d;
+  CouldThrow();
+}
+}
+
+// WIN32-LABEL: define void @"\01?f@noexcept_false_dtor@@YAXXZ"()
+// WIN32: invoke i32 @"\01?CouldThrow@@YAHXZ"()
+// WIN32: call x86_thiscallcc void @"\01??1D@noexcept_false_dtor@@QAE@XZ"(%"struct.noexcept_false_dtor::D"* %{{.*}})
+// WIN32: cleanuppad
+// WIN32: invoke x86_thiscallcc void @"\01??1D@noexcept_false_dtor@@QAE@XZ"(%"struct.noexcept_false_dtor::D"* %{{.*}})
+// WIN32: cleanupret
+// WIN32: cleanupendpad
