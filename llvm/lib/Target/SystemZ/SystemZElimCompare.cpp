@@ -155,6 +155,30 @@ Reference SystemZElimCompare::getRegReferences(MachineInstr *MI, unsigned Reg) {
   return Ref;
 }
 
+// Return true if this is a load and test which can be optimized the
+// same way as compare instruction.
+static bool isLoadAndTestAsCmp(MachineInstr *MI) {
+  // If we during isel used a load-and-test as a compare with 0, the
+  // def operand is dead.
+  return ((MI->getOpcode() == SystemZ::LTEBR ||
+	   MI->getOpcode() == SystemZ::LTDBR ||
+	   MI->getOpcode() == SystemZ::LTXBR) &&
+	  MI->getOperand(0).isDead());
+}
+
+// Return the source register of Compare, which is the unknown value
+// being tested.
+static unsigned getCompareSourceReg(MachineInstr *Compare) {
+  unsigned reg = 0;
+  if (Compare->isCompare())
+    reg = Compare->getOperand(0).getReg();
+  else if (isLoadAndTestAsCmp(Compare))
+    reg = Compare->getOperand(1).getReg();
+  assert (reg);
+
+  return reg;
+}
+
 // Compare compares the result of MI against zero.  If MI is an addition
 // of -1 and if CCUsers is a single branch on nonzero, eliminate the addition
 // and convert the branch to a BRCT(G).  Return true on success.
@@ -185,7 +209,7 @@ SystemZElimCompare::convertToBRCT(MachineInstr *MI, MachineInstr *Compare,
   // We already know that there are no references to the register between
   // MI and Compare.  Make sure that there are also no references between
   // Compare and Branch.
-  unsigned SrcReg = Compare->getOperand(0).getReg();
+  unsigned SrcReg = getCompareSourceReg(Compare);
   MachineBasicBlock::iterator MBBI = Compare, MBBE = Branch;
   for (++MBBI; MBBI != MBBE; ++MBBI)
     if (getRegReferences(MBBI, SrcReg))
@@ -305,6 +329,10 @@ static bool isCompareZero(MachineInstr *Compare) {
     return true;
 
   default:
+
+    if (isLoadAndTestAsCmp(Compare))
+      return true;
+
     return (Compare->getNumExplicitOperands() == 2 &&
             Compare->getOperand(1).isImm() &&
             Compare->getOperand(1).getImm() == 0);
@@ -322,7 +350,7 @@ optimizeCompareZero(MachineInstr *Compare,
     return false;
 
   // Search back for CC results that are based on the first operand.
-  unsigned SrcReg = Compare->getOperand(0).getReg();
+  unsigned SrcReg = getCompareSourceReg(Compare);
   MachineBasicBlock &MBB = *Compare->getParent();
   MachineBasicBlock::iterator MBBI = Compare, MBBE = MBB.begin();
   Reference CCRefs;
@@ -431,7 +459,7 @@ bool SystemZElimCompare::processBlock(MachineBasicBlock &MBB) {
   while (MBBI != MBB.begin()) {
     MachineInstr *MI = --MBBI;
     if (CompleteCCUsers &&
-        MI->isCompare() &&
+        (MI->isCompare() || isLoadAndTestAsCmp(MI)) &&
         (optimizeCompareZero(MI, CCUsers) ||
          fuseCompareAndBranch(MI, CCUsers))) {
       ++MBBI;

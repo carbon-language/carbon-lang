@@ -4,14 +4,15 @@
 ; handled by SystemZElimcompare, so for Z13 this is currently
 ; unimplemented.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s -check-prefix=CHECK-Z10
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
 ; Load complement (sign-bit flipped).
 ; Test f32
 define float @f1(float %a, float %b, float %f) {
 ; CHECK-LABEL: f1:
-; CHECK-Z10: lcebr
-; CHECK-Z10-NEXT: je
+; CHECK: lcebr
+; CHECK-NEXT: je
   %neg = fsub float -0.0, %f
   %cond = fcmp oeq float %neg, 0.0
   %res = select i1 %cond, float %a, float %b
@@ -21,8 +22,8 @@ define float @f1(float %a, float %b, float %f) {
 ; Test f64
 define double @f2(double %a, double %b, double %f) {
 ; CHECK-LABEL: f2:
-; CHECK-Z10: lcdbr
-; CHECK-Z10-NEXT: je
+; CHECK: lcdbr
+; CHECK-NEXT: je
   %neg = fsub double -0.0, %f
   %cond = fcmp oeq double %neg, 0.0
   %res = select i1 %cond, double %a, double %b
@@ -34,8 +35,8 @@ define double @f2(double %a, double %b, double %f) {
 declare float @llvm.fabs.f32(float %f)
 define float @f3(float %a, float %b, float %f) {
 ; CHECK-LABEL: f3:
-; CHECK-Z10: lnebr
-; CHECK-Z10-NEXT: je
+; CHECK: lnebr
+; CHECK-NEXT: je
   %abs = call float @llvm.fabs.f32(float %f)
   %neg = fsub float -0.0, %abs
   %cond = fcmp oeq float %neg, 0.0
@@ -47,8 +48,8 @@ define float @f3(float %a, float %b, float %f) {
 declare double @llvm.fabs.f64(double %f)
 define double @f4(double %a, double %b, double %f) {
 ; CHECK-LABEL: f4:
-; CHECK-Z10: lndbr
-; CHECK-Z10-NEXT: je
+; CHECK: lndbr
+; CHECK-NEXT: je
   %abs = call double @llvm.fabs.f64(double %f)
   %neg = fsub double -0.0, %abs
   %cond = fcmp oeq double %neg, 0.0
@@ -60,8 +61,8 @@ define double @f4(double %a, double %b, double %f) {
 ; Test f32
 define float @f5(float %a, float %b, float %f) {
 ; CHECK-LABEL: f5:
-; CHECK-Z10: lpebr
-; CHECK-Z10-NEXT: je
+; CHECK: lpebr
+; CHECK-NEXT: je
   %abs = call float @llvm.fabs.f32(float %f)
   %cond = fcmp oeq float %abs, 0.0
   %res = select i1 %cond, float %a, float %b
@@ -71,8 +72,8 @@ define float @f5(float %a, float %b, float %f) {
 ; Test f64
 define double @f6(double %a, double %b, double %f) {
 ; CHECK-LABEL: f6:
-; CHECK-Z10: lpdbr
-; CHECK-Z10-NEXT: je
+; CHECK: lpdbr
+; CHECK-NEXT: je
   %abs = call double @llvm.fabs.f64(double %f)
   %cond = fcmp oeq double %abs, 0.0
   %res = select i1 %cond, double %a, double %b

@@ -130,6 +130,13 @@ void SystemZPassConfig::addPreSched2() {
 }
 
 void SystemZPassConfig::addPreEmitPass() {
+
+  // Do instruction shortening before compare elimination because some
+  // vector instructions will be shortened into opcodes that compare
+  // elimination recognizes.
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createSystemZShortenInstPass(getSystemZTargetMachine()), false);
+
   // We eliminate comparisons here rather than earlier because some
   // transformations can change the set of available CC values and we
   // generally want those transformations to have priority.  This is
@@ -155,8 +162,6 @@ void SystemZPassConfig::addPreEmitPass() {
   // preventing that would be a win or not.
   if (getOptLevel() != CodeGenOpt::None)
     addPass(createSystemZElimComparePass(getSystemZTargetMachine()), false);
-  if (getOptLevel() != CodeGenOpt::None)
-    addPass(createSystemZShortenInstPass(getSystemZTargetMachine()), false);
   addPass(createSystemZLongBranchPass(getSystemZTargetMachine()));
 }
 
