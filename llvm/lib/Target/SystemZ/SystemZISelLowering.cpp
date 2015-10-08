@@ -3908,7 +3908,7 @@ static SDValue tryBuildVectorShuffle(SelectionDAG &DAG,
   // Create the BUILD_VECTOR for the remaining elements, if any.
   if (!ResidueOps.empty()) {
     while (ResidueOps.size() < NumElements)
-      ResidueOps.push_back(DAG.getUNDEF(VT.getVectorElementType()));
+      ResidueOps.push_back(DAG.getUNDEF(ResidueOps[0].getValueType()));
     for (auto &Op : GS.Ops) {
       if (!Op.getNode()) {
         Op = DAG.getNode(ISD::BUILD_VECTOR, SDLoc(BVN), VT, ResidueOps);
