@@ -148,7 +148,7 @@ C::C() { foo(); }
 // Verify that we don't bother with a vbtable lookup when adjusting the this
 // pointer to call a base destructor from a constructor while unwinding.
 // WIN32-LABEL: define {{.*}} @"\01??0C@crash_on_partial_destroy@@QAE@XZ"{{.*}} {
-// WIN32:      landingpad
+// WIN32:      cleanuppad
 //
 //        We shouldn't do any vbptr loads, just constant GEPs.
 // WIN32-NOT:  load
@@ -185,7 +185,6 @@ void f() {
 // WIN32: call x86_thiscallcc void @"\01??1C@dont_call_terminate@@QAE@XZ"({{.*}})
 //
 // WIN32: [[lpad]]
-// WIN32-NEXT: landingpad
-// WIN32-NEXT: cleanup
+// WIN32-NEXT: cleanuppad
 // WIN32: call x86_thiscallcc void @"\01??1C@dont_call_terminate@@QAE@XZ"({{.*}})
 }

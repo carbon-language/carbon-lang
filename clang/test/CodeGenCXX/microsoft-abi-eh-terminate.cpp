@@ -6,10 +6,9 @@ void never_throws() noexcept(true) {
   may_throw();
 }
 
-// CHECK-LABEL: define void @"\01?never_throws@@YAXXZ"
+// CHECK-LABEL: define void @"\01?never_throws@@YAXXZ"()
+// CHECK-SAME:          personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 // CHECK:      invoke void @"\01?may_throw@@YAXXZ"()
-
-// CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
-// MSVC2013:   call void @"\01?terminate@@YAXXZ"()
-// MSVC2015:   call void @__std_terminate()
+// MSVC2013:      terminatepad [void ()* @"\01?terminate@@YAXXZ"]
+// MSVC2015:      terminatepad [void ()* @__std_terminate]
 // CHECK-NEXT: unreachable

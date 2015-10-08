@@ -933,8 +933,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
     EmitBlock(EHEntry);
     llvm::CleanupPadInst *CPI = nullptr;
     llvm::BasicBlock *NextAction = getEHDispatchBlock(EHParent);
-    if (CGM.getCodeGenOpts().NewMSEH &&
-        EHPersonality::get(*this).isMSVCPersonality())
+    if (EHPersonality::get(*this).usesFuncletPads())
       CPI = Builder.CreateCleanupPad({});
 
     // We only actually emit the cleanup code if the cleanup is either
