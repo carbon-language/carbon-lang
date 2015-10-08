@@ -862,7 +862,7 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
     DEBUG(dbgs() << "  Into: ");
     DEBUG(MI->dump());
 
-    MachineBasicBlock::iterator InsertPoint = MI->getNextNode();
+    auto InsertPoint = ++MachineBasicBlock::iterator(MI);
 
     // Note that an XXPERMDI requires a VSRC, so if the SUBREG_TO_REG
     // is copying to a VRRC, we need to be careful to avoid a register
@@ -876,19 +876,19 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
       BuildMI(*MI->getParent(), InsertPoint, MI->getDebugLoc(),
               TII->get(PPC::COPY), VSRCTmp1)
         .addReg(NewVReg);
-      DEBUG(MI->getNextNode()->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
 
       insertSwap(MI, InsertPoint, VSRCTmp2, VSRCTmp1);
-      DEBUG(MI->getNextNode()->getNextNode()->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
 
       BuildMI(*MI->getParent(), InsertPoint, MI->getDebugLoc(),
               TII->get(PPC::COPY), DstReg)
         .addReg(VSRCTmp2);
-      DEBUG(MI->getNextNode()->getNextNode()->getNextNode()->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
 
     } else {
       insertSwap(MI, InsertPoint, DstReg, NewVReg);
-      DEBUG(MI->getNextNode()->dump());
+      DEBUG(std::prev(InsertPoint)->dump());
     }
     break;
   }
