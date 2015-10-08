@@ -1616,12 +1616,12 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   }
 
   // sext(C1 + (C2 * x)) --> C1 + sext(C2 * x) if C1 < C2
-  if (auto SA = dyn_cast<SCEVAddExpr>(Op)) {
+  if (auto *SA = dyn_cast<SCEVAddExpr>(Op)) {
     if (SA->getNumOperands() == 2) {
-      auto SC1 = dyn_cast<SCEVConstant>(SA->getOperand(0));
-      auto SMul = dyn_cast<SCEVMulExpr>(SA->getOperand(1));
+      auto *SC1 = dyn_cast<SCEVConstant>(SA->getOperand(0));
+      auto *SMul = dyn_cast<SCEVMulExpr>(SA->getOperand(1));
       if (SMul && SC1) {
-        if (auto SC2 = dyn_cast<SCEVConstant>(SMul->getOperand(0))) {
+        if (auto *SC2 = dyn_cast<SCEVConstant>(SMul->getOperand(0))) {
           const APInt &C1 = SC1->getValue()->getValue();
           const APInt &C2 = SC2->getValue()->getValue();
           if (C1.isStrictlyPositive() && C2.isStrictlyPositive() &&
@@ -1735,8 +1735,8 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       // If Start and Step are constants, check if we can apply this
       // transformation:
       // sext{C1,+,C2} --> C1 + sext{0,+,C2} if C1 < C2
-      auto SC1 = dyn_cast<SCEVConstant>(Start);
-      auto SC2 = dyn_cast<SCEVConstant>(Step);
+      auto *SC1 = dyn_cast<SCEVConstant>(Start);
+      auto *SC2 = dyn_cast<SCEVConstant>(Step);
       if (SC1 && SC2) {
         const APInt &C1 = SC1->getValue()->getValue();
         const APInt &C2 = SC2->getValue()->getValue();
@@ -8525,7 +8525,7 @@ void ScalarEvolution::computeAccessFunctions(
   if (Sizes.empty())
     return;
 
-  if (auto AR = dyn_cast<SCEVAddRecExpr>(Expr))
+  if (auto *AR = dyn_cast<SCEVAddRecExpr>(Expr))
     if (!AR->isAffine())
       return;
 
