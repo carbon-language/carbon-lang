@@ -235,6 +235,10 @@ public:
     return getCallSite().arg_end();
   }
 
+  unsigned gcArgsStartIdx() const {
+    return gc_args_begin() - getInstruction()->op_begin();
+  }
+
   /// range adapter for gc arguments
   iterator_range<arg_iterator> gc_args() const {
     return iterator_range<arg_iterator>(gc_args_begin(), gc_args_end());

@@ -1339,10 +1339,6 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
   assert(isStatepoint(CS) &&
          "This method expects to be rewriting a statepoint");
 
-  // We're not changing the function signature of the statepoint since the gc
-  // arguments go into the var args section.
-  Function *GCStatepointDecl = CS.getCalledFunction();
-
   // Then go ahead and use the builder do actually do the inserts.  We insert
   // immediately before the previous instruction under the assumption that all
   // arguments will be available here.  We can't insert afterwards since we may
@@ -1350,24 +1346,28 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
   Instruction *InsertBefore = CS.getInstruction();
   IRBuilder<> Builder(InsertBefore);
 
-  // Copy all of the arguments from the original statepoint - this includes the
-  // target, call args, and deopt args
-  SmallVector<llvm::Value *, 64> Args;
-  Args.insert(Args.end(), CS.arg_begin(), CS.arg_end());
-  // TODO: Clear the 'needs rewrite' flag
+  Statepoint OldSP(CS);
 
-  // Add all the pointers to be relocated (gc arguments) and capture the start
-  // of the live variable list for use in the gc_relocates
-  const int LiveStartIdx = Args.size();
-  Args.insert(Args.end(), LiveVariables.begin(), LiveVariables.end());
+  ArrayRef<Value *> GCArgs(LiveVariables);
+  uint64_t StatepointID = OldSP.getID();
+  uint32_t NumPatchBytes = OldSP.getNumPatchBytes();
+  uint32_t Flags = OldSP.getFlags();
+
+  ArrayRef<Use> CallArgs(OldSP.arg_begin(), OldSP.arg_end());
+  ArrayRef<Use> DeoptArgs(OldSP.vm_state_begin(), OldSP.vm_state_end());
+  ArrayRef<Use> TransitionArgs(OldSP.gc_transition_args_begin(),
+                               OldSP.gc_transition_args_end());
+  Value *CallTarget = OldSP.getCalledValue();
 
   // Create the statepoint given all the arguments
   Instruction *Token = nullptr;
   AttributeSet ReturnAttrs;
   if (CS.isCall()) {
     CallInst *ToReplace = cast<CallInst>(CS.getInstruction());
-    CallInst *Call =
-        Builder.CreateCall(GCStatepointDecl, Args, "safepoint_token");
+    CallInst *Call = Builder.CreateGCStatepointCall(
+        StatepointID, NumPatchBytes, CallTarget, Flags, CallArgs,
+        TransitionArgs, DeoptArgs, GCArgs, "safepoint_token");
+
     Call->setTailCall(ToReplace->isTailCall());
     Call->setCallingConv(ToReplace->getCallingConv());
 
@@ -1392,10 +1392,11 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
     // Insert the new invoke into the old block.  We'll remove the old one in a
     // moment at which point this will become the new terminator for the
     // original block.
-    InvokeInst *Invoke =
-        InvokeInst::Create(GCStatepointDecl, ToReplace->getNormalDest(),
-                           ToReplace->getUnwindDest(), Args, "statepoint_token",
-                           ToReplace->getParent());
+    InvokeInst *Invoke = Builder.CreateGCStatepointInvoke(
+        StatepointID, NumPatchBytes, CallTarget, ToReplace->getNormalDest(),
+        ToReplace->getUnwindDest(), Flags, CallArgs, TransitionArgs, DeoptArgs,
+        GCArgs, "statepoint_token");
+
     Invoke->setCallingConv(ToReplace->getCallingConv());
 
     // Currently we will fail on parameter attributes and on certain
@@ -1424,6 +1425,7 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
             UnwindBlock->getLandingPadInst(), 1, "relocate_token"));
     Result.UnwindToken = ExceptionalToken;
 
+    const unsigned LiveStartIdx = Statepoint(Token).gcArgsStartIdx();
     CreateGCRelocates(LiveVariables, LiveStartIdx, BasePtrs, ExceptionalToken,
                       Builder);
 
@@ -1460,6 +1462,7 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
   Result.StatepointToken = Token;
 
   // Second, create a gc.relocate for every live variable
+  const unsigned LiveStartIdx = Statepoint(Token).gcArgsStartIdx();
   CreateGCRelocates(LiveVariables, LiveStartIdx, BasePtrs, Token, Builder);
 }
 
