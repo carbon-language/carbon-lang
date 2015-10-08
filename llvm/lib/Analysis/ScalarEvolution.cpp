@@ -5826,11 +5826,6 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
   }
 }
 
-/// ComputeExitCountExhaustively - If the loop is known to execute a
-/// constant number of times (the condition evolves only from constants),
-/// try to evaluate a few iterations of the loop until we get the exit
-/// condition gets a value of ExitWhen (true or false).  If we cannot
-/// evaluate the trip count of the loop, return getCouldNotCompute().
 const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
                                                           Value *Cond,
                                                           bool ExitWhen) {
