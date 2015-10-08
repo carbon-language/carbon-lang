@@ -117,10 +117,10 @@ struct LDTLSCleanup : public MachineFunctionPass {
     *TLSBaseAddrReg = RegInfo.createVirtualRegister(&AArch64::GPR64RegClass);
 
     // Insert a copy from X0 to TLSBaseAddrReg for later.
-    MachineInstr *Next = I->getNextNode();
-    MachineInstr *Copy = BuildMI(*I->getParent(), Next, I->getDebugLoc(),
-                                 TII->get(TargetOpcode::COPY),
-                                 *TLSBaseAddrReg).addReg(AArch64::X0);
+    MachineInstr *Copy =
+        BuildMI(*I->getParent(), ++MachineBasicBlock::iterator(I),
+                I->getDebugLoc(), TII->get(TargetOpcode::COPY), *TLSBaseAddrReg)
+            .addReg(AArch64::X0);
 
     return Copy;
   }
