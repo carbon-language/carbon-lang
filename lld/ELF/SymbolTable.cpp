@@ -105,8 +105,6 @@ void SymbolTable::addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
 }
 
 template <class ELFT> void SymbolTable::addIgnoredSym(StringRef Name) {
-  DefinedAbsolute<ELFT>::IgnoreUndef.setBinding(STB_WEAK);
-  DefinedAbsolute<ELFT>::IgnoreUndef.setVisibility(STV_HIDDEN);
   auto Sym = new (Alloc)
       DefinedAbsolute<ELFT>(Name, DefinedAbsolute<ELFT>::IgnoreUndef);
   resolve<ELFT>(Sym);

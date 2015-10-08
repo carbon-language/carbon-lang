@@ -86,11 +86,17 @@ std::unique_ptr<InputFile> Lazy::getMember() {
   return createELFFile<ObjectFile>(MBRef);
 }
 
+template <class ELFT> static void doInitSymbols() {
+  DefinedAbsolute<ELFT>::IgnoreUndef.setBinding(STB_WEAK);
+  DefinedAbsolute<ELFT>::IgnoreUndef.setVisibility(STV_HIDDEN);
+  Undefined<ELFT>::Optional.setVisibility(STV_HIDDEN);
+}
+
 void lld::elf2::initSymbols() {
-  Undefined<ELF32LE>::Optional.setVisibility(STV_HIDDEN);
-  Undefined<ELF32BE>::Optional.setVisibility(STV_HIDDEN);
-  Undefined<ELF64LE>::Optional.setVisibility(STV_HIDDEN);
-  Undefined<ELF64BE>::Optional.setVisibility(STV_HIDDEN);
+  doInitSymbols<ELF32LE>();
+  doInitSymbols<ELF32BE>();
+  doInitSymbols<ELF64LE>();
+  doInitSymbols<ELF64BE>();
 }
 
 template int SymbolBody::compare<ELF32LE>(SymbolBody *Other);
