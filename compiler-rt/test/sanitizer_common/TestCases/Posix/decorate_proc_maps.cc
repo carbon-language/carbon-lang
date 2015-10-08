@@ -47,8 +47,8 @@ int main(void) {
 // CHECK-asan: rw-p {{.*}} [high shadow]
 
 // CHECK-msan: ---p {{.*}} [invalid]
-// CHECK-msan: rw-p {{.*}} [shadow]
-// CHECK-msan: ---p {{.*}} [origin]
+// CHECK-msan: rw-p {{.*}} [shadow{{.*}}]
+// CHECK-msan: ---p {{.*}} [origin{{.*}}]
 
 // CHECK-tsan: rw-p {{.*}} [shadow]
 // CHECK-tsan: rw-p {{.*}} [meta shadow]

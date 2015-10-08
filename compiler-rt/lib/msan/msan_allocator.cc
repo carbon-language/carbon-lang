@@ -49,15 +49,21 @@ struct MsanMapUnmapCallback {
   typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE, sizeof(Metadata),
                                SizeClassMap, kRegionSizeLog, ByteMap,
                                MsanMapUnmapCallback> PrimaryAllocator;
+
 #elif defined(__x86_64__)
+#if SANITIZER_LINUX && !defined(MSAN_LINUX_X86_64_OLD_MAPPING)
+  static const uptr kAllocatorSpace = 0x700000000000ULL;
+#else
   static const uptr kAllocatorSpace = 0x600000000000ULL;
-  static const uptr kAllocatorSize   = 0x80000000000;  // 8T.
+#endif
+  static const uptr kAllocatorSize = 0x80000000000; // 8T.
   static const uptr kMetadataSize  = sizeof(Metadata);
   static const uptr kMaxAllowedMallocSize = 8UL << 30;
 
   typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, kMetadataSize,
                              DefaultSizeClassMap,
                              MsanMapUnmapCallback> PrimaryAllocator;
+
 #elif defined(__powerpc64__)
   static const uptr kAllocatorSpace = 0x300000000000;
   static const uptr kAllocatorSize  = 0x020000000000;  // 2T

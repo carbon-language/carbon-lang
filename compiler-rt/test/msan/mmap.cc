@@ -15,7 +15,9 @@ bool AddrIsApp(void *p) {
 #if defined(__FreeBSD__) && defined(__x86_64__)
   return addr < 0x010000000000ULL || addr >= 0x600000000000ULL;
 #elif defined(__x86_64__)
-  return addr >= 0x600000000000ULL;
+  return (addr >= 0x000000000000ULL && addr < 0x010000000000ULL) ||
+         (addr >= 0x510000000000ULL && addr < 0x600000000000ULL) ||
+         (addr >= 0x700000000000ULL && addr < 0x800000000000ULL);
 #elif defined(__mips64)
   return addr >= 0x00e000000000ULL;
 #elif defined(__powerpc64__)
