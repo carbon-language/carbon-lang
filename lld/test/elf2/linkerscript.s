@@ -10,6 +10,26 @@
 # RUN: ld.lld2 -o %t2 %t.script1
 # RUN: llvm-readobj %t2 > /dev/null
 
+# RUN: echo "ENTRY(_label)" > %t.script
+# RUN: ld.lld2 -o %t2 %t.script %t
+# RUN: llvm-readobj %t2 > /dev/null
+
+# RUN: echo "ENTRY(_wrong_label)" > %t.script
+# RUN: not lld -flavor gnu2 -o %t2 %t.script %t > %t.log 2>&1
+# RUN: FileCheck -check-prefix=ERR-ENTRY %s < %t.log
+
+# ERR-ENTRY: undefined symbol: _wrong_label
+
+# -e has precedence over linker script's ENTRY.
+# RUN: echo "ENTRY(_label)" > %t.script
+# RUN: ld.lld2 -e _start -o %t2 %t.script %t
+# RUN: llvm-readobj -file-headers -symbols %t2 | \
+# RUN:   FileCheck -check-prefix=ENTRY-OVERLOAD %s
+
+# ENTRY-OVERLOAD: Entry: [[ENTRY:0x[0-9A-F]+]]
+# ENTRY-OVERLOAD: Name: _start
+# ENTRY-OVERLOAD-NEXT: Value: [[ENTRY]]
+
 # RUN: echo "OUTPUT_FORMAT(\"elf64-x86-64\") /*/*/ GROUP(" %t ")" > %t.script
 # RUN: ld.lld2 -o %t2 %t.script
 # RUN: llvm-readobj %t2 > /dev/null
@@ -29,8 +49,9 @@
 
 # ERR1: unknown directive: FOO
 
-.globl _start;
+.globl _start, _label;
 _start:
   mov $60, %rax
   mov $42, %rdi
+_label:
   syscall

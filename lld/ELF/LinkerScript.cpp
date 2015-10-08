@@ -37,6 +37,7 @@ private:
   void expect(StringRef Expect);
 
   void readAsNeeded();
+  void readEntry();
   void readGroup();
   void readOutput();
   void readOutputFormat();
@@ -49,7 +50,9 @@ private:
 void LinkerScript::run() {
   while (!atEOF()) {
     StringRef Tok = next();
-    if (Tok == "GROUP") {
+    if (Tok == "ENTRY") {
+      readEntry();
+    } else if (Tok == "GROUP") {
       readGroup();
     } else if (Tok == "OUTPUT") {
       readOutput();
@@ -129,6 +132,15 @@ void LinkerScript::readAsNeeded() {
       return;
     Driver->addFile(Tok);
   }
+}
+
+void LinkerScript::readEntry() {
+  // -e <symbol> takes predecence over ENTRY(<symbol>).
+  expect("(");
+  StringRef Tok = next();
+  if (Config->Entry.empty())
+    Config->Entry = Tok;
+  expect(")");
 }
 
 void LinkerScript::readGroup() {
