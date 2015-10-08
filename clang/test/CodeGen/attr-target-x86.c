@@ -29,7 +29,7 @@ int __attribute__((target("no-aes, arch=ivybridge"))) qax(int a) { return 4; }
 // CHECK: qux{{.*}} #1
 // CHECK: qax{{.*}} #4
 // CHECK: #0 = {{.*}}"target-cpu"="x86-64" "target-features"="+sse,+sse2"
-// CHECK: #1 = {{.*}}"target-cpu"="ivybridge" "target-features"="+aes,+avx,+cx16,+f16c,+fsgsbase,+pclmul,+rdrnd,+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3"
+// CHECK: #1 = {{.*}}"target-cpu"="ivybridge" "target-features"="+aes,+avx,+cx16,+f16c,+fsgsbase,+pclmul,+popcnt,+rdrnd,+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3"
 // CHECK: #2 = {{.*}}"target-cpu"="x86-64" "target-features"="+sse,-aes,-avx,-avx2,-avx512bw,-avx512cd,-avx512dq,-avx512er,-avx512f,-avx512pf,-avx512vl,-f16c,-fma,-fma4,-pclmul,-sha,-sse2,-sse3,-sse4.1,-sse4.2,-sse4a,-ssse3,-xop"
-// CHECK: #3 = {{.*}}"target-cpu"="x86-64" "target-features"="+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3"
-// CHECK: #4 = {{.*}}"target-cpu"="ivybridge" "target-features"="+avx,+cx16,+f16c,+fsgsbase,+pclmul,+rdrnd,+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3,-aes"
+// CHECK: #3 = {{.*}}"target-cpu"="x86-64" "target-features"="+popcnt,+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3"
+// CHECK: #4 = {{.*}}"target-cpu"="ivybridge" "target-features"="+avx,+cx16,+f16c,+fsgsbase,+pclmul,+popcnt,+rdrnd,+sse,+sse2,+sse3,+sse4.1,+sse4.2,+ssse3,-aes"

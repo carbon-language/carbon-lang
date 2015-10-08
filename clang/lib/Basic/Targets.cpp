@@ -2705,7 +2705,27 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "cx16", true);
     break;
   }
-  return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
+  if (!TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec))
+    return false;
+
+  // Can't do this earlier because we need to be able to explicitly enable
+  // or disable these features and the things that they depend upon.
+
+  // Enable popcnt if sse4.2 is enabled and popcnt is not explicitly disabled.
+  auto I = Features.find("sse4.2");
+  if (I != Features.end() && I->getValue() == true &&
+      std::find(FeaturesVec.begin(), FeaturesVec.end(), "-popcnt") ==
+          FeaturesVec.end())
+    Features["popcnt"] = true;
+
+  // Enable prfchw if 3DNow! is enabled and prfchw is not explicitly disabled.
+  I = Features.find("3dnow");
+  if (I != Features.end() && I->getValue() == true &&
+      std::find(FeaturesVec.begin(), FeaturesVec.end(), "-prfchw") ==
+          FeaturesVec.end())
+    Features["prfchw"] = true;
+
+  return true;
 }
 
 void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
@@ -2972,22 +2992,6 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
         .Case("+sse4a", SSE4A)
         .Default(NoXOP);
     XOPLevel = std::max(XOPLevel, XLevel);
-  }
-
-  // Enable popcnt if sse4.2 is enabled and popcnt is not explicitly disabled.
-  // Can't do this earlier because we need to be able to explicitly enable
-  // popcnt and still disable sse4.2.
-  if (!HasPOPCNT && SSELevel >= SSE42 &&
-      std::find(Features.begin(), Features.end(), "-popcnt") == Features.end()){
-    HasPOPCNT = true;
-    Features.push_back("+popcnt");
-  }
-
-  // Enable prfchw if 3DNow! is enabled and prfchw is not explicitly disabled.
-  if (!HasPRFCHW && MMX3DNowLevel >= AMD3DNow &&
-      std::find(Features.begin(), Features.end(), "-prfchw") == Features.end()){
-    HasPRFCHW = true;
-    Features.push_back("+prfchw");
   }
 
   // LLVM doesn't have a separate switch for fpmath, so only accept it if it
