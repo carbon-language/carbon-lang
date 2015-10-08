@@ -38,7 +38,7 @@ int main()
                   "std::is_signed<ptrdiff_t>::value");
     static_assert(std::is_integral<ptrdiff_t>::value,
                   "std::is_integral<ptrdiff_t>::value");
-    static_assert(std::is_same<decltype(nullptr), nullptr_t>::value,
+    static_assert((std::is_same<decltype(nullptr), nullptr_t>::value),
                   "decltype(nullptr) == nullptr_t");
     static_assert(sizeof(nullptr_t) == sizeof(void*),
                   "sizeof(nullptr_t) == sizeof(void*)");
