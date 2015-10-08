@@ -11769,8 +11769,10 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         EnumUnderlying = Context.IntTy.getTypePtr();
 
     } else if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
-      // Microsoft enums are always of int type.
-      EnumUnderlying = Context.IntTy.getTypePtr();
+      if (getLangOpts().MSVCCompat || TUK == TUK_Definition) {
+        // Microsoft enums are always of int type.
+        EnumUnderlying = Context.IntTy.getTypePtr();
+      }
     }
   }
 
