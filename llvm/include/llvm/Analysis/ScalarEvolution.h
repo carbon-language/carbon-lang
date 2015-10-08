@@ -446,16 +446,16 @@ namespace llvm {
     const BackedgeTakenInfo &getBackedgeTakenInfo(const Loop *L);
 
     /// Compute the number of times the specified loop will iterate.
-    BackedgeTakenInfo ComputeBackedgeTakenCount(const Loop *L);
+    BackedgeTakenInfo computeBackedgeTakenCount(const Loop *L);
 
     /// Compute the number of times the backedge of the specified loop will
     /// execute if it exits via the specified block.
-    ExitLimit ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock);
+    ExitLimit computeExitLimit(const Loop *L, BasicBlock *ExitingBlock);
 
     /// Compute the number of times the backedge of the specified loop will
     /// execute if its exit condition were a conditional branch of ExitCond,
     /// TBB, and FBB.
-    ExitLimit ComputeExitLimitFromCond(const Loop *L,
+    ExitLimit computeExitLimitFromCond(const Loop *L,
                                        Value *ExitCond,
                                        BasicBlock *TBB,
                                        BasicBlock *FBB,
@@ -464,7 +464,7 @@ namespace llvm {
     /// Compute the number of times the backedge of the specified loop will
     /// execute if its exit condition were a conditional branch of the ICmpInst
     /// ExitCond, TBB, and FBB.
-    ExitLimit ComputeExitLimitFromICmp(const Loop *L,
+    ExitLimit computeExitLimitFromICmp(const Loop *L,
                                        ICmpInst *ExitCond,
                                        BasicBlock *TBB,
                                        BasicBlock *FBB,
@@ -474,12 +474,12 @@ namespace llvm {
     /// execute if its exit condition were a switch with a single exiting case
     /// to ExitingBB.
     ExitLimit
-    ComputeExitLimitFromSingleExitSwitch(const Loop *L, SwitchInst *Switch,
+    computeExitLimitFromSingleExitSwitch(const Loop *L, SwitchInst *Switch,
                                BasicBlock *ExitingBB, bool IsSubExpr);
 
     /// Given an exit condition of 'icmp op load X, cst', try to see if we can
     /// compute the backedge-taken count.
-    ExitLimit ComputeLoadConstantCompareExitLimit(LoadInst *LI,
+    ExitLimit computeLoadConstantCompareExitLimit(LoadInst *LI,
                                                   Constant *RHS,
                                                   const Loop *L,
                                                   ICmpInst::Predicate p);
@@ -489,7 +489,7 @@ namespace llvm {
     /// of the loop until we get the exit condition gets a value of ExitWhen
     /// (true or false).  If we cannot evaluate the exit count of the loop,
     /// return CouldNotCompute.
-    const SCEV *ComputeExitCountExhaustively(const Loop *L,
+    const SCEV *computeExitCountExhaustively(const Loop *L,
                                              Value *Cond,
                                              bool ExitWhen);
 
