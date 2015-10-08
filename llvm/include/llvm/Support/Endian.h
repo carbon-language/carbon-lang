@@ -131,14 +131,22 @@ inline void writeAtBitAlignment(void *memory, value_type value,
     // Mask off any existing bits in the upper part of the lower value that
     // we want to replace.
     val[0] &= (1 << startBit) - 1;
-    // Now shift in the new bits
-    val[0] |= value << startBit;
+    unsigned numBitsFirstVal = (sizeof(value_type) * 8) - startBit;
+    unsigned lowerVal = value;
+    if (startBit > 0) {
+      // Mask off the upper bits in the new value that are not going to go into
+      // the lower value. This avoids a left shift of a negative value, which
+      // is undefined behavior.
+      lowerVal &= ((1 << numBitsFirstVal) - 1);
+      // Now shift the new bits into place
+      lowerVal <<= startBit;
+    }
+    val[0] |= lowerVal;
 
     // Mask off any existing bits in the lower part of the upper value that
     // we want to replace.
     val[1] &= ~((1 << startBit) - 1);
     // Next shift the bits that go into the upper value into position.
-    unsigned numBitsFirstVal = (sizeof(value_type) * 8) - startBit;
     unsigned upperVal = value >> numBitsFirstVal;
     // Mask off upper bits after right shift in case of signed type.
     upperVal &= (1 << startBit) - 1;
