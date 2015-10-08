@@ -86,18 +86,18 @@ int main()
     static_assert((std::is_same<decltype(std::tolower(0)), int>::value), "");
     static_assert((std::is_same<decltype(std::toupper(0)), int>::value), "");
 
-    assert(isalnum('a'));
-    assert(isalpha('a'));
-    assert(isblank(' '));
-    assert(!iscntrl(' '));
-    assert(!isdigit('a'));
-    assert(isgraph('a'));
-    assert(islower('a'));
-    assert(isprint('a'));
-    assert(!ispunct('a'));
-    assert(!isspace('a'));
-    assert(!isupper('a'));
-    assert(isxdigit('a'));
-    assert(tolower('A') == 'a');
-    assert(toupper('a') == 'A');
+    assert(std::isalnum('a'));
+    assert(std::isalpha('a'));
+    assert(std::isblank(' '));
+    assert(!std::iscntrl(' '));
+    assert(!std::isdigit('a'));
+    assert(std::isgraph('a'));
+    assert(std::islower('a'));
+    assert(std::isprint('a'));
+    assert(!std::ispunct('a'));
+    assert(!std::isspace('a'));
+    assert(!std::isupper('a'));
+    assert(std::isxdigit('a'));
+    assert(std::tolower('A') == 'a');
+    assert(std::toupper('a') == 'A');
 }
