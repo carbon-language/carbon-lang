@@ -21,6 +21,7 @@ class SymbolBody;
 class TargetInfo {
 public:
   llvm::StringRef getDefaultEntry() const { return DefaultEntry; }
+  uint64_t getVAStart() const { return VAStart; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
   unsigned getGotRefReloc() const { return GotRefReloc; }
@@ -37,6 +38,7 @@ public:
   virtual ~TargetInfo();
 
 protected:
+  uint64_t VAStart;
   unsigned PCRelReloc;
   unsigned GotRefReloc;
   unsigned GotReloc;
