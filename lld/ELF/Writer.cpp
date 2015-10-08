@@ -91,7 +91,7 @@ private:
     return !Symtab.getSharedFiles().empty() || Config->Shared;
   }
   bool needsDynamicSections() const { return isOutputDynamic(); }
-  unsigned getVAStart() const { return Config->Shared ? 0 : Target->getVAStart(); }
+  uintX_t getVAStart() const { return Config->Shared ? 0 : Target->getVAStart(); }
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
