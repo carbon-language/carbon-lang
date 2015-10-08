@@ -48,8 +48,12 @@ OptionValueLanguage::SetValueFromString (llvm::StringRef value, VarSetOperationT
     case eVarSetOperationAssign:
         {
             ConstString lang_name(value.trim());
+            std::set<lldb::LanguageType> languages_for_types;
+            std::set<lldb::LanguageType> languages_for_expressions;
+            Language::GetLanguagesSupportingTypeSystems(languages_for_types, languages_for_expressions);
+
             LanguageType new_type = Language::GetLanguageTypeFromString(lang_name.GetCString());
-            if (new_type)
+            if (new_type && languages_for_types.count(new_type))
             {
                 m_value_was_set = true;
                 m_current_value = new_type;
@@ -59,7 +63,10 @@ OptionValueLanguage::SetValueFromString (llvm::StringRef value, VarSetOperationT
                 StreamString error_strm;
                 error_strm.Printf("invalid language type '%s', ", value.str().c_str());
                 error_strm.Printf("valid values are:\n");
-                Language::PrintAllLanguages(error_strm, "    ", "\n");
+                for (lldb::LanguageType language : languages_for_types)
+                {
+                    error_strm.Printf("%s%s%s", "    ", Language::GetNameForLanguageType(language), "\n");
+                }
                 error.SetErrorString(error_strm.GetData());
             }
         }

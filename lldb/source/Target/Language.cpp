@@ -287,6 +287,18 @@ Language::LanguageIsPascal (LanguageType language)
     }
 }
 
+void
+Language::GetLanguagesSupportingTypeSystems (std::set<lldb::LanguageType> &languages,
+                                             std::set<lldb::LanguageType> &languages_for_expressions)
+{
+    uint32_t idx = 0;
+    
+    while (TypeSystemEnumerateSupportedLanguages enumerate = PluginManager::GetTypeSystemEnumerateSupportedLanguagesCallbackAtIndex(idx++))
+    {
+        (*enumerate)(languages, languages_for_expressions);
+    }
+}
+
 std::unique_ptr<Language::TypeScavenger>
 Language::GetTypeScavenger ()
 {

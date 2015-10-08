@@ -342,13 +342,26 @@ GoASTContext::CreateInstance (lldb::LanguageType language, Module *module, Targe
     return lldb::TypeSystemSP();
 }
 
+void
+GoASTContext::EnumerateSupportedLanguages(std::set<lldb::LanguageType> &languages_for_types, std::set<lldb::LanguageType> &languages_for_expressions)
+{
+    static std::vector<lldb::LanguageType> s_supported_languages_for_types({
+        lldb::eLanguageTypeGo});
+    
+    static std::vector<lldb::LanguageType> s_supported_languages_for_expressions({});
+    
+    languages_for_types.insert(s_supported_languages_for_types.begin(), s_supported_languages_for_types.end());
+    languages_for_expressions.insert(s_supported_languages_for_expressions.begin(), s_supported_languages_for_expressions.end());
+}
+
 
 void
 GoASTContext::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    "AST context plug-in",
-                                   CreateInstance);
+                                   CreateInstance,
+                                   EnumerateSupportedLanguages);
 }
 
 void

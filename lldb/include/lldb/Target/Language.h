@@ -139,7 +139,11 @@ public:
     
     static bool
     LanguageIsPascal (lldb::LanguageType language);
-
+    
+    static void
+    GetLanguagesSupportingTypeSystems (std::set<lldb::LanguageType> &languages,
+                                       std::set<lldb::LanguageType> &languages_for_expressions);
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from Language can see and modify these

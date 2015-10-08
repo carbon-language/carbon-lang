@@ -2531,6 +2531,7 @@ struct TypeSystemInstance
     ConstString name;
     std::string description;
     TypeSystemCreateInstance create_callback;
+    TypeSystemEnumerateSupportedLanguages enumerate_callback;
 };
 
 typedef std::vector<TypeSystemInstance> TypeSystemInstances;
@@ -2552,7 +2553,8 @@ GetTypeSystemInstances ()
 bool
 PluginManager::RegisterPlugin (const ConstString &name,
                                const char *description,
-                               TypeSystemCreateInstance create_callback)
+                               TypeSystemCreateInstance create_callback,
+                               TypeSystemEnumerateSupportedLanguages enumerate_supported_languages_callback)
 {
     if (create_callback)
     {
@@ -2617,6 +2619,33 @@ PluginManager::GetTypeSystemCreateCallbackForPluginName (const ConstString &name
     return NULL;
 }
 
+TypeSystemEnumerateSupportedLanguages
+PluginManager::GetTypeSystemEnumerateSupportedLanguagesCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetTypeSystemMutex ());
+    TypeSystemInstances &instances = GetTypeSystemInstances ();
+    if (idx < instances.size())
+        return instances[idx].enumerate_callback;
+    return NULL;
+}
+
+TypeSystemEnumerateSupportedLanguages
+PluginManager::GetTypeSystemEnumerateSupportedLanguagesCallbackForPluginName (const ConstString &name)
+{
+    if (name)
+    {
+        Mutex::Locker locker (GetTypeSystemMutex ());
+        TypeSystemInstances &instances = GetTypeSystemInstances ();
+        
+        TypeSystemInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name == pos->name)
+                return pos->enumerate_callback;
+        }
+    }
+    return NULL;
+}
 
 #pragma mark PluginManager
 

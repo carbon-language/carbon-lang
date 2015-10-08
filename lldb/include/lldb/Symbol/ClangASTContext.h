@@ -72,6 +72,9 @@ public:
 
     static lldb::TypeSystemSP
     CreateInstance (lldb::LanguageType language, Module *module, Target *target);
+    
+    static void
+    EnumerateSupportedLanguages(std::set<lldb::LanguageType> &languages_for_types, std::set<lldb::LanguageType> &languages_for_expressions);
 
     static void
     Initialize ();

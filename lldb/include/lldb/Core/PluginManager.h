@@ -425,7 +425,8 @@ public:
     static bool
     RegisterPlugin (const ConstString &name,
                     const char *description,
-                    TypeSystemCreateInstance create_callback);
+                    TypeSystemCreateInstance create_callback,
+                    TypeSystemEnumerateSupportedLanguages enumerate_languages_callback);
 
     static bool
     UnregisterPlugin (TypeSystemCreateInstance create_callback);
@@ -435,6 +436,12 @@ public:
 
     static TypeSystemCreateInstance
     GetTypeSystemCreateCallbackForPluginName (const ConstString &name);
+    
+    static TypeSystemEnumerateSupportedLanguages
+    GetTypeSystemEnumerateSupportedLanguagesCallbackAtIndex (uint32_t idx);
+    
+    static TypeSystemEnumerateSupportedLanguages
+    GetTypeSystemEnumerateSupportedLanguagesCallbackForPluginName (const ConstString &name);
     
     //------------------------------------------------------------------
     // Some plug-ins might register a DebuggerInitializeCallback

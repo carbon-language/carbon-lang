@@ -13,6 +13,7 @@
 // C++ Includes
 #include <mutex> // std::once
 #include <string>
+#include <vector>
 
 // Other libraries and framework includes
 
@@ -424,13 +425,41 @@ ClangASTContext::CreateInstance (lldb::LanguageType language, Module *module, Ta
     return lldb::TypeSystemSP();
 }
 
+void
+ClangASTContext::EnumerateSupportedLanguages(std::set<lldb::LanguageType> &languages_for_types, std::set<lldb::LanguageType> &languages_for_expressions)
+{
+    static std::vector<lldb::LanguageType> s_supported_languages_for_types({
+        lldb::eLanguageTypeC89,
+        lldb::eLanguageTypeC,
+        lldb::eLanguageTypeC11,
+        lldb::eLanguageTypeC_plus_plus,
+        lldb::eLanguageTypeC99,
+        lldb::eLanguageTypeObjC,
+        lldb::eLanguageTypeObjC_plus_plus,
+        lldb::eLanguageTypeC_plus_plus_03,
+        lldb::eLanguageTypeC_plus_plus_11,
+        lldb::eLanguageTypeC11,
+        lldb::eLanguageTypeC_plus_plus_14});
+    
+    static std::vector<lldb::LanguageType> s_supported_languages_for_expressions({
+        lldb::eLanguageTypeC_plus_plus,
+        lldb::eLanguageTypeObjC_plus_plus,
+        lldb::eLanguageTypeC_plus_plus_03,
+        lldb::eLanguageTypeC_plus_plus_11,
+        lldb::eLanguageTypeC_plus_plus_14});
+
+    languages_for_types.insert(s_supported_languages_for_types.begin(), s_supported_languages_for_types.end());
+    languages_for_expressions.insert(s_supported_languages_for_expressions.begin(), s_supported_languages_for_expressions.end());
+}
+
 
 void
 ClangASTContext::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    "clang base AST context plug-in",
-                                   CreateInstance);
+                                   CreateInstance,
+                                   EnumerateSupportedLanguages);
 }
 
 void
