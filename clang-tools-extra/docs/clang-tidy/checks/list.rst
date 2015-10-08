@@ -2,6 +2,7 @@ List of clang-tidy Checks
 =========================
 
 .. toctree::
+   cert-setlongjmp
    cert-variadic-function-def
    cppcoreguidelines-pro-type-const-cast
    cppcoreguidelines-pro-type-reinterpret-cast

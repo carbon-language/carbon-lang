@@ -15,6 +15,7 @@
 #include "../misc/NewDeleteOverloadsCheck.h"
 #include "../misc/NonCopyableObjects.h"
 #include "../misc/StaticAssertCheck.h"
+#include "SetLongJmpCheck.h"
 #include "VariadicFunctionDefCheck.h"
 
 namespace clang {
@@ -35,6 +36,9 @@ public:
     // OOP
     CheckFactories.registerCheck<MoveConstructorInitCheck>(
         "cert-oop11-cpp");
+    // ERR
+    CheckFactories.registerCheck<SetLongJmpCheck>(
+        "cert-err52-cpp");
 
     // C checkers
     // DCL
