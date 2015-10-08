@@ -50,6 +50,23 @@ TEST(Endian, ReadBitAligned) {
       0x0f000000);
   EXPECT_EQ((endian::readAtBitAlignment<int, big, unaligned>(&bigval2[0], 4)),
             0x0f000000);
+  // Test to make sure left shift of start bit doesn't overflow.
+  EXPECT_EQ(
+      (endian::readAtBitAlignment<int, little, unaligned>(&littleval2[0], 1)),
+      0x78000000);
+  EXPECT_EQ((endian::readAtBitAlignment<int, big, unaligned>(&bigval2[0], 1)),
+            0x78000000);
+  // Test to make sure 64-bit int doesn't overflow.
+  unsigned char littleval3[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0,
+                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  unsigned char bigval3[] = {0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  EXPECT_EQ((endian::readAtBitAlignment<int64_t, little, unaligned>(
+                &littleval3[0], 4)),
+            0x0f00000000000000);
+  EXPECT_EQ(
+      (endian::readAtBitAlignment<int64_t, big, unaligned>(&bigval3[0], 4)),
+      0x0f00000000000000);
 }
 
 TEST(Endian, WriteBitAligned) {
@@ -78,6 +95,73 @@ TEST(Endian, WriteBitAligned) {
   EXPECT_EQ(littleval[5], 0x00);
   EXPECT_EQ(littleval[6], 0x00);
   EXPECT_EQ(littleval[7], 0x00);
+
+  // This test makes sure 1<<31 doesn't overflow.
+  // Test to make sure left shift of start bit doesn't overflow.
+  unsigned char bigval2[8] = {0x00};
+  endian::writeAtBitAlignment<int32_t, big, unaligned>(bigval2, (int)0xffffffff,
+                                                       1);
+  EXPECT_EQ(bigval2[0], 0xff);
+  EXPECT_EQ(bigval2[1], 0xff);
+  EXPECT_EQ(bigval2[2], 0xff);
+  EXPECT_EQ(bigval2[3], 0xfe);
+  EXPECT_EQ(bigval2[4], 0x00);
+  EXPECT_EQ(bigval2[5], 0x00);
+  EXPECT_EQ(bigval2[6], 0x00);
+  EXPECT_EQ(bigval2[7], 0x01);
+
+  unsigned char littleval2[8] = {0x00};
+  endian::writeAtBitAlignment<int32_t, little, unaligned>(littleval2,
+                                                          (int)0xffffffff, 1);
+  EXPECT_EQ(littleval2[0], 0xfe);
+  EXPECT_EQ(littleval2[1], 0xff);
+  EXPECT_EQ(littleval2[2], 0xff);
+  EXPECT_EQ(littleval2[3], 0xff);
+  EXPECT_EQ(littleval2[4], 0x01);
+  EXPECT_EQ(littleval2[5], 0x00);
+  EXPECT_EQ(littleval2[6], 0x00);
+  EXPECT_EQ(littleval2[7], 0x00);
+
+  // Test to make sure 64-bit int doesn't overflow.
+  unsigned char bigval64[16] = {0x00};
+  endian::writeAtBitAlignment<int64_t, big, unaligned>(
+      bigval64, (int64_t)0xffffffffffffffff, 1);
+  EXPECT_EQ(bigval64[0], 0xff);
+  EXPECT_EQ(bigval64[1], 0xff);
+  EXPECT_EQ(bigval64[2], 0xff);
+  EXPECT_EQ(bigval64[3], 0xff);
+  EXPECT_EQ(bigval64[4], 0xff);
+  EXPECT_EQ(bigval64[5], 0xff);
+  EXPECT_EQ(bigval64[6], 0xff);
+  EXPECT_EQ(bigval64[7], 0xfe);
+  EXPECT_EQ(bigval64[8], 0x00);
+  EXPECT_EQ(bigval64[9], 0x00);
+  EXPECT_EQ(bigval64[10], 0x00);
+  EXPECT_EQ(bigval64[11], 0x00);
+  EXPECT_EQ(bigval64[12], 0x00);
+  EXPECT_EQ(bigval64[13], 0x00);
+  EXPECT_EQ(bigval64[14], 0x00);
+  EXPECT_EQ(bigval64[15], 0x01);
+
+  unsigned char littleval64[16] = {0x00};
+  endian::writeAtBitAlignment<int64_t, little, unaligned>(
+      littleval64, (int64_t)0xffffffffffffffff, 1);
+  EXPECT_EQ(littleval64[0], 0xfe);
+  EXPECT_EQ(littleval64[1], 0xff);
+  EXPECT_EQ(littleval64[2], 0xff);
+  EXPECT_EQ(littleval64[3], 0xff);
+  EXPECT_EQ(littleval64[4], 0xff);
+  EXPECT_EQ(littleval64[5], 0xff);
+  EXPECT_EQ(littleval64[6], 0xff);
+  EXPECT_EQ(littleval64[7], 0xff);
+  EXPECT_EQ(littleval64[8], 0x01);
+  EXPECT_EQ(littleval64[9], 0x00);
+  EXPECT_EQ(littleval64[10], 0x00);
+  EXPECT_EQ(littleval64[11], 0x00);
+  EXPECT_EQ(littleval64[12], 0x00);
+  EXPECT_EQ(littleval64[13], 0x00);
+  EXPECT_EQ(littleval64[14], 0x00);
+  EXPECT_EQ(littleval64[15], 0x00);
 }
 
 TEST(Endian, Write) {
