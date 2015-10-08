@@ -56,7 +56,7 @@ namespace CodeGen {
   class CallArgList :
     public SmallVector<CallArg, 16> {
   public:
-    CallArgList() : StackBase(nullptr), StackBaseMem(Address::invalid()) {}
+    CallArgList() : StackBase(nullptr) {}
 
     struct Writeback {
       /// The original argument.  Note that the argument l-value
@@ -133,9 +133,6 @@ namespace CodeGen {
 
     /// The stacksave call.  It dominates all of the argument evaluation.
     llvm::CallInst *StackBase;
-
-    /// The alloca holding the stackbase.  We need it to maintain SSA form.
-    Address StackBaseMem;
 
     /// The iterator pointing to the stack restore cleanup.  We manually run and
     /// deactivate this cleanup after the call in the unexceptional case because

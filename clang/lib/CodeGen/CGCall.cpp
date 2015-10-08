@@ -2752,25 +2752,12 @@ void CallArgList::allocateArgumentMemory(CodeGenFunction &CGF) {
   // Save the stack.
   llvm::Function *F = CGF.CGM.getIntrinsic(llvm::Intrinsic::stacksave);
   StackBase = CGF.Builder.CreateCall(F, {}, "inalloca.save");
-
-  // Control gets really tied up in landing pads, so we have to spill the
-  // stacksave to an alloca to avoid violating SSA form.
-  // TODO: This is dead if we never emit the cleanup.  We should create the
-  // alloca and store lazily on the first cleanup emission.
-  StackBaseMem = CGF.CreateTempAlloca(CGF.Int8PtrTy, CGF.getPointerAlign(),
-                                      "inalloca.spmem");
-  CGF.Builder.CreateStore(StackBase, StackBaseMem);
-  CGF.pushStackRestore(EHCleanup, StackBaseMem);
-  StackCleanup = CGF.EHStack.getInnermostEHScope();
-  assert(StackCleanup.isValid());
 }
 
 void CallArgList::freeArgumentMemory(CodeGenFunction &CGF) const {
   if (StackBase) {
-    CGF.DeactivateCleanupBlock(StackCleanup, StackBase);
+    // Restore the stack after the call.
     llvm::Value *F = CGF.CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
-    // We could load StackBase from StackBaseMem, but in the non-exceptional
-    // case we can skip it.
     CGF.Builder.CreateCall(F, StackBase);
   }
 }
