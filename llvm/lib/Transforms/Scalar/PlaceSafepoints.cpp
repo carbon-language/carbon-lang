@@ -192,10 +192,8 @@ static void
 InsertSafepointPoll(Instruction *InsertBefore,
                     std::vector<CallSite> &ParsePointsNeeded /*rval*/);
 
-static bool isGCLeafFunction(const CallSite &CS);
-
 static bool needsStatepoint(const CallSite &CS) {
-  if (isGCLeafFunction(CS))
+  if (callsGCLeafFunction(CS))
     return false;
   if (CS.isCall()) {
     CallInst *call = cast<CallInst>(CS.getInstruction());
@@ -751,31 +749,6 @@ INITIALIZE_PASS_BEGIN(PlaceSafepoints, "place-safepoints", "Place Safepoints",
                       false, false)
 INITIALIZE_PASS_END(PlaceSafepoints, "place-safepoints", "Place Safepoints",
                     false, false)
-
-static bool isGCLeafFunction(const CallSite &CS) {
-  Instruction *inst = CS.getInstruction();
-  if (isa<IntrinsicInst>(inst)) {
-    // Most LLVM intrinsics are things which can never take a safepoint.
-    // As a result, we don't need to have the stack parsable at the
-    // callsite.  This is a highly useful optimization since intrinsic
-    // calls are fairly prevalent, particularly in debug builds.
-    return true;
-  }
-
-  // If this function is marked explicitly as a leaf call, we don't need to
-  // place a safepoint of it.  In fact, for correctness we *can't* in many
-  // cases.  Note: Indirect calls return Null for the called function,
-  // these obviously aren't runtime functions with attributes
-  // TODO: Support attributes on the call site as well.
-  const Function *F = CS.getCalledFunction();
-  bool isLeaf =
-      F &&
-      F->getFnAttribute("gc-leaf-function").getValueAsString().equals("true");
-  if (isLeaf) {
-    return true;
-  }
-  return false;
-}
 
 static void
 InsertSafepointPoll(Instruction *InsertBefore,

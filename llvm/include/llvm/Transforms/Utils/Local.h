@@ -304,6 +304,18 @@ unsigned replaceDominatedUsesWith(Value *From, Value *To, DominatorTree &DT,
 /// the given BasicBlock. Returns the number of replacements made.
 unsigned replaceDominatedUsesWith(Value *From, Value *To, DominatorTree &DT,
                                   const BasicBlock *BB);
+
+
+/// \brief Return true if the CallSite CS calls a gc leaf function.
+///
+/// A leaf function is a function that does not safepoint the thread during its
+/// execution.  During a call or invoke to such a function, the callers stack
+/// does not have to be made parseable.
+///
+/// Most passes can and should ignore this information, and it is only used
+/// during lowering by the GC infrastructure.
+bool callsGCLeafFunction(ImmutableCallSite CS);
+
 } // End llvm namespace
 
 #endif

@@ -1480,3 +1480,20 @@ unsigned llvm::replaceDominatedUsesWith(Value *From, Value *To,
   }
   return Count;
 }
+
+bool llvm::callsGCLeafFunction(ImmutableCallSite CS) {
+  if (isa<IntrinsicInst>(CS.getInstruction()))
+    // Most LLVM intrinsics are things which can never take a safepoint.
+    // As a result, we don't need to have the stack parsable at the
+    // callsite.  This is a highly useful optimization since intrinsic
+    // calls are fairly prevalent, particularly in debug builds.
+    return true;
+
+  // Check if the function is specifically marked as a gc leaf function.
+  //
+  // TODO: we should be checking the attributes on the call site as well.
+  if (const Function *F = CS.getCalledFunction())
+    return F->hasFnAttribute("gc-leaf-function");
+
+  return false;
+}
