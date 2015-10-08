@@ -189,6 +189,29 @@ char TargetPassConfig::ID = 0;
 char TargetPassConfig::EarlyTailDuplicateID = 0;
 char TargetPassConfig::PostRAMachineLICMID = 0;
 
+namespace {
+struct InsertedPass {
+  AnalysisID TargetPassID;
+  IdentifyingPassPtr InsertedPassID;
+  bool VerifyAfter;
+  bool PrintAfter;
+
+  InsertedPass(AnalysisID TargetPassID, IdentifyingPassPtr InsertedPassID,
+               bool VerifyAfter, bool PrintAfter)
+      : TargetPassID(TargetPassID), InsertedPassID(InsertedPassID),
+        VerifyAfter(VerifyAfter), PrintAfter(PrintAfter) {}
+
+  Pass *getInsertedPass() const {
+    assert(InsertedPassID.isValid() && "Illegal Pass ID!");
+    if (InsertedPassID.isInstance())
+      return InsertedPassID.getInstance();
+    Pass *NP = Pass::createPass(InsertedPassID.getID());
+    assert(NP && "Pass ID not registered");
+    return NP;
+  }
+};
+}
+
 namespace llvm {
 class PassConfigImpl {
 public:
@@ -203,7 +226,7 @@ public:
 
   /// Store the pairs of <AnalysisID, AnalysisID> of which the second pass
   /// is inserted after each instance of the first one.
-  SmallVector<std::pair<AnalysisID, IdentifyingPassPtr>, 4> InsertedPasses;
+  SmallVector<InsertedPass, 4> InsertedPasses;
 };
 } // namespace llvm
 
@@ -237,14 +260,15 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
 
 /// Insert InsertedPassID pass after TargetPassID.
 void TargetPassConfig::insertPass(AnalysisID TargetPassID,
-                                  IdentifyingPassPtr InsertedPassID) {
+                                  IdentifyingPassPtr InsertedPassID,
+                                  bool VerifyAfter, bool PrintAfter) {
   assert(((!InsertedPassID.isInstance() &&
            TargetPassID != InsertedPassID.getID()) ||
           (InsertedPassID.isInstance() &&
            TargetPassID != InsertedPassID.getInstance()->getPassID())) &&
          "Insert a pass after itself!");
-  std::pair<AnalysisID, IdentifyingPassPtr> P(TargetPassID, InsertedPassID);
-  Impl->InsertedPasses.push_back(P);
+  Impl->InsertedPasses.emplace_back(TargetPassID, InsertedPassID, VerifyAfter,
+                                    PrintAfter);
 }
 
 /// createPassConfig - Create a pass configuration object to be used by
@@ -309,21 +333,9 @@ void TargetPassConfig::addPass(Pass *P, bool verifyAfter, bool printAfter) {
     }
 
     // Add the passes after the pass P if there is any.
-    for (SmallVectorImpl<std::pair<AnalysisID, IdentifyingPassPtr> >::iterator
-             I = Impl->InsertedPasses.begin(),
-             E = Impl->InsertedPasses.end();
-         I != E; ++I) {
-      if ((*I).first == PassID) {
-        assert((*I).second.isValid() && "Illegal Pass ID!");
-        Pass *NP;
-        if ((*I).second.isInstance())
-          NP = (*I).second.getInstance();
-        else {
-          NP = Pass::createPass((*I).second.getID());
-          assert(NP && "Pass ID not registered");
-        }
-        addPass(NP, false, false);
-      }
+    for (auto IP : Impl->InsertedPasses) {
+      if (IP.TargetPassID == PassID)
+        addPass(IP.getInsertedPass(), IP.VerifyAfter, IP.PrintAfter);
     }
   } else {
     delete P;

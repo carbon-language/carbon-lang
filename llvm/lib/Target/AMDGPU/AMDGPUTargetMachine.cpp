@@ -309,7 +309,9 @@ void GCNPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
 void GCNPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   // We want to run this after LiveVariables is computed to avoid computing them
   // twice.
-  insertPass(&LiveVariablesID, &SIFixSGPRLiveRangesID);
+  // FIXME: We shouldn't disable the verifier here. r249087 introduced a failure
+  // that needs to be fixed.
+  insertPass(&LiveVariablesID, &SIFixSGPRLiveRangesID, /*VerifyAfter=*/false);
   TargetPassConfig::addOptimizedRegAlloc(RegAllocPass);
 }
 
