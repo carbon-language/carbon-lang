@@ -8,6 +8,8 @@
 
 void noanal_fun() NO_SANITIZE_MEMORY;
 
+void noanal_fun_alt() __attribute__((__no_sanitize_memory__));
+
 void noanal_fun_args() __attribute__((no_sanitize_memory(1))); // \
   // expected-error {{'no_sanitize_memory' attribute takes no arguments}}
 

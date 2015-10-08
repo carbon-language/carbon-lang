@@ -1308,6 +1308,17 @@ void Sema::AddAssumeAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
             AssumeAlignedAttr(AttrRange, Context, E, OE, SpellingListIndex));
 }
 
+/// Normalize the attribute, __foo__ becomes foo.
+/// Returns true if normalization was applied.
+static bool normalizeName(StringRef &AttrName) {
+  if (AttrName.startswith("__") && AttrName.endswith("__")) {
+    assert(AttrName.size() > 4 && "Name too short");
+    AttrName = AttrName.drop_front(2).drop_back(2);
+    return true;
+  }
+  return false;
+}
+
 static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   // This attribute must be applied to a function declaration. The first
   // argument to the attribute must be an identifier, the name of the resource,
@@ -1349,11 +1360,8 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
 
   IdentifierInfo *Module = AL.getArgAsIdent(0)->Ident;
 
-  // Normalize the argument, __foo__ becomes foo.
   StringRef ModuleName = Module->getName();
-  if (ModuleName.startswith("__") && ModuleName.endswith("__") &&
-      ModuleName.size() > 4) {
-    ModuleName = ModuleName.drop_front(2).drop_back(2);
+  if (normalizeName(ModuleName)) {
     Module = &S.PP.getIdentifierTable().get(ModuleName);
   }
 
@@ -2648,9 +2656,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   IdentifierInfo *II = Attr.getArgAsIdent(0)->Ident;
   StringRef Format = II->getName();
 
-  // Normalize the argument, __foo__ becomes foo.
-  if (Format.startswith("__") && Format.endswith("__")) {
-    Format = Format.substr(2, Format.size() - 4);
+  if (normalizeName(Format)) {
     // If we've modified the string name, we need a new identifier for it.
     II = &S.Context.Idents.get(Format);
   }
@@ -3131,9 +3137,7 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   IdentifierInfo *Name = Attr.getArgAsIdent(0)->Ident;
   StringRef Str = Name->getName();
 
-  // Normalize the attribute name, __foo__ becomes foo.
-  if (Str.startswith("__") && Str.endswith("__"))
-    Str = Str.substr(2, Str.size() - 4);
+  normalizeName(Str);
 
   unsigned DestWidth = 0;
   bool IntegerMode = true;
@@ -4533,8 +4537,10 @@ static void handleNoSanitizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
 static void handleNoSanitizeSpecificAttr(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
+  StringRef AttrName = Attr.getName()->getName();
+  normalizeName(AttrName);
   std::string SanitizerName =
-      llvm::StringSwitch<std::string>(Attr.getName()->getName())
+      llvm::StringSwitch<std::string>(AttrName)
           .Case("no_address_safety_analysis", "address")
           .Case("no_sanitize_address", "address")
           .Case("no_sanitize_thread", "thread")
