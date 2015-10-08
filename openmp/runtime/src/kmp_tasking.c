@@ -38,6 +38,7 @@ static void __kmp_bottom_half_finish_proxy( kmp_int32 gtid, kmp_task_t * ptask )
 #endif
 
 static inline void __kmp_null_resume_wrapper(int gtid, volatile void *flag) {
+    if (!flag) return;
     switch (((kmp_flag_64 *)flag)->get_type()) {
     case flag32: __kmp_resume_32(gtid, NULL); break;
     case flag64: __kmp_resume_64(gtid, NULL); break;
@@ -2538,11 +2539,9 @@ __kmp_task_team_setup( kmp_info_t *this_thr, kmp_team_t *team, int both, int alw
                       __kmp_gtid_from_thread(this_thr), team->t.t_task_team[this_thr->th.th_task_state],
                         ((team != NULL) ? team->t.t_id : -1)) );
     }
-    //else
-        // All threads have reported in, and no tasks were spawned
-        // for this release->gather region.  Leave the old task
-        // team struct in place for the upcoming region.  No task
-        // teams are formed for serialized teams.
+    // else: Either all threads have reported in, and no tasks were spawned for this release->gather region
+    // Leave the old task team struct in place for the upcoming region.
+    // No task teams are formed for serialized teams.
     if (both) {
         int other_team = 1 - this_thr->th.th_task_state;
         if ( ( team->t.t_task_team[other_team] == NULL ) && ( team->t.t_nproc > 1 ) ) { // setup other team as well

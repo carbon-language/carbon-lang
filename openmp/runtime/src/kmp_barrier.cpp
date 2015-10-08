@@ -17,6 +17,8 @@
 #include "kmp_wait_release.h"
 #include "kmp_stats.h"
 #include "kmp_itt.h"
+#include "kmp_os.h"
+
 
 #if KMP_MIC
 #include <immintrin.h>
@@ -886,8 +888,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
             kmp_flag_oncore flag(&thr_bar->parent_bar->b_go, KMP_BARRIER_STATE_BUMP, thr_bar->offset,
                                  bt, this_thr
                                  USE_ITT_BUILD_ARG(itt_sync_obj) );
-            flag.wait(this_thr, TRUE
-                      USE_ITT_BUILD_ARG(itt_sync_obj) );
+            flag.wait(this_thr, TRUE);
             if (thr_bar->wait_flag == KMP_BARRIER_SWITCHING) { // Thread was switched to own b_go
                 TCW_8(thr_bar->b_go, KMP_INIT_BARRIER_STATE); // Reset my b_go flag for next time
             }
@@ -909,6 +910,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
         KMP_MB();  // Flush all pending memory write invalidates.
     }
 
+    nproc = this_thr->th.th_team_nproc;
     int level = team->t.t_level;
 #if OMP_40_ENABLED
     if (team->t.t_threads[0]->th.th_teams_microtask ) {    // are we inside the teams construct?
@@ -920,7 +922,6 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
 #endif
     if (level == 1) thr_bar->use_oncore_barrier = 1;
     else thr_bar->use_oncore_barrier = 0; // Do not use oncore barrier when nested
-    nproc = this_thr->th.th_team_nproc;
 
     // If the team size has increased, we still communicate with old leaves via oncore barrier.
     unsigned short int old_leaf_kids = thr_bar->leaf_kids;

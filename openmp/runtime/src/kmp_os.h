@@ -397,7 +397,7 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 //# define KMP_COMPARE_AND_STORE_RET32(p, cv, sv) __kmp_compare_and_store_ret32( (p), (cv), (sv) )
 # define KMP_COMPARE_AND_STORE_RET64(p, cv, sv) __kmp_compare_and_store_ret64( (p), (cv), (sv) )
 
-# define KMP_XCHG_FIXED8(p, v)                  __kmp_xchg_fixed8( (p), (v) );
+# define KMP_XCHG_FIXED8(p, v)                  __kmp_xchg_fixed8( (volatile kmp_int8*)(p), (kmp_int8)(v) );
 # define KMP_XCHG_FIXED16(p, v)                 __kmp_xchg_fixed16( (p), (v) );
 //# define KMP_XCHG_FIXED32(p, v)                 __kmp_xchg_fixed32( (p), (v) );
 //# define KMP_XCHG_FIXED64(p, v)                 __kmp_xchg_fixed64( (p), (v) );
@@ -534,7 +534,7 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 # define KMP_COMPARE_AND_STORE_RET32(p, cv, sv) __kmp_compare_and_store_ret32( (p), (cv), (sv) )
 # define KMP_COMPARE_AND_STORE_RET64(p, cv, sv) __kmp_compare_and_store_ret64( (p), (cv), (sv) )
 
-# define KMP_XCHG_FIXED8(p, v)                  __kmp_xchg_fixed8( (p), (v) );
+# define KMP_XCHG_FIXED8(p, v)                  __kmp_xchg_fixed8( (volatile kmp_int8*)(p), (kmp_int8)(v) );
 # define KMP_XCHG_FIXED16(p, v)                 __kmp_xchg_fixed16( (p), (v) );
 # define KMP_XCHG_FIXED32(p, v)                 __kmp_xchg_fixed32( (p), (v) );
 # define KMP_XCHG_FIXED64(p, v)                 __kmp_xchg_fixed64( (p), (v) );

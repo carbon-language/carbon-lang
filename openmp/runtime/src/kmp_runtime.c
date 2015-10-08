@@ -5080,14 +5080,15 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
             __kmp_initialize_team( team, new_nproc, new_icvs, root->r.r_uber_thread->th.th_ident );
 
             if ( __kmp_tasking_mode != tskm_immediate_exec ) {
+                // Signal the worker threads to stop looking for tasks while spin waiting.
+                // The task teams are reference counted and will be deallocated by the last worker thread.
                 int tt_idx;
                 for (tt_idx=0; tt_idx<2; ++tt_idx) {
+                    // We don't know which of the two task teams workers are waiting on, so deactivate both.
                     kmp_task_team_t *task_team = team->t.t_task_team[tt_idx];
-                    if ( task_team != NULL ) {
-                        KMP_DEBUG_ASSERT( ! TCR_4(task_team->tt.tt_found_tasks) );
-                        task_team->tt.tt_nproc = new_nproc;
-                        task_team->tt.tt_unfinished_threads = new_nproc;
-                        task_team->tt.tt_ref_ct = new_nproc - 1;
+                    if ( (task_team != NULL) && TCR_SYNC_4(task_team->tt.tt_active) ) {
+                        TCW_SYNC_4( task_team->tt.tt_active, FALSE );
+                        team->t.t_task_team[tt_idx] = NULL;
                     }
                 }
             }
