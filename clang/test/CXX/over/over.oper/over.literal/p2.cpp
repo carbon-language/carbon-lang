@@ -37,7 +37,7 @@ template void operator "" _h<'a', 'b', 'c', 'd'>();
 namespace rdar13605348 {
 
 class C {
-  double operator"" _x(long double value) { return double(value); } // expected-error{{literal operator 'operator "" _x' must be in a namespace or global scope}}
+  double operator"" _x(long double value) { return double(value); } // expected-error{{literal operator 'operator""_x' must be in a namespace or global scope}}
   double value() { return 3.2_x; } // expected-error{{no matching literal operator for call to}}
 };
 

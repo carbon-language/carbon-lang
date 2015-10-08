@@ -70,7 +70,7 @@ namespace Using {
   namespace M {
     int operator"" _using(char);
   }
-  int k1 = 'x'_using; // expected-error {{no matching literal operator for call to 'operator "" _using'}}
+  int k1 = 'x'_using; // expected-error {{no matching literal operator for call to 'operator""_using'}}
 
   using M::operator "" _using;
   int k2 = 'x'_using;
@@ -80,7 +80,7 @@ namespace AmbiguousRawTemplate {
   int operator"" _ambig1(const char *); // expected-note {{candidate}}
   template<char...> int operator"" _ambig1(); // expected-note {{candidate}}
 
-  int k1 = 123_ambig1; // expected-error {{call to 'operator "" _ambig1' is ambiguous}}
+  int k1 = 123_ambig1; // expected-error {{call to 'operator""_ambig1' is ambiguous}}
 
   namespace Inner {
     template<char...> int operator"" _ambig2(); // expected-note 3{{candidate}}
@@ -88,7 +88,7 @@ namespace AmbiguousRawTemplate {
   int operator"" _ambig2(const char *); // expected-note 3{{candidate}}
   using Inner::operator"" _ambig2;
 
-  int k2 = 123_ambig2; // expected-error {{call to 'operator "" _ambig2' is ambiguous}}
+  int k2 = 123_ambig2; // expected-error {{call to 'operator""_ambig2' is ambiguous}}
 
   namespace N {
     using Inner::operator"" _ambig2;
@@ -133,13 +133,13 @@ namespace Namespace {
   int k = _x(); // expected-error {{undeclared identifier '_x'}}
 
   int _y(unsigned long long);
-  int k2 = 123_y; // expected-error {{no matching literal operator for call to 'operator "" _y'}}
+  int k2 = 123_y; // expected-error {{no matching literal operator for call to 'operator""_y'}}
 }
 
 namespace PR14950 {
   template<...> // expected-error {{expected template parameter}}
   int operator"" _b(); // expected-error {{no function template matches function template specialization}}
-  int main() { return 0_b; } // expected-error {{no matching literal operator for call to 'operator "" _b'}}
+  int main() { return 0_b; } // expected-error {{no matching literal operator for call to 'operator""_b'}}
 }
 
 namespace bad_names {

@@ -15,7 +15,7 @@ void *operator""_x(const char*); // #2
 void *a = 123_x; // ok, calls #2
 int b = u8"\"тест 𐀀"_x; // ok, calls #1
 int c = u8R"("тест 𐀀)"_x; // ok, calls #1
-int d = "test"_x; // expected-note {{in instantiation of function template specialization 'operator "" _x<char, 't', 'e', 's', 't'>' requested here}}
+int d = "test"_x; // expected-note {{in instantiation of function template specialization 'operator""_x<char, 't', 'e', 's', 't'>' requested here}}
 int e = uR"("тест 𐀀)"_x;
 int f = UR"("тест 𐀀)"_x;
-int g = UR"("тест_𐀀)"_x; // expected-note {{in instantiation of function template specialization 'operator "" _x<char32_t, 34, 1090, 1077, 1089, 1090, 95, 65536>' requested here}}
+int g = UR"("тест_𐀀)"_x; // expected-note {{in instantiation of function template specialization 'operator""_x<char32_t, 34, 1090, 1077, 1089, 1090, 95, 65536>' requested here}}

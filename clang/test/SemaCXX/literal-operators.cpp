@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++14 %s
 
 #include <stddef.h>
 
 struct tag {
-  void operator "" _tag_bad (const char *); // expected-error {{literal operator 'operator "" _tag_bad' must be in a namespace or global scope}}
+  void operator "" _tag_bad (const char *); // expected-error {{literal operator 'operator""_tag_bad' must be in a namespace or global scope}}
   friend void operator "" _tag_good (const char *);
 };
 
@@ -35,10 +35,14 @@ typedef const char c;
 void operator "" _good (c*);
 
 // Check extra cv-qualifiers
-void operator "" _cv_good (volatile const char *, const size_t); // expected-error {{parameter declaration for literal operator 'operator "" _cv_good' is not valid}}
+void operator "" _cv_good (volatile const char *, const size_t); // expected-error {{parameter declaration for literal operator 'operator""_cv_good' is not valid}}
 
 // Template declaration
 template <char...> void operator "" _good ();
 
 // FIXME: Test some invalid decls that might crop up.
-template <typename...> void operator "" _invalid(); // expected-error {{parameter declaration for literal operator 'operator "" _invalid' is not valid}}
+template <typename...> void operator "" _invalid(); // expected-error {{parameter declaration for literal operator 'operator""_invalid' is not valid}}
+
+_Complex float operator""if(long double); // expected-warning {{reserved}}
+_Complex float test_if_1() { return 2.0f + 1.5if; };
+void test_if_2() { "foo"if; } // expected-error {{no matching literal operator for call to 'operator""if'}}

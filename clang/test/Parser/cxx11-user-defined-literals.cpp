@@ -77,21 +77,21 @@ const char *p =
   erk
   flux
   )x" "eep\x1f"\
-_no_such_suffix // expected-error {{'operator "" _no_such_suffix'}}
+_no_such_suffix // expected-error {{'operator""_no_such_suffix'}}
 "and a bit more"
 "and another suffix"_no_such_suffix;
 
 char c =
   '\x14'\
-_no_such_suffix; // expected-error {{'operator "" _no_such_suffix'}}
+_no_such_suffix; // expected-error {{'operator""_no_such_suffix'}}
 
 int &r =
 1234567\
-_no_such_suffix; // expected-error {{'operator "" _no_such_suffix'}}
+_no_such_suffix; // expected-error {{'operator""_no_such_suffix'}}
 
 int k =
 1234567.89\
-_no_such_suffix; // expected-error {{'operator "" _no_such_suffix'}}
+_no_such_suffix; // expected-error {{'operator""_no_such_suffix'}}
 
 // Make sure we handle more interesting ways of writing a string literal which
 // is "" in translation phase 7.
@@ -115,15 +115,15 @@ void operator "" u8"" "\u0123" "hello"_all_of_the_things ""(const char*); // exp
 // Make sure we treat UCNs and UTF-8 as equivalent.
 int operator""_µs(unsigned long long) {} // expected-note {{previous}}
 int hundred_µs = 50_µs + 50_\u00b5s;
-int operator""_\u00b5s(unsigned long long) {} // expected-error {{redefinition of 'operator "" _µs'}}
+int operator""_\u00b5s(unsigned long long) {} // expected-error {{redefinition of 'operator""_µs'}}
 
 int operator""_\U0000212B(long double) {} // expected-note {{previous}}
 int hundred_Å = 50.0_Å + 50._\U0000212B;
-int operator""_Å(long double) {} // expected-error {{redefinition of 'operator "" _Å'}}
+int operator""_Å(long double) {} // expected-error {{redefinition of 'operator""_Å'}}
 
 int operator""_𐀀(char) {} // expected-note {{previous}}
 int 𐀀 = '4'_𐀀 + '2'_\U00010000;
-int operator""_\U00010000(char) {} // expected-error {{redefinition of 'operator "" _𐀀'}}
+int operator""_\U00010000(char) {} // expected-error {{redefinition of 'operator""_𐀀'}}
 
 // These all declare the same function.
 int operator""_℮""_\u212e""_\U0000212e""(const char*, size_t);

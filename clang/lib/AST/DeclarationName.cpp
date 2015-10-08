@@ -182,7 +182,7 @@ raw_ostream &operator<<(raw_ostream &OS, DeclarationName N) {
   }
 
   case DeclarationName::CXXLiteralOperatorName:
-    return OS << "operator \"\" " << N.getCXXLiteralIdentifier()->getName();
+    return OS << "operator\"\"" << N.getCXXLiteralIdentifier()->getName();
 
   case DeclarationName::CXXConversionFunctionName: {
     OS << "operator ";
