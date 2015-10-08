@@ -104,14 +104,12 @@ static bool isCCLiveOut(MachineBasicBlock &MBB) {
   return false;
 }
 
-// Return true if any CC result of MI would reflect the value of subreg
-// SubReg of Reg.
-static bool resultTests(MachineInstr *MI, unsigned Reg, unsigned SubReg) {
+// Return true if any CC result of MI would reflect the value of Reg.
+static bool resultTests(MachineInstr *MI, unsigned Reg) {
   if (MI->getNumOperands() > 0 &&
       MI->getOperand(0).isReg() &&
       MI->getOperand(0).isDef() &&
-      MI->getOperand(0).getReg() == Reg &&
-      MI->getOperand(0).getSubReg() == SubReg)
+      MI->getOperand(0).getReg() == Reg)
     return true;
 
   switch (MI->getOpcode()) {
@@ -127,8 +125,7 @@ static bool resultTests(MachineInstr *MI, unsigned Reg, unsigned SubReg) {
   case SystemZ::LTEBR:
   case SystemZ::LTDBR:
   case SystemZ::LTXBR:
-    if (MI->getOperand(1).getReg() == Reg &&
-        MI->getOperand(1).getSubReg() == SubReg)
+    if (MI->getOperand(1).getReg() == Reg)
       return true;
   }
 
@@ -326,7 +323,6 @@ optimizeCompareZero(MachineInstr *Compare,
 
   // Search back for CC results that are based on the first operand.
   unsigned SrcReg = Compare->getOperand(0).getReg();
-  unsigned SrcSubReg = Compare->getOperand(0).getSubReg();
   MachineBasicBlock &MBB = *Compare->getParent();
   MachineBasicBlock::iterator MBBI = Compare, MBBE = MBB.begin();
   Reference CCRefs;
@@ -334,7 +330,7 @@ optimizeCompareZero(MachineInstr *Compare,
   while (MBBI != MBBE) {
     --MBBI;
     MachineInstr *MI = MBBI;
-    if (resultTests(MI, SrcReg, SrcSubReg)) {
+    if (resultTests(MI, SrcReg)) {
       // Try to remove both MI and Compare by converting a branch to BRCT(G).
       // We don't care in this case whether CC is modified between MI and
       // Compare.
