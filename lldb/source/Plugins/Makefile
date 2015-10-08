@@ -23,6 +23,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-i386 A
 	UnwindAssembly/InstEmulation UnwindAssembly/x86 \
 	LanguageRuntime/CPlusPlus/ItaniumABI \
 	LanguageRuntime/ObjC/AppleObjCRuntime \
+	LanguageRuntime/Go/ \
 	LanguageRuntime/RenderScript/RenderScriptRuntime \
 	Language/CPlusPlus \
 	Language/ObjC \

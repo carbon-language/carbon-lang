@@ -61,6 +61,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginRenderScriptRuntime.a \
 	lldbPluginMemoryHistoryASan.a \
 	lldbPluginCPlusPlusLanguage.a \
+	lldbPluginLanguageRuntimeGo.a \
 	lldbPluginObjCLanguage.a \
 	lldbPluginObjCPlusPlusLanguage.a \
 	lldbPluginObjectContainerBSDArchive.a \
