@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- cstddef ----------------------------------===//
+//===--------------------------- stddef.h ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,19 +8,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CSTDDEF
-#define _LIBCPP_CSTDDEF
+#if defined(__need_ptrdiff_t) || defined(__need_size_t) || \
+    defined(__need_wchar_t) || defined(__need_NULL) || defined(__need_wint_t)
+#include_next <stddef.h>
+
+#elif !defined(_LIBCPP_STDDEF_H)
+#define _LIBCPP_STDDEF_H
 
 /*
-    cstddef synopsis
+    stddef.h synopsis
 
 Macros:
 
     offsetof(type,member-designator)
     NULL
-
-namespace std
-{
 
 Types:
 
@@ -29,31 +30,27 @@ Types:
     max_align_t
     nullptr_t
 
-}  // std
-
 */
 
 #include <__config>
-// Don't include our own <stddef.h>; we don't want to declare ::nullptr_t.
 #include_next <stddef.h>
-#include <__nullptr>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+#ifdef __cplusplus
 
-using ::ptrdiff_t;
-using ::size_t;
+extern "C++" {
+#include <__nullptr>
+using std::nullptr_t;
+}
 
-#if defined(__CLANG_MAX_ALIGN_T_DEFINED) || defined(_GCC_MAX_ALIGN_T)
 // Re-use the compiler's <stddef.h> max_align_t where possible.
-using ::max_align_t;
-#else
+#if !defined(__CLANG_MAX_ALIGN_T_DEFINED) && !defined(_GCC_MAX_ALIGN_T)
 typedef long double max_align_t;
 #endif
 
-_LIBCPP_END_NAMESPACE_STD
+#endif
 
-#endif  // _LIBCPP_CSTDDEF
+#endif  // _LIBCPP_STDDEF_H
