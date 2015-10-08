@@ -36,6 +36,7 @@ X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
   GotRefReloc = R_386_GOT32;
+  VAStart = 0x10000;
 }
 
 void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -91,6 +92,14 @@ X86_64TargetInfo::X86_64TargetInfo() {
   GotReloc = R_X86_64_GLOB_DAT;
   GotRefReloc = R_X86_64_PC32;
   RelativeReloc = R_X86_64_RELATIVE;
+
+  // On freebsd x86_64 the first page cannot be mmaped.
+  // On linux that is controled by vm.mmap_min_addr. At least on some x86_64
+  // installs that is 65536, so the first 15 pages cannot be used.
+  // Given that, the smallest value that can be used in here is 0x10000.
+  // If using 2MB pages, the smallest page aligned address that works is
+  // 0x200000, but it looks like every OS uses 4k pages for executables.
+  VAStart = 0x10000;
 }
 
 void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -192,6 +201,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
 PPC64TargetInfo::PPC64TargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
+  VAStart = 0x10000000;
 }
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                     uint64_t PltEntryAddr) const {}
@@ -225,6 +235,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 PPCTargetInfo::PPCTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
+  VAStart = 0x10000000;
 }
 void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {}
@@ -241,6 +252,7 @@ void PPCTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 ARMTargetInfo::ARMTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
+  VAStart = 0x8000;
 }
 void ARMTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {}
@@ -257,6 +269,7 @@ void ARMTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 AArch64TargetInfo::AArch64TargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
+  VAStart = 0x400000;
 }
 void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                       uint64_t PltEntryAddr) const {}
@@ -336,6 +349,7 @@ MipsTargetInfo::MipsTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
   DefaultEntry = "__start";
+  VAStart = 0x400000;
 }
 
 void MipsTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,

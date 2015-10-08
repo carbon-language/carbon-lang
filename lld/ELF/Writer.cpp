@@ -24,15 +24,6 @@ using namespace lld::elf2;
 
 static const int PageSize = 4096;
 
-// On freebsd x86_64 the first page cannot be mmaped.
-// On linux that is controled by vm.mmap_min_addr. At least on some x86_64
-// installs that is 65536, so the first 15 pages cannot be used.
-// Given that, the smallest value that can be used in here is 0x10000.
-// If using 2MB pages, the smallest page aligned address that works is
-// 0x200000, but it looks like every OS uses 4k pages for executables.
-// FIXME: This is architecture and OS dependent.
-static const int VAStart = 0x10000;
-
 namespace {
 
 static uint32_t toPHDRFlags(uint64_t Flags) {
@@ -102,7 +93,7 @@ private:
     return !Symtab.getSharedFiles().empty() || Config->Shared;
   }
   bool needsDynamicSections() const { return isOutputDynamic(); }
-  unsigned getVAStart() const { return Config->Shared ? 0 : VAStart; }
+  unsigned getVAStart() const { return Config->Shared ? 0 : Target->getVAStart(); }
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
