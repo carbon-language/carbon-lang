@@ -3055,12 +3055,18 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
 static void
 __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
 {
-    if ( __kmp_place_num_cores == 0 ) {
-        if ( __kmp_place_num_threads_per_core == 0 ) {
-            return;   // no cores limiting actions requested, exit
-        }
+    if (__kmp_place_num_sockets == 0 &&
+        __kmp_place_num_cores == 0 &&
+        __kmp_place_num_threads_per_core == 0 )
+        return;   // no topology limiting actions requested, exit
+    if (__kmp_place_num_sockets == 0)
+        __kmp_place_num_sockets = nPackages;    // use all available sockets
+    if (__kmp_place_num_cores == 0)
         __kmp_place_num_cores = nCoresPerPkg;   // use all available cores
-    }
+    if (__kmp_place_num_threads_per_core == 0 ||
+        __kmp_place_num_threads_per_core > __kmp_nThreadsPerCore)
+        __kmp_place_num_threads_per_core = __kmp_nThreadsPerCore; // use all HW contexts
+
     if ( !__kmp_affinity_uniform_topology() ) {
         KMP_WARNING( AffThrPlaceNonUniform );
         return; // don't support non-uniform topology
@@ -3069,8 +3075,9 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
         KMP_WARNING( AffThrPlaceNonThreeLevel );
         return; // don't support not-3-level topology
     }
-    if ( __kmp_place_num_threads_per_core == 0 ) {
-        __kmp_place_num_threads_per_core = __kmp_nThreadsPerCore;  // use all HW contexts
+    if (__kmp_place_socket_offset + __kmp_place_num_sockets > nPackages) {
+        KMP_WARNING(AffThrPlaceManySockets);
+        return;
     }
     if ( __kmp_place_core_offset + __kmp_place_num_cores > nCoresPerPkg ) {
         KMP_WARNING( AffThrPlaceManyCores );
@@ -3078,23 +3085,31 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
     }
 
     AddrUnsPair *newAddr = (AddrUnsPair *)__kmp_allocate( sizeof(AddrUnsPair) *
-                            nPackages * __kmp_place_num_cores * __kmp_place_num_threads_per_core);
+        __kmp_place_num_sockets * __kmp_place_num_cores * __kmp_place_num_threads_per_core);
+
     int i, j, k, n_old = 0, n_new = 0;
-    for ( i = 0; i < nPackages; ++i ) {
-        for ( j = 0; j < nCoresPerPkg; ++j ) {
-            if ( j < __kmp_place_core_offset || j >= __kmp_place_core_offset + __kmp_place_num_cores ) {
-                n_old += __kmp_nThreadsPerCore;   // skip not-requested core
-            } else {
-                for ( k = 0; k < __kmp_nThreadsPerCore; ++k ) {
-                    if ( k < __kmp_place_num_threads_per_core ) {
-                        newAddr[n_new] = (*pAddr)[n_old];   // copy requested core' data to new location
-                        n_new++;
+    for (i = 0; i < nPackages; ++i)
+        if (i < __kmp_place_socket_offset ||
+            i >= __kmp_place_socket_offset + __kmp_place_num_sockets)
+            n_old += nCoresPerPkg * __kmp_nThreadsPerCore; // skip not-requested socket
+        else
+            for (j = 0; j < nCoresPerPkg; ++j) // walk through requested socket
+                if (j < __kmp_place_core_offset ||
+                    j >= __kmp_place_core_offset + __kmp_place_num_cores)
+                    n_old += __kmp_nThreadsPerCore; // skip not-requested core
+                else
+                    for (k = 0; k < __kmp_nThreadsPerCore; ++k) { // walk through requested core
+                        if (k < __kmp_place_num_threads_per_core) {
+                            newAddr[n_new] = (*pAddr)[n_old]; // collect requested thread's data
+                            n_new++;
+                        }
+                        n_old++;
                     }
-                    n_old++;
-                }
-            }
-        }
-    }
+    KMP_DEBUG_ASSERT(n_old == nPackages * nCoresPerPkg * __kmp_nThreadsPerCore);
+    KMP_DEBUG_ASSERT(n_new == __kmp_place_num_sockets * __kmp_place_num_cores *
+                     __kmp_place_num_threads_per_core);
+
+    nPackages = __kmp_place_num_sockets;                      // correct nPackages
     nCoresPerPkg = __kmp_place_num_cores;                     // correct nCoresPerPkg
     __kmp_nThreadsPerCore = __kmp_place_num_threads_per_core; // correct __kmp_nThreadsPerCore
     __kmp_avail_proc = n_new;                                 // correct avail_proc

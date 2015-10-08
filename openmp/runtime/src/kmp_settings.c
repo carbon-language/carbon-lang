@@ -4117,127 +4117,220 @@ static void
 __kmp_stg_parse_place_threads( char const * name, char const * value, void * data ) {
     // Value example: 5Cx2Tx15O
     // Which means "use 5 cores with offset 15, 2 threads per core"
-
+    // AC: extended to sockets level:
+    //     2s,6o,2c,2o,2t   or   2s,6o,2c,2t,2o
+    //     (to not break legacy code core-offset can be last).
+    // Note: not all syntax errors are analyzed, some may be skipped.
+#define CHECK_DELIM(_x)   (*(_x) == ',' || *(_x) == '@' || *(_x) == 'x')
     int         num;
-    int         prev_delim = 0;
+    int         flagS = 0, flagC = 0, flagT = 0;
     const char *next = value;
     const char *prev;
 
-    SKIP_WS( next );
-    if ( *next == '\0' ) {
-        return;   // leave default values
-    }
-
-    // Get num_cores first
-    if ( *next >= '0' && *next <= '9' ) {
+    SKIP_WS(next);  // skip white spaces
+    if (*next == '\0')
+        return;   // no data provided, retain default values
+    // Get num_sockets first (or whatever specified)
+    if (*next >= '0' && *next <= '9') {
         prev = next;
-        SKIP_DIGITS( next );
-        num = __kmp_str_to_int( prev, *next );
-        SKIP_WS( next );
-        if ( *next == 'C' || *next == 'c' ) {
-            __kmp_place_num_cores = num;
+        SKIP_DIGITS(next);
+        num = __kmp_str_to_int(prev, *next);
+        SKIP_WS(next);
+        if (*next == 's' || *next == 'S') {
+            __kmp_place_num_sockets = num;
+            flagS = 1; // got num sockets
             next++;
-        } else if ( *next == ',' || *next == 'x' ) {
+        } else if (*next == 'c' || *next == 'C') {
             __kmp_place_num_cores = num;
-            prev_delim = 1;
+            flagS = flagC = 1; // sockets were not specified - use default
             next++;
-        } else if ( *next == 'T' || *next == 't' ) {
+        } else if (CHECK_DELIM(next)) {
+            __kmp_place_num_cores = num; // no letter-designator - num cores
+            flagS = flagC = 1; // sockets were not specified - use default
+            next++;
+        } else if (*next == 't' || *next == 'T') {
             __kmp_place_num_threads_per_core = num;
+            // sockets, cores were not specified - use default
             return;   // we ignore offset value in case all cores are used
-        } else if ( *next == '\0' ) {
+        } else if (*next == '\0') {
             __kmp_place_num_cores = num;
-            return;   // the only value provided
+            return;   // the only value provided - set num cores
         } else {
-            KMP_WARNING( AffThrPlaceInvalid, name, value );
+            KMP_WARNING(AffThrPlaceInvalid, name, value);
             return;
         }
-    } else if ( *next == ',' || *next == 'x' ) {
-        // First character is delimiter, skip it, leave num_cores default value
-        prev_delim = 2;
-        next++;
     } else {
-        KMP_WARNING( AffThrPlaceInvalid, name, value );
+        KMP_WARNING(AffThrPlaceInvalid, name, value);
         return;
     }
-    SKIP_WS( next );
-    if ( *next == '\0' ) {
+    KMP_DEBUG_ASSERT(flagS); // num sockets should already be set here
+    SKIP_WS(next);
+    if (*next == '\0')
         return;   // " n  " - something like this
-    }
-    if ( ( *next == ',' || *next == 'x' ) && !prev_delim ) {
-        prev_delim = 1;
-        next++;   // skip delimiter after num_core value
-        SKIP_WS( next );
+    if (CHECK_DELIM(next)) {
+        next++;   // skip delimiter
+        SKIP_WS(next);
     }
 
-    // Get threads_per_core next
-    if ( *next >= '0' && *next <= '9' ) {
-        prev_delim = 0;
+    // Get second value (could be offset, num_cores, num_threads)
+    if (*next >= '0' && *next <= '9') {
         prev = next;
-        SKIP_DIGITS( next );
-        num = __kmp_str_to_int( prev, *next );
-        SKIP_WS( next );
-        if ( *next == 'T' || *next == 't' ) {
-            __kmp_place_num_threads_per_core = num;
+        SKIP_DIGITS(next);
+        num = __kmp_str_to_int(prev, *next);
+        SKIP_WS(next);
+        if (*next == 'o' || *next == 'O') { // offset specified
+            if (flagC) { // whether num_cores already specified (when sockets skipped)
+                __kmp_place_core_offset = num;
+            } else {
+                __kmp_place_socket_offset = num;
+            }
             next++;
-        } else if ( *next == ',' || *next == 'x' ) {
-            __kmp_place_num_threads_per_core = num;
-            prev_delim = 1;
+        } else if (*next == 'c' || *next == 'C') {
+            KMP_DEBUG_ASSERT(flagC == 0);
+            __kmp_place_num_cores = num;
+            flagC = 1;
             next++;
-        } else if ( *next == 'O' || *next == 'o' ) {
-            __kmp_place_core_offset = num;
-            return;   // threads_per_core remains default
-        } else if ( *next == '\0' ) {
+        } else if (*next == 't' || *next == 'T') {
+            KMP_DEBUG_ASSERT(flagT == 0);
             __kmp_place_num_threads_per_core = num;
-            return;
+            flagC = 1; // num_cores could be skipped ?
+            flagT = 1;
+            next++; // can have core-offset specified after num threads
+        } else if (*next == '\0') {
+            KMP_DEBUG_ASSERT(flagC); // 4x2 means 4 cores 2 threads per core
+            __kmp_place_num_threads_per_core = num;
+            return;   // two values provided without letter-designator
         } else {
-            KMP_WARNING( AffThrPlaceInvalid, name, value );
+            KMP_WARNING(AffThrPlaceInvalid, name, value);
             return;
         }
-    } else if ( *next == ',' || *next == 'x' ) {
-        if ( prev_delim == 2 ) {
-            return; // no sense in the only offset value, thus skip the rest
-        }
-        KMP_DEBUG_ASSERT( prev_delim == 1 );
-        next++;     // no value for threads_per_core provided
     } else {
-        KMP_WARNING( AffThrPlaceInvalid, name, value );
+        KMP_WARNING(AffThrPlaceInvalid, name, value);
         return;
     }
-    SKIP_WS( next );
-    if ( *next == '\0' ) {
-        return;   // " nC,mT  " - something like this
-    }
-    if ( ( *next == ',' || *next == 'x' ) && !prev_delim ) {
-        prev_delim = 1;
-        next++;   // skip delimiter after threads_per_core value
-        SKIP_WS( next );
+    SKIP_WS(next);
+    if (*next == '\0')
+        return;   // " Ns,Nc  " - something like this
+    if (CHECK_DELIM(next)) {
+        next++;   // skip delimiter
+        SKIP_WS(next);
     }
 
-    // Get core offset last if any,
-    // don't bother checking syntax after all data obtained
-    if ( *next >= '0' && *next <= '9' ) {
+    // Get third value (could be core-offset, num_cores, num_threads)
+    if (*next >= '0' && *next <= '9') {
         prev = next;
-        SKIP_DIGITS( next );
-        num = __kmp_str_to_int( prev, *next );
-        __kmp_place_core_offset = num;
+        SKIP_DIGITS(next);
+        num = __kmp_str_to_int(prev, *next);
+        SKIP_WS(next);
+        if (*next == 'c' || *next == 'C') {
+            KMP_DEBUG_ASSERT(flagC == 0);
+            __kmp_place_num_cores = num;
+            flagC = 1;
+            next++;
+        } else if (*next == 'o' || *next == 'O') {
+            KMP_DEBUG_ASSERT(flagC);
+            __kmp_place_core_offset = num;
+            next++;
+        } else if (*next == 't' || *next == 'T') {
+            KMP_DEBUG_ASSERT(flagT == 0);
+            __kmp_place_num_threads_per_core = num;
+            if (flagC == 0)
+                return; // num_cores could be skipped (e.g. 2s,4o,2t)
+            flagT = 1;
+            next++; // can have core-offset specified later (e.g. 2s,1c,2t,3o)
+        } else {
+            KMP_WARNING(AffThrPlaceInvalid, name, value);
+            return;
+        }
+    } else {
+        KMP_WARNING(AffThrPlaceInvalid, name, value);
+        return;
     }
+    KMP_DEBUG_ASSERT(flagC);
+    SKIP_WS(next);
+    if ( *next == '\0' )
+            return;
+    if (CHECK_DELIM(next)) {
+        next++;   // skip delimiter
+        SKIP_WS(next);
+    }
+
+    // Get 4-th value (could be core-offset, num_threads)
+    if (*next >= '0' && *next <= '9') {
+        prev = next;
+        SKIP_DIGITS(next);
+        num = __kmp_str_to_int(prev, *next);
+        SKIP_WS(next);
+        if (*next == 'o' || *next == 'O') {
+            __kmp_place_core_offset = num;
+            next++;
+        } else if (*next == 't' || *next == 'T') {
+            KMP_DEBUG_ASSERT(flagT == 0);
+            __kmp_place_num_threads_per_core = num;
+            flagT = 1;
+            next++; // can have core-offset specified after num threads
+        } else {
+            KMP_WARNING(AffThrPlaceInvalid, name, value);
+            return;
+        }
+    } else {
+        KMP_WARNING(AffThrPlaceInvalid, name, value);
+        return;
+    }
+    SKIP_WS(next);
+    if ( *next == '\0' )
+        return;
+    if (CHECK_DELIM(next)) {
+        next++;   // skip delimiter
+        SKIP_WS(next);
+    }
+
+    // Get 5-th value (could be core-offset, num_threads)
+    if (*next >= '0' && *next <= '9') {
+        prev = next;
+        SKIP_DIGITS(next);
+        num = __kmp_str_to_int(prev, *next);
+        SKIP_WS(next);
+        if (*next == 'o' || *next == 'O') {
+            KMP_DEBUG_ASSERT(flagT);
+            __kmp_place_core_offset = num;
+        } else if (*next == 't' || *next == 'T') {
+            KMP_DEBUG_ASSERT(flagT == 0);
+            __kmp_place_num_threads_per_core = num;
+        } else {
+            KMP_WARNING(AffThrPlaceInvalid, name, value);
+        }
+    } else {
+        KMP_WARNING(AffThrPlaceInvalid, name, value);
+    }
+    return;
+#undef CHECK_DELIM
 }
 
 static void
 __kmp_stg_print_place_threads( kmp_str_buf_t * buffer, char const * name, void * data ) {
-    if ( __kmp_place_num_cores + __kmp_place_num_threads_per_core ) {
+    if (__kmp_place_num_sockets + __kmp_place_num_cores + __kmp_place_num_threads_per_core) {
+        int comma = 0;
         kmp_str_buf_t buf;
-        __kmp_str_buf_init( &buf );
-        if( __kmp_env_format ) {
+        __kmp_str_buf_init(&buf);
+        if(__kmp_env_format)
             KMP_STR_BUF_PRINT_NAME_EX(name);
-        } else {
-            __kmp_str_buf_print( buffer, "   %s='", name );
+        else
+            __kmp_str_buf_print(buffer, "   %s='", name);
+        if (__kmp_place_num_sockets) {
+            __kmp_str_buf_print(&buf, "%ds", __kmp_place_num_sockets);
+            if (__kmp_place_socket_offset)
+                __kmp_str_buf_print(&buf, "@%do", __kmp_place_socket_offset);
+            comma = 1;
         }
-        __kmp_str_buf_print( &buf, "%dC", __kmp_place_num_cores );
-        __kmp_str_buf_print( &buf, "x%dT", __kmp_place_num_threads_per_core );
-        if ( __kmp_place_core_offset ) {
-            __kmp_str_buf_print( &buf, ",%dO", __kmp_place_core_offset );
+        if (__kmp_place_num_cores) {
+            __kmp_str_buf_print(&buf, "%s%dc", comma?",":"", __kmp_place_num_cores);
+            if (__kmp_place_core_offset)
+                __kmp_str_buf_print(&buf, "@%do", __kmp_place_core_offset);
+            comma = 1;
         }
+        if (__kmp_place_num_threads_per_core)
+            __kmp_str_buf_print(&buf, "%s%dt", comma?",":"", __kmp_place_num_threads_per_core);
         __kmp_str_buf_print(buffer, "%s'\n", buf.str );
         __kmp_str_buf_free(&buf);
 /*

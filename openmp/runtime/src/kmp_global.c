@@ -249,9 +249,11 @@ kmp_nested_proc_bind_t __kmp_nested_proc_bind = { NULL, 0, 0 };
 int __kmp_affinity_num_places = 0;
 #endif
 
+int __kmp_place_num_sockets = 0;
+int __kmp_place_socket_offset = 0;
 int __kmp_place_num_cores = 0;
-int __kmp_place_num_threads_per_core = 0;
 int __kmp_place_core_offset = 0;
+int __kmp_place_num_threads_per_core = 0;
 
 kmp_tasking_mode_t __kmp_tasking_mode = tskm_task_teams;
 

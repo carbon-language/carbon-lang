@@ -788,9 +788,11 @@ typedef enum kmp_cancel_kind_t {
 } kmp_cancel_kind_t;
 #endif // OMP_40_ENABLED
 
+extern int __kmp_place_num_sockets;
+extern int __kmp_place_socket_offset;
 extern int __kmp_place_num_cores;
-extern int __kmp_place_num_threads_per_core;
 extern int __kmp_place_core_offset;
+extern int __kmp_place_num_threads_per_core;
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
@@ -3388,7 +3390,8 @@ KMP_EXPORT kmp_int32 __kmp_get_reduce_method( void );
 KMP_EXPORT kmp_uint64 __kmpc_get_taskid();
 KMP_EXPORT kmp_uint64 __kmpc_get_parent_taskid();
 
-KMP_EXPORT void __kmpc_place_threads(int,int,int);
+// this function exported for testing of KMP_PLACE_THREADS functionality
+KMP_EXPORT void __kmpc_place_threads(int,int,int,int,int);
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
