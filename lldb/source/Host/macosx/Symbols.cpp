@@ -55,17 +55,14 @@ int
 LocateMacOSXFilesUsingDebugSymbols
 (
     const ModuleSpec &module_spec,
-    FileSpec *out_exec_fspec,   // If non-NULL, try and find the executable
-    FileSpec *out_dsym_fspec    // If non-NULL try and find the debug symbol file
+    ModuleSpec &return_module_spec
 )
 {
+    return_module_spec = module_spec;
+    return_module_spec.GetFileSpec().Clear();
+    return_module_spec.GetSymbolFileSpec().Clear();
+
     int items_found = 0;
-
-    if (out_exec_fspec)
-        out_exec_fspec->Clear();
-
-    if (out_dsym_fspec)
-        out_dsym_fspec->Clear();
 
 #if !defined (__arm__) && !defined (__arm64__) && !defined (__aarch64__) // No DebugSymbols on the iOS devices
 
@@ -110,151 +107,132 @@ LocateMacOSXFilesUsingDebugSymbols
                                                                                   strlen(exec_cf_path),
                                                                                   FALSE));
                 }
-                if (log)
-                {
-                    std::string searching_for;
-                    if (out_exec_fspec && out_dsym_fspec)
-                    {
-                        searching_for = "executable binary and dSYM";
-                    }
-                    else if (out_exec_fspec)
-                    {
-                        searching_for = "executable binary";
-                    }
-                    else 
-                    {
-                        searching_for = "dSYM bundle";
-                    }
-                    log->Printf ("Calling DebugSymbols framework to locate dSYM bundle for UUID %s, searching for %s", uuid->GetAsString().c_str(), searching_for.c_str());
-                }
 
                 CFCReleaser<CFURLRef> dsym_url (::DBGCopyFullDSYMURLForUUID(module_uuid_ref.get(), exec_url.get()));
                 char path[PATH_MAX];
 
                 if (dsym_url.get())
                 {
-                    if (out_dsym_fspec)
+                    if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
+                    {
+                        if (log)
+                        {
+                            log->Printf ("DebugSymbols framework returned dSYM path of %s for UUID %s -- looking for the dSYM", path, uuid->GetAsString().c_str());
+                        }
+                        FileSpec dsym_filespec(path, path[0] == '~');
+
+                        if (dsym_filespec.GetFileType () == FileSpec::eFileTypeDirectory)
+                        {
+                            dsym_filespec = Symbols::FindSymbolFileInBundle (dsym_filespec, uuid, arch);
+                            ++items_found;
+                        }
+                        else
+                        {
+                            ++items_found;
+                        }
+                        return_module_spec.GetSymbolFileSpec() = dsym_filespec;
+                    }
+
+                    bool success = false;
+                    if (log)
                     {
                         if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
                         {
+                            log->Printf ("DebugSymbols framework returned dSYM path of %s for UUID %s -- looking for an exec file", path, uuid->GetAsString().c_str());
+                        }
+
+                    }
+
+                    CFCReleaser<CFDictionaryRef> dict(::DBGCopyDSYMPropertyLists (dsym_url.get()));
+                    CFDictionaryRef uuid_dict = NULL;
+                    if (dict.get())
+                    {
+                        CFCString uuid_cfstr (uuid->GetAsString().c_str());
+                        uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
+                    }
+                    if (uuid_dict)
+                    {
+                        CFStringRef exec_cf_path = static_cast<CFStringRef>(::CFDictionaryGetValue (uuid_dict, CFSTR("DBGSymbolRichExecutable")));
+                        if (exec_cf_path && ::CFStringGetFileSystemRepresentation (exec_cf_path, path, sizeof(path)))
+                        {
                             if (log)
                             {
-                                log->Printf ("DebugSymbols framework returned dSYM path of %s for UUID %s -- looking for the dSYM", path, uuid->GetAsString().c_str());
+                                log->Printf ("plist bundle has exec path of %s for UUID %s", path, uuid->GetAsString().c_str());
                             }
-                            out_dsym_fspec->SetFile(path, path[0] == '~');
-
-                            if (out_dsym_fspec->GetFileType () == FileSpec::eFileTypeDirectory)
+                            ++items_found;
+                            FileSpec exec_filespec (path, path[0] == '~');
+                            if (exec_filespec.Exists())
                             {
-                                *out_dsym_fspec = Symbols::FindSymbolFileInBundle (*out_dsym_fspec, uuid, arch);
-                                if (*out_dsym_fspec)
-                                    ++items_found;
-                            }
-                            else
-                            {
-                                ++items_found;
+                                success = true;
+                                return_module_spec.GetFileSpec() = exec_filespec;
                             }
                         }
                     }
 
-                    if (out_exec_fspec)
+                    if (!success)
                     {
-                        bool success = false;
-                        if (log)
+                        // No dictionary, check near the dSYM bundle for an executable that matches...
+                        if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
                         {
-                            if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
+                            char *dsym_extension_pos = ::strstr (path, ".dSYM");
+                            if (dsym_extension_pos)
                             {
-                                log->Printf ("DebugSymbols framework returned dSYM path of %s for UUID %s -- looking for an exec file", path, uuid->GetAsString().c_str());
-                            }
-
-                        }
-                        CFCReleaser<CFDictionaryRef> dict(::DBGCopyDSYMPropertyLists (dsym_url.get()));
-                        CFDictionaryRef uuid_dict = NULL;
-                        if (dict.get())
-                        {
-                            CFCString uuid_cfstr (uuid->GetAsString().c_str());
-                            uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
-                        }
-                        if (uuid_dict)
-                        {
-                            CFStringRef exec_cf_path = static_cast<CFStringRef>(::CFDictionaryGetValue (uuid_dict, CFSTR("DBGSymbolRichExecutable")));
-                            if (exec_cf_path && ::CFStringGetFileSystemRepresentation (exec_cf_path, path, sizeof(path)))
-                            {
+                                *dsym_extension_pos = '\0';
                                 if (log)
                                 {
-                                    log->Printf ("plist bundle has exec path of %s for UUID %s", path, uuid->GetAsString().c_str());
+                                    log->Printf ("Looking for executable binary next to dSYM bundle with name with name %s", path);
                                 }
-                                ++items_found;
-                                out_exec_fspec->SetFile(path, path[0] == '~');
-                                if (out_exec_fspec->Exists())
-                                    success = true;
-                            }
-                        }
-
-                        if (!success)
-                        {
-                            // No dictionary, check near the dSYM bundle for an executable that matches...
-                            if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
-                            {
-                                char *dsym_extension_pos = ::strstr (path, ".dSYM");
-                                if (dsym_extension_pos)
+                                FileSpec file_spec (path, true);
+                                ModuleSpecList module_specs;
+                                ModuleSpec matched_module_spec;
+                                switch (file_spec.GetFileType())
                                 {
-                                    *dsym_extension_pos = '\0';
-                                    if (log)
-                                    {
-                                        log->Printf ("Looking for executable binary next to dSYM bundle with name with name %s", path);
-                                    }
-                                    FileSpec file_spec (path, true);
-                                    ModuleSpecList module_specs;
-                                    ModuleSpec matched_module_spec;
-                                    switch (file_spec.GetFileType())
-                                    {
-                                        case FileSpec::eFileTypeDirectory:  // Bundle directory?
+                                    case FileSpec::eFileTypeDirectory:  // Bundle directory?
+                                        {
+                                            CFCBundle bundle (path);
+                                            CFCReleaser<CFURLRef> bundle_exe_url (bundle.CopyExecutableURL ());
+                                            if (bundle_exe_url.get())
                                             {
-                                                CFCBundle bundle (path);
-                                                CFCReleaser<CFURLRef> bundle_exe_url (bundle.CopyExecutableURL ());
-                                                if (bundle_exe_url.get())
+                                                if (::CFURLGetFileSystemRepresentation (bundle_exe_url.get(), true, (UInt8*)path, sizeof(path)-1))
                                                 {
-                                                    if (::CFURLGetFileSystemRepresentation (bundle_exe_url.get(), true, (UInt8*)path, sizeof(path)-1))
-                                                    {
-                                                        FileSpec bundle_exe_file_spec (path, true);
-                                                        if (ObjectFile::GetModuleSpecifications(bundle_exe_file_spec, 0, 0, module_specs) &&
-                                                            module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
+                                                    FileSpec bundle_exe_file_spec (path, true);
+                                                    if (ObjectFile::GetModuleSpecifications(bundle_exe_file_spec, 0, 0, module_specs) &&
+                                                        module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
 
+                                                    {
+                                                        ++items_found;
+                                                        return_module_spec.GetFileSpec() = bundle_exe_file_spec;
+                                                        if (log)
                                                         {
-                                                            ++items_found;
-                                                            *out_exec_fspec = bundle_exe_file_spec;
-                                                            if (log)
-                                                            {
-                                                                log->Printf ("Executable binary %s next to dSYM is compatible; using", path);
-                                                            }
+                                                            log->Printf ("Executable binary %s next to dSYM is compatible; using", path);
                                                         }
                                                     }
                                                 }
                                             }
-                                            break;
+                                        }
+                                        break;
 
-                                        case FileSpec::eFileTypePipe:       // Forget pipes
-                                        case FileSpec::eFileTypeSocket:     // We can't process socket files
-                                        case FileSpec::eFileTypeInvalid:    // File doesn't exist...
-                                            break;
+                                    case FileSpec::eFileTypePipe:       // Forget pipes
+                                    case FileSpec::eFileTypeSocket:     // We can't process socket files
+                                    case FileSpec::eFileTypeInvalid:    // File doesn't exist...
+                                        break;
 
-                                        case FileSpec::eFileTypeUnknown:
-                                        case FileSpec::eFileTypeRegular:
-                                        case FileSpec::eFileTypeSymbolicLink:
-                                        case FileSpec::eFileTypeOther:
-                                            if (ObjectFile::GetModuleSpecifications(file_spec, 0, 0, module_specs) &&
-                                                module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
+                                    case FileSpec::eFileTypeUnknown:
+                                    case FileSpec::eFileTypeRegular:
+                                    case FileSpec::eFileTypeSymbolicLink:
+                                    case FileSpec::eFileTypeOther:
+                                        if (ObjectFile::GetModuleSpecifications(file_spec, 0, 0, module_specs) &&
+                                            module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
 
+                                        {
+                                            ++items_found;
+                                            return_module_spec.GetFileSpec() = file_spec;
+                                            if (log)
                                             {
-                                                ++items_found;
-                                                *out_exec_fspec = file_spec;
-                                                if (log)
-                                                {
-                                                    log->Printf ("Executable binary %s next to dSYM is compatible; using", path);
-                                                }
+                                                log->Printf ("Executable binary %s next to dSYM is compatible; using", path);
                                             }
-                                            break;
-                                    }
+                                        }
+                                        break;
                                 }
                             }
                         }

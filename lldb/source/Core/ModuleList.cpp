@@ -1045,19 +1045,19 @@ ModuleList::GetSharedModule
 
     // Fixup the incoming path in case the path points to a valid file, yet
     // the arch or UUID (if one was passed in) don't match.
-    FileSpec file_spec = Symbols::LocateExecutableObjectFile (module_spec);
+    ModuleSpec located_binary_modulespec = Symbols::LocateExecutableObjectFile (module_spec);
 
     // Don't look for the file if it appears to be the same one we already
     // checked for above...
-    if (file_spec != module_file_spec)
+    if (located_binary_modulespec.GetFileSpec() != module_file_spec)
     {
-        if (!file_spec.Exists())
+        if (!located_binary_modulespec.GetFileSpec().Exists())
         {
-            file_spec.GetPath(path, sizeof(path));
+            located_binary_modulespec.GetFileSpec().GetPath(path, sizeof(path));
             if (path[0] == '\0')
                 module_file_spec.GetPath(path, sizeof(path));
             // How can this check ever be true? This branch it is false, and we haven't modified file_spec.
-            if (file_spec.Exists())
+            if (located_binary_modulespec.GetFileSpec().Exists())
             {
                 std::string uuid_str;
                 if (uuid_ptr && uuid_ptr->IsValid())
@@ -1085,8 +1085,9 @@ ModuleList::GetSharedModule
         // function is actively working on it by doing an extra lock on the
         // global mutex list.
         ModuleSpec platform_module_spec(module_spec);
-        platform_module_spec.GetFileSpec() = file_spec;
-        platform_module_spec.GetPlatformFileSpec() = file_spec;
+        platform_module_spec.GetFileSpec() = located_binary_modulespec.GetFileSpec();
+        platform_module_spec.GetPlatformFileSpec() = located_binary_modulespec.GetFileSpec();
+        platform_module_spec.GetSymbolFileSpec() = located_binary_modulespec.GetSymbolFileSpec();
         ModuleList matching_module_list;
         if (shared_module_list.FindModules (platform_module_spec, matching_module_list) > 0)
         {
@@ -1096,7 +1097,7 @@ ModuleList::GetSharedModule
             // then we should make sure the modification time hasn't changed!
             if (platform_module_spec.GetUUIDPtr() == NULL)
             {
-                TimeValue file_spec_mod_time(file_spec.GetModificationTime());
+                TimeValue file_spec_mod_time(located_binary_modulespec.GetFileSpec().GetModificationTime());
                 if (file_spec_mod_time.IsValid())
                 {
                     if (file_spec_mod_time != module_sp->GetModificationTime())
@@ -1125,9 +1126,9 @@ ModuleList::GetSharedModule
             }
             else
             {
-                file_spec.GetPath(path, sizeof(path));
+                located_binary_modulespec.GetFileSpec().GetPath(path, sizeof(path));
 
-                if (file_spec)
+                if (located_binary_modulespec.GetFileSpec())
                 {
                     if (arch.IsValid())
                         error.SetErrorStringWithFormat("unable to open %s architecture in '%s'", arch.GetArchitectureName(), path);

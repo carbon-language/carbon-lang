@@ -673,6 +673,8 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
 
     const char *triple_str = triple.getTriple().c_str();
 
+    // v. https://en.wikipedia.org/wiki/ARM_Cortex-M#Silicon_customization
+    // 
     // Cortex-M3 devices (e.g. armv7m) can only execute thumb (T2) instructions,
     // so hardcode the primary disassembler to thumb mode.  Same for Cortex-M4 (armv7em).
     //

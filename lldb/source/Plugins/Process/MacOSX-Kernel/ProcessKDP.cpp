@@ -321,7 +321,13 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                             // Lookup UUID locally, before attempting dsymForUUID like action
                             module_spec.GetSymbolFileSpec() = Symbols::LocateExecutableSymbolFile(module_spec);
                             if (module_spec.GetSymbolFileSpec())
-                                 module_spec.GetFileSpec() = Symbols::LocateExecutableObjectFile (module_spec);
+                            {
+                                ModuleSpec executable_module_spec = Symbols::LocateExecutableObjectFile (module_spec);
+                                if (executable_module_spec.GetFileSpec().Exists())
+                                {
+                                    module_spec.GetFileSpec() = executable_module_spec.GetFileSpec();
+                                }
+                            }
                             if (!module_spec.GetSymbolFileSpec() || !module_spec.GetSymbolFileSpec())
                                  Symbols::DownloadObjectAndSymbolFile (module_spec, true);
 
