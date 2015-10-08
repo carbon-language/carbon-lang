@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,osx.cocoa.NSAutoreleasePool -analyzer-store=region -fobjc-gc-only -fblocks -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -analyze -analyzer-checker=core,osx.cocoa.RetainCount,osx.cocoa.NSAutoreleasePool -analyzer-store=region -fobjc-gc-only -fblocks -verify -Wno-objc-root-class %s
 
 //===----------------------------------------------------------------------===//
 // Header stuff.

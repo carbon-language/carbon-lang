@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s -verify
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only %s -verify
 // PR5692
 
 enum x;            // expected-note   {{forward declaration}}

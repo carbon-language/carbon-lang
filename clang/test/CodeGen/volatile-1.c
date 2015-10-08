@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-return-type -Wno-unused-value -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -Wno-return-type -Wno-unused-value -emit-llvm %s -o - | FileCheck %s
 
 // CHECK: @i = common global [[INT:i[0-9]+]] 0
 volatile int i, j, k;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only -std=c11 -Wassign-enum %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -verify -fsyntax-only -std=c11 -Wassign-enum %s
 
 enum __attribute__((flag_enum)) flag {
   ea = 0x1,

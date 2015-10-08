@@ -1,3 +1,4 @@
-// RUN: %clang_cc1 -std=gnu89 %s -emit-llvm -o - | not grep dead_function
+// RUN: %clang_cc1 -triple %itanium_abi_triple -std=gnu89 %s -emit-llvm -o - | FileCheck %s
 
 extern __inline__ void dead_function() {}
+// CHECK-NOT: dead_function

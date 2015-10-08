@@ -659,7 +659,7 @@ namespace dr457 { // dr457: yes
 
   enum E {
     ea = a,
-    eb = b // expected-error {{not an integral constant}} expected-note {{read of volatile-qualified}}
+    eb = b // expected-error {{constant}} expected-note {{read of volatile-qualified}}
   };
 }
 

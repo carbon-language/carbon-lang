@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify -std=c++11 -Wc++14-compat %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fsyntax-only -verify -std=c++11 -Wc++14-compat %s
 
 // Need std::initializer_list
 namespace std {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c11 -Wno-unused-value
+// RUN: %clang_cc1 -triple %itanium_abi_triple %s -fsyntax-only -verify -std=c11 -Wno-unused-value
 
 enum e0; // expected-note{{forward declaration of 'enum e0'}}
 

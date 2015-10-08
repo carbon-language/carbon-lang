@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic
+// RUN: %clang_cc1 -triple %itanium_abi_triple %s -fsyntax-only -verify -pedantic
 enum e {A, 
         B = 42LL << 32,        // expected-warning {{ISO C restricts enumerator values to range of 'int'}}
       C = -4, D = 12456 };

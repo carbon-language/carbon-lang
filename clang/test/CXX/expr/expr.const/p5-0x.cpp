@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only -std=c++11 -verify %s
 
 // If an expression of literal class type is used in a context where an integral
 // constant expression is required, then that class type shall have a single
