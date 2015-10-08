@@ -282,12 +282,9 @@ template <class C>
 static inline void __kmp_release_template(C *flag)
 {
 #ifdef KMP_DEBUG
-    // FIX ME
-    kmp_info_t * wait_thr = flag->get_waiter(0);
-    int target_gtid = wait_thr->th.th_info.ds.ds_gtid;
     int gtid = TCR_4(__kmp_init_gtid) ? __kmp_get_gtid() : -1;
 #endif
-    KF_TRACE(20, ("__kmp_release: T#%d releasing T#%d spin(%p)\n", gtid, target_gtid, flag->get()));
+    KF_TRACE(20, ("__kmp_release: T#%d releasing flag(%x)\n", gtid, flag->get()));
     KMP_DEBUG_ASSERT(flag->get());
     KMP_FSYNC_RELEASING(flag->get());
     

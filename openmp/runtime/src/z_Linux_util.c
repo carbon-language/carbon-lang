@@ -1704,8 +1704,8 @@ static inline void __kmp_suspend_template( int th_gtid, C *flag )
     */
     old_spin = flag->set_sleeping();
 
-    KF_TRACE( 5, ( "__kmp_suspend_template: T#%d set sleep bit for spin(%p)==%d\n",
-                   th_gtid, flag->get(), *(flag->get()) ) );
+    KF_TRACE( 5, ( "__kmp_suspend_template: T#%d set sleep bit for spin(%p)==%x, was %x\n",
+                   th_gtid, flag->get(), *(flag->get()), old_spin ) );
 
     if ( flag->done_check_val(old_spin) ) {
         old_spin = flag->unset_sleeping();

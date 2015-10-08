@@ -5093,7 +5093,8 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                 }
             }
 
-            /* reinitialize the old threads */
+            /* reinitialize the threads */
+            KMP_DEBUG_ASSERT(team->t.t_nproc == new_nproc);
             if (level) {
                 for( f = 0  ;  f < team->t.t_nproc  ;  f++ ) {
                     __kmp_initialize_info( team->t.t_threads[ f ], team, f,
