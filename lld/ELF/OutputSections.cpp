@@ -119,7 +119,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
     uintptr_t InstPos = reinterpret_cast<uintptr_t>(Buf);
     uint64_t PltEntryAddr = (InstPos - Start) + this->getVA();
     Target->writePltEntry(Buf, GotEntryAddr, PltEntryAddr);
-    Buf += 8;
+    Buf += EntrySize;
   }
 }
 
