@@ -782,7 +782,7 @@ Value *BinaryExprAST::IRGen(IRGenContext &C) const {
   // Special case '=' because we don't want to emit the LHS as an expression.
   if (Op == '=') {
     // Assignment requires the LHS to be an identifier.
-    auto LHSVar = static_cast<VariableExprAST&>(*LHS);
+    auto &LHSVar = static_cast<VariableExprAST &>(*LHS);
     // Codegen the RHS.
     Value *Val = RHS->IRGen(C);
     if (!Val) return nullptr;
