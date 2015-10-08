@@ -22,10 +22,6 @@ function(llvm_update_compile_flags name)
       list(APPEND LLVM_COMPILE_DEFINITIONS _HAS_EXCEPTIONS=0)
       list(APPEND LLVM_COMPILE_FLAGS "/EHs-c-")
     endif()
-    if (CLANG_CL)
-      # FIXME: Remove this once clang-cl supports SEH
-      list(APPEND LLVM_COMPILE_DEFINITIONS "GTEST_HAS_SEH=0")
-    endif()
   endif()
 
   # LLVM_REQUIRES_RTTI is an internal flag that individual
