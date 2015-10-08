@@ -1198,7 +1198,7 @@
 // ARM:#define __APCS_32__ 1
 // ARM-NOT:#define __ARMEB__ 1
 // ARM:#define __ARMEL__ 1
-// ARM:#define __ARM_ARCH_6J__ 1
+// ARM:#define __ARM_ARCH_4T__ 1
 // ARM-NOT:#define __ARM_BIG_ENDIAN 1
 // ARM:#define __BIGGEST_ALIGNMENT__ 8
 // ARM:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
@@ -1338,7 +1338,6 @@
 // ARM:#define __SIZE_MAX__ 4294967295U
 // ARM:#define __SIZE_TYPE__ unsigned int
 // ARM:#define __SIZE_WIDTH__ 32
-// ARM:#define __THUMB_INTERWORK__ 1
 // ARM:#define __UINT16_C_SUFFIX__ {{$}}
 // ARM:#define __UINT16_MAX__ 65535
 // ARM:#define __UINT16_TYPE__ unsigned short
@@ -1389,7 +1388,7 @@
 // ARM-BE:#define __APCS_32__ 1
 // ARM-BE:#define __ARMEB__ 1
 // ARM-BE-NOT:#define __ARMEL__ 1
-// ARM-BE:#define __ARM_ARCH_6J__ 1
+// ARM-BE:#define __ARM_ARCH_4T__ 1
 // ARM-BE:#define __ARM_BIG_ENDIAN 1
 // ARM-BE:#define __BIGGEST_ALIGNMENT__ 8
 // ARM-BE:#define __BIG_ENDIAN__ 1
@@ -1529,7 +1528,6 @@
 // ARM-BE:#define __SIZE_MAX__ 4294967295U
 // ARM-BE:#define __SIZE_TYPE__ unsigned int
 // ARM-BE:#define __SIZE_WIDTH__ 32
-// ARM-BE:#define __THUMB_INTERWORK__ 1
 // ARM-BE:#define __UINT16_C_SUFFIX__ {{$}}
 // ARM-BE:#define __UINT16_MAX__ 65535
 // ARM-BE:#define __UINT16_TYPE__ unsigned short
@@ -1580,8 +1578,8 @@
 // ARMEABISOFTFP:#define __APCS_32__ 1
 // ARMEABISOFTFP-NOT:#define __ARMEB__ 1
 // ARMEABISOFTFP:#define __ARMEL__ 1
-// ARMEABISOFTFP:#define __ARM_ARCH 6
-// ARMEABISOFTFP:#define __ARM_ARCH_6J__ 1
+// ARMEABISOFTFP:#define __ARM_ARCH 4
+// ARMEABISOFTFP:#define __ARM_ARCH_4T__ 1
 // ARMEABISOFTFP-NOT:#define __ARM_BIG_ENDIAN 1
 // ARMEABISOFTFP:#define __ARM_EABI__ 1
 // ARMEABISOFTFP:#define __ARM_PCS 1
@@ -1725,7 +1723,6 @@
 // ARMEABISOFTFP:#define __SIZE_TYPE__ unsigned int
 // ARMEABISOFTFP:#define __SIZE_WIDTH__ 32
 // ARMEABISOFTFP:#define __SOFTFP__ 1
-// ARMEABISOFTFP:#define __THUMB_INTERWORK__ 1
 // ARMEABISOFTFP:#define __UINT16_C_SUFFIX__ {{$}}
 // ARMEABISOFTFP:#define __UINT16_MAX__ 65535
 // ARMEABISOFTFP:#define __UINT16_TYPE__ unsigned short
@@ -1776,8 +1773,8 @@
 // ARMEABIHARDFP:#define __APCS_32__ 1
 // ARMEABIHARDFP-NOT:#define __ARMEB__ 1
 // ARMEABIHARDFP:#define __ARMEL__ 1
-// ARMEABIHARDFP:#define __ARM_ARCH 6
-// ARMEABIHARDFP:#define __ARM_ARCH_6J__ 1
+// ARMEABIHARDFP:#define __ARM_ARCH 4
+// ARMEABIHARDFP:#define __ARM_ARCH_4T__ 1
 // ARMEABIHARDFP-NOT:#define __ARM_BIG_ENDIAN 1
 // ARMEABIHARDFP:#define __ARM_EABI__ 1
 // ARMEABIHARDFP:#define __ARM_PCS 1
@@ -1921,7 +1918,6 @@
 // ARMEABIHARDFP:#define __SIZE_TYPE__ unsigned int
 // ARMEABIHARDFP:#define __SIZE_WIDTH__ 32
 // ARMEABIHARDFP-NOT:#define __SOFTFP__ 1
-// ARMEABIHARDFP:#define __THUMB_INTERWORK__ 1
 // ARMEABIHARDFP:#define __UINT16_C_SUFFIX__ {{$}}
 // ARMEABIHARDFP:#define __UINT16_MAX__ 65535
 // ARMEABIHARDFP:#define __UINT16_TYPE__ unsigned short
@@ -1972,7 +1968,7 @@
 // ARM-NETBSD:#define __APCS_32__ 1
 // ARM-NETBSD-NOT:#define __ARMEB__ 1
 // ARM-NETBSD:#define __ARMEL__ 1
-// ARM-NETBSD:#define __ARM_ARCH_6J__ 1
+// ARM-NETBSD:#define __ARM_ARCH_4T__ 1
 // ARM-NETBSD:#define __ARM_DWARF_EH__ 1
 // ARM-NETBSD:#define __ARM_EABI__ 1
 // ARM-NETBSD-NOT:#define __ARM_BIG_ENDIAN 1
@@ -2114,7 +2110,6 @@
 // ARM-NETBSD:#define __SIZE_MAX__ 4294967295U
 // ARM-NETBSD:#define __SIZE_TYPE__ long unsigned int
 // ARM-NETBSD:#define __SIZE_WIDTH__ 32
-// ARM-NETBSD:#define __THUMB_INTERWORK__ 1
 // ARM-NETBSD:#define __UINT16_C_SUFFIX__ {{$}}
 // ARM-NETBSD:#define __UINT16_MAX__ 65535
 // ARM-NETBSD:#define __UINT16_TYPE__ unsigned short

@@ -4086,7 +4086,6 @@ class ARMTargetInfo : public TargetInfo {
 
   std::string ABI, CPU;
 
-  StringRef DefaultCPU;
   StringRef CPUProfile;
   StringRef CPUAttr;
 
@@ -4097,7 +4096,7 @@ class ARMTargetInfo : public TargetInfo {
   } FPMath;
 
   unsigned ArchISA;
-  unsigned ArchKind;
+  unsigned ArchKind = llvm::ARM::AK_ARMV4T;
   unsigned ArchProfile;
   unsigned ArchVersion;
 
@@ -4235,13 +4234,11 @@ class ARMTargetInfo : public TargetInfo {
   void setArchInfo() {
     StringRef ArchName = getTriple().getArchName();
 
-    ArchISA    = llvm::ARM::parseArchISA(ArchName);
-    DefaultCPU = getDefaultCPU(ArchName);
-
-    unsigned ArchKind = llvm::ARM::parseArch(ArchName);
-    if (ArchKind == llvm::ARM::AK_INVALID)
-      // set arch of the CPU, either provided explicitly or hardcoded default
-      ArchKind = llvm::ARM::parseCPUArch(CPU);
+    ArchISA     = llvm::ARM::parseArchISA(ArchName);
+    CPU         = llvm::ARM::getDefaultCPU(ArchName);
+    unsigned AK = llvm::ARM::parseArch(ArchName);
+    if (AK != llvm::ARM::AK_INVALID)
+      ArchKind = AK;
     setArchInfo(ArchKind);
   }
 
@@ -4262,8 +4259,7 @@ class ARMTargetInfo : public TargetInfo {
   void setAtomic() {
     // when triple does not specify a sub arch, 
     // then we are not using inline atomics
-    bool ShouldUseInlineAtomic = DefaultCPU.empty() ? 
-                                 false :
+    bool ShouldUseInlineAtomic =
                    (ArchISA == llvm::ARM::IK_ARM   && ArchVersion >= 6) ||
                    (ArchISA == llvm::ARM::IK_THUMB && ArchVersion >= 7);
     // Cortex M does not support 8 byte atomics, while general Thumb2 does. 
@@ -4289,10 +4285,6 @@ class ARMTargetInfo : public TargetInfo {
 
   bool supportsThumb2() const {
     return CPUAttr.equals("6T2") || ArchVersion >= 7;
-  }
-
-  StringRef getDefaultCPU(StringRef ArchName) const {
-    return llvm::ARM::getDefaultCPU(ArchName);
   }
 
   StringRef getCPUAttr() const {
@@ -4340,7 +4332,7 @@ class ARMTargetInfo : public TargetInfo {
 
 public:
   ARMTargetInfo(const llvm::Triple &Triple, bool IsBigEndian)
-      : TargetInfo(Triple), CPU("arm1136j-s"), FPMath(FP_Default),
+      : TargetInfo(Triple), FPMath(FP_Default),
         IsAAPCS(true), LDREX(0), HW_FP(0) {
     BigEndian = IsBigEndian;
 
@@ -4353,7 +4345,7 @@ public:
       break;
     }
 
-    // cache arch related info
+    // Cache arch related info.
     setArchInfo();
 
     // {} in inline assembly are neon specifiers, not assembly variant
@@ -4389,8 +4381,8 @@ public:
         setABI("aapcs");
         break;
       case llvm::Triple::GNU:
-	setABI("apcs-gnu");
-	break;
+        setABI("apcs-gnu");
+      break;
       default:
         if (Triple.getOS() == llvm::Triple::NetBSD)
           setABI("apcs-gnu");
