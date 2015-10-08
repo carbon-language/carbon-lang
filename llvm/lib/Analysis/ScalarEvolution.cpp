@@ -7132,7 +7132,7 @@ ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
 bool ScalarEvolution::isKnownPredicateViaSplitting(ICmpInst::Predicate Pred,
                                                    const SCEV *LHS,
                                                    const SCEV *RHS) {
-  if (ProvingSplitPredicate)
+  if (Pred != ICmpInst::ICMP_ULT || ProvingSplitPredicate)
     return false;
 
   // Allowing arbitrary number of activations of isKnownPredicateViaSplitting on
@@ -7146,7 +7146,7 @@ bool ScalarEvolution::isKnownPredicateViaSplitting(ICmpInst::Predicate Pred,
   // expensive; and using isKnownNonNegative(RHS) is sufficient for most of the
   // interesting cases seen in practice.  We can consider "upgrading" L >= 0 to
   // use isKnownPredicate later if needed.
-  if (Pred == ICmpInst::ICMP_ULT && isKnownNonNegative(RHS) &&
+  if (isKnownNonNegative(RHS) &&
       isKnownPredicate(CmpInst::ICMP_SGE, LHS, getZero(LHS->getType())) &&
       isKnownPredicate(CmpInst::ICMP_SLT, LHS, RHS))
     return true;
