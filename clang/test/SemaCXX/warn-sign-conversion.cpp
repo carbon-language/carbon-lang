@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only -Wsign-conversion %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -verify -fsyntax-only -Wsign-conversion %s
 
 // NOTE: When a 'enumeral mismatch' warning is implemented then expect several
 // of the following cases to be impacted.

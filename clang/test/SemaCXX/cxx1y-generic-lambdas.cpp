@@ -859,7 +859,7 @@ namespace ns1 {
 struct X1 {  
   struct X2 {
     enum { E = [](auto i) { return i; }(3) }; //expected-error{{inside of a constant expression}}\
-                                          //expected-error{{not an integral constant}}\
+                                          //expected-error{{constant}}\
                                           //expected-note{{non-literal type}}
     int L = ([] (int i) { return i; })(2);
     void foo(int i = ([] (int i) { return i; })(2)) { }

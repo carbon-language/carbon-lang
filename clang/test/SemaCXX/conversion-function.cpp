@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wbind-to-temporary-copy -verify %s 
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only -Wbind-to-temporary-copy -verify %s 
 class X { 
 public:
   operator bool();

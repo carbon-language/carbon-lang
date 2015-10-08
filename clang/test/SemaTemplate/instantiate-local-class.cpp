@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -verify -std=c++11 %s
-// RUN: %clang_cc1 -verify -std=c++11 -fdelayed-template-parsing %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -verify -std=c++11 -fdelayed-template-parsing %s
 
 template<typename T>
 void f0() {

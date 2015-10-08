@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -ffreestanding -fsyntax-only -verify -std=c++11 %s
 
 #include "limits.h"
 

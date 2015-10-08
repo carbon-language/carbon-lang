@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wobjc-missing-property-synthesis -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only -Wobjc-missing-property-synthesis -verify -Wno-objc-root-class %s
 // rdar://11295716
 
 @interface NSObject 

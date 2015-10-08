@@ -7,7 +7,7 @@
 
 // CHECK: typedef void (*g)();
 typedef void (*g) ();
-// CHECK: enum {
+// CHECK: enum
 enum {
   k = -1
 };

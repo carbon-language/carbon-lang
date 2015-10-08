@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only -verify %s
 
 // PR3588
 void g0(int, int);
