@@ -132,13 +132,14 @@ using namespace llvm;
 /// \brief Print the samples collected for a function on stream \p OS.
 ///
 /// \param OS Stream to emit the output to.
-void FunctionSamples::print(raw_ostream &OS) {
+void FunctionSamples::print(raw_ostream &OS, unsigned Indent) const {
   OS << TotalSamples << ", " << TotalHeadSamples << ", " << BodySamples.size()
      << " sampled lines\n";
   for (const auto &SI : BodySamples) {
     LineLocation Loc = SI.first;
     const SampleRecord &Sample = SI.second;
-    OS << "\tline offset: " << Loc.LineOffset
+    OS.indent(Indent);
+    OS << "line offset: " << Loc.LineOffset
        << ", discriminator: " << Loc.Discriminator
        << ", number of samples: " << Sample.getSamples();
     if (Sample.hasCalls()) {
@@ -148,7 +149,15 @@ void FunctionSamples::print(raw_ostream &OS) {
     }
     OS << "\n";
   }
-  OS << "\n";
+  for (const auto &CS : CallsiteSamples) {
+    CallsiteLocation Loc = CS.first;
+    const FunctionSamples &CalleeSamples = CS.second;
+    OS.indent(Indent);
+    OS << "line offset: " << Loc.LineOffset
+       << ", discriminator: " << Loc.Discriminator
+       << ", inlined callee: " << Loc.CalleeName << ": ";
+    CalleeSamples.print(OS, Indent + 2);
+  }
 }
 
 /// \brief Dump the function profile for \p FName.
@@ -266,7 +275,7 @@ static bool ParseLine(const StringRef &Input, bool &IsCallsite, unsigned &Depth,
 std::error_code SampleProfileReaderText::read() {
   line_iterator LineIt(*Buffer, /*SkipBlanks=*/true, '#');
 
-  SmallVector<FunctionSamples *, 10> InlineStack;
+  InlineCallStack InlineStack;
 
   for (; !LineIt.is_at_eof(); ++LineIt) {
     if ((*LineIt)[(*LineIt).find_first_not_of(' ')] == '#')
@@ -559,31 +568,18 @@ std::error_code SampleProfileReaderGCC::readFunctionProfiles() {
   if (!GcovBuffer.readInt(NumFunctions))
     return sampleprof_error::truncated;
 
-  SourceStack Stack;
+  InlineCallStack Stack;
   for (uint32_t I = 0; I < NumFunctions; ++I)
-    if (std::error_code EC = readOneFunctionProfile(Stack, true))
+    if (std::error_code EC = readOneFunctionProfile(Stack, true, 0))
       return EC;
 
   return sampleprof_error::success;
 }
 
-std::error_code SampleProfileReaderGCC::addSourceCount(StringRef Name,
-                                                       const SourceStack &Src,
-                                                       uint64_t Count) {
-  if (Src.size() == 0 || Src[0].Malformed())
-    return sampleprof_error::malformed;
-  FunctionSamples &FProfile = Profiles[Name];
-  FProfile.addTotalSamples(Count);
-  // FIXME(dnovillo) - Properly update inline stack for FnName.
-  FProfile.addBodySamples(Src[0].Line, Src[0].Discriminator, Count);
-  return sampleprof_error::success;
-}
-
-std::error_code
-SampleProfileReaderGCC::readOneFunctionProfile(const SourceStack &Stack,
-                                               bool Update) {
+std::error_code SampleProfileReaderGCC::readOneFunctionProfile(
+    const InlineCallStack &InlineStack, bool Update, uint32_t Offset) {
   uint64_t HeadCount = 0;
-  if (Stack.size() == 0)
+  if (InlineStack.size() == 0)
     if (!GcovBuffer.readInt64(HeadCount))
       return sampleprof_error::truncated;
 
@@ -597,15 +593,31 @@ SampleProfileReaderGCC::readOneFunctionProfile(const SourceStack &Stack,
   if (!GcovBuffer.readInt(NumPosCounts))
     return sampleprof_error::truncated;
 
-  uint32_t NumCallSites;
-  if (!GcovBuffer.readInt(NumCallSites))
+  uint32_t NumCallsites;
+  if (!GcovBuffer.readInt(NumCallsites))
     return sampleprof_error::truncated;
 
-  if (Stack.size() == 0) {
-    FunctionSamples &FProfile = Profiles[Name];
-    FProfile.addHeadSamples(HeadCount);
-    if (FProfile.getTotalSamples() > 0)
+  FunctionSamples *FProfile = nullptr;
+  if (InlineStack.size() == 0) {
+    // If this is a top function that we have already processed, do not
+    // update its profile again.  This happens in the presence of
+    // function aliases.  Since these aliases share the same function
+    // body, there will be identical replicated profiles for the
+    // original function.  In this case, we simply not bother updating
+    // the profile of the original function.
+    FProfile = &Profiles[Name];
+    FProfile->addHeadSamples(HeadCount);
+    if (FProfile->getTotalSamples() > 0)
       Update = false;
+  } else {
+    // Otherwise, we are reading an inlined instance. The top of the
+    // inline stack contains the profile of the caller. Insert this
+    // callee in the caller's CallsiteMap.
+    FunctionSamples *CallerProfile = InlineStack.front();
+    uint32_t LineOffset = Offset >> 16;
+    uint32_t Discriminator = Offset & 0xffff;
+    FProfile = &CallerProfile->functionSamplesAt(
+        CallsiteLocation(LineOffset, Discriminator, Name));
   }
 
   for (uint32_t I = 0; I < NumPosCounts; ++I) {
@@ -621,13 +633,28 @@ SampleProfileReaderGCC::readOneFunctionProfile(const SourceStack &Stack,
     if (!GcovBuffer.readInt64(Count))
       return sampleprof_error::truncated;
 
-    SourceInfo Info(Name, "", "", 0, Offset >> 16, Offset & 0xffff);
-    SourceStack NewStack;
-    NewStack.push_back(Info);
-    NewStack.insert(NewStack.end(), Stack.begin(), Stack.end());
-    if (Update)
-      addSourceCount(NewStack[NewStack.size() - 1].FuncName, NewStack, Count);
+    // The line location is encoded in the offset as:
+    //   high 16 bits: line offset to the start of the function.
+    //   low 16 bits: discriminator.
+    uint32_t LineOffset = Offset >> 16;
+    uint32_t Discriminator = Offset & 0xffff;
 
+    InlineCallStack NewStack;
+    NewStack.push_back(FProfile);
+    NewStack.insert(NewStack.end(), InlineStack.begin(), InlineStack.end());
+    if (Update) {
+      // Walk up the inline stack, adding the samples on this line to
+      // the total sample count of the callers in the chain.
+      for (auto CallerProfile : NewStack)
+        CallerProfile->addTotalSamples(Count);
+
+      // Update the body samples for the current profile.
+      FProfile->addBodySamples(LineOffset, Discriminator, Count);
+    }
+
+    // Process the list of functions called at an indirect call site.
+    // These are all the targets that a function pointer (or virtual
+    // function) resolved at runtime.
     for (uint32_t J = 0; J < NumTargets; J++) {
       uint32_t HistVal;
       if (!GcovBuffer.readInt(HistVal))
@@ -647,24 +674,25 @@ SampleProfileReaderGCC::readOneFunctionProfile(const SourceStack &Stack,
 
       if (Update) {
         FunctionSamples &TargetProfile = Profiles[TargetName];
-        TargetProfile.addBodySamples(NewStack[0].Line,
-                                     NewStack[0].Discriminator, TargetCount);
+        TargetProfile.addCalledTargetSamples(LineOffset, Discriminator,
+                                             TargetName, TargetCount);
       }
     }
   }
 
-  for (uint32_t I = 0; I < NumCallSites; I++) {
+  // Process all the inlined callers into the current function. These
+  // are all the callsites that were inlined into this function.
+  for (uint32_t I = 0; I < NumCallsites; I++) {
     // The offset is encoded as:
     //   high 16 bits: line offset to the start of the function.
     //   low 16 bits: discriminator.
     uint32_t Offset;
     if (!GcovBuffer.readInt(Offset))
       return sampleprof_error::truncated;
-    SourceInfo Info(Name, "", "", 0, Offset >> 16, Offset & 0xffff);
-    SourceStack NewStack;
-    NewStack.push_back(Info);
-    NewStack.insert(NewStack.end(), Stack.begin(), Stack.end());
-    if (std::error_code EC = readOneFunctionProfile(NewStack, Update))
+    InlineCallStack NewStack;
+    NewStack.push_back(FProfile);
+    NewStack.insert(NewStack.end(), InlineStack.begin(), InlineStack.end());
+    if (std::error_code EC = readOneFunctionProfile(NewStack, Update, Offset))
       return EC;
   }
 

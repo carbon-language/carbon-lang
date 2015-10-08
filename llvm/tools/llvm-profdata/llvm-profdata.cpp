@@ -77,13 +77,19 @@ static void mergeSampleProfile(const cl::list<std::string> &Inputs,
 
   auto Writer = std::move(WriterOrErr.get());
   StringMap<FunctionSamples> ProfileMap;
+  SmallVector<std::unique_ptr<sampleprof::SampleProfileReader>, 5> Readers;
   for (const auto &Filename : Inputs) {
     auto ReaderOrErr =
         SampleProfileReader::create(Filename, getGlobalContext());
     if (std::error_code EC = ReaderOrErr.getError())
       exitWithError(EC.message(), Filename);
 
-    auto Reader = std::move(ReaderOrErr.get());
+    // We need to keep the readers around until after all the files are
+    // read so that we do not lose the function names stored in each
+    // reader's memory. The function names are needed to write out the
+    // merged profile map.
+    Readers.push_back(std::move(ReaderOrErr.get()));
+    const auto Reader = Readers.back().get();
     if (std::error_code EC = Reader->read())
       exitWithError(EC.message(), Filename);
 

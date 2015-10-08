@@ -31,15 +31,15 @@ using namespace llvm;
 
 /// \brief Write samples to a text file.
 bool SampleProfileWriterText::write(StringRef FName, const FunctionSamples &S) {
-  if (S.empty())
-    return true;
-
-  OS << FName << ":" << S.getTotalSamples() << ":" << S.getHeadSamples()
-     << "\n";
+  OS << FName << ":" << S.getTotalSamples();
+  if (Indent == 0)
+    OS << ":" << S.getHeadSamples();
+  OS << "\n";
 
   for (const auto &I : S.getBodySamples()) {
     LineLocation Loc = I.first;
     const SampleRecord &Sample = I.second;
+    OS.indent(Indent + 1);
     if (Loc.Discriminator == 0)
       OS << Loc.LineOffset << ": ";
     else
@@ -51,6 +51,19 @@ bool SampleProfileWriterText::write(StringRef FName, const FunctionSamples &S) {
       OS << " " << J.first() << ":" << J.second;
     OS << "\n";
   }
+
+  Indent += 1;
+  for (const auto &I : S.getCallsiteSamples()) {
+    CallsiteLocation Loc = I.first;
+    const FunctionSamples &CalleeSamples = I.second;
+    OS.indent(Indent);
+    if (Loc.Discriminator == 0)
+      OS << Loc.LineOffset << ": ";
+    else
+      OS << Loc.LineOffset << "." << Loc.Discriminator << ": ";
+    write(Loc.CalleeName, CalleeSamples);
+  }
+  Indent -= 1;
 
   return true;
 }
