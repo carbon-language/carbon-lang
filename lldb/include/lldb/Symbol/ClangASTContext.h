@@ -71,7 +71,7 @@ public:
     GetPluginNameStatic ();
 
     static lldb::TypeSystemSP
-    CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch);
+    CreateInstance (lldb::LanguageType language, Module *module, Target *target);
 
     static void
     Initialize ();
@@ -1153,6 +1153,7 @@ protected:
     std::unique_ptr<clang::SelectorTable>           m_selector_table_ap;
     std::unique_ptr<clang::Builtin::Context>        m_builtins_ap;
     std::unique_ptr<DWARFASTParser>                 m_dwarf_ast_parser_ap;
+    std::unique_ptr<ClangASTSource>                 m_scratch_ast_source_ap;
     CompleteTagDeclCallback                         m_callback_tag_decl;
     CompleteObjCInterfaceDeclCallback               m_callback_objc_decl;
     void *                                          m_callback_baton;

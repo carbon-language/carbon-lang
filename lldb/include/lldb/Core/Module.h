@@ -18,6 +18,7 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Symbol/SymbolContextScope.h"
+#include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Target/PathMappingList.h"
 
 namespace lldb_private {
@@ -1098,7 +1099,6 @@ public:
                                   bool &match_name_after_lookup);
 
 protected:
-    typedef std::map<lldb::LanguageType, lldb::TypeSystemSP> TypeSystemMap;
     //------------------------------------------------------------------
     // Member Variables
     //------------------------------------------------------------------

@@ -85,7 +85,6 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_process_sp (),
     m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),
-    m_scratch_ast_source_ap (),
     m_ast_importer_ap (),
     m_source_manager_ap(),
     m_stop_hooks (),
@@ -1122,8 +1121,7 @@ Target::ClearModules(bool delete_locations)
     ModulesDidUnload (m_images, delete_locations);
     m_section_load_history.Clear();
     m_images.Clear();
-    m_scratch_type_system_map.clear();
-    m_scratch_ast_source_ap.reset();
+    m_scratch_type_system_map.Clear();
     m_ast_importer_ap.reset();
 }
 
@@ -1892,6 +1890,9 @@ Target::ImageSearchPathsChanged
 TypeSystem *
 Target::GetScratchTypeSystemForLanguage (Error *error, lldb::LanguageType language, bool create_on_demand)
 {
+    if (!m_valid)
+        return nullptr;
+
     if (error)
     {
         error->Clear();
@@ -1902,43 +1903,8 @@ Target::GetScratchTypeSystemForLanguage (Error *error, lldb::LanguageType langua
     {
         language = eLanguageTypeC;
     }
-    
-    TypeSystemMap::iterator pos = m_scratch_type_system_map.find(language);
-    
-    if (pos != m_scratch_type_system_map.end())
-        return pos->second.get();
-    
-    for (const auto &pair : m_scratch_type_system_map)
-    {
-        if (pair.second && pair.second->SupportsLanguage(language))
-        {
-            // Add a new mapping for "language" to point to an already existing
-            // TypeSystem that supports this language
-            m_scratch_type_system_map[language] = pair.second;
-            return pair.second.get();
-        }
-    }
-    
-    if (!create_on_demand)
-        return nullptr;
-    
-    if (Language::LanguageIsC(language)
-       || Language::LanguageIsObjC(language)
-       || Language::LanguageIsCPlusPlus(language))
-    {
-        TypeSystem* ret = GetScratchClangASTContextImpl(error);
-        if (ret)
-        {
-            m_scratch_type_system_map[language].reset(ret);
-            return m_scratch_type_system_map[language].get();
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
 
-    return nullptr;
+    return m_scratch_type_system_map.GetTypeSystemForLanguage(language, this, create_on_demand);
 }
 
 PersistentExpressionState *
@@ -2032,41 +1998,30 @@ Target::GetUtilityFunctionForLanguage (const char *text,
 ClangASTContext *
 Target::GetScratchClangASTContext(bool create_on_demand)
 {
-    if (TypeSystem* type_system = GetScratchTypeSystemForLanguage(nullptr, eLanguageTypeC, create_on_demand))
+    if (m_valid)
     {
-        return llvm::dyn_cast<ClangASTContext>(type_system);
+        if (TypeSystem* type_system = GetScratchTypeSystemForLanguage(nullptr, eLanguageTypeC, create_on_demand))
+            return llvm::dyn_cast<ClangASTContext>(type_system);
     }
-    else
-    {
-        return nullptr;
-    }
+    return nullptr;
 }
 
-ClangASTContext *
-Target::GetScratchClangASTContextImpl(Error *error)
-{
-    ClangASTContextForExpressions *ast_context = new ClangASTContextForExpressions(*this);
-        
-    m_scratch_ast_source_ap.reset (new ClangASTSource(shared_from_this()));
-    m_scratch_ast_source_ap->InstallASTContext(ast_context->getASTContext());
-    llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> proxy_ast_source(m_scratch_ast_source_ap->CreateProxy());
-    ast_context->SetExternalSource(proxy_ast_source);
-
-    return ast_context;
-}
 
 ClangASTImporter *
 Target::GetClangASTImporter()
 {
-    ClangASTImporter *ast_importer = m_ast_importer_ap.get();
-    
-    if (!ast_importer)
+    if (m_valid)
     {
-        ast_importer = new ClangASTImporter();
-        m_ast_importer_ap.reset(ast_importer);
+        ClangASTImporter *ast_importer = m_ast_importer_ap.get();
+        
+        if (!ast_importer)
+        {
+            ast_importer = new ClangASTImporter();
+            m_ast_importer_ap.reset(ast_importer);
+        }
+        return ast_importer;
     }
-    
-    return ast_importer;
+    return nullptr;
 }
 
 void
@@ -2208,56 +2163,41 @@ Target::EvaluateExpression
     return execution_results;
 }
 
+
 lldb::ExpressionVariableSP
 Target::GetPersistentVariable(const ConstString &name)
 {
-    std::set<TypeSystem *> visited;
-    
-    for (const auto &pair : m_scratch_type_system_map)
+    lldb::ExpressionVariableSP variable_sp;
+    m_scratch_type_system_map.ForEach([this, name, &variable_sp](TypeSystem *type_system) -> bool
     {
-        if (pair.second && !visited.count(pair.second.get()))
+        if (PersistentExpressionState *persistent_state = type_system->GetPersistentExpressionState())
         {
-            visited.insert(pair.second.get());
-            
-            if (PersistentExpressionState *persistent_state = pair.second->GetPersistentExpressionState())
-            {
-                lldb::ExpressionVariableSP variable_sp = persistent_state->GetVariable(name);
-                
-                if (variable_sp)
-                {
-                    return variable_sp;
-                }
-            }
+            variable_sp = persistent_state->GetVariable(name);
+
+            if (variable_sp)
+                return false;   // Stop iterating the ForEach
         }
-    }
-    
-    return ExpressionVariableSP();
+        return true;    // Keep iterating the ForEach
+    });
+    return variable_sp;
 }
 
 lldb::addr_t
 Target::GetPersistentSymbol(const ConstString &name)
 {
-    std::set<TypeSystem *> visited;
+    lldb::addr_t address = LLDB_INVALID_ADDRESS;
     
-    for (const auto &pair : m_scratch_type_system_map)
+    m_scratch_type_system_map.ForEach([this, name, &address](TypeSystem *type_system) -> bool
     {
-        if (pair.second && !visited.count(pair.second.get()))
+        if (PersistentExpressionState *persistent_state = type_system->GetPersistentExpressionState())
         {
-            visited.insert(pair.second.get());
-            
-            if (PersistentExpressionState *persistent_state = pair.second->GetPersistentExpressionState())
-            {
-                lldb::addr_t address = persistent_state->LookupSymbol(name);
-                
-                if (address != LLDB_INVALID_ADDRESS)
-                {
-                    return address;
-                }
-            }
+            address = persistent_state->LookupSymbol(name);
+            if (address != LLDB_INVALID_ADDRESS)
+                return false;   // Stop iterating the ForEach
         }
-    }
-    
-    return LLDB_INVALID_ADDRESS;
+        return true;    // Keep iterating the ForEach
+    });
+    return address;
 }
 
 lldb::addr_t

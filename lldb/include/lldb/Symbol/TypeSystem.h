@@ -11,10 +11,13 @@
 #define liblldb_TypeSystem_h_
 
 #include <functional>
+#include <map>
 #include <string>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Expression/Expression.h"
+#include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/Support/Casting.h"
@@ -71,7 +74,10 @@ public:
     LLVMCastKind getKind() const { return m_kind; }
 
     static lldb::TypeSystemSP
-    CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch);
+    CreateInstance (lldb::LanguageType language, Module *module);
+
+    static lldb::TypeSystemSP
+    CreateInstance (lldb::LanguageType language, Target *target);
 
     //----------------------------------------------------------------------
     // Constructors and Destructors
@@ -521,7 +527,34 @@ protected:
     SymbolFile *m_sym_file;
 
 };
-    
+
+    class TypeSystemMap
+    {
+    public:
+        TypeSystemMap ();
+        ~TypeSystemMap();
+
+        void
+        Clear ();
+
+        // Iterate through all of the type systems that are created. Return true
+        // from callback to keep iterating, false to stop iterating.
+        void
+        ForEach (std::function <bool(TypeSystem *)> const &callback);
+
+        TypeSystem *
+        GetTypeSystemForLanguage (lldb::LanguageType language, Module *module, bool can_create);
+
+        TypeSystem *
+        GetTypeSystemForLanguage (lldb::LanguageType language, Target *target, bool can_create);
+
+    protected:
+        typedef std::map<lldb::LanguageType, lldb::TypeSystemSP> collection;
+        mutable Mutex m_mutex; ///< A mutex to keep this object happy in multi-threaded environments.
+        collection m_map;
+    };
+
+
 } // namespace lldb_private
 
 #endif // #ifndef liblldb_TypeSystem_h_

@@ -419,26 +419,7 @@ Module::GetUUID()
 TypeSystem *
 Module::GetTypeSystemForLanguage (LanguageType language)
 {
-    Mutex::Locker locker (m_mutex);
-    TypeSystemMap::iterator pos = m_type_system_map.find(language);
-    if (pos != m_type_system_map.end())
-        return pos->second.get();
-
-    for (const auto &pair : m_type_system_map)
-    {
-        if (pair.second && pair.second->SupportsLanguage(language))
-        {
-            // Add a new mapping for "language" to point to an already existing
-            // TypeSystem that supports this language
-            m_type_system_map[language] = pair.second;
-            return pair.second.get();
-        }
-    }
-
-    // Cache even if we get a shared pointer that contains null type system back
-    lldb::TypeSystemSP type_system_sp = TypeSystem::CreateInstance (language, GetArchitecture());
-    m_type_system_map[language] = type_system_sp;
-    return type_system_sp.get();
+    return m_type_system_map.GetTypeSystemForLanguage(language, this, true);
 }
 
 void

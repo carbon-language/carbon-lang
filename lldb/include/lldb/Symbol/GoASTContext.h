@@ -40,7 +40,7 @@ class GoASTContext : public TypeSystem
     GetPluginNameStatic ();
 
     static lldb::TypeSystemSP
-    CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch);
+    CreateInstance (lldb::LanguageType language, Module *module, Target *target);
 
     static void
     Initialize ();

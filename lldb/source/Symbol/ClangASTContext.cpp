@@ -367,36 +367,59 @@ ClangASTContext::GetPluginVersion()
 }
 
 lldb::TypeSystemSP
-ClangASTContext::CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch)
+ClangASTContext::CreateInstance (lldb::LanguageType language, Module *module, Target *target)
 {
     if (ClangASTContextSupportsLanguage(language))
     {
-        std::shared_ptr<ClangASTContext> ast_sp(new ClangASTContext);
-        if (ast_sp)
+        ArchSpec arch;
+        if (module)
+            arch = module->GetArchitecture();
+        else if (target)
+            arch = target->GetArchitecture();
+
+        if (arch.IsValid())
         {
-            if (arch.IsValid())
+            ArchSpec fixed_arch = arch;
+            // LLVM wants this to be set to iOS or MacOSX; if we're working on
+            // a bare-boards type image, change the triple for llvm's benefit.
+            if (fixed_arch.GetTriple().getVendor() == llvm::Triple::Apple &&
+                fixed_arch.GetTriple().getOS() == llvm::Triple::UnknownOS)
             {
-                ArchSpec fixed_arch = arch;
-                // LLVM wants this to be set to iOS or MacOSX; if we're working on
-                // a bare-boards type image, change the triple for llvm's benefit.
-                if (fixed_arch.GetTriple().getVendor() == llvm::Triple::Apple &&
-                    fixed_arch.GetTriple().getOS() == llvm::Triple::UnknownOS)
+                if (fixed_arch.GetTriple().getArch() == llvm::Triple::arm ||
+                    fixed_arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
+                    fixed_arch.GetTriple().getArch() == llvm::Triple::thumb)
                 {
-                    if (fixed_arch.GetTriple().getArch() == llvm::Triple::arm ||
-                        fixed_arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
-                        fixed_arch.GetTriple().getArch() == llvm::Triple::thumb)
-                    {
-                        fixed_arch.GetTriple().setOS(llvm::Triple::IOS);
-                    }
-                    else
-                    {
-                        fixed_arch.GetTriple().setOS(llvm::Triple::MacOSX);
-                    }
+                    fixed_arch.GetTriple().setOS(llvm::Triple::IOS);
                 }
-                ast_sp->SetArchitecture (fixed_arch);
+                else
+                {
+                    fixed_arch.GetTriple().setOS(llvm::Triple::MacOSX);
+                }
+            }
+
+            if (module)
+            {
+                std::shared_ptr<ClangASTContext> ast_sp(new ClangASTContext);
+                if (ast_sp)
+                {
+                    ast_sp->SetArchitecture (fixed_arch);
+                }
+                return ast_sp;
+            }
+            else if (target)
+            {
+                std::shared_ptr<ClangASTContextForExpressions> ast_sp(new ClangASTContextForExpressions(*target));
+                if (ast_sp)
+                {
+                    ast_sp->SetArchitecture(fixed_arch);
+                    ast_sp->m_scratch_ast_source_ap.reset (new ClangASTSource(target->shared_from_this()));
+                    ast_sp->m_scratch_ast_source_ap->InstallASTContext(ast_sp->getASTContext());
+                    llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> proxy_ast_source(ast_sp->m_scratch_ast_source_ap->CreateProxy());
+                    ast_sp->SetExternalSource(proxy_ast_source);
+                    return ast_sp;
+                }
             }
         }
-        return ast_sp;
     }
     return lldb::TypeSystemSP();
 }

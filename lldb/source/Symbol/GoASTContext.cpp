@@ -22,6 +22,7 @@
 #include "lldb/Symbol/GoASTContext.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Target.h"
 
 #include "Plugins/SymbolFile/DWARF/DWARFASTParserGo.h"
 
@@ -321,10 +322,16 @@ GoASTContext::GetPluginVersion()
 }
 
 lldb::TypeSystemSP
-GoASTContext::CreateInstance (lldb::LanguageType language, const lldb_private::ArchSpec &arch)
+GoASTContext::CreateInstance (lldb::LanguageType language, Module *module, Target *target)
 {
     if (language == eLanguageTypeGo)
     {
+        ArchSpec arch;
+        if (module)
+            arch = module->GetArchitecture();
+        else if (target)
+            arch = target->GetArchitecture();
+
         if (arch.IsValid())
         {
             std::shared_ptr<GoASTContext> go_ast_sp(new GoASTContext);

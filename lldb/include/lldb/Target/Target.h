@@ -25,6 +25,7 @@
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Expression/Expression.h"
+#include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/PathMappingList.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
@@ -1504,10 +1505,7 @@ public:
     lldb::SearchFilterSP
     GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles);
 
-protected:
-    ClangASTContext *
-    GetScratchClangASTContextImpl(Error *error);
-    
+protected:    
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
@@ -1528,11 +1526,8 @@ protected:
     lldb::ProcessSP m_process_sp;
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
-    
-    typedef std::map<lldb::LanguageType, lldb::TypeSystemSP> TypeSystemMap;
     TypeSystemMap m_scratch_type_system_map;
     
-    lldb::ClangASTSourceUP m_scratch_ast_source_ap;
     lldb::ClangASTImporterUP m_ast_importer_ap;
     lldb::ClangModulesDeclVendorUP m_clang_modules_decl_vendor_ap;
 
