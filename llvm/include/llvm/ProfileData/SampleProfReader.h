@@ -189,7 +189,7 @@ struct SourceInfo {
   uint32_t Discriminator;
 };
 
-typedef std::vector<SourceInfo> SourceStack;
+typedef SmallVector<FunctionSamples *, 10> InlineCallStack;
 
 // Supported histogram types in GCC.  Currently, we only need support for
 // call target histograms.
@@ -220,9 +220,8 @@ public:
 
 protected:
   std::error_code readNameTable();
-  std::error_code addSourceCount(StringRef Name, const SourceStack &Src,
-                                 uint64_t Count);
-  std::error_code readOneFunctionProfile(const SourceStack &Stack, bool Update);
+  std::error_code readOneFunctionProfile(const InlineCallStack &InlineStack,
+                                         bool Update, uint32_t Offset);
   std::error_code readFunctionProfiles();
   std::error_code skipNextWord();
   template <typename T> ErrorOr<T> readNumber();
