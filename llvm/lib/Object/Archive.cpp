@@ -510,12 +510,12 @@ Archive::symbol_iterator Archive::symbol_begin() const {
 }
 
 Archive::symbol_iterator Archive::symbol_end() const {
-  if (!hasSymbolTable())
-    return symbol_iterator(Symbol(this, 0, 0));
   return symbol_iterator(Symbol(this, getNumberOfSymbols(), 0));
 }
 
 uint32_t Archive::getNumberOfSymbols() const {
+  if (!hasSymbolTable())
+    return 0;
   const char *buf = getSymbolTable().begin();
   if (kind() == K_GNU)
     return read32be(buf);
