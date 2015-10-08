@@ -15,7 +15,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Symbol/TypeList.h"
+#include "lldb/Symbol/TypeMap.h"
 #include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Symbol/VariableList.h"
 
@@ -135,7 +135,7 @@ SymbolFile::FindFunctions (const RegularExpression& regex, bool include_inlines,
 }
 
 uint32_t
-SymbolFile::FindTypes (const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, uint32_t max_matches, TypeList& types)
+SymbolFile::FindTypes (const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, uint32_t max_matches, TypeMap& types)
 {
     if (!append)
         types.Clear();

@@ -207,7 +207,7 @@ public:
                const lldb_private::CompilerDeclContext *parent_decl_ctx,
                bool append,
                uint32_t max_matches,
-               lldb_private::TypeList& types) override;
+               lldb_private::TypeMap& types) override;
 
     lldb_private::TypeList *
     GetTypeList () override;

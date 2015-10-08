@@ -25,6 +25,7 @@ add_lldb_library(lldbSymbol
   Symtab.cpp
   Type.cpp
   TypeList.cpp
+  TypeMap.cpp 
   TypeSystem.cpp
   UnwindPlan.cpp
   UnwindTable.cpp

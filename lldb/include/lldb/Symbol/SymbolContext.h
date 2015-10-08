@@ -299,6 +299,13 @@ public:
                            ConstString &language_object_name);
 
     //------------------------------------------------------------------
+    /// Sorts the types in TypeMap according to SymbolContext
+    /// to TypeList
+    ///
+    //------------------------------------------------------------------
+    void
+	SortTypeList(TypeMap &type_map, TypeList &type_list) const;
+    //------------------------------------------------------------------
     /// Find a name of the innermost function for the symbol context.
     ///
     /// For instance, if the symbol context contains an inlined block,

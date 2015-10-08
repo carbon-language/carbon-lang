@@ -28,6 +28,7 @@
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Symbol/TypeMap.h"
 #include "lldb/Symbol/VariableList.h"
 
 #include "LogChannelDWARF.h"
@@ -1295,7 +1296,7 @@ SymbolFileDWARFDebugMap::FindTypes
     const CompilerDeclContext *parent_decl_ctx,
     bool append,
     uint32_t max_matches, 
-    TypeList& types
+    TypeMap& types
 )
 {
     if (!append)

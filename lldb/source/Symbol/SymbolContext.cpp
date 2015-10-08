@@ -659,6 +659,174 @@ SymbolContext::GetFunctionMethodInfo (lldb::LanguageType &language,
     return false;
 }
 
+class TypeMoveMatchingBlock
+{
+public:
+    TypeMoveMatchingBlock(Block * block, TypeMap &typem, TypeList &typel) :
+        curr_block(block),type_map(typem),type_list(typel)
+    {
+    }
+
+    bool
+    operator() (const lldb::TypeSP& type)
+    {
+        if (type && type->GetSymbolContextScope() != nullptr && curr_block == type->GetSymbolContextScope()->CalculateSymbolContextBlock())
+        {
+            type_list.Insert(type);
+            type_map.RemoveTypeWithUID(type->GetID());
+            return false;
+        }
+        return true;
+    }
+
+private:
+    const Block * const curr_block;
+    TypeMap &type_map;
+    TypeList &type_list;
+};
+
+class TypeMoveMatchingFunction
+{
+public:
+    TypeMoveMatchingFunction(Function * block, TypeMap &typem, TypeList &typel) :
+        func(block),type_map(typem),type_list(typel)
+    {
+    }
+
+    bool
+    operator() (const lldb::TypeSP& type)
+    {
+        if (type && type->GetSymbolContextScope() != nullptr && func == type->GetSymbolContextScope()->CalculateSymbolContextFunction())
+        {
+            type_list.Insert(type);
+            type_map.RemoveTypeWithUID(type->GetID());
+            return false;
+        }
+        return true;
+    }
+
+private:
+    const Function * const func;
+    TypeMap &type_map;
+    TypeList &type_list;
+};
+
+class TypeMoveMatchingCompileUnit
+{
+public:
+    TypeMoveMatchingCompileUnit(CompileUnit * cunit, TypeMap &typem, TypeList &typel) :
+        comp_unit(cunit),type_map(typem),type_list(typel)
+    {
+    }
+
+    bool
+    operator() (const lldb::TypeSP& type)
+    {
+        if (type && type->GetSymbolContextScope() != nullptr && comp_unit == type->GetSymbolContextScope()->CalculateSymbolContextCompileUnit())
+        {
+            type_list.Insert(type);
+            type_map.RemoveTypeWithUID(type->GetID());
+            return false;
+        }
+        return true;
+    }
+
+private:
+    const CompileUnit * const comp_unit;
+    TypeMap &type_map;
+    TypeList &type_list;
+};
+
+class TypeMoveMatchingModule
+{
+public:
+    TypeMoveMatchingModule(lldb::ModuleSP modsp, TypeMap &typem, TypeList &typel) :
+        modulesp(modsp),type_map(typem),type_list(typel)
+    {
+    }
+
+    bool
+    operator() (const lldb::TypeSP& type)
+    {
+        if (type && type->GetSymbolContextScope() != nullptr && modulesp.get() == type->GetSymbolContextScope()->CalculateSymbolContextModule().get())
+        {
+            type_list.Insert(type);
+            type_map.RemoveTypeWithUID(type->GetID());
+            return false;
+        }
+        return true;
+    }
+
+private:
+    lldb::ModuleSP modulesp;
+    TypeMap &type_map;
+    TypeList &type_list;
+};
+
+class TypeMaptoList
+{
+public:
+    TypeMaptoList(TypeMap &typem, TypeList &typel) :
+        type_map(typem),type_list(typel)
+    {
+    }
+
+    bool
+    operator() (const lldb::TypeSP& type)
+    {
+        if(type)
+        {
+            type_list.Insert(type);
+            type_map.RemoveTypeWithUID(type->GetID());
+            if (type_map.Empty())
+                return false;
+        }
+        return true;
+    }
+
+private:
+    TypeMap &type_map;
+    TypeList &type_list;
+};
+
+void
+SymbolContext::SortTypeList(TypeMap &type_map, TypeList &type_list ) const
+{
+    Block * curr_block = block;
+    bool isInlinedblock = false;
+    if (curr_block != nullptr && curr_block->GetContainingInlinedBlock() != nullptr)
+        isInlinedblock = true;
+
+    while (curr_block != nullptr && !isInlinedblock)
+    {
+        TypeMoveMatchingBlock callbackBlock (curr_block, type_map, type_list);
+        type_map.ForEach(callbackBlock);
+        curr_block = curr_block->GetParent();
+    }
+    if(function != nullptr && type_map.GetSize() > 0)
+    {
+        TypeMoveMatchingFunction callbackFunction (function, type_map, type_list);
+        type_map.ForEach(callbackFunction);
+    }
+    if(comp_unit != nullptr && type_map.GetSize() > 0)
+    {
+        TypeMoveMatchingCompileUnit callbackCompileUnit (comp_unit, type_map, type_list);
+        type_map.ForEach(callbackCompileUnit);
+    }
+    if(module_sp && type_map.GetSize() > 0)
+    {
+        TypeMoveMatchingModule callbackModule (module_sp, type_map, type_list);
+        type_map.ForEach(callbackModule);
+    }
+    if(type_map.GetSize() > 0)
+    {
+        TypeMaptoList callbackM2L (type_map, type_list);
+        type_map.ForEach(callbackM2L);
+
+    }
+	return ;
+}
+
 ConstString
 SymbolContext::GetFunctionName (Mangled::NamePreference preference) const
 {
