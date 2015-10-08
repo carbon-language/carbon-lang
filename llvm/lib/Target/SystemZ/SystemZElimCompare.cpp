@@ -205,7 +205,7 @@ SystemZElimCompare::convertToBRCT(MachineInstr *MI, MachineInstr *Compare,
     .addOperand(MI->getOperand(1))
     .addOperand(Target)
     .addReg(SystemZ::CC, RegState::ImplicitDefine);
-  MI->removeFromParent();
+  MI->eraseFromParent();
   return true;
 }
 
@@ -439,17 +439,16 @@ bool SystemZElimCompare::processBlock(MachineBasicBlock &MBB) {
         (optimizeCompareZero(MI, CCUsers) ||
          fuseCompareAndBranch(MI, CCUsers))) {
       ++MBBI;
-      MI->removeFromParent();
+      MI->eraseFromParent();
       Changed = true;
       CCUsers.clear();
-      CompleteCCUsers = true;
       continue;
     }
 
     Reference CCRefs(getRegReferences(MI, SystemZ::CC));
     if (CCRefs.Def) {
       CCUsers.clear();
-      CompleteCCUsers = !CCRefs.IndirectDef;
+      CompleteCCUsers = true;
     }
     if (CompleteCCUsers && CCRefs.Use)
       CCUsers.push_back(MI);
