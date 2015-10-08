@@ -499,13 +499,36 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned BlockID,
           GetCodeName(Code, BlockID, *Stream.getBitStreamReader(),
                       CurStreamType))
         outs() << " codeid=" << Code;
-      if (Entry.ID != bitc::UNABBREV_RECORD)
+      const BitCodeAbbrev *Abbv = nullptr;
+      if (Entry.ID != bitc::UNABBREV_RECORD) {
+        Abbv = Stream.getAbbrev(Entry.ID);
         outs() << " abbrevid=" << Entry.ID;
+      }
 
       for (unsigned i = 0, e = Record.size(); i != e; ++i)
         outs() << " op" << i << "=" << (int64_t)Record[i];
 
       outs() << "/>";
+
+      if (Abbv) {
+        for (unsigned i = 1, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+          const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
+          if (!Op.isEncoding() || Op.getEncoding() != BitCodeAbbrevOp::Array)
+            continue;
+          assert(i + 2 == e && "Array op not second to last");
+          std::string Str;
+          bool ArrayIsPrintable = true;
+          for (unsigned j = i - 1, je = Record.size(); j != je; ++j) {
+            if (!isprint(static_cast<unsigned char>(Record[j]))) {
+              ArrayIsPrintable = false;
+              break;
+            }
+            Str += (char)Record[j];
+          }
+          if (ArrayIsPrintable) outs() << " record string = '" << Str << "'";
+          break;
+        }
+      }
 
       if (Blob.data()) {
         outs() << " blob data = ";
