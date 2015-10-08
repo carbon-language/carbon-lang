@@ -5618,6 +5618,31 @@ SystemZTargetLowering::emitTransactionBegin(MachineInstr *MI,
   return MBB;
 }
 
+MachineBasicBlock *
+SystemZTargetLowering::emitLoadAndTestCmp0(MachineInstr *MI,
+					  MachineBasicBlock *MBB,
+					  unsigned Opcode) const {
+  MachineFunction &MF = *MBB->getParent();
+  MachineRegisterInfo *MRI = &MF.getRegInfo();
+  const SystemZInstrInfo *TII =
+      static_cast<const SystemZInstrInfo *>(Subtarget.getInstrInfo());
+  DebugLoc DL = MI->getDebugLoc();
+
+  unsigned SrcReg = MI->getOperand(0).getReg();
+
+  // Create new virtual register of the same class as source.
+  const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
+  unsigned DstReg = MRI->createVirtualRegister(RC);
+
+  // Replace pseudo with a normal load-and-test that models the def as
+  // well.
+  BuildMI(*MBB, MI, DL, TII->get(Opcode), DstReg)
+    .addReg(SrcReg);
+  MI->eraseFromParent();
+
+  return MBB;
+}
+
 MachineBasicBlock *SystemZTargetLowering::
 EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   switch (MI->getOpcode()) {
@@ -5865,6 +5890,13 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitTransactionBegin(MI, MBB, SystemZ::TBEGIN, true);
   case SystemZ::TBEGINC:
     return emitTransactionBegin(MI, MBB, SystemZ::TBEGINC, true);
+  case SystemZ::LTEBRCompare_VecPseudo:
+    return emitLoadAndTestCmp0(MI, MBB, SystemZ::LTEBR);
+  case SystemZ::LTDBRCompare_VecPseudo:
+    return emitLoadAndTestCmp0(MI, MBB, SystemZ::LTDBR);
+  case SystemZ::LTXBRCompare_VecPseudo:
+    return emitLoadAndTestCmp0(MI, MBB, SystemZ::LTXBR);
+
   default:
     llvm_unreachable("Unexpected instr type to insert");
   }

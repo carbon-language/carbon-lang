@@ -46,13 +46,26 @@ let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0xF in {
   defm LTDBR : LoadAndTestRRE<"ltdb", 0xB312, FP64>;
   defm LTXBR : LoadAndTestRRE<"ltxb", 0xB342, FP128>;
 }
-// Note that the comparison against zero operation is not available if we
-// have vector support, since load-and-test instructions will partially
-// clobber the target (vector) register.
+// Note that LTxBRCompare is not available if we have vector support,
+// since load-and-test instructions will partially clobber the target
+// (vector) register.
 let Predicates = [FeatureNoVector] in {
   defm : CompareZeroFP<LTEBRCompare, FP32>;
   defm : CompareZeroFP<LTDBRCompare, FP64>;
   defm : CompareZeroFP<LTXBRCompare, FP128>;
+}
+
+// Use a normal load-and-test for compare against zero in case of
+// vector support (via a pseudo to simplify instruction selection).
+let usesCustomInserter = 1 in {
+  def LTEBRCompare_VecPseudo : Pseudo<(outs), (ins FP32:$R1, FP32:$R2), []>;
+  def LTDBRCompare_VecPseudo : Pseudo<(outs), (ins FP64:$R1, FP64:$R2), []>;
+  def LTXBRCompare_VecPseudo : Pseudo<(outs), (ins FP128:$R1, FP128:$R2), []>;
+}
+let Predicates = [FeatureVector] in {
+  defm : CompareZeroFP<LTEBRCompare_VecPseudo, FP32>;
+  defm : CompareZeroFP<LTDBRCompare_VecPseudo, FP64>;
+  defm : CompareZeroFP<LTXBRCompare_VecPseudo, FP128>;
 }
 
 // Moves between 64-bit integer and floating-point registers.
