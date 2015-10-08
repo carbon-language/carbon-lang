@@ -4054,7 +4054,7 @@ parse_nested_name(const char* first, const char* last, C& db,
 
 // <discriminator> := _ <non-negative number>      # when number < 10
 //                 := __ <non-negative number> _   # when number >= 10
-//  extension      := decimal-digit+
+//  extension      := decimal-digit+               # at the end of string
 
 const char*
 parse_discriminator(const char* first, const char* last)
@@ -4083,7 +4083,8 @@ parse_discriminator(const char* first, const char* last)
             const char* t1 = first+1;
             for (; t1 != last && std::isdigit(*t1); ++t1)
                 ;
-            first = t1;
+            if (t1 == last)
+                first = last;
         }
     }
     return first;
