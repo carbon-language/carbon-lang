@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- cfloat -----------------------------------===//
+//===--------------------------- float.h ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CFLOAT
-#define _LIBCPP_CFLOAT
+#ifndef _LIBCPP_FLOAT_H
+#define _LIBCPP_FLOAT_H
 
 /*
-    cfloat synopsis
+    float.h synopsis
 
 Macros:
 
@@ -61,10 +61,18 @@ Macros:
 */
 
 #include <__config>
-#include <float.h>
+#include_next <float.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-#endif  // _LIBCPP_CFLOAT
+#ifndef FLT_EVAL_METHOD
+#define FLT_EVAL_METHOD __FLT_EVAL_METHOD__
+#endif
+
+#ifndef DECIMAL_DIG
+#define DECIMAL_DIG __DECIMAL_DIG__
+#endif
+
+#endif  // _LIBCPP_FLOAT_H
