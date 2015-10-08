@@ -1488,14 +1488,15 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, Res);
 
 
-  // fold (and (cast A), (cast B)) -> (cast (and A, B))
-  if (CastInst *Op0C = dyn_cast<CastInst>(Op0))
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    Value *Op0COp = Op0C->getOperand(0);
+    Type *SrcTy = Op0COp->getType();
+    // fold (and (cast A), (cast B)) -> (cast (and A, B))
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1)) {
-      Type *SrcTy = Op0C->getOperand(0)->getType();
       if (Op0C->getOpcode() == Op1C->getOpcode() && // same cast kind ?
           SrcTy == Op1C->getOperand(0)->getType() &&
           SrcTy->isIntOrIntVectorTy()) {
-        Value *Op0COp = Op0C->getOperand(0), *Op1COp = Op1C->getOperand(0);
+        Value *Op1COp = Op1C->getOperand(0);
 
         // Only do this if the casts both really cause code to be generated.
         if (ShouldOptimizeCast(Op0C->getOpcode(), Op0COp, I.getType()) &&
@@ -1519,6 +1520,20 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
       }
     }
+
+    // If we are masking off the sign bit of a floating-point value, convert
+    // this to the canonical fabs intrinsic call and cast back to integer.
+    // The backend should know how to optimize fabs().
+    // TODO: This transform should also apply to vectors.
+    ConstantInt *CI;
+    if (isa<BitCastInst>(Op0C) && SrcTy->isFloatingPointTy() &&
+        match(Op1, m_ConstantInt(CI)) && CI->isMaxValue(true)) {
+      Module *M = I.getParent()->getParent()->getParent();
+      Function *Fabs = Intrinsic::getDeclaration(M, Intrinsic::fabs, SrcTy);
+      Value *Call = Builder->CreateCall(Fabs, Op0COp, "fabs");
+      return CastInst::CreateBitOrPointerCast(Call, I.getType());
+    }
+  }
 
   {
     Value *X = nullptr;
