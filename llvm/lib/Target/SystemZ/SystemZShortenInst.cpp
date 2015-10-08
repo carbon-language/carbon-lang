@@ -40,6 +40,7 @@ private:
   bool shortenOn0(MachineInstr &MI, unsigned Opcode);
   bool shortenOn01(MachineInstr &MI, unsigned Opcode);
   bool shortenOn001(MachineInstr &MI, unsigned Opcode);
+  bool shortenOn001AddCC(MachineInstr &MI, unsigned Opcode, bool CCLive);
   bool shortenFPConv(MachineInstr &MI, unsigned Opcode);
 
   const SystemZInstrInfo *TII;
@@ -134,6 +135,18 @@ bool SystemZShortenInst::shortenOn001(MachineInstr &MI, unsigned Opcode) {
   return false;
 }
 
+// Calls shortenOn001 if CCLive is false. CC def operand is added in
+// case of success.
+bool SystemZShortenInst::shortenOn001AddCC(MachineInstr &MI, unsigned Opcode,
+					   bool CCLive) {
+  if (!CCLive && shortenOn001(MI, Opcode)) {
+    MachineInstrBuilder(*MI.getParent()->getParent(), &MI)
+      .addReg(SystemZ::CC, RegState::ImplicitDefine);
+    return true;
+  }
+  return false;
+}
+
 // MI is a vector-style conversion instruction with the operand order:
 // destination, source, exact-suppress, rounding-mode.  If both registers
 // have a 4-bit encoding then change it to Opcode, which has operand order:
@@ -167,12 +180,15 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
   // Work out which words are live on exit from the block.
   unsigned LiveLow = 0;
   unsigned LiveHigh = 0;
+  bool CCLive = false;
   for (auto SI = MBB.succ_begin(), SE = MBB.succ_end(); SI != SE; ++SI) {
     for (const auto &LI : (*SI)->liveins()) {
       unsigned Reg = LI.PhysReg;
       assert(Reg < SystemZ::NUM_TARGET_REGS && "Invalid register number");
       LiveLow |= LowGPRs[Reg];
       LiveHigh |= HighGPRs[Reg];
+      if (Reg == SystemZ::CC)
+	CCLive = true;
     }
   }
 
@@ -191,7 +207,7 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
       break;
 
     case SystemZ::WFADB:
-      Changed |= shortenOn001(MI, SystemZ::ADBR);
+      Changed |= shortenOn001AddCC(MI, SystemZ::ADBR, CCLive);
       break;
 
     case SystemZ::WFDDB:
@@ -230,10 +246,10 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
       Changed |= shortenOn01(MI, SystemZ::SQDBR);
       break;
 
-    case SystemZ::WFSDB:
-      Changed |= shortenOn001(MI, SystemZ::SDBR);
+    case SystemZ::WFSDB: {
+      Changed |= shortenOn001AddCC(MI, SystemZ::SDBR, CCLive);
       break;
-
+    }
     case SystemZ::WFCDB:
       Changed |= shortenOn01(MI, SystemZ::CDBR);
       break;
@@ -276,6 +292,11 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
     }
     LiveLow |= UsedLow;
     LiveHigh |= UsedHigh;
+
+    if (MI.definesRegister(SystemZ::CC))
+      CCLive = false;
+    if (MI.readsRegister(SystemZ::CC))
+      CCLive = true;
   }
 
   return Changed;
