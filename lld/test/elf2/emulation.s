@@ -140,9 +140,9 @@
 # MIPS-NEXT:   Type: Executable (0x2)
 # MIPS-NEXT:   Machine: EM_MIPS (0x8)
 # MIPS-NEXT:   Version: 1
-# MIPS-NEXT:   Entry: 0x11030
+# MIPS-NEXT:   Entry: 0x410030
 # MIPS-NEXT:   ProgramHeaderOffset: 0x34
-# MIPS-NEXT:   SectionHeaderOffset: 0x1094
+# MIPS-NEXT:   SectionHeaderOffset: 0x10094
 # MIPS-NEXT:   Flags [ (0x0)
 # MIPS-NEXT:   ]
 
@@ -164,9 +164,9 @@
 # MIPSEL-NEXT:   Type: Executable (0x2)
 # MIPSEL-NEXT:   Machine: EM_MIPS (0x8)
 # MIPSEL-NEXT:   Version: 1
-# MIPSEL-NEXT:   Entry: 0x11030
+# MIPSEL-NEXT:   Entry: 0x410030
 # MIPSEL-NEXT:   ProgramHeaderOffset: 0x34
-# MIPSEL-NEXT:   SectionHeaderOffset: 0x1094
+# MIPSEL-NEXT:   SectionHeaderOffset: 0x10094
 # MIPSEL-NEXT:   Flags [ (0x0)
 # MIPSEL-NEXT:   ]
 
