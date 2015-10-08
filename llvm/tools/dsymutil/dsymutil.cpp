@@ -237,6 +237,9 @@ int main(int argc, char **argv) {
   llvm::PrettyStackTraceProgram StackPrinter(argc, argv);
   llvm::llvm_shutdown_obj Shutdown;
   LinkOptions Options;
+  void *MainAddr = reinterpret_cast<void *>(&exitDsymutil);
+  std::string SDKPath = llvm::sys::fs::getMainExecutable(argv[0], MainAddr);
+  SDKPath = llvm::sys::path::parent_path(SDKPath);
 
   HideUnrelatedOptions(DsymCategory);
   llvm::cl::ParseCommandLineOptions(
@@ -330,7 +333,7 @@ int main(int argc, char **argv) {
 
     if (NeedsTempFiles &&
         !MachOUtils::generateUniversalBinary(
-            TempFiles, getOutputFileName(InputFile), Options))
+            TempFiles, getOutputFileName(InputFile), Options, SDKPath))
       exitDsymutil(1);
   }
 

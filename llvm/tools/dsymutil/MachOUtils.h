@@ -26,7 +26,8 @@ struct ArchAndFilename {
 };
 
 bool generateUniversalBinary(SmallVectorImpl<ArchAndFilename> &ArchFiles,
-                             StringRef OutputFileName, const LinkOptions &);
+                             StringRef OutputFileName, const LinkOptions &,
+                             StringRef SDKPath);
 
 bool generateDsymCompanion(const DebugMap &DM, MCStreamer &MS,
                            raw_fd_ostream &OutFile);
