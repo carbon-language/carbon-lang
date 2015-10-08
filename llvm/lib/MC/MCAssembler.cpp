@@ -97,17 +97,17 @@ void MCAsmLayout::invalidateFragmentsFrom(MCFragment *F) {
 
 void MCAsmLayout::ensureValid(const MCFragment *F) const {
   MCSection *Sec = F->getParent();
-  MCFragment *Cur = LastValidFragment[Sec];
-  if (!Cur)
-    Cur = Sec->begin();
+  MCSection::iterator I;
+  if (MCFragment *Cur = LastValidFragment[Sec])
+    I = ++MCSection::iterator(Cur);
   else
-    Cur = Cur->getNextNode();
+    I = Sec->begin();
 
   // Advance the layout position until the fragment is valid.
   while (!isFragmentValid(F)) {
-    assert(Cur && "Layout bookkeeping error");
-    const_cast<MCAsmLayout*>(this)->layoutFragment(Cur);
-    Cur = Cur->getNextNode();
+    assert(I != Sec->end() && "Layout bookkeeping error");
+    const_cast<MCAsmLayout *>(this)->layoutFragment(&*I);
+    ++I;
   }
 }
 
