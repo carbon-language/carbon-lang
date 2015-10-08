@@ -29,7 +29,7 @@ mystr:
 #
 # CHECK: Disassembly of section .R_AARCH64_ADR_PREL_PG_H121:
 # CHECK-NEXT: $x.2:
-# CHECK-NEXT:   401012:       01 00 00 90     adrp    x1, #0
+# CHECK-NEXT:   11012:       01 00 00 90     adrp    x1, #0
 
 .section .R_AARCH64_ADD_ABS_LO12_NC,"ax",@progbits
   add x0, x0, :lo12:.L.str
@@ -43,4 +43,4 @@ mystr:
 #
 # CHECK: Disassembly of section .R_AARCH64_ADD_ABS_LO12_NC:
 # CHECK-NEXT: $x.4:
-# CHECK-NEXT:   40101b:       00 7c 00 91     add     x0, x0, #31
+# CHECK-NEXT:   1101b:       00 7c 00 91     add     x0, x0, #31
