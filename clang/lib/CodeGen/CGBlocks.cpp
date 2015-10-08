@@ -1345,6 +1345,9 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           nullptr, SC_Static,
                                           false,
                                           false);
+
+  CGM.SetInternalFunctionAttributes(nullptr, Fn, FI);
+
   auto NL = ApplyDebugLocation::CreateEmpty(*this);
   StartFunction(FD, C.VoidTy, Fn, FI, args);
   // Create a scope with an artificial location for the body of this function.
@@ -1516,6 +1519,9 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SourceLocation(), II, C.VoidTy,
                                           nullptr, SC_Static,
                                           false, false);
+
+  CGM.SetInternalFunctionAttributes(nullptr, Fn, FI);
+
   // Create a scope with an artificial location for the body of this function.
   auto NL = ApplyDebugLocation::CreateEmpty(*this);
   StartFunction(FD, C.VoidTy, Fn, FI, args);
@@ -1798,6 +1804,8 @@ generateByrefCopyHelper(CodeGenFunction &CGF, const BlockByrefInfo &byrefInfo,
                                           SC_Static,
                                           false, false);
 
+  CGF.CGM.SetInternalFunctionAttributes(nullptr, Fn, FI);
+
   CGF.StartFunction(FD, R, Fn, FI, args);
 
   if (generator.needsCopy()) {
@@ -1869,6 +1877,9 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
                                           SourceLocation(), II, R, nullptr,
                                           SC_Static,
                                           false, false);
+
+  CGF.CGM.SetInternalFunctionAttributes(nullptr, Fn, FI);
+
   CGF.StartFunction(FD, R, Fn, FI, args);
 
   if (generator.needsDispose()) {
