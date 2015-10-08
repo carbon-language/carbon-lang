@@ -202,6 +202,7 @@ PPC64TargetInfo::PPC64TargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
   PltEntrySize = 32;
+  PageSize = 65536;
   VAStart = 0x10000000;
 }
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -235,6 +236,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
 PPCTargetInfo::PPCTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
+  PageSize = 65536;
   VAStart = 0x10000000;
 }
 void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -347,6 +349,7 @@ MipsTargetInfo::MipsTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
   DefaultEntry = "__start";
+  PageSize = 65536;
   VAStart = 0x400000;
 }
 

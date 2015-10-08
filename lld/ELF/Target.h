@@ -21,6 +21,7 @@ class SymbolBody;
 class TargetInfo {
 public:
   llvm::StringRef getDefaultEntry() const { return DefaultEntry; }
+  unsigned getPageSize() const { return PageSize; }
   uint64_t getVAStart() const { return VAStart; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
@@ -39,6 +40,7 @@ public:
   virtual ~TargetInfo();
 
 protected:
+  unsigned PageSize = 4096;
   uint64_t VAStart;
   unsigned PCRelReloc;
   unsigned GotRefReloc;

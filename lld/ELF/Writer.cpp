@@ -22,8 +22,6 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf2;
 
-static const int PageSize = 4096;
-
 namespace {
 
 static uint32_t toPHDRFlags(uint64_t Flags) {
@@ -43,7 +41,7 @@ template <class ELFT> struct ProgramHeader {
     std::memset(&Header, 0, sizeof(Elf_Phdr));
     Header.p_type = Type;
     Header.p_flags = Flags;
-    Header.p_align = PageSize;
+    Header.p_align = Target->getPageSize();
     Header.p_offset = FileOff;
     Header.p_vaddr = VA;
     Header.p_paddr = VA;
@@ -484,8 +482,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
   // Reserve space for PHDRs.
   ProgramHeaderOff = FileOff;
-  FileOff = RoundUpToAlignment(FileOff, PageSize);
-  VA = RoundUpToAlignment(VA, PageSize);
+  FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
+  VA = RoundUpToAlignment(VA, Target->getPageSize());
 
   if (needsInterpSection())
     PHDRs.push_back(&InterpPHDR);
@@ -494,7 +492,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   PHDRs.push_back(&FileHeaderPHDR);
   FileHeaderPHDR.Header.p_vaddr = getVAStart();
   FileHeaderPHDR.Header.p_paddr = getVAStart();
-  FileHeaderPHDR.Header.p_align = PageSize;
+  FileHeaderPHDR.Header.p_align = Target->getPageSize();
 
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     Out<ELFT>::StrTab->add(Sec->getName());
@@ -512,8 +510,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         }
 
         if (needsPHDR<ELFT>(Sec)) {
-          VA = RoundUpToAlignment(VA, PageSize);
-          FileOff = RoundUpToAlignment(FileOff, PageSize);
+          VA = RoundUpToAlignment(VA, Target->getPageSize());
+          FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
           PHDRs.push_back(new (PAlloc)
                               ProgramHeader<ELFT>(PT_LOAD, Flags, FileOff, VA));
         }
@@ -579,7 +577,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shstrndx = Out<ELFT>::StrTab->getSectionIndex();
 
   // If nothing was merged into the file header PT_LOAD, set the size correctly.
-  if (FileHeaderPHDR.Header.p_filesz == PageSize) {
+  if (FileHeaderPHDR.Header.p_filesz == Target->getPageSize()) {
     uint64_t Size = sizeof(Elf_Ehdr) + sizeof(Elf_Phdr) * PHDRs.size();
     FileHeaderPHDR.Header.p_filesz = Size;
     FileHeaderPHDR.Header.p_memsz = Size;
