@@ -5392,10 +5392,6 @@ static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
     }
   }
 
-  // FIXME: Disable C++ EH completely, until it becomes more reliable. Users
-  // can use -Xclang to manually enable C++ EH until then.
-  EH = EHFlags();
-
   return EH;
 }
 
