@@ -1501,8 +1501,8 @@ static void StabilizeOrder(SmallVectorImpl<Value *> &BaseVec,
 static void
 makeStatepointExplicit(DominatorTree &DT, const CallSite &CS,
                        PartiallyConstructedSafepointRecord &Result) {
-  auto LiveSet = Result.LiveSet;
-  auto PointerToBase = Result.PointerToBase;
+  const auto &LiveSet = Result.LiveSet;
+  const auto &PointerToBase = Result.PointerToBase;
 
   // Convert to vector for efficient cross referencing.
   SmallVector<Value *, 64> BaseVec, LiveVec;
@@ -1511,7 +1511,7 @@ makeStatepointExplicit(DominatorTree &DT, const CallSite &CS,
   for (Value *L : LiveSet) {
     LiveVec.push_back(L);
     assert(PointerToBase.count(L));
-    Value *Base = PointerToBase[L];
+    Value *Base = PointerToBase.find(L)->second;
     BaseVec.push_back(Base);
   }
   assert(LiveVec.size() == BaseVec.size());
