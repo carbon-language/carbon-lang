@@ -75,6 +75,7 @@ public:
   void run();
 
 private:
+  void copyLocalSymbols();
   void createSections();
   template <bool isRela>
   void scanRelocs(const InputSection<ELFT> &C,
@@ -162,6 +163,8 @@ void lld::elf2::writeResult(SymbolTable *Symtab) {
 
 // The main function of the writer.
 template <class ELFT> void Writer<ELFT>::run() {
+  if (!Config->DiscardAll)
+    copyLocalSymbols();
   createSections();
   assignAddresses();
   openFile(Config->OutputFile);
@@ -282,6 +285,91 @@ static void reportUndefined(const SymbolTable &S, const SymbolBody &Sym) {
     error(Message);
 }
 
+// Local symbols are not in the linker's symbol table. This function scans
+// each object file's symbol table to copy local symbols to the output.
+template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
+  for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
+    auto &File = cast<ObjectFile<ELFT>>(*FileB);
+    for (const Elf_Sym &Sym : File.getLocalSymbols()) {
+      ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
+      error(SymNameOrErr);
+      StringRef SymName = *SymNameOrErr;
+      if (shouldKeepInSymtab<ELFT>(SymName, Sym))
+        Out<ELFT>::SymTab->addSymbol(SymName, true);
+    }
+  }
+}
+
+// Output section ordering is determined by this function.
+template <class ELFT>
+static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
+                                  OutputSectionBase<ELFT::Is64Bits> *B) {
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+
+  uintX_t AFlags = A->getFlags();
+  uintX_t BFlags = B->getFlags();
+
+  // Allocatable sections go first to reduce the total PT_LOAD size and
+  // so debug info doesn't change addresses in actual code.
+  bool AIsAlloc = AFlags & SHF_ALLOC;
+  bool BIsAlloc = BFlags & SHF_ALLOC;
+  if (AIsAlloc != BIsAlloc)
+    return AIsAlloc;
+
+  // We don't have any special requirements for the relative order of
+  // two non allocatable sections.
+  if (!AIsAlloc)
+    return false;
+
+  // We want the read only sections first so that they go in the PT_LOAD
+  // covering the program headers at the start of the file.
+  bool AIsWritable = AFlags & SHF_WRITE;
+  bool BIsWritable = BFlags & SHF_WRITE;
+  if (AIsWritable != BIsWritable)
+    return BIsWritable;
+
+  // For a corresponding reason, put non exec sections first (the program
+  // header PT_LOAD is not executable).
+  bool AIsExec = AFlags & SHF_EXECINSTR;
+  bool BIsExec = BFlags & SHF_EXECINSTR;
+  if (AIsExec != BIsExec)
+    return BIsExec;
+
+  // If we got here we know that both A and B and in the same PT_LOAD.
+  // The last requirement we have is to put nobits section last. The
+  // reason is that the only thing the dynamic linker will see about
+  // them is a p_memsz that is larger than p_filesz. Seeing that it
+  // zeros the end of the PT_LOAD, so that has to correspond to the
+  // nobits sections.
+  return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
+}
+
+// Until this function is called, common symbols do not belong to any section.
+// This function adds them to end of BSS section.
+template <class ELFT>
+static void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+
+  // Sort the common symbols by alignment as an heuristic to pack them better.
+  std::stable_sort(
+    Syms.begin(), Syms.end(),
+    [](const DefinedCommon<ELFT> *A, const DefinedCommon<ELFT> *B) {
+      return A->MaxAlignment > B->MaxAlignment;
+    });
+
+  uintX_t Off = Out<ELFT>::Bss->getSize();
+  for (DefinedCommon<ELFT> *C : Syms) {
+    const Elf_Sym &Sym = C->Sym;
+    uintX_t Align = C->MaxAlignment;
+    Off = RoundUpToAlignment(Off, Align);
+    C->OffsetInBSS = Off;
+    Off += Sym.st_size;
+  }
+
+  Out<ELFT>::Bss->setSize(Off);
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
@@ -308,16 +396,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
-    if (!Config->DiscardAll) {
-      Elf_Sym_Range Syms = File.getLocalSymbols();
-      for (const Elf_Sym &Sym : Syms) {
-        ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
-        error(SymNameOrErr);
-        StringRef SymName = *SymNameOrErr;
-        if (shouldKeepInSymtab<ELFT>(SymName, Sym))
-          Out<ELFT>::SymTab->addSymbol(SymName, true);
-      }
-    }
     for (InputSection<ELFT> *C : File.getSections()) {
       if (!C)
         continue;
@@ -376,27 +454,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (needsDynamicSections() && includeInDynamicSymtab(*Body))
       Out<ELFT>::HashTab->addSymbol(Body);
   }
-
-  // Sort the common symbols by alignment as an heuristic to pack them better.
-  std::stable_sort(
-      CommonSymbols.begin(), CommonSymbols.end(),
-      [](const DefinedCommon<ELFT> *A, const DefinedCommon<ELFT> *B) {
-        return A->MaxAlignment > B->MaxAlignment;
-      });
-
-  uintX_t Off = Out<ELFT>::Bss->getSize();
-  for (DefinedCommon<ELFT> *C : CommonSymbols) {
-    const Elf_Sym &Sym = C->Sym;
-    uintX_t Align = C->MaxAlignment;
-    Off = RoundUpToAlignment(Off, Align);
-    C->OffsetInBSS = Off;
-    Off += Sym.st_size;
-  }
-
-  Out<ELFT>::Bss->setSize(Off);
+  addCommonSymbols(CommonSymbols);
 
   OutputSections.push_back(Out<ELFT>::SymTab);
-
   if (needsDynamicSections()) {
     if (needsInterpSection())
       OutputSections.push_back(Out<ELFT>::Interp);
@@ -412,47 +472,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   if (!Out<ELFT>::Plt->empty())
     OutputSections.push_back(Out<ELFT>::Plt);
 
-  std::stable_sort(
-      OutputSections.begin(), OutputSections.end(),
-      [](OutputSectionBase<ELFT::Is64Bits> *A,
-         OutputSectionBase<ELFT::Is64Bits> *B) {
-        uintX_t AFlags = A->getFlags();
-        uintX_t BFlags = B->getFlags();
-
-        // Allocatable sections go first to reduce the total PT_LOAD size and
-        // so debug info doesn't change addresses in actual code.
-        bool AIsAlloc = AFlags & SHF_ALLOC;
-        bool BIsAlloc = BFlags & SHF_ALLOC;
-        if (AIsAlloc != BIsAlloc)
-          return AIsAlloc;
-
-        // We don't have any special requirements for the relative order of
-        // two non allocatable sections.
-        if (!AIsAlloc)
-          return false;
-
-        // We want the read only sections first so that they go in the PT_LOAD
-        // covering the program headers at the start of the file.
-        bool AIsWritable = AFlags & SHF_WRITE;
-        bool BIsWritable = BFlags & SHF_WRITE;
-        if (AIsWritable != BIsWritable)
-          return BIsWritable;
-
-        // For a corresponding reason, put non exec sections first (the program
-        // header PT_LOAD is not executable).
-        bool AIsExec = AFlags & SHF_EXECINSTR;
-        bool BIsExec = BFlags & SHF_EXECINSTR;
-        if (AIsExec != BIsExec)
-          return BIsExec;
-
-        // If we got here we know that both A and B and in the same PT_LOAD.
-        // The last requirement we have is to put nobits section last. The
-        // reason is that the only thing the dynamic linker will see about
-        // them is a p_memsz that is larger than p_filesz. Seeing that it
-        // zeros the end of the PT_LOAD, so that has to correspond to the
-        // nobits sections.
-        return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
-      });
+  std::stable_sort(OutputSections.begin(), OutputSections.end(),
+                   compareOutputSections<ELFT>);
 
   // Always put StrTabSec last so that no section names are added to it after
   // it's finalized.
