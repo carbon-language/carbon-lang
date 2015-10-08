@@ -105,14 +105,14 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSections() {
   uint64_t Size = this->ELFObj.getNumSections();
   Sections.resize(Size);
   unsigned I = 0;
-  for (const Elf_Shdr &Sec : this->ELFObj.sections()) {
+  const ELFFile<ELFT> &Obj = this->ELFObj;
+  for (const Elf_Shdr &Sec : Obj.sections()) {
     switch (Sec.sh_type) {
     case SHT_SYMTAB:
       this->Symtab = &Sec;
       break;
     case SHT_SYMTAB_SHNDX: {
-      ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable =
-          this->ELFObj.getSHNDXTable(Sec);
+      ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable = Obj.getSHNDXTable(Sec);
       error(ErrorOrTable);
       SymtabSHNDX = *ErrorOrTable;
       break;
