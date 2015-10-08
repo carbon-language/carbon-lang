@@ -981,6 +981,7 @@ public:
   Tool *SelectTool(const JobAction &JA) const override;
   void getCompilerSupportDir(std::string &Dir) const;
   void getBuiltinLibDir(std::string &Dir) const;
+  unsigned GetDefaultDwarfVersion() const override { return 2; }
 
 protected:
   Tool *buildLinker() const override;

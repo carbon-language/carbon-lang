@@ -57,3 +57,6 @@
 // RUN: %clang -target sparc-myriad -### -nostdlib %s 2>&1 | FileCheck %s --check-prefix=NOSTDLIB
 //
 // NOSTDLIB-NOT: "-lc"
+
+// RUN: %clang -### -c -g %s -target sparc-myriad 2>&1 | FileCheck -check-prefix=G_SPARC %s
+// G_SPARC: "-debug-info-kind=limited" "-dwarf-version=2"
