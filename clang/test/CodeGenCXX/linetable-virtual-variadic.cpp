@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -gline-tables-only %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -debug-info-kind=line-tables-only %s -o - | FileCheck %s
 // Crasher for PR22929.
 class Base {
   virtual void VariadicFunction(...);

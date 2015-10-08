@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin -g -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin -debug-info-kind=limited -emit-llvm -o - | FileCheck %s
 // This test is for a crash when emitting debug info for not-yet-completed
 // types.
 // Test that we don't actually emit a forward decl for the offending class:

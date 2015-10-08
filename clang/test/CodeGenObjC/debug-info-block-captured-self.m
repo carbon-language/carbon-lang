@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -g -emit-llvm -triple x86_64-apple-darwin -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fblocks -debug-info-kind=limited -emit-llvm -triple x86_64-apple-darwin -o - %s | FileCheck %s
 //
 // Test that debug location is generated for a captured "self" inside
 // a block.

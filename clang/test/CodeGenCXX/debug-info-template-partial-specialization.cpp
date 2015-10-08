@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -g %s -o - -fstandalone-debug | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple %s -o - -debug-info-kind=standalone | FileCheck %s
 namespace __pointer_type_imp
 {
   template <class _Tp, class _Dp, bool > struct __pointer_type1 {};

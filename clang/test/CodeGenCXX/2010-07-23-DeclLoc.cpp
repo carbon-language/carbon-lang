@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited %s -o - | FileCheck %s
 // Require the template function declaration refer to the correct filename.
 // First, locate the function decl in metadata, and pluck out the file handle:
 // CHECK: !DISubprogram(name: "extract_dwarf_data_from_header

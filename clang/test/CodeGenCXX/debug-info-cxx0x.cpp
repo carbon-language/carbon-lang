@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -std=c++11 -g %s
+// RUN: %clang_cc1 -emit-llvm-only -std=c++11 -debug-info-kind=limited %s
 
 namespace PR9414 {
   int f() {

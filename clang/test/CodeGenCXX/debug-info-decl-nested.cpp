@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -g -emit-llvm -g -triple x86_64-apple-darwin %s -o %t
+// RUN: %clang_cc1 -std=c++11 -debug-info-kind=standalone -emit-llvm -triple x86_64-apple-darwin %s -o %t
 // RUN: cat %t | FileCheck %s -check-prefix=CHECK0
 // RUN: cat %t | FileCheck %s -check-prefix=CHECK1
 // RUN: cat %t | FileCheck %s -check-prefix=CHECK2

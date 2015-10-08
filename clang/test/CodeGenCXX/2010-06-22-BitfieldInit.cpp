@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g %s -o -
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited %s -o -
 struct TEST2
 {
   int subid:32;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -x objective-c -g -triple x86_64-apple-macosx10.8.0 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -x objective-c -debug-info-kind=limited -triple x86_64-apple-macosx10.8.0 %s -o - | FileCheck %s
 //
 // rdar://problem/14035789
 //

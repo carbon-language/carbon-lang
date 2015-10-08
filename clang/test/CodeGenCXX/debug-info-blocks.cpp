@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -gline-tables-only -fblocks -S -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -debug-info-kind=line-tables-only -fblocks -S -emit-llvm -o - | FileCheck %s
 
 struct A {
   A();

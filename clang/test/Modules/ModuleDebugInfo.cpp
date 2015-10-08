@@ -5,7 +5,7 @@
 
 // Modules:
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -triple %itanium_abi_triple -x objective-c++ -std=c++11 -g -fmodules -fmodule-format=obj -fimplicit-module-maps -DMODULES -fmodules-cache-path=%t %s -I %S/Inputs -I %t -emit-llvm -o %t.ll -mllvm -debug-only=pchcontainer &>%t-mod.ll
+// RUN: %clang_cc1 -triple %itanium_abi_triple -x objective-c++ -std=c++11 -debug-info-kind=limited -fmodules -fmodule-format=obj -fimplicit-module-maps -DMODULES -fmodules-cache-path=%t %s -I %S/Inputs -I %t -emit-llvm -o %t.ll -mllvm -debug-only=pchcontainer &>%t-mod.ll
 // RUN: cat %t-mod.ll | FileCheck %s
 // RUN: cat %t-mod.ll | FileCheck --check-prefix=CHECK-NEG %s
 // RUN: cat %t-mod.ll | FileCheck --check-prefix=CHECK-DWO %s

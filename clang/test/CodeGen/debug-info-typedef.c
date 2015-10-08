@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -I%p %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -I%p %s -o - | FileCheck %s
 // Test that the location of the typedef points to the header file.
 #line 1 "a.c"
 #line 2 "b.h"

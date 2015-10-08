@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -g -fmodules -DGREETING="Hello World" -UNDEBUG -fimplicit-module-maps -fmodules-cache-path=%t %s -I %S/Inputs -isysroot /tmp/.. -I %t -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -debug-info-kind=limited -fmodules -DGREETING="Hello World" -UNDEBUG -fimplicit-module-maps -fmodules-cache-path=%t %s -I %S/Inputs -isysroot /tmp/.. -I %t -emit-llvm -o - | FileCheck %s
 
 // CHECK: ![[CU:.*]] = distinct !DICompileUnit
 @import DebugObjC;
@@ -11,13 +11,13 @@
 // CHECK-SAME:  isysroot: "/tmp/..")
 
 
-// RUN: %clang_cc1 -g -fmodules -fimplicit-module-maps -fmodules-cache-path=%t \
+// RUN: %clang_cc1 -debug-info-kind=limited -fmodules -fimplicit-module-maps -fmodules-cache-path=%t \
 // RUN:   %s -I %S/Inputs -isysroot /tmp/.. -I %t -emit-llvm -o - \
 // RUN:     | FileCheck %s --check-prefix=NO-SKEL-CHECK
 // NO-SKEL-CHECK: distinct !DICompileUnit
 // NO-SKEL-CHECK-NOT: distinct !DICompileUnit
 
-// RUN: %clang_cc1 -g -fmodules -fimplicit-module-maps -fmodules-cache-path=%t \
+// RUN: %clang_cc1 -debug-info-kind=limited -fmodules -fimplicit-module-maps -fmodules-cache-path=%t \
 // RUN:   -fmodule-format=obj -dwarf-ext-refs \
 // RUN:   %s -I %S/Inputs -isysroot /tmp/.. -I %t -emit-llvm -o - \
 // RUN:     | FileCheck %s --check-prefix=SKEL-CHECK

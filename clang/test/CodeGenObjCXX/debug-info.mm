@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -g -emit-llvm %s -o /dev/null
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -debug-info-kind=limited -emit-llvm %s -o /dev/null
 
 // This test passes if clang doesn't crash.
 

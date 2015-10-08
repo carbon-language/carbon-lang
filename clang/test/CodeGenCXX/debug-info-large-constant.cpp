@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -triple=x86_64-apple-darwin %s -o /dev/null
+// RUN: %clang_cc1 -debug-info-kind=limited -triple=x86_64-apple-darwin %s -o /dev/null
 // PR 8913
 
 typedef __uint128_t word128;

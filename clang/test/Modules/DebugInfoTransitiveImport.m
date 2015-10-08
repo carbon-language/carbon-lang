@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fmodule-format=obj -g -dwarf-ext-refs \
+// RUN: %clang_cc1 -fmodules -fmodule-format=obj -debug-info-kind=limited -dwarf-ext-refs \
 // RUN:     -fimplicit-module-maps -fmodules-cache-path=%t -I %S/Inputs \
 // RUN:     %s -mllvm -debug-only=pchcontainer 2>&1 | FileCheck %s
 // REQUIRES: asserts

@@ -2324,6 +2324,38 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
                       RelaxDefault);
 }
 
+// Extract the integer N from a string spelled "-dwarf-N", returning 0
+// on mismatch. The StringRef input (rather than an Arg) allows
+// for use by the "-Xassembler" option parser.
+static unsigned DwarfVersionNum(StringRef ArgValue) {
+  return llvm::StringSwitch<unsigned>(ArgValue)
+      .Case("-gdwarf-2", 2)
+      .Case("-gdwarf-3", 3)
+      .Case("-gdwarf-4", 4)
+      .Default(0);
+}
+
+static void RenderDebugEnablingArgs(const ArgList &Args, ArgStringList &CmdArgs,
+                                    CodeGenOptions::DebugInfoKind DebugInfoKind,
+                                    unsigned DwarfVersion) {
+  switch (DebugInfoKind) {
+  case CodeGenOptions::DebugLineTablesOnly:
+    CmdArgs.push_back("-debug-info-kind=line-tables-only");
+    break;
+  case CodeGenOptions::LimitedDebugInfo:
+    CmdArgs.push_back("-debug-info-kind=limited");
+    break;
+  case CodeGenOptions::FullDebugInfo:
+    CmdArgs.push_back("-debug-info-kind=standalone");
+    break;
+  default:
+    break;
+  }
+  if (DwarfVersion > 0)
+    CmdArgs.push_back(
+        Args.MakeArgString("-dwarf-version=" + std::to_string(DwarfVersion)));
+}
+
 static void CollectArgsForIntegratedAssembler(Compilation &C,
                                               const ArgList &Args,
                                               ArgStringList &CmdArgs,
@@ -2373,7 +2405,14 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
         if (Value == "-I")
           TakeNextArg = true;
       } else if (Value.startswith("-gdwarf-")) {
-        CmdArgs.push_back(Value.data());
+        // "-gdwarf-N" options are not cc1as options.
+        unsigned DwarfVersion = DwarfVersionNum(Value);
+        if (DwarfVersion == 0) { // Send it onward, and let cc1as complain.
+          CmdArgs.push_back(Value.data());
+        } else {
+          RenderDebugEnablingArgs(
+              Args, CmdArgs, CodeGenOptions::LimitedDebugInfo, DwarfVersion);
+        }
       } else if (Value.startswith("-mcpu") || Value.startswith("-mfpu") ||
                  Value.startswith("-mhwdiv") || Value.startswith("-march")) {
         // Do nothing, we'll validate it later.
@@ -3710,9 +3749,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
   }
 
+  // The 'g' groups options involve a somewhat intricate sequence of decisions
+  // about what to pass from the driver to the frontend, but by the time they
+  // reach cc1 they've been factored into two well-defined orthogonal choices:
+  //  * what level of debug info to generate
+  //  * what dwarf version to write
+  // This avoids having to monkey around further in cc1 other than to disable
+  // codeview if not running in a Windows environment. Perhaps even that
+  // decision should be made in the driver as well though.
+  enum CodeGenOptions::DebugInfoKind DebugInfoKind =
+      CodeGenOptions::NoDebugInfo;
+  // These two are potentially updated by AddClangCLArgs.
+  unsigned DwarfVersion = 0;
+  bool EmitCodeView = false;
+
   // Add clang-cl arguments.
   if (getToolChain().getDriver().IsCLMode())
-    AddClangCLArgs(Args, CmdArgs);
+    AddClangCLArgs(Args, CmdArgs, &DebugInfoKind, &EmitCodeView);
 
   // Pass the linker version in use.
   if (Arg *A = Args.getLastArg(options::OPT_mlinker_version_EQ)) {
@@ -3753,41 +3806,41 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                                  : "-");
   }
 
-  // Use the last option from "-g" group. "-gline-tables-only" and "-gdwarf-x"
-  // are preserved, all other debug options are substituted with "-g".
   Args.ClaimAllArgs(options::OPT_g_Group);
   Arg *SplitDwarfArg = Args.getLastArg(options::OPT_gsplit_dwarf);
   if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
+    // If you say "-gline-tables-only -gsplit-dwarf", split-dwarf wins,
+    // which mandates turning on "-g". But -split-dwarf is not a g_group option,
+    // hence it takes a nontrivial test to decide about line-tables-only.
     if (A->getOption().matches(options::OPT_gline_tables_only) &&
         (!SplitDwarfArg || A->getIndex() > SplitDwarfArg->getIndex())) {
-      // FIXME: we should support specifying dwarf version with
-      // -gline-tables-only.
-      CmdArgs.push_back("-gline-tables-only");
-      // Default is dwarf-2 for Darwin, OpenBSD, FreeBSD and Solaris.
-      const llvm::Triple &Triple = getToolChain().getTriple();
-      if (Triple.isOSDarwin() || Triple.getOS() == llvm::Triple::OpenBSD ||
-          Triple.getOS() == llvm::Triple::FreeBSD ||
-          Triple.getOS() == llvm::Triple::Solaris)
-        CmdArgs.push_back("-gdwarf-2");
+      DebugInfoKind = CodeGenOptions::DebugLineTablesOnly;
       SplitDwarfArg = nullptr;
-    } else if (A->getOption().matches(options::OPT_gdwarf_2) ||
-               A->getOption().matches(options::OPT_gdwarf_3) ||
-               A->getOption().matches(options::OPT_gdwarf_4)) {
-      A->render(Args, CmdArgs);
     } else if (!A->getOption().matches(options::OPT_g0)) {
-      // Default is dwarf-2 for Darwin, OpenBSD, FreeBSD and Solaris.
-      const llvm::Triple &Triple = getToolChain().getTriple();
-      if (Triple.isOSDarwin() || Triple.getOS() == llvm::Triple::OpenBSD ||
-          Triple.getOS() == llvm::Triple::FreeBSD ||
-          Triple.getOS() == llvm::Triple::Solaris)
-        CmdArgs.push_back("-gdwarf-2");
-      else
-        CmdArgs.push_back("-g");
+      // Some 'g' group option other than one expressly disabling debug info
+      // must have been the final (winning) one. They're all equivalent.
+      DebugInfoKind = CodeGenOptions::LimitedDebugInfo;
     }
   }
 
+  // If a -gdwarf argument appeared, use it, unless DebugInfoKind is None
+  // (because that would mean that "-g0" was the rightmost 'g' group option).
+  // FIXME: specifying "-gdwarf-<N>" "-g1" in that order works,
+  // but "-g1" "-gdwarf-<N>" does not. A deceptively simple (but wrong) "fix"
+  // exists of removing the gdwarf options from the g_group.
+  if (Arg *A = Args.getLastArg(options::OPT_gdwarf_2, options::OPT_gdwarf_3,
+                               options::OPT_gdwarf_4))
+    DwarfVersion = DwarfVersionNum(A->getSpelling());
+
   // Forward -gcodeview.
-  Args.AddLastArg(CmdArgs, options::OPT_gcodeview);
+  // 'EmitCodeView might have been set by CL-compatibility argument parsing.
+  if (Args.hasArg(options::OPT_gcodeview) || EmitCodeView) {
+    // DwarfVersion remains at 0 if no explicit choice was made.
+    CmdArgs.push_back("-gcodeview");
+  } else if (DwarfVersion == 0 &&
+             DebugInfoKind != CodeGenOptions::NoDebugInfo) {
+    DwarfVersion = getToolChain().GetDefaultDwarfVersion();
+  }
 
   // We ignore flags -gstrict-dwarf and -grecord-gcc-switches for now.
   Args.ClaimAllArgs(options::OPT_g_flags_Group);
@@ -3797,7 +3850,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // FIXME: Move backend command line options to the module.
   if (Args.hasArg(options::OPT_gmodules)) {
-    CmdArgs.push_back("-g");
+    DebugInfoKind = CodeGenOptions::LimitedDebugInfo;
     CmdArgs.push_back("-dwarf-ext-refs");
     CmdArgs.push_back("-fmodule-format=obj");
   }
@@ -3806,10 +3859,22 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // splitting and extraction.
   // FIXME: Currently only works on Linux.
   if (getToolChain().getTriple().isOSLinux() && SplitDwarfArg) {
-    CmdArgs.push_back("-g");
+    DebugInfoKind = CodeGenOptions::LimitedDebugInfo;
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-split-dwarf=Enable");
   }
+
+  // After we've dealt with all combinations of things that could
+  // make DebugInfoKind be other than None or DebugLineTablesOnly,
+  // figure out if we need to "upgrade" it to standalone debug info.
+  // We parse these two '-f' options whether or not they will be used,
+  // to claim them even if you wrote "-fstandalone-debug -gline-tables-only"
+  bool NeedFullDebug = Args.hasFlag(options::OPT_fstandalone_debug,
+                                    options::OPT_fno_standalone_debug,
+                                    getToolChain().GetDefaultStandaloneDebug());
+  if (DebugInfoKind == CodeGenOptions::LimitedDebugInfo && NeedFullDebug)
+    DebugInfoKind = CodeGenOptions::FullDebugInfo;
+  RenderDebugEnablingArgs(Args, CmdArgs, DebugInfoKind, DwarfVersion);
 
   // -ggnu-pubnames turns on gnu style pubnames in the backend.
   if (Args.hasArg(options::OPT_ggnu_pubnames)) {
@@ -4173,8 +4238,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Forward -f (flag) options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
-  Args.AddLastArg(CmdArgs, options::OPT_fstandalone_debug);
-  Args.AddLastArg(CmdArgs, options::OPT_fno_standalone_debug);
   Args.AddLastArg(CmdArgs, options::OPT_fno_operator_names);
   // Emulated TLS is enabled by default on Android, and can be enabled manually
   // with -femulated-tls.
@@ -5336,7 +5399,9 @@ static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
   return EH;
 }
 
-void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
+void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs,
+                           enum CodeGenOptions::DebugInfoKind *DebugInfoKind,
+                           bool *EmitCodeView) const {
   unsigned RTOptionID = options::OPT__SLASH_MT;
 
   if (Args.hasArg(options::OPT__SLASH_LDd))
@@ -5400,13 +5465,13 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
     CmdArgs.push_back("-fno-rtti-data");
 
   // Emit CodeView if -Z7 is present.
-  bool EmitCodeView = Args.hasArg(options::OPT__SLASH_Z7);
+  *EmitCodeView = Args.hasArg(options::OPT__SLASH_Z7);
   bool EmitDwarf = Args.hasArg(options::OPT_gdwarf);
   // If we are emitting CV but not DWARF, don't build information that LLVM
   // can't yet process.
-  if (EmitCodeView && !EmitDwarf)
-    CmdArgs.push_back("-gline-tables-only");
-  if (EmitCodeView)
+  if (*EmitCodeView && !EmitDwarf)
+    *DebugInfoKind = CodeGenOptions::DebugLineTablesOnly;
+  if (*EmitCodeView)
     CmdArgs.push_back("-gcodeview");
 
   const Driver &D = getToolChain().getDriver();
@@ -5557,14 +5622,20 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // with an actual assembly file.
   if (SourceAction->getType() == types::TY_Asm ||
       SourceAction->getType() == types::TY_PP_Asm) {
+    bool WantDebug = false;
+    unsigned DwarfVersion = 0;
     Args.ClaimAllArgs(options::OPT_g_Group);
-    if (Arg *A = Args.getLastArg(options::OPT_g_Group))
-      if (!A->getOption().matches(options::OPT_g0))
-        CmdArgs.push_back("-g");
-
-    if (Arg *A = Args.getLastArg(options::OPT_gdwarf_2, options::OPT_gdwarf_3,
-                                 options::OPT_gdwarf_4))
-      A->render(Args, CmdArgs);
+    if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
+      WantDebug = !A->getOption().matches(options::OPT_g0);
+      if (WantDebug) {
+        if ((DwarfVersion = DwarfVersionNum(A->getSpelling())) == 0)
+          DwarfVersion = getToolChain().GetDefaultDwarfVersion();
+      }
+    }
+    RenderDebugEnablingArgs(Args, CmdArgs,
+                            (WantDebug ? CodeGenOptions::LimitedDebugInfo
+                                       : CodeGenOptions::NoDebugInfo),
+                            DwarfVersion);
 
     // Add the -fdebug-compilation-dir flag if needed.
     addDebugCompDirArg(Args, CmdArgs);

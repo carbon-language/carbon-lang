@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -debug-info-kind=limited -emit-llvm -o - %s | FileCheck %s
 // The DWARF standard says the underlying data type of an enum may be
 // stored in an DW_AT_type entry in the enum DIE. This is useful to have
 // so the debugger knows about the signedness of the underlying type.

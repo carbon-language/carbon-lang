@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -g -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -debug-info-kind=limited -o - | FileCheck %s
 // CHECK: DW_TAG_pointer_type
 // CHECK-NOT: {"char"}
 

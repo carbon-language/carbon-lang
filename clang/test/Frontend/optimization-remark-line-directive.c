@@ -2,7 +2,7 @@
 // directives. We cannot map #line directives back to
 // a SourceLocation.
 
-// RUN: %clang_cc1 %s -Rpass=inline -gline-tables-only -dwarf-column-info -emit-llvm-only -verify
+// RUN: %clang_cc1 %s -Rpass=inline -debug-info-kind=line-tables-only -dwarf-column-info -emit-llvm-only -verify
 
 int foo(int x, int y) __attribute__((always_inline));
 int foo(int x, int y) { return x + y; }

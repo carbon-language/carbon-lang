@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -triple x86_64-apple-macosx -emit-llvm -g -stdlib=libc++ -fblocks -fexceptions -x objective-c++ -o - %s | FileCheck %s
+// RUN: %clang_cc1  -triple x86_64-apple-macosx -emit-llvm -debug-info-kind=limited -stdlib=libc++ -fblocks -fexceptions -x objective-c++ -o - %s | FileCheck %s
 
 // Verify that all invoke instructions have a debug location.
 // Literally: There are no unwind lines that don't end with ", (!dbg 123)".

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -S -g -o %t %s
+// RUN: %clang_cc1 -S -debug-info-kind=limited -o %t %s
 # 1 "a.c"
 # 1 "a.c" 1
 # 1 "<built-in>" 1

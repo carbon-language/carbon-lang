@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple %itanium_abi_triple -g -mllvm -no-discriminators -emit-llvm  %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -debug-info-kind=limited -mllvm -no-discriminators -emit-llvm  %s -o - | FileCheck %s
 
 struct C {
   ~C();

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -fno-standalone-debug -triple x86_64-apple-darwin %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -triple x86_64-apple-darwin %s -o - | FileCheck %s
 
 struct MyClass {
   template <int i> int add(int j) {
@@ -98,4 +98,3 @@ inline void f1() {
 void f2() {
   virt<elem> d; // emit 'virt<elem>'
 }
-

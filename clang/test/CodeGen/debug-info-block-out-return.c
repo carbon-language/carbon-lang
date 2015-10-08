@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -g -fblocks -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -debug-info-kind=limited -fblocks -emit-llvm -o - %s | FileCheck %s
 
 // Check that arg numbering is not affected by LLVM IR argument numbering -
 // since the latter is affected by return-by-out-parameter ABI requirements

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -debug-info-kind=limited -emit-llvm %s -o - | FileCheck %s
 // Do not use function name to create named metadata used to hold
 // local variable info. For example. llvm.dbg.lv.~A is an invalid name.
 

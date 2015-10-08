@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -g -emit-llvm < %s | FileCheck %s
-// RUN: %clang_cc1 -gline-tables-only -emit-llvm < %s | FileCheck --check-prefix=GMLT %s
+// RUN: %clang_cc1 -dwarf-version=4 -debug-info-kind=limited -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -dwarf-version=4 -debug-info-kind=line-tables-only -emit-llvm < %s | FileCheck --check-prefix=GMLT %s
 // Two variables with same name in separate scope.
 // Radar 8330217.
 int main() {

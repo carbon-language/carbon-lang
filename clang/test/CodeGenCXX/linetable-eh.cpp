@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -triple x86_64-apple-macosx10.9.0 -munwind-tables -std=c++11 -fcxx-exceptions -fexceptions %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -triple x86_64-apple-macosx10.9.0 -munwind-tables -std=c++11 -fcxx-exceptions -fexceptions %s -o - | FileCheck %s
 
 // Test that emitting a landing pad does not affect the line table
 // entries for the code that triggered it.

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited %s -o - | FileCheck %s
 // Test that the line table info for Foo<T>::bar() is pointing to the
 // right header file.
 // CHECK: define{{.*}}bar

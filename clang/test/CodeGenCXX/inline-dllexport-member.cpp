@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-windows-gnu -fms-compatibility -g -emit-llvm %s -o - \
+// RUN: %clang_cc1 -triple i686-windows-gnu -fms-compatibility -debug-info-kind=limited -emit-llvm %s -o - \
 // RUN:    | FileCheck %s
 
 struct __declspec(dllexport) s {

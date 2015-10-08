@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -gdwarf-2 -x c++ -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -dwarf-version=2 -debug-info-kind=limited -x c++ -o - %s | FileCheck %s
 //
 // PR21941: crasher for self-referencing DW_TAG_structure_type node.  If we get
 // rid of self-referenceing structure_types (PR21902), then it should be safe

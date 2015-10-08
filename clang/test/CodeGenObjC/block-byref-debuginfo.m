@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -fobjc-arc -fobjc-runtime-has-weak -g -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fblocks -fobjc-arc -fobjc-runtime-has-weak -debug-info-kind=limited -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
 
 // rdar://problem/14386148
 // Test that the foo is aligned at an 8 byte boundary in the DWARF

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -triple %itanium_abi_triple -emit-llvm-only %s
+// RUN: %clang_cc1 -debug-info-kind=limited -triple %itanium_abi_triple -emit-llvm-only %s
 // Check that we don't crash.
 // PR12305, PR12315
 

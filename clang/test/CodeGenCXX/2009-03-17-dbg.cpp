@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o /dev/null -g
+// RUN: %clang_cc1 -emit-llvm %s -o /dev/null -debug-info-kind=limited
 
 template <typename T1,typename T2>
 inline void f(const T1&,const T2&) { }

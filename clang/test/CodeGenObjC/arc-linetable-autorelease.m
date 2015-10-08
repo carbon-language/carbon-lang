@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fobjc-arc -g -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fobjc-arc -debug-info-kind=limited -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
 // Ensure that the line info is making sense:
 // ARC cleanups should be at the closing '}'.
 @protocol NSObject

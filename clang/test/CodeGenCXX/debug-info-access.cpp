@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -triple %itanium_abi_triple %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -triple %itanium_abi_triple %s -o - | FileCheck %s
 // Test the various accessibility flags in the debug info.
 struct A {
   // CHECK-DAG: !DISubprogram(name: "pub_default",{{.*}} line: [[@LINE+1]],{{.*}} flags: DIFlagPrototyped,

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fblocks -g  -triple x86_64-apple-darwin14 -x objective-c < %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fblocks -debug-info-kind=limited  -triple x86_64-apple-darwin14 -x objective-c < %s -o - | FileCheck %s
 #define nil ((void*) 0)
 typedef signed char BOOL;
 // CHECK: ![[BOOL:[0-9]+]] = !DIDerivedType(tag: DW_TAG_typedef, name: "BOOL"

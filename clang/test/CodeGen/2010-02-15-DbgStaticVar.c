@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -debug-info-kind=limited -emit-llvm %s -o - | FileCheck %s
 // Test to check intentionally empty linkage name for a static variable.
 // Radar 7651244.
 static int foo(int a)

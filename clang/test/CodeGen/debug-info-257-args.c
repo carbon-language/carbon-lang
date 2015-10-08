@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x c++ -g -emit-llvm -triple x86_64-linux-gnu -o - %s | FileCheck %s
+// RUN: %clang_cc1 -x c++ -debug-info-kind=limited -emit-llvm -triple x86_64-linux-gnu -o - %s | FileCheck %s
 // PR23332
 
 // CHECK: DILocalVariable(arg: 255

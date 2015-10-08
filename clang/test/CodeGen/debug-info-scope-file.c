@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -debug-info-kind=limited -emit-llvm < %s | FileCheck %s
 
 // Check that, just because we emitted a function from a different file doesn't
 // mean we insert a file-change inside the next function.

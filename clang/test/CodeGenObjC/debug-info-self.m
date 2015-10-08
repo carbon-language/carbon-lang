@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -debug-info-kind=limited %s -o - | FileCheck %s
 // self and _cmd are marked as DW_AT_artificial. 
 // myarg is not marked as DW_AT_artificial.
 

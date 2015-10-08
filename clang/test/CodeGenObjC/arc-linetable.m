@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fblocks -fobjc-arc -g -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fblocks -fobjc-arc -debug-info-kind=standalone -dwarf-version=4 -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
 
 // Legend: EXP = Return expression, RET = ret instruction
 

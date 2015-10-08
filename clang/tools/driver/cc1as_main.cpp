@@ -195,14 +195,10 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.IncludePaths = Args.getAllArgValues(OPT_I);
   Opts.NoInitialTextSection = Args.hasArg(OPT_n);
   Opts.SaveTemporaryLabels = Args.hasArg(OPT_msave_temp_labels);
-  Opts.GenDwarfForAssembly = Args.hasArg(OPT_g_Flag);
+  // Any DebugInfoKind implies GenDwarfForAssembly.
+  Opts.GenDwarfForAssembly = Args.hasArg(OPT_debug_info_kind_EQ);
   Opts.CompressDebugSections = Args.hasArg(OPT_compress_debug_sections);
-  if (Args.hasArg(OPT_gdwarf_2))
-    Opts.DwarfVersion = 2;
-  if (Args.hasArg(OPT_gdwarf_3))
-    Opts.DwarfVersion = 3;
-  if (Args.hasArg(OPT_gdwarf_4))
-    Opts.DwarfVersion = 4;
+  Opts.DwarfVersion = getLastArgIntValue(Args, OPT_dwarf_version_EQ, 0, Diags);
   Opts.DwarfDebugFlags = Args.getLastArgValue(OPT_dwarf_debug_flags);
   Opts.DwarfDebugProducer = Args.getLastArgValue(OPT_dwarf_debug_producer);
   Opts.DebugCompilationDir = Args.getLastArgValue(OPT_fdebug_compilation_dir);
@@ -511,4 +507,3 @@ int cc1as_main(ArrayRef<const char *> Argv, const char *Argv0, void *MainAddr) {
 
   return !!Failed;
 }
-

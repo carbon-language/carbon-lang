@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -debug-info-kind=standalone -emit-llvm %s -o - | FileCheck %s
 
 struct B {
 // CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "B"

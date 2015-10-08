@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -gline-tables-only -S -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -debug-info-kind=line-tables-only -S -emit-llvm -o - | FileCheck %s
 // Checks that clang with "-gline-tables-only" emits metadata for
 // compile unit, subprogram and file.
 

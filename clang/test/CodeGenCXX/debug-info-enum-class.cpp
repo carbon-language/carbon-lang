@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -triple x86_64-apple-darwin -std=c++11 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -triple x86_64-apple-darwin -std=c++11 %s -o - | FileCheck %s
 
 enum class A { A1=1 };                 // underlying type is int by default
 enum class B: unsigned long { B1=1 };  // underlying type is unsigned long

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ffreestanding -triple x86_64-apple-macosx10.8.0 -target-feature +sse4.1 -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -ffreestanding -triple x86_64-apple-macosx10.8.0 -target-feature +sse4.1 -debug-info-kind=limited -emit-llvm %s -o - | FileCheck %s
 
 // Test that intrinsic calls inlined from _mm_* wrappers have debug metadata.
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited %s -o - | FileCheck %s
 
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, name: "e"
 // CHECK-SAME:             elements: [[TEST3_ENUMS:![0-9]*]]

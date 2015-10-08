@@ -1,4 +1,4 @@
-//RUN: %clang_cc1 -emit-llvm -g -o - %s | FileCheck %s
+//RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -o - %s | FileCheck %s
 //CHECK: DILocalVariable(
 class Foo
 {

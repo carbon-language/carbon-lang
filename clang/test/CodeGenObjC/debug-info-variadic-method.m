@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -o - -emit-llvm -g %s | FileCheck %s
+// RUN: %clang_cc1 -o - -emit-llvm -debug-info-kind=limited %s | FileCheck %s
 
 // This test verifies that variadic ObjC methods get the
 // DW_TAG_unspecified_parameter marker.

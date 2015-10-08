@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-none-linux-gnu -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-none-linux-gnu -emit-llvm -debug-info-kind=limited %s -o - | FileCheck %s
 
 // Multiple references to the same constant should result in only one entry in
 // the globals list.

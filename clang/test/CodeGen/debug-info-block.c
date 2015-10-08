@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -g -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fblocks -debug-info-kind=limited -emit-llvm -o - %s | FileCheck %s
 // Verify that the desired debugging type is generated for a structure
 // member that is a pointer to a block.
 

@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -E %s -o %t.mm
-// RUN: %clang_cc1 -fms-extensions -rewrite-objc -g %t.mm -o %t-rw.cpp
+// RUN: %clang_cc1 -fms-extensions -rewrite-objc -debug-info-kind=limited %t.mm -o %t-rw.cpp
 // RUN: FileCheck  -check-prefix CHECK-LINE --input-file=%t-rw.cpp %s
 // RUN: %clang_cc1 -fms-extensions -rewrite-objc %t.mm -o %t-rwnog.cpp
 // RUN: FileCheck  -check-prefix CHECK-NOLINE --input-file=%t-rwnog.cpp %s

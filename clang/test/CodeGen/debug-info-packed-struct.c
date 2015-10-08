@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x c -g -emit-llvm -triple x86_64-apple-darwin -o - %s | FileCheck %s
+// RUN: %clang_cc1 -x c -debug-info-kind=limited -emit-llvm -triple x86_64-apple-darwin -o - %s | FileCheck %s
 
 // CHECK: %struct.layout0 = type { i8, %struct.size8, i8 }
 // CHECK: %struct.layout1 = type <{ i8, %struct.size8_anon, i8, [2 x i8] }>

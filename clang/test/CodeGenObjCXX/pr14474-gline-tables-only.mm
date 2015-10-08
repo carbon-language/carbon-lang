@@ -1,6 +1,6 @@
 // PR 14474
 // RUN: %clang_cc1 -triple i386-apple-macosx10.6.0 -emit-llvm \
-// RUN:   -gline-tables-only -x objective-c++ -o /dev/null %s
+// RUN:   -debug-info-kind=line-tables-only -x objective-c++ -o /dev/null %s
 
 typedef signed char BOOL;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;

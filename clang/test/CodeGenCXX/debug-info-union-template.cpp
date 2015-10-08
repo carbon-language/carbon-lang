@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -triple x86_64-linux-gnu  %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -triple x86_64-linux-gnu  %s -o - | FileCheck %s
 
 // Make sure that the union type has template parameters.
 

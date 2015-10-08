@@ -14,6 +14,7 @@
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/Compiler.h"
@@ -88,7 +89,9 @@ private:
                                  RewriteKind rewrite) const;
 
   void AddClangCLArgs(const llvm::opt::ArgList &Args,
-                      llvm::opt::ArgStringList &CmdArgs) const;
+                      llvm::opt::ArgStringList &CmdArgs,
+                      enum CodeGenOptions::DebugInfoKind *DebugInfoKind,
+                      bool *EmitCodeView) const;
 
   visualstudio::Compiler *getCLFallback() const;
 

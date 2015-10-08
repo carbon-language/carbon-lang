@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g -w -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -debug-info-kind=limited -w -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
 # 1 "foo.m" 1
 # 1 "foo.m" 2
 # 1 "./foo.h" 1

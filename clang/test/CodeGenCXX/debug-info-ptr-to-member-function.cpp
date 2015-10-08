@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -triple x86_64-apple-darwin -g -emit-llvm -o - | FileCheck -check-prefix=CHECK -check-prefix=DARWIN-X64 %s
-// RUN: %clang_cc1 %s -triple x86_64-pc-win32     -g -emit-llvm -o - | FileCheck -check-prefix=CHECK -check-prefix=WIN32-X64 %s
+// RUN: %clang_cc1 %s -triple x86_64-apple-darwin -debug-info-kind=limited -emit-llvm -o - | FileCheck -check-prefix=CHECK -check-prefix=DARWIN-X64 %s
+// RUN: %clang_cc1 %s -triple x86_64-pc-win32     -debug-info-kind=limited -emit-llvm -o - | FileCheck -check-prefix=CHECK -check-prefix=WIN32-X64 %s
 
 struct T {
   int method();

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -emit-llvm -g -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm -debug-info-kind=limited -o - %s | FileCheck %s
 // Test that we are emitting debug info and base types for scoped enums.
 
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, name: "Color"
