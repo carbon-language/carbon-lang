@@ -2353,7 +2353,7 @@ static void RenderDebugEnablingArgs(const ArgList &Args, ArgStringList &CmdArgs,
   }
   if (DwarfVersion > 0)
     CmdArgs.push_back(
-        Args.MakeArgString("-dwarf-version=" + std::to_string(DwarfVersion)));
+        Args.MakeArgString("-dwarf-version=" + llvm::itostr(DwarfVersion)));
 }
 
 static void CollectArgsForIntegratedAssembler(Compilation &C,
