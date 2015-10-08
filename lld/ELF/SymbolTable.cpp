@@ -90,8 +90,7 @@ void SymbolTable::addUndefinedSym(StringRef Name) {
 }
 
 template <class ELFT> void SymbolTable::addUndefinedSym(StringRef Name) {
-  resolve<ELFT>(new (Alloc)
-                    Undefined<ELFT>(Name, Undefined<ELFT>::SyntheticOptional));
+  resolve<ELFT>(new (Alloc) Undefined<ELFT>(Name, Undefined<ELFT>::Optional));
 }
 
 template <class ELFT>
@@ -119,7 +118,7 @@ template <class ELFT> void SymbolTable::init(uint16_t EMachine) {
     return;
   EntrySym = new (Alloc) Undefined<ELFT>(
       Config->Entry.empty() ? Target->getDefaultEntry() : Config->Entry,
-      Undefined<ELFT>::SyntheticRequired);
+      Undefined<ELFT>::Required);
   resolve<ELFT>(EntrySym);
 
   // In the assembly for 32 bit x86 the _GLOBAL_OFFSET_TABLE_ symbol is magical

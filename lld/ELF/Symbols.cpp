@@ -87,10 +87,10 @@ std::unique_ptr<InputFile> Lazy::getMember() {
 }
 
 void lld::elf2::initSymbols() {
-  Undefined<ELF32LE>::SyntheticOptional.setVisibility(STV_HIDDEN);
-  Undefined<ELF32BE>::SyntheticOptional.setVisibility(STV_HIDDEN);
-  Undefined<ELF64LE>::SyntheticOptional.setVisibility(STV_HIDDEN);
-  Undefined<ELF64BE>::SyntheticOptional.setVisibility(STV_HIDDEN);
+  Undefined<ELF32LE>::Optional.setVisibility(STV_HIDDEN);
+  Undefined<ELF32BE>::Optional.setVisibility(STV_HIDDEN);
+  Undefined<ELF64LE>::Optional.setVisibility(STV_HIDDEN);
+  Undefined<ELF64BE>::Optional.setVisibility(STV_HIDDEN);
 }
 
 template int SymbolBody::compare<ELF32LE>(SymbolBody *Other);

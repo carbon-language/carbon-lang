@@ -238,8 +238,8 @@ template <class ELFT> class Undefined : public ELFSymbolBody<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  static Elf_Sym SyntheticRequired;
-  static Elf_Sym SyntheticOptional;
+  static Elf_Sym Required;
+  static Elf_Sym Optional;
 
   Undefined(StringRef N, const Elf_Sym &Sym)
       : ELFSymbolBody<ELFT>(Base::UndefinedKind, N, Sym) {}
@@ -248,13 +248,13 @@ public:
     return S->kind() == Base::UndefinedKind;
   }
 
-  bool canKeepUndefined() const { return &this->Sym == &SyntheticOptional; }
+  bool canKeepUndefined() const { return &this->Sym == &Optional; }
 };
 
 template <class ELFT>
-typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::SyntheticRequired;
+typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Required;
 template <class ELFT>
-typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::SyntheticOptional;
+typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Optional;
 
 template <class ELFT> class SharedSymbol : public Defined<ELFT> {
   typedef Defined<ELFT> Base;
