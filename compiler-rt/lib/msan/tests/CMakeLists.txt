@@ -18,13 +18,13 @@ set(MSAN_UNITTEST_HEADERS
   ../../../include/sanitizer/msan_interface.h
 )
 set(MSAN_UNITTEST_COMMON_CFLAGS
-  -I${COMPILER_RT_LIBCXX_PATH}/include
+  -nostdinc++
+  -isystem ${COMPILER_RT_LIBCXX_PATH}/include
   ${COMPILER_RT_TEST_CFLAGS}
   ${COMPILER_RT_GTEST_CFLAGS}
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/msan
-  -stdlib=libc++
   -g
   -O2
   -fno-exceptions
@@ -44,6 +44,8 @@ set(MSAN_UNITTEST_INSTRUMENTED_CFLAGS
 )
 set(MSAN_UNITTEST_LINK_FLAGS
   -fsanitize=memory
+  # Don't need -stdlib=libc++ because we explicitly list libc++.so in the linker
+  # inputs.
   # FIXME: we build libcxx without cxxabi and need libstdc++ to provide it.
   -lstdc++
 )
