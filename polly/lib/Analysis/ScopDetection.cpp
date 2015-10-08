@@ -156,11 +156,6 @@ static cl::opt<bool>
                 cl::Hidden, cl::init(false), cl::ZeroOrMore,
                 cl::cat(PollyCategory));
 
-static cl::opt<bool> AllowNonSCEVBackedgeTakenCount(
-    "polly-allow-non-scev-backedge-taken-count",
-    cl::desc("Allow loops even if SCEV cannot provide a trip count"),
-    cl::Hidden, cl::init(true), cl::ZeroOrMore, cl::cat(PollyCategory));
-
 /// @brief The minimal trip count under which loops are considered unprofitable.
 static const unsigned MIN_LOOP_TRIP_COUNT = 8;
 
