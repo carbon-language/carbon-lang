@@ -53,7 +53,7 @@
 // CHECK3-LABEL: define linkonce_odr i32 @_Z2eiv()
 
 // RUN: echo "MS C Mode tests:"
-// RUN: %clang_cc1 %s -triple i386-unknown-unknown -O1 -disable-llvm-optzns -emit-llvm -o - -std=c99 -fms-compatibility | FileCheck %s --check-prefix=CHECK4
+// RUN: %clang_cc1 %s -triple i386-pc-win32 -O1 -disable-llvm-optzns -emit-llvm -o - -std=c99 | FileCheck %s --check-prefix=CHECK4
 // CHECK4-NOT: define weak_odr void @_Exit(
 // CHECK4-LABEL: define weak_odr i32 @ei()
 // CHECK4-LABEL: define i32 @bar()

@@ -5033,9 +5033,10 @@ CharUnits ASTContext::getObjCEncodingTypeSize(QualType type) const {
 }
 
 bool ASTContext::isMSStaticDataMemberInlineDefinition(const VarDecl *VD) const {
-  return getLangOpts().MSVCCompat && VD->isStaticDataMember() &&
-         VD->getType()->isIntegralOrEnumerationType() &&
-         VD->isFirstDecl() && !VD->isOutOfLine() && VD->hasInit();
+  return getTargetInfo().getCXXABI().isMicrosoft() &&
+         VD->isStaticDataMember() &&
+         VD->getType()->isIntegralOrEnumerationType() && VD->isFirstDecl() &&
+         !VD->isOutOfLine() && VD->hasInit();
 }
 
 static inline 
@@ -8270,7 +8271,8 @@ static GVALinkage basicGVALinkageForFunction(const ASTContext &Context,
   if (!FD->isInlined())
     return External;
 
-  if ((!Context.getLangOpts().CPlusPlus && !Context.getLangOpts().MSVCCompat &&
+  if ((!Context.getLangOpts().CPlusPlus &&
+       !Context.getTargetInfo().getCXXABI().isMicrosoft() &&
        !FD->hasAttr<DLLExportAttr>()) ||
       FD->hasAttr<GNUInlineAttr>()) {
     // FIXME: This doesn't match gcc's behavior for dllexport inline functions.
@@ -8346,7 +8348,8 @@ static GVALinkage basicGVALinkageForVariable(const ASTContext &Context,
     return GVA_StrongExternal;
 
   case TSK_ExplicitSpecialization:
-    return Context.getLangOpts().MSVCCompat && VD->isStaticDataMember()
+    return Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+                   VD->isStaticDataMember()
                ? GVA_StrongODR
                : GVA_StrongExternal;
 

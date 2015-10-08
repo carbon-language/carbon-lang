@@ -175,7 +175,7 @@ namespace {
 
       // For MSVC compatibility, treat declarations of static data members with
       // inline initializers as definitions.
-      if (Ctx->getLangOpts().MSVCCompat) {
+      if (Ctx->getTargetInfo().getCXXABI().isMicrosoft()) {
         for (Decl *Member : D->decls()) {
           if (VarDecl *VD = dyn_cast<VarDecl>(Member)) {
             if (Ctx->isMSStaticDataMemberInlineDefinition(VD) &&

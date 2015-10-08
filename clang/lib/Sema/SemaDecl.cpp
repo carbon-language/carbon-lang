@@ -11768,9 +11768,10 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                           UPPC_FixedUnderlyingType))
         EnumUnderlying = Context.IntTy.getTypePtr();
 
-    } else if (getLangOpts().MSVCCompat)
+    } else if (Context.getTargetInfo().getCXXABI().isMicrosoft()) {
       // Microsoft enums are always of int type.
       EnumUnderlying = Context.IntTy.getTypePtr();
+    }
   }
 
   DeclContext *SearchDC = CurContext;

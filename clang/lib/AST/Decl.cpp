@@ -2703,7 +2703,8 @@ bool FunctionDecl::isMSExternInline() const {
   assert(isInlined() && "expected to get called on an inlined function!");
 
   const ASTContext &Context = getASTContext();
-  if (!Context.getLangOpts().MSVCCompat && !hasAttr<DLLExportAttr>())
+  if (!Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+      !hasAttr<DLLExportAttr>())
     return false;
 
   for (const FunctionDecl *FD = getMostRecentDecl(); FD;
