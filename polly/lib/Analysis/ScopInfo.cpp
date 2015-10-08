@@ -1389,6 +1389,26 @@ void ScopStmt::hoistMemoryAccesses(MemoryAccessList &InvMAs,
   DomainCtx = isl_set_detect_equalities(DomainCtx);
   DomainCtx = isl_set_coalesce(DomainCtx);
 
+  Scop &S = *getParent();
+  ScalarEvolution &SE = *S.getSE();
+
+  // Project out all parameters that relate to loads in this statement that
+  // we will hoist. Otherwise we would have cyclic dependences on the
+  // constraints under which the hoisted loads are executed and we could not
+  // determine an order in which to preload them. This happens because not only
+  // lower bounds are part of the domain but also upper bounds.
+  for (MemoryAccess *MA : InvMAs) {
+    Instruction *AccInst = MA->getAccessInstruction();
+    if (SE.isSCEVable(AccInst->getType())) {
+      isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));
+      if (ParamId) {
+        int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
+        DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
+      }
+      isl_id_free(ParamId);
+    }
+  }
+
   for (MemoryAccess *MA : InvMAs)
     TargetList.push_back(std::make_pair(MA, isl_set_copy(DomainCtx)));
 
