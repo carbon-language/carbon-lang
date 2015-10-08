@@ -786,6 +786,21 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (!hasUnwindExceptions(LangOpts))
     B.addAttribute(llvm::Attribute::NoUnwind);
 
+  if (LangOpts.getStackProtector() == LangOptions::SSPOn)
+    B.addAttribute(llvm::Attribute::StackProtect);
+  else if (LangOpts.getStackProtector() == LangOptions::SSPStrong)
+    B.addAttribute(llvm::Attribute::StackProtectStrong);
+  else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
+    B.addAttribute(llvm::Attribute::StackProtectReq);
+
+  if (!D) {
+    F->addAttributes(llvm::AttributeSet::FunctionIndex,
+                     llvm::AttributeSet::get(
+                         F->getContext(),
+                         llvm::AttributeSet::FunctionIndex, B));
+    return;
+  }
+
   if (D->hasAttr<NakedAttr>()) {
     // Naked implies noinline: we should not be inlining such functions.
     B.addAttribute(llvm::Attribute::Naked);
@@ -809,13 +824,6 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   if (D->hasAttr<MinSizeAttr>())
     B.addAttribute(llvm::Attribute::MinSize);
-
-  if (LangOpts.getStackProtector() == LangOptions::SSPOn)
-    B.addAttribute(llvm::Attribute::StackProtect);
-  else if (LangOpts.getStackProtector() == LangOptions::SSPStrong)
-    B.addAttribute(llvm::Attribute::StackProtectStrong);
-  else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
-    B.addAttribute(llvm::Attribute::StackProtectReq);
 
   F->addAttributes(llvm::AttributeSet::FunctionIndex,
                    llvm::AttributeSet::get(
