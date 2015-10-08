@@ -2725,6 +2725,14 @@ bool X86TargetInfo::initFeatureMap(
           FeaturesVec.end())
     Features["prfchw"] = true;
 
+  // Additionally, if SSE is enabled and mmx is not explicitly disabled,
+  // then enable MMX.
+  I = Features.find("sse");
+  if (I != Features.end() && I->getValue() == true &&
+      std::find(FeaturesVec.begin(), FeaturesVec.end(), "-mmx") ==
+          FeaturesVec.end())
+    Features["mmx"] = true;
+
   return true;
 }
 
@@ -3003,17 +3011,6 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
     Diags.Report(diag::err_target_unsupported_fpmath) << "387";
     return false;
   }
-
-  // Don't tell the backend if we're turning off mmx; it will end up disabling
-  // SSE, which we don't want.
-  // Additionally, if SSE is enabled and mmx is not explicitly disabled,
-  // then enable MMX.
-  std::vector<std::string>::iterator it;
-  it = std::find(Features.begin(), Features.end(), "-mmx");
-  if (it != Features.end())
-    Features.erase(it);
-  else if (SSELevel > NoSSE)
-    MMX3DNowLevel = std::max(MMX3DNowLevel, MMX);
 
   SimdDefaultAlign =
       hasFeature("avx512f") ? 512 : hasFeature("avx") ? 256 : 128;
