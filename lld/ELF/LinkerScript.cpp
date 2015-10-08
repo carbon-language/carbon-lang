@@ -41,6 +41,7 @@ private:
   void readGroup();
   void readOutput();
   void readOutputFormat();
+  void readSearchDir();
 
   std::vector<StringRef> Tokens;
   size_t Pos = 0;
@@ -58,6 +59,8 @@ void LinkerScript::run() {
       readOutput();
     } else if (Tok == "OUTPUT_FORMAT") {
       readOutputFormat();
+    } else if (Tok == "SEARCH_DIR") {
+      readSearchDir();
     } else {
       error("unknown directive: " + Tok);
     }
@@ -170,6 +173,12 @@ void LinkerScript::readOutputFormat() {
   // Error checking only for now.
   expect("(");
   next();
+  expect(")");
+}
+
+void LinkerScript::readSearchDir() {
+  expect("(");
+  Config->InputSearchPaths.push_back(next());
   expect(")");
 }
 
