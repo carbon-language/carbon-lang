@@ -546,6 +546,9 @@ EmulateInstructionMIPS::GetOpcodeForInstruction (const char *op_name)
         { "LWR",        &EmulateInstructionMIPS::Emulate_LDST_Imm,          "LWR   rt, offset(base)" },
         { "LWRE",       &EmulateInstructionMIPS::Emulate_LDST_Imm,          "LWRE  rt, offset(base)" },
         { "LWXC1",      &EmulateInstructionMIPS::Emulate_LDST_Reg,          "LWXC1 fd, index (base)" },
+        { "LLX",        &EmulateInstructionMIPS::Emulate_LDST_Imm,          "LLX   rt, offset(base)" },
+        { "LLXE",       &EmulateInstructionMIPS::Emulate_LDST_Imm,          "LLXE  rt, offset(base)" },
+        { "LLDX",       &EmulateInstructionMIPS::Emulate_LDST_Imm,          "LLDX  rt, offset(base)" },
 
         { "SB",         &EmulateInstructionMIPS::Emulate_LDST_Imm,          "SB    rt, offset(base)" },
         { "SBE",        &EmulateInstructionMIPS::Emulate_LDST_Imm,          "SBE   rt, offset(base)" },
@@ -569,6 +572,21 @@ EmulateInstructionMIPS::GetOpcodeForInstruction (const char *op_name)
         { "SWR",        &EmulateInstructionMIPS::Emulate_LDST_Imm,          "SWR   rt, offset(base)" },
         { "SWRE",       &EmulateInstructionMIPS::Emulate_LDST_Imm,          "SWRE  rt, offset(base)" },
         { "SWXC1",      &EmulateInstructionMIPS::Emulate_LDST_Reg,          "SWXC1 fs, index (base)" },
+        { "SCX",        &EmulateInstructionMIPS::Emulate_LDST_Imm,          "SCX   rt, offset(base)" },
+        { "SCXE",       &EmulateInstructionMIPS::Emulate_LDST_Imm,          "SCXE  rt, offset(base)" },
+        { "SCDX",       &EmulateInstructionMIPS::Emulate_LDST_Imm,          "SCDX  rt, offset(base)" },
+
+        //----------------------------------------------------------------------
+        // MicroMIPS Load/Store instructions
+        //----------------------------------------------------------------------
+        { "LBU16_MM",      &EmulateInstructionMIPS::Emulate_LDST_Imm,       "LBU16 rt, decoded_offset(base)"       },
+        { "LHU16_MM",      &EmulateInstructionMIPS::Emulate_LDST_Imm,       "LHU16 rt, left_shifted_offset(base)"  },
+        { "LW16_MM",       &EmulateInstructionMIPS::Emulate_LDST_Imm,       "LW16  rt, left_shifted_offset(base)"  },
+        { "LWGP_MM",       &EmulateInstructionMIPS::Emulate_LDST_Imm,       "LWGP  rt, left_shifted_offset(gp)"    },
+        { "SH16_MM",       &EmulateInstructionMIPS::Emulate_LDST_Imm,       "SH16  rt, left_shifted_offset(base)"  },
+        { "SW16_MM",       &EmulateInstructionMIPS::Emulate_LDST_Imm,       "SW16  rt, left_shifted_offset(base)"  },
+        { "SW_MM",         &EmulateInstructionMIPS::Emulate_LDST_Imm,       "SWSP  rt, left_shifted_offset(base)"  },
+        { "SB16_MM",       &EmulateInstructionMIPS::Emulate_LDST_Imm,       "SB16  rt, offset(base)"               },
 
         //----------------------------------------------------------------------
         // Branch instructions
@@ -1097,9 +1115,29 @@ EmulateInstructionMIPS::Emulate_SWSP (llvm::MCInst& insn)
     bool success = false;
     uint32_t imm5 = insn.getOperand(2).getImm();
     uint32_t src, base;
+    Context bad_vaddr_context;
+    uint32_t address;
 
     src = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
     base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
+
+    RegisterInfo reg_info_base;
+
+    if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + base, reg_info_base))
+        return false;
+
+    // read base register
+    address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
+    if (!success)
+        return false;
+
+    // destination address
+    address = address + imm5;
+
+    // We use bad_vaddr_context to store base address which is used by H/W watchpoint
+    // Set the bad_vaddr register with base address used in the instruction
+    bad_vaddr_context.type = eContextInvalid;
+    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, dwarf_bad_mips, address);
 
     // We look for sp based non-volatile register stores.
     if (base == dwarf_sp_mips && nonvolatile_reg_p (src))
@@ -1107,18 +1145,6 @@ EmulateInstructionMIPS::Emulate_SWSP (llvm::MCInst& insn)
         uint32_t address;
         RegisterInfo reg_info_base;
         RegisterInfo reg_info_src;
-
-        if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + base, reg_info_base)
-            || !GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + src, reg_info_src))
-            return false;
-
-        // read SP
-        address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
-        if (!success)
-            return false;
-
-        // destination address
-        address = address + imm5;
 
         Context context;
         RegisterValue data_src;
@@ -1226,6 +1252,23 @@ EmulateInstructionMIPS::Emulate_LWSP (llvm::MCInst& insn)
     uint32_t src = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
     uint32_t base = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
     uint32_t imm5 = insn.getOperand(2).getImm();
+    Context bad_vaddr_context;
+
+    RegisterInfo reg_info_base;
+    if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + base, reg_info_base))
+        return false;
+
+    // read base register
+    uint32_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
+    if (!success)
+        return false;
+
+    base_address = base_address + imm5;
+
+    // We use bad_vaddr_context to store base address which is used by H/W watchpoint
+    // Set the bad_vaddr register with base address used in the instruction
+    bad_vaddr_context.type = eContextInvalid;
+    WriteRegisterUnsigned (bad_vaddr_context, eRegisterKindDWARF, dwarf_bad_mips, base_address);
 
     if (base == dwarf_sp_mips && nonvolatile_reg_p (src))
     {
@@ -1234,12 +1277,6 @@ EmulateInstructionMIPS::Emulate_LWSP (llvm::MCInst& insn)
 
         if (!GetRegisterInfo (eRegisterKindDWARF, dwarf_zero_mips + src, reg_info_src))
             return false;
-
-        uint32_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_zero_mips + base, 0, &success);
-        if (!success)
-            return false;
-
-        base_address = base_address + imm5;
 
         Context context;
         context.type = eContextPopRegisterOffStack;
