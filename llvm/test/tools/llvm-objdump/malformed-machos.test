@@ -12,3 +12,9 @@
 # RUN:   | FileCheck -check-prefix=m0006 %s 
 
 # m0006: ivarLayout 0x8
+
+# RUN: llvm-objdump -macho -objc-meta-data \
+# RUN:   %p/Inputs/malformed-machos/mem-crup-0006.macho \
+# RUN:   | FileCheck -check-prefix=m0010 %s 
+
+# m0010: 00000000000010e0 0x10e8 _OBJC_CLASS_
