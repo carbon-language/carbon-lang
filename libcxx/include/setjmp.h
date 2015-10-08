@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- csetjmp ----------------------------------===//
+//===--------------------------- setjmp.h ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,18 +8,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CSETJMP
-#define _LIBCPP_CSETJMP
+#ifndef _LIBCPP_SETJMP_H
+#define _LIBCPP_SETJMP_H
 
 /*
-    csetjmp synopsis
+    setjmp.h synopsis
 
 Macros:
 
     setjmp
-
-namespace std
-{
 
 Types:
 
@@ -27,22 +24,17 @@ Types:
 
 void longjmp(jmp_buf env, int val);
 
-}  // std
-
 */
 
 #include <__config>
-#include <setjmp.h>
+#include_next <setjmp.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+#ifndef setjmp
+#define setjmp(env) setjmp(env)
+#endif
 
-using ::jmp_buf;
-using ::longjmp;
-
-_LIBCPP_END_NAMESPACE_STD
-
-#endif  // _LIBCPP_CSETJMP
+#endif  // _LIBCPP_SETJMP_H

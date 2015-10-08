@@ -12,6 +12,10 @@
 #include <setjmp.h>
 #include <type_traits>
 
+#ifndef setjmp
+#error setjmp not defined
+#endif
+
 int main()
 {
     jmp_buf jb;
