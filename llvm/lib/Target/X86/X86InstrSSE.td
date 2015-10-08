@@ -4611,7 +4611,7 @@ multiclass sse2_pinsrw<bit Is2Addr = 1> {
 }
 
 // Extract
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoBWI] in
 def VPEXTRWri : Ii8<0xC5, MRMSrcReg,
                     (outs GR32orGR64:$dst), (ins VR128:$src1, u8imm:$src2),
                     "vpextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -4626,7 +4626,7 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                Sched<[WriteShuffleLd, ReadAfterLd]>;
 
 // Insert
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoBWI] in
 defm VPINSRW : sse2_pinsrw<0>, PD, VEX_4V;
 
 let Predicates = [UseSSE2], Constraints = "$src1 = $dst" in
@@ -6156,7 +6156,7 @@ multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
                                                  imm:$src2)))), addr:$dst)]>;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoBWI] in
   defm VPEXTRB : SS41I_extract8<0x14, "vpextrb">, VEX;
 
 defm PEXTRB      : SS41I_extract8<0x14, "pextrb">;
@@ -6181,7 +6181,7 @@ multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
                                                   imm:$src2)))), addr:$dst)]>;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoBWI] in
   defm VPEXTRW : SS41I_extract16<0x15, "vpextrw">, VEX;
 
 defm PEXTRW      : SS41I_extract16<0x15, "pextrw">;
@@ -6205,7 +6205,7 @@ multiclass SS41I_extract32<bits<8> opc, string OpcodeStr> {
                           addr:$dst)]>;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoDQI] in
   defm VPEXTRD : SS41I_extract32<0x16, "vpextrd">, VEX;
 
 defm PEXTRD      : SS41I_extract32<0x16, "pextrd">;
@@ -6228,7 +6228,7 @@ multiclass SS41I_extract64<bits<8> opc, string OpcodeStr> {
                           addr:$dst)]>, REX_W;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoDQI] in
   defm VPEXTRQ : SS41I_extract64<0x16, "vpextrq">, VEX, VEX_W;
 
 defm PEXTRQ      : SS41I_extract64<0x16, "pextrq">;
@@ -6296,7 +6296,7 @@ multiclass SS41I_insert8<bits<8> opc, string asm, bit Is2Addr = 1> {
                    imm:$src3))]>, Sched<[WriteShuffleLd, ReadAfterLd]>;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoBWI] in
   defm VPINSRB : SS41I_insert8<0x20, "vpinsrb", 0>, VEX_4V;
 let Constraints = "$src1 = $dst" in
   defm PINSRB  : SS41I_insert8<0x20, "pinsrb">;
@@ -6322,7 +6322,7 @@ multiclass SS41I_insert32<bits<8> opc, string asm, bit Is2Addr = 1> {
                           imm:$src3)))]>, Sched<[WriteShuffleLd, ReadAfterLd]>;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoDQI] in
   defm VPINSRD : SS41I_insert32<0x22, "vpinsrd", 0>, VEX_4V;
 let Constraints = "$src1 = $dst" in
   defm PINSRD : SS41I_insert32<0x22, "pinsrd">;
@@ -6348,7 +6348,7 @@ multiclass SS41I_insert64<bits<8> opc, string asm, bit Is2Addr = 1> {
                           imm:$src3)))]>, Sched<[WriteShuffleLd, ReadAfterLd]>;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX, NoDQI] in
   defm VPINSRQ : SS41I_insert64<0x22, "vpinsrq", 0>, VEX_4V, VEX_W;
 let Constraints = "$src1 = $dst" in
   defm PINSRQ : SS41I_insert64<0x22, "pinsrq">, REX_W;

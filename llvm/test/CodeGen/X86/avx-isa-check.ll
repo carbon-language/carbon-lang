@@ -267,3 +267,59 @@ define <16 x i16> @shuffle_v16i16_zz_zz_zz_zz_zz_zz_zz_16_zz_zz_zz_zz_zz_zz_zz_2
   %shuffle = shufflevector <16 x i16> zeroinitializer, <16 x i16> %a, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 16, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 24>
   ret <16 x i16> %shuffle
 }
+
+define i64 @extract_v2i64(<2 x i64> %x, i64* %dst) {
+  %r1 = extractelement <2 x i64> %x, i32 0
+  %r2 = extractelement <2 x i64> %x, i32 1
+  store i64 %r2, i64* %dst, align 1
+  ret i64 %r1
+}
+
+define i32 @extract_v4i32(<4 x i32> %x, i32* %dst) {
+  %r1 = extractelement <4 x i32> %x, i32 1
+  %r2 = extractelement <4 x i32> %x, i32 3
+  store i32 %r2, i32* %dst, align 1
+  ret i32 %r1
+}
+
+define i16 @extract_v8i16(<8 x i16> %x, i16* %dst) {
+  %r1 = extractelement <8 x i16> %x, i32 1
+  %r2 = extractelement <8 x i16> %x, i32 3
+  store i16 %r2, i16* %dst, align 1
+  ret i16 %r1
+}
+
+define i8 @extract_v16i8(<16 x i8> %x, i8* %dst) {
+  %r1 = extractelement <16 x i8> %x, i32 1
+  %r2 = extractelement <16 x i8> %x, i32 3
+  store i8 %r2, i8* %dst, align 1
+  ret i8 %r1
+}
+
+define <2 x i64> @insert_v2i64(<2 x i64> %x, i64 %y , i64* %ptr) {
+  %val = load i64, i64* %ptr
+  %r1 = insertelement <2 x i64> %x, i64 %val, i32 1
+  %r2 = insertelement <2 x i64> %r1, i64 %y, i32 3
+  ret <2 x i64> %r2
+}
+
+define <4 x i32> @insert_v4i32(<4 x i32> %x, i32 %y, i32* %ptr) {
+  %val = load i32, i32* %ptr
+  %r1 = insertelement <4 x i32> %x, i32 %val, i32 1
+  %r2 = insertelement <4 x i32> %r1, i32 %y, i32 3
+  ret <4 x i32> %r2
+}
+
+define <8 x i16> @insert_v8i16(<8 x i16> %x, i16 %y, i16* %ptr) {
+  %val = load i16, i16* %ptr
+  %r1 = insertelement <8 x i16> %x, i16 %val, i32 1
+  %r2 = insertelement <8 x i16> %r1, i16 %y, i32 5
+  ret <8 x i16> %r2
+}
+
+define <16 x i8> @insert_v16i8(<16 x i8> %x, i8 %y, i8* %ptr) {
+  %val = load i8, i8* %ptr
+  %r1 = insertelement <16 x i8> %x, i8 %val, i32 3
+  %r2 = insertelement <16 x i8> %r1, i8 %y, i32 10
+  ret <16 x i8> %r2
+}
