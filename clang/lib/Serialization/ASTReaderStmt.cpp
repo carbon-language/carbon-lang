@@ -1996,6 +1996,10 @@ void OMPClauseReader::VisitOMPReductionClause(OMPReductionClause *C) {
   Vars.clear();
   for (unsigned i = 0; i != NumVars; ++i)
     Vars.push_back(Reader->Reader.ReadSubExpr());
+  C->setPrivates(Vars);
+  Vars.clear();
+  for (unsigned i = 0; i != NumVars; ++i)
+    Vars.push_back(Reader->Reader.ReadSubExpr());
   C->setLHSExprs(Vars);
   Vars.clear();
   for (unsigned i = 0; i != NumVars; ++i)

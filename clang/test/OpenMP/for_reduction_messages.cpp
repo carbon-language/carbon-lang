@@ -64,6 +64,8 @@ public:
 S3 h, k;
 #pragma omp threadprivate(h) // expected-note 2 {{defined as threadprivate or thread local}}
 
+char *get();
+
 template <class T>       // expected-note {{declared here}}
 T tmain(T argc) {
   const T d = T();       // expected-note 4 {{'d' defined here}}
@@ -194,6 +196,14 @@ T tmain(T argc) {
     foo();
 #pragma omp parallel private(fl)  // expected-note 2 {{defined as private}}
 #pragma omp for reduction(+ : fl) // expected-error 2 {{reduction variable must be shared}}
+  for (int i = 0; i < 10; ++i)
+    foo();
+#pragma omp parallel private(qa)  // expected-note 2 {{defined as private}}
+#pragma omp for reduction(+ : qa[1], get()[0]) // expected-error 2 {{reduction variable must be shared}} expected-error {{expected variable name as a base of the array subscript}}
+  for (int i = 0; i < 10; ++i)
+    foo();
+#pragma omp parallel shared(qa)
+#pragma omp for reduction(+ : qa[1], qa[0]) // expected-error 2 {{variable can appear only once in OpenMP 'reduction' clause}} expected-note 2 {{previously referenced here}}
   for (int i = 0; i < 10; ++i)
     foo();
 #pragma omp parallel reduction(* : fl) // expected-note 2 {{defined as reduction}}
@@ -351,6 +361,14 @@ int main(int argc, char **argv) {
     foo();
 #pragma omp parallel private(fl)  // expected-note {{defined as private}}
 #pragma omp for reduction(+ : fl) // expected-error {{reduction variable must be shared}}
+  for (int i = 0; i < 10; ++i)
+    foo();
+#pragma omp parallel private(argv)  // expected-note {{defined as private}}
+#pragma omp for reduction(+ : argv[1], get()[0]) // expected-error {{reduction variable must be shared}} expected-error {{expected variable name as a base of the array subscript}}
+  for (int i = 0; i < 10; ++i)
+    foo();
+#pragma omp parallel shared(qa)
+#pragma omp for reduction(+ : qa[1], qa[0]) // expected-error {{variable can appear only once in OpenMP 'reduction' clause}} expected-note {{previously referenced here}}
   for (int i = 0; i < 10; ++i)
     foo();
 #pragma omp parallel reduction(* : fl) // expected-note {{defined as reduction}}

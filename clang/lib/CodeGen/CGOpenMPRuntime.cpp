@@ -922,6 +922,26 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
   return RTLFn;
 }
 
+static llvm::Value *getTypeSize(CodeGenFunction &CGF, QualType Ty) {
+  auto &C = CGF.getContext();
+  llvm::Value *Size = nullptr;
+  auto SizeInChars = C.getTypeSizeInChars(Ty);
+  if (SizeInChars.isZero()) {
+    // getTypeSizeInChars() returns 0 for a VLA.
+    while (auto *VAT = C.getAsVariableArrayType(Ty)) {
+      llvm::Value *ArraySize;
+      std::tie(ArraySize, Ty) = CGF.getVLASize(VAT);
+      Size = Size ? CGF.Builder.CreateNUWMul(Size, ArraySize) : ArraySize;
+    }
+    SizeInChars = C.getTypeSizeInChars(Ty);
+    assert(!SizeInChars.isZero());
+    Size = CGF.Builder.CreateNUWMul(
+        Size, llvm::ConstantInt::get(CGF.SizeTy, SizeInChars.getQuantity()));
+  } else
+    Size = llvm::ConstantInt::get(CGF.SizeTy, SizeInChars.getQuantity());
+  return Size;
+}
+
 llvm::Constant *CGOpenMPRuntime::createForStaticInitFunction(unsigned IVSize,
                                                              bool IVSigned) {
   assert((IVSize == 32 || IVSize == 64) &&
@@ -1438,17 +1458,16 @@ void CGOpenMPRuntime::emitTaskgroupRegion(CodeGenFunction &CGF,
 
 /// Given an array of pointers to variables, project the address of a
 /// given variable.
-static Address emitAddrOfVarFromArray(CodeGenFunction &CGF,
-                                      Address Array, unsigned Index,
-                                      const VarDecl *Var) {
+static Address emitAddrOfVarFromArray(CodeGenFunction &CGF, Address Array,
+                                      unsigned Index, const VarDecl *Var) {
   // Pull out the pointer to the variable.
   Address PtrAddr =
-    CGF.Builder.CreateConstArrayGEP(Array, Index, CGF.getPointerSize());
+      CGF.Builder.CreateConstArrayGEP(Array, Index, CGF.getPointerSize());
   llvm::Value *Ptr = CGF.Builder.CreateLoad(PtrAddr);
 
   Address Addr = Address(Ptr, CGF.getContext().getDeclAlign(Var));
-  Addr = CGF.Builder.CreateElementBitCast(Addr,
-                                      CGF.ConvertTypeForMem(Var->getType()));
+  Addr = CGF.Builder.CreateElementBitCast(
+      Addr, CGF.ConvertTypeForMem(Var->getType()));
   return Addr;
 }
 
@@ -1569,8 +1588,7 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     auto *CpyFn = emitCopyprivateCopyFunction(
         CGM, CGF.ConvertTypeForMem(CopyprivateArrayTy)->getPointerTo(),
         CopyprivateVars, SrcExprs, DstExprs, AssignmentOps);
-    auto *BufSize = llvm::ConstantInt::get(
-        CGM.SizeTy, C.getTypeSizeInChars(CopyprivateArrayTy).getQuantity());
+    auto *BufSize = getTypeSize(CGF, CopyprivateArrayTy);
     Address CL =
       CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(CopyprivateList,
                                                       CGF.VoidPtrTy);
@@ -2199,27 +2217,6 @@ emitTaskPrivateMappingFunction(CodeGenModule &CGM, SourceLocation Loc,
   return TaskPrivatesMap;
 }
 
-static llvm::Value *getTypeSize(CodeGenFunction &CGF, QualType Ty) {
-  auto &C = CGF.getContext();
-  llvm::Value *Size;
-  auto SizeInChars = C.getTypeSizeInChars(Ty);
-  if (SizeInChars.isZero()) {
-    // getTypeSizeInChars() returns 0 for a VLA.
-    Size = nullptr;
-    while (auto *VAT = C.getAsVariableArrayType(Ty)) {
-      llvm::Value *ArraySize;
-      std::tie(ArraySize, Ty) = CGF.getVLASize(VAT);
-      Size = Size ? CGF.Builder.CreateNUWMul(Size, ArraySize) : ArraySize;
-    }
-    SizeInChars = C.getTypeSizeInChars(Ty);
-    assert(!SizeInChars.isZero());
-    Size = CGF.Builder.CreateNUWMul(
-        Size, llvm::ConstantInt::get(CGF.SizeTy, SizeInChars.getQuantity()));
-  } else
-    Size = llvm::ConstantInt::get(CGF.SizeTy, SizeInChars.getQuantity());
-  return Size;
-}
-
 static int array_pod_sort_comparator(const PrivateDataTy *P1,
                                      const PrivateDataTy *P2) {
   return P1->first < P2->first ? 1 : (P2->first < P1->first ? -1 : 0);
@@ -2277,8 +2274,7 @@ void CGOpenMPRuntime::emitTaskCall(
       C.getPointerType(KmpTaskTWithPrivatesQTy);
   auto *KmpTaskTWithPrivatesTy = CGF.ConvertType(KmpTaskTWithPrivatesQTy);
   auto *KmpTaskTWithPrivatesPtrTy = KmpTaskTWithPrivatesTy->getPointerTo();
-  auto KmpTaskTWithPrivatesTySize =
-      CGM.getSize(C.getTypeSizeInChars(KmpTaskTWithPrivatesQTy));
+  auto *KmpTaskTWithPrivatesTySize = getTypeSize(CGF, KmpTaskTWithPrivatesQTy);
   QualType SharedsPtrTy = C.getPointerType(SharedsTy);
 
   // Emit initial values for private copies (if any).
@@ -2319,12 +2315,12 @@ void CGOpenMPRuntime::emitTaskCall(
                                      CGF.Builder.getInt32(/*C=*/0))
           : CGF.Builder.getInt32(Final.getInt() ? FinalFlag : 0);
   TaskFlags = CGF.Builder.CreateOr(TaskFlags, CGF.Builder.getInt32(Flags));
-  auto SharedsSize = C.getTypeSizeInChars(SharedsTy);
-  llvm::Value *AllocArgs[] = {
-      emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc), TaskFlags,
-      KmpTaskTWithPrivatesTySize, CGM.getSize(SharedsSize),
-      CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(TaskEntry,
-                                                      KmpRoutineEntryPtrTy)};
+  auto *SharedsSize = getTypeSize(CGF, SharedsTy);
+  llvm::Value *AllocArgs[] = {emitUpdateLocation(CGF, Loc),
+                              getThreadID(CGF, Loc), TaskFlags,
+                              KmpTaskTWithPrivatesTySize, SharedsSize,
+                              CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+                                  TaskEntry, KmpRoutineEntryPtrTy)};
   auto *NewTask = CGF.EmitRuntimeCall(
       createRuntimeFunction(OMPRTL__kmpc_omp_task_alloc), AllocArgs);
   auto *NewTaskNewTaskTTy = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
@@ -2442,8 +2438,8 @@ void CGOpenMPRuntime::emitTaskCall(
     enum RTLDependenceKindTy { DepIn = 1, DepOut = 2, DepInOut = 3 };
     enum RTLDependInfoFieldsTy { BaseAddr, Len, Flags };
     RecordDecl *KmpDependInfoRD;
-    QualType FlagsTy = C.getIntTypeForBitwidth(
-        C.toBits(C.getTypeSizeInChars(C.BoolTy)), /*Signed=*/false);
+    QualType FlagsTy =
+        C.getIntTypeForBitwidth(C.getTypeSize(C.BoolTy), /*Signed=*/false);
     llvm::Type *LLVMFlagsTy = CGF.ConvertTypeForMem(FlagsTy);
     if (KmpDependInfoTy.isNull()) {
       KmpDependInfoRD = C.buildImplicitRecord("kmp_depend_info");
@@ -2477,9 +2473,8 @@ void CGOpenMPRuntime::emitTaskCall(
             CGF.Builder.CreatePtrToInt(Addr.getPointer(), CGM.SizeTy);
         llvm::Value *UpIntPtr = CGF.Builder.CreatePtrToInt(UpAddr, CGM.SizeTy);
         Size = CGF.Builder.CreateNUWSub(UpIntPtr, LowIntPtr);
-      } else {
+      } else
         Size = getTypeSize(CGF, Ty);
-      }
       auto Base = CGF.MakeAddrLValue(
           CGF.Builder.CreateConstArrayGEP(DependenciesArray, i, DependencySize),
           KmpDependInfoTy);
@@ -2596,8 +2591,89 @@ void CGOpenMPRuntime::emitTaskCall(
   }
 }
 
+/// \brief Emit reduction operation for each element of array (required for
+/// array sections) LHS op = RHS.
+/// \param Type Type of array.
+/// \param LHSVar Variable on the left side of the reduction operation
+/// (references element of array in original variable).
+/// \param RHSVar Variable on the right side of the reduction operation
+/// (references element of array in original variable).
+/// \param RedOpGen Generator of reduction operation with use of LHSVar and
+/// RHSVar.
+void EmitOMPAggregateReduction(
+    CodeGenFunction &CGF, QualType Type, const VarDecl *LHSVar,
+    const VarDecl *RHSVar,
+    const llvm::function_ref<void(CodeGenFunction &CGF, const Expr *,
+                                  const Expr *, const Expr *)> &RedOpGen,
+    const Expr *XExpr = nullptr, const Expr *EExpr = nullptr,
+    const Expr *UpExpr = nullptr) {
+  // Perform element-by-element initialization.
+  QualType ElementTy;
+  Address LHSAddr = CGF.GetAddrOfLocalVar(LHSVar);
+  Address RHSAddr = CGF.GetAddrOfLocalVar(RHSVar);
+
+  // Drill down to the base element type on both arrays.
+  auto ArrayTy = Type->getAsArrayTypeUnsafe();
+  auto NumElements = CGF.emitArrayLength(ArrayTy, ElementTy, LHSAddr);
+
+  auto RHSBegin = RHSAddr.getPointer();
+  auto LHSBegin = LHSAddr.getPointer();
+  // Cast from pointer to array type to pointer to single element.
+  auto LHSEnd = CGF.Builder.CreateGEP(LHSBegin, NumElements);
+  // The basic structure here is a while-do loop.
+  auto BodyBB = CGF.createBasicBlock("omp.arraycpy.body");
+  auto DoneBB = CGF.createBasicBlock("omp.arraycpy.done");
+  auto IsEmpty =
+      CGF.Builder.CreateICmpEQ(LHSBegin, LHSEnd, "omp.arraycpy.isempty");
+  CGF.Builder.CreateCondBr(IsEmpty, DoneBB, BodyBB);
+
+  // Enter the loop body, making that address the current address.
+  auto EntryBB = CGF.Builder.GetInsertBlock();
+  CGF.EmitBlock(BodyBB);
+
+  CharUnits ElementSize = CGF.getContext().getTypeSizeInChars(ElementTy);
+
+  llvm::PHINode *RHSElementPHI = CGF.Builder.CreatePHI(
+      RHSBegin->getType(), 2, "omp.arraycpy.srcElementPast");
+  RHSElementPHI->addIncoming(RHSBegin, EntryBB);
+  Address RHSElementCurrent =
+      Address(RHSElementPHI,
+              RHSAddr.getAlignment().alignmentOfArrayElement(ElementSize));
+
+  llvm::PHINode *LHSElementPHI = CGF.Builder.CreatePHI(
+      LHSBegin->getType(), 2, "omp.arraycpy.destElementPast");
+  LHSElementPHI->addIncoming(LHSBegin, EntryBB);
+  Address LHSElementCurrent =
+      Address(LHSElementPHI,
+              LHSAddr.getAlignment().alignmentOfArrayElement(ElementSize));
+
+  // Emit copy.
+  CodeGenFunction::OMPPrivateScope Scope(CGF);
+  Scope.addPrivate(LHSVar, [=]() -> Address { return LHSElementCurrent; });
+  Scope.addPrivate(RHSVar, [=]() -> Address { return RHSElementCurrent; });
+  Scope.Privatize();
+  RedOpGen(CGF, XExpr, EExpr, UpExpr);
+  Scope.ForceCleanup();
+
+  // Shift the address forward by one element.
+  auto LHSElementNext = CGF.Builder.CreateConstGEP1_32(
+      LHSElementPHI, /*Idx0=*/1, "omp.arraycpy.dest.element");
+  auto RHSElementNext = CGF.Builder.CreateConstGEP1_32(
+      RHSElementPHI, /*Idx0=*/1, "omp.arraycpy.src.element");
+  // Check whether we've reached the end.
+  auto Done =
+      CGF.Builder.CreateICmpEQ(LHSElementNext, LHSEnd, "omp.arraycpy.done");
+  CGF.Builder.CreateCondBr(Done, DoneBB, BodyBB);
+  LHSElementPHI->addIncoming(LHSElementNext, CGF.Builder.GetInsertBlock());
+  RHSElementPHI->addIncoming(RHSElementNext, CGF.Builder.GetInsertBlock());
+
+  // Done.
+  CGF.EmitBlock(DoneBB, /*IsFinished=*/true);
+}
+
 static llvm::Value *emitReductionFunction(CodeGenModule &CGM,
                                           llvm::Type *ArgsType,
+                                          ArrayRef<const Expr *> Privates,
                                           ArrayRef<const Expr *> LHSExprs,
                                           ArrayRef<const Expr *> RHSExprs,
                                           ArrayRef<const Expr *> ReductionOps) {
@@ -2634,19 +2710,49 @@ static llvm::Value *emitReductionFunction(CodeGenModule &CGM,
   //  *(Type<i>*)lhs[i] = RedOp<i>(*(Type<i>*)lhs[i], *(Type<i>*)rhs[i]);
   //  ...
   CodeGenFunction::OMPPrivateScope Scope(CGF);
-  for (unsigned I = 0, E = ReductionOps.size(); I < E; ++I) {
+  auto IPriv = Privates.begin();
+  unsigned Idx = 0;
+  for (unsigned I = 0, E = ReductionOps.size(); I < E; ++I, ++IPriv, ++Idx) {
     auto RHSVar = cast<VarDecl>(cast<DeclRefExpr>(RHSExprs[I])->getDecl());
     Scope.addPrivate(RHSVar, [&]() -> Address {
-      return emitAddrOfVarFromArray(CGF, RHS, I, RHSVar);
+      return emitAddrOfVarFromArray(CGF, RHS, Idx, RHSVar);
     });
     auto LHSVar = cast<VarDecl>(cast<DeclRefExpr>(LHSExprs[I])->getDecl());
     Scope.addPrivate(LHSVar, [&]() -> Address {
-      return emitAddrOfVarFromArray(CGF, LHS, I, LHSVar);
+      return emitAddrOfVarFromArray(CGF, LHS, Idx, LHSVar);
     });
+    QualType PrivTy = (*IPriv)->getType();
+    if (PrivTy->isArrayType()) {
+      // Get array size and emit VLA type.
+      ++Idx;
+      Address Elem =
+          CGF.Builder.CreateConstArrayGEP(LHS, Idx, CGF.getPointerSize());
+      llvm::Value *Ptr = CGF.Builder.CreateLoad(Elem);
+      CodeGenFunction::OpaqueValueMapping OpaqueMap(
+          CGF,
+          cast<OpaqueValueExpr>(
+              CGF.getContext().getAsVariableArrayType(PrivTy)->getSizeExpr()),
+          RValue::get(CGF.Builder.CreatePtrToInt(Ptr, CGF.SizeTy)));
+      CGF.EmitVariablyModifiedType(PrivTy);
+    }
   }
   Scope.Privatize();
+  IPriv = Privates.begin();
+  auto ILHS = LHSExprs.begin();
+  auto IRHS = RHSExprs.begin();
   for (auto *E : ReductionOps) {
-    CGF.EmitIgnoredExpr(E);
+    if ((*IPriv)->getType()->isArrayType()) {
+      // Emit reduction for array section.
+      auto *LHSVar = cast<VarDecl>(cast<DeclRefExpr>(*ILHS)->getDecl());
+      auto *RHSVar = cast<VarDecl>(cast<DeclRefExpr>(*IRHS)->getDecl());
+      EmitOMPAggregateReduction(CGF, (*IPriv)->getType(), LHSVar, RHSVar,
+                                [=](CodeGenFunction &CGF, const Expr *,
+                                    const Expr *,
+                                    const Expr *) { CGF.EmitIgnoredExpr(E); });
+    } else
+      // Emit reduction for array subscript or single variable.
+      CGF.EmitIgnoredExpr(E);
+    ++IPriv, ++ILHS, ++IRHS;
   }
   Scope.ForceCleanup();
   CGF.FinishFunction();
@@ -2654,6 +2760,7 @@ static llvm::Value *emitReductionFunction(CodeGenModule &CGM,
 }
 
 void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
+                                    ArrayRef<const Expr *> Privates,
                                     ArrayRef<const Expr *> LHSExprs,
                                     ArrayRef<const Expr *> RHSExprs,
                                     ArrayRef<const Expr *> ReductionOps,
@@ -2697,33 +2804,68 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
 
   if (SimpleReduction) {
     CodeGenFunction::RunCleanupsScope Scope(CGF);
+    auto IPriv = Privates.begin();
+    auto ILHS = LHSExprs.begin();
+    auto IRHS = RHSExprs.begin();
     for (auto *E : ReductionOps) {
-      CGF.EmitIgnoredExpr(E);
+      if ((*IPriv)->getType()->isArrayType()) {
+        auto *LHSVar = cast<VarDecl>(cast<DeclRefExpr>(*ILHS)->getDecl());
+        auto *RHSVar = cast<VarDecl>(cast<DeclRefExpr>(*IRHS)->getDecl());
+        EmitOMPAggregateReduction(
+            CGF, (*IPriv)->getType(), LHSVar, RHSVar,
+            [=](CodeGenFunction &CGF, const Expr *, const Expr *,
+                const Expr *) { CGF.EmitIgnoredExpr(E); });
+      } else
+        CGF.EmitIgnoredExpr(E);
+      ++IPriv, ++ILHS, ++IRHS;
     }
     return;
   }
 
   // 1. Build a list of reduction variables.
   // void *RedList[<n>] = {<ReductionVars>[0], ..., <ReductionVars>[<n>-1]};
-  llvm::APInt ArraySize(/*unsigned int numBits=*/32, RHSExprs.size());
+  auto Size = RHSExprs.size();
+  for (auto *E : Privates) {
+    if (E->getType()->isArrayType())
+      // Reserve place for array size.
+      ++Size;
+  }
+  llvm::APInt ArraySize(/*unsigned int numBits=*/32, Size);
   QualType ReductionArrayTy =
       C.getConstantArrayType(C.VoidPtrTy, ArraySize, ArrayType::Normal,
                              /*IndexTypeQuals=*/0);
   Address ReductionList =
       CGF.CreateMemTemp(ReductionArrayTy, ".omp.reduction.red_list");
-  for (unsigned I = 0, E = RHSExprs.size(); I < E; ++I) {
+  auto IPriv = Privates.begin();
+  unsigned Idx = 0;
+  for (unsigned I = 0, E = RHSExprs.size(); I < E; ++I, ++IPriv, ++Idx) {
     Address Elem =
-      CGF.Builder.CreateConstArrayGEP(ReductionList, I, CGF.getPointerSize());
+      CGF.Builder.CreateConstArrayGEP(ReductionList, Idx, CGF.getPointerSize());
     CGF.Builder.CreateStore(
         CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
             CGF.EmitLValue(RHSExprs[I]).getPointer(), CGF.VoidPtrTy),
         Elem);
+    if ((*IPriv)->getType()->isArrayType()) {
+      // Store array size.
+      ++Idx;
+      Elem = CGF.Builder.CreateConstArrayGEP(ReductionList, Idx,
+                                             CGF.getPointerSize());
+      CGF.Builder.CreateStore(
+          CGF.Builder.CreateIntToPtr(
+              CGF.Builder.CreateIntCast(
+                  CGF.getVLASize(CGF.getContext().getAsVariableArrayType(
+                                     (*IPriv)->getType()))
+                      .first,
+                  CGF.SizeTy, /*isSigned=*/false),
+              CGF.VoidPtrTy),
+          Elem);
+    }
   }
 
   // 2. Emit reduce_func().
   auto *ReductionFn = emitReductionFunction(
-      CGM, CGF.ConvertTypeForMem(ReductionArrayTy)->getPointerTo(), LHSExprs,
-      RHSExprs, ReductionOps);
+      CGM, CGF.ConvertTypeForMem(ReductionArrayTy)->getPointerTo(), Privates,
+      LHSExprs, RHSExprs, ReductionOps);
 
   // 3. Create static kmp_critical_name lock = { 0 };
   auto *Lock = getCriticalRegionLock(".reduction");
@@ -2734,8 +2876,7 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
       CGF, Loc,
       static_cast<OpenMPLocationFlags>(OMP_IDENT_KMPC | OMP_ATOMIC_REDUCE));
   auto *ThreadId = getThreadID(CGF, Loc);
-  auto *ReductionArrayTySize = llvm::ConstantInt::get(
-      CGM.SizeTy, C.getTypeSizeInChars(ReductionArrayTy).getQuantity());
+  auto *ReductionArrayTySize = getTypeSize(CGF, ReductionArrayTy);
   auto *RL =
     CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(ReductionList.getPointer(),
                                                     CGF.VoidPtrTy);
@@ -2781,8 +2922,22 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
             createRuntimeFunction(WithNowait ? OMPRTL__kmpc_end_reduce_nowait
                                              : OMPRTL__kmpc_end_reduce),
             llvm::makeArrayRef(EndArgs));
+    auto IPriv = Privates.begin();
+    auto ILHS = LHSExprs.begin();
+    auto IRHS = RHSExprs.begin();
     for (auto *E : ReductionOps) {
-      CGF.EmitIgnoredExpr(E);
+      if ((*IPriv)->getType()->isArrayType()) {
+        // Emit reduction for array section.
+        auto *LHSVar = cast<VarDecl>(cast<DeclRefExpr>(*ILHS)->getDecl());
+        auto *RHSVar = cast<VarDecl>(cast<DeclRefExpr>(*IRHS)->getDecl());
+        EmitOMPAggregateReduction(
+            CGF, (*IPriv)->getType(), LHSVar, RHSVar,
+            [=](CodeGenFunction &CGF, const Expr *, const Expr *,
+                const Expr *) { CGF.EmitIgnoredExpr(E); });
+      } else
+        // Emit reduction for array subscript or single variable.
+        CGF.EmitIgnoredExpr(E);
+      ++IPriv, ++ILHS, ++IRHS;
     }
   }
 
@@ -2812,62 +2967,84 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
               createRuntimeFunction(OMPRTL__kmpc_end_reduce),
               llvm::makeArrayRef(EndArgs));
     }
-    auto I = LHSExprs.begin();
+    auto ILHS = LHSExprs.begin();
+    auto IRHS = RHSExprs.begin();
+    auto IPriv = Privates.begin();
     for (auto *E : ReductionOps) {
-      const Expr *XExpr = nullptr;
-      const Expr *EExpr = nullptr;
-      const Expr *UpExpr = nullptr;
-      BinaryOperatorKind BO = BO_Comma;
-      if (auto *BO = dyn_cast<BinaryOperator>(E)) {
-        if (BO->getOpcode() == BO_Assign) {
-          XExpr = BO->getLHS();
-          UpExpr = BO->getRHS();
+        const Expr *XExpr = nullptr;
+        const Expr *EExpr = nullptr;
+        const Expr *UpExpr = nullptr;
+        BinaryOperatorKind BO = BO_Comma;
+        if (auto *BO = dyn_cast<BinaryOperator>(E)) {
+          if (BO->getOpcode() == BO_Assign) {
+            XExpr = BO->getLHS();
+            UpExpr = BO->getRHS();
+          }
         }
-      }
-      // Try to emit update expression as a simple atomic.
-      auto *RHSExpr = UpExpr;
-      if (RHSExpr) {
-        // Analyze RHS part of the whole expression.
-        if (auto *ACO = dyn_cast<AbstractConditionalOperator>(
-                RHSExpr->IgnoreParenImpCasts())) {
-          // If this is a conditional operator, analyze its condition for
-          // min/max reduction operator.
-          RHSExpr = ACO->getCond();
+        // Try to emit update expression as a simple atomic.
+        auto *RHSExpr = UpExpr;
+        if (RHSExpr) {
+          // Analyze RHS part of the whole expression.
+          if (auto *ACO = dyn_cast<AbstractConditionalOperator>(
+                  RHSExpr->IgnoreParenImpCasts())) {
+            // If this is a conditional operator, analyze its condition for
+            // min/max reduction operator.
+            RHSExpr = ACO->getCond();
+          }
+          if (auto *BORHS =
+                  dyn_cast<BinaryOperator>(RHSExpr->IgnoreParenImpCasts())) {
+            EExpr = BORHS->getRHS();
+            BO = BORHS->getOpcode();
+          }
         }
-        if (auto *BORHS =
-                dyn_cast<BinaryOperator>(RHSExpr->IgnoreParenImpCasts())) {
-          EExpr = BORHS->getRHS();
-          BO = BORHS->getOpcode();
-        }
-      }
-      if (XExpr) {
-        auto *VD = cast<VarDecl>(cast<DeclRefExpr>(*I)->getDecl());
-        LValue X = CGF.EmitLValue(XExpr);
-        RValue E;
-        if (EExpr)
-          E = CGF.EmitAnyExpr(EExpr);
-        CGF.EmitOMPAtomicSimpleUpdateExpr(
-            X, E, BO, /*IsXLHSInRHSPart=*/true, llvm::Monotonic, Loc,
-            [&CGF, UpExpr, VD](RValue XRValue) {
-              CodeGenFunction::OMPPrivateScope PrivateScope(CGF);
-              PrivateScope.addPrivate(
-                  VD, [&CGF, VD, XRValue]() -> Address {
+        if (XExpr) {
+          auto *VD = cast<VarDecl>(cast<DeclRefExpr>(*ILHS)->getDecl());
+          auto &&AtomicRedGen = [this, BO, VD, IPriv,
+                                 Loc](CodeGenFunction &CGF, const Expr *XExpr,
+                                      const Expr *EExpr, const Expr *UpExpr) {
+            LValue X = CGF.EmitLValue(XExpr);
+            RValue E;
+            if (EExpr)
+              E = CGF.EmitAnyExpr(EExpr);
+            CGF.EmitOMPAtomicSimpleUpdateExpr(
+                X, E, BO, /*IsXLHSInRHSPart=*/true, llvm::Monotonic, Loc,
+                [&CGF, UpExpr, VD, IPriv](RValue XRValue) {
+                  CodeGenFunction::OMPPrivateScope PrivateScope(CGF);
+                  PrivateScope.addPrivate(VD, [&CGF, VD, XRValue]() -> Address {
                     Address LHSTemp = CGF.CreateMemTemp(VD->getType());
                     CGF.EmitStoreThroughLValue(
-                        XRValue,
-                        CGF.MakeAddrLValue(LHSTemp, VD->getType()));
+                        XRValue, CGF.MakeAddrLValue(LHSTemp, VD->getType()));
                     return LHSTemp;
                   });
-              (void)PrivateScope.Privatize();
-              return CGF.EmitAnyExpr(UpExpr);
-            });
-      } else {
-        // Emit as a critical region.
-        emitCriticalRegion(CGF, ".atomic_reduction", [E](CodeGenFunction &CGF) {
-          CGF.EmitIgnoredExpr(E);
-        }, Loc);
-      }
-      ++I;
+                  (void)PrivateScope.Privatize();
+                  return CGF.EmitAnyExpr(UpExpr);
+                });
+          };
+          if ((*IPriv)->getType()->isArrayType()) {
+            // Emit atomic reduction for array section.
+            auto *RHSVar = cast<VarDecl>(cast<DeclRefExpr>(*IRHS)->getDecl());
+            EmitOMPAggregateReduction(CGF, (*IPriv)->getType(), VD, RHSVar,
+                                      AtomicRedGen, XExpr, EExpr, UpExpr);
+          } else
+            // Emit atomic reduction for array subscript or single variable.
+            AtomicRedGen(CGF, XExpr, EExpr, UpExpr);
+        } else {
+          // Emit as a critical region.
+          auto &&CritRedGen = [this, E, Loc](CodeGenFunction &CGF, const Expr *,
+                                             const Expr *, const Expr *) {
+            emitCriticalRegion(
+                CGF, ".atomic_reduction",
+                [E](CodeGenFunction &CGF) { CGF.EmitIgnoredExpr(E); }, Loc);
+          };
+          if ((*IPriv)->getType()->isArrayType()) {
+            auto *LHSVar = cast<VarDecl>(cast<DeclRefExpr>(*ILHS)->getDecl());
+            auto *RHSVar = cast<VarDecl>(cast<DeclRefExpr>(*IRHS)->getDecl());
+            EmitOMPAggregateReduction(CGF, (*IPriv)->getType(), LHSVar, RHSVar,
+                                      CritRedGen);
+          } else
+            CritRedGen(CGF, nullptr, nullptr, nullptr);
+        }
+      ++ILHS, ++IRHS, ++IPriv;
     }
   }
 

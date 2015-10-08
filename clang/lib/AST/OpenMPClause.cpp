@@ -340,11 +340,17 @@ OMPCopyprivateClause *OMPCopyprivateClause::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPCopyprivateClause(N);
 }
 
+void OMPReductionClause::setPrivates(ArrayRef<Expr *> Privates) {
+  assert(Privates.size() == varlist_size() &&
+         "Number of private copies is not the same as the preallocated buffer");
+  std::copy(Privates.begin(), Privates.end(), varlist_end());
+}
+
 void OMPReductionClause::setLHSExprs(ArrayRef<Expr *> LHSExprs) {
   assert(
       LHSExprs.size() == varlist_size() &&
       "Number of LHS expressions is not the same as the preallocated buffer");
-  std::copy(LHSExprs.begin(), LHSExprs.end(), varlist_end());
+  std::copy(LHSExprs.begin(), LHSExprs.end(), getPrivates().end());
 }
 
 void OMPReductionClause::setRHSExprs(ArrayRef<Expr *> RHSExprs) {
@@ -365,14 +371,15 @@ OMPReductionClause *OMPReductionClause::Create(
     const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
     SourceLocation EndLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VL,
     NestedNameSpecifierLoc QualifierLoc, const DeclarationNameInfo &NameInfo,
-    ArrayRef<Expr *> LHSExprs, ArrayRef<Expr *> RHSExprs,
-    ArrayRef<Expr *> ReductionOps) {
+    ArrayRef<Expr *> Privates, ArrayRef<Expr *> LHSExprs,
+    ArrayRef<Expr *> RHSExprs, ArrayRef<Expr *> ReductionOps) {
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPReductionClause),
                                                   llvm::alignOf<Expr *>()) +
-                         4 * sizeof(Expr *) * VL.size());
+                         5 * sizeof(Expr *) * VL.size());
   OMPReductionClause *Clause = new (Mem) OMPReductionClause(
       StartLoc, LParenLoc, EndLoc, ColonLoc, VL.size(), QualifierLoc, NameInfo);
   Clause->setVarRefs(VL);
+  Clause->setPrivates(Privates);
   Clause->setLHSExprs(LHSExprs);
   Clause->setRHSExprs(RHSExprs);
   Clause->setReductionOps(ReductionOps);
@@ -383,7 +390,7 @@ OMPReductionClause *OMPReductionClause::CreateEmpty(const ASTContext &C,
                                                     unsigned N) {
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPReductionClause),
                                                   llvm::alignOf<Expr *>()) +
-                         4 * sizeof(Expr *) * N);
+                         5 * sizeof(Expr *) * N);
   return new (Mem) OMPReductionClause(N);
 }
 
