@@ -39,6 +39,15 @@ R_386_PC32_2:
 // Create a .got
 movl bar@GOT, %eax
 
+// ADDR:      Name: .plt
+// ADDR-NEXT: Type: SHT_PROGBITS
+// ADDR-NEXT: Flags [
+// ADDR-NEXT:   SHF_ALLOC
+// ADDR-NEXT:   SHF_EXECINSTR
+// ADDR-NEXT: ]
+// ADDR-NEXT: Address: 0x12030
+// ADDR-NEXT: Offset: 0x2030
+// ADDR-NEXT: Size: 8
 
 // ADDR:      Name: .got
 // ADDR-NEXT: Type: SHT_PROGBITS
@@ -59,10 +68,11 @@ R_386_GOTPC:
 // CHECK-NEXT:   12014:  {{.*}} movl  $4156, %eax
 
 .section .dynamic_reloc, "ax",@progbits
-        call bar+4
+ call bar
+// 0x12030 - (0x12019 + 5) = 18
 // CHECK:      Disassembly of section .dynamic_reloc:
 // CHECK-NEXT: .dynamic_reloc:
-// CHECK-NEXT:   12019:  e8 16 00 00 00 calll 22
+// CHECK-NEXT:   12019:  e8 12 00 00 00 calll 18
 
 .section .R_386_GOT32,"ax",@progbits
 .global R_386_GOT32
