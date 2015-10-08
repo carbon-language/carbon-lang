@@ -178,7 +178,7 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
   }
 
   if (Before)
-    Before->getParent()->getGlobalList().insert(Before, this);
+    Before->getParent()->getGlobalList().insert(Before->getIterator(), this);
   else
     M.getGlobalList().push_back(this);
 }
@@ -188,11 +188,11 @@ void GlobalVariable::setParent(Module *parent) {
 }
 
 void GlobalVariable::removeFromParent() {
-  getParent()->getGlobalList().remove(this);
+  getParent()->getGlobalList().remove(getIterator());
 }
 
 void GlobalVariable::eraseFromParent() {
-  getParent()->getGlobalList().erase(this);
+  getParent()->getGlobalList().erase(getIterator());
 }
 
 void GlobalVariable::setInitializer(Constant *InitVal) {
@@ -276,11 +276,11 @@ void GlobalAlias::setParent(Module *parent) {
 }
 
 void GlobalAlias::removeFromParent() {
-  getParent()->getAliasList().remove(this);
+  getParent()->getAliasList().remove(getIterator());
 }
 
 void GlobalAlias::eraseFromParent() {
-  getParent()->getAliasList().erase(this);
+  getParent()->getAliasList().erase(getIterator());
 }
 
 void GlobalAlias::setAliasee(Constant *Aliasee) {

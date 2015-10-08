@@ -336,7 +336,7 @@ bool llvm::StripDebugInfo(Module &M) {
 
   for (Module::named_metadata_iterator NMI = M.named_metadata_begin(),
          NME = M.named_metadata_end(); NMI != NME;) {
-    NamedMDNode *NMD = NMI;
+    NamedMDNode *NMD = &*NMI;
     ++NMI;
     if (NMD->getName().startswith("llvm.dbg.")) {
       NMD->eraseFromParent();

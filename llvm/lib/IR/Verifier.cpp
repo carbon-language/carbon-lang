@@ -92,6 +92,10 @@ struct VerifierSupport {
       : OS(OS), M(nullptr), Broken(false) {}
 
 private:
+  template <class NodeTy> void Write(const ilist_iterator<NodeTy> &I) {
+    Write(&*I);
+  }
+
   void Write(const Value *V) {
     if (!V)
       return;

@@ -55,7 +55,7 @@ void SymbolTableListTraits<ValueSubClass>::setSymTabObject(TPtr *Dest,
     // Add all of the items to the new symtab.
     for (auto I = ItemList.begin(); I != ItemList.end(); ++I)
       if (I->hasName())
-        NewST->reinsertValue(I);
+        NewST->reinsertValue(&*I);
   }
   
 }

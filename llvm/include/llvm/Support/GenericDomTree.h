@@ -734,13 +734,13 @@ public:
       for (typename TraitsTy::nodes_iterator I = TraitsTy::nodes_begin(&F),
                                              E = TraitsTy::nodes_end(&F);
            I != E; ++I) {
-        if (TraitsTy::child_begin(I) == TraitsTy::child_end(I))
-          addRoot(I);
+        if (TraitsTy::child_begin(&*I) == TraitsTy::child_end(&*I))
+          addRoot(&*I);
 
         // Prepopulate maps so that we don't get iterator invalidation issues
         // later.
-        this->IDoms[I] = nullptr;
-        this->DomTreeNodes[I] = nullptr;
+        this->IDoms[&*I] = nullptr;
+        this->DomTreeNodes[&*I] = nullptr;
       }
 
       Calculate<FT, Inverse<NodeT *>>(*this, F);

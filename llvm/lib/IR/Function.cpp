@@ -235,11 +235,11 @@ Type *Function::getReturnType() const {
 }
 
 void Function::removeFromParent() {
-  getParent()->getFunctionList().remove(this);
+  getParent()->getFunctionList().remove(getIterator());
 }
 
 void Function::eraseFromParent() {
-  getParent()->getFunctionList().erase(this);
+  getParent()->getFunctionList().erase(getIterator());
 }
 
 //===----------------------------------------------------------------------===//

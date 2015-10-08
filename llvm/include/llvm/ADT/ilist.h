@@ -238,6 +238,8 @@ public:
     return *this;
   }
 
+  void reset(pointer NP) { NodePtr = NP; }
+
   // Accessors...
   operator pointer() const {
     return NodePtr;
@@ -469,7 +471,7 @@ public:
     this->setPrev(CurNode, New);
 
     this->addNodeToList(New);  // Notify traits that we added a node...
-    return New;
+    return iterator(New);
   }
 
   iterator insertAfter(iterator where, NodeTy *New) {
@@ -490,7 +492,7 @@ public:
     else
       Head = NextNode;
     this->setPrev(NextNode, PrevNode);
-    IT = NextNode;
+    IT.reset(NextNode);
     this->removeNodeFromList(Node);  // Notify traits that we removed a node...
 
     // Set the next/prev pointers of the current node to null.  This isn't
@@ -569,7 +571,7 @@ private:
       this->setNext(Last, PosNext);
       this->setPrev(PosNext, Last);
 
-      this->transferNodesFromList(L2, First, PosNext);
+      this->transferNodesFromList(L2, iterator(First), iterator(PosNext));
 
       // Now that everything is set, restore the pointers to the list sentinels.
       L2.setTail(L2Sentinel);

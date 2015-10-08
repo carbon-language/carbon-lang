@@ -39,6 +39,8 @@ protected:
 template<typename NodeTy>
 struct ilist_nextprev_traits;
 
+template <typename NodeTy> class ilist_iterator;
+
 /// ilist_node - Base class that provides next/prev services for nodes
 /// that use ilist_nextprev_traits or ilist_default_traits.
 ///
@@ -56,6 +58,15 @@ protected:
   ilist_node() : Next(nullptr) {}
 
 public:
+  ilist_iterator<NodeTy> getIterator() {
+    // FIXME: Stop downcasting to create the iterator (potential UB).
+    return ilist_iterator<NodeTy>(static_cast<NodeTy *>(this));
+  }
+  ilist_iterator<const NodeTy> getIterator() const {
+    // FIXME: Stop downcasting to create the iterator (potential UB).
+    return ilist_iterator<const NodeTy>(static_cast<const NodeTy *>(this));
+  }
+
   /// @name Adjacent Node Accessors
   /// @{
 

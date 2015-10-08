@@ -362,7 +362,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
   LLVMContext &C = CI->getContext();
   IRBuilder<> Builder(C);
-  Builder.SetInsertPoint(CI->getParent(), CI);
+  Builder.SetInsertPoint(CI->getParent(), CI->getIterator());
 
   assert(F && "Intrinsic call is not direct?");
 
@@ -388,7 +388,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                Name == "llvm.x86.avx.movnt.ps.256" ||
                Name == "llvm.x86.avx.movnt.pd.256") {
       IRBuilder<> Builder(C);
-      Builder.SetInsertPoint(CI->getParent(), CI);
+      Builder.SetInsertPoint(CI->getParent(), CI->getIterator());
 
       Module *M = F->getParent();
       SmallVector<Metadata *, 1> Elts;
