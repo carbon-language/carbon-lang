@@ -206,8 +206,6 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     case OPT_no_whole_archive:
       Config->WholeArchive = false;
       break;
-    default:
-      break;
     }
   }
 
