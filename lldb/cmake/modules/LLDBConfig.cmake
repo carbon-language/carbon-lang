@@ -83,6 +83,42 @@ function(find_python_libs_windows)
   file(TO_CMAKE_PATH "${PYTHON_HOME}/libs/${PYTHONLIBS_BASE_NAME}.lib" PYTHON_RELEASE_LIB)
   file(TO_CMAKE_PATH "${PYTHON_HOME}/${PYTHONLIBS_BASE_NAME}.dll" PYTHON_RELEASE_DLL)
 
+  if (NOT EXISTS ${PYTHON_DEBUG_EXE})
+    message("Unable to find ${PYTHON_DEBUG_EXE}")
+    unset(PYTHON_DEBUG_EXE)
+  endif()
+
+  if (NOT EXISTS ${PYTHON_RELEASE_EXE})
+    message("Unable to find ${PYTHON_RELEASE_EXE}")
+    unset(PYTHON_RELEASE_EXE)
+  endif()
+
+  if (NOT EXISTS ${PYTHON_DEBUG_LIB})
+    message("Unable to find ${PYTHON_DEBUG_LIB}")
+    unset(PYTHON_DEBUG_LIB)
+  endif()
+
+  if (NOT EXISTS ${PYTHON_RELEASE_LIB})
+    message("Unable to find ${PYTHON_RELEASE_LIB}")
+    unset(PYTHON_RELEASE_LIB)
+  endif()
+
+  if (NOT EXISTS ${PYTHON_DEBUG_DLL})
+    message("Unable to find ${PYTHON_DEBUG_DLL}")
+    unset(PYTHON_DEBUG_DLL)
+  endif()
+
+  if (NOT EXISTS ${PYTHON_RELEASE_DLL})
+    message("Unable to find ${PYTHON_RELEASE_DLL}")
+    unset(PYTHON_RELEASE_DLL)
+  endif()
+
+  if (NOT (PYTHON_DEBUG_EXE AND PYTHON_RELEASE_EXE AND PYTHON_DEBUG_LIB AND PYTHON_RELEASE_LIB AND PYTHON_DEBUG_DLL AND PYTHON_RELEASE_DLL))
+    message("Python installation is corrupt. Python support will be disabled for this build.")
+    set(LLDB_DISABLE_PYTHON 1 PARENT_SCOPE)
+    return()
+  endif()
+
   # Generator expressions are evaluated in the context of each build configuration generated
   # by CMake. Here we use the $<CONFIG:Debug>:VALUE logical generator expression to ensure
   # that the debug Python library, DLL, and executable are used in the Debug build configuration.
@@ -113,9 +149,9 @@ function(find_python_libs_windows)
   set (PYTHON_DLL ${PYTHON_DLL} PARENT_SCOPE)
   set (PYTHON_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS} PARENT_SCOPE)
 
-  message("-- LLDB Found PythonExecutable: ${PYTHON_EXECUTABLE}")
-  message("-- LLDB Found PythonLibs: ${PYTHON_LIBRARY}")
-  message("-- LLDB Found PythonDLL: ${PYTHON_DLL}")
+  message("-- LLDB Found PythonExecutable: ${PYTHON_RELEASE_EXE} and ${PYTHON_DEBUG_EXE}")
+  message("-- LLDB Found PythonLibs: ${PYTHON_RELEASE_LIB} and ${PYTHON_DEBUG_LIB}")
+  message("-- LLDB Found PythonDLL: ${PYTHON_RELEASE_DLL} and ${PYTHON_DEBUG_DLL}")
   message("-- LLDB Found PythonIncludeDirs: ${PYTHON_INCLUDE_DIRS}")
 endfunction(find_python_libs_windows)
 
