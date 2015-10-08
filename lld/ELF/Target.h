@@ -26,6 +26,7 @@ public:
   unsigned getGotReloc() const { return GotReloc; }
   unsigned getGotRefReloc() const { return GotRefReloc; }
   unsigned getRelativeReloc() const { return RelativeReloc; }
+  unsigned getPltEntrySize() const { return PltEntrySize; }
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                              uint64_t PltEntryAddr) const = 0;
   virtual bool isRelRelative(uint32_t Type) const;
@@ -43,6 +44,7 @@ protected:
   unsigned GotRefReloc;
   unsigned GotReloc;
   unsigned RelativeReloc;
+  unsigned PltEntrySize = 8;
   llvm::StringRef DefaultEntry = "_start";
 };
 

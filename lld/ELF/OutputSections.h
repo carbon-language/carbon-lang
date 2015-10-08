@@ -122,14 +122,11 @@ class PltSection final : public OutputSectionBase<ELFT::Is64Bits> {
 
 public:
   PltSection();
-  void finalize() override {
-    this->Header.sh_size = Entries.size() * EntrySize;
-  }
+  void finalize() override;
   void writeTo(uint8_t *Buf) override;
   void addEntry(SymbolBody *Sym);
   bool empty() const { return Entries.empty(); }
   uintX_t getEntryAddr(const SymbolBody &B) const;
-  static const unsigned EntrySize = 8;
 
 private:
   std::vector<const SymbolBody *> Entries;

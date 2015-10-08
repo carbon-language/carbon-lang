@@ -119,7 +119,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
     uintptr_t InstPos = reinterpret_cast<uintptr_t>(Buf);
     uint64_t PltEntryAddr = (InstPos - Start) + this->getVA();
     Target->writePltEntry(Buf, GotEntryAddr, PltEntryAddr);
-    Buf += EntrySize;
+    Buf += Target->getPltEntrySize();
   }
 }
 
@@ -131,7 +131,12 @@ template <class ELFT> void PltSection<ELFT>::addEntry(SymbolBody *Sym) {
 template <class ELFT>
 typename PltSection<ELFT>::uintX_t
 PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
-  return this->getVA() + B.getPltIndex() * EntrySize;
+  return this->getVA() + B.getPltIndex() * Target->getPltEntrySize();
+}
+
+template <class ELFT>
+void PltSection<ELFT>::finalize() {
+  this->Header.sh_size = Entries.size() * Target->getPltEntrySize();
 }
 
 template <class ELFT>
