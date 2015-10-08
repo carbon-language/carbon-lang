@@ -49,6 +49,7 @@ struct DemandedBits : public FunctionPass {
   bool isInstructionDead(Instruction *I);
 
 private:
+  void performAnalysis();
   void determineLiveOperandBits(const Instruction *UserI,
                                 const Instruction *I, unsigned OperandNo,
                                 const APInt &AOut, APInt &AB,
@@ -57,6 +58,8 @@ private:
 
   AssumptionCache *AC;
   DominatorTree *DT;
+  Function *F;
+  bool Analyzed;
 
   // The set of visited instructions (non-integer-typed only).
   SmallPtrSet<Instruction*, 128> Visited;

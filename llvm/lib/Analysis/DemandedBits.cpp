@@ -51,7 +51,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(DemandedBits, "demanded-bits", "Demanded bits analysis",
                     false, false)
 
-DemandedBits::DemandedBits() : FunctionPass(ID) {
+DemandedBits::DemandedBits() : FunctionPass(ID), F(nullptr), Analyzed(false) {
   initializeDemandedBitsPass(*PassRegistry::getPassRegistry());
 }
 
@@ -243,17 +243,27 @@ void DemandedBits::determineLiveOperandBits(
   }
 }
 
-bool DemandedBits::runOnFunction(Function& F) {
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+bool DemandedBits::runOnFunction(Function& Fn) {
+  F = &Fn;
+  Analyzed = false;
+  return false;
+}
 
+void DemandedBits::performAnalysis() {
+  if (Analyzed)
+    // Analysis already completed for this function.
+    return;
+  Analyzed = true;
+  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(*F);
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  
   Visited.clear();
   AliveBits.clear();
 
   SmallVector<Instruction*, 128> Worklist;
 
   // Collect the set of "root" instructions that are known live.
-  for (Instruction &I : instructions(F)) {
+  for (Instruction &I : instructions(*F)) {
     if (!isAlwaysLive(&I))
       continue;
 
@@ -340,11 +350,11 @@ bool DemandedBits::runOnFunction(Function& F) {
       }
     }
   }
-
-  return false;
 }
 
 APInt DemandedBits::getDemandedBits(Instruction *I) {
+  performAnalysis();
+  
   const DataLayout &DL = I->getParent()->getModule()->getDataLayout();
   if (AliveBits.count(I))
     return AliveBits[I];
@@ -352,6 +362,8 @@ APInt DemandedBits::getDemandedBits(Instruction *I) {
 }
 
 bool DemandedBits::isInstructionDead(Instruction *I) {
+  performAnalysis();
+
   return !Visited.count(I) && AliveBits.find(I) == AliveBits.end() &&
     !isAlwaysLive(I);
 }
