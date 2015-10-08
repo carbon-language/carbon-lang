@@ -322,9 +322,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (!Config->DiscardAll) {
       Elf_Sym_Range Syms = File.getLocalSymbols();
       for (const Elf_Sym &Sym : Syms) {
-        ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
-        if (SymName && shouldKeepInSymtab<ELFT>(*SymName, Sym))
-          Out<ELFT>::SymTab->addSymbol(*SymName, true);
+        ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
+        error(SymNameOrErr);
+        StringRef SymName = *SymNameOrErr;
+        if (shouldKeepInSymtab<ELFT>(SymName, Sym))
+          Out<ELFT>::SymTab->addSymbol(SymName, true);
       }
     }
     for (InputSection<ELFT> *C : File.getSections()) {
