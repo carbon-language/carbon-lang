@@ -1,5 +1,5 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
-# RUN: not lld -flavor gnu2 %t -o %t2
+# RUN: not ld.lld2 %t -o %t2
 # RUN: ld.lld2 %t --noinhibit-exec -o %t2
 # RUN: llvm-objdump -d %t2 | FileCheck %s
 # REQUIRES: x86

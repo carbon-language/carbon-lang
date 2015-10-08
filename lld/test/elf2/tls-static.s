@@ -3,7 +3,7 @@
 // RUN: ld.lld2 -static %t -o %tout
 // RUN: ld.lld2 %t -o %tout
 // RUN: ld.lld2 -shared %tso -o %tshared
-// RUN: not lld -flavor gnu2 -static %t %tshared -o %tout
+// RUN: not ld.lld2 -static %t %tshared -o %tout
 // REQUIRES: x86
 
 .global _start

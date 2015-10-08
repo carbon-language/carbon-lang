@@ -10,12 +10,12 @@
 // REQUIRES: x86
 
 // Should not link because of undefined symbol _bar
-// RUN: not lld -flavor gnu2 -o %t3 %t.o 2>&1 \
+// RUN: not ld.lld2 -o %t3 %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=UNDEFINED %s
 // UNDEFINED: undefined symbol: _bar
 
 // Should fail if cannot find specified library (without -L switch)
-// RUN: not lld -flavor gnu2 -o %t3 %t.o -lls 2>&1 \
+// RUN: not ld.lld2 -o %t3 %t.o -lls 2>&1 \
 // RUN:   | FileCheck --check-prefix=NOLIB %s
 // NOLIB: Unable to find library -lls
 
@@ -46,7 +46,7 @@
 // Should not search for dynamic libraries if -Bstatic is specified
 // RUN: ld.lld2 -o %t3 %t.o -L%T -Bstatic -lls
 // RUN: llvm-readobj --symbols %t3 | FileCheck --check-prefix=STATIC %s
-// RUN: not lld -flavor gnu2 -o %t3 %t.o -L%T -Bstatic -lls2 2>&1 \
+// RUN: not ld.lld2 -o %t3 %t.o -L%T -Bstatic -lls2 2>&1 \
 // RUN:   | FileCheck --check-prefix=NOLIB2 %s
 // NOLIB2: Unable to find library -lls2
 

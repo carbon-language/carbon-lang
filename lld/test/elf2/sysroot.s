@@ -7,12 +7,12 @@
 // REQUIRES: x86
 
 // Should not link because of undefined symbol _bar
-// RUN: not lld -flavor gnu2 -o %t/r %t/m.o 2>&1 \
+// RUN: not ld.lld2 -o %t/r %t/m.o 2>&1 \
 // RUN:     | FileCheck --check-prefix=UNDEFINED %s
 // UNDEFINED: undefined symbol: _bar
 
 // We need to be sure that there is no suitable library in the /lib directory
-// RUN: not lld -flavor gnu2 -o %t/r %t/m.o -L/lib -l:libls.a 2>&1 \
+// RUN: not ld.lld2 -o %t/r %t/m.o -L/lib -l:libls.a 2>&1 \
 // RUN:     | FileCheck --check-prefix=NOLIB %s
 // NOLIB: Unable to find library -l:libls.a
 
@@ -29,8 +29,8 @@
 // RUN: ld.lld2 -o %t/r %t/m.o --sysroot=%t -L=/lib -l:libls.a
 
 // Should not substitute SysRoot if the directory name does not start with '='
-// RUN: not lld -flavor gnu2 -o %t/r %r/m.o --sysroot=%t -Llib -l:libls.a
-// RUN: not lld -flavor gnu2 -o %t/r %r/m.o --sysroot=%t -L/lib -l:libls.a
+// RUN: not ld.lld2 -o %t/r %r/m.o --sysroot=%t -Llib -l:libls.a
+// RUN: not ld.lld2 -o %t/r %r/m.o --sysroot=%t -L/lib -l:libls.a
 
 .globl _start,_bar;
 _start:

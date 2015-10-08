@@ -1,5 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t
-// RUN: not lld -flavor gnu2 %t -o %t2 2>&1 | FileCheck %s
+// RUN: not ld.lld2 %t -o %t2 2>&1 | FileCheck %s
 // REQUIRES: x86
 
 .global _start

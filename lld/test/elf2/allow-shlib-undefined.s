@@ -18,7 +18,7 @@
 # RUN: ld.lld2 -shared --no-allow-shlib-undefined %t -o %t.so
 
 # Executable still should not link when have undefines inside.
-# RUN: not lld -flavor gnu2 %t -o %t.so
+# RUN: not ld.lld2 %t -o %t.so
 
 .globl _start
 _start:
