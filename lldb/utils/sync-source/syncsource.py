@@ -203,9 +203,18 @@ def sync_configured_sources(options, configuration, default_excludes):
         # If excludes are specified for this dir_id, then pass along
         # the excludes.  These are relative to the dir_id directory
         # source, and get passed along that way as well.
-        transfer_source_excludes = list(default_excludes)
+        transfer_source_excludes = []
+
+        # Add the source excludes for this dir.
+        skip_defaults = False
         if source_excludes and dir_key in source_excludes:
             transfer_source_excludes.extend(source_excludes[dir_key])
+            if "<no-defaults>" in source_excludes[dir_key]:
+                skip_defaults = True
+                transfer_source_excludes.remove("<no-defaults>")
+
+        if not skip_defaults and default_excludes is not None:
+            transfer_source_excludes.extend(list(default_excludes))
 
         # Build the destination-base-relative dest dir into which
         # we'll be syncing.  Relative directory defaults to the
