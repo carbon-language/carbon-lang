@@ -169,7 +169,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
     break;
   }
 
-  if (SecIndex >= Sections.size() || (SecIndex != 0 && !Sections[SecIndex]))
+  if (SecIndex >= Sections.size() || !SecIndex || !Sections[SecIndex])
     error("Invalid section index");
 
   switch (Sym->getBinding()) {
