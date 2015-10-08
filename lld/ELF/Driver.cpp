@@ -46,6 +46,16 @@ static void setELFType(StringRef Emul) {
     Config->EMachine = EM_X86_64;
     return;
   }
+  if (Emul == "elf32ltsmip") {
+    Config->ElfKind = ELF32LEKind;
+    Config->EMachine = EM_MIPS;
+    return;
+  }
+  if (Emul == "elf32btsmip") {
+    Config->ElfKind = ELF32BEKind;
+    Config->EMachine = EM_MIPS;
+    return;
+  }
   if (Emul == "elf32ppc") {
     Config->ElfKind = ELF32BEKind;
     Config->EMachine = EM_PPC;

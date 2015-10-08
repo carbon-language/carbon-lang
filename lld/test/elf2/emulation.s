@@ -122,7 +122,55 @@
 # PPC-NEXT:    StringTableSectionIndex: 5
 # PPC-NEXT: }
 
-# REQUIRES: x86,ppc
+# RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %tmips
+# RUN: lld -flavor gnu2 -m elf32btsmip -e _start %tmips -o %t2mips
+# RUN: llvm-readobj -file-headers %t2mips | FileCheck --check-prefix=MIPS %s
+# RUN: lld -flavor gnu2 %tmips -e _start -o %t3mips
+# RUN: llvm-readobj -file-headers %t3mips | FileCheck --check-prefix=MIPS %s
+# MIPS:      ElfHeader {
+# MIPS-NEXT:   Ident {
+# MIPS-NEXT:     Magic: (7F 45 4C 46)
+# MIPS-NEXT:     Class: 32-bit (0x1)
+# MIPS-NEXT:     DataEncoding: BigEndian (0x2)
+# MIPS-NEXT:     FileVersion: 1
+# MIPS-NEXT:     OS/ABI: SystemV (0x0)
+# MIPS-NEXT:     ABIVersion: 0
+# MIPS-NEXT:     Unused: (00 00 00 00 00 00 00)
+# MIPS-NEXT:   }
+# MIPS-NEXT:   Type: Executable (0x2)
+# MIPS-NEXT:   Machine: EM_MIPS (0x8)
+# MIPS-NEXT:   Version: 1
+# MIPS-NEXT:   Entry: 0x11030
+# MIPS-NEXT:   ProgramHeaderOffset: 0x34
+# MIPS-NEXT:   SectionHeaderOffset: 0x1094
+# MIPS-NEXT:   Flags [ (0x0)
+# MIPS-NEXT:   ]
+
+# RUN: llvm-mc -filetype=obj -triple=mipsel-unknown-linux %s -o %tmipsel
+# RUN: lld -flavor gnu2 -m elf32ltsmip -e _start %tmipsel -o %t2mipsel
+# RUN: llvm-readobj -file-headers %t2mipsel | FileCheck --check-prefix=MIPSEL %s
+# RUN: lld -flavor gnu2 %tmipsel -e _start -o %t3mipsel
+# RUN: llvm-readobj -file-headers %t3mipsel | FileCheck --check-prefix=MIPSEL %s
+# MIPSEL:      ElfHeader {
+# MIPSEL-NEXT:   Ident {
+# MIPSEL-NEXT:     Magic: (7F 45 4C 46)
+# MIPSEL-NEXT:     Class: 32-bit (0x1)
+# MIPSEL-NEXT:     DataEncoding: LittleEndian (0x1)
+# MIPSEL-NEXT:     FileVersion: 1
+# MIPSEL-NEXT:     OS/ABI: SystemV (0x0)
+# MIPSEL-NEXT:     ABIVersion: 0
+# MIPSEL-NEXT:     Unused: (00 00 00 00 00 00 00)
+# MIPSEL-NEXT:   }
+# MIPSEL-NEXT:   Type: Executable (0x2)
+# MIPSEL-NEXT:   Machine: EM_MIPS (0x8)
+# MIPSEL-NEXT:   Version: 1
+# MIPSEL-NEXT:   Entry: 0x11030
+# MIPSEL-NEXT:   ProgramHeaderOffset: 0x34
+# MIPSEL-NEXT:   SectionHeaderOffset: 0x1094
+# MIPSEL-NEXT:   Flags [ (0x0)
+# MIPSEL-NEXT:   ]
+
+# REQUIRES: x86,ppc,mips
 
 .globl _start;
 _start:
