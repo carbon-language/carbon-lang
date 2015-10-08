@@ -989,7 +989,7 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
       CmdArgs.push_back("-aarch64-fix-cortex-a53-835769=1");
     else
       CmdArgs.push_back("-aarch64-fix-cortex-a53-835769=0");
-  } else if (Triple.getEnvironment() == llvm::Triple::Android) {
+  } else if (Triple.isAndroid()) {
     // Enabled A53 errata (835769) workaround by default on android
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-aarch64-fix-cortex-a53-835769=1");
@@ -1022,7 +1022,7 @@ void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
   }
 
   // MIPS64r6 is the default for Android MIPS64 (mips64el-linux-android).
-  if (Triple.getEnvironment() == llvm::Triple::Android)
+  if (Triple.isAndroid())
     DefMips64CPU = "mips64r6";
 
   // MIPS3 is the default for mips64*-unknown-openbsd.
@@ -1527,7 +1527,7 @@ static const char *getX86TargetCPU(const ArgList &Args,
     return "btver2";
 
   // On Android use targets compatible with gcc
-  if (Triple.getEnvironment() == llvm::Triple::Android)
+  if (Triple.isAndroid())
     return Is64Bit ? "x86-64" : "i686";
 
   // Everything else goes to x86-64 in 64-bit mode.
@@ -1824,7 +1824,7 @@ static void getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   const llvm::Triple::ArchType ArchType = Triple.getArch();
   // Add features to be compatible with gcc for Android.
-  if (Triple.getEnvironment() == llvm::Triple::Android) {
+  if (Triple.isAndroid()) {
     if (ArchType == llvm::Triple::x86_64) {
       Features.push_back("+sse4.2");
       Features.push_back("+popcnt");
@@ -2593,8 +2593,7 @@ collectSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
   }
 
   // Collect static runtimes.
-  if (Args.hasArg(options::OPT_shared) ||
-      (TC.getTriple().getEnvironment() == llvm::Triple::Android)) {
+  if (Args.hasArg(options::OPT_shared) || TC.getTriple().isAndroid()) {
     // Don't link static runtimes into DSOs or if compiling for Android.
     return;
   }
@@ -3042,7 +3041,7 @@ ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &Triple,
       Args.hasArg(options::OPT_mkernel, options::OPT_fapple_kext);
 
   // Android-specific defaults for PIC/PIE
-  if (ToolChain.getTriple().getEnvironment() == llvm::Triple::Android) {
+  if (ToolChain.getTriple().isAndroid()) {
     switch (ToolChain.getArch()) {
     case llvm::Triple::arm:
     case llvm::Triple::armeb:
@@ -4241,7 +4240,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fno_operator_names);
   // Emulated TLS is enabled by default on Android, and can be enabled manually
   // with -femulated-tls.
-  bool EmulatedTLSDefault = Triple.getEnvironment() == llvm::Triple::Android;
+  bool EmulatedTLSDefault = Triple.isAndroid();
   if (Args.hasFlag(options::OPT_femulated_tls, options::OPT_fno_emulated_tls,
                    EmulatedTLSDefault))
     CmdArgs.push_back("-femulated-tls");
@@ -8170,7 +8169,7 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
 
 static void AddLibgcc(const llvm::Triple &Triple, const Driver &D,
                       ArgStringList &CmdArgs, const ArgList &Args) {
-  bool isAndroid = Triple.getEnvironment() == llvm::Triple::Android;
+  bool isAndroid = Triple.isAndroid();
   bool isCygMing = Triple.isOSCygMing();
   bool StaticLibgcc = Args.hasArg(options::OPT_static_libgcc) ||
                       Args.hasArg(options::OPT_static);
@@ -8206,7 +8205,7 @@ static std::string getLinuxDynamicLinker(const ArgList &Args,
                                          const toolchains::Linux &ToolChain) {
   const llvm::Triple::ArchType Arch = ToolChain.getArch();
 
-  if (ToolChain.getTriple().getEnvironment() == llvm::Triple::Android) {
+  if (ToolChain.getTriple().isAndroid()) {
     if (ToolChain.getTriple().isArch64Bit())
       return "/system/bin/linker64";
     else
@@ -8354,8 +8353,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   llvm::Triple Triple = llvm::Triple(TripleStr);
 
   const llvm::Triple::ArchType Arch = ToolChain.getArch();
-  const bool isAndroid =
-      ToolChain.getTriple().getEnvironment() == llvm::Triple::Android;
+  const bool isAndroid = ToolChain.getTriple().isAndroid();
   const bool IsPIE =
       !Args.hasArg(options::OPT_shared) && !Args.hasArg(options::OPT_static) &&
       (Args.hasArg(options::OPT_pie) || ToolChain.isPIEDefault());

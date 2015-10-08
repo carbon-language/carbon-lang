@@ -284,8 +284,7 @@ static StringRef getArchNameForCompilerRTLib(const ToolChain &TC,
 std::string ToolChain::getCompilerRT(const ArgList &Args, StringRef Component,
                                      bool Shared) const {
   const llvm::Triple &TT = getTriple();
-  const char *Env =
-      (TT.getEnvironment() == llvm::Triple::Android) ? "-android" : "";
+  const char *Env = TT.isAndroid() ? "-android" : "";
   bool IsITANMSVCWindows =
       TT.isWindowsMSVCEnvironment() || TT.isWindowsItaniumEnvironment();
 

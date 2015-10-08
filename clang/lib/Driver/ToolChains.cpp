@@ -1823,7 +1823,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   addMultilibFlag(isMipsEL(TargetArch), "EL", Flags);
   addMultilibFlag(!isMipsEL(TargetArch), "EB", Flags);
 
-  if (TargetTriple.getEnvironment() == llvm::Triple::Android) {
+  if (TargetTriple.isAndroid()) {
     // Select Android toolchain. It's the only choice in that case.
     if (AndroidMipsMultilibs.select(Flags, Result.SelectedMultilib)) {
       Result.Multilibs = AndroidMipsMultilibs;
@@ -2174,8 +2174,7 @@ void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
       getTriple().getArch() == llvm::Triple::aarch64 ||
       getTriple().getArch() == llvm::Triple::aarch64_be ||
       (getTriple().getOS() == llvm::Triple::Linux &&
-       (!V.isOlderThan(4, 7, 0) ||
-        getTriple().getEnvironment() == llvm::Triple::Android)) ||
+       (!V.isOlderThan(4, 7, 0) || getTriple().isAndroid())) ||
       getTriple().getOS() == llvm::Triple::NaCl;
 
   if (DriverArgs.hasFlag(options::OPT_fuse_init_array,
@@ -3329,7 +3328,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
     ExtraOpts.push_back("-X");
 
-  const bool IsAndroid = Triple.getEnvironment() == llvm::Triple::Android;
+  const bool IsAndroid = Triple.isAndroid();
   const bool IsMips = isMipsArch(Arch);
 
   if (IsMips && !SysRoot.empty())

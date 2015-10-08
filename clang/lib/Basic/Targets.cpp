@@ -383,7 +383,7 @@ protected:
     DefineStd(Builder, "linux", Opts);
     Builder.defineMacro("__gnu_linux__");
     Builder.defineMacro("__ELF__");
-    if (Triple.getEnvironment() == llvm::Triple::Android) {
+    if (Triple.isAndroid()) {
       Builder.defineMacro("__ANDROID__", "1");
       unsigned Maj, Min, Rev;
       Triple.getEnvironmentVersion(Maj, Min, Rev);
