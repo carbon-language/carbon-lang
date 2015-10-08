@@ -47,7 +47,7 @@ class X86Subtarget final : public X86GenSubtargetInfo {
 
 protected:
   enum X86SSEEnum {
-    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512F
+    NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512F
   };
 
   enum X863DNowEnum {
@@ -64,7 +64,7 @@ protected:
   /// Which PIC style to use
   PICStyles::Style PICStyle;
 
-  /// MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or none supported.
+  /// SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or none supported.
   X86SSEEnum X86SSELevel;
 
   /// 3DNow, 3DNow Athlon, or none supported.
@@ -73,6 +73,9 @@ protected:
   /// True if this processor has conditional move instructions
   /// (generally pentium pro+).
   bool HasCMov;
+
+  /// True if this processor supports MMX instructions.
+  bool HasMMX;
 
   /// True if the processor supports X86-64 instructions.
   bool HasX86_64;
@@ -319,7 +322,7 @@ public:
   void setPICStyle(PICStyles::Style Style)  { PICStyle = Style; }
 
   bool hasCMov() const { return HasCMov; }
-  bool hasMMX() const { return X86SSELevel >= MMX; }
+  bool hasMMX() const { return HasMMX; }
   bool hasSSE1() const { return X86SSELevel >= SSE1; }
   bool hasSSE2() const { return X86SSELevel >= SSE2; }
   bool hasSSE3() const { return X86SSELevel >= SSE3; }
