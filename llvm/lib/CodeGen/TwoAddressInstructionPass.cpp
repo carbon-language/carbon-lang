@@ -200,8 +200,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
   unsigned DefReg = 0;
   SmallSet<unsigned, 4> UseRegs;
 
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : MI->operands()) {
     if (!MO.isReg())
       continue;
     unsigned MOReg = MO.getReg();
@@ -236,10 +235,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
     KillMI = LIS->getInstructionFromIndex(I->end);
   }
   if (!KillMI) {
-    for (MachineRegisterInfo::use_nodbg_iterator
-           UI = MRI->use_nodbg_begin(SavedReg),
-           UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-      MachineOperand &UseMO = *UI;
+    for (MachineOperand &UseMO : MRI->use_nodbg_operands(SavedReg)) {
       if (!UseMO.isKill())
         continue;
       KillMI = UseMO.getParent();
@@ -1383,10 +1379,9 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
           SmallVector<unsigned, 4> OrigRegs;
           if (LIS) {
-            for (MachineInstr::const_mop_iterator MOI = MI.operands_begin(),
-                 MOE = MI.operands_end(); MOI != MOE; ++MOI) {
-              if (MOI->isReg())
-                OrigRegs.push_back(MOI->getReg());
+            for (const MachineOperand &MO : MI.operands()) {
+              if (MO.isReg())
+                OrigRegs.push_back(MO.getReg());
             }
           }
 
@@ -1705,9 +1700,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
       }
 
       // Now iterate over the information collected above.
-      for (TiedOperandMap::iterator OI = TiedOperands.begin(),
-             OE = TiedOperands.end(); OI != OE; ++OI) {
-        processTiedPairs(mi, OI->second, Dist);
+      for (auto &TO : TiedOperands) {
+        processTiedPairs(mi, TO.second, Dist);
         DEBUG(dbgs() << "\t\trewrite to:\t" << *mi);
       }
 
