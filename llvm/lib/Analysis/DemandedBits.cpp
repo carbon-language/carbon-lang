@@ -25,6 +25,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/BasicBlock.h"
@@ -131,6 +132,7 @@ void DemandedBits::determineLiveOperandBits(
     break;
   case Instruction::Add:
   case Instruction::Sub:
+  case Instruction::Mul:
     // Find the highest live output bit. We don't need any more input
     // bits than that (adds, and thus subtracts, ripple only to the
     // left).
@@ -366,6 +368,16 @@ bool DemandedBits::isInstructionDead(Instruction *I) {
 
   return !Visited.count(I) && AliveBits.find(I) == AliveBits.end() &&
     !isAlwaysLive(I);
+}
+
+void DemandedBits::print(raw_ostream &OS, const Module *M) const {
+  // This is gross. But the alternative is making all the state mutable
+  // just because of this one debugging method.
+  const_cast<DemandedBits*>(this)->performAnalysis();
+  for (auto &KV : AliveBits) {
+    OS << "DemandedBits: 0x" << utohexstr(KV.second.getLimitedValue()) << " for "
+       << *KV.first << "\n";
+  }
 }
 
 FunctionPass *llvm::createDemandedBitsPass() {

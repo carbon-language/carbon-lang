@@ -41,7 +41,8 @@ struct DemandedBits : public FunctionPass {
 
   bool runOnFunction(Function& F) override;
   void getAnalysisUsage(AnalysisUsage& AU) const override;
-
+  void print(raw_ostream &OS, const Module *M) const override;
+  
   /// Return the bits demanded from instruction I.
   APInt getDemandedBits(Instruction *I);
 
