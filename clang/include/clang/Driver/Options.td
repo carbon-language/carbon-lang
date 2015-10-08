@@ -694,9 +694,9 @@ def fmacro_backtrace_limit_EQ : Joined<["-"], "fmacro-backtrace-limit=">,
                                 Group<f_Group>, Flags<[DriverOption, CoreOption]>;
 def fmerge_all_constants : Flag<["-"], "fmerge-all-constants">, Group<f_Group>;
 def fmessage_length_EQ : Joined<["-"], "fmessage-length=">, Group<f_Group>;
-def fms_extensions : Flag<["-"], "fms-extensions">, Group<f_Group>, Flags<[CC1Option]>,
+def fms_extensions : Flag<["-"], "fms-extensions">, Group<f_Group>, Flags<[CC1Option, CoreOption]>,
   HelpText<"Accept some non-standard constructs supported by the Microsoft compiler">;
-def fms_compatibility : Flag<["-"], "fms-compatibility">, Group<f_Group>, Flags<[CC1Option]>,
+def fms_compatibility : Flag<["-"], "fms-compatibility">, Group<f_Group>, Flags<[CC1Option, CoreOption]>,
   HelpText<"Enable full Microsoft Visual C++ compatibility">;
 def fms_volatile : Joined<["-"], "fms-volatile">, Group<f_Group>, Flags<[CC1Option]>;
 def fmsc_version : Joined<["-"], "fmsc-version=">, Group<f_Group>, Flags<[DriverOption, CoreOption]>,
@@ -842,8 +842,10 @@ def fmodule_file_deps : Flag <["-"], "fmodule-file-deps">, Group<f_Group>,
   Flags<[DriverOption]>;
 def fno_module_file_deps : Flag <["-"], "fno-module-file-deps">, Group<f_Group>,
   Flags<[DriverOption]>;
-def fno_ms_extensions : Flag<["-"], "fno-ms-extensions">, Group<f_Group>;
-def fno_ms_compatibility : Flag<["-"], "fno-ms-compatibility">, Group<f_Group>;
+def fno_ms_extensions : Flag<["-"], "fno-ms-extensions">, Group<f_Group>,
+  Flags<[CoreOption]>;
+def fno_ms_compatibility : Flag<["-"], "fno-ms-compatibility">, Group<f_Group>,
+  Flags<[CoreOption]>;
 def fno_delayed_template_parsing : Flag<["-"], "fno-delayed-template-parsing">, Group<f_Group>;
 def fno_objc_exceptions: Flag<["-"], "fno-objc-exceptions">, Group<f_Group>;
 def fno_objc_legacy_dispatch : Flag<["-"], "fno-objc-legacy-dispatch">, Group<f_Group>;

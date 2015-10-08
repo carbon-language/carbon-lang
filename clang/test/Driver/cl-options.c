@@ -411,6 +411,10 @@
 // RUN:     -fno-strict-aliasing \
 // RUN:     -fstrict-aliasing \
 // RUN:     -fsyntax-only \
+// RUN:     -fms-compatibility \
+// RUN:     -fno-ms-compatibility \
+// RUN:     -fms-extensions \
+// RUN:     -fno-ms-extensions \
 // RUN:     -mllvm -disable-llvm-optzns \
 // RUN:     -Wunused-variable \
 // RUN:     -fmacro-backtrace-limit=0 \
