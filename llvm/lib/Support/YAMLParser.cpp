@@ -801,7 +801,7 @@ Token &Scanner::peekNext() {
 
     removeStaleSimpleKeyCandidates();
     SimpleKey SK;
-    SK.Tok = TokenQueue.front();
+    SK.Tok = TokenQueue.begin();
     if (std::find(SimpleKeys.begin(), SimpleKeys.end(), SK)
         == SimpleKeys.end())
       break;
@@ -1163,7 +1163,7 @@ bool Scanner::scanFlowCollectionStart(bool IsSequence) {
   TokenQueue.push_back(T);
 
   // [ and { may begin a simple key.
-  saveSimpleKeyCandidate(TokenQueue.back(), Column - 1, false);
+  saveSimpleKeyCandidate(--TokenQueue.end(), Column - 1, false);
 
   // And may also be followed by a simple key.
   IsSimpleKeyAllowed = true;
@@ -1326,7 +1326,7 @@ bool Scanner::scanFlowScalar(bool IsDoubleQuoted) {
   T.Range = StringRef(Start, Current - Start);
   TokenQueue.push_back(T);
 
-  saveSimpleKeyCandidate(TokenQueue.back(), ColStart, false);
+  saveSimpleKeyCandidate(--TokenQueue.end(), ColStart, false);
 
   IsSimpleKeyAllowed = false;
 
@@ -1404,7 +1404,7 @@ bool Scanner::scanPlainScalar() {
   TokenQueue.push_back(T);
 
   // Plain scalars can be simple keys.
-  saveSimpleKeyCandidate(TokenQueue.back(), ColStart, false);
+  saveSimpleKeyCandidate(--TokenQueue.end(), ColStart, false);
 
   IsSimpleKeyAllowed = false;
 
@@ -1439,7 +1439,7 @@ bool Scanner::scanAliasOrAnchor(bool IsAlias) {
   TokenQueue.push_back(T);
 
   // Alias and anchors can be simple keys.
-  saveSimpleKeyCandidate(TokenQueue.back(), ColStart, false);
+  saveSimpleKeyCandidate(--TokenQueue.end(), ColStart, false);
 
   IsSimpleKeyAllowed = false;
 
@@ -1669,7 +1669,7 @@ bool Scanner::scanTag() {
   TokenQueue.push_back(T);
 
   // Tags can be simple keys.
-  saveSimpleKeyCandidate(TokenQueue.back(), ColStart, false);
+  saveSimpleKeyCandidate(--TokenQueue.end(), ColStart, false);
 
   IsSimpleKeyAllowed = false;
 
