@@ -510,6 +510,9 @@ public:
            getOS() == Triple::PS4;
   }
 
+  /// \brief Tests whether the target is Android
+  bool isAndroid() const { return getEnvironment() == Triple::Android; }
+
   /// @}
   /// @name Mutators
   /// @{

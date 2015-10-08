@@ -262,7 +262,7 @@ Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
   }
 
   // Android provides a libc function that returns the stack pointer address.
-  if (TargetTriple.getEnvironment() == llvm::Triple::Android) {
+  if (TargetTriple.isAndroid()) {
     Value *Fn = M.getOrInsertFunction(kUnsafeStackPtrAddrFn,
                                       StackPtrTy->getPointerTo(0), nullptr);
     return IRB.CreateCall(Fn);

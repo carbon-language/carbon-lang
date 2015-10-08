@@ -383,7 +383,7 @@ public:
             TargetTriple.getEnvironment() == Triple::GNUEABI ||
             TargetTriple.getEnvironment() == Triple::EABIHF ||
             TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
-            TargetTriple.getEnvironment() == Triple::Android) &&
+            isTargetAndroid()) &&
            !isTargetDarwin() && !isTargetWindows();
   }
 
@@ -393,9 +393,7 @@ public:
            TargetTriple.getEnvironment() == Triple::EABIHF ||
            isTargetWindows();
   }
-  bool isTargetAndroid() const {
-    return TargetTriple.getEnvironment() == Triple::Android;
-  }
+  bool isTargetAndroid() const { return TargetTriple.isAndroid(); }
 
   bool isAPCS_ABI() const;
   bool isAAPCS_ABI() const;

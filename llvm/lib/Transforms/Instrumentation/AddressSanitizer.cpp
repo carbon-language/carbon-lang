@@ -338,7 +338,7 @@ struct ShadowMapping {
 
 static ShadowMapping getShadowMapping(Triple &TargetTriple, int LongSize,
                                       bool IsKasan) {
-  bool IsAndroid = TargetTriple.getEnvironment() == llvm::Triple::Android;
+  bool IsAndroid = TargetTriple.isAndroid();
   bool IsIOS = TargetTriple.isiOS();
   bool IsFreeBSD = TargetTriple.isOSFreeBSD();
   bool IsLinux = TargetTriple.isOSLinux();
