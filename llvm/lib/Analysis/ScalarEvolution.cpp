@@ -5742,22 +5742,36 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
   BasicBlock *Header = L->getHeader();
   assert(PN->getParent() == Header && "Can't evaluate PHI not in loop header!");
 
-  // Since the loop is canonicalized, the PHI node must have two entries.  One
+  BasicBlock *Latch = L->getLoopLatch();
+  if (!Latch)
+    return nullptr;
+
+  // Since the loop has one latch, the PHI node must have two entries.  One
   // entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
-  bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
+
+  BasicBlock *NonLatch = Latch == PN->getIncomingBlock(0)
+                             ? PN->getIncomingBlock(1)
+                             : PN->getIncomingBlock(0);
+
+  assert(PN->getNumIncomingValues() == 2 && "Follows from having one latch!");
+
+  // Note: not all PHI nodes in the same block have to have their incoming
+  // values in the same order, so we use the basic block to look up the incoming
+  // value, not an index.
+
   for (auto &I : *Header) {
     PHINode *PHI = dyn_cast<PHINode>(&I);
     if (!PHI) break;
     auto *StartCST =
-      dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
+        dyn_cast<Constant>(PHI->getIncomingValueForBlock(NonLatch));
     if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
   }
   if (!CurrentIterVals.count(PN))
     return RetVal = nullptr;
 
-  Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
+  Value *BEValue = PN->getIncomingValueForBlock(Latch);
 
   // Execute the loop symbolically to determine the exit value.
   if (BEs.getActiveBits() >= 32)
@@ -5796,7 +5810,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
       PHINode *PHI = I.first;
       Constant *&NextPHI = NextIterVals[PHI];
       if (!NextPHI) {   // Not already computed.
-        Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
+        Value *BEValue = PHI->getIncomingValueForBlock(Latch);
         NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, &TLI);
       }
       if (NextPHI != I.second)
@@ -5831,15 +5845,24 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   BasicBlock *Header = L->getHeader();
   assert(PN->getParent() == Header && "Can't evaluate PHI not in loop header!");
 
-  // One entry must be a constant (coming in from outside of the loop), and the
-  // second must be derived from the same PHI.
-  bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
+  BasicBlock *Latch = L->getLoopLatch();
+  assert(Latch && "Should follow from NumIncomingValues == 2!");
+
+  // NonLatch is the preheader, or something equivalent.
+  BasicBlock *NonLatch = Latch == PN->getIncomingBlock(0)
+                             ? PN->getIncomingBlock(1)
+                             : PN->getIncomingBlock(0);
+
+  // Note: not all PHI nodes in the same block have to have their incoming
+  // values in the same order, so we use the basic block to look up the incoming
+  // value, not an index.
+
   for (auto &I : *Header) {
     PHINode *PHI = dyn_cast<PHINode>(&I);
     if (!PHI)
       break;
     auto *StartCST =
-        dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
+      dyn_cast<Constant>(PHI->getIncomingValueForBlock(NonLatch));
     if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
   }
@@ -5879,7 +5902,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
       Constant *&NextPHI = NextIterVals[PHI];
       if (NextPHI) continue;    // Already computed!
 
-      Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
+      Value *BEValue = PHI->getIncomingValueForBlock(Latch);
       NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, &TLI);
     }
     CurrentIterVals.swap(NextIterVals);
