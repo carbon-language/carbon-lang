@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- cinttypes --------------------------------===//
+//===--------------------------- inttypes.h -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,15 +8,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CINTTYPES
-#define _LIBCPP_CINTTYPES
+#ifndef _LIBCPP_INTTYPES_H
+#define _LIBCPP_INTTYPES_H
 
 /*
-    cinttypes synopsis
+    inttypes.h synopsis
 
 This entire header is C99 / C++0X
 
-#include <cstdint>  // <cinttypes> includes <cstdint>
+#include <stdint.h>  // <cinttypes> includes <cstdint>
 
 Macros:
 
@@ -218,9 +218,6 @@ Macros:
     SCNxMAX
     SCNxPTR
 
-namespace std
-{
-
 Types:
 
     imaxdiv_t
@@ -232,27 +229,22 @@ uintmax_t strtoumax(const char* restrict nptr, char** restrict endptr, int base)
 intmax_t  wcstoimax(const wchar_t* restrict nptr, wchar_t** restrict endptr, int base);
 uintmax_t wcstoumax(const wchar_t* restrict nptr, wchar_t** restrict endptr, int base);
 
-}  // std
 */
 
 #include <__config>
-#include <cstdint>
-#include <inttypes.h>
+#include_next <inttypes.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+#ifdef __cplusplus
 
-using::imaxdiv_t;
-using::imaxabs;
-using::imaxdiv;
-using::strtoimax;
-using::strtoumax;
-using::wcstoimax;
-using::wcstoumax;
+#include <stdint.h>
 
-_LIBCPP_END_NAMESPACE_STD
+#undef imaxabs
+#undef imaxdiv
 
-#endif  // _LIBCPP_CINTTYPES
+#endif
+
+#endif  // _LIBCPP_INTTYPES_H
