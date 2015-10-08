@@ -126,4 +126,4 @@
 //
 // NOCI-NOT: "-dwarf-column-info"
 //
-// GEXTREFS: "-dwarf-ext-refs" "-fmodule-format=obj" "-debug-info-kind=limited"
+// GEXTREFS: "-dwarf-ext-refs" "-fmodule-format=obj" "-debug-info-kind={{standalone|limited}}"
