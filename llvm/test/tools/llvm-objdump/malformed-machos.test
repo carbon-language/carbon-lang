@@ -18,3 +18,9 @@
 # RUN:   | FileCheck -check-prefix=m0010 %s 
 
 # m0010: 00000000000010e0 0x10e8 _OBJC_CLASS_
+
+# RUN: llvm-objdump -macho -objc-meta-data \
+# RUN:   %p/Inputs/malformed-machos/mem-crup-0040.macho \
+# RUN:   | FileCheck -check-prefix=m0040 %s 
+
+# m0040: 00000000000010a0 0xf39 -[tiny_dylib init]

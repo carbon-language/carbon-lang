@@ -483,9 +483,32 @@ uint64_t MachOObjectFile::getSectionAddress(DataRefImpl Sec) const {
 }
 
 uint64_t MachOObjectFile::getSectionSize(DataRefImpl Sec) const {
-  if (is64Bit())
-    return getSection64(Sec).size;
-  return getSection(Sec).size;
+  // In the case if a malformed Mach-O file where the section offset is past
+  // the end of the file or some part of the section size is past the end of
+  // the file return a size of zero or a size that covers the rest of the file
+  // but does not extend past the end of the file.
+  uint32_t SectOffset, SectType;
+  uint64_t SectSize;
+
+  if (is64Bit()) {
+    MachO::section_64 Sect = getSection64(Sec);
+    SectOffset = Sect.offset;
+    SectSize = Sect.size;
+    SectType = Sect.flags & MachO::SECTION_TYPE;
+  } else {
+    MachO::section Sect = getSection(Sec);
+    SectOffset = Sect.offset;
+    SectSize = Sect.size;
+    SectType = Sect.flags & MachO::SECTION_TYPE;
+  }
+  if (SectType == MachO::S_ZEROFILL || SectType == MachO::S_GB_ZEROFILL)
+    return SectSize;
+  uint64_t FileSize = getData().size();
+  if (SectOffset > FileSize)
+    return 0;
+  if (FileSize - SectOffset < SectSize)
+    return FileSize - SectOffset;
+  return SectSize;
 }
 
 std::error_code MachOObjectFile::getSectionContents(DataRefImpl Sec,
