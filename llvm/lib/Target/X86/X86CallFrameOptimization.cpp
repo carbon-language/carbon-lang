@@ -26,6 +26,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
@@ -128,6 +129,11 @@ bool X86CallFrameOptimization::isLegal(MachineFunction &MF) {
   // we're looking for will never match.
   const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
   if (STI.is64Bit())
+    return false;
+
+  // We can't encode multiple DW_CFA_GNU_args_size in the compact
+  // unwind encoding that Darwin uses.
+  if (STI.isTargetDarwin() && !MF.getMMI().getLandingPads().empty())
     return false;
 
   // You would expect straight-line code between call-frame setup and
