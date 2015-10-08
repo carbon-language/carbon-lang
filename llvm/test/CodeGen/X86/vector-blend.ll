@@ -255,31 +255,32 @@ entry:
 define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
 ; SSE2-LABEL: vsel_i8:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    movaps {{.*#+}} xmm2 = [255,0,0,0,255,0,0,0,255,255,255,255,255,255,255,255]
-; SSE2-NEXT:    andps %xmm2, %xmm0
-; SSE2-NEXT:    andnps %xmm1, %xmm2
-; SSE2-NEXT:    orps %xmm2, %xmm0
+; SSE2-NEXT:    movaps {{.*#+}} xmm2 = [0,255,255,255,0,255,255,255,0,255,255,255,0,255,255,255]
+; SSE2-NEXT:    andps %xmm2, %xmm1
+; SSE2-NEXT:    andnps %xmm0, %xmm2
+; SSE2-NEXT:    orps %xmm1, %xmm2
+; SSE2-NEXT:    movaps %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_i8:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    pshufb {{.*#+}} xmm1 = zero,xmm1[1,2,3],zero,xmm1[5,6,7],zero,zero,zero,zero,zero,zero,zero,zero
-; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[4],zero,zero,zero,xmm0[8,9,10,11,12,13,14,15]
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[4],zero,zero,zero,xmm0[8],zero,zero,zero,xmm0[12],zero,zero,zero
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm1 = zero,xmm1[1,2,3],zero,xmm1[5,6,7],zero,xmm1[9,10,11],zero,xmm1[13,14,15]
 ; SSSE3-NEXT:    por %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_i8:
 ; SSE41:       # BB#0: # %entry
 ; SSE41-NEXT:    movdqa %xmm0, %xmm2
-; SSE41-NEXT:    movaps {{.*#+}} xmm0 = [255,0,0,0,255,0,0,0,255,255,255,255,255,255,255,255]
-; SSE41-NEXT:    pblendvb %xmm2, %xmm1
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    movaps {{.*#+}} xmm0 = [0,255,255,255,0,255,255,255,0,255,255,255,0,255,255,255]
+; SSE41-NEXT:    pblendvb %xmm1, %xmm2
+; SSE41-NEXT:    movdqa %xmm2, %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: vsel_i8:
 ; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa {{.*#+}} xmm2 = [255,0,0,0,255,0,0,0,255,255,255,255,255,255,255,255]
-; AVX-NEXT:    vpblendvb %xmm2, %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,255,255,255,0,255,255,255,0,255,255,255,0,255,255,255]
+; AVX-NEXT:    vpblendvb %xmm2, %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 entry:
   %vsel = select <16 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <16 x i8> %v1, <16 x i8> %v2
@@ -623,49 +624,52 @@ entry:
 define <32 x i8> @constant_pblendvb_avx2(<32 x i8> %xyzw, <32 x i8> %abcd) {
 ; SSE2-LABEL: constant_pblendvb_avx2:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    movaps {{.*#+}} xmm4 = [0,0,255,0,255,255,255,0,255,255,255,255,255,255,255,255]
+; SSE2-NEXT:    movaps {{.*#+}} xmm4 = [255,255,0,255,0,0,0,255,255,255,0,255,0,0,0,255]
 ; SSE2-NEXT:    movaps %xmm4, %xmm5
-; SSE2-NEXT:    andnps %xmm2, %xmm5
-; SSE2-NEXT:    andps %xmm4, %xmm0
-; SSE2-NEXT:    orps %xmm5, %xmm0
-; SSE2-NEXT:    andps %xmm4, %xmm1
-; SSE2-NEXT:    andnps %xmm3, %xmm4
-; SSE2-NEXT:    orps %xmm4, %xmm1
+; SSE2-NEXT:    andnps %xmm0, %xmm5
+; SSE2-NEXT:    andps %xmm4, %xmm2
+; SSE2-NEXT:    orps %xmm2, %xmm5
+; SSE2-NEXT:    andps %xmm4, %xmm3
+; SSE2-NEXT:    andnps %xmm1, %xmm4
+; SSE2-NEXT:    orps %xmm3, %xmm4
+; SSE2-NEXT:    movaps  %xmm5, %xmm0
+; SSE2-NEXT:    movaps  %xmm4, %xmm1
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: constant_pblendvb_avx2:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    movdqa {{.*#+}} xmm4 = [0,1,128,3,128,128,128,7,128,128,128,128,128,128,128,128]
-; SSSE3-NEXT:    pshufb %xmm4, %xmm2
-; SSSE3-NEXT:    movdqa {{.*#+}} xmm5 = [128,128,2,128,4,5,6,128,8,9,10,11,12,13,14,15]
-; SSSE3-NEXT:    pshufb %xmm5, %xmm0
+; SSSE3-NEXT:    movdqa {{.*#+}} xmm4 = [128,128,2,128,4,5,6,128,128,128,10,128,12,13,14,128]
+; SSSE3-NEXT:    pshufb %xmm4, %xmm0
+; SSSE3-NEXT:    movdqa {{.*#+}} xmm5 = [0,1,128,3,128,128,128,7,8,9,128,11,128,128,128,15]
+; SSSE3-NEXT:    pshufb %xmm5, %xmm2
 ; SSSE3-NEXT:    por %xmm2, %xmm0
-; SSSE3-NEXT:    pshufb %xmm4, %xmm3
-; SSSE3-NEXT:    pshufb %xmm5, %xmm1
+; SSSE3-NEXT:    pshufb %xmm4, %xmm1
+; SSSE3-NEXT:    pshufb %xmm5, %xmm3
 ; SSSE3-NEXT:    por %xmm3, %xmm1
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: constant_pblendvb_avx2:
 ; SSE41:       # BB#0: # %entry
 ; SSE41-NEXT:    movdqa %xmm0, %xmm4
-; SSE41-NEXT:    movaps {{.*#+}} xmm0 = [0,0,255,0,255,255,255,0,255,255,255,255,255,255,255,255]
-; SSE41-NEXT:    pblendvb %xmm4, %xmm2
-; SSE41-NEXT:    pblendvb %xmm1, %xmm3
-; SSE41-NEXT:    movdqa %xmm2, %xmm0
-; SSE41-NEXT:    movdqa %xmm3, %xmm1
+; SSE41-NEXT:    movaps {{.*#+}} xmm0 = [255,255,0,255,0,0,0,255,255,255,0,255,0,0,0,255]
+; SSE41-NEXT:    pblendvb %xmm2, %xmm4
+; SSE41-NEXT:    pblendvb %xmm3, %xmm1
+; SSE41-NEXT:    movdqa %xmm4, %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: constant_pblendvb_avx2:
 ; AVX1:       # BB#0: # %entry
-; AVX1-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,0,255,0,255,255,255,0,255,255,255,255,255,255,255,255]
-; AVX1-NEXT:    vpblendvb %xmm2, %xmm0, %xmm1, %xmm1
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX1-NEXT:    vextractf128    $1, %ymm1, %xmm2
+; AVX1-NEXT:    vextractf128    $1, %ymm0, %xmm3
+; AVX1-NEXT:    vmovdqa .LCPI18_0(%rip), %xmm4  # xmm4 = [255,255,0,255,0,0,0,255,255,255,0,255,0,0,0,255]
+; AVX1-NEXT:    vpblendvb       %xmm4, %xmm2, %xmm3, %xmm2
+; AVX1-NEXT:    vpblendvb       %xmm4, %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128     $1, %xmm2, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: constant_pblendvb_avx2:
 ; AVX2:       # BB#0: # %entry
-; AVX2-NEXT:    vmovdqa {{.*#+}} ymm2 = [0,0,255,0,255,255,255,0,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255]
+; AVX2-NEXT:    vmovdqa {{.*#+}} ymm2 = [0,0,255,0,255,255,255,0,0,0,255,0,255,255,255,0,0,0,255,0,255,255,255,0,0,0,255,0,255,255,255,0]
 ; AVX2-NEXT:    vpblendvb %ymm2, %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 entry:
