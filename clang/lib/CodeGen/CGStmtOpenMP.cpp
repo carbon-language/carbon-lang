@@ -213,7 +213,6 @@ void CodeGenFunction::EmitOMPAggregateAssign(
 }
 
 /// \brief Emit initialization of arrays of complex types.
-/// \param Type Type of array.
 /// \param DestAddr Address of the array.
 /// \param Type Type of array.
 /// \param Init Initial expression of array.
