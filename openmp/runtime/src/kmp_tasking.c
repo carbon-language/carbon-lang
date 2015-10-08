@@ -1328,7 +1328,7 @@ __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid )
 #else
         if ( ! taskdata->td_flags.team_serial ) 
 #endif
-	{
+        {
             // GEH: if team serialized, avoid reading the volatile variable below.
             kmp_flag_32 flag(&(taskdata->td_incomplete_child_tasks), 0U);
             while ( TCR_4(taskdata -> td_incomplete_child_tasks) != 0 ) {
@@ -1457,7 +1457,7 @@ __kmpc_end_taskgroup( ident_t* loc, int gtid )
 #else
         if ( ! taskdata->td_flags.team_serial ) 
 #endif
-	{
+        {
             kmp_flag_32 flag(&(taskgroup->count), 0U);
             while ( TCR_4(taskgroup->count) != 0 ) {
                 flag.execute_tasks(thread, gtid, FALSE, &thread_finished
@@ -1831,7 +1831,7 @@ static inline int __kmp_execute_tasks_template(kmp_info_t *thread, kmp_int32 gti
 #else
         if (final_spin) 
 #endif
-	{
+        {
             // First, decrement the #unfinished threads, if that has not already
             // been done.  This decrement might be to the spin location, and
             // result in the termination condition being satisfied.
@@ -1874,8 +1874,8 @@ static inline int __kmp_execute_tasks_template(kmp_info_t *thread, kmp_int32 gti
 
         // There is a slight chance that __kmp_enable_tasking() did not wake up
         // all threads waiting at the barrier.  If this thread is sleeping, then
-        // then wake it up.  Since we weree going to pay the cache miss penalty
-        // for referenceing another thread's kmp_info_t struct anyway, the check
+        // wake it up.  Since we were going to pay the cache miss penalty
+        // for referencing another thread's kmp_info_t struct anyway, the check
         // shouldn't cost too much performance at this point.
         // In extra barrier mode, tasks do not sleep at the separate tasking
         // barrier, so this isn't a problem.
@@ -1886,7 +1886,7 @@ static inline int __kmp_execute_tasks_template(kmp_info_t *thread, kmp_int32 gti
             __kmp_null_resume_wrapper(__kmp_gtid_from_thread(other_thread), other_thread->th.th_sleep_loc);
             // A sleeping thread should not have any tasks on it's queue.
             // There is a slight possibility that it resumes, steals a task from
-            // another thread, which spawns more tasks, all in the that it takes
+            // another thread, which spawns more tasks, all in the time that it takes
             // this thread to check => don't write an assertion that the victim's
             // queue is empty.  Try stealing from a different thread.
             goto new_victim;
@@ -1946,7 +1946,7 @@ static inline int __kmp_execute_tasks_template(kmp_info_t *thread, kmp_int32 gti
 #else
         if (final_spin) 
 #endif
-	{
+        {
             // First, decrement the #unfinished threads, if that has not already
             // been done.  This decrement might be to the spin location, and
             // result in the termination condition being satisfied.
@@ -2227,8 +2227,8 @@ __kmp_realloc_task_threads_data( kmp_info_t *thread, kmp_task_team_t *task_team 
                             __kmp_allocate( nthreads * sizeof(kmp_thread_data_t) );
                 // copy old data to new data
                 KMP_MEMCPY_S( (void *) new_data, nthreads * sizeof(kmp_thread_data_t),
-			(void *) old_data, 
-                        maxthreads * sizeof(kmp_taskdata_t *) );
+                              (void *) old_data,
+                              maxthreads * sizeof(kmp_taskdata_t *) );
 
 #ifdef BUILD_TIED_TASK_STACK
                 // GEH: Figure out if this is the right thing to do
@@ -2589,9 +2589,9 @@ __kmp_task_team_sync( kmp_info_t *this_thr, kmp_team_t *team )
 }
 
 
-//------------------------------------------------------------------------------
-// __kmp_task_team_wait: Master thread waits for outstanding tasks after the
-// barrier gather phase.  Only called by master thread if #threads in team > 1 or if proxy tasks were created
+//--------------------------------------------------------------------------------------------
+// __kmp_task_team_wait: Master thread waits for outstanding tasks after the barrier gather
+// phase.  Only called by master thread if #threads in team > 1 or if proxy tasks were created
 void
 __kmp_task_team_wait( kmp_info_t *this_thr, kmp_team_t *team
                       USE_ITT_BUILD_ARG(void * itt_sync_obj)
@@ -2633,12 +2633,11 @@ __kmp_task_team_wait( kmp_info_t *this_thr, kmp_team_t *team
 
 //------------------------------------------------------------------------------
 // __kmp_tasking_barrier:
+// This routine may only called when __kmp_tasking_mode == tskm_extra_barrier.
 // Internal function to execute all tasks prior to a regular barrier or a
 // join barrier.  It is a full barrier itself, which unfortunately turns
 // regular barriers into double barriers and join barriers into 1 1/2
 // barriers.
-// This routine may only called when __kmp_tasking_mode == tskm_extra_barrier.
-
 void
 __kmp_tasking_barrier( kmp_team_t *team, kmp_info_t *thread, int gtid )
 {

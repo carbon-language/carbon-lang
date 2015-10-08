@@ -461,7 +461,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
                a worker thread may not assume that the team is valid any more - it could be
                deallocated by the master thread at any time.  */
             p_flag.set_waiter(other_threads[parent_tid]);
-	    p_flag.release();
+            p_flag.release();
             break;
         }
 

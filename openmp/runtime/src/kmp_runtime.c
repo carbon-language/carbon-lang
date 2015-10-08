@@ -5096,14 +5096,12 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
             /* reinitialize the threads */
             KMP_DEBUG_ASSERT(team->t.t_nproc == new_nproc);
             if (level) {
-                for( f = 0  ;  f < team->t.t_nproc  ;  f++ ) {
-                    __kmp_initialize_info( team->t.t_threads[ f ], team, f,
-                                           __kmp_gtid_from_tid( f, team ) );
-                }
+                for (f=0;  f < team->t.t_nproc; ++f)
+                    __kmp_initialize_info( team->t.t_threads[ f ], team, f, __kmp_gtid_from_tid( f, team ) );
             }
             else {
                 int old_state = team->t.t_threads[0]->th.th_task_state;
-                for (f=0;  f < team->t.t_nproc; ++f) {
+                for (f=0;  f<team->t.t_nproc; ++f) {
                     __kmp_initialize_info( team->t.t_threads[ f ], team, f, __kmp_gtid_from_tid( f, team ) );
                     team->t.t_threads[f]->th.th_task_state = old_state;
                     team->t.t_threads[f]->th.th_task_team = team->t.t_task_team[old_state];
@@ -6495,7 +6493,7 @@ __kmp_do_serial_initialize( void )
 #if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
     if( __kmp_mic_type != non_mic ) {
         // AC: plane=3,2, forkjoin=2,1 are optimal for 240 threads on KNC
-        __kmp_barrier_gather_branch_bits [ bs_plain_barrier ] = 3;  // plane gather
+        __kmp_barrier_gather_branch_bits [ bs_plain_barrier ] = 3;  // plain gather
         __kmp_barrier_release_branch_bits[ bs_forkjoin_barrier ] = 1;  // forkjoin release
         __kmp_barrier_gather_pattern [ bs_forkjoin_barrier ] = bp_hierarchical_bar;
         __kmp_barrier_release_pattern[ bs_forkjoin_barrier ] = bp_hierarchical_bar;

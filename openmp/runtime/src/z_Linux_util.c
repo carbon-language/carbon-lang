@@ -1757,8 +1757,7 @@ static inline void __kmp_suspend_template( int th_gtid, C *flag )
             status = pthread_cond_timedwait( &th->th.th_suspend_cv.c_cond, &th->th.th_suspend_mx.m_mutex, & now );
 #else
             KF_TRACE( 15, ( "__kmp_suspend_template: T#%d about to perform pthread_cond_wait\n",
-                               th_gtid ) );
-
+                            th_gtid ) );
             status = pthread_cond_wait( &th->th.th_suspend_cv.c_cond, &th->th.th_suspend_mx.m_mutex );
 #endif
 
@@ -1849,7 +1848,7 @@ static inline void __kmp_resume_template( int target_gtid, C *flag )
         KMP_CHECK_SYSFAIL( "pthread_mutex_unlock", status );
         return;
     }
-    else {
+    else { // if multiple threads are sleeping, flag should be internally referring to a specific thread here
         typename C::flag_t old_spin = flag->unset_sleeping();
         if ( ! flag->is_sleeping_val(old_spin) ) {
             KF_TRACE( 5, ( "__kmp_resume_template: T#%d exiting, thread T#%d already awake: flag(%p): "
