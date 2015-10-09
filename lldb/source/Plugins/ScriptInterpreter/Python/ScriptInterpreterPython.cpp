@@ -189,8 +189,8 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_saved_stderr (),
     m_main_module (),
     m_lldb_module (),
-    m_session_dict (false),     // Don't create an empty dictionary, leave it invalid
-    m_sys_module_dict (false),  // Don't create an empty dictionary, leave it invalid
+    m_session_dict(nullptr),
+    m_sys_module_dict(nullptr),
     m_run_one_line_function (),
     m_run_one_line_str_global (),
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),

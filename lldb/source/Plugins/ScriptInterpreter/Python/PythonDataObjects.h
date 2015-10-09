@@ -235,7 +235,7 @@ enum class PyObjectType
     class PythonDictionary: public PythonObject
     {
     public:
-      PythonDictionary();
+        PythonDictionary();
         PythonDictionary (PyObject* object);
         PythonDictionary (const PythonObject &object);
         virtual ~PythonDictionary ();
