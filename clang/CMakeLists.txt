@@ -598,7 +598,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
   # DARWIN_LTO_LIBRARY so that -flto will work using the just-built compiler
   if(APPLE)
     set(LTO_DEP LTO llvm-ar llvm-ranlib)
-    set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${LLVM_RUNTIME_OUTPUT_INTDIR}/libLTO.dylib)
+    set(LTO_LIBRARY -DDARWIN_LTO_LIBRARY=${LLVM_SHLIB_OUTPUT_INTDIR}/libLTO.dylib)
     set(LTO_AR -DCMAKE_AR=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ar)
     set(LTO_RANLIB -DCMAKE_RANLIB=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ranlib)
   endif()
