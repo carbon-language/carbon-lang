@@ -37,13 +37,11 @@ namespace {
 // instructions.
 struct Reference {
   Reference()
-    : Def(false), Use(false), IndirectDef(false), IndirectUse(false) {}
+    : Def(false), Use(false) {}
 
   Reference &operator|=(const Reference &Other) {
     Def |= Other.Def;
-    IndirectDef |= Other.IndirectDef;
     Use |= Other.Use;
-    IndirectUse |= Other.IndirectUse;
     return *this;
   }
 
@@ -53,11 +51,6 @@ struct Reference {
   // via a sub- or super-register.
   bool Def;
   bool Use;
-
-  // True if the register is defined or used indirectly, by a sub- or
-  // super-register.
-  bool IndirectDef;
-  bool IndirectUse;
 };
 
 class SystemZElimCompare : public MachineFunctionPass {
@@ -132,22 +125,18 @@ static bool resultTests(MachineInstr *MI, unsigned Reg) {
   return false;
 }
 
-// Describe the references to Reg in MI, including sub- and super-registers.
+// Describe the references to Reg or any of its aliases in MI.
 Reference SystemZElimCompare::getRegReferences(MachineInstr *MI, unsigned Reg) {
   Reference Ref;
   for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
     const MachineOperand &MO = MI->getOperand(I);
     if (MO.isReg()) {
       if (unsigned MOReg = MO.getReg()) {
-        if (MOReg == Reg || TRI->regsOverlap(MOReg, Reg)) {
-          if (MO.isUse()) {
+        if (TRI->regsOverlap(MOReg, Reg)) {
+          if (MO.isUse())
             Ref.Use = true;
-            Ref.IndirectUse |= (MOReg != Reg);
-          }
-          if (MO.isDef()) {
+          else if (MO.isDef())
             Ref.Def = true;
-            Ref.IndirectDef |= (MOReg != Reg);
-          }
         }
       }
     }
@@ -469,12 +458,11 @@ bool SystemZElimCompare::processBlock(MachineBasicBlock &MBB) {
       continue;
     }
 
-    Reference CCRefs(getRegReferences(MI, SystemZ::CC));
-    if (CCRefs.Def) {
+    if (MI->definesRegister(SystemZ::CC)) {
       CCUsers.clear();
       CompleteCCUsers = true;
     }
-    if (CompleteCCUsers && CCRefs.Use)
+    if (MI->readsRegister(SystemZ::CC) && CompleteCCUsers)
       CCUsers.push_back(MI);
   }
   return Changed;
