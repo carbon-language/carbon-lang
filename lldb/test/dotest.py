@@ -112,7 +112,7 @@ just_do_benchmarks_test = False
 
 dont_do_dsym_test = False
 dont_do_dwarf_test = False
-dont_do_dwo_test = sys.platform == 'darwin'
+dont_do_dwo_test = False
 
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
 # testclass's and/or testclass.testmethod's.
@@ -1513,11 +1513,12 @@ if __name__ == "__main__":
 
     target_platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
 
-    # By default, both dsym and dwarf tests are performed.
-    # Use @dsym_test or @dwarf_test decorators, defined in lldbtest.py, to mark a test
-    # as a dsym or dwarf test.  Use '-N dsym' or '-N dwarf' to exclude dsym or dwarf
-    # tests from running.
-    dont_do_dsym_test = dont_do_dsym_test or "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
+    # By default, both dsym, dwarf and dwo tests are performed.
+    # Use @dsym_test, @dwarf_test or @dwo_test decorators, defined in lldbtest.py, to mark a test as
+    # a dsym, dwarf or dwo test.  Use '-N dsym', '-N dwarf' or '-N dwo' to exclude dsym, dwarf or
+    # dwo tests from running.
+    dont_do_dsym_test = dont_do_dsym_test or any(platform in target_platform for platform in ["linux", "freebsd", "windows"])
+    dont_do_dwo_test = dont_do_dwo_test or any(platform in target_platform for platform in ["darwin", "macosx", "ios"])
 
     # Don't do debugserver tests on everything except OS X.
     dont_do_debugserver_test = "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
