@@ -64,5 +64,44 @@ loop_exit:
 ; CHECK: }
 }
 
+; This simple test would normally unswitch, but should be inhibited by the presence of
+; the convergent call that is not control-dependent on the unswitch condition.
+
+; CHECK-LABEL: @test3(
+define i32 @test3(i32* %var) {
+  %mem = alloca i32
+  store i32 2, i32* %mem
+  %c = load i32, i32* %mem
+
+  br label %loop_begin
+
+loop_begin:
+
+  %var_val = load i32, i32* %var
+
+; CHECK: call void @conv()
+; CHECK-NOT: call void @conv()
+  call void @conv() convergent
+
+  switch i32 %c, label %default [
+      i32 1, label %inc
+      i32 2, label %dec
+  ]
+
+inc:
+  call void @incf() noreturn nounwind
+  br label %loop_begin
+dec:
+  call void @decf() noreturn nounwind
+  br label %loop_begin
+default:
+  br label %loop_exit
+loop_exit:
+  ret i32 0
+; CHECK: }
+}
+
+
 declare void @incf() noreturn
 declare void @decf() noreturn
+declare void @conv() convergent

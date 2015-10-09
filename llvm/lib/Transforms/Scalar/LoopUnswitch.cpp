@@ -500,6 +500,20 @@ bool LoopUnswitch::processCurrentLoop() {
     return true;
   }
 
+  // Do not unswitch loops containing convergent operations, as we might be
+  // making them control dependent on the unswitch value when they were not
+  // before.
+  // FIXME: This could be refined to only bail if the convergent operation is
+  // not already control-dependent on the unswitch value.
+  for (const auto BB : currentLoop->blocks()) {
+    for (const auto &I : *BB) {
+      const auto CI = dyn_cast<CallInst>(&I);
+      if (!CI) continue;
+      if (CI->isConvergent())
+        return false;
+    }
+  }
+
   // Do not do non-trivial unswitch while optimizing for size.
   // FIXME: Use Function::optForSize().
   if (OptimizeForSize ||
