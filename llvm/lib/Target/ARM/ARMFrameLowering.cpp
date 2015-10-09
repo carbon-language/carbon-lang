@@ -1605,13 +1605,11 @@ void ARMFrameLowering::determineCalleeSaves(MachineFunction &MF,
   // FIXME: We could add logic to be more precise about negative offsets
   //        and which instructions will need a scratch register for them. Is it
   //        worth the effort and added fragility?
-  bool BigStack =
-    (RS &&
-     (MFI->estimateStackSize(MF) +
-      ((hasFP(MF) && AFI->hasStackFrame()) ? 4:0) >=
-      estimateRSStackSizeLimit(MF, this)))
-    || MFI->hasVarSizedObjects()
-    || (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF));
+  bool BigStack = (RS && (MFI->estimateStackSize(MF) +
+                              ((hasFP(MF) && AFI->hasStackFrame()) ? 4 : 0) >=
+                          estimateRSStackSizeLimit(MF, this))) ||
+                  MFI->hasVarSizedObjects() ||
+                  (MFI->adjustsStack() && !canSimplifyCallFramePseudos(MF));
 
   bool ExtraCSSpill = false;
   if (BigStack || !CanEliminateFrame || RegInfo->cannotEliminateFrame(MF)) {
@@ -1649,8 +1647,10 @@ void ARMFrameLowering::determineCalleeSaves(MachineFunction &MF,
       if (CS1Spilled && !UnspilledCS1GPRs.empty()) {
         for (unsigned i = 0, e = UnspilledCS1GPRs.size(); i != e; ++i) {
           unsigned Reg = UnspilledCS1GPRs[i];
-          // Don't spill high register if the function is thumb
+          // Don't spill high register if the function is thumb.  In the case of
+          // Windows on ARM, accept R11 (frame pointer)
           if (!AFI->isThumbFunction() ||
+              (STI.isTargetWindows() && Reg == ARM::R11) ||
               isARMLowRegister(Reg) || Reg == ARM::LR) {
             SavedRegs.set(Reg);
             if (!MRI.isReserved(Reg))
