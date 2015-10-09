@@ -278,11 +278,10 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   if (FiniArraySec)
     NumEntries += 2;
 
-  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
-      SymTab.getSharedFiles();
-  for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
-    Out<ELFT>::DynStrTab->add(File->getSoName());
-  NumEntries += SharedFiles.size();
+  for (const std::unique_ptr<SharedFileBase> &F : SymTab.getSharedFiles()) {
+    Out<ELFT>::DynStrTab->add(F->getSoName());
+    ++NumEntries;
+  }
 
   if (Symbol *S = SymTab.getSymbols().lookup(Config->Init))
     InitSym = dyn_cast<ELFSymbolBody<ELFT>>(S->Body);
@@ -356,10 +355,8 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   WriteArray(DT_INIT_ARRAY, DT_INIT_ARRAYSZ, InitArraySec);
   WriteArray(DT_FINI_ARRAY, DT_FINI_ARRAYSZ, FiniArraySec);
 
-  const std::vector<std::unique_ptr<SharedFileBase>> &SharedFiles =
-      SymTab.getSharedFiles();
-  for (const std::unique_ptr<SharedFileBase> &File : SharedFiles)
-    WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getFileOff(File->getSoName()));
+  for (const std::unique_ptr<SharedFileBase> &F : SymTab.getSharedFiles())
+    WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getFileOff(F->getSoName()));
 
   if (InitSym)
     WritePtr(DT_INIT, getSymVA<ELFT>(*InitSym));
