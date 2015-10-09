@@ -902,7 +902,10 @@ void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
     for (SEHUnwindMapEntry &UME : FuncInfo.SEHUnwindMap) {
       MCSymbol *ExceptOrFinally =
           UME.Handler.get<MachineBasicBlock *>()->getSymbol();
-      OS.EmitIntValue(UME.ToState, 4);                  // ToState
+      // -1 is usually the base state for "unwind to caller", but for
+      // _except_handler4 it's -2. Do that replacement here if necessary.
+      int ToState = UME.ToState == -1 ? BaseState : UME.ToState;
+      OS.EmitIntValue(ToState, 4);                      // ToState
       OS.EmitValue(create32bitRef(UME.Filter), 4);      // Filter
       OS.EmitValue(create32bitRef(ExceptOrFinally), 4); // Except/Finally
     }
