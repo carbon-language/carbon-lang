@@ -47,7 +47,7 @@ class TestValueOfVectorVariableTestCase(TestBase):
 
         # Value of a vector variable should be displayed correctly
         self.expect("watchpoint set variable global_vector", WATCHPOINT_CREATED,
-            substrs = ['new value: (1, 2, 3, 4, 5, 6, 7, 8)'])
+            substrs = ['new value: (1, 2, 3, 4)'])
 
 if __name__ == '__main__':
     import atexit

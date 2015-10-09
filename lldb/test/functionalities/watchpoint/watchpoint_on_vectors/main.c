@@ -6,9 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-typedef short v8i16 __attribute__ ((vector_size(16)));
-v8i16 global_vector = {1, 2, 3, 4, 5, 6, 7, 8};
+typedef char v4i8 __attribute__ ((vector_size(4)));
+v4i8 global_vector = {1, 2, 3, 4};
 
-int main()
+int
+main ()
 {
+  return 0;
 }
