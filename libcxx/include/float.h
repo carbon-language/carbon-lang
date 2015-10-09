@@ -61,11 +61,12 @@ Macros:
 */
 
 #include <__config>
-#include_next <float.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
+
+#include_next <float.h>
 
 #ifndef FLT_EVAL_METHOD
 #define FLT_EVAL_METHOD __FLT_EVAL_METHOD__

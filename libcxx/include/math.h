@@ -293,11 +293,12 @@ long double    truncl(long double x);
 */
 
 #include <__config>
-#include_next <math.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
+
+#include_next <math.h>
 
 #ifdef __cplusplus
 

@@ -31,11 +31,12 @@ int toupper(int c);
 */
 
 #include <__config>
-#include_next <ctype.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
+
+#include_next <ctype.h>
 
 #ifdef __cplusplus
 

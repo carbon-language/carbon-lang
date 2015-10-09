@@ -27,11 +27,12 @@ void longjmp(jmp_buf env, int val);
 */
 
 #include <__config>
-#include_next <setjmp.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
+
+#include_next <setjmp.h>
 
 #ifndef setjmp
 #define setjmp(env) setjmp(env)
