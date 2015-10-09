@@ -2634,11 +2634,12 @@ void Scop::hoistInvariantLoads() {
     isl_set *Dom1 = IA1.second;
 
     int Dim0 = isl_set_find_dim_by_id(Dom0, isl_dim_param, Id0);
-    int Dim1 = isl_set_find_dim_by_id(Dom0, isl_dim_param, Id1);
 
-    bool Involves0Id1 = isl_set_involves_dims(Dom0, isl_dim_param, Dim1, 1);
     bool Involves1Id0 = isl_set_involves_dims(Dom1, isl_dim_param, Dim0, 1);
-    assert(!(Involves0Id1 && Involves1Id0));
+    assert(!Involves1Id0 ||
+           !isl_set_involves_dims(
+               Dom0, isl_dim_param,
+               isl_set_find_dim_by_id(Dom0, isl_dim_param, Id1), 1));
 
     isl_id_free(Id0);
     isl_id_free(Id1);
