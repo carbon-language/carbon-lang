@@ -37,6 +37,9 @@ int * ret_nonnull() {
   return 0; // expected-warning {{null returned from function that requires a non-null return value}}
 }
 
+#define SAFE_CALL(X) if (X) foo(X)
 int main () {
   foo(0); // expected-warning {{null passed to a callee that requires a non-null argument}}
+  (void)sizeof(foo(0)); // expect no diagnostic in unevaluated context.
+  SAFE_CALL(0); // expect no diagnostic for unreachable code.
 }

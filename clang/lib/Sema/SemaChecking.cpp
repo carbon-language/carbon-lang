@@ -1151,7 +1151,8 @@ static void CheckNonNullArgument(Sema &S,
                                  const Expr *ArgExpr,
                                  SourceLocation CallSiteLoc) {
   if (CheckNonNullExpr(S, ArgExpr))
-    S.Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
+    S.DiagRuntimeBehavior(CallSiteLoc, ArgExpr,
+           S.PDiag(diag::warn_null_arg) << ArgExpr->getSourceRange());
 }
 
 bool Sema::GetFormatNSStringIdx(const FormatAttr *Format, unsigned &Idx) {
