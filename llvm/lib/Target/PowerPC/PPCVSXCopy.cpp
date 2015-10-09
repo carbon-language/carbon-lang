@@ -128,6 +128,7 @@ protected:
             IsVRReg(DstMO.getReg(), MRI) ? &PPC::VSHRCRegClass :
                                            &PPC::VSLRCRegClass;
           assert((IsF8Reg(DstMO.getReg(), MRI) ||
+                  IsVSFReg(DstMO.getReg(), MRI) ||
                   IsVRReg(DstMO.getReg(), MRI)) &&
                  "Unknown destination for a VSX copy");
 

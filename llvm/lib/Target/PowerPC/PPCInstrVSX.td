@@ -1237,59 +1237,397 @@ let Predicates = [HasDirectMove, HasVSX] in {
                                [(set f64:$XT, (PPCmtvsrz i32:$rA))]>;
 } // HasDirectMove, HasVSX
 
-/*  Direct moves of various size entities from GPR's into VSR's. Each lines
+/*  Direct moves of various widths from GPR's into VSR's. Each move lines
     the value up into element 0 (both BE and LE). Namely, entities smaller than
     a doubleword are shifted left and moved for BE. For LE, they're moved, then
     swapped to go into the least significant element of the VSR.
 */
-def Moves {
-  dag BE_BYTE_0 = (MTVSRD
-                  (RLDICR
-                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 56, 7));
-  dag BE_HALF_0 = (MTVSRD
-                  (RLDICR
-                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 48, 15));
-  dag BE_WORD_0 = (MTVSRD
-                  (RLDICR
-                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 32, 31));
+def MovesToVSR {
+  dag BE_BYTE_0 =
+    (MTVSRD
+      (RLDICR
+        (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 56, 7));
+  dag BE_HALF_0 =
+    (MTVSRD
+      (RLDICR
+        (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 48, 15));
+  dag BE_WORD_0 =
+    (MTVSRD
+      (RLDICR
+        (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 32, 31));
   dag BE_DWORD_0 = (MTVSRD $A);
 
   dag LE_MTVSRW = (MTVSRD (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32));
-  dag LE_WORD_1 = (v2i64 (COPY_TO_REGCLASS LE_MTVSRW, VSRC));
+  dag LE_WORD_1 = (v2i64 (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)),
+                                        LE_MTVSRW, sub_64));
   dag LE_WORD_0 = (XXPERMDI LE_WORD_1, LE_WORD_1, 2);
-  dag LE_DWORD_1 = (v2i64 (COPY_TO_REGCLASS BE_DWORD_0, VSRC));
+  dag LE_DWORD_1 = (v2i64 (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)),
+                                         BE_DWORD_0, sub_64));
   dag LE_DWORD_0 = (XXPERMDI LE_DWORD_1, LE_DWORD_1, 2);
 }
 
+/*  Direct moves of various widths from VSR's to GPR's. Each moves the
+    respective element out of the VSR and ensures that it is lined up
+    to the right side of the GPR. In addition to the extraction from positions
+    specified by a constant, a pattern for extracting from a variable position
+    is provided. This is useful when the element number is not known at
+    compile time.
+    The numbering for the DAG's is for LE, but when used on BE, the correct
+    LE element can just be used (i.e. LE_BYTE_2 == BE_BYTE_13).
+*/
+def MovesFromVSR {
+  // Doubleword extraction
+  dag LE_DWORD_0 =
+    (MFVSRD
+      (EXTRACT_SUBREG
+        (XXPERMDI (COPY_TO_REGCLASS $S, VSRC),
+                  (COPY_TO_REGCLASS $S, VSRC), 2), sub_64));
+  dag LE_DWORD_1 = (MFVSRD
+                     (EXTRACT_SUBREG
+                       (v2i64 (COPY_TO_REGCLASS $S, VSRC)), sub_64));
+
+  // Word extraction
+  dag LE_WORD_0 = (MFVSRWZ (EXTRACT_SUBREG (XXSLDWI $S, $S, 2), sub_64));
+  dag LE_WORD_1 = (MFVSRWZ (EXTRACT_SUBREG (XXSLDWI $S, $S, 1), sub_64));
+  dag LE_WORD_2 = (MFVSRWZ (EXTRACT_SUBREG
+                             (v2i64 (COPY_TO_REGCLASS $S, VSRC)), sub_64));
+  dag LE_WORD_3 = (MFVSRWZ (EXTRACT_SUBREG (XXSLDWI $S, $S, 3), sub_64));
+
+  // Halfword extraction
+  dag LE_HALF_0 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 0, 48), sub_32));
+  dag LE_HALF_1 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 48, 48), sub_32));
+  dag LE_HALF_2 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 32, 48), sub_32));
+  dag LE_HALF_3 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 16, 48), sub_32));
+  dag LE_HALF_4 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 0, 48), sub_32));
+  dag LE_HALF_5 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 48, 48), sub_32));
+  dag LE_HALF_6 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 32, 48), sub_32));
+  dag LE_HALF_7 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 16, 48), sub_32));
+
+  // Byte extraction
+  dag LE_BYTE_0 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 0, 56), sub_32));
+  dag LE_BYTE_1 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 56, 56), sub_32));
+  dag LE_BYTE_2 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 48, 56), sub_32));
+  dag LE_BYTE_3 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 40, 56), sub_32));
+  dag LE_BYTE_4 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 32, 56), sub_32));
+  dag LE_BYTE_5 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 24, 56), sub_32));
+  dag LE_BYTE_6 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 16, 56), sub_32));
+  dag LE_BYTE_7 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_0, 8, 56), sub_32));
+  dag LE_BYTE_8 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 0, 56), sub_32));
+  dag LE_BYTE_9 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 56, 56), sub_32));
+  dag LE_BYTE_10 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 48, 56), sub_32));
+  dag LE_BYTE_11 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 40, 56), sub_32));
+  dag LE_BYTE_12 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 32, 56), sub_32));
+  dag LE_BYTE_13 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 24, 56), sub_32));
+  dag LE_BYTE_14 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 16, 56), sub_32));
+  dag LE_BYTE_15 = (i32 (EXTRACT_SUBREG (RLDICL LE_DWORD_1, 8, 56), sub_32));
+
+  /* Variable element number (BE and LE patterns must be specified separately)
+     This is a rather involved process.
+
+     Conceptually, this is how the move is accomplished:
+     1. Identify which doubleword contains the element
+     2. Shift in the VMX register so that the correct doubleword is correctly
+        lined up for the MFVSRD
+     3. Perform the move so that the element (along with some extra stuff)
+        is in the GPR
+     4. Right shift within the GPR so that the element is right-justified
+
+     Of course, the index is an element number which has a different meaning
+     on LE/BE so the patterns have to be specified separately.
+
+     Note: The final result will be the element right-justified with high
+           order bits being arbitrarily defined (namely, whatever was in the
+           vector register to the left of the value originally).
+  */
+
+  /*  LE variable byte
+      Number 1. above:
+      - For elements 0-7, we shift left by 8 bytes since they're on the right
+      - For elements 8-15, we need not shift (shift left by zero bytes)
+      This is accomplished by inverting the bits of the index and AND-ing
+      with 0x8 (i.e. clearing all bits of the index and inverting bit 60).
+  */
+  dag LE_VBYTE_PERM_VEC = (LVSL ZERO8, (ANDC8 (LI8 8), $Idx));
+
+  //  Number 2. above:
+  //  - Now that we set up the shift amount, we shift in the VMX register
+  dag LE_VBYTE_PERMUTE = (VPERM $S, $S, LE_VBYTE_PERM_VEC);
+
+  //  Number 3. above:
+  //  - The doubleword containing our element is moved to a GPR
+  dag LE_MV_VBYTE = (MFVSRD
+                      (EXTRACT_SUBREG
+                        (v2i64 (COPY_TO_REGCLASS LE_VBYTE_PERMUTE, VSRC)),
+                        sub_64));
+
+  /*  Number 4. above:
+      - Truncate the element number to the range 0-7 (8-15 are symmetrical
+        and out of range values are truncated accordingly)
+      - Multiply by 8 as we need to shift right by the number of bits, not bytes
+      - Shift right in the GPR by the calculated value
+  */
+  dag LE_VBYTE_SHIFT = (EXTRACT_SUBREG (RLDICR (AND8 (LI8 7), $Idx), 3, 60),
+                                       sub_32);
+  dag LE_VARIABLE_BYTE = (EXTRACT_SUBREG (SRD LE_MV_VBYTE, LE_VBYTE_SHIFT),
+                                         sub_32);
+
+  /*  BE variable byte
+      The algorithm here is the same as the LE variable byte except:
+      - The shift in the VMX register is by 0/8 for opposite element numbers so
+        we simply AND the element number with 0x8
+      - The order of elements after the move to GPR is reversed, so we invert
+        the bits of the index prior to truncating to the range 0-7
+  */
+  dag BE_VBYTE_PERM_VEC = (LVSL ZERO8, (ANDIo8 $Idx, 8));
+  dag BE_VBYTE_PERMUTE = (VPERM $S, $S, BE_VBYTE_PERM_VEC);
+  dag BE_MV_VBYTE = (MFVSRD
+                      (EXTRACT_SUBREG
+                        (v2i64 (COPY_TO_REGCLASS BE_VBYTE_PERMUTE, VSRC)),
+                        sub_64));
+  dag BE_VBYTE_SHIFT = (EXTRACT_SUBREG (RLDICR (ANDC8 (LI8 7), $Idx), 3, 60),
+                                       sub_32);
+  dag BE_VARIABLE_BYTE = (EXTRACT_SUBREG (SRD BE_MV_VBYTE, BE_VBYTE_SHIFT),
+                                         sub_32);
+
+  /*  LE variable halfword
+      Number 1. above:
+      - For elements 0-3, we shift left by 8 since they're on the right
+      - For elements 4-7, we need not shift (shift left by zero bytes)
+      Similarly to the byte pattern, we invert the bits of the index, but we
+      AND with 0x4 (i.e. clear all bits of the index and invert bit 61).
+      Of course, the shift is still by 8 bytes, so we must multiply by 2.
+  */
+  dag LE_VHALF_PERM_VEC = (LVSL ZERO8, (RLDICR (ANDC8 (LI8 4), $Idx), 1, 62));
+
+  //  Number 2. above:
+  //  - Now that we set up the shift amount, we shift in the VMX register
+  dag LE_VHALF_PERMUTE = (VPERM $S, $S, LE_VHALF_PERM_VEC);
+
+  //  Number 3. above:
+  //  - The doubleword containing our element is moved to a GPR
+  dag LE_MV_VHALF = (MFVSRD
+                      (EXTRACT_SUBREG
+                        (v2i64 (COPY_TO_REGCLASS LE_VHALF_PERMUTE, VSRC)),
+                        sub_64));
+
+  /*  Number 4. above:
+      - Truncate the element number to the range 0-3 (4-7 are symmetrical
+        and out of range values are truncated accordingly)
+      - Multiply by 16 as we need to shift right by the number of bits
+      - Shift right in the GPR by the calculated value
+  */
+  dag LE_VHALF_SHIFT = (EXTRACT_SUBREG (RLDICR (AND8 (LI8 3), $Idx), 4, 59),
+                                       sub_32);
+  dag LE_VARIABLE_HALF = (EXTRACT_SUBREG (SRD LE_MV_VHALF, LE_VHALF_SHIFT),
+                                         sub_32);
+
+  /*  BE variable halfword
+      The algorithm here is the same as the LE variable halfword except:
+      - The shift in the VMX register is by 0/8 for opposite element numbers so
+        we simply AND the element number with 0x4 and multiply by 2
+      - The order of elements after the move to GPR is reversed, so we invert
+        the bits of the index prior to truncating to the range 0-3
+  */
+  dag BE_VHALF_PERM_VEC = (LVSL ZERO8, (RLDICR (ANDIo8 $Idx, 4), 1, 62));
+  dag BE_VHALF_PERMUTE = (VPERM $S, $S, BE_VHALF_PERM_VEC);
+  dag BE_MV_VHALF = (MFVSRD
+                      (EXTRACT_SUBREG
+                        (v2i64 (COPY_TO_REGCLASS BE_VHALF_PERMUTE, VSRC)),
+                        sub_64));
+  dag BE_VHALF_SHIFT = (EXTRACT_SUBREG (RLDICR (ANDC8 (LI8 3), $Idx), 4, 60),
+                                       sub_32);
+  dag BE_VARIABLE_HALF = (EXTRACT_SUBREG (SRD BE_MV_VHALF, BE_VHALF_SHIFT),
+                                         sub_32);
+}
+
+// v4f32 scalar <-> vector conversions (BE)
 let Predicates = [IsBigEndian, HasP8Vector] in {
   def : Pat<(v4f32 (scalar_to_vector f32:$A)),
             (v4f32 (XSCVDPSPN $A))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 0)),
+            (f32 (XSCVSPDPN $S))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 1)),
+            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 1)))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 2)),
+            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 2)))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 3)),
+            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 3)))>;
 } // IsBigEndian, HasP8Vector
 
 let Predicates = [IsBigEndian, HasDirectMove] in {
+  // v16i8 scalar <-> vector conversions (BE)
   def : Pat<(v16i8 (scalar_to_vector i32:$A)),
-            (v16i8 (COPY_TO_REGCLASS Moves.BE_BYTE_0, VSRC))>;
+            (v16i8 (SUBREG_TO_REG (i64 1), MovesToVSR.BE_BYTE_0, sub_64))>;
   def : Pat<(v8i16 (scalar_to_vector i32:$A)),
-            (v8i16 (COPY_TO_REGCLASS Moves.BE_HALF_0, VSRC))>;
+            (v8i16 (SUBREG_TO_REG (i64 1), MovesToVSR.BE_HALF_0, sub_64))>;
   def : Pat<(v4i32 (scalar_to_vector i32:$A)),
-            (v4i32 (COPY_TO_REGCLASS Moves.BE_WORD_0, VSRC))>;
+            (v4i32 (SUBREG_TO_REG (i64 1), MovesToVSR.BE_WORD_0, sub_64))>;
   def : Pat<(v2i64 (scalar_to_vector i64:$A)),
-            (v2i64 (COPY_TO_REGCLASS Moves.BE_DWORD_0, VSRC))>;
+            (v2i64 (SUBREG_TO_REG (i64 1), MovesToVSR.BE_DWORD_0, sub_64))>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 0)),
+            (i32 MovesFromVSR.LE_BYTE_15)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 1)),
+            (i32 MovesFromVSR.LE_BYTE_14)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 2)),
+            (i32 MovesFromVSR.LE_BYTE_13)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 3)),
+            (i32 MovesFromVSR.LE_BYTE_12)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 4)),
+            (i32 MovesFromVSR.LE_BYTE_11)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 5)),
+            (i32 MovesFromVSR.LE_BYTE_10)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 6)),
+            (i32 MovesFromVSR.LE_BYTE_9)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 7)),
+            (i32 MovesFromVSR.LE_BYTE_8)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 8)),
+            (i32 MovesFromVSR.LE_BYTE_7)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 9)),
+            (i32 MovesFromVSR.LE_BYTE_6)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 10)),
+            (i32 MovesFromVSR.LE_BYTE_5)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 11)),
+            (i32 MovesFromVSR.LE_BYTE_4)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 12)),
+            (i32 MovesFromVSR.LE_BYTE_3)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 13)),
+            (i32 MovesFromVSR.LE_BYTE_2)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 14)),
+            (i32 MovesFromVSR.LE_BYTE_1)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 15)),
+            (i32 MovesFromVSR.LE_BYTE_0)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, i64:$Idx)),
+            (i32 MovesFromVSR.BE_VARIABLE_BYTE)>;
+
+  // v8i16 scalar <-> vector conversions (BE)
+  def : Pat<(i32 (vector_extract v8i16:$S, 0)),
+            (i32 MovesFromVSR.LE_HALF_7)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 1)),
+            (i32 MovesFromVSR.LE_HALF_6)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 2)),
+            (i32 MovesFromVSR.LE_HALF_5)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 3)),
+            (i32 MovesFromVSR.LE_HALF_4)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 4)),
+            (i32 MovesFromVSR.LE_HALF_3)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 5)),
+            (i32 MovesFromVSR.LE_HALF_2)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 6)),
+            (i32 MovesFromVSR.LE_HALF_1)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 7)),
+            (i32 MovesFromVSR.LE_HALF_0)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, i64:$Idx)),
+            (i32 MovesFromVSR.BE_VARIABLE_HALF)>;
+
+  // v4i32 scalar <-> vector conversions (BE)
+  def : Pat<(i32 (vector_extract v4i32:$S, 0)),
+            (i32 MovesFromVSR.LE_WORD_3)>;
+  def : Pat<(i32 (vector_extract v4i32:$S, 1)),
+            (i32 MovesFromVSR.LE_WORD_2)>;
+  def : Pat<(i32 (vector_extract v4i32:$S, 2)),
+            (i32 MovesFromVSR.LE_WORD_1)>;
+  def : Pat<(i32 (vector_extract v4i32:$S, 3)),
+            (i32 MovesFromVSR.LE_WORD_0)>;
+
+  // v2i64 scalar <-> vector conversions (BE)
+  def : Pat<(i64 (vector_extract v2i64:$S, 0)),
+            (i64 MovesFromVSR.LE_DWORD_1)>;
+  def : Pat<(i64 (vector_extract v2i64:$S, 1)),
+            (i64 MovesFromVSR.LE_DWORD_0)>;
 } // IsBigEndian, HasDirectMove
 
+// v4f32 scalar <-> vector conversions (LE)
 let Predicates = [IsLittleEndian, HasP8Vector] in {
   def : Pat<(v4f32 (scalar_to_vector f32:$A)),
             (v4f32 (XXSLDWI (XSCVDPSPN $A), (XSCVDPSPN $A), 1))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 0)),
+            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 3)))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 1)),
+            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 2)))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 2)),
+            (f32 (XSCVSPDPN (XXSLDWI $S, $S, 1)))>;
+  def : Pat<(f32 (vector_extract v4f32:$S, 3)),
+            (f32 (XSCVSPDPN $S))>;
 } // IsLittleEndian, HasP8Vector
 
 let Predicates = [IsLittleEndian, HasDirectMove] in {
+  // v16i8 scalar <-> vector conversions (LE)
   def : Pat<(v16i8 (scalar_to_vector i32:$A)),
-            (v16i8 (COPY_TO_REGCLASS Moves.LE_WORD_0, VSRC))>;
+            (v16i8 (COPY_TO_REGCLASS MovesToVSR.LE_WORD_0, VSRC))>;
   def : Pat<(v8i16 (scalar_to_vector i32:$A)),
-            (v8i16 (COPY_TO_REGCLASS Moves.LE_WORD_0, VSRC))>;
+            (v8i16 (COPY_TO_REGCLASS MovesToVSR.LE_WORD_0, VSRC))>;
   def : Pat<(v4i32 (scalar_to_vector i32:$A)),
-            (v4i32 (COPY_TO_REGCLASS Moves.LE_WORD_0, VSRC))>;
+            (v4i32 MovesToVSR.LE_WORD_0)>;
   def : Pat<(v2i64 (scalar_to_vector i64:$A)),
-            (v2i64 Moves.LE_DWORD_0)>;
-} // IsLittleEndian, HasDirectMove
+            (v2i64 MovesToVSR.LE_DWORD_0)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 0)),
+            (i32 MovesFromVSR.LE_BYTE_0)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 1)),
+            (i32 MovesFromVSR.LE_BYTE_1)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 2)),
+            (i32 MovesFromVSR.LE_BYTE_2)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 3)),
+            (i32 MovesFromVSR.LE_BYTE_3)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 4)),
+            (i32 MovesFromVSR.LE_BYTE_4)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 5)),
+            (i32 MovesFromVSR.LE_BYTE_5)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 6)),
+            (i32 MovesFromVSR.LE_BYTE_6)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 7)),
+            (i32 MovesFromVSR.LE_BYTE_7)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 8)),
+            (i32 MovesFromVSR.LE_BYTE_8)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 9)),
+            (i32 MovesFromVSR.LE_BYTE_9)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 10)),
+            (i32 MovesFromVSR.LE_BYTE_10)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 11)),
+            (i32 MovesFromVSR.LE_BYTE_11)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 12)),
+            (i32 MovesFromVSR.LE_BYTE_12)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 13)),
+            (i32 MovesFromVSR.LE_BYTE_13)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 14)),
+            (i32 MovesFromVSR.LE_BYTE_14)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, 15)),
+            (i32 MovesFromVSR.LE_BYTE_15)>;
+  def : Pat<(i32 (vector_extract v16i8:$S, i64:$Idx)),
+            (i32 MovesFromVSR.LE_VARIABLE_BYTE)>;
 
+  // v8i16 scalar <-> vector conversions (LE)
+  def : Pat<(i32 (vector_extract v8i16:$S, 0)),
+            (i32 MovesFromVSR.LE_HALF_0)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 1)),
+            (i32 MovesFromVSR.LE_HALF_1)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 2)),
+            (i32 MovesFromVSR.LE_HALF_2)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 3)),
+            (i32 MovesFromVSR.LE_HALF_3)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 4)),
+            (i32 MovesFromVSR.LE_HALF_4)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 5)),
+            (i32 MovesFromVSR.LE_HALF_5)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 6)),
+            (i32 MovesFromVSR.LE_HALF_6)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, 7)),
+            (i32 MovesFromVSR.LE_HALF_7)>;
+  def : Pat<(i32 (vector_extract v8i16:$S, i64:$Idx)),
+            (i32 MovesFromVSR.LE_VARIABLE_HALF)>;
+
+  // v4i32 scalar <-> vector conversions (LE)
+  def : Pat<(i32 (vector_extract v4i32:$S, 0)),
+            (i32 MovesFromVSR.LE_WORD_0)>;
+  def : Pat<(i32 (vector_extract v4i32:$S, 1)),
+            (i32 MovesFromVSR.LE_WORD_1)>;
+  def : Pat<(i32 (vector_extract v4i32:$S, 2)),
+            (i32 MovesFromVSR.LE_WORD_2)>;
+  def : Pat<(i32 (vector_extract v4i32:$S, 3)),
+            (i32 MovesFromVSR.LE_WORD_3)>;
+
+  // v2i64 scalar <-> vector conversions (LE)
+  def : Pat<(i64 (vector_extract v2i64:$S, 0)),
+            (i64 MovesFromVSR.LE_DWORD_0)>;
+  def : Pat<(i64 (vector_extract v2i64:$S, 1)),
+            (i64 MovesFromVSR.LE_DWORD_1)>;
+} // IsLittleEndian, HasDirectMove
