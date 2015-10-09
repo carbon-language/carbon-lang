@@ -1,6 +1,4 @@
-; RUN: opt -S -winehprepare -dwarfehprepare -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
-
-; FIXME: Add and test outlining here.
+; RUN: llc -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
 
 declare void @maybe_throw()
 
@@ -20,19 +18,15 @@ cont:
   ret i32 0
 
 lpad:
-  %ehvals = landingpad { i8*, i32 }
-      cleanup
-      catch i8* bitcast (i32 (i8*, i8*)* @filt_g to i8*)
-  %ehsel = extractvalue { i8*, i32 } %ehvals, 1
-  %filt_g_sel = call i32 @llvm.eh.typeid.for(i8* bitcast (i32 (i8*, i8*)* @filt_g to i8*))
-  %matches = icmp eq i32 %ehsel, %filt_g_sel
-  br i1 %matches, label %ret1, label %eh.resume
+  %p = catchpad [i8* bitcast (i32 (i8*, i8*)* @filt_g to i8*)]
+      to label %catch unwind label %endpad
+catch:
+  catchret %p to label %ret1
+endpad:
+  catchendpad unwind to caller
 
 ret1:
   ret i32 1
-
-eh.resume:
-  resume { i8*, i32 } %ehvals
 }
 
 define internal i32 @filt_g(i8*, i8*) {
@@ -40,14 +34,14 @@ define internal i32 @filt_g(i8*, i8*) {
   ret i32 %g
 }
 
-; CHECK-LABEL: define i32 @use_seh()
-; CHECK: invoke void @maybe_throw()
-; CHECK-NEXT: to label %cont unwind label %lpad
-; CHECK: landingpad
-; CHECK-NEXT: cleanup
-; CHECK-NEXT: catch
-; CHECK-NEXT: call i8* (...) @llvm.eh.actions({{.*}})
-
+; CHECK-LABEL: use_seh:
+; CHECK: callq maybe_throw
+; CHECK: xorl %eax, %eax
+; CHECK: .LBB0_[[epilogue:[0-9]+]]
+; CHECK: retq
+; CHECK: # %lpad
+; CHECK: movl $1, %eax
+; CHECK: jmp .LBB0_[[epilogue]]
 
 ; A MinGW64-ish EH style. It could happen if a binary uses both MSVC CRT and
 ; mingw CRT and is linked with LTO.
@@ -75,8 +69,15 @@ eh.resume:
   resume { i8*, i32 } %ehvals
 }
 
-; CHECK-LABEL: define i32 @use_gcc()
-; CHECK: invoke void @maybe_throw()
-; CHECK-NEXT: to label %cont unwind label %lpad
-; CHECK: eh.resume:
-; CHECK: call void @_Unwind_Resume(i8* %exn.obj)
+; CHECK-LABEL: use_gcc:
+; CHECK: callq maybe_throw
+; CHECK: xorl %eax, %eax
+;
+; CHECK: # %lpad
+; CHECK: cmpl $2, %edx
+; CHECK: jne
+;
+; CHECK: # %ret1
+; CHECK: movl $1, %eax
+;
+; CHECK: callq _Unwind_Resume

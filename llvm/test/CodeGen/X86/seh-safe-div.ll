@@ -27,35 +27,31 @@ define i32 @safe_div(i32* %n, i32* %d) personality i8* bitcast (i32 (...)* @__C_
 entry:
   %r = alloca i32, align 4
   invoke void @try_body(i32* %r, i32* %n, i32* %d)
-          to label %__try.cont unwind label %lpad
+          to label %__try.cont unwind label %lpad0
 
-lpad:
-  %vals = landingpad { i8*, i32 }
-          catch i8* bitcast (i32 (i8*, i8*)* @safe_div_filt0 to i8*)
-          catch i8* bitcast (i32 (i8*, i8*)* @safe_div_filt1 to i8*)
-  %ehptr = extractvalue { i8*, i32 } %vals, 0
-  %sel = extractvalue { i8*, i32 } %vals, 1
-  %filt0_val = call i32 @llvm.eh.typeid.for(i8* bitcast (i32 (i8*, i8*)* @safe_div_filt0 to i8*))
-  %is_filt0 = icmp eq i32 %sel, %filt0_val
-  br i1 %is_filt0, label %handler0, label %eh.dispatch1
-
-eh.dispatch1:
-  %filt1_val = call i32 @llvm.eh.typeid.for(i8* bitcast (i32 (i8*, i8*)* @safe_div_filt1 to i8*))
-  %is_filt1 = icmp eq i32 %sel, %filt1_val
-  br i1 %is_filt1, label %handler1, label %eh.resume
+lpad0:
+  %p0 = catchpad [i8* bitcast (i32 (i8*, i8*)* @safe_div_filt0 to i8*)]
+          to label %handler0 unwind label %endpad0
 
 handler0:
   call void @puts(i8* getelementptr ([27 x i8], [27 x i8]* @str1, i32 0, i32 0))
   store i32 -1, i32* %r, align 4
-  br label %__try.cont
+  catchret %p0 to label %__try.cont
+
+endpad0:
+  catchendpad unwind label %lpad1
+
+lpad1:
+  %p1 = catchpad [i8* bitcast (i32 (i8*, i8*)* @safe_div_filt1 to i8*)]
+          to label %handler1 unwind label %endpad1
 
 handler1:
   call void @puts(i8* getelementptr ([29 x i8], [29 x i8]* @str2, i32 0, i32 0))
   store i32 -2, i32* %r, align 4
-  br label %__try.cont
+  catchret %p1 to label %__try.cont
 
-eh.resume:
-  resume { i8*, i32 } %vals
+endpad1:
+  catchendpad unwind to caller
 
 __try.cont:
   %safe_ret = load i32, i32* %r, align 4
@@ -68,7 +64,7 @@ __try.cont:
 ; CHECK: .seh_proc safe_div
 ; CHECK: .seh_handler __C_specific_handler, @unwind, @except
 ; CHECK: .Ltmp0:
-; CHECK: leaq [[rloc:.*\(%rsp\)]], %rcx
+; CHECK: leaq [[rloc:.*\(%rbp\)]], %rcx
 ; CHECK: callq try_body
 ; CHECK-NEXT: .Ltmp1
 ; CHECK: [[cont_bb:\.LBB0_[0-9]+]]:
@@ -77,35 +73,30 @@ __try.cont:
 
 ; Landing pad code
 
-; CHECK: [[handler0:\.Ltmp[0-9]+]]: # Block address taken
-; CHECK: # %handler0
-; CHECK: callq puts
-; CHECK: movl $-1, [[rloc]]
-; CHECK: jmp [[cont_bb]]
-
-; CHECK: [[handler1:\.Ltmp[0-9]+]]: # Block address taken
-; CHECK: # %handler1
+; CHECK: [[lpad1:\.LBB0_[0-9]+]]: # %lpad1
 ; CHECK: callq puts
 ; CHECK: movl $-2, [[rloc]]
 ; CHECK: jmp [[cont_bb]]
 
+; CHECK: [[lpad0:\.LBB0_[0-9]+]]: # %lpad0
+; CHECK: callq puts
+; CHECK: movl $-1, [[rloc]]
+; CHECK: jmp [[cont_bb]]
+
 ; CHECK: .seh_handlerdata
-; CHECK-NEXT: .text
-; CHECK-NEXT: .Ltmp{{[0-9]+}}
-; CHECK-NEXT: .seh_endproc
-; CHECK-NEXT: .section .xdata,"dr"
-; CHECK-NEXT: .long 2
-; CHECK-NEXT: .long .Ltmp0@IMGREL
+; CHECK-NEXT: .long (.Llsda_end0-.Llsda_begin0)/16
+; CHECK-NEXT: .Llsda_begin0:
+; CHECK-NEXT: .long .Ltmp0@IMGREL+1
 ; CHECK-NEXT: .long .Ltmp1@IMGREL+1
 ; CHECK-NEXT: .long safe_div_filt0@IMGREL
-; CHECK-NEXT: .long [[handler0]]@IMGREL
-; CHECK-NEXT: .long .Ltmp0@IMGREL
+; CHECK-NEXT: .long [[lpad0]]@IMGREL
+; CHECK-NEXT: .long .Ltmp0@IMGREL+1
 ; CHECK-NEXT: .long .Ltmp1@IMGREL+1
 ; CHECK-NEXT: .long safe_div_filt1@IMGREL
-; CHECK-NEXT: .long [[handler1]]@IMGREL
+; CHECK-NEXT: .long [[lpad1]]@IMGREL
+; CHECK-NEXT: .Llsda_end0:
 ; CHECK: .text
 ; CHECK: .seh_endproc
-
 
 define void @try_body(i32* %r, i32* %n, i32* %d) {
 entry:

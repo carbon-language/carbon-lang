@@ -22,23 +22,19 @@ entry:
           to label %__try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 }
-          catch i8* bitcast (i32 ()* @"filt$main" to i8*)
-  %1 = extractvalue { i8*, i32 } %0, 1
-  %2 = call i32 @llvm.eh.typeid.for(i8* bitcast (i32 ()* @"filt$main" to i8*)) #4
-  %matches = icmp eq i32 %1, %2
-  br i1 %matches, label %__except, label %eh.resume
+  %p = catchpad [i8* bitcast (i32 ()* @"filt$main" to i8*)]
+          to label %__except unwind label %endpad
 
 __except:                                         ; preds = %lpad
-  %3 = load i32, i32* %__exceptioncode, align 4
-  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([27 x i8], [27 x i8]* @str, i32 0, i32 0), i32 %3) #4
-  br label %__try.cont
+  %code = load i32, i32* %__exceptioncode, align 4
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([27 x i8], [27 x i8]* @str, i32 0, i32 0), i32 %code) #4
+  catchret %p to label %__try.cont
+
+endpad:                                        ; preds = %lpad
+  catchendpad unwind to caller
 
 __try.cont:                                       ; preds = %entry, %__except
   ret i32 0
-
-eh.resume:                                        ; preds = %lpad
-  resume { i8*, i32 } %0
 }
 
 define internal i32 @"filt$main"() {
@@ -71,19 +67,18 @@ entry:
 ; CHECK: Lmain$frame_escape_1 = [[reg_offs:[-0-9]+]]
 ; CHECK: movl %esp, [[reg_offs]](%ebp)
 ; CHECK: movl $L__ehtable$main,
-; 	EH state 0
+;       EH state 0
 ; CHECK: movl $0, -16(%ebp)
 ; CHECK: calll _crash
 ; CHECK: popl %esi
 ; CHECK: popl %edi
 ; CHECK: popl %ebx
 ; CHECK: retl
-; CHECK: # Block address taken
-; 	stackrestore
+; CHECK: LBB0_[[lpbb:[0-9]+]]: # %lpad{{$}}
+;       stackrestore
 ; CHECK: movl -24(%ebp), %esp
-; 	EH state -1
+;       EH state -1
 ; CHECK: movl [[code_offs]](%ebp), %[[code:[a-z]+]]
-; CHECK: movl $-1, -16(%ebp)
 ; CHECK-DAG: movl %[[code]], 4(%esp)
 ; CHECK-DAG: movl $_str, (%esp)
 ; CHECK: calll _printf
@@ -94,7 +89,7 @@ entry:
 ; CHECK: L__ehtable$main
 ; CHECK-NEXT: .long -1
 ; CHECK-NEXT: .long _filt$main
-; CHECK-NEXT: .long Ltmp{{[0-9]+}}
+; CHECK-NEXT: .long LBB0_[[lpbb]]
 
 ; CHECK-LABEL: _filt$main:
 ; CHECK: pushl %ebp

@@ -17,53 +17,46 @@ invoke.cont:                                      ; preds = %entry
   ret i32 0
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 }
-          cleanup
-  %1 = extractvalue { i8*, i32 } %0, 0
-  %2 = extractvalue { i8*, i32 } %0, 1
+  %p = cleanuppad []
   %call2 = invoke i32 @puts(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str_recovered, i64 0, i64 0))
-          to label %invoke.cont1 unwind label %terminate.lpad
+          to label %invoke.cont1 unwind label %endpad
 
 invoke.cont1:                                     ; preds = %lpad
-  resume { i8*, i32 } %0
+  cleanupret %p unwind to caller
 
-terminate.lpad:                                   ; preds = %lpad
-  %3 = landingpad { i8*, i32 }
-          catch i8* null
-  call void @abort()
-  unreachable
+endpad:                                   ; preds = %lpad
+  cleanupendpad %p unwind to caller
 }
 
 ; X64-LABEL: main:
 ; X64: retq
 
 ; X64: .seh_handlerdata
-; X64-NEXT: .text
-; X64-NEXT: .Ltmp{{[0-9]+}}:
-; X64-NEXT: .seh_endproc
-; X64-NEXT: .section .xdata,"dr"
-; X64-NEXT: .long 1
-; X64-NEXT: .long .Ltmp0@IMGREL
-; X64-NEXT: .long .Ltmp1@IMGREL
-; X64-NEXT: .long main.cleanup@IMGREL
-; X64-NEXT: .long 0
+; X64-NEXT: .long   (.Llsda_end0-.Llsda_begin0)/16
+; X64-NEXT: .Llsda_begin0:
+; X64-NEXT: .long   .Ltmp0@IMGREL+1
+; X64-NEXT: .long   .Ltmp1@IMGREL+1
+; X64-NEXT: .long   "?dtor$2@?0?main@4HA"@IMGREL
+; X64-NEXT: .long   0
+; X64-NEXT: .Llsda_end0:
 
-; X64-LABEL: main.cleanup:
+; X64-LABEL: "?dtor$2@?0?main@4HA":
 ; X64: callq puts
 ; X64: retq
 
 ; X86-LABEL: _main:
 ; X86: retl
 
+; X86-LABEL: "?dtor$2@?0?main@4HA":
+; X86: LBB0_2:
+; X86: calll _puts
+; X86: retl
+
 ; X86: .section .xdata,"dr"
 ; X86: L__ehtable$main:
 ; X86-NEXT: .long -1
 ; X86-NEXT: .long 0
-; X86-NEXT: .long _main.cleanup
-
-; X86-LABEL: _main.cleanup:
-; X86: calll _puts
-; X86: retl
+; X86-NEXT: .long LBB0_2
 
 declare i32 @__C_specific_handler(...)
 

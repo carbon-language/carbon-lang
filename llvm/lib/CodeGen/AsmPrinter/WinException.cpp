@@ -458,6 +458,11 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
     // the actions that would be taken in that state. This means our tables are
     // slightly bigger, which is OK.
     for (const auto &MBB : *MF) {
+      // Break out before we enter into a finally funclet.
+      // FIXME: We need to emit separate EH tables for cleanups.
+      if (MBB.isEHFuncletEntry() && &MBB != MF->begin())
+        break;
+
       for (InvokeRange &I : invoke_ranges(FuncInfo, MBB)) {
         // If this invoke is in the same state as the last invoke and there were
         // no non-throwing calls between it, extend the range to include both

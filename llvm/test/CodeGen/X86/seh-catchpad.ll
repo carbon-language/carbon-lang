@@ -147,7 +147,7 @@ ehcleanup.end:                                    ; preds = %ehcleanup
 ; CHECK-NEXT:         .long   "?filt$0@0@main@@"@IMGREL
 ; CHECK-NEXT:         .long   .LBB1_6@IMGREL
 ; CHECK-NEXT:         .long   .Ltmp6@IMGREL+1
-; CHECK-NEXT:         .long   .Ltmp5@IMGREL+1
+; CHECK-NEXT:         .long   .Ltmp7@IMGREL+1
 ; CHECK-NEXT:         .long   "?filt$0@0@main@@"@IMGREL
 ; CHECK-NEXT:         .long   .LBB1_6@IMGREL
 ; CHECK-NEXT: .Llsda_end0:

@@ -38,49 +38,38 @@ entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
   invoke void @crash() #5
-          to label %invoke.cont unwind label %lpad
+          to label %invoke.cont unwind label %__finally
 
 invoke.cont:                                      ; preds = %entry
   %0 = call i8* @llvm.localaddress()
   invoke void @"\01?fin$0@0@use_both@@"(i1 zeroext false, i8* %0) #5
-          to label %invoke.cont2 unwind label %lpad1
+          to label %invoke.cont2 unwind label %catch.dispatch
 
 invoke.cont2:                                     ; preds = %invoke.cont
   br label %__try.cont
 
-lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 }
-          cleanup
-          catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@use_both@@" to i8*)
-  %2 = extractvalue { i8*, i32 } %1, 0
-  store i8* %2, i8** %exn.slot
-  %3 = extractvalue { i8*, i32 } %1, 1
-  store i32 %3, i32* %ehselector.slot
-  %4 = call i8* @llvm.localaddress()
-  invoke void @"\01?fin$0@0@use_both@@"(i1 zeroext true, i8* %4) #5
-          to label %invoke.cont3 unwind label %lpad1
+__finally:                                             ; preds = %entry
+  %cleanuppad = cleanuppad []
+  %locals = call i8* @llvm.localaddress()
+  invoke void @"\01?fin$0@0@use_both@@"(i1 zeroext true, i8* %locals) #5
+          to label %invoke.cont3 unwind label %cleanupendpad
 
-lpad1:                                            ; preds = %lpad, %invoke.cont
-  %5 = landingpad { i8*, i32 }
-          catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@use_both@@" to i8*)
-  %6 = extractvalue { i8*, i32 } %5, 0
-  store i8* %6, i8** %exn.slot
-  %7 = extractvalue { i8*, i32 } %5, 1
-  store i32 %7, i32* %ehselector.slot
-  br label %catch.dispatch
+invoke.cont3:                                     ; preds = %__finally
+  cleanupret %cleanuppad unwind label %catch.dispatch
 
-invoke.cont3:                                     ; preds = %lpad
-  br label %catch.dispatch
+cleanupendpad:
+  cleanupendpad %cleanuppad unwind label %catch.dispatch
 
 catch.dispatch:                                   ; preds = %invoke.cont3, %lpad1
-  %sel = load i32, i32* %ehselector.slot
-  %8 = call i32 @llvm.eh.typeid.for(i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@use_both@@" to i8*)) #6
-  %matches = icmp eq i32 %sel, %8
-  br i1 %matches, label %__except, label %eh.resume
+  %catchpad = catchpad [i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@use_both@@" to i8*)]
+          to label %__except unwind label %catchendpad
 
 __except:                                         ; preds = %catch.dispatch
   %call = call i32 @puts(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @"\01??_C@_08MLCMLGHM@__except?$AA@", i32 0, i32 0))
-  br label %__try.cont
+  catchret %catchpad to label %__try.cont
+
+catchendpad:
+  catchendpad unwind to caller
 
 __try.cont:                                       ; preds = %__except, %invoke.cont2
   ret void
@@ -97,29 +86,27 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK: .Ltmp0
 ; CHECK: callq crash
 ; CHECK: .Ltmp1
-; CHECK: .Ltmp3
-; CHECK: callq "?fin$0@0@use_both@@"
 ; CHECK: .Ltmp4
+; CHECK: callq "?fin$0@0@use_both@@"
+; CHECK: .Ltmp5
 ; CHECK: retq
 ;
 ; CHECK: .seh_handlerdata
-; CHECK-NEXT: .text
-; CHECK-NEXT: .Ltmp{{[0-9]+}}
-; CHECK-NEXT: .seh_endproc
-; CHECK-NEXT: .section .xdata,"dr"
-; CHECK-NEXT: .long 3
-; CHECK-NEXT: .long .Ltmp0@IMGREL
+; CHECK-NEXT: .long (.Llsda_end0-.Llsda_begin0)/16
+; CHECK-NEXT: .Llsda_begin0:
+; CHECK-NEXT: .long .Ltmp0@IMGREL+1
 ; CHECK-NEXT: .long .Ltmp1@IMGREL+1
-; CHECK-NEXT: .long "?fin$0@0@use_both@@"@IMGREL
+; CHECK-NEXT: .long "?dtor$2@?0?use_both@4HA"@IMGREL
 ; CHECK-NEXT: .long 0
-; CHECK-NEXT: .long .Ltmp0@IMGREL
+; CHECK-NEXT: .long .Ltmp0@IMGREL+1
 ; CHECK-NEXT: .long .Ltmp1@IMGREL+1
 ; CHECK-NEXT: .long "?filt$0@0@use_both@@"@IMGREL
-; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
-; CHECK-NEXT: .long .Ltmp3@IMGREL
+; CHECK-NEXT: .long .LBB0_{{[0-9]+}}@IMGREL
 ; CHECK-NEXT: .long .Ltmp4@IMGREL+1
+; CHECK-NEXT: .long .Ltmp5@IMGREL+1
 ; CHECK-NEXT: .long "?filt$0@0@use_both@@"@IMGREL
-; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
+; CHECK-NEXT: .long .LBB0_{{[0-9]+}}@IMGREL
+; CHECK-NEXT: .Llsda_end0:
 
 ; Function Attrs: noinline nounwind
 define internal i32 @"\01?filt$0@0@use_both@@"(i8* %exception_pointers, i8* %frame_pointer) #2 {
