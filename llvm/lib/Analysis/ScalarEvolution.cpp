@@ -1960,10 +1960,10 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
            "SCEVAddExpr operand types don't match!");
 #endif
 
-  Flags = StrengthenNoWrapFlags(this, scAddExpr, Ops, Flags);
-
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, &LI);
+
+  Flags = StrengthenNoWrapFlags(this, scAddExpr, Ops, Flags);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -2368,10 +2368,10 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
            "SCEVMulExpr operand types don't match!");
 #endif
 
-  Flags = StrengthenNoWrapFlags(this, scMulExpr, Ops, Flags);
-
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, &LI);
+
+  Flags = StrengthenNoWrapFlags(this, scMulExpr, Ops, Flags);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
