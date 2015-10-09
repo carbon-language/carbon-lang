@@ -368,7 +368,9 @@ ClangASTContext::GetPluginVersion()
 }
 
 lldb::TypeSystemSP
-ClangASTContext::CreateInstance (lldb::LanguageType language, Module *module, Target *target)
+ClangASTContext::CreateInstance (lldb::LanguageType language,
+                                 lldb_private::Module *module,
+                                 Target *target)
 {
     if (ClangASTContextSupportsLanguage(language))
     {
