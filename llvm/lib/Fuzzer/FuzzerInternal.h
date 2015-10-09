@@ -90,6 +90,7 @@ class Fuzzer {
     int TBMWidth = 10;
     std::string OutputCorpus;
     std::string SyncCommand;
+    std::string ArtifactPrefix = "./";
     std::vector<std::string> Tokens;
     std::vector<Unit> Dictionary;
   };

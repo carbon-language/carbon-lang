@@ -5,17 +5,19 @@ RUN: LLVMFuzzer-SimpleTest -test_single_input=%S/hi.txt 2>&1 | FileCheck %s
 
 RUN: not LLVMFuzzer-InfiniteTest -timeout=2 2>&1 | FileCheck %s --check-prefix=InfiniteTest
 InfiniteTest: ALARM: working on the last Unit for
-InfiniteTest: Test unit written to timeout-
+InfiniteTest: Test unit written to ./timeout-
 
 RUN: LLVMFuzzer-SimpleCmpTest -max_total_time=1 2>&1 | FileCheck %s --check-prefix=MaxTotalTime
 MaxTotalTime: Done {{.*}} runs in {{.}} second(s)
 
 RUN: not LLVMFuzzer-TimeoutTest -timeout=5 2>&1 | FileCheck %s --check-prefix=TimeoutTest
 TimeoutTest: ALARM: working on the last Unit for
-TimeoutTest: Test unit written to timeout-
+TimeoutTest: Test unit written to ./timeout-
 
 RUN: not LLVMFuzzer-NullDerefTest 2>&1 | FileCheck %s --check-prefix=NullDerefTest
-NullDerefTest: Test unit written to crash-
+NullDerefTest: Test unit written to ./crash-
+RUN: not LLVMFuzzer-NullDerefTest  -artifact_prefix=ZZZ 2>&1 | FileCheck %s --check-prefix=NullDerefTestPrefix
+NullDerefTestPrefix: Test unit written to ZZZcrash-
 
 #not LLVMFuzzer-FullCoverageSetTest -timeout=15 -seed=1 -mutate_depth=2 -use_full_coverage_set=1 2>&1 | FileCheck %s
 

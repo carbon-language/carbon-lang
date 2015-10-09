@@ -270,6 +270,8 @@ int FuzzerDriver(const std::vector<std::string> &Args,
     Options.SyncCommand = Flags.sync_command;
   Options.SyncTimeout = Flags.sync_timeout;
   Options.ReportSlowUnits = Flags.report_slow_units;
+  if (Flags.artifact_prefix)
+    Options.ArtifactPrefix = Flags.artifact_prefix;
   if (Flags.dict)
     if (!ParseDictionaryFile(FileToString(Flags.dict), &Options.Dictionary))
       return 1;
