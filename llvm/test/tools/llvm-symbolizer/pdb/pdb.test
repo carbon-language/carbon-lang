@@ -1,7 +1,17 @@
 RUN: llvm-symbolizer -obj="%p/Inputs/test.exe" < "%p/Inputs/test.exe.input" | \
 RUN:    FileCheck %s --check-prefix=CHECK
+RUN: llvm-symbolizer -obj="%p/Inputs/test.exe" < "%p/Inputs/test.exe.input" | \
+RUN:    FileCheck %s --check-prefix=CHECK
 RUN: llvm-symbolizer -obj="%p/Inputs/test.exe" -demangle=false < \
 RUN:    "%p/Inputs/test.exe.input" | FileCheck %s --check-prefix=CHECK-NO-DEMANGLE
+
+Subtract ImageBase from all the offsets and run the test again with
+--relative-address.
+
+RUN: python -c 'import sys;print "\n".join([hex(int(x, 16) - 0x400000) for x in sys.stdin])' \
+RUN:	< %p/Inputs/test.exe.input \
+RUN:	| llvm-symbolizer -obj="%p/Inputs/test.exe" -demangle=false --relative-address \
+RUN:    | FileCheck %s --check-prefix=CHECK-NO-DEMANGLE
 
 CHECK: foo(void)
 CHECK-NEXT: test.cpp:10

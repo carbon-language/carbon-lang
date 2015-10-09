@@ -1,0 +1,9 @@
+RUN: llvm-symbolizer --inlining --relative-address -obj="%p/Inputs/coff-dwarf.exe" \
+RUN:	    < %p/Inputs/coff-dwarf.input | FileCheck %s
+
+CHECK: foo(void)
+CHECK: coff-dwarf.cpp:7
+CHECK: bar(void)
+CHECK: coff-dwarf.cpp:13
+CHECK: main
+CHECK: coff-dwarf.cpp:17

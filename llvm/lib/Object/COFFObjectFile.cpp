@@ -174,10 +174,7 @@ ErrorOr<uint64_t> COFFObjectFile::getSymbolAddress(DataRefImpl Ref) const {
 
   // The section VirtualAddress does not include ImageBase, and we want to
   // return virtual addresses.
-  if (PE32Header)
-    Result += PE32Header->ImageBase;
-  else if (PE32PlusHeader)
-    Result += PE32PlusHeader->ImageBase;
+  Result += getImageBase().get();
 
   return Result;
 }
@@ -274,10 +271,7 @@ uint64_t COFFObjectFile::getSectionAddress(DataRefImpl Ref) const {
 
   // The section VirtualAddress does not include ImageBase, and we want to
   // return virtual addresses.
-  if (PE32Header)
-    Result += PE32Header->ImageBase;
-  else if (PE32PlusHeader)
-    Result += PE32PlusHeader->ImageBase;
+  Result += getImageBase().get();
   return Result;
 }
 
@@ -424,10 +418,17 @@ std::error_code COFFObjectFile::initSymbolTablePtr() {
   return std::error_code();
 }
 
+ErrorOr<uint64_t> COFFObjectFile::getImageBase() const {
+  if (PE32Header)
+    return uint64_t(PE32Header->ImageBase);
+  else if (PE32PlusHeader)
+    return uint64_t(PE32PlusHeader->ImageBase);
+  return object_error::parse_failed;
+}
+
 // Returns the file offset for the given VA.
 std::error_code COFFObjectFile::getVaPtr(uint64_t Addr, uintptr_t &Res) const {
-  uint64_t ImageBase = PE32Header ? (uint64_t)PE32Header->ImageBase
-                                  : (uint64_t)PE32PlusHeader->ImageBase;
+  uint64_t ImageBase = getImageBase().get();
   uint64_t Rva = Addr - ImageBase;
   assert(Rva <= UINT32_MAX);
   return getRvaPtr((uint32_t)Rva, Res);

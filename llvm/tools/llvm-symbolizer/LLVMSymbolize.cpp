@@ -126,6 +126,13 @@ bool ModuleInfo::isWin32Module() const {
   return CoffObject && CoffObject->getMachine() == COFF::IMAGE_FILE_MACHINE_I386;
 }
 
+uint64_t ModuleInfo::getModulePreferredBase() const {
+  if (auto *CoffObject = dyn_cast<COFFObjectFile>(Module))
+    if (auto Base = CoffObject->getImageBase())
+      return Base.get();
+  return 0;
+}
+
 bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
                                         std::string &Name, uint64_t &Addr,
                                         uint64_t &Size) const {
@@ -210,6 +217,12 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
   ModuleInfo *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
     return printDILineInfo(DILineInfo(), Info);
+
+  // If the user is giving us relative addresses, add the preferred base of the
+  // object to the offset before we do the query. It's what DIContext expects.
+  if (Opts.RelativeAddresses)
+    ModuleOffset += Info->getModulePreferredBase();
+
   if (Opts.PrintInlining) {
     DIInliningInfo InlinedContext =
         Info->symbolizeInlinedCode(ModuleOffset, Opts);
@@ -233,6 +246,10 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
   uint64_t Size = 0;
   if (Opts.UseSymbolTable) {
     if (ModuleInfo *Info = getOrCreateModuleInfo(ModuleName)) {
+      // If the user is giving us relative addresses, add the preferred base of the
+      // object to the offset before we do the query. It's what DIContext expects.
+      if (Opts.RelativeAddresses)
+        ModuleOffset += Info->getModulePreferredBase();
       if (Info->symbolizeData(ModuleOffset, Name, Start, Size) && Opts.Demangle)
         Name = DemangleName(Name, Info);
     }
@@ -474,8 +491,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     PDB_ErrorCode Error = loadDataForEXE(PDB_ReaderType::DIA,
                                          Objects.first->getFileName(), Session);
     if (Error == PDB_ErrorCode::Success) {
-      Context = new PDBContext(*CoffObject, std::move(Session),
-                               Opts.RelativeAddresses);
+      Context = new PDBContext(*CoffObject, std::move(Session));
     }
   }
   if (!Context)

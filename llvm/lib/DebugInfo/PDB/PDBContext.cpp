@@ -21,24 +21,11 @@ using namespace llvm;
 using namespace llvm::object;
 
 PDBContext::PDBContext(const COFFObjectFile &Object,
-                       std::unique_ptr<IPDBSession> PDBSession,
-                       bool RelativeAddress)
+                       std::unique_ptr<IPDBSession> PDBSession)
     : DIContext(CK_PDB), Session(std::move(PDBSession)) {
-  if (!RelativeAddress) {
-    uint64_t ImageBase = 0;
-    if (Object.is64()) {
-      const pe32plus_header *Header = nullptr;
-      Object.getPE32PlusHeader(Header);
-      if (Header)
-        ImageBase = Header->ImageBase;
-    } else {
-      const pe32_header *Header = nullptr;
-      Object.getPE32Header(Header);
-      if (Header)
-        ImageBase = static_cast<uint64_t>(Header->ImageBase);
-    }
-    Session->setLoadAddress(ImageBase);
-  }
+  ErrorOr<uint64_t> ImageBase = Object.getImageBase();
+  if (ImageBase)
+    Session->setLoadAddress(ImageBase.get());
 }
 
 void PDBContext::dump(raw_ostream &OS, DIDumpType DumpType) {}
