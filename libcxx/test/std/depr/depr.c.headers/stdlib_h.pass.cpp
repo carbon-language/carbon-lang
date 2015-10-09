@@ -18,6 +18,30 @@
 #pragma clang diagnostic ignored "-Wnonnull"
 #endif
 
+#ifdef abs
+#error abs is defined
+#endif
+
+#ifdef labs
+#error labs is defined
+#endif
+
+#ifdef llabs
+#error llabs is defined
+#endif
+
+#ifdef div
+#error div is defined
+#endif
+
+#ifdef ldiv
+#error ldiv is defined
+#endif
+
+#ifdef lldiv
+#error lldiv is defined
+#endif
+
 #ifndef EXIT_FAILURE
 #error EXIT_FAILURE not defined
 #endif

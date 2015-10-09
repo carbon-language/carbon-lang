@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- cstdlib ----------------------------------===//
+//===--------------------------- stdlib.h ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CSTDLIB
-#define _LIBCPP_CSTDLIB
+#if defined(__need_malloc_and_calloc)
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#pragma GCC system_header
+#endif
+
+#include_next <stdlib.h>
+
+#elif !defined(_LIBCPP_STDLIB_H)
+#define _LIBCPP_STDLIB_H
 
 /*
-    cstdlib synopsis
+    stdlib.h synopsis
 
 Macros:
 
@@ -21,9 +29,6 @@ Macros:
     MB_CUR_MAX
     NULL
     RAND_MAX
-
-namespace std
-{
 
 Types:
 
@@ -78,81 +83,46 @@ int at_quick_exit(void (*func)(void))                                     // C++
 void quick_exit(int status);                                              // C++11
 void *aligned_alloc(size_t alignment, size_t size);                       // C11
 
-}  // std
-
 */
 
 #include <__config>
-#include <stdlib.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+#include_next <stdlib.h>
 
-using ::size_t;
-using ::div_t;
-using ::ldiv_t;
+#ifdef __cplusplus
+extern "C++" {
+
+#ifdef _LIBCPP_MSVCRT
+#include "support/win32/locale_win32.h"
+#endif // _LIBCPP_MSVCRT
+
+#undef abs
+#undef div
+#undef labs
+#undef ldiv
 #ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::lldiv_t;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-using ::atof;
-using ::atoi;
-using ::atol;
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::atoll;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-using ::strtod;
-using ::strtof;
-using ::strtold;
-using ::strtol;
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::strtoll;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-using ::strtoul;
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::strtoull;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-using ::rand;
-using ::srand;
-using ::calloc;
-using ::free;
-using ::malloc;
-using ::realloc;
-using ::abort;
-using ::atexit;
-using ::exit;
-using ::_Exit;
-using ::getenv;
-using ::system;
-using ::bsearch;
-using ::qsort;
-using ::abs;
-using ::labs;
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::llabs;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-using ::div;
-using ::ldiv;
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::lldiv;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-#ifndef _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
-using ::mblen;
-using ::mbtowc;
-using ::wctomb;
-#endif
-using ::mbstowcs;
-using ::wcstombs;
-#ifdef _LIBCPP_HAS_QUICK_EXIT
-using ::at_quick_exit;
-using ::quick_exit;
-#endif
-#ifdef _LIBCPP_HAS_C11_FEATURES
-using ::aligned_alloc;
+#undef llabs
+#undef lldiv
 #endif
 
-_LIBCPP_END_NAMESPACE_STD
+// MSVCRT already has the correct prototype in <stdlib.h> if __cplusplus is defined
+#if !defined(_LIBCPP_MSVCRT) && !defined(__sun__) && !defined(_AIX)
+inline _LIBCPP_INLINE_VISIBILITY long      abs(     long __x) _NOEXCEPT {return  labs(__x);}
+#ifndef _LIBCPP_HAS_NO_LONG_LONG
+inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) _NOEXCEPT {return llabs(__x);}
+#endif // _LIBCPP_HAS_NO_LONG_LONG
 
-#endif  // _LIBCPP_CSTDLIB
+inline _LIBCPP_INLINE_VISIBILITY  ldiv_t div(     long __x,      long __y) _NOEXCEPT {return  ldiv(__x, __y);}
+#ifndef _LIBCPP_HAS_NO_LONG_LONG
+inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x, long long __y) _NOEXCEPT {return lldiv(__x, __y);}
+#endif // _LIBCPP_HAS_NO_LONG_LONG
+#endif // _LIBCPP_MSVCRT / __sun__ / _AIX
+
+}  // extern "C++"
+#endif  // __cplusplus
+
+#endif  // _LIBCPP_STDLIB_H
