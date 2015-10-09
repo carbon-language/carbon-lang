@@ -405,9 +405,9 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("settings clear stop-disassembly-display", check=False)        
         # language
         self.runCmd ("settings set target.language c89")      # Set to known value
-        self.runCmd ("settings set target.language pascal ")    # Set to new value with trailing whitespace
+        self.runCmd ("settings set target.language go ")      # Set to new value with trailing whitespace
         self.expect ("settings show target.language", SETTING_MSG("target.language"),
-            startstr = "target.language (language) = pascal")
+            startstr = "target.language (language) = go")
         self.runCmd("settings clear target.language", check=False)
         # arguments
         self.runCmd ("settings set target.run-args 1 2 3")  # Set to known value

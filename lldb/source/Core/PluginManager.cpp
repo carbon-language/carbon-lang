@@ -2564,6 +2564,7 @@ PluginManager::RegisterPlugin (const ConstString &name,
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.enumerate_callback = enumerate_supported_languages_callback;
         Mutex::Locker locker (GetTypeSystemMutex ());
         GetTypeSystemInstances ().push_back (instance);
     }
