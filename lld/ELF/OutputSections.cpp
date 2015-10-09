@@ -83,14 +83,14 @@ GotSection<ELFT>::GotSection()
 }
 
 template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody *Sym) {
-  Sym->setGotIndex(Entries.size());
+  Sym->GotIndex = Entries.size();
   Entries.push_back(Sym);
 }
 
 template <class ELFT>
 typename GotSection<ELFT>::uintX_t
 GotSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
-  return this->getVA() + B.getGotIndex() * this->getAddrSize();
+  return this->getVA() + B.GotIndex * this->getAddrSize();
 }
 
 template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -124,14 +124,14 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT> void PltSection<ELFT>::addEntry(SymbolBody *Sym) {
-  Sym->setPltIndex(Entries.size());
+  Sym->PltIndex = Entries.size();
   Entries.push_back(Sym);
 }
 
 template <class ELFT>
 typename PltSection<ELFT>::uintX_t
 PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
-  return this->getVA() + B.getPltIndex() * Target->getPltEntrySize();
+  return this->getVA() + B.PltIndex * Target->getPltEntrySize();
 }
 
 template <class ELFT>

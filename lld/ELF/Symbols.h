@@ -76,13 +76,10 @@ public:
   }
   void setDynamicSymbolTableIndex(unsigned V) { DynamicSymbolTableIndex = V; }
 
-  unsigned getGotIndex() const { return GotIndex; }
+  uint32_t GotIndex = -1;
+  uint32_t PltIndex = -1;
   bool isInGot() const { return GotIndex != -1U; }
-  void setGotIndex(unsigned I) { GotIndex = I; }
-
-  unsigned getPltIndex() const { return PltIndex; }
   bool isInPlt() const { return PltIndex != -1U; }
-  void setPltIndex(unsigned I) { PltIndex = I; }
 
   // A SymbolBody has a backreference to a Symbol. Originally they are
   // doubly-linked. A backreference will never change. But the pointer
@@ -112,8 +109,6 @@ protected:
   unsigned IsUsedInRegularObj : 1;
   unsigned IsUsedInDynamicReloc : 1;
   unsigned DynamicSymbolTableIndex = 0;
-  unsigned GotIndex = -1;
-  unsigned PltIndex = -1;
   StringRef Name;
   Symbol *Backref = nullptr;
 };
