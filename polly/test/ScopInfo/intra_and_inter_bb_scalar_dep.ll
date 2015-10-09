@@ -17,8 +17,8 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK:       Invariant Accesses: {
 ; CHECK:           ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:              MemRef_init_ptr[0]
-; CHECK:           ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
-; CHECK:              MemRef_init_ptr[0]
+; CHECK-NOT:       ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NOT:          MemRef_init_ptr[0]
 ; CHECK:       }
 define void @f(i64* noalias %A, i64 %N, i64* noalias %init_ptr) #0 {
 entry:

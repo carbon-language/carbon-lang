@@ -906,8 +906,8 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
 
 void IslNodeBuilder::preloadInvariantLoads() {
 
-  const auto &InvAccList = S.getInvariantAccesses();
-  if (InvAccList.empty())
+  const auto &InvariantEquivClasses = S.getInvariantAccesses();
+  if (InvariantEquivClasses.empty())
     return;
 
   const Region &R = S.getRegion();
@@ -921,14 +921,20 @@ void IslNodeBuilder::preloadInvariantLoads() {
   isl_ast_build *Build =
       isl_ast_build_from_context(isl_set_universe(S.getParamSpace()));
 
-  for (const auto &IA : InvAccList) {
-    MemoryAccess *MA = IA.first;
+  // For each equivalence class of invariant loads we pre-load the representing
+  // element with the unified execution context. However, we have to map all
+  // elements of the class to the one preloaded load as they are referenced
+  // during the code generation and therefor need to be mapped.
+  for (const auto &IAClass : InvariantEquivClasses) {
+
+    MemoryAccess *MA = IAClass.second.front().first;
     assert(!MA->isImplicit());
 
-    isl_set *Domain = isl_set_copy(IA.second);
+    isl_set *Domain = isl_set_copy(IAClass.second.front().second);
     Instruction *AccInst = MA->getAccessInstruction();
     Value *PreloadVal = preloadInvariantLoad(*MA, Domain, Build);
-    ValueMap[AccInst] = PreloadVal;
+    for (const InvariantAccessTy &IA : IAClass.second)
+      ValueMap[IA.first->getAccessInstruction()] = PreloadVal;
 
     if (SE.isSCEVable(AccInst->getType())) {
       isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));

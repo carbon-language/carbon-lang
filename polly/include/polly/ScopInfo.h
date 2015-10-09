@@ -680,8 +680,14 @@ using MemoryAccessList = std::forward_list<MemoryAccess *>;
 /// @brief Type for invariant memory accesses and their domain context.
 using InvariantAccessTy = std::pair<MemoryAccess *, isl_set *>;
 
+/// @brief Type for an ordered list of invariant accesses.
+using InvariantAccessListTy = std::forward_list<InvariantAccessTy>;
+
+/// @brief Type for a class of equivalent invariant memory accesses.
+using InvariantEquivClassTy = std::pair<const SCEV *, InvariantAccessListTy>;
+
 /// @brief Type for multiple invariant memory accesses and their domain context.
-using InvariantAccessesTy = SmallVector<InvariantAccessTy, 8>;
+using InvariantAccessesTy = SmallVector<InvariantEquivClassTy, 8>;
 
 ///===----------------------------------------------------------------------===//
 /// @brief Statement of the Scop
@@ -906,12 +912,12 @@ public:
   /// @brief Add @p Access to this statement's list of accesses.
   void addAccess(MemoryAccess *Access);
 
-  /// @brief Move the memory access in @p InvMAs to @p TargetList.
+  /// @brief Move the memory access in @p InvMAs to @p InvariantEquivClasses.
   ///
   /// Note that scalar accesses that are caused by any access in @p InvMAs will
   /// be eliminated too.
   void hoistMemoryAccesses(MemoryAccessList &InvMAs,
-                           InvariantAccessesTy &TargetList);
+                           InvariantAccessesTy &InvariantEquivClasses);
 
   typedef MemoryAccessVec::iterator iterator;
   typedef MemoryAccessVec::const_iterator const_iterator;
@@ -1135,7 +1141,7 @@ private:
   MinMaxVectorPairVectorTy MinMaxAliasGroups;
 
   /// @brief List of invariant accesses.
-  InvariantAccessesTy InvariantAccesses;
+  InvariantAccessesTy InvariantEquivClasses;
 
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
   Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
@@ -1186,6 +1192,20 @@ private:
   /// @see isIgnored()
   void simplifySCoP(bool RemoveIgnoredStmts);
 
+  /// @brief Create equivalence classes for required invariant accesses.
+  ///
+  /// These classes will consolidate multiple required invariant loads from the
+  /// same address in order to keep the number of dimensions in the SCoP
+  /// description small. For each such class equivalence class only one
+  /// representing element, hence one required invariant load, will be chosen
+  /// and modeled as parameter. The method
+  /// Scop::getRepresentingInvariantLoadSCEV() will replace each element from an
+  /// equivalence class with the representing element that is modeled. As a
+  /// consequence Scop::getIdForParam() will only return an id for the
+  /// representing element of each equivalence class, thus for each required
+  /// invariant location.
+  void buildInvariantEquivalenceClasses();
+
   /// @brief Hoist invariant memory loads and check for required ones.
   ///
   /// We first identify "common" invariant loads, thus loads that are invariant
@@ -1219,6 +1239,19 @@ private:
 
   /// @brief Simplify the assumed and boundary context.
   void simplifyContexts();
+
+  /// @brief Get the representing SCEV for @p S if applicable, otherwise @p S.
+  ///
+  /// Invariant loads of the same location are put in an equivalence class and
+  /// only one of them is chosen as a representing element that will be
+  /// modeled as a parameter. The others have to be normalized, i.e.,
+  /// replaced by the representing element of their equivalence class, in order
+  /// to get the correct parameter value, e.g., in the SCEVAffinator.
+  ///
+  /// @param S The SCEV to normalize.
+  ///
+  /// @return The representing SCEV for invariant loads or @p S if none.
+  const SCEV *getRepresentingInvariantLoadSCEV(const SCEV *S) const;
 
   /// @brief Create a new SCoP statement for either @p BB or @p R.
   ///
@@ -1340,7 +1373,7 @@ public:
 
   /// @brief Return the set of invariant accesses.
   const InvariantAccessesTy &getInvariantAccesses() const {
-    return InvariantAccesses;
+    return InvariantEquivClasses;
   }
 
   /// @brief Mark the SCoP as optimized by the scheduler.

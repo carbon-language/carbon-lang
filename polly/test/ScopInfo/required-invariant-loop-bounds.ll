@@ -3,10 +3,10 @@
 ; CHECK:      Invariant Accesses: {
 ; CHECK-NEXT:       ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:         MemRef_bounds[0]
-; CHECK-NEXT: Execution Context: [tmp, tmp1] -> {  :  }
+; CHECK-NEXT: Execution Context: [bounds, p_1] -> {  :  }
 ; CHECK-NEXT:       ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:         MemRef_bounds[1]
-; CHECK-NEXT: Execution Context: [tmp, tmp1] -> {  : tmp >= 0 }
+; CHECK-NEXT: Execution Context: [bounds, p_1] -> {  : bounds >= 0 }
 ; CHECK:      }
 
 ;    double A[1000][1000];

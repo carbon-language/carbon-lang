@@ -2,17 +2,17 @@
 ;
 ; CHECK:         Invariant Accesses: {
 ; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:                [tmp, tmp5] -> { Stmt_for_body[i0] -> MemRef_LB[0] };
-; CHECK-NEXT:            Execution Context: [tmp, tmp5] -> {  :  }
+; CHECK-NEXT:                [LB, UB] -> { Stmt_for_body[i0] -> MemRef_LB[0] };
+; CHECK-NEXT:            Execution Context: [LB, UB] -> {  :  }
 ; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:                [tmp, tmp5] -> { Stmt_do_cond[i0, i1] -> MemRef_UB[0] };
-; CHECK-NEXT:            Execution Context: [tmp, tmp5] -> {  :  }
+; CHECK-NEXT:                [LB, UB] -> { Stmt_do_cond[i0, i1] -> MemRef_UB[0] };
+; CHECK-NEXT:            Execution Context: [LB, UB] -> {  :  }
 ; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:                [tmp, tmp5] -> { Stmt_if_then[i0, i1] -> MemRef_V[0] };
-; CHECK-NEXT:            Execution Context: [tmp, tmp5] -> {  : (tmp5 >= 1 + tmp and tmp5 >= 6) or tmp >= 6 }
+; CHECK-NEXT:                [LB, UB] -> { Stmt_if_then[i0, i1] -> MemRef_V[0] };
+; CHECK-NEXT:            Execution Context: [LB, UB] -> {  : (UB >= 1 + LB and UB >= 6) or LB >= 6 }
 ; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:                [tmp, tmp5] -> { Stmt_if_else[i0, i1] -> MemRef_U[0] };
-; CHECK-NEXT:            Execution Context: [tmp, tmp5] -> {  : tmp <= 5 }
+; CHECK-NEXT:                [LB, UB] -> { Stmt_if_else[i0, i1] -> MemRef_U[0] };
+; CHECK-NEXT:            Execution Context: [LB, UB] -> {  : LB <= 5 }
 ; CHECK-NEXT:    }
 ;
 ;    void f(int *restrict A, int *restrict V, int *restrict U, int *restrict UB,
