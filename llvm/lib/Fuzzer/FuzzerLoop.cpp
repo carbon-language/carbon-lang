@@ -48,8 +48,10 @@ void Fuzzer::StaticDeathCallback() {
 
 void Fuzzer::DeathCallback() {
   Printf("DEATH:\n");
-  Print(CurrentUnit, "\n");
-  PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
+  if (CurrentUnit.size() <= kMaxUnitSizeToPrint) {
+    Print(CurrentUnit, "\n");
+    PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
+  }
   WriteUnitToFileWithPrefix(CurrentUnit, "crash-");
 }
 
@@ -69,9 +71,10 @@ void Fuzzer::AlarmCallback() {
     Printf("ALARM: working on the last Unit for %zd seconds\n", Seconds);
     Printf("       and the timeout value is %d (use -timeout=N to change)\n",
            Options.UnitTimeoutSec);
-    if (CurrentUnit.size() <= kMaxUnitSizeToPrint)
+    if (CurrentUnit.size() <= kMaxUnitSizeToPrint) {
       Print(CurrentUnit, "\n");
-    PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
+      PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
+    }
     WriteUnitToFileWithPrefix(CurrentUnit, "timeout-");
     exit(1);
   }
@@ -164,8 +167,6 @@ size_t Fuzzer::RunOne(const Unit &U) {
       TimeOfUnit >= Options.ReportSlowUnits) {
     TimeOfLongestUnitInSeconds = TimeOfUnit;
     Printf("Slowest unit: %zd s:\n", TimeOfLongestUnitInSeconds);
-    if (U.size() <= kMaxUnitSizeToPrint)
-      Print(U, "\n");
     WriteUnitToFileWithPrefix(U, "slow-unit-");
   }
   return Res;
