@@ -4,8 +4,6 @@ addvdi3
 addvsi3
 ashldi3
 ashrdi3
-bswapdi2
-bswapsi2
 clzdi2
 clzsi2
 cmpdi2
