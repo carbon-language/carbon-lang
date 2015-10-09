@@ -427,11 +427,11 @@ namespace llvm {
     /// Returns the next non-null index, if one exists.
     /// Otherwise returns getLastIndex().
     SlotIndex getNextNonNullIndex(SlotIndex Index) {
-      IndexList::iterator I = Index.listEntry();
+      IndexList::iterator I = Index.listEntry()->getIterator();
       IndexList::iterator E = indexList.end();
       while (++I != E)
         if (I->getInstr())
-          return SlotIndex(I, Index.getSlot());
+          return SlotIndex(&*I, Index.getSlot());
       // We reached the end of the function.
       return getLastIndex();
     }
@@ -583,11 +583,11 @@ namespace llvm {
       IndexList::iterator prevItr, nextItr;
       if (Late) {
         // Insert mi's index immediately before the following instruction.
-        nextItr = getIndexAfter(mi).listEntry();
+        nextItr = getIndexAfter(mi).listEntry()->getIterator();
         prevItr = std::prev(nextItr);
       } else {
         // Insert mi's index immediately after the preceding instruction.
-        prevItr = getIndexBefore(mi).listEntry();
+        prevItr = getIndexBefore(mi).listEntry()->getIterator();
         nextItr = std::next(prevItr);
       }
 
@@ -649,11 +649,11 @@ namespace llvm {
       if (nextMBB == mbb->getParent()->end()) {
         startEntry = &indexList.back();
         endEntry = createEntry(nullptr, 0);
-        newItr = indexList.insertAfter(startEntry, endEntry);
+        newItr = indexList.insertAfter(startEntry->getIterator(), endEntry);
       } else {
         startEntry = createEntry(nullptr, 0);
-        endEntry = getMBBStartIdx(nextMBB).listEntry();
-        newItr = indexList.insert(endEntry, startEntry);
+        endEntry = getMBBStartIdx(&*nextMBB).listEntry();
+        newItr = indexList.insert(endEntry->getIterator(), startEntry);
       }
 
       SlotIndex startIdx(startEntry, SlotIndex::Slot_Block);
