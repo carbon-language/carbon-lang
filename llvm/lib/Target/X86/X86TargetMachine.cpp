@@ -110,13 +110,6 @@ X86TargetMachine::X86TargetMachine(const Target &T, const Triple &TT,
                         OL),
       TLOF(createTLOF(getTargetTriple())),
       Subtarget(TT, CPU, FS, *this, Options.StackAlignmentOverride) {
-  // Windows stack unwinder gets confused when execution flow "falls through"
-  // after a call to 'noreturn' function.
-  // To prevent that, we emit a trap for 'unreachable' IR instructions.
-  // (which on X86, happens to be the 'ud2' instruction)
-  if (Subtarget.isTargetWin64())
-    this->Options.TrapUnreachable = true;
-
   // By default (and when -ffast-math is on), enable estimate codegen for
   // everything except scalar division. By default, use 1 refinement step for
   // all operations. Defaults may be overridden by using command-line options.

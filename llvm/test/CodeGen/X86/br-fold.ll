@@ -10,10 +10,10 @@
 ; X64_LINUX-NEXT: %bb8.i329
 
 ; X64_WINDOWS: orq %rax, %rcx
-; X64_WINDOWS-NEXT: ud2
+; X64_WINDOWS-NEXT: %bb8.i329
 
 ; X64_WINDOWS_GNU: orq %rax, %rcx
-; X64_WINDOWS_GNU-NEXT: ud2
+; X64_WINDOWS_GNU-NEXT: %bb8.i329
 
 @_ZN11xercesc_2_513SchemaSymbols21fgURI_SCHEMAFORSCHEMAE = external constant [33 x i16], align 32 ; <[33 x i16]*> [#uses=1]
 @_ZN11xercesc_2_56XMLUni16fgNotationStringE = external constant [9 x i16], align 16 ; <[9 x i16]*> [#uses=1]
