@@ -2715,6 +2715,9 @@ static void calculateExplicitCXXStateNumbers(WinEHFuncInfo &FuncInfo,
     DEBUG(dbgs() << "CatchHigh[" << FirstTryPad->getName() << "]: " << CatchHigh
                  << '\n');
   } else if (isa<CleanupPadInst>(FirstNonPHI)) {
+    // A cleanup can have multiple exits; don't re-process after the first.
+    if (FuncInfo.EHPadStateMap.count(FirstNonPHI))
+      return;
     int CleanupState = addUnwindMapEntry(FuncInfo, ParentState, &BB);
     FuncInfo.EHPadStateMap[FirstNonPHI] = CleanupState;
     DEBUG(dbgs() << "Assigning state #" << CleanupState << " to BB "
@@ -2722,6 +2725,15 @@ static void calculateExplicitCXXStateNumbers(WinEHFuncInfo &FuncInfo,
     for (const BasicBlock *PredBlock : predecessors(&BB))
       if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
         calculateExplicitCXXStateNumbers(FuncInfo, *PredBlock, CleanupState);
+  } else if (auto *CEPI = dyn_cast<CleanupEndPadInst>(FirstNonPHI)) {
+    // Propagate ParentState to the cleanuppad in case it doesn't have
+    // any cleanuprets.
+    BasicBlock *CleanupBlock = CEPI->getCleanupPad()->getParent();
+    calculateExplicitCXXStateNumbers(FuncInfo, *CleanupBlock, ParentState);
+    // Anything unwinding through CleanupEndPadInst is in ParentState.
+    for (const BasicBlock *PredBlock : predecessors(&BB))
+      if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
+        calculateExplicitCXXStateNumbers(FuncInfo, *PredBlock, ParentState);
   } else if (isa<TerminatePadInst>(FirstNonPHI)) {
     report_fatal_error("Not yet implemented!");
   } else {
@@ -2794,6 +2806,9 @@ static void calculateExplicitSEHStateNumbers(WinEHFuncInfo &FuncInfo,
       if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
         calculateExplicitSEHStateNumbers(FuncInfo, *PredBlock, ParentState);
   } else if (isa<CleanupPadInst>(FirstNonPHI)) {
+    // A cleanup can have multiple exits; don't re-process after the first.
+    if (FuncInfo.EHPadStateMap.count(FirstNonPHI))
+      return;
     int CleanupState = addSEHFinally(FuncInfo, ParentState, &BB);
     FuncInfo.EHPadStateMap[FirstNonPHI] = CleanupState;
     DEBUG(dbgs() << "Assigning state #" << CleanupState << " to BB "
@@ -2801,7 +2816,11 @@ static void calculateExplicitSEHStateNumbers(WinEHFuncInfo &FuncInfo,
     for (const BasicBlock *PredBlock : predecessors(&BB))
       if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
         calculateExplicitSEHStateNumbers(FuncInfo, *PredBlock, CleanupState);
-  } else if (isa<CleanupEndPadInst>(FirstNonPHI)) {
+  } else if (auto *CEPI = dyn_cast<CleanupEndPadInst>(FirstNonPHI)) {
+    // Propagate ParentState to the cleanuppad in case it doesn't have
+    // any cleanuprets.
+    BasicBlock *CleanupBlock = CEPI->getCleanupPad()->getParent();
+    calculateExplicitSEHStateNumbers(FuncInfo, *CleanupBlock, ParentState);
     // Anything unwinding through CleanupEndPadInst is in ParentState.
     FuncInfo.EHPadStateMap[FirstNonPHI] = ParentState;
     DEBUG(dbgs() << "Assigning state #" << ParentState << " to BB "
@@ -2859,9 +2878,6 @@ void llvm::calculateWinCXXEHStateNumbers(const Function *Fn,
     if (BB.isLandingPad())
       report_fatal_error("MSVC C++ EH cannot use landingpads");
     const Instruction *FirstNonPHI = BB.getFirstNonPHI();
-    // Skip cleanupendpads; they are exits, not entries.
-    if (isa<CleanupEndPadInst>(FirstNonPHI))
-      continue;
     if (!doesEHPadUnwindToCaller(FirstNonPHI))
       continue;
     calculateExplicitCXXStateNumbers(FuncInfo, BB, -1);
