@@ -3150,9 +3150,6 @@ extern void __kmp_pop_current_task_from_thread( kmp_info_t *this_thr );
 extern kmp_task_t* __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid,
   kmp_tasking_flags_t *flags, size_t sizeof_kmp_task_t, size_t sizeof_shareds,
   kmp_routine_entry_t task_entry );
-#if OMPT_SUPPORT
-extern void __kmp_task_init_ompt( kmp_taskdata_t * task, int tid );
-#endif
 extern void __kmp_init_implicit_task( ident_t *loc_ref, kmp_info_t *this_thr,
                   kmp_team_t *team, int tid, int set_curr_task );
 

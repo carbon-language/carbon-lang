@@ -750,18 +750,18 @@ __kmpc_omp_task_complete( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t *task )
 #if OMPT_SUPPORT
 //----------------------------------------------------------------------------------------------------
 // __kmp_task_init_ompt:
-//   Initialize OMPT fields maintained by a task. Since the serial task is initialized before
-//   ompt_initialize is called, at the point the serial task is initialized we don't know whether
-//   OMPT will be used or not when the serial task is initialized. This function provides the support
-//   needed to initialize OMPT for the serial task after the fact.
+//   Initialize OMPT fields maintained by a task. This will only be called after
+//   ompt_tool, so we already know whether ompt is enabled or not.
 
-void
-__kmp_task_init_ompt( kmp_taskdata_t * task, int tid )
+static inline void
+__kmp_task_init_ompt( kmp_taskdata_t * task, int tid, void * function )
 {
-    task->ompt_task_info.task_id = __ompt_task_id_new(tid);
-    task->ompt_task_info.function = NULL;
-    task->ompt_task_info.frame.exit_runtime_frame = NULL;
-    task->ompt_task_info.frame.reenter_runtime_frame = NULL;
+    if (ompt_enabled) {
+        task->ompt_task_info.task_id = __ompt_task_id_new(tid);
+        task->ompt_task_info.function = function;
+        task->ompt_task_info.frame.exit_runtime_frame = NULL;
+        task->ompt_task_info.frame.reenter_runtime_frame = NULL;
+    }
 }
 #endif
 
@@ -827,7 +827,7 @@ __kmp_init_implicit_task( ident_t *loc_ref, kmp_info_t *this_thr, kmp_team_t *te
     }
 
 #if OMPT_SUPPORT
-    __kmp_task_init_ompt(task, tid);
+    __kmp_task_init_ompt(task, tid, NULL);
 #endif
 
     KF_TRACE(10, ("__kmp_init_implicit_task(exit): T#:%d team=%p task=%p\n",
@@ -1032,12 +1032,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
                   gtid, taskdata, taskdata->td_parent) );
 
 #if OMPT_SUPPORT
-    if (ompt_enabled) {
-        taskdata->ompt_task_info.task_id = __ompt_task_id_new(gtid);
-        taskdata->ompt_task_info.function = (void*) task_entry;
-        taskdata->ompt_task_info.frame.exit_runtime_frame = NULL; 
-        taskdata->ompt_task_info.frame.reenter_runtime_frame = NULL;
-    }
+    __kmp_task_init_ompt(taskdata, gtid, (void*) task_entry);
 #endif
 
     return task;
