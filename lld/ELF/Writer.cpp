@@ -485,6 +485,12 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   // Fill the DynStrTab early.
   Out<ELFT>::Dynamic->finalize();
+
+  // Fix each section's header (e.g. sh_size, sh_link, etc.)
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
+    Out<ELFT>::StrTab->add(Sec->getName());
+    Sec->finalize();
+  }
 }
 
 template <class ELFT>
@@ -524,9 +530,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   FileHeaderPHDR.Header.p_align = Target->getPageSize();
 
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
-    Out<ELFT>::StrTab->add(Sec->getName());
-    Sec->finalize();
-
     if (Sec->getSize()) {
       uintX_t Flags = toPHDRFlags(Sec->getFlags());
       ProgramHeader<ELFT> *Last = PHDRs.back();
