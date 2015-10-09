@@ -1791,7 +1791,7 @@ class TypePromotionTransaction {
         Value *Val = Inst->getOperand(It);
         OriginalValues.push_back(Val);
         // Set a dummy one.
-        // We could use OperandSetter here, but that would implied an overhead
+        // We could use OperandSetter here, but that would imply an overhead
         // that we are not willing to pay.
         Inst->setOperand(It, UndefValue::get(Val->getType()));
       }
@@ -2406,8 +2406,7 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
 
   Value *OpndVal = Inst->getOperand(0);
   // Check if we can use this operand in the extension.
-  // If the type is larger than the result type of the extension,
-  // we cannot.
+  // If the type is larger than the result type of the extension, we cannot.
   if (!OpndVal->getType()->isIntegerTy() ||
       OpndVal->getType()->getIntegerBitWidth() >
           ConsideredExtType->getIntegerBitWidth())
@@ -2433,7 +2432,7 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
   else
     return false;
 
-  // #2 check that the truncate just drop extended bits.
+  // #2 check that the truncate just drops extended bits.
   if (Inst->getType()->getIntegerBitWidth() >= OpndType->getIntegerBitWidth())
     return true;
 
@@ -2546,7 +2545,7 @@ Value *TypePromotionHelper::promoteOperandForOther(
     }
 
     TPT.replaceAllUsesWith(ExtOpnd, Trunc);
-    // Restore the operand of Ext (which has been replace by the previous call
+    // Restore the operand of Ext (which has been replaced by the previous call
     // to replaceAllUsesWith) to avoid creating a cycle trunc <-> sext.
     TPT.setOperand(Ext, 0, ExtOpnd);
   }
@@ -2649,7 +2648,7 @@ bool AddressingModeMatcher::isPromotionProfitable(
 }
 
 /// Given an instruction or constant expr, see if we can fold the operation
-/// into the addressing mode. If so, update the addressing  mode and return
+/// into the addressing mode. If so, update the addressing mode and return
 /// true, otherwise return false without modifying AddrMode.
 /// If \p MovedAway is not NULL, it contains the information of whether or
 /// not AddrInst has to be folded into the addressing mode on success.
@@ -2872,9 +2871,9 @@ bool AddressingModeMatcher::matchOperationAddr(User *AddrInst, unsigned Opcode,
     unsigned OldSize = AddrModeInsts.size();
 
     if (!matchAddr(PromotedOperand, Depth) ||
-        // The total of the new cost is equals to the cost of the created
+        // The total of the new cost is equal to the cost of the created
         // instructions.
-        // The total of the old cost is equals to the cost of the extension plus
+        // The total of the old cost is equal to the cost of the extension plus
         // what we have saved in the addressing mode.
         !isPromotionProfitable(CreatedInstsCost,
                                ExtCost + (AddrModeInsts.size() - OldSize),
@@ -2922,7 +2921,7 @@ bool AddressingModeMatcher::matchAddr(Value *Addr, unsigned Depth) {
     // Check to see if it is possible to fold this operation.
     bool MovedAway = false;
     if (matchOperationAddr(I, I->getOpcode(), Depth, &MovedAway)) {
-      // This instruction may have been move away. If so, there is nothing
+      // This instruction may have been moved away. If so, there is nothing
       // to check here.
       if (MovedAway)
         return true;
@@ -3050,10 +3049,10 @@ static bool FindAllMemoryUses(
   return false;
 }
 
-/// ValueAlreadyLiveAtInst - Retrn true if Val is already known to be live at
-/// the use site that we're folding it into.  If so, there is no cost to
-/// include it in the addressing mode.  KnownLive1 and KnownLive2 are two values
-/// that we know are live at the instruction already.
+/// Return true if Val is already known to be live at the use site that we're
+/// folding it into. If so, there is no cost to include it in the addressing
+/// mode. KnownLive1 and KnownLive2 are two values that we know are live at the
+/// instruction already.
 bool AddressingModeMatcher::valueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
                                                    Value *KnownLive2) {
   // If Val is either of the known-live values, we know it is live!
