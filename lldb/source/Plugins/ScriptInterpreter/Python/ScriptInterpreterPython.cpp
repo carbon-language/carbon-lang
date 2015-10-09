@@ -46,6 +46,7 @@
 #endif
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -78,6 +79,29 @@ static ScriptInterpreterPython::SWIGPythonCreateScriptedThreadPlan g_swig_thread
 static ScriptInterpreterPython::SWIGPythonCallThreadPlan g_swig_call_thread_plan = nullptr;
 
 static bool g_initialized = false;
+
+#if PY_MAJOR_VERSION >= 3 && defined(LLDB_PYTHON_HOME)
+typedef wchar_t PythonHomeChar;
+#else
+typedef char PythonHomeChar;
+#endif
+
+PythonHomeChar *
+GetDesiredPythonHome()
+{
+#if defined(LLDB_PYTHON_HOME)
+#if PY_MAJOR_VERSION >= 3
+    size_t size = 0;
+    static PythonHomeChar *g_python_home = Py_DecodeLocale(LLDB_PYTHON_HOME, &size);
+    return g_python_home;
+#else
+    static PythonHomeChar *g_python_home = LLDB_PYTHON_HOME;
+    return g_python_home;
+#endif
+#else
+    return nullptr;
+#endif
+}
 
 static std::string
 ReadPythonBacktrace (PyObject* py_backtrace);
@@ -116,7 +140,7 @@ ScriptInterpreterPython::Locker::DoAcquireLock()
     // place outside of Python (e.g. printing to screen, waiting for the network, ...)
     // in that case, _PyThreadState_Current will be NULL - and we would be unable
     // to set the asynchronous exception - not a desirable situation
-    m_python_interpreter->SetThreadState (_PyThreadState_Current);
+    m_python_interpreter->SetThreadState(PyThreadState_Get());
     m_python_interpreter->IncrementLockCount();
     return true;
 }
@@ -908,13 +932,13 @@ ScriptInterpreterPython::Interrupt()
 
     if (IsExecutingPython())
     {
-        PyThreadState* state = _PyThreadState_Current;
+        PyThreadState *state = PyThreadState_Get();
         if (!state)
             state = GetThreadState();
         if (state)
         {
             long tid = state->thread_id;
-            _PyThreadState_Current = state;
+            PyThreadState_Swap(state);
             int num_threads = PyThreadState_SetAsyncExc(tid, PyExc_KeyboardInterrupt);
             if (log)
                 log->Printf("ScriptInterpreterPython::Interrupt() sending PyExc_KeyboardInterrupt (tid = %li, num_threads = %i)...", tid, num_threads);
@@ -1124,15 +1148,16 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, const Exec
     
     if (in_string != nullptr)
     {
-        struct _node *compiled_node = PyParser_SimpleParseString (in_string, Py_file_input);
+#if PY_MAJOR_VERSION >= 3
+        PyObject *code_object = Py_CompileString(in_string, "temp.py", Py_file_input);
+#else
+        PyCodeObject *code_object = nullptr;
+        struct _node *compiled_node = PyParser_SimpleParseString(in_string, Py_file_input);
         if (compiled_node)
-        {
-            PyCodeObject *compiled_code = PyNode_Compile (compiled_node, "temp.py");
-            if (compiled_code)
-            {
-              return_value.Reset(PyEval_EvalCode (compiled_code, globals.get(), locals.get()));
-            }
-        }
+            code_object = PyNode_Compile(compiled_node, "temp.py");
+#endif
+        if (code_object)
+            return_value.Reset(PyEval_EvalCode(code_object, globals.get(), locals.get()));
     }
 
     py_error = PyErr_Occurred ();
@@ -1152,7 +1177,11 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, const Exec
         std::string bt = ReadPythonBacktrace(traceback);
         
         if (value && value != Py_None)
-            error.SetErrorStringWithFormat("%s\n%s", PyString_AsString(PyObject_Str(value)),bt.c_str());
+        {
+            PythonString str(value);
+            llvm::StringRef value_str(str.GetString());
+            error.SetErrorStringWithFormat("%s\n%s", value_str.str().c_str(), bt.c_str());
+        }
         else
             error.SetErrorStringWithFormat("%s",bt.c_str());
         Py_XDECREF(type);
@@ -2342,8 +2371,12 @@ ReadPythonBacktrace (PyObject* py_backtrace)
                         if (stringIO_getvalue && stringIO_getvalue != Py_None)
                         {
                             printTB_string = PyObject_CallObject (stringIO_getvalue,nullptr);
-                            if (printTB_string && printTB_string != Py_None && PyString_Check(printTB_string))
-                                retval.assign(PyString_AsString(printTB_string));
+                            if (printTB_string && PythonString::Check(printTB_string))
+                            {
+                                PythonString str(printTB_string);
+                                llvm::StringRef string_data(str.GetString());
+                                retval.assign(string_data.data(), string_data.size());
+                            }
                         }
                     }
                 }
@@ -2924,14 +2957,13 @@ ScriptInterpreterPython::GetShortHelpForCommandObject (StructuredData::GenericSP
         PyErr_Print();
         PyErr_Clear();
     }
-    
-    if (py_return != nullptr && py_return != Py_None)
+
+    if (py_return != Py_None && PythonString::Check(py_return))
     {
-        if (PyString_Check(py_return))
-        {
-            dest.assign(PyString_AsString(py_return));
-            got_string = true;
-        }
+        PythonString py_string(py_return);
+        llvm::StringRef return_data(py_string.GetString());
+        dest.assign(return_data.data(), return_data.size());
+        got_string = true;
     }
     Py_XDECREF(py_return);
     
@@ -2997,13 +3029,11 @@ ScriptInterpreterPython::GetFlagsForCommandObject (StructuredData::GenericSP cmd
         PyErr_Print();
         PyErr_Clear();
     }
-    
-    if (py_return != nullptr && py_return != Py_None)
+
+    if (py_return != Py_None && PythonInteger::Check(py_return))
     {
-        if (PyInt_Check(py_return))
-            result = (uint32_t)PyInt_AsLong(py_return);
-        else if (PyLong_Check(py_return))
-            result = (uint32_t)PyLong_AsLong(py_return);
+        PythonInteger int_value(py_return);
+        result = int_value.GetInteger();
     }
     Py_XDECREF(py_return);
     
@@ -3071,14 +3101,13 @@ ScriptInterpreterPython::GetLongHelpForCommandObject (StructuredData::GenericSP 
         PyErr_Print();
         PyErr_Clear();
     }
-    
-    if (py_return != nullptr && py_return != Py_None)
+
+    if (py_return != Py_None && PythonString::Check(py_return))
     {
-        if (PyString_Check(py_return))
-        {
-            dest.assign(PyString_AsString(py_return));
-            got_string = true;
-        }
+        PythonString str(py_return);
+        llvm::StringRef str_data(str.GetString());
+        dest.assign(str_data.data(), str_data.size());
+        got_string = true;
     }
     Py_XDECREF(py_return);
     
@@ -3164,8 +3193,9 @@ ScriptInterpreterPython::InitializePrivate ()
     stdin_tty_state.Save(STDIN_FILENO, false);
 
 #if defined(LLDB_PYTHON_HOME)
-    Py_SetPythonHome(LLDB_PYTHON_HOME);
+    Py_SetPythonHome(GetDesiredPythonHome());
 #endif
+
     PyGILState_STATE gstate;
     Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
     bool threads_already_initialized = false;

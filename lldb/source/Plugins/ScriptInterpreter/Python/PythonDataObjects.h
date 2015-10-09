@@ -156,7 +156,7 @@ enum class PyObjectType
     protected:
         PyObject* m_py_obj;
     };
-    
+
     class PythonString: public PythonObject
     {
     public:
@@ -166,6 +166,8 @@ enum class PyObjectType
         PythonString (llvm::StringRef string);
         PythonString (const char *string);
         virtual ~PythonString ();
+
+        static bool Check(PyObject *py_obj);
 
         virtual bool
         Reset (PyObject* py_obj = NULL);
@@ -180,7 +182,7 @@ enum class PyObjectType
 
         StructuredData::StringSP CreateStructuredString() const;
     };
-    
+
     class PythonInteger: public PythonObject
     {
     public:
@@ -190,7 +192,9 @@ enum class PyObjectType
         PythonInteger (const PythonObject &object);
         PythonInteger (int64_t value);
         virtual ~PythonInteger ();
-        
+
+        static bool Check(PyObject *py_obj);
+
         virtual bool
         Reset (PyObject* py_obj = NULL);
 
@@ -205,13 +209,13 @@ enum class PyObjectType
     class PythonList: public PythonObject
     {
     public:
-        
-        PythonList (bool create_empty);
+      PythonList();
         PythonList (PyObject* py_obj);
         PythonList (const PythonObject &object);
-        PythonList (uint32_t count);
         virtual ~PythonList ();
-        
+
+        static bool Check(PyObject *py_obj);
+
         virtual bool
         Reset (PyObject* py_obj = NULL);
 
@@ -231,12 +235,13 @@ enum class PyObjectType
     class PythonDictionary: public PythonObject
     {
     public:
-        
-        explicit PythonDictionary (bool create_empty);
+      PythonDictionary();
         PythonDictionary (PyObject* object);
         PythonDictionary (const PythonObject &object);
         virtual ~PythonDictionary ();
-        
+
+        static bool Check(PyObject *py_obj);
+
         virtual bool
         Reset (PyObject* object = NULL);
 

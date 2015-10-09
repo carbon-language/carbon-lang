@@ -25,4 +25,5 @@ endfunction()
 
 add_subdirectory(Host)
 add_subdirectory(Interpreter)
+add_subdirectory(ScriptInterpreter)
 add_subdirectory(Utility)

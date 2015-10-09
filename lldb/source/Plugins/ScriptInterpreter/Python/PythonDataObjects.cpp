@@ -71,10 +71,18 @@ PythonObject::GetObjectType() const
         return PyObjectType::List;
     if (PyDict_Check(m_py_obj))
         return PyObjectType::Dictionary;
+    if (PyUnicode_Check(m_py_obj))
+        return PyObjectType::String;
+    if (PyLong_Check(m_py_obj))
+        return PyObjectType::Integer;
+#if PY_MAJOR_VERSION < 3
+    // These functions don't exist in Python 3.x.  PyString is PyUnicode
+    // and PyInt is PyLong.
     if (PyString_Check(m_py_obj))
         return PyObjectType::String;
-    if (PyInt_Check(m_py_obj) || PyLong_Check(m_py_obj))
+    if (PyInt_Check(m_py_obj))
         return PyObjectType::Integer;
+#endif
     return PyObjectType::Unknown;
 }
 
@@ -142,14 +150,16 @@ PythonString::PythonString (const PythonObject &object) :
     Reset(object.get()); // Use "Reset()" to ensure that py_obj is a string
 }
 
-PythonString::PythonString (llvm::StringRef string) :
-    PythonObject(PyString_FromStringAndSize(string.data(), string.size()))
+PythonString::PythonString(llvm::StringRef string)
+    : PythonObject()
 {
+    SetString(string);
 }
 
-PythonString::PythonString(const char *string) :
-    PythonObject(PyString_FromString(string))
+PythonString::PythonString(const char *string)
+    : PythonObject()
 {
+    SetString(llvm::StringRef(string));
 }
 
 PythonString::PythonString () :
@@ -162,20 +172,53 @@ PythonString::~PythonString ()
 }
 
 bool
-PythonString::Reset (PyObject *py_obj)
+PythonString::Check(PyObject *py_obj)
 {
-    if (py_obj && PyString_Check(py_obj))
-        return PythonObject::Reset(py_obj);
-    
-    PythonObject::Reset(nullptr);
-    return py_obj == nullptr;
+    if (!py_obj)
+        return false;
+#if PY_MAJOR_VERSION >= 3
+    // Python 3 does not have PyString objects, only PyUnicode.
+    return PyUnicode_Check(py_obj);
+#else
+    return PyUnicode_Check(py_obj) || PyString_Check(py_obj);
+#endif
+}
+
+bool
+PythonString::Reset(PyObject *py_obj)
+{
+    if (!PythonString::Check(py_obj))
+    {
+        PythonObject::Reset(nullptr);
+        return false;
+    }
+
+// Convert this to a PyBytes object, and only store the PyBytes.  Note that in
+// Python 2.x, PyString and PyUnicode are interchangeable, and PyBytes is an alias
+// of PyString.  So on 2.x, if we get into this branch, we already have a PyBytes.
+    //#if PY_MAJOR_VERSION >= 3
+    if (PyUnicode_Check(py_obj))
+    {
+        PyObject *unicode = py_obj;
+        py_obj = PyUnicode_AsUTF8String(py_obj);
+        Py_XDECREF(unicode);
+    }
+    //#endif
+
+    assert(PyBytes_Check(py_obj) && "PythonString::Reset received a non-string");
+    return PythonObject::Reset(py_obj);
 }
 
 llvm::StringRef
 PythonString::GetString() const
 {
     if (m_py_obj)
-        return llvm::StringRef(PyString_AsString(m_py_obj), GetSize());
+    {
+        Py_ssize_t size;
+        char *c;
+        PyBytes_AsStringAndSize(m_py_obj, &c, &size);
+        return llvm::StringRef(c, size);
+    }
     return llvm::StringRef();
 }
 
@@ -183,14 +226,21 @@ size_t
 PythonString::GetSize() const
 {
     if (m_py_obj)
-        return PyString_Size(m_py_obj);
+        return PyBytes_Size(m_py_obj);
     return 0;
 }
 
 void
 PythonString::SetString (llvm::StringRef string)
 {
+#if PY_MAJOR_VERSION >= 3
+    PyObject *unicode = PyUnicode_FromStringAndSize(string.data(), string.size());
+    PyObject *bytes = PyUnicode_AsUTF8String(unicode);
+    PythonObject::Reset(bytes);
+    Py_XDECREF(unicode);
+#else
     PythonObject::Reset(PyString_FromStringAndSize(string.data(), string.size()));
+#endif
 }
 
 StructuredData::StringSP
@@ -229,16 +279,44 @@ PythonInteger::~PythonInteger ()
 }
 
 bool
-PythonInteger::Reset (PyObject *py_obj)
+PythonInteger::Check(PyObject *py_obj)
 {
-    if (py_obj)
+    if (!py_obj)
+        return false;
+
+#if PY_MAJOR_VERSION >= 3
+    // Python 3 does not have PyInt_Check.  There is only one type of
+    // integral value, long.
+    return PyLong_Check(py_obj);
+#else
+    return PyLong_Check(py_obj) || PyInt_Check(py_obj);
+#endif
+}
+
+bool
+PythonInteger::Reset(PyObject *py_obj)
+{
+    if (!PythonInteger::Check(py_obj))
     {
-        if (PyInt_Check (py_obj) || PyLong_Check(py_obj))
-            return PythonObject::Reset(py_obj);
+        PythonObject::Reset(nullptr);
+        return false;
     }
-    
-    PythonObject::Reset(nullptr);
-    return py_obj == nullptr;
+
+#if PY_MAJOR_VERSION < 3
+    // Always store this as a PyLong, which makes interoperability between
+    // Python 2.x and Python 3.x easier.  This is only necessary in 2.x,
+    // since 3.x doesn't even have a PyInt.
+    if (PyInt_Check(py_obj))
+    {
+        PyObject *py_long = PyLong_FromLongLong(PyInt_AsLong(py_obj));
+        Py_XDECREF(py_obj);
+        py_obj = py_long;
+    }
+#endif
+
+    assert(PyLong_Check(py_obj) && "Couldn't get a PyLong from this PyObject");
+
+    return PythonObject::Reset(py_obj);
 }
 
 int64_t
@@ -246,10 +324,9 @@ PythonInteger::GetInteger() const
 {
     if (m_py_obj)
     {
-        if (PyInt_Check(m_py_obj))
-            return PyInt_AsLong(m_py_obj);
-        else if (PyLong_Check(m_py_obj))
-            return PyLong_AsLongLong(m_py_obj);
+        assert(PyLong_Check(m_py_obj) && "PythonInteger::GetInteger has a PyObject that isn't a PyLong");
+
+        return PyLong_AsLongLong(m_py_obj);
     }
     return UINT64_MAX;
 }
@@ -272,13 +349,8 @@ PythonInteger::CreateStructuredInteger() const
 // PythonList
 //----------------------------------------------------------------------
 
-PythonList::PythonList (bool create_empty) :
-    PythonObject(create_empty ? PyList_New(0) : nullptr)
-{
-}
-
-PythonList::PythonList (uint32_t count) :
-    PythonObject(PyList_New(count))
+PythonList::PythonList()
+    : PythonObject(PyList_New(0))
 {
 }
 
@@ -300,13 +372,23 @@ PythonList::~PythonList ()
 }
 
 bool
-PythonList::Reset (PyObject *py_obj)
+PythonList::Check(PyObject *py_obj)
 {
-    if (py_obj && PyList_Check(py_obj))
-        return PythonObject::Reset(py_obj);
-    
-    PythonObject::Reset(nullptr);
-    return py_obj == nullptr;
+    if (!py_obj)
+        return false;
+    return PyList_Check(py_obj);
+}
+
+bool
+PythonList::Reset(PyObject *py_obj)
+{
+    if (!PythonList::Check(py_obj))
+    {
+        PythonObject::Reset(nullptr);
+        return false;
+    }
+
+    return PythonObject::Reset(py_obj);
 }
 
 uint32_t
@@ -356,8 +438,8 @@ PythonList::CreateStructuredArray() const
 // PythonDictionary
 //----------------------------------------------------------------------
 
-PythonDictionary::PythonDictionary (bool create_empty) :
-PythonObject(create_empty ? PyDict_New() : nullptr)
+PythonDictionary::PythonDictionary()
+    : PythonObject(PyDict_New())
 {
 }
 
@@ -379,13 +461,24 @@ PythonDictionary::~PythonDictionary ()
 }
 
 bool
-PythonDictionary::Reset (PyObject *py_obj)
+PythonDictionary::Check(PyObject *py_obj)
 {
-    if (py_obj && PyDict_Check(py_obj))
-        return PythonObject::Reset(py_obj);
-    
-    PythonObject::Reset(nullptr);
-    return py_obj == nullptr;
+    if (!py_obj)
+        return false;
+
+    return PyDict_Check(py_obj);
+}
+
+bool
+PythonDictionary::Reset(PyObject *py_obj)
+{
+    if (!PythonDictionary::Check(py_obj))
+    {
+        PythonObject::Reset(nullptr);
+        return false;
+    }
+
+    return PythonObject::Reset(py_obj);
 }
 
 uint32_t
@@ -423,8 +516,11 @@ PythonDictionary::GetItemForKeyAsString (const PythonString &key, const char *fa
     if (m_py_obj && key)
     {
         PyObject *py_obj = PyDict_GetItem(m_py_obj, key.get());
-        if (py_obj && PyString_Check(py_obj))
-            return PyString_AsString(py_obj);
+        if (py_obj && PythonString::Check(py_obj))
+        {
+            PythonString str(py_obj);
+            return str.GetString().data();
+        }
     }
     return fail_value;
 }
@@ -435,13 +531,10 @@ PythonDictionary::GetItemForKeyAsInteger (const PythonString &key, int64_t fail_
     if (m_py_obj && key)
     {
         PyObject *py_obj = PyDict_GetItem(m_py_obj, key.get());
-        if (py_obj)
+        if (PythonInteger::Check(py_obj))
         {
-            if (PyInt_Check(py_obj))
-                return PyInt_AsLong(py_obj);
-
-            if (PyLong_Check(py_obj))
-                return PyLong_AsLong(py_obj);
+            PythonInteger int_obj(py_obj);
+            return int_obj.GetInteger();
         }
     }
     return fail_value;
@@ -452,7 +545,7 @@ PythonDictionary::GetKeys () const
 {
     if (m_py_obj)
         return PythonList(PyDict_Keys(m_py_obj));
-    return PythonList(true);
+    return PythonList();
 }
 
 PythonString
