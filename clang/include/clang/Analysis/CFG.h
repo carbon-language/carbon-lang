@@ -766,7 +766,7 @@ public:
   /// (not a pointer to CFGBlock).
   class graph_iterator {
   public:
-    typedef const CFGBlock                  value_type;
+    typedef CFGBlock                        value_type;
     typedef value_type&                     reference;
     typedef value_type*                     pointer;
     typedef BumpVector<CFGBlock*>::iterator ImplTy;
