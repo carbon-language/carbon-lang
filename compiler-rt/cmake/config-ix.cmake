@@ -354,6 +354,8 @@ if(APPLE)
       ${toolchain_arches})
     message(STATUS "OSX 10.4 supported arches: ${DARWIN_10.4_ARCHS}")
     if(DARWIN_10.4_ARCHS)
+      # don't include the Haswell slice in the 10.4 compatibility library
+      list(REMOVE_ITEM DARWIN_10.4_ARCHS x86_64h)
       list(APPEND BUILTIN_SUPPORTED_OS 10.4)
     endif()
 
