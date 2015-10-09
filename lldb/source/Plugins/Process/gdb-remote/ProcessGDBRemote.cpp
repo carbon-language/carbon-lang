@@ -2105,6 +2105,8 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
                             watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
                             if (wp_addr != LLDB_INVALID_ADDRESS)
                             {
+                                if (wp_hit_addr != LLDB_INVALID_ADDRESS)
+                                    wp_addr = wp_hit_addr;
                                 WatchpointSP wp_sp = GetTarget().GetWatchpointList().FindByAddress(wp_addr);
                                 if (wp_sp)
                                 {
