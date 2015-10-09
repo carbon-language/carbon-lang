@@ -533,14 +533,16 @@ bool SystemZAsmParser::parseRegister(Register &Reg) {
 }
 
 // Parse a register of group Group.  If Regs is nonnull, use it to map
-// the raw register number to LLVM numbering, with zero entries indicating
-// an invalid register.  IsAddress says whether the register appears in an
-// address context.
+// the raw register number to LLVM numbering, with zero entries
+// indicating an invalid register.  IsAddress says whether the
+// register appears in an address context. Allow FP Group if expecting
+// RegV Group, since the f-prefix yields the FP group even while used
+// with vector instructions.
 bool SystemZAsmParser::parseRegister(Register &Reg, RegisterGroup Group,
                                      const unsigned *Regs, bool IsAddress) {
   if (parseRegister(Reg))
     return true;
-  if (Reg.Group != Group)
+  if (Reg.Group != Group && !(Reg.Group == RegFP && Group == RegV))
     return Error(Reg.StartLoc, "invalid operand for instruction");
   if (Regs && Regs[Reg.Num] == 0)
     return Error(Reg.StartLoc, "invalid register pair");
