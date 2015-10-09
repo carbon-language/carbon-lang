@@ -71,8 +71,8 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
   // in them.
   std::vector<BasicBlock*> DeadBlocks;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (!Reachable.count(I)) {
-      BasicBlock *BB = I;
+    if (!Reachable.count(&*I)) {
+      BasicBlock *BB = &*I;
       DeadBlocks.push_back(BB);
       while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
         PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
@@ -131,7 +131,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   // in them.
   std::vector<MachineBasicBlock*> DeadBlocks;
   for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    MachineBasicBlock *BB = I;
+    MachineBasicBlock *BB = &*I;
 
     // Test for deadness.
     if (!Reachable.count(BB)) {
@@ -167,7 +167,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
 
   // Cleanup PHI nodes.
   for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    MachineBasicBlock *BB = I;
+    MachineBasicBlock *BB = &*I;
     // Prune unneeded PHI entries.
     SmallPtrSet<MachineBasicBlock*, 8> preds(BB->pred_begin(),
                                              BB->pred_end());

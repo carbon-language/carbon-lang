@@ -541,7 +541,7 @@ static Instruction *findBeginCatchSplitPoint(BasicBlock *BB,
 void WinEHPrepare::findCXXEHReturnPoints(
     Function &F, SetVector<BasicBlock *> &EHReturnBlocks) {
   for (auto BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
-    BasicBlock *BB = BBI;
+    BasicBlock *BB = &*BBI;
     for (Instruction &I : *BB) {
       if (match(&I, m_Intrinsic<Intrinsic::eh_begincatch>())) {
         Instruction *SplitPt =
@@ -564,7 +564,7 @@ void WinEHPrepare::findCXXEHReturnPoints(
             isa<PHINode>(Br->getSuccessor(0)->begin())) {
           DEBUG(dbgs() << "splitting block " << BB->getName()
                        << " with llvm.eh.endcatch\n");
-          BBI = SplitBlock(BB, I.getNextNode(), DT);
+          BBI = SplitBlock(BB, I.getNextNode(), DT)->getIterator();
         }
         // The next BB is normal control flow.
         EHReturnBlocks.insert(BB->getTerminator()->getSuccessor(0));
@@ -588,7 +588,7 @@ static bool isCatchAllLandingPad(const BasicBlock *BB) {
 void WinEHPrepare::findSEHEHReturnPoints(
     Function &F, SetVector<BasicBlock *> &EHReturnBlocks) {
   for (auto BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
-    BasicBlock *BB = BBI;
+    BasicBlock *BB = &*BBI;
     // If the landingpad is a catch-all, treat the whole lpad as if it is
     // reachable from normal control flow.
     // FIXME: This is imprecise. We need a better way of identifying where a
@@ -608,8 +608,9 @@ void WinEHPrepare::findSEHEHReturnPoints(
       if (!CatchHandler->getSinglePredecessor()) {
         DEBUG(dbgs() << "splitting EH return edge from " << BB->getName()
                      << " to " << CatchHandler->getName() << '\n');
-        BBI = CatchHandler = SplitCriticalEdge(
+        CatchHandler = SplitCriticalEdge(
             BB, std::find(succ_begin(BB), succ_end(BB), CatchHandler));
+        BBI = CatchHandler->getIterator();
       }
       EHReturnBlocks.insert(CatchHandler);
     }
@@ -759,7 +760,7 @@ void WinEHPrepare::demoteValuesLiveAcrossHandlers(
   // FIXME: This demotion is inefficient. We should insert spills at the point
   // of definition, insert one reload in each handler that uses the value, and
   // insert reloads in the BB used to rejoin normal control flow.
-  Instruction *AllocaInsertPt = F.getEntryBlock().getFirstInsertionPt();
+  Instruction *AllocaInsertPt = &*F.getEntryBlock().getFirstInsertionPt();
   for (Instruction *I : InstrsToDemote)
     DemoteRegToStack(*I, false, AllocaInsertPt);
 
@@ -822,7 +823,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
     // FIXME: Switch the ehptr type to i32 and then switch this.
     SEHExceptionCodeSlot =
         new AllocaInst(Int8PtrType, nullptr, "seh_exception_code",
-                       F.getEntryBlock().getFirstInsertionPt());
+                       &*F.getEntryBlock().getFirstInsertionPt());
   }
 
   // In order to handle the case where one outlined catch handler returns
@@ -1042,7 +1043,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
 
   BasicBlock *Entry = &F.getEntryBlock();
   IRBuilder<> Builder(F.getParent()->getContext());
-  Builder.SetInsertPoint(Entry->getFirstInsertionPt());
+  Builder.SetInsertPoint(Entry, Entry->getFirstInsertionPt());
 
   Function *FrameEscapeFn =
       Intrinsic::getDeclaration(M, Intrinsic::localescape);
@@ -1243,10 +1244,10 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
   // and remap return instructions in the nested handlers that should return
   // to an address in the outlined handler.
   Function *OutlinedHandlerFn = OutlinedBB->getParent();
-  BasicBlock::const_iterator II = OriginalLPad;
+  BasicBlock::const_iterator II = OriginalLPad->getIterator();
   ++II;
   // The instruction after the landing pad should now be a call to eh.actions.
-  const Instruction *Recover = II;
+  const Instruction *Recover = &*II;
   const IntrinsicInst *EHActions = cast<IntrinsicInst>(Recover);
 
   // Remap the return target in the nested handler.
@@ -1349,7 +1350,8 @@ static bool isSelectorDispatch(BasicBlock *BB, BasicBlock *&CatchHandler,
 }
 
 static bool isCatchBlock(BasicBlock *BB) {
-  for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(), IE = BB->end();
+  for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg()->getIterator(),
+                            IE = BB->end();
        II != IE; ++II) {
     if (match(cast<Value>(II), m_Intrinsic<Intrinsic::eh_begincatch>()))
       return true;
@@ -1533,7 +1535,7 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   // Skip over PHIs and, if applicable, landingpad instructions.
   II = StartBB->getFirstInsertionPt();
 
-  CloneAndPruneIntoFromInst(Handler, SrcFn, II, VMap,
+  CloneAndPruneIntoFromInst(Handler, SrcFn, &*II, VMap,
                             /*ModuleLevelChanges=*/false, Returns, "",
                             &OutlinedFunctionInfo, Director.get());
 
@@ -1544,10 +1546,10 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   // predecessors.  Any other block wouldn't have been cloned if it didn't
   // have a predecessor which was also cloned.
   Function::iterator ClonedIt = std::next(Function::iterator(Entry));
-  while (!pred_empty(ClonedIt))
+  while (!pred_empty(&*ClonedIt))
     ++ClonedIt;
-  BasicBlock *ClonedEntryBB = ClonedIt;
-  assert(ClonedEntryBB);
+  assert(ClonedIt != Entry->getParent()->end());
+  BasicBlock *ClonedEntryBB = &*ClonedIt;
   Entry->getInstList().splice(Entry->end(), ClonedEntryBB->getInstList());
   ClonedEntryBB->eraseFromParent();
 
@@ -1579,7 +1581,8 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
         auto *Branch = dyn_cast<BranchInst>(Pred->getTerminator());
         if (!Branch || !Branch->isUnconditional() || Pred->size() <= 1)
           continue;
-        BasicBlock::iterator II = const_cast<BranchInst *>(Branch);
+        BasicBlock::iterator II =
+            const_cast<BranchInst *>(Branch)->getIterator();
         --II;
         if (match(cast<Value>(II), m_Intrinsic<Intrinsic::eh_endcatch>())) {
           // This would indicate that a nested landing pad wants to return
@@ -1615,9 +1618,9 @@ void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
   } else {
     // This must be a catch-all. Split the block after the landingpad.
     assert(CatchAction->getSelector()->isNullValue() && "expected catch-all");
-    HandlerBB = SplitBlock(StartBB, StartBB->getFirstInsertionPt(), DT);
+    HandlerBB = SplitBlock(StartBB, &*StartBB->getFirstInsertionPt(), DT);
   }
-  IRBuilder<> Builder(HandlerBB->getFirstInsertionPt());
+  IRBuilder<> Builder(&*HandlerBB->getFirstInsertionPt());
   Function *EHCodeFn = Intrinsic::getDeclaration(
       StartBB->getParent()->getParent(), Intrinsic::eh_exceptioncode_old);
   Value *Code = Builder.CreateCall(EHCodeFn, {}, "sehcode");
@@ -2042,9 +2045,9 @@ WinEHFrameVariableMaterializer::WinEHFrameVariableMaterializer(
 
   // New allocas should be inserted in the entry block, but after the parent FP
   // is established if it is an instruction.
-  Instruction *InsertPoint = EntryBB->getFirstInsertionPt();
+  BasicBlock::iterator InsertPoint = EntryBB->getFirstInsertionPt();
   if (auto *FPInst = dyn_cast<Instruction>(ParentFP))
-    InsertPoint = FPInst->getNextNode();
+    InsertPoint = std::next(FPInst->getIterator());
   Builder.SetInsertPoint(EntryBB, InsertPoint);
 }
 
@@ -2441,9 +2444,10 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
         if (!Insert1)
           return createCleanupHandler(Actions, CleanupHandlerMap, BB);
       }
-      for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(), IE = BB->end();
+      for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg()->getIterator(),
+                                IE = BB->end();
            II != IE; ++II) {
-        Instruction *Inst = II;
+        Instruction *Inst = &*II;
         if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
           continue;
         if (Inst == Insert1 || Inst == Insert2 || Inst == Resume)
@@ -2465,9 +2469,10 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
       CmpInst *Compare = dyn_cast<CmpInst>(Branch->getCondition());
       if (!Compare || !Compare->isEquality())
         return createCleanupHandler(Actions, CleanupHandlerMap, BB);
-      for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(), IE = BB->end();
+      for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg()->getIterator(),
+                                IE = BB->end();
            II != IE; ++II) {
-        Instruction *Inst = II;
+        Instruction *Inst = &*II;
         if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
           continue;
         if (Inst == Compare || Inst == Branch)
@@ -2532,9 +2537,10 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
     }
 
     // Anything else is either a catch block or interesting cleanup code.
-    for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(), IE = BB->end();
+    for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg()->getIterator(),
+                              IE = BB->end();
          II != IE; ++II) {
-      Instruction *Inst = II;
+      Instruction *Inst = &*II;
       if (LPadMap && LPadMap->isLandingPadSpecificInst(Inst))
         continue;
       // Unconditional branches fall through to this loop.
@@ -3163,11 +3169,11 @@ void WinEHPrepare::demotePHIsOnFunclets(Function &F) {
   // Strip PHI nodes off of EH pads.
   SmallVector<PHINode *, 16> PHINodes;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
-    BasicBlock *BB = FI++;
+    BasicBlock *BB = &*FI++;
     if (!BB->isEHPad())
       continue;
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-      Instruction *I = BI++;
+      Instruction *I = &*BI++;
       auto *PN = dyn_cast<PHINode>(I);
       // Stop at the first non-PHI.
       if (!PN)
@@ -3191,10 +3197,10 @@ void WinEHPrepare::demotePHIsOnFunclets(Function &F) {
 void WinEHPrepare::demoteUsesBetweenFunclets(Function &F) {
   // Turn all inter-funclet uses of a Value into loads and stores.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
-    BasicBlock *BB = FI++;
+    BasicBlock *BB = &*FI++;
     std::set<BasicBlock *> &ColorsForBB = BlockColors[BB];
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-      Instruction *I = BI++;
+      Instruction *I = &*BI++;
       // Funclets are permitted to use static allocas.
       if (auto *AI = dyn_cast<AllocaInst>(I))
         if (AI->isStaticAlloca())
@@ -3398,7 +3404,7 @@ void WinEHPrepare::cleanupPreparedFunclets(Function &F) {
   // Clean-up some of the mess we made by removing useles PHI nodes, trivial
   // branches, etc.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
-    BasicBlock *BB = FI++;
+    BasicBlock *BB = &*FI++;
     SimplifyInstructionsInBlock(BB);
     ConstantFoldTerminator(BB, /*DeleteDeadConditions=*/true);
     MergeBlockIntoPredecessor(BB);
@@ -3469,9 +3475,9 @@ AllocaInst *WinEHPrepare::insertPHILoads(PHINode *PN, Function &F) {
     // Insert a load in place of the PHI and replace all uses.
     SpillSlot = new AllocaInst(PN->getType(), nullptr,
                                Twine(PN->getName(), ".wineh.spillslot"),
-                               F.getEntryBlock().begin());
+                               &F.getEntryBlock().front());
     Value *V = new LoadInst(SpillSlot, Twine(PN->getName(), ".wineh.reload"),
-                            PHIBlock->getFirstInsertionPt());
+                            &*PHIBlock->getFirstInsertionPt());
     PN->replaceAllUsesWith(V);
     return SpillSlot;
   }
@@ -3582,7 +3588,7 @@ void WinEHPrepare::demoteNonlocalUses(Value *V,
     // because we can't insert the store AFTER the terminator instruction.
     BasicBlock::iterator InsertPt;
     if (isa<Argument>(V)) {
-      InsertPt = F.getEntryBlock().getTerminator();
+      InsertPt = F.getEntryBlock().getTerminator()->getIterator();
     } else if (isa<TerminatorInst>(V)) {
       auto *II = cast<InvokeInst>(V);
       // We cannot demote invoke instructions to the stack if their normal
@@ -3602,13 +3608,13 @@ void WinEHPrepare::demoteNonlocalUses(Value *V,
       }
       InsertPt = II->getNormalDest()->getFirstInsertionPt();
     } else {
-      InsertPt = cast<Instruction>(V);
+      InsertPt = cast<Instruction>(V)->getIterator();
       ++InsertPt;
       // Don't insert before PHI nodes or EH pad instrs.
       for (; isa<PHINode>(InsertPt) || InsertPt->isEHPad(); ++InsertPt)
         ;
     }
-    new StoreInst(V, SpillSlot, InsertPt);
+    new StoreInst(V, SpillSlot, &*InsertPt);
   }
 }
 
@@ -3619,7 +3625,7 @@ void WinEHPrepare::replaceUseWithLoad(Value *V, Use &U, AllocaInst *&SpillSlot,
   if (!SpillSlot)
     SpillSlot = new AllocaInst(V->getType(), nullptr,
                                Twine(V->getName(), ".wineh.spillslot"),
-                               F.getEntryBlock().begin());
+                               &F.getEntryBlock().front());
 
   auto *UsingInst = cast<Instruction>(U.getUser());
   if (auto *UsingPHI = dyn_cast<PHINode>(UsingInst)) {

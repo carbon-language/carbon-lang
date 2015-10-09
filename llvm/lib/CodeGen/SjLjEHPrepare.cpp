@@ -179,8 +179,8 @@ void SjLjEHPrepare::substituteLPadValues(LandingPadInst *LPI, Value *ExnVal,
   // values and replace the LPI with that aggregate.
   Type *LPadType = LPI->getType();
   Value *LPadVal = UndefValue::get(LPadType);
-  IRBuilder<> Builder(
-      std::next(BasicBlock::iterator(cast<Instruction>(SelVal))));
+  auto *SelI = cast<Instruction>(SelVal);
+  IRBuilder<> Builder(SelI->getParent(), std::next(SelI->getIterator()));
   LPadVal = Builder.CreateInsertValue(LPadVal, ExnVal, 0, "lpad.val");
   LPadVal = Builder.CreateInsertValue(LPadVal, SelVal, 1, "lpad.val");
 
@@ -191,7 +191,7 @@ void SjLjEHPrepare::substituteLPadValues(LandingPadInst *LPI, Value *ExnVal,
 /// it with all of the data that we know at this point.
 Value *SjLjEHPrepare::setupFunctionContext(Function &F,
                                            ArrayRef<LandingPadInst *> LPads) {
-  BasicBlock *EntryBB = F.begin();
+  BasicBlock *EntryBB = &F.front();
 
   // Create an alloca for the incoming jump buffer ptr and the new jump buffer
   // that needs to be restored on all exits from the function. This is an alloca
@@ -199,12 +199,13 @@ Value *SjLjEHPrepare::setupFunctionContext(Function &F,
   auto &DL = F.getParent()->getDataLayout();
   unsigned Align = DL.getPrefTypeAlignment(FunctionContextTy);
   FuncCtx = new AllocaInst(FunctionContextTy, nullptr, Align, "fn_context",
-                           EntryBB->begin());
+                           &EntryBB->front());
 
   // Fill in the function context structure.
   for (unsigned I = 0, E = LPads.size(); I != E; ++I) {
     LandingPadInst *LPI = LPads[I];
-    IRBuilder<> Builder(LPI->getParent()->getFirstInsertionPt());
+    IRBuilder<> Builder(LPI->getParent(),
+                        LPI->getParent()->getFirstInsertionPt());
 
     // Reference the __data field.
     Value *FCData =
@@ -251,21 +252,20 @@ void SjLjEHPrepare::lowerIncomingArguments(Function &F) {
   while (isa<AllocaInst>(AfterAllocaInsPt) &&
          isa<ConstantInt>(cast<AllocaInst>(AfterAllocaInsPt)->getArraySize()))
     ++AfterAllocaInsPt;
+  assert(AfterAllocaInsPt != F.front().end());
 
-  for (Function::arg_iterator AI = F.arg_begin(), AE = F.arg_end(); AI != AE;
-       ++AI) {
-    Type *Ty = AI->getType();
+  for (auto &AI : F.args()) {
+    Type *Ty = AI.getType();
 
     // Use 'select i8 true, %arg, undef' to simulate a 'no-op' instruction.
     Value *TrueValue = ConstantInt::getTrue(F.getContext());
     Value *UndefValue = UndefValue::get(Ty);
-    Instruction *SI = SelectInst::Create(TrueValue, AI, UndefValue,
-                                         AI->getName() + ".tmp",
-                                         AfterAllocaInsPt);
-    AI->replaceAllUsesWith(SI);
+    Instruction *SI = SelectInst::Create(
+        TrueValue, &AI, UndefValue, AI.getName() + ".tmp", &*AfterAllocaInsPt);
+    AI.replaceAllUsesWith(SI);
 
     // Reset the operand, because it  was clobbered by the RAUW above.
-    SI->setOperand(1, AI);
+    SI->setOperand(1, &AI);
   }
 }
 
@@ -280,7 +280,7 @@ void SjLjEHPrepare::lowerAcrossUnwindEdges(Function &F,
       // Ignore obvious cases we don't have to handle. In particular, most
       // instructions either have no uses or only have a single use inside the
       // current block. Ignore them quickly.
-      Instruction *Inst = II;
+      Instruction *Inst = &*II;
       if (Inst->use_empty())
         continue;
       if (Inst->hasOneUse() &&
@@ -361,7 +361,7 @@ void SjLjEHPrepare::lowerAcrossUnwindEdges(Function &F,
       DemotePHIToStack(PN);
 
     // Move the landingpad instruction back to the top of the landing pad block.
-    LPI->moveBefore(UnwindBlock->begin());
+    LPI->moveBefore(&UnwindBlock->front());
   }
 }
 
@@ -401,7 +401,7 @@ bool SjLjEHPrepare::setupEntryBlockAndCallSites(Function &F) {
 
   Value *FuncCtx =
       setupFunctionContext(F, makeArrayRef(LPads.begin(), LPads.end()));
-  BasicBlock *EntryBB = F.begin();
+  BasicBlock *EntryBB = &F.front();
   IRBuilder<> Builder(EntryBB->getTerminator());
 
   // Get a reference to the jump buffer.
@@ -475,7 +475,7 @@ bool SjLjEHPrepare::setupEntryBlockAndCallSites(Function &F) {
         continue;
       }
       Instruction *StackAddr = CallInst::Create(StackAddrFn, "sp");
-      StackAddr->insertAfter(I);
+      StackAddr->insertAfter(&*I);
       Instruction *StoreStackAddr = new StoreInst(StackAddr, StackPtr, true);
       StoreStackAddr->insertAfter(StackAddr);
     }

@@ -373,7 +373,7 @@ bool StackProtector::InsertStackProtectors() {
   Value *StackGuardVar = nullptr; // The stack guard variable.
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E;) {
-    BasicBlock *BB = I++;
+    BasicBlock *BB = &*I++;
     ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
     if (!RI)
       continue;
@@ -433,7 +433,7 @@ bool StackProtector::InsertStackProtectors() {
       BasicBlock *FailBB = CreateFailBB();
 
       // Split the basic block before the return instruction.
-      BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
+      BasicBlock *NewBB = BB->splitBasicBlock(RI->getIterator(), "SP_return");
 
       // Update the dominator tree if we need to.
       if (DT && DT->isReachableFromEntry(BB)) {

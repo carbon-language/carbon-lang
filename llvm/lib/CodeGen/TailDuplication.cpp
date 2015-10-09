@@ -161,7 +161,7 @@ void TailDuplicatePass::getAnalysisUsage(AnalysisUsage &AU) const {
 
 static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
   for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ++I) {
-    MachineBasicBlock *MBB = I;
+    MachineBasicBlock *MBB = &*I;
     SmallSetVector<MachineBasicBlock*, 8> Preds(MBB->pred_begin(),
                                                 MBB->pred_end());
     MachineBasicBlock::iterator MI = MBB->begin();
@@ -322,7 +322,7 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
   }
 
   for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
-    MachineBasicBlock *MBB = I++;
+    MachineBasicBlock *MBB = &*I++;
 
     if (NumTails == TailDupLimit)
       break;
@@ -689,7 +689,7 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
                  << "From simple Succ: " << *TailBB);
 
     MachineBasicBlock *NewTarget = *TailBB->succ_begin();
-    MachineBasicBlock *NextBB = std::next(MachineFunction::iterator(PredBB));
+    MachineBasicBlock *NextBB = &*std::next(PredBB->getIterator());
 
     // Make PredFBB explicit.
     if (PredCond.empty())
@@ -846,7 +846,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
   // If TailBB was duplicated into all its predecessors except for the prior
   // block, which falls through unconditionally, move the contents of this
   // block into the prior block.
-  MachineBasicBlock *PrevBB = std::prev(MachineFunction::iterator(TailBB));
+  MachineBasicBlock *PrevBB = &*std::prev(TailBB->getIterator());
   MachineBasicBlock *PriorTBB = nullptr, *PriorFBB = nullptr;
   SmallVector<MachineOperand, 4> PriorCond;
   // This has to check PrevBB->succ_size() because EH edges are ignored by

@@ -177,10 +177,11 @@ bool SplitAnalysis::calcLiveBlockInfo() {
   UseE = UseSlots.end();
 
   // Loop over basic blocks where CurLI is live.
-  MachineFunction::iterator MFI = LIS.getMBBFromIndex(LVI->start);
+  MachineFunction::iterator MFI =
+      LIS.getMBBFromIndex(LVI->start)->getIterator();
   for (;;) {
     BlockInfo BI;
-    BI.MBB = MFI;
+    BI.MBB = &*MFI;
     SlotIndex Start, Stop;
     std::tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
@@ -260,7 +261,7 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     if (LVI->start < Stop)
       ++MFI;
     else
-      MFI = LIS.getMBBFromIndex(LVI->start);
+      MFI = LIS.getMBBFromIndex(LVI->start)->getIterator();
   }
 
   assert(getNumLiveBlocks() == countLiveBlocks(CurLI) && "Bad block count");
@@ -276,8 +277,9 @@ unsigned SplitAnalysis::countLiveBlocks(const LiveInterval *cli) const {
   unsigned Count = 0;
 
   // Loop over basic blocks where li is live.
-  MachineFunction::const_iterator MFI = LIS.getMBBFromIndex(LVI->start);
-  SlotIndex Stop = LIS.getMBBEndIdx(MFI);
+  MachineFunction::const_iterator MFI =
+      LIS.getMBBFromIndex(LVI->start)->getIterator();
+  SlotIndex Stop = LIS.getMBBEndIdx(&*MFI);
   for (;;) {
     ++Count;
     LVI = li->advanceTo(LVI, Stop);
@@ -285,7 +287,7 @@ unsigned SplitAnalysis::countLiveBlocks(const LiveInterval *cli) const {
       return Count;
     do {
       ++MFI;
-      Stop = LIS.getMBBEndIdx(MFI);
+      Stop = LIS.getMBBEndIdx(&*MFI);
     } while (Stop <= LVI->start);
   }
 }
@@ -865,9 +867,9 @@ bool SplitEditor::transferValues() {
       // This value has multiple defs in RegIdx, but it wasn't rematerialized,
       // so the live range is accurate. Add live-in blocks in [Start;End) to the
       // LiveInBlocks.
-      MachineFunction::iterator MBB = LIS.getMBBFromIndex(Start);
+      MachineFunction::iterator MBB = LIS.getMBBFromIndex(Start)->getIterator();
       SlotIndex BlockStart, BlockEnd;
-      std::tie(BlockStart, BlockEnd) = LIS.getSlotIndexes()->getMBBRange(MBB);
+      std::tie(BlockStart, BlockEnd) = LIS.getSlotIndexes()->getMBBRange(&*MBB);
 
       // The first block may be live-in, or it may have its own def.
       if (Start != BlockStart) {
@@ -876,7 +878,7 @@ bool SplitEditor::transferValues() {
         DEBUG(dbgs() << ':' << VNI->id << "*BB#" << MBB->getNumber());
         // MBB has its own def. Is it also live-out?
         if (BlockEnd <= End)
-          LRC.setLiveOutValue(MBB, VNI);
+          LRC.setLiveOutValue(&*MBB, VNI);
 
         // Skip to the next block for live-in.
         ++MBB;
@@ -887,23 +889,23 @@ bool SplitEditor::transferValues() {
       assert(Start <= BlockStart && "Expected live-in block");
       while (BlockStart < End) {
         DEBUG(dbgs() << ">BB#" << MBB->getNumber());
-        BlockEnd = LIS.getMBBEndIdx(MBB);
+        BlockEnd = LIS.getMBBEndIdx(&*MBB);
         if (BlockStart == ParentVNI->def) {
           // This block has the def of a parent PHI, so it isn't live-in.
           assert(ParentVNI->isPHIDef() && "Non-phi defined at block start?");
           VNInfo *VNI = LR.extendInBlock(BlockStart, std::min(BlockEnd, End));
           assert(VNI && "Missing def for complex mapped parent PHI");
           if (End >= BlockEnd)
-            LRC.setLiveOutValue(MBB, VNI); // Live-out as well.
+            LRC.setLiveOutValue(&*MBB, VNI); // Live-out as well.
         } else {
           // This block needs a live-in value.  The last block covered may not
           // be live-out.
           if (End < BlockEnd)
-            LRC.addLiveInBlock(LR, MDT[MBB], End);
+            LRC.addLiveInBlock(LR, MDT[&*MBB], End);
           else {
             // Live-through, and we don't know the value.
-            LRC.addLiveInBlock(LR, MDT[MBB]);
-            LRC.setLiveOutValue(MBB, nullptr);
+            LRC.addLiveInBlock(LR, MDT[&*MBB]);
+            LRC.setLiveOutValue(&*MBB, nullptr);
           }
         }
         BlockStart = BlockEnd;

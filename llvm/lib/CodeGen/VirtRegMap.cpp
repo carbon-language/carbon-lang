@@ -355,7 +355,7 @@ void VirtRegRewriter::rewrite() {
     DEBUG(MBBI->print(dbgs(), Indexes));
     for (MachineBasicBlock::instr_iterator
            MII = MBBI->instr_begin(), MIE = MBBI->instr_end(); MII != MIE;) {
-      MachineInstr *MI = MII;
+      MachineInstr *MI = &*MII;
       ++MII;
 
       for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
