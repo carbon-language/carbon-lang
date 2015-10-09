@@ -13,6 +13,26 @@
 #include <type_traits>
 #include "test_macros.h"
 
+#ifdef getc
+#error getc is defined
+#endif
+
+#ifdef putc
+#error putc is defined
+#endif
+
+#ifdef clearerr
+#error clearerr is defined
+#endif
+
+#ifdef feof
+#error feof is defined
+#endif
+
+#ifdef ferror
+#error ferror is defined
+#endif
+
 #ifndef BUFSIZ
 #error BUFSIZ not defined
 #endif

@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===---------------------------- cstdio ----------------------------------===//
+//===---------------------------- stdio.h ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CSTDIO
-#define _LIBCPP_CSTDIO
+#if defined(__need_FILE) || defined(__need___FILE)
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#pragma GCC system_header
+#endif
+
+#include_next <stdio.h>
+
+#elif !defined(_LIBCPP_STDIO_H)
+#define _LIBCPP_STDIO_H
 
 /*
-    cstdio synopsis
+    stdio.h synopsis
 
 Macros:
 
@@ -32,9 +40,6 @@ Macros:
     stderr
     stdin
     stdout
-
-namespace std
-{
 
 Types:
 
@@ -92,83 +97,31 @@ void clearerr(FILE* stream);
 int feof(FILE* stream);
 int ferror(FILE* stream);
 void perror(const char* s);
-
-}  // std
 */
 
 #include <__config>
-#include <stdio.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+#include_next <stdio.h>
 
-using ::FILE;
-using ::fpos_t;
-using ::size_t;
+#ifdef __cplusplus
 
-using ::fclose;
-using ::fflush;
-using ::setbuf;
-using ::setvbuf;
-using ::fprintf;
-using ::fscanf;
-using ::snprintf;
-using ::sprintf;
-using ::sscanf;
-#ifndef _LIBCPP_MSVCRT
-using ::vfprintf;
-using ::vfscanf;
-using ::vsscanf;
-#endif // _LIBCPP_MSVCRT
-using ::vsnprintf;
-using ::vsprintf;
-using ::fgetc;
-using ::fgets;
-using ::fputc;
-using ::fputs;
-using ::getc;
-using ::putc;
-using ::ungetc;
-using ::fread;
-using ::fwrite;
-using ::fgetpos;
-using ::fseek;
-using ::fsetpos;
-using ::ftell;
-using ::rewind;
-using ::clearerr;
-using ::feof;
-using ::ferror;
-using ::perror;
-
-#ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
-using ::fopen;
-using ::freopen;
-using ::remove;
-using ::rename;
-using ::tmpfile;
-using ::tmpnam;
+// snprintf
+#if defined(_LIBCPP_MSVCRT)
+extern "C++" {
+#include "support/win32/support.h"
+}
 #endif
 
-#ifndef _LIBCPP_HAS_NO_STDIN
-using ::getchar;
-#if _LIBCPP_STD_VER <= 11
-using ::gets;
-#endif
-using ::scanf;
-using ::vscanf;
-#endif
+#undef getc
+#undef putc
+#undef clearerr
+#undef feof
+#undef ferror
 
-#ifndef _LIBCPP_HAS_NO_STDOUT
-using ::printf;
-using ::putchar;
-using ::puts;
-using ::vprintf;
 #endif
 
-_LIBCPP_END_NAMESPACE_STD
-
-#endif  // _LIBCPP_CSTDIO
+#endif  // _LIBCPP_STDIO_H
