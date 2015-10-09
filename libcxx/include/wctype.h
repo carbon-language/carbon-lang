@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- cwctype ----------------------------------===//
+//===--------------------------- wctype.h ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,18 +8,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CWCTYPE
-#define _LIBCPP_CWCTYPE
+#ifndef _LIBCPP_WCTYPE_H
+#define _LIBCPP_WCTYPE_H
 
 /*
-    cwctype synopsis
+    wctype.h synopsis
 
 Macros:
 
     WEOF
-
-namespace std
-{
 
 Types:
 
@@ -46,42 +43,37 @@ wint_t towupper(wint_t wc);
 wint_t towctrans(wint_t wc, wctrans_t desc);
 wctrans_t wctrans(const char* property);
 
-}  // std
-
 */
 
 #include <__config>
-#include <cctype>
-#include <wctype.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+#include_next <wctype.h>
 
-using ::wint_t;
-using ::wctrans_t;
-using ::wctype_t;
-using ::iswalnum;
-using ::iswalpha;
-using ::iswblank;
-using ::iswcntrl;
-using ::iswdigit;
-using ::iswgraph;
-using ::iswlower;
-using ::iswprint;
-using ::iswpunct;
-using ::iswspace;
-using ::iswupper;
-using ::iswxdigit;
-using ::iswctype;
-using ::wctype;
-using ::towlower;
-using ::towupper;
-using ::towctrans;
-using ::wctrans;
+#ifdef __cplusplus
 
-_LIBCPP_END_NAMESPACE_STD
+#undef iswalnum
+#undef iswalpha
+#undef iswblank
+#undef iswcntrl
+#undef iswdigit
+#undef iswgraph
+#undef iswlower
+#undef iswprint
+#undef iswpunct
+#undef iswspace
+#undef iswupper
+#undef iswxdigit
+#undef iswctype
+#undef wctype
+#undef towlower
+#undef towupper
+#undef towctrans
+#undef wctrans
 
-#endif  // _LIBCPP_CWCTYPE
+#endif  // __cplusplus
+
+#endif  // _LIBCPP_WCTYPE_H
