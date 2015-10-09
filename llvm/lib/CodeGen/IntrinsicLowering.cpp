@@ -35,24 +35,24 @@ static void EnsureFunctionExists(Module &M, const char *Name,
   M.getOrInsertFunction(Name, FunctionType::get(RetTy, ParamTys, false));
 }
 
-static void EnsureFPIntrinsicsExist(Module &M, Function *Fn,
+static void EnsureFPIntrinsicsExist(Module &M, Function &Fn,
                                     const char *FName,
                                     const char *DName, const char *LDName) {
   // Insert definitions for all the floating point types.
-  switch((int)Fn->arg_begin()->getType()->getTypeID()) {
+  switch((int)Fn.arg_begin()->getType()->getTypeID()) {
   case Type::FloatTyID:
-    EnsureFunctionExists(M, FName, Fn->arg_begin(), Fn->arg_end(),
+    EnsureFunctionExists(M, FName, Fn.arg_begin(), Fn.arg_end(),
                          Type::getFloatTy(M.getContext()));
     break;
   case Type::DoubleTyID:
-    EnsureFunctionExists(M, DName, Fn->arg_begin(), Fn->arg_end(),
+    EnsureFunctionExists(M, DName, Fn.arg_begin(), Fn.arg_end(),
                          Type::getDoubleTy(M.getContext()));
     break;
   case Type::X86_FP80TyID:
   case Type::FP128TyID:
   case Type::PPC_FP128TyID:
-    EnsureFunctionExists(M, LDName, Fn->arg_begin(), Fn->arg_end(),
-                         Fn->arg_begin()->getType());
+    EnsureFunctionExists(M, LDName, Fn.arg_begin(), Fn.arg_end(),
+                         Fn.arg_begin()->getType());
     break;
   }
 }
@@ -94,20 +94,20 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
 
 void IntrinsicLowering::AddPrototypes(Module &M) {
   LLVMContext &Context = M.getContext();
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->isDeclaration() && !I->use_empty())
-      switch (I->getIntrinsicID()) {
+  for (auto &F : M)
+    if (F.isDeclaration() && !F.use_empty())
+      switch (F.getIntrinsicID()) {
       default: break;
       case Intrinsic::setjmp:
-        EnsureFunctionExists(M, "setjmp", I->arg_begin(), I->arg_end(),
+        EnsureFunctionExists(M, "setjmp", F.arg_begin(), F.arg_end(),
                              Type::getInt32Ty(M.getContext()));
         break;
       case Intrinsic::longjmp:
-        EnsureFunctionExists(M, "longjmp", I->arg_begin(), I->arg_end(),
+        EnsureFunctionExists(M, "longjmp", F.arg_begin(), F.arg_end(),
                              Type::getVoidTy(M.getContext()));
         break;
       case Intrinsic::siglongjmp:
-        EnsureFunctionExists(M, "abort", I->arg_end(), I->arg_end(),
+        EnsureFunctionExists(M, "abort", F.arg_end(), F.arg_end(),
                              Type::getVoidTy(M.getContext()));
         break;
       case Intrinsic::memcpy:
@@ -132,31 +132,31 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
                               DL.getIntPtrType(Context), nullptr);
         break;
       case Intrinsic::sqrt:
-        EnsureFPIntrinsicsExist(M, I, "sqrtf", "sqrt", "sqrtl");
+        EnsureFPIntrinsicsExist(M, F, "sqrtf", "sqrt", "sqrtl");
         break;
       case Intrinsic::sin:
-        EnsureFPIntrinsicsExist(M, I, "sinf", "sin", "sinl");
+        EnsureFPIntrinsicsExist(M, F, "sinf", "sin", "sinl");
         break;
       case Intrinsic::cos:
-        EnsureFPIntrinsicsExist(M, I, "cosf", "cos", "cosl");
+        EnsureFPIntrinsicsExist(M, F, "cosf", "cos", "cosl");
         break;
       case Intrinsic::pow:
-        EnsureFPIntrinsicsExist(M, I, "powf", "pow", "powl");
+        EnsureFPIntrinsicsExist(M, F, "powf", "pow", "powl");
         break;
       case Intrinsic::log:
-        EnsureFPIntrinsicsExist(M, I, "logf", "log", "logl");
+        EnsureFPIntrinsicsExist(M, F, "logf", "log", "logl");
         break;
       case Intrinsic::log2:
-        EnsureFPIntrinsicsExist(M, I, "log2f", "log2", "log2l");
+        EnsureFPIntrinsicsExist(M, F, "log2f", "log2", "log2l");
         break;
       case Intrinsic::log10:
-        EnsureFPIntrinsicsExist(M, I, "log10f", "log10", "log10l");
+        EnsureFPIntrinsicsExist(M, F, "log10f", "log10", "log10l");
         break;
       case Intrinsic::exp:
-        EnsureFPIntrinsicsExist(M, I, "expf", "exp", "expl");
+        EnsureFPIntrinsicsExist(M, F, "expf", "exp", "expl");
         break;
       case Intrinsic::exp2:
-        EnsureFPIntrinsicsExist(M, I, "exp2f", "exp2", "exp2l");
+        EnsureFPIntrinsicsExist(M, F, "exp2f", "exp2", "exp2l");
         break;
       }
 }
