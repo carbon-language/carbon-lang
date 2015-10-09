@@ -44,10 +44,10 @@ struct Configuration {
   bool ExportDynamic;
   bool NoInhibitExec;
   bool NoUndefined;
-  bool ZNow = false;
   bool Shared;
   bool Static = false;
   bool WholeArchive = false;
+  bool ZNow = false;
   ELFKind ElfKind = ELFNoneKind;
   uint16_t EMachine = llvm::ELF::EM_NONE;
 };
