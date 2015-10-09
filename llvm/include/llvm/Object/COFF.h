@@ -773,7 +773,7 @@ public:
   std::error_code getSectionContents(const coff_section *Sec,
                                      ArrayRef<uint8_t> &Res) const;
 
-  ErrorOr<uint64_t> getImageBase() const;
+  uint64_t getImageBase() const;
   std::error_code getVaPtr(uint64_t VA, uintptr_t &Res) const;
   std::error_code getRvaPtr(uint32_t Rva, uintptr_t &Res) const;
   std::error_code getHintName(uint32_t Rva, uint16_t &Hint,

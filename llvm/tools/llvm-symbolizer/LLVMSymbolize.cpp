@@ -128,8 +128,7 @@ bool ModuleInfo::isWin32Module() const {
 
 uint64_t ModuleInfo::getModulePreferredBase() const {
   if (auto *CoffObject = dyn_cast<COFFObjectFile>(Module))
-    if (auto Base = CoffObject->getImageBase())
-      return Base.get();
+    return CoffObject->getImageBase();
   return 0;
 }
 

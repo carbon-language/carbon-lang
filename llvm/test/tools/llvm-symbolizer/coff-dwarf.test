@@ -1,5 +1,9 @@
-RUN: llvm-symbolizer --inlining --relative-address -obj="%p/Inputs/coff-dwarf.exe" \
-RUN:	    < %p/Inputs/coff-dwarf.input | FileCheck %s
+RUN: grep '^ADDR:' %s | sed -s 's/ADDR: //' \
+RUN:     | llvm-symbolizer --inlining --relative-address -obj="%p/Inputs/coff-dwarf.exe" \
+RUN:     | FileCheck %s
+
+ADDR: 0x5009
+ADDR: 0x5038
 
 CHECK: foo(void)
 CHECK: coff-dwarf.cpp:7
