@@ -113,12 +113,11 @@ PltSection<ELFT>::PltSection()
 }
 
 template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
-  uintptr_t Start = reinterpret_cast<uintptr_t>(Buf);
+  uint8_t *Start = Buf;
   for (const SymbolBody *E : Entries) {
-    uint64_t GotEntryAddr = Out<ELFT>::Got->getEntryAddr(*E);
-    uintptr_t InstPos = reinterpret_cast<uintptr_t>(Buf);
-    uint64_t PltEntryAddr = (InstPos - Start) + this->getVA();
-    Target->writePltEntry(Buf, GotEntryAddr, PltEntryAddr);
+    uint64_t Got = Out<ELFT>::Got->getEntryAddr(*E);
+    uint64_t Plt = Buf - Start + this->getVA();
+    Target->writePltEntry(Buf, Got, Plt);
     Buf += Target->getPltEntrySize();
   }
 }
