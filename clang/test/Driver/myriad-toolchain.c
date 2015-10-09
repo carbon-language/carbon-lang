@@ -54,8 +54,10 @@
 // RUN:   | FileCheck %s -check-prefix=MDMF
 // MDMF: "-S" "-MD" "-MF" "dep.d" "-MT" "foo.o"
 
+// RUN: %clang -target sparc-myriad -### --driver-mode=g++ %s 2>&1 | FileCheck %s --check-prefix=STDLIBCXX
+// STDLIBCXX: "-lstdc++" "-lc" "-lgcc"
+
 // RUN: %clang -target sparc-myriad -### -nostdlib %s 2>&1 | FileCheck %s --check-prefix=NOSTDLIB
-//
 // NOSTDLIB-NOT: "-lc"
 
 // RUN: %clang -### -c -g %s -target sparc-myriad 2>&1 | FileCheck -check-prefix=G_SPARC %s
