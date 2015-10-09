@@ -293,7 +293,11 @@ macro(darwin_add_builtin_libraries)
                                 DEFS KERNEL_USE
                                 PARENT_TARGET builtins)
       endforeach()
-      darwin_lipo_libs(clang_rt.cc_kext_${os}
+      set(archive_name clang_rt.cc_kext_${os})
+      if(${os} STREQUAL "osx")
+        set(archive_name clang_rt.cc_kext)
+      endif()
+      darwin_lipo_libs(${archive_name}
                       PARENT_TARGET builtins
                       LIPO_FLAGS ${${os}_cc_kext_lipo_flags}
                       DEPENDS ${${os}_cc_kext_libs}
