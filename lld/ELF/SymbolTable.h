@@ -27,7 +27,7 @@ struct Symbol;
 // an undefined symbol. Or, if there's a conflict between a lazy and a
 // undefined, it'll read an archive member to read a real definition
 // to replace the lazy symbol. The logic is implemented in resolve().
-class SymbolTable {
+template <class ELFT> class SymbolTable {
 public:
   SymbolTable();
 
@@ -47,11 +47,11 @@ public:
     return Symtab;
   }
 
-  const std::vector<std::unique_ptr<ObjectFileBase>> &getObjectFiles() const {
+  const std::vector<std::unique_ptr<ObjectFile<ELFT>>> &getObjectFiles() const {
     return ObjectFiles;
   }
 
-  const std::vector<std::unique_ptr<SharedFileBase>> &getSharedFiles() const {
+  const std::vector<std::unique_ptr<SharedFile<ELFT>>> &getSharedFiles() const {
     return SharedFiles;
   }
 
@@ -63,27 +63,22 @@ public:
 
   void addUndefinedSym(StringRef Name);
 
-  template <class ELFT>
   void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
 
-  template <class ELFT> void addIgnoredSym(StringRef Name);
+  void addIgnoredSym(StringRef Name);
 
 private:
   Symbol *insert(SymbolBody *New);
-  template <class ELFT> void addELFFile(ELFFileBase *File);
   void addELFFile(ELFFileBase *File);
   void addLazy(Lazy *New);
   void addMemberFile(Lazy *Body);
-  template <class ELFT> void addUndefinedSym(StringRef Name);
-
-  template <class ELFT> void init(uint16_t EMachine);
-  template <class ELFT> void resolve(SymbolBody *Body);
-  template <class ELFT>
+  void init(uint16_t EMachine);
+  void resolve(SymbolBody *Body);
   void reportConflict(const Twine &Message, const SymbolBody &Old,
                       const SymbolBody &New, bool Warning);
 
-  std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
+  std::vector<std::unique_ptr<InputFile>> ArchiveFiles;
 
   // The order the global symbols are in is not defined. We can use an arbitrary
   // order, but it has to be reproducible. That is true even when cross linking.
@@ -98,9 +93,9 @@ private:
   llvm::DenseSet<StringRef> Comdats;
 
   // The writer needs to infer the machine type from the object files.
-  std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
+  std::vector<std::unique_ptr<ObjectFile<ELFT>>> ObjectFiles;
 
-  std::vector<std::unique_ptr<SharedFileBase>> SharedFiles;
+  std::vector<std::unique_ptr<SharedFile<ELFT>>> SharedFiles;
   llvm::DenseSet<StringRef> IncludedSoNames;
 
   SymbolBody *EntrySym = nullptr;

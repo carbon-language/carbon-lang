@@ -71,7 +71,7 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
-  Writer(SymbolTable &S) : Symtab(S) {}
+  Writer(SymbolTable<ELFT> &S) : Symtab(S) {}
   void run();
 
 private:
@@ -101,7 +101,7 @@ private:
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
   llvm::BumpPtrAllocator PAlloc;
-  SymbolTable &Symtab;
+  SymbolTable<ELFT> &Symtab;
   std::vector<ProgramHeader<ELFT> *> PHDRs;
   ProgramHeader<ELFT> PhdrPHDR{PT_PHDR, PF_R, 0, 0};
   ProgramHeader<ELFT> FileHeaderPHDR{PT_LOAD, PF_R, 0, 0};
@@ -114,7 +114,7 @@ private:
 };
 } // anonymous namespace
 
-template <class ELFT> static void doWriteResult(SymbolTable *Symtab) {
+template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   // Initialize output sections that are handled by Writer specially.
   // Don't reorder because the order of initialization matters.
   InterpSection<ELFT::Is64Bits> Interp;
@@ -141,25 +141,6 @@ template <class ELFT> static void doWriteResult(SymbolTable *Symtab) {
   Out<ELFT>::Dynamic = &Dynamic;
 
   Writer<ELFT>(*Symtab).run();
-}
-
-void lld::elf2::writeResult(SymbolTable *Symtab) {
-  switch (Symtab->getFirstELF()->getELFKind()) {
-  case ELF32LEKind:
-    doWriteResult<object::ELF32LE>(Symtab);
-    return;
-  case ELF32BEKind:
-    doWriteResult<object::ELF32BE>(Symtab);
-    return;
-  case ELF64LEKind:
-    doWriteResult<object::ELF64LE>(Symtab);
-    return;
-  case ELF64BEKind:
-    doWriteResult<object::ELF64BE>(Symtab);
-    return;
-  default:
-    llvm_unreachable("Invalid kind");
-  }
 }
 
 // The main function of the writer.
@@ -260,7 +241,7 @@ void Writer<ELFT>::scanRelocs(const InputSection<ELFT> &C) {
 }
 
 template <class ELFT>
-static void reportUndefined(const SymbolTable &S, const SymbolBody &Sym) {
+static void reportUndefined(const SymbolTable<ELFT> &S, const SymbolBody &Sym) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
@@ -270,11 +251,10 @@ static void reportUndefined(const SymbolTable &S, const SymbolBody &Sym) {
   const Elf_Sym &SymE = cast<ELFSymbolBody<ELFT>>(Sym).Sym;
   ELFFileBase *SymFile = nullptr;
 
-  for (const std::unique_ptr<ObjectFileBase> &F : S.getObjectFiles()) {
-    const auto &File = cast<ObjectFile<ELFT>>(*F);
-    Elf_Sym_Range Syms = File.getObj().symbols(File.getSymbolTable());
+  for (const std::unique_ptr<ObjectFile<ELFT>> &File : S.getObjectFiles()) {
+    Elf_Sym_Range Syms = File->getObj().symbols(File->getSymbolTable());
     if (&SymE > Syms.begin() && &SymE < Syms.end())
-      SymFile = F.get();
+      SymFile = File.get();
   }
 
   std::string Message = "undefined symbol: " + Sym.getName().str();
@@ -289,13 +269,12 @@ static void reportUndefined(const SymbolTable &S, const SymbolBody &Sym) {
 // Local symbols are not in the linker's symbol table. This function scans
 // each object file's symbol table to copy local symbols to the output.
 template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
-  for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
-    auto &File = cast<ObjectFile<ELFT>>(*FileB);
-    for (const Elf_Sym &Sym : File.getLocalSymbols()) {
-      ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
+  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
+    for (const Elf_Sym &Sym : F->getLocalSymbols()) {
+      ErrorOr<StringRef> SymNameOrErr = Sym.getName(F->getStringTable());
       error(SymNameOrErr);
       StringRef SymName = *SymNameOrErr;
-      if (!shouldKeepInSymtab<ELFT>(File, SymName, Sym))
+      if (!shouldKeepInSymtab<ELFT>(*F, SymName, Sym))
         continue;
       Out<ELFT>::SymTab->addSymbol(SymName, true);
     }
@@ -387,18 +366,17 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (StringRef Name :
        {"__preinit_array_start", "__preinit_array_end", "__init_array_start",
         "__init_array_end", "__fini_array_start", "__fini_array_end"})
-    Symtab.addIgnoredSym<ELFT>(Name);
+    Symtab.addIgnoredSym(Name);
 
   // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
   // static linking the linker is required to optimize away any references to
   // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
   // to avoid the undefined symbol error.
   if (!isOutputDynamic())
-    Symtab.addIgnoredSym<ELFT>("__tls_get_addr");
+    Symtab.addIgnoredSym("__tls_get_addr");
 
-  for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
-    auto &File = cast<ObjectFile<ELFT>>(*FileB);
-    for (InputSection<ELFT> *C : File.getSections()) {
+  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
+    for (InputSection<ELFT> *C : F->getSections()) {
       if (!C || C == &InputSection<ELFT>::Discarded)
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
@@ -425,8 +403,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   auto AddStartEnd = [&](StringRef Start, StringRef End,
                          OutputSection<ELFT> *OS) {
     if (OS) {
-      Symtab.addSyntheticSym<ELFT>(Start, *OS, 0);
-      Symtab.addSyntheticSym<ELFT>(End, *OS, OS->getSize());
+      Symtab.addSyntheticSym(Start, *OS, 0);
+      Symtab.addSyntheticSym(End, *OS, OS->getSize());
     }
   };
 
@@ -651,3 +629,8 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
     Sec->writeTo(Buf + Sec->getFileOff());
 }
+
+template void lld::elf2::writeResult<ELF32LE>(SymbolTable<ELF32LE> *Symtab);
+template void lld::elf2::writeResult<ELF32BE>(SymbolTable<ELF32BE> *Symtab);
+template void lld::elf2::writeResult<ELF64LE>(SymbolTable<ELF64LE> *Symtab);
+template void lld::elf2::writeResult<ELF64BE>(SymbolTable<ELF64BE> *Symtab);

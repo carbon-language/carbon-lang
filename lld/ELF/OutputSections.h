@@ -23,7 +23,7 @@ namespace lld {
 namespace elf2 {
 
 class SymbolBody;
-class SymbolTable;
+template <class ELFT> class SymbolTable;
 template <class ELFT> class SymbolTableSection;
 template <bool Is64Bits> class StringTableSection;
 template <class ELFT> class InputSection;
@@ -146,7 +146,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
-  SymbolTableSection(SymbolTable &Table,
+  SymbolTableSection(SymbolTable<ELFT> &Table,
                      StringTableSection<ELFT::Is64Bits> &StrTabSec);
 
   void finalize() override;
@@ -159,7 +159,7 @@ private:
   void writeLocalSymbols(uint8_t *&Buf);
   void writeGlobalSymbols(uint8_t *&Buf);
 
-  SymbolTable &Table;
+  SymbolTable<ELFT> &Table;
   StringTableSection<ELFT::Is64Bits> &StrTabSec;
   unsigned NumVisible = 0;
   unsigned NumLocals = 0;
@@ -265,7 +265,7 @@ class DynamicSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
 
 public:
-  DynamicSection(SymbolTable &SymTab);
+  DynamicSection(SymbolTable<ELFT> &SymTab);
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
 
@@ -274,7 +274,7 @@ public:
   OutputSection<ELFT> *FiniArraySec = nullptr;
 
 private:
-  SymbolTable &SymTab;
+  SymbolTable<ELFT> &SymTab;
   const ELFSymbolBody<ELFT> *InitSym = nullptr;
   const ELFSymbolBody<ELFT> *FiniSym = nullptr;
 };

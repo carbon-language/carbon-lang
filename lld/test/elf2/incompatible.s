@@ -25,22 +25,22 @@
 
 // RUN: not ld.lld2 -m elf64ppc %ta.o -o %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=A-ONLY %s
-// A-ONLY: a.o is incompatible with target architecture
+// A-ONLY: a.o is incompatible with elf64ppc
 
 // RUN: not ld.lld2 -m elf64ppc %tb.o -o %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=B-ONLY %s
-// B-ONLY: b.o is incompatible with target architecture
+// B-ONLY: b.o is incompatible with elf64ppc
 
 // RUN: not ld.lld2 -m elf64ppc %tc.o -o %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=C-ONLY %s
-// C-ONLY: c.o is incompatible with target architecture
+// C-ONLY: c.o is incompatible with elf64ppc
 
 // RUN: not ld.lld2 -m elf_i386 %tc.o %ti686.so -o %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=C-AND-SO-I386 %s
-// C-AND-SO-I386: c.o is incompatible with target architecture
+// C-AND-SO-I386: c.o is incompatible with elf_i386
 
 // RUN: not ld.lld2 -m elf_i386 %ti686.so %tc.o -o %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=SO-AND-C-I386 %s
-// SO-AND-C-I386: c.o is incompatible with {{.*}}i686.so
+// SO-AND-C-I386: c.o is incompatible with elf_i386
 
 // REQUIRES: x86,arm

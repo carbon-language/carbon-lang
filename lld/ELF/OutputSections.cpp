@@ -232,7 +232,7 @@ template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-DynamicSection<ELFT>::DynamicSection(SymbolTable &SymTab)
+DynamicSection<ELFT>::DynamicSection(SymbolTable<ELFT> &SymTab)
     : OutputSectionBase<ELFT::Is64Bits>(".dynamic", llvm::ELF::SHT_DYNAMIC,
                                         llvm::ELF::SHF_ALLOC |
                                             llvm::ELF::SHF_WRITE),
@@ -278,7 +278,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   if (FiniArraySec)
     NumEntries += 2;
 
-  for (const std::unique_ptr<SharedFileBase> &F : SymTab.getSharedFiles()) {
+  for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles()) {
     Out<ELFT>::DynStrTab->add(F->getSoName());
     ++NumEntries;
   }
@@ -355,7 +355,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   WriteArray(DT_INIT_ARRAY, DT_INIT_ARRAYSZ, InitArraySec);
   WriteArray(DT_FINI_ARRAY, DT_FINI_ARRAYSZ, FiniArraySec);
 
-  for (const std::unique_ptr<SharedFileBase> &F : SymTab.getSharedFiles())
+  for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles())
     WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getFileOff(F->getSoName()));
 
   if (InitSym)
@@ -521,7 +521,7 @@ bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
 
 template <class ELFT>
 SymbolTableSection<ELFT>::SymbolTableSection(
-    SymbolTable &Table, StringTableSection<ELFT::Is64Bits> &StrTabSec)
+    SymbolTable<ELFT> &Table, StringTableSection<ELFT::Is64Bits> &StrTabSec)
     : OutputSectionBase<ELFT::Is64Bits>(
           StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
           StrTabSec.isDynamic() ? llvm::ELF::SHT_DYNSYM : llvm::ELF::SHT_SYMTAB,
@@ -563,14 +563,13 @@ template <class ELFT>
 void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
   // Iterate over all input object files to copy their local symbols
   // to the output symbol table pointed by Buf.
-  for (const std::unique_ptr<ObjectFileBase> &FileB : Table.getObjectFiles()) {
-    auto &File = cast<ObjectFile<ELFT>>(*FileB);
-    Elf_Sym_Range Syms = File.getLocalSymbols();
+  for (const std::unique_ptr<ObjectFile<ELFT>> &File : Table.getObjectFiles()) {
+    Elf_Sym_Range Syms = File->getLocalSymbols();
     for (const Elf_Sym &Sym : Syms) {
-      ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
+      ErrorOr<StringRef> SymNameOrErr = Sym.getName(File->getStringTable());
       error(SymNameOrErr);
       StringRef SymName = *SymNameOrErr;
-      if (!shouldKeepInSymtab<ELFT>(File, SymName, Sym))
+      if (!shouldKeepInSymtab<ELFT>(*File, SymName, Sym))
         continue;
 
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
@@ -584,9 +583,9 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         ESym->st_shndx = SHN_ABS;
       } else {
         if (SecIndex == SHN_XINDEX)
-          SecIndex = File.getObj().getExtendedSymbolTableIndex(
-              &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-        ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
+          SecIndex = File->getObj().getExtendedSymbolTableIndex(
+              &Sym, File->getSymbolTable(), File->getSymbolTableShndx());
+        ArrayRef<InputSection<ELFT> *> Sections = File->getSections();
         const InputSection<ELFT> *Section = Sections[SecIndex];
         const OutputSection<ELFT> *OutSec = Section->getOutputSection();
         ESym->st_shndx = OutSec->getSectionIndex();

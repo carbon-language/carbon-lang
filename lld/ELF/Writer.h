@@ -13,10 +13,9 @@
 namespace lld {
 namespace elf2 {
 
-class SymbolTable;
+template <class ELFT> class SymbolTable;
 
-void writeResult(SymbolTable *Symtab);
-
+template <class ELFT> void writeResult(SymbolTable<ELFT> *Symtab);
 }
 }
 

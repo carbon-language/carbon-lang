@@ -20,6 +20,7 @@
 
 using namespace llvm;
 using namespace llvm::ELF;
+using namespace llvm::object;
 
 using namespace lld;
 using namespace lld::elf2;
@@ -32,7 +33,7 @@ void lld::elf2::link(ArrayRef<const char *> Args) {
   LinkerDriver D;
   Config = &C;
   Driver = &D;
-  Driver->link(Args.slice(1));
+  Driver->main(Args.slice(1));
 }
 
 static void setELFType(StringRef Emul) {
@@ -102,28 +103,6 @@ static std::string searchLibrary(StringRef Path) {
   error(Twine("Unable to find library -l") + Path);
 }
 
-template <template <class> class T>
-std::unique_ptr<ELFFileBase>
-LinkerDriver::createELFInputFile(MemoryBufferRef MB) {
-  std::unique_ptr<ELFFileBase> File = createELFFile<T>(MB);
-  const ELFKind ElfKind = File->getELFKind();
-  const uint16_t EMachine = File->getEMachine();
-
-  // Grab target from the first input file if wasn't set by -m option.
-  if (Config->ElfKind == ELFNoneKind) {
-    Config->ElfKind = ElfKind;
-    Config->EMachine = EMachine;
-    return File;
-  }
-  if (ElfKind == Config->ElfKind && EMachine == Config->EMachine)
-    return File;
-
-  if (const ELFFileBase *First = Symtab.getFirstELF())
-    error(MB.getBufferIdentifier() + " is incompatible with " +
-          First->getName());
-  error(MB.getBufferIdentifier() + " is incompatible with target architecture");
-}
-
 // Opens and parses a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
 void LinkerDriver::addFile(StringRef Path) {
@@ -139,13 +118,20 @@ void LinkerDriver::addFile(StringRef Path) {
     readLinkerScript(MBRef);
     return;
   case file_magic::archive:
-    Symtab.addFile(make_unique<ArchiveFile>(MBRef));
+    if (WholeArchive) {
+      auto File = make_unique<ArchiveFile>(MBRef);
+      for (MemoryBufferRef &MB : File->getMembers())
+        Files.push_back(createELFFile<ObjectFile>(MB));
+      OwningArchives.emplace_back(std::move(File));
+      return;
+    }
+    Files.push_back(make_unique<ArchiveFile>(MBRef));
     return;
   case file_magic::elf_shared_object:
-    Symtab.addFile(createELFInputFile<SharedFile>(MBRef));
+    Files.push_back(createELFFile<SharedFile>(MBRef));
     return;
   default:
-    Symtab.addFile(createELFInputFile<ObjectFile>(MBRef));
+    Files.push_back(createELFFile<ObjectFile>(MBRef));
   }
 }
 
@@ -156,12 +142,31 @@ getString(opt::InputArgList &Args, unsigned Key, StringRef Default = "") {
   return Default;
 }
 
-void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
+void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   initSymbols();
 
-  // Parse command line options.
   opt::InputArgList Args = Parser.parse(ArgsArr);
+  createFiles(Args);
 
+  switch (Config->ElfKind) {
+  case ELF32LEKind:
+    link<ELF32LE>(Args);
+    return;
+  case ELF32BEKind:
+    link<ELF32BE>(Args);
+    return;
+  case ELF64LEKind:
+    link<ELF64LE>(Args);
+    return;
+  case ELF64BEKind:
+    link<ELF64BE>(Args);
+    return;
+  default:
+    error("-m or at least a .o file required");
+  }
+}
+
+void LinkerDriver::createFiles(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_L))
     Config->InputSearchPaths.push_back(Arg->getValue());
 
@@ -211,16 +216,50 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
       Config->Static = false;
       break;
     case OPT_whole_archive:
-      Config->WholeArchive = true;
+      WholeArchive = true;
       break;
     case OPT_no_whole_archive:
-      Config->WholeArchive = false;
+      WholeArchive = false;
       break;
     }
   }
 
-  if (Symtab.getObjectFiles().empty())
+  if (Files.empty())
     error("no input files.");
+
+  // Set machine type if -m is not given.
+  if (Config->ElfKind == ELFNoneKind) {
+    for (std::unique_ptr<InputFile> &File : Files) {
+      auto *F = dyn_cast<ELFFileBase>(File.get());
+      if (!F)
+        continue;
+      Config->ElfKind = F->getELFKind();
+      Config->EMachine = F->getEMachine();
+      break;
+    }
+  }
+
+  // Check if all files are for the same machine type.
+  for (std::unique_ptr<InputFile> &File : Files) {
+    auto *F = dyn_cast<ELFFileBase>(File.get());
+    if (!F)
+      continue;
+    if (F->getELFKind() == Config->ElfKind &&
+        F->getEMachine() == Config->EMachine)
+      continue;
+    StringRef A = F->getName();
+    StringRef B = Files[0]->getName();
+    if (auto *Arg = Args.getLastArg(OPT_m))
+      B = Arg->getValue();
+    error(A + " is incompatible with " + B);
+  }
+}
+
+template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
+  SymbolTable<ELFT> Symtab;
+
+  for (std::unique_ptr<InputFile> &F : Files)
+    Symtab.addFile(std::move(F));
 
   for (auto *Arg : Args.filtered(OPT_undefined))
     Symtab.addUndefinedSym(Arg->getValue());
@@ -229,5 +268,5 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     Config->OutputFile = "a.out";
 
   // Write the result to the file.
-  writeResult(&Symtab);
+  writeResult<ELFT>(&Symtab);
 }
