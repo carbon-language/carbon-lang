@@ -218,14 +218,31 @@ Watchpoint::DumpSnapshots(Stream *s, const char *prefix) const
         s->Printf("\nWatchpoint %u hit:", GetID());
         prefix = "";
     }
-    
+
     if (m_old_value_sp)
     {
-        s->Printf("\n%sold value: %s", prefix, m_old_value_sp->GetValueAsCString());
+        const char *old_value_cstr =  m_old_value_sp->GetValueAsCString();
+        if (old_value_cstr && old_value_cstr[0])
+            s->Printf("\n%sold value: %s", prefix, old_value_cstr);
+        else
+        {
+            const char *old_summary_cstr =  m_old_value_sp-> GetSummaryAsCString();
+            if (old_summary_cstr && old_summary_cstr[0])
+                s->Printf("\n%sold value: %s", prefix, old_summary_cstr);
+        }
     }
+
     if (m_new_value_sp)
     {
-        s->Printf("\n%snew value: %s", prefix, m_new_value_sp->GetValueAsCString());
+        const char *new_value_cstr =  m_new_value_sp->GetValueAsCString();
+        if (new_value_cstr && new_value_cstr[0])
+            s->Printf("\n%snew value: %s", prefix, new_value_cstr);
+        else
+        {
+            const char *new_summary_cstr =  m_new_value_sp-> GetSummaryAsCString();
+            if (new_summary_cstr && new_summary_cstr[0])
+                s->Printf("\n%snew value: %s", prefix, new_summary_cstr);
+        }
     }
 }
 
