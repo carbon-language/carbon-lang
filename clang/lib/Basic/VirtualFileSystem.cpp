@@ -667,13 +667,14 @@ public:
   EntryKind getKind() const { return Kind; }
 };
 
-class DirectoryEntry : public Entry {
+class RedirectingDirectoryEntry : public Entry {
   std::vector<std::unique_ptr<Entry>> Contents;
   Status S;
 
 public:
-  DirectoryEntry(StringRef Name, std::vector<std::unique_ptr<Entry>> Contents,
-                 Status S)
+  RedirectingDirectoryEntry(StringRef Name,
+                            std::vector<std::unique_ptr<Entry>> Contents,
+                            Status S)
       : Entry(EK_Directory, Name), Contents(std::move(Contents)),
         S(std::move(S)) {}
   Status getStatus() { return S; }
@@ -683,7 +684,7 @@ public:
   static bool classof(const Entry *E) { return E->getKind() == EK_Directory; }
 };
 
-class FileEntry : public Entry {
+class RedirectingFileEntry : public Entry {
 public:
   enum NameKind {
     NK_NotSet,
@@ -694,7 +695,8 @@ private:
   std::string ExternalContentsPath;
   NameKind UseName;
 public:
-  FileEntry(StringRef Name, StringRef ExternalContentsPath, NameKind UseName)
+  RedirectingFileEntry(StringRef Name, StringRef ExternalContentsPath,
+                       NameKind UseName)
       : Entry(EK_File, Name), ExternalContentsPath(ExternalContentsPath),
         UseName(UseName) {}
   StringRef getExternalContentsPath() const { return ExternalContentsPath; }
@@ -711,11 +713,13 @@ class RedirectingFileSystem;
 class VFSFromYamlDirIterImpl : public clang::vfs::detail::DirIterImpl {
   std::string Dir;
   RedirectingFileSystem &FS;
-  DirectoryEntry::iterator Current, End;
+  RedirectingDirectoryEntry::iterator Current, End;
+
 public:
   VFSFromYamlDirIterImpl(const Twine &Path, RedirectingFileSystem &FS,
-                         DirectoryEntry::iterator Begin,
-                         DirectoryEntry::iterator End, std::error_code &EC);
+                         RedirectingDirectoryEntry::iterator Begin,
+                         RedirectingDirectoryEntry::iterator End,
+                         std::error_code &EC);
   std::error_code increment() override;
 };
 
@@ -843,7 +847,7 @@ public:
       return directory_iterator();
     }
 
-    DirectoryEntry *D = cast<DirectoryEntry>(*E);
+    auto *D = cast<RedirectingDirectoryEntry>(*E);
     return directory_iterator(std::make_shared<VFSFromYamlDirIterImpl>(Dir,
         *this, D->contents_begin(), D->contents_end(), EC));
   }
@@ -948,7 +952,7 @@ class RedirectingFileSystemParser {
     std::vector<std::unique_ptr<Entry>> EntryArrayContents;
     std::string ExternalContentsPath;
     std::string Name;
-    FileEntry::NameKind UseExternalName = FileEntry::NK_NotSet;
+    auto UseExternalName = RedirectingFileEntry::NK_NotSet;
     EntryKind Kind;
 
     for (yaml::MappingNode::iterator I = M->begin(), E = M->end(); I != E;
@@ -1016,7 +1020,8 @@ class RedirectingFileSystemParser {
         bool Val;
         if (!parseScalarBool(I->getValue(), Val))
           return nullptr;
-        UseExternalName = Val ? FileEntry::NK_External : FileEntry::NK_Virtual;
+        UseExternalName = Val ? RedirectingFileEntry::NK_External
+                              : RedirectingFileEntry::NK_Virtual;
       } else {
         llvm_unreachable("key missing from Keys");
       }
@@ -1034,7 +1039,8 @@ class RedirectingFileSystemParser {
       return nullptr;
 
     // check invalid configuration
-    if (Kind == EK_Directory && UseExternalName != FileEntry::NK_NotSet) {
+    if (Kind == EK_Directory &&
+        UseExternalName != RedirectingFileEntry::NK_NotSet) {
       error(N, "'use-external-name' is not supported for directories");
       return nullptr;
     }
@@ -1051,11 +1057,11 @@ class RedirectingFileSystemParser {
     std::unique_ptr<Entry> Result;
     switch (Kind) {
     case EK_File:
-      Result = llvm::make_unique<FileEntry>(
+      Result = llvm::make_unique<RedirectingFileEntry>(
           LastComponent, std::move(ExternalContentsPath), UseExternalName);
       break;
     case EK_Directory:
-      Result = llvm::make_unique<DirectoryEntry>(
+      Result = llvm::make_unique<RedirectingDirectoryEntry>(
           LastComponent, std::move(EntryArrayContents),
           Status("", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0, 0,
                  file_type::directory_file, sys::fs::all_all));
@@ -1072,7 +1078,7 @@ class RedirectingFileSystemParser {
          I != E; ++I) {
       std::vector<std::unique_ptr<Entry>> Entries;
       Entries.push_back(std::move(Result));
-      Result = llvm::make_unique<DirectoryEntry>(
+      Result = llvm::make_unique<RedirectingDirectoryEntry>(
           *I, std::move(Entries),
           Status("", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0, 0,
                  file_type::directory_file, sys::fs::all_all));
@@ -1232,7 +1238,7 @@ RedirectingFileSystem::lookupPath(sys::path::const_iterator Start,
     return From;
   }
 
-  DirectoryEntry *DE = dyn_cast<DirectoryEntry>(From);
+  auto *DE = dyn_cast<RedirectingDirectoryEntry>(From);
   if (!DE)
     return make_error_code(llvm::errc::not_a_directory);
 
@@ -1248,7 +1254,7 @@ RedirectingFileSystem::lookupPath(sys::path::const_iterator Start,
 ErrorOr<Status> RedirectingFileSystem::status(const Twine &Path, Entry *E) {
   assert(E != nullptr);
   std::string PathStr(Path.str());
-  if (FileEntry *F = dyn_cast<FileEntry>(E)) {
+  if (auto *F = dyn_cast<RedirectingFileEntry>(E)) {
     ErrorOr<Status> S = ExternalFS->status(F->getExternalContentsPath());
     assert(!S || S->getName() == F->getExternalContentsPath());
     if (S && !F->useExternalName(UseExternalNames))
@@ -1257,7 +1263,7 @@ ErrorOr<Status> RedirectingFileSystem::status(const Twine &Path, Entry *E) {
       S->IsVFSMapped = true;
     return S;
   } else { // directory
-    DirectoryEntry *DE = cast<DirectoryEntry>(E);
+    auto *DE = cast<RedirectingDirectoryEntry>(E);
     return Status::copyWithNewName(DE->getStatus(), PathStr);
   }
 }
@@ -1301,7 +1307,7 @@ RedirectingFileSystem::openFileForRead(const Twine &Path) {
   if (!E)
     return E.getError();
 
-  FileEntry *F = dyn_cast<FileEntry>(*E);
+  auto *F = dyn_cast<RedirectingFileEntry>(*E);
   if (!F) // FIXME: errc::not_a_file?
     return make_error_code(llvm::errc::invalid_argument);
 
@@ -1466,11 +1472,10 @@ void YAMLVFSWriter::write(llvm::raw_ostream &OS) {
   JSONWriter(OS).write(Mappings, IsCaseSensitive);
 }
 
-VFSFromYamlDirIterImpl::VFSFromYamlDirIterImpl(const Twine &_Path,
-                                               RedirectingFileSystem &FS,
-                                               DirectoryEntry::iterator Begin,
-                                               DirectoryEntry::iterator End,
-                                               std::error_code &EC)
+VFSFromYamlDirIterImpl::VFSFromYamlDirIterImpl(
+    const Twine &_Path, RedirectingFileSystem &FS,
+    RedirectingDirectoryEntry::iterator Begin,
+    RedirectingDirectoryEntry::iterator End, std::error_code &EC)
     : Dir(_Path.str()), FS(FS), Current(Begin), End(End) {
   if (Current != End) {
     SmallString<128> PathStr(Dir);
