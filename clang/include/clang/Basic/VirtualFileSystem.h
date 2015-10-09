@@ -283,7 +283,7 @@ public:
   /// Add a buffer to the VFS with a path. The VFS does not own the buffer.
   void addFileNoOwn(const Twine &Path, time_t ModificationTime,
                     llvm::MemoryBuffer *Buffer);
-  StringRef toString() const;
+  std::string toString() const;
 
   llvm::ErrorOr<Status> status(const Twine &Path) override;
   llvm::ErrorOr<std::unique_ptr<File>>

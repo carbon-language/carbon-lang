@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/VirtualFileSystem.h"
+#include "clang/Basic/FileManager.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -482,7 +483,7 @@ InMemoryFileSystem::InMemoryFileSystem()
 
 InMemoryFileSystem::~InMemoryFileSystem() {}
 
-StringRef InMemoryFileSystem::toString() const {
+std::string InMemoryFileSystem::toString() const {
   return Root->toString(/*Indent=*/0);
 }
 
@@ -496,17 +497,14 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
   assert(!EC);
   (void)EC;
 
+  FileManager::removeDotPaths(Path, /*RemoveDotDot=*/true);
+  if (Path.empty())
+    return;
+
   detail::InMemoryDirectory *Dir = Root.get();
   auto I = llvm::sys::path::begin(Path), E = llvm::sys::path::end(Path);
   while (true) {
     StringRef Name = *I;
-    // Skip over ".".
-    // FIXME: Also handle "..".
-    if (Name == ".") {
-      ++I;
-      continue;
-    }
-
     detail::InMemoryNode *Node = Dir->getChild(Name);
     ++I;
     if (!Node) {
@@ -558,17 +556,12 @@ lookupInMemoryNode(const InMemoryFileSystem &FS, detail::InMemoryDirectory *Dir,
   assert(!EC);
   (void)EC;
 
+  FileManager::removeDotPaths(Path, /*RemoveDotDot=*/true);
+  if (Path.empty())
+    return Dir;
+
   auto I = llvm::sys::path::begin(Path), E = llvm::sys::path::end(Path);
   while (true) {
-    // Skip over ".".
-    // FIXME: Also handle "..".
-    if (*I == ".") {
-      ++I;
-      if (I == E)
-        return Dir;
-      continue;
-    }
-
     detail::InMemoryNode *Node = Dir->getChild(*I);
     ++I;
     if (!Node)
