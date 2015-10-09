@@ -246,10 +246,10 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
       Changed |= shortenOn01(MI, SystemZ::SQDBR);
       break;
 
-    case SystemZ::WFSDB: {
+    case SystemZ::WFSDB:
       Changed |= shortenOn001AddCC(MI, SystemZ::SDBR, CCLive);
       break;
-    }
+
     case SystemZ::WFCDB:
       Changed |= shortenOn01(MI, SystemZ::CDBR);
       break;
