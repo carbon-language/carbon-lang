@@ -157,7 +157,7 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
   if (MBB == nullptr)
     MBBI = begin();
   else
-    MBBI = MBB;
+    MBBI = MBB->getIterator();
 
   // Figure out the block number this should have.
   unsigned BlockNo = 0;
@@ -177,7 +177,7 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
       if (MBBNumbering[BlockNo])
         MBBNumbering[BlockNo]->setNumber(-1);
 
-      MBBNumbering[BlockNo] = MBBI;
+      MBBNumbering[BlockNo] = &*MBBI;
       MBBI->setNumber(BlockNo);
     }
   }

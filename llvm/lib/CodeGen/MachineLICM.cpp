@@ -794,8 +794,8 @@ void MachineLICM::SinkIntoLoop() {
        I != Preheader->instr_end(); ++I) {
     // We need to ensure that we can safely move this instruction into the loop.
     // As such, it must not have side-effects, e.g. such as a call has.  
-    if (IsLoopInvariantInst(*I) && !HasLoopPHIUse(I))
-      Candidates.push_back(I);
+    if (IsLoopInvariantInst(*I) && !HasLoopPHIUse(&*I))
+      Candidates.push_back(&*I);
   }
 
   for (MachineInstr *I : Candidates) {
