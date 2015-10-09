@@ -66,9 +66,13 @@ TEST(ToolChainTest, VFSGCCInstallation) {
     llvm::raw_string_ostream OS(S);
     C->getDefaultToolChain().printVerboseInfo(OS);
   }
-  EXPECT_EQ("Found candidate GCC installation: "
-            "/usr/lib/gcc/arm-linux-gnueabihf/4.6.3\n",
-            S);
+  EXPECT_EQ(
+      "Found candidate GCC installation: "
+      "/usr/lib/gcc/arm-linux-gnueabihf/4.6.3\n"
+      "Selected GCC installation: /usr/lib/gcc/arm-linux-gnueabihf/4.6.3\n"
+      "Candidate multilib: .;@m32\n"
+      "Selected multilib: .;@m32\n",
+      S);
 }
 
 } // end anonymous namespace

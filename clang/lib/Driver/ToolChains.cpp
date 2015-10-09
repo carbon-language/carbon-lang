@@ -1522,11 +1522,13 @@ namespace {
 // Filter to remove Multilibs that don't exist as a suffix to Path
 class FilterNonExistent {
   StringRef Base;
+  vfs::FileSystem &VFS;
 
 public:
-  FilterNonExistent(StringRef Base) : Base(Base) {}
+  FilterNonExistent(StringRef Base, vfs::FileSystem &VFS)
+      : Base(Base), VFS(VFS) {}
   bool operator()(const Multilib &M) {
-    return !llvm::sys::fs::exists(Base + M.gccSuffix() + "/crtbegin.o");
+    return !VFS.exists(Base + M.gccSuffix() + "/crtbegin.o");
   }
 };
 } // end anonymous namespace
@@ -1582,8 +1584,9 @@ static Multilib makeMultilib(StringRef commonSuffix) {
   return Multilib(commonSuffix, commonSuffix, commonSuffix);
 }
 
-static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
-                              const ArgList &Args, DetectedMultilibs &Result) {
+static bool findMIPSMultilibs(const Driver &D, const llvm::Triple &TargetTriple,
+                              StringRef Path, const ArgList &Args,
+                              DetectedMultilibs &Result) {
   // Some MIPS toolchains put libraries and object files compiled
   // using different options in to the sub-directoris which names
   // reflects the flags used for compilation. For example sysroot
@@ -1609,7 +1612,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   //     /usr
   //       /lib  <= crt*.o files compiled with '-mips32'
 
-  FilterNonExistent NonExistent(Path);
+  FilterNonExistent NonExistent(Path, D.getVFS());
 
   // Check for FSF toolchain multilibs
   MultilibSet FSFMipsMultilibs;
@@ -1874,11 +1877,11 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   return false;
 }
 
-static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
+static bool findBiarchMultilibs(const Driver &D,
+                                const llvm::Triple &TargetTriple,
                                 StringRef Path, const ArgList &Args,
                                 bool NeedsBiarchSuffix,
                                 DetectedMultilibs &Result) {
-
   // Some versions of SUSE and Fedora on ppc64 put 32-bit libs
   // in what would normally be GCCInstallPath and put the 64-bit
   // libs in a subdirectory named 64. The simple logic we follow is that
@@ -1906,7 +1909,7 @@ static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
                         .flag("-m64")
                         .flag("+mx32");
 
-  FilterNonExistent NonExistent(Path);
+  FilterNonExistent NonExistent(Path, D.getVFS());
 
   // Determine default multilib from: 32, 64, x32
   // Also handle cases such as 64 on 32, 32 on 64, etc.
@@ -2068,9 +2071,9 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // Debian mips multilibs behave more like the rest of the biarch ones,
       // so handle them there
       if (isMipsArch(TargetArch)) {
-        if (!findMIPSMultilibs(TargetTriple, LI->getName(), Args, Detected))
+        if (!findMIPSMultilibs(D, TargetTriple, LI->getName(), Args, Detected))
           continue;
-      } else if (!findBiarchMultilibs(TargetTriple, LI->getName(), Args,
+      } else if (!findBiarchMultilibs(D, TargetTriple, LI->getName(), Args,
                                       NeedsBiarchSuffix, Detected)) {
         continue;
       }
