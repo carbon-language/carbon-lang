@@ -274,7 +274,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    const MCInstrDesc &MCID,
                                    unsigned DestReg) {
   if (I->isInsideBundle()) {
-    MachineBasicBlock::instr_iterator MII = I;
+    MachineBasicBlock::instr_iterator MII(I);
     return BuildMI(BB, MII, DL, MCID, DestReg);
   }
 
@@ -310,7 +310,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
   if (I->isInsideBundle()) {
-    MachineBasicBlock::instr_iterator MII = I;
+    MachineBasicBlock::instr_iterator MII(I);
     return BuildMI(BB, MII, DL, MCID);
   }
 
@@ -462,7 +462,7 @@ public:
     if (I == Begin) {
       if (!empty())
         MI->bundleWithSucc();
-      Begin = MI;
+      Begin = MI->getIterator();
       return *this;
     }
     if (I == End) {

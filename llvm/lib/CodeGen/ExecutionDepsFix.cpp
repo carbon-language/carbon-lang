@@ -751,7 +751,7 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
         AliasMap[*AI].push_back(i);
   }
 
-  MachineBasicBlock *Entry = MF->begin();
+  MachineBasicBlock *Entry = &*MF->begin();
   ReversePostOrderTraversal<MachineBasicBlock*> RPOT(Entry);
   SmallVector<MachineBasicBlock*, 16> Loops;
   for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator

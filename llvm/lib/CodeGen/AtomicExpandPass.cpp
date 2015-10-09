@@ -317,7 +317,7 @@ bool AtomicExpand::expandAtomicRMWToLLSC(AtomicRMWInst *AI) {
   // atomicrmw.end:
   //     fence?
   //     [...]
-  BasicBlock *ExitBB = BB->splitBasicBlock(AI, "atomicrmw.end");
+  BasicBlock *ExitBB = BB->splitBasicBlock(AI->getIterator(), "atomicrmw.end");
   BasicBlock *LoopBB =  BasicBlock::Create(Ctx, "atomicrmw.start", F, ExitBB);
 
   // This grabs the DebugLoc from AI.
@@ -393,7 +393,7 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   //     %restmp = insertvalue { iN, i1 } undef, iN %loaded, 0
   //     %res = insertvalue { iN, i1 } %restmp, i1 %success, 1
   //     [...]
-  BasicBlock *ExitBB = BB->splitBasicBlock(CI, "cmpxchg.end");
+  BasicBlock *ExitBB = BB->splitBasicBlock(CI->getIterator(), "cmpxchg.end");
   auto FailureBB = BasicBlock::Create(Ctx, "cmpxchg.failure", F, ExitBB);
   auto NoStoreBB = BasicBlock::Create(Ctx, "cmpxchg.nostore", F, FailureBB);
   auto SuccessBB = BasicBlock::Create(Ctx, "cmpxchg.success", F, NoStoreBB);
@@ -549,7 +549,7 @@ bool llvm::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI,
   //     br i1 %success, label %atomicrmw.end, label %loop
   // atomicrmw.end:
   //     [...]
-  BasicBlock *ExitBB = BB->splitBasicBlock(AI, "atomicrmw.end");
+  BasicBlock *ExitBB = BB->splitBasicBlock(AI->getIterator(), "atomicrmw.end");
   BasicBlock *LoopBB = BasicBlock::Create(Ctx, "atomicrmw.start", F, ExitBB);
 
   // This grabs the DebugLoc from AI.
