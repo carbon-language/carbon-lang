@@ -854,11 +854,10 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
         // Move from the float value from float registers into the
         // integer registers.
 
-        // TODO: this conversion is done in two steps, because
-        // f64->i64 conversion is done efficiently, and i64->v2i32 is
-        // basically a no-op. But f64->v2i32 is NOT done efficiently
-        // for some reason.
-        Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i64, Arg);
+        // TODO: The f64 -> v2i32 conversion is super-inefficient for
+        // constants: it sticks them in the constant pool, then loads
+        // to a fp register, then stores to temp memory, then loads to
+        // integer registers.
         Arg = DAG.getNode(ISD::BITCAST, dl, MVT::v2i32, Arg);
       }
 
