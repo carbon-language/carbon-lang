@@ -188,7 +188,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->Entry = getString(Args, OPT_entry);
   Config->Fini = getString(Args, OPT_fini, "_fini");
   Config->Init = getString(Args, OPT_init, "_init");
-  Config->OutputFile = getString(Args, OPT_output);
+  Config->OutputFile = getString(Args, OPT_o);
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 

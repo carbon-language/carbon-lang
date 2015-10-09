@@ -61,7 +61,7 @@ def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
 def no_undefined : Flag<["--"], "no-undefined">,
   HelpText<"Report unresolved symbols even if the linker is creating a shared library">;
 
-def output : Separate<["-"], "o">, MetaVarName<"<path>">,
+def o : Separate<["-"], "o">, MetaVarName<"<path>">,
   HelpText<"Path to file to write output">;
 
 def rpath : Separate<["-"], "rpath">,
@@ -98,6 +98,7 @@ def alias_entry_e : Separate<["-"], "e">, Alias<entry>;
 def alias_fini_fini : Joined<["-"], "fini=">, Alias<fini>;
 def alias_init_init : Joined<["-"], "init=">, Alias<init>;
 def alias_l__library : Joined<["--"], "library=">, Alias<l>;
+def alias_o_output : Joined<["--"], "output=">, Alias<o>;
 def alias_rpath_rpath : Joined<["-"], "rpath=">, Alias<rpath>;
 def alias_soname_h : Separate<["-"], "h">, Alias<soname>;
 def alias_soname_soname : Separate<["-"], "soname">, Alias<soname>;
