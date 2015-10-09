@@ -114,23 +114,6 @@ ProcessFreeBSD::GetPluginVersion()
 }
 
 void
-ProcessFreeBSD::GetPluginCommandHelp(const char *command, Stream *strm)
-{
-}
-
-Error
-ProcessFreeBSD::ExecutePluginCommand(Args &command, Stream *strm)
-{
-    return Error(1, eErrorTypeGeneric);
-}
-
-Log *
-ProcessFreeBSD::EnablePluginLogging(Stream *strm, Args &command)
-{
-    return NULL;
-}
-
-void
 ProcessFreeBSD::Terminate()
 {
 }

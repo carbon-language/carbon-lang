@@ -104,11 +104,6 @@ DynamicLoaderHexagonDYLD::GetPluginDescriptionStatic()
            "loads/unloads in Hexagon processes.";
 }
 
-void
-DynamicLoaderHexagonDYLD::GetPluginCommandHelp(const char *command, Stream *strm)
-{
-}
-
 uint32_t
 DynamicLoaderHexagonDYLD::GetPluginVersion()
 {
@@ -246,18 +241,6 @@ DynamicLoaderHexagonDYLD::GetTargetExecutable()
     }
     
     return executable;
-}
-
-Error
-DynamicLoaderHexagonDYLD::ExecutePluginCommand(Args &command, Stream *strm)
-{
-    return Error();
-}
-
-Log *
-DynamicLoaderHexagonDYLD::EnablePluginLogging(Stream *strm, Args &command)
-{
-    return NULL;
 }
 
 //AD: Needs to be updated?

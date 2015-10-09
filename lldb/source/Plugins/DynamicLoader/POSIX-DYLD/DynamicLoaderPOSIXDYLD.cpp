@@ -62,11 +62,6 @@ DynamicLoaderPOSIXDYLD::GetPluginDescriptionStatic()
            "loads/unloads in POSIX processes.";
 }
 
-void
-DynamicLoaderPOSIXDYLD::GetPluginCommandHelp(const char *command, Stream *strm)
-{
-}
-
 uint32_t
 DynamicLoaderPOSIXDYLD::GetPluginVersion()
 {
@@ -231,18 +226,6 @@ DynamicLoaderPOSIXDYLD::DidLaunch()
 
         m_process->GetTarget().ModulesDidLoad(module_list);
     }
-}
-
-Error
-DynamicLoaderPOSIXDYLD::ExecutePluginCommand(Args &command, Stream *strm)
-{
-    return Error();
-}
-
-Log *
-DynamicLoaderPOSIXDYLD::EnablePluginLogging(Stream *strm, Args &command)
-{
-    return NULL;
 }
 
 Error
