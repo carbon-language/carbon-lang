@@ -265,6 +265,9 @@ results_formatter_name = None
 results_formatter_object = None
 results_formatter_options = None
 
+# The names of all tests. Used to assert we don't have two tests with the same base name.
+all_tests = set()
+
 def usage(parser):
     parser.print_help()
     if verbose > 0:
@@ -1288,6 +1291,7 @@ def visit(prefix, dir, names):
     global filters
     global fs4all
     global excluded
+    global all_tests
 
     if set(dir.split(os.sep)).intersection(excluded):
         #print "Detected an excluded dir component: %s" % dir
@@ -1298,6 +1302,11 @@ def visit(prefix, dir, names):
             continue
 
         if '.py' == os.path.splitext(name)[1] and name.startswith(prefix):
+
+            if name in all_tests:
+                raise Exception("Found multiple tests with the name %s" % name)
+            all_tests.add(name)
+
             # Try to match the regexp pattern, if specified.
             if regexp:
                 import re
