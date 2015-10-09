@@ -291,12 +291,12 @@ public:
   /// after every possibly writing memory operation, which ensures that we only
   /// CSE loads with other loads that have no intervening store.
   struct LoadValue {
-    Value *data;
-    unsigned generation;
-    int matchingId;
-    LoadValue() : data(nullptr), generation(0), matchingId(-1) {}
-    LoadValue(Value *data, unsigned generation, unsigned matchingId)
-        : data(data), generation(generation), matchingId(matchingId) {}
+    Value *Data;
+    unsigned Generation;
+    int MatchingId;
+    LoadValue() : Data(nullptr), Generation(0), MatchingId(-1) {}
+    LoadValue(Value *Data, unsigned Generation, unsigned MatchingId)
+        : Data(Data), Generation(Generation), MatchingId(MatchingId) {}
   };
   typedef RecyclingAllocator<BumpPtrAllocator,
                              ScopedHashTableVal<Value *, LoadValue>>
@@ -568,12 +568,12 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // If we have an available version of this load, and if it is the right
       // generation, replace this instruction.
       LoadValue InVal = AvailableLoads.lookup(MemInst.getPtr());
-      if (InVal.data != nullptr && InVal.generation == CurrentGeneration &&
-          InVal.matchingId == MemInst.getMatchingId()) {
-        Value *Op = getOrCreateResult(InVal.data, Inst->getType());
+      if (InVal.Data != nullptr && InVal.Generation == CurrentGeneration &&
+          InVal.MatchingId == MemInst.getMatchingId()) {
+        Value *Op = getOrCreateResult(InVal.Data, Inst->getType());
         if (Op != nullptr) {
           DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst
-                       << "  to: " << *InVal.data << '\n');
+                       << "  to: " << *InVal.Data << '\n');
           if (!Inst->use_empty())
             Inst->replaceAllUsesWith(Op);
           Inst->eraseFromParent();
