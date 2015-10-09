@@ -156,3 +156,9 @@ define <2 x i32*> @vector_gep(<2 x [3 x {i32, i32}]*> %a) {
     %w = getelementptr [3 x {i32, i32}], <2 x [3 x {i32, i32}]*> %a, <2 x i32> <i32 1, i32 2>, <2 x i32> <i32 2, i32 3>, <2 x i32> <i32 1, i32 1>
       ret <2 x i32*> %w
 }
+
+define i32 @extractelt_constant_bitcast() {
+  %1 = bitcast i64 4 to <2 x i32>
+  %2 = extractelement <2 x i32> %1, i32 0
+  ret i32 %2
+}
