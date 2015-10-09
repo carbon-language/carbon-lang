@@ -801,6 +801,8 @@ public:
   ///
   /// The target may modify the features list, to change which options are
   /// passed onwards to the backend.
+  /// FIXME: This part should be fixed so that we can change handleTargetFeatures
+  /// to merely a TargetInfo initialization routine.
   ///
   /// \return  False on error.
   virtual bool handleTargetFeatures(std::vector<std::string> &Features,
