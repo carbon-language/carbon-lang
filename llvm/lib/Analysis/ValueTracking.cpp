@@ -2998,20 +2998,7 @@ static bool isDereferenceableFromAttribute(const Value *V, const DataLayout &DL,
 
 static bool isAligned(const Value *Base, APInt Offset, unsigned Align,
                       const DataLayout &DL) {
-  APInt BaseAlign(Offset.getBitWidth(), 0);
-  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base))
-    BaseAlign = AI->getAlignment();
-  else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Base))
-    BaseAlign = GV->getAlignment();
-  else if (const Argument *A = dyn_cast<Argument>(Base))
-    BaseAlign = A->getParamAlignment();
-  else if (auto CS = ImmutableCallSite(Base))
-    BaseAlign = CS.getAttributes().getParamAlignment(AttributeSet::ReturnIndex);
-  else if (const LoadInst *LI = dyn_cast<LoadInst>(Base))
-    if (MDNode *MD = LI->getMetadata(LLVMContext::MD_align)) {
-      ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(0));
-      BaseAlign = CI->getLimitedValue();
-    }
+  APInt BaseAlign(Offset.getBitWidth(), getAlignment(Base, DL));
 
   if (!BaseAlign) {
     Type *Ty = Base->getType()->getPointerElementType();
