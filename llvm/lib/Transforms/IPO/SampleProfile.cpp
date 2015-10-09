@@ -123,10 +123,6 @@ protected:
   bool propagateThroughEdges(Function &F);
   void computeDominanceAndLoopInfo(Function &F);
 
-  /// \brief Line number for the function header. Used to compute absolute
-  /// line numbers from the relative line numbers found in the profile.
-  unsigned HeaderLineno;
-
   /// \brief Map basic blocks to their computed weights.
   ///
   /// The weight of a basic block is defined to be the maximum
@@ -226,14 +222,16 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
   if (!DLoc)
     return std::error_code();
 
-  unsigned Lineno = DLoc.getLine();
-  if (Lineno < HeaderLineno)
-    return std::error_code();
-
-  const DILocation *DIL = DLoc;
   const FunctionSamples *FS = findFunctionSamples(Inst);
   if (!FS)
     return std::error_code();
+
+  const DILocation *DIL = DLoc;
+  unsigned Lineno = DLoc.getLine();
+  unsigned HeaderLineno = DIL->getScope()->getSubprogram()->getLine();
+  if (Lineno < HeaderLineno)
+    return std::error_code();
+
   ErrorOr<unsigned> R =
       FS->findSamplesAt(Lineno - HeaderLineno, DIL->getDiscriminator());
   if (R)
@@ -837,13 +835,11 @@ void SampleProfileLoader::computeDominanceAndLoopInfo(Function &F) {
 bool SampleProfileLoader::emitAnnotations(Function &F) {
   bool Changed = false;
 
-  // Initialize invariants used during computation and propagation.
-  HeaderLineno = getFunctionLoc(F);
-  if (HeaderLineno == 0)
+  if (getFunctionLoc(F) == 0)
     return false;
 
   DEBUG(dbgs() << "Line number for the first instruction in " << F.getName()
-               << ": " << HeaderLineno << "\n");
+               << ": " << getFunctionLoc(F) << "\n");
 
   Changed |= inlineHotFunctions(F);
 
