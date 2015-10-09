@@ -3717,9 +3717,9 @@ public:
 };
 
 static void addCygMingDefines(const LangOptions &Opts, MacroBuilder &Builder) {
-  // Mingw and cygwin define __declspec(a) to __attribute__((a)).  Clang supports
-  // __declspec natively under -fms-extensions, but we define a no-op __declspec
-  // macro anyway for pre-processor compatibility.
+  // Mingw and cygwin define __declspec(a) to __attribute__((a)).  Clang
+  // supports __declspec natively under -fms-extensions, but we define a no-op
+  // __declspec macro anyway for pre-processor compatibility.
   if (Opts.MicrosoftExt)
     Builder.defineMacro("__declspec", "__declspec");
   else
@@ -4260,12 +4260,12 @@ class ARMTargetInfo : public TargetInfo {
   }
 
   void setAtomic() {
-    // when triple does not specify a sub arch, 
+    // when triple does not specify a sub arch,
     // then we are not using inline atomics
     bool ShouldUseInlineAtomic =
                    (ArchISA == llvm::ARM::IK_ARM   && ArchVersion >= 6) ||
                    (ArchISA == llvm::ARM::IK_THUMB && ArchVersion >= 7);
-    // Cortex M does not support 8 byte atomics, while general Thumb2 does. 
+    // Cortex M does not support 8 byte atomics, while general Thumb2 does.
     if (ArchProfile == llvm::ARM::PK_M) {
       MaxAtomicPromoteWidth = 32;
       if (ShouldUseInlineAtomic)
@@ -4275,7 +4275,7 @@ class ARMTargetInfo : public TargetInfo {
       MaxAtomicPromoteWidth = 64;
       if (ShouldUseInlineAtomic)
         MaxAtomicInlineWidth = 64;
-    } 
+    }
   }
 
   bool isThumb() const {
@@ -4446,7 +4446,7 @@ public:
 
     for (const char *Feature : TargetFeatures)
       if (Feature[0] == '+')
-        Features[Feature+1] = true; 
+        Features[Feature+1] = true;
 
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
@@ -4620,17 +4620,17 @@ public:
       Builder.defineMacro("__ARM_ARCH_PROFILE", "'" + CPUProfile + "'");
 
     // ACLE 6.4.3 Unaligned access supported in hardware
-    if (Unaligned) 
+    if (Unaligned)
       Builder.defineMacro("__ARM_FEATURE_UNALIGNED", "1");
- 
+
     // ACLE 6.4.4 LDREX/STREX
     if (LDREX)
       Builder.defineMacro("__ARM_FEATURE_LDREX", "0x" + llvm::utohexstr(LDREX));
 
     // ACLE 6.4.5 CLZ
-    if (ArchVersion == 5 || 
-       (ArchVersion == 6 && CPUProfile != "M") || 
-        ArchVersion >  6) 
+    if (ArchVersion == 5 ||
+       (ArchVersion == 6 && CPUProfile != "M") ||
+        ArchVersion >  6)
       Builder.defineMacro("__ARM_FEATURE_CLZ", "1");
 
     // ACLE 6.5.1 Hardware Floating Point
@@ -4685,7 +4685,8 @@ public:
       Builder.defineMacro("__ARM_FEATURE_SIMD32", "1");
 
     // ACLE 6.4.10 Hardware Integer Divide
-    if (((HWDiv & HWDivThumb) && isThumb()) || ((HWDiv & HWDivARM) && !isThumb())) {
+    if (((HWDiv & HWDivThumb) && isThumb()) ||
+        ((HWDiv & HWDivARM) && !isThumb())) {
       Builder.defineMacro("__ARM_FEATURE_IDIV", "1");
       Builder.defineMacro("__ARM_ARCH_EXT_IDIV__", "1");
     }
@@ -4712,7 +4713,8 @@ public:
       Builder.defineMacro("__ARM_NEON__");
       // current AArch32 NEON implementations do not support double-precision
       // floating-point even when it is present in VFP.
-      Builder.defineMacro("__ARM_NEON_FP", "0x" + llvm::utohexstr(HW_FP & ~HW_FP_DP));
+      Builder.defineMacro("__ARM_NEON_FP",
+                          "0x" + llvm::utohexstr(HW_FP & ~HW_FP_DP));
     }
 
     Builder.defineMacro("__ARM_SIZEOF_WCHAR_T",
@@ -5879,7 +5881,8 @@ class SystemZTargetInfo : public TargetInfo {
 
 public:
   SystemZTargetInfo(const llvm::Triple &Triple)
-    : TargetInfo(Triple), CPU("z10"), HasTransactionalExecution(false), HasVector(false) {
+      : TargetInfo(Triple), CPU("z10"), HasTransactionalExecution(false),
+        HasVector(false) {
     IntMaxType = SignedLong;
     Int64Type = SignedLong;
     TLSSupported = true;

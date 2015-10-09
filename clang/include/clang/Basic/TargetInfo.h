@@ -108,9 +108,9 @@ public:
   virtual ~TargetInfo();
 
   /// \brief Retrieve the target options.
-  TargetOptions &getTargetOpts() const { 
+  TargetOptions &getTargetOpts() const {
     assert(TargetOpts && "Missing target options");
-    return *TargetOpts; 
+    return *TargetOpts;
   }
 
   ///===---- Target Data Type Query Methods -------------------------------===//
@@ -316,7 +316,9 @@ public:
   unsigned getLongLongAlign() const { return LongLongAlign; }
 
   /// \brief Determine whether the __int128 type is supported on this target.
-  virtual bool hasInt128Type() const { return getPointerWidth(0) >= 64; } // FIXME
+  virtual bool hasInt128Type() const {
+    return getPointerWidth(0) >= 64;
+  } // FIXME
 
   /// \brief Return the alignment that is suitable for storing any
   /// object with a fundamental alignment requirement.
@@ -632,7 +634,7 @@ public:
     }
 
     /// \brief Indicate that this is an input operand that is tied to
-    /// the specified output operand. 
+    /// the specified output operand.
     ///
     /// Copy over the various constraint information from the output.
     void setTiedOperand(unsigned N, ConstraintInfo &Output) {
@@ -814,7 +816,7 @@ public:
   // \brief Validate the contents of the __builtin_cpu_supports(const char*)
   // argument.
   virtual bool validateCpuSupports(StringRef Name) const { return false; }
-  
+
   // \brief Returns maximal number of args passed in registers.
   unsigned getRegParmMax() const {
     assert(RegParmMax < 7 && "RegParmMax value is larger than AST can handle");
@@ -898,7 +900,7 @@ public:
   };
 
   /// \brief Determines whether a given calling convention is valid for the
-  /// target. A calling convention can either be accepted, produce a warning 
+  /// target. A calling convention can either be accepted, produce a warning
   /// and be substituted with the default calling convention, or (someday)
   /// produce an error (such as using thiscall on a non-instance function).
   virtual CallingConvCheckResult checkCallingConvention(CallingConv CC) const {
