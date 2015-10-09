@@ -517,7 +517,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM) {
       if (isa<DbgInfoIntrinsic>(BBI))
         continue;
       if (BBI->mayHaveSideEffects() || BBI->mayReadFromMemory() ||
-          !isSafeToSpeculativelyExecute(BBI))
+          !isSafeToSpeculativelyExecute(&*BBI))
         return false;
     }
 
@@ -725,7 +725,7 @@ llvm::getFuncletMembership(const MachineFunction &MF) {
     return FuncletMembership;
 
   // Identify all the basic blocks reachable from the function entry.
-  collectFuncletMembers(FuncletMembership, EntryBBNumber, MF.begin());
+  collectFuncletMembers(FuncletMembership, EntryBBNumber, &MF.front());
   // All blocks not part of a funclet are in the parent function.
   for (const MachineBasicBlock *MBB : UnreachableBlocks)
     collectFuncletMembers(FuncletMembership, EntryBBNumber, MBB);

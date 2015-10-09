@@ -510,11 +510,17 @@ public:
     return remove(MutIt);
   }
 
+  NodeTy *remove(NodeTy *IT) { return remove(iterator(IT)); }
+  NodeTy *remove(NodeTy &IT) { return remove(iterator(IT)); }
+
   // erase - remove a node from the controlled sequence... and delete it.
   iterator erase(iterator where) {
     this->deleteNode(remove(where));
     return where;
   }
+
+  iterator erase(NodeTy *IT) { return erase(iterator(IT)); }
+  iterator erase(NodeTy &IT) { return erase(iterator(IT)); }
 
   /// Remove all nodes from the list like clear(), but do not call
   /// removeNodeFromList() or deleteNode().

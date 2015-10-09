@@ -367,12 +367,10 @@ public:
     BasicBlocks.splice(InsertPt, BasicBlocks, MBBI, MBBE);
   }
 
-  void remove(iterator MBBI) {
-    BasicBlocks.remove(MBBI);
-  }
-  void erase(iterator MBBI) {
-    BasicBlocks.erase(MBBI);
-  }
+  void remove(iterator MBBI) { BasicBlocks.remove(MBBI); }
+  void remove(MachineBasicBlock *MBBI) { BasicBlocks.remove(MBBI); }
+  void erase(iterator MBBI) { BasicBlocks.erase(MBBI); }
+  void erase(MachineBasicBlock *MBBI) { BasicBlocks.erase(MBBI); }
 
   template <typename Comp>
   void sort(Comp comp) {
