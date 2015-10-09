@@ -283,11 +283,6 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   if (!isFuncletEHPersonality(Personality))
     return;
 
-  if (Personality == EHPersonality::MSVC_Win64SEH ||
-      Personality == EHPersonality::MSVC_X86SEH) {
-    addSEHHandlersForLPads(LPads);
-  }
-
   // Calculate state numbers if we haven't already.
   WinEHFuncInfo &EHInfo = MMI.getWinEHFuncInfo(&fn);
   const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
@@ -313,7 +308,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
         H.Handler = MBBMap[BB];
     }
   }
-  for (WinEHUnwindMapEntry &UME : EHInfo.UnwindMap)
+  for (CxxUnwindMapEntry &UME : EHInfo.CxxUnwindMap)
     if (UME.Cleanup)
       if (const auto *BB = dyn_cast<BasicBlock>(UME.Cleanup.get<const Value *>()))
         UME.Cleanup = MBBMap[BB];
@@ -341,44 +336,6 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     for (const LandingPadInst *LP : LPads) {
       MachineBasicBlock *LPadMBB = MBBMap[LP->getParent()];
       MMI.addWinEHState(LPadMBB, EHInfo.EHPadStateMap[LP]);
-    }
-  }
-}
-
-void FunctionLoweringInfo::addSEHHandlersForLPads(
-    ArrayRef<const LandingPadInst *> LPads) {
-  MachineModuleInfo &MMI = MF->getMMI();
-
-  // Iterate over all landing pads with llvm.eh.actions calls.
-  for (const LandingPadInst *LP : LPads) {
-    const IntrinsicInst *ActionsCall =
-        dyn_cast<IntrinsicInst>(LP->getNextNode());
-    if (!ActionsCall ||
-        ActionsCall->getIntrinsicID() != Intrinsic::eh_actions)
-      continue;
-
-    // Parse the llvm.eh.actions call we found.
-    MachineBasicBlock *LPadMBB = MBBMap[LP->getParent()];
-    SmallVector<std::unique_ptr<ActionHandler>, 4> Actions;
-    parseEHActions(ActionsCall, Actions);
-
-    // Iterate EH actions from most to least precedence, which means
-    // iterating in reverse.
-    for (auto I = Actions.rbegin(), E = Actions.rend(); I != E; ++I) {
-      ActionHandler *Action = I->get();
-      if (auto *CH = dyn_cast<CatchHandler>(Action)) {
-        const auto *Filter =
-            dyn_cast<Function>(CH->getSelector()->stripPointerCasts());
-        assert((Filter || CH->getSelector()->isNullValue()) &&
-               "expected function or catch-all");
-        const auto *RecoverBA =
-            cast<BlockAddress>(CH->getHandlerBlockOrFunc());
-        MMI.addSEHCatchHandler(LPadMBB, Filter, RecoverBA);
-      } else {
-        assert(isa<CleanupHandler>(Action));
-        const auto *Fini = cast<Function>(Action->getHandlerBlockOrFunc());
-        MMI.addSEHCleanupHandler(LPadMBB, Fini);
-      }
     }
   }
 }

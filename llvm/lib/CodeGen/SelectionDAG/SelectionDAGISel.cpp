@@ -973,43 +973,6 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
   BuildMI(*MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
     .addSym(Label);
 
-  // If this personality function uses funclets, we need to split the landing
-  // pad into several BBs.
-  const Constant *Personality = MF->getFunction()->getPersonalityFn();
-  if (const auto *PF = dyn_cast<Function>(Personality->stripPointerCasts()))
-    MF->getMMI().addPersonality(PF);
-  EHPersonality PersonalityType = classifyEHPersonality(Personality);
-
-  if (isFuncletEHPersonality(PersonalityType)) {
-    SmallVector<MachineBasicBlock *, 4> ClauseBBs;
-    const IntrinsicInst *ActionsCall =
-        dyn_cast<IntrinsicInst>(LLVMBB->getFirstInsertionPt());
-    // Get all invoke BBs that unwind to this landingpad.
-    SmallVector<MachineBasicBlock *, 4> InvokeBBs(MBB->pred_begin(),
-                                                  MBB->pred_end());
-    if (ActionsCall && ActionsCall->getIntrinsicID() == Intrinsic::eh_actions) {
-      // If this is a call to llvm.eh.actions followed by indirectbr, then we've
-      // run WinEHPrepare, and we should remove this block from the machine CFG.
-      // Mark the targets of the indirectbr as landingpads instead.
-      for (const BasicBlock *LLVMSucc : successors(LLVMBB)) {
-        MachineBasicBlock *ClauseBB = FuncInfo->MBBMap[LLVMSucc];
-        // Add the edge from the invoke to the clause.
-        for (MachineBasicBlock *InvokeBB : InvokeBBs)
-          InvokeBB->addSuccessor(ClauseBB);
-
-        // Mark the clause as a landing pad or MI passes will delete it.
-        ClauseBB->setIsEHPad();
-      }
-    }
-
-    // Remove the edge from the invoke to the lpad.
-    for (MachineBasicBlock *InvokeBB : InvokeBBs)
-      InvokeBB->removeSuccessor(MBB);
-
-    // Don't select instructions for the landingpad.
-    return false;
-  }
-
   // Mark exception register as live in.
   if (unsigned Reg = TLI->getExceptionPointerRegister())
     FuncInfo->ExceptionPointerVirtReg = MBB->addLiveIn(Reg, PtrRC);

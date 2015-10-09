@@ -5152,9 +5152,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::clear_cache:
     return TLI.getClearCacheBuiltinName();
-  case Intrinsic::eh_actions:
-    setValue(&I, DAG.getUNDEF(TLI.getPointerTy(DAG.getDataLayout())));
-    return nullptr;
   case Intrinsic::donothing:
     // ignore
     return nullptr;
@@ -5236,22 +5233,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     SDValue Add = DAG.getNode(ISD::ADD, sdl, PtrVT, FPVal, OffsetVal);
     setValue(&I, Add);
 
-    return nullptr;
-  }
-  case Intrinsic::eh_begincatch:
-  case Intrinsic::eh_endcatch:
-    llvm_unreachable("begin/end catch intrinsics not lowered in codegen");
-  case Intrinsic::eh_exceptioncode_old: {
-    unsigned Reg = TLI.getExceptionPointerRegister();
-    assert(Reg && "cannot get exception code on this platform");
-    MVT PtrVT = TLI.getPointerTy(DAG.getDataLayout());
-    const TargetRegisterClass *PtrRC = TLI.getRegClassFor(PtrVT);
-    assert(FuncInfo.MBB->isEHPad() && "eh.exceptioncode in non-lpad");
-    unsigned VReg = FuncInfo.MBB->addLiveIn(Reg, PtrRC);
-    SDValue N =
-        DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(), VReg, PtrVT);
-    N = DAG.getZExtOrTrunc(N, getCurSDLoc(), MVT::i32);
-    setValue(&I, N);
     return nullptr;
   }
 

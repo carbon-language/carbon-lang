@@ -33,99 +33,18 @@ class MCSymbol;
 class MachineBasicBlock;
 class Value;
 
-enum ActionType { Catch, Cleanup };
-
-class ActionHandler {
-public:
-  ActionHandler(BasicBlock *BB, ActionType Type)
-      : StartBB(BB), Type(Type), EHState(-1), HandlerBlockOrFunc(nullptr) {}
-
-  ActionType getType() const { return Type; }
-  BasicBlock *getStartBlock() const { return StartBB; }
-
-  bool hasBeenProcessed() { return HandlerBlockOrFunc != nullptr; }
-
-  void setHandlerBlockOrFunc(Constant *F) { HandlerBlockOrFunc = F; }
-  Constant *getHandlerBlockOrFunc() { return HandlerBlockOrFunc; }
-
-  void setEHState(int State) { EHState = State; }
-  int getEHState() const { return EHState; }
-
-private:
-  BasicBlock *StartBB;
-  ActionType Type;
-  int EHState;
-
-  // Can be either a BlockAddress or a Function depending on the EH personality.
-  Constant *HandlerBlockOrFunc;
-};
-
-class CatchHandler : public ActionHandler {
-public:
-  CatchHandler(BasicBlock *BB, Constant *Selector, BasicBlock *NextBB)
-      : ActionHandler(BB, ActionType::Catch), Selector(Selector),
-      NextBB(NextBB), ExceptionObjectVar(nullptr),
-      ExceptionObjectIndex(-1) {}
-
-  // Method for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ActionHandler *H) {
-    return H->getType() == ActionType::Catch;
-  }
-
-  Constant *getSelector() const { return Selector; }
-  BasicBlock *getNextBB() const { return NextBB; }
-
-  const Value *getExceptionVar() { return ExceptionObjectVar; }
-  TinyPtrVector<BasicBlock *> &getReturnTargets() { return ReturnTargets; }
-
-  void setExceptionVar(const Value *Val) { ExceptionObjectVar = Val; }
-  void setExceptionVarIndex(int Index) { ExceptionObjectIndex = Index;  }
-  int getExceptionVarIndex() const { return ExceptionObjectIndex; }
-  void setReturnTargets(TinyPtrVector<BasicBlock *> &Targets) {
-    ReturnTargets = Targets;
-  }
-
-private:
-  Constant *Selector;
-  BasicBlock *NextBB;
-  // While catch handlers are being outlined the ExceptionObjectVar field will
-  // be populated with the instruction in the parent frame that corresponds
-  // to the exception object (or nullptr if the catch does not use an
-  // exception object) and the ExceptionObjectIndex field will be -1.
-  // When the parseEHActions function is called to populate a vector of
-  // instances of this class, the ExceptionObjectVar field will be nullptr
-  // and the ExceptionObjectIndex will be the index of the exception object in
-  // the parent function's localescape block.
-  const Value *ExceptionObjectVar;
-  int ExceptionObjectIndex;
-  TinyPtrVector<BasicBlock *> ReturnTargets;
-};
-
-class CleanupHandler : public ActionHandler {
-public:
-  CleanupHandler(BasicBlock *BB) : ActionHandler(BB, ActionType::Cleanup) {}
-
-  // Method for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ActionHandler *H) {
-    return H->getType() == ActionType::Cleanup;
-  }
-};
-
-void parseEHActions(const IntrinsicInst *II,
-                    SmallVectorImpl<std::unique_ptr<ActionHandler>> &Actions);
-
-// The following structs respresent the .xdata for functions using C++
-// exceptions on Windows.
+// The following structs respresent the .xdata tables for various
+// Windows-related EH personalities.
 
 typedef PointerUnion<const BasicBlock *, MachineBasicBlock *> MBBOrBasicBlock;
 typedef PointerUnion<const Value *, const MachineBasicBlock *> ValueOrMBB;
 
-struct WinEHUnwindMapEntry {
+struct CxxUnwindMapEntry {
   int ToState;
   ValueOrMBB Cleanup;
 };
 
-/// Similar to WinEHUnwindMapEntry, but supports SEH filters.
+/// Similar to CxxUnwindMapEntry, but supports SEH filters.
 struct SEHUnwindMapEntry {
   /// If unwinding continues through this handler, transition to the handler at
   /// this state. This indexes into SEHUnwindMap.
@@ -174,13 +93,13 @@ struct WinEHFuncInfo {
   DenseMap<const CatchReturnInst *, const BasicBlock *>
       CatchRetSuccessorColorMap;
   DenseMap<MCSymbol *, std::pair<int, MCSymbol *>> InvokeToStateMap;
-  SmallVector<WinEHUnwindMapEntry, 4> UnwindMap;
+  SmallVector<CxxUnwindMapEntry, 4> CxxUnwindMap;
   SmallVector<WinEHTryBlockMapEntry, 4> TryBlockMap;
   SmallVector<SEHUnwindMapEntry, 4> SEHUnwindMap;
   SmallVector<ClrEHUnwindMapEntry, 4> ClrEHUnwindMap;
   int UnwindHelpFrameIdx = INT_MAX;
 
-  int getLastStateNumber() const { return UnwindMap.size() - 1; }
+  int getLastStateNumber() const { return CxxUnwindMap.size() - 1; }
 
   void addIPToStateRange(const BasicBlock *PadBB, MCSymbol *InvokeBegin,
                          MCSymbol *InvokeEnd);
