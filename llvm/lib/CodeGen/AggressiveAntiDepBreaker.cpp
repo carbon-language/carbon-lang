@@ -224,7 +224,12 @@ bool AggressiveAntiDepBreaker::IsImplicitDefUse(MachineInstr *MI,
   if (Reg == 0)
     return false;
 
-  MachineOperand *Op = MI->findRegisterUseOperand(Reg, /*isKill=*/MO.isDef());
+  MachineOperand *Op = nullptr;
+  if (MO.isDef())
+    Op = MI->findRegisterUseOperand(Reg, true);
+  else
+    Op = MI->findRegisterDefOperand(Reg);
+
   return(Op && Op->isImplicit());
 }
 
