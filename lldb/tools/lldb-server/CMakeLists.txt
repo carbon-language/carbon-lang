@@ -34,13 +34,7 @@ else()
     lldb-platform.cpp
     lldb-server.cpp
     LLDBServerUtilities.cpp
-    ../../source/lldb.cpp
-    ${LLDB_VERS_GENERATED_FILE}
     )
-
-  if (LLDB_VERS_GENERATED_FILE)
-    add_dependencies(lldb-server swig_wrapper)
-  endif()
 
   # The Darwin linker doesn't understand --start-group/--end-group.
   if (LLDB_LINKER_SUPPORTS_GROUPS)

@@ -67,7 +67,6 @@ add_lldb_library(liblldb SHARED
   SBUnixSignals.cpp
   SystemInitializerFull.cpp
   ${LLDB_WRAP_PYTHON}
-  ${LLDB_VERS_GENERATED_FILE}
   )
 
 # This should not be part of LLDBDependencies.cmake, because we don't
@@ -99,7 +98,7 @@ else()
     )
 endif()
 
-if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
+if (LLDB_WRAP_PYTHON)
   add_dependencies(liblldb swig_wrapper)
 endif()
 target_link_libraries(liblldb ${cmake_2_8_12_PRIVATE} ${LLDB_SYSTEM_LIBS})
