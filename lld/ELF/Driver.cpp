@@ -12,6 +12,7 @@
 #include "Error.h"
 #include "InputFiles.h"
 #include "SymbolTable.h"
+#include "Target.h"
 #include "Writer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -68,6 +69,26 @@ static void setELFType(StringRef Emul) {
     return;
   }
   error(Twine("Unknown emulation: ") + Emul);
+}
+
+static TargetInfo *createTarget() {
+  switch (Config->EMachine) {
+  case EM_386:
+    return new X86TargetInfo();
+  case EM_AARCH64:
+    return new AArch64TargetInfo();
+  case EM_ARM:
+    return new ARMTargetInfo();
+  case EM_MIPS:
+    return new MipsTargetInfo();
+  case EM_PPC:
+    return new PPCTargetInfo();
+  case EM_PPC64:
+    return new PPC64TargetInfo();
+  case EM_X86_64:
+    return new X86_64TargetInfo();
+  }
+  error("Unknown target machine");
 }
 
 // Makes a path by concatenating Dir and File.
@@ -257,12 +278,33 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
+  Target.reset(createTarget());
+
+  if (!Config->Shared) {
+    // Add entry symbol.
+    Config->EntrySym = Symtab.addUndefined(
+        Config->Entry.empty() ? Target->getDefaultEntry() : Config->Entry);
+
+    // In the assembly for 32 bit x86 the _GLOBAL_OFFSET_TABLE_ symbol
+    // is magical and is used to produce a R_386_GOTPC relocation.
+    // The R_386_GOTPC relocation value doesn't actually depend on the
+    // symbol value, so it could use an index of STN_UNDEF which, according
+    // to the spec, means the symbol value is 0.
+    // Unfortunately both gas and MC keep the _GLOBAL_OFFSET_TABLE_ symbol in
+    // the object file.
+    // The situation is even stranger on x86_64 where the assembly doesn't
+    // need the magical symbol, but gas still puts _GLOBAL_OFFSET_TABLE_ as
+    // an undefined symbol in the .o files.
+    // Given that the symbol is effectively unused, we just create a dummy
+    // hidden one to avoid the undefined symbol error.
+    Symtab.addIgnoredSym("_GLOBAL_OFFSET_TABLE_");
+  }
 
   for (std::unique_ptr<InputFile> &F : Files)
     Symtab.addFile(std::move(F));
 
   for (auto *Arg : Args.filtered(OPT_undefined))
-    Symtab.addUndefinedSym(Arg->getValue());
+    Symtab.addUndefinedOpt(Arg->getValue());
 
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";

@@ -580,8 +580,9 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_type = Config->Shared ? ET_DYN : ET_EXEC;
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
-  SymbolBody *Entry = Symtab.getEntrySym();
-  EHdr->e_entry = Entry ? getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Entry)) : 0;
+  if (Config->EntrySym)
+    if (auto *E = dyn_cast<ELFSymbolBody<ELFT>>(Config->EntrySym->repl()))
+      EHdr->e_entry = getSymVA<ELFT>(*E);
   EHdr->e_phoff = ProgramHeaderOff;
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);

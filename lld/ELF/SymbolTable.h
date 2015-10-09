@@ -55,17 +55,10 @@ public:
     return SharedFiles;
   }
 
-  SymbolBody *getEntrySym() const {
-    if (!EntrySym)
-      return nullptr;
-    return EntrySym->repl();
-  }
-
-  void addUndefinedSym(StringRef Name);
-
+  SymbolBody *addUndefined(StringRef Name);
+  SymbolBody *addUndefinedOpt(StringRef Name);
   void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
-
   void addIgnoredSym(StringRef Name);
 
 private:
@@ -97,8 +90,6 @@ private:
 
   std::vector<std::unique_ptr<SharedFile<ELFT>>> SharedFiles;
   llvm::DenseSet<StringRef> IncludedSoNames;
-
-  SymbolBody *EntrySym = nullptr;
 };
 
 } // namespace elf2

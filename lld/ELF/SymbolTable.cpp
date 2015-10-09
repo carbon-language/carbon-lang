@@ -11,7 +11,6 @@
 #include "Config.h"
 #include "Error.h"
 #include "Symbols.h"
-#include "Target.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -47,28 +46,18 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   addELFFile(cast<ELFFileBase>(File.release()));
 }
 
-static TargetInfo *createTarget(uint16_t EMachine) {
-  switch (EMachine) {
-  case EM_386:
-    return new X86TargetInfo();
-  case EM_AARCH64:
-    return new AArch64TargetInfo();
-  case EM_ARM:
-    return new ARMTargetInfo();
-  case EM_MIPS:
-    return new MipsTargetInfo();
-  case EM_PPC:
-    return new PPCTargetInfo();
-  case EM_PPC64:
-    return new PPC64TargetInfo();
-  case EM_X86_64:
-    return new X86_64TargetInfo();
-  }
-  error("Unknown target machine");
+template <class ELFT>
+SymbolBody *SymbolTable<ELFT>::addUndefined(StringRef Name) {
+  auto *Sym = new (Alloc) Undefined<ELFT>(Name, Undefined<ELFT>::Required);
+  resolve(Sym);
+  return Sym;
 }
 
-template <class ELFT> void SymbolTable<ELFT>::addUndefinedSym(StringRef Name) {
-  resolve(new (Alloc) Undefined<ELFT>(Name, Undefined<ELFT>::Optional));
+template <class ELFT>
+SymbolBody *SymbolTable<ELFT>::addUndefinedOpt(StringRef Name) {
+  auto *Sym = new (Alloc) Undefined<ELFT>(Name, Undefined<ELFT>::Optional);
+  resolve(Sym);
+  return Sym;
 }
 
 template <class ELFT>
@@ -89,39 +78,11 @@ template <class ELFT> void SymbolTable<ELFT>::addIgnoredSym(StringRef Name) {
   resolve(Sym);
 }
 
-template <class ELFT> void SymbolTable<ELFT>::init(uint16_t EMachine) {
-  Target.reset(createTarget(EMachine));
-  if (Config->Shared)
-    return;
-  EntrySym = new (Alloc) Undefined<ELFT>(
-      Config->Entry.empty() ? Target->getDefaultEntry() : Config->Entry,
-      Undefined<ELFT>::Required);
-  resolve(EntrySym);
-
-  // In the assembly for 32 bit x86 the _GLOBAL_OFFSET_TABLE_ symbol is magical
-  // and is used to produce a R_386_GOTPC relocation.
-  // The R_386_GOTPC relocation value doesn't actually depend on the
-  // symbol value, so it could use an index of STN_UNDEF which, according to the
-  // spec, means the symbol value is 0.
-  // Unfortunately both gas and MC keep the _GLOBAL_OFFSET_TABLE_ symbol in
-  // the object file.
-  // The situation is even stranger on x86_64 where the assembly doesn't
-  // need the magical symbol, but gas still puts _GLOBAL_OFFSET_TABLE_ as
-  // an undefined symbol in the .o files.
-  // Given that the symbol is effectively unused, we just create a dummy
-  // hidden one to avoid the undefined symbol error.
-  addIgnoredSym("_GLOBAL_OFFSET_TABLE_");
-}
-
 template <class ELFT> void SymbolTable<ELFT>::addELFFile(ELFFileBase *File) {
-  const ELFFileBase *Old = getFirstELF();
   if (auto *O = dyn_cast<ObjectFile<ELFT>>(File))
     ObjectFiles.emplace_back(O);
   else if (auto *S = dyn_cast<SharedFile<ELFT>>(File))
     SharedFiles.emplace_back(S);
-
-  if (!Old)
-    init(File->getEMachine());
 
   if (auto *O = dyn_cast<ObjectFileBase>(File)) {
     for (SymbolBody *Body : O->getSymbols())
