@@ -312,9 +312,9 @@ void TargetInfo::adjust(const LangOptions &Opts) {
   }
 }
 
-bool TargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
-                                DiagnosticsEngine &Diags, StringRef CPU,
-                                std::vector<std::string> &FeatureVec) const {
+bool TargetInfo::initFeatureMap(
+    llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
+    const std::vector<std::string> &FeatureVec) const {
   for (const auto &F : FeatureVec) {
     const char *Name = F.c_str();
     // Apply the feature via the target.

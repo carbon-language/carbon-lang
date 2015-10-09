@@ -753,7 +753,7 @@ public:
   /// \return False on error (invalid features).
   virtual bool initFeatureMap(llvm::StringMap<bool> &Features,
                               DiagnosticsEngine &Diags, StringRef CPU,
-                              std::vector<std::string> &FeatureVec) const;
+                              const std::vector<std::string> &FeatureVec) const;
 
   /// \brief Get the ABI currently in use.
   virtual StringRef getABI() const { return StringRef(); }

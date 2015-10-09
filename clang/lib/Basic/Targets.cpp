@@ -887,9 +887,10 @@ public:
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 
-  bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                      StringRef CPU,
-                      std::vector<std::string> &FeaturesVec) const override;
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override;
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
@@ -1253,7 +1254,7 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
 // go ahead and error since the customer has expressed a somewhat incompatible
 // set of options.
 static bool ppcUserFeaturesCheck(DiagnosticsEngine &Diags,
-                                 std::vector<std::string> &FeaturesVec) {
+                                 const std::vector<std::string> &FeaturesVec) {
 
   if (std::find(FeaturesVec.begin(), FeaturesVec.end(), "-vsx") !=
       FeaturesVec.end()) {
@@ -1275,9 +1276,9 @@ static bool ppcUserFeaturesCheck(DiagnosticsEngine &Diags,
   return true;
 }
 
-bool PPCTargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
-                                   DiagnosticsEngine &Diags, StringRef CPU,
-                                   std::vector<std::string> &FeaturesVec) const {
+bool PPCTargetInfo::initFeatureMap(
+    llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
+    const std::vector<std::string> &FeaturesVec) const {
   Features["altivec"] = llvm::StringSwitch<bool>(CPU)
     .Case("7400", true)
     .Case("g4", true)
@@ -2400,9 +2401,10 @@ public:
   // initFeatureMap which calls this repeatedly.
   static void setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
                                     StringRef Name, bool Enabled);
-  bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                      StringRef CPU,
-                      std::vector<std::string> &FeaturesVec) const override;
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override;
   bool hasFeature(StringRef Feature) const override;
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
@@ -2530,7 +2532,7 @@ bool X86TargetInfo::setFPMath(StringRef Name) {
 
 bool X86TargetInfo::initFeatureMap(
     llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags, StringRef CPU,
-    std::vector<std::string> &FeaturesVec) const {
+    const std::vector<std::string> &FeaturesVec) const {
   // FIXME: This *really* should not be here.
   // X86_64 always has SSE2.
   if (getTriple().getArch() == llvm::Triple::x86_64)
@@ -4427,10 +4429,11 @@ public:
   }
 
   // FIXME: This should be based on Arch attributes, not CPU names.
-  bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                      StringRef CPU,
-                      std::vector<std::string> &FeaturesVec) const override {
-   
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override {
+
     std::vector<const char*> TargetFeatures;
 
     // get default FPU features
@@ -5936,9 +5939,10 @@ public:
 
     return CPUKnown;
   }
-  bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                      StringRef CPU,
-                      std::vector<std::string> &FeaturesVec) const override {
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "zEC12")
       Features["transactional-execution"] = true;
     if (CPU == "z13") {
@@ -6305,9 +6309,10 @@ public:
         .Default(false);
   }
   const std::string& getCPU() const { return CPU; }
-  bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                      StringRef CPU,
-                      std::vector<std::string> &FeaturesVec) const override {
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "octeon")
       Features["mips64r2"] = Features["cnmips"] = true;
     else
@@ -6985,9 +6990,10 @@ protected:
   }
 
 private:
-  bool initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
-                      StringRef CPU,
-                      std::vector<std::string> &FeaturesVec) const override {
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override {
     if (CPU == "bleeding-edge")
       Features["simd128"] = true;
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
