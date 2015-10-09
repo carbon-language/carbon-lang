@@ -594,12 +594,14 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     Elf_Sym_Range Syms = File.getLocalSymbols();
     for (const Elf_Sym &Sym : Syms) {
-      ErrorOr<StringRef> SymName = Sym.getName(File.getStringTable());
-      if (SymName && !shouldKeepInSymtab<ELFT>(*SymName, Sym))
+      ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
+      error(SymNameOrErr);
+      StringRef SymName = *SymNameOrErr;
+      if (!shouldKeepInSymtab<ELFT>(SymName, Sym))
         continue;
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
       Buf += sizeof(*ESym);
-      ESym->st_name = (SymName) ? StrTabSec.getFileOff(*SymName) : 0;
+      ESym->st_name = StrTabSec.getFileOff(SymName);
       ESym->st_size = Sym.st_size;
       ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
       uint32_t SecIndex = Sym.st_shndx;
