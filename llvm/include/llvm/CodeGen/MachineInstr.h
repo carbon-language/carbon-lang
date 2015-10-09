@@ -497,8 +497,8 @@ public:
   }
 
   /// Return true if this instruction is convergent.
-  /// Convergent instructions can only be moved to locations that are
-  /// control-equivalent to their initial position.
+  /// Convergent instructions can not be made control-dependent on any
+  /// additional values.
   bool isConvergent(QueryType Type = AnyInBundle) const {
     return hasProperty(MCID::Convergent, Type);
   }

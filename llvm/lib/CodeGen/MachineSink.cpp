@@ -686,7 +686,8 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore,
   if (!MI->isSafeToMove(AA, SawStore))
     return false;
 
-  // Convergent operations may only be moved to control equivalent locations.
+  // Convergent operations may not be made control-dependent on additional
+  // values.
   if (MI->isConvergent())
     return false;
 

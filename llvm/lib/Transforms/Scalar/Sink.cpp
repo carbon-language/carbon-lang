@@ -172,7 +172,8 @@ static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
   if (isa<TerminatorInst>(Inst) || isa<PHINode>(Inst))
     return false;
 
-  // Convergent operations can only be moved to control equivalent blocks.
+  // Convergent operations cannot be made control-dependent on additional
+  // values.
   if (auto CS = CallSite(Inst)) {
     if (CS.hasFnAttr(Attribute::Convergent))
       return false;
