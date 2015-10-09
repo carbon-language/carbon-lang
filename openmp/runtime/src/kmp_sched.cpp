@@ -97,8 +97,14 @@ __kmp_for_static_init(
     register kmp_info_t *th = __kmp_threads[ gtid ];
 
 #if OMPT_SUPPORT && OMPT_TRACE
-    ompt_team_info_t *team_info = __ompt_get_teaminfo(0, NULL);
-    ompt_task_info_t *task_info = __ompt_get_taskinfo(0);
+    ompt_team_info_t *team_info = NULL; 
+    ompt_task_info_t *task_info = NULL; 
+
+    if (ompt_enabled) {
+        // Only fully initialize variables needed by OMPT if OMPT is enabled.
+        team_info = __ompt_get_teaminfo(0, NULL);
+        task_info = __ompt_get_taskinfo(0);
+    }
 #endif
 
     KMP_DEBUG_ASSERT( plastiter && plower && pupper && pstride );
