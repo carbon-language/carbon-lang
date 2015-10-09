@@ -149,8 +149,13 @@ TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromFactoryType) {
 }
 
 TEST(ToolInvocation, TestMapVirtualFile) {
-  IntrusiveRefCntPtr<clang::FileManager> Files(
-      new clang::FileManager(clang::FileSystemOptions()));
+  llvm::IntrusiveRefCntPtr<vfs::OverlayFileSystem> OverlayFileSystem(
+      new vfs::OverlayFileSystem(vfs::getRealFileSystem()));
+  llvm::IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new vfs::InMemoryFileSystem);
+  OverlayFileSystem->pushOverlay(InMemoryFileSystem);
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
+      new FileManager(FileSystemOptions(), OverlayFileSystem));
   std::vector<std::string> Args;
   Args.push_back("tool-executable");
   Args.push_back("-Idef");
@@ -158,8 +163,10 @@ TEST(ToolInvocation, TestMapVirtualFile) {
   Args.push_back("test.cpp");
   clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
                                             Files.get());
-  Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
-  Invocation.mapVirtualFile("def/abc", "\n");
+  InMemoryFileSystem->addFile(
+      "test.cpp", 0, llvm::MemoryBuffer::getMemBuffer("#include <abc>\n"));
+  InMemoryFileSystem->addFile("def/abc", 0,
+                              llvm::MemoryBuffer::getMemBuffer("\n"));
   EXPECT_TRUE(Invocation.run());
 }
 
@@ -168,8 +175,13 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
   // mapped module.map is found on the include path. In the future, expand this
   // test to run a full modules enabled compilation, so we make sure we can
   // rerun modules compilations with a virtual file system.
-  IntrusiveRefCntPtr<clang::FileManager> Files(
-      new clang::FileManager(clang::FileSystemOptions()));
+  llvm::IntrusiveRefCntPtr<vfs::OverlayFileSystem> OverlayFileSystem(
+      new vfs::OverlayFileSystem(vfs::getRealFileSystem()));
+  llvm::IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new vfs::InMemoryFileSystem);
+  OverlayFileSystem->pushOverlay(InMemoryFileSystem);
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
+      new FileManager(FileSystemOptions(), OverlayFileSystem));
   std::vector<std::string> Args;
   Args.push_back("tool-executable");
   Args.push_back("-Idef");
@@ -177,11 +189,14 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
   Args.push_back("test.cpp");
   clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
                                             Files.get());
-  Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
-  Invocation.mapVirtualFile("def/abc", "\n");
+  InMemoryFileSystem->addFile(
+      "test.cpp", 0, llvm::MemoryBuffer::getMemBuffer("#include <abc>\n"));
+  InMemoryFileSystem->addFile("def/abc", 0,
+                              llvm::MemoryBuffer::getMemBuffer("\n"));
   // Add a module.map file in the include directory of our header, so we trigger
   // the module.map header search logic.
-  Invocation.mapVirtualFile("def/module.map", "\n");
+  InMemoryFileSystem->addFile("def/module.map", 0,
+                              llvm::MemoryBuffer::getMemBuffer("\n"));
   EXPECT_TRUE(Invocation.run());
 }
 

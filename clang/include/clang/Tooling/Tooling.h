@@ -243,6 +243,7 @@ public:
   ///
   /// \param FilePath The path at which the content will be mapped.
   /// \param Content A null terminated buffer of the file's content.
+  // FIXME: remove this when all users have migrated!
   void mapVirtualFile(StringRef FilePath, StringRef Content);
 
   /// \brief Run the clang invocation.
@@ -331,9 +332,12 @@ class ClangTool {
   std::vector<std::string> SourcePaths;
   std::shared_ptr<PCHContainerOperations> PCHContainerOps;
 
+  llvm::IntrusiveRefCntPtr<vfs::OverlayFileSystem> OverlayFileSystem;
+  llvm::IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem;
   llvm::IntrusiveRefCntPtr<FileManager> Files;
   // Contains a list of pairs (<file name>, <file content>).
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
+  llvm::StringSet<> SeenWorkingDirectories;
 
   ArgumentsAdjuster ArgsAdjuster;
 
