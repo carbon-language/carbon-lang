@@ -4196,7 +4196,7 @@ static void print_objc_property_list32(uint32_t p,
   }
 }
 
-static void print_class_ro64_t(uint64_t p, struct DisassembleInfo *info,
+static bool print_class_ro64_t(uint64_t p, struct DisassembleInfo *info,
                                bool &is_meta_class) {
   struct class_ro64_t cro;
   const char *r;
@@ -4207,7 +4207,7 @@ static void print_class_ro64_t(uint64_t p, struct DisassembleInfo *info,
 
   r = get_pointer_64(p, offset, left, S, info);
   if (r == nullptr || left < sizeof(struct class_ro64_t))
-    return;
+    return false;
   memset(&cro, '\0', sizeof(struct class_ro64_t));
   if (left < sizeof(struct class_ro64_t)) {
     memcpy(&cro, r, left);
@@ -4332,9 +4332,10 @@ static void print_class_ro64_t(uint64_t p, struct DisassembleInfo *info,
     print_objc_property_list64(cro.baseProperties + n_value, info);
 
   is_meta_class = (cro.flags & RO_META) ? true : false;
+  return true;
 }
 
-static void print_class_ro32_t(uint32_t p, struct DisassembleInfo *info,
+static bool print_class_ro32_t(uint32_t p, struct DisassembleInfo *info,
                                bool &is_meta_class) {
   struct class_ro32_t cro;
   const char *r;
@@ -4344,7 +4345,7 @@ static void print_class_ro32_t(uint32_t p, struct DisassembleInfo *info,
 
   r = get_pointer_32(p, offset, left, S, info);
   if (r == nullptr)
-    return;
+    return false;
   memset(&cro, '\0', sizeof(struct class_ro32_t));
   if (left < sizeof(struct class_ro32_t)) {
     memcpy(&cro, r, left);
@@ -4395,6 +4396,7 @@ static void print_class_ro32_t(uint32_t p, struct DisassembleInfo *info,
   if (cro.baseProperties != 0)
     print_objc_property_list32(cro.baseProperties, info);
   is_meta_class = (cro.flags & RO_META) ? true : false;
+  return true;
 }
 
 static void print_class64_t(uint64_t p, struct DisassembleInfo *info) {
@@ -4464,7 +4466,8 @@ static void print_class64_t(uint64_t p, struct DisassembleInfo *info) {
     outs() << " Swift class";
   outs() << "\n";
   bool is_meta_class;
-  print_class_ro64_t((c.data + n_value) & ~0x7, info, is_meta_class);
+  if (!print_class_ro64_t((c.data + n_value) & ~0x7, info, is_meta_class))
+    return;
 
   if (!is_meta_class &&
       c.isa + isa_n_value != p &&
@@ -4533,7 +4536,8 @@ static void print_class32_t(uint32_t p, struct DisassembleInfo *info) {
     outs() << " Swift class";
   outs() << "\n";
   bool is_meta_class;
-  print_class_ro32_t(c.data & ~0x3, info, is_meta_class);
+  if (!print_class_ro32_t(c.data & ~0x3, info, is_meta_class))
+    return;
 
   if (!is_meta_class) {
     outs() << "Meta Class\n";
