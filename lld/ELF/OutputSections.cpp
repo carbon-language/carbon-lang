@@ -48,6 +48,10 @@ template <> RelocationSection<ELF32BE> *Out<ELF32BE>::RelaDyn = nullptr;
 template <> RelocationSection<ELF32LE> *Out<ELF32LE>::RelaDyn = nullptr;
 template <> RelocationSection<ELF64BE> *Out<ELF64BE>::RelaDyn = nullptr;
 template <> RelocationSection<ELF64LE> *Out<ELF64LE>::RelaDyn = nullptr;
+template <> RelocationSection<ELF32BE> *Out<ELF32BE>::RelaPlt = nullptr;
+template <> RelocationSection<ELF32LE> *Out<ELF32LE>::RelaPlt = nullptr;
+template <> RelocationSection<ELF64BE> *Out<ELF64BE>::RelaPlt = nullptr;
+template <> RelocationSection<ELF64LE> *Out<ELF64LE>::RelaPlt = nullptr;
 template <> StringTableSection<false> *Out<ELF32BE>::DynStrTab = nullptr;
 template <> StringTableSection<false> *Out<ELF32LE>::DynStrTab = nullptr;
 template <> StringTableSection<true> *Out<ELF64BE>::DynStrTab = nullptr;
@@ -139,10 +143,9 @@ void PltSection<ELFT>::finalize() {
 }
 
 template <class ELFT>
-RelocationSection<ELFT>::RelocationSection(bool IsRela)
-    : OutputSectionBase<ELFT::Is64Bits>(IsRela ? ".rela.dyn" : ".rel.dyn",
-                                        IsRela ? llvm::ELF::SHT_RELA
-                                               : llvm::ELF::SHT_REL,
+RelocationSection<ELFT>::RelocationSection(StringRef Name, bool IsRela)
+    : OutputSectionBase<ELFT::Is64Bits>(Name, IsRela ? llvm::ELF::SHT_RELA
+                                                     : llvm::ELF::SHT_REL,
                                         llvm::ELF::SHF_ALLOC),
       IsRela(IsRela) {
   this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
@@ -300,6 +303,13 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     ++NumEntries; // DT_RELASZ / DT_RELSZ
     ++NumEntries; // DT_RELAENT / DT_RELENT
   }
+  if (Out<ELFT>::RelaPlt->hasRelocs()) {
+    ++NumEntries; // DT_JMPREL
+    ++NumEntries; // DT_PLTRELSZ
+    ++NumEntries; // DT_PLTGOT
+    ++NumEntries; // DT_PLTREL
+  }
+
   ++NumEntries; // DT_SYMTAB
   ++NumEntries; // DT_SYMENT
   ++NumEntries; // DT_STRTAB
@@ -366,6 +376,12 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     WriteVal(IsRela ? DT_RELASZ : DT_RELSZ, Out<ELFT>::RelaDyn->getSize());
     WriteVal(IsRela ? DT_RELAENT : DT_RELENT,
              IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel));
+  }
+  if (Out<ELFT>::RelaPlt->hasRelocs()) {
+    WritePtr(DT_JMPREL, Out<ELFT>::RelaPlt->getVA());
+    WriteVal(DT_PLTRELSZ, Out<ELFT>::RelaPlt->getSize());
+    WritePtr(DT_PLTGOT, Out<ELFT>::Got->getVA());
+    WriteVal(DT_PLTREL, Out<ELFT>::RelaPlt->isRela() ? DT_RELA : DT_REL);
   }
 
   WritePtr(DT_SYMTAB, Out<ELFT>::DynSymTab->getVA());

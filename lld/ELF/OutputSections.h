@@ -171,7 +171,7 @@ class RelocationSection final : public OutputSectionBase<ELFT::Is64Bits> {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
-  RelocationSection(bool IsRela);
+  RelocationSection(StringRef Name, bool IsRela);
   void addReloc(const DynamicReloc<ELFT> &Reloc) { Relocs.push_back(Reloc); }
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
@@ -289,6 +289,7 @@ template <class ELFT> struct Out {
   static OutputSection<ELFT> *Bss;
   static PltSection<ELFT> *Plt;
   static RelocationSection<ELFT> *RelaDyn;
+  static RelocationSection<ELFT> *RelaPlt;
   static StringTableSection<ELFT::Is64Bits> *DynStrTab;
   static StringTableSection<ELFT::Is64Bits> *StrTab;
   static SymbolTableSection<ELFT> *DynSymTab;

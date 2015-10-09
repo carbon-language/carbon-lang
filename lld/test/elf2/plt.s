@@ -20,10 +20,10 @@
 // CHECK-NEXT: AddressAlignment: 16
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
-// CHECK-NEXT:     0x30A0 R_X86_64_GLOB_DAT bar 0x0
-// CHECK-NEXT:     0x30A8 R_X86_64_GLOB_DAT zed 0x0
-// CHECK-NEXT:     0x30B0 R_X86_64_GLOB_DAT _start 0x0
+// CHECK-NEXT:   Section ({{.*}}) .rela.plt {
+// CHECK-NEXT:     0x30B0 R_X86_64_GLOB_DAT bar 0x0
+// CHECK-NEXT:     0x30B8 R_X86_64_GLOB_DAT zed 0x0
+// CHECK-NEXT:     0x30C0 R_X86_64_GLOB_DAT _start 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -39,15 +39,15 @@
 // DISASM-NEXT:   2005:  e9 {{.*}}       jmp  22
 // DISASM-NEXT:   200a:  e9 {{.*}}       jmp  25
 
-// 0x130A0 - 0x12026  = 4218
-// 0x130A8 - 0x1202e  = 4218
+// 0x30B0 - 0x2026  = 4234
+// 0x30B8 - 0x202e  = 4234
 
 // DISASM:      Disassembly of section .plt:
 // DISASM-NEXT: .plt:
-// DISASM-NEXT:   2020:  ff 25 {{.*}}       jmpq *4218(%rip)
+// DISASM-NEXT:   2020:  ff 25 {{.*}}       jmpq *4234(%rip)
 // DISASM-NEXT:   2026:  90                 nop
 // DISASM-NEXT:   2027:  90                 nop
-// DISASM-NEXT:   2028:  ff 25 {{.*}}       jmpq *4218(%rip)
+// DISASM-NEXT:   2028:  ff 25 {{.*}}       jmpq *4234(%rip)
 // DISASM-NEXT:   202e:  90                 nop
 // DISASM-NEXT:   202f:  90                 nop
 
