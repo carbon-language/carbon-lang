@@ -66,6 +66,9 @@ TEST(ToolChainTest, VFSGCCInstallation) {
     llvm::raw_string_ostream OS(S);
     C->getDefaultToolChain().printVerboseInfo(OS);
   }
+#if LLVM_ON_WIN32
+  std::replace(S.begin(), S.end(), '\\', '/');
+#endif
   EXPECT_EQ(
       "Found candidate GCC installation: "
       "/usr/lib/gcc/arm-linux-gnueabihf/4.6.3\n"
