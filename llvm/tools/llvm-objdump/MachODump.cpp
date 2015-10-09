@@ -4984,6 +4984,9 @@ static void print_image_info64(SectionRef S, struct DisassembleInfo *info) {
   struct objc_image_info64 o;
   const char *r;
 
+  if (S == SectionRef())
+    return;
+
   StringRef SectName;
   S.getName(SectName);
   DataRefImpl Ref = S.getRawDataRefImpl();
@@ -8498,6 +8501,7 @@ public:
   StringRef segmentName(uint32_t SegIndex);
   StringRef sectionName(uint32_t SegIndex, uint64_t SegOffset);
   uint64_t address(uint32_t SegIndex, uint64_t SegOffset);
+  bool isValidSegIndexAndOffset(uint32_t SegIndex, uint64_t SegOffset);
 
 private:
   struct SectionInfo {
@@ -8544,6 +8548,20 @@ StringRef SegInfo::segmentName(uint32_t SegIndex) {
       return SI.SegmentName;
   }
   llvm_unreachable("invalid segIndex");
+}
+
+bool SegInfo::isValidSegIndexAndOffset(uint32_t SegIndex,
+                                       uint64_t OffsetInSeg) {
+  for (const SectionInfo &SI : Sections) {
+    if (SI.SegmentIndex != SegIndex)
+      continue;
+    if (SI.OffsetInSegment > OffsetInSeg)
+      continue;
+    if (OffsetInSeg >= (SI.OffsetInSegment + SI.Size))
+      continue;
+    return true;
+  }
+  return false;
 }
 
 const SegInfo::SectionInfo &SegInfo::findSection(uint32_t SegIndex,
@@ -8714,6 +8732,8 @@ static const char *get_dyld_bind_info_symbolname(uint64_t ReferenceValue,
     for (const llvm::object::MachOBindEntry &Entry : info->O->bindTable()) {
       uint32_t SegIndex = Entry.segmentIndex();
       uint64_t OffsetInSeg = Entry.segmentOffset();
+      if (!sectionTable.isValidSegIndexAndOffset(SegIndex, OffsetInSeg))
+        continue;
       uint64_t Address = sectionTable.address(SegIndex, OffsetInSeg);
       const char *SymbolName = nullptr;
       StringRef name = Entry.symbolName();

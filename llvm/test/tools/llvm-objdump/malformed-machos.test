@@ -24,3 +24,12 @@
 # RUN:   | FileCheck -check-prefix=m0040 %s 
 
 # m0040: 00000000000010a0 0xf39 -[tiny_dylib init]
+
+# RUN: llvm-objdump -macho -objc-meta-data \
+# RUN:   %p/Inputs/malformed-machos/mem-crup-0080.macho \
+# RUN:   | FileCheck -check-prefix=m0080 %s 
+
+# m0080: data 0xf960000 (struct class_ro_t *)
+
+# RUN: llvm-objdump -macho -objc-meta-data \
+# RUN:   %p/Inputs/malformed-machos/mem-crup-0261.macho
