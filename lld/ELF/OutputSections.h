@@ -295,6 +295,18 @@ template <class ELFT> struct Out {
   static SymbolTableSection<ELFT> *DynSymTab;
   static SymbolTableSection<ELFT> *SymTab;
 };
+
+template <class ELFT> DynamicSection<ELFT> *Out<ELFT>::Dynamic;
+template <class ELFT> GotSection<ELFT> *Out<ELFT>::Got;
+template <class ELFT> HashTableSection<ELFT> *Out<ELFT>::HashTab;
+template <class ELFT> InterpSection<ELFT::Is64Bits> *Out<ELFT>::Interp;
+template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Bss;
+template <class ELFT> PltSection<ELFT> *Out<ELFT>::Plt;
+template <class ELFT> RelocationSection<ELFT> *Out<ELFT>::RelaDyn;
+template <class ELFT> StringTableSection<ELFT::Is64Bits> *Out<ELFT>::DynStrTab;
+template <class ELFT> StringTableSection<ELFT::Is64Bits> *Out<ELFT>::StrTab;
+template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::DynSymTab;
+template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::SymTab;
 }
 }
 #endif

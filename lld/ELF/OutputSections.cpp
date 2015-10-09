@@ -20,51 +20,6 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf2;
 
-template <> DynamicSection<ELF32BE> *Out<ELF32BE>::Dynamic = nullptr;
-template <> DynamicSection<ELF32LE> *Out<ELF32LE>::Dynamic = nullptr;
-template <> DynamicSection<ELF64BE> *Out<ELF64BE>::Dynamic = nullptr;
-template <> DynamicSection<ELF64LE> *Out<ELF64LE>::Dynamic = nullptr;
-template <> GotSection<ELF32BE> *Out<ELF32BE>::Got = nullptr;
-template <> GotSection<ELF32LE> *Out<ELF32LE>::Got = nullptr;
-template <> GotSection<ELF64BE> *Out<ELF64BE>::Got = nullptr;
-template <> GotSection<ELF64LE> *Out<ELF64LE>::Got = nullptr;
-template <> HashTableSection<ELF32BE> *Out<ELF32BE>::HashTab = nullptr;
-template <> HashTableSection<ELF32LE> *Out<ELF32LE>::HashTab = nullptr;
-template <> HashTableSection<ELF64BE> *Out<ELF64BE>::HashTab = nullptr;
-template <> HashTableSection<ELF64LE> *Out<ELF64LE>::HashTab = nullptr;
-template <> InterpSection<false> *Out<ELF32BE>::Interp = nullptr;
-template <> InterpSection<false> *Out<ELF32LE>::Interp = nullptr;
-template <> InterpSection<true> *Out<ELF64BE>::Interp = nullptr;
-template <> InterpSection<true> *Out<ELF64LE>::Interp = nullptr;
-template <> OutputSection<ELF32BE> *Out<ELF32BE>::Bss = nullptr;
-template <> OutputSection<ELF32LE> *Out<ELF32LE>::Bss = nullptr;
-template <> OutputSection<ELF64BE> *Out<ELF64BE>::Bss = nullptr;
-template <> OutputSection<ELF64LE> *Out<ELF64LE>::Bss = nullptr;
-template <> PltSection<ELF32BE> *Out<ELF32BE>::Plt = nullptr;
-template <> PltSection<ELF32LE> *Out<ELF32LE>::Plt = nullptr;
-template <> PltSection<ELF64BE> *Out<ELF64BE>::Plt = nullptr;
-template <> PltSection<ELF64LE> *Out<ELF64LE>::Plt = nullptr;
-template <> RelocationSection<ELF32BE> *Out<ELF32BE>::RelaDyn = nullptr;
-template <> RelocationSection<ELF32LE> *Out<ELF32LE>::RelaDyn = nullptr;
-template <> RelocationSection<ELF64BE> *Out<ELF64BE>::RelaDyn = nullptr;
-template <> RelocationSection<ELF64LE> *Out<ELF64LE>::RelaDyn = nullptr;
-template <> StringTableSection<false> *Out<ELF32BE>::DynStrTab = nullptr;
-template <> StringTableSection<false> *Out<ELF32LE>::DynStrTab = nullptr;
-template <> StringTableSection<true> *Out<ELF64BE>::DynStrTab = nullptr;
-template <> StringTableSection<true> *Out<ELF64LE>::DynStrTab = nullptr;
-template <> StringTableSection<false> *Out<ELF32BE>::StrTab = nullptr;
-template <> StringTableSection<false> *Out<ELF32LE>::StrTab = nullptr;
-template <> StringTableSection<true> *Out<ELF64BE>::StrTab = nullptr;
-template <> StringTableSection<true> *Out<ELF64LE>::StrTab = nullptr;
-template <> SymbolTableSection<ELF32BE> *Out<ELF32BE>::DynSymTab = nullptr;
-template <> SymbolTableSection<ELF32LE> *Out<ELF32LE>::DynSymTab = nullptr;
-template <> SymbolTableSection<ELF64BE> *Out<ELF64BE>::DynSymTab = nullptr;
-template <> SymbolTableSection<ELF64LE> *Out<ELF64LE>::DynSymTab = nullptr;
-template <> SymbolTableSection<ELF32BE> *Out<ELF32BE>::SymTab = nullptr;
-template <> SymbolTableSection<ELF32LE> *Out<ELF32LE>::SymTab = nullptr;
-template <> SymbolTableSection<ELF64BE> *Out<ELF64BE>::SymTab = nullptr;
-template <> SymbolTableSection<ELF64LE> *Out<ELF64LE>::SymTab = nullptr;
-
 template <bool Is64Bits>
 OutputSectionBase<Is64Bits>::OutputSectionBase(StringRef Name, uint32_t sh_type,
                                                uintX_t sh_flags)
