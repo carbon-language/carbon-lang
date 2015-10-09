@@ -1555,6 +1555,8 @@ SymbolFileDWARF::CompleteType (CompilerType &compiler_type)
     DWARFDebugInfo* debug_info = DebugInfo();
     DWARFDIE dwarf_die = debug_info->GetDIE(die_it->getSecond());
 
+    assert(UserIDMatches(die_it->getSecond().GetUID()) && "CompleteType called on the wrong SymbolFile");
+
     // Once we start resolving this type, remove it from the forward declaration
     // map in case anyone child members or other types require this type to get resolved.
     // The type will get resolved when all of the calls to SymbolFileDWARF::ResolveClangOpaqueTypeDefinition

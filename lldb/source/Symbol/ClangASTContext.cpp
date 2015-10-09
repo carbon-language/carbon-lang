@@ -2593,14 +2593,16 @@ ClangASTContext::IsArrayType (lldb::opaque_compiler_type_t type,
     {
         default:
             break;
-            
+
         case clang::Type::ConstantArray:
             if (element_type_ptr)
                 element_type_ptr->SetCompilerType (getASTContext(), llvm::cast<clang::ConstantArrayType>(qual_type)->getElementType());
             if (size)
                 *size = llvm::cast<clang::ConstantArrayType>(qual_type)->getSize().getLimitedValue(ULLONG_MAX);
+            if (is_incomplete)
+                *is_incomplete = false;
             return true;
-            
+
         case clang::Type::IncompleteArray:
             if (element_type_ptr)
                 element_type_ptr->SetCompilerType (getASTContext(), llvm::cast<clang::IncompleteArrayType>(qual_type)->getElementType());
@@ -2609,21 +2611,25 @@ ClangASTContext::IsArrayType (lldb::opaque_compiler_type_t type,
             if (is_incomplete)
                 *is_incomplete = true;
             return true;
-            
+
         case clang::Type::VariableArray:
             if (element_type_ptr)
                 element_type_ptr->SetCompilerType (getASTContext(), llvm::cast<clang::VariableArrayType>(qual_type)->getElementType());
             if (size)
                 *size = 0;
+            if (is_incomplete)
+                *is_incomplete = false;
             return true;
-            
+
         case clang::Type::DependentSizedArray:
             if (element_type_ptr)
                 element_type_ptr->SetCompilerType (getASTContext(), llvm::cast<clang::DependentSizedArrayType>(qual_type)->getElementType());
             if (size)
                 *size = 0;
+            if (is_incomplete)
+                *is_incomplete = false;
             return true;
-            
+
         case clang::Type::Typedef:
             return IsArrayType(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                element_type_ptr,

@@ -41,6 +41,9 @@ public:
     lldb_private::DWARFExpression::LocationListFormat
     GetLocationListFormat() const override;
 
+    lldb_private::TypeSystem*
+    GetTypeSystemForLanguage(lldb::LanguageType language) override;
+
 protected:
     DIEToTypePtr&
     GetDIEToType() override;
