@@ -20,9 +20,9 @@
 // CHECK-NEXT: AddressAlignment: 16
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section ({{.*}}) .rel.plt {
-// CHECK-NEXT:     0x13058 R_386_GLOB_DAT bar 0x0
-// CHECK-NEXT:     0x1305C R_386_GLOB_DAT zed 0x0
+// CHECK-NEXT:   Section ({{.*}}) .rel.dyn {
+// CHECK-NEXT:     0x13050 R_386_GLOB_DAT bar 0x0
+// CHECK-NEXT:     0x13054 R_386_GLOB_DAT zed 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -38,15 +38,15 @@
 // DISASM-NEXT:   12005:  e9 06 00 00 00  jmp  6
 // DISASM-NEXT:   1200a:  e9 09 00 00 00  jmp  9
 
-// 0x13058 = 77912
-// 0x1305C = 77916
+// 0x13050 = 77904
+// 0x13054 = 77908
 
 // DISASM:      Disassembly of section .plt:
 // DISASM-NEXT: .plt:
-// DISASM-NEXT:   12010:  ff 25 {{.*}}       jmpl *77912
+// DISASM-NEXT:   12010:  ff 25 {{.*}}       jmpl *77904
 // DISASM-NEXT:   12016:  90                 nop
 // DISASM-NEXT:   12017:  90                 nop
-// DISASM-NEXT:   12018:  ff 25 {{.*}}       jmpl *77916
+// DISASM-NEXT:   12018:  ff 25 {{.*}}       jmpl *77908
 // DISASM-NEXT:   1201e:  90                 nop
 // DISASM-NEXT:   1201f:  90                 nop
 

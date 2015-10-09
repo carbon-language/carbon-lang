@@ -134,11 +134,8 @@ template <class ELFT> static void doWriteResult(SymbolTable *Symtab) {
   Out<ELFT>::DynSymTab = &DynSymTab;
   HashTableSection<ELFT> HashTab;
   Out<ELFT>::HashTab = &HashTab;
-  bool IsRela = Symtab->shouldUseRela();
-  RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
+  RelocationSection<ELFT> RelaDyn(Symtab->shouldUseRela());
   Out<ELFT>::RelaDyn = &RelaDyn;
-  RelocationSection<ELFT> RelaPlt(IsRela ? ".rela.plt" : ".rel.plt", IsRela);
-  Out<ELFT>::RelaPlt = &RelaPlt;
   DynamicSection<ELFT> Dynamic(*Symtab);
   Out<ELFT>::Dynamic = &Dynamic;
 
@@ -236,15 +233,11 @@ void Writer<ELFT>::scanRelocs(
         Out<ELFT>::Got->addEntry(Body);
       }
     }
-
-    bool CanBePreempted = canBePreempted(Body);
-    if (CanBePreempted)
+    if (canBePreempted(Body)) {
       Body->setUsedInDynamicReloc();
-    if (CanBePreempted || (Config->Shared && !Target->isRelRelative(Type))) {
-      if (Body && Body->isInPlt())
-        Out<ELFT>::RelaPlt->addReloc({C, RI});
-      else
-        Out<ELFT>::RelaDyn->addReloc({C, RI});
+      Out<ELFT>::RelaDyn->addReloc({C, RI});
+    } else if (Config->Shared && !Target->isRelRelative(Type)) {
+      Out<ELFT>::RelaDyn->addReloc({C, RI});
     }
   }
 }
@@ -473,8 +466,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections.push_back(Out<ELFT>::DynStrTab);
     if (Out<ELFT>::RelaDyn->hasRelocs())
       OutputSections.push_back(Out<ELFT>::RelaDyn);
-    if (Out<ELFT>::RelaPlt->hasRelocs())
-      OutputSections.push_back(Out<ELFT>::RelaPlt);
   }
   if (!Out<ELFT>::Got->empty())
     OutputSections.push_back(Out<ELFT>::Got);
