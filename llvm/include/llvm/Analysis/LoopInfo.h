@@ -140,6 +140,9 @@ public:
   typedef typename std::vector<BlockT*>::const_iterator block_iterator;
   block_iterator block_begin() const { return Blocks.begin(); }
   block_iterator block_end() const { return Blocks.end(); }
+  inline iterator_range<block_iterator> blocks() const {
+    return iterator_range<block_iterator>(block_begin(), block_end());
+  }
 
   /// getNumBlocks - Get the number of blocks in this loop in constant time.
   unsigned getNumBlocks() const {
