@@ -40,23 +40,6 @@ public:
   /// \returns true if the file was updated successfully. False, otherwise.
   virtual bool write(StringRef FName, const FunctionSamples &S) = 0;
 
-  /// \brief Write sample profiles in \p S for function \p F.
-  bool write(const Function &F, const FunctionSamples &S) {
-    return write(F.getName(), S);
-  }
-
-  /// \brief Write all the sample profiles for all the functions in \p M.
-  ///
-  /// \returns true if the file was updated successfully. False, otherwise.
-  bool write(const Module &M, StringMap<FunctionSamples> &P) {
-    for (const auto &F : M) {
-      StringRef Name = F.getName();
-      if (!write(Name, P[Name]))
-        return false;
-    }
-    return true;
-  }
-
   /// \brief Write all the sample profiles in the given map of samples.
   ///
   /// \returns true if the file was updated successfully. False, otherwise.
@@ -87,9 +70,6 @@ public:
       : SampleProfileWriter(F, EC, sys::fs::F_Text), Indent(0) {}
 
   bool write(StringRef FName, const FunctionSamples &S) override;
-  bool write(const Module &M, StringMap<FunctionSamples> &P) {
-    return SampleProfileWriter::write(M, P);
-  }
 
 private:
   /// Indent level to use when writing.
@@ -104,9 +84,6 @@ public:
   SampleProfileWriterBinary(StringRef F, std::error_code &EC);
 
   bool write(StringRef F, const FunctionSamples &S) override;
-  bool write(const Module &M, StringMap<FunctionSamples> &P) {
-    return SampleProfileWriter::write(M, P);
-  }
 };
 
 } // End namespace sampleprof
