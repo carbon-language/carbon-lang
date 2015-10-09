@@ -966,7 +966,7 @@ void BlockFrequencyInfoImpl<BT>::calculate(const FunctionT &F,
 }
 
 template <class BT> void BlockFrequencyInfoImpl<BT>::initializeRPOT() {
-  const BlockT *Entry = F->begin();
+  const BlockT *Entry = &F->front();
   RPOT.reserve(F->size());
   std::copy(po_begin(Entry), po_end(Entry), std::back_inserter(RPOT));
   std::reverse(RPOT.begin(), RPOT.end());

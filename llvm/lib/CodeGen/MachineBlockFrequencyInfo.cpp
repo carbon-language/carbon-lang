@@ -57,7 +57,7 @@ struct GraphTraits<MachineBlockFrequencyInfo *> {
 
   static inline
   const NodeType *getEntryNode(const MachineBlockFrequencyInfo *G) {
-    return G->getFunction()->begin();
+    return &G->getFunction()->front();
   }
 
   static ChildIteratorType child_begin(const NodeType *N) {
