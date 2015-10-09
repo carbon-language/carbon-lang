@@ -1311,8 +1311,8 @@ void Sema::AddAssumeAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
 /// Normalize the attribute, __foo__ becomes foo.
 /// Returns true if normalization was applied.
 static bool normalizeName(StringRef &AttrName) {
-  if (AttrName.startswith("__") && AttrName.endswith("__")) {
-    assert(AttrName.size() > 4 && "Name too short");
+  if (AttrName.size() > 4 && AttrName.startswith("__") &&
+      AttrName.endswith("__")) {
     AttrName = AttrName.drop_front(2).drop_back(2);
     return true;
   }
