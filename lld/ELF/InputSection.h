@@ -56,6 +56,8 @@ public:
   // Relocation sections that refer to this one.
   SmallVector<const Elf_Shdr *, 1> RelocSections;
 
+  static InputSection<ELFT> Discarded;
+
 private:
   template <bool isRela>
   void relocate(uint8_t *Buf,
@@ -74,6 +76,9 @@ private:
 
   const Elf_Shdr *Header;
 };
+
+template <class ELFT>
+InputSection<ELFT> InputSection<ELFT>::Discarded(nullptr, nullptr);
 
 } // namespace elf2
 } // namespace lld

@@ -37,9 +37,6 @@ public:
   Kind kind() const { return FileKind; }
   virtual ~InputFile() {}
 
-  // Reads a file (constructors don't do that).
-  virtual void parse() = 0;
-
   StringRef getName() const { return MB.getBufferIdentifier(); }
 
 protected:
@@ -75,6 +72,7 @@ public:
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
 
   ArrayRef<SymbolBody *> getSymbols() { return SymbolBodies; }
+  virtual void parse(llvm::DenseSet<StringRef> &Comdats) = 0;
 
 protected:
   // List of all symbols referenced or defined by this file.
@@ -126,6 +124,11 @@ class ObjectFile : public ObjectFileBase, public ELFData<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
 
+  typedef llvm::support::detail::packed_endian_specific_integral<
+      uint32_t, ELFT::TargetEndianness, 2> GroupEntryType;
+  StringRef getShtGroupSignature(const Elf_Shdr &Sec);
+  ArrayRef<GroupEntryType> getShtGroupEntries(const Elf_Shdr &Sec);
+
 public:
   using ELFData<ELFT>::getEMachine;
 
@@ -135,7 +138,7 @@ public:
   }
 
   explicit ObjectFile(MemoryBufferRef M);
-  void parse() override;
+  void parse(llvm::DenseSet<StringRef> &Comdats) override;
 
   ArrayRef<InputSection<ELFT> *> getSections() const { return Sections; }
 
@@ -152,7 +155,7 @@ public:
   ArrayRef<Elf_Word> getSymbolTableShndx() const { return SymtabSHNDX; };
 
 private:
-  void initializeSections();
+  void initializeSections(llvm::DenseSet<StringRef> &Comdats);
   void initializeSymbols();
 
   SymbolBody *createSymbolBody(StringRef StringTable, const Elf_Sym *Sym);
@@ -167,7 +170,7 @@ class ArchiveFile : public InputFile {
 public:
   explicit ArchiveFile(MemoryBufferRef M) : InputFile(ArchiveKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == ArchiveKind; }
-  void parse() override;
+  void parse();
 
   // Returns a memory buffer for a given symbol. An empty memory buffer
   // is returned if we have already returned the same memory buffer.
@@ -194,6 +197,7 @@ public:
   static bool classof(const InputFile *F) { return F->kind() == SharedKind; }
   StringRef getSoName() const { return SoName; }
   virtual void parseSoName() = 0;
+  virtual void parse() = 0;
 };
 
 template <class ELFT>

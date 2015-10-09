@@ -95,19 +95,65 @@ typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
   return this->getSymbolsHelper(true);
 }
 
-template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
+template <class ELFT>
+void elf2::ObjectFile<ELFT>::parse(DenseSet<StringRef> &Comdats) {
   // Read section and symbol tables.
-  initializeSections();
+  initializeSections(Comdats);
   initializeSymbols();
 }
 
-template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSections() {
+template <class ELFT>
+StringRef ObjectFile<ELFT>::getShtGroupSignature(const Elf_Shdr &Sec) {
+  const ELFFile<ELFT> &Obj = this->ELFObj;
+  uint32_t SymtabdSectionIndex = Sec.sh_link;
+  ErrorOr<const Elf_Shdr *> SecOrErr = Obj.getSection(SymtabdSectionIndex);
+  error(SecOrErr);
+  const Elf_Shdr *SymtabSec = *SecOrErr;
+  uint32_t SymIndex = Sec.sh_info;
+  const Elf_Sym *Sym = Obj.getSymbol(SymtabSec, SymIndex);
+  ErrorOr<StringRef> StringTableOrErr = Obj.getStringTableForSymtab(*SymtabSec);
+  error(StringTableOrErr);
+  ErrorOr<StringRef> SignatureOrErr = Sym->getName(*StringTableOrErr);
+  error(SignatureOrErr);
+  return *SignatureOrErr;
+}
+
+template <class ELFT>
+ArrayRef<typename ObjectFile<ELFT>::GroupEntryType>
+ObjectFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
+  const ELFFile<ELFT> &Obj = this->ELFObj;
+  ErrorOr<ArrayRef<GroupEntryType>> EntriesOrErr =
+      Obj.template getSectionContentsAsArray<GroupEntryType>(&Sec);
+  error(EntriesOrErr.getError());
+  ArrayRef<GroupEntryType> Entries = *EntriesOrErr;
+  if (Entries.empty() || Entries[0] != GRP_COMDAT)
+    error("Unsupported SHT_GROUP format");
+  return Entries.slice(1);
+}
+
+template <class ELFT>
+void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
   uint64_t Size = this->ELFObj.getNumSections();
   Sections.resize(Size);
-  unsigned I = 0;
+  unsigned I = -1;
   const ELFFile<ELFT> &Obj = this->ELFObj;
   for (const Elf_Shdr &Sec : Obj.sections()) {
+    ++I;
+    if (Sections[I] == &InputSection<ELFT>::Discarded)
+      continue;
+
     switch (Sec.sh_type) {
+    case SHT_GROUP:
+      Sections[I] = &InputSection<ELFT>::Discarded;
+      if (Comdats.insert(getShtGroupSignature(Sec)).second)
+        continue;
+      for (GroupEntryType E : getShtGroupEntries(Sec)) {
+        uint32_t SecIndex = E;
+        if (SecIndex >= Size)
+          error("Invalid section index in group");
+        Sections[SecIndex] = &InputSection<ELFT>::Discarded;
+      }
+      break;
     case SHT_SYMTAB:
       this->Symtab = &Sec;
       break;
@@ -135,7 +181,6 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSections() {
       Sections[I] = new (Alloc) InputSection<ELFT>(this, &Sec);
       break;
     }
-    ++I;
   }
 }
 
@@ -177,8 +222,12 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
     error("unexpected binding");
   case STB_GLOBAL:
   case STB_WEAK:
-  case STB_GNU_UNIQUE:
-    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sections[SecIndex]);
+  case STB_GNU_UNIQUE: {
+    InputSection<ELFT> *Sec = Sections[SecIndex];
+    if (Sec == &InputSection<ELFT>::Discarded)
+      return new (Alloc) Undefined<ELFT>(Name, *Sym);
+    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sec);
+  }
   }
 }
 

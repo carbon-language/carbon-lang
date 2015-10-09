@@ -475,6 +475,14 @@ lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
         Sym, File.getSymbolTable(), File.getSymbolTableShndx());
   ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
   InputSection<ELFT> *Section = Sections[SecIndex];
+
+  // According to the ELF spec reference to a local symbol from outside
+  // the group are not allowed. Unfortunately .eh_frame breaks that rule
+  // and must be treated specially. For now we just replace the symbol with
+  // 0.
+  if (Section == &InputSection<ELFT>::Discarded)
+    return 0;
+
   OutputSection<ELFT> *OutSec = Section->getOutputSection();
   return OutSec->getVA() + Section->getOutputSectionOff() + Sym->st_value;
 }
@@ -534,10 +542,23 @@ bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
 }
 
 template <class ELFT>
-bool lld::elf2::shouldKeepInSymtab(StringRef SymName,
+bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
+                                   StringRef SymName,
                                    const typename ELFFile<ELFT>::Elf_Sym &Sym) {
   if (Sym.getType() == STT_SECTION)
     return false;
+
+  // If sym references a section in a discarded group, don't keep it.
+  uint32_t SecIndex = Sym.st_shndx;
+  if (SecIndex != SHN_ABS) {
+    if (SecIndex == SHN_XINDEX)
+      SecIndex = File.getObj().getExtendedSymbolTableIndex(
+          &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
+    ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
+    const InputSection<ELFT> *Section = Sections[SecIndex];
+    if (Section == &InputSection<ELFT>::Discarded)
+      return false;
+  }
 
   if (Config->DiscardNone)
     return true;
@@ -597,8 +618,9 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
       ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
       error(SymNameOrErr);
       StringRef SymName = *SymNameOrErr;
-      if (!shouldKeepInSymtab<ELFT>(SymName, Sym))
+      if (!shouldKeepInSymtab<ELFT>(File, SymName, Sym))
         continue;
+
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
       Buf += sizeof(*ESym);
       ESym->st_name = StrTabSec.getFileOff(SymName);
@@ -774,13 +796,17 @@ template bool includeInSymtab<ELF32BE>(const SymbolBody &);
 template bool includeInSymtab<ELF64LE>(const SymbolBody &);
 template bool includeInSymtab<ELF64BE>(const SymbolBody &);
 
-template bool shouldKeepInSymtab<ELF32LE>(StringRef,
+template bool shouldKeepInSymtab<ELF32LE>(const ObjectFile<ELF32LE> &,
+                                          StringRef,
                                           const ELFFile<ELF32LE>::Elf_Sym &);
-template bool shouldKeepInSymtab<ELF32BE>(StringRef,
+template bool shouldKeepInSymtab<ELF32BE>(const ObjectFile<ELF32BE> &,
+                                          StringRef,
                                           const ELFFile<ELF32BE>::Elf_Sym &);
-template bool shouldKeepInSymtab<ELF64LE>(StringRef,
+template bool shouldKeepInSymtab<ELF64LE>(const ObjectFile<ELF64LE> &,
+                                          StringRef,
                                           const ELFFile<ELF64LE>::Elf_Sym &);
-template bool shouldKeepInSymtab<ELF64BE>(StringRef,
+template bool shouldKeepInSymtab<ELF64BE>(const ObjectFile<ELF64BE> &,
+                                          StringRef,
                                           const ELFFile<ELF64BE>::Elf_Sym &);
 }
 }

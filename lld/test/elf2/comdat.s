@@ -1,0 +1,72 @@
+// RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t.o
+// RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %p/Inputs/comdat.s -o %t2.o
+// RUN: ld.lld2 -shared %t.o %t.o %t2.o -o %t
+// RUN: llvm-objdump -d %t | FileCheck %s
+// RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=READ %s
+// REQUIRES: x86
+
+        .section	.text2,"axG",@progbits,foo,comdat,unique,0
+foo:
+        nop
+
+// CHECK: Disassembly of section .text2:
+// CHECK-NEXT: foo:
+// CHECK-NEXT:   2000: {{.*}}  nop
+// CHECK-NOT: nop
+
+        .section bar, "ax"
+        call foo
+
+// CHECK: Disassembly of section bar:
+// CHECK-NEXT: bar:
+// 0x2000 - 0x2001 - 5 = -6
+// 0      - 0x2006 - 5 = -8203
+// CHECK-NEXT:   2001:	{{.*}}  callq  -6
+// CHECK-NEXT:   2006:	{{.*}}  callq  -8203
+
+        .section .text3,"axG",@progbits,zed,comdat,unique,0
+
+
+// READ:      Name: .text2
+// READ-NEXT: Type: SHT_PROGBITS
+// READ-NEXT: Flags [
+// READ-NEXT:   SHF_ALLOC
+// READ-NEXT:   SHF_EXECINSTR
+// READ-NEXT: ]
+
+// READ:      Name: .text3
+// READ-NEXT: Type: SHT_PROGBITS
+// READ-NEXT: Flags [
+// READ-NEXT:   SHF_ALLOC
+// READ-NEXT:   SHF_EXECINSTR
+// READ-NEXT: ]
+
+// READ:      Symbols [
+// READ-NEXT:   Symbol {
+// READ-NEXT:     Name:  (0)
+// READ-NEXT:     Value: 0x0
+// READ-NEXT:     Size: 0
+// READ-NEXT:     Binding: Local
+// READ-NEXT:     Type: None
+// READ-NEXT:     Other: 0
+// READ-NEXT:     Section: Undefined
+// READ-NEXT:   }
+// READ-NEXT:   Symbol {
+// READ-NEXT:     Name: foo
+// READ-NEXT:     Value
+// READ-NEXT:     Size: 0
+// READ-NEXT:     Binding: Local
+// READ-NEXT:     Type: None
+// READ-NEXT:     Other: 0
+// READ-NEXT:     Section: .text
+// READ-NEXT:   }
+// READ-NEXT:   Symbol {
+// READ-NEXT:     Name: abc
+// READ-NEXT:     Value: 0x0
+// READ-NEXT:     Size: 0
+// READ-NEXT:     Binding: Global
+// READ-NEXT:     Type: None
+// READ-NEXT:     Other: 0
+// READ-NEXT:     Section: Undefined
+// READ-NEXT:   }
+// READ-NEXT: ]

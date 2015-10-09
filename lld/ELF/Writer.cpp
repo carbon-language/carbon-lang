@@ -295,8 +295,9 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       ErrorOr<StringRef> SymNameOrErr = Sym.getName(File.getStringTable());
       error(SymNameOrErr);
       StringRef SymName = *SymNameOrErr;
-      if (shouldKeepInSymtab<ELFT>(SymName, Sym))
-        Out<ELFT>::SymTab->addSymbol(SymName, true);
+      if (!shouldKeepInSymtab<ELFT>(File, SymName, Sym))
+        continue;
+      Out<ELFT>::SymTab->addSymbol(SymName, true);
     }
   }
 }
@@ -398,11 +399,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.getObjectFiles()) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     for (InputSection<ELFT> *C : File.getSections()) {
-      if (!C)
+      if (!C || C == &InputSection<ELFT>::Discarded)
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
-      SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type,
-                                     H->sh_flags};
+      uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
+      SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type, OutFlags};
       OutputSection<ELFT> *&Sec = Map[Key];
       if (!Sec) {
         Sec = new (CAlloc.Allocate())

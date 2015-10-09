@@ -45,8 +45,10 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
     S->parseSoName();
     if (!IncludedSoNames.insert(S->getSoName()).second)
       return;
+    S->parse();
+  } else {
+    cast<ObjectFileBase>(File.get())->parse(Comdats);
   }
-  File->parse();
   addELFFile(cast<ELFFileBase>(File.release()));
 }
 

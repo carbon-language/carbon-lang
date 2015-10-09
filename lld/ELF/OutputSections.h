@@ -46,7 +46,8 @@ bool includeInDynamicSymtab(const SymbolBody &B);
 
 template <class ELFT>
 bool shouldKeepInSymtab(
-    StringRef Name, const typename llvm::object::ELFFile<ELFT>::Elf_Sym &Sym);
+    const ObjectFile<ELFT> &File, StringRef Name,
+    const typename llvm::object::ELFFile<ELFT>::Elf_Sym &Sym);
 
 // This represents a section in an output file.
 // Different sub classes represent different types of sections. Some contain
