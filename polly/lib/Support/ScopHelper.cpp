@@ -14,12 +14,14 @@
 #include "polly/Support/ScopHelper.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
+#include "polly/Support/SCEVValidator.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/IR/CFG.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
@@ -400,4 +402,44 @@ bool polly::isHoistableLoad(LoadInst *LInst, Region &R, LoopInfo &LI,
   }
 
   return true;
+}
+
+bool polly::isIgnoredIntrinsic(const Value *V) {
+  if (auto *IT = dyn_cast<IntrinsicInst>(V)) {
+    switch (IT->getIntrinsicID()) {
+    // Lifetime markers are supported/ignored.
+    case llvm::Intrinsic::lifetime_start:
+    case llvm::Intrinsic::lifetime_end:
+    // Invariant markers are supported/ignored.
+    case llvm::Intrinsic::invariant_start:
+    case llvm::Intrinsic::invariant_end:
+    // Some misc annotations are supported/ignored.
+    case llvm::Intrinsic::var_annotation:
+    case llvm::Intrinsic::ptr_annotation:
+    case llvm::Intrinsic::annotation:
+    case llvm::Intrinsic::donothing:
+    case llvm::Intrinsic::assume:
+    case llvm::Intrinsic::expect:
+    // Some debug info intrisics are supported/ignored.
+    case llvm::Intrinsic::dbg_value:
+    case llvm::Intrinsic::dbg_declare:
+      return true;
+    default:
+      break;
+    }
+  }
+  return false;
+}
+
+bool polly::canSynthesize(const Value *V, const llvm::LoopInfo *LI,
+                          ScalarEvolution *SE, const Region *R) {
+  if (!V || !SE->isSCEVable(V->getType()))
+    return false;
+
+  if (const SCEV *Scev = SE->getSCEV(const_cast<Value *>(V)))
+    if (!isa<SCEVCouldNotCompute>(Scev))
+      if (!hasScalarDepsInsideRegion(Scev, R))
+        return true;
+
+  return false;
 }

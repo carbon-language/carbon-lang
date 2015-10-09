@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 //
 #include "polly/LinkAllPasses.h"
-#include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Options.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"

@@ -37,26 +37,6 @@ class ScopStmt;
 class MemoryAccess;
 class IslExprBuilder;
 
-/// @brief Check whether a value an be synthesized by the code generator.
-///
-/// Some value will be recalculated only from information that is code generated
-/// from the polyhedral representation. For such instructions we do not need to
-/// ensure that their operands are available during code generation.
-///
-/// @param V The value to check.
-/// @param LI The LoopInfo analysis.
-/// @param SE The scalar evolution database.
-/// @param R The region out of which SSA names are parameters.
-/// @return If the instruction I can be regenerated from its
-///         scalar evolution representation, return true,
-///         otherwise return false.
-bool canSynthesize(const llvm::Value *V, const llvm::LoopInfo *LI,
-                   llvm::ScalarEvolution *SE, const llvm::Region *R);
-
-/// @brief Return true iff @p V is an intrinsic that we ignore during code
-///        generation.
-bool isIgnoredIntrinsic(const llvm::Value *V);
-
 /// @brief Generate a new basic block for a polyhedral statement.
 class BlockGenerator {
 public:
