@@ -22,7 +22,7 @@ declare double @llvm.rint.f64(double)
 ; CHECK-NEXT: set_local @2, pop{{$}}
 ; CHECK-NEXT: @0{{$}}
 ; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: fadd @3, @2{{$}}
+; CHECK-NEXT: add @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 ; CHECK-NEXT: return @4{{$}}
 define double @fadd64(double %x, double %y) {
@@ -31,7 +31,7 @@ define double @fadd64(double %x, double %y) {
 }
 
 ; CHECK-LABEL: fsub64:
-; CHECK: fsub @3, @2{{$}}
+; CHECK: sub @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 define double @fsub64(double %x, double %y) {
   %a = fsub double %x, %y
@@ -39,7 +39,7 @@ define double @fsub64(double %x, double %y) {
 }
 
 ; CHECK-LABEL: fmul64:
-; CHECK: fmul @3, @2{{$}}
+; CHECK: mul @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 define double @fmul64(double %x, double %y) {
   %a = fmul double %x, %y
@@ -47,7 +47,7 @@ define double @fmul64(double %x, double %y) {
 }
 
 ; CHECK-LABEL: fdiv64:
-; CHECK: fdiv @3, @2{{$}}
+; CHECK: div @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 define double @fdiv64(double %x, double %y) {
   %a = fdiv double %x, %y
@@ -55,7 +55,7 @@ define double @fdiv64(double %x, double %y) {
 }
 
 ; CHECK-LABEL: fabs64:
-; CHECK: fabs @1{{$}}
+; CHECK: abs @1{{$}}
 ; CHECK-NEXT: set_local @2, pop{{$}}
 define double @fabs64(double %x) {
   %a = call double @llvm.fabs.f64(double %x)
@@ -63,7 +63,7 @@ define double @fabs64(double %x) {
 }
 
 ; CHECK-LABEL: fneg64:
-; CHECK: fneg @1{{$}}
+; CHECK: neg @1{{$}}
 ; CHECK-NEXT: set_local @2, pop{{$}}
 define double @fneg64(double %x) {
   %a = fsub double -0., %x

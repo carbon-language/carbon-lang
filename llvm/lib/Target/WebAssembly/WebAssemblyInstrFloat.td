@@ -12,14 +12,14 @@
 ///
 //===----------------------------------------------------------------------===//
 
-defm FADD : BinaryFP<fadd>;
-defm FSUB : BinaryFP<fsub>;
-defm FMUL : BinaryFP<fmul>;
-defm FDIV : BinaryFP<fdiv>;
+defm ADD : BinaryFP<fadd>;
+defm SUB : BinaryFP<fsub>;
+defm MUL : BinaryFP<fmul>;
+defm DIV : BinaryFP<fdiv>;
 defm SQRT : UnaryFP<fsqrt>;
 
-defm FABS : UnaryFP<fabs>;
-defm FNEG : UnaryFP<fneg>;
+defm ABS : UnaryFP<fabs>;
+defm NEG : UnaryFP<fneg>;
 defm COPYSIGN : BinaryFP<fcopysign>;
 
 defm CEIL : UnaryFP<fceil>;

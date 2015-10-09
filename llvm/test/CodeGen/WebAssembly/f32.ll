@@ -22,7 +22,7 @@ declare float @llvm.rint.f32(float)
 ; CHECK-NEXT: set_local @2, pop{{$}}
 ; CHECK-NEXT: @0{{$}}
 ; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: fadd @3, @2{{$}}
+; CHECK-NEXT: add @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 ; CHECK-NEXT: return @4{{$}}
 define float @fadd32(float %x, float %y) {
@@ -31,7 +31,7 @@ define float @fadd32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: fsub32:
-; CHECK: fsub @3, @2{{$}}
+; CHECK: sub @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 define float @fsub32(float %x, float %y) {
   %a = fsub float %x, %y
@@ -39,7 +39,7 @@ define float @fsub32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: fmul32:
-; CHECK: fmul @3, @2{{$}}
+; CHECK: mul @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 define float @fmul32(float %x, float %y) {
   %a = fmul float %x, %y
@@ -47,7 +47,7 @@ define float @fmul32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: fdiv32:
-; CHECK: fdiv @3, @2{{$}}
+; CHECK: div @3, @2{{$}}
 ; CHECK-NEXT: set_local @4, pop{{$}}
 define float @fdiv32(float %x, float %y) {
   %a = fdiv float %x, %y
@@ -55,7 +55,7 @@ define float @fdiv32(float %x, float %y) {
 }
 
 ; CHECK-LABEL: fabs32:
-; CHECK: fabs @1{{$}}
+; CHECK: abs @1{{$}}
 ; CHECK-NEXT: set_local @2, pop{{$}}
 define float @fabs32(float %x) {
   %a = call float @llvm.fabs.f32(float %x)
@@ -63,7 +63,7 @@ define float @fabs32(float %x) {
 }
 
 ; CHECK-LABEL: fneg32:
-; CHECK: fneg @1{{$}}
+; CHECK: neg @1{{$}}
 ; CHECK-NEXT: set_local @2, pop{{$}}
 define float @fneg32(float %x) {
   %a = fsub float -0., %x
