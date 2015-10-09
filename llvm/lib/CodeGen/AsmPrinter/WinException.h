@@ -41,6 +41,9 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
 
   void emitCSpecificHandlerTable(const MachineFunction *MF);
 
+  void emitSEHActionsForRange(WinEHFuncInfo &FuncInfo, MCSymbol *BeginLabel,
+                              MCSymbol *EndLabel, int State);
+
   /// Emit the EH table data for 32-bit and 64-bit functions using
   /// the __CxxFrameHandler3 personality.
   void emitCXXFrameHandler3Table(const MachineFunction *MF);

@@ -418,7 +418,7 @@ invoke_ranges(WinEHFuncInfo &EHInfo, const MachineBasicBlock &MBB) {
 ///       imagerel32 LabelStart;
 ///       imagerel32 LabelEnd;
 ///       imagerel32 FilterOrFinally;  // One means catch-all.
-///       imagerel32 LabelLPad;        // Zero means __finally.
+///       imagerel32 ExceptOrNull;     // Zero means __finally.
 ///     } Entries[NumEntries];
 ///   };
 void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
@@ -469,39 +469,20 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
 
         // If this invoke ends a previous one, emit all the actions for this
         // state.
-        if (LastEHState != -1) {
-          assert(LastBeginLabel && LastEndLabel);
-          for (int State = LastEHState; State != -1;) {
-            SEHUnwindMapEntry &UME = FuncInfo.SEHUnwindMap[State];
-            const MCExpr *FilterOrFinally;
-            const MCExpr *ExceptOrNull;
-            auto *Handler = UME.Handler.get<MachineBasicBlock *>();
-            if (UME.IsFinally) {
-              FilterOrFinally =
-                  create32bitRef(getMCSymbolForMBBOrGV(Asm, Handler));
-              ExceptOrNull = MCConstantExpr::create(0, Ctx);
-            } else {
-              // For an except, the filter can be 1 (catch-all) or a function
-              // label.
-              FilterOrFinally = UME.Filter ? create32bitRef(UME.Filter)
-                                           : MCConstantExpr::create(1, Ctx);
-              ExceptOrNull = create32bitRef(Handler->getSymbol());
-            }
-
-            OS.EmitValue(getLabelPlusOne(LastBeginLabel), 4);
-            OS.EmitValue(getLabelPlusOne(LastEndLabel), 4);
-            OS.EmitValue(FilterOrFinally, 4);
-            OS.EmitValue(ExceptOrNull, 4);
-
-            State = UME.ToState;
-          }
-        }
+        if (LastEHState != -1)
+          emitSEHActionsForRange(FuncInfo, LastBeginLabel, LastEndLabel,
+                                 LastEHState);
 
         LastBeginLabel = I.BeginLabel;
         LastEndLabel = I.EndLabel;
         LastEHState = I.State;
       }
     }
+
+    if (LastEndLabel)
+      emitSEHActionsForRange(FuncInfo, LastBeginLabel, LastEndLabel,
+                             LastEHState);
+
     OS.EmitLabel(TableEnd);
     return;
   }
@@ -586,6 +567,45 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
       else
         OS.EmitIntValue(0, 4);
     }
+  }
+}
+
+void WinException::emitSEHActionsForRange(WinEHFuncInfo &FuncInfo,
+                                          MCSymbol *BeginLabel,
+                                          MCSymbol *EndLabel, int State) {
+  auto &OS = *Asm->OutStreamer;
+  MCContext &Ctx = Asm->OutContext;
+
+  assert(BeginLabel && EndLabel);
+  while (State != -1) {
+    // struct Entry {
+    //   imagerel32 LabelStart;
+    //   imagerel32 LabelEnd;
+    //   imagerel32 FilterOrFinally;  // One means catch-all.
+    //   imagerel32 ExceptOrNull;     // Zero means __finally.
+    // };
+    SEHUnwindMapEntry &UME = FuncInfo.SEHUnwindMap[State];
+    const MCExpr *FilterOrFinally;
+    const MCExpr *ExceptOrNull;
+    auto *Handler = UME.Handler.get<MachineBasicBlock *>();
+    if (UME.IsFinally) {
+      FilterOrFinally = create32bitRef(getMCSymbolForMBBOrGV(Asm, Handler));
+      ExceptOrNull = MCConstantExpr::create(0, Ctx);
+    } else {
+      // For an except, the filter can be 1 (catch-all) or a function
+      // label.
+      FilterOrFinally = UME.Filter ? create32bitRef(UME.Filter)
+                                   : MCConstantExpr::create(1, Ctx);
+      ExceptOrNull = create32bitRef(Handler->getSymbol());
+    }
+
+    OS.EmitValue(getLabelPlusOne(BeginLabel), 4);
+    OS.EmitValue(getLabelPlusOne(EndLabel), 4);
+    OS.EmitValue(FilterOrFinally, 4);
+    OS.EmitValue(ExceptOrNull, 4);
+
+    assert(UME.ToState < State && "states should decrease");
+    State = UME.ToState;
   }
 }
 

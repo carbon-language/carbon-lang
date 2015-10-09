@@ -2,6 +2,7 @@
 
 @str = linkonce_odr unnamed_addr constant [27 x i8] c"GetExceptionCode(): 0x%lx\0A\00", align 1
 
+declare i32 @llvm.eh.exceptioncode(token)
 declare i32 @__C_specific_handler(...)
 declare void @crash()
 declare i32 @printf(i8* nocapture readonly, ...) nounwind
@@ -11,20 +12,20 @@ entry:
   invoke void @crash()
           to label %__try.cont unwind label %lpad
 
-lpad:
-  %0 = landingpad { i8*, i32 }
-          catch i8* null
-  %1 = extractvalue { i8*, i32 } %0, 0
-  %2 = ptrtoint i8* %1 to i64
-  %3 = trunc i64 %2 to i32
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([27 x i8], [27 x i8]* @str, i64 0, i64 0), i32 %3)
-  br label %__try.cont
-
 __try.cont:
   ret i32 0
 
-eh.resume:
-  resume { i8*, i32 } %0
+lpad:
+  %p = catchpad [i8* null, i32 64, i8* null]
+          to label %catchall unwind label %endpad
+
+catchall:
+  %code = call i32 @llvm.eh.exceptioncode(token %p)
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([27 x i8], [27 x i8]* @str, i64 0, i64 0), i32 %code)
+  catchret %p to label %__try.cont
+
+endpad:
+  catchendpad unwind to caller
 }
 
 ; Check that we can get the exception code from eax to the printf.
@@ -32,18 +33,17 @@ eh.resume:
 ; CHECK-LABEL: main:
 ; CHECK: callq crash
 ; CHECK: retq
-; CHECK: # Block address taken
+; CHECK: .LBB0_2: # %lpad
+; CHECK: # %catchall
 ; CHECK: leaq str(%rip), %rcx
 ; CHECK: movl %eax, %edx
 ; CHECK: callq printf
 
 ; CHECK: .seh_handlerdata
-; CHECK-NEXT: .text
-; CHECK-NEXT: .Ltmp{{[0-9]+}}
-; CHECK-NEXT: .seh_endproc
-; CHECK-NEXT: .section .xdata,"dr"
-; CHECK-NEXT: .long 1
+; CHECK-NEXT: .long (.Llsda_end0-.Llsda_begin0)/16
+; CHECK-NEXT: .Llsda_begin0:
 ; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
 ; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL+1
 ; CHECK-NEXT: .long 1
-; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
+; CHECK-NEXT: .long .LBB0_2@IMGREL
+; CHECK-NEXT: .Llsda_end0:
