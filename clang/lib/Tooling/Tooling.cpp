@@ -46,10 +46,11 @@ FrontendActionFactory::~FrontendActionFactory() {}
 // it to be based on the same framework.
 
 /// \brief Builds a clang driver initialized for running clang tools.
-static clang::driver::Driver *newDriver(clang::DiagnosticsEngine *Diagnostics,
-                                        const char *BinaryName) {
+static clang::driver::Driver *newDriver(
+    clang::DiagnosticsEngine *Diagnostics, const char *BinaryName,
+    IntrusiveRefCntPtr<vfs::FileSystem> VFS) {
   clang::driver::Driver *CompilerDriver = new clang::driver::Driver(
-      BinaryName, llvm::sys::getDefaultTargetTriple(), *Diagnostics);
+      BinaryName, llvm::sys::getDefaultTargetTriple(), *Diagnostics, VFS);
   CompilerDriver->setTitle("clang_based_tool");
   return CompilerDriver;
 }
@@ -238,7 +239,7 @@ bool ToolInvocation::run() {
       DiagConsumer ? DiagConsumer : &DiagnosticPrinter, false);
 
   const std::unique_ptr<clang::driver::Driver> Driver(
-      newDriver(&Diagnostics, BinaryName));
+      newDriver(&Diagnostics, BinaryName, Files->getVirtualFileSystem()));
   // Since the input might only be virtual, don't check whether it exists.
   Driver->setCheckInputsExist(false);
   const std::unique_ptr<clang::driver::Compilation> Compilation(
