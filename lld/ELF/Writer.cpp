@@ -103,6 +103,7 @@ private:
   llvm::BumpPtrAllocator PAlloc;
   SymbolTable &Symtab;
   std::vector<ProgramHeader<ELFT> *> PHDRs;
+  ProgramHeader<ELFT> PhdrPHDR{PT_PHDR, PF_R, 0, 0};
   ProgramHeader<ELFT> FileHeaderPHDR{PT_LOAD, PF_R, 0, 0};
   ProgramHeader<ELFT> InterpPHDR{PT_INTERP, 0, 0, 0};
   ProgramHeader<ELFT> DynamicPHDR{PT_DYNAMIC, 0, 0, 0};
@@ -501,6 +502,13 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   FileOff += sizeof(Elf_Ehdr);
   VA += sizeof(Elf_Ehdr);
 
+  // The first PHDR entry is PT_PHDR which describes the program header itself.
+  PHDRs.push_back(&PhdrPHDR);
+  PhdrPHDR.Header.p_align = 8;
+  PhdrPHDR.Header.p_offset = FileOff;
+  PhdrPHDR.Header.p_vaddr = VA;
+  PhdrPHDR.Header.p_paddr = VA;
+
   // Reserve space for PHDRs.
   ProgramHeaderOff = FileOff;
   FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
@@ -557,6 +565,10 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     PHDRs.push_back(&DynamicPHDR);
 
   FileOff += OffsetToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
+
+  // Fix up the first entry's size.
+  PhdrPHDR.Header.p_filesz = sizeof(Elf_Phdr) * PHDRs.size();
+  PhdrPHDR.Header.p_memsz = sizeof(Elf_Phdr) * PHDRs.size();
 
   // Add space for section headers.
   SectionHeaderOff = FileOff;

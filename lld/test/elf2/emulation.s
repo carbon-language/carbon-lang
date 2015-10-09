@@ -23,7 +23,7 @@
 # X86-64-NEXT:   ]
 # X86-64-NEXT:   HeaderSize: 64
 # X86-64-NEXT:   ProgramHeaderEntrySize: 56
-# X86-64-NEXT:   ProgramHeaderCount: 1
+# X86-64-NEXT:   ProgramHeaderCount: 2
 # X86-64-NEXT:   SectionHeaderEntrySize: 64
 # X86-64-NEXT:   SectionHeaderCount: 6
 # X86-64-NEXT:    StringTableSectionIndex: 5
@@ -54,7 +54,7 @@
 # X86-NEXT:   ]
 # X86-NEXT:   HeaderSize: 52
 # X86-NEXT:   ProgramHeaderEntrySize: 32
-# X86-NEXT:   ProgramHeaderCount: 1
+# X86-NEXT:   ProgramHeaderCount: 2
 # X86-NEXT:   SectionHeaderEntrySize: 40
 # X86-NEXT:   SectionHeaderCount: 6
 # X86-NEXT:    StringTableSectionIndex: 5
@@ -85,7 +85,7 @@
 # PPC64-NEXT:   ]
 # PPC64-NEXT:   HeaderSize: 64
 # PPC64-NEXT:   ProgramHeaderEntrySize: 56
-# PPC64-NEXT:   ProgramHeaderCount: 1
+# PPC64-NEXT:   ProgramHeaderCount: 2
 # PPC64-NEXT:   SectionHeaderEntrySize: 64
 # PPC64-NEXT:   SectionHeaderCount: 6
 # PPC64-NEXT:    StringTableSectionIndex: 5
@@ -116,7 +116,7 @@
 # PPC-NEXT:   ]
 # PPC-NEXT:   HeaderSize: 52
 # PPC-NEXT:   ProgramHeaderEntrySize: 32
-# PPC-NEXT:   ProgramHeaderCount: 1
+# PPC-NEXT:   ProgramHeaderCount: 2
 # PPC-NEXT:   SectionHeaderEntrySize: 40
 # PPC-NEXT:   SectionHeaderCount: 6
 # PPC-NEXT:    StringTableSectionIndex: 5

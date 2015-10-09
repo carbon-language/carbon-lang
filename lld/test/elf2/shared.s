@@ -256,9 +256,8 @@
 // CHECK-NEXT:   0x00000000 NULL                 0x0
 // CHECK-NEXT: ]
 
-// CHECK:      ProgramHeaders [
-// CHECK-NEXT:   ProgramHeader {
-// CHECK-NEXT:   Type: PT_INTERP
+// CHECK:     ProgramHeaders [
+// CHECK:        Type: PT_INTERP
 // CHECK-NEXT:   Offset: [[INTERPOFFSET]]
 // CHECK-NEXT:   VirtualAddress: [[INTERPADDR]]
 // CHECK-NEXT:   PhysicalAddress: [[INTERPADDR]]

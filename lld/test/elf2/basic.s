@@ -32,7 +32,7 @@ _start:
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 64
 # CHECK-NEXT:   ProgramHeaderEntrySize: 56
-# CHECK-NEXT:   ProgramHeaderCount: 2
+# CHECK-NEXT:   ProgramHeaderCount: 3
 # CHECK-NEXT:   SectionHeaderEntrySize: 64
 # CHECK-NEXT:   SectionHeaderCount: 6
 # CHECK-NEXT:   StringTableSectionIndex: 5
@@ -151,12 +151,24 @@ _start:
 # CHECK-NEXT: ]
 # CHECK-NEXT: ProgramHeaders [
 # CHECK-NEXT:   ProgramHeader {
+# CHECK-NEXT:     Type: PT_PHDR (0x6)
+# CHECK-NEXT:     Offset: 0x40
+# CHECK-NEXT:     VirtualAddress: 0x10040
+# CHECK-NEXT:     PhysicalAddress: 0x10040
+# CHECK-NEXT:     FileSize: 168
+# CHECK-NEXT:     MemSize: 168
+# CHECK-NEXT:     Flags [ (0x4)
+# CHECK-NEXT:       PF_R (0x4)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Alignment: 8
+# CHECK-NEXT:   }
+# CHECK-NEXT:   ProgramHeader {
 # CHECK-NEXT:     Type: PT_LOAD (0x1)
 # CHECK-NEXT:     Offset: 0x0
 # CHECK-NEXT:     VirtualAddress: 0x10000
 # CHECK-NEXT:     PhysicalAddress: 0x10000
-# CHECK-NEXT:     FileSize: 176
-# CHECK-NEXT:     MemSize: 176
+# CHECK-NEXT:     FileSize: 232
+# CHECK-NEXT:     MemSize: 232
 # CHECK-NEXT:     Flags [
 # CHECK-NEXT:       PF_R
 # CHECK-NEXT:     ]
