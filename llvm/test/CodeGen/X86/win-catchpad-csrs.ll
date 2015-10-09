@@ -123,6 +123,8 @@ catchendblock:                                    ; preds = %catch,
 ; X64: movq %rdx, 16(%rsp)
 ; X64: pushq %rbp
 ; X64: .seh_pushreg 5
+; X64: pushq %rsi
+; X64: .seh_pushreg 6
 ; X64: subq $32, %rsp
 ; X64: .seh_stackalloc 32
 ; X64: leaq 32(%rdx), %rbp
@@ -131,6 +133,7 @@ catchendblock:                                    ; preds = %catch,
 ; X64: callq f
 ; X64: leaq [[contbb]](%rip), %rax
 ; X64: addq $32, %rsp
+; X64: popq %rsi
 ; X64: popq %rbp
 ; X64: retq
 
