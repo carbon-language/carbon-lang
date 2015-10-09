@@ -490,7 +490,7 @@ def : Pat<(and GR64:$src, 0xffffffff),
 def LLCMux : UnaryRXYPseudo<"llc", azextloadi8, GRX32, 1>,
              Requires<[FeatureHighWord]>;
 def LLC  : UnaryRXY<"llc", 0xE394, azextloadi8, GR32, 1>;
-def LLCH : UnaryRXY<"llch", 0xE3C2, azextloadi8, GR32, 1>,
+def LLCH : UnaryRXY<"llch", 0xE3C2, azextloadi8, GRH32, 1>,
            Requires<[FeatureHighWord]>;
 
 // 32-bit extensions from 16-bit memory.  LLHMux expands to LLH or LLHH,
@@ -498,7 +498,7 @@ def LLCH : UnaryRXY<"llch", 0xE3C2, azextloadi8, GR32, 1>,
 def LLHMux : UnaryRXYPseudo<"llh", azextloadi16, GRX32, 2>,
              Requires<[FeatureHighWord]>;
 def LLH   : UnaryRXY<"llh", 0xE395, azextloadi16, GR32, 2>;
-def LLHH  : UnaryRXY<"llhh", 0xE3C6, azextloadi16, GR32, 2>,
+def LLHH  : UnaryRXY<"llhh", 0xE3C6, azextloadi16, GRH32, 2>,
             Requires<[FeatureHighWord]>;
 def LLHRL : UnaryRILPC<"llhrl", 0xC42, aligned_azextloadi16, GR32>;
 
@@ -1147,7 +1147,7 @@ let Defs = [CC], CCValues = 0xE, IsLogical = 1 in {
   def CLFIMux : CompareRIPseudo<z_ucmp, GRX32, uimm32>,
                 Requires<[FeatureHighWord]>;
   def CLFI  : CompareRIL<"clfi",  0xC2F, z_ucmp, GR32, uimm32>;
-  def CLIH  : CompareRIL<"clih",  0xCCF, z_ucmp, GR32, uimm32>,
+  def CLIH  : CompareRIL<"clih",  0xCCF, z_ucmp, GRH32, uimm32>,
               Requires<[FeatureHighWord]>;
   def CLGFI : CompareRIL<"clgfi", 0xC2E, z_ucmp, GR64, imm64zx32>;
 
