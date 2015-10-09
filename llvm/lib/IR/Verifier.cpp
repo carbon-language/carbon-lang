@@ -306,6 +306,7 @@ private:
   void visitFunction(const Function &F);
   void visitBasicBlock(BasicBlock &BB);
   void visitRangeMetadata(Instruction& I, MDNode* Range, Type* Ty);
+  void visitDereferenceableMetadata(Instruction& I, MDNode* MD);
 
   template <class Ty> bool isValidMetadataArray(const MDTuple &N);
 #define HANDLE_SPECIALIZED_MDNODE_LEAF(CLASS) void visit##CLASS(const CLASS &N);
@@ -3072,6 +3073,19 @@ void Verifier::verifyDominatesUse(Instruction &I, unsigned i) {
          "Instruction does not dominate all uses!", Op, &I);
 }
 
+void Verifier::visitDereferenceableMetadata(Instruction& I, MDNode* MD) {
+  Assert(I.getType()->isPointerTy(), "dereferenceable, dereferenceable_or_null "
+         "apply only to pointer types", &I);
+  Assert(isa<LoadInst>(I),
+         "dereferenceable, dereferenceable_or_null apply only to load"
+         " instructions, use attributes for calls or invokes", &I);
+  Assert(MD->getNumOperands() == 1, "dereferenceable, dereferenceable_or_null "
+         "take one operand!", &I);
+  ConstantInt *CI = mdconst::dyn_extract<ConstantInt>(MD->getOperand(0));
+  Assert(CI && CI->getType()->isIntegerTy(64), "dereferenceable, "
+         "dereferenceable_or_null metadata value must be an i64!", &I);
+}
+
 /// verifyInstruction - Verify that an instruction is well formed.
 ///
 void Verifier::visitInstruction(Instruction &I) {
@@ -3206,6 +3220,28 @@ void Verifier::visitInstruction(Instruction &I) {
            "nonnull applies only to load instructions, use attributes"
            " for calls or invokes",
            &I);
+  }
+
+  if (MDNode *MD = I.getMetadata(LLVMContext::MD_dereferenceable))
+    visitDereferenceableMetadata(I, MD);
+
+  if (MDNode *MD = I.getMetadata(LLVMContext::MD_dereferenceable_or_null))
+    visitDereferenceableMetadata(I, MD);
+
+  if (MDNode *AlignMD = I.getMetadata(LLVMContext::MD_align)) {
+    Assert(I.getType()->isPointerTy(), "align applies only to pointer types",
+           &I);
+    Assert(isa<LoadInst>(I), "align applies only to load instructions, "
+           "use attributes for calls or invokes", &I);
+    Assert(AlignMD->getNumOperands() == 1, "align takes one operand!", &I);
+    ConstantInt *CI = mdconst::dyn_extract<ConstantInt>(AlignMD->getOperand(0));
+    Assert(CI && CI->getType()->isIntegerTy(64),
+           "align metadata value must be an i64!", &I);
+    uint64_t Align = CI->getZExtValue();
+    Assert(isPowerOf2_64(Align),
+           "align metadata value must be a power of 2!", &I);
+    Assert(Align <= Value::MaximumAlignment,
+           "alignment is larger that implementation defined limit", &I);
   }
 
   if (MDNode *N = I.getDebugLoc().getAsMDNode()) {
