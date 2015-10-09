@@ -25,6 +25,7 @@
 #include "SizeofContainerCheck.h"
 #include "StaticAssertCheck.h"
 #include "SwappedArgumentsCheck.h"
+#include "ThrowByValueCatchByReferenceCheck.h"
 #include "UndelegatedConstructor.h"
 #include "UniqueptrResetReleaseCheck.h"
 #include "UnusedAliasDeclsCheck.h"
@@ -66,6 +67,8 @@ public:
         "misc-static-assert");
     CheckFactories.registerCheck<SwappedArgumentsCheck>(
         "misc-swapped-arguments");
+    CheckFactories.registerCheck<ThrowByValueCatchByReferenceCheck>(
+        "misc-throw-by-value-catch-by-reference");
     CheckFactories.registerCheck<UndelegatedConstructorCheck>(
         "misc-undelegated-constructor");
     CheckFactories.registerCheck<UniqueptrResetReleaseCheck>(
