@@ -353,7 +353,7 @@ if(APPLE)
       DARWIN_10.4_ARCHS
       ${toolchain_arches})
     message(STATUS "OSX 10.4 supported arches: ${DARWIN_10.4_ARCHS}")
-    if(DARWIN_10.4_ARCHES)
+    if(DARWIN_10.4_ARCHS)
       list(APPEND BUILTIN_SUPPORTED_OS 10.4)
     endif()
 
