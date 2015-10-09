@@ -325,7 +325,7 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
   // Sort the frame references by local offset
   array_pod_sort(FrameReferenceInsns.begin(), FrameReferenceInsns.end());
 
-  MachineBasicBlock *Entry = Fn.begin();
+  MachineBasicBlock *Entry = &Fn.front();
 
   unsigned BaseReg = 0;
   int64_t BaseOffset = 0;

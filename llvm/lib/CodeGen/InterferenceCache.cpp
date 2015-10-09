@@ -144,7 +144,8 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
     PrevPos = Start;
   }
 
-  MachineFunction::const_iterator MFI = MF->getBlockNumbered(MBBNum);
+  MachineFunction::const_iterator MFI =
+      MF->getBlockNumbered(MBBNum)->getIterator();
   BlockInterference *BI = &Blocks[MBBNum];
   ArrayRef<SlotIndex> RegMaskSlots;
   ArrayRef<const uint32_t*> RegMaskBits;

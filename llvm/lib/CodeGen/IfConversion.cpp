@@ -462,11 +462,11 @@ bool IfConverter::ReverseBranchCondition(BBInfo &BBI) {
 /// getNextBlock - Returns the next block in the function blocks ordering. If
 /// it is the end, returns NULL.
 static inline MachineBasicBlock *getNextBlock(MachineBasicBlock *BB) {
-  MachineFunction::iterator I = BB;
+  MachineFunction::iterator I = BB->getIterator();
   MachineFunction::iterator E = BB->getParent()->end();
   if (++I == E)
     return nullptr;
-  return I;
+  return &*I;
 }
 
 /// ValidSimple - Returns true if the 'true' block (along with its
@@ -530,10 +530,10 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
 
   MachineBasicBlock *TExit = FalseBranch ? TrueBBI.FalseBB : TrueBBI.TrueBB;
   if (!TExit && blockAlwaysFallThrough(TrueBBI)) {
-    MachineFunction::iterator I = TrueBBI.BB;
+    MachineFunction::iterator I = TrueBBI.BB->getIterator();
     if (++I == TrueBBI.BB->getParent()->end())
       return false;
-    TExit = I;
+    TExit = &*I;
   }
   return TExit && TExit == FalseBBI.BB;
 }
@@ -948,10 +948,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *MBB,
 /// candidates.
 void IfConverter::AnalyzeBlocks(MachineFunction &MF,
                                 std::vector<IfcvtToken*> &Tokens) {
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    MachineBasicBlock *BB = I;
-    AnalyzeBlock(BB, Tokens);
-  }
+  for (auto &BB : MF)
+    AnalyzeBlock(&BB, Tokens);
 
   // Sort to favor more complex ifcvt scheme.
   std::stable_sort(Tokens.begin(), Tokens.end(), IfcvtTokenCmp);
@@ -961,14 +959,14 @@ void IfConverter::AnalyzeBlocks(MachineFunction &MF,
 /// that all the intervening blocks are empty (given BB can fall through to its
 /// next block).
 static bool canFallThroughTo(MachineBasicBlock *BB, MachineBasicBlock *ToBB) {
-  MachineFunction::iterator PI = BB;
+  MachineFunction::iterator PI = BB->getIterator();
   MachineFunction::iterator I = std::next(PI);
-  MachineFunction::iterator TI = ToBB;
+  MachineFunction::iterator TI = ToBB->getIterator();
   MachineFunction::iterator E = BB->getParent()->end();
   while (I != TI) {
     // Check isSuccessor to avoid case where the next block is empty, but
     // it's not a successor.
-    if (I == E || !I->empty() || !PI->isSuccessor(I))
+    if (I == E || !I->empty() || !PI->isSuccessor(&*I))
       return false;
     PI = I++;
   }

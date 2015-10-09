@@ -512,7 +512,7 @@ bool LDVImpl::collectDebugValues(MachineFunction &mf) {
   bool Changed = false;
   for (MachineFunction::iterator MFI = mf.begin(), MFE = mf.end(); MFI != MFE;
        ++MFI) {
-    MachineBasicBlock *MBB = MFI;
+    MachineBasicBlock *MBB = &*MFI;
     for (MachineBasicBlock::iterator MBBI = MBB->begin(), MBBE = MBB->end();
          MBBI != MBBE;) {
       if (!MBBI->isDebugValue()) {
@@ -1004,11 +1004,11 @@ void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
     SlotIndex Stop = I.stop();
     unsigned LocNo = I.value();
     DEBUG(dbgs() << "\t[" << Start << ';' << Stop << "):" << LocNo);
-    MachineFunction::iterator MBB = LIS.getMBBFromIndex(Start);
-    SlotIndex MBBEnd = LIS.getMBBEndIdx(MBB);
+    MachineFunction::iterator MBB = LIS.getMBBFromIndex(Start)->getIterator();
+    SlotIndex MBBEnd = LIS.getMBBEndIdx(&*MBB);
 
     DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
-    insertDebugValue(MBB, Start, LocNo, LIS, TII);
+    insertDebugValue(&*MBB, Start, LocNo, LIS, TII);
     // This interval may span multiple basic blocks.
     // Insert a DBG_VALUE into each one.
     while(Stop > MBBEnd) {
@@ -1016,9 +1016,9 @@ void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
       Start = MBBEnd;
       if (++MBB == MFEnd)
         break;
-      MBBEnd = LIS.getMBBEndIdx(MBB);
+      MBBEnd = LIS.getMBBEndIdx(&*MBB);
       DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
-      insertDebugValue(MBB, Start, LocNo, LIS, TII);
+      insertDebugValue(&*MBB, Start, LocNo, LIS, TII);
     }
     DEBUG(dbgs() << '\n');
     if (MBB == MFEnd)

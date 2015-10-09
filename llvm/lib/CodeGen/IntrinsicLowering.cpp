@@ -75,7 +75,7 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   Constant* FCache = M->getOrInsertFunction(NewFn,
                                   FunctionType::get(RetTy, ParamTys, false));
 
-  IRBuilder<> Builder(CI->getParent(), CI);
+  IRBuilder<> Builder(CI->getParent(), CI->getIterator());
   SmallVector<Value *, 8> Args(ArgBegin, ArgEnd);
   CallInst *NewCI = Builder.CreateCall(FCache, Args);
   NewCI->setName(CI->getName());
@@ -167,8 +167,8 @@ static Value *LowerBSWAP(LLVMContext &Context, Value *V, Instruction *IP) {
   assert(V->getType()->isIntegerTy() && "Can't bswap a non-integer type!");
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
-  
-  IRBuilder<> Builder(IP->getParent(), IP);
+
+  IRBuilder<> Builder(IP);
 
   switch(BitSize) {
   default: llvm_unreachable("Unhandled type size of value to byteswap!");
@@ -268,7 +268,7 @@ static Value *LowerCTPOP(LLVMContext &Context, Value *V, Instruction *IP) {
     0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
   };
 
-  IRBuilder<> Builder(IP->getParent(), IP);
+  IRBuilder<> Builder(IP);
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   unsigned WordSize = (BitSize + 63) / 64;
@@ -301,7 +301,7 @@ static Value *LowerCTPOP(LLVMContext &Context, Value *V, Instruction *IP) {
 /// instruction IP.
 static Value *LowerCTLZ(LLVMContext &Context, Value *V, Instruction *IP) {
 
-  IRBuilder<> Builder(IP->getParent(), IP);
+  IRBuilder<> Builder(IP);
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1; i < BitSize; i <<= 1) {
@@ -338,7 +338,7 @@ static void ReplaceFPIntrinsicWithCall(CallInst *CI, const char *Fname,
 }
 
 void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
-  IRBuilder<> Builder(CI->getParent(), CI);
+  IRBuilder<> Builder(CI);
   LLVMContext &Context = CI->getContext();
 
   const Function *Callee = CI->getCalledFunction();

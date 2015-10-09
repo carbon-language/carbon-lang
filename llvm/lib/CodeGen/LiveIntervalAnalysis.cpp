@@ -224,7 +224,7 @@ void LiveIntervals::computeRegMasks() {
   // Find all instructions with regmask operands.
   for (MachineFunction::iterator MBBI = MF->begin(), E = MF->end();
        MBBI != E; ++MBBI) {
-    MachineBasicBlock *MBB = MBBI;
+    MachineBasicBlock *MBB = &*MBBI;
     std::pair<unsigned, unsigned> &RMB = RegMaskBlocks[MBB->getNumber()];
     RMB.first = RegMaskSlots.size();
     for (MachineBasicBlock::iterator MI = MBB->begin(), ME = MBB->end();
@@ -302,7 +302,7 @@ void LiveIntervals::computeLiveInRegUnits() {
   // Check all basic blocks for live-ins.
   for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
        MFI != MFE; ++MFI) {
-    const MachineBasicBlock *MBB = MFI;
+    const MachineBasicBlock *MBB = &*MFI;
 
     // We only care about ABI blocks: Entry + landing pads.
     if ((MFI != MF->begin() && !MBB->isEHPad()) || MBB->livein_empty())

@@ -637,7 +637,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   // function.  This guarantees that we will see the definition of a virtual
   // register before its uses due to dominance properties of SSA (except for PHI
   // nodes, which are treated as a special case).
-  MachineBasicBlock *Entry = MF->begin();
+  MachineBasicBlock *Entry = &MF->front();
   SmallPtrSet<MachineBasicBlock*,16> Visited;
 
   for (MachineBasicBlock *MBB : depth_first_ext(Entry, Visited)) {
