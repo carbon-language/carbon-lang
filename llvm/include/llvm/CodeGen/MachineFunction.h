@@ -363,6 +363,9 @@ public:
   void splice(iterator InsertPt, iterator MBBI) {
     BasicBlocks.splice(InsertPt, BasicBlocks, MBBI);
   }
+  void splice(iterator InsertPt, MachineBasicBlock *MBB) {
+    BasicBlocks.splice(InsertPt, BasicBlocks, MBB);
+  }
   void splice(iterator InsertPt, iterator MBBI, iterator MBBE) {
     BasicBlocks.splice(InsertPt, BasicBlocks, MBBI, MBBE);
   }

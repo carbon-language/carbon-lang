@@ -505,14 +505,14 @@ MachineBasicBlock *MachineBlockPlacement::getFirstUnplacedBlock(
     const BlockFilterSet *BlockFilter) {
   for (MachineFunction::iterator I = PrevUnplacedBlockIt, E = F.end(); I != E;
        ++I) {
-    if (BlockFilter && !BlockFilter->count(I))
+    if (BlockFilter && !BlockFilter->count(&*I))
       continue;
-    if (BlockToChain[I] != &PlacedChain) {
+    if (BlockToChain[&*I] != &PlacedChain) {
       PrevUnplacedBlockIt = I;
       // Now select the head of the chain to which the unplaced block belongs
       // as the block to place. This will force the entire chain to be placed,
       // and satisfies the requirements of merging chains.
-      return *BlockToChain[I]->begin();
+      return *BlockToChain[&*I]->begin();
     }
   }
   return nullptr;
@@ -889,7 +889,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   // the assumptions of the remaining algorithm.
   SmallVector<MachineOperand, 4> Cond; // For AnalyzeBranch.
   for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
-    MachineBasicBlock *BB = FI;
+    MachineBasicBlock *BB = &*FI;
     BlockChain *Chain =
         new (ChainAllocator.Allocate()) BlockChain(BlockToChain, BB);
     // Also, merge any blocks which we cannot reason about and must preserve
@@ -900,8 +900,8 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
       if (!TII->AnalyzeBranch(*BB, TBB, FBB, Cond) || !FI->canFallThrough())
         break;
 
-      MachineFunction::iterator NextFI(std::next(FI));
-      MachineBasicBlock *NextBB = NextFI;
+      MachineFunction::iterator NextFI = std::next(FI);
+      MachineBasicBlock *NextBB = &*NextFI;
       // Ensure that the layout successor is a viable block, as we know that
       // fallthrough is a possibility.
       assert(NextFI != FE && "Can't fallthrough past the last block.");
@@ -1004,7 +1004,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     // Update the terminator of the previous block.
     if (ChainBB == *FunctionChain.begin())
       continue;
-    MachineBasicBlock *PrevBB = std::prev(MachineFunction::iterator(ChainBB));
+    MachineBasicBlock *PrevBB = &*std::prev(MachineFunction::iterator(ChainBB));
 
     // FIXME: It would be awesome of updateTerminator would just return rather
     // than assert when the branch cannot be analyzed in order to remove this
@@ -1071,7 +1071,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     return; // Empty chain.
 
   const BranchProbability ColdProb(1, 5); // 20%
-  BlockFrequency EntryFreq = MBFI->getBlockFreq(F.begin());
+  BlockFrequency EntryFreq = MBFI->getBlockFreq(&F.front());
   BlockFrequency WeightedEntryFreq = EntryFreq * ColdProb;
   for (MachineBasicBlock *ChainBB : FunctionChain) {
     if (ChainBB == *FunctionChain.begin())

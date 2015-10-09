@@ -634,6 +634,12 @@ public:
   void splice(iterator where, iplist &L2, iterator first, iterator last) {
     if (first != last) transfer(where, L2, first, last);
   }
+  void splice(iterator where, iplist &L2, NodeTy &N) {
+    splice(where, L2, iterator(N));
+  }
+  void splice(iterator where, iplist &L2, NodeTy *N) {
+    splice(where, L2, iterator(N));
+  }
 
   template <class Compare>
   void merge(iplist &Right, Compare comp) {
