@@ -1901,7 +1901,26 @@ Target::GetScratchTypeSystemForLanguage (Error *error, lldb::LanguageType langua
     if (language == eLanguageTypeMipsAssembler // GNU AS and LLVM use it for all assembly code
         || language == eLanguageTypeUnknown)
     {
-        language = eLanguageTypeC;
+        std::set<lldb::LanguageType> languages_for_types;
+        std::set<lldb::LanguageType> languages_for_expressions;
+        
+        Language::GetLanguagesSupportingTypeSystems(languages_for_types, languages_for_expressions);
+        
+        if (languages_for_expressions.count(eLanguageTypeC))
+        {
+            language = eLanguageTypeC; // LLDB's default.  Override by setting the target language.
+        }
+        else
+        {
+            if (languages_for_expressions.empty())
+            {
+                return nullptr;
+            }
+            else
+            {
+                language = *languages_for_expressions.begin();
+            }
+        }
     }
 
     return m_scratch_type_system_map.GetTypeSystemForLanguage(language, this, create_on_demand);
