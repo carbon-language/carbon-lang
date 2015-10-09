@@ -1,8 +1,5 @@
 // RUN: %clangxx_asan -fexceptions -O %s -o %t && %run %t
 //
-// FIXME: Needs better C++ exception support
-// XFAIL: win32
-//
 // Test __sanitizer_annotate_contiguous_container.
 
 #include <stdlib.h>
