@@ -8750,8 +8750,13 @@ static SDValue tryMatchAcrossLaneShuffleForReduction(SDNode *N, SDValue OpV,
     return SDValue();
 
   int NumVecElts = VTy.getVectorNumElements();
-  if (NumVecElts != 4 && NumVecElts != 8 && NumVecElts != 16)
-    return SDValue();
+  if (Op == ISD::FMAXNUM || Op == ISD::FMINNUM) {
+    if (NumVecElts != 4)
+      return SDValue();
+  } else {
+    if (NumVecElts != 4 && NumVecElts != 8 && NumVecElts != 16)
+      return SDValue();
+  }
 
   int NumExpectedSteps = APInt(8, NumVecElts).logBase2();
   SDValue PreOp = OpV;
@@ -8802,6 +8807,8 @@ static SDValue tryMatchAcrossLaneShuffleForReduction(SDNode *N, SDValue OpV,
     PreOp = CurOp;
   }
   unsigned Opcode;
+  bool IsIntrinsic = false;
+
   switch (Op) {
   default:
     llvm_unreachable("Unexpected operator for across vector reduction");
@@ -8820,11 +8827,24 @@ static SDValue tryMatchAcrossLaneShuffleForReduction(SDNode *N, SDValue OpV,
   case ISD::UMIN:
     Opcode = AArch64ISD::UMINV;
     break;
+  case ISD::FMAXNUM:
+    Opcode = Intrinsic::aarch64_neon_fmaxnmv;
+    IsIntrinsic = true;
+    break;
+  case ISD::FMINNUM:
+    Opcode = Intrinsic::aarch64_neon_fminnmv;
+    IsIntrinsic = true;
+    break;
   }
   SDLoc DL(N);
-  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, N->getValueType(0),
-                     DAG.getNode(Opcode, DL, PreOp.getSimpleValueType(), PreOp),
-                     DAG.getConstant(0, DL, MVT::i64));
+
+  return IsIntrinsic
+             ? DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, N->getValueType(0),
+                           DAG.getConstant(Opcode, DL, MVT::i32), PreOp)
+             : DAG.getNode(
+                   ISD::EXTRACT_VECTOR_ELT, DL, N->getValueType(0),
+                   DAG.getNode(Opcode, DL, PreOp.getSimpleValueType(), PreOp),
+                   DAG.getConstant(0, DL, MVT::i64));
 }
 
 /// Target-specific DAG combine for the across vector min/max reductions.
@@ -8848,9 +8868,6 @@ static SDValue tryMatchAcrossLaneShuffleForReduction(SDNode *N, SDValue OpV,
 ///     becomes :
 ///   %1 = smaxv %0
 ///   %result = extract_vector_elt %1, 0
-/// FIXME: Currently this function matches only SMAXV, UMAXV, SMINV, and UMINV.
-/// We could also support other types of across lane reduction available
-/// in AArch64, including FMAXNMV, FMAXV, FMINNMV, and FMINV.
 static SDValue
 performAcrossLaneMinMaxReductionCombine(SDNode *N, SelectionDAG &DAG,
                                         const AArch64Subtarget *Subtarget) {
@@ -8878,16 +8895,25 @@ performAcrossLaneMinMaxReductionCombine(SDNode *N, SelectionDAG &DAG,
   SDValue VectorOp = SetCC.getOperand(0);
   unsigned Op = VectorOp->getOpcode();
   // Check if the input vector is fed by the operator we want to handle.
-  if (Op != ISD::SMAX && Op != ISD::UMAX && Op != ISD::SMIN && Op != ISD::UMIN)
+  if (Op != ISD::SMAX && Op != ISD::UMAX && Op != ISD::SMIN &&
+      Op != ISD::UMIN && Op != ISD::FMAXNUM && Op != ISD::FMINNUM)
     return SDValue();
 
   EVT VTy = VectorOp.getValueType();
   if (!VTy.isVector())
     return SDValue();
 
-  EVT EltTy = VTy.getVectorElementType();
-  if (EltTy != MVT::i32 && EltTy != MVT::i16 && EltTy != MVT::i8)
+  if (VTy.getSizeInBits() < 64)
     return SDValue();
+
+  EVT EltTy = VTy.getVectorElementType();
+  if (Op == ISD::FMAXNUM || Op == ISD::FMINNUM) {
+    if (EltTy != MVT::f32)
+      return SDValue();
+  } else {
+    if (EltTy != MVT::i32 && EltTy != MVT::i16 && EltTy != MVT::i8)
+      return SDValue();
+  }
 
   // Check if extracting from the same vector.
   // For example,
@@ -8904,7 +8930,13 @@ performAcrossLaneMinMaxReductionCombine(SDNode *N, SelectionDAG &DAG,
   if ((Op == ISD::SMAX && CC != ISD::SETGT && CC != ISD::SETGE) ||
       (Op == ISD::UMAX && CC != ISD::SETUGT && CC != ISD::SETUGE) ||
       (Op == ISD::SMIN && CC != ISD::SETLT && CC != ISD::SETLE) ||
-      (Op == ISD::UMIN && CC != ISD::SETULT && CC != ISD::SETULE))
+      (Op == ISD::UMIN && CC != ISD::SETULT && CC != ISD::SETULE) ||
+      (Op == ISD::FMAXNUM && CC != ISD::SETOGT && CC != ISD::SETOGE &&
+       CC != ISD::SETUGT && CC != ISD::SETUGE && CC != ISD::SETGT &&
+       CC != ISD::SETGE) ||
+      (Op == ISD::FMINNUM && CC != ISD::SETOLT && CC != ISD::SETOLE &&
+       CC != ISD::SETULT && CC != ISD::SETULE && CC != ISD::SETLT &&
+       CC != ISD::SETLE))
     return SDValue();
 
   // Expect to check only lane 0 from the vector SETCC.
@@ -8961,6 +8993,9 @@ performAcrossLaneAddReductionCombine(SDNode *N, SelectionDAG &DAG,
 
   EVT EltTy = VTy.getVectorElementType();
   if (EltTy != MVT::i32 && EltTy != MVT::i16 && EltTy != MVT::i8)
+    return SDValue();
+
+  if (VTy.getSizeInBits() < 64)
     return SDValue();
 
   return tryMatchAcrossLaneShuffleForReduction(N, N0, ISD::ADD, DAG);

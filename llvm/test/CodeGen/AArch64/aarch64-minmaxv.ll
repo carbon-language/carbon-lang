@@ -285,3 +285,35 @@ define i64 @umin_D(<2 x i64>* nocapture readonly %arr)  {
   %r = select i1 %rdx.minmax.cmp18.elt, i64 %rdx.minmax.select.elt, i64 %rdx.shuf.elt
   ret i64 %r
 }
+
+; CHECK-LABEL: f_fmaxnmv
+; CHECK: fmaxnmv
+define float @f_fmaxnmv(<4 x float>* nocapture readonly %arr) {
+  %rdx.minmax.select  = load <4 x float>, <4 x float>* %arr
+  %rdx.shuf = shufflevector <4 x float> %rdx.minmax.select, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+  %rdx.minmax.cmp = fcmp fast oge <4 x float> %rdx.minmax.select, %rdx.shuf
+  %rdx.minmax.select1 = select <4 x i1> %rdx.minmax.cmp, <4 x float> %rdx.minmax.select, <4 x float> %rdx.shuf
+  %rdx.shuf1 = shufflevector <4 x float> %rdx.minmax.select1, <4 x float> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp1 = fcmp fast oge <4 x float> %rdx.minmax.select1, %rdx.shuf1
+  %rdx.minmax.cmp1.elt = extractelement <4 x i1> %rdx.minmax.cmp1, i32 0
+  %rdx.minmax.select1.elt = extractelement <4 x float> %rdx.minmax.select1, i32 0
+  %rdx.shuf1.elt = extractelement <4 x float> %rdx.minmax.select1, i32 1
+  %r = select i1 %rdx.minmax.cmp1.elt, float %rdx.minmax.select1.elt, float %rdx.shuf1.elt
+  ret float %r
+}
+
+; CHECK-LABEL: f_fminnmv
+; CHECK: fminnmv
+define float @f_fminnmv(<4 x float>* nocapture readonly %arr) {
+  %rdx.minmax.select  = load <4 x float>, <4 x float>* %arr
+  %rdx.shuf = shufflevector <4 x float> %rdx.minmax.select, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+  %rdx.minmax.cmp = fcmp fast ole <4 x float> %rdx.minmax.select, %rdx.shuf
+  %rdx.minmax.select1 = select <4 x i1> %rdx.minmax.cmp, <4 x float> %rdx.minmax.select, <4 x float> %rdx.shuf
+  %rdx.shuf1 = shufflevector <4 x float> %rdx.minmax.select1, <4 x float> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp1 = fcmp fast ole <4 x float> %rdx.minmax.select1, %rdx.shuf1
+  %rdx.minmax.cmp1.elt = extractelement <4 x i1> %rdx.minmax.cmp1, i32 0
+  %rdx.minmax.select1.elt = extractelement <4 x float> %rdx.minmax.select1, i32 0
+  %rdx.shuf1.elt = extractelement <4 x float> %rdx.minmax.select1, i32 1
+  %r = select i1 %rdx.minmax.cmp1.elt, float %rdx.minmax.select1.elt, float %rdx.shuf1.elt
+  ret float %r
+}
