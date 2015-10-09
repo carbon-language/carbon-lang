@@ -34,17 +34,16 @@ if(LLVM_LINK_LLVM_DYLIB)
 endif()
 
 if(NOT DEFINED LLVM_DYLIB_EXPORTED_SYMBOL_FILE)
-
-  if( WIN32 AND NOT CYGWIN )
-    message(FATAL_ERROR "Auto-generation not implemented for Win32 without GNU utils. Please specify LLVM_EXPORTED_SYMBOL_FILE.")
-  endif()
-
   # To get the export list for a single llvm library:
   # nm ${LIB_PATH} | awk "/T _LLVM/ { print $3 }" | sort -u | sed -e "s/^_//g" > ${LIB_PATH}.exports
 
-  set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_BINARY_DIR}/libllvm.exports)
-
   if (NOT LLVM_DYLIB_EXPORT_ALL)
+    if( WIN32 AND NOT CYGWIN )
+      message(FATAL_ERROR "Auto-generation not implemented for Win32 without GNU utils. Please specify LLVM_EXPORTED_SYMBOL_FILE.")
+    endif()
+
+    set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_BINARY_DIR}/libllvm.exports)
+
     foreach (lib ${LIB_NAMES})
       set(LIB_DIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
       set(LIB_NAME ${LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}${lib})
@@ -60,23 +59,14 @@ if(NOT DEFINED LLVM_DYLIB_EXPORTED_SYMBOL_FILE)
         COMMENT "Generating Export list for ${lib}..."
         VERBATIM )
     endforeach ()
-  endif()
 
-  if (LLVM_DYLIB_EXPORT_ALL)
-    add_custom_command(OUTPUT ${LLVM_EXPORTED_SYMBOL_FILE}
-      COMMAND echo \"LLVM*\" > ${LLVM_EXPORTED_SYMBOL_FILE} && echo \"_Z*llvm*\" >> ${LLVM_EXPORTED_SYMBOL_FILE}
-      WORKING_DIRECTORY ${LIB_DIR}
-      DEPENDS ${LLVM_DYLIB_REQUIRED_EXPORTS}
-      COMMENT "Generating combined export list...")
-  else()
     add_custom_command(OUTPUT ${LLVM_EXPORTED_SYMBOL_FILE}
       COMMAND cat ${LLVM_DYLIB_REQUIRED_EXPORTS} > ${LLVM_EXPORTED_SYMBOL_FILE}
       WORKING_DIRECTORY ${LIB_DIR}
       DEPENDS ${LLVM_DYLIB_REQUIRED_EXPORTS}
       COMMENT "Generating combined export list...")
+    add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
   endif()
-
-  add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
 else()
   set(LLVM_EXPORTED_SYMBOL_FILE ${LLVM_DYLIB_EXPORTED_SYMBOL_FILE})
   add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
@@ -94,7 +84,9 @@ endif()
 
 target_link_libraries(LLVM PRIVATE ${LIB_NAMES})
 
-add_dependencies(LLVM libLLVMExports)
+if(TARGET libLLVMExports)
+  add_dependencies(LLVM libLLVMExports)
+endif()
 
 if (APPLE)
   set_property(TARGET LLVM APPEND_STRING PROPERTY
