@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- cwchar -----------------------------------===//
+//===--------------------------- wchar.h ----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_CWCHAR
-#define _LIBCPP_CWCHAR
+#if defined(__need_wint_t) || defined(__need_mbstate_t)
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#pragma GCC system_header
+#endif
+
+#include_next <wchar.h>
+
+#elif !defined(_LIBCPP_WCHAR_H)
+#define _LIBCPP_WCHAR_H
 
 /*
-    cwchar synopsis
+    wchar.h synopsis
 
 Macros:
 
@@ -20,9 +28,6 @@ Macros:
     WCHAR_MAX
     WCHAR_MIN
     WEOF
-
-namespace std
-{
 
 Types:
 
@@ -99,120 +104,33 @@ size_t mbsrtowcs(wchar_t* restrict dst, const char** restrict src, size_t len,
 size_t wcsrtombs(char* restrict dst, const wchar_t** restrict src, size_t len,
                  mbstate_t* restrict ps);
 
-}  // std
-
 */
 
 #include <__config>
-#include <cwctype>
-#include <wchar.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
-
-using ::mbstate_t;
-using ::size_t;
-using ::tm;
-using ::wint_t;
-using ::FILE;
-using ::fwprintf;
-using ::fwscanf;
-using ::swprintf;
-using ::vfwprintf;
-using ::vswprintf;
-#ifndef _LIBCPP_MSVCRT
-using ::swscanf;
-using ::vfwscanf;
-using ::vswscanf;
-#endif // _LIBCPP_MSVCRT
-using ::fgetwc;
-using ::fgetws;
-using ::fputwc;
-using ::fputws;
-using ::fwide;
-using ::getwc;
-using ::putwc;
-using ::ungetwc;
-using ::wcstod;
-#ifndef _LIBCPP_MSVCRT
-using ::wcstof;
-using ::wcstold;
-#endif // _LIBCPP_MSVCRT
-using ::wcstol;
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::wcstoll;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-using ::wcstoul;
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-using ::wcstoull;
-#endif // _LIBCPP_HAS_NO_LONG_LONG
-using ::wcscpy;
-using ::wcsncpy;
-using ::wcscat;
-using ::wcsncat;
-using ::wcscmp;
-using ::wcscoll;
-using ::wcsncmp;
-using ::wcsxfrm;
-
-#ifdef _LIBCPP_WCHAR_H_HAS_CONST_OVERLOADS
-using ::wcschr;
-using ::wcspbrk;
-using ::wcsrchr;
-using ::wcsstr;
-using ::wmemchr;
-#else
-inline _LIBCPP_INLINE_VISIBILITY const wchar_t* wcschr(const wchar_t* __s, wchar_t __c) {return ::wcschr(__s, __c);}
-inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wcschr(      wchar_t* __s, wchar_t __c) {return ::wcschr(__s, __c);}
-
-inline _LIBCPP_INLINE_VISIBILITY const wchar_t* wcspbrk(const wchar_t* __s1, const wchar_t* __s2) {return ::wcspbrk(__s1, __s2);}
-inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wcspbrk(      wchar_t* __s1, const wchar_t* __s2) {return ::wcspbrk(__s1, __s2);}
-
-inline _LIBCPP_INLINE_VISIBILITY const wchar_t* wcsrchr(const wchar_t* __s, wchar_t __c) {return ::wcsrchr(__s, __c);}
-inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wcsrchr(      wchar_t* __s, wchar_t __c) {return ::wcsrchr(__s, __c);}
-
-inline _LIBCPP_INLINE_VISIBILITY const wchar_t* wcsstr(const wchar_t* __s1, const wchar_t* __s2) {return ::wcsstr(__s1, __s2);}
-inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wcsstr(      wchar_t* __s1, const wchar_t* __s2) {return ::wcsstr(__s1, __s2);}
-
-inline _LIBCPP_INLINE_VISIBILITY const wchar_t* wmemchr(const wchar_t* __s, wchar_t __c, size_t __n) {return ::wmemchr(__s, __c, __n);}
-inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wmemchr(      wchar_t* __s, wchar_t __c, size_t __n) {return ::wmemchr(__s, __c, __n);}
+#ifdef __cplusplus
+#define __CORRECT_ISO_CPP_WCHAR_H_PROTO
 #endif
 
-using ::wcscspn;
-using ::wcslen;
-using ::wcsspn;
-using ::wcstok;
-using ::wmemcmp;
-using ::wmemcpy;
-using ::wmemmove;
-using ::wmemset;
-using ::wcsftime;
-using ::btowc;
-using ::wctob;
-using ::mbsinit;
-using ::mbrlen;
-using ::mbrtowc;
-using ::wcrtomb;
-using ::mbsrtowcs;
-using ::wcsrtombs;
+#include_next <wchar.h>
 
-#ifndef _LIBCPP_HAS_NO_STDIN
-using ::getwchar;
-#ifndef _LIBCPP_MSVCRT
-using ::vwscanf;
-#endif // _LIBCPP_MSVCRT
-using ::wscanf;
+// Let <cwchar> know if we have const-correct overloads for wcschr and friends.
+#if defined(_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_)
+#  define _LIBCPP_WCHAR_H_HAS_CONST_OVERLOADS 1
+#elif defined(__GLIBC_PREREQ)
+#  if __GLIBC_PREREQ(2, 10)
+#    define _LIBCPP_WCHAR_H_HAS_CONST_OVERLOADS 1
+#  endif
 #endif
 
-#ifndef _LIBCPP_HAS_NO_STDOUT
-using ::putwchar;
-using ::vwprintf;
-using ::wprintf;
-#endif
+#if defined(__cplusplus) && (defined(_LIBCPP_MSVCRT) || defined(__MINGW32__))
+extern "C++" {
+#include <support/win32/support.h> // pull in *swprintf defines
+}  // extern "C++"
+#endif  // __cplusplus && _LIBCPP_MSVCRT
 
-_LIBCPP_END_NAMESPACE_STD
-
-#endif  // _LIBCPP_CWCHAR
+#endif  // _LIBCPP_WCHAR_H
