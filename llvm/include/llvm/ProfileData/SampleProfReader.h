@@ -157,6 +157,9 @@ protected:
   /// \brief Return true if we've reached the end of file.
   bool at_eof() const { return Data >= End; }
 
+  /// Read the contents of the given profile instance.
+  std::error_code readProfile(FunctionSamples &FProfile);
+
   /// \brief Points to the current location in the buffer.
   const uint8_t *Data;
 

@@ -84,14 +84,13 @@ SampleProfileWriterBinary::SampleProfileWriterBinary(StringRef F,
 /// \returns true if the samples were written successfully, false otherwise.
 bool SampleProfileWriterBinary::write(StringRef FName,
                                       const FunctionSamples &S) {
-  if (S.empty())
-    return true;
-
   OS << FName;
   encodeULEB128(0, OS);
   encodeULEB128(S.getTotalSamples(), OS);
   encodeULEB128(S.getHeadSamples(), OS);
   encodeULEB128(S.getBodySamples().size(), OS);
+
+  // Emit all the body samples.
   for (const auto &I : S.getBodySamples()) {
     LineLocation Loc = I.first;
     const SampleRecord &Sample = I.second;
@@ -106,6 +105,16 @@ bool SampleProfileWriterBinary::write(StringRef FName,
       encodeULEB128(0, OS);
       encodeULEB128(CalleeSamples, OS);
     }
+  }
+
+  // Recursively emit all the callsite samples.
+  encodeULEB128(S.getCallsiteSamples().size(), OS);
+  for (const auto &J : S.getCallsiteSamples()) {
+    CallsiteLocation Loc = J.first;
+    const FunctionSamples &CalleeSamples = J.second;
+    encodeULEB128(Loc.LineOffset, OS);
+    encodeULEB128(Loc.Discriminator, OS);
+    write(Loc.CalleeName, CalleeSamples);
   }
 
   return true;

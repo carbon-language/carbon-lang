@@ -378,6 +378,83 @@ ErrorOr<StringRef> SampleProfileReaderBinary::readString() {
   return Str;
 }
 
+std::error_code
+SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
+  auto Val = readNumber<unsigned>();
+  if (std::error_code EC = Val.getError())
+    return EC;
+  FProfile.addTotalSamples(*Val);
+
+  Val = readNumber<unsigned>();
+  if (std::error_code EC = Val.getError())
+    return EC;
+  FProfile.addHeadSamples(*Val);
+
+  // Read the samples in the body.
+  auto NumRecords = readNumber<unsigned>();
+  if (std::error_code EC = NumRecords.getError())
+    return EC;
+
+  for (unsigned I = 0; I < *NumRecords; ++I) {
+    auto LineOffset = readNumber<uint64_t>();
+    if (std::error_code EC = LineOffset.getError())
+      return EC;
+
+    auto Discriminator = readNumber<uint64_t>();
+    if (std::error_code EC = Discriminator.getError())
+      return EC;
+
+    auto NumSamples = readNumber<uint64_t>();
+    if (std::error_code EC = NumSamples.getError())
+      return EC;
+
+    auto NumCalls = readNumber<unsigned>();
+    if (std::error_code EC = NumCalls.getError())
+      return EC;
+
+    for (unsigned J = 0; J < *NumCalls; ++J) {
+      auto CalledFunction(readString());
+      if (std::error_code EC = CalledFunction.getError())
+        return EC;
+
+      auto CalledFunctionSamples = readNumber<uint64_t>();
+      if (std::error_code EC = CalledFunctionSamples.getError())
+        return EC;
+
+      FProfile.addCalledTargetSamples(*LineOffset, *Discriminator,
+                                      *CalledFunction, *CalledFunctionSamples);
+    }
+
+    FProfile.addBodySamples(*LineOffset, *Discriminator, *NumSamples);
+  }
+
+  // Read all the samples for inlined function calls.
+  auto NumCallsites = readNumber<unsigned>();
+  if (std::error_code EC = NumCallsites.getError())
+    return EC;
+
+  for (unsigned J = 0; J < *NumCallsites; ++J) {
+    auto LineOffset = readNumber<uint64_t>();
+    if (std::error_code EC = LineOffset.getError())
+      return EC;
+
+    auto Discriminator = readNumber<uint64_t>();
+    if (std::error_code EC = Discriminator.getError())
+      return EC;
+
+    auto FName(readString());
+    if (std::error_code EC = FName.getError())
+      return EC;
+
+    FunctionSamples &CalleeProfile = FProfile.functionSamplesAt(
+        CallsiteLocation(*LineOffset, *Discriminator, *FName));
+    if (std::error_code EC = readProfile(CalleeProfile))
+      return EC;
+  }
+
+  return sampleprof_error::success;
+}
+
 std::error_code SampleProfileReaderBinary::read() {
   while (!at_eof()) {
     auto FName(readString());
@@ -387,53 +464,8 @@ std::error_code SampleProfileReaderBinary::read() {
     Profiles[*FName] = FunctionSamples();
     FunctionSamples &FProfile = Profiles[*FName];
 
-    auto Val = readNumber<unsigned>();
-    if (std::error_code EC = Val.getError())
+    if (std::error_code EC = readProfile(FProfile))
       return EC;
-    FProfile.addTotalSamples(*Val);
-
-    Val = readNumber<unsigned>();
-    if (std::error_code EC = Val.getError())
-      return EC;
-    FProfile.addHeadSamples(*Val);
-
-    // Read the samples in the body.
-    auto NumRecords = readNumber<unsigned>();
-    if (std::error_code EC = NumRecords.getError())
-      return EC;
-    for (unsigned I = 0; I < *NumRecords; ++I) {
-      auto LineOffset = readNumber<uint64_t>();
-      if (std::error_code EC = LineOffset.getError())
-        return EC;
-
-      auto Discriminator = readNumber<uint64_t>();
-      if (std::error_code EC = Discriminator.getError())
-        return EC;
-
-      auto NumSamples = readNumber<uint64_t>();
-      if (std::error_code EC = NumSamples.getError())
-        return EC;
-
-      auto NumCalls = readNumber<unsigned>();
-      if (std::error_code EC = NumCalls.getError())
-        return EC;
-
-      for (unsigned J = 0; J < *NumCalls; ++J) {
-        auto CalledFunction(readString());
-        if (std::error_code EC = CalledFunction.getError())
-          return EC;
-
-        auto CalledFunctionSamples = readNumber<uint64_t>();
-        if (std::error_code EC = CalledFunctionSamples.getError())
-          return EC;
-
-        FProfile.addCalledTargetSamples(*LineOffset, *Discriminator,
-                                        *CalledFunction,
-                                        *CalledFunctionSamples);
-      }
-
-      FProfile.addBodySamples(*LineOffset, *Discriminator, *NumSamples);
-    }
   }
 
   return sampleprof_error::success;
