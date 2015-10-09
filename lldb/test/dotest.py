@@ -1575,6 +1575,7 @@ if __name__ == "__main__":
     lldb.just_do_benchmarks_test = just_do_benchmarks_test
     lldb.dont_do_dsym_test = dont_do_dsym_test
     lldb.dont_do_dwarf_test = dont_do_dwarf_test
+    lldb.dont_do_dwo_test = dont_do_dwo_test
     lldb.dont_do_debugserver_test = dont_do_debugserver_test
     lldb.dont_do_llgs_test = dont_do_llgs_test
 
