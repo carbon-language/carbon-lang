@@ -50,7 +50,7 @@ bool ExpandISelPseudos::runOnMachineFunction(MachineFunction &MF) {
 
   // Iterate through each instruction in the function, looking for pseudos.
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    MachineBasicBlock *MBB = I;
+    MachineBasicBlock *MBB = &*I;
     for (MachineBasicBlock::iterator MBBI = MBB->begin(), MBBE = MBB->end();
          MBBI != MBBE; ) {
       MachineInstr *MI = MBBI++;
@@ -63,7 +63,7 @@ bool ExpandISelPseudos::runOnMachineFunction(MachineFunction &MF) {
         // The expansion may involve new basic blocks.
         if (NewMBB != MBB) {
           MBB = NewMBB;
-          I = NewMBB;
+          I = NewMBB->getIterator();
           MBBI = NewMBB->begin();
           MBBE = NewMBB->end();
         }
