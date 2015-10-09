@@ -13,4 +13,9 @@ void g3(const
 @property (retain,nullable) SomeClass *property2;
 - (nullable SomeClass *)method1;
 - (void)method2:(nonnull SomeClass *)param;
+@property (readonly, weak) SomeClass *property3; // expected-warning{{missing a nullability type specifier}}
+@end
+
+@interface SomeClass ()
+@property (readonly, weak) SomeClass *property4; // expected-warning{{missing a nullability type specifier}}
 @end

@@ -3311,9 +3311,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
   // Are we in an assume-nonnull region?
   bool inAssumeNonNullRegion = false;
-  if (S.PP.getPragmaAssumeNonNullLoc().isValid() &&
-      !state.getDeclarator().isObjCWeakProperty() &&
-      !S.deduceWeakPropertyFromType(T)) {
+  if (S.PP.getPragmaAssumeNonNullLoc().isValid()) {
     inAssumeNonNullRegion = true;
     // Determine which file we saw the assume-nonnull region in.
     FileID file = getNullabilityCompletenessCheckFileID(
@@ -3392,6 +3390,13 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         complainAboutMissingNullability = CAMN_No;
         break;
       }
+
+      // Weak properties are inferred to be nullable.
+      if (state.getDeclarator().isObjCWeakProperty() && inAssumeNonNullRegion) {
+        inferNullability = NullabilityKind::Nullable;
+        break;
+      }
+
       // fallthrough
 
     case Declarator::FileContext:

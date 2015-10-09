@@ -181,7 +181,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   }
 
   // Validate the attributes on the @property.
-  CheckObjCPropertyAttributes(Res, AtLoc, Attributes, 
+  CheckObjCPropertyAttributes(Res, AtLoc, Attributes,
                               (isa<ObjCInterfaceDecl>(ClassDecl) ||
                                isa<ObjCProtocolDecl>(ClassDecl)));
 
@@ -2301,13 +2301,6 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
       if (*nullability == NullabilityKind::NonNull)
         Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
           << "nonnull" << "weak";
-    } else {
-        PropertyTy =
-          Context.getAttributedType(
-            AttributedType::getNullabilityAttrKind(NullabilityKind::Nullable),
-            PropertyTy, PropertyTy);
-        TypeSourceInfo *TSInfo = PropertyDecl->getTypeSourceInfo();
-        PropertyDecl->setType(PropertyTy, TSInfo);
     }
   }
 

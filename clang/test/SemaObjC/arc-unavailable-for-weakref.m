@@ -56,7 +56,7 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @interface I
 {
 }
-@property (weak) NSFont *font; // expected-error {{synthesizing __weak instance variable of type 'NSFont * _Nullable', which does not support weak references}}
+@property (weak) NSFont *font; // expected-error {{synthesizing __weak instance variable of type 'NSFont *', which does not support weak references}}
 @end
 
 @implementation I // expected-note {{when implemented by class I}}
@@ -65,7 +65,7 @@ __attribute__((objc_arc_weak_reference_unavailable))
 
 // rdar://13676793
 @protocol MyProtocol
-@property (weak) NSFont *font; // expected-error {{synthesizing __weak instance variable of type 'NSFont * _Nullable', which does not support weak references}}
+@property (weak) NSFont *font; // expected-error {{synthesizing __weak instance variable of type 'NSFont *', which does not support weak references}}
 @end
 
 @interface I1 <MyProtocol>
@@ -76,7 +76,7 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @end
 
 @interface Super
-@property (weak) NSFont *font;  // expected-error {{synthesizing __weak instance variable of type 'NSFont * _Nullable', which does not support weak references}}
+@property (weak) NSFont *font;  // expected-error {{synthesizing __weak instance variable of type 'NSFont *', which does not support weak references}}
 @end
 
 
