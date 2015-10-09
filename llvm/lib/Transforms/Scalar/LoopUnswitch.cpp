@@ -506,10 +506,10 @@ bool LoopUnswitch::processCurrentLoop() {
   // FIXME: This could be refined to only bail if the convergent operation is
   // not already control-dependent on the unswitch value.
   for (const auto BB : currentLoop->blocks()) {
-    for (const auto &I : *BB) {
-      const auto CI = dyn_cast<CallInst>(&I);
-      if (!CI) continue;
-      if (CI->isConvergent())
+    for (auto &I : *BB) {
+      auto CS = CallSite(&I);
+      if (!CS) continue;
+      if (CS.hasFnAttr(Attribute::Convergent))
         return false;
     }
   }
