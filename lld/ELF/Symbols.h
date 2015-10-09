@@ -63,6 +63,7 @@ public:
   bool isUsedInRegularObj() const { return IsUsedInRegularObj; }
   bool isUsedInDynamicReloc() const { return IsUsedInDynamicReloc; }
   void setUsedInDynamicReloc() { IsUsedInDynamicReloc = true; }
+  bool isTLS() const { return IsTLS; }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
@@ -96,9 +97,10 @@ public:
   template <class ELFT> int compare(SymbolBody *Other);
 
 protected:
-  SymbolBody(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility)
+  SymbolBody(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
+             bool IsTLS)
       : SymbolKind(K), IsWeak(IsWeak), MostConstrainingVisibility(Visibility),
-        Name(Name) {
+        IsTLS(IsTLS), Name(Name) {
     IsUsedInRegularObj = K != SharedKind && K != LazyKind;
     IsUsedInDynamicReloc = 0;
   }
@@ -108,6 +110,7 @@ protected:
   unsigned MostConstrainingVisibility : 2;
   unsigned IsUsedInRegularObj : 1;
   unsigned IsUsedInDynamicReloc : 1;
+  unsigned IsTLS : 1;
   unsigned DynamicSymbolTableIndex = 0;
   StringRef Name;
   Symbol *Backref = nullptr;
@@ -125,7 +128,7 @@ protected:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   ELFSymbolBody(Kind K, StringRef Name, const Elf_Sym &Sym)
       : SymbolBody(K, Name, Sym.getBinding() == llvm::ELF::STB_WEAK,
-                   Sym.getVisibility()),
+                   Sym.getVisibility(), Sym.getType() == llvm::ELF::STT_TLS),
         Sym(Sym) {}
 
 public:
@@ -272,7 +275,7 @@ public:
 class Lazy : public SymbolBody {
 public:
   Lazy(ArchiveFile *F, const llvm::object::Archive::Symbol S)
-      : SymbolBody(LazyKind, S.getName(), false, llvm::ELF::STV_DEFAULT),
+      : SymbolBody(LazyKind, S.getName(), false, llvm::ELF::STV_DEFAULT, false),
         File(F), Sym(S) {}
 
   static bool classof(const SymbolBody *S) { return S->kind() == LazyKind; }

@@ -80,7 +80,8 @@ private:
   template <class ELFT> void init(uint16_t EMachine);
   template <class ELFT> void resolve(SymbolBody *Body);
   template <class ELFT>
-  void reportConflict(const SymbolBody &Old, const SymbolBody &New);
+  void reportConflict(const Twine &Message, const SymbolBody &Old,
+                      const SymbolBody &New, bool Warning);
 
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
 

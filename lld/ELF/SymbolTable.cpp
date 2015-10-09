@@ -175,7 +175,8 @@ void SymbolTable::addELFFile(ELFFileBase *File) {
 }
 
 template <class ELFT>
-void SymbolTable::reportConflict(const SymbolBody &Old, const SymbolBody &New) {
+void SymbolTable::reportConflict(const Twine &Message, const SymbolBody &Old,
+                                 const SymbolBody &New, bool Warning) {
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
@@ -193,10 +194,10 @@ void SymbolTable::reportConflict(const SymbolBody &Old, const SymbolBody &New) {
       NewFile = F.get();
   }
 
-  std::string Msg = (Twine("duplicate symbol: ") + Old.getName() + " in " +
+  std::string Msg = (Message + ": " + Old.getName() + " in " +
                      OldFile->getName() + " and " + NewFile->getName())
                         .str();
-  if (Config->AllowMultipleDefinition)
+  if (Warning)
     warning(Msg);
   else
     error(Msg);
@@ -229,13 +230,18 @@ template <class ELFT> void SymbolTable::resolve(SymbolBody *New) {
     return;
   }
 
+  if (New->isTLS() != Existing->isTLS())
+    reportConflict<ELFT>("TLS attribute mismatch for symbol", *Existing, *New,
+                         false);
+
   // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,
   // equivalent (conflicting), or more preferable, respectively.
   int comp = Existing->compare<ELFT>(New);
   if (comp < 0)
     Sym->Body = New;
   else if (comp == 0)
-    reportConflict<ELFT>(*Existing, *New);
+    reportConflict<ELFT>("duplicate symbol", *Existing, *New,
+                         Config->AllowMultipleDefinition);
 }
 
 Symbol *SymbolTable::insert(SymbolBody *New) {
