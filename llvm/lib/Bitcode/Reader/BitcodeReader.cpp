@@ -146,7 +146,10 @@ class BitcodeReader : public GVMaterializer {
   std::unique_ptr<MemoryBuffer> Buffer;
   std::unique_ptr<BitstreamReader> StreamFile;
   BitstreamCursor Stream;
+  // Next offset to start scanning for lazy parsing of function bodies.
   uint64_t NextUnreadBit = 0;
+  // Last function offset found in the VST.
+  uint64_t LastFunctionBlockBit = 0;
   bool SeenValueSymbolTable = false;
   unsigned VSTOffset = 0;
 
@@ -368,7 +371,8 @@ private:
   /// a corresponding error code.
   std::error_code parseAlignmentValue(uint64_t Exponent, unsigned &Alignment);
   std::error_code parseAttrKind(uint64_t Code, Attribute::AttrKind *Kind);
-  std::error_code parseModule(bool Resume, bool ShouldLazyLoadMetadata = false);
+  std::error_code parseModule(uint64_t ResumeBit,
+                              bool ShouldLazyLoadMetadata = false);
   std::error_code parseAttributeBlock();
   std::error_code parseAttributeGroupBlock();
   std::error_code parseTypeTable();
@@ -379,6 +383,7 @@ private:
                                unsigned NameIndex, Triple &TT);
   std::error_code parseValueSymbolTable(unsigned Offset = 0);
   std::error_code parseConstants();
+  std::error_code rememberAndSkipFunctionBodies();
   std::error_code rememberAndSkipFunctionBody();
   /// Save the positions of the Metadata blocks and skip parsing the blocks.
   std::error_code rememberAndSkipMetadata();
@@ -1836,11 +1841,11 @@ std::error_code BitcodeReader::parseValueSymbolTable(unsigned Offset) {
       assert(F);
       uint64_t FuncBitOffset = FuncWordOffset * 32;
       DeferredFunctionInfo[F] = FuncBitOffset + FuncBitcodeOffsetDelta;
-      // Set the NextUnreadBit to point to the last function block.
+      // Set the LastFunctionBlockBit to point to the last function block.
       // Later when parsing is resumed after function materialization,
       // we can simply skip that last function block.
-      if (FuncBitOffset > NextUnreadBit)
-        NextUnreadBit = FuncBitOffset;
+      if (FuncBitOffset > LastFunctionBlockBit)
+        LastFunctionBlockBit = FuncBitOffset;
       break;
     }
     case bitc::VST_CODE_BBENTRY: {
@@ -2987,6 +2992,9 @@ std::error_code BitcodeReader::rememberAndSkipFunctionBody() {
 
   // Save the current stream state.
   uint64_t CurBit = Stream.GetCurrentBitNo();
+  assert(
+      (DeferredFunctionInfo[Fn] == 0 || DeferredFunctionInfo[Fn] == CurBit) &&
+      "Mismatch between VST and scanned function offsets");
   DeferredFunctionInfo[Fn] = CurBit;
 
   // Skip over the function block for now.
@@ -3019,10 +3027,44 @@ std::error_code BitcodeReader::globalCleanup() {
   return std::error_code();
 }
 
-std::error_code BitcodeReader::parseModule(bool Resume,
+/// Support for lazy parsing of function bodies. This is required if we
+/// either have an old bitcode file without a VST forward declaration record,
+/// or if we have an anonymous function being materialized, since anonymous
+/// functions do not have a name and are therefore not in the VST.
+std::error_code BitcodeReader::rememberAndSkipFunctionBodies() {
+  Stream.JumpToBit(NextUnreadBit);
+
+  if (Stream.AtEndOfStream()) return error("Could not find function in stream");
+
+  assert(SeenFirstFunctionBody);
+  // An old bitcode file with the symbol table at the end would have
+  // finished the parse greedily.
+  assert(SeenValueSymbolTable);
+
+  SmallVector<uint64_t, 64> Record;
+
+  while (1) {
+    BitstreamEntry Entry = Stream.advance();
+    switch (Entry.Kind) {
+      default:
+        return error("Expect SubBlock");
+      case BitstreamEntry::SubBlock:
+        switch (Entry.ID) {
+          default:
+            return error("Expect function block");
+          case bitc::FUNCTION_BLOCK_ID:
+            if (std::error_code EC = rememberAndSkipFunctionBody()) return EC;
+            NextUnreadBit = Stream.GetCurrentBitNo();
+            return std::error_code();
+        }
+    }
+  }
+}
+
+std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
                                            bool ShouldLazyLoadMetadata) {
-  if (Resume)
-    Stream.JumpToBit(NextUnreadBit);
+  if (ResumeBit)
+    Stream.JumpToBit(ResumeBit);
   else if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
     return error("Invalid record");
 
@@ -3116,14 +3158,17 @@ std::error_code BitcodeReader::parseModule(bool Resume,
                     BitcodeReader::parseValueSymbolTable(VSTOffset))
               return EC;
             SeenValueSymbolTable = true;
-            return std::error_code();
+            // Fall through so that we record the NextUnreadBit below.
+            // This is necessary in case we have an anonymous function that
+            // is later materialized. Since it will not have a VST entry we
+            // need to fall back to the lazy parse to find its offset.
           } else {
             // If we have a VST forward declaration record, but have already
             // parsed the VST (just above, when the first function body was
             // encountered here), then we are resuming the parse after
-            // materializing functions. The NextUnreadBit points to the start
-            // of the last function block recorded in the VST (set when
-            // parsing the VST function entries). Skip it.
+            // materializing functions. The ResumeBit points to the
+            // start of the last function block recorded in the
+            // DeferredFunctionInfo map. Skip it.
             if (Stream.SkipBlock())
               return error("Invalid record");
             continue;
@@ -3131,10 +3176,12 @@ std::error_code BitcodeReader::parseModule(bool Resume,
         }
 
         // Support older bitcode files that did not have the function
-        // index in the VST, nor a VST forward declaration record.
+        // index in the VST, nor a VST forward declaration record, as
+        // well as anonymous functions that do not have VST entries.
         // Build the DeferredFunctionInfo vector on the fly.
         if (std::error_code EC = rememberAndSkipFunctionBody())
           return EC;
+
         // Suspend parsing when we reach the function bodies. Subsequent
         // materialization calls will resume it when necessary. If the bitcode
         // file is old, the symbol table will be at the end instead and will not
@@ -3506,7 +3553,7 @@ BitcodeReader::parseBitcodeInto(std::unique_ptr<DataStreamer> Streamer,
       return error("Malformed block");
 
     if (Entry.ID == bitc::MODULE_BLOCK_ID)
-      return parseModule(false, ShouldLazyLoadMetadata);
+      return parseModule(0, ShouldLazyLoadMetadata);
 
     if (Stream.SkipBlock())
       return error("Invalid record");
@@ -4959,16 +5006,13 @@ std::error_code BitcodeReader::findFunctionInStream(
     DenseMap<Function *, uint64_t>::iterator DeferredFunctionInfoIterator) {
   while (DeferredFunctionInfoIterator->second == 0) {
     // This is the fallback handling for the old format bitcode that
-    // didn't contain the function index in the VST. Assert if we end up
-    // here for the new format (which is the only time the VSTOffset would
-    // be non-zero).
-    assert(VSTOffset == 0);
-    if (Stream.AtEndOfStream())
-      return error("Could not find function in stream");
-    // ParseModule will parse the next body in the stream and set its
-    // position in the DeferredFunctionInfo map.
-    if (std::error_code EC = parseModule(true))
-      return EC;
+    // didn't contain the function index in the VST, or when we have
+    // an anonymous function which would not have a VST entry.
+    // Assert that we have one of those two cases.
+    assert(VSTOffset == 0 || !F->hasName());
+    // Parse the next body in the stream and set its position in the
+    // DeferredFunctionInfo map.
+    if (std::error_code EC = rememberAndSkipFunctionBodies()) return EC;
   }
   return std::error_code();
 }
@@ -5064,11 +5108,12 @@ std::error_code BitcodeReader::materializeModule(Module *M) {
     if (std::error_code EC = materialize(F))
       return EC;
   }
-  // At this point, if there are any function bodies, the current bit is
-  // pointing to the END_BLOCK record after them. Now make sure the rest
-  // of the bits in the module have been read.
-  if (NextUnreadBit)
-    parseModule(true);
+  // At this point, if there are any function bodies, parse the rest of
+  // the bits in the module past the last function block we have recorded
+  // through either lazy scanning or the VST.
+  if (LastFunctionBlockBit || NextUnreadBit)
+    parseModule(LastFunctionBlockBit > NextUnreadBit ? LastFunctionBlockBit
+                                                     : NextUnreadBit);
 
   // Check that all block address forward references got resolved (as we
   // promised above).
