@@ -681,11 +681,8 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   // so conservatively exclude them. Only do this if we're finalizing, though,
   // as otherwise we won't necessarilly have seen everything yet.
   if (!NoFinalize && MAI.hasSubsectionsViaSymbols()) {
-    const MCContext::SymbolTable &Symbols = getContext().getSymbols();
-    for (MCContext::SymbolTable::const_iterator i = Symbols.begin(),
-                                                e = Symbols.end();
-         i != e; ++i) {
-      MCSymbol *Sym = i->getValue();
+    for (const auto &TableEntry : getContext().getSymbols()) {
+      MCSymbol *Sym = TableEntry.getValue();
       // Variable symbols may not be marked as defined, so check those
       // explicitly. If we know it's a variable, we have a definition for
       // the purposes of this check.
@@ -1861,10 +1858,8 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
           break;
 
         // Otherwise substitute with the token values, with spaces eliminated.
-        for (MCAsmMacroArgument::const_iterator it = A[Index].begin(),
-                                                ie = A[Index].end();
-             it != ie; ++it)
-          OS << it->getString();
+        for (const AsmToken &Token : A[Index])
+          OS << Token.getString();
         break;
       }
       }
@@ -1900,15 +1895,13 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
           }
         } else {
           bool VarargParameter = HasVararg && Index == (NParameters - 1);
-          for (MCAsmMacroArgument::const_iterator it = A[Index].begin(),
-                                                  ie = A[Index].end();
-               it != ie; ++it)
+          for (const AsmToken &Token : A[Index])
             // We expect no quotes around the string's contents when
             // parsing for varargs.
-            if (it->getKind() != AsmToken::String || VarargParameter)
-              OS << it->getString();
+            if (Token.getKind() != AsmToken::String || VarargParameter)
+              OS << Token.getString();
             else
-              OS << it->getStringContents();
+              OS << Token.getStringContents();
 
           Pos += 1 + Argument.size();
         }
@@ -4412,10 +4405,10 @@ bool AsmParser::parseDirectiveIrp(SMLoc DirectiveLoc) {
   SmallString<256> Buf;
   raw_svector_ostream OS(Buf);
 
-  for (MCAsmMacroArguments::iterator i = A.begin(), e = A.end(); i != e; ++i) {
+  for (const MCAsmMacroArgument &Arg : A) {
     // Note that the AtPseudoVariable is enabled for instantiations of .irp.
     // This is undocumented, but GAS seems to support it.
-    if (expandMacro(OS, M->Body, Parameter, *i, true, getTok().getLoc()))
+    if (expandMacro(OS, M->Body, Parameter, Arg, true, getTok().getLoc()))
       return true;
   }
 
