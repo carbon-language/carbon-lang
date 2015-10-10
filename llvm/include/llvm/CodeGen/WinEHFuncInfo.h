@@ -37,11 +37,10 @@ class Value;
 // Windows-related EH personalities.
 
 typedef PointerUnion<const BasicBlock *, MachineBasicBlock *> MBBOrBasicBlock;
-typedef PointerUnion<const Value *, const MachineBasicBlock *> ValueOrMBB;
 
 struct CxxUnwindMapEntry {
   int ToState;
-  ValueOrMBB Cleanup;
+  MBBOrBasicBlock Cleanup;
 };
 
 /// Similar to CxxUnwindMapEntry, but supports SEH filters.
@@ -69,7 +68,7 @@ struct WinEHHandlerType {
     int FrameIndex;
   } CatchObj = {};
   GlobalVariable *TypeDescriptor;
-  ValueOrMBB Handler;
+  MBBOrBasicBlock Handler;
 };
 
 struct WinEHTryBlockMapEntry {

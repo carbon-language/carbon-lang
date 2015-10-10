@@ -285,15 +285,14 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
   // Calculate state numbers if we haven't already.
   WinEHFuncInfo &EHInfo = MMI.getWinEHFuncInfo(&fn);
-  const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
   if (Personality == EHPersonality::MSVC_CXX)
-    calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
+    calculateWinCXXEHStateNumbers(&fn, EHInfo);
   else if (isAsynchronousEHPersonality(Personality))
-    calculateSEHStateNumbers(WinEHParentFn, EHInfo);
+    calculateSEHStateNumbers(&fn, EHInfo);
   else if (Personality == EHPersonality::CoreCLR)
-    calculateClrEHStateNumbers(WinEHParentFn, EHInfo);
+    calculateClrEHStateNumbers(&fn, EHInfo);
 
-  calculateCatchReturnSuccessorColors(WinEHParentFn, EHInfo);
+  calculateCatchReturnSuccessorColors(&fn, EHInfo);
 
   // Map all BB references in the WinEH data to MBBs.
   for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap) {
@@ -304,14 +303,13 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       } else {
         H.CatchObj.FrameIndex = INT_MAX;
       }
-      if (const auto *BB = dyn_cast<BasicBlock>(H.Handler.get<const Value *>()))
-        H.Handler = MBBMap[BB];
+      if (H.Handler)
+        H.Handler = MBBMap[H.Handler.get<const BasicBlock *>()];
     }
   }
   for (CxxUnwindMapEntry &UME : EHInfo.CxxUnwindMap)
     if (UME.Cleanup)
-      if (const auto *BB = dyn_cast<BasicBlock>(UME.Cleanup.get<const Value *>()))
-        UME.Cleanup = MBBMap[BB];
+      UME.Cleanup = MBBMap[UME.Cleanup.get<const BasicBlock *>()];
   for (SEHUnwindMapEntry &UME : EHInfo.SEHUnwindMap) {
     const BasicBlock *BB = UME.Handler.get<const BasicBlock *>();
     UME.Handler = MBBMap[BB];

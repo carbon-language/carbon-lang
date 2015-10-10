@@ -144,10 +144,6 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   if (!Fn.hasPersonalityFn())
     return false;
 
-  // No need to prepare outlined handlers.
-  if (Fn.hasFnAttribute("wineh-parent"))
-    return false;
-
   // Classify the personality to see what kind of preparation we need.
   Personality = classifyEHPersonality(Fn.getPersonalityFn());
 
@@ -173,10 +169,10 @@ void WinEHPrepare::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 static int addUnwindMapEntry(WinEHFuncInfo &FuncInfo, int ToState,
-                             const Value *V) {
+                             const BasicBlock *BB) {
   CxxUnwindMapEntry UME;
   UME.ToState = ToState;
-  UME.Cleanup = V;
+  UME.Cleanup = BB;
   FuncInfo.CxxUnwindMap.push_back(UME);
   return FuncInfo.getLastStateNumber();
 }

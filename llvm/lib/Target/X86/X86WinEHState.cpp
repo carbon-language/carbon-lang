@@ -149,13 +149,6 @@ void WinEHStatePass::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool WinEHStatePass::runOnFunction(Function &F) {
-  // If this is an outlined handler, don't do anything. We'll do state insertion
-  // for it in the parent.
-  StringRef WinEHParentName =
-      F.getFnAttribute("wineh-parent").getValueAsString();
-  if (WinEHParentName != F.getName() && !WinEHParentName.empty())
-    return false;
-
   // Check the personality. Do nothing if this personality doesn't use funclets.
   if (!F.hasPersonalityFn())
     return false;
@@ -169,17 +162,15 @@ bool WinEHStatePass::runOnFunction(Function &F) {
 
   // Skip this function if there are no EH pads and we aren't using IR-level
   // outlining.
-  if (WinEHParentName.empty()) {
-    bool HasPads = false;
-    for (BasicBlock &BB : F) {
-      if (BB.isEHPad()) {
-        HasPads = true;
-        break;
-      }
+  bool HasPads = false;
+  for (BasicBlock &BB : F) {
+    if (BB.isEHPad()) {
+      HasPads = true;
+      break;
     }
-    if (!HasPads)
-      return false;
   }
+  if (!HasPads)
+    return false;
 
   // Disable frame pointer elimination in this function.
   // FIXME: Do the nested handlers need to keep the parent ebp in ebp, or can we

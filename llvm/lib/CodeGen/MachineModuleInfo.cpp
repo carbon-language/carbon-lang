@@ -467,16 +467,8 @@ try_next:;
   return FilterID;
 }
 
-const Function *MachineModuleInfo::getWinEHParent(const Function *F) const {
-  StringRef WinEHParentName =
-      F->getFnAttribute("wineh-parent").getValueAsString();
-  if (WinEHParentName.empty() || WinEHParentName == F->getName())
-    return F;
-  return F->getParent()->getFunction(WinEHParentName);
-}
-
 WinEHFuncInfo &MachineModuleInfo::getWinEHFuncInfo(const Function *F) {
-  auto &Ptr = FuncInfoMap[getWinEHParent(F)];
+  auto &Ptr = FuncInfoMap[F];
   if (!Ptr)
     Ptr.reset(new WinEHFuncInfo);
   return *Ptr;

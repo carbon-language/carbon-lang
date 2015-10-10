@@ -67,7 +67,6 @@ void WinException::beginFunction(const MachineFunction *MF) {
   bool hasEHFunclets = MMI->hasEHFunclets();
 
   const Function *F = MF->getFunction();
-  const Function *ParentF = MMI->getWinEHParent(F);
 
   shouldEmitMoves = Asm->needsSEHMoves();
 
@@ -91,11 +90,8 @@ void WinException::beginFunction(const MachineFunction *MF) {
 
   // If we're not using CFI, we don't want the CFI or the personality, but we
   // might want EH tables if we had EH pads.
-  // FIXME: If WinEHPrepare outlined something, we should emit the LSDA. Remove
-  // this once WinEHPrepare stops doing that.
   if (!Asm->MAI->usesWindowsCFI()) {
-    shouldEmitLSDA =
-        hasEHFunclets || (F->hasFnAttribute("wineh-parent") && F == ParentF);
+    shouldEmitLSDA = hasEHFunclets;
     shouldEmitPersonality = false;
     return;
   }
@@ -152,25 +148,23 @@ void WinException::endFunction(const MachineFunction *MF) {
 
 /// Retreive the MCSymbol for a GlobalValue or MachineBasicBlock. GlobalValues
 /// are used in the old WinEH scheme, and they will be removed eventually.
-static MCSymbol *getMCSymbolForMBBOrGV(AsmPrinter *Asm, ValueOrMBB Handler) {
-  if (!Handler)
+static MCSymbol *getMCSymbolForMBB(AsmPrinter *Asm,
+                                   const MachineBasicBlock *MBB) {
+  if (!MBB)
     return nullptr;
-  if (Handler.is<const MachineBasicBlock *>()) {
-    auto *MBB = Handler.get<const MachineBasicBlock *>();
-    assert(MBB->isEHFuncletEntry());
 
-    // Give catches and cleanups a name based off of their parent function and
-    // their funclet entry block's number.
-    const MachineFunction *MF = MBB->getParent();
-    const Function *F = MF->getFunction();
-    StringRef FuncLinkageName = GlobalValue::getRealLinkageName(F->getName());
-    MCContext &Ctx = MF->getContext();
-    StringRef HandlerPrefix = MBB->isCleanupFuncletEntry() ? "dtor" : "catch";
-    return Ctx.getOrCreateSymbol("?" + HandlerPrefix + "$" +
-                                 Twine(MBB->getNumber()) + "@?0?" +
-                                 FuncLinkageName + "@4HA");
-  }
-  return Asm->getSymbol(cast<GlobalValue>(Handler.get<const Value *>()));
+  assert(MBB->isEHFuncletEntry());
+
+  // Give catches and cleanups a name based off of their parent function and
+  // their funclet entry block's number.
+  const MachineFunction *MF = MBB->getParent();
+  const Function *F = MF->getFunction();
+  StringRef FuncLinkageName = GlobalValue::getRealLinkageName(F->getName());
+  MCContext &Ctx = MF->getContext();
+  StringRef HandlerPrefix = MBB->isCleanupFuncletEntry() ? "dtor" : "catch";
+  return Ctx.getOrCreateSymbol("?" + HandlerPrefix + "$" +
+                               Twine(MBB->getNumber()) + "@?0?" +
+                               FuncLinkageName + "@4HA");
 }
 
 void WinException::beginFunclet(const MachineBasicBlock &MBB,
@@ -180,7 +174,7 @@ void WinException::beginFunclet(const MachineBasicBlock &MBB,
   const Function *F = Asm->MF->getFunction();
   // If a symbol was not provided for the funclet, invent one.
   if (!Sym) {
-    Sym = getMCSymbolForMBBOrGV(Asm, &MBB);
+    Sym = getMCSymbolForMBB(Asm, &MBB);
 
     // Describe our funclet symbol as a function with internal linkage.
     Asm->OutStreamer->BeginCOFFSymbolDef(Sym);
@@ -504,7 +498,7 @@ void WinException::emitSEHActionsForRange(WinEHFuncInfo &FuncInfo,
     const MCExpr *ExceptOrNull;
     auto *Handler = UME.Handler.get<MachineBasicBlock *>();
     if (UME.IsFinally) {
-      FilterOrFinally = create32bitRef(getMCSymbolForMBBOrGV(Asm, Handler));
+      FilterOrFinally = create32bitRef(getMCSymbolForMBB(Asm, Handler));
       ExceptOrNull = MCConstantExpr::create(0, Ctx);
     } else {
       // For an except, the filter can be 1 (catch-all) or a function
@@ -597,7 +591,8 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   if (UnwindMapXData) {
     OS.EmitLabel(UnwindMapXData);
     for (const CxxUnwindMapEntry &UME : FuncInfo.CxxUnwindMap) {
-      MCSymbol *CleanupSym = getMCSymbolForMBBOrGV(Asm, UME.Cleanup);
+      MCSymbol *CleanupSym =
+          getMCSymbolForMBB(Asm, UME.Cleanup.dyn_cast<MachineBasicBlock *>());
       OS.EmitIntValue(UME.ToState, 4);             // ToState
       OS.EmitValue(create32bitRef(CleanupSym), 4); // Action
     }
@@ -677,7 +672,8 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
           FrameAllocOffsetRef = MCConstantExpr::create(0, Asm->OutContext);
         }
 
-        MCSymbol *HandlerSym = getMCSymbolForMBBOrGV(Asm, HT.Handler);
+        MCSymbol *HandlerSym =
+            getMCSymbolForMBB(Asm, HT.Handler.dyn_cast<MachineBasicBlock *>());
 
         OS.EmitIntValue(HT.Adjectives, 4);                  // Adjectives
         OS.EmitValue(create32bitRef(HT.TypeDescriptor), 4); // Type

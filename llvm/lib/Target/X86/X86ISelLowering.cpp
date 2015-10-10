@@ -2701,10 +2701,6 @@ SDValue X86TargetLowering::LowerFormalArguments(
   }
 
   MachineModuleInfo &MMI = MF.getMMI();
-  const Function *WinEHParent = nullptr;
-  if (MMI.hasWinEHFuncInfo(Fn))
-    WinEHParent = MMI.getWinEHParent(Fn);
-  bool IsWinEHParent = WinEHParent && WinEHParent == Fn;
 
   // Figure out if XMM registers are in use.
   assert(!(Subtarget->useSoftFloat() &&
@@ -2861,7 +2857,7 @@ SDValue X86TargetLowering::LowerFormalArguments(
 
   FuncInfo->setArgumentStackSize(StackSize);
 
-  if (IsWinEHParent) {
+  if (MMI.hasWinEHFuncInfo(Fn)) {
     if (Is64Bit) {
       int UnwindHelpFI = MFI->CreateStackObject(8, 8, /*isSS=*/false);
       SDValue StackSlot = DAG.getFrameIndex(UnwindHelpFI, MVT::i64);

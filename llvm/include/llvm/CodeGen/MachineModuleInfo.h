@@ -220,10 +220,9 @@ public:
   void setModule(const Module *M) { TheModule = M; }
   const Module *getModule() const { return TheModule; }
 
-  const Function *getWinEHParent(const Function *F) const;
   WinEHFuncInfo &getWinEHFuncInfo(const Function *F);
   bool hasWinEHFuncInfo(const Function *F) const {
-    return FuncInfoMap.count(getWinEHParent(F)) > 0;
+    return FuncInfoMap.count(F) > 0;
   }
 
   /// getInfo - Keep track of various per-function pieces of information for
