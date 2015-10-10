@@ -14,16 +14,16 @@
 
 // CHECK: Disassembly of section .R_AARCH64_ABS16:
 // CHECK-NEXT: $d.0:
-// CHECK-NEXT:     2000:       0c 00   .short
+// CHECK-NEXT:     1000:       0c 00   .short
 //                             ^-- A = 0xc
 
 // CHECK-NEXT: Disassembly of section .R_AARCH64_ABS32:
 // CHECK-NEXT: $d.1:
-// CHECK-NEXT:     2002:       18 00 00 00     .word
+// CHECK-NEXT:     1002:       18 00 00 00     .word
 //                             ^-- A = 0x18
 
 // CHECK-NEXT: Disassembly of section .R_AARCH64_ABS64:
 // CHECK-NEXT: $d.2:
-// CHECK-NEXT:     2006:       24 00 00 00     .word
+// CHECK-NEXT:     1006:       24 00 00 00     .word
 //                             ^-- A = 0x24
-// CHECK-NEXT:     200a:       00 00 00 00     .word
+// CHECK-NEXT:     100a:       00 00 00 00     .word

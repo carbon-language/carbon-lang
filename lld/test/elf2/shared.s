@@ -14,7 +14,7 @@
 // SO-NEXT: Flags [
 // SO-NEXT: ]
 // SO-NEXT: Address:
-// SO-NEXT: Offset: 0x2030
+// SO-NEXT: Offset: 0x1030
 // SO-NEXT: Size:
 // SO-NEXT: Link:
 // SO-NEXT: Info:
@@ -46,7 +46,7 @@
 // CHECK-NEXT:     SHF_ALLOC
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address: [[DYNSYMADDR:.*]]
-// CHECK-NEXT:   Offset: 0x101C
+// CHECK-NEXT:   Offset: 0x110
 // CHECK-NEXT:   Size:
 // CHECK-NEXT:   Link: [[DYNSTR:.*]]
 // CHECK-NEXT:   Info: 1
@@ -145,7 +145,7 @@
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: _start
-// CHECK-NEXT:     Value: 0x12000
+// CHECK-NEXT:     Value: 0x11000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
@@ -184,7 +184,7 @@
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: _start@
-// CHECK-NEXT:     Value: 0x12000
+// CHECK-NEXT:     Value: 0x11000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Non

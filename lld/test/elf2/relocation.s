@@ -12,8 +12,8 @@
 // SEC-NEXT:   SHF_ALLOC
 // SEC-NEXT:   SHF_EXECINSTR
 // SEC-NEXT: ]
-// SEC-NEXT: Address: 0x12020
-// SEC-NEXT: Offset: 0x2020
+// SEC-NEXT: Address: 0x11020
+// SEC-NEXT: Offset: 0x1020
 // SEC-NEXT: Size: 8
 
 // SEC:         Name: .got
@@ -22,7 +22,7 @@
 // SEC-NEXT:     SHF_ALLOC
 // SEC-NEXT:     SHF_WRITE
 // SEC-NEXT:   ]
-// SEC-NEXT:   Address: 0x130A0
+// SEC-NEXT:   Address: 0x120A0
 // SEC-NEXT:   Offset:
 // SEC-NEXT:   Size: 16
 // SEC-NEXT:   Link: 0
@@ -44,11 +44,11 @@ lulz:
 
 // CHECK: Disassembly of section .text:
 // CHECK-NEXT: _start:
-// CHECK-NEXT:   12000:  e8 04 00 00 00   callq 4
-// CHECK-NEXT:   12005:
+// CHECK-NEXT:   11000:  e8 04 00 00 00   callq 4
+// CHECK-NEXT:   11005:
 
 // CHECK:      lulz:
-// CHECK-NEXT:   12009:  90  nop
+// CHECK-NEXT:   11009:  90  nop
 
 
 .section       .text2,"ax",@progbits
@@ -60,7 +60,7 @@ R_X86_64_32:
 // constants in hex.
 // CHECK: Disassembly of section .text2:
 // CHECK-NEXT: R_X86_64_32:
-// CHECK-NEXT:  1200a: {{.*}} movl $73738, %edx
+// CHECK-NEXT:  1100a: {{.*}} movl $69642, %edx
 
 .section .R_X86_64_32S,"ax",@progbits
 .global R_X86_64_32S
@@ -69,16 +69,16 @@ R_X86_64_32S:
 
 // CHECK: Disassembly of section .R_X86_64_32S:
 // CHECK-NEXT: R_X86_64_32S:
-// CHECK-NEXT:  {{.*}}: {{.*}} movq -974839, %rdx
+// CHECK-NEXT:  {{.*}}: {{.*}} movq -978935, %rdx
 
 .section .R_X86_64_PC32,"ax",@progbits
 .global R_X86_64_PC32
 R_X86_64_PC32:
  call bar
-// 0x12020 - (0x12017 + 5) = 4
+// 0x11020 - (0x11017 + 5) = 4
 // CHECK:      Disassembly of section .R_X86_64_PC32:
 // CHECK-NEXT: R_X86_64_PC32:
-// CHECK-NEXT:  12017:   e8 04 00 00 00  callq  4
+// CHECK-NEXT:  11017:   e8 04 00 00 00  callq  4
 
 .section .R_X86_64_64,"a",@progbits
 .global R_X86_64_64
@@ -86,14 +86,14 @@ R_X86_64_64:
  .quad R_X86_64_64
 
 // CHECK:      Contents of section .R_X86_64_64:
-// CHECK-NEXT:   11000 00100100 00000000
+// CHECK-NEXT:   10158 58010100 00000000
 
 .section .R_X86_64_GOTPCREL,"a",@progbits
 .global R_X86_64_GOTPCREL
 R_X86_64_GOTPCREL:
  .long zed@gotpcrel
 
-// 0x130A8 - 0x11008 = 8352
-// 8352 = 0x80200000   in little endian
+// 0x120A8 - 0x10160 = 8008
+// 8008 = 0x481f0000   in little endian
 // CHECK:      Contents of section .R_X86_64_GOTPCREL
-// CHECK-NEXT:   11008 a0200000
+// CHECK-NEXT:   10160 481f0000

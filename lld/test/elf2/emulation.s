@@ -16,9 +16,9 @@
 # X86-64-NEXT:   Type: Executable (0x2)
 # X86-64-NEXT:   Machine: EM_X86_64 (0x3E)
 # X86-64-NEXT:   Version: 1
-# X86-64-NEXT:   Entry: 0x11000
+# X86-64-NEXT:   Entry: 0x100B0
 # X86-64-NEXT:   ProgramHeaderOffset: 0x40
-# X86-64-NEXT:   SectionHeaderOffset: 0x1060
+# X86-64-NEXT:   SectionHeaderOffset: 0x110
 # X86-64-NEXT:   Flags [ (0x0)
 # X86-64-NEXT:   ]
 # X86-64-NEXT:   HeaderSize: 64
@@ -47,9 +47,9 @@
 # X86-NEXT:   Type: Executable (0x2)
 # X86-NEXT:   Machine: EM_386 (0x3)
 # X86-NEXT:   Version: 1
-# X86-NEXT:   Entry: 0x11000
+# X86-NEXT:   Entry: 0x10074
 # X86-NEXT:   ProgramHeaderOffset: 0x34
-# X86-NEXT:   SectionHeaderOffset: 0x104C
+# X86-NEXT:   SectionHeaderOffset: 0xC0
 # X86-NEXT:   Flags [ (0x0)
 # X86-NEXT:   ]
 # X86-NEXT:   HeaderSize: 52
@@ -78,9 +78,9 @@
 # PPC64-NEXT:   Type: Executable (0x2)
 # PPC64-NEXT:   Machine: EM_PPC64 (0x15)
 # PPC64-NEXT:   Version: 1
-# PPC64-NEXT:   Entry: 0x10010000
+# PPC64-NEXT:   Entry: 0x100000B0
 # PPC64-NEXT:   ProgramHeaderOffset: 0x40
-# PPC64-NEXT:   SectionHeaderOffset: 0x10060
+# PPC64-NEXT:   SectionHeaderOffset: 0x110
 # PPC64-NEXT:   Flags [ (0x0)
 # PPC64-NEXT:   ]
 # PPC64-NEXT:   HeaderSize: 64
@@ -109,9 +109,9 @@
 # PPC-NEXT:   Type: Executable (0x2)
 # PPC-NEXT:   Machine: EM_PPC (0x14)
 # PPC-NEXT:   Version: 1
-# PPC-NEXT:   Entry: 0x10010000
+# PPC-NEXT:   Entry: 0x10000074
 # PPC-NEXT:   ProgramHeaderOffset: 0x34
-# PPC-NEXT:   SectionHeaderOffset: 0x1004C
+# PPC-NEXT:   SectionHeaderOffset: 0xC0
 # PPC-NEXT:   Flags [ (0x0)
 # PPC-NEXT:   ]
 # PPC-NEXT:   HeaderSize: 52
@@ -140,9 +140,9 @@
 # MIPS-NEXT:   Type: Executable (0x2)
 # MIPS-NEXT:   Machine: EM_MIPS (0x8)
 # MIPS-NEXT:   Version: 1
-# MIPS-NEXT:   Entry: 0x410030
+# MIPS-NEXT:   Entry: 0x4000B0
 # MIPS-NEXT:   ProgramHeaderOffset: 0x34
-# MIPS-NEXT:   SectionHeaderOffset: 0x10094
+# MIPS-NEXT:   SectionHeaderOffset: 0x114
 # MIPS-NEXT:   Flags [ (0x0)
 # MIPS-NEXT:   ]
 
@@ -164,9 +164,9 @@
 # MIPSEL-NEXT:   Type: Executable (0x2)
 # MIPSEL-NEXT:   Machine: EM_MIPS (0x8)
 # MIPSEL-NEXT:   Version: 1
-# MIPSEL-NEXT:   Entry: 0x410030
+# MIPSEL-NEXT:   Entry: 0x4000B0
 # MIPSEL-NEXT:   ProgramHeaderOffset: 0x34
-# MIPSEL-NEXT:   SectionHeaderOffset: 0x10094
+# MIPSEL-NEXT:   SectionHeaderOffset: 0x114
 # MIPSEL-NEXT:   Flags [ (0x0)
 # MIPSEL-NEXT:   ]
 

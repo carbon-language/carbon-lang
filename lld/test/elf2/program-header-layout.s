@@ -23,7 +23,7 @@ _start:
 # CHECK-NEXT:     SHF_ALLOC
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   Address:
-# CHECK-NEXT:   Offset: 0x1000
+# CHECK-NEXT:   Offset: 0xE8
 # CHECK-NEXT:   Size:
 # CHECK-NEXT:   Link:
 # CHECK-NEXT:   Info:
@@ -49,8 +49,8 @@ _start:
 # CHECK-NEXT:     Offset: 0x0
 # CHECK-NEXT:     VirtualAddress:
 # CHECK-NEXT:     PhysicalAddress:
-# CHECK-NEXT:     FileSize: 4104
-# CHECK-NEXT:     MemSize: 4104
+# CHECK-NEXT:     FileSize: 240
+# CHECK-NEXT:     MemSize: 240
 # CHECK-NEXT:     Flags [
 # CHECK-NEXT:       PF_R
 # CHECK-NEXT:     ]

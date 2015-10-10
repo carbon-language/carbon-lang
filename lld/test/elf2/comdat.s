@@ -11,7 +11,7 @@ foo:
 
 // CHECK: Disassembly of section .text2:
 // CHECK-NEXT: foo:
-// CHECK-NEXT:   2000: {{.*}}  nop
+// CHECK-NEXT:   1000: {{.*}}  nop
 // CHECK-NOT: nop
 
         .section bar, "ax"
@@ -19,10 +19,10 @@ foo:
 
 // CHECK: Disassembly of section bar:
 // CHECK-NEXT: bar:
-// 0x2000 - 0x2001 - 5 = -6
-// 0      - 0x2006 - 5 = -8203
-// CHECK-NEXT:   2001:	{{.*}}  callq  -6
-// CHECK-NEXT:   2006:	{{.*}}  callq  -8203
+// 0x1000 - 0x1001 - 5 = -6
+// 0      - 0x1006 - 5 = -8203
+// CHECK-NEXT:   1001:	{{.*}}  callq  -6
+// CHECK-NEXT:   1006:	{{.*}}  callq  -4107
 
         .section .text3,"axG",@progbits,zed,comdat,unique,0
 
