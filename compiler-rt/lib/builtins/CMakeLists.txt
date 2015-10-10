@@ -334,7 +334,7 @@ if (APPLE)
   add_subdirectory(Darwin-excludes)
   add_subdirectory(macho_embedded)
   darwin_add_builtin_libraries(${BUILTIN_SUPPORTED_OS})
-else ()
+elseif (NOT WIN32 OR MINGW)
   foreach (arch ${BUILTIN_SUPPORTED_ARCH})
     if (CAN_TARGET_${arch})
       # Filter out generic versions of routines that are re-implemented in
