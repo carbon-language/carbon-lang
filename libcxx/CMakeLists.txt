@@ -89,7 +89,9 @@ option(LIBCXX_ENABLE_MONOTONIC_CLOCK
    This option may only be set to OFF when LIBCXX_ENABLE_THREADS=OFF." ON)
 
 # Misc options ----------------------------------------------------------------
-option(LIBCXX_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
+# FIXME: Turn -pedantic back ON. It is currently off because it warns
+# about #include_next which is used everywhere.
+option(LIBCXX_ENABLE_PEDANTIC "Compile with pedantic enabled." OFF)
 option(LIBCXX_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 
 option(LIBCXX_GENERATE_COVERAGE "Enable generating code coverage." OFF)
