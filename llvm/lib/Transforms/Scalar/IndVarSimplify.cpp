@@ -962,14 +962,12 @@ Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
     Value *RHS = (DU.NarrowUse->getOperand(1) == DU.NarrowDef) ? DU.WideDef :
       getExtend(DU.NarrowUse->getOperand(1), WideType, IsSigned, DU.NarrowUse);
 
-    BinaryOperator *NarrowBO = cast<BinaryOperator>(DU.NarrowUse);
-    BinaryOperator *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(),
-                                                    LHS, RHS,
-                                                    NarrowBO->getName());
+    auto *NarrowBO = cast<BinaryOperator>(DU.NarrowUse);
+    auto *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(), LHS, RHS,
+                                          NarrowBO->getName());
     IRBuilder<> Builder(DU.NarrowUse);
     Builder.Insert(WideBO);
-    if (const OverflowingBinaryOperator *OBO =
-        dyn_cast<OverflowingBinaryOperator>(NarrowBO)) {
+    if (const auto *OBO = dyn_cast<OverflowingBinaryOperator>(NarrowBO)) {
       if (OBO->hasNoUnsignedWrap()) WideBO->setHasNoUnsignedWrap();
       if (OBO->hasNoSignedWrap()) WideBO->setHasNoSignedWrap();
     }
