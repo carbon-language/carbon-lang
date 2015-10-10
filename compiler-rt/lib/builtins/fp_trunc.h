@@ -63,12 +63,12 @@ static const int dstSigBits = 10;
 // End of specialization parameters.  Two helper routines for conversion to and
 // from the representation of floating-point data as integer values follow.
 
-static inline src_rep_t srcToRep(src_t x) {
+static __inline src_rep_t srcToRep(src_t x) {
     const union { src_t f; src_rep_t i; } rep = {.f = x};
     return rep.i;
 }
 
-static inline dst_t dstFromRep(dst_rep_t x) {
+static __inline dst_t dstFromRep(dst_rep_t x) {
     const union { dst_t f; dst_rep_t i; } rep = {.i = x};
     return rep.f;
 }

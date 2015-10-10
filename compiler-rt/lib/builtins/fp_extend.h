@@ -28,7 +28,7 @@ typedef double src_t;
 typedef uint64_t src_rep_t;
 #define SRC_REP_C UINT64_C
 static const int srcSigBits = 52;
-static inline int src_rep_t_clz(src_rep_t a) {
+static __inline int src_rep_t_clz(src_rep_t a) {
 #if defined __LP64__
     return __builtin_clzl(a);
 #else
@@ -75,12 +75,12 @@ static const int dstSigBits = 112;
 // End of specialization parameters.  Two helper routines for conversion to and
 // from the representation of floating-point data as integer values follow.
 
-static inline src_rep_t srcToRep(src_t x) {
+static __inline src_rep_t srcToRep(src_t x) {
     const union { src_t f; src_rep_t i; } rep = {.f = x};
     return rep.i;
 }
 
-static inline dst_t dstFromRep(dst_rep_t x) {
+static __inline dst_t dstFromRep(dst_rep_t x) {
     const union { dst_t f; dst_rep_t i; } rep = {.i = x};
     return rep.f;
 }

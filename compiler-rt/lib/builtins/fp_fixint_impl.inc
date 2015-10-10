@@ -14,7 +14,7 @@
 
 #include "fp_lib.h"
 
-static inline fixint_t __fixint(fp_t a) {
+static __inline fixint_t __fixint(fp_t a) {
     const fixint_t fixint_max = (fixint_t)((~(fixuint_t)0) / 2);
     const fixint_t fixint_min = -fixint_max - 1;
     // Break a into sign, exponent, significand

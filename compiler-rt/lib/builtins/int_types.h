@@ -95,14 +95,14 @@ typedef union
     }s;
 } utwords;
 
-static inline ti_int make_ti(di_int h, di_int l) {
+static __inline ti_int make_ti(di_int h, di_int l) {
     twords r;
     r.s.high = h;
     r.s.low = l;
     return r.all;
 }
 
-static inline tu_int make_tu(du_int h, du_int l) {
+static __inline tu_int make_tu(du_int h, du_int l) {
     utwords r;
     r.s.high = h;
     r.s.low = l;

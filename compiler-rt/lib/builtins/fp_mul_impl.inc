@@ -14,7 +14,7 @@
 
 #include "fp_lib.h"
 
-static inline fp_t __mulXf3__(fp_t a, fp_t b) {
+static __inline fp_t __mulXf3__(fp_t a, fp_t b) {
     const unsigned int aExponent = toRep(a) >> significandBits & maxExponent;
     const unsigned int bExponent = toRep(b) >> significandBits & maxExponent;
     const rep_t productSign = (toRep(a) ^ toRep(b)) & signBit;

@@ -14,7 +14,7 @@
 
 #include "fp_lib.h"
 
-static inline fixuint_t __fixuint(fp_t a) {
+static __inline fixuint_t __fixuint(fp_t a) {
     // Break a into sign, exponent, significand
     const rep_t aRep = toRep(a);
     const rep_t aAbs = aRep & absMask;

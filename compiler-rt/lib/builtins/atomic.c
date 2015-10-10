@@ -56,13 +56,13 @@ static const long SPINLOCK_MASK = SPINLOCK_COUNT - 1;
 #include <machine/atomic.h>
 #include <sys/umtx.h>
 typedef struct _usem Lock;
-inline static void unlock(Lock *l) {
+__inline static void unlock(Lock *l) {
   __c11_atomic_store((_Atomic(uint32_t)*)&l->_count, 1, __ATOMIC_RELEASE);
   __c11_atomic_thread_fence(__ATOMIC_SEQ_CST);
   if (l->_has_waiters)
       _umtx_op(l, UMTX_OP_SEM_WAKE, 1, 0, 0);
 }
-inline static void lock(Lock *l) {
+__inline static void lock(Lock *l) {
   uint32_t old = 1;
   while (!__c11_atomic_compare_exchange_weak((_Atomic(uint32_t)*)&l->_count, &old,
         0, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)) {
@@ -76,12 +76,12 @@ static Lock locks[SPINLOCK_COUNT] = { [0 ...  SPINLOCK_COUNT-1] = {0,1,0} };
 #elif defined(__APPLE__)
 #include <libkern/OSAtomic.h>
 typedef OSSpinLock Lock;
-inline static void unlock(Lock *l) {
+__inline static void unlock(Lock *l) {
   OSSpinLockUnlock(l);
 }
 /// Locks a lock.  In the current implementation, this is potentially
 /// unbounded in the contended case.
-inline static void lock(Lock *l) {  
+__inline static void lock(Lock *l) {
   OSSpinLockLock(l);
 }
 static Lock locks[SPINLOCK_COUNT]; // initialized to OS_SPINLOCK_INIT which is 0
@@ -89,12 +89,12 @@ static Lock locks[SPINLOCK_COUNT]; // initialized to OS_SPINLOCK_INIT which is 0
 #else
 typedef _Atomic(uintptr_t) Lock;
 /// Unlock a lock.  This is a release operation.
-inline static void unlock(Lock *l) {
+__inline static void unlock(Lock *l) {
   __c11_atomic_store(l, 0, __ATOMIC_RELEASE);
 }
 /// Locks a lock.  In the current implementation, this is potentially
 /// unbounded in the contended case.
-inline static void lock(Lock *l) {
+__inline static void lock(Lock *l) {
   uintptr_t old = 0;
   while (!__c11_atomic_compare_exchange_weak(l, &old, 1, __ATOMIC_ACQUIRE,
         __ATOMIC_RELAXED))
@@ -106,7 +106,7 @@ static Lock locks[SPINLOCK_COUNT];
 
 
 /// Returns a lock to use for a given pointer.  
-static inline Lock *lock_for_pointer(void *ptr) {
+static __inline Lock *lock_for_pointer(void *ptr) {
   intptr_t hash = (intptr_t)ptr;
   // Disregard the lowest 4 bits.  We want all values that may be part of the
   // same memory operation to hash to the same value and therefore use the same

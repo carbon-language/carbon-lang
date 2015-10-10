@@ -39,7 +39,7 @@
 
 #include "fp_trunc.h"
 
-static inline dst_t __truncXfYf2__(src_t a) {
+static __inline dst_t __truncXfYf2__(src_t a) {
     // Various constants whose values follow from the type parameters.
     // Any reasonable optimizer will fold and propagate all of these.
     const int srcBits = sizeof(src_t)*CHAR_BIT;

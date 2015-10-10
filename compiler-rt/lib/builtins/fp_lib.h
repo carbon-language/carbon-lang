@@ -46,12 +46,12 @@ typedef float fp_t;
 #define REP_C UINT32_C
 #define significandBits 23
 
-static inline int rep_clz(rep_t a) {
+static __inline int rep_clz(rep_t a) {
     return __builtin_clz(a);
 }
 
 // 32x32 --> 64 bit multiply
-static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
+static __inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
     const uint64_t product = (uint64_t)a*b;
     *hi = product >> 32;
     *lo = product;
@@ -66,7 +66,7 @@ typedef double fp_t;
 #define REP_C UINT64_C
 #define significandBits 52
 
-static inline int rep_clz(rep_t a) {
+static __inline int rep_clz(rep_t a) {
 #if defined __LP64__
     return __builtin_clzl(a);
 #else
@@ -83,7 +83,7 @@ static inline int rep_clz(rep_t a) {
 // 64x64 -> 128 wide multiply for platforms that don't have such an operation;
 // many 64-bit platforms have this operation, but they tend to have hardware
 // floating-point, so we don't bother with a special case for them here.
-static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
+static __inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
     // Each of the component 32x32 -> 64 products
     const uint64_t plolo = loWord(a) * loWord(b);
     const uint64_t plohi = loWord(a) * hiWord(b);
@@ -112,7 +112,7 @@ typedef long double fp_t;
 // 128-bit integer, we let the constant be casted to 128-bit integer
 #define significandBits 112
 
-static inline int rep_clz(rep_t a) {
+static __inline int rep_clz(rep_t a) {
     const union
         {
              __uint128_t ll;
@@ -148,7 +148,7 @@ static inline int rep_clz(rep_t a) {
 // 128x128 -> 256 wide multiply for platforms that don't have such an operation;
 // many 64-bit platforms have this operation, but they tend to have hardware
 // floating-point, so we don't bother with a special case for them here.
-static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
+static __inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
 
     const uint64_t product11 = Word_1(a) * Word_1(b);
     const uint64_t product12 = Word_1(a) * Word_2(b);
@@ -228,28 +228,28 @@ static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
 #define quietBit        (implicitBit >> 1)
 #define qnanRep         (exponentMask | quietBit)
 
-static inline rep_t toRep(fp_t x) {
+static __inline rep_t toRep(fp_t x) {
     const union { fp_t f; rep_t i; } rep = {.f = x};
     return rep.i;
 }
 
-static inline fp_t fromRep(rep_t x) {
+static __inline fp_t fromRep(rep_t x) {
     const union { fp_t f; rep_t i; } rep = {.i = x};
     return rep.f;
 }
 
-static inline int normalize(rep_t *significand) {
+static __inline int normalize(rep_t *significand) {
     const int shift = rep_clz(*significand) - rep_clz(implicitBit);
     *significand <<= shift;
     return 1 - shift;
 }
 
-static inline void wideLeftShift(rep_t *hi, rep_t *lo, int count) {
+static __inline void wideLeftShift(rep_t *hi, rep_t *lo, int count) {
     *hi = *hi << count | *lo >> (typeWidth - count);
     *lo = *lo << count;
 }
 
-static inline void wideRightShiftWithSticky(rep_t *hi, rep_t *lo, unsigned int count) {
+static __inline void wideRightShiftWithSticky(rep_t *hi, rep_t *lo, unsigned int count) {
     if (count < typeWidth) {
         const bool sticky = *lo << (typeWidth - count);
         *lo = *hi << (typeWidth - count) | *lo >> count | sticky;

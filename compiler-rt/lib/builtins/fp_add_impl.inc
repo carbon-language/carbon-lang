@@ -14,7 +14,7 @@
 
 #include "fp_lib.h"
 
-static inline fp_t __addXf3__(fp_t a, fp_t b) {
+static __inline fp_t __addXf3__(fp_t a, fp_t b) {
     rep_t aRep = toRep(a);
     rep_t bRep = toRep(b);
     const rep_t aAbs = aRep & absMask;
