@@ -1,7 +1,8 @@
 ; Test high-word operations, using "h" constraints to force a high
 ; register and "r" constraints to force a low register.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z196 -no-integrated-as | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=s390x-linux-gnu -mcpu=z196 \
+; RUN:   -no-integrated-as | FileCheck %s
 
 ; Test loads and stores involving mixtures of high and low registers.
 define void @f1(i32 *%ptr1, i32 *%ptr2) {
