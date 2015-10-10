@@ -459,11 +459,14 @@ Trophies
 
 * pugixml: https://github.com/zeux/pugixml/issues/39
 
-* PCRE: Search for "LLVM fuzzer" in http://vcs.pcre.org/pcre2/code/trunk/ChangeLog?view=markup
+* PCRE: Search for "LLVM fuzzer" in http://vcs.pcre.org/pcre2/code/trunk/ChangeLog?view=markup;
+  also: https://bugs.exim.org/buglist.cgi?bug_status=__all__&content=libfuzzer&no_redirect=1&order=Importance&product=PCRE&query_format=specific
 
 * ICU: http://bugs.icu-project.org/trac/ticket/11838
 
 * Freetype: https://savannah.nongnu.org/search/?words=LibFuzzer&type_of_search=bugs&Search=Search&exact=1#options
+
+* Harfbuzz: https://github.com/behdad/harfbuzz/issues/139
 
 * Linux Kernel's BPF verifier: https://github.com/iovisor/bpf-fuzzer
 
