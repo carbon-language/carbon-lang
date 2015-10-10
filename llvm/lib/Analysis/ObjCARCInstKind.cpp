@@ -93,7 +93,7 @@ ARCInstKind llvm::objcarc::GetFunctionClass(const Function *F) {
         .Default(ARCInstKind::CallOrUser);
 
   // One argument.
-  const Argument *A0 = AI++;
+  const Argument *A0 = &*AI++;
   if (AI == AE)
     // Argument is a pointer.
     if (PointerType *PTy = dyn_cast<PointerType>(A0->getType())) {
@@ -131,7 +131,7 @@ ARCInstKind llvm::objcarc::GetFunctionClass(const Function *F) {
     }
 
   // Two arguments, first is i8**.
-  const Argument *A1 = AI++;
+  const Argument *A1 = &*AI++;
   if (AI == AE)
     if (PointerType *PTy = dyn_cast<PointerType>(A0->getType()))
       if (PointerType *Pte = dyn_cast<PointerType>(PTy->getElementType()))

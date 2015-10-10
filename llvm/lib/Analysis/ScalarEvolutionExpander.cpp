@@ -63,7 +63,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
             // Create a new cast, and leave the old cast in place in case
             // it is being used as an insert point. Clear its operand
             // so that it doesn't hold anything live.
-            Ret = CastInst::Create(Op, V, Ty, "", IP);
+            Ret = CastInst::Create(Op, V, Ty, "", &*IP);
             Ret->takeName(CI);
             CI->replaceAllUsesWith(Ret);
             CI->setOperand(0, UndefValue::get(V->getType()));
@@ -75,12 +75,12 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
 
   // Create a new cast.
   if (!Ret)
-    Ret = CastInst::Create(Op, V, Ty, V->getName(), IP);
+    Ret = CastInst::Create(Op, V, Ty, V->getName(), &*IP);
 
   // We assert at the end of the function since IP might point to an
   // instruction with different dominance properties than a cast
   // (an invoke for example) and not dominate BIP (but the cast does).
-  assert(SE.DT.dominates(Ret, BIP));
+  assert(SE.DT.dominates(Ret, &*BIP));
 
   rememberInstruction(Ret);
   return Ret;
@@ -143,7 +143,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
 
   // Cast the instruction immediately after the instruction.
   Instruction *I = cast<Instruction>(V);
-  BasicBlock::iterator IP = I; ++IP;
+  BasicBlock::iterator IP = ++I->getIterator();
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
   if (CatchPadInst *CPI = dyn_cast<CatchPadInst>(I))
@@ -176,7 +176,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
         ScanLimit++;
       if (IP->getOpcode() == (unsigned)Opcode && IP->getOperand(0) == LHS &&
           IP->getOperand(1) == RHS)
-        return IP;
+        return &*IP;
       if (IP == BlockBegin) break;
     }
   }
@@ -192,7 +192,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
     if (!Preheader) break;
 
     // Ok, move up a level.
-    Builder.SetInsertPoint(Preheader, Preheader->getTerminator());
+    Builder.SetInsertPoint(Preheader->getTerminator());
   }
 
   // If we haven't found this binop, insert it.
@@ -485,7 +485,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
        Type::getInt8PtrTy(Ty->getContext(), PTy->getAddressSpace()));
 
     assert(!isa<Instruction>(V) ||
-           SE.DT.dominates(cast<Instruction>(V), Builder.GetInsertPoint()));
+           SE.DT.dominates(cast<Instruction>(V), &*Builder.GetInsertPoint()));
 
     // Expand the operands for a plain byte offset.
     Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);
@@ -510,7 +510,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
           ScanLimit++;
         if (IP->getOpcode() == Instruction::GetElementPtr &&
             IP->getOperand(0) == V && IP->getOperand(1) == Idx)
-          return IP;
+          return &*IP;
         if (IP == BlockBegin) break;
       }
     }
@@ -525,7 +525,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
       if (!Preheader) break;
 
       // Ok, move up a level.
-      Builder.SetInsertPoint(Preheader, Preheader->getTerminator());
+      Builder.SetInsertPoint(Preheader->getTerminator());
     }
 
     // Emit a GEP.
@@ -556,7 +556,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     if (!Preheader) break;
 
     // Ok, move up a level.
-    Builder.SetInsertPoint(Preheader, Preheader->getTerminator());
+    Builder.SetInsertPoint(Preheader->getTerminator());
   }
 
   // Insert a pretty getelementptr. Note that this GEP is not marked inbounds,
@@ -1168,8 +1168,8 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   PostIncLoops.clear();
 
   // Expand code for the start value.
-  Value *StartV = expandCodeFor(Normalized->getStart(), ExpandTy,
-                                L->getHeader()->begin());
+  Value *StartV =
+      expandCodeFor(Normalized->getStart(), ExpandTy, &L->getHeader()->front());
 
   // StartV must be hoisted into L's preheader to dominate the new phi.
   assert(!isa<Instruction>(StartV) ||
@@ -1186,7 +1186,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   if (useSubtract)
     Step = SE.getNegativeSCEV(Step);
   // Expand the step somewhere that dominates the loop header.
-  Value *StepV = expandCodeFor(Step, IntTy, L->getHeader()->begin());
+  Value *StepV = expandCodeFor(Step, IntTy, &L->getHeader()->front());
 
   // The no-wrap behavior proved by IsIncrement(NUW|NSW) is only applicable if
   // we actually do emit an addition.  It does not apply if we emit a
@@ -1302,7 +1302,8 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
     // expandCodeFor with an InsertPoint that is either outside the PostIncLoop
     // or dominated by IVIncInsertPos.
     if (isa<Instruction>(Result) &&
-        !SE.DT.dominates(cast<Instruction>(Result), Builder.GetInsertPoint())) {
+        !SE.DT.dominates(cast<Instruction>(Result),
+                         &*Builder.GetInsertPoint())) {
       // The induction variable's postinc expansion does not dominate this use.
       // IVUsers tries to prevent this case, so it is rare. However, it can
       // happen when an IVUser outside the loop is not dominated by the latch
@@ -1320,7 +1321,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
       {
         // Expand the step somewhere that dominates the loop header.
         BuilderType::InsertPointGuard Guard(Builder);
-        StepV = expandCodeFor(Step, IntTy, L->getHeader()->begin());
+        StepV = expandCodeFor(Step, IntTy, &L->getHeader()->front());
       }
       Result = expandIVInc(PN, StepV, L, ExpandTy, IntTy, useSubtract);
     }
@@ -1400,7 +1401,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
            isa<LandingPadInst>(NewInsertPt))
       ++NewInsertPt;
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), nullptr,
-                      NewInsertPt);
+                      &*NewInsertPt);
     return V;
   }
 
@@ -1441,7 +1442,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     BasicBlock *Header = L->getHeader();
     pred_iterator HPB = pred_begin(Header), HPE = pred_end(Header);
     CanonicalIV = PHINode::Create(Ty, std::distance(HPB, HPE), "indvar",
-                                  Header->begin());
+                                  &Header->front());
     rememberInstruction(CanonicalIV);
 
     SmallSet<BasicBlock *, 4> PredSeen;
@@ -1586,7 +1587,8 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
 
 Value *SCEVExpander::expandCodeFor(const SCEV *SH, Type *Ty,
                                    Instruction *IP) {
-  Builder.SetInsertPoint(IP->getParent(), IP);
+  assert(IP);
+  Builder.SetInsertPoint(IP);
   return expandCodeFor(SH, Ty);
 }
 
@@ -1604,7 +1606,7 @@ Value *SCEVExpander::expandCodeFor(const SCEV *SH, Type *Ty) {
 Value *SCEVExpander::expand(const SCEV *S) {
   // Compute an insertion point for this SCEV object. Hoist the instructions
   // as far out in the loop nest as possible.
-  Instruction *InsertPt = Builder.GetInsertPoint();
+  Instruction *InsertPt = &*Builder.GetInsertPoint();
   for (Loop *L = SE.LI.getLoopFor(Builder.GetInsertBlock());;
        L = L->getParentLoop())
     if (SE.isLoopInvariant(S, L)) {
@@ -1615,18 +1617,18 @@ Value *SCEVExpander::expand(const SCEV *S) {
         // LSR sets the insertion point for AddRec start/step values to the
         // block start to simplify value reuse, even though it's an invalid
         // position. SCEVExpander must correct for this in all cases.
-        InsertPt = L->getHeader()->getFirstInsertionPt();
+        InsertPt = &*L->getHeader()->getFirstInsertionPt();
       }
     } else {
       // If the SCEV is computable at this level, insert it into the header
       // after the PHIs (and after any other instructions that we've inserted
       // there) so that it is guaranteed to dominate any user inside the loop.
       if (L && SE.hasComputableLoopEvolution(S, L) && !PostIncLoops.count(L))
-        InsertPt = L->getHeader()->getFirstInsertionPt();
+        InsertPt = &*L->getHeader()->getFirstInsertionPt();
       while (InsertPt != Builder.GetInsertPoint()
              && (isInsertedInstruction(InsertPt)
                  || isa<DbgInfoIntrinsic>(InsertPt))) {
-        InsertPt = std::next(BasicBlock::iterator(InsertPt));
+        InsertPt = &*std::next(InsertPt->getIterator());
       }
       break;
     }
@@ -1638,7 +1640,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
     return I->second;
 
   BuilderType::InsertPointGuard Guard(Builder);
-  Builder.SetInsertPoint(InsertPt->getParent(), InsertPt);
+  Builder.SetInsertPoint(InsertPt);
 
   // Expand the expression into instructions.
   Value *V = visit(S);
@@ -1676,8 +1678,8 @@ SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
 
   // Emit code for it.
   BuilderType::InsertPointGuard Guard(Builder);
-  PHINode *V = cast<PHINode>(expandCodeFor(H, nullptr,
-                                           L->getHeader()->begin()));
+  PHINode *V =
+      cast<PHINode>(expandCodeFor(H, nullptr, &L->getHeader()->front()));
 
   return V;
 }
@@ -1783,7 +1785,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
         if (OrigInc->getType() != IsomorphicInc->getType()) {
           Instruction *IP = nullptr;
           if (PHINode *PN = dyn_cast<PHINode>(OrigInc))
-            IP = PN->getParent()->getFirstInsertionPt();
+            IP = &*PN->getParent()->getFirstInsertionPt();
           else
             IP = OrigInc->getNextNode();
 
@@ -1801,7 +1803,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
     ++NumElim;
     Value *NewIV = OrigPhiRef;
     if (OrigPhiRef->getType() != Phi->getType()) {
-      IRBuilder<> Builder(L->getHeader()->getFirstInsertionPt());
+      IRBuilder<> Builder(&*L->getHeader()->getFirstInsertionPt());
       Builder.SetCurrentDebugLocation(Phi->getDebugLoc());
       NewIV = Builder.CreateTruncOrBitCast(OrigPhiRef, Phi->getType(), IVName);
     }

@@ -116,7 +116,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
        II != E; ++II) {
     // Skip ephemeral values.
-    if (EphValues.count(II))
+    if (EphValues.count(&*II))
       continue;
 
     // Special handling for calls.

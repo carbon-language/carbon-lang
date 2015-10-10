@@ -960,7 +960,7 @@ bool CallAnalyzer::analyzeBlock(BasicBlock *BB,
       continue;
 
     // Skip ephemeral values.
-    if (EphValues.count(I))
+    if (EphValues.count(&*I))
       continue;
 
     ++NumInstructions;
@@ -992,7 +992,7 @@ bool CallAnalyzer::analyzeBlock(BasicBlock *BB,
     // all of the per-instruction logic. The visit tree returns true if we
     // consumed the instruction in any way, and false if the instruction's base
     // cost should count against inlining.
-    if (Base::visit(I))
+    if (Base::visit(&*I))
       ++NumInstructionsSimplified;
     else
       Cost += InlineConstants::InstrCost;
@@ -1172,15 +1172,15 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
        FAI != FAE; ++FAI, ++CAI) {
     assert(CAI != CS.arg_end());
     if (Constant *C = dyn_cast<Constant>(CAI))
-      SimplifiedValues[FAI] = C;
+      SimplifiedValues[&*FAI] = C;
 
     Value *PtrArg = *CAI;
     if (ConstantInt *C = stripAndComputeInBoundsConstantOffsets(PtrArg)) {
-      ConstantOffsetPtrs[FAI] = std::make_pair(PtrArg, C->getValue());
+      ConstantOffsetPtrs[&*FAI] = std::make_pair(PtrArg, C->getValue());
 
       // We can SROA any pointer arguments derived from alloca instructions.
       if (isa<AllocaInst>(PtrArg)) {
-        SROAArgValues[FAI] = PtrArg;
+        SROAArgValues[&*FAI] = PtrArg;
         SROAArgCosts[PtrArg] = 0;
       }
     }
@@ -1423,9 +1423,8 @@ bool InlineCostAnalysis::isInlineViable(Function &F) {
     if (isa<IndirectBrInst>(BI->getTerminator()) || BI->hasAddressTaken())
       return false;
 
-    for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
-         ++II) {
-      CallSite CS(II);
+    for (auto &II : *BI) {
+      CallSite CS(&II);
       if (!CS)
         continue;
 

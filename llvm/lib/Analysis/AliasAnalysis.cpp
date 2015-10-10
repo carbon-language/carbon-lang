@@ -351,12 +351,12 @@ bool AAResults::canInstructionRangeModRef(const Instruction &I1,
                                           const ModRefInfo Mode) {
   assert(I1.getParent() == I2.getParent() &&
          "Instructions not in same basic block!");
-  BasicBlock::const_iterator I = &I1;
-  BasicBlock::const_iterator E = &I2;
+  BasicBlock::const_iterator I = I1.getIterator();
+  BasicBlock::const_iterator E = I2.getIterator();
   ++E;  // Convert from inclusive to exclusive range.
 
   for (; I != E; ++I) // Check every instruction in range
-    if (getModRefInfo(I, Loc) & Mode)
+    if (getModRefInfo(&*I, Loc) & Mode)
       return true;
   return false;
 }

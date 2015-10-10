@@ -216,7 +216,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
     if (!Limit)
       return MemDepResult::getUnknown();
 
-    Instruction *Inst = --ScanIt;
+    Instruction *Inst = &*--ScanIt;
 
     // If this inst is a memory op, get the pointer it accessed
     MemoryLocation Loc;
@@ -502,7 +502,7 @@ MemDepResult MemoryDependenceAnalysis::getSimplePointerDependencyFrom(
 
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
-    Instruction *Inst = --ScanIt;
+    Instruction *Inst = &*--ScanIt;
 
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst))
       // Debug intrinsics don't (and can't) cause dependencies.
@@ -767,13 +767,13 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(QueryInst))
         isLoad |= II->getIntrinsicID() == Intrinsic::lifetime_start;
 
-      LocalCache = getPointerDependencyFrom(MemLoc, isLoad, ScanPos,
-                                            QueryParent, QueryInst);
+      LocalCache = getPointerDependencyFrom(
+          MemLoc, isLoad, ScanPos->getIterator(), QueryParent, QueryInst);
     } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
       CallSite QueryCS(QueryInst);
       bool isReadOnly = AA->onlyReadsMemory(QueryCS);
-      LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
-                                             QueryParent);
+      LocalCache = getCallSiteDependencyFrom(
+          QueryCS, isReadOnly, ScanPos->getIterator(), QueryParent);
     } else
       // Non-memory instruction.
       LocalCache = MemDepResult::getUnknown();
@@ -896,7 +896,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     BasicBlock::iterator ScanPos = DirtyBB->end();
     if (ExistingResult) {
       if (Instruction *Inst = ExistingResult->getResult().getInst()) {
-        ScanPos = Inst;
+        ScanPos = Inst->getIterator();
         // We're removing QueryInst's use of Inst.
         RemoveFromReverseMap(ReverseNonLocalDeps, Inst,
                              QueryCS.getInstruction());
@@ -1035,11 +1035,11 @@ MemDepResult MemoryDependenceAnalysis::GetNonLocalInfoForBlock(
     assert(ExistingResult->getResult().getInst()->getParent() == BB &&
            "Instruction invalidated?");
     ++NumCacheDirtyNonLocalPtr;
-    ScanPos = ExistingResult->getResult().getInst();
+    ScanPos = ExistingResult->getResult().getInst()->getIterator();
 
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
     ValueIsLoadPair CacheKey(Loc.Ptr, isLoad);
-    RemoveFromReverseMap(ReverseNonLocalPtrDeps, ScanPos, CacheKey);
+    RemoveFromReverseMap(ReverseNonLocalPtrDeps, &*ScanPos, CacheKey);
   } else {
     ++NumUncacheNonLocalPtr;
   }
@@ -1590,7 +1590,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   // the entire block to get to this point.
   MemDepResult NewDirtyVal;
   if (!RemInst->isTerminator())
-    NewDirtyVal = MemDepResult::getDirty(++BasicBlock::iterator(RemInst));
+    NewDirtyVal = MemDepResult::getDirty(&*++RemInst->getIterator());
 
   ReverseDepMapType::iterator ReverseDepIt = ReverseLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseLocalDeps.end()) {

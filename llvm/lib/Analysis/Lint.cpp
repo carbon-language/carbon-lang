@@ -234,7 +234,7 @@ void Lint::visitCallSite(CallSite CS) {
     for (; AI != AE; ++AI) {
       Value *Actual = *AI;
       if (PI != PE) {
-        Argument *Formal = PI++;
+        Argument *Formal = &*PI++;
         Assert(Formal->getType() == Actual->getType(),
                "Undefined behavior: Call argument type mismatches "
                "callee parameter type",
@@ -602,8 +602,8 @@ void Lint::visitInsertElementInst(InsertElementInst &I) {
 
 void Lint::visitUnreachableInst(UnreachableInst &I) {
   // This isn't undefined behavior, it's merely suspicious.
-  Assert(&I == I.getParent()->begin() ||
-             std::prev(BasicBlock::iterator(&I))->mayHaveSideEffects(),
+  Assert(&I == &I.getParent()->front() ||
+             std::prev(I.getIterator())->mayHaveSideEffects(),
          "Unusual: unreachable immediately preceded by instruction without "
          "side effects",
          &I);
@@ -635,7 +635,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
   // TODO: Look through vector insert/extract/shuffle.
   V = OffsetOk ? GetUnderlyingObject(V, *DL) : V->stripPointerCasts();
   if (LoadInst *L = dyn_cast<LoadInst>(V)) {
-    BasicBlock::iterator BBI = L;
+    BasicBlock::iterator BBI = L->getIterator();
     BasicBlock *BB = L->getParent();
     SmallPtrSet<BasicBlock *, 4> VisitedBlocks;
     for (;;) {

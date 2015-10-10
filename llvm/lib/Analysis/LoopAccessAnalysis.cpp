@@ -1397,7 +1397,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
       if (it->mayWriteToMemory()) {
         StoreInst *St = dyn_cast<StoreInst>(it);
         if (!St) {
-          emitAnalysis(LoopAccessReport(it) <<
+          emitAnalysis(LoopAccessReport(&*it) <<
                        "instruction cannot be vectorized");
           CanVecMem = false;
           return;

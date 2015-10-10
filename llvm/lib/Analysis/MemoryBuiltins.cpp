@@ -621,7 +621,7 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute_(Value *V) {
 
   // always generate code immediately before the instruction being
   // processed, so that the generated code dominates the same BBs
-  Instruction *PrevInsertPoint = Builder.GetInsertPoint();
+  BuilderTy::InsertPointGuard Guard(Builder);
   if (Instruction *I = dyn_cast<Instruction>(V))
     Builder.SetInsertPoint(I);
 
@@ -649,9 +649,6 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::compute_(Value *V) {
           << *V << '\n');
     Result = unknown();
   }
-
-  if (PrevInsertPoint)
-    Builder.SetInsertPoint(PrevInsertPoint);
 
   // Don't reuse CacheIt since it may be invalid at this point.
   CacheMap[V] = Result;
@@ -742,7 +739,7 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitPHINode(PHINode &PHI) {
 
   // compute offset/size for each PHI incoming pointer
   for (unsigned i = 0, e = PHI.getNumIncomingValues(); i != e; ++i) {
-    Builder.SetInsertPoint(PHI.getIncomingBlock(i)->getFirstInsertionPt());
+    Builder.SetInsertPoint(&*PHI.getIncomingBlock(i)->getFirstInsertionPt());
     SizeOffsetEvalType EdgeData = compute_(PHI.getIncomingValue(i));
 
     if (!bothKnown(EdgeData)) {

@@ -203,7 +203,8 @@ bool llvm::isPotentiallyReachable(const Instruction *A, const Instruction *B,
       return true;
 
     // Linear scan, start at 'A', see whether we hit 'B' or the end first.
-    for (BasicBlock::const_iterator I = A, E = BB->end(); I != E; ++I) {
+    for (BasicBlock::const_iterator I = A->getIterator(), E = BB->end(); I != E;
+         ++I) {
       if (&*I == B)
         return true;
     }

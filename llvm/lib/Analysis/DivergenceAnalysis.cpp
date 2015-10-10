@@ -147,8 +147,8 @@ void DivergencePropagator::exploreSyncDependency(TerminatorInst *TI) {
   for (auto I = IPostDom->begin(); isa<PHINode>(I); ++I) {
     // A PHINode is uniform if it returns the same value no matter which path is
     // taken.
-    if (!cast<PHINode>(I)->hasConstantValue() && DV.insert(I).second)
-      Worklist.push_back(I);
+    if (!cast<PHINode>(I)->hasConstantValue() && DV.insert(&*I).second)
+      Worklist.push_back(&*I);
   }
 
   // Propagation rule 2: if a value defined in a loop is used outside, the user

@@ -118,7 +118,8 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
   // from/to.  If so, the previous load or store would have already trapped,
   // so there is no harm doing an extra load (also, CSE will later eliminate
   // the load entirely).
-  BasicBlock::iterator BBI = ScanFrom, E = ScanFrom->getParent()->begin();
+  BasicBlock::iterator BBI = ScanFrom->getIterator(),
+                       E = ScanFrom->getParent()->begin();
 
   // We can at least always strip pointer casts even though we can't use the
   // base here.
@@ -211,7 +212,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
   while (ScanFrom != ScanBB->begin()) {
     // We must ignore debug info directives when counting (otherwise they
     // would affect codegen).
-    Instruction *Inst = --ScanFrom;
+    Instruction *Inst = &*--ScanFrom;
     if (isa<DbgInfoIntrinsic>(Inst))
       continue;
 

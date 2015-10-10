@@ -149,9 +149,9 @@ bool AAEval::runOnFunction(Function &F) {
   SetVector<Value *> Loads;
   SetVector<Value *> Stores;
 
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
-    if (I->getType()->isPointerTy())    // Add all pointer arguments.
-      Pointers.insert(I);
+  for (auto &I : F.args())
+    if (I.getType()->isPointerTy())    // Add all pointer arguments.
+      Pointers.insert(&I);
 
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     if (I->getType()->isPointerTy()) // Add all pointer instructions.

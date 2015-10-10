@@ -455,7 +455,7 @@ static bool isValidAssumeForContext(Value *V, const Query &Q) {
       for (BasicBlock::const_iterator I =
              std::next(BasicBlock::const_iterator(Q.CxtI)),
                                       IE(Inv); I != IE; ++I)
-        if (!isSafeToSpeculativelyExecute(I) && !isAssumeLikeIntrinsic(I))
+        if (!isSafeToSpeculativelyExecute(&*I) && !isAssumeLikeIntrinsic(&*I))
           return false;
 
       return !isEphemeralValueOf(Inv, Q.CxtI);
@@ -472,14 +472,14 @@ static bool isValidAssumeForContext(Value *V, const Query &Q) {
     // of the block); the common case is that the assume will come first.
     for (BasicBlock::iterator I = std::next(BasicBlock::iterator(Inv)),
          IE = Inv->getParent()->end(); I != IE; ++I)
-      if (I == Q.CxtI)
+      if (&*I == Q.CxtI)
         return true;
 
     // The context must come first...
     for (BasicBlock::const_iterator I =
            std::next(BasicBlock::const_iterator(Q.CxtI)),
                                     IE(Inv); I != IE; ++I)
-      if (!isSafeToSpeculativelyExecute(I) && !isAssumeLikeIntrinsic(I))
+      if (!isSafeToSpeculativelyExecute(&*I) && !isAssumeLikeIntrinsic(&*I))
         return false;
 
     return !isEphemeralValueOf(Inv, Q.CxtI);
@@ -3635,16 +3635,17 @@ bool llvm::isKnownNotFullPoison(const Instruction *PoisonI) {
   SmallSet<const Value *, 16> YieldsPoison;
   YieldsPoison.insert(PoisonI);
 
-  for (const Instruction *I = PoisonI, *E = BB->end(); I != E;
-       I = I->getNextNode()) {
-    if (I != PoisonI) {
-      const Value *NotPoison = getGuaranteedNonFullPoisonOp(I);
+  for (BasicBlock::const_iterator I = PoisonI->getIterator(), E = BB->end();
+       I != E; ++I) {
+    if (&*I != PoisonI) {
+      const Value *NotPoison = getGuaranteedNonFullPoisonOp(&*I);
       if (NotPoison != nullptr && YieldsPoison.count(NotPoison)) return true;
-      if (!isGuaranteedToTransferExecutionToSuccessor(I)) return false;
+      if (!isGuaranteedToTransferExecutionToSuccessor(&*I))
+        return false;
     }
 
     // Mark poison that propagates from I through uses of I.
-    if (YieldsPoison.count(I)) {
+    if (YieldsPoison.count(&*I)) {
       for (const User *User : I->users()) {
         const Instruction *UserI = cast<Instruction>(User);
         if (UserI->getParent() == BB && propagatesFullPoison(UserI))

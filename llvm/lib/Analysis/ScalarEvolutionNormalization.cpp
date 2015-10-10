@@ -109,7 +109,7 @@ TransformImpl(const SCEV *S, Instruction *User, Value *OperandValToReplace) {
     SmallVector<const SCEV *, 8> Operands;
     const Loop *L = AR->getLoop();
     // The addrec conceptually uses its operands at loop entry.
-    Instruction *LUser = L->getHeader()->begin();
+    Instruction *LUser = &L->getHeader()->front();
     // Transform each operand.
     for (SCEVNAryExpr::op_iterator I = AR->op_begin(), E = AR->op_end();
          I != E; ++I) {

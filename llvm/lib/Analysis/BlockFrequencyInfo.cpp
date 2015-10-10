@@ -55,7 +55,7 @@ struct GraphTraits<BlockFrequencyInfo *> {
   typedef Function::const_iterator nodes_iterator;
 
   static inline const NodeType *getEntryNode(const BlockFrequencyInfo *G) {
-    return G->getFunction()->begin();
+    return &G->getFunction()->front();
   }
   static ChildIteratorType child_begin(const NodeType *N) {
     return succ_begin(N);

@@ -1418,7 +1418,7 @@ bool BasicAAResult::isValueEqualInPotentialCycles(const Value *V,
   // the Values cannot come from different iterations of a potential cycle the
   // phi nodes could be involved in.
   for (auto *P : VisitedPhiBBs)
-    if (isPotentiallyReachable(P->begin(), Inst, DT, LI))
+    if (isPotentiallyReachable(&P->front(), Inst, DT, LI))
       return false;
 
   return true;

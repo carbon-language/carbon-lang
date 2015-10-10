@@ -514,11 +514,10 @@ void BranchProbabilityInfo::print(raw_ostream &OS) const {
   // We print the probabilities from the last function the analysis ran over,
   // or the function it is currently running over.
   assert(LastF && "Cannot print prior to running over a function");
-  for (Function::const_iterator BI = LastF->begin(), BE = LastF->end();
-       BI != BE; ++BI) {
-    for (succ_const_iterator SI = succ_begin(BI), SE = succ_end(BI);
-         SI != SE; ++SI) {
-      printEdgeProbability(OS << "  ", BI, *SI);
+  for (const auto &BI : *LastF) {
+    for (succ_const_iterator SI = succ_begin(&BI), SE = succ_end(&BI); SI != SE;
+         ++SI) {
+      printEdgeProbability(OS << "  ", &BI, *SI);
     }
   }
 }
