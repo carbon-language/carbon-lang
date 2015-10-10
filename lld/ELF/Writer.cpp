@@ -77,13 +77,8 @@ private:
                uintX_t VA, uintX_t Align);
   void phdrCopy(Elf_Phdr *PH, OutputSectionBase<ELFT::Is64Bits> *From);
 
-  llvm::BumpPtrAllocator PAlloc;
   SymbolTable<ELFT> &Symtab;
-  std::vector<Elf_Phdr *> Phdrs;
-  Elf_Phdr PhdrPhdr;
-  Elf_Phdr FileHeaderPhdr;
-  Elf_Phdr InterpPhdr;
-  Elf_Phdr DynamicPhdr;
+  std::vector<Elf_Phdr> Phdrs;
 
   uintX_t FileSize;
   uintX_t SectionHeaderOff;
@@ -462,10 +457,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   uintX_t VA = getVAStart() + sizeof(Elf_Ehdr);
   uintX_t FileOff = sizeof(Elf_Ehdr);
 
-  // The first Phdr entry is PT_PHDR which describes the program header itself.
-  Phdrs.push_back(&PhdrPhdr);
-  phdrSet(&PhdrPhdr, PT_PHDR, PF_R, FileOff, VA, /*Align=*/8);
-
   // Reserve space for Phdrs.
   int NumPhdrs = 2;   // 2 for PhdrPhdr and FileHeaderPhdr
   if (needsInterpSection())
@@ -482,22 +473,32 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       ++NumPhdrs;
     }
   }
+  Phdrs.reserve(NumPhdrs);
+
+  // The first Phdr entry is PT_PHDR which describes the program header itself.
+  Phdrs.emplace_back();
+  Elf_Phdr *PhdrPhdr = &Phdrs.back();
+  phdrSet(PhdrPhdr, PT_PHDR, PF_R, FileOff, VA, /*Align=*/8);
+
   FileOff += sizeof(Elf_Phdr) * NumPhdrs;
   VA += sizeof(Elf_Phdr) * NumPhdrs;
 
-  if (needsInterpSection())
-    Phdrs.push_back(&InterpPhdr);
+  Elf_Phdr *Interp = nullptr;
+  if (needsInterpSection()) {
+    Phdrs.emplace_back();
+    Interp = &Phdrs.back();
+  }
 
   // Create a Phdr for the file header.
-  Phdrs.push_back(&FileHeaderPhdr);
-  phdrSet(&FileHeaderPhdr, PT_LOAD, PF_R, 0, getVAStart(),
-          Target->getPageSize());
+  Phdrs.emplace_back();
+  Elf_Phdr *FileHeader = &Phdrs.back();
+  phdrSet(FileHeader, PT_LOAD, PF_R, 0, getVAStart(), Target->getPageSize());
 
   std::unordered_set<Elf_Phdr *> Closed;
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     if (Sec->getSize()) {
       uintX_t Flags = toPhdrFlags(Sec->getFlags());
-      Elf_Phdr *Last = Phdrs.back();
+      Elf_Phdr *Last = &Phdrs.back();
       if (Last->p_flags != Flags || !needsPhdr<ELFT>(Sec)) {
         // Flags changed. End current Phdr and potentially create a new one.
         if (Closed.insert(Last).second) {
@@ -508,9 +509,9 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
         if (needsPhdr<ELFT>(Sec)) {
           VA = RoundUpToAlignment(VA, Target->getPageSize());
           FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
-          auto *PH = new (PAlloc) Elf_Phdr;
+          Phdrs.emplace_back();
+          Elf_Phdr *PH = &Phdrs.back();
           phdrSet(PH, PT_LOAD, Flags, FileOff, VA, Target->getPageSize());
-          Phdrs.push_back(PH);
         }
       }
     }
@@ -528,25 +529,26 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       FileOff += Size;
   }
 
-  if (needsInterpSection()) {
-    InterpPhdr.p_type = PT_INTERP;
-    phdrCopy(&InterpPhdr, Out<ELFT>::Interp);
+  if (Interp) {
+    Interp->p_type = PT_INTERP;
+    phdrCopy(Interp, Out<ELFT>::Interp);
   }
   if (needsDynamicSections()) {
-    Phdrs.push_back(&DynamicPhdr);
-    DynamicPhdr.p_type = PT_DYNAMIC;
-    phdrCopy(&DynamicPhdr, Out<ELFT>::Dynamic);
+    Phdrs.emplace_back();
+    Elf_Phdr *PH = &Phdrs.back();
+    PH->p_type = PT_DYNAMIC;
+    phdrCopy(PH, Out<ELFT>::Dynamic);
   }
 
   // Fix up the first entry's size.
-  PhdrPhdr.p_filesz = sizeof(Elf_Phdr) * Phdrs.size();
-  PhdrPhdr.p_memsz = sizeof(Elf_Phdr) * Phdrs.size();
+  PhdrPhdr->p_filesz = sizeof(Elf_Phdr) * Phdrs.size();
+  PhdrPhdr->p_memsz = sizeof(Elf_Phdr) * Phdrs.size();
 
   // If nothing was merged into the file header PT_LOAD, set the size correctly.
-  if (FileHeaderPhdr.p_filesz == Target->getPageSize()) {
+  if (FileHeader->p_filesz == Target->getPageSize()) {
     uint64_t Size = sizeof(Elf_Ehdr) + sizeof(Elf_Phdr) * Phdrs.size();
-    FileHeaderPhdr.p_filesz = Size;
-    FileHeaderPhdr.p_memsz = Size;
+    FileHeader->p_filesz = Size;
+    FileHeader->p_memsz = Size;
   }
 
   // Add space for section headers.
@@ -591,8 +593,8 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shstrndx = Out<ELFT>::StrTab->getSectionIndex();
 
   auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
-  for (Elf_Phdr *PH : Phdrs)
-    *PHdrs++ = *PH;
+  for (Elf_Phdr &PH : Phdrs)
+    *PHdrs++ = PH;
 
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.
