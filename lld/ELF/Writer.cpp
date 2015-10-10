@@ -86,7 +86,6 @@ private:
   Elf_Phdr DynamicPhdr;
 
   uintX_t FileSize;
-  uintX_t ProgramHeaderOff;
   uintX_t SectionHeaderOff;
 };
 } // anonymous namespace
@@ -466,7 +465,6 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   phdrSet(&PhdrPhdr, PT_PHDR, PF_R, FileOff, VA, /*Align=*/8);
 
   // Reserve space for Phdrs.
-  ProgramHeaderOff = FileOff;
   FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
   VA = RoundUpToAlignment(VA, Target->getPageSize());
 
@@ -559,7 +557,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   if (Config->EntrySym)
     if (auto *E = dyn_cast<ELFSymbolBody<ELFT>>(Config->EntrySym->repl()))
       EHdr->e_entry = getSymVA<ELFT>(*E);
-  EHdr->e_phoff = ProgramHeaderOff;
+  EHdr->e_phoff = sizeof(Elf_Ehdr);
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
   EHdr->e_phentsize = sizeof(Elf_Phdr);
