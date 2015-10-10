@@ -28,9 +28,13 @@
 #error WEOF not defined
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#endif
+
 int main()
 {
-    mbstate_t mb = {0};
+    mbstate_t mb = {};
     size_t s = 0;
     tm *tm = 0;
     wint_t w = 0;
@@ -50,13 +54,19 @@ int main()
     static_assert((std::is_same<decltype(vfwscanf(fp, L"", va)), int>::value), "");
     static_assert((std::is_same<decltype(vswprintf(ws, s, L"", va)), int>::value), "");
     static_assert((std::is_same<decltype(vswscanf(L"", L"", va)), int>::value), "");
+    static_assert((std::is_same<decltype(vwprintf(L"", va)), int>::value), "");
+    static_assert((std::is_same<decltype(vwscanf(L"", va)), int>::value), "");
+    static_assert((std::is_same<decltype(wprintf(L"")), int>::value), "");
+    static_assert((std::is_same<decltype(wscanf(L"")), int>::value), "");
     static_assert((std::is_same<decltype(fgetwc(fp)), wint_t>::value), "");
     static_assert((std::is_same<decltype(fgetws(ws, 0, fp)), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(fputwc(L' ', fp)), wint_t>::value), "");
     static_assert((std::is_same<decltype(fputws(L"", fp)), int>::value), "");
     static_assert((std::is_same<decltype(fwide(fp, 0)), int>::value), "");
     static_assert((std::is_same<decltype(getwc(fp)), wint_t>::value), "");
+    static_assert((std::is_same<decltype(getwchar()), wint_t>::value), "");
     static_assert((std::is_same<decltype(putwc(L' ', fp)), wint_t>::value), "");
+    static_assert((std::is_same<decltype(putwchar(L' ')), wint_t>::value), "");
     static_assert((std::is_same<decltype(ungetwc(L' ', fp)), wint_t>::value), "");
     static_assert((std::is_same<decltype(wcstod(L"", (wchar_t**)0)), double>::value), "");
     static_assert((std::is_same<decltype(wcstof(L"", (wchar_t**)0)), float>::value), "");
@@ -73,19 +83,14 @@ int main()
     static_assert((std::is_same<decltype(wcscoll(L"", L"")), int>::value), "");
     static_assert((std::is_same<decltype(wcsncmp(L"", L"", s)), int>::value), "");
     static_assert((std::is_same<decltype(wcsxfrm(ws, L"", s)), size_t>::value), "");
-    static_assert((std::is_same<decltype(wcschr((const wchar_t*)0, L' ')), const wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wcschr((wchar_t*)0, L' ')), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wcscspn(L"", L"")), size_t>::value), "");
     static_assert((std::is_same<decltype(wcslen(L"")), size_t>::value), "");
-    static_assert((std::is_same<decltype(wcspbrk((const wchar_t*)0, L"")), const wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wcspbrk((wchar_t*)0, L"")), wchar_t*>::value), "");
-    static_assert((std::is_same<decltype(wcsrchr((const wchar_t*)0, L' ')), const wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wcsrchr((wchar_t*)0, L' ')), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wcsspn(L"", L"")), size_t>::value), "");
-    static_assert((std::is_same<decltype(wcsstr((const wchar_t*)0, L"")), const wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wcsstr((wchar_t*)0, L"")), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wcstok(ws, L"", (wchar_t**)0)), wchar_t*>::value), "");
-    static_assert((std::is_same<decltype(wmemchr((const wchar_t*)0, L' ', s)), const wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wmemchr((wchar_t*)0, L' ', s)), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(wmemcmp(L"", L"", s)), int>::value), "");
     static_assert((std::is_same<decltype(wmemcpy(ws, L"", s)), wchar_t*>::value), "");
@@ -100,16 +105,4 @@ int main()
     static_assert((std::is_same<decltype(wcrtomb(ns, L' ', &mb)), size_t>::value), "");
     static_assert((std::is_same<decltype(mbsrtowcs(ws, (const char**)0, s, &mb)), size_t>::value), "");
     static_assert((std::is_same<decltype(wcsrtombs(ns, (const wchar_t**)0, s, &mb)), size_t>::value), "");
-
-#ifndef _LIBCPP_HAS_NO_STDIN
-    static_assert((std::is_same<decltype(getwchar()), wint_t>::value), "");
-    static_assert((std::is_same<decltype(vwscanf(L"", va)), int>::value), "");
-    static_assert((std::is_same<decltype(wscanf(L"")), int>::value), "");
-#endif
-
-#ifndef _LIBCPP_HAS_NO_STDOUT
-    static_assert((std::is_same<decltype(putwchar(L' ')), wint_t>::value), "");
-    static_assert((std::is_same<decltype(vwprintf(L"", va)), int>::value), "");
-    static_assert((std::is_same<decltype(wprintf(L"")), int>::value), "");
-#endif
 }

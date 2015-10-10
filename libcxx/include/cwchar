@@ -106,6 +106,9 @@ size_t wcsrtombs(char* restrict dst, const wchar_t** restrict src, size_t len,
 #include <__config>
 #include <cwctype>
 #include <wchar.h>
+#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
+#include <support/win32/support.h> // pull in *swprintf defines
+#endif // _LIBCPP_MSVCRT
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -158,13 +161,16 @@ using ::wcscoll;
 using ::wcsncmp;
 using ::wcsxfrm;
 
-#ifdef _LIBCPP_WCHAR_H_HAS_CONST_OVERLOADS
+#if defined(_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_)
+
 using ::wcschr;
 using ::wcspbrk;
 using ::wcsrchr;
 using ::wcsstr;
 using ::wmemchr;
+
 #else
+
 inline _LIBCPP_INLINE_VISIBILITY const wchar_t* wcschr(const wchar_t* __s, wchar_t __c) {return ::wcschr(__s, __c);}
 inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wcschr(      wchar_t* __s, wchar_t __c) {return ::wcschr(__s, __c);}
 
@@ -179,6 +185,7 @@ inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wcsstr(      wchar_t* __s1, cons
 
 inline _LIBCPP_INLINE_VISIBILITY const wchar_t* wmemchr(const wchar_t* __s, wchar_t __c, size_t __n) {return ::wmemchr(__s, __c, __n);}
 inline _LIBCPP_INLINE_VISIBILITY       wchar_t* wmemchr(      wchar_t* __s, wchar_t __c, size_t __n) {return ::wmemchr(__s, __c, __n);}
+
 #endif
 
 using ::wcscspn;
