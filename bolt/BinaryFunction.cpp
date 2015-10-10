@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Object/ObjectFile.h"
@@ -166,9 +167,9 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       break;
     }
 
+    uint64_t AbsoluteInstrAddr = getAddress() + Offset;
     if (MIA->isBranch(Instruction) || MIA->isCall(Instruction)) {
       uint64_t InstructionTarget = 0;
-      uint64_t AbsoluteInstrAddr = getAddress() + Offset;
       if (MIA->evaluateBranch(Instruction,
                               AbsoluteInstrAddr,
                               Size,
@@ -242,15 +243,45 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
       } else {
         // Indirect call
+        DEBUG(dbgs() << "FLO: indirect call detected (not yet supported)\n");
         IsSimple = false;
         break;
       }
     } else {
       if (MIA->hasRIPOperand(Instruction)) {
-        DEBUG(dbgs() << "FLO: rip-relative instruction found "
-                        "(not supported yet)\n");
-        IsSimple = false;
-        break;
+        uint64_t TargetAddress{0};
+        MCSymbol *TargetSymbol{nullptr};
+        if (!MIA->evaluateRIPOperand(Instruction, AbsoluteInstrAddr,
+                                     Size, TargetAddress)) {
+          DEBUG(
+            dbgs() << "FLO: rip-relative operand could not be evaluated:\n";
+            BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
+            dbgs() << '\n';
+            Instruction.dump_pretty(dbgs(), BC.InstPrinter.get());
+            dbgs() << '\n';
+          );
+          IsSimple = false;
+          break;
+        }
+        std::string Name;
+        auto NI = BC.GlobalAddresses.find(TargetAddress);
+        if (NI != BC.GlobalAddresses.end()) {
+          Name = NI->second;
+        } else {
+          // Register new "data" symbol at the destination.
+          Name = (Twine("DATAat0x") + Twine::utohexstr(TargetAddress)).str();
+          BC.GlobalAddresses.emplace(std::make_pair(TargetAddress,
+                                                    Name));
+        }
+        TargetSymbol =  Ctx->getOrCreateSymbol(Name);
+        BC.GlobalSymbols[Name] = TargetAddress;
+
+        MIA->replaceRIPOperandDisp(
+            Instruction,
+            MCOperand::createExpr(
+              MCSymbolRefExpr::create(TargetSymbol,
+                                      MCSymbolRefExpr::VK_None,
+                                      *Ctx)));
       }
     }
 

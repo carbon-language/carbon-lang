@@ -312,24 +312,25 @@ static void OptimizeFile(ELFObjectFileBase *File) {
 
     FileSymRefs[Address] = Symbol;
 
+    // There's nothing horribly wrong with anonymous symbols, but let's
+    // ignore them for now.
+    if (Name->empty())
+      continue;
+
+    BC->GlobalAddresses.emplace(std::make_pair(Address, *Name));
+
     // Only consider ST_Function symbols for functions. Although this
     // assumption  could be broken by assembly functions for which the type
-    // could be wrong.
-    if (Symbol.getType() != SymbolRef::ST_Function) {
-      // FIXME: add it to the address map.
+    // could be wrong, we skip such entries till the support for
+    // assembly is implemented.
+    if (Symbol.getType() != SymbolRef::ST_Function)
       continue;
-    }
 
     // TODO: populate address map with PLT entries for better readability.
 
     // Ignore function with 0 size for now (possibly coming from assembly).
     auto SymbolSize = ELFSymbolRef(Symbol).getSize();
     if (SymbolSize == 0)
-      continue;
-
-    // There's nothing horribly wrong with anonymous symbols, but let's
-    // ignore them for now.
-    if (Name->empty())
       continue;
 
     ErrorOr<section_iterator> SectionOrErr = Symbol.getSection();
