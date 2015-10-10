@@ -91,18 +91,18 @@ void RuntimeDyldImpl::resolveRelocations() {
   // First, resolve relocations associated with external symbols.
   resolveExternalSymbols();
 
-  // Just iterate over the sections we have and resolve all the relocations
-  // in them. Gross overkill, but it gets the job done.
-  for (int i = 0, e = Sections.size(); i != e; ++i) {
+  // Iterate over all outstanding relocations
+  for (auto it = Relocations.begin(), e = Relocations.end(); it != e; ++it) {
     // The Section here (Sections[i]) refers to the section in which the
     // symbol for the relocation is located.  The SectionID in the relocation
     // entry provides the section to which the relocation will be applied.
-    uint64_t Addr = Sections[i].LoadAddress;
-    DEBUG(dbgs() << "Resolving relocations Section #" << i << "\t"
+    int Idx = it->getFirst();
+    uint64_t Addr = Sections[Idx].LoadAddress;
+    DEBUG(dbgs() << "Resolving relocations Section #" << Idx << "\t"
                  << format("%p", (uintptr_t)Addr) << "\n");
-    resolveRelocationList(Relocations[i], Addr);
-    Relocations.erase(i);
+    resolveRelocationList(it->getSecond(), Addr);
   }
+  Relocations.clear();
 
   // Print out sections after relocation.
   DEBUG(
