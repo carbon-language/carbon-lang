@@ -313,7 +313,7 @@ inline bool isShiftedUInt(uint64_t x) {
 /// isUIntN - Checks if an unsigned integer fits into the given (dynamic)
 /// bit width.
 inline bool isUIntN(unsigned N, uint64_t x) {
-  return x == (x & (~0ULL >> (64 - N)));
+  return N >= 64 || x < (UINT64_C(1)<<(N));
 }
 
 /// isIntN - Checks if an signed integer fits into the given (dynamic)
