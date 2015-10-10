@@ -1107,13 +1107,13 @@ std::unique_ptr<X86Operand> X86AsmParser::CreateMemForInlineAsm(
 }
 
 static void
-RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
+RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> &AsmRewrites,
                            StringRef SymName, int64_t ImmDisp,
                            int64_t FinalImmDisp, SMLoc &BracLoc,
                            SMLoc &StartInBrac, SMLoc &End) {
   // Remove the '[' and ']' from the IR string.
-  AsmRewrites->emplace_back(AOK_Skip, BracLoc, 1);
-  AsmRewrites->emplace_back(AOK_Skip, End, 1);
+  AsmRewrites.emplace_back(AOK_Skip, BracLoc, 1);
+  AsmRewrites.emplace_back(AOK_Skip, End, 1);
 
   // If ImmDisp is non-zero, then we parsed a displacement before the
   // bracketed expression (i.e., ImmDisp [ BaseReg + Scale*IndexReg + Disp])
@@ -1124,15 +1124,14 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
       // We have an immediate displacement before the bracketed expression.
       // Adjust this to match the final immediate displacement.
       bool Found = false;
-      for (SmallVectorImpl<AsmRewrite>::iterator I = AsmRewrites->begin(),
-             E = AsmRewrites->end(); I != E; ++I) {
-        if ((*I).Loc.getPointer() > BracLoc.getPointer())
+      for (AsmRewrite &AR : AsmRewrites) {
+        if (AR.Loc.getPointer() > BracLoc.getPointer())
           continue;
-        if ((*I).Kind == AOK_ImmPrefix || (*I).Kind == AOK_Imm) {
+        if (AR.Kind == AOK_ImmPrefix || AR.Kind == AOK_Imm) {
           assert (!Found && "ImmDisp already rewritten.");
-          (*I).Kind = AOK_Imm;
-          (*I).Len = BracLoc.getPointer() - (*I).Loc.getPointer();
-          (*I).Val = FinalImmDisp;
+          AR.Kind = AOK_Imm;
+          AR.Len = BracLoc.getPointer() - AR.Loc.getPointer();
+          AR.Val = FinalImmDisp;
           Found = true;
           break;
         }
@@ -1143,16 +1142,15 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
       // We have a symbolic and an immediate displacement, but no displacement
       // before the bracketed expression.  Put the immediate displacement
       // before the bracketed expression.
-      AsmRewrites->emplace_back(AOK_Imm, BracLoc, 0, FinalImmDisp);
+      AsmRewrites.emplace_back(AOK_Imm, BracLoc, 0, FinalImmDisp);
     }
   }
   // Remove all the ImmPrefix rewrites within the brackets.
-  for (SmallVectorImpl<AsmRewrite>::iterator I = AsmRewrites->begin(),
-         E = AsmRewrites->end(); I != E; ++I) {
-    if ((*I).Loc.getPointer() < StartInBrac.getPointer())
+  for (AsmRewrite &AR : AsmRewrites) {
+    if (AR.Loc.getPointer() < StartInBrac.getPointer())
       continue;
-    if ((*I).Kind == AOK_ImmPrefix)
-      (*I).Kind = AOK_Delete;
+    if (AR.Kind == AOK_ImmPrefix)
+      AR.Kind = AOK_Delete;
   }
   const char *SymLocPtr = SymName.data();
   // Skip everything before the symbol.
@@ -1311,7 +1309,7 @@ X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
     // A symbolic displacement.
     Disp = Sym;
     if (isParsingInlineAsm())
-      RewriteIntelBracExpression(InstInfo->AsmRewrites, SM.getSymName(),
+      RewriteIntelBracExpression(*InstInfo->AsmRewrites, SM.getSymName(),
                                  ImmDisp, SM.getImm(), BracLoc, StartInBrac,
                                  End);
   }
