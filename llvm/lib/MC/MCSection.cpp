@@ -72,7 +72,7 @@ MCSection::getSubsectionInsertionPoint(unsigned Subsection) {
   if (MI == SubsectionFragmentMap.end())
     IP = end();
   else
-    IP = MI->second;
+    IP = MI->second->getIterator();
   if (!ExactMatch && Subsection != 0) {
     // The GNU as documentation claims that subsections have an alignment of 4,
     // although this appears not to be the case.

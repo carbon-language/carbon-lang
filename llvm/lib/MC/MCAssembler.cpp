@@ -1095,7 +1095,7 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSection &Sec) {
       break;
     }
     if (RelaxedFrag && !FirstRelaxedFragment)
-      FirstRelaxedFragment = I;
+      FirstRelaxedFragment = &*I;
   }
   if (FirstRelaxedFragment) {
     Layout.invalidateFragmentsFrom(FirstRelaxedFragment);

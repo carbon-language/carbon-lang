@@ -472,7 +472,7 @@ void MCMachOStreamer::FinishImpl() {
     const MCSymbol *CurrentAtom = nullptr;
     for (MCSection::iterator it2 = it->begin(), ie2 = it->end(); it2 != ie2;
          ++it2) {
-      if (const MCSymbol *Symbol = DefiningSymbolMap.lookup(it2))
+      if (const MCSymbol *Symbol = DefiningSymbolMap.lookup(&*it2))
         CurrentAtom = Symbol;
       it2->setAtom(CurrentAtom);
     }
