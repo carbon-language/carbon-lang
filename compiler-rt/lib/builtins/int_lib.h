@@ -106,6 +106,7 @@ uint32_t __inline __builtin_clz(uint32_t value) {
   return 32;
 }
 
+#if defined(_M_ARM) || defined(_M_X64)
 uint32_t __inline __builtin_clzll(uint64_t value) {
   uint32_t leading_zero = 0;
   if (_BitScanReverse64(&leading_zero, value))
@@ -114,6 +115,7 @@ uint32_t __inline __builtin_clzll(uint64_t value) {
 }
 
 #define __builtin_clzl __builtin_clzll
+#endif
 #endif
 
 #endif /* INT_LIB_H */
