@@ -1,0 +1,65 @@
+//===--- BinaryBasicBlock.cpp - Interface for assembly-level basic block --===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//===----------------------------------------------------------------------===//
+
+#include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstPrinter.h"
+#include <limits>
+#include <string>
+
+#include "BinaryBasicBlock.h"
+#include "BinaryFunction.h"
+
+#undef  DEBUG_TYPE
+#define DEBUG_TYPE "flo"
+
+namespace llvm {
+
+namespace flo {
+
+bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
+  return LHS.Offset < RHS.Offset;
+}
+
+void BinaryBasicBlock::addSuccessor(BinaryBasicBlock *Succ,
+                                    uint64_t Count,
+                                    uint64_t MispredictedCount) {
+  Successors.push_back(Succ);
+  Succ->Predecessors.push_back(this);
+
+  // TODO: update weights.
+}
+
+void BinaryBasicBlock::removeSuccessor(BinaryBasicBlock *Succ) {
+  Succ->removePredecessor(this);
+  auto I = std::find(succ_begin(), succ_end(), Succ);
+  assert(I != succ_end() && "no such successor!");
+
+  Successors.erase(I);
+
+  // TODO: update weights.
+}
+
+void BinaryBasicBlock::addPredecessor(BinaryBasicBlock *Pred) {
+  Predecessors.push_back(Pred);
+}
+
+void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
+  auto I = std::find(pred_begin(), pred_end(), Pred);
+  assert(I != pred_end() && "Pred is not a predecessor of this block!");
+  Predecessors.erase(I);
+}
+
+} // namespace flo
+
+} // namespace llvm
