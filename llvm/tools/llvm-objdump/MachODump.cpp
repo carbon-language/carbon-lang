@@ -1705,8 +1705,15 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
   if (Arch == Triple::x86) {
     if (Size != 1 && Size != 2 && Size != 4 && Size != 0)
       return 0;
-    // First search the section's relocation entries (if any) for an entry
-    // for this section offset.
+    if (info->O->getHeader().filetype != MachO::MH_OBJECT) {
+      // TODO:
+      // Search the external relocation entries of a fully linked image
+      // (if any) for an entry that matches this segment offset.
+      // uint32_t seg_offset = (Pc + Offset);
+      return 0;
+    }
+    // In MH_OBJECT filetypes search the section's relocation entries (if any)
+    // for an entry for this section offset.
     uint32_t sect_addr = info->S.getAddress();
     uint32_t sect_offset = (Pc + Offset) - sect_addr;
     bool reloc_found = false;
@@ -1776,17 +1783,20 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
       op_info->Value = offset;
       return 1;
     }
-    // TODO:
-    // Second search the external relocation entries of a fully linked image
-    // (if any) for an entry that matches this segment offset.
-    // uint32_t seg_offset = (Pc + Offset);
     return 0;
   }
   if (Arch == Triple::x86_64) {
     if (Size != 1 && Size != 2 && Size != 4 && Size != 0)
       return 0;
-    // First search the section's relocation entries (if any) for an entry
-    // for this section offset.
+    if (info->O->getHeader().filetype != MachO::MH_OBJECT) {
+      // TODO:
+      // Search the external relocation entries of a fully linked image
+      // (if any) for an entry that matches this segment offset.
+      // uint64_t seg_offset = (Pc + Offset);
+      return 0;
+    }
+    // In MH_OBJECT filetypes search the section's relocation entries (if any)
+    // for an entry for this section offset.
     uint64_t sect_addr = info->S.getAddress();
     uint64_t sect_offset = (Pc + Offset) - sect_addr;
     bool reloc_found = false;
@@ -1844,17 +1854,20 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
       op_info->AddSymbol.Name = name;
       return 1;
     }
-    // TODO:
-    // Second search the external relocation entries of a fully linked image
-    // (if any) for an entry that matches this segment offset.
-    // uint64_t seg_offset = (Pc + Offset);
     return 0;
   }
   if (Arch == Triple::arm) {
     if (Offset != 0 || (Size != 4 && Size != 2))
       return 0;
-    // First search the section's relocation entries (if any) for an entry
-    // for this section offset.
+    if (info->O->getHeader().filetype != MachO::MH_OBJECT) {
+      // TODO:
+      // Search the external relocation entries of a fully linked image
+      // (if any) for an entry that matches this segment offset.
+      // uint32_t seg_offset = (Pc + Offset);
+      return 0;
+    }
+    // In MH_OBJECT filetypes search the section's relocation entries (if any)
+    // for an entry for this section offset.
     uint32_t sect_addr = info->S.getAddress();
     uint32_t sect_offset = (Pc + Offset) - sect_addr;
     DataRefImpl Rel;
@@ -1986,8 +1999,15 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
   if (Arch == Triple::aarch64) {
     if (Offset != 0 || Size != 4)
       return 0;
-    // First search the section's relocation entries (if any) for an entry
-    // for this section offset.
+    if (info->O->getHeader().filetype != MachO::MH_OBJECT) {
+      // TODO:
+      // Search the external relocation entries of a fully linked image
+      // (if any) for an entry that matches this segment offset.
+      // uint64_t seg_offset = (Pc + Offset);
+      return 0;
+    }
+    // In MH_OBJECT filetypes search the section's relocation entries (if any)
+    // for an entry for this section offset.
     uint64_t sect_addr = info->S.getAddress();
     uint64_t sect_offset = (Pc + Offset) - sect_addr;
     auto Reloc =
@@ -5574,36 +5594,38 @@ static const char *GuessLiteralPointer(uint64_t ReferenceValue,
                                        uint64_t *ReferenceType,
                                        struct DisassembleInfo *info) {
   // First see if there is an external relocation entry at the ReferencePC.
-  uint64_t sect_addr = info->S.getAddress();
-  uint64_t sect_offset = ReferencePC - sect_addr;
-  bool reloc_found = false;
-  DataRefImpl Rel;
-  MachO::any_relocation_info RE;
-  bool isExtern = false;
-  SymbolRef Symbol;
-  for (const RelocationRef &Reloc : info->S.relocations()) {
-    uint64_t RelocOffset = Reloc.getOffset();
-    if (RelocOffset == sect_offset) {
-      Rel = Reloc.getRawDataRefImpl();
-      RE = info->O->getRelocation(Rel);
-      if (info->O->isRelocationScattered(RE))
-        continue;
-      isExtern = info->O->getPlainRelocationExternal(RE);
-      if (isExtern) {
-        symbol_iterator RelocSym = Reloc.getSymbol();
-        Symbol = *RelocSym;
+  if (info->O->getHeader().filetype == MachO::MH_OBJECT) {
+    uint64_t sect_addr = info->S.getAddress();
+    uint64_t sect_offset = ReferencePC - sect_addr;
+    bool reloc_found = false;
+    DataRefImpl Rel;
+    MachO::any_relocation_info RE;
+    bool isExtern = false;
+    SymbolRef Symbol;
+    for (const RelocationRef &Reloc : info->S.relocations()) {
+      uint64_t RelocOffset = Reloc.getOffset();
+      if (RelocOffset == sect_offset) {
+        Rel = Reloc.getRawDataRefImpl();
+        RE = info->O->getRelocation(Rel);
+        if (info->O->isRelocationScattered(RE))
+          continue;
+        isExtern = info->O->getPlainRelocationExternal(RE);
+        if (isExtern) {
+          symbol_iterator RelocSym = Reloc.getSymbol();
+          Symbol = *RelocSym;
+        }
+        reloc_found = true;
+        break;
       }
-      reloc_found = true;
-      break;
     }
-  }
-  // If there is an external relocation entry for a symbol in a section
-  // then used that symbol's value for the value of the reference.
-  if (reloc_found && isExtern) {
-    if (info->O->getAnyRelocationPCRel(RE)) {
-      unsigned Type = info->O->getAnyRelocationType(RE);
-      if (Type == MachO::X86_64_RELOC_SIGNED) {
-        ReferenceValue = Symbol.getValue();
+    // If there is an external relocation entry for a symbol in a section
+    // then used that symbol's value for the value of the reference.
+    if (reloc_found && isExtern) {
+      if (info->O->getAnyRelocationPCRel(RE)) {
+        unsigned Type = info->O->getAnyRelocationType(RE);
+        if (Type == MachO::X86_64_RELOC_SIGNED) {
+          ReferenceValue = Symbol.getValue();
+        }
       }
     }
   }
@@ -6070,19 +6092,6 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
     uint64_t SectAddress = Sections[SectIdx].getAddress();
 
     bool symbolTableWorked = false;
-
-    // Parse relocations.
-    std::vector<std::pair<uint64_t, SymbolRef>> Relocs;
-    for (const RelocationRef &Reloc : Sections[SectIdx].relocations()) {
-      uint64_t RelocOffset = Reloc.getOffset();
-      uint64_t SectionAddress = Sections[SectIdx].getAddress();
-      RelocOffset -= SectionAddress;
-
-      symbol_iterator RelocSym = Reloc.getSymbol();
-
-      Relocs.push_back(std::make_pair(RelocOffset, *RelocSym));
-    }
-    array_pod_sort(Relocs.begin(), Relocs.end());
 
     // Create a map of symbol addresses to symbol names for use by
     // the SymbolizerSymbolLookUp() routine.
