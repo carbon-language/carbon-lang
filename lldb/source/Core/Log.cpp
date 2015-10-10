@@ -143,6 +143,7 @@ Log::VAPrintf(const char *format, va_list args)
             std::string back_trace;
             llvm::raw_string_ostream stream(back_trace);
             llvm::sys::PrintStackTrace(stream);
+            stream.flush();
             header.PutCString(back_trace.c_str());
         }
 
