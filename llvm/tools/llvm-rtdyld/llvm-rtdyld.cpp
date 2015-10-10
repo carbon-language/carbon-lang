@@ -625,10 +625,10 @@ static int linkAndVerify() {
   // If we don't have any input files, read from stdin.
   if (!InputFileList.size())
     InputFileList.push_back("-");
-  for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
+  for (auto &Filename : InputFileList) {
     // Load the input memory buffer.
     ErrorOr<std::unique_ptr<MemoryBuffer>> InputBuffer =
-        MemoryBuffer::getFileOrSTDIN(InputFileList[i]);
+        MemoryBuffer::getFileOrSTDIN(Filename);
 
     if (std::error_code EC = InputBuffer.getError())
       return Error("unable to read input: '" + EC.message() + "'");
