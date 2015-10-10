@@ -69,6 +69,9 @@ void SystemZInstrInfo::splitMove(MachineBasicBlock::iterator MI,
   MachineOperand &LowOffsetOp = MI->getOperand(2);
   LowOffsetOp.setImm(LowOffsetOp.getImm() + 8);
 
+  // Clear the kill flag for the address reg in the first instruction.
+  EarlierMI->getOperand(1).setIsKill(false);
+
   // Set the opcodes.
   unsigned HighOpcode = getOpcodeForOffset(NewOpcode, HighOffsetOp.getImm());
   unsigned LowOpcode = getOpcodeForOffset(NewOpcode, LowOffsetOp.getImm());

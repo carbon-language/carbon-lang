@@ -206,9 +206,8 @@ SystemZElimCompare::convertToBRCT(MachineInstr *MI, MachineInstr *Compare,
 
   // The transformation is OK.  Rebuild Branch as a BRCT(G).
   MachineOperand Target(Branch->getOperand(2));
-  Branch->RemoveOperand(2);
-  Branch->RemoveOperand(1);
-  Branch->RemoveOperand(0);
+  while (Branch->getNumOperands())
+    Branch->RemoveOperand(0);
   Branch->setDesc(TII->get(BRCT));
   MachineInstrBuilder(*Branch->getParent()->getParent(), Branch)
     .addOperand(MI->getOperand(0))
