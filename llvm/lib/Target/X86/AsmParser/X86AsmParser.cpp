@@ -1072,8 +1072,8 @@ std::unique_ptr<X86Operand> X86AsmParser::CreateMemForInlineAsm(
     // Insert an explicit size if the user didn't have one.
     if (!Size) {
       Size = getPointerWidth();
-      InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, Start,
-                                                  /*Len=*/0, Size));
+      InstInfo->AsmRewrites->emplace_back(AOK_SizeDirective, Start,
+                                          /*Len=*/0, Size);
     }
 
     // Create an absolute memory reference in order to match against
@@ -1092,8 +1092,8 @@ std::unique_ptr<X86Operand> X86AsmParser::CreateMemForInlineAsm(
     if (!Size) {
       Size = Info.Type * 8; // Size is in terms of bits in this context.
       if (Size)
-        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, Start,
-                                                    /*Len=*/0, Size));
+        InstInfo->AsmRewrites->emplace_back(AOK_SizeDirective, Start,
+                                            /*Len=*/0, Size);
     }
   }
 
@@ -1112,8 +1112,8 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
                            int64_t FinalImmDisp, SMLoc &BracLoc,
                            SMLoc &StartInBrac, SMLoc &End) {
   // Remove the '[' and ']' from the IR string.
-  AsmRewrites->push_back(AsmRewrite(AOK_Skip, BracLoc, 1));
-  AsmRewrites->push_back(AsmRewrite(AOK_Skip, End, 1));
+  AsmRewrites->emplace_back(AOK_Skip, BracLoc, 1);
+  AsmRewrites->emplace_back(AOK_Skip, End, 1);
 
   // If ImmDisp is non-zero, then we parsed a displacement before the
   // bracketed expression (i.e., ImmDisp [ BaseReg + Scale*IndexReg + Disp])
@@ -1143,7 +1143,7 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
       // We have a symbolic and an immediate displacement, but no displacement
       // before the bracketed expression.  Put the immediate displacement
       // before the bracketed expression.
-      AsmRewrites->push_back(AsmRewrite(AOK_Imm, BracLoc, 0, FinalImmDisp));
+      AsmRewrites->emplace_back(AOK_Imm, BracLoc, 0, FinalImmDisp);
     }
   }
   // Remove all the ImmPrefix rewrites within the brackets.
@@ -1158,13 +1158,13 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
   // Skip everything before the symbol.
   if (unsigned Len = SymLocPtr - StartInBrac.getPointer()) {
     assert(Len > 0 && "Expected a non-negative length.");
-    AsmRewrites->push_back(AsmRewrite(AOK_Skip, StartInBrac, Len));
+    AsmRewrites.emplace_back(AOK_Skip, StartInBrac, Len);
   }
   // Skip everything after the symbol.
   if (unsigned Len = End.getPointer() - (SymLocPtr + SymName.size())) {
     SMLoc Loc = SMLoc::getFromPointer(SymLocPtr + SymName.size());
     assert(Len > 0 && "Expected a non-negative length.");
-    AsmRewrites->push_back(AsmRewrite(AOK_Skip, Loc, Len));
+    AsmRewrites.emplace_back(AOK_Skip, Loc, Len);
   }
 }
 
@@ -1233,8 +1233,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     case AsmToken::Integer: {
       StringRef ErrMsg;
       if (isParsingInlineAsm() && SM.getAddImmPrefix())
-        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix,
-                                                    Tok.getLoc()));
+        InstInfo->AsmRewrites->emplace_back(AOK_ImmPrefix, Tok.getLoc());
       // Look for 'b' or 'f' following an Integer as a directional label
       SMLoc Loc = getTok().getLoc();
       int64_t IntVal = getTok().getIntVal();
@@ -1401,9 +1400,8 @@ bool X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
                                          Loc, false);
     assert(InternalName.size() && "We should have an internal name here.");
     // Push a rewrite for replacing the identifier name with the internal name.
-    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Label, Loc,
-                                                Identifier.size(),
-                                                InternalName));
+    InstInfo->AsmRewrites->emplace_back(AOK_Label, Loc, Identifier.size(),
+                                        InternalName);
   }
 
   // Create the symbol reference.
@@ -1430,8 +1428,7 @@ X86AsmParser::ParseIntelSegmentOverride(unsigned SegReg, SMLoc Start,
     AsmToken ImmDispToken = Parser.Lex(); // Eat the integer.
 
     if (isParsingInlineAsm())
-      InstInfo->AsmRewrites->push_back(
-          AsmRewrite(AOK_ImmPrefix, ImmDispToken.getLoc()));
+      InstInfo->AsmRewrites->emplace_back(AOK_ImmPrefix, ImmDispToken.getLoc());
 
     if (getLexer().isNot(AsmToken::LBrac)) {
       // An immediate following a 'segment register', 'colon' token sequence can
@@ -1600,8 +1597,7 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
     SMLoc Loc = SMLoc::getFromPointer(DotDispStr.data());
     unsigned Len = DotDispStr.size();
     unsigned Val = OrigDispVal + DotDispVal;
-    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_DotOperator, Loc, Len,
-                                                Val));
+    InstInfo->AsmRewrites->emplace_back(AOK_DotOperator, Loc, Len, Val);
   }
 
   NewDisp = MCConstantExpr::create(OrigDispVal + DotDispVal, getContext());
@@ -1625,7 +1621,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOffsetOfOperator() {
     return nullptr;
 
   // Don't emit the offset operator.
-  InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, OffsetOfLoc, 7));
+  InstInfo->AsmRewrites->emplace_back(AOK_Skip, OffsetOfLoc, 7);
 
   // The offset operator will have an 'r' constraint, thus we need to create
   // register operand to ensure proper matching.  Just pick a GPR based on
@@ -1676,7 +1672,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperator(unsigned OpKind) {
   // Rewrite the type operator and the C or C++ type or variable in terms of an
   // immediate.  E.g. TYPE foo -> $$4
   unsigned Len = End.getPointer() - TypeLoc.getPointer();
-  InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, TypeLoc, Len, CVal));
+  InstInfo->AsmRewrites->emplace_back(AOK_Imm, TypeLoc, Len, CVal);
 
   const MCExpr *Imm = MCConstantExpr::create(CVal, getContext());
   return X86Operand::CreateImm(Imm, Start, End);
@@ -1723,10 +1719,10 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
       unsigned Len = Tok.getLoc().getPointer() - Start.getPointer();
       if (StartTok.getString().size() == Len)
         // Just add a prefix if this wasn't a complex immediate expression.
-        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_ImmPrefix, Start));
+        InstInfo->AsmRewrites->emplace_back(AOK_ImmPrefix, Start);
       else
         // Otherwise, rewrite the complex expression as a single immediate.
-        InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Imm, Start, Len, Imm));
+        InstInfo->AsmRewrites->emplace_back(AOK_Imm, Start, Len, Imm);
     }
 
     if (getLexer().isNot(AsmToken::LBrac)) {
