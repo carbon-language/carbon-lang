@@ -4488,7 +4488,7 @@ bool AsmParser::parseDirectiveMSEmit(SMLoc IDLoc, ParseStatementInfo &Info,
   if (!MCE)
     return Error(ExprLoc, "unexpected expression in _emit");
   uint64_t IntValue = MCE->getValue();
-  if (!isUIntN(8, IntValue) && !isIntN(8, IntValue))
+  if (!isUInt<8>(IntValue) && !isInt<8>(IntValue))
     return Error(ExprLoc, "literal value out of range for directive");
 
   Info.AsmRewrites->emplace_back(AOK_Emit, IDLoc, Len);

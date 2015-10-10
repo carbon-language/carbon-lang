@@ -1441,7 +1441,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
       Offset = Inst.getOperand(1);
       if (!Offset.isImm())
         break; // We'll deal with this situation later on when applying fixups.
-      if (!isIntN(8, Offset.getImm()))
+      if (!isInt<8>(Offset.getImm()))
         return Error(IDLoc, "branch target out of range");
       if (OffsetToAlignment(Offset.getImm(), 2LL))
         return Error(IDLoc, "branch to misaligned address");
@@ -1663,7 +1663,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
             int MemOffset = Op.getImm();
             MCOperand &DstReg = Inst.getOperand(0);
             MCOperand &BaseReg = Inst.getOperand(1);
-            if (isIntN(9, MemOffset) && (MemOffset % 4 == 0) &&
+            if (isInt<9>(MemOffset) && (MemOffset % 4 == 0) &&
                 getContext().getRegisterInfo()->getRegClass(
                   Mips::GPRMM16RegClassID).contains(DstReg.getReg()) &&
                 (BaseReg.getReg() == Mips::GP ||
@@ -1808,7 +1808,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
         if (!Opnd.isImm())
           return Error(IDLoc, "expected immediate operand kind");
         int Imm = Opnd.getImm();
-        if ((Imm % 4 != 0) || !isIntN(25, Imm))
+        if ((Imm % 4 != 0) || !isInt<25>(Imm))
           return Error(IDLoc, "immediate operand value out of range");
         break;
     }
@@ -2461,13 +2461,13 @@ bool MipsAsmParser::expandUncondBranchMMPseudo(
     Inst.addOperand(MCOperand::createExpr(Offset.getExpr()));
   } else {
     assert(Offset.isImm() && "expected immediate operand kind");
-    if (isIntN(11, Offset.getImm())) {
+    if (isInt<11>(Offset.getImm())) {
       // If offset fits into 11 bits then this instruction becomes microMIPS
       // 16-bit unconditional branch instruction.
       if (inMicroMipsMode())
         Inst.setOpcode(hasMips32r6() ? Mips::BC16_MMR6 : Mips::B16_MM);
     } else {
-      if (!isIntN(17, Offset.getImm()))
+      if (!isInt<17>(Offset.getImm()))
         Error(IDLoc, "branch target out of range");
       if (OffsetToAlignment(Offset.getImm(), 1LL << 1))
         Error(IDLoc, "branch to misaligned address");
