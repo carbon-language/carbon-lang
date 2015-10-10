@@ -182,13 +182,12 @@ private:
   DISALLOW_COPY_AND_ASSIGN(Log);
 };
 
-
 class LogChannel : public PluginInterface
 {
 public:
   LogChannel();
 
-  virtual ~LogChannel();
+  ~LogChannel() override;
 
   static lldb::LogChannelSP FindPlugin(const char *plugin_name);
 
@@ -209,7 +208,6 @@ private:
   DISALLOW_COPY_AND_ASSIGN(LogChannel);
 };
 
-
 } // namespace lldb_private
 
-#endif  // liblldb_Log_H_
+#endif // liblldb_Log_h_

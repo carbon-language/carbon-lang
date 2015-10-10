@@ -29,8 +29,7 @@ namespace lldb_private {
                          uint32_t addr_size,
                          lldb::ByteOrder byte_order);
         
-        virtual
-        ~StreamGDBRemote ();
+        ~StreamGDBRemote() override;
         
         //------------------------------------------------------------------
         /// Output a block of data to the stream performing GDB-remote escaping.
@@ -51,4 +50,4 @@ namespace lldb_private {
 
 } // namespace lldb_private
 
-#endif  // liblldb_StreamGDBRemote_h_
+#endif // liblldb_StreamGDBRemote_h_

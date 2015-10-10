@@ -48,6 +48,7 @@ public:
         CalculateMnemonicOperandsAndCommentIfNeeded (exe_ctx);
         return m_opcode_name.c_str();
     }
+
     const char *
     GetOperands (const ExecutionContext* exe_ctx)
     {
@@ -127,7 +128,6 @@ public:
     ///     so this method can properly align the instruction opcodes.
     ///     May be 0 to indicate no indentation/alignment of the opcodes.
     //------------------------------------------------------------------
-
     virtual void
     Dump (Stream *s,
           uint32_t max_opcode_byte_size,
@@ -211,7 +211,6 @@ protected:
     }
 };
 
-
 class InstructionList
 {
 public:
@@ -263,33 +262,32 @@ public:
 
     PseudoInstruction ();
     
-     virtual
-     ~PseudoInstruction ();
+    ~PseudoInstruction() override;
      
-    virtual bool
-    DoesBranch ();
+    bool
+    DoesBranch() override;
 
-    virtual bool
-    HasDelaySlot ();
+    bool
+    HasDelaySlot() override;
 
-    virtual void
-    CalculateMnemonicOperandsAndComment (const ExecutionContext* exe_ctx)
+    void
+    CalculateMnemonicOperandsAndComment(const ExecutionContext* exe_ctx) override
     {
         // TODO: fill this in and put opcode name into Instruction::m_opcode_name,
         // mnemonic into Instruction::m_mnemonics, and any comment into 
         // Instruction::m_comment
     }
     
-    virtual size_t
-    Decode (const Disassembler &disassembler,
-            const DataExtractor &data,
-            lldb::offset_t data_offset);
+    size_t
+    Decode(const Disassembler &disassembler,
+           const DataExtractor &data,
+           lldb::offset_t data_offset) override;
             
     void
     SetOpcode (size_t opcode_size, void *opcode_data);
     
-    virtual void
-    SetDescription (const char *description);
+    void
+    SetDescription(const char *description) override;
     
 protected:
     std::string m_description;
@@ -411,7 +409,7 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     Disassembler(const ArchSpec &arch, const char *flavor);
-    virtual ~Disassembler();
+    ~Disassembler() override;
 
     typedef const char * (*SummaryCallback)(const Instruction& inst, ExecutionContext *exe_context, void *user_data);
 
@@ -484,4 +482,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_Disassembler_h_
+#endif // liblldb_Disassembler_h_

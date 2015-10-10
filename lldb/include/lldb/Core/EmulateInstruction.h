@@ -19,6 +19,8 @@
 #include "lldb/Core/Opcode.h"
 #include "lldb/Core/RegisterValue.h"
 
+namespace lldb_private {
+
 //----------------------------------------------------------------------
 /// @class EmulateInstruction EmulateInstruction.h "lldb/Core/EmulateInstruction.h"
 /// @brief A class that allows emulation of CPU opcodes.
@@ -78,8 +80,6 @@
 /// restore locations of registers for unwinding stack frame variables)
 /// and emulating the instruction is just a bonus.
 //----------------------------------------------------------------------
-
-namespace lldb_private {
 
 class EmulateInstruction :
     public PluginInterface
@@ -233,7 +233,6 @@ public:
             } ISAAndImmediateSigned;
             
             uint32_t isa;
-                        
         } info;
         
         Context () :
@@ -387,9 +386,8 @@ public:
 
     EmulateInstruction (const ArchSpec &arch);
 
-    virtual ~EmulateInstruction()
-    {
-    }
+    ~EmulateInstruction() override = default;
+
     //----------------------------------------------------------------------
     // Mandatory overrides
     //----------------------------------------------------------------------    
@@ -530,7 +528,6 @@ public:
         return m_arch;
     }
 
-
     static size_t 
     ReadMemoryFrame (EmulateInstruction *instruction,
                      void *baton,
@@ -631,7 +628,6 @@ protected:
     lldb::addr_t            m_addr;
     Opcode                  m_opcode;
     
-
 private:
     //------------------------------------------------------------------
     // For EmulateInstruction only
@@ -639,6 +635,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN (EmulateInstruction);
 };
 
-}   // namespace lldb_private
+} // namespace lldb_private
 
-#endif  // lldb_EmulateInstruction_h_
+#endif // lldb_EmulateInstruction_h_

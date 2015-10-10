@@ -9,8 +9,6 @@
 
 #ifndef liblldb_Debugger_h_
 #define liblldb_Debugger_h_
-#if defined(__cplusplus)
-
 
 #include <stdint.h>
 
@@ -32,8 +30,8 @@ namespace llvm
 namespace sys
 {
 class DynamicLibrary;
-}
-}
+} // namespace sys
+} // namespace llvm
 
 namespace lldb_private {
 
@@ -43,7 +41,6 @@ namespace lldb_private {
 ///
 /// Provides a global root objects for the debugger core.
 //----------------------------------------------------------------------
-
 
 class Debugger :
     public std::enable_shared_from_this<Debugger>,
@@ -79,8 +76,7 @@ public:
     static void
     Destroy (lldb::DebuggerSP &debugger_sp);
 
-    virtual
-    ~Debugger ();
+    ~Debugger() override;
     
     void Clear();
 
@@ -108,8 +104,6 @@ public:
         return m_error_file_sp;
     }
 
-    
-    
     void
     SetInputFileHandle (FILE *fh, bool tranfer_ownership);
 
@@ -257,7 +251,6 @@ public:
     void
     SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton);
     
-
     //----------------------------------------------------------------------
     // Properties Functions
     //----------------------------------------------------------------------
@@ -268,11 +261,11 @@ public:
         eStopDisassemblyTypeAlways
     };
     
-    virtual Error
-    SetPropertyValue (const ExecutionContext *exe_ctx,
-                      VarSetOperationType op,
-                      const char *property_path,
-                      const char *value);
+    Error
+    SetPropertyValue(const ExecutionContext *exe_ctx,
+                     VarSetOperationType op,
+                     const char *property_path,
+                     const char *value) override;
 
     bool
     GetAutoConfirm () const;
@@ -456,10 +449,8 @@ private:
     Debugger (lldb::LogOutputCallback m_log_callback, void *baton);
 
     DISALLOW_COPY_AND_ASSIGN (Debugger);
-    
 };
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_Debugger_h_
+#endif // liblldb_Debugger_h_

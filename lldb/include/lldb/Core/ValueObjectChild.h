@@ -26,71 +26,71 @@ namespace lldb_private {
 class ValueObjectChild : public ValueObject
 {
 public:
-    virtual ~ValueObjectChild();
+    ~ValueObjectChild() override;
 
-    virtual uint64_t
-    GetByteSize()
+    uint64_t
+    GetByteSize() override
     {
         return m_byte_size;
     }
 
-    virtual lldb::offset_t
-    GetByteOffset()
+    lldb::offset_t
+    GetByteOffset() override
     {
         return m_byte_offset;
     }
 
-    virtual uint32_t
-    GetBitfieldBitSize()
+    uint32_t
+    GetBitfieldBitSize() override
     {
         return m_bitfield_bit_size;
     }
 
-    virtual uint32_t
-    GetBitfieldBitOffset()
+    uint32_t
+    GetBitfieldBitOffset() override
     {
         return m_bitfield_bit_offset;
     }
 
-    virtual lldb::ValueType
-    GetValueType() const;
+    lldb::ValueType
+    GetValueType() const override;
 
-    virtual size_t
-    CalculateNumChildren();
+    size_t
+    CalculateNumChildren() override;
 
-    virtual ConstString
-    GetTypeName();
+    ConstString
+    GetTypeName() override;
 
-    virtual ConstString
-    GetQualifiedTypeName();
+    ConstString
+    GetQualifiedTypeName() override;
     
-    virtual ConstString
-    GetDisplayTypeName();
+    ConstString
+    GetDisplayTypeName() override;
     
-    virtual bool
-    IsInScope ();
+    bool
+    IsInScope() override;
 
-    virtual bool
-    IsBaseClass ()
+    bool
+    IsBaseClass() override
     {
         return m_is_base_class;
     }
 
-    virtual bool
-    IsDereferenceOfParent ()
+    bool
+    IsDereferenceOfParent() override
     {
         return m_is_deref_of_parent;
     }
 
 protected:
-    virtual bool
-    UpdateValue ();
+    bool
+    UpdateValue() override;
     
-    virtual LazyBool
-    CanUpdateWithInvalidExecutionContext ();
+    LazyBool
+    CanUpdateWithInvalidExecutionContext() override;
 
-    virtual CompilerType
-    GetCompilerTypeImpl ()
+    CompilerType
+    GetCompilerTypeImpl() override
     {
         return m_compiler_type;
     }
@@ -113,6 +113,7 @@ protected:
     friend class ValueObject;
     friend class ValueObjectConstResult;
     friend class ValueObjectConstResultImpl;
+
     ValueObjectChild (ValueObject &parent,
                       const CompilerType &compiler_type,
                       const ConstString &name,

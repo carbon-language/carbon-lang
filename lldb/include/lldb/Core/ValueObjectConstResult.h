@@ -26,6 +26,8 @@ namespace lldb_private {
 class ValueObjectConstResult : public ValueObject
 {
 public:
+    ~ValueObjectConstResult() override;
+
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
             lldb::ByteOrder byte_order, 
@@ -67,79 +69,76 @@ public:
     Create (ExecutionContextScope *exe_scope,
             const Error& error);
 
-    virtual ~ValueObjectConstResult();
+    uint64_t
+    GetByteSize() override;
 
-    virtual uint64_t
-    GetByteSize();
+    lldb::ValueType
+    GetValueType() const override;
 
-    virtual lldb::ValueType
-    GetValueType() const;
+    size_t
+    CalculateNumChildren() override;
 
-    virtual size_t
-    CalculateNumChildren();
+    ConstString
+    GetTypeName() override;
 
-    virtual ConstString
-    GetTypeName();
-
-    virtual ConstString
-    GetDisplayTypeName();
+    ConstString
+    GetDisplayTypeName() override;
     
-    virtual bool
-    IsInScope ();
+    bool
+    IsInScope() override;
 
     void
     SetByteSize (size_t size);
     
-    virtual lldb::ValueObjectSP
-    Dereference (Error &error);
+    lldb::ValueObjectSP
+    Dereference(Error &error) override;
     
-    virtual ValueObject *
-    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    ValueObject *
+    CreateChildAtIndex(size_t idx, bool synthetic_array_member, int32_t synthetic_index) override;
     
-    virtual lldb::ValueObjectSP
-    GetSyntheticChildAtOffset(uint32_t offset, const CompilerType& type, bool can_create);
+    lldb::ValueObjectSP
+    GetSyntheticChildAtOffset(uint32_t offset, const CompilerType& type, bool can_create) override;
     
-    virtual lldb::ValueObjectSP
-    AddressOf (Error &error);
+    lldb::ValueObjectSP
+    AddressOf(Error &error) override;
     
-    virtual lldb::addr_t
-    GetAddressOf (bool scalar_is_load_address = true,
-                  AddressType *address_type = NULL);
+    lldb::addr_t
+    GetAddressOf(bool scalar_is_load_address = true,
+                 AddressType *address_type = NULL) override;
     
-    virtual size_t
-    GetPointeeData (DataExtractor& data,
-                    uint32_t item_idx = 0,
-					uint32_t item_count = 1);
+    size_t
+    GetPointeeData(DataExtractor& data,
+                   uint32_t item_idx = 0,
+                   uint32_t item_count = 1) override;
     
-    virtual lldb::addr_t
-    GetLiveAddress()
+    lldb::addr_t
+    GetLiveAddress() override
     {
         return m_impl.GetLiveAddress();
     }
     
-    virtual void
+    void
     SetLiveAddress(lldb::addr_t addr = LLDB_INVALID_ADDRESS,
-                   AddressType address_type = eAddressTypeLoad)
+                   AddressType address_type = eAddressTypeLoad) override
     {
-        m_impl.SetLiveAddress(addr,
-                              address_type);
+        m_impl.SetLiveAddress(addr, address_type);
     }
     
-    virtual lldb::ValueObjectSP
-    GetDynamicValue (lldb::DynamicValueType valueType);
+    lldb::ValueObjectSP
+    GetDynamicValue(lldb::DynamicValueType valueType) override;
     
-    virtual lldb::LanguageType
-    GetPreferredDisplayLanguage ();
+    lldb::LanguageType
+    GetPreferredDisplayLanguage() override;
 
-    virtual lldb::ValueObjectSP
-    Cast (const CompilerType &compiler_type);
+    lldb::ValueObjectSP
+    Cast(const CompilerType &compiler_type) override;
 
 protected:
-    virtual bool
-    UpdateValue ();
+    bool
+    UpdateValue() override;
     
-    virtual CompilerType
-    GetCompilerTypeImpl ();
+    CompilerType
+    GetCompilerTypeImpl() override;
 
     ConstString m_type_name;
     uint64_t m_byte_size;
@@ -148,6 +147,7 @@ protected:
 
 private:
     friend class ValueObjectConstResultImpl;
+
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             lldb::ByteOrder byte_order, 
                             uint32_t addr_byte_size,

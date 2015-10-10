@@ -29,7 +29,7 @@ namespace curses
 {
     class Application;
     typedef std::unique_ptr<Application> ApplicationAP;
-}
+} // namespace curses
 
 namespace lldb_private {
 
@@ -257,7 +257,6 @@ namespace lldb_private {
     private:
         DISALLOW_COPY_AND_ASSIGN (IOHandler);
     };
-
     
     //------------------------------------------------------------------
     /// A delegate class for use with IOHandler subclasses.
@@ -283,9 +282,7 @@ namespace lldb_private {
         }
         
         virtual
-        ~IOHandlerDelegate()
-        {
-        }
+        ~IOHandlerDelegate() = default;
         
         virtual void
         IOHandlerActivated (IOHandler &io_handler)
@@ -415,6 +412,7 @@ namespace lldb_private {
         {
             return false;
         }
+
     protected:
         Completion m_completion; // Support for common builtin completions
         bool m_io_handler_done;
@@ -438,10 +436,7 @@ namespace lldb_private {
         {
         }
         
-        virtual
-        ~IOHandlerDelegateMultiline ()
-        {
-        }
+        ~IOHandlerDelegateMultiline() override = default;
         
         ConstString
         IOHandlerGetControlSequence (char ch) override
@@ -467,10 +462,10 @@ namespace lldb_private {
             }
             return false;
         }
+
     protected:
         const std::string m_end_line;
     };
-    
     
     class IOHandlerEditline : public IOHandler
     {
@@ -499,8 +494,7 @@ namespace lldb_private {
                            uint32_t line_number_start, // If non-zero show line numbers starting at 'line_number_start'
                            IOHandlerDelegate &delegate);
         
-        virtual
-        ~IOHandlerEditline ();
+        ~IOHandlerEditline() override;
         
         void
         Run () override;
@@ -632,8 +626,7 @@ namespace lldb_private {
                           const char *prompt,
                           bool default_response);
         
-        virtual
-        ~IOHandlerConfirm ();
+        ~IOHandlerConfirm() override;
                 
         bool
         GetResponse () const
@@ -694,14 +687,14 @@ namespace lldb_private {
     public:
         IOHandlerCursesValueObjectList (Debugger &debugger, ValueObjectList &valobj_list);
         
-        virtual
-        ~IOHandlerCursesValueObjectList ();
+        ~IOHandlerCursesValueObjectList() override;
         
         void
         Run () override;
         
         void
         GotEOF() override;
+
     protected:
         ValueObjectList m_valobj_list;
     };
@@ -717,9 +710,7 @@ namespace lldb_private {
         {
         }
         
-        ~IOHandlerStack ()
-        {
-        }
+        ~IOHandlerStack() = default;
         
         size_t
         GetSize () const
@@ -830,17 +821,15 @@ namespace lldb_private {
         PrintAsync (Stream *stream, const char *s, size_t len);
 
     protected:
-        
         typedef std::vector<lldb::IOHandlerSP> collection;
         collection m_stack;
         mutable Mutex m_mutex;
         IOHandler *m_top;
         
     private:
-        
         DISALLOW_COPY_AND_ASSIGN (IOHandlerStack);
     };
 
 } // namespace lldb_private
 
-#endif // #ifndef liblldb_IOHandler_h_
+#endif // liblldb_IOHandler_h_

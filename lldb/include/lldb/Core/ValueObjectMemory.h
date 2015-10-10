@@ -26,6 +26,8 @@ namespace lldb_private {
 class ValueObjectMemory : public ValueObject
 {
 public:
+    ~ValueObjectMemory() override;
+
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope, 
             const char *name,
@@ -38,36 +40,33 @@ public:
             const Address &address, 
             const CompilerType &ast_type);
 
-    virtual
-    ~ValueObjectMemory();
+    uint64_t
+    GetByteSize() override;
 
-    virtual uint64_t
-    GetByteSize();
+    ConstString
+    GetTypeName() override;
 
-    virtual ConstString
-    GetTypeName();
-
-    virtual ConstString
-    GetDisplayTypeName();
+    ConstString
+    GetDisplayTypeName() override;
     
-    virtual size_t
-    CalculateNumChildren();
+    size_t
+    CalculateNumChildren() override;
 
-    virtual lldb::ValueType
-    GetValueType() const;
+    lldb::ValueType
+    GetValueType() const override;
 
-    virtual bool
-    IsInScope ();
+    bool
+    IsInScope() override;
 
-    virtual lldb::ModuleSP
-    GetModule();
+    lldb::ModuleSP
+    GetModule() override;
 
 protected:
-    virtual bool
-    UpdateValue ();
+    bool
+    UpdateValue() override;
     
-    virtual CompilerType
-    GetCompilerTypeImpl ();
+    CompilerType
+    GetCompilerTypeImpl() override;
 
     Address  m_address;  ///< The variable that this value object is based upon
     lldb::TypeSP m_type_sp;
@@ -91,4 +90,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectMemory_h_
+#endif // liblldb_ValueObjectMemory_h_

@@ -272,7 +272,7 @@ class SearchFilterForUnconstrainedSearches :
 {
 public:
     SearchFilterForUnconstrainedSearches (const lldb::TargetSP &target_sp) : SearchFilter(target_sp) {}
-    ~SearchFilterForUnconstrainedSearches () {}
+    ~SearchFilterForUnconstrainedSearches() override = default;
     
     bool 
     ModulePasses (const FileSpec &module_spec) override;
@@ -283,7 +283,6 @@ public:
 protected:
     lldb::SearchFilterSP
     DoCopyForBreakpoint (Breakpoint &breakpoint) override;
-
 };
 
 //----------------------------------------------------------------------
@@ -311,8 +310,7 @@ public:
 
     SearchFilterByModule (const SearchFilterByModule& rhs);
 
-    virtual
-    ~SearchFilterByModule ();
+    ~SearchFilterByModule() override;
 
     const SearchFilterByModule&
     operator=(const SearchFilterByModule& rhs);
@@ -372,8 +370,7 @@ public:
 
     SearchFilterByModuleList (const SearchFilterByModuleList& rhs);
 
-    virtual
-    ~SearchFilterByModuleList ();
+    ~SearchFilterByModuleList() override;
 
     const SearchFilterByModuleList&
     operator=(const SearchFilterByModuleList& rhs);
@@ -434,8 +431,7 @@ public:
 
     SearchFilterByModuleListAndCU (const SearchFilterByModuleListAndCU& rhs);
 
-    virtual
-    ~SearchFilterByModuleListAndCU ();
+    ~SearchFilterByModuleListAndCU() override;
 
     const SearchFilterByModuleListAndCU&
     operator=(const SearchFilterByModuleListAndCU& rhs);
@@ -472,4 +468,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_SearchFilter_h_
+#endif // liblldb_SearchFilter_h_
