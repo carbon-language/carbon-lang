@@ -260,7 +260,7 @@ private:
 
 };
 
-} // namespace lldb
+} // namespace lldb_utility
 
 #endif  // #if defined(__cplusplus)
 #endif // #ifndef liblldb_PseudoTerminal_h_
