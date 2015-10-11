@@ -23,7 +23,7 @@
 
 #ifdef KERNEL_USE
 
-extern void panic(const char *, ...) __attribute__((noreturn));
+NORETURN extern void panic(const char *, ...);
 #ifndef _WIN32
 __attribute__((visibility("hidden")))
 #endif
@@ -34,8 +34,8 @@ void compilerrt_abort_impl(const char *file, int line, const char *function) {
 #elif __APPLE__
 
 /* from libSystem.dylib */
-extern void __assert_rtn(const char *func, const char *file, 
-                     int line, const char * message) __attribute__((noreturn));
+NORETURN extern void __assert_rtn(const char *func, const char *file, int line,
+                                  const char *message);
 
 #ifndef _WIN32
 __attribute__((weak))
