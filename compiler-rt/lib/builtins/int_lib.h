@@ -43,10 +43,12 @@
 #endif
 
 #ifdef _MSC_VER
+#define ALWAYS_INLINE __forceinline
 #define NOINLINE __declspec(noinline)
 #define NORETURN __declspec(noreturn)
 #define UNUSED
 #else
+#define ALWAYS_INLINE __attribute__((always_inline))
 #define NOINLINE __attribute__((noinline))
 #define NORETURN __attribute__((noreturn))
 #define UNUSED __attribute__((unused))
