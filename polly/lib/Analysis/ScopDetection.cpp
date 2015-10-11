@@ -340,6 +340,17 @@ bool ScopDetection::isValidSwitch(BasicBlock &BB, SwitchInst *SI,
 bool ScopDetection::isValidBranch(BasicBlock &BB, BranchInst *BI,
                                   Value *Condition, bool IsLoopBranch,
                                   DetectionContext &Context) const {
+
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Condition)) {
+    auto Opcode = BinOp->getOpcode();
+    if (Opcode == Instruction::And || Opcode == Instruction::Or) {
+      Value *Op0 = BinOp->getOperand(0);
+      Value *Op1 = BinOp->getOperand(1);
+      return isValidBranch(BB, BI, Op0, IsLoopBranch, Context) &&
+             isValidBranch(BB, BI, Op1, IsLoopBranch, Context);
+    }
+  }
+
   // Non constant conditions of branches need to be ICmpInst.
   if (!isa<ICmpInst>(Condition)) {
     if (!IsLoopBranch && AllowNonAffineSubRegions &&

@@ -998,6 +998,63 @@ buildConditionSets(Scop &S, SwitchInst *SI, Loop *L, __isl_keep isl_set *Domain,
   isl_pw_aff_free(LHS);
 }
 
+/// @brief Build the conditions sets for the branch condition @p Condition in
+///        the @p Domain.
+///
+/// This will fill @p ConditionSets with the conditions under which control
+/// will be moved from @p TI to its successors. Hence, @p ConditionSets will
+/// have as many elements as @p TI has successors.
+static void
+buildConditionSets(Scop &S, Value *Condition, TerminatorInst *TI, Loop *L,
+                   __isl_keep isl_set *Domain,
+                   SmallVectorImpl<__isl_give isl_set *> &ConditionSets) {
+
+  isl_set *ConsequenceCondSet = nullptr;
+  if (auto *CCond = dyn_cast<ConstantInt>(Condition)) {
+    if (CCond->isZero())
+      ConsequenceCondSet = isl_set_empty(isl_set_get_space(Domain));
+    else
+      ConsequenceCondSet = isl_set_universe(isl_set_get_space(Domain));
+  } else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Condition)) {
+    auto Opcode = BinOp->getOpcode();
+    assert(Opcode == Instruction::And || Opcode == Instruction::Or);
+
+    buildConditionSets(S, BinOp->getOperand(0), TI, L, Domain, ConditionSets);
+    buildConditionSets(S, BinOp->getOperand(1), TI, L, Domain, ConditionSets);
+
+    isl_set_free(ConditionSets.pop_back_val());
+    isl_set *ConsCondPart0 = ConditionSets.pop_back_val();
+    isl_set_free(ConditionSets.pop_back_val());
+    isl_set *ConsCondPart1 = ConditionSets.pop_back_val();
+
+    if (Opcode == Instruction::And)
+      ConsequenceCondSet = isl_set_intersect(ConsCondPart0, ConsCondPart1);
+    else
+      ConsequenceCondSet = isl_set_union(ConsCondPart0, ConsCondPart1);
+  } else {
+    auto *ICond = dyn_cast<ICmpInst>(Condition);
+    assert(ICond &&
+           "Condition of exiting branch was neither constant nor ICmp!");
+
+    ScalarEvolution &SE = *S.getSE();
+    BasicBlock *BB = TI->getParent();
+    isl_pw_aff *LHS, *RHS;
+    LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), BB);
+    RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), BB);
+    ConsequenceCondSet =
+        buildConditionSet(ICond->getPredicate(), LHS, RHS, Domain);
+  }
+
+  assert(ConsequenceCondSet);
+  isl_set *AlternativeCondSet =
+      isl_set_complement(isl_set_copy(ConsequenceCondSet));
+
+  ConditionSets.push_back(isl_set_coalesce(
+      isl_set_intersect(ConsequenceCondSet, isl_set_copy(Domain))));
+  ConditionSets.push_back(isl_set_coalesce(
+      isl_set_intersect(AlternativeCondSet, isl_set_copy(Domain))));
+}
+
 /// @brief Build the conditions sets for the terminator @p TI in the @p Domain.
 ///
 /// This will fill @p ConditionSets with the conditions under which control
@@ -1021,34 +1078,7 @@ buildConditionSets(Scop &S, TerminatorInst *TI, Loop *L,
   Value *Condition = getConditionFromTerminator(TI);
   assert(Condition && "No condition for Terminator");
 
-  isl_set *ConsequenceCondSet = nullptr;
-  if (auto *CCond = dyn_cast<ConstantInt>(Condition)) {
-    if (CCond->isZero())
-      ConsequenceCondSet = isl_set_empty(isl_set_get_space(Domain));
-    else
-      ConsequenceCondSet = isl_set_universe(isl_set_get_space(Domain));
-  } else {
-    auto *ICond = dyn_cast<ICmpInst>(Condition);
-    assert(ICond &&
-           "Condition of exiting branch was neither constant nor ICmp!");
-
-    ScalarEvolution &SE = *S.getSE();
-    BasicBlock *BB = TI->getParent();
-    isl_pw_aff *LHS, *RHS;
-    LHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(0), L), BB);
-    RHS = S.getPwAff(SE.getSCEVAtScope(ICond->getOperand(1), L), BB);
-    ConsequenceCondSet =
-        buildConditionSet(ICond->getPredicate(), LHS, RHS, Domain);
-  }
-
-  assert(ConsequenceCondSet);
-  isl_set *AlternativeCondSet =
-      isl_set_complement(isl_set_copy(ConsequenceCondSet));
-
-  ConditionSets.push_back(isl_set_coalesce(
-      isl_set_intersect(ConsequenceCondSet, isl_set_copy(Domain))));
-  ConditionSets.push_back(isl_set_coalesce(
-      isl_set_intersect(AlternativeCondSet, isl_set_copy(Domain))));
+  return buildConditionSets(S, Condition, TI, L, Domain, ConditionSets);
 }
 
 void ScopStmt::buildDomain() {
