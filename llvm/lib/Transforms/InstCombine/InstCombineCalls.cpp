@@ -446,6 +446,43 @@ static Value *SimplifyX86vperm2(const IntrinsicInst &II,
   return nullptr;
 }
 
+/// Decode XOP integer vector comparison intrinsics.
+static Value *SimplifyX86vpcom(const IntrinsicInst &II,
+                               InstCombiner::BuilderTy &Builder, bool IsSigned) {
+  if (auto *CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
+    uint64_t Imm = CInt->getZExtValue() & 0x7;
+    VectorType *VecTy = cast<VectorType>(II.getType());
+    CmpInst::Predicate Pred = ICmpInst::BAD_ICMP_PREDICATE;
+
+    switch (Imm) {
+    case 0x0:
+      Pred = IsSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
+      break;
+    case 0x1:
+      Pred = IsSigned ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE;
+      break;
+    case 0x2:
+      Pred = IsSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
+      break;
+    case 0x3:
+      Pred = IsSigned ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE;
+      break;
+    case 0x4:
+      Pred = ICmpInst::ICMP_EQ; break;
+    case 0x5:
+      Pred = ICmpInst::ICMP_NE; break;
+    case 0x6:
+      return ConstantInt::getSigned(VecTy, 0); // FALSE
+    case 0x7:
+      return ConstantInt::getSigned(VecTy, -1); // TRUE
+    }
+
+    if (Value *Cmp = Builder.CreateICmp(Pred, II.getArgOperand(0), II.getArgOperand(1)))
+      return Builder.CreateSExtOrTrunc(Cmp, VecTy);
+  }
+  return nullptr;
+}
+
 /// visitCallInst - CallInst simplification.  This mostly only handles folding
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
 /// the heavy lifting.
@@ -1249,6 +1286,22 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx_vperm2f128_si_256:
   case Intrinsic::x86_avx2_vperm2i128:
     if (Value *V = SimplifyX86vperm2(*II, *Builder))
+      return ReplaceInstUsesWith(*II, V);
+    break;
+
+  case Intrinsic::x86_xop_vpcomb:
+  case Intrinsic::x86_xop_vpcomd:
+  case Intrinsic::x86_xop_vpcomq:
+  case Intrinsic::x86_xop_vpcomw:
+    if (Value *V = SimplifyX86vpcom(*II, *Builder, true))
+      return ReplaceInstUsesWith(*II, V);
+    break;
+
+  case Intrinsic::x86_xop_vpcomub:
+  case Intrinsic::x86_xop_vpcomud:
+  case Intrinsic::x86_xop_vpcomuq:
+  case Intrinsic::x86_xop_vpcomuw:
+    if (Value *V = SimplifyX86vpcom(*II, *Builder, false))
       return ReplaceInstUsesWith(*II, V);
     break;
 
