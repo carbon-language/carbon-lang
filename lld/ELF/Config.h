@@ -18,6 +18,7 @@
 namespace lld {
 namespace elf2 {
 
+class ELFFileBase;
 class SymbolBody;
 
 enum ELFKind {
@@ -30,6 +31,7 @@ enum ELFKind {
 
 struct Configuration {
   SymbolBody *EntrySym = nullptr;
+  ELFFileBase *FirstElf = nullptr;
   llvm::StringRef DynamicLinker;
   llvm::StringRef Entry;
   llvm::StringRef Emulation;

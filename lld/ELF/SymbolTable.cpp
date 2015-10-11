@@ -35,7 +35,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
       StringRef A = E->getName();
       StringRef B = Config->Emulation;
       if (B.empty())
-        B = getFirstELF()->getName();
+        B = Config->FirstElf->getName();
       error(A + " is incompatible with " + B);
     }
   }

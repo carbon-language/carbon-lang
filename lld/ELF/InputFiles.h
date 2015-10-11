@@ -249,6 +249,9 @@ std::unique_ptr<ELFFileBase> createELFFile(MemoryBufferRef MB) {
     error("Invalid file class: " + MB.getBufferIdentifier());
   }
 
+  if (!Config->FirstElf)
+    Config->FirstElf = Ret.get();
+
   if (Config->ElfKind == ELFNoneKind) {
     Config->ElfKind = Ret->getELFKind();
     Config->EMachine = Ret->getEMachine();
