@@ -47,6 +47,11 @@
 # RUN: ld.lld2 %t.script %t
 # RUN: llvm-readobj %t.out > /dev/null
 
+# RUN: echo "INCLUDE " %t.script2 "OUTPUT(" %t.out ")" > %t.script1
+# RUN: echo "GROUP(" %t ")" > %t.script2
+# RUN: ld.lld2 %t.script1
+# RUN: llvm-readobj %t2 > /dev/null
+
 # RUN: echo "FOO(BAR)" > %t.script
 # RUN: not ld.lld2 -o foo %t.script > %t.log 2>&1
 # RUN: FileCheck -check-prefix=ERR1 %s < %t.log

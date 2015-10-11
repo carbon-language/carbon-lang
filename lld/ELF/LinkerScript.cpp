@@ -39,12 +39,14 @@ private:
   void readAsNeeded();
   void readEntry();
   void readGroup();
+  void readInclude();
   void readOutput();
   void readOutputFormat();
   void readSearchDir();
 
   std::vector<StringRef> Tokens;
   size_t Pos = 0;
+  static std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 }
 
@@ -55,6 +57,8 @@ void LinkerScript::run() {
       readEntry();
     } else if (Tok == "GROUP") {
       readGroup();
+    } else if (Tok == "INCLUDE") {
+      readInclude();
     } else if (Tok == "OUTPUT") {
       readOutput();
     } else if (Tok == "OUTPUT_FORMAT") {
@@ -160,6 +164,16 @@ void LinkerScript::readGroup() {
   }
 }
 
+void LinkerScript::readInclude() {
+  StringRef Tok = next();
+  auto MBOrErr = MemoryBuffer::getFile(Tok);
+  error(MBOrErr, Twine("cannot open ") + Tok);
+  std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
+  std::vector<StringRef> V = tokenize(MB->getMemBufferRef().getBuffer());
+  Tokens.insert(Tokens.begin() + Pos, V.begin(), V.end());
+  OwningMBs.push_back(std::move(MB)); // keep ownership of MB
+}
+
 void LinkerScript::readOutput() {
   // -o <file> takes predecence over OUTPUT(<file>).
   expect("(");
@@ -181,6 +195,8 @@ void LinkerScript::readSearchDir() {
   Config->InputSearchPaths.push_back(next());
   expect(")");
 }
+
+std::vector<std::unique_ptr<MemoryBuffer>> LinkerScript::OwningMBs;
 
 // Entry point. The other functions or classes are private to this file.
 void lld::elf2::readLinkerScript(MemoryBufferRef MB) {
