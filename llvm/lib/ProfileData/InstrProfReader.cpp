@@ -408,6 +408,7 @@ bool IndexedInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
   using namespace support;
   uint64_t Magic =
       endian::read<uint64_t, little, aligned>(DataBuffer.getBufferStart());
+  // verify that it's magical
   return Magic == IndexedInstrProf::Magic;
 }
 
