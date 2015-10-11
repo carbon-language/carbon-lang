@@ -867,9 +867,9 @@ def X86_COND_E_OR_NE : ImmLeaf<i8, [{
 }]>;
 
 
-def i16immSExt8  : ImmLeaf<i16, [{ return Imm == (int8_t)Imm; }]>;
-def i32immSExt8  : ImmLeaf<i32, [{ return Imm == (int8_t)Imm; }]>;
-def i64immSExt8  : ImmLeaf<i64, [{ return Imm == (int8_t)Imm; }]>;
+def i16immSExt8  : ImmLeaf<i16, [{ return isInt<8>(Imm); }]>;
+def i32immSExt8  : ImmLeaf<i32, [{ return isInt<8>(Imm); }]>;
+def i64immSExt8  : ImmLeaf<i64, [{ return isInt<8>(Imm); }]>;
 
 // If we have multiple users of an immediate, it's much smaller to reuse
 // the register, rather than encode the immediate in every instruction.
@@ -906,15 +906,15 @@ def i32immSExt8_su : PatLeaf<(i32immSExt8), [{
 }]>;
 
 
-def i64immSExt32 : ImmLeaf<i64, [{ return Imm == (int32_t)Imm; }]>;
+def i64immSExt32 : ImmLeaf<i64, [{ return isInt<32>(Imm); }]>;
 
 
 // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
 // unsigned field.
-def i64immZExt32 : ImmLeaf<i64, [{ return (uint64_t)Imm == (uint32_t)Imm; }]>;
+def i64immZExt32 : ImmLeaf<i64, [{ return isUInt<32>(Imm); }]>;
 
 def i64immZExt32SExt8 : ImmLeaf<i64, [{
-  return (uint64_t)Imm == (uint32_t)Imm && (int32_t)Imm == (int8_t)Imm;
+  return isUInt<32>(Imm) && isInt<8>(static_cast<int32_t>(Imm));
 }]>;
 
 // Helper fragments for loads.

@@ -13,30 +13,25 @@
 namespace llvm {
 
 inline bool isImmSExti16i8Value(uint64_t Value) {
-  return ((                                  Value <= 0x000000000000007FULL)||
-          (0x000000000000FF80ULL <= Value && Value <= 0x000000000000FFFFULL)||
-          (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+  return isInt<8>(Value) ||
+         (isUInt<16>(Value) && isInt<8>(static_cast<int16_t>(Value)));
 }
 
 inline bool isImmSExti32i8Value(uint64_t Value) {
-  return ((                                  Value <= 0x000000000000007FULL)||
-          (0x00000000FFFFFF80ULL <= Value && Value <= 0x00000000FFFFFFFFULL)||
-          (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+  return isInt<8>(Value) ||
+         (isUInt<32>(Value) && isInt<8>(static_cast<int32_t>(Value)));
 }
 
 inline bool isImmSExti64i8Value(uint64_t Value) {
-  return ((                                  Value <= 0x000000000000007FULL)||
-          (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+  return isInt<8>(Value);
 }
 
 inline bool isImmSExti64i32Value(uint64_t Value) {
-  return ((                                  Value <= 0x000000007FFFFFFFULL)||
-          (0xFFFFFFFF80000000ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+  return isInt<32>(Value);
 }
 
 inline bool isImmUnsignedi8Value(uint64_t Value) {
-  return ((                                  Value <= 0x00000000000000FFULL)||
-          (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+  return isUInt<8>(Value) || isInt<8>(Value);
 }
 
 } // End of namespace llvm
