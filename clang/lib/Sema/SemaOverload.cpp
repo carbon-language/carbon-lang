@@ -130,7 +130,11 @@ ImplicitConversionRank clang::GetConversionRank(ImplicitConversionKind Kind) {
     ICR_Complex_Real_Conversion,
     ICR_Conversion,
     ICR_Conversion,
-    ICR_Writeback_Conversion
+    ICR_Writeback_Conversion,
+    ICR_Exact_Match, // NOTE(gbiv): This may not be completely right --
+                     // it was omitted by the patch that added
+                     // ICK_Zero_Event_Conversion
+    ICR_C_Conversion
   };
   return Rank[(int)Kind];
 }
@@ -162,7 +166,9 @@ static const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Complex-real conversion",
     "Block Pointer conversion",
     "Transparent Union Conversion",
-    "Writeback conversion"
+    "Writeback conversion",
+    "OpenCL Zero Event Conversion",
+    "C specific type conversion"
   };
   return Name[Kind];
 }
@@ -1411,7 +1417,7 @@ static bool tryAtomicConversion(Sema &S, Expr *From, QualType ToType,
                                 bool InOverloadResolution,
                                 StandardConversionSequence &SCS,
                                 bool CStyle);
-  
+
 /// IsStandardConversion - Determines whether there is a standard
 /// conversion sequence (C++ [conv], C++ [over.ics.scs]) from the
 /// expression From to the type ToType. Standard conversion sequences
@@ -1434,13 +1440,10 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   SCS.CopyConstructor = nullptr;
 
   // There are no standard conversions for class types in C++, so
-  // abort early. When overloading in C, however, we do permit
-  if (FromType->isRecordType() || ToType->isRecordType()) {
-    if (S.getLangOpts().CPlusPlus)
-      return false;
-
-    // When we're overloading in C, we allow, as standard conversions,
-  }
+  // abort early. When overloading in C, however, we do permit them.
+  if (S.getLangOpts().CPlusPlus &&
+      (FromType->isRecordType() || ToType->isRecordType()))
+    return false;
 
   // The first conversion can be an lvalue-to-rvalue conversion,
   // array-to-pointer conversion, or function-to-pointer conversion
@@ -1649,9 +1652,9 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     // tryAtomicConversion has updated the standard conversion sequence
     // appropriately.
     return true;
-  } else if (ToType->isEventT() && 
+  } else if (ToType->isEventT() &&
              From->isIntegerConstantExpr(S.getASTContext()) &&
-             (From->EvaluateKnownConstInt(S.getASTContext()) == 0)) {
+             From->EvaluateKnownConstInt(S.getASTContext()) == 0) {
     SCS.Second = ICK_Zero_Event_Conversion;
     FromType = ToType;
   } else {
@@ -1690,11 +1693,28 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   }
   SCS.setToType(2, FromType);
 
+  if (CanonFrom == CanonTo)
+    return true;
+
   // If we have not converted the argument type to the parameter type,
-  // this is a bad conversion sequence.
-  if (CanonFrom != CanonTo)
+  // this is a bad conversion sequence, unless we're resolving an overload in C.
+  if (S.getLangOpts().CPlusPlus || !InOverloadResolution)
     return false;
 
+  ExprResult ER = ExprResult{From};
+  auto Conv = S.CheckSingleAssignmentConstraints(ToType, ER,
+                                                 /*Diagnose=*/false,
+                                                 /*DiagnoseCFAudited=*/false,
+                                                 /*ConvertRHS=*/false);
+  if (Conv != Sema::Compatible)
+    return false;
+
+  SCS.setAllToTypes(ToType);
+  // We need to set all three because we want this conversion to rank terribly,
+  // and we don't know what conversions it may overlap with.
+  SCS.First = ICK_C_Only_Conversion;
+  SCS.Second = ICK_C_Only_Conversion;
+  SCS.Third = ICK_C_Only_Conversion;
   return true;
 }
   
@@ -4993,6 +5013,7 @@ static bool CheckConvertedConstantConversions(Sema &S,
   case ICK_TransparentUnionConversion:
   case ICK_Writeback_Conversion:
   case ICK_Zero_Event_Conversion:
+  case ICK_C_Only_Conversion:
     return false;
 
   case ICK_Lvalue_To_Rvalue:
@@ -5785,7 +5806,7 @@ ObjCMethodDecl *Sema::SelectBestMethod(Selector Sel, MultiExprArg Args,
         Match = false;
         break;
       }
-                
+
       ImplicitConversionSequence ConversionState
         = TryCopyInitialization(*this, argExpr, param->getType(),
                                 /*SuppressUserConversions*/false,
