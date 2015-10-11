@@ -17,7 +17,6 @@
 #include "Error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/StringSaver.h"
 
 using namespace llvm;
 
@@ -48,6 +47,8 @@ public:
   ELFOptTable() : OptTable(infoTable, array_lengthof(infoTable)) {}
 };
 
+ArgParser::ArgParser(BumpPtrAllocator *A) : Saver(*A) {}
+
 // Parses a given list of options.
 opt::InputArgList ArgParser::parse(ArrayRef<const char *> Argv) {
   // Make InputArgList from string vectors.
@@ -57,7 +58,6 @@ opt::InputArgList ArgParser::parse(ArrayRef<const char *> Argv) {
 
   // Expand response files. '@<filename>' is replaced by the file's contents.
   SmallVector<const char *, 256> Vec(Argv.data(), Argv.data() + Argv.size());
-  StringSaver Saver(Alloc);
   llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, Vec);
 
   // Parse options and then do error checking.

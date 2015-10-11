@@ -166,7 +166,7 @@ getString(opt::InputArgList &Args, unsigned Key, StringRef Default = "") {
 void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   initSymbols();
 
-  opt::InputArgList Args = Parser.parse(ArgsArr);
+  opt::InputArgList Args = ArgParser(&Alloc).parse(ArgsArr);
   createFiles(Args);
 
   switch (Config->ElfKind) {

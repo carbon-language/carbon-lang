@@ -14,6 +14,7 @@
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/Support/StringSaver.h"
 
 namespace lld {
 namespace elf2 {
@@ -25,11 +26,13 @@ void link(ArrayRef<const char *> Args);
 
 class ArgParser {
 public:
+  ArgParser(llvm::BumpPtrAllocator *A);
+
   // Parses command line options.
   llvm::opt::InputArgList parse(ArrayRef<const char *> Args);
 
 private:
-  llvm::BumpPtrAllocator Alloc;
+  llvm::StringSaver Saver;
 };
 
 class LinkerDriver {
@@ -45,7 +48,6 @@ private:
   std::unique_ptr<ELFFileBase> createELFInputFile(MemoryBufferRef MB);
 
   llvm::BumpPtrAllocator Alloc;
-  ArgParser Parser;
   bool WholeArchive = false;
   std::vector<std::unique_ptr<InputFile>> Files;
   std::vector<std::unique_ptr<ArchiveFile>> OwningArchives;
