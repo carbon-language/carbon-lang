@@ -483,13 +483,6 @@ StmtResult
 Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
                   Stmt *thenStmt, SourceLocation ElseLoc,
                   Stmt *elseStmt) {
-  // If the condition was invalid, discard the if statement.  We could recover
-  // better by replacing it with a valid expr, but don't do that yet.
-  if (!CondVal.get() && !CondVar) {
-    getCurFunction()->setHasDroppedStmt();
-    return StmtError();
-  }
-
   ExprResult CondResult(CondVal.release());
 
   VarDecl *ConditionVar = nullptr;
@@ -497,21 +490,22 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
     ConditionVar = cast<VarDecl>(CondVar);
     CondResult = CheckConditionVariable(ConditionVar, IfLoc, true);
     CondResult = ActOnFinishFullExpr(CondResult.get(), IfLoc);
-    if (CondResult.isInvalid())
-      return StmtError();
   }
   Expr *ConditionExpr = CondResult.getAs<Expr>();
-  if (!ConditionExpr)
-    return StmtError();
+  if (ConditionExpr) {
+    DiagnoseUnusedExprResult(thenStmt);
 
-  DiagnoseUnusedExprResult(thenStmt);
+    if (!elseStmt) {
+      DiagnoseEmptyStmtBody(ConditionExpr->getLocEnd(), thenStmt,
+                            diag::warn_empty_if_body);
+    }
 
-  if (!elseStmt) {
-    DiagnoseEmptyStmtBody(ConditionExpr->getLocEnd(), thenStmt,
-                          diag::warn_empty_if_body);
+    DiagnoseUnusedExprResult(elseStmt);
+  } else {
+    // Create a dummy Expr for the condition for error recovery
+    ConditionExpr = new (Context) OpaqueValueExpr(SourceLocation(),
+                                                  Context.BoolTy, VK_RValue);
   }
-
-  DiagnoseUnusedExprResult(elseStmt);
 
   return new (Context) IfStmt(Context, IfLoc, ConditionVar, ConditionExpr,
                               thenStmt, ElseLoc, elseStmt);
