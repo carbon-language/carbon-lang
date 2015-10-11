@@ -771,7 +771,7 @@ std::string TreePredicateFn::getCodeToRunOnSDNode() const {
   if (ClassName == "SDNode")
     Result = "    SDNode *N = Node;\n";
   else
-    Result = "    " + ClassName + "*N = cast<" + ClassName + ">(Node);\n";
+    Result = "    auto *N = cast<" + ClassName + ">(Node);\n";
   
   return Result + getPredCode();
 }
