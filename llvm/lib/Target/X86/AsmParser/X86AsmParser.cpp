@@ -718,7 +718,6 @@ private:
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveCode(StringRef IDVal, SMLoc L);
 
-  bool validateInstruction(MCInst &Inst, const OperandVector &Ops);
   bool processInstruction(MCInst &Inst, const OperandVector &Ops);
 
   /// Wrapper around MCStreamer::EmitInstruction(). Possibly adds
@@ -2401,22 +2400,6 @@ static bool convert64i32to64ri8(MCInst &Inst, unsigned Opcode,
   return convertToSExti8(Inst, Opcode, X86::RAX, isCmp);
 }
 
-bool X86AsmParser::validateInstruction(MCInst &Inst, const OperandVector &Ops) {
-  switch (Inst.getOpcode()) {
-  default: return true;
-  case X86::INT:
-    X86Operand &Op = static_cast<X86Operand &>(*Ops[1]);
-    assert(Op.isImm() && "expected immediate");
-    int64_t Res;
-    if (!Op.getImm()->evaluateAsAbsolute(Res) || Res > 255) {
-      Error(Op.getStartLoc(), "interrupt vector must be in range [0-255]");
-      return false;
-    }
-    return true;
-  }
-  llvm_unreachable("handle the instruction appropriately");
-}
-
 bool X86AsmParser::processInstruction(MCInst &Inst, const OperandVector &Ops) {
   switch (Inst.getOpcode()) {
   default: return false;
@@ -2579,9 +2562,6 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
                                isParsingIntelSyntax())) {
   default: llvm_unreachable("Unexpected match result!");
   case Match_Success:
-    if (!validateInstruction(Inst, Operands))
-      return true;
-
     // Some instructions need post-processing to, for example, tweak which
     // encoding is selected. Loop on it while changes happen so the
     // individual transformations can chain off each other.
@@ -2825,9 +2805,6 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
   unsigned NumSuccessfulMatches =
       std::count(std::begin(Match), std::end(Match), Match_Success);
   if (NumSuccessfulMatches == 1) {
-    if (!validateInstruction(Inst, Operands))
-      return true;
-
     // Some instructions need post-processing to, for example, tweak which
     // encoding is selected. Loop on it while changes happen so the individual
     // transformations can chain off each other.

@@ -44,7 +44,7 @@ def INT3 : I<0xcc, RawFrm, (outs), (ins), "int3",
 
 let SchedRW = [WriteSystem] in {
 
-def INT : Ii8<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap",
+def INT : Ii8<0xcd, RawFrm, (outs), (ins u8imm:$trap), "int\t$trap",
               [(int_x86_int imm:$trap)], IIC_INT>;
 
 

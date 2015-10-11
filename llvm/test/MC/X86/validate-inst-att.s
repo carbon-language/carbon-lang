@@ -2,6 +2,11 @@
 
 	.text
 	int $65535
-# CHECK: error: interrupt vector must be in range [0-255]
+# CHECK: error: invalid operand for instruction
 # CHECK:	int $65535
+# CHECK:            ^
+
+	int $-129
+# CHECK: error: invalid operand for instruction
+# CHECK:	int $-129
 # CHECK:            ^

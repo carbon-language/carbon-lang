@@ -11,7 +11,7 @@ bb.entry:
   ret void
 }
 
-; CHECK: int	$-128
+; CHECK: int	$128
 ; CHECK: ret
 define void @primitive_int128 () {
 bb.entry:
