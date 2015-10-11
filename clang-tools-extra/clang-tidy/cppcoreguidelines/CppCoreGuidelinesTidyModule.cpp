@@ -17,6 +17,7 @@ namespace clang {
 namespace tidy {
 namespace cppcoreguidelines {
 
+/// A module containing checks of the C++ Core Guidelines
 class CppCoreGuidelinesModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
