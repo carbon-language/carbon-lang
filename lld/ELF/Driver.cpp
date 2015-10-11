@@ -134,7 +134,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
 
 void LinkerDriver::createFiles(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_L))
-    Config->InputSearchPaths.push_back(Arg->getValue());
+    Config->SearchPaths.push_back(Arg->getValue());
 
   std::vector<StringRef> RPaths;
   for (auto *Arg : Args.filtered(OPT_rpath))

@@ -38,7 +38,7 @@ struct Configuration {
   llvm::StringRef SoName;
   llvm::StringRef Sysroot;
   std::string RPath;
-  std::vector<llvm::StringRef> InputSearchPaths;
+  std::vector<llvm::StringRef> SearchPaths;
   bool AllowMultipleDefinition;
   bool DiscardAll;
   bool DiscardLocals;

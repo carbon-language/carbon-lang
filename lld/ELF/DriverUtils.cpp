@@ -78,6 +78,15 @@ opt::InputArgList ArgParser::parse(ArrayRef<const char *> Argv) {
   return Args;
 }
 
+std::string lld::elf2::findFromSearchPaths(StringRef Path) {
+  for (StringRef Dir : Config->SearchPaths) {
+    std::string FullPath = buildSysrootedPath(Dir, Path);
+    if (sys::fs::exists(FullPath))
+      return FullPath;
+  }
+  return "";
+}
+
 // Searches a given library from input search paths, which are filled
 // from -L command line switches. Returns a path to an existent library file.
 std::string lld::elf2::searchLibrary(StringRef Path) {
@@ -89,12 +98,10 @@ std::string lld::elf2::searchLibrary(StringRef Path) {
       Names.push_back(("lib" + Path + ".so").str());
     Names.push_back(("lib" + Path + ".a").str());
   }
-  for (StringRef Dir : Config->InputSearchPaths) {
-    for (const std::string &Name : Names) {
-      std::string FullPath = buildSysrootedPath(Dir, Name);
-      if (sys::fs::exists(FullPath))
-        return FullPath;
-    }
+  for (const std::string &Name : Names) {
+    std::string S = findFromSearchPaths(Name);
+    if (!S.empty())
+      return S;
   }
   error("Unable to find library -l" + Path);
 }

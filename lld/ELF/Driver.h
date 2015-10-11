@@ -65,6 +65,7 @@ enum {
 // Parses a linker script. Calling this function updates the Symtab and Config.
 void readLinkerScript(llvm::BumpPtrAllocator *A, MemoryBufferRef MB);
 
+std::string findFromSearchPaths(StringRef Path);
 std::string searchLibrary(StringRef Path);
 std::string buildSysrootedPath(llvm::StringRef Dir, llvm::StringRef File);
 

@@ -38,6 +38,8 @@ private:
   bool atEOF() { return Tokens.size() == Pos; }
   void expect(StringRef Expect);
 
+  void addFile(StringRef Path);
+
   void readAsNeeded();
   void readEntry();
   void readGroup();
@@ -133,13 +135,31 @@ void LinkerScript::expect(StringRef Expect) {
     error(Expect + " expected, but got " + Tok);
 }
 
+void LinkerScript::addFile(StringRef S) {
+  if (S.startswith("/")) {
+    Driver->addFile(S);
+  } else if (S.startswith("=")) {
+    if (Config->Sysroot.empty())
+      Driver->addFile(S.substr(1));
+    else
+      Driver->addFile(Saver.save(Config->Sysroot + "/" + S.substr(1)));
+  } else if (S.startswith("-l")) {
+    Driver->addFile(searchLibrary(S.substr(2)));
+  } else {
+    std::string Path = findFromSearchPaths(S);
+    if (Path.empty())
+      error("Unable to find " + S);
+    Driver->addFile(Saver.save(Path));
+  }
+}
+
 void LinkerScript::readAsNeeded() {
   expect("(");
   for (;;) {
     StringRef Tok = next();
     if (Tok == ")")
       return;
-    Driver->addFile(Tok);
+    addFile(Tok);
   }
 }
 
@@ -162,7 +182,7 @@ void LinkerScript::readGroup() {
       readAsNeeded();
       continue;
     }
-    Driver->addFile(Tok);
+    addFile(Tok);
   }
 }
 
@@ -194,7 +214,7 @@ void LinkerScript::readOutputFormat() {
 
 void LinkerScript::readSearchDir() {
   expect("(");
-  Config->InputSearchPaths.push_back(next());
+  Config->SearchPaths.push_back(next());
   expect(")");
 }
 

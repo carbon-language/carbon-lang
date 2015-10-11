@@ -1,5 +1,10 @@
 # REQUIRES: x86
+# RUN: mkdir -p %t.dir
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
+# RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux \
+# RUN:   %p/Inputs/libsearch-st.s -o %t2.o
+# RUN: rm -f %t.dir/libxyz.a
+# RUN: llvm-ar rcs %t.dir/libxyz.a %t2.o
 
 # RUN: echo "GROUP(" %t ")" > %t.script
 # RUN: ld.lld2 -o %t2 %t.script
@@ -7,6 +12,26 @@
 
 # RUN: echo "INPUT(" %t ")" > %t.script
 # RUN: ld.lld2 -o %t2 %t.script
+# RUN: llvm-readobj %t2 > /dev/null
+
+# RUN: echo "GROUP(" %t libxyz.a ")" > %t.script
+# RUN: not ld.lld2 -o %t2 %t.script
+# RUN: ld.lld2 -o %t2 %t.script -L%t.dir
+# RUN: llvm-readobj %t2 > /dev/null
+
+# RUN: echo "GROUP(" %t =libxyz.a ")" > %t.script
+# RUN: not ld.lld2 -o %t2 %t.script
+# RUN: ld.lld2 -o %t2 %t.script --sysroot=%t.dir
+# RUN: llvm-readobj %t2 > /dev/null
+
+# RUN: echo "GROUP(" %t -lxyz ")" > %t.script
+# RUN: not ld.lld2 -o %t2 %t.script
+# RUN: ld.lld2 -o %t2 %t.script -L%t.dir
+# RUN: llvm-readobj %t2 > /dev/null
+
+# RUN: echo "GROUP(" %t libxyz.a ")" > %t.script
+# RUN: not ld.lld2 -o %t2 %t.script
+# RUN: ld.lld2 -o %t2 %t.script -L%t.dir
 # RUN: llvm-readobj %t2 > /dev/null
 
 # RUN: echo "GROUP(" %t.script2 ")" > %t.script1
