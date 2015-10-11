@@ -55,7 +55,7 @@ void LinkerScript::run() {
     StringRef Tok = next();
     if (Tok == "ENTRY") {
       readEntry();
-    } else if (Tok == "GROUP") {
+    } else if (Tok == "GROUP" || Tok == "INPUT") {
       readGroup();
     } else if (Tok == "INCLUDE") {
       readInclude();

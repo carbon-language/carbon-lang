@@ -5,6 +5,10 @@
 # RUN: ld.lld2 -o %t2 %t.script
 # RUN: llvm-readobj %t2 > /dev/null
 
+# RUN: echo "INPUT(" %t ")" > %t.script
+# RUN: ld.lld2 -o %t2 %t.script
+# RUN: llvm-readobj %t2 > /dev/null
+
 # RUN: echo "GROUP(" %t.script2 ")" > %t.script1
 # RUN: echo "GROUP(" %t ")" > %t.script2
 # RUN: ld.lld2 -o %t2 %t.script1
