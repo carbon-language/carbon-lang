@@ -43,4 +43,16 @@
 // RUN:   FileCheck --check-prefix=SO-AND-C-I386 %s
 // SO-AND-C-I386: c.o is incompatible with elf_i386
 
+
+// We used to fail to identify this incompatibility and crash trying to
+// read a 64 bit file as a 32 bit one.
+// RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %p/Inputs/archive2.s -o %ta.o
+// RUN: llvm-ar rc %t.a %ta.o
+// RUN: llvm-mc -filetype=obj -triple=i686-linux %s -o %tb.o
+// RUN: not ld.lld2 %t.a %tb.o 2>&1 | FileCheck --check-prefix=ARCHIVE %s
+// ARCHIVE: a.o is incompatible with {{.*}}b.o
+.global _start
+_start:
+        .long foo
+
 // REQUIRES: x86,arm

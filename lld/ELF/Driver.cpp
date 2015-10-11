@@ -38,6 +38,7 @@ void lld::elf2::link(ArrayRef<const char *> Args) {
 }
 
 static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
+  Config->Emulation = S;
   if (S == "elf32btsmip") return {ELF32BEKind, EM_MIPS};
   if (S == "elf32ltsmip") return {ELF32LEKind, EM_MIPS};
   if (S == "elf32ppc")    return {ELF32BEKind, EM_PPC};
@@ -196,33 +197,6 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
   if (Files.empty())
     error("no input files.");
-
-  // Set machine type if -m is not given.
-  if (Config->ElfKind == ELFNoneKind) {
-    for (std::unique_ptr<InputFile> &File : Files) {
-      auto *F = dyn_cast<ELFFileBase>(File.get());
-      if (!F)
-        continue;
-      Config->ElfKind = F->getELFKind();
-      Config->EMachine = F->getEMachine();
-      break;
-    }
-  }
-
-  // Check if all files are for the same machine type.
-  for (std::unique_ptr<InputFile> &File : Files) {
-    auto *F = dyn_cast<ELFFileBase>(File.get());
-    if (!F)
-      continue;
-    if (F->getELFKind() == Config->ElfKind &&
-        F->getEMachine() == Config->EMachine)
-      continue;
-    StringRef A = F->getName();
-    StringRef B = Files[0]->getName();
-    if (auto *Arg = Args.getLastArg(OPT_m))
-      B = Arg->getValue();
-    error(A + " is incompatible with " + B);
-  }
 }
 
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {

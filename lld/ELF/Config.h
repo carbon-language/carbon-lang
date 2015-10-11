@@ -32,6 +32,7 @@ struct Configuration {
   SymbolBody *EntrySym = nullptr;
   llvm::StringRef DynamicLinker;
   llvm::StringRef Entry;
+  llvm::StringRef Emulation;
   llvm::StringRef Fini;
   llvm::StringRef Init;
   llvm::StringRef OutputFile;

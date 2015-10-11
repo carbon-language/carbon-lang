@@ -28,6 +28,18 @@ template <class ELFT> bool SymbolTable<ELFT>::shouldUseRela() const {
 
 template <class ELFT>
 void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
+
+  if (auto *E = dyn_cast<ELFFileBase>(File.get())) {
+    if (E->getELFKind() != Config->ElfKind ||
+        E->getEMachine() != Config->EMachine) {
+      StringRef A = E->getName();
+      StringRef B = Config->Emulation;
+      if (B.empty())
+        B = getFirstELF()->getName();
+      error(A + " is incompatible with " + B);
+    }
+  }
+
   if (auto *AF = dyn_cast<ArchiveFile>(File.get())) {
     ArchiveFiles.emplace_back(std::move(File));
     AF->parse();
