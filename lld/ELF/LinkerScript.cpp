@@ -18,6 +18,7 @@
 #include "SymbolTable.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/StringSaver.h"
 
 using namespace llvm;
 using namespace lld;
@@ -26,7 +27,8 @@ using namespace lld::elf2;
 namespace {
 class LinkerScript {
 public:
-  LinkerScript(StringRef S) : Tokens(tokenize(S)) {}
+  LinkerScript(BumpPtrAllocator *A, StringRef S)
+      : Saver(*A), Tokens(tokenize(S)) {}
   void run();
 
 private:
@@ -44,9 +46,9 @@ private:
   void readOutputFormat();
   void readSearchDir();
 
+  StringSaver Saver;
   std::vector<StringRef> Tokens;
   size_t Pos = 0;
-  static std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 }
 
@@ -169,9 +171,9 @@ void LinkerScript::readInclude() {
   auto MBOrErr = MemoryBuffer::getFile(Tok);
   error(MBOrErr, Twine("cannot open ") + Tok);
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
-  std::vector<StringRef> V = tokenize(MB->getMemBufferRef().getBuffer());
+  StringRef S = Saver.save(MB->getMemBufferRef().getBuffer());
+  std::vector<StringRef> V = tokenize(S);
   Tokens.insert(Tokens.begin() + Pos, V.begin(), V.end());
-  OwningMBs.push_back(std::move(MB)); // keep ownership of MB
 }
 
 void LinkerScript::readOutput() {
@@ -196,9 +198,7 @@ void LinkerScript::readSearchDir() {
   expect(")");
 }
 
-std::vector<std::unique_ptr<MemoryBuffer>> LinkerScript::OwningMBs;
-
 // Entry point. The other functions or classes are private to this file.
-void lld::elf2::readLinkerScript(MemoryBufferRef MB) {
-  LinkerScript(MB.getBuffer()).run();
+void lld::elf2::readLinkerScript(BumpPtrAllocator *A, MemoryBufferRef MB) {
+  LinkerScript(A, MB.getBuffer()).run();
 }

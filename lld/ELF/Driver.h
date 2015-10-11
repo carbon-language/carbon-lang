@@ -44,6 +44,7 @@ private:
   template <template <class> class T>
   std::unique_ptr<ELFFileBase> createELFInputFile(MemoryBufferRef MB);
 
+  llvm::BumpPtrAllocator Alloc;
   ArgParser Parser;
   bool WholeArchive = false;
   std::vector<std::unique_ptr<InputFile>> Files;
@@ -60,7 +61,7 @@ enum {
 };
 
 // Parses a linker script. Calling this function updates the Symtab and Config.
-void readLinkerScript(MemoryBufferRef MB);
+void readLinkerScript(llvm::BumpPtrAllocator *A, MemoryBufferRef MB);
 
 } // namespace elf2
 } // namespace lld

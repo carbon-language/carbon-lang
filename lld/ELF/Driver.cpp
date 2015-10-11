@@ -136,7 +136,7 @@ void LinkerDriver::addFile(StringRef Path) {
 
   switch (identify_magic(MBRef.getBuffer())) {
   case file_magic::unknown:
-    readLinkerScript(MBRef);
+    readLinkerScript(&Alloc, MBRef);
     return;
   case file_magic::archive:
     if (WholeArchive) {
