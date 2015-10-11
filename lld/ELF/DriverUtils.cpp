@@ -19,6 +19,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/StringSaver.h"
 
 using namespace llvm;
 
@@ -49,10 +50,9 @@ public:
   ELFOptTable() : OptTable(infoTable, array_lengthof(infoTable)) {}
 };
 
-ArgParser::ArgParser(BumpPtrAllocator *A) : Saver(*A) {}
-
 // Parses a given list of options.
-opt::InputArgList ArgParser::parse(ArrayRef<const char *> Argv) {
+opt::InputArgList lld::elf2::parseArgs(llvm::BumpPtrAllocator *A,
+                                       ArrayRef<const char *> Argv) {
   // Make InputArgList from string vectors.
   ELFOptTable Table;
   unsigned MissingIndex;
@@ -60,6 +60,7 @@ opt::InputArgList ArgParser::parse(ArrayRef<const char *> Argv) {
 
   // Expand response files. '@<filename>' is replaced by the file's contents.
   SmallVector<const char *, 256> Vec(Argv.data(), Argv.data() + Argv.size());
+  StringSaver Saver(*A);
   llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, Vec);
 
   // Parse options and then do error checking.

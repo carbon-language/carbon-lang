@@ -14,7 +14,6 @@
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Option/ArgList.h"
-#include "llvm/Support/StringSaver.h"
 
 namespace lld {
 namespace elf2 {
@@ -23,17 +22,6 @@ extern class LinkerDriver *Driver;
 
 // Entry point of the ELF linker.
 void link(ArrayRef<const char *> Args);
-
-class ArgParser {
-public:
-  ArgParser(llvm::BumpPtrAllocator *A);
-
-  // Parses command line options.
-  llvm::opt::InputArgList parse(ArrayRef<const char *> Args);
-
-private:
-  llvm::StringSaver Saver;
-};
 
 class LinkerDriver {
 public:
@@ -53,6 +41,10 @@ private:
   std::vector<std::unique_ptr<ArchiveFile>> OwningArchives;
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
+
+// Parses command line options.
+llvm::opt::InputArgList parseArgs(llvm::BumpPtrAllocator *A,
+                                  ArrayRef<const char *> Args);
 
 // Create enum with OPT_xxx values for each option in Options.td
 enum {
