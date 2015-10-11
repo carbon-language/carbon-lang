@@ -79,6 +79,8 @@ def sysroot : Joined<["--"], "sysroot=">,
 def undefined : Joined<["--"], "undefined=">,
   HelpText<"Force undefined symbol during linking">;
 
+def verbose : Flag<["--"], "verbose">;
+
 def whole_archive : Flag<["--"], "whole-archive">,
   HelpText<"Force load of all members in a static library">;
 

@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -128,6 +129,8 @@ static std::string searchLibrary(StringRef Path) {
 // Newly created memory buffers are owned by this driver.
 void LinkerDriver::addFile(StringRef Path) {
   using namespace llvm::sys::fs;
+  if (Config->Verbose)
+    llvm::outs() << Path << "\n";
   auto MBOrErr = MemoryBuffer::getFile(Path);
   error(MBOrErr, Twine("cannot open ") + Path);
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
@@ -209,6 +212,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->Shared = Args.hasArg(OPT_shared);
+  Config->Verbose = Args.hasArg(OPT_verbose);
 
   Config->DynamicLinker = getString(Args, OPT_dynamic_linker);
   Config->Entry = getString(Args, OPT_entry);

@@ -49,6 +49,7 @@ struct Configuration {
   bool NoUndefined;
   bool Shared;
   bool Static = false;
+  bool Verbose;
   bool ZNow = false;
   ELFKind ElfKind = ELFNoneKind;
   uint16_t EMachine = llvm::ELF::EM_NONE;
