@@ -79,6 +79,11 @@ static cl::opt<bool, true> XPollyProcessUnprofitable(
     cl::location(PollyProcessUnprofitable), cl::init(false), cl::ZeroOrMore,
     cl::cat(PollyCategory));
 
+static cl::alias
+    DetectUnprofitableAlias("polly-detect-unprofitable",
+                            cl::desc("Alias for -polly-process-unprofitable"),
+                            cl::aliasopt(XPollyProcessUnprofitable));
+
 static cl::opt<std::string> OnlyFunction(
     "polly-only-func",
     cl::desc("Only run on functions that contain a certain string"),
