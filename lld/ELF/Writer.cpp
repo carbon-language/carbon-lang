@@ -13,8 +13,8 @@
 #include "SymbolTable.h"
 #include "Target.h"
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/FileOutputBuffer.h"
-#include <unordered_set>
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -473,6 +473,9 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       ++NumPhdrs;
     }
   }
+
+  // Reserve space needed for the program header so that the array
+  // will never be resized.
   Phdrs.reserve(NumPhdrs);
 
   // The first Phdr entry is PT_PHDR which describes the program header itself.
@@ -494,7 +497,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   Elf_Phdr *FileHeader = &Phdrs.back();
   phdrSet(FileHeader, PT_LOAD, PF_R, 0, getVAStart(), Target->getPageSize());
 
-  std::unordered_set<Elf_Phdr *> Closed;
+  SmallPtrSet<Elf_Phdr *, 8> Closed;
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     if (Sec->getSize()) {
       uintX_t Flags = toPhdrFlags(Sec->getFlags());
