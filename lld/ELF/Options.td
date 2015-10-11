@@ -67,6 +67,8 @@ def o : Separate<["-"], "o">, MetaVarName<"<path>">,
 def rpath : Separate<["-"], "rpath">,
   HelpText<"Add a DT_RUNPATH to the output">;
 
+def script : Separate<["--"], "script">, HelpText<"Read linker script">;
+
 def shared : Flag<["-"], "shared">,
   HelpText<"Build a shared object">;
 
@@ -104,6 +106,7 @@ def alias_o_output : Joined<["--"], "output=">, Alias<o>;
 def alias_rpath_rpath : Joined<["-"], "rpath=">, Alias<rpath>;
 def alias_soname_h : Separate<["-"], "h">, Alias<soname>;
 def alias_soname_soname : Separate<["-"], "soname">, Alias<soname>;
+def alias_script_T : Separate<["-"], "T">, Alias<script>;
 def alias_undefined_u : Separate<["-"], "u">, Alias<undefined>;
 
 // Options listed below are silently ignored now.
