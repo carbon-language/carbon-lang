@@ -39,12 +39,18 @@ void lld::elf2::link(ArrayRef<const char *> Args) {
 
 static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
   Config->Emulation = S;
-  if (S == "elf32btsmip") return {ELF32BEKind, EM_MIPS};
-  if (S == "elf32ltsmip") return {ELF32LEKind, EM_MIPS};
-  if (S == "elf32ppc")    return {ELF32BEKind, EM_PPC};
-  if (S == "elf64ppc")    return {ELF64BEKind, EM_PPC64};
-  if (S == "elf_i386")    return {ELF32LEKind, EM_386};
-  if (S == "elf_x86_64")  return {ELF64LEKind, EM_X86_64};
+  if (S == "elf32btsmip")
+    return {ELF32BEKind, EM_MIPS};
+  if (S == "elf32ltsmip")
+    return {ELF32LEKind, EM_MIPS};
+  if (S == "elf32ppc")
+    return {ELF32BEKind, EM_PPC};
+  if (S == "elf64ppc")
+    return {ELF64BEKind, EM_PPC64};
+  if (S == "elf_i386")
+    return {ELF32LEKind, EM_386};
+  if (S == "elf_x86_64")
+    return {ELF64LEKind, EM_X86_64};
   error("Unknown emulation: " + S);
 }
 
