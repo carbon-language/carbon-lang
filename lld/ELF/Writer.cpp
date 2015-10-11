@@ -591,10 +591,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
   EHdr->e_shstrndx = Out<ELFT>::StrTab->getSectionIndex();
-
-  auto PHdrs = reinterpret_cast<Elf_Phdr *>(Buf + EHdr->e_phoff);
-  for (Elf_Phdr &PH : Phdrs)
-    *PHdrs++ = PH;
+  memcpy(Buf + EHdr->e_phoff, &Phdrs[0], Phdrs.size() * sizeof(Phdrs[0]));
 
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.
