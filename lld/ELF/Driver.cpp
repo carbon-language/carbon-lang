@@ -19,6 +19,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include <utility>
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -38,38 +39,14 @@ void lld::elf2::link(ArrayRef<const char *> Args) {
   Driver->main(Args.slice(1));
 }
 
-static void setELFType(StringRef Emul) {
-  if (Emul == "elf_i386") {
-    Config->ElfKind = ELF32LEKind;
-    Config->EMachine = EM_386;
-    return;
-  }
-  if (Emul == "elf_x86_64") {
-    Config->ElfKind = ELF64LEKind;
-    Config->EMachine = EM_X86_64;
-    return;
-  }
-  if (Emul == "elf32ltsmip") {
-    Config->ElfKind = ELF32LEKind;
-    Config->EMachine = EM_MIPS;
-    return;
-  }
-  if (Emul == "elf32btsmip") {
-    Config->ElfKind = ELF32BEKind;
-    Config->EMachine = EM_MIPS;
-    return;
-  }
-  if (Emul == "elf32ppc") {
-    Config->ElfKind = ELF32BEKind;
-    Config->EMachine = EM_PPC;
-    return;
-  }
-  if (Emul == "elf64ppc") {
-    Config->ElfKind = ELF64BEKind;
-    Config->EMachine = EM_PPC64;
-    return;
-  }
-  error(Twine("Unknown emulation: ") + Emul);
+static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
+  if (S == "elf32btsmip") return {ELF32BEKind, EM_MIPS};
+  if (S == "elf32ltsmip") return {ELF32LEKind, EM_MIPS};
+  if (S == "elf32ppc")    return {ELF32BEKind, EM_PPC};
+  if (S == "elf64ppc")    return {ELF64BEKind, EM_PPC64};
+  if (S == "elf_i386")    return {ELF32LEKind, EM_386};
+  if (S == "elf_x86_64")  return {ELF64LEKind, EM_X86_64};
+  error("Unknown emulation: " + S);
 }
 
 static TargetInfo *createTarget() {
@@ -200,8 +177,11 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   if (!RPaths.empty())
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
 
-  if (auto *Arg = Args.getLastArg(OPT_m))
-    setELFType(Arg->getValue());
+  if (auto *Arg = Args.getLastArg(OPT_m)) {
+    std::pair<ELFKind, uint16_t> P = parseEmulation(Arg->getValue());
+    Config->ElfKind = P.first;
+    Config->EMachine = P.second;
+  }
 
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
   Config->DiscardAll = Args.hasArg(OPT_discard_all);
