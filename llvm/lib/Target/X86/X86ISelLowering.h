@@ -412,6 +412,8 @@ namespace llvm {
 
       // XOP arithmetic/logical shifts
       VPSHA, VPSHL,
+      // XOP signed/unsigned integer comparisons
+      VPCOM, VPCOMU,
 
       // Vector multiply packed unsigned doubleword integers
       PMULUDQ,

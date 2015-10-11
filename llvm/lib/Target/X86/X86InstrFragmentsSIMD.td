@@ -222,6 +222,13 @@ def X86vpsha   : SDNode<"X86ISD::VPSHA",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                       SDTCisVec<2>]>>;
 
+def X86vpcom   : SDNode<"X86ISD::VPCOM",
+                        SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                      SDTCisVec<2>, SDTCisVT<3, i8>]>>;
+def X86vpcomu  : SDNode<"X86ISD::VPCOMU",
+                        SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                      SDTCisVec<2>, SDTCisVT<3, i8>]>>;
+
 def SDTX86CmpPTest : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
                                           SDTCisVec<1>,
                                           SDTCisSameAs<2, 1>]>;

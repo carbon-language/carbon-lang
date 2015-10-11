@@ -197,21 +197,25 @@ let ExeDomain = SSEPackedInt in {
 }
 
 // Instruction where second source can be memory, third must be imm8
-multiclass xopvpcom<bits<8> opc, string Suffix, Intrinsic Int> {
+multiclass xopvpcom<bits<8> opc, string Suffix, SDNode OpNode, ValueType vt128> {
   let isCommutable = 1 in
   def ri : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, XOPCC:$cc),
            !strconcat("vpcom${cc}", Suffix,
            "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-           [(set VR128:$dst, (Int VR128:$src1, VR128:$src2, i8immZExt3:$cc))]>,
+           [(set VR128:$dst,
+              (vt128 (OpNode (vt128 VR128:$src1), (vt128 VR128:$src2),
+                             i8immZExt3:$cc)))]>,
            XOP_4V;
   def mi : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, i128mem:$src2, XOPCC:$cc),
            !strconcat("vpcom${cc}", Suffix,
            "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
-             (Int VR128:$src1, (bitconvert (loadv2i64 addr:$src2)),
-              i8immZExt3:$cc))]>, XOP_4V;
+              (vt128 (OpNode (vt128 VR128:$src1),
+                             (vt128 (bitconvert (loadv2i64 addr:$src2))),
+                              i8immZExt3:$cc)))]>,
+           XOP_4V;
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def ri_alt : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
                  (ins VR128:$src1, VR128:$src2, i8imm:$src3),
@@ -228,14 +232,14 @@ multiclass xopvpcom<bits<8> opc, string Suffix, Intrinsic Int> {
 }
 
 let ExeDomain = SSEPackedInt in { // SSE integer instructions
-  defm VPCOMB  : xopvpcom<0xCC, "b", int_x86_xop_vpcomb>;
-  defm VPCOMW  : xopvpcom<0xCD, "w", int_x86_xop_vpcomw>;
-  defm VPCOMD  : xopvpcom<0xCE, "d", int_x86_xop_vpcomd>;
-  defm VPCOMQ  : xopvpcom<0xCF, "q", int_x86_xop_vpcomq>;
-  defm VPCOMUB : xopvpcom<0xEC, "ub", int_x86_xop_vpcomub>;
-  defm VPCOMUW : xopvpcom<0xED, "uw", int_x86_xop_vpcomuw>;
-  defm VPCOMUD : xopvpcom<0xEE, "ud", int_x86_xop_vpcomud>;
-  defm VPCOMUQ : xopvpcom<0xEF, "uq", int_x86_xop_vpcomuq>;
+  defm VPCOMB  : xopvpcom<0xCC, "b", X86vpcom, v16i8>;
+  defm VPCOMW  : xopvpcom<0xCD, "w", X86vpcom, v8i16>;
+  defm VPCOMD  : xopvpcom<0xCE, "d", X86vpcom, v4i32>;
+  defm VPCOMQ  : xopvpcom<0xCF, "q", X86vpcom, v2i64>;
+  defm VPCOMUB : xopvpcom<0xEC, "ub", X86vpcomu, v16i8>;
+  defm VPCOMUW : xopvpcom<0xED, "uw", X86vpcomu, v8i16>;
+  defm VPCOMUD : xopvpcom<0xEE, "ud", X86vpcomu, v4i32>;
+  defm VPCOMUQ : xopvpcom<0xEF, "uq", X86vpcomu, v2i64>;
 }
 
 // Instruction where either second or third source can be memory
