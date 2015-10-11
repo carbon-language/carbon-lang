@@ -16,8 +16,6 @@
 #include "Writer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include <utility>
 
@@ -67,39 +65,6 @@ static TargetInfo *createTarget() {
     return new X86_64TargetInfo();
   }
   error("Unknown target machine");
-}
-
-// Makes a path by concatenating Dir and File.
-// If Dir starts with '=' the result will be preceded by Sysroot,
-// which can be set with --sysroot command line switch.
-static std::string buildSysrootedPath(StringRef Dir, StringRef File) {
-  SmallString<128> Path;
-  if (Dir.startswith("="))
-    sys::path::append(Path, Config->Sysroot, Dir.substr(1), File);
-  else
-    sys::path::append(Path, Dir, File);
-  return Path.str().str();
-}
-
-// Searches a given library from input search paths, which are filled
-// from -L command line switches. Returns a path to an existent library file.
-static std::string searchLibrary(StringRef Path) {
-  std::vector<std::string> Names;
-  if (Path[0] == ':') {
-    Names.push_back(Path.drop_front().str());
-  } else {
-    if (!Config->Static)
-      Names.push_back((Twine("lib") + Path + ".so").str());
-    Names.push_back((Twine("lib") + Path + ".a").str());
-  }
-  for (StringRef Dir : Config->InputSearchPaths) {
-    for (const std::string &Name : Names) {
-      std::string FullPath = buildSysrootedPath(Dir, Name);
-      if (sys::fs::exists(FullPath))
-        return FullPath;
-    }
-  }
-  error(Twine("Unable to find library -l") + Path);
 }
 
 // Opens and parses a file. Path has to be resolved already.
