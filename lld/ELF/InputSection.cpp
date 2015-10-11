@@ -46,7 +46,7 @@ void InputSection<ELFT>::relocate(
         continue;
       SymVA = getLocalSymVA(Sym, File);
     } else {
-      SymbolBody &Body = *File.getSymbolBody(SymIndex);
+      SymbolBody &Body = *File.getSymbolBody(SymIndex)->repl();
       SymVA = getSymVA<ELFT>(Body);
       if (Target->relocNeedsPlt(Type, Body)) {
         SymVA = Out<ELFT>::Plt->getEntryAddr(Body);

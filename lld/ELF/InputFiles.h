@@ -146,7 +146,7 @@ public:
     uint32_t FirstNonLocal = this->Symtab->sh_info;
     if (SymbolIndex < FirstNonLocal)
       return nullptr;
-    return SymbolBodies[SymbolIndex - FirstNonLocal]->repl();
+    return SymbolBodies[SymbolIndex - FirstNonLocal];
   }
 
   Elf_Sym_Range getLocalSymbols();
@@ -198,6 +198,11 @@ public:
   StringRef getSoName() const { return SoName; }
   virtual void parseSoName() = 0;
   virtual void parse() = 0;
+
+  // Used for --as-needed
+  bool AsNeeded = false;
+  bool IsUsed = false;
+  bool isNeeded() const { return !AsNeeded || IsUsed; }
 };
 
 template <class ELFT>

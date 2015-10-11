@@ -116,8 +116,10 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     OutputSection<ELFT> *OutSec = C.getOutputSection();
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     const ObjectFile<ELFT> &File = *C.getFile();
-    const SymbolBody *Body = File.getSymbolBody(SymIndex);
+    SymbolBody *Body = File.getSymbolBody(SymIndex);
     const ELFFile<ELFT> &Obj = File.getObj();
+    if (Body)
+      Body = Body->repl();
 
     uint32_t Type = RI.getType(IsMips64EL);
 
@@ -279,6 +281,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     NumEntries += 2;
 
   for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles()) {
+    if (!F->isNeeded())
+      continue;
     Out<ELFT>::DynStrTab->add(F->getSoName());
     ++NumEntries;
   }
@@ -356,7 +360,8 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   WriteArray(DT_FINI_ARRAY, DT_FINI_ARRAYSZ, FiniArraySec);
 
   for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles())
-    WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getFileOff(F->getSoName()));
+    if (F->isNeeded())
+      WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getFileOff(F->getSoName()));
 
   if (InitSym)
     WritePtr(DT_INIT, getSymVA<ELFT>(*InitSym));

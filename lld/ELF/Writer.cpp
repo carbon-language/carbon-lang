@@ -174,6 +174,14 @@ void Writer<ELFT>::scanRelocs(
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     SymbolBody *Body = File.getSymbolBody(SymIndex);
     uint32_t Type = RI.getType(IsMips64EL);
+
+    // Set "used" bit for --as-needed.
+    if (Body && Body->isUndefined() && !Body->isWeak())
+      if (auto *S = dyn_cast<SharedSymbol<ELFT>>(Body->repl()))
+        S->File->IsUsed = true;
+
+    if (Body)
+      Body = Body->repl();
     if (Body) {
       if (Target->relocNeedsPlt(Type, *Body)) {
         if (Body->isInPlt())
@@ -186,12 +194,13 @@ void Writer<ELFT>::scanRelocs(
         Out<ELFT>::Got->addEntry(Body);
       }
     }
-    if (canBePreempted(Body)) {
+
+    bool CBP = canBePreempted(Body);
+    if (!CBP && (!Config->Shared || Target->isRelRelative(Type)))
+      continue;
+    if (CBP)
       Body->setUsedInDynamicReloc();
-      Out<ELFT>::RelaDyn->addReloc({C, RI});
-    } else if (Config->Shared && !Target->isRelRelative(Type)) {
-      Out<ELFT>::RelaDyn->addReloc({C, RI});
-    }
+    Out<ELFT>::RelaDyn->addReloc({C, RI});
   }
 }
 

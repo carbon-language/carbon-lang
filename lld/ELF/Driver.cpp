@@ -100,9 +100,12 @@ void LinkerDriver::addFile(StringRef Path) {
     }
     Files.push_back(make_unique<ArchiveFile>(MBRef));
     return;
-  case file_magic::elf_shared_object:
-    Files.push_back(createELFFile<SharedFile>(MBRef));
+  case file_magic::elf_shared_object: {
+    std::unique_ptr<ELFFileBase> File = createELFFile<SharedFile>(MBRef);
+    cast<SharedFileBase>(File.get())->AsNeeded = Config->AsNeeded;
+    Files.push_back(std::move(File));
     return;
+  }
   default:
     Files.push_back(createELFFile<ObjectFile>(MBRef));
   }
@@ -186,6 +189,12 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     case OPT_INPUT:
     case OPT_script:
       addFile(Arg->getValue());
+      break;
+    case OPT_as_needed:
+      Config->AsNeeded = true;
+      break;
+    case OPT_no_as_needed:
+      Config->AsNeeded = false;
       break;
     case OPT_Bstatic:
       Config->Static = true;

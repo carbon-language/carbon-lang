@@ -24,6 +24,7 @@ class InputFile;
 class SymbolBody;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
+template <class ELFT> class SharedFile;
 
 // Initializes global objects defined in this file.
 // Called at the beginning of main().
@@ -263,8 +264,10 @@ public:
     return S->kind() == Base::SharedKind;
   }
 
-  SharedSymbol(StringRef Name, const Elf_Sym &Sym)
-      : Defined<ELFT>(Base::SharedKind, Name, Sym) {}
+  SharedSymbol(SharedFile<ELFT> *F, StringRef Name, const Elf_Sym &Sym)
+      : Defined<ELFT>(Base::SharedKind, Name, Sym), File(F) {}
+
+  SharedFile<ELFT> *File;
 };
 
 // This class represents a symbol defined in an archive file. It is

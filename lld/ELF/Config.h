@@ -43,6 +43,7 @@ struct Configuration {
   std::string RPath;
   std::vector<llvm::StringRef> SearchPaths;
   bool AllowMultipleDefinition;
+  bool AsNeeded = false;
   bool DiscardAll;
   bool DiscardLocals;
   bool DiscardNone;

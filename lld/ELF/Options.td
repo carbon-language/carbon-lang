@@ -14,6 +14,8 @@ def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
 
 def allow_shlib_undefined : Flag<["--", "-"], "allow-shlib-undefined">;
 
+def as_needed : Flag<["--"], "as-needed">;
+
 def disable_new_dtags : Flag<["--"], "disable-new-dtags">,
   HelpText<"Disable new dynamic tags">;
 
@@ -51,6 +53,8 @@ def m : Separate<["-"], "m">,
   HelpText<"Set target emulation">;
 
 def no_allow_shlib_undefined : Flag<["--"], "no-allow-shlib-undefined">;
+
+def no_as_needed : Flag<["--"], "no-as-needed">;
 
 def no_whole_archive : Flag<["--"], "no-whole-archive">,
   HelpText<"Restores the default behavior of loading archive members">;
@@ -111,14 +115,12 @@ def alias_undefined_u : Separate<["-"], "u">, Alias<undefined>;
 
 // Options listed below are silently ignored now.
 def O3 : Flag<["-"], "O3">;
-def as_needed : Flag<["--"], "as-needed">;
 def build_id : Flag<["--"], "build-id">;
 def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def end_group : Flag<["--"], "end-group">;
 def gc_sections : Flag<["--"], "gc-sections">;
 def hash_style : Joined<["--"], "hash-style=">;
 def no_add_needed : Flag<["--"], "no-add-needed">;
-def no_as_needed : Flag<["--"], "no-as-needed">;
 def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;
 def start_group : Flag<["--"], "start-group">;
 def strip_all : Flag<["--"], "strip-all">;

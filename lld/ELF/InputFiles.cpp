@@ -329,7 +329,7 @@ template <class ELFT> void SharedFile<ELFT>::parse() {
     error(NameOrErr.getError());
     StringRef Name = *NameOrErr;
 
-    SymbolBodies.emplace_back(Name, Sym);
+    SymbolBodies.emplace_back(this, Name, Sym);
   }
 }
 

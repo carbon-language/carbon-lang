@@ -155,12 +155,15 @@ void LinkerScript::addFile(StringRef S) {
 
 void LinkerScript::readAsNeeded() {
   expect("(");
+  bool Orig = Config->AsNeeded;
+  Config->AsNeeded = true;
   for (;;) {
     StringRef Tok = next();
     if (Tok == ")")
-      return;
+      break;
     addFile(Tok);
   }
+  Config->AsNeeded = Orig;
 }
 
 void LinkerScript::readEntry() {
