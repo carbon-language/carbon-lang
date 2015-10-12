@@ -237,16 +237,16 @@ unsigned MipsFastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
 
   unsigned Opc;
   switch (ISDOpc) {
-    case ISD::AND:
-      Opc = Mips::AND;
-      break;
-    case ISD::OR:
-      Opc = Mips::OR;
-      break;
-    case ISD::XOR:
-      Opc = Mips::XOR;
-      break;
-    default:
+  case ISD::AND:
+    Opc = Mips::AND;
+    break;
+  case ISD::OR:
+    Opc = Mips::OR;
+    break;
+  case ISD::XOR:
+    Opc = Mips::XOR;
+    break;
+  default:
     llvm_unreachable("unexpected opcode");
   }
 
