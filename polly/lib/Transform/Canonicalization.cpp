@@ -14,11 +14,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/LinkAllPasses.h"
+#include "polly/Options.h"
 #include "polly/Canonicalization.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/IPO.h"
 
 using namespace llvm;
 using namespace polly;
+
+static cl::opt<bool>
+    PollyInliner("polly-run-inliner",
+                 cl::desc("Run an early inliner pass before Polly"), cl::Hidden,
+                 cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 void polly::registerCanonicalicationPasses(llvm::legacy::PassManagerBase &PM) {
   PM.add(llvm::createPromoteMemoryToRegisterPass());
@@ -28,6 +35,12 @@ void polly::registerCanonicalicationPasses(llvm::legacy::PassManagerBase &PM) {
   PM.add(llvm::createCFGSimplificationPass());
   PM.add(llvm::createReassociatePass());
   PM.add(llvm::createLoopRotatePass());
+  if (PollyInliner) {
+    PM.add(llvm::createFunctionInliningPass(200));
+    PM.add(llvm::createCFGSimplificationPass());
+    PM.add(llvm::createInstructionCombiningPass());
+    PM.add(createBarrierNoopPass());
+  }
   PM.add(llvm::createInstructionCombiningPass());
   PM.add(llvm::createIndVarSimplifyPass());
   PM.add(polly::createCodePreparationPass());
