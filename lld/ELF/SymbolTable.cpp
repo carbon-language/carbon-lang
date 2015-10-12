@@ -29,7 +29,7 @@ template <class ELFT> bool SymbolTable<ELFT>::shouldUseRela() const {
 template <class ELFT>
 void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
 
-  if (auto *E = dyn_cast<ELFFileBase>(File.get())) {
+  if (auto *E = dyn_cast<ELFFileBase<ELFT>>(File.get())) {
     if (E->getELFKind() != Config->ElfKind ||
         E->getEMachine() != Config->EMachine) {
       StringRef A = E->getName();
@@ -47,15 +47,15 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
       addLazy(&Sym);
     return;
   }
-  if (auto *S = dyn_cast<SharedFileBase>(File.get())) {
+  if (auto *S = dyn_cast<SharedFileBase<ELFT>>(File.get())) {
     S->parseSoName();
     if (!IncludedSoNames.insert(S->getSoName()).second)
       return;
     S->parse();
   } else {
-    cast<ObjectFileBase>(File.get())->parse(Comdats);
+    cast<ObjectFileBase<ELFT>>(File.get())->parse(Comdats);
   }
-  addELFFile(cast<ELFFileBase>(File.release()));
+  addELFFile(cast<ELFFileBase<ELFT>>(File.release()));
 }
 
 template <class ELFT>
@@ -90,13 +90,14 @@ template <class ELFT> void SymbolTable<ELFT>::addIgnoredSym(StringRef Name) {
   resolve(Sym);
 }
 
-template <class ELFT> void SymbolTable<ELFT>::addELFFile(ELFFileBase *File) {
+template <class ELFT>
+void SymbolTable<ELFT>::addELFFile(ELFFileBase<ELFT> *File) {
   if (auto *O = dyn_cast<ObjectFile<ELFT>>(File))
     ObjectFiles.emplace_back(O);
   else if (auto *S = dyn_cast<SharedFile<ELFT>>(File))
     SharedFiles.emplace_back(S);
 
-  if (auto *O = dyn_cast<ObjectFileBase>(File)) {
+  if (auto *O = dyn_cast<ObjectFileBase<ELFT>>(File)) {
     for (SymbolBody *Body : O->getSymbols())
       resolve(Body);
   }
@@ -116,8 +117,8 @@ void SymbolTable<ELFT>::reportConflict(const Twine &Message,
 
   const Elf_Sym &OldE = cast<ELFSymbolBody<ELFT>>(Old).Sym;
   const Elf_Sym &NewE = cast<ELFSymbolBody<ELFT>>(New).Sym;
-  ELFFileBase *OldFile = nullptr;
-  ELFFileBase *NewFile = nullptr;
+  ELFFileBase<ELFT> *OldFile = nullptr;
+  ELFFileBase<ELFT> *NewFile = nullptr;
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &File : ObjectFiles) {
     Elf_Sym_Range Syms = File->getObj().symbols(File->getSymbolTable());

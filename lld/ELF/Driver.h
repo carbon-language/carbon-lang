@@ -33,7 +33,7 @@ public:
 
 private:
   template <template <class> class T>
-  std::unique_ptr<ELFFileBase> createELFInputFile(MemoryBufferRef MB);
+  std::unique_ptr<InputFile> createELFInputFile(MemoryBufferRef MB);
 
   llvm::BumpPtrAllocator Alloc;
   bool WholeArchive = false;

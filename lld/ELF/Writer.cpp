@@ -229,7 +229,7 @@ static void reportUndefined(const SymbolTable<ELFT> &S, const SymbolBody &Sym) {
     return;
 
   const Elf_Sym &SymE = cast<ELFSymbolBody<ELFT>>(Sym).Sym;
-  ELFFileBase *SymFile = nullptr;
+  ELFFileBase<ELFT> *SymFile = nullptr;
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &File : S.getObjectFiles()) {
     Elf_Sym_Range Syms = File->getObj().symbols(File->getSymbolTable());

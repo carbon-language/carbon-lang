@@ -33,7 +33,7 @@ public:
 
   void addFile(std::unique_ptr<InputFile> File);
 
-  const ELFFileBase *getFirstELF() const {
+  const ELFFileBase<ELFT> *getFirstELF() const {
     if (!ObjectFiles.empty())
       return ObjectFiles[0].get();
     if (!SharedFiles.empty())
@@ -63,7 +63,7 @@ public:
 
 private:
   Symbol *insert(SymbolBody *New);
-  void addELFFile(ELFFileBase *File);
+  void addELFFile(ELFFileBase<ELFT> *File);
   void addLazy(Lazy *New);
   void addMemberFile(Lazy *Body);
   void init(uint16_t EMachine);

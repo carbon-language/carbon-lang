@@ -21,28 +21,6 @@ using namespace llvm::sys::fs;
 using namespace lld;
 using namespace lld::elf2;
 
-template <class ELFT> static uint16_t getEMachine(const ELFFileBase &B) {
-  bool IsShared = isa<SharedFileBase>(B);
-  if (IsShared)
-    return cast<SharedFile<ELFT>>(B).getEMachine();
-  return cast<ObjectFile<ELFT>>(B).getEMachine();
-}
-
-uint16_t ELFFileBase::getEMachine() const {
-  switch (EKind) {
-  case ELF32BEKind:
-    return ::getEMachine<ELF32BE>(*this);
-  case ELF32LEKind:
-    return ::getEMachine<ELF32LE>(*this);
-  case ELF64BEKind:
-    return ::getEMachine<ELF64BE>(*this);
-  case ELF64LEKind:
-    return ::getEMachine<ELF64LE>(*this);
-  default:
-    llvm_unreachable("Invalid kind");
-  }
-}
-
 namespace {
 class ECRAII {
   std::error_code EC;
@@ -54,12 +32,12 @@ public:
 }
 
 template <class ELFT>
-ELFData<ELFT>::ELFData(MemoryBufferRef MB)
-    : ELFObj(MB.getBuffer(), ECRAII().getEC()) {}
+ELFFileBase<ELFT>::ELFFileBase(Kind K, ELFKind EKind, MemoryBufferRef M)
+    : InputFile(K, M), EKind(EKind), ELFObj(MB.getBuffer(), ECRAII().getEC()) {}
 
 template <class ELFT>
-typename ELFData<ELFT>::Elf_Sym_Range
-ELFData<ELFT>::getSymbolsHelper(bool Local) {
+typename ELFFileBase<ELFT>::Elf_Sym_Range
+ELFFileBase<ELFT>::getSymbolsHelper(bool Local) {
   if (!Symtab)
     return Elf_Sym_Range(nullptr, nullptr);
   Elf_Sym_Range Syms = ELFObj.symbols(Symtab);
@@ -73,7 +51,7 @@ ELFData<ELFT>::getSymbolsHelper(bool Local) {
   return make_range(Syms.begin() + 1, Syms.begin() + FirstNonLocal);
 }
 
-template <class ELFT> void ELFData<ELFT>::initStringTable() {
+template <class ELFT> void ELFFileBase<ELFT>::initStringTable() {
   if (!Symtab)
     return;
   ErrorOr<StringRef> StringTableOrErr = ELFObj.getStringTableForSymtab(*Symtab);
@@ -82,13 +60,14 @@ template <class ELFT> void ELFData<ELFT>::initStringTable() {
 }
 
 template <class ELFT>
-typename ELFData<ELFT>::Elf_Sym_Range ELFData<ELFT>::getNonLocalSymbols() {
+typename ELFFileBase<ELFT>::Elf_Sym_Range
+ELFFileBase<ELFT>::getNonLocalSymbols() {
   return getSymbolsHelper(false);
 }
 
 template <class ELFT>
 ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
-    : ObjectFileBase(getStaticELFKind<ELFT>(), M), ELFData<ELFT>(M) {}
+    : ObjectFileBase<ELFT>(getStaticELFKind<ELFT>(), M) {}
 
 template <class ELFT>
 typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
@@ -178,7 +157,7 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
       break;
     }
     default:
-      Sections[I] = new (Alloc) InputSection<ELFT>(this, &Sec);
+      Sections[I] = new (this->Alloc) InputSection<ELFT>(this, &Sec);
       break;
     }
   }
@@ -188,9 +167,9 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
   this->initStringTable();
   Elf_Sym_Range Syms = this->getNonLocalSymbols();
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
-  SymbolBodies.reserve(NumSymbols);
+  this->SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms)
-    SymbolBodies.push_back(createSymbolBody(this->StringTable, &Sym));
+    this->SymbolBodies.push_back(createSymbolBody(this->StringTable, &Sym));
 }
 
 template <class ELFT>
@@ -203,11 +182,11 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   uint32_t SecIndex = Sym->st_shndx;
   switch (SecIndex) {
   case SHN_ABS:
-    return new (Alloc) DefinedAbsolute<ELFT>(Name, *Sym);
+    return new (this->Alloc) DefinedAbsolute<ELFT>(Name, *Sym);
   case SHN_UNDEF:
-    return new (Alloc) Undefined<ELFT>(Name, *Sym);
+    return new (this->Alloc) Undefined<ELFT>(Name, *Sym);
   case SHN_COMMON:
-    return new (Alloc) DefinedCommon<ELFT>(Name, *Sym);
+    return new (this->Alloc) DefinedCommon<ELFT>(Name, *Sym);
   case SHN_XINDEX:
     SecIndex = this->ELFObj.getExtendedSymbolTableIndex(Sym, this->Symtab,
                                                         SymtabSHNDX);
@@ -225,8 +204,8 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_GNU_UNIQUE: {
     InputSection<ELFT> *Sec = Sections[SecIndex];
     if (Sec == &InputSection<ELFT>::Discarded)
-      return new (Alloc) Undefined<ELFT>(Name, *Sym);
-    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sec);
+      return new (this->Alloc) Undefined<ELFT>(Name, *Sym);
+    return new (this->Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sec);
   }
   }
 }
@@ -281,7 +260,7 @@ std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
 
 template <class ELFT>
 SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
-    : SharedFileBase(getStaticELFKind<ELFT>(), M), ELFData<ELFT>(M) {}
+    : SharedFileBase<ELFT>(getStaticELFKind<ELFT>(), M) {}
 
 template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
@@ -298,7 +277,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   }
 
   this->initStringTable();
-  SoName = getName();
+  this->SoName = this->getName();
 
   if (DynamicSec) {
     auto *Begin =
@@ -310,7 +289,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
         uintX_t Val = Dyn.getVal();
         if (Val >= this->StringTable.size())
           error("Invalid DT_SONAME entry");
-        SoName = StringRef(this->StringTable.data() + Val);
+        this->SoName = StringRef(this->StringTable.data() + Val);
         break;
       }
     }
@@ -335,6 +314,10 @@ template <class ELFT> void SharedFile<ELFT>::parse() {
 
 namespace lld {
 namespace elf2 {
+template class ELFFileBase<llvm::object::ELF32LE>;
+template class ELFFileBase<llvm::object::ELF32BE>;
+template class ELFFileBase<llvm::object::ELF64LE>;
+template class ELFFileBase<llvm::object::ELF64BE>;
 
 template class elf2::ObjectFile<llvm::object::ELF32LE>;
 template class elf2::ObjectFile<llvm::object::ELF32BE>;
