@@ -41,10 +41,7 @@ void InputSection<ELFT>::relocate(
     // resolved so we don't allocate a SymbolBody.
     const Elf_Shdr *SymTab = File.getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
-      const Elf_Sym *Sym = File.getObj().getRelocationSymbol(&RI, SymTab);
-      if (!Sym)
-        continue;
-      SymVA = getLocalSymVA(Sym, File);
+      SymVA = getLocalRelTarget(File, RI);
     } else {
       SymbolBody &Body = *File.getSymbolBody(SymIndex)->repl();
       SymVA = getSymVA<ELFT>(Body);

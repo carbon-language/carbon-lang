@@ -37,8 +37,8 @@ typename llvm::object::ELFFile<ELFT>::uintX_t getSymVA(const SymbolBody &S);
 
 template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t
-getLocalSymVA(const typename llvm::object::ELFFile<ELFT>::Elf_Sym *Sym,
-              const ObjectFile<ELFT> &File);
+getLocalRelTarget(const ObjectFile<ELFT> &File,
+                  const typename llvm::object::ELFFile<ELFT>::Elf_Rel &Sym);
 bool canBePreempted(const SymbolBody *Body);
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 

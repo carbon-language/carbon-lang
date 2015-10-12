@@ -117,7 +117,6 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     const ObjectFile<ELFT> &File = *C.getFile();
     SymbolBody *Body = File.getSymbolBody(SymIndex);
-    const ELFFile<ELFT> &Obj = File.getObj();
     if (Body)
       Body = Body->repl();
 
@@ -130,8 +129,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
         if (Body)
           Addend += getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body));
         else
-          Addend += getLocalSymVA(
-              Obj.getRelocationSymbol(&RI, File.getSymbolTable()), File);
+          Addend += getLocalRelTarget(File, RI);
       }
       P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
     }
@@ -423,10 +421,18 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
 
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
-lld::elf2::getLocalSymVA(const typename ELFFile<ELFT>::Elf_Sym *Sym,
-                         const ObjectFile<ELFT> &File) {
-  uint32_t SecIndex = Sym->st_shndx;
+lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
+                             const typename ELFFile<ELFT>::Elf_Rel &RI) {
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  const Elf_Sym *Sym =
+      File.getObj().getRelocationSymbol(&RI, File.getSymbolTable());
 
+  // For certain special relocations, such as R_PPC64_TOC, there's no
+  // corresponding symbol. Just return 0 in that case.
+  if (!Sym)
+    return 0;
+
+  uint32_t SecIndex = Sym->st_shndx;
   if (SecIndex == SHN_XINDEX)
     SecIndex = File.getObj().getExtendedSymbolTableIndex(
         Sym, File.getSymbolTable(), File.getSymbolTableShndx());
@@ -736,16 +742,20 @@ template ELFFile<ELF64LE>::uintX_t getSymVA<ELF64LE>(const SymbolBody &);
 template ELFFile<ELF64BE>::uintX_t getSymVA<ELF64BE>(const SymbolBody &);
 
 template ELFFile<ELF32LE>::uintX_t
-getLocalSymVA(const ELFFile<ELF32LE>::Elf_Sym *, const ObjectFile<ELF32LE> &);
+getLocalRelTarget(const ObjectFile<ELF32LE> &,
+                  const ELFFile<ELF32LE>::Elf_Rel &);
 
 template ELFFile<ELF32BE>::uintX_t
-getLocalSymVA(const ELFFile<ELF32BE>::Elf_Sym *, const ObjectFile<ELF32BE> &);
+getLocalRelTarget(const ObjectFile<ELF32BE> &,
+                  const ELFFile<ELF32BE>::Elf_Rel &);
 
 template ELFFile<ELF64LE>::uintX_t
-getLocalSymVA(const ELFFile<ELF64LE>::Elf_Sym *, const ObjectFile<ELF64LE> &);
+getLocalRelTarget(const ObjectFile<ELF64LE> &,
+                  const ELFFile<ELF64LE>::Elf_Rel &);
 
 template ELFFile<ELF64BE>::uintX_t
-getLocalSymVA(const ELFFile<ELF64BE>::Elf_Sym *, const ObjectFile<ELF64BE> &);
+getLocalRelTarget(const ObjectFile<ELF64BE> &,
+                  const ELFFile<ELF64BE>::Elf_Rel &);
 
 template bool includeInSymtab<ELF32LE>(const SymbolBody &);
 template bool includeInSymtab<ELF32BE>(const SymbolBody &);
