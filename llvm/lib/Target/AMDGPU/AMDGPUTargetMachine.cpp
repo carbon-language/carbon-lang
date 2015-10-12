@@ -44,6 +44,8 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   RegisterTargetMachine<GCNTargetMachine> Y(TheGCNTarget);
 
   PassRegistry *PR = PassRegistry::getPassRegistry();
+  initializeSILowerI1CopiesPass(*PR);
+  initializeSIFoldOperandsPass(*PR);
   initializeSIFixSGPRLiveRangesPass(*PR);
   initializeSIFixControlFlowLiveIntervalsPass(*PR);
   initializeSILoadStoreOptimizerPass(*PR);
