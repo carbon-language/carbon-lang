@@ -6,7 +6,6 @@ import pkgutil
 import re
 import shlex
 import sys
-import subprocess
 
 import lit.Test  # pylint: disable=import-error,no-name-in-module
 import lit.util  # pylint: disable=import-error,no-name-in-module
@@ -48,11 +47,8 @@ def getSysrootFlagsOnDarwin(config, lit_config):
     # default system root path.
     if 'darwin' in config.target_triple:
         try:
-            cmd = subprocess.Popen(['xcrun', '--show-sdk-path'],
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = cmd.communicate()
-            out = out.strip()
-            res = cmd.wait()
+            out = lit.util.capture(['xcrun', '--show-sdk-path']).strip()
+            res = 0
         except OSError:
             res = -1
         if res == 0 and out:
