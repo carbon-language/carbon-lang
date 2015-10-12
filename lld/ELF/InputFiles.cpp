@@ -321,14 +321,14 @@ template class ELFFileBase<llvm::object::ELF32BE>;
 template class ELFFileBase<llvm::object::ELF64LE>;
 template class ELFFileBase<llvm::object::ELF64BE>;
 
-template class elf2::ObjectFile<llvm::object::ELF32LE>;
-template class elf2::ObjectFile<llvm::object::ELF32BE>;
-template class elf2::ObjectFile<llvm::object::ELF64LE>;
-template class elf2::ObjectFile<llvm::object::ELF64BE>;
+template class ObjectFile<llvm::object::ELF32LE>;
+template class ObjectFile<llvm::object::ELF32BE>;
+template class ObjectFile<llvm::object::ELF64LE>;
+template class ObjectFile<llvm::object::ELF64BE>;
 
-template class elf2::SharedFile<llvm::object::ELF32LE>;
-template class elf2::SharedFile<llvm::object::ELF32BE>;
-template class elf2::SharedFile<llvm::object::ELF64LE>;
-template class elf2::SharedFile<llvm::object::ELF64BE>;
+template class SharedFile<llvm::object::ELF32LE>;
+template class SharedFile<llvm::object::ELF32BE>;
+template class SharedFile<llvm::object::ELF64LE>;
+template class SharedFile<llvm::object::ELF64BE>;
 }
 }
