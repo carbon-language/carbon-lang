@@ -154,6 +154,9 @@ def FeatureMips16  : SubtargetFeature<"mips16", "InMips16Mode", "true",
 def FeatureDSP : SubtargetFeature<"dsp", "HasDSP", "true", "Mips DSP ASE">;
 def FeatureDSPR2 : SubtargetFeature<"dspr2", "HasDSPR2", "true",
                                     "Mips DSP-R2 ASE", [FeatureDSP]>;
+def FeatureDSPR3
+    : SubtargetFeature<"dspr3", "HasDSPR3", "true", "Mips DSP-R3 ASE",
+                       [ FeatureDSP, FeatureDSPR2 ]>;
 
 def FeatureMSA : SubtargetFeature<"msa", "HasMSA", "true", "Mips MSA ASE">;
 

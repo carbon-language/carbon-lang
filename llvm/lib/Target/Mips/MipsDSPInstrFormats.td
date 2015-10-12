@@ -7,10 +7,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+class DspMMRel;
+
+def Dsp2MicroMips : InstrMapping {
+  let FilterClass = "DspMMRel";
+  // Instructions with the same BaseOpcode and isNVStore values form a row.
+  let RowFields = ["BaseOpcode"];
+  // Instructions with the same predicate sense form a column.
+  let ColFields = ["Arch"];
+  // The key column is the unpredicated instructions.
+  let KeyCol = ["dsp"];
+  // Value columns are PredSense=true and PredSense=false
+  let ValueCols = [["dsp"], ["mmdsp"]];
+}
+
 def HasDSP : Predicate<"Subtarget->hasDSP()">,
              AssemblerPredicate<"FeatureDSP">;
 def HasDSPR2 : Predicate<"Subtarget->hasDSPR2()">,
                AssemblerPredicate<"FeatureDSPR2">;
+def HasDSPR3 : Predicate<"Subtarget->hasDSPR3()">,
+               AssemblerPredicate<"FeatureDSPR3">;
 
 // Fields.
 class Field6<bits<6> val> {
@@ -20,8 +36,11 @@ class Field6<bits<6> val> {
 def SPECIAL3_OPCODE : Field6<0b011111>;
 def REGIMM_OPCODE : Field6<0b000001>;
 
-class DSPInst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther> {
+class DSPInst<string opstr = "">
+    : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther> {
   let Predicates = [HasDSP];
+  string BaseOpcode = opstr;
+  string Arch = "dsp";
 }
 
 class PseudoDSP<dag outs, dag ins, list<dag> pattern,

@@ -190,6 +190,10 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     else
       NewOpcode = Mips::Std2MicroMips(Opcode, Mips::Arch_micromips);
 
+    // Check whether it is Dsp instruction.
+    if (NewOpcode == -1)
+      NewOpcode = Mips::Dsp2MicroMips(Opcode, Mips::Arch_mmdsp);
+
     if (NewOpcode != -1) {
       if (Fixups.size() > N)
         Fixups.pop_back();

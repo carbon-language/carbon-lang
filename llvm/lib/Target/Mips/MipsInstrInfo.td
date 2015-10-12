@@ -2109,3 +2109,7 @@ include "MicroMips32r6InstrInfo.td"
 // Micromips64 r6
 include "MicroMips64r6InstrFormats.td"
 include "MicroMips64r6InstrInfo.td"
+
+// Micromips DSP
+include "MicroMipsDSPInstrFormats.td"
+include "MicroMipsDSPInstrInfo.td"

@@ -483,6 +483,7 @@ public:
 
   bool hasDSP() const { return STI.getFeatureBits()[Mips::FeatureDSP]; }
   bool hasDSPR2() const { return STI.getFeatureBits()[Mips::FeatureDSPR2]; }
+  bool hasDSPR3() const { return STI.getFeatureBits()[Mips::FeatureDSPR3]; }
   bool hasMSA() const { return STI.getFeatureBits()[Mips::FeatureMSA]; }
   bool hasCnMips() const {
     return (STI.getFeatureBits()[Mips::FeatureCnMips]);
