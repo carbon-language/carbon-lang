@@ -192,7 +192,7 @@ void LinkerScript::readGroup() {
 void LinkerScript::readInclude() {
   StringRef Tok = next();
   auto MBOrErr = MemoryBuffer::getFile(Tok);
-  error(MBOrErr, Twine("cannot open ") + Tok);
+  error(MBOrErr, "cannot open " + Tok);
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
   StringRef S = Saver.save(MB->getMemBufferRef().getBuffer());
   std::vector<StringRef> V = tokenize(S);

@@ -81,7 +81,7 @@ void LinkerDriver::addFile(StringRef Path) {
   if (Config->Verbose)
     llvm::outs() << Path << "\n";
   auto MBOrErr = MemoryBuffer::getFile(Path);
-  error(MBOrErr, Twine("cannot open ") + Path);
+  error(MBOrErr, "cannot open " + Path);
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take MB ownership

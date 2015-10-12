@@ -231,15 +231,14 @@ void ArchiveFile::parse() {
 // Returns a buffer pointing to a member file containing a given symbol.
 MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   ErrorOr<Archive::child_iterator> ItOrErr = Sym->getMember();
-  error(ItOrErr,
-        Twine("Could not get the member for symbol ") + Sym->getName());
+  error(ItOrErr, "Could not get the member for symbol " + Sym->getName());
   Archive::child_iterator It = *ItOrErr;
 
   if (!Seen.insert(It->getChildOffset()).second)
     return MemoryBufferRef();
 
   ErrorOr<MemoryBufferRef> Ret = It->getMemoryBufferRef();
-  error(Ret, Twine("Could not get the buffer for the member defining symbol ") +
+  error(Ret, "Could not get the buffer for the member defining symbol " +
                  Sym->getName());
   return *Ret;
 }
@@ -250,9 +249,8 @@ std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
   std::vector<MemoryBufferRef> Result;
   for (const Archive::Child &Child : File->children()) {
     ErrorOr<MemoryBufferRef> MbOrErr = Child.getMemoryBufferRef();
-    error(MbOrErr,
-          Twine("Could not get the buffer for a child of the archive ") +
-              File->getFileName());
+    error(MbOrErr, "Could not get the buffer for a child of the archive " +
+                       File->getFileName());
     Result.push_back(MbOrErr.get());
   }
   return Result;
