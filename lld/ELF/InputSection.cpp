@@ -28,7 +28,8 @@ InputSection<ELFT>::InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header)
 template <class ELFT>
 template <bool isRela>
 void InputSection<ELFT>::relocate(
-    uint8_t *Buf, iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
+    uint8_t *Buf, uint8_t *BufEnd,
+    iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
     const ObjectFile<ELFT> &File, uintX_t BaseAddr) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   bool IsMips64EL = File.getObj().isMips64EL();
@@ -41,8 +42,8 @@ void InputSection<ELFT>::relocate(
     const Elf_Shdr *SymTab = File.getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
       uintX_t SymVA = getLocalRelTarget(File, RI);
-      Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,
-                          BaseAddr, SymVA);
+      Target->relocateOne(Buf, BufEnd, reinterpret_cast<const void *>(&RI),
+                          Type, BaseAddr, SymVA);
       continue;
     }
 
@@ -60,7 +61,7 @@ void InputSection<ELFT>::relocate(
     } else if (isa<SharedSymbol<ELFT>>(Body)) {
       continue;
     }
-    Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,
+    Target->relocateOne(Buf, BufEnd, reinterpret_cast<const void *>(&RI), Type,
                         BaseAddr, SymVA);
   }
 }
@@ -79,9 +80,9 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
-      relocate(Base, EObj.relas(RelSec), *File, BaseAddr);
+      relocate(Base, Base + Data.size(), EObj.relas(RelSec), *File, BaseAddr);
     else
-      relocate(Base, EObj.rels(RelSec), *File, BaseAddr);
+      relocate(Base, Base + Data.size(), EObj.rels(RelSec), *File, BaseAddr);
   }
 }
 

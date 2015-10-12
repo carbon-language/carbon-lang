@@ -64,8 +64,9 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
 static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }
 static void or32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) | V); }
 
-void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                uint64_t BaseAddr, uint64_t SymVA) const {
+void X86TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                                uint32_t Type, uint64_t BaseAddr,
+                                uint64_t SymVA) const {
   typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
   auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
 
@@ -164,9 +165,9 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   }
 }
 
-void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
-                                   uint32_t Type, uint64_t BaseAddr,
-                                   uint64_t SymVA) const {
+void X86_64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
+                                   const void *RelP, uint32_t Type,
+                                   uint64_t BaseAddr, uint64_t SymVA) const {
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
@@ -306,7 +307,8 @@ bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
   }
 }
 
-void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
+                                  const void *RelP, uint32_t Type,
                                   uint64_t BaseAddr, uint64_t SymVA) const {
   typedef ELFFile<ELF64BE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
@@ -397,6 +399,14 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
     if (!isInt<24>(R - P))
       error("Relocation R_PPC64_REL24 overflow");
     write32be(L, (read32be(L) & ~Mask) | ((R - P) & Mask));
+
+    uint64_t PltStart = Out<ELF64BE>::Plt->getVA();
+    uint64_t PltEnd = PltStart + Out<ELF64BE>::Plt->getSize();
+    bool InPlt = PltStart <= S + A && S + A < PltEnd;
+
+    if (InPlt && L + 8 < BufEnd &&
+        read32be(L + 4) == 0x60000000 /* nop */)
+      write32be(L + 4, 0xe8410028); // ld %r2, 40(%r1)
     break;
   }
   case R_PPC64_REL32:
@@ -429,7 +439,8 @@ bool PPCTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
 bool PPCTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
-void PPCTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+void PPCTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
+                                const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA) const {}
 
 ARMTargetInfo::ARMTargetInfo() {
@@ -445,7 +456,8 @@ bool ARMTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
 bool ARMTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
-void ARMTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+void ARMTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
+                                const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA) const {}
 
 AArch64TargetInfo::AArch64TargetInfo() {
@@ -478,9 +490,9 @@ static uint64_t getAArch64Page(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
-void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
-                                    uint32_t Type, uint64_t BaseAddr,
-                                    uint64_t SymVA) const {
+void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
+                                    const void *RelP, uint32_t Type,
+                                    uint64_t BaseAddr, uint64_t SymVA) const {
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
@@ -544,7 +556,8 @@ bool MipsTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
 
-void MipsTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
+void MipsTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
+                                 const void *RelP, uint32_t Type,
                                  uint64_t BaseAddr, uint64_t SymVA) const {
   typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
   auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);

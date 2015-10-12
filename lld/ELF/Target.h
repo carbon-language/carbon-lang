@@ -33,8 +33,9 @@ public:
   virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
   virtual bool relocPointsToGot(uint32_t Type) const;
   virtual bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const = 0;
-  virtual void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                           uint64_t BaseAddr, uint64_t SymVA) const = 0;
+  virtual void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                           uint32_t Type, uint64_t BaseAddr,
+                           uint64_t SymVA) const = 0;
 
   virtual ~TargetInfo();
 
@@ -56,8 +57,9 @@ public:
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocPointsToGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
 };
 
 class X86_64TargetInfo final : public TargetInfo {
@@ -67,8 +69,9 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 
@@ -79,8 +82,9 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 
@@ -91,8 +95,9 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
 };
 
 class ARMTargetInfo final : public TargetInfo {
@@ -102,8 +107,9 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
 };
 
 class AArch64TargetInfo final : public TargetInfo {
@@ -113,8 +119,9 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
 };
 
 class MipsTargetInfo final : public TargetInfo {
@@ -124,8 +131,9 @@ public:
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                   uint64_t BaseAddr, uint64_t SymVA) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
 };
 
 extern std::unique_ptr<TargetInfo> Target;

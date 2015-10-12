@@ -60,7 +60,7 @@ public:
 
 private:
   template <bool isRela>
-  void relocate(uint8_t *Buf,
+  void relocate(uint8_t *Buf, uint8_t *BufEnd,
                 llvm::iterator_range<
                     const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
                 const ObjectFile<ELFT> &File, uintX_t BaseAddr);
