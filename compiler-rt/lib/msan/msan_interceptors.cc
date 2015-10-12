@@ -1011,6 +1011,11 @@ void __msan_allocated_memory(const void *data, uptr size) {
   }
 }
 
+void __msan_copy_shadow(void *dest, const void *src, uptr n) {
+  GET_STORE_STACK_TRACE;
+  MoveShadowAndOrigin(dest, src, n, &stack);
+}
+
 void __sanitizer_dtor_callback(const void *data, uptr size) {
   GET_MALLOC_STACK_TRACE;
   if (flags()->poison_in_dtor) {

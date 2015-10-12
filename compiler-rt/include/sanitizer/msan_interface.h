@@ -98,6 +98,12 @@ extern "C" {
   /* Deprecated. Call __sanitizer_set_death_callback instead. */
   void __msan_set_death_callback(void (*callback)(void));
 
+  /* Update shadow for the application copy of size bytes from src to dst.
+     Src and dst are application addresses. This function does not copy the
+     actual application memory, it only updates shadow and origin for such
+     copy. Source and destination regions can overlap. */
+  void __msan_copy_shadow(const volatile void *dst, const volatile void *src,
+                          size_t size);
 #ifdef __cplusplus
 }  // extern "C"
 #endif
