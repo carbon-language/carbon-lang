@@ -372,7 +372,9 @@ private:
         updateParameterCount(Left, CurrentToken);
         if (CurrentToken->isOneOf(tok::colon, tok::l_brace)) {
           FormatToken *Previous = CurrentToken->getPreviousNonComment();
-          if ((CurrentToken->is(tok::colon) ||
+          if (((CurrentToken->is(tok::colon) &&
+                (!Contexts.back().ColonIsDictLiteral ||
+                 Style.Language != FormatStyle::LK_Cpp)) ||
                Style.Language == FormatStyle::LK_Proto) &&
               Previous->Tok.getIdentifierInfo())
             Previous->Type = TT_SelectorName;

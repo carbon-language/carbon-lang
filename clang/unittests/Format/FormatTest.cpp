@@ -7531,6 +7531,13 @@ TEST_F(FormatTest, ObjCDictLiterals) {
                "      bbbbbbbbbbbbbbbbbb : bbbbb,\n"
                "      cccccccccccccccc : ccccccccccccccc\n"
                "    }];");
+
+  // Ensure that casts before the key are kept on the same line as the key.
+  verifyFormat(
+      "NSDictionary *d = @{\n"
+      "  (aaaaaaaa id)aaaaaaaaa : (aaaaaaaa id)aaaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "  (aaaaaaaa id)aaaaaaaaaaaaaa : (aaaaaaaa id)aaaaaaaaaaaaaa,\n"
+      "};");
 }
 
 TEST_F(FormatTest, ObjCArrayLiterals) {
