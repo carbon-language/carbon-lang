@@ -1,19 +1,20 @@
-; RUN: llc -mtriple=i686-windows-msvc < %s | FileCheck %s --check-prefix=X86
 ; RUN: llc -mtriple=x86_64-windows-msvc < %s | FileCheck %s --check-prefix=X64
+; RUN: llc -mtriple=i686-windows-msvc < %s | FileCheck %s --check-prefix=X86
 
-declare void @llvm.localescape(...)
 declare i8* @llvm.frameaddress(i32)
+declare void @llvm.localescape(...)
+declare i8* @llvm.localaddress()
 declare i8* @llvm.localrecover(i8*, i8*, i32)
 declare i32 @printf(i8*, ...)
 
 @str = internal constant [10 x i8] c"asdf: %d\0A\00"
 
 define void @print_framealloc_from_fp(i8* %fp) {
-  %a.i8 = call i8* @llvm.localrecover(i8* bitcast (void()* @alloc_func to i8*), i8* %fp, i32 0)
+  %a.i8 = call i8* @llvm.localrecover(i8* bitcast (void(i32)* @alloc_func to i8*), i8* %fp, i32 0)
   %a = bitcast i8* %a.i8 to i32*
   %a.val = load i32, i32* %a
   call i32 (i8*, ...) @printf(i8* getelementptr ([10 x i8], [10 x i8]* @str, i32 0, i32 0), i32 %a.val)
-  %b.i8 = call i8* @llvm.localrecover(i8* bitcast (void()* @alloc_func to i8*), i8* %fp, i32 1)
+  %b.i8 = call i8* @llvm.localrecover(i8* bitcast (void(i32)* @alloc_func to i8*), i8* %fp, i32 1)
   %b = bitcast i8* %b.i8 to i32*
   %b.val = load i32, i32* %b
   call i32 (i8*, ...) @printf(i8* getelementptr ([10 x i8], [10 x i8]* @str, i32 0, i32 0), i32 %b.val)
@@ -58,47 +59,52 @@ define void @print_framealloc_from_fp(i8* %fp) {
 ; X86: popl    %esi
 ; X86: retl
 
-define void @alloc_func() {
+define void @alloc_func(i32 %n) {
   %a = alloca i32
   %b = alloca i32, i32 2
   call void (...) @llvm.localescape(i32* %a, i32* %b)
   store i32 42, i32* %a
   store i32 13, i32* %b
-  %fp = call i8* @llvm.frameaddress(i32 0)
-  call void @print_framealloc_from_fp(i8* %fp)
+
+  ; Force usage of EBP with a dynamic alloca.
+  alloca i8, i32 %n
+
+  %lp = call i8* @llvm.localaddress()
+  call void @print_framealloc_from_fp(i8* %lp)
   ret void
 }
 
 ; X64-LABEL: alloc_func:
-; X64: subq    $48, %rsp
-; X64: .seh_stackalloc 48
-; X64: leaq    48(%rsp), %rbp
-; X64: .seh_setframe 5, 48
-; X64: .Lalloc_func$frame_escape_0 = 44
-; X64: .Lalloc_func$frame_escape_1 = 36
+; X64: pushq   %rbp
+; X64: subq    $16, %rsp
+; X64: .seh_stackalloc 16
+; X64: leaq    16(%rsp), %rbp
+; X64: .seh_setframe 5, 16
+; X64: .Lalloc_func$frame_escape_0 = -4
+; X64: .Lalloc_func$frame_escape_1 = -12
 ; X64: movl $42, -4(%rbp)
 ; X64: movl $13, -12(%rbp)
-; X64: leaq    -48(%rbp), %rcx
+; X64: movq 	%rbp, %rcx
 ; X64: callq print_framealloc_from_fp
 ; X64: retq
 
 ; X86-LABEL: alloc_func:
 ; X86: pushl   %ebp
 ; X86: movl    %esp, %ebp
-; X86: subl    $16, %esp
+; X86: subl    $12, %esp
 ; X86: Lalloc_func$frame_escape_0 = -4
 ; X86: Lalloc_func$frame_escape_1 = -12
 ; X86: movl    $42, -4(%ebp)
 ; X86: movl    $13, -12(%ebp)
-; X86: movl    %ebp, (%esp)
+; X86: pushl   %ebp
 ; X86: calll   _print_framealloc_from_fp
-; X86: addl    $16, %esp
+; X86: movl    %ebp, %esp
 ; X86: popl    %ebp
 ; X86: retl
 
 ; Helper to make this a complete program so it can be compiled and tested.
 define i32 @main() {
-  call void @alloc_func()
+  call void @alloc_func(i32 3)
   ret i32 0
 }
 
@@ -126,3 +132,12 @@ define void @alloc_func_no_frameaddr() {
 ; X64: retq
 
 ; X86-LABEL: alloc_func_no_frameaddr:
+; X86: subl    $12, %esp
+; X86: Lalloc_func_no_frameaddr$frame_escape_0 = 8
+; X86: Lalloc_func_no_frameaddr$frame_escape_1 = 4
+; X86: movl $42, 8(%esp)
+; X86: movl $13, 4(%esp)
+; X86: movl $0, (%esp)
+; X86: calll _print_framealloc_from_fp
+; X86: addl $12, %esp
+; X86: retl
