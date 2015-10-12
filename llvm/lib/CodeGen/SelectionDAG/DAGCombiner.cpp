@@ -11886,7 +11886,24 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   }
 
   SDValue EltNo = N->getOperand(1);
-  bool ConstEltNo = isa<ConstantSDNode>(EltNo);
+  ConstantSDNode *ConstEltNo = dyn_cast<ConstantSDNode>(EltNo);
+
+  // extract_vector_elt (build_vector x, y), 1 -> y
+  if (ConstEltNo &&
+      InVec.getOpcode() == ISD::BUILD_VECTOR &&
+      TLI.isTypeLegal(VT) &&
+      (InVec.hasOneUse() ||
+       TLI.aggressivelyPreferBuildVectorSources(VT))) {
+    SDValue Elt = InVec.getOperand(ConstEltNo->getZExtValue());
+    EVT InEltVT = Elt.getValueType();
+
+    // Sometimes build_vector's scalar input types do not match result type.
+    if (NVT == InEltVT)
+      return Elt;
+
+    // TODO: It may be useful to truncate if free if the build_vector implicitly
+    // converts.
+  }
 
   // Transform: (EXTRACT_VECTOR_ELT( VECTOR_SHUFFLE )) -> EXTRACT_VECTOR_ELT.
   // We only perform this optimization before the op legalization phase because
@@ -11894,13 +11911,11 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // patterns. For example on AVX, extracting elements from a wide vector
   // without using extract_subvector. However, if we can find an underlying
   // scalar value, then we can always use that.
-  if (InVec.getOpcode() == ISD::VECTOR_SHUFFLE
-      && ConstEltNo) {
-    int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
+  if (ConstEltNo && InVec.getOpcode() == ISD::VECTOR_SHUFFLE) {
     int NumElem = VT.getVectorNumElements();
     ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(InVec);
     // Find the new index to extract from.
-    int OrigElt = SVOp->getMaskElt(Elt);
+    int OrigElt = SVOp->getMaskElt(ConstEltNo->getZExtValue());
 
     // Extracting an undef index is undef.
     if (OrigElt == -1)

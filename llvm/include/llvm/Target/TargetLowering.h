@@ -1720,6 +1720,12 @@ public:
     return false;
   }
 
+  // Return true if it is profitable to use a scalar input to a BUILD_VECTOR
+  // even if the vector itself has multiple uses.
+  virtual bool aggressivelyPreferBuildVectorSources(EVT VecVT) const {
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // Runtime Library hooks
   //

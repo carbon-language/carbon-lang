@@ -533,6 +533,18 @@ bool AMDGPUTargetLowering:: storeOfVectorConstantIsCheap(EVT MemVT,
   return true;
 }
 
+bool AMDGPUTargetLowering::aggressivelyPreferBuildVectorSources(EVT VecVT) const {
+  // There are few operations which truly have vector input operands. Any vector
+  // operation is going to involve operations on each component, and a
+  // build_vector will be a copy per element, so it always makes sense to use a
+  // build_vector input in place of the extracted element to avoid a copy into a
+  // super register.
+  //
+  // We should probably only do this if all users are extracts only, but this
+  // should be the common case.
+  return true;
+}
+
 bool AMDGPUTargetLowering::isTruncateFree(EVT Source, EVT Dest) const {
   // Truncate is just accessing a subregister.
   return Dest.bitsLT(Source) && (Dest.getSizeInBits() % 32 == 0);

@@ -138,6 +138,7 @@ public:
   bool storeOfVectorConstantIsCheap(EVT MemVT,
                                     unsigned NumElem,
                                     unsigned AS) const override;
+  bool aggressivelyPreferBuildVectorSources(EVT VecVT) const override;
   bool isCheapToSpeculateCttz() const override;
   bool isCheapToSpeculateCtlz() const override;
 
