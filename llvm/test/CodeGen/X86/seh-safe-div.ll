@@ -73,14 +73,14 @@ __try.cont:
 
 ; Landing pad code
 
-; CHECK: [[lpad1:\.LBB0_[0-9]+]]: # %lpad1
-; CHECK: callq puts
-; CHECK: movl $-2, [[rloc]]
-; CHECK: jmp [[cont_bb]]
-
 ; CHECK: [[lpad0:\.LBB0_[0-9]+]]: # %lpad0
 ; CHECK: callq puts
 ; CHECK: movl $-1, [[rloc]]
+; CHECK: jmp [[cont_bb]]
+
+; CHECK: [[lpad1:\.LBB0_[0-9]+]]: # %lpad1
+; CHECK: callq puts
+; CHECK: movl $-2, [[rloc]]
 ; CHECK: jmp [[cont_bb]]
 
 ; CHECK: .seh_handlerdata

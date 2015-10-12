@@ -64,6 +64,7 @@
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
+#include <utility>
 using namespace llvm;
 
 #define DEBUG_TYPE "isel"
@@ -1243,50 +1244,66 @@ void SelectionDAGBuilder::visitCleanupPad(const CleanupPadInst &CPI) {
 /// destination, but in the machine CFG, we enumerate all the possible blocks.
 /// This function skips over imaginary basic blocks that hold catchpad,
 /// terminatepad, or catchendpad instructions, and finds all the "real" machine
-/// basic block destinations.
-static void
-findUnwindDestinations(FunctionLoweringInfo &FuncInfo,
-                       const BasicBlock *EHPadBB,
-                       SmallVectorImpl<MachineBasicBlock *> &UnwindDests) {
+/// basic block destinations. As those destinations may not be successors of
+/// EHPadBB, here we also calculate the edge weight to those destinations. The
+/// passed-in Weight is the edge weight to EHPadBB.
+static void findUnwindDestinations(
+    FunctionLoweringInfo &FuncInfo, const BasicBlock *EHPadBB, uint32_t Weight,
+    SmallVectorImpl<std::pair<MachineBasicBlock *, uint32_t>> &UnwindDests) {
   EHPersonality Personality =
     classifyEHPersonality(FuncInfo.Fn->getPersonalityFn());
   bool IsMSVCCXX = Personality == EHPersonality::MSVC_CXX;
   bool IsCoreCLR = Personality == EHPersonality::CoreCLR;
+
   while (EHPadBB) {
     const Instruction *Pad = EHPadBB->getFirstNonPHI();
+    BasicBlock *NewEHPadBB = nullptr;
     if (isa<LandingPadInst>(Pad)) {
       // Stop on landingpads. They are not funclets.
-      UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
+      UnwindDests.emplace_back(FuncInfo.MBBMap[EHPadBB], Weight);
       break;
     } else if (isa<CleanupPadInst>(Pad)) {
       // Stop on cleanup pads. Cleanups are always funclet entries for all known
       // personalities.
-      UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
-      UnwindDests.back()->setIsEHFuncletEntry();
+      UnwindDests.emplace_back(FuncInfo.MBBMap[EHPadBB], Weight);
+      UnwindDests.back().first->setIsEHFuncletEntry();
       break;
     } else if (const auto *CPI = dyn_cast<CatchPadInst>(Pad)) {
       // Add the catchpad handler to the possible destinations.
-      UnwindDests.push_back(FuncInfo.MBBMap[EHPadBB]);
+      UnwindDests.emplace_back(FuncInfo.MBBMap[EHPadBB], Weight);
       // In MSVC C++, catchblocks are funclets and need prologues.
       if (IsMSVCCXX || IsCoreCLR)
-        UnwindDests.back()->setIsEHFuncletEntry();
-      EHPadBB = CPI->getUnwindDest();
-    } else if (const auto *CEPI = dyn_cast<CatchEndPadInst>(Pad)) {
-      EHPadBB = CEPI->getUnwindDest();
-    } else if (const auto *CEPI = dyn_cast<CleanupEndPadInst>(Pad)) {
-      EHPadBB = CEPI->getUnwindDest();
+        UnwindDests.back().first->setIsEHFuncletEntry();
+      NewEHPadBB = CPI->getUnwindDest();
+    } else if (const auto *CEPI = dyn_cast<CatchEndPadInst>(Pad))
+      NewEHPadBB = CEPI->getUnwindDest();
+    else if (const auto *CEPI = dyn_cast<CleanupEndPadInst>(Pad))
+      NewEHPadBB = CEPI->getUnwindDest();
+    else
+      continue;
+
+    BranchProbabilityInfo *BPI = FuncInfo.BPI;
+    if (BPI && NewEHPadBB) {
+      // When BPI is available, the calculated weight cannot be zero as zero
+      // will be turned to a default weight in MachineBlockFrequencyInfo.
+      Weight = std::max<uint32_t>(
+          BPI->getEdgeProbability(EHPadBB, NewEHPadBB).scale(Weight), 1);
     }
+    EHPadBB = NewEHPadBB;
   }
 }
 
 void SelectionDAGBuilder::visitCleanupRet(const CleanupReturnInst &I) {
   // Update successor info.
-  // FIXME: The weights for catchpads will be wrong.
-  SmallVector<MachineBasicBlock *, 1> UnwindDests;
-  findUnwindDestinations(FuncInfo, I.getUnwindDest(), UnwindDests);
-  for (MachineBasicBlock *UnwindDest : UnwindDests) {
-    UnwindDest->setIsEHPad();
-    addSuccessorWithWeight(FuncInfo.MBB, UnwindDest);
+  SmallVector<std::pair<MachineBasicBlock *, uint32_t>, 1> UnwindDests;
+  auto UnwindDest = I.getUnwindDest();
+  BranchProbabilityInfo *BPI = FuncInfo.BPI;
+  uint32_t UnwindDestWeight =
+      BPI ? BPI->getEdgeWeight(FuncInfo.MBB->getBasicBlock(), UnwindDest) : 0;
+  findUnwindDestinations(FuncInfo, UnwindDest, UnwindDestWeight, UnwindDests);
+  for (auto &UnwindDest : UnwindDests) {
+    UnwindDest.first->setIsEHPad();
+    addSuccessorWithWeight(FuncInfo.MBB, UnwindDest.first, UnwindDest.second);
   }
 
   // Create the terminator node.
@@ -2128,15 +2145,17 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
     CopyToExportRegsIfNeeded(&I);
   }
 
-  SmallVector<MachineBasicBlock *, 1> UnwindDests;
-  findUnwindDestinations(FuncInfo, EHPadBB, UnwindDests);
+  SmallVector<std::pair<MachineBasicBlock *, uint32_t>, 1> UnwindDests;
+  BranchProbabilityInfo *BPI = FuncInfo.BPI;
+  uint32_t EHPadBBWeight =
+      BPI ? BPI->getEdgeWeight(InvokeMBB->getBasicBlock(), EHPadBB) : 0;
+  findUnwindDestinations(FuncInfo, EHPadBB, EHPadBBWeight, UnwindDests);
 
   // Update successor info.
-  // FIXME: The weights for catchpads will be wrong.
   addSuccessorWithWeight(InvokeMBB, Return);
-  for (MachineBasicBlock *UnwindDest : UnwindDests) {
-    UnwindDest->setIsEHPad();
-    addSuccessorWithWeight(InvokeMBB, UnwindDest);
+  for (auto &UnwindDest : UnwindDests) {
+    UnwindDest.first->setIsEHPad();
+    addSuccessorWithWeight(InvokeMBB, UnwindDest.first, UnwindDest.second);
   }
 
   // Drop into normal successor.

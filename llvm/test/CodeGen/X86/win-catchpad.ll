@@ -74,13 +74,13 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: [[contbb:LBB0_[0-9]+]]: # %try.cont
 ; X86: retl
 
-; FIXME: These should be de-duplicated.
-; X86: [[restorebb2:LBB0_[0-9]+]]: # %invoke.cont.3
+; X86: [[restorebb1:LBB0_[0-9]+]]: # %invoke.cont.2
 ; X86: movl -16(%ebp), %esp
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
-; X86: [[restorebb1:LBB0_[0-9]+]]: # %invoke.cont.2
+; FIXME: These should be de-duplicated.
+; X86: [[restorebb2:LBB0_[0-9]+]]: # %invoke.cont.3
 ; X86: movl -16(%ebp), %esp
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
