@@ -41,6 +41,11 @@ add_host_subdirectory(common
   common/XML.cpp
   )
 
+# Keep track of whether we want to provide a define for the
+# Python's architecture-specific lib path (i.e. where a
+# Python lldb module would go).
+set (get_python_libdir 0)
+
 if (NOT LLDB_DISABLE_LIBEDIT)
   add_host_subdirectory(common
     common/Editline.cpp
@@ -70,6 +75,11 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     windows/Windows.cpp
     )
 else()
+  if (NOT LLDB_DISABLE_PYTHON)
+    # We'll grab the arch-specific python libdir on POSIX systems.
+    set (get_python_libdir 1)
+  endif()
+
   add_host_subdirectory(posix
     posix/FileSystem.cpp
     posix/HostInfoPosix.cpp
@@ -130,6 +140,19 @@ else()
       freebsd/HostThreadFreeBSD.cpp
       freebsd/ThisThread.cpp
       )
+  endif()
+endif()
+
+if (${get_python_libdir})
+  # Call a python script to gather the arch-specific libdir for
+  # modules like the lldb module.
+  execute_process(
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/get_relative_lib_dir.py
+    RESULT_VARIABLE get_libdir_status
+    OUTPUT_VARIABLE relative_libdir
+    )
+  if (get_libdir_status EQUAL 0)
+    add_definitions(-DLLDB_PYTHON_RELATIVE_LIBDIR="${relative_libdir}")
   endif()
 endif()
 
