@@ -91,6 +91,12 @@ void test4(int c) {
 #endif
 }
 
+void test5() {
+  int (*p1)(int) = &isdigit2;
+  int (*p2)(int) = isdigit2;
+  void *p3 = (void *)&isdigit2;
+  void *p4 = (void *)isdigit2;
+}
 
 #ifndef CODEGEN
 __attribute__((enable_if(n == 0, "chosen when 'n' is zero"))) void f1(int n); // expected-error{{use of undeclared identifier 'n'}}
@@ -109,4 +115,23 @@ void f(int n) __attribute__((enable_if(global == 0, "chosen when 'global' is zer
 const int cst = 7;
 void return_cst(void) __attribute__((overloadable)) __attribute__((enable_if(cst == 7, "chosen when 'cst' is 7")));
 void test_return_cst() { return_cst(); }
+
+void f2(void) __attribute__((overloadable)) __attribute__((enable_if(1, "always chosen")));
+void f2(void) __attribute__((overloadable)) __attribute__((enable_if(0, "never chosen")));
+void f2(void) __attribute__((overloadable));
+void test6() {
+  void (*p1)(void) = &f2; // expected-error{{initializing 'void (*)(void)' with an expression of incompatible type '<overloaded function type>'}} expected-note@119{{candidate function}} expected-note@120{{candidate function made ineligible by enable_if}} expected-note@121{{candidate function}}
+  void (*p2)(void) = f2; // expected-error{{initializing 'void (*)(void)' with an expression of incompatible type '<overloaded function type>'}} expected-note@119{{candidate function}} expected-note@120{{candidate function made ineligible by enable_if}} expected-note@121{{candidate function}}
+  void *p3 = (void*)&f2; // expected-error{{address of overloaded function 'f2' is ambiguous}} expected-note@119{{candidate function}} expected-note@120{{candidate function made ineligible by enable_if}} expected-note@121{{candidate function}}
+  void *p4 = (void*)f2; // expected-error{{address of overloaded function 'f2' is ambiguous}} expected-note@119{{candidate function}} expected-note@120{{candidate function made ineligible by enable_if}} expected-note@121{{candidate function}}
+}
+
+void f3(int m) __attribute__((overloadable)) __attribute__((enable_if(m >= 0, "positive")));
+void f3(int m) __attribute__((overloadable)) __attribute__((enable_if(m < 0, "negative")));
+void test7() {
+  void (*p1)(int) = &f3; // expected-error{{initializing 'void (*)(int)' with an expression of incompatible type '<overloaded function type>'}} expected-note@129{{candidate function made ineligible by enable_if}} expected-note@130{{candidate function made ineligible by enable_if}}
+  void (*p2)(int) = f3; // expected-error{{initializing 'void (*)(int)' with an expression of incompatible type '<overloaded function type>'}} expected-note@129{{candidate function made ineligible by enable_if}} expected-note@130{{candidate function made ineligible by enable_if}}
+  void *p3 = (void*)&f3; // expected-error{{address of overloaded function 'f3' does not match required type 'void'}} expected-note@129{{candidate function made ineligible by enable_if}} expected-note@130{{candidate function made ineligible by enable_if}}
+  void *p4 = (void*)f3; // expected-error{{address of overloaded function 'f3' does not match required type 'void'}} expected-note@129{{candidate function made ineligible by enable_if}} expected-note@130{{candidate function made ineligible by enable_if}}
+}
 #endif
