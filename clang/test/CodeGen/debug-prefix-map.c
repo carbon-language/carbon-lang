@@ -16,19 +16,19 @@ void test_rewrite_includes() {
   vprintf("string", argp);
 }
 
-// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty/<stdin>"
-// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty/{{.*}}"
-// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty/Inputs/stdio.h"
+// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty{{[/\\]}}<stdin>"
+// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty{{[/\\]}}{{.*}}"
+// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty{{[/\\]}}Inputs/stdio.h"
 // CHECK-NO-MAIN-FILE-NAME-NOT: !DIFile(filename:
 
-// CHECK-EVIL: !DIFile(filename: "/var=empty/{{.*}}"
-// CHECK-EVIL: !DIFile(filename: "/var=empty/Inputs/stdio.h"
+// CHECK-EVIL: !DIFile(filename: "/var=empty{{[/\\]}}{{.*}}"
+// CHECK-EVIL: !DIFile(filename: "/var=empty{{[/\\]}}Inputs/stdio.h"
 // CHECK-EVIL-NOT: !DIFile(filename:
 
-// CHECK: !DIFile(filename: "/var/empty/{{.*}}"
-// CHECK: !DIFile(filename: "/var/empty/Inputs/stdio.h"
+// CHECK: !DIFile(filename: "/var/empty{{[/\\]}}{{.*}}"
+// CHECK: !DIFile(filename: "/var/empty{{[/\\]}}Inputs/stdio.h"
 // CHECK-NOT: !DIFile(filename:
 
-// CHECK-COMPILATION-DIR: !DIFile(filename: "/var/empty/{{.*}}", directory: "/var/empty")
-// CHECK-COMPILATION-DIR: !DIFile(filename: "/var/empty/Inputs/stdio.h", directory: "/var/empty")
+// CHECK-COMPILATION-DIR: !DIFile(filename: "/var/empty{{[/\\]}}{{.*}}", directory: "/var/empty")
+// CHECK-COMPILATION-DIR: !DIFile(filename: "/var/empty{{[/\\]}}Inputs/stdio.h", directory: "/var/empty")
 // CHECK-COMPILATION-DIR-NOT: !DIFile(filename:
