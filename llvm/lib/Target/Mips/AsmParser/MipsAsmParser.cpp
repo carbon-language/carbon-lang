@@ -1937,6 +1937,22 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::BLEUL:
   case Mips::BGEUL:
   case Mips::BGTUL:
+  case Mips::BLTImmMacro:
+  case Mips::BLEImmMacro:
+  case Mips::BGEImmMacro:
+  case Mips::BGTImmMacro:
+  case Mips::BLTUImmMacro:
+  case Mips::BLEUImmMacro:
+  case Mips::BGEUImmMacro:
+  case Mips::BGTUImmMacro:
+  case Mips::BLTLImmMacro:
+  case Mips::BLELImmMacro:
+  case Mips::BGELImmMacro:
+  case Mips::BGTLImmMacro:
+  case Mips::BLTULImmMacro:
+  case Mips::BLEULImmMacro:
+  case Mips::BGEULImmMacro:
+  case Mips::BGTULImmMacro:
   case Mips::SDivMacro:
   case Mips::UDivMacro:
   case Mips::DSDivMacro:
@@ -2028,6 +2044,22 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::BLEUL:
   case Mips::BGEUL:
   case Mips::BGTUL:
+  case Mips::BLTImmMacro:
+  case Mips::BLEImmMacro:
+  case Mips::BGEImmMacro:
+  case Mips::BGTImmMacro:
+  case Mips::BLTUImmMacro:
+  case Mips::BLEUImmMacro:
+  case Mips::BGEUImmMacro:
+  case Mips::BGTUImmMacro:
+  case Mips::BLTLImmMacro:
+  case Mips::BLELImmMacro:
+  case Mips::BGELImmMacro:
+  case Mips::BGTLImmMacro:
+  case Mips::BLTULImmMacro:
+  case Mips::BLEULImmMacro:
+  case Mips::BGEULImmMacro:
+  case Mips::BGTULImmMacro:
     return expandCondBranches(Inst, IDLoc, Instructions);
   case Mips::SDivMacro:
     return expandDiv(Inst, IDLoc, Instructions, false, true);
@@ -2614,13 +2646,83 @@ MipsAsmParser::expandLoadStoreMultiple(MCInst &Inst, SMLoc IDLoc,
 
 bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
                                        SmallVectorImpl<MCInst> &Instructions) {
+  bool EmittedNoMacroWarning = false;
   unsigned PseudoOpcode = Inst.getOpcode();
   unsigned SrcReg = Inst.getOperand(0).getReg();
-  unsigned TrgReg = Inst.getOperand(1).getReg();
+  const MCOperand &TrgOp = Inst.getOperand(1);
   const MCExpr *OffsetExpr = Inst.getOperand(2).getExpr();
 
   unsigned ZeroSrcOpcode, ZeroTrgOpcode;
   bool ReverseOrderSLT, IsUnsigned, IsLikely, AcceptsEquality;
+
+  unsigned TrgReg;
+  if (TrgOp.isReg())
+    TrgReg = TrgOp.getReg();
+  else if (TrgOp.isImm()) {
+    warnIfNoMacro(IDLoc);
+    EmittedNoMacroWarning = true;
+
+    TrgReg = getATReg(IDLoc);
+    if (!TrgReg)
+      return true;
+
+    switch(PseudoOpcode) {
+    default:
+      llvm_unreachable("unknown opcode for branch pseudo-instruction");
+    case Mips::BLTImmMacro:
+      PseudoOpcode = Mips::BLT;
+      break;
+    case Mips::BLEImmMacro:
+      PseudoOpcode = Mips::BLE;
+      break;
+    case Mips::BGEImmMacro:
+      PseudoOpcode = Mips::BGE;
+      break;
+    case Mips::BGTImmMacro:
+      PseudoOpcode = Mips::BGT;
+      break;
+    case Mips::BLTUImmMacro:
+      PseudoOpcode = Mips::BLTU;
+      break;
+    case Mips::BLEUImmMacro:
+      PseudoOpcode = Mips::BLEU;
+      break;
+    case Mips::BGEUImmMacro:
+      PseudoOpcode = Mips::BGEU;
+      break;
+    case Mips::BGTUImmMacro:
+      PseudoOpcode = Mips::BGTU;
+      break;
+    case Mips::BLTLImmMacro:
+      PseudoOpcode = Mips::BLTL;
+      break;
+    case Mips::BLELImmMacro:
+      PseudoOpcode = Mips::BLEL;
+      break;
+    case Mips::BGELImmMacro:
+      PseudoOpcode = Mips::BGEL;
+      break;
+    case Mips::BGTLImmMacro:
+      PseudoOpcode = Mips::BGTL;
+      break;
+    case Mips::BLTULImmMacro:
+      PseudoOpcode = Mips::BLTUL;
+      break;
+    case Mips::BLEULImmMacro:
+      PseudoOpcode = Mips::BLEUL;
+      break;
+    case Mips::BGEULImmMacro:
+      PseudoOpcode = Mips::BGEUL;
+      break;
+    case Mips::BGTULImmMacro:
+      PseudoOpcode = Mips::BGTUL;
+      break;
+    }
+
+    if (loadImmediate(TrgOp.getImm(), TrgReg, Mips::NoRegister, !isGP64bit(),
+                      false, IDLoc, Instructions))
+      return true;
+  }
 
   switch (PseudoOpcode) {
   case Mips::BLT:
@@ -2770,7 +2872,8 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
   if (!ATRegNum)
     return true;
 
-  warnIfNoMacro(IDLoc);
+  if (!EmittedNoMacroWarning)
+    warnIfNoMacro(IDLoc);
 
   // SLT fits well with 2 of our 4 pseudo-branches:
   //   BLT, where $rs < $rt, translates into "slt $at, $rs, $rt" and

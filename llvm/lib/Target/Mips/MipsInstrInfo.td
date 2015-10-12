@@ -1809,6 +1809,27 @@ def BLEUL: CondBranchPseudo<"bleul">, ISA_MIPS2_NOT_32R6_64R6;
 def BGEUL: CondBranchPseudo<"bgeul">, ISA_MIPS2_NOT_32R6_64R6;
 def BGTUL: CondBranchPseudo<"bgtul">, ISA_MIPS2_NOT_32R6_64R6;
 
+class CondBranchImmPseudo<string instr_asm> :
+  MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, imm64:$imm, brtarget:$offset),
+                    !strconcat(instr_asm, "\t$rs, $imm, $offset")>;
+
+def BLTImmMacro  : CondBranchImmPseudo<"blt">;
+def BLEImmMacro  : CondBranchImmPseudo<"ble">;
+def BGEImmMacro  : CondBranchImmPseudo<"bge">;
+def BGTImmMacro  : CondBranchImmPseudo<"bgt">;
+def BLTUImmMacro : CondBranchImmPseudo<"bltu">;
+def BLEUImmMacro : CondBranchImmPseudo<"bleu">;
+def BGEUImmMacro : CondBranchImmPseudo<"bgeu">;
+def BGTUImmMacro : CondBranchImmPseudo<"bgtu">;
+def BLTLImmMacro : CondBranchImmPseudo<"bltl">, ISA_MIPS2_NOT_32R6_64R6;
+def BLELImmMacro : CondBranchImmPseudo<"blel">, ISA_MIPS2_NOT_32R6_64R6;
+def BGELImmMacro : CondBranchImmPseudo<"bgel">, ISA_MIPS2_NOT_32R6_64R6;
+def BGTLImmMacro : CondBranchImmPseudo<"bgtl">, ISA_MIPS2_NOT_32R6_64R6;
+def BLTULImmMacro : CondBranchImmPseudo<"bltul">, ISA_MIPS2_NOT_32R6_64R6;
+def BLEULImmMacro : CondBranchImmPseudo<"bleul">, ISA_MIPS2_NOT_32R6_64R6;
+def BGEULImmMacro : CondBranchImmPseudo<"bgeul">, ISA_MIPS2_NOT_32R6_64R6;
+def BGTULImmMacro : CondBranchImmPseudo<"bgtul">, ISA_MIPS2_NOT_32R6_64R6;
+
 // FIXME: Predicates are removed because instructions are matched regardless of
 // predicates, because PredicateControl was not in the hierarchy. This was
 // done to emit more precise error message from expansion function.
