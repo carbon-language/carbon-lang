@@ -35,30 +35,31 @@ void InputSection<ELFT>::relocate(
   for (const RelType &RI : Rels) {
     uint32_t SymIndex = RI.getSymbol(IsMips64EL);
     uint32_t Type = RI.getType(IsMips64EL);
-    uintX_t SymVA;
 
     // Handle relocations for local symbols -- they never get
     // resolved so we don't allocate a SymbolBody.
     const Elf_Shdr *SymTab = File.getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
-      SymVA = getLocalRelTarget(File, RI);
-    } else {
-      SymbolBody &Body = *File.getSymbolBody(SymIndex)->repl();
-      SymVA = getSymVA<ELFT>(Body);
-      if (Target->relocNeedsPlt(Type, Body)) {
-        SymVA = Out<ELFT>::Plt->getEntryAddr(Body);
-        Type = Target->getPCRelReloc();
-      } else if (Target->relocNeedsGot(Type, Body)) {
-        SymVA = Out<ELFT>::Got->getEntryAddr(Body);
-        Type = Target->getGotRefReloc();
-      } else if (Target->relocPointsToGot(Type)) {
-        SymVA = Out<ELFT>::Got->getVA();
-        Type = Target->getPCRelReloc();
-      } else if (isa<SharedSymbol<ELFT>>(Body)) {
-        continue;
-      }
+      uintX_t SymVA = getLocalRelTarget(File, RI);
+      Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,
+                          BaseAddr, SymVA);
+      continue;
     }
 
+    SymbolBody &Body = *File.getSymbolBody(SymIndex)->repl();
+    uintX_t SymVA = getSymVA<ELFT>(Body);
+    if (Target->relocNeedsPlt(Type, Body)) {
+      SymVA = Out<ELFT>::Plt->getEntryAddr(Body);
+      Type = Target->getPCRelReloc();
+    } else if (Target->relocNeedsGot(Type, Body)) {
+      SymVA = Out<ELFT>::Got->getEntryAddr(Body);
+      Type = Target->getGotRefReloc();
+    } else if (Target->relocPointsToGot(Type)) {
+      SymVA = Out<ELFT>::Got->getVA();
+      Type = Target->getPCRelReloc();
+    } else if (isa<SharedSymbol<ELFT>>(Body)) {
+      continue;
+    }
     Target->relocateOne(Buf, reinterpret_cast<const void *>(&RI), Type,
                         BaseAddr, SymVA);
   }
