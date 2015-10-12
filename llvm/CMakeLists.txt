@@ -590,6 +590,13 @@ endif( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
 # use export_executable_symbols(target).
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 
+set(LLVM_PROFDATA_FILE "" CACHE FILEPATH
+  "Profiling data file to use when compiling in order to improve runtime performance.")
+
+if(LLVM_PROFDATA_FILE AND EXISTS ${LLVM_PROFDATA_FILE})
+  add_definitions("-fprofile-instr-use=${LLVM_PROFDATA_FILE}")
+endif()
+
 include(AddLLVM)
 include(TableGen)
 
