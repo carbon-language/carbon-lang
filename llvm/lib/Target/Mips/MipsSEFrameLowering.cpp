@@ -319,6 +319,15 @@ bool ExpandPseudo::expandBuildPairF64(MachineBasicBlock &MBB,
 bool ExpandPseudo::expandExtractElementF64(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator I,
                                            bool FP64) const {
+  const MachineOperand &Op1 = I->getOperand(1);
+  const MachineOperand &Op2 = I->getOperand(2);
+
+  if ((Op1.isReg() && Op1.isUndef()) || (Op2.isReg() && Op2.isUndef())) {
+    unsigned DstReg = I->getOperand(0).getReg();
+    BuildMI(MBB, I, I->getDebugLoc(), TII.get(Mips::IMPLICIT_DEF), DstReg);
+    return true;
+  }
+
   // For fpxx and when mfhc1 is not available, use:
   //   spill + reload via ldc1
   //
@@ -335,8 +344,8 @@ bool ExpandPseudo::expandExtractElementF64(MachineBasicBlock &MBB,
   if ((Subtarget.isABI_FPXX() && !Subtarget.hasMTHC1()) ||
       (FP64 && !Subtarget.useOddSPReg())) {
     unsigned DstReg = I->getOperand(0).getReg();
-    unsigned SrcReg = I->getOperand(1).getReg();
-    unsigned N = I->getOperand(2).getImm();
+    unsigned SrcReg = Op1.getReg();
+    unsigned N = Op2.getImm();
     int64_t Offset = 4 * (Subtarget.isLittle() ? N : (1 - N));
 
     // It should be impossible to have FGR64 on MIPS-II or MIPS32r1 (which are
@@ -352,8 +361,7 @@ bool ExpandPseudo::expandExtractElementF64(MachineBasicBlock &MBB,
     // We re-use the same spill slot each time so that the stack frame doesn't
     // grow too much in functions with a large number of moves.
     int FI = MF.getInfo<MipsFunctionInfo>()->getMoveF64ViaSpillFI(RC);
-    TII.storeRegToStack(MBB, I, SrcReg, I->getOperand(1).isKill(), FI, RC,
-                        &RegInfo, 0);
+    TII.storeRegToStack(MBB, I, SrcReg, Op1.isKill(), FI, RC, &RegInfo, 0);
     TII.loadRegFromStack(MBB, I, DstReg, FI, RC2, &RegInfo, Offset);
     return true;
   }
