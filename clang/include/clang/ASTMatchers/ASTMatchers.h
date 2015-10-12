@@ -4123,6 +4123,24 @@ AST_TYPE_MATCHER(TemplateTypeParmType, templateTypeParmType);
 /// \endcode
 AST_TYPE_MATCHER(InjectedClassNameType, injectedClassNameType);
 
+/// \brief Matches decayed type
+/// Example matches i[] in declaration of f.
+///     (matcher = valueDecl(hasType(decayedType(hasDecayedType(pointerType())))))
+/// Example matches i[1].
+///     (matcher = expr(hasType(decayedType(hasDecayedType(pointerType())))))
+/// \code
+///   void f(int i[]) {
+///     i[1] = 0;
+///   }
+/// \endcode
+AST_TYPE_MATCHER(DecayedType, decayedType);
+
+/// \brief Matches the decayed type, whos decayed type matches \c InnerMatcher
+AST_MATCHER_P(DecayedType, hasDecayedType, internal::Matcher<QualType>,
+              InnerType) {
+  return InnerType.matches(Node.getDecayedType(), Finder, Builder);
+}
+
 /// \brief Matches declarations whose declaration context, interpreted as a
 /// Decl, matches \c InnerMatcher.
 ///

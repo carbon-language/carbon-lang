@@ -152,6 +152,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(cxxThrowExpr);
   REGISTER_MATCHER(cxxTryStmt);
   REGISTER_MATCHER(cxxUnresolvedConstructExpr);
+  REGISTER_MATCHER(decayedType);
   REGISTER_MATCHER(decl);
   REGISTER_MATCHER(declaratorDecl);
   REGISTER_MATCHER(declCountIs);
@@ -199,6 +200,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasCaseConstant);
   REGISTER_MATCHER(hasCondition);
   REGISTER_MATCHER(hasConditionVariableStatement);
+  REGISTER_MATCHER(hasDecayedType);
   REGISTER_MATCHER(hasDeclaration);
   REGISTER_MATCHER(hasDeclContext);
   REGISTER_MATCHER(hasDeducedType);

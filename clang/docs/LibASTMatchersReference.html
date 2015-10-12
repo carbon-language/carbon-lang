@@ -1244,6 +1244,18 @@ constantArrayType()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('decayedType0')"><a name="decayedType0Anchor">decayedType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1DecayedType.html">DecayedType</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="decayedType0"><pre>Matches decayed type
+Example matches i[] in declaration of f.
+    (matcher = valueDecl(hasType(decayedType(hasDecayedType(pointerType())))))
+Example matches i[1].
+    (matcher = expr(hasType(decayedType(hasDecayedType(pointerType())))))
+  void f(int i[]) {
+    i[1] = 0;
+  }
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Type.html">Type</a>&gt;</td><td class="name" onclick="toggle('dependentSizedArrayType0')"><a name="dependentSizedArrayType0Anchor">dependentSizedArrayType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1DependentSizedArrayType.html">DependentSizedArrayType</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="dependentSizedArrayType0"><pre>Matches C++ arrays whose size is a value-dependent expression.
 
@@ -3562,6 +3574,11 @@ Example matches b
 
 Example matches a
   condition ? a : b
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1DecayedType.html">DecayedType</a>&gt;</td><td class="name" onclick="toggle('hasDecayedType0')"><a name="hasDecayedType0Anchor">hasDecayedType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerType</td></tr>
+<tr><td colspan="4" class="doc" id="hasDecayedType0"><pre>Matches the decayed type, whos decayed type matches InnerMatcher
 </pre></td></tr>
 
 

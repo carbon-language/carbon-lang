@@ -4109,6 +4109,11 @@ TEST(TypeMatching, MatchesArrayTypes) {
   EXPECT_TRUE(matches("const int a = 0;", qualType(isInteger())));
 }
 
+TEST(TypeMatching, DecayedType) {
+  EXPECT_TRUE(matches("void f(int i[]);", valueDecl(hasType(decayedType(hasDecayedType(pointerType()))))));
+  EXPECT_TRUE(notMatches("int i[7];", decayedType()));
+}
+
 TEST(TypeMatching, MatchesComplexTypes) {
   EXPECT_TRUE(matches("_Complex float f;", complexType()));
   EXPECT_TRUE(matches(
