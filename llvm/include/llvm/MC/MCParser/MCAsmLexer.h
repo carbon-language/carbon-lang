@@ -189,13 +189,13 @@ public:
   }
 
   /// Get the kind of current token.
-  AsmToken::TokenKind getKind() const { return CurTok.getKind(); }
+  AsmToken::TokenKind getKind() const { return getTok().getKind(); }
 
   /// Check if the current token has kind \p K.
-  bool is(AsmToken::TokenKind K) const { return CurTok.is(K); }
+  bool is(AsmToken::TokenKind K) const { return getTok().is(K); }
 
   /// Check if the current token has kind \p K.
-  bool isNot(AsmToken::TokenKind K) const { return CurTok.isNot(K); }
+  bool isNot(AsmToken::TokenKind K) const { return getTok().isNot(K); }
 
   /// Set whether spaces should be ignored by the lexer
   void setSkipSpace(bool val) { SkipSpace = val; }

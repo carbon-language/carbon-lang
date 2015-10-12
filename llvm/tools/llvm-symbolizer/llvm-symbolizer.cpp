@@ -73,9 +73,6 @@ static cl::list<std::string>
 ClDsymHint("dsym-hint", cl::ZeroOrMore,
            cl::desc("Path to .dSYM bundles to search for debug info for the "
                     "object files"));
-static cl::opt<bool>
-    ClPrintAddress("print-address", cl::init(false),
-                   cl::desc("Show address before line information"));
 
 static bool parseCommand(bool &IsData, std::string &ModuleName,
                          uint64_t &ModuleOffset) {
@@ -155,11 +152,6 @@ int main(int argc, char **argv) {
     std::string Result =
         IsData ? Symbolizer.symbolizeData(ModuleName, ModuleOffset)
                : Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
-    if (ClPrintAddress) {
-      outs() << "0x";
-      outs().write_hex(ModuleOffset);
-      outs() << "\n";
-    }
     outs() << Result << "\n";
     outs().flush();
   }
