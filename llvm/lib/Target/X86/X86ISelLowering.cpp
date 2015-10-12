@@ -25736,10 +25736,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  if (!Subtarget->hasFp256())
-    return SDValue();
-
-  if (VT.isVector() && VT.getSizeInBits() == 256)
+  if (Subtarget->hasAVX() && VT.isVector() && VT.getSizeInBits() == 256)
     if (SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget))
       return R;
 
