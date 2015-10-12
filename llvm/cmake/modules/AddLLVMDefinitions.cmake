@@ -7,7 +7,11 @@
 macro(add_llvm_definitions)
   # We don't want no semicolons on LLVM_DEFINITIONS:
   foreach(arg ${ARGN})
-    set(LLVM_DEFINITIONS "${LLVM_DEFINITIONS} ${arg}")
+    if(DEFINED LLVM_DEFINITIONS)
+      set(LLVM_DEFINITIONS "${LLVM_DEFINITIONS} ${arg}")
+    else()
+      set(LLVM_DEFINITIONS ${arg})
+    endif()
   endforeach(arg)
   add_definitions( ${ARGN} )
 endmacro(add_llvm_definitions)
