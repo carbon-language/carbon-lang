@@ -319,8 +319,8 @@ static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
   // them is a p_memsz that is larger than p_filesz. Seeing that it
   // zeros the end of the PT_LOAD, so that has to correspond to the
   // nobits sections.
-  if (A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS)
-    return true;
+  if (A->getType() != B->getType())
+    return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
 
   return getPPC64SectionRank(A->getName()) < getPPC64SectionRank(B->getName());
 }
