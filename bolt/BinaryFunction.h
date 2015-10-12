@@ -263,22 +263,7 @@ public:
 
   /// Return basic block that originally contained offset \p Offset
   /// from the function start.
-  BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset) {
-    if (Offset > Size)
-      return nullptr;
-
-    if (BasicBlocks.empty())
-      return nullptr;
-
-    auto I = std::lower_bound(BasicBlocks.begin(),
-                              BasicBlocks.end(),
-                              BinaryBasicBlock(Offset));
-
-    if (I == BasicBlocks.end())
-      return &BasicBlocks.back();
-
-    return &(*I);
-  }
+  BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
 
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.

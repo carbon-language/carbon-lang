@@ -31,6 +31,22 @@ namespace llvm {
 
 namespace flo {
 
+BinaryBasicBlock *
+BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
+  if (Offset > Size)
+    return nullptr;
+
+  if (BasicBlocks.empty())
+    return nullptr;
+
+  auto I = std::upper_bound(BasicBlocks.begin(),
+                            BasicBlocks.end(),
+                            BinaryBasicBlock(Offset));
+  assert(I != BasicBlocks.begin() && "first basic block not at offset 0");
+
+  return &(*--I);
+}
+
 void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
   StringRef SectionName;
   Section.getName(SectionName);
