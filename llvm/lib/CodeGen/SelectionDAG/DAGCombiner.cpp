@@ -13454,70 +13454,12 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
 
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
+  SDValue Ops[] = {LHS, RHS};
 
-  // If the LHS and RHS are BUILD_VECTOR nodes, see if we can constant fold
-  // this operation.
-  if (LHS.getOpcode() == ISD::BUILD_VECTOR &&
-      RHS.getOpcode() == ISD::BUILD_VECTOR) {
-    // Check if both vectors are constants. If not bail out.
-    if (!(cast<BuildVectorSDNode>(LHS)->isConstant() &&
-          cast<BuildVectorSDNode>(RHS)->isConstant()))
-      return SDValue();
-
-    SmallVector<SDValue, 8> Ops;
-    for (unsigned i = 0, e = LHS.getNumOperands(); i != e; ++i) {
-      SDValue LHSOp = LHS.getOperand(i);
-      SDValue RHSOp = RHS.getOperand(i);
-
-      // Can't fold divide by zero.
-      if (N->getOpcode() == ISD::SDIV || N->getOpcode() == ISD::UDIV ||
-          N->getOpcode() == ISD::FDIV) {
-        if (isNullConstant(RHSOp) || (RHSOp.getOpcode() == ISD::ConstantFP &&
-             cast<ConstantFPSDNode>(RHSOp.getNode())->isZero()))
-          break;
-      }
-
-      EVT VT = LHSOp.getValueType();
-      EVT RVT = RHSOp.getValueType();
-      EVT ST = VT;
-
-      if (RVT.getSizeInBits() < VT.getSizeInBits())
-        ST = RVT;
-
-      // Integer BUILD_VECTOR operands may have types larger than the element
-      // size (e.g., when the element type is not legal).  Prior to type
-      // legalization, the types may not match between the two BUILD_VECTORS.
-      // Truncate the operands to make them match.
-      if (VT.getSizeInBits() != LHS.getValueType().getScalarSizeInBits()) {
-        EVT ScalarT = LHS.getValueType().getScalarType();
-        LHSOp = DAG.getNode(ISD::TRUNCATE, SDLoc(N), ScalarT, LHSOp);
-        VT = LHSOp.getValueType();
-      }
-      if (RVT.getSizeInBits() != RHS.getValueType().getScalarSizeInBits()) {
-        EVT ScalarT = RHS.getValueType().getScalarType();
-        RHSOp = DAG.getNode(ISD::TRUNCATE, SDLoc(N), ScalarT, RHSOp);
-        RVT = RHSOp.getValueType();
-      }
-
-      SDValue FoldOp = DAG.getNode(N->getOpcode(), SDLoc(LHS), VT,
-                                   LHSOp, RHSOp, N->getFlags());
-
-      // We need the resulting constant to be legal if we are in a phase after
-      // legalization, so zero extend to the smallest operand type if required.
-      if (ST != VT && Level != BeforeLegalizeTypes)
-        FoldOp = DAG.getNode(ISD::ANY_EXTEND, SDLoc(LHS), ST, FoldOp);
-
-      if (FoldOp.getOpcode() != ISD::UNDEF &&
-          FoldOp.getOpcode() != ISD::Constant &&
-          FoldOp.getOpcode() != ISD::ConstantFP)
-        break;
-      Ops.push_back(FoldOp);
-      AddToWorklist(FoldOp.getNode());
-    }
-
-    if (Ops.size() == LHS.getNumOperands())
-      return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), LHS.getValueType(), Ops);
-  }
+  // See if we can constant fold the vector operation.
+  if (SDValue Fold = DAG.FoldConstantVectorArithmetic(
+          N->getOpcode(), SDLoc(LHS), LHS.getValueType(), Ops, N->getFlags()))
+    return Fold;
 
   // Try to convert a constant mask AND into a shuffle clear mask.
   if (SDValue Shuffle = XformToShuffleWithZero(N))

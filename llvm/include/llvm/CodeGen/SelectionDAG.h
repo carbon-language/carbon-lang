@@ -1166,6 +1166,10 @@ public:
                                  const ConstantSDNode *Cst1,
                                  const ConstantSDNode *Cst2);
 
+  SDValue FoldConstantVectorArithmetic(unsigned Opcode, SDLoc DL,
+                                       EVT VT, ArrayRef<SDValue> Ops,
+                                       const SDNodeFlags *Flags = nullptr);
+
   /// Constant fold a setcc to true or false.
   SDValue FoldSetCC(EVT VT, SDValue N1,
                     SDValue N2, ISD::CondCode Cond, SDLoc dl);
