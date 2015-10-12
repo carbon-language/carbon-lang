@@ -47,13 +47,13 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
       addLazy(&Sym);
     return;
   }
-  if (auto *S = dyn_cast<SharedFileBase<ELFT>>(File.get())) {
+  if (auto *S = dyn_cast<SharedFile<ELFT>>(File.get())) {
     S->parseSoName();
     if (!IncludedSoNames.insert(S->getSoName()).second)
       return;
     S->parse();
   } else {
-    cast<ObjectFileBase<ELFT>>(File.get())->parse(Comdats);
+    cast<ObjectFile<ELFT>>(File.get())->parse(Comdats);
   }
   addELFFile(cast<ELFFileBase<ELFT>>(File.release()));
 }
@@ -97,7 +97,7 @@ void SymbolTable<ELFT>::addELFFile(ELFFileBase<ELFT> *File) {
   else if (auto *S = dyn_cast<SharedFile<ELFT>>(File))
     SharedFiles.emplace_back(S);
 
-  if (auto *O = dyn_cast<ObjectFileBase<ELFT>>(File)) {
+  if (auto *O = dyn_cast<ObjectFile<ELFT>>(File)) {
     for (SymbolBody *Body : O->getSymbols())
       resolve(Body);
   }

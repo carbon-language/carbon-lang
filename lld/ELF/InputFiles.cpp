@@ -67,7 +67,7 @@ ELFFileBase<ELFT>::getNonLocalSymbols() {
 
 template <class ELFT>
 ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
-    : ObjectFileBase<ELFT>(getStaticELFKind<ELFT>(), M) {}
+    : ELFFileBase<ELFT>(Base::ObjectKind, getStaticELFKind<ELFT>(), M) {}
 
 template <class ELFT>
 typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
@@ -260,7 +260,9 @@ std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
 
 template <class ELFT>
 SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
-    : SharedFileBase<ELFT>(getStaticELFKind<ELFT>(), M) {}
+    : ELFFileBase<ELFT>(Base::SharedKind, getStaticELFKind<ELFT>(), M) {
+  AsNeeded = Config->AsNeeded;
+}
 
 template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;

@@ -80,27 +80,6 @@ protected:
   Elf_Sym_Range getSymbolsHelper(bool);
 };
 
-// .o file.
-template <typename ELFT> class ObjectFileBase : public ELFFileBase<ELFT> {
-  typedef ELFFileBase<ELFT> Base;
-
-public:
-  ObjectFileBase(ELFKind EKind, MemoryBufferRef M)
-      : ELFFileBase<ELFT>(Base::ObjectKind, EKind, M) {}
-  static bool classof(const InputFile *F) {
-    return F->kind() == Base::ObjectKind;
-  }
-
-  ArrayRef<SymbolBody *> getSymbols() { return SymbolBodies; }
-  virtual void parse(llvm::DenseSet<StringRef> &Comdats) = 0;
-
-protected:
-  // List of all symbols referenced or defined by this file.
-  std::vector<SymbolBody *> SymbolBodies;
-
-  llvm::BumpPtrAllocator Alloc;
-};
-
 template <class ELFT> static ELFKind getStaticELFKind() {
   if (!ELFT::Is64Bits) {
     if (ELFT::TargetEndianness == llvm::support::little)
@@ -112,8 +91,9 @@ template <class ELFT> static ELFKind getStaticELFKind() {
   return ELF64BEKind;
 }
 
-template <class ELFT> class ObjectFile : public ObjectFileBase<ELFT> {
-  typedef ObjectFileBase<ELFT> Base;
+// .o file.
+template <class ELFT> class ObjectFile : public ELFFileBase<ELFT> {
+  typedef ELFFileBase<ELFT> Base;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
@@ -130,8 +110,10 @@ public:
            cast<ELFFileBase<ELFT>>(F)->getELFKind() == getStaticELFKind<ELFT>();
   }
 
+  ArrayRef<SymbolBody *> getSymbols() { return this->SymbolBodies; }
+
   explicit ObjectFile(MemoryBufferRef M);
-  void parse(llvm::DenseSet<StringRef> &Comdats) override;
+  void parse(llvm::DenseSet<StringRef> &Comdats);
 
   ArrayRef<InputSection<ELFT> *> getSections() const { return Sections; }
 
@@ -157,6 +139,11 @@ private:
   std::vector<InputSection<ELFT> *> Sections;
 
   ArrayRef<Elf_Word> SymtabSHNDX;
+
+  // List of all symbols referenced or defined by this file.
+  std::vector<SymbolBody *> SymbolBodies;
+
+  llvm::BumpPtrAllocator Alloc;
 };
 
 class ArchiveFile : public InputFile {
@@ -180,39 +167,17 @@ private:
 };
 
 // .so file.
-template <typename ELFT> class SharedFileBase : public ELFFileBase<ELFT> {
+template <class ELFT> class SharedFile : public ELFFileBase<ELFT> {
   typedef ELFFileBase<ELFT> Base;
-
-protected:
-  StringRef SoName;
-
-public:
-  SharedFileBase(ELFKind EKind, MemoryBufferRef M)
-      : ELFFileBase<ELFT>(Base::SharedKind, EKind, M) {
-    AsNeeded = Config->AsNeeded;
-  }
-  static bool classof(const InputFile *F) {
-    return F->kind() == Base::SharedKind;
-  }
-  StringRef getSoName() const { return SoName; }
-  virtual void parseSoName() = 0;
-  virtual void parse() = 0;
-
-  // Used for --as-needed
-  bool AsNeeded = false;
-  bool IsUsed = false;
-  bool isNeeded() const { return !AsNeeded || IsUsed; }
-};
-
-template <class ELFT> class SharedFile : public SharedFileBase<ELFT> {
-  typedef SharedFileBase<ELFT> Base;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
   std::vector<SharedSymbol<ELFT>> SymbolBodies;
+  StringRef SoName;
 
 public:
+  StringRef getSoName() const { return SoName; }
   llvm::MutableArrayRef<SharedSymbol<ELFT>> getSharedSymbols() {
     return SymbolBodies;
   }
@@ -224,8 +189,13 @@ public:
 
   explicit SharedFile(MemoryBufferRef M);
 
-  void parseSoName() override;
-  void parse() override;
+  void parseSoName();
+  void parse();
+
+  // Used for --as-needed
+  bool AsNeeded = false;
+  bool IsUsed = false;
+  bool isNeeded() const { return !AsNeeded || IsUsed; }
 };
 
 template <typename T>
