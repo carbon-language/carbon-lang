@@ -129,14 +129,14 @@ class HiddenIvarsTestCase(TestBase):
             substrs = ["= 3"])
 
         self.expect("expression k.filteredDataSource", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = [' = 0x', '"2 objects"'])
+            substrs = [' = 0x', '"2 elements"'])
 
         if strip:
             self.expect("expression *(k)", VARIABLES_DISPLAYED_CORRECTLY,
-                substrs = ["foo = 2", ' = 0x', '"2 objects"'])
+                substrs = ["foo = 2", ' = 0x', '"2 elements"'])
         else:            
             self.expect("expression *(k)", VARIABLES_DISPLAYED_CORRECTLY,
-                substrs = ["foo = 2", "bar = 3", '_filteredDataSource = 0x', '"2 objects"'])
+                substrs = ["foo = 2", "bar = 3", '_filteredDataSource = 0x', '"2 elements"'])
 
     def frame_var(self, strip):
         self.common_setup(strip)
@@ -160,14 +160,14 @@ class HiddenIvarsTestCase(TestBase):
             substrs = ["= 2"])
 
         self.expect("frame variable k->_filteredDataSource", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = [' = 0x', '"2 objects"'])
+            substrs = [' = 0x', '"2 elements"'])
 
         if strip:
             self.expect("frame variable *k", VARIABLES_DISPLAYED_CORRECTLY,
-                substrs = ["foo = 2", '_filteredDataSource = 0x', '"2 objects"'])
+                substrs = ["foo = 2", '_filteredDataSource = 0x', '"2 elements"'])
         else:
             self.expect("frame variable *k", VARIABLES_DISPLAYED_CORRECTLY,
-                substrs = ["foo = 2", "bar = 3", '_filteredDataSource = 0x', '"2 objects"'])
+                substrs = ["foo = 2", "bar = 3", '_filteredDataSource = 0x', '"2 elements"'])
 
                        
 if __name__ == '__main__':
