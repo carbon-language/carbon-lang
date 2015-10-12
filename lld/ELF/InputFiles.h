@@ -71,23 +71,23 @@ public:
 
 protected:
   static ELFKind getStaticELFKind() {
-  if (!ELFT::Is64Bits) {
+    if (!ELFT::Is64Bits) {
+      if (ELFT::TargetEndianness == llvm::support::little)
+        return ELF32LEKind;
+      return ELF32BEKind;
+    }
     if (ELFT::TargetEndianness == llvm::support::little)
-      return ELF32LEKind;
-    return ELF32BEKind;
+      return ELF64LEKind;
+    return ELF64BEKind;
   }
-  if (ELFT::TargetEndianness == llvm::support::little)
-    return ELF64LEKind;
-  return ELF64BEKind;
-}
 
-const ELFKind EKind;
-llvm::object::ELFFile<ELFT> ELFObj;
-const Elf_Shdr *Symtab = nullptr;
-StringRef StringTable;
-void initStringTable();
-Elf_Sym_Range getNonLocalSymbols();
-Elf_Sym_Range getSymbolsHelper(bool);
+  const ELFKind EKind;
+  llvm::object::ELFFile<ELFT> ELFObj;
+  const Elf_Shdr *Symtab = nullptr;
+  StringRef StringTable;
+  void initStringTable();
+  Elf_Sym_Range getNonLocalSymbols();
+  Elf_Sym_Range getSymbolsHelper(bool);
 };
 
 // .o file.
