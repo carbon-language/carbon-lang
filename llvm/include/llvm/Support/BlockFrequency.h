@@ -38,7 +38,7 @@ public:
   /// \brief Multiplies with a branch probability. The computation will never
   /// overflow.
   BlockFrequency &operator*=(BranchProbability Prob);
-  const BlockFrequency operator*(BranchProbability Prob) const;
+  BlockFrequency operator*(BranchProbability Prob) const;
 
   /// \brief Divide by a non-zero branch probability using saturating
   /// arithmetic.
@@ -46,25 +46,25 @@ public:
   BlockFrequency operator/(BranchProbability Prob) const;
 
   /// \brief Adds another block frequency using saturating arithmetic.
-  BlockFrequency &operator+=(const BlockFrequency &Freq);
-  const BlockFrequency operator+(const BlockFrequency &Freq) const;
+  BlockFrequency &operator+=(BlockFrequency Freq);
+  BlockFrequency operator+(BlockFrequency Freq) const;
 
   /// \brief Shift block frequency to the right by count digits saturating to 1.
   BlockFrequency &operator>>=(const unsigned count);
 
-  bool operator<(const BlockFrequency &RHS) const {
+  bool operator<(BlockFrequency RHS) const {
     return Frequency < RHS.Frequency;
   }
 
-  bool operator<=(const BlockFrequency &RHS) const {
+  bool operator<=(BlockFrequency RHS) const {
     return Frequency <= RHS.Frequency;
   }
 
-  bool operator>(const BlockFrequency &RHS) const {
+  bool operator>(BlockFrequency RHS) const {
     return Frequency > RHS.Frequency;
   }
 
-  bool operator>=(const BlockFrequency &RHS) const {
+  bool operator>=(BlockFrequency RHS) const {
     return Frequency >= RHS.Frequency;
   }
 };

@@ -22,8 +22,7 @@ BlockFrequency &BlockFrequency::operator*=(BranchProbability Prob) {
   return *this;
 }
 
-const BlockFrequency
-BlockFrequency::operator*(BranchProbability Prob) const {
+BlockFrequency BlockFrequency::operator*(BranchProbability Prob) const {
   BlockFrequency Freq(Frequency);
   Freq *= Prob;
   return Freq;
@@ -40,7 +39,7 @@ BlockFrequency BlockFrequency::operator/(BranchProbability Prob) const {
   return Freq;
 }
 
-BlockFrequency &BlockFrequency::operator+=(const BlockFrequency &Freq) {
+BlockFrequency &BlockFrequency::operator+=(BlockFrequency Freq) {
   uint64_t Before = Freq.Frequency;
   Frequency += Freq.Frequency;
 
@@ -51,11 +50,10 @@ BlockFrequency &BlockFrequency::operator+=(const BlockFrequency &Freq) {
   return *this;
 }
 
-const BlockFrequency
-BlockFrequency::operator+(const BlockFrequency &Prob) const {
-  BlockFrequency Freq(Frequency);
-  Freq += Prob;
-  return Freq;
+BlockFrequency BlockFrequency::operator+(BlockFrequency Freq) const {
+  BlockFrequency NewFreq(Frequency);
+  NewFreq += Freq;
+  return NewFreq;
 }
 
 BlockFrequency &BlockFrequency::operator>>=(const unsigned count) {
