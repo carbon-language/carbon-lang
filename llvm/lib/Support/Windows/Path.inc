@@ -253,17 +253,34 @@ std::error_code rename(const Twine &from, const Twine &to) {
     return ec;
 
   std::error_code ec = std::error_code();
+
+  // Retry while we see ERROR_ACCESS_DENIED.
+  // System scanners (eg. indexer) might open the source file when it is written
+  // and closed.
+
   for (int i = 0; i < 2000; i++) {
+    // Try ReplaceFile first, as it is able to associate a new data stream with
+    // the destination even if the destination file is currently open.
+    if (::ReplaceFileW(wide_to.begin(), wide_from.begin(), NULL, 0, NULL, NULL))
+      return std::error_code();
+
+    // We get ERROR_FILE_NOT_FOUND if the destination file is missing.
+    // MoveFileEx can handle this case.
+    DWORD ReplaceError = ::GetLastError();
+    ec = mapWindowsError(ReplaceError);
+    if (ReplaceError != ERROR_ACCESS_DENIED &&
+        ReplaceError != ERROR_FILE_NOT_FOUND &&
+        ReplaceError != ERROR_SHARING_VIOLATION)
+      break;
+
     if (::MoveFileExW(wide_from.begin(), wide_to.begin(),
                       MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
       return std::error_code();
-    DWORD LastError = ::GetLastError();
-    ec = mapWindowsError(LastError);
-    if (LastError != ERROR_ACCESS_DENIED)
-      break;
-    // Retry MoveFile() at ACCESS_DENIED.
-    // System scanners (eg. indexer) might open the source file when
-    // It is written and closed.
+
+    DWORD MoveError = ::GetLastError();
+    ec = mapWindowsError(MoveError);
+    if (MoveError != ERROR_ACCESS_DENIED) break;
+
     ::Sleep(1);
   }
 
@@ -649,9 +666,10 @@ std::error_code openFileForRead(const Twine &Name, int &ResultFD) {
   if (std::error_code EC = widenPath(Name, PathUTF16))
     return EC;
 
-  HANDLE H = ::CreateFileW(PathUTF16.begin(), GENERIC_READ,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE H =
+      ::CreateFileW(PathUTF16.begin(), GENERIC_READ,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (H == INVALID_HANDLE_VALUE) {
     DWORD LastError = ::GetLastError();
     std::error_code EC = mapWindowsError(LastError);

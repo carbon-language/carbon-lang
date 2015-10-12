@@ -32,6 +32,7 @@ add_llvm_unittest(SupportTests
   ProcessTest.cpp
   ProgramTest.cpp
   RegexTest.cpp
+  ReplaceFileTest.cpp
   ScaledNumberTest.cpp
   SourceMgrTest.cpp
   SpecialCaseListTest.cpp
