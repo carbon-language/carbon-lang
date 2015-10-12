@@ -70,16 +70,7 @@ public:
   StringRef getStringTable() const { return StringTable; }
 
 protected:
-  const ELFKind EKind;
-  llvm::object::ELFFile<ELFT> ELFObj;
-  const Elf_Shdr *Symtab = nullptr;
-  StringRef StringTable;
-  void initStringTable();
-  Elf_Sym_Range getNonLocalSymbols();
-  Elf_Sym_Range getSymbolsHelper(bool);
-};
-
-template <class ELFT> static ELFKind getStaticELFKind() {
+  static ELFKind getStaticELFKind() {
   if (!ELFT::Is64Bits) {
     if (ELFT::TargetEndianness == llvm::support::little)
       return ELF32LEKind;
@@ -89,6 +80,15 @@ template <class ELFT> static ELFKind getStaticELFKind() {
     return ELF64LEKind;
   return ELF64BEKind;
 }
+
+const ELFKind EKind;
+llvm::object::ELFFile<ELFT> ELFObj;
+const Elf_Shdr *Symtab = nullptr;
+StringRef StringTable;
+void initStringTable();
+Elf_Sym_Range getNonLocalSymbols();
+Elf_Sym_Range getSymbolsHelper(bool);
+};
 
 // .o file.
 template <class ELFT> class ObjectFile : public ELFFileBase<ELFT> {
@@ -106,7 +106,7 @@ template <class ELFT> class ObjectFile : public ELFFileBase<ELFT> {
 public:
   static bool classof(const InputFile *F) {
     return F->kind() == Base::ObjectKind &&
-           cast<ELFFileBase<ELFT>>(F)->getELFKind() == getStaticELFKind<ELFT>();
+           cast<ELFFileBase<ELFT>>(F)->getELFKind() == Base::getStaticELFKind();
   }
 
   ArrayRef<SymbolBody *> getSymbols() { return this->SymbolBodies; }
@@ -183,7 +183,7 @@ public:
 
   static bool classof(const InputFile *F) {
     return F->kind() == Base::SharedKind &&
-           cast<ELFFileBase<ELFT>>(F)->getELFKind() == getStaticELFKind<ELFT>();
+           cast<ELFFileBase<ELFT>>(F)->getELFKind() == Base::getStaticELFKind();
   }
 
   explicit SharedFile(MemoryBufferRef M);
