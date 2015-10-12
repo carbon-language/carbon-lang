@@ -195,7 +195,7 @@ ThreadPlanRunToAddress::DoPlanExplainsStop (Event *event_ptr)
 bool
 ThreadPlanRunToAddress::ShouldStop (Event *event_ptr)
 {
-    return false;
+    return AtOurAddress();
 }
 
 bool
