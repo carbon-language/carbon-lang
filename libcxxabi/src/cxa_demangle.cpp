@@ -4415,7 +4415,7 @@ parse_special_name(const char* first, const char* last, C& db)
                 {
                     if (db.names.empty())
                         return first;
-                    if (first[2] == 'v')
+                    if (first[1] == 'v')
                     {
                         db.names.back().first.insert(0, "virtual thunk to ");
                         first = t;
