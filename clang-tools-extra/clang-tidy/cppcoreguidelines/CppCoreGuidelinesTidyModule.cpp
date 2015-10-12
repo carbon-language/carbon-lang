@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "ProTypeConstCastCheck.h"
 #include "ProTypeReinterpretCastCheck.h"
+#include "ProTypeStaticCastDowncastCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -25,6 +26,8 @@ public:
         "cppcoreguidelines-pro-type-const-cast");
     CheckFactories.registerCheck<ProTypeReinterpretCastCheck>(
         "cppcoreguidelines-pro-type-reinterpret-cast");
+    CheckFactories.registerCheck<ProTypeStaticCastDowncastCheck>(
+        "cppcoreguidelines-pro-type-static-cast-downcast");
   }
 };
 

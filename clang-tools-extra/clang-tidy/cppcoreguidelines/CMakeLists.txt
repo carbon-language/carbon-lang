@@ -4,6 +4,7 @@ add_clang_library(clangTidyCppCoreGuidelinesModule
   CppCoreGuidelinesTidyModule.cpp
   ProTypeConstCastCheck.cpp
   ProTypeReinterpretCastCheck.cpp
+  ProTypeStaticCastDowncastCheck.cpp
 
   LINK_LIBS
   clangAST
