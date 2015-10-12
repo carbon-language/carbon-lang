@@ -1153,8 +1153,9 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     // Setup an EH landing-pad block.
     FuncInfo->ExceptionPointerVirtReg = 0;
     FuncInfo->ExceptionSelectorVirtReg = 0;
-    if (!PrepareEHLandingPad())
-      continue;
+    if (LLVMBB->isEHPad())
+      if (!PrepareEHLandingPad())
+        continue;
 
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     if (FastIS) {
