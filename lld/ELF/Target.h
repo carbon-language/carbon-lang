@@ -81,6 +81,7 @@ public:
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                    uint64_t BaseAddr, uint64_t SymVA) const override;
+  bool isRelRelative(uint32_t Type) const override;
 };
 
 class PPCTargetInfo final : public TargetInfo {

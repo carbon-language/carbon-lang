@@ -221,6 +221,7 @@ PPC64TargetInfo::PPC64TargetInfo() {
   PCRelReloc = R_PPC64_REL24;
   GotReloc = R_PPC64_GLOB_DAT;
   GotRefReloc = R_PPC64_REL64;
+  RelativeReloc = R_PPC64_RELATIVE;
   PltEntrySize = 32;
 
   // We need 64K pages (at least under glibc/Linux, the loader won't
@@ -289,6 +290,20 @@ bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
 
   // These are function calls that need to be redirected through a PLT stub.
   return S.isShared() || (S.isUndefined() && S.isWeak());
+}
+
+bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
+  switch (Type) {
+  default:
+    return false;
+  case R_PPC64_REL24:
+  case R_PPC64_REL14:
+  case R_PPC64_REL14_BRTAKEN:
+  case R_PPC64_REL14_BRNTAKEN:
+  case R_PPC64_REL32:
+  case R_PPC64_REL64:
+    return true;
+  }
 }
 
 void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
