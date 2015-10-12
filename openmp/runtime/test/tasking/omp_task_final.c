@@ -9,7 +9,7 @@ int test_omp_task_final()
   int tids[NUM_TASKS];
   int includedtids[NUM_TASKS];
   int i;
-  int error;
+  int error = 0;
   #pragma omp parallel 
   {
     #pragma omp single
