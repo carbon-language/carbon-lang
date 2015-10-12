@@ -212,6 +212,14 @@ void LinkerScript::readOutputFormat() {
   // Error checking only for now.
   expect("(");
   next();
+  StringRef Tok = next();
+  if (Tok == ")")
+   return;
+  if (Tok != ",")
+    error("unexpected token: " + Tok);
+  next();
+  expect(",");
+  next();
   expect(")");
 }
 
