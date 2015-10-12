@@ -40,6 +40,7 @@ List of clang-tidy Checks
    misc-sizeof-container
    misc-static-assert
    misc-swapped-arguments
+   misc-throw-by-value-catch-by-reference
    misc-undelegated-constructor
    misc-uniqueptr-reset-release
    misc-unused-alias-decls
