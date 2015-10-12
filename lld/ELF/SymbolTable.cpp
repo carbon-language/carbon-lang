@@ -22,7 +22,7 @@ using namespace lld::elf2;
 template <class ELFT> SymbolTable<ELFT>::SymbolTable() {}
 
 template <class ELFT> bool SymbolTable<ELFT>::shouldUseRela() const {
-  ELFKind K = getFirstELF()->getELFKind();
+  ELFKind K = cast<ELFFileBase<ELFT>>(Config->FirstElf)->getELFKind();
   return K == ELF64LEKind || K == ELF64BEKind;
 }
 

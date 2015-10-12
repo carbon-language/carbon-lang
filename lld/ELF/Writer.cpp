@@ -583,7 +583,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
                                : ELFDATA2MSB;
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
 
-  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.getFirstELF());
+  auto &FirstObj = cast<ELFFileBase<ELFT>>(*Config->FirstElf);
   EHdr->e_ident[EI_OSABI] = FirstObj.getOSABI();
 
   // FIXME: Generalize the segment construction similar to how we create

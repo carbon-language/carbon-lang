@@ -33,14 +33,6 @@ public:
 
   void addFile(std::unique_ptr<InputFile> File);
 
-  const ELFFileBase<ELFT> *getFirstELF() const {
-    if (!ObjectFiles.empty())
-      return ObjectFiles[0].get();
-    if (!SharedFiles.empty())
-      return SharedFiles[0].get();
-    return nullptr;
-  }
-
   bool shouldUseRela() const;
 
   const llvm::MapVector<StringRef, Symbol *> &getSymbols() const {
