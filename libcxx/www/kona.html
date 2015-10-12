@@ -79,8 +79,8 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2384">2384</a></td><td>Allocator's <tt>deallocate</tt> function needs better specification</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2385">2385</a></td><td><tt>function::assign</tt> allocator argument doesn't make sense</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2435">2435</a></td><td><tt>reference_wrapper::operator()</tt>'s Remark should be deleted</td><td>Kona</td><td>Complete</td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2447">2447</a></td><td>Allocators and <tt>volatile</tt>-qualified value types</td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2462">2462</a></td><td><tt>std::ios_base::failure</tt> is overspecified</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2447">2447</a></td><td>Allocators and <tt>volatile</tt>-qualified value types</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2462">2462</a></td><td><tt>std::ios_base::failure</tt> is overspecified</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2466">2466</a></td><td><tt>allocator_traits::max_size()</tt> default behavior is incorrect</td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2469">2469</a></td><td>Wrong specification of Requires clause of <tt>operator[]</tt> for <tt>map</tt> and <tt>unordered_map</tt></td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2473">2473</a></td><td><tt>basic_filebuf</tt>'s relation to C <tt>FILE</tt> semantics</td><td>Kona</td><td>Complete</td></tr>
@@ -124,10 +124,10 @@
 <li><i>2384 - Wording cleanup; no code change required</i></li>
 <li>2385 - Removing broken signatures. Only question is "how far back"?</li>
 <li><i>2435 - Wording cleanup; no code change required</i></li>
-<li>2447 - I don't know if there's any work here.</li>
-<li>2462 - No code change necessary. I don't see any tests. I think that there should be</li>
+<li><i>2447 - This is a relaxation of a requirement that we satisfy. No changes needed.</i>.</li>
+<li><i>2462 - Added a simple test. No code change needed</i> <b>Patch Available</b></li>
 <li><i>2466 - Simple change; need a test.</i> <b>Patch Available</b></li>
-<li>2469 - This is a followon to 2464, which we're done. This restates a bunch of operations in terms of newer ops. Probably refactoring to do here, but tests shouldn't change.</li>
+<li>2469 - This is a follow on to 2464, which we're done. This restates a bunch of operations in terms of newer ops. Probably refactoring to do here, but tests shouldn't change.</li>
 <li><i>2473 - There are two changes here; one to <tt>filebuf::seekpos</tt> and the other to <tt>filebuf::sync</tt>. We do both of these already.</i></li>
 <li><i>2476 - Just needed tests.</i> <b>Patch Available</b></li>
 <li><i>2477 - Wording cleanup.</i></li>
