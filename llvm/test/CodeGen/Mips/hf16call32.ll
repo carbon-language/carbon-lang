@@ -751,280 +751,280 @@ land.end289:                                      ; preds = %land.rhs286, %land.
 }
 
 declare void @v_sf(float) #1
-; stel: .section	.mips16.call.fp.v_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_v_sf
-; stel:	mtc1 $4,$f12
-; stel:	lui  $25,%hi(v_sf)
-; stel:	addiu  $25,$25,%lo(v_sf)
-; stel:	jr $25
-; stel:	.end	__call_stub_fp_v_sf
+; stel: .section .mips16.call.fp.v_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_v_sf
+; stel: mtc1 $4,$f12
+; stel: lui $25,%hi(v_sf)
+; stel: addiu $25,$25,%lo(v_sf)
+; stel: jr $25
+; stel: .end __call_stub_fp_v_sf
 
 declare i32 @printf(i8*, ...) #1
 
 declare void @v_df(double) #1
-; stel: .section	.mips16.call.fp.v_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_v_df
+; stel: .section .mips16.call.fp.v_df,"ax",@progbits
+; stel: .ent __call_stub_fp_v_df
 ; stel: #APP
 ; setl: .set reorder
-; stel:	mtc1 $4,$f12
-; stel:	mtc1 $5,$f13
-; stel:	lui  $25,%hi(v_df)
-; stel:	addiu  $25,$25,%lo(v_df)
-; stel:	jr $25
-; stel:	.end	__call_stub_fp_v_df
+; stel: mtc1 $4,$f12
+; stel: mtc1 $5,$f13
+; stel: lui $25,%hi(v_df)
+; stel: addiu $25,$25,%lo(v_df)
+; stel: jr $25
+; stel: .end __call_stub_fp_v_df
 
 declare void @v_sf_sf(float, float) #1
-; stel: .section	.mips16.call.fp.v_sf_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_v_sf_sf
-; stel:	mtc1 $4,$f12
-; stel:	mtc1 $5,$f14
-; stel:	lui  $25,%hi(v_sf_sf)
-; stel:	addiu  $25,$25,%lo(v_sf_sf)
-; stel:	jr $25
-; stel:	.end	__call_stub_fp_v_sf_sf
+; stel: .section .mips16.call.fp.v_sf_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_v_sf_sf
+; stel: mtc1 $4,$f12
+; stel: mtc1 $5,$f14
+; stel: lui $25,%hi(v_sf_sf)
+; stel: addiu $25,$25,%lo(v_sf_sf)
+; stel: jr $25
+; stel: .end __call_stub_fp_v_sf_sf
 
 declare void @v_sf_df(float, double) #1
-; stel: .section	.mips16.call.fp.v_sf_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_v_sf_df
-; stel:	mtc1 $4,$f12
-; stel:	mtc1 $6,$f14
-; stel:	mtc1 $7,$f15
-; stel:	lui  $25,%hi(v_sf_df)
-; stel:	addiu  $25,$25,%lo(v_sf_df)
-; stel:	jr $25
-; stel:	.end	__call_stub_fp_v_sf_df
+; stel: .section .mips16.call.fp.v_sf_df,"ax",@progbits
+; stel: .ent __call_stub_fp_v_sf_df
+; stel: mtc1 $4,$f12
+; stel: mtc1 $6,$f14
+; stel: mtc1 $7,$f15
+; stel: lui $25,%hi(v_sf_df)
+; stel: addiu $25,$25,%lo(v_sf_df)
+; stel: jr $25
+; stel: .end __call_stub_fp_v_sf_df
 
 declare void @v_df_sf(double, float) #1
-; stel: .section	.mips16.call.fp.v_df_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_v_df_sf
-; stel:	mtc1 $4,$f12
-; stel:	mtc1 $5,$f13
-; stel:	mtc1 $6,$f14
-; stel:	lui  $25,%hi(v_df_sf)
-; stel:	addiu  $25,$25,%lo(v_df_sf)
-; stel:	jr $25
-; stel:	.end	__call_stub_fp_v_df_sf
+; stel: .section .mips16.call.fp.v_df_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_v_df_sf
+; stel: mtc1 $4,$f12
+; stel: mtc1 $5,$f13
+; stel: mtc1 $6,$f14
+; stel: lui $25,%hi(v_df_sf)
+; stel: addiu $25,$25,%lo(v_df_sf)
+; stel: jr $25
+; stel: .end __call_stub_fp_v_df_sf
 
 declare void @v_df_df(double, double) #1
-; stel: .section	.mips16.call.fp.v_df_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_v_df_df
-; stel:	mtc1 $4,$f12
-; stel:	mtc1 $5,$f13
-; stel:	mtc1 $6,$f14
-; stel:	mtc1 $7,$f15
-; stel:	lui  $25,%hi(v_df_df)
-; stel:	addiu  $25,$25,%lo(v_df_df)
-; stel:	jr $25
-; stel:	.end	__call_stub_fp_v_df_df
+; stel: .section .mips16.call.fp.v_df_df,"ax",@progbits
+; stel: .ent __call_stub_fp_v_df_df
+; stel: mtc1 $4,$f12
+; stel: mtc1 $5,$f13
+; stel: mtc1 $6,$f14
+; stel: mtc1 $7,$f15
+; stel: lui $25,%hi(v_df_df)
+; stel: addiu $25,$25,%lo(v_df_df)
+; stel: jr $25
+; stel: .end __call_stub_fp_v_df_df
 
 declare float @sf_v() #1
-; stel: .section	.mips16.call.fp.sf_v,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sf_v
+; stel: .section .mips16.call.fp.sf_v,"ax",@progbits
+; stel: .ent __call_stub_fp_sf_v
 ; stel: move $18, $31
 ; stel: jal sf_v
-; stel:	mfc1 $2,$f0
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sf_v
+; stel: mfc1 $2,$f0
+; stel: jr $18
+; stel: .end __call_stub_fp_sf_v
 
 declare float @sf_sf(float) #1
-; stel: .section	.mips16.call.fp.sf_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sf_sf
+; stel: .section .mips16.call.fp.sf_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_sf_sf
 ; stel: mtc1 $4,$f12
 ; stel: move $18, $31
 ; stel: jal sf_sf
-; stel:	mfc1 $2,$f0
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sf_sf
+; stel: mfc1 $2,$f0
+; stel: jr $18
+; stel: .end __call_stub_fp_sf_sf
 
 declare float @sf_df(double) #1
-; stel: .section	.mips16.call.fp.sf_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sf_df
+; stel: .section .mips16.call.fp.sf_df,"ax",@progbits
+; stel: .ent __call_stub_fp_sf_df
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f13
 ; stel: move $18, $31
 ; stel: jal sf_df
-; stel:	mfc1 $2,$f0
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sf_df
+; stel: mfc1 $2,$f0
+; stel: jr $18
+; stel: .end __call_stub_fp_sf_df
 
 declare float @sf_sf_sf(float, float) #1
-; stel: .section	.mips16.call.fp.sf_sf_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sf_sf_sf
+; stel: .section .mips16.call.fp.sf_sf_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_sf_sf_sf
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f14
 ; stel: move $18, $31
 ; stel: jal sf_sf_sf
-; stel:	mfc1 $2,$f0
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sf_sf_sf
+; stel: mfc1 $2,$f0
+; stel: jr $18
+; stel: .end __call_stub_fp_sf_sf_sf
 
 declare float @sf_sf_df(float, double) #1
-; stel: .section	.mips16.call.fp.sf_sf_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sf_sf_df
+; stel: .section .mips16.call.fp.sf_sf_df,"ax",@progbits
+; stel: .ent __call_stub_fp_sf_sf_df
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $6,$f14
 ; stel: mtc1 $7,$f15
 ; stel: move $18, $31
 ; stel: jal sf_sf_df
-; stel:	mfc1 $2,$f0
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sf_sf_df
+; stel: mfc1 $2,$f0
+; stel: jr $18
+; stel: .end __call_stub_fp_sf_sf_df
 
 declare float @sf_df_sf(double, float) #1
-; stel: .section	.mips16.call.fp.sf_df_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sf_df_sf
+; stel: .section .mips16.call.fp.sf_df_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_sf_df_sf
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f13
 ; stel: mtc1 $6,$f14
 ; stel: move $18, $31
 ; stel: jal sf_df_sf
-; stel:	mfc1 $2,$f0
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sf_df_sf
+; stel: mfc1 $2,$f0
+; stel: jr $18
+; stel: .end __call_stub_fp_sf_df_sf
 
 declare float @sf_df_df(double, double) #1
-; stel: .section	.mips16.call.fp.sf_df_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sf_df_df
+; stel: .section .mips16.call.fp.sf_df_df,"ax",@progbits
+; stel: .ent __call_stub_fp_sf_df_df
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f13
 ; stel: mtc1 $6,$f14
 ; stel: mtc1 $7,$f15
 ; stel: move $18, $31
 ; stel: jal sf_df_df
-; stel:	mfc1 $2,$f0
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sf_df_df
+; stel: mfc1 $2,$f0
+; stel: jr $18
+; stel: .end __call_stub_fp_sf_df_df
 
 declare double @df_v() #1
-; stel: .section	.mips16.call.fp.df_v,"ax",@progbits
-; stel:	.ent	__call_stub_fp_df_v
+; stel: .section .mips16.call.fp.df_v,"ax",@progbits
+; stel: .ent __call_stub_fp_df_v
 ; stel: move $18, $31
 ; stel: jal df_v
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_df_v
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_df_v
 
 declare double @df_sf(float) #1
-; stel: .section	.mips16.call.fp.df_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_df_sf
+; stel: .section .mips16.call.fp.df_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_df_sf
 ; stel: mtc1 $4,$f12
 ; stel: move $18, $31
 ; stel: jal df_sf
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_df_sf
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_df_sf
 
 declare double @df_df(double) #1
-; stel: .section	.mips16.call.fp.df_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_df_df
+; stel: .section .mips16.call.fp.df_df,"ax",@progbits
+; stel: .ent __call_stub_fp_df_df
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f13
 ; stel: move $18, $31
 ; stel: jal df_df
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_df_df
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_df_df
 
 declare double @df_sf_sf(float, float) #1
-; stel: .section	.mips16.call.fp.df_sf_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_df_sf_sf
+; stel: .section .mips16.call.fp.df_sf_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_df_sf_sf
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f14
 ; stel: move $18, $31
 ; stel: jal df_sf_sf
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_df_sf_sf
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_df_sf_sf
 
 declare double @df_sf_df(float, double) #1
-; stel: .section	.mips16.call.fp.df_sf_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_df_sf_df
+; stel: .section .mips16.call.fp.df_sf_df,"ax",@progbits
+; stel: .ent __call_stub_fp_df_sf_df
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $6,$f14
 ; stel: mtc1 $7,$f15
 ; stel: move $18, $31
 ; stel: jal df_sf_df
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_df_sf_df
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_df_sf_df
 
 declare double @df_df_sf(double, float) #1
-; stel: .section	.mips16.call.fp.df_df_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_df_df_sf
+; stel: .section .mips16.call.fp.df_df_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_df_df_sf
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f13
 ; stel: mtc1 $6,$f14
 ; stel: move $18, $31
 ; stel: jal df_df_sf
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_df_df_sf
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_df_df_sf
 
 declare double @df_df_df(double, double) #1
-; stel: .section	.mips16.call.fp.df_df_df,"ax",@progbits
-; stel:	.ent	__call_stub_fp_df_df_df
+; stel: .section .mips16.call.fp.df_df_df,"ax",@progbits
+; stel: .ent __call_stub_fp_df_df_df
 ; stel: mtc1 $4,$f12
 ; stel: mtc1 $5,$f13
 ; stel: mtc1 $6,$f14
 ; stel: mtc1 $7,$f15
 ; stel: move $18, $31
 ; stel: jal df_df_df
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_df_df_df
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_df_df_df
 
 declare { float, float } @sc_v() #1
-; stel: .section	.mips16.call.fp.sc_v,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sc_v
+; stel: .section .mips16.call.fp.sc_v,"ax",@progbits
+; stel: .ent __call_stub_fp_sc_v
 ; stel: move $18, $31
 ; stel: jal sc_v
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f2
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sc_v
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f2
+; stel: jr $18
+; stel: .end __call_stub_fp_sc_v
 
 declare { float, float } @sc_sf(float) #1
-; stel: .section	.mips16.call.fp.sc_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_sc_sf
+; stel: .section .mips16.call.fp.sc_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_sc_sf
 ; stel: mtc1 $4,$f12
 ; stel: move $18, $31
 ; stel: jal sc_sf
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f2
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_sc_sf
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f2
+; stel: jr $18
+; stel: .end __call_stub_fp_sc_sf
 
 declare { double, double } @dc_v() #1
-; stel: .section	.mips16.call.fp.dc_v,"ax",@progbits
-; stel:	.ent	__call_stub_fp_dc_v
+; stel: .section .mips16.call.fp.dc_v,"ax",@progbits
+; stel: .ent __call_stub_fp_dc_v
 ; stel: move $18, $31
 ; stel: jal dc_v
-; stel:	mfc1 $4,$f2
-; stel:	mfc1 $5,$f3
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_dc_v
+; stel: mfc1 $4,$f2
+; stel: mfc1 $5,$f3
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_dc_v
 
 declare { double, double } @dc_sf(float) #1
-; stel: .section	.mips16.call.fp.dc_sf,"ax",@progbits
-; stel:	.ent	__call_stub_fp_dc_sf
+; stel: .section .mips16.call.fp.dc_sf,"ax",@progbits
+; stel: .ent __call_stub_fp_dc_sf
 ; stel: mtc1 $4,$f12
 ; stel: move $18, $31
 ; stel: jal dc_sf
-; stel:	mfc1 $4,$f2
-; stel:	mfc1 $5,$f3
-; stel:	mfc1 $2,$f0
-; stel:	mfc1 $3,$f1
-; stel:	jr $18
-; stel:	.end	__call_stub_fp_dc_sf
+; stel: mfc1 $4,$f2
+; stel: mfc1 $5,$f3
+; stel: mfc1 $2,$f0
+; stel: mfc1 $3,$f1
+; stel: jr $18
+; stel: .end __call_stub_fp_dc_sf
 
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
