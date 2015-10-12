@@ -6,6 +6,7 @@ import pkgutil
 import re
 import shlex
 import sys
+import subprocess
 
 import lit.Test  # pylint: disable=import-error,no-name-in-module
 import lit.util  # pylint: disable=import-error,no-name-in-module
@@ -41,6 +42,24 @@ def loadSiteConfig(lit_config, config, param_name, env_name):
         lit_config.load_config = prevent_reload_fn
         ld_fn(config, site_cfg)
         lit_config.load_config = ld_fn
+
+def getSysrootFlagsOnDarwin(config, lit_config):
+    # On Darwin, support relocatable SDKs by providing Clang with a
+    # default system root path.
+    if 'darwin' in config.target_triple:
+        try:
+            cmd = subprocess.Popen(['xcrun', '--show-sdk-path'],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = cmd.communicate()
+            out = out.strip()
+            res = cmd.wait()
+        except OSError:
+            res = -1
+        if res == 0 and out:
+            sdk_path = out
+            lit_config.note('using SDKROOT: %r' % sdk_path)
+            return ["-isysroot", sdk_path]
+    return []
 
 
 class Configuration(object):
@@ -339,6 +358,8 @@ class Configuration(object):
         # Configure extra flags
         compile_flags_str = self.get_lit_conf('compile_flags', '')
         self.cxx.compile_flags += shlex.split(compile_flags_str)
+        sysroot_flags = getSysrootFlagsOnDarwin(self.config, self.lit_config)
+        self.cxx.compile_flags.extend(sysroot_flags)
 
     def configure_default_compile_flags(self):
         # Try and get the std version from the command line. Fall back to
