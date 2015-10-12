@@ -457,16 +457,19 @@ Trophies
   * http://git.musl-libc.org/cgit/musl/commit/?id=39dfd58417ef642307d90306e1c7e50aaec5a35c
   * http://www.openwall.com/lists/oss-security/2015/03/30/3
 
-* pugixml: https://github.com/zeux/pugixml/issues/39
+* `pugixml <https://github.com/zeux/pugixml/issues/39>`_
 
 * PCRE: Search for "LLVM fuzzer" in http://vcs.pcre.org/pcre2/code/trunk/ChangeLog?view=markup;
-  also: https://bugs.exim.org/buglist.cgi?bug_status=__all__&content=libfuzzer&no_redirect=1&order=Importance&product=PCRE&query_format=specific
+  also in `bugzilla <https://bugs.exim.org/buglist.cgi?bug_status=__all__&content=libfuzzer&no_redirect=1&order=Importance&product=PCRE&query_format=specific>`_
 
-* ICU: http://bugs.icu-project.org/trac/ticket/11838
+* `ICU <http://bugs.icu-project.org/trac/ticket/11838>`_
 
-* Freetype: https://savannah.nongnu.org/search/?words=LibFuzzer&type_of_search=bugs&Search=Search&exact=1#options
+* `Freetype <https://savannah.nongnu.org/search/?words=LibFuzzer&type_of_search=bugs&Search=Search&exact=1#options>`_
 
-* Harfbuzz: https://github.com/behdad/harfbuzz/issues/139
+* `Harfbuzz <https://github.com/behdad/harfbuzz/issues/139>`_
+
+* `Libxml2
+  <https://bugzilla.gnome.org/buglist.cgi?bug_status=__all__&content=libFuzzer&list_id=68957&order=Importance&product=libxml2&query_format=specific>`_
 
 * Linux Kernel's BPF verifier: https://github.com/iovisor/bpf-fuzzer
 
