@@ -286,9 +286,9 @@ define i64 @umin_D(<2 x i64>* nocapture readonly %arr)  {
   ret i64 %r
 }
 
-; CHECK-LABEL: f_fmaxnmv
+; CHECK-LABEL: fmaxnm_S
 ; CHECK: fmaxnmv
-define float @f_fmaxnmv(<4 x float>* nocapture readonly %arr) {
+define float @fmaxnm_S(<4 x float>* nocapture readonly %arr) {
   %rdx.minmax.select  = load <4 x float>, <4 x float>* %arr
   %rdx.shuf = shufflevector <4 x float> %rdx.minmax.select, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
   %rdx.minmax.cmp = fcmp fast oge <4 x float> %rdx.minmax.select, %rdx.shuf
@@ -302,9 +302,9 @@ define float @f_fmaxnmv(<4 x float>* nocapture readonly %arr) {
   ret float %r
 }
 
-; CHECK-LABEL: f_fminnmv
+; CHECK-LABEL: fminnm_S
 ; CHECK: fminnmv
-define float @f_fminnmv(<4 x float>* nocapture readonly %arr) {
+define float @fminnm_S(<4 x float>* nocapture readonly %arr) {
   %rdx.minmax.select  = load <4 x float>, <4 x float>* %arr
   %rdx.shuf = shufflevector <4 x float> %rdx.minmax.select, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
   %rdx.minmax.cmp = fcmp fast ole <4 x float> %rdx.minmax.select, %rdx.shuf
