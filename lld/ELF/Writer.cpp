@@ -14,6 +14,7 @@
 #include "Target.h"
 
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
 using namespace llvm;
@@ -261,6 +262,22 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
   }
 }
 
+// PPC64 has a number of special SHT_PROGBITS+SHF_ALLOC+SHF_WRITE sections that
+// we would like to make sure appear is a specific order to maximize their
+// coverage by a single signed 16-bit offset from the TOC base pointer.
+// Conversely, the special .tocbss section should be first among all SHT_NOBITS
+// sections. This will put it next to the loaded special PPC64 sections (and,
+// thus, within reach of the TOC base pointer).
+static int getPPC64SectionRank(StringRef SectionName) {
+  return StringSwitch<int>(SectionName)
+           .Case(".tocbss", 0)
+           .Case(".branch_lt", 2)
+           .Case(".toc", 3)
+           .Case(".toc1", 4)
+           .Case(".opd", 5)
+           .Default(1);
+}
+
 // Output section ordering is determined by this function.
 template <class ELFT>
 static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
@@ -302,7 +319,10 @@ static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
   // them is a p_memsz that is larger than p_filesz. Seeing that it
   // zeros the end of the PT_LOAD, so that has to correspond to the
   // nobits sections.
-  return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
+  if (A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS)
+    return true;
+
+  return getPPC64SectionRank(A->getName()) < getPPC64SectionRank(B->getName());
 }
 
 // Until this function is called, common symbols do not belong to any section.
