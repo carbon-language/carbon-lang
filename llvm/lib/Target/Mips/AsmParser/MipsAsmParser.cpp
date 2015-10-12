@@ -1372,6 +1372,81 @@ static unsigned countMCSymbolRefExpr(const MCExpr *Expr) {
   return 0;
 }
 
+namespace {
+void emitRX(unsigned Opcode, unsigned Reg0, MCOperand Op1, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createReg(Reg0));
+  tmpInst.addOperand(Op1);
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
+}
+
+void emitRI(unsigned Opcode, unsigned Reg0, int32_t Imm, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  emitRX(Opcode, Reg0, MCOperand::createImm(Imm), IDLoc, Instructions);
+}
+
+void emitRR(unsigned Opcode, unsigned Reg0, unsigned Reg1, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  emitRX(Opcode, Reg0, MCOperand::createReg(Reg1), IDLoc, Instructions);
+}
+
+void emitII(unsigned Opcode, int16_t Imm1, int16_t Imm2, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createImm(Imm1));
+  tmpInst.addOperand(MCOperand::createImm(Imm2));
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
+}
+
+void emitR(unsigned Opcode, unsigned Reg0, SMLoc IDLoc,
+           SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createReg(Reg0));
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
+}
+
+void emitRRX(unsigned Opcode, unsigned Reg0, unsigned Reg1, MCOperand Op2,
+             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createReg(Reg0));
+  tmpInst.addOperand(MCOperand::createReg(Reg1));
+  tmpInst.addOperand(Op2);
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
+}
+
+void emitRRR(unsigned Opcode, unsigned Reg0, unsigned Reg1, unsigned Reg2,
+             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+  emitRRX(Opcode, Reg0, Reg1, MCOperand::createReg(Reg2), IDLoc,
+          Instructions);
+}
+
+void emitRRI(unsigned Opcode, unsigned Reg0, unsigned Reg1, int16_t Imm,
+             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+  emitRRX(Opcode, Reg0, Reg1, MCOperand::createImm(Imm), IDLoc,
+          Instructions);
+}
+
+void emitAppropriateDSLL(unsigned DstReg, unsigned SrcReg, int16_t ShiftAmount,
+                         SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+  if (ShiftAmount >= 32) {
+    emitRRI(Mips::DSLL32, DstReg, SrcReg, ShiftAmount - 32, IDLoc,
+            Instructions);
+    return;
+  }
+
+  emitRRI(Mips::DSLL, DstReg, SrcReg, ShiftAmount, IDLoc, Instructions);
+}
+} // end anonymous namespace.
+
 bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                                        SmallVectorImpl<MCInst> &Instructions) {
   const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
@@ -1558,19 +1633,10 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
         const MCExpr *Got16RelocExpr = evaluateRelocExpr(JalExpr, "got");
         const MCExpr *Lo16RelocExpr = evaluateRelocExpr(JalExpr, "lo");
 
-        MCInst LwInst;
-        LwInst.setOpcode(Mips::LW);
-        LwInst.addOperand(MCOperand::createReg(Mips::T9));
-        LwInst.addOperand(MCOperand::createReg(Mips::GP));
-        LwInst.addOperand(MCOperand::createExpr(Got16RelocExpr));
-        Instructions.push_back(LwInst);
-
-        MCInst AddiuInst;
-        AddiuInst.setOpcode(Mips::ADDiu);
-        AddiuInst.addOperand(MCOperand::createReg(Mips::T9));
-        AddiuInst.addOperand(MCOperand::createReg(Mips::T9));
-        AddiuInst.addOperand(MCOperand::createExpr(Lo16RelocExpr));
-        Instructions.push_back(AddiuInst);
+        emitRRX(Mips::LW, Mips::T9, Mips::GP,
+                MCOperand::createExpr(Got16RelocExpr), IDLoc, Instructions);
+        emitRRX(Mips::ADDiu, Mips::T9, Mips::T9,
+                MCOperand::createExpr(Lo16RelocExpr), IDLoc, Instructions);
       } else if (isABI_N32() || isABI_N64()) {
         // If it's a local symbol and the N32/N64 ABIs are being used,
         // we expand to:
@@ -1579,12 +1645,8 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
         //  jalr  $25
         const MCExpr *GotDispRelocExpr = evaluateRelocExpr(JalExpr, "got_disp");
 
-        MCInst LoadInst;
-        LoadInst.setOpcode(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW);
-        LoadInst.addOperand(MCOperand::createReg(Mips::T9));
-        LoadInst.addOperand(MCOperand::createReg(Mips::GP));
-        LoadInst.addOperand(MCOperand::createExpr(GotDispRelocExpr));
-        Instructions.push_back(LoadInst);
+        emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9, Mips::GP,
+                MCOperand::createExpr(GotDispRelocExpr), IDLoc, Instructions);
       }
     } else {
       // If it's an external/weak symbol, we expand to:
@@ -1593,12 +1655,8 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
       //  jalr  $25
       const MCExpr *Call16RelocExpr = evaluateRelocExpr(JalExpr, "call16");
 
-      MCInst LoadInst;
-      LoadInst.setOpcode(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW);
-      LoadInst.addOperand(MCOperand::createReg(Mips::T9));
-      LoadInst.addOperand(MCOperand::createReg(Mips::GP));
-      LoadInst.addOperand(MCOperand::createExpr(Call16RelocExpr));
-      Instructions.push_back(LoadInst);
+      emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9, Mips::GP,
+              MCOperand::createExpr(Call16RelocExpr), IDLoc, Instructions);
     }
 
     MCInst JalrInst;
@@ -1668,13 +1726,9 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                   Mips::GPRMM16RegClassID).contains(DstReg.getReg()) &&
                 (BaseReg.getReg() == Mips::GP ||
                 BaseReg.getReg() == Mips::GP_64)) {
-              MCInst TmpInst;
-              TmpInst.setLoc(IDLoc);
-              TmpInst.setOpcode(Mips::LWGP_MM);
-              TmpInst.addOperand(MCOperand::createReg(DstReg.getReg()));
-              TmpInst.addOperand(MCOperand::createReg(Mips::GP));
-              TmpInst.addOperand(MCOperand::createImm(MemOffset));
-              Instructions.push_back(TmpInst);
+
+              emitRRI(Mips::LWGP_MM, DstReg.getReg(), Mips::GP, MemOffset,
+                      IDLoc, Instructions);
               return false;
             }
           }
@@ -1998,81 +2052,6 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
     return expandAliasImmediate(Inst, IDLoc, Instructions);
   }
 }
-
-namespace {
-void emitRX(unsigned Opcode, unsigned Reg0, MCOperand Op1, SMLoc IDLoc,
-            SmallVectorImpl<MCInst> &Instructions) {
-  MCInst tmpInst;
-  tmpInst.setOpcode(Opcode);
-  tmpInst.addOperand(MCOperand::createReg(Reg0));
-  tmpInst.addOperand(Op1);
-  tmpInst.setLoc(IDLoc);
-  Instructions.push_back(tmpInst);
-}
-
-void emitRI(unsigned Opcode, unsigned Reg0, int32_t Imm, SMLoc IDLoc,
-            SmallVectorImpl<MCInst> &Instructions) {
-  emitRX(Opcode, Reg0, MCOperand::createImm(Imm), IDLoc, Instructions);
-}
-
-void emitRR(unsigned Opcode, unsigned Reg0, unsigned Reg1, SMLoc IDLoc,
-            SmallVectorImpl<MCInst> &Instructions) {
-  emitRX(Opcode, Reg0, MCOperand::createReg(Reg1), IDLoc, Instructions);
-}
-
-void emitII(unsigned Opcode, int16_t Imm1, int16_t Imm2, SMLoc IDLoc,
-            SmallVectorImpl<MCInst> &Instructions) {
-  MCInst tmpInst;
-  tmpInst.setOpcode(Opcode);
-  tmpInst.addOperand(MCOperand::createImm(Imm1));
-  tmpInst.addOperand(MCOperand::createImm(Imm2));
-  tmpInst.setLoc(IDLoc);
-  Instructions.push_back(tmpInst);
-}
-
-void emitR(unsigned Opcode, unsigned Reg0, SMLoc IDLoc,
-           SmallVectorImpl<MCInst> &Instructions) {
-  MCInst tmpInst;
-  tmpInst.setOpcode(Opcode);
-  tmpInst.addOperand(MCOperand::createReg(Reg0));
-  tmpInst.setLoc(IDLoc);
-  Instructions.push_back(tmpInst);
-}
-
-void emitRRX(unsigned Opcode, unsigned Reg0, unsigned Reg1, MCOperand Op2,
-             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
-  MCInst tmpInst;
-  tmpInst.setOpcode(Opcode);
-  tmpInst.addOperand(MCOperand::createReg(Reg0));
-  tmpInst.addOperand(MCOperand::createReg(Reg1));
-  tmpInst.addOperand(Op2);
-  tmpInst.setLoc(IDLoc);
-  Instructions.push_back(tmpInst);
-}
-
-void emitRRR(unsigned Opcode, unsigned Reg0, unsigned Reg1, unsigned Reg2,
-             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
-  emitRRX(Opcode, Reg0, Reg1, MCOperand::createReg(Reg2), IDLoc,
-          Instructions);
-}
-
-void emitRRI(unsigned Opcode, unsigned Reg0, unsigned Reg1, int16_t Imm,
-             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
-  emitRRX(Opcode, Reg0, Reg1, MCOperand::createImm(Imm), IDLoc,
-          Instructions);
-}
-
-void emitAppropriateDSLL(unsigned DstReg, unsigned SrcReg, int16_t ShiftAmount,
-                         SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
-  if (ShiftAmount >= 32) {
-    emitRRI(Mips::DSLL32, DstReg, SrcReg, ShiftAmount - 32, IDLoc,
-            Instructions);
-    return;
-  }
-
-  emitRRI(Mips::DSLL, DstReg, SrcReg, ShiftAmount, IDLoc, Instructions);
-}
-} // end anonymous namespace.
 
 bool MipsAsmParser::expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
                                       SmallVectorImpl<MCInst> &Instructions) {
@@ -2514,14 +2493,10 @@ bool MipsAsmParser::expandBranchImm(MCInst &Inst, SMLoc IDLoc,
   }
 
   int64_t ImmValue = ImmOp.getImm();
-  if (ImmValue == 0) {
-    MCInst BranchInst;
-    BranchInst.setOpcode(OpCode);
-    BranchInst.addOperand(DstRegOp);
-    BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-    BranchInst.addOperand(MemOffsetOp);
-    Instructions.push_back(BranchInst);
-  } else {
+  if (ImmValue == 0)
+    emitRRX(OpCode, DstRegOp.getReg(), Mips::ZERO, MemOffsetOp, IDLoc,
+            Instructions);
+  else {
     warnIfNoMacro(IDLoc);
 
     unsigned ATReg = getATReg(IDLoc);
@@ -2532,12 +2507,7 @@ bool MipsAsmParser::expandBranchImm(MCInst &Inst, SMLoc IDLoc,
                       IDLoc, Instructions))
       return true;
 
-    MCInst BranchInst;
-    BranchInst.setOpcode(OpCode);
-    BranchInst.addOperand(DstRegOp);
-    BranchInst.addOperand(MCOperand::createReg(ATReg));
-    BranchInst.addOperand(MemOffsetOp);
-    Instructions.push_back(BranchInst);
+    emitRRX(OpCode, DstRegOp.getReg(), ATReg, MemOffsetOp, IDLoc, Instructions);
   }
   return false;
 }
@@ -2545,7 +2515,6 @@ bool MipsAsmParser::expandBranchImm(MCInst &Inst, SMLoc IDLoc,
 void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
                                   SmallVectorImpl<MCInst> &Instructions,
                                   bool isLoad, bool isImmOpnd) {
-  MCInst TempInst;
   unsigned ImmOffset, HiOffset, LoOffset;
   const MCExpr *ExprOffset;
   unsigned TmpRegNum;
@@ -2566,8 +2535,6 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
       HiOffset++;
   } else
     ExprOffset = Inst.getOperand(2).getExpr();
-  // All instructions will have the same location.
-  TempInst.setLoc(IDLoc);
   // These are some of the types of expansions we perform here:
   // 1) lw $8, sym        => lui $8, %hi(sym)
   //                         lw $8, %lo(sym)($8)
@@ -2606,40 +2573,20 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
       return;
   }
 
-  TempInst.setOpcode(Mips::LUi);
-  TempInst.addOperand(MCOperand::createReg(TmpRegNum));
-  if (isImmOpnd)
-    TempInst.addOperand(MCOperand::createImm(HiOffset));
-  else {
-    const MCExpr *HiExpr = evaluateRelocExpr(ExprOffset, "hi");
-    TempInst.addOperand(MCOperand::createExpr(HiExpr));
-  }
-  // Add the instruction to the list.
-  Instructions.push_back(TempInst);
-  // Prepare TempInst for next instruction.
-  TempInst.clear();
+  emitRX(Mips::LUi, TmpRegNum,
+         isImmOpnd ? MCOperand::createImm(HiOffset)
+                   : MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "hi")),
+         IDLoc, Instructions);
   // Add temp register to base.
-  if (BaseRegNum != Mips::ZERO) {
-    TempInst.setOpcode(Mips::ADDu);
-    TempInst.addOperand(MCOperand::createReg(TmpRegNum));
-    TempInst.addOperand(MCOperand::createReg(TmpRegNum));
-    TempInst.addOperand(MCOperand::createReg(BaseRegNum));
-    Instructions.push_back(TempInst);
-    TempInst.clear();
-  }
+  if (BaseRegNum != Mips::ZERO)
+    emitRRR(Mips::ADDu, TmpRegNum, TmpRegNum, BaseRegNum, IDLoc, Instructions);
   // And finally, create original instruction with low part
   // of offset and new base.
-  TempInst.setOpcode(Inst.getOpcode());
-  TempInst.addOperand(MCOperand::createReg(RegOpNum));
-  TempInst.addOperand(MCOperand::createReg(TmpRegNum));
-  if (isImmOpnd)
-    TempInst.addOperand(MCOperand::createImm(LoOffset));
-  else {
-    const MCExpr *LoExpr = evaluateRelocExpr(ExprOffset, "lo");
-    TempInst.addOperand(MCOperand::createExpr(LoExpr));
-  }
-  Instructions.push_back(TempInst);
-  TempInst.clear();
+  emitRRX(Inst.getOpcode(), RegOpNum, TmpRegNum,
+          isImmOpnd
+              ? MCOperand::createImm(LoOffset)
+              : MCOperand::createExpr(evaluateRelocExpr(ExprOffset, "lo")),
+          IDLoc, Instructions);
 }
 
 bool
@@ -2724,7 +2671,6 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
     llvm_unreachable("unknown opcode for branch pseudo-instruction");
   }
 
-  MCInst BranchInst;
   bool IsTrgRegZero = (TrgReg == Mips::ZERO);
   bool IsSrcRegZero = (SrcReg == Mips::ZERO);
   if (IsSrcRegZero && IsTrgRegZero) {
@@ -2732,51 +2678,37 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
     // with GAS' behaviour. However, they may not generate the most efficient
     // code in some circumstances.
     if (PseudoOpcode == Mips::BLT) {
-      BranchInst.setOpcode(Mips::BLTZ);
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRX(Mips::BLTZ, Mips::ZERO, MCOperand::createExpr(OffsetExpr), IDLoc,
+             Instructions);
       return false;
     }
     if (PseudoOpcode == Mips::BLE) {
-      BranchInst.setOpcode(Mips::BLEZ);
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRX(Mips::BLEZ, Mips::ZERO, MCOperand::createExpr(OffsetExpr), IDLoc,
+             Instructions);
       Warning(IDLoc, "branch is always taken");
       return false;
     }
     if (PseudoOpcode == Mips::BGE) {
-      BranchInst.setOpcode(Mips::BGEZ);
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRX(Mips::BGEZ, Mips::ZERO, MCOperand::createExpr(OffsetExpr), IDLoc,
+             Instructions);
       Warning(IDLoc, "branch is always taken");
       return false;
     }
     if (PseudoOpcode == Mips::BGT) {
-      BranchInst.setOpcode(Mips::BGTZ);
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRX(Mips::BGTZ, Mips::ZERO, MCOperand::createExpr(OffsetExpr), IDLoc,
+             Instructions);
       return false;
     }
     if (PseudoOpcode == Mips::BGTU) {
-      BranchInst.setOpcode(Mips::BNE);
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRRX(Mips::BNE, Mips::ZERO, Mips::ZERO,
+              MCOperand::createExpr(OffsetExpr), IDLoc, Instructions);
       return false;
     }
     if (AcceptsEquality) {
       // If both registers are $0 and the pseudo-branch accepts equality, it
       // will always be taken, so we emit an unconditional branch.
-      BranchInst.setOpcode(Mips::BEQ);
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRRX(Mips::BEQ, Mips::ZERO, Mips::ZERO,
+              MCOperand::createExpr(OffsetExpr), IDLoc, Instructions);
       Warning(IDLoc, "branch is always taken");
       return false;
     }
@@ -2800,11 +2732,8 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
       // the pseudo-branch will always be taken, so we emit an unconditional
       // branch.
       // This only applies to unsigned pseudo-branches.
-      BranchInst.setOpcode(Mips::BEQ);
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRRX(Mips::BEQ, Mips::ZERO, Mips::ZERO,
+              MCOperand::createExpr(OffsetExpr), IDLoc, Instructions);
       Warning(IDLoc, "branch is always taken");
       return false;
     }
@@ -2821,21 +2750,17 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
       //
       // Because only BLEU and BGEU branch on equality, we can use the
       // AcceptsEquality variable to decide when to emit the BEQZ.
-      BranchInst.setOpcode(AcceptsEquality ? Mips::BEQ : Mips::BNE);
-      BranchInst.addOperand(
-          MCOperand::createReg(IsSrcRegZero ? TrgReg : SrcReg));
-      BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-      Instructions.push_back(BranchInst);
+      emitRRX(AcceptsEquality ? Mips::BEQ : Mips::BNE,
+              IsSrcRegZero ? TrgReg : SrcReg, Mips::ZERO,
+              MCOperand::createExpr(OffsetExpr), IDLoc, Instructions);
       return false;
     }
     // If we have a signed pseudo-branch and one of the registers is $0,
     // we can use an appropriate compare-to-zero branch. We select which one
     // to use in the switch statement above.
-    BranchInst.setOpcode(IsSrcRegZero ? ZeroSrcOpcode : ZeroTrgOpcode);
-    BranchInst.addOperand(MCOperand::createReg(IsSrcRegZero ? TrgReg : SrcReg));
-    BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-    Instructions.push_back(BranchInst);
+    emitRX(IsSrcRegZero ? ZeroSrcOpcode : ZeroTrgOpcode,
+           IsSrcRegZero ? TrgReg : SrcReg, MCOperand::createExpr(OffsetExpr),
+           IDLoc, Instructions);
     return false;
   }
 
@@ -2862,21 +2787,14 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
   //
   // The same applies to the unsigned variants, except that SLTu is used
   // instead of SLT.
-  MCInst SetInst;
-  SetInst.setOpcode(IsUnsigned ? Mips::SLTu : Mips::SLT);
-  SetInst.addOperand(MCOperand::createReg(ATRegNum));
-  SetInst.addOperand(MCOperand::createReg(ReverseOrderSLT ? TrgReg : SrcReg));
-  SetInst.addOperand(MCOperand::createReg(ReverseOrderSLT ? SrcReg : TrgReg));
-  Instructions.push_back(SetInst);
+  emitRRR(IsUnsigned ? Mips::SLTu : Mips::SLT, ATRegNum,
+          ReverseOrderSLT ? TrgReg : SrcReg, ReverseOrderSLT ? SrcReg : TrgReg,
+          IDLoc, Instructions);
 
-  if (!IsLikely)
-    BranchInst.setOpcode(AcceptsEquality ? Mips::BEQ : Mips::BNE);
-  else
-    BranchInst.setOpcode(AcceptsEquality ? Mips::BEQL : Mips::BNEL);
-  BranchInst.addOperand(MCOperand::createReg(ATRegNum));
-  BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
-  BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
-  Instructions.push_back(BranchInst);
+  emitRRX(IsLikely ? (AcceptsEquality ? Mips::BEQL : Mips::BNEL)
+                   : (AcceptsEquality ? Mips::BEQ : Mips::BNE),
+          ATRegNum, Mips::ZERO, MCOperand::createExpr(OffsetExpr), IDLoc,
+          Instructions);
   return false;
 }
 
@@ -3060,33 +2978,15 @@ bool MipsAsmParser::expandUlhu(MCInst &Inst, SMLoc IDLoc,
 
   unsigned SllReg = LoadedOffsetInAT ? DstReg : ATReg;
 
-  MCInst TmpInst;
-  TmpInst.setOpcode(Mips::LBu);
-  TmpInst.addOperand(MCOperand::createReg(FirstLbuDstReg));
-  TmpInst.addOperand(MCOperand::createReg(LbuSrcReg));
-  TmpInst.addOperand(MCOperand::createImm(FirstLbuOffset));
-  Instructions.push_back(TmpInst);
+  emitRRI(Mips::LBu, FirstLbuDstReg, LbuSrcReg, FirstLbuOffset, IDLoc,
+          Instructions);
 
-  TmpInst.clear();
-  TmpInst.setOpcode(Mips::LBu);
-  TmpInst.addOperand(MCOperand::createReg(SecondLbuDstReg));
-  TmpInst.addOperand(MCOperand::createReg(LbuSrcReg));
-  TmpInst.addOperand(MCOperand::createImm(SecondLbuOffset));
-  Instructions.push_back(TmpInst);
+  emitRRI(Mips::LBu, SecondLbuDstReg, LbuSrcReg, SecondLbuOffset, IDLoc,
+          Instructions);
 
-  TmpInst.clear();
-  TmpInst.setOpcode(Mips::SLL);
-  TmpInst.addOperand(MCOperand::createReg(SllReg));
-  TmpInst.addOperand(MCOperand::createReg(SllReg));
-  TmpInst.addOperand(MCOperand::createImm(8));
-  Instructions.push_back(TmpInst);
+  emitRRI(Mips::SLL, SllReg, SllReg, 8, IDLoc, Instructions);
 
-  TmpInst.clear();
-  TmpInst.setOpcode(Mips::OR);
-  TmpInst.addOperand(MCOperand::createReg(DstReg));
-  TmpInst.addOperand(MCOperand::createReg(DstReg));
-  TmpInst.addOperand(MCOperand::createReg(ATReg));
-  Instructions.push_back(TmpInst);
+  emitRRR(Mips::OR, DstReg, DstReg, ATReg, IDLoc, Instructions);
 
   return false;
 }
@@ -3147,19 +3047,11 @@ bool MipsAsmParser::expandUlw(MCInst &Inst, SMLoc IDLoc,
     RightLoadOffset  = LoadedOffsetInAT ? 3 : (OffsetValue + 3);
   }
 
-  MCInst LeftLoadInst;
-  LeftLoadInst.setOpcode(Mips::LWL);
-  LeftLoadInst.addOperand(DstRegOp);
-  LeftLoadInst.addOperand(MCOperand::createReg(FinalSrcReg));
-  LeftLoadInst.addOperand(MCOperand::createImm(LeftLoadOffset));
-  Instructions.push_back(LeftLoadInst);
+  emitRRI(Mips::LWL, DstRegOp.getReg(), FinalSrcReg, LeftLoadOffset, IDLoc,
+          Instructions);
 
-  MCInst RightLoadInst;
-  RightLoadInst.setOpcode(Mips::LWR);
-  RightLoadInst.addOperand(DstRegOp);
-  RightLoadInst.addOperand(MCOperand::createReg(FinalSrcReg));
-  RightLoadInst.addOperand(MCOperand::createImm(RightLoadOffset ));
-  Instructions.push_back(RightLoadInst);
+  emitRRI(Mips::LWR, DstRegOp.getReg(), FinalSrcReg, RightLoadOffset, IDLoc,
+          Instructions);
 
   return false;
 }
@@ -3220,21 +3112,11 @@ bool MipsAsmParser::expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
       break;
     }
 
-    MCInst tmpInst;
-
-    tmpInst.clear();
-    tmpInst.setLoc(Inst.getLoc());
-    tmpInst.setOpcode(FinalOpcode);
-    if (FinalDstReg == Mips::NoRegister) {
-      tmpInst.addOperand(MCOperand::createReg(DstReg));
-      tmpInst.addOperand(MCOperand::createReg(DstReg));
-      tmpInst.addOperand(MCOperand::createReg(SrcReg));
-    } else {
-      tmpInst.addOperand(MCOperand::createReg(FinalDstReg));
-      tmpInst.addOperand(MCOperand::createReg(FinalDstReg));
-      tmpInst.addOperand(MCOperand::createReg(DstReg));
-    }
-    Instructions.push_back(tmpInst);
+    if (FinalDstReg == Mips::NoRegister)
+      emitRRR(FinalOpcode, DstReg, DstReg, SrcReg, IDLoc, Instructions);
+    else
+      emitRRR(FinalOpcode, FinalDstReg, FinalDstReg, DstReg, IDLoc,
+              Instructions);
     return false;
   }
   return true;
@@ -3242,18 +3124,10 @@ bool MipsAsmParser::expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
 
 void MipsAsmParser::createNop(bool hasShortDelaySlot, SMLoc IDLoc,
                               SmallVectorImpl<MCInst> &Instructions) {
-  MCInst NopInst;
-  if (hasShortDelaySlot) {
-    NopInst.setOpcode(Mips::MOVE16_MM);
-    NopInst.addOperand(MCOperand::createReg(Mips::ZERO));
-    NopInst.addOperand(MCOperand::createReg(Mips::ZERO));
-  } else {
-    NopInst.setOpcode(Mips::SLL);
-    NopInst.addOperand(MCOperand::createReg(Mips::ZERO));
-    NopInst.addOperand(MCOperand::createReg(Mips::ZERO));
-    NopInst.addOperand(MCOperand::createImm(0));
-  }
-  Instructions.push_back(NopInst);
+  if (hasShortDelaySlot)
+    emitRR(Mips::MOVE16_MM, Mips::ZERO, Mips::ZERO, IDLoc, Instructions);
+  else
+    emitRRI(Mips::SLL, Mips::ZERO, Mips::ZERO, 0, IDLoc, Instructions);
 }
 
 void MipsAsmParser::createAddu(unsigned DstReg, unsigned SrcReg,
@@ -3266,17 +3140,19 @@ void MipsAsmParser::createAddu(unsigned DstReg, unsigned SrcReg,
 void MipsAsmParser::createCpRestoreMemOp(
     bool IsLoad, int StackOffset, SMLoc IDLoc,
     SmallVectorImpl<MCInst> &Instructions) {
-  MCInst MemInst;
-  MemInst.setOpcode(IsLoad ? Mips::LW : Mips::SW);
-  MemInst.addOperand(MCOperand::createReg(Mips::GP));
-  MemInst.addOperand(MCOperand::createReg(Mips::SP));
-  MemInst.addOperand(MCOperand::createImm(StackOffset));
-
   // If the offset can not fit into 16 bits, we need to expand.
-  if (!isInt<16>(StackOffset))
+  if (!isInt<16>(StackOffset)) {
+    MCInst MemInst;
+    MemInst.setOpcode(IsLoad ? Mips::LW : Mips::SW);
+    MemInst.addOperand(MCOperand::createReg(Mips::GP));
+    MemInst.addOperand(MCOperand::createReg(Mips::SP));
+    MemInst.addOperand(MCOperand::createImm(StackOffset));
     expandMemInst(MemInst, IDLoc, Instructions, IsLoad, true /*HasImmOpnd*/);
-  else
-    Instructions.push_back(MemInst);
+    return;
+  }
+
+  emitRRI(IsLoad ? Mips::LW : Mips::SW, Mips::GP, Mips::SP, StackOffset, IDLoc,
+          Instructions);
 }
 
 unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
