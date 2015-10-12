@@ -297,7 +297,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   // Map all BB references in the WinEH data to MBBs.
   for (WinEHTryBlockMapEntry &TBME : EHInfo.TryBlockMap) {
     for (WinEHHandlerType &H : TBME.HandlerArray) {
-      if (H.CatchObjRecoverIdx == -2 && H.CatchObj.Alloca) {
+      if (H.CatchObj.Alloca) {
         assert(StaticAllocaMap.count(H.CatchObj.Alloca));
         H.CatchObj.FrameIndex = StaticAllocaMap[H.CatchObj.Alloca];
       } else {

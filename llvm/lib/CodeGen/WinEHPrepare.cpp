@@ -194,7 +194,6 @@ static void addTryBlockMapEntry(WinEHFuncInfo &FuncInfo, int TryLow,
       HT.TypeDescriptor = cast<GlobalVariable>(TypeInfo->stripPointerCasts());
     HT.Adjectives = cast<ConstantInt>(CPI->getArgOperand(1))->getZExtValue();
     HT.Handler = CPI->getParent();
-    HT.CatchObjRecoverIdx = -2;
     if (isa<ConstantPointerNull>(CPI->getArgOperand(2)))
       HT.CatchObj.Alloca = nullptr;
     else

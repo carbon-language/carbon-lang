@@ -146,8 +146,7 @@ void WinException::endFunction(const MachineFunction *MF) {
   }
 }
 
-/// Retreive the MCSymbol for a GlobalValue or MachineBasicBlock. GlobalValues
-/// are used in the old WinEH scheme, and they will be removed eventually.
+/// Retreive the MCSymbol for a GlobalValue or MachineBasicBlock.
 static MCSymbol *getMCSymbolForMBB(AsmPrinter *Asm,
                                    const MachineBasicBlock *MBB) {
   if (!MBB)
@@ -275,7 +274,6 @@ const MCExpr *WinException::create32bitRef(const MCSymbol *Value) {
 const MCExpr *WinException::create32bitRef(const Value *V) {
   if (!V)
     return MCConstantExpr::create(0, Asm->OutContext);
-  // FIXME: Delete the GlobalValue case once the new IR is fully functional.
   if (const auto *GV = dyn_cast<GlobalValue>(V))
     return create32bitRef(Asm->getSymbol(GV));
   return create32bitRef(MMI->getAddrLabelSymbol(cast<BasicBlock>(V)));
@@ -649,16 +647,10 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
       OS.EmitLabel(HandlerMapXData);
       for (const WinEHHandlerType &HT : TBME.HandlerArray) {
         // Get the frame escape label with the offset of the catch object. If
-        // the index is -1, then there is no catch object, and we should emit an
-        // offset of zero, indicating that no copy will occur.
+        // the index is INT_MAX, then there is no catch object, and we should
+        // emit an offset of zero, indicating that no copy will occur.
         const MCExpr *FrameAllocOffsetRef = nullptr;
-        if (HT.CatchObjRecoverIdx >= 0) {
-          MCSymbol *FrameAllocOffset =
-              Asm->OutContext.getOrCreateFrameAllocSymbol(
-                  FuncLinkageName, HT.CatchObjRecoverIdx);
-          FrameAllocOffsetRef = MCSymbolRefExpr::create(
-              FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
-        } else if (HT.CatchObj.FrameIndex != INT_MAX) {
+        if (HT.CatchObj.FrameIndex != INT_MAX) {
           int Offset = getFrameIndexOffset(HT.CatchObj.FrameIndex);
           // For 32-bit, the catch object offset is relative to the end of the
           // EH registration node. For 64-bit, it's relative to SP at the end of
@@ -681,7 +673,6 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
         OS.EmitValue(create32bitRef(HandlerSym), 4);        // Handler
 
         if (shouldEmitPersonality) {
-          // With the new IR, this is always 16 + 8 + getMaxCallFrameSize().
           // Keep this in sync with X86FrameLowering::emitPrologue.
           int ParentFrameOffset =
               16 + 8 + MF->getFrameInfo()->getMaxCallFrameSize();

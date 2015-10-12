@@ -60,7 +60,6 @@ struct SEHUnwindMapEntry {
 
 struct WinEHHandlerType {
   int Adjectives;
-  int CatchObjRecoverIdx;
   /// The CatchObj starts out life as an LLVM alloca, is turned into a frame
   /// index, and after PEI, becomes a raw offset.
   union {
