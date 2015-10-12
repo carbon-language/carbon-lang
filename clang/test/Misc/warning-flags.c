@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (89):
+CHECK: Warnings without flags (85):
 CHECK-NEXT:   ext_excess_initializers
 CHECK-NEXT:   ext_excess_initializers_in_char_array_initializer
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -35,13 +35,9 @@ CHECK-NEXT:   ext_typecheck_cond_incompatible_operands_nonstandard
 CHECK-NEXT:   ext_typecheck_ordered_comparison_of_function_pointers
 CHECK-NEXT:   ext_typecheck_ordered_comparison_of_pointer_integer
 CHECK-NEXT:   ext_using_undefined_std
-CHECK-NEXT:   pp_include_next_absolute_path
-CHECK-NEXT:   pp_include_next_in_primary
 CHECK-NEXT:   pp_invalid_string_literal
 CHECK-NEXT:   pp_out_of_date_dependency
 CHECK-NEXT:   pp_poisoning_existing_macro
-CHECK-NEXT:   pp_pragma_once_in_main_file
-CHECK-NEXT:   pp_pragma_sysheader_in_main_file
 CHECK-NEXT:   w_asm_qualifier_ignored
 CHECK-NEXT:   warn_accessor_property_type_mismatch
 CHECK-NEXT:   warn_arcmt_nsalloc_realloc
@@ -111,4 +107,4 @@ CHECK-NEXT:   warn_weak_import
 
 The list of warnings in -Wpedantic should NEVER grow.
 
-CHECK: Number in -Wpedantic (not covered by other -W flags): 28
+CHECK: Number in -Wpedantic (not covered by other -W flags): 27

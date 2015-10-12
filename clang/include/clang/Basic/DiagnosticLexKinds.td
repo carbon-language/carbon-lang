@@ -256,10 +256,13 @@ def err_pp_hash_error : Error<"%0">;
 }
 
 def pp_include_next_in_primary : Warning<
-  "#include_next in primary source file">;
+  "#include_next in primary source file">,
+  InGroup<DiagGroup<"include-next-outside-header">>;
 def pp_include_macros_out_of_predefines : Error<
   "the #__include_macros directive is only for internal use by -imacros">;
-def pp_include_next_absolute_path : Warning<"#include_next with absolute path">;
+def pp_include_next_absolute_path : Warning<
+  "#include_next with absolute path">,
+  InGroup<DiagGroup<"include-next-absolute-path">>;
 def ext_c99_whitespace_required_after_macro_name : ExtWarn<
   "ISO C99 requires whitespace after the macro name">, InGroup<C99>;
 def ext_missing_whitespace_after_macro_name : ExtWarn<
@@ -267,9 +270,11 @@ def ext_missing_whitespace_after_macro_name : ExtWarn<
 def warn_missing_whitespace_after_macro_name : Warning<
   "whitespace recommended after macro name">;
   
-def pp_pragma_once_in_main_file : Warning<"#pragma once in main file">;
+def pp_pragma_once_in_main_file : Warning<"#pragma once in main file">,
+  InGroup<DiagGroup<"pragma-once-outside-header">>;
 def pp_pragma_sysheader_in_main_file : Warning<
-  "#pragma system_header ignored in main file">;
+  "#pragma system_header ignored in main file">,
+  InGroup<DiagGroup<"pragma-system-header-outside-header">>;
 def pp_poisoning_existing_macro : Warning<"poisoning existing macro">;
 def pp_out_of_date_dependency : Warning<
   "current file is older than dependency %0">;
@@ -316,7 +321,7 @@ def ext_pp_include_search_ms : ExtWarn<
 
 def ext_pp_ident_directive : Extension<"#ident is a language extension">;
 def ext_pp_include_next_directive : Extension<
-  "#include_next is a language extension">;
+  "#include_next is a language extension">, InGroup<GNUIncludeNext>;
 def ext_pp_warning_directive : Extension<"#warning is a language extension">;
 
 def ext_pp_extra_tokens_at_eol : ExtWarn<
