@@ -182,7 +182,7 @@ def FeatureRDSEED  : SubtargetFeature<"rdseed", "HasRDSEED", "true",
                                       "Support RDSEED instruction">;
 def FeatureMPX     : SubtargetFeature<"mpx", "HasMPX", "true",
                                       "Support MPX instructions">;
-def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
+def FeatureLEAForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
                                      "Use LEA for adjusting the stack pointer">;
 def FeatureSlowDivide32 : SubtargetFeature<"idivl-to-divb",
                                      "HasSlowDivide32", "true",
@@ -284,7 +284,7 @@ class BonnellProc<string Name> : ProcessorModel<Name, AtomModel, [
   FeatureCMPXCHG16B,
   FeatureMOVBE,
   FeatureSlowBTMem,
-  FeatureLeaForSP,
+  FeatureLEAForSP,
   FeatureSlowDivide32,
   FeatureSlowDivide64,
   FeatureCallRegIndirect,
