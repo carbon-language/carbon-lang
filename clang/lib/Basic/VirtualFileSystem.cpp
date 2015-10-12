@@ -497,7 +497,7 @@ void InMemoryFileSystem::addFile(const Twine &P, time_t ModificationTime,
   assert(!EC);
   (void)EC;
 
-  FileManager::removeDotPaths(Path, /*RemoveDotDot=*/true);
+  FileManager::removeDotPaths(Path, /*RemoveDotDot=*/false);
   if (Path.empty())
     return;
 
@@ -556,7 +556,7 @@ lookupInMemoryNode(const InMemoryFileSystem &FS, detail::InMemoryDirectory *Dir,
   assert(!EC);
   (void)EC;
 
-  FileManager::removeDotPaths(Path, /*RemoveDotDot=*/true);
+  FileManager::removeDotPaths(Path, /*RemoveDotDot=*/false);
   if (Path.empty())
     return Dir;
 
