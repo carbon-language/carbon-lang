@@ -197,42 +197,8 @@ public:
   bool isNeeded() const { return !AsNeeded || IsUsed; }
 };
 
-template <typename T>
-std::unique_ptr<InputFile> createELFFileAux(MemoryBufferRef MB) {
-  std::unique_ptr<T> Ret = llvm::make_unique<T>(MB);
-
-  if (!Config->FirstElf)
-    Config->FirstElf = Ret.get();
-
-  if (Config->ElfKind == ELFNoneKind) {
-    Config->ElfKind = Ret->getELFKind();
-    Config->EMachine = Ret->getEMachine();
-  }
-
-  return std::move(Ret);
-}
-
 template <template <class> class T>
-std::unique_ptr<InputFile> createELFFile(MemoryBufferRef MB) {
-  using namespace llvm;
-
-  std::pair<unsigned char, unsigned char> Type =
-    object::getElfArchType(MB.getBuffer());
-  if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
-    error("Invalid data encoding: " + MB.getBufferIdentifier());
-
-  if (Type.first == ELF::ELFCLASS32) {
-    if (Type.second == ELF::ELFDATA2LSB)
-      return createELFFileAux<T<object::ELF32LE>>(MB);
-    return createELFFileAux<T<object::ELF32BE>>(MB);
-  }
-  if (Type.first == ELF::ELFCLASS64) {
-    if (Type.second == ELF::ELFDATA2LSB)
-      return createELFFileAux<T<object::ELF64LE>>(MB);
-    return createELFFileAux<T<object::ELF64BE>>(MB);
-  }
-  error("Invalid file class: " + MB.getBufferIdentifier());
-}
+std::unique_ptr<InputFile> createELFFile(MemoryBufferRef MB);
 
 } // namespace elf2
 } // namespace lld
