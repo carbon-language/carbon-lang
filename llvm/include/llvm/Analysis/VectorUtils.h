@@ -14,15 +14,18 @@
 #ifndef LLVM_TRANSFORMS_UTILS_VECTORUTILS_H
 #define LLVM_TRANSFORMS_UTILS_VECTORUTILS_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 
 namespace llvm {
 
+struct DemandedBits;
 class GetElementPtrInst;
 class Loop;
 class ScalarEvolution;
+class TargetTransformInfo;
 class Type;
 class Value;
 
@@ -84,6 +87,45 @@ Value *findScalarElement(Value *V, unsigned EltNo);
 /// a sequence of instructions that broadcast a single value into a vector.
 Value *getSplatValue(Value *V);
 
+/// \brief Compute a map of integer instructions to their minimum legal type
+/// size.
+///
+/// C semantics force sub-int-sized values (e.g. i8, i16) to be promoted to int
+/// type (e.g. i32) whenever arithmetic is performed on them.
+///
+/// For targets with native i8 or i16 operations, usually InstCombine can shrink
+/// the arithmetic type down again. However InstCombine refuses to create
+/// illegal types, so for targets without i8 or i16 registers, the lengthening
+/// and shrinking remains.
+///
+/// Most SIMD ISAs (e.g. NEON) however support vectors of i8 or i16 even when
+/// their scalar equivalents do not, so during vectorization it is important to
+/// remove these lengthens and truncates when deciding the profitability of
+/// vectorization.
+///
+/// This function analyzes the given range of instructions and determines the
+/// minimum type size each can be converted to. It attempts to remove or
+/// minimize type size changes across each def-use chain, so for example in the
+/// following code:
+///
+///   %1 = load i8, i8*
+///   %2 = add i8 %1, 2
+///   %3 = load i16, i16*
+///   %4 = zext i8 %2 to i32
+///   %5 = zext i16 %3 to i32
+///   %6 = add i32 %4, %5
+///   %7 = trunc i32 %6 to i16
+///
+/// Instruction %6 must be done at least in i16, so computeMinimumValueSizes
+/// will return: {%1: 16, %2: 16, %3: 16, %4: 16, %5: 16, %6: 16, %7: 16}.
+///
+/// If the optional TargetTransformInfo is provided, this function tries harder
+/// to do less work by only looking at illegal types.
+DenseMap<Instruction*, uint64_t>
+computeMinimumValueSizes(ArrayRef<BasicBlock*> Blocks,
+                         DemandedBits &DB,
+                         const TargetTransformInfo *TTI=nullptr);
+    
 } // llvm namespace
 
 #endif
