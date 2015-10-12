@@ -5367,6 +5367,53 @@ Process::SettingsTerminate ()
     Thread::SettingsTerminate ();
 }
 
+namespace
+{
+    // RestorePlanState is used to record the "is private", "is master" and "okay to discard" fields of
+    // the plan we are running, and reset it on Clean or on destruction.
+    // It will only reset the state once, so you can call Clean and then monkey with the state and it
+    // won't get reset on you again.
+    
+    class RestorePlanState
+    {
+    public:
+        RestorePlanState (lldb::ThreadPlanSP thread_plan_sp) :
+            m_thread_plan_sp(thread_plan_sp),
+            m_already_reset(false)
+        {
+            if (m_thread_plan_sp)
+            {
+                m_private = m_thread_plan_sp->GetPrivate();
+                m_is_master = m_thread_plan_sp->IsMasterPlan();
+                m_okay_to_discard = m_thread_plan_sp->OkayToDiscard();
+            }
+        }
+        
+        ~RestorePlanState()
+        {
+            Clean();
+        }
+        
+        void
+        Clean ()
+        {
+            if (!m_already_reset && m_thread_plan_sp)
+            {
+                m_already_reset = true;
+                m_thread_plan_sp->SetPrivate(m_private);
+                m_thread_plan_sp->SetIsMasterPlan (m_is_master);
+                m_thread_plan_sp->SetOkayToDiscard(m_okay_to_discard);
+            }
+        }
+    private:
+        lldb::ThreadPlanSP m_thread_plan_sp;
+        bool m_already_reset;
+        bool m_private;
+        bool m_is_master;
+        bool m_okay_to_discard;
+    };
+}
+
 ExpressionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         lldb::ThreadPlanSP &thread_plan_sp,
@@ -5400,12 +5447,22 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         return eExpressionSetupError;
     }
 
+    // We need to change some of the thread plan attributes for the thread plan runner.  This will restore them
+    // when we are done:
+    
+    RestorePlanState thread_plan_restorer(thread_plan_sp);
+    
     // We rely on the thread plan we are running returning "PlanCompleted" if when it successfully completes.
     // For that to be true the plan can't be private - since private plans suppress themselves in the
     // GetCompletedPlan call. 
 
-    bool orig_plan_private = thread_plan_sp->GetPrivate();
     thread_plan_sp->SetPrivate(false);
+    
+    // The plans run with RunThreadPlan also need to be terminal master plans or when they are done we will end
+    // up asking the plan above us whether we should stop, which may give the wrong answer.
+    
+    thread_plan_sp->SetIsMasterPlan (true);
+    thread_plan_sp->SetOkayToDiscard(false);
 
     if (m_private_state.GetValue() != eStateStopped)
     {
@@ -5835,10 +5892,10 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                         {
                                             if (log)
                                                 log->PutCString ("Process::RunThreadPlan(): execution completed successfully.");
-                                            // Now mark this plan as private so it doesn't get reported as the stop reason
-                                            // after this point.  
-                                            if (thread_plan_sp)
-                                                thread_plan_sp->SetPrivate (orig_plan_private);
+                                            
+                                            // Restore the plan state so it will get reported as intended when we are done.
+                                            thread_plan_restorer.Clean();
+                                            
                                             return_value = eExpressionCompleted;
                                         }
                                         else
@@ -5851,6 +5908,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                                 return_value = eExpressionHitBreakpoint;
                                                 if (!options.DoesIgnoreBreakpoints())
                                                 {
+                                                    // Restore the plan state and then force Private to false.  We are
+                                                    // going to stop because of this plan so we need it to become a public
+                                                    // plan or it won't report correctly when we continue to its termination
+                                                    // later on.
+                                                    thread_plan_restorer.Clean();
+                                                    if (thread_plan_sp)
+                                                        thread_plan_sp->SetPrivate(false);
                                                     event_to_broadcast_sp = event_sp;
                                                 }
                                             }
@@ -6069,6 +6133,19 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 m_public_state.SetValueNoLock(old_state);
         }
 
+        if (return_value != eExpressionCompleted && log)
+        {
+            // Print a backtrace into the log so we can figure out where we are:
+            StreamString s;
+            s.PutCString("Thread state after unsuccessful completion: \n");
+            thread->GetStackFrameStatus (s,
+                                         0,
+                                         UINT32_MAX,
+                                         true,
+                                         UINT32_MAX);
+            log->PutCString(s.GetData());
+
+        }
         // Restore the thread state if we are going to discard the plan execution.  There are three cases where this
         // could happen:
         // 1) The execution successfully completed
@@ -6157,7 +6234,8 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             else
                                 ts.Printf("[ip unknown] ");
 
-                            lldb::StopInfoSP stop_info_sp = thread->GetStopInfo();
+                            // Show the private stop info here, the public stop info will be from the last natural stop.
+                            lldb::StopInfoSP stop_info_sp = thread->GetPrivateStopInfo();
                             if (stop_info_sp)
                             {
                                 const char *stop_desc = stop_info_sp->GetDescription();
@@ -6183,7 +6261,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - discarding thread plans up to %p.",
                                  static_cast<void*>(thread_plan_sp.get()));
                 thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
-                thread_plan_sp->SetPrivate (orig_plan_private);
             }
             else
             {
@@ -6200,7 +6277,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (options.DoesUnwindOnError())
             {
                 thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
-                thread_plan_sp->SetPrivate (orig_plan_private);
             }
         }
         else
@@ -6226,7 +6302,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     if (log)
                         log->PutCString("Process::RunThreadPlan(): discarding thread plan 'cause unwind_on_error is set.");
                     thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
-                    thread_plan_sp->SetPrivate (orig_plan_private);
                 }
             }
         }

@@ -103,9 +103,6 @@ lldb_private::InferiorCallMmap (Process *process,
                 if (call_plan_sp)
                 {
                     StreamFile error_strm;
-                    // This plan is a utility plan, so set it to discard itself when done.
-                    call_plan_sp->SetIsMasterPlan (true);
-                    call_plan_sp->SetOkayToDiscard(true);
                     
                     StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
                     if (frame)
@@ -188,9 +185,6 @@ lldb_private::InferiorCallMunmap (Process *process,
                 if (call_plan_sp)
                 {
                     StreamFile error_strm;
-                    // This plan is a utility plan, so set it to discard itself when done.
-                    call_plan_sp->SetIsMasterPlan (true);
-                    call_plan_sp->SetOkayToDiscard(true);
                    
                     StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
                     if (frame)
@@ -244,9 +238,6 @@ lldb_private::InferiorCall (Process *process,
     if (call_plan_sp)
     {
         StreamString error_strm;
-        // This plan is a utility plan, so set it to discard itself when done.
-        call_plan_sp->SetIsMasterPlan (true);
-        call_plan_sp->SetOkayToDiscard(true);
 
         StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
         if (frame)
