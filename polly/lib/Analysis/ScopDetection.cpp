@@ -495,9 +495,6 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
     // First step: collect parametric terms in all array references.
     SmallVector<const SCEV *, 4> Terms;
     for (const auto &Pair : Context.Accesses[BasePointer]) {
-      if (auto *AF = dyn_cast<SCEVAddRecExpr>(Pair.second))
-        SE->collectParametricTerms(AF, Terms);
-
       // In case the outermost expression is a plain add, we check if any of its
       // terms has the form 4 * %inst * %param * %param ..., aka a term that
       // contains a product between a parameter and an instruction that is
@@ -530,6 +527,8 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
           }
         }
       }
+      if (Terms.empty())
+        SE->collectParametricTerms(Pair.second, Terms);
     }
 
     // Second step: find array shape.
@@ -539,12 +538,18 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
     if (!AllowNonAffine)
       for (const SCEV *DelinearizedSize : Shape->DelinearizedSizes) {
         if (auto *Unknown = dyn_cast<SCEVUnknown>(DelinearizedSize)) {
-          auto *value = dyn_cast<Value>(Unknown->getValue());
-          if (isa<UndefValue>(value)) {
+          auto *V = dyn_cast<Value>(Unknown->getValue());
+          if (isa<UndefValue>(V)) {
             invalid<ReportDifferentArrayElementSize>(
                 Context, /*Assert=*/true,
                 Context.Accesses[BasePointer].front().first, BaseValue);
             return false;
+          }
+          if (auto *Load = dyn_cast<LoadInst>(V)) {
+            if (Context.CurRegion.contains(Load) &&
+                isHoistableLoad(Load, CurRegion, *LI, *SE))
+              Context.RequiredILS.insert(Load);
+            continue;
           }
         }
         if (hasScalarDepsInsideRegion(DelinearizedSize, &CurRegion))
