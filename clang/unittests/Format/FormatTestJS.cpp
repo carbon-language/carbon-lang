@@ -617,9 +617,15 @@ TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
   verifyFormat("var regex = /x|y/;");
   verifyFormat("var regex = /a{2}/;");
   verifyFormat("var regex = /a{1,3}/;");
+
   verifyFormat("var regex = /[abc]/;");
   verifyFormat("var regex = /[^abc]/;");
   verifyFormat("var regex = /[\\b]/;");
+  verifyFormat("var regex = /[/]/;");
+  verifyFormat("var regex = /[\\/]/;");
+  verifyFormat("var regex = /\\[/;");
+  verifyFormat("var regex = /\\\\[/]/;");
+
   verifyFormat("var regex = /\\b/;");
   verifyFormat("var regex = /\\B/;");
   verifyFormat("var regex = /\\d/;");
