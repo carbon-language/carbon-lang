@@ -83,6 +83,8 @@ class CGDebugInfo {
   /// Cache of previously constructed Types.
   llvm::DenseMap<const void *, llvm::TrackingMDRef> TypeCache;
 
+  llvm::SmallDenseMap<llvm::StringRef, llvm::StringRef> DebugPrefixMap;
+
   struct ObjCInterfaceCacheEntry {
     const ObjCInterfaceType *Type;
     llvm::DIType *Decl;
@@ -403,6 +405,9 @@ private:
 
   /// Create new compile unit.
   void CreateCompileUnit();
+
+  /// Remap a given path with the current debug prefix map
+  std::string remapDIPath(StringRef) const;
 
   /// Get the file debug info descriptor for the input location.
   llvm::DIFile *getOrCreateFile(SourceLocation Loc);

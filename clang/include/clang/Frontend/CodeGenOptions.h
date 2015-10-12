@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Sanitizers.h"
 #include "llvm/Support/Regex.h"
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -119,6 +120,8 @@ public:
   /// The string to embed in the debug information for the compile unit, if
   /// non-empty.
   std::string DwarfDebugFlags;
+
+  std::map<std::string, std::string> DebugPrefixMap;
 
   /// The ABI to use for passing floating point arguments.
   std::string FloatABI;
