@@ -50,6 +50,13 @@ uint32_t ArchiveMemberHeader::getSize() const {
   return Ret;
 }
 
+bool ArchiveMemberHeader::isSizeValid() const {
+  uint32_t Ret;
+  if (llvm::StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, Ret))
+    return false;
+  return true;
+}
+
 sys::fs::perms ArchiveMemberHeader::getAccessMode() const {
   unsigned Ret;
   if (StringRef(AccessMode, sizeof(AccessMode)).rtrim(" ").getAsInteger(8, Ret))
@@ -89,6 +96,11 @@ Archive::Child::Child(const Archive *Parent, const char *Start)
 
   uint64_t Size = sizeof(ArchiveMemberHeader);
   Data = StringRef(Start, Size);
+  // Check to make sure the size is valid.
+  const ArchiveMemberHeader *Header =
+    reinterpret_cast<const ArchiveMemberHeader *>(Data.data());
+  if (!Header->isSizeValid())
+    return;
   if (!isThinMember()) {
     Size += getRawSize();
     Data = StringRef(Start, Size);

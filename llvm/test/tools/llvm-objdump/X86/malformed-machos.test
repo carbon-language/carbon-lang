@@ -39,3 +39,9 @@
 # RUN:   | FileCheck -check-prefix=m0337 %s 
 
 # m0337: subq	$16, %rsp
+
+# RUN: llvm-objdump -macho -disassemble \
+# RUN:   %p/Inputs/malformed-machos/00000031.a \
+# RUN:   | FileCheck -check-prefix=0031a %s
+
+# 0031a: Archive
