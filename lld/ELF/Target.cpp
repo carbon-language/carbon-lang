@@ -365,6 +365,18 @@ bool MipsTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
 }
 
 void MipsTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
-                                 uint64_t BaseAddr, uint64_t SymVA) const {}
+                                 uint64_t BaseAddr, uint64_t SymVA) const {
+  typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
+  auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
+
+  switch (Type) {
+  case R_MIPS_32:
+    add32le(Buf + Rel.r_offset, SymVA);
+    break;
+  default:
+    error(Twine("unrecognized reloc ") + Twine(Type));
+    break;
+  }
+}
 }
 }
