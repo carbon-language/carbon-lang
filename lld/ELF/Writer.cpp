@@ -65,7 +65,6 @@ private:
   bool isOutputDynamic() const {
     return !Symtab.getSharedFiles().empty() || Config->Shared;
   }
-  bool needsDynamicSections() const { return isOutputDynamic(); }
   uintX_t getVAStart() const { return Config->Shared ? 0 : Target->getVAStart(); }
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
@@ -435,13 +434,13 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       continue;
     Out<ELFT>::SymTab->addSymbol(Name);
 
-    if (needsDynamicSections() && includeInDynamicSymtab(*Body))
+    if (isOutputDynamic() && includeInDynamicSymtab(*Body))
       Out<ELFT>::HashTab->addSymbol(Body);
   }
   addCommonSymbols(CommonSymbols);
 
   OutputSections.push_back(Out<ELFT>::SymTab);
-  if (needsDynamicSections()) {
+  if (isOutputDynamic()) {
     OutputSections.push_back(Out<ELFT>::DynSymTab);
     OutputSections.push_back(Out<ELFT>::HashTab);
     OutputSections.push_back(Out<ELFT>::Dynamic);
@@ -495,7 +494,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   int NumPhdrs = 2;   // 2 for PhdrPhdr and FileHeaderPhdr
   if (needsInterpSection())
     ++NumPhdrs;
-  if (needsDynamicSections())
+  if (isOutputDynamic())
     ++NumPhdrs;
   uintX_t Last = PF_R;
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
@@ -570,7 +569,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     Interp->p_type = PT_INTERP;
     copyPhdr(Interp, Out<ELFT>::Interp);
   }
-  if (needsDynamicSections()) {
+  if (isOutputDynamic()) {
     Phdrs.emplace_back();
     Elf_Phdr *PH = &Phdrs.back();
     PH->p_type = PT_DYNAMIC;
