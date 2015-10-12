@@ -200,7 +200,11 @@ PPC64TargetInfo::PPC64TargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
   PltEntrySize = 32;
+
+  // We need 64K pages (at least under glibc/Linux, the loader won't
+  // set different permissions on a finer granularity than that).
   PageSize = 65536;
+
   VAStart = 0x10000000;
 }
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
