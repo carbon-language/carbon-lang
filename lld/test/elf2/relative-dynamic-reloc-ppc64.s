@@ -1,6 +1,7 @@
 // RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %s -o %t.o
 // RUN: ld.lld2 -shared %t.o -o %t.so
 // RUN: llvm-readobj -t -r -dyn-symbols %t.so | FileCheck %s
+// REQUIRES: ppc
 
 // Test that we create R_PPC64_RELATIVE relocations but don't put any
 // symbols in the dynamic symbol table.
