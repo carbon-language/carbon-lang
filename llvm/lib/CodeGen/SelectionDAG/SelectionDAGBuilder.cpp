@@ -4185,22 +4185,20 @@ static SDValue ExpandPowI(SDLoc DL, SDValue LHS, SDValue RHS,
   return DAG.getNode(ISD::FPOWI, DL, LHS.getValueType(), LHS, RHS);
 }
 
-// getTruncatedArgReg - Find underlying register used for an truncated
-// argument.
-static unsigned getTruncatedArgReg(const SDValue &N) {
-  if (N.getOpcode() != ISD::TRUNCATE)
+// getUnderlyingArgReg - Find underlying register used for a truncated or
+// bitcasted argument.
+static unsigned getUnderlyingArgReg(const SDValue &N) {
+  switch (N.getOpcode()) {
+  case ISD::CopyFromReg:
+    return cast<RegisterSDNode>(N.getOperand(1))->getReg();
+  case ISD::BITCAST:
+  case ISD::AssertZext:
+  case ISD::AssertSext:
+  case ISD::TRUNCATE:
+    return getUnderlyingArgReg(N.getOperand(0));
+  default:
     return 0;
-
-  const SDValue &Ext = N.getOperand(0);
-  if (Ext.getOpcode() == ISD::AssertZext ||
-      Ext.getOpcode() == ISD::AssertSext) {
-    const SDValue &CFR = Ext.getOperand(0);
-    if (CFR.getOpcode() == ISD::CopyFromReg)
-      return cast<RegisterSDNode>(CFR.getOperand(1))->getReg();
-    if (CFR.getOpcode() == ISD::TRUNCATE)
-      return getTruncatedArgReg(CFR);
   }
-  return 0;
 }
 
 /// EmitFuncArgumentDbgValue - If the DbgValueInst is a dbg_value of a function
@@ -4228,11 +4226,7 @@ bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(
     Op = MachineOperand::CreateFI(FI);
 
   if (!Op && N.getNode()) {
-    unsigned Reg;
-    if (N.getOpcode() == ISD::CopyFromReg)
-      Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
-    else
-      Reg = getTruncatedArgReg(N);
+    unsigned Reg = getUnderlyingArgReg(N);
     if (Reg && TargetRegisterInfo::isVirtualRegister(Reg)) {
       MachineRegisterInfo &RegInfo = MF.getRegInfo();
       unsigned PR = RegInfo.getLiveInPhysReg(Reg);
