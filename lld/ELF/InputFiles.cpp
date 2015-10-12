@@ -281,19 +281,19 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   this->initStringTable();
   this->SoName = this->getName();
 
-  if (DynamicSec) {
-    auto *Begin =
-        reinterpret_cast<const Elf_Dyn *>(Obj.base() + DynamicSec->sh_offset);
-    const Elf_Dyn *End = Begin + DynamicSec->sh_size / sizeof(Elf_Dyn);
+  if (!DynamicSec)
+    return;
+  auto *Begin =
+      reinterpret_cast<const Elf_Dyn *>(Obj.base() + DynamicSec->sh_offset);
+  const Elf_Dyn *End = Begin + DynamicSec->sh_size / sizeof(Elf_Dyn);
 
-    for (const Elf_Dyn &Dyn : make_range(Begin, End)) {
-      if (Dyn.d_tag == DT_SONAME) {
-        uintX_t Val = Dyn.getVal();
-        if (Val >= this->StringTable.size())
-          error("Invalid DT_SONAME entry");
-        this->SoName = StringRef(this->StringTable.data() + Val);
-        break;
-      }
+  for (const Elf_Dyn &Dyn : make_range(Begin, End)) {
+    if (Dyn.d_tag == DT_SONAME) {
+      uintX_t Val = Dyn.getVal();
+      if (Val >= this->StringTable.size())
+        error("Invalid DT_SONAME entry");
+      this->SoName = StringRef(this->StringTable.data() + Val);
+      return;
     }
   }
 }
