@@ -1254,10 +1254,13 @@ def default_test_runner_name(num_threads):
         # Use the serial runner.
         test_runner_name = "serial"
     elif os.name == "nt":
-        # Currently the multiprocessing test runner with ctrl-c
-        # support isn't running correctly on nt.  Use the pool
-        # support without ctrl-c.
-        test_runner_name = "threading-pool"
+        # On Windows, Python uses CRT with a low limit on the number of open
+        # files.  If you have a lot of cores, the threading-pool runner will
+        # often fail because it exceeds that limit.
+        if num_threads > 32:
+            test_runner_name = "multiprocessing-pool"
+        else:
+            test_runner_name = "threading-pool"
     elif is_darwin_version_lower_than(
             distutils.version.StrictVersion("10.10.0")):
         # OS X versions before 10.10 appear to have an issue using
