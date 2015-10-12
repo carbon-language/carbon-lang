@@ -571,8 +571,6 @@ TEST_F(InMemoryFileSystemTest, OpenFileForRead) {
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/a"); // Open again.
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
-  File = FS.openFileForRead("./a"); // Open again.
-  ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/");
   ASSERT_EQ(File.getError(), errc::invalid_argument) << FS.toString();
   File = FS.openFileForRead("/b");
