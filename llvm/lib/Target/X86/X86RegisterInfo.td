@@ -225,15 +225,15 @@ let SubRegIndices = [sub_ymm] in {
   }
 }
 
-  // Mask Registers, used by AVX-512 instructions.
-  def K0 : X86Reg<"k0", 0>, DwarfRegNum<[118, -2, -2]>;
-  def K1 : X86Reg<"k1", 1>, DwarfRegNum<[119, -2, -2]>;
-  def K2 : X86Reg<"k2", 2>, DwarfRegNum<[120, -2, -2]>;
-  def K3 : X86Reg<"k3", 3>, DwarfRegNum<[121, -2, -2]>;
-  def K4 : X86Reg<"k4", 4>, DwarfRegNum<[122, -2, -2]>;
-  def K5 : X86Reg<"k5", 5>, DwarfRegNum<[123, -2, -2]>;
-  def K6 : X86Reg<"k6", 6>, DwarfRegNum<[124, -2, -2]>;
-  def K7 : X86Reg<"k7", 7>, DwarfRegNum<[125, -2, -2]>;
+// Mask Registers, used by AVX-512 instructions.
+def K0 : X86Reg<"k0", 0>, DwarfRegNum<[118, -2, -2]>;
+def K1 : X86Reg<"k1", 1>, DwarfRegNum<[119, -2, -2]>;
+def K2 : X86Reg<"k2", 2>, DwarfRegNum<[120, -2, -2]>;
+def K3 : X86Reg<"k3", 3>, DwarfRegNum<[121, -2, -2]>;
+def K4 : X86Reg<"k4", 4>, DwarfRegNum<[122, -2, -2]>;
+def K5 : X86Reg<"k5", 5>, DwarfRegNum<[123, -2, -2]>;
+def K6 : X86Reg<"k6", 6>, DwarfRegNum<[124, -2, -2]>;
+def K7 : X86Reg<"k7", 7>, DwarfRegNum<[125, -2, -2]>;
 
 // Floating point stack registers. These don't map one-to-one to the FP
 // pseudo registers, but we still mark them as aliasing FP registers. That
@@ -459,8 +459,8 @@ def FPCCR : RegisterClass<"X86", [i16], 16, (add FPSW)> {
 }
 
 // AVX-512 vector/mask registers.
-def VR512 : RegisterClass<"X86", [v16f32, v8f64, v64i8, v32i16, v16i32, v8i64], 512,
-    (sequence "ZMM%u", 0, 31)>;
+def VR512 : RegisterClass<"X86", [v16f32, v8f64, v64i8, v32i16, v16i32, v8i64],
+                          512, (sequence "ZMM%u", 0, 31)>;
 
 // Scalar AVX-512 floating point registers.
 def FR32X : RegisterClass<"X86", [f32], 32, (sequence "XMM%u", 0, 31)>;
@@ -469,9 +469,9 @@ def FR64X : RegisterClass<"X86", [f64], 64, (add FR32X)>;
 
 // Extended VR128 and VR256 for AVX-512 instructions
 def VR128X : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-                          128, (add FR32X)>;
+                           128, (add FR32X)>;
 def VR256X : RegisterClass<"X86", [v32i8, v16i16, v8i32, v4i64, v8f32, v4f64],
-                          256, (sequence "YMM%u", 0, 31)>;
+                           256, (sequence "YMM%u", 0, 31)>;
 
 // Mask registers
 def VK1     : RegisterClass<"X86", [i1],    8,  (sequence "K%u", 0, 7)> {let Size = 8;}
