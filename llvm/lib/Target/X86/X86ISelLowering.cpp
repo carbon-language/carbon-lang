@@ -21991,10 +21991,22 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   MVT RootVT = Root.getSimpleValueType();
   SDLoc DL(Root);
 
-  // Just remove no-op shuffle masks.
   if (Mask.size() == 1) {
-    DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Input),
-                  /*AddTo*/ true);
+    int Index = Mask[0];
+    assert((Index >= 0 || Index == SM_SentinelUndef ||
+            Index == SM_SentinelZero) &&
+           "Invalid shuffle index found!");
+
+    // We may end up with an accumulated mask of size 1 as a result of
+    // widening of shuffle operands (see function canWidenShuffleElements).
+    // If the only shuffle index is equal to SM_SentinelZero then propagate
+    // a zero vector. Otherwise, the combine shuffle mask is a no-op shuffle
+    // mask, and therefore the entire chain of shuffles can be folded away.
+    if (Index == SM_SentinelZero)
+      DCI.CombineTo(Root.getNode(), getZeroVector(RootVT, Subtarget, DAG, DL));
+    else
+      DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Input),
+                    /*AddTo*/ true);
     return true;
   }
 
