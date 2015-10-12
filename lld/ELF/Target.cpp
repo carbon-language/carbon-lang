@@ -196,9 +196,31 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   }
 }
 
+// Relocation masks following the #lo(value), #hi(value), #ha(value),
+// #higher(value), #highera(value), #highest(value), and #highesta(value)
+// macros defined in section 4.5.1. Relocation Types of the PPC-elf64abi
+// document.
+
+static uint16_t applyPPCLo(uint64_t V) { return V & 0xffff; }
+
+static uint16_t applyPPCHi(uint64_t V) { return (V >> 16) & 0xffff; }
+
+static uint16_t applyPPCHa(uint64_t V) { return ((V + 0x8000) >> 16) & 0xffff; }
+
+static uint16_t applyPPCHigher(uint64_t V) { return (V >> 32) & 0xffff; }
+
+static uint16_t applyPPCHighera(uint64_t V) {
+  return ((V + 0x8000) >> 32) & 0xffff;
+}
+
+static uint16_t applyPPCHighest(uint64_t V) { return V >> 48; }
+
+static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
+
 PPC64TargetInfo::PPC64TargetInfo() {
-  // PCRelReloc = FIXME
-  // GotReloc = FIXME
+  PCRelReloc = R_PPC64_REL24;
+  GotReloc = R_PPC64_GLOB_DAT;
+  GotRefReloc = R_PPC64_REL64;
   PltEntrySize = 32;
 
   // We need 64K pages (at least under glibc/Linux, the loader won't
@@ -207,27 +229,171 @@ PPC64TargetInfo::PPC64TargetInfo() {
 
   VAStart = 0x10000000;
 }
+
+static uint64_t getPPC64TocBase() {
+  // The TOC consists of sections .got, .toc, .tocbss, .plt in that
+  // order. The TOC starts where the first of these sections starts.
+
+  // FIXME: This obviously does not do the right thing when there is no .got
+  // section, but there is a .toc or .tocbss section.
+  uint64_t TocVA = Out<ELF64BE>::Got->getVA();
+  if (!TocVA)
+    TocVA = Out<ELF64BE>::Plt->getVA();
+
+  // Per the ppc64-elf-linux ABI, The TOC base is TOC value plus 0x8000
+  // thus permitting a full 64 Kbytes segment. Note that the glibc startup
+  // code (crt1.o) assumes that you can get from the TOC base to the
+  // start of the .toc section with only a single (signed) 16-bit relocation.
+  return TocVA + 0x8000;
+}
+
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                    uint64_t PltEntryAddr) const {}
+                                    uint64_t PltEntryAddr) const {
+  uint64_t Off = GotEntryAddr - getPPC64TocBase();
+
+  // FIXME: What we should do, in theory, is get the offset of the function
+  // descriptor in the .opd section, and use that as the offset from %r2 (the
+  // TOC-base pointer). Instead, we have the GOT-entry offset, and that will
+  // be a pointer to the function descriptor in the .opd section. Using
+  // this scheme is simpler, but requires an extra indirection per PLT dispatch.
+
+  write32be(Buf,      0xf8410000);                   // std %r2, 40(%r1)
+  write32be(Buf + 4,  0x3d620000 | applyPPCHa(Off)); // addis %r11, %r2, X@ha
+  write32be(Buf + 8,  0xe98b0000 | applyPPCLo(Off)); // ld %r12, X@l(%r11)
+  write32be(Buf + 12, 0xe96c0000);                   // ld %r11,0(%r12)
+  write32be(Buf + 16, 0x7d6903a6);                   // mtctr %r11
+  write32be(Buf + 20, 0xe84c0008);                   // ld %r2,8(%r12)
+  write32be(Buf + 24, 0xe96c0010);                   // ld %r11,16(%r12)
+  write32be(Buf + 28, 0x4e800420);                   // bctr
+}
+
 bool PPC64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  return false;
+  if (relocNeedsPlt(Type, S))
+    return true;
+
+  switch (Type) {
+  default: return false;
+  case R_PPC64_GOT16:
+  case R_PPC64_GOT16_LO:
+  case R_PPC64_GOT16_HI:
+  case R_PPC64_GOT16_HA:
+  case R_PPC64_GOT16_DS:
+  case R_PPC64_GOT16_LO_DS:
+    return true;
+  }
 }
+
 bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
-  return false;
+  if (Type != R_PPC64_REL24)
+    return false;
+
+  // These are function calls that need to be redirected through a PLT stub.
+  return S.isShared() || (S.isUndefined() && S.isWeak());
 }
+
 void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
                                   uint64_t BaseAddr, uint64_t SymVA) const {
   typedef ELFFile<ELF64BE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
-  uint64_t Offset = Rel.r_offset;
-  uint8_t *Loc = Buf + Offset;
+  uint8_t *L = Buf + Rel.r_offset;
+  uint64_t S = SymVA;
+  int64_t A = Rel.r_addend;
+  uint64_t P = BaseAddr + Rel.r_offset;
+  uint64_t TB = getPPC64TocBase();
+
+  if (Type == R_PPC64_TOC) {
+    write64be(L, TB);
+    return;
+  }
+
+  // For a TOC-relative relocation, adjust the addend and proceed in terms of
+  // the corresponding ADDR16 relocation type.
   switch (Type) {
-  case R_PPC64_ADDR64:
-    write64be(Loc, SymVA + Rel.r_addend);
+  case R_PPC64_TOC16:       Type = R_PPC64_ADDR16;       A -= TB; break;
+  case R_PPC64_TOC16_DS:    Type = R_PPC64_ADDR16_DS;    A -= TB; break;
+  case R_PPC64_TOC16_LO:    Type = R_PPC64_ADDR16_LO;    A -= TB; break;
+  case R_PPC64_TOC16_LO_DS: Type = R_PPC64_ADDR16_LO_DS; A -= TB; break;
+  case R_PPC64_TOC16_HI:    Type = R_PPC64_ADDR16_HI;    A -= TB; break;
+  case R_PPC64_TOC16_HA:    Type = R_PPC64_ADDR16_HA;    A -= TB; break;
+  default: break;
+  }
+
+  uint64_t R = S + A;
+
+  switch (Type) {
+  case R_PPC64_ADDR16:
+    write16be(L, applyPPCLo(R));
     break;
-  case R_PPC64_TOC:
-    // We don't create a TOC yet.
+  case R_PPC64_ADDR16_DS:
+    if (!isInt<16>(R))
+      error("Relocation R_PPC64_ADDR16_DS overflow");
+    write16be(L, (read16be(L) & 3) | (R & ~3));
+    break;
+  case R_PPC64_ADDR16_LO:
+    write16be(L, applyPPCLo(R));
+    break;
+  case R_PPC64_ADDR16_LO_DS:
+    write16be(L, (read16be(L) & 3) | (applyPPCLo(R) & ~3));
+    break;
+  case R_PPC64_ADDR16_HI:
+    write16be(L, applyPPCHi(R));
+    break;
+  case R_PPC64_ADDR16_HA:
+    write16be(L, applyPPCHa(R));
+    break;
+  case R_PPC64_ADDR16_HIGHER:
+    write16be(L, applyPPCHigher(R));
+    break;
+  case R_PPC64_ADDR16_HIGHERA:
+    write16be(L, applyPPCHighera(R));
+    break;
+  case R_PPC64_ADDR16_HIGHEST:
+    write16be(L, applyPPCHighest(R));
+    break;
+  case R_PPC64_ADDR16_HIGHESTA:
+    write16be(L, applyPPCHighesta(R));
+    break;
+  case R_PPC64_ADDR14: {
+    if ((R & 3) != 0)
+      error("Improper alignment for relocation R_PPC64_ADDR14");
+
+    // Preserve the AA/LK bits in the branch instruction
+    uint8_t AALK = L[3];
+    write16be(L + 2, (AALK & 3) | (R & 0xfffc));
+    break;
+  }
+  case R_PPC64_REL16_LO:
+    write16be(L, applyPPCLo(R - P));
+    break;
+  case R_PPC64_REL16_HI:
+    write16be(L, applyPPCHi(R - P));
+    break;
+  case R_PPC64_REL16_HA:
+    write16be(L, applyPPCHa(R - P));
+    break;
+  case R_PPC64_ADDR32:
+    if (!isInt<32>(R))
+      error("Relocation R_PPC64_ADDR32 overflow");
+    write32be(L, R);
+    break;
+  case R_PPC64_REL24: {
+    uint32_t Mask = 0x03FFFFFC;
+    if (!isInt<24>(R - P))
+      error("Relocation R_PPC64_REL24 overflow");
+    write32be(L, (read32be(L) & ~Mask) | ((R - P) & Mask));
+    break;
+  }
+  case R_PPC64_REL32:
+    if (!isInt<32>(R - P))
+      error("Relocation R_PPC64_REL32 overflow");
+    write32be(L, R - P);
+    break;
+  case R_PPC64_REL64:
+    write64be(L, R - P);
+    break;
+  case R_PPC64_ADDR64:
+    write64be(L, R);
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
