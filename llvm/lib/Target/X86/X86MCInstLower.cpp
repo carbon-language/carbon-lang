@@ -460,6 +460,7 @@ ReSimplify:
 
   // Commute operands to get a smaller encoding by using VEX.R instead of VEX.B
   // if one of the registers is extended, but other isn't.
+  case X86::VMOVZPQILo2PQIrr:
   case X86::VMOVAPDrr:
   case X86::VMOVAPDYrr:
   case X86::VMOVAPSrr:
@@ -477,18 +478,19 @@ ReSimplify:
       unsigned NewOpc;
       switch (OutMI.getOpcode()) {
       default: llvm_unreachable("Invalid opcode");
-      case X86::VMOVAPDrr:  NewOpc = X86::VMOVAPDrr_REV;  break;
-      case X86::VMOVAPDYrr: NewOpc = X86::VMOVAPDYrr_REV; break;
-      case X86::VMOVAPSrr:  NewOpc = X86::VMOVAPSrr_REV;  break;
-      case X86::VMOVAPSYrr: NewOpc = X86::VMOVAPSYrr_REV; break;
-      case X86::VMOVDQArr:  NewOpc = X86::VMOVDQArr_REV;  break;
-      case X86::VMOVDQAYrr: NewOpc = X86::VMOVDQAYrr_REV; break;
-      case X86::VMOVDQUrr:  NewOpc = X86::VMOVDQUrr_REV;  break;
-      case X86::VMOVDQUYrr: NewOpc = X86::VMOVDQUYrr_REV; break;
-      case X86::VMOVUPDrr:  NewOpc = X86::VMOVUPDrr_REV;  break;
-      case X86::VMOVUPDYrr: NewOpc = X86::VMOVUPDYrr_REV; break;
-      case X86::VMOVUPSrr:  NewOpc = X86::VMOVUPSrr_REV;  break;
-      case X86::VMOVUPSYrr: NewOpc = X86::VMOVUPSYrr_REV; break;
+      case X86::VMOVZPQILo2PQIrr: NewOpc = X86::VMOVPQI2QIrr;   break;
+      case X86::VMOVAPDrr:        NewOpc = X86::VMOVAPDrr_REV;  break;
+      case X86::VMOVAPDYrr:       NewOpc = X86::VMOVAPDYrr_REV; break;
+      case X86::VMOVAPSrr:        NewOpc = X86::VMOVAPSrr_REV;  break;
+      case X86::VMOVAPSYrr:       NewOpc = X86::VMOVAPSYrr_REV; break;
+      case X86::VMOVDQArr:        NewOpc = X86::VMOVDQArr_REV;  break;
+      case X86::VMOVDQAYrr:       NewOpc = X86::VMOVDQAYrr_REV; break;
+      case X86::VMOVDQUrr:        NewOpc = X86::VMOVDQUrr_REV;  break;
+      case X86::VMOVDQUYrr:       NewOpc = X86::VMOVDQUYrr_REV; break;
+      case X86::VMOVUPDrr:        NewOpc = X86::VMOVUPDrr_REV;  break;
+      case X86::VMOVUPDYrr:       NewOpc = X86::VMOVUPDYrr_REV; break;
+      case X86::VMOVUPSrr:        NewOpc = X86::VMOVUPSrr_REV;  break;
+      case X86::VMOVUPSYrr:       NewOpc = X86::VMOVUPSYrr_REV; break;
       }
       OutMI.setOpcode(NewOpc);
     }

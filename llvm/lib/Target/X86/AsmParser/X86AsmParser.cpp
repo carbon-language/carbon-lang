@@ -2364,6 +2364,7 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 bool X86AsmParser::processInstruction(MCInst &Inst, const OperandVector &Ops) {
   switch (Inst.getOpcode()) {
   default: return false;
+  case X86::VMOVZPQILo2PQIrr:
   case X86::VMOVAPDrr:
   case X86::VMOVAPDYrr:
   case X86::VMOVAPSrr:
@@ -2383,18 +2384,19 @@ bool X86AsmParser::processInstruction(MCInst &Inst, const OperandVector &Ops) {
     unsigned NewOpc;
     switch (Inst.getOpcode()) {
     default: llvm_unreachable("Invalid opcode");
-    case X86::VMOVAPDrr:  NewOpc = X86::VMOVAPDrr_REV;  break;
-    case X86::VMOVAPDYrr: NewOpc = X86::VMOVAPDYrr_REV; break;
-    case X86::VMOVAPSrr:  NewOpc = X86::VMOVAPSrr_REV;  break;
-    case X86::VMOVAPSYrr: NewOpc = X86::VMOVAPSYrr_REV; break;
-    case X86::VMOVDQArr:  NewOpc = X86::VMOVDQArr_REV;  break;
-    case X86::VMOVDQAYrr: NewOpc = X86::VMOVDQAYrr_REV; break;
-    case X86::VMOVDQUrr:  NewOpc = X86::VMOVDQUrr_REV;  break;
-    case X86::VMOVDQUYrr: NewOpc = X86::VMOVDQUYrr_REV; break;
-    case X86::VMOVUPDrr:  NewOpc = X86::VMOVUPDrr_REV;  break;
-    case X86::VMOVUPDYrr: NewOpc = X86::VMOVUPDYrr_REV; break;
-    case X86::VMOVUPSrr:  NewOpc = X86::VMOVUPSrr_REV;  break;
-    case X86::VMOVUPSYrr: NewOpc = X86::VMOVUPSYrr_REV; break;
+    case X86::VMOVZPQILo2PQIrr: NewOpc = X86::VMOVPQI2QIrr;   break;
+    case X86::VMOVAPDrr:        NewOpc = X86::VMOVAPDrr_REV;  break;
+    case X86::VMOVAPDYrr:       NewOpc = X86::VMOVAPDYrr_REV; break;
+    case X86::VMOVAPSrr:        NewOpc = X86::VMOVAPSrr_REV;  break;
+    case X86::VMOVAPSYrr:       NewOpc = X86::VMOVAPSYrr_REV; break;
+    case X86::VMOVDQArr:        NewOpc = X86::VMOVDQArr_REV;  break;
+    case X86::VMOVDQAYrr:       NewOpc = X86::VMOVDQAYrr_REV; break;
+    case X86::VMOVDQUrr:        NewOpc = X86::VMOVDQUrr_REV;  break;
+    case X86::VMOVDQUYrr:       NewOpc = X86::VMOVDQUYrr_REV; break;
+    case X86::VMOVUPDrr:        NewOpc = X86::VMOVUPDrr_REV;  break;
+    case X86::VMOVUPDYrr:       NewOpc = X86::VMOVUPDYrr_REV; break;
+    case X86::VMOVUPSrr:        NewOpc = X86::VMOVUPSrr_REV;  break;
+    case X86::VMOVUPSYrr:       NewOpc = X86::VMOVUPSYrr_REV; break;
     }
     Inst.setOpcode(NewOpc);
     return true;
