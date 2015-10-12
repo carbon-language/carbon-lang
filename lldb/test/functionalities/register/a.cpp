@@ -13,6 +13,7 @@ return_long_double (long double value)
 {
     float a=2, b=4,c=8, d=16, e=32, f=64, k=128, l=256, add=0;
     __asm__ (
+        "int3 ;"
         "flds %1 ;"
         "flds %2 ;"
         "flds %3 ;"

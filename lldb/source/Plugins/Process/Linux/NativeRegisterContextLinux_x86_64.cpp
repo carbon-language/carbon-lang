@@ -575,6 +575,9 @@ NativeRegisterContextLinux_x86_64::ReadRegister (const RegisterInfo *reg_info, R
     uint8_t *src = (uint8_t *)&m_fpr + reg_info->byte_offset - m_fctrl_offset_in_userarea;
     switch (reg_info->byte_size)
     {
+        case 1:
+            reg_value.SetUInt8(*(uint8_t *)src);
+            break;
         case 2:
             reg_value.SetUInt16(*(uint16_t *)src);
             break;
@@ -644,6 +647,9 @@ NativeRegisterContextLinux_x86_64::WriteRegister (const RegisterInfo *reg_info, 
             uint8_t *dst = (uint8_t *)&m_fpr + reg_info->byte_offset - m_fctrl_offset_in_userarea;
             switch (reg_info->byte_size)
             {
+                case 1:
+                    *(uint8_t *)dst = reg_value.GetAsUInt8();
+                    break;
                 case 2:
                     *(uint16_t *)dst = reg_value.GetAsUInt16();
                     break;

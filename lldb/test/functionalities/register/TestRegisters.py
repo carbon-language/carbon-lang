@@ -37,7 +37,7 @@ class RegisterCommandsTestCase(TestBase):
         self.fp_register_write()
 
     @expectedFailureAndroid(archs=["i386"]) # "register read fstat" always return 0xffff
-    @expectedFailureClang("llvm.org/pr24733")
+    @skipIfFreeBSD    #llvm.org/pr25057
     def test_fp_special_purpose_register_read(self):
         """Test commands that read fpu special purpose registers."""
         if not self.getArchitecture() in ['amd64', 'i386', 'x86_64']:
@@ -165,14 +165,21 @@ class RegisterCommandsTestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        # Find the line number to break inside a.cpp.
-        self.line = line_number('a.cpp', '// Set break point at this line.')
+        # Launch the process and stop.
+        self.expect ("run", PROCESS_STOPPED, substrs = ['stopped'])
 
-        # Set breakpoint
-        lldbutil.run_break_set_by_file_and_line (self, "a.cpp", self.line, num_expected_locations=1, loc_exact=True)
-
-        # Launch the process, and do not stop at the entry point.
-        self.runCmd ("run", RUN_SUCCEEDED)
+        # Check stop reason; Should be either signal SIGTRAP or EXC_BREAKPOINT
+        output = self.res.GetOutput()
+        matched = False
+        substrs = ['stop reason = EXC_BREAKPOINT', 'stop reason = signal SIGTRAP']
+        for str1 in substrs:
+            matched = output.find(str1) != -1
+            with recording(self, False) as sbuf:
+                print >> sbuf, "%s sub string: %s" % ('Expecting', str1)
+                print >> sbuf, "Matched" if matched else "Not Matched"
+            if matched:
+                break
+        self.assertTrue(matched, STOPPED_DUE_TO_SIGNAL)
 
         process = target.GetProcess()
         self.assertTrue(process.GetState() == lldb.eStateStopped,
@@ -218,7 +225,7 @@ class RegisterCommandsTestCase(TestBase):
 
             # Verify ftag and save it to be used for verification in next execution of 'si' command
             self.expect("register read ftag",
-                substrs = ['ftag' + ' = ', str("0x%0.4x" % (reg_value_ftag_initial | (1<< fstat_top_pointer_initial)))])
+                substrs = ['ftag' + ' = ', str("0x%0.2x" % (reg_value_ftag_initial | (1<< fstat_top_pointer_initial)))])
             reg_value_ftag_initial = reg_value_ftag_initial | (1<< fstat_top_pointer_initial)
 
     def fp_register_write(self):

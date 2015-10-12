@@ -268,6 +268,9 @@ RegisterContextPOSIXProcessMonitor_x86_64::ReadRegister(const RegisterInfo *reg_
     uint8_t *src = (uint8_t *)&m_fpr + reg_info->byte_offset - m_fctrl_offset_in_userarea;
     switch (reg_info->byte_size)
     {
+        case 1:
+            value.SetUInt8(*(uint8_t *)src);
+            return true;
         case 2:
             value.SetUInt16(*(uint16_t *)src);
             return true;
@@ -329,6 +332,9 @@ RegisterContextPOSIXProcessMonitor_x86_64::WriteRegister(const RegisterInfo *reg
             uint8_t *dst = (uint8_t *)&m_fpr + reg_info->byte_offset - m_fctrl_offset_in_userarea;
             switch (reg_info->byte_size)
             {
+                case 1:
+                    *(uint8_t *)dst = value.GetAsUInt8();
+                    break;
                 case 2:
                     *(uint16_t *)dst = value.GetAsUInt16();
                     break;
