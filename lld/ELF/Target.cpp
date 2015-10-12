@@ -83,7 +83,6 @@ void X86TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
-    break;
   }
 }
 
@@ -194,7 +193,6 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   }
   default:
     error("unrecognized reloc " + Twine(Type));
-    break;
   }
 }
 
@@ -229,7 +227,6 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
-    break;
   }
 }
 
@@ -341,7 +338,6 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
   }
   default:
     error("unrecognized reloc " + Twine(Type));
-    break;
   }
 }
 
@@ -374,7 +370,6 @@ void MipsTargetInfo::relocateOne(uint8_t *Buf, const void *RelP, uint32_t Type,
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
-    break;
   }
 }
 }
