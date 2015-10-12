@@ -97,6 +97,21 @@ def test_canonical():
     assert len(cursors) == 3
     assert cursors[1].canonical == cursors[2].canonical
 
+def test_is_const_method():
+    """Ensure Cursor.is_const_method works."""
+    source = 'class X { void foo() const; void bar(); };'
+    tu = get_tu(source, lang='cpp')
+
+    cls = get_cursor(tu, 'X')
+    foo = get_cursor(tu, 'foo')
+    bar = get_cursor(tu, 'bar')
+    assert cls is not None
+    assert foo is not None
+    assert bar is not None
+
+    assert foo.is_const_method()
+    assert not bar.is_const_method()
+
 def test_is_static_method():
     """Ensure Cursor.is_static_method works."""
 
@@ -112,6 +127,36 @@ def test_is_static_method():
 
     assert foo.is_static_method()
     assert not bar.is_static_method()
+
+def test_is_pure_virtual_method():
+    """Ensure Cursor.is_pure_virtual_method works."""
+    source = 'class X { virtual void foo() = 0; virtual void bar(); };'
+    tu = get_tu(source, lang='cpp')
+
+    cls = get_cursor(tu, 'X')
+    foo = get_cursor(tu, 'foo')
+    bar = get_cursor(tu, 'bar')
+    assert cls is not None
+    assert foo is not None
+    assert bar is not None
+
+    assert foo.is_pure_virtual_method()
+    assert not bar.is_pure_virtual_method()
+
+def test_is_virtual_method():
+    """Ensure Cursor.is_virtual_method works."""
+    source = 'class X { virtual void foo(); void bar(); };'
+    tu = get_tu(source, lang='cpp')
+
+    cls = get_cursor(tu, 'X')
+    foo = get_cursor(tu, 'foo')
+    bar = get_cursor(tu, 'bar')
+    assert cls is not None
+    assert foo is not None
+    assert bar is not None
+
+    assert foo.is_virtual_method()
+    assert not bar.is_virtual_method()
 
 def test_underlying_type():
     tu = get_tu('typedef int foo;')

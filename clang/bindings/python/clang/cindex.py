@@ -1164,11 +1164,29 @@ class Cursor(Structure):
         """
         return conf.lib.clang_isCursorDefinition(self)
 
+    def is_const_method(self):
+        """Returns True if the cursor refers to a C++ member function or member
+        function template that is declared 'const'.
+        """
+        return conf.lib.clang_CXXMethod_isConst(self)
+
+    def is_pure_virtual_method(self):
+        """Returns True if the cursor refers to a C++ member function or member
+        function template that is declared pure virtual.
+        """
+        return conf.lib.clang_CXXMethod_isPureVirtual(self)
+
     def is_static_method(self):
         """Returns True if the cursor refers to a C++ member function or member
         function template that is declared 'static'.
         """
         return conf.lib.clang_CXXMethod_isStatic(self)
+
+    def is_virtual_method(self):
+        """Returns True if the cursor refers to a C++ member function or member
+        function template that is declared 'virtual'.
+        """
+        return conf.lib.clang_CXXMethod_isVirtual(self)
 
     def get_definition(self):
         """
@@ -2878,6 +2896,10 @@ functionList = [
   ("clang_createTranslationUnit",
    [Index, c_char_p],
    c_object_p),
+
+  ("clang_CXXMethod_isConst",
+   [Cursor],
+   bool),
 
   ("clang_CXXMethod_isPureVirtual",
    [Cursor],
