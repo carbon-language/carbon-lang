@@ -1,0 +1,19 @@
+#Source:
+##include <stdio.h>
+#static inline int inc (int *a) {
+#  printf ("%d\n",(*a)++);
+#  return (*a)++;
+#}
+#
+#int main () {
+#  int x = 1;
+#  return inc(&x);
+#}
+#Build as : clang -g -O2 addr.c
+
+RUN: llvm-symbolizer -inlining -print-address -obj=%p/Inputs/addr.exe < %p/Inputs/addr.inp | FileCheck %s
+
+#CHECK: 0x40054d
+#CHECK: main
+#CHECK: {{[/\]+}}tmp{{[/\]+}}x.c:9:0
+
