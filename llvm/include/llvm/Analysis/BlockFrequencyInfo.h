@@ -45,6 +45,9 @@ public:
   /// floating points.
   BlockFrequency getBlockFreq(const BasicBlock *BB) const;
 
+  // Set the frequency of the given basic block.
+  void setBlockFreq(const BasicBlock *BB, uint64_t Freq);
+
   /// calculate - compute block frequency info for the given function.
   void calculate(const Function &F, const BranchProbabilityInfo &BPI,
                  const LoopInfo &LI);

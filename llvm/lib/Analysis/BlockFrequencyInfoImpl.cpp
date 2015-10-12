@@ -530,6 +530,13 @@ BlockFrequencyInfoImplBase::getFloatingBlockFreq(const BlockNode &Node) const {
   return Freqs[Node.Index].Scaled;
 }
 
+void BlockFrequencyInfoImplBase::setBlockFreq(const BlockNode &Node,
+                                              uint64_t Freq) {
+  assert(Node.isValid() && "Expected valid node");
+  assert(Node.Index < Freqs.size() && "Expected legal index");
+  Freqs[Node.Index].Integer = Freq;
+}
+
 std::string
 BlockFrequencyInfoImplBase::getBlockName(const BlockNode &Node) const {
   return std::string();
