@@ -37,6 +37,18 @@ def FeatureCMOV    : SubtargetFeature<"cmov","HasCMov", "true",
 def FeaturePOPCNT   : SubtargetFeature<"popcnt", "HasPOPCNT", "true",
                                        "Support POPCNT instruction">;
 
+def FeatureXSAVE   : SubtargetFeature<"xsave", "HasXSAVE", "true",
+                                       "Support xsave instructions">;
+
+def FeatureXSAVEOPT: SubtargetFeature<"xsaveopt", "HasXSAVEOPT", "true",
+                                       "Support xsaveopt instructions">;
+
+def FeatureXSAVEC  : SubtargetFeature<"xsavec", "HasXSAVEC", "true",
+                                       "Support xsavec instructions">;
+
+def FeatureXSAVES  : SubtargetFeature<"xsaves", "HasXSAVES", "true",
+                                       "Support xsaves instructions">;
+
 // The MMX subtarget feature is separate from the rest of the SSE features
 // because it's important (for odd compatibility reasons) to be able to
 // turn it off explicitly while allowing SSE+ to be on.

@@ -89,6 +89,15 @@ protected:
   /// Target has AES instructions
   bool HasAES;
 
+  /// Target has XSAVE instructions
+  bool HasXSAVE;
+  /// Target has XSAVEOPT instructions
+  bool HasXSAVEOPT;
+  /// Target has XSAVEC instructions
+  bool HasXSAVEC;
+  /// Target has XSAVES instructions
+  bool HasXSAVES;
+
   /// Target has carry-less multiplication
   bool HasPCLMUL;
 
@@ -339,6 +348,10 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAES() const { return HasAES; }
+  bool hasXSAVE() const { return HasXSAVE; }
+  bool hasXSAVEOPT() const { return HasXSAVEOPT; }
+  bool hasXSAVEC() const { return HasXSAVEC; }
+  bool hasXSAVES() const { return HasXSAVES; }
   bool hasPCLMUL() const { return HasPCLMUL; }
   bool hasFMA() const { return HasFMA; }
   // FIXME: Favor FMA when both are enabled. Is this the right thing to do?

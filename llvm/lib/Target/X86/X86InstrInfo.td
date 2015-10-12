@@ -773,6 +773,10 @@ def NoVLX_Or_NoBWI : Predicate<"!Subtarget->hasVLX() || !Subtarget->hasBWI()">;
 
 def HasPOPCNT    : Predicate<"Subtarget->hasPOPCNT()">;
 def HasAES       : Predicate<"Subtarget->hasAES()">;
+def HasXSAVE     : Predicate<"Subtarget->hasXSAVE()">;
+def HasXSAVEOPT  : Predicate<"Subtarget->hasXSAVEOPT()">;
+def HasXSAVEC    : Predicate<"Subtarget->hasXSAVEC()">;
+def HasXSAVES    : Predicate<"Subtarget->hasXSAVES()">;
 def HasPCLMUL    : Predicate<"Subtarget->hasPCLMUL()">;
 def HasFMA       : Predicate<"Subtarget->hasFMA()">;
 def UseFMAOnAVX  : Predicate<"Subtarget->hasFMA() && !Subtarget->hasAVX512()">;
@@ -2635,7 +2639,9 @@ def : MnemonicAlias<"fxrstorq",  "fxrstor64",  "att">;
 def : MnemonicAlias<"xsaveq",    "xsave64",    "att">;
 def : MnemonicAlias<"xrstorq",   "xrstor64",   "att">;
 def : MnemonicAlias<"xsaveoptq", "xsaveopt64", "att">;
-
+def : MnemonicAlias<"xrstorsq",  "xrstors64",  "att">;
+def : MnemonicAlias<"xsavecq",   "xsavec64",   "att">;
+def : MnemonicAlias<"xsavesq",   "xsaves64",   "att">;
 
 class CondCodeAlias<string Prefix,string Suffix, string OldCond, string NewCond,
                     string VariantName>
