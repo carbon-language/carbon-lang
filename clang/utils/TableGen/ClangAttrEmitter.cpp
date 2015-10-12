@@ -1180,6 +1180,7 @@ writePrettyPrintFunction(Record &R,
     if (Variety == "Pragma") {
       OS << " \";\n";
       OS << "    printPrettyPragma(OS, Policy);\n";
+      OS << "    OS << \"\\n\";";
       OS << "    break;\n";
       OS << "  }\n";
       continue;

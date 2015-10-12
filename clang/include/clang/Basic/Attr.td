@@ -2048,17 +2048,15 @@ def LoopHint : Attr {
     unsigned SpellingIndex = getSpellingListIndex();
     // For "#pragma unroll" and "#pragma nounroll" the string "unroll" or
     // "nounroll" is already emitted as the pragma name.
-    if (SpellingIndex == Pragma_nounroll) {
-      OS << "\n";
+    if (SpellingIndex == Pragma_nounroll)
       return;
-    }
     else if (SpellingIndex == Pragma_unroll) {
-      OS << getValueString(Policy) << "\n";
+      OS << getValueString(Policy);
       return;
     }
 
     assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
-    OS << getOptionName(option) << getValueString(Policy) << "\n";
+    OS << getOptionName(option) << getValueString(Policy);
   }
 
   // Return a string containing the loop hint argument including the
