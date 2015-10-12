@@ -273,17 +273,24 @@ class InMemoryDirectory;
 class InMemoryFileSystem : public FileSystem {
   std::unique_ptr<detail::InMemoryDirectory> Root;
   std::string WorkingDirectory;
+  bool UseNormalizedPaths = true;
 
 public:
-  InMemoryFileSystem();
+  explicit InMemoryFileSystem(bool UseNormalizedPaths = true);
   ~InMemoryFileSystem() override;
   /// Add a buffer to the VFS with a path. The VFS owns the buffer.
-  void addFile(const Twine &Path, time_t ModificationTime,
+  /// \return true if the file was successfully added, false if the file already
+  /// exists in the file system with different contents.
+  bool addFile(const Twine &Path, time_t ModificationTime,
                std::unique_ptr<llvm::MemoryBuffer> Buffer);
   /// Add a buffer to the VFS with a path. The VFS does not own the buffer.
-  void addFileNoOwn(const Twine &Path, time_t ModificationTime,
+  /// \return true if the file was successfully added, false if the file already
+  /// exists in the file system with different contents.
+  bool addFileNoOwn(const Twine &Path, time_t ModificationTime,
                     llvm::MemoryBuffer *Buffer);
   std::string toString() const;
+  /// Return true if this file system normalizes . and .. in paths.
+  bool useNormalizedPaths() const { return UseNormalizedPaths; }
 
   llvm::ErrorOr<Status> status(const Twine &Path) override;
   llvm::ErrorOr<std::unique_ptr<File>>

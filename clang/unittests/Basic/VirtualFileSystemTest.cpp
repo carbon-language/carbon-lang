@@ -525,6 +525,11 @@ TEST(VirtualFileSystemTest, HiddenInIteration) {
 class InMemoryFileSystemTest : public ::testing::Test {
 protected:
   clang::vfs::InMemoryFileSystem FS;
+  clang::vfs::InMemoryFileSystem NormalizedFS;
+
+  InMemoryFileSystemTest()
+      : FS(/*UseNormalizedPaths=*/false),
+        NormalizedFS(/*UseNormalizedPaths=*/true) {}
 };
 
 TEST_F(InMemoryFileSystemTest, IsEmpty) {
@@ -549,7 +554,12 @@ TEST_F(InMemoryFileSystemTest, WindowsPath) {
 
 TEST_F(InMemoryFileSystemTest, OverlayFile) {
   FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a"));
+  NormalizedFS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a"));
   auto Stat = FS.status("/");
+  ASSERT_FALSE(Stat.getError()) << Stat.getError() << FS.toString();
+  Stat = FS.status("/.");
+  ASSERT_FALSE(Stat);
+  Stat = NormalizedFS.status("/.");
   ASSERT_FALSE(Stat.getError()) << Stat.getError() << FS.toString();
   Stat = FS.status("/a");
   ASSERT_FALSE(Stat.getError()) << Stat.getError() << "\n" << FS.toString();
@@ -566,17 +576,36 @@ TEST_F(InMemoryFileSystemTest, OverlayFileNoOwn) {
 
 TEST_F(InMemoryFileSystemTest, OpenFileForRead) {
   FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a"));
-  FS.addFile("./c", 0, MemoryBuffer::getMemBuffer("c"));
+  FS.addFile("././c", 0, MemoryBuffer::getMemBuffer("c"));
+  FS.addFile("./d/../d", 0, MemoryBuffer::getMemBuffer("d"));
+  NormalizedFS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a"));
+  NormalizedFS.addFile("././c", 0, MemoryBuffer::getMemBuffer("c"));
+  NormalizedFS.addFile("./d/../d", 0, MemoryBuffer::getMemBuffer("d"));
   auto File = FS.openFileForRead("/a");
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/a"); // Open again.
+  ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
+  File = NormalizedFS.openFileForRead("/././a"); // Open again.
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/");
   ASSERT_EQ(File.getError(), errc::invalid_argument) << FS.toString();
   File = FS.openFileForRead("/b");
   ASSERT_EQ(File.getError(), errc::no_such_file_or_directory) << FS.toString();
-  File = FS.openFileForRead("c");
+  File = FS.openFileForRead("./c");
+  ASSERT_FALSE(File);
+  File = FS.openFileForRead("e/../d");
+  ASSERT_FALSE(File);
+  File = NormalizedFS.openFileForRead("./c");
   ASSERT_EQ("c", (*(*File)->getBuffer("ignored"))->getBuffer());
+  File = NormalizedFS.openFileForRead("e/../d");
+  ASSERT_EQ("d", (*(*File)->getBuffer("ignored"))->getBuffer());
+}
+
+TEST_F(InMemoryFileSystemTest, DuplicatedFile) {
+  ASSERT_TRUE(FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a")));
+  ASSERT_FALSE(FS.addFile("/a/b", 0, MemoryBuffer::getMemBuffer("a")));
+  ASSERT_TRUE(FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a")));
+  ASSERT_FALSE(FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("b")));
 }
 
 TEST_F(InMemoryFileSystemTest, DirectoryIteration) {
