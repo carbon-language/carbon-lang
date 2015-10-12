@@ -45,6 +45,7 @@ private:
   void readGroup();
   void readInclude();
   void readOutput();
+  void readOutputArch();
   void readOutputFormat();
   void readSearchDir();
 
@@ -65,6 +66,8 @@ void LinkerScript::run() {
       readInclude();
     } else if (Tok == "OUTPUT") {
       readOutput();
+    } else if (Tok == "OUTPUT_ARCH") {
+      readOutputArch();
     } else if (Tok == "OUTPUT_FORMAT") {
       readOutputFormat();
     } else if (Tok == "SEARCH_DIR") {
@@ -205,6 +208,13 @@ void LinkerScript::readOutput() {
   StringRef Tok = next();
   if (Config->OutputFile.empty())
     Config->OutputFile = Tok;
+  expect(")");
+}
+
+void LinkerScript::readOutputArch() {
+  // Error checking only for now.
+  expect("(");
+  next();
   expect(")");
 }
 
