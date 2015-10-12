@@ -28,17 +28,7 @@ template <class ELFT> bool SymbolTable<ELFT>::shouldUseRela() const {
 
 template <class ELFT>
 void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
-
-  if (auto *E = dyn_cast<ELFFileBase<ELFT>>(File.get())) {
-    if (E->getELFKind() != Config->ElfKind ||
-        E->getEMachine() != Config->EMachine) {
-      StringRef A = E->getName();
-      StringRef B = Config->Emulation;
-      if (B.empty())
-        B = Config->FirstElf->getName();
-      error(A + " is incompatible with " + B);
-    }
-  }
+  checkCompatibility(File);
 
   if (auto *AF = dyn_cast<ArchiveFile>(File.get())) {
     ArchiveFiles.emplace_back(std::move(File));
@@ -47,6 +37,7 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
       addLazy(&Sym);
     return;
   }
+
   if (auto *S = dyn_cast<SharedFile<ELFT>>(File.get())) {
     S->parseSoName();
     if (!IncludedSoNames.insert(S->getSoName()).second)
@@ -213,6 +204,21 @@ template <class ELFT> void SymbolTable<ELFT>::addLazy(Lazy *New) {
     return;
   }
   addMemberFile(New);
+}
+
+template <class ELFT>
+void SymbolTable<ELFT>::checkCompatibility(std::unique_ptr<InputFile> &File) {
+  auto *E = dyn_cast<ELFFileBase<ELFT>>(File.get());
+  if (!E)
+    return;
+  if (E->getELFKind() == Config->ElfKind &&
+      E->getEMachine() == Config->EMachine)
+    return;
+  StringRef A = E->getName();
+  StringRef B = Config->Emulation;
+  if (B.empty())
+    B = Config->FirstElf->getName();
+  error(A + " is incompatible with " + B);
 }
 
 template <class ELFT> void SymbolTable<ELFT>::addMemberFile(Lazy *Body) {
