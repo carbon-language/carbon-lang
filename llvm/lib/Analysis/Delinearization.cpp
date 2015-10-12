@@ -102,20 +102,14 @@ void Delinearization::print(raw_ostream &O, const Module *) const {
       if (!BasePointer)
         break;
       AccessFn = SE->getMinusSCEV(AccessFn, BasePointer);
-      const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(AccessFn);
-
-      // Do not try to delinearize memory accesses that are not AddRecs.
-      if (!AR)
-        break;
-
 
       O << "\n";
       O << "Inst:" << *Inst << "\n";
       O << "In Loop with Header: " << L->getHeader()->getName() << "\n";
-      O << "AddRec: " << *AR << "\n";
+      O << "AccessFunction: " << *AccessFn << "\n";
 
       SmallVector<const SCEV *, 3> Subscripts, Sizes;
-      SE->delinearize(AR, Subscripts, Sizes, SE->getElementSize(Inst));
+      SE->delinearize(AccessFn, Subscripts, Sizes, SE->getElementSize(Inst));
       if (Subscripts.size() == 0 || Sizes.size() == 0 ||
           Subscripts.size() != Sizes.size()) {
         O << "failed to delinearize\n";

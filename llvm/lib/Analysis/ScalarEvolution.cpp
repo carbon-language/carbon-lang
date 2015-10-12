@@ -8307,9 +8307,84 @@ struct SCEVCollectTerms {
   }
   bool isDone() const { return false; }
 };
+
+// Check if a SCEV contains an AddRecExpr.
+struct SCEVHasAddRec {
+  bool &ContainsAddRec;
+
+  SCEVHasAddRec(bool &ContainsAddRec) : ContainsAddRec(ContainsAddRec) {
+   ContainsAddRec = false;
+  }
+
+  bool follow(const SCEV *S) {
+    if (isa<SCEVAddRecExpr>(S)) {
+      ContainsAddRec = true;
+
+      // Stop recursion: once we collected a term, do not walk its operands.
+      return false;
+    }
+
+    // Keep looking.
+    return true;
+  }
+  bool isDone() const { return false; }
+};
+
+// Find factors that are multiplied with an expression that (possibly as a
+// subexpression) contains an AddRecExpr. In the expression:
+//
+//  8 * (100 +  %p * %q * (%a + {0, +, 1}_loop))
+//
+// "%p * %q" are factors multiplied by the expression "(%a + {0, +, 1}_loop)"
+// that contains the AddRec {0, +, 1}_loop. %p * %q are likely to be array size
+// parameters as they form a product with an induction variable.
+//
+// This collector expects all array size parameters to be in the same MulExpr.
+// It might be necessary to later add support for collecting parameters that are
+// spread over different nested MulExpr.
+struct SCEVCollectAddRecMultiplies {
+  SmallVectorImpl<const SCEV *> &Terms;
+  ScalarEvolution &SE;
+
+  SCEVCollectAddRecMultiplies(SmallVectorImpl<const SCEV *> &T, ScalarEvolution &SE)
+      : Terms(T), SE(SE) {}
+
+  bool follow(const SCEV *S) {
+    if (auto *Mul = dyn_cast<SCEVMulExpr>(S)) {
+      bool HasAddRec = false;
+      SmallVector<const SCEV *, 0> Operands;
+      for (auto Op : Mul->operands()) {
+        if (isa<SCEVUnknown>(Op)) {
+          Operands.push_back(Op);
+        } else {
+          bool ContainsAddRec;
+          SCEVHasAddRec ContiansAddRec(ContainsAddRec);
+          visitAll(Op, ContiansAddRec);
+          HasAddRec |= ContainsAddRec;
+        }
+      }
+      if (Operands.size() == 0)
+        return true;
+
+      if (!HasAddRec)
+        return false;
+
+      Terms.push_back(SE.getMulExpr(Operands));
+      // Stop recursion: once we collected a term, do not walk its operands.
+      return false;
+    }
+
+    // Keep looking.
+    return true;
+  }
+  bool isDone() const { return false; }
+};
 }
 
-/// Find parametric terms in this SCEVAddRecExpr.
+/// Find parametric terms in this SCEVAddRecExpr. We first for parameters in
+/// two places:
+///   1) The strides of AddRec expressions.
+///   2) Unknowns that are multiplied with AddRec expressions.
 void ScalarEvolution::collectParametricTerms(const SCEV *Expr,
     SmallVectorImpl<const SCEV *> &Terms) {
   SmallVector<const SCEV *, 4> Strides;
@@ -8332,6 +8407,9 @@ void ScalarEvolution::collectParametricTerms(const SCEV *Expr,
       for (const SCEV *T : Terms)
         dbgs() << *T << "\n";
     });
+
+  SCEVCollectAddRecMultiplies MulCollector(Terms, *this);
+  visitAll(Expr, MulCollector);
 }
 
 static bool findArrayDimensionsRec(ScalarEvolution &SE,
@@ -8492,11 +8570,13 @@ void ScalarEvolution::findArrayDimensions(SmallVectorImpl<const SCEV *> &Terms,
 
   ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
 
-  // Divide all terms by the element size.
+  // Try to divide all terms by the element size. If term is not divisible by
+  // element size, proceed with the original term.
   for (const SCEV *&Term : Terms) {
     const SCEV *Q, *R;
     SCEVDivision::divide(SE, Term, ElementSize, &Q, &R);
-    Term = Q;
+    if (!Q->isZero())
+      Term = Q;
   }
 
   SmallVector<const SCEV *, 4> NewTerms;
