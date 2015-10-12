@@ -551,8 +551,6 @@ TEST_F(InMemoryFileSystemTest, OverlayFile) {
   FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a"));
   auto Stat = FS.status("/");
   ASSERT_FALSE(Stat.getError()) << Stat.getError() << FS.toString();
-  Stat = FS.status("/.");
-  ASSERT_FALSE(Stat.getError()) << Stat.getError() << FS.toString();
   Stat = FS.status("/a");
   ASSERT_FALSE(Stat.getError()) << Stat.getError() << "\n" << FS.toString();
   ASSERT_EQ("/a", Stat->getName());
@@ -568,18 +566,18 @@ TEST_F(InMemoryFileSystemTest, OverlayFileNoOwn) {
 
 TEST_F(InMemoryFileSystemTest, OpenFileForRead) {
   FS.addFile("/a", 0, MemoryBuffer::getMemBuffer("a"));
-  FS.addFile("././c", 0, MemoryBuffer::getMemBuffer("c"));
+  FS.addFile("./c", 0, MemoryBuffer::getMemBuffer("c"));
   auto File = FS.openFileForRead("/a");
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/a"); // Open again.
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
-  File = FS.openFileForRead("/././a"); // Open again.
+  File = FS.openFileForRead("./a"); // Open again.
   ASSERT_EQ("a", (*(*File)->getBuffer("ignored"))->getBuffer());
   File = FS.openFileForRead("/");
   ASSERT_EQ(File.getError(), errc::invalid_argument) << FS.toString();
   File = FS.openFileForRead("/b");
   ASSERT_EQ(File.getError(), errc::no_such_file_or_directory) << FS.toString();
-  File = FS.openFileForRead("./c");
+  File = FS.openFileForRead("c");
   ASSERT_EQ("c", (*(*File)->getBuffer("ignored"))->getBuffer());
 }
 
