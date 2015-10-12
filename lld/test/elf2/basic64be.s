@@ -157,7 +157,7 @@ _start:
 # CHECK-NEXT:     AddressAlignment: 1
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:     SectionData (
-# CHECK-NEXT:       0000: 00000000 10010000 00000000 00000000 |................|
+# CHECK-NEXT:       0000: 00000000 10010000 00000000 00008000 |................|
 # CHECK-NEXT:       0010: 00000000 00000000                    |........|
 # CHECK-NEXT:     )
 # CHECK-NEXT:   }
