@@ -229,6 +229,13 @@ public:
     void
     RunToAddress (lldb::addr_t addr);
 
+    %feature("autodoc", "
+    Force a return from the frame passed in (and any frames younger than it)
+    without executing any more code in those frames.  If return_value contains
+    a valid SBValue, that will be set as the return value from frame.  Note, at
+    present only scalar return values are supported.
+    ") ReturnFromFrame;
+    
     SBError
     ReturnFromFrame (SBFrame &frame, SBValue &return_value);
 
