@@ -3,9 +3,11 @@
 // RUN: ld.lld2 -static %t -o %tout
 // RUN: ld.lld2 %t -o %tout
 // RUN: ld.lld2 -shared %tso -o %tshared
-// RUN: not ld.lld2 -static %t %tshared -o %tout
+// RUN: not ld.lld2 -static %t %tshared -o %tout 2>&1 | FileCheck %s
 // REQUIRES: x86
 
 .global _start
 _start:
   call __tls_get_addr
+
+// CHECK: undefined symbol: __tls_get_addr
