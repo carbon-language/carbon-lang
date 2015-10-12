@@ -43,6 +43,7 @@ def SwiftModel : SchedMachineModel {
   let MicroOpBufferSize = 45; // Based on NEON renamed registers.
   let LoadLatency = 3;
   let MispredictPenalty = 14; // A branch direction mispredict.
+  let CompleteModel = 0;      // FIXME: Remove if all instructions are covered.
 }
 
 // Swift predicates.
