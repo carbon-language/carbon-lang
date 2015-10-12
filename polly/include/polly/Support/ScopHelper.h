@@ -49,17 +49,6 @@ using ValueMapT = llvm::DenseMap<llvm::AssertingVH<llvm::Value>,
 /// @brief Type for a set of invariant loads.
 using InvariantLoadsSetTy = llvm::SetVector<llvm::AssertingVH<llvm::LoadInst>>;
 
-/// Temporary Hack for extended regiontree.
-///
-/// @brief Cast the region to loop.
-///
-/// @param R  The Region to be casted.
-/// @param LI The LoopInfo to help the casting.
-///
-/// @return If there is a a loop that has the same entry and exit as the region,
-///         return the loop, otherwise, return null.
-llvm::Loop *castToLoop(const llvm::Region &R, llvm::LoopInfo &LI);
-
 /// @brief Check if the PHINode has any incoming Invoke edge.
 ///
 /// @param PN The PHINode to check.
