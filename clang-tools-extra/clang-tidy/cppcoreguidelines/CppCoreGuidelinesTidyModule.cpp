@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "ProBoundsPointerArithmeticCheck.h"
 #include "ProTypeConstCastCheck.h"
 #include "ProTypeReinterpretCastCheck.h"
 #include "ProTypeStaticCastDowncastCheck.h"
@@ -22,6 +23,8 @@ namespace cppcoreguidelines {
 class CppCoreGuidelinesModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<ProBoundsPointerArithmeticCheck>(
+        "cppcoreguidelines-pro-bounds-pointer-arithmetic");
     CheckFactories.registerCheck<ProTypeConstCastCheck>(
         "cppcoreguidelines-pro-type-const-cast");
     CheckFactories.registerCheck<ProTypeReinterpretCastCheck>(
