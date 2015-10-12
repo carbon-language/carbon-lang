@@ -1804,7 +1804,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       GVI = FirstNewGV; // Don't skip the newly produced globals!
       return true;
     }
-  } else if (GS.StoredType == GlobalStatus::StoredOnce) {
+  } else if (GS.StoredType == GlobalStatus::StoredOnce && GS.StoredOnceValue) {
     // If the initial value for the global was an undef value, and if only
     // one other value was stored into it, we can just change the
     // initializer to be the stored value, then delete all stores to the
