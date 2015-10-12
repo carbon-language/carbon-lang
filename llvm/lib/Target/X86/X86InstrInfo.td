@@ -2850,9 +2850,9 @@ def : InstAlias<"imul{q} {$imm, $r|$r, $imm}", (IMUL64rri8 GR64:$r, GR64:$r, i64
 def : InstAlias<"inb\t{%dx|dx}", (IN8rr), 0>;
 def : InstAlias<"inw\t{%dx|dx}", (IN16rr), 0>;
 def : InstAlias<"inl\t{%dx|dx}", (IN32rr), 0>;
-def : InstAlias<"inb\t$port", (IN8ri i8imm:$port), 0>;
-def : InstAlias<"inw\t$port", (IN16ri i8imm:$port), 0>;
-def : InstAlias<"inl\t$port", (IN32ri i8imm:$port), 0>;
+def : InstAlias<"inb\t$port", (IN8ri u8imm:$port), 0>;
+def : InstAlias<"inw\t$port", (IN16ri u8imm:$port), 0>;
+def : InstAlias<"inl\t$port", (IN32ri u8imm:$port), 0>;
 
 
 // jmp and call aliases for lcall and ljmp.  jmp $42,$5 -> ljmp
@@ -2902,9 +2902,9 @@ def : InstAlias<"movzx {$src, $dst|$dst, $src}", (MOVZX64rr16_Q GR64:$dst, GR16:
 def : InstAlias<"outb\t{%dx|dx}", (OUT8rr), 0>;
 def : InstAlias<"outw\t{%dx|dx}", (OUT16rr), 0>;
 def : InstAlias<"outl\t{%dx|dx}", (OUT32rr), 0>;
-def : InstAlias<"outb\t$port", (OUT8ir i8imm:$port), 0>;
-def : InstAlias<"outw\t$port", (OUT16ir i8imm:$port), 0>;
-def : InstAlias<"outl\t$port", (OUT32ir i8imm:$port), 0>;
+def : InstAlias<"outb\t$port", (OUT8ir u8imm:$port), 0>;
+def : InstAlias<"outw\t$port", (OUT16ir u8imm:$port), 0>;
+def : InstAlias<"outl\t$port", (OUT32ir u8imm:$port), 0>;
 
 // 'sldt <mem>' can be encoded with either sldtw or sldtq with the same
 // effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
