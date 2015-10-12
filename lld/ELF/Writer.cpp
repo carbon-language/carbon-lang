@@ -472,6 +472,11 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     Out<ELFT>::StrTab->add(Sec->getName());
     Sec->finalize();
   }
+
+  // If we have a .opd section (used under PPC64 for function descriptors),
+  // store a pointer to it here so that we can use it later when processing
+  // relocations.
+  Out<ELFT>::Opd = Map.lookup({".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC});
 }
 
 template <class ELFT>
@@ -644,8 +649,18 @@ template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
 // Write section contents to a mmap'ed file.
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
+
+  // PPC64 needs to process relocations in the .opd section before processing
+  // relocations in code-containing sections.
+  for (OutputSectionBase<ELFT::Is64Bits> *&Sec : OutputSections)
+    if (Sec->getName() == ".opd") {
+      Out<ELFT>::OpdBuf = Buf + Sec->getFileOff();
+      Sec->writeTo(Buf + Sec->getFileOff());
+    }
+
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
-    Sec->writeTo(Buf + Sec->getFileOff());
+    if (Sec->getName() != ".opd")
+      Sec->writeTo(Buf + Sec->getFileOff());
 }
 
 template <class ELFT>

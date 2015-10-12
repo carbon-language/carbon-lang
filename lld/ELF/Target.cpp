@@ -395,14 +395,25 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     write32be(L, R);
     break;
   case R_PPC64_REL24: {
+    uint64_t PltStart = Out<ELF64BE>::Plt->getVA();
+    uint64_t PltEnd = PltStart + Out<ELF64BE>::Plt->getSize();
+    bool InPlt = PltStart <= S + A && S + A < PltEnd;
+
+    if (!InPlt && Out<ELF64BE>::Opd) {
+      // If this is a local call, and we currently have the address of a
+      // function-descriptor, get the underlying code address instead.
+      uint64_t OpdStart = Out<ELF64BE>::Opd->getVA();
+      uint64_t OpdEnd = OpdStart + Out<ELF64BE>::Opd->getSize();
+      bool InOpd = OpdStart <= S + A && S + A < OpdEnd;
+
+      if (InOpd)
+        R = read64be(&Out<ELF64BE>::OpdBuf[S + A - OpdStart]);
+    }
+
     uint32_t Mask = 0x03FFFFFC;
     if (!isInt<24>(R - P))
       error("Relocation R_PPC64_REL24 overflow");
     write32be(L, (read32be(L) & ~Mask) | ((R - P) & Mask));
-
-    uint64_t PltStart = Out<ELF64BE>::Plt->getVA();
-    uint64_t PltEnd = PltStart + Out<ELF64BE>::Plt->getSize();
-    bool InPlt = PltStart <= S + A && S + A < PltEnd;
 
     if (InPlt && L + 8 < BufEnd &&
         read32be(L + 4) == 0x60000000 /* nop */)

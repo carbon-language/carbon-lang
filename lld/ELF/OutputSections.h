@@ -288,6 +288,8 @@ template <class ELFT> struct Out {
   static HashTableSection<ELFT> *HashTab;
   static InterpSection<ELFT::Is64Bits> *Interp;
   static OutputSection<ELFT> *Bss;
+  static OutputSection<ELFT> *Opd;
+  static uint8_t *OpdBuf;
   static PltSection<ELFT> *Plt;
   static RelocationSection<ELFT> *RelaDyn;
   static StringTableSection<ELFT::Is64Bits> *DynStrTab;
@@ -301,6 +303,8 @@ template <class ELFT> GotSection<ELFT> *Out<ELFT>::Got;
 template <class ELFT> HashTableSection<ELFT> *Out<ELFT>::HashTab;
 template <class ELFT> InterpSection<ELFT::Is64Bits> *Out<ELFT>::Interp;
 template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Bss;
+template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Opd;
+template <class ELFT> uint8_t *Out<ELFT>::OpdBuf;
 template <class ELFT> PltSection<ELFT> *Out<ELFT>::Plt;
 template <class ELFT> RelocationSection<ELFT> *Out<ELFT>::RelaDyn;
 template <class ELFT> StringTableSection<ELFT::Is64Bits> *Out<ELFT>::DynStrTab;
