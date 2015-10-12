@@ -12,17 +12,10 @@ class TestValueOfVectorVariableTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @dsym_test
-    def test_value_of_vector_variable_with_dsym_using_watchpoint_set(self):
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    def test_value_of_vector_variable_using_watchpoint_set(self):
         """Test verify displayed value of vector variable."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.value_of_vector_variable_with_watchpoint_set()
-
-    @dwarf_test
-    def test_value_of_vector_variable_with_dwarf_using_watchpoint_set(self):
-        """Test verify displayed value of vector variable."""
-        self.buildDwarf(dictionary=self.d)
+        self.build(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.value_of_vector_variable_with_watchpoint_set()
     
