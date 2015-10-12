@@ -20,7 +20,6 @@ class SymbolBody;
 
 class TargetInfo {
 public:
-  llvm::StringRef getDefaultEntry() const { return DefaultEntry; }
   unsigned getPageSize() const { return PageSize; }
   uint64_t getVAStart() const { return VAStart; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
@@ -47,7 +46,6 @@ protected:
   unsigned GotReloc;
   unsigned RelativeReloc;
   unsigned PltEntrySize = 8;
-  llvm::StringRef DefaultEntry = "_start";
 };
 
 class X86TargetInfo final : public TargetInfo {

@@ -348,7 +348,6 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, const void *RelP,
 MipsTargetInfo::MipsTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
-  DefaultEntry = "__start";
   PageSize = 65536;
   VAStart = 0x400000;
 }
