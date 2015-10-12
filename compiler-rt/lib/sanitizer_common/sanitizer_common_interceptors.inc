@@ -5114,21 +5114,26 @@ INTERCEPTOR(__sanitizer_FILE *, fopencookie, void *cookie, const char *mode,
 #endif  // SANITIZER_INTERCEPT_FOPENCOOKIE
 
 #if SANITIZER_INTERCEPT_SEM
-INTERCEPTOR(int, sem_init, void *s, int pshared, unsigned value) {
+INTERCEPTOR(int, sem_init, __sanitizer_sem_t *s, int pshared, unsigned value) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, sem_init, s, pshared, value);
+  // Workaround a bug in glibc's "old" semaphore implementation by
+  // zero-initializing the sem_t contents. This has to be done here because
+  // interceptors bind to the lowest symbols version by default, hitting the
+  // buggy code path while the non-sanitized build of the same code works fine.
+  REAL(memset)(s, 0, sizeof(*s));
   int res = REAL(sem_init)(s, pshared, value);
   return res;
 }
 
-INTERCEPTOR(int, sem_destroy, void *s) {
+INTERCEPTOR(int, sem_destroy, __sanitizer_sem_t *s) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, sem_destroy, s);
   int res = REAL(sem_destroy)(s);
   return res;
 }
 
-INTERCEPTOR(int, sem_wait, void *s) {
+INTERCEPTOR(int, sem_wait, __sanitizer_sem_t *s) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, sem_wait, s);
   int res = COMMON_INTERCEPTOR_BLOCK_REAL(sem_wait)(s);
@@ -5138,7 +5143,7 @@ INTERCEPTOR(int, sem_wait, void *s) {
   return res;
 }
 
-INTERCEPTOR(int, sem_trywait, void *s) {
+INTERCEPTOR(int, sem_trywait, __sanitizer_sem_t *s) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, sem_trywait, s);
   int res = COMMON_INTERCEPTOR_BLOCK_REAL(sem_trywait)(s);
@@ -5148,7 +5153,7 @@ INTERCEPTOR(int, sem_trywait, void *s) {
   return res;
 }
 
-INTERCEPTOR(int, sem_timedwait, void *s, void *abstime) {
+INTERCEPTOR(int, sem_timedwait, __sanitizer_sem_t *s, void *abstime) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, sem_timedwait, s, abstime);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, abstime, struct_timespec_sz);
@@ -5159,7 +5164,7 @@ INTERCEPTOR(int, sem_timedwait, void *s, void *abstime) {
   return res;
 }
 
-INTERCEPTOR(int, sem_post, void *s) {
+INTERCEPTOR(int, sem_post, __sanitizer_sem_t *s) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, sem_post, s);
   COMMON_INTERCEPTOR_RELEASE(ctx, (uptr)s);
@@ -5167,7 +5172,7 @@ INTERCEPTOR(int, sem_post, void *s) {
   return res;
 }
 
-INTERCEPTOR(int, sem_getvalue, void *s, int *sval) {
+INTERCEPTOR(int, sem_getvalue, __sanitizer_sem_t *s, int *sval) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, sem_getvalue, s, sval);
   int res = REAL(sem_getvalue)(s, sval);

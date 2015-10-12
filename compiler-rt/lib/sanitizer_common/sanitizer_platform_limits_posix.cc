@@ -122,6 +122,7 @@
 # if defined(__mips64) || defined(__aarch64__)
 #  include <asm/ptrace.h>
 # endif
+# include <semaphore.h>
 #endif
 
 #if !SANITIZER_ANDROID
@@ -1239,6 +1240,10 @@ CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, read);
 CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, write);
 CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, seek);
 CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, close);
+#endif
+
+#if SANITIZER_LINUX || SANITIZER_FREEBSD
+CHECK_TYPE_SIZE(sem_t);
 #endif
 
 #endif // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC
