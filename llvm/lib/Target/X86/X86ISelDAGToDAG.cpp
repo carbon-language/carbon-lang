@@ -1648,13 +1648,12 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue N,
     Complexity++;
 
   // FIXME: We are artificially lowering the criteria to turn ADD %reg, $GA
-  // to a LEA. This is determined with some expermentation but is by no means
+  // to a LEA. This is determined with some experimentation but is by no means
   // optimal (especially for code size consideration). LEA is nice because of
   // its three-address nature. Tweak the cost function again when we can run
   // convertToThreeAddress() at register allocation time.
   if (AM.hasSymbolicDisplacement()) {
-    // For X86-64, we should always use lea to materialize RIP relative
-    // addresses.
+    // For X86-64, always use LEA to materialize RIP-relative addresses.
     if (Subtarget->is64Bit())
       Complexity = 4;
     else
