@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -fms-extensions
+// RUN: %clang_cc1 %s -fsyntax-only -verify -fms-extensions -Wunknown-pragmas
 // RUN: not %clang_cc1 %s -fms-extensions -E | FileCheck %s
 // REQUIRES: non-ps4-sdk
 
@@ -53,7 +53,7 @@ __pragma(comment(linker," bar=" BAR))
 
 void f()
 {
-  __pragma()
+  __pragma() // expected-warning{{unknown pragma ignored}}
 // CHECK: #pragma
 
   // If we ever actually *support* __pragma(warning(disable: x)),
@@ -159,3 +159,6 @@ void g() {}
 #pragma warning(default 321) // expected-warning {{expected ':'}}
 #pragma warning(asdf : 321) // expected-warning {{expected 'push', 'pop'}}
 #pragma warning(push, -1) // expected-warning {{requires a level between 0 and 4}}
+
+// Test that runtime_checks is parsed but ignored.
+#pragma runtime_checks("sc", restore) // no-warning

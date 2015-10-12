@@ -156,6 +156,10 @@ struct PragmaUnrollHintHandler : public PragmaHandler {
                     Token &FirstToken) override;
 };
 
+struct PragmaMSRuntimeChecksHandler : public EmptyPragmaHandler {
+  PragmaMSRuntimeChecksHandler() : EmptyPragmaHandler("runtime_checks") {}
+};
+
 }  // end namespace
 
 void Parser::initializePragmaHandlers() {
@@ -222,6 +226,8 @@ void Parser::initializePragmaHandlers() {
     PP.AddPragmaHandler(MSCodeSeg.get());
     MSSection.reset(new PragmaMSPragma("section"));
     PP.AddPragmaHandler(MSSection.get());
+    MSRuntimeChecks.reset(new PragmaMSRuntimeChecksHandler());
+    PP.AddPragmaHandler(MSRuntimeChecks.get());
   }
 
   OptimizeHandler.reset(new PragmaOptimizeHandler(Actions));
@@ -288,6 +294,8 @@ void Parser::resetPragmaHandlers() {
     MSCodeSeg.reset();
     PP.RemovePragmaHandler(MSSection.get());
     MSSection.reset();
+    PP.RemovePragmaHandler(MSRuntimeChecks.get());
+    MSRuntimeChecks.reset();
   }
 
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());

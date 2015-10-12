@@ -76,7 +76,7 @@ public:
 /// used to ignore particular pragmas.
 class EmptyPragmaHandler : public PragmaHandler {
 public:
-  EmptyPragmaHandler();
+  explicit EmptyPragmaHandler(StringRef Name = StringRef());
 
   void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                     Token &FirstToken) override;
