@@ -35,19 +35,24 @@ void BinaryBasicBlock::addSuccessor(BinaryBasicBlock *Succ,
                                     uint64_t Count,
                                     uint64_t MispredictedCount) {
   Successors.push_back(Succ);
+  BranchInfo.push_back({Count, MispredictedCount});
   Succ->Predecessors.push_back(this);
-
-  // TODO: update weights.
 }
 
 void BinaryBasicBlock::removeSuccessor(BinaryBasicBlock *Succ) {
   Succ->removePredecessor(this);
-  auto I = std::find(succ_begin(), succ_end(), Succ);
+  auto I = succ_begin();
+  auto BI = BranchInfo.begin();
+  for (; I != succ_end(); ++I) {
+    assert(BI != BranchInfo.end() && "missing BranchInfo entry");
+    if (*I == Succ)
+      break;
+    ++BI;
+  }
   assert(I != succ_end() && "no such successor!");
 
   Successors.erase(I);
-
-  // TODO: update weights.
+  BranchInfo.erase(BI);
 }
 
 void BinaryBasicBlock::addPredecessor(BinaryBasicBlock *Pred) {

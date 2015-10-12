@@ -87,6 +87,10 @@ static cl::opt<bool>
 DumpData("dump-data", cl::desc("dump parsed flo data (debugging)"),
          cl::Hidden);
 
+static cl::opt<bool>
+DumpFunctions("dump-functions", cl::desc("dump parsed functions (debugging)"),
+         cl::Hidden);
+
 static StringRef ToolName;
 
 static void report_error(StringRef Message, std::error_code EC) {
@@ -158,7 +162,7 @@ public:
 /// triple \p TripleName.
 static std::unique_ptr<BinaryContext> CreateBinaryContext(
     std::string ArchName,
-    std::string TripleName) {
+    std::string TripleName, const DataReader &DR) {
 
   std::string Error;
 
@@ -255,17 +259,18 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
                                        std::move(MIA),
                                        std::move(MRI),
                                        std::move(DisAsm),
-                                       MAB);
+                                       MAB,
+                                       DR);
 
   return BC;
 }
 
-static void OptimizeFile(ELFObjectFileBase *File) {
+static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
   // FIXME: there should be some way to extract arch and triple information
   //        from the file.
   std::unique_ptr<BinaryContext> BC =
-    std::move(CreateBinaryContext("x86-64", "x86_64-unknown-linux"));
+    std::move(CreateBinaryContext("x86-64", "x86_64-unknown-linux", DR));
   if (!BC) {
     errs() << "failed to create a binary context\n";
     return;
@@ -421,8 +426,12 @@ static void OptimizeFile(ELFObjectFileBase *File) {
     if (!Function.buildCFG())
       continue;
 
+    if (DumpFunctions)
+      Function.print(errs(), true);
   } // Iterate over all functions
 
+  if (DumpFunctions)
+    return;
 
   // Run optimization passes.
   //
@@ -693,18 +702,18 @@ int main(int argc, char **argv) {
   if (!sys::fs::exists(InputFilename))
     report_error(InputFilename, errc::no_such_file_or_directory);
 
+  std::unique_ptr<flo::DataReader> DR(new DataReader(errs()));
   if (!InputDataFilename.empty()) {
     if (!sys::fs::exists(InputDataFilename))
       report_error(InputDataFilename, errc::no_such_file_or_directory);
 
     // Attempt to read input flo data
-    ErrorOr<std::unique_ptr<flo::DataReader>> ReaderOrErr =
-        flo::DataReader::readPerfData(InputDataFilename, errs());
+    auto ReaderOrErr = flo::DataReader::readPerfData(InputDataFilename, errs());
     if (std::error_code EC = ReaderOrErr.getError())
       report_error(InputDataFilename, EC);
-    flo::DataReader &DR = *ReaderOrErr.get().get();
+    DR.reset(ReaderOrErr.get().release());
     if (DumpData) {
-      DR.dump();
+      DR->dump();
       return EXIT_SUCCESS;
     }
   }
@@ -716,7 +725,7 @@ int main(int argc, char **argv) {
   Binary &Binary = *BinaryOrErr.get().getBinary();
 
   if (ELFObjectFileBase *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
-    OptimizeFile(e);
+    OptimizeFile(e, *DR.get());
   } else {
     report_error(InputFilename, object_error::invalid_file_type);
   }

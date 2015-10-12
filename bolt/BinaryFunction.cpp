@@ -24,6 +24,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
+#include "DataReader.h"
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "flo"
@@ -61,8 +62,10 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  IsSimple    : "   << IsSimple
      << "\n  BB count    : "   << BasicBlocks.size()
-     << "\n  Image       : 0x" << Twine::utohexstr(ImageAddress)
-     << "\n}\n";
+     << "\n  Image       : 0x" << Twine::utohexstr(ImageAddress);
+  if (ExecutionCount != COUNT_NO_PROFILE)
+    OS << "\n  Exec Count  : " << ExecutionCount;
+  OS << "\n}\n";
 
   if (!PrintInstructions || !BC.InstPrinter)
     return;
@@ -122,10 +125,14 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
 
     if (!BB.Successors.empty()) {
       OS << "  Successors: ";
+      auto BI = BB.BranchInfo.begin();
       auto Sep = "";
       for (auto Succ : BB.Successors) {
-        OS << Sep << Succ->getName();
+        assert(BI != BB.BranchInfo.end() && "missing BranchInfo entry");
+        OS << Sep << Succ->getName() << " (mispreds: " << BI->MispredictedCount
+           << ", count: " << BI->Count << ")";
         Sep = ", ";
+        ++BI;
       }
       OS << '\n';
     }
@@ -307,6 +314,13 @@ bool BinaryFunction::buildCFG() {
 
   auto &MIA = BC.MIA;
 
+  auto BranchDataOrErr = BC.DR.getFuncBranchData(getName());
+  if (std::error_code EC = BranchDataOrErr.getError()) {
+    DEBUG(dbgs() << "no branch data found for \"" << getName() << "\"\n");
+  } else {
+    ExecutionCount = BC.DR.countBranchesTo(getName());
+  }
+
   if (!isSimple())
     return false;
 
@@ -378,9 +392,18 @@ bool BinaryFunction::buildCFG() {
     BinaryBasicBlock *ToBB = getBasicBlockAtOffset(Branch.second);
     assert(ToBB && "cannot find BB containing TO branch");
 
-    // TODO: add weights here.
-    //
-    FromBB->addSuccessor(ToBB);
+    if (std::error_code EC = BranchDataOrErr.getError()) {
+      FromBB->addSuccessor(ToBB);
+    } else {
+      const FuncBranchData &BranchData = BranchDataOrErr.get();
+      auto BranchInfoOrErr = BranchData.getBranch(Branch.first, Branch.second);
+      if (std::error_code EC = BranchInfoOrErr.getError()) {
+        FromBB->addSuccessor(ToBB);
+      } else {
+        const BranchInfo &BInfo = BranchInfoOrErr.get();
+        FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
+      }
+    }
   }
 
   // Add fall-through branches.

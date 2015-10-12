@@ -18,6 +18,25 @@
 namespace llvm {
 namespace flo {
 
+ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
+                                                      uint64_t To) const {
+  for (const auto &I : Data) {
+    if (I.From.Offset == From && I.To.Offset == To)
+      return I;
+  }
+  return make_error_code(llvm::errc::invalid_argument);
+}
+
+uint64_t
+FuncBranchData::countBranchesTo(StringRef FuncName) const {
+  uint64_t TotalCount = 0;
+  for (const auto &I : Data) {
+    if (I.To.Offset == 0 && I.To.Name == FuncName)
+      TotalCount += I.Branches;
+  }
+  return TotalCount;
+}
+
 ErrorOr<std::unique_ptr<DataReader>>
 DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
@@ -148,16 +167,45 @@ std::error_code DataReader::parse() {
       return EC;
     Col = 0;
     Line += 1;
+
     BranchInfo BI = Res.get();
-    ParsedData.emplace_back(std::move(BI));
+    StringRef Name = BI.From.Name;
+    auto I = FuncsMap.find(Name);
+    if (I == FuncsMap.end()) {
+      FuncBranchData::ContainerTy Cont;
+      Cont.emplace_back(std::move(BI));
+      FuncsMap.insert(
+          std::make_pair(Name, FuncBranchData(Name, std::move(Cont))));
+      continue;
+    }
+    I->getValue().Data.emplace_back(std::move(BI));
   }
   return std::error_code();
 }
 
-void DataReader::dump() {
-  for (auto &BI : ParsedData) {
-    Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
-         << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
+ErrorOr<const FuncBranchData &>
+DataReader::getFuncBranchData(StringRef FuncName) const {
+  const auto I = FuncsMap.find(FuncName);
+  if (I == FuncsMap.end()) {
+    return make_error_code(llvm::errc::invalid_argument);
+  }
+  return I->getValue();
+}
+
+uint64_t DataReader::countBranchesTo(StringRef FuncName) const {
+  uint64_t TotalCount = 0;
+  for (const auto &KV : FuncsMap) {
+    TotalCount += KV.getValue().countBranchesTo(FuncName);
+  }
+  return TotalCount;
+}
+
+void DataReader::dump() const {
+  for (const auto &Func : FuncsMap) {
+    for (const auto &BI : Func.getValue().Data) {
+      Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
+           << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
+    }
   }
 }
 }

@@ -46,12 +46,28 @@ struct BranchInfo {
         Branches(Branches) {}
 };
 
+class FuncBranchData {
+public:
+  typedef std::vector<BranchInfo> ContainerTy;
+
+  StringRef Name;
+  ContainerTy Data;
+
+  FuncBranchData(StringRef Name, ContainerTy Data)
+      : Name(Name), Data(std::move(Data)) {}
+
+  ErrorOr<const BranchInfo &> getBranch(uint64_t From, uint64_t To) const;
+  uint64_t countBranchesTo(StringRef FuncName) const;
+};
+
 //===----------------------------------------------------------------------===//
 //
 /// DataReader Class
 ///
 class DataReader {
 public:
+  explicit DataReader(raw_ostream &Diag) : Diag(Diag) {}
+
   DataReader(std::unique_ptr<MemoryBuffer> MemBuf, raw_ostream &Diag)
       : FileBuf(std::move(MemBuf)), Diag(Diag), ParsingBuf(FileBuf->getBuffer()),
         Line(0), Col(0) {}
@@ -77,8 +93,11 @@ public:
   /// offset 12, with 4 mispredictions and 221 branches
   std::error_code parse();
 
+  ErrorOr<const FuncBranchData &> getFuncBranchData(StringRef FuncName) const;
+  uint64_t countBranchesTo(StringRef FuncName) const;
+
   /// Dumps the entire data structures parsed. Used for debugging.
-  void dump();
+  void dump() const;
 
 private:
 
@@ -90,15 +109,13 @@ private:
   ErrorOr<BranchInfo> parseBranchInfo();
   bool hasData();
 
-  // Owns reader data structures
-  BumpPtrAllocator Alloc;
   // An in-memory copy of the input data file - owns strings used in reader
   std::unique_ptr<MemoryBuffer> FileBuf;
   raw_ostream &Diag;
   StringRef ParsingBuf;
   unsigned Line;
   unsigned Col;
-  std::vector<BranchInfo> ParsedData;
+  StringMap<FuncBranchData> FuncsMap;
   static const char FieldSeparator = ' ';
 };
 

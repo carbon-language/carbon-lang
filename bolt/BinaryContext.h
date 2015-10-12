@@ -35,6 +35,8 @@ namespace llvm {
 
 namespace flo {
 
+class DataReader;
+
 /// Everything that's needed to process binaries lives here.
 class BinaryContext {
 
@@ -77,6 +79,8 @@ public:
 
   MCAsmBackend *MAB;
 
+  const DataReader &DR;
+
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<Triple> TheTriple,
                 const Target *TheTarget,
@@ -89,7 +93,8 @@ public:
                 std::unique_ptr<const MCInstrAnalysis> MIA,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
-                MCAsmBackend *MAB) :
+                MCAsmBackend *MAB,
+                const DataReader &DR) :
       Ctx(std::move(Ctx)),
       TheTriple(std::move(TheTriple)),
       TheTarget(TheTarget),
@@ -102,7 +107,8 @@ public:
       MIA(std::move(MIA)),
       MRI(std::move(MRI)),
       DisAsm(std::move(DisAsm)),
-      MAB(MAB) {}
+      MAB(MAB),
+      DR(DR) {}
 
   ~BinaryContext() {}
 };
