@@ -49,6 +49,10 @@ public:
   BlockFrequency &operator+=(BlockFrequency Freq);
   BlockFrequency operator+(BlockFrequency Freq) const;
 
+  /// \brief Subtracts another block frequency using saturating arithmetic.
+  BlockFrequency &operator-=(BlockFrequency Freq);
+  BlockFrequency operator-(BlockFrequency Freq) const;
+
   /// \brief Shift block frequency to the right by count digits saturating to 1.
   BlockFrequency &operator>>=(const unsigned count);
 

@@ -88,6 +88,12 @@ TEST(BlockFrequencyTest, MaxToMax) {
   EXPECT_EQ(Freq.getFrequency(), UINT64_MAX);
 }
 
+TEST(BlockFrequencyTest, Subtract) {
+  BlockFrequency Freq1(0), Freq2(1);
+  EXPECT_EQ((Freq1 - Freq2).getFrequency(), 0u);
+  EXPECT_EQ((Freq2 - Freq1).getFrequency(), 1u);
+}
+
 TEST(BlockFrequency, Divide) {
   BlockFrequency Freq(0x3333333333333333ULL);
   Freq /= BranchProbability(1, 2);

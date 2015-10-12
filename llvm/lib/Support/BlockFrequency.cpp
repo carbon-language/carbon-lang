@@ -56,6 +56,21 @@ BlockFrequency BlockFrequency::operator+(BlockFrequency Freq) const {
   return NewFreq;
 }
 
+BlockFrequency &BlockFrequency::operator-=(BlockFrequency Freq) {
+  // If underflow, set frequency to 0.
+  if (Frequency <= Freq.Frequency)
+    Frequency = 0;
+  else
+    Frequency -= Freq.Frequency;
+  return *this;
+}
+
+BlockFrequency BlockFrequency::operator-(BlockFrequency Freq) const {
+  BlockFrequency NewFreq(Frequency);
+  NewFreq -= Freq;
+  return NewFreq;
+}
+
 BlockFrequency &BlockFrequency::operator>>=(const unsigned count) {
   // Frequency can never be 0 by design.
   assert(Frequency != 0);
