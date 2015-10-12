@@ -41,3 +41,4 @@ _start:
 .long bar
 .long zed
 .weak baz
+  call baz
