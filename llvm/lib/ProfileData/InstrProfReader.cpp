@@ -369,20 +369,20 @@ data_type InstrProfLookupTrait::ReadData(StringRef K, const unsigned char *D,
   using namespace support;
   const unsigned char *End = D + N;
   while (D < End) {
-    // Read hash
+    // Read hash.
     if (D + sizeof(uint64_t) >= End)
       return data_type();
     uint64_t Hash = endian::readNext<uint64_t, little, unaligned>(D);
 
-    // Initialize number of counters for FormatVersion == 1
+    // Initialize number of counters for FormatVersion == 1.
     uint64_t CountsSize = N / sizeof(uint64_t) - 1;
-    // If format version is different then read number of counters
+    // If format version is different then read the number of counters.
     if (FormatVersion != 1) {
       if (D + sizeof(uint64_t) > End)
         return data_type();
       CountsSize = endian::readNext<uint64_t, little, unaligned>(D);
     }
-    // Read counter values
+    // Read counter values.
     if (D + CountsSize * sizeof(uint64_t) > End)
       return data_type();
 
@@ -393,7 +393,7 @@ data_type InstrProfLookupTrait::ReadData(StringRef K, const unsigned char *D,
 
     DataBuffer.push_back(InstrProfRecord(K, Hash, std::move(CounterBuffer)));
 
-    // Read value profiling data
+    // Read value profiling data.
     if (FormatVersion > 2 && !ReadValueProfilingData(D, End)) {
       DataBuffer.clear();
       return data_type();
@@ -408,7 +408,7 @@ bool IndexedInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
   using namespace support;
   uint64_t Magic =
       endian::read<uint64_t, little, aligned>(DataBuffer.getBufferStart());
-  // verify that it's magical
+  // Verify that it's magical.
   return Magic == IndexedInstrProf::Magic;
 }
 
