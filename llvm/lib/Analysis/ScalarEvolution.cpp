@@ -7677,17 +7677,13 @@ bool ScalarEvolution::isImpliedCondOperands(ICmpInst::Predicate Pred,
 /// If Expr computes ~A, return A else return nullptr
 static const SCEV *MatchNotExpr(const SCEV *Expr) {
   const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Expr);
-  if (!Add || Add->getNumOperands() != 2) return nullptr;
-
-  const SCEVConstant *AddLHS = dyn_cast<SCEVConstant>(Add->getOperand(0));
-  if (!(AddLHS && AddLHS->getValue()->getValue().isAllOnesValue()))
+  if (!Add || Add->getNumOperands() != 2 ||
+      !Add->getOperand(0)->isAllOnesValue())
     return nullptr;
 
   const SCEVMulExpr *AddRHS = dyn_cast<SCEVMulExpr>(Add->getOperand(1));
-  if (!AddRHS || AddRHS->getNumOperands() != 2) return nullptr;
-
-  const SCEVConstant *MulLHS = dyn_cast<SCEVConstant>(AddRHS->getOperand(0));
-  if (!(MulLHS && MulLHS->getValue()->getValue().isAllOnesValue()))
+  if (!AddRHS || AddRHS->getNumOperands() != 2 ||
+      !AddRHS->getOperand(0)->isAllOnesValue())
     return nullptr;
 
   return AddRHS->getOperand(1);
