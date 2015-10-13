@@ -154,6 +154,9 @@ protected:
   /// \returns the read value.
   ErrorOr<StringRef> readString();
 
+  /// Read a string indirectly via the name table.
+  ErrorOr<StringRef> readStringFromTable();
+
   /// \brief Return true if we've reached the end of file.
   bool at_eof() const { return Data >= End; }
 
@@ -165,6 +168,9 @@ protected:
 
   /// \brief Points to the end of the buffer.
   const uint8_t *End;
+
+  /// Function name table.
+  std::vector<StringRef> NameTable;
 };
 
 // Represents the source position in GCC sample profiles.

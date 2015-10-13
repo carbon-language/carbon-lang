@@ -34,6 +34,8 @@ enum class sampleprof_error {
   truncated,
   malformed,
   unrecognized_format,
+  unsupported_writing_format,
+  truncated_name_table,
   not_implemented
 };
 
@@ -59,7 +61,7 @@ static inline uint64_t SPMagic() {
          uint64_t('2') << (64 - 56) | uint64_t(0xff);
 }
 
-static inline uint64_t SPVersion() { return 100; }
+static inline uint64_t SPVersion() { return 101; }
 
 /// Represents the relative location of an instruction.
 ///

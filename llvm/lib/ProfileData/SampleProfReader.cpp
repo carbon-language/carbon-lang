@@ -378,6 +378,16 @@ ErrorOr<StringRef> SampleProfileReaderBinary::readString() {
   return Str;
 }
 
+ErrorOr<StringRef> SampleProfileReaderBinary::readStringFromTable() {
+  std::error_code EC;
+  auto Idx = readNumber<unsigned>();
+  if (std::error_code EC = Idx.getError())
+    return EC;
+  if (*Idx >= NameTable.size())
+    return sampleprof_error::truncated_name_table;
+  return NameTable[*Idx];
+}
+
 std::error_code
 SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
   auto Val = readNumber<unsigned>();
@@ -413,7 +423,7 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
       return EC;
 
     for (unsigned J = 0; J < *NumCalls; ++J) {
-      auto CalledFunction(readString());
+      auto CalledFunction(readStringFromTable());
       if (std::error_code EC = CalledFunction.getError())
         return EC;
 
@@ -442,7 +452,7 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
     if (std::error_code EC = Discriminator.getError())
       return EC;
 
-    auto FName(readString());
+    auto FName(readStringFromTable());
     if (std::error_code EC = FName.getError())
       return EC;
 
@@ -457,7 +467,7 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
 
 std::error_code SampleProfileReaderBinary::read() {
   while (!at_eof()) {
-    auto FName(readString());
+    auto FName(readStringFromTable());
     if (std::error_code EC = FName.getError())
       return EC;
 
@@ -488,6 +498,18 @@ std::error_code SampleProfileReaderBinary::readHeader() {
     return EC;
   else if (*Version != SPVersion())
     return sampleprof_error::unsupported_version;
+
+  // Read the name table.
+  auto Size = readNumber<size_t>();
+  if (std::error_code EC = Size.getError())
+    return EC;
+  NameTable.reserve(*Size);
+  for (size_t I = 0; I < *Size; ++I) {
+    auto Name(readString());
+    if (std::error_code EC = Name.getError())
+      return EC;
+    NameTable.push_back(*Name);
+  }
 
   return sampleprof_error::success;
 }

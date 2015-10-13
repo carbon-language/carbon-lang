@@ -30,7 +30,8 @@ using namespace llvm::sampleprof;
 using namespace llvm;
 
 /// \brief Write samples to a text file.
-bool SampleProfileWriterText::write(StringRef FName, const FunctionSamples &S) {
+std::error_code SampleProfileWriterText::write(StringRef FName,
+                                               const FunctionSamples &S) {
   OS << FName << ":" << S.getTotalSamples();
   if (Indent == 0)
     OS << ":" << S.getHeadSamples();
@@ -61,31 +62,74 @@ bool SampleProfileWriterText::write(StringRef FName, const FunctionSamples &S) {
       OS << Loc.LineOffset << ": ";
     else
       OS << Loc.LineOffset << "." << Loc.Discriminator << ": ";
-    write(Loc.CalleeName, CalleeSamples);
+    if (std::error_code EC = write(Loc.CalleeName, CalleeSamples))
+      return EC;
   }
   Indent -= 1;
 
-  return true;
+  return sampleprof_error::success;
 }
 
-SampleProfileWriterBinary::SampleProfileWriterBinary(StringRef F,
-                                                     std::error_code &EC)
-    : SampleProfileWriter(F, EC, sys::fs::F_None) {
-  if (EC)
-    return;
+std::error_code SampleProfileWriterBinary::writeNameIdx(StringRef FName) {
+  const auto &ret = NameTable.find(FName);
+  if (ret == NameTable.end())
+    return sampleprof_error::truncated_name_table;
+  encodeULEB128(ret->second, OS);
+  return sampleprof_error::success;
+}
 
-  // Write the file header.
+void SampleProfileWriterBinary::addName(StringRef FName) {
+  auto NextIdx = NameTable.size();
+  NameTable.insert(std::make_pair(FName, NextIdx));
+}
+
+void SampleProfileWriterBinary::addNames(const FunctionSamples &S) {
+  // Add all the names in indirect call targets.
+  for (const auto &I : S.getBodySamples()) {
+    const SampleRecord &Sample = I.second;
+    for (const auto &J : Sample.getCallTargets())
+      addName(J.first());
+  }
+
+  // Recursively add all the names for inlined callsites.
+  for (const auto &J : S.getCallsiteSamples()) {
+    CallsiteLocation Loc = J.first;
+    const FunctionSamples &CalleeSamples = J.second;
+    addName(Loc.CalleeName);
+    addNames(CalleeSamples);
+  }
+}
+
+std::error_code SampleProfileWriterBinary::writeHeader(
+    const StringMap<FunctionSamples> &ProfileMap) {
+  // Write file magic identifier.
   encodeULEB128(SPMagic(), OS);
   encodeULEB128(SPVersion(), OS);
+
+  // Generate the name table for all the functions referenced in the profile.
+  for (const auto &I : ProfileMap) {
+    addName(I.first());
+    addNames(I.second);
+  }
+
+  // Write out the name table.
+  encodeULEB128(NameTable.size(), OS);
+  for (auto N : NameTable) {
+    OS << N.first;
+    encodeULEB128(0, OS);
+  }
+
+  return sampleprof_error::success;
 }
 
 /// \brief Write samples to a binary file.
 ///
 /// \returns true if the samples were written successfully, false otherwise.
-bool SampleProfileWriterBinary::write(StringRef FName,
-                                      const FunctionSamples &S) {
-  OS << FName;
-  encodeULEB128(0, OS);
+std::error_code SampleProfileWriterBinary::write(StringRef FName,
+                                                 const FunctionSamples &S) {
+  if (std::error_code EC = writeNameIdx(FName))
+    return EC;
+
   encodeULEB128(S.getTotalSamples(), OS);
   encodeULEB128(S.getHeadSamples(), OS);
   encodeULEB128(S.getBodySamples().size(), OS);
@@ -99,10 +143,10 @@ bool SampleProfileWriterBinary::write(StringRef FName,
     encodeULEB128(Sample.getSamples(), OS);
     encodeULEB128(Sample.getCallTargets().size(), OS);
     for (const auto &J : Sample.getCallTargets()) {
-      std::string Callee = J.first();
+      StringRef Callee = J.first();
       unsigned CalleeSamples = J.second;
-      OS << Callee;
-      encodeULEB128(0, OS);
+      if (std::error_code EC = writeNameIdx(Callee))
+        return EC;
       encodeULEB128(CalleeSamples, OS);
     }
   }
@@ -114,10 +158,11 @@ bool SampleProfileWriterBinary::write(StringRef FName,
     const FunctionSamples &CalleeSamples = J.second;
     encodeULEB128(Loc.LineOffset, OS);
     encodeULEB128(Loc.Discriminator, OS);
-    write(Loc.CalleeName, CalleeSamples);
+    if (std::error_code EC = write(Loc.CalleeName, CalleeSamples))
+      return EC;
   }
 
-  return true;
+  return sampleprof_error::success;
 }
 
 /// \brief Create a sample profile writer based on the specified format.
@@ -138,6 +183,8 @@ SampleProfileWriter::create(StringRef Filename, SampleProfileFormat Format) {
     Writer.reset(new SampleProfileWriterBinary(Filename, EC));
   else if (Format == SPF_Text)
     Writer.reset(new SampleProfileWriterText(Filename, EC));
+  else if (Format == SPF_GCC)
+    EC = sampleprof_error::unsupported_writing_format;
   else
     EC = sampleprof_error::unrecognized_format;
 
