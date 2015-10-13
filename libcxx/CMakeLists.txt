@@ -198,6 +198,10 @@ include(HandleLibcxxFlags)
 remove_flags(-DNDEBUG -UNDEBUG -D_DEBUG
              -stdlib=libc++ -stdlib=libstdc++ -lc++abi -m32)
 
+# FIXME(EricWF): See the FIXME on LIBCXX_ENABLE_PEDANTIC.
+# Remove the -pedantic flag provided by LLVM.
+remove_flags(-pedantic)
+
 # Required flags ==============================================================
 add_compile_flags_if_supported(-std=c++11)
 if (NOT MSVC AND NOT LIBCXX_SUPPORTS_STD_EQ_CXX11_FLAG)
