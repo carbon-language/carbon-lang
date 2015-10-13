@@ -101,7 +101,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   opt::InputArgList Args = parseArgs(&Alloc, ArgsArr);
   createFiles(Args);
 
-  switch (Config->ElfKind) {
+  switch (Config->EKind) {
   case ELF32LEKind:
     link<ELF32LE>(Args);
     return;
@@ -131,7 +131,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
 
   if (auto *Arg = Args.getLastArg(OPT_m)) {
     std::pair<ELFKind, uint16_t> P = parseEmulation(Arg->getValue());
-    Config->ElfKind = P.first;
+    Config->EKind = P.first;
     Config->EMachine = P.second;
   }
 

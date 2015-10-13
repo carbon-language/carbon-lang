@@ -55,7 +55,7 @@ struct Configuration {
   bool Static = false;
   bool Verbose;
   bool ZNow = false;
-  ELFKind ElfKind = ELFNoneKind;
+  ELFKind EKind = ELFNoneKind;
   uint16_t EMachine = llvm::ELF::EM_NONE;
 };
 

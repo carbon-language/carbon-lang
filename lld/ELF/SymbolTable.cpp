@@ -211,8 +211,7 @@ void SymbolTable<ELFT>::checkCompatibility(std::unique_ptr<InputFile> &File) {
   auto *E = dyn_cast<ELFFileBase<ELFT>>(File.get());
   if (!E)
     return;
-  if (E->getELFKind() == Config->ElfKind &&
-      E->getEMachine() == Config->EMachine)
+  if (E->getELFKind() == Config->EKind && E->getEMachine() == Config->EMachine)
     return;
   StringRef A = E->getName();
   StringRef B = Config->Emulation;

@@ -319,8 +319,8 @@ static std::unique_ptr<InputFile> createELFFileAux(MemoryBufferRef MB) {
   if (!Config->FirstElf)
     Config->FirstElf = Ret.get();
 
-  if (Config->ElfKind == ELFNoneKind) {
-    Config->ElfKind = Ret->getELFKind();
+  if (Config->EKind == ELFNoneKind) {
+    Config->EKind = Ret->getELFKind();
     Config->EMachine = Ret->getEMachine();
   }
 
