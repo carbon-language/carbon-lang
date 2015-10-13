@@ -2866,7 +2866,7 @@ std::error_code BitcodeReader::parseConstants() {
             return error("Invalid ID");
           ++BBI;
         }
-        BB = BBI;
+        BB = &*BBI;
       } else {
         // Otherwise insert a placeholder and remember it so it can be inserted
         // when the function is parsed.
@@ -3720,8 +3720,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
   unsigned ModuleMDValueListSize = MDValueList.size();
 
   // Add all the function arguments to the value table.
-  for(Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
-    ValueList.push_back(I);
+  for (Argument &I : F->args())
+    ValueList.push_back(&I);
 
   unsigned NextValueNo = ValueList.size();
   BasicBlock *CurBB = nullptr;
@@ -5103,9 +5103,8 @@ std::error_code BitcodeReader::materializeModule(Module *M) {
 
   // Iterate over the module, deserializing any functions that are still on
   // disk.
-  for (Module::iterator F = TheModule->begin(), E = TheModule->end();
-       F != E; ++F) {
-    if (std::error_code EC = materialize(F))
+  for (Function &F : *TheModule) {
+    if (std::error_code EC = materialize(&F))
       return EC;
   }
   // At this point, if there are any function bodies, parse the rest of
