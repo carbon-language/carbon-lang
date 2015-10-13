@@ -59,6 +59,8 @@ private:
 void LinkerScript::run() {
   while (!atEOF()) {
     StringRef Tok = next();
+    if (Tok == ";")
+      continue;
     if (Tok == "ENTRY") {
       readEntry();
     } else if (Tok == "GROUP" || Tok == "INPUT") {

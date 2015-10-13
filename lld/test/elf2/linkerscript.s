@@ -76,6 +76,14 @@
 # RUN: ld.lld2 %t.script %t
 # RUN: llvm-readobj %t.out > /dev/null
 
+# RUN: echo ";SEARCH_DIR(x);SEARCH_DIR(y);" > %t.script
+# RUN: ld.lld2 %t.script %t
+# RUN: llvm-readobj %t.out > /dev/null
+
+# RUN: echo ";" > %t.script
+# RUN: ld.lld2 %t.script %t
+# RUN: llvm-readobj %t.out > /dev/null
+
 # RUN: echo "INCLUDE " %t.script2 "OUTPUT(" %t.out ")" > %t.script1
 # RUN: echo "GROUP(" %t ")" > %t.script2
 # RUN: ld.lld2 %t.script1
