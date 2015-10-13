@@ -16,7 +16,7 @@ void test_rewrite_includes() {
   vprintf("string", argp);
 }
 
-// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty{{[/\\]}}<stdin>"
+// CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty{{/|\\5C}}<stdin>"
 // CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty{{[/\\]}}{{.*}}"
 // CHECK-NO-MAIN-FILE-NAME: !DIFile(filename: "/var/empty{{[/\\]}}Inputs/stdio.h"
 // CHECK-NO-MAIN-FILE-NAME-NOT: !DIFile(filename:
