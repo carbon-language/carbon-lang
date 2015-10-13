@@ -13,6 +13,7 @@ add_clang_library(clangTidyCppCoreGuidelinesModule
   clangBasic
   clangLex
   clangTidy
+  clangTidyMiscModule
   clangTidyUtils
   clangTooling
   )
