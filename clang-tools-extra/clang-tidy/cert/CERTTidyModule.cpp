@@ -15,6 +15,7 @@
 #include "../misc/NewDeleteOverloadsCheck.h"
 #include "../misc/NonCopyableObjects.h"
 #include "../misc/StaticAssertCheck.h"
+#include "../misc/ThrowByValueCatchByReferenceCheck.h"
 #include "SetLongJmpCheck.h"
 #include "VariadicFunctionDefCheck.h"
 
@@ -39,6 +40,8 @@ public:
     // ERR
     CheckFactories.registerCheck<SetLongJmpCheck>(
         "cert-err52-cpp");
+    CheckFactories.registerCheck<ThrowByValueCatchByReferenceCheck>(
+        "cert-err61-cpp");
 
     // C checkers
     // DCL
