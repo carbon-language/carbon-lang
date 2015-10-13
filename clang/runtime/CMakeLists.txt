@@ -44,6 +44,16 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
     COMMENT "Clobberring compiler-rt build and stamp directories"
     )
 
+  # Find all variables that start with COMPILER_RT and populate a variable with
+  # them.
+  get_cmake_property(variableNames VARIABLES)
+  foreach(varaibleName ${variableNames})
+    if(${varaibleName} MATCHES "^COMPILER_RT")
+      list(APPEND COMPILER_RT_PASSTHROUGH_VARIABLES
+        -D${varaibleName}=${${varaibleName}})
+    endif()
+  endforeach()
+
   ExternalProject_Add(compiler-rt
     PREFIX ${COMPILER_RT_PREFIX}
     SOURCE_DIR ${COMPILER_RT_SRC_ROOT}
@@ -59,6 +69,7 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
                -DCOMPILER_RT_INSTALL_PATH=${CMAKE_INSTALL_PREFIX}/lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}
                -DCOMPILER_RT_INCLUDE_TESTS=${LLVM_INCLUDE_TESTS}
                -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               ${COMPILER_RT_PASSTHROUGH_VARIABLES}
     INSTALL_COMMAND ""
     STEP_TARGETS configure build
     ${cmake_3_4_USES_TERMINAL_OPTIONS}
