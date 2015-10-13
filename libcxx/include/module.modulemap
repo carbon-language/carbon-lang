@@ -455,9 +455,13 @@ module std [system] {
     export *
   }
 
+  // FIXME: We don't have modules for the <foo.h> headers, because they might
+  // be included from the C library's headers, and that would create a #include
+  // cycle. For the same reason, we don't have a module for __config.
+  //module __config { header "__config" export * }
+
   // FIXME: These should be private.
   module __bit_reference { header "__bit_reference" export * }
-  module __config { header "__config" export * }
   module __debug { header "__debug" export * }
   module __functional_base { header "__functional_base" export * }
   module __hash_table { header "__hash_table" export * }
