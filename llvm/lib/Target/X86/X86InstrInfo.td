@@ -2687,8 +2687,8 @@ defm : IntegerCondCodeMnemonicAlias<"cmov", "", "intel">;
 //===----------------------------------------------------------------------===//
 
 // aad/aam default to base 10 if no operand is specified.
-def : InstAlias<"aad", (AAD8i8 10)>;
-def : InstAlias<"aam", (AAM8i8 10)>;
+def : InstAlias<"aad", (AAD8i8 10)>, Requires<[Not64BitMode]>;
+def : InstAlias<"aam", (AAM8i8 10)>, Requires<[Not64BitMode]>;
 
 // Disambiguate the mem/imm form of bt-without-a-suffix as btl.
 // Likewise for btc/btr/bts.
