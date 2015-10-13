@@ -454,23 +454,6 @@ void PPCTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
                                 const void *RelP, uint32_t Type,
                                 uint64_t BaseAddr, uint64_t SymVA) const {}
 
-ARMTargetInfo::ARMTargetInfo() {
-  // PCRelReloc = FIXME
-  // GotReloc = FIXME
-  VAStart = 0x8000;
-}
-void ARMTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                  uint64_t PltEntryAddr) const {}
-bool ARMTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
-bool ARMTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
-void ARMTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                const void *RelP, uint32_t Type,
-                                uint64_t BaseAddr, uint64_t SymVA) const {}
-
 AArch64TargetInfo::AArch64TargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME

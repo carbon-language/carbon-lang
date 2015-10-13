@@ -100,18 +100,6 @@ public:
                    uint64_t SymVA) const override;
 };
 
-class ARMTargetInfo final : public TargetInfo {
-public:
-  ARMTargetInfo();
-  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                   uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SymVA) const override;
-};
-
 class AArch64TargetInfo final : public TargetInfo {
 public:
   AArch64TargetInfo();

@@ -60,8 +60,6 @@ static TargetInfo *createTarget() {
     return new X86TargetInfo();
   case EM_AARCH64:
     return new AArch64TargetInfo();
-  case EM_ARM:
-    return new ARMTargetInfo();
   case EM_MIPS:
     return new MipsTargetInfo();
   case EM_PPC:

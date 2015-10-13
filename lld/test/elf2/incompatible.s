@@ -1,7 +1,7 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %ta.o
 // RUN: llvm-mc -filetype=obj -triple=i686-unknown-linux %s -o %tb.o
 // RUN: ld.lld2 -shared %tb.o -o %ti686.so
-// RUN: llvm-mc -filetype=obj -triple=arm-unknown-linux %s -o %tc.o
+// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %s -o %tc.o
 
 // RUN: not ld.lld2 %ta.o %tb.o -o %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=A-AND-B %s
@@ -55,4 +55,4 @@
 _start:
         .long foo
 
-// REQUIRES: x86,arm
+// REQUIRES: x86,aarch64
