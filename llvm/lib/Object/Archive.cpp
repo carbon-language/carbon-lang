@@ -43,18 +43,11 @@ StringRef ArchiveMemberHeader::getName() const {
   return llvm::StringRef(Name, end);
 }
 
-uint32_t ArchiveMemberHeader::getSize() const {
+ErrorOr<uint32_t> ArchiveMemberHeader::getSize() const {
   uint32_t Ret;
   if (llvm::StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, Ret))
-    llvm_unreachable("Size is not a decimal number.");
+    return object_error::parse_failed;
   return Ret;
-}
-
-bool ArchiveMemberHeader::isSizeValid() const {
-  uint32_t Ret;
-  if (llvm::StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, Ret))
-    return false;
-  return true;
 }
 
 sys::fs::perms ArchiveMemberHeader::getAccessMode() const {
@@ -96,11 +89,6 @@ Archive::Child::Child(const Archive *Parent, const char *Start)
 
   uint64_t Size = sizeof(ArchiveMemberHeader);
   Data = StringRef(Start, Size);
-  // Check to make sure the size is valid.
-  const ArchiveMemberHeader *Header =
-    reinterpret_cast<const ArchiveMemberHeader *>(Data.data());
-  if (!Header->isSizeValid())
-    return;
   if (!isThinMember()) {
     Size += getRawSize();
     Data = StringRef(Start, Size);
@@ -119,13 +107,20 @@ Archive::Child::Child(const Archive *Parent, const char *Start)
 }
 
 uint64_t Archive::Child::getSize() const {
-  if (Parent->IsThin)
-    return getHeader()->getSize();
+  if (Parent->IsThin) {
+    ErrorOr<uint32_t> Size = getHeader()->getSize();
+    if (Size.getError())
+      return 0;
+    return Size.get();
+  }
   return Data.size() - StartOfFile;
 }
 
 uint64_t Archive::Child::getRawSize() const {
-  return getHeader()->getSize();
+  ErrorOr<uint32_t> Size = getHeader()->getSize();
+  if (Size.getError())
+    return 0;
+  return Size.get();
 }
 
 bool Archive::Child::isThinMember() const {

@@ -37,8 +37,7 @@ struct ArchiveMemberHeader {
   llvm::StringRef getName() const;
 
   /// Members are not larger than 4GB.
-  uint32_t getSize() const;
-  bool isSizeValid() const;
+  ErrorOr<uint32_t> getSize() const;
 
   sys::fs::perms getAccessMode() const;
   sys::TimeValue getLastModified() const;
