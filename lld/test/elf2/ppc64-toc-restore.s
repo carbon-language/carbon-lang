@@ -40,6 +40,16 @@ noretb:
 // CHECK: noretb:
 // CHECK: 20014:       48 00 00 0c     b .+12
 
+// This should come last to check the end-of-buffer condition.
+.global last
+last:
+  bl bar
+  nop
+
+// CHECK: last:
+// CHECK: 20018:       48 00 00 09     bl .+8
+// CHECK: 2001c:       e8 41 00 28     ld 2, 40(1)
+
 // CHECK: Disassembly of section .plt:
 // CHECK: .plt:
 // CHECK: 20020:

@@ -427,7 +427,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
       error("Relocation R_PPC64_REL24 overflow");
     write32be(L, (read32be(L) & ~Mask) | ((R - P) & Mask));
 
-    if (InPlt && L + 8 < BufEnd &&
+    if (InPlt && L + 8 <= BufEnd &&
         read32be(L + 4) == 0x60000000 /* nop */)
       write32be(L + 4, 0xe8410028); // ld %r2, 40(%r1)
     break;
