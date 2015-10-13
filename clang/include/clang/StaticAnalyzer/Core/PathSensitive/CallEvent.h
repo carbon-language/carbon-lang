@@ -164,7 +164,8 @@ protected:
 
   /// \brief Used to specify non-argument regions that will be invalidated as a
   /// result of this call.
-  virtual void getExtraInvalidatedValues(ValueList &Values) const {}
+  virtual void getExtraInvalidatedValues(ValueList &Values,
+                 RegionAndSymbolInvalidationTraits *ETraits) const {}
 
 public:
   virtual ~CallEvent() {}
@@ -472,7 +473,8 @@ protected:
   BlockCall(const BlockCall &Other) : CallEvent(Other) {}
   void cloneTo(void *Dest) const override { new (Dest) BlockCall(*this); }
 
-  void getExtraInvalidatedValues(ValueList &Values) const override;
+  void getExtraInvalidatedValues(ValueList &Values,
+         RegionAndSymbolInvalidationTraits *ETraits) const override;
 
 public:
   virtual const CallExpr *getOriginExpr() const {
@@ -521,7 +523,8 @@ public:
 /// it is written.
 class CXXInstanceCall : public AnyFunctionCall {
 protected:
-  void getExtraInvalidatedValues(ValueList &Values) const override;
+  void getExtraInvalidatedValues(ValueList &Values, 
+         RegionAndSymbolInvalidationTraits *ETraits) const override;
 
   CXXInstanceCall(const CallExpr *CE, ProgramStateRef St,
                   const LocationContext *LCtx)
@@ -704,7 +707,8 @@ protected:
   CXXConstructorCall(const CXXConstructorCall &Other) : AnyFunctionCall(Other){}
   void cloneTo(void *Dest) const override { new (Dest) CXXConstructorCall(*this); }
 
-  void getExtraInvalidatedValues(ValueList &Values) const override;
+  void getExtraInvalidatedValues(ValueList &Values,
+         RegionAndSymbolInvalidationTraits *ETraits) const override;
 
 public:
   virtual const CXXConstructExpr *getOriginExpr() const {
@@ -803,7 +807,8 @@ protected:
   ObjCMethodCall(const ObjCMethodCall &Other) : CallEvent(Other) {}
   void cloneTo(void *Dest) const override { new (Dest) ObjCMethodCall(*this); }
 
-  void getExtraInvalidatedValues(ValueList &Values) const override;
+  void getExtraInvalidatedValues(ValueList &Values,
+         RegionAndSymbolInvalidationTraits *ETraits) const override;
 
   /// Check if the selector may have multiple definitions (may have overrides).
   virtual bool canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
