@@ -108,7 +108,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   size_t Off = 0;
   // First write PLT[0] entry which is special.
   Target->writePltZeroEntry(Buf, Out<ELFT>::GotPlt->getVA(), this->getVA());
-  Off += Target->getPltZeroEntrySize(); 
+  Off += Target->getPltZeroEntrySize();
   for (const SymbolBody *E : Entries) {
     uint64_t Got = Out<ELFT>::GotPlt->getEntryAddr(*E);
     uint64_t Plt = this->getVA() + Off;

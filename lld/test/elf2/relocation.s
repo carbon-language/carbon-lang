@@ -31,7 +31,7 @@
 // SEC-NEXT:   EntrySize: 0
 // SEC-NEXT: }
 
-// SEC:        Name: .got.plt 
+// SEC:        Name: .got.plt
 // SEC-NEXT:   Type: SHT_PROGBITS
 // SEC-NEXT:   Flags [
 // SEC-NEXT:     SHF_ALLOC

@@ -56,7 +56,7 @@
 // DISASM-NEXT:   1050:  ff 25 82 10 00 00  jmpq *4226(%rip)
 // DISASM-NEXT:   1056:  68 02 00 00 00     pushq $2
 // DISASM-NEXT:   105b:  e9 c0 ff ff ff     jmp -64 <bar+1020>
-	
+
 
 .global _start
 _start:

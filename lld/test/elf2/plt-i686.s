@@ -69,8 +69,8 @@
 // DISASM-NEXT:   11030:  ff 25 32 10 00 00 jmpl *4146
 // DISASM-NEXT:   11036:  68 01 00 00 00 pushl $1
 // DISASM-NEXT:   1103b:  e9 d0 ff ff ff jmp -48
-   
-   
+
+
 .global _start
 _start:
   jmp bar@PLT
