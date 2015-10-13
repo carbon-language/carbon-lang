@@ -387,6 +387,7 @@ class Configuration(object):
         # Configure feature flags.
         self.configure_compile_flags_exceptions()
         self.configure_compile_flags_rtti()
+        self.configure_compile_flags_abi_version()
         self.configure_compile_flags_no_global_filesystem_namespace()
         self.configure_compile_flags_no_stdin()
         self.configure_compile_flags_no_stdout()
@@ -439,6 +440,15 @@ class Configuration(object):
         if not enable_rtti:
             self.config.available_features.add('libcpp-no-rtti')
             self.cxx.compile_flags += ['-fno-rtti', '-D_LIBCPP_NO_RTTI']
+
+    def configure_compile_flags_abi_version(self):
+        abi_version = self.get_lit_conf('abi_version', '').strip()
+        abi_unstable = self.get_lit_bool('abi_unstable')
+        if abi_version:
+          self.cxx.compile_flags += ['-D_LIBCPP_ABI_VERSION=' + abi_version]
+        if abi_unstable:
+          self.config.available_features.add('libcpp-abi-unstable')
+          self.cxx.compile_flags += ['-D_LIBCPP_ABI_UNSTABLE']
 
     def configure_compile_flags_no_global_filesystem_namespace(self):
         enable_global_filesystem_namespace = self.get_lit_bool(

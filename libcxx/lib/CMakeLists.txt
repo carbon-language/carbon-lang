@@ -129,8 +129,8 @@ set_target_properties(cxx
     COMPILE_FLAGS "${LIBCXX_COMPILE_FLAGS}"
     LINK_FLAGS    "${LIBCXX_LINK_FLAGS}"
     OUTPUT_NAME   "c++"
-    VERSION       "1.0"
-    SOVERSION     "1"
+    VERSION       "${LIBCXX_ABI_VERSION}.0"
+    SOVERSION     "${LIBCXX_ABI_VERSION}"
   )
 
 if (LIBCXX_INSTALL_LIBRARY)

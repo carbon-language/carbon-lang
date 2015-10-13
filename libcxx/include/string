@@ -1185,7 +1185,7 @@ _LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS __basic_string_common<true>)
 #pragma warning( pop )
 #endif // _LIBCPP_MSVC
 
-#ifdef _LIBCPP_ALTERNATE_STRING_LAYOUT
+#ifdef _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
 
 template <class _CharT, size_t = sizeof(_CharT)>
 struct __padding
@@ -1198,7 +1198,7 @@ struct __padding<_CharT, 1>
 {
 };
 
-#endif  // _LIBCPP_ALTERNATE_STRING_LAYOUT
+#endif  // _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
 
 template<class _CharT, class _Traits, class _Allocator>
 class _LIBCPP_TYPE_VIS_ONLY basic_string
@@ -1234,7 +1234,7 @@ public:
 
 private:
 
-#ifdef _LIBCPP_ALTERNATE_STRING_LAYOUT
+#ifdef _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
 
     struct __long
     {
@@ -1294,7 +1294,7 @@ private:
         value_type __data_[__min_cap];
     };
 
-#endif  // _LIBCPP_ALTERNATE_STRING_LAYOUT
+#endif  // _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
 
     union __ulx{__long __lx; __short __lxx;};
 
@@ -1698,7 +1698,7 @@ private:
     const allocator_type& __alloc() const _NOEXCEPT
         {return __r_.second();}
 
-#ifdef _LIBCPP_ALTERNATE_STRING_LAYOUT
+#ifdef _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
 
     _LIBCPP_INLINE_VISIBILITY
     void __set_short_size(size_type __s) _NOEXCEPT
@@ -1716,7 +1716,7 @@ private:
         {return __r_.first().__s.__size_;}
 #   endif
 
-#else  // _LIBCPP_ALTERNATE_STRING_LAYOUT
+#else  // _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
 
     _LIBCPP_INLINE_VISIBILITY
     void __set_short_size(size_type __s) _NOEXCEPT
@@ -1734,7 +1734,7 @@ private:
         {return __r_.first().__s.__size_ >> 1;}
 #   endif
 
-#endif  // _LIBCPP_ALTERNATE_STRING_LAYOUT
+#endif  // _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
 
     _LIBCPP_INLINE_VISIBILITY
     void __set_long_size(size_type __s) _NOEXCEPT
