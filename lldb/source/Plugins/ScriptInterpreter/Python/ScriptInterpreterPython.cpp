@@ -468,11 +468,23 @@ ScriptInterpreterPython::LeaveSession ()
 }
 
 static PythonObject
-PyFile_FromFile_Const(FILE *fp, const char *name, const char *mode, int (*close)(FILE *))
+PyFile_FromFile_Const(FILE *fp, char *mode)
 {
+    char *cmode = const_cast<char*>(mode);
+#if PY_MAJOR_VERSION >= 3
+#if defined(LLVM_ON_WIN32)
+    int fd = _fileno(fp);
+#else
+    int fd = fileno(fp);
+#endif
+
+    return PyRef(PyRefType::Owned,
+        PyFile_FromFd(fd, nullptr, cmode, -1, nullptr, "ignore", nullptr, 0));
+#else
     // Read through the Python source, doesn't seem to modify these strings
     return PythonObject(PyRefType::Owned, 
-        PyFile_FromFile(fp, const_cast<char*>(name), const_cast<char*>(mode), close));
+        PyFile_FromFile(fp, const_cast<char*>(""), cmode, nullptr));
+#endif
 }
 
 bool
@@ -540,7 +552,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
             {
                 m_saved_stdin = sys_module_dict.GetItemForKey(PythonString("stdin"));
                 // This call can deadlock your process if the file is locked
-                PythonObject new_file = PyFile_FromFile_Const(in, "", "r", nullptr);
+                PythonObject new_file = PyFile_FromFile_Const(in, "r");
                 sys_module_dict.SetItemForKey (PythonString("stdin"), new_file);
             }
         }
@@ -551,7 +563,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
         {
             m_saved_stdout = sys_module_dict.GetItemForKey(PythonString("stdout"));
 
-            PythonObject new_file = PyFile_FromFile_Const(out, "", "w", nullptr);
+            PythonObject new_file = PyFile_FromFile_Const(out, "w");
             sys_module_dict.SetItemForKey (PythonString("stdout"), new_file);
         }
         else
@@ -563,7 +575,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
         {
             m_saved_stderr = sys_module_dict.GetItemForKey(PythonString("stderr"));
 
-            PythonObject new_file = PyFile_FromFile_Const(err, "", "w", nullptr);
+            PythonObject new_file = PyFile_FromFile_Const(err, "w");
             sys_module_dict.SetItemForKey (PythonString("stderr"), new_file);
         }
         else
