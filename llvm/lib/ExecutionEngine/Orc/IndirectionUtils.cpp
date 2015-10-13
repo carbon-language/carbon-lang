@@ -121,7 +121,7 @@ Function* cloneFunctionDecl(Module &Dst, const Function &F,
     auto NewArgI = NewF->arg_begin();
     for (auto ArgI = F.arg_begin(), ArgE = F.arg_end(); ArgI != ArgE;
          ++ArgI, ++NewArgI)
-      (*VMap)[ArgI] = NewArgI;
+      (*VMap)[&*ArgI] = &*NewArgI;
   }
 
   return NewF;
