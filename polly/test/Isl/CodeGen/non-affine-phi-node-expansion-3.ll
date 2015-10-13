@@ -20,6 +20,7 @@ loop:
 ; CHECK-NEXT: store float %p_val0, float* %merge.phiops
 ; CHECK-NEXT: store float %p_val1, float* %val1.s2a
 ; CHECK-NEXT: store float %p_val2, float* %val2.s2a
+; CHECK-NEXT: br
 
 ; FIXME -> The last two writes are not really needed and can be dropped if the
 ;          incoming block of the PHI and the value that is used share the same
@@ -30,12 +31,14 @@ branch1:
 
 ; CHECK-LABEL: polly.stmt.branch1:
 ; CHECK-NEXT:    store float %p_val1, float* %merge.phiops
+; CHECK-NEXT:    br
 
 branch2:
   br label %backedge
 
 ; CHECK-LABEL: polly.stmt.branch2:
 ; CHECK-NEXT:    store float %p_val2, float* %merge.phiops
+; CHECK-NEXT:    br
 
 backedge:
   %merge = phi float [%val0, %loop], [%val1, %branch1], [%val2, %branch2]
