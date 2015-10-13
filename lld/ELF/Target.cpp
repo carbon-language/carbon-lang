@@ -271,7 +271,7 @@ void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   // be a pointer to the function descriptor in the .opd section. Using
   // this scheme is simpler, but requires an extra indirection per PLT dispatch.
 
-  write32be(Buf,      0xf8410000);                   // std %r2, 40(%r1)
+  write32be(Buf,      0xf8410028);                   // std %r2, 40(%r1)
   write32be(Buf + 4,  0x3d620000 | applyPPCHa(Off)); // addis %r11, %r2, X@ha
   write32be(Buf + 8,  0xe98b0000 | applyPPCLo(Off)); // ld %r12, X@l(%r11)
   write32be(Buf + 12, 0xe96c0000);                   // ld %r11,0(%r12)
