@@ -20,6 +20,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
+#include <queue>
 #include <string>
 
 #include "BinaryBasicBlock.h"
@@ -387,6 +388,11 @@ bool BinaryFunction::buildCFG() {
     }
   }
 
+  // Set the basic block layout to the original order
+  for (auto &BB : BasicBlocks) {
+    BasicBlocksLayout.emplace_back(&BB);
+  }
+
   // Intermediate dump.
   DEBUG(print(dbgs(), /* PrintInstructions = */ true));
 
@@ -525,6 +531,156 @@ void BinaryFunction::inferFallThroughCounts() {
   } // end for (CurBB : BasicBlocks)
 
   return;
+}
+
+void BinaryFunction::optimizeLayout(bool DumpLayout) {
+  // Bail if no profiling information
+  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE) {
+    return;
+  }
+
+  if (DumpLayout) {
+    dbgs() << "running block layout heuristics on " << getName() << "\n";
+  }
+
+  // Greedy heuristic implementation for the "TSP problem", applied to BB
+  // layout. Try to maximize weight during a path traversing all BBs. In this
+  // way, we will convert the hottest branches into fall-throughs.
+
+  // Encode an edge between two basic blocks, source and destination
+  typedef std::pair<BinaryBasicBlock *, BinaryBasicBlock *> EdgeTy;
+  std::map<EdgeTy, uint64_t> Weight;
+
+  // Define a comparison function to establish SWO between edges
+  auto Comp = [&Weight](EdgeTy A, EdgeTy B) { return Weight[A] > Weight[B]; };
+  std::priority_queue<EdgeTy, std::vector<EdgeTy>, decltype(Comp)> Queue(Comp);
+
+  typedef std::vector<BinaryBasicBlock *> ClusterTy;
+  typedef std::map<BinaryBasicBlock *, int> BBToClusterMapTy;
+  std::vector<ClusterTy> Clusters;
+  BBToClusterMapTy BBToClusterMap;
+
+  // Populating priority queue with all edges
+  for (auto &BB : BasicBlocks) {
+    BBToClusterMap[&BB] = -1; // Mark as unmapped
+    auto BI = BB.BranchInfo.begin();
+    for (auto &I : BB.successors()) {
+      if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
+        Weight[std::make_pair(&BB, I)] = BI->Count;
+      Queue.push(std::make_pair(&BB, I));
+      ++BI;
+    }
+  }
+
+  // Start a cluster with the entry point
+  BinaryBasicBlock *Entry = &*BasicBlocks.begin();
+  Clusters.emplace_back();
+  auto &EntryCluster = Clusters.back();
+  EntryCluster.push_back(Entry);
+  BBToClusterMap[Entry] = 0;
+
+  // Grow clusters in a greedy fashion
+  while (!Queue.empty()) {
+    auto elmt = Queue.top();
+    Queue.pop();
+
+    BinaryBasicBlock *BBSrc = elmt.first;
+    BinaryBasicBlock *BBDst = elmt.second;
+    int I = 0, J = 0;
+
+    // Case 1: BBSrc and BBDst are the same. Ignore this edge
+    if (BBSrc == BBDst)
+      continue;
+
+    // Case 2: Both BBSrc and BBDst are already allocated
+    if ((I = BBToClusterMap[BBSrc]) != -1 &&
+        (J = BBToClusterMap[BBDst]) != -1) {
+      auto &ClusterA = Clusters[I];
+      auto &ClusterB = Clusters[J];
+      if (ClusterA.back() == BBSrc && ClusterB.front() == BBDst) {
+        // Case 2a: BBSrc is at the end of a cluster and BBDst is at the start,
+        // allowing us to merge two clusters
+        for (auto BB : ClusterB)
+          BBToClusterMap[BB] = I;
+        ClusterA.insert(ClusterA.end(), ClusterB.begin(), ClusterB.end());
+        ClusterB.clear();
+      } else {
+        // Case 2b: Both BBSrc and BBDst are allocated in positions we cannot
+        // merge them, so we ignore this edge.
+      }
+      continue;
+    }
+
+    // Case 3: BBSrc is already allocated in a cluster
+    if ((I = BBToClusterMap[BBSrc]) != -1) {
+      auto &Cluster = Clusters[I];
+      if (Cluster.back() == BBSrc) {
+        // Case 3a: BBSrc is allocated at the end of this cluster. We put
+        // BBSrc and BBDst together.
+        Cluster.push_back(BBDst);
+        BBToClusterMap[BBDst] = I;
+      } else {
+        // Case 3b: We cannot put BBSrc and BBDst in consecutive positions,
+        // so we ignore this edge.
+      }
+      continue;
+    }
+
+    // Case 4: BBSrc is not in a cluster, but BBDst is
+    if ((I = BBToClusterMap[BBDst]) != -1) {
+      auto &Cluster = Clusters[I];
+      if (Cluster.front() == BBDst) {
+        // Case 4a: BBDst is allocated at the start of this cluster. We put
+        // BBSrc and BBDst together.
+        Cluster.insert(Cluster.begin(), BBSrc);
+        BBToClusterMap[BBSrc] = I;
+      } else {
+        // Case 4b: We cannot put BBSrc and BBDst in consecutive positions,
+        // so we ignore this edge.
+      }
+      continue;
+    }
+
+    // Case 5: Both BBSrc and BBDst are unallocated, so we create a new cluster
+    // with them
+    I = Clusters.size();
+    Clusters.emplace_back();
+    auto &Cluster = Clusters.back();
+    Cluster.push_back(BBSrc);
+    Cluster.push_back(BBDst);
+    BBToClusterMap[BBSrc] = I;
+    BBToClusterMap[BBDst] = I;
+  }
+
+  // Define final function layout based on clusters
+  BasicBlocksLayout.clear();
+  for (auto &Cluster : Clusters) {
+    BasicBlocksLayout.insert(BasicBlocksLayout.end(), Cluster.begin(),
+                             Cluster.end());
+  }
+
+  // Finalize layout with BBs that weren't assigned to any cluster, preserving
+  // their relative order
+  for (auto &BB : BasicBlocks) {
+    if (BBToClusterMap[&BB] == -1)
+      BasicBlocksLayout.push_back(&BB);
+  }
+
+  if (DumpLayout) {
+    dbgs() << "original BB order is: ";
+    auto Sep = "";
+    for (auto &BB : BasicBlocks) {
+      dbgs() << Sep << BB.getName();
+      Sep = ",";
+    }
+    dbgs() << "\nnew order is:         ";
+    Sep = "";
+    for (auto BB : BasicBlocksLayout) {
+      dbgs() << Sep << BB->getName();
+      Sep = ",";
+    }
+    dbgs() << "\n";
+  }
 }
 
 } // namespace flo

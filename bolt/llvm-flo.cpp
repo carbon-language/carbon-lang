@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DataReader.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
@@ -50,6 +49,7 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "DataReader.h"
 
 #include <algorithm>
 #include <map>
@@ -84,11 +84,20 @@ EliminateUnreachable("eliminate-unreachable",
                      cl::Optional);
 
 static cl::opt<bool>
+ReorderBlocks("reorder-blocks",
+                     cl::desc("redo basic block layout based on profiling data"),
+                     cl::Optional);
+
+static cl::opt<bool>
 DumpData("dump-data", cl::desc("dump parsed flo data (debugging)"),
          cl::Hidden);
 
 static cl::opt<bool>
 DumpFunctions("dump-functions", cl::desc("dump parsed functions (debugging)"),
+         cl::Hidden);
+
+static cl::opt<bool>
+DumpLayout("dump-layout", cl::desc("dump parsed flo data (debugging)"),
          cl::Hidden);
 
 static StringRef ToolName;
@@ -456,6 +465,9 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       DEBUG(dbgs() << "*** After unreachable block elimination ***\n");
       DEBUG(Function.print(dbgs(), /* PrintInstructions = */ true));
     }
+    if (ReorderBlocks) {
+      BFI.second.optimizeLayout(DumpLayout);
+    }
   }
 
   std::error_code EC;
@@ -539,9 +551,9 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     Streamer->EmitLabel(FunctionSymbol);
 
     // Emit code.
-    for (const auto &BB : Function) {
-      Streamer->EmitLabel(BB.getLabel());
-      for (const auto &Instr : BB) {
+    for (auto BB : Function.layout()) {
+      Streamer->EmitLabel(BB->getLabel());
+      for (const auto &Instr : *BB) {
         Streamer->EmitInstruction(Instr, *BC->STI);
       }
     }

@@ -143,9 +143,12 @@ private:
   InstrMapType Instructions;
 
   // Blocks are kept sorted in the layout order. If we need to change the
-  // layout, the terminating instructions need to be modified.
+  // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
+  // the terminating instructions need to be modified.
   using BasicBlockListType = std::vector<BinaryBasicBlock>;
+  using BasicBlockOrderType = std::vector<BinaryBasicBlock*>;
   BasicBlockListType BasicBlocks;
+  BasicBlockOrderType BasicBlocksLayout;
 
 public:
 
@@ -153,6 +156,7 @@ public:
   typedef BasicBlockListType::const_iterator const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
+  typedef BasicBlockOrderType::iterator order_iterator;
 
   // CFG iterators.
   iterator                 begin()       { return BasicBlocks.begin(); }
@@ -172,6 +176,10 @@ public:
   const BinaryBasicBlock & back() const  { return BasicBlocks.back(); }
         BinaryBasicBlock & back()        { return BasicBlocks.back(); }
 
+  inline iterator_range<order_iterator> layout() {
+    return iterator_range<order_iterator>(BasicBlocksLayout.begin(),
+                                          BasicBlocksLayout.end());
+  }
 
   BinaryFunction(StringRef Name, SymbolRef Symbol, SectionRef Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC) :
@@ -180,7 +188,7 @@ public:
 
   /// Perform optimal code layout based on edge frequencies making necessary
   /// adjustments to instructions at the end of basic blocks.
-  void optimizeLayout();
+  void optimizeLayout(bool DumpLayout);
 
   /// View CFG in graphviz program
   void viewGraph();
