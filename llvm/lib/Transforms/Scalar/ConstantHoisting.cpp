@@ -365,9 +365,9 @@ void ConstantHoisting::collectConstantCandidates(ConstCandMapType &ConstCandMap,
 /// into an instruction itself.
 void ConstantHoisting::collectConstantCandidates(Function &Fn) {
   ConstCandMapType ConstCandMap;
-  for (Function::iterator BB : Fn)
-    for (BasicBlock::iterator Inst : *BB)
-      collectConstantCandidates(ConstCandMap, Inst);
+  for (BasicBlock &BB : Fn)
+    for (Instruction &Inst : BB)
+      collectConstantCandidates(ConstCandMap, &Inst);
 }
 
 /// \brief Find the base constant within the given range and rebase all other

@@ -47,7 +47,7 @@ namespace {
       TargetLibraryInfo *TLI = TLIP ? &TLIP->getTLI() : nullptr;
       bool Changed = false;
       for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
-        Instruction *Inst = DI++;
+        Instruction *Inst = &*DI++;
         if (isInstructionTriviallyDead(Inst, TLI)) {
           Inst->eraseFromParent();
           Changed = true;

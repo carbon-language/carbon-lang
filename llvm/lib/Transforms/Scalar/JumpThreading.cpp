@@ -178,7 +178,7 @@ bool JumpThreading::runOnFunction(Function &F) {
   do {
     Changed = false;
     for (Function::iterator I = F.begin(), E = F.end(); I != E;) {
-      BasicBlock *BB = I;
+      BasicBlock *BB = &*I;
       // Thread all of the branches we can over this block.
       while (ProcessBlock(BB))
         Changed = true;
@@ -241,7 +241,7 @@ bool JumpThreading::runOnFunction(Function &F) {
 static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB,
                                              unsigned Threshold) {
   /// Ignore PHI nodes, these will be flattened when duplication happens.
-  BasicBlock::const_iterator I = BB->getFirstNonPHI();
+  BasicBlock::const_iterator I(BB->getFirstNonPHI());
 
   // FIXME: THREADING will delete values that are just used to compute the
   // branch, so they shouldn't count against the duplication cost.
@@ -874,7 +874,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 
   // Scan a few instructions up from the load, to see if it is obviously live at
   // the entry to its block.
-  BasicBlock::iterator BBIt = LI;
+  BasicBlock::iterator BBIt(LI);
 
   if (Value *AvailableVal =
         FindAvailableLoadedValue(LoadedPtr, LoadBB, BBIt, DefMaxInstsToScan)) {
@@ -1004,7 +1004,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   // Create a PHI node at the start of the block for the PRE'd load value.
   pred_iterator PB = pred_begin(LoadBB), PE = pred_end(LoadBB);
   PHINode *PN = PHINode::Create(LI->getType(), std::distance(PB, PE), "",
-                                LoadBB->begin());
+                                &LoadBB->front());
   PN->takeName(LI);
   PN->setDebugLoc(LI->getDebugLoc());
 
@@ -1434,7 +1434,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
     Instruction *New = BI->clone();
     New->setName(BI->getName());
     NewBB->getInstList().push_back(New);
-    ValueMapping[BI] = New;
+    ValueMapping[&*BI] = New;
 
     // Remap operands to patch up intra-block references.
     for (unsigned i = 0, e = New->getNumOperands(); i != e; ++i)
@@ -1484,8 +1484,8 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
     // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
     // with the two values we know.
     SSAUpdate.Initialize(I->getType(), I->getName());
-    SSAUpdate.AddAvailableValue(BB, I);
-    SSAUpdate.AddAvailableValue(NewBB, ValueMapping[I]);
+    SSAUpdate.AddAvailableValue(BB, &*I);
+    SSAUpdate.AddAvailableValue(NewBB, ValueMapping[&*I]);
 
     while (!UsesToRename.empty())
       SSAUpdate.RewriteUse(*UsesToRename.pop_back_val());
@@ -1590,12 +1590,12 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
     if (Value *IV =
             SimplifyInstruction(New, BB->getModule()->getDataLayout())) {
       delete New;
-      ValueMapping[BI] = IV;
+      ValueMapping[&*BI] = IV;
     } else {
       // Otherwise, insert the new instruction into the block.
       New->setName(BI->getName());
-      PredBB->getInstList().insert(OldPredBranch, New);
-      ValueMapping[BI] = New;
+      PredBB->getInstList().insert(OldPredBranch->getIterator(), New);
+      ValueMapping[&*BI] = New;
     }
   }
 
@@ -1637,8 +1637,8 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
     // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
     // with the two values we know.
     SSAUpdate.Initialize(I->getType(), I->getName());
-    SSAUpdate.AddAvailableValue(BB, I);
-    SSAUpdate.AddAvailableValue(PredBB, ValueMapping[I]);
+    SSAUpdate.AddAvailableValue(BB, &*I);
+    SSAUpdate.AddAvailableValue(PredBB, ValueMapping[&*I]);
 
     while (!UsesToRename.empty())
       SSAUpdate.RewriteUse(*UsesToRename.pop_back_val());

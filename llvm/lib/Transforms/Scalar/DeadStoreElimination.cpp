@@ -67,11 +67,11 @@ namespace {
       TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
       bool Changed = false;
-      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+      for (BasicBlock &I : F)
         // Only check non-dead blocks.  Dead blocks may have strange pointer
         // cycles that will confuse alias analysis.
-        if (DT->isReachableFromEntry(I))
-          Changed |= runOnBasicBlock(*I);
+        if (DT->isReachableFromEntry(&I))
+          Changed |= runOnBasicBlock(I);
 
       AA = nullptr; MD = nullptr; DT = nullptr;
       return Changed;
@@ -488,7 +488,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
   // Do a top-down walk on the BB.
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ) {
-    Instruction *Inst = BBI++;
+    Instruction *Inst = &*BBI++;
 
     // Handle 'free' calls specially.
     if (CallInst *F = isFreeCall(Inst, TLI)) {
@@ -507,7 +507,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       auto RemoveDeadInstAndUpdateBBI = [&](Instruction *DeadInst) {
         // DeleteDeadInstruction can delete the current instruction.  Save BBI
         // in case we need it.
-        WeakVH NextInst(BBI);
+        WeakVH NextInst(&*BBI);
 
         DeleteDeadInstruction(DeadInst, *MD, *TLI);
 
@@ -599,7 +599,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
           // DeleteDeadInstruction can delete the current instruction in loop
           // cases, reset BBI.
-          BBI = Inst;
+          BBI = Inst->getIterator();
           if (BBI != BB.begin())
             --BBI;
           break;
@@ -645,7 +645,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       if (AA->getModRefInfo(DepWrite, Loc) & MRI_Ref)
         break;
 
-      InstDep = MD->getPointerDependencyFrom(Loc, false, DepWrite, &BB);
+      InstDep = MD->getPointerDependencyFrom(Loc, false,
+                                             DepWrite->getIterator(), &BB);
     }
   }
 
@@ -695,7 +696,7 @@ bool DSE::MemoryIsNotModifiedBetween(Instruction *FirstI,
       EI = B->end();
     }
     for (; BI != EI; ++BI) {
-      Instruction *I = BI;
+      Instruction *I = &*BI;
       if (I->mayWriteToMemory() && I != SecondI) {
         auto Res = AA->getModRefInfo(I, MemLoc);
         if (Res != MRI_NoModRef)
@@ -746,7 +747,8 @@ bool DSE::HandleFree(CallInst *F) {
     Instruction *InstPt = BB->getTerminator();
     if (BB == F->getParent()) InstPt = F;
 
-    MemDepResult Dep = MD->getPointerDependencyFrom(Loc, false, InstPt, BB);
+    MemDepResult Dep =
+        MD->getPointerDependencyFrom(Loc, false, InstPt->getIterator(), BB);
     while (Dep.isDef() || Dep.isClobber()) {
       Instruction *Dependency = Dep.getInst();
       if (!hasMemoryWrite(Dependency, *TLI) || !isRemovable(Dependency))
@@ -759,7 +761,7 @@ bool DSE::HandleFree(CallInst *F) {
       if (!AA->isMustAlias(F->getArgOperand(0), DepPointer))
         break;
 
-      Instruction *Next = std::next(BasicBlock::iterator(Dependency));
+      auto Next = ++Dependency->getIterator();
 
       // DCE instructions only used to calculate that store
       DeleteDeadInstruction(Dependency, *MD, *TLI);
@@ -795,23 +797,22 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
   SmallSetVector<Value*, 16> DeadStackObjects;
 
   // Find all of the alloca'd pointers in the entry block.
-  BasicBlock *Entry = BB.getParent()->begin();
-  for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I) {
-    if (isa<AllocaInst>(I))
-      DeadStackObjects.insert(I);
+  BasicBlock &Entry = BB.getParent()->front();
+  for (Instruction &I : Entry) {
+    if (isa<AllocaInst>(&I))
+      DeadStackObjects.insert(&I);
 
     // Okay, so these are dead heap objects, but if the pointer never escapes
     // then it's leaked by this function anyways.
-    else if (isAllocLikeFn(I, TLI) && !PointerMayBeCaptured(I, true, true))
-      DeadStackObjects.insert(I);
+    else if (isAllocLikeFn(&I, TLI) && !PointerMayBeCaptured(&I, true, true))
+      DeadStackObjects.insert(&I);
   }
 
   // Treat byval or inalloca arguments the same, stores to them are dead at the
   // end of the function.
-  for (Function::arg_iterator AI = BB.getParent()->arg_begin(),
-       AE = BB.getParent()->arg_end(); AI != AE; ++AI)
-    if (AI->hasByValOrInAllocaAttr())
-      DeadStackObjects.insert(AI);
+  for (Argument &AI : BB.getParent()->args())
+    if (AI.hasByValOrInAllocaAttr())
+      DeadStackObjects.insert(&AI);
 
   const DataLayout &DL = BB.getModule()->getDataLayout();
 
@@ -820,10 +821,10 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     --BBI;
 
     // If we find a store, check to see if it points into a dead stack value.
-    if (hasMemoryWrite(BBI, *TLI) && isRemovable(BBI)) {
+    if (hasMemoryWrite(&*BBI, *TLI) && isRemovable(&*BBI)) {
       // See through pointer-to-pointer bitcasts
       SmallVector<Value *, 4> Pointers;
-      GetUnderlyingObjects(getStoredPointerOperand(BBI), Pointers, DL);
+      GetUnderlyingObjects(getStoredPointerOperand(&*BBI), Pointers, DL);
 
       // Stores to stack values are valid candidates for removal.
       bool AllDead = true;
@@ -835,7 +836,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         }
 
       if (AllDead) {
-        Instruction *Dead = BBI++;
+        Instruction *Dead = &*BBI++;
 
         DEBUG(dbgs() << "DSE: Dead Store at End of Block:\n  DEAD: "
                      << *Dead << "\n  Objects: ";
@@ -856,8 +857,8 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
 
     // Remove any dead non-memory-mutating instructions.
-    if (isInstructionTriviallyDead(BBI, TLI)) {
-      Instruction *Inst = BBI++;
+    if (isInstructionTriviallyDead(&*BBI, TLI)) {
+      Instruction *Inst = &*BBI++;
       DeleteDeadInstruction(Inst, *MD, *TLI, &DeadStackObjects);
       ++NumFastOther;
       MadeChange = true;
@@ -867,15 +868,15 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     if (isa<AllocaInst>(BBI)) {
       // Remove allocas from the list of dead stack objects; there can't be
       // any references before the definition.
-      DeadStackObjects.remove(BBI);
+      DeadStackObjects.remove(&*BBI);
       continue;
     }
 
-    if (auto CS = CallSite(BBI)) {
+    if (auto CS = CallSite(&*BBI)) {
       // Remove allocation function calls from the list of dead stack objects; 
       // there can't be any references before the definition.
-      if (isAllocLikeFn(BBI, TLI))
-        DeadStackObjects.remove(BBI);
+      if (isAllocLikeFn(&*BBI, TLI))
+        DeadStackObjects.remove(&*BBI);
 
       // If this call does not access memory, it can't be loading any of our
       // pointers.

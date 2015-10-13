@@ -347,7 +347,7 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     bool BBChanged = false;
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
-      Instruction *II = BI++;
+      Instruction *II = &*BI++;
       switch (II->getOpcode()) {
       case Instruction::Select:
         BBChanged |= processSelect(cast<SelectInst>(II));

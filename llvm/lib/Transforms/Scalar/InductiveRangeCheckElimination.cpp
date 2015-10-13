@@ -1051,9 +1051,9 @@ LoopConstrainer::RewrittenRangeInfo LoopConstrainer::changeIterationSpaceEnd(
 
   auto BBInsertLocation = std::next(Function::iterator(LS.Latch));
   RRI.ExitSelector = BasicBlock::Create(Ctx, Twine(LS.Tag) + ".exit.selector",
-                                        &F, BBInsertLocation);
+                                        &F, &*BBInsertLocation);
   RRI.PseudoExit = BasicBlock::Create(Ctx, Twine(LS.Tag) + ".pseudo.exit", &F,
-                                      BBInsertLocation);
+                                      &*BBInsertLocation);
 
   BranchInst *PreheaderJump = cast<BranchInst>(&*Preheader->rbegin());
   bool Increasing = LS.IndVarIncreasing;

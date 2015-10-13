@@ -505,7 +505,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   // See if any instructions in the block can be eliminated.  If so, do it.  If
   // not, add them to AvailableValues.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-    Instruction *Inst = I++;
+    Instruction *Inst = &*I++;
 
     // Dead instructions should just be removed.
     if (isInstructionTriviallyDead(Inst, &TLI)) {

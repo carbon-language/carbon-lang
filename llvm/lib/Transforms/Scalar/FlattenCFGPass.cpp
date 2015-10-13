@@ -59,7 +59,7 @@ static bool iterativelyFlattenCFG(Function &F, AliasAnalysis *AA) {
     // Loop over all of the basic blocks and remove them if they are unneeded...
     //
     for (Function::iterator BBIt = F.begin(); BBIt != F.end();) {
-      if (FlattenCFG(BBIt++, AA)) {
+      if (FlattenCFG(&*BBIt++, AA)) {
         LocalChange = true;
       }
     }
