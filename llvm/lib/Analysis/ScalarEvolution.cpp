@@ -7509,21 +7509,24 @@ bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred, const SCEV *LHS,
   return false;
 }
 
-// Return true if More == (Less + C), where C is a constant.
-static bool IsConstDiff(ScalarEvolution &SE, const SCEV *Less, const SCEV *More,
-                        APInt &C) {
+bool ScalarEvolution::splitBinaryAdd(const SCEV *Expr,
+                                     const SCEV *&L, const SCEV *&R,
+                                     SCEV::NoWrapFlags &Flags) {
+  const auto *AE = dyn_cast<SCEVAddExpr>(Expr);
+  if (!AE || AE->getNumOperands() != 2)
+    return false;
+
+  L = AE->getOperand(0);
+  R = AE->getOperand(1);
+  Flags = AE->getNoWrapFlags();
+  return true;
+}
+
+bool ScalarEvolution::computeConstantDifference(const SCEV *Less,
+                                                const SCEV *More,
+                                                APInt &C) {
   // We avoid subtracting expressions here because this function is usually
   // fairly deep in the call stack (i.e. is called many times).
-
-  auto SplitBinaryAdd = [](const SCEV *Expr, const SCEV *&L, const SCEV *&R) {
-    const auto *AE = dyn_cast<SCEVAddExpr>(Expr);
-    if (!AE || AE->getNumOperands() != 2)
-      return false;
-
-    L = AE->getOperand(0);
-    R = AE->getOperand(1);
-    return true;
-  };
 
   if (isa<SCEVAddRecExpr>(Less) && isa<SCEVAddRecExpr>(More)) {
     const auto *LAR = cast<SCEVAddRecExpr>(Less);
@@ -7537,7 +7540,7 @@ static bool IsConstDiff(ScalarEvolution &SE, const SCEV *Less, const SCEV *More,
     if (!LAR->isAffine() || !MAR->isAffine())
       return false;
 
-    if (LAR->getStepRecurrence(SE) != MAR->getStepRecurrence(SE))
+    if (LAR->getStepRecurrence(*this) != MAR->getStepRecurrence(*this))
       return false;
 
     Less = LAR->getStart();
@@ -7554,14 +7557,15 @@ static bool IsConstDiff(ScalarEvolution &SE, const SCEV *Less, const SCEV *More,
   }
 
   const SCEV *L, *R;
-  if (SplitBinaryAdd(Less, L, R))
+  SCEV::NoWrapFlags Flags;
+  if (splitBinaryAdd(Less, L, R, Flags))
     if (const auto *LC = dyn_cast<SCEVConstant>(L))
       if (R == More) {
         C = -(LC->getValue()->getValue());
         return true;
       }
 
-  if (SplitBinaryAdd(More, L, R))
+  if (splitBinaryAdd(More, L, R, Flags))
     if (const auto *LC = dyn_cast<SCEVConstant>(L))
       if (R == Less) {
         C = LC->getValue()->getValue();
@@ -7626,8 +7630,8 @@ bool ScalarEvolution::isImpliedCondOperandsViaNoOverflow(
   // C)".
 
   APInt LDiff, RDiff;
-  if (!IsConstDiff(*this, FoundLHS, LHS, LDiff) ||
-      !IsConstDiff(*this, FoundRHS, RHS, RDiff) ||
+  if (!computeConstantDifference(FoundLHS, LHS, LDiff) ||
+      !computeConstantDifference(FoundRHS, RHS, RDiff) ||
       LDiff != RDiff)
     return false;
 

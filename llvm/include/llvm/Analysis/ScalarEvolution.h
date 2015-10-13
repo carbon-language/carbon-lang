@@ -581,6 +581,15 @@ namespace llvm {
     bool isKnownPredicateViaSplitting(ICmpInst::Predicate Pred, const SCEV *LHS,
                                       const SCEV *RHS);
 
+    /// Try to match the Expr as "(L + R)<Flags>".
+    bool splitBinaryAdd(const SCEV *Expr, const SCEV *&L, const SCEV *&R,
+                        SCEV::NoWrapFlags &Flags);
+
+    /// Return true if More == (Less + C), where C is a constant.  This is
+    /// intended to be used as a cheaper substitute for full SCEV subtraction.
+    bool computeConstantDifference(const SCEV *Less, const SCEV *More,
+                                   APInt &C);
+
     /// Drop memoized information computed for S.
     void forgetMemoizedResults(const SCEV *S);
 
