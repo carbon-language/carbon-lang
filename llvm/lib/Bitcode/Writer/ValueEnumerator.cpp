@@ -512,10 +512,8 @@ void ValueEnumerator::EnumerateValueSymbolTable(const ValueSymbolTable &VST) {
 /// Insert all of the values referenced by named metadata in the specified
 /// module.
 void ValueEnumerator::EnumerateNamedMetadata(const Module &M) {
-  for (Module::const_named_metadata_iterator I = M.named_metadata_begin(),
-                                             E = M.named_metadata_end();
-       I != E; ++I)
-    EnumerateNamedMDNode(I);
+  for (const auto &I : M.named_metadata())
+    EnumerateNamedMDNode(&I);
 }
 
 void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
@@ -729,23 +727,20 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   NumModuleMDs = MDs.size();
 
   // Adding function arguments to the value table.
-  for (Function::const_arg_iterator I = F.arg_begin(), E = F.arg_end();
-       I != E; ++I)
-    EnumerateValue(I);
+  for (const auto &I : F.args())
+    EnumerateValue(&I);
 
   FirstFuncConstantID = Values.size();
 
   // Add all function-level constants to the value table.
-  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
-      for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
-           OI != E; ++OI) {
-        if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
-            isa<InlineAsm>(*OI))
-          EnumerateValue(*OI);
+  for (const BasicBlock &BB : F) {
+    for (const Instruction &I : BB)
+      for (const Use &OI : I.operands()) {
+        if ((isa<Constant>(OI) && !isa<GlobalValue>(OI)) || isa<InlineAsm>(OI))
+          EnumerateValue(OI);
       }
-    BasicBlocks.push_back(BB);
-    ValueMap[BB] = BasicBlocks.size();
+    BasicBlocks.push_back(&BB);
+    ValueMap[&BB] = BasicBlocks.size();
   }
 
   // Optimize the constant layout.
@@ -759,18 +754,17 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
 
   SmallVector<LocalAsMetadata *, 8> FnLocalMDVector;
   // Add all of the instructions.
-  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
-      for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
-           OI != E; ++OI) {
-        if (auto *MD = dyn_cast<MetadataAsValue>(&*OI))
+  for (const BasicBlock &BB : F) {
+    for (const Instruction &I : BB) {
+      for (const Use &OI : I.operands()) {
+        if (auto *MD = dyn_cast<MetadataAsValue>(&OI))
           if (auto *Local = dyn_cast<LocalAsMetadata>(MD->getMetadata()))
             // Enumerate metadata after the instructions they might refer to.
             FnLocalMDVector.push_back(Local);
       }
 
-      if (!I->getType()->isVoidTy())
-        EnumerateValue(I);
+      if (!I.getType()->isVoidTy())
+        EnumerateValue(&I);
     }
   }
 
@@ -797,8 +791,8 @@ void ValueEnumerator::purgeFunction() {
 static void IncorporateFunctionInfoGlobalBBIDs(const Function *F,
                                  DenseMap<const BasicBlock*, unsigned> &IDMap) {
   unsigned Counter = 0;
-  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-    IDMap[BB] = ++Counter;
+  for (const BasicBlock &BB : *F)
+    IDMap[&BB] = ++Counter;
 }
 
 /// getGlobalBasicBlockID - This returns the function-specific ID for the
