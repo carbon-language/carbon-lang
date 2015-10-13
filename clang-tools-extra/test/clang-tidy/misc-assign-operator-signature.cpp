@@ -49,3 +49,8 @@ class Private {
   // Pre-C++11 way of disabling assignment.
   void operator=(const Private &);
 };
+
+struct Virtual {
+  virtual Virtual& operator=(const Virtual &);
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: operator=() should not be marked 'virtual'
+};

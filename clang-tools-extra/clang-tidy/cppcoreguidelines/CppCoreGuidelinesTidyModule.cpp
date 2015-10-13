@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "../misc/AssignOperatorSignatureCheck.h"
 #include "ProBoundsPointerArithmeticCheck.h"
 #include "ProTypeConstCastCheck.h"
 #include "ProTypeReinterpretCastCheck.h"
@@ -31,6 +32,8 @@ public:
         "cppcoreguidelines-pro-type-reinterpret-cast");
     CheckFactories.registerCheck<ProTypeStaticCastDowncastCheck>(
         "cppcoreguidelines-pro-type-static-cast-downcast");
+    CheckFactories.registerCheck<misc::AssignOperatorSignatureCheck>(
+        "cppcoreguidelines-c-copy-assignment-signature");
   }
 };
 
