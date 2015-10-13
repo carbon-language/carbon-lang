@@ -55,40 +55,16 @@ X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
   GotRefReloc = R_386_GOT32;
-  PltReloc = R_386_JUMP_SLOT;
-  PltEntrySize = 16;
   VAStart = 0x10000;
 }
 
-void X86TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {
-  // Skip 6 bytes of "jmpq *got(%rip)"
-  write32le(Buf, Plt + 6);
-}
-
-void X86TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                      uint64_t PltEntryAddr) const {
-  const uint8_t PltData[] = {
-      0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
-      0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
-      0x00, 0x00, 0x00, 0x00
-  };
-  memcpy(Buf, PltData, sizeof(PltData));
-  write32le(Buf + 2, GotEntryAddr - PltEntryAddr + 2); // GOT+8
-  write32le(Buf + 8, GotEntryAddr - PltEntryAddr + 4); // GOT+16
-}
-
 void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                  uint64_t PltEntryAddr, int32_t Index) const {
-  const uint8_t Inst[] = {
-      0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *got(%rip)
-      0x68, 0x00, 0x00, 0x00, 0x00,       // pushq <relocation index>
-      0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[0]
-  };
+                                  uint64_t PltEntryAddr) const {
+  // jmpl *val; nop; nop
+  const uint8_t Inst[] = {0xff, 0x25, 0, 0, 0, 0, 0x90, 0x90};
   memcpy(Buf, Inst, sizeof(Inst));
-
-  write32le(Buf + 2, GotEntryAddr - PltEntryAddr - 6);
-  write32le(Buf + 7, Index);
-  write32le(Buf + 12, -Index * PltEntrySize - PltZeroEntrySize - 16);
+  assert(isUInt<32>(GotEntryAddr));
+  write32le(Buf + 2, GotEntryAddr);
 }
 
 bool X86TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
@@ -133,9 +109,7 @@ X86_64TargetInfo::X86_64TargetInfo() {
   PCRelReloc = R_X86_64_PC32;
   GotReloc = R_X86_64_GLOB_DAT;
   GotRefReloc = R_X86_64_PC32;
-  PltReloc = R_X86_64_JUMP_SLOT;
   RelativeReloc = R_X86_64_RELATIVE;
-  PltEntrySize = 16;
 
   // On freebsd x86_64 the first page cannot be mmaped.
   // On linux that is controled by vm.mmap_min_addr. At least on some x86_64
@@ -146,35 +120,16 @@ X86_64TargetInfo::X86_64TargetInfo() {
   VAStart = 0x10000;
 }
 
-void X86_64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {
-  // Skip 6 bytes of "jmpq *got(%rip)"
-  write32le(Buf, Plt + 6);
-}
-
-void X86_64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                      uint64_t PltEntryAddr) const {
-  const uint8_t PltData[] = {
-      0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
-      0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
-      0x0f, 0x1f, 0x40, 0x00              // nopl 0x0(rax)
-  };
-  memcpy(Buf, PltData, sizeof(PltData));
-  write32le(Buf + 2, GotEntryAddr - PltEntryAddr + 2); // GOT+8
-  write32le(Buf + 8, GotEntryAddr - PltEntryAddr + 4); // GOT+16
-}
-
 void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                     uint64_t PltEntryAddr, int32_t Index) const {
-  const uint8_t Inst[] = {
-      0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *got(%rip)
-      0x68, 0x00, 0x00, 0x00, 0x00,       // pushq <relocation index>
-      0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[0]
-  };
+                                     uint64_t PltEntryAddr) const {
+  // jmpq *val(%rip); nop; nop
+  const uint8_t Inst[] = {0xff, 0x25, 0, 0, 0, 0, 0x90, 0x90};
   memcpy(Buf, Inst, sizeof(Inst));
 
-  write32le(Buf + 2, GotEntryAddr - PltEntryAddr - 6);
-  write32le(Buf + 7, Index);
-  write32le(Buf + 12, -Index * PltEntrySize - PltZeroEntrySize - 16);
+  uint64_t NextPC = PltEntryAddr + 6;
+  int64_t Delta = GotEntryAddr - NextPC;
+  assert(isInt<32>(Delta));
+  write32le(Buf + 2, Delta);
 }
 
 bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
@@ -286,9 +241,7 @@ PPC64TargetInfo::PPC64TargetInfo() {
   GotReloc = R_PPC64_GLOB_DAT;
   GotRefReloc = R_PPC64_REL64;
   RelativeReloc = R_PPC64_RELATIVE;
-  // PltReloc = FIXME
   PltEntrySize = 32;
-  PltZeroEntrySize = 0; //FIXME
 
   // We need 64K pages (at least under glibc/Linux, the loader won't
   // set different permissions on a finer granularity than that).
@@ -314,12 +267,8 @@ static uint64_t getPPC64TocBase() {
   return TocVA + 0x8000;
 }
 
-
-void PPC64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
-void PPC64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                       uint64_t PltEntryAddr) const {}
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                    uint64_t PltEntryAddr, int32_t Index) const {
+                                    uint64_t PltEntryAddr) const {
   uint64_t Off = GotEntryAddr - getPPC64TocBase();
 
   // FIXME: What we should do, in theory, is get the offset of the function
@@ -508,16 +457,11 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
 PPCTargetInfo::PPCTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
-  // PltReloc = FIXME
   PageSize = 65536;
   VAStart = 0x10000000;
 }
-
-void PPCTargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
-void PPCTargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                      uint64_t PltEntryAddr) const {}
 void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                  uint64_t PltEntryAddr, int32_t Index) const {}
+                                  uint64_t PltEntryAddr) const {}
 bool PPCTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
@@ -531,16 +475,10 @@ void PPCTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
 AArch64TargetInfo::AArch64TargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
-  // PltReloc = FIXME
   VAStart = 0x400000;
 }
-
-void AArch64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
-void AArch64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                          uint64_t PltEntryAddr) const {}
 void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                      uint64_t PltEntryAddr,
-                                      int32_t Index) const {}
+                                      uint64_t PltEntryAddr) const {}
 bool AArch64TargetInfo::relocNeedsGot(uint32_t Type,
                                       const SymbolBody &S) const {
   return false;
@@ -615,19 +553,12 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
 MipsTargetInfo::MipsTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
-  // PltReloc = FIXME
   PageSize = 65536;
   VAStart = 0x400000;
 }
 
-void MipsTargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
-
-void MipsTargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                       uint64_t PltEntryAddr) const {}
-
 void MipsTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                   uint64_t PltEntryAddr, int32_t Index) const {
-}
+                                   uint64_t PltEntryAddr) const {}
 
 bool MipsTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   return false;
