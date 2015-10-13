@@ -327,9 +327,10 @@ static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
   // them is a p_memsz that is larger than p_filesz. Seeing that it
   // zeros the end of the PT_LOAD, so that has to correspond to the
   // nobits sections.
-  if ((A->getType() == SHT_NOBITS || B->getType() == SHT_NOBITS) &&
-      A->getType() != B->getType())
-    return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
+  bool AIsNoBits = A->getType() == SHT_NOBITS;
+  bool BIsNoBits = B->getType() == SHT_NOBITS;
+  if (AIsNoBits != BIsNoBits)
+    return BIsNoBits;
 
   // Some architectures have additional ordering restrictions for sections
   // within the same PT_LOAD.
