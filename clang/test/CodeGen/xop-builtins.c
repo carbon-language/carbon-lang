@@ -225,7 +225,7 @@ __m128i test_mm_roti_epi16(__m128i a) {
 
 __m128i test_mm_roti_epi32(__m128i a) {
   // CHECK: @llvm.x86.xop.vprotdi
-  // CHECK-ASM: vprotd $-30, %xmm{{.*}}, %xmm{{.*}}
+  // CHECK-ASM: vprotd $226, %xmm{{.*}}, %xmm{{.*}}
   return _mm_roti_epi32(a, -30);
 }
 
