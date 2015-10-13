@@ -480,8 +480,8 @@ void GlobalsAAResult::AnalyzeCallGraph(CallGraph &CG, Module &M) {
     const std::vector<CallGraphNode *> &SCC = *I;
     assert(!SCC.empty() && "SCC with no functions?");
 
-    if (!SCC[0]->getFunction()) {
-      // Calls externally - can't say anything useful.  Remove any existing
+    if (!SCC[0]->getFunction() || SCC[0]->getFunction()->mayBeOverridden()) {
+      // Calls externally or is weak - can't say anything useful. Remove any existing
       // function records (may have been created when scanning globals).
       for (auto *Node : SCC)
         FunctionInfos.erase(Node->getFunction());
