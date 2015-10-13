@@ -1,5 +1,8 @@
 include "llvm/Option/OptParser.td"
 
+def Bsymbolic: Flag<["-"], "Bsymbolic">,
+  HelpText<"Bind defined symbols locally">;
+
 def Bdynamic: Flag<["-"], "Bdynamic">,
   HelpText<"Link against shared libraries">;
 

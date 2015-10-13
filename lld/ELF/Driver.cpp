@@ -136,6 +136,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   }
 
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
+  Config->Bsymbolic = Args.hasArg(OPT_Bsymbolic);
   Config->DiscardAll = Args.hasArg(OPT_discard_all);
   Config->DiscardLocals = Args.hasArg(OPT_discard_locals);
   Config->DiscardNone = Args.hasArg(OPT_discard_none);

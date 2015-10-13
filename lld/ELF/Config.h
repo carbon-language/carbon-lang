@@ -44,6 +44,7 @@ struct Configuration {
   std::vector<llvm::StringRef> SearchPaths;
   bool AllowMultipleDefinition;
   bool AsNeeded = false;
+  bool Bsymbolic;
   bool DiscardAll;
   bool DiscardLocals;
   bool DiscardNone;
