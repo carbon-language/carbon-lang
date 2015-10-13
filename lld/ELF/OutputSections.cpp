@@ -295,9 +295,6 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     ++NumEntries; // DT_FINI
   if (Config->ZNow || Config->Bsymbolic)
     ++NumEntries; // DT_FLAGS_1
-  if (Config->Bsymbolic)
-    ++NumEntries; // DT_SYMBOLIC
-
   ++NumEntries; // DT_NULL
 
   Header.sh_size = NumEntries * Header.sh_entsize;
