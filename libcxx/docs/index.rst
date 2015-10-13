@@ -124,6 +124,12 @@ A full list of currently open libc++ bugs can be `found here`__.
 Design Documents
 ----------------
 
+.. toctree::
+   :maxdepth: 1
+
+   DesignDocs/CapturingConfigInfo
+
+
 * `<atomic> design <http://libcxx.llvm.org/atomic_design.html>`_
 * `<type_traits> design <http://libcxx.llvm.org/type_traits_design.html>`_
 * `Status of debug mode <http://libcxx.llvm.org/debug_mode.html>`_

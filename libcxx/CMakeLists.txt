@@ -260,13 +260,6 @@ endif()
 
 # Feature flags ===============================================================
 define_if(MSVC -D_CRT_SECURE_NO_WARNINGS)
-define_if_not(LIBCXX_ENABLE_GLOBAL_FILESYSTEM_NAMESPACE -D_LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
-define_if_not(LIBCXX_ENABLE_STDIN -D_LIBCPP_HAS_NO_STDIN)
-define_if_not(LIBCXX_ENABLE_STDOUT -D_LIBCPP_HAS_NO_STDOUT)
-define_if_not(LIBCXX_ENABLE_THREADS -D_LIBCPP_HAS_NO_THREADS)
-define_if_not(LIBCXX_ENABLE_MONOTONIC_CLOCK -D_LIBCPP_HAS_NO_MONOTONIC_CLOCK)
-define_if_not(LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTIONS -D_LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS)
-
 
 # Sanitizer flags =============================================================
 
@@ -303,6 +296,22 @@ if (LIBCXX_BUILT_STANDALONE)
     message(WARNING "LLVM_USE_SANITIZER is not supported on this platform.")
   endif()
 endif()
+
+# Configuration file flags =====================================================
+config_define_if_not(LIBCXX_ENABLE_GLOBAL_FILESYSTEM_NAMESPACE _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
+config_define_if_not(LIBCXX_ENABLE_STDIN _LIBCPP_HAS_NO_STDIN)
+config_define_if_not(LIBCXX_ENABLE_STDOUT _LIBCPP_HAS_NO_STDOUT)
+config_define_if_not(LIBCXX_ENABLE_THREADS _LIBCPP_HAS_NO_THREADS)
+config_define_if_not(LIBCXX_ENABLE_MONOTONIC_CLOCK _LIBCPP_HAS_NO_MONOTONIC_CLOCK)
+config_define_if_not(LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTIONS _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS)
+
+if (LIBCXX_NEEDS_SITE_CONFIG)
+  configure_file(
+    include/__config_site.in
+    ${LIBCXX_BINARY_DIR}/__config_site
+    @ONLY)
+endif()
+
 #===============================================================================
 # Setup Source Code And Tests
 #===============================================================================
