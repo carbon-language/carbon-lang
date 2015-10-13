@@ -1,7 +1,7 @@
 // RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %s -o %t.o
 // RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %p/Inputs/shared-ppc64.s -o %t2.o
 // RUN: ld.lld2 -shared %t2.o -o %t2.so
-// RUN: ld.lld2 -dynamic-linker /lib64/ld64.so.1 -rpath foo -rpath bar --export-dynamic %t.o %t2.so -o %t
+// RUN: ld.lld2 %t.o %t2.so -o %t
 // RUN: llvm-objdump -d %t | FileCheck %s
 // REQUIRES: ppc
 
