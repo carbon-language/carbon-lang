@@ -459,7 +459,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     EntryLoc = IP->getDebugLoc();
   }
 
-  IRBuilder<> IRB(IP);
+  IRBuilder<> IRB(&*IP);
   IRB.SetCurrentDebugLocation(EntryLoc);
   Value *GuardP = IRB.CreateAdd(
       IRB.CreatePointerCast(GuardArray, IntptrTy),
@@ -475,7 +475,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     SetNoSanitizeMetadata(Load);
     Value *Cmp = IRB.CreateICmpSGE(Constant::getNullValue(Load->getType()), Load);
     Instruction *Ins = SplitBlockAndInsertIfThen(
-        Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
+        Cmp, &*IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
     IRB.SetInsertPoint(Ins);
     IRB.SetCurrentDebugLocation(EntryLoc);
     // __sanitizer_cov gets the PC of the instruction using GET_CALLER_PC.
@@ -484,7 +484,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
   }
 
   if (Options.Use8bitCounters) {
-    IRB.SetInsertPoint(IP);
+    IRB.SetInsertPoint(&*IP);
     Value *P = IRB.CreateAdd(
         IRB.CreatePointerCast(EightBitCounterArray, IntptrTy),
         ConstantInt::get(IntptrTy, NumberOfInstrumentedBlocks() - 1));
@@ -499,7 +499,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
   if (Options.TraceBB) {
     // Experimental support for tracing.
     // Insert a callback with the same guard variable as used for coverage.
-    IRB.SetInsertPoint(IP);
+    IRB.SetInsertPoint(&*IP);
     IRB.CreateCall(IsEntryBB ? SanCovTraceEnter : SanCovTraceBB, GuardP);
   }
 }

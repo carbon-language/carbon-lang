@@ -347,8 +347,8 @@ namespace {
       std::string EdgeDestinations;
       raw_string_ostream EDOS(EdgeDestinations);
       Function *F = Blocks.begin()->first->getParent();
-      for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-        GCOVBlock &Block = getBlock(I);
+      for (BasicBlock &I : *F) {
+        GCOVBlock &Block = getBlock(&I);
         for (int i = 0, e = Block.OutEdges.size(); i != e; ++i)
           EDOS << Block.OutEdges[i]->Number;
       }
@@ -389,8 +389,8 @@ namespace {
       // Emit edges between blocks.
       if (Blocks.empty()) return;
       Function *F = Blocks.begin()->first->getParent();
-      for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-        GCOVBlock &Block = getBlock(I);
+      for (BasicBlock &I : *F) {
+        GCOVBlock &Block = getBlock(&I);
         if (Block.OutEdges.empty()) continue;
 
         writeBytes(EdgeTag, 4);
@@ -405,9 +405,8 @@ namespace {
       }
 
       // Emit lines for each block.
-      for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-        getBlock(I).writeOut();
-      }
+      for (BasicBlock &I : *F)
+        getBlock(&I).writeOut();
     }
 
    private:
@@ -513,7 +512,7 @@ void GCOVProfiler::emitProfileNotes() {
       GCOVFunction &Func = *Funcs.back();
 
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-        GCOVBlock &Block = Func.getBlock(BB);
+        GCOVBlock &Block = Func.getBlock(&*BB);
         TerminatorInst *TI = BB->getTerminator();
         if (int successors = TI->getNumSuccessors()) {
           for (int i = 0; i != successors; ++i) {
@@ -605,7 +604,7 @@ bool GCOVProfiler::emitProfileArcs() {
         int Successors = isa<ReturnInst>(TI) ? 1 : TI->getNumSuccessors();
         if (Successors) {
           if (Successors == 1) {
-            IRBuilder<> Builder(BB->getFirstInsertionPt());
+            IRBuilder<> Builder(&*BB->getFirstInsertionPt());
             Value *Counter = Builder.CreateConstInBoundsGEP2_64(Counters, 0,
                                                                 Edge);
             Value *Count = Builder.CreateLoad(Counter);
@@ -625,7 +624,7 @@ bool GCOVProfiler::emitProfileArcs() {
             Count = Builder.CreateAdd(Count, Builder.getInt64(1));
             Builder.CreateStore(Count, Counter);
           } else {
-            ComplexEdgePreds.insert(BB);
+            ComplexEdgePreds.insert(&*BB);
             for (int i = 0; i != Successors; ++i)
               ComplexEdgeSuccs.insert(TI->getSuccessor(i));
           }
@@ -641,13 +640,13 @@ bool GCOVProfiler::emitProfileArcs() {
         GlobalVariable *EdgeState = getEdgeStateValue();
 
         for (int i = 0, e = ComplexEdgePreds.size(); i != e; ++i) {
-          IRBuilder<> Builder(ComplexEdgePreds[i + 1]->getFirstInsertionPt());
+          IRBuilder<> Builder(&*ComplexEdgePreds[i + 1]->getFirstInsertionPt());
           Builder.CreateStore(Builder.getInt32(i), EdgeState);
         }
 
         for (int i = 0, e = ComplexEdgeSuccs.size(); i != e; ++i) {
           // Call runtime to perform increment.
-          IRBuilder<> Builder(ComplexEdgeSuccs[i+1]->getFirstInsertionPt());
+          IRBuilder<> Builder(&*ComplexEdgeSuccs[i + 1]->getFirstInsertionPt());
           Value *CounterPtrArray =
             Builder.CreateConstInBoundsGEP2_64(EdgeTable, 0,
                                                i * ComplexEdgePreds.size());
@@ -731,8 +730,8 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
         IRBuilder<> Builder(Succ);
         Value *Counter = Builder.CreateConstInBoundsGEP2_64(Counters, 0,
                                                             Edge + i);
-        EdgeTable[((Succs.idFor(Succ)-1) * Preds.size()) +
-                  (Preds.idFor(BB)-1)] = cast<Constant>(Counter);
+        EdgeTable[((Succs.idFor(Succ) - 1) * Preds.size()) +
+                  (Preds.idFor(&*BB) - 1)] = cast<Constant>(Counter);
       }
     }
     Edge += Successors;
@@ -901,7 +900,7 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
 
   // uint32_t pred = *predecessor;
   // if (pred == 0xffffffff) return;
-  Argument *Arg = Fn->arg_begin();
+  Argument *Arg = &*Fn->arg_begin();
   Arg->setName("predecessor");
   Value *Pred = Builder.CreateLoad(Arg, "pred");
   Value *Cond = Builder.CreateICmpEQ(Pred, Builder.getInt32(0xffffffff));
@@ -912,7 +911,7 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   // uint64_t *counter = counters[pred];
   // if (!counter) return;
   Value *ZExtPred = Builder.CreateZExt(Pred, Builder.getInt64Ty());
-  Arg = std::next(Fn->arg_begin());
+  Arg = &*std::next(Fn->arg_begin());
   Arg->setName("counters");
   Value *GEP = Builder.CreateGEP(Type::getInt64PtrTy(*Ctx), Arg, ZExtPred);
   Value *Counter = Builder.CreateLoad(GEP, "counter");

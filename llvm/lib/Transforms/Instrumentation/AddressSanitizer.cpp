@@ -1124,7 +1124,8 @@ void AddressSanitizer::instrumentUnusualSizeOrAlignment(
 void AddressSanitizerModule::poisonOneInitializer(Function &GlobalInit,
                                                   GlobalValue *ModuleName) {
   // Set up the arguments to our poison/unpoison functions.
-  IRBuilder<> IRB(GlobalInit.begin()->getFirstInsertionPt());
+  IRBuilder<> IRB(&GlobalInit.front(),
+                  GlobalInit.front().getFirstInsertionPt());
 
   // Add a call to poison all external globals before the given function starts.
   Value *ModuleNameAddr = ConstantExpr::getPointerCast(ModuleName, IntptrTy);
@@ -1514,7 +1515,7 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   // We cannot just ignore these methods, because they may call other
   // instrumented functions.
   if (F.getName().find(" load]") != std::string::npos) {
-    IRBuilder<> IRB(F.begin()->begin());
+    IRBuilder<> IRB(&F.front(), F.front().begin());
     IRB.CreateCall(AsanInitFunction, {});
     return true;
   }
@@ -1821,8 +1822,8 @@ void FunctionStackPoisoner::poisonStack() {
   // regular stack slots.
   auto InsBeforeB = InsBefore->getParent();
   assert(InsBeforeB == &F.getEntryBlock());
-  for (BasicBlock::iterator I = InsBefore; I != InsBeforeB->end(); ++I)
-    if (auto *AI = dyn_cast_or_null<AllocaInst>(I))
+  for (BasicBlock::iterator I(InsBefore); I != InsBeforeB->end(); ++I)
+    if (auto *AI = dyn_cast<AllocaInst>(I))
       if (NonInstrumentedStaticAllocaVec.count(AI) > 0)
         AI->moveBefore(InsBefore);
 

@@ -596,7 +596,7 @@ bool SafeStack::runOnFunction(Function &F) {
   if (!StackRestorePoints.empty())
     ++NumUnsafeStackRestorePointsFunctions;
 
-  IRBuilder<> IRB(F.begin()->getFirstInsertionPt());
+  IRBuilder<> IRB(&F.front(), F.begin()->getFirstInsertionPt());
   UnsafeStackPtr = getOrCreateUnsafeStackPtr(IRB, F);
 
   // The top of the unsafe stack after all unsafe static allocas are allocated.

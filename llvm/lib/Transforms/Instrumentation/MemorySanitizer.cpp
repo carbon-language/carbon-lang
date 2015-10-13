@@ -737,7 +737,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         Value *Cmp = IRB.CreateICmpNE(
             ConvertedShadow, getCleanShadow(ConvertedShadow), "_mscmp");
         Instruction *CheckTerm = SplitBlockAndInsertIfThen(
-            Cmp, IRB.GetInsertPoint(), false, MS.OriginStoreWeights);
+            Cmp, &*IRB.GetInsertPoint(), false, MS.OriginStoreWeights);
         IRBuilder<> IRBNew(CheckTerm);
         paintOrigin(IRBNew, updateOrigin(Origin, IRBNew),
                     getOriginPtr(Addr, IRBNew, Alignment), StoreSize,
@@ -2551,9 +2551,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     // Until we have full dynamic coverage, make sure the retval shadow is 0.
     Value *Base = getShadowPtrForRetval(&I, IRBBefore);
     IRBBefore.CreateAlignedStore(getCleanShadow(&I), Base, kShadowTLSAlignment);
-    Instruction *NextInsn = nullptr;
+    BasicBlock::iterator NextInsn;
     if (CS.isCall()) {
-      NextInsn = I.getNextNode();
+      NextInsn = ++I.getIterator();
+      assert(NextInsn != I.getParent()->end());
     } else {
       BasicBlock *NormalDest = cast<InvokeInst>(&I)->getNormalDest();
       if (!NormalDest->getSinglePredecessor()) {
@@ -2565,10 +2566,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         return;
       }
       NextInsn = NormalDest->getFirstInsertionPt();
-      assert(NextInsn &&
+      assert(NextInsn != NormalDest->end() &&
              "Could not find insertion point for retval shadow load");
     }
-    IRBuilder<> IRBAfter(NextInsn);
+    IRBuilder<> IRBAfter(&*NextInsn);
     Value *RetvalShadow =
       IRBAfter.CreateAlignedLoad(getShadowPtrForRetval(&I, IRBAfter),
                                  kShadowTLSAlignment, "_msret");
