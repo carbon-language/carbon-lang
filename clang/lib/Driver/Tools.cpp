@@ -5632,10 +5632,11 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
       WantDebug = !A->getOption().matches(options::OPT_g0);
       if (WantDebug) {
-        if ((DwarfVersion = DwarfVersionNum(A->getSpelling())) == 0)
-          DwarfVersion = getToolChain().GetDefaultDwarfVersion();
+        DwarfVersion = DwarfVersionNum(A->getSpelling());
       }
     }
+    if (DwarfVersion == 0)
+      DwarfVersion = getToolChain().GetDefaultDwarfVersion();
     RenderDebugEnablingArgs(Args, CmdArgs,
                             (WantDebug ? CodeGenOptions::LimitedDebugInfo
                                        : CodeGenOptions::NoDebugInfo),
