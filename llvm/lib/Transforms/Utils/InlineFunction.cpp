@@ -341,9 +341,10 @@ static void HandleInlinedEHPad(InvokeInst *II, BasicBlock *FirstNewBlock,
       } else if (auto *TPI = dyn_cast<TerminatePadInst>(I)) {
         if (TPI->unwindsToCaller()) {
           SmallVector<Value *, 3> TerminatePadArgs;
-          for (Value *Operand : TPI->operands())
-            TerminatePadArgs.push_back(Operand);
-          TerminatePadInst::Create(TPI->getContext(), UnwindDest, TPI);
+          for (Value *ArgOperand : TPI->arg_operands())
+            TerminatePadArgs.push_back(ArgOperand);
+          TerminatePadInst::Create(TPI->getContext(), UnwindDest,
+                                   TerminatePadArgs, TPI);
           TPI->eraseFromParent();
           UpdatePHINodes(&*BB);
         }
@@ -1048,13 +1049,17 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
   // Get the personality function from the callee if it contains a landing pad.
   Constant *CalledPersonality =
-      CalledFunc->hasPersonalityFn() ? CalledFunc->getPersonalityFn() : nullptr;
+      CalledFunc->hasPersonalityFn()
+          ? CalledFunc->getPersonalityFn()->stripPointerCasts()
+          : nullptr;
 
   // Find the personality function used by the landing pads of the caller. If it
   // exists, then check to see that it matches the personality function used in
   // the callee.
   Constant *CallerPersonality =
-      Caller->hasPersonalityFn() ? Caller->getPersonalityFn() : nullptr;
+      Caller->hasPersonalityFn()
+          ? Caller->getPersonalityFn()->stripPointerCasts()
+          : nullptr;
   if (CalledPersonality) {
     if (!CallerPersonality)
       Caller->setPersonalityFn(CalledPersonality);
