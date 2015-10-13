@@ -312,13 +312,14 @@ static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
   if (AIsExec != BIsExec)
     return BIsExec;
 
-  // If we got here we know that both A and B and in the same PT_LOAD.
+  // If we got here we know that both A and B are in the same PT_LOAD.
   // The last requirement we have is to put nobits section last. The
   // reason is that the only thing the dynamic linker will see about
   // them is a p_memsz that is larger than p_filesz. Seeing that it
   // zeros the end of the PT_LOAD, so that has to correspond to the
   // nobits sections.
-  if (A->getType() != B->getType())
+  if ((A->getType() == SHT_NOBITS || B->getType() == SHT_NOBITS) &&
+      A->getType() != B->getType())
     return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
 
   return getPPC64SectionRank(A->getName()) < getPPC64SectionRank(B->getName());
