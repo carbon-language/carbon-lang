@@ -9,6 +9,8 @@
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_CXX
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DEXTERN_CXX
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DNAMESPACE
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DNO_EXTERN_C_ERROR -Wno-module-import-in-extern-c
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DNAMESPACE -DNO_EXTERN_C_ERROR -Wno-module-import-in-extern-c
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs -x c %s
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs/elsewhere -I %S/Inputs %s -DEXTERN_C -DINDIRECT
 
@@ -36,12 +38,12 @@ extern "C++" {
 
 #include HEADER
 
-#if defined(EXTERN_C) && !defined(EXTERN_CXX) && defined(CXX_HEADER)
-// expected-error@-3 {{import of C++ module 'cxx_library' appears within extern "C" language linkage specification}}
-// expected-note@-17 {{extern "C" language linkage specification begins here}}
-#elif defined(NAMESPACE)
-// expected-error-re@-6 {{import of module '{{c_library.inner|cxx_library}}' appears within namespace 'M'}}
-// expected-note@-24 {{namespace 'M' begins here}}
+#if defined(NAMESPACE)
+// expected-error-re@-3 {{import of module '{{c_library.inner|cxx_library}}' appears within namespace 'M'}}
+// expected-note@-21 {{namespace 'M' begins here}}
+#elif defined(EXTERN_C) && !defined(EXTERN_CXX) && defined(CXX_HEADER) && !defined(NO_EXTERN_C_ERROR)
+// expected-error@-6 {{import of C++ module 'cxx_library' appears within extern "C" language linkage specification}}
+// expected-note@-20 {{extern "C" language linkage specification begins here}}
 #endif
 
 #ifdef EXTERN_CXX

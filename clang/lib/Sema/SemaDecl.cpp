@@ -14424,15 +14424,13 @@ Decl *Sema::ActOnFileScopeAsmDecl(Expr *expr,
 static void checkModuleImportContext(Sema &S, Module *M,
                                      SourceLocation ImportLoc,
                                      DeclContext *DC) {
+  SourceLocation ExternCLoc;
+
   if (auto *LSD = dyn_cast<LinkageSpecDecl>(DC)) {
     switch (LSD->getLanguage()) {
     case LinkageSpecDecl::lang_c:
-      if (!M->IsExternC) {
-        S.Diag(ImportLoc, diag::err_module_import_in_extern_c)
-          << M->getFullModuleName();
-        S.Diag(LSD->getLocStart(), diag::note_module_import_in_extern_c);
-        return;
-      }
+      if (ExternCLoc.isInvalid())
+        ExternCLoc = LSD->getLocStart();
       break;
     case LinkageSpecDecl::lang_cxx:
       break;
@@ -14442,11 +14440,16 @@ static void checkModuleImportContext(Sema &S, Module *M,
 
   while (isa<LinkageSpecDecl>(DC))
     DC = DC->getParent();
+
   if (!isa<TranslationUnitDecl>(DC)) {
     S.Diag(ImportLoc, diag::err_module_import_not_at_top_level_fatal)
         << M->getFullModuleName() << DC;
     S.Diag(cast<Decl>(DC)->getLocStart(),
            diag::note_module_import_not_at_top_level) << DC;
+  } else if (!M->IsExternC && ExternCLoc.isValid()) {
+    S.Diag(ImportLoc, diag::ext_module_import_in_extern_c)
+      << M->getFullModuleName();
+    S.Diag(ExternCLoc, diag::note_module_import_in_extern_c);
   }
 }
 

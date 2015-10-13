@@ -7803,9 +7803,10 @@ def err_module_unimported_use : Error<
 def err_module_unimported_use_multiple : Error<
   "%select{declaration|definition|default argument}0 of %1 must be imported "
   "from one of the following modules before it is required:%2">;
-def err_module_import_in_extern_c : Error<
+def ext_module_import_in_extern_c : ExtWarn<
   "import of C++ module '%0' appears within extern \"C\" language linkage "
-  "specification">;
+  "specification">, DefaultError,
+  InGroup<DiagGroup<"module-import-in-extern-c">>;
 def note_module_import_in_extern_c : Note<
   "extern \"C\" language linkage specification begins here">;
 def err_module_import_not_at_top_level_fatal : Error<
