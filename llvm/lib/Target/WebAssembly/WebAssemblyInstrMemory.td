@@ -12,13 +12,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-/*
- * TODO(jfb): Add the following.
- * 
- * load_global: load the value of a given global variable
- * store_global: store a given value to a given global variable
- */
-
 // FIXME:
 //  - HasAddr64
 //  - WebAssemblyTargetLowering::isLegalAddressingMode
