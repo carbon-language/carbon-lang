@@ -89,7 +89,17 @@ class Window(object):
                 self.key_actions[key_integer] = key_action_dict
             else:
                 raise ValueError
-       
+
+    def draw_title_box(self, title):
+        is_in_first_responder_chain = self.is_in_first_responder_chain()
+        if is_in_first_responder_chain:
+            self.attron (curses.A_REVERSE)
+        self.box()
+        if is_in_first_responder_chain:
+            self.attroff (curses.A_REVERSE)
+        if title:
+            self.addstr(Point(x=2, y=0), ' ' + title + ' ')
+        
     def remove_child(self, window):
         self.children.remove(window)
                                 
@@ -187,7 +197,13 @@ class Window(object):
         size = self.get_size()
         return pt.x >= 0 and pt.x < size.w and pt.y >= 0 and pt.y < size.h
     
-    def addch(self, pt, c):
+    def addch(self, c):
+        try:
+            self.window.addch(c)
+        except:
+            pass
+
+    def addch_at_point(self, pt, c):
         try:
             self.window.addch(pt.y, pt.x, c)
         except:
@@ -199,9 +215,14 @@ class Window(object):
         except:
             pass
 
-    def addnstr(self, pt, str, n):
+    def addnstr_at_point(self, pt, str, n):
         try:
             self.window.addnstr(pt.y, pt.x, str, n)
+        except:
+            pass
+    def addnstr(self, str, n):
+        try:
+            self.window.addnstr(str, n)
         except:
             pass
 
@@ -235,6 +256,10 @@ class Window(object):
 
     def erase(self):
         self.window.erase()
+    
+    def get_cursor(self):
+        (y, x) = self.window.getyx()
+        return Point(x=x, y=y)
 
     def get_frame(self):
         position = self.get_position()
@@ -249,9 +274,13 @@ class Window(object):
         (y, x) = self.window.getmaxyx()
         return Size(w=x, h=y)
 
+    def move(self, pt):
+        self.window.move(pt.y, pt.x)
+
     def refresh(self):
         self.update()
         curses.panel.update_panels()
+        self.move(Point(x=0, y=0))
         return self.window.refresh()
         
     def resize(self, size):
@@ -475,15 +504,8 @@ class BoxedPanel(Panel):
             self.update()
     
     def update(self):
-        self.erase()
-        is_in_first_responder_chain = self.is_in_first_responder_chain()
-        if is_in_first_responder_chain:
-            self.attron (curses.A_REVERSE)
-        self.box()
-        if is_in_first_responder_chain:
-            self.attroff (curses.A_REVERSE)
-        if self.title:
-            self.addstr(Point(x=2, y=0), ' ' + self.title + ' ')
+        self.erase()                                                    
+        self.draw_title_box(self.title)
         max_width = self.get_usable_width()
         for line_idx in range(self.first_visible_idx, len(self.lines)):
             pt = self.get_point_for_line(line_idx)
@@ -491,7 +513,7 @@ class BoxedPanel(Panel):
                 is_selected = line_idx == self.selected_idx
                 if is_selected:
                     self.attron (curses.A_REVERSE)
-                self.addnstr(pt, self.lines[line_idx], max_width)
+                self.addnstr_at_point(pt, self.lines[line_idx], max_width)
                 if is_selected:
                     self.attroff (curses.A_REVERSE)
             else:
@@ -501,7 +523,251 @@ class Item(object):
     def __init__(self, title, action):
         self.title = title
         self.action = action
+
+class TreeItem(object):
+    def __init__(self, delegate, parent = None, title = None, action = None, is_expanded = False):
+        self.parent = parent
+        self.title = title
+        self.action = action        
+        self.delegate = delegate
+        self.is_expanded = not parent or is_expanded == True
+        self.might_have_children_value = None
+        self.children = None
+                           
+    def get_children(self):
+        if self.is_expanded and self.might_have_children():
+            if self.children is None:
+                self.children = self.update_children()
+        else:
+            self.children = None
+        return self.children
+
+    def append_visible_items(self, items):
+        items.append(self)
+        children = self.get_children()
+        if children:
+            for child in children:
+                child.append_visible_items(items)
+
+    def might_have_children(self):
+        if self.might_have_children_value is None:
+            if not self.parent:
+                # Root item always might have children
+                self.might_have_children_value = True
+            else:
+                # Check with the delegate to see if the item might have children
+                self.might_have_children_value = self.delegate.might_have_children()
+        return self.might_have_children_value
+        
+    def update_children(self):
+        if self.is_expanded and self.might_have_children():
+            self.children = self.delegate.update_children(self)
+            for child in self.children:
+                child.update_children()
+        else:          
+            self.children = None
+        return self.children
     
+    def get_num_visible_rows(self):
+        rows = 1
+        if self.is_expanded:
+            children = self.get_children()
+            for child in children:
+                rows += child.get_num_visible_rows()
+        return rows
+    def draw(self, tree_window, row):
+        display_row = tree_window.get_display_row(row)
+        if display_row >= 0:
+            tree_window.move(tree_window.get_item_draw_point(row))
+            if self.parent:
+                self.parent.draw_tree_for_child(tree_window, self, 0)
+            if self.might_have_children():
+                tree_window.addch (curses.ACS_DIAMOND)
+                tree_window.addch (curses.ACS_HLINE)
+                
+            is_selected = tree_window.is_selected(row)
+            if is_selected:
+                tree_window.attron (curses.A_REVERSE)
+            self.delegate.draw_item(tree_window, self)
+            if is_selected:
+                tree_window.attroff (curses.A_REVERSE)
+            
+    def draw_tree_for_child (self, tree_window, child, reverse_depth):
+        if self.parent:
+            self.parent.draw_tree_for_child (tree_window, self, reverse_depth + 1)
+            if self.children[-1] == child:
+                # Last child
+                if reverse_depth == 0:
+                    tree_window.addch (curses.ACS_LLCORNER)
+                    tree_window.addch (curses.ACS_HLINE)
+                else:
+                    tree_window.addch (' ')
+                    tree_window.addch (' ')
+            else:
+                # Middle child
+                if reverse_depth == 0:
+                    tree_window.addch (curses.ACS_LTEE)
+                    tree_window.addch (curses.ACS_HLINE)
+                else:
+                    tree_window.addch (curses.ACS_VLINE)
+                    tree_window.addch (' ')
+            
+    def was_selected(self):
+        pass
+    
+class TreePanel(Panel):
+    def __init__(self, frame, title, root_item):
+        self.root_item = root_item
+        self.title = title
+        self.first_visible_idx = 0
+        self.selected_idx = 0
+        self.items = None
+        super(TreePanel, self).__init__(frame)     
+        self.add_key_action(curses.KEY_UP,   self.select_prev, "Select the previous item")
+        self.add_key_action(curses.KEY_DOWN, self.select_next, "Select the next item")
+        self.add_key_action(curses.KEY_RIGHT,self.right_arrow, "Expand an item")
+        self.add_key_action(curses.KEY_LEFT, self.left_arrow, "Unexpand an item or navigate to parent")
+        self.add_key_action(curses.KEY_HOME, self.scroll_begin, "Go to the beginning of the list")
+        self.add_key_action(curses.KEY_END,  self.scroll_end,   "Go to the end of the list")
+        self.add_key_action(curses.KEY_PPAGE, self.scroll_page_backward, "Scroll to previous page")
+        self.add_key_action(curses.KEY_NPAGE, self.scroll_page_forward, "Scroll to next forward")
+
+    def get_selected_item(self):
+        if self.selected_idx < len(self.items):
+            return self.items[self.selected_idx]
+        else:
+            return None
+    
+    def select_item(self, item):
+        if self.items and item in self.items:
+            self.selected_idx = self.items.index(item)
+            return True
+        else:
+            return False
+            
+    def get_visible_items(self):
+        # Clear self.items when you want to update all chidren 
+        if self.items is None:
+            self.items = list()
+            children = self.root_item.get_children()
+            if children:
+                for child in children:
+                    child.append_visible_items(self.items)
+        return self.items
+        
+    def update(self):
+        self.erase()                                                    
+        self.draw_title_box(self.title)   
+        visible_items = self.get_visible_items()
+        for (row, child) in enumerate(visible_items):
+           child.draw(self, row)
+
+    def get_item_draw_point(self, row): 
+        display_row = self.get_display_row(row)
+        if display_row >= 0:
+            return Point(2, display_row + 1)
+        else:
+            return Point(-1, -1)
+
+    def get_display_row(self, row):
+        if row >= self.first_visible_idx:
+            display_row = row - self.first_visible_idx
+            if display_row < self.get_size().h-2:
+                return display_row                    
+        return -1
+
+    def is_selected(self, row):
+        return row == self.selected_idx
+
+    def get_num_lines(self):
+        rows = 0
+        children = self.root_item.get_children()
+        for child in children:
+            rows += child.get_num_visible_rows()
+        return rows
+    
+    def get_num_visible_lines(self):
+        return self.get_size().h-2
+    def select_next (self):
+        self.selected_idx += 1   
+        num_lines = self.get_num_lines()
+        if self.selected_idx >= num_lines:
+            self.selected_idx = num_lines - 1
+        self.refresh()
+
+    def select_prev (self):
+        self.selected_idx -= 1
+        if self.selected_idx < 0:
+            num_lines = self.get_num_lines()
+            if num_lines > 0:
+                self.selected_idx = 0
+            else:
+                self.selected_idx = -1
+        self.refresh()
+
+    def scroll_begin (self):
+        self.first_visible_idx = 0
+        num_lines = self.get_num_lines()
+        if num_lines > 0:
+            self.selected_idx = 0
+        else:
+            self.selected_idx = -1
+        self.update()
+    
+    def redisplay_tree(self):
+        self.items = None
+        self.refresh()
+
+    def right_arrow(self): 
+        selected_item = self.get_selected_item()
+        if selected_item and selected_item.is_expanded == False:
+            selected_item.is_expanded = True
+            self.redisplay_tree()
+    
+    def left_arrow(self):
+        selected_item = self.get_selected_item()
+        if selected_item:
+            if selected_item.is_expanded == True:
+                selected_item.is_expanded = False
+                self.redisplay_tree()
+            elif selected_item.parent:
+                if self.select_item(selected_item.parent):
+                    self.refresh()
+               
+
+    def scroll_end (self):
+        num_visible_lines = self.get_num_visible_lines()
+        num_lines = len(self.lines)
+        if num_lines > num_visible_lines:
+            self.first_visible_idx = num_lines - num_visible_lines
+        else:
+            self.first_visible_idx = 0
+        self.selected_idx = num_lines-1
+        self.update()
+
+    def scroll_page_backward(self):
+        num_visible_lines = self.get_num_visible_lines()
+        new_index = self.first_visible_idx - num_visible_lines
+        if new_index < 0:
+            self.first_visible_idx = 0
+        else:
+            self.first_visible_idx = new_index
+        self.refresh()
+
+    def scroll_page_forward(self):
+        num_visible_lines = self.get_num_visible_lines()
+        self.first_visible_idx += num_visible_lines
+        self._adjust_first_visible_line()
+        self.refresh()
+
+    def _adjust_first_visible_line(self):
+        num_lines = len(self.lines)
+        num_visible_lines = self.get_num_visible_lines()
+        if (self.first_visible_idx >= num_lines) or (num_lines - self.first_visible_idx) > num_visible_lines:
+            self.first_visible_idx = num_lines - num_visible_lines
+
+
+
 class Menu(BoxedPanel):
     def __init__(self, title, items):
         max_title_width = 0
@@ -632,7 +898,7 @@ class MenuBar(Panel):
         self.addstr(pt, '|')      
         width = self.get_size().w
         while pt.x < width:
-            self.addch(pt, ' ')
+            self.addch_at_point(pt, ' ')
             pt.x += 1  
         if is_in_first_responder_chain:
             self.attroff (curses.A_REVERSE)
@@ -680,7 +946,7 @@ class StatusPanel(Panel):
     def update(self):
         self.erase();
         for status_item_dict in self.status_items:
-            self.addnstr(Point(x=status_item_dict['x'], y=0), '%s: %s' % (status_item_dict['title'], status_item_dict['value']), status_item_dict['width'])
+            self.addnstr_at_point(Point(x=status_item_dict['x'], y=0), '%s: %s' % (status_item_dict['title'], status_item_dict['value']), status_item_dict['width'])
 
 stdscr = None
 
