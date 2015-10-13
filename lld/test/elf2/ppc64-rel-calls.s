@@ -16,9 +16,9 @@ _start:
   li      3,42
   sc
 
-# CHECK: 10010000:       38 00 00 01     li 0, 1
-# CHECK: 10010004:       38 60 00 2a     li 3, 42
-# CHECK: 10010008:       44 00 00 02     sc
+# CHECK: 20000:       38 00 00 01     li 0, 1
+# CHECK: 20004:       38 60 00 2a     li 3, 42
+# CHECK: 20008:       44 00 00 02     sc
 
 .section        ".opd","aw"
 .global bar
@@ -34,9 +34,9 @@ bar:
   blr
 
 # FIXME: The printing here is misleading, the branch offset here is negative.
-# CHECK: 1001000c:       4b ff ff f5     bl .+67108852
-# CHECK: 10010010:       60 00 00 00     nop
-# CHECK: 10010014:       4b ff ff ed     bl .+67108844
-# CHECK: 10010018:       60 00 00 00     nop
-# CHECK: 1001001c:       4e 80 00 20     blr
+# CHECK: 2000c:       4b ff ff f5     bl .+67108852
+# CHECK: 20010:       60 00 00 00     nop
+# CHECK: 20014:       4b ff ff ed     bl .+67108844
+# CHECK: 20018:       60 00 00 00     nop
+# CHECK: 2001c:       4e 80 00 20     blr
 

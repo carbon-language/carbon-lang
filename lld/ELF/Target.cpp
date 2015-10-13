@@ -55,7 +55,6 @@ X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
   GotReloc = R_386_GLOB_DAT;
   GotRefReloc = R_386_GOT32;
-  VAStart = 0x10000;
 }
 
 void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -110,14 +109,6 @@ X86_64TargetInfo::X86_64TargetInfo() {
   GotReloc = R_X86_64_GLOB_DAT;
   GotRefReloc = R_X86_64_PC32;
   RelativeReloc = R_X86_64_RELATIVE;
-
-  // On freebsd x86_64 the first page cannot be mmaped.
-  // On linux that is controled by vm.mmap_min_addr. At least on some x86_64
-  // installs that is 65536, so the first 15 pages cannot be used.
-  // Given that, the smallest value that can be used in here is 0x10000.
-  // If using 2MB pages, the smallest page aligned address that works is
-  // 0x200000, but it looks like every OS uses 4k pages for executables.
-  VAStart = 0x10000;
 }
 
 void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -246,8 +237,6 @@ PPC64TargetInfo::PPC64TargetInfo() {
   // We need 64K pages (at least under glibc/Linux, the loader won't
   // set different permissions on a finer granularity than that).
   PageSize = 65536;
-
-  VAStart = 0x10000000;
 }
 
 static uint64_t getPPC64TocBase() {
@@ -458,7 +447,6 @@ PPCTargetInfo::PPCTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
   PageSize = 65536;
-  VAStart = 0x10000000;
 }
 void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr) const {}
@@ -475,7 +463,6 @@ void PPCTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
 AArch64TargetInfo::AArch64TargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
-  VAStart = 0x400000;
 }
 void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                       uint64_t PltEntryAddr) const {}
@@ -554,7 +541,6 @@ MipsTargetInfo::MipsTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
   PageSize = 65536;
-  VAStart = 0x400000;
 }
 
 void MipsTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,

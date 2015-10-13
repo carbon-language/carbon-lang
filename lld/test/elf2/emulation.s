@@ -78,7 +78,7 @@
 # PPC64-NEXT:   Type: Executable (0x2)
 # PPC64-NEXT:   Machine: EM_PPC64 (0x15)
 # PPC64-NEXT:   Version: 1
-# PPC64-NEXT:   Entry: 0x100000B0
+# PPC64-NEXT:   Entry: 0x100B0
 # PPC64-NEXT:   ProgramHeaderOffset: 0x40
 # PPC64-NEXT:   SectionHeaderOffset: 0x110
 # PPC64-NEXT:   Flags [ (0x0)
@@ -109,7 +109,7 @@
 # PPC-NEXT:   Type: Executable (0x2)
 # PPC-NEXT:   Machine: EM_PPC (0x14)
 # PPC-NEXT:   Version: 1
-# PPC-NEXT:   Entry: 0x10000074
+# PPC-NEXT:   Entry: 0x10074
 # PPC-NEXT:   ProgramHeaderOffset: 0x34
 # PPC-NEXT:   SectionHeaderOffset: 0xC0
 # PPC-NEXT:   Flags [ (0x0)
@@ -140,7 +140,7 @@
 # MIPS-NEXT:   Type: Executable (0x2)
 # MIPS-NEXT:   Machine: EM_MIPS (0x8)
 # MIPS-NEXT:   Version: 1
-# MIPS-NEXT:   Entry: 0x4000B0
+# MIPS-NEXT:   Entry: 0x100B0
 # MIPS-NEXT:   ProgramHeaderOffset: 0x34
 # MIPS-NEXT:   SectionHeaderOffset: 0x114
 # MIPS-NEXT:   Flags [ (0x0)
@@ -164,7 +164,7 @@
 # MIPSEL-NEXT:   Type: Executable (0x2)
 # MIPSEL-NEXT:   Machine: EM_MIPS (0x8)
 # MIPSEL-NEXT:   Version: 1
-# MIPSEL-NEXT:   Entry: 0x4000B0
+# MIPSEL-NEXT:   Entry: 0x100B0
 # MIPSEL-NEXT:   ProgramHeaderOffset: 0x34
 # MIPSEL-NEXT:   SectionHeaderOffset: 0x114
 # MIPSEL-NEXT:   Flags [ (0x0)

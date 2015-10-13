@@ -21,7 +21,6 @@ class SymbolBody;
 class TargetInfo {
 public:
   unsigned getPageSize() const { return PageSize; }
-  uint64_t getVAStart() const { return VAStart; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
   unsigned getGotRefReloc() const { return GotRefReloc; }
@@ -41,7 +40,6 @@ public:
 
 protected:
   unsigned PageSize = 4096;
-  uint64_t VAStart;
   unsigned PCRelReloc;
   unsigned GotRefReloc;
   unsigned GotReloc;

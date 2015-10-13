@@ -25,7 +25,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_TOC16_LO_DS:
 # CHECK: .FR_PPC64_TOC16_LO_DS:
-# CHECK: 1001000c:       e8 22 80 00     ld 1, -32768(2)
+# CHECK: 2000c:       e8 22 80 00     ld 1, -32768(2)
 
 .section .R_PPC64_TOC16_LO,"ax",@progbits
 .globl .FR_PPC64_TOC16_LO
@@ -34,7 +34,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_TOC16_LO:
 # CHECK: .FR_PPC64_TOC16_LO:
-# CHECK: 10010010: 38 22 80 00 addi 1, 2, -32768
+# CHECK: 20010: 38 22 80 00 addi 1, 2, -32768
 
 .section .R_PPC64_TOC16_HI,"ax",@progbits
 .globl .FR_PPC64_TOC16_HI
@@ -43,7 +43,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_TOC16_HI:
 # CHECK: .FR_PPC64_TOC16_HI:
-# CHECK: 10010014: 3c 22 10 01 addis 1, 2, 4097
+# CHECK: 20014: 3c 22 00 02 addis 1, 2, 2
 
 .section .R_PPC64_TOC16_HA,"ax",@progbits
 .globl .FR_PPC64_TOC16_HA
@@ -52,7 +52,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_TOC16_HA:
 # CHECK: .FR_PPC64_TOC16_HA:
-# CHECK: 10010018: 3c 22 10 02 addis 1, 2, 4098
+# CHECK: 20018: 3c 22 00 03 addis 1, 2, 3
 
 .section .R_PPC64_REL24,"ax",@progbits
 .globl .FR_PPC64_REL24
@@ -63,7 +63,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_REL24:
 # CHECK: .FR_PPC64_REL24:
-# CHECK: 1001001c: 48 00 00 04 b .+4
+# CHECK: 2001c: 48 00 00 04 b .+4
 
 .section .R_PPC64_ADDR16_LO,"ax",@progbits
 .globl .FR_PPC64_ADDR16_LO
@@ -72,7 +72,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_ADDR16_LO:
 # CHECK: .FR_PPC64_ADDR16_LO:
-# CHECK: 10010020: 38 20 00 00 li 1, 0
+# CHECK: 20020: 38 20 00 00 li 1, 0
 
 .section .R_PPC64_ADDR16_HI,"ax",@progbits
 .globl .FR_PPC64_ADDR16_HI
@@ -81,7 +81,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_ADDR16_HI:
 # CHECK: .FR_PPC64_ADDR16_HI:
-# CHECK: 10010024: 38 20 10 01 li 1, 4097
+# CHECK: 20024: 38 20 00 02 li 1, 2
 
 .section .R_PPC64_ADDR16_HA,"ax",@progbits
 .globl .FR_PPC64_ADDR16_HA
@@ -90,7 +90,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_ADDR16_HA:
 # CHECK: .FR_PPC64_ADDR16_HA:
-# CHECK: 10010028: 38 20 10 01 li 1, 4097
+# CHECK: 20028: 38 20 00 02 li 1, 2
 
 .section .R_PPC64_ADDR16_HIGHER,"ax",@progbits
 .globl .FR_PPC64_ADDR16_HIGHER
@@ -99,7 +99,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_ADDR16_HIGHER:
 # CHECK: .FR_PPC64_ADDR16_HIGHER:
-# CHECK: 1001002c: 38 20 00 00 li 1, 0
+# CHECK: 2002c: 38 20 00 00 li 1, 0
 
 .section .R_PPC64_ADDR16_HIGHERA,"ax",@progbits
 .globl .FR_PPC64_ADDR16_HIGHERA
@@ -108,7 +108,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_ADDR16_HIGHERA:
 # CHECK: .FR_PPC64_ADDR16_HIGHERA:
-# CHECK: 10010030: 38 20 00 00 li 1, 0
+# CHECK: 20030: 38 20 00 00 li 1, 0
 
 .section .R_PPC64_ADDR16_HIGHEST,"ax",@progbits
 .globl .FR_PPC64_ADDR16_HIGHEST
@@ -117,7 +117,7 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_ADDR16_HIGHEST:
 # CHECK: .FR_PPC64_ADDR16_HIGHEST:
-# CHECK: 10010034: 38 20 00 00 li 1, 0
+# CHECK: 20034: 38 20 00 00 li 1, 0
 
 .section .R_PPC64_ADDR16_HIGHESTA,"ax",@progbits
 .globl .FR_PPC64_ADDR16_HIGHESTA
@@ -126,5 +126,5 @@ _start:
 
 # CHECK: Disassembly of section .R_PPC64_ADDR16_HIGHESTA:
 # CHECK: .FR_PPC64_ADDR16_HIGHESTA:
-# CHECK: 10010038: 38 20 00 00 li 1, 0
+# CHECK: 20038: 38 20 00 00 li 1, 0
 

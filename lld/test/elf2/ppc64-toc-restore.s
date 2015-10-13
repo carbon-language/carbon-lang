@@ -13,9 +13,9 @@ _start:
   nop
 
 // CHECK: _start:
-// CHECK: 10010000:       48 00 00 21     bl .+32
-// CHECK-NOT: 10010004:       60 00 00 00     nop
-// CHECK: 10010004:       e8 41 00 28     ld 2, 40(1)
+// CHECK: 20000:       48 00 00 21     bl .+32
+// CHECK-NOT: 20004:       60 00 00 00     nop
+// CHECK: 20004:       e8 41 00 28     ld 2, 40(1)
 
 .global noret
 noret:
@@ -23,23 +23,23 @@ noret:
   li 5, 7
 
 // CHECK: noret:
-// CHECK: 10010008:       48 00 00 19     bl .+24
-// CHECK: 1001000c:       38 a0 00 07     li 5, 7
+// CHECK: 20008:       48 00 00 19     bl .+24
+// CHECK: 2000c:       38 a0 00 07     li 5, 7
 
 .global noretend
 noretend:
   bl bar
 
 // CHECK: noretend:
-// CHECK: 10010010:       48 00 00 11     bl .+16
+// CHECK: 20010:       48 00 00 11     bl .+16
 
 .global noretb
 noretb:
   b bar
 
 // CHECK: noretb:
-// CHECK: 10010014:       48 00 00 0c     b .+12
+// CHECK: 20014:       48 00 00 0c     b .+12
 
 // CHECK: Disassembly of section .plt:
 // CHECK: .plt:
-// CHECK: 10010020:
+// CHECK: 20020:

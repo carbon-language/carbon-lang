@@ -23,9 +23,9 @@ v2:
   .word v1   # R_MIPS_32 target v1 addend 0
 
 # CHECK: Contents of section .data:
-# CHECK-NEXT: 420000 00000000 08004200 00004200
-#                             ^-- v2+4 ^-- v1
+# CHECK-NEXT: 30000 00000000 08000300 00000300
+#                            ^-- v2+4 ^-- v1
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00420000 l       .data           00000004 v1
-# CHECK: 00420004 g       .data           00000008 v2
+# CHECK: 00030000 l       .data           00000004 v1
+# CHECK: 00030004 g       .data           00000008 v2
