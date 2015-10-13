@@ -139,6 +139,8 @@ void WinException::endFunction(const MachineFunction *MF) {
       emitExceptHandlerTable(MF);
     else if (Per == EHPersonality::MSVC_CXX)
       emitCXXFrameHandler3Table(MF);
+    else if (Per == EHPersonality::CoreCLR)
+      emitCLRExceptionTable(MF);
     else
       emitExceptionTable();
 
@@ -281,6 +283,20 @@ const MCExpr *WinException::create32bitRef(const Value *V) {
 
 const MCExpr *WinException::getLabelPlusOne(const MCSymbol *Label) {
   return MCBinaryExpr::createAdd(create32bitRef(Label),
+                                 MCConstantExpr::create(1, Asm->OutContext),
+                                 Asm->OutContext);
+}
+
+const MCExpr *WinException::getOffset(const MCSymbol *OffsetOf,
+                                      const MCSymbol *OffsetFrom) {
+  return MCBinaryExpr::createSub(
+      MCSymbolRefExpr::create(OffsetOf, Asm->OutContext),
+      MCSymbolRefExpr::create(OffsetFrom, Asm->OutContext), Asm->OutContext);
+}
+
+const MCExpr *WinException::getOffsetPlusOne(const MCSymbol *OffsetOf,
+                                             const MCSymbol *OffsetFrom) {
+  return MCBinaryExpr::createAdd(getOffset(OffsetOf, OffsetFrom),
                                  MCConstantExpr::create(1, Asm->OutContext),
                                  Asm->OutContext);
 }
@@ -509,9 +525,7 @@ void WinException::emitCSpecificHandlerTable(const MachineFunction *MF) {
       Ctx.createTempSymbol("lsda_begin", /*AlwaysAddSuffix=*/true);
   MCSymbol *TableEnd =
       Ctx.createTempSymbol("lsda_end", /*AlwaysAddSuffix=*/true);
-  const MCExpr *LabelDiff =
-      MCBinaryExpr::createSub(MCSymbolRefExpr::create(TableEnd, Ctx),
-                              MCSymbolRefExpr::create(TableBegin, Ctx), Ctx);
+  const MCExpr *LabelDiff = getOffset(TableEnd, TableBegin);
   const MCExpr *EntrySize = MCConstantExpr::create(16, Ctx);
   const MCExpr *EntryCount = MCBinaryExpr::createDiv(LabelDiff, EntrySize, Ctx);
   OS.EmitValue(EntryCount, 4);
@@ -854,5 +868,265 @@ void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
     OS.EmitIntValue(ToState, 4);                      // ToState
     OS.EmitValue(create32bitRef(UME.Filter), 4);      // Filter
     OS.EmitValue(create32bitRef(ExceptOrFinally), 4); // Except/Finally
+  }
+}
+
+static int getRank(WinEHFuncInfo &FuncInfo, int State) {
+  int Rank = 0;
+  while (State != -1) {
+    ++Rank;
+    State = FuncInfo.ClrEHUnwindMap[State].Parent;
+  }
+  return Rank;
+}
+
+static int getAncestor(WinEHFuncInfo &FuncInfo, int Left, int Right) {
+  int LeftRank = getRank(FuncInfo, Left);
+  int RightRank = getRank(FuncInfo, Right);
+
+  while (LeftRank < RightRank) {
+    Right = FuncInfo.ClrEHUnwindMap[Right].Parent;
+    --RightRank;
+  }
+
+  while (RightRank < LeftRank) {
+    Left = FuncInfo.ClrEHUnwindMap[Left].Parent;
+    --LeftRank;
+  }
+
+  while (Left != Right) {
+    Left = FuncInfo.ClrEHUnwindMap[Left].Parent;
+    Right = FuncInfo.ClrEHUnwindMap[Right].Parent;
+  }
+
+  return Left;
+}
+
+void WinException::emitCLRExceptionTable(const MachineFunction *MF) {
+  // CLR EH "states" are really just IDs that identify handlers/funclets;
+  // states, handlers, and funclets all have 1:1 mappings between them, and a
+  // handler/funclet's "state" is its index in the ClrEHUnwindMap.
+  MCStreamer &OS = *Asm->OutStreamer;
+  const Function *F = MF->getFunction();
+  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(F);
+  MCSymbol *FuncBeginSym = Asm->getFunctionBegin();
+  MCSymbol *FuncEndSym = Asm->getFunctionEnd();
+
+  // A ClrClause describes a protected region.
+  struct ClrClause {
+    const MCSymbol *StartLabel; // Start of protected region
+    const MCSymbol *EndLabel;   // End of protected region
+    int State;          // Index of handler protecting the protected region
+    int EnclosingState; // Index of funclet enclosing the protected region
+  };
+  SmallVector<ClrClause, 8> Clauses;
+
+  // Build a map from handler MBBs to their corresponding states (i.e. their
+  // indices in the ClrEHUnwindMap).
+  int NumStates = FuncInfo.ClrEHUnwindMap.size();
+  assert(NumStates > 0 && "Don't need exception table!");
+  DenseMap<const MachineBasicBlock *, int> HandlerStates;
+  for (int State = 0; State < NumStates; ++State) {
+    MachineBasicBlock *HandlerBlock =
+        FuncInfo.ClrEHUnwindMap[State].Handler.get<MachineBasicBlock *>();
+    HandlerStates[HandlerBlock] = State;
+    // Use this loop through all handlers to verify our assumption (used in
+    // the MinEnclosingState computation) that ancestors have lower state
+    // numbers than their descendants.
+    assert(FuncInfo.ClrEHUnwindMap[State].Parent < State &&
+           "ill-formed state numbering");
+  }
+  // Map the main function to the NullState.
+  HandlerStates[MF->begin()] = NullState;
+
+  // Write out a sentinel indicating the end of the standard (Windows) xdata
+  // and the start of the additional (CLR) info.
+  OS.EmitIntValue(0xffffffff, 4);
+  // Write out the number of funclets
+  OS.EmitIntValue(NumStates, 4);
+
+  // Walk the machine blocks/instrs, computing and emitting a few things:
+  // 1. Emit a list of the offsets to each handler entry, in lexical order.
+  // 2. Compute a map (EndSymbolMap) from each funclet to the symbol at its end.
+  // 3. Compute the list of ClrClauses, in the required order (inner before
+  //    outer, earlier before later; the order by which a forward scan with
+  //    early termination will find the innermost enclosing clause covering
+  //    a given address).
+  // 4. A map (MinClauseMap) from each handler index to the index of the
+  //    outermost funclet/function which contains a try clause targeting the
+  //    key handler.  This will be used to determine IsDuplicate-ness when
+  //    emitting ClrClauses.  The NullState value is used to indicate that the
+  //    top-level function contains a try clause targeting the key handler.
+  // HandlerStack is a stack of (PendingStartLabel, PendingState) pairs for
+  // try regions we entered before entering the PendingState try but which
+  // we haven't yet exited.
+  SmallVector<std::pair<const MCSymbol *, int>, 4> HandlerStack;
+  // EndSymbolMap and MinClauseMap are maps described above.
+  std::unique_ptr<MCSymbol *[]> EndSymbolMap(new MCSymbol *[NumStates]);
+  SmallVector<int, 4> MinClauseMap((size_t)NumStates, NumStates);
+
+  // Visit the root function and each funclet.
+
+  for (MachineFunction::const_iterator FuncletStart = MF->begin(),
+                                       FuncletEnd = MF->begin(),
+                                       End = MF->end();
+       FuncletStart != End; FuncletStart = FuncletEnd) {
+    int FuncletState = HandlerStates[FuncletStart];
+    // Find the end of the funclet
+    MCSymbol *EndSymbol = FuncEndSym;
+    while (++FuncletEnd != End) {
+      if (FuncletEnd->isEHFuncletEntry()) {
+        EndSymbol = getMCSymbolForMBB(Asm, FuncletEnd);
+        break;
+      }
+    }
+    // Emit the function/funclet end and, if this is a funclet (and not the
+    // root function), record it in the EndSymbolMap.
+    OS.EmitValue(getOffset(EndSymbol, FuncBeginSym), 4);
+    if (FuncletState != NullState) {
+      // Record the end of the handler.
+      EndSymbolMap[FuncletState] = EndSymbol;
+    }
+
+    // Walk the state changes in this function/funclet and compute its clauses.
+    // Funclets always start in the null state.
+    const MCSymbol *CurrentStartLabel = nullptr;
+    int CurrentState = NullState;
+    assert(HandlerStack.empty());
+    for (const auto &StateChange :
+         InvokeStateChangeIterator::range(FuncInfo, FuncletStart, FuncletEnd)) {
+      // Close any try regions we're not still under
+      int AncestorState =
+          getAncestor(FuncInfo, CurrentState, StateChange.NewState);
+      while (CurrentState != AncestorState) {
+        assert(CurrentState != NullState && "Failed to find ancestor!");
+        // Close the pending clause
+        Clauses.push_back({CurrentStartLabel, StateChange.PreviousEndLabel,
+                           CurrentState, FuncletState});
+        // Now the parent handler is current
+        CurrentState = FuncInfo.ClrEHUnwindMap[CurrentState].Parent;
+        // Pop the new start label from the handler stack if we've exited all
+        // descendants of the corresponding handler.
+        if (HandlerStack.back().second == CurrentState)
+          CurrentStartLabel = HandlerStack.pop_back_val().first;
+      }
+
+      if (StateChange.NewState != CurrentState) {
+        // For each clause we're starting, update the MinClauseMap so we can
+        // know which is the topmost funclet containing a clause targeting
+        // it.
+        for (int EnteredState = StateChange.NewState;
+             EnteredState != CurrentState;
+             EnteredState = FuncInfo.ClrEHUnwindMap[EnteredState].Parent) {
+          int &MinEnclosingState = MinClauseMap[EnteredState];
+          if (FuncletState < MinEnclosingState)
+            MinEnclosingState = FuncletState;
+        }
+        // Save the previous current start/label on the stack and update to
+        // the newly-current start/state.
+        HandlerStack.emplace_back(CurrentStartLabel, CurrentState);
+        CurrentStartLabel = StateChange.NewStartLabel;
+        CurrentState = StateChange.NewState;
+      }
+    }
+    assert(HandlerStack.empty());
+  }
+
+  // Now emit the clause info, starting with the number of clauses.
+  OS.EmitIntValue(Clauses.size(), 4);
+  for (ClrClause &Clause : Clauses) {
+    // Emit a CORINFO_EH_CLAUSE :
+    /*
+      struct CORINFO_EH_CLAUSE
+      {
+          CORINFO_EH_CLAUSE_FLAGS Flags;         // actually a CorExceptionFlag
+          DWORD                   TryOffset;
+          DWORD                   TryLength;     // actually TryEndOffset
+          DWORD                   HandlerOffset;
+          DWORD                   HandlerLength; // actually HandlerEndOffset
+          union
+          {
+              DWORD               ClassToken;   // use for catch clauses
+              DWORD               FilterOffset; // use for filter clauses
+          };
+      };
+
+      enum CORINFO_EH_CLAUSE_FLAGS
+      {
+          CORINFO_EH_CLAUSE_NONE    = 0,
+          CORINFO_EH_CLAUSE_FILTER  = 0x0001, // This clause is for a filter
+          CORINFO_EH_CLAUSE_FINALLY = 0x0002, // This clause is a finally clause
+          CORINFO_EH_CLAUSE_FAULT   = 0x0004, // This clause is a fault clause
+      };
+      typedef enum CorExceptionFlag
+      {
+          COR_ILEXCEPTION_CLAUSE_NONE,
+          COR_ILEXCEPTION_CLAUSE_FILTER  = 0x0001, // This is a filter clause
+          COR_ILEXCEPTION_CLAUSE_FINALLY = 0x0002, // This is a finally clause
+          COR_ILEXCEPTION_CLAUSE_FAULT = 0x0004,   // This is a fault clause
+          COR_ILEXCEPTION_CLAUSE_DUPLICATED = 0x0008, // duplicated clause. This
+                                                      // clause was duplicated
+                                                      // to a funclet which was
+                                                      // pulled out of line
+      } CorExceptionFlag;
+    */
+    // Add 1 to the start/end of the EH clause; the IP associated with a
+    // call when the runtime does its scan is the IP of the next instruction
+    // (the one to which control will return after the call), so we need
+    // to add 1 to the end of the clause to cover that offset.  We also add
+    // 1 to the start of the clause to make sure that the ranges reported
+    // for all clauses are disjoint.  Note that we'll need some additional
+    // logic when machine traps are supported, since in that case the IP
+    // that the runtime uses is the offset of the faulting instruction
+    // itself; if such an instruction immediately follows a call but the
+    // two belong to different clauses, we'll need to insert a nop between
+    // them so the runtime can distinguish the point to which the call will
+    // return from the point at which the fault occurs.
+
+    const MCExpr *ClauseBegin =
+        getOffsetPlusOne(Clause.StartLabel, FuncBeginSym);
+    const MCExpr *ClauseEnd = getOffsetPlusOne(Clause.EndLabel, FuncBeginSym);
+
+    ClrEHUnwindMapEntry &Entry = FuncInfo.ClrEHUnwindMap[Clause.State];
+    MachineBasicBlock *HandlerBlock = Entry.Handler.get<MachineBasicBlock *>();
+    MCSymbol *BeginSym = getMCSymbolForMBB(Asm, HandlerBlock);
+    const MCExpr *HandlerBegin = getOffset(BeginSym, FuncBeginSym);
+    MCSymbol *EndSym = EndSymbolMap[Clause.State];
+    const MCExpr *HandlerEnd = getOffset(EndSym, FuncBeginSym);
+
+    uint32_t Flags = 0;
+    switch (Entry.HandlerType) {
+    case ClrHandlerType::Catch:
+      // Leaving bits 0-2 clear indicates catch.
+      break;
+    case ClrHandlerType::Filter:
+      Flags |= 1;
+      break;
+    case ClrHandlerType::Finally:
+      Flags |= 2;
+      break;
+    case ClrHandlerType::Fault:
+      Flags |= 4;
+      break;
+    }
+    if (Clause.EnclosingState != MinClauseMap[Clause.State]) {
+      // This is a "duplicate" clause; the handler needs to be entered from a
+      // frame above the one holding the invoke.
+      assert(Clause.EnclosingState > MinClauseMap[Clause.State]);
+      Flags |= 8;
+    }
+    OS.EmitIntValue(Flags, 4);
+
+    // Write the clause start/end
+    OS.EmitValue(ClauseBegin, 4);
+    OS.EmitValue(ClauseEnd, 4);
+
+    // Write out the handler start/end
+    OS.EmitValue(HandlerBegin, 4);
+    OS.EmitValue(HandlerEnd, 4);
+
+    // Write out the type token or filter offset
+    assert(Entry.HandlerType != ClrHandlerType::Filter && "NYI: filters");
+    OS.EmitIntValue(Entry.TypeToken, 4);
   }
 }

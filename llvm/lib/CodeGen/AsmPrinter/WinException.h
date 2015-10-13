@@ -54,6 +54,8 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
   /// tables.
   void emitExceptHandlerTable(const MachineFunction *MF);
 
+  void emitCLRExceptionTable(const MachineFunction *MF);
+
   void computeIP2StateTable(
       const MachineFunction *MF, WinEHFuncInfo &FuncInfo,
       SmallVectorImpl<std::pair<const MCExpr *, int>> &IPToStateTable);
@@ -66,6 +68,9 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
   const MCExpr *create32bitRef(const MCSymbol *Value);
   const MCExpr *create32bitRef(const Value *V);
   const MCExpr *getLabelPlusOne(const MCSymbol *Label);
+  const MCExpr *getOffset(const MCSymbol *OffsetOf, const MCSymbol *OffsetFrom);
+  const MCExpr *getOffsetPlusOne(const MCSymbol *OffsetOf,
+                                 const MCSymbol *OffsetFrom);
 
   /// Gets the offset that we should use in a table for a stack object with the
   /// given index. For targets using CFI (Win64, etc), this is relative to the
