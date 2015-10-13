@@ -227,5 +227,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
     Config->OutputFile = "a.out";
 
   // Write the result to the file.
+  Symtab.finalize();
   writeResult<ELFT>(&Symtab);
 }

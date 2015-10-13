@@ -301,14 +301,14 @@ template <class ELFT> void SharedFile<ELFT>::parse() {
   uint32_t NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms) {
-    if (Sym.isUndefined())
-      continue;
-
     ErrorOr<StringRef> NameOrErr = Sym.getName(this->StringTable);
     error(NameOrErr.getError());
     StringRef Name = *NameOrErr;
 
-    SymbolBodies.emplace_back(this, Name, Sym);
+    if (Sym.isUndefined())
+      Undefs.push_back(Name);
+    else
+      SymbolBodies.emplace_back(this, Name, Sym);
   }
 }
 

@@ -181,6 +181,13 @@ template <class ELFT> Symbol *SymbolTable<ELFT>::insert(SymbolBody *New) {
   return Sym;
 }
 
+template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
+  auto It = Symtab.find(Name);
+  if (It == Symtab.end())
+    return nullptr;
+  return It->second->Body;
+}
+
 template <class ELFT> void SymbolTable<ELFT>::addLazy(Lazy *New) {
   Symbol *Sym = insert(New);
   if (Sym->Body == New)
@@ -228,6 +235,20 @@ template <class ELFT> void SymbolTable<ELFT>::addMemberFile(Lazy *Body) {
     return;
 
   addFile(std::move(File));
+}
+
+template <class ELFT> void SymbolTable<ELFT>::finalize() {
+  // This code takes care of the case in which shared libraries depend on
+  // the user program (not the other way, which is usual). Shared libraries
+  // may have undefined symbols, expecting that the user program provides
+  // the definitions for them. An example is BSD's __progname symbol.
+  // We need to put such symbols to the main program's .dynsym so that
+  // shared libraries can find them.
+  for (std::unique_ptr<SharedFile<ELFT>> &File : SharedFiles)
+    for (StringRef U : File->getUndefinedSymbols())
+      if (SymbolBody *Sym = find(U))
+        if (Sym->isDefined())
+          Sym->setUsedInDynamicReloc();
 }
 
 template class lld::elf2::SymbolTable<ELF32LE>;

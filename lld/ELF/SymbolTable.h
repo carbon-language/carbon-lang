@@ -52,6 +52,7 @@ public:
   void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
   void addIgnoredSym(StringRef Name);
+  void finalize();
 
 private:
   Symbol *insert(SymbolBody *New);
@@ -60,6 +61,7 @@ private:
   void addMemberFile(Lazy *Body);
   void checkCompatibility(std::unique_ptr<InputFile> &File);
   void resolve(SymbolBody *Body);
+  SymbolBody *find(StringRef Name);
   void reportConflict(const Twine &Message, const SymbolBody &Old,
                       const SymbolBody &New, bool Warning);
 

@@ -169,6 +169,7 @@ template <class ELFT> class SharedFile : public ELFFileBase<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
   std::vector<SharedSymbol<ELFT>> SymbolBodies;
+  std::vector<StringRef> Undefs;
   StringRef SoName;
 
 public:
@@ -176,6 +177,8 @@ public:
   llvm::MutableArrayRef<SharedSymbol<ELFT>> getSharedSymbols() {
     return SymbolBodies;
   }
+
+  llvm::ArrayRef<StringRef> getUndefinedSymbols() { return Undefs; }
 
   static bool classof(const InputFile *F) {
     return F->kind() == Base::SharedKind;
