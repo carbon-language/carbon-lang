@@ -56,6 +56,7 @@ And (from test/python_api/event/TestEvent.py),
 checks that after calling the target.Launch() method there's no error
 condition and we get back a void process object.
 ") SBError;
+
 class SBError {
 public:
     SBError ();
@@ -94,6 +95,7 @@ public:
     void
     SetErrorString (const char *err_str);
 
+    %varargs(3, char *str = NULL) SetErrorStringWithFormat;
     int
     SetErrorStringWithFormat (const char *format, ...);
 
