@@ -9,7 +9,7 @@
 
 #include "InstrProfiling.h"
 
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(__linux__)
 #include <stdlib.h>
 
 static const __llvm_profile_data *DataFirst = NULL;
