@@ -553,9 +553,9 @@ protected:
         eIOHandlerBreakpoint,
         eIOHandlerWatchpoint
     };
-    PythonObject &
-    GetMainModule ();
-    
+
+    PythonObject &GetMainModule();
+
     PythonDictionary &
     GetSessionDictionary ();
     
@@ -564,7 +564,7 @@ protected:
 
     bool
     GetEmbeddedInterpreterModuleObjects ();
-    
+
     PythonObject m_saved_stdin;
     PythonObject m_saved_stdout;
     PythonObject m_saved_stderr;

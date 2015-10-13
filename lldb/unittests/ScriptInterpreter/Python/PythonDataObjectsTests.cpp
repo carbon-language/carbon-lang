@@ -23,18 +23,74 @@ class PythonDataObjectsTest : public testing::Test
     SetUp() override
     {
         HostInfoBase::Initialize();
-        // ScriptInterpreterPython::Initialize() depends on things like HostInfo being initialized
-        // so it can compute the python directory etc, so we need to do this after
-        // SystemInitializerCommon::Initialize().
+        // ScriptInterpreterPython::Initialize() depends on HostInfo being
+        // initializedso it can compute the python directory etc.
         ScriptInterpreterPython::Initialize();
+
+        // Although we don't care about concurrency for the purposes of running
+        // this test suite, Python requires the GIL to be locked even for
+        // deallocating memory, which can happen when you call Py_DECREF or
+        // Py_INCREF.  So acquire the GIL for the entire duration of this
+        // test suite.
+        m_gil_state = PyGILState_Ensure();
     }
 
     void
     TearDown() override
     {
+        PyGILState_Release(m_gil_state);
+
         ScriptInterpreterPython::Terminate();
     }
+
+  private:
+    PyGILState_STATE m_gil_state;
 };
+
+TEST_F(PythonDataObjectsTest, TestOwnedReferences)
+{
+    // After creating a new object, the refcount should be 1
+    PyObject *obj = PyLong_FromLong(3);
+    EXPECT_EQ(1, obj->ob_refcnt);
+
+    // If we take an owned reference, the refcount should still be 1
+    PythonObject owned_long(PyRefType::Owned, obj);
+    EXPECT_EQ(1, owned_long.get()->ob_refcnt);
+
+    // Take another reference and verify that the refcount increases
+    PythonObject strong_ref(owned_long);
+    EXPECT_EQ(2, strong_ref.get()->ob_refcnt);
+
+    // If we reset the first one, the refcount should be 1 again.
+    owned_long.Reset();
+    EXPECT_EQ(1, strong_ref.get()->ob_refcnt);
+}
+
+TEST_F(PythonDataObjectsTest, TestResetting)
+{
+    PythonDictionary dict(PyInitialValue::Empty);
+
+    PyObject *new_dict = PyDict_New();
+    dict.Reset(PyRefType::Owned, new_dict);
+    EXPECT_EQ(new_dict, dict.get());
+
+    dict.Reset(PyRefType::Owned, nullptr);
+    EXPECT_EQ(nullptr, dict.get());
+
+    dict.Reset(PyRefType::Owned, PyDict_New());
+    EXPECT_NE(nullptr, dict.get());
+    dict.Reset();
+    EXPECT_EQ(nullptr, dict.get());
+}
+
+TEST_F(PythonDataObjectsTest, TestBorrowedReferences)
+{
+    PythonInteger long_value(PyRefType::Owned, PyLong_FromLong(3));
+    EXPECT_EQ(1, long_value.get()->ob_refcnt);
+
+    PythonInteger borrowed_long(PyRefType::Borrowed, long_value.get());
+    EXPECT_EQ(2, borrowed_long.get()->ob_refcnt);
+}
 
 TEST_F(PythonDataObjectsTest, TestPythonInteger)
 {
@@ -45,7 +101,7 @@ TEST_F(PythonDataObjectsTest, TestPythonInteger)
     // Note that PyInt doesn't exist in Python 3.x, so this is only for 2.x
     PyObject *py_int = PyInt_FromLong(12);
     EXPECT_TRUE(PythonInteger::Check(py_int));
-    PythonInteger python_int(py_int);
+    PythonInteger python_int(PyRefType::Owned, py_int);
 
     EXPECT_EQ(PyObjectType::Integer, python_int.GetObjectType());
     EXPECT_EQ(12, python_int.GetInteger());
@@ -54,7 +110,7 @@ TEST_F(PythonDataObjectsTest, TestPythonInteger)
     // Verify that `PythonInt` works correctly when given a PyLong object.
     PyObject *py_long = PyLong_FromLong(12);
     EXPECT_TRUE(PythonInteger::Check(py_long));
-    PythonInteger python_long(py_long);
+    PythonInteger python_long(PyRefType::Owned, py_long);
     EXPECT_EQ(PyObjectType::Integer, python_long.GetObjectType());
 
     // Verify that you can reset the value and that it is reflected properly.
@@ -74,7 +130,7 @@ TEST_F(PythonDataObjectsTest, TestPythonString)
     // Note that PyString doesn't exist in Python 3.x, so this is only for 2.x
     PyObject *py_string = PyString_FromString(test_string);
     EXPECT_TRUE(PythonString::Check(py_string));
-    PythonString python_string(py_string);
+    PythonString python_string(PyRefType::Owned, py_string);
 
     EXPECT_EQ(PyObjectType::String, python_string.GetObjectType());
     EXPECT_STREQ(test_string, python_string.GetString().data());
@@ -83,7 +139,7 @@ TEST_F(PythonDataObjectsTest, TestPythonString)
     // Verify that `PythonString` works correctly when given a PyUnicode object.
     PyObject *py_unicode = PyUnicode_FromString(test_string);
     EXPECT_TRUE(PythonString::Check(py_unicode));
-    PythonString python_unicode(py_unicode);
+    PythonString python_unicode(PyRefType::Owned, py_unicode);
 
     EXPECT_EQ(PyObjectType::String, python_unicode.GetObjectType());
     EXPECT_STREQ(test_string, python_unicode.GetString().data());
@@ -101,18 +157,17 @@ TEST_F(PythonDataObjectsTest, TestPythonListPrebuilt)
     static const long long_idx0 = 5;
     static const char *const string_idx1 = "String Index 1";
 
-    PyObject *list_items[list_size];
-
     PyObject *py_list = PyList_New(2);
-    list_items[0] = PyLong_FromLong(long_idx0);
-    list_items[1] = PyString_FromString(string_idx1);
+    EXPECT_TRUE(PythonList::Check(py_list));
+    PythonList list(PyRefType::Owned, py_list);
+
+    PythonObject list_items[list_size];
+    list_items[0].Reset(PyRefType::Owned, PyLong_FromLong(long_idx0));
+    list_items[1].Reset(PyRefType::Owned, PyString_FromString(string_idx1));
 
     for (int i = 0; i < list_size; ++i)
-        PyList_SetItem(py_list, i, list_items[i]);
+        list.SetItemAtIndex(i, list_items[i]);
 
-    EXPECT_TRUE(PythonList::Check(py_list));
-
-    PythonList list(py_list);
     EXPECT_EQ(list_size, list.GetSize());
     EXPECT_EQ(PyObjectType::List, list.GetObjectType());
 
@@ -129,21 +184,20 @@ TEST_F(PythonDataObjectsTest, TestPythonDictionaryPrebuilt)
     // Python API behaves correctly when wrapped by a PythonDictionary.
     static const int dict_entries = 2;
 
-    PyObject *keys[dict_entries];
-    PyObject *values[dict_entries];
+    PythonObject keys[dict_entries];
+    PythonObject values[dict_entries];
 
-    keys[0] = PyString_FromString("Key 0");
-    keys[1] = PyLong_FromLong(1);
-    values[0] = PyLong_FromLong(0);
-    values[1] = PyString_FromString("Value 1");
+    keys[0].Reset(PyRefType::Owned, PyString_FromString("Key 0"));
+    keys[1].Reset(PyRefType::Owned, PyLong_FromLong(1));
+    values[0].Reset(PyRefType::Owned, PyLong_FromLong(0));
+    values[1].Reset(PyRefType::Owned, PyString_FromString("Value 1"));
 
     PyObject *py_dict = PyDict_New();
-    for (int i = 0; i < dict_entries; ++i)
-        PyDict_SetItem(py_dict, keys[i], values[i]);
-
     EXPECT_TRUE(PythonDictionary::Check(py_dict));
+    PythonDictionary dict(PyRefType::Owned, py_dict);
 
-    PythonDictionary dict(py_dict);
+    for (int i = 0; i < dict_entries; ++i)
+        PyDict_SetItem(py_dict, keys[i].get(), values[i].get());
     EXPECT_EQ(dict.GetSize(), dict_entries);
     EXPECT_EQ(PyObjectType::Dictionary, dict.GetObjectType());
 
@@ -162,8 +216,7 @@ TEST_F(PythonDataObjectsTest, TestPythonListManipulation)
     static const long long_idx0 = 5;
     static const char *const string_idx1 = "String Index 1";
 
-    PyObject *py_list = PyList_New(0);
-    PythonList list(py_list);
+    PythonList list(PyInitialValue::Empty);
     PythonInteger integer(long_idx0);
     PythonString string(string_idx1);
 
@@ -184,19 +237,17 @@ TEST_F(PythonDataObjectsTest, TestPythonDictionaryManipulation)
     // by a PythonDictionary.
     static const int dict_entries = 2;
 
-    PyObject *keys[dict_entries];
-    PyObject *values[dict_entries];
+    PythonString keys[dict_entries];
+    PythonObject values[dict_entries];
 
-    keys[0] = PyString_FromString("Key 0");
-    keys[1] = PyString_FromString("Key 1");
-    values[0] = PyLong_FromLong(1);
-    values[1] = PyString_FromString("Value 1");
+    keys[0].Reset(PyRefType::Owned, PyString_FromString("Key 0"));
+    keys[1].Reset(PyRefType::Owned, PyString_FromString("Key 1"));
+    values[0].Reset(PyRefType::Owned, PyLong_FromLong(1));
+    values[1].Reset(PyRefType::Owned, PyString_FromString("Value 1"));
 
-    PyObject *py_dict = PyDict_New();
-
-    PythonDictionary dict(py_dict);
+    PythonDictionary dict(PyInitialValue::Empty);
     for (int i = 0; i < 2; ++i)
-        dict.SetItemForKey(PythonString(keys[i]), values[i]);
+        dict.SetItemForKey(keys[i], values[i]);
 
     EXPECT_EQ(dict_entries, dict.GetSize());
 
@@ -225,9 +276,9 @@ TEST_F(PythonDataObjectsTest, TestPythonListToStructuredObject)
     static const char *const nested_dict_key1 = "Nested Key 1";
     static const long nested_dict_value1 = 2;
 
-    PythonList list;
-    PythonList nested_list;
-    PythonDictionary nested_dict;
+    PythonList list(PyInitialValue::Empty);
+    PythonList nested_list(PyInitialValue::Empty);
+    PythonDictionary nested_dict(PyInitialValue::Empty);
 
     nested_list.AppendItem(PythonInteger(nested_list_long_idx0));
     nested_list.AppendItem(PythonString(nested_list_str_idx1));
@@ -324,9 +375,9 @@ TEST_F(PythonDataObjectsTest, TestPythonDictionaryToStructuredObject)
     static const char *const nested_dict_value0 = "Nested Dict Value 0";
     static const long nested_dict_value1 = 7;
 
-    PythonDictionary dict;
-    PythonDictionary nested_dict;
-    PythonList nested_list;
+    PythonDictionary dict(PyInitialValue::Empty);
+    PythonDictionary nested_dict(PyInitialValue::Empty);
+    PythonList nested_list(PyInitialValue::Empty);
 
     nested_dict.SetItemForKey(PythonString(nested_dict_keys[0]), PythonString(nested_dict_value0));
     nested_dict.SetItemForKey(PythonString(nested_dict_keys[1]), PythonInteger(nested_dict_value1));

@@ -37,7 +37,7 @@ StructuredPythonObject::Dump(Stream &s) const
 //----------------------------------------------------------------------
 
 void
-PythonObject::Dump (Stream &strm) const
+PythonObject::Dump(Stream &strm) const
 {
     if (m_py_obj)
     {
@@ -64,7 +64,7 @@ PythonObject::Dump (Stream &strm) const
 PyObjectType
 PythonObject::GetObjectType() const
 {
-    if (IsNULLOrNone())
+    if (!IsAllocated())
         return PyObjectType::None;
 
     if (PyList_Check(m_py_obj))
@@ -87,31 +87,43 @@ PythonObject::GetObjectType() const
 }
 
 PythonString
-PythonObject::Repr ()
+PythonObject::Repr()
 {
     if (!m_py_obj)
-        return PythonString ();
+        return PythonString();
     PyObject *repr = PyObject_Repr(m_py_obj);
     if (!repr)
-        return PythonString ();
-    return PythonString(repr);
+        return PythonString();
+    return PythonString(PyRefType::Owned, repr);
 }
 
 PythonString
-PythonObject::Str ()
+PythonObject::Str()
 {
     if (!m_py_obj)
-        return PythonString ();
+        return PythonString();
     PyObject *str = PyObject_Str(m_py_obj);
     if (!str)
-        return PythonString ();
-    return PythonString(str);
+        return PythonString();
+    return PythonString(PyRefType::Owned, str);
 }
 
 bool
-PythonObject::IsNULLOrNone () const
+PythonObject::IsNone() const
 {
-    return ((m_py_obj == nullptr) || (m_py_obj == Py_None));
+    return m_py_obj == Py_None;
+}
+
+bool
+PythonObject::IsValid() const
+{
+    return m_py_obj != nullptr;
+}
+
+bool
+PythonObject::IsAllocated() const
+{
+    return IsValid() && !IsNone();
 }
 
 StructuredData::ObjectSP
@@ -120,13 +132,13 @@ PythonObject::CreateStructuredObject() const
     switch (GetObjectType())
     {
         case PyObjectType::Dictionary:
-            return PythonDictionary(m_py_obj).CreateStructuredDictionary();
+            return PythonDictionary(PyRefType::Borrowed, m_py_obj).CreateStructuredDictionary();
         case PyObjectType::Integer:
-            return PythonInteger(m_py_obj).CreateStructuredInteger();
+            return PythonInteger(PyRefType::Borrowed, m_py_obj).CreateStructuredInteger();
         case PyObjectType::List:
-            return PythonList(m_py_obj).CreateStructuredArray();
+            return PythonList(PyRefType::Borrowed, m_py_obj).CreateStructuredArray();
         case PyObjectType::String:
-            return PythonString(m_py_obj).CreateStructuredString();
+            return PythonString(PyRefType::Borrowed, m_py_obj).CreateStructuredString();
         case PyObjectType::None:
             return StructuredData::ObjectSP();
         default:
@@ -138,16 +150,15 @@ PythonObject::CreateStructuredObject() const
 // PythonString
 //----------------------------------------------------------------------
 
-PythonString::PythonString (PyObject *py_obj) :
-    PythonObject()
+PythonString::PythonString(PyRefType type, PyObject *py_obj)
+    : PythonObject()
 {
-    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a string
+    Reset(type, py_obj); // Use "Reset()" to ensure that py_obj is a string
 }
 
-PythonString::PythonString (const PythonObject &object) :
-    PythonObject()
+PythonString::PythonString(const PythonString &object)
+    : PythonObject(object)
 {
-    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a string
 }
 
 PythonString::PythonString(llvm::StringRef string)
@@ -162,8 +173,8 @@ PythonString::PythonString(const char *string)
     SetString(llvm::StringRef(string));
 }
 
-PythonString::PythonString () :
-    PythonObject()
+PythonString::PythonString()
+    : PythonObject()
 {
 }
 
@@ -184,35 +195,40 @@ PythonString::Check(PyObject *py_obj)
 #endif
 }
 
-bool
-PythonString::Reset(PyObject *py_obj)
+void
+PythonString::Reset(PyRefType type, PyObject *py_obj)
 {
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
     if (!PythonString::Check(py_obj))
     {
-        PythonObject::Reset(nullptr);
-        return false;
+        PythonObject::Reset();
+        return;
     }
 
-// Convert this to a PyBytes object, and only store the PyBytes.  Note that in
-// Python 2.x, PyString and PyUnicode are interchangeable, and PyBytes is an alias
-// of PyString.  So on 2.x, if we get into this branch, we already have a PyBytes.
-    //#if PY_MAJOR_VERSION >= 3
+    // Convert this to a PyBytes object, and only store the PyBytes.  Note that in
+    // Python 2.x, PyString and PyUnicode are interchangeable, and PyBytes is an alias
+    // of PyString.  So on 2.x, if we get into this branch, we already have a PyBytes.
     if (PyUnicode_Check(py_obj))
     {
-        PyObject *unicode = py_obj;
-        py_obj = PyUnicode_AsUTF8String(py_obj);
-        Py_XDECREF(unicode);
+        // Since we're converting this to a different object, we assume ownership of the
+        // new object regardless of the value of `type`.
+        result.Reset(PyRefType::Owned, PyUnicode_AsUTF8String(py_obj));
     }
-    //#endif
 
-    assert(PyBytes_Check(py_obj) && "PythonString::Reset received a non-string");
-    return PythonObject::Reset(py_obj);
+    assert(PyBytes_Check(result.get()) && "PythonString::Reset received a non-string");
+
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
+    // back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
 }
 
 llvm::StringRef
 PythonString::GetString() const
 {
-    if (m_py_obj)
+    if (IsValid())
     {
         Py_ssize_t size;
         char *c;
@@ -225,7 +241,7 @@ PythonString::GetString() const
 size_t
 PythonString::GetSize() const
 {
-    if (m_py_obj)
+    if (IsValid())
         return PyBytes_Size(m_py_obj);
     return 0;
 }
@@ -236,10 +252,10 @@ PythonString::SetString (llvm::StringRef string)
 #if PY_MAJOR_VERSION >= 3
     PyObject *unicode = PyUnicode_FromStringAndSize(string.data(), string.size());
     PyObject *bytes = PyUnicode_AsUTF8String(unicode);
-    PythonObject::Reset(bytes);
-    Py_XDECREF(unicode);
+    PythonObject::Reset(PyRefType::Owned, bytes);
+    Py_DECREF(unicode);
 #else
-    PythonObject::Reset(PyString_FromStringAndSize(string.data(), string.size()));
+    PythonObject::Reset(PyRefType::Owned, PyString_FromStringAndSize(string.data(), string.size()));
 #endif
 }
 
@@ -255,22 +271,21 @@ PythonString::CreateStructuredString() const
 // PythonInteger
 //----------------------------------------------------------------------
 
-PythonInteger::PythonInteger (PyObject *py_obj) :
-    PythonObject()
+PythonInteger::PythonInteger(PyRefType type, PyObject *py_obj)
+    : PythonObject()
 {
-    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a integer type
+    Reset(type, py_obj); // Use "Reset()" to ensure that py_obj is a integer type
 }
 
-PythonInteger::PythonInteger (const PythonObject &object) :
-    PythonObject()
+PythonInteger::PythonInteger(const PythonInteger &object)
+    : PythonObject(object)
 {
-    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a integer type
 }
 
-PythonInteger::PythonInteger (int64_t value) :
-    PythonObject()
+PythonInteger::PythonInteger(int64_t value)
+    : PythonObject()
 {
-    SetInteger (value);
+    SetInteger(value);
 }
 
 
@@ -293,13 +308,17 @@ PythonInteger::Check(PyObject *py_obj)
 #endif
 }
 
-bool
-PythonInteger::Reset(PyObject *py_obj)
+void
+PythonInteger::Reset(PyRefType type, PyObject *py_obj)
 {
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
     if (!PythonInteger::Check(py_obj))
     {
-        PythonObject::Reset(nullptr);
-        return false;
+        PythonObject::Reset();
+        return;
     }
 
 #if PY_MAJOR_VERSION < 3
@@ -308,15 +327,18 @@ PythonInteger::Reset(PyObject *py_obj)
     // since 3.x doesn't even have a PyInt.
     if (PyInt_Check(py_obj))
     {
-        PyObject *py_long = PyLong_FromLongLong(PyInt_AsLong(py_obj));
-        Py_XDECREF(py_obj);
-        py_obj = py_long;
+        // Since we converted the original object to a different type, the new
+        // object is an owned object regardless of the ownership semantics requested
+        // by the user.
+        result.Reset(PyRefType::Owned, PyLong_FromLongLong(PyInt_AsLong(py_obj)));
     }
 #endif
 
-    assert(PyLong_Check(py_obj) && "Couldn't get a PyLong from this PyObject");
+    assert(PyLong_Check(result.get()) && "Couldn't get a PyLong from this PyObject");
 
-    return PythonObject::Reset(py_obj);
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
+    // back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
 }
 
 int64_t
@@ -332,9 +354,9 @@ PythonInteger::GetInteger() const
 }
 
 void
-PythonInteger::SetInteger (int64_t value)
+PythonInteger::SetInteger(int64_t value)
 {
-    PythonObject::Reset(PyLong_FromLongLong(value));
+    PythonObject::Reset(PyRefType::Owned, PyLong_FromLongLong(value));
 }
 
 StructuredData::IntegerSP
@@ -349,22 +371,22 @@ PythonInteger::CreateStructuredInteger() const
 // PythonList
 //----------------------------------------------------------------------
 
-PythonList::PythonList()
-    : PythonObject(PyList_New(0))
+PythonList::PythonList(PyInitialValue value)
+    : PythonObject()
 {
+    if (value == PyInitialValue::Empty)
+        Reset(PyRefType::Owned, PyList_New(0));
 }
 
-PythonList::PythonList (PyObject *py_obj) :
-    PythonObject()
+PythonList::PythonList(PyRefType type, PyObject *py_obj)
+    : PythonObject()
 {
-    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a list
+    Reset(type, py_obj); // Use "Reset()" to ensure that py_obj is a list
 }
 
-
-PythonList::PythonList (const PythonObject &object) :
-    PythonObject()
+PythonList::PythonList(const PythonList &list)
+    : PythonObject(list)
 {
-    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a list
 }
 
 PythonList::~PythonList ()
@@ -379,22 +401,28 @@ PythonList::Check(PyObject *py_obj)
     return PyList_Check(py_obj);
 }
 
-bool
-PythonList::Reset(PyObject *py_obj)
+void
+PythonList::Reset(PyRefType type, PyObject *py_obj)
 {
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
     if (!PythonList::Check(py_obj))
     {
-        PythonObject::Reset(nullptr);
-        return false;
+        PythonObject::Reset();
+        return;
     }
 
-    return PythonObject::Reset(py_obj);
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
+    // back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
 }
 
 uint32_t
 PythonList::GetSize() const
 {
-    if (m_py_obj)
+    if (IsValid())
         return PyList_GET_SIZE(m_py_obj);
     return 0;
 }
@@ -402,23 +430,32 @@ PythonList::GetSize() const
 PythonObject
 PythonList::GetItemAtIndex(uint32_t index) const
 {
-    if (m_py_obj)
-        return PythonObject(PyList_GetItem(m_py_obj, index));
+    if (IsValid())
+        return PythonObject(PyRefType::Borrowed, PyList_GetItem(m_py_obj, index));
     return PythonObject();
 }
 
 void
-PythonList::SetItemAtIndex (uint32_t index, const PythonObject & object)
+PythonList::SetItemAtIndex(uint32_t index, const PythonObject &object)
 {
-    if (m_py_obj && object)
+    if (IsAllocated() && object.IsValid())
+    {
+        // PyList_SetItem is documented to "steal" a reference, so we need to
+        // convert it to an owned reference by incrementing it.
+        Py_INCREF(object.get());
         PyList_SetItem(m_py_obj, index, object.get());
+    }
 }
 
 void
-PythonList::AppendItem (const PythonObject &object)
+PythonList::AppendItem(const PythonObject &object)
 {
-    if (m_py_obj && object)
+    if (IsAllocated() && object.IsValid())
+    {
+        // `PyList_Append` does *not* steal a reference, so do not call `Py_INCREF`
+        // here like we do with `PyList_SetItem`.
         PyList_Append(m_py_obj, object.get());
+    }
 }
 
 StructuredData::ArraySP
@@ -438,22 +475,22 @@ PythonList::CreateStructuredArray() const
 // PythonDictionary
 //----------------------------------------------------------------------
 
-PythonDictionary::PythonDictionary()
-    : PythonObject(PyDict_New())
+PythonDictionary::PythonDictionary(PyInitialValue value)
+    : PythonObject()
 {
+    if (value == PyInitialValue::Empty)
+        Reset(PyRefType::Owned, PyDict_New());
 }
 
-PythonDictionary::PythonDictionary (PyObject *py_obj) :
-    PythonObject(py_obj)
+PythonDictionary::PythonDictionary(PyRefType type, PyObject *py_obj)
+    : PythonObject()
 {
-    Reset(py_obj); // Use "Reset()" to ensure that py_obj is a dictionary
+    Reset(type, py_obj); // Use "Reset()" to ensure that py_obj is a dictionary
 }
 
-
-PythonDictionary::PythonDictionary (const PythonObject &object) :
-    PythonObject()
+PythonDictionary::PythonDictionary(const PythonDictionary &object)
+    : PythonObject(object)
 {
-    Reset(object.get()); // Use "Reset()" to ensure that py_obj is a dictionary
 }
 
 PythonDictionary::~PythonDictionary ()
@@ -469,129 +506,52 @@ PythonDictionary::Check(PyObject *py_obj)
     return PyDict_Check(py_obj);
 }
 
-bool
-PythonDictionary::Reset(PyObject *py_obj)
+void
+PythonDictionary::Reset(PyRefType type, PyObject *py_obj)
 {
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
     if (!PythonDictionary::Check(py_obj))
     {
-        PythonObject::Reset(nullptr);
-        return false;
+        PythonObject::Reset();
+        return;
     }
 
-    return PythonObject::Reset(py_obj);
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
+    // back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
 }
 
 uint32_t
 PythonDictionary::GetSize() const
 {
-    if (m_py_obj)
+    if (IsValid())
         return PyDict_Size(m_py_obj);
     return 0;
 }
 
-PythonObject
-PythonDictionary::GetItemForKey (const char *key) const
-{
-    if (key && key[0])
-    {
-        PythonString python_key(key);
-        return GetItemForKey(python_key);
-    }
-    return PythonObject();
-}
-
-
-PythonObject
-PythonDictionary::GetItemForKey (const PythonString &key) const
-{
-    if (m_py_obj && key)
-        return PythonObject(PyDict_GetItem(m_py_obj, key.get()));
-    return PythonObject();
-}
-
-
-const char *
-PythonDictionary::GetItemForKeyAsString (const PythonString &key, const char *fail_value) const
-{
-    if (m_py_obj && key)
-    {
-        PyObject *py_obj = PyDict_GetItem(m_py_obj, key.get());
-        if (py_obj && PythonString::Check(py_obj))
-        {
-            PythonString str(py_obj);
-            return str.GetString().data();
-        }
-    }
-    return fail_value;
-}
-
-int64_t
-PythonDictionary::GetItemForKeyAsInteger (const PythonString &key, int64_t fail_value) const
-{
-    if (m_py_obj && key)
-    {
-        PyObject *py_obj = PyDict_GetItem(m_py_obj, key.get());
-        if (PythonInteger::Check(py_obj))
-        {
-            PythonInteger int_obj(py_obj);
-            return int_obj.GetInteger();
-        }
-    }
-    return fail_value;
-}
-
 PythonList
-PythonDictionary::GetKeys () const
+PythonDictionary::GetKeys() const
 {
-    if (m_py_obj)
-        return PythonList(PyDict_Keys(m_py_obj));
-    return PythonList();
-}
-
-PythonString
-PythonDictionary::GetKeyAtPosition (uint32_t pos) const
-{
-    PyObject *key, *value;
-    Py_ssize_t pos_iter = 0;
-    
-    if (m_py_obj)
-    {
-        while (PyDict_Next(m_py_obj, &pos_iter, &key, &value))
-        {
-            if (pos-- == 0)
-                return PythonString(key);
-        }
-    }
-    return PythonString();
+    if (IsValid())
+        return PythonList(PyRefType::Owned, PyDict_Keys(m_py_obj));
+    return PythonList(PyInitialValue::Invalid);
 }
 
 PythonObject
-PythonDictionary::GetValueAtPosition (uint32_t pos) const
+PythonDictionary::GetItemForKey(const PythonObject &key) const
 {
-    PyObject *key, *value;
-    Py_ssize_t pos_iter = 0;
-    
-    if (!m_py_obj)
-        return PythonObject();
-    
-    while (PyDict_Next(m_py_obj, &pos_iter, &key, &value)) {
-        if (pos-- == 0)
-            return PythonObject(value);
-    }
+    if (IsAllocated() && key.IsValid())
+        return PythonObject(PyRefType::Borrowed, PyDict_GetItem(m_py_obj, key.get()));
     return PythonObject();
 }
 
 void
-PythonDictionary::SetItemForKey (const PythonString &key, PyObject *value)
+PythonDictionary::SetItemForKey(const PythonObject &key, const PythonObject &value)
 {
-    if (m_py_obj && key && value)
-        PyDict_SetItem(m_py_obj, key.get(), value);
-}
-
-void
-PythonDictionary::SetItemForKey (const PythonString &key, const PythonObject &value)
-{
-    if (m_py_obj && key && value)
+    if (IsAllocated() && key.IsValid() && value.IsValid())
         PyDict_SetItem(m_py_obj, key.get(), value.get());
 }
 
@@ -604,10 +564,9 @@ PythonDictionary::CreateStructuredDictionary() const
     for (uint32_t i = 0; i < num_keys; ++i)
     {
         PythonObject key = keys.GetItemAtIndex(i);
-        PythonString key_str = key.Str();
         PythonObject value = GetItemForKey(key);
         StructuredData::ObjectSP structured_value = value.CreateStructuredObject();
-        result->AddItem(key_str.GetString(), structured_value);
+        result->AddItem(key.Str().GetString(), structured_value);
     }
     return result;
 }
