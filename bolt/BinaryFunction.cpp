@@ -94,6 +94,10 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
     OS << BB.getName() << " ("
        << BB.Instructions.size() << " instructions)\n";
 
+    uint64_t BBExecCount = BB.getExecutionCount();
+    if (BBExecCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
+      OS << "  Exec Count : " << BBExecCount << "\n";
+    }
     if (!BB.Predecessors.empty()) {
       OS << "  Predecessors: ";
       auto Sep = "";
@@ -129,8 +133,15 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
       auto Sep = "";
       for (auto Succ : BB.Successors) {
         assert(BI != BB.BranchInfo.end() && "missing BranchInfo entry");
-        OS << Sep << Succ->getName() << " (mispreds: " << BI->MispredictedCount
-           << ", count: " << BI->Count << ")";
+        OS << Sep << Succ->getName();
+        if (ExecutionCount != COUNT_NO_PROFILE &&
+            BI->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+          OS << " (mispreds: " << BI->MispredictedCount
+             << ", count: " << BI->Count << ")";
+        } else if (ExecutionCount != COUNT_NO_PROFILE &&
+                   BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+          OS << " (inferred count: " << BI->Count << ")";
+        }
         Sep = ", ";
         ++BI;
       }
@@ -411,7 +422,8 @@ bool BinaryFunction::buildCFG() {
   bool IsPrevFT = false; // Is previous block a fall-through.
   for (auto &BB : BasicBlocks) {
     if (IsPrevFT) {
-      PrevBB->addSuccessor(&BB);
+      PrevBB->addSuccessor(&BB, BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE,
+                           BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE);
     }
 
     MCInst &LastInst = BB.back();
@@ -432,6 +444,11 @@ bool BinaryFunction::buildCFG() {
     DEBUG(dbgs() << "last block was marked as a fall-through\n");
   }
 
+  // Infer frequency for non-taken branches
+  if (ExecutionCount != COUNT_NO_PROFILE && !BranchDataOrErr.getError()) {
+    inferFallThroughCounts();
+  }
+
   // Clean-up memory taken by instructions and labels.
   clearInstructions();
   clearLabels();
@@ -444,6 +461,70 @@ bool BinaryFunction::buildCFG() {
   DEBUG(print(dbgs(), /* PrintInstructions = */ true));
 
   return true;
+}
+
+void BinaryFunction::inferFallThroughCounts() {
+  assert(!BasicBlocks.empty() && "basic block list should not be empty");
+
+  // Compute preliminary execution time for each basic block
+  for (auto &CurBB : BasicBlocks) {
+    if (&CurBB == &*BasicBlocks.begin()) {
+      CurBB.ExecutionCount = ExecutionCount;
+      continue;
+    }
+    CurBB.ExecutionCount = 0;
+  }
+
+  for (auto &CurBB : BasicBlocks) {
+    auto SuccCount = CurBB.BranchInfo.begin();
+    for (auto Succ : CurBB.successors()) {
+      if (SuccCount->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
+        Succ->ExecutionCount += SuccCount->Count;
+      ++SuccCount;
+    }
+  }
+
+  // Work on a basic block at a time, propagating frequency information forwards
+  // It is important to walk in the layour order
+  for (auto &CurBB : BasicBlocks) {
+    uint64_t BBExecCount = CurBB.getExecutionCount();
+
+    // Propagate this information to successors, filling in fall-through edges
+    // with frequency information
+    if (CurBB.succ_size() == 0)
+      continue;
+
+    // Calculate frequency of outgoing branches from this node according to
+    // LBR data
+    uint64_t ReportedBranches = 0;
+    for (auto &SuccCount : CurBB.BranchInfo) {
+      if (SuccCount.Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
+        ReportedBranches += SuccCount.Count;
+    }
+
+    // Infer the frequency of the fall-through edge, representing not taking the
+    // branch
+    uint64_t Inferred = 0;
+    if (BBExecCount > ReportedBranches)
+      Inferred = BBExecCount - ReportedBranches;
+    if (BBExecCount < ReportedBranches)
+      errs() << "FLO-WARNING: Fall-through inference is slightly inconsistent. "
+                "BB exec frequency is less than the outgoing edges frequency\n";
+
+    // Put this information into the fall-through edge
+    if (CurBB.succ_size() == 0)
+      continue;
+    // If there is a FT, the last successor will be it.
+    auto &SuccCount = CurBB.BranchInfo.back();
+    auto &Succ = CurBB.Successors.back();
+    if (SuccCount.Count == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+      SuccCount.Count = Inferred;
+      Succ->ExecutionCount += Inferred;
+    }
+
+  } // end for (CurBB : BasicBlocks)
+
+  return;
 }
 
 } // namespace flo

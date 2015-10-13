@@ -46,6 +46,9 @@ class BinaryBasicBlock {
   /// Alignment requirements for the block.
   uint64_t Alignment{1};
 
+  /// Number of times this basic block was executed.
+  uint64_t ExecutionCount{COUNT_NO_PROFILE};
+
   /// Vector of all instructions in the block.
   std::vector<MCInst> Instructions;
 
@@ -80,6 +83,10 @@ class BinaryBasicBlock {
                         const BinaryBasicBlock &RHS);
 
 public:
+  static constexpr uint64_t COUNT_FALLTHROUGH_EDGE =
+      std::numeric_limits<uint64_t>::max();
+  static constexpr uint64_t COUNT_NO_PROFILE =
+      std::numeric_limits<uint64_t>::max();
 
   // Instructions iterators.
   typedef std::vector<MCInst>::iterator                                iterator;
@@ -191,6 +198,15 @@ public:
   /// Remove /p Succ basic block from the list of successors. Update the
   /// list of predecessors of /p Succ and update branch info.
   void removeSuccessor(BinaryBasicBlock *Succ);
+
+  /// Return the information about the number of times this basic block was
+  /// executed.
+  ///
+  /// Return COUNT_NO_PROFILE if there's no profile info.
+  uint64_t getExecutionCount() const {
+    return ExecutionCount;
+  }
+
 
 private:
 

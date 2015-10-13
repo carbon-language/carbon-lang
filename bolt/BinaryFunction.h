@@ -368,6 +368,13 @@ public:
   /// State::CFG. Returns false if CFG cannot be built.
   bool buildCFG();
 
+  /// Walks the list of basic blocks filling in missing information about
+  /// edge frequency for fall-throughs.
+  ///
+  /// Assumes the CFG has been built and edge frequency for taken branches
+  /// has been filled with LBR data.
+  void inferFallThroughCounts();
+
   virtual ~BinaryFunction() {}
 };
 
