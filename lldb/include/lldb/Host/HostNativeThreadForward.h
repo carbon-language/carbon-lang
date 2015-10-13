@@ -21,6 +21,9 @@ typedef HostThreadLinux HostNativeThread;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 class HostThreadFreeBSD;
 typedef HostThreadFreeBSD HostNativeThread;
+#elif defined(__NetBSD__)
+class HostThreadNetBSD;
+typedef HostThreadNetBSD HostNativeThread;
 #elif defined(__APPLE__)
 class HostThreadMacOSX;
 typedef HostThreadMacOSX HostNativeThread;

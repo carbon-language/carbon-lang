@@ -18,6 +18,8 @@
 #include "lldb/Host/linux/HostThreadLinux.h"
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include "lldb/Host/freebsd/HostThreadFreeBSD.h"
+#elif defined(__NetBSD__)
+#include "lldb/Host/netbsd/HostThreadNetBSD.h"
 #elif defined(__APPLE__)
 #include "lldb/Host/macosx/HostThreadMacOSX.h"
 #endif

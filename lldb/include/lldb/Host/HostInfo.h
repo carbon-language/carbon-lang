@@ -48,6 +48,9 @@
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include "lldb/Host/freebsd/HostInfoFreeBSD.h"
 #define HOST_INFO_TYPE HostInfoFreeBSD
+#elif defined(__NetBSD__)
+#include "lldb/Host/netbsd/HostInfoNetBSD.h"
+#define HOST_INFO_TYPE HostInfoNetBSD
 #elif defined(__APPLE__)
 #include "lldb/Host/macosx/HostInfoMacOSX.h"
 #define HOST_INFO_TYPE HostInfoMacOSX
