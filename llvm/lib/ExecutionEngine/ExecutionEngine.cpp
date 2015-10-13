@@ -237,11 +237,10 @@ void ExecutionEngine::clearAllGlobalMappings() {
 void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
   MutexGuard locked(lock);
 
-  for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
-    EEState.RemoveMapping(getMangledName(FI));
-  for (Module::global_iterator GI = M->global_begin(), GE = M->global_end();
-       GI != GE; ++GI)
-    EEState.RemoveMapping(getMangledName(GI));
+  for (Function &FI : *M)
+    EEState.RemoveMapping(getMangledName(&FI));
+  for (GlobalVariable &GI : M->globals())
+    EEState.RemoveMapping(getMangledName(&GI));
 }
 
 uint64_t ExecutionEngine::updateGlobalMapping(const GlobalValue *GV,
