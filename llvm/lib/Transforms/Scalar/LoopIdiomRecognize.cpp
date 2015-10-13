@@ -652,7 +652,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
                << "    from load ptr=" << *LoadEv << " at: " << *LI << "\n"
                << "    from store ptr=" << *StoreEv << " at: " << *SI << "\n");
 
-  // Okay, the memset has been formed.  Zap the original store and anything that
+  // Okay, the memcpy has been formed.  Zap the original store and anything that
   // feeds into it.
   deleteDeadInstruction(SI, TLI);
   ++NumMemCpy;
