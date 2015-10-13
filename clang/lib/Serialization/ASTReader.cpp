@@ -1948,7 +1948,9 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
     if (Complain) {
       std::string ErrorStr = "could not find file '";
       ErrorStr += Filename;
-      ErrorStr += "' referenced by AST file";
+      ErrorStr += "' referenced by AST file '";
+      ErrorStr += F.FileName;
+      ErrorStr += "'";
       Error(ErrorStr.c_str());
     }
     // Record that we didn't find the file.
