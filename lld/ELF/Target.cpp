@@ -409,17 +409,17 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   case R_PPC64_REL24: {
     uint64_t PltStart = Out<ELF64BE>::Plt->getVA();
     uint64_t PltEnd = PltStart + Out<ELF64BE>::Plt->getSize();
-    bool InPlt = PltStart <= S + A && S + A < PltEnd;
+    bool InPlt = PltStart <= R && R < PltEnd;
 
     if (!InPlt && Out<ELF64BE>::Opd) {
       // If this is a local call, and we currently have the address of a
       // function-descriptor, get the underlying code address instead.
       uint64_t OpdStart = Out<ELF64BE>::Opd->getVA();
       uint64_t OpdEnd = OpdStart + Out<ELF64BE>::Opd->getSize();
-      bool InOpd = OpdStart <= S + A && S + A < OpdEnd;
+      bool InOpd = OpdStart <= R && R < OpdEnd;
 
       if (InOpd)
-        R = read64be(&Out<ELF64BE>::OpdBuf[S + A - OpdStart]);
+        R = read64be(&Out<ELF64BE>::OpdBuf[R - OpdStart]);
     }
 
     uint32_t Mask = 0x03FFFFFC;
