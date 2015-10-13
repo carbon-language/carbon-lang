@@ -774,12 +774,14 @@ multiclass RELEASE_BINOP_MI<SDNode op> {
         [(atomic_store_64 addr:$dst, (op
             (atomic_load_64 addr:$dst), GR64:$src))]>;
 }
-defm RELEASE_ADD : RELEASE_BINOP_MI<add>;
-defm RELEASE_AND : RELEASE_BINOP_MI<and>;
-defm RELEASE_OR  : RELEASE_BINOP_MI<or>;
-defm RELEASE_XOR : RELEASE_BINOP_MI<xor>;
-// Note: we don't deal with sub, because substractions of constants are
-// optimized into additions before this code can run
+let Defs = [EFLAGS] in {
+  defm RELEASE_ADD : RELEASE_BINOP_MI<add>;
+  defm RELEASE_AND : RELEASE_BINOP_MI<and>;
+  defm RELEASE_OR  : RELEASE_BINOP_MI<or>;
+  defm RELEASE_XOR : RELEASE_BINOP_MI<xor>;
+  // Note: we don't deal with sub, because substractions of constants are
+  //       optimized into additions before this code can run.
+}
 
 // Same as above, but for floating-point.
 // FIXME: imm version.
