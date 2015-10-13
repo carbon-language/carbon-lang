@@ -83,7 +83,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   PointerType *PTy = cast<PointerType>(CI.getType());
 
   BuilderTy AllocaBuilder(*Builder);
-  AllocaBuilder.SetInsertPoint(AI.getParent(), &AI);
+  AllocaBuilder.SetInsertPoint(&AI);
 
   // Get the type really allocated and the type casted to.
   Type *AllocElTy = AI.getAllocatedType();

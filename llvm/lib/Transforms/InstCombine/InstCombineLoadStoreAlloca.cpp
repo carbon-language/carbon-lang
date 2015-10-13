@@ -186,7 +186,7 @@ static Instruction *simplifyAllocaArraySize(InstCombiner &IC, AllocaInst &AI) {
     // Scan to the end of the allocation instructions, to skip over a block of
     // allocas if possible...also skip interleaved debug info
     //
-    BasicBlock::iterator It = New;
+    BasicBlock::iterator It(New);
     while (isa<AllocaInst>(*It) || isa<DbgInfoIntrinsic>(*It))
       ++It;
 
@@ -748,7 +748,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // Do really simple store-to-load forwarding and load CSE, to catch cases
   // where there are several consecutive memory accesses to the same location,
   // separated by a few arithmetic operations.
-  BasicBlock::iterator BBI = &LI;
+  BasicBlock::iterator BBI(LI);
   AAMDNodes AATags;
   if (Value *AvailableVal =
       FindAvailableLoadedValue(Op, LI.getParent(), BBI,
@@ -989,7 +989,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   // Do really simple DSE, to catch cases where there are several consecutive
   // stores to the same location, separated by a few arithmetic operations. This
   // situation often occurs with bitfield accesses.
-  BasicBlock::iterator BBI = &SI;
+  BasicBlock::iterator BBI(SI);
   for (unsigned ScanInsts = 6; BBI != SI.getParent()->begin() && ScanInsts;
        --ScanInsts) {
     --BBI;
@@ -1048,7 +1048,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   // If this store is the last instruction in the basic block (possibly
   // excepting debug info instructions), and if the block ends with an
   // unconditional branch, try to move it to the successor block.
-  BBI = &SI;
+  BBI = SI.getIterator();
   do {
     ++BBI;
   } while (isa<DbgInfoIntrinsic>(BBI) ||
@@ -1104,7 +1104,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
     return false;
 
   // Verify that the other block ends in a branch and is not otherwise empty.
-  BasicBlock::iterator BBI = OtherBB->getTerminator();
+  BasicBlock::iterator BBI(OtherBB->getTerminator());
   BranchInst *OtherBr = dyn_cast<BranchInst>(BBI);
   if (!OtherBr || BBI == OtherBB->begin())
     return false;

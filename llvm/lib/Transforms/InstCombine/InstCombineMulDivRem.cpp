@@ -746,7 +746,7 @@ bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
     return true;
 
   // Scan the current block backward, looking for other uses of SI.
-  BasicBlock::iterator BBI = &I, BBFront = I.getParent()->begin();
+  BasicBlock::iterator BBI = I.getIterator(), BBFront = I.getParent()->begin();
 
   while (BBI != BBFront) {
     --BBI;
@@ -760,10 +760,10 @@ bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
          I != E; ++I) {
       if (*I == SI) {
         *I = SI->getOperand(NonNullOperand);
-        Worklist.Add(BBI);
+        Worklist.Add(&*BBI);
       } else if (*I == SelectCond) {
         *I = Builder->getInt1(NonNullOperand == 1);
-        Worklist.Add(BBI);
+        Worklist.Add(&*BBI);
       }
     }
 

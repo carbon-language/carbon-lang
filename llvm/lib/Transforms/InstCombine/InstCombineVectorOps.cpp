@@ -115,8 +115,7 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
       Instruction *pos = dyn_cast<Instruction>(PHIInVal);
       BasicBlock::iterator InsertPos;
       if (pos && !isa<PHINode>(pos)) {
-        InsertPos = pos;
-        ++InsertPos;
+        InsertPos = ++pos->getIterator();
       } else {
         InsertPos = inBB->getFirstInsertionPt();
       }

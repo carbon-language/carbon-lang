@@ -1407,15 +1407,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // happen when variable allocas are DCE'd.
     if (IntrinsicInst *SS = dyn_cast<IntrinsicInst>(II->getArgOperand(0))) {
       if (SS->getIntrinsicID() == Intrinsic::stacksave) {
-        BasicBlock::iterator BI = SS;
-        if (&*++BI == II)
+        if (&*++SS->getIterator() == II)
           return EraseInstFromFunction(CI);
       }
     }
 
     // Scan down this block to see if there is another stack restore in the
     // same block without an intervening call/alloca.
-    BasicBlock::iterator BI = II;
+    BasicBlock::iterator BI(II);
     TerminatorInst *TI = II->getParent()->getTerminator();
     bool CannotRemove = false;
     for (++BI; &*BI != TI; ++BI) {
@@ -1449,7 +1448,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Remove trivially empty lifetime_start/end ranges, i.e. a start
     // immediately followed by an end (ignoring debuginfo or other
     // lifetime markers in between).
-    BasicBlock::iterator BI = II, BE = II->getParent()->end();
+    BasicBlock::iterator BI = II->getIterator(), BE = II->getParent()->end();
     for (++BI; BI != BE; ++BI) {
       if (IntrinsicInst *LTE = dyn_cast<IntrinsicInst>(BI)) {
         if (isa<DbgInfoIntrinsic>(LTE) ||
@@ -1670,9 +1669,10 @@ static IntrinsicInst *FindInitTrampolineFromBB(IntrinsicInst *AdjustTramp,
                                                Value *TrampMem) {
   // Visit all the previous instructions in the basic block, and try to find a
   // init.trampoline which has a direct path to the adjust.trampoline.
-  for (BasicBlock::iterator I = AdjustTramp,
-       E = AdjustTramp->getParent()->begin(); I != E; ) {
-    Instruction *Inst = --I;
+  for (BasicBlock::iterator I = AdjustTramp->getIterator(),
+                            E = AdjustTramp->getParent()->begin();
+       I != E;) {
+    Instruction *Inst = &*--I;
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
       if (II->getIntrinsicID() == Intrinsic::init_trampoline &&
           II->getOperand(0) == TrampMem)

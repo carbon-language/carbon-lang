@@ -1464,11 +1464,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // All the GEPs feeding the PHI differ at a single offset. Clone a GEP
       // into the current block so it can be merged, and create a new PHI to
       // set that index.
-      Instruction *InsertPt = Builder->GetInsertPoint();
-      Builder->SetInsertPoint(PN);
-      PHINode *NewPN = Builder->CreatePHI(Op1->getOperand(DI)->getType(),
-                                          PN->getNumOperands());
-      Builder->SetInsertPoint(InsertPt);
+      PHINode *NewPN;
+      {
+        IRBuilderBase::InsertPointGuard Guard(*Builder);
+        Builder->SetInsertPoint(PN);
+        NewPN = Builder->CreatePHI(Op1->getOperand(DI)->getType(),
+                                   PN->getNumOperands());
+      }
 
       for (auto &I : PN->operands())
         NewPN->addIncoming(cast<GEPOperator>(I)->getOperand(DI),
@@ -1822,7 +1824,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           if (Instruction *I = visitBitCast(*BCI)) {
             if (I != BCI) {
               I->takeName(BCI);
-              BCI->getParent()->getInstList().insert(BCI, I);
+              BCI->getParent()->getInstList().insert(BCI->getIterator(), I);
               ReplaceInstUsesWith(*BCI, I);
             }
             return &GEP;
@@ -2326,7 +2328,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
 
       // We need to insert these at the location of the old load, not at that of
       // the extractvalue.
-      Builder->SetInsertPoint(L->getParent(), L);
+      Builder->SetInsertPoint(L);
       Value *GEP = Builder->CreateInBoundsGEP(L->getType(),
                                               L->getPointerOperand(), Indices);
       // Returning the load directly will cause the main loop to insert it in
@@ -2690,14 +2692,15 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   // We can only sink load instructions if there is nothing between the load and
   // the end of block that could change the value.
   if (I->mayReadFromMemory()) {
-    for (BasicBlock::iterator Scan = I, E = I->getParent()->end();
+    for (BasicBlock::iterator Scan = I->getIterator(),
+                              E = I->getParent()->end();
          Scan != E; ++Scan)
       if (Scan->mayWriteToMemory())
         return false;
   }
 
   BasicBlock::iterator InsertPos = DestBlock->getFirstInsertionPt();
-  I->moveBefore(InsertPos);
+  I->moveBefore(&*InsertPos);
   ++NumSunkInst;
   return true;
 }
@@ -2771,7 +2774,7 @@ bool InstCombiner::run() {
     }
 
     // Now that we have an instruction, try combining it to simplify it.
-    Builder->SetInsertPoint(I->getParent(), I);
+    Builder->SetInsertPoint(I);
     Builder->SetCurrentDebugLocation(I->getDebugLoc());
 
 #ifndef NDEBUG
@@ -2801,7 +2804,7 @@ bool InstCombiner::run() {
 
         // Insert the new instruction into the basic block...
         BasicBlock *InstParent = I->getParent();
-        BasicBlock::iterator InsertPos = I;
+        BasicBlock::iterator InsertPos = I->getIterator();
 
         // If we replace a PHI with something that isn't a PHI, fix up the
         // insertion point.
@@ -2862,7 +2865,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB, const DataLayout &DL,
       continue;
 
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
-      Instruction *Inst = BBI++;
+      Instruction *Inst = &*BBI++;
 
       // DCE instruction if trivially dead.
       if (isInstructionTriviallyDead(Inst, TLI)) {
@@ -2963,13 +2966,13 @@ static bool prepareICWorklistFromFunction(Function &F, const DataLayout &DL,
   // track of which blocks we visit.
   SmallPtrSet<BasicBlock *, 64> Visited;
   MadeIRChange |=
-      AddReachableCodeToWorklist(F.begin(), DL, Visited, ICWorklist, TLI);
+      AddReachableCodeToWorklist(&F.front(), DL, Visited, ICWorklist, TLI);
 
   // Do a quick scan over the function.  If we find any blocks that are
   // unreachable, remove any instructions inside of them.  This prevents
   // the instcombine code from having to deal with some bad special cases.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    if (Visited.count(BB))
+    if (Visited.count(&*BB))
       continue;
 
     // Delete the instructions backwards, as it has a reduced likelihood of
@@ -2977,8 +2980,7 @@ static bool prepareICWorklistFromFunction(Function &F, const DataLayout &DL,
     Instruction *EndInst = BB->getTerminator(); // Last not to be deleted.
     while (EndInst != BB->begin()) {
       // Delete the next to last instruction.
-      BasicBlock::iterator I = EndInst;
-      Instruction *Inst = --I;
+      Instruction *Inst = &*--EndInst->getIterator();
       if (!Inst->use_empty())
         Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
       if (Inst->isEHPad()) {
