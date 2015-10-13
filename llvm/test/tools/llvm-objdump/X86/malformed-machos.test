@@ -31,11 +31,14 @@
 
 # m0080: data 0xf960000 (struct class_ro_t *)
 
-# RUN: llvm-objdump -macho -objc-meta-data \
-# RUN:   %p/Inputs/malformed-machos/mem-crup-0261.macho
-
 # RUN: llvm-objdump -macho -disassemble \
 # RUN:   %p/Inputs/malformed-machos/mem-crup-0337.macho \
 # RUN:   | FileCheck -check-prefix=m0337 %s 
 
 # m0337: subq	$16, %rsp
+
+# RUN: llvm-objdump -macho -disassemble \
+# RUN:   %p/Inputs/malformed-machos/00000031.a \
+# RUN:   | FileCheck -check-prefix=0031a %s
+
+# 0031a: Archive
