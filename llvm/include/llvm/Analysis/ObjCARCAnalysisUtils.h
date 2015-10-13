@@ -30,11 +30,11 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Transforms/ObjCARC.h"
-#include "llvm/Transforms/Utils/Local.h"
 
 namespace llvm {
 class raw_ostream;
