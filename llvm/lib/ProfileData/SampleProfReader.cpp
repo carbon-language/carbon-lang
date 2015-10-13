@@ -521,16 +521,6 @@ bool SampleProfileReaderBinary::hasFormat(const MemoryBuffer &Buffer) {
   return Magic == SPMagic();
 }
 
-bool SourceInfo::operator<(const SourceInfo &P) const {
-  if (Line != P.Line)
-    return Line < P.Line;
-  if (StartLine != P.StartLine)
-    return StartLine < P.StartLine;
-  if (Discriminator != P.Discriminator)
-    return Discriminator < P.Discriminator;
-  return FuncName < P.FuncName;
-}
-
 std::error_code SampleProfileReaderGCC::skipNextWord() {
   uint32_t dummy;
   if (!GcovBuffer.readInt(dummy))

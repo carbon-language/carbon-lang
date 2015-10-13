@@ -173,31 +173,6 @@ protected:
   std::vector<StringRef> NameTable;
 };
 
-// Represents the source position in GCC sample profiles.
-struct SourceInfo {
-  SourceInfo()
-      : FuncName(), DirName(), FileName(), StartLine(0), Line(0),
-        Discriminator(0) {}
-
-  SourceInfo(StringRef FuncName, StringRef DirName, StringRef FileName,
-             uint32_t StartLine, uint32_t Line, uint32_t Discriminator)
-      : FuncName(FuncName), DirName(DirName), FileName(FileName),
-        StartLine(StartLine), Line(Line), Discriminator(Discriminator) {}
-
-  bool operator<(const SourceInfo &p) const;
-
-  uint32_t Offset() const { return ((Line - StartLine) << 16) | Discriminator; }
-
-  bool Malformed() const { return Line < StartLine; }
-
-  StringRef FuncName;
-  StringRef DirName;
-  StringRef FileName;
-  uint32_t StartLine;
-  uint32_t Line;
-  uint32_t Discriminator;
-};
-
 typedef SmallVector<FunctionSamples *, 10> InlineCallStack;
 
 // Supported histogram types in GCC.  Currently, we only need support for
