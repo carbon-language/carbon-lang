@@ -146,11 +146,11 @@ let ExeDomain = SSEPackedInt in {
 
 multiclass xop3opimm<bits<8> opc, string OpcodeStr, Intrinsic Int> {
   def ri : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
-           (ins VR128:$src1, i8imm:$src2),
+           (ins VR128:$src1, u8imm:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst, (Int VR128:$src1, imm:$src2))]>, XOP;
   def mi : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
-           (ins i128mem:$src1, i8imm:$src2),
+           (ins i128mem:$src1, u8imm:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
              (Int (bitconvert (loadv2i64 addr:$src1)), imm:$src2))]>, XOP;
@@ -218,13 +218,13 @@ multiclass xopvpcom<bits<8> opc, string Suffix, SDNode OpNode, ValueType vt128> 
            XOP_4V;
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def ri_alt : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
-                 (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+                 (ins VR128:$src1, VR128:$src2, u8imm:$src3),
                  !strconcat("vpcom", Suffix,
                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                  []>, XOP_4V;
     let mayLoad = 1 in
     def mi_alt : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
-                 (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+                 (ins VR128:$src1, i128mem:$src2, u8imm:$src3),
                  !strconcat("vpcom", Suffix,
                  "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                  []>, XOP_4V;
@@ -304,39 +304,39 @@ let ExeDomain = SSEPackedInt in
 multiclass xop5op<bits<8> opc, string OpcodeStr, Intrinsic Int128,
                   Intrinsic Int256, PatFrag ld_128, PatFrag ld_256> {
   def rr : IXOP5<opc, MRMSrcReg, (outs VR128:$dst),
-        (ins VR128:$src1, VR128:$src2, VR128:$src3, i8imm:$src4),
+        (ins VR128:$src1, VR128:$src2, VR128:$src3, u8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR128:$dst,
            (Int128 VR128:$src1, VR128:$src2, VR128:$src3, imm:$src4))]>;
   def rm : IXOP5<opc, MRMSrcMem, (outs VR128:$dst),
-        (ins VR128:$src1, VR128:$src2, f128mem:$src3, i8imm:$src4),
+        (ins VR128:$src1, VR128:$src2, f128mem:$src3, u8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR128:$dst,
            (Int128 VR128:$src1, VR128:$src2, (ld_128 addr:$src3), imm:$src4))]>,
         VEX_W, MemOp4;
   def mr : IXOP5<opc, MRMSrcMem, (outs VR128:$dst),
-        (ins VR128:$src1, f128mem:$src2, VR128:$src3, i8imm:$src4),
+        (ins VR128:$src1, f128mem:$src2, VR128:$src3, u8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR128:$dst,
            (Int128 VR128:$src1, (ld_128 addr:$src2), VR128:$src3, imm:$src4))]>;
   def rrY : IXOP5<opc, MRMSrcReg, (outs VR256:$dst),
-        (ins VR256:$src1, VR256:$src2, VR256:$src3, i8imm:$src4),
+        (ins VR256:$src1, VR256:$src2, VR256:$src3, u8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR256:$dst,
           (Int256 VR256:$src1, VR256:$src2, VR256:$src3, imm:$src4))]>, VEX_L;
   def rmY : IXOP5<opc, MRMSrcMem, (outs VR256:$dst),
-        (ins VR256:$src1, VR256:$src2, f256mem:$src3, i8imm:$src4),
+        (ins VR256:$src1, VR256:$src2, f256mem:$src3, u8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR256:$dst,
           (Int256 VR256:$src1, VR256:$src2, (ld_256 addr:$src3), imm:$src4))]>,
         VEX_W, MemOp4, VEX_L;
   def mrY : IXOP5<opc, MRMSrcMem, (outs VR256:$dst),
-        (ins VR256:$src1, f256mem:$src2, VR256:$src3, i8imm:$src4),
+        (ins VR256:$src1, f256mem:$src2, VR256:$src3, u8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
         [(set VR256:$dst,
