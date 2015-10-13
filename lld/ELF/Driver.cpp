@@ -54,24 +54,6 @@ static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
   error("Unknown emulation: " + S);
 }
 
-static TargetInfo *createTarget() {
-  switch (Config->EMachine) {
-  case EM_386:
-    return new X86TargetInfo();
-  case EM_AARCH64:
-    return new AArch64TargetInfo();
-  case EM_MIPS:
-    return new MipsTargetInfo();
-  case EM_PPC:
-    return new PPCTargetInfo();
-  case EM_PPC64:
-    return new PPC64TargetInfo();
-  case EM_X86_64:
-    return new X86_64TargetInfo();
-  }
-  error("Unknown target machine");
-}
-
 // Opens and parses a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
 void LinkerDriver::addFile(StringRef Path) {

@@ -27,6 +27,24 @@ namespace elf2 {
 
 std::unique_ptr<TargetInfo> Target;
 
+TargetInfo *createTarget() {
+  switch (Config->EMachine) {
+  case EM_386:
+    return new X86TargetInfo();
+  case EM_AARCH64:
+    return new AArch64TargetInfo();
+  case EM_MIPS:
+    return new MipsTargetInfo();
+  case EM_PPC:
+    return new PPCTargetInfo();
+  case EM_PPC64:
+    return new PPC64TargetInfo();
+  case EM_X86_64:
+    return new X86_64TargetInfo();
+  }
+  error("Unknown target machine");
+}
+
 TargetInfo::~TargetInfo() {}
 
 bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }

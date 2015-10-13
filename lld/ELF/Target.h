@@ -125,6 +125,7 @@ public:
 };
 
 extern std::unique_ptr<TargetInfo> Target;
+TargetInfo *createTarget();
 }
 }
 
