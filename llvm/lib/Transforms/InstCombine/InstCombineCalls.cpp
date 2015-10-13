@@ -1059,6 +1059,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (auto CILength = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
       if (auto CIIndex = dyn_cast<ConstantInt>(II->getArgOperand(3))) {
         unsigned Index = CIIndex->getZExtValue();
+
         // From AMD documentation: "a value of zero in the field length is
         // defined as length of 64".
         unsigned Length = CILength->equalsInt(0) ? 64 : CILength->getZExtValue();
@@ -1077,54 +1078,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         if (Length == 64 && Index == 0) {
           Value *Vec = II->getArgOperand(1);
           Value *Undef = UndefValue::get(Vec->getType());
-          const uint32_t Mask[] = { 0, 2 };
+          const uint32_t Mask[] = {0, 2};
           return ReplaceInstUsesWith(
               CI,
               Builder->CreateShuffleVector(
                   Vec, Undef, ConstantDataVector::get(
                                   II->getContext(), makeArrayRef(Mask))));
-        } else if (auto Source =
-                       dyn_cast<IntrinsicInst>(II->getArgOperand(0))) {
-          if (Source->hasOneUse() &&
-              Source->getArgOperand(1) == II->getArgOperand(1)) {
-            // If the source of the insert has only one use and it's another
-            // insert (and they're both inserting from the same vector), try to
-            // bundle both together.
-            auto CISourceLength =
-                dyn_cast<ConstantInt>(Source->getArgOperand(2));
-            auto CISourceIndex =
-                dyn_cast<ConstantInt>(Source->getArgOperand(3));
-            if (CISourceIndex && CISourceLength) {
-              unsigned SourceIndex = CISourceIndex->getZExtValue();
-              unsigned SourceLength = CISourceLength->getZExtValue();
-              unsigned SourceEnd = SourceIndex + SourceLength;
-              unsigned NewIndex, NewLength;
-              bool ShouldReplace = false;
-              if (Index <= SourceIndex && SourceIndex <= End) {
-                NewIndex = Index;
-                NewLength = std::max(End, SourceEnd) - NewIndex;
-                ShouldReplace = true;
-              } else if (SourceIndex <= Index && Index <= SourceEnd) {
-                NewIndex = SourceIndex;
-                NewLength = std::max(SourceEnd, End) - NewIndex;
-                ShouldReplace = true;
-              }
-
-              if (ShouldReplace) {
-                Constant *ConstantLength = ConstantInt::get(
-                    II->getArgOperand(2)->getType(), NewLength, false);
-                Constant *ConstantIndex = ConstantInt::get(
-                    II->getArgOperand(3)->getType(), NewIndex, false);
-                Value *Args[4] = { Source->getArgOperand(0),
-                                   II->getArgOperand(1), ConstantLength,
-                                   ConstantIndex };
-                Module *M = CI.getParent()->getParent()->getParent();
-                Value *F =
-                    Intrinsic::getDeclaration(M, Intrinsic::x86_sse4a_insertqi);
-                return ReplaceInstUsesWith(CI, Builder->CreateCall(F, Args));
-              }
-            }
-          }
         }
       }
     }
@@ -1220,9 +1179,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         // control mask is set, then zero is written in the result byte.
         // The zero vector is in the right-hand side of the resulting
         // shufflevector.
- 
+
         // The value of each index is the least significant 4 bits of the
-        // shuffle control byte.      
+        // shuffle control byte.
         Indexes[I] = (Index < 0) ? NumElts : Index & 0xF;
       }
     } else if (!isa<ConstantAggregateZero>(V))

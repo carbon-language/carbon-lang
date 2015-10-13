@@ -1,15 +1,5 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-; We should optimize these two redundant insertqi into one
-define <2 x i64> @testInsertTwice(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertTwice
-; CHECK-NEXT: %1 = call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 32)
-; CHECK-NEXT: ret <2 x i64> %1
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 32)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 32, i8 32)
-  ret <2 x i64> %2
-}
-
 ; The result of this insert is the second arg, since the top 64 bits of
 ; the result are undefined, and we copy the bottom 64 bits from the
 ; second arg
@@ -18,81 +8,6 @@ define <2 x i64> @testInsert64Bits(<2 x i64> %v, <2 x i64> %i) {
 ; CHECK-NEXT: ret <2 x i64> %i
   %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 64, i8 0)
   ret <2 x i64> %1
-}
-
-; Test the several types of ranges and ordering that exist for two insertqi
-define <2 x i64> @testInsertContainedRange(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertContainedRange
-; CHECK: %1 = call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 0)
-; CHECK: ret <2 x i64> %1
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 0)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 16, i8 16)
-  ret <2 x i64> %2
-}
-
-define <2 x i64> @testInsertContainedRange_2(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertContainedRange_2
-; CHECK-NEXT: %1 = call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 0)
-; CHECK-NEXT: ret <2 x i64> %1
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 16, i8 16)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 32, i8 0)
-  ret <2 x i64> %2
-}
-
-define <2 x i64> @testInsertOverlappingRange(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertOverlappingRange
-; CHECK-NEXT: %1 = call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 48, i8 0)
-; CHECK-NEXT: ret <2 x i64> %1
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 0)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 32, i8 16)
-  ret <2 x i64> %2
-}
-
-define <2 x i64> @testInsertOverlappingRange_2(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertOverlappingRange_2
-; CHECK-NEXT: %1 = call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 48, i8 0)
-; CHECK-NEXT: ret <2 x i64> %1
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 16)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 32, i8 0)
-  ret <2 x i64> %2
-}
-
-define <2 x i64> @testInsertAdjacentRange(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertAdjacentRange
-; CHECK-NEXT: %1 = call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 48, i8 0)
-; CHECK-NEXT: ret <2 x i64> %1
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 32, i8 0)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 16, i8 32)
-  ret <2 x i64> %2
-}
-
-define <2 x i64> @testInsertAdjacentRange_2(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertAdjacentRange_2
-; CHECK-NEXT: %1 = call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 48, i8 0)
-; CHECK-NEXT: ret <2 x i64> %1
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 16, i8 32)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 32, i8 0)
-  ret <2 x i64> %2
-}
-
-define <2 x i64> @testInsertDisjointRange(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertDisjointRange
-; CHECK-NEXT: %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 16, i8 0)
-; CHECK-NEXT: %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 16, i8 32)
-; CHECK-NEXT: ret <2 x i64> %2
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 16, i8 0)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 16, i8 32)
-  ret <2 x i64> %2
-}
-
-define <2 x i64> @testInsertDisjointRange_2(<2 x i64> %v, <2 x i64> %i) {
-; CHECK-LABEL: @testInsertDisjointRange_2
-; CHECK-NEXT: %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 16, i8 0)
-; CHECK-NEXT: %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 16, i8 32)
-; CHECK-NEXT: ret <2 x i64> %2
-  %1 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %v, <2 x i64> %i, i8 16, i8 0)
-  %2 = tail call <2 x i64> @llvm.x86.sse4a.insertqi(<2 x i64> %1, <2 x i64> %i, i8 16, i8 32)
-  ret <2 x i64> %2
 }
 
 define <2 x i64> @testZeroLength(<2 x i64> %v, <2 x i64> %i) {
