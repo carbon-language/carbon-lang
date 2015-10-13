@@ -85,9 +85,7 @@ static cl::opt<ReplaceExitVal> ReplaceExitValue(
 
 namespace {
 struct RewritePhi;
-}
 
-namespace {
 class IndVarSimplify : public LoopPass {
   LoopInfo                  *LI;
   ScalarEvolution           *SE;
@@ -127,20 +125,20 @@ private:
 
   bool isValidRewrite(Value *FromVal, Value *ToVal);
 
-  void HandleFloatingPointIV(Loop *L, PHINode *PH);
-  void RewriteNonIntegerIVs(Loop *L);
+  void handleFloatingPointIV(Loop *L, PHINode *PH);
+  void rewriteNonIntegerIVs(Loop *L);
 
-  void SimplifyAndExtend(Loop *L, SCEVExpander &Rewriter, LPPassManager &LPM);
+  void simplifyAndExtend(Loop *L, SCEVExpander &Rewriter, LPPassManager &LPM);
 
-  bool CanLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet);
-  void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
+  bool canLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet);
+  void rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
 
-  Value *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
+  Value *linearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
                                    PHINode *IndVar, SCEVExpander &Rewriter);
 
-  void SinkUnusedInvariants(Loop *L);
+  void sinkUnusedInvariants(Loop *L);
 
-  Value *ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S, Loop *L,
+  Value *expandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S, Loop *L,
                             Instruction *InsertPt, Type *Ty);
 };
 }
@@ -177,10 +175,10 @@ bool IndVarSimplify::isValidRewrite(Value *FromVal, Value *ToVal) {
   // because it understands lcssa phis while SCEV does not.
   Value *FromPtr = FromVal;
   Value *ToPtr = ToVal;
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(FromVal)) {
+  if (auto *GEP = dyn_cast<GEPOperator>(FromVal)) {
     FromPtr = GEP->getPointerOperand();
   }
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(ToVal)) {
+  if (auto *GEP = dyn_cast<GEPOperator>(ToVal)) {
     ToPtr = GEP->getPointerOperand();
   }
   if (FromPtr != FromVal || ToPtr != ToVal) {
@@ -243,7 +241,7 @@ static Instruction *getInsertPointForUses(Instruction *User, Value *Def,
 }
 
 //===----------------------------------------------------------------------===//
-// RewriteNonIntegerIVs and helpers. Prefer integer IVs.
+// rewriteNonIntegerIVs and helpers. Prefer integer IVs.
 //===----------------------------------------------------------------------===//
 
 /// Convert APF to an integer, if possible.
@@ -267,13 +265,12 @@ static bool ConvertToSInt(const APFloat &APF, int64_t &IntVal) {
 /// for(int i = 0; i < 10000; ++i)
 ///   bar((double)i);
 ///
-void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
+void IndVarSimplify::handleFloatingPointIV(Loop *L, PHINode *PN) {
   unsigned IncomingEdge = L->contains(PN->getIncomingBlock(0));
   unsigned BackEdge     = IncomingEdge^1;
 
   // Check incoming value.
-  ConstantFP *InitValueVal =
-    dyn_cast<ConstantFP>(PN->getIncomingValue(IncomingEdge));
+  auto *InitValueVal = dyn_cast<ConstantFP>(PN->getIncomingValue(IncomingEdge));
 
   int64_t InitValue;
   if (!InitValueVal || !ConvertToSInt(InitValueVal->getValueAPF(), InitValue))
@@ -281,8 +278,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
 
   // Check IV increment. Reject this PN if increment operation is not
   // an add or increment value can not be represented by an integer.
-  BinaryOperator *Incr =
-    dyn_cast<BinaryOperator>(PN->getIncomingValue(BackEdge));
+  auto *Incr = dyn_cast<BinaryOperator>(PN->getIncomingValue(BackEdge));
   if (Incr == nullptr || Incr->getOpcode() != Instruction::FAdd) return;
 
   // If this is not an add of the PHI with a constantfp, or if the constant fp
@@ -465,7 +461,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   Changed = true;
 }
 
-void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
+void IndVarSimplify::rewriteNonIntegerIVs(Loop *L) {
   // First step.  Check to see if there are any floating-point recurrences.
   // If there are, change them into integer recurrences, permitting analysis by
   // the SCEV routines.
@@ -479,7 +475,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 
   for (unsigned i = 0, e = PHIs.size(); i != e; ++i)
     if (PHINode *PN = dyn_cast_or_null<PHINode>(&*PHIs[i]))
-      HandleFloatingPointIV(L, PN);
+      handleFloatingPointIV(L, PN);
 
   // If the loop previously had floating-point IV, ScalarEvolution
   // may not have been able to compute a trip count. Now that we've done some
@@ -490,7 +486,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 
 namespace {
 // Collect information about PHI nodes which can be transformed in
-// RewriteLoopExitValues.
+// rewriteLoopExitValues.
 struct RewritePhi {
   PHINode *PN;
   unsigned Ith;  // Ith incoming value.
@@ -503,7 +499,7 @@ struct RewritePhi {
 };
 }
 
-Value *IndVarSimplify::ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S,
+Value *IndVarSimplify::expandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S,
                                           Loop *L, Instruction *InsertPt,
                                           Type *ResultTy) {
   // Before expanding S into an expensive LLVM expression, see if we can use an
@@ -517,7 +513,7 @@ Value *IndVarSimplify::ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S,
 }
 
 //===----------------------------------------------------------------------===//
-// RewriteLoopExitValues - Optimize IV users outside the loop.
+// rewriteLoopExitValues - Optimize IV users outside the loop.
 // As a side effect, reduces the amount of IV processing within the loop.
 //===----------------------------------------------------------------------===//
 
@@ -531,7 +527,7 @@ Value *IndVarSimplify::ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S,
 /// happen later, except that it's more powerful in some cases, because it's
 /// able to brute-force evaluate arbitrary instructions as long as they have
 /// constant operands at the beginning of the loop.
-void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
+void IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm(*DT));
 
@@ -650,7 +646,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 
         bool HighCost = Rewriter.isHighCostExpansion(ExitValue, L, Inst);
         Value *ExitVal =
-            ExpandSCEVIfNeeded(Rewriter, ExitValue, L, Inst, PN->getType());
+            expandSCEVIfNeeded(Rewriter, ExitValue, L, Inst, PN->getType());
 
         DEBUG(dbgs() << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal << '\n'
                      << "  LoopVal = " << *Inst << "\n");
@@ -667,7 +663,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
     }
   }
 
-  bool LoopCanBeDel = CanLoopBeDeleted(L, RewritePhiSet);
+  bool LoopCanBeDel = canLoopBeDeleted(L, RewritePhiSet);
 
   // Transformation.
   for (const RewritePhi &Phi : RewritePhiSet) {
@@ -707,7 +703,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 /// Check whether it is possible to delete the loop after rewriting exit
 /// value. If it is possible, ignore ReplaceExitValue and do rewriting
 /// aggressively.
-bool IndVarSimplify::CanLoopBeDeleted(
+bool IndVarSimplify::canLoopBeDeleted(
     Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet) {
 
   BasicBlock *Preheader = L->getLoopPreheader();
@@ -884,24 +880,24 @@ public:
     assert(L->getHeader() == OrigPhi->getParent() && "Phi must be an IV");
   }
 
-  PHINode *CreateWideIV(SCEVExpander &Rewriter);
+  PHINode *createWideIV(SCEVExpander &Rewriter);
 
 protected:
   Value *getExtend(Value *NarrowOper, Type *WideType, bool IsSigned,
                    Instruction *Use);
 
-  Instruction *CloneIVUser(NarrowIVDefUse DU);
+  Instruction *cloneIVUser(NarrowIVDefUse DU);
 
-  const SCEVAddRecExpr *GetWideRecurrence(Instruction *NarrowUse);
+  const SCEVAddRecExpr *getWideRecurrence(Instruction *NarrowUse);
 
-  const SCEVAddRecExpr* GetExtendedOperandRecurrence(NarrowIVDefUse DU);
+  const SCEVAddRecExpr* getExtendedOperandRecurrence(NarrowIVDefUse DU);
 
-  const SCEV *GetSCEVByOpCode(const SCEV *LHS, const SCEV *RHS,
+  const SCEV *getSCEVByOpCode(const SCEV *LHS, const SCEV *RHS,
                               unsigned OpCode) const;
 
-  Instruction *WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter);
+  Instruction *widenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter);
 
-  bool WidenLoopCompare(NarrowIVDefUse DU);
+  bool widenLoopCompare(NarrowIVDefUse DU);
 
   void pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef);
 };
@@ -935,7 +931,7 @@ Value *WidenIV::getExtend(Value *NarrowOper, Type *WideType, bool IsSigned,
 /// Instantiate a wide operation to replace a narrow operation. This only needs
 /// to handle operations that can evaluation to SCEVAddRec. It can safely return
 /// 0 for any operation we decide not to clone.
-Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
+Instruction *WidenIV::cloneIVUser(NarrowIVDefUse DU) {
   unsigned Opcode = DU.NarrowUse->getOpcode();
   switch (Opcode) {
   default:
@@ -956,7 +952,7 @@ Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
     // anything about the narrow operand yet so must insert a [sz]ext. It is
     // probably loop invariant and will be folded or hoisted. If it actually
     // comes from a widened IV, it should be removed during a future call to
-    // WidenIVUse.
+    // widenIVUse.
     Value *LHS = (DU.NarrowUse->getOperand(0) == DU.NarrowDef) ? DU.WideDef :
       getExtend(DU.NarrowUse->getOperand(0), WideType, IsSigned, DU.NarrowUse);
     Value *RHS = (DU.NarrowUse->getOperand(1) == DU.NarrowDef) ? DU.WideDef :
@@ -975,7 +971,7 @@ Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
   }
 }
 
-const SCEV *WidenIV::GetSCEVByOpCode(const SCEV *LHS, const SCEV *RHS,
+const SCEV *WidenIV::getSCEVByOpCode(const SCEV *LHS, const SCEV *RHS,
                                      unsigned OpCode) const {
   if (OpCode == Instruction::Add)
     return SE->getAddExpr(LHS, RHS);
@@ -991,7 +987,7 @@ const SCEV *WidenIV::GetSCEVByOpCode(const SCEV *LHS, const SCEV *RHS,
 /// operands. Generate the SCEV value for the widened operation without
 /// actually modifying the IR yet. If the expression after extending the
 /// operands is an AddRec for this loop, return it.
-const SCEVAddRecExpr* WidenIV::GetExtendedOperandRecurrence(NarrowIVDefUse DU) {
+const SCEVAddRecExpr* WidenIV::getExtendedOperandRecurrence(NarrowIVDefUse DU) {
 
   // Handle the common case of add<nsw/nuw>
   const unsigned OpCode = DU.NarrowUse->getOpcode();
@@ -1031,7 +1027,7 @@ const SCEVAddRecExpr* WidenIV::GetExtendedOperandRecurrence(NarrowIVDefUse DU) {
   if (ExtendOperIdx == 0)
     std::swap(lhs, rhs);
   const SCEVAddRecExpr *AddRec =
-      dyn_cast<SCEVAddRecExpr>(GetSCEVByOpCode(lhs, rhs, OpCode));
+      dyn_cast<SCEVAddRecExpr>(getSCEVByOpCode(lhs, rhs, OpCode));
 
   if (!AddRec || AddRec->getLoop() != L)
     return nullptr;
@@ -1042,7 +1038,7 @@ const SCEVAddRecExpr* WidenIV::GetExtendedOperandRecurrence(NarrowIVDefUse DU) {
 /// widening it's type? In other words, can the extend be safely hoisted out of
 /// the loop with SCEV reducing the value to a recurrence on the same loop. If
 /// so, return the sign or zero extended recurrence. Otherwise return NULL.
-const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
+const SCEVAddRecExpr *WidenIV::getWideRecurrence(Instruction *NarrowUse) {
   if (!SE->isSCEVable(NarrowUse->getType()))
     return nullptr;
 
@@ -1076,7 +1072,7 @@ static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
 /// If the narrow use is a compare instruction, then widen the compare
 //  (and possibly the other operand).  The extend operation is hoisted into the
 // loop preheader as far as possible.
-bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
+bool WidenIV::widenLoopCompare(NarrowIVDefUse DU) {
   ICmpInst *Cmp = dyn_cast<ICmpInst>(DU.NarrowUse);
   if (!Cmp)
     return false;
@@ -1118,7 +1114,7 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
 
 /// Determine whether an individual user of the narrow IV can be widened. If so,
 /// return the wide clone of the user.
-Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
+Instruction *WidenIV::widenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
   if (PHINode *UsePhi = dyn_cast<PHINode>(DU.NarrowUse)) {
@@ -1182,14 +1178,14 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
   }
 
   // Does this user itself evaluate to a recurrence after widening?
-  const SCEVAddRecExpr *WideAddRec = GetWideRecurrence(DU.NarrowUse);
+  const SCEVAddRecExpr *WideAddRec = getWideRecurrence(DU.NarrowUse);
   if (!WideAddRec)
-    WideAddRec = GetExtendedOperandRecurrence(DU);
+    WideAddRec = getExtendedOperandRecurrence(DU);
 
   if (!WideAddRec) {
     // If use is a loop condition, try to promote the condition instead of
     // truncating the IV first.
-    if (WidenLoopCompare(DU))
+    if (widenLoopCompare(DU))
       return nullptr;
 
     // This user does not evaluate to a recurence after widening, so don't
@@ -1210,7 +1206,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
       && Rewriter.hoistIVInc(WideInc, DU.NarrowUse))
     WideUse = WideInc;
   else {
-    WideUse = CloneIVUser(DU);
+    WideUse = cloneIVUser(DU);
     if (!WideUse)
       return nullptr;
   }
@@ -1252,13 +1248,13 @@ void WidenIV::pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef) {
 /// Process a single induction variable. First use the SCEVExpander to create a
 /// wide induction variable that evaluates to the same recurrence as the
 /// original narrow IV. Then use a worklist to forward traverse the narrow IV's
-/// def-use chain. After WidenIVUse has processed all interesting IV users, the
+/// def-use chain. After widenIVUse has processed all interesting IV users, the
 /// narrow IV will be isolated for removal by DeleteDeadPHIs.
 ///
 /// It would be simpler to delete uses as they are processed, but we must avoid
 /// invalidating SCEV expressions.
 ///
-PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
+PHINode *WidenIV::createWideIV(SCEVExpander &Rewriter) {
   // Is this phi an induction variable?
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(OrigPhi));
   if (!AddRec)
@@ -1292,7 +1288,7 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   WidePhi = cast<PHINode>(Rewriter.expandCodeFor(AddRec, WideType, InsertPt));
 
   // Remembering the WideIV increment generated by SCEVExpander allows
-  // WidenIVUse to reuse it when widening the narrow IV's increment. We don't
+  // widenIVUse to reuse it when widening the narrow IV's increment. We don't
   // employ a general reuse mechanism because the call above is the only call to
   // SCEVExpander. Henceforth, we produce 1-to-1 narrow to wide uses.
   if (BasicBlock *LatchBlock = L->getLoopLatch()) {
@@ -1315,13 +1311,13 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
 
     // Process a def-use edge. This may replace the use, so don't hold a
     // use_iterator across it.
-    Instruction *WideUse = WidenIVUse(DU, Rewriter);
+    Instruction *WideUse = widenIVUse(DU, Rewriter);
 
     // Follow all def-use edges from the previous narrow use.
     if (WideUse)
       pushNarrowIVUsers(DU.NarrowUse, WideUse);
 
-    // WidenIVUse may have removed the def-use edge.
+    // widenIVUse may have removed the def-use edge.
     if (DU.NarrowDef->use_empty())
       DeadInsts.emplace_back(DU.NarrowDef);
   }
@@ -1367,7 +1363,7 @@ public:
 ///
 /// Sign/Zero extend elimination is interleaved with IV simplification.
 ///
-void IndVarSimplify::SimplifyAndExtend(Loop *L,
+void IndVarSimplify::simplifyAndExtend(Loop *L,
                                        SCEVExpander &Rewriter,
                                        LPPassManager &LPM) {
   SmallVector<WideIVInfo, 8> WideIVs;
@@ -1386,7 +1382,7 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
     // extension. The first time SCEV attempts to normalize sign/zero extension,
     // the result becomes final. So for the most predictable results, we delay
     // evaluation of sign/zero extend evaluation until needed, and avoid running
-    // other SCEV based analysis prior to SimplifyAndExtend.
+    // other SCEV based analysis prior to simplifyAndExtend.
     do {
       PHINode *CurrIV = LoopPhis.pop_back_val();
 
@@ -1402,7 +1398,7 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
 
     for (; !WideIVs.empty(); WideIVs.pop_back()) {
       WidenIV Widener(WideIVs.back(), LI, SE, DT, DeadInsts);
-      if (PHINode *WidePhi = Widener.CreateWideIV(Rewriter)) {
+      if (PHINode *WidePhi = Widener.createWideIV(Rewriter)) {
         Changed = true;
         LoopPhis.push_back(WidePhi);
       }
@@ -1411,12 +1407,12 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
 }
 
 //===----------------------------------------------------------------------===//
-//  LinearFunctionTestReplace and its kin. Rewrite the loop exit condition.
+//  linearFunctionTestReplace and its kin. Rewrite the loop exit condition.
 //===----------------------------------------------------------------------===//
 
 /// Return true if this loop's backedge taken count expression can be safely and
 /// cheaply expanded into an instruction sequence that can be used by
-/// LinearFunctionTestReplace.
+/// linearFunctionTestReplace.
 ///
 /// TODO: This fails for pointer-type loop counters with greater than one byte
 /// strides, consequently preventing LFTR from running. For the purpose of LFTR
@@ -1498,7 +1494,7 @@ static ICmpInst *getLoopTest(Loop *L) {
   return dyn_cast<ICmpInst>(BI->getCondition());
 }
 
-/// LinearFunctionTestReplace policy. Return true unless we can show that the
+/// linearFunctionTestReplace policy. Return true unless we can show that the
 /// current exit test is already sufficiently canonical.
 static bool needsLFTR(Loop *L, DominatorTree *DT) {
   // Do LFTR to simplify the exit condition to an ICMP.
@@ -1687,7 +1683,7 @@ static PHINode *FindLoopCounter(Loop *L, const SCEV *BECount,
   return BestPhi;
 }
 
-/// Help LinearFunctionTestReplace by generating a value that holds the RHS of
+/// Help linearFunctionTestReplace by generating a value that holds the RHS of
 /// the new loop test.
 static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
                            SCEVExpander &Rewriter, ScalarEvolution *SE) {
@@ -1776,7 +1772,7 @@ static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
 /// determine a loop-invariant trip count of the loop, which is actually a much
 /// broader range than just linear tests.
 Value *IndVarSimplify::
-LinearFunctionTestReplace(Loop *L,
+linearFunctionTestReplace(Loop *L,
                           const SCEV *BackedgeTakenCount,
                           PHINode *IndVar,
                           SCEVExpander &Rewriter) {
@@ -1871,13 +1867,13 @@ LinearFunctionTestReplace(Loop *L,
 }
 
 //===----------------------------------------------------------------------===//
-//  SinkUnusedInvariants. A late subpass to cleanup loop preheaders.
+//  sinkUnusedInvariants. A late subpass to cleanup loop preheaders.
 //===----------------------------------------------------------------------===//
 
 /// If there's a single exit block, sink any loop-invariant values that
 /// were defined in the preheader but not used inside the loop into the
 /// exit block to reduce register pressure in the loop.
-void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
+void IndVarSimplify::sinkUnusedInvariants(Loop *L) {
   BasicBlock *ExitBlock = L->getExitBlock();
   if (!ExitBlock) return;
 
@@ -1992,7 +1988,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // If there are any floating-point recurrences, attempt to
   // transform them to use integer recurrences.
-  RewriteNonIntegerIVs(L);
+  rewriteNonIntegerIVs(L);
 
   const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
 
@@ -2009,7 +2005,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // other expressions involving loop IVs have been evaluated. This helps SCEV
   // set no-wrap flags before normalizing sign/zero extension.
   Rewriter.disableCanonicalMode();
-  SimplifyAndExtend(L, Rewriter, LPM);
+  simplifyAndExtend(L, Rewriter, LPM);
 
   // Check to see if this loop has a computable loop-invariant execution count.
   // If so, this means that we can compute the final value of any expressions
@@ -2019,7 +2015,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   //
   if (ReplaceExitValue != NeverRepl &&
       !isa<SCEVCouldNotCompute>(BackedgeTakenCount))
-    RewriteLoopExitValues(L, Rewriter);
+    rewriteLoopExitValues(L, Rewriter);
 
   // Eliminate redundant IV cycles.
   NumElimIV += Rewriter.replaceCongruentIVs(L, DT, DeadInsts);
@@ -2039,7 +2035,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       // explicitly check any assumptions made by SCEV. Brittle.
       const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(BackedgeTakenCount);
       if (!AR || AR->getLoop()->getLoopPreheader())
-        (void)LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
+        (void)linearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
                                         Rewriter);
     }
   }
@@ -2059,7 +2055,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Loop-invariant instructions in the preheader that aren't used in the
   // loop may be sunk below the loop to reduce register pressure.
-  SinkUnusedInvariants(L);
+  sinkUnusedInvariants(L);
 
   // Clean up dead instructions.
   Changed |= DeleteDeadPHIs(L->getHeader(), TLI);
