@@ -322,7 +322,7 @@ static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
     return BIsExec;
 
   // If we got here we know that both A and B are in the same PT_LOAD.
-  // The last requirement we have is to put nobits section last. The
+  // The next requirement we have is to put nobits sections last. The
   // reason is that the only thing the dynamic linker will see about
   // them is a p_memsz that is larger than p_filesz. Seeing that it
   // zeros the end of the PT_LOAD, so that has to correspond to the
