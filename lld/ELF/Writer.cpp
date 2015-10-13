@@ -651,14 +651,13 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 
   // PPC64 needs to process relocations in the .opd section before processing
   // relocations in code-containing sections.
-  for (OutputSectionBase<ELFT::Is64Bits> *&Sec : OutputSections)
-    if (Sec->getName() == ".opd") {
-      Out<ELFT>::OpdBuf = Buf + Sec->getFileOff();
-      Sec->writeTo(Buf + Sec->getFileOff());
-    }
+  if (OutputSectionBase<ELFT::Is64Bits> *Sec = Out<ELFT>::Opd) {
+    Out<ELFT>::OpdBuf = Buf + Sec->getFileOff();
+    Sec->writeTo(Buf + Sec->getFileOff());
+  }
 
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
-    if (Sec->getName() != ".opd")
+    if (Sec != Out<ELFT>::Opd)
       Sec->writeTo(Buf + Sec->getFileOff());
 }
 
