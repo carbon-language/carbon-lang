@@ -5630,27 +5630,52 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
   }
 }
 
+static bool isImportedDeclContext(ASTReader *Chain, const Decl *D) {
+  if (D->isFromASTFile())
+    return true;
+
+  // If we've not loaded any modules, this can't be imported.
+  if (!Chain || !Chain->getModuleManager().size())
+    return false;
+
+  // The predefined __va_list_tag struct is imported if we imported any decls.
+  // FIXME: This is a gross hack.
+  return D == D->getASTContext().getVaListTagDecl();
+}
+
 void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
   // TU and namespaces are handled elsewhere.
   if (isa<TranslationUnitDecl>(DC) || isa<NamespaceDecl>(DC))
     return;
 
-  if (!(!D->isFromASTFile() && cast<Decl>(DC)->isFromASTFile()))
-    return; // Not a source decl added to a DeclContext from PCH.
+  // We're only interested in cases where a local declaration is added to an
+  // imported context.
+  if (D->isFromASTFile() || !isImportedDeclContext(Chain, cast<Decl>(DC)))
+    return;
 
   assert(DC == DC->getPrimaryContext() && "added to non-primary context");
   assert(!getDefinitiveDeclContext(DC) && "DeclContext not definitive!");
   assert(!WritingAST && "Already writing the AST!");
-  UpdatedDeclContexts.insert(DC);
+  if (UpdatedDeclContexts.insert(DC) && !cast<Decl>(DC)->isFromASTFile()) {
+    // We're adding a visible declaration to a predefined decl context. Ensure
+    // that we write out all of its lookup results so we don't get a nasty
+    // surprise when we try to emit its lookup table.
+    for (auto *Child : DC->decls())
+      UpdatingVisibleDecls.push_back(Child);
+  }
   UpdatingVisibleDecls.push_back(D);
 }
 
 void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
   assert(D->isImplicit());
-  if (!(!D->isFromASTFile() && RD->isFromASTFile()))
-    return; // Not a source member added to a class from PCH.
+
+  // We're only interested in cases where a local declaration is added to an
+  // imported context.
+  if (D->isFromASTFile() || !isImportedDeclContext(Chain, RD))
+    return;
+
   if (!isa<CXXMethodDecl>(D))
-    return; // We are interested in lazily declared implicit methods.
+    return;
 
   // A decl coming from PCH was modified.
   assert(RD->isCompleteDefinition());
