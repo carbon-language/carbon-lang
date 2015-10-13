@@ -50,7 +50,7 @@ ModulePass* llvm::createPartialInliningPass() { return new PartialInliner(); }
 
 Function* PartialInliner::unswitchFunction(Function* F) {
   // First, verify that this function is an unswitching candidate...
-  BasicBlock* entryBlock = F->begin();
+  BasicBlock *entryBlock = &F->front();
   BranchInst *BR = dyn_cast<BranchInst>(entryBlock->getTerminator());
   if (!BR || BR->isUnconditional())
     return nullptr;
@@ -89,18 +89,18 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   // of which will go outside.
   BasicBlock* preReturn = newReturnBlock;
   newReturnBlock = newReturnBlock->splitBasicBlock(
-                                              newReturnBlock->getFirstNonPHI());
+      newReturnBlock->getFirstNonPHI()->getIterator());
   BasicBlock::iterator I = preReturn->begin();
-  BasicBlock::iterator Ins = newReturnBlock->begin();
+  Instruction *Ins = &newReturnBlock->front();
   while (I != preReturn->end()) {
     PHINode* OldPhi = dyn_cast<PHINode>(I);
     if (!OldPhi) break;
-    
-    PHINode* retPhi = PHINode::Create(OldPhi->getType(), 2, "", Ins);
+
+    PHINode *retPhi = PHINode::Create(OldPhi->getType(), 2, "", Ins);
     OldPhi->replaceAllUsesWith(retPhi);
     Ins = newReturnBlock->getFirstNonPHI();
-    
-    retPhi->addIncoming(I, preReturn);
+
+    retPhi->addIncoming(&*I, preReturn);
     retPhi->addIncoming(OldPhi->getIncomingValueForBlock(newEntryBlock),
                         newEntryBlock);
     OldPhi->removeIncomingValue(newEntryBlock);
@@ -116,8 +116,8 @@ Function* PartialInliner::unswitchFunction(Function* F) {
        FE = duplicateFunction->end(); FI != FE; ++FI)
     if (&*FI != newEntryBlock && &*FI != newReturnBlock &&
         &*FI != newNonReturnBlock)
-      toExtract.push_back(FI);
-      
+      toExtract.push_back(&*FI);
+
   // The CodeExtractor needs a dominator tree.
   DominatorTree DT;
   DT.recalculate(*duplicateFunction);

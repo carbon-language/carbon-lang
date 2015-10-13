@@ -83,7 +83,7 @@ namespace {
       for (Module::global_iterator I = M.global_begin(), E = M.global_end();
            I != E; ++I) {
         bool Delete =
-          deleteStuff == (bool)Named.count(I) && !I->isDeclaration();
+            deleteStuff == (bool)Named.count(&*I) && !I->isDeclaration();
         if (!Delete) {
           if (I->hasAvailableExternallyLinkage())
             continue;
@@ -103,7 +103,7 @@ namespace {
       // Visit the Functions.
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
         bool Delete =
-          deleteStuff == (bool)Named.count(I) && !I->isDeclaration();
+            deleteStuff == (bool)Named.count(&*I) && !I->isDeclaration();
         if (!Delete) {
           if (I->hasAvailableExternallyLinkage())
             continue;
@@ -124,7 +124,7 @@ namespace {
         Module::alias_iterator CurI = I;
         ++I;
 
-        bool Delete = deleteStuff == (bool)Named.count(CurI);
+        bool Delete = deleteStuff == (bool)Named.count(&*CurI);
         makeVisible(*CurI, Delete);
 
         if (Delete) {
@@ -143,7 +143,7 @@ namespace {
 
           }
           CurI->replaceAllUsesWith(Declaration);
-          delete CurI;
+          delete &*CurI;
         }
       }
 

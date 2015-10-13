@@ -119,7 +119,7 @@ bool ConstantMerge::runOnModule(Module &M) {
     // First: Find the canonical constants others will be merged with.
     for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
          GVI != E; ) {
-      GlobalVariable *GV = GVI++;
+      GlobalVariable *GV = &*GVI++;
 
       // If this GV is dead, remove it.
       GV->removeDeadConstantUsers();
@@ -160,7 +160,7 @@ bool ConstantMerge::runOnModule(Module &M) {
     // invalidating the Constant* pointers in CMap.
     for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
          GVI != E; ) {
-      GlobalVariable *GV = GVI++;
+      GlobalVariable *GV = &*GVI++;
 
       // Only process constants with initializers in the default address space.
       if (!GV->isConstant() || !GV->hasDefinitiveInitializer() ||

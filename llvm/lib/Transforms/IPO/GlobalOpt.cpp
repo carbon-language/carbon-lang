@@ -497,7 +497,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
                                                In, GV->getName()+"."+Twine(i),
                                                GV->getThreadLocalMode(),
                                               GV->getType()->getAddressSpace());
-      Globals.insert(GV, NGV);
+      Globals.insert(GV->getIterator(), NGV);
       NewGlobals.push_back(NGV);
 
       // Calculate the known alignment of the field.  If the original aggregate
@@ -530,7 +530,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
                                                In, GV->getName()+"."+Twine(i),
                                                GV->getThreadLocalMode(),
                                               GV->getType()->getAddressSpace());
-      Globals.insert(GV, NGV);
+      Globals.insert(GV->getIterator(), NGV);
       NewGlobals.push_back(NGV);
 
       // Calculate the known alignment of the field.  If the original aggregate
@@ -935,7 +935,7 @@ OptimizeGlobalAddressOfMalloc(GlobalVariable *GV, CallInst *CI, Type *AllocTy,
       cast<StoreInst>(InitBool->user_back())->eraseFromParent();
     delete InitBool;
   } else
-    GV->getParent()->getGlobalList().insert(GV, InitBool);
+    GV->getParent()->getGlobalList().insert(GV->getIterator(), InitBool);
 
   // Now the GV is dead, nuke it and the malloc..
   GV->eraseFromParent();
@@ -1336,7 +1336,8 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
 
   // Split the basic block at the old malloc.
   BasicBlock *OrigBB = CI->getParent();
-  BasicBlock *ContBB = OrigBB->splitBasicBlock(CI, "malloc_cont");
+  BasicBlock *ContBB =
+      OrigBB->splitBasicBlock(CI->getIterator(), "malloc_cont");
 
   // Create the block to check the first condition.  Put all these blocks at the
   // end of the function as they are unlikely to be executed.
@@ -1499,7 +1500,8 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
     // (2048 bytes currently), as we don't want to introduce a 16M global or
     // something.
     if (NElements->getZExtValue() * DL.getTypeAllocSize(AllocTy) < 2048) {
-      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, DL, TLI);
+      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, DL, TLI)
+                ->getIterator();
       return true;
     }
 
@@ -1545,7 +1547,8 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
     }
 
     GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, DL, TLI, true),
-                               DL, TLI);
+                               DL, TLI)
+              ->getIterator();
     return true;
   }
 
@@ -1620,7 +1623,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
                                              GV->getName()+".b",
                                              GV->getThreadLocalMode(),
                                              GV->getType()->getAddressSpace());
-  GV->getParent()->getGlobalList().insert(GV, NewGV);
+  GV->getParent()->getGlobalList().insert(GV->getIterator(), NewGV);
 
   Constant *InitVal = GV->getInitializer();
   assert(InitVal->getType() != Type::getInt1Ty(GV->getContext()) &&
@@ -1801,7 +1804,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   } else if (!GV->getInitializer()->getType()->isSingleValueType()) {
     const DataLayout &DL = GV->getParent()->getDataLayout();
     if (GlobalVariable *FirstNewGV = SRAGlobal(GV, DL)) {
-      GVI = FirstNewGV; // Don't skip the newly produced globals!
+      GVI = FirstNewGV->getIterator(); // Don't skip the newly produced globals!
       return true;
     }
   } else if (GS.StoredType == GlobalStatus::StoredOnce && GS.StoredOnceValue) {
@@ -1823,7 +1826,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
           GV->eraseFromParent();
           ++NumDeleted;
         } else {
-          GVI = GV;
+          GVI = GV->getIterator();
         }
         ++NumSubstitute;
         return true;
@@ -1898,7 +1901,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
   bool Changed = false;
   // Optimize functions.
   for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
-    Function *F = FI++;
+    Function *F = &*FI++;
     // Functions without names cannot be referenced outside this module.
     if (!F->hasName() && !F->isDeclaration() && !F->hasLocalLinkage())
       F->setLinkage(GlobalValue::InternalLinkage);
@@ -1940,7 +1943,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
 
   for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
        GVI != E; ) {
-    GlobalVariable *GV = GVI++;
+    GlobalVariable *GV = &*GVI++;
     // Global variables without names cannot be referenced outside this module.
     if (!GV->hasName() && !GV->isDeclaration() && !GV->hasLocalLinkage())
       GV->setLinkage(GlobalValue::InternalLinkage);
@@ -2438,7 +2441,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
       InstResult = AllocaTmps.back().get();
       DEBUG(dbgs() << "Found an alloca. Result: " << *InstResult << "\n");
     } else if (isa<CallInst>(CurInst) || isa<InvokeInst>(CurInst)) {
-      CallSite CS(CurInst);
+      CallSite CS(&*CurInst);
 
       // Debug info can safely be ignored here.
       if (isa<DbgInfoIntrinsic>(CS.getInstruction())) {
@@ -2604,7 +2607,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(InstResult))
         InstResult = ConstantFoldConstantExpression(CE, DL, TLI);
 
-      setVal(CurInst, InstResult);
+      setVal(&*CurInst, InstResult);
     }
 
     // If we just processed an invoke, we finished evaluating the block.
@@ -2635,7 +2638,7 @@ bool Evaluator::EvaluateFunction(Function *F, Constant *&RetVal,
   unsigned ArgNo = 0;
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E;
        ++AI, ++ArgNo)
-    setVal(AI, ActualArgs[ArgNo]);
+    setVal(&*AI, ActualArgs[ArgNo]);
 
   // ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
   // we can only evaluate any one basic block at most once.  This set keeps
@@ -2643,7 +2646,7 @@ bool Evaluator::EvaluateFunction(Function *F, Constant *&RetVal,
   SmallPtrSet<BasicBlock*, 32> ExecutedBlocks;
 
   // CurBB - The current basic block we're evaluating.
-  BasicBlock *CurBB = F->begin();
+  BasicBlock *CurBB = &F->front();
 
   BasicBlock::iterator CurInst = CurBB->begin();
 
@@ -2894,15 +2897,15 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
 
     if (RenameTarget) {
       // Give the aliasee the name, linkage and other attributes of the alias.
-      Target->takeName(J);
+      Target->takeName(&*J);
       Target->setLinkage(J->getLinkage());
       Target->setVisibility(J->getVisibility());
       Target->setDLLStorageClass(J->getDLLStorageClass());
 
-      if (Used.usedErase(J))
+      if (Used.usedErase(&*J))
         Used.usedInsert(Target);
 
-      if (Used.compilerUsedErase(J))
+      if (Used.compilerUsedErase(&*J))
         Used.compilerUsedInsert(Target);
     } else if (mayHaveOtherReferences(*J, Used))
       continue;

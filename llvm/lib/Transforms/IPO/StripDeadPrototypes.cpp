@@ -47,7 +47,7 @@ bool StripDeadPrototypesPass::runOnModule(Module &M) {
   
   // Erase dead function prototypes.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
-    Function *F = I++;
+    Function *F = &*I++;
     // Function must be a prototype and unused.
     if (F->isDeclaration() && F->use_empty()) {
       F->eraseFromParent();
@@ -59,7 +59,7 @@ bool StripDeadPrototypesPass::runOnModule(Module &M) {
   // Erase dead global var prototypes.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ) {
-    GlobalVariable *GV = I++;
+    GlobalVariable *GV = &*I++;
     // Global must be a prototype and unused.
     if (GV->isDeclaration() && GV->use_empty())
       GV->eraseFromParent();

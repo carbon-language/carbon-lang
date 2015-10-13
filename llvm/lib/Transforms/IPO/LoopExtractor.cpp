@@ -259,7 +259,7 @@ bool BlockExtractorPass::runOnModule(Module &M) {
     // Figure out which index the basic block is in its function.
     Function::iterator BBI = MF->begin();
     std::advance(BBI, std::distance(F->begin(), Function::iterator(BB)));
-    TranslatedBlocksToNotExtract.insert(BBI);
+    TranslatedBlocksToNotExtract.insert(&*BBI);
   }
 
   while (!BlocksToNotExtractByName.empty()) {
@@ -278,7 +278,7 @@ bool BlockExtractorPass::runOnModule(Module &M) {
         BasicBlock &BB = *BI;
         if (BB.getName() != BlockName) continue;
 
-        TranslatedBlocksToNotExtract.insert(BI);
+        TranslatedBlocksToNotExtract.insert(&*BI);
       }
     }
 
@@ -291,8 +291,8 @@ bool BlockExtractorPass::runOnModule(Module &M) {
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     SplitLandingPadPreds(&*F);
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      if (!TranslatedBlocksToNotExtract.count(BB))
-        BlocksToExtract.push_back(BB);
+      if (!TranslatedBlocksToNotExtract.count(&*BB))
+        BlocksToExtract.push_back(&*BB);
   }
 
   for (unsigned i = 0, e = BlocksToExtract.size(); i != e; ++i) {

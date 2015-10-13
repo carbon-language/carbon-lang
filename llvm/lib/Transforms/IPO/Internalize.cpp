@@ -202,16 +202,16 @@ bool InternalizePass::runOnModule(Module &M) {
   }
 
   // Mark all functions not in the api as internal.
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!maybeInternalize(*I, ExternalComdats))
+  for (Function &I : M) {
+    if (!maybeInternalize(I, ExternalComdats))
       continue;
 
     if (ExternalNode)
       // Remove a callgraph edge from the external node to this function.
-      ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
+      ExternalNode->removeOneAbstractEdgeTo((*CG)[&I]);
 
     ++NumFunctions;
-    DEBUG(dbgs() << "Internalizing func " << I->getName() << "\n");
+    DEBUG(dbgs() << "Internalizing func " << I.getName() << "\n");
   }
 
   // Never internalize the llvm.used symbol.  It is used to implement

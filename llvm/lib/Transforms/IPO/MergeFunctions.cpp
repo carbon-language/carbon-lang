@@ -1121,7 +1121,7 @@ int FunctionComparator::cmpBasicBlocks(const BasicBlock *BBL,
   BasicBlock::const_iterator InstR = BBR->begin(), InstRE = BBR->end();
 
   do {
-    if (int Res = cmpValues(InstL, InstR))
+    if (int Res = cmpValues(&*InstL, &*InstR))
       return Res;
 
     const GetElementPtrInst *GEPL = dyn_cast<GetElementPtrInst>(InstL);
@@ -1139,7 +1139,7 @@ int FunctionComparator::cmpBasicBlocks(const BasicBlock *BBL,
       if (int Res = cmpGEPs(GEPL, GEPR))
         return Res;
     } else {
-      if (int Res = cmpOperations(InstL, InstR))
+      if (int Res = cmpOperations(&*InstL, &*InstR))
         return Res;
       assert(InstL->getNumOperands() == InstR->getNumOperands());
 
@@ -1207,7 +1207,7 @@ int FunctionComparator::compare() {
                                     ArgRI = FnR->arg_begin(),
                                     ArgLE = FnL->arg_end();
        ArgLI != ArgLE; ++ArgLI, ++ArgRI) {
-    if (cmpValues(ArgLI, ArgRI) != 0)
+    if (cmpValues(&*ArgLI, &*ArgRI) != 0)
       llvm_unreachable("Arguments repeat!");
   }
 
@@ -1658,9 +1658,8 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
   SmallVector<Value *, 16> Args;
   unsigned i = 0;
   FunctionType *FFTy = F->getFunctionType();
-  for (Function::arg_iterator AI = NewG->arg_begin(), AE = NewG->arg_end();
-       AI != AE; ++AI) {
-    Args.push_back(createCast(Builder, (Value*)AI, FFTy->getParamType(i)));
+  for (Argument & AI : NewG->args()) {
+    Args.push_back(createCast(Builder, &AI, FFTy->getParamType(i)));
     ++i;
   }
 

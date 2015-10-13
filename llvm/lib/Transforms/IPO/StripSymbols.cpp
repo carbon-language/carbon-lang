@@ -211,13 +211,13 @@ static bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (I->hasLocalLinkage() && llvmUsedValues.count(I) == 0)
+    if (I->hasLocalLinkage() && llvmUsedValues.count(&*I) == 0)
       if (!PreserveDbgInfo || !I->getName().startswith("llvm.dbg"))
         I->setName("");     // Internal symbols can't participate in linkage
   }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (I->hasLocalLinkage() && llvmUsedValues.count(I) == 0)
+    if (I->hasLocalLinkage() && llvmUsedValues.count(&*I) == 0)
       if (!PreserveDbgInfo || !I->getName().startswith("llvm.dbg"))
         I->setName("");     // Internal symbols can't participate in linkage
     StripSymtab(I->getValueSymbolTable(), PreserveDbgInfo);

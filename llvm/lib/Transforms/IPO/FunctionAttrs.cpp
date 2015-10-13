@@ -347,7 +347,7 @@ struct ArgumentUsesTracker : public CaptureTracker {
         return true;
       }
       if (PI == U) {
-        Uses.push_back(AI);
+        Uses.push_back(&*AI);
         Found = true;
         break;
       }
@@ -466,7 +466,7 @@ determinePointerReadAttrs(Argument *A,
             return Attribute::None;
           }
           Captures &= !CS.doesNotCapture(A - B);
-          if (SCCNodes.count(AI))
+          if (SCCNodes.count(&*AI))
             continue;
           if (!CS.onlyReadsMemory() && !CS.onlyReadsMemory(A - B))
             return Attribute::None;
@@ -551,7 +551,7 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
       bool HasNonLocalUses = false;
       if (!A->hasNoCaptureAttr()) {
         ArgumentUsesTracker Tracker(SCCNodes);
-        PointerMayBeCaptured(A, &Tracker);
+        PointerMayBeCaptured(&*A, &Tracker);
         if (!Tracker.Captured) {
           if (Tracker.Uses.empty()) {
             // If it's trivially not captured, mark it nocapture now.
@@ -563,7 +563,7 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
             // If it's not trivially captured and not trivially not captured,
             // then it must be calling into another function in our SCC. Save
             // its particulars for Argument-SCC analysis later.
-            ArgumentGraphNode *Node = AG[A];
+            ArgumentGraphNode *Node = AG[&*A];
             for (SmallVectorImpl<Argument *>::iterator
                      UI = Tracker.Uses.begin(),
                      UE = Tracker.Uses.end();
@@ -582,8 +582,8 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
         // will be dependent on the iteration order through the functions in the
         // SCC.
         SmallPtrSet<Argument *, 8> Self;
-        Self.insert(A);
-        Attribute::AttrKind R = determinePointerReadAttrs(A, Self);
+        Self.insert(&*A);
+        Attribute::AttrKind R = determinePointerReadAttrs(&*A, Self);
         if (R != Attribute::None) {
           AttrBuilder B;
           B.addAttribute(R);

@@ -237,7 +237,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, Fn.getLinkage());
   NF->copyAttributesFrom(&Fn);
-  Fn.getParent()->getFunctionList().insert(&Fn, NF);
+  Fn.getParent()->getFunctionList().insert(Fn.getIterator(), NF);
   NF->takeName(&Fn);
 
   // Loop over all of the callers of the function, transforming the call sites
@@ -304,8 +304,8 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end(),
        I2 = NF->arg_begin(); I != E; ++I, ++I2) {
     // Move the name and users over to the new version.
-    I->replaceAllUsesWith(I2);
-    I2->takeName(I);
+    I->replaceAllUsesWith(&*I2);
+    I2->takeName(&*I);
   }
 
   // Patch the pointer to LLVM function in debug info descriptor.
@@ -363,12 +363,9 @@ bool DAE::RemoveDeadArgumentsFromCallers(Function &Fn)
     return false;
 
   SmallVector<unsigned, 8> UnusedArgs;
-  for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end(); 
-       I != E; ++I) {
-    Argument *Arg = I;
-
-    if (Arg->use_empty() && !Arg->hasByValOrInAllocaAttr())
-      UnusedArgs.push_back(Arg->getArgNo());
+  for (Argument &Arg : Fn.args()) {
+    if (Arg.use_empty() && !Arg.hasByValOrInAllocaAttr())
+      UnusedArgs.push_back(Arg.getArgNo());
   }
 
   if (UnusedArgs.empty())
@@ -670,7 +667,7 @@ void DAE::SurveyFunction(const Function &F) {
     } else {
       // See what the effect of this use is (recording any uses that cause
       // MaybeLive in MaybeLiveArgUses). 
-      Result = SurveyUses(AI, MaybeLiveArgUses);
+      Result = SurveyUses(&*AI, MaybeLiveArgUses);
     }
 
     // Mark the result.
@@ -900,7 +897,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   NF->setAttributes(NewPAL);
   // Insert the new function before the old function, so we won't be processing
   // it again.
-  F->getParent()->getFunctionList().insert(F, NF);
+  F->getParent()->getFunctionList().insert(F->getIterator(), NF);
   NF->takeName(F);
 
   // Loop over all of the callers of the function, transforming the call sites
@@ -999,7 +996,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         Instruction *InsertPt = Call;
         if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
           BasicBlock *NewEdge = SplitEdge(New->getParent(), II->getNormalDest());
-          InsertPt = NewEdge->getFirstInsertionPt();
+          InsertPt = &*NewEdge->getFirstInsertionPt();
         }
 
         // We used to return a struct or array. Instead of doing smart stuff
@@ -1047,8 +1044,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     if (ArgAlive[i]) {
       // If this is a live argument, move the name and users over to the new
       // version.
-      I->replaceAllUsesWith(I2);
-      I2->takeName(I);
+      I->replaceAllUsesWith(&*I2);
+      I2->takeName(&*I);
       ++I2;
     } else {
       // If this argument is dead, replace any uses of it with null constants
@@ -1140,7 +1137,7 @@ bool DAE::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
     // Increment now, because the function will probably get removed (ie.
     // replaced by a new one).
-    Function *F = I++;
+    Function *F = &*I++;
     Changed |= RemoveDeadStuffFromFunction(F);
   }
 
