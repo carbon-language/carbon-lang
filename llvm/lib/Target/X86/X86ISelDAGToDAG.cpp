@@ -46,9 +46,8 @@ STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 //===----------------------------------------------------------------------===//
 
 namespace {
-  /// X86ISelAddressMode - This corresponds to X86AddressMode, but uses
-  /// SDValue's instead of register numbers for the leaves of the matched
-  /// tree.
+  /// This corresponds to X86AddressMode, but uses SDValue's instead of register
+  /// numbers for the leaves of the matched tree.
   struct X86ISelAddressMode {
     enum {
       RegBase,
@@ -87,8 +86,7 @@ namespace {
              IndexReg.getNode() != nullptr || Base_Reg.getNode() != nullptr;
     }
 
-    /// isRIPRelative - Return true if this addressing mode is already RIP
-    /// relative.
+    /// Return true if this addressing mode is already RIP-relative.
     bool isRIPRelative() const {
       if (BaseType != RegBase) return false;
       if (RegisterSDNode *RegNode =
@@ -147,16 +145,16 @@ namespace {
 
 namespace {
   //===--------------------------------------------------------------------===//
-  /// ISel - X86 specific code to select X86 machine instructions for
+  /// ISel - X86-specific code to select X86 machine instructions for
   /// SelectionDAG operations.
   ///
   class X86DAGToDAGISel final : public SelectionDAGISel {
-    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
+    /// Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
 
-    /// OptForSize - If true, selector should try to optimize for code size
-    /// instead of performance.
+    /// If true, selector should try to optimize for code size instead of
+    /// performance.
     bool OptForSize;
 
   public:
@@ -184,8 +182,7 @@ namespace {
       return isInt<8>(cast<ConstantSDNode>(N)->getSExtValue());
     }
 
-    // i64immSExt32 predicate - True if the 64-bit immediate fits in a 32-bit
-    // sign extended field.
+    // True if the 64-bit immediate fits in a 32-bit sign-extended field.
     inline bool i64immSExt32(SDNode *N) const {
       uint64_t v = cast<ConstantSDNode>(N)->getZExtValue();
       return (int64_t)v == (int32_t)v;
@@ -233,8 +230,7 @@ namespace {
                      SDValue &Index, SDValue &Disp,
                      SDValue &Segment);
 
-    /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
-    /// inline asm expressions.
+    /// Implement addressing mode selection for inline asm expressions.
     bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                       unsigned ConstraintID,
                                       std::vector<SDValue> &OutOps) override;
@@ -252,7 +248,7 @@ namespace {
                  : AM.Base_Reg;
       Scale = getI8Imm(AM.Scale, DL);
       Index = AM.IndexReg;
-      // These are 32-bit even in 64-bit mode since RIP relative offset
+      // These are 32-bit even in 64-bit mode since RIP-relative offset
       // is 32-bit.
       if (AM.GV)
         Disp = CurDAG->getTargetGlobalAddress(AM.GV, SDLoc(),
@@ -359,32 +355,29 @@ namespace {
       return (UseCount > 1);
     }
 
-    /// getI8Imm - Return a target constant with the specified value, of type
-    /// i8.
+    /// Return a target constant with the specified value of type i8.
     inline SDValue getI8Imm(unsigned Imm, SDLoc DL) {
       return CurDAG->getTargetConstant(Imm, DL, MVT::i8);
     }
 
-    /// getI32Imm - Return a target constant with the specified value, of type
-    /// i32.
+    /// Return a target constant with the specified value, of type i32.
     inline SDValue getI32Imm(unsigned Imm, SDLoc DL) {
       return CurDAG->getTargetConstant(Imm, DL, MVT::i32);
     }
 
-    /// getGlobalBaseReg - Return an SDNode that returns the value of
-    /// the global base register. Output instructions required to
-    /// initialize the global base register, if necessary.
-    ///
+    /// Return an SDNode that returns the value of the global base register.
+    /// Output instructions required to initialize the global base register,
+    /// if necessary.
     SDNode *getGlobalBaseReg();
 
-    /// getTargetMachine - Return a reference to the TargetMachine, casted
-    /// to the target-specific type.
+    /// Return a reference to the TargetMachine, casted to the target-specific
+    /// type.
     const X86TargetMachine &getTargetMachine() const {
       return static_cast<const X86TargetMachine &>(TM);
     }
 
-    /// getInstrInfo - Return a reference to the TargetInstrInfo, casted
-    /// to the target-specific type.
+    /// Return a reference to the TargetInstrInfo, casted to the target-specific
+    /// type.
     const X86InstrInfo *getInstrInfo() const {
       return Subtarget->getInstrInfo();
     }
@@ -462,7 +455,7 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
   return true;
 }
 
-/// MoveBelowCallOrigChain - Replace the original chain operand of the call with
+/// Replace the original chain operand of the call with
 /// load's chain operand and move load below the call's chain operand.
 static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
                                SDValue Call, SDValue OrigChain) {
@@ -494,7 +487,7 @@ static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
   CurDAG->UpdateNodeOperands(Call.getNode(), Ops);
 }
 
-/// isCalleeLoad - Return true if call address is a load and it can be
+/// Return true if call address is a load and it can be
 /// moved below CALLSEQ_START and the chains leading up to the call.
 /// Return the CALLSEQ_START by reference as a second output.
 /// In the case of a tail call, there isn't a callseq node between the call
@@ -653,8 +646,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
 }
 
 
-/// EmitSpecialCodeForMain - Emit any code that needs to be executed only in
-/// the main function.
+/// Emit any code that needs to be executed only in the main function.
 void X86DAGToDAGISel::EmitSpecialCodeForMain() {
   if (Subtarget->isTargetCygMing()) {
     TargetLowering::ArgListTy Args;
@@ -734,10 +726,9 @@ bool X86DAGToDAGISel::MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM){
   return true;
 }
 
-/// MatchWrapper - Try to match X86ISD::Wrapper and X86ISD::WrapperRIP nodes
-/// into an addressing mode.  These wrap things that will resolve down into a
-/// symbol reference.  If no match is possible, this returns true, otherwise it
-/// returns false.
+/// Try to match X86ISD::Wrapper and X86ISD::WrapperRIP nodes into an addressing
+/// mode. These wrap things that will resolve down into a symbol reference.
+/// If no match is possible, this returns true, otherwise it returns false.
 bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
   // If the addressing mode already has a symbol as the displacement, we can
   // never match another symbol.
@@ -834,9 +825,8 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
   return true;
 }
 
-/// MatchAddress - Add the specified node to the specified addressing mode,
-/// returning true if it cannot be done.  This just pattern matches for the
-/// addressing mode.
+/// Add the specified node to the specified addressing mode, returning true if
+/// it cannot be done. This just pattern matches for the addressing mode.
 bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
   if (MatchAddressRecursively(N, AM, 0))
     return true;
@@ -1393,7 +1383,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   return MatchAddressBase(N, AM);
 }
 
-/// MatchAddressBase - Helper for MatchAddress. Add the specified node to the
+/// Helper for MatchAddress. Add the specified node to the
 /// specified addressing mode without any further recursion.
 bool X86DAGToDAGISel::MatchAddressBase(SDValue N, X86ISelAddressMode &AM) {
   // Is the base register already occupied?
@@ -1451,7 +1441,7 @@ bool X86DAGToDAGISel::SelectVectorAddr(SDNode *Parent, SDValue N, SDValue &Base,
   return true;
 }
 
-/// SelectAddr - returns true if it is able pattern match an addressing mode.
+/// Returns true if it is able to pattern match an addressing mode.
 /// It returns the operands which make up the maximal addressing mode it can
 /// match by reference.
 ///
@@ -1496,9 +1486,9 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
   return true;
 }
 
-/// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
-/// match a load whose top elements are either undef or zeros.  The load flavor
-/// is derived from the type of N, which is either v4f32 or v2f64.
+/// Match a scalar SSE load. In particular, we want to match a load whose top
+/// elements are either undef or zeros. The load flavor is derived from the
+/// type of N, which is either v4f32 or v2f64.
 ///
 /// We also return:
 ///   PatternChainNode: this is the matched node that has a chain input and
@@ -1609,7 +1599,7 @@ bool X86DAGToDAGISel::SelectLEA64_32Addr(SDValue N, SDValue &Base,
   return true;
 }
 
-/// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
+/// Calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LEA instruction.
 bool X86DAGToDAGISel::SelectLEAAddr(SDValue N,
                                     SDValue &Base, SDValue &Scale,
@@ -1671,7 +1661,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue N,
   return true;
 }
 
-/// SelectTLSADDRAddr - This is only run on TargetGlobalTLSAddress nodes.
+/// This is only run on TargetGlobalTLSAddress nodes.
 bool X86DAGToDAGISel::SelectTLSADDRAddr(SDValue N, SDValue &Base,
                                         SDValue &Scale, SDValue &Index,
                                         SDValue &Disp, SDValue &Segment) {
@@ -1709,10 +1699,9 @@ bool X86DAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
                     N.getOperand(1), Base, Scale, Index, Disp, Segment);
 }
 
-/// getGlobalBaseReg - Return an SDNode that returns the value of
-/// the global base register. Output instructions required to
-/// initialize the global base register, if necessary.
-///
+/// Return an SDNode that returns the value of the global base register.
+/// Output instructions required to initialize the global base register,
+/// if necessary.
 SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
   unsigned GlobalBaseReg = getInstrInfo()->getGlobalBaseReg(MF);
   auto &DL = MF->getDataLayout();
@@ -2008,8 +1997,8 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, MVT NVT) {
   return CurDAG->getMergeValues(RetVals, dl).getNode();
 }
 
-/// HasNoSignedComparisonUses - Test whether the given X86ISD::CMP node has
-/// any uses which require the SF or OF bits to be accurate.
+/// Test whether the given X86ISD::CMP node has any uses which require the SF
+/// or OF bits to be accurate.
 static bool HasNoSignedComparisonUses(SDNode *N) {
   // Examine each user of the node.
   for (SDNode::use_iterator UI = N->use_begin(),
@@ -2070,9 +2059,8 @@ static bool HasNoSignedComparisonUses(SDNode *N) {
   return true;
 }
 
-/// isLoadIncOrDecStore - Check whether or not the chain ending in StoreNode
-/// is suitable for doing the {load; increment or decrement; store} to modify
-/// transformation.
+/// Check whether or not the chain ending in StoreNode is suitable for doing
+/// the {load; increment or decrement; store} to modify transformation.
 static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
                                 SDValue StoredVal, SelectionDAG *CurDAG,
                                 LoadSDNode* &LoadNode, SDValue &InputChain) {
@@ -2156,8 +2144,8 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
   return true;
 }
 
-/// getFusedLdStOpcode - Get the appropriate X86 opcode for an in memory
-/// increment or decrement. Opc should be X86ISD::DEC or X86ISD::INC.
+/// Get the appropriate X86 opcode for an in-memory increment or decrement.
+/// Opc should be X86ISD::DEC or X86ISD::INC.
 static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
   if (Opc == X86ISD::DEC) {
     if (LdVT == MVT::i64) return X86::DEC64m;
@@ -2174,8 +2162,7 @@ static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
   llvm_unreachable("unrecognized size for LdVT");
 }
 
-/// SelectGather - Customized ISel for GATHER operations.
-///
+/// Customized ISel for GATHER operations.
 SDNode *X86DAGToDAGISel::SelectGather(SDNode *Node, unsigned Opc) {
   // Operands of Gather: VSrc, Base, VIdx, VMask, Scale
   SDValue Chain = Node->getOperand(0);
@@ -3012,9 +2999,8 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
   return false;
 }
 
-/// createX86ISelDag - This pass converts a legalized DAG into a
-/// X86-specific DAG, ready for instruction scheduling.
-///
+/// This pass converts a legalized DAG into a X86-specific DAG,
+/// ready for instruction scheduling.
 FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM,
                                      CodeGenOpt::Level OptLevel) {
   return new X86DAGToDAGISel(TM, OptLevel);
