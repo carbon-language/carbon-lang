@@ -591,9 +591,11 @@ typedef unsigned int   char32_t;
 
 #ifdef _LIBCPP_HAS_NO_STATIC_ASSERT
 
+extern "C++" {
 template <bool> struct __static_assert_test;
 template <> struct __static_assert_test<true> {};
 template <unsigned> struct __static_assert_check {};
+}
 #define static_assert(__b, __m) \
     typedef __static_assert_check<sizeof(__static_assert_test<(__b)>)> \
     _LIBCPP_CONCAT(__t, __LINE__)
