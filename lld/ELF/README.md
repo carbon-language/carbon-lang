@@ -9,4 +9,5 @@ distinguish chunks from input sections; they are merged together.
 
 Capabilities
 ------------
-This linker can link LLVM and Clang on Linux x86-64 with -LLVM_ENABLE_THREADS=OFF.
+This linker can link LLVM and Clang on Linux/x86-64 or FreeBSD/x86-64
+with -LLVM_ENABLE_THREADS=OFF. "Hello world" can be linked on Linux/PPC64.
