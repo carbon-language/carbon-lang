@@ -1461,8 +1461,7 @@ void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
   if (Instruction *ArgInst = dyn_cast<Instruction>(Arg)) {
     // If the argument is an instruction, it must dominate all uses so put our
     // sincos call there.
-    BasicBlock::iterator Loc = ArgInst;
-    B.SetInsertPoint(ArgInst->getParent(), ++Loc);
+    B.SetInsertPoint(ArgInst->getParent(), ++ArgInst->getIterator());
   } else {
     // Otherwise (e.g. for a constant) the beginning of the function is as
     // good a place as any.

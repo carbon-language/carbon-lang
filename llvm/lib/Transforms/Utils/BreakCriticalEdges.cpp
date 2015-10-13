@@ -101,10 +101,9 @@ static void createPHIsForSplitLoopExit(ArrayRef<BasicBlock *> Preds,
         continue;
 
     // Otherwise a new PHI is needed. Create one and populate it.
-    PHINode *NewPN =
-      PHINode::Create(PN->getType(), Preds.size(), "split",
-                      SplitBB->isLandingPad() ?
-                      SplitBB->begin() : SplitBB->getTerminator());
+    PHINode *NewPN = PHINode::Create(
+        PN->getType(), Preds.size(), "split",
+        SplitBB->isLandingPad() ? &SplitBB->front() : SplitBB->getTerminator());
     for (unsigned i = 0, e = Preds.size(); i != e; ++i)
       NewPN->addIncoming(V, Preds[i]);
 
@@ -157,7 +156,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
 
   // Insert the block into the function... right after the block TI lives in.
   Function &F = *TIBB->getParent();
-  Function::iterator FBBI = TIBB;
+  Function::iterator FBBI = TIBB->getIterator();
   F.getBasicBlockList().insert(++FBBI, NewBB);
 
   // If there are any PHI nodes in DestBB, we need to update them so that they

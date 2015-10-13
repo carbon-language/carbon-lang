@@ -82,7 +82,7 @@ static bool insertFastDiv(Function &F,
                           bool UseSignedOp,
                           DivCacheTy &PerBBDivCache) {
   // Get instruction operands
-  Instruction *Instr = J;
+  Instruction *Instr = &*J;
   Value *Dividend = Instr->getOperand(0);
   Value *Divisor = Instr->getOperand(1);
 
@@ -94,7 +94,7 @@ static bool insertFastDiv(Function &F,
   }
 
   // Basic Block is split before divide
-  BasicBlock *MainBB = I;
+  BasicBlock *MainBB = &*I;
   BasicBlock *SuccessorBB = I->splitBasicBlock(J);
   ++I; //advance iterator I to successorBB
 
@@ -190,7 +190,7 @@ static bool reuseOrInsertFastDiv(Function &F,
                                  bool UseSignedOp,
                                  DivCacheTy &PerBBDivCache) {
   // Get instruction operands
-  Instruction *Instr = J;
+  Instruction *Instr = &*J;
   DivOpInfo Key(UseSignedOp, Instr->getOperand(0), Instr->getOperand(1));
   DivCacheTy::iterator CacheI = PerBBDivCache.find(Key);
 

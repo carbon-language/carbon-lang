@@ -69,7 +69,7 @@ bool LowerInvoke::runOnFunction(Function &F) {
       BranchInst::Create(II->getNormalDest(), II);
 
       // Remove any PHI node entries from the exception destination.
-      II->getUnwindDest()->removePredecessor(BB);
+      II->getUnwindDest()->removePredecessor(&*BB);
 
       // Remove the invoke instruction now.
       BB->getInstList().erase(II);

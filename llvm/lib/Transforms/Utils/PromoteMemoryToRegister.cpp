@@ -205,10 +205,9 @@ public:
     // avoid gratuitus rescans.
     const BasicBlock *BB = I->getParent();
     unsigned InstNo = 0;
-    for (BasicBlock::const_iterator BBI = BB->begin(), E = BB->end(); BBI != E;
-         ++BBI)
-      if (isInterestingInstruction(BBI))
-        InstNumbers[BBI] = InstNo++;
+    for (const Instruction &BBI : *BB)
+      if (isInterestingInstruction(&BBI))
+        InstNumbers[&BBI] = InstNo++;
     It = InstNumbers.find(I);
 
     assert(It != InstNumbers.end() && "Didn't insert instruction?");
@@ -644,7 +643,7 @@ void PromoteMem2Reg::run() {
   // and inserting the phi nodes we marked as necessary
   //
   std::vector<RenamePassData> RenamePassWorkList;
-  RenamePassWorkList.emplace_back(F.begin(), nullptr, std::move(Values));
+  RenamePassWorkList.emplace_back(&F.front(), nullptr, std::move(Values));
   do {
     RenamePassData RPD;
     RPD.swap(RenamePassWorkList.back());
@@ -862,7 +861,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   // BasicBlock.
   PN = PHINode::Create(Allocas[AllocaNo]->getAllocatedType(), getNumPreds(BB),
                        Allocas[AllocaNo]->getName() + "." + Twine(Version++),
-                       BB->begin());
+                       &BB->front());
   ++NumPHIInsert;
   PhiToAllocaMap[PN] = AllocaNo;
 
@@ -927,7 +926,7 @@ NextIteration:
     return;
 
   for (BasicBlock::iterator II = BB->begin(); !isa<TerminatorInst>(II);) {
-    Instruction *I = II++; // get the instruction, increment iterator
+    Instruction *I = &*II++; // get the instruction, increment iterator
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       AllocaInst *Src = dyn_cast<AllocaInst>(LI->getPointerOperand());

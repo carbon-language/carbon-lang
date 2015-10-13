@@ -104,7 +104,7 @@ void LoopVersioning::addPHINodes(
     // If not create it.
     if (!PN) {
       PN = PHINode::Create(Inst->getType(), 2, Inst->getName() + ".lver",
-                           PHIBlock->begin());
+                           &PHIBlock->front());
       for (auto *User : Inst->users())
         if (!VersionedLoop->contains(cast<Instruction>(User)->getParent()))
           User->replaceUsesOfWith(Inst, PN);

@@ -478,7 +478,7 @@ bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB,
   // or deleted by these simplifications. The idea of simplification is that it
   // cannot introduce new instructions, and there is no way to replace the
   // terminator of a block without introducing a new instruction.
-  AssertingVH<Instruction> TerminatorVH(--BB->end());
+  AssertingVH<Instruction> TerminatorVH(&BB->back());
 #endif
 
   SmallSetVector<Instruction *, 16> WorkList;
@@ -861,7 +861,8 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
 
     // Copy over any phi, debug or lifetime instruction.
     BB->getTerminator()->eraseFromParent();
-    Succ->getInstList().splice(Succ->getFirstNonPHI(), BB->getInstList());
+    Succ->getInstList().splice(Succ->getFirstNonPHI()->getIterator(),
+                               BB->getInstList());
   } else {
     while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
       // We explicitly check for such uses in CanPropagatePredecessorsForPHIs.
@@ -1087,8 +1088,8 @@ bool llvm::LowerDbgDeclare(Function &F) {
   DIBuilder DIB(*F.getParent(), /*AllowUnresolved*/ false);
   SmallVector<DbgDeclareInst *, 4> Dbgs;
   for (auto &FI : F)
-    for (BasicBlock::iterator BI : FI)
-      if (auto DDI = dyn_cast<DbgDeclareInst>(BI))
+    for (Instruction &BI : FI)
+      if (auto DDI = dyn_cast<DbgDeclareInst>(&BI))
         Dbgs.push_back(DDI);
 
   if (Dbgs.empty())
@@ -1193,7 +1194,7 @@ static void changeToUnreachable(Instruction *I, bool UseLLVMTrap) {
   new UnreachableInst(I->getContext(), I);
 
   // All instructions after this are dead.
-  BasicBlock::iterator BBI = I, BBE = BB->end();
+  BasicBlock::iterator BBI = I->getIterator(), BBE = BB->end();
   while (BBI != BBE) {
     if (!BBI->use_empty())
       BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
@@ -1223,7 +1224,7 @@ static bool markAliveBlocks(Function &F,
                             SmallPtrSetImpl<BasicBlock*> &Reachable) {
 
   SmallVector<BasicBlock*, 128> Worklist;
-  BasicBlock *BB = F.begin();
+  BasicBlock *BB = &F.front();
   Worklist.push_back(BB);
   Reachable.insert(BB);
   bool Changed = false;
@@ -1248,7 +1249,7 @@ static bool markAliveBlocks(Function &F,
 
           if (MakeUnreachable) {
             // Don't insert a call to llvm.trap right before the unreachable.
-            changeToUnreachable(BBI, false);
+            changeToUnreachable(&*BBI, false);
             Changed = true;
             break;
           }
@@ -1262,7 +1263,7 @@ static bool markAliveBlocks(Function &F,
           ++BBI;
           if (!isa<UnreachableInst>(BBI)) {
             // Don't insert a call to llvm.trap right before the unreachable.
-            changeToUnreachable(BBI, false);
+            changeToUnreachable(&*BBI, false);
             Changed = true;
           }
           break;
@@ -1368,17 +1369,18 @@ bool llvm::removeUnreachableBlocks(Function &F) {
   // Loop over all of the basic blocks that are not reachable, dropping all of
   // their internal references...
   for (Function::iterator BB = ++F.begin(), E = F.end(); BB != E; ++BB) {
-    if (Reachable.count(BB))
+    if (Reachable.count(&*BB))
       continue;
 
-    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+    for (succ_iterator SI = succ_begin(&*BB), SE = succ_end(&*BB); SI != SE;
+         ++SI)
       if (Reachable.count(*SI))
-        (*SI)->removePredecessor(BB);
+        (*SI)->removePredecessor(&*BB);
     BB->dropAllReferences();
   }
 
   for (Function::iterator I = ++F.begin(); I != F.end();)
-    if (!Reachable.count(I))
+    if (!Reachable.count(&*I))
       I = F.getBasicBlockList().erase(I);
     else
       ++I;

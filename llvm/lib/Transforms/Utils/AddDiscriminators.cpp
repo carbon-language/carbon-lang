@@ -171,9 +171,8 @@ bool AddDiscriminators::runOnFunction(Function &F) {
 
   // Traverse all the blocks looking for instructions in different
   // blocks that are at the same file:line location.
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock *B = I;
-    TerminatorInst *Last = B->getTerminator();
+  for (BasicBlock &B : F) {
+    TerminatorInst *Last = B.getTerminator();
     const DILocation *LastDIL = Last->getDebugLoc();
     if (!LastDIL)
       continue;

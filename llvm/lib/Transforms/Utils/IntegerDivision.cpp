@@ -401,7 +401,7 @@ bool llvm::expandRemainder(BinaryOperator *Rem) {
     // If we didn't actually generate an urem instruction, we're done
     // This happens for example if the input were constant. In this case the
     // Builder insertion point was unchanged
-    if (Rem == Builder.GetInsertPoint())
+    if (Rem == Builder.GetInsertPoint().getNodePtrUnchecked())
       return true;
 
     BinaryOperator *BO = dyn_cast<BinaryOperator>(Builder.GetInsertPoint());
@@ -461,7 +461,7 @@ bool llvm::expandDivision(BinaryOperator *Div) {
     // If we didn't actually generate an udiv instruction, we're done
     // This happens for example if the input were constant. In this case the
     // Builder insertion point was unchanged
-    if (Div == Builder.GetInsertPoint())
+    if (Div == Builder.GetInsertPoint().getNodePtrUnchecked())
       return true;
 
     BinaryOperator *BO = dyn_cast<BinaryOperator>(Builder.GetInsertPoint());

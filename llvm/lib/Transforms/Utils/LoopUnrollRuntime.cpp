@@ -206,9 +206,9 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
   // Change the incoming values to the ones defined in the preheader or
   // cloned loop.
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
-    PHINode *NewPHI = cast<PHINode>(VMap[I]);
+    PHINode *NewPHI = cast<PHINode>(VMap[&*I]);
     if (UnrollProlog) {
-      VMap[I] = NewPHI->getIncomingValueForBlock(Preheader);
+      VMap[&*I] = NewPHI->getIncomingValueForBlock(Preheader);
       cast<BasicBlock>(VMap[Header])->getInstList().erase(NewPHI);
     } else {
       unsigned idx = NewPHI->getBasicBlockIndex(Preheader);
@@ -398,8 +398,8 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
                   VMap, LI);
 
   // Insert the cloned blocks into function just before the original loop
-  F->getBasicBlockList().splice(PEnd, F->getBasicBlockList(), NewBlocks[0],
-                                F->end());
+  F->getBasicBlockList().splice(PEnd->getIterator(), F->getBasicBlockList(),
+                                NewBlocks[0]->getIterator(), F->end());
 
   // Rewrite the cloned instruction operands to use the values
   // created when the clone is created.
@@ -407,7 +407,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
     for (BasicBlock::iterator I = NewBlocks[i]->begin(),
                               E = NewBlocks[i]->end();
          I != E; ++I) {
-      RemapInstruction(I, VMap,
+      RemapInstruction(&*I, VMap,
                        RF_NoModuleLevelChanges | RF_IgnoreMissingEntries);
     }
   }

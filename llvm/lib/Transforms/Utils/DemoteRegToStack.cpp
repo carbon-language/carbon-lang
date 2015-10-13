@@ -35,8 +35,8 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
                           I.getName()+".reg2mem", AllocaPoint);
   } else {
     Function *F = I.getParent()->getParent();
-    Slot = new AllocaInst(I.getType(), nullptr, I.getName()+".reg2mem",
-                          F->getEntryBlock().begin());
+    Slot = new AllocaInst(I.getType(), nullptr, I.getName() + ".reg2mem",
+                          &F->getEntryBlock().front());
   }
 
   // We cannot demote invoke instructions to the stack if their normal edge
@@ -89,8 +89,7 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
   // AFTER the terminator instruction.
   BasicBlock::iterator InsertPt;
   if (!isa<TerminatorInst>(I)) {
-    InsertPt = &I;
-    ++InsertPt;
+    InsertPt = ++I.getIterator();
     for (; isa<PHINode>(InsertPt) || InsertPt->isEHPad(); ++InsertPt)
       /* empty */;   // Don't insert before PHI nodes or landingpad instrs.
   } else {
@@ -98,7 +97,7 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
     InsertPt = II.getNormalDest()->getFirstInsertionPt();
   }
 
-  new StoreInst(&I, Slot, InsertPt);
+  new StoreInst(&I, Slot, &*InsertPt);
   return Slot;
 }
 
@@ -118,8 +117,8 @@ AllocaInst *llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
                           P->getName()+".reg2mem", AllocaPoint);
   } else {
     Function *F = P->getParent()->getParent();
-    Slot = new AllocaInst(P->getType(), nullptr, P->getName()+".reg2mem",
-                          F->getEntryBlock().begin());
+    Slot = new AllocaInst(P->getType(), nullptr, P->getName() + ".reg2mem",
+                          &F->getEntryBlock().front());
   }
 
   // Iterate over each operand inserting a store in each predecessor.
@@ -133,12 +132,12 @@ AllocaInst *llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   }
 
   // Insert a load in place of the PHI and replace all uses.
-  BasicBlock::iterator InsertPt = P;
+  BasicBlock::iterator InsertPt = P->getIterator();
 
   for (; isa<PHINode>(InsertPt) || InsertPt->isEHPad(); ++InsertPt)
     /* empty */;   // Don't insert before PHI nodes or landingpad instrs.
 
-  Value *V = new LoadInst(Slot, P->getName()+".reload", InsertPt);
+  Value *V = new LoadInst(Slot, P->getName() + ".reload", &*InsertPt);
   P->replaceAllUsesWith(V);
 
   // Delete PHI.

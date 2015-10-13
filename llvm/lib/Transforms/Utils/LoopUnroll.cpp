@@ -394,7 +394,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     for (unsigned i = 0; i < NewBlocks.size(); ++i)
       for (BasicBlock::iterator I = NewBlocks[i]->begin(),
            E = NewBlocks[i]->end(); I != E; ++I)
-        ::RemapInstruction(I, LastValueMap);
+        ::RemapInstruction(&*I, LastValueMap);
   }
 
   // Loop over the PHI nodes in the original block, setting incoming values.
@@ -517,7 +517,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   for (std::vector<BasicBlock*>::const_iterator BB = NewLoopBlocks.begin(),
        BBE = NewLoopBlocks.end(); BB != BBE; ++BB)
     for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ) {
-      Instruction *Inst = I++;
+      Instruction *Inst = &*I++;
 
       if (isInstructionTriviallyDead(Inst))
         (*BB)->getInstList().erase(Inst);

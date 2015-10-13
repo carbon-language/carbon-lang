@@ -64,7 +64,7 @@ namespace {
           // Here be subtlety: the iterator must be incremented before the loop
           // body (not sure why), so a range-for loop won't work here.
           for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-            Instruction *I = BI++;
+            Instruction *I = &*BI++;
             // The first time through the loop ToSimplify is empty and we try to
             // simplify all instructions.  On later iterations ToSimplify is not
             // empty and we only bother simplifying instructions that are in it.

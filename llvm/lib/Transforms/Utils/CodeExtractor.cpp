@@ -175,7 +175,7 @@ void CodeExtractor::findInputsOutputs(ValueSet &Inputs,
 
       for (User *U : II->users())
         if (!definedInRegion(Blocks, U)) {
-          Outputs.insert(II);
+          Outputs.insert(&*II);
           break;
         }
     }
@@ -211,7 +211,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   // containing PHI nodes merging values from outside of the region, and a
   // second that contains all of the code for the block and merges back any
   // incoming values from inside of the region.
-  BasicBlock::iterator AfterPHIs = Header->getFirstNonPHI();
+  BasicBlock::iterator AfterPHIs = Header->getFirstNonPHI()->getIterator();
   BasicBlock *NewBB = Header->splitBasicBlock(AfterPHIs,
                                               Header->getName()+".ce");
 
@@ -246,7 +246,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
       // Create a new PHI node in the new region, which has an incoming value
       // from OldPred of PN.
       PHINode *NewPN = PHINode::Create(PN->getType(), 1 + NumPredsFromRegion,
-                                       PN->getName()+".ce", NewBB->begin());
+                                       PN->getName() + ".ce", &NewBB->front());
       NewPN->addIncoming(PN, OldPred);
 
       // Loop over all of the incoming value in PN, moving them to NewPN if they
@@ -266,7 +266,8 @@ void CodeExtractor::splitReturnBlocks() {
   for (SetVector<BasicBlock *>::iterator I = Blocks.begin(), E = Blocks.end();
        I != E; ++I)
     if (ReturnInst *RI = dyn_cast<ReturnInst>((*I)->getTerminator())) {
-      BasicBlock *New = (*I)->splitBasicBlock(RI, (*I)->getName()+".ret");
+      BasicBlock *New =
+          (*I)->splitBasicBlock(RI->getIterator(), (*I)->getName() + ".ret");
       if (DT) {
         // Old dominates New. New node dominates all other nodes dominated
         // by Old.
@@ -365,10 +366,10 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       Idx[1] = ConstantInt::get(Type::getInt32Ty(header->getContext()), i);
       TerminatorInst *TI = newFunction->begin()->getTerminator();
       GetElementPtrInst *GEP = GetElementPtrInst::Create(
-          StructTy, AI, Idx, "gep_" + inputs[i]->getName(), TI);
+          StructTy, &*AI, Idx, "gep_" + inputs[i]->getName(), TI);
       RewriteVal = new LoadInst(GEP, "loadgep_" + inputs[i]->getName(), TI);
     } else
-      RewriteVal = AI++;
+      RewriteVal = &*AI++;
 
     std::vector<User*> Users(inputs[i]->user_begin(), inputs[i]->user_end());
     for (std::vector<User*>::iterator use = Users.begin(), useE = Users.end();
@@ -440,8 +441,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       StructValues.push_back(*i);
     } else {
       AllocaInst *alloca =
-        new AllocaInst((*i)->getType(), nullptr, (*i)->getName()+".loc",
-                       codeReplacer->getParent()->begin()->begin());
+          new AllocaInst((*i)->getType(), nullptr, (*i)->getName() + ".loc",
+                         &codeReplacer->getParent()->front().front());
       ReloadOutputs.push_back(alloca);
       params.push_back(alloca);
     }
@@ -457,9 +458,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     // Allocate a struct at the beginning of this function
     StructArgTy = StructType::get(newFunction->getContext(), ArgTypes);
-    Struct =
-      new AllocaInst(StructArgTy, nullptr, "structArg",
-                     codeReplacer->getParent()->begin()->begin());
+    Struct = new AllocaInst(StructArgTy, nullptr, "structArg",
+                            &codeReplacer->getParent()->front().front());
     params.push_back(Struct);
 
     for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
@@ -612,11 +612,11 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                 Idx[1] = ConstantInt::get(Type::getInt32Ty(Context),
                                           FirstOut+out);
                 GetElementPtrInst *GEP = GetElementPtrInst::Create(
-                    StructArgTy, OAI, Idx, "gep_" + outputs[out]->getName(),
+                    StructArgTy, &*OAI, Idx, "gep_" + outputs[out]->getName(),
                     NTRet);
                 new StoreInst(outputs[out], GEP, NTRet);
               } else {
-                new StoreInst(outputs[out], OAI, NTRet);
+                new StoreInst(outputs[out], &*OAI, NTRet);
               }
             }
             // Advance output iterator even if we don't emit a store
