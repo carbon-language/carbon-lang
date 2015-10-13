@@ -881,7 +881,7 @@ bool AMDGPUCFGStructurizer::run() {
     } //while, "one iteration" over the function.
 
     MachineBasicBlock *EntryMBB =
-        GraphTraits<MachineFunction *>::nodes_begin(FuncRep);
+        &*GraphTraits<MachineFunction *>::nodes_begin(FuncRep);
     if (EntryMBB->succ_size() == 0) {
       Finish = true;
       DEBUG(
@@ -904,7 +904,7 @@ bool AMDGPUCFGStructurizer::run() {
   } while (!Finish && MakeProgress);
 
   // Misc wrap up to maintain the consistency of the Function representation.
-  wrapup(GraphTraits<MachineFunction *>::nodes_begin(FuncRep));
+  wrapup(&*GraphTraits<MachineFunction *>::nodes_begin(FuncRep));
 
   // Detach retired Block, release memory.
   for (MBBInfoMap::iterator It = BlockInfoMap.begin(), E = BlockInfoMap.end();

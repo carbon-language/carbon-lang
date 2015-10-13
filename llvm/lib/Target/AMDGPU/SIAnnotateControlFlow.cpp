@@ -315,7 +315,7 @@ void SIAnnotateControlFlow::closeControlFlow(BasicBlock *BB) {
     BB = llvm::SplitBlockPredecessors(BB, Preds, "endcf.split", DT, LI, false);
   }
 
-  CallInst::Create(EndCf, popSaved(), "", BB->getFirstInsertionPt());
+  CallInst::Create(EndCf, popSaved(), "", &*BB->getFirstInsertionPt());
 }
 
 /// \brief Annotate the control flow with intrinsics so the backend can

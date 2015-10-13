@@ -318,7 +318,7 @@ bool R600VectorRegMerger::runOnMachineFunction(MachineFunction &Fn) {
   MRI = &(Fn.getRegInfo());
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {
-    MachineBasicBlock *MB = MBB;
+    MachineBasicBlock *MB = &*MBB;
     PreviousRegSeq.clear();
     PreviousRegSeqByReg.clear();
     PreviousRegSeqByUndefCount.clear();

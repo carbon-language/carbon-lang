@@ -405,8 +405,8 @@ private:
             if (MO.isReg() && MO.isInternalRead())
               MO.setIsInternalRead(false);
           }
-          getLiteral(BI, Literals);
-          ClauseContent.push_back(BI);
+          getLiteral(&*BI, Literals);
+          ClauseContent.push_back(&*BI);
         }
         I = BI;
         DeleteMI->eraseFromParent();

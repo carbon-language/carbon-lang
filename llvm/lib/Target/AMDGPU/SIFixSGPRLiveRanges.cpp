@@ -119,7 +119,7 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
   SmallVector<unsigned, 16> SGPRLiveRanges;
 
   LiveVariables *LV = &getAnalysis<LiveVariables>();
-  MachineBasicBlock *Entry = MF.begin();
+  MachineBasicBlock *Entry = &MF.front();
 
   // Use a depth first order so that in SSA, we encounter all defs before
   // uses. Once the defs of the block have been found, attempt to insert

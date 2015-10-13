@@ -68,7 +68,7 @@ bool SIPrepareScratchRegs::runOnMachineFunction(MachineFunction &MF) {
   const SIRegisterInfo *TRI = &TII->getRegisterInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-  MachineBasicBlock *Entry = MF.begin();
+  MachineBasicBlock *Entry = &MF.front();
   MachineBasicBlock::iterator I = Entry->begin();
   DebugLoc DL = I->getDebugLoc();
 
