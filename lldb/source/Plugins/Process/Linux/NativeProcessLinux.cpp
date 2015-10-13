@@ -1282,7 +1282,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t &info, NativeThreadLinux &thr
     {
         // If a watchpoint was hit, report it
         uint32_t wp_index;
-        Error error = thread.GetRegisterContext()->GetWatchpointHitIndex(wp_index, (lldb::addr_t)info.si_addr);
+        Error error = thread.GetRegisterContext()->GetWatchpointHitIndex(wp_index, (uintptr_t)info.si_addr);
         if (error.Fail() && log)
             log->Printf("NativeProcessLinux::%s() "
                         "received error while checking for watchpoint hits, "
