@@ -75,7 +75,7 @@ void X86TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   memcpy(Buf, PltData, sizeof(PltData));
   write32le(Buf + 2, GotEntryAddr - PltEntryAddr + 2); // GOT+8
   write32le(Buf + 8, GotEntryAddr - PltEntryAddr + 4); // GOT+16
-};
+}
 
 void X86TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr, int32_t Index) const {
@@ -317,7 +317,7 @@ static uint64_t getPPC64TocBase() {
 
 void PPC64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
 void PPC64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                       uint64_t PltEntryAddr) const {};
+                                       uint64_t PltEntryAddr) const {}
 void PPC64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                     uint64_t PltEntryAddr, int32_t Index) const {
   uint64_t Off = GotEntryAddr - getPPC64TocBase();
@@ -515,7 +515,7 @@ PPCTargetInfo::PPCTargetInfo() {
 
 void PPCTargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
 void PPCTargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                      uint64_t PltEntryAddr) const {};
+                                      uint64_t PltEntryAddr) const {}
 void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                   uint64_t PltEntryAddr, int32_t Index) const {}
 bool PPCTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
@@ -537,7 +537,7 @@ AArch64TargetInfo::AArch64TargetInfo() {
 
 void AArch64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
 void AArch64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                          uint64_t PltEntryAddr) const {};
+                                          uint64_t PltEntryAddr) const {}
 void AArch64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                       uint64_t PltEntryAddr,
                                       int32_t Index) const {}
