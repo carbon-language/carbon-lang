@@ -594,7 +594,11 @@ set(LLVM_PROFDATA_FILE "" CACHE FILEPATH
   "Profiling data file to use when compiling in order to improve runtime performance.")
 
 if(LLVM_PROFDATA_FILE AND EXISTS ${LLVM_PROFDATA_FILE})
-  add_definitions("-fprofile-instr-use=${LLVM_PROFDATA_FILE}")
+  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
+    add_definitions("-fprofile-instr-use=${LLVM_PROFDATA_FILE}")
+  else()
+    message(FATAL_ERROR "LLVM_PROFDATA_FILE can only be specified when compiling with clang")
+  endif()
 endif()
 
 include(AddLLVM)

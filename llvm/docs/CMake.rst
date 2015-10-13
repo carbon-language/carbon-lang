@@ -334,6 +334,10 @@ LLVM-specific variables
 **LLVM_USE_OPROFILE**:BOOL
   Enable building OProfile JIT support. Defaults to OFF.
 
+**LLVM_PROFDATA_FILE**:PATH
+  Path to a profdata file to pass into clang's -fprofile-instr-use flag. This
+  can only be specified if you're building with clang.
+
 **LLVM_USE_INTEL_JITEVENTS**:BOOL
   Enable building support for Intel JIT Events API. Defaults to OFF.
 
