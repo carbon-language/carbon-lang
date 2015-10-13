@@ -258,10 +258,10 @@ bool LoopIdiomRecognize::runOnLoopBlock(
 
   bool MadeChange = false;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-    Instruction *Inst = I++;
+    Instruction *Inst = &*I++;
     // Look for store instructions, which may be optimized to memset/memcpy.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      WeakVH InstPtr(I);
+      WeakVH InstPtr(&*I);
       if (!processLoopStore(SI, BECount))
         continue;
       MadeChange = true;
@@ -275,7 +275,7 @@ bool LoopIdiomRecognize::runOnLoopBlock(
 
     // Look for memset instructions, which may be optimized to a larger memset.
     if (MemSetInst *MSI = dyn_cast<MemSetInst>(Inst)) {
-      WeakVH InstPtr(I);
+      WeakVH InstPtr(&*I);
       if (!processLoopMemSet(MSI, BECount))
         continue;
       MadeChange = true;
@@ -416,7 +416,7 @@ static bool mayLoopAccessLocation(Value *Ptr, ModRefInfo Access, Loop *L,
   for (Loop::block_iterator BI = L->block_begin(), E = L->block_end(); BI != E;
        ++BI)
     for (BasicBlock::iterator I = (*BI)->begin(), E = (*BI)->end(); I != E; ++I)
-      if (&*I != IgnoredStore && (AA.getModRefInfo(I, StoreLoc) & Access))
+      if (&*I != IgnoredStore && (AA.getModRefInfo(&*I, StoreLoc) & Access))
         return true;
 
   return false;
@@ -777,10 +777,10 @@ static bool detectPopcountIdiom(Loop *CurLoop, BasicBlock *PreCondBB,
   // step 4: Find the instruction which count the population: cnt2 = cnt1 + 1
   {
     CountInst = nullptr;
-    for (BasicBlock::iterator Iter = LoopEntry->getFirstNonPHI(),
+    for (BasicBlock::iterator Iter = LoopEntry->getFirstNonPHI()->getIterator(),
                               IterE = LoopEntry->end();
          Iter != IterE; Iter++) {
-      Instruction *Inst = Iter;
+      Instruction *Inst = &*Iter;
       if (Inst->getOpcode() != Instruction::Add)
         continue;
 
@@ -972,7 +972,7 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
     ICmpInst *LbCond = cast<ICmpInst>(LbBr->getCondition());
     Type *Ty = TripCnt->getType();
 
-    PHINode *TcPhi = PHINode::Create(Ty, 2, "tcphi", Body->begin());
+    PHINode *TcPhi = PHINode::Create(Ty, 2, "tcphi", &Body->front());
 
     Builder.SetInsertPoint(LbCond);
     Instruction *TcDec = cast<Instruction>(

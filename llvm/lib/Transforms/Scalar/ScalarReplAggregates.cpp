@@ -382,8 +382,8 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
     // Create and insert the integer alloca.
     NewTy = IntegerType::get(AI->getContext(), BitWidth);
   }
-  AllocaInst *NewAI = new AllocaInst(NewTy, nullptr, "",
-                                     AI->getParent()->begin());
+  AllocaInst *NewAI =
+      new AllocaInst(NewTy, nullptr, "", &AI->getParent()->front());
   ConvertUsesToScalar(AI, NewAI, 0, nullptr);
   return NewAI;
 }
@@ -1195,7 +1195,7 @@ static bool isSafePHIToSpeculate(PHINode *PN) {
 
     // Ensure that there are no instructions between the PHI and the load that
     // could store.
-    for (BasicBlock::iterator BBI = PN; &*BBI != LI; ++BBI)
+    for (BasicBlock::iterator BBI(PN); &*BBI != LI; ++BBI)
       if (BBI->mayWriteToMemory())
         return false;
 

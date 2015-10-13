@@ -2191,7 +2191,7 @@ LSRInstance::OptimizeLoopTermCond() {
         ICmpInst *OldCond = Cond;
         Cond = cast<ICmpInst>(Cond->clone());
         Cond->setName(L->getHeader()->getName() + ".termcond");
-        ExitingBlock->getInstList().insert(TermBr, Cond);
+        ExitingBlock->getInstList().insert(TermBr->getIterator(), Cond);
 
         // Clone the IVUse, as the old use still exists!
         CondUse = &IU.AddUser(Cond, CondUse->getOperandValToReplace());
@@ -2765,19 +2765,19 @@ void LSRInstance::CollectChains() {
     for (BasicBlock::iterator I = (*BBIter)->begin(), E = (*BBIter)->end();
          I != E; ++I) {
       // Skip instructions that weren't seen by IVUsers analysis.
-      if (isa<PHINode>(I) || !IU.isIVUserOrOperand(I))
+      if (isa<PHINode>(I) || !IU.isIVUserOrOperand(&*I))
         continue;
 
       // Ignore users that are part of a SCEV expression. This way we only
       // consider leaf IV Users. This effectively rediscovers a portion of
       // IVUsers analysis but in program order this time.
-      if (SE.isSCEVable(I->getType()) && !isa<SCEVUnknown>(SE.getSCEV(I)))
+      if (SE.isSCEVable(I->getType()) && !isa<SCEVUnknown>(SE.getSCEV(&*I)))
         continue;
 
       // Remove this instruction from any NearUsers set it may be in.
       for (unsigned ChainIdx = 0, NChains = IVChainVec.size();
            ChainIdx < NChains; ++ChainIdx) {
-        ChainUsersVec[ChainIdx].NearUsers.erase(I);
+        ChainUsersVec[ChainIdx].NearUsers.erase(&*I);
       }
       // Search for operands that can be chained.
       SmallPtrSet<Instruction*, 4> UniqueOperands;
@@ -2786,7 +2786,7 @@ void LSRInstance::CollectChains() {
       while (IVOpIter != IVOpEnd) {
         Instruction *IVOpInst = cast<Instruction>(*IVOpIter);
         if (UniqueOperands.insert(IVOpInst).second)
-          ChainInstruction(I, IVOpInst, ChainUsersVec);
+          ChainInstruction(&*I, IVOpInst, ChainUsersVec);
         IVOpIter = findIVOperand(std::next(IVOpIter), IVOpEnd, L, SE);
       }
     } // Continue walking down the instructions.
@@ -4368,14 +4368,14 @@ LSRInstance::HoistInsertPosition(BasicBlock::iterator IP,
       // instead of at the end, so that it can be used for other expansions.
       if (IDom == Inst->getParent() &&
           (!BetterPos || !DT.dominates(Inst, BetterPos)))
-        BetterPos = std::next(BasicBlock::iterator(Inst));
+        BetterPos = &*std::next(BasicBlock::iterator(Inst));
     }
     if (!AllDominate)
       break;
     if (BetterPos)
-      IP = BetterPos;
+      IP = BetterPos->getIterator();
     else
-      IP = Tentative;
+      IP = Tentative->getIterator();
   }
 
   return IP;
@@ -4440,7 +4440,8 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator LowestIP,
   // Set IP below instructions recently inserted by SCEVExpander. This keeps the
   // IP consistent across expansions and allows the previously inserted
   // instructions to be reused by subsequent expansion.
-  while (Rewriter.isInsertedInstruction(IP) && IP != LowestIP) ++IP;
+  while (Rewriter.isInsertedInstruction(&*IP) && IP != LowestIP)
+    ++IP;
 
   return IP;
 }
@@ -4490,7 +4491,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
                                  LF.UserInst, LF.OperandValToReplace,
                                  Loops, SE, DT);
 
-    Ops.push_back(SE.getUnknown(Rewriter.expandCodeFor(Reg, nullptr, IP)));
+    Ops.push_back(SE.getUnknown(Rewriter.expandCodeFor(Reg, nullptr, &*IP)));
   }
 
   // Expand the ScaledReg portion.
@@ -4508,14 +4509,14 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
       // Expand ScaleReg as if it was part of the base regs.
       if (F.Scale == 1)
         Ops.push_back(
-            SE.getUnknown(Rewriter.expandCodeFor(ScaledS, nullptr, IP)));
+            SE.getUnknown(Rewriter.expandCodeFor(ScaledS, nullptr, &*IP)));
       else {
         // An interesting way of "folding" with an icmp is to use a negated
         // scale, which we'll implement by inserting it into the other operand
         // of the icmp.
         assert(F.Scale == -1 &&
                "The only scale supported by ICmpZero uses is -1!");
-        ICmpScaledV = Rewriter.expandCodeFor(ScaledS, nullptr, IP);
+        ICmpScaledV = Rewriter.expandCodeFor(ScaledS, nullptr, &*IP);
       }
     } else {
       // Otherwise just expand the scaled register and an explicit scale,
@@ -4525,11 +4526,11 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
       // Unless the addressing mode will not be folded.
       if (!Ops.empty() && LU.Kind == LSRUse::Address &&
           isAMCompletelyFolded(TTI, LU, F)) {
-        Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+        Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, &*IP);
         Ops.clear();
         Ops.push_back(SE.getUnknown(FullV));
       }
-      ScaledS = SE.getUnknown(Rewriter.expandCodeFor(ScaledS, nullptr, IP));
+      ScaledS = SE.getUnknown(Rewriter.expandCodeFor(ScaledS, nullptr, &*IP));
       if (F.Scale != 1)
         ScaledS =
             SE.getMulExpr(ScaledS, SE.getConstant(ScaledS->getType(), F.Scale));
@@ -4541,7 +4542,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
   if (F.BaseGV) {
     // Flush the operand list to suppress SCEVExpander hoisting.
     if (!Ops.empty()) {
-      Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+      Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, &*IP);
       Ops.clear();
       Ops.push_back(SE.getUnknown(FullV));
     }
@@ -4551,7 +4552,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
   // Flush the operand list to suppress SCEVExpander hoisting of both folded and
   // unfolded offsets. LSR assumes they both live next to their uses.
   if (!Ops.empty()) {
-    Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+    Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, &*IP);
     Ops.clear();
     Ops.push_back(SE.getUnknown(FullV));
   }
@@ -4587,7 +4588,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
   const SCEV *FullS = Ops.empty() ?
                       SE.getConstant(IntTy, 0) :
                       SE.getAddExpr(Ops);
-  Value *FullV = Rewriter.expandCodeFor(FullS, Ty, IP);
+  Value *FullV = Rewriter.expandCodeFor(FullS, Ty, &*IP);
 
   // We're done expanding now, so reset the rewriter.
   Rewriter.clearPostInc();
@@ -4687,7 +4688,8 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
       if (!Pair.second)
         PN->setIncomingValue(i, Pair.first->second);
       else {
-        Value *FullV = Expand(LF, F, BB->getTerminator(), Rewriter, DeadInsts);
+        Value *FullV = Expand(LF, F, BB->getTerminator()->getIterator(),
+                              Rewriter, DeadInsts);
 
         // If this is reuse-by-noop-cast, insert the noop cast.
         Type *OpTy = LF.OperandValToReplace->getType();
@@ -4717,7 +4719,8 @@ void LSRInstance::Rewrite(const LSRFixup &LF,
   if (PHINode *PN = dyn_cast<PHINode>(LF.UserInst)) {
     RewriteForPHI(PN, LF, F, Rewriter, DeadInsts, P);
   } else {
-    Value *FullV = Expand(LF, F, LF.UserInst, Rewriter, DeadInsts);
+    Value *FullV =
+        Expand(LF, F, LF.UserInst->getIterator(), Rewriter, DeadInsts);
 
     // If this is reuse-by-noop-cast, insert the noop cast.
     Type *OpTy = LF.OperandValToReplace->getType();

@@ -158,7 +158,7 @@ static void RewriteUsesOfClonedInstructions(BasicBlock *OrigHeader,
   // as necessary.
   SSAUpdater SSA;
   for (I = OrigHeader->begin(); I != E; ++I) {
-    Value *OrigHeaderVal = I;
+    Value *OrigHeaderVal = &*I;
 
     // If there are no uses of the value (e.g. because it returns void), there
     // is nothing to rewrite.
@@ -221,7 +221,7 @@ static bool shouldSpeculateInstrs(BasicBlock::iterator Begin,
 
   for (BasicBlock::iterator I = Begin; I != End; ++I) {
 
-    if (!isSafeToSpeculativelyExecute(I))
+    if (!isSafeToSpeculativelyExecute(&*I))
       return false;
 
     if (isa<DbgInfoIntrinsic>(I))
@@ -301,14 +301,15 @@ bool LoopRotate::simplifyLoopLatch(Loop *L) {
   if (!BI)
     return false;
 
-  if (!shouldSpeculateInstrs(Latch->begin(), Jmp, L))
+  if (!shouldSpeculateInstrs(Latch->begin(), Jmp->getIterator(), L))
     return false;
 
   DEBUG(dbgs() << "Folding loop latch " << Latch->getName() << " into "
         << LastExit->getName() << "\n");
 
   // Hoist the instructions from Latch into LastExit.
-  LastExit->getInstList().splice(BI, Latch->getInstList(), Latch->begin(), Jmp);
+  LastExit->getInstList().splice(BI->getIterator(), Latch->getInstList(),
+                                 Latch->begin(), Jmp->getIterator());
 
   unsigned FallThruPath = BI->getSuccessor(0) == Latch ? 0 : 1;
   BasicBlock *Header = Jmp->getSuccessor(0);
@@ -431,7 +432,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   // possible or create a clone in the OldPreHeader if not.
   TerminatorInst *LoopEntryBranch = OrigPreheader->getTerminator();
   while (I != E) {
-    Instruction *Inst = I++;
+    Instruction *Inst = &*I++;
 
     // If the instruction's operands are invariant and it doesn't read or write
     // memory, then it is safe to hoist.  Doing this doesn't change the order of

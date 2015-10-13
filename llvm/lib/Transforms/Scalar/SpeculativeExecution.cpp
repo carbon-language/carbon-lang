@@ -227,7 +227,7 @@ bool SpeculativeExecution::considerHoistingFromTo(BasicBlock &FromBlock,
     // changes the list that I is iterating through.
     auto Current = I;
     ++I;
-    if (!NotHoisted.count(Current)) {
+    if (!NotHoisted.count(&*Current)) {
       Current->moveBefore(ToBlock.getTerminator());
     }
   }

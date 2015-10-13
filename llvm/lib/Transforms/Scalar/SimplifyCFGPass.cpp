@@ -68,15 +68,14 @@ static bool mergeEmptyReturnBlocks(Function &F) {
     // single PHI node that is the operand to the return.
     if (Ret != &BB.front()) {
       // Check for something else in the block.
-      BasicBlock::iterator I = Ret;
+      BasicBlock::iterator I(Ret);
       --I;
       // Skip over debug info.
       while (isa<DbgInfoIntrinsic>(I) && I != BB.begin())
         --I;
       if (!isa<DbgInfoIntrinsic>(I) &&
-          (!isa<PHINode>(I) || I != BB.begin() ||
-           Ret->getNumOperands() == 0 ||
-           Ret->getOperand(0) != I))
+          (!isa<PHINode>(I) || I != BB.begin() || Ret->getNumOperands() == 0 ||
+           Ret->getOperand(0) != &*I))
         continue;
     }
 
@@ -137,7 +136,7 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
 
     // Loop over all of the basic blocks and remove them if they are unneeded.
     for (Function::iterator BBIt = F.begin(); BBIt != F.end(); ) {
-      if (SimplifyCFG(BBIt++, TTI, BonusInstThreshold, AC)) {
+      if (SimplifyCFG(&*BBIt++, TTI, BonusInstThreshold, AC)) {
         LocalChange = true;
         ++NumSimpl;
       }

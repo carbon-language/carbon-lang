@@ -899,14 +899,14 @@ void StructurizeCFG::rebuildSSA() {
             continue;
         }
 
-        if (DT->dominates(II, User))
+        if (DT->dominates(&*II, User))
           continue;
 
         if (!Initialized) {
           Value *Undef = UndefValue::get(II->getType());
           Updater.Initialize(II->getType(), "");
           Updater.AddAvailableValue(&Func->getEntryBlock(), Undef);
-          Updater.AddAvailableValue(BB, II);
+          Updater.AddAvailableValue(BB, &*II);
           Initialized = true;
         }
         Updater.RewriteUseAfterInsertions(U);

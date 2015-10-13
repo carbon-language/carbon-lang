@@ -1158,7 +1158,7 @@ static bool isSafePHIToSpeculate(PHINode &PN) {
 
     // Ensure that there are no instructions between the PHI and the load that
     // could store.
-    for (BasicBlock::iterator BBI = &PN; &*BBI != LI; ++BBI)
+    for (BasicBlock::iterator BBI(PN); &*BBI != LI; ++BBI)
       if (BBI->mayWriteToMemory())
         return false;
 
@@ -2442,7 +2442,7 @@ private:
                  DL.getTypeStoreSizeInBits(LI.getType()) &&
              "Non-byte-multiple bit width");
       // Move the insertion point just past the load so that we can refer to it.
-      IRB.SetInsertPoint(std::next(BasicBlock::iterator(&LI)));
+      IRB.SetInsertPoint(&*std::next(BasicBlock::iterator(&LI)));
       // Create a placeholder value with the same type as LI to use as the
       // basis for the new value. This allows us to replace the uses of LI with
       // the computed value, and then replace the placeholder with LI, leaving
@@ -2920,7 +2920,7 @@ private:
     // dominate the PHI.
     IRBuilderTy PtrBuilder(IRB);
     if (isa<PHINode>(OldPtr))
-      PtrBuilder.SetInsertPoint(OldPtr->getParent()->getFirstInsertionPt());
+      PtrBuilder.SetInsertPoint(&*OldPtr->getParent()->getFirstInsertionPt());
     else
       PtrBuilder.SetInsertPoint(OldPtr);
     PtrBuilder.SetCurrentDebugLocation(OldPtr->getDebugLoc());
@@ -3566,7 +3566,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
            "Cannot represent alloca access size using 64-bit integers!");
 
     Instruction *BasePtr = cast<Instruction>(LI->getPointerOperand());
-    IRB.SetInsertPoint(BasicBlock::iterator(LI));
+    IRB.SetInsertPoint(LI);
 
     DEBUG(dbgs() << "  Splitting load: " << *LI << "\n");
 
@@ -3618,7 +3618,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       }
 
       Value *StoreBasePtr = SI->getPointerOperand();
-      IRB.SetInsertPoint(BasicBlock::iterator(SI));
+      IRB.SetInsertPoint(SI);
 
       DEBUG(dbgs() << "    Splitting store of load: " << *SI << "\n");
 
@@ -3707,7 +3707,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       if (SplitLoads) {
         PLoad = (*SplitLoads)[Idx];
       } else {
-        IRB.SetInsertPoint(BasicBlock::iterator(LI));
+        IRB.SetInsertPoint(LI);
         PLoad = IRB.CreateAlignedLoad(
             getAdjustedPtr(IRB, DL, LoadBasePtr,
                            APInt(DL.getPointerSizeInBits(), PartOffset),
@@ -3717,7 +3717,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       }
 
       // And store this partition.
-      IRB.SetInsertPoint(BasicBlock::iterator(SI));
+      IRB.SetInsertPoint(SI);
       StoreInst *PStore = IRB.CreateAlignedStore(
           PLoad, getAdjustedPtr(IRB, DL, StoreBasePtr,
                                 APInt(DL.getPointerSizeInBits(), PartOffset),

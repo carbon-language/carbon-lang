@@ -1415,7 +1415,7 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
            UnwindBlock->getUniquePredecessor() &&
            "can't safely insert in this block!");
 
-    Builder.SetInsertPoint(UnwindBlock->getFirstInsertionPt());
+    Builder.SetInsertPoint(&*UnwindBlock->getFirstInsertionPt());
     Builder.SetCurrentDebugLocation(ToReplace->getDebugLoc());
 
     // Extract second element from landingpad return value. We will attach
@@ -1435,7 +1435,7 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
            NormalDest->getUniquePredecessor() &&
            "can't safely insert in this block!");
 
-    Builder.SetInsertPoint(NormalDest->getFirstInsertionPt());
+    Builder.SetInsertPoint(&*NormalDest->getFirstInsertionPt());
 
     // gc relocates will be generated later as if it were regular call
     // statepoint
@@ -1708,8 +1708,8 @@ static void relocationViaAlloca(
       // Insert the clobbering stores.  These may get intermixed with the
       // gc.results and gc.relocates, but that's fine.
       if (auto II = dyn_cast<InvokeInst>(Statepoint)) {
-        InsertClobbersAt(II->getNormalDest()->getFirstInsertionPt());
-        InsertClobbersAt(II->getUnwindDest()->getFirstInsertionPt());
+        InsertClobbersAt(&*II->getNormalDest()->getFirstInsertionPt());
+        InsertClobbersAt(&*II->getUnwindDest()->getFirstInsertionPt());
       } else {
         InsertClobbersAt(cast<Instruction>(Statepoint)->getNextNode());
       }
@@ -1819,18 +1819,17 @@ static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
       "__tmp_use", FunctionType::get(Type::getVoidTy(M->getContext()), true)));
   if (CS.isCall()) {
     // For call safepoints insert dummy calls right after safepoint
-    BasicBlock::iterator Next(CS.getInstruction());
-    Next++;
-    Holders.push_back(CallInst::Create(Func, Values, "", Next));
+    Holders.push_back(CallInst::Create(Func, Values, "",
+                                       &*++CS.getInstruction()->getIterator()));
     return;
   }
   // For invoke safepooints insert dummy calls both in normal and
   // exceptional destination blocks
   auto *II = cast<InvokeInst>(CS.getInstruction());
   Holders.push_back(CallInst::Create(
-      Func, Values, "", II->getNormalDest()->getFirstInsertionPt()));
+      Func, Values, "", &*II->getNormalDest()->getFirstInsertionPt()));
   Holders.push_back(CallInst::Create(
-      Func, Values, "", II->getUnwindDest()->getFirstInsertionPt()));
+      Func, Values, "", &*II->getUnwindDest()->getFirstInsertionPt()));
 }
 
 static void findLiveReferences(
@@ -2153,9 +2152,9 @@ static void rematerializeLiveValues(CallSite CS,
       InvokeInst *Invoke = cast<InvokeInst>(CS.getInstruction());
 
       Instruction *NormalInsertBefore =
-          Invoke->getNormalDest()->getFirstInsertionPt();
+          &*Invoke->getNormalDest()->getFirstInsertionPt();
       Instruction *UnwindInsertBefore =
-          Invoke->getUnwindDest()->getFirstInsertionPt();
+          &*Invoke->getUnwindDest()->getFirstInsertionPt();
 
       Instruction *NormalRematerializedValue =
           rematerializeChain(NormalInsertBefore);
@@ -2724,7 +2723,7 @@ static void findLiveSetAtInst(Instruction *Inst, GCPtrLivenessData &Data,
   // call result is not live (normal), nor are it's arguments
   // (unless they're used again later).  This adjustment is
   // specifically what we need to relocate
-  BasicBlock::reverse_iterator rend(Inst);
+  BasicBlock::reverse_iterator rend(Inst->getIterator());
   computeLiveInValues(BB->rbegin(), rend, LiveOut);
   LiveOut.erase(Inst);
   Out.insert(LiveOut.begin(), LiveOut.end());

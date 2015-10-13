@@ -134,7 +134,7 @@ bool Sinking::ProcessBlock(BasicBlock &BB) {
   bool ProcessedBegin = false;
   SmallPtrSet<Instruction *, 8> Stores;
   do {
-    Instruction *Inst = I;  // The instruction to sink.
+    Instruction *Inst = &*I; // The instruction to sink.
 
     // Predecrement I (if it's not begin) so that it isn't invalidated by
     // sinking.
@@ -279,6 +279,6 @@ bool Sinking::SinkInstruction(Instruction *Inst,
         dbgs() << ")\n");
 
   // Move the instruction.
-  Inst->moveBefore(SuccToSinkTo->getFirstInsertionPt());
+  Inst->moveBefore(&*SuccToSinkTo->getFirstInsertionPt());
   return true;
 }

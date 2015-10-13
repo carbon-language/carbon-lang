@@ -379,7 +379,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
   // are stored.
   MemsetRanges Ranges(DL);
 
-  BasicBlock::iterator BI = StartInst;
+  BasicBlock::iterator BI(StartInst);
   for (++BI; !isa<TerminatorInst>(BI); ++BI) {
     if (!isa<StoreInst>(BI) && !isa<MemSetInst>(BI)) {
       // If the instruction is readnone, ignore it, otherwise bail out.  We
@@ -434,7 +434,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
   // If we create any memsets, we put it right before the first instruction that
   // isn't part of the memset block.  This ensure that the memset is dominated
   // by any addressing instruction needed by the start of the block.
-  IRBuilder<> Builder(BI);
+  IRBuilder<> Builder(&*BI);
 
   // Now that we have full information about ranges, loop over the ranges and
   // emit memset's for anything big enough to be worthwhile.
@@ -516,8 +516,8 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
         // the call and the store.
         AliasAnalysis &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
         MemoryLocation StoreLoc = MemoryLocation::get(SI);
-        for (BasicBlock::iterator I = --BasicBlock::iterator(SI),
-                                  E = C; I != E; --I) {
+        for (BasicBlock::iterator I = --SI->getIterator(), E = C->getIterator();
+             I != E; --I) {
           if (AA.getModRefInfo(&*I, StoreLoc) != MRI_NoModRef) {
             C = nullptr;
             break;
@@ -559,7 +559,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   if (Value *ByteVal = isBytewiseValue(SI->getOperand(0)))
     if (Instruction *I = tryMergingIntoMemset(SI, SI->getPointerOperand(),
                                               ByteVal)) {
-      BBI = I;  // Don't invalidate iterator.
+      BBI = I->getIterator(); // Don't invalidate iterator.
       return true;
     }
 
@@ -572,7 +572,7 @@ bool MemCpyOpt::processMemSet(MemSetInst *MSI, BasicBlock::iterator &BBI) {
   if (isa<ConstantInt>(MSI->getLength()) && !MSI->isVolatile())
     if (Instruction *I = tryMergingIntoMemset(MSI, MSI->getDest(),
                                               MSI->getValue())) {
-      BBI = I;  // Don't invalidate iterator.
+      BBI = I->getIterator(); // Don't invalidate iterator.
       return true;
     }
   return false;
@@ -803,8 +803,9 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep) {
   //
   // NOTE: This is conservative, it will stop on any read from the source loc,
   // not just the defining memcpy.
-  MemDepResult SourceDep = MD->getPointerDependencyFrom(
-      MemoryLocation::getForSource(MDep), false, M, M->getParent());
+  MemDepResult SourceDep =
+      MD->getPointerDependencyFrom(MemoryLocation::getForSource(MDep), false,
+                                   M->getIterator(), M->getParent());
   if (!SourceDep.isClobber() || SourceDep.getInst() != MDep)
     return false;
 
@@ -861,8 +862,9 @@ bool MemCpyOpt::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
     return false;
 
   // Check that there are no other dependencies on the memset destination.
-  MemDepResult DstDepInfo = MD->getPointerDependencyFrom(
-      MemoryLocation::getForDest(MemSet), false, MemCpy, MemCpy->getParent());
+  MemDepResult DstDepInfo =
+      MD->getPointerDependencyFrom(MemoryLocation::getForDest(MemSet), false,
+                                   MemCpy->getIterator(), MemCpy->getParent());
   if (DstDepInfo.getInst() != MemSet)
     return false;
 
@@ -999,8 +1001,8 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   }
 
   MemoryLocation SrcLoc = MemoryLocation::getForSource(M);
-  MemDepResult SrcDepInfo = MD->getPointerDependencyFrom(SrcLoc, true,
-                                                         M, M->getParent());
+  MemDepResult SrcDepInfo = MD->getPointerDependencyFrom(
+      SrcLoc, true, M->getIterator(), M->getParent());
 
   if (SrcDepInfo.isClobber()) {
     if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(SrcDepInfo.getInst()))
@@ -1077,8 +1079,8 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   Type *ByValTy = cast<PointerType>(ByValArg->getType())->getElementType();
   uint64_t ByValSize = DL.getTypeAllocSize(ByValTy);
   MemDepResult DepInfo = MD->getPointerDependencyFrom(
-      MemoryLocation(ByValArg, ByValSize), true, CS.getInstruction(),
-      CS.getInstruction()->getParent());
+      MemoryLocation(ByValArg, ByValSize), true,
+      CS.getInstruction()->getIterator(), CS.getInstruction()->getParent());
   if (!DepInfo.isClobber())
     return false;
 
@@ -1120,9 +1122,9 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   //
   // NOTE: This is conservative, it will stop on any read from the source loc,
   // not just the defining memcpy.
-  MemDepResult SourceDep =
-      MD->getPointerDependencyFrom(MemoryLocation::getForSource(MDep), false,
-                                   CS.getInstruction(), MDep->getParent());
+  MemDepResult SourceDep = MD->getPointerDependencyFrom(
+      MemoryLocation::getForSource(MDep), false,
+      CS.getInstruction()->getIterator(), MDep->getParent());
   if (!SourceDep.isClobber() || SourceDep.getInst() != MDep)
     return false;
 
@@ -1149,7 +1151,7 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB) {
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
       // Avoid invalidating the iterator.
-      Instruction *I = BI++;
+      Instruction *I = &*BI++;
 
       bool RepeatInstruction = false;
 

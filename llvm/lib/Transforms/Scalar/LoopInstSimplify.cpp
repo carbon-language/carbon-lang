@@ -112,7 +112,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
       // Simplify instructions in the current basic block.
       for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-        Instruction *I = BI++;
+        Instruction *I = &*BI++;
 
         // The first time through the loop ToSimplify is empty and we try to
         // simplify all instructions. On later iterations ToSimplify is not

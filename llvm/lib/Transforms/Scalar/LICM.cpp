@@ -587,7 +587,7 @@ static Instruction *CloneInstructionInExitBlock(const Instruction &I,
         if (!OLoop->contains(&PN)) {
           PHINode *OpPN =
               PHINode::Create(OInst->getType(), PN.getNumIncomingValues(),
-                              OInst->getName() + ".lcssa", ExitBlock.begin());
+                              OInst->getName() + ".lcssa", &ExitBlock.front());
           for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
             OpPN->addIncoming(OInst, PN.getIncomingBlock(i));
           *OI = OpPN;
@@ -751,9 +751,9 @@ namespace {
           if (!L->contains(BB)) {
             // We need to create an LCSSA PHI node for the incoming value and
             // store that.
-            PHINode *PN = PHINode::Create(
-                I->getType(), PredCache.size(BB),
-                I->getName() + ".lcssa", BB->begin());
+            PHINode *PN =
+                PHINode::Create(I->getType(), PredCache.size(BB),
+                                I->getName() + ".lcssa", &BB->front());
             for (BasicBlock *Pred : PredCache.get(BB))
               PN->addIncoming(I, Pred);
             return PN;
@@ -963,7 +963,7 @@ bool llvm::promoteLoopAccessesToScalars(AliasSet &AS,
     CurLoop->getUniqueExitBlocks(ExitBlocks);
     InsertPts.resize(ExitBlocks.size());
     for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-      InsertPts[i] = ExitBlocks[i]->getFirstInsertionPt();
+      InsertPts[i] = &*ExitBlocks[i]->getFirstInsertionPt();
   }
 
   // We use the SSAUpdater interface to insert phi nodes as required.

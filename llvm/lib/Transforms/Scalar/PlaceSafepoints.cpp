@@ -423,14 +423,14 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
     assert(hasNextInstruction(I) &&
            "first check if there is a next instruction!");
     if (I->isTerminator()) {
-      return I->getParent()->getUniqueSuccessor()->begin();
+      return &I->getParent()->getUniqueSuccessor()->front();
     } else {
-      return std::next(BasicBlock::iterator(I));
+      return &*++I->getIterator();
     }
   };
 
   Instruction *cursor = nullptr;
-  for (cursor = F.getEntryBlock().begin(); hasNextInstruction(cursor);
+  for (cursor = &F.getEntryBlock().front(); hasNextInstruction(cursor);
        cursor = nextInstruction(cursor)) {
 
     // We need to ensure a safepoint poll occurs before any 'real' call.  The

@@ -99,7 +99,7 @@ static bool populateDependencyMatrix(CharMatrix &DepMatrix, unsigned Level,
         return false;
       if (St && !St->isSimple())
         return false;
-      MemInstr.push_back(I);
+      MemInstr.push_back(&*I);
     }
   }
 
@@ -1113,8 +1113,8 @@ static void moveBBContents(BasicBlock *FromBB, Instruction *InsertBefore) {
   auto &ToList = InsertBefore->getParent()->getInstList();
   auto &FromList = FromBB->getInstList();
 
-  ToList.splice(InsertBefore, FromList, FromList.begin(),
-                FromBB->getTerminator());
+  ToList.splice(InsertBefore->getIterator(), FromList, FromList.begin(),
+                FromBB->getTerminator()->getIterator());
 }
 
 void LoopInterchangeTransform::adjustOuterLoopPreheader() {

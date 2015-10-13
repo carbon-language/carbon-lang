@@ -484,7 +484,7 @@ void LoopReroll::collectPossibleIVs(Loop *L,
       continue;
 
     if (const SCEVAddRecExpr *PHISCEV =
-        dyn_cast<SCEVAddRecExpr>(SE->getSCEV(I))) {
+            dyn_cast<SCEVAddRecExpr>(SE->getSCEV(&*I))) {
       if (PHISCEV->getLoop() != L)
         continue;
       if (!PHISCEV->isAffine())
@@ -494,10 +494,10 @@ void LoopReroll::collectPossibleIVs(Loop *L,
         const APInt &AInt = IncSCEV->getValue()->getValue().abs();
         if (IncSCEV->getValue()->isZero() || AInt.uge(MaxInc))
           continue;
-        IVToIncMap[I] = IncSCEV->getValue()->getSExtValue();
+        IVToIncMap[&*I] = IncSCEV->getValue()->getSExtValue();
         DEBUG(dbgs() << "LRR: Possible IV: " << *I << " = " << *PHISCEV
                      << "\n");
-        PossibleIVs.push_back(I);
+        PossibleIVs.push_back(&*I);
       }
     }
   }
@@ -558,7 +558,7 @@ void LoopReroll::collectPossibleReductions(Loop *L,
     if (!I->getType()->isSingleValueType())
       continue;
 
-    SimpleLoopReduction SLR(I, L);
+    SimpleLoopReduction SLR(&*I, L);
     if (!SLR.valid())
       continue;
 
@@ -1297,7 +1297,7 @@ void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
         SCEV::FlagAnyWrap));
     { // Limit the lifetime of SCEVExpander.
       SCEVExpander Expander(*SE, DL, "reroll");
-      Value *NewIV = Expander.expandCodeFor(H, IV->getType(), Header->begin());
+      Value *NewIV = Expander.expandCodeFor(H, IV->getType(), &Header->front());
 
       for (auto &KV : Uses) {
         if (KV.second.find_first() == 0)
