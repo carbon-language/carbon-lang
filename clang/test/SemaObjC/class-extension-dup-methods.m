@@ -26,3 +26,15 @@ __attribute__((objc_root_class)) @interface AppDelegate
 - (void)someMethodWithArgument:(float)argument; // OK. No warning to be issued here.
 + (void)someMethodWithArgument:(float)argument : (float)argument2; // expected-error {{duplicate declaration of method 'someMethodWithArgument::'}}
 @end
+
+__attribute__((objc_root_class))
+@interface Test
+-(void)meth; // expected-note {{declared here}}
+@end
+
+@interface Test()
+-(void)meth;
+@end
+
+@implementation Test // expected-warning {{method definition for 'meth' not found}}
+@end
