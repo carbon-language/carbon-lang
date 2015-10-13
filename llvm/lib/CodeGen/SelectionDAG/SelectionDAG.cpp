@@ -949,7 +949,7 @@ void SelectionDAG::allnodes_clear() {
   assert(&*AllNodes.begin() == &EntryNode);
   AllNodes.remove(AllNodes.begin());
   while (!AllNodes.empty())
-    DeallocateNode(AllNodes.begin());
+    DeallocateNode(&AllNodes.front());
 #ifndef NDEBUG
   NextPersistentId = 0;
 #endif
@@ -6584,13 +6584,13 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
   // Node Id fields for nodes At SortedPos and after will contain the
   // count of outstanding operands.
   for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ) {
-    SDNode *N = I++;
+    SDNode *N = &*I++;
     checkForCycles(N, this);
     unsigned Degree = N->getNumOperands();
     if (Degree == 0) {
       // A node with no uses, add it to the result array immediately.
       N->setNodeId(DAGSize++);
-      allnodes_iterator Q = N;
+      allnodes_iterator Q(N);
       if (Q != SortedPos)
         SortedPos = AllNodes.insert(SortedPos, AllNodes.remove(Q));
       assert(SortedPos != AllNodes.end() && "Overran node list");
@@ -6628,8 +6628,8 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
     }
     if (&Node == SortedPos) {
 #ifndef NDEBUG
-      allnodes_iterator I = N;
-      SDNode *S = ++I;
+      allnodes_iterator I(N);
+      SDNode *S = &*++I;
       dbgs() << "Overran sorted position:\n";
       S->dumprFull(this); dbgs() << "\n";
       dbgs() << "Checking if this is due to cycles\n";

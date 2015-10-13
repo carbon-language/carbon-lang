@@ -134,7 +134,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
       // Look for inline asm that clobbers the SP register.
       if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
-        ImmutableCallSite CS(I);
+        ImmutableCallSite CS(&*I);
         if (isa<InlineAsm>(CS.getCalledValue())) {
           unsigned SP = TLI->getStackPointerRegisterToSaveRestore();
           const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
@@ -172,10 +172,9 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
       // Mark values used outside their block as exported, by allocating
       // a virtual register for them.
-      if (isUsedOutsideOfDefiningBlock(I))
-        if (!isa<AllocaInst>(I) ||
-            !StaticAllocaMap.count(cast<AllocaInst>(I)))
-          InitializeRegForValue(I);
+      if (isUsedOutsideOfDefiningBlock(&*I))
+        if (!isa<AllocaInst>(I) || !StaticAllocaMap.count(cast<AllocaInst>(I)))
+          InitializeRegForValue(&*I);
 
       // Collect llvm.dbg.declare information. This is done now instead of
       // during the initial isel pass through the IR so that it is done
@@ -205,7 +204,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       }
 
       // Decide the preferred extend type for a value.
-      PreferredExtendType[I] = getPreferredExtendForValue(I);
+      PreferredExtendType[&*I] = getPreferredExtendForValue(&*I);
     }
 
   // Create an initial MachineBasicBlock for each LLVM BasicBlock in F.  This
@@ -229,8 +228,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
         assert(&*BB->begin() == I && "WinEHPrepare failed to demote PHIs");
     }
 
-    MachineBasicBlock *MBB = mf.CreateMachineBasicBlock(BB);
-    MBBMap[BB] = MBB;
+    MachineBasicBlock *MBB = mf.CreateMachineBasicBlock(&*BB);
+    MBBMap[&*BB] = MBB;
     MF->push_back(MBB);
 
     // Transfer the address-taken flag. This is necessary because there could
@@ -270,8 +269,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   SmallVector<const LandingPadInst *, 4> LPads;
   for (BB = Fn->begin(); BB != EB; ++BB) {
     const Instruction *FNP = BB->getFirstNonPHI();
-    if (BB->isEHPad() && MBBMap.count(BB))
-      MBBMap[BB]->setIsEHPad();
+    if (BB->isEHPad() && MBBMap.count(&*BB))
+      MBBMap[&*BB]->setIsEHPad();
     if (const auto *LPI = dyn_cast<LandingPadInst>(FNP))
       LPads.push_back(LPI);
   }

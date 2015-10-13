@@ -604,7 +604,7 @@ void SelectionDAG::dump() const {
 
   for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
        I != E; ++I) {
-    const SDNode *N = I;
+    const SDNode *N = &*I;
     if (!N->hasOneUse() && N != getRoot().getNode() &&
         (!shouldPrintInline(*N) || N->use_empty()))
       DumpNodes(N, 2, this);

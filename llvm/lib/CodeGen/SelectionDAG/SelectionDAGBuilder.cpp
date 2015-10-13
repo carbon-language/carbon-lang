@@ -1180,7 +1180,7 @@ void SelectionDAGBuilder::visitCatchPad(const CatchPadInst &I) {
   if (IsSEH) {
     DAG.setRoot(DAG.getNode(ISD::CATCHRET, getCurSDLoc(), MVT::Other,
                             getControlRoot(), DAG.getBasicBlock(NormalDestMBB),
-                            DAG.getBasicBlock(FuncInfo.MF->begin())));
+                            DAG.getBasicBlock(&FuncInfo.MF->front())));
     return;
   }
 
@@ -1587,7 +1587,7 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
   }
 
   //  Create TmpBB after CurBB.
-  MachineFunction::iterator BBI = CurBB;
+  MachineFunction::iterator BBI(CurBB);
   MachineFunction &MF = DAG.getMachineFunction();
   MachineBasicBlock *TmpBB = MF.CreateMachineBasicBlock(CurBB->getBasicBlock());
   CurBB->getParent()->insert(++BBI, TmpBB);
@@ -7286,9 +7286,9 @@ static bool isOnlyUsedInEntryBlock(const Argument *A, bool FastISel) {
   if (FastISel)
     return A->use_empty();
 
-  const BasicBlock *Entry = A->getParent()->begin();
+  const BasicBlock &Entry = A->getParent()->front();
   for (const User *U : A->users())
-    if (cast<Instruction>(U)->getParent() != Entry || isa<SwitchInst>(U))
+    if (cast<Instruction>(U)->getParent() != &Entry || isa<SwitchInst>(U))
       return false;  // Use not in entry block.
 
   return true;
@@ -7452,12 +7452,12 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
     // If this argument is unused then remember its value. It is used to generate
     // debugging information.
     if (I->use_empty() && NumValues) {
-      SDB->setUnusedArgValue(I, InVals[i]);
+      SDB->setUnusedArgValue(&*I, InVals[i]);
 
       // Also remember any frame index for use in FastISel.
       if (FrameIndexSDNode *FI =
           dyn_cast<FrameIndexSDNode>(InVals[i].getNode()))
-        FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
+        FuncInfo->setArgumentFrameIndex(&*I, FI->getIndex());
     }
 
     for (unsigned Val = 0; Val != NumValues; ++Val) {
@@ -7487,18 +7487,18 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
     // Note down frame index.
     if (FrameIndexSDNode *FI =
         dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
-      FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
+      FuncInfo->setArgumentFrameIndex(&*I, FI->getIndex());
 
     SDValue Res = DAG.getMergeValues(makeArrayRef(ArgValues.data(), NumValues),
                                      SDB->getCurSDLoc());
 
-    SDB->setValue(I, Res);
+    SDB->setValue(&*I, Res);
     if (!TM.Options.EnableFastISel && Res.getOpcode() == ISD::BUILD_PAIR) {
       if (LoadSDNode *LNode =
           dyn_cast<LoadSDNode>(Res.getOperand(0).getNode()))
         if (FrameIndexSDNode *FI =
             dyn_cast<FrameIndexSDNode>(LNode->getBasePtr().getNode()))
-        FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
+        FuncInfo->setArgumentFrameIndex(&*I, FI->getIndex());
     }
 
     // If this argument is live outside of the entry block, insert a copy from
@@ -7510,13 +7510,13 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
       // uses with vregs.
       unsigned Reg = cast<RegisterSDNode>(Res.getOperand(1))->getReg();
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-        FuncInfo->ValueMap[I] = Reg;
+        FuncInfo->ValueMap[&*I] = Reg;
         continue;
       }
     }
-    if (!isOnlyUsedInEntryBlock(I, TM.Options.EnableFastISel)) {
-      FuncInfo->InitializeRegForValue(I);
-      SDB->CopyToExportRegsIfNeeded(I);
+    if (!isOnlyUsedInEntryBlock(&*I, TM.Options.EnableFastISel)) {
+      FuncInfo->InitializeRegForValue(&*I);
+      SDB->CopyToExportRegsIfNeeded(&*I);
     }
   }
 
@@ -7618,7 +7618,7 @@ AddSuccessorMBB(const BasicBlock *BB,
   // If SuccBB has not been created yet, create it.
   if (!SuccMBB) {
     MachineFunction *MF = ParentMBB->getParent();
-    MachineFunction::iterator BBI = ParentMBB;
+    MachineFunction::iterator BBI(ParentMBB);
     SuccMBB = MF->CreateMachineBasicBlock(BB);
     MF->insert(++BBI, SuccMBB);
   }
@@ -7629,10 +7629,10 @@ AddSuccessorMBB(const BasicBlock *BB,
 }
 
 MachineBasicBlock *SelectionDAGBuilder::NextBlock(MachineBasicBlock *MBB) {
-  MachineFunction::iterator I = MBB;
+  MachineFunction::iterator I(MBB);
   if (++I == FuncInfo.MF->end())
     return nullptr;
-  return I;
+  return &*I;
 }
 
 /// During lowering new call nodes can be created (such as memset, etc.).
@@ -8096,9 +8096,9 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
                                         MachineBasicBlock *DefaultMBB) {
   MachineFunction *CurMF = FuncInfo.MF;
   MachineBasicBlock *NextMBB = nullptr;
-  MachineFunction::iterator BBI = W.MBB;
+  MachineFunction::iterator BBI(W.MBB);
   if (++BBI != FuncInfo.MF->end())
-    NextMBB = BBI;
+    NextMBB = &*BBI;
 
   unsigned Size = W.LastCluster - W.FirstCluster + 1;
 
@@ -8400,7 +8400,7 @@ void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
   const ConstantInt *Pivot = PivotCluster->Low;
 
   // New blocks will be inserted immediately after the current one.
-  MachineFunction::iterator BBI = W.MBB;
+  MachineFunction::iterator BBI(W.MBB);
   ++BBI;
 
   // We will branch to the LHS if Value < Pivot. If LHS is a single cluster,

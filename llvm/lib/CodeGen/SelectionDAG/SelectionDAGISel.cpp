@@ -388,8 +388,8 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 ///
 static void SplitCriticalSideEffectEdges(Function &Fn) {
   // Loop for blocks with phi nodes.
-  for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-    PHINode *PN = dyn_cast<PHINode>(BB->begin());
+  for (BasicBlock &BB : Fn) {
+    PHINode *PN = dyn_cast<PHINode>(BB.begin());
     if (!PN) continue;
 
   ReprocessBlock:
@@ -397,7 +397,7 @@ static void SplitCriticalSideEffectEdges(Function &Fn) {
     // are potentially trapping constant expressions.  Constant expressions are
     // the only potentially trapping value that can occur as the argument to a
     // PHI.
-    for (BasicBlock::iterator I = BB->begin(); (PN = dyn_cast<PHINode>(I)); ++I)
+    for (BasicBlock::iterator I = BB.begin(); (PN = dyn_cast<PHINode>(I)); ++I)
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
         ConstantExpr *CE = dyn_cast<ConstantExpr>(PN->getIncomingValue(i));
         if (!CE || !CE->canTrap()) continue;
@@ -411,7 +411,7 @@ static void SplitCriticalSideEffectEdges(Function &Fn) {
 
         // Okay, we have to split this edge.
         SplitCriticalEdge(
-            Pred->getTerminator(), GetSuccessorNumber(Pred, BB),
+            Pred->getTerminator(), GetSuccessorNumber(Pred, &BB),
             CriticalEdgeSplittingOptions().setMergeIdenticalEdges());
         goto ReprocessBlock;
       }
@@ -468,7 +468,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // If the first basic block in the function has live ins that need to be
   // copied into vregs, emit the copies into the top of the block before
   // emitting the code for the block.
-  MachineBasicBlock *EntryMBB = MF->begin();
+  MachineBasicBlock *EntryMBB = &MF->front();
   const TargetRegisterInfo &TRI = *MF->getSubtarget().getRegisterInfo();
   RegInfo->EmitLiveInCopies(EntryMBB, TRI, *TII);
 
@@ -888,7 +888,7 @@ void SelectionDAGISel::DoInstructionSelection() {
     // graph) and preceding back toward the beginning (the entry
     // node).
     while (ISelPosition != CurDAG->allnodes_begin()) {
-      SDNode *Node = --ISelPosition;
+      SDNode *Node = &*--ISelPosition;
       // Skip dead nodes. DAGCombiner is expected to eliminate all dead nodes,
       // but there are currently some corner cases that it misses. Also, this
       // makes it theoretically possible to disable the DAGCombiner.
@@ -1141,7 +1141,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       FuncInfo->VisitedBBs.insert(LLVMBB);
     }
 
-    BasicBlock::const_iterator const Begin = LLVMBB->getFirstNonPHI();
+    BasicBlock::const_iterator const Begin =
+        LLVMBB->getFirstNonPHI()->getIterator();
     BasicBlock::const_iterator const End = LLVMBB->end();
     BasicBlock::const_iterator BI = End;
 
@@ -1192,7 +1193,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       unsigned NumFastIselRemaining = std::distance(Begin, End);
       // Do FastISel on as many instructions as possible.
       for (; BI != Begin; --BI) {
-        const Instruction *Inst = std::prev(BI);
+        const Instruction *Inst = &*std::prev(BI);
 
         // If we no longer require this instruction, skip it.
         if (isFoldedOrDeadInstruction(Inst, FuncInfo)) {
@@ -1212,8 +1213,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           // then see if there is a load right before the selected instructions.
           // Try to fold the load if so.
           const Instruction *BeforeInst = Inst;
-          while (BeforeInst != Begin) {
-            BeforeInst = std::prev(BasicBlock::const_iterator(BeforeInst));
+          while (BeforeInst != &*Begin) {
+            BeforeInst = &*std::prev(BasicBlock::const_iterator(BeforeInst));
             if (!isFoldedOrDeadInstruction(BeforeInst, FuncInfo))
               break;
           }
@@ -1254,7 +1255,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
           bool HadTailCall = false;
           MachineBasicBlock::iterator SavedInsertPt = FuncInfo->InsertPt;
-          SelectBasicBlock(Inst, BI, HadTailCall);
+          SelectBasicBlock(Inst->getIterator(), BI, HadTailCall);
 
           // If the call was emitted as a tail call, we're done with the block.
           // We also need to delete any previously emitted instructions.
