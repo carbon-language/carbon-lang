@@ -7756,8 +7756,6 @@ def err_omp_ordered_directive_with_param : Error<
   "'ordered' directive %select{without any clauses|with 'threads' clause}0 cannot be closely nested inside ordered region with specified parameter">;
 def note_omp_ordered_param : Note<
   "'ordered' clause with specified parameter">;
-def err_omp_expected_array_sect_reduction_lb_not_zero : Error<
-  "lower bound expected to be evaluated to zero">;
 def err_omp_expected_base_var_name : Error<
   "expected variable name as a base of the array %select{subscript|section}0">;
 } // end of OpenMP category
