@@ -711,7 +711,6 @@ this in a target-independent way: we should probably fold that (when using
 "undefined at zero" semantics) to set the "defined at zero" bit and have
 the code generator expand out the right code.
 
-
 //===---------------------------------------------------------------------===//
 
 Clean up the test/MC/ARM files to have more robust register choices.
