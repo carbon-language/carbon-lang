@@ -66,6 +66,10 @@ set(files
   x86intrin.h
   xmmintrin.h
   xopintrin.h
+  xsaveintrin.h
+  xsaveoptintrin.h
+  xsavecintrin.h
+  xsavesintrin.h
   xtestintrin.h
   )
 

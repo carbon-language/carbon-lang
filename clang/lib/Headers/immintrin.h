@@ -144,6 +144,14 @@ _writegsbase_u64(unsigned long long __V)
 
 #include <fxsrintrin.h>
 
+#include <xsaveintrin.h>
+
+#include <xsaveoptintrin.h>
+
+#include <xsavecintrin.h>
+
+#include <xsavesintrin.h>
+
 /* Some intrinsics inside adxintrin.h are available only on processors with ADX,
  * whereas others are also available at all times. */
 #include <adxintrin.h>

@@ -665,6 +665,20 @@ BUILTIN(__builtin_ia32_fxrstor64, "vv*", "")
 BUILTIN(__builtin_ia32_fxsave, "vv*", "")
 BUILTIN(__builtin_ia32_fxsave64, "vv*", "")
 
+// XSAVE
+BUILTIN(__builtin_ia32_xsave, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xsave64, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xrstor, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xrstor64, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xsaveopt, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xsaveopt64, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xrstors, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xrstors64, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xsavec, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xsavec64, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xsaves, "vv*ULLi", "")
+BUILTIN(__builtin_ia32_xsaves64, "vv*ULLi", "")
+
 // ADX
 TARGET_BUILTIN(__builtin_ia32_addcarryx_u32, "UcUcUiUiUi*", "", "adx")
 TARGET_BUILTIN(__builtin_ia32_addcarryx_u64, "UcUcULLiULLiULLi*", "", "adx")

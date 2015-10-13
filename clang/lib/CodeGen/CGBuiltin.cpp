@@ -6083,6 +6083,46 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                        Builder.CreateBitCast(Tmp.getPointer(), Int8PtrTy));
     return Builder.CreateLoad(Tmp, "stmxcsr");
   }
+  case X86::BI__builtin_ia32_xsave:
+  case X86::BI__builtin_ia32_xsave64:
+  case X86::BI__builtin_ia32_xrstor:
+  case X86::BI__builtin_ia32_xrstor64:
+  case X86::BI__builtin_ia32_xsaveopt:
+  case X86::BI__builtin_ia32_xsaveopt64:
+  case X86::BI__builtin_ia32_xrstors:
+  case X86::BI__builtin_ia32_xrstors64:
+  case X86::BI__builtin_ia32_xsavec:
+  case X86::BI__builtin_ia32_xsavec64:
+  case X86::BI__builtin_ia32_xsaves:
+  case X86::BI__builtin_ia32_xsaves64: {
+    Intrinsic::ID ID;
+#define INTRINSIC_X86_XSAVE_ID(NAME) \
+    case X86::BI__builtin_ia32_##NAME: \
+      ID = Intrinsic::x86_##NAME; \
+      break
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported intrinsic!");
+    INTRINSIC_X86_XSAVE_ID(xsave);
+    INTRINSIC_X86_XSAVE_ID(xsave64);
+    INTRINSIC_X86_XSAVE_ID(xrstor);
+    INTRINSIC_X86_XSAVE_ID(xrstor64);
+    INTRINSIC_X86_XSAVE_ID(xsaveopt);
+    INTRINSIC_X86_XSAVE_ID(xsaveopt64);
+    INTRINSIC_X86_XSAVE_ID(xrstors);
+    INTRINSIC_X86_XSAVE_ID(xrstors64);
+    INTRINSIC_X86_XSAVE_ID(xsavec);
+    INTRINSIC_X86_XSAVE_ID(xsavec64);
+    INTRINSIC_X86_XSAVE_ID(xsaves);
+    INTRINSIC_X86_XSAVE_ID(xsaves64);
+    }
+#undef INTRINSIC_X86_XSAVE_ID
+    Value *Mhi = Builder.CreateTrunc(
+      Builder.CreateLShr(Ops[1], ConstantInt::get(Int64Ty, 32)), Int32Ty);
+    Value *Mlo = Builder.CreateTrunc(Ops[1], Int32Ty);
+    Ops[1] = Mhi;
+    Ops.push_back(Mlo);
+    return Builder.CreateCall(CGM.getIntrinsic(ID), Ops);
+  }
   case X86::BI__builtin_ia32_storehps:
   case X86::BI__builtin_ia32_storelps: {
     llvm::Type *PtrTy = llvm::PointerType::getUnqual(Int64Ty);
