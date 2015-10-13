@@ -940,6 +940,10 @@ xexpand(KMP_API_NAME_GOMP_TASK)(void (*func)(void *), void *data, void (*copy_fu
     if (gomp_flags & 1) {
         input_flags->tiedness = 1;
     }
+    // The second low-order bit is the "final" flag
+    if (gomp_flags & 2) {
+        input_flags->final = 1;
+    }
     input_flags->native = 1;
     // __kmp_task_alloc() sets up all other flags
 
