@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// Machine-specific stuff, such as applying relocations, creation of
+// GOT or PLT entries, etc., are is handled in this file.
+//
+//===----------------------------------------------------------------------===//
 
 #include "Target.h"
 #include "Error.h"

@@ -419,6 +419,8 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
   llvm_unreachable("Invalid symbol kind");
 }
 
+// Returns a VA which a relocatin RI refers to. Used only for local symbols.
+// For non-local symbols, use getSymVA instead.
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
 lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
@@ -450,9 +452,11 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
   return OutSec->getVA() + Section->getOutputSectionOff() + Sym->st_value;
 }
 
+// Returns true if a symbol can be replaced at load-time by a symbol
+// with the same name defined in other ELF executable or DSO.
 bool lld::elf2::canBePreempted(const SymbolBody *Body) {
   if (!Body)
-    return false;
+    return false;  // Body is a local symbol.
   if (Body->isShared())
     return true;
   if (Body->isUndefined() && !Body->isWeak())

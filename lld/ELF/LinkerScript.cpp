@@ -9,7 +9,7 @@
 //
 // This file contains the parser/evaluator of the linker script.
 // It does not construct an AST but consume linker script directives directly.
-// Results are written to Symtab or Config object.
+// Results are written to Driver or Config object.
 //
 //===----------------------------------------------------------------------===//
 

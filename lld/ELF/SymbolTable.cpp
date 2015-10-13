@@ -6,6 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// Symbol table is a bag of all known symbols. We put all symbols of
+// all input files to the symbol table. The symbol Table is basically
+// a hash table with the logic to resolve symbol name conflicts using
+// the symbol types.
+//
+//===----------------------------------------------------------------------===//
 
 #include "SymbolTable.h"
 #include "Config.h"
