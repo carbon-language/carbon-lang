@@ -475,7 +475,11 @@ Platform::GetStatus (Stream &strm)
     if (arch.IsValid())
     {
         if (!arch.GetTriple().str().empty())
-        strm.Printf("    Triple: %s\n", arch.GetTriple().str().c_str());        
+        {
+            strm.Printf("    Triple: ");
+            arch.DumpTriple(strm);
+            strm.EOL();
+        }
     }
 
     if (GetOSVersion(major, minor, update))

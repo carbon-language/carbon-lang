@@ -341,9 +341,21 @@ public:
     }
 
     bool
+    TripleVendorIsUnspecifiedUnknown() const
+    {
+        return m_triple.getVendor() == llvm::Triple::UnknownVendor && m_triple.getVendorName().empty();
+    }
+
+    bool
     TripleOSWasSpecified() const
     {
         return !m_triple.getOSName().empty();
+    }
+
+    bool
+    TripleOSIsUnspecifiedUnknown() const
+    {
+        return m_triple.getOS() == llvm::Triple::UnknownOS && m_triple.getOSName().empty();
     }
 
     //------------------------------------------------------------------
@@ -483,6 +495,9 @@ public:
     {
         return m_triple;
     }
+
+    void
+    DumpTriple(Stream &s) const;
 
     //------------------------------------------------------------------
     /// Architecture tripple setter.

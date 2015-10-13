@@ -329,7 +329,7 @@ public:
     }
 
     void
-    Dump (Stream &strm)
+    Dump (Stream &strm) const
     {
         bool dumped_something = false;
         if (m_file)
@@ -361,7 +361,8 @@ public:
         {
             if (dumped_something)
                 strm.PutCString(", ");
-            strm.Printf("arch = %s", m_arch.GetTriple().str().c_str());
+            strm.Printf("arch = ");
+            m_arch.DumpTriple(strm);
             dumped_something = true;
         }
         if (m_uuid.IsValid())

@@ -79,7 +79,8 @@ DumpTargetInfo (uint32_t target_idx, Target *target, const char *prefix_cstr, bo
     uint32_t properties = 0;
     if (target_arch.IsValid())
     {
-        strm.Printf ("%sarch=%s", properties++ > 0 ? ", " : " ( ", target_arch.GetTriple().str().c_str());
+        strm.Printf ("%sarch=", properties++ > 0 ? ", " : " ( ");
+        target_arch.DumpTriple (strm);
         properties++;
     }
     PlatformSP platform_sp (target->GetPlatform());
@@ -1459,15 +1460,18 @@ DumpModuleArchitecture (Stream &strm, Module *module, bool full_triple, uint32_t
 {
     if (module)
     {
-        const char *arch_cstr;
+        StreamString arch_strm;
+
         if (full_triple)
-            arch_cstr = module->GetArchitecture().GetTriple().str().c_str();
+            module->GetArchitecture().DumpTriple(arch_strm);
         else
-            arch_cstr = module->GetArchitecture().GetArchitectureName();
+            arch_strm.PutCString(module->GetArchitecture().GetArchitectureName());
+        std::string arch_str = arch_strm.GetString();
+
         if (width)
-            strm.Printf("%-*s", width, arch_cstr);
+            strm.Printf("%-*s", width, arch_str.c_str());
         else
-            strm.PutCString(arch_cstr);
+            strm.PutCString(arch_str.c_str());
     }
 }
 

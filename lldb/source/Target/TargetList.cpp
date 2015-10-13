@@ -179,9 +179,14 @@ TargetList::CreateTargetInternal (Debugger &debugger,
                         }
                         else
                         {
+                            StreamString platform_arch_strm;
+                            StreamString module_arch_strm;
+
+                            platform_arch.DumpTriple(platform_arch_strm);
+                            matching_module_spec.GetArchitecture().DumpTriple(module_arch_strm);
                             error.SetErrorStringWithFormat("the specified architecture '%s' is not compatible with '%s' in '%s'",
-                                                           platform_arch.GetTriple().str().c_str(),
-                                                           matching_module_spec.GetArchitecture().GetTriple().str().c_str(),
+                                                           platform_arch_strm.GetString().c_str(),
+                                                           module_arch_strm.GetString().c_str(),
                                                            module_spec.GetFileSpec().GetPath().c_str());
                             return error;
                         }

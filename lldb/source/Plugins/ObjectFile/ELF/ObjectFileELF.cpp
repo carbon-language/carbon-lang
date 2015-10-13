@@ -1605,6 +1605,12 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 }
             }
 
+            // Make any unknown triple components to be unspecified unknowns.
+            if (arch_spec.GetTriple().getVendor() == llvm::Triple::UnknownVendor)
+                arch_spec.GetTriple().setVendorName (llvm::StringRef());
+            if (arch_spec.GetTriple().getOS() == llvm::Triple::UnknownOS)
+                arch_spec.GetTriple().setOSName (llvm::StringRef());
+
             return section_headers.size();
         }
     }

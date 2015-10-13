@@ -271,12 +271,12 @@ HostInfoLinux::ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_
     {
         arch_32.SetDistributionId(distribution_id);
         if (arch_32.GetTriple().getVendor() == llvm::Triple::UnknownVendor)
-            arch_32.GetTriple().setVendorName("");
+            arch_32.GetTriple().setVendorName(llvm::StringRef());
     }
     if (arch_64.IsValid())
     {
         arch_64.SetDistributionId(distribution_id);
         if (arch_64.GetTriple().getVendor() == llvm::Triple::UnknownVendor)
-            arch_64.GetTriple().setVendorName("");
+            arch_64.GetTriple().setVendorName(llvm::StringRef());
     }
 }

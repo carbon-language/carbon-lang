@@ -844,9 +844,9 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
 void
 ArchSpec::MergeFrom(const ArchSpec &other)
 {
-    if (GetTriple().getVendor() == llvm::Triple::UnknownVendor && !TripleVendorWasSpecified())
+    if (TripleVendorIsUnspecifiedUnknown() && !other.TripleVendorIsUnspecifiedUnknown())
         GetTriple().setVendor(other.GetTriple().getVendor());
-    if (GetTriple().getOS() == llvm::Triple::UnknownOS && !TripleOSWasSpecified())
+    if (TripleOSIsUnspecifiedUnknown() && !other.TripleOSIsUnspecifiedUnknown())
         GetTriple().setOS(other.GetTriple().getOS());
     if (GetTriple().getArch() == llvm::Triple::UnknownArch)
         GetTriple().setArch(other.GetTriple().getArch());
@@ -1443,4 +1443,19 @@ ArchSpec::GetStopInfoOverrideCallback () const
     if (machine == llvm::Triple::arm)
         return StopInfoOverrideCallbackTypeARM;
     return NULL;
+}
+
+void
+ArchSpec::DumpTriple(Stream &s) const
+{
+    const llvm::Triple &triple = GetTriple();
+    llvm::StringRef arch_str = triple.getArchName();
+    llvm::StringRef vendor_str = triple.getVendorName();
+    llvm::StringRef os_str = triple.getOSName();
+
+    s.Printf("%s-%s-%s",
+             arch_str.empty() ? "*" : arch_str.str().c_str(),
+             vendor_str.empty() ? "*" : vendor_str.str().c_str(),
+             os_str.empty() ? "*" : os_str.str().c_str()
+             );
 }

@@ -316,8 +316,12 @@ ProcessInstanceInfo::Dump (Stream &s, Platform *platform) const
         }
     }
 
-    if (m_arch.IsValid())                       
-        s.Printf ("   arch = %s\n", m_arch.GetTriple().str().c_str());
+    if (m_arch.IsValid())
+    {
+        s.Printf ("   arch = ");
+        m_arch.DumpTriple(s);
+        s.EOL();
+    }
 
     if (m_uid != UINT32_MAX)
     {
@@ -370,7 +374,10 @@ ProcessInstanceInfo::DumpAsTableRow (Stream &s, Platform *platform, bool show_ar
         const char *cstr;
         s.Printf ("%-6" PRIu64 " %-6" PRIu64 " ", m_pid, m_parent_pid);
 
-    
+        StreamString arch_strm;
+        if (m_arch.IsValid())
+            m_arch.DumpTriple(arch_strm);
+
         if (verbose)
         {
             cstr = platform->GetUserName (m_uid);
@@ -396,13 +403,14 @@ ProcessInstanceInfo::DumpAsTableRow (Stream &s, Platform *platform, bool show_ar
                 s.Printf ("%-10s ", cstr);
             else
                 s.Printf ("%-10u ", m_egid);
-            s.Printf ("%-24s ", m_arch.IsValid() ? m_arch.GetTriple().str().c_str() : "");
+
+            s.Printf ("%-24s ", arch_strm.GetString().c_str());
         }
         else
         {
             s.Printf ("%-10s %-24s ",
                       platform->GetUserName (m_euid),
-                      m_arch.IsValid() ? m_arch.GetTriple().str().c_str() : "");
+                      arch_strm.GetString().c_str());
         }
 
         if (verbose || show_args)
