@@ -52,7 +52,7 @@ public:
   void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
   void addIgnoredSym(StringRef Name);
-  void finalize();
+  void scanShlibUndefined();
 
 private:
   Symbol *insert(SymbolBody *New);

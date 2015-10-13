@@ -237,13 +237,14 @@ template <class ELFT> void SymbolTable<ELFT>::addMemberFile(Lazy *Body) {
   addFile(std::move(File));
 }
 
-template <class ELFT> void SymbolTable<ELFT>::finalize() {
-  // This code takes care of the case in which shared libraries depend on
-  // the user program (not the other way, which is usual). Shared libraries
-  // may have undefined symbols, expecting that the user program provides
-  // the definitions for them. An example is BSD's __progname symbol.
-  // We need to put such symbols to the main program's .dynsym so that
-  // shared libraries can find them.
+// This function takes care of the case in which shared libraries depend on
+// the user program (not the other way, which is usual). Shared libraries
+// may have undefined symbols, expecting that the user program provides
+// the definitions for them. An example is BSD's __progname symbol.
+// We need to put such symbols to the main program's .dynsym so that
+// shared libraries can find them.
+// Except this, we ignore undefined symbols in DSOs.
+template <class ELFT> void SymbolTable<ELFT>::scanShlibUndefined() {
   for (std::unique_ptr<SharedFile<ELFT>> &File : SharedFiles)
     for (StringRef U : File->getUndefinedSymbols())
       if (SymbolBody *Sym = find(U))
