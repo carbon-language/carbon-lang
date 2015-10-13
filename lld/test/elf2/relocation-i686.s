@@ -47,7 +47,7 @@ movl bar@GOT, %eax
 // ADDR-NEXT: ]
 // ADDR-NEXT: Address: 0x11030
 // ADDR-NEXT: Offset: 0x1030
-// ADDR-NEXT: Size: 8
+// ADDR-NEXT: Size: 32
 
 // ADDR:      Name: .got
 // ADDR-NEXT: Type: SHT_PROGBITS
@@ -55,24 +55,25 @@ movl bar@GOT, %eax
 // ADDR-NEXT:   SHF_ALLOC
 // ADDR-NEXT:   SHF_WRITE
 // ADDR-NEXT: ]
-// ADDR-NEXT: Address: 0x12050
+// ADDR-NEXT: Address: 0x12070
 
 .section .R_386_GOTPC,"ax",@progbits
 R_386_GOTPC:
  movl $_GLOBAL_OFFSET_TABLE_, %eax
 
-// 0x12050 - 0x11014 = 4156
+// 0x12070 - 0x11014 = 4188
 
 // CHECK:      Disassembly of section .R_386_GOTPC:
 // CHECK-NEXT: R_386_GOTPC:
-// CHECK-NEXT:   11014:  {{.*}} movl  $4156, %eax
+// CHECK-NEXT:   11014:  {{.*}} movl  $4188, %eax
 
 .section .dynamic_reloc, "ax",@progbits
  call bar
-// 0x11030 - (0x11019 + 5) = 18
+// (0x11030 + 16) - (0x11019 + 5) = 34
+// 16 - is a size of PLT[0]
 // CHECK:      Disassembly of section .dynamic_reloc:
 // CHECK-NEXT: .dynamic_reloc:
-// CHECK-NEXT:   11019:  e8 12 00 00 00 calll 18
+// CHECK-NEXT:   11019:  e8 22 00 00 00 calll 34
 
 .section .R_386_GOT32,"ax",@progbits
 .global R_386_GOT32
