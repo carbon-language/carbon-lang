@@ -49,7 +49,7 @@ header. The rule first generates a dummy "__config_site" header containing the r
 #defines. The contents of the dummy header are then prependend to the installed
 __config header. By manually prepending the files we avoid the cost of an
 extra #include and we allow the __config header to be ignorant of the extra
- configuration all together. An example "__config" header generated when
+configuration all together. An example "__config" header generated when
 -DLIBCXX_ENABLE_THREADS=OFF is given to CMake would look something like:
 
 .. code-block:: cpp
