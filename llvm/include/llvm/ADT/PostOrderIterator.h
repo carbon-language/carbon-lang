@@ -215,8 +215,8 @@ struct ipo_iterator : public po_iterator<Inverse<T>, SetType, External > {
 };
 
 template <class T>
-ipo_iterator<T> ipo_begin(const T &G, bool Reverse = false) {
-  return ipo_iterator<T>::begin(G, Reverse);
+ipo_iterator<T> ipo_begin(const T &G) {
+  return ipo_iterator<T>::begin(G);
 }
 
 template <class T>
@@ -225,8 +225,8 @@ ipo_iterator<T> ipo_end(const T &G){
 }
 
 template <class T>
-iterator_range<ipo_iterator<T>> inverse_post_order(const T &G, bool Reverse = false) {
-  return make_range(ipo_begin(G, Reverse), ipo_end(G));
+iterator_range<ipo_iterator<T>> inverse_post_order(const T &G) {
+  return make_range(ipo_begin(G), ipo_end(G));
 }
 
 // Provide global definitions of external inverse postorder iterators...
