@@ -974,8 +974,7 @@ AArch64TargetLowering::EmitF128CSEL(MachineInstr *MI,
   const TargetInstrInfo *TII = Subtarget->getInstrInfo();
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
   DebugLoc DL = MI->getDebugLoc();
-  MachineFunction::iterator It = MBB;
-  ++It;
+  MachineFunction::iterator It = ++MBB->getIterator();
 
   unsigned DestReg = MI->getOperand(0).getReg();
   unsigned IfTrueReg = MI->getOperand(1).getReg();

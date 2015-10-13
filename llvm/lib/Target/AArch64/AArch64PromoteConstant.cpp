@@ -489,7 +489,7 @@ bool AArch64PromoteConstant::insertDefinitions(
 
     for (const auto &IPI : InsertPts) {
       // Create the load of the global variable.
-      IRBuilder<> Builder(IPI.first->getParent(), IPI.first);
+      IRBuilder<> Builder(IPI.first);
       LoadInst *LoadedCst = Builder.CreateLoad(PromotedGV);
       DEBUG(dbgs() << "**********\n");
       DEBUG(dbgs() << "New def: ");

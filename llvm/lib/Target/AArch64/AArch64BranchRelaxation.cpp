@@ -142,14 +142,14 @@ void AArch64BranchRelaxation::dumpBBs() {
 /// into the block immediately after it.
 static bool BBHasFallthrough(MachineBasicBlock *MBB) {
   // Get the next machine basic block in the function.
-  MachineFunction::iterator MBBI = MBB;
+  MachineFunction::iterator MBBI(MBB);
   // Can't fall off end of function.
-  MachineBasicBlock *NextBB = std::next(MBBI);
+  auto NextBB = std::next(MBBI);
   if (NextBB == MBB->getParent()->end())
     return false;
 
   for (MachineBasicBlock *S : MBB->successors())
-    if (S == NextBB)
+    if (S == &*NextBB)
       return true;
 
   return false;
@@ -227,9 +227,7 @@ AArch64BranchRelaxation::splitBlockBeforeInstr(MachineInstr *MI) {
   // Create a new MBB for the code after the OrigBB.
   MachineBasicBlock *NewBB =
       MF->CreateMachineBasicBlock(OrigBB->getBasicBlock());
-  MachineFunction::iterator MBBI = OrigBB;
-  ++MBBI;
-  MF->insert(MBBI, NewBB);
+  MF->insert(++OrigBB->getIterator(), NewBB);
 
   // Splice the instructions starting with MI over to NewBB.
   NewBB->splice(NewBB->end(), OrigBB, MI, OrigBB->end());
@@ -432,7 +430,7 @@ bool AArch64BranchRelaxation::fixupConditionalBranch(MachineInstr *MI) {
     MBB->replaceSuccessor(FBB, NewBB);
     NewBB->addSuccessor(FBB);
   }
-  MachineBasicBlock *NextBB = std::next(MachineFunction::iterator(MBB));
+  MachineBasicBlock *NextBB = &*std::next(MachineFunction::iterator(MBB));
 
   DEBUG(dbgs() << "  Insert B to BB#" << DestBB->getNumber()
                << ", invert condition and change dest. to BB#"

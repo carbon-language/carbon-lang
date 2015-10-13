@@ -392,7 +392,7 @@ bool AArch64AdvSIMDScalar::runOnMachineFunction(MachineFunction &mf) {
 
   // Just check things on a one-block-at-a-time basis.
   for (MachineFunction::iterator I = mf.begin(), E = mf.end(); I != E; ++I)
-    if (processMachineBasicBlock(I))
+    if (processMachineBasicBlock(&*I))
       Changed = true;
   return Changed;
 }

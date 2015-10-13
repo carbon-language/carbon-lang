@@ -122,7 +122,7 @@ AArch64A53Fix835769::runOnMachineFunction(MachineFunction &F) {
 static MachineBasicBlock *getBBFallenThrough(MachineBasicBlock *MBB,
                                              const TargetInstrInfo *TII) {
   // Get the previous machine basic block in the function.
-  MachineFunction::iterator MBBI = *MBB;
+  MachineFunction::iterator MBBI(MBB);
 
   // Can't go off top of function.
   if (MBBI == MBB->getParent()->begin())
@@ -131,7 +131,7 @@ static MachineBasicBlock *getBBFallenThrough(MachineBasicBlock *MBB,
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 2> Cond;
 
-  MachineBasicBlock *PrevBB = std::prev(MBBI);
+  MachineBasicBlock *PrevBB = &*std::prev(MBBI);
   for (MachineBasicBlock *S : MBB->predecessors())
     if (S == PrevBB && !TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond) &&
         !TBB && !FBB)
