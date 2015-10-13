@@ -33,12 +33,12 @@ TEST(ToolChainTest, VFSGCCInstallation) {
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, new TestDiagnosticConsumer);
   IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem(
       new vfs::InMemoryFileSystem);
-  Driver TheDriver("/usr/bin/clang", "arm-linux-gnueabihf", Diags,
+  Driver TheDriver("/bin/clang", "arm-linux-gnueabihf", Diags,
                    InMemoryFileSystem);
 
   const char *EmptyFiles[] = {
       "foo.cpp",
-      "/usr/bin/clang",
+      "/bin/clang",
       "/usr/lib/gcc/arm-linux-gnueabi/4.6.1/crtbegin.o",
       "/usr/lib/gcc/arm-linux-gnueabi/4.6.1/crtend.o",
       "/usr/lib/gcc/arm-linux-gnueabihf/4.6.3/crtbegin.o",
@@ -76,6 +76,45 @@ TEST(ToolChainTest, VFSGCCInstallation) {
       "Candidate multilib: .;@m32\n"
       "Selected multilib: .;@m32\n",
       S);
+}
+
+TEST(ToolChainTest, VFSGCCInstallationRelativeDir) {
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  struct TestDiagnosticConsumer : public DiagnosticConsumer {};
+  DiagnosticsEngine Diags(DiagID, &*DiagOpts, new TestDiagnosticConsumer);
+  IntrusiveRefCntPtr<vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new vfs::InMemoryFileSystem);
+  Driver TheDriver("/home/test/bin/clang", "arm-linux-gnueabi", Diags,
+                   InMemoryFileSystem);
+
+  const char *EmptyFiles[] = {
+      "foo.cpp", "/home/test/lib/gcc/arm-linux-gnueabi/4.6.1/crtbegin.o",
+      "/home/test/include/arm-linux-gnueabi/.keep"};
+
+  for (const char *Path : EmptyFiles)
+    InMemoryFileSystem->addFile(Path, 0,
+                                llvm::MemoryBuffer::getMemBuffer("\n"));
+
+  std::unique_ptr<Compilation> C(
+      TheDriver.BuildCompilation({"-fsyntax-only", "foo.cpp"}));
+
+  std::string S;
+  {
+    llvm::raw_string_ostream OS(S);
+    C->getDefaultToolChain().printVerboseInfo(OS);
+  }
+#if LLVM_ON_WIN32
+  std::replace(S.begin(), S.end(), '\\', '/');
+#endif
+  EXPECT_EQ("Found candidate GCC installation: "
+            "/home/test/lib/gcc/arm-linux-gnueabi/4.6.1\n"
+            "Selected GCC installation: "
+            "/home/test/bin/../lib/gcc/arm-linux-gnueabi/4.6.1\n"
+            "Candidate multilib: .;@m32\n"
+            "Selected multilib: .;@m32\n",
+            S);
 }
 
 } // end anonymous namespace

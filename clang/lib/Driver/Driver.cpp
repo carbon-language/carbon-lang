@@ -65,6 +65,7 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
 
   Name = llvm::sys::path::filename(ClangExecutable);
   Dir = llvm::sys::path::parent_path(ClangExecutable);
+  InstalledDir = Dir; // Provide a sensible default installed dir.
 
   // Compute the path to the resource directory.
   StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
