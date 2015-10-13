@@ -48,17 +48,13 @@ class StdListSynthProvider:
 		return False
 
 	def num_children(self):
-		global _list_capping_size
 		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
-			if self.count > _list_capping_size:
-				self.count = _list_capping_size
 		return self.count
 
 	def num_children_impl(self):
 		logger = lldb.formatters.Logger.Logger()
-		global _list_capping_size
 		try:
 			next_val = self.next.GetValueAsUnsigned(0)
 			prev_val = self.prev.GetValueAsUnsigned(0)
@@ -76,8 +72,6 @@ class StdListSynthProvider:
 			while current.GetChildMemberWithName('_M_next').GetValueAsUnsigned(0) != self.node_address:
 				size = size + 1
 				current = current.GetChildMemberWithName('_M_next')
-				if size > _list_capping_size:
-					return _list_capping_size
 			return (size - 1)
 		except:
 			return 0;
@@ -346,12 +340,9 @@ class StdMapSynthProvider:
 			pass
 
 	def num_children(self):
-		global _map_capping_size
 		logger = lldb.formatters.Logger.Logger()
 		if self.count == None:
 			self.count = self.num_children_impl()
-			if self.count > _map_capping_size:
-				self.count = _map_capping_size
 		return self.count
 
 	def num_children_impl(self):
@@ -445,6 +436,4 @@ class StdMapSynthProvider:
 	def has_children(self):
 		return True
 
-_map_capping_size = 255
-_list_capping_size = 255
 _list_uses_loop_detector = True
