@@ -91,6 +91,6 @@ endif()
 if (APPLE)
   set_property(TARGET LLVM APPEND_STRING PROPERTY
               LINK_FLAGS
-              " -compatibility_version ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR} -current_version ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}")
+              " -compatibility_version 1 -current_version ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}")
 endif()
 
