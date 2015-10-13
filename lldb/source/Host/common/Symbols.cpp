@@ -238,8 +238,10 @@ Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
         // Add current working directory.
         debug_file_search_paths.AppendIfUnique (FileSpec(".", true));
 
+#ifndef LLVM_ON_WIN32
         // Add /usr/lib/debug directory.
         debug_file_search_paths.AppendIfUnique (FileSpec("/usr/lib/debug", true));
+#endif // LLVM_ON_WIN32
 
         std::string uuid_str;
         const UUID &module_uuid = module_spec.GetUUID();
