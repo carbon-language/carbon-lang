@@ -132,6 +132,10 @@ _m_pmulhrw(__m64 __m1, __m64 __m2) {
   return (__m64)__builtin_ia32_pmulhrw((__v4hi)__m1, (__v4hi)__m2);
 }
 
+/* Handle the 3dnowa instructions here. */
+#undef __DEFAULT_FN_ATTRS
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("3dnowa")))
+
 static __inline__ __m64 __DEFAULT_FN_ATTRS
 _m_pf2iw(__m64 __m) {
   return (__m64)__builtin_ia32_pf2iw((__v2sf)__m);
