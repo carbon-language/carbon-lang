@@ -59,7 +59,6 @@ private:
   void addLazy(Lazy *New);
   void addMemberFile(Lazy *Body);
   void checkCompatibility(std::unique_ptr<InputFile> &File);
-  void init(uint16_t EMachine);
   void resolve(SymbolBody *Body);
   void reportConflict(const Twine &Message, const SymbolBody &Old,
                       const SymbolBody &New, bool Warning);
