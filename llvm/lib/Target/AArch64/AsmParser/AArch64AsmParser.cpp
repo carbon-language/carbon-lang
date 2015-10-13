@@ -3967,7 +3967,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // suffix token operand.  The short-form match failure is probably more
     // relevant: use it instead.
     if (MatchResult == Match_InvalidOperand && ErrorInfo == 1 &&
-        ((AArch64Operand &)*Operands[1]).isToken() &&
+        Operands.size() > 1 && ((AArch64Operand &)*Operands[1]).isToken() &&
         ((AArch64Operand &)*Operands[1]).isTokenSuffix()) {
       MatchResult = ShortFormNEONMatchResult;
       ErrorInfo = ShortFormNEONErrorInfo;

@@ -480,3 +480,12 @@ tlbi vale3
 ; CHECK-ERRORS: error: invalid operand for instruction
 ; CHECK-ERRORS:   b.eq 0, 0
 ; CHECK-ERRORS:           ^
+
+; Check that we give the proper "too few operands" diagnostic instead of
+; asserting.
+
+  ldr
+
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   ldr
+; CHECK-ERRORS:   ^
