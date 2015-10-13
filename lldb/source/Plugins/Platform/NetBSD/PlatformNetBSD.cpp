@@ -290,19 +290,6 @@ PlatformNetBSD::PlatformNetBSD (bool is_host) :
 {
 }
 
-//------------------------------------------------------------------
-/// Destructor.
-///
-/// The destructor is virtual since this class is designed to be
-/// inherited from by the plug-in instance.
-//------------------------------------------------------------------
-PlatformNetBSD::~PlatformNetBSD()
-{
-}
-
-//TODO:VK: inherit PlatformPOSIX
-
-
 bool
 PlatformNetBSD::GetRemoteOSVersion ()
 {
