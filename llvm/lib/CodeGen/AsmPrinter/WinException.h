@@ -41,8 +41,9 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
 
   void emitCSpecificHandlerTable(const MachineFunction *MF);
 
-  void emitSEHActionsForRange(WinEHFuncInfo &FuncInfo, MCSymbol *BeginLabel,
-                              MCSymbol *EndLabel, int State);
+  void emitSEHActionsForRange(WinEHFuncInfo &FuncInfo,
+                              const MCSymbol *BeginLabel,
+                              const MCSymbol *EndLabel, int State);
 
   /// Emit the EH table data for 32-bit and 64-bit functions using
   /// the __CxxFrameHandler3 personality.
@@ -64,7 +65,7 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
 
   const MCExpr *create32bitRef(const MCSymbol *Value);
   const MCExpr *create32bitRef(const Value *V);
-  const MCExpr *getLabelPlusOne(MCSymbol *Label);
+  const MCExpr *getLabelPlusOne(const MCSymbol *Label);
 
   /// Gets the offset that we should use in a table for a stack object with the
   /// given index. For targets using CFI (Win64, etc), this is relative to the
