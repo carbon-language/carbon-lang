@@ -331,7 +331,13 @@ static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
       A->getType() != B->getType())
     return A->getType() != SHT_NOBITS && B->getType() == SHT_NOBITS;
 
-  return getPPC64SectionRank(A->getName()) < getPPC64SectionRank(B->getName());
+  // Some architectures have additional ordering restrictions for sections
+  // within the same PT_LOAD.
+  if (Config->EMachine == EM_PPC64)
+    return getPPC64SectionRank(A->getName()) <
+           getPPC64SectionRank(B->getName());
+
+  return false;
 }
 
 // Until this function is called, common symbols do not belong to any section.
