@@ -28,5 +28,16 @@ function declarations, for example:
    void foo(int a);
    void foo(int); // no warning
 
-If there are multiple declarations of same function, only one warning will be
-generated.
+To help with refactoring, in some cases FixIt hints are generated to align
+parameter names to a single naming convention. This works with the assumption
+that the function definition is the most up-to-date version, as it directly
+references parameter names in its body. Example:
+
+.. code:: c++
+
+   void foo(int a); // warning and FixIt hint (replace "a" to "b")
+   int foo(int b) { return b + 2; } // definition with use of "b"
+
+In the case of multiple redeclarations or function template specializations,
+a warning is issued for every redeclaration or specialization inconsistent with
+the definition or the first declaration seen in a translation unit.
