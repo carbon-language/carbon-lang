@@ -18,6 +18,7 @@
 #include "SymbolTable.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/StringSaver.h"
 #include <cctype>
 
@@ -139,12 +140,8 @@ void LinkerScript::expect(StringRef Expect) {
     error(Expect + " expected, but got " + Tok);
 }
 
-static bool isDOSAbsolutePath(StringRef S) {
-  return isalpha(S[0]) && S.substr(1).startswith(":\\");
-}
-
 void LinkerScript::addFile(StringRef S) {
-  if (S.startswith("/") || isDOSAbsolutePath(S)) {
+  if (sys::path::is_absolute(S)) {
     Driver->addFile(S);
   } else if (S.startswith("=")) {
     if (Config->Sysroot.empty())
