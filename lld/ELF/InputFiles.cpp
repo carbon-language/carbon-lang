@@ -32,8 +32,8 @@ public:
 }
 
 template <class ELFT>
-ELFFileBase<ELFT>::ELFFileBase(Kind K, ELFKind EKind, MemoryBufferRef M)
-    : InputFile(K, M), EKind(EKind), ELFObj(MB.getBuffer(), ECRAII().getEC()) {}
+ELFFileBase<ELFT>::ELFFileBase(Kind K, MemoryBufferRef M)
+    : InputFile(K, M), ELFObj(MB.getBuffer(), ECRAII().getEC()) {}
 
 template <class ELFT>
 typename ELFFileBase<ELFT>::Elf_Sym_Range
@@ -67,7 +67,7 @@ ELFFileBase<ELFT>::getNonLocalSymbols() {
 
 template <class ELFT>
 ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
-    : ELFFileBase<ELFT>(Base::ObjectKind, Base::getStaticELFKind(), M) {}
+    : ELFFileBase<ELFT>(Base::ObjectKind, M) {}
 
 template <class ELFT>
 typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
@@ -258,7 +258,7 @@ std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
 
 template <class ELFT>
 SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
-    : ELFFileBase<ELFT>(Base::SharedKind, Base::getStaticELFKind(), M) {
+    : ELFFileBase<ELFT>(Base::SharedKind, M) {
   AsNeeded = Config->AsNeeded;
 }
 

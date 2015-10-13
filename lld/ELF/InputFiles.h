@@ -51,13 +51,22 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
-  ELFFileBase(Kind K, ELFKind EKind, MemoryBufferRef M);
+  ELFFileBase(Kind K, MemoryBufferRef M);
   static bool classof(const InputFile *F) {
     Kind K = F->kind();
     return K == ObjectKind || K == SharedKind;
   }
 
-  ELFKind getELFKind() const { return EKind; }
+  static ELFKind getELFKind() {
+    if (!ELFT::Is64Bits) {
+      if (ELFT::TargetEndianness == llvm::support::little)
+        return ELF32LEKind;
+      return ELF32BEKind;
+    }
+    if (ELFT::TargetEndianness == llvm::support::little)
+      return ELF64LEKind;
+    return ELF64BEKind;
+  }
 
   const llvm::object::ELFFile<ELFT> &getObj() const { return ELFObj; }
   llvm::object::ELFFile<ELFT> &getObj() { return ELFObj; }
@@ -70,18 +79,6 @@ public:
   StringRef getStringTable() const { return StringTable; }
 
 protected:
-  static ELFKind getStaticELFKind() {
-    if (!ELFT::Is64Bits) {
-      if (ELFT::TargetEndianness == llvm::support::little)
-        return ELF32LEKind;
-      return ELF32BEKind;
-    }
-    if (ELFT::TargetEndianness == llvm::support::little)
-      return ELF64LEKind;
-    return ELF64BEKind;
-  }
-
-  const ELFKind EKind;
   llvm::object::ELFFile<ELFT> ELFObj;
   const Elf_Shdr *Symtab = nullptr;
   StringRef StringTable;
@@ -105,8 +102,7 @@ template <class ELFT> class ObjectFile : public ELFFileBase<ELFT> {
 
 public:
   static bool classof(const InputFile *F) {
-    return F->kind() == Base::ObjectKind &&
-           cast<ELFFileBase<ELFT>>(F)->getELFKind() == Base::getStaticELFKind();
+    return F->kind() == Base::ObjectKind;
   }
 
   ArrayRef<SymbolBody *> getSymbols() { return this->SymbolBodies; }
@@ -182,8 +178,7 @@ public:
   }
 
   static bool classof(const InputFile *F) {
-    return F->kind() == Base::SharedKind &&
-           cast<ELFFileBase<ELFT>>(F)->getELFKind() == Base::getStaticELFKind();
+    return F->kind() == Base::SharedKind;
   }
 
   explicit SharedFile(MemoryBufferRef M);
