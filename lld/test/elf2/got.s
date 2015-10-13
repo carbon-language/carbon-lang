@@ -29,9 +29,9 @@
 
 // Unfortunately FileCheck can't do math, so we have to check for explicit
 // values:
-//  0x110A0 - (0x11000 + 2) - 4 = 4250
-//  0x110A0 - (0x11006 + 2) - 4 = 4244
-//  0x110A8 - (0x1100c + 2) - 4 = 4246
+//  0x120A0 - (0x11000 + 2) - 4 = 4250
+//  0x120A0 - (0x11006 + 2) - 4 = 4244
+//  0x120A8 - (0x1100c + 2) - 4 = 4246
 
 // DISASM:      _start:
 // DISASM-NEXT:   11000:  {{.*}}  jmpq  *4250(%rip)
