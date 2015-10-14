@@ -64,6 +64,7 @@ class Configuration(object):
         self.lit_config = lit_config
         self.config = config
         self.cxx = None
+        self.project_obj_root = None
         self.libcxx_src_root = None
         self.libcxx_obj_root = None
         self.cxx_library_root = None
@@ -194,7 +195,14 @@ class Configuration(object):
             'libcxx_src_root', os.path.dirname(self.config.test_source_root))
 
     def configure_obj_root(self):
+        self.project_obj_root = self.get_lit_conf('project_obj_root')
         self.libcxx_obj_root = self.get_lit_conf('libcxx_obj_root')
+        if not self.libcxx_obj_root:
+            possible_root = os.path.join(self.project_obj_root, 'projects', 'libcxx')
+            if os.path.isdir(possible_root):
+                self.libcxx_obj_root = possible_root
+            else:
+                self.libcxx_obj_root = self.project_root
 
     def configure_cxx_library_root(self):
         self.cxx_library_root = self.get_lit_conf('cxx_library_root',
@@ -388,25 +396,9 @@ class Configuration(object):
         self.configure_compile_flags_exceptions()
         self.configure_compile_flags_rtti()
         self.configure_compile_flags_abi_version()
-        self.configure_compile_flags_no_global_filesystem_namespace()
-        self.configure_compile_flags_no_stdin()
-        self.configure_compile_flags_no_stdout()
         enable_32bit = self.get_lit_bool('enable_32bit', False)
         if enable_32bit:
             self.cxx.flags += ['-m32']
-        # Configure threading features.
-        enable_threads = self.get_lit_bool('enable_threads', True)
-        enable_monotonic_clock = self.get_lit_bool('enable_monotonic_clock',
-                                                   True)
-        if not enable_threads:
-            self.configure_compile_flags_no_threads()
-            if not enable_monotonic_clock:
-                self.configure_compile_flags_no_monotonic_clock()
-        elif not enable_monotonic_clock:
-            self.lit_config.fatal('enable_monotonic_clock cannot be false when'
-                                  ' enable_threads is true.')
-        self.configure_compile_flags_no_thread_unsafe_c_functions()
-
         # Use verbose output for better errors
         self.cxx.flags += ['-v']
         sysroot = self.get_lit_conf('sysroot')
@@ -422,12 +414,58 @@ class Configuration(object):
         support_path = os.path.join(self.libcxx_src_root, 'test/support')
         self.cxx.compile_flags += ['-I' + support_path]
         self.cxx.compile_flags += ['-include', os.path.join(support_path, 'nasty_macros.hpp')]
+        # Check for a possible __config_site in the build directory. We
+        # use this if it exists.
+        config_site_header = os.path.join(self.libcxx_obj_root, '__config_site')
+        if os.path.isfile(config_site_header):
+            contained_macros = self.parse_config_site_and_add_features(
+                config_site_header)
+            self.lit_config.note('Using __config_site header %s with macros: %r'
+                % (config_site_header, contained_macros))
+            # FIXME: This must come after the call to
+            # 'parse_config_site_and_add_features(...)' in order for it to work.
+            self.cxx.compile_flags += ['-include', config_site_header]
+
         libcxx_headers = self.get_lit_conf(
             'libcxx_headers', os.path.join(self.libcxx_src_root, 'include'))
         if not os.path.isdir(libcxx_headers):
             self.lit_config.fatal("libcxx_headers='%s' is not a directory."
                                   % libcxx_headers)
         self.cxx.compile_flags += ['-I' + libcxx_headers]
+
+    def parse_config_site_and_add_features(self, header):
+        """ parse_config_site_and_add_features - Deduce and add the test
+            features that that are implied by the #define's in the __config_site
+            header. Return a dictionary containing the macros found in the
+            '__config_site' header.
+        """
+        # Parse the macro contents of __config_site by dumping the macros
+        # using 'c++ -dM -E' and filtering the predefines.
+        predefines = self.cxx.dumpMacros()
+        macros = self.cxx.dumpMacros(header)
+        feature_macros_keys = set(macros.keys()) - set(predefines.keys())
+        feature_macros = {}
+        for k in feature_macros_keys:
+            feature_macros[k] = macros[k]
+        # We expect the header guard to be one of the definitions
+        assert '_LIBCPP_CONFIG_SITE' in feature_macros
+        del feature_macros['_LIBCPP_CONFIG_SITE']
+        # The __config_site header should be non-empty. Otherwise it should
+        # have never been emitted by CMake.
+        assert len(feature_macros) > 0
+        # Transform each macro name into the feature name used in the tests.
+        # Ex. _LIBCPP_HAS_NO_THREADS -> libcpp-has-no-threads
+        for m in feature_macros:
+            if m == '_LIBCPP_ABI_VERSION':
+                self.config.available_features.add('libcpp-abi-version-v%s'
+                    % feature_macros[m])
+                continue
+            assert m.startswith('_LIBCPP_HAS_') or m == '_LIBCPP_ABI_UNSTABLE'
+            m = m.lower()[1:].replace('_', '-')
+            self.config.available_features.add(m)
+        return feature_macros
+
+
 
     def configure_compile_flags_exceptions(self):
         enable_exceptions = self.get_lit_bool('enable_exceptions', True)
@@ -451,44 +489,6 @@ class Configuration(object):
         if abi_unstable:
           self.config.available_features.add('libcpp-abi-unstable')
           self.cxx.compile_flags += ['-D_LIBCPP_ABI_UNSTABLE']
-
-    def configure_compile_flags_no_global_filesystem_namespace(self):
-        enable_global_filesystem_namespace = self.get_lit_bool(
-            'enable_global_filesystem_namespace', True)
-        if not enable_global_filesystem_namespace:
-            self.config.available_features.add(
-                'libcpp-has-no-global-filesystem-namespace')
-            self.cxx.compile_flags += [
-                '-D_LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE']
-
-    def configure_compile_flags_no_stdin(self):
-        enable_stdin = self.get_lit_bool('enable_stdin', True)
-        if not enable_stdin:
-            self.config.available_features.add('libcpp-has-no-stdin')
-            self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_STDIN']
-
-    def configure_compile_flags_no_stdout(self):
-        enable_stdout = self.get_lit_bool('enable_stdout', True)
-        if not enable_stdout:
-            self.config.available_features.add('libcpp-has-no-stdout')
-            self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_STDOUT']
-
-    def configure_compile_flags_no_threads(self):
-        self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_THREADS']
-        self.config.available_features.add('libcpp-has-no-threads')
-
-    def configure_compile_flags_no_thread_unsafe_c_functions(self):
-        enable_thread_unsafe_c_functions = self.get_lit_bool(
-            'enable_thread_unsafe_c_functions', True)
-        if not enable_thread_unsafe_c_functions:
-            self.cxx.compile_flags += [
-                '-D_LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS']
-            self.config.available_features.add(
-                'libcpp-has-no-thread-unsafe-c-functions')
-
-    def configure_compile_flags_no_monotonic_clock(self):
-        self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_MONOTONIC_CLOCK']
-        self.config.available_features.add('libcpp-has-no-monotonic-clock')
 
     def configure_link_flags(self):
         no_default_flags = self.get_lit_bool('no_default_flags', False)
@@ -560,7 +560,8 @@ class Configuration(object):
                 'C++ ABI setting %s unsupported for tests' % cxx_abi)
 
     def configure_extra_library_flags(self):
-        enable_threads = self.get_lit_bool('enable_threads', True)
+        enable_threads = ('libcpp-has-no-threads' not in
+                          self.config.available_features)
         llvm_unwinder = self.get_lit_bool('llvm_unwinder', False)
         target_platform = self.target_info.platform()
         if target_platform == 'darwin':
