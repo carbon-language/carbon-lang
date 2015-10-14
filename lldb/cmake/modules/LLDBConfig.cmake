@@ -29,6 +29,15 @@ set(LLDB_DISABLE_CURSES ${LLDB_DEFAULT_DISABLE_CURSES} CACHE BOOL
 set(LLDB_RELOCATABLE_PYTHON 0 CACHE BOOL
   "Causes LLDB to use the PYTHONHOME environment variable to locate Python.")
 
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(LLDB_EXPORT_ALL_SYMBOLS 0 CACHE BOOL
+    "Causes lldb to export all symbols when building liblldb.")
+else()
+  # Windows doesn't support toggling this, so don't bother making it a
+  # cache variable.
+  set(LLDB_EXPORT_ALL_SYMBOLS 0)
+endif()
+
 if ((NOT MSVC) OR MSVC12)
   add_definitions( -DHAVE_ROUND )
 endif()
