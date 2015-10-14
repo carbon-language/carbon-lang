@@ -138,7 +138,7 @@ set_target_properties(cxx
 if (LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
   # Get the name of the ABI library and handle the case where CXXABI_LIBNAME
   # is a target name and not a library. Ex cxxabi_shared.
-  set(SCRIPT_ABI_LIBNAME "${CXXABI_LIBNAME}")
+  set(SCRIPT_ABI_LIBNAME "${LIBCXX_CXX_ABI_LIBRARY}")
   if (SCRIPT_ABI_LIBNAME STREQUAL "cxxabi_shared")
     set("${SCRIPT_ABI_LIBNAME}" "c++abi")
   endif()
