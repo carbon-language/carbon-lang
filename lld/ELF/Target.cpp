@@ -32,6 +32,92 @@ namespace elf2 {
 
 std::unique_ptr<TargetInfo> Target;
 
+static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }
+static void add32be(uint8_t *L, int32_t V) { write32be(L, read32be(L) + V); }
+static void or32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) | V); }
+
+template <bool IsLE> static void add32(uint8_t *L, int32_t V);
+template <> void add32<true>(uint8_t *L, int32_t V) { add32le(L, V); }
+template <> void add32<false>(uint8_t *L, int32_t V) { add32be(L, V); }
+
+namespace {
+class X86TargetInfo final : public TargetInfo {
+public:
+  X86TargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool relocPointsToGot(uint32_t Type) const override;
+  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
+};
+
+class X86_64TargetInfo final : public TargetInfo {
+public:
+  X86_64TargetInfo();
+  unsigned getPLTRefReloc(unsigned Type) const override;
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
+  bool isRelRelative(uint32_t Type) const override;
+};
+
+class PPC64TargetInfo final : public TargetInfo {
+public:
+  PPC64TargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
+  bool isRelRelative(uint32_t Type) const override;
+};
+
+class PPCTargetInfo final : public TargetInfo {
+public:
+  PPCTargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
+};
+
+class AArch64TargetInfo final : public TargetInfo {
+public:
+  AArch64TargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
+};
+
+template <class ELFT> class MipsTargetInfo final : public TargetInfo {
+public:
+  MipsTargetInfo();
+  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                     uint64_t PltEntryAddr) const override;
+  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
+  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
+  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                   uint32_t Type, uint64_t BaseAddr,
+                   uint64_t SymVA) const override;
+};
+} // anonymous namespace
+
 TargetInfo *createTarget() {
   switch (Config->EMachine) {
   case EM_386:
@@ -91,14 +177,6 @@ bool X86TargetInfo::relocPointsToGot(uint32_t Type) const {
 bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return Type == R_386_PLT32 || (Type == R_386_PC32 && S.isShared());
 }
-
-static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }
-static void add32be(uint8_t *L, int32_t V) { write32be(L, read32be(L) + V); }
-static void or32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) | V); }
-
-template <bool IsLE> static void add32(uint8_t *L, int32_t V);
-template <> void add32<true>(uint8_t *L, int32_t V) { add32le(L, V); }
-template <> void add32<false>(uint8_t *L, int32_t V) { add32be(L, V); }
 
 void X86TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                                 uint32_t Type, uint64_t BaseAddr,
