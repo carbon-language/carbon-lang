@@ -235,8 +235,7 @@ namespace {
     SDValue visitMUL(SDNode *N);
     SDValue visitSDIV(SDNode *N);
     SDValue visitUDIV(SDNode *N);
-    SDValue visitSREM(SDNode *N);
-    SDValue visitUREM(SDNode *N);
+    SDValue visitREM(SDNode *N);
     SDValue visitMULHU(SDNode *N);
     SDValue visitMULHS(SDNode *N);
     SDValue visitSMUL_LOHI(SDNode *N);
@@ -1348,8 +1347,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::MUL:                return visitMUL(N);
   case ISD::SDIV:               return visitSDIV(N);
   case ISD::UDIV:               return visitUDIV(N);
-  case ISD::SREM:               return visitSREM(N);
-  case ISD::UREM:               return visitUREM(N);
+  case ISD::SREM:
+  case ISD::UREM:               return visitREM(N);
   case ISD::MULHU:              return visitMULHU(N);
   case ISD::MULHS:              return visitMULHS(N);
   case ISD::SMUL_LOHI:          return visitSMUL_LOHI(N);
@@ -2311,80 +2310,48 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
   return SDValue();
 }
 
-SDValue DAGCombiner::visitSREM(SDNode *N) {
+// handles ISD::SREM and ISD::UREM
+SDValue DAGCombiner::visitREM(SDNode *N) {
+  unsigned Opcode = N->getOpcode();
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
 
-  // fold (srem c1, c2) -> c1%c2
+  // fold (rem c1, c2) -> c1%c2
   ConstantSDNode *N0C = isConstOrConstSplat(N0);
   ConstantSDNode *N1C = isConstOrConstSplat(N1);
   if (N0C && N1C)
-    if (SDValue Folded = DAG.FoldConstantArithmetic(ISD::SREM, SDLoc(N), VT,
+    if (SDValue Folded = DAG.FoldConstantArithmetic(Opcode, SDLoc(N), VT,
                                                     N0C, N1C))
       return Folded;
-  // If we know the sign bits of both operands are zero, strength reduce to a
-  // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
-  if (!VT.isVector()) {
-    if (DAG.SignBitIsZero(N1) && DAG.SignBitIsZero(N0))
-      return DAG.getNode(ISD::UREM, SDLoc(N), VT, N0, N1);
-  }
 
-  // If X/C can be simplified by the division-by-constant logic, lower
-  // X%C to the equivalent of X-X/C*C.
-  if (N1C && !N1C->isNullValue()) {
-    SDValue Div = DAG.getNode(ISD::SDIV, SDLoc(N), VT, N0, N1);
-    AddToWorklist(Div.getNode());
-    SDValue OptimizedDiv = combine(Div.getNode());
-    if (OptimizedDiv.getNode() && OptimizedDiv.getNode() != Div.getNode()) {
-      SDValue Mul = DAG.getNode(ISD::MUL, SDLoc(N), VT,
-                                OptimizedDiv, N1);
-      SDValue Sub = DAG.getNode(ISD::SUB, SDLoc(N), VT, N0, Mul);
-      AddToWorklist(Mul.getNode());
-      return Sub;
+  if (Opcode == ISD::SREM) {
+    // If we know the sign bits of both operands are zero, strength reduce to a
+    // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
+    if (!VT.isVector()) {
+      if (DAG.SignBitIsZero(N1) && DAG.SignBitIsZero(N0))
+        return DAG.getNode(ISD::UREM, SDLoc(N), VT, N0, N1);
     }
-  }
-
-  // undef % X -> 0
-  if (N0.getOpcode() == ISD::UNDEF)
-    return DAG.getConstant(0, SDLoc(N), VT);
-  // X % undef -> undef
-  if (N1.getOpcode() == ISD::UNDEF)
-    return N1;
-
-  return SDValue();
-}
-
-SDValue DAGCombiner::visitUREM(SDNode *N) {
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
-  EVT VT = N->getValueType(0);
-
-  // fold (urem c1, c2) -> c1%c2
-  ConstantSDNode *N0C = isConstOrConstSplat(N0);
-  ConstantSDNode *N1C = isConstOrConstSplat(N1);
-  if (N0C && N1C)
-    if (SDValue Folded = DAG.FoldConstantArithmetic(ISD::UREM, SDLoc(N), VT,
-                                                    N0C, N1C))
-      return Folded;
-  // fold (urem x, pow2) -> (and x, pow2-1)
-  if (N1C && !N1C->isNullValue() && !N1C->isOpaque() &&
-      N1C->getAPIntValue().isPowerOf2()) {
-    SDLoc DL(N);
-    return DAG.getNode(ISD::AND, DL, VT, N0,
-                       DAG.getConstant(N1C->getAPIntValue() - 1, DL, VT));
-  }
-  // fold (urem x, (shl pow2, y)) -> (and x, (add (shl pow2, y), -1))
-  if (N1.getOpcode() == ISD::SHL) {
-    if (ConstantSDNode *SHC = getAsNonOpaqueConstant(N1.getOperand(0))) {
-      if (SHC->getAPIntValue().isPowerOf2()) {
-        SDLoc DL(N);
-        SDValue Add =
-          DAG.getNode(ISD::ADD, DL, VT, N1,
+  } else {
+    // fold (urem x, pow2) -> (and x, pow2-1)
+    if (N1C && !N1C->isNullValue() && !N1C->isOpaque() &&
+        N1C->getAPIntValue().isPowerOf2()) {
+      SDLoc DL(N);
+      return DAG.getNode(ISD::AND, DL, VT, N0,
+                         DAG.getConstant(N1C->getAPIntValue() - 1, DL, VT));
+    }
+    // fold (urem x, (shl pow2, y)) -> (and x, (add (shl pow2, y), -1))
+    if (N1.getOpcode() == ISD::SHL) {
+      if (ConstantSDNode *SHC = getAsNonOpaqueConstant(N1.getOperand(0))) {
+        if (SHC->getAPIntValue().isPowerOf2()) {
+          SDLoc DL(N);
+          SDValue Add =
+            DAG.getNode(ISD::ADD, DL, VT, N1,
                  DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), DL,
                                  VT));
-        AddToWorklist(Add.getNode());
-        return DAG.getNode(ISD::AND, DL, VT, N0, Add);
+          AddToWorklist(Add.getNode());
+          return DAG.getNode(ISD::AND, DL, VT, N0, Add);
+        }
       }
     }
   }
@@ -2392,7 +2359,8 @@ SDValue DAGCombiner::visitUREM(SDNode *N) {
   // If X/C can be simplified by the division-by-constant logic, lower
   // X%C to the equivalent of X-X/C*C.
   if (N1C && !N1C->isNullValue()) {
-    SDValue Div = DAG.getNode(ISD::UDIV, SDLoc(N), VT, N0, N1);
+    unsigned DivOpcode = (Opcode == ISD::SREM ? ISD::SDIV : ISD::UDIV);
+    SDValue Div = DAG.getNode(DivOpcode, SDLoc(N), VT, N0, N1);
     AddToWorklist(Div.getNode());
     SDValue OptimizedDiv = combine(Div.getNode());
     if (OptimizedDiv.getNode() && OptimizedDiv.getNode() != Div.getNode()) {
