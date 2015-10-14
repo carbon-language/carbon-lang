@@ -487,8 +487,7 @@ bool LoopUnswitch::processCurrentLoop() {
 
   LLVMContext &Context = loopHeader->getContext();
 
-  // Probably we reach the quota of branches for this loop. If so
-  // stop unswitching.
+  // Analyze loop cost, and stop unswitching if loop content can not be duplicated.
   if (!BranchesInfo.countLoop(
           currentLoop, getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
                            *currentLoop->getHeader()->getParent()),
