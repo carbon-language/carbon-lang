@@ -10,8 +10,10 @@
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -578,6 +580,29 @@ bool DarwinAsmParser::parseDirectiveSection(StringRef, SMLoc) {
 
   if (!ErrorStr.empty())
     return Error(Loc, ErrorStr.c_str());
+
+  // Issue a warning if the target is not powerpc and Section is a *coal* section.
+  Triple TT = getParser().getContext().getObjectFileInfo()->getTargetTriple();
+  Triple::ArchType ArchTy = TT.getArch();
+
+  if (ArchTy != Triple::ppc && ArchTy != Triple::ppc64) {
+    StringRef NonCoalSection = StringSwitch<StringRef>(Section)
+                                   .Case("__textcoal_nt", "__text")
+                                   .Case("__const_coal", "__const")
+                                   .Case("__datacoal_nt", "__data")
+                                   .Default(Section);
+
+    if (!Section.equals(NonCoalSection)) {
+      StringRef SectionVal(Loc.getPointer());
+      size_t B = SectionVal.find(',') + 1, E = SectionVal.find(',', B);
+      SMLoc BLoc = SMLoc::getFromPointer(SectionVal.data() + B);
+      SMLoc ELoc = SMLoc::getFromPointer(SectionVal.data() + E);
+      getParser().Warning(Loc, "section \"" + Section + "\" is deprecated",
+                          SMRange(BLoc, ELoc));
+      getParser().Note(Loc, "change section name to \"" + NonCoalSection +
+                       "\"", SMRange(BLoc, ELoc));
+    }
+  }
 
   // FIXME: Arch specific.
   bool isText = Segment == "__TEXT";  // FIXME: Hack.
