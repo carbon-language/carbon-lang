@@ -42,19 +42,21 @@ public:
   ObjectFile<ELFT> *getFile() const { return File; }
 
   // The writer sets and uses the addresses.
-  uintX_t getOutputSectionOff() const { return OutputSectionOff; }
   uintX_t getAlign() {
     // The ELF spec states that a value of 0 means the section has no alignment
     // constraits.
     return std::max<uintX_t>(Header->sh_addralign, 1);
   }
-  void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 
   void setOutputSection(OutputSection<ELFT> *O) { OutSec = O; }
   OutputSection<ELFT> *getOutputSection() const { return OutSec; }
 
   // Relocation sections that refer to this one.
   SmallVector<const Elf_Shdr *, 1> RelocSections;
+
+  // The offset from beginning of the output sections this section was assigned
+  // to. The writer sets a value.
+  uint64_t OutputSectionOff = 0;
 
   static InputSection<ELFT> Discarded;
 
@@ -64,10 +66,6 @@ private:
                 llvm::iterator_range<
                     const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
                 const ObjectFile<ELFT> &File, uintX_t BaseAddr);
-
-  // The offset from beginning of the output sections this section was assigned
-  // to. The writer sets a value.
-  uint64_t OutputSectionOff = 0;
 
   // The file this section is from.
   ObjectFile<ELFT> *File;
