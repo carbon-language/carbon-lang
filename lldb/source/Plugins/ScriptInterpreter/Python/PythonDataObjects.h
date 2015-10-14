@@ -215,10 +215,10 @@ class PythonString : public PythonObject
 {
 public:
     PythonString();
-    PythonString(PyRefType type, PyObject *o);
-    PythonString(const PythonString &object);
     explicit PythonString(llvm::StringRef string);
     explicit PythonString(const char *string);
+    PythonString(PyRefType type, PyObject *o);
+    PythonString(const PythonString &object);
     ~PythonString() override;
 
     static bool Check(PyObject *py_obj);
@@ -243,9 +243,9 @@ class PythonInteger : public PythonObject
 {
 public:
     PythonInteger();
+    explicit PythonInteger(int64_t value);
     PythonInteger(PyRefType type, PyObject *o);
     PythonInteger(const PythonInteger &object);
-    explicit PythonInteger(int64_t value);
     ~PythonInteger() override;
 
     static bool Check(PyObject *py_obj);
@@ -266,7 +266,8 @@ public:
 class PythonList : public PythonObject
 {
 public:
-    PythonList(PyInitialValue value);
+    explicit PythonList(PyInitialValue value);
+    explicit PythonList(int list_size);
     PythonList(PyRefType type, PyObject *o);
     PythonList(const PythonList &list);
     ~PythonList() override;
@@ -292,7 +293,7 @@ public:
 class PythonDictionary : public PythonObject
 {
 public:
-    PythonDictionary(PyInitialValue value);
+    explicit PythonDictionary(PyInitialValue value);
     PythonDictionary(PyRefType type, PyObject *o);
     PythonDictionary(const PythonDictionary &dict);
     ~PythonDictionary() override;
@@ -313,6 +314,7 @@ public:
 
     StructuredData::DictionarySP CreateStructuredDictionary() const;
 };
+
 } // namespace lldb_private
 
 #endif  // LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_PYTHONDATAOBJECTS_H

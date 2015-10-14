@@ -378,6 +378,12 @@ PythonList::PythonList(PyInitialValue value)
         Reset(PyRefType::Owned, PyList_New(0));
 }
 
+PythonList::PythonList(int list_size)
+    : PythonObject()
+{
+    Reset(PyRefType::Owned, PyList_New(list_size));
+}
+
 PythonList::PythonList(PyRefType type, PyObject *py_obj)
     : PythonObject()
 {
