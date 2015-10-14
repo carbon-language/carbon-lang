@@ -93,8 +93,8 @@ struct InitializePythonRAII
 {
 public:
     InitializePythonRAII() :
-        m_was_already_initialized(false),
-        m_gil_state(PyGILState_UNLOCKED)
+        m_gil_state(PyGILState_UNLOCKED),
+        m_was_already_initialized(false)
     {
         // Python will muck with STDIN terminal state, so save off any current TTY
         // settings so we can restore them.
