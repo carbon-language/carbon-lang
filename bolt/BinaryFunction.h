@@ -54,6 +54,9 @@ public:
 
   static constexpr uint64_t COUNT_NO_PROFILE =
     std::numeric_limits<uint64_t>::max();
+  // Function size, in number of BBs, above which we fallback to a heuristic
+  // solution to the layout problem instead of seeking the optimal one.
+  static constexpr uint64_t FUNC_SIZE_THRESHOLD = 10;
 
 private:
 
@@ -189,6 +192,15 @@ public:
   /// Perform optimal code layout based on edge frequencies making necessary
   /// adjustments to instructions at the end of basic blocks.
   void optimizeLayout(bool DumpLayout);
+
+  /// Dynamic programming implementation for the "TSP problem", applied to BB
+  /// layout. Find the optimal way to maximize weight during a path traversing
+  /// all BBs. In this way, we will convert the hottest branches into
+  /// fall-throughs.
+  ///
+  /// Uses exponential amount of memory on the number of basic blocks and should
+  /// only be used for small functions.
+  void solveOptimalLayout(bool DumpLayout);
 
   /// View CFG in graphviz program
   void viewGraph();

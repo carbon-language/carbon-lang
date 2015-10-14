@@ -539,6 +539,10 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
     return;
   }
 
+  // Work on optimal solution if problem is small enough
+  if (BasicBlocks.size() <= FUNC_SIZE_THRESHOLD)
+    return solveOptimalLayout(DumpLayout);
+
   if (DumpLayout) {
     dbgs() << "running block layout heuristics on " << getName() << "\n";
   }
@@ -680,6 +684,124 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
       Sep = ",";
     }
     dbgs() << "\n";
+  }
+}
+
+void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
+  std::vector<std::vector<uint64_t>> Weight;
+  std::map<BinaryBasicBlock *, int> BBToIndex;
+  std::vector<BinaryBasicBlock *> IndexToBB;
+
+  if (DumpLayout) {
+    dbgs() << "finding optimal block layout for " << getName() << "\n";
+  }
+
+  unsigned N = BasicBlocks.size();
+  // Populating weight map and index map
+  for (auto &BB : BasicBlocks) {
+    BBToIndex[&BB] = IndexToBB.size();
+    IndexToBB.push_back(&BB);
+  }
+  Weight.resize(N);
+  for (auto &BB : BasicBlocks) {
+    auto BI = BB.BranchInfo.begin();
+    Weight[BBToIndex[&BB]].resize(N);
+    for (auto &I : BB.successors()) {
+      if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
+        Weight[BBToIndex[&BB]][BBToIndex[I]] = BI->Count;
+      ++BI;
+    }
+  }
+
+  std::vector<std::vector<int64_t>> DP;
+  DP.resize(1 << N);
+  for (auto &Elmt : DP) {
+    Elmt.resize(N, -1);
+  }
+  // Start with the entry basic block being allocated with cost zero
+  DP[1][0] = 0;
+  // Walk through TSP solutions using a bitmask to represent state (current set
+  // of BBs in the layout)
+  unsigned BestSet = 1;
+  unsigned BestLast = 0;
+  int64_t BestWeight = 0;
+  for (unsigned Set = 1; Set < (1U << N); ++Set) {
+    // Traverse each possibility of Last BB visited in this layout
+    for (unsigned Last = 0; Last < N; ++Last) {
+      // Case 1: There is no possible layout with this BB as Last
+      if (DP[Set][Last] == -1)
+        continue;
+
+      // Case 2: There is a layout with this Set and this Last, and we try
+      // to expand this set with New
+      for (unsigned New = 1; New < N; ++New) {
+        // Case 2a: BB "New" is already in this Set
+        if ((Set & (1 << New)) != 0)
+          continue;
+
+        // Case 2b: BB "New" is not in this set and we add it to this Set and
+        // record total weight of this layout with "New" as the last BB.
+        unsigned NewSet = (Set | (1 << New));
+        if (DP[NewSet][New] == -1)
+          DP[NewSet][New] = DP[Set][Last] + (int64_t)Weight[Last][New];
+        DP[NewSet][New] = std::max(DP[NewSet][New],
+                                   DP[Set][Last] + (int64_t)Weight[Last][New]);
+
+        if (DP[NewSet][New] > BestWeight) {
+          BestWeight = DP[NewSet][New];
+          BestSet = NewSet;
+          BestLast = New;
+        }
+      }
+    }
+  }
+
+  // Define final function layout based on layout that maximizes weight
+  BasicBlocksLayout.clear();
+  unsigned Last = BestLast;
+  unsigned Set = BestSet;
+  std::vector<bool> Visited;
+  Visited.resize(N);
+  Visited[Last] = true;
+  BasicBlocksLayout.push_back(IndexToBB[Last]);
+  Set = Set & ~(1U << Last);
+  while (Set != 0) {
+    int64_t Best = -1;
+    for (unsigned I = 0; I < N; ++I) {
+      if (DP[Set][I] == -1)
+        continue;
+      if (DP[Set][I] > Best) {
+        Last = I;
+        Best = DP[Set][I];
+      }
+    }
+    Visited[Last] = true;
+    BasicBlocksLayout.push_back(IndexToBB[Last]);
+    Set = Set & ~(1U << Last);
+  }
+  std::reverse(BasicBlocksLayout.begin(), BasicBlocksLayout.end());
+
+  // Finalize layout with BBs that weren't assigned to the layout
+  for (auto &BB : BasicBlocks) {
+    if (Visited[BBToIndex[&BB]] == false)
+      BasicBlocksLayout.push_back(&BB);
+  }
+
+  if (DumpLayout) {
+    dbgs() << "original BB order is: ";
+    auto Sep = "";
+    for (auto &BB : BasicBlocks) {
+      dbgs() << Sep << BB.getName();
+      Sep = ",";
+    }
+    dbgs() << "\nnew order is:         ";
+    Sep = "";
+    for (auto BB : BasicBlocksLayout) {
+      dbgs() << Sep << BB->getName();
+      Sep = ",";
+    }
+    dbgs() << "\n";
+    DEBUG(print(dbgs(), /* PrintInstructions = */ true));
   }
 }
 
