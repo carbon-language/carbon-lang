@@ -9,6 +9,174 @@
 //
 // This file contains definitions needed for reading sample profiles.
 //
+// NOTE: If you are making changes to this file format, please remember
+//       to document them in the Clang documentation at
+//       tools/clang/docs/UsersManual.rst.
+//
+// Text format
+// -----------
+//
+// Sample profiles are written as ASCII text. The file is divided into
+// sections, which correspond to each of the functions executed at runtime.
+// Each section has the following format
+//
+//     function1:total_samples:total_head_samples
+//      offset1[.discriminator]: number_of_samples [fn1:num fn2:num ... ]
+//      offset2[.discriminator]: number_of_samples [fn3:num fn4:num ... ]
+//      ...
+//      offsetN[.discriminator]: number_of_samples [fn5:num fn6:num ... ]
+//      offsetA[.discriminator]: fnA:num_of_total_samples
+//       offsetA1[.discriminator]: number_of_samples [fn7:num fn8:num ... ]
+//       ...
+//
+// This is a nested tree in which the identation represents the nesting level
+// of the inline stack. There are no blank lines in the file. And the spacing
+// within a single line is fixed. Additional spaces will result in an error
+// while reading the file.
+//
+// Any line starting with the '#' character is completely ignored.
+//
+// Inlined calls are represented with indentation. The Inline stack is a
+// stack of source locations in which the top of the stack represents the
+// leaf function, and the bottom of the stack represents the actual
+// symbol to which the instruction belongs.
+//
+// Function names must be mangled in order for the profile loader to
+// match them in the current translation unit. The two numbers in the
+// function header specify how many total samples were accumulated in the
+// function (first number), and the total number of samples accumulated
+// in the prologue of the function (second number). This head sample
+// count provides an indicator of how frequently the function is invoked.
+//
+// There are two types of lines in the function body.
+//
+// * Sampled line represents the profile information of a source location.
+// * Callsite line represents the profile information of a callsite.
+//
+// Each sampled line may contain several items. Some are optional (marked
+// below):
+//
+// a. Source line offset. This number represents the line number
+//    in the function where the sample was collected. The line number is
+//    always relative to the line where symbol of the function is
+//    defined. So, if the function has its header at line 280, the offset
+//    13 is at line 293 in the file.
+//
+//    Note that this offset should never be a negative number. This could
+//    happen in cases like macros. The debug machinery will register the
+//    line number at the point of macro expansion. So, if the macro was
+//    expanded in a line before the start of the function, the profile
+//    converter should emit a 0 as the offset (this means that the optimizers
+//    will not be able to associate a meaningful weight to the instructions
+//    in the macro).
+//
+// b. [OPTIONAL] Discriminator. This is used if the sampled program
+//    was compiled with DWARF discriminator support
+//    (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators).
+//    DWARF discriminators are unsigned integer values that allow the
+//    compiler to distinguish between multiple execution paths on the
+//    same source line location.
+//
+//    For example, consider the line of code ``if (cond) foo(); else bar();``.
+//    If the predicate ``cond`` is true 80% of the time, then the edge
+//    into function ``foo`` should be considered to be taken most of the
+//    time. But both calls to ``foo`` and ``bar`` are at the same source
+//    line, so a sample count at that line is not sufficient. The
+//    compiler needs to know which part of that line is taken more
+//    frequently.
+//
+//    This is what discriminators provide. In this case, the calls to
+//    ``foo`` and ``bar`` will be at the same line, but will have
+//    different discriminator values. This allows the compiler to correctly
+//    set edge weights into ``foo`` and ``bar``.
+//
+// c. Number of samples. This is an integer quantity representing the
+//    number of samples collected by the profiler at this source
+//    location.
+//
+// d. [OPTIONAL] Potential call targets and samples. If present, this
+//    line contains a call instruction. This models both direct and
+//    number of samples. For example,
+//
+//      130: 7  foo:3  bar:2  baz:7
+//
+//    The above means that at relative line offset 130 there is a call
+//    instruction that calls one of ``foo()``, ``bar()`` and ``baz()``,
+//    with ``baz()`` being the relatively more frequently called target.
+//
+// Each callsite line may contain several items. Some are optional.
+//
+// a. Source line offset. This number represents the line number of the
+//    callsite that is inlined in the profiled binary.
+//
+// b. [OPTIONAL] Discriminator. Same as the discriminator for sampled line.
+//
+// c. Number of samples. This is an integer quantity representing the
+//    total number of samples collected for the inlined instance at this
+//    callsite
+//
+//
+// Binary format
+// -------------
+//
+// This is a more compact encoding. Numbers are encoded as ULEB128 values
+// and all strings are encoded in a name table. The file is organized in
+// the following sections:
+//
+// MAGIC (uint64_t)
+//    File identifier computed by function SPMagic() (0x5350524f463432ff)
+//
+// VERSION (uint32_t)
+//    File format version number computed by SPVersion()
+//
+// NAME TABLE
+//    SIZE (uint32_t)
+//        Number of entries in the name table.
+//    NAMES
+//        A NUL-separated list of SIZE strings.
+//
+// FUNCTION BODY (one for each uninlined function body present in the profile)
+//    NAME_IDX (uint32_t)
+//        Index into the name table indicating the function name.
+//    SAMPLES (uint32_t)
+//        Total number of samples collected in this function.
+//        FIXME(dnovillo) this should be a uint64_t value.
+//    HEAD_SAMPLES (uint32_t)
+//        Total number of samples collected at the head of the function.
+//    NRECS (uint32_t)
+//        Total number of sampling records this function's profile.
+//    BODY RECORDS
+//        A list of NRECS entries. Each entry contains:
+//          OFFSET (uint32_t)
+//            Line offset from the start of the function.
+//          DISCRIMINATOR (uint32_t)
+//            Discriminator value (see description of discriminators
+//            in the text format documentation above).
+//          SAMPLES (uint64_t)
+//            Number of samples collected at this location.
+//          NUM_CALLS (uint32_t)
+//            Number of non-inlined function calls made at this location. In the
+//            case of direct calls, this number will always be 1. For indirect
+//            calls (virtual functions and function pointers) this will
+//            represent all the actual functions called at runtime.
+//          CALL_TARGETS
+//            A list of NUM_CALLS entries for each called function:
+//               NAME_IDX (uint32_t)
+//                  Index into the name table with the callee name.
+//               SAMPLES (uint64_t)
+//                  Number of samples collected at the call site.
+//    NUM_INLINED_FUNCTIONS (uint32_t)
+//      Number of callees inlined into this function.
+//    INLINED FUNCTION RECORDS
+//      A list of NUM_INLINED_FUNCTIONS entries describing each of the inlined
+//      callees.
+//        OFFSET (uint32_t)
+//          Line offset from the start of the function.
+//        DISCRIMINATOR (uint32_t)
+//          Discriminator value (see description of discriminators
+//          in the text format documentation above).
+//        FUNCTION BODY
+//          A FUNCTION BODY entry describing the inlined function.
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_PROFILEDATA_SAMPLEPROFREADER_H
 #define LLVM_PROFILEDATA_SAMPLEPROFREADER_H
