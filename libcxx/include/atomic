@@ -552,7 +552,12 @@ typedef enum memory_order
 namespace __gcc_atomic {
 template <typename _Tp>
 struct __gcc_atomic_t {
-  __gcc_atomic_t() _NOEXCEPT {}
+  _LIBCPP_INLINE_VISIBILITY
+#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+    __gcc_atomic_t() _NOEXCEPT = default;
+#else
+    __gcc_atomic_t() _NOEXCEPT : __a_value() {}
+#endif // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
   _LIBCPP_CONSTEXPR explicit __gcc_atomic_t(_Tp value) _NOEXCEPT
     : __a_value(value) {}
   _Tp __a_value;
@@ -573,7 +578,7 @@ struct __can_assign {
       sizeof(__test_atomic_assignable<_Tp, _Td>(1)) == sizeof(char);
 };
 
-static inline constexpr int __to_gcc_order(memory_order __order) {
+static inline _LIBCPP_CONSTEXPR int __to_gcc_order(memory_order __order) {
   // Avoid switch statement to make this a constexpr.
   return __order == memory_order_relaxed ? __ATOMIC_RELAXED:
          (__order == memory_order_acquire ? __ATOMIC_ACQUIRE:
@@ -583,7 +588,7 @@ static inline constexpr int __to_gcc_order(memory_order __order) {
               __ATOMIC_CONSUME))));
 }
 
-static inline constexpr int __to_gcc_failure_order(memory_order __order) {
+static inline _LIBCPP_CONSTEXPR int __to_gcc_failure_order(memory_order __order) {
   // Avoid switch statement to make this a constexpr.
   return __order == memory_order_relaxed ? __ATOMIC_RELAXED:
          (__order == memory_order_acquire ? __ATOMIC_ACQUIRE:
