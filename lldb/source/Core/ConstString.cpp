@@ -8,13 +8,14 @@
 //===----------------------------------------------------------------------===//
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Host/Mutex.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/RWMutex.h"
 
-#include <mutex> // std::once
+#include <array>
+#include <mutex>
 
 using namespace lldb_private;
-
 
 class Pool
 {
@@ -22,25 +23,6 @@ public:
     typedef const char * StringPoolValueType;
     typedef llvm::StringMap<StringPoolValueType, llvm::BumpPtrAllocator> StringPool;
     typedef llvm::StringMapEntry<StringPoolValueType> StringPoolEntryType;
-    
-    //------------------------------------------------------------------
-    // Default constructor
-    //
-    // Initialize the member variables and create the empty string.
-    //------------------------------------------------------------------
-    Pool () :
-        m_mutex (Mutex::eMutexTypeRecursive),
-        m_string_map ()
-    {
-    }
-
-    //------------------------------------------------------------------
-    // Destructor
-    //------------------------------------------------------------------
-    ~Pool ()
-    {
-    }
-
 
     static StringPoolEntryType &
     GetStringMapEntryFromKeyData (const char *keyData)
@@ -85,20 +67,15 @@ public:
     {
         if (cstr)
             return GetConstCStringWithLength (cstr, strlen (cstr));
-        return NULL;
+        return nullptr;
     }
 
     const char *
     GetConstCStringWithLength (const char *cstr, size_t cstr_len)
     {
         if (cstr)
-        {
-            Mutex::Locker locker (m_mutex);
-            llvm::StringRef string_ref (cstr, cstr_len);
-            StringPoolEntryType& entry = *m_string_map.insert (std::make_pair (string_ref, (StringPoolValueType)NULL)).first;
-            return entry.getKeyData();
-        }
-        return NULL;
+            return GetConstCStringWithStringRef(llvm::StringRef(cstr, cstr_len));
+        return nullptr;
     }
 
     const char *
@@ -106,11 +83,20 @@ public:
     {
         if (string_ref.data())
         {
-            Mutex::Locker locker (m_mutex);
-            StringPoolEntryType& entry = *m_string_map.insert (std::make_pair (string_ref, (StringPoolValueType)NULL)).first;
+            uint8_t h = hash (string_ref);
+
+            {
+                llvm::sys::SmartScopedReader<false> rlock(m_string_pools[h].m_mutex);
+                auto it = m_string_pools[h].m_string_map.find (string_ref);
+                if (it != m_string_pools[h].m_string_map.end())
+                    return it->getKeyData();
+            }
+
+            llvm::sys::SmartScopedWriter<false> wlock(m_string_pools[h].m_mutex);
+            StringPoolEntryType& entry = *m_string_pools[h].m_string_map.insert (std::make_pair (string_ref, nullptr)).first;
             return entry.getKeyData();
         }
-        return NULL;
+        return nullptr;
     }
 
     const char *
@@ -118,9 +104,12 @@ public:
     {
         if (demangled_cstr)
         {
-            Mutex::Locker locker (m_mutex);
+            llvm::StringRef string_ref (demangled_cstr);
+            uint8_t h = hash (string_ref);
+            llvm::sys::SmartScopedWriter<false> wlock(m_string_pools[h].m_mutex);
+
             // Make string pool entry with the mangled counterpart already set
-            StringPoolEntryType& entry = *m_string_map.insert (std::make_pair (llvm::StringRef (demangled_cstr), mangled_ccstr)).first;
+            StringPoolEntryType& entry = *m_string_pools[h].m_string_map.insert (std::make_pair (string_ref, mangled_ccstr)).first;
 
             // Extract the const version of the demangled_cstr
             const char *demangled_ccstr = entry.getKeyData();
@@ -130,7 +119,7 @@ public:
             // Return the constant demangled C string
             return demangled_ccstr;
         }
-        return NULL;
+        return nullptr;
     }
 
     const char *
@@ -141,7 +130,7 @@ public:
             const size_t trimmed_len = std::min<size_t> (strlen (cstr), cstr_len);
             return GetConstCStringWithLength (cstr, trimmed_len);
         }
-        return NULL;
+        return nullptr;
     }
 
     //------------------------------------------------------------------
@@ -152,28 +141,31 @@ public:
     size_t
     MemorySize() const
     {
-        Mutex::Locker locker (m_mutex);
         size_t mem_size = sizeof(Pool);
-        const_iterator end = m_string_map.end();
-        for (const_iterator pos = m_string_map.begin(); pos != end; ++pos)
+        for (const auto& pool : m_string_pools)
         {
-            mem_size += sizeof(StringPoolEntryType) + pos->getKey().size();
+            llvm::sys::SmartScopedReader<false> rlock(pool.m_mutex);
+            for (const auto& entry : pool.m_string_map)
+                mem_size += sizeof(StringPoolEntryType) + entry.getKey().size();
         }
         return mem_size;
     }
 
 protected:
-    //------------------------------------------------------------------
-    // Typedefs
-    //------------------------------------------------------------------
-    typedef StringPool::iterator iterator;
-    typedef StringPool::const_iterator const_iterator;
+    uint8_t
+    hash(const llvm::StringRef &s)
+    {
+        uint32_t h = llvm::HashString(s);
+        return ((h >> 24) ^ (h >> 16) ^ (h >> 8) ^ h) & 0xff;
+    }
 
-    //------------------------------------------------------------------
-    // Member variables
-    //------------------------------------------------------------------
-    mutable Mutex m_mutex;
-    StringPool m_string_map;
+    struct PoolEntry
+    {
+        mutable llvm::sys::SmartRWMutex<false> m_mutex;
+        StringPool m_string_map;
+    };
+
+    std::array<PoolEntry, 256> m_string_pools;
 };
 
 //----------------------------------------------------------------------
@@ -191,7 +183,7 @@ static Pool &
 StringPool()
 {
     static std::once_flag g_pool_initialization_flag;
-    static Pool *g_string_pool = NULL;
+    static Pool *g_string_pool = nullptr;
 
     std::call_once(g_pool_initialization_flag, [] () {
         g_string_pool = new Pool();
@@ -228,8 +220,8 @@ ConstString::operator < (const ConstString& rhs) const
     if (lhs_string_ref.data() && rhs_string_ref.data())
         return lhs_string_ref < rhs_string_ref;
 
-    // Else one of them was NULL, so if LHS is NULL then it is less than
-    return lhs_string_ref.data() == NULL;
+    // Else one of them was nullptr, so if LHS is nullptr then it is less than
+    return lhs_string_ref.data() == nullptr;
 }
 
 Stream&
