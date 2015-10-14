@@ -17,6 +17,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
@@ -124,8 +125,7 @@ namespace {
                cl::ZeroOrMore, cl::PositionalEatsArgs);
 
   cl::opt<std::string>
-  GCCBinary("gcc", cl::init("gcc"),
-              cl::desc("The gcc binary to use. (default 'gcc')"));
+  GCCBinary("gcc", cl::init(""), cl::desc("The gcc binary to use."));
 
   cl::list<std::string>
   GCCToolArgv("gcc-tool-args", cl::Positional,
@@ -147,6 +147,13 @@ bool BugDriver::initializeExecutionEnvironment() {
   // the command line
   SafeInterpreter = nullptr;
   std::string Message;
+
+  if (GCCBinary.empty()) {
+    if (sys::findProgramByName("clang"))
+      GCCBinary = "clang";
+    else
+      GCCBinary = "gcc";
+  }
 
   switch (InterpreterSel) {
   case AutoPick:
