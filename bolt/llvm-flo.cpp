@@ -99,12 +99,10 @@ static void report_error(StringRef Message, std::error_code EC) {
   exit(1);
 }
 
-static void error(std::error_code EC) {
+static void check_error(std::error_code EC, StringRef Message) {
   if (!EC)
     return;
-
-  errs() << ToolName << ": error reading file: " << EC.message() << ".\n";
-  exit(1);
+  report_error(Message, EC);
 }
 
 template <typename T>
@@ -298,7 +296,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       continue;
 
     ErrorOr<StringRef> Name = Symbol.getName();
-    error(Name.getError());
+    check_error(Name.getError(), "cannot get symbol name");
 
     if (Symbol.getType() == SymbolRef::ST_File) {
       // Could be used for local symbol disambiguation.
@@ -307,7 +305,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     }
 
     ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
-    error(AddressOrErr.getError());
+    check_error(AddressOrErr.getError(), "cannot get symbol address");
     uint64_t Address = *AddressOrErr;
     if (Address == 0) {
       if (Symbol.getType() == SymbolRef::ST_Function)
@@ -339,7 +337,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       continue;
 
     ErrorOr<section_iterator> SectionOrErr = Symbol.getSection();
-    error(SectionOrErr.getError());
+    check_error(SectionOrErr.getError(), "cannot get symbol section");
     section_iterator Section = *SectionOrErr;
     if (Section == File->section_end()) {
       // Could be an absolute symbol. Could record for pretty printing.
@@ -403,7 +401,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     }
 
     StringRef SectionContents;
-    error(Section.getContents(SectionContents));
+    check_error(Section.getContents(SectionContents),
+                "cannot get section contents");
 
     assert(SectionContents.size() == Section.getSize() &&
            "section size mismatch");
@@ -460,22 +459,18 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   }
 
   std::error_code EC;
+
+  // This is an object file, which we keep for debugging purposes.
+  // Once we decide it's useless, we should create it in memory.
   std::unique_ptr<tool_output_file> Out =
     llvm::make_unique<tool_output_file>(OutputFilename + ".o",
-                                        EC,sys::fs::F_None);
-
-  if (EC) {
-    // FIXME: handle error
-    return;
-  }
+                                        EC, sys::fs::F_None);
+  check_error(EC, "cannot create output object file");
 
   std::unique_ptr<tool_output_file> RealOut =
     llvm::make_unique<tool_output_file>(OutputFilename, EC, sys::fs::F_None,
                                         0777);
-  if (EC) {
-    // FIXME: handle error
-    return;
-  }
+  check_error(EC, "cannot create output executable file");
 
   // Copy input file.
   RealOut->os() << File->getData();
@@ -565,11 +560,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       MemoryBuffer::getMemBuffer(BOS->str(), "in-memory object file", false);
   ErrorOr<std::unique_ptr<object::ObjectFile>> ObjOrErr =
     object::ObjectFile::createObjectFile(ObjectMemBuffer->getMemBufferRef());
-
-  if (std::error_code EC = ObjOrErr.getError()) {
-    report_error(InputFilename, EC);
-    return;
-  }
+  check_error(ObjOrErr.getError(), "error creating in-memory object");
 
   std::unique_ptr<ExecutableFileMemoryManager>
     EFMM(new ExecutableFileMemoryManager());

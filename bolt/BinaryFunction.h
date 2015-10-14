@@ -105,22 +105,22 @@ private:
 
   /// Release storage used by instructions.
   BinaryFunction &clearInstructions() {
-    std::map<uint64_t, MCInst> TempMap;
+    InstrMapType TempMap;
     Instructions.swap(TempMap);
     return *this;
   }
 
   /// Release storage used by instructions.
   BinaryFunction &clearLabels() {
-    std::map<uint64_t, MCSymbol *> TempMap;
+    LabelsMapType TempMap;
     Labels.swap(TempMap);
     return *this;
   }
 
   /// Release memory taken by local branch info.
   BinaryFunction &clearLocalBranches() {
-    std::vector<std::pair<uint64_t, uint64_t>> TempVector;
-    LocalBranches.swap(TempVector);
+    LocalBranchesListType TempList;
+    LocalBranches.swap(TempList);
     return *this;
   }
 
@@ -129,18 +129,25 @@ private:
     return *this;
   }
 
-public:
-  std::vector<std::pair<uint64_t, uint64_t>> LocalBranches;
+  /// Storage for all local branches in the function (non-fall-throughs).
+  using LocalBranchesListType = std::vector<std::pair<uint32_t, uint32_t>>;
+  LocalBranchesListType LocalBranches;
 
-  std::map<uint64_t, MCSymbol *> Labels;
+  /// Map offset in the function to a local label.
+  using LabelsMapType = std::map<uint32_t, MCSymbol *>;
+  LabelsMapType Labels;
 
   /// Temporary holder of instructions before CFG is constructed.
-  std::map<uint64_t, MCInst> Instructions;
+  /// Map offset in the function to MCInst.
+  using InstrMapType = std::map<uint32_t, MCInst>;
+  InstrMapType Instructions;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout, the terminating instructions need to be modified.
-  typedef std::vector<BinaryBasicBlock> BasicBlockListType;
+  using BasicBlockListType = std::vector<BinaryBasicBlock>;
   BasicBlockListType BasicBlocks;
+
+public:
 
   typedef BasicBlockListType::iterator iterator;
   typedef BasicBlockListType::const_iterator const_iterator;
