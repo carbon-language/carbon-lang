@@ -222,6 +222,9 @@ StatementMatcher makeDeclWithNewMatcher() {
              has(varDecl()),
              unless(has(varDecl(anyOf(
                  unless(hasInitializer(ignoringParenImpCasts(cxxNewExpr()))),
+                 // Skip declarations that are already using auto.
+                 anyOf(hasType(autoType()),
+                       hasType(pointerType(pointee(autoType())))),
                  // FIXME: TypeLoc information is not reliable where CV
                  // qualifiers are concerned so these types can't be
                  // handled for now.

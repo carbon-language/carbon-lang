@@ -95,4 +95,9 @@ void auto_new() {
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: use auto when initializing with new
     // CHECK-FIXES: auto g = new int*, h = new int_p;
   }
+
+  // Don't warn when 'auto' is already being used.
+  auto aut = new MyType();
+  auto *paut = new MyType();
+  const auto *pcaut = new MyType();
 }
