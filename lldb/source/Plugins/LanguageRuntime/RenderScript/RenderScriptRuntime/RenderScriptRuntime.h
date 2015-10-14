@@ -202,6 +202,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     void DumpKernels(Stream &strm) const;
 
+    bool DumpAllocation(Stream &strm, StackFrame* frame_ptr, const uint32_t id);
+
     void ListAllocations(Stream &strm, StackFrame* frame_ptr, bool recompute);
 
     void AttemptBreakpointAtKernelName(Stream &strm, const char *name, Error &error, lldb::TargetSP target);
@@ -298,6 +300,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     void CaptureAllocationInit1(RuntimeHook* hook_info, ExecutionContext& context);
     void CaptureSetGlobalVar1(RuntimeHook* hook_info, ExecutionContext& context);
 
+    AllocationDetails* FindAllocByID(Stream &strm, const uint32_t alloc_id);
+
     //
     // Helper functions for jitting the runtime
     //
@@ -309,6 +313,10 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     bool JITTypePacked(AllocationDetails* allocation, StackFrame* frame_ptr);
 
     bool JITElementPacked(AllocationDetails* allocation, StackFrame* frame_ptr);
+
+    bool JITAllocationSize(AllocationDetails* allocation, StackFrame* frame_ptr, const uint32_t elem_size);
+
+    bool JITAllocationStride(AllocationDetails* allocation, StackFrame* frame_ptr);
 
     // Search for a script detail object using a target address.
     // If a script does not currently exist this function will return nullptr.

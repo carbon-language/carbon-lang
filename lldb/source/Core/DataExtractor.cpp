@@ -2012,6 +2012,12 @@ DataExtractor::Dump (Stream *s,
             s->PutChar('}');
             break;
 
+        case eFormatVectorOfFloat16:
+            s->PutChar('{');
+            offset = Dump (s, offset, eFormatFloat,       2, item_byte_size / 2, item_byte_size / 2, LLDB_INVALID_ADDRESS, 0, 0);
+            s->PutChar('}');
+            break;
+
         case eFormatVectorOfFloat32:
             s->PutChar('{');
             offset = Dump (s, offset, eFormatFloat,       4, item_byte_size / 4, item_byte_size / 4, LLDB_INVALID_ADDRESS, 0, 0);

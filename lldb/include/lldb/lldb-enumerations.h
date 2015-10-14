@@ -146,6 +146,7 @@ namespace lldb {
         eFormatVectorOfUInt32,
         eFormatVectorOfSInt64,
         eFormatVectorOfUInt64,
+        eFormatVectorOfFloat16,
         eFormatVectorOfFloat32,
         eFormatVectorOfFloat64,
         eFormatVectorOfUInt128,

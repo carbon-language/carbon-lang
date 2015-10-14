@@ -14,6 +14,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/Process.h"
@@ -188,6 +189,9 @@ struct RenderScriptRuntime::AllocationDetails
     // Maps Allocation DataKind enum to printable strings
     static const char* RsDataKindToString[];
 
+    // Maps allocation types to format sizes for printing.
+    static const unsigned int RSTypeToFormat[][3];
+
     // Give each allocation an ID as a way
     // for commands to reference it.
     const unsigned int id;
@@ -201,6 +205,8 @@ struct RenderScriptRuntime::AllocationDetails
     empirical_type<lldb::addr_t> type_ptr;    // Pointer to the RS Type of the Allocation
     empirical_type<lldb::addr_t> element_ptr; // Pointer to the RS Element of the Type
     empirical_type<lldb::addr_t> context;     // Pointer to the RS Context of the Allocation
+    empirical_type<uint32_t> size;            // Size of the allocation
+    empirical_type<uint32_t> stride;          // Stride between rows of the allocation
 
     // Give each allocation an id, so we can reference it in user commands.
     AllocationDetails(): id(ID++)
@@ -240,6 +246,31 @@ const char* RenderScriptRuntime::AllocationDetails::RsDataTypeToString[][4] =
     {"uint", "uint2", "uint3", "uint4"},
     {"ulong", "ulong2", "ulong3", "ulong4"},
     {"bool", "bool2", "bool3", "bool4"}
+};
+
+// Used as an index into the RSTypeToFormat array elements
+enum TypeToFormatIndex {
+   eFormatSingle = 0,
+   eFormatVector,
+   eElementSize
+};
+
+// { format enum of single element, format enum of element vector, size of element}
+const unsigned int RenderScriptRuntime::AllocationDetails::RSTypeToFormat[][3] =
+{
+    {eFormatHex, eFormatHex, 1}, // RS_TYPE_NONE
+    {eFormatFloat, eFormatVectorOfFloat16, 2}, // RS_TYPE_FLOAT_16
+    {eFormatFloat, eFormatVectorOfFloat32, sizeof(float)}, // RS_TYPE_FLOAT_32
+    {eFormatFloat, eFormatVectorOfFloat64, sizeof(double)}, // RS_TYPE_FLOAT_64
+    {eFormatDecimal, eFormatVectorOfSInt8, sizeof(int8_t)}, // RS_TYPE_SIGNED_8
+    {eFormatDecimal, eFormatVectorOfSInt16, sizeof(int16_t)}, // RS_TYPE_SIGNED_16
+    {eFormatDecimal, eFormatVectorOfSInt32, sizeof(int32_t)}, // RS_TYPE_SIGNED_32
+    {eFormatDecimal, eFormatVectorOfSInt64, sizeof(int64_t)}, // RS_TYPE_SIGNED_64
+    {eFormatDecimal, eFormatVectorOfUInt8, sizeof(uint8_t)}, // RS_TYPE_UNSIGNED_8
+    {eFormatDecimal, eFormatVectorOfUInt16, sizeof(uint16_t)}, // RS_TYPE_UNSIGNED_16
+    {eFormatDecimal, eFormatVectorOfUInt32, sizeof(uint32_t)}, // RS_TYPE_UNSIGNED_32
+    {eFormatDecimal, eFormatVectorOfUInt64, sizeof(uint64_t)}, // RS_TYPE_UNSIGNED_64
+    {eFormatBoolean, eFormatBoolean, sizeof(bool)} // RS_TYPE_BOOL
 };
 
 //------------------------------------------------------------------
@@ -1211,6 +1242,109 @@ RenderScriptRuntime::JITElementPacked(AllocationDetails* allocation, StackFrame*
     return true;
 }
 
+// JITs the RS runtime for the address of the last element in the allocation.
+// The `elem_size` paramter represents the size of a single element, including padding.
+// Which is needed as an offset from the last element pointer.
+// Using this offset minus the starting address we can calculate the size of the allocation.
+// Returns true on success, false otherwise
+bool
+RenderScriptRuntime::JITAllocationSize(AllocationDetails* allocation, StackFrame* frame_ptr,
+                                       const uint32_t elem_size)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    if (!allocation->address.isValid() || !allocation->dimension.isValid()
+        || !allocation->data_ptr.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITAllocationSize - Failed to find allocation details");
+        return false;
+    }
+
+    const char* expr_cstr = runtimeExpressions[eExprGetOffsetPtr];
+    const int max_expr_size = 512; // Max expression size
+    char buffer[max_expr_size];
+
+    // Find dimensions
+    unsigned int dim_x = allocation->dimension.get()->dim_1;
+    unsigned int dim_y = allocation->dimension.get()->dim_2;
+    unsigned int dim_z = allocation->dimension.get()->dim_3;
+
+    // Calculate last element
+    dim_x = dim_x == 0 ? 0 : dim_x - 1;
+    dim_y = dim_y == 0 ? 0 : dim_y - 1;
+    dim_z = dim_z == 0 ? 0 : dim_z - 1;
+
+    int chars_written = snprintf(buffer, max_expr_size, expr_cstr, *allocation->address.get(),
+                                 dim_x, dim_y, dim_z);
+    if (chars_written < 0)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITAllocationSize - Encoding error in snprintf()");
+        return false;
+    }
+    else if (chars_written >= max_expr_size)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITAllocationSize - Expression too long");
+        return false;
+    }
+
+    uint64_t result = 0;
+    if (!EvalRSExpression(buffer, frame_ptr, &result))
+        return false;
+
+    addr_t mem_ptr = static_cast<lldb::addr_t>(result);
+    // Find pointer to last element and add on size of an element
+    allocation->size = static_cast<uint32_t>(mem_ptr - *allocation->data_ptr.get()) + elem_size;
+
+    return true;
+}
+
+// JITs the RS runtime for information about the stride between rows in the allocation.
+// This is done to detect padding, since allocated memory is 16-byte aligned.
+// Returns true on success, false otherwise
+bool
+RenderScriptRuntime::JITAllocationStride(AllocationDetails* allocation, StackFrame* frame_ptr)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    if (!allocation->address.isValid() || !allocation->data_ptr.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITAllocationStride - Failed to find allocation details");
+        return false;
+    }
+
+    const char* expr_cstr = runtimeExpressions[eExprGetOffsetPtr];
+    const int max_expr_size = 512; // Max expression size
+    char buffer[max_expr_size];
+
+    int chars_written = snprintf(buffer, max_expr_size, expr_cstr, *allocation->address.get(),
+                                 0, 1, 0);
+    if (chars_written < 0)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITAllocationStride - Encoding error in snprintf()");
+        return false;
+    }
+    else if (chars_written >= max_expr_size)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::JITAllocationStride - Expression too long");
+        return false;
+    }
+
+    uint64_t result = 0;
+    if (!EvalRSExpression(buffer, frame_ptr, &result))
+        return false;
+
+    addr_t mem_ptr = static_cast<lldb::addr_t>(result);
+    allocation->stride = static_cast<uint32_t>(mem_ptr - *allocation->data_ptr.get());
+
+    return true;
+}
+
 // JIT all the current runtime info regarding an allocation
 bool
 RenderScriptRuntime::RefreshAllocation(AllocationDetails* allocation, StackFrame* frame_ptr)
@@ -1526,6 +1660,182 @@ RenderScriptRuntime::DumpKernels(Stream &strm) const
         }
     }
     strm.IndentLess();
+}
+
+RenderScriptRuntime::AllocationDetails*
+RenderScriptRuntime::FindAllocByID(Stream &strm, const uint32_t alloc_id)
+{
+    AllocationDetails* alloc = nullptr;
+
+    // See if we can find allocation using id as an index;
+    if (alloc_id <= m_allocations.size() && alloc_id != 0
+        && m_allocations[alloc_id-1]->id == alloc_id)
+    {
+        alloc = m_allocations[alloc_id-1].get();
+        return alloc;
+    }
+
+    // Fallback to searching
+    for (const auto & a : m_allocations)
+    {
+       if (a->id == alloc_id)
+       {
+           alloc = a.get();
+           break;
+       }
+    }
+
+    if (alloc == nullptr)
+    {
+        strm.Printf("Error: Couldn't find allocation with id matching %u", alloc_id);
+        strm.EOL();
+    }
+
+    return alloc;
+}
+
+// Prints the contents of an allocation to the output stream, which may be a file
+bool
+RenderScriptRuntime::DumpAllocation(Stream &strm, StackFrame* frame_ptr, const uint32_t id)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    // Check we can find the desired allocation
+    AllocationDetails* alloc = FindAllocByID(strm, id);
+    if (!alloc)
+        return false; // FindAllocByID() will print error message for us here
+
+    if (log)
+        log->Printf("RenderScriptRuntime::DumpAllocation - Found allocation 0x%" PRIx64, *alloc->address.get());
+
+    // Check we have information about the allocation, if not calculate it
+    if (!alloc->data_ptr.isValid() || !alloc->type.isValid() ||
+        !alloc->type_vec_size.isValid() || !alloc->dimension.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::DumpAllocation - Allocation details not calculated yet, jitting info");
+
+        // JIT all the allocation information
+        if (!RefreshAllocation(alloc, frame_ptr))
+        {
+            strm.Printf("Error: Couldn't JIT allocation details");
+            strm.EOL();
+            return false;
+        }
+    }
+
+    // Establish format and size of each data element
+    const unsigned int vec_size = *alloc->type_vec_size.get();
+    const AllocationDetails::DataType type = *alloc->type.get();
+
+    assert(type >= AllocationDetails::RS_TYPE_NONE && type <= AllocationDetails::RS_TYPE_BOOLEAN
+                                                   && "Invalid allocation type");
+
+    lldb::Format format = vec_size == 1 ? static_cast<lldb::Format>(AllocationDetails::RSTypeToFormat[type][eFormatSingle])
+                                        : static_cast<lldb::Format>(AllocationDetails::RSTypeToFormat[type][eFormatVector]);
+
+    const unsigned int data_size = vec_size * AllocationDetails::RSTypeToFormat[type][eElementSize];
+    // Renderscript pads vector 3 elements to vector 4
+    const unsigned int elem_padding = vec_size == 3 ? AllocationDetails::RSTypeToFormat[type][eElementSize] : 0;
+
+    if (log)
+        log->Printf("RenderScriptRuntime::DumpAllocation - Element size %u bytes, element padding %u bytes",
+                    data_size, elem_padding);
+
+    // Calculate stride between rows as there may be padding at end of rows since
+    // allocated memory is 16-byte aligned
+    if (!alloc->stride.isValid())
+    {
+        if (alloc->dimension.get()->dim_2 == 0) // We only have one dimension
+            alloc->stride = 0;
+        else if (!JITAllocationStride(alloc, frame_ptr))
+        {
+            strm.Printf("Error: Couldn't calculate allocation row stride");
+            strm.EOL();
+            return false;
+        }
+    }
+    const unsigned int stride = *alloc->stride.get();
+
+    // Calculate data size
+    if (!alloc->size.isValid() && !JITAllocationSize(alloc, frame_ptr, data_size + elem_padding))
+    {
+        strm.Printf("Error: Couldn't calculate allocation size");
+        strm.EOL();
+        return false;
+    }
+    const unsigned int size = *alloc->size.get(); //size of last element
+
+    if (log)
+        log->Printf("RenderScriptRuntime::DumpAllocation - stride %u bytes, size %u bytes", stride, size);
+
+    // Allocate a buffer to copy data into
+    uint8_t* buffer = new uint8_t[size];
+    if (!buffer)
+    {
+        strm.Printf("Error: Couldn't allocate a %u byte buffer to read memory into", size);
+        strm.EOL();
+        return false;
+    }
+
+    // Read Memory into buffer
+    Error error;
+    Process* process = GetProcess();
+    const addr_t data_ptr = *alloc->data_ptr.get();
+    const uint32_t archByteSize = process->GetTarget().GetArchitecture().GetAddressByteSize();
+    DataExtractor alloc_data(buffer, size, process->GetByteOrder(), archByteSize);
+
+    if (log)
+        log->Printf("RenderScriptRuntime::DumpAllocation - Reading %u bytes of allocation data from 0x%" PRIx64,
+                    size, data_ptr);
+
+    // Read the inferior memory
+    process->ReadMemory(data_ptr, buffer, size, error);
+    if (error.Fail())
+    {
+        strm.Printf("Error: Couldn't read %u bytes of allocation data from 0x%" PRIx64, size, data_ptr);
+        strm.EOL();
+        delete[] buffer; // remember to free memory
+        return false;
+    }
+
+    // Find dimensions used to index loops, so need to be non-zero
+    unsigned int dim_x = alloc->dimension.get()->dim_1;
+    dim_x = dim_x == 0 ? 1 : dim_x;
+
+    unsigned int dim_y = alloc->dimension.get()->dim_2;
+    dim_y = dim_y == 0 ? 1 : dim_y;
+
+    unsigned int dim_z = alloc->dimension.get()->dim_3;
+    dim_z = dim_z == 0 ? 1 : dim_z;
+
+    unsigned int offset = 0;   // Offset in buffer to next element to be printed
+    unsigned int prev_row = 0; // Offset to the start of the previous row
+
+    // Iterate over allocation dimensions, printing results to user
+    strm.Printf("Data (X, Y, Z):");
+    for (unsigned int z = 0; z < dim_z; ++z)
+    {
+        for (unsigned int y = 0; y < dim_y; ++y)
+        {
+            // Use stride to index start of next row.
+            if (!(y==0 && z==0))
+                offset = prev_row + stride;
+            prev_row = offset;
+
+            // Print each element in the row individually
+            for (unsigned int x = 0; x < dim_x; ++x)
+            {
+                strm.Printf("\n(%u, %u, %u) = ", x, y, z);
+                alloc_data.Dump(&strm, offset, format, data_size, 1, 1, LLDB_INVALID_ADDRESS, 0, 0);
+                offset += data_size + elem_padding;
+            }
+        }
+    }
+    strm.EOL();
+
+    delete[] buffer;
+    return true;
 }
 
 // Prints infomation regarding all the currently loaded allocations.
@@ -2105,6 +2415,150 @@ class CommandObjectRenderScriptRuntimeContext : public CommandObjectMultiword
     ~CommandObjectRenderScriptRuntimeContext() {}
 };
 
+
+class CommandObjectRenderScriptRuntimeAllocationDump : public CommandObjectParsed
+{
+  private:
+  public:
+    CommandObjectRenderScriptRuntimeAllocationDump(CommandInterpreter &interpreter)
+        : CommandObjectParsed(interpreter, "renderscript allocation dump",
+                              "Displays the contents of a particular allocation", "renderscript allocation dump <ID>",
+                              eCommandRequiresProcess | eCommandProcessMustBeLaunched), m_options(interpreter)
+    {
+    }
+
+    virtual Options*
+    GetOptions()
+    {
+        return &m_options;
+    }
+
+    class CommandOptions : public Options
+    {
+      public:
+        CommandOptions(CommandInterpreter &interpreter) : Options(interpreter)
+        {
+        }
+
+        virtual
+        ~CommandOptions()
+        {
+        }
+
+        virtual Error
+        SetOptionValue(uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'f':
+                    m_outfile.SetFile(option_arg, true);
+                    if (m_outfile.Exists())
+                    {
+                        m_outfile.Clear();
+                        error.SetErrorStringWithFormat("file already exists: '%s'", option_arg);
+                    }
+                    break;
+                default:
+                    error.SetErrorStringWithFormat("unrecognized option '%c'", short_option);
+                    break;
+            }
+            return error;
+        }
+
+        void
+        OptionParsingStarting()
+        {
+            m_outfile.Clear();
+        }
+
+        const OptionDefinition*
+        GetDefinitions()
+        {
+            return g_option_table;
+        }
+
+        static OptionDefinition g_option_table[];
+        FileSpec m_outfile;
+    };
+
+    ~CommandObjectRenderScriptRuntimeAllocationDump() {}
+
+    bool
+    DoExecute(Args &command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc < 1)
+        {
+            result.AppendErrorWithFormat("'%s' takes 1 argument, an allocation ID. As well as an optional -f argument",
+                                         m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        RenderScriptRuntime *runtime =
+          static_cast<RenderScriptRuntime *>(m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript));
+
+        const char* id_cstr = command.GetArgumentAtIndex(0);
+        bool convert_complete = false;
+        const uint32_t id = StringConvert::ToUInt32(id_cstr, UINT32_MAX, 0, &convert_complete);
+        if (!convert_complete)
+        {
+            result.AppendErrorWithFormat("invalid allocation id argument '%s'", id_cstr);
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        Stream* output_strm = nullptr;
+        StreamFile outfile_stream;
+        const FileSpec &outfile_spec = m_options.m_outfile; // Dump allocation to file instead
+        if (outfile_spec)
+        {
+            // Open output file
+            char path[256];
+            outfile_spec.GetPath(path, sizeof(path));
+            if (outfile_stream.GetFile().Open(path, File::eOpenOptionWrite | File::eOpenOptionCanCreate).Success())
+            {
+                output_strm = &outfile_stream;
+                result.GetOutputStream().Printf("Results written to '%s'", path);
+                result.GetOutputStream().EOL();
+            }
+            else
+            {
+                result.AppendErrorWithFormat("Couldn't open file '%s'", path);
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+            output_strm = &result.GetOutputStream();
+
+        assert(output_strm != nullptr);
+        bool success = runtime->DumpAllocation(*output_strm, m_exe_ctx.GetFramePtr(), id);
+
+        if (success)
+            result.SetStatus(eReturnStatusSuccessFinishResult);
+        else
+            result.SetStatus(eReturnStatusFailed);
+
+        return true;
+    }
+
+    private:
+        CommandOptions m_options;
+};
+
+OptionDefinition
+CommandObjectRenderScriptRuntimeAllocationDump::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "file", 'f', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeFilename,
+      "Print results to specified file instead of command line."},
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+};
+
+
 class CommandObjectRenderScriptRuntimeAllocationList : public CommandObjectParsed
 {
   public:
@@ -2201,6 +2655,7 @@ class CommandObjectRenderScriptRuntimeAllocation : public CommandObjectMultiword
                                  NULL)
     {
         LoadSubCommand("list", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationList(interpreter)));
+        LoadSubCommand("dump", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationDump(interpreter)));
     }
 
     ~CommandObjectRenderScriptRuntimeAllocation() {}
