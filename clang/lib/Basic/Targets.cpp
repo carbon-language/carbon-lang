@@ -2060,36 +2060,40 @@ const TargetInfo::AddlRegName AddlRegNames[] = {
 class X86TargetInfo : public TargetInfo {
   enum X86SSEEnum {
     NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512F
-  } SSELevel;
+  } SSELevel = NoSSE;
   enum MMX3DNowEnum {
     NoMMX3DNow, MMX, AMD3DNow, AMD3DNowAthlon
-  } MMX3DNowLevel;
+  } MMX3DNowLevel = NoMMX3DNow;
   enum XOPEnum {
     NoXOP,
     SSE4A,
     FMA4,
     XOP
-  } XOPLevel;
+  } XOPLevel = NoXOP;
 
-  bool HasAES;
-  bool HasPCLMUL;
-  bool HasLZCNT;
-  bool HasRDRND;
-  bool HasFSGSBASE;
-  bool HasBMI;
-  bool HasBMI2;
-  bool HasPOPCNT;
-  bool HasRTM;
-  bool HasPRFCHW;
-  bool HasRDSEED;
-  bool HasADX;
-  bool HasTBM;
-  bool HasFMA;
-  bool HasF16C;
-  bool HasAVX512CD, HasAVX512ER, HasAVX512PF, HasAVX512DQ, HasAVX512BW,
-      HasAVX512VL;
-  bool HasSHA;
-  bool HasCX16;
+  bool HasAES = false;
+  bool HasPCLMUL = false;
+  bool HasLZCNT = false;
+  bool HasRDRND = false;
+  bool HasFSGSBASE = false;
+  bool HasBMI = false;
+  bool HasBMI2 = false;
+  bool HasPOPCNT = false;
+  bool HasRTM = false;
+  bool HasPRFCHW = false;
+  bool HasRDSEED = false;
+  bool HasADX = false;
+  bool HasTBM = false;
+  bool HasFMA = false;
+  bool HasF16C = false;
+  bool HasAVX512CD = false;
+  bool HasAVX512ER = false;
+  bool HasAVX512PF = false;
+  bool HasAVX512DQ = false;
+  bool HasAVX512BW = false;
+  bool HasAVX512VL = false;
+  bool HasSHA = false;
+  bool HasCX16 = false;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -2257,7 +2261,7 @@ class X86TargetInfo : public TargetInfo {
     //@{
     CK_Geode
     //@}
-  } CPU;
+  } CPU = CK_Generic;
 
   CPUKind getCPUKind(StringRef CPU) const {
     return llvm::StringSwitch<CPUKind>(CPU)
@@ -2332,18 +2336,10 @@ class X86TargetInfo : public TargetInfo {
     FP_Default,
     FP_SSE,
     FP_387
-  } FPMath;
+  } FPMath = FP_Default;
 
 public:
-  X86TargetInfo(const llvm::Triple &Triple)
-      : TargetInfo(Triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
-        XOPLevel(NoXOP), HasAES(false), HasPCLMUL(false), HasLZCNT(false),
-        HasRDRND(false), HasFSGSBASE(false), HasBMI(false), HasBMI2(false),
-        HasPOPCNT(false), HasRTM(false), HasPRFCHW(false), HasRDSEED(false),
-        HasADX(false), HasTBM(false), HasFMA(false), HasF16C(false),
-        HasAVX512CD(false), HasAVX512ER(false), HasAVX512PF(false),
-        HasAVX512DQ(false), HasAVX512BW(false), HasAVX512VL(false),
-        HasSHA(false), HasCX16(false), CPU(CK_Generic), FPMath(FP_Default) {
+  X86TargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
