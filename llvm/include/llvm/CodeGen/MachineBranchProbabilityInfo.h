@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
-#include <algorithm>
 #include <climits>
 #include <numeric>
 
@@ -84,46 +83,7 @@ public:
   raw_ostream &printEdgeProbability(raw_ostream &OS,
                                     const MachineBasicBlock *Src,
                                     const MachineBasicBlock *Dst) const;
-
-  // Normalize a list of weights by scaling them down so that the sum of them
-  // doesn't exceed UINT32_MAX.
-  template <class WeightListIter>
-  static void normalizeEdgeWeights(WeightListIter Begin, WeightListIter End);
 };
-
-template <class WeightListIter>
-void MachineBranchProbabilityInfo::normalizeEdgeWeights(WeightListIter Begin,
-                                                        WeightListIter End) {
-  // First we compute the sum with 64-bits of precision.
-  uint64_t Sum = std::accumulate(Begin, End, uint64_t(0));
-
-  if (Sum > UINT32_MAX) {
-    // Compute the scale necessary to cause the weights to fit, and re-sum with
-    // that scale applied.
-    assert(Sum / UINT32_MAX < UINT32_MAX &&
-           "The sum of weights exceeds UINT32_MAX^2!");
-    uint32_t Scale = Sum / UINT32_MAX + 1;
-    for (auto I = Begin; I != End; ++I)
-      *I /= Scale;
-    Sum = std::accumulate(Begin, End, uint64_t(0));
-  }
-
-  // Eliminate zero weights.
-  auto ZeroWeightNum = std::count(Begin, End, 0u);
-  if (ZeroWeightNum > 0) {
-    // If all weights are zeros, replace them by 1.
-    if (Sum == 0)
-      std::fill(Begin, End, 1u);
-    else {
-      // Scale up non-zero weights and turn zero weights into ones.
-      uint64_t ScalingFactor = (UINT32_MAX - ZeroWeightNum) / Sum;
-      if (ScalingFactor > 1)
-        for (auto I = Begin; I != End; ++I)
-          *I *= ScalingFactor;
-      std::replace(Begin, End, 0u, 1u);
-    }
-  }
-}
 
 }
 
