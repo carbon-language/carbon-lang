@@ -48,15 +48,13 @@ public:
     return std::max<uintX_t>(Header->sh_addralign, 1);
   }
 
-  void setOutputSection(OutputSection<ELFT> *O) { OutSec = O; }
-  OutputSection<ELFT> *getOutputSection() const { return OutSec; }
-
   // Relocation sections that refer to this one.
   SmallVector<const Elf_Shdr *, 1> RelocSections;
 
   // The offset from beginning of the output sections this section was assigned
   // to. The writer sets a value.
   uint64_t OutputSectionOff = 0;
+  OutputSection<ELFT> *OutputSection = nullptr;
 
   static InputSection<ELFT> Discarded;
 
@@ -69,8 +67,6 @@ private:
 
   // The file this section is from.
   ObjectFile<ELFT> *File;
-
-  OutputSection<ELFT> *OutSec = nullptr;
 
   const Elf_Shdr *Header;
 };

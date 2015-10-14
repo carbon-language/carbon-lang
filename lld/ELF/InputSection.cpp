@@ -76,7 +76,7 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   ObjectFile<ELFT> *File = getFile();
   ELFFile<ELFT> &EObj = File->getObj();
   uint8_t *Base = Buf + OutputSectionOff;
-  uintX_t BaseAddr = OutSec->getVA() + OutputSectionOff;
+  uintX_t BaseAddr = OutputSection->getVA() + OutputSectionOff;
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)
