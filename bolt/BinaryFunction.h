@@ -17,6 +17,8 @@
 #ifndef LLVM_TOOLS_LLVM_FLO_BINARY_FUNCTION_H
 #define LLVM_TOOLS_LLVM_FLO_BINARY_FUNCTION_H
 
+#include "BinaryBasicBlock.h"
+#include "BinaryContext.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -31,13 +33,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 
-#include "BinaryBasicBlock.h"
-#include "BinaryContext.h"
-
 using namespace llvm::object;
 
 namespace llvm {
-
 namespace flo {
 
 /// BinaryFunction is a representation of machine-level function.
@@ -184,10 +182,10 @@ public:
                                           BasicBlocksLayout.end());
   }
 
-  BinaryFunction(StringRef Name, SymbolRef Symbol, SectionRef Section,
+  BinaryFunction(std::string Name, SymbolRef Symbol, SectionRef Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC) :
       Name(Name), Symbol(Symbol), Section(Section), Address(Address),
-      Size(Size), BC(BC), CodeSectionName((".text." + Name).str()) {}
+      Size(Size), BC(BC), CodeSectionName(".text." + Name) {}
 
   /// Perform optimal code layout based on edge frequencies making necessary
   /// adjustments to instructions at the end of basic blocks.
@@ -411,7 +409,6 @@ inline raw_ostream &operator<<(raw_ostream &OS,
 }
 
 } // namespace flo
-
 } // namespace llvm
 
 #endif

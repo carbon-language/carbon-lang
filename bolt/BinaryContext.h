@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// Context for processing binary executables in files and/or memory.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TOOLS_LLVM_FLO_BINARY_CONTEXT_H
@@ -24,27 +26,25 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/TargetRegistry.h"
-
 #include <functional>
 #include <map>
 #include <string>
 #include <system_error>
 
 namespace llvm {
-
 namespace flo {
 
 class DataReader;
 
-/// Everything that's needed to process binaries lives here.
 class BinaryContext {
 
   BinaryContext() = delete;
 
 public:
 
-  // [name] -> [address]
+  // [name] -> [address] map used for global symbol resolution.
   typedef std::map<std::string, uint64_t> SymbolMapType;
   SymbolMapType GlobalSymbols;
 
@@ -111,10 +111,15 @@ public:
       DR(DR) {}
 
   ~BinaryContext() {}
+
+  /// Return a global symbol registered at a given \p Address. If no symbol
+  /// exists, create one with unique name using \p Prefix.
+  /// If there are multiple symbols registered at the \p Address, then
+  /// return the first one.
+  MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
 };
 
 } // namespace flo
-
 } // namespace llvm
 
 #endif

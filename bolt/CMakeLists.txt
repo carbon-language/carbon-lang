@@ -13,6 +13,7 @@ set(LLVM_LINK_COMPONENTS
 add_llvm_tool(llvm-flo
   llvm-flo.cpp
   BinaryBasicBlock.cpp
+  BinaryContext.cpp
   BinaryFunction.cpp
   DataReader.cpp
   )

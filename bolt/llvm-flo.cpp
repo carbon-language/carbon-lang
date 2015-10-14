@@ -13,6 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "BinaryBasicBlock.h"
+#include "BinaryContext.h"
+#include "BinaryFunction.h"
+#include "DataReader.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
@@ -45,12 +49,6 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
-
-#include "BinaryBasicBlock.h"
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
-#include "DataReader.h"
-
 #include <algorithm>
 #include <map>
 #include <system_error>
@@ -62,7 +60,8 @@ using namespace llvm;
 using namespace object;
 using namespace flo;
 
-// Tool options.
+namespace opts {
+
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<executable>"), cl::Required);
 
@@ -77,6 +76,17 @@ FunctionNames("funcs",
               cl::CommaSeparated,
               cl::desc("list of functions to optimize"),
               cl::value_desc("func1,func2,func3,..."));
+
+static cl::list<std::string>
+SkipFunctionNames("skip_funcs",
+                  cl::CommaSeparated,
+                  cl::desc("list of functions to skip"),
+                  cl::value_desc("func1,func2,func3,..."));
+
+static cl::opt<unsigned>
+MaxFunctions("max_funcs",
+             cl::desc("maximum # of functions to overwrite"),
+             cl::Optional);
 
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
@@ -99,6 +109,7 @@ DumpFunctions("dump-functions", cl::desc("dump parsed functions (debugging)"),
 static cl::opt<bool>
 DumpLayout("dump-layout", cl::desc("dump parsed flo data (debugging)"),
          cl::Hidden);
+} // namespace opts
 
 static StringRef ToolName;
 
@@ -283,7 +294,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     return;
   }
 
-  // Store all non-zero file symbols in this map for quick address lookup.
+  // Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, SymbolRef> FileSymRefs;
 
   // Entry point to the binary.
@@ -298,7 +309,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   // For local symbols we want to keep track of associated FILE symbol for
   // disambiguation by name.
   std::map<uint64_t, BinaryFunction> BinaryFunctions;
-  StringRef FileSymbolName;
+  std::string FileSymbolName;
   for (const SymbolRef &Symbol : File->symbols()) {
     // Keep undefined symbols for pretty printing?
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
@@ -329,7 +340,36 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (Name->empty())
       continue;
 
-    BC->GlobalAddresses.emplace(std::make_pair(Address, *Name));
+    // Disambiguate all local symbols before adding to symbol table.
+    // Since we don't know if we'll see a global with the same name,
+    // always modify the local name.
+    std::string UniqueName;
+    if (Symbol.getFlags() & SymbolRef::SF_Global) {
+      assert(BC->GlobalSymbols.find(*Name) == BC->GlobalSymbols.end() &&
+             "global name not unique");
+      UniqueName = *Name;
+    } else {
+      unsigned LocalCount = 1;
+      std::string LocalName = (*Name).str() + "/" + FileSymbolName + "/";
+      while (BC->GlobalSymbols.find(LocalName + std::to_string(LocalCount)) !=
+             BC->GlobalSymbols.end()) {
+        ++LocalCount;
+      }
+      UniqueName = LocalName + std::to_string(LocalCount);
+    }
+
+    /// It's possible we are seeing a globalized local. Even though
+    /// we've made the name unique, LLVM might still treat it as local
+    /// if it has a "private global" prefix, e.g. ".L". Thus we have to
+    /// change the prefix to enforce global scope of the symbol.
+    if (StringRef(UniqueName).startswith(BC->AsmInfo->getPrivateGlobalPrefix()))
+      UniqueName = "PG." + UniqueName;
+
+    // Add the name to global symbols map.
+    BC->GlobalSymbols[UniqueName] = Address;
+
+    // Add to the reverse map. There could multiple names at the same address.
+    BC->GlobalAddresses.emplace(std::make_pair(Address, UniqueName));
 
     // Only consider ST_Function symbols for functions. Although this
     // assumption  could be broken by assembly functions for which the type
@@ -353,35 +393,12 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       continue;
     }
 
-    // Disambiguate local function name. Since we don't know if we'll see
-    // a global with the same name, always modify the local function name.
-    std::string UniqueFunctionName;
-    if (!(Symbol.getFlags() & SymbolRef::SF_Global)) {
-      unsigned LocalCount = 1;
-      auto LocalName = *Name + "/" + FileSymbolName + "/";
-      while (BC->GlobalSymbols.find((LocalName + Twine(LocalCount)).str()) !=
-             BC->GlobalSymbols.end()) {
-        ++LocalCount;
-      }
-      UniqueFunctionName = (LocalName + Twine(LocalCount)).str();
-    } else {
-      auto I = BC->GlobalSymbols.find(*Name);
-      assert(I == BC->GlobalSymbols.end() && "global name not unique");
-      UniqueFunctionName = *Name;
-    }
-
     // Create the function and add to the map.
     BinaryFunctions.emplace(
         Address,
-        BinaryFunction(UniqueFunctionName, Symbol, *Section, Address,
+        BinaryFunction(UniqueName, Symbol, *Section, Address,
                        SymbolSize, *BC)
     );
-
-    // Add the name to global symbols map.
-    BC->GlobalSymbols[UniqueFunctionName] = Address;
-
-    // Add to the reverse map.
-    BC->GlobalAddresses.emplace(std::make_pair(Address, UniqueFunctionName));
   }
 
   // Disassemble every function and build it's control flow graph.
@@ -404,8 +421,12 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     auto SymRefI = FileSymRefs.upper_bound(Function.getAddress());
     if (SymRefI != FileSymRefs.end()) {
       auto MaxSize = SymRefI->first - Function.getAddress();
-      assert(MaxSize >= Function.getSize() &&
-             "symbol seen in the middle of the function");
+      if (MaxSize < Function.getSize()) {
+        DEBUG(dbgs() << "FLO: symbol seen in the middle of the function "
+                     << Function.getName() << ". Skipping.\n");
+        Function.setSimple(false);
+        continue;
+      }
       Function.setMaxSize(MaxSize);
     }
 
@@ -434,11 +455,11 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (!Function.buildCFG())
       continue;
 
-    if (DumpFunctions)
+    if (opts::DumpFunctions)
       Function.print(errs(), true);
   } // Iterate over all functions
 
-  if (DumpFunctions)
+  if (opts::DumpFunctions)
     return;
 
   // Run optimization passes.
@@ -452,7 +473,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     // FIXME: this wouldn't work with C++ exceptions until we implement
     //        support for those as there will be "invisible" edges
     //        in the graph.
-    if (EliminateUnreachable) {
+    if (opts::EliminateUnreachable) {
       bool IsFirst = true;
       for (auto &BB : Function) {
         if (!IsFirst && BB.pred_empty()) {
@@ -465,8 +486,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       DEBUG(dbgs() << "*** After unreachable block elimination ***\n");
       DEBUG(Function.print(dbgs(), /* PrintInstructions = */ true));
     }
-    if (ReorderBlocks) {
-      BFI.second.optimizeLayout(DumpLayout);
+    if (opts::ReorderBlocks) {
+      BFI.second.optimizeLayout(opts::DumpLayout);
     }
   }
 
@@ -475,12 +496,14 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   // This is an object file, which we keep for debugging purposes.
   // Once we decide it's useless, we should create it in memory.
   std::unique_ptr<tool_output_file> Out =
-    llvm::make_unique<tool_output_file>(OutputFilename + ".o",
+    llvm::make_unique<tool_output_file>(opts::OutputFilename + ".o",
                                         EC, sys::fs::F_None);
   check_error(EC, "cannot create output object file");
 
   std::unique_ptr<tool_output_file> RealOut =
-    llvm::make_unique<tool_output_file>(OutputFilename, EC, sys::fs::F_None,
+    llvm::make_unique<tool_output_file>(opts::OutputFilename,
+                                        EC,
+                                        sys::fs::F_None,
                                         0777);
   check_error(EC, "cannot create output executable file");
 
@@ -513,18 +536,31 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (!Function.isSimple())
       continue;
 
-    // Only overwrite functions from the list if non-empty.
-    if (!FunctionNames.empty()) {
-      bool IsValid = false;
-      for (auto &Name : FunctionNames) {
+    // Check against lists of functions from options if we should
+    // optimize the function.
+    bool IsValid = true;
+    if (!opts::FunctionNames.empty()) {
+      IsValid = false;
+      for (auto &Name : opts::FunctionNames) {
         if (Function.getName() == Name) {
           IsValid = true;
           break;
         }
       }
-      if (!IsValid)
-        continue;
     }
+    if (!IsValid)
+      continue;
+
+    if (!opts::SkipFunctionNames.empty()) {
+      for (auto &Name : opts::SkipFunctionNames) {
+        if (Function.getName() == Name) {
+          IsValid = false;
+          break;
+        }
+      }
+    }
+    if (!IsValid)
+      continue;
 
     DEBUG(dbgs() << "FLO: generating code for function \""
                  << Function.getName() << "\"\n");
@@ -635,6 +671,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   Writer.setStream(RealOut->os());
 
   // Overwrite function in the output file.
+  uint64_t CountOverwrittenFunctions = 0;
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
 
@@ -663,6 +700,13 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     BC->MAB->writeNopData(Function.getMaxSize() - Function.getImageSize(),
                           &Writer);
     RealOut->os().seek(Pos);
+
+    ++CountOverwrittenFunctions;
+
+    if (opts::MaxFunctions && CountOverwrittenFunctions == opts::MaxFunctions) {
+      outs() << "FLO: maximum number of functions reached\n";
+      break;
+    }
   }
 
   if (EntryPointFunction) {
@@ -672,6 +716,9 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     DEBUG(dbgs() << "FLO: no entry point function was set\n");
   }
 
+  outs() << "FLO: " << CountOverwrittenFunctions
+         << " out of " << BinaryFunctions.size()
+         << " functions were overwritten.\n";
   // TODO: we should find a way to mark the binary as optimized by us.
 
   Out->keep();
@@ -702,35 +749,36 @@ int main(int argc, char **argv) {
 
   ToolName = argv[0];
 
-  if (!sys::fs::exists(InputFilename))
-    report_error(InputFilename, errc::no_such_file_or_directory);
+  if (!sys::fs::exists(opts::InputFilename))
+    report_error(opts::InputFilename, errc::no_such_file_or_directory);
 
   std::unique_ptr<flo::DataReader> DR(new DataReader(errs()));
-  if (!InputDataFilename.empty()) {
-    if (!sys::fs::exists(InputDataFilename))
-      report_error(InputDataFilename, errc::no_such_file_or_directory);
+  if (!opts::InputDataFilename.empty()) {
+    if (!sys::fs::exists(opts::InputDataFilename))
+      report_error(opts::InputDataFilename, errc::no_such_file_or_directory);
 
     // Attempt to read input flo data
-    auto ReaderOrErr = flo::DataReader::readPerfData(InputDataFilename, errs());
+    auto ReaderOrErr =
+      flo::DataReader::readPerfData(opts::InputDataFilename, errs());
     if (std::error_code EC = ReaderOrErr.getError())
-      report_error(InputDataFilename, EC);
+      report_error(opts::InputDataFilename, EC);
     DR.reset(ReaderOrErr.get().release());
-    if (DumpData) {
+    if (opts::DumpData) {
       DR->dump();
       return EXIT_SUCCESS;
     }
   }
 
   // Attempt to open the binary.
-  ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(InputFilename);
+  ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(opts::InputFilename);
   if (std::error_code EC = BinaryOrErr.getError())
-    report_error(InputFilename, EC);
+    report_error(opts::InputFilename, EC);
   Binary &Binary = *BinaryOrErr.get().getBinary();
 
   if (ELFObjectFileBase *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
     OptimizeFile(e, *DR.get());
   } else {
-    report_error(InputFilename, object_error::invalid_file_type);
+    report_error(opts::InputFilename, object_error::invalid_file_type);
   }
 
   return EXIT_SUCCESS;

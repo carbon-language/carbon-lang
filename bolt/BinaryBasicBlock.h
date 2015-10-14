@@ -28,7 +28,6 @@
 #include <limits>
 
 namespace llvm {
-
 namespace flo {
 
 class BinaryFunction;
@@ -222,7 +221,6 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 
 
 } // namespace flo
-
 } // namespace llvm
 
 #endif

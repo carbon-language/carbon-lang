@@ -9,6 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "BinaryBasicBlock.h"
+#include "BinaryFunction.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -17,14 +19,10 @@
 #include <limits>
 #include <string>
 
-#include "BinaryBasicBlock.h"
-#include "BinaryFunction.h"
-
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "flo"
 
 namespace llvm {
-
 namespace flo {
 
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
@@ -66,5 +64,4 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
 }
 
 } // namespace flo
-
 } // namespace llvm

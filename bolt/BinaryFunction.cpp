@@ -10,6 +10,9 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "BinaryBasicBlock.h"
+#include "BinaryFunction.h"
+#include "DataReader.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -23,15 +26,10 @@
 #include <queue>
 #include <string>
 
-#include "BinaryBasicBlock.h"
-#include "BinaryFunction.h"
-#include "DataReader.h"
-
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "flo"
 
 namespace llvm {
-
 namespace flo {
 
 BinaryBasicBlock *
@@ -181,7 +179,16 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       break;
     }
 
+    if (MIA->isUnsupported(Instruction)) {
+      DEBUG(dbgs() << "FLO: unsupported instruction seen. Skipping function "
+                   << getName() << ".\n");
+      IsSimple = false;
+      break;
+    }
+
     if (MIA->isIndirectBranch(Instruction)) {
+      DEBUG(dbgs() << "FLO: indirect branch seen. Skipping function "
+                   << getName() << ".\n");
       IsSimple = false;
       break;
     }
@@ -231,21 +238,8 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           } else {
             // This is a call regardless of the opcode (e.g. tail call).
             IsCall = true;
-            // Check if we already have a symbol at this address.
-            std::string Name;
-            auto NI = BC.GlobalAddresses.find(InstructionTarget);
-            if (NI != BC.GlobalAddresses.end()) {
-              // Any registered name will do.
-              Name = NI->second;
-            } else {
-              // Create a new symbol at the destination.
-              Name = (Twine("FUNCat0x") +
-                      Twine::utohexstr(InstructionTarget)).str();
-              BC.GlobalAddresses.emplace(std::make_pair(InstructionTarget,
-                                                        Name));
-            }
-            TargetSymbol =  Ctx->getOrCreateSymbol(Name);
-            BC.GlobalSymbols[Name] = InstructionTarget;
+            TargetSymbol = BC.getOrCreateGlobalSymbol(InstructionTarget,
+                                                      "FUNCat");
           }
         }
 
@@ -282,19 +276,8 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           IsSimple = false;
           break;
         }
-        std::string Name;
-        auto NI = BC.GlobalAddresses.find(TargetAddress);
-        if (NI != BC.GlobalAddresses.end()) {
-          Name = NI->second;
-        } else {
-          // Register new "data" symbol at the destination.
-          Name = (Twine("DATAat0x") + Twine::utohexstr(TargetAddress)).str();
-          BC.GlobalAddresses.emplace(std::make_pair(TargetAddress,
-                                                    Name));
-        }
-        TargetSymbol =  Ctx->getOrCreateSymbol(Name);
-        BC.GlobalSymbols[Name] = TargetAddress;
-
+        // FIXME: check that the address is in data, not in code.
+        TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
         MIA->replaceRIPOperandDisp(
             Instruction,
             MCOperand::createExpr(
@@ -806,5 +789,4 @@ void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
 }
 
 } // namespace flo
-
 } // namespace llvm
