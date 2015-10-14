@@ -1518,6 +1518,7 @@ protected:
             case eFormatVectorOfUInt32:
             case eFormatVectorOfSInt64:
             case eFormatVectorOfUInt64:
+            case eFormatVectorOfFloat16:
             case eFormatVectorOfFloat32:
             case eFormatVectorOfFloat64:
             case eFormatVectorOfUInt128:
