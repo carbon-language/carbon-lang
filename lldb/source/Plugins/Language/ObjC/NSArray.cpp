@@ -202,6 +202,31 @@ namespace  lldb_private {
             std::vector<lldb::ValueObjectSP> m_children;
         };
         
+        class NSArray0SyntheticFrontEnd : public SyntheticChildrenFrontEnd
+        {
+        public:
+            NSArray0SyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+            
+            virtual size_t
+            CalculateNumChildren ();
+            
+            virtual lldb::ValueObjectSP
+            GetChildAtIndex (size_t idx);
+            
+            virtual bool
+            Update();
+            
+            virtual bool
+            MightHaveChildren ();
+            
+            virtual size_t
+            GetIndexOfChildWithName (const ConstString &name);
+            
+            virtual
+            ~NSArray0SyntheticFrontEnd ();
+        private:
+        };
+        
         class NSArrayCodeRunningSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
         public:
@@ -274,6 +299,10 @@ lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& s
         value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + ptr_size, ptr_size, 0, error);
         if (error.Fail())
             return false;
+    }
+    else if (!strcmp(class_name,"__NSArray0"))
+    {
+        value = 0;
     }
     else if (!strcmp(class_name,"__NSCFArray"))
     {
@@ -632,6 +661,45 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (size_t idx
     return retval_sp;
 }
 
+lldb_private::formatters::NSArray0SyntheticFrontEnd::NSArray0SyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+SyntheticChildrenFrontEnd (*valobj_sp.get())
+{
+}
+
+lldb_private::formatters::NSArray0SyntheticFrontEnd::~NSArray0SyntheticFrontEnd ()
+{
+}
+
+size_t
+lldb_private::formatters::NSArray0SyntheticFrontEnd::GetIndexOfChildWithName (const ConstString &name)
+{
+    return UINT32_MAX;
+}
+
+size_t
+lldb_private::formatters::NSArray0SyntheticFrontEnd::CalculateNumChildren ()
+{
+    return 0;
+}
+
+bool
+lldb_private::formatters::NSArray0SyntheticFrontEnd::Update()
+{
+    return false;
+}
+
+bool
+lldb_private::formatters::NSArray0SyntheticFrontEnd::MightHaveChildren ()
+{
+    return false;
+}
+
+lldb::ValueObjectSP
+lldb_private::formatters::NSArray0SyntheticFrontEnd::GetChildAtIndex (size_t idx)
+{
+    return lldb::ValueObjectSP();
+}
+
 SyntheticChildrenFrontEnd* lldb_private::formatters::NSArraySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
 {
     if (!valobj_sp)
@@ -668,6 +736,10 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSArraySyntheticFrontEndCre
     if (!strcmp(class_name,"__NSArrayI"))
     {
         return (new NSArrayISyntheticFrontEnd(valobj_sp));
+    }
+    else if (!strcmp(class_name,"__NSArray0"))
+    {
+        return (new NSArray0SyntheticFrontEnd(valobj_sp));
     }
     else if (!strcmp(class_name,"__NSArrayM"))
     {

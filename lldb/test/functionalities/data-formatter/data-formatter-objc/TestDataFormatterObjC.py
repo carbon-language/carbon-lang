@@ -229,6 +229,8 @@ class ObjCDataFormatterTestCase(TestBase):
                     substrs = ['(CFMutableBagRef) mutable_bag_ref = ','@"17 values"',
                     '(CFBagRef) cfbag_ref = ','@"15 values"',
                     '(CFBinaryHeapRef) binheap_ref = ','@"21 items"'])
+                    
+        self.expect('expression -d run -- [NSArray new]', substrs=['@"0 elements"'])
 
     def nsdata_data_formatter_commands(self):
         self.expect('frame variable immutableData mutableData data_ref mutable_data_ref mutable_string_ref',
