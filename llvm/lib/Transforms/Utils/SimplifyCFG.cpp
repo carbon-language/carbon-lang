@@ -73,6 +73,17 @@ static cl::opt<bool> HoistCondStores(
     "simplifycfg-hoist-cond-stores", cl::Hidden, cl::init(true),
     cl::desc("Hoist conditional stores if an unconditional store precedes"));
 
+static cl::opt<unsigned> SpeculativeFlattenBias(
+    "speculative-flatten-bias", cl::Hidden, cl::init(100),
+    cl::desc("Control how biased a branch needs to be to be considered rarely"
+             " failing for speculative flattening (default = 100)"));
+
+static cl::opt<unsigned> SpeculativeFlattenThreshold(
+    "speculative-flatten-threshold", cl::Hidden, cl::init(10),
+    cl::desc("Control how much speculation happens due to speculative"
+             " flattening (default = 10)"));
+
+
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
 STATISTIC(NumLinearMaps, "Number of switch instructions turned into linear mapping");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
@@ -2332,11 +2343,115 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, unsigned BonusInstThreshold) {
   return false;
 }
 
+
+/// Return true if B is known to be implied by A.  A & B must be i1 (boolean)
+static bool implies(Value *A, Value *B, const DataLayout &DL) {
+  assert(A->getType()->isIntegerTy(1) && B->getType()->isIntegerTy(1));
+  // Note that the truth table for implication is the same as <=u on i1
+  // values. 
+  Value *Simplified = SimplifyICmpInst(ICmpInst::ICMP_ULE, A, B, DL);
+  Constant *Con = dyn_cast_or_null<Constant>(Simplified);
+  return Con && Con->isOneValue();
+}
+
+/// If we have a series of tests leading to a frequently executed fallthrough
+/// path and we can test all the conditions at once, we can execute a single
+/// test on the fast path and figure out which condition failed on the slow
+/// path.  This transformation considers a pair of branches at a time since
+/// recursively considering branches pairwise will cause an entire chain to
+/// collapse.  This transformation is code size neutral, but makes it
+/// dynamically more expensive to fail either check.  As such, we only want to
+/// do this if both checks are expected to essentially never fail.
+/// The key motivating examples are cases like:
+///   br (i < Length), in_bounds, fail1
+/// in_bounds:
+///   br (i+1 < Length), in_bounds2, fail2
+/// in_bounds2:
+///   ...
+///
+/// We can rewrite this as:
+///   br (i+1 < Length), in_bounds2, dispatch
+/// in_bounds2:
+///   ...
+/// dispatch:
+///   br (i < Length), fail2, fail1
+///
+/// TODO: we could consider duplicating some (non-speculatable) instructions
+/// from BI->getParent() down both paths
+static bool SpeculativelyFlattenCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
+                                                       const DataLayout &DL) {
+  auto *PredBB = PBI->getParent();
+  auto *BB = BI->getParent();
+
+  /// Is the failing path of this branch taken rarely if at all?
+  auto isRarelyUntaken = [](BranchInst *BI) {
+    uint64_t ProbTrue;
+    uint64_t ProbFalse;
+    if (!ExtractBranchMetadata(BI, ProbTrue, ProbFalse))
+      return false;
+    return ProbTrue > ProbFalse * SpeculativeFlattenBias;
+  };
+
+  if (PBI->getSuccessor(0) != BB ||
+      !isRarelyUntaken(PBI) || !isRarelyUntaken(BI) ||
+      !implies(BI->getCondition(), PBI->getCondition(), DL))
+    return false;
+
+  // TODO: The following code performs a similiar, but slightly distinct
+  // transformation to that done by SpeculativelyExecuteBB.  We should consider
+  // combining them at some point.
+
+  // Can we speculate everything in the given block (except for the terminator
+  // instruction) at the instruction boundary before 'At'?
+  unsigned SpeculationCost = 0;
+  for (Instruction &I : *BB) {
+    if (isa<TerminatorInst>(I)) break;
+    if (!isSafeToSpeculativelyExecute(&I, PBI))
+      return false;
+    SpeculationCost++;
+    // Only flatten relatively small BBs to avoid making the bad case terrible
+    if (SpeculationCost > SpeculativeFlattenThreshold || isa<CallInst>(I))
+      return false;
+  }
+
+  DEBUG(dbgs() << "Outlining slow path comparison: "
+        << *PBI->getCondition() << " implied by "
+        << *BI->getCondition() << "\n");
+  // See the example in the function comment.
+  Value *WhichCond = PBI->getCondition();
+  auto *Success = BI->getSuccessor(0);
+  auto *FailPBI = PBI->getSuccessor(1);
+  auto *FailBI =  BI->getSuccessor(1);
+  // Have PBI branch directly to the fast path using BI's condition, branch
+  // to this BI's block for the slow path dispatch
+  PBI->setSuccessor(0, Success);
+  PBI->setSuccessor(1, BB);
+  PBI->setCondition(BI->getCondition());
+  // Rewrite BI to distinguish between the two failing cases
+  BI->setSuccessor(0, FailBI);
+  BI->setSuccessor(1, FailPBI);
+  BI->setCondition(WhichCond);
+  // Move all of the instructions from BI->getParent other than
+  // the terminator into the fastpath.  This requires speculating them past
+  // the original PBI branch, but we checked for that legality above.
+  // TODO: This doesn't handle dependent loads.  We could duplicate those
+  // down both paths, but that involves further code growth.  We need to
+  // figure out a good cost model here.
+  PredBB->getInstList().splice(PBI, BB->getInstList(),
+                               BB->begin(), std::prev(BB->end()));
+
+  // To be conservatively correct, drop all metadata on the rewritten
+  // branches.  TODO: update metadata
+  PBI->dropUnknownNonDebugMetadata();
+  BI->dropUnknownNonDebugMetadata();
+  return true;
+}
 /// If we have a conditional branch as a predecessor of another block,
 /// this function tries to simplify it.  We know
 /// that PBI and BI are both conditional branches, and BI is in one of the
 /// successor blocks of PBI - PBI branches to BI.
-static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
+static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
+                                           const DataLayout &DL) {
   assert(PBI->isConditional() && BI->isConditional());
   BasicBlock *BB = BI->getParent();
 
@@ -2385,6 +2500,13 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     }
   }
 
+  if (auto *CE = dyn_cast<ConstantExpr>(BI->getCondition()))
+    if (CE->canTrap())
+      return false;
+
+  if (SpeculativelyFlattenCondBranchToCondBranch(PBI, BI, DL))
+    return true;
+
   // If this is a conditional branch in an empty block, and if any
   // predecessors are a conditional branch to one of our destinations,
   // fold the conditions into logical ops and one cond br.
@@ -2394,11 +2516,6 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     ++BBI;
   if (&*BBI != BI)
     return false;
-
-
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(BI->getCondition()))
-    if (CE->canTrap())
-      return false;
 
   int PBIOp, BIOp;
   if (PBI->getSuccessor(0) == BI->getSuccessor(0))
@@ -4652,7 +4769,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
     if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
       if (PBI != BI && PBI->isConditional())
-        if (SimplifyCondBranchToCondBranch(PBI, BI))
+        if (SimplifyCondBranchToCondBranch(PBI, BI, DL))
           return SimplifyCFG(BB, TTI, BonusInstThreshold, AC) | true;
 
   return false;
