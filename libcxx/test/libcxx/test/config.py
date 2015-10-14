@@ -414,24 +414,27 @@ class Configuration(object):
         support_path = os.path.join(self.libcxx_src_root, 'test/support')
         self.cxx.compile_flags += ['-I' + support_path]
         self.cxx.compile_flags += ['-include', os.path.join(support_path, 'nasty_macros.hpp')]
-        # Check for a possible __config_site in the build directory. We
-        # use this if it exists.
-        config_site_header = os.path.join(self.libcxx_obj_root, '__config_site')
-        if os.path.isfile(config_site_header):
-            contained_macros = self.parse_config_site_and_add_features(
-                config_site_header)
-            self.lit_config.note('Using __config_site header %s with macros: %r'
-                % (config_site_header, contained_macros))
-            # FIXME: This must come after the call to
-            # 'parse_config_site_and_add_features(...)' in order for it to work.
-            self.cxx.compile_flags += ['-include', config_site_header]
-
+        self.configure_config_site_header()
         libcxx_headers = self.get_lit_conf(
             'libcxx_headers', os.path.join(self.libcxx_src_root, 'include'))
         if not os.path.isdir(libcxx_headers):
             self.lit_config.fatal("libcxx_headers='%s' is not a directory."
                                   % libcxx_headers)
         self.cxx.compile_flags += ['-I' + libcxx_headers]
+
+    def configure_config_site_header(self):
+        # Check for a possible __config_site in the build directory. We
+        # use this if it exists.
+        config_site_header = os.path.join(self.libcxx_obj_root, '__config_site')
+        if not os.path.isfile(config_site_header):
+            return
+        contained_macros = self.parse_config_site_and_add_features(
+            config_site_header)
+        self.lit_config.note('Using __config_site header %s with macros: %r'
+            % (config_site_header, contained_macros))
+        # FIXME: This must come after the call to
+        # 'parse_config_site_and_add_features(...)' in order for it to work.
+        self.cxx.compile_flags += ['-include', config_site_header]
 
     def parse_config_site_and_add_features(self, header):
         """ parse_config_site_and_add_features - Deduce and add the test
