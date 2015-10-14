@@ -73,7 +73,6 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
   ArrayRef<uint8_t> Data = *File->getObj().getSectionContents(Header);
   memcpy(Buf + OutputSectionOff, Data.data(), Data.size());
 
-  ObjectFile<ELFT> *File = getFile();
   ELFFile<ELFT> &EObj = File->getObj();
   uint8_t *Base = Buf + OutputSectionOff;
   uintX_t BaseAddr = OutputSection->getVA() + OutputSectionOff;
