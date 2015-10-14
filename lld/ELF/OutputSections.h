@@ -85,8 +85,6 @@ public:
   }
   uint32_t getType() { return Header.sh_type; }
 
-  static unsigned getAddrSize() { return Is64Bits ? 8 : 4; }
-
   virtual void finalize() {}
   virtual void writeTo(uint8_t *Buf) = 0;
 
@@ -105,7 +103,7 @@ class GotSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   GotSection();
   void finalize() override {
-    this->Header.sh_size = Entries.size() * this->getAddrSize();
+    this->Header.sh_size = Entries.size() * sizeof(uintX_t);
   }
   void writeTo(uint8_t *Buf) override;
   void addEntry(SymbolBody *Sym);

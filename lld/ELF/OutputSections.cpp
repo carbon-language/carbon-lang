@@ -34,7 +34,7 @@ GotSection<ELFT>::GotSection()
     : OutputSectionBase<ELFT::Is64Bits>(".got", llvm::ELF::SHT_PROGBITS,
                                         llvm::ELF::SHF_ALLOC |
                                             llvm::ELF::SHF_WRITE) {
-  this->Header.sh_addralign = this->getAddrSize();
+  this->Header.sh_addralign = sizeof(uintX_t);
 }
 
 template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody *Sym) {
@@ -45,7 +45,7 @@ template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody *Sym) {
 template <class ELFT>
 typename GotSection<ELFT>::uintX_t
 GotSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
-  return this->getVA() + B.GotIndex * this->getAddrSize();
+  return this->getVA() + B.GotIndex * sizeof(uintX_t);
 }
 
 template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
