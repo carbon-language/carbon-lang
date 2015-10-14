@@ -19,6 +19,9 @@
 
 using namespace lldb_private;
 
+const char *
+FileSystem::DEV_NULL = "nul";
+
 FileSpec::PathSyntax
 FileSystem::GetNativePathSyntax()
 {

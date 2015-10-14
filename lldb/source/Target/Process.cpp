@@ -21,6 +21,7 @@
 #include "lldb/Expression/UserExpression.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Pipe.h"
@@ -478,7 +479,7 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
         case 'n':   // Disable STDIO
         {
             FileAction action;
-            const FileSpec dev_null{"/dev/null", false};
+            const FileSpec dev_null{FileSystem::DEV_NULL, false};
             if (action.Open(STDIN_FILENO, dev_null, true, false))
                 launch_info.AppendFileAction (action);
             if (action.Open(STDOUT_FILENO, dev_null, false, true))

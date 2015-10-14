@@ -22,6 +22,8 @@ namespace lldb_private
 class FileSystem
 {
   public:
+    static const char *DEV_NULL;
+
     static FileSpec::PathSyntax GetNativePathSyntax();
 
     static Error MakeDirectory(const FileSpec &file_spec, uint32_t mode);

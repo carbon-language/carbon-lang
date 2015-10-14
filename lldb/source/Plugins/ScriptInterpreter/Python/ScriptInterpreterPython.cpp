@@ -34,6 +34,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -809,9 +810,9 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         else
         {
             input_file_sp.reset (new StreamFile ());
-            input_file_sp->GetFile().Open("/dev/null", File::eOpenOptionRead);
+            input_file_sp->GetFile().Open(FileSystem::DEV_NULL, File::eOpenOptionRead);
             output_file_sp.reset (new StreamFile ());
-            output_file_sp->GetFile().Open("/dev/null", File::eOpenOptionWrite);
+            output_file_sp->GetFile().Open(FileSystem::DEV_NULL, File::eOpenOptionWrite);
             error_file_sp = output_file_sp;
         }
 

@@ -11,6 +11,7 @@
 
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Target.h"
@@ -129,7 +130,7 @@ bool
 ProcessLaunchInfo::AppendSuppressFileAction (int fd, bool read, bool write)
 {
     FileAction file_action;
-    if (file_action.Open(fd, FileSpec{"/dev/null", false}, read, write))
+    if (file_action.Open(fd, FileSpec{FileSystem::DEV_NULL, false}, read, write))
     {
         AppendFileAction (file_action);
         return true;
