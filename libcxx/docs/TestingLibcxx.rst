@@ -18,7 +18,6 @@ Please see the `Lit Command Guide`_ for more information about LIT.
 
 .. _LIT Command Guide: http://llvm.org/docs/CommandGuide/lit.html
 
-
 Setting up the Environment
 --------------------------
 
@@ -38,6 +37,52 @@ LIT.
 
      $ export LIBCXX_SITE_CONFIG=path/to/build-libcxx/test/lit.site.cfg
 
+Example Usage
+-------------
+
+Once you have your environment set up and you have built libc++ you can run
+parts of the libc++ test suite by simply running `lit` on a specified test or
+directory. For example:
+
+.. code-block:: bash
+
+  $ cd path/to/src/libcxx
+  $ lit -sv test/std/re # Run all of the std::regex tests
+  $ lit -sv test/std/depr/depr.c.headers/stdlib_h.pass.cpp # Run a single test
+  $ lit -sv test/std/atomics test/std/threads # Test std::thread and std::atomic
+
+Sometimes you'll want to change the way LIT is running the tests. Custom options
+can be specified using the `--param=<name>=<val>` flag. The most common option
+you'll want to change is the standard dialect (ie -std=c++XX). By default the
+test suite will select the newest C++ dialect supported by the compiler and use
+that. However if you want to manually specify the option like so:
+
+.. code-block:: bash
+
+  $ lit -sv test/std/containers # Run the tests with the newest -std
+  $ lit -sv --param=std=c++03 test/std/containers # Run the tests in C++03
+
+Occasionally you'll want to add extra compile or link flags when testing.
+You can do this as follows:
+
+.. code-block:: bash
+
+  $ lit -sv --param=compile_flags='-Wcustom-warning'
+  $ lit -sv --param=link_flags='-L/custom/library/path'
+
+Some other common examples include:
+
+.. code-block:: bash
+
+  # Specify a custom compiler.
+  $ lit -sv --param=cxx_under_test=/opt/bin/g++ test/std
+
+  # Enable warnings in the test suite
+  $ lit -sv --param=enable_warnings=true test/std
+
+  # Use UBSAN when running the tests.
+  $ lit -sv --param=use_sanitizer=Undefined
+
 
 LIT Options
 ===========
@@ -52,6 +97,16 @@ To use these options you pass them on the LIT command line as --param NAME or
 configuration. Passing the option on the command line will override the default.
 
 .. program:: lit
+
+.. option:: cxx_under_test=<path/to/compiler>
+
+  Specify the compiler used to build the tests.
+
+.. option:: std=<standard version>
+
+  **Values**: c++98, c++03, c++11, c++14, c++1z
+
+  Change the standard version used when building the tests.
 
 .. option:: libcxx_site_config=<path/to/lit.site.cfg>
 
@@ -99,12 +154,6 @@ configuration. Passing the option on the command line will override the default.
 .. option:: link_flags="<list-of-args>"
 
   Specify additional link flags as a space delimited string.
-
-.. option:: std=<standard version>
-
-  **Values**: c++98, c++03, c++11, c++14, c++1z
-
-  Change the standard version used when building the tests.
 
 .. option:: debug_level=<level>
 
