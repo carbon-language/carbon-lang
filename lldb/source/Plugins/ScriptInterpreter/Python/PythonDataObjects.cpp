@@ -67,22 +67,14 @@ PythonObject::GetObjectType() const
     if (!IsAllocated())
         return PyObjectType::None;
 
-    if (PyList_Check(m_py_obj))
+    if (PythonList::Check(m_py_obj))
         return PyObjectType::List;
-    if (PyDict_Check(m_py_obj))
+    if (PythonDictionary::Check(m_py_obj))
         return PyObjectType::Dictionary;
-    if (PyUnicode_Check(m_py_obj))
+    if (PythonString::Check(m_py_obj))
         return PyObjectType::String;
-    if (PyLong_Check(m_py_obj))
+    if (PythonInteger::Check(m_py_obj))
         return PyObjectType::Integer;
-#if PY_MAJOR_VERSION < 3
-    // These functions don't exist in Python 3.x.  PyString is PyUnicode
-    // and PyInt is PyLong.
-    if (PyString_Check(m_py_obj))
-        return PyObjectType::String;
-    if (PyInt_Check(m_py_obj))
-        return PyObjectType::Integer;
-#endif
     return PyObjectType::Unknown;
 }
 
@@ -187,11 +179,11 @@ PythonString::Check(PyObject *py_obj)
 {
     if (!py_obj)
         return false;
+
 #if PY_MAJOR_VERSION >= 3
-    // Python 3 does not have PyString objects, only PyUnicode.
     return PyUnicode_Check(py_obj);
 #else
-    return PyUnicode_Check(py_obj) || PyString_Check(py_obj);
+    return PyString_Check(py_obj);
 #endif
 }
 
@@ -208,18 +200,6 @@ PythonString::Reset(PyRefType type, PyObject *py_obj)
         return;
     }
 
-    // Convert this to a PyBytes object, and only store the PyBytes.  Note that in
-    // Python 2.x, PyString and PyUnicode are interchangeable, and PyBytes is an alias
-    // of PyString.  So on 2.x, if we get into this branch, we already have a PyBytes.
-    if (PyUnicode_Check(py_obj))
-    {
-        // Since we're converting this to a different object, we assume ownership of the
-        // new object regardless of the value of `type`.
-        result.Reset(PyRefType::Owned, PyUnicode_AsUTF8String(py_obj));
-    }
-
-    assert(PyBytes_Check(result.get()) && "PythonString::Reset received a non-string");
-
     // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
     // back into the virtual implementation.
     PythonObject::Reset(PyRefType::Borrowed, result.get());
@@ -228,21 +208,31 @@ PythonString::Reset(PyRefType type, PyObject *py_obj)
 llvm::StringRef
 PythonString::GetString() const
 {
-    if (IsValid())
-    {
-        Py_ssize_t size;
-        char *c;
-        PyBytes_AsStringAndSize(m_py_obj, &c, &size);
-        return llvm::StringRef(c, size);
-    }
-    return llvm::StringRef();
+    if (!IsValid())
+        return llvm::StringRef();
+
+    Py_ssize_t size;
+    char *c;
+
+#if PY_MAJOR_VERSION >= 3
+    c = PyUnicode_AsUTF8AndSize(m_py_obj, &size);
+#else
+    PyString_AsStringAndSize(m_py_obj, &c, &size);
+#endif
+    return llvm::StringRef(c, size);
 }
 
 size_t
 PythonString::GetSize() const
 {
     if (IsValid())
-        return PyBytes_Size(m_py_obj);
+    {
+#if PY_MAJOR_VERSION >= 3
+        return PyUnicode_GetSize(m_py_obj);
+#else
+        return PyString_Size(m_py_obj);
+#endif
+    }
     return 0;
 }
 
@@ -251,11 +241,10 @@ PythonString::SetString (llvm::StringRef string)
 {
 #if PY_MAJOR_VERSION >= 3
     PyObject *unicode = PyUnicode_FromStringAndSize(string.data(), string.size());
-    PyObject *bytes = PyUnicode_AsUTF8String(unicode);
-    PythonObject::Reset(PyRefType::Owned, bytes);
-    Py_DECREF(unicode);
+    PythonObject::Reset(PyRefType::Owned, unicode);
 #else
-    PythonObject::Reset(PyRefType::Owned, PyString_FromStringAndSize(string.data(), string.size()));
+    PyObject *str = PyString_FromStringAndSize(string.data(), string.size());
+    PythonObject::Reset(PyRefType::Owned, str);
 #endif
 }
 

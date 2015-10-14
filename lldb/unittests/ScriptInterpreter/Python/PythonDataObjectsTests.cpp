@@ -49,21 +49,22 @@ class PythonDataObjectsTest : public testing::Test
 
 TEST_F(PythonDataObjectsTest, TestOwnedReferences)
 {
-    // After creating a new object, the refcount should be 1
+    // After creating a new object, the refcount should be >= 1
     PyObject *obj = PyLong_FromLong(3);
-    EXPECT_EQ(1, obj->ob_refcnt);
+    Py_ssize_t original_refcnt = obj->ob_refcnt;
+    EXPECT_LE(1, original_refcnt);
 
-    // If we take an owned reference, the refcount should still be 1
+    // If we take an owned reference, the refcount should be the same
     PythonObject owned_long(PyRefType::Owned, obj);
-    EXPECT_EQ(1, owned_long.get()->ob_refcnt);
+    EXPECT_EQ(original_refcnt, owned_long.get()->ob_refcnt);
 
-    // Take another reference and verify that the refcount increases
+    // Take another reference and verify that the refcount increases by 1
     PythonObject strong_ref(owned_long);
-    EXPECT_EQ(2, strong_ref.get()->ob_refcnt);
+    EXPECT_EQ(original_refcnt + 1, strong_ref.get()->ob_refcnt);
 
-    // If we reset the first one, the refcount should be 1 again.
+    // If we reset the first one, the refcount should be the original value.
     owned_long.Reset();
-    EXPECT_EQ(1, strong_ref.get()->ob_refcnt);
+    EXPECT_EQ(original_refcnt, strong_ref.get()->ob_refcnt);
 }
 
 TEST_F(PythonDataObjectsTest, TestResetting)
@@ -86,10 +87,11 @@ TEST_F(PythonDataObjectsTest, TestResetting)
 TEST_F(PythonDataObjectsTest, TestBorrowedReferences)
 {
     PythonInteger long_value(PyRefType::Owned, PyLong_FromLong(3));
-    EXPECT_EQ(1, long_value.get()->ob_refcnt);
+    Py_ssize_t original_refcnt = long_value.get()->ob_refcnt;
+    EXPECT_LE(1, original_refcnt);
 
     PythonInteger borrowed_long(PyRefType::Borrowed, long_value.get());
-    EXPECT_EQ(2, borrowed_long.get()->ob_refcnt);
+    EXPECT_EQ(original_refcnt + 1, borrowed_long.get()->ob_refcnt);
 }
 
 TEST_F(PythonDataObjectsTest, TestPythonInteger)
@@ -107,7 +109,7 @@ TEST_F(PythonDataObjectsTest, TestPythonInteger)
     EXPECT_EQ(12, python_int.GetInteger());
 #endif
 
-    // Verify that `PythonInt` works correctly when given a PyLong object.
+    // Verify that `PythonInteger` works correctly when given a PyLong object.
     PyObject *py_long = PyLong_FromLong(12);
     EXPECT_TRUE(PythonInteger::Check(py_long));
     PythonInteger python_long(PyRefType::Owned, py_long);
@@ -116,14 +118,20 @@ TEST_F(PythonDataObjectsTest, TestPythonInteger)
     // Verify that you can reset the value and that it is reflected properly.
     python_long.SetInteger(40);
     EXPECT_EQ(40, python_long.GetInteger());
+
+    // Test that creating a `PythonInteger` object works correctly with the
+    // int constructor.
+    PythonInteger constructed_int(7);
+    EXPECT_EQ(7, constructed_int.GetInteger());
 }
 
 TEST_F(PythonDataObjectsTest, TestPythonString)
 {
     // Test that strings behave correctly when wrapped by a PythonString.
 
-    static const char *test_string = "PythonDataObjectsTest::TestPythonString";
-    static const char *test_string2 = "PythonDataObjectsTest::TestPythonString";
+    static const char *test_string = "PythonDataObjectsTest::TestPythonString1";
+    static const char *test_string2 = "PythonDataObjectsTest::TestPythonString2";
+    static const char *test_string3 = "PythonDataObjectsTest::TestPythonString3";
 
 #if PY_MAJOR_VERSION < 3
     // Verify that `PythonString` works correctly when given a PyString object.
@@ -134,36 +142,66 @@ TEST_F(PythonDataObjectsTest, TestPythonString)
 
     EXPECT_EQ(PyObjectType::String, python_string.GetObjectType());
     EXPECT_STREQ(test_string, python_string.GetString().data());
-#endif
-
+#else
     // Verify that `PythonString` works correctly when given a PyUnicode object.
     PyObject *py_unicode = PyUnicode_FromString(test_string);
     EXPECT_TRUE(PythonString::Check(py_unicode));
     PythonString python_unicode(PyRefType::Owned, py_unicode);
-
     EXPECT_EQ(PyObjectType::String, python_unicode.GetObjectType());
     EXPECT_STREQ(test_string, python_unicode.GetString().data());
+#endif
 
-    // Verify that you can reset the value and that it is reflected properly.
-    python_unicode.SetString(test_string2);
-    EXPECT_STREQ(test_string2, python_unicode.GetString().data());
+    // Test that creating a `PythonString` object works correctly with the
+    // string constructor
+    PythonString constructed_string(test_string3);
+    EXPECT_STREQ(test_string3, constructed_string.GetString().str().c_str());
 }
 
-TEST_F(PythonDataObjectsTest, TestPythonListPrebuilt)
+TEST_F(PythonDataObjectsTest, TestPythonStringToStr)
+{
+    const char *c_str = "PythonDataObjectsTest::TestPythonStringToStr";
+
+    PythonString str(c_str);
+    EXPECT_STREQ(c_str, str.GetString().str().c_str());
+
+    PythonString str_str = str.Str();
+    EXPECT_STREQ(c_str, str_str.GetString().str().c_str());
+}
+
+TEST_F(PythonDataObjectsTest, TestPythonIntegerToStr)
+{
+}
+
+TEST_F(PythonDataObjectsTest, TestPythonIntegerToStructuredInteger)
+{
+    PythonInteger integer(7);
+    auto int_sp = integer.CreateStructuredInteger();
+    EXPECT_EQ(7, int_sp->GetValue());
+}
+
+TEST_F(PythonDataObjectsTest, TestPythonStringToStructuredString)
+{
+    static const char *test_string = "PythonDataObjectsTest::TestPythonStringToStructuredString";
+    PythonString constructed_string(test_string);
+    auto string_sp = constructed_string.CreateStructuredString();
+    EXPECT_STREQ(test_string, string_sp->GetStringValue().c_str());
+}
+
+TEST_F(PythonDataObjectsTest, TestPythonListValueEquality)
 {
     // Test that a list which is built through the native
     // Python API behaves correctly when wrapped by a PythonList.
     static const int list_size = 2;
-    static const long long_idx0 = 5;
-    static const char *const string_idx1 = "String Index 1";
+    static const long long_value0 = 5;
+    static const char *const string_value1 = "String Index 1";
 
     PyObject *py_list = PyList_New(2);
     EXPECT_TRUE(PythonList::Check(py_list));
     PythonList list(PyRefType::Owned, py_list);
 
     PythonObject list_items[list_size];
-    list_items[0].Reset(PyRefType::Owned, PyLong_FromLong(long_idx0));
-    list_items[1].Reset(PyRefType::Owned, PyString_FromString(string_idx1));
+    list_items[0].Reset(PythonInteger(long_value0));
+    list_items[1].Reset(PythonString(string_value1));
 
     for (int i = 0; i < list_size; ++i)
         list.SetItemAtIndex(i, list_items[i]);
@@ -171,41 +209,17 @@ TEST_F(PythonDataObjectsTest, TestPythonListPrebuilt)
     EXPECT_EQ(list_size, list.GetSize());
     EXPECT_EQ(PyObjectType::List, list.GetObjectType());
 
-    // PythonList doesn't yet support getting objects by type.
-    // For now, we have to call CreateStructuredArray and use
-    // those objects.  That will be in a different test.
-    // TODO: Add the ability for GetItemByIndex() to return a
-    // typed object.
-}
+    // Verify that the values match
+    PythonObject chk_value1 = list.GetItemAtIndex(0);
+    PythonObject chk_value2 = list.GetItemAtIndex(1);
+    EXPECT_TRUE(PythonInteger::Check(chk_value1.get()));
+    EXPECT_TRUE(PythonString::Check(chk_value2.get()));
 
-TEST_F(PythonDataObjectsTest, TestPythonDictionaryPrebuilt)
-{
-    // Test that a dictionary which is built through the native
-    // Python API behaves correctly when wrapped by a PythonDictionary.
-    static const int dict_entries = 2;
+    PythonInteger chk_int(PyRefType::Borrowed, chk_value1.get());
+    PythonString chk_str(PyRefType::Borrowed, chk_value2.get());
 
-    PythonObject keys[dict_entries];
-    PythonObject values[dict_entries];
-
-    keys[0].Reset(PyRefType::Owned, PyString_FromString("Key 0"));
-    keys[1].Reset(PyRefType::Owned, PyLong_FromLong(1));
-    values[0].Reset(PyRefType::Owned, PyLong_FromLong(0));
-    values[1].Reset(PyRefType::Owned, PyString_FromString("Value 1"));
-
-    PyObject *py_dict = PyDict_New();
-    EXPECT_TRUE(PythonDictionary::Check(py_dict));
-    PythonDictionary dict(PyRefType::Owned, py_dict);
-
-    for (int i = 0; i < dict_entries; ++i)
-        PyDict_SetItem(py_dict, keys[i].get(), values[i].get());
-    EXPECT_EQ(dict.GetSize(), dict_entries);
-    EXPECT_EQ(PyObjectType::Dictionary, dict.GetObjectType());
-
-    // PythonDictionary doesn't yet support getting objects by type.
-    // For now, we have to call CreateStructuredDictionary and use
-    // those objects.  That will be in a different test.
-    // TODO: Add the ability for GetItemByKey() to return a
-    // typed object.
+    EXPECT_EQ(long_value0, chk_int.GetInteger());
+    EXPECT_STREQ(string_value1, chk_str.GetString().str().c_str());
 }
 
 TEST_F(PythonDataObjectsTest, TestPythonListManipulation)
@@ -213,22 +227,88 @@ TEST_F(PythonDataObjectsTest, TestPythonListManipulation)
     // Test that manipulation of a PythonList behaves correctly when
     // wrapped by a PythonDictionary.
 
-    static const long long_idx0 = 5;
-    static const char *const string_idx1 = "String Index 1";
+    static const long long_value0 = 5;
+    static const char *const string_value1 = "String Index 1";
 
     PythonList list(PyInitialValue::Empty);
-    PythonInteger integer(long_idx0);
-    PythonString string(string_idx1);
+    PythonInteger integer(long_value0);
+    PythonString string(string_value1);
 
     list.AppendItem(integer);
     list.AppendItem(string);
     EXPECT_EQ(2, list.GetSize());
 
-    // PythonList doesn't yet support getting typed objects out, so we
-    // can't easily test that the first item is an integer with the correct
-    // value, etc.
-    // TODO: Add the ability for GetItemByIndex() to return a
-    // typed object.
+    // Verify that the values match
+    PythonObject chk_value1 = list.GetItemAtIndex(0);
+    PythonObject chk_value2 = list.GetItemAtIndex(1);
+    EXPECT_TRUE(PythonInteger::Check(chk_value1.get()));
+    EXPECT_TRUE(PythonString::Check(chk_value2.get()));
+
+    PythonInteger chk_int(PyRefType::Borrowed, chk_value1.get());
+    PythonString chk_str(PyRefType::Borrowed, chk_value2.get());
+
+    EXPECT_EQ(long_value0, chk_int.GetInteger());
+    EXPECT_STREQ(string_value1, chk_str.GetString().str().c_str());
+}
+
+TEST_F(PythonDataObjectsTest, TestPythonListToStructuredList)
+{
+    static const long long_value0 = 5;
+    static const char *const string_value1 = "String Index 1";
+
+    PythonList list(PyInitialValue::Empty);
+    list.AppendItem(PythonInteger(long_value0));
+    list.AppendItem(PythonString(string_value1));
+
+    auto array_sp = list.CreateStructuredArray();
+    EXPECT_EQ(StructuredData::Type::eTypeInteger, array_sp->GetItemAtIndex(0)->GetType());
+    EXPECT_EQ(StructuredData::Type::eTypeString, array_sp->GetItemAtIndex(1)->GetType());
+
+    auto int_sp = array_sp->GetItemAtIndex(0)->GetAsInteger();
+    auto string_sp = array_sp->GetItemAtIndex(1)->GetAsString();
+
+    EXPECT_EQ(long_value0, int_sp->GetValue());
+    EXPECT_STREQ(string_value1, string_sp->GetValue().c_str());
+}
+
+TEST_F(PythonDataObjectsTest, TestPythonDictionaryValueEquality)
+{
+    // Test that a dictionary which is built through the native
+    // Python API behaves correctly when wrapped by a PythonDictionary.
+    static const int dict_entries = 2;
+    const char *key_0 = "Key 0";
+    int key_1 = 1;
+    const int value_0 = 0;
+    const char *value_1 = "Value 1";
+
+    PythonObject py_keys[dict_entries];
+    PythonObject py_values[dict_entries];
+
+    py_keys[0].Reset(PythonString(key_0));
+    py_keys[1].Reset(PythonInteger(key_1));
+    py_values[0].Reset(PythonInteger(value_0));
+    py_values[1].Reset(PythonString(value_1));
+
+    PyObject *py_dict = PyDict_New();
+    EXPECT_TRUE(PythonDictionary::Check(py_dict));
+    PythonDictionary dict(PyRefType::Owned, py_dict);
+
+    for (int i = 0; i < dict_entries; ++i)
+        PyDict_SetItem(py_dict, py_keys[i].get(), py_values[i].get());
+    EXPECT_EQ(dict.GetSize(), dict_entries);
+    EXPECT_EQ(PyObjectType::Dictionary, dict.GetObjectType());
+
+    // Verify that the values match
+    PythonObject chk_value1 = dict.GetItemForKey(py_keys[0]);
+    PythonObject chk_value2 = dict.GetItemForKey(py_keys[1]);
+    EXPECT_TRUE(PythonInteger::Check(chk_value1.get()));
+    EXPECT_TRUE(PythonString::Check(chk_value2.get()));
+
+    PythonInteger chk_int(PyRefType::Borrowed, chk_value1.get());
+    PythonString chk_str(PyRefType::Borrowed, chk_value2.get());
+
+    EXPECT_EQ(value_0, chk_int.GetInteger());
+    EXPECT_STREQ(value_1, chk_str.GetString().str().c_str());
 }
 
 TEST_F(PythonDataObjectsTest, TestPythonDictionaryManipulation)
@@ -237,13 +317,18 @@ TEST_F(PythonDataObjectsTest, TestPythonDictionaryManipulation)
     // by a PythonDictionary.
     static const int dict_entries = 2;
 
+    const char *const key_0 = "Key 0";
+    const char *const key_1 = "Key 1";
+    const long value_0 = 1;
+    const char *const value_1 = "Value 1";
+
     PythonString keys[dict_entries];
     PythonObject values[dict_entries];
 
-    keys[0].Reset(PyRefType::Owned, PyString_FromString("Key 0"));
-    keys[1].Reset(PyRefType::Owned, PyString_FromString("Key 1"));
-    values[0].Reset(PyRefType::Owned, PyLong_FromLong(1));
-    values[1].Reset(PyRefType::Owned, PyString_FromString("Value 1"));
+    keys[0].Reset(PythonString(key_0));
+    keys[1].Reset(PythonString(key_1));
+    values[0].Reset(PythonInteger(value_0));
+    values[1].Reset(PythonString(value_1));
 
     PythonDictionary dict(PyInitialValue::Empty);
     for (int i = 0; i < 2; ++i)
@@ -251,212 +336,40 @@ TEST_F(PythonDataObjectsTest, TestPythonDictionaryManipulation)
 
     EXPECT_EQ(dict_entries, dict.GetSize());
 
-    // PythonDictionary doesn't yet support getting objects by type.
-    // For now, we have to call CreateStructuredDictionary and use
-    // those objects.  That will be in a different test.
-    // TODO: Add the ability for GetItemByKey() to return a
-    // typed object.
+    // Verify that the keys and values match
+    PythonObject chk_value1 = dict.GetItemForKey(keys[0]);
+    PythonObject chk_value2 = dict.GetItemForKey(keys[1]);
+    EXPECT_TRUE(PythonInteger::Check(chk_value1.get()));
+    EXPECT_TRUE(PythonString::Check(chk_value2.get()));
+
+    PythonInteger chk_int(PyRefType::Borrowed, chk_value1.get());
+    PythonString chk_str(PyRefType::Borrowed, chk_value2.get());
+
+    EXPECT_EQ(value_0, chk_int.GetInteger());
+    EXPECT_STREQ(value_1, chk_str.GetString().str().c_str());
 }
 
-TEST_F(PythonDataObjectsTest, TestPythonListToStructuredObject)
+TEST_F(PythonDataObjectsTest, TestPythonDictionaryToStructuredDictionary)
 {
-    // Test that a PythonList is properly converted to a StructuredArray.
-    // This includes verifying that a list can contain a nested list as
-    // well as a nested dictionary.
+    static const char *const string_key0 = "String Key 0";
+    static const char *const string_key1 = "String Key 1";
 
-    static const int item_count = 4;
-    static const long long_idx0 = 5;
-    static const char *const string_idx1 = "String Index 1";
-
-    static const long nested_list_long_idx0 = 6;
-    static const char *const nested_list_str_idx1 = "Nested String Index 1";
-
-    static const char *const nested_dict_key0 = "Nested Key 0";
-    static const char *const nested_dict_value0 = "Nested Value 0";
-    static const char *const nested_dict_key1 = "Nested Key 1";
-    static const long nested_dict_value1 = 2;
-
-    PythonList list(PyInitialValue::Empty);
-    PythonList nested_list(PyInitialValue::Empty);
-    PythonDictionary nested_dict(PyInitialValue::Empty);
-
-    nested_list.AppendItem(PythonInteger(nested_list_long_idx0));
-    nested_list.AppendItem(PythonString(nested_list_str_idx1));
-    nested_dict.SetItemForKey(PythonString(nested_dict_key0), PythonString(nested_dict_value0));
-    nested_dict.SetItemForKey(PythonString(nested_dict_key1), PythonInteger(nested_dict_value1));
-
-    list.AppendItem(PythonInteger(long_idx0));
-    list.AppendItem(PythonString(string_idx1));
-    list.AppendItem(nested_list);
-    list.AppendItem(nested_dict);
-
-    EXPECT_EQ(item_count, list.GetSize());
-
-    StructuredData::ArraySP array_sp = list.CreateStructuredArray();
-    EXPECT_EQ(list.GetSize(), array_sp->GetSize());
-    EXPECT_EQ(StructuredData::Type::eTypeInteger, array_sp->GetItemAtIndex(0)->GetType());
-    EXPECT_EQ(StructuredData::Type::eTypeString, array_sp->GetItemAtIndex(1)->GetType());
-    EXPECT_EQ(StructuredData::Type::eTypeArray, array_sp->GetItemAtIndex(2)->GetType());
-    EXPECT_EQ(StructuredData::Type::eTypeDictionary, array_sp->GetItemAtIndex(3)->GetType());
-
-    auto list_int_sp = std::static_pointer_cast<StructuredData::Integer>(array_sp->GetItemAtIndex(0));
-    auto list_str_sp = std::static_pointer_cast<StructuredData::String>(array_sp->GetItemAtIndex(1));
-    auto list_list_sp = std::static_pointer_cast<StructuredData::Array>(array_sp->GetItemAtIndex(2));
-    auto list_dict_sp = std::static_pointer_cast<StructuredData::Dictionary>(array_sp->GetItemAtIndex(3));
-
-    // Verify that the first item (long) has the correct value
-    EXPECT_EQ(long_idx0, list_int_sp->GetValue());
-
-    // Verify that the second item (string) has the correct value
-    EXPECT_STREQ(string_idx1, list_str_sp->GetValue().c_str());
-
-    // Verify that the third item is a list with the correct length and element types
-    EXPECT_EQ(nested_list.GetSize(), list_list_sp->GetSize());
-    EXPECT_EQ(StructuredData::Type::eTypeInteger, list_list_sp->GetItemAtIndex(0)->GetType());
-    EXPECT_EQ(StructuredData::Type::eTypeString, list_list_sp->GetItemAtIndex(1)->GetType());
-    // Verify that the values of each element in the list are correct
-    auto nested_list_value_0 = std::static_pointer_cast<StructuredData::Integer>(list_list_sp->GetItemAtIndex(0));
-    auto nested_list_value_1 = std::static_pointer_cast<StructuredData::String>(list_list_sp->GetItemAtIndex(1));
-    EXPECT_EQ(nested_list_long_idx0, nested_list_value_0->GetValue());
-    EXPECT_STREQ(nested_list_str_idx1, nested_list_value_1->GetValue().c_str());
-
-    // Verify that the fourth item is a dictionary with the correct length
-    EXPECT_EQ(nested_dict.GetSize(), list_dict_sp->GetSize());
-    auto dict_keys = std::static_pointer_cast<StructuredData::Array>(list_dict_sp->GetKeys());
-
-    // Verify that all of the keys match the values and types of keys we inserted
-    EXPECT_EQ(StructuredData::Type::eTypeString, dict_keys->GetItemAtIndex(0)->GetType());
-    EXPECT_EQ(StructuredData::Type::eTypeString, dict_keys->GetItemAtIndex(1)->GetType());
-    auto nested_key_0 = std::static_pointer_cast<StructuredData::String>(dict_keys->GetItemAtIndex(0));
-    auto nested_key_1 = std::static_pointer_cast<StructuredData::String>(dict_keys->GetItemAtIndex(1));
-    EXPECT_STREQ(nested_dict_key0, nested_key_0->GetValue().c_str());
-    EXPECT_STREQ(nested_dict_key1, nested_key_1->GetValue().c_str());
-
-    // Verify that for each key, the value has the correct type and value as what we inserted.
-    auto nested_dict_value_0 = list_dict_sp->GetValueForKey(nested_key_0->GetValue());
-    auto nested_dict_value_1 = list_dict_sp->GetValueForKey(nested_key_1->GetValue());
-    EXPECT_EQ(StructuredData::Type::eTypeString, nested_dict_value_0->GetType());
-    EXPECT_EQ(StructuredData::Type::eTypeInteger, nested_dict_value_1->GetType());
-    auto nested_dict_str_value_0 = std::static_pointer_cast<StructuredData::String>(nested_dict_value_0);
-    auto nested_dict_int_value_1 = std::static_pointer_cast<StructuredData::Integer>(nested_dict_value_1);
-    EXPECT_STREQ(nested_dict_value0, nested_dict_str_value_0->GetValue().c_str());
-    EXPECT_EQ(nested_dict_value1, nested_dict_int_value_1->GetValue());
-}
-
-TEST_F(PythonDataObjectsTest, TestPythonDictionaryToStructuredObject)
-{
-    // Test that a PythonDictionary is properly converted to a
-    // StructuredDictionary.  This includes verifying that a dictionary
-    // can contain a nested dictionary as well as a nested list.
-
-    static const int dict_item_count = 4;
-    static const char *const dict_keys[dict_item_count] = {"Key 0 (str)", "Key 1 (long)", "Key 2 (dict)",
-                                                           "Key 3 (list)"};
-
-    static const StructuredData::Type dict_value_types[dict_item_count] = {
-        StructuredData::Type::eTypeString, StructuredData::Type::eTypeInteger, StructuredData::Type::eTypeDictionary,
-        StructuredData::Type::eTypeArray};
-
-    static const char *const nested_dict_keys[2] = {"Nested Key 0 (str)", "Nested Key 1 (long)"};
-
-    static const StructuredData::Type nested_dict_value_types[2] = {
-        StructuredData::Type::eTypeString, StructuredData::Type::eTypeInteger,
-    };
-
-    static const StructuredData::Type nested_list_value_types[2] = {StructuredData::Type::eTypeInteger,
-                                                                    StructuredData::Type::eTypeString};
-
-    static const char *const dict_value0 = "Value 0";
-    static const long dict_value1 = 2;
-
-    static const long nested_list_value0 = 5;
-    static const char *const nested_list_value1 = "Nested list string";
-
-    static const char *const nested_dict_value0 = "Nested Dict Value 0";
-    static const long nested_dict_value1 = 7;
+    static const char *const string_value0 = "String Value 0";
+    static const long int_value1 = 7;
 
     PythonDictionary dict(PyInitialValue::Empty);
-    PythonDictionary nested_dict(PyInitialValue::Empty);
-    PythonList nested_list(PyInitialValue::Empty);
+    dict.SetItemForKey(PythonString(string_key0), PythonString(string_value0));
+    dict.SetItemForKey(PythonString(string_key1), PythonInteger(int_value1));
 
-    nested_dict.SetItemForKey(PythonString(nested_dict_keys[0]), PythonString(nested_dict_value0));
-    nested_dict.SetItemForKey(PythonString(nested_dict_keys[1]), PythonInteger(nested_dict_value1));
+    auto dict_sp = dict.CreateStructuredDictionary();
+    EXPECT_EQ(2, dict_sp->GetSize());
 
-    nested_list.AppendItem(PythonInteger(nested_list_value0));
-    nested_list.AppendItem(PythonString(nested_list_value1));
+    EXPECT_TRUE(dict_sp->HasKey(string_key0));
+    EXPECT_TRUE(dict_sp->HasKey(string_key1));
 
-    dict.SetItemForKey(PythonString(dict_keys[0]), PythonString(dict_value0));
-    dict.SetItemForKey(PythonString(dict_keys[1]), PythonInteger(dict_value1));
-    dict.SetItemForKey(PythonString(dict_keys[2]), nested_dict);
-    dict.SetItemForKey(PythonString(dict_keys[3]), nested_list);
+    auto string_sp = dict_sp->GetValueForKey(string_key0)->GetAsString();
+    auto int_sp = dict_sp->GetValueForKey(string_key1)->GetAsInteger();
 
-    StructuredData::DictionarySP dict_sp = dict.CreateStructuredDictionary();
-    EXPECT_EQ(dict_item_count, dict_sp->GetSize());
-    auto dict_keys_array = std::static_pointer_cast<StructuredData::Array>(dict_sp->GetKeys());
-
-    std::vector<StructuredData::StringSP> converted_keys;
-    std::vector<StructuredData::ObjectSP> converted_values;
-    // Verify that all of the keys match the values and types of keys we inserted
-    // (Keys are always strings, so this is easy)
-    for (int i = 0; i < dict_sp->GetSize(); ++i)
-    {
-        EXPECT_EQ(StructuredData::Type::eTypeString, dict_keys_array->GetItemAtIndex(i)->GetType());
-        auto converted_key = std::static_pointer_cast<StructuredData::String>(dict_keys_array->GetItemAtIndex(i));
-        converted_keys.push_back(converted_key);
-        converted_values.push_back(dict_sp->GetValueForKey(converted_key->GetValue().c_str()));
-
-        EXPECT_STREQ(dict_keys[i], converted_key->GetValue().c_str());
-        EXPECT_EQ(dict_value_types[i], converted_values[i]->GetType());
-    }
-
-    auto dict_string_value = std::static_pointer_cast<StructuredData::String>(converted_values[0]);
-    auto dict_int_value = std::static_pointer_cast<StructuredData::Integer>(converted_values[1]);
-    auto dict_dict_value = std::static_pointer_cast<StructuredData::Dictionary>(converted_values[2]);
-    auto dict_list_value = std::static_pointer_cast<StructuredData::Array>(converted_values[3]);
-
-    // The first two dictionary values are easy to test, because they are just a string and an integer.
-    EXPECT_STREQ(dict_value0, dict_string_value->GetValue().c_str());
-    EXPECT_EQ(dict_value1, dict_int_value->GetValue());
-
-    // For the nested dictionary, repeat the same process as before.
-    EXPECT_EQ(2, dict_dict_value->GetSize());
-    auto nested_dict_keys_array = std::static_pointer_cast<StructuredData::Array>(dict_dict_value->GetKeys());
-
-    std::vector<StructuredData::StringSP> nested_converted_keys;
-    std::vector<StructuredData::ObjectSP> nested_converted_values;
-    // Verify that all of the keys match the values and types of keys we inserted
-    // (Keys are always strings, so this is easy)
-    for (int i = 0; i < dict_dict_value->GetSize(); ++i)
-    {
-        EXPECT_EQ(StructuredData::Type::eTypeString, nested_dict_keys_array->GetItemAtIndex(i)->GetType());
-        auto converted_key =
-            std::static_pointer_cast<StructuredData::String>(nested_dict_keys_array->GetItemAtIndex(i));
-        nested_converted_keys.push_back(converted_key);
-        nested_converted_values.push_back(dict_dict_value->GetValueForKey(converted_key->GetValue().c_str()));
-
-        EXPECT_STREQ(nested_dict_keys[i], converted_key->GetValue().c_str());
-        EXPECT_EQ(nested_dict_value_types[i], converted_values[i]->GetType());
-    }
-
-    auto converted_nested_dict_value_0 = std::static_pointer_cast<StructuredData::String>(nested_converted_values[0]);
-    auto converted_nested_dict_value_1 = std::static_pointer_cast<StructuredData::Integer>(nested_converted_values[1]);
-
-    // The first two dictionary values are easy to test, because they are just a string and an integer.
-    EXPECT_STREQ(nested_dict_value0, converted_nested_dict_value_0->GetValue().c_str());
-    EXPECT_EQ(nested_dict_value1, converted_nested_dict_value_1->GetValue());
-
-    // For the nested list, just verify the size, type and value of each item
-    nested_converted_values.clear();
-    EXPECT_EQ(2, dict_list_value->GetSize());
-    for (int i = 0; i < dict_list_value->GetSize(); ++i)
-    {
-        auto converted_value = dict_list_value->GetItemAtIndex(i);
-        EXPECT_EQ(nested_list_value_types[i], converted_value->GetType());
-        nested_converted_values.push_back(converted_value);
-    }
-
-    auto converted_nested_list_value_0 = std::static_pointer_cast<StructuredData::Integer>(nested_converted_values[0]);
-    auto converted_nested_list_value_1 = std::static_pointer_cast<StructuredData::String>(nested_converted_values[1]);
-    EXPECT_EQ(nested_list_value0, converted_nested_list_value_0->GetValue());
-    EXPECT_STREQ(nested_list_value1, converted_nested_list_value_1->GetValue().c_str());
+    EXPECT_STREQ(string_value0, string_sp->GetValue().c_str());
+    EXPECT_EQ(int_value1, int_sp->GetValue());
 }
