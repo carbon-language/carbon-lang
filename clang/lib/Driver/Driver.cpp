@@ -2261,6 +2261,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
     case llvm::Triple::CUDA:
       TC = new toolchains::CudaToolChain(*this, Target, Args);
       break;
+    case llvm::Triple::PS4:
+      TC = new toolchains::PS4CPU(*this, Target, Args);
+      break;
     default:
       // Of these targets, Hexagon is the only one that might have
       // an OS of Linux, in which case it got handled above already.
