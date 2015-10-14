@@ -80,27 +80,101 @@ static ScriptInterpreterPython::SWIGPythonCallThreadPlan g_swig_call_thread_plan
 
 static bool g_initialized = false;
 
-#if PY_MAJOR_VERSION >= 3 && defined(LLDB_PYTHON_HOME)
-typedef wchar_t PythonHomeChar;
-#else
-typedef char PythonHomeChar;
-#endif
-
-PythonHomeChar *
-GetDesiredPythonHome()
+namespace
 {
+
+// Initializing Python is not a straightforward process.  We cannot control what
+// external code may have done before getting to this point in LLDB, including
+// potentially having already initialized Python, so we need to do a lot of work
+// to ensure that the existing state of the system is maintained across our
+// initialization.  We do this by using an RAII pattern where we save off initial
+// state at the beginning, and restore it at the end 
+struct InitializePythonRAII
+{
+public:
+    InitializePythonRAII() :
+        m_was_already_initialized(false),
+        m_gil_state(PyGILState_UNLOCKED)
+    {
+        // Python will muck with STDIN terminal state, so save off any current TTY
+        // settings so we can restore them.
+        m_stdin_tty_state.Save(STDIN_FILENO, false);
+
+        InitializePythonHome();
+
+        // Python < 3.2 and Python >= 3.2 reversed the ordering requirements for
+        // calling `Py_Initialize` and `PyEval_InitThreads`.  < 3.2 requires that you
+        // call `PyEval_InitThreads` first, and >= 3.2 requires that you call it last.
+#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 2) || (PY_MAJOR_VERSION > 3)
+        Py_InitializeEx(0);
+        InitializeThreadsPrivate();
+#else
+        InitializeThreadsPrivate();
+        Py_InitializeEx(0);
+#endif
+    }
+
+    ~InitializePythonRAII()
+    {
+        if (m_was_already_initialized)
+        {
+            Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+
+            if (log)
+            {
+                log->Printf("Releasing PyGILState. Returning to state = %slocked\n",
+                    m_was_already_initialized == PyGILState_UNLOCKED ? "un" : "");
+            }
+            PyGILState_Release(m_gil_state);
+        }
+        else
+        {
+            // We initialized the threads in this function, just unlock the GIL.
+            PyEval_SaveThread();
+        }
+
+        m_stdin_tty_state.Restore();
+    }
+
+private:
+    void InitializePythonHome()
+    {
 #if defined(LLDB_PYTHON_HOME)
 #if PY_MAJOR_VERSION >= 3
-    size_t size = 0;
-    static PythonHomeChar *g_python_home = Py_DecodeLocale(LLDB_PYTHON_HOME, &size);
-    return g_python_home;
+        size_t size = 0;
+        static wchar_t *g_python_home = Py_DecodeLocale(LLDB_PYTHON_HOME, &size);
 #else
-    static PythonHomeChar *g_python_home = LLDB_PYTHON_HOME;
-    return g_python_home;
+        static char *g_python_home = LLDB_PYTHON_HOME;
 #endif
-#else
-    return nullptr;
+        Py_SetPythonHome(g_python_home);
 #endif
+    }
+
+    void InitializeThreadsPrivate()
+    {
+        if (PyEval_ThreadsInitialized())
+        {
+            Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
+
+            m_was_already_initialized = true;
+            m_gil_state = PyGILState_Ensure();
+            if (log)
+            {
+                log->Printf("Ensured PyGILState. Previous state = %slocked\n",
+                    m_gil_state == PyGILState_UNLOCKED ? "un" : "");
+            }
+            return;
+        }
+
+        // InitThreads acquires the GIL if it hasn't been called before.
+        PyEval_InitThreads();
+    }
+
+    TerminalState m_stdin_tty_state;
+    PyGILState_STATE m_gil_state;
+    bool m_was_already_initialized;
+};
+
 }
 
 static std::string ReadPythonBacktrace(PythonObject py_backtrace);
@@ -3104,28 +3178,10 @@ ScriptInterpreterPython::InitializePrivate ()
 
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-    // Python will muck with STDIN terminal state, so save off any current TTY
-    // settings so we can restore them.
-    TerminalState stdin_tty_state;
-    stdin_tty_state.Save(STDIN_FILENO, false);
-
-#if defined(LLDB_PYTHON_HOME)
-    Py_SetPythonHome(GetDesiredPythonHome());
-#endif
-
-    PyGILState_STATE gstate;
-    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT | LIBLLDB_LOG_VERBOSE));
-    bool threads_already_initialized = false;
-    if (PyEval_ThreadsInitialized ()) {
-        gstate = PyGILState_Ensure ();
-        if (log)
-            log->Printf("Ensured PyGILState. Previous state = %slocked\n", gstate == PyGILState_UNLOCKED ? "un" : "");
-        threads_already_initialized = true;
-    } else {
-        // InitThreads acquires the GIL if it hasn't been called before.
-        PyEval_InitThreads ();
-    }
-    Py_InitializeEx (0);
+    // RAII-based initialization which correctly handles multiple-initialization, version-
+    // specific differences among Python 2 and Python 3, and saving and restoring various
+    // other pieces of state that can get mucked with during initialization.
+    InitializePythonRAII initialize_guard;
 
     if (g_swig_init_callback)
         g_swig_init_callback ();
@@ -3146,17 +3202,6 @@ ScriptInterpreterPython::InitializePrivate ()
         AddToSysPath(AddLocation::Beginning, file_spec.GetPath(false));
 
     PyRun_SimpleString ("sys.dont_write_bytecode = 1; import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line");
-
-    if (threads_already_initialized) {
-        if (log)
-            log->Printf("Releasing PyGILState. Returning to state = %slocked\n", gstate == PyGILState_UNLOCKED ? "un" : "");
-        PyGILState_Release (gstate);
-    } else {
-        // We initialized the threads in this function, just unlock the GIL.
-        PyEval_SaveThread();
-    }
-
-    stdin_tty_state.Restore();
 }
 
 void
