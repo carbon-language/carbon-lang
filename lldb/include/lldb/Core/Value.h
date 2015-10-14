@@ -265,7 +265,7 @@ public:
     GetValueDefaultFormat ();
 
     uint64_t
-    GetValueByteSize (Error *error_ptr);
+    GetValueByteSize (Error *error_ptr, ExecutionContext *exe_ctx);
 
     Error
     GetValueAsData (ExecutionContext *exe_ctx, 

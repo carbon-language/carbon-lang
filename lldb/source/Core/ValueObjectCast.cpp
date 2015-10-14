@@ -76,7 +76,8 @@ ValueObjectCast::CalculateNumChildren()
 uint64_t
 ValueObjectCast::GetByteSize()
 {
-    return m_value.GetValueByteSize(NULL);
+    ExecutionContext exe_ctx (GetExecutionContextRef());
+    return m_value.GetValueByteSize(nullptr, &exe_ctx);
 }
 
 lldb::ValueType

@@ -127,7 +127,10 @@ ValueObjectDynamicValue::GetByteSize()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_dynamic_type_info.HasType())
-        return m_value.GetValueByteSize(nullptr);
+    {
+        ExecutionContext exe_ctx (GetExecutionContextRef());
+        return m_value.GetValueByteSize(nullptr, &exe_ctx);
+    }
     else
         return m_parent->GetByteSize();
 }
