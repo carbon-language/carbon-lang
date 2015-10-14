@@ -92,3 +92,26 @@ entry:
 ; CHECK: [[A:%.*]] = load {{.*}} @__msan_param_tls
 ; CHECK: [[B:%.*]] = mul <4 x i32> [[A]], <i32 1024, i32 0, i32 16, i32 16>
 ; CHECK: store <4 x i32> [[B]], <4 x i32>* {{.*}} @__msan_retval_tls
+
+
+; The constant in multiplication does not have to be a literal integer constant.
+@X = linkonce_odr global i8* null
+define i64 @MulNonIntegerConst(i64 %a) sanitize_memory {
+  %mul = mul i64 %a, ptrtoint (i8** @X to i64)
+  ret i64 %mul
+}
+
+; CHECK-LABEL: @MulNonIntegerConst(
+; CHECK: [[A:%.*]] = load {{.*}} @__msan_param_tls
+; CHECK: [[B:%.*]] = mul i64 [[A]], 1
+; CHECK: store i64 [[B]], {{.*}}@__msan_retval_tls
+
+define <2 x i64> @MulNonIntegerVectorConst(<2 x i64> %a) sanitize_memory {
+  %mul = mul <2 x i64> %a, <i64 3072, i64 ptrtoint (i8** @X to i64)>
+  ret <2 x i64> %mul
+}
+
+; CHECK-LABEL: @MulNonIntegerVectorConst(
+; CHECK: [[A:%.*]] = load {{.*}} @__msan_param_tls
+; CHECK: [[B:%.*]] = mul <2 x i64> [[A]], <i64 1024, i64 1>
+; CHECK: store <2 x i64> [[B]], {{.*}}@__msan_retval_tls

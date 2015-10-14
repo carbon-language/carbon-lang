@@ -1617,18 +1617,24 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Type *EltTy = Ty->getSequentialElementType();
       SmallVector<Constant *, 16> Elements;
       for (unsigned Idx = 0; Idx < NumElements; ++Idx) {
-        ConstantInt *Elt =
-            dyn_cast<ConstantInt>(ConstArg->getAggregateElement(Idx));
-        APInt V = Elt->getValue();
-        APInt V2 = APInt(V.getBitWidth(), 1) << V.countTrailingZeros();
-        Elements.push_back(ConstantInt::get(EltTy, V2));
+        if (ConstantInt *Elt =
+                dyn_cast<ConstantInt>(ConstArg->getAggregateElement(Idx))) {
+          APInt V = Elt->getValue();
+          APInt V2 = APInt(V.getBitWidth(), 1) << V.countTrailingZeros();
+          Elements.push_back(ConstantInt::get(EltTy, V2));
+        } else {
+          Elements.push_back(ConstantInt::get(EltTy, 1));
+        }
       }
       ShadowMul = ConstantVector::get(Elements);
     } else {
-      ConstantInt *Elt = dyn_cast<ConstantInt>(ConstArg);
-      APInt V = Elt->getValue();
-      APInt V2 = APInt(V.getBitWidth(), 1) << V.countTrailingZeros();
-      ShadowMul = ConstantInt::get(Elt->getType(), V2);
+      if (ConstantInt *Elt = dyn_cast<ConstantInt>(ConstArg)) {
+        APInt V = Elt->getValue();
+        APInt V2 = APInt(V.getBitWidth(), 1) << V.countTrailingZeros();
+        ShadowMul = ConstantInt::get(Ty, V2);
+      } else {
+        ShadowMul = ConstantInt::get(Ty, 1);
+      }
     }
 
     IRBuilder<> IRB(&I);
