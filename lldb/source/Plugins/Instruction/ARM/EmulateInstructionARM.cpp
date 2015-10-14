@@ -290,7 +290,7 @@ EmulateInstructionARM::GetRegisterInfo (lldb::RegisterKind reg_kind, uint32_t re
 uint32_t
 EmulateInstructionARM::GetFramePointerRegisterNumber () const
 {
-    if (m_arch.GetTriple().getEnvironment() == llvm::Triple::Android)
+    if (m_arch.GetTriple().isAndroid())
         return LLDB_INVALID_REGNUM; // Don't use frame pointer on android
 
     bool is_apple = false;

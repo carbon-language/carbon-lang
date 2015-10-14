@@ -405,7 +405,7 @@ EmulateInstructionARM64::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
 uint32_t
 EmulateInstructionARM64::GetFramePointerRegisterNumber () const
 {
-    if (m_arch.GetTriple().getEnvironment() == llvm::Triple::Android)
+    if (m_arch.GetTriple().isAndroid())
         return LLDB_INVALID_REGNUM; // Don't use frame pointer on android
 
     return arm64_dwarf::sp;

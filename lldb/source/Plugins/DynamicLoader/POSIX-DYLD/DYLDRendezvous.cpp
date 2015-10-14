@@ -291,19 +291,13 @@ DYLDRendezvous::SOEntryIsMainExecutable(const SOEntry &entry)
     // FreeBSD and on Android it is the full path to the executable.
 
     auto triple = m_process->GetTarget().GetArchitecture().GetTriple();
-    auto os_type = triple.getOS();
-    auto env_type = triple.getEnvironment();
-
-    switch (os_type) {
+    switch (triple.getOS()) {
         case llvm::Triple::FreeBSD:
             return entry.file_spec == m_exe_file_spec;
         case llvm::Triple::Linux:
-            switch (env_type) {
-                case llvm::Triple::Android:
-                    return entry.file_spec == m_exe_file_spec;
-                default:
-                    return !entry.file_spec;
-            }
+            if (triple.isAndroid())
+                return entry.file_spec == m_exe_file_spec;
+            return !entry.file_spec;
         default:
             return false;
     }
@@ -381,7 +375,7 @@ isLoadBiasIncorrect(Target& target, const std::string& file_path)
     // On Android L (API 21, 22) the load address of the "/system/bin/linker" isn't filled in
     // correctly.
     uint32_t os_major = 0, os_minor = 0, os_update = 0;
-    if (target.GetArchitecture().GetTriple().getEnvironment() == llvm::Triple::Android &&
+    if (target.GetArchitecture().GetTriple().isAndroid() &&
         target.GetPlatform()->GetOSVersion(os_major, os_minor, os_update) &&
         (os_major == 21 || os_major == 22) &&
         (file_path == "/system/bin/linker" || file_path == "/system/bin/linker64"))
