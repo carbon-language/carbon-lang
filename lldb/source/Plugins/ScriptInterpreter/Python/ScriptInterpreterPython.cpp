@@ -478,7 +478,7 @@ PyFile_FromFile_Const(FILE *fp, const char *mode)
     int fd = fileno(fp);
 #endif
 
-    return PyRef(PyRefType::Owned,
+    return PythonObject(PyRefType::Owned,
         PyFile_FromFd(fd, nullptr, cmode, -1, nullptr, "ignore", nullptr, 0));
 #else
     // Read through the Python source, doesn't seem to modify these strings

@@ -111,8 +111,9 @@ import os
 #include "lldb/API/SBWatchpoint.h"
 #include "lldb/API/SBUnixSignals.h"
 
-#include "../scripts/Python/python-swigsafecast.swig"
+#include "../source/Plugins/ScriptInterpreter/Python/PythonDataObjects.h"
 
+#include "../scripts/Python/python-swigsafecast.swig"
 %}
 
 /* Various liblldb typedefs that SWIG needs to know about.  */
@@ -121,6 +122,7 @@ import os
    as INT32_MAX should only be defined if __STDC_LIMIT_MACROS is. */
 #define __STDC_LIMIT_MACROS
 %include "stdint.i"
+
 %include "lldb/lldb-defines.h"
 %include "lldb/lldb-enumerations.h"
 %include "lldb/lldb-forward.h"

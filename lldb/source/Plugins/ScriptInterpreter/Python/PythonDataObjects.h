@@ -122,7 +122,7 @@ public:
     {
         // Avoid calling the virtual method if it's not necessary
         // to actually validate the type of the PyObject.
-        if (!rhs.get())
+        if (!rhs.IsValid())
             Reset();
         else
             Reset(PyRefType::Borrowed, rhs.m_py_obj);
@@ -167,12 +167,21 @@ public:
     Dump (Stream &strm) const;
 
     PyObject*
-    get () const
+    get() const
     {
         return m_py_obj;
     }
 
-    PyObjectType GetObjectType() const;
+    PyObject*
+    release()
+    {
+        PyObject *result = m_py_obj;
+        m_py_obj = nullptr;
+        return result;
+    }
+
+    PyObjectType
+    GetObjectType() const;
 
     PythonString
     Repr ();

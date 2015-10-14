@@ -63,10 +63,10 @@
   int i;
   len = 0;
   while ($1[len]) len++;
-  $result = PyList_New(len);
-  for (i = 0; i < len; i++) {
-    PyList_SetItem($result, i, PyString_FromString($1[i]));
-  }
+  lldb_private::PythonList list(len);
+  for (i = 0; i < len; i++)
+    list.SetItemAtIndex(i, lldb_private::PythonString($1[i]));
+  $result = list.release();
 }
 
 %typemap(in) char const ** {
@@ -147,7 +147,8 @@
 // See also SBThread::GetStopDescription.
 %typemap(argout) (char *dst, size_t dst_len) {
    Py_XDECREF($result);   /* Blow away any previous result */
-   $result = PyString_FromStringAndSize(($1),result);
+   lldb_private::PythonString str($1);
+   $result = str.release();
    free($1);
 }
 
@@ -237,7 +238,9 @@
 // See also SBProcess::ReadMemory.
 %typemap(argout) (void *buf, size_t size) {
    Py_XDECREF($result);   /* Blow away any previous result */
-   $result = PyString_FromStringAndSize(static_cast<const char*>($1),result);
+   llvm::StringRef ref(static_cast<const char*>($1), result);
+   lldb_private::PythonString string(ref);
+   $result = string.release();
    free($1);
 }
 
