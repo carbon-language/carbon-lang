@@ -369,6 +369,18 @@ static void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
   Out<ELFT>::Bss->setSize(Off);
 }
 
+static StringRef getOutputName(StringRef S) {
+  if (S.startswith(".text."))
+    return ".text";
+  if (S.startswith(".rodata."))
+    return ".rodata";
+  if (S.startswith(".data."))
+    return ".data";
+  if (S.startswith(".bss."))
+    return ".bss";
+  return S;
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   // .interp needs to be on the first page in the output file.
@@ -403,7 +415,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
       uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
-      SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type, OutFlags};
+      SectionKey<ELFT::Is64Bits> Key{getOutputName(C->getSectionName()),
+                                     H->sh_type, OutFlags};
       OutputSection<ELFT> *&Sec = Map[Key];
       if (!Sec) {
         Sec = new (CAlloc.Allocate())
