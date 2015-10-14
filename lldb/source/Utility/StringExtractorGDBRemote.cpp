@@ -310,6 +310,12 @@ StringExtractorGDBRemote::GetServerPacketType () const
       case 'S':
         return eServerPacketType_S;
 
+      case 'x':
+        return eServerPacketType_x;
+
+      case 'X':
+        return eServerPacketType_X;
+
       case 'T':
         return eServerPacketType_T;
 

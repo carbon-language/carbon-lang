@@ -202,8 +202,9 @@ protected:
     PacketResult
     Handle_interrupt (StringExtractorGDBRemote &packet);
 
+    // Handles $m and $x packets.
     PacketResult
-    Handle_m (StringExtractorGDBRemote &packet);
+    Handle_memory_read (StringExtractorGDBRemote &packet);
 
     PacketResult
     Handle_M (StringExtractorGDBRemote &packet);

@@ -113,7 +113,7 @@ GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers()
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_interrupt,
                                   &GDBRemoteCommunicationServerLLGS::Handle_interrupt);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_m,
-                                  &GDBRemoteCommunicationServerLLGS::Handle_m);
+                                  &GDBRemoteCommunicationServerLLGS::Handle_memory_read);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_M,
                                   &GDBRemoteCommunicationServerLLGS::Handle_M);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_p,
@@ -164,6 +164,8 @@ GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers()
                                   &GDBRemoteCommunicationServerLLGS::Handle_vCont);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_vCont_actions,
                                   &GDBRemoteCommunicationServerLLGS::Handle_vCont_actions);
+    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_x,
+                                  &GDBRemoteCommunicationServerLLGS::Handle_memory_read);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_Z,
                                   &GDBRemoteCommunicationServerLLGS::Handle_Z);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_z,
@@ -1975,7 +1977,7 @@ GDBRemoteCommunicationServerLLGS::Handle_interrupt (StringExtractorGDBRemote &pa
 }
 
 GDBRemoteCommunication::PacketResult
-GDBRemoteCommunicationServerLLGS::Handle_m (StringExtractorGDBRemote &packet)
+GDBRemoteCommunicationServerLLGS::Handle_memory_read(StringExtractorGDBRemote &packet)
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
@@ -2008,7 +2010,7 @@ GDBRemoteCommunicationServerLLGS::Handle_m (StringExtractorGDBRemote &packet)
     {
         if (log)
             log->Printf ("GDBRemoteCommunicationServerLLGS::%s nothing to read: zero-length packet", __FUNCTION__);
-        return PacketResult::Success;
+        return SendOKResponse();
     }
 
     // Allocate the response buffer.
@@ -2035,8 +2037,16 @@ GDBRemoteCommunicationServerLLGS::Handle_m (StringExtractorGDBRemote &packet)
     }
 
     StreamGDBRemote response;
-    for (size_t i = 0; i < bytes_read; ++i)
-        response.PutHex8(buf[i]);
+    packet.SetFilePos(0);
+    char kind = packet.GetChar('?');
+    if (kind == 'x')
+        response.PutEscapedBytes(buf.data(), byte_count);
+    else
+    {
+        assert(kind == 'm');
+        for (size_t i = 0; i < bytes_read; ++i)
+            response.PutHex8(buf[i]);
+    }
 
     return SendPacketNoLock(response.GetData(), response.GetSize());
 }

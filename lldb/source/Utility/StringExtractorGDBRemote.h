@@ -145,6 +145,8 @@ public:
         eServerPacketType_s,
         eServerPacketType_S,
         eServerPacketType_T,
+        eServerPacketType_x,
+        eServerPacketType_X,
         eServerPacketType_Z,
         eServerPacketType_z,
 
