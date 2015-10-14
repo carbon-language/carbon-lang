@@ -738,6 +738,7 @@ EmulateInstructionMIPS64::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
     unwind_plan.SetSourceName ("EmulateInstructionMIPS64");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
+    unwind_plan.SetReturnAddressRegister (dwarf_ra_mips64);
 
     return true;
 }
