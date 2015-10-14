@@ -328,11 +328,12 @@ namespace {
 
  class MSPropertyOpBuilder : public PseudoOpBuilder {
    MSPropertyRefExpr *RefExpr;
+   OpaqueValueExpr *InstanceBase;
 
  public:
    MSPropertyOpBuilder(Sema &S, MSPropertyRefExpr *refExpr) :
      PseudoOpBuilder(S, refExpr->getSourceRange().getBegin()),
-     RefExpr(refExpr) {}
+     RefExpr(refExpr), InstanceBase(nullptr) {}
 
    Expr *rebuildAndCaptureObject(Expr *) override;
    ExprResult buildGet() override;
@@ -1400,10 +1401,10 @@ ExprResult ObjCSubscriptOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
 //===----------------------------------------------------------------------===//
 
 Expr *MSPropertyOpBuilder::rebuildAndCaptureObject(Expr *syntacticBase) {
-  Expr *NewBase = capture(RefExpr->getBaseExpr());
+  InstanceBase = capture(RefExpr->getBaseExpr());
 
   syntacticBase =
-    MSPropertyRefRebuilder(S, NewBase).rebuild(syntacticBase);
+    MSPropertyRefRebuilder(S, InstanceBase).rebuild(syntacticBase);
 
   return syntacticBase;
 }
@@ -1420,10 +1421,10 @@ ExprResult MSPropertyOpBuilder::buildGet() {
   GetterName.setIdentifier(II, RefExpr->getMemberLoc());
   CXXScopeSpec SS;
   SS.Adopt(RefExpr->getQualifierLoc());
-  ExprResult GetterExpr = S.ActOnMemberAccessExpr(
-    S.getCurScope(), RefExpr->getBaseExpr(), SourceLocation(),
-    RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
-    GetterName, nullptr);
+  ExprResult GetterExpr =
+      S.ActOnMemberAccessExpr(S.getCurScope(), InstanceBase, SourceLocation(),
+                              RefExpr->isArrow() ? tok::arrow : tok::period, SS,
+                              SourceLocation(), GetterName, nullptr);
   if (GetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
            diag::error_cannot_find_suitable_accessor) << 0 /* getter */
@@ -1450,10 +1451,10 @@ ExprResult MSPropertyOpBuilder::buildSet(Expr *op, SourceLocation sl,
   SetterName.setIdentifier(II, RefExpr->getMemberLoc());
   CXXScopeSpec SS;
   SS.Adopt(RefExpr->getQualifierLoc());
-  ExprResult SetterExpr = S.ActOnMemberAccessExpr(
-    S.getCurScope(), RefExpr->getBaseExpr(), SourceLocation(),
-    RefExpr->isArrow() ? tok::arrow : tok::period, SS, SourceLocation(),
-    SetterName, nullptr);
+  ExprResult SetterExpr =
+      S.ActOnMemberAccessExpr(S.getCurScope(), InstanceBase, SourceLocation(),
+                              RefExpr->isArrow() ? tok::arrow : tok::period, SS,
+                              SourceLocation(), SetterName, nullptr);
   if (SetterExpr.isInvalid()) {
     S.Diag(RefExpr->getMemberLoc(),
            diag::error_cannot_find_suitable_accessor) << 1 /* setter */
