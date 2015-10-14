@@ -235,13 +235,9 @@ void SymbolTable<ELFT>::checkCompatibility(std::unique_ptr<InputFile> &File) {
 }
 
 template <class ELFT> void SymbolTable<ELFT>::addMemberFile(Lazy *Body) {
-  std::unique_ptr<InputFile> File = Body->getMember();
-
   // getMember returns nullptr if the member was already read from the library.
-  if (!File)
-    return;
-
-  addFile(std::move(File));
+  if (std::unique_ptr<InputFile> File = Body->getMember())
+    addFile(std::move(File));
 }
 
 // This function takes care of the case in which shared libraries depend on
