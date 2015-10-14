@@ -27,6 +27,17 @@
 // RUN: %clang -### -c -ggdb3 %s -target x86_64-apple-darwin 2>&1 \
 // RUN:             | FileCheck -check-prefix=G_DARWIN %s
 
+// On the PS4, -g defaults to -gno-column-info, and we always generate the
+// arange section.
+// RUN: %clang -### -c %s -target x86_64-scei-ps4 2>&1 \
+// RUN:             | FileCheck -check-prefix=G_PS4 %s
+// RUN: %clang -### -c %s -g -target x86_64-scei-ps4 2>&1 \
+// RUN:             | FileCheck -check-prefix=G_PS4 %s
+// RUN: %clang -### -c %s -g -target x86_64-scei-ps4 2>&1 \
+// RUN:             | FileCheck -check-prefix=NOCI %s
+// RUN: %clang -### -c %s -g -gcolumn-info -target x86_64-scei-ps4 2>&1 \
+// RUN:             | FileCheck -check-prefix=CI %s
+
 // RUN: %clang -### -c -gdwarf-2 %s 2>&1 | FileCheck -check-prefix=G_D2 %s
 //
 // RUN: %clang -### -c -gfoo %s 2>&1 | FileCheck -check-prefix=G_NO %s
@@ -75,7 +86,8 @@
 // RUN: %clang -### -g -gno-column-info %s 2>&1 \
 // RUN:        | FileCheck -check-prefix=NOCI %s
 //
-// RUN: %clang -### -g %s 2>&1 | FileCheck -check-prefix=CI %s
+// RUN: %clang -### -g -target x86_64-unknown-unknown %s 2>&1 \
+//             | FileCheck -check-prefix=CI %s
 //
 // RUN: %clang -### -gmodules %s 2>&1 \
 // RUN:        | FileCheck -check-prefix=GEXTREFS %s
@@ -85,6 +97,9 @@
 //
 // G_DARWIN: "-cc1"
 // G_DARWIN: "-dwarf-version=2"
+//
+// G_PS4: "-cc1"
+// G_PS4: "-generate-arange-section"
 //
 // G_D2: "-cc1"
 // G_D2: "-dwarf-version=2"
