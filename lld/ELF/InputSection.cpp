@@ -51,7 +51,7 @@ void InputSection<ELFT>::relocate(
     uintX_t SymVA = getSymVA<ELFT>(Body);
     if (Target->relocNeedsPlt(Type, Body)) {
       SymVA = Out<ELFT>::Plt->getEntryAddr(Body);
-      Type = Target->getPCRelReloc();
+      Type = Target->getPLTRefReloc(Type);
     } else if (Target->relocNeedsGot(Type, Body)) {
       SymVA = Out<ELFT>::Got->getEntryAddr(Body);
       Type = Target->getGotRefReloc();

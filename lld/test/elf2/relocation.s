@@ -12,8 +12,8 @@
 // SEC-NEXT:   SHF_ALLOC
 // SEC-NEXT:   SHF_EXECINSTR
 // SEC-NEXT: ]
-// SEC-NEXT: Address: 0x11020
-// SEC-NEXT: Offset: 0x1020
+// SEC-NEXT: Address: 0x11030
+// SEC-NEXT: Offset: 0x1030
 // SEC-NEXT: Size: 8
 
 // SEC:         Name: .got
@@ -75,10 +75,13 @@ R_X86_64_32S:
 .global R_X86_64_PC32
 R_X86_64_PC32:
  call bar
-// 0x11020 - (0x11017 + 5) = 4
+ movl $bar, %eax
+// 0x11030 - (0x11017 + 5) = 20
+// 0x11030 = 69680
 // CHECK:      Disassembly of section .R_X86_64_PC32:
 // CHECK-NEXT: R_X86_64_PC32:
-// CHECK-NEXT:  11017:   e8 04 00 00 00  callq  4
+// CHECK-NEXT:  11017:   {{.*}}  callq  20
+// CHECK-NEXT:  1101c:   {{.*}}  movl $69680, %eax
 
 .section .R_X86_64_64,"a",@progbits
 .global R_X86_64_64

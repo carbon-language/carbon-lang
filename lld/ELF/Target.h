@@ -26,6 +26,7 @@ public:
   unsigned getGotRefReloc() const { return GotRefReloc; }
   unsigned getRelativeReloc() const { return RelativeReloc; }
   unsigned getPltEntrySize() const { return PltEntrySize; }
+  virtual unsigned getPLTRefReloc(unsigned Type) const;
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                              uint64_t PltEntryAddr) const = 0;
   virtual bool isRelRelative(uint32_t Type) const;
@@ -63,6 +64,7 @@ public:
 class X86_64TargetInfo final : public TargetInfo {
 public:
   X86_64TargetInfo();
+  unsigned getPLTRefReloc(unsigned Type) const override;
   void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                      uint64_t PltEntryAddr) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
