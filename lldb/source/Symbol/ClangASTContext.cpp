@@ -4431,7 +4431,7 @@ ClangASTContext::GetBitSize (lldb::opaque_compiler_type_t type, ExecutionContext
                     if (!g_printed)
                     {
                         StreamString s;
-                        DumpTypeDescription(&s);
+                        DumpTypeDescription(type, &s);
                         
                         llvm::outs() << "warning: trying to determine the size of type ";
                         llvm::outs() << s.GetString() << "\n";
@@ -8822,7 +8822,7 @@ void
 ClangASTContext::DumpTypeDescription (lldb::opaque_compiler_type_t type)
 {
     StreamFile s (stdout, false);
-    DumpTypeDescription (&s);
+    DumpTypeDescription (type, &s);
     ClangASTMetadata *metadata = ClangASTContext::GetMetadata (getASTContext(), type);
     if (metadata)
     {
