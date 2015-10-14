@@ -28,8 +28,10 @@ class Configuration(LibcxxConfiguration):
     def configure_compile_flags(self):
         self.cxx.compile_flags += ['-DLIBCXXABI_NO_TIMER']
         self.cxx.compile_flags += ['-funwind-tables']
-        super(Configuration, self).configure_compile_flags()
-
+        if not self.get_lit_bool('enable_threads', True):
+            self.cxx.compile_flags += ['-DLIBCXXABI_HAS_NO_THREADS=1']
+        super(Configuration, self).configure_compile_flags()    
+    
     def configure_compile_flags_header_includes(self):
         self.configure_config_site_header()
         cxx_headers = self.get_lit_conf(
@@ -52,12 +54,6 @@ class Configuration(LibcxxConfiguration):
         pass
 
     def configure_compile_flags_rtti(self):
-        pass
-
-    def configure_compile_flags_no_threads(self):
-        self.cxx.compile_flags += ['-DLIBCXXABI_HAS_NO_THREADS=1']
-
-    def configure_compile_flags_no_monotonic_clock(self):
         pass
 
     # TODO(ericwf): Remove this. This is a hack for OS X.
