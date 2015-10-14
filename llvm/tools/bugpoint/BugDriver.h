@@ -36,7 +36,7 @@ class LLVMContext;
 
 class DebugCrashes;
 
-class GCC;
+class CC;
 
 extern bool DisableSimplifyCFG;
 
@@ -52,7 +52,7 @@ class BugDriver {
   std::vector<std::string> PassesToRun;
   AbstractInterpreter *Interpreter;   // How to run the program
   AbstractInterpreter *SafeInterpreter;  // To generate reference output, etc.
-  GCC *gcc;
+  CC *cc;
   bool run_find_bugs;
   unsigned Timeout;
   unsigned MemoryLimit;

@@ -1080,7 +1080,7 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
   } else {
     outs() << "  llc " << TestModuleBC << " -o " << TestModuleBC
            << ".s\n";
-    outs() << "  gcc " << SharedObject << " " << TestModuleBC.str()
+    outs() << "  cc " << SharedObject << " " << TestModuleBC.str()
               << ".s -o " << TestModuleBC << ".exe";
 #if defined (HAVE_LINK_R)
     outs() << " -Wl,-R.";
@@ -1093,7 +1093,7 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
   outs() << '\n';
   outs() << "The shared object was created with:\n  llc -march=c "
          << SafeModuleBC.str() << " -o temporary.c\n"
-         << "  gcc -xc temporary.c -O2 -o " << SharedObject;
+         << "  cc -xc temporary.c -O2 -o " << SharedObject;
   if (TargetTriple.getArch() == Triple::sparc)
     outs() << " -G";              // Compile a shared library, `-G' for Sparc
   else
