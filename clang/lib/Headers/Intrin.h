@@ -432,6 +432,17 @@ __umulh(unsigned __int64 _Multiplier, unsigned __int64 _Multiplicand) {
 #endif /* __x86_64__ */
 
 /*----------------------------------------------------------------------------*\
+|* Multiplication
+\*----------------------------------------------------------------------------*/
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+__emul(int __in1, int __in2) {
+  return (__int64)__in1 * (__int64)__in2;
+}
+static __inline__ unsigned __int64 __DEFAULT_FN_ATTRS
+__emulu(unsigned int __in1, unsigned int __in2) {
+  return (unsigned __int64)__in1 * (unsigned __int64)__in2;
+}
+/*----------------------------------------------------------------------------*\
 |* Bit Twiddling
 \*----------------------------------------------------------------------------*/
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
