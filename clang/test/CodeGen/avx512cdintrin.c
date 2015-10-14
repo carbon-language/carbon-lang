@@ -1,5 +1,10 @@
-// RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -ffreestanding -target-feature +avx512cd -emit-llvm -o - -Werror | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin -target-feature +avx512cd -emit-llvm -o - -Werror | FileCheck %s
+
+// Don't include mm_malloc.h, it's system specific.
+#define __MM_MALLOC_H
+
 #include <immintrin.h>
+
 __m512i test_mm512_conflict_epi64(__m512i __A) {
   // CHECK-LABEL: @test_mm512_conflict_epi64
   // CHECK: @llvm.x86.avx512.mask.conflict.q.512

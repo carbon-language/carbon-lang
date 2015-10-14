@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -O3 -triple=x86_64-apple-darwin -target-feature +avx -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin -target-feature +avx -emit-llvm -o - | FileCheck %s
 
 // Don't include mm_malloc.h, it's system specific.
 #define __MM_MALLOC_H
@@ -96,19 +96,22 @@ int test_mm_cmpistrz(__m128i A, __m128i B) {
 
 int test_extract_epi32(__m256i __a) {
   // CHECK-LABEL: @test_extract_epi32
-  // CHECK: extractelement <8 x i32> %{{.*}}, i32 0
+  // CHECK: [[SHIFT1:%[^ ]+]] = and i32 %{{.*}}, 7
+  // CHECK: extractelement <8 x i32> %{{.*}}, i32 [[SHIFT1]]
   return _mm256_extract_epi32(__a, 8);
 }
 
 int test_extract_epi16(__m256i __a) {
   // CHECK-LABEL: @test_extract_epi16
-  // CHECK: extractelement <16 x i16> %{{.*}}, i32 0
+  // CHECK: [[SHIFT2:%[^ ]+]] = and i32 %{{.*}}, 15
+  // CHECK: extractelement <16 x i16> %{{.*}}, i32 [[SHIFT2]]
   return _mm256_extract_epi16(__a, 16);
 }
 
 int test_extract_epi8(__m256i __a) {
   // CHECK-LABEL: @test_extract_epi8
-  // CHECK: extractelement <32 x i8> %{{.*}}, i32 0
+  // CHECK: [[SHIFT3:%[^ ]+]] = and i32 %{{.*}}, 31
+  // CHECK: extractelement <32 x i8> %{{.*}}, i32 [[SHIFT3]]
   return _mm256_extract_epi8(__a, 32);
 }
 
