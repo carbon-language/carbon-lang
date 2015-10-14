@@ -39,6 +39,7 @@ public:
   virtual void printNeededLibraries() { }
   virtual void printProgramHeaders() { }
   virtual void printHashTable() { }
+  virtual void printGnuHashTable() { }
   virtual void printLoadName() {}
 
   // Only implemented for ARM ELF at this time.

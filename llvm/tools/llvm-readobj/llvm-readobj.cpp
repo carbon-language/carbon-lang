@@ -132,6 +132,10 @@ namespace opts {
   cl::opt<bool> HashTable("hash-table",
     cl::desc("Display ELF hash table"));
 
+  // -gnu-hash-table
+  cl::opt<bool> GnuHashTable("gnu-hash-table",
+    cl::desc("Display ELF .gnu.hash section"));
+
   // -expand-relocs
   cl::opt<bool> ExpandRelocs("expand-relocs",
     cl::desc("Expand each shown relocation to multiple lines"));
@@ -322,6 +326,8 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printProgramHeaders();
   if (opts::HashTable)
     Dumper->printHashTable();
+  if (opts::GnuHashTable)
+    Dumper->printGnuHashTable();
   if (Obj->getArch() == llvm::Triple::arm && Obj->isELF())
     if (opts::ARMAttributes)
       Dumper->printAttributes();

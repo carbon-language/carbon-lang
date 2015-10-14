@@ -194,6 +194,19 @@ public:
     OS << "]\n";
   }
 
+  template <typename T>
+  void printHexList(StringRef Label, const T &List) {
+    startLine() << Label << ": [";
+    bool Comma = false;
+    for (const auto &Item : List) {
+      if (Comma)
+        OS << ", ";
+      OS << hex(Item);
+      Comma = true;
+    }
+    OS << "]\n";
+  }
+
   template<typename T>
   void printHex(StringRef Label, T Value) {
     startLine() << Label << ": " << hex(Value) << "\n";

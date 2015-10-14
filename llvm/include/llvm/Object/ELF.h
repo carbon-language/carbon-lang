@@ -53,6 +53,7 @@ public:
   typedef Elf_Vernaux_Impl<ELFT> Elf_Vernaux;
   typedef Elf_Versym_Impl<ELFT> Elf_Versym;
   typedef Elf_Hash_Impl<ELFT> Elf_Hash;
+  typedef Elf_GnuHash_Impl<ELFT> Elf_GnuHash;
   typedef iterator_range<const Elf_Dyn *> Elf_Dyn_Range;
   typedef iterator_range<const Elf_Shdr *> Elf_Shdr_Range;
   typedef iterator_range<const Elf_Sym *> Elf_Sym_Range;

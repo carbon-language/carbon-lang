@@ -484,6 +484,30 @@ struct Elf_Hash_Impl {
   }
 };
 
+// .gnu.hash section
+template <class ELFT>
+struct Elf_GnuHash_Impl {
+  LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
+  Elf_Word nbuckets;
+  Elf_Word symndx;
+  Elf_Word maskwords;
+  Elf_Word shift2;
+
+  ArrayRef<Elf_Off> filter() const {
+    return ArrayRef<Elf_Off>(reinterpret_cast<const Elf_Off *>(&shift2 + 1),
+                             maskwords);
+  }
+
+  ArrayRef<Elf_Word> buckets() const {
+    return ArrayRef<Elf_Word>(
+        reinterpret_cast<const Elf_Word *>(filter().end()), nbuckets);
+  }
+
+  ArrayRef<Elf_Word> values(unsigned DynamicSymCount) const {
+    return ArrayRef<Elf_Word>(buckets().end(), DynamicSymCount - symndx);
+  }
+};
+
 // MIPS .reginfo section
 template <class ELFT>
 struct Elf_Mips_RegInfo;
