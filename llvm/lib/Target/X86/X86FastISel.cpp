@@ -433,6 +433,10 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, X86AddressMode &AM,
 bool X86FastISel::X86FastEmitStore(EVT VT, unsigned ValReg, bool ValIsKill,
                                    X86AddressMode &AM,
                                    MachineMemOperand *MMO, bool Aligned) {
+  bool HasSSE2 = Subtarget->hasSSE2();
+  bool HasAVX = Subtarget->hasAVX();
+  bool IsNonTemporal = MMO && MMO->isNonTemporal();
+
   // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
   switch (VT.getSimpleVT().SimpleTy) {
@@ -449,35 +453,49 @@ bool X86FastISel::X86FastEmitStore(EVT VT, unsigned ValReg, bool ValIsKill,
   // FALLTHROUGH, handling i1 as i8.
   case MVT::i8:  Opc = X86::MOV8mr;  break;
   case MVT::i16: Opc = X86::MOV16mr; break;
-  case MVT::i32: Opc = X86::MOV32mr; break;
-  case MVT::i64: Opc = X86::MOV64mr; break; // Must be in x86-64 mode.
+  case MVT::i32:
+    Opc = (IsNonTemporal && HasSSE2) ? X86::MOVNTImr : X86::MOV32mr;
+    break;
+  case MVT::i64:
+    // Must be in x86-64 mode.
+    Opc = (IsNonTemporal && HasSSE2) ? X86::MOVNTI_64mr : X86::MOV64mr;
+    break;
   case MVT::f32:
-    Opc = X86ScalarSSEf32 ?
-          (Subtarget->hasAVX() ? X86::VMOVSSmr : X86::MOVSSmr) : X86::ST_Fp32m;
+    Opc = X86ScalarSSEf32 ? 
+          (HasAVX ? X86::VMOVSSmr : X86::MOVSSmr) : X86::ST_Fp32m;
     break;
   case MVT::f64:
     Opc = X86ScalarSSEf64 ?
-          (Subtarget->hasAVX() ? X86::VMOVSDmr : X86::MOVSDmr) : X86::ST_Fp64m;
+          (HasAVX ? X86::VMOVSDmr : X86::MOVSDmr) : X86::ST_Fp64m;
     break;
   case MVT::v4f32:
-    if (Aligned)
-      Opc = Subtarget->hasAVX() ? X86::VMOVAPSmr : X86::MOVAPSmr;
-    else
-      Opc = Subtarget->hasAVX() ? X86::VMOVUPSmr : X86::MOVUPSmr;
+    if (Aligned) {
+      if (IsNonTemporal)
+        Opc = HasAVX ? X86::VMOVNTPSmr : X86::MOVNTPSmr;
+      else
+        Opc = HasAVX ? X86::VMOVAPSmr : X86::MOVAPSmr;
+    } else
+      Opc = HasAVX ? X86::VMOVUPSmr : X86::MOVUPSmr;
     break;
   case MVT::v2f64:
-    if (Aligned)
-      Opc = Subtarget->hasAVX() ? X86::VMOVAPDmr : X86::MOVAPDmr;
-    else
-      Opc = Subtarget->hasAVX() ? X86::VMOVUPDmr : X86::MOVUPDmr;
+    if (Aligned) {
+      if (IsNonTemporal)
+        Opc = HasAVX ? X86::VMOVNTPDmr : X86::MOVNTPDmr;
+      else
+        Opc = HasAVX ? X86::VMOVAPDmr : X86::MOVAPDmr;
+    } else
+      Opc = HasAVX ? X86::VMOVUPDmr : X86::MOVUPDmr;
     break;
   case MVT::v4i32:
   case MVT::v2i64:
   case MVT::v8i16:
   case MVT::v16i8:
-    if (Aligned)
-      Opc = Subtarget->hasAVX() ? X86::VMOVDQAmr : X86::MOVDQAmr;
-    else
+    if (Aligned) {
+      if (IsNonTemporal)
+        Opc = HasAVX ? X86::VMOVNTDQmr : X86::MOVNTDQmr;
+      else
+        Opc = HasAVX ? X86::VMOVDQAmr : X86::MOVDQAmr;
+    } else
       Opc = Subtarget->hasAVX() ? X86::VMOVDQUmr : X86::MOVDQUmr;
     break;
   }
