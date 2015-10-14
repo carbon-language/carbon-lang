@@ -128,6 +128,7 @@ Design Documents
    :maxdepth: 1
 
    DesignDocs/CapturingConfigInfo
+   DesignDocs/ABIVersioning
 
 
 * `<atomic> design <http://libcxx.llvm.org/atomic_design.html>`_

@@ -321,6 +321,9 @@ if (LIBCXX_NEEDS_SITE_CONFIG)
     include/__config_site.in
     ${LIBCXX_BINARY_DIR}/__config_site
     @ONLY)
+  # Provide the config definitions by included the generated __config_site
+  # file at compile time.
+  add_compile_flags("-include ${LIBCXX_BINARY_DIR}/__config_site")
 endif()
 
 #===============================================================================

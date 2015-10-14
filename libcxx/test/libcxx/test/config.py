@@ -444,7 +444,9 @@ class Configuration(object):
     def configure_compile_flags_abi_version(self):
         abi_version = self.get_lit_conf('abi_version', '').strip()
         abi_unstable = self.get_lit_bool('abi_unstable')
-        if abi_version:
+        # Only add the ABI version when it is non-default.
+        # FIXME(EricWF): Get the ABI version from the "__config_site".
+        if abi_version and abi_version != '1':
           self.cxx.compile_flags += ['-D_LIBCPP_ABI_VERSION=' + abi_version]
         if abi_unstable:
           self.config.available_features.add('libcpp-abi-unstable')
