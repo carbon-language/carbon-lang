@@ -39,7 +39,7 @@ template <class ELFT>
 typename llvm::object::ELFFile<ELFT>::uintX_t
 getLocalRelTarget(const ObjectFile<ELFT> &File,
                   const typename llvm::object::ELFFile<ELFT>::Elf_Rel &Sym);
-bool canBePreempted(const SymbolBody *Body);
+bool canBePreempted(const SymbolBody *Body, bool NeedsGot);
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 
 bool includeInDynamicSymtab(const SymbolBody &B);

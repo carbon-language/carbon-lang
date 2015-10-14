@@ -52,7 +52,7 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
   for (const SymbolBody *B : Entries) {
     uint8_t *Entry = Buf;
     Buf += sizeof(uintX_t);
-    if (canBePreempted(B))
+    if (canBePreempted(B, false))
       continue; // The dynamic linker will take care of it.
     uintX_t VA = getSymVA<ELFT>(*B);
     write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(Entry, VA);
@@ -122,7 +122,8 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
 
     uint32_t Type = RI.getType(IsMips64EL);
 
-    bool CanBePreempted = canBePreempted(Body);
+    bool NeedsGot = Body && Target->relocNeedsGot(Type, *Body);
+    bool CanBePreempted = canBePreempted(Body, NeedsGot);
     uintX_t Addend = 0;
     if (!CanBePreempted) {
       if (IsRela) {
@@ -134,7 +135,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
     }
 
-    if (Body && Target->relocNeedsGot(Type, *Body)) {
+    if (NeedsGot) {
       P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
       if (CanBePreempted)
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
@@ -458,13 +459,34 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
 
 // Returns true if a symbol can be replaced at load-time by a symbol
 // with the same name defined in other ELF executable or DSO.
-bool lld::elf2::canBePreempted(const SymbolBody *Body) {
+bool lld::elf2::canBePreempted(const SymbolBody *Body, bool NeedsGot) {
   if (!Body)
     return false;  // Body is a local symbol.
   if (Body->isShared())
     return true;
-  if (Body->isUndefined() && !Body->isWeak())
-    return true;
+
+  if (Body->isUndefined()) {
+    if (!Body->isWeak())
+      return true;
+
+    // This is an horrible corner case. Ideally we would like to say that any
+    // undefined symbol can be preempted so that the dynamic linker has a
+    // chance of finding it at runtime.
+    //
+    // The problem is that the code sequence used to test for weak undef
+    // functions looks like
+    // if (func) func()
+    // If the code is -fPIC the first reference is a load from the got and
+    // everything works.
+    // If the code is not -fPIC there is no reasonable way to solve it:
+    // * A relocation writing to the text segment will fail (it is ro).
+    // * A copy relocation doesn't work for functions.
+    // * The trick of using a plt entry as the address would fail here since
+    //   the plt entry would have a non zero address.
+    // Since we cannot do anything better, we just resolve the symbol to 0 and
+    // don't produce a dynamic relocation.
+    return NeedsGot;
+  }
   if (!Config->Shared)
     return false;
   return Body->getMostConstrainingVisibility() == STV_DEFAULT;

@@ -191,20 +191,22 @@ void Writer<ELFT>::scanRelocs(
 
     if (Body)
       Body = Body->repl();
+    bool NeedsGot = false;
     if (Body) {
       if (Target->relocNeedsPlt(Type, *Body)) {
         if (Body->isInPlt())
           continue;
         Out<ELFT>::Plt->addEntry(Body);
       }
-      if (Target->relocNeedsGot(Type, *Body)) {
+      NeedsGot = Target->relocNeedsGot(Type, *Body);
+      if (NeedsGot) {
         if (Body->isInGot())
           continue;
         Out<ELFT>::Got->addEntry(Body);
       }
     }
 
-    bool CBP = canBePreempted(Body);
+    bool CBP = canBePreempted(Body, NeedsGot);
     if (!CBP && (!Config->Shared || Target->isRelRelative(Type)))
       continue;
     if (CBP)
