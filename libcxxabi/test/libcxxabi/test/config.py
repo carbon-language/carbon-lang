@@ -31,6 +31,7 @@ class Configuration(LibcxxConfiguration):
         super(Configuration, self).configure_compile_flags()
 
     def configure_compile_flags_header_includes(self):
+        self.configure_config_site_header()
         cxx_headers = self.get_lit_conf(
             'cxx_headers',
             os.path.join(self.libcxx_src_root, '/include'))
