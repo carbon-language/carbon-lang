@@ -201,7 +201,11 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
     // Add entry symbol.
     if (Config->Entry.empty())
       Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
-    Config->EntrySym = Symtab.addUndefined(Config->Entry);
+
+    // Set either EntryAddr (if S is a number) or EntrySym (otherwise).
+    StringRef S = Config->Entry;
+    if (S.getAsInteger(0, Config->EntryAddr))
+      Config->EntrySym = Symtab.addUndefined(S);
 
     // In the assembly for 32 bit x86 the _GLOBAL_OFFSET_TABLE_ symbol
     // is magical and is used to produce a R_386_GOTPC relocation.

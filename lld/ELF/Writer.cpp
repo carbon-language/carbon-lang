@@ -648,9 +648,12 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_type = Config->Shared ? ET_DYN : ET_EXEC;
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
-  if (Config->EntrySym)
+  if (Config->EntrySym) {
     if (auto *E = dyn_cast<ELFSymbolBody<ELFT>>(Config->EntrySym->repl()))
       EHdr->e_entry = getSymVA<ELFT>(*E);
+  } else if (Config->EntryAddr != uint64_t(-1)) {
+    EHdr->e_entry = Config->EntryAddr;
+  }
   EHdr->e_phoff = sizeof(Elf_Ehdr);
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
