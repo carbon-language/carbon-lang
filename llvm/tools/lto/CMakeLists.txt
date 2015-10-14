@@ -27,5 +27,5 @@ if (APPLE)
   endif()
   set_property(TARGET LTO APPEND_STRING PROPERTY
               LINK_FLAGS
-              " -compatibility_version 1 -current_version ${LTO_VERSION}.${LLVM_VERSION_MINOR}")
+              " -compatibility_version 1 -current_version ${LTO_VERSION}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}")
 endif()
