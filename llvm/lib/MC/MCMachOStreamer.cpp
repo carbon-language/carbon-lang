@@ -439,9 +439,9 @@ void MCMachOStreamer::EmitInstToData(const MCInst &Inst,
   getAssembler().getEmitter().encodeInstruction(Inst, VecOS, Fixups, STI);
 
   // Add the fixups and data.
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-    Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
-    DF->getFixups().push_back(Fixups[i]);
+  for (MCFixup &Fixup : Fixups) {
+    Fixup.setOffset(Fixup.getOffset() + DF->getContents().size());
+    DF->getFixups().push_back(Fixup);
   }
   DF->getContents().append(Code.begin(), Code.end());
 }
@@ -467,14 +467,12 @@ void MCMachOStreamer::FinishImpl() {
 
   // Set the fragment atom associations by tracking the last seen atom defining
   // symbol.
-  for (MCAssembler::iterator it = getAssembler().begin(),
-         ie = getAssembler().end(); it != ie; ++it) {
+  for (MCSection &Sec : getAssembler()) {
     const MCSymbol *CurrentAtom = nullptr;
-    for (MCSection::iterator it2 = it->begin(), ie2 = it->end(); it2 != ie2;
-         ++it2) {
-      if (const MCSymbol *Symbol = DefiningSymbolMap.lookup(&*it2))
+    for (MCFragment &Frag : Sec) {
+      if (const MCSymbol *Symbol = DefiningSymbolMap.lookup(&Frag))
         CurrentAtom = Symbol;
-      it2->setAtom(CurrentAtom);
+      Frag.setAtom(CurrentAtom);
     }
   }
 
