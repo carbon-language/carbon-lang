@@ -110,7 +110,7 @@ public:
                    uint64_t SymVA) const override;
 };
 
-class MipsTargetInfo final : public TargetInfo {
+template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
   void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,

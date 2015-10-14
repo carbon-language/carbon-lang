@@ -39,7 +39,14 @@ TargetInfo *createTarget() {
   case EM_AARCH64:
     return new AArch64TargetInfo();
   case EM_MIPS:
-    return new MipsTargetInfo();
+    switch (Config->EKind) {
+    case ELF32LEKind:
+      return new MipsTargetInfo<ELF32LE>();
+    case ELF32BEKind:
+      return new MipsTargetInfo<ELF32BE>();
+    default:
+      error("Unsupported MIPS target");
+    }
   case EM_PPC:
     return new PPCTargetInfo();
   case EM_PPC64:
@@ -84,7 +91,12 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
 }
 
 static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }
+static void add32be(uint8_t *L, int32_t V) { write32be(L, read32be(L) + V); }
 static void or32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) | V); }
+
+template <bool IsLE> static void add32(uint8_t *L, int32_t V);
+template <> void add32<true>(uint8_t *L, int32_t V) { add32le(L, V); }
+template <> void add32<false>(uint8_t *L, int32_t V) { add32be(L, V); }
 
 void X86TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                                 uint32_t Type, uint64_t BaseAddr,
@@ -542,32 +554,40 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   }
 }
 
-MipsTargetInfo::MipsTargetInfo() {
+template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   // PCRelReloc = FIXME
   // GotReloc = FIXME
   PageSize = 65536;
 }
 
-void MipsTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                   uint64_t PltEntryAddr) const {}
+template <class ELFT>
+void MipsTargetInfo<ELFT>::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                                         uint64_t PltEntryAddr) const {}
 
-bool MipsTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
+template <class ELFT>
+bool MipsTargetInfo<ELFT>::relocNeedsGot(uint32_t Type,
+                                         const SymbolBody &S) const {
   return false;
 }
 
-bool MipsTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+template <class ELFT>
+bool MipsTargetInfo<ELFT>::relocNeedsPlt(uint32_t Type,
+                                         const SymbolBody &S) const {
   return false;
 }
 
-void MipsTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                 const void *RelP, uint32_t Type,
-                                 uint64_t BaseAddr, uint64_t SymVA) const {
-  typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
+template <class ELFT>
+void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
+                                       const void *RelP, uint32_t Type,
+                                       uint64_t BaseAddr,
+                                       uint64_t SymVA) const {
+  const bool IsLE = ELFT::TargetEndianness == support::little;
+  typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
 
   switch (Type) {
   case R_MIPS_32:
-    add32le(Buf + Rel.r_offset, SymVA);
+    add32<IsLE>(Buf + Rel.r_offset, SymVA);
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
