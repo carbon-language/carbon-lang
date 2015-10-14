@@ -54,8 +54,11 @@ void MakeUniqueCheck::check(const MatchFinder::MatchResult &Result) {
   SourceManager &SM = *Result.SourceManager;
   const auto *Construct =
       Result.Nodes.getNodeAs<CXXConstructExpr>(ConstructorCall);
-  const auto *New = Result.Nodes.getNodeAs<CXXNewExpr>(NewExpression);
   const auto *Type = Result.Nodes.getNodeAs<QualType>(PointerType);
+  const auto *New = Result.Nodes.getNodeAs<CXXNewExpr>(NewExpression);
+
+  if (New->getNumPlacementArgs() != 0)
+    return;
 
   SourceLocation ConstructCallStart = Construct->getExprLoc();
 
@@ -86,6 +89,20 @@ void MakeUniqueCheck::check(const MatchFinder::MatchResult &Result) {
       CharSourceRange::getCharRange(ConstructCallStart, ConstructCallEnd),
       "std::make_unique");
 
+  // If the unique_ptr is built with brace enclosed direct initialization, use
+  // parenthesis instead.
+  if (Construct->isListInitialization()) {
+    SourceRange BraceRange = Construct->getParenOrBraceRange();
+    Diag << FixItHint::CreateReplacement(
+        CharSourceRange::getCharRange(
+            BraceRange.getBegin(), BraceRange.getBegin().getLocWithOffset(1)),
+        "(");
+    Diag << FixItHint::CreateReplacement(
+        CharSourceRange::getCharRange(BraceRange.getEnd(),
+                                      BraceRange.getEnd().getLocWithOffset(1)),
+        ")");
+  }
+
   SourceLocation NewStart = New->getSourceRange().getBegin();
   SourceLocation NewEnd = New->getSourceRange().getEnd();
   switch (New->getInitializationStyle()) {
@@ -101,9 +118,30 @@ void MakeUniqueCheck::check(const MatchFinder::MatchResult &Result) {
     break;
   }
   case CXXNewExpr::ListInit: {
-    SourceRange InitRange = New->getInitializer()->getSourceRange();
+    // Range of the substring that we do not want to remove.
+    SourceRange InitRange;
+    if (const auto *NewConstruct = New->getConstructExpr()) {
+      // Direct initialization with initialization list.
+      //   struct S { S(int x) {} };
+      //   std::unique_ptr<S>(new S{5});
+      // The arguments in the initialization list are going to be forwarded to
+      // the constructor, so this has to be replaced with:
+      //   struct S { S(int x) {} };
+      //   std::make_unique<S>(5);
+      InitRange = SourceRange(
+          NewConstruct->getParenOrBraceRange().getBegin().getLocWithOffset(1),
+          NewConstruct->getParenOrBraceRange().getEnd().getLocWithOffset(-1));
+    } else {
+      // Aggregate initialization.
+      //   std::unique_ptr<Pair>(new Pair{first, second});
+      // Has to be replaced with:
+      //   std::make_unique<Pair>(Pair{first, second});
+      InitRange = SourceRange(
+          New->getAllocatedTypeSourceInfo()->getTypeLoc().getLocStart(),
+          New->getInitializer()->getSourceRange().getEnd());
+    }
     Diag << FixItHint::CreateRemoval(
-        SourceRange(NewStart, InitRange.getBegin().getLocWithOffset(-1)));
+        CharSourceRange::getCharRange(NewStart, InitRange.getBegin()));
     Diag << FixItHint::CreateRemoval(
         SourceRange(InitRange.getEnd().getLocWithOffset(1), NewEnd));
     break;

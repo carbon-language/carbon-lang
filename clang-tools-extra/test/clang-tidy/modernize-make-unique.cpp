@@ -34,11 +34,21 @@ struct Derived : public Base {
   Derived(int, int);
 };
 
-struct Pair {
+struct APair {
   int a, b;
 };
 
+struct DPair {
+  DPair() : a(0), b(0) {}
+  DPair(int x, int y) : a(y), b(x) {}
+  int a, b;
+};
+
+struct Empty {};
+
 template<class T> using unique_ptr_ = std::unique_ptr<T>;
+
+void *operator new(unsigned long Count, void *Ptr);
 
 int g(std::unique_ptr<int> P);
 
@@ -48,7 +58,7 @@ std::unique_ptr<Base> getPointer() {
   // CHECK-FIXES: return std::make_unique<Base>();
 }
 
-void f() {
+void basic() {
   std::unique_ptr<int> P1 = std::unique_ptr<int>(new int());
   // CHECK-MESSAGES: :[[@LINE-1]]:29: warning: use std::make_unique instead [modernize-make-unique]
   // CHECK-FIXES: std::unique_ptr<int> P1 = std::make_unique<int>();
@@ -78,16 +88,6 @@ void f() {
   // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: use std::make_unique instead
   // CHECK-FIXES: int T = g(std::make_unique<int>());
 
-  // Arguments are correctly handled.
-  std::unique_ptr<Base> Pbase = std::unique_ptr<Base>(new Base(5, T));
-  // CHECK-MESSAGES: :[[@LINE-1]]:33: warning: use std::make_unique instead
-  // CHECK-FIXES: std::unique_ptr<Base> Pbase = std::make_unique<Base>(5, T);
-
-  // Works with init lists.
-  std::unique_ptr<Pair> Ppair = std::unique_ptr<Pair>(new Pair{T, 1});
-  // CHECK-MESSAGES: :[[@LINE-1]]:33: warning: use std::make_unique instead
-  // CHECK-FIXES: std::unique_ptr<Pair> Ppair = std::make_unique<Pair>({T, 1});
-
   // Only replace if the type in the template is the same than the type returned
   // by the new operator.
   auto Pderived = std::unique_ptr<Base>(new Derived());
@@ -95,7 +95,69 @@ void f() {
   // The pointer is returned by the function, nothing to do.
   std::unique_ptr<Base> RetPtr = getPointer();
 
-  // Aliases.
+  // This emulates std::move.
+  std::unique_ptr<int> Move = static_cast<std::unique_ptr<int>&&>(P1);
+
+  // Placemenet arguments should not be removed.
+  int *PInt = new int;
+  std::unique_ptr<int> Placement = std::unique_ptr<int>(new (PInt) int{3});
+}
+
+void initialization(int T, Base b) {
+  // Test different kinds of initialization of the pointee.
+
+  // Direct initialization with parenthesis.
+  std::unique_ptr<DPair> PDir1 = std::unique_ptr<DPair>(new DPair(1, T));
+  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<DPair> PDir1 = std::make_unique<DPair>(1, T);
+
+  // Direct initialization with braces.
+  std::unique_ptr<DPair> PDir2 = std::unique_ptr<DPair>(new DPair{2, T});
+  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<DPair> PDir2 = std::make_unique<DPair>(2, T);
+
+  // Aggregate initialization.
+  std::unique_ptr<APair> PAggr = std::unique_ptr<APair>(new APair{T, 1});
+  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<APair> PAggr = std::make_unique<APair>(APair{T, 1});
+
+
+  // Test different kinds of initialization of the pointee, when the unique_ptr
+  // is initialized with braces.
+
+  // Direct initialization with parenthesis.
+  std::unique_ptr<DPair> PDir3 = std::unique_ptr<DPair>{new DPair(3, T)};
+  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<DPair> PDir3 = std::make_unique<DPair>(3, T);
+
+  // Direct initialization with braces.
+  std::unique_ptr<DPair> PDir4 = std::unique_ptr<DPair>{new DPair{4, T}};
+  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<DPair> PDir4 = std::make_unique<DPair>(4, T);
+
+  // Aggregate initialization.
+  std::unique_ptr<APair> PAggr2 = std::unique_ptr<APair>{new APair{T, 2}};
+  // CHECK-MESSAGES: :[[@LINE-1]]:35: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<APair> PAggr2 = std::make_unique<APair>(APair{T, 2});
+
+
+  // Direct initialization with parenthesis, without arguments.
+  std::unique_ptr<DPair> PDir5 = std::unique_ptr<DPair>(new DPair());
+  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<DPair> PDir5 = std::make_unique<DPair>();
+
+  // Direct initialization with braces, without arguments.
+  std::unique_ptr<DPair> PDir6 = std::unique_ptr<DPair>(new DPair{});
+  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<DPair> PDir6 = std::make_unique<DPair>();
+
+  // Aggregate initialization without arguments.
+  std::unique_ptr<Empty> PEmpty = std::unique_ptr<Empty>(new Empty{});
+  // CHECK-MESSAGES: :[[@LINE-1]]:35: warning: use std::make_unique instead
+  // CHECK-FIXES: std::unique_ptr<Empty> PEmpty = std::make_unique<Empty>(Empty{});
+}
+
+void aliases() {
   typedef std::unique_ptr<int> IntPtr;
   IntPtr Typedef = IntPtr(new int);
   // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: use std::make_unique instead
@@ -110,11 +172,9 @@ void f() {
   std::unique_ptr<int> Using = unique_ptr_<int>(new int);
   // CHECK-MESSAGES: :[[@LINE-1]]:32: warning: use std::make_unique instead
   // CHECK-FIXES: std::unique_ptr<int> Using = std::make_unique<int>();
+}
 
-  // This emulates std::move.
-  std::unique_ptr<int> Move = static_cast<std::unique_ptr<int>&&>(P1);
-
-  // Adding whitespaces.
+void whitespaces() {
   auto Space = std::unique_ptr <int>(new int());
   // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: use std::make_unique instead
   // CHECK-FIXES: auto Space = std::make_unique<int>();
