@@ -69,6 +69,11 @@ set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 
 option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 
+# Generate and install a linker script inplace of libc++.so. The linker script
+# will link libc++ to the correct ABI library.
+option(LIBCXX_ENABLE_ABI_LINKER_SCRIPT
+      "Use and install a linker script for the given ABI library" OFF)
+
 # Build libc++abi with libunwind. We need this option to determine whether to
 # link with libunwind or libgcc_s while running the test cases.
 option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
@@ -151,6 +156,21 @@ if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY)
   else()
     message(WARNING "LIBCXX_ENABLE_STATIC_ABI_LIBRARY is an experimental option")
   endif()
+endif()
+
+if (LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
+    if (APPLE)
+      message(FATAL_ERROR "LIBCXX_ENABLE_ABI_LINKER_SCRIPT cannot be used on APPLE targets")
+    endif()
+    if (NOT PYTHONINTERP_FOUND)
+      message(FATAL_ERROR "LIBCXX_ENABLE_ABI_LINKER_SCRIPT requires python but it was not found.")
+    endif()
+endif()
+
+if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY AND LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
+    message(FATAL_ERROR "Conflicting options given.
+        LIBCXX_ENABLE_STATIC_ABI_LIBRARY cannot be specified with
+        LIBCXX_ENABLE_ABI_LINKER_SCRIPT")
 endif()
 
 #===============================================================================

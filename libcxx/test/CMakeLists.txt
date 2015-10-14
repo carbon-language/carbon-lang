@@ -17,10 +17,11 @@ pythonize_bool(LIBCXX_GENERATE_COVERAGE)
 pythonize_bool(LIBCXXABI_USE_LLVM_UNWINDER)
 
 # The tests shouldn't link to any ABI library when it has been linked into
-# libc++ statically.
-if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY)
+# libc++ statically or via a linker script.
+if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY OR LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
   set(LIBCXX_CXX_ABI_LIBNAME "none")
 endif()
+
 set(LIBCXX_TARGET_INFO "libcxx.test.target_info.LocalTI" CACHE STRING
     "TargetInfo to use when setting up test environment.")
 set(LIBCXX_EXECUTOR "None" CACHE STRING
