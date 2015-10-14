@@ -117,7 +117,7 @@ bb7:
 
 ; TODO: linux drops this into .rodata, we drop it into ".gnu.linkonce.r.G2"
 
-; DARWIN: .section __TEXT,__const_coal,coalesced
+; DARWIN: .section __TEXT,__const{{$}}
 ; DARWIN: _G2:
 ; DARWIN:    .long 42
 
@@ -176,7 +176,6 @@ bb7:
 ; LINUX: .weak  "foo bar"
 ; LINUX: "foo bar":
 
-; DARWIN: .section              __DATA,__datacoal_nt,coalesced
 ; DARWIN: .globl        "_foo bar"
 ; DARWIN:       .weak_definition "_foo bar"
 ; DARWIN: "_foo bar":
@@ -190,7 +189,7 @@ bb7:
 ; LINUX:   .byte        1
 ; LINUX:   .size        G6, 1
 
-; DARWIN:  .section __TEXT,__const_coal,coalesced
+; DARWIN:  .section __TEXT,__const{{$}}
 ; DARWIN:  .globl _G6
 ; DARWIN:  .weak_definition _G6
 ; DARWIN:_G6:
@@ -239,7 +238,7 @@ bb7:
 @G10 = weak global [100 x i32] zeroinitializer, align 32 ; <[100 x i32]*> [#uses=0]
 
 
-; DARWIN:       .section        __DATA,__datacoal_nt,coalesced
+; DARWIN:       .section        __DATA,__data{{$}}
 ; DARWIN: .globl _G10
 ; DARWIN:       .weak_definition _G10
 ; DARWIN:       .align  5
