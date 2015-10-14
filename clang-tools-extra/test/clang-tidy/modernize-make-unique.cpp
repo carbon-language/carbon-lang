@@ -48,7 +48,7 @@ struct Empty {};
 
 template<class T> using unique_ptr_ = std::unique_ptr<T>;
 
-void *operator new(unsigned long Count, void *Ptr);
+void *operator new(__SIZE_TYPE__ Count, void *Ptr);
 
 int g(std::unique_ptr<int> P);
 
