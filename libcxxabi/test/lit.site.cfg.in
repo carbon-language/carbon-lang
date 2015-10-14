@@ -1,5 +1,6 @@
 @AUTO_GEN_COMMENT@
 config.cxx_under_test           = "@LIBCXXABI_COMPILER@"
+config.project_obj_root         = "@CMAKE_BINARY_DIR@"
 config.libcxxabi_src_root       = "@LIBCXXABI_SOURCE_DIR@"
 config.libcxxabi_obj_root       = "@LIBCXXABI_BINARY_DIR@"
 config.abi_library_path         = "@LIBCXXABI_LIBRARY_DIR@"
