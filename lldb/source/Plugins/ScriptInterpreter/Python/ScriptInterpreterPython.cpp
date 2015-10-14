@@ -468,7 +468,7 @@ ScriptInterpreterPython::LeaveSession ()
 }
 
 static PythonObject
-PyFile_FromFile_Const(FILE *fp, char *mode)
+PyFile_FromFile_Const(FILE *fp, const char *mode)
 {
     char *cmode = const_cast<char*>(mode);
 #if PY_MAJOR_VERSION >= 3
