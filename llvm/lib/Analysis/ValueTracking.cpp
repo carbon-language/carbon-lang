@@ -1375,8 +1375,18 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
         break;
       }
       case Intrinsic::ctpop: {
-        unsigned LowBits = Log2_32(BitWidth)+1;
-        KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
+        computeKnownBits(I->getOperand(0), KnownZero2, KnownOne2, DL,
+                         Depth + 1, Q);
+        // We can bound the space the count needs.  Also, bits known to be zero
+        // can't contribute to the population.
+        unsigned BitsPossiblySet = BitWidth - KnownZero2.countPopulation();
+        unsigned LeadingZeros =
+          APInt(BitWidth, BitsPossiblySet).countLeadingZeros();
+        assert(LeadingZeros >= 0 && LeadingZeros <= BitWidth);
+        KnownZero |= APInt::getHighBitsSet(BitWidth, LeadingZeros);
+        KnownOne &= ~KnownZero;
+        // TODO: we could bound KnownOne using the lower bound on the number
+        // of bits which might be set provided by popcnt KnownOne2.
         break;
       }
       case Intrinsic::fabs: {
