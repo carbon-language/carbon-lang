@@ -29,4 +29,5 @@ declare void @llvm.instrprof.increment(i8*, i64, i32, i32)
 ; BSD: define internal void @__llvm_profile_register_functions
 
 ; MACHO-NOT: define internal void @__llvm_profile_init
+; LINUX-NOT: define internal void @__llvm_profile_init
 ; BSD: define internal void @__llvm_profile_init
