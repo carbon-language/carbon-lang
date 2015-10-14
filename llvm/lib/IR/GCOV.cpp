@@ -448,7 +448,7 @@ static uint32_t branchDiv(uint64_t Numerator, uint64_t Divisor) {
 
 namespace {
 struct formatBranchInfo {
-  formatBranchInfo(const GCOVOptions &Options, uint64_t Count, uint64_t Total)
+  formatBranchInfo(const GCOV::Options &Options, uint64_t Count, uint64_t Total)
       : Options(Options), Count(Count), Total(Total) {}
 
   void print(raw_ostream &OS) const {
@@ -460,7 +460,7 @@ struct formatBranchInfo {
       OS << "taken " << branchDiv(Count, Total) << "%";
   }
 
-  const GCOVOptions &Options;
+  const GCOV::Options &Options;
   uint64_t Count;
   uint64_t Total;
 };

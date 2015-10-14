@@ -190,10 +190,6 @@ module LLVM_Utils {
     // Exclude this; it's fundamentally non-modular.
     exclude header "Support/PluginLoader.h"
 
-    // Exclude this; it's a weirdly-factored part of llvm-gcov and conflicts
-    // with the Analysis module (which also defines an llvm::GCOVOptions).
-    exclude header "Support/GCOV.h"
-
     // FIXME: Mislayered?
     exclude header "Support/TargetRegistry.h"
 
