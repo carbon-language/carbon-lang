@@ -263,6 +263,7 @@ class ADDU_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
   list<dag> Pattern = [(set ROD:$rd, (OpNode ROS:$rs, ROT:$rt))];
   InstrItinClass Itinerary = itin;
+  string BaseOpcode = instr_asm;
 }
 
 class RADDU_W_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -444,6 +445,7 @@ class DPA_W_PH_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
   list<dag> Pattern = [(set ACC64DSPOpnd:$ac,
                         (OpNode GPR32Opnd:$rs, GPR32Opnd:$rt, ACC64DSPOpnd:$acin))];
   string Constraints = "$acin = $ac";
+  string BaseOpcode = instr_asm;
 }
 
 class MULT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -1132,13 +1134,13 @@ def MFHI_DSP : MFHI_ENC, MFHI_DESC;
 def MFLO_DSP : MFLO_ENC, MFLO_DESC;
 def MTHI_DSP : MTHI_ENC, MTHI_DESC;
 def MTLO_DSP : MTLO_ENC, MTLO_DESC;
-def DPAU_H_QBL : DPAU_H_QBL_ENC, DPAU_H_QBL_DESC;
-def DPAU_H_QBR : DPAU_H_QBR_ENC, DPAU_H_QBR_DESC;
+def DPAU_H_QBL : DspMMRel, DPAU_H_QBL_ENC, DPAU_H_QBL_DESC;
+def DPAU_H_QBR : DspMMRel, DPAU_H_QBR_ENC, DPAU_H_QBR_DESC;
 def DPSU_H_QBL : DPSU_H_QBL_ENC, DPSU_H_QBL_DESC;
 def DPSU_H_QBR : DPSU_H_QBR_ENC, DPSU_H_QBR_DESC;
-def DPAQ_S_W_PH : DPAQ_S_W_PH_ENC, DPAQ_S_W_PH_DESC;
+def DPAQ_S_W_PH : DspMMRel, DPAQ_S_W_PH_ENC, DPAQ_S_W_PH_DESC;
 def DPSQ_S_W_PH : DPSQ_S_W_PH_ENC, DPSQ_S_W_PH_DESC;
-def DPAQ_SA_L_W : DPAQ_SA_L_W_ENC, DPAQ_SA_L_W_DESC;
+def DPAQ_SA_L_W : DspMMRel, DPAQ_SA_L_W_ENC, DPAQ_SA_L_W_DESC;
 def DPSQ_SA_L_W : DPSQ_SA_L_W_ENC, DPSQ_SA_L_W_DESC;
 def MULT_DSP : MULT_DSP_ENC, MULT_DSP_DESC;
 def MULTU_DSP : MULTU_DSP_ENC, MULTU_DSP_DESC;
@@ -1214,11 +1216,11 @@ def MUL_S_PH : MUL_S_PH_ENC, MUL_S_PH_DESC;
 def MULQ_S_W : MULQ_S_W_ENC, MULQ_S_W_DESC;
 def MULQ_RS_W : MULQ_RS_W_ENC, MULQ_RS_W_DESC;
 def MULQ_S_PH : MULQ_S_PH_ENC, MULQ_S_PH_DESC;
-def DPA_W_PH : DPA_W_PH_ENC, DPA_W_PH_DESC;
+def DPA_W_PH : DspMMRel, DPA_W_PH_ENC, DPA_W_PH_DESC;
 def DPS_W_PH : DPS_W_PH_ENC, DPS_W_PH_DESC;
-def DPAQX_S_W_PH : DPAQX_S_W_PH_ENC, DPAQX_S_W_PH_DESC;
-def DPAQX_SA_W_PH : DPAQX_SA_W_PH_ENC, DPAQX_SA_W_PH_DESC;
-def DPAX_W_PH : DPAX_W_PH_ENC, DPAX_W_PH_DESC;
+def DPAQX_S_W_PH : DspMMRel, DPAQX_S_W_PH_ENC, DPAQX_S_W_PH_DESC;
+def DPAQX_SA_W_PH : DspMMRel, DPAQX_SA_W_PH_ENC, DPAQX_SA_W_PH_DESC;
+def DPAX_W_PH : DspMMRel, DPAX_W_PH_ENC, DPAX_W_PH_DESC;
 def DPSX_W_PH : DPSX_W_PH_ENC, DPSX_W_PH_DESC;
 def DPSQX_S_W_PH : DPSQX_S_W_PH_ENC, DPSQX_S_W_PH_DESC;
 def DPSQX_SA_W_PH : DPSQX_SA_W_PH_ENC, DPSQX_SA_W_PH_DESC;

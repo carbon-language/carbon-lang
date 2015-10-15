@@ -28,6 +28,10 @@ def HasDSPR2 : Predicate<"Subtarget->hasDSPR2()">,
 def HasDSPR3 : Predicate<"Subtarget->hasDSPR3()">,
                AssemblerPredicate<"FeatureDSPR3">;
 
+class ISA_DSPR2 {
+  list<Predicate> InsnPredicates = [HasDSPR2];
+}
+
 // Fields.
 class Field6<bits<6> val> {
   bits<6> V = val;
