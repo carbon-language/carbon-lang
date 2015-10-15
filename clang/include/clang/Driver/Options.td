@@ -1321,6 +1321,10 @@ def mno_prfchw : Flag<["-"], "mno-prfchw">, Group<m_x86_Features_Group>;
 def mno_rdseed : Flag<["-"], "mno-rdseed">, Group<m_x86_Features_Group>;
 def mno_adx : Flag<["-"], "mno-adx">, Group<m_x86_Features_Group>;
 def mno_sha : Flag<["-"], "mno-sha">, Group<m_x86_Features_Group>;
+def mno_xsave : Flag<["-"], "mno-xsave">, Group<m_x86_Features_Group>;
+def mno_xsaveopt : Flag<["-"], "mno-xsaveopt">, Group<m_x86_Features_Group>;
+def mno_xsavec : Flag<["-"], "mno-xsavec">, Group<m_x86_Features_Group>;
+def mno_xsaves : Flag<["-"], "mno-xsaves">, Group<m_x86_Features_Group>;
 
 def munaligned_access : Flag<["-"], "munaligned-access">, Group<m_arm_Features_Group>,
   HelpText<"Allow memory accesses to be unaligned (AArch32/AArch64 only)">;
@@ -1468,6 +1472,10 @@ def mrdseed : Flag<["-"], "mrdseed">, Group<m_x86_Features_Group>;
 def madx : Flag<["-"], "madx">, Group<m_x86_Features_Group>;
 def msha : Flag<["-"], "msha">, Group<m_x86_Features_Group>;
 def mcx16 : Flag<["-"], "mcx16">, Group<m_x86_Features_Group>;
+def mxsave : Flag<["-"], "mxsave">, Group<m_x86_Features_Group>;
+def mxsaveopt : Flag<["-"], "mxsaveopt">, Group<m_x86_Features_Group>;
+def mxsavec : Flag<["-"], "mxsavec">, Group<m_x86_Features_Group>;
+def mxsaves : Flag<["-"], "mxsaves">, Group<m_x86_Features_Group>;
 def mips16 : Flag<["-"], "mips16">, Group<m_Group>;
 def mno_mips16 : Flag<["-"], "mno-mips16">, Group<m_Group>;
 def mmicromips : Flag<["-"], "mmicromips">, Group<m_Group>;

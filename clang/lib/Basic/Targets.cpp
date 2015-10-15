@@ -2094,6 +2094,10 @@ class X86TargetInfo : public TargetInfo {
   bool HasAVX512VL = false;
   bool HasSHA = false;
   bool HasCX16 = false;
+  bool HasXSAVE = false;
+  bool HasXSAVEOPT = false;
+  bool HasXSAVEC = false;
+  bool HasXSAVES = false;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -2581,6 +2585,8 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "avx512dq", true);
     setFeatureEnabledImpl(Features, "avx512bw", true);
     setFeatureEnabledImpl(Features, "avx512vl", true);
+    setFeatureEnabledImpl(Features, "xsavec", true);
+    setFeatureEnabledImpl(Features, "xsaves", true);
     // FALLTHROUGH
   case CK_Broadwell:
     setFeatureEnabledImpl(Features, "rdseed", true);
@@ -2601,6 +2607,8 @@ bool X86TargetInfo::initFeatureMap(
     // FALLTHROUGH
   case CK_SandyBridge:
     setFeatureEnabledImpl(Features, "avx", true);
+    setFeatureEnabledImpl(Features, "xsave", true);
+    setFeatureEnabledImpl(Features, "xsaveopt", true);
     // FALLTHROUGH
   case CK_Westmere:
   case CK_Silvermont:
@@ -2629,6 +2637,8 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "aes", true);
     setFeatureEnabledImpl(Features, "pclmul", true);
     setFeatureEnabledImpl(Features, "cx16", true);
+    setFeatureEnabledImpl(Features, "xsaveopt", true);
+    setFeatureEnabledImpl(Features, "xsave", true);
     break;
   case CK_K6_2:
   case CK_K6_3:
@@ -2671,6 +2681,7 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "pclmul", true);
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "xsaveopt", true);
     // FALLTHROUGH
   case CK_BTVER1:
     setFeatureEnabledImpl(Features, "ssse3", true);
@@ -2679,6 +2690,7 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "popcnt", true);
     setFeatureEnabledImpl(Features, "prfchw", true);
     setFeatureEnabledImpl(Features, "cx16", true);
+    setFeatureEnabledImpl(Features, "xsave", true);
     break;
   case CK_BDVER4:
     setFeatureEnabledImpl(Features, "avx2", true);
@@ -2686,6 +2698,7 @@ bool X86TargetInfo::initFeatureMap(
     // FALLTHROUGH
   case CK_BDVER3:
     setFeatureEnabledImpl(Features, "fsgsbase", true);
+    setFeatureEnabledImpl(Features, "xsaveopt", true);
     // FALLTHROUGH
   case CK_BDVER2:
     setFeatureEnabledImpl(Features, "bmi", true);
@@ -2701,6 +2714,7 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "pclmul", true);
     setFeatureEnabledImpl(Features, "prfchw", true);
     setFeatureEnabledImpl(Features, "cx16", true);
+    setFeatureEnabledImpl(Features, "xsave", true);
     break;
   }
   if (!TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec))
@@ -2744,6 +2758,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
       Features["avx2"] = true;
     case AVX:
       Features["avx"] = true;
+      Features["xsave"] = true;
     case SSE42:
       Features["sse4.2"] = true;
     case SSE41:
@@ -2779,7 +2794,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case SSE42:
     Features["sse4.2"] = false;
   case AVX:
-    Features["fma"] = Features["avx"] = Features["f16c"] = false;
+    Features["fma"] = Features["avx"] = Features["f16c"] = Features["xsave"] =
+      Features["xsaveopt"] = false;
     setXOPLevel(Features, FMA4, false);
   case AVX2:
     Features["avx2"] = false;
@@ -2912,6 +2928,16 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
       setSSELevel(Features, SSE42, Enabled);
     else
       setSSELevel(Features, SSE41, Enabled);
+  } else if (Name == "xsave") {
+    if (Enabled)
+      setSSELevel(Features, AVX, Enabled);
+    else
+      Features["xsaveopt"] = false;
+  } else if (Name == "xsaveopt" || Name == "xsavec" || Name == "xsaves") {
+    if (Enabled) {
+      Features["xsave"] = true;
+      setSSELevel(Features, AVX, Enabled);
+    }
   }
 }
 
@@ -2969,6 +2995,14 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasSHA = true;
     } else if (Feature == "+cx16") {
       HasCX16 = true;
+    } else if (Feature == "+xsave") {
+      HasXSAVE = true;
+    } else if (Feature == "+xsaveopt") {
+      HasXSAVEOPT = true;
+    } else if (Feature == "+xsavec") {
+      HasXSAVEC = true;
+    } else if (Feature == "+xsaves") {
+      HasXSAVES = true;
     }
 
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Feature)
@@ -3261,6 +3295,15 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasSHA)
     Builder.defineMacro("__SHA__");
 
+  if (HasXSAVE)
+    Builder.defineMacro("__XSAVE__");
+  if (HasXSAVEOPT)
+    Builder.defineMacro("__XSAVEOPT__");
+  if (HasXSAVEC)
+    Builder.defineMacro("__XSAVEC__");
+  if (HasXSAVES)
+    Builder.defineMacro("__XSAVES__");
+
   if (HasCX16)
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16");
 
@@ -3373,6 +3416,10 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("x86_32", getTriple().getArch() == llvm::Triple::x86)
       .Case("x86_64", getTriple().getArch() == llvm::Triple::x86_64)
       .Case("xop", XOPLevel >= XOP)
+      .Case("xsave", HasXSAVE)
+      .Case("xsavec", HasXSAVEC)
+      .Case("xsaves", HasXSAVES)
+      .Case("xsaveopt", HasXSAVEOPT)
       .Default(false);
 }
 
