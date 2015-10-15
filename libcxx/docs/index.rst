@@ -138,11 +138,13 @@ Design Documents
 
 .. __: https://cplusplusmusings.wordpress.com/2012/07/05/clang-and-standard-libraries-on-mac-os-x/
 
-Build Bots
------------
+Build Bots and Test Coverage
+----------------------------
 
 * `LLVM Buildbot Builders <http://lab.llvm.org:8011/console>`_
 * `Apple Jenkins Builders <http://lab.llvm.org:8080/green/view/Libcxx/>`_
+* `EricWF's Nightly Builders <http://ds2.efcs.ca:8080/console>`_
+* `Code Coverage Results <http://efcs.ca/libcxx-coverage>`_
 
 Getting Involved
 ================
