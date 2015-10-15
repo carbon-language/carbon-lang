@@ -194,6 +194,18 @@ HashTableSection<ELFT>::HashTableSection()
   this->Header.sh_addralign = sizeof(Elf_Word);
 }
 
+static uint32_t hash(StringRef Name) {
+  uint32_t H = 0;
+  for (char C : Name) {
+    H = (H << 4) + C;
+    uint32_t G = H & 0xf0000000;
+    if (G)
+      H ^= G >> 24;
+    H &= ~G;
+  }
+  return H;
+}
+
 template <class ELFT> void HashTableSection<ELFT>::addSymbol(SymbolBody *S) {
   StringRef Name = S->getName();
   Out<ELFT>::DynSymTab->addSymbol(Name);
