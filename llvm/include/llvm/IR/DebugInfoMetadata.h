@@ -1413,13 +1413,6 @@ public:
 
   Metadata *getRawScope() const { return getOperand(1); }
 
-  /// \brief Forwarding accessors to LexicalBlock.
-  ///
-  /// TODO: Remove these and update code to use \a DILexicalBlock directly.
-  /// @{
-  inline unsigned getLine() const;
-  inline unsigned getColumn() const;
-  /// @}
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == DILexicalBlockKind ||
            MD->getMetadataID() == DILexicalBlockFileKind;
@@ -1476,18 +1469,6 @@ public:
     return MD->getMetadataID() == DILexicalBlockKind;
   }
 };
-
-unsigned DILexicalBlockBase::getLine() const {
-  if (auto *N = dyn_cast<DILexicalBlock>(this))
-    return N->getLine();
-  return 0;
-}
-
-unsigned DILexicalBlockBase::getColumn() const {
-  if (auto *N = dyn_cast<DILexicalBlock>(this))
-    return N->getColumn();
-  return 0;
-}
 
 class DILexicalBlockFile : public DILexicalBlockBase {
   friend class LLVMContextImpl;
