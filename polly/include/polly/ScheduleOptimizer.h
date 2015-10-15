@@ -12,8 +12,8 @@
 #ifndef POLLY_SCHEDULE_OPTIMIZER_H
 #define POLLY_SCHEDULE_OPTIMIZER_H
 
-#include "isl/ctx.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "isl/ctx.h"
 
 struct isl_schedule;
 struct isl_schedule_node;

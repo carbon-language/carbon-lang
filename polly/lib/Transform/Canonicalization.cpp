@@ -14,10 +14,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/LinkAllPasses.h"
-#include "polly/Options.h"
 #include "polly/Canonicalization.h"
-#include "llvm/Transforms/Scalar.h"
+#include "polly/Options.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 using namespace polly;
