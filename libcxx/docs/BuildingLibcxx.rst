@@ -170,6 +170,14 @@ ABI Library Specific Options
   If this option is enabled, libc++ will try and link the selected ABI library
   statically.
 
+.. option:: LIBCXX_ENABLE_ABI_LINKER_SCRIPT:BOOL
+
+  **Default**: ``ON`` by default on UNIX platforms other than Apple unless
+  'LIBCXX_ENABLE_STATIC_ABI_LIBRARY' is ON. Otherwise the default value is ``OFF``.
+
+  This option generate and installs a linker script as ``libc++.so`` which
+  links the correct ABI library.
+
 .. option:: LIBCXXABI_USE_LLVM_UNWINDER:BOOL
 
   **Default**: ``OFF``

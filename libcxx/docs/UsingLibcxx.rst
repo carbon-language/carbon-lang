@@ -54,10 +54,10 @@ An example of using ``LD_LIBRARY_PATH``:
 Using libc++ on Linux
 =====================
 
-On Linux libc++ typically links to a shared version of libc++abi. Unfortunately
-you can't simply run clang with "-stdlib=libc++" as clang is not set up to
-link for this configuration. To get around this you'll have to manually
-link libc++abi yourself. For example:
+On Linux libc++ can typically be used with only '-stdlib=libc++'. However
+some libc++ installations require the user manually link libc++abi themselves.
+If you are running into linker errors when using libc++ try adding '-lc++abi'
+to the link line.  For example:
 
 .. code-block:: bash
 

@@ -67,12 +67,22 @@ set(LIBCXX_CXX_ABI "${LIBCXX_CXX_ABI}" CACHE STRING
 set(CXXABIS none libcxxabi libcxxrt libstdc++ libsupc++)
 set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 
+# Use a static copy of the ABI library when linking libc++. This option
+# cannot be used with LIBCXX_ENABLE_ABI_LINKER_SCRIPT.
 option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 
 # Generate and install a linker script inplace of libc++.so. The linker script
-# will link libc++ to the correct ABI library.
+# will link libc++ to the correct ABI library. This option is on by default
+# On UNIX platforms other than Apple unless 'LIBCXX_ENABLE_STATIC_ABI_LIBRARY'
+# is on.
+set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE OFF)
+if (LLVM_HAVE_LINK_VERSION_SCRIPT AND NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY)
+    set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE ON)
+endif()
+
 option(LIBCXX_ENABLE_ABI_LINKER_SCRIPT
-      "Use and install a linker script for the given ABI library" OFF)
+      "Use and install a linker script for the given ABI library"
+      ${ENABLE_LINKER_SCRIPT_DEFAULT_VALUE})
 
 # Build libc++abi with libunwind. We need this option to determine whether to
 # link with libunwind or libgcc_s while running the test cases.
