@@ -9,4 +9,4 @@
 ; CHECK-NEXT: NumDirectoryBlocks: 1
 ; CHECK-NEXT: BlockMapOffset: 98304
 ; CHECK-NEXT: DirectoryBlocks: [23]
-; CHECK-NEXT: NumFiles: 17
+; CHECK-NEXT: NumStreams: 17
