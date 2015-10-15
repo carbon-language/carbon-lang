@@ -1,14 +1,14 @@
 // RUN: %clang_cc1 %s -DTEST_XSAVE -O0 -triple=i686-unknown-unknown -target-feature +xsave -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVE
 // RUN: %clang_cc1 %s -DTEST_XSAVE -O0 -triple=i686-unknown-unknown -target-feature +xsave -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVE
 
-// RUN: %clang_cc1 %s -DTEST_XSAVEOPT -O0 -triple=i686-unknown-unknown -target-feature +xsave,+xsaveopt -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEOPT
-// RUN: %clang_cc1 %s -DTEST_XSAVEOPT -O0 -triple=i686-unknown-unknown -target-feature +xsave,+xsaveopt -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEOPT
+// RUN: %clang_cc1 %s -DTEST_XSAVEOPT -O0 -triple=i686-unknown-unknown -target-feature +xsave -target-feature +xsaveopt -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEOPT
+// RUN: %clang_cc1 %s -DTEST_XSAVEOPT -O0 -triple=i686-unknown-unknown -target-feature +xsave -target-feature +xsaveopt -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEOPT
 
-// RUN: %clang_cc1 %s -DTEST_XSAVEC -O0 -triple=i686-unknown-unknown -target-feature +xsave,+xsavec -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEC
-// RUN: %clang_cc1 %s -DTEST_XSAVEC -O0 -triple=i686-unknown-unknown -target-feature +xsave,+xsavec -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEC
+// RUN: %clang_cc1 %s -DTEST_XSAVEC -O0 -triple=i686-unknown-unknown -target-feature +xsave -target-feature +xsavec -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEC
+// RUN: %clang_cc1 %s -DTEST_XSAVEC -O0 -triple=i686-unknown-unknown -target-feature +xsave -target-feature +xsavec -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVEC
 
-// RUN: %clang_cc1 %s -DTEST_XSAVES -O0 -triple=i686-unknown-unknown -target-feature +xsave,+xsaves -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVES
-// RUN: %clang_cc1 %s -DTEST_XSAVES -O0 -triple=i686-unknown-unknown -target-feature +xsave,+xsaves -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVES
+// RUN: %clang_cc1 %s -DTEST_XSAVES -O0 -triple=i686-unknown-unknown -target-feature +xsave -target-feature +xsaves -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVES
+// RUN: %clang_cc1 %s -DTEST_XSAVES -O0 -triple=i686-unknown-unknown -target-feature +xsave -target-feature +xsaves -fno-signed-char -emit-llvm -o - -Werror | FileCheck %s --check-prefix=XSAVES
 
 void test() {
   unsigned long long tmp_ULLi;
