@@ -470,7 +470,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
   addCommonSymbols(CommonSymbols);
 
+  // This order is not the same as the final output order
+  // because we sort the sections using their attributes below.
   OutputSections.push_back(Out<ELFT>::SymTab);
+  OutputSections.push_back(Out<ELFT>::StrTab);
   if (isOutputDynamic()) {
     OutputSections.push_back(Out<ELFT>::DynSymTab);
     OutputSections.push_back(Out<ELFT>::HashTab);
@@ -487,21 +490,19 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compareOutputSections<ELFT>);
 
-  // Always put StrTabSec last so that no section names are added to it after
-  // it's finalized.
-  OutputSections.push_back(Out<ELFT>::StrTab);
-
   for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
     OutputSections[I]->SectionIndex = I + 1;
 
-  // Fill the DynStrTab early.
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
+    Out<ELFT>::StrTab->add(Sec->getName());
+
+  // Fill the DynStrTab early because Dynamic adds strings to
+  // DynStrTab but .dynstr may appear before .dynamic.
   Out<ELFT>::Dynamic->finalize();
 
-  // Fix each section's header (e.g. sh_size, sh_link, etc.)
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
-    Out<ELFT>::StrTab->add(Sec->getName());
+  // Fill other section headers.
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
     Sec->finalize();
-  }
 
   // If we have a .opd section (used under PPC64 for function descriptors),
   // store a pointer to it here so that we can use it later when processing
