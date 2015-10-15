@@ -61,27 +61,6 @@ bool isKernelFunction(const llvm::Function &);
 bool getAlign(const llvm::Function &, unsigned index, unsigned &);
 bool getAlign(const llvm::CallInst &, unsigned index, unsigned &);
 
-bool isBarrierIntrinsic(llvm::Intrinsic::ID);
-
-/// make_vector - Helper function which is useful for building temporary vectors
-/// to pass into type construction of CallInst ctors.  This turns a null
-/// terminated list of pointers (or other value types) into a real live vector.
-///
-template <typename T> inline std::vector<T> make_vector(T A, ...) {
-  va_list Args;
-  va_start(Args, A);
-  std::vector<T> Result;
-  Result.push_back(A);
-  while (T Val = va_arg(Args, T))
-    Result.push_back(Val);
-  va_end(Args);
-  return Result;
-}
-
-bool isMemorySpaceTransferIntrinsic(Intrinsic::ID id);
-const Value *skipPointerTransfer(const Value *V, bool ignore_GEP_indices);
-const Value *
-skipPointerTransfer(const Value *V, std::set<const Value *> &processed);
 BasicBlock *getParentBlock(Value *v);
 Function *getParentFunction(Value *v);
 void dumpBlock(Value *v, char *blockName);

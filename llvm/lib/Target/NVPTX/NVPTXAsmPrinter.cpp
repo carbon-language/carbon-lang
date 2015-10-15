@@ -1419,11 +1419,6 @@ void NVPTXAsmPrinter::printParamName(Function::const_arg_iterator I,
   O << "_param_" << paramIndex;
 }
 
-void NVPTXAsmPrinter::printParamName(int paramIndex, raw_ostream &O) {
-  CurrentFnSym->print(O, MAI);
-  O << "_param_" << paramIndex;
-}
-
 void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
   const DataLayout &DL = getDataLayout();
   const AttributeSet &PAL = F->getAttributes();
@@ -1950,15 +1945,6 @@ void NVPTXAsmPrinter::bufferAggregateConstant(const Constant *CPV,
 
 // buildTypeNameMap - Run through symbol table looking for type names.
 //
-
-bool NVPTXAsmPrinter::isImageType(Type *Ty) {
-
-  std::map<Type *, std::string>::iterator PI = TypeNameMap.find(Ty);
-
-  return PI != TypeNameMap.end() && (!PI->second.compare("struct._image1d_t") ||
-                                     !PI->second.compare("struct._image2d_t") ||
-                                     !PI->second.compare("struct._image3d_t"));
-}
 
 
 bool NVPTXAsmPrinter::ignoreLoc(const MachineInstr &MI) {

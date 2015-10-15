@@ -87,27 +87,6 @@ bool NVPTXInstrInfo::isMoveInstr(const MachineInstr &MI, unsigned &SrcReg,
   return false;
 }
 
-bool NVPTXInstrInfo::isReadSpecialReg(MachineInstr &MI) const {
-  switch (MI.getOpcode()) {
-  default:
-    return false;
-  case NVPTX::INT_PTX_SREG_NTID_X:
-  case NVPTX::INT_PTX_SREG_NTID_Y:
-  case NVPTX::INT_PTX_SREG_NTID_Z:
-  case NVPTX::INT_PTX_SREG_TID_X:
-  case NVPTX::INT_PTX_SREG_TID_Y:
-  case NVPTX::INT_PTX_SREG_TID_Z:
-  case NVPTX::INT_PTX_SREG_CTAID_X:
-  case NVPTX::INT_PTX_SREG_CTAID_Y:
-  case NVPTX::INT_PTX_SREG_CTAID_Z:
-  case NVPTX::INT_PTX_SREG_NCTAID_X:
-  case NVPTX::INT_PTX_SREG_NCTAID_Y:
-  case NVPTX::INT_PTX_SREG_NCTAID_Z:
-  case NVPTX::INT_PTX_SREG_WARPSIZE:
-    return true;
-  }
-}
-
 bool NVPTXInstrInfo::isLoadInstr(const MachineInstr &MI,
                                  unsigned &AddrSpace) const {
   bool isLoad = false;

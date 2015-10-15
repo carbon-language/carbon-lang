@@ -41,24 +41,6 @@ enum CondCodes {
 };
 }
 
-inline static const char *NVPTXCondCodeToString(NVPTXCC::CondCodes CC) {
-  switch (CC) {
-  case NVPTXCC::NE:
-    return "ne";
-  case NVPTXCC::EQ:
-    return "eq";
-  case NVPTXCC::LT:
-    return "lt";
-  case NVPTXCC::LE:
-    return "le";
-  case NVPTXCC::GT:
-    return "gt";
-  case NVPTXCC::GE:
-    return "ge";
-  }
-  llvm_unreachable("Unknown condition code");
-}
-
 FunctionPass *createNVPTXISelDag(NVPTXTargetMachine &TM,
                                  llvm::CodeGenOpt::Level OptLevel);
 ModulePass *createNVPTXAssignValidGlobalNamesPass();

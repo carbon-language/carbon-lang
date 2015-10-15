@@ -2012,15 +2012,6 @@ SDValue NVPTXTargetLowering::LowerSTOREi1(SDValue Op, SelectionDAG &DAG) const {
   return Result;
 }
 
-SDValue NVPTXTargetLowering::getExtSymb(SelectionDAG &DAG, const char *inname,
-                                        int idx, EVT v) const {
-  std::string *name = nvTM->getManagedStrPool()->getManagedString(inname);
-  std::stringstream suffix;
-  suffix << idx;
-  *name += suffix.str();
-  return DAG.getTargetExternalSymbol(name->c_str(), v);
-}
-
 SDValue
 NVPTXTargetLowering::getParamSymbol(SelectionDAG &DAG, int idx, EVT v) const {
   std::string ParamSym;
@@ -2032,10 +2023,6 @@ NVPTXTargetLowering::getParamSymbol(SelectionDAG &DAG, int idx, EVT v) const {
   std::string *SavedStr =
     nvTM->getManagedStrPool()->getManagedString(ParamSym.c_str());
   return DAG.getTargetExternalSymbol(SavedStr->c_str(), v);
-}
-
-SDValue NVPTXTargetLowering::getParamHelpSymbol(SelectionDAG &DAG, int idx) {
-  return getExtSymb(DAG, ".HLPPARAM", idx);
 }
 
 // Check to see if the kernel argument is image*_t or sampler_t
@@ -2548,20 +2535,6 @@ void NVPTXTargetLowering::LowerAsmOperandForConstraint(
     return;
   else
     TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
-}
-
-// NVPTX suuport vector of legal types of any length in Intrinsics because the
-// NVPTX specific type legalizer
-// will legalize them to the PTX supported length.
-bool NVPTXTargetLowering::isTypeSupportedInIntrinsic(MVT VT) const {
-  if (isTypeLegal(VT))
-    return true;
-  if (VT.isVector()) {
-    MVT eVT = VT.getVectorElementType();
-    if (isTypeLegal(eVT))
-      return true;
-  }
-  return false;
 }
 
 static unsigned getOpcForTextureInstr(unsigned Intrinsic) {
@@ -3821,11 +3794,6 @@ NVPTXTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned NVPTXTargetLowering::getFunctionAlignment(const Function *) const {
-  return 4;
 }
 
 //===----------------------------------------------------------------------===//
