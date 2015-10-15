@@ -492,7 +492,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSections.push_back(Out<ELFT>::StrTab);
 
   for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
-    OutputSections[I]->setSectionIndex(I + 1);
+    OutputSections[I]->SectionIndex = I + 1;
 
   // Fill the DynStrTab early.
   Out<ELFT>::Dynamic->finalize();
@@ -692,7 +692,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_phnum = Phdrs.size();
   EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
-  EHdr->e_shstrndx = Out<ELFT>::StrTab->getSectionIndex();
+  EHdr->e_shstrndx = Out<ELFT>::StrTab->SectionIndex;
   memcpy(Buf + EHdr->e_phoff, &Phdrs[0], Phdrs.size() * sizeof(Phdrs[0]));
 
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);

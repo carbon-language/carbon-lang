@@ -154,7 +154,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT> void RelocationSection<ELFT>::finalize() {
-  this->Header.sh_link = Out<ELFT>::DynSymTab->getSectionIndex();
+  this->Header.sh_link = Out<ELFT>::DynSymTab->SectionIndex;
   this->Header.sh_size = Relocs.size() * this->Header.sh_entsize;
 }
 
@@ -202,7 +202,7 @@ template <class ELFT> void HashTableSection<ELFT>::addSymbol(SymbolBody *S) {
 }
 
 template <class ELFT> void HashTableSection<ELFT>::finalize() {
-  this->Header.sh_link = Out<ELFT>::DynSymTab->getSectionIndex();
+  this->Header.sh_link = Out<ELFT>::DynSymTab->SectionIndex;
 
   assert(Out<ELFT>::DynSymTab->getNumSymbols() == Hashes.size() + 1);
   unsigned NumEntries = 2;                 // nbucket and nchain.
@@ -247,7 +247,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     return; // Already finalized.
 
   typename Base::HeaderT &Header = this->Header;
-  Header.sh_link = Out<ELFT>::DynStrTab->getSectionIndex();
+  Header.sh_link = Out<ELFT>::DynStrTab->SectionIndex;
 
   unsigned NumEntries = 0;
   if (Out<ELFT>::RelaDyn->hasRelocs()) {
@@ -574,7 +574,7 @@ SymbolTableSection<ELFT>::SymbolTableSection(
 
 template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   this->Header.sh_size = getNumSymbols() * sizeof(Elf_Sym);
-  this->Header.sh_link = StrTabSec.getSectionIndex();
+  this->Header.sh_link = StrTabSec.SectionIndex;
   this->Header.sh_info = NumLocals + 1;
 }
 
@@ -625,7 +625,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
               &Sym, File->getSymbolTable(), File->getSymbolTableShndx());
         ArrayRef<InputSection<ELFT> *> Sections = File->getSections();
         const InputSection<ELFT> *Sec = Sections[SecIndex];
-        ESym->st_shndx = Sec->OutSec->getSectionIndex();
+        ESym->st_shndx = Sec->OutSec->SectionIndex;
         VA += Sec->OutSec->getVA() + Sec->OutSecOff;
       }
       ESym->st_value = VA;
@@ -697,7 +697,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
     if (isa<DefinedAbsolute<ELFT>>(Body))
       ESym->st_shndx = SHN_ABS;
     else if (OutSec)
-      ESym->st_shndx = OutSec->getSectionIndex();
+      ESym->st_shndx = OutSec->SectionIndex;
   }
   if (!StrTabSec.isDynamic())
     std::stable_sort(

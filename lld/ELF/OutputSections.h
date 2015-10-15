@@ -70,8 +70,7 @@ public:
   StringRef getName() { return Name; }
   void setNameOffset(uintX_t Offset) { Header.sh_name = Offset; }
 
-  unsigned getSectionIndex() const { return SectionIndex; }
-  void setSectionIndex(unsigned I) { SectionIndex = I; }
+  unsigned SectionIndex;
 
   // Returns the size of the section in the output file.
   uintX_t getSize() const { return Header.sh_size; }
@@ -91,7 +90,6 @@ public:
 protected:
   StringRef Name;
   HeaderT Header;
-  unsigned SectionIndex;
   ~OutputSectionBase() = default;
 };
 
