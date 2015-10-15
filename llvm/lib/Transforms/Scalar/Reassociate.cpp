@@ -84,20 +84,6 @@ namespace {
 
     Factor(Value *Base, unsigned Power) : Base(Base), Power(Power) {}
 
-    /// \brief Sort factors by their Base.
-    struct BaseSorter {
-      bool operator()(const Factor &LHS, const Factor &RHS) {
-        return LHS.Base < RHS.Base;
-      }
-    };
-
-    /// \brief Compare factors for equal bases.
-    struct BaseEqual {
-      bool operator()(const Factor &LHS, const Factor &RHS) {
-        return LHS.Base == RHS.Base;
-      }
-    };
-
     /// \brief Sort factors in descending order by their power.
     struct PowerDescendingSorter {
       bool operator()(const Factor &LHS, const Factor &RHS) {

@@ -303,22 +303,6 @@ namespace {
       // The functions below can be called after we've finished processing all
       // instructions in the loop, and we know which reductions were selected.
 
-      // Is the provided instruction the PHI of a reduction selected for
-      // rerolling?
-      bool isSelectedPHI(Instruction *J) {
-        if (!isa<PHINode>(J))
-          return false;
-
-        for (DenseSet<int>::iterator RI = Reds.begin(), RIE = Reds.end();
-             RI != RIE; ++RI) {
-          int i = *RI;
-          if (cast<Instruction>(J) == PossibleReds[i].getPHI())
-            return true;
-        }
-
-        return false;
-      }
-
       bool validateSelected();
       void replaceSelected();
 

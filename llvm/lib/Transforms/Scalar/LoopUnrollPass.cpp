@@ -283,8 +283,8 @@ class UnrolledInstAnalyzer : private InstVisitor<UnrolledInstAnalyzer, bool> {
 public:
   UnrolledInstAnalyzer(unsigned Iteration,
                        DenseMap<Value *, Constant *> &SimplifiedValues,
-                       const Loop *L, ScalarEvolution &SE)
-      : Iteration(Iteration), SimplifiedValues(SimplifiedValues), L(L), SE(SE) {
+                       ScalarEvolution &SE)
+      : SimplifiedValues(SimplifiedValues), SE(SE) {
       IterationNumber = SE.getConstant(APInt(64, Iteration));
   }
 
@@ -300,13 +300,6 @@ private:
   /// results saved.
   DenseMap<Value *, SimplifiedAddress> SimplifiedAddresses;
 
-  /// \brief Number of currently simulated iteration.
-  ///
-  /// If an expression is ConstAddress+Constant, then the Constant is
-  /// Start + Iteration*Step, where Start and Step could be obtained from
-  /// SCEVGEPCache.
-  unsigned Iteration;
-
   /// \brief SCEV expression corresponding to number of currently simulated
   /// iteration.
   const SCEV *IterationNumber;
@@ -321,7 +314,6 @@ private:
   /// post-unrolling.
   DenseMap<Value *, Constant *> &SimplifiedValues;
 
-  const Loop *L;
   ScalarEvolution &SE;
 
   /// \brief Try to simplify instruction \param I using its SCEV expression.
@@ -597,7 +589,7 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, DominatorTree &DT,
     while (!SimplifiedInputValues.empty())
       SimplifiedValues.insert(SimplifiedInputValues.pop_back_val());
 
-    UnrolledInstAnalyzer Analyzer(Iteration, SimplifiedValues, L, SE);
+    UnrolledInstAnalyzer Analyzer(Iteration, SimplifiedValues, SE);
 
     BBWorklist.clear();
     BBWorklist.insert(L->getHeader());
