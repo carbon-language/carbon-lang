@@ -215,8 +215,8 @@ class MipsAsmParser : public MCTargetAsmParser {
                  SmallVectorImpl<MCInst> &Instructions, const bool IsMips64,
                  const bool Signed);
 
-  bool expandUlhu(MCInst &Inst, SMLoc IDLoc,
-                  SmallVectorImpl<MCInst> &Instructions);
+  bool expandUlh(MCInst &Inst, bool Signed, SMLoc IDLoc,
+                 SmallVectorImpl<MCInst> &Instructions);
 
   bool expandUlw(MCInst &Inst, SMLoc IDLoc,
                  SmallVectorImpl<MCInst> &Instructions);
@@ -1958,6 +1958,7 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::UDivMacro:
   case Mips::DSDivMacro:
   case Mips::DUDivMacro:
+  case Mips::Ulh:
   case Mips::Ulhu:
   case Mips::Ulw:
   case Mips::NORImm:
@@ -2070,8 +2071,10 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
     return expandDiv(Inst, IDLoc, Instructions, false, false);
   case Mips::DUDivMacro:
     return expandDiv(Inst, IDLoc, Instructions, true, false);
+  case Mips::Ulh:
+    return expandUlh(Inst, true, IDLoc, Instructions);
   case Mips::Ulhu:
-    return expandUlhu(Inst, IDLoc, Instructions);
+    return expandUlh(Inst, false, IDLoc, Instructions);
   case Mips::Ulw:
     return expandUlw(Inst, IDLoc, Instructions);
   case Mips::ADDi:
@@ -3018,8 +3021,8 @@ bool MipsAsmParser::expandDiv(MCInst &Inst, SMLoc IDLoc,
   return false;
 }
 
-bool MipsAsmParser::expandUlhu(MCInst &Inst, SMLoc IDLoc,
-                               SmallVectorImpl<MCInst> &Instructions) {
+bool MipsAsmParser::expandUlh(MCInst &Inst, bool Signed, SMLoc IDLoc,
+                              SmallVectorImpl<MCInst> &Instructions) {
   if (hasMips32r6() || hasMips64r6()) {
     Error(IDLoc, "instruction not supported on mips32r6 or mips64r6");
     return false;
@@ -3082,8 +3085,8 @@ bool MipsAsmParser::expandUlhu(MCInst &Inst, SMLoc IDLoc,
 
   unsigned SllReg = LoadedOffsetInAT ? DstReg : ATReg;
 
-  emitRRI(Mips::LBu, FirstLbuDstReg, LbuSrcReg, FirstLbuOffset, IDLoc,
-          Instructions);
+  emitRRI(Signed ? Mips::LB : Mips::LBu, FirstLbuDstReg, LbuSrcReg,
+          FirstLbuOffset, IDLoc, Instructions);
 
   emitRRI(Mips::LBu, SecondLbuDstReg, LbuSrcReg, SecondLbuOffset, IDLoc,
           Instructions);

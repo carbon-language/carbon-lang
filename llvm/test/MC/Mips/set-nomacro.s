@@ -60,6 +60,7 @@
   bgtu $0, $8, local_label
   bgtu $0, $0, local_label
 
+  ulh $5, 0
   ulhu $5, 0
 
   ulw $8, 2
@@ -180,6 +181,8 @@
   bgtu $0, $0, local_label
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
 
+  ulh $5, 0
+# CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
   ulhu $5, 0
 # CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
 
