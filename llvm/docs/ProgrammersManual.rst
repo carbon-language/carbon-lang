@@ -366,7 +366,7 @@ Then you can run your pass like this:
 
 Using the ``DEBUG()`` macro instead of a home-brewed solution allows you to not
 have to create "yet another" command line option for the debug output for your
-pass.  Note that ``DEBUG()`` macros are disabled for optimized builds, so they
+pass.  Note that ``DEBUG()`` macros are disabled for non-asserts builds, so they
 do not cause a performance impact at all (for the same reason, they should also
 not contain side-effects!).
 
@@ -383,21 +383,17 @@ Fine grained debug info with ``DEBUG_TYPE`` and the ``-debug-only`` option
 Sometimes you may find yourself in a situation where enabling ``-debug`` just
 turns on **too much** information (such as when working on the code generator).
 If you want to enable debug information with more fine-grained control, you
-can define the ``DEBUG_TYPE`` macro and use the ``-debug-only`` option as
+should define the ``DEBUG_TYPE`` macro and use the ``-debug-only`` option as
 follows:
 
 .. code-block:: c++
 
-  #undef  DEBUG_TYPE
-  DEBUG(errs() << "No debug type\n");
   #define DEBUG_TYPE "foo"
   DEBUG(errs() << "'foo' debug type\n");
   #undef  DEBUG_TYPE
   #define DEBUG_TYPE "bar"
   DEBUG(errs() << "'bar' debug type\n"));
   #undef  DEBUG_TYPE
-  #define DEBUG_TYPE ""
-  DEBUG(errs() << "No debug type (2)\n");
 
 Then you can run your pass like this:
 
@@ -406,24 +402,22 @@ Then you can run your pass like this:
   $ opt < a.bc > /dev/null -mypass
   <no output>
   $ opt < a.bc > /dev/null -mypass -debug
-  No debug type
   'foo' debug type
   'bar' debug type
-  No debug type (2)
   $ opt < a.bc > /dev/null -mypass -debug-only=foo
   'foo' debug type
   $ opt < a.bc > /dev/null -mypass -debug-only=bar
   'bar' debug type
 
 Of course, in practice, you should only set ``DEBUG_TYPE`` at the top of a file,
-to specify the debug type for the entire module (if you do this before you
-``#include "llvm/Support/Debug.h"``, you don't have to insert the ugly
-``#undef``'s).  Also, you should use names more meaningful than "foo" and "bar",
-because there is no system in place to ensure that names do not conflict.  If
-two different modules use the same string, they will all be turned on when the
-name is specified.  This allows, for example, all debug information for
-instruction scheduling to be enabled with ``-debug-only=InstrSched``, even if
-the source lives in multiple files.
+to specify the debug type for the entire module. Be careful that you only do
+this after including Debug.h and not around any #include of headers. Also, you
+should use names more meaningful than "foo" and "bar", because there is no
+system in place to ensure that names do not conflict. If two different modules
+use the same string, they will all be turned on when the name is specified.
+This allows, for example, all debug information for instruction scheduling to be
+enabled with ``-debug-only=InstrSched``, even if the source lives in multiple
+files.
 
 For performance reasons, -debug-only is not available in optimized build
 (``--enable-optimized``) of LLVM.
@@ -435,10 +429,8 @@ preceding example could be written as:
 
 .. code-block:: c++
 
-  DEBUG_WITH_TYPE("", errs() << "No debug type\n");
   DEBUG_WITH_TYPE("foo", errs() << "'foo' debug type\n");
   DEBUG_WITH_TYPE("bar", errs() << "'bar' debug type\n"));
-  DEBUG_WITH_TYPE("", errs() << "No debug type (2)\n");
 
 .. _Statistic:
 

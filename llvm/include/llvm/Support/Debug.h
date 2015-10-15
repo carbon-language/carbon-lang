@@ -13,7 +13,7 @@
 //
 // In particular, just wrap your code with the DEBUG() macro, and it will be
 // enabled automatically if you specify '-debug' on the command-line.
-// Alternatively, you can also define the DEBUG_TYPE macro to "foo" specify
+// DEBUG() requires the DEBUG_TYPE macro to be defined. Set it to "foo" specify
 // that your debug code belongs to class "foo". Be careful that you only do
 // this after including Debug.h and not around any #include of headers. Headers
 // should define and undef the macro acround the code that needs to use the
