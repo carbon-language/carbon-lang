@@ -9,6 +9,8 @@
 
 #include "gtest/gtest.h"
 
+#include "lldb/Host/File.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostInfo.h"
 #include "Plugins/ScriptInterpreter/Python/lldb-python.h"
 #include "Plugins/ScriptInterpreter/Python/PythonDataObjects.h"
@@ -372,4 +374,11 @@ TEST_F(PythonDataObjectsTest, TestPythonDictionaryToStructuredDictionary)
 
     EXPECT_STREQ(string_value0, string_sp->GetValue().c_str());
     EXPECT_EQ(int_value1, int_sp->GetValue());
+}
+
+TEST_F(PythonDataObjectsTest, TestPythonFile)
+{
+    File file(FileSystem::DEV_NULL, File::eOpenOptionRead);
+    PythonFile py_file(file, "r");
+    EXPECT_TRUE(PythonFile::Check(py_file.get()));
 }

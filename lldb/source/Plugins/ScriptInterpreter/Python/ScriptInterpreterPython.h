@@ -520,6 +520,7 @@ public:
         PyGILState_STATE         m_GILState;
 	};
 protected:
+
     enum class AddLocation
     {
         Beginning,

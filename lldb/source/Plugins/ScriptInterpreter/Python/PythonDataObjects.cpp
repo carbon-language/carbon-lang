@@ -75,6 +75,8 @@ PythonObject::GetObjectType() const
         return PyObjectType::String;
     if (PythonInteger::Check(m_py_obj))
         return PyObjectType::Integer;
+    if (PythonFile::Check(m_py_obj))
+        return PyObjectType::File;
     return PyObjectType::Unknown;
 }
 
@@ -98,6 +100,15 @@ PythonObject::Str()
     if (!str)
         return PythonString();
     return PythonString(PyRefType::Owned, str);
+}
+
+bool
+PythonObject::HasAttribute(llvm::StringRef attr) const
+{
+    if (!IsValid())
+        return false;
+    PythonString py_attr(attr);
+    return !!PyObject_HasAttr(m_py_obj, py_attr.get());
 }
 
 bool
@@ -564,6 +575,80 @@ PythonDictionary::CreateStructuredDictionary() const
         result->AddItem(key.Str().GetString(), structured_value);
     }
     return result;
+}
+
+PythonFile::PythonFile(File &file, const char *mode)
+{
+    Reset(file, mode);
+}
+
+PythonFile::PythonFile(PyRefType type, PyObject *o)
+{
+    Reset(type, o);
+}
+
+PythonFile::~PythonFile()
+{
+}
+
+bool
+PythonFile::Check(PyObject *py_obj)
+{
+#if PY_MAJOR_VERSION < 3
+    return PyFile_Check(py_obj);
+#else
+    // In Python 3, there is no `PyFile_Check`, and in fact PyFile is not even a
+    // first-class object type anymore.  `PyFile_FromFd` is just a thin wrapper
+    // over `io.open()`, which returns some object derived from `io.IOBase`.
+    // As a result, the only way to detect a file in Python 3 is to check whether
+    // it inherits from `io.IOBase`.  Since it is possible for non-files to also
+    // inherit from `io.IOBase`, we additionally verify that it has the `fileno`
+    // attribute, which should guarantee that it is backed by the file system.
+    PythonObject io_module(PyRefType::Owned, PyImport_ImportModule("io"));
+    PythonDictionary io_dict(PyRefType::Borrowed, PyModule_GetDict(io_module.get()));
+    PythonObject io_base_class = io_dict.GetItemForKey(PythonString("IOBase"));
+
+    PythonObject object_type(PyRefType::Owned, PyObject_Type(py_obj));
+
+    if (1 != PyObject_IsSubclass(object_type.get(), io_base_class.get()))
+        return false;
+    if (!object_type.HasAttribute("fileno"))
+        return false;
+
+    return true;
+#endif
+}
+
+void
+PythonFile::Reset(PyRefType type, PyObject *py_obj)
+{
+    // Grab the desired reference type so that if we end up rejecting
+    // `py_obj` it still gets decremented if necessary.
+    PythonObject result(type, py_obj);
+
+    if (!PythonFile::Check(py_obj))
+    {
+        PythonObject::Reset();
+        return;
+    }
+
+    // Calling PythonObject::Reset(const PythonObject&) will lead to stack
+    // overflow since it calls back into the virtual implementation.
+    PythonObject::Reset(PyRefType::Borrowed, result.get());
+}
+
+void
+PythonFile::Reset(File &file, const char *mode)
+{
+    char *cmode = const_cast<char *>(mode);
+#if PY_MAJOR_VERSION >= 3
+    Reset(PyRefType::Owned,
+        PyFile_FromFd(file.GetDescriptor(), nullptr, cmode, -1, nullptr, "ignore", nullptr, 0));
+#else
+    // Read through the Python source, doesn't seem to modify these strings
+    Reset(PyRefType::Owned,
+        PyFile_FromFile(file.GetStream(), const_cast<char *>(""), cmode, nullptr));
+#endif
 }
 
 #endif

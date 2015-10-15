@@ -542,26 +542,6 @@ ScriptInterpreterPython::LeaveSession ()
     m_session_is_active = false;
 }
 
-static PythonObject
-PyFile_FromFile_Const(FILE *fp, const char *mode)
-{
-    char *cmode = const_cast<char*>(mode);
-#if PY_MAJOR_VERSION >= 3
-#if defined(LLVM_ON_WIN32)
-    int fd = _fileno(fp);
-#else
-    int fd = fileno(fp);
-#endif
-
-    return PythonObject(PyRefType::Owned,
-        PyFile_FromFd(fd, nullptr, cmode, -1, nullptr, "ignore", nullptr, 0));
-#else
-    // Read through the Python source, doesn't seem to modify these strings
-    return PythonObject(PyRefType::Owned, 
-        PyFile_FromFile(fp, const_cast<char*>(""), cmode, nullptr));
-#endif
-}
-
 bool
 ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
                                        FILE *in,
@@ -610,10 +590,14 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
     PythonDictionary &sys_module_dict = GetSysModuleDictionary ();
     if (sys_module_dict.IsValid())
     {
+        File in_file(in, false);
+        File out_file(out, false);
+        File err_file(err, false);
+
         lldb::StreamFileSP in_sp;
         lldb::StreamFileSP out_sp;
         lldb::StreamFileSP err_sp;
-        if (in == nullptr || out == nullptr || err == nullptr)
+        if (!in_file.IsValid() || !out_file.IsValid() || !err_file.IsValid())
             m_interpreter.GetDebugger().AdoptTopIOHandlerFilesIfInvalid (in_sp, out_sp, err_sp);
 
         m_saved_stdin.Reset();
@@ -621,36 +605,45 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
         if ((on_entry_flags & Locker::NoSTDIN) == 0)
         {
             // STDIN is enabled
-            if (in == nullptr && in_sp)
-                in = in_sp->GetFile().GetStream();
-            if (in)
+            if (!in_file.IsValid() && in_sp)
+                in_file = in_sp->GetFile();
+            if (in_file.IsValid())
             {
+                // Flush the file before giving it to python to avoid interleaved output.
+                in_file.Flush();
+
                 m_saved_stdin = sys_module_dict.GetItemForKey(PythonString("stdin"));
                 // This call can deadlock your process if the file is locked
-                PythonObject new_file = PyFile_FromFile_Const(in, "r");
+                PythonFile new_file(in_file, "r");
                 sys_module_dict.SetItemForKey (PythonString("stdin"), new_file);
             }
         }
 
-        if (out == nullptr && out_sp)
-            out = out_sp->GetFile().GetStream();
-        if (out)
+        if (!out_file.IsValid() && out_sp)
+            out_file = out_sp->GetFile();
+        if (out_file.IsValid())
         {
+            // Flush the file before giving it to python to avoid interleaved output.
+            out_file.Flush();
+
             m_saved_stdout = sys_module_dict.GetItemForKey(PythonString("stdout"));
 
-            PythonObject new_file = PyFile_FromFile_Const(out, "w");
+            PythonFile new_file(out_file, "w");
             sys_module_dict.SetItemForKey (PythonString("stdout"), new_file);
         }
         else
             m_saved_stdout.Reset();
 
-        if (err == nullptr && err_sp)
-            err = err_sp->GetFile().GetStream();
-        if (err)
+        if (!err_file.IsValid() && err_sp)
+            err_file = err_sp->GetFile();
+        if (err_file.IsValid())
         {
+            // Flush the file before giving it to python to avoid interleaved output.
+            err_file.Flush();
+
             m_saved_stderr = sys_module_dict.GetItemForKey(PythonString("stderr"));
 
-            PythonObject new_file = PyFile_FromFile_Const(err, "w");
+            PythonFile new_file(err_file, "w");
             sys_module_dict.SetItemForKey (PythonString("stderr"), new_file);
         }
         else

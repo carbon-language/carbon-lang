@@ -19,6 +19,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Core/Flags.h"
+#include "lldb/Host/File.h"
 #include "lldb/Interpreter/OptionValue.h"
 
 namespace lldb_private {
@@ -67,7 +68,8 @@ enum class PyObjectType
     Integer,
     Dictionary,
     List,
-    String
+    String,
+    File
 };
 
 enum class PyRefType
@@ -197,6 +199,9 @@ public:
     }
 
     bool
+    HasAttribute(llvm::StringRef attribute) const;
+
+    bool
     IsValid() const;
 
     bool
@@ -313,6 +318,21 @@ public:
     void SetItemForKey(const PythonObject &key, const PythonObject &value);
 
     StructuredData::DictionarySP CreateStructuredDictionary() const;
+};
+
+class PythonFile : public PythonObject
+{
+  public:
+    explicit PythonFile(File &file, const char *mode);
+    PythonFile(PyRefType type, PyObject *o);
+    ~PythonFile() override;
+
+    static bool Check(PyObject *py_obj);
+
+    using PythonObject::Reset;
+
+    void Reset(PyRefType type, PyObject *py_obj) override;
+    void Reset(File &file, const char *mode);
 };
 
 } // namespace lldb_private

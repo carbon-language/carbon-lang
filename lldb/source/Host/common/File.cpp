@@ -143,7 +143,13 @@ File::GetDescriptor() const
     // Don't open the file descriptor if we don't need to, just get it from the
     // stream if we have one.
     if (StreamIsValid())
-        return fileno (m_stream);
+    {
+#if defined(LLVM_ON_WIN32)
+        return _fileno(m_stream);
+#else
+        return fileno(m_stream);
+#endif
+    }
 
     // Invalid descriptor and invalid stream, return invalid descriptor.
     return kInvalidDescriptor;
