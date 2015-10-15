@@ -5643,9 +5643,8 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     Args.ClaimAllArgs(options::OPT_g_Group);
     if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
       WantDebug = !A->getOption().matches(options::OPT_g0);
-      if (WantDebug) {
+      if (WantDebug)
         DwarfVersion = DwarfVersionNum(A->getSpelling());
-      }
     }
     if (DwarfVersion == 0)
       DwarfVersion = getToolChain().GetDefaultDwarfVersion();
