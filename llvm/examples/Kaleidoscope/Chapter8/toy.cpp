@@ -848,8 +848,7 @@ static DISubroutineType *CreateFunctionType(unsigned NumArgs, DIFile *Unit) {
   for (unsigned i = 0, e = NumArgs; i != e; ++i)
     EltTys.push_back(DblTy);
 
-  return DBuilder->createSubroutineType(Unit,
-                                        DBuilder->getOrCreateTypeArray(EltTys));
+  return DBuilder->createSubroutineType(DBuilder->getOrCreateTypeArray(EltTys));
 }
 
 //===----------------------------------------------------------------------===//
