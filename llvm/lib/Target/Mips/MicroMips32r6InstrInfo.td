@@ -681,7 +681,6 @@ class SBE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"sbe", GPR32Opnd>;
 class SCE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"sce", GPR32Opnd>;
 class SH_MMR6_DESC : STORE_MMR6_DESC_BASE<"sh", GPR32Opnd>;
 class SHE_MMR6_DESC : STORE_EVA_MMR6_DESC_BASE<"she", GPR32Opnd>;
-
 class LOAD_WORD_EVA_MMR6_DESC_BASE<string instr_asm, RegisterOperand RO> :
             MMR6Arch<instr_asm>, MipsR6Inst {
   dag OutOperandList = (outs RO:$rt);
