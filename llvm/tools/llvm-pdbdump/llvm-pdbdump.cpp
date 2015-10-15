@@ -47,6 +47,9 @@
 #include "llvm/Support/Signals.h"
 
 #if defined(HAVE_DIA_SDK)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <Windows.h>
 #endif
 
