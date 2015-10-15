@@ -434,6 +434,8 @@ class KnightsLandingProc<string Name> : ProcessorModel<Name, HaswellModel, [
   FeaturePOPCNT,
   FeatureAES,
   FeaturePCLMUL,
+  FeatureXSAVE,
+  FeatureXSAVEOPT,
   FeatureRDRAND,
   FeatureF16C,
   FeatureFSGSBase,
