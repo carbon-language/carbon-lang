@@ -69,7 +69,7 @@ private:
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
-  SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
+  SpecificBumpPtrAllocator<OutputSection<ELFT>> SecAlloc;
   std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
@@ -410,7 +410,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
                                      H->sh_type, OutFlags};
       OutputSection<ELFT> *&Sec = Map[Key];
       if (!Sec) {
-        Sec = new (CAlloc.Allocate())
+        Sec = new (SecAlloc.Allocate())
             OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
         OutputSections.push_back(Sec);
       }
