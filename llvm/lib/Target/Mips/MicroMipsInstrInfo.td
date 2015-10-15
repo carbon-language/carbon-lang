@@ -268,10 +268,25 @@ class LLBaseMM<string opstr, RegisterOperand RO> :
   let mayLoad = 1;
 }
 
+class LLEBaseMM<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$rt), (ins mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm9";
+  let mayLoad = 1;
+}
+
 class SCBaseMM<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$dst), (ins RO:$rt, mem_mm_12:$addr),
          !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMemMMImm12";
+  let mayStore = 1;
+  let Constraints = "$rt = $dst";
+}
+
+class SCEBaseMM<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$dst), (ins RO:$rt, mem_mm_12:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMemMMImm9";
   let mayStore = 1;
   let Constraints = "$rt = $dst";
 }
@@ -900,6 +915,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Load-linked, Store-conditional
   def LL_MM : LLBaseMM<"ll", GPR32Opnd>, LL_FM_MM<0x3>;
   def SC_MM : SCBaseMM<"sc", GPR32Opnd>, LL_FM_MM<0xb>;
+
+  def LLE_MM : LLEBaseMM<"lle", GPR32Opnd>, LLE_FM_MM<0x6>;
+  def SCE_MM : SCEBaseMM<"sce", GPR32Opnd>, LLE_FM_MM<0xA>;
 
   let DecoderMethod = "DecodeCacheOpMM" in {
   def CACHE_MM : MMRel, CacheOp<"cache", mem_mm_12>,

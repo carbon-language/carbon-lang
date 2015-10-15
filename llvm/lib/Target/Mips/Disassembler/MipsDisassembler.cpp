@@ -1411,6 +1411,9 @@ static DecodeStatus DecodeMemMMImm9(MCInst &Inst,
   Reg = getReg(Decoder, Mips::GPR32RegClassID, Reg);
   Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
 
+  if (Inst.getOpcode() == Mips::SCE_MM)
+    Inst.addOperand(MCOperand::createReg(Reg));
+
   Inst.addOperand(MCOperand::createReg(Reg));
   Inst.addOperand(MCOperand::createReg(Base));
   Inst.addOperand(MCOperand::createImm(Offset));

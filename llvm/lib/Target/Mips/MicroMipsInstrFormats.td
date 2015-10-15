@@ -687,6 +687,22 @@ class LL_FM_MM<bits<4> funct> {
   let Inst{11-0}  = addr{11-0};
 }
 
+class LLE_FM_MM<bits<4> funct> {
+  bits<5> rt;
+  bits<21> addr;
+  bits<5> base = addr{20-16};
+  bits<9> offset = addr{8-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x18;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = base;
+  let Inst{15-12} = funct;
+  let Inst{11-9} = 0x6;
+  let Inst{8-0} = offset;
+}
+
 class ADDS_FM_MM<bits<2> fmt, bits<8> funct> : MMArch {
   bits<5> ft;
   bits<5> fs;
