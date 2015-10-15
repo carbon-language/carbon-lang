@@ -191,6 +191,6 @@ if ( NOT LLDB_DISABLE_PYTHON )
   if (LLVM_COMPILER_IS_GCC_COMPATIBLE AND
       NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
     set_property(SOURCE ${LLDB_WRAP_PYTHON}
-                 APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-sequence-point")
+                 APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-sequence-point -Wno-cast-qual")
   endif ()
 endif()
