@@ -355,7 +355,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
     setOperationAction(ISD::SDIVREM, VT, Custom);
-    setOperationAction(ISD::UDIVREM, VT, Custom);
+    setOperationAction(ISD::UDIVREM, VT, Expand);
     setOperationAction(ISD::ADDC, VT, Expand);
     setOperationAction(ISD::SUBC, VT, Expand);
     setOperationAction(ISD::ADDE, VT, Expand);
