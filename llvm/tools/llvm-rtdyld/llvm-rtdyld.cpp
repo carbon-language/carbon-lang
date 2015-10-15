@@ -181,7 +181,10 @@ uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
                                                    unsigned Alignment,
                                                    unsigned SectionID,
                                                    StringRef SectionName) {
-  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, nullptr);
+  std::string Err;
+  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, &Err);
+  if (!MB.base())
+    report_fatal_error("MemoryManager allocation failed: " + Err);
   FunctionMemory.push_back(MB);
   return (uint8_t*)MB.base();
 }
@@ -191,7 +194,10 @@ uint8_t *TrivialMemoryManager::allocateDataSection(uintptr_t Size,
                                                    unsigned SectionID,
                                                    StringRef SectionName,
                                                    bool IsReadOnly) {
-  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, nullptr);
+  std::string Err;
+  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, &Err);
+  if (!MB.base())
+    report_fatal_error("MemoryManager allocation failed: " + Err);
   DataMemory.push_back(MB);
   return (uint8_t*)MB.base();
 }
