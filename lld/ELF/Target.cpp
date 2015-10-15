@@ -346,6 +346,16 @@ PPC64TargetInfo::PPC64TargetInfo() {
   // We need 64K pages (at least under glibc/Linux, the loader won't
   // set different permissions on a finer granularity than that).
   PageSize = 65536;
+
+  // The PPC64 ELF ABI v1 spec, says:
+  //
+  //   It is normally desirable to put segments with different characteristics
+  //   in separate 256 Mbyte portions of the address space, to give the
+  //   operating system full paging flexibility in the 64-bit address space.
+  //
+  // And because the lowest non-zero 256M boundary is 0x10000000, PPC64 linkers
+  // use 0x10000000 as the starting address.
+  VAStart = 0x10000000;
 }
 
 static uint64_t getPPC64TocBase() {

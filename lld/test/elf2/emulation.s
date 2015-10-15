@@ -78,7 +78,7 @@
 # PPC64-NEXT:   Type: Executable (0x2)
 # PPC64-NEXT:   Machine: EM_PPC64 (0x15)
 # PPC64-NEXT:   Version: 1
-# PPC64-NEXT:   Entry: 0x100B0
+# PPC64-NEXT:   Entry: 0x100000B0
 # PPC64-NEXT:   ProgramHeaderOffset: 0x40
 # PPC64-NEXT:   SectionHeaderOffset: 0x110
 # PPC64-NEXT:   Flags [ (0x0)
