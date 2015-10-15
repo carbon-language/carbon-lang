@@ -1,0 +1,12 @@
+; RUN: llvm-pdbdump --dump-headers %p/Inputs/empty.pdb | FileCheck %s
+
+; CHECK:      BlockSize: 4096
+; CHECK-NEXT: Unknown0: 2
+; CHECK-NEXT: NumBlocks: 25
+; CHECK-NEXT: NumDirectoryBytes: 136
+; CHECK-NEXT: Unknown1: 0
+; CHECK-NEXT: BlockMapAddr: 24
+; CHECK-NEXT: NumDirectoryBlocks: 1
+; CHECK-NEXT: BlockMapOffset: 98304
+; CHECK-NEXT: DirectoryBlocks: [23]
+; CHECK-NEXT: NumFiles: 17

@@ -22,6 +22,8 @@
 #include "VariableDumper.h"
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -38,6 +40,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
@@ -78,6 +81,17 @@ cl::opt<uint64_t> LoadAddress(
     "load-address",
     cl::desc("Assume the module is loaded at the specified address"),
     cl::cat(OtherOptions));
+
+cl::opt<bool> DumpHeaders("dump-headers", cl::desc("dump PDB headers"),
+                          cl::cat(OtherOptions));
+cl::opt<bool> DumpStreamSizes("dump-stream-sizes",
+                              cl::desc("dump PDB stream sizes"),
+                              cl::cat(OtherOptions));
+cl::opt<bool> DumpStreamBlocks("dump-stream-blocks",
+                               cl::desc("dump PDB stream blocks"),
+                               cl::cat(OtherOptions));
+cl::opt<std::string> DumpStreamData("dump-stream", cl::desc("dump stream data"),
+                                    cl::cat(OtherOptions));
 
 cl::list<std::string>
     ExcludeTypes("exclude-types",
@@ -121,10 +135,264 @@ cl::opt<bool> NoEnumDefs("no-enum-definitions",
                          cl::cat(FilterCategory));
 }
 
+
+static void reportError(StringRef Input, StringRef Message) {
+  if (Input == "-")
+    Input = "<stdin>";
+  errs() << Input << ": " << Message << "\n";
+  errs().flush();
+  exit(1);
+}
+
+static void reportError(StringRef Input, std::error_code EC) {
+  reportError(Input, EC.message());
+}
+
+static std::error_code checkOffset(MemoryBufferRef M, uintptr_t Addr,
+                                   const uint64_t Size) {
+  if (Addr + Size < Addr || Addr + Size < Size ||
+      Addr + Size > uintptr_t(M.getBufferEnd()) ||
+      Addr < uintptr_t(M.getBufferStart())) {
+    return std::make_error_code(std::errc::bad_address);
+  }
+  return std::error_code();
+}
+
+template <typename T>
+static std::error_code checkOffset(MemoryBufferRef M, ArrayRef<T> AR) {
+  return checkOffset(M, uintptr_t(AR.data()), (uint64_t)AR.size() * sizeof(T));
+}
+
+static std::error_code checkOffset(MemoryBufferRef M, StringRef SR) {
+  return checkOffset(M, uintptr_t(SR.data()), SR.size());
+}
+
+// Sets Obj unless any bytes in [addr, addr + size) fall outsize of m.
+// Returns unexpected_eof if error.
+template <typename T>
+static std::error_code getObject(const T *&Obj, MemoryBufferRef M,
+                                 const void *Ptr,
+                                 const uint64_t Size = sizeof(T)) {
+  uintptr_t Addr = uintptr_t(Ptr);
+  if (std::error_code EC = checkOffset(M, Addr, Size))
+    return EC;
+  Obj = reinterpret_cast<const T *>(Addr);
+  return std::error_code();
+}
+
+static uint64_t bytesToBlocks(uint64_t NumBytes, uint64_t BlockSize) {
+  return RoundUpToAlignment(NumBytes, BlockSize) / BlockSize;
+}
+
+static uint64_t blockToOffset(uint64_t BlockNumber, uint64_t BlockSize) {
+  return BlockNumber * BlockSize;
+}
+
+static void dumpStructure(MemoryBufferRef M) {
+  const PDB::SuperBlock *SB;
+  if (auto EC = getObject(SB, M, M.getBufferStart()))
+    reportError(M.getBufferIdentifier(), EC);
+
+  if (opts::DumpHeaders) {
+    outs() << "BlockSize: " << SB->BlockSize << '\n';
+    outs() << "Unknown0: " << SB->Unknown0 << '\n';
+    outs() << "NumBlocks: " << SB->NumBlocks << '\n';
+    outs() << "NumDirectoryBytes: " << SB->NumDirectoryBytes << '\n';
+    outs() << "Unknown1: " << SB->Unknown1 << '\n';
+    outs() << "BlockMapAddr: " << SB->BlockMapAddr << '\n';
+  }
+
+  // We don't support blocksizes which aren't a multiple of four bytes.
+  if (SB->BlockSize % sizeof(support::ulittle32_t) != 0)
+    reportError(M.getBufferIdentifier(),
+                std::make_error_code(std::errc::illegal_byte_sequence));
+
+  // We don't support directories whose sizes aren't a multiple of four bytes.
+  if (SB->NumDirectoryBytes % sizeof(support::ulittle32_t) != 0)
+    reportError(M.getBufferIdentifier(),
+                std::make_error_code(std::errc::illegal_byte_sequence));
+
+  // The number of blocks which comprise the directory is a simple function of
+  // the number of bytes it contains.
+  uint64_t NumDirectoryBlocks =
+      bytesToBlocks(SB->NumDirectoryBytes, SB->BlockSize);
+  if (opts::DumpHeaders)
+    outs() << "NumDirectoryBlocks: " << NumDirectoryBlocks << '\n';
+
+  // The block map, as we understand it, is a block which consists of a list of
+  // block numbers.
+  // It is unclear what would happen if the number of blocks couldn't fit on a
+  // single block.
+  if (NumDirectoryBlocks > SB->BlockSize / sizeof(support::ulittle32_t))
+    reportError(M.getBufferIdentifier(),
+                std::make_error_code(std::errc::illegal_byte_sequence));
+
+
+  uint64_t BlockMapOffset = (uint64_t)SB->BlockMapAddr * SB->BlockSize;
+  if (opts::DumpHeaders)
+    outs() << "BlockMapOffset: " << BlockMapOffset << '\n';
+
+  // The directory is not contiguous.  Instead, the block map contains a
+  // contiguous list of block numbers whose contents, when concatenated in
+  // order, make up the directory.
+  auto DirectoryBlocks =
+      makeArrayRef(reinterpret_cast<const support::ulittle32_t *>(
+                       M.getBufferStart() + BlockMapOffset),
+                   NumDirectoryBlocks);
+  if (auto EC = checkOffset(M, DirectoryBlocks))
+    reportError(M.getBufferIdentifier(), EC);
+
+  if (opts::DumpHeaders) {
+    outs() << "DirectoryBlocks: [";
+    for (const support::ulittle32_t &DirectoryBlockAddr : DirectoryBlocks) {
+      if (&DirectoryBlockAddr != &DirectoryBlocks.front())
+        outs() << ", ";
+      outs() << DirectoryBlockAddr;
+    }
+    outs() << "]\n";
+  }
+
+  bool SeenNumStreams = false;
+  uint32_t NumStreams = 0;
+  std::vector<uint32_t> StreamSizes;
+  DenseMap<uint32_t, std::vector<uint32_t>> StreamMap;
+  uint32_t StreamIdx = 0;
+  uint64_t DirectoryBytesRead = 0;
+  // The structure of the directory is as follows:
+  //    struct PDBDirectory {
+  //      uint32_t NumStreams;
+  //      uint32_t StreamSizes[NumStreams];
+  //      uint32_t StreamMap[NumStreams][];
+  //    };
+  //
+  //  Empty streams don't consume entries in the StreamMap.
+  for (uint32_t DirectoryBlockAddr : DirectoryBlocks) {
+    uint64_t DirectoryBlockOffset =
+        blockToOffset(DirectoryBlockAddr, SB->BlockSize);
+    auto DirectoryBlock =
+        makeArrayRef(reinterpret_cast<const support::ulittle32_t *>(
+                         M.getBufferStart() + DirectoryBlockOffset),
+                     SB->BlockSize / sizeof(support::ulittle32_t));
+    if (auto EC = checkOffset(M, DirectoryBlock))
+      reportError(M.getBufferIdentifier(), EC);
+
+    // We read data out of the directory four bytes at a time.  Depending on
+    // where we are in the directory, the contents may be: the number of streams
+    // in the directory, a stream's size, or a block in the stream map.
+    for (uint32_t Data : DirectoryBlock) {
+      // Don't read beyond the end of the directory.
+      if (DirectoryBytesRead == SB->NumDirectoryBytes)
+        break;
+
+      DirectoryBytesRead += sizeof(Data);
+
+      // This data must be the number of streams if we haven't seen it yet.
+      if (!SeenNumStreams) {
+        NumStreams = Data;
+        SeenNumStreams = true;
+        continue;
+      }
+      // This data must be a stream size if we have not seen them all yet.
+      if (StreamSizes.size() < NumStreams) {
+        // It seems like some streams have their set to -1 when their contents
+        // are not present.  Treat them like empty streams for now.
+        if (Data == UINT32_MAX)
+          StreamSizes.push_back(0);
+        else
+          StreamSizes.push_back(Data);
+        continue;
+      }
+
+      // This data must be a stream block number if we have seen all of the
+      // stream sizes.
+      std::vector<uint32_t> *StreamBlocks = nullptr;
+      // Figure out which stream this block number belongs to.
+      while (StreamIdx < NumStreams) {
+        uint64_t NumExpectedStreamBlocks =
+            bytesToBlocks(StreamSizes[StreamIdx], SB->BlockSize);
+        StreamBlocks = &StreamMap[StreamIdx];
+        if (NumExpectedStreamBlocks > StreamBlocks->size())
+          break;
+        ++StreamIdx;
+      }
+      // It seems this block doesn't belong to any stream?  The stream is either
+      // corrupt or something more mysterious is going on.
+      if (StreamIdx == NumStreams)
+        reportError(M.getBufferIdentifier(),
+                    std::make_error_code(std::errc::illegal_byte_sequence));
+
+      StreamBlocks->push_back(Data);
+    }
+  }
+
+  // We should have read exactly SB->NumDirectoryBytes bytes.
+  assert(DirectoryBytesRead == SB->NumDirectoryBytes);
+
+  if (opts::DumpHeaders)
+    outs() << "NumStreams: " << NumStreams << '\n';
+  if (opts::DumpStreamSizes)
+    for (uint32_t StreamIdx = 0; StreamIdx < NumStreams; ++StreamIdx)
+      outs() << "StreamSizes[" << StreamIdx << "]: " << StreamSizes[StreamIdx]
+             << '\n';
+
+  if (opts::DumpStreamBlocks) {
+    for (uint32_t StreamIdx = 0; StreamIdx < NumStreams; ++StreamIdx) {
+      outs() << "StreamBlocks[" << StreamIdx << "]: [";
+      std::vector<uint32_t> &StreamBlocks = StreamMap[StreamIdx];
+      for (uint32_t &StreamBlock : StreamBlocks) {
+        if (&StreamBlock != &StreamBlocks.front())
+          outs() << ", ";
+        outs() << StreamBlock;
+      }
+      outs() << "]\n";
+    }
+  }
+
+  StringRef DumpStreamStr = opts::DumpStreamData;
+  uint32_t DumpStreamNum;
+  if (!DumpStreamStr.getAsInteger(/*Radix=*/0U, DumpStreamNum) &&
+      DumpStreamNum < NumStreams) {
+    uint32_t StreamBytesRead = 0;
+    uint32_t StreamSize = StreamSizes[DumpStreamNum];
+    std::vector<uint32_t> &StreamBlocks = StreamMap[DumpStreamNum];
+    for (uint32_t &StreamBlockAddr : StreamBlocks) {
+      uint64_t StreamBlockOffset = blockToOffset(StreamBlockAddr, SB->BlockSize);
+      uint32_t BytesLeftToReadInStream = StreamSize - StreamBytesRead;
+      if (BytesLeftToReadInStream == 0)
+        break;
+
+      uint32_t BytesToReadInBlock =
+          std::min(BytesLeftToReadInStream, static_cast<uint32_t>(SB->BlockSize));
+      auto StreamBlockData =
+          StringRef(M.getBufferStart() + StreamBlockOffset, BytesToReadInBlock);
+      if (auto EC = checkOffset(M, StreamBlockData))
+        reportError(M.getBufferIdentifier(), EC);
+
+      outs() << StreamBlockData;
+      StreamBytesRead += StreamBlockData.size();
+    }
+  }
+}
+
 static void dumpInput(StringRef Path) {
+  if (opts::DumpHeaders || !opts::DumpStreamData.empty()) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> ErrorOrBuffer =
+        MemoryBuffer::getFileOrSTDIN(Path, /*FileSize=*/-1,
+                                     /*RequiresNullTerminator=*/false);
+
+    if (std::error_code EC = ErrorOrBuffer.getError())
+      reportError(Path, EC);
+
+    std::unique_ptr<MemoryBuffer> &Buffer = ErrorOrBuffer.get();
+
+    dumpStructure(Buffer->getMemBufferRef());
+
+    outs().flush();
+    return;
+  }
+
   std::unique_ptr<IPDBSession> Session;
-  PDB_ErrorCode Error =
-      llvm::loadDataForPDB(PDB_ReaderType::DIA, Path, Session);
+  PDB_ErrorCode Error = loadDataForPDB(PDB_ReaderType::DIA, Path, Session);
   switch (Error) {
   case PDB_ErrorCode::Success:
     break;
@@ -159,7 +427,7 @@ static void dumpInput(StringRef Path) {
 
   Printer.NewLine();
   WithColor(Printer, PDB_ColorItem::Identifier).get() << "Size";
-  if (!llvm::sys::fs::file_size(FileName, FileSize)) {
+  if (!sys::fs::file_size(FileName, FileSize)) {
     Printer << ": " << FileSize << " bytes";
   } else {
     Printer << ": (Unable to obtain file size)";
@@ -256,11 +524,11 @@ int main(int argc_, const char *argv_[]) {
   PrettyStackTraceProgram X(argc_, argv_);
 
   SmallVector<const char *, 256> argv;
-  llvm::SpecificBumpPtrAllocator<char> ArgAllocator;
-  std::error_code EC = llvm::sys::Process::GetArgumentVector(
-      argv, llvm::makeArrayRef(argv_, argc_), ArgAllocator);
+  SpecificBumpPtrAllocator<char> ArgAllocator;
+  std::error_code EC = sys::Process::GetArgumentVector(
+      argv, makeArrayRef(argv_, argc_), ArgAllocator);
   if (EC) {
-    llvm::errs() << "error: couldn't get arguments: " << EC.message() << '\n';
+    errs() << "error: couldn't get arguments: " << EC.message() << '\n';
     return 1;
   }
 
