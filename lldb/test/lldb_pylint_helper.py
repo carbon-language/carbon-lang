@@ -12,10 +12,13 @@ and multiple OS types, verifying changes across all.
 Provides helper support for adding lldb test paths to the python path.
 """
 import os
+import platform
+import subprocess
 import sys
 
 
 def add_lldb_test_paths(check_dir):
+    # pylint: disable=line-too-long
     """Adds lldb test-related paths to the python path.
 
     Starting with the given directory and working upward through
@@ -66,6 +69,72 @@ def add_lldb_test_paths(check_dir):
 
     @param check_dir specifies a directory that will be used to start
     looking for the lldb test infrastructure python library paths.
+    """
+    # Add the test-related packages themselves.
+    add_lldb_test_package_paths(check_dir)
+
+    # Add the lldb directory itself
+    add_lldb_module_directory()
+
+
+def add_lldb_module_directory():
+    """
+    Desired Approach:
+
+    Part A: find an lldb
+
+    1. Walk up the parent chain from the current directory, looking for
+    a directory matching *build*.  If we find that, use it as the
+    root of a directory search for an lldb[.exe] executable.
+
+    2. If 1 fails, use the path and look for an lldb[.exe] in there.
+
+    If Part A ends up with an lldb, go to part B.  Otherwise, give up
+    on the lldb python module path.
+
+    Part B: use the output from 'lldb[.exe] -P' to find the lldb dir.
+
+    Current approach:
+    If Darwin, use 'xcrun lldb -P'; others: find lldb on path.
+
+    Drawback to current approach:
+    If the tester is changing the SB API (adding new methods), pylint
+    will not know about them as it is using the wrong lldb python module.
+    In practice, this should be minor.
+    """
+    try:
+        lldb_module_path = None
+
+        if platform.system() == 'Darwin':
+            # Use xcrun to find the selected lldb.
+            lldb_module_path = subprocess.check_output(["xcrun", "lldb", "-P"])
+        elif platform.system() == 'Windows':
+            lldb_module_path = subprocess.check_output(
+                ["lldb.exe", "-P"], shell=True)
+        else:
+            # Use the shell to run lldb from the path.
+            lldb_module_path = subprocess.check_output(
+                ["lldb", "-P"], shell=True)
+
+        # Trim the result.
+        if lldb_module_path is not None:
+            lldb_module_path = lldb_module_path.rtrim()
+
+        # If we have a result, add it to the path
+        if lldb_module_path is not None and len(lldb_module_path) > 0:
+            sys.path.insert(0, lldb_module_path)
+    # pylint: disable=broad-except
+    except Exception as exception:
+        print "failed to find python path: {}".format(exception)
+    elif platform.system() != 'Windows':
+        
+
+def add_lldb_test_package_paths(check_dir):
+    """Adds the lldb test infrastructure modules to the python path.
+
+    See add_lldb_test_paths for more details.
+
+    @param check_dir the directory of the test.
     """
     check_dir = os.path.realpath(check_dir)
     while check_dir and len(check_dir) > 0:
