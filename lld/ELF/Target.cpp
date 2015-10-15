@@ -461,86 +461,84 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   default: break;
   }
 
-  uint64_t R = SA;
-
   switch (Type) {
   case R_PPC64_ADDR16:
-    if (!isInt<16>(R))
+    if (!isInt<16>(SA))
       error("Relocation R_PPC64_ADDR16 overflow");
-    write16be(L, R);
+    write16be(L, SA);
     break;
   case R_PPC64_ADDR16_DS:
-    if (!isInt<16>(R))
+    if (!isInt<16>(SA))
       error("Relocation R_PPC64_ADDR16_DS overflow");
-    write16be(L, (read16be(L) & 3) | (R & ~3));
+    write16be(L, (read16be(L) & 3) | (SA & ~3));
     break;
   case R_PPC64_ADDR16_LO:
-    write16be(L, applyPPCLo(R));
+    write16be(L, applyPPCLo(SA));
     break;
   case R_PPC64_ADDR16_LO_DS:
-    write16be(L, (read16be(L) & 3) | (applyPPCLo(R) & ~3));
+    write16be(L, (read16be(L) & 3) | (applyPPCLo(SA) & ~3));
     break;
   case R_PPC64_ADDR16_HI:
-    write16be(L, applyPPCHi(R));
+    write16be(L, applyPPCHi(SA));
     break;
   case R_PPC64_ADDR16_HA:
-    write16be(L, applyPPCHa(R));
+    write16be(L, applyPPCHa(SA));
     break;
   case R_PPC64_ADDR16_HIGHER:
-    write16be(L, applyPPCHigher(R));
+    write16be(L, applyPPCHigher(SA));
     break;
   case R_PPC64_ADDR16_HIGHERA:
-    write16be(L, applyPPCHighera(R));
+    write16be(L, applyPPCHighera(SA));
     break;
   case R_PPC64_ADDR16_HIGHEST:
-    write16be(L, applyPPCHighest(R));
+    write16be(L, applyPPCHighest(SA));
     break;
   case R_PPC64_ADDR16_HIGHESTA:
-    write16be(L, applyPPCHighesta(R));
+    write16be(L, applyPPCHighesta(SA));
     break;
   case R_PPC64_ADDR14: {
-    if ((R & 3) != 0)
+    if ((SA & 3) != 0)
       error("Improper alignment for relocation R_PPC64_ADDR14");
 
     // Preserve the AA/LK bits in the branch instruction
     uint8_t AALK = L[3];
-    write16be(L + 2, (AALK & 3) | (R & 0xfffc));
+    write16be(L + 2, (AALK & 3) | (SA & 0xfffc));
     break;
   }
   case R_PPC64_REL16_LO:
-    write16be(L, applyPPCLo(R - P));
+    write16be(L, applyPPCLo(SA - P));
     break;
   case R_PPC64_REL16_HI:
-    write16be(L, applyPPCHi(R - P));
+    write16be(L, applyPPCHi(SA - P));
     break;
   case R_PPC64_REL16_HA:
-    write16be(L, applyPPCHa(R - P));
+    write16be(L, applyPPCHa(SA - P));
     break;
   case R_PPC64_ADDR32:
-    if (!isInt<32>(R))
+    if (!isInt<32>(SA))
       error("Relocation R_PPC64_ADDR32 overflow");
-    write32be(L, R);
+    write32be(L, SA);
     break;
   case R_PPC64_REL24: {
     uint64_t PltStart = Out<ELF64BE>::Plt->getVA();
     uint64_t PltEnd = PltStart + Out<ELF64BE>::Plt->getSize();
-    bool InPlt = PltStart <= R && R < PltEnd;
+    bool InPlt = PltStart <= SA && SA < PltEnd;
 
     if (!InPlt && Out<ELF64BE>::Opd) {
       // If this is a local call, and we currently have the address of a
       // function-descriptor, get the underlying code address instead.
       uint64_t OpdStart = Out<ELF64BE>::Opd->getVA();
       uint64_t OpdEnd = OpdStart + Out<ELF64BE>::Opd->getSize();
-      bool InOpd = OpdStart <= R && R < OpdEnd;
+      bool InOpd = OpdStart <= SA && SA < OpdEnd;
 
       if (InOpd)
-        R = read64be(&Out<ELF64BE>::OpdBuf[R - OpdStart]);
+        SA = read64be(&Out<ELF64BE>::OpdBuf[SA - OpdStart]);
     }
 
     uint32_t Mask = 0x03FFFFFC;
-    if (!isInt<24>(R - P))
+    if (!isInt<24>(SA - P))
       error("Relocation R_PPC64_REL24 overflow");
-    write32be(L, (read32be(L) & ~Mask) | ((R - P) & Mask));
+    write32be(L, (read32be(L) & ~Mask) | ((SA - P) & Mask));
 
     if (InPlt && L + 8 <= BufEnd &&
         read32be(L + 4) == 0x60000000 /* nop */)
@@ -548,15 +546,15 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     break;
   }
   case R_PPC64_REL32:
-    if (!isInt<32>(R - P))
+    if (!isInt<32>(SA - P))
       error("Relocation R_PPC64_REL32 overflow");
-    write32be(L, R - P);
+    write32be(L, SA - P);
     break;
   case R_PPC64_REL64:
-    write64be(L, R - P);
+    write64be(L, SA - P);
     break;
   case R_PPC64_ADDR64:
-    write64be(L, R);
+    write64be(L, SA);
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
