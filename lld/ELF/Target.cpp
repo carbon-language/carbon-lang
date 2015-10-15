@@ -440,7 +440,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
   uint8_t *L = Buf + Rel.r_offset;
-  uint64_t S = SymVA;
+  uint64_t SA = SymVA;
   uint64_t P = BaseAddr + Rel.r_offset;
   uint64_t TB = getPPC64TocBase();
 
@@ -452,16 +452,16 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   // For a TOC-relative relocation, adjust the addend and proceed in terms of
   // the corresponding ADDR16 relocation type.
   switch (Type) {
-  case R_PPC64_TOC16:       Type = R_PPC64_ADDR16;       S -= TB; break;
-  case R_PPC64_TOC16_DS:    Type = R_PPC64_ADDR16_DS;    S -= TB; break;
-  case R_PPC64_TOC16_LO:    Type = R_PPC64_ADDR16_LO;    S -= TB; break;
-  case R_PPC64_TOC16_LO_DS: Type = R_PPC64_ADDR16_LO_DS; S -= TB; break;
-  case R_PPC64_TOC16_HI:    Type = R_PPC64_ADDR16_HI;    S -= TB; break;
-  case R_PPC64_TOC16_HA:    Type = R_PPC64_ADDR16_HA;    S -= TB; break;
+  case R_PPC64_TOC16:       Type = R_PPC64_ADDR16;       SA -= TB; break;
+  case R_PPC64_TOC16_DS:    Type = R_PPC64_ADDR16_DS;    SA -= TB; break;
+  case R_PPC64_TOC16_LO:    Type = R_PPC64_ADDR16_LO;    SA -= TB; break;
+  case R_PPC64_TOC16_LO_DS: Type = R_PPC64_ADDR16_LO_DS; SA -= TB; break;
+  case R_PPC64_TOC16_HI:    Type = R_PPC64_ADDR16_HI;    SA -= TB; break;
+  case R_PPC64_TOC16_HA:    Type = R_PPC64_ADDR16_HA;    SA -= TB; break;
   default: break;
   }
 
-  uint64_t R = S;
+  uint64_t R = SA;
 
   switch (Type) {
   case R_PPC64_ADDR16:
@@ -616,36 +616,36 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
   uint8_t *L = Buf + Rel.r_offset;
-  uint64_t S = SymVA;
+  uint64_t SA = SymVA;
   uint64_t P = BaseAddr + Rel.r_offset;
   switch (Type) {
   case R_AARCH64_ABS16:
-    if (!isInt<16>(S))
+    if (!isInt<16>(SA))
       error("Relocation R_AARCH64_ABS16 out of range");
-    write16le(L, S);
+    write16le(L, SA);
     break;
   case R_AARCH64_ABS32:
-    if (!isInt<32>(S))
+    if (!isInt<32>(SA))
       error("Relocation R_AARCH64_ABS32 out of range");
-    write32le(L, S);
+    write32le(L, SA);
     break;
   case R_AARCH64_ABS64:
     // No overflow check needed.
-    write64le(L, S);
+    write64le(L, SA);
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
     // No overflow check needed.
-    or32le(L, (S & 0xFFF) << 10);
+    or32le(L, (SA & 0xFFF) << 10);
     break;
   case R_AARCH64_ADR_PREL_LO21: {
-    uint64_t X = S - P;
+    uint64_t X = SA - P;
     if (!isInt<21>(X))
       error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
     updateAArch64Adr(L, X & 0x1FFFFF);
     break;
   }
   case R_AARCH64_ADR_PREL_PG_HI21: {
-    uint64_t X = getAArch64Page(S) - getAArch64Page(P);
+    uint64_t X = getAArch64Page(SA) - getAArch64Page(P);
     if (!isInt<33>(X))
       error("Relocation R_AARCH64_ADR_PREL_PG_HI21 out of range");
     updateAArch64Adr(L, (X >> 12) & 0x1FFFFF); // X[32:12]
