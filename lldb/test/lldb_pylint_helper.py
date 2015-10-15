@@ -118,7 +118,7 @@ def add_lldb_module_directory():
 
         # Trim the result.
         if lldb_module_path is not None:
-            lldb_module_path = lldb_module_path.rtrim()
+            lldb_module_path = lldb_module_path.strip()
 
         # If we have a result, add it to the path
         if lldb_module_path is not None and len(lldb_module_path) > 0:
@@ -126,8 +126,7 @@ def add_lldb_module_directory():
     # pylint: disable=broad-except
     except Exception as exception:
         print "failed to find python path: {}".format(exception)
-    elif platform.system() != 'Windows':
-        
+
 
 def add_lldb_test_package_paths(check_dir):
     """Adds the lldb test infrastructure modules to the python path.
