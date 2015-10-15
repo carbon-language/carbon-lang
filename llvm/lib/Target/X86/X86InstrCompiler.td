@@ -821,24 +821,29 @@ multiclass RELEASE_UNOP<dag dag8, dag dag16, dag dag32, dag dag64> {
         [(atomic_store_64 addr:$dst, dag64)]>;
 }
 
-defm RELEASE_INC : RELEASE_UNOP<
-    (add (atomic_load_8  addr:$dst), (i8 1)),
-    (add (atomic_load_16 addr:$dst), (i16 1)),
-    (add (atomic_load_32 addr:$dst), (i32 1)),
-    (add (atomic_load_64 addr:$dst), (i64 1))>, Requires<[NotSlowIncDec]>;
-defm RELEASE_DEC : RELEASE_UNOP<
-    (add (atomic_load_8  addr:$dst), (i8 -1)),
-    (add (atomic_load_16 addr:$dst), (i16 -1)),
-    (add (atomic_load_32 addr:$dst), (i32 -1)),
-    (add (atomic_load_64 addr:$dst), (i64 -1))>, Requires<[NotSlowIncDec]>;
+let Defs = [EFLAGS] in {
+  defm RELEASE_INC : RELEASE_UNOP<
+      (add (atomic_load_8  addr:$dst), (i8 1)),
+      (add (atomic_load_16 addr:$dst), (i16 1)),
+      (add (atomic_load_32 addr:$dst), (i32 1)),
+      (add (atomic_load_64 addr:$dst), (i64 1))>, Requires<[NotSlowIncDec]>;
+  defm RELEASE_DEC : RELEASE_UNOP<
+      (add (atomic_load_8  addr:$dst), (i8 -1)),
+      (add (atomic_load_16 addr:$dst), (i16 -1)),
+      (add (atomic_load_32 addr:$dst), (i32 -1)),
+      (add (atomic_load_64 addr:$dst), (i64 -1))>, Requires<[NotSlowIncDec]>;
+}
 /*
 TODO: These don't work because the type inference of TableGen fails.
 TODO: find a way to fix it.
-defm RELEASE_NEG : RELEASE_UNOP<
-    (ineg (atomic_load_8  addr:$dst)),
-    (ineg (atomic_load_16 addr:$dst)),
-    (ineg (atomic_load_32 addr:$dst)),
-    (ineg (atomic_load_64 addr:$dst))>;
+let Defs = [EFLAGS] in {
+  defm RELEASE_NEG : RELEASE_UNOP<
+      (ineg (atomic_load_8  addr:$dst)),
+      (ineg (atomic_load_16 addr:$dst)),
+      (ineg (atomic_load_32 addr:$dst)),
+      (ineg (atomic_load_64 addr:$dst))>;
+}
+// NOT doesn't set flags.
 defm RELEASE_NOT : RELEASE_UNOP<
     (not (atomic_load_8  addr:$dst)),
     (not (atomic_load_16 addr:$dst)),
