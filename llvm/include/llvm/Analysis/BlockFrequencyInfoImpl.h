@@ -477,8 +477,6 @@ public:
 
   BlockFrequency getBlockFreq(const BlockNode &Node) const;
 
-  void setBlockFreq(const BlockNode &Node, uint64_t Freq);
-
   raw_ostream &printBlockFreq(raw_ostream &OS, const BlockNode &Node) const;
   raw_ostream &printBlockFreq(raw_ostream &OS,
                               const BlockFrequency &Freq) const;
@@ -915,7 +913,6 @@ public:
   BlockFrequency getBlockFreq(const BlockT *BB) const {
     return BlockFrequencyInfoImplBase::getBlockFreq(getNode(BB));
   }
-  void setBlockFreq(const BlockT *BB, uint64_t Freq);
   Scaled64 getFloatingBlockFreq(const BlockT *BB) const {
     return BlockFrequencyInfoImplBase::getFloatingBlockFreq(getNode(BB));
   }
@@ -966,21 +963,6 @@ void BlockFrequencyInfoImpl<BT>::calculate(const FunctionT &F,
   computeMassInFunction();
   unwrapLoops();
   finalizeMetrics();
-}
-
-template <class BT>
-void BlockFrequencyInfoImpl<BT>::setBlockFreq(const BlockT *BB, uint64_t Freq) {
-  if (Nodes.count(BB))
-    BlockFrequencyInfoImplBase::setBlockFreq(getNode(BB), Freq);
-  else {
-    // If BB is a newly added block after BFI is done, we need to create a new
-    // BlockNode for it assigned with a new index. The index can be determined
-    // by the size of Freqs.
-    BlockNode NewNode(Freqs.size());
-    Nodes[BB] = NewNode;
-    Freqs.emplace_back();
-    BlockFrequencyInfoImplBase::setBlockFreq(NewNode, Freq);
-  }
 }
 
 template <class BT> void BlockFrequencyInfoImpl<BT>::initializeRPOT() {

@@ -287,45 +287,4 @@ TEST(BranchProbabilityTest, scaleBruteForce) {
   }
 }
 
-TEST(BranchProbabilityTest, NormalizeEdgeWeights) {
-  {
-    SmallVector<uint32_t, 2> Weights{0, 0};
-    BranchProbability::normalizeEdgeWeights(Weights.begin(), Weights.end());
-    EXPECT_EQ(1u, Weights[0]);
-    EXPECT_EQ(1u, Weights[1]);
-  }
-  {
-    SmallVector<uint32_t, 2> Weights{0, UINT32_MAX};
-    BranchProbability::normalizeEdgeWeights(Weights.begin(), Weights.end());
-    EXPECT_EQ(1u, Weights[0]);
-    EXPECT_EQ(UINT32_MAX - 1u, Weights[1]);
-  }
-  {
-    SmallVector<uint32_t, 2> Weights{1, UINT32_MAX};
-    BranchProbability::normalizeEdgeWeights(Weights.begin(), Weights.end());
-    EXPECT_EQ(1u, Weights[0]);
-    EXPECT_EQ(UINT32_MAX - 1u, Weights[1]);
-  }
-  {
-    SmallVector<uint32_t, 3> Weights{0, 0, UINT32_MAX};
-    BranchProbability::normalizeEdgeWeights(Weights.begin(), Weights.end());
-    EXPECT_EQ(1u, Weights[0]);
-    EXPECT_EQ(1u, Weights[1]);
-    EXPECT_EQ(UINT32_MAX / 2u, Weights[2]);
-  }
-  {
-    SmallVector<uint32_t, 2> Weights{UINT32_MAX, UINT32_MAX};
-    BranchProbability::normalizeEdgeWeights(Weights.begin(), Weights.end());
-    EXPECT_EQ(UINT32_MAX / 3u, Weights[0]);
-    EXPECT_EQ(UINT32_MAX / 3u, Weights[1]);
-  }
-  {
-    SmallVector<uint32_t, 3> Weights{UINT32_MAX, UINT32_MAX, UINT32_MAX};
-    BranchProbability::normalizeEdgeWeights(Weights.begin(), Weights.end());
-    EXPECT_EQ(UINT32_MAX / 4u, Weights[0]);
-    EXPECT_EQ(UINT32_MAX / 4u, Weights[1]);
-    EXPECT_EQ(UINT32_MAX / 4u, Weights[2]);
-  }
-}
-
 }
