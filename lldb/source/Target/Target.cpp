@@ -1276,7 +1276,7 @@ Target::ModuleAdded (const ModuleList& module_list, const ModuleSP &module_sp)
 void
 Target::ModuleRemoved (const ModuleList& module_list, const ModuleSP &module_sp)
 {
-    // A module is being added to this target for the first time
+    // A module is being removed from this target.
     if (m_valid)
     {
         ModuleList my_module_list;

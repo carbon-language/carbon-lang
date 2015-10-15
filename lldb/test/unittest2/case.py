@@ -353,32 +353,7 @@ class TestCase(unittest.TestCase):
             except Exception:
                 result.addError(self, sys.exc_info())
             else:
-                try:
-                    testMethod()
-                except self.failureException:
-                    result.addFailure(self, sys.exc_info())
-                except _ExpectedFailure, e:
-                    addExpectedFailure = getattr(result, 'addExpectedFailure', None)
-                    if addExpectedFailure is not None:
-                        addExpectedFailure(self, e.exc_info, e.bugnumber)
-                    else: 
-                        warnings.warn("Use of a TestResult without an addExpectedFailure method is deprecated", 
-                                      DeprecationWarning)
-                        result.addSuccess(self)
-                except _UnexpectedSuccess, x:
-                    addUnexpectedSuccess = getattr(result, 'addUnexpectedSuccess', None)
-                    if addUnexpectedSuccess is not None:
-                        addUnexpectedSuccess(self, x.bugnumber)
-                    else:
-                        warnings.warn("Use of a TestResult without an addUnexpectedSuccess method is deprecated", 
-                                      DeprecationWarning)
-                        result.addFailure(self, sys.exc_info())
-                except SkipTest, e:
-                    self._addSkip(result, str(e))
-                except Exception:
-                    result.addError(self, sys.exc_info())
-                else:
-                    success = True
+                success = self.runMethod(testMethod, result)
 
                 try:
                     self.tearDown()
@@ -398,6 +373,42 @@ class TestCase(unittest.TestCase):
                 stopTestRun = getattr(result, 'stopTestRun', None)
                 if stopTestRun is not None:
                     stopTestRun()
+
+    def runMethod(self, testMethod, result):
+        """Runs the test method and catches any exception that might be thrown.
+
+        This is factored out of TestCase.run() to ensure that any exception
+        thrown during the test goes out of scope before tearDown.  Otherwise, an
+        exception could hold references to Python objects that are bound to
+        SB objects and prevent them from being deleted in time.
+        """
+        try:
+            testMethod()
+        except self.failureException:
+            result.addFailure(self, sys.exc_info())
+        except _ExpectedFailure, e:
+            addExpectedFailure = getattr(result, 'addExpectedFailure', None)
+            if addExpectedFailure is not None:
+                addExpectedFailure(self, e.exc_info, e.bugnumber)
+            else:
+                warnings.warn("Use of a TestResult without an addExpectedFailure method is deprecated",
+                              DeprecationWarning)
+                result.addSuccess(self)
+        except _UnexpectedSuccess, x:
+            addUnexpectedSuccess = getattr(result, 'addUnexpectedSuccess', None)
+            if addUnexpectedSuccess is not None:
+                addUnexpectedSuccess(self, x.bugnumber)
+            else:
+                warnings.warn("Use of a TestResult without an addUnexpectedSuccess method is deprecated",
+                              DeprecationWarning)
+                result.addFailure(self, sys.exc_info())
+        except SkipTest, e:
+            self._addSkip(result, str(e))
+        except Exception:
+            result.addError(self, sys.exc_info())
+        else:
+            return True
+        return False
 
     def doCleanups(self):
         """Execute all cleanup functions. Normally called for you after

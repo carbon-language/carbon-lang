@@ -32,6 +32,7 @@ $
 """
 
 import abc
+import gc
 import glob
 import os, sys, traceback
 import os.path
@@ -2543,6 +2544,11 @@ class TestBase(Base):
     def tearDown(self):
         #import traceback
         #traceback.print_stack()
+
+        # Ensure all the references to SB objects have gone away so that we can
+        # be sure that all test-specific resources have been freed before we
+        # attempt to delete the targets.
+        gc.collect()
 
         # Delete the target(s) from the debugger as a general cleanup step.
         # This includes terminating the process for each target, if any.
