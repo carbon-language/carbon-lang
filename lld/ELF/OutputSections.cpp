@@ -20,20 +20,19 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf2;
 
-template <bool Is64Bits>
-OutputSectionBase<Is64Bits>::OutputSectionBase(StringRef Name, uint32_t sh_type,
-                                               uintX_t sh_flags)
+template <class ELFT>
+OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t sh_type,
+                                           uintX_t sh_flags)
     : Name(Name) {
-  memset(&Header, 0, sizeof(HeaderT));
+  memset(&Header, 0, sizeof(Elf_Shdr));
   Header.sh_type = sh_type;
   Header.sh_flags = sh_flags;
 }
 
 template <class ELFT>
 GotSection<ELFT>::GotSection()
-    : OutputSectionBase<ELFT::Is64Bits>(".got", llvm::ELF::SHT_PROGBITS,
-                                        llvm::ELF::SHF_ALLOC |
-                                            llvm::ELF::SHF_WRITE) {
+    : OutputSectionBase<ELFT>(".got", llvm::ELF::SHT_PROGBITS,
+                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE) {
   this->Header.sh_addralign = sizeof(uintX_t);
 }
 
@@ -61,9 +60,8 @@ template <class ELFT> void GotSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 PltSection<ELFT>::PltSection()
-    : OutputSectionBase<ELFT::Is64Bits>(".plt", llvm::ELF::SHT_PROGBITS,
-                                        llvm::ELF::SHF_ALLOC |
-                                            llvm::ELF::SHF_EXECINSTR) {
+    : OutputSectionBase<ELFT>(".plt", llvm::ELF::SHT_PROGBITS,
+                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR) {
   this->Header.sh_addralign = 16;
 }
 
@@ -95,10 +93,9 @@ void PltSection<ELFT>::finalize() {
 
 template <class ELFT>
 RelocationSection<ELFT>::RelocationSection(bool IsRela)
-    : OutputSectionBase<ELFT::Is64Bits>(IsRela ? ".rela.dyn" : ".rel.dyn",
-                                        IsRela ? llvm::ELF::SHT_RELA
-                                               : llvm::ELF::SHT_REL,
-                                        llvm::ELF::SHF_ALLOC),
+    : OutputSectionBase<ELFT>(IsRela ? ".rela.dyn" : ".rel.dyn",
+                              IsRela ? llvm::ELF::SHT_RELA : llvm::ELF::SHT_REL,
+                              llvm::ELF::SHF_ALLOC),
       IsRela(IsRela) {
   this->Header.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   this->Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
@@ -158,38 +155,27 @@ template <class ELFT> void RelocationSection<ELFT>::finalize() {
   this->Header.sh_size = Relocs.size() * this->Header.sh_entsize;
 }
 
-template <bool Is64Bits>
-InterpSection<Is64Bits>::InterpSection()
-    : OutputSectionBase<Is64Bits>(".interp", llvm::ELF::SHT_PROGBITS,
-                                  llvm::ELF::SHF_ALLOC) {
+template <class ELFT>
+InterpSection<ELFT>::InterpSection()
+    : OutputSectionBase<ELFT>(".interp", llvm::ELF::SHT_PROGBITS,
+                              llvm::ELF::SHF_ALLOC) {
   this->Header.sh_size = Config->DynamicLinker.size() + 1;
   this->Header.sh_addralign = 1;
 }
 
-template <bool Is64Bits>
-template <endianness E>
-void OutputSectionBase<Is64Bits>::writeHeaderTo(
-    typename ELFFile<ELFType<E, Is64Bits>>::Elf_Shdr *SHdr) {
-  SHdr->sh_name = Header.sh_name;
-  SHdr->sh_type = Header.sh_type;
-  SHdr->sh_flags = Header.sh_flags;
-  SHdr->sh_addr = Header.sh_addr;
-  SHdr->sh_offset = Header.sh_offset;
-  SHdr->sh_size = Header.sh_size;
-  SHdr->sh_link = Header.sh_link;
-  SHdr->sh_info = Header.sh_info;
-  SHdr->sh_addralign = Header.sh_addralign;
-  SHdr->sh_entsize = Header.sh_entsize;
+template <class ELFT>
+void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
+  *SHdr = Header;
 }
 
-template <bool Is64Bits> void InterpSection<Is64Bits>::writeTo(uint8_t *Buf) {
+template <class ELFT> void InterpSection<ELFT>::writeTo(uint8_t *Buf) {
   memcpy(Buf, Config->DynamicLinker.data(), Config->DynamicLinker.size());
 }
 
 template <class ELFT>
 HashTableSection<ELFT>::HashTableSection()
-    : OutputSectionBase<ELFT::Is64Bits>(".hash", llvm::ELF::SHT_HASH,
-                                        llvm::ELF::SHF_ALLOC) {
+    : OutputSectionBase<ELFT>(".hash", llvm::ELF::SHT_HASH,
+                              llvm::ELF::SHF_ALLOC) {
   this->Header.sh_entsize = sizeof(Elf_Word);
   this->Header.sh_addralign = sizeof(Elf_Word);
 }
@@ -245,11 +231,10 @@ template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 DynamicSection<ELFT>::DynamicSection(SymbolTable<ELFT> &SymTab)
-    : OutputSectionBase<ELFT::Is64Bits>(".dynamic", llvm::ELF::SHT_DYNAMIC,
-                                        llvm::ELF::SHF_ALLOC |
-                                            llvm::ELF::SHF_WRITE),
+    : OutputSectionBase<ELFT>(".dynamic", llvm::ELF::SHT_DYNAMIC,
+                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE),
       SymTab(SymTab) {
-  typename Base::HeaderT &Header = this->Header;
+  Elf_Shdr &Header = this->Header;
   Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
   Header.sh_entsize = ELFT::Is64Bits ? 16 : 8;
 }
@@ -258,7 +243,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   if (this->Header.sh_size)
     return; // Already finalized.
 
-  typename Base::HeaderT &Header = this->Header;
+  Elf_Shdr &Header = this->Header;
   Header.sh_link = Out<ELFT>::DynStrTab->SectionIndex;
 
   unsigned NumEntries = 0;
@@ -358,7 +343,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     WriteVal(DT_SONAME, Out<ELFT>::DynStrTab->getFileOff(Config->SoName));
 
   auto WriteArray = [&](int32_t T1, int32_t T2,
-                        const OutputSectionBase<ELFT::Is64Bits> *Sec) {
+                        const OutputSectionBase<ELFT> *Sec) {
     if (!Sec)
       return;
     WritePtr(T1, Sec->getVA());
@@ -391,7 +376,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 template <class ELFT>
 OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t sh_type,
                                    uintX_t sh_flags)
-    : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags) {}
+    : OutputSectionBase<ELFT>(Name, sh_type, sh_flags) {}
 
 template <class ELFT>
 void OutputSection<ELFT>::addSection(InputSection<ELFT> *C) {
@@ -506,17 +491,16 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
     C->writeTo(Buf);
 }
 
-template <bool Is64Bits>
-StringTableSection<Is64Bits>::StringTableSection(bool Dynamic)
-    : OutputSectionBase<Is64Bits>(Dynamic ? ".dynstr" : ".strtab",
-                                  llvm::ELF::SHT_STRTAB,
-                                  Dynamic ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
+template <class ELFT>
+StringTableSection<ELFT>::StringTableSection(bool Dynamic)
+    : OutputSectionBase<ELFT>(Dynamic ? ".dynstr" : ".strtab",
+                              llvm::ELF::SHT_STRTAB,
+                              Dynamic ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
       Dynamic(Dynamic) {
   this->Header.sh_addralign = 1;
 }
 
-template <bool Is64Bits>
-void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
+template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
   StringRef Data = StrTabBuilder.data();
   memcpy(Buf, Data.data(), Data.size());
 }
@@ -571,14 +555,14 @@ bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
 
 template <class ELFT>
 SymbolTableSection<ELFT>::SymbolTableSection(
-    SymbolTable<ELFT> &Table, StringTableSection<ELFT::Is64Bits> &StrTabSec)
-    : OutputSectionBase<ELFT::Is64Bits>(
+    SymbolTable<ELFT> &Table, StringTableSection<ELFT> &StrTabSec)
+    : OutputSectionBase<ELFT>(
           StrTabSec.isDynamic() ? ".dynsym" : ".symtab",
           StrTabSec.isDynamic() ? llvm::ELF::SHT_DYNSYM : llvm::ELF::SHT_SYMTAB,
           StrTabSec.isDynamic() ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
       Table(Table), StrTabSec(StrTabSec) {
-  typedef OutputSectionBase<ELFT::Is64Bits> Base;
-  typename Base::HeaderT &Header = this->Header;
+  typedef OutputSectionBase<ELFT> Base;
+  typename Base::Elf_Shdr &Header = this->Header;
 
   Header.sh_entsize = sizeof(Elf_Sym);
   Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
@@ -664,7 +648,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
 
     ESym->st_name = StrTabSec.getFileOff(Name);
 
-    const OutputSectionBase<ELFT::Is64Bits> *OutSec = nullptr;
+    const OutputSectionBase<ELFT> *OutSec = nullptr;
     const InputSection<ELFT> *Section = nullptr;
 
     switch (Body->kind()) {
@@ -721,17 +705,10 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
 
 namespace lld {
 namespace elf2 {
-template class OutputSectionBase<false>;
-template class OutputSectionBase<true>;
-
-template void OutputSectionBase<false>::writeHeaderTo<support::little>(
-    ELFFile<ELFType<support::little, false>>::Elf_Shdr *SHdr);
-template void OutputSectionBase<true>::writeHeaderTo<support::little>(
-    ELFFile<ELFType<support::little, true>>::Elf_Shdr *SHdr);
-template void OutputSectionBase<false>::writeHeaderTo<support::big>(
-    ELFFile<ELFType<support::big, false>>::Elf_Shdr *SHdr);
-template void OutputSectionBase<true>::writeHeaderTo<support::big>(
-    ELFFile<ELFType<support::big, true>>::Elf_Shdr *SHdr);
+template class OutputSectionBase<ELF32LE>;
+template class OutputSectionBase<ELF32BE>;
+template class OutputSectionBase<ELF64LE>;
+template class OutputSectionBase<ELF64BE>;
 
 template class GotSection<ELF32LE>;
 template class GotSection<ELF32BE>;
@@ -748,8 +725,10 @@ template class RelocationSection<ELF32BE>;
 template class RelocationSection<ELF64LE>;
 template class RelocationSection<ELF64BE>;
 
-template class InterpSection<false>;
-template class InterpSection<true>;
+template class InterpSection<ELF32LE>;
+template class InterpSection<ELF32BE>;
+template class InterpSection<ELF64LE>;
+template class InterpSection<ELF64BE>;
 
 template class HashTableSection<ELF32LE>;
 template class HashTableSection<ELF32BE>;
@@ -766,8 +745,10 @@ template class OutputSection<ELF32BE>;
 template class OutputSection<ELF64LE>;
 template class OutputSection<ELF64BE>;
 
-template class StringTableSection<false>;
-template class StringTableSection<true>;
+template class StringTableSection<ELF32LE>;
+template class StringTableSection<ELF32BE>;
+template class StringTableSection<ELF64LE>;
+template class StringTableSection<ELF64BE>;
 
 template class SymbolTableSection<ELF32LE>;
 template class SymbolTableSection<ELF32BE>;

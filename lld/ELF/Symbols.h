@@ -37,7 +37,7 @@ class InputFile;
 class SymbolBody;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
-template <bool Is64Bits> class OutputSectionBase;
+template <class ELFT> class OutputSectionBase;
 template <class ELFT> class SharedFile;
 
 // Initializes global objects defined in this file.
@@ -193,8 +193,7 @@ template <class ELFT> class DefinedCommon : public Defined<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  typedef typename std::conditional<ELFT::Is64Bits, uint64_t, uint32_t>::type
-      uintX_t;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   DefinedCommon(StringRef N, const Elf_Sym &Sym)
       : Defined<ELFT>(Base::DefinedCommonKind, N, Sym) {
     MaxAlignment = Sym.st_value;
@@ -234,14 +233,14 @@ template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {
 public:
   typedef typename Base::Elf_Sym Elf_Sym;
   DefinedSynthetic(StringRef N, const Elf_Sym &Sym,
-                   OutputSectionBase<ELFT::Is64Bits> &Section)
+                   OutputSectionBase<ELFT> &Section)
       : Defined<ELFT>(Base::DefinedSyntheticKind, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedSyntheticKind;
   }
 
-  const OutputSectionBase<ELFT::Is64Bits> &Section;
+  const OutputSectionBase<ELFT> &Section;
 };
 
 // Undefined symbol.

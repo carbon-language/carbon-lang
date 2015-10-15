@@ -18,7 +18,7 @@ namespace elf2 {
 
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
-template <bool Is64Bits> class OutputSectionBase;
+template <class ELFT> class OutputSectionBase;
 
 // This corresponds to a section of an input file.
 template <class ELFT> class InputSection {
@@ -55,7 +55,7 @@ public:
   // The offset from beginning of the output sections this section was assigned
   // to. The writer sets a value.
   uint64_t OutSecOff = 0;
-  OutputSectionBase<ELFT::Is64Bits> *OutSec = nullptr;
+  OutputSectionBase<ELFT> *OutSec = nullptr;
 
   static InputSection<ELFT> Discarded;
 

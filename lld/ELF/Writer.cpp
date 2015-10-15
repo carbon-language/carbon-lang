@@ -72,13 +72,13 @@ private:
 
   SpecificBumpPtrAllocator<OutputSection<ELFT>> SecAlloc;
   BumpPtrAllocator Alloc;
-  std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
+  std::vector<OutputSectionBase<ELFT> *> OutputSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
-  void addStartStopSymbols(OutputSectionBase<ELFT::Is64Bits> *Sec);
+  void addStartStopSymbols(OutputSectionBase<ELFT> *Sec);
   void setPhdr(Elf_Phdr *PH, uint32_t Type, uint32_t Flags, uintX_t FileOff,
                uintX_t VA, uintX_t Align);
-  void copyPhdr(Elf_Phdr *PH, OutputSectionBase<ELFT::Is64Bits> *From);
+  void copyPhdr(Elf_Phdr *PH, OutputSectionBase<ELFT> *From);
 
   SymbolTable<ELFT> &Symtab;
   std::vector<Elf_Phdr> Phdrs;
@@ -91,11 +91,11 @@ private:
 template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   // Initialize output sections that are handled by Writer specially.
   // Don't reorder because the order of initialization matters.
-  InterpSection<ELFT::Is64Bits> Interp;
+  InterpSection<ELFT> Interp;
   Out<ELFT>::Interp = &Interp;
-  StringTableSection<ELFT::Is64Bits> StrTab(false);
+  StringTableSection<ELFT> StrTab(false);
   Out<ELFT>::StrTab = &StrTab;
-  StringTableSection<ELFT::Is64Bits> DynStrTab(true);
+  StringTableSection<ELFT> DynStrTab(true);
   Out<ELFT>::DynStrTab = &DynStrTab;
   OutputSection<ELFT> Bss(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   Out<ELFT>::Bss = &Bss;
@@ -284,8 +284,8 @@ static int getPPC64SectionRank(StringRef SectionName) {
 
 // Output section ordering is determined by this function.
 template <class ELFT>
-static bool compareOutputSections(OutputSectionBase<ELFT::Is64Bits> *A,
-                                  OutputSectionBase<ELFT::Is64Bits> *B) {
+static bool compareOutputSections(OutputSectionBase<ELFT> *A,
+                                  OutputSectionBase<ELFT> *B) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
 
   uintX_t AFlags = A->getFlags();
@@ -403,7 +403,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   if (!isOutputDynamic())
     Symtab.addIgnoredSym("__tls_get_addr");
 
-  std::vector<OutputSectionBase<ELFT::Is64Bits> *> RegularSections;
+  std::vector<OutputSectionBase<ELFT> *> RegularSections;
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (InputSection<ELFT> *C : F->getSections()) {
@@ -425,7 +425,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : RegularSections)
+  for (OutputSectionBase<ELFT> *Sec : RegularSections)
     addStartStopSymbols(Sec);
 
   Out<ELFT>::Dynamic->PreInitArraySec =
@@ -436,7 +436,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC});
 
   auto AddStartEnd = [&](StringRef Start, StringRef End,
-                         OutputSectionBase<ELFT::Is64Bits> *OS) {
+                         OutputSectionBase<ELFT> *OS) {
     if (OS) {
       Symtab.addSyntheticSym(Start, *OS, 0);
       Symtab.addSyntheticSym(End, *OS, OS->getSize());
@@ -493,7 +493,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (unsigned I = 0, N = OutputSections.size(); I < N; ++I)
     OutputSections[I]->SectionIndex = I + 1;
 
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
     Out<ELFT>::StrTab->add(Sec->getName());
 
   // Fill the DynStrTab early because Dynamic adds strings to
@@ -501,7 +501,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Out<ELFT>::Dynamic->finalize();
 
   // Fill other section headers.
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
     Sec->finalize();
 
   // If we have a .opd section (used under PPC64 for function descriptors),
@@ -529,7 +529,7 @@ static bool isValidCIdentifier(StringRef S) {
 // respectively. This is not requested by the ELF standard, but GNU ld and
 // gold provide the feature, and used by many programs.
 template <class ELFT>
-void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT::Is64Bits> *Sec) {
+void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
   StringRef S = Sec->getName();
   if (!isValidCIdentifier(S))
     return;
@@ -542,8 +542,7 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT::Is64Bits> *Sec) {
     Symtab.addSyntheticSym(Stop, *Sec, Sec->getSize());
 }
 
-template <class ELFT>
-static bool needsPhdr(OutputSectionBase<ELFT::Is64Bits> *Sec) {
+template <class ELFT> static bool needsPhdr(OutputSectionBase<ELFT> *Sec) {
   return Sec->getFlags() & SHF_ALLOC;
 }
 
@@ -561,7 +560,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   if (isOutputDynamic())
     ++NumPhdrs;
   uintX_t Last = PF_R;
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
+  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
     if (!Sec->getSize() || !needsPhdr<ELFT>(Sec))
       continue;
     uintX_t Flags = toPhdrFlags(Sec->getFlags());
@@ -595,7 +594,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   setPhdr(FileHeader, PT_LOAD, PF_R, 0, getVAStart(), Target->getPageSize());
 
   SmallPtrSet<Elf_Phdr *, 8> Closed;
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
+  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
     if (Sec->getSize()) {
       uintX_t Flags = toPhdrFlags(Sec->getFlags());
       Elf_Phdr *Last = &Phdrs.back();
@@ -699,9 +698,9 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.
   ++SHdrs;
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
+  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
     Sec->setNameOffset(Out<ELFT>::StrTab->getFileOff(Sec->getName()));
-    Sec->template writeHeaderTo<ELFT::TargetEndianness>(SHdrs++);
+    Sec->writeHeaderTo(SHdrs++);
   }
 }
 
@@ -718,12 +717,12 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 
   // PPC64 needs to process relocations in the .opd section before processing
   // relocations in code-containing sections.
-  if (OutputSectionBase<ELFT::Is64Bits> *Sec = Out<ELFT>::Opd) {
+  if (OutputSectionBase<ELFT> *Sec = Out<ELFT>::Opd) {
     Out<ELFT>::OpdBuf = Buf + Sec->getFileOff();
     Sec->writeTo(Buf + Sec->getFileOff());
   }
 
-  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
     if (Sec != Out<ELFT>::Opd)
       Sec->writeTo(Buf + Sec->getFileOff());
 }
@@ -740,8 +739,7 @@ void Writer<ELFT>::setPhdr(Elf_Phdr *PH, uint32_t Type, uint32_t Flags,
 }
 
 template <class ELFT>
-void Writer<ELFT>::copyPhdr(Elf_Phdr *PH,
-                            OutputSectionBase<ELFT::Is64Bits> *From) {
+void Writer<ELFT>::copyPhdr(Elf_Phdr *PH, OutputSectionBase<ELFT> *From) {
   PH->p_flags = toPhdrFlags(From->getFlags());
   PH->p_offset = From->getFileOff();
   PH->p_vaddr = From->getVA();
