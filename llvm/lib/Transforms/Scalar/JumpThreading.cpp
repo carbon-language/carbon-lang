@@ -20,14 +20,19 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/CFG.h"
+#include "llvm/Analysis/BlockFrequencyInfo.h"
+#include "llvm/Analysis/BlockFrequencyInfoImpl.h"
+#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Analysis/Loads.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
@@ -37,6 +42,8 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
+#include <algorithm>
+#include <memory>
 using namespace llvm;
 
 #define DEBUG_TYPE "jump-threading"
@@ -81,6 +88,9 @@ namespace {
   class JumpThreading : public FunctionPass {
     TargetLibraryInfo *TLI;
     LazyValueInfo *LVI;
+    std::unique_ptr<BlockFrequencyInfo> BFI;
+    std::unique_ptr<BranchProbabilityInfo> BPI;
+    bool HasProfileData;
 #ifdef NDEBUG
     SmallPtrSet<BasicBlock*, 16> LoopHeaders;
 #else
@@ -119,6 +129,11 @@ namespace {
       AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
+    void releaseMemory() override {
+      BFI.reset();
+      BPI.reset();
+    }
+
     void FindLoopHeaders(Function &F);
     bool ProcessBlock(BasicBlock *BB);
     bool ThreadEdge(BasicBlock *BB, const SmallVectorImpl<BasicBlock*> &PredBBs,
@@ -139,6 +154,12 @@ namespace {
 
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
     bool TryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB);
+
+  private:
+    BasicBlock *SplitBlockPreds(BasicBlock *BB, ArrayRef<BasicBlock *> Preds,
+                                const char *Suffix);
+    void UpdateBlockFreqAndEdgeWeight(BasicBlock *PredBB, BasicBlock *BB,
+                                      BasicBlock *NewBB, BasicBlock *SuccBB);
   };
 }
 
@@ -162,6 +183,16 @@ bool JumpThreading::runOnFunction(Function &F) {
   DEBUG(dbgs() << "Jump threading on function '" << F.getName() << "'\n");
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   LVI = &getAnalysis<LazyValueInfo>();
+  BFI.reset();
+  BPI.reset();
+  // When profile data is available, we need to update edge weights after
+  // successful jump threading, which requires both BPI and BFI being available.
+  HasProfileData = F.getEntryCount().hasValue();
+  if (HasProfileData) {
+    LoopInfo LI{DominatorTree(F)};
+    BPI.reset(new BranchProbabilityInfo(F, LI));
+    BFI.reset(new BlockFrequencyInfo(F, *BPI, LI));
+  }
 
   // Remove unreachable blocks from function as they may result in infinite
   // loop. We do threading if we found something profitable. Jump threading a
@@ -977,8 +1008,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     }
 
     // Split them out to their own block.
-    UnavailablePred =
-      SplitBlockPredecessors(LoadBB, PredsToSplit, "thread-pre-split");
+    UnavailablePred = SplitBlockPreds(LoadBB, PredsToSplit, "thread-pre-split");
   }
 
   // If the value isn't available in all predecessors, then there will be
@@ -1403,7 +1433,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   else {
     DEBUG(dbgs() << "  Factoring out " << PredBBs.size()
           << " common predecessors.\n");
-    PredBB = SplitBlockPredecessors(BB, PredBBs, ".thr_comm");
+    PredBB = SplitBlockPreds(BB, PredBBs, ".thr_comm");
   }
 
   // And finally, do it!
@@ -1423,6 +1453,13 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
                                          BB->getName()+".thread",
                                          BB->getParent(), BB);
   NewBB->moveAfter(PredBB);
+
+  // Set the block frequency of NewBB.
+  if (HasProfileData) {
+    auto NewBBFreq =
+        BFI->getBlockFreq(PredBB) * BPI->getEdgeProbability(PredBB, BB);
+    BFI->setBlockFreq(NewBB, NewBBFreq.getFrequency());
+  }
 
   BasicBlock::iterator BI = BB->begin();
   for (; PHINode *PN = dyn_cast<PHINode>(BI); ++BI)
@@ -1447,7 +1484,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
 
   // We didn't copy the terminator from BB over to NewBB, because there is now
   // an unconditional jump to SuccBB.  Insert the unconditional jump.
-  BranchInst *NewBI =BranchInst::Create(SuccBB, NewBB);
+  BranchInst *NewBI = BranchInst::Create(SuccBB, NewBB);
   NewBI->setDebugLoc(BB->getTerminator()->getDebugLoc());
 
   // Check to see if SuccBB has PHI nodes. If so, we need to add entries to the
@@ -1508,9 +1545,83 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   // frequently happens because of phi translation.
   SimplifyInstructionsInBlock(NewBB, TLI);
 
+  // Update the edge weight from BB to SuccBB, which should be less than before.
+  UpdateBlockFreqAndEdgeWeight(PredBB, BB, NewBB, SuccBB);
+
   // Threaded an edge!
   ++NumThreads;
   return true;
+}
+
+/// Create a new basic block that will be the predecessor of BB and successor of
+/// all blocks in Preds. When profile data is availble, update the frequency of
+/// this new block.
+BasicBlock *JumpThreading::SplitBlockPreds(BasicBlock *BB,
+                                           ArrayRef<BasicBlock *> Preds,
+                                           const char *Suffix) {
+  // Collect the frequencies of all predecessors of BB, which will be used to
+  // update the edge weight on BB->SuccBB.
+  BlockFrequency PredBBFreq(0);
+  if (HasProfileData)
+    for (auto Pred : Preds)
+      PredBBFreq += BFI->getBlockFreq(Pred) * BPI->getEdgeProbability(Pred, BB);
+
+  BasicBlock *PredBB = SplitBlockPredecessors(BB, Preds, Suffix);
+
+  // Set the block frequency of the newly created PredBB, which is the sum of
+  // frequencies of Preds.
+  if (HasProfileData)
+    BFI->setBlockFreq(PredBB, PredBBFreq.getFrequency());
+  return PredBB;
+}
+
+/// Update the block frequency of BB and branch weight and the metadata on the
+/// edge BB->SuccBB. This is done by scaling the weight of BB->SuccBB by 1 -
+/// Freq(PredBB->BB) / Freq(BB->SuccBB).
+void JumpThreading::UpdateBlockFreqAndEdgeWeight(BasicBlock *PredBB,
+                                                 BasicBlock *BB,
+                                                 BasicBlock *NewBB,
+                                                 BasicBlock *SuccBB) {
+  if (!HasProfileData)
+    return;
+
+  assert(BFI && BPI && "BFI & BPI should have been created here");
+
+  // As the edge from PredBB to BB is deleted, we have to update the block
+  // frequency of BB.
+  auto BBOrigFreq = BFI->getBlockFreq(BB);
+  auto NewBBFreq = BFI->getBlockFreq(NewBB);
+  auto BB2SuccBBFreq = BBOrigFreq * BPI->getEdgeProbability(BB, SuccBB);
+  auto BBNewFreq = BBOrigFreq - NewBBFreq;
+  BFI->setBlockFreq(BB, BBNewFreq.getFrequency());
+
+  // Collect updated outgoing edges' frequencies from BB and use them to update
+  // edge weights.
+  SmallVector<uint64_t, 4> BBSuccFreq;
+  for (auto I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
+    auto SuccFreq = (*I == SuccBB)
+                        ? BB2SuccBBFreq - NewBBFreq
+                        : BBOrigFreq * BPI->getEdgeProbability(BB, *I);
+    BBSuccFreq.push_back(SuccFreq.getFrequency());
+  }
+
+  // Normalize edge weights in Weights64 so that the sum of them can fit in
+  BranchProbability::normalizeEdgeWeights(BBSuccFreq.begin(), BBSuccFreq.end());
+
+  SmallVector<uint32_t, 4> Weights;
+  for (auto Freq : BBSuccFreq)
+    Weights.push_back(static_cast<uint32_t>(Freq));
+
+  // Update edge weights in BPI.
+  for (int I = 0, E = Weights.size(); I < E; I++)
+    BPI->setEdgeWeight(BB, I, Weights[I]);
+
+  if (Weights.size() >= 2) {
+    auto TI = BB->getTerminator();
+    TI->setMetadata(
+        LLVMContext::MD_prof,
+        MDBuilder(TI->getParent()->getContext()).createBranchWeights(Weights));
+  }
 }
 
 /// DuplicateCondBranchOnPHIIntoPred - PredBB contains an unconditional branch
@@ -1546,7 +1657,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   else {
     DEBUG(dbgs() << "  Factoring out " << PredBBs.size()
           << " common predecessors.\n");
-    PredBB = SplitBlockPredecessors(BB, PredBBs, ".thr_comm");
+    PredBB = SplitBlockPreds(BB, PredBBs, ".thr_comm");
   }
 
   // Okay, we decided to do this!  Clone all the instructions in BB onto the end
