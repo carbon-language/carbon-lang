@@ -20,6 +20,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <thread>
@@ -344,19 +345,9 @@ HostInfoBase::ComputeProcessTempFileDirectory(FileSpec &file_spec)
 bool
 HostInfoBase::ComputeTempFileBaseDirectory(FileSpec &file_spec)
 {
-    file_spec.Clear();
-
-    const char *tmpdir_cstr = getenv("TMPDIR");
-    if (tmpdir_cstr == nullptr)
-    {
-        tmpdir_cstr = getenv("TMP");
-        if (tmpdir_cstr == nullptr)
-            tmpdir_cstr = getenv("TEMP");
-    }
-    if (!tmpdir_cstr)
-        return false;
-
-    file_spec = FileSpec(tmpdir_cstr, false);
+    llvm::SmallVector<char, 16> tmpdir;
+    llvm::sys::path::system_temp_directory(/*ErasedOnReboot*/ true, tmpdir);
+    file_spec = FileSpec(std::string(tmpdir.data(), tmpdir.size()), true);
     return true;
 }
 
