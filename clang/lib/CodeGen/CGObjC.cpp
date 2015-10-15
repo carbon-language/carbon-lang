@@ -1410,22 +1410,6 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
   FinishFunction();
 }
 
-bool CodeGenFunction::IndirectObjCSetterArg(const CGFunctionInfo &FI) {
-  CGFunctionInfo::const_arg_iterator it = FI.arg_begin();
-  it++; it++;
-  const ABIArgInfo &AI = it->info;
-  // FIXME. Is this sufficient check?
-  return (AI.getKind() == ABIArgInfo::Indirect);
-}
-
-bool CodeGenFunction::IvarTypeWithAggrGCObjects(QualType Ty) {
-  if (CGM.getLangOpts().getGC() == LangOptions::NonGC)
-    return false;
-  if (const RecordType *FDTTy = Ty.getTypePtr()->getAs<RecordType>())
-    return FDTTy->getDecl()->hasObjectMember();
-  return false;
-}
-
 llvm::Value *CodeGenFunction::LoadObjCSelf() {
   VarDecl *Self = cast<ObjCMethodDecl>(CurFuncDecl)->getSelfDecl();
   DeclRefExpr DRE(Self, /*is enclosing local*/ (CurFuncDecl != CurCodeDecl),
@@ -1743,13 +1727,6 @@ void CodeGenFunction::EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S) {
 void CodeGenFunction::EmitObjCAtSynchronizedStmt(
                                               const ObjCAtSynchronizedStmt &S) {
   CGM.getObjCRuntime().EmitSynchronizedStmt(*this, S);
-}
-
-/// Produce the code for a CK_ARCProduceObject.  Just does a
-/// primitive retain.
-llvm::Value *CodeGenFunction::EmitObjCProduceObject(QualType type,
-                                                    llvm::Value *value) {
-  return EmitARCRetain(type, value);
 }
 
 namespace {
@@ -2185,14 +2162,6 @@ CodeGenFunction::EmitARCRetainAutoreleaseNonBlock(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
                                CGM.getARCEntrypoints().objc_retainAutorelease,
                                "objc_retainAutorelease");
-}
-
-/// i8* \@objc_loadWeak(i8** %addr)
-/// Essentially objc_autorelease(objc_loadWeakRetained(addr)).
-llvm::Value *CodeGenFunction::EmitARCLoadWeak(Address addr) {
-  return emitARCLoadOperation(*this, addr,
-                              CGM.getARCEntrypoints().objc_loadWeak,
-                              "objc_loadWeak");
 }
 
 /// i8* \@objc_loadWeakRetained(i8** %addr)

@@ -46,7 +46,7 @@ public:
       : CGCXXABI(CGM), BaseClassDescriptorType(nullptr),
         ClassHierarchyDescriptorType(nullptr),
         CompleteObjectLocatorType(nullptr), CatchableTypeType(nullptr),
-        ThrowInfoType(nullptr), CatchHandlerTypeType(nullptr) {}
+        ThrowInfoType(nullptr) {}
 
   bool HasThisReturn(GlobalDecl GD) const override;
   bool hasMostDerivedReturn(GlobalDecl GD) const override;
@@ -534,14 +534,6 @@ private:
     return  llvm::Constant::getAllOnesValue(CGM.IntTy);
   }
 
-  llvm::Constant *getConstantOrZeroInt(llvm::Constant *C) {
-    return C ? C : getZeroInt();
-  }
-
-  llvm::Value *getValueOrZeroInt(llvm::Value *C) {
-    return C ? C : getZeroInt();
-  }
-
   CharUnits getVirtualFunctionPrologueThisAdjustment(GlobalDecl GD);
 
   void
@@ -659,18 +651,6 @@ public:
 
   void emitCXXStructor(const CXXMethodDecl *MD, StructorType Type) override;
 
-  llvm::StructType *getCatchHandlerTypeType() {
-    if (!CatchHandlerTypeType) {
-      llvm::Type *FieldTypes[] = {
-          CGM.IntTy,     // Flags
-          CGM.Int8PtrTy, // TypeDescriptor
-      };
-      CatchHandlerTypeType = llvm::StructType::create(
-          CGM.getLLVMContext(), FieldTypes, "eh.CatchHandlerType");
-    }
-    return CatchHandlerTypeType;
-  }
-
   llvm::StructType *getCatchableTypeType() {
     if (CatchableTypeType)
       return CatchableTypeType;
@@ -786,7 +766,6 @@ private:
   llvm::StructType *CatchableTypeType;
   llvm::DenseMap<uint32_t, llvm::StructType *> CatchableTypeArrayTypeMap;
   llvm::StructType *ThrowInfoType;
-  llvm::StructType *CatchHandlerTypeType;
 };
 
 }

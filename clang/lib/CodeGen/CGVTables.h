@@ -85,10 +85,6 @@ public:
   uint64_t getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
                                            BaseSubobject Base);
 
-  /// getAddressPoint - Get the address point of the given subobject in the
-  /// class decl.
-  uint64_t getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD);
-  
   /// GenerateConstructionVTable - Generate a construction vtable for the given 
   /// base subobject.
   llvm::GlobalVariable *

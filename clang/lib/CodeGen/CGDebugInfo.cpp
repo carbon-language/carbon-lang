@@ -2159,30 +2159,6 @@ llvm::DIType *CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile *Unit) {
   return Res;
 }
 
-unsigned CGDebugInfo::Checksum(const ObjCInterfaceDecl *ID) {
-  // The assumption is that the number of ivars can only increase
-  // monotonically, so it is safe to just use their current number as
-  // a checksum.
-  unsigned Sum = 0;
-  for (const ObjCIvarDecl *Ivar = ID->all_declared_ivar_begin();
-       Ivar != nullptr; Ivar = Ivar->getNextIvar())
-    ++Sum;
-
-  return Sum;
-}
-
-ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
-  switch (Ty->getTypeClass()) {
-  case Type::ObjCObjectPointer:
-    return getObjCInterfaceDecl(
-        cast<ObjCObjectPointerType>(Ty)->getPointeeType());
-  case Type::ObjCInterface:
-    return cast<ObjCInterfaceType>(Ty)->getDecl();
-  default:
-    return nullptr;
-  }
-}
-
 llvm::DIModule *CGDebugInfo::getParentModuleOrNull(const Decl *D) {
   // A forward declaration inside a module header does not belong to the module.
   if (isa<RecordDecl>(D) && !cast<RecordDecl>(D)->getDefinition())

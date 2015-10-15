@@ -250,10 +250,6 @@ public:
     ~CGCapturedStmtRAII() { CGF.CapturedStmtInfo = PrevCapturedStmtInfo; }
   };
 
-  /// BoundsChecking - Emit run-time bounds checks. Higher values mean
-  /// potentially higher performance penalties.
-  unsigned char BoundsChecking;
-
   /// \brief Sanitizers enabled for this function.
   SanitizerSet SanOpts;
 
@@ -1237,8 +1233,6 @@ public:
   void generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
                               const ObjCPropertyImplDecl *propImpl,
                               llvm::Constant *AtomicHelperFn);
-  bool IndirectObjCSetterArg(const CGFunctionInfo &FI);
-  bool IvarTypeWithAggrGCObjects(QualType Ty);
 
   //===--------------------------------------------------------------------===//
   //                                  Block Bits
@@ -1247,10 +1241,6 @@ public:
   llvm::Value *EmitBlockLiteral(const BlockExpr *);
   llvm::Value *EmitBlockLiteral(const CGBlockInfo &Info);
   static void destroyBlockInfos(CGBlockInfo *info);
-  llvm::Constant *BuildDescriptorBlockDecl(const BlockExpr *,
-                                           const CGBlockInfo &Info,
-                                           llvm::StructType *,
-                                           llvm::Constant *BlockVarLayout);
 
   llvm::Function *GenerateBlockFunction(GlobalDecl GD,
                                         const CGBlockInfo &Info,
@@ -1276,9 +1266,6 @@ public:
                                 llvm::Value *ptr);
 
   Address LoadBlockStruct();
-
-  void AllocateBlockCXXThisPointer(const CXXThisExpr *E);
-  void AllocateBlockDecl(const DeclRefExpr *E);
   Address GetAddrOfBlockDecl(const VarDecl *var, bool ByRef);
 
   /// BuildBlockByrefAddress - Computes the location of the
@@ -1627,10 +1614,6 @@ public:
                                  AggValueSlot::IsNotAliased);
   }
 
-  /// CreateInAllocaTmp - Create a temporary memory object for the given
-  /// aggregate type.
-  AggValueSlot CreateInAllocaTmp(QualType T, const Twine &Name = "inalloca");
-
   /// Emit a cast to void* in the appropriate address space.
   llvm::Value *EmitCastToVoidPtr(llvm::Value *value);
 
@@ -1710,10 +1693,6 @@ public:
   void EmitAggregateCopy(Address DestPtr, Address SrcPtr,
                          QualType EltTy, bool isVolatile=false,
                          bool isAssignment = false);
-
-  /// StartBlock - Start new block named N. If insert block is a dummy block
-  /// then reuse it.
-  void StartBlock(const char *N);
 
   /// GetAddrOfLocalVar - Return the address of a local variable.
   Address GetAddrOfLocalVar(const VarDecl *VD) {
@@ -1808,14 +1787,6 @@ public:
   // that needs to be abstracted properly.
   llvm::Value *LoadCXXVTT() {
     assert(CXXStructorImplicitParamValue && "no VTT value for this function");
-    return CXXStructorImplicitParamValue;
-  }
-
-  /// LoadCXXStructorImplicitParam - Load the implicit parameter
-  /// for a constructor/destructor.
-  llvm::Value *LoadCXXStructorImplicitParam() {
-    assert(CXXStructorImplicitParamValue &&
-           "no implicit argument value for this function");
     return CXXStructorImplicitParamValue;
   }
 
@@ -2549,7 +2520,6 @@ public:
   // Note: only available for agg return types
   LValue EmitVAArgExprLValue(const VAArgExpr *E);
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
-  LValue EmitReadRegister(const VarDecl *VD);
   LValue EmitStringLiteralLValue(const StringLiteral *E);
   LValue EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E);
   LValue EmitPredefinedLValue(const PredefinedExpr *E);
@@ -2677,8 +2647,6 @@ public:
   llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
                                   ArrayRef<llvm::Value *> Args,
                                   const Twine &Name = "");
-  llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
-                                  const Twine &Name = "");
   llvm::CallSite EmitRuntimeCallOrInvoke(llvm::Value *callee,
                                          ArrayRef<llvm::Value*> args,
                                          const Twine &name = "");
@@ -2765,8 +2733,6 @@ public:
                                    bool negateForRightShift);
   llvm::Value *EmitNeonRShiftImm(llvm::Value *Vec, llvm::Value *Amt,
                                  llvm::Type *Ty, bool usgn, const char *name);
-  // Helper functions for EmitAArch64BuiltinExpr.
-  llvm::Value *vectorWrapScalar8(llvm::Value *Op);
   llvm::Value *vectorWrapScalar16(llvm::Value *Op);
   llvm::Value *EmitAArch64BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
@@ -2800,7 +2766,6 @@ public:
   // ARC primitives.
   void EmitARCInitWeak(Address addr, llvm::Value *value);
   void EmitARCDestroyWeak(Address addr);
-  llvm::Value *EmitARCLoadWeak(Address addr);
   llvm::Value *EmitARCLoadWeakRetained(Address addr);
   llvm::Value *EmitARCStoreWeak(Address addr, llvm::Value *value, bool ignored);
   void EmitARCCopyWeak(Address dst, Address src);
@@ -2827,8 +2792,6 @@ public:
   EmitARCStoreStrong(const BinaryOperator *e, bool ignored);
 
   llvm::Value *EmitObjCThrowOperand(const Expr *expr);
-
-  llvm::Value *EmitObjCProduceObject(QualType T, llvm::Value *Ptr);
   llvm::Value *EmitObjCConsumeObject(QualType T, llvm::Value *Ptr);
   llvm::Value *EmitObjCExtendObjectLifetime(QualType T, llvm::Value *Ptr);
 
@@ -2880,11 +2843,6 @@ public:
   /// EmitAggExprToLValue - Emit the computation of the specified expression of
   /// aggregate type into a temporary LValue.
   LValue EmitAggExprToLValue(const Expr *E);
-
-  /// EmitGCMemmoveCollectable - Emit special API for structs with object
-  /// pointers.
-  void EmitGCMemmoveCollectable(llvm::Value *DestPtr, llvm::Value *SrcPtr,
-                                QualType Ty);
 
   /// EmitExtendGCLifetime - Given a pointer to an Objective-C object,
   /// make sure it survives garbage collection until this point.

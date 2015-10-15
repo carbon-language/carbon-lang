@@ -659,9 +659,6 @@ public:
   // MessageRefCPtrTy - clang type for struct _message_ref_t*
   QualType MessageRefCPtrTy;
 
-  // MessengerTy - Type of the messenger (shown as IMP above)
-  llvm::FunctionType *MessengerTy;
-
   // SuperMessageRefTy - LLVM for:
   // struct _super_message_ref_t {
   //   SUPER_IMP messenger;

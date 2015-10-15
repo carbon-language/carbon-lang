@@ -643,8 +643,6 @@ public:
   llvm::MDNode *getTBAAInfo(QualType QTy);
   llvm::MDNode *getTBAAInfoForVTablePtr();
   llvm::MDNode *getTBAAStructInfo(QualType QTy);
-  /// Return the MDNode in the type DAG for the given struct type.
-  llvm::MDNode *getTBAAStructTypeInfo(QualType QTy);
   /// Return the path-aware tag for given base type, access node and offset.
   llvm::MDNode *getTBAAStructTagInfo(QualType BaseTy, llvm::MDNode *AccessN,
                                      uint64_t O);
@@ -991,9 +989,6 @@ public:
 
   void EmitVTable(CXXRecordDecl *Class);
 
-  /// Emit the RTTI descriptors for the builtin types.
-  void EmitFundamentalRTTIDescriptors();
-
   /// \brief Appends Opts to the "Linker Options" metadata value.
   void AppendLinkerOptions(StringRef Opts);
 
@@ -1072,13 +1067,6 @@ public:
   /// Emit code for a singal global function or var decl. Forward declarations
   /// are emitted lazily.
   void EmitGlobal(GlobalDecl D);
-
-  bool
-  HasTrivialDestructorBody(ASTContext &Context,
-                           const CXXRecordDecl *BaseClassDecl,
-                           const CXXRecordDecl *MostDerivedClassDecl);
-  bool
-  FieldHasTrivialDestructorBody(ASTContext &Context, const FieldDecl *Field);
 
   bool TryEmitDefinitionAsAlias(GlobalDecl Alias, GlobalDecl Target,
                                 bool InEveryTU);
@@ -1191,9 +1179,6 @@ private:
   /// and name. This array will have appending linkage and is suitable for use
   /// as a LLVM constructor or destructor array.
   void EmitCtorList(const CtorList &Fns, const char *GlobalName);
-
-  /// Emit the RTTI descriptors for the given type.
-  void EmitFundamentalRTTIDescriptor(QualType Type);
 
   /// Emit any needed decls for which code generation was deferred.
   void EmitDeferred();

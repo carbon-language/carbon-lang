@@ -3038,12 +3038,6 @@ CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::Value *callee,
   return callSite;
 }
 
-llvm::CallSite
-CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
-                                  const Twine &Name) {
-  return EmitCallOrInvoke(Callee, None, Name);
-}
-
 /// Emits a call or invoke instruction to the given function, depending
 /// on the current state of the EH stack.
 llvm::CallSite

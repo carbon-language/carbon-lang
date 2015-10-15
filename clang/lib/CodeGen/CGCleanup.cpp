@@ -167,23 +167,6 @@ EHScopeStack::getInnermostActiveNormalCleanup() const {
   return stable_end();
 }
 
-EHScopeStack::stable_iterator EHScopeStack::getInnermostActiveEHScope() const {
-  for (stable_iterator si = getInnermostEHScope(), se = stable_end();
-         si != se; ) {
-    // Skip over inactive cleanups.
-    EHCleanupScope *cleanup = dyn_cast<EHCleanupScope>(&*find(si));
-    if (cleanup && !cleanup->isActive()) {
-      si = cleanup->getEnclosingEHScope();
-      continue;
-    }
-
-    // All other scopes are always active.
-    return si;
-  }
-
-  return stable_end();
-}
-
 
 void *EHScopeStack::pushCleanup(CleanupKind Kind, size_t Size) {
   char *Buffer = allocate(EHCleanupScope::getSizeForCleanupSize(Size));
