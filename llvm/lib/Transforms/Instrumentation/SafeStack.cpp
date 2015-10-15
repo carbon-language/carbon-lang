@@ -46,6 +46,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "safestack"
 
+static const char *const kUnsafeStackPtrVar = "__safestack_unsafe_stack_ptr";
+static const char *const kUnsafeStackPtrAddrFn = "__safestack_pointer_address";
+
 namespace llvm {
 
 STATISTIC(NumFunctions, "Total number of functions");
@@ -179,6 +182,10 @@ class SafeStack : public FunctionPass {
   /// might expect to appear on the stack on most common targets.
   enum { StackAlignment = 16 };
 
+  /// \brief Build a constant representing a pointer to the unsafe stack
+  /// pointer.
+  Value *getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F);
+
   /// \brief Find all static allocas, dynamic allocas, return instructions and
   /// stack restore points (exception unwind blocks and setjmp calls) in the
   /// given function and append them to the respective vectors.
@@ -239,6 +246,54 @@ public:
 
   bool runOnFunction(Function &F) override;
 }; // class SafeStack
+
+Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
+  Module &M = *F.getParent();
+  Triple TargetTriple(M.getTargetTriple());
+
+  unsigned Offset;
+  unsigned AddressSpace;
+  // Check if the target keeps the unsafe stack pointer at a fixed offset.
+  if (TLI && TLI->getSafeStackPointerLocation(AddressSpace, Offset)) {
+    Constant *OffsetVal =
+        ConstantInt::get(Type::getInt32Ty(F.getContext()), Offset);
+    return ConstantExpr::getIntToPtr(OffsetVal,
+                                     StackPtrTy->getPointerTo(AddressSpace));
+  }
+
+  // Android provides a libc function that returns the stack pointer address.
+  if (TargetTriple.isAndroid()) {
+    Value *Fn = M.getOrInsertFunction(kUnsafeStackPtrAddrFn,
+                                      StackPtrTy->getPointerTo(0), nullptr);
+    return IRB.CreateCall(Fn);
+  } else {
+    // Otherwise, declare a thread-local variable with a magic name.
+    auto UnsafeStackPtr =
+        dyn_cast_or_null<GlobalVariable>(M.getNamedValue(kUnsafeStackPtrVar));
+
+    if (!UnsafeStackPtr) {
+      // The global variable is not defined yet, define it ourselves.
+      // We use the initial-exec TLS model because we do not support the
+      // variable living anywhere other than in the main executable.
+      UnsafeStackPtr = new GlobalVariable(
+          /*Module=*/M, /*Type=*/StackPtrTy,
+          /*isConstant=*/false, /*Linkage=*/GlobalValue::ExternalLinkage,
+          /*Initializer=*/nullptr, /*Name=*/kUnsafeStackPtrVar,
+          /*InsertBefore=*/nullptr,
+          /*ThreadLocalMode=*/GlobalValue::InitialExecTLSModel);
+    } else {
+      // The variable exists, check its type and attributes.
+      if (UnsafeStackPtr->getValueType() != StackPtrTy) {
+        report_fatal_error(Twine(kUnsafeStackPtrVar) + " must have void* type");
+      }
+
+      if (!UnsafeStackPtr->isThreadLocal()) {
+        report_fatal_error(Twine(kUnsafeStackPtrVar) + " must be thread-local");
+      }
+    }
+    return UnsafeStackPtr;
+  }
+}
 
 void SafeStack::findInsts(Function &F,
                           SmallVectorImpl<AllocaInst *> &StaticAllocas,
@@ -542,7 +597,7 @@ bool SafeStack::runOnFunction(Function &F) {
     ++NumUnsafeStackRestorePointsFunctions;
 
   IRBuilder<> IRB(&F.front(), F.begin()->getFirstInsertionPt());
-  UnsafeStackPtr = TLI->getSafeStackPointerLocation(IRB);
+  UnsafeStackPtr = getOrCreateUnsafeStackPtr(IRB, F);
 
   // The top of the unsafe stack after all unsafe static allocas are allocated.
   Value *StaticTop = moveStaticAllocasToUnsafeStack(IRB, F, StaticAllocas, Returns);

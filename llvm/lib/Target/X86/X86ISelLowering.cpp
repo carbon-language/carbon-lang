@@ -2086,14 +2086,14 @@ bool X86TargetLowering::getStackCookieLocation(unsigned &AddressSpace,
   return true;
 }
 
-Value *X86TargetLowering::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
+/// Android provides a fixed TLS slot for the SafeStack pointer.
+/// See the definition of TLS_SLOT_SAFESTACK in
+/// https://android.googlesource.com/platform/bionic/+/master/libc/private/bionic_tls.h
+bool X86TargetLowering::getSafeStackPointerLocation(unsigned &AddressSpace,
+                                                    unsigned &Offset) const {
   if (!Subtarget->isTargetAndroid())
-    return TargetLowering::getSafeStackPointerLocation(IRB);
+    return false;
 
-  // Android provides a fixed TLS slot for the SafeStack pointer. See the
-  // definition of TLS_SLOT_SAFESTACK in
-  // https://android.googlesource.com/platform/bionic/+/master/libc/private/bionic_tls.h
-  unsigned AddressSpace, Offset;
   if (Subtarget->is64Bit()) {
     // %fs:0x48, unless we're using a Kernel code model, in which case it's %gs:
     Offset = 0x48;
@@ -2106,10 +2106,7 @@ Value *X86TargetLowering::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
     Offset = 0x24;
     AddressSpace = 256;
   }
-
-  return ConstantExpr::getIntToPtr(
-      ConstantInt::get(Type::getInt32Ty(IRB.getContext()), Offset),
-      Type::getInt8PtrTy(IRB.getContext())->getPointerTo(AddressSpace));
+  return true;
 }
 
 bool X86TargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
