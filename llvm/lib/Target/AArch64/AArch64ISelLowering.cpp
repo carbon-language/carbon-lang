@@ -9921,3 +9921,19 @@ bool AArch64TargetLowering::shouldNormalizeToSelectSequence(LLVMContext &,
                                                             EVT) const {
   return false;
 }
+
+Value *AArch64TargetLowering::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
+  if (!Subtarget->isTargetAndroid())
+    return TargetLowering::getSafeStackPointerLocation(IRB);
+
+  // Android provides a fixed TLS slot for the SafeStack pointer. See the
+  // definition of TLS_SLOT_SAFESTACK in
+  // https://android.googlesource.com/platform/bionic/+/master/libc/private/bionic_tls.h
+  const unsigned TlsOffset = 0x48;
+  Module *M = IRB.GetInsertBlock()->getParent()->getParent();
+  Function *ThreadPointerFunc =
+      Intrinsic::getDeclaration(M, Intrinsic::aarch64_thread_pointer);
+  return IRB.CreatePointerCast(
+      IRB.CreateConstGEP1_32(IRB.CreateCall(ThreadPointerFunc), TlsOffset),
+      Type::getInt8PtrTy(IRB.getContext())->getPointerTo(0));
+}

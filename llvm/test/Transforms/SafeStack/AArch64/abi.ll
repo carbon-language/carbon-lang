@@ -3,7 +3,9 @@
 
 define void @foo() nounwind uwtable safestack {
 entry:
-; CHECK: %[[SPA:.*]] = call i8** @__safestack_pointer_address()
+; CHECK: %[[TP:.*]] = call i8* @llvm.aarch64.thread.pointer()
+; CHECK: %[[SPA0:.*]] = getelementptr i8, i8* %[[TP]], i32 72
+; CHECK: %[[SPA:.*]] = bitcast i8* %[[SPA0]] to i8**
 ; CHECK: %[[USP:.*]] = load i8*, i8** %[[SPA]]
 ; CHECK: %[[USST:.*]] = getelementptr i8, i8* %[[USP]], i32 -16
 ; CHECK: store i8* %[[USST]], i8** %[[SPA]]
