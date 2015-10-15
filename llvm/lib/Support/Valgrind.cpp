@@ -15,6 +15,7 @@
 
 #include "llvm/Support/Valgrind.h"
 #include "llvm/Config/config.h"
+#include <cstddef>
 
 #if HAVE_VALGRIND_VALGRIND_H
 #include <valgrind/valgrind.h>
