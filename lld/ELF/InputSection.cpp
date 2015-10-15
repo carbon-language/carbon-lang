@@ -71,11 +71,11 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
     return;
   // Copy section contents from source object file to output file.
   ArrayRef<uint8_t> Data = *File->getObj().getSectionContents(Header);
-  memcpy(Buf + OutputSectionOff, Data.data(), Data.size());
+  memcpy(Buf + OutSecOff, Data.data(), Data.size());
 
   ELFFile<ELFT> &EObj = File->getObj();
-  uint8_t *Base = Buf + OutputSectionOff;
-  uintX_t BaseAddr = OutputSection->getVA() + OutputSectionOff;
+  uint8_t *Base = Buf + OutSecOff;
+  uintX_t BaseAddr = OutSec->getVA() + OutSecOff;
   // Iterate over all relocation sections that apply to this section.
   for (const Elf_Shdr *RelSec : RelocSections) {
     if (RelSec->sh_type == SHT_RELA)

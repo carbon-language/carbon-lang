@@ -53,8 +53,8 @@ public:
 
   // The offset from beginning of the output sections this section was assigned
   // to. The writer sets a value.
-  uint64_t OutputSectionOff = 0;
-  OutputSection<ELFT> *OutputSection = nullptr;
+  uint64_t OutSecOff = 0;
+  OutputSection<ELFT> *OutSec = nullptr;
 
   static InputSection<ELFT> Discarded;
 
