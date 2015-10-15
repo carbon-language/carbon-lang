@@ -144,7 +144,7 @@ std::error_code SampleProfileWriterBinary::write(StringRef FName,
     encodeULEB128(Sample.getCallTargets().size(), OS);
     for (const auto &J : Sample.getCallTargets()) {
       StringRef Callee = J.first();
-      unsigned CalleeSamples = J.second;
+      uint64_t CalleeSamples = J.second;
       if (std::error_code EC = writeNameIdx(Callee))
         return EC;
       encodeULEB128(CalleeSamples, OS);

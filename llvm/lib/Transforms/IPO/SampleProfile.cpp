@@ -65,10 +65,10 @@ static cl::opt<unsigned> SampleProfileMaxPropagateIterations(
              "sample block/edge weights through the CFG."));
 
 namespace {
-typedef DenseMap<const BasicBlock *, unsigned> BlockWeightMap;
+typedef DenseMap<const BasicBlock *, uint64_t> BlockWeightMap;
 typedef DenseMap<const BasicBlock *, const BasicBlock *> EquivalenceClassMap;
 typedef std::pair<const BasicBlock *, const BasicBlock *> Edge;
-typedef DenseMap<Edge, unsigned> EdgeWeightMap;
+typedef DenseMap<Edge, uint64_t> EdgeWeightMap;
 typedef DenseMap<const BasicBlock *, SmallVector<const BasicBlock *, 8>>
     BlockEdgeMap;
 
@@ -104,8 +104,8 @@ protected:
   bool runOnFunction(Function &F);
   unsigned getFunctionLoc(Function &F);
   bool emitAnnotations(Function &F);
-  ErrorOr<unsigned> getInstWeight(const Instruction &I) const;
-  ErrorOr<unsigned> getBlockWeight(const BasicBlock *BB) const;
+  ErrorOr<uint64_t> getInstWeight(const Instruction &I) const;
+  ErrorOr<uint64_t> getBlockWeight(const BasicBlock *BB) const;
   const FunctionSamples *findCalleeFunctionSamples(const CallInst &I) const;
   const FunctionSamples *findFunctionSamples(const Instruction &I) const;
   bool inlineHotFunctions(Function &F);
@@ -118,7 +118,7 @@ protected:
                            SmallVector<BasicBlock *, 8> Descendants,
                            DominatorTreeBase<BasicBlock> *DomTree);
   void propagateWeights(Function &F);
-  unsigned visitEdge(Edge E, unsigned *NumUnknownEdges, Edge *UnknownEdge);
+  uint64_t visitEdge(Edge E, unsigned *NumUnknownEdges, Edge *UnknownEdge);
   void buildEdges(Function &F);
   bool propagateThroughEdges(Function &F);
   void computeDominanceAndLoopInfo(Function &F);
@@ -201,7 +201,7 @@ void SampleProfileLoader::printBlockEquivalence(raw_ostream &OS,
 void SampleProfileLoader::printBlockWeight(raw_ostream &OS,
                                            const BasicBlock *BB) const {
   const auto &I = BlockWeights.find(BB);
-  unsigned W = (I == BlockWeights.end() ? 0 : I->second);
+  uint64_t W = (I == BlockWeights.end() ? 0 : I->second);
   OS << "weight[" << BB->getName() << "]: " << W << "\n";
 }
 
@@ -216,7 +216,7 @@ void SampleProfileLoader::printBlockWeight(raw_ostream &OS,
 /// \param Inst Instruction to query.
 ///
 /// \returns the weight of \p Inst.
-ErrorOr<unsigned>
+ErrorOr<uint64_t>
 SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
   DebugLoc DLoc = Inst.getDebugLoc();
   if (!DLoc)
@@ -232,7 +232,7 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
   if (Lineno < HeaderLineno)
     return std::error_code();
 
-  ErrorOr<unsigned> R =
+  ErrorOr<uint64_t> R =
       FS->findSamplesAt(Lineno - HeaderLineno, DIL->getDiscriminator());
   if (R)
     DEBUG(dbgs() << "    " << Lineno << "." << DIL->getDiscriminator() << ":"
@@ -250,12 +250,12 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
 /// \param BB The basic block to query.
 ///
 /// \returns the weight for \p BB.
-ErrorOr<unsigned>
+ErrorOr<uint64_t>
 SampleProfileLoader::getBlockWeight(const BasicBlock *BB) const {
   bool Found = false;
-  unsigned Weight = 0;
+  uint64_t Weight = 0;
   for (auto &I : BB->getInstList()) {
-    const ErrorOr<unsigned> &R = getInstWeight(I);
+    const ErrorOr<uint64_t> &R = getInstWeight(I);
     if (R && R.get() >= Weight) {
       Weight = R.get();
       Found = true;
@@ -277,7 +277,7 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "Block weights\n");
   for (const auto &BB : F) {
-    ErrorOr<unsigned> Weight = getBlockWeight(&BB);
+    ErrorOr<uint64_t> Weight = getBlockWeight(&BB);
     if (Weight) {
       BlockWeights[&BB] = Weight.get();
       VisitedBlocks.insert(&BB);
@@ -431,7 +431,7 @@ void SampleProfileLoader::findEquivalencesFor(
     BasicBlock *BB1, SmallVector<BasicBlock *, 8> Descendants,
     DominatorTreeBase<BasicBlock> *DomTree) {
   const BasicBlock *EC = EquivalenceClass[BB1];
-  unsigned Weight = BlockWeights[EC];
+  uint64_t Weight = BlockWeights[EC];
   for (const auto *BB2 : Descendants) {
     bool IsDomParent = DomTree->dominates(BB2, BB1);
     bool IsInSameLoop = LI->getLoopFor(BB1) == LI->getLoopFor(BB2);
@@ -520,7 +520,7 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
 /// \param UnknownEdge  Set if E has not been visited before.
 ///
 /// \returns E's weight, if known. Otherwise, return 0.
-unsigned SampleProfileLoader::visitEdge(Edge E, unsigned *NumUnknownEdges,
+uint64_t SampleProfileLoader::visitEdge(Edge E, unsigned *NumUnknownEdges,
                                         Edge *UnknownEdge) {
   if (!VisitedEdges.count(E)) {
     (*NumUnknownEdges)++;
@@ -555,7 +555,7 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
     // only case we are interested in handling is when only a single
     // edge is unknown (see setEdgeOrBlockWeight).
     for (unsigned i = 0; i < 2; i++) {
-      unsigned TotalWeight = 0;
+      uint64_t TotalWeight = 0;
       unsigned NumUnknownEdges = 0;
       Edge UnknownEdge, SelfReferentialEdge;
 
@@ -599,7 +599,7 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
       // all edges will get a weight, or iteration will stop when
       // it reaches SampleProfileMaxPropagateIterations.
       if (NumUnknownEdges <= 1) {
-        unsigned &BBWeight = BlockWeights[EC];
+        uint64_t &BBWeight = BlockWeights[EC];
         if (NumUnknownEdges == 0) {
           // If we already know the weight of all edges, the weight of the
           // basic block can be computed. It should be no larger than the sum
@@ -626,7 +626,7 @@ bool SampleProfileLoader::propagateThroughEdges(Function &F) {
                 printEdgeWeight(dbgs(), UnknownEdge));
         }
       } else if (SelfReferentialEdge.first && VisitedBlocks.count(EC)) {
-        unsigned &BBWeight = BlockWeights[BB];
+        uint64_t &BBWeight = BlockWeights[BB];
         // We have a self-referential edge and the weight of BB is known.
         if (BBWeight >= TotalWeight)
           EdgeWeights[SelfReferentialEdge] = BBWeight - TotalWeight;
@@ -692,7 +692,7 @@ void SampleProfileLoader::buildEdges(Function &F) {
 ///   known).
 void SampleProfileLoader::propagateWeights(Function &F) {
   bool Changed = true;
-  unsigned i = 0;
+  unsigned I = 0;
 
   // Add an entry count to the function using the samples gathered
   // at the function entry.
@@ -706,7 +706,7 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   buildEdges(F);
 
   // Propagate until we converge or we go past the iteration limit.
-  while (Changed && i++ < SampleProfileMaxPropagateIterations) {
+  while (Changed && I++ < SampleProfileMaxPropagateIterations) {
     Changed = propagateThroughEdges(F);
   }
 
@@ -724,14 +724,21 @@ void SampleProfileLoader::propagateWeights(Function &F) {
 
     DEBUG(dbgs() << "\nGetting weights for branch at line "
                  << TI->getDebugLoc().getLine() << ".\n");
-    SmallVector<unsigned, 4> Weights;
+    SmallVector<uint32_t, 4> Weights;
     bool AllWeightsZero = true;
     for (unsigned I = 0; I < TI->getNumSuccessors(); ++I) {
       BasicBlock *Succ = TI->getSuccessor(I);
       Edge E = std::make_pair(BB, Succ);
-      unsigned Weight = EdgeWeights[E];
+      uint64_t Weight = EdgeWeights[E];
       DEBUG(dbgs() << "\t"; printEdgeWeight(dbgs(), E));
-      Weights.push_back(Weight);
+      // Use uint32_t saturated arithmetic to adjust the incoming weights,
+      // if needed. Sample counts in profiles are 64-bit unsigned values,
+      // but internally branch weights are expressed as 32-bit values.
+      if (Weight > std::numeric_limits<uint32_t>::max()) {
+        DEBUG(dbgs() << " (saturated due to uint32_t overflow)");
+        Weight = std::numeric_limits<uint32_t>::max();
+      }
+      Weights.push_back(static_cast<uint32_t>(Weight));
       if (Weight != 0)
         AllWeightsZero = false;
     }

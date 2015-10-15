@@ -87,7 +87,7 @@ void SampleProfileReader::dump(raw_ostream &OS) {
 ///
 /// \returns true if parsing is successful.
 static bool ParseHead(const StringRef &Input, StringRef &FName,
-                      unsigned &NumSamples, unsigned &NumHeadSamples) {
+                      uint64_t &NumSamples, uint64_t &NumHeadSamples) {
   if (Input[0] == ' ')
     return false;
   size_t n2 = Input.rfind(':');
@@ -111,10 +111,10 @@ static bool ParseHead(const StringRef &Input, StringRef &FName,
 /// \param TargetCountMap map from indirect call target to count.
 ///
 /// returns true if parsing is successful.
-static bool ParseLine(const StringRef &Input, bool &IsCallsite, unsigned &Depth,
-                      unsigned &NumSamples, unsigned &LineOffset,
-                      unsigned &Discriminator, StringRef &CalleeName,
-                      DenseMap<StringRef, unsigned> &TargetCountMap) {
+static bool ParseLine(const StringRef &Input, bool &IsCallsite, uint32_t &Depth,
+                      uint64_t &NumSamples, uint32_t &LineOffset,
+                      uint32_t &Discriminator, StringRef &CalleeName,
+                      DenseMap<StringRef, uint64_t> &TargetCountMap) {
   for (Depth = 0; Input[Depth] == ' '; Depth++)
     ;
   if (Depth == 0)
@@ -153,15 +153,15 @@ static bool ParseLine(const StringRef &Input, bool &IsCallsite, unsigned &Depth,
       if (n3 != StringRef::npos) {
         pair = Rest.substr(0, n3);
       }
-      int n4 = pair.find(':');
-      unsigned count;
+      size_t n4 = pair.find(':');
+      uint64_t count;
       if (pair.substr(n4 + 1).getAsInteger(10, count))
         return false;
       TargetCountMap[pair.substr(0, n4)] = count;
     }
   } else {
     IsCallsite = true;
-    int n3 = Rest.find_last_of(':');
+    size_t n3 = Rest.find_last_of(':');
     CalleeName = Rest.substr(0, n3);
     if (Rest.substr(n3 + 1).getAsInteger(10, NumSamples))
       return false;
@@ -196,7 +196,7 @@ std::error_code SampleProfileReaderText::read() {
     // The only requirement we place on the identifier, then, is that it
     // should not begin with a number.
     if ((*LineIt)[0] != ' ') {
-      unsigned NumSamples, NumHeadSamples;
+      uint64_t NumSamples, NumHeadSamples;
       StringRef FName;
       if (!ParseHead(*LineIt, FName, NumSamples, NumHeadSamples)) {
         reportError(LineIt.line_number(),
@@ -210,11 +210,11 @@ std::error_code SampleProfileReaderText::read() {
       InlineStack.clear();
       InlineStack.push_back(&FProfile);
     } else {
-      unsigned NumSamples;
+      uint64_t NumSamples;
       StringRef FName;
-      DenseMap<StringRef, unsigned> TargetCountMap;
+      DenseMap<StringRef, uint64_t> TargetCountMap;
       bool IsCallsite;
-      unsigned Depth, LineOffset, Discriminator;
+      uint32_t Depth, LineOffset, Discriminator;
       if (!ParseLine(*LineIt, IsCallsite, Depth, NumSamples, LineOffset,
                      Discriminator, FName, TargetCountMap)) {
         reportError(LineIt.line_number(),
@@ -283,7 +283,7 @@ ErrorOr<StringRef> SampleProfileReaderBinary::readString() {
 
 ErrorOr<StringRef> SampleProfileReaderBinary::readStringFromTable() {
   std::error_code EC;
-  auto Idx = readNumber<unsigned>();
+  auto Idx = readNumber<uint32_t>();
   if (std::error_code EC = Idx.getError())
     return EC;
   if (*Idx >= NameTable.size())
@@ -293,22 +293,22 @@ ErrorOr<StringRef> SampleProfileReaderBinary::readStringFromTable() {
 
 std::error_code
 SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
-  auto Val = readNumber<unsigned>();
+  auto Val = readNumber<uint64_t>();
   if (std::error_code EC = Val.getError())
     return EC;
   FProfile.addTotalSamples(*Val);
 
-  Val = readNumber<unsigned>();
+  Val = readNumber<uint64_t>();
   if (std::error_code EC = Val.getError())
     return EC;
   FProfile.addHeadSamples(*Val);
 
   // Read the samples in the body.
-  auto NumRecords = readNumber<unsigned>();
+  auto NumRecords = readNumber<uint32_t>();
   if (std::error_code EC = NumRecords.getError())
     return EC;
 
-  for (unsigned I = 0; I < *NumRecords; ++I) {
+  for (uint32_t I = 0; I < *NumRecords; ++I) {
     auto LineOffset = readNumber<uint64_t>();
     if (std::error_code EC = LineOffset.getError())
       return EC;
@@ -321,11 +321,11 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
     if (std::error_code EC = NumSamples.getError())
       return EC;
 
-    auto NumCalls = readNumber<unsigned>();
+    auto NumCalls = readNumber<uint32_t>();
     if (std::error_code EC = NumCalls.getError())
       return EC;
 
-    for (unsigned J = 0; J < *NumCalls; ++J) {
+    for (uint32_t J = 0; J < *NumCalls; ++J) {
       auto CalledFunction(readStringFromTable());
       if (std::error_code EC = CalledFunction.getError())
         return EC;
@@ -342,11 +342,11 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
   }
 
   // Read all the samples for inlined function calls.
-  auto NumCallsites = readNumber<unsigned>();
+  auto NumCallsites = readNumber<uint32_t>();
   if (std::error_code EC = NumCallsites.getError())
     return EC;
 
-  for (unsigned J = 0; J < *NumCallsites; ++J) {
+  for (uint32_t J = 0; J < *NumCallsites; ++J) {
     auto LineOffset = readNumber<uint64_t>();
     if (std::error_code EC = LineOffset.getError())
       return EC;
@@ -403,11 +403,11 @@ std::error_code SampleProfileReaderBinary::readHeader() {
     return sampleprof_error::unsupported_version;
 
   // Read the name table.
-  auto Size = readNumber<size_t>();
+  auto Size = readNumber<uint32_t>();
   if (std::error_code EC = Size.getError())
     return EC;
   NameTable.reserve(*Size);
-  for (size_t I = 0; I < *Size; ++I) {
+  for (uint32_t I = 0; I < *Size; ++I) {
     auto Name(readString());
     if (std::error_code EC = Name.getError())
       return EC;
@@ -678,7 +678,7 @@ setupMemoryBuffer(std::string Filename) {
   auto Buffer = std::move(BufferOrErr.get());
 
   // Sanity check the file.
-  if (Buffer->getBufferSize() > std::numeric_limits<unsigned>::max())
+  if (Buffer->getBufferSize() > std::numeric_limits<uint32_t>::max())
     return sampleprof_error::too_large;
 
   return std::move(Buffer);

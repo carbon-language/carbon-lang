@@ -73,9 +73,9 @@ static inline uint64_t SPVersion() { return 101; }
 /// that are on the same line but belong to different basic blocks
 /// (e.g., the two post-increment instructions in "if (p) x++; else y++;").
 struct LineLocation {
-  LineLocation(int L, unsigned D) : LineOffset(L), Discriminator(D) {}
-  int LineOffset;
-  unsigned Discriminator;
+  LineLocation(uint32_t L, uint32_t D) : LineOffset(L), Discriminator(D) {}
+  uint32_t LineOffset;
+  uint32_t Discriminator;
 };
 
 /// Represents the relative location of a callsite.
@@ -85,7 +85,7 @@ struct LineLocation {
 /// head is), the discriminator value within that line, and the callee
 /// function name.
 struct CallsiteLocation : public LineLocation {
-  CallsiteLocation(int L, unsigned D, StringRef N)
+  CallsiteLocation(uint32_t L, uint32_t D, StringRef N)
       : LineLocation(L, D), CalleeName(N) {}
   StringRef CalleeName;
 };
@@ -93,8 +93,8 @@ struct CallsiteLocation : public LineLocation {
 } // End namespace sampleprof
 
 template <> struct DenseMapInfo<sampleprof::LineLocation> {
-  typedef DenseMapInfo<int> OffsetInfo;
-  typedef DenseMapInfo<unsigned> DiscriminatorInfo;
+  typedef DenseMapInfo<uint32_t> OffsetInfo;
+  typedef DenseMapInfo<uint32_t> DiscriminatorInfo;
   static inline sampleprof::LineLocation getEmptyKey() {
     return sampleprof::LineLocation(OffsetInfo::getEmptyKey(),
                                     DiscriminatorInfo::getEmptyKey());
@@ -104,8 +104,8 @@ template <> struct DenseMapInfo<sampleprof::LineLocation> {
                                     DiscriminatorInfo::getTombstoneKey());
   }
   static inline unsigned getHashValue(sampleprof::LineLocation Val) {
-    return DenseMapInfo<std::pair<int, unsigned>>::getHashValue(
-        std::pair<int, unsigned>(Val.LineOffset, Val.Discriminator));
+    return DenseMapInfo<std::pair<uint32_t, uint32_t>>::getHashValue(
+        std::pair<uint32_t, uint32_t>(Val.LineOffset, Val.Discriminator));
   }
   static inline bool isEqual(sampleprof::LineLocation LHS,
                              sampleprof::LineLocation RHS) {
@@ -115,8 +115,8 @@ template <> struct DenseMapInfo<sampleprof::LineLocation> {
 };
 
 template <> struct DenseMapInfo<sampleprof::CallsiteLocation> {
-  typedef DenseMapInfo<int> OffsetInfo;
-  typedef DenseMapInfo<unsigned> DiscriminatorInfo;
+  typedef DenseMapInfo<uint32_t> OffsetInfo;
+  typedef DenseMapInfo<uint32_t> DiscriminatorInfo;
   typedef DenseMapInfo<StringRef> CalleeNameInfo;
   static inline sampleprof::CallsiteLocation getEmptyKey() {
     return sampleprof::CallsiteLocation(OffsetInfo::getEmptyKey(),
@@ -128,8 +128,8 @@ template <> struct DenseMapInfo<sampleprof::CallsiteLocation> {
                                         "");
   }
   static inline unsigned getHashValue(sampleprof::CallsiteLocation Val) {
-    return DenseMapInfo<std::pair<int, unsigned>>::getHashValue(
-        std::pair<int, unsigned>(Val.LineOffset, Val.Discriminator));
+    return DenseMapInfo<std::pair<uint32_t, uint32_t>>::getHashValue(
+        std::pair<uint32_t, uint32_t>(Val.LineOffset, Val.Discriminator));
   }
   static inline bool isEqual(sampleprof::CallsiteLocation LHS,
                              sampleprof::CallsiteLocation RHS) {
@@ -153,7 +153,7 @@ namespace sampleprof {
 /// will be a list of one or more functions.
 class SampleRecord {
 public:
-  typedef StringMap<unsigned> CallTargetMap;
+  typedef StringMap<uint64_t> CallTargetMap;
 
   SampleRecord() : NumSamples(0), CallTargets() {}
 
@@ -161,29 +161,29 @@ public:
   ///
   /// Sample counts accumulate using saturating arithmetic, to avoid wrapping
   /// around unsigned integers.
-  void addSamples(unsigned S) {
-    if (NumSamples <= std::numeric_limits<unsigned>::max() - S)
+  void addSamples(uint64_t S) {
+    if (NumSamples <= std::numeric_limits<uint64_t>::max() - S)
       NumSamples += S;
     else
-      NumSamples = std::numeric_limits<unsigned>::max();
+      NumSamples = std::numeric_limits<uint64_t>::max();
   }
 
   /// Add called function \p F with samples \p S.
   ///
   /// Sample counts accumulate using saturating arithmetic, to avoid wrapping
   /// around unsigned integers.
-  void addCalledTarget(StringRef F, unsigned S) {
-    unsigned &TargetSamples = CallTargets[F];
-    if (TargetSamples <= std::numeric_limits<unsigned>::max() - S)
+  void addCalledTarget(StringRef F, uint64_t S) {
+    uint64_t &TargetSamples = CallTargets[F];
+    if (TargetSamples <= std::numeric_limits<uint64_t>::max() - S)
       TargetSamples += S;
     else
-      TargetSamples = std::numeric_limits<unsigned>::max();
+      TargetSamples = std::numeric_limits<uint64_t>::max();
   }
 
   /// Return true if this sample record contains function calls.
   bool hasCalls() const { return CallTargets.size() > 0; }
 
-  unsigned getSamples() const { return NumSamples; }
+  uint64_t getSamples() const { return NumSamples; }
   const CallTargetMap &getCallTargets() const { return CallTargets; }
 
   /// Merge the samples in \p Other into this record.
@@ -194,7 +194,7 @@ public:
   }
 
 private:
-  unsigned NumSamples;
+  uint64_t NumSamples;
   CallTargetMap CallTargets;
 };
 
@@ -211,14 +211,15 @@ class FunctionSamples {
 public:
   FunctionSamples() : TotalSamples(0), TotalHeadSamples(0) {}
   void print(raw_ostream &OS = dbgs(), unsigned Indent = 0) const;
-  void addTotalSamples(unsigned Num) { TotalSamples += Num; }
-  void addHeadSamples(unsigned Num) { TotalHeadSamples += Num; }
-  void addBodySamples(int LineOffset, unsigned Discriminator, unsigned Num) {
+  void addTotalSamples(uint64_t Num) { TotalSamples += Num; }
+  void addHeadSamples(uint64_t Num) { TotalHeadSamples += Num; }
+  void addBodySamples(uint32_t LineOffset, uint32_t Discriminator,
+                      uint64_t Num) {
     assert(LineOffset >= 0);
     BodySamples[LineLocation(LineOffset, Discriminator)].addSamples(Num);
   }
-  void addCalledTargetSamples(int LineOffset, unsigned Discriminator,
-                              std::string FName, unsigned Num) {
+  void addCalledTargetSamples(uint32_t LineOffset, uint32_t Discriminator,
+                              std::string FName, uint64_t Num) {
     assert(LineOffset >= 0);
     BodySamples[LineLocation(LineOffset, Discriminator)].addCalledTarget(FName,
                                                                          Num);
@@ -227,8 +228,8 @@ public:
   /// Return the number of samples collected at the given location.
   /// Each location is specified by \p LineOffset and \p Discriminator.
   /// If the location is not found in profile, return error.
-  ErrorOr<unsigned> findSamplesAt(int LineOffset,
-                                  unsigned Discriminator) const {
+  ErrorOr<uint64_t> findSamplesAt(uint32_t LineOffset,
+                                  uint32_t Discriminator) const {
     const auto &ret = BodySamples.find(LineLocation(LineOffset, Discriminator));
     if (ret == BodySamples.end())
       return std::error_code();
@@ -255,11 +256,11 @@ public:
   bool empty() const { return TotalSamples == 0; }
 
   /// Return the total number of samples collected inside the function.
-  unsigned getTotalSamples() const { return TotalSamples; }
+  uint64_t getTotalSamples() const { return TotalSamples; }
 
   /// Return the total number of samples collected at the head of the
   /// function.
-  unsigned getHeadSamples() const { return TotalHeadSamples; }
+  uint64_t getHeadSamples() const { return TotalHeadSamples; }
 
   /// Return all the samples collected in the body of the function.
   const BodySampleMap &getBodySamples() const { return BodySamples; }
@@ -290,12 +291,12 @@ private:
   ///
   /// Samples are cumulative, they include all the samples collected
   /// inside this function and all its inlined callees.
-  unsigned TotalSamples;
+  uint64_t TotalSamples;
 
   /// Total number of samples collected at the head of the function.
   /// This is an approximation of the number of calls made to this function
   /// at runtime.
-  unsigned TotalHeadSamples;
+  uint64_t TotalHeadSamples;
 
   /// Map instruction locations to collected samples.
   ///

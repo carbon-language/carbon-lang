@@ -110,7 +110,7 @@ private:
   void addName(StringRef FName);
   void addNames(const FunctionSamples &S);
 
-  MapVector<StringRef, unsigned> NameTable;
+  MapVector<StringRef, uint32_t> NameTable;
 };
 
 } // End namespace sampleprof
