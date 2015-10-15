@@ -21105,21 +21105,26 @@ X86TargetLowering::EmitLoweredAtomicFP(MachineInstr *MI,
   const X86InstrInfo *TII = Subtarget->getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
   MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
-  unsigned MSrc = MI->getOperand(0).getReg();
+  MachineOperand MSrc = MI->getOperand(0);
   unsigned VSrc = MI->getOperand(5).getReg();
+  const MachineOperand &Disp = MI->getOperand(3);
+  MachineOperand ZeroDisp = MachineOperand::CreateImm(0);
+  bool hasDisp = Disp.isGlobal() || Disp.isImm();
+  if (hasDisp && MSrc.isReg())
+    MSrc.setIsKill(false);
   MachineInstrBuilder MIM = BuildMI(*BB, MI, DL, TII->get(MOp))
-                                .addReg(/*Base=*/MSrc)
+                                .addOperand(/*Base=*/MSrc)
                                 .addImm(/*Scale=*/1)
                                 .addReg(/*Index=*/0)
-                                .addImm(0)
+                                .addDisp(hasDisp ? Disp : ZeroDisp, /*off=*/0)
                                 .addReg(0);
   MachineInstr *MIO = BuildMI(*BB, (MachineInstr *)MIM, DL, TII->get(FOp),
                               MRI.createVirtualRegister(MRI.getRegClass(VSrc)))
                           .addReg(VSrc)
-                          .addReg(/*Base=*/MSrc)
+                          .addOperand(/*Base=*/MSrc)
                           .addImm(/*Scale=*/1)
                           .addReg(/*Index=*/0)
-                          .addImm(/*Disp=*/0)
+                          .addDisp(hasDisp ? Disp : ZeroDisp, /*off=*/0)
                           .addReg(/*Segment=*/0);
   MIM.addReg(MIO->getOperand(0).getReg(), RegState::Kill);
   MI->eraseFromParent(); // The pseudo instruction is gone now.

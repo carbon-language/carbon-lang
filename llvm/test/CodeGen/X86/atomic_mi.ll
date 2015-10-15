@@ -871,3 +871,111 @@ define void @fadd_64r(double* %loc, double %val) {
   store atomic i64 %3, i64* %floc release, align 8
   ret void
 }
+
+@glob32 = global float 0.000000e+00, align 4
+@glob64 = global double 0.000000e+00, align 8
+
+; Floating-point add to a global using an immediate.
+define void @fadd_32g() {
+; X64-LABEL: fadd_32g:
+; X64-NOT: lock
+; X64:      movss .{{[A-Z0-9_]+}}(%rip), %[[XMM:xmm[0-9]+]]
+; X64-NEXT: addss glob32(%rip), %[[XMM]]
+; X64-NEXT: movss %[[XMM]], glob32(%rip)
+; X32-LABEL: fadd_32g:
+; Don't check x86-32 (see comment above).
+  %i = load atomic i32, i32* bitcast (float* @glob32 to i32*) monotonic, align 4
+  %f = bitcast i32 %i to float
+  %add = fadd float %f, 1.000000e+00
+  %s = bitcast float %add to i32
+  store atomic i32 %s, i32* bitcast (float* @glob32 to i32*) monotonic, align 4
+  ret void
+}
+
+define void @fadd_64g() {
+; X64-LABEL: fadd_64g:
+; X64-NOT: lock
+; X64:      movsd .{{[A-Z0-9_]+}}(%rip), %[[XMM:xmm[0-9]+]]
+; X64-NEXT: addsd glob64(%rip), %[[XMM]]
+; X64-NEXT: movsd %[[XMM]], glob64(%rip)
+; X32-LABEL: fadd_64g:
+; Don't check x86-32 (see comment above).
+  %i = load atomic i64, i64* bitcast (double* @glob64 to i64*) monotonic, align 8
+  %f = bitcast i64 %i to double
+  %add = fadd double %f, 1.000000e+00
+  %s = bitcast double %add to i64
+  store atomic i64 %s, i64* bitcast (double* @glob64 to i64*) monotonic, align 8
+  ret void
+}
+
+; Floating-point add to a hard-coded immediate location using an immediate.
+define void @fadd_32imm() {
+; X64-LABEL: fadd_32imm:
+; X64-NOT: lock
+; X64:      movl $3735928559, %e[[M:[a-z]+]]
+; X64:      movss .{{[A-Z0-9_]+}}(%rip), %[[XMM:xmm[0-9]+]]
+; X64-NEXT: addss (%r[[M]]), %[[XMM]]
+; X64-NEXT: movss %[[XMM]], (%r[[M]])
+; X32-LABEL: fadd_32imm:
+; Don't check x86-32 (see comment above).
+  %i = load atomic i32, i32* inttoptr (i32 3735928559 to i32*) monotonic, align 4
+  %f = bitcast i32 %i to float
+  %add = fadd float %f, 1.000000e+00
+  %s = bitcast float %add to i32
+  store atomic i32 %s, i32* inttoptr (i32 3735928559 to i32*) monotonic, align 4
+  ret void
+}
+
+define void @fadd_64imm() {
+; X64-LABEL: fadd_64imm:
+; X64-NOT: lock
+; X64:      movl $3735928559, %e[[M:[a-z]+]]
+; X64:      movsd .{{[A-Z0-9_]+}}(%rip), %[[XMM:xmm[0-9]+]]
+; X64-NEXT: addsd (%r[[M]]), %[[XMM]]
+; X64-NEXT: movsd %[[XMM]], (%r[[M]])
+; X32-LABEL: fadd_64imm:
+; Don't check x86-32 (see comment above).
+  %i = load atomic i64, i64* inttoptr (i64 3735928559 to i64*) monotonic, align 8
+  %f = bitcast i64 %i to double
+  %add = fadd double %f, 1.000000e+00
+  %s = bitcast double %add to i64
+  store atomic i64 %s, i64* inttoptr (i64 3735928559 to i64*) monotonic, align 8
+  ret void
+}
+
+; Floating-point add to a stack location.
+define void @fadd_32stack() {
+; X64-LABEL: fadd_32stack:
+; X64-NOT: lock
+; X64:      movss .{{[A-Z0-9_]+}}(%rip), %[[XMM:xmm[0-9]+]]
+; X64-NEXT: addss [[STACKOFF:-?[0-9]+]](%rsp), %[[XMM]]
+; X64-NEXT: movss %[[XMM]], [[STACKOFF]](%rsp)
+; X32-LABEL: fadd_32stack:
+; Don't check x86-32 (see comment above).
+  %ptr = alloca i32, align 4
+  %bc3 = bitcast i32* %ptr to float*
+  %load = load atomic i32, i32* %ptr acquire, align 4
+  %bc0 = bitcast i32 %load to float
+  %fadd = fadd float 1.000000e+00, %bc0
+  %bc1 = bitcast float %fadd to i32
+  store atomic i32 %bc1, i32* %ptr release, align 4
+  ret void
+}
+
+define void @fadd_64stack() {
+; X64-LABEL: fadd_64stack:
+; X64-NOT: lock
+; X64:      movsd .{{[A-Z0-9_]+}}(%rip), %[[XMM:xmm[0-9]+]]
+; X64-NEXT: addsd [[STACKOFF:-?[0-9]+]](%rsp), %[[XMM]]
+; X64-NEXT: movsd %[[XMM]], [[STACKOFF]](%rsp)
+; X32-LABEL: fadd_64stack:
+; Don't check x86-32 (see comment above).
+  %ptr = alloca i64, align 8
+  %bc3 = bitcast i64* %ptr to double*
+  %load = load atomic i64, i64* %ptr acquire, align 8
+  %bc0 = bitcast i64 %load to double
+  %fadd = fadd double 1.000000e+00, %bc0
+  %bc1 = bitcast double %fadd to i64
+  store atomic i64 %bc1, i64* %ptr release, align 8
+  ret void
+}
