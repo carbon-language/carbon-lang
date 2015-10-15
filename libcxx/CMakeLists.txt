@@ -219,8 +219,9 @@ remove_flags(-DNDEBUG -UNDEBUG -D_DEBUG
              -stdlib=libc++ -stdlib=libstdc++ -lc++abi -m32)
 
 # FIXME(EricWF): See the FIXME on LIBCXX_ENABLE_PEDANTIC.
-# Remove the -pedantic flag provided by LLVM.
-remove_flags(-pedantic)
+# Remove the -pedantic flag and -Wno-pedantic and -pedantic-errors
+# so they don't get transformed into -Wno and -errors respectivly.
+remove_flags(-Wno-pedantic -pedantic-errors -pedantic)
 
 # Required flags ==============================================================
 add_compile_flags_if_supported(-std=c++11)
