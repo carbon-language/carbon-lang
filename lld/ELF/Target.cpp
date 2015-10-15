@@ -416,7 +416,7 @@ bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
     return false;
 
   // These are function calls that need to be redirected through a PLT stub.
-  return S.isShared();
+  return S.isShared() || (S.isUndefined() && S.isWeak());
 }
 
 bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
