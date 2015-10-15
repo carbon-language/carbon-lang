@@ -57,6 +57,10 @@ class Rect(object):
                     return pt.y >= self.get_min_y()
         return False
 
+class QuitException(Exception):
+    def __init__(self):
+        super(QuitException, self).__init__('QuitException')
+
 class Window(object):
     def __init__(self, window, delegate = None, can_become_first_responder = True):
         self.window = window
@@ -327,6 +331,9 @@ class Window(object):
     def update(self):
         for child in self.children:
             child.update()
+    
+    def quit_action(self):
+        raise QuitException
 
     def key_event_loop(self, timeout_msec=-1, n=sys.maxint):
         '''Run an event loop to receive key presses and pass them along to the
@@ -339,13 +346,14 @@ class Window(object):
            
            n is the number of times to go through the event loop before exiting'''
         self.timeout(timeout_msec)
-        while n > 0:
+        done = False
+        while not done and n > 0:
             c = self.window.getch()
             if c != -1:
                 try:
                     self.handle_key(c)
-                except:
-                    break
+                except QuitException:
+                    done = True
             n -= 1
 
 class Panel(Window):
@@ -524,6 +532,24 @@ class Item(object):
         self.title = title
         self.action = action
 
+class TreeItemDelegate(object):
+
+    def might_have_children(self):
+        return False
+
+    def update_children(self, item):
+        '''Return a list of child Item objects'''
+        return None
+
+    def draw_item_string(self, tree_window, item, s):
+        pt = tree_window.get_cursor()
+        width = tree_window.get_size().w - 1
+        if width > pt.x:
+            tree_window.addnstr(s, width - pt.x)
+
+    def draw_item(self, tree_window, item):
+        self.draw_item_string(tree_window, item, item.title)
+
 class TreeItem(object):
     def __init__(self, delegate, parent = None, title = None, action = None, is_expanded = False):
         self.parent = parent
@@ -531,17 +557,24 @@ class TreeItem(object):
         self.action = action        
         self.delegate = delegate
         self.is_expanded = not parent or is_expanded == True
-        self.might_have_children_value = None
+        self._might_have_children = None
         self.children = None
+        self._children_might_have_children = False
                            
     def get_children(self):
         if self.is_expanded and self.might_have_children():
             if self.children is None:
+                self._children_might_have_children = False
                 self.children = self.update_children()
+                for child in self.children:
+                    if child.might_have_children():
+                        self._children_might_have_children = True
+                        break
         else:
+            self._children_might_have_children = False
             self.children = None
         return self.children
-
+    
     def append_visible_items(self, items):
         items.append(self)
         children = self.get_children()
@@ -550,15 +583,18 @@ class TreeItem(object):
                 child.append_visible_items(items)
 
     def might_have_children(self):
-        if self.might_have_children_value is None:
+        if self._might_have_children is None:
             if not self.parent:
                 # Root item always might have children
-                self.might_have_children_value = True
+                self._might_have_children = True
             else:
                 # Check with the delegate to see if the item might have children
-                self.might_have_children_value = self.delegate.might_have_children()
-        return self.might_have_children_value
-        
+                self._might_have_children = self.delegate.might_have_children()
+        return self._might_have_children
+
+    def children_might_have_children(self):
+        return self._children_might_have_children
+
     def update_children(self):
         if self.is_expanded and self.might_have_children():
             self.children = self.delegate.update_children(self)
@@ -584,7 +620,9 @@ class TreeItem(object):
             if self.might_have_children():
                 tree_window.addch (curses.ACS_DIAMOND)
                 tree_window.addch (curses.ACS_HLINE)
-                
+            elif self.parent and self.parent.children_might_have_children():
+                tree_window.addch (curses.ACS_HLINE)
+                tree_window.addch (curses.ACS_HLINE)                
             is_selected = tree_window.is_selected(row)
             if is_selected:
                 tree_window.attron (curses.A_REVERSE)
