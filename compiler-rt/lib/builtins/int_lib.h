@@ -115,9 +115,19 @@ uint32_t __inline __builtin_clzll(uint64_t value) {
     return 63 - leading_zero;
   return 64;
 }
+#else
+uint32_t __inline __builtin_clzll(uint64_t value) {
+  if (value == 0)
+    return 64;
+  uint32_t msh = (uint32_t)(value >> 32);
+  uint32_t lsh = (uint32_t)(value & 0xFFFFFFFF);
+  if (msh != 0)
+    return __builtin_clz(msh);
+  return 32 + __builtin_clz(lsh);
+}
+#endif
 
 #define __builtin_clzl __builtin_clzll
-#endif
-#endif
+#endif // defined(_MSC_VER) && !defined(__clang__)
 
 #endif /* INT_LIB_H */
