@@ -201,7 +201,6 @@ def : Proc<"mips64r2", [FeatureMips64r2]>;
 def : Proc<"mips64r3", [FeatureMips64r3]>;
 def : Proc<"mips64r5", [FeatureMips64r5]>;
 def : Proc<"mips64r6", [FeatureMips64r6]>;
-def : Proc<"mips16", [FeatureMips16]>;
 def : Proc<"octeon", [FeatureMips64r2, FeatureCnMips]>;
 def : ProcessorModel<"p5600", MipsP5600Model, [ImplP5600]>;
 

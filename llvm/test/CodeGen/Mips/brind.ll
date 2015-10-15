@@ -1,4 +1,4 @@
-; RUN: llc  -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=16
+; RUN: llc  -march=mipsel -mattr=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=16
 
 @main.L = internal unnamed_addr constant [5 x i8*] [i8* blockaddress(@main, %L1), i8* blockaddress(@main, %L2), i8* blockaddress(@main, %L3), i8* blockaddress(@main, %L4), i8* null], align 4
 @str = private unnamed_addr constant [2 x i8] c"A\00"

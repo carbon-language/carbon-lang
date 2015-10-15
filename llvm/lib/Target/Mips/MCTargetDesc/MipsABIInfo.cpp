@@ -78,7 +78,6 @@ MipsABIInfo MipsABIInfo::computeTargetABI(const Triple &TT, StringRef CPU,
       .Case("mips32r3", MipsABIInfo::O32())
       .Case("mips32r5", MipsABIInfo::O32())
       .Case("mips32r6", MipsABIInfo::O32())
-      .Case("mips16", MipsABIInfo::O32())
       .Case("mips3", MipsABIInfo::N64())
       .Case("mips4", MipsABIInfo::N64())
       .Case("mips5", MipsABIInfo::N64())

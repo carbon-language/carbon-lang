@@ -1,10 +1,10 @@
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=C1
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=C2
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=PE
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST1
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST2
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mattr=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=C1
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mattr=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=C2
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mattr=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=PE
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mattr=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST1
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mattr=mips16 -relocation-model=static -O3 < %s | FileCheck %s -check-prefix=ST2
 ;
-; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=SR
+; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mattr=mips16 -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=SR
 ; RUN: llc  -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32  -relocation-model=pic -O3 < %s | FileCheck %s -check-prefix=SR32
 
 

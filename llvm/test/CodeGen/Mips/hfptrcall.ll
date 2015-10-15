@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -relocation-model=pic < %s | FileCheck %s -check-prefix=picel
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mattr=mips16 -relocation-model=pic < %s | FileCheck %s -check-prefix=picel
 
 @ptrsv = global float ()* @sv, align 4
 @ptrdv = global double ()* @dv, align 4

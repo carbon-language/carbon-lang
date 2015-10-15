@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=mips -mcpu=mips16 | FileCheck %s -check-prefix=M16
+; RUN: llc < %s -march=mips -mattr=mips16 | FileCheck %s -check-prefix=M16
 ; RUN: llc < %s -march=mips -mcpu=mips2 | FileCheck %s -check-prefix=GP32
 ; RUN: llc < %s -march=mips -mcpu=mips32 | FileCheck %s -check-prefix=GP32
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s -check-prefix=GP32

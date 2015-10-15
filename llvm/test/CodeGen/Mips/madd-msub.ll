@@ -7,7 +7,7 @@
 ; RUN: llc -march=mips -mcpu=mips64r6 < %s | FileCheck %s -check-prefix=ALL -check-prefix=64R6
 
 ; FIXME: The MIPS16 test should check its output
-; RUN: llc -march=mips -mcpu=mips16 < %s
+; RUN: llc -march=mips -mattr=mips16 < %s
 
 ; ALL-LABEL: madd1:
 
