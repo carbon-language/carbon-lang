@@ -1382,7 +1382,7 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
         unsigned BitsPossiblySet = BitWidth - KnownZero2.countPopulation();
         unsigned LeadingZeros =
           APInt(BitWidth, BitsPossiblySet).countLeadingZeros();
-        assert(LeadingZeros >= 0 && LeadingZeros <= BitWidth);
+        assert(LeadingZeros <= BitWidth);
         KnownZero |= APInt::getHighBitsSet(BitWidth, LeadingZeros);
         KnownOne &= ~KnownZero;
         // TODO: we could bound KnownOne using the lower bound on the number
