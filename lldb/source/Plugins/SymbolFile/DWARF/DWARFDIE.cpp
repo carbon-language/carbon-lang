@@ -185,7 +185,7 @@ DWARFDIE::GetID () const
 
         if (m_cu)
         {
-            lldb::user_id_t cu_id = ((lldb::user_id_t)m_cu->GetID())<<32;
+            lldb::user_id_t cu_id = m_cu->GetID()&0xffffffff00000000ull;
             assert ((id&0xffffffff00000000ull) == 0 ||
                     (cu_id&0xffffffff00000000ll) == 0 ||
                     (id&0xffffffff00000000ull) == (cu_id&0xffffffff00000000ll));
