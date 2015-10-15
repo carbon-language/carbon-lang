@@ -16252,6 +16252,23 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case TERLOG_OP_MASK:
+    case TERLOG_OP_MASKZ: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src3 = Op.getOperand(3);
+      SDValue Src4 = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Op.getOperand(4));
+      SDValue Mask = Op.getOperand(5);
+      EVT VT = Op.getValueType();
+      SDValue PassThru = Src1;
+      // Set PassThru element.
+      if (IntrData->Type == TERLOG_OP_MASKZ)
+        PassThru = getZeroVector(VT, Subtarget, DAG, dl);
+
+      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
+                                              Src1, Src2, Src3, Src4),
+                                  Mask, PassThru, Subtarget, DAG);
+    }
     case FPCLASS: {
       // FPclass intrinsics with mask
        SDValue Src1 = Op.getOperand(1);
@@ -19915,6 +19932,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VPERMV3:            return "X86ISD::VPERMV3";
   case X86ISD::VPERMIV3:           return "X86ISD::VPERMIV3";
   case X86ISD::VPERMI:             return "X86ISD::VPERMI";
+  case X86ISD::VPTERNLOG:          return "X86ISD::VPTERNLOG";
   case X86ISD::VFIXUPIMM:          return "X86ISD::VFIXUPIMM";
   case X86ISD::VRANGE:             return "X86ISD::VRANGE";
   case X86ISD::PMULUDQ:            return "X86ISD::PMULUDQ";

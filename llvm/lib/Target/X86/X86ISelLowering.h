@@ -389,9 +389,11 @@ namespace llvm {
       VPERMIV3,
       VPERMI,
       VPERM2X128,
-      //Fix Up Special Packed Float32/64 values
+      // Bitwise ternary logic
+      VPTERNLOG,
+      // Fix Up Special Packed Float32/64 values
       VFIXUPIMM,
-      //Range Restriction Calculation For Packed Pairs of Float32/64 values
+      // Range Restriction Calculation For Packed Pairs of Float32/64 values
       VRANGE,
       // Reduce - Perform Reduction Transformation on scalar\packed FP
       VREDUCE,

@@ -293,6 +293,10 @@ def SDTVBroadcastm : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>]>;
 def SDTBlend : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                              SDTCisSameAs<1,2>, SDTCisVT<3, i8>]>;
 
+def SDTTernlog  : SDTypeProfile<1, 4, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                SDTCisSameAs<0,2>, SDTCisSameAs<0,3>,
+                                SDTCisInt<4>]>;
+
 def SDTFPBinOpRound : SDTypeProfile<1, 3, [      // fadd_round, fmul_round, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisFP<0>, SDTCisInt<3>]>;
 
@@ -353,6 +357,7 @@ def X86VPermv     : SDNode<"X86ISD::VPERMV",    SDTShuff2Op>;
 def X86VPermi     : SDNode<"X86ISD::VPERMI",    SDTShuff2OpI>;
 def X86VPermv3    : SDNode<"X86ISD::VPERMV3",   SDTShuff3Op>;
 def X86VPermiv3   : SDNode<"X86ISD::VPERMIV3",  SDTShuff3Op>;
+def X86vpternlog  : SDNode<"X86ISD::VPTERNLOG", SDTTernlog>;
 
 def X86VPerm2x128 : SDNode<"X86ISD::VPERM2X128", SDTShuff3OpI>;
 

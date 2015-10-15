@@ -29,7 +29,8 @@ enum IntrinsicType {
   INTR_TYPE_SCALAR_MASK_RM, INTR_TYPE_3OP_SCALAR_MASK_RM,
   COMPRESS_EXPAND_IN_REG, COMPRESS_TO_MEM,
   TRUNCATE_TO_MEM_VI8, TRUNCATE_TO_MEM_VI16, TRUNCATE_TO_MEM_VI32,
-  EXPAND_FROM_MEM, BLEND, INSERT_SUBVEC
+  EXPAND_FROM_MEM, BLEND, INSERT_SUBVEC,
+  TERLOG_OP_MASK, TERLOG_OP_MASKZ
 };
 
 struct IntrinsicData {
@@ -1145,6 +1146,18 @@ static const IntrinsicData  IntrinsicsWithoutChain[] = {
   X86_INTRINSIC_DATA(avx512_mask_psubus_w_128, INTR_TYPE_2OP_MASK, X86ISD::SUBUS, 0),
   X86_INTRINSIC_DATA(avx512_mask_psubus_w_256, INTR_TYPE_2OP_MASK, X86ISD::SUBUS, 0),
   X86_INTRINSIC_DATA(avx512_mask_psubus_w_512, INTR_TYPE_2OP_MASK, X86ISD::SUBUS, 0),
+  X86_INTRINSIC_DATA(avx512_mask_pternlog_d_128, TERLOG_OP_MASK,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_mask_pternlog_d_256, TERLOG_OP_MASK,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_mask_pternlog_d_512, TERLOG_OP_MASK,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_mask_pternlog_q_128, TERLOG_OP_MASK,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_mask_pternlog_q_256, TERLOG_OP_MASK,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_mask_pternlog_q_512, TERLOG_OP_MASK,
+                     X86ISD::VPTERNLOG, 0),
   X86_INTRINSIC_DATA(avx512_mask_punpckhb_w_128, INTR_TYPE_2OP_MASK,
                      X86ISD::UNPCKH, 0),
   X86_INTRINSIC_DATA(avx512_mask_punpckhb_w_256, INTR_TYPE_2OP_MASK,
@@ -1489,7 +1502,18 @@ static const IntrinsicData  IntrinsicsWithoutChain[] = {
   X86_INTRINSIC_DATA(avx512_mask_xor_ps_128, INTR_TYPE_2OP_MASK, X86ISD::FXOR, 0),
   X86_INTRINSIC_DATA(avx512_mask_xor_ps_256, INTR_TYPE_2OP_MASK, X86ISD::FXOR, 0),
   X86_INTRINSIC_DATA(avx512_mask_xor_ps_512, INTR_TYPE_2OP_MASK, X86ISD::FXOR, 0),
-
+  X86_INTRINSIC_DATA(avx512_maskz_pternlog_d_128, TERLOG_OP_MASKZ,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_maskz_pternlog_d_256, TERLOG_OP_MASKZ,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_maskz_pternlog_d_512, TERLOG_OP_MASKZ,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_maskz_pternlog_q_128, TERLOG_OP_MASKZ,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_maskz_pternlog_q_256, TERLOG_OP_MASKZ,
+                     X86ISD::VPTERNLOG, 0),
+  X86_INTRINSIC_DATA(avx512_maskz_pternlog_q_512, TERLOG_OP_MASKZ,
+                     X86ISD::VPTERNLOG, 0),
   X86_INTRINSIC_DATA(avx512_maskz_vfmadd_pd_128, FMA_OP_MASKZ, X86ISD::FMADD, 0),
   X86_INTRINSIC_DATA(avx512_maskz_vfmadd_pd_256, FMA_OP_MASKZ, X86ISD::FMADD, 0),
   X86_INTRINSIC_DATA(avx512_maskz_vfmadd_pd_512, FMA_OP_MASKZ, X86ISD::FMADD,
