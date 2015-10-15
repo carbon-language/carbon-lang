@@ -361,8 +361,8 @@ static void dumpStructure(MemoryBufferRef M) {
       if (BytesLeftToReadInStream == 0)
         break;
 
-      uint32_t BytesToReadInBlock =
-          std::min(BytesLeftToReadInStream, static_cast<uint32_t>(SB->BlockSize));
+      uint32_t BytesToReadInBlock = (std::min)(
+          BytesLeftToReadInStream, static_cast<uint32_t>(SB->BlockSize));
       auto StreamBlockData =
           StringRef(M.getBufferStart() + StreamBlockOffset, BytesToReadInBlock);
       if (auto EC = checkOffset(M, StreamBlockData))
