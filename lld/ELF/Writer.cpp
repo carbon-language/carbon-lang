@@ -69,7 +69,7 @@ private:
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
-  llvm::SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
+  SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
   std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
