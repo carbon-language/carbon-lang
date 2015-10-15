@@ -455,10 +455,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (auto &P : Symtab.getSymbols()) {
     StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
-    if (auto *U = dyn_cast<Undefined<ELFT>>(Body)) {
+    if (auto *U = dyn_cast<Undefined<ELFT>>(Body))
       if (!U->isWeak() && !U->canKeepUndefined())
         reportUndefined<ELFT>(Symtab, *Body);
-    }
 
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
