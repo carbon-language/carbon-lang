@@ -47,6 +47,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Socket.h"
+#include "lldb/Host/common/TCPSocket.h"
 #include "lldb/Interpreter/Args.h"
 
 #include "Utility/UriParser.h"
@@ -233,8 +234,8 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
                     // allow us to specify this. For now, we assume we must
                     // assume we don't own it.
 
-                    std::unique_ptr<Socket> tcp_socket;
-                    tcp_socket.reset(new Socket(fd, Socket::ProtocolTcp, false));
+                    std::unique_ptr<TCPSocket> tcp_socket;
+                    tcp_socket.reset(new TCPSocket(fd, false));
                     // Try and get a socket option from this file descriptor to
                     // see if this is a socket and set m_is_socket accordingly.
                     int resuse;
@@ -790,7 +791,7 @@ ConnectionFileDescriptor::SocketListenAndAccept(const char *s, Error *error_ptr)
 
     listening_socket_up.reset(socket);
     socket = nullptr;
-    error = listening_socket_up->BlockingAccept(s, m_child_processes_inherit, socket);
+    error = listening_socket_up->Accept(s, m_child_processes_inherit, socket);
     listening_socket_up.reset();
     if (error_ptr)
         *error_ptr = error;
@@ -866,9 +867,12 @@ ConnectionFileDescriptor::SetChildProcessesInherit(bool child_processes_inherit)
 void
 ConnectionFileDescriptor::InitializeSocket(Socket* socket)
 {
+    assert(socket->GetSocketProtocol() == Socket::ProtocolTcp);
+    TCPSocket* tcp_socket = static_cast<TCPSocket*>(socket);
+
     m_write_sp.reset(socket);
     m_read_sp = m_write_sp;
     StreamString strm;
-    strm.Printf("connect://%s:%u",socket->GetRemoteIPAddress().c_str(), socket->GetRemotePortNumber());
+    strm.Printf("connect://%s:%u",tcp_socket->GetRemoteIPAddress().c_str(), tcp_socket->GetRemotePortNumber());
     m_uri.swap(strm.GetString());
 }

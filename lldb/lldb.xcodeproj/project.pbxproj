@@ -100,6 +100,9 @@
 		256CBDBA1ADD107200BC6CDC /* RegisterContextLinux_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDB61ADD107200BC6CDC /* RegisterContextLinux_arm.cpp */; };
 		256CBDBC1ADD107200BC6CDC /* RegisterContextLinux_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDB81ADD107200BC6CDC /* RegisterContextLinux_mips64.cpp */; };
 		256CBDC01ADD11C000BC6CDC /* RegisterContextPOSIX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDBE1ADD11C000BC6CDC /* RegisterContextPOSIX_arm.cpp */; };
+		2579065C1BD0488100178368 /* TCPSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2579065A1BD0488100178368 /* TCPSocket.cpp */; };
+		2579065D1BD0488100178368 /* UDPSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2579065B1BD0488100178368 /* UDPSocket.cpp */; };
+		2579065F1BD0488D00178368 /* DomainSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2579065E1BD0488D00178368 /* DomainSocket.cpp */; };
 		257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 257E47151AA56C2000A62F81 /* ModuleCache.cpp */; };
 		25EF23781AC09B3700908DF0 /* AdbClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25EF23751AC09AD800908DF0 /* AdbClient.cpp */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
@@ -713,8 +716,8 @@
 		6D95DC001B9DC057000E318A /* DIERef.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D95DBFD1B9DC057000E318A /* DIERef.cpp */; };
 		6D95DC011B9DC057000E318A /* HashedNameToDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D95DBFE1B9DC057000E318A /* HashedNameToDIE.cpp */; };
 		6D95DC021B9DC057000E318A /* SymbolFileDWARFDwo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D95DBFF1B9DC057000E318A /* SymbolFileDWARFDwo.cpp */; };
-		6D9AB3DD1BB2B74E003F2289 /* TypeMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D9AB3DC1BB2B74E003F2289 /* TypeMap.cpp */; };
 		6D99A3631BBC2F3200979793 /* ArmUnwindInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D99A3621BBC2F3200979793 /* ArmUnwindInfo.cpp */; };
+		6D9AB3DD1BB2B74E003F2289 /* TypeMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D9AB3DC1BB2B74E003F2289 /* TypeMap.cpp */; };
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
 		8C2D6A5E197A250F006989C9 /* MemoryHistoryASan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */; };
 		8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */; };
@@ -1198,6 +1201,9 @@
 		256CBDB91ADD107200BC6CDC /* RegisterContextLinux_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextLinux_mips64.h; path = Utility/RegisterContextLinux_mips64.h; sourceTree = "<group>"; };
 		256CBDBE1ADD11C000BC6CDC /* RegisterContextPOSIX_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextPOSIX_arm.cpp; path = Utility/RegisterContextPOSIX_arm.cpp; sourceTree = "<group>"; };
 		256CBDBF1ADD11C000BC6CDC /* RegisterContextPOSIX_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextPOSIX_arm.h; path = Utility/RegisterContextPOSIX_arm.h; sourceTree = "<group>"; };
+		2579065A1BD0488100178368 /* TCPSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TCPSocket.cpp; sourceTree = "<group>"; };
+		2579065B1BD0488100178368 /* UDPSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UDPSocket.cpp; sourceTree = "<group>"; };
+		2579065E1BD0488D00178368 /* DomainSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DomainSocket.cpp; sourceTree = "<group>"; };
 		257E47151AA56C2000A62F81 /* ModuleCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleCache.cpp; path = source/Utility/ModuleCache.cpp; sourceTree = "<group>"; };
 		257E47161AA56C2000A62F81 /* ModuleCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ModuleCache.h; path = source/Utility/ModuleCache.h; sourceTree = "<group>"; };
 		25EF23751AC09AD800908DF0 /* AdbClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdbClient.cpp; sourceTree = "<group>"; };
@@ -2407,10 +2413,10 @@
 		6D95DBFF1B9DC057000E318A /* SymbolFileDWARFDwo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolFileDWARFDwo.cpp; sourceTree = "<group>"; };
 		6D95DC031B9DC06F000E318A /* DIERef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DIERef.h; sourceTree = "<group>"; };
 		6D95DC041B9DC06F000E318A /* SymbolFileDWARFDwo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolFileDWARFDwo.h; sourceTree = "<group>"; };
-		6D9AB3DC1BB2B74E003F2289 /* TypeMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeMap.cpp; path = source/Symbol/TypeMap.cpp; sourceTree = "<group>"; };
-		6D9AB3DE1BB2B76B003F2289 /* TypeMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeMap.h; path = include/lldb/Symbol/TypeMap.h; sourceTree = "<group>"; };
 		6D99A3611BBC2F1600979793 /* ArmUnwindInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArmUnwindInfo.h; path = include/lldb/Symbol/ArmUnwindInfo.h; sourceTree = "<group>"; };
 		6D99A3621BBC2F3200979793 /* ArmUnwindInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArmUnwindInfo.cpp; path = source/Symbol/ArmUnwindInfo.cpp; sourceTree = "<group>"; };
+		6D9AB3DC1BB2B74E003F2289 /* TypeMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeMap.cpp; path = source/Symbol/TypeMap.cpp; sourceTree = "<group>"; };
+		6D9AB3DE1BB2B76B003F2289 /* TypeMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeMap.h; path = include/lldb/Symbol/TypeMap.h; sourceTree = "<group>"; };
 		8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryHistory.cpp; path = source/Target/MemoryHistory.cpp; sourceTree = "<group>"; };
 		8C2D6A54197A1EBE006989C9 /* MemoryHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MemoryHistory.h; path = include/lldb/Target/MemoryHistory.h; sourceTree = "<group>"; };
 		8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryHistoryASan.cpp; sourceTree = "<group>"; };
@@ -5018,6 +5024,7 @@
 		3FDFDDC4199D37BE009756A7 /* posix */ = {
 			isa = PBXGroup;
 			children = (
+				2579065E1BD0488D00178368 /* DomainSocket.cpp */,
 				255EFF751AFABA950069F277 /* LockFilePosix.cpp */,
 				30DED5DC1B4ECB17004CC508 /* MainLoopPosix.cpp */,
 				AFDFDFD019E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp */,
@@ -5224,6 +5231,8 @@
 		69A01E1A1236C5D400C660B5 /* common */ = {
 			isa = PBXGroup;
 			children = (
+				2579065A1BD0488100178368 /* TCPSocket.cpp */,
+				2579065B1BD0488100178368 /* UDPSocket.cpp */,
 				255EFF731AFABA720069F277 /* LockFileBase.cpp */,
 				250D6AE11A9679270049CC70 /* FileSystem.cpp */,
 				33E5E8411A672A240024ED68 /* StringConvert.cpp */,
@@ -6421,6 +6430,7 @@
 				2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */,
 				2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */,
 				2689009613353E4200698AC0 /* ObjectContainerBSDArchive.cpp in Sources */,
+				2579065D1BD0488100178368 /* UDPSocket.cpp in Sources */,
 				AE8F624919EF3E1E00326B21 /* OperatingSystemGo.cpp in Sources */,
 				26BC179A18C7F2B300D2196D /* JITLoaderList.cpp in Sources */,
 				2689009713353E4200698AC0 /* ObjectContainerUniversalMachO.cpp in Sources */,
@@ -6490,6 +6500,7 @@
 				268900D313353E6F00698AC0 /* ClangExternalASTSourceCallbacks.cpp in Sources */,
 				268900D513353E6F00698AC0 /* CompileUnit.cpp in Sources */,
 				268900D613353E6F00698AC0 /* Declaration.cpp in Sources */,
+				2579065C1BD0488100178368 /* TCPSocket.cpp in Sources */,
 				268900D713353E6F00698AC0 /* DWARFCallFrameInfo.cpp in Sources */,
 				268900D813353E6F00698AC0 /* Function.cpp in Sources */,
 				268900D913353E6F00698AC0 /* FuncUnwinders.cpp in Sources */,
@@ -6548,6 +6559,7 @@
 				94B6385D1B8FB178004FE1E4 /* CPlusPlusLanguage.cpp in Sources */,
 				268900FE13353E6F00698AC0 /* ThreadPlanCallUserExpression.cpp in Sources */,
 				268900FF13353E6F00698AC0 /* ThreadPlanShouldStopHere.cpp in Sources */,
+				2579065F1BD0488D00178368 /* DomainSocket.cpp in Sources */,
 				2689010013353E6F00698AC0 /* ThreadPlanStepInstruction.cpp in Sources */,
 				232CB61B191E00CD00EF39FC /* NativeThreadProtocol.cpp in Sources */,
 				2689010113353E6F00698AC0 /* ThreadPlanStepOut.cpp in Sources */,

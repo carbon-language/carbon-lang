@@ -50,8 +50,11 @@ public:
 
     static const NativeSocket kInvalidSocketValue;
 
-    Socket(NativeSocket socket, SocketProtocol protocol, bool should_close);
     ~Socket() override;
+
+    virtual Error Connect(llvm::StringRef name) = 0;
+    virtual Error Listen(llvm::StringRef name, int backlog) = 0;
+    virtual Error Accept(llvm::StringRef name, bool child_processes_inherit, Socket *&socket) = 0;
 
     // Initialize a Tcp Socket object in listening mode.  listen and accept are implemented
     // separately because the caller may wish to manipulate or query the socket after it is
@@ -67,30 +70,8 @@ public:
     static Error UnixDomainConnect(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket);
     static Error UnixDomainAccept(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket);
 
-    // Blocks on a listening socket until a connection is received.  This method assumes that
-    // |this->m_socket| is a listening socket, created via either TcpListen() or via the native
-    // constructor that takes a NativeSocket, which itself was created via a call to |listen()|
-    Error BlockingAccept(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket);
-
     int GetOption (int level, int option_name, int &option_value);
     int SetOption (int level, int option_name, int option_value);
-
-    // returns port number or 0 if error
-    static uint16_t GetLocalPortNumber (const NativeSocket& socket);
-    
-    // returns port number or 0 if error
-    uint16_t GetLocalPortNumber () const;
-
-    // returns ip address string or empty string if error
-    std::string GetLocalIPAddress () const;
-
-    // must be connected
-    // returns port number or 0 if error
-    uint16_t GetRemotePortNumber () const;
-
-    // must be connected
-    // returns ip address string or empty string if error
-    std::string GetRemoteIPAddress () const;
 
     NativeSocket GetNativeSocket () const { return m_socket; }
     SocketProtocol GetSocketProtocol () const { return m_protocol; }
@@ -112,9 +93,18 @@ public:
                        Error *error_ptr);
 
 protected:
+    Socket(NativeSocket socket, SocketProtocol protocol, bool should_close);
+
+    virtual size_t Send(const void *buf, const size_t num_bytes);
+
+    static void SetLastError(Error &error);
+    static NativeSocket CreateSocket(
+        const int domain, const int type, const int protocol, bool child_processes_inherit, Error& error);
+    static NativeSocket AcceptSocket(
+        NativeSocket sockfd, struct sockaddr *addr, socklen_t *addrlen, bool child_processes_inherit, Error& error);
+
     SocketProtocol m_protocol;
     NativeSocket m_socket;
-    SocketAddress m_udp_send_sockaddr;    // Send address used for UDP connections.
 };
 
 } // namespace lldb_private

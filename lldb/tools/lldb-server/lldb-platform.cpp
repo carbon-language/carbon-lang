@@ -29,7 +29,7 @@
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostGetOpt.h"
 #include "lldb/Host/OptionParser.h"
-#include "lldb/Host/Socket.h"
+#include "lldb/Host/common/TCPSocket.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
 #include "LLDBServerUtilities.h"
@@ -283,7 +283,6 @@ main_platform (int argc, char *argv[])
         exit(option_error);
     }
     
-    std::unique_ptr<Socket> listening_socket_up;
     Socket *socket = nullptr;
     const bool children_inherit_listen_socket = false;
 
@@ -291,14 +290,19 @@ main_platform (int argc, char *argv[])
     // The highest this should get reasonably is a function of the number 
     // of target CPUs.  For now, let's just use 100
     const int backlog = 100;
-    error = Socket::TcpListen(listen_host_port.c_str(), children_inherit_listen_socket, socket, NULL, backlog);
+    std::unique_ptr<TCPSocket> listening_socket_up(new TCPSocket(children_inherit_listen_socket, error));
+    if (error.Fail())
+    {
+        fprintf(stderr, "failed to create socket: %s", error.AsCString());
+        exit(socket_error);
+    }
+
+    error = listening_socket_up->Listen(listen_host_port.c_str(), backlog);
     if (error.Fail())
     {
         printf("error: %s\n", error.AsCString());
         exit(socket_error);
     }
-    listening_socket_up.reset(socket);
-    printf ("Listening for a connection from %u...\n", listening_socket_up->GetLocalPortNumber());
     if (port_file)
     {
         error = save_port_to_file(listening_socket_up->GetLocalPortNumber(), port_file);
@@ -322,7 +326,7 @@ main_platform (int argc, char *argv[])
 
         const bool children_inherit_accept_socket = true;
         socket = nullptr;
-        error = listening_socket_up->BlockingAccept(listen_host_port.c_str(), children_inherit_accept_socket, socket);
+        error = listening_socket_up->Accept(listen_host_port.c_str(), children_inherit_accept_socket, socket);
         if (error.Fail())
         {
             printf ("error: %s\n", error.AsCString());

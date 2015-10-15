@@ -24,8 +24,8 @@
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
-#include "lldb/Host/Socket.h"
 #include "lldb/Host/ThreadLauncher.h"
+#include "lldb/Host/common/TCPSocket.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
@@ -276,7 +276,7 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 
     if (conn_ap->IsConnected())
     {
-        const Socket& socket = static_cast<const Socket&>(*conn_ap->GetReadObject());
+        const TCPSocket& socket = static_cast<const TCPSocket&>(*conn_ap->GetReadObject());
         const uint16_t reply_port = socket.GetLocalPortNumber();
 
         if (reply_port != 0)

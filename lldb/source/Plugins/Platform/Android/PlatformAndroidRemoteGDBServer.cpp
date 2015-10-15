@@ -10,9 +10,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Host/Socket.h"
-
-// Project includes
+#include "lldb/Host/common/TCPSocket.h"
 #include "AdbClient.h"
 #include "PlatformAndroidRemoteGDBServer.h"
 #include "Utility/UriParser.h"
@@ -52,13 +50,15 @@ DeleteForwardPortWithAdb (uint16_t local_port, const std::string& device_id)
 static Error
 FindUnusedPort (uint16_t& port)
 {
-    Socket* socket = nullptr;
-    auto error = Socket::TcpListen ("127.0.0.1:0", false, socket, nullptr);
-    if (error.Success ())
-    {
-        port = socket->GetLocalPortNumber ();
-        delete socket;
-    }
+    Error error;
+    std::unique_ptr<TCPSocket> tcp_socket(new TCPSocket(false, error));
+    if (error.Fail())
+        return error;
+
+    error = tcp_socket->Listen("127.0.0.1:0", 1);
+    if (error.Success())
+        port = tcp_socket->GetLocalPortNumber();
+
     return error;
 }
 

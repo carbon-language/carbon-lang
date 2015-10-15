@@ -34,11 +34,13 @@ add_host_subdirectory(common
   common/SoftwareBreakpoint.cpp
   common/StringConvert.cpp
   common/Symbols.cpp
+  common/TCPSocket.cpp
   common/Terminal.cpp
   common/ThisThread.cpp
   common/ThreadLauncher.cpp
   common/TimeValue.cpp
   common/XML.cpp
+  common/UDPSocket.cpp
   )
 
 # Keep track of whether we want to provide a define for the
@@ -81,6 +83,7 @@ else()
   endif()
 
   add_host_subdirectory(posix
+    posix/DomainSocket.cpp
     posix/FileSystem.cpp
     posix/HostInfoPosix.cpp
     posix/HostProcessPosix.cpp
