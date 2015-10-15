@@ -228,28 +228,6 @@ class Run(object):
             canceled_flag = LockedValue(0)
             consumer = ThreadResultsConsumer(display)
 
-        # Because some tests use threads internally, and at least on Linux each
-        # of these threads counts toward the current process limit, try to
-        # raise the (soft) process limit so that tests don't fail due to
-        # resource exhaustion.
-        try:
-          cpus = lit.util.detectCPUs()
-          desired_limit = jobs * cpus * 2 # the 2 is a safety factor
-
-          # Import the resource module here inside this try block because it
-          # will likely fail on Windows.
-          import resource
-
-          max_procs_soft, max_procs_hard = resource.getrlimit(resource.RLIMIT_NPROC)
-          desired_limit = min(desired_limit, max_procs_hard)
-
-          if max_procs_soft < desired_limit:
-            resource.setrlimit(resource.RLIMIT_NPROC, (desired_limit, max_procs_hard))
-            self.lit_config.note('raised the process limit from %d to %d' % \
-                                 (max_procs_soft, desired_limit))
-        except:
-          pass
-
         # Create the test provider.
         provider = TestProvider(self.tests, jobs, queue_impl, canceled_flag)
 
