@@ -465,7 +465,9 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
 
   switch (Type) {
   case R_PPC64_ADDR16:
-    write16be(L, applyPPCLo(R));
+    if (!isInt<16>(R))
+      error("Relocation R_PPC64_ADDR16 overflow");
+    write16be(L, R);
     break;
   case R_PPC64_ADDR16_DS:
     if (!isInt<16>(R))
