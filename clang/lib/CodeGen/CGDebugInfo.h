@@ -135,6 +135,11 @@ class CGDebugInfo {
       NamespaceAliasCache;
   llvm::DenseMap<const Decl *, llvm::TypedTrackingMDRef<llvm::DIDerivedType>>
       StaticDataMemberCache;
+
+  /// Helper functions for getOrCreateType.
+  /// @{
+  /// Currently the checksum of an interface includes the number of
+  /// ivars and property accessors.
   llvm::DIType *CreateType(const BuiltinType *Ty);
   llvm::DIType *CreateType(const ComplexType *Ty);
   llvm::DIType *CreateQualifiedType(QualType Ty, llvm::DIFile *Fg);
