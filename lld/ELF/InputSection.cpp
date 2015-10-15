@@ -37,9 +37,8 @@ template <class ELFT>
 void InputSection<ELFT>::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
                                      const Elf_Rela &Rel, uint32_t Type,
                                      uintX_t BaseAddr, uintX_t SymVA) {
-  SymVA += Rel.r_addend;
   Target->relocateOne(Buf, BufEnd, reinterpret_cast<const void *>(&Rel), Type,
-                      BaseAddr, SymVA);
+                      BaseAddr, SymVA + Rel.r_addend);
 }
 
 template <class ELFT>

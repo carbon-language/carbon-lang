@@ -7,8 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Machine-specific stuff, such as applying relocations, creation of
-// GOT or PLT entries, etc., are is handled in this file.
+// Machine-specific things, such as applying relocations, creation of
+// GOT or PLT entries, etc., are handled in this file.
+//
+// Refer the ELF spec for the single letter varaibles, S, A or P, used
+// in this file. SA is S+A.
 //
 //===----------------------------------------------------------------------===//
 
@@ -51,7 +54,7 @@ public:
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                    uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SymVA) const override;
+                   uint64_t SA) const override;
 };
 
 class X86_64TargetInfo final : public TargetInfo {
@@ -64,7 +67,7 @@ public:
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                    uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SymVA) const override;
+                   uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 
@@ -77,7 +80,7 @@ public:
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                    uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SymVA) const override;
+                   uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
 
@@ -90,7 +93,7 @@ public:
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                    uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SymVA) const override;
+                   uint64_t SA) const override;
 };
 
 class AArch64TargetInfo final : public TargetInfo {
@@ -102,7 +105,7 @@ public:
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                    uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SymVA) const override;
+                   uint64_t SA) const override;
 };
 
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
@@ -114,7 +117,7 @@ public:
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                    uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SymVA) const override;
+                   uint64_t SA) const override;
 };
 } // anonymous namespace
 
@@ -180,7 +183,7 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
 
 void X86TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
                                 uint32_t Type, uint64_t BaseAddr,
-                                uint64_t SymVA) const {
+                                uint64_t SA) const {
   typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
   auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
 
@@ -188,13 +191,13 @@ void X86TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
   uint8_t *Loc = Buf + Offset;
   switch (Type) {
   case R_386_GOT32:
-    add32le(Loc, SymVA - Out<ELF32LE>::Got->getVA());
+    add32le(Loc, SA - Out<ELF32LE>::Got->getVA());
     break;
   case R_386_PC32:
-    add32le(Loc, SymVA - (BaseAddr + Offset));
+    add32le(Loc, SA - BaseAddr - Offset);
     break;
   case R_386_32:
-    add32le(Loc, SymVA);
+    add32le(Loc, SA);
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
@@ -285,7 +288,7 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
 
 void X86_64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
                                    const void *RelP, uint32_t Type,
-                                   uint64_t BaseAddr, uint64_t SymVA) const {
+                                   uint64_t BaseAddr, uint64_t SA) const {
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
@@ -294,20 +297,18 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   switch (Type) {
   case R_X86_64_PC32:
   case R_X86_64_GOTPCREL:
-    write32le(Loc, SymVA - (BaseAddr + Offset));
+    write32le(Loc, SA - BaseAddr - Offset);
     break;
   case R_X86_64_64:
-    write64le(Loc, SymVA);
+    write64le(Loc, SA);
     break;
   case R_X86_64_32: {
   case R_X86_64_32S:
-    uint64_t VA = SymVA;
-    if (Type == R_X86_64_32 && !isUInt<32>(VA))
+    if (Type == R_X86_64_32 && !isUInt<32>(SA))
       error("R_X86_64_32 out of range");
-    else if (!isInt<32>(VA))
+    else if (!isInt<32>(SA))
       error("R_X86_64_32S out of range");
-
-    write32le(Loc, VA);
+    write32le(Loc, SA);
     break;
   }
   default:
@@ -435,12 +436,11 @@ bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
 
 void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
                                   const void *RelP, uint32_t Type,
-                                  uint64_t BaseAddr, uint64_t SymVA) const {
+                                  uint64_t BaseAddr, uint64_t SA) const {
   typedef ELFFile<ELF64BE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
   uint8_t *L = Buf + Rel.r_offset;
-  uint64_t SA = SymVA;
   uint64_t P = BaseAddr + Rel.r_offset;
   uint64_t TB = getPPC64TocBase();
 
@@ -574,9 +574,9 @@ bool PPCTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
 bool PPCTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return false;
 }
-void PPCTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                const void *RelP, uint32_t Type,
-                                uint64_t BaseAddr, uint64_t SymVA) const {}
+void PPCTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
+                                uint32_t Type, uint64_t BaseAddr,
+                                uint64_t SA) const {}
 
 AArch64TargetInfo::AArch64TargetInfo() {
   // PCRelReloc = FIXME
@@ -609,12 +609,11 @@ static uint64_t getAArch64Page(uint64_t Expr) {
 
 void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
                                     const void *RelP, uint32_t Type,
-                                    uint64_t BaseAddr, uint64_t SymVA) const {
+                                    uint64_t BaseAddr, uint64_t SA) const {
   typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
   auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
 
   uint8_t *L = Buf + Rel.r_offset;
-  uint64_t SA = SymVA;
   uint64_t P = BaseAddr + Rel.r_offset;
   switch (Type) {
   case R_AARCH64_ABS16:
@@ -679,15 +678,14 @@ bool MipsTargetInfo<ELFT>::relocNeedsPlt(uint32_t Type,
 template <class ELFT>
 void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
                                        const void *RelP, uint32_t Type,
-                                       uint64_t BaseAddr,
-                                       uint64_t SymVA) const {
+                                       uint64_t BaseAddr, uint64_t SA) const {
   const bool IsLE = ELFT::TargetEndianness == support::little;
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
 
   switch (Type) {
   case R_MIPS_32:
-    add32<IsLE>(Buf + Rel.r_offset, SymVA);
+    add32<IsLE>(Buf + Rel.r_offset, SA);
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
