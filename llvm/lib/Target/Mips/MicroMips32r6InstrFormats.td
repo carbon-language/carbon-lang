@@ -632,7 +632,7 @@ class POOL16C_NOT16_FM_MMR6 : MicroMipsR6Inst16 {
   let Inst{3-0}   = 0b0000;
 }
 
-class POOL16C_OR16_FM_MMR6 : MicroMipsR6Inst16 {
+class POOL16C_OR16_XOR16_FM_MMR6<bits<4> op> {
   bits<3> rt;
   bits<3> rs;
 
@@ -641,7 +641,30 @@ class POOL16C_OR16_FM_MMR6 : MicroMipsR6Inst16 {
   let Inst{15-10} = 0b010001;
   let Inst{9-7}   = rt;
   let Inst{6-4}   = rs;
-  let Inst{3-0}   = 0b1001;
+  let Inst{3-0}   = op;
+}
+
+class POOL16C_BREAKPOINT_FM_MMR6<bits<6> op> {
+  bits<4> code_;
+  bits<16> Inst;
+
+  let Inst{15-10} = 0b010001;
+  let Inst{9-6}   = code_;
+  let Inst{5-0}   = op;
+}
+
+class POOL16A_SUBU16_FM_MMR6 {
+  bits<3> rs;
+  bits<3> rt;
+  bits<3> rd;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0b000001;
+  let Inst{9-7}   = rs;
+  let Inst{6-4}   = rt;
+  let Inst{3-1}   = rd;
+  let Inst{0}     = 0b1;
 }
 
 class POOL32A_WRPGPR_WSBH_FM_MMR6<bits<10> funct> : MipsR6Inst {

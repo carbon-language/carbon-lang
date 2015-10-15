@@ -112,9 +112,15 @@ class ADDU16_MMR6_ENC : POOL16A_ADDU16_FM_MMR6;
 class AND16_MMR6_ENC : POOL16C_AND16_FM_MMR6;
 class ANDI16_MMR6_ENC : ANDI_FM_MM16<0b001011>, MicroMipsR6Inst16;
 class NOT16_MMR6_ENC : POOL16C_NOT16_FM_MMR6;
-class OR16_MMR6_ENC : POOL16C_OR16_FM_MMR6;
+class OR16_MMR6_ENC : POOL16C_OR16_XOR16_FM_MMR6<0b1001>;
 class SLL16_MMR6_ENC : SHIFT_FM_MM16<0>, MicroMipsR6Inst16;
 class SRL16_MMR6_ENC : SHIFT_FM_MM16<1>, MicroMipsR6Inst16;
+class BREAK16_MMR6_ENC : POOL16C_BREAKPOINT_FM_MMR6<0b011011>;
+class LI16_MMR6_ENC : LI_FM_MM16;
+class MOVE16_MMR6_ENC : MOVE_FM_MM16<0b000011>;
+class SDBBP16_MMR6_ENC : POOL16C_BREAKPOINT_FM_MMR6<0b111011>;
+class SUBU16_MMR6_ENC : POOL16A_SUBU16_FM_MMR6;
+class XOR16_MMR6_ENC : POOL16C_OR16_XOR16_FM_MMR6<0b1000>;
 
 class CMP_CBR_RT_Z_MMR6_DESC_BASE<string instr_asm, DAGOperand opnd,
                                   RegisterOperand GPROpnd>
@@ -692,18 +698,30 @@ class LOAD_WORD_EVA_MMR6_DESC_BASE<string instr_asm, RegisterOperand RO> :
 class LLE_MMR6_DESC : LOAD_WORD_EVA_MMR6_DESC_BASE<"lle", GPR32Opnd>;
 class LWE_MMR6_DESC : LOAD_WORD_EVA_MMR6_DESC_BASE<"lwe", GPR32Opnd>;
 class ADDU16_MMR6_DESC : ArithRMM16<"addu16", GPRMM16Opnd, 1, II_ADDU, add>,
-  MMR6Arch<"addu16">;
+      MMR6Arch<"addu16">;
 class AND16_MMR6_DESC : LogicRMM16<"and16", GPRMM16Opnd, II_AND, and>,
-  MMR6Arch<"and16">;
+      MMR6Arch<"and16">;
 class ANDI16_MMR6_DESC : AndImmMM16<"andi16", GPRMM16Opnd, II_AND>,
-  MMR6Arch<"andi16">;
+      MMR6Arch<"andi16">;
 class NOT16_MMR6_DESC : NotMM16<"not16", GPRMM16Opnd>, MMR6Arch<"not16">;
 class OR16_MMR6_DESC : LogicRMM16<"or16", GPRMM16Opnd, II_OR, or>,
-  MMR6Arch<"or16">;
+      MMR6Arch<"or16">;
 class SLL16_MMR6_DESC : ShiftIMM16<"sll16", uimm3_shift, GPRMM16Opnd, II_SLL>,
-  MMR6Arch<"sll16">;
+      MMR6Arch<"sll16">;
 class SRL16_MMR6_DESC : ShiftIMM16<"srl16", uimm3_shift, GPRMM16Opnd, II_SRL>,
-  MMR6Arch<"srl16">;
+      MMR6Arch<"srl16">;
+class BREAK16_MMR6_DESC : BrkSdbbp16MM<"break16">, MMR6Arch<"srl16">,
+      MicroMipsR6Inst16;
+class LI16_MMR6_DESC : LoadImmMM16<"li16", li_simm7, GPRMM16Opnd>,
+      MMR6Arch<"srl16">, MicroMipsR6Inst16, IsAsCheapAsAMove;
+class MOVE16_MMR6_DESC : MoveMM16<"move16", GPR32Opnd>, MMR6Arch<"srl16">,
+      MicroMipsR6Inst16;
+class SDBBP16_MMR6_DESC : BrkSdbbp16MM<"sdbbp16">, MMR6Arch<"sdbbp16">,
+      MicroMipsR6Inst16;
+class SUBU16_MMR6_DESC : ArithRMM16<"subu16", GPRMM16Opnd, 0, II_SUBU, sub>,
+      MMR6Arch<"sdbbp16">, MicroMipsR6Inst16;
+class XOR16_MMR6_DESC : LogicRMM16<"xor16", GPRMM16Opnd, II_XOR, xor>,
+      MMR6Arch<"sdbbp16">, MicroMipsR6Inst16;
 
 class LW_MMR6_DESC : MMR6Arch<"lw">, MipsR6Inst {
   dag OutOperandList = (outs GPR32Opnd:$rt);
@@ -944,6 +962,18 @@ def SLL16_MMR6 : StdMMR6Rel, SLL16_MMR6_DESC, SLL16_MMR6_ENC,
                   ISA_MICROMIPS32R6;
 def SRL16_MMR6 : StdMMR6Rel, SRL16_MMR6_DESC, SRL16_MMR6_ENC,
                   ISA_MICROMIPS32R6;
+def BREAK16_MMR6 : StdMMR6Rel, BREAK16_MMR6_DESC, BREAK16_MMR6_ENC,
+                   ISA_MICROMIPS32R6;
+def LI16_MMR6 : StdMMR6Rel, LI16_MMR6_DESC, LI16_MMR6_ENC,
+                ISA_MICROMIPS32R6;
+def MOVE16_MMR6 : StdMMR6Rel, MOVE16_MMR6_DESC, MOVE16_MMR6_ENC,
+                  ISA_MICROMIPS32R6;
+def SDBBP16_MMR6 : StdMMR6Rel, SDBBP16_MMR6_DESC, SDBBP16_MMR6_ENC,
+                   ISA_MICROMIPS32R6;
+def SUBU16_MMR6 : StdMMR6Rel, SUBU16_MMR6_DESC, SUBU16_MMR6_ENC,
+                  ISA_MICROMIPS32R6;
+def XOR16_MMR6 : StdMMR6Rel, XOR16_MMR6_DESC, XOR16_MMR6_ENC,
+                 ISA_MICROMIPS32R6;
 }
 
 //===----------------------------------------------------------------------===//

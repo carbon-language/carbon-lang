@@ -115,5 +115,11 @@ a:
         jalr $9                  # CHECK: jalr $9             # encoding: [0x45,0x2b]
         jrc16 $9                 # CHECK: jrc16 $9            # encoding: [0x45,0x23]
         jrcaddiusp 20            # CHECK: jrcaddiusp 20       # encoding: [0x44,0xb3]
+        break16 8                # CHECK: break16 8                # encoding: [0x46,0x1b]
+        li16 $3, -1              # CHECK: li16 $3, -1              # encoding: [0xed,0xff]
+        move16 $3, $5            # CHECK: move16 $3, $5            # encoding: [0x0c,0x65]
+        sdbbp16 8                # CHECK: sdbbp16 8                # encoding: [0x46,0x3b]
+        subu16 $5, $16, $3       # CHECK: subu16 $5, $16, $3       # encoding: [0x04,0x3b]
+        xor16 $17, $5            # CHECK: xor16 $17, $5            # encoding: [0x44,0xd8]
 
 1:
