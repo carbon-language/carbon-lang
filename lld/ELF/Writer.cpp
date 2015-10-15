@@ -75,7 +75,7 @@ private:
   std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
-  void addStartStopSymbols(OutputSection<ELFT> *Sec);
+  void addStartStopSymbols(OutputSectionBase<ELFT::Is64Bits> *Sec);
   void setPhdr(Elf_Phdr *PH, uint32_t Type, uint32_t Flags, uintX_t FileOff,
                uintX_t VA, uintX_t Align);
   void copyPhdr(Elf_Phdr *PH, OutputSectionBase<ELFT::Is64Bits> *From);
@@ -403,7 +403,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   if (!isOutputDynamic())
     Symtab.addIgnoredSym("__tls_get_addr");
 
-  std::vector<OutputSection<ELFT> *> RegularSections;
+  std::vector<OutputSectionBase<ELFT::Is64Bits> *> RegularSections;
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (InputSection<ELFT> *C : F->getSections()) {
@@ -425,7 +425,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     }
   }
 
-  for (OutputSection<ELFT> *Sec : RegularSections)
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : RegularSections)
     addStartStopSymbols(Sec);
 
   Out<ELFT>::Dynamic->PreInitArraySec =
@@ -529,7 +529,7 @@ static bool isValidCIdentifier(StringRef S) {
 // respectively. This is not requested by the ELF standard, but GNU ld and
 // gold provide the feature, and used by many programs.
 template <class ELFT>
-void Writer<ELFT>::addStartStopSymbols(OutputSection<ELFT> *Sec) {
+void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT::Is64Bits> *Sec) {
   StringRef S = Sec->getName();
   if (!isValidCIdentifier(S))
     return;
