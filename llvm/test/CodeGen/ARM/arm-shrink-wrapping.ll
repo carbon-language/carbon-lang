@@ -624,3 +624,60 @@ loop2b:                                           ; preds = %loop1
 end:
   ret void
 }
+
+; Function Attrs: nounwind readnone
+declare double @llvm.pow.f64(double, double)
+
+; This function needs to spill floating point registers to
+; exerce the path where we were deferencing the end iterator
+; to access debug info location while inserting the spill code
+; during PEI with shrink-wrapping enable.
+; CHECK-LABEL: debug_info:
+;
+; ENABLE: tst{{(\.w)?}}  r2, #1
+; ENABLE-NEXT: beq      [[BB13:LBB[0-9_]+]]
+;
+; CHECK: push
+;
+; DISABLE: tst{{(\.w)?}}  r2, #1
+; DISABLE-NEXT: beq      [[BB13:LBB[0-9_]+]]
+;
+; CHECK: bl{{x?}} _pow
+;
+;
+; ENABLE: pop
+;
+; CHECK: [[BB13]]:
+; CHECK: vldr
+;
+; DISABLE: pop
+;
+; CHECK: bl
+define float @debug_info(float %gamma, float %slopeLimit, i1 %or.cond, double %tmp) {
+bb:
+  br i1 %or.cond, label %bb3, label %bb13
+
+bb3:                                              ; preds = %bb
+  %tmp4 = fcmp ogt float %gamma, 1.000000e+00
+  %tmp5 = fadd double 1.000000e+00, %tmp
+  %tmp6 = select i1 %tmp4, double %tmp5, double %tmp
+  %tmp10 = tail call double @llvm.pow.f64(double %tmp, double %tmp)
+  %tmp11 = fcmp une double %tmp6, %tmp
+  %tmp12 = fadd double %tmp10, %tmp10
+  %cutoff.0 = select i1 %tmp11, double %tmp12, double %tmp
+  %phitmp = fptrunc double %cutoff.0 to float
+  br label %bb13
+
+bb13:                                             ; preds = %bb3, %bb
+  %cutoff.1 = phi float [ 0.000000e+00, %bb ], [ %phitmp, %bb3 ]
+  ret float %cutoff.1
+}
+
+
+!llvm.dbg.cu = !{!0}
+!llvm.module.flags = !{!3}
+
+!0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "LLVM", isOptimized: true, runtimeVersion: 0, emissionKind: 1, enums: !2, retainedTypes: !2, subprograms: !2, globals: !2, imports: !2)
+!1 = !DIFile(filename: "a.cpp", directory: "b")
+!2 = !{}
+!3 = !{i32 2, !"Debug Info Version", i32 3}

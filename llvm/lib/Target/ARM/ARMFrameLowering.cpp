@@ -1060,7 +1060,7 @@ static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
                                     const TargetRegisterInfo *TRI) {
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  DebugLoc DL = MI->getDebugLoc();
+  DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
 
@@ -1220,7 +1220,7 @@ static void emitAlignedDPRCS2Restores(MachineBasicBlock &MBB,
                                       const TargetRegisterInfo *TRI) {
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  DebugLoc DL = MI->getDebugLoc();
+  DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
 
   // Find the frame index assigned to d8.
