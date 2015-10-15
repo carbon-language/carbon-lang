@@ -28,4 +28,7 @@ inst1:
 .Ltmp2:
 	.seh_endproc
 
-
+# Make sure the JIT doesn't bail out on BSS sections.
+        .bss
+bss_check:
+        .fill 8, 1, 0

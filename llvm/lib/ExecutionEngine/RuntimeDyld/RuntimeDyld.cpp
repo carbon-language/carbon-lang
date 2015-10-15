@@ -182,8 +182,6 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
           continue;
         uint64_t SectOffset;
         Check(getOffset(*I, *SI, SectOffset));
-        StringRef SectionData;
-        Check(SI->getContents(SectionData));
         bool IsCode = SI->isText();
         unsigned SectionID =
             findOrEmitSection(Obj, *SI, IsCode, LocalSections);
@@ -568,12 +566,14 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
   uint8_t *Addr;
   const char *pData = nullptr;
 
-  // In either case, set the location of the unrelocated section in memory,
-  // since we still process relocations for it even if we're not applying them.
-  Check(Section.getContents(data));
-  // Virtual sections have no data in the object image, so leave pData = 0
-  if (!IsVirtual)
+  // If this section contains any bits (i.e. isn't a virtual or bss section),
+  // grab a reference to them.
+  if (!IsVirtual && !IsZeroInit) {
+    // In either case, set the location of the unrelocated section in memory,
+    // since we still process relocations for it even if we're not applying them.
+    Check(Section.getContents(data));
     pData = data.data();
+  }
 
   // Code section alignment needs to be at least as high as stub alignment or
   // padding calculations may by incorrect when the section is remapped to a
