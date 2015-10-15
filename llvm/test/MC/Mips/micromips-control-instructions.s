@@ -42,6 +42,10 @@
 # CHECK-EL:    prefe 1, 8($5)             # encoding: [0x25,0x60,0x08,0xa4]
 # CHECK-EL:    cachee 1, 8($5)            # encoding: [0x25,0x60,0x08,0xa6]
 # CHECK-EL:    prefx 1, $3($5)            # encoding: [0x65,0x54,0xa0,0x09]
+# CHECK-EL:    swre $24, 5($3)            # encoding: [0x03,0x63,0x05,0xa2]
+# CHECK-EL:    swle $24, 5($3)            # encoding: [0x03,0x63,0x05,0xa0]
+# CHECK-EL:    lwre $24, 5($3)            # encoding: [0x03,0x63,0x05,0x66]
+# CHECK-EL:    lwle $24, 2($4)            # encoding: [0x04,0x63,0x02,0x64]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -78,6 +82,10 @@
 # CHECK-EB:   prefe 1, 8($5)              # encoding: [0x60,0x25,0xa4,0x08]
 # CHECK-EB:   cachee 1, 8($5)             # encoding: [0x60,0x25,0xa6,0x08]
 # CHECK-EB:   prefx 1, $3($5)             # encoding: [0x54,0x65,0x09,0xa0]
+# CHECK-EB:   swre $24, 5($3)             # encoding: [0x63,0x03,0xa2,0x05]
+# CHECK-EB:   swle $24, 5($3)             # encoding: [0x63,0x03,0xa0,0x05]
+# CHECK-EB:   lwre $24, 5($3)             # encoding: [0x63,0x03,0x66,0x05]
+# CHECK-EB:   lwle $24, 2($4)             # encoding: [0x63,0x04,0x64,0x02]
 
     sdbbp
     sdbbp 34
@@ -109,3 +117,7 @@
     prefe 1, 8($5)
     cachee 1, 8($5)
     prefx 1, $3($5)
+    swre $24, 5($3)
+    swle $24, 5($3)
+    lwre $24, 5($3)
+    lwle $24, 2($4)
