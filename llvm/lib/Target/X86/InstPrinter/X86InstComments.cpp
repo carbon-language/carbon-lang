@@ -107,6 +107,51 @@ static void getZeroExtensionTypes(const MCInst *MI, MVT &SrcVT, MVT &DstVT) {
   }
 }
 
+#define CASE_VSHUF_COMMON(Inst, Suffix, src2)       \
+  case X86::VSHUFF##Inst##Suffix##r##src2##i:       \
+  case X86::VSHUFF##Inst##Suffix##r##src2##ik:      \
+  case X86::VSHUFF##Inst##Suffix##r##src2##ikz:     \
+  case X86::VSHUFI##Inst##Suffix##r##src2##i:       \
+  case X86::VSHUFI##Inst##Suffix##r##src2##ik:      \
+  case X86::VSHUFI##Inst##Suffix##r##src2##ikz:
+
+#define CASE_VSHUF(Inst)            \
+  CASE_VSHUF_COMMON(Inst, Z, r)     \
+  CASE_VSHUF_COMMON(Inst, Z, m)     \
+  CASE_VSHUF_COMMON(Inst, Z256, r)  \
+  CASE_VSHUF_COMMON(Inst, Z256, m)  \
+
+/// \brief Extracts the types and if it has memory operand for a given
+/// (SHUFF32x4/SHUFF64x2/SHUFI32x4/SHUFI64x2) instruction.
+static void getVSHUF64x2FamilyInfo(const MCInst *MI, MVT &VT, bool &HasMemOp) {
+  HasMemOp = false;
+  switch (MI->getOpcode()) {
+  default:
+    llvm_unreachable("Unknown VSHUF64x2 family instructions.");
+    break;
+  CASE_VSHUF_COMMON(64X2, Z, m)
+    HasMemOp = true;        // FALL THROUGH.
+  CASE_VSHUF_COMMON(64X2, Z, r)
+    VT = MVT::v8i64;
+    break;
+  CASE_VSHUF_COMMON(64X2, Z256, m)
+    HasMemOp = true;        // FALL THROUGH.
+  CASE_VSHUF_COMMON(64X2, Z256, r)
+    VT = MVT::v4i64;
+    break;
+  CASE_VSHUF_COMMON(32X4, Z, m)
+    HasMemOp = true;        // FALL THROUGH.
+  CASE_VSHUF_COMMON(32X4, Z, r)
+    VT = MVT::v16i32;
+    break;
+  CASE_VSHUF_COMMON(32X4, Z256, m)
+    HasMemOp = true;        // FALL THROUGH.
+  CASE_VSHUF_COMMON(32X4, Z256, r)
+    VT = MVT::v8i32;
+    break;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Entrypoint
 //===----------------------------------------------------------------------===//
@@ -726,7 +771,25 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
-
+  CASE_VSHUF(64X2)
+  CASE_VSHUF(32X4) {
+    MVT VT;
+    bool HasMemOp;
+    unsigned NumOp = MI->getNumOperands();
+    getVSHUF64x2FamilyInfo(MI, VT, HasMemOp);
+    decodeVSHUF64x2FamilyMask(VT, MI->getOperand(NumOp - 1).getImm(),
+                              ShuffleMask);
+    DestName = getRegName(MI->getOperand(0).getReg());
+    if (HasMemOp) {
+      assert((NumOp >= 8) && "Expected at least 8 operands!");
+      Src1Name = getRegName(MI->getOperand(NumOp - 7).getReg());
+    } else {
+      assert((NumOp >= 4) && "Expected at least 4 operands!");
+      Src2Name = getRegName(MI->getOperand(NumOp - 2).getReg());
+      Src1Name = getRegName(MI->getOperand(NumOp - 3).getReg());
+    }
+    break;
+  }
   case X86::UNPCKLPDrr:
   case X86::VUNPCKLPDrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());

@@ -4162,7 +4162,9 @@ define <16 x float>@test_int_x86_avx512_mask_shuf_f32x4(<16 x float> %x0, <16 x 
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
 ; CHECK-NEXT:    vshuff32x4 $22, %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    ## zmm2 = zmm0[8,9,10,11,4,5,6,7],zmm1[4,5,6,7,0,1,2,3]
 ; CHECK-NEXT:    vshuff32x4 $22, %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[8,9,10,11,4,5,6,7],zmm1[4,5,6,7,0,1,2,3]
 ; CHECK-NEXT:    vaddps %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    retq
   %res = call <16 x float> @llvm.x86.avx512.mask.shuf.f32x4(<16 x float> %x0, <16 x float> %x1, i32 22, <16 x float> %x3, i16 %x4)
@@ -4179,8 +4181,11 @@ define <8 x double>@test_int_x86_avx512_mask_shuf_f64x2(<8 x double> %x0, <8 x d
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vshuff64x2 $22, %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    ## zmm2 = zmm0[4,5,2,3],zmm1[2,3,0,1]
 ; CHECK-NEXT:    vshuff64x2 $22, %zmm1, %zmm0, %zmm3 {%k1} {z}
+; CHECK-NEXT:    ## zmm3 = zmm0[4,5,2,3],zmm1[2,3,0,1]
 ; CHECK-NEXT:    vshuff64x2 $22, %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[4,5,2,3],zmm1[2,3,0,1]
 ; CHECK-NEXT:    vaddpd %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    vaddpd %zmm3, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
@@ -4200,7 +4205,9 @@ define <16 x i32>@test_int_x86_avx512_mask_shuf_i32x4(<16 x i32> %x0, <16 x i32>
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
 ; CHECK-NEXT:    vshufi32x4 $22, %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    ## zmm2 = zmm0[8,9,10,11,4,5,6,7],zmm1[4,5,6,7,0,1,2,3]
 ; CHECK-NEXT:    vshufi32x4 $22, %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[8,9,10,11,4,5,6,7],zmm1[4,5,6,7,0,1,2,3]
 ; CHECK-NEXT:    vpaddd %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    retq
   %res = call <16 x i32> @llvm.x86.avx512.mask.shuf.i32x4(<16 x i32> %x0, <16 x i32> %x1, i32 22, <16 x i32> %x3, i16 %x4)
@@ -4217,7 +4224,9 @@ define <8 x i64>@test_int_x86_avx512_mask_shuf_i64x2(<8 x i64> %x0, <8 x i64> %x
 ; CHECK-NEXT:    movzbl %dil, %eax
 ; CHECK-NEXT:    kmovw %eax, %k1
 ; CHECK-NEXT:    vshufi64x2 $22, %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    ## zmm2 = zmm0[4,5,2,3],zmm1[2,3,0,1]
 ; CHECK-NEXT:    vshufi64x2 $22, %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    ## zmm0 = zmm0[4,5,2,3],zmm1[2,3,0,1]
 ; CHECK-NEXT:    vpaddq %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    retq
   %res = call <8 x i64> @llvm.x86.avx512.mask.shuf.i64x2(<8 x i64> %x0, <8 x i64> %x1, i32 22, <8 x i64> %x3, i8 %x4)

@@ -264,6 +264,26 @@ void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
   }
 }
 
+/// \brief Decode a shuffle packed values at 128-bit granularity
+/// (SHUFF32x4/SHUFF64x2/SHUFI32x4/SHUFI64x2)
+/// immediate mask into a shuffle mask.
+void decodeVSHUF64x2FamilyMask(MVT VT, unsigned Imm,
+                        SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  unsigned NumElementsInLane = 128 / VT.getScalarSizeInBits();
+  unsigned ControlBitsMask = NumLanes - 1;
+  unsigned NumControlBits  = NumLanes / 2;
+
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    unsigned LaneMask = (Imm >> (l * NumControlBits)) & ControlBitsMask;
+    // We actually need the other source.
+    if (l >= NumLanes / 2)
+      LaneMask += NumLanes;
+    for (unsigned i = 0; i != NumElementsInLane; ++i)
+      ShuffleMask.push_back(LaneMask * NumElementsInLane + i);
+  }
+}
+
 void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
                           SmallVectorImpl<int> &ShuffleMask) {
   unsigned HalfSize = VT.getVectorNumElements() / 2;
