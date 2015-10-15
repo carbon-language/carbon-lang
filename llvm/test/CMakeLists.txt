@@ -45,6 +45,7 @@ set(LLVM_TEST_DEPENDS
           llvm-mcmarkup
           llvm-nm
           llvm-objdump
+          llvm-pdbdump
           llvm-profdata
           llvm-ranlib
           llvm-readobj
