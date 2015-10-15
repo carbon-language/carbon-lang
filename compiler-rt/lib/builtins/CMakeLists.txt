@@ -162,47 +162,60 @@ if (HAVE_UNWIND_H)
       gcc_personality_v0.c)
 endif ()
 
-set(x86_64_SOURCES
-  x86_64/floatdidf.c
-  x86_64/floatdisf.c
-  x86_64/floatdixf.c
-  x86_64/floatundidf.S
-  x86_64/floatundisf.S
-  x86_64/floatundixf.S
-  ${GENERIC_SOURCES})
-set(x86_64h_SOURCES ${x86_64_SOURCES})
-
-if(WIN32)
+if (NOT MSVC)
   set(x86_64_SOURCES
-      ${x86_64_SOURCES}
-      x86_64/chkstk.S)
-endif()
+      x86_64/floatdidf.c
+      x86_64/floatdisf.c
+      x86_64/floatdixf.c
+      x86_64/floatundidf.S
+      x86_64/floatundisf.S
+      x86_64/floatundixf.S
+      ${GENERIC_SOURCES})
+  set(x86_64h_SOURCES ${x86_64_SOURCES})
 
-set(i386_SOURCES
-  i386/ashldi3.S
-  i386/ashrdi3.S
-  i386/divdi3.S
-  i386/floatdidf.S
-  i386/floatdisf.S
-  i386/floatdixf.S
-  i386/floatundidf.S
-  i386/floatundisf.S
-  i386/floatundixf.S
-  i386/lshrdi3.S
-  i386/moddi3.S
-  i386/muldi3.S
-  i386/udivdi3.S
-  i386/umoddi3.S
-  ${GENERIC_SOURCES})
+  if (WIN32)
+    set(x86_64_SOURCES
+        ${x86_64_SOURCES}
+        x86_64/chkstk.S)
+  endif()
 
-if(WIN32)
   set(i386_SOURCES
-      ${i386_SOURCES}
-      i386/chkstk.S)
-endif()
+      i386/ashldi3.S
+      i386/ashrdi3.S
+      i386/divdi3.S
+      i386/floatdidf.S
+      i386/floatdisf.S
+      i386/floatdixf.S
+      i386/floatundidf.S
+      i386/floatundisf.S
+      i386/floatundixf.S
+      i386/lshrdi3.S
+      i386/moddi3.S
+      i386/muldi3.S
+      i386/udivdi3.S
+      i386/umoddi3.S
+      ${GENERIC_SOURCES})
 
-set(i686_SOURCES
-  ${i386_SOURCES})
+  if (WIN32)
+    set(i386_SOURCES
+        ${i386_SOURCES}
+        i386/chkstk.S)
+  endif()
+
+  set(i686_SOURCES
+      ${i386_SOURCES})
+else () # MSVC
+  # Use C versions of functions when building on MSVC
+  # MSVC's assembler takes Intel syntax, not AT&T syntax
+  set(x86_64_SOURCES
+      x86_64/floatdidf.c
+      x86_64/floatdisf.c
+      x86_64/floatdixf.c
+      ${GENERIC_SOURCES})
+  set(x86_64h_SOURCES ${x86_64_SOURCES})
+  set(i386_SOURCES ${GENERIC_SOURCES})
+  set(i686_SOURCES ${i386_SOURCES})
+endif () # if (NOT MSVC)
 
 set(arm_SOURCES
   arm/adddf3vfp.S
