@@ -50,8 +50,7 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
                DiagnosticsEngine &Diags,
                IntrusiveRefCntPtr<vfs::FileSystem> VFS)
     : Opts(createDriverOptTable()), Diags(Diags), VFS(VFS), Mode(GCCMode),
-      SaveTemps(SaveTempsNone), LTOMode(LTOK_None),
-      ClangExecutable(ClangExecutable),
+      SaveTemps(SaveTempsNone), ClangExecutable(ClangExecutable),
       SysRoot(DEFAULT_SYSROOT), UseStdLib(true),
       DefaultTargetTriple(DefaultTargetTriple),
       DriverTitle("clang LLVM compiler"), CCPrintOptionsFilename(nullptr),
@@ -367,31 +366,6 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
   return Target;
 }
 
-// \brief Parse the LTO options and record the type of LTO compilation
-// based on which -f(no-)?lto(=.*)? option occurs last.
-void Driver::setLTOMode(const llvm::opt::ArgList &Args) {
-  LTOMode = LTOK_None;
-  if (!Args.hasFlag(options::OPT_flto, options::OPT_flto_EQ,
-                    options::OPT_fno_lto, false))
-    return;
-
-  StringRef LTOName("full");
-
-  const Arg *A = Args.getLastArg(options::OPT_flto_EQ);
-  if (A) LTOName = A->getValue();
-
-  LTOMode = llvm::StringSwitch<LTOKind>(LTOName)
-                .Case("full", LTOK_Full)
-                .Case("thin", LTOK_Thin)
-                .Default(LTOK_Unknown);
-
-  if (LTOMode == LTOK_Unknown) {
-    assert(A);
-    Diag(diag::err_drv_unsupported_option_argument) << A->getOption().getName()
-                                                    << A->getValue();
-  }
-}
-
 Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
@@ -474,8 +448,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
                     .Case("obj", SaveTempsObj)
                     .Default(SaveTempsCwd);
   }
-
-  setLTOMode(Args);
 
   std::unique_ptr<llvm::opt::InputArgList> UArgs =
       llvm::make_unique<InputArgList>(std::move(Args));
@@ -1595,7 +1567,7 @@ Driver::ConstructPhaseAction(const ToolChain &TC, const ArgList &Args,
                                                types::TY_LLVM_BC);
   }
   case phases::Backend: {
-    if (isUsingLTO()) {
+    if (IsUsingLTO(Args)) {
       types::ID Output =
           Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
       return llvm::make_unique<BackendJobAction>(std::move(Input), Output);
@@ -1614,6 +1586,10 @@ Driver::ConstructPhaseAction(const ToolChain &TC, const ArgList &Args,
   }
 
   llvm_unreachable("invalid phase in ConstructPhaseAction");
+}
+
+bool Driver::IsUsingLTO(const ArgList &Args) const {
+  return Args.hasFlag(options::OPT_flto, options::OPT_fno_lto, false);
 }
 
 void Driver::BuildJobs(Compilation &C) const {
