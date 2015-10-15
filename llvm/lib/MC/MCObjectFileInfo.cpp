@@ -114,37 +114,22 @@ void MCObjectFileInfo::initMachOMCObjectFileInfo(Triple T) {
     = Ctx->getMachOSection("__TEXT", "__const", 0,
                            SectionKind::getReadOnly());
 
-  // If the target is not powerpc, map the coal sections to the non-coal
-  // sections.
-  //
-  // "__TEXT/__textcoal_nt" => section "__TEXT/__text"
-  // "__TEXT/__const_coal"  => section "__TEXT/__const"
-  // "__DATA/__datacoal_nt" => section "__DATA/__data"
-  Triple::ArchType ArchTy = T.getArch();
-
-  if (ArchTy == Triple::ppc || ArchTy == Triple::ppc64) {
-    TextCoalSection
-      = Ctx->getMachOSection("__TEXT", "__textcoal_nt",
-                             MachO::S_COALESCED |
-                             MachO::S_ATTR_PURE_INSTRUCTIONS,
-                             SectionKind::getText());
-    ConstTextCoalSection
-      = Ctx->getMachOSection("__TEXT", "__const_coal",
-                             MachO::S_COALESCED,
-                             SectionKind::getReadOnly());
-    DataCoalSection
-      = Ctx->getMachOSection("__DATA","__datacoal_nt",
-                             MachO::S_COALESCED,
-                             SectionKind::getDataRel());
-  } else {
-    TextCoalSection = TextSection;
-    ConstTextCoalSection = ReadOnlySection;
-    DataCoalSection = DataSection;
-  }
-
+  TextCoalSection
+    = Ctx->getMachOSection("__TEXT", "__textcoal_nt",
+                           MachO::S_COALESCED |
+                           MachO::S_ATTR_PURE_INSTRUCTIONS,
+                           SectionKind::getText());
+  ConstTextCoalSection
+    = Ctx->getMachOSection("__TEXT", "__const_coal",
+                           MachO::S_COALESCED,
+                           SectionKind::getReadOnly());
   ConstDataSection  // .const_data
     = Ctx->getMachOSection("__DATA", "__const", 0,
                            SectionKind::getReadOnlyWithRel());
+  DataCoalSection
+    = Ctx->getMachOSection("__DATA","__datacoal_nt",
+                           MachO::S_COALESCED,
+                           SectionKind::getDataRel());
   DataCommonSection
     = Ctx->getMachOSection("__DATA","__common",
                            MachO::S_ZEROFILL,
