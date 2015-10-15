@@ -4246,6 +4246,40 @@ bool X86::isZeroNode(SDValue Elt) {
   return false;
 }
 
+// Build a vector of constants
+// Use an UNDEF node if MaskElt == -1.
+// Spilt 64-bit constants in the 32-bit mode.
+static SDValue getConstVector(ArrayRef<int> Values, EVT VT,
+                              SelectionDAG &DAG,
+                              SDLoc dl, bool IsMask = false) {
+
+  SmallVector<SDValue, 32>  Ops;
+  bool Split = false;
+
+  EVT ConstVecVT = VT;
+  unsigned NumElts = VT.getVectorNumElements();
+  bool In64BitMode = DAG.getTargetLoweringInfo().isTypeLegal(MVT::i64);
+  if (!In64BitMode && VT.getScalarType() == MVT::i64) {
+    ConstVecVT = MVT::getVectorVT(MVT::i32, NumElts * 2);
+    Split = true;
+  }
+
+  EVT EltVT = ConstVecVT.getScalarType();
+  for (unsigned i = 0; i < NumElts; ++i) {
+    bool IsUndef = Values[i] < 0 && IsMask;
+    SDValue OpNode = IsUndef ? DAG.getUNDEF(EltVT) :
+      DAG.getConstant(Values[i], dl, EltVT);
+    Ops.push_back(OpNode);
+    if (Split)
+      Ops.push_back(IsUndef ? DAG.getUNDEF(EltVT) :
+                    DAG.getConstant(0, dl, EltVT));
+  }
+  SDValue ConstsNode = DAG.getNode(ISD::BUILD_VECTOR, dl, ConstVecVT, Ops);
+  if (Split)
+    ConstsNode = DAG.getBitcast(VT, ConstsNode);
+  return ConstsNode;
+}
+
 /// Returns a vector of specified type with all zero elements.
 static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
                              SelectionDAG &DAG, SDLoc dl) {
@@ -10722,12 +10756,7 @@ static SDValue lowerVectorShuffleWithPERMV(SDLoc DL, MVT VT,
   MVT MaskEltVT = MVT::getIntegerVT(VT.getScalarSizeInBits());
   MVT MaskVecVT = MVT::getVectorVT(MaskEltVT, VT.getVectorNumElements());
 
-  SmallVector<SDValue, 32>  VPermMask;
-  for (unsigned i = 0; i < VT.getVectorNumElements(); ++i)
-    VPermMask.push_back(Mask[i] < 0 ? DAG.getUNDEF(MaskEltVT) :
-                        DAG.getConstant(Mask[i], DL, MaskEltVT));
-  SDValue MaskNode = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskVecVT,
-                                 VPermMask);
+  SDValue MaskNode = getConstVector(Mask, MaskVecVT, DAG, DL, true);
   if (isSingleInputShuffleMask(Mask))
     return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
 
