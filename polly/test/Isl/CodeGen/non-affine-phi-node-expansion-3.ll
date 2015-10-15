@@ -18,12 +18,6 @@ loop:
 ; CHECK-NEXT: %p_val1 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT: %p_val2 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT: store float %p_val0, float* %merge.phiops
-; CHECK-NEXT: store float %p_val1, float* %val1.s2a
-; CHECK-NEXT: store float %p_val2, float* %val2.s2a
-
-; FIXME -> The last two writes are not really needed and can be dropped if the
-;          incoming block of the PHI and the value that is used share the same
-;          non-affine region.
 
 branch1:
   br i1 %cond1, label %branch2, label %backedge

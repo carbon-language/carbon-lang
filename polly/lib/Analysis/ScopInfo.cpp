@@ -3228,7 +3228,8 @@ void ScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       // As we pretend there is a use (or more precise a write) of OpI in OpBB
       // we have to insert a scalar dependence from the definition of OpI to
       // OpBB if the definition is not in OpBB.
-      if (OpIBB != OpBB) {
+      if (scop->getStmtForBasicBlock(OpIBB) !=
+          scop->getStmtForBasicBlock(OpBB)) {
         addScalarReadAccess(OpI, PHI, OpBB);
         addScalarWriteAccess(OpI);
       }

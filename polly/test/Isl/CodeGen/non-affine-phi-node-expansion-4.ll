@@ -16,7 +16,6 @@ loop:
 ; CHECK-NEXT:    %p_val0 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT:    %p_val1 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT:    store float %p_val0, float* %merge.phiops
-; CHECK-NEXT:    store float %p_val1, float* %val1.s2a
 
 ; The interesting instruction here is %val2, which does not dominate the exit of
 ; the non-affine region. Care needs to be taken when code-generating this write.
@@ -29,13 +28,6 @@ branch1:
 ; CHECK-LABEL: polly.stmt.branch1:
 ; CHECK-NEXT:    %p_val2 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT:    store float %p_val1, float* %merge.phiops
-; CHECK-NEXT:    store float %p_val2, float* %val2.s2a
-; CHECK-NEXT:    br
-
-; FIXME -> The two writes of %p_val1 and %p_val2 are not really needed and can
-;          be dropped if the incoming block of the PHI and the value that is
-;          used share the same non-affine region.
-
 
 branch2:
   br label %backedge
