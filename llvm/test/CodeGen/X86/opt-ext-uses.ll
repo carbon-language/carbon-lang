@@ -1,4 +1,10 @@
-; RUN: llc < %s -march=x86 | grep movw | count 1
+; RUN: llc < %s -march=x86 | FileCheck %s
+
+; This test should get one and only one register to register mov.
+; CHECK-LABEL: t:
+; CHECK:     movw
+; CHECK-NOT: movw
+; CHECK:     ret
 
 define signext i16 @t()   {
 entry:
