@@ -17,7 +17,6 @@ loop:
 ; CHECK-NEXT:    %p_val1 = fadd float 1.000000e+00, 2.000000e+00
 ; CHECK-NEXT:    store float %p_val0, float* %merge.phiops
 ; CHECK-NEXT:    store float %p_val1, float* %val1.s2a
-; CHECK-NEXT:    br
 
 ; The interesting instruction here is %val2, which does not dominate the exit of
 ; the non-affine region. Care needs to be taken when code-generating this write.
@@ -43,7 +42,6 @@ branch2:
 
 ; CHECK-LABEL: polly.stmt.branch2:
 ; CHECK-NEXT:    store float %p_val2, float* %merge.phiops
-; CHECK-NEXT:    br
 
 backedge:
   %merge = phi float [%val0, %loop], [%val1, %branch1], [%val2, %branch2]
