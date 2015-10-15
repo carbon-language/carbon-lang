@@ -373,7 +373,7 @@
 // CHECK-WARNING-DAG: optimization flag '-ftracer' is not supported
 // CHECK-WARNING-DAG: optimization flag '-funroll-all-loops' is not supported
 // CHECK-WARNING-DAG: optimization flag '-funswitch-loops' is not supported
-// CHECK-WARNING-DAG: optimization flag '-flto=1' is not supported
+// CHECK-WARNING-DAG: unsupported argument '1' to option 'flto='
 // CHECK-WARNING-DAG: optimization flag '-falign-labels' is not supported
 // CHECK-WARNING-DAG: optimization flag '-falign-labels=100' is not supported
 // CHECK-WARNING-DAG: optimization flag '-falign-loops' is not supported

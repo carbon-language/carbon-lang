@@ -499,7 +499,9 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.MergeFunctions = Args.hasArg(OPT_fmerge_functions);
 
-  Opts.PrepareForLTO = Args.hasArg(OPT_flto);
+  Opts.PrepareForLTO = Args.hasArg(OPT_flto, OPT_flto_EQ);
+  const Arg *A = Args.getLastArg(OPT_flto, OPT_flto_EQ);
+  Opts.EmitFunctionSummary = A && A->containsValue("thin");
 
   Opts.MSVolatile = Args.hasArg(OPT_fms_volatile);
 

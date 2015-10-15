@@ -52,6 +52,14 @@ namespace driver {
   class SanitizerArgs;
   class ToolChain;
 
+/// Describes the kind of LTO mode selected via -f(no-)?lto(=.*)? options.
+enum LTOKind {
+  LTOK_None,
+  LTOK_Full,
+  LTOK_Thin,
+  LTOK_Unknown
+};
+
 /// Driver - Encapsulate logic for constructing compilation processes
 /// from a set of gcc-driver-like command line arguments.
 class Driver {
@@ -73,6 +81,9 @@ class Driver {
     SaveTempsCwd,
     SaveTempsObj
   } SaveTemps;
+
+  /// LTO mode selected via -f(no-)?lto(=.*)? options.
+  LTOKind LTOMode;
 
 public:
   // Diag - Forwarding function for diagnostics.
@@ -411,9 +422,17 @@ public:
   /// handle this action.
   bool ShouldUseClangCompiler(const JobAction &JA) const;
 
-  bool IsUsingLTO(const llvm::opt::ArgList &Args) const;
+  /// Returns true if we are performing any kind of LTO.
+  bool isUsingLTO() const { return LTOMode != LTOK_None; }
+
+  /// Get the specific kind of LTO being performed.
+  LTOKind getLTOMode() const { return LTOMode; }
 
 private:
+  /// Parse the \p Args list for LTO options and record the type of LTO
+  /// compilation based on which -f(no-)?lto(=.*)? option occurs last.
+  void setLTOMode(const llvm::opt::ArgList &Args);
+
   /// \brief Retrieves a ToolChain for a particular \p Target triple.
   ///
   /// Will cache ToolChains for the life of the driver object, and create them
