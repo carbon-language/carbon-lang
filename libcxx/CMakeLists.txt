@@ -76,14 +76,14 @@ option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 # On UNIX platforms other than Apple unless 'LIBCXX_ENABLE_STATIC_ABI_LIBRARY'
 # is on.
 set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE OFF)
-if (LLVM_HAVE_LINK_VERSION_SCRIPT AND NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY)
+if (LLVM_HAVE_LINK_VERSION_SCRIPT AND NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY
+      AND PYTHONINTERP_FOUND)
     set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE ON)
 endif()
 
-#FIXME(EricWF)
 option(LIBCXX_ENABLE_ABI_LINKER_SCRIPT
       "Use and install a linker script for the given ABI library"
-      OFF) #${ENABLE_LINKER_SCRIPT_DEFAULT_VALUE})
+      ${ENABLE_LINKER_SCRIPT_DEFAULT_VALUE})
 
 # Build libc++abi with libunwind. We need this option to determine whether to
 # link with libunwind or libgcc_s while running the test cases.

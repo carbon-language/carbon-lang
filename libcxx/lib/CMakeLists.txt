@@ -140,7 +140,7 @@ if (LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
   # is a target name and not a library. Ex cxxabi_shared.
   set(SCRIPT_ABI_LIBNAME "${LIBCXX_CXX_ABI_LIBRARY}")
   if (SCRIPT_ABI_LIBNAME STREQUAL "cxxabi_shared")
-    set("${SCRIPT_ABI_LIBNAME}" "c++abi")
+    set(SCRIPT_ABI_LIBNAME "c++abi")
   endif()
   # Generate a linker script inplace of a libc++.so symlink. Rerun this command
   # after cxx builds.
