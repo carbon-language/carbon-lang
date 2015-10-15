@@ -447,6 +447,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.BraceWrapping = {false, false, false, false, false, false,
                              false, false, false, false, false};
   LLVMStyle.BreakConstructorInitializersBeforeComma = false;
+  LLVMStyle.BreakAfterJavaFieldAnnotations = false;
   LLVMStyle.ColumnLimit = 80;
   LLVMStyle.CommentPragmas = "^ IWYU pragma:";
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
@@ -550,8 +551,9 @@ FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
   FormatStyle ChromiumStyle = getGoogleStyle(Language);
   if (Language == FormatStyle::LK_Java) {
     ChromiumStyle.AllowShortIfStatementsOnASingleLine = true;
-    ChromiumStyle.IndentWidth = 4;
+    ChromiumStyle.BreakAfterJavaFieldAnnotations = true;
     ChromiumStyle.ContinuationIndentWidth = 8;
+    ChromiumStyle.IndentWidth = 4;
   } else {
     ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
     ChromiumStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;

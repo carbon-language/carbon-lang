@@ -236,6 +236,9 @@ struct FormatStyle {
   /// the commas with the colon.
   bool BreakConstructorInitializersBeforeComma;
 
+  /// \brief Break after each annotation on a field in Java files.
+  bool BreakAfterJavaFieldAnnotations;
+
   /// \brief The column limit.
   ///
   /// A column limit of \c 0 means that there is no column limit. In this case,
@@ -560,8 +563,8 @@ struct FormatStyle {
            BreakBeforeTernaryOperators == R.BreakBeforeTernaryOperators &&
            BreakConstructorInitializersBeforeComma ==
                R.BreakConstructorInitializersBeforeComma &&
-           ColumnLimit == R.ColumnLimit &&
-           CommentPragmas == R.CommentPragmas &&
+           BreakAfterJavaFieldAnnotations == R.BreakAfterJavaFieldAnnotations &&
+           ColumnLimit == R.ColumnLimit && CommentPragmas == R.CommentPragmas &&
            ConstructorInitializerAllOnOneLineOrOnePerLine ==
                R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
            ConstructorInitializerIndentWidth ==
@@ -604,8 +607,7 @@ struct FormatStyle {
            SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
            SpacesInParentheses == R.SpacesInParentheses &&
            SpacesInSquareBrackets == R.SpacesInSquareBrackets &&
-           Standard == R.Standard &&
-           TabWidth == R.TabWidth &&
+           Standard == R.Standard && TabWidth == R.TabWidth &&
            UseTab == R.UseTab;
   }
 };

@@ -2176,7 +2176,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
        Style.Language == FormatStyle::LK_JavaScript) &&
       Left.is(TT_LeadingJavaAnnotation) &&
       Right.isNot(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
-      Line.Last->is(tok::l_brace))
+      (Line.Last->is(tok::l_brace) || Style.BreakAfterJavaFieldAnnotations))
     return true;
 
   return false;
