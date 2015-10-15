@@ -32,8 +32,8 @@ ARM_EABI_FNALIAS(l2d, floatdidf)
 COMPILER_RT_ABI double
 __floatdidf(di_int a)
 {
-	static const double twop52 = 0x1.0p52;
-	static const double twop32 = 0x1.0p32;
+	static const double twop52 = 4503599627370496.0; // 0x1.0p52
+	static const double twop32 = 4294967296.0; // 0x1.0p32
 	
 	union { int64_t x; double d; } low = { .d = twop52 };
 	
