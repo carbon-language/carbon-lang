@@ -1244,6 +1244,8 @@ static const char *getTypeString(uint64_t Type) {
   LLVM_READOBJ_TYPE_CASE(SYMENT);
   LLVM_READOBJ_TYPE_CASE(SYMTAB);
   LLVM_READOBJ_TYPE_CASE(TEXTREL);
+  LLVM_READOBJ_TYPE_CASE(VERDEF);
+  LLVM_READOBJ_TYPE_CASE(VERDEFNUM);
   LLVM_READOBJ_TYPE_CASE(VERNEED);
   LLVM_READOBJ_TYPE_CASE(VERNEEDNUM);
   LLVM_READOBJ_TYPE_CASE(VERSYM);
@@ -1378,6 +1380,7 @@ void ELFDumper<ELFT>::printValue(uint64_t Type, uint64_t Value) {
   case DT_FINI_ARRAY:
   case DT_PREINIT_ARRAY:
   case DT_DEBUG:
+  case DT_VERDEF:
   case DT_VERNEED:
   case DT_VERSYM:
   case DT_GNU_HASH:
@@ -1391,6 +1394,7 @@ void ELFDumper<ELFT>::printValue(uint64_t Type, uint64_t Value) {
     OS << format("0x%" PRIX64, Value);
     break;
   case DT_RELCOUNT:
+  case DT_VERDEFNUM:
   case DT_VERNEEDNUM:
   case DT_MIPS_RLD_VERSION:
   case DT_MIPS_LOCAL_GOTNO:

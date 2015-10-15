@@ -1,0 +1,7 @@
+// Test that llvm-readobj dumps version info tags correctly.
+
+RUN: llvm-readobj -dynamic-table %p/Inputs/verdef.elf-x86-64 | FileCheck %s
+
+CHECK: 0x000000006FFFFFF0 VERSYM               0x24C
+CHECK: 0x000000006FFFFFFC VERDEF               0x25C
+CHECK: 0x000000006FFFFFFD VERDEFNUM            3
