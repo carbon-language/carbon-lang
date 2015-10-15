@@ -844,7 +844,7 @@ llvm::DIType *CGDebugInfo::CreateType(const FunctionType *Ty,
   }
 
   llvm::DITypeRefArray EltTypeArray = DBuilder.getOrCreateTypeArray(EltTys);
-  return DBuilder.createSubroutineType(Unit, EltTypeArray);
+  return DBuilder.createSubroutineType(EltTypeArray);
 }
 
 /// Convert an AccessSpecifier into the corresponding DINode flag.
@@ -1095,7 +1095,7 @@ llvm::DISubroutineType *CGDebugInfo::getOrCreateInstanceMethodType(
   if (Func->getExtProtoInfo().RefQualifier == RQ_RValue)
     Flags |= llvm::DINode::FlagRValueReference;
 
-  return DBuilder.createSubroutineType(Unit, EltTypeArray, Flags);
+  return DBuilder.createSubroutineType(EltTypeArray, Flags);
 }
 
 /// isFunctionLocalClass - Return true if CXXRecordDecl is defined
@@ -1395,7 +1395,7 @@ llvm::DIType *CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile *Unit) {
   /* Function type */
   llvm::Metadata *STy = getOrCreateType(Context.IntTy, Unit);
   llvm::DITypeRefArray SElements = DBuilder.getOrCreateTypeArray(STy);
-  llvm::DIType *SubTy = DBuilder.createSubroutineType(Unit, SElements);
+  llvm::DIType *SubTy = DBuilder.createSubroutineType(SElements);
   unsigned Size = Context.getTypeSize(Context.VoidPtrTy);
   llvm::DIType *vtbl_ptr_type =
       DBuilder.createPointerType(SubTy, Size, 0, "__vtbl_ptr_type");
@@ -2599,8 +2599,7 @@ llvm::DISubroutineType *CGDebugInfo::getOrCreateFunctionType(const Decl *D,
   if (!D || DebugKind <= CodeGenOptions::DebugLineTablesOnly)
     // Create fake but valid subroutine type. Otherwise -verify would fail, and
     // subprogram DIE will miss DW_AT_decl_file and DW_AT_decl_line fields.
-    return DBuilder.createSubroutineType(F,
-                                         DBuilder.getOrCreateTypeArray(None));
+    return DBuilder.createSubroutineType(DBuilder.getOrCreateTypeArray(None));
 
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
@@ -2637,7 +2636,7 @@ llvm::DISubroutineType *CGDebugInfo::getOrCreateFunctionType(const Decl *D,
       Elts.push_back(DBuilder.createUnspecifiedParameter());
 
     llvm::DITypeRefArray EltTypeArray = DBuilder.getOrCreateTypeArray(Elts);
-    return DBuilder.createSubroutineType(F, EltTypeArray);
+    return DBuilder.createSubroutineType(EltTypeArray);
   }
 
   // Handle variadic function types; they need an additional
@@ -2651,7 +2650,7 @@ llvm::DISubroutineType *CGDebugInfo::getOrCreateFunctionType(const Decl *D,
           EltTys.push_back(getOrCreateType(FPT->getParamType(i), F));
       EltTys.push_back(DBuilder.createUnspecifiedParameter());
       llvm::DITypeRefArray EltTypeArray = DBuilder.getOrCreateTypeArray(EltTys);
-      return DBuilder.createSubroutineType(F, EltTypeArray);
+      return DBuilder.createSubroutineType(EltTypeArray);
     }
 
   return cast<llvm::DISubroutineType>(getOrCreateType(FnType, F));
