@@ -267,9 +267,9 @@ public:
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
 
-  OutputSection<ELFT> *PreInitArraySec = nullptr;
-  OutputSection<ELFT> *InitArraySec = nullptr;
-  OutputSection<ELFT> *FiniArraySec = nullptr;
+  OutputSectionBase<ELFT::Is64Bits> *PreInitArraySec = nullptr;
+  OutputSectionBase<ELFT::Is64Bits> *InitArraySec = nullptr;
+  OutputSectionBase<ELFT::Is64Bits> *FiniArraySec = nullptr;
 
 private:
   SymbolTable<ELFT> &SymTab;
@@ -286,7 +286,7 @@ template <class ELFT> struct Out {
   static HashTableSection<ELFT> *HashTab;
   static InterpSection<ELFT::Is64Bits> *Interp;
   static OutputSection<ELFT> *Bss;
-  static OutputSection<ELFT> *Opd;
+  static OutputSectionBase<ELFT::Is64Bits> *Opd;
   static uint8_t *OpdBuf;
   static PltSection<ELFT> *Plt;
   static RelocationSection<ELFT> *RelaDyn;
@@ -301,7 +301,7 @@ template <class ELFT> GotSection<ELFT> *Out<ELFT>::Got;
 template <class ELFT> HashTableSection<ELFT> *Out<ELFT>::HashTab;
 template <class ELFT> InterpSection<ELFT::Is64Bits> *Out<ELFT>::Interp;
 template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Bss;
-template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Opd;
+template <class ELFT> OutputSectionBase<ELFT::Is64Bits> *Out<ELFT>::Opd;
 template <class ELFT> uint8_t *Out<ELFT>::OpdBuf;
 template <class ELFT> PltSection<ELFT> *Out<ELFT>::Plt;
 template <class ELFT> RelocationSection<ELFT> *Out<ELFT>::RelaDyn;

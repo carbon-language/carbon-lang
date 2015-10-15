@@ -427,7 +427,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC});
 
   auto AddStartEnd = [&](StringRef Start, StringRef End,
-                         OutputSection<ELFT> *OS) {
+                         OutputSectionBase<ELFT::Is64Bits> *OS) {
     if (OS) {
       Symtab.addSyntheticSym(Start, *OS, 0);
       Symtab.addSyntheticSym(End, *OS, OS->getSize());

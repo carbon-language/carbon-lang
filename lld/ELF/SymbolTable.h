@@ -15,6 +15,7 @@
 
 namespace lld {
 namespace elf2 {
+template <bool Is64Bits> class OutputSectionBase;
 struct Symbol;
 
 // SymbolTable is a bucket of all known symbols, including defined,
@@ -49,7 +50,8 @@ public:
 
   SymbolBody *addUndefined(StringRef Name);
   SymbolBody *addUndefinedOpt(StringRef Name);
-  void addSyntheticSym(StringRef Name, OutputSection<ELFT> &Section,
+  void addSyntheticSym(StringRef Name,
+                       OutputSectionBase<ELFT::Is64Bits> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
   void addIgnoredSym(StringRef Name);
   void scanShlibUndefined();

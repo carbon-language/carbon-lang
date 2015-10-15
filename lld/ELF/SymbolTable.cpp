@@ -71,9 +71,9 @@ SymbolBody *SymbolTable<ELFT>::addUndefinedOpt(StringRef Name) {
 }
 
 template <class ELFT>
-void SymbolTable<ELFT>::addSyntheticSym(StringRef Name,
-                                        OutputSection<ELFT> &Section,
-                                        typename ELFFile<ELFT>::uintX_t Value) {
+void SymbolTable<ELFT>::addSyntheticSym(
+    StringRef Name, OutputSectionBase<ELFT::Is64Bits> &Section,
+    typename ELFFile<ELFT>::uintX_t Value) {
   typedef typename DefinedSynthetic<ELFT>::Elf_Sym Elf_Sym;
   auto ESym = new (Alloc) Elf_Sym;
   memset(ESym, 0, sizeof(Elf_Sym));

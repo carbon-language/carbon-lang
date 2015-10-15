@@ -346,7 +346,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     WriteVal(DT_SONAME, Out<ELFT>::DynStrTab->getFileOff(Config->SoName));
 
   auto WriteArray = [&](int32_t T1, int32_t T2,
-                        const OutputSection<ELFT> *Sec) {
+                        const OutputSectionBase<ELFT::Is64Bits> *Sec) {
     if (!Sec)
       return;
     WritePtr(T1, Sec->getVA());
@@ -652,7 +652,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
 
     ESym->st_name = StrTabSec.getFileOff(Name);
 
-    const OutputSection<ELFT> *OutSec = nullptr;
+    const OutputSectionBase<ELFT::Is64Bits> *OutSec = nullptr;
     const InputSection<ELFT> *Section = nullptr;
 
     switch (Body->kind()) {

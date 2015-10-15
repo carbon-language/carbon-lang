@@ -37,6 +37,7 @@ class InputFile;
 class SymbolBody;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
+template <bool Is64Bits> class OutputSectionBase;
 template <class ELFT> class SharedFile;
 
 // Initializes global objects defined in this file.
@@ -233,14 +234,14 @@ template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {
 public:
   typedef typename Base::Elf_Sym Elf_Sym;
   DefinedSynthetic(StringRef N, const Elf_Sym &Sym,
-                   OutputSection<ELFT> &Section)
+                   OutputSectionBase<ELFT::Is64Bits> &Section)
       : Defined<ELFT>(Base::DefinedSyntheticKind, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedSyntheticKind;
   }
 
-  const OutputSection<ELFT> &Section;
+  const OutputSectionBase<ELFT::Is64Bits> &Section;
 };
 
 // Undefined symbol.
