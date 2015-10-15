@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "../cert/VariadicFunctionDefCheck.h"
 #include "../misc/AssignOperatorSignatureCheck.h"
 #include "ProBoundsPointerArithmeticCheck.h"
 #include "ProTypeConstCastCheck.h"
@@ -28,6 +29,8 @@ public:
         "cppcoreguidelines-pro-bounds-pointer-arithmetic");
     CheckFactories.registerCheck<ProTypeConstCastCheck>(
         "cppcoreguidelines-pro-type-const-cast");
+    CheckFactories.registerCheck<VariadicFunctionDefCheck>(
+        "cppcoreguidelines-pro-type-vararg-def");
     CheckFactories.registerCheck<ProTypeReinterpretCastCheck>(
         "cppcoreguidelines-pro-type-reinterpret-cast");
     CheckFactories.registerCheck<ProTypeStaticCastDowncastCheck>(
