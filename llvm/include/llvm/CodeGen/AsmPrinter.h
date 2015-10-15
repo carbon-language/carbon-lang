@@ -414,9 +414,6 @@ public:
   void EmitULEB128(uint64_t Value, const char *Desc = nullptr,
                    unsigned PadTo = 0) const;
 
-  /// Emit a .byte 42 directive for a DW_CFA_xxx value.
-  void EmitCFAByte(unsigned Val) const;
-
   /// Emit a .byte 42 directive that corresponds to an encoding.  If verbose
   /// assembly output is enabled, we output comments describing the encoding.
   /// Desc is a string saying what the encoding is specifying (e.g. "LSDA").

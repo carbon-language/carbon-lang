@@ -113,13 +113,6 @@ protected:
   DwarfUnit(unsigned UID, dwarf::Tag, const DICompileUnit *CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
-  /// Add a string attribute data and value.
-  ///
-  /// This is guaranteed to be in the local string pool instead of indirected.
-  void addLocalString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
-
-  void addIndexedString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
-
   bool applySubprogramDefinitionAttributes(const DISubprogram *SP, DIE &SPDie);
 
 public:
@@ -161,9 +154,6 @@ public:
   /// Add a new global type to the compile unit.
   virtual void addGlobalType(const DIType *Ty, const DIE &Die,
                              const DIScope *Context) {}
-
-  /// Add a new name to the namespace accelerator table.
-  void addAccelNamespace(StringRef Name, const DIE &Die);
 
   /// Returns the DIE map slot for the specified debug variable.
   ///

@@ -84,9 +84,6 @@ class DIEHash {
 public:
   DIEHash(AsmPrinter *A = nullptr) : AP(A) {}
 
-  /// \brief Computes the ODR signature.
-  uint64_t computeDIEODRSignature(const DIE &Die);
-
   /// \brief Computes the CU signature.
   uint64_t computeCUSignature(const DIE &Die);
 

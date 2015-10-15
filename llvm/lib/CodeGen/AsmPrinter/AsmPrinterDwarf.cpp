@@ -56,18 +56,6 @@ void AsmPrinter::EmitULEB128(uint64_t Value, const char *Desc,
   OutStreamer->EmitULEB128IntValue(Value, PadTo);
 }
 
-/// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
-void AsmPrinter::EmitCFAByte(unsigned Val) const {
-  if (isVerbose()) {
-    if (Val >= dwarf::DW_CFA_offset && Val < dwarf::DW_CFA_offset + 64)
-      OutStreamer->AddComment("DW_CFA_offset + Reg (" +
-                              Twine(Val - dwarf::DW_CFA_offset) + ")");
-    else
-      OutStreamer->AddComment(dwarf::CallFrameString(Val));
-  }
-  OutStreamer->EmitIntValue(Val, 1);
-}
-
 static const char *DecodeDWARFEncoding(unsigned Encoding) {
   switch (Encoding) {
   case dwarf::DW_EH_PE_absptr:

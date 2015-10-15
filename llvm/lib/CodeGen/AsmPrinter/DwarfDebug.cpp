@@ -214,7 +214,6 @@ static LLVM_CONSTEXPR DwarfAccelTable::Atom TypeAtoms[] = {
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), DebugLocs(A->OutStreamer->isVerboseAsm()),
       PrevLabel(nullptr), InfoHolder(A, "info_string", DIEValueAllocator),
-      UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator),
       IsDarwin(Triple(A->getTargetTriple()).isOSDarwin()),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
@@ -341,18 +340,6 @@ void DwarfDebug::addSubprogramNames(const DISubprogram *SP, DIE &Die) {
     // Also add the base method name to the name table.
     addAccelName(getObjCMethodName(SP->getName()), Die);
   }
-}
-
-/// isSubprogramContext - Return true if Context is either a subprogram
-/// or another context nested inside a subprogram.
-bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
-  if (!Context)
-    return false;
-  if (isa<DISubprogram>(Context))
-    return true;
-  if (auto *T = dyn_cast<DIType>(Context))
-    return isSubprogramContext(resolve(T->getScope()));
-  return false;
 }
 
 /// Check whether we should create a DIE for the given Scope, return true
