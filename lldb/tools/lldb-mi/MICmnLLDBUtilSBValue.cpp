@@ -374,6 +374,7 @@ CMICmnLLDBUtilSBValue::GetValueSummary() const
     CMIUtilString valSummary;
     if (m_rValue.IsValid())
     {
+#ifndef LLDB_DISABLE_PYTHON
         const char *c_str = m_rValue.GetSummary();
         if (c_str && c_str[0])
         {
@@ -388,6 +389,7 @@ CMICmnLLDBUtilSBValue::GetValueSummary() const
                 }
             }
         }
+#endif
     }
     return valSummary;
 }
