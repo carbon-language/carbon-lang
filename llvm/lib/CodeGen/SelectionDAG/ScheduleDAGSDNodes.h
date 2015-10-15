@@ -86,12 +86,6 @@ namespace llvm {
     /// flagged together nodes with a single SUnit.
     void BuildSchedGraph(AliasAnalysis *AA);
 
-    /// InitVRegCycleFlag - Set isVRegCycle if this node's single use is
-    /// CopyToReg and its only active data operands are CopyFromReg within a
-    /// single block loop.
-    ///
-    void InitVRegCycleFlag(SUnit *SU);
-
     /// InitNumRegDefsLeft - Determine the # of regs defined by this node.
     ///
     void InitNumRegDefsLeft(SUnit *SU);

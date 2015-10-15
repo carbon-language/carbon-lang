@@ -211,28 +211,6 @@ bool ISD::isBuildVectorOfConstantFPSDNodes(const SDNode *N) {
   return true;
 }
 
-/// isScalarToVector - Return true if the specified node is a
-/// ISD::SCALAR_TO_VECTOR node or a BUILD_VECTOR node where only the low
-/// element is not an undef.
-bool ISD::isScalarToVector(const SDNode *N) {
-  if (N->getOpcode() == ISD::SCALAR_TO_VECTOR)
-    return true;
-
-  if (N->getOpcode() != ISD::BUILD_VECTOR)
-    return false;
-  if (N->getOperand(0).getOpcode() == ISD::UNDEF)
-    return false;
-  unsigned NumElems = N->getNumOperands();
-  if (NumElems == 1)
-    return false;
-  for (unsigned i = 1; i < NumElems; ++i) {
-    SDValue V = N->getOperand(i);
-    if (V.getOpcode() != ISD::UNDEF)
-      return false;
-  }
-  return true;
-}
-
 /// allOperandsUndef - Return true if the node has at least one operand
 /// and all operands of the specified node are ISD::UNDEF.
 bool ISD::allOperandsUndef(const SDNode *N) {
@@ -1415,24 +1393,6 @@ SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, EVT VT,
 
   SDNode *N = new (NodeAllocator) ConstantPoolSDNode(isTarget, C, VT, Offset,
                                                      Alignment, TargetFlags);
-  CSEMap.InsertNode(N, IP);
-  InsertNode(N);
-  return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getTargetIndex(int Index, EVT VT, int64_t Offset,
-                                     unsigned char TargetFlags) {
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::TargetIndex, getVTList(VT), None);
-  ID.AddInteger(Index);
-  ID.AddInteger(Offset);
-  ID.AddInteger(TargetFlags);
-  void *IP = nullptr;
-  if (SDNode *E = FindNodeOrInsertPos(ID, IP))
-    return SDValue(E, 0);
-
-  SDNode *N = new (NodeAllocator) TargetIndexSDNode(Index, VT, Offset,
-                                                    TargetFlags);
   CSEMap.InsertNode(N, IP);
   InsertNode(N);
   return SDValue(N, 0);

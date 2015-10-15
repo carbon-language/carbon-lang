@@ -597,10 +597,6 @@ public:
   ///
   FunctionLoweringInfo &FuncInfo;
 
-  /// OptLevel - What optimization level we're generating code for.
-  ///
-  CodeGenOpt::Level OptLevel;
-
   /// GFI - Garbage collection metadata for the function.
   GCFunctionInfo *GFI;
 
@@ -618,7 +614,7 @@ public:
   SelectionDAGBuilder(SelectionDAG &dag, FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
     : CurInst(nullptr), SDNodeOrder(LowestSDNodeOrder), TM(dag.getTarget()),
-      DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
+      DAG(dag), FuncInfo(funcinfo),
       HasTailCall(false) {
   }
 

@@ -425,12 +425,6 @@ protected:
                           const TargetRegisterClass *RC,
                           const ConstantFP *FPImm);
 
-  /// \brief Emit a MachineInstr with one register operand, a floating point
-  /// immediate, and a result register in the given register class.
-  unsigned fastEmitInst_rf(unsigned MachineInstOpcode,
-                           const TargetRegisterClass *RC, unsigned Op0,
-                           bool Op0IsKill, const ConstantFP *FPImm);
-
   /// \brief Emit a MachineInstr with two register operands, an immediate, and a
   /// result register in the given register class.
   unsigned fastEmitInst_rri(unsigned MachineInstOpcode,
@@ -438,22 +432,10 @@ protected:
                             bool Op0IsKill, unsigned Op1, bool Op1IsKill,
                             uint64_t Imm);
 
-  /// \brief Emit a MachineInstr with two register operands, two immediates
-  /// operands, and a result register in the given register class.
-  unsigned fastEmitInst_rrii(unsigned MachineInstOpcode,
-                             const TargetRegisterClass *RC, unsigned Op0,
-                             bool Op0IsKill, unsigned Op1, bool Op1IsKill,
-                             uint64_t Imm1, uint64_t Imm2);
-
   /// \brief Emit a MachineInstr with a single immediate operand, and a result
   /// register in the given register class.
   unsigned fastEmitInst_i(unsigned MachineInstrOpcode,
                           const TargetRegisterClass *RC, uint64_t Imm);
-
-  /// \brief Emit a MachineInstr with a two immediate operands.
-  unsigned fastEmitInst_ii(unsigned MachineInstrOpcode,
-                           const TargetRegisterClass *RC, uint64_t Imm1,
-                           uint64_t Imm2);
 
   /// \brief Emit a MachineInstr for an extract_subreg from a specified index of
   /// a superregister to a specified type.
