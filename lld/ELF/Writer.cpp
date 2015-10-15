@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileOutputBuffer.h"
+#include "llvm/Support/StringSaver.h"
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -70,9 +71,11 @@ private:
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
   SpecificBumpPtrAllocator<OutputSection<ELFT>> SecAlloc;
+  BumpPtrAllocator Alloc;
   std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
 
+  void addStartStopSymbols(OutputSection<ELFT> *Sec);
   void setPhdr(Elf_Phdr *PH, uint32_t Type, uint32_t Flags, uintX_t FileOff,
                uintX_t VA, uintX_t Align);
   void copyPhdr(Elf_Phdr *PH, OutputSectionBase<ELFT::Is64Bits> *From);
@@ -400,6 +403,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   if (!isOutputDynamic())
     Symtab.addIgnoredSym("__tls_get_addr");
 
+  std::vector<OutputSection<ELFT> *> RegularSections;
+
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (InputSection<ELFT> *C : F->getSections()) {
       if (!C || C == &InputSection<ELFT>::Discarded)
@@ -413,11 +418,15 @@ template <class ELFT> void Writer<ELFT>::createSections() {
         Sec = new (SecAlloc.Allocate())
             OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
         OutputSections.push_back(Sec);
+        RegularSections.push_back(Sec);
       }
       Sec->addSection(C);
       scanRelocs(*C);
     }
   }
+
+  for (OutputSection<ELFT> *Sec : RegularSections)
+    addStartStopSymbols(Sec);
 
   Out<ELFT>::Dynamic->PreInitArraySec =
       Map.lookup({".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC});
@@ -499,6 +508,38 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // store a pointer to it here so that we can use it later when processing
   // relocations.
   Out<ELFT>::Opd = Map.lookup({".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC});
+}
+
+static bool isAlpha(char C) {
+  return ('a' <= C && C <= 'z') || ('A' <= C && C <= 'Z') || C == '_';
+}
+
+static bool isAlnum(char C) { return isAlpha(C) || ('0' <= C && C <= '9'); }
+
+// Returns true if S is valid as a C language identifier.
+static bool isValidCIdentifier(StringRef S) {
+  if (S.empty() || !isAlpha(S[0]))
+    return false;
+  return std::all_of(S.begin() + 1, S.end(), isAlnum);
+}
+
+// If a section name is valid as a C identifier (which is rare because of
+// the leading '.'), linkers are expected to define __start_<secname> and
+// __stop_<secname> symbols. They are at beginning and end of the section,
+// respectively. This is not requested by the ELF standard, but GNU ld and
+// gold provide the feature, and used by many programs.
+template <class ELFT>
+void Writer<ELFT>::addStartStopSymbols(OutputSection<ELFT> *Sec) {
+  StringRef S = Sec->getName();
+  if (!isValidCIdentifier(S))
+    return;
+  StringSaver Saver(Alloc);
+  StringRef Start = Saver.save("__start_" + S);
+  StringRef Stop = Saver.save("__stop_" + S);
+  if (Symtab.isUndefined(Start))
+    Symtab.addSyntheticSym(Start, *Sec, 0);
+  if (Symtab.isUndefined(Stop))
+    Symtab.addSyntheticSym(Stop, *Sec, Sec->getSize());
 }
 
 template <class ELFT>

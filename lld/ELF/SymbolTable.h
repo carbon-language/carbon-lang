@@ -54,6 +54,7 @@ public:
                        OutputSectionBase<ELFT::Is64Bits> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
   void addIgnoredSym(StringRef Name);
+  bool isUndefined(StringRef Name);
   void scanShlibUndefined();
 
 private:

@@ -88,6 +88,12 @@ template <class ELFT> void SymbolTable<ELFT>::addIgnoredSym(StringRef Name) {
   resolve(Sym);
 }
 
+template <class ELFT> bool SymbolTable<ELFT>::isUndefined(StringRef Name) {
+  if (SymbolBody *Sym = find(Name))
+    return Sym->isUndefined();
+  return false;
+}
+
 template <class ELFT>
 void SymbolTable<ELFT>::addELFFile(ELFFileBase<ELFT> *File) {
   if (auto *O = dyn_cast<ObjectFile<ELFT>>(File))
