@@ -128,8 +128,7 @@ LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref, LLVMMetadataRef File,
                                   LLVMMetadataRef ParameterTypes) {
   DIBuilder *D = unwrap(Dref);
   return wrap(
-      D->createSubroutineType(File ? unwrap<DIFile>(File) : nullptr,
-                              DITypeRefArray(unwrap<MDTuple>(ParameterTypes))));
+      D->createSubroutineType(DITypeRefArray(unwrap<MDTuple>(ParameterTypes))));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateStructType(

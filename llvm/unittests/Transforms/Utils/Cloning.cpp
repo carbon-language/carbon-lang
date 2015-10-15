@@ -231,7 +231,7 @@ protected:
     auto *File = DBuilder.createFile("filename.c", "/file/dir/");
     DITypeRefArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
     DISubroutineType *FuncType =
-        DBuilder.createSubroutineType(File, ParamTypes);
+        DBuilder.createSubroutineType(ParamTypes);
     auto *CU =
         DBuilder.createCompileUnit(dwarf::DW_LANG_C99, "filename.c",
                                    "/file/dir", "CloneFunc", false, "", 0);

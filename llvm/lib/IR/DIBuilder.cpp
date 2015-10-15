@@ -429,8 +429,7 @@ DICompositeType *DIBuilder::createUnionType(
   return R;
 }
 
-DISubroutineType *DIBuilder::createSubroutineType(DIFile *File,
-                                                  DITypeRefArray ParameterTypes,
+DISubroutineType *DIBuilder::createSubroutineType(DITypeRefArray ParameterTypes,
                                                   unsigned Flags) {
   return DISubroutineType::get(VMContext, Flags, ParameterTypes);
 }
