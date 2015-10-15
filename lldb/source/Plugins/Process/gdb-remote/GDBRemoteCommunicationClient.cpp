@@ -619,7 +619,6 @@ GDBRemoteCommunicationClient::GetThreadsInfo()
     if (m_supports_jThreadsInfo)
     {
         StringExtractorGDBRemote response;
-        m_supports_jThreadExtendedInfo = eLazyBoolNo;
         if (SendPacketAndWaitForResponse("jThreadsInfo", response, false) == PacketResult::Success)
         {
             if (response.IsUnsupportedResponse())

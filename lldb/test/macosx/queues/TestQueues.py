@@ -108,6 +108,51 @@ class TestQueues(TestBase):
         self.check_queues_threads_match_queue (queue_performer_2)
         self.check_queues_threads_match_queue (queue_performer_3)
 
+
+
+        # We have threads running with all the different dispatch QoS service
+        # levels - find those threads and check that we can get the correct
+        # QoS name for each of them.
+
+        user_initiated_thread = lldb.SBThread()
+        user_interactive_thread = lldb.SBThread()
+        utility_thread = lldb.SBThread()
+        unspecified_thread = lldb.SBThread()
+        background_thread = lldb.SBThread()
+        for th in process.threads:
+            if th.GetName() == "user initiated QoS":
+                user_initiated_thread = th
+            if th.GetName() == "user interactive QoS":
+                user_interactive_thread = th
+            if th.GetName() == "utility QoS":
+                utility_thread = th
+            if th.GetName() == "unspecified QoS":
+                unspecified_thread = th
+            if th.GetName() == "background QoS":
+                background_thread = th
+
+        self.assertTrue(user_initiated_thread.IsValid(), "Found user initiated QoS thread")
+        self.assertTrue(user_interactive_thread.IsValid(), "Found user interactive QoS thread")
+        self.assertTrue(utility_thread.IsValid(), "Found utility QoS thread")
+        self.assertTrue(unspecified_thread.IsValid(), "Found unspecified QoS thread")
+        self.assertTrue(background_thread.IsValid(), "Found background QoS thread")
+
+        stream = lldb.SBStream()
+        self.assertTrue(user_initiated_thread.GetInfoItemByPathAsString("requested_qos.printable_name", stream), "Get QoS printable string for user initiated QoS thread")
+        self.assertTrue(stream.GetData() == "User Initiated", "user initiated QoS thread name is valid")
+        stream.Clear()
+        self.assertTrue(user_interactive_thread.GetInfoItemByPathAsString("requested_qos.printable_name", stream), "Get QoS printable string for user interactive QoS thread")
+        self.assertTrue(stream.GetData() == "User Interactive", "user interactive QoS thread name is valid")
+        stream.Clear()
+        self.assertTrue(utility_thread.GetInfoItemByPathAsString("requested_qos.printable_name", stream), "Get QoS printable string for utility QoS thread")
+        self.assertTrue(stream.GetData() == "Utility", "utility QoS thread name is valid")
+        stream.Clear()
+        self.assertTrue(unspecified_thread.GetInfoItemByPathAsString("requested_qos.printable_name", stream), "Get QoS printable string for unspecified QoS thread")
+        self.assertTrue(stream.GetData() == "User Initiated", "unspecified QoS thread name is valid")
+        stream.Clear()
+        self.assertTrue(background_thread.GetInfoItemByPathAsString("requested_qos.printable_name", stream), "Get QoS printable string for background QoS thread")
+        self.assertTrue(stream.GetData() == "Background", "background QoS thread name is valid")
+
     def queues_with_libBacktraceRecording(self):
         """Test queues inspection SB APIs with libBacktraceRecording present."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -193,7 +238,6 @@ class TestQueues(TestBase):
         self.assertTrue(queue_performer_2.GetPendingItemAtIndex(9998).GetAddress().GetSymbol().GetName() == "doing_the_work_2", "queue 2's pending item #0 should be doing_the_work_2")
         self.assertTrue(queue_performer_2.GetPendingItemAtIndex(9999).IsValid() == False, "queue 2's pending item #9999 is invalid")
 
-        
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

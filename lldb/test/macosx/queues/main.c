@@ -91,6 +91,41 @@ int main ()
 
     dispatch_async_f (work_submittor_3, (void*) &work_performer_3, submit_work_3);
 
+
+    // Spin up threads with each of the different libdispatch QoS values.
+
+    dispatch_async (dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            pthread_setname_np ("user initiated QoS");
+            while (1)
+                sleep (10);
+                });
+    dispatch_async (dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+            pthread_setname_np ("user interactive QoS");
+            while (1)
+                sleep (10);
+                });
+    dispatch_async (dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+            pthread_setname_np ("default QoS");
+            while (1)
+                sleep (10);
+                });
+    dispatch_async (dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+            pthread_setname_np ("utility QoS");
+            while (1)
+                sleep (10);
+                });
+    dispatch_async (dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), ^{
+            pthread_setname_np ("background QoS");
+            while (1)
+                sleep (10);
+                });
+    dispatch_async (dispatch_get_global_queue(QOS_CLASS_UNSPECIFIED, 0), ^{
+            pthread_setname_np ("unspecified QoS");
+            while (1)
+                sleep (10);
+                });
+
+
     sleep (1);
     stopper ();
 
