@@ -459,9 +459,9 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
         }
         
 #if defined (DEBUG_STACK_FRAMES)
-            s.PutCString("\n\nNew frames:\n");
-            Dump (&s);
-            s.EOL();
+        s.PutCString("\n\nNew frames:\n");
+        Dump (&s);
+        s.EOL();
 #endif
     }
     else
