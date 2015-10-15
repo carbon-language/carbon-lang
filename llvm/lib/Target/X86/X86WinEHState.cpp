@@ -71,7 +71,6 @@ private:
   void addStateStoresToFunclet(Value *ParentRegNode, WinEHFuncInfo &FuncInfo,
                                Function &F, int BaseState);
   void insertStateNumberStore(Value *ParentRegNode, Instruction *IP, int State);
-  void insertRestoreFrame(BasicBlock *BB);
 
   Value *emitEHLSDA(IRBuilder<> &Builder, Function *F);
 
@@ -473,14 +472,6 @@ int WinEHStatePass::escapeRegNode(Function &F) {
   if (EscapeCall)
     EscapeCall->eraseFromParent();
   return Args.size() - 1;
-}
-
-void WinEHStatePass::insertRestoreFrame(BasicBlock *BB) {
-  Instruction *Start = BB->getFirstInsertionPt();
-  if (match(Start, m_Intrinsic<Intrinsic::x86_seh_restoreframe>()))
-    return;
-  IRBuilder<> Builder(Start);
-  Builder.CreateCall(RestoreFrame, {});
 }
 
 void WinEHStatePass::addStateStoresToFunclet(Value *ParentRegNode,

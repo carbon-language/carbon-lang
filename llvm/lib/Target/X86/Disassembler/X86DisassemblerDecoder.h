@@ -572,8 +572,6 @@ struct InternalInstruction {
 
   // The last byte of the opcode, not counting any ModR/M extension
   uint8_t opcode;
-  // The ModR/M byte of the instruction, if it is an opcode extension
-  uint8_t modRMExtension;
 
   // decode state
 

@@ -49,12 +49,6 @@ FunctionPass *createX86FloatingPointStackifierPass();
 /// AVX and SSE.
 FunctionPass *createX86IssueVZeroUpperPass();
 
-/// createX86EmitCodeToMemory - Returns a pass that converts a register
-/// allocated function into raw machine code in a dynamically
-/// allocated chunk of memory.
-///
-FunctionPass *createEmitX86CodeToMemory();
-
 /// createX86PadShortFunctions - Return a pass that pads short functions
 /// with NOOPs. This will prevent a stall when returning on the Atom.
 FunctionPass *createX86PadShortFunctions();

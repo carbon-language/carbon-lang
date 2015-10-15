@@ -402,11 +402,6 @@ public:
   /// not marked dead.
   bool hasLiveCondCodeDef(MachineInstr *MI) const;
 
-  static bool isX86_64ExtendedReg(const MachineOperand &MO) {
-    if (!MO.isReg()) return false;
-    return X86II::isX86_64ExtendedReg(MO.getReg());
-  }
-
   /// getGlobalBaseReg - Return a virtual register initialized with the
   /// the global base register value. Output instructions required to
   /// initialize the register in the function entry block, if necessary.

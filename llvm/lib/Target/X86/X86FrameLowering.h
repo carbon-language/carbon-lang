@@ -124,15 +124,6 @@ public:
   bool canUseAsEpilogue(const MachineBasicBlock &MBB) const override;
 
 private:
-  /// convertArgMovsToPushes - This method tries to convert a call sequence
-  /// that uses sub and mov instructions to put the argument onto the stack
-  /// into a series of pushes.
-  /// Returns true if the transformation succeeded, false if not.
-  bool convertArgMovsToPushes(MachineFunction &MF, 
-                              MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I, 
-                              uint64_t Amount) const;
-
   uint64_t calculateMaxStackAlign(const MachineFunction &MF) const;
 
   /// Wraps up getting a CFI index and building a MachineInstr for it.
