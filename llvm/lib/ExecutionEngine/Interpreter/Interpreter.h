@@ -26,7 +26,6 @@
 namespace llvm {
 
 class IntrinsicLowering;
-struct FunctionInfo;
 template<typename T> class generic_gep_type_iterator;
 class ConstantExpr;
 typedef generic_gep_type_iterator<User::const_op_iterator> gep_type_iterator;
