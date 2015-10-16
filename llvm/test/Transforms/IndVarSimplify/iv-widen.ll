@@ -6,7 +6,7 @@ target datalayout = "n8:16:32:64"
 
 target triple = "x86_64-apple-darwin"
 
-; CHECK-LABEL: @sloop
+; CHECK-LABEL: @loop_0
 ; CHECK-LABEL: B18:
 ; Only one phi now.
 ; CHECK: phi
@@ -16,7 +16,7 @@ target triple = "x86_64-apple-darwin"
 ; One trunc for the dummy() call.
 ; CHECK-LABEL: exit24:
 ; CHECK: trunc i64 {{.*}}lcssa.wide to i32
-define void @sloop(i32* %a) {
+define void @loop_0(i32* %a) {
 Prologue:
   br i1 undef, label %B18, label %B6
 
@@ -41,4 +41,30 @@ exit24:                      ; preds = %B18
   unreachable
 }
 
+define void @loop_1(i32 %lim) {
+; CHECK-LABEL: @loop_1(
+ entry:
+  %entry.cond = icmp ne i32 %lim, 0
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+; CHECK:  %indvars.iv = phi i64 [ 1, %loop.preheader ], [ %indvars.iv.next, %loop ]
+; CHECK:  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+; CHECK:  [[IV_INC:%[^ ]+]] = add nsw i64 %indvars.iv, -1
+; CHECK:  call void @dummy.i64(i64 [[IV_INC]])
+
+  %iv = phi i32 [ 1, %entry ], [ %iv.inc, %loop ]
+  %iv.inc = add i32 %iv, 1
+  %iv.inc.sub = add i32 %iv, -1
+  %iv.inc.sub.zext = zext i32 %iv.inc.sub to i64
+  call void @dummy.i64(i64 %iv.inc.sub.zext)
+  %be.cond = icmp ult i32 %iv.inc, %lim
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
 declare void @dummy(i32)
+declare void @dummy.i64(i64)

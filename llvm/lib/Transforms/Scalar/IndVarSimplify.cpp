@@ -998,22 +998,84 @@ Instruction *WidenIV::cloneArithmeticIVUser(NarrowIVDefUse DU,
 
   DEBUG(dbgs() << "Cloning arithmetic IVUser: " << *NarrowUse << "\n");
 
-  // Replace NarrowDef operands with WideDef. Otherwise, we don't know anything
-  // about the narrow operand yet so must insert a [sz]ext. It is probably loop
-  // invariant and will be folded or hoisted. If it actually comes from a
-  // widened IV, it should be removed during a future call to widenIVUse.
-  Value *LHS =
-      (NarrowUse->getOperand(0) == NarrowDef)
-          ? WideDef
-          : getExtend(NarrowUse->getOperand(0), WideType, IsSigned, NarrowUse);
-  Value *RHS =
-      (NarrowUse->getOperand(1) == NarrowDef)
-          ? WideDef
-          : getExtend(NarrowUse->getOperand(1), WideType, IsSigned, NarrowUse);
+  unsigned IVOpIdx = (NarrowUse->getOperand(0) == NarrowDef) ? 0 : 1;
+
+  // We're trying to find X such that
+  //
+  //  Widen(NarrowDef `op` NonIVNarrowDef) == WideAR == WideDef `op.wide` X
+  //
+  // We guess two solutions to X, sext(NonIVNarrowDef) and zext(NonIVNarrowDef),
+  // and check using SCEV if any of them are correct.
+
+  // Returns true if extending NonIVNarrowDef according to `SignExt` is a
+  // correct solution to X.
+  auto GuessNonIVOperand = [&](bool SignExt) {
+    const SCEV *WideLHS;
+    const SCEV *WideRHS;
+
+    auto GetExtend = [this, SignExt](const SCEV *S, Type *Ty) {
+      if (SignExt)
+        return SE->getSignExtendExpr(S, Ty);
+      return SE->getZeroExtendExpr(S, Ty);
+    };
+
+    if (IVOpIdx == 0) {
+      WideLHS = SE->getSCEV(WideDef);
+      const SCEV *NarrowRHS = SE->getSCEV(NarrowUse->getOperand(1));
+      WideRHS = GetExtend(NarrowRHS, WideType);
+    } else {
+      const SCEV *NarrowLHS = SE->getSCEV(NarrowUse->getOperand(0));
+      WideLHS = GetExtend(NarrowLHS, WideType);
+      WideRHS = SE->getSCEV(WideDef);
+    }
+
+    // WideUse is "WideDef `op.wide` X" as described in the comment.
+    const SCEV *WideUse = nullptr;
+
+    switch (NarrowUse->getOpcode()) {
+    default:
+      llvm_unreachable("No other possibility!");
+
+    case Instruction::Add:
+      WideUse = SE->getAddExpr(WideLHS, WideRHS);
+      break;
+
+    case Instruction::Mul:
+      WideUse = SE->getMulExpr(WideLHS, WideRHS);
+      break;
+
+    case Instruction::UDiv:
+      WideUse = SE->getUDivExpr(WideLHS, WideRHS);
+      break;
+
+    case Instruction::Sub:
+      WideUse = SE->getMinusSCEV(WideLHS, WideRHS);
+      break;
+    }
+
+    return WideUse == WideAR;
+  };
+
+  bool SignExtend = IsSigned;
+  if (!GuessNonIVOperand(SignExtend)) {
+    SignExtend = !SignExtend;
+    if (!GuessNonIVOperand(SignExtend))
+      return nullptr;
+  }
+
+  Value *LHS = (NarrowUse->getOperand(0) == NarrowDef)
+                   ? WideDef
+                   : getExtend(NarrowUse->getOperand(0), WideType, SignExtend,
+                               NarrowUse);
+  Value *RHS = (NarrowUse->getOperand(1) == NarrowDef)
+                   ? WideDef
+                   : getExtend(NarrowUse->getOperand(1), WideType, SignExtend,
+                               NarrowUse);
 
   auto *NarrowBO = cast<BinaryOperator>(NarrowUse);
   auto *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(), LHS, RHS,
                                         NarrowBO->getName());
+
   IRBuilder<> Builder(NarrowUse);
   Builder.Insert(WideBO);
   if (const auto *OBO = dyn_cast<OverflowingBinaryOperator>(NarrowBO)) {
