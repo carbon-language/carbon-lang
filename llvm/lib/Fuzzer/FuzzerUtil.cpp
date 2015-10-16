@@ -166,4 +166,6 @@ bool ParseDictionaryFile(const std::string &Text, std::vector<Unit> *Units) {
   return true;
 }
 
+int GetPid() { return getpid(); }
+
 }  // namespace fuzzer

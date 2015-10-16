@@ -56,6 +56,7 @@ bool ToASCII(Unit &U);
 bool IsASCII(const Unit &U);
 
 int NumberOfCpuCores();
+int GetPid();
 
 // Dictionary.
 

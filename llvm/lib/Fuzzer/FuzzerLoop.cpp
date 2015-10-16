@@ -13,6 +13,10 @@
 #include <sanitizer/coverage_interface.h>
 #include <algorithm>
 
+extern "C" {
+__attribute__((weak)) void __sanitizer_print_stack_trace();
+}
+
 namespace fuzzer {
 static const size_t kMaxUnitSizeToPrint = 256;
 
@@ -76,6 +80,11 @@ void Fuzzer::AlarmCallback() {
       PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
     }
     WriteUnitToFileWithPrefix(CurrentUnit, "timeout-");
+    Printf("==%d== ERROR: libFuzzer: timeout after %d seconds\n", GetPid(),
+           Seconds);
+    if (__sanitizer_print_stack_trace)
+      __sanitizer_print_stack_trace();
+    Printf("SUMMARY: libFuzzer: timeout\n");
     exit(1);
   }
 }
