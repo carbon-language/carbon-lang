@@ -215,12 +215,10 @@ public:
   void addHeadSamples(uint64_t Num) { TotalHeadSamples += Num; }
   void addBodySamples(uint32_t LineOffset, uint32_t Discriminator,
                       uint64_t Num) {
-    assert(LineOffset >= 0);
     BodySamples[LineLocation(LineOffset, Discriminator)].addSamples(Num);
   }
   void addCalledTargetSamples(uint32_t LineOffset, uint32_t Discriminator,
                               std::string FName, uint64_t Num) {
-    assert(LineOffset >= 0);
     BodySamples[LineLocation(LineOffset, Discriminator)].addCalledTarget(FName,
                                                                          Num);
   }
