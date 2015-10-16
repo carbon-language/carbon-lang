@@ -317,6 +317,16 @@ static bool compareOutputSections(OutputSectionBase<ELFT> *A,
     return BIsExec;
 
   // If we got here we know that both A and B are in the same PT_LOAD.
+
+  // The TLS initialization block needs to be a single contiguous block in a R/W
+  // PT_LOAD, so stick TLS sections directly before R/W sections. The TLS NOBITS
+  // sections are placed here as they don't take up virtual address space in the
+  // PT_LOAD.
+  bool AIsTLS = AFlags & SHF_TLS;
+  bool BIsTLS = BFlags & SHF_TLS;
+  if (AIsTLS != BIsTLS)
+    return AIsTLS;
+
   // The next requirement we have is to put nobits sections last. The
   // reason is that the only thing the dynamic linker will see about
   // them is a p_memsz that is larger than p_filesz. Seeing that it
