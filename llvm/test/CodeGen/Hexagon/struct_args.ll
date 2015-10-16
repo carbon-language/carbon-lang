@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-hsdr < %s | FileCheck %s
 ; CHECK: r{{[0-9]}}:{{[0-9]}} = combine({{r[0-9]|#0}}, r{{[0-9]}})
 ; CHECK: r{{[0-9]}}:{{[0-9]}} |= asl(r{{[0-9]}}:{{[0-9]}}, #32)
 

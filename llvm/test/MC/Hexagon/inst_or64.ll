@@ -1,4 +1,4 @@
-;; RUN: llc -mtriple=hexagon-unknown-elf -filetype=obj %s -o - \
+;; RUN: llc -mtriple=hexagon-unknown-elf -filetype=obj -disable-hsdr %s -o - \
 ;; RUN: | llvm-objdump -s - | FileCheck %s
 
 define i64 @foo (i64 %a, i64 %b)

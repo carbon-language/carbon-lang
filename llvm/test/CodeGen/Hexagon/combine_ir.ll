@@ -1,18 +1,8 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
-; CHECK: word
-; CHECK: combine(#0
-
-define void @word(i32* nocapture %a) nounwind {
-entry:
-  %0 = load i32, i32* %a, align 4
-  %1 = zext i32 %0 to i64
-  tail call void @bar(i64 %1) nounwind
-  ret void
-}
+; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-hsdr < %s | FileCheck %s
 
 declare void @bar(i64)
 
-; CHECK: halfword
+; CHECK-LABEL: halfword:
 ; CHECK: combine(#0
 
 define void @halfword(i16* nocapture %a) nounwind {
@@ -28,7 +18,7 @@ entry:
   ret void
 }
 
-; CHECK: byte
+; CHECK-LABEL: byte:
 ; CHECK: combine(#0
 
 define void @byte(i8* nocapture %a) nounwind {

@@ -1,6 +1,6 @@
 ; Extracted from test/CodeGen/Generic/vector.ll: used to loop indefinitely.
 ; RUN: llc -march=hexagon -mcpu=hexagonv5 < %s | FileCheck %s
-; CHECK: combine
+; CHECK: splat_i4
 
 %i4 = type <4 x i32>
 

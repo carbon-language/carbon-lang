@@ -59,6 +59,9 @@ static cl::opt<bool> EnableGenPred("hexagon-gen-pred", cl::init(true),
   cl::Hidden, cl::desc("Enable conversion of arithmetic operations to "
   "predicate instructions"));
 
+static cl::opt<bool> DisableHSDR("disable-hsdr", cl::init(false), cl::Hidden,
+  cl::desc("Disable splitting double registers"));
+
 /// HexagonTargetMachineModule - Note that this is used on hosts that
 /// cannot link in a library unless there are references into the
 /// library.  In particular, it seems that it is not possible to get
@@ -99,6 +102,7 @@ namespace llvm {
   FunctionPass *createHexagonPacketizer();
   FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonSplitConst32AndConst64();
+  FunctionPass *createHexagonSplitDoubleRegs();
   FunctionPass *createHexagonStoreWidening();
 } // end namespace llvm;
 
@@ -214,6 +218,9 @@ bool HexagonPassConfig::addInstSelector() {
     // Create logical operations on predicate registers.
     if (EnableGenPred)
       addPass(createHexagonGenPredicate(), false);
+    // Split double registers.
+    if (!DisableHSDR)
+      addPass(createHexagonSplitDoubleRegs());
     addPass(createHexagonPeephole());
     printAndVerify("After hexagon peephole pass");
     if (EnableGenInsert)
