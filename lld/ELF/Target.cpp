@@ -423,14 +423,10 @@ bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
 bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
   switch (Type) {
   default:
-    return false;
-  case R_PPC64_REL24:
-  case R_PPC64_REL14:
-  case R_PPC64_REL14_BRTAKEN:
-  case R_PPC64_REL14_BRNTAKEN:
-  case R_PPC64_REL32:
-  case R_PPC64_REL64:
     return true;
+  case R_PPC64_TOC:
+  case R_PPC64_ADDR64:
+    return false;
   }
 }
 
