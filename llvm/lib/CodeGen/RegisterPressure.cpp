@@ -882,19 +882,13 @@ getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff,
 }
 
 /// Helper to find a vreg use between two indices [PriorUseIdx, NextUseIdx).
-static bool findUseBetween(unsigned Reg,
-                           SlotIndex PriorUseIdx, SlotIndex NextUseIdx,
-                           const MachineRegisterInfo *MRI,
+static bool findUseBetween(unsigned Reg, SlotIndex PriorUseIdx,
+                           SlotIndex NextUseIdx, const MachineRegisterInfo &MRI,
                            const LiveIntervals *LIS) {
-  for (MachineRegisterInfo::use_instr_nodbg_iterator
-       UI = MRI->use_instr_nodbg_begin(Reg),
-       UE = MRI->use_instr_nodbg_end(); UI != UE; ++UI) {
-      const MachineInstr* MI = &*UI;
-      if (MI->isDebugValue())
-        continue;
-      SlotIndex InstSlot = LIS->getInstructionIndex(MI).getRegSlot();
-      if (InstSlot >= PriorUseIdx && InstSlot < NextUseIdx)
-        return true;
+  for (const MachineInstr &MI : MRI.use_nodbg_instructions(Reg)) {
+    SlotIndex InstSlot = LIS->getInstructionIndex(&MI).getRegSlot();
+    if (InstSlot >= PriorUseIdx && InstSlot < NextUseIdx)
+      return true;
   }
   return false;
 }
@@ -927,9 +921,8 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
       const LiveRange *LR = getLiveRange(Reg);
       if (LR) {
         LiveQueryResult LRQ = LR->Query(SlotIdx);
-        if (LRQ.isKill() && !findUseBetween(Reg, CurrIdx, SlotIdx, MRI, LIS)) {
+        if (LRQ.isKill() && !findUseBetween(Reg, CurrIdx, SlotIdx, *MRI, LIS))
           decreaseRegPressure(Reg);
-        }
       }
     }
     else if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
