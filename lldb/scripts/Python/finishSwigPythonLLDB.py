@@ -1,4 +1,4 @@
-""" Python SWIG post process script for each language
+﻿""" Python SWIG post process script for each language
 
     --------------------------------------------------------------------------
     File:           finishSwigPythonLLDB.py
@@ -121,7 +121,7 @@ def macosx_copy_file_for_heap( vDictArgs, vstrFrameworkPythonDir ):
 def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles ):
     dbg = utilsDebug.CDebugFnVerbose( "Python script create_py_pkg()" );
     dbg.dump_object( "Package file(s):", vListPkgFiles );
-    bDbg = vDictArgs.has_key( "-d" );
+    bDbg = "-d" in vDictArgs;
 
     bOk = True;
     strMsg = "";
@@ -189,7 +189,7 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 def copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs, vstrFrameworkPythonDir, vstrCfgBldDir ):
     dbg = utilsDebug.CDebugFnVerbose( "Python script copy_lldbpy_file_to_lldb_pkg_dir()" );
     bOk = True;
-    bDbg = vDictArgs.has_key( "-d" );
+    bDbg = "-d" in vDictArgs;
     strMsg = "";
 
     strSrc = os.path.join(vstrCfgBldDir, "lldb.py");
@@ -225,7 +225,7 @@ def copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs, vstrFrameworkPythonDir, vstrCfg
 # Throws:   None.
 #--
 def make_symlink_windows( vstrSrcPath, vstrTargetPath ):
-    print "Making symlink from %s to %s" % (vstrSrcPath, vstrTargetPath);
+    print("Making symlink from %s to %s" % (vstrSrcPath, vstrTargetPath));
     dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_windows()" );
     bOk = True;
     strErrMsg = "";
@@ -283,13 +283,13 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
     dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink()" );
     bOk = True;
     strErrMsg = "";
-    bDbg = vDictArgs.has_key( "-d" );
+    bDbg = "-d" in vDictArgs;
     strTarget = os.path.join(vstrFrameworkPythonDir, vstrTargetFile);
     strTarget = os.path.normcase( strTarget );
     strSrc = "";
 
     os.chdir( vstrFrameworkPythonDir );
-    bMakeFileCalled = vDictArgs.has_key( "-m" );
+    bMakeFileCalled = "-m" in vDictArgs;
     eOSType = utilsOsType.determine_os_type();
     if not bMakeFileCalled:
         return (bOk, strErrMsg);
@@ -313,19 +313,19 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
     elif eOSType == utilsOsType.EnumOsType.Windows:
         if os.path.isfile( strTarget ):
             if bDbg:
-                print strMsgSymlinkExists % vstrTargetFile;
+                print(strMsgSymlinkExists % vstrTargetFile);
             return (bOk, strErrMsg);
         if bDbg:
-            print strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget);
+            print(strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget));
         bOk, strErrMsg = make_symlink_windows( strSrc,
                                                strTarget );
     else:
         if os.path.islink( strTarget ):
             if bDbg:
-                print strMsgSymlinkExists % vstrTargetFile;
+                print(strMsgSymlinkExists % vstrTargetFile);
             return (bOk, strErrMsg);
         if bDbg:
-            print strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget);
+            print(strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget));
         bOk, strErrMsg = make_symlink_other_platforms( strSrc,
                                                        strTarget );
 
@@ -359,7 +359,7 @@ def make_symlink_liblldb( vDictArgs, vstrFrameworkPythonDir, vstrLiblldbFileName
     else:
         strTarget += ".so";
 
-    bMakeFileCalled = vDictArgs.has_key( "-m" );
+    bMakeFileCalled = "-m" in vDictArgs;
     if not bMakeFileCalled:
         strSrc = os.path.join("lib", "LLDB");
     else:
@@ -400,7 +400,7 @@ def make_symlink_darwin_debug( vDictArgs, vstrFrameworkPythonDir, vstrDarwinDebu
     strTarget = vstrDarwinDebugFileName;
     strSrc = "";
 
-    bMakeFileCalled = vDictArgs.has_key( "-m" );
+    bMakeFileCalled = "-m" in vDictArgs;
     if not bMakeFileCalled:
         return (bOk, strErrMsg);
     else:
@@ -430,7 +430,7 @@ def make_symlink_argdumper( vDictArgs, vstrFrameworkPythonDir, vstrArgdumperFile
     if eOSType == utilsOsType.EnumOsType.Windows:
         strTarget += ".exe";
 
-    bMakeFileCalled = vDictArgs.has_key( "-m" );
+    bMakeFileCalled = "-m" in vDictArgs;
     if not bMakeFileCalled:
         return (bOk, strErrMsg);
     else:
@@ -494,15 +494,15 @@ def find_or_create_python_dir( vDictArgs, vstrFrameworkPythonDir ):
     dbg = utilsDebug.CDebugFnVerbose( "Python script find_or_create_python_dir()" );
     bOk = True;
     strMsg = "";
-    bDbg = vDictArgs.has_key( "-d" );
+    bDbg = "-d" in vDictArgs;
 
     if os.path.isdir( vstrFrameworkPythonDir ):
         if bDbg:
-            print strMsgFrameWkPyExists % vstrFrameworkPythonDir;
+            print(strMsgFrameWkPyExists % vstrFrameworkPythonDir);
         return (bOk, strMsg);
 
     if bDbg:
-        print strMsgFrameWkPyMkDir % vstrFrameworkPythonDir;
+        print(strMsgFrameWkPyMkDir % vstrFrameworkPythonDir);
 
     try:
         os.makedirs( vstrFrameworkPythonDir );
@@ -529,7 +529,7 @@ def get_config_build_dir( vDictArgs, vstrFrameworkPythonDir ):
     strErrMsg = "";
 
     strConfigBldDir = "";
-    bHaveConfigBldDir = vDictArgs.has_key( "--cfgBldDir" );
+    bHaveConfigBldDir = "--cfgBldDir" in vDictArgs;
     if bHaveConfigBldDir:
         strConfigBldDir = vDictArgs[ "--cfgBldDir" ];
     if (bHaveConfigBldDir == False) or (strConfigBldDir.__len__() == 0):
@@ -557,11 +557,11 @@ def get_framework_python_dir_windows( vDictArgs ):
     # on the system other stuff may need to be put here as well.
     from distutils.sysconfig import get_python_lib;
     strPythonInstallDir = "";
-    bHaveArgPrefix = vDictArgs.has_key( "--prefix" );
+    bHaveArgPrefix = "--prefix" in vDictArgs;
     if bHaveArgPrefix:
         strPythonInstallDir = os.path.normpath(vDictArgs[ "--prefix" ]);
 
-    bHaveArgCmakeBuildConfiguration = vDictArgs.has_key( "--cmakeBuildConfiguration" );
+    bHaveArgCmakeBuildConfiguration = "--cmakeBuildConfiguration" in vDictArgs;
     if bHaveArgCmakeBuildConfiguration:
         strPythonInstallDir = os.path.join(strPythonInstallDir, vDictArgs["--cmakeBuildConfiguration"]);
 
@@ -587,9 +587,9 @@ def get_framework_python_dir_other_platforms( vDictArgs ):
     bOk = True;
     strWkDir = "";
     strErrMsg = "";
-    bDbg = vDictArgs.has_key( "-d" );
+    bDbg = "-d" in vDictArgs;
 
-    bMakeFileCalled = vDictArgs.has_key( "-m" );
+    bMakeFileCalled = "-m" in vDictArgs;
     if bMakeFileCalled:
         dbg.dump_text( "Built by LLVM" );
         return get_framework_python_dir_windows( vDictArgs );
@@ -601,7 +601,7 @@ def get_framework_python_dir_other_platforms( vDictArgs ):
         strWkDir += os.path.join(strWkDir, "LLDB.framework");
         if os.path.exists( strWkDir ):
             if bDbg:
-                print strMsgFoundLldbFrameWkDir % strWkDir;
+                print(strMsgFoundLldbFrameWkDir % strWkDir);
             strWkDir = os.path.join(strWkDir, "Resources", "Python", "lldb");
             strWkDir = os.path.normcase( strWkDir );
         else:
@@ -675,7 +675,7 @@ def main( vDictArgs ):
     strMsg = "";
     strErrMsgProgFail = "";
 
-    bDbg = vDictArgs.has_key( "-d" );
+    bDbg = "-d" in vDictArgs;
 
     eOSType = utilsOsType.determine_os_type();
     if bDbg:
@@ -688,8 +688,8 @@ def main( vDictArgs ):
     if bOk:
         bOk, strCfgBldDir, strMsg = get_config_build_dir( vDictArgs, strFrameworkPythonDir );
     if bOk and bDbg:
-        print strMsgPyFileLocatedHere % strFrameworkPythonDir;
-        print strMsgConfigBuildDir % strCfgBldDir;
+        print(strMsgPyFileLocatedHere % strFrameworkPythonDir);
+        print(strMsgConfigBuildDir % strCfgBldDir);
 
     if bOk:
         bOk, strMsg = find_or_create_python_dir( vDictArgs, strFrameworkPythonDir );
@@ -764,5 +764,5 @@ def main( vDictArgs ):
 # This script can be called by another Python script by calling the main()
 # function directly
 if __name__ == "__main__":
-    print "Script cannot be called directly, called by finishSwigWrapperClasses.py";
+    print("Script cannot be called directly, called by finishSwigWrapperClasses.py");
 

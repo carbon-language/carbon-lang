@@ -1,4 +1,4 @@
-""" Post process SWIG Bridge wrapper code Python script for Windows/LINUX/OSX platform
+﻿""" Post process SWIG Bridge wrapper code Python script for Windows/LINUX/OSX platform
 
     --------------------------------------------------------------------------
     File:           finishSwigWrapperClasses.py
@@ -312,7 +312,7 @@ def main( vArgv ):
         program_exit( -4, strMsgErrorOsTypeUnknown );
 
     global gbDbgFlag;
-    gbDbgFlag = dictArgs.has_key( "-d" );
+    gbDbgFlag = "-d" in dictArgs;
     if gbDbgFlag:
         print_out_input_parameters( dictArgs );
 
@@ -321,7 +321,7 @@ def main( vArgv ):
     # Not used in this program, but passed through to the language script file
     # called by this program
     global gbMakeFileFlag;
-    gbMakeFileFlag = dictArgs.has_key( "-m" );
+    gbMakeFileFlag = "-m" in dictArgs;
 
     nResult, strMsg = run_post_process_for_each_script_supported( dictArgs );
 
