@@ -33,7 +33,7 @@ debugger = lldb.SBDebugger.Create()
 debugger.SetAsync (False)
 
 # Create a target from a file and arch
-print 'Creating a target for \'%s\'' % exe
+print('Creating a target for \'%s\'' % exe)
 
 target = debugger.CreateTargetWithFileAndArch (exe, lldb.LLDB_ARCH_DEFAULT)
 
@@ -82,17 +82,17 @@ if target:
                             disassemble_instructions (insts)
 
                     registerList = frame.GetRegisters()
-                    print 'Frame registers (size of register set = %d):' % registerList.GetSize()
+                    print('Frame registers (size of register set = %d):' % registerList.GetSize())
                     for value in registerList:
                         #print value
-                        print '%s (number of children = %d):' % (value.GetName(), value.GetNumChildren())
+                        print('%s (number of children = %d):' % (value.GetName(), value.GetNumChildren()))
                         for child in value:
-                            print 'Name: ', child.GetName(), ' Value: ', child.GetValue()
+                            print('Name: ', child.GetName(), ' Value: ', child.GetValue())
 
-            print 'Hit the breakpoint at main, enter to continue and wait for program to exit or \'Ctrl-D\'/\'quit\' to terminate the program'
+            print('Hit the breakpoint at main, enter to continue and wait for program to exit or \'Ctrl-D\'/\'quit\' to terminate the program')
             next = sys.stdin.readline()
             if not next or next.rstrip('\n') == 'quit':
-                print 'Terminating the inferior process...'
+                print('Terminating the inferior process...')
                 process.Kill()
             else:
                 # Now continue to the program exit
@@ -101,9 +101,9 @@ if target:
                 # program exit. Print out some process info
                 print process
         elif state == lldb.eStateExited:
-            print 'Didn\'t hit the breakpoint at main, program has exited...'
+            print('Didn\'t hit the breakpoint at main, program has exited...')
         else:
-            print 'Unexpected process state: %s, killing process...' % debugger.StateAsCString (state)
+            print('Unexpected process state: %s, killing process...' % debugger.StateAsCString (state))
             process.Kill()
 ") SBDebugger;
 class SBDebugger

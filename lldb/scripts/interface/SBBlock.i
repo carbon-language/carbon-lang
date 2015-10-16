@@ -128,7 +128,7 @@ public:
                     if range_idx < len(self):
                         return [self.sbblock.GetRangeStartAddress(range_idx), self.sbblock.GetRangeEndAddress(range_idx)]
                 else:
-                    print "error: unsupported item type: %s" % type(key)
+                    print("error: unsupported item type: %s" % type(key))
                 return None
         
         def get_ranges_access_object(self):

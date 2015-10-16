@@ -1,7 +1,10 @@
-import __builtin__
+﻿import sys
+if sys.version_info[0] < 3:
+    import __builtin__ as builtins
+else:
+    import builtins
 import code
 import lldb
-import sys
 import traceback
 
 try:
@@ -42,8 +45,8 @@ def setquit():
     # "sys.exit(123)"
     global g_builtin_override_called
     g_builtin_override_called = False
-    __builtin__.quit = LLDBQuitter('quit')
-    __builtin__.exit = LLDBQuitter('exit')
+    builtins.quit = LLDBQuitter('quit')
+    builtins.exit = LLDBQuitter('exit')
 
 # When running one line, we might place the string to run in this string
 # in case it would be hard to correctly escape a string's contents
@@ -94,7 +97,7 @@ def run_python_interpreter (local_dict):
     except SystemExit as e:
         global g_builtin_override_called
         if not g_builtin_override_called:
-            print 'Script exited with %s' %(e)
+            print('Script exited with %s' %(e))
 
 def run_one_line (local_dict, input_string):
     global g_run_one_line_str
@@ -109,4 +112,4 @@ def run_one_line (local_dict, input_string):
     except SystemExit as e:
         global g_builtin_override_called
         if not g_builtin_override_called:
-            print 'Script exited with %s' %(e)
+            print('Script exited with %s' %(e))

@@ -276,7 +276,7 @@ public:
     new_value = str(bytes)
     result = process.WriteMemory(addr, new_value, error)
     if not error.Success() or result != len(bytes):
-        print 'SBProcess.WriteMemory() failed!'
+        print('SBProcess.WriteMemory() failed!')
     ") WriteMemory;
     size_t
     WriteMemory (addr_t addr, const void *buf, size_t size, lldb::SBError &error);
@@ -290,9 +290,9 @@ public:
     error = lldb.SBError()
     cstring = process.ReadCStringFromMemory(0x1000, 256, error)
     if error.Success():
-        print 'cstring: ', cstring
+        print('cstring: ', cstring)
     else
-        print 'error: ', error
+        print('error: ', error)
     ") ReadCStringFromMemory;
 
     size_t
@@ -306,9 +306,9 @@ public:
     error = lldb.SBError()
     uint = ReadUnsignedFromMemory(0x1000, 4, error)
     if error.Success():
-        print 'integer: %u' % uint
+        print('integer: %u' % uint)
     else
-        print 'error: ', error
+        print('error: ', error)
 
     ") ReadUnsignedFromMemory;
 
@@ -322,9 +322,9 @@ public:
     error = lldb.SBError()
     ptr = ReadPointerFromMemory(0x1000, error)
     if error.Success():
-        print 'pointer: 0x%x' % ptr
+        print('pointer: 0x%x' % ptr)
     else
-        print 'error: ', error
+        print('error: ', error)
     
     ") ReadPointerFromMemory;
     

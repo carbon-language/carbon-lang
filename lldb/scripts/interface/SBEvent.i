@@ -76,17 +76,17 @@ from test/python_api/event/TestEventspy:
                 # After that, the thread exits.
                 while not count > 3:
                     if traceOn:
-                        print 'Try wait for event...'
+                        print('Try wait for event...')
                     if listener.WaitForEventForBroadcasterWithType(5,
                                                                    broadcaster,
                                                                    lldb.SBProcess.eBroadcastBitStateChanged,
                                                                    event):
                         if traceOn:
-                            desc = lldbutil.get_description(event)
-                            print 'Event description:', desc
-                            print 'Event data flavor:', event.GetDataFlavor()
-                            print 'Process state:', lldbutil.state_type_to_str(process.GetState())
-                            print
+                            desc = lldbutil.get_description(event))
+                            print('Event description:', desc)
+                            print('Event data flavor:', event.GetDataFlavor())
+                            print('Process state:', lldbutil.state_type_to_str(process.GetState()))
+                            print()
                     else:
                         if traceOn:
                             print 'timeout occurred waiting for event...'

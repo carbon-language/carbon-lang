@@ -14,10 +14,10 @@ namespace lldb {
 a source file location. SBCompileUnit contains SBLineEntry(s). For example,
 
     for lineEntry in compileUnit:
-        print 'line entry: %s:%d' % (str(lineEntry.GetFileSpec()),
-                                    lineEntry.GetLine())
-        print 'start addr: %s' % str(lineEntry.GetStartAddress())
-        print 'end   addr: %s' % str(lineEntry.GetEndAddress())
+        print('line entry: %s:%d' % (str(lineEntry.GetFileSpec()),
+                                    lineEntry.GetLine()))
+        print('start addr: %s' % str(lineEntry.GetStartAddress()))
+        print('end   addr: %s' % str(lineEntry.GetEndAddress()))
 
 produces:
 

@@ -21,10 +21,10 @@ SBCompileUnit supports line entry iteration. For example,
     compileUnit = context.GetCompileUnit()
 
     for lineEntry in compileUnit:
-        print 'line entry: %s:%d' % (str(lineEntry.GetFileSpec()),
-                                    lineEntry.GetLine())
-        print 'start addr: %s' % str(lineEntry.GetStartAddress())
-        print 'end   addr: %s' % str(lineEntry.GetEndAddress())
+        print('line entry: %s:%d' % (str(lineEntry.GetFileSpec()),
+                                    lineEntry.GetLine()))
+        print('start addr: %s' % str(lineEntry.GetStartAddress()))
+        print('end   addr: %s' % str(lineEntry.GetEndAddress()))
 
 produces:
 

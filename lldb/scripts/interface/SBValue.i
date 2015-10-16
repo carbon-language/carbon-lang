@@ -22,9 +22,9 @@ frame as an SBValue, and iterate through all the registers,
             GPRs = regs
             break
 
-    print '%s (number of children = %d):' % (GPRs.GetName(), GPRs.GetNumChildren())
+    print('%s (number of children = %d):' % (GPRs.GetName(), GPRs.GetNumChildren()))
     for reg in GPRs:
-        print 'Name: ', reg.GetName(), ' Value: ', reg.GetValue()
+        print('Name: ', reg.GetName(), ' Value: ', reg.GetValue())
 
 produces the output:
 

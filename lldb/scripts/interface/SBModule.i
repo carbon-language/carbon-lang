@@ -29,24 +29,24 @@ SBModule supports symbol iteration, for example,
 and rich comparion methods which allow the API program to use,
 
     if thisModule == thatModule:
-        print 'This module is the same as that module'
+        print('This module is the same as that module')
 
 to test module equality.  A module also contains object file sections, namely
 SBSection.  SBModule supports section iteration through section_iter(), for
 example,
 
-    print 'Number of sections: %d' % module.GetNumSections()
+    print('Number of sections: %d' % module.GetNumSections())
     for sec in module.section_iter():
-        print sec
+        print(sec)
 
 And to iterate the symbols within a SBSection, use symbol_in_section_iter(),
 
     # Iterates the text section and prints each symbols within each sub-section.
     for subsec in text_sec:
-        print INDENT + repr(subsec)
+        print(INDENT + repr(subsec))
         for sym in exe_module.symbol_in_section_iter(subsec):
-            print INDENT2 + repr(sym)
-            print INDENT2 + 'symbol type: %s' % symbol_type_to_str(sym.GetType())
+            print(INDENT2 + repr(sym))
+            print(INDENT2 + 'symbol type: %s' % symbol_type_to_str(sym.GetType()))
 
 produces this following output:
 
@@ -365,7 +365,7 @@ public:
                                     matches.append(symbol)
                     return matches
                 else:
-                    print "error: unsupported item type: %s" % type(key)
+                    print("error: unsupported item type: %s" % type(key))
                 return None
         
         def get_symbols_access_object(self):
@@ -415,7 +415,7 @@ public:
                                 matches.append(section)
                     return matches
                 else:
-                    print "error: unsupported item type: %s" % type(key)
+                    print("error: unsupported item type: %s" % type(key))
                 return None
 
         class compile_units_access(object):
@@ -455,7 +455,7 @@ public:
                                 matches.append(comp_unit)
                     return matches
                 else:
-                    print "error: unsupported item type: %s" % type(key)
+                    print("error: unsupported item type: %s" % type(key))
                 return None
 
         def get_sections_access_object(self):
