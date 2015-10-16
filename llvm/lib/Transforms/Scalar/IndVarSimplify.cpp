@@ -883,8 +883,8 @@ public:
   PHINode *createWideIV(SCEVExpander &Rewriter);
 
 protected:
-  Value *getExtend(Value *NarrowOper, Type *WideType, bool IsSigned,
-                   Instruction *Use);
+  Value *createExtendInst(Value *NarrowOper, Type *WideType, bool IsSigned,
+                          Instruction *Use);
 
   Instruction *cloneIVUser(NarrowIVDefUse DU, const SCEVAddRecExpr *WideAR);
   Instruction *cloneArithmeticIVUser(NarrowIVDefUse DU,
@@ -917,8 +917,8 @@ static bool isLoopInvariant(Value *V, const Loop *L, const DominatorTree *DT) {
   return DT->properlyDominates(Inst->getParent(), L->getHeader());
 }
 
-Value *WidenIV::getExtend(Value *NarrowOper, Type *WideType, bool IsSigned,
-                          Instruction *Use) {
+Value *WidenIV::createExtendInst(Value *NarrowOper, Type *WideType,
+                                 bool IsSigned, Instruction *Use) {
   // Set the debug location and conservative insertion point.
   IRBuilder<> Builder(Use);
   // Hoist the insertion point into loop preheaders as far as possible.
@@ -967,14 +967,14 @@ Instruction *WidenIV::cloneBitwiseIVUser(NarrowIVDefUse DU) {
   // about the narrow operand yet so must insert a [sz]ext. It is probably loop
   // invariant and will be folded or hoisted. If it actually comes from a
   // widened IV, it should be removed during a future call to widenIVUse.
-  Value *LHS =
-      (NarrowUse->getOperand(0) == NarrowDef)
-          ? WideDef
-          : getExtend(NarrowUse->getOperand(0), WideType, IsSigned, NarrowUse);
-  Value *RHS =
-      (NarrowUse->getOperand(1) == NarrowDef)
-          ? WideDef
-          : getExtend(NarrowUse->getOperand(1), WideType, IsSigned, NarrowUse);
+  Value *LHS = (NarrowUse->getOperand(0) == NarrowDef)
+                   ? WideDef
+                   : createExtendInst(NarrowUse->getOperand(0), WideType,
+                                      IsSigned, NarrowUse);
+  Value *RHS = (NarrowUse->getOperand(1) == NarrowDef)
+                   ? WideDef
+                   : createExtendInst(NarrowUse->getOperand(1), WideType,
+                                      IsSigned, NarrowUse);
 
   auto *NarrowBO = cast<BinaryOperator>(NarrowUse);
   auto *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(), LHS, RHS,
@@ -1065,12 +1065,12 @@ Instruction *WidenIV::cloneArithmeticIVUser(NarrowIVDefUse DU,
 
   Value *LHS = (NarrowUse->getOperand(0) == NarrowDef)
                    ? WideDef
-                   : getExtend(NarrowUse->getOperand(0), WideType, SignExtend,
-                               NarrowUse);
+                   : createExtendInst(NarrowUse->getOperand(0), WideType,
+                                      SignExtend, NarrowUse);
   Value *RHS = (NarrowUse->getOperand(1) == NarrowDef)
                    ? WideDef
-                   : getExtend(NarrowUse->getOperand(1), WideType, SignExtend,
-                               NarrowUse);
+                   : createExtendInst(NarrowUse->getOperand(1), WideType,
+                                      SignExtend, NarrowUse);
 
   auto *NarrowBO = cast<BinaryOperator>(NarrowUse);
   auto *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(), LHS, RHS,
@@ -1222,7 +1222,7 @@ bool WidenIV::widenLoopCompare(NarrowIVDefUse DU) {
 
   // Widen the other operand of the compare, if necessary.
   if (CastWidth < IVWidth) {
-    Value *ExtOp = getExtend(Op, WideType, Cmp->isSigned(), Cmp);
+    Value *ExtOp = createExtendInst(Op, WideType, Cmp->isSigned(), Cmp);
     DU.NarrowUse->replaceUsesOfWith(Op, ExtOp);
   }
   return true;
