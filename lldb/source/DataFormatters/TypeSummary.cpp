@@ -76,15 +76,17 @@ TypeSummaryOptions::SetCapping (lldb::TypeSummaryCapping cap)
     return *this;
 }
 
-TypeSummaryImpl::TypeSummaryImpl (const TypeSummaryImpl::Flags& flags) :
-m_flags(flags)
+TypeSummaryImpl::TypeSummaryImpl (Kind kind,
+                                  const TypeSummaryImpl::Flags& flags) :
+    m_flags(flags),
+    m_kind(kind)
 {
 }
 
 
 StringSummaryFormat::StringSummaryFormat (const TypeSummaryImpl::Flags& flags,
                                           const char *format_cstr) :
-    TypeSummaryImpl(flags),
+    TypeSummaryImpl(Kind::eSummaryString,flags),
     m_format_str()
 {
     SetSummaryString (format_cstr);
@@ -170,7 +172,7 @@ StringSummaryFormat::GetDescription ()
 CXXFunctionSummaryFormat::CXXFunctionSummaryFormat (const TypeSummaryImpl::Flags& flags,
                                                     Callback impl,
                                                     const char* description) :
-TypeSummaryImpl(flags),
+    TypeSummaryImpl(Kind::eCallback,flags),
     m_impl(impl),
     m_description(description ? description : "")
 {
@@ -208,10 +210,10 @@ CXXFunctionSummaryFormat::GetDescription ()
 ScriptSummaryFormat::ScriptSummaryFormat (const TypeSummaryImpl::Flags& flags,
                                           const char * function_name,
                                           const char * python_script) :
-TypeSummaryImpl(flags),
-m_function_name(),
-m_python_script(),
-m_script_function_sp()
+    TypeSummaryImpl(Kind::eScript,flags),
+    m_function_name(),
+    m_python_script(),
+    m_script_function_sp()
 {
     if (function_name)
         m_function_name.assign(function_name);
