@@ -105,6 +105,8 @@ StackFrameList::GetCurrentInlinedDepth ()
 void
 StackFrameList::ResetCurrentInlinedDepth ()
 {
+    Mutex::Locker locker (m_mutex);
+
     if (m_show_inlined_frames)
     {        
         GetFramesUpTo(0);
