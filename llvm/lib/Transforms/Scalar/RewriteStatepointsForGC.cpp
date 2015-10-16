@@ -1274,34 +1274,32 @@ static int find_index(ArrayRef<Value *> livevec, Value *val) {
 // Create new attribute set containing only attributes which can be transferred
 // from original call to the safepoint.
 static AttributeSet legalizeCallAttributes(AttributeSet AS) {
-  AttributeSet ret;
+  AttributeSet Ret;
 
   for (unsigned Slot = 0; Slot < AS.getNumSlots(); Slot++) {
-    unsigned index = AS.getSlotIndex(Slot);
+    unsigned Index = AS.getSlotIndex(Slot);
 
-    if (index == AttributeSet::ReturnIndex ||
-        index == AttributeSet::FunctionIndex) {
+    if (Index == AttributeSet::ReturnIndex ||
+        Index == AttributeSet::FunctionIndex) {
 
-      for (auto it = AS.begin(Slot), it_end = AS.end(Slot); it != it_end;
-           ++it) {
-        Attribute attr = *it;
+      for (Attribute Attr : make_range(AS.begin(Slot), AS.end(Slot))) {
 
         // Do not allow certain attributes - just skip them
         // Safepoint can not be read only or read none.
-        if (attr.hasAttribute(Attribute::ReadNone) ||
-            attr.hasAttribute(Attribute::ReadOnly))
+        if (Attr.hasAttribute(Attribute::ReadNone) ||
+            Attr.hasAttribute(Attribute::ReadOnly))
           continue;
 
-        ret = ret.addAttributes(
-            AS.getContext(), index,
-            AttributeSet::get(AS.getContext(), index, AttrBuilder(attr)));
+        Ret = Ret.addAttributes(
+            AS.getContext(), Index,
+            AttributeSet::get(AS.getContext(), Index, AttrBuilder(Attr)));
       }
     }
 
     // Just skip parameter attributes for now
   }
 
-  return ret;
+  return Ret;
 }
 
 /// Helper function to place all gc relocates necessary for the given
