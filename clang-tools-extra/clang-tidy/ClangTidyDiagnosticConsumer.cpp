@@ -519,8 +519,8 @@ struct LessClangTidyError {
   }
 };
 struct EqualClangTidyError {
-  static LessClangTidyError Less;
   bool operator()(const ClangTidyError &LHS, const ClangTidyError &RHS) const {
+    LessClangTidyError Less;
     return !Less(LHS, RHS) && !Less(RHS, LHS);
   }
 };
