@@ -84,18 +84,6 @@ public:
   bool isRelRelative(uint32_t Type) const override;
 };
 
-class PPCTargetInfo final : public TargetInfo {
-public:
-  PPCTargetInfo();
-  void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                     uint64_t PltEntryAddr) const override;
-  bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
-  bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                   uint32_t Type, uint64_t BaseAddr,
-                   uint64_t SA) const override;
-};
-
 class AArch64TargetInfo final : public TargetInfo {
 public:
   AArch64TargetInfo();
@@ -136,8 +124,6 @@ TargetInfo *createTarget() {
     default:
       error("Unsupported MIPS target");
     }
-  case EM_PPC:
-    return new PPCTargetInfo();
   case EM_PPC64:
     return new PPC64TargetInfo();
   case EM_X86_64:
@@ -556,23 +542,6 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     error("unrecognized reloc " + Twine(Type));
   }
 }
-
-PPCTargetInfo::PPCTargetInfo() {
-  // PCRelReloc = FIXME
-  // GotReloc = FIXME
-  PageSize = 65536;
-}
-void PPCTargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                                  uint64_t PltEntryAddr) const {}
-bool PPCTargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
-bool PPCTargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
-  return false;
-}
-void PPCTargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                                uint32_t Type, uint64_t BaseAddr,
-                                uint64_t SA) const {}
 
 AArch64TargetInfo::AArch64TargetInfo() {
   // PCRelReloc = FIXME

@@ -91,37 +91,6 @@
 # PPC64-NEXT:    StringTableSectionIndex: 5
 # PPC64-NEXT: }
 
-# RUN: llvm-mc -filetype=obj -triple=powerpc-unknown-linux %s -o %tppc
-# RUN: ld.lld2 -m elf32ppc %tppc -o %t2ppc
-# RUN: llvm-readobj -file-headers %t2ppc | FileCheck --check-prefix=PPC %s
-# RUN: ld.lld2 %tppc -o %t3ppc
-# RUN: llvm-readobj -file-headers %t3ppc | FileCheck --check-prefix=PPC %s
-# PPC:      ElfHeader {
-# PPC-NEXT:   Ident {
-# PPC-NEXT:     Magic: (7F 45 4C 46)
-# PPC-NEXT:     Class: 32-bit (0x1)
-# PPC-NEXT:     DataEncoding: BigEndian (0x2)
-# PPC-NEXT:     FileVersion: 1
-# PPC-NEXT:     OS/ABI: SystemV (0x0)
-# PPC-NEXT:     ABIVersion: 0
-# PPC-NEXT:     Unused: (00 00 00 00 00 00 00)
-# PPC-NEXT:   }
-# PPC-NEXT:   Type: Executable (0x2)
-# PPC-NEXT:   Machine: EM_PPC (0x14)
-# PPC-NEXT:   Version: 1
-# PPC-NEXT:   Entry: 0x10074
-# PPC-NEXT:   ProgramHeaderOffset: 0x34
-# PPC-NEXT:   SectionHeaderOffset: 0xC0
-# PPC-NEXT:   Flags [ (0x0)
-# PPC-NEXT:   ]
-# PPC-NEXT:   HeaderSize: 52
-# PPC-NEXT:   ProgramHeaderEntrySize: 32
-# PPC-NEXT:   ProgramHeaderCount: 2
-# PPC-NEXT:   SectionHeaderEntrySize: 40
-# PPC-NEXT:   SectionHeaderCount: 6
-# PPC-NEXT:    StringTableSectionIndex: 5
-# PPC-NEXT: }
-
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %tmips
 # RUN: lld -flavor gnu2 -m elf32btsmip -e _start %tmips -o %t2mips
 # RUN: llvm-readobj -file-headers %t2mips | FileCheck --check-prefix=MIPS %s
