@@ -126,7 +126,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
         if (Body)
           Addend += getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body));
         else
-          Addend += getLocalRelTarget(File, RI);
+          Addend += getLocalRelTarget(File, RI, Type);
       }
       P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
     }
@@ -424,15 +424,19 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
 lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
-                             const typename ELFFile<ELFT>::Elf_Rel &RI) {
+                             const typename ELFFile<ELFT>::Elf_Rel &RI,
+                             uint32_t Type) {
+  // PPC64 has a special relocation representing the TOC base pointer
+  // that does not have a corresponding symbol.
+  if (Config->EMachine == EM_PPC64 && Type == R_PPC64_TOC)
+    return getPPC64TocBase();
+
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   const Elf_Sym *Sym =
       File.getObj().getRelocationSymbol(&RI, File.getSymbolTable());
 
-  // For certain special relocations, such as R_PPC64_TOC, there's no
-  // corresponding symbol. Just return 0 in that case.
   if (!Sym)
-    return 0;
+    error("Unsupported relocation without symbol");
 
   // According to the ELF spec reference to a local symbol from outside
   // the group are not allowed. Unfortunately .eh_frame breaks that rule
@@ -743,19 +747,19 @@ template ELFFile<ELF64BE>::uintX_t getSymVA<ELF64BE>(const SymbolBody &);
 
 template ELFFile<ELF32LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32LE> &,
-                  const ELFFile<ELF32LE>::Elf_Rel &);
+                  const ELFFile<ELF32LE>::Elf_Rel &, uint32_t);
 
 template ELFFile<ELF32BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32BE> &,
-                  const ELFFile<ELF32BE>::Elf_Rel &);
+                  const ELFFile<ELF32BE>::Elf_Rel &, uint32_t);
 
 template ELFFile<ELF64LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64LE> &,
-                  const ELFFile<ELF64LE>::Elf_Rel &);
+                  const ELFFile<ELF64LE>::Elf_Rel &, uint32_t);
 
 template ELFFile<ELF64BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64BE> &,
-                  const ELFFile<ELF64BE>::Elf_Rel &);
+                  const ELFFile<ELF64BE>::Elf_Rel &, uint32_t);
 
 template bool includeInSymtab<ELF32LE>(const SymbolBody &);
 template bool includeInSymtab<ELF32BE>(const SymbolBody &);

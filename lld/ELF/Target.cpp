@@ -345,7 +345,7 @@ PPC64TargetInfo::PPC64TargetInfo() {
   VAStart = 0x10000000;
 }
 
-static uint64_t getPPC64TocBase() {
+uint64_t getPPC64TocBase() {
   // The TOC consists of sections .got, .toc, .tocbss, .plt in that
   // order. The TOC starts where the first of these sections starts.
 
@@ -425,11 +425,6 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   uint8_t *L = Buf + Rel.r_offset;
   uint64_t P = BaseAddr + Rel.r_offset;
   uint64_t TB = getPPC64TocBase();
-
-  if (Type == R_PPC64_TOC) {
-    write64be(L, TB);
-    return;
-  }
 
   // For a TOC-relative relocation, adjust the addend and proceed in terms of
   // the corresponding ADDR16 relocation type.
@@ -536,6 +531,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     write64be(L, SA - P);
     break;
   case R_PPC64_ADDR64:
+  case R_PPC64_TOC:
     write64be(L, SA);
     break;
   default:

@@ -58,6 +58,8 @@ protected:
   unsigned PltEntrySize = 8;
 };
 
+uint64_t getPPC64TocBase();
+
 extern std::unique_ptr<TargetInfo> Target;
 TargetInfo *createTarget();
 }
