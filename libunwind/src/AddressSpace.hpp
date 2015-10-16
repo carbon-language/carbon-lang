@@ -35,7 +35,11 @@ namespace libunwind {
 #include "Registers.hpp"
 
 #if _LIBUNWIND_ARM_EHABI
-#ifdef __linux__
+#if defined(__FreeBSD__)
+
+typedef void *_Unwind_Ptr;
+
+#elif defined(__linux__)
 
 typedef long unsigned int *_Unwind_Ptr;
 extern "C" _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr addr, int *len);
