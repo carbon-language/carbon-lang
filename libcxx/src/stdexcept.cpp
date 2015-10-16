@@ -14,7 +14,7 @@
 #include "system_error"
 
 /* For _LIBCPPABI_VERSION */
-#if defined(LIBCXX_BUILDING_LIBCXXABI) || defined(__APPLE_) || defined(LIBCXXRT)
+#if defined(LIBCXX_BUILDING_LIBCXXABI) || defined(__APPLE__) || defined(LIBCXXRT)
 #include <cxxabi.h>
 #endif
 
