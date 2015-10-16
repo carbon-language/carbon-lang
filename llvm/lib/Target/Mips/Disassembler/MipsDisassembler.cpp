@@ -246,6 +246,16 @@ static DecodeStatus DecodeMemEVA(MCInst &Inst,
                                  uint64_t Address,
                                  const void *Decoder);
 
+static DecodeStatus DecodeLoadByte9(MCInst &Inst,
+                                    unsigned Insn,
+                                    uint64_t Address,
+                                    const void *Decoder);
+
+static DecodeStatus DecodeLoadByte15(MCInst &Inst,
+                                     unsigned Insn,
+                                     uint64_t Address,
+                                     const void *Decoder);
+
 static DecodeStatus DecodeCacheOp(MCInst &Inst,
                               unsigned Insn,
                               uint64_t Address,
@@ -1145,6 +1155,42 @@ static DecodeStatus DecodeMemEVA(MCInst &Inst,
 
    if (Inst.getOpcode() == Mips::SCE)
      Inst.addOperand(MCOperand::createReg(Reg));
+
+  Inst.addOperand(MCOperand::createReg(Reg));
+  Inst.addOperand(MCOperand::createReg(Base));
+  Inst.addOperand(MCOperand::createImm(Offset));
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeLoadByte9(MCInst &Inst,
+                                    unsigned Insn,
+                                    uint64_t Address,
+                                    const void *Decoder) {
+  int Offset = SignExtend32<9>(Insn & 0x1ff);
+  unsigned Base = fieldFromInstruction(Insn, 16, 5);
+  unsigned Reg = fieldFromInstruction(Insn, 21, 5);
+
+  Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
+  Reg = getReg(Decoder, Mips::GPR32RegClassID, Reg);
+
+  Inst.addOperand(MCOperand::createReg(Reg));
+  Inst.addOperand(MCOperand::createReg(Base));
+  Inst.addOperand(MCOperand::createImm(Offset));
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeLoadByte15(MCInst &Inst,
+                                     unsigned Insn,
+                                     uint64_t Address,
+                                     const void *Decoder) {
+  int Offset = SignExtend32<16>(Insn & 0xffff);
+  unsigned Base = fieldFromInstruction(Insn, 16, 5);
+  unsigned Reg = fieldFromInstruction(Insn, 21, 5);
+
+  Base = getReg(Decoder, Mips::GPR32RegClassID, Base);
+  Reg = getReg(Decoder, Mips::GPR32RegClassID, Reg);
 
   Inst.addOperand(MCOperand::createReg(Reg));
   Inst.addOperand(MCOperand::createReg(Base));

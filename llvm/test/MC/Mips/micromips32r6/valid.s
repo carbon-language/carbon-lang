@@ -204,3 +204,7 @@
   sdbbp16 8                # CHECK: sdbbp16 8           # encoding: [0x46,0x3b]
   subu16 $5, $16, $3       # CHECK: subu16 $5, $16, $3  # encoding: [0x04,0x3b]
   xor16 $17, $5            # CHECK: xor16 $17, $5       # encoding: [0x44,0xd8]
+  lb $4, 8($5)             # CHECK: lb $4, 8($5)        # encoding: [0x1c,0x85,0x00,0x08]
+  lbu $4, 8($5)            # CHECK: lbu $4, 8($5)       # encoding: [0x14,0x85,0x00,0x08]
+  lbe $4, 8($5)            # CHECK: lbe $4, 8($5)       # encoding: [0x60,0x85,0x68,0x08]
+  lbue $4, 8($5)           # CHECK: lbue $4, 8($5)      # encoding: [0x60,0x85,0x60,0x08]

@@ -130,6 +130,14 @@ def mem_mm_12 : Operand<i32> {
   let OperandType = "OPERAND_MEMORY";
 }
 
+def mem_mm_16 : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops GPR32, simm16);
+  let EncoderMethod = "getMemEncodingMMImm16";
+  let ParserMatchClass = MipsMemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
+}
+
 def MipsMemUimm4AsmOperand : AsmOperandClass {
   let Name = "MemOffsetUimm4";
   let SuperClasses = [MipsMemAsmOperand];

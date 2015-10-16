@@ -78,6 +78,10 @@ class PREFE_MMR6_ENC : POOL32C_ST_EVA_FM_MMR6<0b011000, 0b010>;
 class CACHEE_MMR6_ENC : POOL32C_ST_EVA_FM_MMR6<0b011000, 0b011>;
 class WRPGPR_MMR6_ENC : POOL32A_WRPGPR_WSBH_FM_MMR6<0x3c5>;
 class WSBH_MMR6_ENC : POOL32A_WRPGPR_WSBH_FM_MMR6<0x1ec>;
+class LB_MMR6_ENC : LB32_FM_MMR6;
+class LBU_MMR6_ENC : LBU32_FM_MMR6;
+class LBE_MMR6_ENC : POOL32C_LB_LBU_FM_MMR6<0b100>;
+class LBUE_MMR6_ENC : POOL32C_LB_LBU_FM_MMR6<0b000>;
 class XOR_MMR6_ENC : ARITH_FM_MMR6<"xor", 0x310>;
 class XORI_MMR6_ENC : ADDI_FM_MMR6<"xori", 0x1c>;
 class ABS_S_MMR6_ENC : POOL32F_ABS_FM_MMR6<"abs.s", 0, 0b0001101>;
@@ -284,6 +288,25 @@ class PREFE_CACHEE_MMR6_DESC_BASE<string instr_asm, Operand MemOpnd,
 
 class PREFE_MMR6_DESC : PREFE_CACHEE_MMR6_DESC_BASE<"prefe", mem_mm_9, GPR32Opnd>;
 class CACHEE_MMR6_DESC : PREFE_CACHEE_MMR6_DESC_BASE<"cachee", mem_mm_9, GPR32Opnd>;
+
+class LB_LBU_MMR6_DESC_BASE<string instr_asm, Operand MemOpnd,
+                            RegisterOperand GPROpnd> : MMR6Arch<instr_asm> {
+  dag OutOperandList = (outs GPROpnd:$rt);
+  dag InOperandList = (ins MemOpnd:$addr);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $addr");
+  string DecoderMethod = "DecodeLoadByte15";
+  bit mayLoad = 1;
+}
+class LB_MMR6_DESC : LB_LBU_MMR6_DESC_BASE<"lb", mem_mm_16, GPR32Opnd>;
+class LBU_MMR6_DESC : LB_LBU_MMR6_DESC_BASE<"lbu", mem_mm_16, GPR32Opnd>;
+
+class LBE_LBUE_MMR6_DESC_BASE<string instr_asm, Operand MemOpnd,
+                              RegisterOperand GPROpnd>
+    : LB_LBU_MMR6_DESC_BASE<instr_asm, MemOpnd, GPROpnd> {
+  let DecoderMethod = "DecodeLoadByte9";
+}
+class LBE_MMR6_DESC : LBE_LBUE_MMR6_DESC_BASE<"lbe", mem_mm_9, GPR32Opnd>;
+class LBUE_MMR6_DESC : LBE_LBUE_MMR6_DESC_BASE<"lbue", mem_mm_9, GPR32Opnd>;
 
 class CLO_CLZ_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
     : MMR6Arch<instr_asm> {
@@ -830,6 +853,10 @@ def CACHEE_MMR6 : StdMMR6Rel, CACHEE_MMR6_ENC, CACHEE_MMR6_DESC,
 def WRPGPR_MMR6 : StdMMR6Rel, WRPGPR_MMR6_ENC, WRPGPR_MMR6_DESC,
                   ISA_MICROMIPS32R6;
 def WSBH_MMR6 : StdMMR6Rel, WSBH_MMR6_ENC, WSBH_MMR6_DESC, ISA_MICROMIPS32R6;
+def LB_MMR6 : R6MMR6Rel, LB_MMR6_ENC, LB_MMR6_DESC, ISA_MICROMIPS32R6;
+def LBU_MMR6 : R6MMR6Rel, LBU_MMR6_ENC, LBU_MMR6_DESC, ISA_MICROMIPS32R6;
+def LBE_MMR6 : R6MMR6Rel, LBE_MMR6_ENC, LBE_MMR6_DESC, ISA_MICROMIPS32R6;
+def LBUE_MMR6 : R6MMR6Rel, LBUE_MMR6_ENC, LBUE_MMR6_DESC, ISA_MICROMIPS32R6;
 def XOR_MMR6 : StdMMR6Rel, XOR_MMR6_DESC, XOR_MMR6_ENC, ISA_MICROMIPS32R6;
 def XORI_MMR6 : StdMMR6Rel, XORI_MMR6_DESC, XORI_MMR6_ENC, ISA_MICROMIPS32R6;
 let DecoderMethod = "DecodeMemMMImm16" in {
