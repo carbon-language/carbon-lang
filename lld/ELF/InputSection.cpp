@@ -48,10 +48,9 @@ void InputSection<ELFT>::relocate(
     iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels,
     const ObjectFile<ELFT> &File, uintX_t BaseAddr) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
-  bool IsMips64EL = File.getObj().isMips64EL();
   for (const RelType &RI : Rels) {
-    uint32_t SymIndex = RI.getSymbol(IsMips64EL);
-    uint32_t Type = RI.getType(IsMips64EL);
+    uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
+    uint32_t Type = RI.getType(Config->Mips64EL);
 
     // Handle relocations for local symbols -- they never get
     // resolved so we don't allocate a SymbolBody.

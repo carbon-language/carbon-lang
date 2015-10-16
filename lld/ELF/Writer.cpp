@@ -172,11 +172,10 @@ void Writer<ELFT>::scanRelocs(
     iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
   typedef Elf_Rel_Impl<ELFT, isRela> RelType;
   const ObjectFile<ELFT> &File = *C.getFile();
-  bool IsMips64EL = File.getObj().isMips64EL();
   for (const RelType &RI : Rels) {
-    uint32_t SymIndex = RI.getSymbol(IsMips64EL);
+    uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
     SymbolBody *Body = File.getSymbolBody(SymIndex);
-    uint32_t Type = RI.getType(IsMips64EL);
+    uint32_t Type = RI.getType(Config->Mips64EL);
 
     // Set "used" bit for --as-needed.
     if (Body && Body->isUndefined() && !Body->isWeak())

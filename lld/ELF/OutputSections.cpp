@@ -103,20 +103,19 @@ RelocationSection<ELFT>::RelocationSection(bool IsRela)
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
   const unsigned EntrySize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
-  bool IsMips64EL = Relocs[0].C.getFile()->getObj().isMips64EL();
   for (const DynamicReloc<ELFT> &Rel : Relocs) {
     auto *P = reinterpret_cast<Elf_Rel *>(Buf);
     Buf += EntrySize;
 
     const InputSection<ELFT> &C = Rel.C;
     const Elf_Rel &RI = Rel.RI;
-    uint32_t SymIndex = RI.getSymbol(IsMips64EL);
+    uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
     const ObjectFile<ELFT> &File = *C.getFile();
     SymbolBody *Body = File.getSymbolBody(SymIndex);
     if (Body)
       Body = Body->repl();
 
-    uint32_t Type = RI.getType(IsMips64EL);
+    uint32_t Type = RI.getType(Config->Mips64EL);
 
     bool NeedsGot = Body && Target->relocNeedsGot(Type, *Body);
     bool CanBePreempted = canBePreempted(Body, NeedsGot);
@@ -128,21 +127,21 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
         else
           Addend += getLocalRelTarget(File, RI);
       }
-      P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
+      P->setSymbolAndType(0, Target->getRelativeReloc(), Config->Mips64EL);
     }
 
     if (NeedsGot) {
       P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
       if (CanBePreempted)
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
-                            Target->getGotReloc(), IsMips64EL);
+                            Target->getGotReloc(), Config->Mips64EL);
     } else {
       if (IsRela)
         Addend += static_cast<const Elf_Rela &>(RI).r_addend;
       P->r_offset = RI.r_offset + C.OutSec->getVA() + C.OutSecOff;
       if (CanBePreempted)
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
-                            IsMips64EL);
+                            Config->Mips64EL);
     }
 
     if (IsRela)

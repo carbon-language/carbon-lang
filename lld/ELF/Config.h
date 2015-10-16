@@ -50,6 +50,7 @@ struct Configuration {
   bool DiscardNone;
   bool EnableNewDtags;
   bool ExportDynamic;
+  bool Mips64EL = false;
   bool NoInhibitExec;
   bool NoUndefined;
   bool Shared;
