@@ -201,6 +201,9 @@ public:
     bool
     HasAttribute(llvm::StringRef attribute) const;
 
+    PythonObject
+    GetAttributeValue(llvm::StringRef attribute) const;
+
     bool
     IsValid() const;
 
@@ -209,6 +212,14 @@ public:
 
     bool
     IsNone() const;
+
+    template<typename T>
+    T AsType() const
+    {
+        if (!T::Check(m_py_obj))
+            return T();
+        return T(PyRefType::Borrowed, m_py_obj);
+    }
 
     StructuredData::ObjectSP CreateStructuredObject() const;
 

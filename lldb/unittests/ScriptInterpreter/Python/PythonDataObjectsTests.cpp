@@ -382,3 +382,14 @@ TEST_F(PythonDataObjectsTest, TestPythonFile)
     PythonFile py_file(file, "r");
     EXPECT_TRUE(PythonFile::Check(py_file.get()));
 }
+
+TEST_F(PythonDataObjectsTest, TestObjectAttributes)
+{
+    PythonInteger py_int(42);
+    EXPECT_TRUE(py_int.HasAttribute("numerator"));
+    EXPECT_FALSE(py_int.HasAttribute("this_should_not_exist"));
+
+    PythonInteger numerator_attr = py_int.GetAttributeValue("numerator").AsType<PythonInteger>();
+    EXPECT_TRUE(numerator_attr.IsAllocated());
+    EXPECT_EQ(42, numerator_attr.GetInteger());
+}

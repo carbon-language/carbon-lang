@@ -111,6 +111,20 @@ PythonObject::HasAttribute(llvm::StringRef attr) const
     return !!PyObject_HasAttr(m_py_obj, py_attr.get());
 }
 
+PythonObject
+PythonObject::GetAttributeValue(llvm::StringRef attr) const
+{
+    if (!IsValid())
+        return PythonObject();
+
+    PythonString py_attr(attr);
+    if (!PyObject_HasAttr(m_py_obj, py_attr.get()))
+        return PythonObject();
+
+    return PythonObject(PyRefType::Owned,
+        PyObject_GetAttr(m_py_obj, py_attr.get()));
+}
+
 bool
 PythonObject::IsNone() const
 {
@@ -191,11 +205,13 @@ PythonString::Check(PyObject *py_obj)
     if (!py_obj)
         return false;
 
-#if PY_MAJOR_VERSION >= 3
-    return PyUnicode_Check(py_obj);
-#else
-    return PyString_Check(py_obj);
+    if (PyUnicode_Check(py_obj))
+        return true;
+#if PY_MAJOR_VERSION < 3
+    if (PyString_Check(py_obj))
+        return true;
 #endif
+    return false;
 }
 
 void
@@ -210,7 +226,13 @@ PythonString::Reset(PyRefType type, PyObject *py_obj)
         PythonObject::Reset();
         return;
     }
-
+#if PY_MAJOR_VERSION < 3
+    // In Python 2, Don't store PyUnicode objects directly, because we need
+    // access to their underlying character buffers which Python 2 doesn't
+    // provide.
+    if (PyUnicode_Check(py_obj))
+        result.Reset(PyRefType::Owned, PyUnicode_AsUTF8String(result.get()));
+#endif
     // Calling PythonObject::Reset(const PythonObject&) will lead to stack overflow since it calls
     // back into the virtual implementation.
     PythonObject::Reset(PyRefType::Borrowed, result.get());
@@ -270,6 +292,12 @@ PythonString::CreateStructuredString() const
 //----------------------------------------------------------------------
 // PythonInteger
 //----------------------------------------------------------------------
+
+PythonInteger::PythonInteger()
+    : PythonObject()
+{
+
+}
 
 PythonInteger::PythonInteger(PyRefType type, PyObject *py_obj)
     : PythonObject()

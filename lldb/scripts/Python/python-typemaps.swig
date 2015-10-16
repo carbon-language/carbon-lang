@@ -63,34 +63,38 @@
   int i;
   len = 0;
   while ($1[len]) len++;
-  lldb_private::PythonList list(len);
+  using namespace lldb_private;
+  PythonList list(len);
   for (i = 0; i < len; i++)
-    list.SetItemAtIndex(i, lldb_private::PythonString($1[i]));
+    list.SetItemAtIndex(i, PythonString($1[i]));
   $result = list.release();
 }
 
 %typemap(in) char const ** {
   /* Check if is a list  */
-  if (PyList_Check($input)) {
-    int size = PyList_Size($input);
-    int i = 0;
-    $1 = (char **) malloc((size+1) * sizeof(char*));
-    for (i = 0; i < size; i++) {
-      PyObject *o = PyList_GetItem($input,i);
-      if (PyString_Check(o))
-        $1[i] = PyString_AsString(o);
-      else {
+  using namespace lldb_private;
+  if (PythonList::Check($input)) {
+    PythonList py_list(PyRefType::Borrowed, $input);
+    int size = py_list.GetSize();
+
+    $1 = (char**)malloc((size+1)*sizeof(char*));
+    for (int i = 0; i < size; i++) {
+      PythonObject o = py_list.GetItemAtIndex(i);
+      if (!PythonString::Check(o.get())) {
         PyErr_SetString(PyExc_TypeError,"list must contain strings");
         free($1);
-        return NULL;
+        return nullptr;
       }
+      auto py_str = o.AsType<PythonString>();
+      $1[i] = const_cast<char*>(py_str.GetString().data());
     }
-    $1[i] = 0;
+
+    $1[size] = 0;
   } else if ($input == Py_None) {
-    $1 =  NULL;
+    $1 = nullptr;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -501,12 +505,13 @@
 }
 
 %typemap(in) FILE * {
+   using namespace lldb_private;
    if ($input == Py_None)
-      $1 = NULL;
+      $1 = nullptr;
    else if (!lldb_private::PythonFile::Check($input)) {
       int fd = PyObject_AsFileDescriptor($input);
-      lldb_private::PythonString py_mode(lldb_private::PyRefType::Owned,
-		  PyObject_GetAttrString($input, "mode"));
+      PythonObject py_input(PyRefType::Borrowed, $input);
+      PythonString py_mode = py_input.GetAttributeValue("mode").AsType<PythonString>();
 
       if (-1 != fd && py_mode.IsValid()) {
          FILE *f;
@@ -521,10 +526,10 @@
    }
    else
    {
-      lldb_private::File file;
-	    lldb_private::PythonFile py_file(lldb_private::PyRefType::Borrowed, $input);
-	    if (!py_file.GetUnderlyingFile(file))
-	      return nullptr;
+      PythonFile py_file(PyRefType::Borrowed, $input);
+      File file;
+      if (!py_file.GetUnderlyingFile(file))
+         return nullptr;
 
       $1 = file.GetStream();
    }
@@ -543,26 +548,34 @@
    else // if (flags & __SRW)
       mode[i++] = 'a';
 #endif
-   lldb_private::File file($1, false);
-   lldb_private::PythonFile py_file(file, mode);
+   using namespace lldb_private;
+   File file($1, false);
+   PythonFile py_file(file, mode);
    $result = py_file.release();
 }
 
 %typemap(in) (const char* string, int len) {
+    using namespace lldb_private;
     if ($input == Py_None)
     {
         $1 = NULL;
         $2 = 0;
     }
-    else if (PyUnicode_Check($input))
+    else if (PythonString::Check($input))
     {
-        $1 = PyString_AsString(PyUnicode_AsUTF8String($input));
-        $2 = strlen($1);
-    }
-    else if (PyString_Check($input))
-    {
-        $1 = PyString_AsString($input);
-        $2 = PyString_Size($input);
+        PythonString py_str(PyRefType::Borrowed, $input);
+        llvm::StringRef str = py_str.GetString();
+        $1 = const_cast<char*>(str.data());
+        $2 = str.size();
+        // In Python 2, if $input is a PyUnicode object then this
+        // will trigger a Unicode -> String conversion, in which
+        // case the `PythonString` will now own the PyString.  Thus
+        // if it goes out of scope, the data will be deleted.  The
+        // only way to avoid this is to leak the Python object in
+        // that case.  Note that if there was no conversion, then
+        // releasing the string will not leak anything, since we
+        // created this as a borrowed reference.
+        py_str.release();
     }
     else
     {
