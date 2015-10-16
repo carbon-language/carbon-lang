@@ -628,6 +628,10 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
     // No overflow check needed.
+    // This relocation stores 12 bits and there's no instruction
+    // to do it. Instead, we do a 32 bits store of the value
+    // of r_addend bitwise-or'ed L. This assumes that the addend
+    // bits in L are zero.
     or32le(L, (SA & 0xFFF) << 10);
     break;
   case R_AARCH64_ADR_PREL_LO21: {
