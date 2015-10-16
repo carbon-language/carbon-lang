@@ -28,6 +28,8 @@ FunctionPass *createWebAssemblyISelDag(WebAssemblyTargetMachine &TM,
 
 FunctionPass *createWebAssemblyCFGStackify();
 
+FunctionPass *createWebAssemblyRelooper();
+
 } // end namespace llvm
 
 #endif

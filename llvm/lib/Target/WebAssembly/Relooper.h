@@ -14,13 +14,13 @@
 ///
 //===-------------------------------------------------------------------===//
 
-#include <llvm/ADT/MapVector.h>
-#include <llvm/ADT/SetVector.h>
-#include <llvm/Support/Casting.h>
+#include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/Support/Casting.h"
 
 #include <cassert>
-#include <cstdio>
 #include <cstdarg>
+#include <cstdio>
 #include <deque>
 #include <list>
 #include <map>
@@ -180,34 +180,6 @@ struct LoopShape : public LabeledShape {
 
   static bool classof(const Shape *S) { return S->getKind() == SK_Loop; }
 };
-
-///
-/// Implements the relooper algorithm for a function's blocks.
-///
-/// Implementation details: The Relooper instance has
-/// ownership of the blocks and shapes, and frees them when done.
-///
-struct Relooper {
-  std::deque<Block *> Blocks;
-  std::deque<Shape *> Shapes;
-  Shape *Root;
-  bool MinSize;
-  int BlockIdCounter;
-  int ShapeIdCounter;
-
-  Relooper();
-  ~Relooper();
-
-  void AddBlock(Block *New, int Id = -1);
-
-  // Calculates the shapes
-  void Calculate(Block *Entry);
-
-  // Sets us to try to minimize size
-  void SetMinSize(bool MinSize_) { MinSize = MinSize_; }
-};
-
-typedef MapVector<Block *, BlockSet> BlockBlockSetMap;
 
 } // namespace Relooper
 

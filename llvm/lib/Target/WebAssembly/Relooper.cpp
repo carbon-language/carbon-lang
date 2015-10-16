@@ -20,10 +20,15 @@
 //===-------------------------------------------------------------------===//
 
 #include "Relooper.h"
+#include "WebAssembly.h"
 
-#include <llvm/ADT/STLExtras.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/CommandLine.h>
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/CFG.h"
+#include "llvm/IR/Function.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <cstring>
 #include <cstdlib>
@@ -32,7 +37,10 @@
 #include <stack>
 #include <string>
 
+#define DEBUG_TYPE "relooper"
+
 using namespace llvm;
+using namespace Relooper;
 
 static cl::opt<int> RelooperSplittingFactor(
     "relooper-splitting-factor",
@@ -52,14 +60,88 @@ static cl::opt<unsigned> RelooperNestingLimit(
         "How much nesting is acceptable"),
     cl::init(20));
 
-namespace llvm {
 
-namespace Relooper {
+namespace {
+///
+/// Implements the relooper algorithm for a function's blocks.
+///
+/// Implementation details: The Relooper instance has
+/// ownership of the blocks and shapes, and frees them when done.
+///
+struct RelooperAlgorithm {
+  std::deque<Block *> Blocks;
+  std::deque<Shape *> Shapes;
+  Shape *Root;
+  bool MinSize;
+  int BlockIdCounter;
+  int ShapeIdCounter;
+
+  RelooperAlgorithm();
+  ~RelooperAlgorithm();
+
+  void AddBlock(Block *New, int Id = -1);
+
+  // Calculates the shapes
+  void Calculate(Block *Entry);
+
+  // Sets us to try to minimize size
+  void SetMinSize(bool MinSize_) { MinSize = MinSize_; }
+};
+
+struct RelooperAnalysis final : public FunctionPass {
+  static char ID;
+  RelooperAnalysis() : FunctionPass(ID) {}
+  const char *getPassName() const override { return "relooper"; }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesAll();
+  }
+  bool runOnFunction(Function &F) override;
+};
+}
+
+// RelooperAnalysis
+
+char RelooperAnalysis::ID = 0;
+FunctionPass *llvm::createWebAssemblyRelooper() {
+  return new RelooperAnalysis();
+}
+
+bool RelooperAnalysis::runOnFunction(Function &F) {
+  DEBUG(dbgs() << "Relooping function '" << F.getName() << "'\n");
+  RelooperAlgorithm R;
+  // FIXME: remove duplication between relooper's and LLVM's BBs.
+  std::map<const BasicBlock *, Block *> BB2B;
+  std::map<const Block *, const BasicBlock *> B2BB;
+  for (const BasicBlock &BB : F) {
+    // FIXME: getName is wrong here, Code is meant to represent amount of code.
+    // FIXME: use BranchVarInit for switch.
+    Block *B = new Block(BB.getName().str().data(), /*BranchVarInit=*/nullptr);
+    R.AddBlock(B);
+    assert(BB2B.find(&BB) == BB2B.end() && "Inserting the same block twice");
+    assert(B2BB.find(B) == B2BB.end() && "Inserting the same block twice");
+    BB2B[&BB] = B;
+    B2BB[B] = &BB;
+  }
+  for (Block *B : R.Blocks) {
+    const BasicBlock *BB = B2BB[B];
+    for (const BasicBlock *Successor : successors(BB))
+      // FIXME: add branch's Condition and Code below.
+      B->AddBranchTo(BB2B[Successor], /*Condition=*/nullptr, /*Code=*/nullptr);
+  }
+  R.Calculate(BB2B[&F.getEntryBlock()]);
+  return false; // Analysis passes don't modify anything.
+}
+
+// Helpers
+
+typedef MapVector<Block *, BlockSet> BlockBlockSetMap;
+typedef std::list<Block *> BlockList;
 
 template <class T, class U>
 static bool contains(const T &container, const U &contained) {
   return container.count(contained);
 }
+
 
 // Branch
 
@@ -93,42 +175,39 @@ Block::~Block() {
 
 void Block::AddBranchTo(Block *Target, const char *Condition,
                         const char *Code) {
-  assert(
-      !contains(BranchesOut,
-                Target)); // cannot add more than one branch to the same target
+  assert(!contains(BranchesOut, Target) &&
+         "cannot add more than one branch to the same target");
   BranchesOut[Target] = make_unique<Branch>(Condition, Code);
 }
 
 // Relooper
 
-Relooper::Relooper()
+RelooperAlgorithm::RelooperAlgorithm()
     : Root(nullptr), MinSize(false), BlockIdCounter(1),
       ShapeIdCounter(0) { // block ID 0 is reserved for clearings
 }
 
-Relooper::~Relooper() {
+RelooperAlgorithm::~RelooperAlgorithm() {
   for (auto Curr : Blocks)
     delete Curr;
   for (auto Curr : Shapes)
     delete Curr;
 }
 
-void Relooper::AddBlock(Block *New, int Id) {
+void RelooperAlgorithm::AddBlock(Block *New, int Id) {
   New->Id = Id == -1 ? BlockIdCounter++ : Id;
   Blocks.push_back(New);
 }
 
 struct RelooperRecursor {
-  Relooper *Parent;
-  RelooperRecursor(Relooper *ParentInit) : Parent(ParentInit) {}
+  RelooperAlgorithm *Parent;
+  RelooperRecursor(RelooperAlgorithm *ParentInit) : Parent(ParentInit) {}
 };
 
-typedef std::list<Block *> BlockList;
-
-void Relooper::Calculate(Block *Entry) {
+void RelooperAlgorithm::Calculate(Block *Entry) {
   // Scan and optimize the input
   struct PreOptimizer : public RelooperRecursor {
-    PreOptimizer(Relooper *Parent) : RelooperRecursor(Parent) {}
+    PreOptimizer(RelooperAlgorithm *Parent) : RelooperRecursor(Parent) {}
     BlockSet Live;
 
     void FindLive(Block *Root) {
@@ -169,6 +248,7 @@ void Relooper::Calculate(Block *Entry) {
                     // amount, abort
         // Split the node (for simplicity, we replace all the blocks, even
         // though we could have reused the original)
+        DEBUG(dbgs() << "  Splitting '" << Original->Code << "'\n");
         for (const auto &Prior : Original->BranchesIn) {
           Block *Split = new Block(Original->Code, Original->BranchVar);
           Parent->AddBlock(Split, Original->Id);
@@ -216,7 +296,7 @@ void Relooper::Calculate(Block *Entry) {
   // Recursively process the graph
 
   struct Analyzer : public RelooperRecursor {
-    Analyzer(Relooper *Parent) : RelooperRecursor(Parent) {}
+    Analyzer(RelooperAlgorithm *Parent) : RelooperRecursor(Parent) {}
 
     // Add a shape to the list of shapes in this Relooper calculation
     void Notice(Shape *New) {
@@ -236,6 +316,8 @@ void Relooper::Calculate(Block *Entry) {
     // Converts/processes all branchings to a specific target
     void Solipsize(Block *Target, Branch::FlowType Type, Shape *Ancestor,
                    BlockSet &From) {
+      DEBUG(dbgs() << "  Solipsize '" << Target->Code << "' type " << Type
+                   << "\n");
       for (auto iter = Target->BranchesIn.begin();
            iter != Target->BranchesIn.end();) {
         Block *Prior = *iter;
@@ -258,6 +340,7 @@ void Relooper::Calculate(Block *Entry) {
     }
 
     Shape *MakeSimple(BlockSet &Blocks, Block *Inner, BlockSet &NextEntries) {
+      DEBUG(dbgs() << "  MakeSimple inner block '" << Inner->Code << "'\n");
       SimpleShape *Simple = new SimpleShape;
       Notice(Simple);
       Simple->Inner = Inner;
@@ -649,10 +732,10 @@ void Relooper::Calculate(Block *Entry) {
   /// Relooper post-optimizer
   ///
   struct PostOptimizer {
-    Relooper *Parent;
+    RelooperAlgorithm *Parent;
     std::stack<Shape *> LoopStack;
 
-    PostOptimizer(Relooper *ParentInit) : Parent(ParentInit) {}
+    PostOptimizer(RelooperAlgorithm *ParentInit) : Parent(ParentInit) {}
 
     void ShapeSwitch(Shape* var,
                      std::function<void (SimpleShape*)> simple,
@@ -900,7 +983,3 @@ void Relooper::Calculate(Block *Entry) {
 
   PostOptimizer(this).Process(Root);
 }
-
-} // namespace Relooper
-
-} // namespace llvm
