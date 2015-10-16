@@ -703,8 +703,6 @@ void llvm::calculateCatchReturnSuccessorColors(const Function *Fn,
       std::set<BasicBlock *> &SuccessorColors = BlockColors[CatchRetSuccessor];
       assert(SuccessorColors.size() == 1 && "Expected BB to be monochrome!");
       BasicBlock *Color = *SuccessorColors.begin();
-      if (auto *CPI = dyn_cast<CatchPadInst>(Color->getFirstNonPHI()))
-        Color = CPI->getNormalDest();
       // Record the catchret successor's funclet membership.
       FuncInfo.CatchRetSuccessorColorMap[CatchReturn] = Color;
     }
