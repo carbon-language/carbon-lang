@@ -334,3 +334,24 @@
 //
 // CHECK-SAFESTACK-ANDROID-AARCH64: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-SAFESTACK-ANDROID-AARCH64-NOT: libclang_rt.safestack
+
+// RUN: %clang -fsanitize=undefined %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-scei-ps4 \
+// RUN:     -shared \
+// RUN:   | FileCheck --check-prefix=CHECK-UBSAN-PS4 %s
+// CHECK-UBSAN-PS4: "{{.*}}ld{{(.exe)?}}"
+// CHECK-UBSAN-PS4: -lSceDbgUBSanitizer_stub_weak
+
+// RUN: %clang -fsanitize=address %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-scei-ps4 \
+// RUN:     -shared \
+// RUN:   | FileCheck --check-prefix=CHECK-ASAN-PS4 %s
+// CHECK-ASAN-PS4: "{{.*}}ld{{(.exe)?}}"
+// CHECK-ASAN-PS4: -lSceDbgAddressSanitizer_stub_weak
+
+// RUN: %clang -fsanitize=address,undefined %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-scei-ps4 \
+// RUN:     -shared \
+// RUN:   | FileCheck --check-prefix=CHECK-AUBSAN-PS4 %s
+// CHECK-AUBSAN-PS4: "{{.*}}ld{{(.exe)?}}"
+// CHECK-AUBSAN-PS4: -lSceDbgAddressSanitizer_stub_weak
