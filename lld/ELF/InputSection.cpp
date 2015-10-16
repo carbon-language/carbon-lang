@@ -57,7 +57,7 @@ void InputSection<ELFT>::relocate(
     // resolved so we don't allocate a SymbolBody.
     const Elf_Shdr *SymTab = File.getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
-      uintX_t SymVA = getLocalRelTarget(File, RI, Type);
+      uintX_t SymVA = getLocalRelTarget(File, RI);
       relocateOne(Buf, BufEnd, RI, Type, BaseAddr, SymVA);
       continue;
     }

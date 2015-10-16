@@ -126,7 +126,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
         if (Body)
           Addend += getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body));
         else
-          Addend += getLocalRelTarget(File, RI, Type);
+          Addend += getLocalRelTarget(File, RI);
       }
       P->setSymbolAndType(0, Target->getRelativeReloc(), IsMips64EL);
     }
@@ -424,11 +424,10 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
 lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
-                             const typename ELFFile<ELFT>::Elf_Rel &RI,
-                             uint32_t Type) {
+                             const typename ELFFile<ELFT>::Elf_Rel &RI) {
   // PPC64 has a special relocation representing the TOC base pointer
   // that does not have a corresponding symbol.
-  if (Config->EMachine == EM_PPC64 && Type == R_PPC64_TOC)
+  if (Config->EMachine == EM_PPC64 && RI.getType(false) == R_PPC64_TOC)
     return getPPC64TocBase();
 
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
@@ -750,19 +749,19 @@ template ELFFile<ELF64BE>::uintX_t getSymVA<ELF64BE>(const SymbolBody &);
 
 template ELFFile<ELF32LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32LE> &,
-                  const ELFFile<ELF32LE>::Elf_Rel &, uint32_t);
+                  const ELFFile<ELF32LE>::Elf_Rel &);
 
 template ELFFile<ELF32BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32BE> &,
-                  const ELFFile<ELF32BE>::Elf_Rel &, uint32_t);
+                  const ELFFile<ELF32BE>::Elf_Rel &);
 
 template ELFFile<ELF64LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64LE> &,
-                  const ELFFile<ELF64LE>::Elf_Rel &, uint32_t);
+                  const ELFFile<ELF64LE>::Elf_Rel &);
 
 template ELFFile<ELF64BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64BE> &,
-                  const ELFFile<ELF64BE>::Elf_Rel &, uint32_t);
+                  const ELFFile<ELF64BE>::Elf_Rel &);
 
 template bool includeInSymtab<ELF32LE>(const SymbolBody &);
 template bool includeInSymtab<ELF32BE>(const SymbolBody &);
