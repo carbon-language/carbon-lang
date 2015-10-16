@@ -1290,6 +1290,13 @@ static AttributeSet legalizeCallAttributes(AttributeSet AS) {
             Attr.hasAttribute(Attribute::ReadOnly))
           continue;
 
+        // These attributes control the generation of the gc.statepoint call /
+        // invoke itself; and once the gc.statepoint is in place, they're of no
+        // use.
+        if (Attr.hasAttribute("statepoint-num-patch-bytes") ||
+            Attr.hasAttribute("statepoint-id"))
+          continue;
+
         Ret = Ret.addAttributes(
             AS.getContext(), Index,
             AttributeSet::get(AS.getContext(), Index, AttrBuilder(Attr)));
