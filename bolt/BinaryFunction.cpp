@@ -89,27 +89,27 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
     }
   }
 
-  for (const auto &BB : BasicBlocks) {
-    OS << BB.getName() << " ("
-       << BB.Instructions.size() << " instructions)\n";
+  for (auto BB : BasicBlocksLayout) {
+    OS << BB->getName() << " ("
+       << BB->Instructions.size() << " instructions)\n";
 
-    uint64_t BBExecCount = BB.getExecutionCount();
+    uint64_t BBExecCount = BB->getExecutionCount();
     if (BBExecCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
       OS << "  Exec Count : " << BBExecCount << "\n";
     }
-    if (!BB.Predecessors.empty()) {
+    if (!BB->Predecessors.empty()) {
       OS << "  Predecessors: ";
       auto Sep = "";
-      for (auto Pred : BB.Predecessors) {
+      for (auto Pred : BB->Predecessors) {
         OS << Sep << Pred->getName();
         Sep = ", ";
       }
       OS << '\n';
     }
 
-    Offset = RoundUpToAlignment(Offset, BB.getAlignment());
+    Offset = RoundUpToAlignment(Offset, BB->getAlignment());
 
-    for (auto &Instr : BB) {
+    for (auto &Instr : *BB) {
       OS << format("    %08" PRIx64 ": ", Offset);
       BC.InstPrinter->printInst(&Instr, OS, "", *BC.STI);
       OS << "\n";
@@ -126,12 +126,12 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
       Offset += Code.size();
     }
 
-    if (!BB.Successors.empty()) {
+    if (!BB->Successors.empty()) {
       OS << "  Successors: ";
-      auto BI = BB.BranchInfo.begin();
+      auto BI = BB->BranchInfo.begin();
       auto Sep = "";
-      for (auto Succ : BB.Successors) {
-        assert(BI != BB.BranchInfo.end() && "missing BranchInfo entry");
+      for (auto Succ : BB->Successors) {
+        assert(BI != BB->BranchInfo.end() && "missing BranchInfo entry");
         OS << Sep << Succ->getName();
         if (ExecutionCount != COUNT_NO_PROFILE &&
             BI->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
@@ -657,6 +657,8 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
     }
   }
 
+  fixBranches();
+
   if (DumpLayout) {
     dbgs() << "original BB order is: ";
     auto Sep = "";
@@ -671,6 +673,7 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
       Sep = ",";
     }
     dbgs() << "\n";
+    print(dbgs(), /* PrintInstructions = */ true);
   }
 }
 
@@ -774,6 +777,8 @@ void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
       BasicBlocksLayout.push_back(&BB);
   }
 
+  fixBranches();
+
   if (DumpLayout) {
     dbgs() << "original BB order is: ";
     auto Sep = "";
@@ -788,7 +793,116 @@ void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
       Sep = ",";
     }
     dbgs() << "\n";
-    DEBUG(print(dbgs(), /* PrintInstructions = */ true));
+    print(dbgs(), /* PrintInstructions = */ true);
+  }
+}
+
+const BinaryBasicBlock *
+BinaryFunction::getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const {
+  auto I = std::upper_bound(BasicBlocks.begin(), BasicBlocks.end(), *BB);
+  assert(I != BasicBlocks.begin() && "first basic block not at offset 0");
+
+  if (I == BasicBlocks.end())
+    return nullptr;
+  return &*I;
+}
+
+void BinaryFunction::fixBranches() {
+  auto &MIA = BC.MIA;
+
+  for (unsigned I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
+    BinaryBasicBlock *BB = BasicBlocksLayout[I];
+    if (BB->begin() == BB->end())
+      continue;
+
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
+    if (!MIA->analyzeBranch(BB->Instructions, TBB, FBB, CondBranch,
+                            UncondBranch)) {
+      continue;
+    }
+
+    // Check if the original fall-through for this block has been moved
+    const MCSymbol *FT = nullptr;
+    if (I + 1 != BasicBlocksLayout.size())
+      FT = BasicBlocksLayout[I + 1]->getLabel();
+    const BinaryBasicBlock *OldFTBB = getOriginalLayoutSuccessor(BB);
+    const MCSymbol *OldFT = nullptr;
+    if (OldFTBB != nullptr)
+      OldFT = OldFTBB->getLabel();
+
+    // Case 1: There are no branches in this basic block and it just falls
+    // through
+    if (CondBranch == nullptr && UncondBranch == nullptr) {
+      // Case 1a: Last instruction is a return, so it does *not* fall through to
+      // the next block.
+      if (MIA->isReturn(BB->back()))
+        continue;
+      // Case 1b: Layout has changed and the fallthrough is not the same. Need
+      // to add a new unconditional branch to jump to the old fallthrough.
+      if (FT != OldFT && OldFT != nullptr) {
+        MCInst NewInst;
+        if (!MIA->createUncondBranch(NewInst, OldFT, BC.Ctx.get()))
+          llvm_unreachable("Target does not support creating new branches");
+        BB->Instructions.emplace_back(std::move(NewInst));
+      }
+      // Case 1c: Layout hasn't changed, nothing to do.
+      continue;
+    }
+
+    // Case 2: There is a single jump, unconditional, in this basic block
+    if (CondBranch == nullptr) {
+      // Case 2a: It jumps to the new fall-through, so we can delete it
+      if (TBB == FT) {
+        BB->eraseInstruction(UncondBranch);
+      }
+      // Case 2b: If 2a doesn't happen, there is nothing we can do
+      continue;
+    }
+
+    // Case 3: There is a single jump, conditional, in this basic block
+    if (UncondBranch == nullptr) {
+      // Case 3a: If the taken branch goes to the next block in the new layout,
+      // invert this conditional branch logic so we can make this a fallthrough.
+      if (TBB == FT) {
+        assert(OldFT != nullptr && "malformed CFG");
+        if (!MIA->reverseBranchCondition(*CondBranch, OldFT, BC.Ctx.get()))
+          llvm_unreachable("Target does not support reversing branches");
+        continue;
+      }
+      // Case 3b: Need to add a new unconditional branch because layout
+      // has changed
+      if (FT != OldFT && OldFT != nullptr) {
+        MCInst NewInst;
+        if (!MIA->createUncondBranch(NewInst, OldFT, BC.Ctx.get()))
+          llvm_unreachable("Target does not support creating new branches");
+        BB->Instructions.emplace_back(std::move(NewInst));
+        continue;
+      }
+      // Case 3c: Old fall-through is the same as the new one, no need to change
+      continue;
+    }
+
+    // Case 4: There are two jumps in this basic block, one conditional followed
+    // by another unconditional.
+    // Case 4a: If the unconditional jump target is the new fall through,
+    // delete it.
+    if (FBB == FT) {
+      BB->eraseInstruction(UncondBranch);
+      continue;
+    }
+    // Case 4b: If the taken branch goes to the next block in the new layout,
+    // invert this conditional branch logic so we can make this a fallthrough.
+    // Now we don't need the unconditional jump anymore, so we also delete it.
+    if (TBB == FT) {
+      if (!MIA->reverseBranchCondition(*CondBranch, FBB, BC.Ctx.get()))
+        llvm_unreachable("Target does not support reversing branches");
+      BB->eraseInstruction(UncondBranch);
+      continue;
+    }
+    // Case 4c: Nothing interesting happening.
   }
 }
 

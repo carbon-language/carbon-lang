@@ -206,6 +206,18 @@ public:
     return ExecutionCount;
   }
 
+  bool eraseInstruction(MCInst *Inst) {
+    auto I = Instructions.end();
+    auto B = Instructions.begin();
+    while (I > B) {
+      --I;
+      if (&*I == Inst) {
+        Instructions.erase(I);
+        return true;
+      }
+    }
+    return false;
+  }
 
 private:
 

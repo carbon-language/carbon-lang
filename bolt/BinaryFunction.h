@@ -130,6 +130,9 @@ private:
     return *this;
   }
 
+  const BinaryBasicBlock *
+  getOriginalLayoutSuccessor(const BinaryBasicBlock *BB) const;
+
   /// Storage for all local branches in the function (non-fall-throughs).
   using LocalBranchesListType = std::vector<std::pair<uint32_t, uint32_t>>;
   LocalBranchesListType LocalBranches;
@@ -391,6 +394,10 @@ public:
   /// Assumes the CFG has been built and edge frequency for taken branches
   /// has been filled with LBR data.
   void inferFallThroughCounts();
+
+  /// Traverse the CFG checking branches, inverting their condition, removing or
+  /// adding jumps based on a new layout order.
+  void fixBranches();
 
   virtual ~BinaryFunction() {}
 };
