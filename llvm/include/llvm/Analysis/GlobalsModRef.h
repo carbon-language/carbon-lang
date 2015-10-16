@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 /// \file
-/// This is the interface for a simple mod/ref and alias analysis over globlas.
+/// This is the interface for a simple mod/ref and alias analysis over globals.
 ///
 //===----------------------------------------------------------------------===//
 
