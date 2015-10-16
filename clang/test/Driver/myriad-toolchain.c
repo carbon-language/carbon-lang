@@ -8,6 +8,12 @@
 // LINK_WITH_RTEMS: Inputs/basic_myriad_tree/lib/gcc/sparc-myriad-elf/4.8.2/crtend.o
 // LINK_WITH_RTEMS: Inputs/basic_myriad_tree/lib/gcc/sparc-myriad-elf/4.8.2/crtn.o
 
+// RUN: %clang -c -no-canonical-prefixes -### -target sparc-myriad-rtems-elf -x c++ %s \
+// RUN: -B %S/Inputs/basic_myriad_tree 2>&1 | FileCheck %s -check-prefix=COMPILE_CXX
+// COMPILE_CXX: "-internal-isystem" "{{.*}}/Inputs/basic_myriad_tree/lib/gcc/sparc-myriad-elf/4.8.2/../../../../sparc-myriad-elf/include/c++/4.8.2"
+// COMPILE_CXX: "-internal-isystem" "{{.*}}/Inputs/basic_myriad_tree/lib/gcc/sparc-myriad-elf/4.8.2/../../../../sparc-myriad-elf/include/c++/4.8.2/sparc-myriad-elf"
+// COMPILE_CXX: "-internal-isystem" "{{.*}}/Inputs/basic_myriad_tree/lib/gcc/sparc-myriad-elf/4.8.2/../../../../sparc-myriad-elf/include/c++/4.8.2/backward"
+
 // RUN: %clang -### -E -target sparc-myriad --sysroot=/yow %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=SLASH_INCLUDE
 // SLASH_INCLUDE: "-isysroot" "/yow" "-internal-isystem" "/yow/include"
