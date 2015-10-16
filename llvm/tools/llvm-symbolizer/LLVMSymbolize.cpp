@@ -92,12 +92,18 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
   }
 }
 
+namespace {
+struct OffsetNamePair {
+  uint32_t Offset;
+  StringRef Name;
+  bool operator<(const OffsetNamePair &R) const {
+    return Offset < R.Offset;
+  }
+};
+}
+
 void ModuleInfo::addCoffExportSymbols(const COFFObjectFile *CoffObj) {
   // Get all export names and offsets.
-  struct OffsetNamePair {
-    uint32_t Offset;
-    StringRef Name;
-  };
   std::vector<OffsetNamePair> ExportSyms;
   for (const ExportDirectoryEntryRef &Ref : CoffObj->export_directories()) {
     StringRef Name;
@@ -110,10 +116,7 @@ void ModuleInfo::addCoffExportSymbols(const COFFObjectFile *CoffObj) {
     return;
 
   // Sort by ascending offset.
-  array_pod_sort(ExportSyms.begin(), ExportSyms.end(),
-                 [](const OffsetNamePair *L, const OffsetNamePair *R) -> int {
-                   return L->Offset - R->Offset;
-                 });
+  array_pod_sort(ExportSyms.begin(), ExportSyms.end());
 
   // Approximate the symbol sizes by assuming they run to the next symbol.
   // FIXME: This assumes all exports are functions.
