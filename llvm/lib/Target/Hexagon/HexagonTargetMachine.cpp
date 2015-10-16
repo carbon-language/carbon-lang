@@ -98,7 +98,6 @@ namespace llvm {
   FunctionPass *createHexagonNewValueJump();
   FunctionPass *createHexagonPacketizer();
   FunctionPass *createHexagonPeephole();
-  FunctionPass *createHexagonRemoveExtendArgs(const HexagonTargetMachine &TM);
   FunctionPass *createHexagonSplitConst32AndConst64();
   FunctionPass *createHexagonStoreWidening();
 } // end namespace llvm;
@@ -208,9 +207,6 @@ void HexagonPassConfig::addIRPasses() {
 bool HexagonPassConfig::addInstSelector() {
   HexagonTargetMachine &TM = getHexagonTargetMachine();
   bool NoOpt = (getOptLevel() == CodeGenOpt::None);
-
-  if (!NoOpt)
-    addPass(createHexagonRemoveExtendArgs(TM));
 
   addPass(createHexagonISelDag(TM, getOptLevel()));
 
