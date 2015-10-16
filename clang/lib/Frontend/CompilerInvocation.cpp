@@ -1986,8 +1986,8 @@ void ModuleSignature::flush() {
 }
 
 void ModuleSignature::add(StringRef Value) {
-  for (StringRef::iterator I = Value.begin(), IEnd = Value.end(); I != IEnd;++I)
-    add(*I, 8);
+  for (auto &S : Value)
+    add(S, 8);
 }
 
 llvm::APInt ModuleSignature::getAsInteger() const {
