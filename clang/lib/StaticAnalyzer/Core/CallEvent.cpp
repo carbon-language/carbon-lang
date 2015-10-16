@@ -408,7 +408,7 @@ void CXXInstanceCall::getExtraInvalidatedValues(ValueList &Values,
   SVal ThisVal = getCXXThisVal();
   Values.push_back(ThisVal);
 
-  // Don't invalidate if the method is const and there are no mutable fields
+  // Don't invalidate if the method is const and there are no mutable fields.
   if (const CXXMethodDecl *D = cast_or_null<CXXMethodDecl>(getDecl())) {
     if (!D->isConst())
       return;
