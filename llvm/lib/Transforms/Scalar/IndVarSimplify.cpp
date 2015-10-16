@@ -957,25 +957,29 @@ Instruction *WidenIV::cloneIVUser(NarrowIVDefUse DU,
 }
 
 Instruction *WidenIV::cloneBitwiseIVUser(NarrowIVDefUse DU) {
-  DEBUG(dbgs() << "Cloning bitwise IVUser: " << *DU.NarrowUse << "\n");
+  Instruction *NarrowUse = DU.NarrowUse;
+  Instruction *NarrowDef = DU.NarrowDef;
+  Instruction *WideDef = DU.WideDef;
+
+  DEBUG(dbgs() << "Cloning bitwise IVUser: " << *NarrowUse << "\n");
 
   // Replace NarrowDef operands with WideDef. Otherwise, we don't know anything
   // about the narrow operand yet so must insert a [sz]ext. It is probably loop
   // invariant and will be folded or hoisted. If it actually comes from a
   // widened IV, it should be removed during a future call to widenIVUse.
-  Value *LHS = (DU.NarrowUse->getOperand(0) == DU.NarrowDef)
-                   ? DU.WideDef
-                   : getExtend(DU.NarrowUse->getOperand(0), WideType, IsSigned,
-                               DU.NarrowUse);
-  Value *RHS = (DU.NarrowUse->getOperand(1) == DU.NarrowDef)
-                   ? DU.WideDef
-                   : getExtend(DU.NarrowUse->getOperand(1), WideType, IsSigned,
-                               DU.NarrowUse);
+  Value *LHS =
+      (NarrowUse->getOperand(0) == NarrowDef)
+          ? WideDef
+          : getExtend(NarrowUse->getOperand(0), WideType, IsSigned, NarrowUse);
+  Value *RHS =
+      (NarrowUse->getOperand(1) == NarrowDef)
+          ? WideDef
+          : getExtend(NarrowUse->getOperand(1), WideType, IsSigned, NarrowUse);
 
-  auto *NarrowBO = cast<BinaryOperator>(DU.NarrowUse);
+  auto *NarrowBO = cast<BinaryOperator>(NarrowUse);
   auto *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(), LHS, RHS,
                                         NarrowBO->getName());
-  IRBuilder<> Builder(DU.NarrowUse);
+  IRBuilder<> Builder(NarrowUse);
   Builder.Insert(WideBO);
   if (const auto *OBO = dyn_cast<OverflowingBinaryOperator>(NarrowBO)) {
     if (OBO->hasNoUnsignedWrap())
@@ -988,25 +992,29 @@ Instruction *WidenIV::cloneBitwiseIVUser(NarrowIVDefUse DU) {
 
 Instruction *WidenIV::cloneArithmeticIVUser(NarrowIVDefUse DU,
                                             const SCEVAddRecExpr *WideAR) {
-  DEBUG(dbgs() << "Cloning arithmetic IVUser: " << *DU.NarrowUse << "\n");
+  Instruction *NarrowUse = DU.NarrowUse;
+  Instruction *NarrowDef = DU.NarrowDef;
+  Instruction *WideDef = DU.WideDef;
+
+  DEBUG(dbgs() << "Cloning arithmetic IVUser: " << *NarrowUse << "\n");
 
   // Replace NarrowDef operands with WideDef. Otherwise, we don't know anything
   // about the narrow operand yet so must insert a [sz]ext. It is probably loop
   // invariant and will be folded or hoisted. If it actually comes from a
   // widened IV, it should be removed during a future call to widenIVUse.
-  Value *LHS = (DU.NarrowUse->getOperand(0) == DU.NarrowDef)
-                   ? DU.WideDef
-                   : getExtend(DU.NarrowUse->getOperand(0), WideType, IsSigned,
-                               DU.NarrowUse);
-  Value *RHS = (DU.NarrowUse->getOperand(1) == DU.NarrowDef)
-                   ? DU.WideDef
-                   : getExtend(DU.NarrowUse->getOperand(1), WideType, IsSigned,
-                               DU.NarrowUse);
+  Value *LHS =
+      (NarrowUse->getOperand(0) == NarrowDef)
+          ? WideDef
+          : getExtend(NarrowUse->getOperand(0), WideType, IsSigned, NarrowUse);
+  Value *RHS =
+      (NarrowUse->getOperand(1) == NarrowDef)
+          ? WideDef
+          : getExtend(NarrowUse->getOperand(1), WideType, IsSigned, NarrowUse);
 
-  auto *NarrowBO = cast<BinaryOperator>(DU.NarrowUse);
+  auto *NarrowBO = cast<BinaryOperator>(NarrowUse);
   auto *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(), LHS, RHS,
                                         NarrowBO->getName());
-  IRBuilder<> Builder(DU.NarrowUse);
+  IRBuilder<> Builder(NarrowUse);
   Builder.Insert(WideBO);
   if (const auto *OBO = dyn_cast<OverflowingBinaryOperator>(NarrowBO)) {
     if (OBO->hasNoUnsignedWrap())
