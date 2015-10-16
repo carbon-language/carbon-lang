@@ -503,27 +503,31 @@
 %typemap(in) FILE * {
    if ($input == Py_None)
       $1 = NULL;
-   else if (!PyFile_Check($input)) {
+   else if (!lldb_private::PythonFile::Check($input)) {
       int fd = PyObject_AsFileDescriptor($input);
-      PyObject *py_mode = PyObject_GetAttrString($input, "mode");
-      if (!py_mode) {
-         PyErr_SetString(PyExc_TypeError,"not a file-like object");
-         return NULL;
-      }
-      const char *mode = PyString_AsString(py_mode);
-      if (-1 != fd && mode) {
+      lldb_private::PythonString py_mode(lldb_private::PyRefType::Owned,
+		  PyObject_GetAttrString($input, "mode"));
+
+      if (-1 != fd && py_mode.IsValid()) {
          FILE *f;
-         if ((f = fdopen(fd, mode)))
+         if ((f = fdopen(fd, py_mode.GetString().str().c_str())))
             $1 = f;
          else
             PyErr_SetString(PyExc_TypeError, strerror(errno));
       } else {
          PyErr_SetString(PyExc_TypeError,"not a file-like object");
-         return NULL;
+         return nullptr;
       }
    }
    else
-      $1 = PyFile_AsFile($input);
+   {
+      lldb_private::File file;
+	    lldb_private::PythonFile py_file(lldb_private::PyRefType::Borrowed, $input);
+	    if (!py_file.GetUnderlyingFile(file))
+	      return nullptr;
+
+      $1 = file.GetStream();
+   }
 }
 
 %typemap(out) FILE * {
@@ -539,7 +543,9 @@
    else // if (flags & __SRW)
       mode[i++] = 'a';
 #endif
-   $result = PyFile_FromFile($1, const_cast<char*>(""), mode, fflush);
+   lldb_private::File file($1, false);
+   lldb_private::PythonFile py_file(file, mode);
+   $result = py_file.release();
 }
 
 %typemap(in) (const char* string, int len) {

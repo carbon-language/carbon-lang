@@ -323,7 +323,8 @@ public:
 class PythonFile : public PythonObject
 {
   public:
-    explicit PythonFile(File &file, const char *mode);
+    PythonFile(File &file, const char *mode);
+    PythonFile(const char *path, const char *mode);
     PythonFile(PyRefType type, PyObject *o);
     ~PythonFile() override;
 
@@ -333,6 +334,8 @@ class PythonFile : public PythonObject
 
     void Reset(PyRefType type, PyObject *py_obj) override;
     void Reset(File &file, const char *mode);
+
+    bool GetUnderlyingFile(File &file) const;
 };
 
 } // namespace lldb_private

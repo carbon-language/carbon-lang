@@ -582,6 +582,14 @@ PythonFile::PythonFile(File &file, const char *mode)
     Reset(file, mode);
 }
 
+PythonFile::PythonFile(const char *path, const char *mode)
+{
+    FILE *fp = nullptr;
+    fp = fopen(path, mode);
+    lldb_private::File file(fp, true);
+    Reset(file, mode);
+}
+
 PythonFile::PythonFile(PyRefType type, PyObject *o)
 {
     Reset(type, o);
@@ -650,5 +658,19 @@ PythonFile::Reset(File &file, const char *mode)
         PyFile_FromFile(file.GetStream(), const_cast<char *>(""), cmode, nullptr));
 #endif
 }
+
+bool
+PythonFile::GetUnderlyingFile(File &file) const
+{
+    if (!IsValid())
+        return false;
+
+    file.Close();
+    // We don't own the file descriptor returned by this function, make sure the
+    // File object knows about that.
+    file.SetDescriptor(PyObject_AsFileDescriptor(m_py_obj), false);
+    return file.IsValid();
+}
+
 
 #endif
