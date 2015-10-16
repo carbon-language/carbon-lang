@@ -16,6 +16,7 @@
 #include "ProTypeConstCastCheck.h"
 #include "ProTypeReinterpretCastCheck.h"
 #include "ProTypeStaticCastDowncastCheck.h"
+#include "ProTypeUnionAccessCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -35,6 +36,8 @@ public:
         "cppcoreguidelines-pro-type-reinterpret-cast");
     CheckFactories.registerCheck<ProTypeStaticCastDowncastCheck>(
         "cppcoreguidelines-pro-type-static-cast-downcast");
+    CheckFactories.registerCheck<ProTypeUnionAccessCheck>(
+        "cppcoreguidelines-pro-type-union-access");
     CheckFactories.registerCheck<misc::AssignOperatorSignatureCheck>(
         "cppcoreguidelines-c-copy-assignment-signature");
   }
