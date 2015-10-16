@@ -122,19 +122,15 @@ std::error_code SampleProfileWriterBinary::writeHeader(
   return sampleprof_error::success;
 }
 
-/// \brief Write samples to a binary file.
-///
-/// \returns true if the samples were written successfully, false otherwise.
-std::error_code SampleProfileWriterBinary::write(StringRef FName,
-                                                 const FunctionSamples &S) {
+std::error_code SampleProfileWriterBinary::writeBody(StringRef FName,
+                                                     const FunctionSamples &S) {
   if (std::error_code EC = writeNameIdx(FName))
     return EC;
 
   encodeULEB128(S.getTotalSamples(), OS);
-  encodeULEB128(S.getHeadSamples(), OS);
-  encodeULEB128(S.getBodySamples().size(), OS);
 
   // Emit all the body samples.
+  encodeULEB128(S.getBodySamples().size(), OS);
   for (const auto &I : S.getBodySamples()) {
     LineLocation Loc = I.first;
     const SampleRecord &Sample = I.second;
@@ -158,11 +154,20 @@ std::error_code SampleProfileWriterBinary::write(StringRef FName,
     const FunctionSamples &CalleeSamples = J.second;
     encodeULEB128(Loc.LineOffset, OS);
     encodeULEB128(Loc.Discriminator, OS);
-    if (std::error_code EC = write(Loc.CalleeName, CalleeSamples))
+    if (std::error_code EC = writeBody(Loc.CalleeName, CalleeSamples))
       return EC;
   }
 
   return sampleprof_error::success;
+}
+
+/// \brief Write samples of a top-level function to a binary file.
+///
+/// \returns true if the samples were written successfully, false otherwise.
+std::error_code SampleProfileWriterBinary::write(StringRef FName,
+                                                 const FunctionSamples &S) {
+  encodeULEB128(S.getHeadSamples(), OS);
+  return writeBody(FName, S);
 }
 
 /// \brief Create a sample profile writer based on the specified format.

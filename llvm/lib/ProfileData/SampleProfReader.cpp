@@ -21,13 +21,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/SampleProfReader.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
 
 using namespace llvm::sampleprof;
 using namespace llvm;
@@ -293,15 +293,10 @@ ErrorOr<StringRef> SampleProfileReaderBinary::readStringFromTable() {
 
 std::error_code
 SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
-  auto Val = readNumber<uint64_t>();
-  if (std::error_code EC = Val.getError())
+  auto NumSamples = readNumber<uint64_t>();
+  if (std::error_code EC = NumSamples.getError())
     return EC;
-  FProfile.addTotalSamples(*Val);
-
-  Val = readNumber<uint64_t>();
-  if (std::error_code EC = Val.getError())
-    return EC;
-  FProfile.addHeadSamples(*Val);
+  FProfile.addTotalSamples(*NumSamples);
 
   // Read the samples in the body.
   auto NumRecords = readNumber<uint32_t>();
@@ -370,12 +365,18 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
 
 std::error_code SampleProfileReaderBinary::read() {
   while (!at_eof()) {
+    auto NumHeadSamples = readNumber<uint64_t>();
+    if (std::error_code EC = NumHeadSamples.getError())
+      return EC;
+
     auto FName(readStringFromTable());
     if (std::error_code EC = FName.getError())
       return EC;
 
     Profiles[*FName] = FunctionSamples();
     FunctionSamples &FProfile = Profiles[*FName];
+
+    FProfile.addHeadSamples(*NumHeadSamples);
 
     if (std::error_code EC = readProfile(FProfile))
       return EC;
