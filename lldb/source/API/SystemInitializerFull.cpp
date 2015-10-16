@@ -89,8 +89,18 @@ using namespace lldb_private;
 #ifndef LLDB_DISABLE_PYTHON
 
 // Defined in the SWIG source file
+#if PY_MAJOR_VERSION >= 3
+extern "C" PyObject*
+PyInit__lldb(void);
+
+#define LLDBSwigPyInit PyInit__lldb
+
+#else
 extern "C" void 
 init_lldb(void);
+
+#define LLDBSwigPyInit init_lldb
+#endif
 
 // these are the Pythonic implementations of the required callbacks
 // these are scripting-language specific, which is why they belong here
@@ -328,7 +338,7 @@ void SystemInitializerFull::InitializeSWIG()
 {
 #if !defined(LLDB_DISABLE_PYTHON)
     ScriptInterpreterPython::InitializeInterpreter(
-        init_lldb,
+        LLDBSwigPyInit,
         LLDBSwigPythonBreakpointCallbackFunction,
         LLDBSwigPythonWatchpointCallbackFunction,
         LLDBSwigPythonCallTypeScript,

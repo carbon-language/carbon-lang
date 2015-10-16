@@ -32,7 +32,11 @@ class ScriptInterpreterPython :
     public IOHandlerDelegateMultiline
 {
 public:
-    typedef void (*SWIGInitCallback) (void);
+#if PY_MAJOR_VERSION >= 3
+    typedef PyObject*(*SWIGInitCallback) (void);
+#else
+    typedef void(*SWIGInitCallback) (void);
+#endif
 
     typedef bool (*SWIGBreakpointCallbackFunction) (const char *python_function_name,
                                                     const char *session_dictionary_name,
