@@ -2,7 +2,7 @@
 # DESTDIR environment variable may be unset at configuration time.
 # See PR8397.
 
-function(install_symlink name target)
+function(install_symlink name target outdir)
   if(UNIX)
     set(LINK_OR_COPY create_symlink)
     set(DESTDIR $ENV{DESTDIR})
@@ -10,19 +10,12 @@ function(install_symlink name target)
     set(LINK_OR_COPY copy)
   endif()
 
-  # CMAKE_EXECUTABLE_SUFFIX is undefined on cmake scripts. See PR9286.
-  if( WIN32 )
-    set(EXECUTABLE_SUFFIX ".exe")
-  else()
-    set(EXECUTABLE_SUFFIX "")
-  endif()
-
-  set(bindir "${DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/")
+  set(bindir "${DESTDIR}${CMAKE_INSTALL_PREFIX}/${outdir}/")
 
   message("Creating ${name}")
 
   execute_process(
-    COMMAND "${CMAKE_COMMAND}" -E ${LINK_OR_COPY} "${target}${EXECUTABLE_SUFFIX}" "${name}${EXECUTABLE_SUFFIX}"
+    COMMAND "${CMAKE_COMMAND}" -E ${LINK_OR_COPY} "${target}" "${name}"
     WORKING_DIRECTORY "${bindir}")
 
 endfunction()
