@@ -660,10 +660,10 @@ TARGET_BUILTIN(__builtin_ia32_wrgsbase32, "vUi", "", "fsgsbase")
 TARGET_BUILTIN(__builtin_ia32_wrgsbase64, "vULLi", "", "fsgsbase")
 
 // FXSR
-BUILTIN(__builtin_ia32_fxrstor, "vv*", "")
-BUILTIN(__builtin_ia32_fxrstor64, "vv*", "")
-BUILTIN(__builtin_ia32_fxsave, "vv*", "")
-BUILTIN(__builtin_ia32_fxsave64, "vv*", "")
+TARGET_BUILTIN(__builtin_ia32_fxrstor, "vv*", "", "fxsr")
+TARGET_BUILTIN(__builtin_ia32_fxrstor64, "vv*", "", "fxsr")
+TARGET_BUILTIN(__builtin_ia32_fxsave, "vv*", "", "fxsr")
+TARGET_BUILTIN(__builtin_ia32_fxsave64, "vv*", "", "fxsr")
 
 // XSAVE
 TARGET_BUILTIN(__builtin_ia32_xsave, "vv*ULLi", "", "xsave")

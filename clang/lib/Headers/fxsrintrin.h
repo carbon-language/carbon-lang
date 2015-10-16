@@ -28,7 +28,7 @@
 #ifndef __FXSRINTRIN_H
 #define __FXSRINTRIN_H
 
-#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__,  __target__("fxsr")))
 
 static __inline__ void __DEFAULT_FN_ATTRS
 _fxsave(void *__p) {
