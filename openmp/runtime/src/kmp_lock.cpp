@@ -84,7 +84,7 @@ __kmp_is_tas_lock_nestable( kmp_tas_lock_t *lck )
     return lck->lk.depth_locked != -1;
 }
 
-__forceinline static void
+__forceinline static int
 __kmp_acquire_tas_lock_timed_template( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
     KMP_MB();
@@ -99,7 +99,7 @@ __kmp_acquire_tas_lock_timed_template( kmp_tas_lock_t *lck, kmp_int32 gtid )
     if ( ( lck->lk.poll == DYNA_LOCK_FREE(tas) )
       && KMP_COMPARE_AND_STORE_ACQ32( & ( lck->lk.poll ), DYNA_LOCK_FREE(tas), DYNA_LOCK_BUSY(gtid+1, tas) ) ) {
         KMP_FSYNC_ACQUIRED(lck);
-        return;
+        return KMP_LOCK_ACQUIRED_FIRST;
     }
 
     kmp_uint32 spins;
@@ -127,15 +127,16 @@ __kmp_acquire_tas_lock_timed_template( kmp_tas_lock_t *lck, kmp_int32 gtid )
         }
     }
     KMP_FSYNC_ACQUIRED( lck );
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
-void
+int
 __kmp_acquire_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
-    __kmp_acquire_tas_lock_timed_template( lck, gtid );
+    return __kmp_acquire_tas_lock_timed_template( lck, gtid );
 }
 
-static void
+static int
 __kmp_acquire_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_lock";
@@ -146,7 +147,7 @@ __kmp_acquire_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
     if ( ( gtid >= 0 ) && ( __kmp_get_tas_lock_owner( lck ) == gtid ) ) {
         KMP_FATAL( LockIsAlreadyOwned, func );
     }
-    __kmp_acquire_tas_lock( lck, gtid );
+    return __kmp_acquire_tas_lock( lck, gtid );
 }
 
 int
@@ -241,28 +242,30 @@ __kmp_destroy_tas_lock_with_checks( kmp_tas_lock_t *lck )
 // nested test and set locks
 //
 
-void
+int
 __kmp_acquire_nested_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( gtid >= 0 );
 
     if ( __kmp_get_tas_lock_owner( lck ) == gtid ) {
         lck->lk.depth_locked += 1;
+        return KMP_LOCK_ACQUIRED_NEXT;
     }
     else {
         __kmp_acquire_tas_lock_timed_template( lck, gtid );
         lck->lk.depth_locked = 1;
+        return KMP_LOCK_ACQUIRED_FIRST;
     }
 }
 
-static void
+static int
 __kmp_acquire_nested_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_nest_lock";
     if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
         KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
-    __kmp_acquire_nested_tas_lock( lck, gtid );
+    return __kmp_acquire_nested_tas_lock( lck, gtid );
 }
 
 int
@@ -381,7 +384,7 @@ __kmp_is_futex_lock_nestable( kmp_futex_lock_t *lck )
     return lck->lk.depth_locked != -1;
 }
 
-__forceinline static void
+__forceinline static int
 __kmp_acquire_futex_lock_timed_template( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
     kmp_int32 gtid_code = ( gtid + 1 ) << 1;
@@ -457,15 +460,16 @@ __kmp_acquire_futex_lock_timed_template( kmp_futex_lock_t *lck, kmp_int32 gtid )
     KMP_FSYNC_ACQUIRED( lck );
     KA_TRACE( 1000, ("__kmp_acquire_futex_lock: lck:%p(0x%x), T#%d exiting\n",
       lck, lck->lk.poll, gtid ) );
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
-void
+int
 __kmp_acquire_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
-    __kmp_acquire_futex_lock_timed_template( lck, gtid );
+   return __kmp_acquire_futex_lock_timed_template( lck, gtid );
 }
 
-static void
+static int
 __kmp_acquire_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_lock";
@@ -476,7 +480,7 @@ __kmp_acquire_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
     if ( ( gtid >= 0 ) && ( __kmp_get_futex_lock_owner( lck ) == gtid ) ) {
         KMP_FATAL( LockIsAlreadyOwned, func );
     }
-    __kmp_acquire_futex_lock( lck, gtid );
+    return __kmp_acquire_futex_lock( lck, gtid );
 }
 
 int
@@ -587,28 +591,30 @@ __kmp_destroy_futex_lock_with_checks( kmp_futex_lock_t *lck )
 // nested futex locks
 //
 
-void
+int
 __kmp_acquire_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( gtid >= 0 );
 
     if ( __kmp_get_futex_lock_owner( lck ) == gtid ) {
         lck->lk.depth_locked += 1;
+        return KMP_LOCK_ACQUIRED_NEXT;
     }
     else {
         __kmp_acquire_futex_lock_timed_template( lck, gtid );
         lck->lk.depth_locked = 1;
+        return KMP_LOCK_ACQUIRED_FIRST;
     }
 }
 
-static void
+static int
 __kmp_acquire_nested_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_nest_lock";
     if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
         KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
-    __kmp_acquire_nested_futex_lock( lck, gtid );
+    return __kmp_acquire_nested_futex_lock( lck, gtid );
 }
 
 int
@@ -734,7 +740,7 @@ __kmp_bakery_check(kmp_uint value, kmp_uint checker)
     return FALSE;
 }
 
-__forceinline static void
+__forceinline static int
 __kmp_acquire_ticket_lock_timed_template( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
     kmp_uint32 my_ticket;
@@ -750,19 +756,20 @@ __kmp_acquire_ticket_lock_timed_template( kmp_ticket_lock_t *lck, kmp_int32 gtid
 
     if ( TCR_4( lck->lk.now_serving ) == my_ticket ) {
         KMP_FSYNC_ACQUIRED(lck);
-        return;
+        return KMP_LOCK_ACQUIRED_FIRST;
     }
     KMP_WAIT_YIELD( &lck->lk.now_serving, my_ticket, __kmp_bakery_check, lck );
     KMP_FSYNC_ACQUIRED(lck);
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
-void
+int
 __kmp_acquire_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
-    __kmp_acquire_ticket_lock_timed_template( lck, gtid );
+    return __kmp_acquire_ticket_lock_timed_template( lck, gtid );
 }
 
-static void
+static int
 __kmp_acquire_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_lock";
@@ -779,6 +786,7 @@ __kmp_acquire_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
     __kmp_acquire_ticket_lock( lck, gtid );
 
     lck->lk.owner_id = gtid + 1;
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
 int
@@ -905,13 +913,14 @@ __kmp_destroy_ticket_lock_with_checks( kmp_ticket_lock_t *lck )
 // nested ticket locks
 //
 
-void
+int
 __kmp_acquire_nested_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( gtid >= 0 );
 
     if ( __kmp_get_ticket_lock_owner( lck ) == gtid ) {
         lck->lk.depth_locked += 1;
+        return KMP_LOCK_ACQUIRED_NEXT;
     }
     else {
         __kmp_acquire_ticket_lock_timed_template( lck, gtid );
@@ -919,10 +928,11 @@ __kmp_acquire_nested_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
         lck->lk.depth_locked = 1;
         KMP_MB();
         lck->lk.owner_id = gtid + 1;
+        return KMP_LOCK_ACQUIRED_FIRST;
     }
 }
 
-static void
+static int
 __kmp_acquire_nested_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_nest_lock";
@@ -932,7 +942,7 @@ __kmp_acquire_nested_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 
     if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
         KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
-    __kmp_acquire_nested_ticket_lock( lck, gtid );
+    return __kmp_acquire_nested_ticket_lock( lck, gtid );
 }
 
 int
@@ -1196,7 +1206,7 @@ __kmp_is_queuing_lock_nestable( kmp_queuing_lock_t *lck )
 template <bool takeTime>
 /* [TLW] The unused template above is left behind because of what BEB believes is a
    potential compiler problem with __forceinline. */
-__forceinline static void
+__forceinline static int
 __kmp_acquire_queuing_lock_timed_template( kmp_queuing_lock_t *lck,
   kmp_int32 gtid )
 {
@@ -1323,7 +1333,7 @@ __kmp_acquire_queuing_lock_timed_template( kmp_queuing_lock_t *lck,
 #endif
 
                     KMP_FSYNC_ACQUIRED( lck );
-                    return; /* lock holder cannot be on queue */
+                    return KMP_LOCK_ACQUIRED_FIRST; /* lock holder cannot be on queue */
                 }
                 enqueued = FALSE;
             }
@@ -1376,7 +1386,7 @@ __kmp_acquire_queuing_lock_timed_template( kmp_queuing_lock_t *lck,
 #endif
 
             /* got lock, we were dequeued by the thread that released lock */
-            return;
+            return KMP_LOCK_ACQUIRED_FIRST;
         }
 
         /* Yield if number of threads > number of logical processors */
@@ -1390,17 +1400,18 @@ __kmp_acquire_queuing_lock_timed_template( kmp_queuing_lock_t *lck,
 
     }
     KMP_ASSERT2( 0, "should not get here" );
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
-void
+int
 __kmp_acquire_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( gtid >= 0 );
 
-    __kmp_acquire_queuing_lock_timed_template<false>( lck, gtid );
+    return __kmp_acquire_queuing_lock_timed_template<false>( lck, gtid );
 }
 
-static void
+static int
 __kmp_acquire_queuing_lock_with_checks( kmp_queuing_lock_t *lck,
   kmp_int32 gtid )
 {
@@ -1418,6 +1429,7 @@ __kmp_acquire_queuing_lock_with_checks( kmp_queuing_lock_t *lck,
     __kmp_acquire_queuing_lock( lck, gtid );
 
     lck->lk.owner_id = gtid + 1;
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
 int
@@ -1689,13 +1701,14 @@ __kmp_destroy_queuing_lock_with_checks( kmp_queuing_lock_t *lck )
 // nested queuing locks
 //
 
-void
+int
 __kmp_acquire_nested_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( gtid >= 0 );
 
     if ( __kmp_get_queuing_lock_owner( lck ) == gtid ) {
         lck->lk.depth_locked += 1;
+        return KMP_LOCK_ACQUIRED_NEXT;
     }
     else {
         __kmp_acquire_queuing_lock_timed_template<false>( lck, gtid );
@@ -1703,10 +1716,11 @@ __kmp_acquire_nested_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
         lck->lk.depth_locked = 1;
         KMP_MB();
         lck->lk.owner_id = gtid + 1;
+        return KMP_LOCK_ACQUIRED_FIRST;
     }
 }
 
-static void
+static int
 __kmp_acquire_nested_queuing_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_nest_lock";
@@ -1716,7 +1730,7 @@ __kmp_acquire_nested_queuing_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int3
     if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
         KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
-    __kmp_acquire_nested_queuing_lock( lck, gtid );
+    return __kmp_acquire_nested_queuing_lock( lck, gtid );
 }
 
 int
@@ -2458,7 +2472,7 @@ __kmp_is_drdpa_lock_nestable( kmp_drdpa_lock_t *lck )
     return lck->lk.depth_locked != -1;
 }
 
-__forceinline static void
+__forceinline static int
 __kmp_acquire_drdpa_lock_timed_template( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
     kmp_uint64 ticket = KMP_TEST_THEN_INC64((kmp_int64 *)&lck->lk.next_ticket);
@@ -2621,15 +2635,16 @@ __kmp_acquire_drdpa_lock_timed_template( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
             lck->lk.cleanup_ticket = TCR_8(lck->lk.next_ticket);
         }
     }
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
-void
+int
 __kmp_acquire_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
-    __kmp_acquire_drdpa_lock_timed_template( lck, gtid );
+    return __kmp_acquire_drdpa_lock_timed_template( lck, gtid );
 }
 
-static void
+static int
 __kmp_acquire_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
     char const * const func = "omp_set_lock";
@@ -2646,6 +2661,7 @@ __kmp_acquire_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
     __kmp_acquire_drdpa_lock( lck, gtid );
 
     lck->lk.owner_id = gtid + 1;
+    return KMP_LOCK_ACQUIRED_FIRST;
 }
 
 int
@@ -2813,13 +2829,14 @@ __kmp_destroy_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck )
 // nested drdpa ticket locks
 //
 
-void
+int
 __kmp_acquire_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
     KMP_DEBUG_ASSERT( gtid >= 0 );
 
     if ( __kmp_get_drdpa_lock_owner( lck ) == gtid ) {
         lck->lk.depth_locked += 1;
+        return KMP_LOCK_ACQUIRED_NEXT;
     }
     else {
         __kmp_acquire_drdpa_lock_timed_template( lck, gtid );
@@ -2827,6 +2844,7 @@ __kmp_acquire_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
         lck->lk.depth_locked = 1;
         KMP_MB();
         lck->lk.owner_id = gtid + 1;
+        return KMP_LOCK_ACQUIRED_FIRST;
     }
 }
 
@@ -3567,14 +3585,14 @@ size_t __kmp_base_user_lock_size = 0;
 size_t __kmp_user_lock_size = 0;
 
 kmp_int32 ( *__kmp_get_user_lock_owner_ )( kmp_user_lock_p lck ) = NULL;
-void ( *__kmp_acquire_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
+int ( *__kmp_acquire_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
 
 int ( *__kmp_test_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
 int ( *__kmp_release_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
 void ( *__kmp_init_user_lock_with_checks_ )( kmp_user_lock_p lck ) = NULL;
 void ( *__kmp_destroy_user_lock_ )( kmp_user_lock_p lck ) = NULL;
 void ( *__kmp_destroy_user_lock_with_checks_ )( kmp_user_lock_p lck ) = NULL;
-void ( *__kmp_acquire_nested_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
+int ( *__kmp_acquire_nested_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
 
 int ( *__kmp_test_nested_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
 int ( *__kmp_release_nested_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid ) = NULL;
