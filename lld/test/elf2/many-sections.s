@@ -1,5 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o %t
-// RUN: llvm-readobj -t %t | FileCheck --check-prefix=LINKED %s
+// RUN: llvm-readobj -t %t | FileCheck  %s
 
 // Verify that the symbol _start is in a section with an index >= SHN_LORESERVE.
 // CHECK:      Name: _start
