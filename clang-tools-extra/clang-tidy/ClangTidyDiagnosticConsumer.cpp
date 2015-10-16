@@ -22,8 +22,8 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
 #include "llvm/ADT/SmallString.h"
-#include <set>
 #include <tuple>
+#include <vector>
 using namespace clang;
 using namespace tidy;
 
@@ -146,8 +146,7 @@ static llvm::Regex ConsumeGlob(StringRef &GlobList) {
 }
 
 GlobList::GlobList(StringRef Globs)
-    : Positive(!ConsumeNegativeIndicator(Globs)),
-      Regex(ConsumeGlob(Globs)),
+    : Positive(!ConsumeNegativeIndicator(Globs)), Regex(ConsumeGlob(Globs)),
       NextGlob(Globs.empty() ? nullptr : new GlobList(Globs)) {}
 
 bool GlobList::contains(StringRef S, bool Contains) {
@@ -222,9 +221,7 @@ const ClangTidyOptions &ClangTidyContext::getOptions() const {
   return CurrentOptions;
 }
 
-void ClangTidyContext::setCheckProfileData(ProfileData *P) {
-  Profile = P;
-}
+void ClangTidyContext::setCheckProfileData(ProfileData *P) { Profile = P; }
 
 GlobList &ClangTidyContext::getChecksFilter() {
   assert(CheckFilter != nullptr);
@@ -296,16 +293,16 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
       // This is a compiler diagnostic without a warning option. Assign check
       // name based on its level.
       switch (DiagLevel) {
-        case DiagnosticsEngine::Error:
-        case DiagnosticsEngine::Fatal:
-          CheckName = "clang-diagnostic-error";
-          break;
-        case DiagnosticsEngine::Warning:
-          CheckName = "clang-diagnostic-warning";
-          break;
-        default:
-          CheckName = "clang-diagnostic-unknown";
-          break;
+      case DiagnosticsEngine::Error:
+      case DiagnosticsEngine::Fatal:
+        CheckName = "clang-diagnostic-error";
+        break;
+      case DiagnosticsEngine::Warning:
+        CheckName = "clang-diagnostic-warning";
+        break;
+      default:
+        CheckName = "clang-diagnostic-unknown";
+        break;
       }
     }
 
@@ -340,7 +337,7 @@ bool ClangTidyDiagnosticConsumer::passesLineFilter(StringRef FileName,
                                                    unsigned LineNumber) const {
   if (Context.getGlobalOptions().LineFilter.empty())
     return true;
-  for (const FileFilter& Filter : Context.getGlobalOptions().LineFilter) {
+  for (const FileFilter &Filter : Context.getGlobalOptions().LineFilter) {
     if (FileName.endswith(Filter.Name)) {
       if (Filter.LineRanges.empty())
         return true;
@@ -398,14 +395,133 @@ llvm::Regex *ClangTidyDiagnosticConsumer::getHeaderFilter() {
   return HeaderFilter.get();
 }
 
+void ClangTidyDiagnosticConsumer::removeIncompatibleErrors(
+    SmallVectorImpl<ClangTidyError> &Errors) const {
+  // Each error is modelled as the set of intervals in which it applies
+  // replacements. To detect overlapping replacements, we use a sweep line
+  // algorithm over these sets of intervals.
+  // An event here consists of the opening or closing of an interval. During the
+  // proccess, we maintain a counter with the amount of open intervals. If we
+  // find an endpoint of an interval and this counter is different from 0, it
+  // means that this interval overlaps with another one, so we set it as
+  // inapplicable.
+  struct Event {
+    // An event can be either the begin or the end of an interval.
+    enum EventType {
+      ET_Begin = 1,
+      ET_End = -1,
+    };
+
+    Event(unsigned Begin, unsigned End, EventType Type, unsigned ErrorId,
+          unsigned ErrorSize)
+        : Type(Type), ErrorId(ErrorId) {
+      // The events are going to be sorted by their position. In case of draw:
+      //
+      // * If an interval ends at the same position at which other interval
+      //   begins, this is not an overlapping, so we want to remove the ending
+      //   interval before adding the starting one: end events have higher
+      //   priority than begin events.
+      //
+      // * If we have several begin points at the same position, we will mark as
+      //   inapplicable the ones that we proccess later, so the first one has to
+      //   be the one with the latest end point, because this one will contain
+      //   all the other intervals. For the same reason, if we have several end
+      //   points in the same position, the last one has to be the one with the
+      //   earliest begin point. In both cases, we sort non-increasingly by the
+      //   position of the complementary.
+      //
+      // * In case of two equal intervals, the one whose error is bigger can
+      //   potentially contain the other one, so we want to proccess its begin
+      //   points before and its end points later.
+      //
+      // * Finally, if we have two equal intervals whose errors have the same
+      //   size, none of them will be strictly contained inside the other.
+      //   Sorting by ErrorId will guarantee that the begin point of the first
+      //   one will be proccessed before, disallowing the second one, and the
+      //   end point of the first one will also be proccessed before,
+      //   disallowing the first one.
+      if (Type == ET_Begin)
+        Priority = std::make_tuple(Begin, Type, -End, -ErrorSize, ErrorId);
+      else
+        Priority = std::make_tuple(End, Type, -Begin, ErrorSize, ErrorId);
+    }
+
+    bool operator<(const Event &Other) const {
+      return Priority < Other.Priority;
+    }
+
+    // Determines if this event is the begin or the end of an interval.
+    EventType Type;
+    // The index of the error to which the interval that generated this event
+    // belongs.
+    unsigned ErrorId;
+    // The events will be sorted based on this field.
+    std::tuple<unsigned, EventType, int, int, unsigned> Priority;
+  };
+
+  // Compute error sizes.
+  std::vector<int> Sizes;
+  for (const auto &Error : Errors) {
+    int Size = 0;
+    for (const auto &Replace : Error.Fix)
+      Size += Replace.getLength();
+    Sizes.push_back(Size);
+  }
+
+  // Build events from error intervals.
+  std::vector<Event> Events;
+  for (unsigned I = 0; I < Errors.size(); ++I) {
+    for (const auto &Replace : Errors[I].Fix) {
+      unsigned Begin = Replace.getOffset();
+      unsigned End = Begin + Replace.getLength();
+      // FIXME: Handle empty intervals, such as those from insertions.
+      if (Begin == End)
+        continue;
+      Events.push_back(Event(Begin, End, Event::ET_Begin, I, Sizes[I]));
+      Events.push_back(Event(Begin, End, Event::ET_End, I, Sizes[I]));
+    }
+  }
+  std::sort(Events.begin(), Events.end());
+
+  // Sweep.
+  std::vector<bool> Apply(Errors.size(), true);
+  int OpenIntervals = 0;
+  for (const auto &Event : Events) {
+    if (Event.Type == Event::ET_End)
+      --OpenIntervals;
+    // This has to be checked after removing the interval from the count if it
+    // is an end event, or before adding it if it is a begin event.
+    if (OpenIntervals != 0)
+      Apply[Event.ErrorId] = false;
+    if (Event.Type == Event::ET_Begin)
+      ++OpenIntervals;
+  }
+  assert(OpenIntervals == 0 && "Amount of begin/end points doesn't match");
+
+  for (unsigned I = 0; I < Errors.size(); ++I) {
+    if (!Apply[I]) {
+      Errors[I].Fix.clear();
+      Errors[I].Notes.push_back(
+          ClangTidyMessage("this fix will not be applied because"
+                           " it overlaps with another fix"));
+    }
+  }
+}
+
 namespace {
 struct LessClangTidyError {
-  bool operator()(const ClangTidyError *LHS, const ClangTidyError *RHS) const {
-    const ClangTidyMessage &M1 = LHS->Message;
-    const ClangTidyMessage &M2 = RHS->Message;
+  bool operator()(const ClangTidyError &LHS, const ClangTidyError &RHS) const {
+    const ClangTidyMessage &M1 = LHS.Message;
+    const ClangTidyMessage &M2 = RHS.Message;
 
     return std::tie(M1.FilePath, M1.FileOffset, M1.Message) <
            std::tie(M2.FilePath, M2.FileOffset, M2.Message);
+  }
+};
+struct EqualClangTidyError {
+  static LessClangTidyError Less;
+  bool operator()(const ClangTidyError &LHS, const ClangTidyError &RHS) const {
+    return !Less(LHS, RHS) && !Less(RHS, LHS);
   }
 };
 } // end anonymous namespace
@@ -413,11 +529,13 @@ struct LessClangTidyError {
 // Flushes the internal diagnostics buffer to the ClangTidyContext.
 void ClangTidyDiagnosticConsumer::finish() {
   finalizeLastError();
-  std::set<const ClangTidyError*, LessClangTidyError> UniqueErrors;
-  for (const ClangTidyError &Error : Errors)
-    UniqueErrors.insert(&Error);
 
-  for (const ClangTidyError *Error : UniqueErrors)
-    Context.storeError(*Error);
+  std::sort(Errors.begin(), Errors.end(), LessClangTidyError());
+  Errors.erase(std::unique(Errors.begin(), Errors.end(), EqualClangTidyError()),
+               Errors.end());
+  removeIncompatibleErrors(Errors);
+
+  for (const ClangTidyError &Error : Errors)
+    Context.storeError(Error);
   Errors.clear();
 }

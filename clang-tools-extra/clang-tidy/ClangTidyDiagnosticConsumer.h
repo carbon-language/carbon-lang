@@ -179,8 +179,8 @@ public:
   ///
   /// Setting a non-null pointer here will enable profile collection in
   /// clang-tidy.
-  void setCheckProfileData(ProfileData* Profile);
-  ProfileData* getCheckProfileData() const { return Profile; }
+  void setCheckProfileData(ProfileData *Profile);
+  ProfileData *getCheckProfileData() const { return Profile; }
 
 private:
   // Calls setDiagnosticsEngine() and storeError().
@@ -231,9 +231,11 @@ public:
 private:
   void finalizeLastError();
 
+  void removeIncompatibleErrors(SmallVectorImpl<ClangTidyError> &Errors) const;
+
   /// \brief Returns the \c HeaderFilter constructed for the options set in the
   /// context.
-  llvm::Regex* getHeaderFilter();
+  llvm::Regex *getHeaderFilter();
 
   /// \brief Updates \c LastErrorRelatesToUserCode and LastErrorPassesLineFilter
   /// according to the diagnostic \p Location.

@@ -77,11 +77,12 @@ public:
     auto *VD = Result.Nodes.getNodeAs<VarDecl>(BoundDecl);
     std::string NewName = newName(VD->getName());
 
-    auto Diag = diag(VD->getLocation(), "refactor")
+    auto Diag = diag(VD->getLocation(), "refactor %0 into %1")
+                << VD->getName() << NewName
                 << FixItHint::CreateReplacement(
-                    CharSourceRange::getTokenRange(VD->getLocation(),
-                                                   VD->getLocation()),
-                    NewName);
+                       CharSourceRange::getTokenRange(VD->getLocation(),
+                                                      VD->getLocation()),
+                       NewName);
 
     class UsageVisitor : public RecursiveASTVisitor<UsageVisitor> {
     public:
@@ -281,7 +282,7 @@ TEST(OverlappingReplacementsTest, ReplacementInsideOtherReplacement) {
 
   // Apply the UseCharCheck together with the IfFalseCheck.
   //
-  // The 'If' fix is bigger, so that is the one that has to be applied.
+  // The 'If' fix contains the other, so that is the one that has to be applied.
   // } else if (int a = 0) {
   //            ^^^ -> char
   //            ~~~~~~~~~ -> false
@@ -294,7 +295,9 @@ TEST(OverlappingReplacementsTest, ReplacementInsideOtherReplacement) {
   }
 })";
   Res = runCheckOnCode<UseCharCheck, IfFalseCheck>(Code);
-  // FIXME: EXPECT_EQ(CharIfFix, Res);
+  EXPECT_EQ(CharIfFix, Res);
+  Res = runCheckOnCode<IfFalseCheck, UseCharCheck>(Code);
+  EXPECT_EQ(CharIfFix, Res);
 
   // Apply the IfFalseCheck with the StartsWithPotaCheck.
   //
@@ -303,7 +306,7 @@ TEST(OverlappingReplacementsTest, ReplacementInsideOtherReplacement) {
   //          ^^^^^^ -> tomato
   //     ~~~~~~~~~~~~~~~ -> false
   //
-  // But the refactoring is bigger here:
+  // But the refactoring is the one that contains the other here:
   // char potato = 0;
   //      ^^^^^^ -> tomato
   // if (potato) potato;
@@ -318,60 +321,87 @@ TEST(OverlappingReplacementsTest, ReplacementInsideOtherReplacement) {
   }
 })";
   Res = runCheckOnCode<IfFalseCheck, StartsWithPotaCheck>(Code);
-  // FIXME: EXPECT_EQ(IfStartsFix, Res);
-
-  // Silence warnings.
-  (void)CharIfFix;
-  (void)IfStartsFix;
+  EXPECT_EQ(IfStartsFix, Res);
+  Res = runCheckOnCode<StartsWithPotaCheck, IfFalseCheck>(Code);
+  EXPECT_EQ(IfStartsFix, Res);
 }
 
-TEST(OverlappingReplacementsTest, ApplyFullErrorOrNothingWhenOverlapping) {
+TEST(OverlappingReplacements, TwoReplacementsInsideOne) {
+  std::string Res;
+  const char Code[] =
+      R"(void f() {
+  if (int potato = 0) {
+    int a = 0;
+  }
+})";
+
+  // The two smallest replacements should not be applied.
+  // if (int potato = 0) {
+  //         ^^^^^^ -> tomato
+  //     *** -> char
+  //     ~~~~~~~~~~~~~~ -> false
+  // But other errors from the same checks should not be affected.
+  //   int a = 0;
+  //   *** -> char
+  const char Fix[] =
+      R"(void f() {
+  if (false) {
+    char a = 0;
+  }
+})";
+  Res = runCheckOnCode<UseCharCheck, IfFalseCheck, StartsWithPotaCheck>(Code);
+  EXPECT_EQ(Fix, Res);
+  Res = runCheckOnCode<StartsWithPotaCheck, IfFalseCheck, UseCharCheck>(Code);
+  EXPECT_EQ(Fix, Res);
+}
+
+TEST(OverlappingReplacementsTest,
+     ApplyAtMostOneOfTheChangesWhenPartialOverlapping) {
+  std::string Res;
+  const char Code[] =
+      R"(void f() {
+  if (int potato = 0) {
+    int a = potato;
+  }
+})";
+
+  // These two replacements overlap, but none of them is completely contained
+  // inside the other.
+  // if (int potato = 0) {
+  //         ^^^^^^ -> tomato
+  //     ~~~~~~~~~~~~~~ -> false
+  //   int a = potato;
+  //           ^^^^^^ -> tomato
+  //
+  // The 'StartsWithPotaCheck' fix has endpoints inside the 'IfFalseCheck' fix,
+  // so it is going to be set as inapplicable. The 'if' fix will be applied.
+  const char IfFix[] =
+      R"(void f() {
+  if (false) {
+    int a = potato;
+  }
+})";
+  Res = runCheckOnCode<IfFalseCheck, StartsWithPotaCheck>(Code);
+  EXPECT_EQ(IfFix, Res);
+}
+
+TEST(OverlappingReplacementsTest, TwoErrorsHavePerfectOverlapping) {
   std::string Res;
   const char Code[] =
       R"(void f() {
   int potato = 0;
   potato += potato * potato;
-  if (char this_name_make_this_if_really_long = potato) potato;
+  if (char a = potato) potato;
 })";
 
-  // StartsWithPotaCheck will try to refactor 'potato' into 'tomato',
-  // and EndsWithTatoCheck will try to use 'pomelo'. We have to apply
-  // either all conversions from one check, or all from the other.
-  const char StartsFix[] =
-      R"(void f() {
-  int tomato = 0;
-  tomato += tomato * tomato;
-  if (char this_name_make_this_if_really_long = tomato) tomato;
-})";
-  const char EndsFix[] =
-      R"(void f() {
-  int pomelo = 0;
-  pomelo += pomelo * pomelo;
-  if (char this_name_make_this_if_really_long = pomelo) pomelo;
-})";
-  // In case of overlapping, we will prioritize the biggest fix. However, these
-  // two fixes have the same size and position, so we don't know yet which one
-  // will have preference.
+  // StartsWithPotaCheck will try to refactor 'potato' into 'tomato', and
+  // EndsWithTatoCheck will try to use 'pomelo'. Both fixes have the same set of
+  // ranges. This is a corner case of one error completely containing another:
+  // the other completely contains the first one as well. Both errors are
+  // discarded.
+
   Res = runCheckOnCode<StartsWithPotaCheck, EndsWithTatoCheck>(Code);
-  // FIXME: EXPECT_TRUE(Res == StartsFix || Res == EndsFix);
-
-  // StartsWithPotaCheck will try to refactor 'potato' into 'tomato', but
-  // replacing the 'if' condition is a bigger change than all the refactoring
-  // changes together (48 vs 36), so this is the one that is going to be
-  // applied.
-  const char IfFix[] =
-      R"(void f() {
-  int potato = 0;
-  potato += potato * potato;
-  if (true) potato;
-})";
-  Res = runCheckOnCode<StartsWithPotaCheck, IfFalseCheck>(Code);
-  // FIXME: EXPECT_EQ(IfFix, Res);
-
-  // Silence warnings.
-  (void)StartsFix;
-  (void)EndsFix;
-  (void)IfFix;
+  EXPECT_EQ(Code, Res);
 }
 
 } // namespace test
