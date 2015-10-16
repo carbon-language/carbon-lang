@@ -205,9 +205,6 @@ CXXFunctionSummaryFormat::GetDescription ()
     return sstr.GetString();
 }
 
-#ifndef LLDB_DISABLE_PYTHON
-
-
 ScriptSummaryFormat::ScriptSummaryFormat (const TypeSummaryImpl::Flags& flags,
                                           const char * function_name,
                                           const char * python_script) :
@@ -275,5 +272,3 @@ ScriptSummaryFormat::GetDescription ()
     return sstr.GetString();
     
 }
-
-#endif // #ifndef LLDB_DISABLE_PYTHON

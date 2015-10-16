@@ -632,7 +632,6 @@ SBValue::GetValueDidChange ()
     return result;
 }
 
-#ifndef LLDB_DISABLE_PYTHON
 const char *
 SBValue::GetSummary ()
 {
@@ -681,7 +680,6 @@ SBValue::GetSummary (lldb::SBStream& stream,
     }
     return cstr;
 }
-#endif // LLDB_DISABLE_PYTHON
 
 const char *
 SBValue::GetLocation ()
@@ -753,7 +751,6 @@ SBValue::GetTypeFormat ()
     return format;
 }
 
-#ifndef LLDB_DISABLE_PYTHON
 lldb::SBTypeSummary
 SBValue::GetTypeSummary ()
 {
@@ -771,7 +768,6 @@ SBValue::GetTypeSummary ()
     }
     return summary;
 }
-#endif // LLDB_DISABLE_PYTHON
 
 lldb::SBTypeFilter
 SBValue::GetTypeFilter ()

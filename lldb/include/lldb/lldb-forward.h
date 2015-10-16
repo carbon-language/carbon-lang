@@ -186,9 +186,7 @@ class   RegularExpression;
 class   Scalar;
 class   ScriptInterpreter;
 class   ScriptInterpreterLocker;
-#ifndef LLDB_DISABLE_PYTHON
 struct  ScriptSummaryFormat;
-#endif
 class   SearchFilter;
 class   Section;
 class   SectionImpl;
@@ -384,9 +382,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::Queue> QueueSP;
     typedef std::weak_ptr<lldb_private::Queue> QueueWP;
     typedef std::shared_ptr<lldb_private::QueueItem> QueueItemSP;
-#ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::ScriptSummaryFormat> ScriptSummaryFormatSP;
-#endif // #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::ScriptInterpreter> ScriptInterpreterSP;
     typedef std::unique_ptr<lldb_private::ScriptInterpreter> ScriptInterpreterUP;
     typedef std::shared_ptr<lldb_private::Section> SectionSP;

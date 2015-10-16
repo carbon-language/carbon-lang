@@ -86,9 +86,7 @@ class LLDB_API SBTypeMemberFunction;
 class LLDB_API SBTypeNameSpecifier;
 class LLDB_API SBTypeSummary;
 class LLDB_API SBTypeSummaryOptions;
-#ifndef LLDB_DISABLE_PYTHON
 class LLDB_API SBTypeSynthetic;
-#endif
 class LLDB_API SBTypeList;
 class LLDB_API SBValue;
 class LLDB_API SBValueList;

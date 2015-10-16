@@ -541,8 +541,6 @@ namespace lldb_private {
         DISALLOW_COPY_AND_ASSIGN(CXXFunctionSummaryFormat);
     };
     
-#ifndef LLDB_DISABLE_PYTHON
-    
     // Python-based summaries, running script code to show data
     struct ScriptSummaryFormat : public TypeSummaryImpl
     {
@@ -614,7 +612,6 @@ namespace lldb_private {
     private:
         DISALLOW_COPY_AND_ASSIGN(ScriptSummaryFormat);
     };
-#endif
 } // namespace lldb_private
 
 #endif // lldb_TypeSummary_h_
