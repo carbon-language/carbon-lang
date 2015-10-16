@@ -317,3 +317,195 @@ define float @fminnm_S(<4 x float>* nocapture readonly %arr) {
   %r = select i1 %rdx.minmax.cmp1.elt, float %rdx.minmax.select1.elt, float %rdx.shuf1.elt
   ret float %r
 }
+
+define i16 @oversized_umax_256(<16 x i16>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_umax_256
+; CHECK: umax [[V0:v[0-9]+]].8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+; CHECK: umaxv {{h[0-9]+}}, [[V0]]
+  %rdx.minmax.select = load <16 x i16>, <16 x i16>* %arr
+  %rdx.shuf = shufflevector <16 x i16> %rdx.minmax.select, <16 x i16> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp ugt <16 x i16> %rdx.minmax.select, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i16> %rdx.minmax.select, <16 x i16> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i16> %rdx.minmax.select23, <16 x i16> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp ugt <16 x i16> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i16> %rdx.minmax.select23, <16 x i16> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i16> %rdx.minmax.select26, <16 x i16> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp ugt <16 x i16> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i16> %rdx.minmax.select26, <16 x i16> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i16> %rdx.minmax.select29, <16 x i16> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp ugt <16 x i16> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i16 %rdx.minmax.select29.elt, i16 %rdx.shuf30.elt
+  ret i16 %r
+}
+
+define i32 @oversized_umax_512(<16 x i32>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_umax_512
+; CHECK: umax v
+; CHECK-NEXT: umax v
+; CHECK-NEXT: umax [[V0:v[0-9]+]].4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+; CHECK-NEXT: umaxv {{s[0-9]+}}, [[V0]]
+  %arr.load = load <16 x i32>, <16 x i32>* %arr
+  %rdx.shuf = shufflevector <16 x i32> %arr.load, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp ugt <16 x i32> %arr.load, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i32> %arr.load, <16 x i32> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i32> %rdx.minmax.select23, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp ugt <16 x i32> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i32> %rdx.minmax.select23, <16 x i32> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i32> %rdx.minmax.select26, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp ugt <16 x i32> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i32> %rdx.minmax.select26, <16 x i32> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i32> %rdx.minmax.select29, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp ugt <16 x i32> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i32 %rdx.minmax.select29.elt, i32 %rdx.shuf30.elt
+  ret i32 %r
+}
+
+define i16 @oversized_umin_256(<16 x i16>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_umin_256
+; CHECK: umin [[V0:v[0-9]+]].8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+; CHECK: uminv {{h[0-9]+}}, [[V0]]
+  %rdx.minmax.select = load <16 x i16>, <16 x i16>* %arr
+  %rdx.shuf = shufflevector <16 x i16> %rdx.minmax.select, <16 x i16> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp ult <16 x i16> %rdx.minmax.select, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i16> %rdx.minmax.select, <16 x i16> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i16> %rdx.minmax.select23, <16 x i16> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp ult <16 x i16> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i16> %rdx.minmax.select23, <16 x i16> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i16> %rdx.minmax.select26, <16 x i16> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp ult <16 x i16> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i16> %rdx.minmax.select26, <16 x i16> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i16> %rdx.minmax.select29, <16 x i16> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp ult <16 x i16> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i16 %rdx.minmax.select29.elt, i16 %rdx.shuf30.elt
+  ret i16 %r
+}
+
+define i32 @oversized_umin_512(<16 x i32>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_umin_512
+; CHECK: umin v
+; CHECK-NEXT: umin v
+; CHECK-NEXT: umin [[V0:v[0-9]+]].4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+; CHECK-NEXT: uminv {{s[0-9]+}}, [[V0]]
+  %arr.load = load <16 x i32>, <16 x i32>* %arr
+  %rdx.shuf = shufflevector <16 x i32> %arr.load, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp ult <16 x i32> %arr.load, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i32> %arr.load, <16 x i32> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i32> %rdx.minmax.select23, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp ult <16 x i32> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i32> %rdx.minmax.select23, <16 x i32> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i32> %rdx.minmax.select26, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp ult <16 x i32> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i32> %rdx.minmax.select26, <16 x i32> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i32> %rdx.minmax.select29, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp ult <16 x i32> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i32 %rdx.minmax.select29.elt, i32 %rdx.shuf30.elt
+  ret i32 %r
+}
+
+define i16 @oversized_smax_256(<16 x i16>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_smax_256
+; CHECK: smax [[V0:v[0-9]+]].8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+; CHECK: smaxv {{h[0-9]+}}, [[V0]]
+  %arr.load = load <16 x i16>, <16 x i16>* %arr
+  %rdx.shuf = shufflevector <16 x i16> %arr.load, <16 x i16> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp sgt <16 x i16> %arr.load, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i16> %arr.load, <16 x i16> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i16> %rdx.minmax.select23, <16 x i16> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp sgt <16 x i16> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i16> %rdx.minmax.select23, <16 x i16> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i16> %rdx.minmax.select26, <16 x i16> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp sgt <16 x i16> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i16> %rdx.minmax.select26, <16 x i16> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i16> %rdx.minmax.select29, <16 x i16> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp sgt <16 x i16> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i16 %rdx.minmax.select29.elt, i16 %rdx.shuf30.elt
+  ret i16 %r
+}
+
+define i32 @oversized_smax_512(<16 x i32>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_smax_512
+; CHECK: smax v
+; CHECK-NEXT: smax v
+; CHECK-NEXT: smax [[V0:v[0-9]+]].4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+; CHECK-NEXT: smaxv {{s[0-9]+}}, [[V0]]
+  %arr.load = load <16 x i32>, <16 x i32>* %arr
+  %rdx.shuf = shufflevector <16 x i32> %arr.load, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp sgt <16 x i32> %arr.load, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i32> %arr.load, <16 x i32> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i32> %rdx.minmax.select23, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp sgt <16 x i32> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i32> %rdx.minmax.select23, <16 x i32> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i32> %rdx.minmax.select26, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp sgt <16 x i32> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i32> %rdx.minmax.select26, <16 x i32> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i32> %rdx.minmax.select29, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp sgt <16 x i32> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i32 %rdx.minmax.select29.elt, i32 %rdx.shuf30.elt
+  ret i32 %r
+}
+
+define i16 @oversized_smin_256(<16 x i16>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_smin_256
+; CHECK: smin [[V0:v[0-9]+]].8h, {{v[0-9]+}}.8h, {{v[0-9]+}}.8h
+; CHECK: sminv {{h[0-9]+}}, [[V0]]
+  %rdx.minmax.select = load <16 x i16>, <16 x i16>* %arr
+  %rdx.shuf = shufflevector <16 x i16> %rdx.minmax.select, <16 x i16> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp slt <16 x i16> %rdx.minmax.select, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i16> %rdx.minmax.select, <16 x i16> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i16> %rdx.minmax.select23, <16 x i16> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp slt <16 x i16> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i16> %rdx.minmax.select23, <16 x i16> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i16> %rdx.minmax.select26, <16 x i16> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp slt <16 x i16> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i16> %rdx.minmax.select26, <16 x i16> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i16> %rdx.minmax.select29, <16 x i16> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp slt <16 x i16> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i16> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i16 %rdx.minmax.select29.elt, i16 %rdx.shuf30.elt
+  ret i16 %r
+}
+
+define i32 @oversized_smin_512(<16 x i32>* nocapture readonly %arr)  {
+; CHECK-LABEL: oversized_smin_512
+; CHECK: smin v
+; CHECK-NEXT: smin v
+; CHECK-NEXT: smin [[V0:v[0-9]+]].4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+; CHECK-NEXT: sminv {{s[0-9]+}}, [[V0]]
+  %arr.load = load <16 x i32>, <16 x i32>* %arr
+  %rdx.shuf = shufflevector <16 x i32> %arr.load, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp22 = icmp slt <16 x i32> %arr.load, %rdx.shuf
+  %rdx.minmax.select23 = select <16 x i1> %rdx.minmax.cmp22, <16 x i32> %arr.load, <16 x i32> %rdx.shuf
+  %rdx.shuf24 = shufflevector <16 x i32> %rdx.minmax.select23, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp25 = icmp slt <16 x i32> %rdx.minmax.select23, %rdx.shuf24
+  %rdx.minmax.select26 = select <16 x i1> %rdx.minmax.cmp25, <16 x i32> %rdx.minmax.select23, <16 x i32> %rdx.shuf24
+  %rdx.shuf27 = shufflevector <16 x i32> %rdx.minmax.select26, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp28 = icmp slt <16 x i32> %rdx.minmax.select26, %rdx.shuf27
+  %rdx.minmax.select29 = select <16 x i1> %rdx.minmax.cmp28, <16 x i32> %rdx.minmax.select26, <16 x i32> %rdx.shuf27
+  %rdx.shuf30 = shufflevector <16 x i32> %rdx.minmax.select29, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %rdx.minmax.cmp31 = icmp slt <16 x i32> %rdx.minmax.select29, %rdx.shuf30
+  %rdx.minmax.cmp31.elt = extractelement <16 x i1> %rdx.minmax.cmp31, i32 0
+  %rdx.minmax.select29.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 0
+  %rdx.shuf30.elt = extractelement <16 x i32> %rdx.minmax.select29, i32 1
+  %r = select i1 %rdx.minmax.cmp31.elt, i32 %rdx.minmax.select29.elt, i32 %rdx.shuf30.elt
+  ret i32 %r
+}
