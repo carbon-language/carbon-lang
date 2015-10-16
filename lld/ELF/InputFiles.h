@@ -111,6 +111,7 @@ public:
   void parse(llvm::DenseSet<StringRef> &Comdats);
 
   ArrayRef<InputSection<ELFT> *> getSections() const { return Sections; }
+  InputSection<ELFT> *getSection(const Elf_Sym &Sym) const;
 
   SymbolBody *getSymbolBody(uint32_t SymbolIndex) const {
     uint32_t FirstNonLocal = this->Symtab->sh_info;

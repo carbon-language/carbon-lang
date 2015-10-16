@@ -173,28 +173,35 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
 }
 
 template <class ELFT>
+InputSection<ELFT> *
+elf2::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
+  uint32_t Index = Sym.st_shndx;
+  if (Index == ELF::SHN_XINDEX)
+    Index = this->ELFObj.getExtendedSymbolTableIndex(&Sym, this->Symtab,
+                                                     SymtabSHNDX);
+  else if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
+    return nullptr;
+
+  if (Index >= Sections.size() || !Index || !Sections[Index])
+    error("Invalid section index");
+  return Sections[Index];
+}
+
+template <class ELFT>
 SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
                                                      const Elf_Sym *Sym) {
   ErrorOr<StringRef> NameOrErr = Sym->getName(StringTable);
   error(NameOrErr.getError());
   StringRef Name = *NameOrErr;
 
-  uint32_t SecIndex = Sym->st_shndx;
-  switch (SecIndex) {
+  switch (Sym->st_shndx) {
   case SHN_ABS:
     return new (this->Alloc) DefinedAbsolute<ELFT>(Name, *Sym);
   case SHN_UNDEF:
     return new (this->Alloc) Undefined<ELFT>(Name, *Sym);
   case SHN_COMMON:
     return new (this->Alloc) DefinedCommon<ELFT>(Name, *Sym);
-  case SHN_XINDEX:
-    SecIndex = this->ELFObj.getExtendedSymbolTableIndex(Sym, this->Symtab,
-                                                        SymtabSHNDX);
-    break;
   }
-
-  if (SecIndex >= Sections.size() || !SecIndex || !Sections[SecIndex])
-    error("Invalid section index");
 
   switch (Sym->getBinding()) {
   default:
@@ -202,7 +209,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_GLOBAL:
   case STB_WEAK:
   case STB_GNU_UNIQUE: {
-    InputSection<ELFT> *Sec = Sections[SecIndex];
+    InputSection<ELFT> *Sec = getSection(*Sym);
     if (Sec == &InputSection<ELFT>::Discarded)
       return new (this->Alloc) Undefined<ELFT>(Name, *Sym);
     return new (this->Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sec);

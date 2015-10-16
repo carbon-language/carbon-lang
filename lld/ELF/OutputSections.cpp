@@ -434,17 +434,11 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
   if (!Sym)
     return 0;
 
-  uint32_t SecIndex = Sym->st_shndx;
-  if (SecIndex == SHN_XINDEX)
-    SecIndex = File.getObj().getExtendedSymbolTableIndex(
-        Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-  ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
-  InputSection<ELFT> *Section = Sections[SecIndex];
-
   // According to the ELF spec reference to a local symbol from outside
   // the group are not allowed. Unfortunately .eh_frame breaks that rule
   // and must be treated specially. For now we just replace the symbol with
   // 0.
+  InputSection<ELFT> *Section = File.getSection(*Sym);
   if (Section == &InputSection<ELFT>::Discarded)
     return 0;
 
@@ -535,16 +529,8 @@ bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
     return false;
 
   // If sym references a section in a discarded group, don't keep it.
-  uint32_t SecIndex = Sym.st_shndx;
-  if (SecIndex != SHN_ABS) {
-    if (SecIndex == SHN_XINDEX)
-      SecIndex = File.getObj().getExtendedSymbolTableIndex(
-          &Sym, File.getSymbolTable(), File.getSymbolTableShndx());
-    ArrayRef<InputSection<ELFT> *> Sections = File.getSections();
-    const InputSection<ELFT> *Section = Sections[SecIndex];
-    if (Section == &InputSection<ELFT>::Discarded)
-      return false;
-  }
+  if (File.getSection(Sym) == &InputSection<ELFT>::Discarded)
+    return false;
 
   if (Config->DiscardNone)
     return true;
@@ -611,16 +597,11 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
       ESym->st_name = StrTabSec.getFileOff(SymName);
       ESym->st_size = Sym.st_size;
       ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
-      uint32_t SecIndex = Sym.st_shndx;
       uintX_t VA = Sym.st_value;
-      if (SecIndex == SHN_ABS) {
+      if (Sym.st_shndx == SHN_ABS) {
         ESym->st_shndx = SHN_ABS;
       } else {
-        if (SecIndex == SHN_XINDEX)
-          SecIndex = File->getObj().getExtendedSymbolTableIndex(
-              &Sym, File->getSymbolTable(), File->getSymbolTableShndx());
-        ArrayRef<InputSection<ELFT> *> Sections = File->getSections();
-        const InputSection<ELFT> *Sec = Sections[SecIndex];
+        const InputSection<ELFT> *Sec = File->getSection(Sym);
         ESym->st_shndx = Sec->OutSec->SectionIndex;
         VA += Sec->OutSec->getVA() + Sec->OutSecOff;
       }
