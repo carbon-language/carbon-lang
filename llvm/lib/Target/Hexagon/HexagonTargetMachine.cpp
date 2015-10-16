@@ -33,6 +33,9 @@ static cl::opt<bool> DisableHexagonCFGOpt("disable-hexagon-cfgopt",
   cl::Hidden, cl::ZeroOrMore, cl::init(false),
   cl::desc("Disable Hexagon CFG Optimization"));
 
+static cl::opt<bool> DisableStoreWidening("disable-store-widen",
+  cl::Hidden, cl::init(false), cl::desc("Disable store widening"));
+
 static cl::opt<bool> EnableExpandCondsets("hexagon-expand-condsets",
   cl::init(true), cl::Hidden, cl::ZeroOrMore,
   cl::desc("Early expansion of MUX"));
@@ -97,6 +100,7 @@ namespace llvm {
   FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonRemoveExtendArgs(const HexagonTargetMachine &TM);
   FunctionPass *createHexagonSplitConst32AndConst64();
+  FunctionPass *createHexagonStoreWidening();
 } // end namespace llvm;
 
 /// HexagonTargetMachine ctor - Create an ILP32 architecture model.
@@ -226,9 +230,12 @@ bool HexagonPassConfig::addInstSelector() {
 }
 
 void HexagonPassConfig::addPreRegAlloc() {
-  if (getOptLevel() != CodeGenOpt::None)
+  if (getOptLevel() != CodeGenOpt::None) {
+    if (!DisableStoreWidening)
+      addPass(createHexagonStoreWidening(), false);
     if (!DisableHardwareLoops)
       addPass(createHexagonHardwareLoops(), false);
+  }
 }
 
 void HexagonPassConfig::addPostRegAlloc() {
