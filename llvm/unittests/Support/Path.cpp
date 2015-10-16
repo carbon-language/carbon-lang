@@ -302,18 +302,22 @@ TEST(Support, AbsolutePathIteratorEnd) {
 TEST(Support, HomeDirectory) {
   std::string expected;
 #ifdef LLVM_ON_WIN32
-  wchar_t *path = ::_wgetenv(L"USERPROFILE");
-  auto pathLen = ::wcslen(path);
-  ArrayRef<char> ref{reinterpret_cast<char *>(path), pathLen * sizeof(wchar_t)};
-  convertUTF16ToUTF8String(ref, expected);
+  if (wchar_t const *path = ::_wgetenv(L"USERPROFILE")) {
+    auto pathLen = ::wcslen(path);
+    ArrayRef<char> ref{reinterpret_cast<char const *>(path),
+                       pathLen * sizeof(wchar_t)};
+    convertUTF16ToUTF8String(ref, expected);
+  }
 #else
-  if (char const *home = ::getenv("HOME"))
-    expected = home;
+  if (char const *path = ::getenv("HOME"))
+    expected = path;
 #endif
-  if (expected.length() > 0) {
+  // Do not try to test it if we don't know what to expect.
+  // On Windows we use something better than env vars.
+  if (!expected.empty()) {
     SmallString<128> HomeDir;
     auto status = path::home_directory(HomeDir);
-    EXPECT_TRUE(status ^ HomeDir.empty());
+    EXPECT_TRUE(status);
     EXPECT_EQ(expected, HomeDir);
   }
 }
