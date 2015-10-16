@@ -256,7 +256,7 @@ bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
     // R_386_JMP_SLOT, etc).
     return S.isShared();
   case R_X86_64_PLT32:
-    return true;
+    return canBePreempted(&S, true);
   }
 }
 
@@ -297,6 +297,9 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     write32le(Loc, SA);
     break;
   }
+  case R_X86_64_PLT32:
+    write32le(Loc, SA - BaseAddr - Offset);
+    break;
   default:
     error("unrecognized reloc " + Twine(Type));
   }
