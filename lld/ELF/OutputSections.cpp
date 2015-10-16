@@ -477,7 +477,10 @@ bool lld::elf2::canBePreempted(const SymbolBody *Body, bool NeedsGot) {
     //   the plt entry would have a non zero address.
     // Since we cannot do anything better, we just resolve the symbol to 0 and
     // don't produce a dynamic relocation.
-    return NeedsGot;
+    //
+    // As an extra hack, assume that if we are producing a shared library the
+    // user knows what he or she is doing and can handle a dynamic relocation.
+    return Config->Shared || NeedsGot;
   }
   if (!Config->Shared)
     return false;
