@@ -186,7 +186,7 @@ entry:
 ; CHECK-LABEL: minimal_loop:
 ; CHECK-NOT: br
 ; CHECK: BB7_1:
-; CHECK: store_i32 (get_local 1), (get_local 3){{$}}
+; CHECK: i32.store (get_local 1), (get_local 3){{$}}
 ; CHECK: br $BB7_1{{$}}
 define i32 @minimal_loop(i32* %p) {
 entry:
