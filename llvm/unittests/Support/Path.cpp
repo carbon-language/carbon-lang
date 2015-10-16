@@ -303,7 +303,7 @@ TEST(Support, HomeDirectory) {
 #ifdef LLVM_ON_WIN32
   wchar_t *path = ::_wgetenv(L"USERPROFILE");
   auto pathLen = ::wcslen(path);
-  ArrayRef<char> ref{reinterpret_cast<char*>(path), pathLen * sizeof(wchar_t)};
+  ArrayRef<char> ref{reinterpret_cast<char *>(path), pathLen * sizeof(wchar_t)};
   std::string expected;
   convertUTF16ToUTF8String(ref, expected);
 #else
