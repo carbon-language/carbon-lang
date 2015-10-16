@@ -189,7 +189,7 @@ namespace FnPtrs {
   }
 
   int ovlConflict(int m) __attribute__((enable_if(true, "")));
-  int ovlConflict(int m);
+  int ovlConflict(int m) __attribute__((enable_if(1, "")));
   void test3() {
     int (*p)(int) = ovlConflict; // expected-error{{address of overloaded function 'ovlConflict' is ambiguous}} expected-note@191{{candidate function}} expected-note@192{{candidate function}}
     int (*p2)(int) = &ovlConflict; // expected-error{{address of overloaded function 'ovlConflict' is ambiguous}} expected-note@191{{candidate function}} expected-note@192{{candidate function}}
@@ -225,7 +225,7 @@ namespace FnPtrs {
   template <typename T>
   T templatedConflict(T m) __attribute__((enable_if(true, ""))) { return T(); }
   template <typename T>
-  T templatedConflict(T m) { return T(); }
+  T templatedConflict(T m) __attribute__((enable_if(1, ""))) { return T(); }
   void test6() {
     int (*p)(int) = templatedConflict<int>; // expected-error{{address of overloaded function 'templatedConflict' is ambiguous}} expected-note@224{{candidate function made ineligible by enable_if}} expected-note@226{{candidate function}} expected-note@228{{candidate function}}
     int (*p0)(int) = &templatedConflict<int>; // expected-error{{address of overloaded function 'templatedConflict' is ambiguous}} expected-note@224{{candidate function made ineligible by enable_if}} expected-note@226{{candidate function}} expected-note@228{{candidate function}}

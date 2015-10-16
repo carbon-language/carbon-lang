@@ -1,4 +1,13 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-pc-linux-gnu| FileCheck %s
+
+// Test address-of overloading logic
+int test5(int);
+template <typename T>
+T test5(T) __attribute__((enable_if(1, "better than non-template")));
+
+// CHECK: @_Z5test5IiEUa9enable_ifIXLi1EEET_S0_
+int (*Ptr)(int) = &test5;
+
 // Test itanium mangling for attribute enable_if
 
 // CHECK: _Z5test1Ua9enable_ifIXeqfL0p_Li1EEEi
