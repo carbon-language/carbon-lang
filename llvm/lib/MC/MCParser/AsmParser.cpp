@@ -690,9 +690,8 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
         // FIXME: We would really like to refer back to where the symbol was
         // first referenced for a source location. We need to add something
         // to track that. Currently, we just point to the end of the file.
-        printMessage(getLexer().getLoc(), SourceMgr::DK_Error,
-                     "assembler local symbol '" + Sym->getName() +
-                         "' not defined");
+        return Error(getLexer().getLoc(), "assembler local symbol '" +
+                                              Sym->getName() + "' not defined");
     }
   }
 
