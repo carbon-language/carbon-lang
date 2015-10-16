@@ -13,12 +13,8 @@
 #include "string"
 #include "system_error"
 
-#ifndef __has_include
-#define __has_include(inc) 0
-#endif
-
 /* For _LIBCPPABI_VERSION */
-#if __has_include(<cxxabi.h>) || defined(__APPLE_) || defined(LIBCXXRT)
+#if defined(LIBCXX_BUILDING_LIBCXXABI) || defined(__APPLE_) || defined(LIBCXXRT)
 #include <cxxabi.h>
 #endif
 
