@@ -17,36 +17,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/Triple.h"
-#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/LibCallSemantics.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/CodeGen/WinEHFuncInfo.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/PatternMatch.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
-#include <memory>
 
 using namespace llvm;
-using namespace llvm::PatternMatch;
 
 #define DEBUG_TYPE "winehprepare"
 
@@ -66,11 +48,7 @@ namespace {
 class WinEHPrepare : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid.
-  WinEHPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID) {
-    if (TM)
-      TheTriple = TM->getTargetTriple();
-  }
+  WinEHPrepare(const TargetMachine *TM = nullptr) : FunctionPass(ID) {}
 
   bool runOnFunction(Function &Fn) override;
 
@@ -104,8 +82,6 @@ private:
   void removeImplausibleTerminators(Function &F);
   void cleanupPreparedFunclets(Function &F);
   void verifyPreparedFunclets(Function &F);
-
-  Triple TheTriple;
 
   // All fields are reset by runOnFunction.
   EHPersonality Personality = EHPersonality::Unknown;
@@ -163,10 +139,7 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
 
 bool WinEHPrepare::doFinalization(Module &M) { return false; }
 
-void WinEHPrepare::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<TargetLibraryInfoWrapperPass>();
-}
+void WinEHPrepare::getAnalysisUsage(AnalysisUsage &AU) const {}
 
 static int addUnwindMapEntry(WinEHFuncInfo &FuncInfo, int ToState,
                              const BasicBlock *BB) {
