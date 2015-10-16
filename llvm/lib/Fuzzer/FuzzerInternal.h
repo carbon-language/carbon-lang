@@ -93,6 +93,7 @@ class Fuzzer {
     std::string ArtifactPrefix = "./";
     std::vector<std::string> Tokens;
     std::vector<Unit> Dictionary;
+    bool SaveArtifacts = true;
   };
   Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }

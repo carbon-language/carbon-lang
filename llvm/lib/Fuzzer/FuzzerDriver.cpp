@@ -277,11 +277,16 @@ int FuzzerDriver(const std::vector<std::string> &Args,
       return 1;
   if (Flags.verbosity > 0 && !Options.Dictionary.empty())
     Printf("Dictionary: %zd entries\n", Options.Dictionary.size());
+  Options.SaveArtifacts = !Flags.test_single_input;
 
   Fuzzer F(USF, Options);
 
   if (Flags.apply_tokens)
     return ApplyTokens(F, Flags.apply_tokens);
+
+  // Timer
+  if (Flags.timeout > 0)
+    SetTimer(Flags.timeout / 2 + 1);
 
   if (Flags.test_single_input)
     return RunOneTest(&F, Flags.test_single_input);
@@ -293,10 +298,6 @@ int FuzzerDriver(const std::vector<std::string> &Args,
   if (Flags.verbosity)
     Printf("Seed: %u\n", Seed);
   USF.GetRand().ResetSeed(Seed);
-
-  // Timer
-  if (Flags.timeout > 0)
-    SetTimer(Flags.timeout / 2 + 1);
 
   if (Flags.verbosity >= 2) {
     Printf("Tokens: {");

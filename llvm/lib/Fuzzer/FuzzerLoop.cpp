@@ -237,6 +237,8 @@ void Fuzzer::WriteToOutputCorpus(const Unit &U) {
 }
 
 void Fuzzer::WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix) {
+  if (!Options.SaveArtifacts)
+    return;
   std::string Path = Options.ArtifactPrefix + Prefix + Hash(U);
   WriteToFile(U, Path);
   Printf("artifact_prefix='%s'; Test unit written to %s\n",

@@ -49,6 +49,10 @@ static std::vector<std::string> ListFilesInDir(const std::string &Dir,
 
 Unit FileToVector(const std::string &Path) {
   std::ifstream T(Path);
+  if (!T) {
+    Printf("No such directory: %s; exiting\n", Path.c_str());
+    exit(1);
+  }
   return Unit((std::istreambuf_iterator<char>(T)),
               std::istreambuf_iterator<char>());
 }

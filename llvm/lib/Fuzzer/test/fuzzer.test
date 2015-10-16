@@ -1,7 +1,8 @@
 CHECK: BINGO
 
 RUN: LLVMFuzzer-SimpleTest 2>&1 | FileCheck %s
-RUN: LLVMFuzzer-SimpleTest -test_single_input=%S/hi.txt 2>&1 | FileCheck %s 
+RUN: not LLVMFuzzer-NullDerefTest -test_single_input=%S/hi.txt 2>&1 | FileCheck %s --check-prefix=SingleInput
+SingleInput-NOT: Test unit written to ./crash-
 
 RUN: not LLVMFuzzer-InfiniteTest -timeout=2 2>&1 | FileCheck %s --check-prefix=InfiniteTest
 InfiniteTest: ALARM: working on the last Unit for
@@ -13,6 +14,10 @@ MaxTotalTime: Done {{.*}} runs in {{.}} second(s)
 RUN: not LLVMFuzzer-TimeoutTest -timeout=5 2>&1 | FileCheck %s --check-prefix=TimeoutTest
 TimeoutTest: ALARM: working on the last Unit for
 TimeoutTest: Test unit written to ./timeout-
+
+RUN: not LLVMFuzzer-TimeoutTest -timeout=5 -test_single_input=%S/hi.txt 2>&1 | FileCheck %s --check-prefix=SingleInputTimeoutTest
+SingleInputTimeoutTest: ALARM: working on the last Unit for
+SingleInputTimeoutTest-NOT: Test unit written to ./timeout-
 
 RUN: not LLVMFuzzer-NullDerefTest 2>&1 | FileCheck %s --check-prefix=NullDerefTest
 NullDerefTest: Test unit written to ./crash-
