@@ -710,6 +710,13 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
       OS.EmitValue(create32bitRef(HandlerMapXData), 4);   // HandlerArray
     }
 
+    // All funclets use the same parent frame offset currently.
+    unsigned ParentFrameOffset = 0;
+    if (shouldEmitPersonality) {
+      const TargetFrameLowering *TFI = MF->getSubtarget().getFrameLowering();
+      ParentFrameOffset = TFI->getWinEHParentFrameOffset(*MF);
+    }
+
     for (size_t I = 0, E = FuncInfo.TryBlockMap.size(); I != E; ++I) {
       WinEHTryBlockMapEntry &TBME = FuncInfo.TryBlockMap[I];
       MCSymbol *HandlerMapXData = HandlerMaps[I];
@@ -749,13 +756,8 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
         OS.EmitValue(create32bitRef(HT.TypeDescriptor), 4); // Type
         OS.EmitValue(FrameAllocOffsetRef, 4);               // CatchObjOffset
         OS.EmitValue(create32bitRef(HandlerSym), 4);        // Handler
-
-        if (shouldEmitPersonality) {
-          // Keep this in sync with X86FrameLowering::emitPrologue.
-          int ParentFrameOffset =
-              16 + 8 + MF->getFrameInfo()->getMaxCallFrameSize();
+        if (shouldEmitPersonality)
           OS.EmitIntValue(ParentFrameOffset, 4); // ParentFrameOffset
-        }
       }
     }
   }

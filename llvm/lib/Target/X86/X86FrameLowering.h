@@ -101,6 +101,8 @@ public:
                                  MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI) const override;
 
+  unsigned getWinEHParentFrameOffset(const MachineFunction &MF) const override;
+
   /// Check the instruction before/after the passed instruction. If
   /// it is an ADD/SUB/LEA instruction it is deleted argument and the
   /// stack adjustment is returned as a positive value for ADD/LEA and
@@ -152,6 +154,8 @@ private:
   restoreWin32EHStackPointers(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI, DebugLoc DL,
                               bool RestoreSP = false) const;
+
+  unsigned getWinEHFuncletFrameSize(const MachineFunction &MF) const;
 };
 
 } // End llvm namespace

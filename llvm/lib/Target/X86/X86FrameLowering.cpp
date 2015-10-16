@@ -786,7 +786,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   // NumBytes value that we would've used for the parent frame.
   unsigned ParentFrameNumBytes = NumBytes;
   if (IsFunclet)
-    NumBytes = MFI->getMaxCallFrameSize();
+    NumBytes = getWinEHFuncletFrameSize(MF);
 
   // Skip the callee-saved push instructions.
   bool PushedRegs = false;
@@ -1039,6 +1039,22 @@ static bool isFuncletReturnInstr(MachineInstr *MI) {
   llvm_unreachable("impossible");
 }
 
+unsigned X86FrameLowering::getWinEHFuncletFrameSize(const MachineFunction &MF) const {
+  // This is the size of the pushed CSRs.
+  unsigned CSSize =
+      MF.getInfo<X86MachineFunctionInfo>()->getCalleeSavedFrameSize();
+  // This is the amount of stack a funclet needs to allocate.
+  unsigned MaxCallSize = MF.getFrameInfo()->getMaxCallFrameSize();
+  // RBP is not included in the callee saved register block. After pushing RBP,
+  // everything is 16 byte aligned. Everything we allocate before an outgoing
+  // call must also be 16 byte aligned.
+  unsigned FrameSizeMinusRBP =
+      RoundUpToAlignment(CSSize + MaxCallSize, getStackAlignment());
+  // Subtract out the size of the callee saved registers. This is how much stack
+  // each funclet will allocate.
+  return FrameSizeMinusRBP - CSSize;
+}
+
 void X86FrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1067,7 +1083,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   uint64_t NumBytes = 0;
 
   if (MBBI->getOpcode() == X86::CATCHRET) {
-    NumBytes = MFI->getMaxCallFrameSize();
+    NumBytes = getWinEHFuncletFrameSize(MF);
     assert(hasFP(MF) && "EH funclets without FP not yet implemented");
     MachineBasicBlock *TargetMBB = MBBI->getOperand(0).getMBB();
 
@@ -1107,7 +1123,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
           .addMBB(TargetMBB);
     }
   } else if (MBBI->getOpcode() == X86::CLEANUPRET) {
-    NumBytes = MFI->getMaxCallFrameSize();
+    NumBytes = getWinEHFuncletFrameSize(MF);
     assert(hasFP(MF) && "EH funclets without FP not yet implemented");
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::POP64r : X86::POP32r),
             MachineFramePtr)
@@ -2210,4 +2226,16 @@ MachineBasicBlock::iterator X86FrameLowering::restoreWin32EHStackPointers(
     llvm_unreachable("32-bit frames with WinEH must use FramePtr or BasePtr");
   }
   return MBBI;
+}
+
+unsigned X86FrameLowering::getWinEHParentFrameOffset(const MachineFunction &MF) const {
+  // RDX, the parent frame pointer, is homed into 16(%rsp) in the prologue.
+  unsigned Offset = 16;
+  // RBP is immediately pushed.
+  Offset += SlotSize;
+  // All callee-saved registers are then pushed.
+  Offset += MF.getInfo<X86MachineFunctionInfo>()->getCalleeSavedFrameSize();
+  // Every funclet allocates enough stack space for the largest outgoing call.
+  Offset += getWinEHFuncletFrameSize(MF);
+  return Offset;
 }

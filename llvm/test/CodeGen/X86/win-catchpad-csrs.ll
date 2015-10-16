@@ -125,14 +125,20 @@ catchendblock:                                    ; preds = %catch,
 ; X64: .seh_pushreg 5
 ; X64: pushq %rsi
 ; X64: .seh_pushreg 6
-; X64: subq $32, %rsp
-; X64: .seh_stackalloc 32
+; X64: pushq %rdi
+; X64: .seh_pushreg 7
+; X64: pushq %rbx
+; X64: .seh_pushreg 3
+; X64: subq $40, %rsp
+; X64: .seh_stackalloc 40
 ; X64: leaq 32(%rdx), %rbp
 ; X64: .seh_endprologue
 ; X64: movl $2, %ecx
 ; X64: callq f
 ; X64: leaq [[contbb]](%rip), %rax
-; X64: addq $32, %rsp
+; X64: addq $40, %rsp
+; X64: popq %rbx
+; X64: popq %rdi
 ; X64: popq %rsi
 ; X64: popq %rbp
 ; X64: retq
@@ -142,4 +148,130 @@ catchendblock:                                    ; preds = %catch,
 ; X64:   .long   "??_R0H@8"@IMGREL
 ; X64:   .long   0
 ; X64:   .long   "?catch$[[catch1bb]]@?0?try_catch_catch@4HA"@IMGREL
+; X64:   .long   88
+
+define i32 @try_one_csr() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  %a = call i32 @getint()
+  %b = call i32 @getint()
+  call void (...) @useints(i32 %a)
+  invoke void @f(i32 1)
+          to label %try.cont unwind label %catch.dispatch
+
+catch.dispatch:                                   ; preds = %entry
+  %0 = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i8* null]
+          to label %catch unwind label %catchendblock
+
+catch:
+  catchret %0 to label %try.cont
+
+try.cont:                                         ; preds = %entry, %invoke.cont.2, %invoke.cont.3
+  ret i32 0
+
+catchendblock:                                    ; preds = %catch,
+  catchendpad unwind to caller
+}
+
+; X64-LABEL: try_one_csr:
+; X64: pushq %rbp
+; X64: .seh_pushreg 5
+; X64: pushq %rsi
+; X64: .seh_pushreg 6
+; X64-NOT: pushq
+; X64: subq $40, %rsp
+; X64: .seh_stackalloc 40
+; X64: leaq 32(%rsp), %rbp
+; X64: .seh_setframe 5, 32
+; X64: .seh_endprologue
+; X64: callq getint
+; X64: callq getint
+; X64: callq useints
+; X64: movl $1, %ecx
+; X64: callq f
+; X64: [[contbb:\.LBB1_[0-9]+]]: # %try.cont
+; X64: addq $40, %rsp
+; X64-NOT: popq
+; X64: popq %rsi
+; X64: popq %rbp
+; X64: retq
+
+; X64: "?catch$[[catch1bb:[0-9]+]]@?0?try_one_csr@4HA":
+; X64: LBB1_[[catch1bb]]: # %catch.dispatch{{$}}
+; X64: movq %rdx, 16(%rsp)
+; X64: pushq %rbp
+; X64: .seh_pushreg 5
+; X64: pushq %rsi
+; X64: .seh_pushreg 6
+; X64: subq $40, %rsp
+; X64: .seh_stackalloc 40
+; X64: leaq 32(%rdx), %rbp
+; X64: .seh_endprologue
+; X64: leaq [[contbb]](%rip), %rax
+; X64: addq $40, %rsp
+; X64: popq %rsi
+; X64: popq %rbp
+; X64: retq
+
+; X64: $handlerMap$0$try_one_csr:
+; X64:   .long   0
+; X64:   .long   "??_R0H@8"@IMGREL
+; X64:   .long   0
+; X64:   .long   "?catch$[[catch1bb]]@?0?try_one_csr@4HA"@IMGREL
+; X64:   .long   72
+
+define i32 @try_no_csr() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  invoke void @f(i32 1)
+          to label %try.cont unwind label %catch.dispatch
+
+catch.dispatch:                                   ; preds = %entry
+  %0 = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i8* null]
+          to label %catch unwind label %catchendblock
+
+catch:
+  catchret %0 to label %try.cont
+
+try.cont:                                         ; preds = %entry, %invoke.cont.2, %invoke.cont.3
+  ret i32 0
+
+catchendblock:                                    ; preds = %catch,
+  catchendpad unwind to caller
+}
+
+; X64-LABEL: try_no_csr:
+; X64: pushq %rbp
+; X64: .seh_pushreg 5
+; X64-NOT: pushq
+; X64: subq $48, %rsp
+; X64: .seh_stackalloc 48
+; X64: leaq 48(%rsp), %rbp
+; X64: .seh_setframe 5, 48
+; X64: .seh_endprologue
+; X64: movl $1, %ecx
+; X64: callq f
+; X64: [[contbb:\.LBB2_[0-9]+]]: # %try.cont
+; X64: addq $48, %rsp
+; X64-NOT: popq
+; X64: popq %rbp
+; X64: retq
+
+; X64: "?catch$[[catch1bb:[0-9]+]]@?0?try_no_csr@4HA":
+; X64: LBB2_[[catch1bb]]: # %catch.dispatch{{$}}
+; X64: movq %rdx, 16(%rsp)
+; X64: pushq %rbp
+; X64: .seh_pushreg 5
+; X64: subq $32, %rsp
+; X64: .seh_stackalloc 32
+; X64: leaq 48(%rdx), %rbp
+; X64: .seh_endprologue
+; X64: leaq [[contbb]](%rip), %rax
+; X64: addq $32, %rsp
+; X64: popq %rbp
+; X64: retq
+
+; X64: $handlerMap$0$try_no_csr:
+; X64:   .long   0
+; X64:   .long   "??_R0H@8"@IMGREL
+; X64:   .long   0
+; X64:   .long   "?catch$[[catch1bb]]@?0?try_no_csr@4HA"@IMGREL
 ; X64:   .long   56

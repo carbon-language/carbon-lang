@@ -265,6 +265,10 @@ public:
                                              RegScavenger *RS = nullptr) const {
   }
 
+  virtual unsigned getWinEHParentFrameOffset(const MachineFunction &MF) const {
+    report_fatal_error("WinEH not implemented for this target");
+  }
+
   /// eliminateCallFramePseudoInstr - This method is called during prolog/epilog
   /// code insertion to eliminate call frame setup and destroy pseudo
   /// instructions (but only if the Target is using them).  It is responsible
