@@ -36,7 +36,7 @@ uint64_t __llvm_profile_get_size_for_buffer_internal(
   /* Match logic in __llvm_profile_write_buffer(). */
   const uint64_t NamesSize = PROFILE_RANGE_SIZE(Names) * sizeof(char);
   const uint64_t Padding = sizeof(uint64_t) - NamesSize % sizeof(uint64_t);
-  return sizeof(uint64_t) * PROFILE_HEADER_SIZE +
+  return sizeof(__llvm_profile_header) +
       PROFILE_RANGE_SIZE(Data) * sizeof(__llvm_profile_data) +
       PROFILE_RANGE_SIZE(Counters) * sizeof(uint64_t) +
       NamesSize + Padding;
@@ -78,14 +78,14 @@ int __llvm_profile_write_buffer_internal(
   const char Zeroes[sizeof(uint64_t)] = {0};
 
   /* Create the header. */
-  uint64_t Header[PROFILE_HEADER_SIZE];
-  Header[0] = __llvm_profile_get_magic();
-  Header[1] = __llvm_profile_get_version();
-  Header[2] = DataSize;
-  Header[3] = CountersSize;
-  Header[4] = NamesSize;
-  Header[5] = (uintptr_t)CountersBegin;
-  Header[6] = (uintptr_t)NamesBegin;
+  __llvm_profile_header Header;
+  Header.Magic = __llvm_profile_get_magic();
+  Header.Version = __llvm_profile_get_version();
+  Header.DataSize = DataSize;
+  Header.CountersSize = CountersSize;
+  Header.NamesSize = NamesSize;
+  Header.CountersDelta = (uintptr_t)CountersBegin;
+  Header.NamesDelta = (uintptr_t)NamesBegin;
 
   /* Write the data. */
 #define UPDATE_memcpy(Data, Size) \
@@ -93,7 +93,7 @@ int __llvm_profile_write_buffer_internal(
     memcpy(Buffer, Data, Size);   \
     Buffer += Size;               \
   } while (0)
-  UPDATE_memcpy(Header,  PROFILE_HEADER_SIZE * sizeof(uint64_t));
+  UPDATE_memcpy(&Header,  sizeof(__llvm_profile_header));
   UPDATE_memcpy(DataBegin,     DataSize      * sizeof(__llvm_profile_data));
   UPDATE_memcpy(CountersBegin, CountersSize  * sizeof(uint64_t));
   UPDATE_memcpy(NamesBegin,    NamesSize     * sizeof(char));

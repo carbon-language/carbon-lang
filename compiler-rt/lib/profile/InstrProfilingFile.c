@@ -35,19 +35,19 @@ static int writeFile(FILE *File) {
   const char Zeroes[sizeof(uint64_t)] = {0};
 
   /* Create the header. */
-  uint64_t Header[PROFILE_HEADER_SIZE];
-  Header[0] = __llvm_profile_get_magic();
-  Header[1] = __llvm_profile_get_version();
-  Header[2] = DataSize;
-  Header[3] = CountersSize;
-  Header[4] = NamesSize;
-  Header[5] = (uintptr_t)CountersBegin;
-  Header[6] = (uintptr_t)NamesBegin;
+  __llvm_profile_header Header;
+  Header.Magic = __llvm_profile_get_magic();
+  Header.Version = __llvm_profile_get_version();
+  Header.DataSize = DataSize;
+  Header.CountersSize = CountersSize;
+  Header.NamesSize = NamesSize;
+  Header.CountersDelta = (uintptr_t)CountersBegin;
+  Header.NamesDelta = (uintptr_t)NamesBegin;
 
   /* Write the data. */
 #define CHECK_fwrite(Data, Size, Length, File) \
   do { if (fwrite(Data, Size, Length, File) != Length) return -1; } while (0)
-  CHECK_fwrite(Header,        sizeof(uint64_t), PROFILE_HEADER_SIZE, File);
+  CHECK_fwrite(&Header,        sizeof(__llvm_profile_header), 1, File);
   CHECK_fwrite(DataBegin,     sizeof(__llvm_profile_data), DataSize, File);
   CHECK_fwrite(CountersBegin, sizeof(uint64_t), CountersSize, File);
   CHECK_fwrite(NamesBegin,    sizeof(char), NamesSize, File);
