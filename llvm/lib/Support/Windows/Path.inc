@@ -753,16 +753,20 @@ std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
 
 namespace path {
 
+namespace {
+bool getKnownFolderPath(KNOWNFOLDERID folderId, SmallVectorImpl<char> &result) {
+  wchar_t *path = nullptr;
+  if (::SHGetKnownFolderPath(folderId, KF_FLAG_CREATE, nullptr, &path) != S_OK)
+    return false;
+
+  bool ok = !UTF16ToUTF8(path, ::wcslen(path), result);
+  ::CoTaskMemFree(path);
+  return ok;
+}
+}
+
 bool home_directory(SmallVectorImpl<char> &result) {
-  wchar_t Path[MAX_PATH];
-  if (::SHGetFolderPathW(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, 0,
-                         /*SHGFP_TYPE_CURRENT*/0, Path) != S_OK)
-    return false;
-
-  if (UTF16ToUTF8(Path, ::wcslen(Path), result))
-    return false;
-
-  return true;
+  return getKnownFolderPath(FOLDERID_Profile, result);
 }
 
 static bool getTempDirEnvVar(const char *Var, SmallVectorImpl<char> &Res) {
