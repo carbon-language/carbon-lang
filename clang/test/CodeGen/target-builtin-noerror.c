@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -S -o -
 #define __MM_MALLOC_H
 
