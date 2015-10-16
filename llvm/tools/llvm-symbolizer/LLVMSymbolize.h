@@ -130,6 +130,7 @@ private:
   void addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
                  DataExtractor *OpdExtractor = nullptr,
                  uint64_t OpdAddress = 0);
+  void addCoffExportSymbols(const COFFObjectFile *CoffObj);
   ObjectFile *Module;
   std::unique_ptr<DIContext> DebugInfoContext;
 

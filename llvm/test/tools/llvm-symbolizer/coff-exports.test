@@ -1,0 +1,17 @@
+RUN: grep '^ADDR:' %s | sed -s 's/ADDR: //' \
+RUN: 	 | llvm-symbolizer --inlining --relative-address -obj="%p/Inputs/coff-exports.exe" \
+RUN:	 | FileCheck %s
+
+ADDR: 0x500A
+ADDR: 0x5038
+ADDR: 0x504B
+
+We get the expected stack trace, except 'foo' appears for the 'bar' frame
+because 'bar' isn't in the export table.
+
+CHECK: foo(void)
+CHECK: ??:0:0
+CHECK: foo(void)
+CHECK: ??:0:0
+CHECK: main
+CHECK: ??:0:0

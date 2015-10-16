@@ -1,5 +1,5 @@
 // To generate the corresponding EXE, run:
-// clang-cl -O2 -gdwarf -c coff-dwarf.cpp && lld-link -debug coff-dwarf.obj
+// clang-cl -MD -O2 -gdwarf -c coff-dwarf.cpp && lld-link -debug coff-dwarf.obj
 
 extern "C" int puts(const char *str);
 

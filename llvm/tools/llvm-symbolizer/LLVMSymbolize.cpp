@@ -83,6 +83,50 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
       computeSymbolSizes(*Module);
   for (auto &P : Symbols)
     addSymbol(P.first, P.second, OpdExtractor.get(), OpdAddress);
+
+  // If this is a COFF object and we didn't find any symbols, try the export
+  // table.
+  if (Symbols.empty()) {
+    if (auto *CoffObj = dyn_cast<COFFObjectFile>(Obj))
+      addCoffExportSymbols(CoffObj);
+  }
+}
+
+void ModuleInfo::addCoffExportSymbols(const COFFObjectFile *CoffObj) {
+  // Get all export names and offsets.
+  struct OffsetNamePair {
+    uint32_t Offset;
+    StringRef Name;
+  };
+  std::vector<OffsetNamePair> ExportSyms;
+  for (const ExportDirectoryEntryRef &Ref : CoffObj->export_directories()) {
+    StringRef Name;
+    uint32_t Offset;
+    if (error(Ref.getSymbolName(Name)) || error(Ref.getExportRVA(Offset)))
+      return;
+    ExportSyms.push_back(OffsetNamePair{Offset, Name});
+  }
+  if (ExportSyms.empty())
+    return;
+
+  // Sort by ascending offset.
+  array_pod_sort(ExportSyms.begin(), ExportSyms.end(),
+                 [](const OffsetNamePair *L, const OffsetNamePair *R) -> int {
+                   return L->Offset - R->Offset;
+                 });
+
+  // Approximate the symbol sizes by assuming they run to the next symbol.
+  // FIXME: This assumes all exports are functions.
+  uint64_t ImageBase = CoffObj->getImageBase();
+  for (auto I = ExportSyms.begin(), E = ExportSyms.end(); I != E; ++I) {
+    OffsetNamePair &Export = *I;
+    // FIXME: The last export has a one byte size now.
+    uint32_t NextOffset = I != E ? I->Offset : Export.Offset + 1;
+    uint64_t SymbolStart = ImageBase + Export.Offset;
+    uint64_t SymbolSize = NextOffset - Export.Offset;
+    SymbolDesc SD = {SymbolStart, SymbolSize};
+    Functions.insert(std::make_pair(SD, Export.Name));
+  }
 }
 
 void ModuleInfo::addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
