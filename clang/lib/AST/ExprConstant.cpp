@@ -114,7 +114,8 @@ namespace {
   static
   unsigned findMostDerivedSubobject(ASTContext &Ctx, QualType Base,
                                     ArrayRef<APValue::LValuePathEntry> Path,
-                                    uint64_t &ArraySize, QualType &Type) {
+                                    uint64_t &ArraySize, QualType &Type,
+                                    bool &IsArray) {
     unsigned MostDerivedLength = 0;
     Type = Base;
     for (unsigned I = 0, N = Path.size(); I != N; ++I) {
@@ -124,18 +125,22 @@ namespace {
         Type = CAT->getElementType();
         ArraySize = CAT->getSize().getZExtValue();
         MostDerivedLength = I + 1;
+        IsArray = true;
       } else if (Type->isAnyComplexType()) {
         const ComplexType *CT = Type->castAs<ComplexType>();
         Type = CT->getElementType();
         ArraySize = 2;
         MostDerivedLength = I + 1;
+        IsArray = true;
       } else if (const FieldDecl *FD = getAsField(Path[I])) {
         Type = FD->getType();
         ArraySize = 0;
         MostDerivedLength = I + 1;
+        IsArray = false;
       } else {
         // Path[I] describes a base class.
         ArraySize = 0;
+        IsArray = false;
       }
     }
     return MostDerivedLength;
@@ -157,12 +162,17 @@ namespace {
     /// Is this a pointer one past the end of an object?
     bool IsOnePastTheEnd : 1;
 
+    /// Indicator of whether the most-derived object is an array element.
+    bool MostDerivedIsArrayElement : 1;
+
     /// The length of the path to the most-derived object of which this is a
     /// subobject.
-    unsigned MostDerivedPathLength : 30;
+    unsigned MostDerivedPathLength : 29;
 
-    /// The size of the array of which the most-derived object is an element, or
-    /// 0 if the most-derived object is not an array element.
+    /// The size of the array of which the most-derived object is an element.
+    /// This will always be 0 if the most-derived object is not an array
+    /// element. 0 is not an indicator of whether or not the most-derived object
+    /// is an array, however, because 0-length arrays are allowed.
     uint64_t MostDerivedArraySize;
 
     /// The type of the most derived object referred to by this address.
@@ -176,21 +186,26 @@ namespace {
     SubobjectDesignator() : Invalid(true) {}
 
     explicit SubobjectDesignator(QualType T)
-      : Invalid(false), IsOnePastTheEnd(false), MostDerivedPathLength(0),
-        MostDerivedArraySize(0), MostDerivedType(T) {}
+        : Invalid(false), IsOnePastTheEnd(false),
+          MostDerivedIsArrayElement(false), MostDerivedPathLength(0),
+          MostDerivedArraySize(0), MostDerivedType(T) {}
 
     SubobjectDesignator(ASTContext &Ctx, const APValue &V)
-      : Invalid(!V.isLValue() || !V.hasLValuePath()), IsOnePastTheEnd(false),
-        MostDerivedPathLength(0), MostDerivedArraySize(0) {
+        : Invalid(!V.isLValue() || !V.hasLValuePath()), IsOnePastTheEnd(false),
+          MostDerivedIsArrayElement(false), MostDerivedPathLength(0),
+          MostDerivedArraySize(0) {
       if (!Invalid) {
         IsOnePastTheEnd = V.isLValueOnePastTheEnd();
         ArrayRef<PathEntry> VEntries = V.getLValuePath();
         Entries.insert(Entries.end(), VEntries.begin(), VEntries.end());
-        if (V.getLValueBase())
+        if (V.getLValueBase()) {
+          bool IsArray = false;
           MostDerivedPathLength =
               findMostDerivedSubobject(Ctx, getType(V.getLValueBase()),
                                        V.getLValuePath(), MostDerivedArraySize,
-                                       MostDerivedType);
+                                       MostDerivedType, IsArray);
+          MostDerivedIsArrayElement = IsArray;
+        }
       }
     }
 
@@ -204,7 +219,7 @@ namespace {
       assert(!Invalid);
       if (IsOnePastTheEnd)
         return true;
-      if (MostDerivedArraySize &&
+      if (MostDerivedIsArrayElement &&
           Entries[MostDerivedPathLength - 1].ArrayIndex == MostDerivedArraySize)
         return true;
       return false;
@@ -228,6 +243,7 @@ namespace {
 
       // This is a most-derived object.
       MostDerivedType = CAT->getElementType();
+      MostDerivedIsArrayElement = true;
       MostDerivedArraySize = CAT->getSize().getZExtValue();
       MostDerivedPathLength = Entries.size();
     }
@@ -242,6 +258,7 @@ namespace {
       // If this isn't a base class, it's a new most-derived object.
       if (const FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
         MostDerivedType = FD->getType();
+        MostDerivedIsArrayElement = false;
         MostDerivedArraySize = 0;
         MostDerivedPathLength = Entries.size();
       }
@@ -255,6 +272,7 @@ namespace {
       // This is technically a most-derived object, though in practice this
       // is unlikely to matter.
       MostDerivedType = EltTy;
+      MostDerivedIsArrayElement = true;
       MostDerivedArraySize = 2;
       MostDerivedPathLength = Entries.size();
     }
@@ -262,7 +280,8 @@ namespace {
     /// Add N to the address of this subobject.
     void adjustIndex(EvalInfo &Info, const Expr *E, uint64_t N) {
       if (Invalid) return;
-      if (MostDerivedPathLength == Entries.size() && MostDerivedArraySize) {
+      if (MostDerivedPathLength == Entries.size() &&
+          MostDerivedIsArrayElement) {
         Entries.back().ArrayIndex += N;
         if (Entries.back().ArrayIndex > MostDerivedArraySize) {
           diagnosePointerArithmetic(Info, E, Entries.back().ArrayIndex);
@@ -834,7 +853,7 @@ bool SubobjectDesignator::checkSubobject(EvalInfo &Info, const Expr *E,
 
 void SubobjectDesignator::diagnosePointerArithmetic(EvalInfo &Info,
                                                     const Expr *E, uint64_t N) {
-  if (MostDerivedPathLength == Entries.size() && MostDerivedArraySize)
+  if (MostDerivedPathLength == Entries.size() && MostDerivedIsArrayElement)
     Info.CCEDiag(E, diag::note_constexpr_array_index)
       << static_cast<int>(N) << /*array*/ 0
       << static_cast<unsigned>(MostDerivedArraySize);
@@ -2517,7 +2536,7 @@ static bool AreElementsOfSameArray(QualType ObjType,
   if (A.Entries.size() != B.Entries.size())
     return false;
 
-  bool IsArray = A.MostDerivedArraySize != 0;
+  bool IsArray = A.MostDerivedIsArrayElement;
   if (IsArray && A.MostDerivedPathLength != A.Entries.size())
     // A is a subobject of the array element.
     return false;
@@ -4416,7 +4435,8 @@ public:
     if (!EvalOK) {
       if (!this->Info.allowInvalidBaseExpr())
         return false;
-      Result.setInvalid(E->getBase());
+      Result.setInvalid(E);
+      return true;
     }
 
     const ValueDecl *MD = E->getMemberDecl();
@@ -6276,6 +6296,85 @@ static const Expr *ignorePointerCastsAndParens(const Expr *E) {
   return ignorePointerCastsAndParens(SubExpr);
 }
 
+/// Checks to see if the given LValue's Designator is at the end of the LValue's
+/// record layout. e.g.
+///   struct { struct { int a, b; } fst, snd; } obj;
+///   obj.fst   // no
+///   obj.snd   // yes
+///   obj.fst.a // no
+///   obj.fst.b // no
+///   obj.snd.a // no
+///   obj.snd.b // yes
+///
+/// Please note: this function is specialized for how __builtin_object_size
+/// views "objects".
+static bool isDesignatorAtObjectEnd(const ASTContext &Ctx, const LValue &LVal) {
+  assert(!LVal.Designator.Invalid);
+
+  auto IsLastFieldDecl = [&Ctx](const FieldDecl *FD) {
+    if (FD->getParent()->isUnion())
+      return true;
+    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(FD->getParent());
+    return FD->getFieldIndex() + 1 == Layout.getFieldCount();
+  };
+
+  auto &Base = LVal.getLValueBase();
+  if (auto *ME = dyn_cast_or_null<MemberExpr>(Base.dyn_cast<const Expr *>())) {
+    if (auto *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+      if (!IsLastFieldDecl(FD))
+        return false;
+    } else if (auto *IFD = dyn_cast<IndirectFieldDecl>(ME->getMemberDecl())) {
+      for (auto *FD : IFD->chain())
+        if (!IsLastFieldDecl(cast<FieldDecl>(FD)))
+          return false;
+    }
+  }
+
+  QualType BaseType = getType(Base);
+  for (int I = 0, E = LVal.Designator.Entries.size(); I != E; ++I) {
+    if (BaseType->isArrayType()) {
+      // Because __builtin_object_size treats arrays as objects, we can ignore
+      // the index iff this is the last array in the Designator.
+      if (I + 1 == E)
+        return true;
+      auto *CAT = cast<ConstantArrayType>(Ctx.getAsArrayType(BaseType));
+      uint64_t Index = LVal.Designator.Entries[I].ArrayIndex;
+      if (Index + 1 != CAT->getSize())
+        return false;
+      BaseType = CAT->getElementType();
+    } else if (BaseType->isAnyComplexType()) {
+      auto *CT = BaseType->castAs<ComplexType>();
+      uint64_t Index = LVal.Designator.Entries[I].ArrayIndex;
+      if (Index != 1)
+        return false;
+      BaseType = CT->getElementType();
+    } else if (auto *FD = getAsField(LVal.Designator.Entries[I])) {
+      if (!IsLastFieldDecl(FD))
+        return false;
+      BaseType = FD->getType();
+    } else {
+      assert(getAsBaseClass(LVal.Designator.Entries[I]) != nullptr &&
+             "Expecting cast to a base class");
+      return false;
+    }
+  }
+  return true;
+}
+
+/// Tests to see if the LValue has a designator (that isn't necessarily valid).
+static bool refersToCompleteObject(const LValue &LVal) {
+  if (LVal.Designator.Invalid || !LVal.Designator.Entries.empty())
+    return false;
+
+  if (!LVal.InvalidBase)
+    return true;
+
+  auto *E = LVal.Base.dyn_cast<const Expr *>();
+  (void)E;
+  assert(E != nullptr && isa<MemberExpr>(E));
+  return false;
+}
+
 bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
                                                     unsigned Type) {
   // Determine the denoted object.
@@ -6299,8 +6398,7 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
 
   // In the case where we're not dealing with a subobject, we discard the
   // subobject bit.
-  if (!Base.Designator.Invalid && Base.Designator.Entries.empty())
-    Type = Type & ~1U;
+  bool SubobjectOnly = (Type & 1) != 0 && !refersToCompleteObject(Base);
 
   // If Type & 1 is 0, we need to be able to statically guarantee that the bytes
   // exist. If we can't verify the base, then we can't do that.
@@ -6313,17 +6411,17 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
   //   int b = __builtin_object_size(p->buff + 4, 2); // returns 0, not 40
   //
   // This matches GCC's behavior.
-  if ((Type & 1) == 0 && Base.InvalidBase)
+  if (Base.InvalidBase && !SubobjectOnly)
     return Error(E);
 
-  // If Type & 1 is 0, the object in question is the complete object; reset to
-  // a complete object designator in that case.
+  // If we're not examining only the subobject, then we reset to a complete
+  // object designator
   //
   // If Type is 1 and we've lost track of the subobject, just find the complete
   // object instead. (If Type is 3, that's not correct behavior and we should
   // return 0 instead.)
   LValue End = Base;
-  if (((Type & 1) == 0) || (End.Designator.Invalid && Type == 1)) {
+  if (!SubobjectOnly || (End.Designator.Invalid && Type == 1)) {
     QualType T = getObjectType(End.getLValueBase());
     if (T.isNull())
       End.Designator.setInvalid();
@@ -6343,7 +6441,7 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
   // denoted by the pointer. But that's not quite right -- what we actually
   // want is the size of the immediately-enclosing array, if there is one.
   int64_t AmountToAdd = 1;
-  if (End.Designator.MostDerivedArraySize &&
+  if (End.Designator.MostDerivedIsArrayElement &&
       End.Designator.Entries.size() == End.Designator.MostDerivedPathLength) {
     // We got a pointer to an array. Step to its end.
     AmountToAdd = End.Designator.MostDerivedArraySize -
@@ -6363,6 +6461,24 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
     return false;
 
   auto EndOffset = End.getLValueOffset();
+
+  // The following is a moderately common idiom in C:
+  //
+  // struct Foo { int a; char c[1]; };
+  // struct Foo *F = (struct Foo *)malloc(sizeof(struct Foo) + strlen(Bar));
+  // strcpy(&F->c[0], Bar);
+  //
+  // So, if we see that we're examining a 1-length (or 0-length) array at the
+  // end of a struct with an unknown base, we give up instead of breaking code
+  // that behaves this way. Note that we only do this when Type=1, because
+  // Type=3 is a lower bound, so answering conservatively is fine.
+  if (End.InvalidBase && SubobjectOnly && Type == 1 &&
+      End.Designator.Entries.size() == End.Designator.MostDerivedPathLength &&
+      End.Designator.MostDerivedIsArrayElement &&
+      End.Designator.MostDerivedArraySize < 2 &&
+      isDesignatorAtObjectEnd(Info.Ctx, End))
+    return false;
+
   if (BaseOffset > EndOffset)
     return Success(0, E);
 
