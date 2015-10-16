@@ -3272,7 +3272,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
       continue;
 
     // Check whether or not the use is in the SCoP.
-    if (!R->contains(UseParent)) {
+    if (!isa<PHINode>(UI) && !R->contains(UseParent)) {
       AnyCrossStmtUse = true;
       continue;
     }
