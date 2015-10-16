@@ -14,7 +14,7 @@
 #include <algorithm>
 
 namespace fuzzer {
-static const size_t kMaxUnitSizeToPrint = 4096;
+static const size_t kMaxUnitSizeToPrint = 256;
 
 // Only one Fuzzer per process.
 static Fuzzer *F;
