@@ -300,19 +300,22 @@ TEST(Support, AbsolutePathIteratorEnd) {
 }
 
 TEST(Support, HomeDirectory) {
+  std::string expected;
 #ifdef LLVM_ON_WIN32
   wchar_t *path = ::_wgetenv(L"USERPROFILE");
   auto pathLen = ::wcslen(path);
   ArrayRef<char> ref{reinterpret_cast<char *>(path), pathLen * sizeof(wchar_t)};
-  std::string expected;
   convertUTF16ToUTF8String(ref, expected);
 #else
-  std::string expected{::getenv("HOME")};
+  if (char const *home = ::getenv("HOME"))
+    expected = home;
 #endif
-  SmallString<128> HomeDir;
-  auto status = path::home_directory(HomeDir);
-  EXPECT_TRUE(status ^ HomeDir.empty());
-  EXPECT_EQ(expected, HomeDir);
+  if (expected.length() > 0) {
+    SmallString<128> HomeDir;
+    auto status = path::home_directory(HomeDir);
+    EXPECT_TRUE(status ^ HomeDir.empty());
+    EXPECT_EQ(expected, HomeDir);
+  }
 }
 
 class FileSystemTest : public testing::Test {
