@@ -25767,6 +25767,57 @@ static SDValue PerformSIGN_EXTEND_INREGCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// sext(add_nsw(x, C)) --> add(sext(x), C_sext)
+/// Promoting a sign extension ahead of an 'add nsw' exposes opportunities
+/// to combine math ops, use an LEA, or use a complex addressing mode. This can
+/// eliminate extend, add, and shift instructions.
+static SDValue promoteSextBeforeAddNSW(SDNode *Sext, SelectionDAG &DAG,
+                                       const X86Subtarget *Subtarget) {
+  // TODO: This should be valid for other integer types.
+  EVT VT = Sext->getValueType(0);
+  if (VT != MVT::i64)
+    return SDValue();
+
+  // We need an 'add nsw' feeding into the 'sext'.
+  SDValue Add = Sext->getOperand(0);
+  if (Add.getOpcode() != ISD::ADD || !Add->getFlags()->hasNoSignedWrap())
+    return SDValue();
+
+  // Having a constant operand to the 'add' ensures that we are not increasing
+  // the instruction count because the constant is extended for free below.
+  // A constant operand can also become the displacement field of an LEA.
+  auto *AddOp1 = dyn_cast<ConstantSDNode>(Add.getOperand(1));
+  if (!AddOp1)
+    return SDValue();
+
+  // Don't make the 'add' bigger if there's no hope of combining it with some
+  // other 'add' or 'shl' instruction.
+  // TODO: It may be profitable to generate simpler LEA instructions in place
+  // of single 'add' instructions, but the cost model for selecting an LEA
+  // currently has a high threshold.
+  bool HasLEAPotential = false;
+  for (auto *User : Sext->uses()) {
+    if (User->getOpcode() == ISD::ADD || User->getOpcode() == ISD::SHL) {
+      HasLEAPotential = true;
+      break;
+    }
+  }
+  if (!HasLEAPotential)
+    return SDValue();
+
+  // Everything looks good, so pull the 'sext' ahead of the 'add'.
+  int64_t AddConstant = AddOp1->getSExtValue();
+  SDValue AddOp0 = Add.getOperand(0);
+  SDValue NewSext = DAG.getNode(ISD::SIGN_EXTEND, SDLoc(Sext), VT, AddOp0);
+  SDValue NewConstant = DAG.getConstant(AddConstant, SDLoc(Add), VT);
+
+  // The wider add is guaranteed to not wrap because both operands are
+  // sign-extended.
+  SDNodeFlags Flags;
+  Flags.setNoSignedWrap(true);
+  return DAG.getNode(ISD::ADD, SDLoc(Add), VT, NewSext, NewConstant, &Flags);
+}
+
 static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
                                   const X86Subtarget *Subtarget) {
@@ -25860,6 +25911,9 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   if (Subtarget->hasAVX() && VT.isVector() && VT.getSizeInBits() == 256)
     if (SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget))
       return R;
+
+  if (SDValue NewAdd = promoteSextBeforeAddNSW(N, DAG, Subtarget))
+    return NewAdd;
 
   return SDValue();
 }

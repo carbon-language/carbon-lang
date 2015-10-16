@@ -1,15 +1,14 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown | FileCheck %s
 
 ; The fundamental problem: an add separated from other arithmetic by a sext can't
-; be combined with the later instructions. However, if the first add is 'nsw', 
+; be combined with the later instructions. However, if the first add is 'nsw',
 ; then we can promote the sext ahead of that add to allow optimizations.
 
 define i64 @add_nsw_consts(i32 %i) {
 ; CHECK-LABEL: add_nsw_consts:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
-; CHECK-NEXT:    addq $7, %rax
+; CHECK-NEXT:    addq $12, %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, 5
@@ -24,9 +23,8 @@ define i64 @add_nsw_consts(i32 %i) {
 define i64 @add_nsw_sext_add(i32 %i, i64 %x) {
 ; CHECK-LABEL: add_nsw_sext_add:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
-; CHECK-NEXT:    addq %rsi, %rax
+; CHECK-NEXT:    leaq 5(%rax,%rsi), %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, 5
@@ -41,9 +39,8 @@ define i64 @add_nsw_sext_add(i32 %i, i64 %x) {
 define i64 @add_nsw_sext_lsh_add(i32 %i, i64 %x) {
 ; CHECK-LABEL: add_nsw_sext_lsh_add:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $-5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
-; CHECK-NEXT:    leaq (%rsi,%rax,8), %rax
+; CHECK-NEXT:    leaq -40(%rsi,%rax,8), %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, -5
@@ -73,9 +70,8 @@ define i64 @add_nsw_sext(i32 %i, i64 %x) {
 define i8* @gep8(i32 %i, i8* %x) {
 ; CHECK-LABEL: gep8:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
-; CHECK-NEXT:    addq %rsi, %rax
+; CHECK-NEXT:    leaq 5(%rax,%rsi), %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, 5
@@ -87,9 +83,8 @@ define i8* @gep8(i32 %i, i8* %x) {
 define i16* @gep16(i32 %i, i16* %x) {
 ; CHECK-LABEL: gep16:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $-5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
-; CHECK-NEXT:    leaq (%rsi,%rax,2), %rax
+; CHECK-NEXT:    leaq -10(%rsi,%rax,2), %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, -5
@@ -101,9 +96,8 @@ define i16* @gep16(i32 %i, i16* %x) {
 define i32* @gep32(i32 %i, i32* %x) {
 ; CHECK-LABEL: gep32:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
-; CHECK-NEXT:    leaq (%rsi,%rax,4), %rax
+; CHECK-NEXT:    leaq 20(%rsi,%rax,4), %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, 5
@@ -115,9 +109,8 @@ define i32* @gep32(i32 %i, i32* %x) {
 define i64* @gep64(i32 %i, i64* %x) {
 ; CHECK-LABEL: gep64:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $-5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
-; CHECK-NEXT:    leaq (%rsi,%rax,8), %rax
+; CHECK-NEXT:    leaq -40(%rsi,%rax,8), %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, -5
@@ -131,10 +124,9 @@ define i64* @gep64(i32 %i, i64* %x) {
 define i128* @gep128(i32 %i, i128* %x) {
 ; CHECK-LABEL: gep128:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    addl $5, %edi
 ; CHECK-NEXT:    movslq %edi, %rax
 ; CHECK-NEXT:    shlq $4, %rax
-; CHECK-NEXT:    addq %rsi, %rax
+; CHECK-NEXT:    leaq 80(%rax,%rsi), %rax
 ; CHECK-NEXT:    retq
 
   %add = add nsw i32 %i, 5
@@ -150,14 +142,10 @@ define i128* @gep128(i32 %i, i128* %x) {
 define void @PR20134(i32* %a, i32 %i) {
 ; CHECK-LABEL: PR20134:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    leal 1(%rsi), %eax
-; CHECK-NEXT:    cltq
-; CHECK-NEXT:    movl (%rdi,%rax,4), %eax
-; CHECK-NEXT:    leal 2(%rsi), %ecx
-; CHECK-NEXT:    movslq %ecx, %rcx
-; CHECK-NEXT:    addl (%rdi,%rcx,4), %eax
-; CHECK-NEXT:    movslq %esi, %rcx
-; CHECK-NEXT:    movl %eax, (%rdi,%rcx,4)
+; CHECK-NEXT:    movslq %esi, %rax
+; CHECK-NEXT:    movl 4(%rdi,%rax,4), %ecx
+; CHECK-NEXT:    addl 8(%rdi,%rax,4), %ecx
+; CHECK-NEXT:    movl %ecx, (%rdi,%rax,4)
 ; CHECK-NEXT:    retq
 
   %add1 = add nsw i32 %i, 1
