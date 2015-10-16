@@ -172,6 +172,9 @@ def warn_incompatible_analyzer_plugin_api : Warning<
 def note_incompatible_analyzer_plugin_api : Note<
     "current API version is '%0', but plugin was compiled with version '%1'">;
 
+def warn_module_config_mismatch : Warning<
+  "module file %0 cannot be loaded due to a configuration mismatch with the current "
+  "compilation">, InGroup<DiagGroup<"module-file-config-mismatch">>, DefaultError;
 def err_module_map_not_found : Error<"module map file '%0' not found">, 
   DefaultFatal;
 def err_missing_module_name : Error<

@@ -1335,15 +1335,24 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
                                                    std::move(Listener));
 
   // Try to load the module file.
-  if (ModuleManager->ReadAST(FileName, serialization::MK_ExplicitModule,
-                             SourceLocation(), ASTReader::ARR_None)
-          != ASTReader::Success)
-    return false;
-
+  switch (ModuleManager->ReadAST(FileName, serialization::MK_ExplicitModule,
+                                 SourceLocation(),
+                                 ASTReader::ARR_ConfigurationMismatch)) {
+  case ASTReader::Success:
   // We successfully loaded the module file; remember the set of provided
   // modules so that we don't try to load implicit modules for them.
   ListenerRef.registerAll();
   return true;
+
+  case ASTReader::ConfigurationMismatch:
+    // Ignore unusable module files.
+    getDiagnostics().Report(SourceLocation(), diag::warn_module_config_mismatch)
+        << FileName;
+    return true;
+
+  default:
+    return false;
+  }
 }
 
 ModuleLoadResult
