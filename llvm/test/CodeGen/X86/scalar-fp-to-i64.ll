@@ -133,3 +133,19 @@ define i64 @x_to_s64(x86_fp80 %a) nounwind {
   %r = fptosi x86_fp80 %a to i64
   ret i64 %r
 }
+
+; CHECK-LABEL: t_to_u64
+; CHECK: __fixunstfdi
+; CHECK: ret
+define i64 @t_to_u64(fp128 %a) nounwind {
+  %r = fptoui fp128 %a to i64
+  ret i64 %r
+}
+
+; CHECK-LABEL: t_to_s64
+; CHECK: __fixtfdi
+; CHECK: ret
+define i64 @t_to_s64(fp128 %a) nounwind {
+  %r = fptosi fp128 %a to i64
+  ret i64 %r
+}

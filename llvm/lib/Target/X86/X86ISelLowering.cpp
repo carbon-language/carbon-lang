@@ -12779,7 +12779,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
 }
 
 // If the given FP_TO_SINT (IsSigned) or FP_TO_UINT (!IsSigned) operation
-// is legal, or has an f16 source (which needs to be promoted to f32),
+// is legal, or has an fp128 or f16 source (which needs to be promoted to f32),
 // just return an <SDValue(), SDValue()> pair.
 // Otherwise it is assumed to be a conversion from one of f32, f64 or f80
 // to i16, i32 or i64, and we lower it to a legal sequence.
@@ -12796,15 +12796,11 @@ X86TargetLowering::FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
   EVT TheVT = Op.getOperand(0).getValueType();
   auto PtrVT = getPointerTy(DAG.getDataLayout());
 
-  if (TheVT == MVT::f16)
-    // We need to promote the f16 to f32 before using the lowering
-    // in this routine.
+  if (TheVT != MVT::f32 && TheVT != MVT::f64 && TheVT != MVT::f80) {
+    // f16 must be promoted before using the lowering in this routine.
+    // fp128 does not use this lowering.
     return std::make_pair(SDValue(), SDValue());
-
-  assert((TheVT == MVT::f32 ||
-          TheVT == MVT::f64 ||
-          TheVT == MVT::f80) &&
-         "Unexpected FP operand type in FP_TO_INTHelper");
+  }
 
   // If using FIST to compute an unsigned i64, we'll need some fixup
   // to handle values above the maximum signed i64.  A FIST is always
