@@ -42,11 +42,12 @@ namespace {
 
 class WebAssemblyAsmPrinter final : public AsmPrinter {
   const WebAssemblyInstrInfo *TII;
+  const MachineRegisterInfo *MRI;
   unsigned NumArgs;
 
 public:
   WebAssemblyAsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
-      : AsmPrinter(TM, std::move(Streamer)), TII(nullptr) {}
+      : AsmPrinter(TM, std::move(Streamer)), TII(nullptr), MRI(nullptr) {}
 
 private:
   const char *getPassName() const override {
@@ -64,6 +65,7 @@ private:
   bool runOnMachineFunction(MachineFunction &MF) override {
     const auto &Subtarget = MF.getSubtarget<WebAssemblySubtarget>();
     TII = Subtarget.getInstrInfo();
+    MRI = &MF.getRegInfo();
     NumArgs = MF.getInfo<WebAssemblyFunctionInfo>()->getNumArguments();
     return AsmPrinter::runOnMachineFunction(MF);
   }
@@ -78,10 +80,11 @@ private:
 
   void EmitInstruction(const MachineInstr *MI) override;
 
+  std::string getRegTypeName(unsigned RegNo) const;
   static std::string toString(const APFloat &APF);
   const char *toString(Type *Ty) const;
-  std::string regToString(unsigned RegNo);
-  std::string argToString(unsigned ArgNo);
+  std::string regToString(const MachineOperand &MO);
+  std::string argToString(const MachineOperand &MO);
 };
 
 } // end anonymous namespace
@@ -90,18 +93,32 @@ private:
 // Helpers.
 //===----------------------------------------------------------------------===//
 
-// Untyped, lower-case version of the opcode's name matching the names
-// WebAssembly opcodes are expected to have. The tablegen names are uppercase
-// and suffixed with their type (after an underscore).
-static SmallString<32> OpcodeName(const WebAssemblyInstrInfo *TII,
-                                  const MachineInstr *MI) {
+// Operand type (if any), followed by the lower-case version of the opcode's
+// name matching the names WebAssembly opcodes are expected to have. The
+// tablegen names are uppercase and suffixed with their type (after an
+// underscore).
+static std::string OpcodeName(const WebAssemblyInstrInfo *TII,
+                              const MachineInstr *MI) {
   std::string N(StringRef(TII->getName(MI->getOpcode())).lower());
-  std::string::size_type End = N.rfind('_');
-  End = std::string::npos == End ? N.length() : End;
-  return SmallString<32>(&N[0], &N[End]);
+  std::string::size_type Len = N.length();
+  std::string::size_type Under = N.rfind('_');
+  bool HasType = std::string::npos != Under;
+  std::string::size_type NameEnd = HasType ? Under : Len;
+  std::string Name(&N[0], &N[NameEnd]);
+  return HasType ? (std::string(&N[NameEnd + 1], &N[Len]) + '.' + Name) : Name;
 }
 
 static std::string toSymbol(StringRef S) { return ("$" + S).str(); }
+
+std::string WebAssemblyAsmPrinter::getRegTypeName(unsigned RegNo) const {
+  const TargetRegisterClass *TRC = MRI->getRegClass(RegNo);
+  for (MVT T : {MVT::i32, MVT::i64, MVT::f32, MVT::f64})
+    if (TRC->hasType(T))
+      return EVT(T).getEVTString();
+  DEBUG(errs() << "Unknown type for register number: " << RegNo);
+  llvm_unreachable("Unknown register type");
+  return "?";
+}
 
 std::string WebAssemblyAsmPrinter::toString(const APFloat &FP) {
   static const size_t BufBytes = 128;
@@ -120,19 +137,21 @@ std::string WebAssemblyAsmPrinter::toString(const APFloat &FP) {
   return buf;
 }
 
-std::string WebAssemblyAsmPrinter::regToString(unsigned RegNo) {
+std::string WebAssemblyAsmPrinter::regToString(const MachineOperand &MO) {
+  unsigned RegNo = MO.getReg();
   if (TargetRegisterInfo::isPhysicalRegister(RegNo))
     return WebAssemblyInstPrinter::getRegisterName(RegNo);
 
   // WebAssembly arguments and local variables are in the same index space, and
   // there are no explicit varargs, so we just add the number of arguments to
   // the virtual register number to get the local variable number.
-  return '@' + utostr(TargetRegisterInfo::virtReg2Index(RegNo) + NumArgs);
+  return utostr(TargetRegisterInfo::virtReg2Index(RegNo) + NumArgs);
 }
 
-std::string WebAssemblyAsmPrinter::argToString(unsigned ArgNo) {
+std::string WebAssemblyAsmPrinter::argToString(const MachineOperand &MO) {
+  unsigned ArgNo = MO.getImm();
   // Same as above, but we don't need to add NumArgs here.
-  return '@' + utostr(ArgNo);
+  return utostr(ArgNo);
 }
 
 const char *WebAssemblyAsmPrinter::toString(Type *Ty) const {
@@ -189,26 +208,36 @@ void WebAssemblyAsmPrinter::EmitJumpTableInfo() {
 void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
   const Function *F = MF->getFunction();
   Type *Rt = F->getReturnType();
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  bool First = true;
 
   if (!Rt->isVoidTy() || !F->arg_empty()) {
-    SmallString<128> Str;
-    raw_svector_ostream OS(Str);
-    bool First = true;
     for (const Argument &A : F->args()) {
-      OS << (First ? "" : "\n") << "\t"
-                                   ".param "
-         << toString(A.getType());
+      OS << (First ? "" : "\n") << "\t.param " << toString(A.getType());
       First = false;
     }
     if (!Rt->isVoidTy()) {
-      OS << (First ? "" : "\n") << "\t"
-                                   ".result "
-         << toString(Rt);
+      OS << (First ? "" : "\n") << "\t.result " << toString(Rt);
       First = false;
     }
-    OutStreamer->EmitRawText(OS.str());
   }
 
+  bool FirstVReg = true;
+  for (unsigned Idx = 0, IdxE = MRI->getNumVirtRegs(); Idx != IdxE; ++Idx) {
+    unsigned VReg = TargetRegisterInfo::index2VirtReg(Idx);
+    if (!MRI->use_empty(VReg)) {
+      if (FirstVReg) {
+        OS << (First ? "" : "\n") << "\t.local ";
+        First = false;
+      }
+      OS << (FirstVReg ? "" : ", ") << getRegTypeName(VReg);
+      FirstVReg = false;
+    }
+  }
+
+  if (!First)
+    OutStreamer->EmitRawText(OS.str());
   AsmPrinter::EmitFunctionBodyStart();
 }
 
@@ -225,7 +254,7 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   switch (MI->getOpcode()) {
   case TargetOpcode::COPY:
-    OS << regToString(MI->getOperand(1).getReg());
+    OS << "get_local " << regToString(MI->getOperand(1));
     break;
   case WebAssembly::GLOBAL:
     // TODO: wasm64
@@ -235,7 +264,7 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case WebAssembly::ARGUMENT_I64:
   case WebAssembly::ARGUMENT_F32:
   case WebAssembly::ARGUMENT_F64:
-    OS << argToString(MI->getOperand(1).getImm());
+    OS << "get_local " << argToString(MI->getOperand(1));
     break;
   case WebAssembly::Immediate_I32:
     OS << "i32.const " << MI->getOperand(1).getImm();
@@ -263,7 +292,7 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       default:
         llvm_unreachable("unexpected machine operand type");
       case MachineOperand::MO_Register:
-        OS << regToString(MO.getReg());
+        OS << "(get_local " << regToString(MO) << ')';
         break;
       case MachineOperand::MO_Immediate:
         OS << MO.getImm();
@@ -288,9 +317,8 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   if (NumDefs != 0) {
     SmallString<128> Str;
     raw_svector_ostream OS(Str);
-    OS << "\t" "set_local "
-       << regToString(MI->getOperand(0).getReg()) << ", "
-          "pop";
+    const MachineOperand &Operand = MI->getOperand(0);
+    OS << "\tset_local " << regToString(Operand) << ", pop";
     OutStreamer->EmitRawText(OS.str());
   }
 }

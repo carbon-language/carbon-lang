@@ -13,13 +13,14 @@ declare i64 @llvm.ctpop.i64(i64)
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: add @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: add (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @add64(i64 %x, i64 %y) {
   %a = add i64 %x, %y
   ret i64 %a
@@ -29,13 +30,14 @@ define i64 @add64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: sub @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: sub (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @sub64(i64 %x, i64 %y) {
   %a = sub i64 %x, %y
   ret i64 %a
@@ -45,13 +47,14 @@ define i64 @sub64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: mul @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: mul (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @mul64(i64 %x, i64 %y) {
   %a = mul i64 %x, %y
   ret i64 %a
@@ -61,13 +64,14 @@ define i64 @mul64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: sdiv @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: sdiv (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @sdiv64(i64 %x, i64 %y) {
   %a = sdiv i64 %x, %y
   ret i64 %a
@@ -77,13 +81,14 @@ define i64 @sdiv64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: udiv @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: udiv (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @udiv64(i64 %x, i64 %y) {
   %a = udiv i64 %x, %y
   ret i64 %a
@@ -93,13 +98,14 @@ define i64 @udiv64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: srem @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: srem (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @srem64(i64 %x, i64 %y) {
   %a = srem i64 %x, %y
   ret i64 %a
@@ -109,13 +115,14 @@ define i64 @srem64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: urem @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: urem (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @urem64(i64 %x, i64 %y) {
   %a = urem i64 %x, %y
   ret i64 %a
@@ -125,13 +132,14 @@ define i64 @urem64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: and @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: and (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @and64(i64 %x, i64 %y) {
   %a = and i64 %x, %y
   ret i64 %a
@@ -141,13 +149,14 @@ define i64 @and64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: ior @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: ior (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @ior64(i64 %x, i64 %y) {
   %a = or i64 %x, %y
   ret i64 %a
@@ -157,13 +166,14 @@ define i64 @ior64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: xor @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: xor (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @xor64(i64 %x, i64 %y) {
   %a = xor i64 %x, %y
   ret i64 %a
@@ -173,13 +183,14 @@ define i64 @xor64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: shl @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: shl (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @shl64(i64 %x, i64 %y) {
   %a = shl i64 %x, %y
   ret i64 %a
@@ -189,13 +200,14 @@ define i64 @shl64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: shr_u @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: shr_u (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @shr64(i64 %x, i64 %y) {
   %a = lshr i64 %x, %y
   ret i64 %a
@@ -205,13 +217,14 @@ define i64 @shr64(i64 %x, i64 %y) {
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @3, pop{{$}}
-; CHECK-NEXT: shr_s @3, @2{{$}}
-; CHECK-NEXT: set_local @4, pop{{$}}
-; CHECK-NEXT: return @4{{$}}
+; CHECK-NEXT: .local i64, i64, i64{{$}}
+; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 3, pop{{$}}
+; CHECK-NEXT: shr_s (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: set_local 4, pop{{$}}
+; CHECK-NEXT: return (get_local 4){{$}}
 define i64 @sar64(i64 %x, i64 %y) {
   %a = ashr i64 %x, %y
   ret i64 %a
@@ -220,11 +233,12 @@ define i64 @sar64(i64 %x, i64 %y) {
 ; CHECK-LABEL: clz64:
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @1, pop{{$}}
-; CHECK-NEXT: clz @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: return @2{{$}}
+; CHECK-NEXT: .local i64, i64{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 1, pop{{$}}
+; CHECK-NEXT: clz (get_local 1){{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @clz64(i64 %x) {
   %a = call i64 @llvm.ctlz.i64(i64 %x, i1 false)
   ret i64 %a
@@ -233,11 +247,12 @@ define i64 @clz64(i64 %x) {
 ; CHECK-LABEL: clz64_zero_undef:
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @1, pop{{$}}
-; CHECK-NEXT: clz @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: return @2{{$}}
+; CHECK-NEXT: .local i64, i64{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 1, pop{{$}}
+; CHECK-NEXT: clz (get_local 1){{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @clz64_zero_undef(i64 %x) {
   %a = call i64 @llvm.ctlz.i64(i64 %x, i1 true)
   ret i64 %a
@@ -246,11 +261,12 @@ define i64 @clz64_zero_undef(i64 %x) {
 ; CHECK-LABEL: ctz64:
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @1, pop{{$}}
-; CHECK-NEXT: ctz @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: return @2{{$}}
+; CHECK-NEXT: .local i64, i64{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 1, pop{{$}}
+; CHECK-NEXT: ctz (get_local 1){{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @ctz64(i64 %x) {
   %a = call i64 @llvm.cttz.i64(i64 %x, i1 false)
   ret i64 %a
@@ -259,11 +275,12 @@ define i64 @ctz64(i64 %x) {
 ; CHECK-LABEL: ctz64_zero_undef:
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @1, pop{{$}}
-; CHECK-NEXT: ctz @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: return @2{{$}}
+; CHECK-NEXT: .local i64, i64{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 1, pop{{$}}
+; CHECK-NEXT: ctz (get_local 1){{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @ctz64_zero_undef(i64 %x) {
   %a = call i64 @llvm.cttz.i64(i64 %x, i1 true)
   ret i64 %a
@@ -272,11 +289,12 @@ define i64 @ctz64_zero_undef(i64 %x) {
 ; CHECK-LABEL: popcnt64:
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
-; CHECK-NEXT: @0{{$}}
-; CHECK-NEXT: set_local @1, pop{{$}}
-; CHECK-NEXT: popcnt @1{{$}}
-; CHECK-NEXT: set_local @2, pop{{$}}
-; CHECK-NEXT: return @2{{$}}
+; CHECK-NEXT: .local i64, i64{{$}}
+; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: set_local 1, pop{{$}}
+; CHECK-NEXT: popcnt (get_local 1){{$}}
+; CHECK-NEXT: set_local 2, pop{{$}}
+; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @popcnt64(i64 %x) {
   %a = call i64 @llvm.ctpop.i64(i64 %x)
   ret i64 %a
