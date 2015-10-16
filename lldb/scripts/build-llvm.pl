@@ -54,7 +54,7 @@ else
 our @llvm_repositories = (
     abs_path("$llvm_srcroot"),
     abs_path("$llvm_srcroot/tools/clang"),
-    abs_path("$llvm_srcroot/projects/compiler-rt")
+#    abs_path("$llvm_srcroot/projects/compiler-rt")
 );
 
 if (-e "$llvm_srcroot/lib")
@@ -68,8 +68,8 @@ else
     do_command ("cd '$SRCROOT' && svn co --quiet --revision $llvm_revision http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1);
     print "Checking out clang sources from revision $clang_revision...\n";
     do_command ("cd '$llvm_srcroot/tools' && svn co --quiet --revision $clang_revision http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
-    print "Checking out compiler-rt sources from revision $compiler_rt_revision...\n";
-    do_command ("cd '$llvm_srcroot/projects' && svn co --quiet --revision $compiler_rt_revision http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt", "checking out compiler-rt from repository", 1);
+#    print "Checking out compiler-rt sources from revision $compiler_rt_revision...\n";
+#    do_command ("cd '$llvm_srcroot/projects' && svn co --quiet --revision $compiler_rt_revision http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt", "checking out compiler-rt from repository", 1);
     print "Applying any local patches to LLVM/Clang...";
 
     my @llvm_patches = bsd_glob("$ENV{SRCROOT}/scripts/llvm.*.diff");
@@ -84,11 +84,11 @@ else
         do_command ("cd '$llvm_srcroot/tools/clang' && patch -p0 < $patch");
     }
 
-    my @compiler_rt_patches = bsd_glob("$ENV{SRCROOT}/scripts/compiler-rt.*.diff");
-    foreach my $patch (@compiler_rt_patches)
-    {
-        do_command ("cd '$llvm_srcroot/projects/compiler-rt' && patch -p0 < $patch");
-    }
+#    my @compiler_rt_patches = bsd_glob("$ENV{SRCROOT}/scripts/compiler-rt.*.diff");
+#    foreach my $patch (@compiler_rt_patches)
+#    {
+#        do_command ("cd '$llvm_srcroot/projects/compiler-rt' && patch -p0 < $patch");
+#    }
 }
 
 # Get our options
