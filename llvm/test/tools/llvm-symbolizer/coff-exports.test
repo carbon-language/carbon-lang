@@ -2,6 +2,9 @@ RUN: grep '^ADDR:' %s | sed -s 's/ADDR: //' \
 RUN: 	 | llvm-symbolizer --inlining --relative-address -obj="%p/Inputs/coff-exports.exe" \
 RUN:	 | FileCheck %s
 
+This test relies on UnDecorateSymbolName, which is Windows-only.
+REQUIRES: system-windows
+
 ADDR: 0x500A
 ADDR: 0x5038
 ADDR: 0x504B
