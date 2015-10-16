@@ -486,6 +486,66 @@ unreachable:
   unreachable
 }
 
+define void @test14() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  invoke void @f()
+    to label %exit unwind label %catch1.pad
+catch1.pad:
+  %catch1 = catchpad [i32 1]
+    to label %catch1.body unwind label %catch2.pad
+catch1.body:
+  invoke void @h(i32 1)
+    to label %catch1.body2 unwind label %catch.end
+catch1.body2:
+  invoke void @f()
+    to label %catch1.ret unwind label %cleanup1.pad
+cleanup1.pad:
+  %cleanup1 = cleanuppad []
+  call void @f()
+  cleanupret %cleanup1 unwind label %catch.end
+catch1.ret:
+  catchret %catch1 to label %exit
+catch2.pad:
+  %catch2 = catchpad [i32 2]
+    to label %catch2.body unwind label %catch.end
+catch2.body:
+  invoke void @h(i32 2)
+    to label %catch2.body2 unwind label %catch.end
+catch2.body2:
+  invoke void @f()
+    to label %catch2.ret unwind label %cleanup2.pad
+cleanup2.pad:
+  %cleanup2 = cleanuppad []
+  call void @f()
+  cleanupret %cleanup2 unwind label %catch.end
+catch2.ret:
+  catchret %catch2 to label %exit
+catch.end:
+  catchendpad unwind to caller
+exit:
+  ret void
+}
+; Make sure we don't clone the catchendpad even though the
+; cleanupendpads targeting it would naively imply that it
+; should get their respective parent colors (catch1 and catch2),
+; as well as its properly getting the root function color.  The
+; references from the invokes ensure that if we did make clones
+; for each catch, they'd be reachable, as those invokes would get
+; rewritten
+; CHECK-LABEL: define void @test14()
+; CHECK-NOT:  catchendpad
+; CHECK:      invoke void @h(i32 1)
+; CHECK-NEXT:   unwind label %catch.end
+; CHECK-NOT:  catchendpad
+; CHECK:      invoke void @h(i32 2)
+; CHECK-NEXT:   unwind label %catch.end
+; CHECK-NOT:   catchendpad
+; CHECK:     catch.end:
+; CHECK-NEXT:  catchendpad
+; CHECK-NOT:   catchendpad
+
+;; Debug info (from test12)
+
 ; Make sure the DISubprogram doesn't get cloned
 ; CHECK-LABEL: !llvm.module.flags
 ; CHECK-NOT: !DISubprogram

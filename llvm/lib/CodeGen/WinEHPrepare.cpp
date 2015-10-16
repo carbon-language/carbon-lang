@@ -306,6 +306,7 @@ static void calculateExplicitCXXStateNumbers(WinEHFuncInfo &FuncInfo,
     BasicBlock *CleanupBlock = CEPI->getCleanupPad()->getParent();
     calculateExplicitCXXStateNumbers(FuncInfo, *CleanupBlock, ParentState);
     // Anything unwinding through CleanupEndPadInst is in ParentState.
+    FuncInfo.EHPadStateMap[FirstNonPHI] = ParentState;
     for (const BasicBlock *PredBlock : predecessors(&BB))
       if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
         calculateExplicitCXXStateNumbers(FuncInfo, *PredBlock, ParentState);
@@ -614,12 +615,20 @@ colorFunclets(Function &F, SmallVectorImpl<BasicBlock *> &EntryBlocks,
         !isa<CleanupEndPadInst>(VisitingHead)) {
       // Mark this as a funclet head as a member of itself.
       FuncletBlocks[Visiting].insert(Visiting);
-      // Queue exits with the parent color.
+      // Queue exits (i.e. successors of rets/endpads) with the parent color.
+      // Skip any exits that are catchendpads, since the parent color must then
+      // represent one of the catches chained to that catchendpad, but the
+      // catchendpad should get the color of the common parent of all its
+      // chained catches (i.e. the grandparent color of the current pad).
+      // We don't need to worry abou catchendpads going unvisited, since the
+      // catches chained to them must have unwind edges to them by which we will
+      // visit them.
       for (User *U : VisitingHead->users()) {
         if (auto *Exit = dyn_cast<TerminatorInst>(U)) {
           for (BasicBlock *Succ : successors(Exit->getParent()))
-            if (BlockColors[Succ].insert(Color).second)
-              Worklist.push_back({Succ, Color});
+            if (!isa<CatchEndPadInst>(*Succ->getFirstNonPHI()))
+              if (BlockColors[Succ].insert(Color).second)
+                Worklist.push_back({Succ, Color});
         }
       }
       // Handle CatchPad specially since its successors need different colors.
