@@ -402,6 +402,22 @@ class Window(object):
     def quit_action(self):
         raise QuitException
 
+    def get_key(self, timeout_msec=-1):
+        self.timeout(timeout_msec)
+        done = False
+        c = self.window.getch()
+        if c == 27:
+            self.timeout(0)
+            escape_key = 0
+            while True:
+                escape_key = self.window.getch()
+                if escape_key == -1:
+                    break
+                else:
+                    c = c << 8 | escape_key
+            self.timeout(timeout_msec)
+        return c        
+        
     def key_event_loop(self, timeout_msec=-1, n=sys.maxint):
         '''Run an event loop to receive key presses and pass them along to the
            responder chain.
@@ -412,20 +428,9 @@ class Window(object):
            for timeout_msec milliseconds.
            
            n is the number of times to go through the event loop before exiting'''
-        self.timeout(timeout_msec)
         done = False
         while not done and n > 0:
-            c = self.window.getch()
-            if c == 27:
-                self.timeout(0)
-                escape_key = 0
-                while True:
-                    escape_key = self.window.getch()
-                    if escape_key == -1:
-                        break
-                    else:
-                        c = c << 8 | escape_key
-                self.timeout(timeout_msec)
+            c = self.get_key(timeoue_msec)
             if c != -1:
                 try:
                     self.handle_key(c)
