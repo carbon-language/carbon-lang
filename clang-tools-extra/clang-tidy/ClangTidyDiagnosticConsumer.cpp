@@ -469,34 +469,40 @@ void ClangTidyDiagnosticConsumer::removeIncompatibleErrors(
   }
 
   // Build events from error intervals.
-  std::vector<Event> Events;
+  std::map<std::string, std::vector<Event>> FileEvents;
   for (unsigned I = 0; I < Errors.size(); ++I) {
     for (const auto &Replace : Errors[I].Fix) {
       unsigned Begin = Replace.getOffset();
       unsigned End = Begin + Replace.getLength();
+      const std::string &FilePath = Replace.getFilePath();
       // FIXME: Handle empty intervals, such as those from insertions.
       if (Begin == End)
         continue;
-      Events.push_back(Event(Begin, End, Event::ET_Begin, I, Sizes[I]));
-      Events.push_back(Event(Begin, End, Event::ET_End, I, Sizes[I]));
+      FileEvents[FilePath].push_back(
+          Event(Begin, End, Event::ET_Begin, I, Sizes[I]));
+      FileEvents[FilePath].push_back(
+          Event(Begin, End, Event::ET_End, I, Sizes[I]));
     }
   }
-  std::sort(Events.begin(), Events.end());
 
-  // Sweep.
   std::vector<bool> Apply(Errors.size(), true);
-  int OpenIntervals = 0;
-  for (const auto &Event : Events) {
-    if (Event.Type == Event::ET_End)
-      --OpenIntervals;
-    // This has to be checked after removing the interval from the count if it
-    // is an end event, or before adding it if it is a begin event.
-    if (OpenIntervals != 0)
-      Apply[Event.ErrorId] = false;
-    if (Event.Type == Event::ET_Begin)
-      ++OpenIntervals;
+  for (auto &FileAndEvents : FileEvents) {
+    std::vector<Event> &Events = FileAndEvents.second;
+    // Sweep.
+    std::sort(Events.begin(), Events.end());
+    int OpenIntervals = 0;
+    for (const auto &Event : Events) {
+      if (Event.Type == Event::ET_End)
+        --OpenIntervals;
+      // This has to be checked after removing the interval from the count if it
+      // is an end event, or before adding it if it is a begin event.
+      if (OpenIntervals != 0)
+        Apply[Event.ErrorId] = false;
+      if (Event.Type == Event::ET_Begin)
+        ++OpenIntervals;
+    }
+    assert(OpenIntervals == 0 && "Amount of begin/end points doesn't match");
   }
-  assert(OpenIntervals == 0 && "Amount of begin/end points doesn't match");
 
   for (unsigned I = 0; I < Errors.size(); ++I) {
     if (!Apply[I]) {
