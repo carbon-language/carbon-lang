@@ -158,6 +158,8 @@ public:
   /// SearchPath at which the file was found. This only differs from the
   /// Filename for framework includes.
   ///
+  /// \param RequestingModule The module in which the lookup was performed.
+  ///
   /// \param SuggestedModule If non-null, and the file found is semantically
   /// part of a known module, this will be set to the module that should
   /// be imported instead of preprocessing/parsing the file found.
@@ -172,6 +174,7 @@ public:
   const FileEntry *LookupFile(StringRef &Filename, HeaderSearch &HS,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
+                              Module *RequestingModule,
                               ModuleMap::KnownHeader *SuggestedModule,
                               bool &InUserSpecifiedSystemFramework,
                               bool &HasBeenMapped,
@@ -182,6 +185,7 @@ private:
       StringRef Filename, HeaderSearch &HS,
       SmallVectorImpl<char> *SearchPath,
       SmallVectorImpl<char> *RelativePath,
+      Module *RequestingModule,
       ModuleMap::KnownHeader *SuggestedModule,
       bool &InUserSpecifiedSystemHeader) const;
 

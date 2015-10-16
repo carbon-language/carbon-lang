@@ -389,9 +389,10 @@ bool InclusionRewriter::HandleHasInclude(
   SmallVector<std::pair<const FileEntry *, const DirectoryEntry *>, 1>
       Includers;
   Includers.push_back(std::make_pair(FileEnt, FileEnt->getDir()));
+  // FIXME: Why don't we call PP.LookupFile here?
   const FileEntry *File = PP.getHeaderSearchInfo().LookupFile(
       Filename, SourceLocation(), isAngled, nullptr, CurDir, Includers, nullptr,
-      nullptr, nullptr, false);
+      nullptr, nullptr, nullptr, false);
 
   FileExists = File != nullptr;
   return true;
