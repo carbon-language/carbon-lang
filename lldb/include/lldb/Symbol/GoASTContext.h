@@ -7,10 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __lldb__GoASTContext__
-#define __lldb__GoASTContext__
+#ifndef liblldb_GoASTContext_h_
+#define liblldb_GoASTContext_h_
 
+// C Includes
+// C++ Includes
 #include <map>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/ConstString.h"
 #include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Symbol/CompilerType.h"
@@ -25,7 +30,7 @@ class GoASTContext : public TypeSystem
 {
   public:
     GoASTContext();
-    ~GoASTContext();
+    ~GoASTContext() override;
 
     //------------------------------------------------------------------
     // PluginInterface functions
@@ -51,7 +56,6 @@ class GoASTContext : public TypeSystem
     static void
     Terminate ();
     
-
     DWARFASTParser *GetDWARFParser() override;
 
     void
@@ -71,19 +75,19 @@ class GoASTContext : public TypeSystem
     //----------------------------------------------------------------------
     // CompilerDecl functions
     //----------------------------------------------------------------------
-    virtual ConstString
+    ConstString
     DeclGetName (void *opaque_decl) override
     {
         return ConstString();
     }
 
-    virtual lldb::VariableSP
+    lldb::VariableSP
     DeclGetVariable (void *opaque_decl) override
     {
         return lldb::VariableSP();
     }
 
-    virtual void
+    void
     DeclLinkToObject (void *opaque_decl, std::shared_ptr<void> object) override
     {
     }
@@ -92,25 +96,25 @@ class GoASTContext : public TypeSystem
     // CompilerDeclContext functions
     //----------------------------------------------------------------------
     
-    virtual std::vector<void *>
+    std::vector<void *>
     DeclContextFindDeclByName (void *opaque_decl_ctx, ConstString name) override
     {
         return std::vector<void *>();
     }
 
-    virtual bool
+    bool
     DeclContextIsStructUnionOrClass(void *opaque_decl_ctx) override
     {
         return false;
     }
 
-    virtual ConstString
+    ConstString
     DeclContextGetName(void *opaque_decl_ctx) override
     {
         return ConstString();
     }
 
-    virtual bool
+    bool
     DeclContextIsClassMethod(void *opaque_decl_ctx, lldb::LanguageType *language_ptr, bool *is_instance_method_ptr,
                              ConstString *language_object_name_ptr) override
     {
@@ -187,123 +191,123 @@ class GoASTContext : public TypeSystem
     // Type Completion
     //----------------------------------------------------------------------
 
-    virtual bool GetCompleteType(lldb::opaque_compiler_type_t type) override;
+    bool GetCompleteType(lldb::opaque_compiler_type_t type) override;
 
     //----------------------------------------------------------------------
     // AST related queries
     //----------------------------------------------------------------------
 
-    virtual uint32_t GetPointerByteSize() override;
+    uint32_t GetPointerByteSize() override;
 
     //----------------------------------------------------------------------
     // Accessors
     //----------------------------------------------------------------------
 
-    virtual ConstString GetTypeName(lldb::opaque_compiler_type_t type) override;
+    ConstString GetTypeName(lldb::opaque_compiler_type_t type) override;
 
-    virtual uint32_t GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_compiler_type = NULL) override;
+    uint32_t GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_compiler_type = NULL) override;
 
-    virtual lldb::LanguageType GetMinimumLanguage(lldb::opaque_compiler_type_t type) override;
+    lldb::LanguageType GetMinimumLanguage(lldb::opaque_compiler_type_t type) override;
 
-    virtual lldb::TypeClass GetTypeClass(lldb::opaque_compiler_type_t type) override;
+    lldb::TypeClass GetTypeClass(lldb::opaque_compiler_type_t type) override;
 
     //----------------------------------------------------------------------
     // Creating related types
     //----------------------------------------------------------------------
 
-    virtual CompilerType GetArrayElementType(lldb::opaque_compiler_type_t type, uint64_t *stride = nullptr) override;
+    CompilerType GetArrayElementType(lldb::opaque_compiler_type_t type, uint64_t *stride = nullptr) override;
 
-    virtual CompilerType GetCanonicalType(lldb::opaque_compiler_type_t type) override;
+    CompilerType GetCanonicalType(lldb::opaque_compiler_type_t type) override;
 
     // Returns -1 if this isn't a function of if the function doesn't have a prototype
     // Returns a value >= 0 if there is a prototype.
-    virtual int GetFunctionArgumentCount(lldb::opaque_compiler_type_t type) override;
+    int GetFunctionArgumentCount(lldb::opaque_compiler_type_t type) override;
 
-    virtual CompilerType GetFunctionArgumentTypeAtIndex(lldb::opaque_compiler_type_t type, size_t idx) override;
+    CompilerType GetFunctionArgumentTypeAtIndex(lldb::opaque_compiler_type_t type, size_t idx) override;
 
-    virtual CompilerType GetFunctionReturnType(lldb::opaque_compiler_type_t type) override;
+    CompilerType GetFunctionReturnType(lldb::opaque_compiler_type_t type) override;
 
-    virtual size_t GetNumMemberFunctions(lldb::opaque_compiler_type_t type) override;
+    size_t GetNumMemberFunctions(lldb::opaque_compiler_type_t type) override;
 
-    virtual TypeMemberFunctionImpl GetMemberFunctionAtIndex(lldb::opaque_compiler_type_t type, size_t idx) override;
+    TypeMemberFunctionImpl GetMemberFunctionAtIndex(lldb::opaque_compiler_type_t type, size_t idx) override;
 
-    virtual CompilerType GetPointeeType(lldb::opaque_compiler_type_t type) override;
+    CompilerType GetPointeeType(lldb::opaque_compiler_type_t type) override;
 
-    virtual CompilerType GetPointerType(lldb::opaque_compiler_type_t type) override;
+    CompilerType GetPointerType(lldb::opaque_compiler_type_t type) override;
 
     //----------------------------------------------------------------------
     // Exploring the type
     //----------------------------------------------------------------------
 
-    virtual uint64_t GetBitSize(lldb::opaque_compiler_type_t type, ExecutionContextScope *exe_scope) override;
+    uint64_t GetBitSize(lldb::opaque_compiler_type_t type, ExecutionContextScope *exe_scope) override;
 
-    virtual lldb::Encoding GetEncoding(lldb::opaque_compiler_type_t type, uint64_t &count) override;
+    lldb::Encoding GetEncoding(lldb::opaque_compiler_type_t type, uint64_t &count) override;
 
-    virtual lldb::Format GetFormat(lldb::opaque_compiler_type_t type) override;
+    lldb::Format GetFormat(lldb::opaque_compiler_type_t type) override;
 
-    virtual uint32_t GetNumChildren(lldb::opaque_compiler_type_t type, bool omit_empty_base_classes) override;
+    uint32_t GetNumChildren(lldb::opaque_compiler_type_t type, bool omit_empty_base_classes) override;
 
-    virtual lldb::BasicType GetBasicTypeEnumeration(lldb::opaque_compiler_type_t type) override;
+    lldb::BasicType GetBasicTypeEnumeration(lldb::opaque_compiler_type_t type) override;
 
-    virtual CompilerType GetBuiltinTypeForEncodingAndBitSize (lldb::Encoding encoding,
-                                                              size_t bit_size) override;
+    CompilerType GetBuiltinTypeForEncodingAndBitSize(lldb::Encoding encoding,
+                                                     size_t bit_size) override;
 
-    virtual uint32_t GetNumFields(lldb::opaque_compiler_type_t type) override;
+    uint32_t GetNumFields(lldb::opaque_compiler_type_t type) override;
 
-    virtual CompilerType GetFieldAtIndex(lldb::opaque_compiler_type_t type, size_t idx, std::string &name, uint64_t *bit_offset_ptr,
-                                         uint32_t *bitfield_bit_size_ptr, bool *is_bitfield_ptr) override;
+    CompilerType GetFieldAtIndex(lldb::opaque_compiler_type_t type, size_t idx, std::string &name, uint64_t *bit_offset_ptr,
+                                 uint32_t *bitfield_bit_size_ptr, bool *is_bitfield_ptr) override;
 
-    virtual uint32_t
+    uint32_t
     GetNumDirectBaseClasses(lldb::opaque_compiler_type_t type) override
     {
         return 0;
     }
 
-    virtual uint32_t
+    uint32_t
     GetNumVirtualBaseClasses(lldb::opaque_compiler_type_t type) override
     {
         return 0;
     }
 
-    virtual CompilerType
+    CompilerType
     GetDirectBaseClassAtIndex(lldb::opaque_compiler_type_t type, size_t idx, uint32_t *bit_offset_ptr) override
     {
         return CompilerType();
     }
 
-    virtual CompilerType
+    CompilerType
     GetVirtualBaseClassAtIndex(lldb::opaque_compiler_type_t type, size_t idx, uint32_t *bit_offset_ptr) override
     {
         return CompilerType();
     }
 
-    virtual CompilerType GetChildCompilerTypeAtIndex(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, size_t idx,
-                                                     bool transparent_pointers, bool omit_empty_base_classes,
-                                                     bool ignore_array_bounds, std::string &child_name,
-                                                     uint32_t &child_byte_size, int32_t &child_byte_offset,
-                                                     uint32_t &child_bitfield_bit_size,
-                                                     uint32_t &child_bitfield_bit_offset, bool &child_is_base_class,
-                                                     bool &child_is_deref_of_parent, ValueObject *valobj) override;
+    CompilerType GetChildCompilerTypeAtIndex(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, size_t idx,
+                                             bool transparent_pointers, bool omit_empty_base_classes,
+                                             bool ignore_array_bounds, std::string &child_name,
+                                             uint32_t &child_byte_size, int32_t &child_byte_offset,
+                                             uint32_t &child_bitfield_bit_size,
+                                             uint32_t &child_bitfield_bit_offset, bool &child_is_base_class,
+                                             bool &child_is_deref_of_parent, ValueObject *valobj) override;
 
     // Lookup a child given a name. This function will match base class names
     // and member member names in "clang_type" only, not descendants.
-    virtual uint32_t GetIndexOfChildWithName(lldb::opaque_compiler_type_t type, const char *name, bool omit_empty_base_classes) override;
+    uint32_t GetIndexOfChildWithName(lldb::opaque_compiler_type_t type, const char *name, bool omit_empty_base_classes) override;
 
     // Lookup a child member given a name. This function will match member names
     // only and will descend into "clang_type" children in search for the first
     // member in this class, or any base class that matches "name".
     // TODO: Return all matches for a given name by returning a vector<vector<uint32_t>>
     // so we catch all names that match a given child name, not just the first.
-    virtual size_t GetIndexOfChildMemberWithName(lldb::opaque_compiler_type_t type, const char *name, bool omit_empty_base_classes,
-                                                 std::vector<uint32_t> &child_indexes) override;
+    size_t GetIndexOfChildMemberWithName(lldb::opaque_compiler_type_t type, const char *name, bool omit_empty_base_classes,
+                                         std::vector<uint32_t> &child_indexes) override;
 
-    virtual size_t
+    size_t
     GetNumTemplateArguments(lldb::opaque_compiler_type_t type) override
     {
         return 0;
     }
 
-    virtual CompilerType
+    CompilerType
     GetTemplateArgument(lldb::opaque_compiler_type_t type, size_t idx, lldb::TemplateArgumentKind &kind) override
     {
         return CompilerType();
@@ -312,66 +316,66 @@ class GoASTContext : public TypeSystem
     //----------------------------------------------------------------------
     // Dumping types
     //----------------------------------------------------------------------
-    virtual void DumpValue(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, Stream *s, lldb::Format format,
-                           const DataExtractor &data, lldb::offset_t data_offset, size_t data_byte_size,
-                           uint32_t bitfield_bit_size, uint32_t bitfield_bit_offset, bool show_types, bool show_summary,
-                           bool verbose, uint32_t depth) override;
+    void DumpValue(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, Stream *s, lldb::Format format,
+                   const DataExtractor &data, lldb::offset_t data_offset, size_t data_byte_size,
+                   uint32_t bitfield_bit_size, uint32_t bitfield_bit_offset, bool show_types, bool show_summary,
+                   bool verbose, uint32_t depth) override;
 
-    virtual bool DumpTypeValue(lldb::opaque_compiler_type_t type, Stream *s, lldb::Format format, const DataExtractor &data,
-                               lldb::offset_t data_offset, size_t data_byte_size, uint32_t bitfield_bit_size,
-                               uint32_t bitfield_bit_offset, ExecutionContextScope *exe_scope) override;
+    bool DumpTypeValue(lldb::opaque_compiler_type_t type, Stream *s, lldb::Format format, const DataExtractor &data,
+                       lldb::offset_t data_offset, size_t data_byte_size, uint32_t bitfield_bit_size,
+                       uint32_t bitfield_bit_offset, ExecutionContextScope *exe_scope) override;
 
-    virtual void DumpTypeDescription(lldb::opaque_compiler_type_t type) override; // Dump to stdout
+    void DumpTypeDescription(lldb::opaque_compiler_type_t type) override; // Dump to stdout
 
-    virtual void DumpTypeDescription(lldb::opaque_compiler_type_t type, Stream *s) override;
+    void DumpTypeDescription(lldb::opaque_compiler_type_t type, Stream *s) override;
 
     //----------------------------------------------------------------------
     // TODO: These methods appear unused. Should they be removed?
     //----------------------------------------------------------------------
 
-    virtual bool IsRuntimeGeneratedType(lldb::opaque_compiler_type_t type) override;
+    bool IsRuntimeGeneratedType(lldb::opaque_compiler_type_t type) override;
 
-    virtual void DumpSummary(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, Stream *s, const DataExtractor &data,
-                             lldb::offset_t data_offset, size_t data_byte_size) override;
+    void DumpSummary(lldb::opaque_compiler_type_t type, ExecutionContext *exe_ctx, Stream *s, const DataExtractor &data,
+                     lldb::offset_t data_offset, size_t data_byte_size) override;
 
     // Converts "s" to a floating point value and place resulting floating
     // point bytes in the "dst" buffer.
-    virtual size_t ConvertStringToFloatValue(lldb::opaque_compiler_type_t type, const char *s, uint8_t *dst, size_t dst_size) override;
+    size_t ConvertStringToFloatValue(lldb::opaque_compiler_type_t type, const char *s, uint8_t *dst, size_t dst_size) override;
 
     //----------------------------------------------------------------------
     // TODO: Determine if these methods should move to ClangASTContext.
     //----------------------------------------------------------------------
 
-    virtual bool IsPointerOrReferenceType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type = NULL) override;
+    bool IsPointerOrReferenceType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type = NULL) override;
 
-    virtual unsigned GetTypeQualifiers(lldb::opaque_compiler_type_t type) override;
+    unsigned GetTypeQualifiers(lldb::opaque_compiler_type_t type) override;
 
-    virtual bool IsCStringType(lldb::opaque_compiler_type_t type, uint32_t &length) override;
+    bool IsCStringType(lldb::opaque_compiler_type_t type, uint32_t &length) override;
 
-    virtual size_t GetTypeBitAlign(lldb::opaque_compiler_type_t type) override;
+    size_t GetTypeBitAlign(lldb::opaque_compiler_type_t type) override;
 
-    virtual CompilerType GetBasicTypeFromAST(lldb::BasicType basic_type) override;
+    CompilerType GetBasicTypeFromAST(lldb::BasicType basic_type) override;
 
-    virtual bool IsBeingDefined(lldb::opaque_compiler_type_t type) override;
+    bool IsBeingDefined(lldb::opaque_compiler_type_t type) override;
 
-    virtual bool IsConst(lldb::opaque_compiler_type_t type) override;
+    bool IsConst(lldb::opaque_compiler_type_t type) override;
 
-    virtual uint32_t IsHomogeneousAggregate(lldb::opaque_compiler_type_t type, CompilerType *base_type_ptr) override;
+    uint32_t IsHomogeneousAggregate(lldb::opaque_compiler_type_t type, CompilerType *base_type_ptr) override;
 
-    virtual bool IsPolymorphicClass(lldb::opaque_compiler_type_t type) override;
+    bool IsPolymorphicClass(lldb::opaque_compiler_type_t type) override;
 
-    virtual bool IsTypedefType(lldb::opaque_compiler_type_t type) override;
+    bool IsTypedefType(lldb::opaque_compiler_type_t type) override;
 
     // If the current object represents a typedef type, get the underlying type
-    virtual CompilerType GetTypedefedType(lldb::opaque_compiler_type_t type) override;
+    CompilerType GetTypedefedType(lldb::opaque_compiler_type_t type) override;
 
-    virtual bool IsVectorType(lldb::opaque_compiler_type_t type, CompilerType *element_type, uint64_t *size) override;
+    bool IsVectorType(lldb::opaque_compiler_type_t type, CompilerType *element_type, uint64_t *size) override;
 
-    virtual CompilerType GetFullyUnqualifiedType(lldb::opaque_compiler_type_t type) override;
+    CompilerType GetFullyUnqualifiedType(lldb::opaque_compiler_type_t type) override;
 
-    virtual CompilerType GetNonReferenceType(lldb::opaque_compiler_type_t type) override;
+    CompilerType GetNonReferenceType(lldb::opaque_compiler_type_t type) override;
 
-    virtual bool IsReferenceType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type = nullptr, bool *is_rvalue = nullptr) override;
+    bool IsReferenceType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type = nullptr, bool *is_rvalue = nullptr) override;
 
   private:
     typedef std::map<ConstString, std::unique_ptr<GoType>> TypeMap;
@@ -383,6 +387,7 @@ class GoASTContext : public TypeSystem
     GoASTContext(const GoASTContext &) = delete;
     const GoASTContext &operator=(const GoASTContext &) = delete;
 };
-}
 
-#endif /* defined(__lldb__GoASTContext__) */
+} // namespace lldb_private
+
+#endif // liblldb_GoASTContext_h_

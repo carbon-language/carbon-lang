@@ -10,17 +10,22 @@
 #ifndef liblldb_TypeSystem_h_
 #define liblldb_TypeSystem_h_
 
+// C Includes
+// C++ Includes
 #include <functional>
 #include <map>
 #include <string>
 
+// Other libraries and framework includes
+#include "llvm/ADT/APSInt.h"
+#include "llvm/Support/Casting.h"
+
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Expression/Expression.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
-#include "llvm/ADT/APSInt.h"
-#include "llvm/Support/Casting.h"
 
 class DWARFDIE;
 class DWARFASTParser;
@@ -71,6 +76,13 @@ public:
         kNumKinds
     };
 
+    //----------------------------------------------------------------------
+    // Constructors and Destructors
+    //----------------------------------------------------------------------
+    TypeSystem(LLVMCastKind kind);
+    
+    ~TypeSystem() override;
+
     LLVMCastKind getKind() const { return m_kind; }
 
     static lldb::TypeSystemSP
@@ -78,13 +90,6 @@ public:
 
     static lldb::TypeSystemSP
     CreateInstance (lldb::LanguageType language, Target *target);
-
-    //----------------------------------------------------------------------
-    // Constructors and Destructors
-    //----------------------------------------------------------------------
-    TypeSystem (LLVMCastKind kind);
-    
-    virtual ~TypeSystem ();
 
     virtual DWARFASTParser *
     GetDWARFParser ()
@@ -375,6 +380,7 @@ public:
     //----------------------------------------------------------------------
     // Dumping types
     //----------------------------------------------------------------------
+
     virtual void
     DumpValue (lldb::opaque_compiler_type_t type,
                ExecutionContext *exe_ctx,
@@ -554,7 +560,6 @@ protected:
         collection m_map;
     };
 
-
 } // namespace lldb_private
 
-#endif // #ifndef liblldb_TypeSystem_h_
+#endif // liblldb_TypeSystem_h_

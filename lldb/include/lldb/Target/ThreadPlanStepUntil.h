@@ -19,33 +19,32 @@
 
 namespace lldb_private {
 
-
 class ThreadPlanStepUntil : public ThreadPlan
 {
 public:
-    virtual ~ThreadPlanStepUntil ();
+    ~ThreadPlanStepUntil() override;
 
-    virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
-    virtual bool ValidatePlan (Stream *error);
-    virtual bool ShouldStop (Event *event_ptr);
-    virtual bool StopOthers ();
-    virtual lldb::StateType GetPlanRunState ();
-    virtual bool WillStop ();
-    virtual bool MischiefManaged ();
+    void GetDescription(Stream *s, lldb::DescriptionLevel level) override;
+    bool ValidatePlan(Stream *error) override;
+    bool ShouldStop(Event *event_ptr) override;
+    bool StopOthers() override;
+    lldb::StateType GetPlanRunState() override;
+    bool WillStop() override;
+    bool MischiefManaged() override;
 
 protected:
-    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
-    virtual bool DoPlanExplainsStop (Event *event_ptr);
+    bool DoWillResume(lldb::StateType resume_state, bool current_plan) override;
+    bool DoPlanExplainsStop(Event *event_ptr) override;
 
     ThreadPlanStepUntil (Thread &thread,
                          lldb::addr_t *address_list,
                          size_t num_addresses,
                          bool stop_others,
                          uint32_t frame_idx = 0);
-    void AnalyzeStop(void);
+
+    void AnalyzeStop();
 
 private:
-
     StackID m_stack_id;
     lldb::addr_t m_step_from_insn;
     lldb::break_id_t m_return_bp_id;
@@ -72,9 +71,8 @@ private:
     // from step in.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepUntil);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanStepUntil_h_
+#endif // liblldb_ThreadPlanStepUntil_h_

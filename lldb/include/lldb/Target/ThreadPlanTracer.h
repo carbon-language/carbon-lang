@@ -26,7 +26,6 @@ class ThreadPlanTracer
 friend class ThreadPlan;
 
 public:
-
     typedef enum ThreadPlanTracerStyle
     {
         eLocation = 0,
@@ -34,21 +33,18 @@ public:
         eCheckFrames,
         ePython
     } ThreadPlanTracerStyle;
+
     ThreadPlanTracer (Thread &thread, lldb::StreamSP &stream_sp);    
     ThreadPlanTracer (Thread &thread);
         
-    virtual ~ThreadPlanTracer()
-    {
-    }
+    virtual ~ThreadPlanTracer() = default;
     
     virtual void TracingStarted ()
     {
-    
     }
     
     virtual void TracingEnded ()
     {
-    
     }
     
     bool
@@ -90,8 +86,6 @@ protected:
     Stream *
     GetLogStream ();
     
-    
-    
     virtual void Log();
     
 private:
@@ -108,12 +102,13 @@ class ThreadPlanAssemblyTracer : public ThreadPlanTracer
 public:
     ThreadPlanAssemblyTracer (Thread &thread, lldb::StreamSP &stream_sp);    
     ThreadPlanAssemblyTracer (Thread &thread);    
-    virtual ~ThreadPlanAssemblyTracer ();
-    virtual void TracingStarted ();
-    virtual void TracingEnded ();
-    virtual void Log();
+    ~ThreadPlanAssemblyTracer() override;
+
+    void TracingStarted() override;
+    void TracingEnded() override;
+    void Log() override;
+
 private:
-    
     Disassembler *
     GetDisassembler ();
 
@@ -128,4 +123,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanTracer_h_
+#endif // liblldb_ThreadPlanTracer_h_

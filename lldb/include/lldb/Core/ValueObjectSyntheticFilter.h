@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ThreadSafeSTLMap.h"
@@ -30,61 +31,63 @@ namespace lldb_private {
 class ValueObjectSynthetic : public ValueObject
 {
 public:
-    virtual
-    ~ValueObjectSynthetic();
+    ~ValueObjectSynthetic() override;
 
-    virtual uint64_t
-    GetByteSize();
+    uint64_t
+    GetByteSize() override;
     
-    virtual ConstString
-    GetTypeName();
+    ConstString
+    GetTypeName() override;
     
-    virtual ConstString
-    GetQualifiedTypeName();
+    ConstString
+    GetQualifiedTypeName() override;
     
-    virtual ConstString
-    GetDisplayTypeName();
+    ConstString
+    GetDisplayTypeName() override;
 
-    virtual bool
-    MightHaveChildren();
+    bool
+    MightHaveChildren() override;
 
-    virtual size_t
-    CalculateNumChildren();
+    size_t
+    CalculateNumChildren() override;
 
-    virtual lldb::ValueType
-    GetValueType() const;
+    lldb::ValueType
+    GetValueType() const override;
     
-    virtual lldb::ValueObjectSP
-    GetChildAtIndex (size_t idx, bool can_create);
+    lldb::ValueObjectSP
+    GetChildAtIndex(size_t idx, bool can_create) override;
     
-    virtual lldb::ValueObjectSP
-    GetChildMemberWithName (const ConstString &name, bool can_create);
+    lldb::ValueObjectSP
+    GetChildMemberWithName(const ConstString &name, bool can_create) override;
     
-    virtual size_t
-    GetIndexOfChildWithName (const ConstString &name);
+    size_t
+    GetIndexOfChildWithName(const ConstString &name) override;
 
-    virtual lldb::ValueObjectSP
-    GetDynamicValue (lldb::DynamicValueType valueType);
+    lldb::ValueObjectSP
+    GetDynamicValue(lldb::DynamicValueType valueType) override;
     
-    virtual bool
-    IsInScope ();
+    bool
+    IsInScope() override;
     
-    virtual bool
-    HasSyntheticValue()
+    bool
+    HasSyntheticValue() override
     {
         return false;
     }
     
-    virtual bool
-    IsSynthetic() { return true; }
+    bool
+    IsSynthetic() override
+    {
+        return true;
+    }
     
-    virtual void
-    CalculateSyntheticValue (bool use_synthetic)
+    void
+    CalculateSyntheticValue(bool use_synthetic) override
     {
     }
     
-    virtual bool
-    IsDynamic ()
+    bool
+    IsDynamic() override
     {
         if (m_parent)
             return m_parent->IsDynamic();
@@ -92,8 +95,8 @@ public:
             return false;
     }
     
-    virtual lldb::ValueObjectSP
-    GetStaticValue ()
+    lldb::ValueObjectSP
+    GetStaticValue() override
     {
         if (m_parent)
             return m_parent->GetStaticValue();
@@ -110,8 +113,8 @@ public:
             return lldb::eNoDynamicValues;
     }
 
-    virtual ValueObject *
-    GetParent()
+    ValueObject *
+    GetParent() override
     {
         if (m_parent)
             return m_parent->GetParent();
@@ -119,8 +122,8 @@ public:
             return NULL;
     }
 
-    virtual const ValueObject *
-    GetParent() const
+    const ValueObject *
+    GetParent() const override
     {
         if (m_parent)
             return m_parent->GetParent();
@@ -128,51 +131,51 @@ public:
             return NULL;
     }
     
-    virtual lldb::ValueObjectSP
-    GetNonSyntheticValue ();
+    lldb::ValueObjectSP
+    GetNonSyntheticValue() override;
     
-    virtual bool
-    CanProvideValue ();
+    bool
+    CanProvideValue() override;
     
-    virtual bool
-    DoesProvideSyntheticValue ()
+    bool
+    DoesProvideSyntheticValue() override
     {
         return (UpdateValueIfNeeded(), m_provides_value == eLazyBoolYes);
     }
     
-    virtual bool
-    GetIsConstant () const
+    bool
+    GetIsConstant() const override
     {
         return false;
     }
 
-    virtual bool
-    SetValueFromCString (const char *value_str, Error& error);
+    bool
+    SetValueFromCString(const char *value_str, Error& error) override;
     
-    virtual void
-    SetFormat (lldb::Format format);
+    void
+    SetFormat(lldb::Format format) override;
     
-    virtual lldb::LanguageType
-    GetPreferredDisplayLanguage ();
+    lldb::LanguageType
+    GetPreferredDisplayLanguage() override;
     
     void
     SetPreferredDisplayLanguage (lldb::LanguageType);
     
-    virtual bool
-    GetDeclaration (Declaration &decl);
+    bool
+    GetDeclaration(Declaration &decl) override;
 
 protected:
-    virtual bool
-    UpdateValue ();
+    bool
+    UpdateValue() override;
     
-    virtual LazyBool
-    CanUpdateWithInvalidExecutionContext ()
+    LazyBool
+    CanUpdateWithInvalidExecutionContext() override
     {
         return eLazyBoolYes;
     }
     
-    virtual CompilerType
-    GetCompilerTypeImpl ();
+    CompilerType
+    GetCompilerTypeImpl() override;
     
     virtual void
     CreateSynthFilter ();
@@ -212,4 +215,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectSyntheticFilter_h_
+#endif // liblldb_ValueObjectSyntheticFilter_h_

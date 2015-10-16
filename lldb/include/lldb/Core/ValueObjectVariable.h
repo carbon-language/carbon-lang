@@ -25,57 +25,56 @@ namespace lldb_private {
 class ValueObjectVariable : public ValueObject
 {
 public:
+    ~ValueObjectVariable() override;
+
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope, const lldb::VariableSP &var_sp);
 
-    virtual
-    ~ValueObjectVariable();
+    uint64_t
+    GetByteSize() override;
 
-    virtual uint64_t
-    GetByteSize();
+    ConstString
+    GetTypeName() override;
 
-    virtual ConstString
-    GetTypeName();
-
-    virtual ConstString
-    GetQualifiedTypeName();
+    ConstString
+    GetQualifiedTypeName() override;
     
-    virtual ConstString
-    GetDisplayTypeName();
+    ConstString
+    GetDisplayTypeName() override;
 
-    virtual size_t
-    CalculateNumChildren();
+    size_t
+    CalculateNumChildren() override;
 
-    virtual lldb::ValueType
-    GetValueType() const;
+    lldb::ValueType
+    GetValueType() const override;
 
-    virtual bool
-    IsInScope ();
+    bool
+    IsInScope() override;
 
-    virtual lldb::ModuleSP
-    GetModule();
+    lldb::ModuleSP
+    GetModule() override;
     
-    virtual SymbolContextScope *
-    GetSymbolContextScope();
+    SymbolContextScope *
+    GetSymbolContextScope() override;
 
-    virtual bool
-    GetDeclaration (Declaration &decl);
+    bool
+    GetDeclaration(Declaration &decl) override;
     
-    virtual const char *
-    GetLocationAsCString ();
+    const char *
+    GetLocationAsCString() override;
     
-    virtual bool
-    SetValueFromCString (const char *value_str, Error& error);
+    bool
+    SetValueFromCString(const char *value_str, Error& error) override;
 
-    virtual bool
-    SetData (DataExtractor &data, Error &error);
+    bool
+    SetData(DataExtractor &data, Error &error) override;
     
 protected:
-    virtual bool
-    UpdateValue ();
+    bool
+    UpdateValue() override;
     
-    virtual CompilerType
-    GetCompilerTypeImpl ();
+    CompilerType
+    GetCompilerTypeImpl() override;
 
     lldb::VariableSP  m_variable_sp;  ///< The variable that this value object is based upon
     Value m_resolved_value;           ///< The value that DWARFExpression resolves this variable to before we patch it up
@@ -90,4 +89,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectVariable_h_
+#endif // liblldb_ValueObjectVariable_h_

@@ -33,24 +33,22 @@ public:
                          lldb::RunMode stop_others,
                          bool given_ranges_only = false);
 
-    virtual ~ThreadPlanStepRange ();
+    ~ThreadPlanStepRange() override;
 
-    virtual void GetDescription (Stream *s, lldb::DescriptionLevel level) = 0;
-    virtual bool ValidatePlan (Stream *error);
-    virtual bool ShouldStop (Event *event_ptr) = 0;
-    virtual Vote ShouldReportStop (Event *event_ptr);
-    virtual bool StopOthers ();
-    virtual lldb::StateType GetPlanRunState ();
-    virtual bool WillStop ();
-    virtual bool MischiefManaged ();
-    virtual void DidPush ();
-    virtual bool IsPlanStale ();
-
+    void GetDescription(Stream *s, lldb::DescriptionLevel level) override = 0;
+    bool ValidatePlan(Stream *error) override;
+    bool ShouldStop(Event *event_ptr) override = 0;
+    Vote ShouldReportStop(Event *event_ptr) override;
+    bool StopOthers() override;
+    lldb::StateType GetPlanRunState() override;
+    bool WillStop() override;
+    bool MischiefManaged() override;
+    void DidPush() override;
+    bool IsPlanStale() override;
 
     void AddRange(const AddressRange &new_range);
 
 protected:
-
     bool InRange();
     lldb::FrameComparison CompareCurrentFrameToStartFrame();
     bool InSymbol();
@@ -88,10 +86,10 @@ protected:
 
 private:
     std::vector<lldb::DisassemblerSP> m_instruction_ranges;
-    DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepRange);
 
+    DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepRange);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanStepRange_h_
+#endif // liblldb_ThreadPlanStepRange_h_
