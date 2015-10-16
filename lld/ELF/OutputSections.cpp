@@ -403,8 +403,8 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     return cast<DefinedAbsolute<ELFT>>(S).Sym.st_value;
   case SymbolBody::DefinedRegularKind: {
     const auto &DR = cast<DefinedRegular<ELFT>>(S);
-    const InputSection<ELFT> *SC = &DR.Section;
-    return SC->OutSec->getVA() + SC->OutSecOff + DR.Sym.st_value;
+    const InputSection<ELFT> &SC = DR.Section;
+    return SC.OutSec->getVA() + SC.OutSecOff + DR.Sym.st_value;
   }
   case SymbolBody::DefinedCommonKind:
     return Out<ELFT>::Bss->getVA() + cast<DefinedCommon<ELFT>>(S).OffsetInBSS;
