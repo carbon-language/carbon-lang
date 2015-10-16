@@ -67,6 +67,7 @@ g_format_infos[] =
     { eFormatVectorOfUInt32 , '\0'  , "uint32_t[]"          },
     { eFormatVectorOfSInt64 , '\0'  , "int64_t[]"           },
     { eFormatVectorOfUInt64 , '\0'  , "uint64_t[]"          },
+    { eFormatVectorOfFloat16, '\0'  , "float16[]"           },
     { eFormatVectorOfFloat32, '\0'  , "float32[]"           },
     { eFormatVectorOfFloat64, '\0'  , "float64[]"           },
     { eFormatVectorOfUInt128, '\0'  , "uint128_t[]"         },
@@ -534,6 +535,7 @@ FormatManager::GetSingleItemFormat(lldb::Format vector_format)
         case eFormatVectorOfUInt128:
             return eFormatHex;
             
+        case eFormatVectorOfFloat16:
         case eFormatVectorOfFloat32:
         case eFormatVectorOfFloat64:
             return eFormatFloat;
