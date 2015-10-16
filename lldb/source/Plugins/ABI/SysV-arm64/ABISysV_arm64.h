@@ -20,7 +20,7 @@
 class ABISysV_arm64 : public lldb_private::ABI
 {
 public:
-    ~ABISysV_arm64() { }
+    ~ABISysV_arm64() override = default;
 
     size_t
     GetRedZoneSize () const override;
@@ -39,12 +39,6 @@ public:
     lldb_private::Error
     SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) override;
 
-protected:
-    lldb::ValueObjectSP
-    GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                    lldb_private::CompilerType &ast_type) const override;
-
-public:
     bool
     CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan) override;
 
@@ -64,7 +58,6 @@ public:
     // Whitelisting the trap handlers for user space would be easy (_sigtramp) but
     // in other environments there can be a large number of different functions
     // involved in async traps.
-
     bool
     CallFrameAddressIsValid (lldb::addr_t cfa) override
     {
@@ -92,6 +85,7 @@ public:
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
+
     static void
     Initialize();
     
@@ -107,6 +101,7 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
+
     lldb_private::ConstString
     GetPluginName() override;
     
@@ -114,6 +109,10 @@ public:
     GetPluginVersion() override;
     
 protected:
+    lldb::ValueObjectSP
+    GetReturnValueObjectImpl(lldb_private::Thread &thread,
+                             lldb_private::CompilerType &ast_type) const override;
+
 private:
     ABISysV_arm64() : 
         lldb_private::ABI() 
@@ -122,4 +121,4 @@ private:
     }
 };
 
-#endif  // liblldb_ABISysV_arm64_h_
+#endif // liblldb_ABISysV_arm64_h_

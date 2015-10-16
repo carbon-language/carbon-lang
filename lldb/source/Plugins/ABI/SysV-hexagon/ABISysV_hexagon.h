@@ -21,63 +21,54 @@ class ABISysV_hexagon :
     public lldb_private::ABI
 {
 public:
+    ~ABISysV_hexagon() override = default;
 
-    ~ABISysV_hexagon( void )
-    {
-    }
+    size_t
+    GetRedZoneSize() const override;
 
-    virtual size_t
-    GetRedZoneSize ( void ) const;
-
-    virtual bool
-    PrepareTrivialCall ( lldb_private::Thread &thread, 
-                         lldb::addr_t sp,
-                         lldb::addr_t functionAddress,
-                         lldb::addr_t returnAddress, 
-                         llvm::ArrayRef<lldb::addr_t> args ) const;
+    bool
+    PrepareTrivialCall(lldb_private::Thread &thread,
+                       lldb::addr_t sp,
+                       lldb::addr_t functionAddress,
+                       lldb::addr_t returnAddress,
+                       llvm::ArrayRef<lldb::addr_t> args) const override;
     
     // special thread plan for GDB style non-jit function calls
-    virtual bool
-    PrepareTrivialCall ( lldb_private::Thread &thread, 
-                         lldb::addr_t sp,
-                         lldb::addr_t functionAddress,
-                         lldb::addr_t returnAddress,
-                         llvm::Type &prototype,
-                         llvm::ArrayRef<ABI::CallArgument> args ) const;
+    bool
+    PrepareTrivialCall(lldb_private::Thread &thread, 
+                       lldb::addr_t sp,
+                       lldb::addr_t functionAddress,
+                       lldb::addr_t returnAddress,
+                       llvm::Type &prototype,
+                       llvm::ArrayRef<ABI::CallArgument> args) const override;
 
-    virtual bool
-    GetArgumentValues ( lldb_private::Thread &thread,
-                        lldb_private::ValueList &values ) const;
+    bool
+    GetArgumentValues(lldb_private::Thread &thread,
+                       lldb_private::ValueList &values) const override;
     
-    virtual lldb_private::Error
-    SetReturnValueObject ( lldb::StackFrameSP &frame_sp,
-                           lldb::ValueObjectSP &new_value );
+    lldb_private::Error
+    SetReturnValueObject(lldb::StackFrameSP &frame_sp,
+                         lldb::ValueObjectSP &new_value) override;
 
-protected:
     lldb::ValueObjectSP
-    GetReturnValueObjectSimple ( lldb_private::Thread &thread,
-                                 lldb_private::CompilerType &ast_type ) const;
-    
-public:    
-    virtual lldb::ValueObjectSP
-    GetReturnValueObjectImpl ( lldb_private::Thread &thread,
-                               lldb_private::CompilerType &type ) const;
+    GetReturnValueObjectImpl(lldb_private::Thread &thread,
+                             lldb_private::CompilerType &type) const override;
         
     // specialized to work with llvm IR types
-    virtual lldb::ValueObjectSP
-    GetReturnValueObjectImpl ( lldb_private::Thread &thread, llvm::Type &type ) const;
+    lldb::ValueObjectSP
+    GetReturnValueObjectImpl(lldb_private::Thread &thread, llvm::Type &type) const override;
 
-    virtual bool
-    CreateFunctionEntryUnwindPlan ( lldb_private::UnwindPlan &unwind_plan );
+    bool
+    CreateFunctionEntryUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual bool
-    CreateDefaultUnwindPlan ( lldb_private::UnwindPlan &unwind_plan );
+    bool
+    CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
         
-    virtual bool
-    RegisterIsVolatile ( const lldb_private::RegisterInfo *reg_info );
+    bool
+    RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
 
-    virtual bool
-    CallFrameAddressIsValid ( lldb::addr_t cfa )
+    bool
+    CallFrameAddressIsValid(lldb::addr_t cfa) override
     {
         // Make sure the stack call frame addresses are 8 byte aligned
         if (cfa & 0x07)
@@ -87,50 +78,60 @@ public:
         return true;
     }
     
-    virtual bool
-    CodeAddressIsValid ( lldb::addr_t pc )
+    bool
+    CodeAddressIsValid(lldb::addr_t pc) override
     {
         // We have a 64 bit address space, so anything is valid as opcodes
         // aren't fixed width...
         return true;
     }
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoArray ( uint32_t &count );
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoArray(uint32_t &count) override;
 
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
-    static void
-    Initialize ( void );
 
     static void
-    Terminate ( void );
+    Initialize();
+
+    static void
+    Terminate();
 
     static lldb::ABISP
     CreateInstance ( const lldb_private::ArchSpec &arch );
 
     static lldb_private::ConstString
-    GetPluginNameStatic ( void );
+    GetPluginNameStatic();
     
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName ( void );
 
-    virtual uint32_t
-    GetPluginVersion ( void );
+    lldb_private::ConstString
+    GetPluginName() override;
+
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     void
-    CreateRegisterMapIfNeeded ( void );
+    CreateRegisterMapIfNeeded();
+
+    lldb::ValueObjectSP
+    GetReturnValueObjectSimple(lldb_private::Thread &thread,
+                               lldb_private::CompilerType &ast_type) const;
 
     bool
     RegisterIsCalleeSaved (const lldb_private::RegisterInfo *reg_info);
 
 private:
-    ABISysV_hexagon ( void ) : lldb_private::ABI() { } // Call CreateInstance instead.
+    ABISysV_hexagon() : 
+        lldb_private::ABI() 
+    {
+         // Call CreateInstance instead.
+    }
 };
 
-#endif  // liblldb_ABISysV_hexagon_h_
+#endif // liblldb_ABISysV_hexagon_h_

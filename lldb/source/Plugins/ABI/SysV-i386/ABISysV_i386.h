@@ -21,10 +21,7 @@ class ABISysV_i386 :
     public lldb_private::ABI
 {
 public:
-
-    ~ABISysV_i386()
-    {
-    }
+    ~ABISysV_i386() override = default;
 
     size_t
     GetRedZoneSize () const override
@@ -46,15 +43,6 @@ public:
     lldb_private::Error
     SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) override;
 
-protected:
-    lldb::ValueObjectSP
-    GetReturnValueObjectSimple (lldb_private::Thread &thread,
-                                lldb_private::CompilerType &ast_type) const;
-
-    bool
-    RegisterIsCalleeSaved (const lldb_private::RegisterInfo *reg_info);
-
-public:
     lldb::ValueObjectSP
     GetReturnValueObjectImpl (lldb_private::Thread &thread,
                           lldb_private::CompilerType &type) const override;
@@ -104,9 +92,11 @@ public:
 
     const lldb_private::RegisterInfo *
     GetRegisterInfoArray (uint32_t &count) override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
+
     static void
     Initialize();
 
@@ -119,6 +109,7 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
+
     static lldb_private::ConstString
     GetPluginNameStatic();
 
@@ -126,13 +117,25 @@ public:
     GetPluginName() override;
 
     uint32_t
-    GetPluginVersion()  override
+    GetPluginVersion() override
     {
         return 1;
     }
 
+protected:
+    lldb::ValueObjectSP
+    GetReturnValueObjectSimple(lldb_private::Thread &thread,
+                               lldb_private::CompilerType &ast_type) const;
+
+    bool
+    RegisterIsCalleeSaved(const lldb_private::RegisterInfo *reg_info);
+
 private:
-    ABISysV_i386() : lldb_private::ABI() { } // Call CreateInstance instead.
+    ABISysV_i386() : 
+        lldb_private::ABI() 
+    {
+         // Call CreateInstance instead.
+    }
 };
 
-#endif  // liblldb_ABI_h
+#endif // liblldb_ABISysV_i386_h_

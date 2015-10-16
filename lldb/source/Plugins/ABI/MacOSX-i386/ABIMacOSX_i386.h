@@ -22,41 +22,33 @@ class ABIMacOSX_i386 :
     public lldb_private::ABI
 {
 public:
+    ~ABIMacOSX_i386() override = default;
+    
+    size_t 
+    GetRedZoneSize() const override;
+    
+    bool
+    PrepareTrivialCall(lldb_private::Thread &thread,
+                       lldb::addr_t sp,
+                       lldb::addr_t func_addr,
+                       lldb::addr_t return_addr,
+                       llvm::ArrayRef<lldb::addr_t> args) const override;
+    
+    bool
+    GetArgumentValues(lldb_private::Thread &thread,
+                      lldb_private::ValueList &values) const override;
+    
+    lldb_private::Error
+    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) override;
 
-    ~ABIMacOSX_i386() { }
+    bool
+    CreateFunctionEntryUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual size_t 
-    GetRedZoneSize () const;
+    bool
+    CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual bool
-    PrepareTrivialCall (lldb_private::Thread &thread, 
-                        lldb::addr_t sp,
-                        lldb::addr_t func_addr,
-                        lldb::addr_t return_addr, 
-                        llvm::ArrayRef<lldb::addr_t> args) const;
-    
-    virtual bool
-    GetArgumentValues (lldb_private::Thread &thread,
-                       lldb_private::ValueList &values) const;
-    
-    virtual lldb_private::Error
-    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value);
-
-protected:
-    virtual lldb::ValueObjectSP
-    GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                    lldb_private::CompilerType &ast_type) const;
-
-public:
-
-    virtual bool
-    CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
-    
-    virtual bool
-    CreateDefaultUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
-    
-    virtual bool
-    RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
+    bool
+    RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
 
     // The Darwin i386 ABI requires that stack frames be 16 byte aligned.
     // When there is a trap handler on the stack, e.g. _sigtramp in userland
@@ -71,8 +63,8 @@ public:
     //
     // If we were to enforce 16-byte alignment, we also need to relax to 4-byte
     // alignment for non-darwin i386 targets.
-    virtual bool
-    CallFrameAddressIsValid (lldb::addr_t cfa)
+    bool
+    CallFrameAddressIsValid(lldb::addr_t cfa) override
     {
         // Make sure the stack call frame addresses are are 4 byte aligned
         if (cfa & (4ull - 1ull))
@@ -82,19 +74,20 @@ public:
         return true;
     }
 
-    virtual bool
-    CodeAddressIsValid (lldb::addr_t pc)
+    bool
+    CodeAddressIsValid(lldb::addr_t pc) override
     {
         // Just make sure the address is a valid 32 bit address. 
         return pc <= UINT32_MAX;
     }
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoArray (uint32_t &count);
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoArray(uint32_t &count) override;
 
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
+
     static void
     Initialize();
     
@@ -107,22 +100,30 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
+
     static lldb_private::ConstString
     GetPluginNameStatic ();
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
     
 protected:
+    lldb::ValueObjectSP
+    GetReturnValueObjectImpl(lldb_private::Thread &thread,
+                             lldb_private::CompilerType &ast_type) const override;
+
     bool
     RegisterIsCalleeSaved (const lldb_private::RegisterInfo *reg_info);
 
 private:
-    ABIMacOSX_i386() : lldb_private::ABI() { } // Call CreateInstance instead.
+    ABIMacOSX_i386() : 
+        lldb_private::ABI() 
+    {
+        // Call CreateInstance instead.  
+    } 
 };
 
-
-#endif  // liblldb_ABI_h_
+#endif // liblldb_ABIMacOSX_i386_h_

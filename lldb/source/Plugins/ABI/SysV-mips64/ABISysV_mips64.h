@@ -21,46 +21,37 @@ class ABISysV_mips64 :
     public lldb_private::ABI
 {
 public:
+    ~ABISysV_mips64() override = default;
 
-    ~ABISysV_mips64()
-    {
-    }
+    size_t
+    GetRedZoneSize() const override;
 
-    virtual size_t
-    GetRedZoneSize () const;
+    bool
+    PrepareTrivialCall(lldb_private::Thread &thread,
+                       lldb::addr_t sp,
+                       lldb::addr_t functionAddress,
+                       lldb::addr_t returnAddress,
+                       llvm::ArrayRef<lldb::addr_t> args) const override;
 
-    virtual bool
-    PrepareTrivialCall (lldb_private::Thread &thread, 
-                        lldb::addr_t sp,
-                        lldb::addr_t functionAddress,
-                        lldb::addr_t returnAddress, 
-                        llvm::ArrayRef<lldb::addr_t> args) const;
+    bool
+    GetArgumentValues(lldb_private::Thread &thread,
+                      lldb_private::ValueList &values) const override;
 
-    virtual bool
-    GetArgumentValues (lldb_private::Thread &thread,
-                       lldb_private::ValueList &values) const;
+    lldb_private::Error
+    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) override;
 
-    virtual lldb_private::Error
-    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value);
-
-protected:
     lldb::ValueObjectSP
-    GetReturnValueObjectSimple (lldb_private::Thread &thread,
-                                lldb_private::CompilerType &ast_type) const;
+    GetReturnValueObjectImpl(lldb_private::Thread &thread,
+                             lldb_private::CompilerType &type) const override;
 
-public:    
-    virtual lldb::ValueObjectSP
-    GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                          lldb_private::CompilerType &type) const;
-
-    virtual bool
-    CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateFunctionEntryUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual bool
-    CreateDefaultUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
 
-    virtual bool
-    RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
+    bool
+    RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
 
     // The SysV mips ABI requires that stack frames be 16 byte aligned.
     // When there is a trap handler on the stack, e.g. _sigtramp in userland
@@ -72,8 +63,8 @@ public:
     // Whitelisting the trap handlers for user space would be easy (_sigtramp) but
     // in other environments there can be a large number of different functions
     // involved in async traps.
-    virtual bool
-    CallFrameAddressIsValid (lldb::addr_t cfa)
+    bool
+    CallFrameAddressIsValid(lldb::addr_t cfa) override
     {
         // Make sure the stack call frame addresses are 8 byte aligned
         if (cfa & (8ull - 1ull))
@@ -83,8 +74,8 @@ public:
         return true;
     }
 
-    virtual bool
-    CodeAddressIsValid (lldb::addr_t pc)
+    bool
+    CodeAddressIsValid(lldb::addr_t pc) override
     {
        if (pc & (4ull - 1ull))
            return false;   // Not 4 byte aligned
@@ -93,11 +84,13 @@ public:
         return true;
     }
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoArray (uint32_t &count);
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoArray(uint32_t &count) override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
+
     static void
     Initialize();
 
@@ -113,21 +106,30 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
 
-    virtual uint32_t
-    GetPluginVersion();
+    lldb_private::ConstString
+    GetPluginName() override;
+
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     void
     CreateRegisterMapIfNeeded ();
 
+    lldb::ValueObjectSP
+    GetReturnValueObjectSimple(lldb_private::Thread &thread,
+                               lldb_private::CompilerType &ast_type) const;
+
     bool
     RegisterIsCalleeSaved (const lldb_private::RegisterInfo *reg_info);
 
 private:
-    ABISysV_mips64() : lldb_private::ABI() { } // Call CreateInstance instead.
+    ABISysV_mips64() : 
+        lldb_private::ABI() 
+    {
+         // Call CreateInstance instead.
+    }
 };
 
-#endif  // liblldb_ABI_h_
+#endif // liblldb_ABISysV_mips64_h_

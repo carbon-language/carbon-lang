@@ -22,30 +22,30 @@ class ABIMacOSX_arm64 :
     public lldb_private::ABI
 {
 public:
-    ~ABIMacOSX_arm64() { }
+    ~ABIMacOSX_arm64() override = default;
     
-    virtual size_t 
-    GetRedZoneSize () const;
+    size_t
+    GetRedZoneSize() const override;
     
-    virtual bool
-    PrepareTrivialCall (lldb_private::Thread &thread,
-                        lldb::addr_t sp,
-                        lldb::addr_t functionAddress,
-                        lldb::addr_t returnAddress,
-                        llvm::ArrayRef<lldb::addr_t> args) const;
+    bool
+    PrepareTrivialCall(lldb_private::Thread &thread,
+                       lldb::addr_t sp,
+                       lldb::addr_t functionAddress,
+                       lldb::addr_t returnAddress,
+                       llvm::ArrayRef<lldb::addr_t> args) const override;
 
-    virtual bool
-    GetArgumentValues (lldb_private::Thread &thread,
-                       lldb_private::ValueList &values) const;
+    bool
+    GetArgumentValues(lldb_private::Thread &thread,
+                      lldb_private::ValueList &values) const override;
     
-    virtual bool
-    CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateFunctionEntryUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual bool
-    CreateDefaultUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual bool
-    RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
+    bool
+    RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
 
     // The arm64 ABI requires that stack frames be 16 byte aligned.
     // When there is a trap handler on the stack, e.g. _sigtramp in userland
@@ -57,9 +57,8 @@ public:
     // Whitelisting the trap handlers for user space would be easy (_sigtramp) but
     // in other environments there can be a large number of different functions
     // involved in async traps.
-
-    virtual bool
-    CallFrameAddressIsValid (lldb::addr_t cfa)
+    bool
+    CallFrameAddressIsValid(lldb::addr_t cfa) override
     {
         // Make sure the stack call frame addresses are are 8 byte aligned
         if (cfa & (8ull - 1ull))
@@ -69,8 +68,8 @@ public:
         return true;
     }
     
-    virtual bool
-    CodeAddressIsValid (lldb::addr_t pc)
+    bool
+    CodeAddressIsValid(lldb::addr_t pc) override
     {
         if (pc & (4ull - 1ull))
             return false;   // Not 4 byte aligned
@@ -79,12 +78,13 @@ public:
         return true;
     }
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoArray (uint32_t &count);
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoArray(uint32_t &count) override;
 
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
+
     static void
     Initialize();
     
@@ -97,25 +97,26 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
+
     static lldb_private::ConstString
     GetPluginNameStatic();
 
-    virtual lldb_private::ConstString
-    GetPluginName()
+    lldb_private::ConstString
+    GetPluginName() override
     {
         return GetPluginNameStatic();
     }
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
     
-    virtual lldb_private::Error
-    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value);
+    lldb_private::Error
+    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) override;
 
 protected:
-    virtual lldb::ValueObjectSP
+    lldb::ValueObjectSP
     GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                    lldb_private::CompilerType &ast_type) const;
+                    lldb_private::CompilerType &ast_type) const override;
 
 private:
     ABIMacOSX_arm64() : 
@@ -125,4 +126,4 @@ private:
     } 
 };
 
-#endif  // liblldb_ABI_h_
+#endif // liblldb_ABIMacOSX_arm64_h_

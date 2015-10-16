@@ -20,7 +20,7 @@
 class ABISysV_arm : public lldb_private::ABI
 {
 public:
-    ~ABISysV_arm() { }
+    ~ABISysV_arm() override = default;
 
     size_t
     GetRedZoneSize () const override;
@@ -39,12 +39,6 @@ public:
     lldb_private::Error
     SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) override;
 
-protected:
-    lldb::ValueObjectSP
-    GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                    lldb_private::CompilerType &ast_type) const override;
-
-public:
     bool
     CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan) override;
 
@@ -88,6 +82,7 @@ public:
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
+
     static void
     Initialize();
     
@@ -103,6 +98,7 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
+
     lldb_private::ConstString
     GetPluginName() override;
     
@@ -110,6 +106,10 @@ public:
     GetPluginVersion() override;
     
 protected:
+    lldb::ValueObjectSP
+    GetReturnValueObjectImpl(lldb_private::Thread &thread,
+                             lldb_private::CompilerType &ast_type) const override;
+
 private:
     ABISysV_arm() : 
         lldb_private::ABI() 
@@ -118,4 +118,4 @@ private:
     }
 };
 
-#endif  // liblldb_ABISysV_arm_h_
+#endif // liblldb_ABISysV_arm_h_

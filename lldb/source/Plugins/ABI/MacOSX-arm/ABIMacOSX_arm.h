@@ -20,42 +20,36 @@
 class ABIMacOSX_arm : public lldb_private::ABI
 {
 public:
-    ~ABIMacOSX_arm() { }
+    ~ABIMacOSX_arm() override = default;
     
-    virtual size_t 
-    GetRedZoneSize () const;
+    size_t 
+    GetRedZoneSize() const override;
     
-    virtual bool
-    PrepareTrivialCall (lldb_private::Thread &thread, 
-                        lldb::addr_t sp,
-                        lldb::addr_t func_addr,
-                        lldb::addr_t returnAddress, 
-                        llvm::ArrayRef<lldb::addr_t> args) const;
+    bool
+    PrepareTrivialCall(lldb_private::Thread &thread,
+                       lldb::addr_t sp,
+                       lldb::addr_t func_addr,
+                       lldb::addr_t returnAddress,
+                       llvm::ArrayRef<lldb::addr_t> args) const override;
     
-    virtual bool
-    GetArgumentValues (lldb_private::Thread &thread,
-                       lldb_private::ValueList &values) const;
+    bool
+    GetArgumentValues(lldb_private::Thread &thread,
+                      lldb_private::ValueList &values) const override;
     
-    virtual lldb_private::Error
-    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value);
+    lldb_private::Error
+    SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) override;
 
-protected:
-    virtual lldb::ValueObjectSP
-    GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                    lldb_private::CompilerType &ast_type) const;
-
-public:
-    virtual bool
-    CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateFunctionEntryUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual bool
-    CreateDefaultUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
     
-    virtual bool
-    RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
+    bool
+    RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
 
-    virtual bool
-    CallFrameAddressIsValid (lldb::addr_t cfa)
+    bool
+    CallFrameAddressIsValid(lldb::addr_t cfa) override
     {
         // Make sure the stack call frame addresses are are 4 byte aligned
         if (cfa & (4ull - 1ull))
@@ -65,8 +59,8 @@ public:
         return true;
     }
     
-    virtual bool
-    CodeAddressIsValid (lldb::addr_t pc)
+    bool
+    CodeAddressIsValid(lldb::addr_t pc) override
     {
         // Just make sure the address is a valid 32 bit address. Bit zero
         // might be set due to Thumb function calls, so don't enforce 2 byte
@@ -74,20 +68,21 @@ public:
         return pc <= UINT32_MAX;
     }
     
-    virtual lldb::addr_t
-    FixCodeAddress (lldb::addr_t pc)
+    lldb::addr_t
+    FixCodeAddress(lldb::addr_t pc) override
     {
         // ARM uses bit zero to signify a code address is thumb, so we must
         // strip bit zero in any code addresses.
         return pc & ~(lldb::addr_t)1;
     }
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoArray (uint32_t &count);
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoArray(uint32_t &count) override;
 
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
+
     static void
     Initialize();
     
@@ -103,13 +98,18 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+
+    lldb_private::ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
     
 protected:
+    lldb::ValueObjectSP
+    GetReturnValueObjectImpl(lldb_private::Thread &thread,
+                             lldb_private::CompilerType &ast_type) const override;
+
 private:
     ABIMacOSX_arm() : 
         lldb_private::ABI() 
@@ -118,4 +118,4 @@ private:
     }
 };
 
-#endif  // liblldb_ABIMacOSX_arm_h_
+#endif // liblldb_ABIMacOSX_arm_h_
