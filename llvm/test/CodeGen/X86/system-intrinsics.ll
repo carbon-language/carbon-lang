@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-unknown-unknown   | FileCheck %s
+; RUN: llc < %s -mtriple=i686-unknown-unknown -mattr=+fxsr  | FileCheck %s
 
 define void @test_fxsave(i8* %ptr) {
 ; CHECK-LABEL: test_fxsave

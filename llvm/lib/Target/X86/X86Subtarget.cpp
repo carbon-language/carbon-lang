@@ -236,6 +236,7 @@ void X86Subtarget::initializeEnvironment() {
   HasPOPCNT = false;
   HasSSE4A = false;
   HasAES = false;
+  HasFXSR = false;
   HasXSAVE = false;
   HasXSAVEOPT = false;
   HasXSAVEC = false;

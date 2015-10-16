@@ -89,6 +89,9 @@ protected:
   /// Target has AES instructions
   bool HasAES;
 
+  /// Target has FXSAVE/FXRESTOR instructions
+  bool HasFXSR;
+
   /// Target has XSAVE instructions
   bool HasXSAVE;
   /// Target has XSAVEOPT instructions
@@ -348,6 +351,7 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAES() const { return HasAES; }
+  bool hasFXSR() const { return HasFXSR; }
   bool hasXSAVE() const { return HasXSAVE; }
   bool hasXSAVEOPT() const { return HasXSAVEOPT; }
   bool hasXSAVEC() const { return HasXSAVEC; }
