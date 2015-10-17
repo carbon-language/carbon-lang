@@ -340,8 +340,8 @@ static const NEONLdStTableEntry *LookupNEONLdSt(unsigned Opcode) {
   }
 #endif
 
-  const auto I = std::lower_bound(std::begin(NEONLdStTable),
-                                  std::end(NEONLdStTable), Opcode);
+  auto I = std::lower_bound(std::begin(NEONLdStTable),
+                            std::end(NEONLdStTable), Opcode);
   if (I != std::end(NEONLdStTable) && I->PseudoOpc == Opcode)
     return I;
   return nullptr;
