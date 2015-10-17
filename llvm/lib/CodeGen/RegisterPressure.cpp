@@ -561,6 +561,17 @@ bool RegPressureTracker::recede(SmallVectorImpl<unsigned> *LiveUses,
   return true;
 }
 
+bool RegPressureTracker::isLastUse(unsigned VRegOrUnit, SlotIndex Pos) const {
+  // Allocatable physregs are always single-use before register rewriting.
+  if (!TargetRegisterInfo::isVirtualRegister(VRegOrUnit))
+    return true;
+  // Without liveness information we conservatively assume "no last use".
+  if (!RequireIntervals)
+    return false;
+  const LiveRange *LR = getLiveRange(VRegOrUnit);
+  return LR && LR->Query(Pos).isKill();
+}
+
 /// Advance across the current instruction.
 bool RegPressureTracker::advance() {
   assert(!TrackUntiedDefs && "unsupported mode");
@@ -595,21 +606,15 @@ bool RegPressureTracker::advance() {
     if (!isLive)
       discoverLiveIn(Reg);
     // Kill liveness at last uses.
-    bool lastUse = false;
-    if (RequireIntervals) {
-      const LiveRange *LR = getLiveRange(Reg);
-      lastUse = LR && LR->Query(SlotIdx).isKill();
-    }
-    else {
-      // Allocatable physregs are always single-use before register rewriting.
-      lastUse = !TargetRegisterInfo::isVirtualRegister(Reg);
-    }
-    if (lastUse && isLive) {
-      LiveRegs.erase(Reg);
-      decreaseRegPressure(Reg);
-    }
-    else if (!lastUse && !isLive)
+    if (isLastUse(Reg, SlotIdx)) {
+      if (isLive) {
+        LiveRegs.erase(Reg);
+        decreaseRegPressure(Reg);
+      }
+    } else if(!isLive) {
+      // We discovered a live which was not last used here, adjust pressure.
       increaseRegPressure(Reg);
+    }
   }
 
   // Generate liveness for defs.
@@ -924,21 +929,18 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
 
   for (unsigned i = 0, e = RegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = RegOpers.Uses[i];
-    if (RequireIntervals) {
+    bool IsLastUse = isLastUse(Reg, SlotIdx);
+    // We had a last use at MIs position. To know the situation for the current
+    // position we have to check if there exist other uses in between.
+    if (IsLastUse && TargetRegisterInfo::isVirtualRegister(Reg)) {
+      SlotIndex CurrIdx = getCurrSlot();
       // FIXME: allow the caller to pass in the list of vreg uses that remain
       // to be bottom-scheduled to avoid searching uses at each query.
-      SlotIndex CurrIdx = getCurrSlot();
-      const LiveRange *LR = getLiveRange(Reg);
-      if (LR) {
-        LiveQueryResult LRQ = LR->Query(SlotIdx);
-        if (LRQ.isKill() && !findUseBetween(Reg, CurrIdx, SlotIdx, *MRI, LIS))
-          decreaseRegPressure(Reg);
-      }
+      if (findUseBetween(Reg, CurrIdx, SlotIdx, *MRI, LIS))
+        IsLastUse = false;
     }
-    else if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
-      // Allocatable physregs are always single-use before register rewriting.
+    if (IsLastUse)
       decreaseRegPressure(Reg);
-    }
   }
 
   // Generate liveness for defs.
