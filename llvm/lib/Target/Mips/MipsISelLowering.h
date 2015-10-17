@@ -258,12 +258,6 @@ namespace llvm {
     EmitInstrWithCustomInserter(MachineInstr *MI,
                                 MachineBasicBlock *MBB) const override;
 
-    struct LTStr {
-      bool operator()(const char *S1, const char *S2) const {
-        return strcmp(S1, S2) < 0;
-      }
-    };
-
     void HandleByVal(CCState *, unsigned &, unsigned) const override;
 
     unsigned getRegisterByName(const char* RegName, EVT VT,
