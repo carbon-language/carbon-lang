@@ -5258,7 +5258,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     unsigned VReg = FuncInfo.getCatchPadExceptionPointerVReg(CPI, PtrRC);
     SDValue N =
         DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(), VReg, PtrVT);
-    N = DAG.getZExtOrTrunc(N, getCurSDLoc(), MVT::i32);
+    if (Intrinsic == Intrinsic::eh_exceptioncode)
+      N = DAG.getZExtOrTrunc(N, getCurSDLoc(), MVT::i32);
     setValue(&I, N);
     return nullptr;
   }
