@@ -886,7 +886,9 @@ public:
   /// @brief Return the (scalar) memory accesses for @p Inst if any.
   MemoryAccessList *lookupAccessesFor(const Instruction *Inst) const {
     auto It = InstructionToAccess.find(Inst);
-    return It == InstructionToAccess.end() ? nullptr : It->getSecond();
+    if (It == InstructionToAccess.end())
+      return nullptr;
+    return It->getSecond()->empty() ? nullptr : It->getSecond();
   }
 
   /// @brief Return the __first__ (scalar) memory access for @p Inst.
@@ -899,7 +901,9 @@ public:
   /// @brief Return the __first__ (scalar) memory access for @p Inst if any.
   MemoryAccess *lookupAccessFor(const Instruction *Inst) const {
     auto It = InstructionToAccess.find(Inst);
-    return It == InstructionToAccess.end() ? nullptr : It->getSecond()->front();
+    if (It == InstructionToAccess.end())
+      return nullptr;
+    return It->getSecond()->empty() ? nullptr : It->getSecond()->front();
   }
 
   void setBasicBlock(BasicBlock *Block) {
