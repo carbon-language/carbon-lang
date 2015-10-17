@@ -1,10 +1,8 @@
 ; RUN: opt %loadPolly -analyze -polly-scops %s | FileCheck %s
 
 ; Check that PHI nodes only create PHI access and nothing else (e.g. unnecessary
-; SCALAR accesses)In this case, for a PHI in the exit node, hence there is no
+; SCALAR accesses). In this case, for a PHI in the exit node, hence there is no
 ; PHI ReadAccess.
-
-; XFAIL: *
 
 ; CHECK-LABEL: Function: foo
 ; CHECK:       Statements {
@@ -22,7 +20,7 @@
 ; CHECK-NEXT:              { Stmt_body[i0] -> [1, i0] };
 ; CHECK-NEXT:          MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK-NEXT:              { Stmt_body[i0] -> MemRef_phi[] };
-; CHECK-NEXT:   }
+; CHECK-NEXT:  }
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

@@ -3271,6 +3271,23 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     if (NonAffineSubRegion && NonAffineSubRegion->contains(UseParent))
       continue;
 
+    // Check for PHI nodes in the region exit and skip them, if they will be
+    // modeled
+    // as PHI nodes.
+    //
+    // PHI nodes in the region exit that have more than two incoming edges need
+    // to
+    // be modeled as PHI-Nodes to correctly model the fact that depending on the
+    // control flow a different value will be assigned to the PHI node. In case
+    // this
+    // is the case, there is no need to create an additional normal scalar
+    // dependence.
+    // Hence bail out, before we register an "out-of-region" use for this
+    // definition.
+    if (isa<PHINode>(UI) && UI->getParent() == R->getExit() &&
+        !R->getExitingBlock())
+      continue;
+
     // Check whether or not the use is in the SCoP.
     if (!R->contains(UseParent)) {
       AnyCrossStmtUse = true;
