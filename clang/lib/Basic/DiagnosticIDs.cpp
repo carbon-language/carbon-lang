@@ -502,7 +502,6 @@ static const WarningOption OptionTable[] = {
 #include "clang/Basic/DiagnosticGroups.inc"
 #undef GET_DIAG_TABLE
 };
-static const size_t OptionTableSize = llvm::array_lengthof(OptionTable);
 
 static bool WarningOptionCompare(const WarningOption &LHS, StringRef RHS) {
   return LHS.getName() < RHS;
@@ -550,10 +549,10 @@ static bool getDiagnosticsInGroup(diag::Flavor Flavor,
 bool
 DiagnosticIDs::getDiagnosticsInGroup(diag::Flavor Flavor, StringRef Group,
                                      SmallVectorImpl<diag::kind> &Diags) const {
-  const WarningOption *Found = std::lower_bound(
-      OptionTable, OptionTable + OptionTableSize, Group, WarningOptionCompare);
-  if (Found == OptionTable + OptionTableSize ||
-      Found->getName() != Group)
+  const WarningOption *Found = std::lower_bound(std::begin(OptionTable),
+                                                std::end(OptionTable),
+                                                Group, WarningOptionCompare);
+  if (Found == std::end(OptionTable) || Found->getName() != Group)
     return true; // Option not found.
 
   return ::getDiagnosticsInGroup(Flavor, Found, Diags);
@@ -570,19 +569,18 @@ StringRef DiagnosticIDs::getNearestOption(diag::Flavor Flavor,
                                           StringRef Group) {
   StringRef Best;
   unsigned BestDistance = Group.size() + 1; // Sanity threshold.
-  for (const WarningOption *i = OptionTable, *e = OptionTable + OptionTableSize;
-       i != e; ++i) {
+  for (const WarningOption &O : llvm::makeArrayRef(OptionTable)) {
     // Don't suggest ignored warning flags.
-    if (!i->Members && !i->SubGroups)
+    if (!O.Members && !O.SubGroups)
       continue;
 
-    unsigned Distance = i->getName().edit_distance(Group, true, BestDistance);
+    unsigned Distance = O.getName().edit_distance(Group, true, BestDistance);
     if (Distance > BestDistance)
       continue;
 
     // Don't suggest groups that are not of this kind.
     llvm::SmallVector<diag::kind, 8> Diags;
-    if (::getDiagnosticsInGroup(Flavor, i, Diags) || Diags.empty())
+    if (::getDiagnosticsInGroup(Flavor, &O, Diags) || Diags.empty())
       continue;
 
     if (Distance == BestDistance) {
@@ -590,7 +588,7 @@ StringRef DiagnosticIDs::getNearestOption(diag::Flavor Flavor,
       Best = "";
     } else if (Distance < BestDistance) {
       // This is a better match.
-      Best = i->getName();
+      Best = O.getName();
       BestDistance = Distance;
     }
   }
