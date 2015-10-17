@@ -3,7 +3,7 @@
 
 // RUN: rm -f %T/ps4-ld
 // RUN: touch %T/ps4-ld
-// XFAIL: *
+// RUN: chmod +x %T/ps4-ld
 
 // RUN: env "PATH=%T" %clang -### -target x86_64-scei-ps4  %s -fuse-ld=gold 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PS4-LINKER %s
