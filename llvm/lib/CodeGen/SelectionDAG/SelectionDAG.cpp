@@ -3321,11 +3321,11 @@ SDValue SelectionDAG::FoldConstantVectorArithmetic(unsigned Opcode, SDLoc DL,
   for (unsigned i = 0; i != NumElts; i++) {
     SmallVector<SDValue, 4> ScalarOps;
     for (SDValue Op : Ops) {
-      EVT InSVT = Op->getValueType(0).getScalarType();
+      EVT InSVT = Op.getValueType().getScalarType();
       BuildVectorSDNode *InBV = dyn_cast<BuildVectorSDNode>(Op);
       if (!InBV) {
         // We've checked that this is UNDEF above.
-        ScalarOps.push_back(getUNDEF(LegalSVT));
+        ScalarOps.push_back(getUNDEF(InSVT));
         continue;
       }
 
