@@ -28,14 +28,14 @@ defm SHR_S : BinaryInt<sra>;
 
 defm EQ : ComparisonInt<SETEQ>;
 defm NE : ComparisonInt<SETNE>;
-defm SLT : ComparisonInt<SETLT>;
-defm SLE : ComparisonInt<SETLE>;
-defm ULT : ComparisonInt<SETULT>;
-defm ULE : ComparisonInt<SETULE>;
-defm SGT : ComparisonInt<SETGT>;
-defm SGE : ComparisonInt<SETGE>;
-defm UGT : ComparisonInt<SETUGT>;
-defm UGE : ComparisonInt<SETUGE>;
+defm LT_S : ComparisonInt<SETLT>;
+defm LE_S : ComparisonInt<SETLE>;
+defm LT_U : ComparisonInt<SETULT>;
+defm LE_U : ComparisonInt<SETULE>;
+defm GT_S : ComparisonInt<SETGT>;
+defm GE_S : ComparisonInt<SETGE>;
+defm GT_U : ComparisonInt<SETUGT>;
+defm GE_U : ComparisonInt<SETUGE>;
 
 defm CLZ : UnaryInt<ctlz>;
 defm CTZ : UnaryInt<cttz>;
