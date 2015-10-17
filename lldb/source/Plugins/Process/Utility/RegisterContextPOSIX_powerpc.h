@@ -1,4 +1,4 @@
-//===-- RegisterContextPOSIX_powerpc.h ---------------------------*- C++ -*-===//
+//===-- RegisterContextPOSIX_powerpc.h --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContextPOSIX_powerpc_H_
-#define liblldb_RegisterContextPOSIX_powerpc_H_
+#ifndef liblldb_RegisterContextPOSIX_powerpc_h_
+#define liblldb_RegisterContextPOSIX_powerpc_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/Log.h"
 #include "lldb/Target/RegisterContext.h"
 #include "RegisterInfoInterface.h"
@@ -149,16 +153,16 @@ public:
                             uint32_t concrete_frame_idx,
                             lldb_private::RegisterInfoInterface *register_info);
 
-    ~RegisterContextPOSIX_powerpc();
+    ~RegisterContextPOSIX_powerpc() override;
 
     void
     Invalidate();
 
     void
-    InvalidateAllRegisters();
+    InvalidateAllRegisters() override;
 
     size_t
-    GetRegisterCount();
+    GetRegisterCount() override;
 
     virtual size_t
     GetGPRSize();
@@ -170,19 +174,19 @@ public:
     GetRegisterOffset(unsigned reg);
 
     const lldb_private::RegisterInfo *
-    GetRegisterInfoAtIndex(size_t reg);
+    GetRegisterInfoAtIndex(size_t reg) override;
 
     size_t
-    GetRegisterSetCount();
+    GetRegisterSetCount() override;
 
     const lldb_private::RegisterSet *
-    GetRegisterSet(size_t set);
+    GetRegisterSet(size_t set) override;
 
     const char *
     GetRegisterName(unsigned reg);
 
     uint32_t
-    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num) override;
 
 protected:
     uint64_t m_gpr_powerpc[k_num_gpr_registers_powerpc];         // general purpose registers.
@@ -216,4 +220,4 @@ protected:
     virtual bool WriteVMX() = 0;
 };
 
-#endif // #ifndef liblldb_RegisterContextPOSIX_powerpc_H_
+#endif // liblldb_RegisterContextPOSIX_powerpc_h_

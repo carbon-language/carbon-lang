@@ -10,6 +10,10 @@
 #ifndef liblldb_HistoryThread_h_
 #define liblldb_HistoryThread_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Core/Broadcaster.h"
@@ -37,52 +41,55 @@ class HistoryThread : public lldb_private::Thread
 public:
     HistoryThread (lldb_private::Process &process, lldb::tid_t tid, std::vector<lldb::addr_t> pcs, uint32_t stop_id, bool stop_id_is_valid);
 
-    virtual ~HistoryThread ();
+    ~HistoryThread() override;
 
-    virtual lldb::RegisterContextSP
-    GetRegisterContext ();
+    lldb::RegisterContextSP
+    GetRegisterContext() override;
 
-    virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (StackFrame *frame);
+    lldb::RegisterContextSP
+    CreateRegisterContextForFrame(StackFrame *frame) override;
 
-    virtual void
-    RefreshStateAfterStop() { }
+    void
+    RefreshStateAfterStop() override { }
 
     bool
-    CalculateStopInfo () { return false; }
+    CalculateStopInfo() override
+    {
+        return false;
+    }
 
     void 
-    SetExtendedBacktraceToken (uint64_t token)
+    SetExtendedBacktraceToken(uint64_t token) override
     {
         m_extended_unwind_token = token;
     }
 
     uint64_t
-    GetExtendedBacktraceToken ()
+    GetExtendedBacktraceToken() override
     {
         return m_extended_unwind_token;
     }
 
     const char *
-    GetQueueName ()
+    GetQueueName() override
     {
         return m_queue_name.c_str();
     }
 
     void
-    SetQueueName (const char *name)
+    SetQueueName(const char *name) override
     {
         m_queue_name = name;
     }
 
     lldb::queue_id_t
-    GetQueueID ()
+    GetQueueID() override
     {
         return m_queue_id;
     }
 
     void
-    SetQueueID (lldb::queue_id_t queue)
+    SetQueueID(lldb::queue_id_t queue) override
     {
         m_queue_id = queue;
     }
@@ -94,7 +101,7 @@ public:
     }
 
     uint32_t
-    GetExtendedBacktraceOriginatingIndexID ();
+    GetExtendedBacktraceOriginatingIndexID() override;
 
     void
     SetThreadName (const char *name)
@@ -102,14 +109,14 @@ public:
         m_thread_name = name;
     }
     
-    virtual const char *
-    GetName ()
+    const char *
+    GetName() override
     {
         return m_thread_name.c_str();
     }
     
-    virtual void
-    SetName(const char *name)
+    void
+    SetName(const char *name) override
     {
         m_thread_name = name;
     }
@@ -133,4 +140,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_HistoryThread_h_
+#endif // liblldb_HistoryThread_h_

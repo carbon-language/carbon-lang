@@ -20,45 +20,45 @@
 class RegisterContextDarwin_i386 : public lldb_private::RegisterContext
 {
 public:
-
     RegisterContextDarwin_i386(lldb_private::Thread &thread,
-                             uint32_t concrete_frame_idx);
+                               uint32_t concrete_frame_idx);
 
-    virtual
-    ~RegisterContextDarwin_i386();
+    ~RegisterContextDarwin_i386() override;
 
-    virtual void
-    InvalidateAllRegisters ();
+    void
+    InvalidateAllRegisters() override;
 
-    virtual size_t
-    GetRegisterCount ();
+    size_t
+    GetRegisterCount() override;
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoAtIndex (size_t reg);
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoAtIndex(size_t reg) override;
 
-    virtual size_t
-    GetRegisterSetCount ();
+    size_t
+    GetRegisterSetCount() override;
 
-    virtual const lldb_private::RegisterSet *
-    GetRegisterSet (size_t set);
+    const lldb_private::RegisterSet *
+    GetRegisterSet(size_t set) override;
 
-    virtual bool
-    ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
+    bool
+    ReadRegister(const lldb_private::RegisterInfo *reg_info,
+                 lldb_private::RegisterValue &value) override;
 
-    virtual bool
-    WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+    bool
+    WriteRegister(const lldb_private::RegisterInfo *reg_info,
+                  const lldb_private::RegisterValue &value) override;
     
-    virtual bool
-    ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
+    bool
+    ReadAllRegisterValues(lldb::DataBufferSP &data_sp) override;
 
-    virtual bool
-    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
+    bool
+    WriteAllRegisterValues(const lldb::DataBufferSP &data_sp) override;
 
-    virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
+    uint32_t
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num) override;
 
-    virtual bool
-    HardwareSingleStep (bool enable);
+    bool
+    HardwareSingleStep(bool enable) override;
 
     struct GPR
     {
@@ -121,7 +121,6 @@ public:
     };
 
 protected:
-
     enum
     {
         GPRRegSet = 1,
@@ -266,4 +265,4 @@ protected:
     GetRegisterInfos ();
 };
 
-#endif  // liblldb_RegisterContextDarwin_i386_h_
+#endif // liblldb_RegisterContextDarwin_i386_h_

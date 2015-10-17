@@ -7,9 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContextFreeBSD_powerpc_H_
-#define liblldb_RegisterContextFreeBSD_powerpc_H_
+#ifndef liblldb_RegisterContextFreeBSD_powerpc_h_
+#define liblldb_RegisterContextFreeBSD_powerpc_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "RegisterInfoInterface.h"
 
 class RegisterContextFreeBSD_powerpc:
@@ -17,7 +21,7 @@ class RegisterContextFreeBSD_powerpc:
 {
 public:
     RegisterContextFreeBSD_powerpc(const lldb_private::ArchSpec &target_arch);
-    virtual ~RegisterContextFreeBSD_powerpc();
+    ~RegisterContextFreeBSD_powerpc() override;
 
     size_t
     GetGPRSize() const override;
@@ -34,7 +38,7 @@ class RegisterContextFreeBSD_powerpc32:
 {
 public:
     RegisterContextFreeBSD_powerpc32(const lldb_private::ArchSpec &target_arch);
-    virtual ~RegisterContextFreeBSD_powerpc32();
+    ~RegisterContextFreeBSD_powerpc32() override;
 
     size_t
     GetGPRSize() const override;
@@ -51,7 +55,7 @@ class RegisterContextFreeBSD_powerpc64:
 {
 public:
     RegisterContextFreeBSD_powerpc64(const lldb_private::ArchSpec &target_arch);
-    virtual ~RegisterContextFreeBSD_powerpc64();
+    ~RegisterContextFreeBSD_powerpc64() override;
 
     size_t
     GetGPRSize() const override;
@@ -63,4 +67,4 @@ public:
     GetRegisterCount() const override;
 };
 
-#endif
+#endif // liblldb_RegisterContextFreeBSD_powerpc_h_

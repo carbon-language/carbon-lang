@@ -7,9 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContextPOSIX_mips64_H_
-#define liblldb_RegisterContextPOSIX_mips64_H_
+#ifndef liblldb_RegisterContextPOSIX_mips64_h_
+#define liblldb_RegisterContextPOSIX_mips64_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/Log.h"
 #include "lldb/Target/RegisterContext.h"
 #include "RegisterInfoInterface.h"
@@ -28,16 +32,16 @@ public:
                             uint32_t concrete_frame_idx,
                             lldb_private::RegisterInfoInterface *register_info);
 
-    ~RegisterContextPOSIX_mips64();
+    ~RegisterContextPOSIX_mips64() override;
 
     void
     Invalidate();
 
     void
-    InvalidateAllRegisters();
+    InvalidateAllRegisters() override;
 
     size_t
-    GetRegisterCount();
+    GetRegisterCount() override;
 
     virtual size_t
     GetGPRSize();
@@ -49,19 +53,19 @@ public:
     GetRegisterOffset(unsigned reg);
 
     const lldb_private::RegisterInfo *
-    GetRegisterInfoAtIndex(size_t reg);
+    GetRegisterInfoAtIndex(size_t reg) override;
 
     size_t
-    GetRegisterSetCount();
+    GetRegisterSetCount() override;
 
     const lldb_private::RegisterSet *
-    GetRegisterSet(size_t set);
+    GetRegisterSet(size_t set) override;
 
     const char *
     GetRegisterName(unsigned reg);
 
     uint32_t
-    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num) override;
 
 protected:
     uint64_t m_gpr_mips64[k_num_gpr_registers_mips64];         // general purpose registers.
@@ -88,4 +92,4 @@ protected:
     virtual bool WriteFPR() = 0;
 };
 
-#endif // #ifndef liblldb_RegisterContextPOSIX_mips64_H_
+#endif // liblldb_RegisterContextPOSIX_mips64_h_

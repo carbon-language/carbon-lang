@@ -10,8 +10,12 @@
 #ifndef lldb_RegisterContextDummy_h_
 #define lldb_RegisterContextDummy_h_
 
+// C Includes
+// C++ Includes
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -25,42 +29,39 @@ public:
     
     RegisterContextDummy (Thread &thread, uint32_t concrete_frame_idx, uint32_t address_byte_size);
     
-    ///
-    // pure virtual functions from the base class that we must implement
-    ///
+    ~RegisterContextDummy() override;
 
-    virtual
-    ~RegisterContextDummy ();
+    void
+    InvalidateAllRegisters() override;
 
-    virtual void
-    InvalidateAllRegisters ();
+    size_t
+    GetRegisterCount() override;
 
-    virtual size_t
-    GetRegisterCount ();
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoAtIndex(size_t reg) override;
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoAtIndex (size_t reg);
+    size_t
+    GetRegisterSetCount() override;
 
-    virtual size_t
-    GetRegisterSetCount ();
+    const lldb_private::RegisterSet *
+    GetRegisterSet(size_t reg_set) override;
 
-    virtual const lldb_private::RegisterSet *
-    GetRegisterSet (size_t reg_set);
+    bool
+    ReadRegister(const lldb_private::RegisterInfo *reg_info,
+                 lldb_private::RegisterValue &value) override;
 
-    virtual bool
-    ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
+    bool
+    WriteRegister(const lldb_private::RegisterInfo *reg_info,
+                  const lldb_private::RegisterValue &value) override;
 
-    virtual bool
-    WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+    bool
+    ReadAllRegisterValues(lldb::DataBufferSP &data_sp) override;
 
-    virtual bool
-    ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
+    bool
+    WriteAllRegisterValues(const lldb::DataBufferSP &data_sp) override;
 
-    virtual bool
-    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
-
-    virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
+    uint32_t
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num) override;
     
 private:
     //------------------------------------------------------------------
@@ -72,6 +73,7 @@ private:
     
     DISALLOW_COPY_AND_ASSIGN (RegisterContextDummy);
 };
+
 } // namespace lldb_private
 
-#endif  // lldb_RegisterContextDummy_h_
+#endif // lldb_RegisterContextDummy_h_

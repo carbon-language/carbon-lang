@@ -51,68 +51,65 @@
 class RegisterContextDarwin_arm : public lldb_private::RegisterContext
 {
 public:
-
     RegisterContextDarwin_arm(lldb_private::Thread &thread, uint32_t concrete_frame_idx);
 
-    virtual
-    ~RegisterContextDarwin_arm();
+    ~RegisterContextDarwin_arm() override;
 
-    virtual void
-    InvalidateAllRegisters ();
+    void
+    InvalidateAllRegisters() override;
 
-    virtual size_t
-    GetRegisterCount ();
+    size_t
+    GetRegisterCount() override;
 
-    virtual const lldb_private::RegisterInfo *
-    GetRegisterInfoAtIndex (size_t reg);
+    const lldb_private::RegisterInfo *
+    GetRegisterInfoAtIndex(size_t reg) override;
 
-    virtual size_t
-    GetRegisterSetCount ();
+    size_t
+    GetRegisterSetCount() override;
 
-    virtual const lldb_private::RegisterSet *
-    GetRegisterSet (size_t set);
+    const lldb_private::RegisterSet *
+    GetRegisterSet(size_t set) override;
 
-    virtual bool
-    ReadRegister (const lldb_private::RegisterInfo *reg_info, 
-                  lldb_private::RegisterValue &reg_value);
+    bool
+    ReadRegister(const lldb_private::RegisterInfo *reg_info,
+                 lldb_private::RegisterValue &reg_value) override;
     
-    virtual bool
-    WriteRegister (const lldb_private::RegisterInfo *reg_info,
-                   const lldb_private::RegisterValue &reg_value);
+    bool
+    WriteRegister(const lldb_private::RegisterInfo *reg_info,
+                  const lldb_private::RegisterValue &reg_value) override;
     
-    virtual bool
-    ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
+    bool
+    ReadAllRegisterValues(lldb::DataBufferSP &data_sp) override;
 
-    virtual bool
-    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
+    bool
+    WriteAllRegisterValues(const lldb::DataBufferSP &data_sp) override;
 
-    virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
+    uint32_t
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num) override;
 
-    virtual uint32_t
-    NumSupportedHardwareBreakpoints ();
+    uint32_t
+    NumSupportedHardwareBreakpoints() override;
 
-    virtual uint32_t
-    SetHardwareBreakpoint (lldb::addr_t addr, size_t size);
+    uint32_t
+    SetHardwareBreakpoint(lldb::addr_t addr, size_t size) override;
 
-    virtual bool
-    ClearHardwareBreakpoint (uint32_t hw_idx);
+    bool
+    ClearHardwareBreakpoint(uint32_t hw_idx) override;
 
-    virtual uint32_t
-    NumSupportedHardwareWatchpoints ();
+    uint32_t
+    NumSupportedHardwareWatchpoints() override;
 
-    virtual uint32_t
-    SetHardwareWatchpoint (lldb::addr_t addr, size_t size, bool read, bool write);
+    uint32_t
+    SetHardwareWatchpoint(lldb::addr_t addr, size_t size, bool read, bool write) override;
 
-    virtual bool
-    ClearHardwareWatchpoint (uint32_t hw_index);
+    bool
+    ClearHardwareWatchpoint(uint32_t hw_index) override;
 
     struct GPR
     {
         uint32_t    r[16];  // R0-R15
         uint32_t    cpsr;   // CPSR
     };
-
 
     struct QReg
     {
@@ -163,7 +160,6 @@ public:
     LogDBGRegisters (lldb_private::Log *log, const DBG& dbg);
 
 protected:
-
     enum
     {
         GPRRegSet = 1, // ARM_THREAD_STATE
@@ -330,4 +326,4 @@ protected:
     GetRegisterInfos ();
 };
 
-#endif  // liblldb_RegisterContextDarwin_arm_h_
+#endif // liblldb_RegisterContextDarwin_arm_h_
