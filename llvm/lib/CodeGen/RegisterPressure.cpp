@@ -389,7 +389,7 @@ void PressureDiff::addPressureChange(unsigned RegUnit, bool IsDec,
   int Weight = IsDec ? -PSetI.getWeight() : PSetI.getWeight();
   for (; PSetI.isValid(); ++PSetI) {
     // Find an existing entry in the pressure diff for this PSet.
-    PressureDiff::iterator I = begin(), E = end();
+    PressureDiff::iterator I = nonconst_begin(), E = nonconst_end();
     for (; I != E && I->isValid(); ++I) {
       if (I->getPSet() >= *PSetI)
         break;

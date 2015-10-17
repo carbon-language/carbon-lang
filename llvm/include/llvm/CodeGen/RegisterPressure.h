@@ -125,11 +125,13 @@ class PressureDiff {
   enum { MaxPSets = 16 };
 
   PressureChange PressureChanges[MaxPSets];
-public:
+
   typedef PressureChange* iterator;
+  iterator nonconst_begin() { return &PressureChanges[0]; }
+  iterator nonconst_end() { return &PressureChanges[MaxPSets]; }
+
+public:
   typedef const PressureChange* const_iterator;
-  iterator begin() { return &PressureChanges[0]; }
-  iterator end() { return &PressureChanges[MaxPSets]; }
   const_iterator begin() const { return &PressureChanges[0]; }
   const_iterator end() const { return &PressureChanges[MaxPSets]; }
 
