@@ -106,7 +106,6 @@ int main(int argc, char **argv) {
   ExecutionEngine *EE =
     EngineBuilder(std::move(Owner))
     .setErrorStr(&errStr)
-    .setEngineKind(EngineKind::JIT)
     .create();
 
   if (!EE) {
