@@ -373,6 +373,16 @@ protected:
   void handleOutsideUsers(const Region &R, Instruction *Inst,
                           Value *Address = nullptr);
 
+  /// @brief Find scalar statements that have outside users.
+  ///
+  /// We register these scalar values to later update subsequent scalar uses of
+  /// these values to either use the newly computed value from within the scop
+  /// (if the scop was executed) or the unchanged original code (if the run-time
+  /// check failed).
+  ///
+  /// @param S The scop for which to find the outside users.
+  void findOutsideUsers(Scop &S);
+
   /// @brief Initialize the memory of demoted scalars.
   ///
   /// @param S The scop for which to generate the scalar initializers.

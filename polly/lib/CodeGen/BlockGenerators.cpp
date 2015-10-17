@@ -312,10 +312,6 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
   // in their alloca. First the scalars that have dependences inside the SCoP,
   // then the ones that might escape the SCoP.
   generateScalarStores(Stmt, BB, LTS, BBMap);
-
-  const Region &R = Stmt.getParent()->getRegion();
-  for (Instruction &Inst : *BB)
-    handleOutsideUsers(R, &Inst);
 }
 
 Value *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
@@ -572,7 +568,8 @@ void BlockGenerator::createScalarFinalization(Region &R) {
   }
 }
 
-void BlockGenerator::finalizeSCoP(Scop &S) {
+void BlockGenerator::findOutsideUsers(Scop &S) {
+  auto &R = S.getRegion();
 
   // Handle PHI nodes that were in the original exit and are now
   // moved into the region exiting block.
@@ -589,6 +586,32 @@ void BlockGenerator::finalizeSCoP(Scop &S) {
     }
   }
 
+  for (auto &Pair : S.arrays()) {
+    auto &Array = Pair.second;
+
+    if (Array->getNumberOfDimensions() != 0)
+      continue;
+
+    if (Array->isPHI())
+      continue;
+
+    auto *Inst = dyn_cast<Instruction>(Array->getBasePtr());
+
+    if (!Inst)
+      continue;
+
+    // Scop invariant hoisting moves some of the base pointers out of the scop.
+    // We can ignore these, as the invariant load hoisting already registers the
+    // relevant outside users.
+    if (!R.contains(Inst))
+      continue;
+
+    handleOutsideUsers(R, Inst, nullptr);
+  }
+}
+
+void BlockGenerator::finalizeSCoP(Scop &S) {
+  findOutsideUsers(S);
   createScalarInitialization(S);
   createScalarFinalization(S.getRegion());
 }
