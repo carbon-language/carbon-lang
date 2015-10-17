@@ -35,6 +35,7 @@ namespace polly {
 using namespace llvm;
 class ScopStmt;
 class MemoryAccess;
+class ScopArrayInfo;
 class IslExprBuilder;
 
 /// @brief Generate a new basic block for a polyhedral statement.
@@ -129,6 +130,16 @@ public:
   /// @returns The alloca for @p Access or a replacement value taken from
   ///          GlobalMap.
   Value *getOrCreateAlloca(MemoryAccess &Access);
+
+  /// @brief Return the alloca for @p Array
+  ///
+  /// If no alloca was mapped for @p Array a new one is created.
+  ///
+  /// @param Array The array for which to generate the alloca
+  ///
+  /// @returns The alloca for @p Array or a replacement value taken from
+  ///          GlobalMap.
+  Value *getOrCreateAlloca(const ScopArrayInfo *Array);
 
   /// @brief Finalize the code generation for the SCoP @p S.
   ///

@@ -332,10 +332,14 @@ Value *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
 }
 
 Value *BlockGenerator::getOrCreateAlloca(MemoryAccess &Access) {
-  if (Access.getScopArrayInfo()->isPHI())
-    return getOrCreatePHIAlloca(Access.getBaseAddr());
+  return getOrCreateAlloca(Access.getScopArrayInfo());
+}
+
+Value *BlockGenerator::getOrCreateAlloca(const ScopArrayInfo *Array) {
+  if (Array->isPHI())
+    return getOrCreatePHIAlloca(Array->getBasePtr());
   else
-    return getOrCreateScalarAlloca(Access.getBaseAddr());
+    return getOrCreateScalarAlloca(Array->getBasePtr());
 }
 
 Value *BlockGenerator::getOrCreateScalarAlloca(Value *ScalarBase) {
