@@ -2044,11 +2044,8 @@ bool llvm::isImageOrSamplerVal(const Value *arg, const Module *context) {
   auto *STy = dyn_cast<StructType>(PTy->getElementType());
   const std::string TypeName = STy && !STy->isLiteral() ? STy->getName() : "";
 
-  for (int i = 0, e = array_lengthof(specialTypes); i != e; ++i)
-    if (TypeName == specialTypes[i])
-      return true;
-
-  return false;
+  return std::find(std::begin(specialTypes), std::end(specialTypes),
+                   TypeName) != std::end(specialTypes);
 }
 
 SDValue NVPTXTargetLowering::LowerFormalArguments(
