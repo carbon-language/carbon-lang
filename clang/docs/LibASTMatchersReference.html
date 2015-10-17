@@ -321,7 +321,7 @@ namespaceDecl()
 
 Given
   template &lt;typename T, int N&gt; struct C {};
-templateArgument()
+nonTypeTemplateParmDecl()
   matches 'N', but not 'T'.
 </pre></td></tr>
 
@@ -368,6 +368,16 @@ in
     int x;
   };
   static_assert(sizeof(S) == sizeof(int));
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('templateTypeParmDecl0')"><a name="templateTypeParmDecl0Anchor">templateTypeParmDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateTypeParmDecl.html">TemplateTypeParmDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="templateTypeParmDecl0"><pre>Matches template type parameter declarations.
+
+Given
+  template &lt;typename T, int N&gt; struct C {};
+templateTypeParmDecl()
+  matches 'T', but not 'N'.
 </pre></td></tr>
 
 

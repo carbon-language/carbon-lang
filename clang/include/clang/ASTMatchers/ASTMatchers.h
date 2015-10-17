@@ -418,11 +418,23 @@ const internal::VariadicAllOfMatcher<TemplateArgument> templateArgument;
 /// \code
 ///   template <typename T, int N> struct C {};
 /// \endcode
-/// templateArgument()
+/// nonTypeTemplateParmDecl()
 ///   matches 'N', but not 'T'.
 const internal::VariadicDynCastAllOfMatcher<
   Decl,
   NonTypeTemplateParmDecl> nonTypeTemplateParmDecl;
+
+/// \brief Matches template type parameter declarations.
+///
+/// Given
+/// \code
+///   template <typename T, int N> struct C {};
+/// \endcode
+/// templateTypeParmDecl()
+///   matches 'T', but not 'N'.
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  TemplateTypeParmDecl> templateTypeParmDecl;
 
 /// \brief Matches public C++ declarations.
 ///
