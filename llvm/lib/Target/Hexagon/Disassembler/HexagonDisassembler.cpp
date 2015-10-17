@@ -58,6 +58,18 @@ public:
 static DecodeStatus DecodeModRegsRegisterClass(MCInst &Inst, unsigned RegNo,
                                                uint64_t Address,
                                                const void *Decoder);
+static DecodeStatus DecodeIntRegsLow8RegisterClass(MCInst &Inst, unsigned RegNo,
+                                                   uint64_t Address,
+                                                   const void *Decoder);
+static DecodeStatus DecodeVectorRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                                  uint64_t Address,
+                                                  const void *Decoder);
+static DecodeStatus DecodeVecDblRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                                  uint64_t Address,
+                                                  const void *Decoder);
+static DecodeStatus DecodeVecPredRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                                   uint64_t Address,
+                                                   const void *Decoder);
 static DecodeStatus DecodeCtrRegsRegisterClass(MCInst &Inst, unsigned RegNo,
                                                uint64_t Address,
                                                const void *Decoder);
@@ -94,6 +106,10 @@ static DecodeStatus s4_1ImmDecoder(MCInst &MI, unsigned tmp, uint64_t Address,
 static DecodeStatus s4_2ImmDecoder(MCInst &MI, unsigned tmp, uint64_t Address,
                                    const void *Decoder);
 static DecodeStatus s4_3ImmDecoder(MCInst &MI, unsigned tmp, uint64_t Address,
+                                   const void *Decoder);
+static DecodeStatus s4_6ImmDecoder(MCInst &MI, unsigned tmp, uint64_t Address,
+                                   const void *Decoder);
+static DecodeStatus s3_6ImmDecoder(MCInst &MI, unsigned tmp, uint64_t Address,
                                    const void *Decoder);
 
 static const uint16_t IntRegDecoderTable[] = {
@@ -383,6 +399,51 @@ DecodeStatus HexagonDisassembler::getSingleInstruction(
 
   return Result;
 }
+static DecodeStatus DecodeIntRegsLow8RegisterClass(MCInst &Inst, unsigned RegNo,
+                                                   uint64_t Address,
+                                                   const void *Decoder) {
+  return DecodeIntRegsRegisterClass(Inst, RegNo, Address, Decoder);
+}
+
+
+static DecodeStatus DecodeVectorRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                                  uint64_t /*Address*/,
+                                                  const void *Decoder) {
+  static const uint16_t VecRegDecoderTable[] = {
+      Hexagon::V0,  Hexagon::V1,  Hexagon::V2,  Hexagon::V3,  Hexagon::V4,
+      Hexagon::V5,  Hexagon::V6,  Hexagon::V7,  Hexagon::V8,  Hexagon::V9,
+      Hexagon::V10, Hexagon::V11, Hexagon::V12, Hexagon::V13, Hexagon::V14,
+      Hexagon::V15, Hexagon::V16, Hexagon::V17, Hexagon::V18, Hexagon::V19,
+      Hexagon::V20, Hexagon::V21, Hexagon::V22, Hexagon::V23, Hexagon::V24,
+      Hexagon::V25, Hexagon::V26, Hexagon::V27, Hexagon::V28, Hexagon::V29,
+      Hexagon::V30, Hexagon::V31};
+
+  return (DecodeRegisterClass(Inst, RegNo, VecRegDecoderTable,
+                              sizeof(VecRegDecoderTable)));
+}
+
+static DecodeStatus DecodeVecDblRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                                  uint64_t /*Address*/,
+                                                  const void *Decoder) {
+  static const uint16_t VecDblRegDecoderTable[] = {
+      Hexagon::W0,  Hexagon::W1,  Hexagon::W2,  Hexagon::W3,
+      Hexagon::W4,  Hexagon::W5,  Hexagon::W6,  Hexagon::W7,
+      Hexagon::W8,  Hexagon::W9,  Hexagon::W10, Hexagon::W11,
+      Hexagon::W12, Hexagon::W13, Hexagon::W14, Hexagon::W15};
+
+  return (DecodeRegisterClass(Inst, RegNo >> 1, VecDblRegDecoderTable,
+                              sizeof(VecDblRegDecoderTable)));
+}
+
+static DecodeStatus DecodeVecPredRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                                   uint64_t /*Address*/,
+                                                   const void *Decoder) {
+  static const uint16_t VecPredRegDecoderTable[] = {Hexagon::Q0, Hexagon::Q1,
+                                                    Hexagon::Q2, Hexagon::Q3};
+
+  return (DecodeRegisterClass(Inst, RegNo, VecPredRegDecoderTable,
+                              sizeof(VecPredRegDecoderTable)));
+}
 
 static DecodeStatus s16ImmDecoder(MCInst &MI, unsigned tmp,
                                   uint64_t /*Address*/, const void *Decoder) {
@@ -471,6 +532,20 @@ static DecodeStatus s4_2ImmDecoder(MCInst &MI, unsigned tmp,
 static DecodeStatus s4_3ImmDecoder(MCInst &MI, unsigned tmp,
                                    uint64_t /*Address*/, const void *Decoder) {
   uint64_t imm = SignExtend64<7>(tmp);
+  MI.addOperand(MCOperand::createImm(imm));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus s4_6ImmDecoder(MCInst &MI, unsigned tmp,
+                                   uint64_t /*Address*/, const void *Decoder) {
+  uint64_t imm = SignExtend64<10>(tmp);
+  MI.addOperand(MCOperand::createImm(imm));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus s3_6ImmDecoder(MCInst &MI, unsigned tmp,
+                                   uint64_t /*Address*/, const void *Decoder) {
+  uint64_t imm = SignExtend64<9>(tmp);
   MI.addOperand(MCOperand::createImm(imm));
   return MCDisassembler::Success;
 }

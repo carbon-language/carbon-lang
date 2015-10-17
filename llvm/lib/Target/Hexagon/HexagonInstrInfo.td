@@ -13,7 +13,7 @@
 
 include "HexagonInstrFormats.td"
 include "HexagonOperands.td"
-
+include "HexagonInstrEnc.td"
 // Pattern fragment that combines the value type and the register class
 // into a single parameter.
 // The pat frags in the definitions below need to have a named register,
@@ -5781,6 +5781,16 @@ include "HexagonInstrInfoV5.td"
 
 //===----------------------------------------------------------------------===//
 // V5 Instructions -
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// V60 Instructions +
+//===----------------------------------------------------------------------===//
+
+include "HexagonInstrInfoV60.td"
+
+//===----------------------------------------------------------------------===//
+// V60 Instructions -
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//

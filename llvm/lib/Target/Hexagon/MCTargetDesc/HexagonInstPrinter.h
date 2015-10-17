@@ -47,7 +47,15 @@ namespace llvm {
     void printNegImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O)
            const;
     void printNOneImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O)
-           const;
+             const;
+    void prints3_6ImmOperand(MCInst const *MI, unsigned OpNo,
+                             raw_ostream &O) const;
+    void prints3_7ImmOperand(MCInst const *MI, unsigned OpNo,
+                             raw_ostream &O) const;
+    void prints4_6ImmOperand(MCInst const *MI, unsigned OpNo,
+                             raw_ostream &O) const;
+    void prints4_7ImmOperand(MCInst const *MI, unsigned OpNo,
+                             raw_ostream &O) const;
     void printMEMriOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O)
            const;
     void printFrameIndexOperand(const MCInst *MI, unsigned OpNo,

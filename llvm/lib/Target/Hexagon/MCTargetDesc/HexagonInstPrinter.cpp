@@ -178,6 +178,34 @@ void HexagonInstPrinter::printNOneImmOperand(const MCInst *MI, unsigned OpNo,
   O << -1;
 }
 
+void HexagonInstPrinter::prints3_6ImmOperand(MCInst const *MI, unsigned OpNo,
+                                             raw_ostream &O) const {
+  int64_t Imm = MI->getOperand(OpNo).getImm();
+  assert(((Imm & 0x3f) == 0) && "Lower 6 bits must be ZERO.");
+  O << formatImm(Imm/64);
+}
+
+void HexagonInstPrinter::prints3_7ImmOperand(MCInst const *MI, unsigned OpNo,
+                                             raw_ostream &O) const {
+  int64_t Imm = MI->getOperand(OpNo).getImm();
+  assert(((Imm & 0x7f) == 0) && "Lower 7 bits must be ZERO.");
+  O << formatImm(Imm/128);
+}
+
+void HexagonInstPrinter::prints4_6ImmOperand(MCInst const *MI, unsigned OpNo,
+                                             raw_ostream &O) const {
+  int64_t Imm = MI->getOperand(OpNo).getImm();
+  assert(((Imm & 0x3f) == 0) && "Lower 6 bits must be ZERO.");
+  O << formatImm(Imm/64);
+}
+
+void HexagonInstPrinter::prints4_7ImmOperand(MCInst const *MI, unsigned OpNo,
+                                             raw_ostream &O) const {
+  int64_t Imm = MI->getOperand(OpNo).getImm();
+  assert(((Imm & 0x7f) == 0) && "Lower 7 bits must be ZERO.");
+  O << formatImm(Imm/128);
+}
+
 void HexagonInstPrinter::printMEMriOperand(const MCInst *MI, unsigned OpNo,
                                            raw_ostream &O) const {
   const MCOperand& MO0 = MI->getOperand(OpNo);

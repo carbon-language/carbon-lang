@@ -11,6 +11,8 @@ def s4_0ImmOperand : AsmOperandClass { let Name = "s4_0Imm"; }
 def s4_1ImmOperand : AsmOperandClass { let Name = "s4_1Imm"; }
 def s4_2ImmOperand : AsmOperandClass { let Name = "s4_2Imm"; }
 def s4_3ImmOperand : AsmOperandClass { let Name = "s4_3Imm"; }
+def s4_6ImmOperand : AsmOperandClass { let Name = "s4_6Imm"; }
+def s3_6ImmOperand : AsmOperandClass { let Name = "s3_6Imm"; }
 
 // Immediate operands.
 
@@ -56,6 +58,19 @@ let PrintMethod = "printImmOperand" in {
   def u1Imm : Operand<i32>;
   def n8Imm : Operand<i32>;
   def m6Imm : Operand<i32>;
+}
+
+let OperandType = "OPERAND_IMMEDIATE" in {
+  def s4_6Imm : Operand<i32> { let ParserMatchClass = s4_6ImmOperand;
+                               let PrintMethod = "prints4_6ImmOperand";
+                               let DecoderMethod = "s4_6ImmDecoder";}
+  def s4_7Imm : Operand<i32> { let PrintMethod = "prints4_7ImmOperand";
+                               let DecoderMethod = "s4_6ImmDecoder";}
+  def s3_6Imm : Operand<i32> { let ParserMatchClass = s3_6ImmOperand;
+                               let PrintMethod = "prints3_6ImmOperand";
+                               let DecoderMethod = "s3_6ImmDecoder";}
+  def s3_7Imm : Operand<i32> { let PrintMethod = "prints3_7ImmOperand";
+                               let DecoderMethod = "s3_6ImmDecoder";}
 }
 
 let PrintMethod = "printNOneImmOperand" in
@@ -499,6 +514,43 @@ def u9ExtPred  : PatLeaf<(i32 imm), [{
   // Return true if extending this immediate is profitable and the value
   // can fit in a 32-bit unsigned field.
   return isConstExtProfitable(Node) && isUInt<32>(v);
+}]>;
+
+
+def s4_7ImmPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (HST->hasV60TOps())
+    // Return true if the immediate can fit in a 10-bit sign extended field and
+    // is 128-byte aligned.
+    return isShiftedInt<4,7>(v);
+  return false;
+}]>;
+
+def s3_7ImmPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (HST->hasV60TOps())
+    // Return true if the immediate can fit in a 9-bit sign extended field and
+    // is 128-byte aligned.
+    return isShiftedInt<3,7>(v);
+  return false;
+}]>;
+
+def s4_6ImmPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (HST->hasV60TOps())
+    // Return true if the immediate can fit in a 10-bit sign extended field and
+    // is 64-byte aligned.
+    return isShiftedInt<4,6>(v);
+  return false;
+}]>;
+
+def s3_6ImmPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (HST->hasV60TOps())
+    // Return true if the immediate can fit in a 9-bit sign extended field and
+    // is 64-byte aligned.
+    return isShiftedInt<3,6>(v);
+  return false;
 }]>;
 
 

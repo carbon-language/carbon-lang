@@ -34,6 +34,8 @@ class SubTarget<bits<6> value> {
 
 def HasAnySubT    : SubTarget<0x3f>;  // 111111
 def HasV5SubT     : SubTarget<0x3e>;  // 111110
+def HasV55SubT    : SubTarget<0x3c>;  // 111100
+def HasV60SubT    : SubTarget<0x38>;  // 111000
 
 // Addressing modes for load/store instructions
 class AddrModeType<bits<3> value> {
@@ -57,6 +59,8 @@ def ByteAccess       : MemAccessSize<1>;// Byte access instruction (memb).
 def HalfWordAccess   : MemAccessSize<2>;// Half word access instruction (memh).
 def WordAccess       : MemAccessSize<3>;// Word access instruction (memw).
 def DoubleWordAccess : MemAccessSize<4>;// Double word access instruction (memd)
+def Vector64Access   : MemAccessSize<7>;// Vector access instruction (memv)
+def Vector128Access  : MemAccessSize<8>;// Vector access instruction (memv)
 
 
 //===----------------------------------------------------------------------===//
@@ -167,7 +171,17 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
   bits<1> isFP = 0;
   let TSFlags {48} = isFP; // Floating-point.
 
+  bits<1> hasNewValue2 = 0;
+  let TSFlags{50} = hasNewValue2; // Second New-value producer insn.
+  bits<3> opNewValue2 = 0;
+  let TSFlags{53-51} = opNewValue2; // Second New-value produced operand.
+
+  bits<1> isAccumulator = 0;
+  let TSFlags{54} = isAccumulator;
+
   // Fields used for relation models.
+  bit isNonTemporal = 0;
+  string isNT = ""; // set to "true" for non-temporal vector stores.
   string BaseOpcode = "";
   string CextOpcode = "";
   string PredSense = "";
@@ -182,6 +196,7 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
                                     "");
   let PNewValue = !if(isPredicatedNew, "new", "");
   let NValueST = !if(isNVStore, "true", "false");
+  let isNT = !if(isNonTemporal, "true", "false");
 
   // *** Must match MCTargetDesc/HexagonBaseInfo.h ***
 }
@@ -217,6 +232,11 @@ class LD0Inst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
               string cstr = "", InstrItinClass itin=LD_tc_ld_SLOT0>
   : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeLD>, OpcodeHexagon;
 
+let mayLoad = 1 in
+class LD1Inst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+              string cstr = "", InstrItinClass itin=LD_tc_ld_SLOT0>
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeLD>;
+
 // ST Instruction Class in V2/V3 can take SLOT0 only.
 // ST Instruction Class in V4    can take SLOT0 & SLOT1.
 // Definition of the instruction class CHANGED from V2/V3 to V4.
@@ -233,6 +253,12 @@ let mayStore = 1 in
 class ST0Inst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
               string cstr = "", InstrItinClass itin = ST_tc_ld_SLOT0>
   : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeST>, OpcodeHexagon;
+
+// Same as ST0Inst but doesn't derive from OpcodeHexagon.
+let mayStore = 1 in
+class ST1Inst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+              string cstr = "", InstrItinClass itin = ST_tc_st_SLOT0>
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeST>;
 
 // ST Instruction Class in V2/V3 can take SLOT0 only.
 // ST Instruction Class in V4    can take SLOT0 & SLOT1.
@@ -277,6 +303,11 @@ class MInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
   : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeXTYPE>,
     OpcodeHexagon;
 
+// Same as above but doesn't derive from OpcodeHexagon
+class MInst2<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+            string cstr = "", InstrItinClass itin = M_tc_3x_SLOT23>
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeXTYPE>;
+
 // M Instruction Class in V2/V3.
 // XTYPE Instruction Class in V4.
 // Definition of the instruction class NOT CHANGED.
@@ -293,6 +324,10 @@ class SInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
             string cstr = "", InstrItinClass itin = S_2op_tc_1_SLOT23>
   : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeXTYPE>,
     OpcodeHexagon;
+
+class SInst2<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+            string cstr = "", InstrItinClass itin = S_2op_tc_1_SLOT23>
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, itin, TypeXTYPE>;
 
 // S Instruction Class in V2/V3.
 // XTYPE Instruction Class in V4.
@@ -401,4 +436,14 @@ include "HexagonInstrFormatsV4.td"
 
 //===----------------------------------------------------------------------===//
 // V4 Instruction Format Definitions +
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// V60 Instruction Format Definitions +
+//===----------------------------------------------------------------------===//
+
+include "HexagonInstrFormatsV60.td"
+
+//===----------------------------------------------------------------------===//
+// V60 Instruction Format Definitions +
 //===----------------------------------------------------------------------===//

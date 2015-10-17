@@ -66,6 +66,8 @@ HexagonRegisterInfo::getCallerSavedRegs(const MachineFunction *MF) const {
   switch (HST.getHexagonArchVersion()) {
   case HexagonSubtarget::V4:
   case HexagonSubtarget::V5:
+  case HexagonSubtarget::V55:
+  case HexagonSubtarget::V60:
     return CallerSavedRegsV4;
   }
   llvm_unreachable(
@@ -84,6 +86,8 @@ HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   switch (MF->getSubtarget<HexagonSubtarget>().getHexagonArchVersion()) {
   case HexagonSubtarget::V4:
   case HexagonSubtarget::V5:
+  case HexagonSubtarget::V55:
+  case HexagonSubtarget::V60:
     return CalleeSavedRegsV3;
   }
   llvm_unreachable("Callee saved registers requested for unknown architecture "

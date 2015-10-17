@@ -34,12 +34,12 @@ namespace llvm {
 class HexagonSubtarget : public HexagonGenSubtargetInfo {
   virtual void anchor();
 
-  bool UseMemOps;
+  bool UseMemOps, UseHVXOps, UseHVXDblOps;
   bool ModeIEEERndNear;
 
 public:
   enum HexagonArchEnum {
-    V4, V5
+    V4, V5, V55, V60
   };
 
   HexagonArchEnum HexagonArchVersion;
@@ -84,7 +84,11 @@ public:
   bool useMemOps() const { return UseMemOps; }
   bool hasV5TOps() const { return getHexagonArchVersion() >= V5; }
   bool hasV5TOpsOnly() const { return getHexagonArchVersion() == V5; }
+  bool hasV60TOps() const { return getHexagonArchVersion() >= V60; }
+  bool hasV60TOpsOnly() const { return getHexagonArchVersion() == V60; }
   bool modeIEEERndNear() const { return ModeIEEERndNear; }
+  bool useHVXDblOps() const { return UseHVXDblOps; }
+  bool useHVXSglOps() const { return UseHVXOps && !UseHVXDblOps; }
   bool enableMachineScheduler() const override;
   // Always use the TargetLowering default scheduler.
   // FIXME: This will use the vliw scheduler which is probably just hurting

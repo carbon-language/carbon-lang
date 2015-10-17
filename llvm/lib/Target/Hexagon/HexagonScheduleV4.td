@@ -39,6 +39,7 @@ def PSEUDOM   : InstrItinClass;
 // ALU64/M/S Instruction classes of V2 are collectively knownn as XTYPE in V4.
 def DUPLEX      : InstrItinClass;
 def PREFIX      : InstrItinClass;
+def COMPOUND_CJ_ARCHDEPSLOT    : InstrItinClass;
 def COMPOUND    : InstrItinClass;
 
 def ALU32_2op_tc_1_SLOT0123  : InstrItinClass;
@@ -58,6 +59,7 @@ def CR_tc_2early_SLOT3       : InstrItinClass;
 def CR_tc_3x_SLOT23          : InstrItinClass;
 def CR_tc_3x_SLOT3           : InstrItinClass;
 def J_tc_2early_SLOT23       : InstrItinClass;
+def J_tc_2early_CJUMP_UCJUMP_ARCHDEPSLOT       : InstrItinClass;
 def J_tc_2early_SLOT2        : InstrItinClass;
 def LD_tc_ld_SLOT01          : InstrItinClass;
 def LD_tc_ld_SLOT0           : InstrItinClass;
@@ -91,6 +93,7 @@ def V4LDST_tc_st_SLOT0       : InstrItinClass;
 def V4LDST_tc_st_SLOT01      : InstrItinClass;
 def J_tc_2early_SLOT0123     : InstrItinClass;
 def EXTENDER_tc_1_SLOT0123   : InstrItinClass;
+def S_3op_tc_3stall_SLOT23   : InstrItinClass;
 
 
 def HexagonItinerariesV4 :

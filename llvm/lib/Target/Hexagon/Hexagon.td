@@ -24,14 +24,29 @@ include "llvm/Target/Target.td"
 // Hexagon Architectures
 def ArchV4:  SubtargetFeature<"v4",  "HexagonArchVersion", "V4",  "Hexagon V4">;
 def ArchV5:  SubtargetFeature<"v5",  "HexagonArchVersion", "V5",  "Hexagon V5">;
+def ArchV55: SubtargetFeature<"v55", "HexagonArchVersion", "V55", "Hexagon V55">;
+def ArchV60: SubtargetFeature<"v60", "HexagonArchVersion", "V60", "Hexagon V60">;
 
+// Hexagon ISA Extensions
+def ExtensionHVX: SubtargetFeature<"hvx", "UseHVXOps",
+                                   "true", "Hexagon HVX instructions">;
 //===----------------------------------------------------------------------===//
 // Hexagon Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasV5T                      : Predicate<"HST->hasV5TOps()">;
-def NoV5T                       : Predicate<"!HST->hasV5TOps()">;
-def UseMEMOP                    : Predicate<"HST->useMemOps()">;
-def IEEERndNearV5T              : Predicate<"HST->modeIEEERndNear()">;
+def HasV5T             : Predicate<"HST->hasV5TOps()">;
+def NoV5T              : Predicate<"!HST->hasV5TOps()">;
+def HasV55T            : Predicate<"HST->hasV55TOps()">,
+                         AssemblerPredicate<"ArchV55">;
+def HasV60T            : Predicate<"HST->hasV60TOps()">,
+                         AssemblerPredicate<"ArchV60">;
+def UseMEMOP           : Predicate<"HST->useMemOps()">;
+def IEEERndNearV5T     : Predicate<"HST->modeIEEERndNear()">;
+def UseHVXDbl          : Predicate<"HST->useHVXDblOps()">,
+                         AssemblerPredicate<"ExtensionHVXDbl">;
+def UseHVXSgl          : Predicate<"HST->useHVXSglOps()">;
+
+def UseHVX             : Predicate<"HST->useHVXOps()">,
+                         AssemblerPredicate<"ExtensionHVX">;
 
 //===----------------------------------------------------------------------===//
 // Classes used for relation maps.
@@ -62,7 +77,7 @@ class AddrModeRel: NewValueRel;
 def getPredOpcode : InstrMapping {
   let FilterClass = "PredRel";
   // Instructions with the same BaseOpcode and isNVStore values form a row.
-  let RowFields = ["BaseOpcode", "isNVStore", "PNewValue"];
+  let RowFields = ["BaseOpcode", "isNVStore", "PNewValue", "isNT"];
   // Instructions with the same predicate sense form a column.
   let ColFields = ["PredSense"];
   // The key column is the unpredicated instructions.
@@ -77,7 +92,7 @@ def getPredOpcode : InstrMapping {
 //
 def getFalsePredOpcode : InstrMapping {
   let FilterClass = "PredRel";
-  let RowFields = ["BaseOpcode", "PNewValue", "isNVStore", "isBrTaken"];
+  let RowFields = ["BaseOpcode", "PNewValue", "isNVStore", "isBrTaken", "isNT"];
   let ColFields = ["PredSense"];
   let KeyCol = ["true"];
   let ValueCols = [["false"]];
@@ -89,7 +104,7 @@ def getFalsePredOpcode : InstrMapping {
 //
 def getTruePredOpcode : InstrMapping {
   let FilterClass = "PredRel";
-  let RowFields = ["BaseOpcode", "PNewValue", "isNVStore", "isBrTaken"];
+  let RowFields = ["BaseOpcode", "PNewValue", "isNVStore", "isBrTaken", "isNT"];
   let ColFields = ["PredSense"];
   let KeyCol = ["false"];
   let ValueCols = [["true"]];
@@ -125,7 +140,7 @@ def getPredOldOpcode : InstrMapping {
 //
 def getNewValueOpcode : InstrMapping {
   let FilterClass = "NewValueRel";
-  let RowFields = ["BaseOpcode", "PredSense", "PNewValue", "addrMode"];
+  let RowFields = ["BaseOpcode", "PredSense", "PNewValue", "addrMode", "isNT"];
   let ColFields = ["NValueST"];
   let KeyCol = ["false"];
   let ValueCols = [["true"]];
@@ -137,7 +152,7 @@ def getNewValueOpcode : InstrMapping {
 //
 def getNonNVStore : InstrMapping {
   let FilterClass = "NewValueRel";
-  let RowFields = ["BaseOpcode", "PredSense", "PNewValue", "addrMode"];
+  let RowFields = ["BaseOpcode", "PredSense", "PNewValue", "addrMode", "isNT"];
   let ColFields = ["NValueST"];
   let KeyCol = ["true"];
   let ValueCols = [["false"]];
