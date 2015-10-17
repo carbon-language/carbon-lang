@@ -402,11 +402,8 @@ bool PPC64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
 }
 
 bool PPC64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
-  if (Type != R_PPC64_REL24)
-    return false;
-
   // These are function calls that need to be redirected through a PLT stub.
-  return S.isShared() || (S.isUndefined() && S.isWeak());
+  return Type == R_PPC64_REL24 && canBePreempted(&S, false);
 }
 
 bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
@@ -500,6 +497,12 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     write32be(L, SA);
     break;
   case R_PPC64_REL24: {
+    // If we have an undefined weak symbol, we might get here with a symbol
+    // address of zero. That could overflow, but the code must be unreachable,
+    // so don't bother doing anything at all.
+    if (!SA)
+      break;
+
     uint64_t PltStart = Out<ELF64BE>::Plt->getVA();
     uint64_t PltEnd = PltStart + Out<ELF64BE>::Plt->getSize();
     bool InPlt = PltStart <= SA && SA < PltEnd;

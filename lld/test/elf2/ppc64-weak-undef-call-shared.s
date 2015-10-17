@@ -7,5 +7,10 @@
 .quad weakfunc
 // CHECK-NOT: R_PPC64_RELATIVE
 
+.text
+.Lfoo:
+  bl weakfunc
+// CHECK-NOT: R_PPC64_REL24
+
 .weak weakfunc
 

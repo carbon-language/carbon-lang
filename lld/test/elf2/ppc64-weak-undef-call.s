@@ -19,5 +19,9 @@ _start:
 .weak weakfunc
 
 # It does not really matter how we fixup the bl, if at all, because it needs to
-# be unreachable. But, we should link successfully.
+# be unreachable. But, we should link successfully. We should not, however,
+# generate a .plt entry (this would be wasted space). For now, we do nothing
+# (leaving the zero relative offset present in the input).
+# CHECK: 10010000:       48 00 00 01     bl .+0
+# CHECK: 10010004:       60 00 00 00     nop
 # CHECK: 10010008:       4e 80 00 20     blr
