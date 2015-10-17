@@ -341,13 +341,11 @@ protected:
   Value *getOrCreateAlloca(Value *ScalarBase, ScalarAllocaMapTy &Map,
                            const char *NameExt);
 
-  /// @brief Generate reload of scalars demoted to memory and needed by @p Inst.
+  /// @brief Generate reload of scalars demoted to memory and needed by @p Stmt.
   ///
   /// @param Stmt  The statement we generate code for.
-  /// @param Inst  The instruction that might need reloaded values.
   /// @param BBMap A mapping from old values to their new values in this block.
-  virtual void generateScalarLoads(ScopStmt &Stmt, const Instruction *Inst,
-                                   ValueMapT &BBMap);
+  void generateScalarLoads(ScopStmt &Stmt, ValueMapT &BBMap);
 
   /// @brief Generate the scalar stores for the given statement.
   ///
@@ -356,14 +354,13 @@ protected:
   /// be demoted to memory.
   ///
   /// @param Stmt  The statement we generate code for.
-  /// @param BB    The basic block we generate code for.
   /// @param LTS   A mapping from loops virtual canonical induction
   ///              variable to their new values
   ///              (for values recalculated in the new ScoP, but not
   ///               within this basic block)
   /// @param BBMap A mapping from old values to their new values in this block.
-  virtual void generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
-                                    LoopToScevMapT &LTS, ValueMapT &BBMap);
+  virtual void generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
+                                    ValueMapT &BBMap);
 
   /// @brief Handle users of @p Inst outside the SCoP.
   ///
@@ -746,14 +743,6 @@ private:
   void addOperandToPHI(ScopStmt &Stmt, const PHINode *PHI, PHINode *PHICopy,
                        BasicBlock *IncomingBB, LoopToScevMapT &LTS);
 
-  /// @brief Generate reload of scalars demoted to memory and needed by @p Inst.
-  ///
-  /// @param Stmt  The statement we generate code for.
-  /// @param Inst  The instruction that might need reloaded values.
-  /// @param BBMap A mapping from old values to their new values in this block.
-  virtual void generateScalarLoads(ScopStmt &Stmt, const Instruction *Inst,
-                                   ValueMapT &BBMap) override;
-
   /// @brief Generate the scalar stores for the given statement.
   ///
   /// After the statement @p Stmt was copied all inner-SCoP scalar dependences
@@ -761,13 +750,11 @@ private:
   /// be demoted to memory.
   ///
   /// @param Stmt  The statement we generate code for.
-  /// @param BB    The basic block we generate code for.
   /// @param LTS   A mapping from loops virtual canonical induction variable to
   ///              their new values (for values recalculated in the new ScoP,
   ///              but not within this basic block)
   /// @param BBMap A mapping from old values to their new values in this block.
-  virtual void generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
-                                    LoopToScevMapT &LTS,
+  virtual void generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
                                     ValueMapT &BBMAp) override;
 
   /// @brief Copy a single PHI instruction.

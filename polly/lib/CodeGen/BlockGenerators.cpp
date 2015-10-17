@@ -231,10 +231,6 @@ void BlockGenerator::generateScalarStore(ScopStmt &Stmt, StoreInst *Store,
 void BlockGenerator::copyInstruction(ScopStmt &Stmt, Instruction *Inst,
                                      ValueMapT &BBMap, LoopToScevMapT &LTS,
                                      isl_id_to_ast_expr *NewAccesses) {
-
-  // First check for possible scalar dependences for this instruction.
-  generateScalarLoads(Stmt, Inst, BBMap);
-
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
@@ -295,23 +291,24 @@ BasicBlock *BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB,
                                    ValueMapT &BBMap, LoopToScevMapT &LTS,
                                    isl_id_to_ast_expr *NewAccesses) {
   BasicBlock *CopyBB = splitBB(BB);
+  Builder.SetInsertPoint(CopyBB->begin());
+  generateScalarLoads(Stmt, BBMap);
+
   copyBB(Stmt, BB, CopyBB, BBMap, LTS, NewAccesses);
+
+  // After a basic block was copied store all scalars that escape this block in
+  // their alloca.
+  generateScalarStores(Stmt, LTS, BBMap);
   return CopyBB;
 }
 
 void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
                             ValueMapT &BBMap, LoopToScevMapT &LTS,
                             isl_id_to_ast_expr *NewAccesses) {
-  Builder.SetInsertPoint(CopyBB->begin());
   EntryBB = &CopyBB->getParent()->getEntryBlock();
 
   for (Instruction &Inst : *BB)
     copyInstruction(Stmt, &Inst, BBMap, LTS, NewAccesses);
-
-  // After a basic block was copied store all scalars that escape this block
-  // in their alloca. First the scalars that have dependences inside the SCoP,
-  // then the ones that might escape the SCoP.
-  generateScalarStores(Stmt, BB, LTS, BBMap);
 }
 
 Value *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
@@ -382,16 +379,9 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
   EscapeMap[Inst] = std::make_pair(ScalarAddr, std::move(EscapeUsers));
 }
 
-void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
-                                         const Instruction *Inst,
-                                         ValueMapT &BBMap) {
-  auto *MAL = Stmt.lookupAccessesFor(Inst);
-
-  if (!MAL)
-    return;
-
-  for (MemoryAccess *MA : *MAL) {
-    if (MA->isExplicit() || !MA->isRead())
+void BlockGenerator::generateScalarLoads(ScopStmt &Stmt, ValueMapT &BBMap) {
+  for (MemoryAccess *MA : Stmt) {
+    if (MA->isExplicit() || MA->isWrite())
       continue;
 
     auto *Address = getOrCreateAlloca(*MA);
@@ -447,14 +437,13 @@ Value *BlockGenerator::getNewScalarValue(Value *ScalarValue, const Region &R,
   return ScalarValue;
 }
 
-void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
-                                          LoopToScevMapT &LTS,
+void BlockGenerator::generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
                                           ValueMapT &BBMap) {
   const Region &R = Stmt.getParent()->getRegion();
 
-  assert(Stmt.isBlockStmt() && BB == Stmt.getBasicBlock() &&
-         "Region statements need to use the generateScalarStores() "
-         "function in the RegionGenerator");
+  assert(Stmt.isBlockStmt() && "Region statements need to use the "
+                               "generateScalarStores() function in the "
+                               "RegionGenerator");
 
   for (MemoryAccess *MA : Stmt) {
     if (MA->isExplicit() || MA->isRead())
@@ -990,6 +979,9 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   RegionMaps.clear();
   IncompletePHINodeMap.clear();
 
+  // Collection of all values related to this subregion.
+  ValueMapT ValueMap;
+
   // The region represented by the statement.
   Region *R = Stmt.getRegion();
 
@@ -1000,6 +992,8 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
       SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
   EntryBBCopy->setName("polly.stmt." + EntryBB->getName() + ".entry");
   Builder.SetInsertPoint(EntryBBCopy->begin());
+
+  generateScalarLoads(Stmt, RegionMaps[EntryBBCopy]);
 
   for (auto PI = pred_begin(EntryBB), PE = pred_end(EntryBB); PI != PE; ++PI)
     if (!R->contains(*PI))
@@ -1025,9 +1019,11 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
     // Get the mapping for this block and initialize it with the mapping
     // available at its immediate dominator (in the new region).
     ValueMapT &RegionMap = RegionMaps[BBCopy];
-    RegionMap = RegionMaps[BBCopyIDom];
+    if (BBCopy != EntryBBCopy)
+      RegionMap = RegionMaps[BBCopyIDom];
 
     // Copy the block with the BlockGenerator.
+    Builder.SetInsertPoint(BBCopy->begin());
     copyBB(Stmt, BB, BBCopy, RegionMap, LTS, IdToAstExp);
 
     // In order to remap PHI nodes we store also basic block mappings.
@@ -1042,6 +1038,9 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
     for (auto SI = succ_begin(BB), SE = succ_end(BB); SI != SE; SI++)
       if (R->contains(*SI) && SeenBlocks.insert(*SI).second)
         Blocks.push_back(*SI);
+
+    // Remember value in case it is visible after this subregion.
+    ValueMap.insert(RegionMap.begin(), RegionMap.end());
   }
 
   // Now create a new dedicated region exit block and add it to the region map.
@@ -1107,26 +1106,14 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
     LTS[L] = SE.getUnknown(LoopPHI);
   }
 
-  // Reset the old insert point for the build.
-  Builder.SetInsertPoint(ExitBBCopy->begin());
+  // Continue generating code in the exit block.
+  Builder.SetInsertPoint(ExitBBCopy->getFirstInsertionPt());
+
+  // Write values visible to other statements.
+  generateScalarStores(Stmt, LTS, ValueMap);
 }
 
-void RegionGenerator::generateScalarLoads(ScopStmt &Stmt,
-                                          const Instruction *Inst,
-                                          ValueMapT &BBMap) {
-
-  // Inside a non-affine region PHI nodes are copied not demoted. Once the
-  // phi is copied it will reload all inputs from outside the region, hence
-  // we do not need to generate code for the read access of the operands of a
-  // PHI.
-  if (isa<PHINode>(Inst))
-    return;
-
-  return BlockGenerator::generateScalarLoads(Stmt, Inst, BBMap);
-}
-
-void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
-                                           LoopToScevMapT &LTS,
+void RegionGenerator::generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
                                            ValueMapT &BBMap) {
   const Region &R = Stmt.getParent()->getRegion();
 
@@ -1135,22 +1122,31 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
          "function in the BlockGenerator");
 
   for (MemoryAccess *MA : Stmt) {
-
     if (MA->isExplicit() || MA->isRead())
       continue;
 
     Instruction *ScalarInst = MA->getAccessInstruction();
-
-    // Only generate accesses that belong to this basic block.
-    if (ScalarInst->getParent() != BB)
-      continue;
-
     Value *Val = MA->getAccessValue();
+
+    // In case we add the store into an exiting block, we need to restore the
+    // position for stores in the exit node.
+    auto SavedInsertionPoint = Builder.GetInsertPoint();
+
+    // Implicit writes induced by PHIs must be written in the incoming blocks.
+    if (isa<TerminatorInst>(ScalarInst)) {
+      BasicBlock *ExitingBB = ScalarInst->getParent();
+      BasicBlock *ExitingBBCopy = BlockMap[ExitingBB];
+      Builder.SetInsertPoint(ExitingBBCopy->getTerminator());
+    }
 
     auto Address = getOrCreateAlloca(*MA);
 
     Val = getNewScalarValue(Val, R, Stmt, LTS, BBMap);
     Builder.CreateStore(Val, Address);
+
+    // Restore the insertion point if necessary.
+    if (isa<TerminatorInst>(ScalarInst))
+      Builder.SetInsertPoint(SavedInsertionPoint);
   }
 }
 

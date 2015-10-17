@@ -451,9 +451,6 @@ private:
 
   bool isAffine() const { return IsAffine; }
 
-  /// @brief Is this MemoryAccess modeling special PHI node accesses?
-  bool isPHI() const { return Origin == PHI; }
-
   __isl_give isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
 
   void assumeNoOutOfBound();
@@ -630,6 +627,9 @@ public:
   /// @brief Whether this access represents a register access or models PHI
   /// nodes.
   bool isImplicit() const { return !isExplicit(); }
+
+  /// @brief Is this MemoryAccess modeling special PHI node accesses?
+  bool isPHI() const { return Origin == PHI; }
 
   /// @brief Get the statement that contains this memory access.
   ScopStmt *getStatement() const { return Statement; }
