@@ -503,10 +503,6 @@ static const WarningOption OptionTable[] = {
 #undef GET_DIAG_TABLE
 };
 
-static bool WarningOptionCompare(const WarningOption &LHS, StringRef RHS) {
-  return LHS.getName() < RHS;
-}
-
 /// getWarningOptionForDiag - Return the lowest-level warning option that
 /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
 /// the diagnostic, this returns null.
@@ -549,9 +545,11 @@ static bool getDiagnosticsInGroup(diag::Flavor Flavor,
 bool
 DiagnosticIDs::getDiagnosticsInGroup(diag::Flavor Flavor, StringRef Group,
                                      SmallVectorImpl<diag::kind> &Diags) const {
-  const WarningOption *Found = std::lower_bound(std::begin(OptionTable),
-                                                std::end(OptionTable),
-                                                Group, WarningOptionCompare);
+  auto Found = std::lower_bound(std::begin(OptionTable), std::end(OptionTable),
+                                Group,
+                                [](const WarningOption &LHS, StringRef RHS) {
+                                  return LHS.getName() < RHS;
+                                });
   if (Found == std::end(OptionTable) || Found->getName() != Group)
     return true; // Option not found.
 
