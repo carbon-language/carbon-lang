@@ -545,17 +545,9 @@ namespace {
   };
 }
 
-#ifndef NDEBUG
-static bool TableIsSorted(const TableEntry *Table, unsigned NumEntries) {
-  for (unsigned i = 0; i != NumEntries-1; ++i)
-    if (!(Table[i] < Table[i+1])) return false;
-  return true;
-}
-#endif
-
-static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode) {
-  const TableEntry *I = std::lower_bound(Table, Table+N, Opcode);
-  if (I != Table+N && I->from == Opcode)
+static int Lookup(ArrayRef<TableEntry> Table, unsigned Opcode) {
+  const TableEntry *I = std::lower_bound(Table.begin(), Table.end(), Opcode);
+  if (I != Table.end() && I->from == Opcode)
     return I->to;
   return -1;
 }
@@ -566,7 +558,7 @@ static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode) {
 #define ASSERT_SORTED(TABLE)                                              \
   { static bool TABLE##Checked = false;                                   \
     if (!TABLE##Checked) {                                                \
-       assert(TableIsSorted(TABLE, array_lengthof(TABLE)) &&              \
+       assert(std::is_sorted(std::begin(TABLE), std::end(TABLE)) &&       \
               "All lookup tables must be sorted for efficient access!");  \
        TABLE##Checked = true;                                             \
     }                                                                     \
@@ -745,7 +737,7 @@ static const TableEntry OpcodeTable[] = {
 
 static unsigned getConcreteOpcode(unsigned Opcode) {
   ASSERT_SORTED(OpcodeTable);
-  int Opc = Lookup(OpcodeTable, array_lengthof(OpcodeTable), Opcode);
+  int Opc = Lookup(OpcodeTable, Opcode);
   assert(Opc != -1 && "FP Stack instruction not in OpcodeTable!");
   return Opc;
 }
@@ -796,7 +788,7 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
   RegMap[Stack[--StackTop]] = ~0;     // Update state
 
   // Check to see if there is a popping version of this instruction...
-  int Opcode = Lookup(PopTable, array_lengthof(PopTable), I->getOpcode());
+  int Opcode = Lookup(PopTable, I->getOpcode());
   if (Opcode != -1) {
     I->setDesc(TII->get(Opcode));
     if (Opcode == X86::UCOM_FPPr)
@@ -1192,7 +1184,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   // We decide which form to use based on what is on the top of the stack, and
   // which operand is killed by this instruction.
-  const TableEntry *InstTable;
+  ArrayRef<TableEntry> InstTable;
   bool isForward = TOS == Op0;
   bool updateST0 = (TOS == Op0 && !KillsOp1) || (TOS == Op1 && !KillsOp0);
   if (updateST0) {
@@ -1207,8 +1199,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
       InstTable = ReverseSTiTable;
   }
 
-  int Opcode = Lookup(InstTable, array_lengthof(ForwardST0Table),
-                      MI->getOpcode());
+  int Opcode = Lookup(InstTable, MI->getOpcode());
   assert(Opcode != -1 && "Unknown TwoArgFP pseudo instruction!");
 
   // NotTOS - The register which is not on the top of stack...
