@@ -248,19 +248,31 @@ int X86TTIImpl::getArithmeticInstrCost(
     // custom.
     // Constant splats are cheaper for the following instructions.
     { ISD::SHL,  MVT::v16i8,  1 }, // psllw.
+    { ISD::SHL,  MVT::v32i8,  2 }, // psllw.
     { ISD::SHL,  MVT::v8i16,  1 }, // psllw.
+    { ISD::SHL,  MVT::v16i16, 2 }, // psllw.
     { ISD::SHL,  MVT::v4i32,  1 }, // pslld
+    { ISD::SHL,  MVT::v8i32,  2 }, // pslld
     { ISD::SHL,  MVT::v2i64,  1 }, // psllq.
+    { ISD::SHL,  MVT::v4i64,  2 }, // psllq.
 
     { ISD::SRL,  MVT::v16i8,  1 }, // psrlw.
+    { ISD::SRL,  MVT::v32i8,  2 }, // psrlw.
     { ISD::SRL,  MVT::v8i16,  1 }, // psrlw.
+    { ISD::SRL,  MVT::v16i16, 2 }, // psrlw.
     { ISD::SRL,  MVT::v4i32,  1 }, // psrld.
+    { ISD::SRL,  MVT::v8i32,  2 }, // psrld.
     { ISD::SRL,  MVT::v2i64,  1 }, // psrlq.
+    { ISD::SRL,  MVT::v4i64,  2 }, // psrlq.
 
     { ISD::SRA,  MVT::v16i8,  4 }, // psrlw, pand, pxor, psubb.
+    { ISD::SRA,  MVT::v32i8,  8 }, // psrlw, pand, pxor, psubb.
     { ISD::SRA,  MVT::v8i16,  1 }, // psraw.
+    { ISD::SRA,  MVT::v16i16, 2 }, // psraw.
     { ISD::SRA,  MVT::v4i32,  1 }, // psrad.
+    { ISD::SRA,  MVT::v8i32,  2 }, // psrad.
     { ISD::SRA,  MVT::v2i64,  4 }, // 2 x psrad + shuffle.
+    { ISD::SRA,  MVT::v4i64,  8 }, // 2 x psrad + shuffle.
 
     { ISD::SDIV, MVT::v8i16,  6 }, // pmulhw sequence
     { ISD::UDIV, MVT::v8i16,  6 }, // pmulhuw sequence
@@ -282,15 +294,22 @@ int X86TTIImpl::getArithmeticInstrCost(
   if (ISD == ISD::SHL &&
       Op2Info == TargetTransformInfo::OK_NonUniformConstantValue) {
     EVT VT = LT.second;
+    // Vector shift left by non uniform constant can be lowered
+    // into vector multiply (pmullw/pmulld).
     if ((VT == MVT::v8i16 && ST->hasSSE2()) ||
         (VT == MVT::v4i32 && ST->hasSSE41()))
-      // Vector shift left by non uniform constant can be lowered
-      // into vector multiply (pmullw/pmulld).
       return LT.first;
+
+    // v16i16 and v8i32 shifts by non-uniform constants are lowered into a
+    // sequence of extract + two vector multiply + insert.
+    if ((VT == MVT::v8i32 || VT == MVT::v16i16) &&
+       (ST->hasAVX() && !ST->hasAVX2()))
+      ISD = ISD::MUL;
+
+    // A vector shift left by non uniform constant is converted
+    // into a vector multiply; the new multiply is eventually
+    // lowered into a sequence of shuffles and 2 x pmuludq.
     if (VT == MVT::v4i32 && ST->hasSSE2())
-      // A vector shift left by non uniform constant is converted
-      // into a vector multiply; the new multiply is eventually
-      // lowered into a sequence of shuffles and 2 x pmuludq.
       ISD = ISD::MUL;
   }
 
@@ -304,20 +323,31 @@ int X86TTIImpl::getArithmeticInstrCost(
     // used for vectorization and we don't want to make vectorized code worse
     // than scalar code.
     { ISD::SHL,  MVT::v16i8,    26 }, // cmpgtb sequence.
+    { ISD::SHL,  MVT::v32i8,  2*26 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v8i16,    32 }, // cmpgtb sequence.
+    { ISD::SHL,  MVT::v16i16, 2*32 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v4i32,   2*5 }, // We optimized this using mul.
+    { ISD::SHL,  MVT::v8i32, 2*2*5 }, // We optimized this using mul.
     { ISD::SHL,  MVT::v2i64,     4 }, // splat+shuffle sequence.
-    { ISD::SHL,  MVT::v4i64,     8 }, // splat+shuffle sequence.
+    { ISD::SHL,  MVT::v4i64,   2*4 }, // splat+shuffle sequence.
 
     { ISD::SRL,  MVT::v16i8,    26 }, // cmpgtb sequence.
+    { ISD::SRL,  MVT::v32i8,  2*26 }, // cmpgtb sequence.
     { ISD::SRL,  MVT::v8i16,    32 }, // cmpgtb sequence.
+    { ISD::SRL,  MVT::v16i16, 2*32 }, // cmpgtb sequence.
     { ISD::SRL,  MVT::v4i32,    16 }, // Shift each lane + blend.
+    { ISD::SRL,  MVT::v8i32,  2*16 }, // Shift each lane + blend.
     { ISD::SRL,  MVT::v2i64,     4 }, // splat+shuffle sequence.
+    { ISD::SRL,  MVT::v4i64,   2*4 }, // splat+shuffle sequence.
 
     { ISD::SRA,  MVT::v16i8,    54 }, // unpacked cmpgtb sequence.
+    { ISD::SRA,  MVT::v32i8,  2*54 }, // unpacked cmpgtb sequence.
     { ISD::SRA,  MVT::v8i16,    32 }, // cmpgtb sequence.
+    { ISD::SRA,  MVT::v16i16, 2*32 }, // cmpgtb sequence.
     { ISD::SRA,  MVT::v4i32,    16 }, // Shift each lane + blend.
+    { ISD::SRA,  MVT::v8i32,  2*16 }, // Shift each lane + blend.
     { ISD::SRA,  MVT::v2i64,    12 }, // srl/xor/sub sequence.
+    { ISD::SRA,  MVT::v4i64,  2*12 }, // srl/xor/sub sequence.
 
     // It is not a good idea to vectorize division. We have to scalarize it and
     // in the process we will often end up having to spilling regular
@@ -362,12 +392,6 @@ int X86TTIImpl::getArithmeticInstrCost(
   // Look for AVX1 lowering tricks.
   if (ST->hasAVX() && !ST->hasAVX2()) {
     EVT VT = LT.second;
-
-    // v16i16 and v8i32 shifts by non-uniform constants are lowered into a
-    // sequence of extract + two vector multiply + insert.
-    if (ISD == ISD::SHL && (VT == MVT::v8i32 || VT == MVT::v16i16) &&
-        Op2Info == TargetTransformInfo::OK_NonUniformConstantValue)
-      ISD = ISD::MUL;
 
     int Idx = CostTableLookup(AVX1CostTable, ISD, VT);
     if (Idx != -1)
