@@ -82,6 +82,7 @@ class Fuzzer {
     bool UseTraces = false;
     bool UseFullCoverageSet  = false;
     bool Reload = true;
+    bool ShuffleAtStartUp = true;
     int PreferSmallDuringInitialShuffle = -1;
     size_t MaxNumberOfRuns = ULONG_MAX;
     int SyncTimeout = 600;

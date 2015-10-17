@@ -18,6 +18,7 @@ FUZZER_FLAG_INT(max_len, 64, "Maximum length of the test input.")
 FUZZER_FLAG_INT(cross_over, 1, "If 1, cross over inputs.")
 FUZZER_FLAG_INT(mutate_depth, 5,
             "Apply this number of consecutive mutations to each input.")
+FUZZER_FLAG_INT(shuffle, 1, "Shuffle inputs at startup")
 FUZZER_FLAG_INT(
     prefer_small_during_initial_shuffle, -1,
     "If 1, always prefer smaller inputs during the initial corpus shuffle."
