@@ -330,22 +330,19 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 /// LookupNEONLdSt - Search the NEONLdStTable for information about a NEON
 /// load or store pseudo instruction.
 static const NEONLdStTableEntry *LookupNEONLdSt(unsigned Opcode) {
-  const unsigned NumEntries = array_lengthof(NEONLdStTable);
-
 #ifndef NDEBUG
   // Make sure the table is sorted.
   static bool TableChecked = false;
   if (!TableChecked) {
-    for (unsigned i = 0; i != NumEntries-1; ++i)
-      assert(NEONLdStTable[i] < NEONLdStTable[i+1] &&
-             "NEONLdStTable is not sorted!");
+    assert(std::is_sorted(std::begin(NEONLdStTable), std::end(NEONLdStTable)) &&
+           "NEONLdStTable is not sorted!");
     TableChecked = true;
   }
 #endif
 
-  const NEONLdStTableEntry *I =
-    std::lower_bound(NEONLdStTable, NEONLdStTable + NumEntries, Opcode);
-  if (I != NEONLdStTable + NumEntries && I->PseudoOpc == Opcode)
+  const auto I = std::lower_bound(std::begin(NEONLdStTable),
+                                  std::end(NEONLdStTable), Opcode);
+  if (I != std::end(NEONLdStTable) && I->PseudoOpc == Opcode)
     return I;
   return nullptr;
 }

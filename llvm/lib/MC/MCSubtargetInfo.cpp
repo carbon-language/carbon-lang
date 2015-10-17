@@ -77,13 +77,12 @@ FeatureBitset MCSubtargetInfo::ApplyFeatureFlag(StringRef FS) {
 const MCSchedModel &MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
   assert(ProcSchedModels && "Processor machine model not available!");
 
-  unsigned NumProcs = ProcDesc.size();
-#ifndef NDEBUG
-  for (size_t i = 1; i < NumProcs; i++) {
-    assert(strcmp(ProcSchedModels[i - 1].Key, ProcSchedModels[i].Key) < 0 &&
-           "Processor machine model table is not sorted");
-  }
-#endif
+  size_t NumProcs = ProcDesc.size();
+  assert(std::is_sorted(ProcSchedModels, ProcSchedModels+NumProcs,
+                    [](const SubtargetInfoKV &LHS, const SubtargetInfoKV &RHS) {
+                      return strcmp(LHS.Key, RHS.Key) < 0;
+                    }) &&
+         "Processor machine model table is not sorted");
 
   // Find entry
   const SubtargetInfoKV *Found =
