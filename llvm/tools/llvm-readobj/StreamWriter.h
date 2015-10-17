@@ -34,14 +34,17 @@ struct HexNumber {
   // unsigned type. The overloads are here so that every type that is implicitly
   // convertible to an integer (including enums and endian helpers) can be used
   // without requiring type traits or call-site changes.
-  HexNumber(int8_t   Value) : Value(static_cast<uint8_t >(Value)) { }
-  HexNumber(int16_t  Value) : Value(static_cast<uint16_t>(Value)) { }
-  HexNumber(int32_t  Value) : Value(static_cast<uint32_t>(Value)) { }
-  HexNumber(int64_t  Value) : Value(static_cast<uint64_t>(Value)) { }
-  HexNumber(uint8_t  Value) : Value(Value) { }
-  HexNumber(uint16_t Value) : Value(Value) { }
-  HexNumber(uint32_t Value) : Value(Value) { }
-  HexNumber(uint64_t Value) : Value(Value) { }
+  HexNumber(char             Value) : Value(static_cast<unsigned char>(Value)) { }
+  HexNumber(signed char      Value) : Value(static_cast<unsigned char>(Value)) { }
+  HexNumber(signed short     Value) : Value(static_cast<unsigned short>(Value)) { }
+  HexNumber(signed int       Value) : Value(static_cast<unsigned int>(Value)) { }
+  HexNumber(signed long      Value) : Value(static_cast<unsigned long>(Value)) { }
+  HexNumber(signed long long Value) : Value(static_cast<unsigned long long>(Value)) { }
+  HexNumber(unsigned char      Value) : Value(Value) { }
+  HexNumber(unsigned short     Value) : Value(Value) { }
+  HexNumber(unsigned int       Value) : Value(Value) { }
+  HexNumber(unsigned long      Value) : Value(Value) { }
+  HexNumber(unsigned long long Value) : Value(Value) { }
   uint64_t Value;
 };
 
