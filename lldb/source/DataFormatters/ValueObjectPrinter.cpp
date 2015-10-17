@@ -99,9 +99,7 @@ ValueObjectPrinter::PrintValueObject ()
         PrintLocationIfNeeded();
         m_stream->Indent();
         
-        bool show_type = PrintTypeIfNeeded();
-        
-        PrintNameIfNeeded(show_type);
+        PrintDecl();
     }
 
     bool value_printed = false;
@@ -253,8 +251,8 @@ ValueObjectPrinter::PrintLocationIfNeeded ()
     return false;
 }
 
-bool
-ValueObjectPrinter::PrintTypeIfNeeded ()
+void
+ValueObjectPrinter::PrintDecl ()
 {
     bool show_type = true;
     // if we are at the root-level and been asked to hide the root's type, then hide it
@@ -264,44 +262,89 @@ ValueObjectPrinter::PrintTypeIfNeeded ()
         // otherwise decide according to the usual rules (asked to show types - always at the root level)
         show_type = options.m_show_types || (m_curr_depth == 0 && !options.m_flat_output);
     
+    StreamString typeName;
+    
+    // always show the type at the root level if it is invalid
     if (show_type)
     {
         // Some ValueObjects don't have types (like registers sets). Only print
         // the type if there is one to print
         ConstString type_name;
-        if (options.m_use_type_display_name)
-            type_name = m_valobj->GetDisplayTypeName();
+        if (m_compiler_type.IsValid())
+        {
+            if (options.m_use_type_display_name)
+                type_name = m_valobj->GetDisplayTypeName();
+            else
+                type_name = m_valobj->GetQualifiedTypeName();
+        }
         else
-            type_name = m_valobj->GetQualifiedTypeName();
+        {
+            // only show an invalid type name if the user explicitly triggered show_type
+            if (options.m_show_types)
+                type_name = ConstString("<invalid type>");
+            else
+                type_name.Clear();
+        }
+        
         if (type_name)
-            m_stream->Printf("(%s) ", type_name.GetCString());
-        else
-            show_type = false;
+        {
+            std::string type_name_str(type_name.GetCString());
+            if (options.m_hide_pointer_value)
+            {
+                for(auto iter = type_name_str.find(" *");
+                    iter != std::string::npos;
+                    iter = type_name_str.find(" *"))
+                {
+                    type_name_str.erase(iter, 2);
+                }
+            }
+            typeName.Printf("(%s)", type_name_str.c_str());
+        }
     }
-    return show_type;
-}
-
-bool
-ValueObjectPrinter::PrintNameIfNeeded (bool show_type)
-{
+    
+    StreamString varName;
+    
     if (options.m_flat_output)
     {
         // If we are showing types, also qualify the C++ base classes
         const bool qualify_cxx_base_classes = show_type;
         if (!options.m_hide_name)
         {
-            m_valobj->GetExpressionPath(*m_stream, qualify_cxx_base_classes);
-            m_stream->PutCString(" =");
-            return true;
+            m_valobj->GetExpressionPath(varName, qualify_cxx_base_classes);
         }
     }
     else if (!options.m_hide_name)
     {
         const char *name_cstr = GetRootNameForDisplay("");
-        m_stream->Printf ("%s =", name_cstr);
-        return true;
+        varName.Printf ("%s", name_cstr);
     }
-    return false;
+    
+    bool decl_printed = false;
+    if (options.m_decl_printing_helper)
+    {
+        ConstString type_name_cstr(typeName.GetData());
+        ConstString var_name_cstr(varName.GetData());
+        
+        StreamString dest_stream;
+        if (options.m_decl_printing_helper(type_name_cstr,
+                                           var_name_cstr,
+                                           options,
+                                           dest_stream))
+        {
+            decl_printed = true;
+            m_stream->Printf("%s", dest_stream.GetData());
+        }
+    }
+    
+    if (!decl_printed)
+    {
+        if (typeName.GetSize())
+            m_stream->Printf("%s ", typeName.GetData());
+        if (varName.GetSize())
+            m_stream->Printf("%s =", varName.GetData());
+        else if (!options.m_hide_name)
+            m_stream->Printf(" =");
+    }
 }
 
 bool
@@ -325,6 +368,15 @@ ValueObjectPrinter::GetSummaryFormatter ()
         m_summary_formatter.second = true;
     }
     return m_summary_formatter.first;
+}
+
+static bool
+IsPointerValue (const CompilerType &type)
+{
+    Flags type_flags(type.GetTypeInfo());
+    if (type_flags.AnySet(eTypeIsPointer))
+        return type_flags.AllClear(eTypeIsBuiltIn);
+    return false;
 }
 
 void
@@ -393,8 +445,12 @@ ValueObjectPrinter::PrintValueAndSummaryIfNeeded (bool& value_printed,
             TypeSummaryImpl* entry = GetSummaryFormatter();
             if (!IsNil() && !m_value.empty() && (entry == NULL || (entry->DoesPrintValue(m_valobj) || options.m_format != eFormatDefault) || m_summary.empty()) && !options.m_hide_value)
             {
-                m_stream->Printf(" %s", m_value.c_str());
-                value_printed = true;
+                if (options.m_hide_pointer_value && IsPointerValue(m_valobj->GetCompilerType())) {}
+                else
+                {
+                    m_stream->Printf(" %s", m_value.c_str());
+                    value_printed = true;
+                }
             }
             
             if (m_summary.size())

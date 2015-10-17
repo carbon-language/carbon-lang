@@ -22,6 +22,8 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/TypeSummary.h"
 
+#include <functional>
+
 namespace lldb_private {
 
 struct DumpValueObjectOptions
@@ -54,6 +56,11 @@ struct DumpValueObjectOptions
                            ValueObject *valobj,
                            const std::string& summary);
     };
+    
+    typedef std::function<bool(ConstString,
+                               ConstString,
+                               const DumpValueObjectOptions &,
+                               Stream&)> DeclPrintingHelper;
 
     uint32_t m_max_depth = UINT32_MAX;
     lldb::DynamicValueType m_use_dynamic = lldb::eNoDynamicValues;
@@ -63,6 +70,7 @@ struct DumpValueObjectOptions
     std::string m_root_valobj_name;
     lldb::LanguageType m_varformat_language = lldb::eLanguageTypeUnknown;
     PointerDepth m_max_ptr_depth;
+    DeclPrintingHelper m_decl_printing_helper;
     bool m_use_synthetic : 1;
     bool m_scope_already_checked : 1;
     bool m_flat_output : 1;
@@ -76,11 +84,13 @@ struct DumpValueObjectOptions
     bool m_run_validator : 1;
     bool m_use_type_display_name : 1;
     bool m_allow_oneliner_mode : 1;
+    bool m_hide_pointer_value : 1;
     
     DumpValueObjectOptions() :
     m_summary_sp(),
     m_root_valobj_name(),
     m_max_ptr_depth(PointerDepth{PointerDepth::Mode::Default,0}),
+    m_decl_printing_helper(),
     m_use_synthetic(true),
     m_scope_already_checked(false),
     m_flat_output(false),
@@ -93,7 +103,8 @@ struct DumpValueObjectOptions
     m_hide_value(false),
     m_run_validator(false),
     m_use_type_display_name(true),
-    m_allow_oneliner_mode(true)
+    m_allow_oneliner_mode(true),
+    m_hide_pointer_value(false)
     {}
     
     static const DumpValueObjectOptions
@@ -119,6 +130,13 @@ struct DumpValueObjectOptions
     SetMaximumDepth(uint32_t depth = 0)
     {
         m_max_depth = depth;
+        return *this;
+    }
+    
+    DumpValueObjectOptions&
+    SetDeclPrintingHelper(DeclPrintingHelper helper)
+    {
+        m_decl_printing_helper = helper;
         return *this;
     }
     
@@ -254,6 +272,13 @@ struct DumpValueObjectOptions
     }
     
     DumpValueObjectOptions&
+    SetHidePointerValue (bool hide = false)
+    {
+        m_hide_pointer_value = hide;
+        return *this;
+    }
+    
+    DumpValueObjectOptions&
     SetVariableFormatDisplayLanguage (lldb::LanguageType lang = lldb::eLanguageTypeUnknown)
     {
         m_varformat_language = lang;
@@ -354,11 +379,8 @@ protected:
     bool
     PrintLocationIfNeeded ();
     
-    bool
-    PrintTypeIfNeeded ();
-    
-    bool
-    PrintNameIfNeeded (bool show_type);
+    void
+    PrintDecl ();
     
     bool
     CheckScopeIfNeeded ();
