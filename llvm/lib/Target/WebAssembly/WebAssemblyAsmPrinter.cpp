@@ -226,14 +226,16 @@ void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
   bool FirstVReg = true;
   for (unsigned Idx = 0, IdxE = MRI->getNumVirtRegs(); Idx != IdxE; ++Idx) {
     unsigned VReg = TargetRegisterInfo::index2VirtReg(Idx);
-    if (!MRI->use_empty(VReg)) {
+    // FIXME: Don't skip dead virtual registers for now: that would require
+    //        remapping all locals' numbers.
+    //if (!MRI->use_empty(VReg)) {
       if (FirstVReg) {
         OS << (First ? "" : "\n") << "\t.local ";
         First = false;
       }
       OS << (FirstVReg ? "" : ", ") << getRegTypeName(VReg);
       FirstVReg = false;
-    }
+    //}
   }
 
   if (!First)
