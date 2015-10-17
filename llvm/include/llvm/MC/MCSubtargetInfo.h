@@ -159,11 +159,8 @@ public:
 
   /// Check whether the CPU string is valid.
   bool isCPUStringValid(StringRef CPU) const {
-    auto Found = std::find_if(ProcDesc.begin(), ProcDesc.end(),
-                              [=](const SubtargetFeatureKV &KV) {
-                                return CPU == KV.Key; 
-                              });
-    return Found != ProcDesc.end();
+    auto Found = std::lower_bound(ProcDesc.begin(), ProcDesc.end(), CPU);
+    return Found != ProcDesc.end() && StringRef(Found->Key) == CPU;
   }
 };
 
