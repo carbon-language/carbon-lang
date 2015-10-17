@@ -4,6 +4,8 @@
 ; SCALAR accesses)In this case, for a PHI in the exit node, hence there is no
 ; PHI ReadAccess.
 
+; XFAIL: *
+
 ; CHECK-LABEL: Function: foo
 ; CHECK:       Statements {
 ; CHECK-NEXT:      Stmt_header
