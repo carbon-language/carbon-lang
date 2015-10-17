@@ -92,12 +92,14 @@ ErrorOr<int64_t> DataReader::parseNumberField(char EndChar) {
 
 ErrorOr<Location> DataReader::parseLocation() {
   // Read whether the location of the branch should be DSO or a symbol
-  if (ParsingBuf[0] != '0' && ParsingBuf[0] != '1') {
-    reportError("expected 0 or 1");
+  // 0 means it is a DSO. 1 means it is a global symbol. 2 means it is a local
+  // symbol.
+  if (ParsingBuf[0] != '0' && ParsingBuf[0] != '1' && ParsingBuf[0] != '2') {
+    reportError("expected 0, 1 or 2");
     return make_error_code(llvm::errc::io_error);
   }
 
-  bool IsSymbol = ParsingBuf[0] == '1';
+  bool IsSymbol = ParsingBuf[0] == '1' || ParsingBuf[0] == '2';
   ParsingBuf = ParsingBuf.drop_front(1);
   Col += 1;
 
@@ -153,7 +155,7 @@ bool DataReader::hasData() {
   if (ParsingBuf.size() == 0)
     return false;
 
-  if (ParsingBuf[0] == '0' || ParsingBuf[0] == '1')
+  if (ParsingBuf[0] == '0' || ParsingBuf[0] == '1' || ParsingBuf[0] == '2')
     return true;
   return false;
 }
