@@ -315,7 +315,7 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
 
   const Region &R = Stmt.getParent()->getRegion();
   for (Instruction &Inst : *BB)
-    handleOutsideUsers(R, &Inst, BBMap[&Inst]);
+    handleOutsideUsers(R, &Inst);
 }
 
 Value *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
@@ -354,7 +354,7 @@ Value *BlockGenerator::getOrCreatePHIAlloca(Value *ScalarBase) {
 }
 
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
-                                        Value *InstCopy, Value *Address) {
+                                        Value *Address) {
   // If there are escape users we get the alloca for this instruction and put it
   // in the EscapeMap for later finalization. Lastly, if the instruction was
   // copied multiple times we already did this and can exit.
@@ -585,8 +585,7 @@ void BlockGenerator::finalizeSCoP(Scop &S) {
       assert(PHI->getNumUses() == 1);
       assert(ScalarMap.count(PHI->user_back()));
 
-      handleOutsideUsers(S.getRegion(), PHI, nullptr,
-                         ScalarMap[PHI->user_back()]);
+      handleOutsideUsers(S.getRegion(), PHI, ScalarMap[PHI->user_back()]);
     }
   }
 
