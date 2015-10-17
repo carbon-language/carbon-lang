@@ -79,8 +79,8 @@ void RegPressureTracker::dump() const {
 
 void PressureDiff::dump(const TargetRegisterInfo &TRI) const {
   for (const PressureChange &Change : *this) {
-    if (!Change.isValid() || Change.getUnitInc() == 0)
-      continue;
+    if (!Change.isValid())
+      break;
     dbgs() << "    " << TRI.getRegPressureSetName(Change.getPSet())
            << " " << Change.getUnitInc();
   }
@@ -401,10 +401,20 @@ void PressureDiff::addPressureChange(unsigned RegUnit, bool IsDec,
     if (!I->isValid() || I->getPSet() != *PSetI) {
       PressureChange PTmp = PressureChange(*PSetI);
       for (PressureDiff::iterator J = I; J != E && PTmp.isValid(); ++J)
-        std::swap(*J,PTmp);
+        std::swap(*J, PTmp);
     }
     // Update the units for this pressure set.
-    I->setUnitInc(I->getUnitInc() + Weight);
+    unsigned NewUnitInc = I->getUnitInc() + Weight;
+    if (NewUnitInc != 0) {
+      I->setUnitInc(NewUnitInc);
+    } else {
+      // Remove entry
+      PressureDiff::iterator J;
+      for (J = std::next(I); J != E && J->isValid(); ++J, ++I)
+        *I = *J;
+      if (J != E)
+        *I = *J;
+    }
   }
 }
 
