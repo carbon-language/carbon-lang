@@ -805,6 +805,34 @@ define <8 x i16> @test_int_x86_xop_vprotw(<8 x i16> %a0, <8 x i16> %a1) {
 }
 declare <8 x i16> @llvm.x86.xop.vprotw(<8 x i16>, <8 x i16>) nounwind readnone
 
+define <16 x i8> @test_int_x86_xop_vprotbi(<16 x i8> %a0) {
+  ; CHECK: vprotb
+  %res = call <16 x i8> @llvm.x86.xop.vprotbi(<16 x i8> %a0, i8 1) ;
+  ret <16 x i8> %res
+}
+declare <16 x i8> @llvm.x86.xop.vprotbi(<16 x i8>, i8) nounwind readnone
+
+define <4 x i32> @test_int_x86_xop_vprotdi(<4 x i32> %a0) {
+  ; CHECK: vprotd
+  %res = call <4 x i32> @llvm.x86.xop.vprotdi(<4 x i32> %a0, i8 -2) ;
+  ret <4 x i32> %res
+}
+declare <4 x i32> @llvm.x86.xop.vprotdi(<4 x i32>, i8) nounwind readnone
+
+define <2 x i64> @test_int_x86_xop_vprotqi(<2 x i64> %a0) {
+  ; CHECK: vprotq
+  %res = call <2 x i64> @llvm.x86.xop.vprotqi(<2 x i64> %a0, i8 3) ;
+  ret <2 x i64> %res
+}
+declare <2 x i64> @llvm.x86.xop.vprotqi(<2 x i64>, i8) nounwind readnone
+
+define <8 x i16> @test_int_x86_xop_vprotwi(<8 x i16> %a0) {
+  ; CHECK: vprotw
+  %res = call <8 x i16> @llvm.x86.xop.vprotwi(<8 x i16> %a0, i8 -4) ;
+  ret <8 x i16> %res
+}
+declare <8 x i16> @llvm.x86.xop.vprotwi(<8 x i16>, i8) nounwind readnone
+
 define <16 x i8> @test_int_x86_xop_vpshab(<16 x i8> %a0, <16 x i8> %a1) {
   ; CHECK: vpshab
   %res = call <16 x i8> @llvm.x86.xop.vpshab(<16 x i8> %a0, <16 x i8> %a1) ;
