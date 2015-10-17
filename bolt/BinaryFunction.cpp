@@ -547,9 +547,9 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
     dbgs() << "running block layout heuristics on " << getName() << "\n";
   }
 
-  // Greedy heuristic implementation for the "TSP problem", applied to BB
-  // layout. Try to maximize weight during a path traversing all BBs. In this
-  // way, we will convert the hottest branches into fall-throughs.
+  // Greedy heuristic implementation for the TSP, applied to BB layout. Try to
+  // maximize weight during a path traversing all BBs. In this way, we will
+  // convert the hottest branches into fall-throughs.
 
   // Encode an edge between two basic blocks, source and destination
   typedef std::pair<BinaryBasicBlock *, BinaryBasicBlock *> EdgeTy;

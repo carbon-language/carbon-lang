@@ -193,10 +193,9 @@ public:
   /// adjustments to instructions at the end of basic blocks.
   void optimizeLayout(bool DumpLayout);
 
-  /// Dynamic programming implementation for the "TSP problem", applied to BB
-  /// layout. Find the optimal way to maximize weight during a path traversing
-  /// all BBs. In this way, we will convert the hottest branches into
-  /// fall-throughs.
+  /// Dynamic programming implementation for the TSP, applied to BB layout. Find
+  /// the optimal way to maximize weight during a path traversing all BBs. In
+  /// this way, we will convert the hottest branches into fall-throughs.
   ///
   /// Uses exponential amount of memory on the number of basic blocks and should
   /// only be used for small functions.
