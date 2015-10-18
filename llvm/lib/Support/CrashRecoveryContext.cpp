@@ -244,7 +244,7 @@ void CrashRecoveryContext::Disable() {
 
 static const int Signals[] =
     { SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGTRAP };
-static const unsigned NumSignals = sizeof(Signals) / sizeof(Signals[0]);
+static const unsigned NumSignals = array_lengthof(Signals);
 static struct sigaction PrevActions[NumSignals];
 
 static void CrashRecoverySignalHandler(int Signal) {
