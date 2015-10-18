@@ -421,8 +421,8 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, bool IsLoopBranch,
   if (isa<UndefValue>(Condition))
     return invalid<ReportUndefCond>(Context, /*Assert=*/true, TI, &BB);
 
-  // Constant conditions are always affine.
-  if (isa<Constant>(Condition))
+  // Constant integer conditions are always affine.
+  if (isa<ConstantInt>(Condition))
     return true;
 
   if (BranchInst *BI = dyn_cast<BranchInst>(TI))
