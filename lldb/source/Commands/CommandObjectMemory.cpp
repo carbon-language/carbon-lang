@@ -527,20 +527,21 @@ protected:
                                                1, 
                                                type_list);
             }
-            
+
             if (type_list.GetSize() == 0 && lookup_type_name.GetCString() && *lookup_type_name.GetCString() == '$')
             {
                 if (ClangPersistentVariables *persistent_vars = llvm::dyn_cast_or_null<ClangPersistentVariables>(target->GetPersistentExpressionStateForLanguage(lldb::eLanguageTypeC)))
                 {
                     clang::TypeDecl *tdecl = persistent_vars->GetPersistentType(ConstString(lookup_type_name));
-                    
+
                     if (tdecl)
                     {
-                        clang_ast_type.SetCompilerType(ClangASTContext::GetASTContext(&tdecl->getASTContext()),(const lldb::opaque_compiler_type_t)tdecl->getTypeForDecl());
+                        clang_ast_type.SetCompilerType(ClangASTContext::GetASTContext(&tdecl->getASTContext()),
+                                                       reinterpret_cast<lldb::opaque_compiler_type_t>(const_cast<clang::Type*>(tdecl->getTypeForDecl())));
                     }
                 }
             }
-            
+
             if (clang_ast_type.IsValid() == false)
             {
                 if (type_list.GetSize() == 0)

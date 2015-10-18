@@ -264,7 +264,7 @@ Scalar::GetBytes() const
     case e_ulonglong:
     case e_sint128:
     case e_uint128:
-        return (void *)m_integer.getRawData();
+        return const_cast<void *>(reinterpret_cast<const void *>(m_integer.getRawData()));
     case e_float:
         flt_val = m_float.convertToFloat();
         return (void *)&flt_val;
@@ -273,7 +273,7 @@ Scalar::GetBytes() const
         return (void *)&dbl_val;
     case e_long_double:
         llvm::APInt ldbl_val = m_float.bitcastToAPInt();
-        return (void *)ldbl_val.getRawData();
+        return const_cast<void *>(reinterpret_cast<const void *>(ldbl_val.getRawData()));
     }
     return NULL;
 }

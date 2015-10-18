@@ -445,7 +445,7 @@ Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, AddressType 
         data.SetData(data_sp);
     }
 
-    uint8_t* dst = (uint8_t*)data.PeekData(0, byte_size);
+    uint8_t* dst = const_cast<uint8_t*>(data.PeekData(0, byte_size));
     if (dst != nullptr)
     {
         if (address_type == eAddressTypeHost)

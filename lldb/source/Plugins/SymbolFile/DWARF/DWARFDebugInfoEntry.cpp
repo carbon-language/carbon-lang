@@ -227,7 +227,7 @@ DWARFDebugInfoEntry::Extract
 
                 bool isCompileUnitTag = m_tag == DW_TAG_compile_unit;
                 if (cu && isCompileUnitTag)
-                    ((DWARFCompileUnit*)cu)->SetBaseAddress(0);
+                    const_cast<DWARFCompileUnit *>(cu)->SetBaseAddress(0);
 
                 // Skip all data in the .debug_info for the attributes
                 const uint32_t numAttributes = abbrevDecl->NumAttributes();

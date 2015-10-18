@@ -37,7 +37,7 @@ StreamString::Flush ()
 size_t
 StreamString::Write (const void *s, size_t length)
 {
-    m_packet.append ((char *)s, length);
+    m_packet.append (reinterpret_cast<const char *>(s), length);
     return length;
 }
 

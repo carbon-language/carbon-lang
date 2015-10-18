@@ -820,8 +820,8 @@ Host::LaunchProcessPosixSpawn(const char *exe_path, const ProcessLaunchInfo &lau
 #endif
 
     const char *tmp_argv[2];
-    char * const *argv = (char * const*)launch_info.GetArguments().GetConstArgumentVector();
-    char * const *envp = (char * const*)launch_info.GetEnvironmentEntries().GetConstArgumentVector();
+    char * const *argv = const_cast<char * const*>(launch_info.GetArguments().GetConstArgumentVector());
+    char * const *envp = const_cast<char * const*>(launch_info.GetEnvironmentEntries().GetConstArgumentVector());
     if (argv == NULL)
     {
         // posix_spawn gets very unhappy if it doesn't have at least the program
@@ -829,7 +829,7 @@ Host::LaunchProcessPosixSpawn(const char *exe_path, const ProcessLaunchInfo &lau
         // variables don't make it into the child process if "argv == NULL"!!!
         tmp_argv[0] = exe_path;
         tmp_argv[1] = NULL;
-        argv = (char * const*)tmp_argv;
+        argv = const_cast<char * const*>(tmp_argv);
     }
 
 #if !defined (__APPLE__)

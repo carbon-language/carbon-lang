@@ -324,8 +324,8 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
         {
             // just copy the pointers - the cast is necessary to make the compiler happy
             // but this should only happen if we are reading UTF8 data
-            utf8_data_ptr = (UTF8*)data_ptr;
-            utf8_data_end_ptr = (UTF8*)data_end_ptr;
+            utf8_data_ptr = const_cast<UTF8 *>(reinterpret_cast<const UTF8*>(data_ptr));
+            utf8_data_end_ptr = const_cast<UTF8 *>(reinterpret_cast<const UTF8*>(data_end_ptr));
         }
         
         const bool escape_non_printables = dump_options.GetEscapeNonPrintables();

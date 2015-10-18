@@ -183,7 +183,8 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
             if (!gdb_comm.ReadAllRegisters(m_thread.GetProtocolID(), response))
                 return false;
             if (response.IsNormalResponse())
-                if (response.GetHexBytes ((void *)m_reg_data.GetDataStart(), m_reg_data.GetByteSize(), '\xcc') == m_reg_data.GetByteSize())
+                if (response.GetHexBytes(const_cast<void *>(reinterpret_cast<const void *>(m_reg_data.GetDataStart())),
+                                         m_reg_data.GetByteSize(), '\xcc') == m_reg_data.GetByteSize())
                     SetAllRegisterValid (true);
         }
         else if (reg_info->value_regs)

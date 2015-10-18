@@ -432,13 +432,13 @@ namespace lldb_private {
                 m_size(size),
                 m_deleter(deleter)
                 {}
-                
+
                 StringPrinterBufferPointer(const U* bytes, S size, Deleter deleter = nullptr) :
-                m_data((T*)bytes),
+                m_data(reinterpret_cast<const T*>(bytes)),
                 m_size(size),
                 m_deleter(deleter)
                 {}
-                
+
                 StringPrinterBufferPointer(StringPrinterBufferPointer&& rhs) :
                 m_data(rhs.m_data),
                 m_size(rhs.m_size),
