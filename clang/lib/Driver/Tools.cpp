@@ -9093,7 +9093,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString("-debug"));
     CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
     if (Args.hasArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd)) {
-      static const char *CompilerRTComponents[] = {
+      static const char *const CompilerRTComponents[] = {
           "asan_dynamic", "asan_dynamic_runtime_thunk",
       };
       for (const auto &Component : CompilerRTComponents)
@@ -9104,7 +9104,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     } else if (DLL) {
       CmdArgs.push_back(getCompilerRTArgString(TC, Args, "asan_dll_thunk"));
     } else {
-      static const char *CompilerRTComponents[] = {
+      static const char *const CompilerRTComponents[] = {
           "asan", "asan_cxx",
       };
       for (const auto &Component : CompilerRTComponents)

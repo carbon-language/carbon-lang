@@ -7069,7 +7069,7 @@ static bool appendEnumType(SmallStringEnc &Enc, const EnumType *ET,
 /// This is done prior to appending the type's encoding.
 static void appendQualifier(SmallStringEnc &Enc, QualType QT) {
   // Qualifiers are emitted in alphabetical order.
-  static const char *Table[] = {"","c:","r:","cr:","v:","cv:","rv:","crv:"};
+  static const char *const Table[]={"","c:","r:","cr:","v:","cv:","rv:","crv:"};
   int Lookup = 0;
   if (QT.isConstQualified())
     Lookup += 1<<0;
