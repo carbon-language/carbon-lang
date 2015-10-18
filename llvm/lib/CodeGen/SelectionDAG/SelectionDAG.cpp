@@ -3907,8 +3907,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
     break;
   case ISD::SETCC: {
     // Use FoldSetCC to simplify SETCC's.
-    SDValue Simp = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get(), DL);
-    if (Simp.getNode()) return Simp;
+    if (SDValue V = FoldSetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get(), DL))
+      return V;
     break;
   }
   case ISD::SELECT:
