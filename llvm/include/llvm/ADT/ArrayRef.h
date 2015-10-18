@@ -10,6 +10,7 @@
 #ifndef LLVM_ADT_ARRAYREF_H
 #define LLVM_ADT_ARRAYREF_H
 
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
@@ -374,6 +375,10 @@ namespace llvm {
   template <typename T> struct isPodLike<ArrayRef<T> > {
     static const bool value = true;
   };
+
+  template <typename T> hash_code hash_value(ArrayRef<T> S) {
+    return hash_combine_range(S.begin(), S.end());
+  }
 }
 
 #endif
