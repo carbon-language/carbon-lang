@@ -162,38 +162,55 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
        ++I) {
     uint32_t Flags = I->getFlags();
 
-    bool IsCommon = Flags & SymbolRef::SF_Common;
-    if (IsCommon)
+    if (Flags & SymbolRef::SF_Common)
       CommonSymbols.push_back(*I);
     else {
       object::SymbolRef::Type SymType = I->getType();
 
-      if (SymType == object::SymbolRef::ST_Function ||
-          SymType == object::SymbolRef::ST_Data ||
-          SymType == object::SymbolRef::ST_Unknown) {
+      // Get symbol name.
+      ErrorOr<StringRef> NameOrErr = I->getName();
+      Check(NameOrErr.getError());
+      StringRef Name = *NameOrErr;
+  
+      // Compute JIT symbol flags.
+      JITSymbolFlags RTDyldSymFlags = JITSymbolFlags::None;
+      if (Flags & SymbolRef::SF_Weak)
+        RTDyldSymFlags |= JITSymbolFlags::Weak;
+      if (Flags & SymbolRef::SF_Exported)
+        RTDyldSymFlags |= JITSymbolFlags::Exported;
 
-        ErrorOr<StringRef> NameOrErr = I->getName();
-        Check(NameOrErr.getError());
-        StringRef Name = *NameOrErr;
+      if (Flags & SymbolRef::SF_Absolute) {
+        auto Addr = I->getAddress();
+        Check(Addr.getError());
+        uint64_t SectOffset = *Addr;
+        unsigned SectionID = AbsoluteSymbolSection;
+
+        DEBUG(dbgs() << "\tType: " << SymType << " (absolute) Name: " << Name
+                     << " SID: " << SectionID << " Offset: "
+                     << format("%p", (uintptr_t)SectOffset)
+                     << " flags: " << Flags << "\n");
+        GlobalSymbolTable[Name] =
+          SymbolTableEntry(SectionID, SectOffset, RTDyldSymFlags);
+      } else if (SymType == object::SymbolRef::ST_Function ||
+                 SymType == object::SymbolRef::ST_Data ||
+                 SymType == object::SymbolRef::ST_Unknown ||
+                 SymType == object::SymbolRef::ST_Other) {
+
         ErrorOr<section_iterator> SIOrErr = I->getSection();
         Check(SIOrErr.getError());
         section_iterator SI = *SIOrErr;
         if (SI == Obj.section_end())
           continue;
+        // Get symbol offset.
         uint64_t SectOffset;
         Check(getOffset(*I, *SI, SectOffset));
         bool IsCode = SI->isText();
-        unsigned SectionID =
-            findOrEmitSection(Obj, *SI, IsCode, LocalSections);
+        unsigned SectionID = findOrEmitSection(Obj, *SI, IsCode, LocalSections);
+
         DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name
                      << " SID: " << SectionID << " Offset: "
                      << format("%p", (uintptr_t)SectOffset)
                      << " flags: " << Flags << "\n");
-        JITSymbolFlags RTDyldSymFlags = JITSymbolFlags::None;
-        if (Flags & SymbolRef::SF_Weak)
-          RTDyldSymFlags |= JITSymbolFlags::Weak;
-        if (Flags & SymbolRef::SF_Exported)
-          RTDyldSymFlags |= JITSymbolFlags::Exported;
         GlobalSymbolTable[Name] =
           SymbolTableEntry(SectionID, SectOffset, RTDyldSymFlags);
       }

@@ -188,6 +188,8 @@ class RuntimeDyldImpl {
   friend class RuntimeDyld::LoadedObjectInfo;
   friend class RuntimeDyldCheckerImpl;
 protected:
+  static const unsigned AbsoluteSymbolSection = ~0U;
+
   // The MemoryManager to load objects into.
   RuntimeDyld::MemoryManager &MemMgr;
 
@@ -407,6 +409,9 @@ public:
     if (pos == GlobalSymbolTable.end())
       return nullptr;
     const auto &SymInfo = pos->second;
+    // Absolute symbols do not have a local address.
+    if (SymInfo.getSectionID() == AbsoluteSymbolSection)
+      return nullptr;
     return getSectionAddress(SymInfo.getSectionID()) + SymInfo.getOffset();
   }
 
@@ -417,8 +422,10 @@ public:
     if (pos == GlobalSymbolTable.end())
       return nullptr;
     const auto &SymEntry = pos->second;
-    uint64_t TargetAddr =
-      getSectionLoadAddress(SymEntry.getSectionID()) + SymEntry.getOffset();
+    uint64_t SectionAddr = 0;
+    if (SymEntry.getSectionID() != AbsoluteSymbolSection)
+      SectionAddr = getSectionLoadAddress(SymEntry.getSectionID());
+    uint64_t TargetAddr = SectionAddr + SymEntry.getOffset();
     return RuntimeDyld::SymbolInfo(TargetAddr, SymEntry.getFlags());
   }
 
