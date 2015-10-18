@@ -107,7 +107,6 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
                     dwarf->m_die_to_type[die.GetDIE()] = DIE_IS_BEING_PARSED;
 
                     const size_t num_attributes = die.GetAttributes(attributes);
-                    uint32_t encoding = 0;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
 
                     if (num_attributes > 0)
@@ -129,7 +128,7 @@ DWARFASTParserGo::ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, cons
                                         byte_size = form_value.Unsigned();
                                         break;
                                     case DW_AT_encoding:
-                                        encoding = form_value.Unsigned();
+                                        // = form_value.Unsigned();
                                         break;
                                     case DW_AT_type:
                                         encoding_uid = form_value.Reference();
@@ -510,7 +509,6 @@ DWARFASTParserGo::ParseChildParameters(const SymbolContext &sc,
                 const size_t num_attributes = die.GetAttributes(attributes);
                 if (num_attributes > 0)
                 {
-                    const char *name = NULL;
                     Declaration decl;
                     dw_offset_t param_type_die_offset = DW_INVALID_OFFSET;
 
@@ -524,7 +522,7 @@ DWARFASTParserGo::ParseChildParameters(const SymbolContext &sc,
                             switch (attr)
                             {
                                 case DW_AT_name:
-                                    name = form_value.AsCString();
+                                    // = form_value.AsCString();
                                     break;
                                 case DW_AT_type:
                                     param_type_die_offset = form_value.Reference();

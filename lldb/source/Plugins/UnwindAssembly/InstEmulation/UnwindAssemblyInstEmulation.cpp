@@ -117,21 +117,13 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
 
                 // cache the pc register number (in whatever register numbering this UnwindPlan uses) for
                 // quick reference during instruction parsing.
-                uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
                 RegisterInfo pc_reg_info;
-                if (m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, pc_reg_info))
-                    pc_reg_num = pc_reg_info.kinds[unwind_plan.GetRegisterKind()];
-                else
-                    pc_reg_num = LLDB_INVALID_REGNUM;
+                m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, pc_reg_info);
 
                 // cache the return address register number (in whatever register numbering this UnwindPlan uses) for
                 // quick reference during instruction parsing.
-                uint32_t ra_reg_num = LLDB_INVALID_REGNUM;
                 RegisterInfo ra_reg_info;
-                if (m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, ra_reg_info))
-                    ra_reg_num = ra_reg_info.kinds[unwind_plan.GetRegisterKind()];
-                else
-                    ra_reg_num = LLDB_INVALID_REGNUM;
+                m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA, ra_reg_info);
 
                 for (size_t idx=0; idx<num_instructions; ++idx)
                 {
