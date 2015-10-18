@@ -61,7 +61,7 @@ void AssignOperatorSignatureCheck::check(
   const auto* Method = Result.Nodes.getNodeAs<CXXMethodDecl>("method");
   std::string Name = Method->getParent()->getName();
 
-  static const char *Messages[][2] = {
+  static const char *const Messages[][2] = {
       {"ReturnType", "operator=() should return '%0&'"},
       {"ArgumentType", "operator=() should take '%0 const&', '%0&&' or '%0'"},
       {"cv", "operator=() should not be marked '%1'"}

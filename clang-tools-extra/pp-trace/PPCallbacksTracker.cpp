@@ -56,35 +56,38 @@ static std::string getSourceLocationString(clang::Preprocessor &PP,
 // Enum string tables.
 
 // FileChangeReason strings.
-static const char *FileChangeReasonStrings[] = {
+static const char *const FileChangeReasonStrings[] = {
   "EnterFile", "ExitFile", "SystemHeaderPragma", "RenameFile"
 };
 
 // CharacteristicKind strings.
-static const char *CharacteristicKindStrings[] = { "C_User", "C_System",
-                                                   "C_ExternCSystem" };
+static const char *const CharacteristicKindStrings[] = { "C_User", "C_System",
+                                                         "C_ExternCSystem" };
 
 // MacroDirective::Kind strings.
-static const char *MacroDirectiveKindStrings[] = { "MD_Define", "MD_Undefine",
-                                                   "MD_Visibility" };
+static const char *const MacroDirectiveKindStrings[] = {
+  "MD_Define","MD_Undefine", "MD_Visibility"
+};
 
 // PragmaIntroducerKind strings.
-static const char *PragmaIntroducerKindStrings[] = { "PIK_HashPragma",
-                                                     "PIK__Pragma",
-                                                     "PIK___pragma" };
+static const char *const PragmaIntroducerKindStrings[] = { "PIK_HashPragma",
+                                                           "PIK__Pragma",
+                                                           "PIK___pragma" };
 
 // PragmaMessageKind strings.
-static const char *PragmaMessageKindStrings[] = { "PMK_Message", "PMK_Warning",
-                                                  "PMK_Error" };
+static const char *const PragmaMessageKindStrings[] = {
+  "PMK_Message", "PMK_Warning", "PMK_Error"
+};
 
 // ConditionValueKind strings.
-static const char *ConditionValueKindStrings[] = {"CVK_NotEvaluated",
-                                                  "CVK_False", "CVK_True"};
+static const char *const ConditionValueKindStrings[] = {
+  "CVK_NotEvaluated", "CVK_False", "CVK_True"
+};
 
 // Mapping strings.
-static const char *MappingStrings[] = { "0",          "MAP_IGNORE",
-                                        "MAP_REMARK", "MAP_WARNING",
-                                        "MAP_ERROR",  "MAP_FATAL" };
+static const char *const MappingStrings[] = { "0",          "MAP_IGNORE",
+                                              "MAP_REMARK", "MAP_WARNING",
+                                              "MAP_ERROR",  "MAP_FATAL" };
 
 // PPCallbacksTracker functions.
 
@@ -453,7 +456,7 @@ void PPCallbacksTracker::appendArgument(const char *Name,
 
 // Append an enum argument to the top trace item.
 void PPCallbacksTracker::appendArgument(const char *Name, int Value,
-                                        const char *Strings[]) {
+                                        const char *const Strings[]) {
   appendArgument(Name, Strings[Value]);
 }
 

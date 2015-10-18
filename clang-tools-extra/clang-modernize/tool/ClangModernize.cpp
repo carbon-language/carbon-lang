@@ -45,7 +45,7 @@ static cl::OptionCategory FormattingCategory("Formatting Options");
 static cl::OptionCategory IncludeExcludeCategory("Inclusion/Exclusion Options");
 static cl::OptionCategory SerializeCategory("Serialization Options");
 
-static const cl::OptionCategory *VisibleCategories[] = {
+static const cl::OptionCategory *const VisibleCategories[] = {
   &GeneralCategory,   &FormattingCategory, &IncludeExcludeCategory,
   &SerializeCategory, &TransformCategory,  &TransformsOptionsCategory,
 };

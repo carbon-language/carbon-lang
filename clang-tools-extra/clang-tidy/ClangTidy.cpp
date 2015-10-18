@@ -55,7 +55,7 @@ namespace tidy {
 namespace {
 static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
 
-static StringRef StaticAnalyzerChecks[] = {
+static const StringRef StaticAnalyzerChecks[] = {
 #define GET_CHECKERS
 #define CHECKER(FULLNAME, CLASS, DESCFILE, HELPTEXT, GROUPINDEX, HIDDEN)       \
   FULLNAME,

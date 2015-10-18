@@ -20,7 +20,7 @@ namespace {
 // users can add their own elements to the list. However, it may require some
 // extra thought since POSIX types and FILE types are usable in different ways.
 bool isPOSIXTypeName(StringRef ClassName) {
-  static const char *TypeNames[] = {
+  static const char *const TypeNames[] = {
     "::pthread_cond_t",
     "::pthread_mutex_t",
     "pthread_cond_t",
@@ -31,7 +31,7 @@ bool isPOSIXTypeName(StringRef ClassName) {
 }
 
 bool isFILETypeName(StringRef ClassName) {
-  static const char *TypeNames[] = {
+  static const char *const TypeNames[] = {
     "::FILE",
     "FILE",
     "std::FILE"

@@ -179,7 +179,7 @@ public:
   void appendArgument(const char *Name, const clang::Token &Value);
 
   /// \brief Append an enum argument to the top trace item.
-  void appendArgument(const char *Name, int Value, const char *Strings[]);
+  void appendArgument(const char *Name, int Value, const char *const Strings[]);
 
   /// \brief Append a FileID argument to the top trace item.
   void appendArgument(const char *Name, clang::FileID Value);

@@ -18,7 +18,7 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace {
 bool isShrinkableContainer(llvm::StringRef ClassName) {
-  static const char *Shrinkables[] = {
+  static const char *const Shrinkables[] = {
     "std::basic_string",
     "std::deque",
     "std::vector"

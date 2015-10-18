@@ -15,7 +15,7 @@
 using namespace clang::ast_matchers;
 
 static bool isContainer(llvm::StringRef ClassName) {
-  static const char *ContainerNames[] = {
+  static const char *const ContainerNames[] = {
     "std::array",
     "std::deque",
     "std::forward_list",
