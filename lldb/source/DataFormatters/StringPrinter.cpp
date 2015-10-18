@@ -258,6 +258,7 @@ StringPrinter::GetDefaultEscapingHelper (GetPrintableElementType elem_type)
                 return GetPrintable(StringPrinter::StringElementType::ASCII, buffer, buffer_end, next);
             };
     }
+    llvm_unreachable("bad element type");
 }
 
 // use this call if you already have an LLDB-side buffer for the data
