@@ -1233,7 +1233,7 @@ void DeclContext::addHiddenDecl(Decl *D) {
   }
 
   // Notify a C++ record declaration that we've added a member, so it can
-  // update it's class-specific state.
+  // update its class-specific state.
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this))
     Record->addedMember(D);
 

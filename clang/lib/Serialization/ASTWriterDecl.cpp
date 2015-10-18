@@ -260,7 +260,7 @@ void ASTDeclWriter::Visit(Decl *D) {
   // Source locations require array (variable-length) abbreviations.  The
   // abbreviation infrastructure requires that arrays are encoded last, so
   // we handle it here in the case of those classes derived from DeclaratorDecl
-  if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)){
+  if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
     Writer.AddTypeSourceInfo(DD->getTypeSourceInfo(), Record);
   }
 
@@ -2101,7 +2101,7 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
     if (IDR == 0)
       IDR = NextDeclID++;
     
-    ID= IDR;
+    ID = IDR;
   }
 
   bool isReplacingADecl = ID < FirstDeclID;
