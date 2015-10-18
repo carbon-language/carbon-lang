@@ -2043,8 +2043,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
               break;
             }
             LargeMulOps.push_back(T->getOperand());
-          } else if (const SCEVConstant *C =
-                       dyn_cast<SCEVConstant>(M->getOperand(j))) {
+          } else if (const auto *C = dyn_cast<SCEVConstant>(M->getOperand(j))) {
             LargeMulOps.push_back(getAnyExtendExpr(C, SrcType));
           } else {
             Ok = false;
@@ -2421,9 +2420,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
           }
           if (AnyFolded)
             return getAddExpr(NewOps);
-        }
-        else if (const SCEVAddRecExpr *
-                 AddRec = dyn_cast<SCEVAddRecExpr>(Ops[1])) {
+        } else if (const auto *AddRec = dyn_cast<SCEVAddRecExpr>(Ops[1])) {
           // Negation preserves a recurrence's no self-wrap property.
           SmallVector<const SCEV *, 4> Operands;
           for (SCEVAddRecExpr::op_iterator I = AddRec->op_begin(),
@@ -2748,8 +2745,7 @@ const SCEV *ScalarEvolution::getUDivExactExpr(const SCEV *LHS,
   if (const SCEVConstant *RHSCst = dyn_cast<SCEVConstant>(RHS)) {
     // If the mulexpr multiplies by a constant, then that constant must be the
     // first element of the mulexpr.
-    if (const SCEVConstant *LHSCst =
-            dyn_cast<SCEVConstant>(Mul->getOperand(0))) {
+    if (const auto *LHSCst = dyn_cast<SCEVConstant>(Mul->getOperand(0))) {
       if (LHSCst == RHSCst) {
         SmallVector<const SCEV *, 2> Operands;
         Operands.append(Mul->op_begin() + 1, Mul->op_end());
@@ -3567,8 +3563,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
     if (!Visited.insert(I).second)
       continue;
 
-    ValueExprMapType::iterator It =
-      ValueExprMap.find_as(static_cast<Value *>(I));
+    auto It = ValueExprMap.find_as(static_cast<Value *>(I));
     if (It != ValueExprMap.end()) {
       const SCEV *Old = It->second;
 
@@ -3708,8 +3703,7 @@ const SCEV *ScalarEvolution::createAddRecFromPHI(PHINode *PN) {
           return PHISCEV;
         }
       }
-    } else if (const SCEVAddRecExpr *AddRec =
-                   dyn_cast<SCEVAddRecExpr>(BEValue)) {
+    } else if (const auto *AddRec = dyn_cast<SCEVAddRecExpr>(BEValue)) {
       // Otherwise, this could be a loop like this:
       //     i = 0;  for (j = 1; ..; ++j) { ....  i = j; }
       // In this case, j = {1,+,1}  and BEValue is j.
@@ -8124,8 +8118,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
       Operands[0] = SE.getZero(SC->getType());
       const SCEV *Shifted = SE.getAddRecExpr(Operands, getLoop(),
                                              getNoWrapFlags(FlagNW));
-      if (const SCEVAddRecExpr *ShiftedAddRec =
-            dyn_cast<SCEVAddRecExpr>(Shifted))
+      if (const auto *ShiftedAddRec = dyn_cast<SCEVAddRecExpr>(Shifted))
         return ShiftedAddRec->getNumIterationsInRange(
                            Range.subtract(SC->getValue()->getValue()), SE);
       // This is strange and shouldn't happen.
