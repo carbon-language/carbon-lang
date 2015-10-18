@@ -566,7 +566,7 @@ StringRef DiagnosticIDs::getNearestOption(diag::Flavor Flavor,
                                           StringRef Group) {
   StringRef Best;
   unsigned BestDistance = Group.size() + 1; // Sanity threshold.
-  for (const WarningOption &O : llvm::makeArrayRef(OptionTable)) {
+  for (const WarningOption &O : OptionTable) {
     // Don't suggest ignored warning flags.
     if (!O.Members && !O.SubGroups)
       continue;
