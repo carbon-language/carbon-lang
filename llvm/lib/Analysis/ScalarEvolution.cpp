@@ -1132,8 +1132,8 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
   // If the input value is a chrec scev, truncate the chrec's operands.
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
     SmallVector<const SCEV *, 4> Operands;
-    for (unsigned i = 0, e = AddRec->getNumOperands(); i != e; ++i)
-      Operands.push_back(getTruncateExpr(AddRec->getOperand(i), Ty));
+    for (const SCEV *Op : AddRec->operands())
+      Operands.push_back(getTruncateExpr(Op, Ty));
     return getAddRecExpr(Operands, AddRec->getLoop(), SCEV::FlagAnyWrap);
   }
 
@@ -2638,10 +2638,9 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
                             getZeroExtendExpr(Step, ExtTy),
                             AR->getLoop(), SCEV::FlagAnyWrap)) {
             SmallVector<const SCEV *, 4> Operands;
-            for (unsigned i = 0, e = AR->getNumOperands(); i != e; ++i)
-              Operands.push_back(getUDivExpr(AR->getOperand(i), RHS));
-            return getAddRecExpr(Operands, AR->getLoop(),
-                                 SCEV::FlagNW);
+            for (const SCEV *Op : AR->operands())
+              Operands.push_back(getUDivExpr(Op, RHS));
+            return getAddRecExpr(Operands, AR->getLoop(), SCEV::FlagNW);
           }
           /// Get a canonical UDivExpr for a recurrence.
           /// {X,+,N}/C => {Y,+,N}/C where Y=X-(X%N). Safe when C%N=0.
@@ -2662,8 +2661,8 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
       // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
       if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS)) {
         SmallVector<const SCEV *, 4> Operands;
-        for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i)
-          Operands.push_back(getZeroExtendExpr(M->getOperand(i), ExtTy));
+        for (const SCEV *Op : M->operands())
+          Operands.push_back(getZeroExtendExpr(Op, ExtTy));
         if (getZeroExtendExpr(M, ExtTy) == getMulExpr(Operands))
           // Find an operand that's safely divisible.
           for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
@@ -2680,8 +2679,8 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
       // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
       if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(LHS)) {
         SmallVector<const SCEV *, 4> Operands;
-        for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i)
-          Operands.push_back(getZeroExtendExpr(A->getOperand(i), ExtTy));
+        for (const SCEV *Op : A->operands())
+          Operands.push_back(getZeroExtendExpr(Op, ExtTy));
         if (getZeroExtendExpr(A, ExtTy) == getAddExpr(Operands)) {
           Operands.clear();
           for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i) {
@@ -6066,8 +6065,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
       if (CanConstantFold(I)) {
         SmallVector<Constant *, 4> Operands;
         bool MadeImprovement = false;
-        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-          Value *Op = I->getOperand(i);
+        for (Value *Op : I->operands()) {
           if (Constant *C = dyn_cast<Constant>(Op)) {
             Operands.push_back(C);
             continue;
@@ -8844,11 +8842,8 @@ ScalarEvolution::~ScalarEvolution() {
 
   // Free any extra memory created for ExitNotTakenInfo in the unlikely event
   // that a loop had multiple computable exits.
-  for (DenseMap<const Loop*, BackedgeTakenInfo>::iterator I =
-         BackedgeTakenCounts.begin(), E = BackedgeTakenCounts.end();
-       I != E; ++I) {
-    I->second.clear();
-  }
+  for (auto &BTCI : BackedgeTakenCounts)
+    BTCI.second.clear();
 
   assert(PendingLoopPredicates.empty() && "isImpliedCond garbage");
   assert(!WalkingBEDominatingConds && "isLoopBackedgeGuardedByCond garbage!");
@@ -8906,11 +8901,11 @@ void ScalarEvolution::print(raw_ostream &OS) const {
   OS << "Classifying expressions for: ";
   F.printAsOperand(OS, /*PrintType=*/false);
   OS << "\n";
-  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if (isSCEVable(I->getType()) && !isa<CmpInst>(*I)) {
-      OS << *I << '\n';
+  for (Instruction &I : instructions(F))
+    if (isSCEVable(I.getType()) && !isa<CmpInst>(I)) {
+      OS << I << '\n';
       OS << "  -->  ";
-      const SCEV *SV = SE.getSCEV(&*I);
+      const SCEV *SV = SE.getSCEV(&I);
       SV->print(OS);
       if (!isa<SCEVCouldNotCompute>(SV)) {
         OS << " U: ";
@@ -8919,7 +8914,7 @@ void ScalarEvolution::print(raw_ostream &OS) const {
         SE.getSignedRange(SV).print(OS);
       }
 
-      const Loop *L = LI.getLoopFor((*I).getParent());
+      const Loop *L = LI.getLoopFor(I.getParent());
 
       const SCEV *AtUse = SE.getSCEVAtScope(SV, L);
       if (AtUse != SV) {
