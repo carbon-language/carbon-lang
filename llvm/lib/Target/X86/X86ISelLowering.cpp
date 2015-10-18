@@ -16012,6 +16012,8 @@ static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
 
   if (Op.getOpcode() == X86ISD::FSETCC)
     return DAG.getNode(ISD::AND, dl, VT, Op, IMask);
+  if (Op.getOpcode() == X86ISD::VFPCLASS)
+    return DAG.getNode(ISD::OR, dl, VT, Op, IMask);
 
   if (PreservedSrc.getOpcode() == ISD::UNDEF)
     PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
@@ -16356,6 +16358,15 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                  DAG.getUNDEF(BitcastVT), FPclassMask,
                                  DAG.getIntPtrConstant(0, dl));
        return DAG.getBitcast(Op.getValueType(), Res);
+    }
+    case FPCLASSS: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Imm = Op.getOperand(2);
+      SDValue Mask = Op.getOperand(3);
+      SDValue FPclass = DAG.getNode(IntrData->Opc0, dl, MVT::i1, Src1, Imm);
+      SDValue FPclassMask = getScalarMaskingNode(FPclass, Mask,
+        DAG.getTargetConstant(0, dl, MVT::i1), Subtarget, DAG);
+      return DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i8, FPclassMask);
     }
     case CMP_MASK:
     case CMP_MASK_CC: {

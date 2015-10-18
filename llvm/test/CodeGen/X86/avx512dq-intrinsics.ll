@@ -467,3 +467,37 @@ define i16@test_int_x86_avx512_mask_fpclass_ps_512(<16 x float> %x0, i16 %x1) {
 	%res2 = add i16 %res, %res1
 	ret i16 %res2
 }
+
+declare i8 @llvm.x86.avx512.mask.fpclass.sd(<2 x double>, i32, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_sd
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vfpclasssd
+; CHECK: %k0 {%k1}
+; CHECK: vfpclasssd
+; CHECK: %k0
+define i8 @test_int_x86_avx512_mask_fpclass_sd(<2 x double> %x0, i8 %x1) {
+  %res = call i8 @llvm.x86.avx512.mask.fpclass.sd(<2 x double> %x0, i32 2, i8 %x1)
+  %res1 = call i8 @llvm.x86.avx512.mask.fpclass.sd(<2 x double> %x0, i32 4, i8 -1)
+  %res2 = add i8 %res, %res1
+  ret i8 %res2
+}
+
+declare i8 @llvm.x86.avx512.mask.fpclass.ss(<4 x float>, i32, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_fpclass_ss
+; CHECK-NOT: call 
+; CHECK: kmovw 
+; CHECK: vfpclassss
+; CHECK: %k0
+; CHECK: {%k1}
+; CHECK: kmovw
+; CHECK: vfpclassss
+; CHECK: %k0
+define i8 @test_int_x86_avx512_mask_fpclass_ss(<4 x float> %x0, i8 %x1) {
+  %res = call i8 @llvm.x86.avx512.mask.fpclass.ss(<4 x float> %x0, i32 4, i8 %x1)
+  %res1 = call i8 @llvm.x86.avx512.mask.fpclass.ss(<4 x float> %x0, i32 4, i8 -1)
+  %res2 = add i8 %res, %res1
+  ret i8 %res2
+}

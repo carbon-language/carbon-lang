@@ -1705,6 +1705,14 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
          GCCBuiltin<"__builtin_ia32_fpclassps512_mask">,
           Intrinsic<[llvm_i16_ty], [llvm_v16f32_ty, llvm_i32_ty, llvm_i16_ty],
           [IntrNoMem]>;
+  def int_x86_avx512_mask_fpclass_sd : 
+         GCCBuiltin<"__builtin_ia32_fpclasssd">,
+          Intrinsic<[llvm_i8_ty], [llvm_v2f64_ty, llvm_i32_ty, llvm_i8_ty],
+          [IntrNoMem]>;
+  def int_x86_avx512_mask_fpclass_ss : 
+         GCCBuiltin<"__builtin_ia32_fpclassss">,
+          Intrinsic<[llvm_i8_ty], [llvm_v4f32_ty, llvm_i32_ty, llvm_i8_ty],
+          [IntrNoMem]>;
 }
 
 // Vector extract sign mask
