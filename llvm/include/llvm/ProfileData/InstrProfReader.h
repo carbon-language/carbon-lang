@@ -132,28 +132,12 @@ class RawInstrProfReader : public InstrProfReader {
 private:
   /// The profile data file contents.
   std::unique_ptr<MemoryBuffer> DataBuffer;
-  struct ProfileData {
-    const uint32_t NameSize;
-    const uint32_t NumCounters;
-    const uint64_t FuncHash;
-    const IntPtrT NamePtr;
-    const IntPtrT CounterPtr;
-  };
-  struct RawHeader {
-    const uint64_t Magic;
-    const uint64_t Version;
-    const uint64_t DataSize;
-    const uint64_t CountersSize;
-    const uint64_t NamesSize;
-    const uint64_t CountersDelta;
-    const uint64_t NamesDelta;
-  };
 
   bool ShouldSwapBytes;
   uint64_t CountersDelta;
   uint64_t NamesDelta;
-  const ProfileData *Data;
-  const ProfileData *DataEnd;
+  const RawInstrProf::ProfileData<IntPtrT> *Data;
+  const RawInstrProf::ProfileData<IntPtrT> *DataEnd;
   const uint64_t *CountersStart;
   const char *NamesStart;
   const char *ProfileEnd;
@@ -170,7 +154,7 @@ public:
 
 private:
   std::error_code readNextHeader(const char *CurrentPos);
-  std::error_code readHeader(const RawHeader &Header);
+  std::error_code readHeader(const RawInstrProf::Header &Header);
   template <class IntT>
   IntT swap(IntT Int) const {
     return ShouldSwapBytes ? sys::getSwappedBytes(Int) : Int;

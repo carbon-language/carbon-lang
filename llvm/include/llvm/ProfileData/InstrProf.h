@@ -16,8 +16,11 @@
 #ifndef LLVM_PROFILEDATA_INSTRPROF_H_
 #define LLVM_PROFILEDATA_INSTRPROF_H_
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MD5.h"
 #include <cstdint>
 #include <list>
 #include <system_error>
@@ -131,6 +134,105 @@ struct InstrProfRecord {
             ->getValueSitesForKind(ValueKind));
   }
 };
+
+namespace IndexedInstrProf {
+enum class HashT : uint32_t {
+  MD5,
+
+  Last = MD5
+};
+
+static inline uint64_t MD5Hash(StringRef Str) {
+  MD5 Hash;
+  Hash.update(Str);
+  llvm::MD5::MD5Result Result;
+  Hash.final(Result);
+  // Return the least significant 8 bytes. Our MD5 implementation returns the
+  // result in little endian, so we may need to swap bytes.
+  using namespace llvm::support;
+  return endian::read<uint64_t, little, unaligned>(Result);
+}
+
+static inline uint64_t ComputeHash(HashT Type, StringRef K) {
+  switch (Type) {
+    case HashT::MD5:
+      return IndexedInstrProf::MD5Hash(K);
+  }
+  llvm_unreachable("Unhandled hash type");
+}
+
+const uint64_t Magic = 0x8169666f72706cff;  // "\xfflprofi\x81"
+const uint64_t Version = 3;
+const HashT HashType = HashT::MD5;
+
+struct Header {
+  uint64_t Magic;
+  uint64_t Version;
+  uint64_t MaxFunctionCount;
+  uint64_t HashType;
+  uint64_t HashOffset;
+};
+
+}  // end namespace IndexedInstrProf
+
+namespace RawInstrProf {
+
+const uint64_t Version = 1;
+
+// Magic number to detect file format and endianness.
+// Use 255 at one end, since no UTF-8 file can use that character.  Avoid 0,
+// so that utilities, like strings, don't grab it as a string.  129 is also
+// invalid UTF-8, and high enough to be interesting.
+// Use "lprofr" in the centre to stand for "LLVM Profile Raw", or "lprofR"
+// for 32-bit platforms.
+// The magic and version need to be kept in sync with
+// projects/compiler-rt/lib/profile/InstrProfiling.c
+
+template <class IntPtrT>
+inline uint64_t getMagic();
+template <>
+inline uint64_t getMagic<uint64_t>() {
+  return uint64_t(255) << 56 | uint64_t('l') << 48 | uint64_t('p') << 40 |
+         uint64_t('r') << 32 | uint64_t('o') << 24 | uint64_t('f') << 16 |
+         uint64_t('r') << 8 | uint64_t(129);
+}
+
+template <>
+inline uint64_t getMagic<uint32_t>() {
+  return uint64_t(255) << 56 | uint64_t('l') << 48 | uint64_t('p') << 40 |
+         uint64_t('r') << 32 | uint64_t('o') << 24 | uint64_t('f') << 16 |
+         uint64_t('R') << 8 | uint64_t(129);
+}
+
+// The definition should match the structure defined in
+// compiler-rt/lib/profile/InstrProfiling.h.
+// It should also match the synthesized type in
+// Transforms/Instrumentation/InstrProfiling.cpp:getOrCreateRegionCounters.
+
+template <class IntPtrT>
+struct ProfileData {
+  const uint32_t NameSize;
+  const uint32_t NumCounters;
+  const uint64_t FuncHash;
+  const IntPtrT NamePtr;
+  const IntPtrT CounterPtr;
+};
+
+// The definition should match the header referenced in
+// compiler-rt/lib/profile/InstrProfilingFile.c  and
+// InstrProfilingBuffer.c.
+
+struct Header {
+  const uint64_t Magic;
+  const uint64_t Version;
+  const uint64_t DataSize;
+  const uint64_t CountersSize;
+  const uint64_t NamesSize;
+  const uint64_t CountersDelta;
+  const uint64_t NamesDelta;
+};
+
+}  // end namespace RawInstrProf
 
 } // end namespace llvm
 

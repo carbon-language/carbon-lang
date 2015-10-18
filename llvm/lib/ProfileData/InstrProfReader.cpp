@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/InstrProfReader.h"
-#include "InstrProfIndexed.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cassert>
 
@@ -140,53 +139,24 @@ std::error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
 }
 
 template <class IntPtrT>
-static uint64_t getRawMagic();
-
-template <>
-uint64_t getRawMagic<uint64_t>() {
-  return
-    uint64_t(255) << 56 |
-    uint64_t('l') << 48 |
-    uint64_t('p') << 40 |
-    uint64_t('r') << 32 |
-    uint64_t('o') << 24 |
-    uint64_t('f') << 16 |
-    uint64_t('r') <<  8 |
-    uint64_t(129);
-}
-
-template <>
-uint64_t getRawMagic<uint32_t>() {
-  return
-    uint64_t(255) << 56 |
-    uint64_t('l') << 48 |
-    uint64_t('p') << 40 |
-    uint64_t('r') << 32 |
-    uint64_t('o') << 24 |
-    uint64_t('f') << 16 |
-    uint64_t('R') <<  8 |
-    uint64_t(129);
-}
-
-template <class IntPtrT>
 bool RawInstrProfReader<IntPtrT>::hasFormat(const MemoryBuffer &DataBuffer) {
   if (DataBuffer.getBufferSize() < sizeof(uint64_t))
     return false;
   uint64_t Magic =
     *reinterpret_cast<const uint64_t *>(DataBuffer.getBufferStart());
-  return getRawMagic<IntPtrT>() == Magic ||
-    sys::getSwappedBytes(getRawMagic<IntPtrT>()) == Magic;
+  return RawInstrProf::getMagic<IntPtrT>() == Magic ||
+         sys::getSwappedBytes(RawInstrProf::getMagic<IntPtrT>()) == Magic;
 }
 
 template <class IntPtrT>
 std::error_code RawInstrProfReader<IntPtrT>::readHeader() {
   if (!hasFormat(*DataBuffer))
     return error(instrprof_error::bad_magic);
-  if (DataBuffer->getBufferSize() < sizeof(RawHeader))
+  if (DataBuffer->getBufferSize() < sizeof(RawInstrProf::Header))
     return error(instrprof_error::bad_header);
-  auto *Header =
-    reinterpret_cast<const RawHeader *>(DataBuffer->getBufferStart());
-  ShouldSwapBytes = Header->Magic != getRawMagic<IntPtrT>();
+  auto *Header = reinterpret_cast<const RawInstrProf::Header *>(
+      DataBuffer->getBufferStart());
+  ShouldSwapBytes = Header->Magic != RawInstrProf::getMagic<IntPtrT>();
   return readHeader(*Header);
 }
 
@@ -202,29 +172,25 @@ RawInstrProfReader<IntPtrT>::readNextHeader(const char *CurrentPos) {
     return instrprof_error::eof;
   // If there isn't enough space for another header, this is probably just
   // garbage at the end of the file.
-  if (CurrentPos + sizeof(RawHeader) > End)
+  if (CurrentPos + sizeof(RawInstrProf::Header) > End)
     return instrprof_error::malformed;
   // The writer ensures each profile is padded to start at an aligned address.
   if (reinterpret_cast<size_t>(CurrentPos) % alignOf<uint64_t>())
     return instrprof_error::malformed;
   // The magic should have the same byte order as in the previous header.
   uint64_t Magic = *reinterpret_cast<const uint64_t *>(CurrentPos);
-  if (Magic != swap(getRawMagic<IntPtrT>()))
+  if (Magic != swap(RawInstrProf::getMagic<IntPtrT>()))
     return instrprof_error::bad_magic;
 
   // There's another profile to read, so we need to process the header.
-  auto *Header = reinterpret_cast<const RawHeader *>(CurrentPos);
+  auto *Header = reinterpret_cast<const RawInstrProf::Header *>(CurrentPos);
   return readHeader(*Header);
 }
 
-static uint64_t getRawVersion() {
-  return 1;
-}
-
 template <class IntPtrT>
-std::error_code
-RawInstrProfReader<IntPtrT>::readHeader(const RawHeader &Header) {
-  if (swap(Header.Version) != getRawVersion())
+std::error_code RawInstrProfReader<IntPtrT>::readHeader(
+    const RawInstrProf::Header &Header) {
+  if (swap(Header.Version) != RawInstrProf::Version)
     return error(instrprof_error::unsupported_version);
 
   CountersDelta = swap(Header.CountersDelta);
@@ -233,8 +199,9 @@ RawInstrProfReader<IntPtrT>::readHeader(const RawHeader &Header) {
   auto CountersSize = swap(Header.CountersSize);
   auto NamesSize = swap(Header.NamesSize);
 
-  ptrdiff_t DataOffset = sizeof(RawHeader);
-  ptrdiff_t CountersOffset = DataOffset + sizeof(ProfileData) * DataSize;
+  ptrdiff_t DataOffset = sizeof(RawInstrProf::Header);
+  ptrdiff_t CountersOffset =
+      DataOffset + sizeof(RawInstrProf::ProfileData<IntPtrT>) * DataSize;
   ptrdiff_t NamesOffset = CountersOffset + sizeof(uint64_t) * CountersSize;
   size_t ProfileSize = NamesOffset + sizeof(char) * NamesSize;
 
@@ -242,7 +209,8 @@ RawInstrProfReader<IntPtrT>::readHeader(const RawHeader &Header) {
   if (Start + ProfileSize > DataBuffer->getBufferEnd())
     return error(instrprof_error::bad_header);
 
-  Data = reinterpret_cast<const ProfileData *>(Start + DataOffset);
+  Data = reinterpret_cast<const RawInstrProf::ProfileData<IntPtrT> *>(
+      Start + DataOffset);
   DataEnd = Data + DataSize;
   CountersStart = reinterpret_cast<const uint64_t *>(Start + CountersOffset);
   NamesStart = Start + NamesOffset;
@@ -421,25 +389,30 @@ std::error_code IndexedInstrProfReader::readHeader() {
 
   using namespace support;
 
+  auto *Header = reinterpret_cast<const IndexedInstrProf::Header *>(Cur);
+  Cur += sizeof(IndexedInstrProf::Header);
+
   // Check the magic number.
-  uint64_t Magic = endian::readNext<uint64_t, little, unaligned>(Cur);
+  uint64_t Magic = endian::byte_swap<uint64_t, little>(Header->Magic);
   if (Magic != IndexedInstrProf::Magic)
     return error(instrprof_error::bad_magic);
 
   // Read the version.
-  FormatVersion = endian::readNext<uint64_t, little, unaligned>(Cur);
+  FormatVersion = endian::byte_swap<uint64_t, little>(Header->Version);
   if (FormatVersion > IndexedInstrProf::Version)
     return error(instrprof_error::unsupported_version);
 
   // Read the maximal function count.
-  MaxFunctionCount = endian::readNext<uint64_t, little, unaligned>(Cur);
+  MaxFunctionCount =
+      endian::byte_swap<uint64_t, little>(Header->MaxFunctionCount);
 
   // Read the hash type and start offset.
   IndexedInstrProf::HashT HashType = static_cast<IndexedInstrProf::HashT>(
-      endian::readNext<uint64_t, little, unaligned>(Cur));
+      endian::byte_swap<uint64_t, little>(Header->HashType));
   if (HashType > IndexedInstrProf::HashT::Last)
     return error(instrprof_error::unsupported_hash_type);
-  uint64_t HashOffset = endian::readNext<uint64_t, little, unaligned>(Cur);
+
+  uint64_t HashOffset = endian::byte_swap<uint64_t, little>(Header->HashOffset);
 
   // The rest of the file is an on disk hash table.
   Index.reset(InstrProfReaderIndex::Create(

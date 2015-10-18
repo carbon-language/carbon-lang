@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/InstrProfWriter.h"
-#include "InstrProfIndexed.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/OnDiskHashTable.h"
@@ -197,13 +196,23 @@ std::pair<uint64_t, uint64_t> InstrProfWriter::writeImpl(raw_ostream &OS) {
   endian::Writer<little> LE(OS);
 
   // Write the header.
-  LE.write<uint64_t>(IndexedInstrProf::Magic);
-  LE.write<uint64_t>(IndexedInstrProf::Version);
-  LE.write<uint64_t>(MaxFunctionCount);
-  LE.write<uint64_t>(static_cast<uint64_t>(IndexedInstrProf::HashType));
+  IndexedInstrProf::Header Header;
+  Header.Magic = IndexedInstrProf::Magic;
+  Header.Version = IndexedInstrProf::Version;
+  Header.MaxFunctionCount = MaxFunctionCount;
+  Header.HashType = static_cast<uint64_t>(IndexedInstrProf::HashType);
+  Header.HashOffset = 0;
+  int N = sizeof(IndexedInstrProf::Header) / sizeof(uint64_t);
+
+  // Only write out all the fields execpt 'HashOffset'. We need
+  // to remember the offset of that field to allow back patching
+  // later.
+  for (int I = 0; I < N - 1; I++)
+    LE.write<uint64_t>(reinterpret_cast<uint64_t *>(&Header)[I]);
 
   // Save a space to write the hash table start location.
   uint64_t HashTableStartLoc = OS.tell();
+  // Reserve the space for HashOffset field.
   LE.write<uint64_t>(0);
   // Write the hash table.
   uint64_t HashTableStart = Generator.Emit(OS);
@@ -218,6 +227,7 @@ void InstrProfWriter::write(raw_fd_ostream &OS) {
   // Go back and fill in the hash table start.
   using namespace support;
   OS.seek(TableStart.first);
+  // Now patch the HashOffset field previously reserved.
   endian::Writer<little>(OS).write<uint64_t>(TableStart.second);
 }
 
