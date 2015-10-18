@@ -2844,12 +2844,10 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
       // AddRecs require their operands be loop-invariant with respect to their
       // loops. Don't perform this transformation if it would break this
       // requirement.
-      bool AllInvariant = true;
-      for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-        if (!isLoopInvariant(Operands[i], L)) {
-          AllInvariant = false;
-          break;
-        }
+      bool AllInvariant =
+          std::all_of(Operands.begin(), Operands.end(),
+                      [&](const SCEV *Op) { return isLoopInvariant(Op, L); });
+
       if (AllInvariant) {
         // Create a recurrence for the outer loop with the same step size.
         //
@@ -2859,12 +2857,10 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
           maskFlags(Flags, SCEV::FlagNW | NestedAR->getNoWrapFlags());
 
         NestedOperands[0] = getAddRecExpr(Operands, L, OuterFlags);
-        AllInvariant = true;
-        for (unsigned i = 0, e = NestedOperands.size(); i != e; ++i)
-          if (!isLoopInvariant(NestedOperands[i], NestedLoop)) {
-            AllInvariant = false;
-            break;
-          }
+        AllInvariant = std::all_of(
+            NestedOperands.begin(), NestedOperands.end(),
+            [&](const SCEV *Op) { return isLoopInvariant(Op, NestedLoop); });
+
         if (AllInvariant) {
           // Ok, both add recurrences are valid after the transformation.
           //
@@ -8127,10 +8123,9 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
   // The only time we can solve this is when we have all constant indices.
   // Otherwise, we cannot determine the overflow conditions.
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (!isa<SCEVConstant>(getOperand(i)))
-      return SE.getCouldNotCompute();
-
+  if (std::any_of(op_begin(), op_end(),
+                  [](const SCEV *Op) { return !isa<SCEVConstant>(Op);}))
+    return SE.getCouldNotCompute();
 
   // Okay at this point we know that all elements of the chrec are constants and
   // that the start element is zero.
