@@ -1186,8 +1186,10 @@ public:
   template <unsigned NumRegs>
   void addVectorList64Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    static unsigned FirstRegs[] = { AArch64::D0,       AArch64::D0_D1,
-                                    AArch64::D0_D1_D2, AArch64::D0_D1_D2_D3 };
+    static const unsigned FirstRegs[] = { AArch64::D0,
+                                          AArch64::D0_D1,
+                                          AArch64::D0_D1_D2,
+                                          AArch64::D0_D1_D2_D3 };
     unsigned FirstReg = FirstRegs[NumRegs - 1];
 
     Inst.addOperand(
@@ -1197,8 +1199,10 @@ public:
   template <unsigned NumRegs>
   void addVectorList128Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    static unsigned FirstRegs[] = { AArch64::Q0,       AArch64::Q0_Q1,
-                                    AArch64::Q0_Q1_Q2, AArch64::Q0_Q1_Q2_Q3 };
+    static const unsigned FirstRegs[] = { AArch64::Q0,
+                                          AArch64::Q0_Q1,
+                                          AArch64::Q0_Q1_Q2,
+                                          AArch64::Q0_Q1_Q2_Q3 };
     unsigned FirstReg = FirstRegs[NumRegs - 1];
 
     Inst.addOperand(

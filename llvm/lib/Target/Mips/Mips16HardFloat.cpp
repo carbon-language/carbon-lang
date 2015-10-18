@@ -343,7 +343,7 @@ static void assureFPCallStub(Function &F, Module *M,
 //
 // Functions that are llvm intrinsics and don't need helpers.
 //
-static const char *IntrinsicInline[] = {
+static const char *const IntrinsicInline[] = {
   "fabs", "fabsf",
   "llvm.ceil.f32", "llvm.ceil.f64",
   "llvm.copysign.f32", "llvm.copysign.f64",
@@ -395,7 +395,7 @@ static bool fixupFPReturnAndCall(Function &F, Module *M,
         Type *T = RVal->getType();
         FPReturnVariant RV = whichFPReturnVariant(T);
         if (RV == NoFPRet) continue;
-        static const char* Helper[NoFPRet] = {
+        static const char *const Helper[NoFPRet] = {
           "__mips16_ret_sf", "__mips16_ret_df", "__mips16_ret_sc",
           "__mips16_ret_dc"
         };

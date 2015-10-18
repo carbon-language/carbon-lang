@@ -42,7 +42,7 @@ struct {
 #undef FUZZER_FLAG_STRING
 } Flags;
 
-static FlagDescription FlagDescriptions [] {
+static const FlagDescription FlagDescriptions [] {
 #define FUZZER_FLAG_INT(Name, Default, Description)                            \
   { #Name, Description, Default, &Flags.Name, nullptr},
 #define FUZZER_FLAG_STRING(Name, Description)                                  \

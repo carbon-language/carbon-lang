@@ -26,7 +26,7 @@ using namespace Hexagon;
 #define DEBUG_TYPE "hexagon-mcduplex-info"
 
 // pair table of subInstructions with opcodes
-static std::pair<unsigned, unsigned> opcodeData[] = {
+static const std::pair<unsigned, unsigned> opcodeData[] = {
     std::make_pair((unsigned)V4_SA1_addi, 0),
     std::make_pair((unsigned)V4_SA1_addrx, 6144),
     std::make_pair((unsigned)V4_SA1_addsp, 3072),

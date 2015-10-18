@@ -106,14 +106,15 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     Regex vstRegex("^arm\\.neon\\.vst([1234]|[234]lane)\\.v[a-z0-9]*$");
     if (vstRegex.match(Name)) {
-      static Intrinsic::ID StoreInts[] = {Intrinsic::arm_neon_vst1,
-                                          Intrinsic::arm_neon_vst2,
-                                          Intrinsic::arm_neon_vst3,
-                                          Intrinsic::arm_neon_vst4};
+      static const Intrinsic::ID StoreInts[] = {Intrinsic::arm_neon_vst1,
+                                                Intrinsic::arm_neon_vst2,
+                                                Intrinsic::arm_neon_vst3,
+                                                Intrinsic::arm_neon_vst4};
 
-      static Intrinsic::ID StoreLaneInts[] = {Intrinsic::arm_neon_vst2lane,
-                                              Intrinsic::arm_neon_vst3lane,
-                                              Intrinsic::arm_neon_vst4lane};
+      static const Intrinsic::ID StoreLaneInts[] = {
+        Intrinsic::arm_neon_vst2lane, Intrinsic::arm_neon_vst3lane,
+        Intrinsic::arm_neon_vst4lane
+      };
 
       auto fArgs = F->getFunctionType()->params();
       Type *Tys[] = {fArgs[0], fArgs[1]};

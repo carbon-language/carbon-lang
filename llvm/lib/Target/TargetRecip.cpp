@@ -26,7 +26,7 @@ using namespace llvm;
 // the key strings for queries and command-line inputs.
 // In addition, the command-line interface recognizes the global parameters
 // "all", "none", and "default".
-static const char *RecipOps[] = {
+static const char *const RecipOps[] = {
   "divd",
   "divf",
   "vec-divd",

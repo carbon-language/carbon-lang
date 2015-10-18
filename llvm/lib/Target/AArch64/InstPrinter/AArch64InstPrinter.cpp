@@ -269,7 +269,7 @@ struct LdStNInstrDesc {
   int NaturalOffset;
 };
 
-static LdStNInstrDesc LdStNInstInfo[] = {
+static const LdStNInstrDesc LdStNInstInfo[] = {
   { AArch64::LD1i8,             "ld1",  ".b",     1, true,  0  },
   { AArch64::LD1i16,            "ld1",  ".h",     1, true,  0  },
   { AArch64::LD1i32,            "ld1",  ".s",     1, true,  0  },
@@ -612,7 +612,7 @@ static LdStNInstrDesc LdStNInstInfo[] = {
   { AArch64::ST4Fourv2s_POST,   "st4",  ".2s",    1, false, 32 },
 };
 
-static LdStNInstrDesc *getLdStNInstrDesc(unsigned Opcode) {
+static const LdStNInstrDesc *getLdStNInstrDesc(unsigned Opcode) {
   unsigned Idx;
   for (Idx = 0; Idx != array_lengthof(LdStNInstInfo); ++Idx)
     if (LdStNInstInfo[Idx].Opcode == Opcode)
@@ -641,7 +641,7 @@ void AArch64AppleInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-  if (LdStNInstrDesc *LdStDesc = getLdStNInstrDesc(Opcode)) {
+  if (const LdStNInstrDesc *LdStDesc = getLdStNInstrDesc(Opcode)) {
     O << "\t" << LdStDesc->Mnemonic << LdStDesc->Layout << '\t';
 
     // Now onto the operands: first a vector list with possible lane

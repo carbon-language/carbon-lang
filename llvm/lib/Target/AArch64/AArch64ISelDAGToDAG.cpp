@@ -1282,8 +1282,8 @@ SDNode *AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
   SDValue SuperReg = SDValue(Ld, 0);
 
   EVT WideVT = RegSeq.getOperand(1)->getValueType(0);
-  static unsigned QSubs[] = { AArch64::qsub0, AArch64::qsub1, AArch64::qsub2,
-                              AArch64::qsub3 };
+  static const unsigned QSubs[] = { AArch64::qsub0, AArch64::qsub1,
+                                    AArch64::qsub2, AArch64::qsub3 };
   for (unsigned i = 0; i < NumVecs; ++i) {
     SDValue NV = CurDAG->getTargetExtractSubreg(QSubs[i], dl, WideVT, SuperReg);
     if (Narrow)
@@ -1335,8 +1335,8 @@ SDNode *AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
                 Narrow ? NarrowVector(SuperReg, *CurDAG) : SuperReg);
   } else {
     EVT WideVT = RegSeq.getOperand(1)->getValueType(0);
-    static unsigned QSubs[] = { AArch64::qsub0, AArch64::qsub1, AArch64::qsub2,
-                                AArch64::qsub3 };
+    static const unsigned QSubs[] = { AArch64::qsub0, AArch64::qsub1,
+                                      AArch64::qsub2, AArch64::qsub3 };
     for (unsigned i = 0; i < NumVecs; ++i) {
       SDValue NV = CurDAG->getTargetExtractSubreg(QSubs[i], dl, WideVT,
                                                   SuperReg);

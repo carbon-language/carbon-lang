@@ -11926,9 +11926,9 @@ bool ARMTargetLowering::lowerInterleavedStore(StoreInst *SI,
     SubVecTy = VectorType::get(IntTy, NumSubElts);
   }
 
-  static Intrinsic::ID StoreInts[3] = {Intrinsic::arm_neon_vst2,
-                                       Intrinsic::arm_neon_vst3,
-                                       Intrinsic::arm_neon_vst4};
+  static const Intrinsic::ID StoreInts[3] = {Intrinsic::arm_neon_vst2,
+                                             Intrinsic::arm_neon_vst3,
+                                             Intrinsic::arm_neon_vst4};
   SmallVector<Value *, 6> Ops;
 
   Type *Int8Ptr = Builder.getInt8PtrTy(SI->getPointerAddressSpace());
