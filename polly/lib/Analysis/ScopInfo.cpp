@@ -2564,6 +2564,15 @@ void Scop::hoistInvariantLoads() {
         continue;
 
       isl_map *AccessRelation = MA->getAccessRelation();
+
+      // Skip accesses that have an empty access relation. These can be caused
+      // by multiple offsets with a type cast in-between that cause the overall
+      // byte offset to be not divisible by the new types sizes.
+      if (isl_map_is_empty(AccessRelation)) {
+        isl_map_free(AccessRelation);
+        continue;
+      }
+
       if (isl_map_involves_dims(AccessRelation, isl_dim_in, 0,
                                 Stmt.getNumIterators())) {
         isl_map_free(AccessRelation);
