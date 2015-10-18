@@ -541,8 +541,10 @@ void BlockGenerator::createScalarFinalization(Region &R) {
     Value *ScalarAddr = EscapeMappingValue.first;
 
     // Reload the demoted instruction in the optimized version of the SCoP.
-    Instruction *EscapeInstReload =
+    Value *EscapeInstReload =
         Builder.CreateLoad(ScalarAddr, EscapeInst->getName() + ".final_reload");
+    EscapeInstReload =
+        Builder.CreateBitOrPointerCast(EscapeInstReload, EscapeInst->getType());
 
     // Create the merge PHI that merges the optimized and unoptimized version.
     PHINode *MergePHI = PHINode::Create(EscapeInst->getType(), 2,

@@ -835,18 +835,20 @@ void IslNodeBuilder::materializeParameters(isl_set *Set, bool All) {
 }
 
 Value *IslNodeBuilder::preloadUnconditionally(isl_set *AccessRange,
-                                              isl_ast_build *Build) {
+                                              isl_ast_build *Build, Type *Ty) {
   isl_pw_multi_aff *PWAccRel = isl_pw_multi_aff_from_set(AccessRange);
   PWAccRel = isl_pw_multi_aff_gist_params(PWAccRel, S.getContext());
   isl_ast_expr *Access =
       isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
-  return ExprBuilder.create(Access);
+  Value *PreloadVal = ExprBuilder.create(Access);
+  PreloadVal = Builder.CreateBitOrPointerCast(PreloadVal, Ty);
+  return PreloadVal;
 }
 
 Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
-                                            isl_set *Domain,
-                                            isl_ast_build *Build) {
+                                            isl_set *Domain) {
 
+  auto *Build = isl_ast_build_from_context(isl_set_universe(S.getParamSpace()));
   isl_set *AccessRange = isl_map_range(MA.getAccessRelation());
   materializeParameters(AccessRange, false);
 
@@ -854,9 +856,13 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
   bool AlwaysExecuted = isl_set_is_equal(Domain, Universe);
   isl_set_free(Universe);
 
+  Instruction *AccInst = MA.getAccessInstruction();
+  Type *AccInstTy = AccInst->getType();
+
+  Value *PreloadVal;
   if (AlwaysExecuted) {
     isl_set_free(Domain);
-    return preloadUnconditionally(AccessRange, Build);
+    PreloadVal = preloadUnconditionally(AccessRange, Build, AccInstTy);
   } else {
 
     materializeParameters(Domain, false);
@@ -890,18 +896,18 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
     Builder.CreateBr(MergeBB);
 
     Builder.SetInsertPoint(ExecBB->getTerminator());
-    Instruction *AccInst = MA.getAccessInstruction();
-    Type *AccInstTy = AccInst->getType();
-    Value *PreAccInst = preloadUnconditionally(AccessRange, Build);
+    Value *PreAccInst = preloadUnconditionally(AccessRange, Build, AccInstTy);
 
     Builder.SetInsertPoint(MergeBB->getTerminator());
     auto *MergePHI = Builder.CreatePHI(
         AccInstTy, 2, "polly.preload." + AccInst->getName() + ".merge");
     MergePHI->addIncoming(PreAccInst, ExecBB);
     MergePHI->addIncoming(Constant::getNullValue(AccInstTy), CondBB);
-
-    return MergePHI;
+    PreloadVal = MergePHI;
   }
+
+  isl_ast_build_free(Build);
+  return PreloadVal;
 }
 
 void IslNodeBuilder::preloadInvariantLoads() {
@@ -918,9 +924,6 @@ void IslNodeBuilder::preloadInvariantLoads() {
   PreLoadBB->setName("polly.preload.begin");
   Builder.SetInsertPoint(PreLoadBB->begin());
 
-  isl_ast_build *Build =
-      isl_ast_build_from_context(isl_set_universe(S.getParamSpace()));
-
   // For each equivalence class of invariant loads we pre-load the representing
   // element with the unified execution context. However, we have to map all
   // elements of the class to the one preloaded load as they are referenced
@@ -932,9 +935,12 @@ void IslNodeBuilder::preloadInvariantLoads() {
 
     isl_set *Domain = isl_set_copy(IAClass.second.front().second);
     Instruction *AccInst = MA->getAccessInstruction();
-    Value *PreloadVal = preloadInvariantLoad(*MA, Domain, Build);
-    for (const InvariantAccessTy &IA : IAClass.second)
-      ValueMap[IA.first->getAccessInstruction()] = PreloadVal;
+    Value *PreloadVal = preloadInvariantLoad(*MA, Domain);
+    for (const InvariantAccessTy &IA : IAClass.second) {
+      Instruction *AccInst = IA.first->getAccessInstruction();
+      ValueMap[AccInst] =
+          Builder.CreateBitOrPointerCast(PreloadVal, AccInst->getType());
+    }
 
     if (SE.isSCEVable(AccInst->getType())) {
       isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));
@@ -965,8 +971,6 @@ void IslNodeBuilder::preloadInvariantLoads() {
 
     EscapeMap[AccInst] = std::make_pair(Alloca, std::move(EscapeUsers));
   }
-
-  isl_ast_build_free(Build);
 }
 
 void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {

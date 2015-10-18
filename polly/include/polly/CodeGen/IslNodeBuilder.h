@@ -204,8 +204,10 @@ protected:
   virtual void createFor(__isl_take isl_ast_node *For);
 
   /// @brief Preload the memory access at @p AccessRange with @p Build.
+  ///
+  /// @returns The preloaded value casted to type @p Ty
   Value *preloadUnconditionally(__isl_take isl_set *AccessRange,
-                                isl_ast_build *Build);
+                                isl_ast_build *Build, Type *Ty);
 
   /// @brief Preload the memory load access @p MA.
   ///
@@ -218,8 +220,7 @@ protected:
   ///   MA_preload = load MA;
   /// use MA_preload
   Value *preloadInvariantLoad(const MemoryAccess &MA,
-                              __isl_take isl_set *Domain,
-                              __isl_keep isl_ast_build *Build);
+                              __isl_take isl_set *Domain);
 
   void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
   void createForSequential(__isl_take isl_ast_node *For);
