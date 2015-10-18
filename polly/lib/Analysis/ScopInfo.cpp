@@ -2545,6 +2545,19 @@ void Scop::hoistInvariantLoads() {
       if (MA->isImplicit() || MA->isWrite() || !MA->isAffine())
         continue;
 
+      // Skip accesses that have an invariant base pointer which is defined but
+      // not loaded inside the SCoP. This can happened e.g., if a readnone call
+      // returns a pointer that is used as a base address. However, as we want
+      // to hoist indirect pointers, we allow the base pointer to be defined in
+      // the region if it is also a memory access. Hence, if the ScopArrayInfo
+      // object has a base pointer origin we know the base pointer is loaded and
+      // that it is invariant, thus it will be hoisted too.
+      const ScopArrayInfo *SAI = MA->getScopArrayInfo();
+      if (!SAI->getBasePtrOriginSAI())
+        if (auto *BasePtrInst = dyn_cast<Instruction>(SAI->getBasePtr()))
+          if (R.contains(BasePtrInst))
+            continue;
+
       // Skip accesses in non-affine subregions as they might not be executed
       // under the same condition as the entry of the non-affine subregion.
       if (BB != MA->getAccessInstruction()->getParent())
