@@ -3091,6 +3091,9 @@ void Scop::buildSchedule(
     }
 
     Loop *L = getRegionNodeLoop(RN, LI);
+    if (!getRegion().contains(L))
+      L = getLoopSurroundingRegion(getRegion(), LI);
+
     int LD = getRelativeLoopDepth(L);
     auto &LSchedulePair = LoopSchedules[L];
     LSchedulePair.second += getNumBlocksInRegionNode(RN);
