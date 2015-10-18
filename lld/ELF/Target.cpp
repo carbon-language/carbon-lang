@@ -283,6 +283,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   switch (Type) {
   case R_X86_64_PC32:
   case R_X86_64_GOTPCREL:
+  case R_X86_64_PLT32:
     write32le(Loc, SA - BaseAddr - Offset);
     break;
   case R_X86_64_64:
@@ -297,9 +298,6 @@ void X86_64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     write32le(Loc, SA);
     break;
   }
-  case R_X86_64_PLT32:
-    write32le(Loc, SA - BaseAddr - Offset);
-    break;
   default:
     error("unrecognized reloc " + Twine(Type));
   }
