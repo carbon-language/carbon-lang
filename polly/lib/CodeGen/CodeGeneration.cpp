@@ -192,7 +192,6 @@ public:
     //        region tree.
     AU.addPreserved<RegionInfoPass>();
     AU.addPreserved<ScopInfo>();
-    AU.addPreservedID(IndependentBlocksID);
   }
 };
 }

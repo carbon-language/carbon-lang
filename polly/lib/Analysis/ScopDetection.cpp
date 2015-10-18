@@ -648,10 +648,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // Check that the base address of the access is invariant in the current
   // region.
   if (!isInvariant(*BaseValue, CurRegion))
-    // Verification of this property is difficult as the independent blocks
-    // pass may introduce aliasing that we did not have when running the
-    // scop detection.
-    return invalid<ReportVariantBasePtr>(Context, /*Assert=*/false, BaseValue,
+    return invalid<ReportVariantBasePtr>(Context, /*Assert=*/true, BaseValue,
                                          &Inst);
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
@@ -684,8 +681,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
                                             AccessFunction, &Inst, BaseValue);
   }
 
-  // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
-  // created by IndependentBlocks Pass.
+  // FIXME: Think about allowing IntToPtrInst
   if (IntToPtrInst *Inst = dyn_cast<IntToPtrInst>(BaseValue))
     return invalid<ReportIntToPtr>(Context, /*Assert=*/true, Inst);
 
@@ -699,13 +695,6 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   AliasSet &AS = Context.AST.getAliasSetForPointer(
       BaseValue, MemoryLocation::UnknownSize, AATags);
 
-  // INVALID triggers an assertion in verifying mode, if it detects that a
-  // SCoP was detected by SCoP detection and that this SCoP was invalidated by
-  // a pass that stated it would preserve the SCoPs. We disable this check as
-  // the independent blocks pass may create memory references which seem to
-  // alias, if -basicaa is not available. They actually do not, but as we can
-  // not proof this without -basicaa we would fail. We disable this check to
-  // not cause irrelevant verification failures.
   if (!AS.isMustAlias()) {
     if (PollyUseRuntimeAliasChecks) {
       bool CanBuildRunTimeCheck = true;
@@ -731,7 +720,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
       if (CanBuildRunTimeCheck)
         return true;
     }
-    return invalid<ReportAlias>(Context, /*Assert=*/false, &Inst, AS);
+    return invalid<ReportAlias>(Context, /*Assert=*/true, &Inst, AS);
   }
 
   return true;

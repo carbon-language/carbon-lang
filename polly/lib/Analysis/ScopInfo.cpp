@@ -3651,7 +3651,6 @@ ScopInfo::~ScopInfo() {
 }
 
 void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequiredID(IndependentBlocksID);
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<RegionInfoPass>();
   AU.addRequired<DominatorTreeWrapperPass>();

@@ -146,7 +146,6 @@ void initializePollyPasses(PassRegistry &Registry) {
   initializeCodePreparationPass(Registry);
   initializeDeadCodeElimPass(Registry);
   initializeDependenceInfoPass(Registry);
-  initializeIndependentBlocksPass(Registry);
   initializeJSONExporterPass(Registry);
   initializeJSONImporterPass(Registry);
   initializeIslAstInfoPass(Registry);

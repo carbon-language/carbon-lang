@@ -6,11 +6,13 @@
 ;          A[i]++;
 ;    }
 ;
+; FIXME: This test is a negative test until we have an independent blocks alternative.
+;
 ; We should move operands as close to their use as possible, hence in this case
 ; there should not be any scalar dependence anymore after %cmp1 is moved to 
 ; %for.body (%c and %indvar.iv are synthesis able).
 ;
-; CHECK-NOT:      [Scalar: 1]
+; CHECK:      [Scalar: 1]
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

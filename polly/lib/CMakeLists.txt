@@ -49,7 +49,6 @@ add_polly_library(Polly
   Transform/Canonicalization.cpp
   Transform/CodePreparation.cpp
   Transform/DeadCodeElimination.cpp
-  Transform/IndependentBlocks.cpp
   Transform/ScheduleOptimizer.cpp
   ${POLLY_HEADER_FILES}
   )
