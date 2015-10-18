@@ -2,27 +2,32 @@
 ; RUN: opt %loadPolly -polly-codegen -S < %s | FileCheck %s --check-prefix=CODEGEN
 ;
 ;    int U;
-;    void f(int *A) {
-;      for (int i = 0; i < 1000; i++)
-;        A[i] = (*(int *)&U) + (int)(*(float *)&U);
+;    int f(int *A) {
+;      int i = 0, x, y;
+;      do {
+;        x = (*(int *)&U);
+;        y = (int)(*(float *)&U);
+;        A[i] = x + y;
+;      } while (i++ < 100);
+;      return x + y;
 ;    }
 ;
 ; CHECK:    Invariant Accesses: {
 ; CHECK-NOT:        ReadAccess
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK:                { Stmt_for_body[i0] -> MemRef_U[0] };
+; CHECK:                { Stmt_do_body[i0] -> MemRef_U[0] };
 ; CHECK:            Execution Context: {  :  }
 ; CHECK-NOT:        ReadAccess
 ; CHECK:    }
 ;
 ; CHECK:    Statements {
-; CHECK:      Stmt_for_body
+; CHECK:      Stmt_do_body
 ; CHECK:            Domain :=
-; CHECK:                { Stmt_for_body[i0] : i0 <= 999 and i0 >= 0 };
+; CHECK:                { Stmt_do_body[i0] : i0 <= 100 and i0 >= 0 };
 ; CHECK:            Schedule :=
-; CHECK:                { Stmt_for_body[i0] -> [i0] };
+; CHECK:                { Stmt_do_body[i0] -> [i0] };
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:                { Stmt_for_body[i0] -> MemRef_A[i0] };
+; CHECK:                { Stmt_do_body[i0] -> MemRef_A[i0] };
 ; CHECK:    }
 ;
 ; CODEGEN: entry:
@@ -36,12 +41,15 @@
 ; CODEGEN:   store float %0, float* %U.f.preload.s2a
 ;
 ; CODEGEN:     polly.merge_new_and_old:
-; CODEGEN-NOT:   merge = phi
+; CODEGEN-DAG:   %U.f.merge = phi float [ %U.f.final_reload, %polly.loop_exit ], [ %U.f, %do.cond ]
+; CODEGEN-DAG:   %U.i.merge = phi i32 [ %7, %polly.loop_exit ], [ %U.i, %do.cond ]
 ;
 ; CODEGEN: polly.loop_exit:
-; CODEGEN-NOT:   final_reload
+; CODEGEN-DAG:   %U.f.final_reload = load float, float* %U.f.preload.s2a
+; CODEGEN-DAG:   %U.i.final_reload = load float, float* %U.f.preload.s2a
+; CODEGEN-DAG:   %7 = bitcast float %U.i.final_reload to i32
 ;
-; CODEGEN: polly.stmt.for.body:
+; CODEGEN: polly.stmt.do.body:
 ; CODEGEN:   %p_conv = fptosi float %0 to i32
 ; CODEGEN:   %p_add = add nsw i32 %1, %p_conv
 ;
@@ -49,16 +57,12 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 @U = common global i32 0, align 4
 
-define void @f(i32* %A) {
+define i32 @f(i32* %A) {
 entry:
-  br label %for.cond
+  br label %do.body
 
-for.cond:                                         ; preds = %for.inc, %entry
-  %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
-  %exitcond = icmp ne i64 %indvars.iv, 1000
-  br i1 %exitcond, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
+do.body:                                          ; preds = %do.cond, %entry
+  %indvars.iv = phi i64 [ %indvars.iv.next, %do.cond ], [ 0, %entry ]
   %U.i = load i32, i32* @U, align 4
   %U.cast = bitcast i32 *@U to float*
   %U.f = load float, float* %U.cast, align 4
@@ -66,12 +70,15 @@ for.body:                                         ; preds = %for.cond
   %add = add nsw i32 %U.i, %conv
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %add, i32* %arrayidx, align 4
-  br label %for.inc
+  br label %do.cond
 
-for.inc:                                          ; preds = %for.body
+do.cond:                                          ; preds = %do.body
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
-  br label %for.cond
+  %exitcond = icmp ne i64 %indvars.iv.next, 101
+  br i1 %exitcond, label %do.body, label %do.end
 
-for.end:                                          ; preds = %for.cond
-  ret void
+do.end:                                           ; preds = %do.cond
+  %conv2 = fptosi float %U.f to i32
+  %add2 = add nsw i32 %U.i, %conv2
+  ret i32 %add2
 }

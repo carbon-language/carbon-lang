@@ -8,14 +8,14 @@
 
 ; CHECK:  Invariant Accesses: {
 ; CHECK-NEXT:          ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:              [p] -> { Stmt_bb5[i0, i1] -> MemRef_p[0] };
-; CHECK-NEXT:          Execution Context: [p] -> {  :  }
+; CHECK-NEXT:              [pval] -> { Stmt_bb5[i0, i1] -> MemRef_p[0] };
+; CHECK-NEXT:          Execution Context: [pval] -> {  :  }
 ; CHECK-NEXT:  }
 
 ; CHECK: ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
-; CHECK:     [p] -> { Stmt_bb5[i0, i1] -> MemRef_A[i0, i1] };
+; CHECK:     [pval] -> { Stmt_bb5[i0, i1] -> MemRef_A[i0, i1] };
 ; CHECK: MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:     [p] -> { Stmt_bb5[i0, i1] -> MemRef_A[i0, i1] };
+; CHECK:     [pval] -> { Stmt_bb5[i0, i1] -> MemRef_A[i0, i1] };
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

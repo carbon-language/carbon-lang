@@ -2,10 +2,7 @@
 ;
 ; CHECK:         Invariant Accesses: {
 ; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:                [LB, UB] -> { Stmt_for_body[i0] -> MemRef_LB[0] };
-; CHECK-NEXT:            Execution Context: [LB, UB] -> {  :  }
-; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:                [LB, UB] -> { Stmt_do_cond[i0, i1] -> MemRef_UB[0] };
+; CHECK-NEXT:                [LB, UB] -> { Stmt_for_body[i0] -> MemRef_LBptr[0] };
 ; CHECK-NEXT:            Execution Context: [LB, UB] -> {  :  }
 ; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:                [LB, UB] -> { Stmt_if_then[i0, i1] -> MemRef_V[0] };
@@ -13,6 +10,9 @@
 ; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:                [LB, UB] -> { Stmt_if_else[i0, i1] -> MemRef_U[0] };
 ; CHECK-NEXT:            Execution Context: [LB, UB] -> {  : LB <= 5 }
+; CHECK-NEXT:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
+; CHECK-NEXT:                [LB, UB] -> { Stmt_do_cond[i0, i1] -> MemRef_UBptr[0] };
+; CHECK-NEXT:            Execution Context: [LB, UB] -> {  :  }
 ; CHECK-NEXT:    }
 ;
 ;    void f(int *restrict A, int *restrict V, int *restrict U, int *restrict UB,
@@ -30,7 +30,7 @@
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
-define void @f(i32* noalias %A, i32* noalias %V, i32* noalias %U, i32* noalias %UB, i32* noalias %LB) {
+define void @f(i32* noalias %A, i32* noalias %V, i32* noalias %U, i32* noalias %UBptr, i32* noalias %LBptr) {
 entry:
   br label %for.cond
 
@@ -40,11 +40,11 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %tmp = load i32, i32* %LB, align 4
+  %LB = load i32, i32* %LBptr, align 4
   br label %do.body
 
 do.body:                                          ; preds = %do.cond, %for.body
-  %j.0 = phi i32 [ %tmp, %for.body ], [ %inc, %do.cond ]
+  %j.0 = phi i32 [ %LB, %for.body ], [ %inc, %do.cond ]
   %cmp1 = icmp sgt i32 %j.0, 5
   br i1 %cmp1, label %if.then, label %if.else
 
@@ -69,8 +69,8 @@ if.end:                                           ; preds = %if.else, %if.then
 
 do.cond:                                          ; preds = %if.end
   %inc = add nsw i32 %j.0, 1
-  %tmp5 = load i32, i32* %UB, align 4
-  %cmp5 = icmp slt i32 %j.0, %tmp5
+  %UB = load i32, i32* %UBptr, align 4
+  %cmp5 = icmp slt i32 %j.0, %UB
   br i1 %cmp5, label %do.body, label %do.end
 
 do.end:                                           ; preds = %do.cond

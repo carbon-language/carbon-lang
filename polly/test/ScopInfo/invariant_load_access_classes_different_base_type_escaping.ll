@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-codegen -S < %s
+; RUN: opt %loadPolly -polly-codegen -S < %s | FileCheck %s --check-prefix=CODEGEN
 ;
 ;    struct {
 ;      int a;

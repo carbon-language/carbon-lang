@@ -16,6 +16,7 @@
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/CodeGen/LoopGenerators.h"
+#include "polly/ScopInfo.h"
 #include "isl/ctx.h"
 #include "isl/union_map.h"
 
@@ -221,6 +222,13 @@ protected:
   /// use MA_preload
   Value *preloadInvariantLoad(const MemoryAccess &MA,
                               __isl_take isl_set *Domain);
+
+  /// @brief Preload the invariant access equivalence class @p IAClass
+  ///
+  /// This function will preload the representing load from @p IAClass and
+  /// map all members of @p IAClass to that preloaded value, potentially casted
+  /// to the required type.
+  void preloadInvariantEquivClass(const InvariantEquivClassTy &IAClass);
 
   void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
   void createForSequential(__isl_take isl_ast_node *For);

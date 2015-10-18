@@ -3,10 +3,10 @@
 ; CHECK:      Invariant Accesses: {
 ; CHECK-NEXT:       ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:         MemRef_bounds[0]
-; CHECK-NEXT: Execution Context: [bounds, p_1] -> {  :  }
+; CHECK-NEXT: Execution Context: [bounds0, bounds1] -> {  :  }
 ; CHECK-NEXT:       ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:         MemRef_bounds[1]
-; CHECK-NEXT: Execution Context: [bounds, p_1] -> {  : bounds >= 0 }
+; CHECK-NEXT: Execution Context: [bounds0, bounds1] -> {  : bounds0 >= 0 }
 ; CHECK:      }
 
 ;    double A[1000][1000];
@@ -30,8 +30,8 @@ entry:
 
 for.cond:                                         ; preds = %for.inc.6, %entry
   %i.0 = phi i64 [ 0, %entry ], [ %inc7, %for.inc.6 ]
-  %tmp = load i64, i64* getelementptr inbounds ([2 x i64], [2 x i64]* @bounds, i64 0, i64 0), align 16
-  %cmp = icmp sgt i64 %i.0, %tmp
+  %bounds0 = load i64, i64* getelementptr inbounds ([2 x i64], [2 x i64]* @bounds, i64 0, i64 0), align 16
+  %cmp = icmp sgt i64 %i.0, %bounds0
   br i1 %cmp, label %for.end.8, label %for.body
 
 for.body:                                         ; preds = %for.cond
@@ -39,8 +39,8 @@ for.body:                                         ; preds = %for.cond
 
 for.cond.1:                                       ; preds = %for.inc, %for.body
   %j.0 = phi i64 [ 0, %for.body ], [ %inc, %for.inc ]
-  %tmp1 = load i64, i64* getelementptr inbounds ([2 x i64], [2 x i64]* @bounds, i64 0, i64 1), align 8
-  %cmp2 = icmp sgt i64 %j.0, %tmp1
+  %bounds1 = load i64, i64* getelementptr inbounds ([2 x i64], [2 x i64]* @bounds, i64 0, i64 1), align 8
+  %cmp2 = icmp sgt i64 %j.0, %bounds1
   br i1 %cmp2, label %for.end, label %for.body.3
 
 for.body.3:                                       ; preds = %for.cond.1

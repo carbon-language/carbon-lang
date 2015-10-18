@@ -8,21 +8,21 @@
 ; CHECK:      Invariant Accesses: {
 ; CHECK-NEXT:         ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK-NEXT:             MemRef_bounds[0]
-; CHECK-NEXT:         Execution Context: [bounds] -> {  :  }
+; CHECK-NEXT:         Execution Context: [bounds0l0] -> {  :  }
 ; CHECK-NEXT: }
 ;
-; CHECK:      p0: @bounds
+; CHECK:      p0: %bounds0l0
 ; CHECK-NOT:  p1
 ; CHECK:      Statements {
 ; CHECK:        Stmt_for_body_6
 ; CHECK:              Domain :=
-; CHECK:                  [bounds] -> { Stmt_for_body_6[i0, i1, i2] : i0 >= 0 and i0 <= -1 + bounds and i1 >= 0 and i1 <= -1 + bounds and i2 >= 0 and i2 <= -1 + bounds };
+; CHECK:                  [bounds0l0] -> { Stmt_for_body_6[i0, i1, i2] : i0 >= 0 and i0 <= -1 + bounds0l0 and i1 >= 0 and i1 <= -1 + bounds0l0 and i2 >= 0 and i2 <= -1 + bounds0l0 };
 ; CHECK:              Schedule :=
-; CHECK:                  [bounds] -> { Stmt_for_body_6[i0, i1, i2] -> [i0, i1, i2] };
+; CHECK:                  [bounds0l0] -> { Stmt_for_body_6[i0, i1, i2] -> [i0, i1, i2] };
 ; CHECK:              ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK:                  [bounds] -> { Stmt_for_body_6[i0, i1, i2] -> MemRef_data[i0, i1, i2] };
+; CHECK:                  [bounds0l0] -> { Stmt_for_body_6[i0, i1, i2] -> MemRef_data[i0, i1, i2] };
 ; CHECK:              MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:                  [bounds] -> { Stmt_for_body_6[i0, i1, i2] -> MemRef_data[i0, i1, i2] };
+; CHECK:                  [bounds0l0] -> { Stmt_for_body_6[i0, i1, i2] -> MemRef_data[i0, i1, i2] };
 ; CHECK:      }
 ;
 ;    int bounds[1];
@@ -47,8 +47,8 @@ entry:
 
 for.cond:                                         ; preds = %for.inc.16, %entry
   %indvars.iv5 = phi i64 [ %indvars.iv.next6, %for.inc.16 ], [ 0, %entry ]
-  %tmp = load i32, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @bounds, i64 0, i64 0), align 4
-  %tmp7 = sext i32 %tmp to i64
+  %bounds0l0 = load i32, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @bounds, i64 0, i64 0), align 4
+  %tmp7 = sext i32 %bounds0l0 to i64
   %cmp = icmp slt i64 %indvars.iv5, %tmp7
   br i1 %cmp, label %for.body, label %for.end.18
 
@@ -57,8 +57,8 @@ for.body:                                         ; preds = %for.cond
 
 for.cond.1:                                       ; preds = %for.inc.13, %for.body
   %indvars.iv3 = phi i64 [ %indvars.iv.next4, %for.inc.13 ], [ 0, %for.body ]
-  %tmp8 = load i32, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @bounds, i64 0, i64 0), align 4
-  %tmp9 = sext i32 %tmp8 to i64
+  %bounds0l1 = load i32, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @bounds, i64 0, i64 0), align 4
+  %tmp9 = sext i32 %bounds0l1 to i64
   %cmp2 = icmp slt i64 %indvars.iv3, %tmp9
   br i1 %cmp2, label %for.body.3, label %for.end.15
 
@@ -67,8 +67,8 @@ for.body.3:                                       ; preds = %for.cond.1
 
 for.cond.4:                                       ; preds = %for.inc, %for.body.3
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %for.body.3 ]
-  %tmp10 = load i32, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @bounds, i64 0, i64 0), align 4
-  %tmp11 = sext i32 %tmp10 to i64
+  %bounds0l2 = load i32, i32* getelementptr inbounds ([1 x i32], [1 x i32]* @bounds, i64 0, i64 0), align 4
+  %tmp11 = sext i32 %bounds0l2 to i64
   %cmp5 = icmp slt i64 %indvars.iv, %tmp11
   br i1 %cmp5, label %for.body.6, label %for.end
 

@@ -677,17 +677,19 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 /// @brief Ordered list type to hold accesses.
 using MemoryAccessList = std::forward_list<MemoryAccess *>;
 
-/// @brief Type for invariant memory accesses and their domain context.
-using InvariantAccessTy = std::pair<MemoryAccess *, isl_set *>;
+/// @brief Type for equivalent invariant accesses and their domain context.
+///
+/// The first element is the SCEV for the pointer/location that identifies this
+/// equivalence class. The second is a list of memory accesses to that location
+/// that are now treated as invariant and hoisted during code generation. The
+/// last element is the execution context under which the invariant memory
+/// location is accessed, hence the union of all domain contexts for the memory
+/// accesses in the list.
+using InvariantEquivClassTy =
+    std::tuple<const SCEV *, MemoryAccessList, isl_set *>;
 
-/// @brief Type for an ordered list of invariant accesses.
-using InvariantAccessListTy = std::forward_list<InvariantAccessTy>;
-
-/// @brief Type for a class of equivalent invariant memory accesses.
-using InvariantEquivClassTy = std::pair<const SCEV *, InvariantAccessListTy>;
-
-/// @brief Type for multiple invariant memory accesses and their domain context.
-using InvariantAccessesTy = SmallVector<InvariantEquivClassTy, 8>;
+/// @brief Type for invariant accesses equivalence classes.
+using InvariantEquivClassesTy = SmallVector<InvariantEquivClassTy, 8>;
 
 ///===----------------------------------------------------------------------===//
 /// @brief Statement of the Scop
@@ -916,12 +918,11 @@ public:
   /// @brief Add @p Access to this statement's list of accesses.
   void addAccess(MemoryAccess *Access);
 
-  /// @brief Move the memory access in @p InvMAs to @p InvariantEquivClasses.
+  /// @brief Remove the memory access in @p InvMAs.
   ///
   /// Note that scalar accesses that are caused by any access in @p InvMAs will
   /// be eliminated too.
-  void hoistMemoryAccesses(MemoryAccessList &InvMAs,
-                           InvariantAccessesTy &InvariantEquivClasses);
+  void removeMemoryAccesses(MemoryAccessList &InvMAs);
 
   typedef MemoryAccessVec::iterator iterator;
   typedef MemoryAccessVec::const_iterator const_iterator;
@@ -1144,8 +1145,12 @@ private:
   /// group to ensure the SCoP is executed in an alias free environment.
   MinMaxVectorPairVectorTy MinMaxAliasGroups;
 
+  /// @brief Mapping from invariant loads to the representing invariant load of
+  ///        their equivalence class.
+  ValueToValueMap InvEquivClassVMap;
+
   /// @brief List of invariant accesses.
-  InvariantAccessesTy InvariantEquivClasses;
+  InvariantEquivClassesTy InvariantEquivClasses;
 
   /// @brief Scop constructor; invoked from ScopInfo::buildScop.
   Scop(Region &R, AccFuncMapType &AccFuncMap, ScopDetection &SD,
@@ -1229,6 +1234,9 @@ private:
   /// Required inv. loads: LB[0], LB[1], (V, if it may alias with A or LB)
   void hoistInvariantLoads();
 
+  /// @brief Add invariant loads listed in @p InvMAs with the domain of @p Stmt.
+  void addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs);
+
   /// @brief Build the Context of the Scop.
   void buildContext();
 
@@ -1255,7 +1263,7 @@ private:
   /// @param S The SCEV to normalize.
   ///
   /// @return The representing SCEV for invariant loads or @p S if none.
-  const SCEV *getRepresentingInvariantLoadSCEV(const SCEV *S) const;
+  const SCEV *getRepresentingInvariantLoadSCEV(const SCEV *S);
 
   /// @brief Create a new SCoP statement for either @p BB or @p R.
   ///
@@ -1349,7 +1357,7 @@ public:
   /// @param Parameter A SCEV that was recognized as a Parameter.
   ///
   /// @return The corresponding isl_id or NULL otherwise.
-  isl_id *getIdForParam(const SCEV *Parameter) const;
+  isl_id *getIdForParam(const SCEV *Parameter);
 
   /// @name Parameter Iterators
   ///
@@ -1375,8 +1383,11 @@ public:
   /// @return The maximum depth of the loop.
   inline unsigned getMaxLoopDepth() const { return MaxLoopDepth; }
 
+  /// @brief Return the invariant equivalence class for @p Val if any.
+  const InvariantEquivClassTy *lookupInvariantEquivClass(Value *Val) const;
+
   /// @brief Return the set of invariant accesses.
-  const InvariantAccessesTy &getInvariantAccesses() const {
+  const InvariantEquivClassesTy &getInvariantAccesses() const {
     return InvariantEquivClasses;
   }
 

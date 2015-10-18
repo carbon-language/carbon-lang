@@ -1384,8 +1384,7 @@ void ScopStmt::print(raw_ostream &OS) const {
 
 void ScopStmt::dump() const { print(dbgs()); }
 
-void ScopStmt::hoistMemoryAccesses(MemoryAccessList &InvMAs,
-                                   InvariantAccessesTy &InvariantEquivClasses) {
+void ScopStmt::removeMemoryAccesses(MemoryAccessList &InvMAs) {
 
   // Remove all memory accesses in @p InvMAs from this statement together
   // with all scalar accesses that were caused by them. The tricky iteration
@@ -1410,79 +1409,6 @@ void ScopStmt::hoistMemoryAccesses(MemoryAccessList &InvMAs,
     InstructionToAccess.erase(MA->getAccessInstruction());
     delete &MAL;
   }
-
-  // Get the context under which this statement, hence the memory accesses, are
-  // executed.
-  isl_set *DomainCtx = isl_set_params(getDomain());
-  DomainCtx = isl_set_remove_redundancies(DomainCtx);
-  DomainCtx = isl_set_detect_equalities(DomainCtx);
-  DomainCtx = isl_set_coalesce(DomainCtx);
-
-  Scop &S = *getParent();
-  ScalarEvolution &SE = *S.getSE();
-
-  // Project out all parameters that relate to loads in this statement that
-  // we will hoist. Otherwise we would have cyclic dependences on the
-  // constraints under which the hoisted loads are executed and we could not
-  // determine an order in which to preload them. This happens because not only
-  // lower bounds are part of the domain but also upper bounds.
-  for (MemoryAccess *MA : InvMAs) {
-    Instruction *AccInst = MA->getAccessInstruction();
-    if (SE.isSCEVable(AccInst->getType())) {
-      isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));
-      if (ParamId) {
-        int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
-        DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
-      }
-      isl_id_free(ParamId);
-    }
-  }
-
-  for (MemoryAccess *MA : InvMAs) {
-
-    // Check for another invariant access that accesses the same location as
-    // MA and if found consolidate them. Otherwise create a new equivalence
-    // class at the end of InvariantEquivClasses.
-    LoadInst *LInst = cast<LoadInst>(MA->getAccessInstruction());
-    const SCEV *PointerSCEV = SE.getSCEV(LInst->getPointerOperand());
-    bool Consolidated = false;
-
-    for (auto &IAClass : InvariantEquivClasses) {
-      const SCEV *ClassPointerSCEV = IAClass.first;
-      if (PointerSCEV != ClassPointerSCEV)
-        continue;
-
-      Consolidated = true;
-
-      // We created empty equivalence classes for required invariant loads
-      // in the beginning and might encounter one of them here. If so, this
-      // MA will be the first in that equivalence class.
-      auto &ClassList = IAClass.second;
-      if (ClassList.empty()) {
-        ClassList.push_front(std::make_pair(MA, isl_set_copy(DomainCtx)));
-        break;
-      }
-
-      // If the equivalence class for MA is not empty we unify the execution
-      // context and add MA to the list of accesses that are in this class.
-      isl_set *IAClassDomainCtx = IAClass.second.front().second;
-      IAClassDomainCtx =
-          isl_set_union(IAClassDomainCtx, isl_set_copy(DomainCtx));
-      ClassList.push_front(std::make_pair(MA, IAClassDomainCtx));
-      break;
-    }
-
-    if (Consolidated)
-      continue;
-
-    // If we did not consolidate MA, thus did not find an equivalence class
-    // that for it, we create a new one.
-    InvariantAccessTy IA = std::make_pair(MA, isl_set_copy(DomainCtx));
-    InvariantEquivClasses.emplace_back(InvariantEquivClassTy(
-        std::make_pair(PointerSCEV, InvariantAccessListTy({IA}))));
-  }
-
-  isl_set_free(DomainCtx);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1494,25 +1420,8 @@ void Scop::setContext(__isl_take isl_set *NewContext) {
   Context = NewContext;
 }
 
-const SCEV *Scop::getRepresentingInvariantLoadSCEV(const SCEV *S) const {
-  const SCEVUnknown *SU = dyn_cast_or_null<SCEVUnknown>(S);
-  if (!SU)
-    return S;
-
-  LoadInst *LInst = dyn_cast<LoadInst>(SU->getValue());
-  if (!LInst)
-    return S;
-
-  // Try to find an equivalence class for the load, if found return
-  // the SCEV for the representing element, otherwise return S.
-  const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
-  for (const InvariantEquivClassTy &IAClass : InvariantEquivClasses) {
-    const SCEV *ClassPointerSCEV = IAClass.first;
-    if (ClassPointerSCEV == PointerSCEV)
-      return ClassPointerSCEV;
-  }
-
-  return S;
+const SCEV *Scop::getRepresentingInvariantLoadSCEV(const SCEV *S) {
+  return SCEVParameterRewriter::rewrite(S, *SE, InvEquivClassVMap);
 }
 
 void Scop::addParams(std::vector<const SCEV *> NewParameters) {
@@ -1532,7 +1441,7 @@ void Scop::addParams(std::vector<const SCEV *> NewParameters) {
   }
 }
 
-__isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
+__isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) {
   // Normalize the SCEV to get the representing element for an invariant load.
   Parameter = getRepresentingInvariantLoadSCEV(Parameter);
 
@@ -1614,17 +1523,17 @@ void Scop::addUserContext() {
 }
 
 void Scop::buildInvariantEquivalenceClasses() {
+  DenseMap<const SCEV *, LoadInst *> EquivClasses;
+
   const InvariantLoadsSetTy &RIL = *SD.getRequiredInvariantLoads(&getRegion());
-  SmallPtrSet<const SCEV *, 4> ClassPointerSet;
   for (LoadInst *LInst : RIL) {
     const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
 
-    // Skip the load if we already have a equivalence class for the pointer.
-    if (!ClassPointerSet.insert(PointerSCEV).second)
-      continue;
-
-    InvariantEquivClasses.emplace_back(InvariantEquivClassTy(
-        std::make_pair(PointerSCEV, InvariantAccessListTy())));
+    LoadInst *&ClassRep = EquivClasses[PointerSCEV];
+    if (!ClassRep)
+      ClassRep = LInst;
+    else
+      InvEquivClassVMap[LInst] = ClassRep;
   }
 }
 
@@ -2504,8 +2413,7 @@ Scop::~Scop() {
   }
 
   for (const auto &IAClass : InvariantEquivClasses)
-    if (!IAClass.second.empty())
-      isl_set_free(IAClass.second.front().second);
+    isl_set_free(std::get<2>(IAClass));
 }
 
 void Scop::updateAccessDimensionality() {
@@ -2538,6 +2446,84 @@ void Scop::simplifySCoP(bool RemoveIgnoredStmts) {
 
     StmtIt++;
   }
+}
+
+const InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) const {
+  LoadInst *LInst = dyn_cast<LoadInst>(Val);
+  if (!LInst)
+    return nullptr;
+
+  if (Value *Rep = InvEquivClassVMap.lookup(LInst))
+    LInst = cast<LoadInst>(Rep);
+
+  const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
+  for (auto &IAClass : InvariantEquivClasses)
+    if (PointerSCEV == std::get<0>(IAClass))
+      return &IAClass;
+
+  return nullptr;
+}
+
+void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
+
+  // Get the context under which the statement is executed.
+  isl_set *DomainCtx = isl_set_params(Stmt.getDomain());
+  DomainCtx = isl_set_remove_redundancies(DomainCtx);
+  DomainCtx = isl_set_detect_equalities(DomainCtx);
+  DomainCtx = isl_set_coalesce(DomainCtx);
+
+  // Project out all parameters that relate to loads in the statement. Otherwise
+  // we could have cyclic dependences on the constraints under which the
+  // hoisted loads are executed and we could not determine an order in which to
+  // pre-load them. This happens because not only lower bounds are part of the
+  // domain but also upper bounds.
+  for (MemoryAccess *MA : InvMAs) {
+    Instruction *AccInst = MA->getAccessInstruction();
+    if (SE->isSCEVable(AccInst->getType())) {
+      isl_id *ParamId = getIdForParam(SE->getSCEV(AccInst));
+      if (ParamId) {
+        int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
+        DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
+      }
+      isl_id_free(ParamId);
+    }
+  }
+
+  for (MemoryAccess *MA : InvMAs) {
+    // Check for another invariant access that accesses the same location as
+    // MA and if found consolidate them. Otherwise create a new equivalence
+    // class at the end of InvariantEquivClasses.
+    LoadInst *LInst = cast<LoadInst>(MA->getAccessInstruction());
+    const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
+
+    bool Consolidated = false;
+    for (auto &IAClass : InvariantEquivClasses) {
+      if (PointerSCEV != std::get<0>(IAClass))
+        continue;
+
+      Consolidated = true;
+
+      // Add MA to the list of accesses that are in this class.
+      auto &MAs = std::get<1>(IAClass);
+      MAs.push_front(MA);
+
+      // Unify the execution context of the class and this statement.
+      isl_set *&IAClassDomainCtx = std::get<2>(IAClass);
+      IAClassDomainCtx = isl_set_coalesce(
+          isl_set_union(IAClassDomainCtx, isl_set_copy(DomainCtx)));
+      break;
+    }
+
+    if (Consolidated)
+      continue;
+
+    // If we did not consolidate MA, thus did not find an equivalence class
+    // for it, we create a new one.
+    InvariantEquivClasses.emplace_back(PointerSCEV, MemoryAccessList{MA},
+                                       isl_set_copy(DomainCtx));
+  }
+
+  isl_set_free(DomainCtx);
 }
 
 void Scop::hoistInvariantLoads() {
@@ -2594,7 +2580,8 @@ void Scop::hoistInvariantLoads() {
     InvMAs.reverse();
 
     // Transfer the memory access from the statement to the SCoP.
-    Stmt.hoistMemoryAccesses(InvMAs, InvariantEquivClasses);
+    Stmt.removeMemoryAccesses(InvMAs);
+    addInvariantLoads(Stmt, InvMAs);
 
     isl_set_free(Domain);
   }
@@ -2617,67 +2604,6 @@ void Scop::hoistInvariantLoads() {
       return;
     }
   }
-
-  // We want invariant accesses to be sorted in a "natural order" because there
-  // might be dependences between invariant loads. These can be caused by
-  // indirect loads but also because an invariant load is only conditionally
-  // executed and the condition is dependent on another invariant load. As we
-  // want to do code generation in a straight forward way, e.g., preload the
-  // accesses in the list one after another, we sort them such that the
-  // preloaded values needed in the conditions will always be in front. Before
-  // we already ordered the accesses such that indirect loads can be resolved,
-  // thus we use a stable sort here.
-
-  auto compareInvariantAccesses = [this](
-      const InvariantEquivClassTy &IAClass0,
-      const InvariantEquivClassTy &IAClass1) {
-    const InvariantAccessTy &IA0 = IAClass0.second.front();
-    const InvariantAccessTy &IA1 = IAClass1.second.front();
-
-    Instruction *AI0 = IA0.first->getAccessInstruction();
-    Instruction *AI1 = IA1.first->getAccessInstruction();
-
-    const SCEV *S0 =
-        SE->isSCEVable(AI0->getType()) ? SE->getSCEV(AI0) : nullptr;
-    const SCEV *S1 =
-        SE->isSCEVable(AI1->getType()) ? SE->getSCEV(AI1) : nullptr;
-
-    isl_id *Id0 = getIdForParam(S0);
-    isl_id *Id1 = getIdForParam(S1);
-
-    if (Id0 && !Id1) {
-      isl_id_free(Id0);
-      isl_id_free(Id1);
-      return true;
-    }
-
-    if (!Id0) {
-      isl_id_free(Id0);
-      isl_id_free(Id1);
-      return false;
-    }
-
-    assert(Id0 && Id1);
-
-    isl_set *Dom0 = IA0.second;
-    isl_set *Dom1 = IA1.second;
-
-    int Dim0 = isl_set_find_dim_by_id(Dom0, isl_dim_param, Id0);
-
-    bool Involves1Id0 = isl_set_involves_dims(Dom1, isl_dim_param, Dim0, 1);
-    assert(!Involves1Id0 ||
-           !isl_set_involves_dims(
-               Dom0, isl_dim_param,
-               isl_set_find_dim_by_id(Dom0, isl_dim_param, Id1), 1));
-
-    isl_id_free(Id0);
-    isl_id_free(Id1);
-
-    return Involves1Id0;
-  };
-
-  std::stable_sort(InvariantEquivClasses.begin(), InvariantEquivClasses.end(),
-                   compareInvariantAccesses);
 }
 
 const ScopArrayInfo *
@@ -2862,12 +2788,12 @@ void Scop::print(raw_ostream &OS) const {
   OS.indent(4) << "Max Loop Depth:  " << getMaxLoopDepth() << "\n";
   OS.indent(4) << "Invariant Accesses: {\n";
   for (const auto &IAClass : InvariantEquivClasses) {
-    if (IAClass.second.empty()) {
-      OS.indent(12) << "Class Pointer: " << IAClass.first << "\n";
+    const auto &MAs = std::get<1>(IAClass);
+    if (MAs.empty()) {
+      OS.indent(12) << "Class Pointer: " << *std::get<0>(IAClass) << "\n";
     } else {
-      IAClass.second.front().first->print(OS);
-      OS.indent(12) << "Execution Context: " << IAClass.second.front().second
-                    << "\n";
+      MAs.front()->print(OS);
+      OS.indent(12) << "Execution Context: " << std::get<2>(IAClass) << "\n";
     }
   }
   OS.indent(4) << "}\n";

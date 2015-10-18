@@ -818,7 +818,19 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
 void IslNodeBuilder::materializeValue(isl_id *Id) {
   // If the Id is already mapped, skip it.
   if (!IDToValue.count(Id)) {
-    auto V = generateSCEV((const SCEV *)isl_id_get_user(Id));
+    auto *ParamSCEV = (const SCEV *)isl_id_get_user(Id);
+
+    // Parameters could refere to invariant loads that need to be
+    // preloaded before we can generate code for the parameter. Thus,
+    // check if any value refered to in ParamSCEV is an invariant load
+    // and if so make sure its equivalence class is preloaded.
+    SetVector<Value *> Values;
+    findValues(ParamSCEV, Values);
+    for (auto *Val : Values)
+      if (const auto *IAClass = S.lookupInvariantEquivClass(Val))
+        preloadInvariantEquivClass(*IAClass);
+
+    auto *V = generateSCEV(ParamSCEV);
     IDToValue[Id] = V;
   }
 
@@ -910,53 +922,60 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
   return PreloadVal;
 }
 
-void IslNodeBuilder::preloadInvariantLoads() {
-
-  const auto &InvariantEquivClasses = S.getInvariantAccesses();
-  if (InvariantEquivClasses.empty())
-    return;
-
-  const Region &R = S.getRegion();
-  BasicBlock *EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();
-
-  BasicBlock *PreLoadBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
-  PreLoadBB->setName("polly.preload.begin");
-  Builder.SetInsertPoint(PreLoadBB->begin());
-
-  // For each equivalence class of invariant loads we pre-load the representing
+void IslNodeBuilder::preloadInvariantEquivClass(
+    const InvariantEquivClassTy &IAClass) {
+  // For an equivalence class of invariant loads we pre-load the representing
   // element with the unified execution context. However, we have to map all
   // elements of the class to the one preloaded load as they are referenced
   // during the code generation and therefor need to be mapped.
-  for (const auto &IAClass : InvariantEquivClasses) {
+  const MemoryAccessList &MAs = std::get<1>(IAClass);
+  assert(!MAs.empty());
+  MemoryAccess *MA = MAs.front();
+  assert(MA->isExplicit() && MA->isRead());
 
-    MemoryAccess *MA = IAClass.second.front().first;
-    assert(!MA->isImplicit());
+  // If the access function was already mapped, the preload of this equivalence
+  // class was triggered earlier already and doesn't need to be done again.
+  if (ValueMap.count(MA->getAccessInstruction()))
+    return;
 
-    isl_set *Domain = isl_set_copy(IAClass.second.front().second);
-    Instruction *AccInst = MA->getAccessInstruction();
-    Value *PreloadVal = preloadInvariantLoad(*MA, Domain);
-    for (const InvariantAccessTy &IA : IAClass.second) {
-      Instruction *AccInst = IA.first->getAccessInstruction();
-      ValueMap[AccInst] =
-          Builder.CreateBitOrPointerCast(PreloadVal, AccInst->getType());
-    }
+  Instruction *AccInst = MA->getAccessInstruction();
+  Type *AccInstTy = AccInst->getType();
 
-    if (SE.isSCEVable(AccInst->getType())) {
-      isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));
-      if (ParamId)
-        IDToValue[ParamId] = PreloadVal;
-      isl_id_free(ParamId);
-    }
+  isl_set *Domain = isl_set_copy(std::get<2>(IAClass));
+  Value *PreloadVal = preloadInvariantLoad(*MA, Domain);
+  assert(PreloadVal->getType() == AccInst->getType());
+  for (const MemoryAccess *MA : MAs) {
+    Instruction *MAAccInst = MA->getAccessInstruction();
+    ValueMap[MAAccInst] =
+        Builder.CreateBitOrPointerCast(PreloadVal, MAAccInst->getType());
+  }
 
-    auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
-    for (auto *DerivedSAI : SAI->getDerivedSAIs())
-      DerivedSAI->setBasePtr(PreloadVal);
+  if (SE.isSCEVable(AccInstTy)) {
+    isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));
+    if (ParamId)
+      IDToValue[ParamId] = PreloadVal;
+    isl_id_free(ParamId);
+  }
 
-    // Use the escape system to get the correct value to users outside
-    // the SCoP.
+  auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
+  for (auto *DerivedSAI : SAI->getDerivedSAIs()) {
+    Value *BasePtr = DerivedSAI->getBasePtr();
+    BasePtr = Builder.CreateBitOrPointerCast(PreloadVal, BasePtr->getType());
+    DerivedSAI->setBasePtr(BasePtr);
+  }
+
+  BasicBlock *EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();
+  auto *Alloca = new AllocaInst(AccInstTy, AccInst->getName() + ".preload.s2a");
+  Alloca->insertBefore(EntryBB->getFirstInsertionPt());
+  Builder.CreateStore(PreloadVal, Alloca);
+
+  const Region &R = S.getRegion();
+  for (const MemoryAccess *MA : MAs) {
+
+    Instruction *MAAccInst = MA->getAccessInstruction();
+    // Use the escape system to get the correct value to users outside the SCoP.
     BlockGenerator::EscapeUserVectorTy EscapeUsers;
-    for (auto *U : AccInst->users())
+    for (auto *U : MAAccInst->users())
       if (Instruction *UI = dyn_cast<Instruction>(U))
         if (!R.contains(UI))
           EscapeUsers.push_back(UI);
@@ -964,13 +983,24 @@ void IslNodeBuilder::preloadInvariantLoads() {
     if (EscapeUsers.empty())
       continue;
 
-    auto *Ty = AccInst->getType();
-    auto *Alloca = new AllocaInst(Ty, AccInst->getName() + ".preload.s2a");
-    Alloca->insertBefore(EntryBB->getFirstInsertionPt());
-    Builder.CreateStore(PreloadVal, Alloca);
-
-    EscapeMap[AccInst] = std::make_pair(Alloca, std::move(EscapeUsers));
+    EscapeMap[MA->getAccessInstruction()] =
+        std::make_pair(Alloca, std::move(EscapeUsers));
   }
+}
+
+void IslNodeBuilder::preloadInvariantLoads() {
+
+  const auto &InvariantEquivClasses = S.getInvariantAccesses();
+  if (InvariantEquivClasses.empty())
+    return;
+
+  BasicBlock *PreLoadBB =
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  PreLoadBB->setName("polly.preload.begin");
+  Builder.SetInsertPoint(PreLoadBB->begin());
+
+  for (const auto &IAClass : InvariantEquivClasses)
+    preloadInvariantEquivClass(IAClass);
 }
 
 void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
