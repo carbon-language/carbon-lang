@@ -600,6 +600,13 @@ TEST_F(FormatTestJS, RegexLiteralClassification) {
 
   // Not regex literals.
   verifyFormat("var a = a / 2 + b / 3;");
+  verifyFormat("var a = a++ / 2;");
+  // Prefix unary can operate on regex literals, not that it makes sense.
+  verifyFormat("var a = ++/a/;");
+
+  // This is a known issue, regular expressions are incorrectly detected if
+  // directly following a closing parenthesis.
+  verifyFormat("if (foo) / bar /.exec(baz);");
 }
 
 TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
@@ -625,6 +632,9 @@ TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
   verifyFormat("var regex = /[\\/]/;");
   verifyFormat("var regex = /\\[/;");
   verifyFormat("var regex = /\\\\[/]/;");
+  verifyFormat("var regex = /}[\"]/;");
+  verifyFormat("var regex = /}[/\"]/;");
+  verifyFormat("var regex = /}[\"/]/;");
 
   verifyFormat("var regex = /\\b/;");
   verifyFormat("var regex = /\\B/;");

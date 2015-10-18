@@ -732,6 +732,8 @@ public:
     assert(FirstInLineIndex == 0);
     do {
       Tokens.push_back(getNextToken());
+      if (Style.Language == FormatStyle::LK_JavaScript)
+        tryParseJSRegexLiteral();
       tryMergePreviousTokens();
       if (Tokens.back()->NewlinesBefore > 0 || Tokens.back()->IsMultiline)
         FirstInLineIndex = Tokens.size() - 1;
@@ -751,10 +753,6 @@ private:
       return;
 
     if (Style.Language == FormatStyle::LK_JavaScript) {
-      if (tryMergeJSRegexLiteral())
-        return;
-      if (tryMergeEscapeSequence())
-        return;
       if (tryMergeTemplateString())
         return;
 
@@ -826,107 +824,97 @@ private:
     return true;
   }
 
-  // Tries to merge an escape sequence, i.e. a "\\" and the following
-  // character. Use e.g. inside JavaScript regex literals.
-  bool tryMergeEscapeSequence() {
-    if (Tokens.size() < 2)
+  // Returns \c true if \p Tok can only be followed by an operand in JavaScript.
+  bool precedesOperand(FormatToken *Tok) {
+    // NB: This is not entirely correct, as an r_paren can introduce an operand
+    // location in e.g. `if (foo) /bar/.exec(...);`. That is a rare enough
+    // corner case to not matter in practice, though.
+    return Tok->isOneOf(tok::period, tok::l_paren, tok::comma, tok::l_brace,
+                        tok::r_brace, tok::l_square, tok::semi, tok::exclaim,
+                        tok::colon, tok::question, tok::tilde) ||
+           Tok->isOneOf(tok::kw_return, tok::kw_do, tok::kw_case, tok::kw_throw,
+                        tok::kw_else, tok::kw_new, tok::kw_delete, tok::kw_void,
+                        tok::kw_typeof, Keywords.kw_instanceof,
+                        Keywords.kw_in) ||
+           Tok->isBinaryOperator();
+  }
+
+  bool canPrecedeRegexLiteral(FormatToken *Prev) {
+    if (!Prev)
+      return true;
+
+    // Regex literals can only follow after prefix unary operators, not after
+    // postfix unary operators. If the '++' is followed by a non-operand
+    // introducing token, the slash here is the operand and not the start of a
+    // regex.
+    if (Prev->isOneOf(tok::plusplus, tok::minusminus))
+      return (Tokens.size() < 3 || precedesOperand(Tokens[Tokens.size() - 3]));
+
+    // The previous token must introduce an operand location where regex
+    // literals can occur.
+    if (!precedesOperand(Prev))
       return false;
-    FormatToken *Previous = Tokens[Tokens.size() - 2];
-    if (Previous->isNot(tok::unknown) || Previous->TokenText != "\\")
-      return false;
-    ++Previous->ColumnWidth;
-    StringRef Text = Previous->TokenText;
-    Previous->TokenText = StringRef(Text.data(), Text.size() + 1);
-    resetLexer(SourceMgr.getFileOffset(Tokens.back()->Tok.getLocation()) + 1);
-    Tokens.resize(Tokens.size() - 1);
-    Column = Previous->OriginalColumn + Previous->ColumnWidth;
+
     return true;
   }
 
-  // Try to determine whether the current token ends a JavaScript regex literal.
-  // We heuristically assume that this is a regex literal if we find two
-  // unescaped slashes on a line and the token before the first slash is one of
-  // "(;,{}![:?", a binary operator or 'return', as those cannot be followed by
-  // a division.
-  bool tryMergeJSRegexLiteral() {
-    if (Tokens.size() < 2)
-      return false;
+  // Tries to parse a JavaScript Regex literal starting at the current token,
+  // if that begins with a slash and is in a location where JavaScript allows
+  // regex literals. Changes the current token to a regex literal and updates
+  // its text if successful.
+  void tryParseJSRegexLiteral() {
+    FormatToken *RegexToken = Tokens.back();
+    if (!RegexToken->isOneOf(tok::slash, tok::slashequal))
+      return;
 
-    // If this is a string literal with a slash inside, compute the slash's
-    // offset and try to find the beginning of the regex literal.
-    // Also look at tok::unknown, as it can be an unterminated char literal.
-    size_t SlashInStringPos = StringRef::npos;
-    if (Tokens.back()->isOneOf(tok::string_literal, tok::char_constant,
-                               tok::unknown)) {
-      // Start search from position 1 as otherwise, this is an unknown token
-      // for an unterminated /*-comment which is handled elsewhere.
-      SlashInStringPos = Tokens.back()->TokenText.find('/', 1);
-      if (SlashInStringPos == StringRef::npos)
-        return false;
-    }
-
-    // If a regex literal ends in "\//", this gets represented by an unknown
-    // token "\" and a comment.
-    bool MightEndWithEscapedSlash =
-        Tokens.back()->is(tok::comment) &&
-        Tokens.back()->TokenText.startswith("//") &&
-        Tokens[Tokens.size() - 2]->TokenText == "\\";
-    if (!MightEndWithEscapedSlash && SlashInStringPos == StringRef::npos &&
-        (Tokens.back()->isNot(tok::slash) ||
-         (Tokens[Tokens.size() - 2]->is(tok::unknown) &&
-          Tokens[Tokens.size() - 2]->TokenText == "\\")))
-      return false;
-
-    unsigned TokenCount = 0;
-    bool InCharacterClass = false;
+    FormatToken *Prev = nullptr;
     for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
-      ++TokenCount;
-      auto Prev = I + 1;
-      while (Prev != E && Prev[0]->is(tok::comment))
-        ++Prev;
-      // Slashes in character classes (delimited by [ and ]) do not need
-      // escaping. Escaping of the squares themselves is already handled by
-      // \c tryMergeEscapeSequence(), a plain tok::r_square must be non-escaped.
-      if (I[0]->is(tok::r_square))
-        InCharacterClass = true;
-      if (I[0]->is(tok::l_square)) {
-        if (!InCharacterClass)
-          return false;
-        InCharacterClass = false;
+      // NB: Because previous pointers are not initialized yet, this cannot use
+      // Token.getPreviousNonComment.
+      if ((*I)->isNot(tok::comment)) {
+        Prev = *I;
+        break;
       }
-      if (!InCharacterClass && I[0]->isOneOf(tok::slash, tok::slashequal) &&
-          (Prev == E ||
-           ((Prev[0]->isOneOf(tok::l_paren, tok::semi, tok::l_brace,
-                              tok::r_brace, tok::exclaim, tok::l_square,
-                              tok::colon, tok::comma, tok::question,
-                              tok::kw_return) ||
-             Prev[0]->isBinaryOperator())))) {
-        unsigned LastColumn = Tokens.back()->OriginalColumn;
-        SourceLocation Loc = Tokens.back()->Tok.getLocation();
-        if (MightEndWithEscapedSlash) {
-          // This regex literal ends in '\//'. Skip past the '//' of the last
-          // token and re-start lexing from there.
-          resetLexer(SourceMgr.getFileOffset(Loc) + 2);
-        } else if (SlashInStringPos != StringRef::npos) {
-          // This regex literal ends in a string_literal with a slash inside.
-          // Calculate end column and reset lexer appropriately.
-          resetLexer(SourceMgr.getFileOffset(Loc) + SlashInStringPos + 1);
-          LastColumn += SlashInStringPos;
-        }
-        Tokens.resize(Tokens.size() - TokenCount);
-        Tokens.back()->Tok.setKind(tok::unknown);
-        Tokens.back()->Type = TT_RegexLiteral;
-        // Treat regex literals like other string_literals.
-        Tokens.back()->Tok.setKind(tok::string_literal);
-        Tokens.back()->ColumnWidth += LastColumn - I[0]->OriginalColumn;
-        return true;
-      }
-
-      // There can't be a newline inside a regex literal.
-      if (I[0]->NewlinesBefore > 0)
-        return false;
     }
-    return false;
+
+    if (!canPrecedeRegexLiteral(Prev))
+      return;
+
+    // 'Manually' lex ahead in the current file buffer.
+    const char *Offset = Lex->getBufferLocation();
+    const char *RegexBegin = Offset - RegexToken->TokenText.size();
+    StringRef Buffer = Lex->getBuffer();
+    bool InCharacterClass = false;
+    bool HaveClosingSlash = false;
+    for (; !HaveClosingSlash && Offset != Buffer.end(); ++Offset) {
+      // Regular expressions are terminated with a '/', which can only be
+      // escaped using '\' or a character class between '[' and ']'.
+      // See http://www.ecma-international.org/ecma-262/5.1/#sec-7.8.5.
+      switch (*Offset) {
+      case '\\':
+        // Skip the escaped character.
+        ++Offset;
+        break;
+      case '[':
+        InCharacterClass = true;
+        break;
+      case ']':
+        InCharacterClass = false;
+        break;
+      case '/':
+        if (!InCharacterClass)
+          HaveClosingSlash = true;
+        break;
+      }
+    }
+
+    RegexToken->Type = TT_RegexLiteral;
+    // Treat regex literals like other string_literals.
+    RegexToken->Tok.setKind(tok::string_literal);
+    RegexToken->TokenText = StringRef(RegexBegin, Offset - RegexBegin);
+    RegexToken->ColumnWidth = RegexToken->TokenText.size();
+
+    resetLexer(SourceMgr.getFileOffset(Lex->getSourceLocation(Offset)));
   }
 
   bool tryMergeTemplateString() {
