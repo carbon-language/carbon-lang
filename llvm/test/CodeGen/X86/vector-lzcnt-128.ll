@@ -4,7 +4,8 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse4.1 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE41
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl -mattr=+avx512cd -mattr=+avx512vl | FileCheck %s --check-prefix=ALL  --check-prefix=AVX512 --check-prefix=AVX512VLCD
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl -mattr=+avx512cd -mattr=+avx512vl | FileCheck %s --check-prefix=AVX512VLCD --check-prefix=ALL --check-prefix=AVX512
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl -mattr=+avx512cd | FileCheck %s --check-prefix=AVX512CD --check-prefix=ALL --check-prefix=AVX512
 
 define <2 x i64> @testv2i64(<2 x i64> %in) nounwind {
 ; SSE2-LABEL: testv2i64:
@@ -93,10 +94,15 @@ define <2 x i64> @testv2i64(<2 x i64> %in) nounwind {
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv2i64:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vplzcntq %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv2i64:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntq %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv2i64:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vplzcntq %zmm0, %zmm0
+; AVX512CD-NEXT:    retq
 
   %out = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %in, i1 0)
   ret <2 x i64> %out
@@ -174,10 +180,15 @@ define <2 x i64> @testv2i64u(<2 x i64> %in) nounwind {
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv2i64u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vplzcntq %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv2i64u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntq %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv2i64u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vplzcntq %zmm0, %zmm0
+; AVX512CD-NEXT:    retq
 
   %out = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %in, i1 -1)
   ret <2 x i64> %out
@@ -331,10 +342,15 @@ define <4 x i32> @testv4i32(<4 x i32> %in) nounwind {
 ; AVX-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv4i32:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vplzcntd %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv4i32:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntd %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv4i32:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CD-NEXT:    retq
 
   %out = call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %in, i1 0)
   ret <4 x i32> %out
@@ -463,10 +479,15 @@ define <4 x i32> @testv4i32u(<4 x i32> %in) nounwind {
 ; AVX-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv4i32u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vplzcntd %xmm0, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv4i32u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vplzcntd %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv4i32u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CD-NEXT:    retq
 
   %out = call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %in, i1 -1)
   ret <4 x i32> %out
@@ -720,33 +741,22 @@ define <8 x i16> @testv8i16(<8 x i16> %in) nounwind {
 ; AVX-NEXT:    vpinsrw $7, %ecx, %xmm1, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv8i16:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vpextrw $1, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vmovd %xmm0, %ecx
-; AVX512-NEXT:    lzcntw %cx, %cx
-; AVX512-NEXT:    vmovd %ecx, %xmm1
-; AVX512-NEXT:    vpinsrw $1, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $2, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $2, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $3, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $3, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $4, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $4, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $5, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $5, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $6, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $6, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $7, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $7, %eax, %xmm1, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv8i16:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vpmovzxwd %xmm0, %ymm0
+; AVX512VLCD-NEXT:    vplzcntd %ymm0, %ymm0
+; AVX512VLCD-NEXT:    vpmovdw %ymm0, %xmm0
+; AVX512VLCD-NEXT:    vpsubw {{.*}}(%rip), %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv8i16:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CD-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
+; AVX512CD-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
+; AVX512CD-NEXT:    vpsubw {{.*}}(%rip), %xmm0, %xmm0
+; AVX512CD-NEXT:    retq
   %out = call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %in, i1 0)
   ret <8 x i16> %out
 }
@@ -954,33 +964,22 @@ define <8 x i16> @testv8i16u(<8 x i16> %in) nounwind {
 ; AVX-NEXT:    vpinsrw $7, %eax, %xmm1, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv8i16u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vpextrw $1, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vmovd %xmm0, %ecx
-; AVX512-NEXT:    lzcntw %cx, %cx
-; AVX512-NEXT:    vmovd %ecx, %xmm1
-; AVX512-NEXT:    vpinsrw $1, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $2, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $2, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $3, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $3, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $4, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $4, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $5, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $5, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $6, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $6, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrw $7, %xmm0, %eax
-; AVX512-NEXT:    lzcntw %ax, %ax
-; AVX512-NEXT:    vpinsrw $7, %eax, %xmm1, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv8i16u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vpmovzxwd %xmm0, %ymm0
+; AVX512VLCD-NEXT:    vplzcntd %ymm0, %ymm0
+; AVX512VLCD-NEXT:    vpmovdw %ymm0, %xmm0
+; AVX512VLCD-NEXT:    vpsubw {{.*}}(%rip), %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv8i16u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CD-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
+; AVX512CD-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
+; AVX512CD-NEXT:    vpsubw {{.*}}(%rip), %xmm0, %xmm0
+; AVX512CD-NEXT:    retq
   %out = call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %in, i1 -1)
   ret <8 x i16> %out
 }
@@ -1472,73 +1471,21 @@ define <16 x i8> @testv16i8(<16 x i8> %in) nounwind {
 ; AVX-NEXT:    vpinsrb $15, %ecx, %xmm1, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv16i8:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vpextrb $1, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpextrb $0, %xmm0, %ecx
-; AVX512-NEXT:    lzcntl %ecx, %ecx
-; AVX512-NEXT:    addl $-24, %ecx
-; AVX512-NEXT:    vmovd %ecx, %xmm1
-; AVX512-NEXT:    vpinsrb $1, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $2, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $2, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $3, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $3, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $4, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $4, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $5, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $5, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $6, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $6, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $7, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $7, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $8, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $8, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $9, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $9, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $10, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $10, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $11, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $11, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $12, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $12, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $13, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $13, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $14, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $14, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $15, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $15, %eax, %xmm1, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv16i8:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vpmovzxbd %xmm0, %zmm0
+; AVX512VLCD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512VLCD-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512VLCD-NEXT:    vpsubb {{.*}}(%rip), %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv16i8:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vpmovzxbd %xmm0, %zmm0
+; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CD-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512CD-NEXT:    vpsubb {{.*}}(%rip), %xmm0, %xmm0
+; AVX512CD-NEXT:    retq
   %out = call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> %in, i1 0)
   ret <16 x i8> %out
 }
@@ -1939,73 +1886,21 @@ define <16 x i8> @testv16i8u(<16 x i8> %in) nounwind {
 ; AVX-NEXT:    vpinsrb $15, %eax, %xmm1, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: testv16i8u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vpextrb $1, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpextrb $0, %xmm0, %ecx
-; AVX512-NEXT:    lzcntl %ecx, %ecx
-; AVX512-NEXT:    addl $-24, %ecx
-; AVX512-NEXT:    vmovd %ecx, %xmm1
-; AVX512-NEXT:    vpinsrb $1, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $2, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $2, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $3, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $3, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $4, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $4, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $5, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $5, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $6, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $6, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $7, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $7, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $8, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $8, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $9, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $9, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $10, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $10, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $11, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $11, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $12, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $12, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $13, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $13, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $14, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $14, %eax, %xmm1, %xmm1
-; AVX512-NEXT:    vpextrb $15, %xmm0, %eax
-; AVX512-NEXT:    lzcntl %eax, %eax
-; AVX512-NEXT:    addl $-24, %eax
-; AVX512-NEXT:    vpinsrb $15, %eax, %xmm1, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: testv16i8u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vpmovzxbd %xmm0, %zmm0
+; AVX512VLCD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512VLCD-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512VLCD-NEXT:    vpsubb {{.*}}(%rip), %xmm0, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: testv16i8u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vpmovzxbd %xmm0, %zmm0
+; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
+; AVX512CD-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512CD-NEXT:    vpsubb {{.*}}(%rip), %xmm0, %xmm0
+; AVX512CD-NEXT:    retq
   %out = call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> %in, i1 -1)
   ret <16 x i8> %out
 }
@@ -2023,11 +1918,17 @@ define <2 x i64> @foldv2i64() nounwind {
 ; AVX-NEXT:    vmovq %rax, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv2i64:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    movl $55, %eax
-; AVX512-NEXT:    vmovq %rax, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv2i64:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    movl $55, %eax
+; AVX512VLCD-NEXT:    vmovq %rax, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv2i64:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    movl $55, %eax
+; AVX512CD-NEXT:    vmovq %rax, %xmm0
+; AVX512CD-NEXT:    retq
   %out = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> <i64 256, i64 -1>, i1 0)
   ret <2 x i64> %out
 }
@@ -2045,11 +1946,17 @@ define <2 x i64> @foldv2i64u() nounwind {
 ; AVX-NEXT:    vmovq %rax, %xmm0
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv2i64u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    movl $55, %eax
-; AVX512-NEXT:    vmovq %rax, %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv2i64u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    movl $55, %eax
+; AVX512VLCD-NEXT:    vmovq %rax, %xmm0
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv2i64u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    movl $55, %eax
+; AVX512CD-NEXT:    vmovq %rax, %xmm0
+; AVX512CD-NEXT:    retq
   %out = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> <i64 256, i64 -1>, i1 -1)
   ret <2 x i64> %out
 }
@@ -2065,10 +1972,15 @@ define <4 x i32> @foldv4i32() nounwind {
 ; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [23,0,32,24]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv4i32:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vmovdqa32 {{.*}}(%rip), %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv4i32:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vmovdqa32 {{.*#+}} xmm0 = [23,0,32,24]
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv4i32:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vmovaps {{.*#+}} xmm0 = [23,0,32,24]
+; AVX512CD-NEXT:    retq
   %out = call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> <i32 256, i32 -1, i32 0, i32 255>, i1 0)
   ret <4 x i32> %out
 }
@@ -2084,10 +1996,15 @@ define <4 x i32> @foldv4i32u() nounwind {
 ; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [23,0,32,24]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv4i32u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vmovdqa32 {{.*}}(%rip), %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv4i32u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vmovdqa32 {{.*#+}} xmm0 = [23,0,32,24]
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv4i32u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vmovaps {{.*#+}} xmm0 = [23,0,32,24]
+; AVX512CD-NEXT:    retq
   %out = call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> <i32 256, i32 -1, i32 0, i32 255>, i1 -1)
   ret <4 x i32> %out
 }
@@ -2103,10 +2020,15 @@ define <8 x i16> @foldv8i16() nounwind {
 ; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [7,0,16,8,16,13,11,9]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv8i16:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv8i16:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vmovdqa64 {{.*#+}} xmm0 = [7,0,16,8,16,13,11,9]
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv8i16:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vmovaps {{.*#+}} xmm0 = [7,0,16,8,16,13,11,9]
+; AVX512CD-NEXT:    retq
   %out = call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> <i16 256, i16 -1, i16 0, i16 255, i16 -65536, i16 7, i16 24, i16 88>, i1 0)
   ret <8 x i16> %out
 }
@@ -2122,10 +2044,15 @@ define <8 x i16> @foldv8i16u() nounwind {
 ; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [7,0,16,8,16,13,11,9]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv8i16u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv8i16u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vmovdqa64 {{.*#+}} xmm0 = [7,0,16,8,16,13,11,9]
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv8i16u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vmovaps {{.*#+}} xmm0 = [7,0,16,8,16,13,11,9]
+; AVX512CD-NEXT:    retq
   %out = call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> <i16 256, i16 -1, i16 0, i16 255, i16 -65536, i16 7, i16 24, i16 88>, i1 -1)
   ret <8 x i16> %out
 }
@@ -2141,10 +2068,15 @@ define <16 x i8> @foldv16i8() nounwind {
 ; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [8,0,8,0,8,5,3,1,0,0,7,6,5,4,3,2]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv16i8:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv16i8:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vmovdqa64 {{.*#+}} xmm0 = [8,0,8,0,8,5,3,1,0,0,7,6,5,4,3,2]
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv16i8:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vmovaps {{.*#+}} xmm0 = [8,0,8,0,8,5,3,1,0,0,7,6,5,4,3,2]
+; AVX512CD-NEXT:    retq
   %out = call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> <i8 256, i8 -1, i8 0, i8 255, i8 -65536, i8 7, i8 24, i8 88, i8 -2, i8 254, i8 1, i8 2, i8 4, i8 8, i8 16, i8 32>, i1 0)
   ret <16 x i8> %out
 }
@@ -2160,10 +2092,15 @@ define <16 x i8> @foldv16i8u() nounwind {
 ; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [8,0,8,0,8,5,3,1,0,0,7,6,5,4,3,2]
 ; AVX-NEXT:    retq
 ;
-; AVX512-LABEL: foldv16i8u:
-; AVX512:       ## BB#0:
-; AVX512-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm0
-; AVX512-NEXT:    retq
+; AVX512VLCD-LABEL: foldv16i8u:
+; AVX512VLCD:       ## BB#0:
+; AVX512VLCD-NEXT:    vmovdqa64 {{.*#+}} xmm0 = [8,0,8,0,8,5,3,1,0,0,7,6,5,4,3,2]
+; AVX512VLCD-NEXT:    retq
+;
+; AVX512CD-LABEL: foldv16i8u:
+; AVX512CD:       ## BB#0:
+; AVX512CD-NEXT:    vmovaps {{.*#+}} xmm0 = [8,0,8,0,8,5,3,1,0,0,7,6,5,4,3,2]
+; AVX512CD-NEXT:    retq
   %out = call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> <i8 256, i8 -1, i8 0, i8 255, i8 -65536, i8 7, i8 24, i8 88, i8 -2, i8 254, i8 1, i8 2, i8 4, i8 8, i8 16, i8 32>, i1 -1)
   ret <16 x i8> %out
 }

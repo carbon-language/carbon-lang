@@ -786,6 +786,10 @@ def : Pat<(insert_subvector undef, (v8i32 VR256X:$src), (iPTR 0)),
           (INSERT_SUBREG (v16i32 (IMPLICIT_DEF)), VR256X:$src, sub_ymm)>;
 def : Pat<(insert_subvector undef, (v8f32 VR256X:$src), (iPTR 0)),
           (INSERT_SUBREG (v16f32 (IMPLICIT_DEF)), VR256X:$src, sub_ymm)>;
+def : Pat<(insert_subvector undef, (v16i16 VR256X:$src), (iPTR 0)),
+          (INSERT_SUBREG (v32i16 (IMPLICIT_DEF)), VR256X:$src, sub_ymm)>;
+def : Pat<(insert_subvector undef, (v32i8 VR256X:$src), (iPTR 0)),
+          (INSERT_SUBREG (v64i8 (IMPLICIT_DEF)), VR256X:$src, sub_ymm)>;
 
 // vextractps - extract 32 bits from XMM
 def VEXTRACTPSzrr : AVX512AIi8<0x17, MRMDestReg, (outs GR32:$dst),
