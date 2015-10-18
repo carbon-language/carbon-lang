@@ -488,24 +488,16 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
       .Case("posix", llvm::ThreadModel::POSIX)
       .Case("single", llvm::ThreadModel::Single);
 
-  if (CodeGenOpts.DisableIntegratedAS)
-    Options.DisableIntegratedAS = true;
-
-  if (CodeGenOpts.CompressDebugSections)
-    Options.CompressDebugSections = true;
-
-  if (CodeGenOpts.UseInitArray)
-    Options.UseInitArray = true;
-
   // Set float ABI type.
-  if (CodeGenOpts.FloatABI == "soft" || CodeGenOpts.FloatABI == "softfp")
-    Options.FloatABIType = llvm::FloatABI::Soft;
-  else if (CodeGenOpts.FloatABI == "hard")
-    Options.FloatABIType = llvm::FloatABI::Hard;
-  else {
-    assert(CodeGenOpts.FloatABI.empty() && "Invalid float abi!");
-    Options.FloatABIType = llvm::FloatABI::Default;
-  }
+  assert((CodeGenOpts.FloatABI == "soft" || CodeGenOpts.FloatABI == "softfp" ||
+          CodeGenOpts.FloatABI == "hard" || CodeGenOpts.FloatABI.empty()) &&
+         "Invalid Floating Point ABI!");
+  Options.FloatABIType =
+      llvm::StringSwitch<llvm::FloatABI::ABIType>(CodeGenOpts.FloatABI)
+          .Case("soft", llvm::FloatABI::Soft)
+          .Case("softfp", llvm::FloatABI::Soft)
+          .Case("hard", llvm::FloatABI::Hard)
+          .Default(llvm::FloatABI::Default);
 
   // Set FP fusion mode.
   switch (CodeGenOpts.getFPContractMode()) {
@@ -520,6 +512,9 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
     break;
   }
 
+  Options.UseInitArray = CodeGenOpts.UseInitArray;
+  Options.DisableIntegratedAS = CodeGenOpts.DisableIntegratedAS;
+  Options.CompressDebugSections = CodeGenOpts.CompressDebugSections;
   Options.LessPreciseFPMADOption = CodeGenOpts.LessPreciseFPMAD;
   Options.NoInfsFPMath = CodeGenOpts.NoInfsFPMath;
   Options.NoNaNsFPMath = CodeGenOpts.NoNaNsFPMath;
