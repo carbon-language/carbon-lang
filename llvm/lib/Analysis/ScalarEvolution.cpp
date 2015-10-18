@@ -1303,9 +1303,9 @@ static const SCEV *getPreStartForExtend(const SCEVAddRecExpr *AR, Type *Ty,
       ExtendOpTraits<ExtendOpTy>::getOverflowLimitForStep(Step, &Pred, SE);
 
   if (OverflowLimit &&
-      SE->isLoopEntryGuardedByCond(L, Pred, PreStart, OverflowLimit)) {
+      SE->isLoopEntryGuardedByCond(L, Pred, PreStart, OverflowLimit))
     return PreStart;
-  }
+
   return nullptr;
 }
 
@@ -3237,9 +3237,8 @@ uint64_t ScalarEvolution::getTypeSizeInBits(Type *Ty) const {
 Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
 
-  if (Ty->isIntegerTy()) {
+  if (Ty->isIntegerTy())
     return Ty;
-  }
 
   // The only other support type is pointer.
   assert(Ty->isPointerTy() && "Unexpected non-pointer non-integer type!");
@@ -3514,8 +3513,7 @@ const SCEV *ScalarEvolution::getPointerBase(const SCEV *V) {
 
   if (const SCEVCastExpr *Cast = dyn_cast<SCEVCastExpr>(V)) {
     return getPointerBase(Cast->getOperand());
-  }
-  else if (const SCEVNAryExpr *NAry = dyn_cast<SCEVNAryExpr>(V)) {
+  } else if (const SCEVNAryExpr *NAry = dyn_cast<SCEVNAryExpr>(V)) {
     const SCEV *PtrOp = nullptr;
     for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
          I != E; ++I) {
@@ -3788,8 +3786,8 @@ static bool IsAvailableOnEntry(const Loop *L, DominatorTree &DT, const SCEV *S,
 
       case scUDivExpr:
       case scCouldNotCompute:
-      // We do not try to smart about these at all.
-      return setUnavailable();
+        // We do not try to smart about these at all.
+        return setUnavailable();
       }
       llvm_unreachable("switch should be fully covered!");
     }
@@ -5646,9 +5644,8 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I || !canConstantEvolve(I, L)) return nullptr;
 
-  if (PHINode *PN = dyn_cast<PHINode>(I)) {
+  if (PHINode *PN = dyn_cast<PHINode>(I))
     return PN;
-  }
 
   // Record non-constant instructions contained by the loop.
   DenseMap<Instruction *, PHINode *> PHIMap;
