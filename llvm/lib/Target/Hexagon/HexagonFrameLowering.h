@@ -52,7 +52,7 @@ public:
     return true;
   }
   int getFrameIndexReference(const MachineFunction &MF, int FI,
-                             unsigned &FrameReg) const override;
+        unsigned &FrameReg) const;
   bool hasFP(const MachineFunction &MF) const override;
 
   const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries)
@@ -74,7 +74,7 @@ public:
       const override;
 
   bool needsAligna(const MachineFunction &MF) const;
-  MachineInstr *getAlignaInstr(MachineFunction &MF) const;
+  const MachineInstr *getAlignaInstr(const MachineFunction &MF) const;
 
   void insertCFIInstructions(MachineFunction &MF) const;
 

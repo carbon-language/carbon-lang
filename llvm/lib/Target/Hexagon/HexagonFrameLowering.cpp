@@ -147,6 +147,9 @@ static cl::opt<unsigned> ShrinkLimit("shrink-frame-limit", cl::init(UINT_MAX),
     cl::Hidden, cl::ZeroOrMore, cl::desc("Max count of stack frame "
     "shrink-wraps"));
 
+static cl::opt<bool> UseAllocframe("use-allocframe", cl::init(true),
+    cl::Hidden, cl::desc("Use allocframe more conservatively"));
+
 
 namespace llvm {
   void initializeHexagonCallFrameInformationPass(PassRegistry&);
@@ -422,7 +425,6 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
 void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB) const {
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  auto &HTM = static_cast<const HexagonTargetMachine&>(MF.getTarget());
   auto &HST = MF.getSubtarget<HexagonSubtarget>();
   auto &HII = *HST.getInstrInfo();
   auto &HRI = *HST.getRegisterInfo();
@@ -457,14 +459,7 @@ void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB) const {
     MI->eraseFromParent();
   }
 
-  //
-  // Only insert ALLOCFRAME if we need to or at -O0 for the debugger.  Think
-  // that this shouldn't be required, but doing so now because gcc does and
-  // gdb can't break at the start of the function without it.  Will remove if
-  // this turns out to be a gdb bug.
-  //
-  bool NoOpt = (HTM.getOptLevel() == CodeGenOpt::None);
-  if (!NoOpt && !FuncInfo->hasClobberLR() && !hasFP(MF))
+  if (!hasFP(MF))
     return;
 
   // Check for overflow.
@@ -506,11 +501,7 @@ void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB) const {
 
 void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
   MachineFunction &MF = *MBB.getParent();
-  //
-  // Only insert deallocframe if we need to.  Also at -O0.  See comment
-  // in insertPrologueInBlock above.
-  //
-  if (!hasFP(MF) && MF.getTarget().getOptLevel() != CodeGenOpt::None)
+  if (!hasFP(MF))
     return;
 
   auto &HST = static_cast<const HexagonSubtarget&>(MF.getSubtarget());
@@ -634,24 +625,33 @@ void HexagonFrameLowering::insertCFIInstructionsAt(MachineBasicBlock &MBB,
 
   MCSymbol *FrameLabel = MMI.getContext().createTempSymbol();
 
-  // Advance CFA. DW_CFA_def_cfa
-  unsigned DwFPReg = HRI.getDwarfRegNum(HRI.getFrameRegister(), true);
-  unsigned DwRAReg = HRI.getDwarfRegNum(HRI.getRARegister(), true);
+  if (hasFP(MF)) {
+    unsigned DwFPReg = HRI.getDwarfRegNum(HRI.getFrameRegister(), true);
+    unsigned DwRAReg = HRI.getDwarfRegNum(HRI.getRARegister(), true);
 
-  // CFA = FP + 8
-  auto DefCfa = MCCFIInstruction::createDefCfa(FrameLabel, DwFPReg, -8);
-  BuildMI(MBB, At, DL, CFID)
-      .addCFIIndex(MMI.addFrameInst(DefCfa));
-
-  // R31 (return addr) = CFA - #4
-  auto OffR31 = MCCFIInstruction::createOffset(FrameLabel, DwRAReg, -4);
-  BuildMI(MBB, At, DL, CFID)
-      .addCFIIndex(MMI.addFrameInst(OffR31));
-
-  // R30 (frame ptr) = CFA - #8)
-  auto OffR30 = MCCFIInstruction::createOffset(FrameLabel, DwFPReg, -8);
-  BuildMI(MBB, At, DL, CFID)
-      .addCFIIndex(MMI.addFrameInst(OffR30));
+    // Define CFA via an offset from the value of FP.
+    //
+    //  -8   -4    0 (SP)
+    // --+----+----+---------------------
+    //   | FP | LR |          increasing addresses -->
+    // --+----+----+---------------------
+    //   |         +-- Old SP (before allocframe)
+    //   +-- New FP (after allocframe)
+    //
+    // MCCFIInstruction::createDefCfa subtracts the offset from the register.
+    // MCCFIInstruction::createOffset takes the offset without sign change.
+    auto DefCfa = MCCFIInstruction::createDefCfa(FrameLabel, DwFPReg, -8);
+    BuildMI(MBB, At, DL, CFID)
+        .addCFIIndex(MMI.addFrameInst(DefCfa));
+    // R31 (return addr) = CFA - 4
+    auto OffR31 = MCCFIInstruction::createOffset(FrameLabel, DwRAReg, -4);
+    BuildMI(MBB, At, DL, CFID)
+        .addCFIIndex(MMI.addFrameInst(OffR31));
+    // R30 (frame ptr) = CFA - 8
+    auto OffR30 = MCCFIInstruction::createOffset(FrameLabel, DwFPReg, -8);
+    BuildMI(MBB, At, DL, CFID)
+        .addCFIIndex(MMI.addFrameInst(OffR30));
+  }
 
   static unsigned int RegsToMove[] = {
     Hexagon::R1,  Hexagon::R0,  Hexagon::R3,  Hexagon::R2,
@@ -709,11 +709,40 @@ void HexagonFrameLowering::insertCFIInstructionsAt(MachineBasicBlock &MBB,
 
 
 bool HexagonFrameLowering::hasFP(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const HexagonMachineFunctionInfo *FuncInfo =
-    MF.getInfo<HexagonMachineFunctionInfo>();
-  return MFI->hasCalls() || MFI->getStackSize() > 0 ||
-         FuncInfo->hasClobberLR();
+  auto &MFI = *MF.getFrameInfo();
+  auto &HRI = *MF.getSubtarget<HexagonSubtarget>().getRegisterInfo();
+
+  bool HasFixed = MFI.getNumFixedObjects();
+  bool HasPrealloc = const_cast<MachineFrameInfo&>(MFI)
+                        .getLocalFrameObjectCount();
+  bool HasExtraAlign = HRI.needsStackRealignment(MF);
+  bool HasAlloca = MFI.hasVarSizedObjects();
+
+  // Insert ALLOCFRAME if we need to or at -O0 for the debugger.  Think
+  // that this shouldn't be required, but doing so now because gcc does and
+  // gdb can't break at the start of the function without it.  Will remove if
+  // this turns out to be a gdb bug.
+  //
+  if (MF.getTarget().getOptLevel() == CodeGenOpt::None)
+    return true;
+
+  // By default we want to use SP (since it's always there). FP requires
+  // some setup (i.e. ALLOCFRAME).
+  // Fixed and preallocated objects need FP if the distance from them to
+  // the SP is unknown (as is with alloca or aligna).
+  if ((HasFixed || HasPrealloc) && (HasAlloca || HasExtraAlign))
+    return true;
+
+  if (MFI.getStackSize() > 0) {
+    if (UseAllocframe)
+      return true;
+  }
+
+  if (MFI.hasCalls() ||
+      MF.getInfo<HexagonMachineFunctionInfo>()->hasClobberLR())
+    return true;
+
+  return false;
 }
 
 
@@ -795,15 +824,90 @@ static void addCalleeSaveRegistersAsImpOperand(MachineInstr *Inst,
   }
 }
 
+
 int HexagonFrameLowering::getFrameIndexReference(const MachineFunction &MF,
-                                                 int FI,
-                                                 unsigned &FrameReg) const {
-  const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
+      int FI, unsigned &FrameReg) const {
+  auto &MFI = *MF.getFrameInfo();
+  auto &HRI = *MF.getSubtarget<HexagonSubtarget>().getRegisterInfo();
 
-  // Fill in FrameReg output argument.
-  FrameReg = RI->getFrameRegister(MF);
+  // Large parts of this code are shared with HRI::eliminateFrameIndex.
+  int Offset = MFI.getObjectOffset(FI);
+  bool HasAlloca = MFI.hasVarSizedObjects();
+  bool HasExtraAlign = HRI.needsStackRealignment(MF);
+  bool NoOpt = MF.getTarget().getOptLevel() == CodeGenOpt::None;
 
-  return MF.getFrameInfo()->getObjectOffset(FI);
+  unsigned SP = HRI.getStackRegister(), FP = HRI.getFrameRegister();
+  unsigned AP = 0;
+  if (const MachineInstr *AI = getAlignaInstr(MF))
+    AP = AI->getOperand(0).getReg();
+  unsigned FrameSize = MFI.getStackSize();
+
+  bool UseFP = false, UseAP = false;  // Default: use SP (except at -O0).
+  // Use FP at -O0, except when there are objects with extra alignment.
+  // That additional alignment requirement may cause a pad to be inserted,
+  // which will make it impossible to use FP to access objects located
+  // past the pad.
+  if (NoOpt && !HasExtraAlign)
+    UseFP = true;
+  if (MFI.isFixedObjectIndex(FI) || MFI.isObjectPreAllocated(FI)) {
+    // Fixed and preallocated objects will be located before any padding
+    // so FP must be used to access them.
+    UseFP |= (HasAlloca || HasExtraAlign);
+  } else {
+    if (HasAlloca) {
+      if (HasExtraAlign)
+        UseAP = true;
+      else
+        UseFP = true;
+    }
+  }
+
+  // If FP was picked, then there had better be FP.
+  bool HasFP = hasFP(MF);
+  assert((HasFP || !UseFP) && "This function must have frame pointer");
+
+  // Having FP implies allocframe. Allocframe will store extra 8 bytes:
+  // FP/LR. If the base register is used to access an object across these
+  // 8 bytes, then the offset will need to be adjusted by 8.
+  //
+  // After allocframe:
+  //                    HexagonISelLowering adds 8 to ---+
+  //                    the offsets of all stack-based   |
+  //                    arguments (*)                    |
+  //                                                     |
+  //   getObjectOffset < 0   0     8  getObjectOffset >= 8
+  // ------------------------+-----+------------------------> increasing
+  //     <local objects>     |FP/LR|    <input arguments>     addresses
+  // -----------------+------+-----+------------------------>
+  //                  |      |
+  //    SP/AP point --+      +-- FP points here (**)
+  //    somewhere on
+  //    this side of FP/LR
+  //
+  // (*) See LowerFormalArguments. The FP/LR is assumed to be present.
+  // (**) *FP == old-FP. FP+0..7 are the bytes of FP/LR.
+
+  // The lowering assumes that FP/LR is present, and so the offsets of
+  // the formal arguments start at 8. If FP/LR is not there we need to
+  // reduce the offset by 8.
+  if (Offset > 0 && !HasFP)
+    Offset -= 8;
+
+  if (UseFP)
+    FrameReg = FP;
+  else if (UseAP)
+    FrameReg = AP;
+  else
+    FrameReg = SP;
+
+  // Calculate the actual offset in the instruction. If there is no FP
+  // (in other words, no allocframe), then SP will not be adjusted (i.e.
+  // there will be no SP -= FrameSize), so the frame size should not be
+  // added to the calculated offset.
+  int RealOffset = Offset;
+  if (!UseFP && !UseAP && HasFP)
+    RealOffset = FrameSize+Offset;
+  return RealOffset;
 }
 
 
@@ -915,9 +1019,9 @@ void HexagonFrameLowering::processFunctionBeforeFrameFinalized(
   // via AP, which may not be available at the particular place in the program.
   MachineFrameInfo *MFI = MF.getFrameInfo();
   bool HasAlloca = MFI->hasVarSizedObjects();
-  bool HasAligna = (MFI->getMaxAlignment() > getStackAlignment());
+  bool NeedsAlign = (MFI->getMaxAlignment() > getStackAlignment());
 
-  if (!HasAlloca || !HasAligna)
+  if (!HasAlloca || !NeedsAlign)
     return;
 
   unsigned LFS = MFI->getLocalFrameSize();
@@ -1293,7 +1397,8 @@ bool HexagonFrameLowering::needsAligna(const MachineFunction &MF) const {
 }
 
 
-MachineInstr *HexagonFrameLowering::getAlignaInstr(MachineFunction &MF) const {
+const MachineInstr *HexagonFrameLowering::getAlignaInstr(
+      const MachineFunction &MF) const {
   for (auto &B : MF)
     for (auto &I : B)
       if (I.getOpcode() == Hexagon::ALIGNA)
