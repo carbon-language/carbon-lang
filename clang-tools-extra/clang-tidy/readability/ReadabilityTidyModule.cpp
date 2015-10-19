@@ -20,6 +20,7 @@
 #include "RedundantSmartptrGetCheck.h"
 #include "RedundantStringCStrCheck.h"
 #include "SimplifyBooleanExprCheck.h"
+#include "UniqueptrDeleteReleaseCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -40,6 +41,8 @@ public:
         "readability-identifier-naming");
     CheckFactories.registerCheck<InconsistentDeclarationParameterNameCheck>(
         "readability-inconsistent-declaration-parameter-name");
+    CheckFactories.registerCheck<UniqueptrDeleteReleaseCheck>(
+        "readability-uniqueptr-delete-release");
     CheckFactories.registerCheck<readability::NamedParameterCheck>(
         "readability-named-parameter");
     CheckFactories.registerCheck<RedundantSmartptrGetCheck>(

@@ -67,3 +67,4 @@ List of clang-tidy Checks
    readability-redundant-smartptr-get
    readability-redundant-string-cstr
    readability-simplify-boolean-expr
+   readability-uniqueptr-delete-release

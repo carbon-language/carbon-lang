@@ -13,6 +13,7 @@ add_clang_library(clangTidyReadabilityModule
   RedundantStringCStrCheck.cpp
   RedundantSmartptrGetCheck.cpp
   SimplifyBooleanExprCheck.cpp
+  UniqueptrDeleteReleaseCheck.cpp
 
   LINK_LIBS
   clangAST
