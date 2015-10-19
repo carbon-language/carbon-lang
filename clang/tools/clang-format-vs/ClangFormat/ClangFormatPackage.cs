@@ -19,10 +19,10 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
+using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
@@ -32,13 +32,53 @@ namespace LLVM.ClangFormat
     [CLSCompliant(false), ComVisible(true)]
     public class OptionPageGrid : DialogPage
     {
-        private string style = "File";
+        private string assumeFilename = "";
+        private string fallbackStyle = "LLVM";
+        private bool sortIncludes = false;
+        private string style = "file";
+
+        public class StyleConverter : TypeConverter
+        {
+            protected ArrayList values;
+            public StyleConverter()
+            {
+                // Initializes the standard values list with defaults.
+                values = new ArrayList(new string[] { "file", "Chromium", "Google", "LLVM", "Mozilla", "WebKit" });
+            }
+
+            public override bool GetStandardValuesSupported(ITypeDescriptorContext context)
+            {
+                return true;
+            }
+
+            public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
+            {
+                return new StandardValuesCollection(values);
+            }
+
+            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+            {
+                if (sourceType == typeof(string))
+                    return true;
+
+                return base.CanConvertFrom(context, sourceType);
+            }
+
+            public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+            {
+                string s = value as string;
+                if (s == null)
+                    return base.ConvertFrom(context, culture, value);
+
+                return value;
+            }
+        }
 
         [Category("LLVM/Clang")]
         [DisplayName("Style")]
         [Description("Coding style, currently supports:\n" +
-                     "  - Predefined styles ('LLVM', 'Google', 'Chromium', 'Mozilla').\n" +
-                     "  - 'File' to search for a YAML .clang-format or _clang-format\n" +
+                     "  - Predefined styles ('LLVM', 'Google', 'Chromium', 'Mozilla', 'WebKit').\n" +
+                     "  - 'file' to search for a YAML .clang-format or _clang-format\n" +
                      "    configuration file.\n" +
                      "  - A YAML configuration snippet.\n\n" +
                      "'File':\n" +
@@ -48,10 +88,80 @@ namespace LLVM.ClangFormat
                      "  The content of a .clang-format configuration file, as string.\n" +
                      "  Example: '{BasedOnStyle: \"LLVM\", IndentWidth: 8}'\n\n" +
                      "See also: http://clang.llvm.org/docs/ClangFormatStyleOptions.html.")]
+        [TypeConverter(typeof(StyleConverter))]
         public string Style
         {
             get { return style; }
             set { style = value; }
+        }
+
+        public sealed class FilenameConverter : TypeConverter
+        {
+            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+            {
+                if (sourceType == typeof(string))
+                    return true;
+
+                return base.CanConvertFrom(context, sourceType);
+            }
+
+            public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+            {
+                string s = value as string;
+                if (s == null)
+                    return base.ConvertFrom(context, culture, value);
+
+                // Check if string contains quotes. On Windows, file names cannot contain quotes.
+                // We do not accept them however to avoid hard-to-debug problems.
+                // A quote in user input would end the parameter quote and so break the command invocation.
+                if (s.IndexOf('\"') != -1)
+                    throw new NotSupportedException("Filename cannot contain quotes");
+
+                return value;
+            }
+        }
+
+        [Category("LLVM/Clang")]
+        [DisplayName("Assume Filename")]
+        [Description("When reading from stdin, clang-format assumes this " +
+                     "filename to look for a style config file (with 'file' style) " +
+                     "and to determine the language.")]
+        [TypeConverter(typeof(FilenameConverter))]
+        public string AssumeFilename
+        {
+            get { return assumeFilename; }
+            set { assumeFilename = value; }
+        }
+
+        public sealed class FallbackStyleConverter : StyleConverter
+        {
+            public FallbackStyleConverter()
+            {
+                // Add "none" to the list of styles.
+                values.Insert(0, "none");
+            }
+        }
+
+        [Category("LLVM/Clang")]
+        [DisplayName("Fallback Style")]
+        [Description("The name of the predefined style used as a fallback in case clang-format " +
+                     "is invoked with 'file' style, but can not find the configuration file.\n" +
+                     "Use 'none' fallback style to skip formatting.")]
+        [TypeConverter(typeof(FallbackStyleConverter))]
+        public string FallbackStyle
+        {
+            get { return fallbackStyle; }
+            set { fallbackStyle = value; }
+        }
+
+        [Category("LLVM/Clang")]
+        [DisplayName("Sort includes")]
+        [Description("Sort touched include lines.\n\n" +
+                     "See also: http://clang.llvm.org/docs/ClangFormat.html.")]
+        public bool SortIncludes
+        {
+            get { return sortIncludes; }
+            set { sortIncludes = value; }
         }
     }
 
@@ -138,10 +248,17 @@ namespace LLVM.ClangFormat
             // Poor man's escaping - this will not work when quotes are already escaped
             // in the input (but we don't need more).
             string style = GetStyle().Replace("\"", "\\\"");
+            string fallbackStyle = GetFallbackStyle().Replace("\"", "\\\"");
             process.StartInfo.Arguments = " -offset " + offset +
                                           " -length " + length +
                                           " -output-replacements-xml " +
-                                          " -style \"" + style + "\"";
+                                          " -style \"" + style + "\"" +
+                                          " -fallback-style \"" + fallbackStyle + "\"";
+            if (GetSortIncludes())
+              process.StartInfo.Arguments += " -sort-includes ";
+            string assumeFilename = GetAssumeFilename();
+            if (!string.IsNullOrEmpty(assumeFilename))
+              process.StartInfo.Arguments += " -assume-filename \"" + assumeFilename + "\"";
             process.StartInfo.CreateNoWindow = true;
             process.StartInfo.RedirectStandardInput = true;
             process.StartInfo.RedirectStandardOutput = true;
@@ -209,6 +326,24 @@ namespace LLVM.ClangFormat
         {
             var page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
             return page.Style;
+        }
+
+        private string GetAssumeFilename()
+        {
+            var page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+            return page.AssumeFilename;
+        }
+
+        private string GetFallbackStyle()
+        {
+            var page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+            return page.FallbackStyle;
+        }
+
+        private bool GetSortIncludes()
+        {
+            var page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+            return page.SortIncludes;
         }
 
         private string GetDocumentParent(IWpfTextView view)
