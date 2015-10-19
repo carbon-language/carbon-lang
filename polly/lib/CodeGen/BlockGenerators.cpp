@@ -1181,7 +1181,11 @@ void RegionGenerator::addOperandToPHI(ScopStmt &Stmt, const PHINode *PHI,
     ValueMapT &BBCopyMap = RegionMaps[BBCopy];
 
     Value *Op = PHI->getIncomingValueForBlock(IncomingBB);
+
+    auto OldIP = Builder.GetInsertPoint();
+    Builder.SetInsertPoint(BBCopy->getTerminator());
     OpCopy = getNewValue(Stmt, Op, BBCopyMap, LTS, getLoopForInst(PHI));
+    Builder.SetInsertPoint(OldIP);
   } else {
 
     if (PHICopy->getBasicBlockIndex(BBCopy) >= 0)
