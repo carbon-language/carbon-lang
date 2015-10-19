@@ -798,6 +798,7 @@ class X86_32ABIInfo : public ABIInfo {
   bool IsDarwinVectorABI;
   bool IsRetSmallStructInRegABI;
   bool IsWin32StructABI;
+  bool IsSoftFloatABI;
   unsigned DefaultNumRegisterParameters;
 
   static bool isRegisterSize(unsigned Size) {
@@ -847,21 +848,22 @@ public:
 
   X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool DarwinVectorABI,
                 bool RetSmallStructInRegABI, bool Win32StructABI,
-                unsigned NumRegisterParameters)
+                unsigned NumRegisterParameters, bool SoftFloatABI)
     : ABIInfo(CGT), IsDarwinVectorABI(DarwinVectorABI),
       IsRetSmallStructInRegABI(RetSmallStructInRegABI), 
       IsWin32StructABI(Win32StructABI),
-      DefaultNumRegisterParameters(NumRegisterParameters) {}
+      DefaultNumRegisterParameters(NumRegisterParameters),
+      IsSoftFloatABI(SoftFloatABI) {}
 };
 
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool DarwinVectorABI,
                           bool RetSmallStructInRegABI, bool Win32StructABI,
-                          unsigned NumRegisterParameters)
-      : TargetCodeGenInfo(
-            new X86_32ABIInfo(CGT, DarwinVectorABI, RetSmallStructInRegABI,
-                              Win32StructABI, NumRegisterParameters)) {}
+                          unsigned NumRegisterParameters, bool SoftFloatABI)
+      : TargetCodeGenInfo(new X86_32ABIInfo(
+            CGT, DarwinVectorABI, RetSmallStructInRegABI, Win32StructABI,
+            NumRegisterParameters, SoftFloatABI)) {}
 
   static bool isStructReturnInRegABI(
       const llvm::Triple &Triple, const CodeGenOptions &Opts);
@@ -1212,9 +1214,11 @@ X86_32ABIInfo::Class X86_32ABIInfo::classify(QualType Ty) const {
 bool X86_32ABIInfo::shouldUseInReg(QualType Ty, CCState &State,
                                    bool &NeedsPadding) const {
   NeedsPadding = false;
-  Class C = classify(Ty);
-  if (C == Float)
-    return false;
+  if (!IsSoftFloatABI) {
+    Class C = classify(Ty);
+    if (C == Float)
+      return false;
+  }
 
   unsigned Size = getContext().getTypeSize(Ty);
   unsigned SizeInRegs = (Size + 31) / 32;
@@ -1885,7 +1889,7 @@ public:
         bool DarwinVectorABI, bool RetSmallStructInRegABI, bool Win32StructABI,
         unsigned NumRegisterParameters)
     : X86_32TargetCodeGenInfo(CGT, DarwinVectorABI, RetSmallStructInRegABI,
-        Win32StructABI, NumRegisterParameters) {}
+        Win32StructABI, NumRegisterParameters, false) {}
 
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const override;
@@ -7397,7 +7401,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     } else {
       return *(TheTargetCodeGenInfo = new X86_32TargetCodeGenInfo(
                    Types, IsDarwinVectorABI, RetSmallStructInRegABI,
-                   IsWin32FloatStructABI, CodeGenOpts.NumRegisterParameters));
+                   IsWin32FloatStructABI, CodeGenOpts.NumRegisterParameters,
+                   CodeGenOpts.FloatABI == "soft"));
     }
   }
 
