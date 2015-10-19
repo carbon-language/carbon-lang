@@ -1410,7 +1410,7 @@ SDValue SelectionDAG::getTargetIndex(int Index, EVT VT, int64_t Offset,
     return SDValue(E, 0);
 
   SDNode *N =
-      new (NodeAllocator) TargetIndexSDNode(Index, VT, Offset, -TargetFlags);
+      new (NodeAllocator) TargetIndexSDNode(Index, VT, Offset, TargetFlags);
   CSEMap.InsertNode(N, IP);
   InsertNode(N);
   return SDValue(N, 0);
