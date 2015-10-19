@@ -20,6 +20,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -3846,8 +3847,22 @@ bool CodeGenPrepare::optimizeExtUses(Instruction *I) {
   return MadeChange;
 }
 
+/// Check if V (an operand of a select instruction) is an expensive instruction
+/// that is only used once.
+static bool sinkSelectOperand(const TargetTransformInfo *TTI, Value *V) {
+  auto *I = dyn_cast<Instruction>(V);
+  // If it's safe to speculatively execute, then it should not have side
+  // effects; therefore, it's safe to sink and possibly *not* execute.
+  if (I && I->hasOneUse() && isSafeToSpeculativelyExecute(I) &&
+      TTI->getUserCost(I) >= TargetTransformInfo::TCC_Expensive)
+    return true;
+
+  return false;
+}
+
 /// Returns true if a SelectInst should be turned into an explicit branch.
-static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
+static bool isFormingBranchFromSelectProfitable(const TargetTransformInfo *TTI,
+                                                SelectInst *SI) {
   // FIXME: This should use the same heuristics as IfConversion to determine
   // whether a select is better represented as a branch.  This requires that
   // branch probability metadata is preserved for the select, which is not the
@@ -3868,8 +3883,17 @@ static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
   // on a load from memory. But if the load is used more than once, do not
   // change the select to a branch because the load is probably needed
   // regardless of whether the branch is taken or not.
-  return ((isa<LoadInst>(CmpOp0) && CmpOp0->hasOneUse()) ||
-          (isa<LoadInst>(CmpOp1) && CmpOp1->hasOneUse()));
+  if ((isa<LoadInst>(CmpOp0) && CmpOp0->hasOneUse()) ||
+      (isa<LoadInst>(CmpOp1) && CmpOp1->hasOneUse()))
+    return true;
+
+  // If either operand of the select is expensive and only needed on one side
+  // of the select, we should form a branch.
+  if (sinkSelectOperand(TTI, SI->getTrueValue()) ||
+      sinkSelectOperand(TTI, SI->getFalseValue()))
+    return true;
+
+  return false;
 }
 
 
@@ -3895,34 +3919,97 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
     // We have efficient codegen support for the select instruction.
     // Check if it is profitable to keep this 'select'.
     if (!TLI->isPredictableSelectExpensive() ||
-        !isFormingBranchFromSelectProfitable(SI))
+        !isFormingBranchFromSelectProfitable(TTI, SI))
       return false;
   }
 
   ModifiedDT = true;
 
+  // Transform a sequence like this:
+  //    start:
+  //       %cmp = cmp uge i32 %a, %b
+  //       %sel = select i1 %cmp, i32 %c, i32 %d
+  //
+  // Into:
+  //    start:
+  //       %cmp = cmp uge i32 %a, %b
+  //       br i1 %cmp, label %select.true, label %select.false
+  //    select.true:
+  //       br label %select.end
+  //    select.false:
+  //       br label %select.end
+  //    select.end:
+  //       %sel = phi i32 [ %c, %select.true ], [ %d, %select.false ]
+  //
+  // In addition, we may sink instructions that produce %c or %d from
+  // the entry block into the destination(s) of the new branch.
+  // If the true or false blocks do not contain a sunken instruction, that
+  // block and its branch may be optimized away. In that case, one side of the
+  // first branch will point directly to select.end, and the corresponding PHI
+  // predecessor block will be the start block.
+
   // First, we split the block containing the select into 2 blocks.
   BasicBlock *StartBlock = SI->getParent();
   BasicBlock::iterator SplitPt = ++(BasicBlock::iterator(SI));
-  BasicBlock *NextBlock = StartBlock->splitBasicBlock(SplitPt, "select.end");
+  BasicBlock *EndBlock = StartBlock->splitBasicBlock(SplitPt, "select.end");
 
-  // Create a new block serving as the landing pad for the branch.
-  BasicBlock *SmallBlock = BasicBlock::Create(SI->getContext(), "select.mid",
-                                             NextBlock->getParent(), NextBlock);
-
-  // Move the unconditional branch from the block with the select in it into our
-  // landing pad block.
+  // Delete the unconditional branch that was just created by the split.
   StartBlock->getTerminator()->eraseFromParent();
-  BranchInst::Create(NextBlock, SmallBlock);
+
+  // These are the new basic blocks for the conditional branch.
+  // At least one will become an actual new basic block.
+  BasicBlock *TrueBlock = nullptr;
+  BasicBlock *FalseBlock = nullptr;
+
+  // Sink expensive instructions into the conditional blocks to avoid executing
+  // them speculatively.
+  if (sinkSelectOperand(TTI, SI->getTrueValue())) {
+    TrueBlock = BasicBlock::Create(SI->getContext(), "select.true.sink",
+                                   EndBlock->getParent(), EndBlock);
+    auto *TrueBranch = BranchInst::Create(EndBlock, TrueBlock);
+    auto *TrueInst = cast<Instruction>(SI->getTrueValue());
+    TrueInst->moveBefore(TrueBranch);
+  }
+  if (sinkSelectOperand(TTI, SI->getFalseValue())) {
+    FalseBlock = BasicBlock::Create(SI->getContext(), "select.false.sink",
+                                    EndBlock->getParent(), EndBlock);
+    auto *FalseBranch = BranchInst::Create(EndBlock, FalseBlock);
+    auto *FalseInst = cast<Instruction>(SI->getFalseValue());
+    FalseInst->moveBefore(FalseBranch);
+  }
+
+  // If there was nothing to sink, then arbitrarily choose the 'false' side
+  // for a new input value to the PHI.
+  if (TrueBlock == FalseBlock) {
+    assert(TrueBlock == nullptr &&
+           "Unexpected basic block transform while optimizing select");
+
+    FalseBlock = BasicBlock::Create(SI->getContext(), "select.false",
+                                    EndBlock->getParent(), EndBlock);
+    BranchInst::Create(EndBlock, FalseBlock);
+  }
 
   // Insert the real conditional branch based on the original condition.
-  BranchInst::Create(NextBlock, SmallBlock, SI->getCondition(), SI);
+  // If we did not create a new block for one of the 'true' or 'false' paths
+  // of the condition, it means that side of the branch goes to the end block
+  // directly and the path originates from the start block from the point of
+  // view of the new PHI.
+  if (TrueBlock == nullptr) {
+    BranchInst::Create(EndBlock, FalseBlock, SI->getCondition(), SI);
+    TrueBlock = StartBlock;
+  } else if (FalseBlock == nullptr) {
+    BranchInst::Create(TrueBlock, EndBlock, SI->getCondition(), SI);
+    FalseBlock = StartBlock;
+  } else {
+    BranchInst::Create(TrueBlock, FalseBlock, SI->getCondition(), SI);
+  }
 
   // The select itself is replaced with a PHI Node.
-  PHINode *PN = PHINode::Create(SI->getType(), 2, "", &NextBlock->front());
+  PHINode *PN = PHINode::Create(SI->getType(), 2, "", &EndBlock->front());
   PN->takeName(SI);
-  PN->addIncoming(SI->getTrueValue(), StartBlock);
-  PN->addIncoming(SI->getFalseValue(), SmallBlock);
+  PN->addIncoming(SI->getTrueValue(), TrueBlock);
+  PN->addIncoming(SI->getFalseValue(), FalseBlock);
+
   SI->replaceAllUsesWith(PN);
   SI->eraseFromParent();
 
