@@ -2083,6 +2083,10 @@ __kmp_fork_call(
 #endif /* OMP_40_ENABLED */
     team->t.t_sched      = get__sched_2(parent_team, master_tid); // set master's schedule as new run-time schedule
 
+#if OMP_40_ENABLED
+    team->t.t_cancel_request = cancel_noreq;
+#endif
+
     // Update the floating point rounding in the team if required.
     propagateFPControl(team);
 
