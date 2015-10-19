@@ -33,12 +33,24 @@ template <class ELFT> class DefinedRegular;
 template <class ELFT> class ELFSymbolBody;
 
 template <class ELFT>
-typename llvm::object::ELFFile<ELFT>::uintX_t getSymVA(const SymbolBody &S);
+static inline typename llvm::object::ELFFile<ELFT>::uintX_t
+getAddend(const typename llvm::object::ELFFile<ELFT>::Elf_Rel &Rel) {
+  return 0;
+}
 
 template <class ELFT>
+static inline typename llvm::object::ELFFile<ELFT>::uintX_t
+getAddend(const typename llvm::object::ELFFile<ELFT>::Elf_Rela &Rel) {
+  return Rel.r_addend;
+}
+
+template <class ELFT>
+typename llvm::object::ELFFile<ELFT>::uintX_t getSymVA(const SymbolBody &S);
+
+template <class ELFT, bool IsRela>
 typename llvm::object::ELFFile<ELFT>::uintX_t
 getLocalRelTarget(const ObjectFile<ELFT> &File,
-                  const typename llvm::object::ELFFile<ELFT>::Elf_Rel &Sym);
+                  const llvm::object::Elf_Rel_Impl<ELFT, IsRela> &Rel);
 bool canBePreempted(const SymbolBody *Body, bool NeedsGot);
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 

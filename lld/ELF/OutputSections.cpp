@@ -135,15 +135,20 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     else
       P->r_offset = RI.r_offset + C.OutSec->getVA() + C.OutSecOff;
 
-    uintX_t Addend = 0;
+    uintX_t OrigAddend = 0;
     if (IsRela && !NeedsGot)
-      Addend = static_cast<const Elf_Rela &>(RI).r_addend;
+      OrigAddend = static_cast<const Elf_Rela &>(RI).r_addend;
 
-    if (!CanBePreempted) {
+    uintX_t Addend;
+    if (CanBePreempted) {
+      Addend = OrigAddend;
+    } else {
       if (Body)
-        Addend += getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body));
+        Addend = getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body)) + OrigAddend;
+      else if (IsRela)
+        Addend = getLocalRelTarget(File, static_cast<const Elf_Rela &>(RI));
       else
-        Addend += getLocalRelTarget(File, RI);
+        Addend = getLocalRelTarget(File, RI);
     }
 
     if (IsRela)
@@ -422,16 +427,20 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
 
 // Returns a VA which a relocatin RI refers to. Used only for local symbols.
 // For non-local symbols, use getSymVA instead.
-template <class ELFT>
+template <class ELFT, bool IsRela>
 typename ELFFile<ELFT>::uintX_t
 lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
-                             const typename ELFFile<ELFT>::Elf_Rel &RI) {
+                             const Elf_Rel_Impl<ELFT, IsRela> &RI) {
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+
+  uintX_t Addend = getAddend<ELFT>(RI);
+
   // PPC64 has a special relocation representing the TOC base pointer
   // that does not have a corresponding symbol.
   if (Config->EMachine == EM_PPC64 && RI.getType(false) == R_PPC64_TOC)
-    return getPPC64TocBase();
+    return getPPC64TocBase() + Addend;
 
-  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   const Elf_Sym *Sym =
       File.getObj().getRelocationSymbol(&RI, File.getSymbolTable());
 
@@ -444,9 +453,9 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
   // 0.
   InputSection<ELFT> *Section = File.getSection(*Sym);
   if (Section == &InputSection<ELFT>::Discarded)
-    return 0;
+    return Addend;
 
-  return Section->OutSec->getVA() + Section->OutSecOff + Sym->st_value;
+  return Section->OutSec->getVA() + Section->OutSecOff + Sym->st_value + Addend;
 }
 
 // Returns true if a symbol can be replaced at load-time by a symbol

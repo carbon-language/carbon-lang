@@ -60,12 +60,6 @@ public:
   static InputSection<ELFT> Discarded;
 
 private:
-  static void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const Elf_Rel &Rel,
-                          uint32_t Type, uintX_t BaseAddr, uintX_t SymVA);
-
-  static void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const Elf_Rela &Rel,
-                          uint32_t Type, uintX_t BaseAddr, uintX_t SymVA);
-
   template <bool isRela>
   void relocate(uint8_t *Buf, uint8_t *BufEnd,
                 llvm::iterator_range<

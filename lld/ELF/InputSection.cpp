@@ -26,22 +26,6 @@ InputSection<ELFT>::InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header)
     : File(F), Header(Header) {}
 
 template <class ELFT>
-void InputSection<ELFT>::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                     const Elf_Rel &Rel, uint32_t Type,
-                                     uintX_t BaseAddr, uintX_t SymVA) {
-  Target->relocateOne(Buf, BufEnd, reinterpret_cast<const void *>(&Rel), Type,
-                      BaseAddr, SymVA);
-}
-
-template <class ELFT>
-void InputSection<ELFT>::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                     const Elf_Rela &Rel, uint32_t Type,
-                                     uintX_t BaseAddr, uintX_t SymVA) {
-  Target->relocateOne(Buf, BufEnd, reinterpret_cast<const void *>(&Rel), Type,
-                      BaseAddr, SymVA + Rel.r_addend);
-}
-
-template <class ELFT>
 template <bool isRela>
 void InputSection<ELFT>::relocate(
     uint8_t *Buf, uint8_t *BufEnd,
@@ -57,7 +41,7 @@ void InputSection<ELFT>::relocate(
     const Elf_Shdr *SymTab = File.getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
       uintX_t SymVA = getLocalRelTarget(File, RI);
-      relocateOne(Buf, BufEnd, RI, Type, BaseAddr, SymVA);
+      Target->relocateOne(Buf, BufEnd, &RI, Type, BaseAddr, SymVA);
       continue;
     }
 
@@ -75,7 +59,8 @@ void InputSection<ELFT>::relocate(
     } else if (isa<SharedSymbol<ELFT>>(Body)) {
       continue;
     }
-    relocateOne(Buf, BufEnd, RI, Type, BaseAddr, SymVA);
+    Target->relocateOne(Buf, BufEnd, &RI, Type, BaseAddr,
+                        SymVA + getAddend<ELFT>(RI));
   }
 }
 
