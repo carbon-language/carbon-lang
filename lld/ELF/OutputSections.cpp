@@ -616,7 +616,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
 }
 
 template <class ELFT>
-void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *&Buf) {
+void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
   // pointed by Buf.
   uint8_t *Start = Buf;

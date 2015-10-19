@@ -148,7 +148,7 @@ public:
 
 private:
   void writeLocalSymbols(uint8_t *&Buf);
-  void writeGlobalSymbols(uint8_t *&Buf);
+  void writeGlobalSymbols(uint8_t *Buf);
 
   SymbolTable<ELFT> &Table;
   StringTableSection<ELFT> &StrTabSec;
