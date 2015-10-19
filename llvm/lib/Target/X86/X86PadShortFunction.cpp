@@ -106,7 +106,7 @@ bool PadShortFunc::runOnMachineFunction(MachineFunction &MF) {
   // Search through basic blocks and mark the ones that have early returns
   ReturnBBs.clear();
   VisitedBBs.clear();
-  findReturns(MF.begin());
+  findReturns(&MF.front());
 
   bool MadeChange = false;
 

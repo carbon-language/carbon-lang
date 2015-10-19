@@ -535,7 +535,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
 
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
        E = CurDAG->allnodes_end(); I != E; ) {
-    SDNode *N = I++;  // Preincrement iterator to avoid invalidation issues.
+    SDNode *N = &*I++; // Preincrement iterator to avoid invalidation issues.
 
     if (OptLevel != CodeGenOpt::None &&
         // Only does this when target favors doesn't favor register indirect
@@ -864,7 +864,7 @@ bool X86DAGToDAGISel::matchAddress(SDValue N, X86ISelAddressMode &AM) {
 static void insertDAGNode(SelectionDAG &DAG, SDValue Pos, SDValue N) {
   if (N.getNode()->getNodeId() == -1 ||
       N.getNode()->getNodeId() > Pos.getNode()->getNodeId()) {
-    DAG.RepositionNode(Pos.getNode(), N.getNode());
+    DAG.RepositionNode(Pos.getNode()->getIterator(), N.getNode());
     N.getNode()->setNodeId(Pos.getNode()->getNodeId());
   }
 }

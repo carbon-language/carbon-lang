@@ -320,7 +320,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   // Process the function in depth first order so that we process at least one
   // of the predecessors for every reachable block in the function.
   SmallPtrSet<MachineBasicBlock*, 8> Processed;
-  MachineBasicBlock *Entry = MF.begin();
+  MachineBasicBlock *Entry = &MF.front();
 
   bool Changed = false;
   for (MachineBasicBlock *BB : depth_first_ext(Entry, Processed))
@@ -328,9 +328,9 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
 
   // Process any unreachable blocks in arbitrary order now.
   if (MF.size() != Processed.size())
-    for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
-      if (Processed.insert(BB).second)
-        Changed |= processBasicBlock(MF, *BB);
+    for (MachineBasicBlock &BB : MF)
+      if (Processed.insert(&BB).second)
+        Changed |= processBasicBlock(MF, BB);
 
   LiveBundles.clear();
 
@@ -347,13 +347,12 @@ void FPS::bundleCFG(MachineFunction &MF) {
   LiveBundles.resize(Bundles->getNumBundles());
 
   // Gather the actual live-in masks for all MBBs.
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    MachineBasicBlock *MBB = I;
-    const unsigned Mask = calcLiveInMask(MBB);
+  for (MachineBasicBlock &MBB : MF) {
+    const unsigned Mask = calcLiveInMask(&MBB);
     if (!Mask)
       continue;
     // Update MBB ingoing bundle mask.
-    LiveBundles[Bundles->getBundle(MBB->getNumber(), false)].Mask |= Mask;
+    LiveBundles[Bundles->getBundle(MBB.getNumber(), false)].Mask |= Mask;
   }
 }
 

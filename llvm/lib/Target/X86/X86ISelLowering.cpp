@@ -20364,8 +20364,7 @@ static MachineBasicBlock *EmitXBegin(MachineInstr *MI, MachineBasicBlock *MBB,
   DebugLoc DL = MI->getDebugLoc();
 
   const BasicBlock *BB = MBB->getBasicBlock();
-  MachineFunction::iterator I = MBB;
-  ++I;
+  MachineFunction::iterator I = ++MBB->getIterator();
 
   // For the v = xbegin(), we generate
   //
@@ -20613,8 +20612,7 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr *MI,
     offsetMBB = MF->CreateMachineBasicBlock(LLVM_BB);
     endMBB = MF->CreateMachineBasicBlock(LLVM_BB);
 
-    MachineFunction::iterator MBBIter = MBB;
-    ++MBBIter;
+    MachineFunction::iterator MBBIter = ++MBB->getIterator();
 
     // Insert the new basic blocks
     MF->insert(MBBIter, offsetMBB);
@@ -20784,8 +20782,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   // stores were performed.
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
   MachineFunction *F = MBB->getParent();
-  MachineFunction::iterator MBBIter = MBB;
-  ++MBBIter;
+  MachineFunction::iterator MBBIter = ++MBB->getIterator();
   MachineBasicBlock *XMMSaveMBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *EndMBB = F->CreateMachineBasicBlock(LLVM_BB);
   F->insert(MBBIter, XMMSaveMBB);
@@ -20925,8 +20922,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   // destination vreg to set, the condition code register to branch on, the
   // true/false values to select between, and a branch opcode to use.
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It;
+  MachineFunction::iterator It = ++BB->getIterator();
 
   //  thisMBB:
   //  ...
@@ -21283,8 +21279,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
     sizeVReg = MI->getOperand(1).getReg(),
     physSPReg = IsLP64 || Subtarget->isTargetNaCl64() ? X86::RSP : X86::ESP;
 
-  MachineFunction::iterator MBBIter = BB;
-  ++MBBIter;
+  MachineFunction::iterator MBBIter = ++BB->getIterator();
 
   MF->insert(MBBIter, bumpMBB);
   MF->insert(MBBIter, mallocMBB);
@@ -21449,8 +21444,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
   const BasicBlock *BB = MBB->getBasicBlock();
-  MachineFunction::iterator I = MBB;
-  ++I;
+  MachineFunction::iterator I = ++MBB->getIterator();
 
   // Memory Reference
   MachineInstr::mmo_iterator MMOBegin = MI->memoperands_begin();

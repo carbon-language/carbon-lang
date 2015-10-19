@@ -187,7 +187,7 @@ FixupLEAPass::usesRegister(MachineOperand &p, MachineBasicBlock::iterator I) {
 static inline bool getPreviousInstr(MachineBasicBlock::iterator &I,
                                     MachineFunction::iterator MFI) {
   if (I == MFI->begin()) {
-    if (MFI->isPredecessor(MFI)) {
+    if (MFI->isPredecessor(&*MFI)) {
       I = --MFI->end();
       return true;
     } else

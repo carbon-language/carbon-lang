@@ -298,8 +298,8 @@ bool X86FastISel::foldX86XALUIntrinsic(X86::CondCode &CC, const Instruction *I,
     return false;
 
   // Make sure nothing is in the way
-  BasicBlock::const_iterator Start = I;
-  BasicBlock::const_iterator End = II;
+  BasicBlock::const_iterator Start(I);
+  BasicBlock::const_iterator End(II);
   for (auto Itr = std::prev(Start); Itr != End; --Itr) {
     // We only expect extractvalue instructions between the intrinsic and the
     // instruction to be selected.
