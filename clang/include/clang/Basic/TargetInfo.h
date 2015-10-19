@@ -930,10 +930,14 @@ protected:
   virtual enum IntType getPtrDiffTypeV(unsigned AddrSpace) const {
     return PtrDiffType;
   }
-  virtual ArrayRef<const char *> getGCCRegNames() const = 0;
-  virtual ArrayRef<GCCRegAlias> getGCCRegAliases() const = 0;
-  virtual ArrayRef<AddlRegName> getGCCAddlRegNames() const {
-    return None;
+  virtual void getGCCRegNames(const char * const *&Names,
+                              unsigned &NumNames) const = 0;
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                unsigned &NumAliases) const = 0;
+  virtual void getGCCAddlRegNames(const AddlRegName *&Addl,
+                                  unsigned &NumAddl) const {
+    Addl = nullptr;
+    NumAddl = 0;
   }
 };
 

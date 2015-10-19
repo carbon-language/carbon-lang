@@ -349,41 +349,49 @@ bool TargetInfo::isValidGCCRegisterName(StringRef Name) const {
   if (Name.empty())
     return false;
 
+  const char * const *Names;
+  unsigned NumNames;
+
   // Get rid of any register prefix.
   Name = removeGCCRegisterPrefix(Name);
   if (Name.empty())
       return false;
 
-  ArrayRef<const char *> Names = getGCCRegNames();
+  getGCCRegNames(Names, NumNames);
 
   // If we have a number it maps to an entry in the register name array.
   if (isDigit(Name[0])) {
     int n;
     if (!Name.getAsInteger(0, n))
-      return n >= 0 && (unsigned)n < Names.size();
+      return n >= 0 && (unsigned)n < NumNames;
   }
 
   // Check register names.
-  for (unsigned i = 0; i < Names.size(); i++) {
+  for (unsigned i = 0; i < NumNames; i++) {
     if (Name == Names[i])
       return true;
   }
 
   // Check any additional names that we have.
-  ArrayRef<AddlRegName> AddlNames = getGCCAddlRegNames();
-  for (unsigned i = 0; i < AddlNames.size(); i++)
+  const AddlRegName *AddlNames;
+  unsigned NumAddlNames;
+  getGCCAddlRegNames(AddlNames, NumAddlNames);
+  for (unsigned i = 0; i < NumAddlNames; i++)
     for (unsigned j = 0; j < llvm::array_lengthof(AddlNames[i].Names); j++) {
       if (!AddlNames[i].Names[j])
         break;
       // Make sure the register that the additional name is for is within
       // the bounds of the register names from above.
-      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < Names.size())
+      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < NumNames)
         return true;
   }
 
   // Now check aliases.
-  ArrayRef<GCCRegAlias> Aliases = getGCCRegAliases();
-  for (unsigned i = 0; i < Aliases.size(); i++) {
+  const GCCRegAlias *Aliases;
+  unsigned NumAliases;
+
+  getGCCRegAliases(Aliases, NumAliases);
+  for (unsigned i = 0; i < NumAliases; i++) {
     for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
       if (!Aliases[i].Aliases[j])
         break;
@@ -402,33 +410,41 @@ TargetInfo::getNormalizedGCCRegisterName(StringRef Name) const {
   // Get rid of any register prefix.
   Name = removeGCCRegisterPrefix(Name);
 
-  ArrayRef<const char *> Names = getGCCRegNames();
+  const char * const *Names;
+  unsigned NumNames;
+
+  getGCCRegNames(Names, NumNames);
 
   // First, check if we have a number.
   if (isDigit(Name[0])) {
     int n;
     if (!Name.getAsInteger(0, n)) {
-      assert(n >= 0 && (unsigned)n < Names.size() &&
+      assert(n >= 0 && (unsigned)n < NumNames &&
              "Out of bounds register number!");
       return Names[n];
     }
   }
 
   // Check any additional names that we have.
-  ArrayRef<AddlRegName> AddlNames = getGCCAddlRegNames();
-  for (unsigned i = 0; i < AddlNames.size(); i++)
+  const AddlRegName *AddlNames;
+  unsigned NumAddlNames;
+  getGCCAddlRegNames(AddlNames, NumAddlNames);
+  for (unsigned i = 0; i < NumAddlNames; i++)
     for (unsigned j = 0; j < llvm::array_lengthof(AddlNames[i].Names); j++) {
       if (!AddlNames[i].Names[j])
         break;
       // Make sure the register that the additional name is for is within
       // the bounds of the register names from above.
-      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < Names.size())
+      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < NumNames)
         return Name;
     }
 
   // Now check aliases.
-  ArrayRef<GCCRegAlias> Aliases = getGCCRegAliases();
-  for (unsigned i = 0; i < Aliases.size(); i++) {
+  const GCCRegAlias *Aliases;
+  unsigned NumAliases;
+
+  getGCCRegAliases(Aliases, NumAliases);
+  for (unsigned i = 0; i < NumAliases; i++) {
     for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
       if (!Aliases[i].Aliases[j])
         break;
