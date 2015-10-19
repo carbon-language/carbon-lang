@@ -1632,3 +1632,43 @@ entry:
   %cmp580 = icmp ule i16 mul (i16 zext (i8 ptrtoint (i1 (i16)* @f10 to i8) to i16), i16 zext (i8 ptrtoint (i1 (i16)* @f10 to i8) to i16)), %p
   ret i1 %cmp580
 }
+
+; CHECK-LABEL: @cmp_sgt_rhs_dec
+; CHECK-NOT: sub
+; CHECK: icmp sge
+define i1 @cmp_sgt_rhs_dec(float %x, i32 %i) {
+  %conv = fptosi float %x to i32
+  %dec = sub nsw i32 %i, 1
+  %cmp = icmp sgt i32 %conv, %dec
+  ret i1 %cmp
+}
+
+; CHECK-LABEL: @cmp_sle_rhs_dec
+; CHECK-NOT: sub
+; CHECK: icmp slt
+define i1 @cmp_sle_rhs_dec(float %x, i32 %i) {
+  %conv = fptosi float %x to i32
+  %dec = sub nsw i32 %i, 1
+  %cmp = icmp sle i32 %conv, %dec
+  ret i1 %cmp
+}
+
+; CHECK-LABEL: @cmp_sge_rhs_inc
+; CHECK-NOT: add
+; CHECK: icmp sgt
+define i1 @cmp_sge_rhs_inc(float %x, i32 %i) {
+  %conv = fptosi float %x to i32
+  %inc = add nsw i32 %i, 1
+  %cmp = icmp sge i32 %conv, %inc
+  ret i1 %cmp
+}
+
+; CHECK-LABEL: @cmp_slt_rhs_inc
+; CHECK-NOT: add
+; CHECK: icmp sle
+define i1 @cmp_slt_rhs_inc(float %x, i32 %i) {
+  %conv = fptosi float %x to i32
+  %inc = add nsw i32 %i, 1
+  %cmp = icmp slt i32 %conv, %inc
+  ret i1 %cmp
+}

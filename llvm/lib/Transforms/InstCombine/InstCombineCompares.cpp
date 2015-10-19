@@ -3426,6 +3426,26 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         match(B, m_One()))
       return new ICmpInst(CmpInst::ICMP_SGE, A, Op1);
 
+    // icmp sgt X, (Y + -1) -> icmp sge X, Y
+    if (C && NoOp1WrapProblem && Pred == CmpInst::ICMP_SGT &&
+        match(D, m_AllOnes()))
+      return new ICmpInst(CmpInst::ICMP_SGE, Op0, C);
+
+    // icmp sle X, (Y + -1) -> icmp slt X, Y
+    if (C && NoOp1WrapProblem && Pred == CmpInst::ICMP_SLE &&
+        match(D, m_AllOnes()))
+      return new ICmpInst(CmpInst::ICMP_SLT, Op0, C);
+
+    // icmp sge X, (Y + 1) -> icmp sgt X, Y
+    if (C && NoOp1WrapProblem && Pred == CmpInst::ICMP_SGE &&
+        match(D, m_One()))
+      return new ICmpInst(CmpInst::ICMP_SGT, Op0, C);
+
+    // icmp slt X, (Y + 1) -> icmp sle X, Y
+    if (C && NoOp1WrapProblem && Pred == CmpInst::ICMP_SLT &&
+        match(D, m_One()))
+      return new ICmpInst(CmpInst::ICMP_SLE, Op0, C);
+
     // if C1 has greater magnitude than C2:
     //  icmp (X + C1), (Y + C2) -> icmp (X + C3), Y
     //  s.t. C3 = C1 - C2
