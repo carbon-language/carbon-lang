@@ -6,8 +6,8 @@
 ; RUN: not test -e %t3
 
 ; COMBINED: <MODULE_STRTAB_BLOCK
-; COMBINED-NEXT: <ENTRY {{.*}} record string = '{{.*}}/thinlto.ll.tmp{{.*}}.o'
-; COMBINED-NEXT: <ENTRY {{.*}} record string = '{{.*}}/thinlto.ll.tmp{{.*}}.o'
+; COMBINED-NEXT: <ENTRY {{.*}} record string = '{{.*}}thinlto.ll.tmp{{.*}}.o'
+; COMBINED-NEXT: <ENTRY {{.*}} record string = '{{.*}}thinlto.ll.tmp{{.*}}.o'
 ; COMBINED-NEXT: </MODULE_STRTAB_BLOCK
 ; COMBINED-NEXT: <FUNCTION_SUMMARY_BLOCK
 ; COMBINED-NEXT: <COMBINED_ENTRY
