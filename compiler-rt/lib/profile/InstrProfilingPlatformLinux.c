@@ -9,7 +9,7 @@
 
 #include "InstrProfiling.h"
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__FreeBSD__)
 #include <stdlib.h>
 
 extern __llvm_profile_data __start___llvm_prf_data
