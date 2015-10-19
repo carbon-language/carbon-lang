@@ -1,5 +1,6 @@
-# RUN: llvm-mc --disassemble %s -triple=mips-unknown-linux -mcpu=mips32r6 -mattr=micromips  -mattr=+dspr2 | FileCheck %s
+# RUN: llvm-mc --disassemble %s -triple=mips-unknown-linux -mcpu=mips32r6 -mattr=micromips -mattr=+dspr2 | FileCheck %s
 
+0x00 0x64 0x01 0x3c # CHECK: absq_s.qb $3, $4
 0x00 0x43 0x00 0xbc # CHECK: dpa.w.ph $ac0, $3, $2
 0x00 0xec 0xe2 0xbc # CHECK: dpaqx_s.w.ph $ac3, $12, $7
 0x00 0xc5 0x32 0xbc # CHECK: dpaqx_sa.w.ph $ac0, $5, $6
