@@ -258,7 +258,9 @@ void InstrProfiling::emitRegistration() {
     return;
 
   // Use linker script magic to get data/cnts/name start/end.
-  if (Triple(M->getTargetTriple()).isOSLinux()) return;
+  if (Triple(M->getTargetTriple()).isOSLinux() ||
+      Triple(M->getTargetTriple()).isOSFreeBSD())
+    return;
 
   // Construct the function.
   auto *VoidTy = Type::getVoidTy(M->getContext());
