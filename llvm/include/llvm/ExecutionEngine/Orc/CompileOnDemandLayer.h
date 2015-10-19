@@ -44,7 +44,7 @@ class CompileOnDemandLayer {
 private:
 
   template <typename MaterializerFtor>
-  class LambdaMaterializer : public ValueMaterializer {
+  class LambdaMaterializer final : public ValueMaterializer {
   public:
     LambdaMaterializer(MaterializerFtor M) : M(std::move(M)) {}
     Value* materializeValueFor(Value *V) final {

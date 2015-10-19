@@ -365,7 +365,7 @@ class ModuleLinker;
 /// Creates prototypes for functions that are lazily linked on the fly. This
 /// speeds up linking for modules with many/ lazily linked functions of which
 /// few get used.
-class ValueMaterializerTy : public ValueMaterializer {
+class ValueMaterializerTy final : public ValueMaterializer {
   TypeMapTy &TypeMap;
   Module *DstM;
   std::vector<GlobalValue *> &LazilyLinkGlobalValues;

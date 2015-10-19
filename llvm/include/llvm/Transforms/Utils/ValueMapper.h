@@ -38,9 +38,14 @@ namespace llvm {
   /// to materialize Values on demand.
   class ValueMaterializer {
     virtual void anchor(); // Out of line method.
-  public:
-    virtual ~ValueMaterializer() {}
 
+  protected:
+    ~ValueMaterializer() = default;
+    ValueMaterializer() = default;
+    ValueMaterializer(const ValueMaterializer&) = default;
+    ValueMaterializer &operator=(const ValueMaterializer&) = default;
+
+  public:
     /// materializeValueFor - The client should implement this method if they
     /// want to generate a mapped Value on demand. For example, if linking
     /// lazily.
