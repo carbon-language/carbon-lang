@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_BASIC_BUILTINS_H
 #define LLVM_CLANG_BASIC_BUILTINS_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include <cstring>
 
 // VC++ defines 'alloca' as an object-like macro, which interferes with our
@@ -58,16 +59,14 @@ struct Info {
 /// target-specific builtins, allowing easy queries by clients.
 ///
 /// Builtins from an optional auxiliary target are stored in
-/// AuxTSRecords. Their IDs are shifted up by NumTSRecords and need to
+/// AuxTSRecords. Their IDs are shifted up by TSRecords.size() and need to
 /// be translated back with getAuxBuiltinID() before use.
 class Context {
-  const Info *TSRecords;
-  const Info *AuxTSRecords;
-  unsigned NumTSRecords;
-  unsigned NumAuxTSRecords;
+  llvm::ArrayRef<Info> TSRecords;
+  llvm::ArrayRef<Info> AuxTSRecords;
 
 public:
-  Context();
+  Context() {}
 
   /// \brief Perform target-specific initialization
   /// \param AuxTarget Target info to incorporate builtins from. May be nullptr.
@@ -186,12 +185,12 @@ public:
 
   /// \brief Return true if builtin ID belongs to AuxTarget.
   bool isAuxBuiltinID(unsigned ID) const {
-    return ID >= (Builtin::FirstTSBuiltin + NumTSRecords);
+    return ID >= (Builtin::FirstTSBuiltin + TSRecords.size());
   }
 
   /// Return real buitin ID (i.e. ID it would have furing compilation
   /// for AuxTarget).
-  unsigned getAuxBuiltinID(unsigned ID) const { return ID - NumTSRecords; }
+  unsigned getAuxBuiltinID(unsigned ID) const { return ID - TSRecords.size(); }
 
 private:
   const Info &getRecord(unsigned ID) const;

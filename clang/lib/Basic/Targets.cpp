@@ -876,10 +876,9 @@ public:
 
   StringRef getABI() const override { return ABI; }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                             clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin);
   }
 
   bool isCLZForZeroUndef() const override { return false; }
@@ -1637,10 +1636,9 @@ public:
       Builder.defineMacro("__CUDA_ARCH__", CUDAArchCode);
     }
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::NVPTX::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                         clang::NVPTX::LastTSBuiltin - Builtin::FirstTSBuiltin);
   }
   bool hasFeature(StringRef Feature) const override {
     return Feature == "ptx" || Feature == "nvptx";
@@ -1824,10 +1822,9 @@ public:
     return true;
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::AMDGPU::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                        clang::AMDGPU::LastTSBuiltin - Builtin::FirstTSBuiltin);
   }
 
   void getTargetDefines(const LangOptions &Opts,
@@ -2336,10 +2333,9 @@ public:
     // X87 evaluates with 80 bits "long double" precision.
     return SSELevel == NoSSE ? 2 : 0;
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                                 unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::X86::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                             clang::X86::LastTSBuiltin-Builtin::FirstTSBuiltin);
   }
   ArrayRef<const char *> getGCCRegNames() const override {
     return llvm::makeArrayRef(GCCRegNames);
@@ -4789,10 +4785,9 @@ public:
       Builder.defineMacro("__ARM_FP_FAST", "1");
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::ARM::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                             clang::ARM::LastTSBuiltin-Builtin::FirstTSBuiltin);
   }
   bool isCLZForZeroUndef() const override { return false; }
   BuiltinVaListKind getBuiltinVaListKind() const override {
@@ -5285,10 +5280,9 @@ public:
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8");
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::AArch64::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                       clang::AArch64::LastTSBuiltin - Builtin::FirstTSBuiltin);
   }
 
   bool hasFeature(StringRef Feature) const override {
@@ -5552,10 +5546,9 @@ public:
     NoAsmVariants = true;
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::Hexagon::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                         clang::Hexagon::LastTSBuiltin-Builtin::FirstTSBuiltin);
   }
 
   bool validateAsmConstraint(const char *&Name,
@@ -5716,9 +5709,9 @@ public:
              .Default(false);
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
     // FIXME: Implement!
+    return None;
   }
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::VoidPtrBuiltinVaList;
@@ -5923,10 +5916,9 @@ public:
     if (Opts.ZVector)
       Builder.defineMacro("__VEC__", "10301");
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::SystemZ::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                         clang::SystemZ::LastTSBuiltin-Builtin::FirstTSBuiltin);
   }
 
   ArrayRef<const char *> getGCCRegNames() const override;
@@ -6078,11 +6070,9 @@ public:
     Builder.defineMacro("__MSP430__");
     // FIXME: defines for different 'flavours' of MCU
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
     // FIXME: Implement.
-    Records = nullptr;
-    NumRecords = 0;
+    return None;
   }
   bool hasFeature(StringRef Feature) const override {
     return Feature == "msp430";
@@ -6179,8 +6169,7 @@ public:
   }
   bool hasFeature(StringRef Feature) const override { return Feature == "tce"; }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {}
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override { return None; }
   const char *getClobbers() const override { return ""; }
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::VoidPtrBuiltinVaList;
@@ -6225,8 +6214,7 @@ public:
     return Feature == "bpf";
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {}
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override { return None; }
   const char *getClobbers() const override {
     return "";
   }
@@ -6383,10 +6371,9 @@ public:
     Builder.defineMacro("_MIPS_ARCH_" + StringRef(CPU).upper());
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::Mips::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                          clang::Mips::LastTSBuiltin - Builtin::FirstTSBuiltin);
   }
   bool hasFeature(StringRef Feature) const override {
     return llvm::StringSwitch<bool>(Feature)
@@ -6869,9 +6856,7 @@ public:
   bool hasFeature(StringRef Feature) const override {
     return Feature == "pnacl";
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-  }
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override { return None; }
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::PNaClABIBuiltinVaList;
   }
@@ -6925,10 +6910,9 @@ public:
     defineCPUMacros(Builder, "le64", /*Tuning=*/false);
     Builder.defineMacro("__ELF__");
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::Le64::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                          clang::Le64::LastTSBuiltin - Builtin::FirstTSBuiltin);
   }
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::PNaClABIBuiltinVaList;
@@ -7015,10 +6999,9 @@ private:
               .Case("generic",       true)
               .Default(false);
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const final {
-    Records = BuiltinInfo;
-    NumRecords = clang::WebAssembly::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const final {
+    return llvm::makeArrayRef(BuiltinInfo,
+                   clang::WebAssembly::LastTSBuiltin - Builtin::FirstTSBuiltin);
   }
   BuiltinVaListKind getBuiltinVaListKind() const final {
     // TODO: Implement va_list properly.
@@ -7134,8 +7117,7 @@ public:
     return Feature == "spir";
   }
 
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {}
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override { return None; }
   const char *getClobbers() const override { return ""; }
   ArrayRef<const char *> getGCCRegNames() const override { return None; }
   bool validateAsmConstraint(const char *&Name,
@@ -7211,10 +7193,9 @@ public:
                         MacroBuilder &Builder) const override {
     Builder.defineMacro("__XS1B__");
   }
-  void getTargetBuiltins(const Builtin::Info *&Records,
-                         unsigned &NumRecords) const override {
-    Records = BuiltinInfo;
-    NumRecords = clang::XCore::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return llvm::makeArrayRef(BuiltinInfo,
+                           clang::XCore::LastTSBuiltin-Builtin::FirstTSBuiltin);
   }
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::VoidPtrBuiltinVaList;
