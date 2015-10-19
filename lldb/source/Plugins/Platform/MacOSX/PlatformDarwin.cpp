@@ -11,6 +11,8 @@
 
 // C Includes
 // C++ Includes
+#include <mutex>
+
 // Other libraries and framework includes
 #include "clang/Basic/VersionTuple.h"
 // Project includes
