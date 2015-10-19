@@ -122,6 +122,13 @@ TEST_F(SortIncludesTest, LeavesMainHeaderFirst) {
             sort("#include \"llvm/a.h\"\n"
                  "#include \"c.h\"\n"
                  "#include \"b.h\"\n"));
+  EXPECT_EQ("#include \"llvm/a.h\"\n"
+            "#include \"b.h\"\n"
+            "#include \"c.h\"\n",
+            sort("#include \"llvm/a.h\"\n"
+                 "#include \"c.h\"\n"
+                 "#include \"b.h\"\n",
+                 "input.mm"));
 
   // Don't do this in headers.
   EXPECT_EQ("#include \"b.h\"\n"

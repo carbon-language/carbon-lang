@@ -1747,7 +1747,9 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
                            FileName.endswith(".cc") ||
                            FileName.endswith(".cpp")||
                            FileName.endswith(".c++")||
-                           FileName.endswith(".cxx");
+                           FileName.endswith(".cxx") ||
+                           FileName.endswith(".m")||
+                           FileName.endswith(".mm");
 
   // Create pre-compiled regular expressions for the #include categories.
   SmallVector<llvm::Regex, 4> CategoryRegexs;
