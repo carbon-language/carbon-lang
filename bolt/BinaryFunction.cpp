@@ -517,8 +517,8 @@ void BinaryFunction::inferFallThroughCounts() {
 }
 
 void BinaryFunction::optimizeLayout(bool DumpLayout) {
-  // Bail if no profiling information
-  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE) {
+  // Bail if no profiling information or if empty
+  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE || empty()) {
     return;
   }
 
