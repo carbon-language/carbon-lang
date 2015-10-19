@@ -119,9 +119,9 @@ bool ObjCARCContract::optimizeRetainCall(Function &F, Instruction *Retain) {
     return false;
 
   // Check that the call is next to the retain.
-  BasicBlock::const_iterator I = Call;
-  ++I;
-  while (IsNoopInstruction(I)) ++I;
+  BasicBlock::const_iterator I = ++Call->getIterator();
+  while (IsNoopInstruction(&*I))
+    ++I;
   if (&*I != Retain)
     return false;
 
@@ -282,9 +282,9 @@ findRetainForStoreStrongContraction(Value *New, StoreInst *Store,
                                     Instruction *Release,
                                     ProvenanceAnalysis &PA) {
   // Walk up from the Store to find the retain.
-  BasicBlock::iterator I = Store;
+  BasicBlock::iterator I = Store->getIterator();
   BasicBlock::iterator Begin = Store->getParent()->begin();
-  while (I != Begin && GetBasicARCInstKind(I) != ARCInstKind::Retain) {
+  while (I != Begin && GetBasicARCInstKind(&*I) != ARCInstKind::Retain) {
     Instruction *Inst = &*I;
 
     // It is only safe to move the retain to the store if we can prove
@@ -294,7 +294,7 @@ findRetainForStoreStrongContraction(Value *New, StoreInst *Store,
       return nullptr;
     --I;
   }
-  Instruction *Retain = I;
+  Instruction *Retain = &*I;
   if (GetBasicARCInstKind(Retain) != ARCInstKind::Retain)
     return nullptr;
   if (GetArgRCIdentityRoot(Retain) != New)
@@ -429,7 +429,7 @@ bool ObjCARCContract::tryToPeepholeInstruction(
       // insert it now.
       if (!RetainRVMarker)
         return false;
-      BasicBlock::iterator BBI = Inst;
+      BasicBlock::iterator BBI = Inst->getIterator();
       BasicBlock *InstParent = Inst->getParent();
 
       // Step up to see if the call immediately precedes the RetainRV call.
@@ -440,11 +440,11 @@ bool ObjCARCContract::tryToPeepholeInstruction(
           BasicBlock *Pred = InstParent->getSinglePredecessor();
           if (!Pred)
             goto decline_rv_optimization;
-          BBI = Pred->getTerminator();
+          BBI = Pred->getTerminator()->getIterator();
           break;
         }
         --BBI;
-      } while (IsNoopInstruction(BBI));
+      } while (IsNoopInstruction(&*BBI));
 
       if (&*BBI == GetArgRCIdentityRoot(Inst)) {
         DEBUG(dbgs() << "Adding inline asm marker for "

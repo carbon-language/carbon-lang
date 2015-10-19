@@ -581,16 +581,18 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
   ImmutableCallSite CS(Arg);
   if (const Instruction *Call = CS.getInstruction()) {
     if (Call->getParent() == RetainRV->getParent()) {
-      BasicBlock::const_iterator I = Call;
+      BasicBlock::const_iterator I(Call);
       ++I;
-      while (IsNoopInstruction(I)) ++I;
+      while (IsNoopInstruction(&*I))
+        ++I;
       if (&*I == RetainRV)
         return false;
     } else if (const InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       BasicBlock *RetainRVParent = RetainRV->getParent();
       if (II->getNormalDest() == RetainRVParent) {
         BasicBlock::const_iterator I = RetainRVParent->begin();
-        while (IsNoopInstruction(I)) ++I;
+        while (IsNoopInstruction(&*I))
+          ++I;
         if (&*I == RetainRV)
           return false;
       }
@@ -599,18 +601,21 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
 
   // Check for being preceded by an objc_autoreleaseReturnValue on the same
   // pointer. In this case, we can delete the pair.
-  BasicBlock::iterator I = RetainRV, Begin = RetainRV->getParent()->begin();
+  BasicBlock::iterator I = RetainRV->getIterator(),
+                       Begin = RetainRV->getParent()->begin();
   if (I != Begin) {
-    do --I; while (I != Begin && IsNoopInstruction(I));
-    if (GetBasicARCInstKind(I) == ARCInstKind::AutoreleaseRV &&
-        GetArgRCIdentityRoot(I) == Arg) {
+    do
+      --I;
+    while (I != Begin && IsNoopInstruction(&*I));
+    if (GetBasicARCInstKind(&*I) == ARCInstKind::AutoreleaseRV &&
+        GetArgRCIdentityRoot(&*I) == Arg) {
       Changed = true;
       ++NumPeeps;
 
       DEBUG(dbgs() << "Erasing autoreleaseRV,retainRV pair: " << *I << "\n"
                    << "Erasing " << *RetainRV << "\n");
 
-      EraseInstruction(I);
+      EraseInstruction(&*I);
       EraseInstruction(RetainRV);
       return true;
     }
@@ -1216,7 +1221,7 @@ bool ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
 
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
-    Instruction *Inst = std::prev(I);
+    Instruction *Inst = &*std::prev(I);
 
     // Invoke instructions are visited as part of their successors (below).
     if (isa<InvokeInst>(Inst))
@@ -1342,12 +1347,10 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
                      << "Performing Dataflow:\n");
 
   // Visit all the instructions, top-down.
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-    Instruction *Inst = I;
+  for (Instruction &Inst : *BB) {
+    DEBUG(dbgs() << "    Visiting " << Inst << "\n");
 
-    DEBUG(dbgs() << "    Visiting " << *Inst << "\n");
-
-    NestingDetected |= VisitInstructionTopDown(Inst, Releases, MyStates);
+    NestingDetected |= VisitInstructionTopDown(&Inst, Releases, MyStates);
   }
 
   DEBUG(llvm::dbgs() << "\nState Before Checking for CFG Hazards:\n"
@@ -1413,16 +1416,15 @@ ComputePostOrders(Function &F,
   // Functions may have many exits, and there also blocks which we treat
   // as exits due to ignored edges.
   SmallVector<std::pair<BasicBlock *, BBState::edge_iterator>, 16> PredStack;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock *ExitBB = I;
-    BBState &MyStates = BBStates[ExitBB];
+  for (BasicBlock &ExitBB : F) {
+    BBState &MyStates = BBStates[&ExitBB];
     if (!MyStates.isExit())
       continue;
 
     MyStates.SetAsExit();
 
-    PredStack.push_back(std::make_pair(ExitBB, MyStates.pred_begin()));
-    Visited.insert(ExitBB);
+    PredStack.push_back(std::make_pair(&ExitBB, MyStates.pred_begin()));
+    Visited.insert(&ExitBB);
     while (!PredStack.empty()) {
     reverse_dfs_next_succ:
       BBState::edge_iterator PE = BBStates[PredStack.back().first].pred_end();
@@ -1830,7 +1832,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
     // analysis too, but that would want caching. A better approach would be to
     // use the technique that EarlyCSE uses.
     inst_iterator Current = std::prev(I);
-    BasicBlock *CurrentBB = Current.getBasicBlockIterator();
+    BasicBlock *CurrentBB = &*Current.getBasicBlockIterator();
     for (BasicBlock::iterator B = CurrentBB->begin(),
                               J = Current.getInstructionIterator();
          J != B; --J) {
@@ -2081,9 +2083,8 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
   SmallPtrSet<Instruction *, 4> DependingInstructions;
   SmallPtrSet<const BasicBlock *, 4> Visited;
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
-    BasicBlock *BB = FI;
-    ReturnInst *Ret = dyn_cast<ReturnInst>(&BB->back());
+  for (BasicBlock &BB: F) {
+    ReturnInst *Ret = dyn_cast<ReturnInst>(&BB.back());
 
     DEBUG(dbgs() << "Visiting: " << *Ret << "\n");
 
@@ -2095,19 +2096,16 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
     // Look for an ``autorelease'' instruction that is a predecessor of Ret and
     // dependent on Arg such that there are no instructions dependent on Arg
     // that need a positive ref count in between the autorelease and Ret.
-    CallInst *Autorelease =
-      FindPredecessorAutoreleaseWithSafePath(Arg, BB, Ret,
-                                             DependingInstructions, Visited,
-                                             PA);
+    CallInst *Autorelease = FindPredecessorAutoreleaseWithSafePath(
+        Arg, &BB, Ret, DependingInstructions, Visited, PA);
     DependingInstructions.clear();
     Visited.clear();
 
     if (!Autorelease)
       continue;
 
-    CallInst *Retain =
-      FindPredecessorRetainWithSafePath(Arg, BB, Autorelease,
-                                        DependingInstructions, Visited, PA);
+    CallInst *Retain = FindPredecessorRetainWithSafePath(
+        Arg, &BB, Autorelease, DependingInstructions, Visited, PA);
     DependingInstructions.clear();
     Visited.clear();
 

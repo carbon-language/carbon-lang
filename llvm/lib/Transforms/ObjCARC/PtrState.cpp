@@ -256,9 +256,9 @@ void BottomUpPtrState::HandlePotentialUse(BasicBlock *BB, Instruction *Inst,
       // one of its successor blocks, since we can't insert code after it
       // in its own block, and we don't want to split critical edges.
       if (isa<InvokeInst>(Inst))
-        InsertReverseInsertPt(BB->getFirstInsertionPt());
+        InsertReverseInsertPt(&*BB->getFirstInsertionPt());
       else
-        InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
+        InsertReverseInsertPt(&*++Inst->getIterator());
       SetSeq(S_Use);
     } else if (Seq == S_Release && IsUser(Class)) {
       DEBUG(dbgs() << "            PreciseReleaseUse: Seq: " << GetSeq() << "; "
@@ -268,9 +268,9 @@ void BottomUpPtrState::HandlePotentialUse(BasicBlock *BB, Instruction *Inst,
       assert(!HasReverseInsertPts());
       // As above; handle invoke specially.
       if (isa<InvokeInst>(Inst))
-        InsertReverseInsertPt(BB->getFirstInsertionPt());
+        InsertReverseInsertPt(&*BB->getFirstInsertionPt());
       else
-        InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
+        InsertReverseInsertPt(&*++Inst->getIterator());
     }
     break;
   case S_Stop:
