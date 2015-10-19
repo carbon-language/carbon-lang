@@ -1,5 +1,5 @@
-// RUN: clang-format -output-replacements-xml -sort-includes %s > %t.xml
-// RUN: FileCheck -strict-whitespace -input-file=%t.xml %s
+// RUN: clang-format -output-replacements-xml -sort-includes %s \
+// RUN:   | FileCheck -strict-whitespace %s
 
 // CHECK: <?xml
 // CHECK-NEXT: {{<replacements.*incomplete_format='false'}}
