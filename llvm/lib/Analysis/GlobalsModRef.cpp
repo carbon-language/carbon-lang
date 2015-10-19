@@ -587,8 +587,11 @@ void GlobalsAAResult::AnalyzeCallGraph(CallGraph &CG, Module &M) {
 
     // Finally, now that we know the full effect on this SCC, clone the
     // information to each function in the SCC.
+    // FI is a reference into FunctionInfos, so copy it now so that it doesn't
+    // get invalidated if DenseMap decides to re-hash.
+    FunctionInfo CachedFI = FI;
     for (unsigned i = 1, e = SCC.size(); i != e; ++i)
-      FunctionInfos[SCC[i]->getFunction()] = FI;
+      FunctionInfos[SCC[i]->getFunction()] = CachedFI;
   }
 }
 
