@@ -1380,7 +1380,7 @@ Sample Profile Text Format
 This section describes the ASCII text format for sampling profiles. It is,
 arguably, the easiest one to generate. If you are interested in generating any
 of the other two, consult the ``ProfileData`` library in in LLVM's source tree
-(specifically, ``llvm/lib/ProfileData/SampleProfWriter.cpp``).
+(specifically, ``include/llvm/ProfileData/SampleProfReader.h``).
 
 .. code-block:: console
 
