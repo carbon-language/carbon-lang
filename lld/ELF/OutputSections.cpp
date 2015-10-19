@@ -116,32 +116,34 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       Body = Body->repl();
 
     uint32_t Type = RI.getType(Config->Mips64EL);
-
     bool NeedsGot = Body && Target->relocNeedsGot(Type, *Body);
     bool CanBePreempted = canBePreempted(Body, NeedsGot);
-    uintX_t Addend = 0;
-    if (!CanBePreempted) {
-      if (IsRela) {
-        if (Body)
-          Addend += getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body));
-        else
-          Addend += getLocalRelTarget(File, RI);
-      }
+
+    if (CanBePreempted) {
+      if (NeedsGot)
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                            Target->getGotReloc(), Config->Mips64EL);
+      else
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
+                            Config->Mips64EL);
+    } else {
       P->setSymbolAndType(0, Target->getRelativeReloc(), Config->Mips64EL);
     }
 
-    if (NeedsGot) {
+    if (NeedsGot)
       P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
-      if (CanBePreempted)
-        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
-                            Target->getGotReloc(), Config->Mips64EL);
-    } else {
-      if (IsRela)
-        Addend += static_cast<const Elf_Rela &>(RI).r_addend;
+    else
       P->r_offset = RI.r_offset + C.OutSec->getVA() + C.OutSecOff;
-      if (CanBePreempted)
-        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
-                            Config->Mips64EL);
+
+    uintX_t Addend = 0;
+    if (IsRela && !NeedsGot)
+      Addend = static_cast<const Elf_Rela &>(RI).r_addend;
+
+    if (!CanBePreempted) {
+      if (Body)
+        Addend += getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body));
+      else
+        Addend += getLocalRelTarget(File, RI);
     }
 
     if (IsRela)
