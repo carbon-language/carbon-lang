@@ -1247,20 +1247,23 @@ namespace {
       if (I == Start) IAfterStart = true;
 
       bool IsSimpleLoadStore;
-      if (!isInstVectorizable(I, IsSimpleLoadStore)) continue;
+      if (!isInstVectorizable(&*I, IsSimpleLoadStore))
+        continue;
 
       // Look for an instruction with which to pair instruction *I...
       DenseSet<Value *> Users;
       AliasSetTracker WriteSet(*AA);
-      if (I->mayWriteToMemory()) WriteSet.add(I);
+      if (I->mayWriteToMemory())
+        WriteSet.add(&*I);
 
       bool JAfterStart = IAfterStart;
       BasicBlock::iterator J = std::next(I);
       for (unsigned ss = 0; J != E && ss <= Config.SearchLimit; ++J, ++ss) {
-        if (J == Start) JAfterStart = true;
+        if (&*J == Start)
+          JAfterStart = true;
 
         // Determine if J uses I, if so, exit the loop.
-        bool UsesI = trackUsesOfI(Users, WriteSet, I, J, !Config.FastDep);
+        bool UsesI = trackUsesOfI(Users, WriteSet, &*I, &*J, !Config.FastDep);
         if (Config.FastDep) {
           // Note: For this heuristic to be effective, independent operations
           // must tend to be intermixed. This is likely to be true from some
@@ -1277,25 +1280,26 @@ namespace {
         // J does not use I, and comes before the first use of I, so it can be
         // merged with I if the instructions are compatible.
         int CostSavings, FixedOrder;
-        if (!areInstsCompatible(I, J, IsSimpleLoadStore, NonPow2Len,
-            CostSavings, FixedOrder)) continue;
+        if (!areInstsCompatible(&*I, &*J, IsSimpleLoadStore, NonPow2Len,
+                                CostSavings, FixedOrder))
+          continue;
 
         // J is a candidate for merging with I.
         if (PairableInsts.empty() ||
-             PairableInsts[PairableInsts.size()-1] != I) {
-          PairableInsts.push_back(I);
+            PairableInsts[PairableInsts.size() - 1] != &*I) {
+          PairableInsts.push_back(&*I);
         }
 
-        CandidatePairs[I].push_back(J);
+        CandidatePairs[&*I].push_back(&*J);
         ++TotalPairs;
         if (TTI)
-          CandidatePairCostSavings.insert(ValuePairWithCost(ValuePair(I, J),
-                                                            CostSavings));
+          CandidatePairCostSavings.insert(
+              ValuePairWithCost(ValuePair(&*I, &*J), CostSavings));
 
         if (FixedOrder == 1)
-          FixedOrderPairs.insert(ValuePair(I, J));
+          FixedOrderPairs.insert(ValuePair(&*I, &*J));
         else if (FixedOrder == -1)
-          FixedOrderPairs.insert(ValuePair(J, I));
+          FixedOrderPairs.insert(ValuePair(&*J, &*I));
 
         // The next call to this function must start after the last instruction
         // selected during this invocation.
@@ -1476,14 +1480,16 @@ namespace {
     BasicBlock::iterator E = BB.end(), EL =
       BasicBlock::iterator(cast<Instruction>(PairableInsts.back()));
     for (BasicBlock::iterator I = BB.getFirstInsertionPt(); I != E; ++I) {
-      if (IsInPair.find(I) == IsInPair.end()) continue;
+      if (IsInPair.find(&*I) == IsInPair.end())
+        continue;
 
       DenseSet<Value *> Users;
       AliasSetTracker WriteSet(*AA);
-      if (I->mayWriteToMemory()) WriteSet.add(I);
+      if (I->mayWriteToMemory())
+        WriteSet.add(&*I);
 
       for (BasicBlock::iterator J = std::next(I); J != E; ++J) {
-        (void) trackUsesOfI(Users, WriteSet, I, J);
+        (void)trackUsesOfI(Users, WriteSet, &*I, &*J);
 
         if (J == EL)
           break;
@@ -1492,7 +1498,7 @@ namespace {
       for (DenseSet<Value *>::iterator U = Users.begin(), E = Users.end();
            U != E; ++U) {
         if (IsInPair.find(*U) == IsInPair.end()) continue;
-        PairableInstUsers.insert(ValuePair(I, *U));
+        PairableInstUsers.insert(ValuePair(&*I, *U));
       }
 
       if (I == EL)
@@ -2873,7 +2879,7 @@ namespace {
     if (I->mayWriteToMemory()) WriteSet.add(I);
 
     for (; cast<Instruction>(L) != J; ++L)
-      (void) trackUsesOfI(Users, WriteSet, I, L, true, &LoadMoveSetPairs);
+      (void)trackUsesOfI(Users, WriteSet, I, &*L, true, &LoadMoveSetPairs);
 
     assert(cast<Instruction>(L) == J &&
       "Tracking has not proceeded far enough to check for dependencies");
@@ -2895,9 +2901,9 @@ namespace {
     if (I->mayWriteToMemory()) WriteSet.add(I);
 
     for (; cast<Instruction>(L) != J;) {
-      if (trackUsesOfI(Users, WriteSet, I, L, true, &LoadMoveSetPairs)) {
+      if (trackUsesOfI(Users, WriteSet, I, &*L, true, &LoadMoveSetPairs)) {
         // Move this instruction
-        Instruction *InstToMove = L; ++L;
+        Instruction *InstToMove = &*L++;
 
         DEBUG(dbgs() << "BBV: moving: " << *InstToMove <<
                         " to after " << *InsertionPt << "\n");
@@ -2928,11 +2934,11 @@ namespace {
     // Note: We cannot end the loop when we reach J because J could be moved
     // farther down the use chain by another instruction pairing. Also, J
     // could be before I if this is an inverted input.
-    for (BasicBlock::iterator E = BB.end(); cast<Instruction>(L) != E; ++L) {
-      if (trackUsesOfI(Users, WriteSet, I, L)) {
+    for (BasicBlock::iterator E = BB.end(); L != E; ++L) {
+      if (trackUsesOfI(Users, WriteSet, I, &*L)) {
         if (L->mayReadFromMemory()) {
-          LoadMoveSet[L].push_back(I);
-          LoadMoveSetPairs.insert(ValuePair(L, I));
+          LoadMoveSet[&*L].push_back(I);
+          LoadMoveSetPairs.insert(ValuePair(&*L, I));
         }
       }
     }
@@ -2995,7 +3001,7 @@ namespace {
     DEBUG(dbgs() << "BBV: initial: \n" << BB << "\n");
 
     for (BasicBlock::iterator PI = BB.getFirstInsertionPt(); PI != BB.end();) {
-      DenseMap<Value *, Value *>::iterator P = ChosenPairs.find(PI);
+      DenseMap<Value *, Value *>::iterator P = ChosenPairs.find(&*PI);
       if (P == ChosenPairs.end()) {
         ++PI;
         continue;
