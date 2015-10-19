@@ -1219,7 +1219,7 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
     DI->setName(Arg.getName());  // Copy the name over.
 
     // Add a mapping to our mapping.
-    ValueMap[&Arg] = DI;
+    ValueMap[&Arg] = &*DI;
     ++DI;
   }
 
