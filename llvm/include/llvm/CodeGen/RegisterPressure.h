@@ -444,8 +444,6 @@ public:
 protected:
   const LiveRange *getLiveRange(unsigned Reg) const;
 
-  bool isLastUse(unsigned VRegOrUnit, SlotIndex Pos) const;
-
   void increaseRegPressure(ArrayRef<unsigned> Regs);
   void decreaseRegPressure(ArrayRef<unsigned> Regs);
 
