@@ -9,6 +9,7 @@ add_lldb_library(lldbExpression
   IRInterpreter.cpp
   IRMemoryMap.cpp
   Materializer.cpp
+  REPL.cpp
   UserExpression.cpp
   UtilityFunction.cpp
   )
