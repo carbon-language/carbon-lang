@@ -31,6 +31,8 @@ OK
 $ 
 """
 
+from __future__ import print_function
+
 import abc
 import gc
 import glob
@@ -247,9 +249,9 @@ class recording(StringIO.StringIO):
         recordings to our session object.  And close the StringIO object, too.
         """
         if self.trace:
-            print >> sys.stderr, self.getvalue()
+            print(self.getvalue(), file=sys.stderr)
         if self.session:
-            print >> self.session, self.getvalue()
+            print(self.getvalue(), file=self.session)
         self.close()
 
 class _BaseProcess(object):
@@ -390,13 +392,13 @@ def system(commands, **kwargs):
             trace = True
 
         with recording(test, trace) as sbuf:
-            print >> sbuf
-            print >> sbuf, "os command:", shellCommand
-            print >> sbuf, "with pid:", pid
-            print >> sbuf, "stdout:", this_output
-            print >> sbuf, "stderr:", this_error
-            print >> sbuf, "retcode:", retcode
-            print >> sbuf
+            print(file=sbuf)
+            print("os command:", shellCommand, file=sbuf)
+            print("with pid:", pid, file=sbuf)
+            print("stdout:", this_output, file=sbuf)
+            print("stderr:", this_error, file=sbuf)
+            print("retcode:", retcode, file=sbuf)
+            print(file=sbuf)
 
         if retcode:
             cmd = kwargs.get("args")
@@ -1235,7 +1237,7 @@ class Base(unittest2.TestCase):
         if ("LLDB_TEST" in os.environ):
             full_dir = os.path.join(os.environ["LLDB_TEST"], cls.mydir)
             if traceAlways:
-                print >> sys.stderr, "Change dir to:", full_dir
+                print("Change dir to:", full_dir, file=sys.stderr)
             os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
 
         if debug_confirm_directory_exclusivity:
@@ -1251,7 +1253,7 @@ class Base(unittest2.TestCase):
                 cls.dir_lock.acquire()
                 # read the previous owner from the lock file
                 lock_id = cls.dir_lock.handle.read()
-                print >> sys.stderr, "LOCK ERROR: {} wants to lock '{}' but it is already locked by '{}'".format(cls.__name__, full_dir, lock_id)
+                print("LOCK ERROR: {} wants to lock '{}' but it is already locked by '{}'".format(cls.__name__, full_dir, lock_id), file=sys.stderr)
                 raise ioerror
 
         # Set platform context.
@@ -1277,7 +1279,7 @@ class Base(unittest2.TestCase):
             # Subclass might have specific cleanup function defined.
             if getattr(cls, "classCleanup", None):
                 if traceAlways:
-                    print >> sys.stderr, "Call class-specific cleanup function for class:", cls
+                    print("Call class-specific cleanup function for class:", cls, file=sys.stderr)
                 try:
                     cls.classCleanup()
                 except:
@@ -1290,7 +1292,7 @@ class Base(unittest2.TestCase):
 
         # Restore old working directory.
         if traceAlways:
-            print >> sys.stderr, "Restore dir to:", cls.oldcwd
+            print("Restore dir to:", cls.oldcwd, file=sys.stderr)
         os.chdir(cls.oldcwd)
 
     @classmethod
@@ -1626,7 +1628,7 @@ class Base(unittest2.TestCase):
         """
         if callable(hook):
             with recording(self, traceAlways) as sbuf:
-                print >> sbuf, "Adding tearDown hook:", getsource_if_available(hook)
+                print("Adding tearDown hook:", getsource_if_available(hook), file=sbuf)
             self.hooks.append(hook)
         
         return self
@@ -1637,7 +1639,7 @@ class Base(unittest2.TestCase):
         if self.child and self.child.isalive():
             import pexpect
             with recording(self, traceAlways) as sbuf:
-                print >> sbuf, "tearing down the child process...."
+                print("tearing down the child process....", file=sbuf)
             try:
                 if self.child_in_script_interpreter:
                     self.child.sendline('quit()')
@@ -1669,7 +1671,7 @@ class Base(unittest2.TestCase):
         # Check and run any hook functions.
         for hook in reversed(self.hooks):
             with recording(self, traceAlways) as sbuf:
-                print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
+                print("Executing tearDown hook:", getsource_if_available(hook), file=sbuf)
             import inspect
             hook_argc = len(inspect.getargspec(hook).args)
             if hook_argc == 0 or getattr(hook,'im_self',None):
@@ -1703,7 +1705,7 @@ class Base(unittest2.TestCase):
         with recording(self, False) as sbuf:
             # False because there's no need to write "ERROR" to the stderr twice.
             # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "ERROR"
+            print("ERROR", file=sbuf)
 
     def markCleanupError(self):
         """Callback invoked when an error occurs while a test is cleaning up."""
@@ -1711,7 +1713,7 @@ class Base(unittest2.TestCase):
         with recording(self, False) as sbuf:
             # False because there's no need to write "CLEANUP_ERROR" to the stderr twice.
             # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "CLEANUP_ERROR"
+            print("CLEANUP_ERROR", file=sbuf)
 
     def markFailure(self):
         """Callback invoked when a failure (test assertion failure) occurred."""
@@ -1719,7 +1721,7 @@ class Base(unittest2.TestCase):
         with recording(self, False) as sbuf:
             # False because there's no need to write "FAIL" to the stderr twice.
             # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "FAIL"
+            print("FAIL", file=sbuf)
 
     def markExpectedFailure(self,err,bugnumber):
         """Callback invoked when an expected failure/error occurred."""
@@ -1729,9 +1731,9 @@ class Base(unittest2.TestCase):
             # stderr twice.
             # Once by the Python unittest framework, and a second time by us.
             if bugnumber == None:
-                print >> sbuf, "expected failure"
+                print("expected failure", file=sbuf)
             else:
-                print >> sbuf, "expected failure (problem id:" + str(bugnumber) + ")"
+                print("expected failure (problem id:" + str(bugnumber) + ")", file=sbuf)
 
     def markSkippedTest(self):
         """Callback invoked when a test is skipped."""
@@ -1740,7 +1742,7 @@ class Base(unittest2.TestCase):
             # False because there's no need to write "skipped test" to the
             # stderr twice.
             # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "skipped test"
+            print("skipped test", file=sbuf)
 
     def markUnexpectedSuccess(self, bugnumber):
         """Callback invoked when an unexpected success occurred."""
@@ -1750,9 +1752,9 @@ class Base(unittest2.TestCase):
             # stderr twice.
             # Once by the Python unittest framework, and a second time by us.
             if bugnumber == None:
-                print >> sbuf, "unexpected success"
+                print("unexpected success", file=sbuf)
             else:
-                print >> sbuf, "unexpected success (problem id:" + str(bugnumber) + ")"
+                print("unexpected success (problem id:" + str(bugnumber) + ")", file=sbuf)
 
     def getRerunArgs(self):
         return " -f %s.%s" % (self.__class__.__name__, self._testMethodName)
@@ -1830,7 +1832,7 @@ class Base(unittest2.TestCase):
         if not self.__unexpected__ and not self.__skipped__:
             for test, traceback in pairs:
                 if test is self:
-                    print >> self.session, traceback
+                    print(traceback, file=self.session)
 
         # put footer (timestamp/rerun instructions) into session
         testMethod = getattr(self, self._testMethodName)
@@ -1840,11 +1842,11 @@ class Base(unittest2.TestCase):
             benchmarks = False
 
         import datetime
-        print >> self.session, "Session info generated @", datetime.datetime.now().ctime()
-        print >> self.session, "To rerun this test, issue the following command from the 'test' directory:\n"
-        print >> self.session, "./dotest.py %s -v %s %s" % (self.getRunOptions(),
+        print("Session info generated @", datetime.datetime.now().ctime(), file=self.session)
+        print("To rerun this test, issue the following command from the 'test' directory:\n", file=self.session)
+        print("./dotest.py %s -v %s %s" % (self.getRunOptions(),
                                                  ('+b' if benchmarks else '-t'),
-                                                 self.getRerunArgs())
+                                                 self.getRerunArgs()), file=self.session)
         self.session.close()
         del self.session
 
@@ -2072,7 +2074,7 @@ class Base(unittest2.TestCase):
                  'CFLAGS_EXTRAS' : "%s %s -I%s" % (stdflag, stdlibflag, os.path.join(os.environ["LLDB_SRC"], "include")),
                  'LD_EXTRAS' : "-L%s -lliblldb" % self.implib_dir}
         if self.TraceOn():
-            print "Building LLDB Driver (%s) from sources %s" % (exe_name, sources)
+            print("Building LLDB Driver (%s) from sources %s" % (exe_name, sources))
 
         self.buildDefault(dictionary=d)
 
@@ -2100,7 +2102,7 @@ class Base(unittest2.TestCase):
                  'CFLAGS_EXTRAS' : "%s -I%s -fPIC" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
                  'LD_EXTRAS' : "-shared -l%s\liblldb.lib" % self.implib_dir}
         if self.TraceOn():
-            print "Building LLDB Library (%s) from sources %s" % (lib_name, sources)
+            print("Building LLDB Library (%s) from sources %s" % (lib_name, sources))
 
         self.buildDefault(dictionary=d)
     
@@ -2423,7 +2425,7 @@ class TestBase(Base):
                 return target
             self.dbg.CreateTarget = DecoratedCreateTarget
             if self.TraceOn():
-                print "self.dbg.Create is redefined to:\n%s" % getsource_if_available(DecoratedCreateTarget)
+                print("self.dbg.Create is redefined to:\n%s" % getsource_if_available(DecoratedCreateTarget))
 
         # We want our debugger to be synchronous.
         self.dbg.SetAsync(False)
@@ -2462,7 +2464,7 @@ class TestBase(Base):
                     lldb.remote_platform.Run(shell_cmd)
                 self.addTearDownHook(clean_working_directory)
             else:
-                print "error: making remote directory '%s': %s" % (remote_test_dir, error)
+                print("error: making remote directory '%s': %s" % (remote_test_dir, error))
     
     def registerSharedLibrariesWithTarget(self, target, shlibs):
         '''If we are remotely running the test suite, register the shared libraries with the target so they get uploaded, otherwise do nothing
@@ -2618,11 +2620,11 @@ class TestBase(Base):
                 target = atoms[-1]
                 # Now let's get the absolute pathname of our target.
                 abs_target = os.path.abspath(target)
-                print >> sbuf, "Found a file command, target (with absolute pathname)=%s" % abs_target
+                print("Found a file command, target (with absolute pathname)=%s" % abs_target, file=sbuf)
                 fpath, fname = os.path.split(abs_target)
                 parent_dir = os.path.split(fpath)[0]
                 platform_target_install_command = 'platform target-install %s %s' % (fpath, lldb.lldbtest_remote_sandbox)
-                print >> sbuf, "Insert this command to be run first: %s" % platform_target_install_command
+                print("Insert this command to be run first: %s" % platform_target_install_command, file=sbuf)
                 self.ci.HandleCommand(platform_target_install_command, self.res)
                 # And this is the file command we want to execute, instead.
                 #
@@ -2632,7 +2634,7 @@ class TestBase(Base):
                 #
                 lldb.lldbtest_remote_sandboxed_executable = abs_target.replace(parent_dir, lldb.lldbtest_remote_sandbox)
                 cmd = "file -P %s %s %s" % (lldb.lldbtest_remote_sandboxed_executable, the_rest.replace(target, ''), abs_target)
-                print >> sbuf, "And this is the replaced file command: %s" % cmd
+                print("And this is the replaced file command: %s" % cmd, file=sbuf)
 
         running = (cmd.startswith("run") or cmd.startswith("process launch"))
 
@@ -2640,14 +2642,14 @@ class TestBase(Base):
             self.ci.HandleCommand(cmd, self.res, inHistory)
 
             with recording(self, trace) as sbuf:
-                print >> sbuf, "runCmd:", cmd
+                print("runCmd:", cmd, file=sbuf)
                 if not check:
-                    print >> sbuf, "check of return status not required"
+                    print("check of return status not required", file=sbuf)
                 if self.res.Succeeded():
-                    print >> sbuf, "output:", self.res.GetOutput()
+                    print("output:", self.res.GetOutput(), file=sbuf)
                 else:
-                    print >> sbuf, "runCmd failed!"
-                    print >> sbuf, self.res.GetError()
+                    print("runCmd failed!", file=sbuf)
+                    print(self.res.GetError(), file=sbuf)
 
             if self.res.Succeeded():
                 break
@@ -2655,7 +2657,7 @@ class TestBase(Base):
                 # For process launch, wait some time before possible next try.
                 time.sleep(self.timeWaitNextLaunch)
                 with recording(self, trace) as sbuf:
-                    print >> sbuf, "Command '" + cmd + "' failed!"
+                    print("Command '" + cmd + "' failed!", file=sbuf)
 
         if check:
             self.assertTrue(self.res.Succeeded(),
@@ -2684,7 +2686,7 @@ class TestBase(Base):
             # No execution required, just compare str against the golden input.
             output = str
             with recording(self, trace) as sbuf:
-                print >> sbuf, "looking at:", output
+                print("looking at:", output, file=sbuf)
 
         # The heading says either "Expecting" or "Not expecting".
         heading = "Expecting" if matching else "Not expecting"
@@ -2694,8 +2696,8 @@ class TestBase(Base):
             match_object = re.search(pattern, output)
             matched = bool(match_object)
             with recording(self, trace) as sbuf:
-                print >> sbuf, "%s pattern: %s" % (heading, pattern)
-                print >> sbuf, "Matched" if matched else "Not matched"
+                print("%s pattern: %s" % (heading, pattern), file=sbuf)
+                print("Matched" if matched else "Not matched", file=sbuf)
             if matched:
                 break
 
@@ -2749,7 +2751,7 @@ class TestBase(Base):
             else:
                 output = str
             with recording(self, trace) as sbuf:
-                print >> sbuf, "looking at:", output
+                print("looking at:", output, file=sbuf)
 
         # The heading says either "Expecting" or "Not expecting".
         heading = "Expecting" if matching else "Not expecting"
@@ -2760,16 +2762,16 @@ class TestBase(Base):
 
         if startstr:
             with recording(self, trace) as sbuf:
-                print >> sbuf, "%s start string: %s" % (heading, startstr)
-                print >> sbuf, "Matched" if matched else "Not matched"
+                print("%s start string: %s" % (heading, startstr), file=sbuf)
+                print("Matched" if matched else "Not matched", file=sbuf)
 
         # Look for endstr, if specified.
         keepgoing = matched if matching else not matched
         if endstr:
             matched = output.endswith(endstr)
             with recording(self, trace) as sbuf:
-                print >> sbuf, "%s end string: %s" % (heading, endstr)
-                print >> sbuf, "Matched" if matched else "Not matched"
+                print("%s end string: %s" % (heading, endstr), file=sbuf)
+                print("Matched" if matched else "Not matched", file=sbuf)
 
         # Look for sub strings, if specified.
         keepgoing = matched if matching else not matched
@@ -2777,8 +2779,8 @@ class TestBase(Base):
             for str in substrs:
                 matched = output.find(str) != -1
                 with recording(self, trace) as sbuf:
-                    print >> sbuf, "%s sub string: %s" % (heading, str)
-                    print >> sbuf, "Matched" if matched else "Not matched"
+                    print("%s sub string: %s" % (heading, str), file=sbuf)
+                    print("Matched" if matched else "Not matched", file=sbuf)
                 keepgoing = matched if matching else not matched
                 if not keepgoing:
                     break
@@ -2790,8 +2792,8 @@ class TestBase(Base):
                 # Match Objects always have a boolean value of True.
                 matched = bool(re.search(pattern, output))
                 with recording(self, trace) as sbuf:
-                    print >> sbuf, "%s pattern: %s" % (heading, pattern)
-                    print >> sbuf, "Matched" if matched else "Not matched"
+                    print("%s pattern: %s" % (heading, pattern), file=sbuf)
+                    print("Matched" if matched else "Not matched", file=sbuf)
                 keepgoing = matched if matching else not matched
                 if not keepgoing:
                     break
@@ -2809,7 +2811,7 @@ class TestBase(Base):
                         name + "is a method name of object: " + str(obj))
         result = method()
         with recording(self, trace) as sbuf:
-            print >> sbuf, str(method) + ":",  result
+            print(str(method) + ":",  result, file=sbuf)
         return result
 
     def build(self, architecture=None, compiler=None, dictionary=None, clean=True):
@@ -2869,7 +2871,7 @@ class TestBase(Base):
         if not traceAlways:
             return
 
-        print child
+        print(child)
 
     @classmethod
     def RemoveTempFile(cls, file):

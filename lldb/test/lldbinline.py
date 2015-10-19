@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import lldb
 from lldbtest import *
 import lldbutil
@@ -161,8 +163,8 @@ class InlineTest(TestBase):
         value = self.frame().EvaluateExpression (expression)
         self.assertTrue(value.IsValid(), expression+"returned a valid value")
         if self.TraceOn():
-            print value.GetSummary()
-            print value.GetValue()
+            print(value.GetSummary())
+            print(value.GetValue())
         if use_summary:
             answer = value.GetSummary()
         else:

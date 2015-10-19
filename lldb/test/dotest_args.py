@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 import multiprocessing
 import os
@@ -20,7 +22,7 @@ def parse_args(parser, argv):
         args = ArgParseNamespace()
 
         if ('LLDB_TEST_ARGUMENTS' in os.environ):
-            print "Arguments passed through environment: '%s'" % os.environ['LLDB_TEST_ARGUMENTS']
+            print("Arguments passed through environment: '%s'" % os.environ['LLDB_TEST_ARGUMENTS'])
             args = parser.parse_args([sys.argv[0]].__add__(os.environ['LLDB_TEST_ARGUMENTS'].split()),namespace=args)
 
         return parser.parse_args(args=argv, namespace=args)

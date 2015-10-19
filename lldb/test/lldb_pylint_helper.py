@@ -11,6 +11,9 @@ and multiple OS types, verifying changes across all.
 
 Provides helper support for adding lldb test paths to the python path.
 """
+
+from __future__ import print_function
+
 import os
 import platform
 import subprocess
@@ -125,7 +128,7 @@ def add_lldb_module_directory():
             sys.path.insert(0, lldb_module_path)
     # pylint: disable=broad-except
     except Exception as exception:
-        print "failed to find python path: {}".format(exception)
+        print("failed to find python path: {}".format(exception))
 
 
 def add_lldb_test_package_paths(check_dir):

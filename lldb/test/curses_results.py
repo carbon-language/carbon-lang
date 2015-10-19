@@ -9,6 +9,8 @@
 Configuration options for lldbtest.py set by dotest.py during initialization
 """
 
+from __future__ import print_function
+
 import curses
 import datetime
 import lldbcurses
@@ -43,7 +45,7 @@ class Curses(test_results.ResultsFormatter):
             self.have_curses = False
             lldbcurses.terminate_curses()
             self.using_terminal = False
-            print "Unexpected error:", sys.exc_info()[0]
+            print("Unexpected error:", sys.exc_info()[0])
             raise
             
         

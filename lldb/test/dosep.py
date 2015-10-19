@@ -32,6 +32,8 @@ ulimit -c unlimited
 echo core.%p | sudo tee /proc/sys/kernel/core_pattern
 """
 
+from __future__ import print_function
+
 # system packages and modules
 import asyncore
 import distutils.version
@@ -104,10 +106,10 @@ def report_test_failure(name, command, output):
     global output_lock
     with output_lock:
         if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
-            print >> sys.stderr
-            print >> sys.stderr, output
-            print >> sys.stderr, "[%s FAILED]" % name
-            print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
+            print(file=sys.stderr)
+            print(output, file=sys.stderr)
+            print("[%s FAILED]" % name, file=sys.stderr)
+            print("Command invoked: %s" % ' '.join(command), file=sys.stderr)
         update_progress(name)
 
 
@@ -116,9 +118,9 @@ def report_test_pass(name, output):
     with output_lock:
         if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
             if output_on_success:
-                print >> sys.stderr
-                print >> sys.stderr, output
-                print >> sys.stderr, "[%s PASSED]" % name
+                print(file=sys.stderr)
+                print(output, file=sys.stderr)
+                print("[%s PASSED]" % name, file=sys.stderr)
         update_progress(name)
 
 
@@ -414,7 +416,7 @@ def kill_all_worker_processes(workers, inferior_pid_events):
     active_pid_set = collect_active_pids_from_pid_events(
         inferior_pid_events)
     for inferior_pid in active_pid_set:
-        print "killing inferior pid {}".format(inferior_pid)
+        print("killing inferior pid {}".format(inferior_pid))
         os.kill(inferior_pid, signal.SIGKILL)
 
 
@@ -432,7 +434,7 @@ def kill_all_worker_threads(workers, inferior_pid_events):
     active_pid_set = collect_active_pids_from_pid_events(
         inferior_pid_events)
     for inferior_pid in active_pid_set:
-        print "killing inferior pid {}".format(inferior_pid)
+        print("killing inferior pid {}".format(inferior_pid))
         os.kill(inferior_pid, signal.SIGKILL)
 
     # We don't have a way to nuke the threads.  However, since we killed
@@ -485,8 +487,8 @@ def initialize_global_vars_common(num_threads, test_work_items):
     test_counter = multiprocessing.Value('i', 0)
     test_name_len = multiprocessing.Value('i', 0)
     if not (RESULTS_FORMATTER and RESULTS_FORMATTER.is_using_terminal()):
-        print >> sys.stderr, "Testing: %d test suites, %d thread%s" % (
-            total_tests, num_threads, (num_threads > 1) * "s")
+        print("Testing: %d test suites, %d thread%s" % (
+            total_tests, num_threads, (num_threads > 1) * "s"), file=sys.stderr)
     update_progress()
 
 
@@ -630,7 +632,7 @@ def handle_ctrl_c(ctrl_c_count, job_queue, workers, inferior_pid_events,
         name_index = len(key_name) - 1
     message = "\nHandling {} KeyboardInterrupt".format(key_name[name_index])
     with output_lock:
-        print message
+        print(message)
 
     if ctrl_c_count == 1:
         # Remove all outstanding items from the work queue so we stop
@@ -642,13 +644,13 @@ def handle_ctrl_c(ctrl_c_count, job_queue, workers, inferior_pid_events,
             except Queue.Empty:
                 pass
         with output_lock:
-            print "Stopped more work from being started."
+            print("Stopped more work from being started.")
     elif ctrl_c_count == 2:
         # Try to stop all inferiors, even the ones currently doing work.
         stop_all_inferiors_func(workers, inferior_pid_events)
     else:
         with output_lock:
-            print "All teardown activities kicked off, should finish soon."
+            print("All teardown activities kicked off, should finish soon.")
 
 
 def workers_and_async_done(workers, async_map):
@@ -1392,33 +1394,33 @@ def main(print_details_on_success, num_threads, test_subdir,
             test_name = os.path.splitext(xtime)[0]
             touch(os.path.join(session_dir, "{}-{}".format(result, test_name)))
 
-    print
+    print()
     sys.stdout.write("Ran %d test suites" % num_test_files)
     if num_test_files > 0:
         sys.stdout.write(" (%d failed) (%f%%)" % (
             len(failed), 100.0 * len(failed) / num_test_files))
-    print
+    print()
     sys.stdout.write("Ran %d test cases" % num_test_cases)
     if num_test_cases > 0:
         sys.stdout.write(" (%d failed) (%f%%)" % (
             fail_count, 100.0 * fail_count / num_test_cases))
-    print
+    print()
     exit_code = 0
 
     if len(failed) > 0:
         failed.sort()
-        print "Failing Tests (%d)" % len(failed)
+        print("Failing Tests (%d)" % len(failed))
         for f in failed:
-            print "%s: LLDB (suite) :: %s (%s)" % (
+            print("%s: LLDB (suite) :: %s (%s)" % (
                 "TIMEOUT" if f in timed_out else "FAIL", f, system_info
-            )
+            ))
         exit_code = 1
 
     if len(unexpected_successes) > 0:
         unexpected_successes.sort()
-        print "\nUnexpected Successes (%d)" % len(unexpected_successes)
+        print("\nUnexpected Successes (%d)" % len(unexpected_successes))
         for u in unexpected_successes:
-            print "UNEXPECTED SUCCESS: LLDB (suite) :: %s (%s)" % (u, system_info)
+            print("UNEXPECTED SUCCESS: LLDB (suite) :: %s (%s)" % (u, system_info))
 
     sys.exit(exit_code)
 

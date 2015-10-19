@@ -14,6 +14,8 @@ Use the following to get only the benchmark results in your terminal output:
 See also bench-history.
 """
 
+from __future__ import print_function
+
 import os, sys
 import re
 from optparse import OptionParser
@@ -55,17 +57,17 @@ Run the standard benchmarks defined in the list named 'benches'.\
     # Parses the options, if any.
     opts, args = parser.parse_args()
                           
-    print "Starting bench runner...."
+    print("Starting bench runner....")
 
     for item in benches:
         command = item.replace('%E',
                                '-e "%s"' % opts.exe if opts.exe else '')
         command = command.replace('%X',
                                '-x "%s"' % opts.break_spec if opts.break_spec else '')
-        print "Running %s" % (command)
+        print("Running %s" % (command))
         os.system(command)
 
-    print "Bench runner done."
+    print("Bench runner done.")
 
 if __name__ == '__main__':
     main()

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 import sys
 import time
 
@@ -146,4 +148,4 @@ if __name__ == '__main__':
         time.sleep(0.3)
         if p.progress == 100:
             break
-    print #new line
+    print() #new line

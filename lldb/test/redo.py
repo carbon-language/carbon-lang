@@ -15,6 +15,8 @@ Type:
 for help.
 """
 
+from __future__ import print_function
+
 import os, sys, datetime
 import re
 
@@ -41,7 +43,7 @@ comp_specs = set()
 arch_specs = set()
 
 def usage():
-    print"""\
+    print("""\
 Usage: redo.py [-F filename_component] [-n] [session_dir] [-d]
 where options:
 -F : only consider the test for re-run if the session filename contains the filename component
@@ -55,7 +57,7 @@ recorded session infos for all the test cases which either failed or errored.
 
 If sessin_dir is left unspecified, this script uses the heuristic to find the
 possible session directories with names starting with %Y-%m-%d- (for example,
-2012-01-23-) and employs the one with the latest timestamp."""
+2012-01-23-) and employs the one with the latest timestamp.""")
     sys.exit(0)
 
 def where(session_dir, test_dir):
@@ -99,7 +101,7 @@ def redo(suffix, dir, names):
                         match = filter_pattern.match(line)
                         if match:
                             filterspec = match.group(1)
-                            print "adding filterspec:", filterspec
+                            print("adding filterspec:", filterspec)
                             redo_specs.append(filterspec)
                             comp = comp_pattern.search(line)
                             if comp:
@@ -121,7 +123,7 @@ def main():
     if not test_dir:
         test_dir = os.getcwd()
     if not test_dir.endswith('test'):
-        print "This script expects to reside in lldb's test directory."
+        print("This script expects to reside in lldb's test directory.")
         sys.exit(-1)
 
     index = 1
@@ -157,22 +159,22 @@ def main():
         name = datetime.datetime.now().strftime("%Y-%m-%d-")
         dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(name)]
         if len(dirs) == 0:
-            print "No default session directory found, please specify it explicitly."
+            print("No default session directory found, please specify it explicitly.")
             usage()
         session_dir = max(dirs, key=os.path.getmtime)
         if not session_dir or not os.path.exists(session_dir):
-            print "No default session directory found, please specify it explicitly."
+            print("No default session directory found, please specify it explicitly.")
             usage()
 
     #print "The test directory:", test_dir
     session_dir_path = where(session_dir, test_dir)
 
-    print "Using session dir path:", session_dir_path
+    print("Using session dir path:", session_dir_path)
     os.chdir(test_dir)
     os.path.walk(session_dir_path, redo, ".log")
 
     if not redo_specs:
-        print "No failures/errors recorded within the session directory, please specify a different session directory.\n"
+        print("No failures/errors recorded within the session directory, please specify a different session directory.\n")
         usage()
 
     filters = " -f ".join(redo_specs)
@@ -186,7 +188,7 @@ def main():
     command = "./dotest.py %s %s -v %s %s -f " % (compilers, archs, "" if no_trace else "-t", "-d" if do_delay else "")
 
 
-    print "Running %s" % (command + filters)
+    print("Running %s" % (command + filters))
     os.system(command + filters)
 
 if __name__ == '__main__':
