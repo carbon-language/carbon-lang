@@ -3050,7 +3050,7 @@ bool ARMFastISel::fastLowerArguments() {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
             TII.get(TargetOpcode::COPY),
             ResultReg).addReg(DstReg, getKillRegState(true));
-    updateValueMap(I, ResultReg);
+    updateValueMap(&*I, ResultReg);
   }
 
   return true;

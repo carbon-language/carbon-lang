@@ -342,7 +342,7 @@ void ARMConstantIslands::verify() {
 #ifndef NDEBUG
   for (MachineFunction::iterator MBBI = MF->begin(), E = MF->end();
        MBBI != E; ++MBBI) {
-    MachineBasicBlock *MBB = MBBI;
+    MachineBasicBlock *MBB = &*MBBI;
     unsigned MBBId = MBB->getNumber();
     assert(!MBBId || BBInfo[MBBId - 1].postOffset() <= BBInfo[MBBId].Offset);
   }
@@ -639,12 +639,12 @@ void ARMConstantIslands::doInitialJumpTablePlacement(
 /// into the block immediately after it.
 bool ARMConstantIslands::BBHasFallthrough(MachineBasicBlock *MBB) {
   // Get the next machine basic block in the function.
-  MachineFunction::iterator MBBI = MBB;
+  MachineFunction::iterator MBBI = MBB->getIterator();
   // Can't fall off end of function.
   if (std::next(MBBI) == MBB->getParent()->end())
     return false;
 
-  MachineBasicBlock *NextBB = std::next(MBBI);
+  MachineBasicBlock *NextBB = &*std::next(MBBI);
   if (std::find(MBB->succ_begin(), MBB->succ_end(), NextBB) == MBB->succ_end())
     return false;
 
@@ -722,15 +722,15 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
   // has any inline assembly in it. If so, we have to be conservative about
   // alignment assumptions, as we don't know for sure the size of any
   // instructions in the inline assembly.
-  for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I)
-    computeBlockSize(I);
+  for (MachineBasicBlock &MBB : *MF)
+    computeBlockSize(&MBB);
 
   // The known bits of the entry block offset are determined by the function
   // alignment.
   BBInfo.front().KnownBits = MF->getAlignment();
 
   // Compute block offsets and known bits.
-  adjustBBOffsetsAfter(MF->begin());
+  adjustBBOffsetsAfter(&MF->front());
 
   // Now go back through the instructions and build up our data structures.
   for (MachineFunction::iterator MBBI = MF->begin(), E = MF->end();
@@ -968,7 +968,7 @@ MachineBasicBlock *ARMConstantIslands::splitBlockBeforeInstr(MachineInstr *MI) {
   // Create a new MBB for the code after the OrigBB.
   MachineBasicBlock *NewBB =
     MF->CreateMachineBasicBlock(OrigBB->getBasicBlock());
-  MachineFunction::iterator MBBI = OrigBB; ++MBBI;
+  MachineFunction::iterator MBBI = ++OrigBB->getIterator();
   MF->insert(MBBI, NewBB);
 
   // Splice the instructions starting with MI over to NewBB.
@@ -1088,7 +1088,7 @@ bool ARMConstantIslands::isWaterInRange(unsigned UserOffset,
   unsigned CPELogAlign = getCPELogAlign(U.CPEMI);
   unsigned CPEOffset = BBInfo[Water->getNumber()].postOffset(CPELogAlign);
   unsigned NextBlockOffset, NextBlockAlignment;
-  MachineFunction::const_iterator NextBlock = Water;
+  MachineFunction::const_iterator NextBlock = Water->getIterator();
   if (++NextBlock == MF->end()) {
     NextBlockOffset = BBInfo[Water->getNumber()].postOffset();
     NextBlockAlignment = 0;
@@ -1350,7 +1350,7 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
     if (isOffsetInRange(UserOffset, CPEOffset, U)) {
       DEBUG(dbgs() << "Split at end of BB#" << UserMBB->getNumber()
             << format(", expected CPE offset %#x\n", CPEOffset));
-      NewMBB = std::next(MachineFunction::iterator(UserMBB));
+      NewMBB = &*++UserMBB->getIterator();
       // Add an unconditional branch from UserMBB to fallthrough block.  Record
       // it for branch lengthening; this new branch will not get out of range,
       // but if the preceding conditional branch is out of range, the targets
@@ -1503,8 +1503,7 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex) {
       NewWaterList.insert(NewIsland);
 
     // The new CPE goes before the following block (NewMBB).
-    NewMBB = std::next(MachineFunction::iterator(WaterBB));
-
+    NewMBB = &*++WaterBB->getIterator();
   } else {
     // No water found.
     DEBUG(dbgs() << "No water found\n");
@@ -1515,7 +1514,7 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex) {
     // next iteration for constant pools, but in this context, we don't want
     // it.  Check for this so it will be removed from the WaterList.
     // Also remove any entry from NewWaterList.
-    MachineBasicBlock *WaterBB = std::prev(MachineFunction::iterator(NewMBB));
+    MachineBasicBlock *WaterBB = &*--NewMBB->getIterator();
     IP = std::find(WaterList.begin(), WaterList.end(), WaterBB);
     if (IP != WaterList.end())
       NewWaterList.erase(WaterBB);
@@ -1532,7 +1531,7 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex) {
     WaterList.erase(IP);
 
   // Okay, we know we can put an island before NewMBB now, do it!
-  MF->insert(NewMBB, NewIsland);
+  MF->insert(NewMBB->getIterator(), NewIsland);
 
   // Update internal data structures to account for the newly inserted MBB.
   updateForInsertedWaterBlock(NewIsland);
@@ -1553,7 +1552,7 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex) {
 
   // Increase the size of the island block to account for the new entry.
   BBInfo[NewIsland->getNumber()].Size += Size;
-  adjustBBOffsetsAfter(std::prev(MachineFunction::iterator(NewIsland)));
+  adjustBBOffsetsAfter(&*--NewIsland->getIterator());
 
   // Finally, change the CPI in the instruction operand to be ID.
   for (unsigned i = 0, e = UserMI->getNumOperands(); i != e; ++i)
@@ -1732,7 +1731,7 @@ ARMConstantIslands::fixupConditionalBr(ImmBranch &Br) {
     MBB->back().eraseFromParent();
     // BBInfo[SplitBB].Offset is wrong temporarily, fixed below
   }
-  MachineBasicBlock *NextBB = std::next(MachineFunction::iterator(MBB));
+  MachineBasicBlock *NextBB = &*++MBB->getIterator();
 
   DEBUG(dbgs() << "  Insert B to BB#" << DestBB->getNumber()
                << " also invert condition and change dest. to BB#"
@@ -2060,7 +2059,7 @@ bool ARMConstantIslands::preserveBaseRegister(MachineInstr *JumpMI,
 /// we can switch the first register to PC and usually remove the address
 /// calculation that preceded it.
 static bool jumpTableFollowsTB(MachineInstr *JTMI, MachineInstr *CPEMI) {
-  MachineFunction::iterator MBB = JTMI->getParent();
+  MachineFunction::iterator MBB = JTMI->getParent()->getIterator();
   MachineFunction *MF = MBB->getParent();
   ++MBB;
 
@@ -2235,7 +2234,7 @@ adjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB) {
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
   SmallVector<MachineOperand, 4> CondPrior;
-  MachineFunction::iterator BBi = BB;
+  MachineFunction::iterator BBi = BB->getIterator();
   MachineFunction::iterator OldPrior = std::prev(BBi);
 
   // If the block terminator isn't analyzable, don't try to move the block
@@ -2258,7 +2257,7 @@ adjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB) {
   // Create a new MBB for the code after the jump BB.
   MachineBasicBlock *NewBB =
     MF->CreateMachineBasicBlock(JTBB->getBasicBlock());
-  MachineFunction::iterator MBBI = JTBB; ++MBBI;
+  MachineFunction::iterator MBBI = ++JTBB->getIterator();
   MF->insert(MBBI, NewBB);
 
   // Add an unconditional branch from NewBB to BB.

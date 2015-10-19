@@ -1895,7 +1895,7 @@ void ARMFrameLowering::adjustForSegmentedStacks(
   // we do not have to do the following updates for them.
   for (int Idx = 0; Idx < NbAddedBlocks; ++Idx) {
     BeforePrologueRegion.erase(AddedBlocks[Idx]);
-    MF.insert(&PrologueMBB, AddedBlocks[Idx]);
+    MF.insert(PrologueMBB.getIterator(), AddedBlocks[Idx]);
   }
 
   for (MachineBasicBlock *MBB : BeforePrologueRegion) {
