@@ -927,7 +927,7 @@ GetWatchHi (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips32.watchhi[index];
     else if (regs->style == pt_watch_style_mips64)
         return regs->mips64.watchhi[index];
-    else
+    if(log)
         log->Printf("Invalid watch register style");
     return 0;
 }
@@ -940,7 +940,7 @@ SetWatchHi (struct pt_watch_regs *regs, uint32_t index, uint16_t value)
         regs->mips32.watchhi[index] = value;
     else if (regs->style == pt_watch_style_mips64)
         regs->mips64.watchhi[index] = value;
-    else
+    if(log)
         log->Printf("Invalid watch register style");
     return;
 }
@@ -953,7 +953,7 @@ GetWatchLo (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips32.watchlo[index];
     else if (regs->style == pt_watch_style_mips64)
         return regs->mips64.watchlo[index];
-    else
+    if(log)
         log->Printf("Invalid watch register style");
     return LLDB_INVALID_ADDRESS;
 }
@@ -966,7 +966,7 @@ SetWatchLo (struct pt_watch_regs *regs, uint32_t index, uint64_t value)
         regs->mips32.watchlo[index] = (uint32_t) value;
     else if (regs->style == pt_watch_style_mips64)
         regs->mips64.watchlo[index] = value;
-    else
+    if(log)
         log->Printf("Invalid watch register style");
     return;
 }
@@ -979,7 +979,7 @@ GetIRWMask (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips32.watch_masks[index] & IRW;
     else if (regs->style == pt_watch_style_mips64)
         return regs->mips64.watch_masks[index] & IRW;
-    else
+    if(log)
         log->Printf("Invalid watch register style");
     return 0;
 }
@@ -992,7 +992,7 @@ GetRegMask (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips32.watch_masks[index] & ~IRW;
     else if (regs->style == pt_watch_style_mips64)
         return regs->mips64.watch_masks[index] & ~IRW;
-    else
+    if(log)
         log->Printf("Invalid watch register style");
     return 0;
 }
@@ -1361,7 +1361,8 @@ NativeRegisterContextLinux_mips64::NumSupportedHardwareWatchpoints ()
                 num_valid = regs.mips64.num_valid;
                 return num_valid;
             default:
-                log->Printf("NativeRegisterContextLinux_mips64::%s Error: Unrecognized watch register style", __FUNCTION__);
+                if(log)
+                    log->Printf("NativeRegisterContextLinux_mips64::%s Error: Unrecognized watch register style", __FUNCTION__);
         }
         return 0;
     }
@@ -1392,7 +1393,7 @@ NativeRegisterContextLinux_mips64::DoWriteRegisterValue(uint32_t offset,
                                                         const char* reg_name,
                                                         const RegisterValue &value)
 {
-    elf_gregset_t regs;
+    GPR_linux_mips regs;
     Error error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs);
     if (error.Success())
     {
