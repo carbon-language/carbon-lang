@@ -9,6 +9,9 @@
 # RUN: lld-link /entry:foo /out:%t.exe /subsystem:console /include:bar \
 # RUN:   /verbose /opt:noicf %t.obj > %t.log 2>&1
 # RUN: FileCheck -check-prefix=NOICF %s < %t.log
+# RUN: lld-link /entry:foo /out:%t.exe /subsystem:console /include:bar \
+# RUN:   /verbose /opt:noref,noicf %t.obj > %t.log 2>&1
+# RUN: FileCheck -check-prefix=NOICF %s < %t.log
 
 # NOICF-NOT: Removed foo
 # NOICF-NOT: Removed bar

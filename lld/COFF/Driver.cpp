@@ -361,35 +361,39 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Handle /opt
   for (auto *Arg : Args.filtered(OPT_opt)) {
-    std::string S = StringRef(Arg->getValue()).lower();
-    if (S == "noref") {
-      Config->DoGC = false;
-      Config->DoICF = false;
-      continue;
+    std::string Str = StringRef(Arg->getValue()).lower();
+    SmallVector<StringRef, 1> Vec;
+    StringRef(Str).split(Vec, ',');
+    for (StringRef S : Vec) {
+      if (S == "noref") {
+        Config->DoGC = false;
+        Config->DoICF = false;
+        continue;
+      }
+      if (S == "icf" || StringRef(S).startswith("icf=")) {
+        Config->DoICF = true;
+        continue;
+      }
+      if (S == "noicf") {
+        Config->DoICF = false;
+        continue;
+      }
+      if (StringRef(S).startswith("lldlto=")) {
+        StringRef OptLevel = StringRef(S).substr(7);
+        if (OptLevel.getAsInteger(10, Config->LTOOptLevel) ||
+            Config->LTOOptLevel > 3)
+          error("/opt:lldlto: invalid optimization level: " + OptLevel);
+        continue;
+      }
+      if (StringRef(S).startswith("lldltojobs=")) {
+        StringRef Jobs = StringRef(S).substr(11);
+        if (Jobs.getAsInteger(10, Config->LTOJobs) || Config->LTOJobs == 0)
+          error("/opt:lldltojobs: invalid job count: " + Jobs);
+        continue;
+      }
+      if (S != "ref" && S != "lbr" && S != "nolbr")
+        error(Twine("/opt: unknown option: ") + S);
     }
-    if (S == "icf" || StringRef(S).startswith("icf=")) {
-      Config->DoICF = true;
-      continue;
-    }
-    if (S == "noicf") {
-      Config->DoICF = false;
-      continue;
-    }
-    if (StringRef(S).startswith("lldlto=")) {
-      StringRef OptLevel = StringRef(S).substr(7);
-      if (OptLevel.getAsInteger(10, Config->LTOOptLevel) ||
-          Config->LTOOptLevel > 3)
-        error("/opt:lldlto: invalid optimization level: " + OptLevel);
-      continue;
-    }
-    if (StringRef(S).startswith("lldltojobs=")) {
-      StringRef Jobs = StringRef(S).substr(11);
-      if (Jobs.getAsInteger(10, Config->LTOJobs) || Config->LTOJobs == 0)
-        error("/opt:lldltojobs: invalid job count: " + Jobs);
-      continue;
-    }
-    if (S != "ref" && S != "lbr" && S != "nolbr")
-      error(Twine("/opt: unknown option: ") + S);
   }
 
   // Handle /failifmismatch
