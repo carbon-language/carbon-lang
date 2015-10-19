@@ -13,6 +13,7 @@ TOOLNAME = lldb-mi
 NO_PEDANTIC = 1
 
 LLVMLibsOptions += -ledit -llldb -llldbUtility
+LINK_COMPONENTS := support
 
 include $(LLDB_LEVEL)/Makefile
 
