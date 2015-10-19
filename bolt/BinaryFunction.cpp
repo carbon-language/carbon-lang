@@ -582,17 +582,20 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
     // Case 2: Both BBSrc and BBDst are already allocated
     if ((I = BBToClusterMap[BBSrc]) != -1 &&
         (J = BBToClusterMap[BBDst]) != -1) {
+      // Case 2a: If they are already allocated at the same cluster, ignore
+      if (I == J)
+        continue;
       auto &ClusterA = Clusters[I];
       auto &ClusterB = Clusters[J];
       if (ClusterA.back() == BBSrc && ClusterB.front() == BBDst) {
-        // Case 2a: BBSrc is at the end of a cluster and BBDst is at the start,
+        // Case 2b: BBSrc is at the end of a cluster and BBDst is at the start,
         // allowing us to merge two clusters
         for (auto BB : ClusterB)
           BBToClusterMap[BB] = I;
         ClusterA.insert(ClusterA.end(), ClusterB.begin(), ClusterB.end());
         ClusterB.clear();
       } else {
-        // Case 2b: Both BBSrc and BBDst are allocated in positions we cannot
+        // Case 2c: Both BBSrc and BBDst are allocated in positions we cannot
         // merge them, so we ignore this edge.
       }
       continue;
@@ -649,8 +652,9 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
   // Finalize layout with BBs that weren't assigned to any cluster, preserving
   // their relative order
   for (auto &BB : BasicBlocks) {
-    if (BBToClusterMap[&BB] == -1)
+    if (BBToClusterMap[&BB] == -1) {
       BasicBlocksLayout.push_back(&BB);
+    }
   }
 
   if (DumpLayout) {
