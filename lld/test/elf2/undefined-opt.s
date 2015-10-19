@@ -37,6 +37,10 @@
 # TWO-UNDEFINED: Name: bar
 # TWO-UNDEFINED: Name: zed
 # TWO-UNDEFINED: ]
+# Now the same logic but linker script is used to set undefines
+# RUN: echo "EXTERN( bar abs )" > %t.script
+# RUN: ld.lld2 -o %t3 %t.o %tar.a %t.script
+# RUN: llvm-readobj --symbols %t3 | FileCheck --check-prefix=TWO-UNDEFINED %s
 
 # Added undefined symbol may be left undefined without error, but
 # shouldn't show up in the dynamic table.

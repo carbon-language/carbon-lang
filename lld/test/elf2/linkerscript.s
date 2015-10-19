@@ -6,6 +6,10 @@
 # RUN: rm -f %t.dir/libxyz.a
 # RUN: llvm-ar rcs %t.dir/libxyz.a %t2.o
 
+# RUN: echo "EXTERN( undef undef2 )" > %t.script
+# RUN: ld.lld2 %t -o %t2 %t.script
+# RUN: llvm-readobj %t2 > /dev/null
+
 # RUN: echo "GROUP(" %t ")" > %t.script
 # RUN: ld.lld2 -o %t2 %t.script
 # RUN: llvm-readobj %t2 > /dev/null

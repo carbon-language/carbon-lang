@@ -42,6 +42,7 @@ struct Configuration {
   llvm::StringRef Sysroot;
   std::string RPath;
   std::vector<llvm::StringRef> SearchPaths;
+  std::vector<llvm::StringRef> Undefined;
   bool AllowMultipleDefinition;
   bool AsNeeded = false;
   bool Bsymbolic;

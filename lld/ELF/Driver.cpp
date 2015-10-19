@@ -155,6 +155,9 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 
+  for (auto *Arg : Args.filtered(OPT_undefined))
+    Config->Undefined.push_back(Arg->getValue());
+
   for (auto *Arg : Args.filtered(OPT_z))
     if (Arg->getValue() == StringRef("now"))
       Config->ZNow = true;
@@ -225,8 +228,8 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   for (std::unique_ptr<InputFile> &F : Files)
     Symtab.addFile(std::move(F));
 
-  for (auto *Arg : Args.filtered(OPT_undefined))
-    Symtab.addUndefinedOpt(Arg->getValue());
+  for (auto &U : Config->Undefined)
+    Symtab.addUndefinedOpt(U);
 
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";

@@ -43,6 +43,7 @@ private:
 
   void readAsNeeded();
   void readEntry();
+  void readExtern();
   void readGroup();
   void readInclude();
   void readOutput();
@@ -63,6 +64,8 @@ void LinkerScript::run() {
       continue;
     if (Tok == "ENTRY") {
       readEntry();
+    } else if (Tok == "EXTERN") {
+      readExtern();
     } else if (Tok == "GROUP" || Tok == "INPUT") {
       readGroup();
     } else if (Tok == "INCLUDE") {
@@ -179,6 +182,16 @@ void LinkerScript::readEntry() {
   if (Config->Entry.empty())
     Config->Entry = Tok;
   expect(")");
+}
+
+void LinkerScript::readExtern() {
+  expect("(");
+  for (;;) {
+    StringRef Tok = next();
+    if (Tok == ")")
+      return;
+    Config->Undefined.push_back(Tok);
+  }
 }
 
 void LinkerScript::readGroup() {
