@@ -208,7 +208,7 @@ static int createCombinedFunctionIndex(StringRef Command) {
            << ".thinlto.bc': " << EC.message() << "\n";
     return 1;
   }
-  WriteFunctionSummaryToFile(&CombinedIndex, OS);
+  WriteFunctionSummaryToFile(CombinedIndex, OS);
   OS.close();
   return 0;
 }

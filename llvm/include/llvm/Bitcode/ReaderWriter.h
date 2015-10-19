@@ -101,7 +101,7 @@ namespace llvm {
   /// Write the specified function summary index to the given raw output stream,
   /// where it will be written in a new bitcode block. This is used when
   /// writing the combined index file for ThinLTO.
-  void WriteFunctionSummaryToFile(const FunctionInfoIndex *Index,
+  void WriteFunctionSummaryToFile(const FunctionInfoIndex &Index,
                                   raw_ostream &Out);
 
   /// isBitcodeWrapper - Return true if the given bytes are the magic bytes

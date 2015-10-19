@@ -2314,7 +2314,7 @@ static void WriteValueSymbolTable(
 
 /// Emit function names and summary offsets for the combined index
 /// used by ThinLTO.
-static void WriteCombinedValueSymbolTable(const FunctionInfoIndex *Index,
+static void WriteCombinedValueSymbolTable(const FunctionInfoIndex &Index,
                                           BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 4);
 
@@ -2345,7 +2345,7 @@ static void WriteCombinedValueSymbolTable(const FunctionInfoIndex *Index,
   // FIXME: We know if the type names can use 7-bit ascii.
   SmallVector<unsigned, 64> NameVals;
 
-  for (const auto &FII : *Index) {
+  for (const auto &FII : Index) {
     for (const auto &FI : FII.getValue()) {
       NameVals.push_back(FI->bitcodeIndex());
 
@@ -2686,7 +2686,7 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
 /// Write the module path strings, currently only used when generating
 /// a combined index file.
-static void WriteModStrings(const FunctionInfoIndex *I,
+static void WriteModStrings(const FunctionInfoIndex &I,
                             BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::MODULE_STRTAB_BLOCK_ID, 3);
 
@@ -2717,7 +2717,7 @@ static void WriteModStrings(const FunctionInfoIndex *I,
   unsigned Abbrev6Bit = Stream.EmitAbbrev(Abbv);
 
   SmallVector<unsigned, 64> NameVals;
-  for (const StringMapEntry<uint64_t> &MPSE : I->modPathStringEntries()) {
+  for (const StringMapEntry<uint64_t> &MPSE : I.modPathStringEntries()) {
     StringEncoding Bits =
         getStringEncoding(MPSE.getKey().data(), MPSE.getKey().size());
     unsigned AbbrevToUse = Abbrev8Bit;
@@ -2795,7 +2795,7 @@ static void WritePerModuleFunctionSummary(
 
 /// Emit the combined function summary section into the combined index
 /// file.
-static void WriteCombinedFunctionSummary(const FunctionInfoIndex *I,
+static void WriteCombinedFunctionSummary(const FunctionInfoIndex &I,
                                          BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::FUNCTION_SUMMARY_BLOCK_ID, 3);
 
@@ -2807,12 +2807,12 @@ static void WriteCombinedFunctionSummary(const FunctionInfoIndex *I,
   unsigned FSAbbrev = Stream.EmitAbbrev(Abbv);
 
   SmallVector<unsigned, 64> NameVals;
-  for (const auto &FII : *I) {
+  for (const auto &FII : I) {
     for (auto &FI : FII.getValue()) {
       FunctionSummary *FS = FI->functionSummary();
       assert(FS);
 
-      NameVals.push_back(I->getModuleId(FS->modulePath()));
+      NameVals.push_back(I.getModuleId(FS->modulePath()));
       NameVals.push_back(FS->instCount());
 
       // Record the starting offset of this summary entry for use
@@ -3015,7 +3015,7 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out,
 // Write the specified function summary index to the given raw output stream,
 // where it will be written in a new bitcode block. This is used when
 // writing the combined index file for ThinLTO.
-void llvm::WriteFunctionSummaryToFile(const FunctionInfoIndex *Index,
+void llvm::WriteFunctionSummaryToFile(const FunctionInfoIndex &Index,
                                       raw_ostream &Out) {
   SmallVector<char, 0> Buffer;
   Buffer.reserve(256 * 1024);
