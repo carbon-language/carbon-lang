@@ -110,7 +110,7 @@ def program_exit_success( vnResult, vMsg ):
 # Throws:   None.
 #--
 def program_exit_on_failure( vnResult, vMsg ):
-    print("%s%s (%d)" % (strExitMsgError, vMsg, vnResult));
+    print(("%s%s (%d)" % (strExitMsgError, vMsg, vnResult)));
     sys.exit( vnResult );
 
 #++---------------------------------------------------------------------------
@@ -135,13 +135,13 @@ def program_exit( vnResult, vMsg ):
 # Throws:   None.
 #--
 def print_out_input_parameters( vDictArgs ):
-    for arg, val in vDictArgs.iteritems():
+    for arg, val in list(vDictArgs.items()):
         strEqs = "";
         strQ = "";
         if val.__len__() != 0:
             strEqs = " =";
             strQ = "\"";
-        print("%s%s%s %s%s%s\n" % (strParameter, arg, strEqs, strQ, val, strQ));
+        print(("%s%s%s %s%s%s\n" % (strParameter, arg, strEqs, strQ, val, strQ)));
 
 #++---------------------------------------------------------------------------
 # Details:  Validate the arguments passed to the program. This function exits
@@ -210,8 +210,8 @@ def run_post_process( vStrScriptLang, vstrFinishFileName, vDictArgs ):
         return (-9, strStatusMsg);
 
     if gbDbgFlag:
-        print(strScriptLangFound % vStrScriptLang);
-        print(strExecuteMsg % vStrScriptLang);
+        print((strScriptLangFound % vStrScriptLang));
+        print((strExecuteMsg % vStrScriptLang));
 
     # Change where Python looks for our modules
     strDir = os.path.normcase( strScriptFileDir );

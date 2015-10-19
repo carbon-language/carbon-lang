@@ -69,8 +69,8 @@ class CDebugFnVerbose:
 	def dump_text( self, vstrText ):
 		if CDebugFnVerbose.bVerboseOn == False:
 			return;
-		print("%d%s> Dp: %s" % (CDebugFnVerbose.__nLevel, self.__get_dots(),
-								vstrText));
+		print(("%d%s> Dp: %s" % (CDebugFnVerbose.__nLevel, self.__get_dots(),
+								vstrText)));
 				
 	# Private methods:
 	def __init__( self, vstrFnName ):
@@ -100,8 +100,8 @@ class CDebugFnVerbose:
 	#--
 	def __indent_back( self ):
 		if CDebugFnVerbose.bVerboseOn:
-			print("%d%s< fn: %s" % (CDebugFnVerbose.__nLevel, self.__get_dots(),
-									self.__strFnName));
+			print(("%d%s< fn: %s" % (CDebugFnVerbose.__nLevel, self.__get_dots(),
+									self.__strFnName)));
 		CDebugFnVerbose.__nLevel -= 1;
 
 	#++------------------------------------------------------------------------
@@ -116,8 +116,8 @@ class CDebugFnVerbose:
 		CDebugFnVerbose.__nLevel += 1;
 		self.__strFnName = vstrFnName;
 		if CDebugFnVerbose.bVerboseOn:
-			print("%d%s> fn: %s" % ( CDebugFnVerbose.__nLevel, self.__get_dots(), 
-									 self.__strFnName));
+			print(("%d%s> fn: %s" % ( CDebugFnVerbose.__nLevel, self.__get_dots(), 
+									 self.__strFnName)));
 
 	# Private statics attributes:
 	__nLevel = 0;	# Indentation level counter

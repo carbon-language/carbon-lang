@@ -140,13 +140,13 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 
     if not(os.path.exists( strPkgDir ) and os.path.isdir( strPkgDir )):
         if bDbg:
-            print(strMsgCreatePyPkgMkDir % strPkgDir);
+            print((strMsgCreatePyPkgMkDir % strPkgDir));
         os.makedirs( strPkgDir );
 
     for strPkgFile in vListPkgFiles:
         if os.path.exists( strPkgFile ) and os.path.isfile( strPkgFile ):
             if bDbg:
-                print(strMsgCreatePyPkgCopyPkgFile % (strPkgFile, strPkgDir));
+                print((strMsgCreatePyPkgCopyPkgFile % (strPkgFile, strPkgDir)));
             shutil.copy( strPkgFile, strPkgDir );
 
     # Create a packet init files if there wasn't one
@@ -169,7 +169,7 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
     strPyScript += "\t__import__('%s.' + x)" % strPkgName;
 
     if bDbg:
-        print(strMsgCreatePyPkgInitFile % strPkgIniFile);
+        print((strMsgCreatePyPkgInitFile % strPkgIniFile));
     file = open( strPkgIniFile, "w" );
     file.write( strPyScript );
     file.close();
@@ -203,7 +203,7 @@ def copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs, vstrFrameworkPythonDir, vstrCfg
 
     try:
         if bDbg:
-            print(strMsgCopyLLDBPy % (strSrc, strDst));
+            print((strMsgCopyLLDBPy % (strSrc, strDst)));
         shutil.copyfile( strSrc, strDst );
     except IOError as e:
         bOk = False;
@@ -225,7 +225,7 @@ def copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs, vstrFrameworkPythonDir, vstrCfg
 # Throws:   None.
 #--
 def make_symlink_windows( vstrSrcPath, vstrTargetPath ):
-    print("Making symlink from %s to %s" % (vstrSrcPath, vstrTargetPath));
+    print(("Making symlink from %s to %s" % (vstrSrcPath, vstrTargetPath)));
     dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_windows()" );
     bOk = True;
     strErrMsg = "";
@@ -313,19 +313,19 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
     elif eOSType == utilsOsType.EnumOsType.Windows:
         if os.path.isfile( strTarget ):
             if bDbg:
-                print(strMsgSymlinkExists % vstrTargetFile);
+                print((strMsgSymlinkExists % vstrTargetFile));
             return (bOk, strErrMsg);
         if bDbg:
-            print(strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget));
+            print((strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget)));
         bOk, strErrMsg = make_symlink_windows( strSrc,
                                                strTarget );
     else:
         if os.path.islink( strTarget ):
             if bDbg:
-                print(strMsgSymlinkExists % vstrTargetFile);
+                print((strMsgSymlinkExists % vstrTargetFile));
             return (bOk, strErrMsg);
         if bDbg:
-            print(strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget));
+            print((strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget)));
         bOk, strErrMsg = make_symlink_other_platforms( strSrc,
                                                        strTarget );
 
@@ -498,11 +498,11 @@ def find_or_create_python_dir( vDictArgs, vstrFrameworkPythonDir ):
 
     if os.path.isdir( vstrFrameworkPythonDir ):
         if bDbg:
-            print(strMsgFrameWkPyExists % vstrFrameworkPythonDir);
+            print((strMsgFrameWkPyExists % vstrFrameworkPythonDir));
         return (bOk, strMsg);
 
     if bDbg:
-        print(strMsgFrameWkPyMkDir % vstrFrameworkPythonDir);
+        print((strMsgFrameWkPyMkDir % vstrFrameworkPythonDir));
 
     try:
         os.makedirs( vstrFrameworkPythonDir );
@@ -601,7 +601,7 @@ def get_framework_python_dir_other_platforms( vDictArgs ):
         strWkDir += os.path.join(strWkDir, "LLDB.framework");
         if os.path.exists( strWkDir ):
             if bDbg:
-                print(strMsgFoundLldbFrameWkDir % strWkDir);
+                print((strMsgFoundLldbFrameWkDir % strWkDir));
             strWkDir = os.path.join(strWkDir, "Resources", "Python", "lldb");
             strWkDir = os.path.normcase( strWkDir );
         else:
@@ -680,16 +680,16 @@ def main( vDictArgs ):
     eOSType = utilsOsType.determine_os_type();
     if bDbg:
         pyVersion = sys.version_info;
-        print(strMsgOsVersion % utilsOsType.EnumOsType.name_of( eOSType ));
-        print(strMsgPyVersion % (pyVersion[ 0 ], pyVersion[ 1 ]));
+        print((strMsgOsVersion % utilsOsType.EnumOsType.name_of( eOSType )));
+        print((strMsgPyVersion % (pyVersion[ 0 ], pyVersion[ 1 ])));
 
     bOk, strFrameworkPythonDir, strMsg = get_framework_python_dir( vDictArgs );
 
     if bOk:
         bOk, strCfgBldDir, strMsg = get_config_build_dir( vDictArgs, strFrameworkPythonDir );
     if bOk and bDbg:
-        print(strMsgPyFileLocatedHere % strFrameworkPythonDir);
-        print(strMsgConfigBuildDir % strCfgBldDir);
+        print((strMsgPyFileLocatedHere % strFrameworkPythonDir));
+        print((strMsgConfigBuildDir % strCfgBldDir));
 
     if bOk:
         bOk, strMsg = find_or_create_python_dir( vDictArgs, strFrameworkPythonDir );

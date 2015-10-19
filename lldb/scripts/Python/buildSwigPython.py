@@ -256,7 +256,7 @@ def check_file_exists( vDictArgs, vstrFileNamePath ):
 	if os.path.exists( vstrFileNamePath ):
 		bExists = True;
 	elif bDebug:
-		print(strMsgFileNotExist % vstrFileNamePath);
+		print((strMsgFileNotExist % vstrFileNamePath));
 	
 	return bExists;
 
@@ -368,7 +368,7 @@ def get_framework_python_dir_other_platforms( vDictArgs ):
 		strWkDir += "/LLDB.framework";
 		if os.path.exists( strWkDir ):
 			if bDbg:
-				print(strMsgFoundLldbFrameWkDir % strWkDir);
+				print((strMsgFoundLldbFrameWkDir % strWkDir));
 			strWkDir += "/Resources/Python/lldb";
 			strWkDir = os.path.normcase( strWkDir );
 		else:
@@ -502,7 +502,7 @@ def do_swig_rebuild( vDictArgs, vstrSwigDepFile, vstrCfgBldDir,
 	strCmd += "-o \"%s\" " % strOp;
 	strCmd += "\"%s\" " % strIp;
 	if bDbg:
-		print(strMsgSwigExecute % strCmd);
+		print((strMsgSwigExecute % strCmd));
 
 	# Execute SWIG
 	process = subprocess.Popen( strCmd, stdout=subprocess.PIPE, 
