@@ -852,8 +852,8 @@ public:
     : ABIInfo(CGT), IsDarwinVectorABI(DarwinVectorABI),
       IsRetSmallStructInRegABI(RetSmallStructInRegABI), 
       IsWin32StructABI(Win32StructABI),
-      DefaultNumRegisterParameters(NumRegisterParameters),
-      IsSoftFloatABI(SoftFloatABI) {}
+      IsSoftFloatABI(SoftFloatABI),
+      DefaultNumRegisterParameters(NumRegisterParameters) {}
 };
 
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
