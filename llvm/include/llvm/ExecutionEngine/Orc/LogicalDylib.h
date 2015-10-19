@@ -82,22 +82,27 @@ public:
   }
 
   JITSymbol findSymbolInLogicalModule(LogicalModuleHandle LMH,
-                                      const std::string &Name) {
+                                      const std::string &Name,
+                                      bool ExportedSymbolsOnly) {
+
+    if (auto StubSym = LMH->Resources.findSymbol(Name, ExportedSymbolsOnly))
+      return StubSym;
+
     for (auto BLH : LMH->BaseLayerHandles)
-      if (auto Symbol = BaseLayer.findSymbolIn(BLH, Name, false))
+      if (auto Symbol = BaseLayer.findSymbolIn(BLH, Name, ExportedSymbolsOnly))
         return Symbol;
     return nullptr;
   }
 
   JITSymbol findSymbolInternally(LogicalModuleHandle LMH,
                                  const std::string &Name) {
-    if (auto Symbol = findSymbolInLogicalModule(LMH, Name))
+    if (auto Symbol = findSymbolInLogicalModule(LMH, Name, false))
       return Symbol;
 
     for (auto LMI = LogicalModules.begin(), LME = LogicalModules.end();
            LMI != LME; ++LMI) {
       if (LMI != LMH)
-        if (auto Symbol = findSymbolInLogicalModule(LMI, Name))
+        if (auto Symbol = findSymbolInLogicalModule(LMI, Name, false))
           return Symbol;
     }
 
@@ -105,11 +110,10 @@ public:
   }
 
   JITSymbol findSymbol(const std::string &Name, bool ExportedSymbolsOnly) {
-    for (auto &LM : LogicalModules)
-      for (auto BLH : LM.BaseLayerHandles)
-        if (auto Symbol =
-            BaseLayer.findSymbolIn(BLH, Name, ExportedSymbolsOnly))
-          return Symbol;
+    for (auto LMI = LogicalModules.begin(), LME = LogicalModules.end();
+         LMI != LME; ++LMI)
+      if (auto Sym = findSymbolInLogicalModule(LMI, Name, ExportedSymbolsOnly))
+        return Sym;
     return nullptr;
   }
 
@@ -119,7 +123,6 @@ protected:
   BaseLayerT BaseLayer;
   LogicalModuleList LogicalModules;
   LogicalDylibResources DylibResources;
-
 };
 
 } // End namespace orc.

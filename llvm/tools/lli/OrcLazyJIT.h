@@ -37,6 +37,8 @@ public:
     TransformFtor;
   typedef orc::IRTransformLayer<CompileLayerT, TransformFtor> IRDumpLayerT;
   typedef orc::CompileOnDemandLayer<IRDumpLayerT, CompileCallbackMgr> CODLayerT;
+  typedef CODLayerT::IndirectStubsManagerBuilderT
+    IndirectStubsManagerBuilder;
   typedef CODLayerT::ModuleSetHandleT ModuleHandleT;
 
   typedef std::function<
@@ -45,16 +47,16 @@ public:
                                                 LLVMContext&)>
     CallbackManagerBuilder;
 
-  static CallbackManagerBuilder createCallbackManagerBuilder(Triple T);
-  const DataLayout &DL;
-
-  OrcLazyJIT(std::unique_ptr<TargetMachine> TM, const DataLayout &DL,
-             LLVMContext &Context, CallbackManagerBuilder &BuildCallbackMgr)
-      : DL(DL), TM(std::move(TM)), ObjectLayer(),
+  OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context,
+             CallbackManagerBuilder &BuildCallbackMgr,
+             IndirectStubsManagerBuilder IndirectStubsMgrBuilder,
+             bool InlineStubs)
+      : TM(std::move(TM)), DL(this->TM->createDataLayout()), ObjectLayer(),
         CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
         IRDumpLayer(CompileLayer, createDebugDumper()),
         CCMgr(BuildCallbackMgr(IRDumpLayer, CCMgrMemMgr, Context)),
-        CODLayer(IRDumpLayer, *CCMgr, extractSingleFunction, false),
+        CODLayer(IRDumpLayer, extractSingleFunction, *CCMgr,
+                 std::move(IndirectStubsMgrBuilder), InlineStubs),
         CXXRuntimeOverrides(
             [this](const std::string &S) { return mangle(S); }) {}
 
@@ -66,10 +68,9 @@ public:
       DtorRunner.runViaLayer(CODLayer);
   }
 
-  template <typename PtrTy>
-  static PtrTy fromTargetAddress(orc::TargetAddress Addr) {
-    return reinterpret_cast<PtrTy>(static_cast<uintptr_t>(Addr));
-  }
+  static CallbackManagerBuilder createCallbackMgrBuilder(Triple T);
+
+  static IndirectStubsManagerBuilder createIndirectStubsMgrBuilder(Triple T);
 
   ModuleHandleT addModule(std::unique_ptr<Module> M) {
     // Attach a data-layout if one isn't already present.
@@ -151,6 +152,7 @@ private:
   static TransformFtor createDebugDumper();
 
   std::unique_ptr<TargetMachine> TM;
+  DataLayout DL;
   SectionMemoryManager CCMgrMemMgr;
 
   ObjLayerT ObjectLayer;

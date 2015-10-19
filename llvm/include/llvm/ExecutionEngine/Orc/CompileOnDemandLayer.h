@@ -36,42 +36,27 @@ namespace orc {
 /// added to the layer below. When a stub is called it triggers the extraction
 /// of the function body from the original module. The extracted body is then
 /// compiled and executed.
-template <typename BaseLayerT, typename CompileCallbackMgrT,
-          typename PartitioningFtor =
-            std::function<std::set<Function*>(Function&)>>
+template <typename BaseLayerT,
+          typename CompileCallbackMgrT = JITCompileCallbackManagerBase,
+          typename IndirectStubsMgrT = IndirectStubsManagerBase>
 class CompileOnDemandLayer {
 private:
 
-  // Utility class for MapValue. Only materializes declarations for global
-  // variables.
-  class GlobalDeclMaterializer : public ValueMaterializer {
+  template <typename MaterializerFtor>
+  class LambdaMaterializer : public ValueMaterializer {
   public:
-    typedef std::set<const Function*> StubSet;
-
-    GlobalDeclMaterializer(Module &Dst, const StubSet *StubsToClone = nullptr)
-        : Dst(Dst), StubsToClone(StubsToClone) {}
-
+    LambdaMaterializer(MaterializerFtor M) : M(std::move(M)) {}
     Value* materializeValueFor(Value *V) final {
-      if (auto *GV = dyn_cast<GlobalVariable>(V))
-        return cloneGlobalVariableDecl(Dst, *GV);
-      else if (auto *F = dyn_cast<Function>(V)) {
-        auto *ClonedF = cloneFunctionDecl(Dst, *F);
-        if (StubsToClone && StubsToClone->count(F)) {
-          GlobalVariable *FnBodyPtr =
-            createImplPointer(*ClonedF->getType(), *ClonedF->getParent(),
-                              ClonedF->getName() + "$orc_addr", nullptr);
-          makeStub(*ClonedF, *FnBodyPtr);
-          ClonedF->setLinkage(GlobalValue::AvailableExternallyLinkage);
-          ClonedF->addFnAttr(Attribute::AlwaysInline);
-        }
-        return ClonedF;
-      }
-      // Else.
-      return nullptr;
+      return M(V);
     }
   private:
-    Module &Dst;
-    const StubSet *StubsToClone;
+    MaterializerFtor M;
+  };
+
+  template <typename MaterializerFtor>
+  LambdaMaterializer<MaterializerFtor>
+  createLambdaMaterializer(MaterializerFtor M) {
+    return LambdaMaterializer<MaterializerFtor>(std::move(M));
   };
 
   typedef typename BaseLayerT::ModuleSetHandleT BaseLayerModuleSetHandleT;
@@ -79,6 +64,16 @@ private:
   struct LogicalModuleResources {
     std::shared_ptr<Module> SourceModule;
     std::set<const Function*> StubsToClone;
+    std::unique_ptr<IndirectStubsMgrT> StubsMgr;
+
+    JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) {
+      if (Name.endswith("$stub_ptr") && !ExportedSymbolsOnly) {
+        assert(!ExportedSymbolsOnly && "Stubs are never exported");
+        return StubsMgr->findPointer(Name.drop_back(9));
+      }
+      return StubsMgr->findStub(Name, ExportedSymbolsOnly);
+    }
+
   };
 
   struct LogicalDylibResources {
@@ -94,15 +89,25 @@ private:
   typedef std::list<CODLogicalDylib> LogicalDylibList;
 
 public:
+
   /// @brief Handle to a set of loaded modules.
   typedef typename LogicalDylibList::iterator ModuleSetHandleT;
 
+  /// @brief Module partitioning functor.
+  typedef std::function<std::set<Function*>(Function&)> PartitioningFtor;
+
+  /// @brief Builder for IndirectStubsManagers.
+  typedef std::function<std::unique_ptr<IndirectStubsMgrT>()>
+    IndirectStubsManagerBuilderT;
+
   /// @brief Construct a compile-on-demand layer instance.
-  CompileOnDemandLayer(BaseLayerT &BaseLayer, CompileCallbackMgrT &CallbackMgr,
-                       PartitioningFtor Partition,
+  CompileOnDemandLayer(BaseLayerT &BaseLayer, PartitioningFtor Partition,
+                       CompileCallbackMgrT &CallbackMgr,
+                       IndirectStubsManagerBuilderT CreateIndirectStubsManager,
                        bool CloneStubsIntoPartitions = true)
-      : BaseLayer(BaseLayer), CompileCallbackMgr(CallbackMgr),
-        Partition(Partition),
+      : BaseLayer(BaseLayer),  Partition(Partition),
+        CompileCallbackMgr(CallbackMgr),
+        CreateIndirectStubsManager(std::move(CreateIndirectStubsManager)),
         CloneStubsIntoPartitions(CloneStubsIntoPartitions) {}
 
   /// @brief Add a module to the compile-on-demand layer.
@@ -144,7 +149,11 @@ public:
   /// @param ExportedSymbolsOnly If true, search only for exported symbols.
   /// @return A handle for the given named symbol, if it exists.
   JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) {
-    return BaseLayer.findSymbol(Name, ExportedSymbolsOnly);
+    for (auto LDI = LogicalDylibs.begin(), LDE = LogicalDylibs.end();
+         LDI != LDE; ++LDI)
+      if (auto Symbol = findSymbolIn(LDI, Name, ExportedSymbolsOnly))
+        return Symbol;
+    return nullptr;
   }
 
   /// @brief Get the address of a symbol provided by this layer, or some layer
@@ -165,80 +174,127 @@ private:
     // Create a logical module handle for SrcM within the logical dylib.
     auto LMH = LD.createLogicalModule();
     auto &LMResources =  LD.getLogicalModuleResources(LMH);
+
     LMResources.SourceModule = SrcM;
 
-    // Create the GVs-and-stubs module.
-    auto GVsAndStubsM = llvm::make_unique<Module>(
-                          (SrcM->getName() + ".globals_and_stubs").str(),
-                          SrcM->getContext());
-    GVsAndStubsM->setDataLayout(SrcM->getDataLayout());
+    // Create the GlobalValues module.
+    const DataLayout &DL = SrcM->getDataLayout();
+    auto GVsM = llvm::make_unique<Module>((SrcM->getName() + ".globals").str(),
+                                          SrcM->getContext());
+    GVsM->setDataLayout(DL);
+
+    // Create function stubs.
     ValueToValueMapTy VMap;
+    {
+      typename IndirectStubsMgrT::StubInitsMap StubInits;
+      for (auto &F : *SrcM) {
+        // Skip declarations.
+        if (F.isDeclaration())
+          continue;
 
-    // Process module and create stubs.
-    // We create the stubs before copying the global variables as we know the
-    // stubs won't refer to any globals (they only refer to their implementation
-    // pointer) so there's no ordering/value-mapping issues.
-    for (auto &F : *SrcM) {
+        // Record all functions defined by this module.
+        if (CloneStubsIntoPartitions)
+          LMResources.StubsToClone.insert(&F);
 
-      // Skip declarations.
-      if (F.isDeclaration())
-        continue;
+        // Create a callback, associate it with the stub for the function,
+        // and set the compile action to compile the partition containing the
+        // function.
+        auto CCInfo = CompileCallbackMgr.getCompileCallback(SrcM->getContext());
+        StubInits[mangle(F.getName(), DL)] =
+          std::make_pair(CCInfo.getAddress(),
+                         JITSymbolBase::flagsFromGlobalValue(F));
+        CCInfo.setCompileAction(
+          [this, &LD, LMH, &F]() {
+            return this->extractAndCompile(LD, LMH, F);
+          });
+      }
 
-      // Record all functions defined by this module.
-      if (CloneStubsIntoPartitions)
-        LMResources.StubsToClone.insert(&F);
-
-      // For each definition: create a callback, a stub, and a function body
-      // pointer. Initialize the function body pointer to point at the callback,
-      // and set the callback to compile the function body.
-      auto CCInfo = CompileCallbackMgr.getCompileCallback(SrcM->getContext());
-      Function *StubF = cloneFunctionDecl(*GVsAndStubsM, F, &VMap);
-      GlobalVariable *FnBodyPtr =
-        createImplPointer(*StubF->getType(), *StubF->getParent(),
-                          StubF->getName() + "$orc_addr",
-                          createIRTypedAddress(*StubF->getFunctionType(),
-                                               CCInfo.getAddress()));
-      makeStub(*StubF, *FnBodyPtr);
-      CCInfo.setCompileAction(
-        [this, &LD, LMH, &F]() {
-          return this->extractAndCompile(LD, LMH, F);
-        });
+      LMResources.StubsMgr = CreateIndirectStubsManager();
+      auto EC = LMResources.StubsMgr->init(StubInits);
+      (void)EC;
+      // FIXME: This should be propagated back to the user. Stub creation may
+      //        fail for remote JITs.
+      assert(!EC && "Error generating stubs");
     }
 
-    // Now clone the global variable declarations.
-    GlobalDeclMaterializer GDMat(*GVsAndStubsM);
+    // Clone global variable decls.
     for (auto &GV : SrcM->globals())
-      if (!GV.isDeclaration())
-        cloneGlobalVariableDecl(*GVsAndStubsM, GV, &VMap);
+      if (!GV.isDeclaration() && !VMap.count(&GV))
+        cloneGlobalVariableDecl(*GVsM, GV, &VMap);
 
     // And the aliases.
-    for (auto &Alias : SrcM->aliases())
-      cloneGlobalAlias(*GVsAndStubsM, Alias, VMap, &GDMat);
+    for (auto &A : SrcM->aliases())
+      if (!VMap.count(&A))
+        cloneGlobalAliasDecl(*GVsM, A, VMap);
 
-    // Then clone the initializers.
+    // Now we need to clone the GV and alias initializers.
+
+    // Initializers may refer to functions declared (but not defined) in this
+    // module. Build a materializer to clone decls on demand.
+    auto Materializer = createLambdaMaterializer(
+      [&GVsM, &LMResources](Value *V) -> Value* {
+        if (auto *F = dyn_cast<Function>(V)) {
+          // Decls in the original module just get cloned.
+          if (F->isDeclaration())
+            return cloneFunctionDecl(*GVsM, *F);
+
+          // Definitions in the original module (which we have emitted stubs
+          // for at this point) get turned into a constant alias to the stub
+          // instead.
+          const DataLayout &DL = GVsM->getDataLayout();
+          std::string FName = mangle(F->getName(), DL);
+          auto StubSym = LMResources.StubsMgr->findStub(FName, false);
+          unsigned PtrBitWidth = DL.getPointerTypeSizeInBits(F->getType());
+          ConstantInt *StubAddr =
+            ConstantInt::get(GVsM->getContext(),
+                             APInt(PtrBitWidth, StubSym.getAddress()));
+          Constant *Init = ConstantExpr::getCast(Instruction::IntToPtr,
+                                                 StubAddr, F->getType());
+          return GlobalAlias::create(F->getFunctionType(),
+                                     F->getType()->getAddressSpace(),
+                                     F->getLinkage(), F->getName(),
+                                     Init, GVsM.get());
+        }
+        // else....
+        return nullptr;
+      });
+
+    // Clone the global variable initializers.
     for (auto &GV : SrcM->globals())
       if (!GV.isDeclaration())
-        moveGlobalVariableInitializer(GV, VMap, &GDMat);
+        moveGlobalVariableInitializer(GV, VMap, &Materializer);
 
-    // Build a resolver for the stubs module and add it to the base layer.
-    auto GVsAndStubsResolver = createLambdaResolver(
-        [&LD](const std::string &Name) {
+    // Clone the global alias initializers.
+    for (auto &A : SrcM->aliases()) {
+      auto *NewA = cast<GlobalAlias>(VMap[&A]);
+      assert(NewA && "Alias not cloned?");
+      Value *Init = MapValue(A.getAliasee(), VMap, RF_None, nullptr,
+                             &Materializer);
+      NewA->setAliasee(cast<Constant>(Init));
+    }
+
+    // Build a resolver for the globals module and add it to the base layer.
+    auto GVsResolver = createLambdaResolver(
+        [&LD, LMH](const std::string &Name) {
+          auto &LMResources = LD.getLogicalModuleResources(LMH);
+          if (auto Sym = LMResources.StubsMgr->findStub(Name, false))
+            return RuntimeDyld::SymbolInfo(Sym.getAddress(), Sym.getFlags());
           return LD.getDylibResources().ExternalSymbolResolver(Name);
         },
         [](const std::string &Name) {
           return RuntimeDyld::SymbolInfo(nullptr);
         });
 
-    std::vector<std::unique_ptr<Module>> GVsAndStubsMSet;
-    GVsAndStubsMSet.push_back(std::move(GVsAndStubsM));
-    auto GVsAndStubsH =
-      BaseLayer.addModuleSet(std::move(GVsAndStubsMSet),
+    std::vector<std::unique_ptr<Module>> GVsMSet;
+    GVsMSet.push_back(std::move(GVsM));
+    auto GVsH =
+      BaseLayer.addModuleSet(std::move(GVsMSet),
                              llvm::make_unique<SectionMemoryManager>(),
-                             std::move(GVsAndStubsResolver));
-    LD.addToLogicalModule(LMH, GVsAndStubsH);
+                             std::move(GVsResolver));
+    LD.addToLogicalModule(LMH, GVsH);
   }
 
-  static std::string Mangle(StringRef Name, const DataLayout &DL) {
+  static std::string mangle(StringRef Name, const DataLayout &DL) {
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
@@ -250,42 +306,35 @@ private:
   TargetAddress extractAndCompile(CODLogicalDylib &LD,
                                   LogicalModuleHandle LMH,
                                   Function &F) {
-    Module &SrcM = *LD.getLogicalModuleResources(LMH).SourceModule;
+    auto &LMResources = LD.getLogicalModuleResources(LMH);
+    Module &SrcM = *LMResources.SourceModule;
 
     // If F is a declaration we must already have compiled it.
     if (F.isDeclaration())
       return 0;
 
     // Grab the name of the function being called here.
-    std::string CalledFnName = Mangle(F.getName(), SrcM.getDataLayout());
+    std::string CalledFnName = mangle(F.getName(), SrcM.getDataLayout());
 
     auto Part = Partition(F);
     auto PartH = emitPartition(LD, LMH, Part);
 
     TargetAddress CalledAddr = 0;
     for (auto *SubF : Part) {
-      std::string FName = SubF->getName();
-      auto FnBodySym =
-        BaseLayer.findSymbolIn(PartH, Mangle(FName, SrcM.getDataLayout()),
-                               false);
-      auto FnPtrSym =
-        BaseLayer.findSymbolIn(*LD.moduleHandlesBegin(LMH),
-                               Mangle(FName + "$orc_addr",
-                                      SrcM.getDataLayout()),
-                               false);
+      std::string FnName = mangle(SubF->getName(), SrcM.getDataLayout());
+      auto FnBodySym = BaseLayer.findSymbolIn(PartH, FnName, false);
       assert(FnBodySym && "Couldn't find function body.");
-      assert(FnPtrSym && "Couldn't find function body pointer.");
 
       TargetAddress FnBodyAddr = FnBodySym.getAddress();
-      void *FnPtrAddr = reinterpret_cast<void*>(
-          static_cast<uintptr_t>(FnPtrSym.getAddress()));
 
       // If this is the function we're calling record the address so we can
       // return it from this function.
       if (SubF == &F)
         CalledAddr = FnBodyAddr;
 
-      memcpy(FnPtrAddr, &FnBodyAddr, sizeof(uintptr_t));
+      // Update the function body pointer for the stub.
+      if (auto EC = LMResources.StubsMgr->updatePointer(FnName, FnBodyAddr))
+        return 0;
     }
 
     return CalledAddr;
@@ -308,7 +357,43 @@ private:
     auto M = llvm::make_unique<Module>(NewName, SrcM.getContext());
     M->setDataLayout(SrcM.getDataLayout());
     ValueToValueMapTy VMap;
-    GlobalDeclMaterializer GDM(*M, &LMResources.StubsToClone);
+
+    auto Materializer = createLambdaMaterializer(
+      [this, &LMResources, &M, &VMap](Value *V) -> Value* {
+        if (auto *GV = dyn_cast<GlobalVariable>(V)) {
+          return cloneGlobalVariableDecl(*M, *GV);
+        } else if (auto *F = dyn_cast<Function>(V)) {
+          // Check whether we want to clone an available_externally definition.
+          if (LMResources.StubsToClone.count(F)) {
+            // Ok - we want an inlinable stub. For that to work we need a decl
+            // for the stub pointer.
+            auto *StubPtr = createImplPointer(*F->getType(), *M,
+                                              F->getName() + "$stub_ptr",
+                                              nullptr);
+            auto *ClonedF = cloneFunctionDecl(*M, *F);
+            makeStub(*ClonedF, *StubPtr);
+            ClonedF->setLinkage(GlobalValue::AvailableExternallyLinkage);
+            ClonedF->addFnAttr(Attribute::AlwaysInline);
+            return ClonedF;
+          }
+
+          return cloneFunctionDecl(*M, *F);
+        } else if (auto *A = dyn_cast<GlobalAlias>(V)) {
+          auto *PTy = cast<PointerType>(A->getType());
+          if (PTy->getElementType()->isFunctionTy())
+            return Function::Create(cast<FunctionType>(PTy->getElementType()),
+                                    GlobalValue::ExternalLinkage,
+                                    A->getName(), M.get());
+          // else
+          return new GlobalVariable(*M, PTy->getElementType(), false,
+                                    GlobalValue::ExternalLinkage,
+                                    nullptr, A->getName(), nullptr,
+                                    GlobalValue::NotThreadLocal,
+                                    PTy->getAddressSpace());
+        }
+        // Else.
+        return nullptr;
+      });
 
     // Create decls in the new module.
     for (auto *F : Part)
@@ -316,7 +401,7 @@ private:
 
     // Move the function bodies.
     for (auto *F : Part)
-      moveFunctionBody(*F, VMap, &GDM);
+      moveFunctionBody(*F, VMap, &Materializer);
 
     // Create memory manager and symbol resolver.
     auto MemMgr = llvm::make_unique<SectionMemoryManager>();
@@ -340,9 +425,11 @@ private:
   }
 
   BaseLayerT &BaseLayer;
-  CompileCallbackMgrT &CompileCallbackMgr;
-  LogicalDylibList LogicalDylibs;
   PartitioningFtor Partition;
+  CompileCallbackMgrT &CompileCallbackMgr;
+  IndirectStubsManagerBuilderT CreateIndirectStubsManager;
+
+  LogicalDylibList LogicalDylibs;
   bool CloneStubsIntoPartitions;
 };
 

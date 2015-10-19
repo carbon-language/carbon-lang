@@ -118,6 +118,9 @@ protected:
   typedef std::map<TargetAddress, CompileFtor> TrampolineMapT;
   TrampolineMapT ActiveTrampolines;
   std::vector<TargetAddress> AvailableTrampolines;
+
+private:
+  virtual void anchor();
 };
 
 /// @brief Manage compile callbacks.
@@ -222,6 +225,93 @@ private:
   TargetAddress ResolverBlockAddr;
 };
 
+/// @brief Base class for managing collections of named indirect stubs.
+class IndirectStubsManagerBase {
+public:
+
+  /// @brief Map type for initializing the manager. See init.
+  typedef StringMap<std::pair<TargetAddress, JITSymbolFlags>> StubInitsMap;
+
+  virtual ~IndirectStubsManagerBase() {}
+
+  /// @brief Create StubInits.size() stubs with the given names, target
+  ///        addresses, and flags.
+  virtual std::error_code init(const StubInitsMap &StubInits) = 0;
+
+  /// @brief Find the stub with the given name. If ExportedStubsOnly is true,
+  ///        this will only return a result if the stub's flags indicate that it
+  ///        is exported.
+  virtual JITSymbol findStub(StringRef Name, bool ExportedStubsOnly) = 0;
+
+  /// @brief Find the implementation-pointer for the stub.
+  virtual JITSymbol findPointer(StringRef Name) = 0;
+
+  /// @brief Change the value of the implementation pointer for the stub.
+  virtual std::error_code updatePointer(StringRef Name, TargetAddress NewAddr) = 0;
+private:
+  virtual void anchor();
+};
+
+/// @brief IndirectStubsManager implementation for a concrete target, e.g. OrcX86_64.
+///        (See OrcTargetSupport.h).
+template <typename TargetT>
+class IndirectStubsManager : public IndirectStubsManagerBase {
+public:
+
+  std::error_code
+  init(const StubInitsMap &StubInits) override {
+    if (auto EC = TargetT::emitIndirectStubsBlock(IndirectStubsInfo,
+                                                  StubInits.size(),
+                                                  nullptr))
+      return EC;
+
+    unsigned I = 0;
+    for (auto &Entry : StubInits) {
+      *IndirectStubsInfo.getPtr(I) =
+        reinterpret_cast<void*>(static_cast<uintptr_t>(Entry.second.first));
+      StubIndexes[Entry.first()] = std::make_pair(I++, Entry.second.second);
+    }
+
+    return std::error_code();
+  }
+
+  JITSymbol findStub(StringRef Name, bool ExportedStubsOnly) override {
+    auto I = StubIndexes.find(Name);
+    if (I == StubIndexes.end())
+      return nullptr;
+    void *StubAddr = IndirectStubsInfo.getStub(I->second.first);
+    assert(StubAddr && "Missing stub address");
+    auto StubTargetAddr =
+      static_cast<TargetAddress>(reinterpret_cast<uintptr_t>(StubAddr));
+    auto StubSymbol = JITSymbol(StubTargetAddr, I->second.second);
+    if (ExportedStubsOnly && !StubSymbol.isExported())
+      return nullptr;
+    return StubSymbol;
+  }
+
+  JITSymbol findPointer(StringRef Name) override {
+    auto I = StubIndexes.find(Name);
+    if (I == StubIndexes.end())
+      return nullptr;
+    void *PtrAddr = IndirectStubsInfo.getPtr(StubIndexes[Name].first);
+    assert(PtrAddr && "Missing pointer address");
+    auto PtrTargetAddr =
+      static_cast<TargetAddress>(reinterpret_cast<uintptr_t>(PtrAddr));
+    return JITSymbol(PtrTargetAddr, JITSymbolFlags::None);
+  }
+
+  std::error_code updatePointer(StringRef Name, TargetAddress NewAddr) override {
+    assert(StubIndexes.count(Name) && "No stub pointer for symbol");
+    *IndirectStubsInfo.getPtr(StubIndexes[Name].first) =
+      reinterpret_cast<void*>(static_cast<uintptr_t>(NewAddr));
+    return std::error_code();
+  }
+
+private:
+  typename TargetT::IndirectStubsInfo IndirectStubsInfo;
+  StringMap<std::pair<unsigned, JITSymbolFlags>> StubIndexes;
+};
+
 /// @brief Build a function pointer of FunctionType with the given constant
 ///        address.
 ///
@@ -236,7 +326,7 @@ GlobalVariable* createImplPointer(PointerType &PT, Module &M,
 
 /// @brief Turn a function declaration into a stub function that makes an
 ///        indirect call using the given function pointer.
-void makeStub(Function &F, GlobalVariable &ImplPointer);
+void makeStub(Function &F, Value &ImplPointer);
 
 /// @brief Raise linkage types and rename as necessary to ensure that all
 ///        symbols are accessible for other modules.
@@ -289,9 +379,9 @@ void moveGlobalVariableInitializer(GlobalVariable &OrigGV,
                                    ValueMaterializer *Materializer = nullptr,
                                    GlobalVariable *NewGV = nullptr);
 
-GlobalAlias* cloneGlobalAlias(Module &Dst, const GlobalAlias &OrigA,
-                              ValueToValueMapTy &VMap,
-                              ValueMaterializer *Materializer = nullptr);
+/// @brief Clone 
+GlobalAlias* cloneGlobalAliasDecl(Module &Dst, const GlobalAlias &OrigA,
+                                  ValueToValueMapTy &VMap);
 
 } // End namespace orc.
 } // End namespace llvm.
