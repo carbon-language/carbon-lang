@@ -52,7 +52,7 @@ public:
     return true;
   }
   int getFrameIndexReference(const MachineFunction &MF, int FI,
-        unsigned &FrameReg) const;
+                             unsigned &FrameReg) const override;
   bool hasFP(const MachineFunction &MF) const override;
 
   const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries)
