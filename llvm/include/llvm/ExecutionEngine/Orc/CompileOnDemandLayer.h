@@ -67,13 +67,20 @@ private:
     std::set<const Function*> StubsToClone;
     std::unique_ptr<IndirectStubsMgrT> StubsMgr;
 
-    LogicalModuleResources() {}
+    LogicalModuleResources() = default;
 
     // Explicit move constructor to make MSVC happy.
-    LogicalModuleResources(LogicalModuleResources &&Other) = default;
+    LogicalModuleResources(LogicalModuleResources &&Other)
+        : SourceModule(std::move(Other.SourceModule)),
+          StubsToClone(std::move(Other.StubsToClone)),
+          StubsMgr(std::move(Other.StubsMgr)) {}
 
     // Explicit move assignment to make MSVC happy.
-    LogicalModuleResources& operator=(LogicalModuleResources &&Other) = default;
+    LogicalModuleResources& operator=(LogicalModuleResources &&Other) {
+      SourceModule = std::move(Other.SourceModule);
+      StubsToClone = std::move(Other.StubsToClone);
+      StubsMgr = std::move(Other.StubsMgr);
+    }
 
     JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) {
       if (Name.endswith("$stub_ptr") && !ExportedSymbolsOnly) {
