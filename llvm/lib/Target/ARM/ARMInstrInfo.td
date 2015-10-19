@@ -3678,10 +3678,10 @@ def USAT16 : AI<(outs GPRnopc:$Rd),
   let Inst{3-0} = Rn;
 }
 
-def : ARMV6Pat<(int_arm_ssat GPRnopc:$a, imm:$pos),
-               (SSAT imm:$pos, GPRnopc:$a, 0)>;
-def : ARMV6Pat<(int_arm_usat GPRnopc:$a, imm:$pos),
-               (USAT imm:$pos, GPRnopc:$a, 0)>;
+def : ARMV6Pat<(int_arm_ssat GPRnopc:$a, imm1_32:$pos),
+               (SSAT imm1_32:$pos, GPRnopc:$a, 0)>;
+def : ARMV6Pat<(int_arm_usat GPRnopc:$a, imm0_31:$pos),
+               (USAT imm0_31:$pos, GPRnopc:$a, 0)>;
 
 //===----------------------------------------------------------------------===//
 //  Bitwise Instructions.
