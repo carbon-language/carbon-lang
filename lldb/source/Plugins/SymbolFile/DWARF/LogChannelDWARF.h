@@ -1,4 +1,4 @@
-//===-- LogChannelDWARF.h --------------------------------------*- C++ -*-===//
+//===-- LogChannelDWARF.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/Core/Log.h"
 
@@ -34,8 +33,7 @@ class LogChannelDWARF : public lldb_private::LogChannel
 public:
     LogChannelDWARF ();
 
-    virtual
-    ~LogChannelDWARF ();
+    ~LogChannelDWARF() override;
 
     static void
     Initialize();
@@ -52,26 +50,26 @@ public:
     static lldb_private::LogChannel *
     CreateInstance ();
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
-    virtual void
-    Disable (const char** categories, lldb_private::Stream *feedback_strm);
+    void
+    Disable(const char** categories, lldb_private::Stream *feedback_strm) override;
 
     void
     Delete ();
 
-    virtual bool
-    Enable (lldb::StreamSP &log_stream_sp,
-            uint32_t log_options,
-            lldb_private::Stream *feedback_strm,      // Feedback stream for argument errors etc
-            const char **categories);    // The categories to enable within this logging stream, if empty, enable default set
+    bool
+    Enable(lldb::StreamSP &log_stream_sp,
+           uint32_t log_options,
+           lldb_private::Stream *feedback_strm,  // Feedback stream for argument errors etc
+           const char **categories) override;    // The categories to enable within this logging stream, if empty, enable default set
 
-    virtual void
-    ListCategories (lldb_private::Stream *strm);
+    void
+    ListCategories(lldb_private::Stream *strm) override;
 
     static lldb_private::Log *
     GetLog ();
@@ -86,4 +84,4 @@ public:
     LogIf (uint32_t mask, const char *format, ...);
 };
 
-#endif  // SymbolFileDWARF_LogChannelDWARF_h_
+#endif // SymbolFileDWARF_LogChannelDWARF_h_

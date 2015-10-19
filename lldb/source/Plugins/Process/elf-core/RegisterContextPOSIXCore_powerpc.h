@@ -5,11 +5,15 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContextCorePOSIX_powerpc_H_
-#define liblldb_RegisterContextCorePOSIX_powerpc_H_
+#ifndef liblldb_RegisterContextCorePOSIX_powerpc_h_
+#define liblldb_RegisterContextCorePOSIX_powerpc_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "Plugins/Process/Utility/RegisterContextPOSIX_powerpc.h"
 
@@ -23,41 +27,43 @@ public:
                                      const lldb_private::DataExtractor &fpregset,
                                      const lldb_private::DataExtractor &vregset);
 
-    ~RegisterContextCorePOSIX_powerpc();
-
-    virtual bool
-    ReadRegister(const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
-
-    virtual bool
-    WriteRegister(const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+    ~RegisterContextCorePOSIX_powerpc() override;
 
     bool
-    ReadAllRegisterValues(lldb::DataBufferSP &data_sp);
+    ReadRegister(const lldb_private::RegisterInfo *reg_info,
+                 lldb_private::RegisterValue &value) override;
 
     bool
-    WriteAllRegisterValues(const lldb::DataBufferSP &data_sp);
+    WriteRegister(const lldb_private::RegisterInfo *reg_info,
+                  const lldb_private::RegisterValue &value) override;
 
     bool
-    HardwareSingleStep(bool enable);
+    ReadAllRegisterValues(lldb::DataBufferSP &data_sp) override;
+
+    bool
+    WriteAllRegisterValues(const lldb::DataBufferSP &data_sp) override;
+
+    bool
+    HardwareSingleStep(bool enable) override;
 
 protected:
     bool
-    ReadGPR();
+    ReadGPR() override;
 
     bool
-    ReadFPR();
+    ReadFPR() override;
 
     bool
-    ReadVMX();
+    ReadVMX() override;
 
     bool
-    WriteGPR();
+    WriteGPR() override;
 
     bool
-    WriteFPR();
+    WriteFPR() override;
 
     bool
-    WriteVMX();
+    WriteVMX() override;
 
 private:
     lldb::DataBufferSP m_gpr_buffer;
@@ -68,4 +74,4 @@ private:
     lldb_private::DataExtractor m_vec;
 };
 
-#endif // #ifndef liblldb_RegisterContextCorePOSIX_powerpc_H_
+#endif // liblldb_RegisterContextCorePOSIX_powerpc_h_

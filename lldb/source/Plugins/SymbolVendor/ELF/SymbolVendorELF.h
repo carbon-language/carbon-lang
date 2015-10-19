@@ -1,4 +1,4 @@
-//===-- SymbolVendorELF.h ------------------------------------*- C++ -*-===//
+//===-- SymbolVendorELF.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,12 +10,23 @@
 #ifndef liblldb_SymbolVendorELF_h_
 #define liblldb_SymbolVendorELF_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/SymbolVendor.h"
 
 class SymbolVendorELF : public lldb_private::SymbolVendor
 {
 public:
+    //------------------------------------------------------------------
+    // Constructors and Destructors
+    //------------------------------------------------------------------
+    SymbolVendorELF (const lldb::ModuleSP &module_sp);
+
+    ~SymbolVendorELF() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -35,24 +46,16 @@ public:
     CreateInstance (const lldb::ModuleSP &module_sp, lldb_private::Stream *feedback_strm);
 
     //------------------------------------------------------------------
-    // Constructors and Destructors
-    //------------------------------------------------------------------
-    SymbolVendorELF (const lldb::ModuleSP &module_sp);
-
-    virtual
-    ~SymbolVendorELF();
-
-    //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (SymbolVendorELF);
 };
 
-#endif  // liblldb_SymbolVendorELF_h_
+#endif // liblldb_SymbolVendorELF_h_

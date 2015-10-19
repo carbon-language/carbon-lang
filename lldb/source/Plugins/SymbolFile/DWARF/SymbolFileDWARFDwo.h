@@ -21,8 +21,7 @@ class SymbolFileDWARFDwo : public SymbolFileDWARF
 public:
     SymbolFileDWARFDwo(lldb::ObjectFileSP objfile, DWARFCompileUnit* dwarf_cu);
 
-    virtual
-    ~SymbolFileDWARFDwo() = default;
+    ~SymbolFileDWARFDwo() override = default;
     
     const lldb_private::DWARFDataExtractor&
     GetCachedSectionData(uint32_t got_flag,
@@ -67,4 +66,4 @@ protected:
     DWARFCompileUnit* m_base_dwarf_cu;
 };
 
-#endif  // SymbolFileDWARFDwo_SymbolFileDWARFDwo_h_
+#endif // SymbolFileDWARFDwo_SymbolFileDWARFDwo_h_

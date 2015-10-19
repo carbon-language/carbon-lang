@@ -1,4 +1,4 @@
-//===-- DWARFASTParserGo.h -----------------------------------*- C++ -*-===//
+//===-- DWARFASTParserGo.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,61 +10,66 @@
 #ifndef SymbolFileDWARF_DWARFASTParserGo_h_
 #define SymbolFileDWARF_DWARFASTParserGo_h_
 
-#include "DWARFDefines.h"
-#include "DWARFASTParser.h"
-#include "DWARFDIE.h"
-
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 
+// Project includes
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/GoASTContext.h"
+#include "DWARFDefines.h"
+#include "DWARFASTParser.h"
+#include "DWARFDIE.h"
 
 class DWARFDebugInfoEntry;
 class DWARFDIECollection;
 
 class DWARFASTParserGo : public DWARFASTParser
 {
-  public:
+public:
     DWARFASTParserGo(lldb_private::GoASTContext &ast);
 
-    virtual ~DWARFASTParserGo();
+    ~DWARFASTParserGo() override;
 
     lldb::TypeSP ParseTypeFromDWARF(const lldb_private::SymbolContext &sc, const DWARFDIE &die, lldb_private::Log *log,
                                     bool *type_is_new_ptr) override;
 
-    virtual lldb_private::Function *ParseFunctionFromDWARF(const lldb_private::SymbolContext &sc,
-                                                           const DWARFDIE &die) override;
+    lldb_private::Function *
+    ParseFunctionFromDWARF(const lldb_private::SymbolContext &sc,
+                           const DWARFDIE &die) override;
 
-    virtual bool CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type *type,
-                                       lldb_private::CompilerType &go_type) override;
+    bool
+    CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type *type,
+                          lldb_private::CompilerType &go_type) override;
 
-    virtual lldb_private::CompilerDeclContext
+    lldb_private::CompilerDeclContext
     GetDeclContextForUIDFromDWARF(const DWARFDIE &die) override
     {
         return lldb_private::CompilerDeclContext();
     }
 
-    virtual lldb_private::CompilerDeclContext
+    lldb_private::CompilerDeclContext
     GetDeclContextContainingUIDFromDWARF(const DWARFDIE &die) override
     {
         return lldb_private::CompilerDeclContext();
     }
 
-    virtual lldb_private::CompilerDecl
+    lldb_private::CompilerDecl
     GetDeclForUIDFromDWARF (const DWARFDIE &die) override
     {
         return lldb_private::CompilerDecl();
     }
 
-    virtual std::vector<DWARFDIE>
+    std::vector<DWARFDIE>
     GetDIEForDeclContext (lldb_private::CompilerDeclContext decl_context) override
     {
         return std::vector<DWARFDIE>();
     }
 
-  private:
+private:
     size_t ParseChildParameters(const lldb_private::SymbolContext &sc, const DWARFDIE &parent_die, bool &is_variadic,
                                 std::vector<lldb_private::CompilerType> &function_param_types);
     void ParseChildArrayInfo(const lldb_private::SymbolContext &sc, const DWARFDIE &parent_die, int64_t &first_index,

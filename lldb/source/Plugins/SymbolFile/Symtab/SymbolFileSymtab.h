@@ -10,13 +10,25 @@
 #ifndef liblldb_SymbolFileSymtab_h_
 #define liblldb_SymbolFileSymtab_h_
 
+// C Includes
+// C++ Includes
+#include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/Symtab.h"
-#include <vector>
 
 class SymbolFileSymtab : public lldb_private::SymbolFile
 {
 public:
+    //------------------------------------------------------------------
+    // Constructors and Destructors
+    //------------------------------------------------------------------
+    SymbolFileSymtab(lldb_private::ObjectFile* obj_file);
+
+    ~SymbolFileSymtab() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -35,71 +47,68 @@ public:
     static lldb_private::SymbolFile*
     CreateInstance (lldb_private::ObjectFile* obj_file);
 
-    //------------------------------------------------------------------
-    // Constructors and Destructors
-    //------------------------------------------------------------------
-    SymbolFileSymtab(lldb_private::ObjectFile* obj_file);
-
-    virtual
-    ~SymbolFileSymtab();
-
-    virtual uint32_t        CalculateAbilities ();
+    uint32_t
+    CalculateAbilities() override;
 
     //------------------------------------------------------------------
     // Compile Unit function calls
     //------------------------------------------------------------------
-    virtual uint32_t
-    GetNumCompileUnits();
+    uint32_t
+    GetNumCompileUnits() override;
 
-    virtual lldb::CompUnitSP
-    ParseCompileUnitAtIndex(uint32_t index);
+    lldb::CompUnitSP
+    ParseCompileUnitAtIndex(uint32_t index) override;
 
-    virtual lldb::LanguageType
-    ParseCompileUnitLanguage (const lldb_private::SymbolContext& sc);
+    lldb::LanguageType
+    ParseCompileUnitLanguage(const lldb_private::SymbolContext& sc) override;
 
-    virtual size_t
-    ParseCompileUnitFunctions (const lldb_private::SymbolContext& sc);
+    size_t
+    ParseCompileUnitFunctions(const lldb_private::SymbolContext& sc) override;
 
-    virtual bool
-    ParseCompileUnitLineTable (const lldb_private::SymbolContext& sc);
+    bool
+    ParseCompileUnitLineTable(const lldb_private::SymbolContext& sc) override;
 
-    virtual bool
-    ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList &support_files);
+    bool
+    ParseCompileUnitSupportFiles(const lldb_private::SymbolContext& sc,
+                                 lldb_private::FileSpecList &support_files) override;
     
-    virtual bool
-    ParseImportedModules (const lldb_private::SymbolContext &sc, std::vector<lldb_private::ConstString> &imported_modules);
+    bool
+    ParseImportedModules(const lldb_private::SymbolContext &sc,
+                         std::vector<lldb_private::ConstString> &imported_modules) override;
 
-    virtual size_t
-    ParseFunctionBlocks (const lldb_private::SymbolContext& sc);
+    size_t
+    ParseFunctionBlocks(const lldb_private::SymbolContext& sc) override;
 
-    virtual size_t
-    ParseTypes (const lldb_private::SymbolContext& sc);
+    size_t
+    ParseTypes(const lldb_private::SymbolContext& sc) override;
 
-    virtual size_t
-    ParseVariablesForContext (const lldb_private::SymbolContext& sc);
+    size_t
+    ParseVariablesForContext(const lldb_private::SymbolContext& sc) override;
 
-    virtual lldb_private::Type*
-    ResolveTypeUID(lldb::user_id_t type_uid);
+    lldb_private::Type*
+    ResolveTypeUID(lldb::user_id_t type_uid) override;
 
-    virtual bool
-    CompleteType (lldb_private::CompilerType& compiler_type);
+    bool
+    CompleteType(lldb_private::CompilerType& compiler_type) override;
 
-    virtual uint32_t
-    ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
+    uint32_t
+    ResolveSymbolContext(const lldb_private::Address& so_addr,
+                         uint32_t resolve_scope,
+                         lldb_private::SymbolContext& sc) override;
 
-    virtual size_t
-    GetTypes (lldb_private::SymbolContextScope *sc_scope,
-              uint32_t type_mask,
-              lldb_private::TypeList &type_list);
+    size_t
+    GetTypes(lldb_private::SymbolContextScope *sc_scope,
+             uint32_t type_mask,
+             lldb_private::TypeList &type_list) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     typedef std::map<lldb_private::ConstString, lldb::TypeSP> TypeMap;
@@ -115,5 +124,4 @@ private:
     DISALLOW_COPY_AND_ASSIGN (SymbolFileSymtab);
 };
 
-
-#endif  // liblldb_SymbolFileSymtab_h_
+#endif // liblldb_SymbolFileSymtab_h_

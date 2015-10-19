@@ -10,17 +10,20 @@
 #ifndef SymbolFileDWARF_DWARFASTParserClang_h_
 #define SymbolFileDWARF_DWARFASTParserClang_h_
 
-#include "DWARFDefines.h"
-#include "DWARFASTParser.h"
-
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/CharUnits.h"
 
+// Project includes
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "DWARFDefines.h"
+#include "DWARFASTParser.h"
 
 class DWARFDebugInfoEntry;
 class DWARFDIECollection;
@@ -30,7 +33,7 @@ class DWARFASTParserClang : public DWARFASTParser
 public:
     DWARFASTParserClang (lldb_private::ClangASTContext &ast);
 
-    virtual ~DWARFASTParserClang ();
+    ~DWARFASTParserClang() override;
 
     lldb::TypeSP
     ParseTypeFromDWARF (const lldb_private::SymbolContext& sc,
@@ -39,25 +42,25 @@ public:
                         bool *type_is_new_ptr) override;
 
 
-    virtual lldb_private::Function *
+    lldb_private::Function *
     ParseFunctionFromDWARF (const lldb_private::SymbolContext& sc,
                             const DWARFDIE &die) override;
 
-    virtual bool
+    bool
     CompleteTypeFromDWARF (const DWARFDIE &die,
                            lldb_private::Type *type,
                            lldb_private::CompilerType &compiler_type) override;
 
-    virtual lldb_private::CompilerDecl
+    lldb_private::CompilerDecl
     GetDeclForUIDFromDWARF (const DWARFDIE &die) override;
 
-    virtual std::vector<DWARFDIE>
+    std::vector<DWARFDIE>
     GetDIEForDeclContext (lldb_private::CompilerDeclContext decl_context) override;
 
-    virtual lldb_private::CompilerDeclContext
+    lldb_private::CompilerDeclContext
     GetDeclContextForUIDFromDWARF (const DWARFDIE &die) override;
 
-    virtual lldb_private::CompilerDeclContext
+    lldb_private::CompilerDeclContext
     GetDeclContextContainingUIDFromDWARF (const DWARFDIE &die) override;
 
     bool
@@ -67,8 +70,8 @@ public:
                      llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
-protected:
 
+protected:
     class DelayedAddObjCClassProperty;
     typedef std::vector <DelayedAddObjCClassProperty> DelayedPropertyList;
 
@@ -128,7 +131,6 @@ protected:
                           std::vector<clang::ParmVarDecl*>& function_param_decls,
                           unsigned &type_quals);
 
-
     void
     ParseChildArrayInfo (const lldb_private::SymbolContext& sc,
                          const DWARFDIE &parent_die,
@@ -136,7 +138,6 @@ protected:
                          std::vector<uint64_t>& element_orders,
                          uint32_t& byte_stride,
                          uint32_t& bit_stride);
-
 
     size_t
     ParseChildEnumerators (const lldb_private::SymbolContext& sc,
@@ -189,4 +190,4 @@ protected:
     RecordDeclToLayoutMap m_record_decl_to_layout_map;
 };
 
-#endif  // SymbolFileDWARF_DWARFASTParserClang_h_
+#endif // SymbolFileDWARF_DWARFASTParserClang_h_

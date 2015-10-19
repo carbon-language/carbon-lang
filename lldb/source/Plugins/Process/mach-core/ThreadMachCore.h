@@ -10,8 +10,12 @@
 #ifndef liblldb_ThreadMachCore_h_
 #define liblldb_ThreadMachCore_h_
 
+// C Includes
+// C++ Includes
 #include <string>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Target/Thread.h"
 
 class ProcessMachCore;
@@ -22,20 +26,19 @@ public:
     ThreadMachCore (lldb_private::Process &process,
                     lldb::tid_t tid);
 
-    virtual
-    ~ThreadMachCore ();
+    ~ThreadMachCore() override;
 
-    virtual void
-    RefreshStateAfterStop();
+    void
+    RefreshStateAfterStop() override;
 
-    virtual const char *
-    GetName ();
+    const char *
+    GetName() override;
 
-    virtual lldb::RegisterContextSP
-    GetRegisterContext ();
+    lldb::RegisterContextSP
+    GetRegisterContext() override;
 
-    virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    lldb::RegisterContextSP
+    CreateRegisterContextForFrame(lldb_private::StackFrame *frame) override;
 
     static bool
     ThreadIDIsValid (lldb::tid_t thread);
@@ -47,7 +50,7 @@ public:
     GetBasicInfoAsString ();
 
     void
-    SetName (const char *name)
+    SetName(const char *name) override
     {
         if (name && name[0])
             m_thread_name.assign (name);
@@ -68,7 +71,6 @@ public:
     }
 
 protected:
-    
     friend class ProcessMachCore;
 
     //------------------------------------------------------------------
@@ -78,11 +80,12 @@ protected:
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
     lldb::RegisterContextSP m_thread_reg_ctx_sp;
+
     //------------------------------------------------------------------
     // Protected member functions.
     //------------------------------------------------------------------
-    virtual bool
-    CalculateStopInfo ();
+    bool
+    CalculateStopInfo() override;
 };
 
-#endif  // liblldb_ThreadMachCore_h_
+#endif // liblldb_ThreadMachCore_h_

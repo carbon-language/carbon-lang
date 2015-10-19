@@ -10,6 +10,10 @@
 #ifndef liblldb_ScriptInterpreterNone_h_
 #define liblldb_ScriptInterpreterNone_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Interpreter/ScriptInterpreter.h"
 
 namespace lldb_private
@@ -20,14 +24,14 @@ class ScriptInterpreterNone : public ScriptInterpreter
   public:
     ScriptInterpreterNone(CommandInterpreter &interpreter);
 
-    ~ScriptInterpreterNone();
+    ~ScriptInterpreterNone() override;
 
     bool
     ExecuteOneLine(const char *command, CommandReturnObject *result,
-                   const ExecuteScriptOptions &options = ExecuteScriptOptions());
+                   const ExecuteScriptOptions &options = ExecuteScriptOptions()) override;
 
     void
-    ExecuteInterpreterLoop();
+    ExecuteInterpreterLoop() override;
 
     //------------------------------------------------------------------
     // Static Functions
@@ -50,13 +54,13 @@ class ScriptInterpreterNone : public ScriptInterpreter
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 };
 
 } // namespace lldb_private
 
-#endif // #ifndef liblldb_ScriptInterpreterNone_h_
+#endif // liblldb_ScriptInterpreterNone_h_

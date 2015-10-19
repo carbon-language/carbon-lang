@@ -11,12 +11,12 @@
 #define liblldb_ProcessMachCore_h_
 
 // C Includes
-
 // C++ Includes
 #include <list>
 #include <vector>
 
 // Other libraries and framework includes
+// Project includes
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Target/Process.h"
@@ -29,6 +29,12 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
+    ProcessMachCore(lldb::TargetSP target_sp, 
+                    lldb_private::Listener &listener,
+                    const lldb_private::FileSpec &core_file);
+    
+    ~ProcessMachCore() override;
+    
     static lldb::ProcessSP
     CreateInstance (lldb::TargetSP target_sp, 
                     lldb_private::Listener &listener, 
@@ -45,16 +51,6 @@ public:
     
     static const char *
     GetPluginDescriptionStatic();
-    
-    //------------------------------------------------------------------
-    // Constructors and Destructors
-    //------------------------------------------------------------------
-    ProcessMachCore(lldb::TargetSP target_sp, 
-                    lldb_private::Listener &listener,
-                    const lldb_private::FileSpec &core_file);
-    
-    virtual
-    ~ProcessMachCore();
     
     //------------------------------------------------------------------
     // Check if a given Process
@@ -117,7 +113,7 @@ protected:
     void
     Clear ( );
     
-    virtual bool
+    bool
     UpdateThreadList (lldb_private::ThreadList &old_thread_list, 
                       lldb_private::ThreadList &new_thread_list) override;
     
@@ -161,8 +157,8 @@ private:
     lldb::addr_t m_dyld_addr;
     lldb::addr_t m_mach_kernel_addr;
     lldb_private::ConstString m_dyld_plugin_name;
+
     DISALLOW_COPY_AND_ASSIGN (ProcessMachCore);
-    
 };
 
-#endif  // liblldb_ProcessMachCore_h_
+#endif // liblldb_ProcessMachCore_h_
