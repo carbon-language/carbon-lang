@@ -2831,9 +2831,9 @@ __kmp_process_place(const char **scan, kmp_affin_mask_t *osId2Mask,
         (*scan)++;      // skip '}'
     }
     else if (**scan == '!') {
+        (*scan)++;      // skip '!'
         __kmp_process_place(scan, osId2Mask, maxOsId, tempMask, setSize);
         KMP_CPU_COMPLEMENT(tempMask);
-        (*scan)++;      // skip '!'
     }
     else if ((**scan >= '0') && (**scan <= '9')) {
         next = *scan;
