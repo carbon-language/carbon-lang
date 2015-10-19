@@ -57,7 +57,7 @@ private:
   LambdaMaterializer<MaterializerFtor>
   createLambdaMaterializer(MaterializerFtor M) {
     return LambdaMaterializer<MaterializerFtor>(std::move(M));
-  };
+  }
 
   typedef typename BaseLayerT::ModuleSetHandleT BaseLayerModuleSetHandleT;
 
