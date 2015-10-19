@@ -137,11 +137,11 @@ class StdVectorSynthProvider:
 			self.count = None
 
 		def num_children(self):
-                        if self.count == None:
-                                self.count = self.num_children_impl()
-                        return self.count
+			if self.count == None:
+				self.count = self.num_children_impl()
+			return self.count
 
-                def num_children_impl(self):
+		def num_children_impl(self):
 			try:
 				start_val = self.start.GetValueAsUnsigned(0)
 				finish_val = self.finish.GetValueAsUnsigned(0)

@@ -25,7 +25,7 @@ class TimeMetrics:
 	
 	def __exit__(self, a,b,c):
 		self.exit_time = time.clock()
-		print "It took " + str(self.exit_time - self.enter_time) + " time units to run through " + self.function + self.label
+		print("It took " + str(self.exit_time - self.enter_time) + " time units to run through " + self.function + self.label)
 		return False
 
 class Counter:
