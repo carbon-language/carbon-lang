@@ -140,16 +140,14 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       OrigAddend = static_cast<const Elf_Rela &>(RI).r_addend;
 
     uintX_t Addend;
-    if (CanBePreempted) {
+    if (CanBePreempted)
       Addend = OrigAddend;
-    } else {
-      if (Body)
-        Addend = getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body)) + OrigAddend;
-      else if (IsRela)
-        Addend = getLocalRelTarget(File, static_cast<const Elf_Rela &>(RI));
-      else
-        Addend = getLocalRelTarget(File, RI);
-    }
+    else if (Body)
+      Addend = getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body)) + OrigAddend;
+    else if (IsRela)
+      Addend = getLocalRelTarget(File, static_cast<const Elf_Rela &>(RI));
+    else
+      Addend = getLocalRelTarget(File, RI);
 
     if (IsRela)
       static_cast<Elf_Rela *>(P)->r_addend = Addend;
