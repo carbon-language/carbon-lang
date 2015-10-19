@@ -845,10 +845,10 @@ extern int __kmp_place_num_threads_per_core;
 #define KMP_MIN_NTH           1
 
 #ifndef KMP_MAX_NTH
-#  ifdef PTHREAD_THREADS_MAX
+#  if defined(PTHREAD_THREADS_MAX) && PTHREAD_THREADS_MAX < INT_MAX
 #    define KMP_MAX_NTH          PTHREAD_THREADS_MAX
 #  else
-#    define KMP_MAX_NTH          (32 * 1024)
+#    define KMP_MAX_NTH          INT_MAX
 #  endif
 #endif /* KMP_MAX_NTH */
 
