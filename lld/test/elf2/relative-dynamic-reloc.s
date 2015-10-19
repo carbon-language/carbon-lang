@@ -63,3 +63,7 @@ bar:
         .quad foo
 
         .quad external
+
+// This doesn't need a relocation.
+        callq localfunc@PLT
+localfunc:
