@@ -9,7 +9,7 @@
 ; CHECK:         br label
 
 ; CHECK-LABEL: polly.stmt.while.body.740.region_exiting:
-; CHECKL         %polly.curr.3.ph = phi i32 [ undef, %polly.stmt.if.else.864 ], [ %[[R1]], %polly.stmt.if.then.862 ]
+; CHECK:         %polly.curr.3.ph = phi i32 [ undef, %polly.stmt.if.else.864 ], [ %[[R1]], %polly.stmt.if.then.862 ]
 ; CHECK:         br label
 
 
