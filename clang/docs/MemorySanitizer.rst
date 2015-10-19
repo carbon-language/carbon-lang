@@ -80,14 +80,11 @@ whether MemorySanitizer is enabled. :ref:`\_\_has\_feature
 ``__attribute__((no_sanitize_memory))``
 -----------------------------------------------
 
-Some code should not be checked by MemorySanitizer.
-One may use the function attribute
-:ref:`no_sanitize_memory <langext-memory_sanitizer>`
-to disable uninitialized checks in a particular function.
-MemorySanitizer may still instrument such functions to avoid false positives.
-This attribute may not be
-supported by other compilers, so we suggest to use it together with
-``__has_feature(memory_sanitizer)``.
+Some code should not be checked by MemorySanitizer.  One may use the function
+attribute `no_sanitize_memory` to disable uninitialized checks in a particular
+function.  MemorySanitizer may still instrument such functions to avoid false
+positives.  This attribute may not be supported by other compilers, so we
+suggest to use it together with ``__has_feature(memory_sanitizer)``.
 
 Blacklist
 ---------

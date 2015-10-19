@@ -86,25 +86,22 @@ this purpose.
 ``__attribute__((no_sanitize_thread))``
 -----------------------------------------------
 
-Some code should not be instrumented by ThreadSanitizer.
-One may use the function attribute
-:ref:`no_sanitize_thread <langext-thread_sanitizer>`
-to disable instrumentation of plain (non-atomic) loads/stores in a particular function.
-ThreadSanitizer still instruments such functions to avoid false positives and
-provide meaningful stack traces.
-This attribute may not be
-supported by other compilers, so we suggest to use it together with
-``__has_feature(thread_sanitizer)``.
+Some code should not be instrumented by ThreadSanitizer.  One may use the
+function attribute `no_sanitize_thread` to disable instrumentation of plain
+(non-atomic) loads/stores in a particular function.  ThreadSanitizer still
+instruments such functions to avoid false positives and provide meaningful stack
+traces.  This attribute may not be supported by other compilers, so we suggest
+to use it together with ``__has_feature(thread_sanitizer)``.
 
 Blacklist
 ---------
 
 ThreadSanitizer supports ``src`` and ``fun`` entity types in
-:doc:`SanitizerSpecialCaseList`, that can be used to suppress data race reports in
-the specified source files or functions. Unlike functions marked with
-:ref:`no_sanitize_thread <langext-thread_sanitizer>` attribute,
-blacklisted functions are not instrumented at all. This can lead to false positives
-due to missed synchronization via atomic operations and missed stack frames in reports.
+:doc:`SanitizerSpecialCaseList`, that can be used to suppress data race reports
+in the specified source files or functions. Unlike functions marked with
+`no_sanitize_thread` attribute, blacklisted functions are not instrumented at
+all. This can lead to false positives due to missed synchronization via atomic
+operations and missed stack frames in reports.
 
 Limitations
 -----------
