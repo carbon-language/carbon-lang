@@ -88,8 +88,8 @@ public:
   int getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm, Type *Ty);
   int getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
                     Type *Ty);
-  bool isLegalMaskedLoad(Type *DataType, int Consecutive);
-  bool isLegalMaskedStore(Type *DataType, int Consecutive);
+  bool isLegalMaskedLoad(Type *DataType);
+  bool isLegalMaskedStore(Type *DataType);
   bool areInlineCompatible(const Function *Caller,
                            const Function *Callee) const;
 

@@ -899,8 +899,8 @@ int X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
   unsigned NumElem = SrcVTy->getVectorNumElements();
   VectorType *MaskTy =
     VectorType::get(Type::getInt8Ty(getGlobalContext()), NumElem);
-  if ((Opcode == Instruction::Load && !isLegalMaskedLoad(SrcVTy, 1)) ||
-      (Opcode == Instruction::Store && !isLegalMaskedStore(SrcVTy, 1)) ||
+  if ((Opcode == Instruction::Load && !isLegalMaskedLoad(SrcVTy)) ||
+      (Opcode == Instruction::Store && !isLegalMaskedStore(SrcVTy)) ||
       !isPowerOf2_32(NumElem)) {
     // Scalarization
     int MaskSplitCost = getScalarizationOverhead(MaskTy, false, true);
@@ -1189,19 +1189,16 @@ int X86TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
   return X86TTIImpl::getIntImmCost(Imm, Ty);
 }
 
-bool X86TTIImpl::isLegalMaskedLoad(Type *DataTy, int Consecutive) {
-  int DataWidth = DataTy->getPrimitiveSizeInBits();
+bool X86TTIImpl::isLegalMaskedLoad(Type *DataTy) {
+  Type *ScalarTy = DataTy->getScalarType();
+  int DataWidth = ScalarTy->isPointerTy() ? DL.getPointerSizeInBits() :
+    ScalarTy->getPrimitiveSizeInBits();
 
-  // Todo: AVX512 allows gather/scatter, works with strided and random as well
-  if ((DataWidth < 32) || (Consecutive == 0))
-    return false;
-  if (ST->hasAVX512() || ST->hasAVX2())
-    return true;
-  return false;
+  return (DataWidth >= 32 && ST->hasAVX2());
 }
 
-bool X86TTIImpl::isLegalMaskedStore(Type *DataType, int Consecutive) {
-  return isLegalMaskedLoad(DataType, Consecutive);
+bool X86TTIImpl::isLegalMaskedStore(Type *DataType) {
+  return isLegalMaskedLoad(DataType);
 }
 
 bool X86TTIImpl::areInlineCompatible(const Function *Caller,

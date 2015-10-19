@@ -209,9 +209,9 @@ public:
     return !BaseGV && BaseOffset == 0 && (Scale == 0 || Scale == 1);
   }
 
-  bool isLegalMaskedStore(Type *DataType, int Consecutive) { return false; }
+  bool isLegalMaskedStore(Type *DataType) { return false; }
 
-  bool isLegalMaskedLoad(Type *DataType, int Consecutive) { return false; }
+  bool isLegalMaskedLoad(Type *DataType) { return false; }
 
   int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
                            bool HasBaseReg, int64_t Scale, unsigned AddrSpace) {

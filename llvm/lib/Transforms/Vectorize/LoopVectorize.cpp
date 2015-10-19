@@ -1226,12 +1226,12 @@ public:
   /// Returns true if the target machine supports masked store operation
   /// for the given \p DataType and kind of access to \p Ptr.
   bool isLegalMaskedStore(Type *DataType, Value *Ptr) {
-    return TTI->isLegalMaskedStore(DataType, isConsecutivePtr(Ptr));
+    return isConsecutivePtr(Ptr) && TTI->isLegalMaskedStore(DataType);
   }
   /// Returns true if the target machine supports masked load operation
   /// for the given \p DataType and kind of access to \p Ptr.
   bool isLegalMaskedLoad(Type *DataType, Value *Ptr) {
-    return TTI->isLegalMaskedLoad(DataType, isConsecutivePtr(Ptr));
+    return isConsecutivePtr(Ptr) && TTI->isLegalMaskedLoad(DataType);
   }
   /// Returns true if vector representation of the instruction \p I
   /// requires mask.
