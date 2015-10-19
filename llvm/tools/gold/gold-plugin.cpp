@@ -896,7 +896,7 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
   // function index/summary and emit it. We don't need to parse the modules
   // and link them in this case.
   if (options::thinlto) {
-    std::unique_ptr<FunctionInfoIndex> CombinedIndex(new FunctionInfoIndex());
+    FunctionInfoIndex CombinedIndex;
     uint64_t NextModuleId = 0;
     for (claimed_file &F : Modules) {
       ld_plugin_input_file File;
@@ -905,7 +905,7 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
 
       std::unique_ptr<FunctionInfoIndex> Index =
           getFunctionIndexForFile(Context, F, File);
-      CombinedIndex->mergeFrom(std::move(Index), ++NextModuleId);
+      CombinedIndex.mergeFrom(std::move(Index), ++NextModuleId);
     }
 
     std::error_code EC;
@@ -914,7 +914,7 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
     if (EC)
       message(LDPL_FATAL, "Unable to open %s.thinlto.bc for writing: %s",
               output_name.data(), EC.message().c_str());
-    WriteFunctionSummaryToFile(CombinedIndex.get(), OS);
+    WriteFunctionSummaryToFile(&CombinedIndex, OS);
     OS.close();
 
     cleanup_hook();
