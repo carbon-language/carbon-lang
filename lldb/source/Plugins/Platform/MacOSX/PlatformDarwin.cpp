@@ -1211,11 +1211,13 @@ static const char *const sdk_strings[] = {
 static FileSpec
 GetXcodeContentsPath ()
 {
-    const char substr[] = ".app/Contents/";
+    static FileSpec g_xcode_filespec;
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag, []() {
+
+        const char substr[] = ".app/Contents/";
     
-    // First, try based on the current shlib's location
-    
-    {
+        // First, try based on the current shlib's location
         FileSpec fspec;
         
         if (HostInfo::GetLLDBPath (lldb::ePathTypeLLDBShlibDir, fspec))
@@ -1225,42 +1227,42 @@ GetXcodeContentsPath ()
             if (pos != std::string::npos)
             {
                 path_to_shlib.erase(pos + strlen(substr));
-                return FileSpec(path_to_shlib.c_str(), false);
+                g_xcode_filespec = FileSpec(path_to_shlib.c_str(), false);
             }
         }
-    }
-    
-    // Fall back to using xcrun
-    
-    {
-        int status = 0;
-        int signo = 0;
-        std::string output;
-        const char *command = "xcrun -sdk macosx --show-sdk-path";
-        lldb_private::Error error = Host::RunShellCommand (command,   // shell command to run
-                                                           NULL,      // current working directory
-                                                           &status,   // Put the exit status of the process in here
-                                                           &signo,    // Put the signal that caused the process to exit in here
-                                                           &output,   // Get the output from the command and place it in this string
-                                                           3);        // Timeout in seconds to wait for shell program to finish
-        if (status == 0 && !output.empty())
+
+        // Fall back to using xcrun
+        if (!g_xcode_filespec)
         {
-            size_t first_non_newline = output.find_last_not_of("\r\n");
-            if (first_non_newline != std::string::npos)
+            int status = 0;
+            int signo = 0;
+            std::string output;
+            const char *command = "xcrun -sdk macosx --show-sdk-path";
+            lldb_private::Error error = Host::RunShellCommand (command,   // shell command to run
+                                                               NULL,      // current working directory
+                                                               &status,   // Put the exit status of the process in here
+                                                               &signo,    // Put the signal that caused the process to exit in here
+                                                               &output,   // Get the output from the command and place it in this string
+                                                               3);        // Timeout in seconds to wait for shell program to finish
+            if (status == 0 && !output.empty())
             {
-                output.erase(first_non_newline+1);
-            }
-            
-            size_t pos = output.rfind(substr);
-            if (pos != std::string::npos)
-            {
-                output.erase(pos + strlen(substr));
-                return FileSpec(output.c_str(), false);
+                size_t first_non_newline = output.find_last_not_of("\r\n");
+                if (first_non_newline != std::string::npos)
+                {
+                    output.erase(first_non_newline+1);
+                }
+                
+                size_t pos = output.rfind(substr);
+                if (pos != std::string::npos)
+                {
+                    output.erase(pos + strlen(substr));
+                    g_xcode_filespec = FileSpec(output.c_str(), false);
+                }
             }
         }
-    }
+    });
     
-    return FileSpec();
+    return g_xcode_filespec;
 }
 
 bool
@@ -1543,3 +1545,59 @@ PlatformDarwin::GetFullNameForDylib (ConstString basename)
     return ConstString(stream.GetData());
 }
 
+
+lldb_private::FileSpec
+PlatformDarwin::LocateExecutable (const char *basename)
+{
+    // A collection of SBFileSpec whose SBFileSpec.m_directory members are filled in with
+    // any executable directories that should be searched.
+    static std::vector<FileSpec> g_executable_dirs;
+
+    // Find the global list of directories that we will search for
+    // executables once so we don't keep doing the work over and over.
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
+
+        // When locating executables, trust the DEVELOPER_DIR first if it is set
+        FileSpec xcode_contents_dir;
+        const char *developer_dir_env_var = getenv("DEVELOPER_DIR");
+        if (developer_dir_env_var && developer_dir_env_var[0])
+        {
+            xcode_contents_dir = FileSpec(developer_dir_env_var, true);
+            if (xcode_contents_dir.Exists())
+                xcode_contents_dir.RemoveLastPathComponent();
+        }
+        if (!xcode_contents_dir)
+        {
+            xcode_contents_dir = GetXcodeContentsPath();
+            if (!xcode_contents_dir.Exists())
+                xcode_contents_dir.Clear();
+        }
+        if (xcode_contents_dir)
+        {
+            FileSpec xcode_lldb_resources = xcode_contents_dir;
+            xcode_lldb_resources.AppendPathComponent("SharedFrameworks");
+            xcode_lldb_resources.AppendPathComponent("LLDB.framework");
+            xcode_lldb_resources.AppendPathComponent("Resources");
+            if (xcode_lldb_resources.Exists())
+            {
+                FileSpec dir;
+                dir.GetDirectory().SetCString(xcode_lldb_resources.GetPath().c_str());
+                g_executable_dirs.push_back(dir);
+            }
+        }
+    });
+
+    // Now search the global list of executable directories for the executable we
+    // are looking for
+    for (const auto &executable_dir : g_executable_dirs)
+    {
+        FileSpec executable_file;
+        executable_file.GetDirectory() = executable_dir.GetDirectory();
+        executable_file.GetFilename().SetCString(basename);
+        if (executable_file.Exists())
+            return executable_file;
+    }
+
+    return FileSpec();
+}

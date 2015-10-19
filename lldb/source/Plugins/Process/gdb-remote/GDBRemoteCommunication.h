@@ -169,6 +169,7 @@ public:
     Error
     StartDebugserverProcess (const char *hostname,
                              uint16_t in_port, // If set to zero, then out_port will contain the bound port on exit
+                             Platform *platform, // If non NULL, then check with the platform for the GDB server binary if it can't be located
                              ProcessLaunchInfo &launch_info,
                              uint16_t &out_port);
 

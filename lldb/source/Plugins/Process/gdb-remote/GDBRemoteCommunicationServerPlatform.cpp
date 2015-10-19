@@ -138,11 +138,11 @@ GDBRemoteCommunicationServerPlatform::Handle_qLaunchGDBServer (StringExtractorGD
     bool ok = UriParser::Parse(GetConnection()->GetURI().c_str(), platform_scheme, platform_ip, platform_port, platform_path);
     UNUSED_IF_ASSERT_DISABLED(ok);
     assert(ok);
-    Error error = StartDebugserverProcess (
-                                     platform_ip.c_str(),
-                                     port,
-                                     debugserver_launch_info,
-                                     port);
+    Error error = StartDebugserverProcess (platform_ip.c_str(),
+                                           port,
+                                           nullptr,
+                                           debugserver_launch_info,
+                                           port);
 
     lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
 

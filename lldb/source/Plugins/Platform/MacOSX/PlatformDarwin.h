@@ -88,6 +88,9 @@ public:
     lldb_private::ConstString
     GetFullNameForDylib (lldb_private::ConstString basename) override;
 
+    lldb_private::FileSpec
+    LocateExecutable (const char *basename) override;
+
 protected:
 
     void

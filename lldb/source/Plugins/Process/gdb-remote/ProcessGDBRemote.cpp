@@ -3568,6 +3568,7 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
 
         error = m_gdb_comm.StartDebugserverProcess (hostname,
                                                     port,
+                                                    GetTarget().GetPlatform().get(),
                                                     debugserver_launch_info,
                                                     port);
 

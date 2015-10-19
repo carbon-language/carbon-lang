@@ -30,6 +30,7 @@
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "llvm/ADT/SmallString.h"
 
@@ -1113,6 +1114,7 @@ GDBRemoteCommunication::ListenThread (lldb::thread_arg_t arg)
 Error
 GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                                                  uint16_t in_port,
+                                                 Platform *platform,
                                                  ProcessLaunchInfo &launch_info,
                                                  uint16_t &out_port)
 {
@@ -1157,11 +1159,20 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             }
             else
             {
-                if (log)
-                    log->Printf ("GDBRemoteCommunication::%s() could not find gdb-remote stub exe '%s'", __FUNCTION__, debugserver_file_spec.GetPath ().c_str ());
-
+                debugserver_file_spec = platform->LocateExecutable(DEBUGSERVER_BASENAME);
+                if (debugserver_file_spec)
+                {
+                    // Platform::LocateExecutable() wouldn't return a path if it doesn't exist
+                    debugserver_exists = true;
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("GDBRemoteCommunication::%s() could not find gdb-remote stub exe '%s'", __FUNCTION__, debugserver_file_spec.GetPath ().c_str ());
+                }
+                // Don't cache the platform specific GDB server binary as it could change
+                // from platform to platform
                 g_debugserver_file_spec.Clear();
-                debugserver_file_spec.Clear();
             }
         }
     }
