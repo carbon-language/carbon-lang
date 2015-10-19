@@ -72,7 +72,6 @@ public:
     case COFF::IMAGE_REL_AMD64_REL32_3:
     case COFF::IMAGE_REL_AMD64_REL32_4:
     case COFF::IMAGE_REL_AMD64_REL32_5: {
-      uint32_t *TargetAddress = (uint32_t *)Target;
       uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
       // Delta is the distance from the start of the reloc to the end of the
       // instruction with the reloc.
@@ -81,7 +80,7 @@ public:
       uint64_t Result = Value + RE.Addend;
       assert(((int64_t)Result <= INT32_MAX) && "Relocation overflow");
       assert(((int64_t)Result >= INT32_MIN) && "Relocation underflow");
-      *TargetAddress = Result;
+      writeBytesUnaligned(Result, Target, 4);
       break;
     }
 
@@ -92,14 +91,12 @@ public:
       // within a 32 bit offset from the base.
       //
       // For now we just set these to zero.
-      uint32_t *TargetAddress = (uint32_t *)Target;
-      *TargetAddress = 0;
+      writeBytesUnaligned(0, Target, 4);
       break;
     }
 
     case COFF::IMAGE_REL_AMD64_ADDR64: {
-      uint64_t *TargetAddress = (uint64_t *)Target;
-      *TargetAddress = Value + RE.Addend;
+      writeBytesUnaligned(0, Target, Value + RE.Addend);
       break;
     }
 
@@ -139,14 +136,14 @@ public:
     case COFF::IMAGE_REL_AMD64_REL32_4:
     case COFF::IMAGE_REL_AMD64_REL32_5:
     case COFF::IMAGE_REL_AMD64_ADDR32NB: {
-      uint32_t *Displacement = (uint32_t *)ObjTarget;
-      Addend = *Displacement;
+      uint8_t *Displacement = (uint8_t *)ObjTarget;
+      Addend = readBytesUnaligned(Displacement, 4);
       break;
     }
 
     case COFF::IMAGE_REL_AMD64_ADDR64: {
-      uint64_t *Displacement = (uint64_t *)ObjTarget;
-      Addend = *Displacement;
+      uint8_t *Displacement = (uint8_t *)ObjTarget;
+      Addend = readBytesUnaligned(Displacement, 8);
       break;
     }
 
