@@ -110,10 +110,10 @@ public:
 
   // MSC-DAG: @"\01?StaticField@ExportMembers@@2HA"               = dllexport global i32 1, align 4
   // MSC-DAG: @"\01?StaticConstField@ExportMembers@@2HB"          = dllexport constant i32 1, align 4
-  // MSC-DAG: @"\01?StaticConstFieldEqualInit@ExportMembers@@2HB" = dllexport constant i32 1, comdat, align 4
-  // MSC-DAG: @"\01?StaticConstFieldBraceInit@ExportMembers@@2HB" = dllexport constant i32 1, comdat, align 4
+  // MSC-DAG: @"\01?StaticConstFieldEqualInit@ExportMembers@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
+  // MSC-DAG: @"\01?StaticConstFieldBraceInit@ExportMembers@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
   // MSC-DAG: @"\01?StaticConstFieldRefNotDef@ExportMembers@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
-  // MSC-DAG: @"\01?ConstexprField@ExportMembers@@2HB"            = dllexport constant i32 1, comdat, align 4
+  // MSC-DAG: @"\01?ConstexprField@ExportMembers@@2HB"            = weak_odr dllexport constant i32 1, comdat, align 4
   // GNU-DAG: @_ZN13ExportMembers11StaticFieldE                   = dllexport global i32 1, align 4
   // GNU-DAG: @_ZN13ExportMembers16StaticConstFieldE              = dllexport constant i32 1, align 4
   // GNU-DAG: @_ZN13ExportMembers25StaticConstFieldEqualInitE     = dllexport constant i32 1, align 4
@@ -236,10 +236,10 @@ public:
 
   // MSC-DAG: @"\01?StaticField@Nested@ExportMembers@@2HA"               = dllexport global i32 1, align 4
   // MSC-DAG: @"\01?StaticConstField@Nested@ExportMembers@@2HB"          = dllexport constant i32 1, align 4
-  // MSC-DAG: @"\01?StaticConstFieldEqualInit@Nested@ExportMembers@@2HB" = dllexport constant i32 1, comdat, align 4
-  // MSC-DAG: @"\01?StaticConstFieldBraceInit@Nested@ExportMembers@@2HB" = dllexport constant i32 1, comdat, align 4
+  // MSC-DAG: @"\01?StaticConstFieldEqualInit@Nested@ExportMembers@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
+  // MSC-DAG: @"\01?StaticConstFieldBraceInit@Nested@ExportMembers@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
   // MSC-DAG: @"\01?StaticConstFieldRefNotDef@Nested@ExportMembers@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
-  // MSC-DAG: @"\01?ConstexprField@Nested@ExportMembers@@2HB"            = dllexport constant i32 1, comdat, align 4
+  // MSC-DAG: @"\01?ConstexprField@Nested@ExportMembers@@2HB"            = weak_odr dllexport constant i32 1, comdat, align 4
   // GNU-DAG: @_ZN13ExportMembers6Nested11StaticFieldE                   = dllexport global i32 1, align 4
   // GNU-DAG: @_ZN13ExportMembers6Nested16StaticConstFieldE              = dllexport constant i32 1, align 4
   // GNU-DAG: @_ZN13ExportMembers6Nested25StaticConstFieldEqualInitE     = dllexport constant i32 1, align 4
