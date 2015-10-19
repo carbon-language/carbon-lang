@@ -2,6 +2,12 @@
 
   .set noat
   addu.qb $3, $4, $5           # CHECK: addu.qb $3, $4, $5      # encoding: [0x00,0xa4,0x18,0xcd]
+  addu_s.qb $3, $4, $5         # CHECK: addu_s.qb $3, $4, $5    # encoding: [0x00,0xa4,0x1c,0xcd]
+  addsc $3, $4, $5             # CHECK: addsc $3, $4, $5        # encoding: [0x00,0xa4,0x1b,0x85]
+  addwc $3, $4, $5             # CHECK: addwc $3, $4, $5        # encoding: [0x00,0xa4,0x1b,0xc5]
+  addq.ph $3, $4, $5           # CHECK: addq.ph $3, $4, $5      # encoding: [0x00,0xa4,0x18,0x0d]
+  addq_s.ph $3, $4, $5         # CHECK: addq_s.ph $3, $4, $5    # encoding: [0x00,0xa4,0x1c,0x0d]
+  addq_s.w $3, $4, $5          # CHECK: addq_s.w $3, $4, $5     # encoding: [0x00,0xa4,0x1b,0x05]
   dpaq_s.w.ph $ac1, $5, $3     # CHECK: dpaq_s.w.ph $ac1, $5, $3   # encoding: [0x00,0x65,0x42,0xbc]
   dpaq_sa.l.w $ac2, $4, $3     # CHECK: dpaq_sa.l.w $ac2, $4, $3   # encoding: [0x00,0x64,0x92,0xbc]
   dpau.h.qbl $ac1, $3, $4      # CHECK: dpau.h.qbl $ac1, $3, $4    # encoding: [0x00,0x83,0x60,0xbc]

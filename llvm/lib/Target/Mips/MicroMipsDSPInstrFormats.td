@@ -64,3 +64,16 @@ class POOL32A_2RAC_FMT<string opstr, bits<8> op> : MMDSPInst<opstr> {
   let Inst{13-6}  = op;
   let Inst{5-0}   = 0b111100;
 }
+
+class POOL32A_3RB0_FMT<string opstr, bits<10> op> : MMDSPInst<opstr> {
+  bits<5> rd;
+  bits<5> rs;
+  bits<5> rt;
+
+  let Inst{31-26} = 0b000000;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
+  let Inst{15-11} = rd;
+  let Inst{10}    = 0b0;
+  let Inst{9-0}   = op;
+}
