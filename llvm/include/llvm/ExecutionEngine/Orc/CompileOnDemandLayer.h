@@ -232,7 +232,7 @@ private:
     // Initializers may refer to functions declared (but not defined) in this
     // module. Build a materializer to clone decls on demand.
     auto Materializer = createLambdaMaterializer(
-      [&GVsM, &LMResources](Value *V) -> Value* {
+      [this, &GVsM, &LMResources](Value *V) -> Value* {
         if (auto *F = dyn_cast<Function>(V)) {
           // Decls in the original module just get cloned.
           if (F->isDeclaration())
