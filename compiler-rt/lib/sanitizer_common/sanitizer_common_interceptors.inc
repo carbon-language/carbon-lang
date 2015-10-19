@@ -5219,6 +5219,23 @@ INTERCEPTOR(int, pthread_setcanceltype, int type, int *oldtype) {
 #define INIT_PTHREAD_SETCANCEL
 #endif
 
+#if SANITIZER_INTERCEPT_MINCORE
+INTERCEPTOR(int, mincore, void *addr, uptr length, unsigned char *vec) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, mincore, addr, length, vec);
+  int res = REAL(mincore)(addr, length, vec);
+  if (res == 0) {
+    uptr page_size = GetPageSizeCached();
+    uptr vec_size = ((length + page_size - 1) & (~(page_size - 1))) / page_size;
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, vec, vec_size);
+  }
+  return res;
+}
+#define INIT_MINCORE COMMON_INTERCEPT_FUNCTION(mincore);
+#else
+#define INIT_MINCORE
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -5391,4 +5408,5 @@ static void InitializeCommonInterceptors() {
   INIT_FOPENCOOKIE;
   INIT_SEM;
   INIT_PTHREAD_SETCANCEL;
+  INIT_MINCORE;
 }
