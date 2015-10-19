@@ -5194,6 +5194,31 @@ INTERCEPTOR(int, sem_getvalue, __sanitizer_sem_t *s, int *sval) {
 #define INIT_SEM
 #endif // SANITIZER_INTERCEPT_SEM
 
+#if SANITIZER_INTERCEPT_PTHREAD_SETCANCEL
+INTERCEPTOR(int, pthread_setcancelstate, int state, int *oldstate) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_setcancelstate, state, oldstate);
+  int res = REAL(pthread_setcancelstate)(state, oldstate);
+  if (res == 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, oldstate, sizeof(*oldstate));
+  return res;
+}
+
+INTERCEPTOR(int, pthread_setcanceltype, int type, int *oldtype) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_setcanceltype, type, oldtype);
+  int res = REAL(pthread_setcanceltype)(type, oldtype);
+  if (res == 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, oldtype, sizeof(*oldtype));
+  return res;
+}
+#define INIT_PTHREAD_SETCANCEL                                                 \
+  COMMON_INTERCEPT_FUNCTION(pthread_setcancelstate);                           \
+  COMMON_INTERCEPT_FUNCTION(pthread_setcanceltype);
+#else
+#define INIT_PTHREAD_SETCANCEL
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -5365,4 +5390,5 @@ static void InitializeCommonInterceptors() {
   INIT_MLOCKX;
   INIT_FOPENCOOKIE;
   INIT_SEM;
+  INIT_PTHREAD_SETCANCEL;
 }
