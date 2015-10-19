@@ -396,22 +396,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Map[{Out<ELFT>::Bss->getName(), Out<ELFT>::Bss->getType(),
        Out<ELFT>::Bss->getFlags()}] = Out<ELFT>::Bss;
 
-  // Declare linker generated symbols.
-  // This must be done before the relocation scan to make sure we can correctly
-  // decide if a dynamic relocation is needed or not.
-  // FIXME: Make this more declarative.
-  for (StringRef Name :
-       {"__preinit_array_start", "__preinit_array_end", "__init_array_start",
-        "__init_array_end", "__fini_array_start", "__fini_array_end"})
-    Symtab.addIgnoredSym(Name);
-
-  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
-  // static linking the linker is required to optimize away any references to
-  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
-  // to avoid the undefined symbol error.
-  if (!isOutputDynamic())
-    Symtab.addIgnoredSym("__tls_get_addr");
-
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
@@ -430,12 +414,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
         RegularSections.push_back(Sec);
       }
       Sec->addSection(C);
-      scanRelocs(*C);
     }
   }
-
-  for (OutputSectionBase<ELFT> *Sec : RegularSections)
-    addStartStopSymbols(Sec);
 
   Out<ELFT>::Dynamic->PreInitArraySec =
       Map.lookup({".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC});
@@ -449,6 +429,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (OS) {
       Symtab.addSyntheticSym(Start, *OS, 0);
       Symtab.addSyntheticSym(End, *OS, OS->getSize());
+    } else {
+      Symtab.addIgnoredSym(Start);
+      Symtab.addIgnoredSym(End);
     }
   };
 
@@ -458,6 +441,23 @@ template <class ELFT> void Writer<ELFT>::createSections() {
               Out<ELFT>::Dynamic->InitArraySec);
   AddStartEnd("__fini_array_start", "__fini_array_end",
               Out<ELFT>::Dynamic->FiniArraySec);
+
+  for (OutputSectionBase<ELFT> *Sec : RegularSections)
+    addStartStopSymbols(Sec);
+
+  // __tls_get_addr is defined by the dynamic linker for dynamic ELFs. For
+  // static linking the linker is required to optimize away any references to
+  // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
+  // to avoid the undefined symbol error.
+  if (!isOutputDynamic())
+    Symtab.addIgnoredSym("__tls_get_addr");
+
+  // Scan relocations. This must be done after every symbol is declared so that
+  // we can correctly decide if a dynamic relocation is needed.
+  for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles())
+    for (InputSection<ELFT> *S : F->getSections())
+      if (S && S != &InputSection<ELFT>::Discarded)
+        scanRelocs(*S);
 
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
