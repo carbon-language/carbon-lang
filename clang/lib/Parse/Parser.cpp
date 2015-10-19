@@ -282,6 +282,7 @@ bool Parser::SkipUntil(ArrayRef<tok::TokenKind> Toks, SkipUntilFlags Flags) {
       // Ran out of tokens.
       return false;
 
+    case tok::annot_pragma_openmp:
     case tok::annot_pragma_openmp_end:
       // Stop before an OpenMP pragma boundary.
     case tok::annot_module_begin:
