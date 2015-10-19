@@ -217,14 +217,15 @@ template <class ELFT> class DefinedRegular : public Defined<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  DefinedRegular(StringRef N, const Elf_Sym &Sym, InputSection<ELFT> &Section)
+  DefinedRegular(StringRef N, const Elf_Sym &Sym,
+                 InputSectionBase<ELFT> &Section)
       : Defined<ELFT>(Base::DefinedRegularKind, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedRegularKind;
   }
 
-  const InputSection<ELFT> &Section;
+  const InputSectionBase<ELFT> &Section;
 };
 
 template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {

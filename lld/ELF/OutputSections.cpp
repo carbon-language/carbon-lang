@@ -408,8 +408,8 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     return cast<DefinedAbsolute<ELFT>>(S).Sym.st_value;
   case SymbolBody::DefinedRegularKind: {
     const auto &DR = cast<DefinedRegular<ELFT>>(S);
-    const InputSection<ELFT> &SC = DR.Section;
-    return SC.OutSec->getVA() + SC.OutSecOff + DR.Sym.st_value;
+    const InputSectionBase<ELFT> &SC = DR.Section;
+    return SC.OutSec->getVA() + SC.getOffset(DR.Sym);
   }
   case SymbolBody::DefinedCommonKind:
     return Out<ELFT>::Bss->getVA() + cast<DefinedCommon<ELFT>>(S).OffsetInBSS;
@@ -449,11 +449,22 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
   // the group are not allowed. Unfortunately .eh_frame breaks that rule
   // and must be treated specially. For now we just replace the symbol with
   // 0.
-  InputSection<ELFT> *Section = File.getSection(*Sym);
+  InputSectionBase<ELFT> *Section = File.getSection(*Sym);
   if (Section == &InputSection<ELFT>::Discarded)
     return Addend;
 
-  return Section->OutSec->getVA() + Section->OutSecOff + Sym->st_value + Addend;
+  uintX_t VA = Section->OutSec->getVA();
+  if (isa<InputSection<ELFT>>(Section))
+    return VA + Section->getOffset(*Sym) + Addend;
+
+  uintX_t Offset = Sym->st_value;
+  if (Sym->getType() == STT_SECTION) {
+    Offset += Addend;
+    Addend = Offset % Section->getSectionHdr()->sh_entsize;
+    Offset -= Addend;
+  }
+  return VA + cast<MergeInputSection<ELFT>>(Section)->getOffset(Offset) +
+         Addend;
 }
 
 // Returns true if a symbol can be replaced at load-time by a symbol
@@ -497,6 +508,44 @@ bool lld::elf2::canBePreempted(const SymbolBody *Body, bool NeedsGot) {
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
   for (InputSection<ELFT> *C : Sections)
     C->writeTo(Buf);
+}
+
+template <class ELFT>
+MergeOutputSection<ELFT>::MergeOutputSection(StringRef Name, uint32_t sh_type,
+                                             uintX_t sh_flags)
+    : OutputSectionBase<ELFT>(Name, sh_type, sh_flags) {}
+
+template <class ELFT> void MergeOutputSection<ELFT>::writeTo(uint8_t *Buf) {
+  for (const std::pair<ArrayRef<uint8_t>, uintX_t> &P : Offsets) {
+    ArrayRef<uint8_t> Data = P.first;
+    memcpy(Buf, Data.data(), Data.size());
+    Buf += Data.size();
+  }
+}
+
+template <class ELFT>
+void MergeOutputSection<ELFT>::addSection(MergeInputSection<ELFT> *S) {
+  S->OutSec = this;
+  uint32_t Align = S->getAlign();
+  if (Align > this->Header.sh_addralign)
+    this->Header.sh_addralign = Align;
+
+  uintX_t Off = this->Header.sh_size;
+  ArrayRef<uint8_t> Data = S->getSectionData();
+  uintX_t EntSize = S->getSectionHdr()->sh_entsize;
+  if (Data.size() % EntSize)
+    error("SHF_MERGE section size must be a multiple of sh_entsize");
+  for (unsigned I = 0, N = Data.size(); I != N; I += EntSize) {
+    auto P = Offsets.insert(std::make_pair(Data.slice(I, EntSize), Off));
+    if (P.second)
+      Off += EntSize;
+  }
+  this->Header.sh_size = Off;
+}
+
+template <class ELFT>
+unsigned MergeOutputSection<ELFT>::getOffset(ArrayRef<uint8_t> Val) {
+  return Offsets.find(Val)->second;
 }
 
 template <class ELFT>
@@ -611,13 +660,15 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
       ESym->st_name = StrTabSec.getFileOff(SymName);
       ESym->st_size = Sym.st_size;
       ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
-      uintX_t VA = Sym.st_value;
+      uintX_t VA = 0;
       if (Sym.st_shndx == SHN_ABS) {
         ESym->st_shndx = SHN_ABS;
+        VA = Sym.st_value;
       } else {
-        const InputSection<ELFT> *Sec = File->getSection(Sym);
-        ESym->st_shndx = Sec->OutSec->SectionIndex;
-        VA += Sec->OutSec->getVA() + Sec->OutSecOff;
+        const InputSectionBase<ELFT> *Section = File->getSection(Sym);
+        const OutputSectionBase<ELFT> *OutSec = Section->OutSec;
+        ESym->st_shndx = OutSec->SectionIndex;
+        VA += OutSec->getVA() + Section->getOffset(Sym);
       }
       ESym->st_value = VA;
     }
@@ -644,7 +695,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     ESym->st_name = StrTabSec.getFileOff(Name);
 
     const OutputSectionBase<ELFT> *OutSec = nullptr;
-    const InputSection<ELFT> *Section = nullptr;
+    const InputSectionBase<ELFT> *Section = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::DefinedSyntheticKind:
@@ -740,6 +791,11 @@ template class OutputSection<ELF32BE>;
 template class OutputSection<ELF64LE>;
 template class OutputSection<ELF64BE>;
 
+template class MergeOutputSection<ELF32LE>;
+template class MergeOutputSection<ELF32BE>;
+template class MergeOutputSection<ELF64LE>;
+template class MergeOutputSection<ELF64BE>;
+
 template class StringTableSection<ELF32LE>;
 template class StringTableSection<ELF32BE>;
 template class StringTableSection<ELF64LE>;
@@ -758,18 +814,28 @@ template ELFFile<ELF64BE>::uintX_t getSymVA<ELF64BE>(const SymbolBody &);
 template ELFFile<ELF32LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32LE> &,
                   const ELFFile<ELF32LE>::Elf_Rel &);
-
 template ELFFile<ELF32BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF32BE> &,
                   const ELFFile<ELF32BE>::Elf_Rel &);
-
 template ELFFile<ELF64LE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64LE> &,
                   const ELFFile<ELF64LE>::Elf_Rel &);
-
 template ELFFile<ELF64BE>::uintX_t
 getLocalRelTarget(const ObjectFile<ELF64BE> &,
                   const ELFFile<ELF64BE>::Elf_Rel &);
+
+template ELFFile<ELF32LE>::uintX_t
+getLocalRelTarget(const ObjectFile<ELF32LE> &,
+                  const ELFFile<ELF32LE>::Elf_Rela &);
+template ELFFile<ELF32BE>::uintX_t
+getLocalRelTarget(const ObjectFile<ELF32BE> &,
+                  const ELFFile<ELF32BE>::Elf_Rela &);
+template ELFFile<ELF64LE>::uintX_t
+getLocalRelTarget(const ObjectFile<ELF64LE> &,
+                  const ELFFile<ELF64LE>::Elf_Rela &);
+template ELFFile<ELF64BE>::uintX_t
+getLocalRelTarget(const ObjectFile<ELF64BE> &,
+                  const ELFFile<ELF64BE>::Elf_Rela &);
 
 template bool includeInSymtab<ELF32LE>(const SymbolBody &);
 template bool includeInSymtab<ELF32BE>(const SymbolBody &);

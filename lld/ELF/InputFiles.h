@@ -94,6 +94,7 @@ template <class ELFT> class ObjectFile : public ELFFileBase<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
   typedef llvm::support::detail::packed_endian_specific_integral<
       uint32_t, ELFT::TargetEndianness, 2> GroupEntryType;
@@ -110,8 +111,8 @@ public:
   explicit ObjectFile(MemoryBufferRef M);
   void parse(llvm::DenseSet<StringRef> &Comdats);
 
-  ArrayRef<InputSection<ELFT> *> getSections() const { return Sections; }
-  InputSection<ELFT> *getSection(const Elf_Sym &Sym) const;
+  ArrayRef<InputSectionBase<ELFT> *> getSections() const { return Sections; }
+  InputSectionBase<ELFT> *getSection(const Elf_Sym &Sym) const;
 
   SymbolBody *getSymbolBody(uint32_t SymbolIndex) const {
     uint32_t FirstNonLocal = this->Symtab->sh_info;
@@ -132,7 +133,7 @@ private:
   SymbolBody *createSymbolBody(StringRef StringTable, const Elf_Sym *Sym);
 
   // List of all sections defined by this file.
-  std::vector<InputSection<ELFT> *> Sections;
+  std::vector<InputSectionBase<ELFT> *> Sections;
 
   ArrayRef<Elf_Word> SymtabSHNDX;
 

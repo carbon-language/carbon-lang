@@ -12,6 +12,7 @@
 
 #include "lld/Core/LLVM.h"
 
+#include "llvm/ADT/MapVector.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Object/ELF.h"
 
@@ -27,6 +28,7 @@ template <class ELFT> class SymbolTable;
 template <class ELFT> class SymbolTableSection;
 template <class ELFT> class StringTableSection;
 template <class ELFT> class InputSection;
+template <class ELFT> class MergeInputSection;
 template <class ELFT> class OutputSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class DefinedRegular;
@@ -201,6 +203,23 @@ public:
 
 private:
   std::vector<InputSection<ELFT> *> Sections;
+};
+
+template <class ELFT>
+class MergeOutputSection final : public OutputSectionBase<ELFT> {
+  typedef typename OutputSectionBase<ELFT>::uintX_t uintX_t;
+
+public:
+  MergeOutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags);
+  void addSection(MergeInputSection<ELFT> *S);
+  void writeTo(uint8_t *Buf) override;
+
+  unsigned getOffset(ArrayRef<uint8_t> Val);
+
+private:
+  // This map is used to find if we already have an entry for a given value and,
+  // if so, at what offset it is.
+  llvm::MapVector<ArrayRef<uint8_t>, uintX_t> Offsets;
 };
 
 template <class ELFT>

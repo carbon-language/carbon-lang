@@ -21,22 +21,28 @@ template <class ELFT> class OutputSection;
 template <class ELFT> class OutputSectionBase;
 
 // This corresponds to a section of an input file.
-template <class ELFT> class InputSection {
+template <class ELFT> class InputSectionBase {
+protected:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+  const Elf_Shdr *Header;
+
+  // The file this section is from.
+  ObjectFile<ELFT> *File;
 
 public:
-  InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
+  enum Kind { Regular, Merge };
+  Kind SectionKind;
+
+  InputSectionBase(ObjectFile<ELFT> *File, const Elf_Shdr *Header,
+                   Kind SectionKind);
+  OutputSectionBase<ELFT> *OutSec = nullptr;
 
   // Returns the size of this section (even if this is a common or BSS.)
   size_t getSize() const { return Header->sh_size; }
 
-  // Write this section to a mmap'ed file, assuming Buf is pointing to
-  // beginning of the output section.
-  void writeTo(uint8_t *Buf);
+  static InputSectionBase<ELFT> Discarded;
 
   StringRef getSectionName() const;
   const Elf_Shdr *getSectionHdr() const { return Header; }
@@ -49,15 +55,52 @@ public:
     return std::max<uintX_t>(Header->sh_addralign, 1);
   }
 
+  uintX_t getOffset(const Elf_Sym &Sym) const;
+  ArrayRef<uint8_t> getSectionData() const;
+};
+
+template <class ELFT>
+InputSectionBase<ELFT>
+    InputSectionBase<ELFT>::Discarded(nullptr, nullptr,
+                                      InputSectionBase<ELFT>::Regular);
+
+// This corresponds to a SHF_MERGE section of an input file.
+template <class ELFT> class MergeInputSection : public InputSectionBase<ELFT> {
+  typedef InputSectionBase<ELFT> Base;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+
+public:
+  MergeInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
+  static bool classof(const InputSectionBase<ELFT> *S);
+  uintX_t getOffset(uintX_t Offset) const;
+};
+
+// This corresponds to a non SHF_MERGE section of an input file.
+template <class ELFT> class InputSection : public InputSectionBase<ELFT> {
+  typedef InputSectionBase<ELFT> Base;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+
+public:
+  InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
+
+  // Write this section to a mmap'ed file, assuming Buf is pointing to
+  // beginning of the output section.
+  void writeTo(uint8_t *Buf);
+
   // Relocation sections that refer to this one.
   SmallVector<const Elf_Shdr *, 1> RelocSections;
 
   // The offset from beginning of the output sections this section was assigned
   // to. The writer sets a value.
   uint64_t OutSecOff = 0;
-  OutputSectionBase<ELFT> *OutSec = nullptr;
 
-  static InputSection<ELFT> Discarded;
+  static bool classof(const InputSectionBase<ELFT> *S);
 
 private:
   template <bool isRela>
@@ -65,15 +108,7 @@ private:
                 llvm::iterator_range<
                     const llvm::object::Elf_Rel_Impl<ELFT, isRela> *> Rels,
                 const ObjectFile<ELFT> &File, uintX_t BaseAddr);
-
-  // The file this section is from.
-  ObjectFile<ELFT> *File;
-
-  const Elf_Shdr *Header;
 };
-
-template <class ELFT>
-InputSection<ELFT> InputSection<ELFT>::Discarded(nullptr, nullptr);
 
 } // namespace elf2
 } // namespace lld

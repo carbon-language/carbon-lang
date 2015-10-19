@@ -71,6 +71,7 @@ private:
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
   SpecificBumpPtrAllocator<OutputSection<ELFT>> SecAlloc;
+  SpecificBumpPtrAllocator<MergeOutputSection<ELFT>> MSecAlloc;
   BumpPtrAllocator Alloc;
   std::vector<OutputSectionBase<ELFT> *> OutputSections;
   unsigned getNumSections() const { return OutputSections.size() + 1; }
@@ -135,24 +136,27 @@ template <bool Is64Bits> struct SectionKey {
   StringRef Name;
   uint32_t Type;
   uintX_t Flags;
+  uintX_t EntSize;
 };
 }
 namespace llvm {
 template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
   static SectionKey<Is64Bits> getEmptyKey() {
-    return SectionKey<Is64Bits>{DenseMapInfo<StringRef>::getEmptyKey(), 0, 0};
+    return SectionKey<Is64Bits>{DenseMapInfo<StringRef>::getEmptyKey(), 0, 0,
+                                0};
   }
   static SectionKey<Is64Bits> getTombstoneKey() {
     return SectionKey<Is64Bits>{DenseMapInfo<StringRef>::getTombstoneKey(), 0,
-                                0};
+                                0, 0};
   }
   static unsigned getHashValue(const SectionKey<Is64Bits> &Val) {
-    return hash_combine(Val.Name, Val.Type, Val.Flags);
+    return hash_combine(Val.Name, Val.Type, Val.Flags, Val.EntSize);
   }
   static bool isEqual(const SectionKey<Is64Bits> &LHS,
                       const SectionKey<Is64Bits> &RHS) {
     return DenseMapInfo<StringRef>::isEqual(LHS.Name, RHS.Name) &&
-           LHS.Type == RHS.Type && LHS.Flags == RHS.Flags;
+           LHS.Type == RHS.Type && LHS.Flags == RHS.Flags &&
+           LHS.EntSize == RHS.EntSize;
   }
 };
 }
@@ -390,39 +394,52 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   if (needsInterpSection())
     OutputSections.push_back(Out<ELFT>::Interp);
 
-  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
+  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSectionBase<ELFT> *> Map;
 
   OutputSections.push_back(Out<ELFT>::Bss);
   Map[{Out<ELFT>::Bss->getName(), Out<ELFT>::Bss->getType(),
-       Out<ELFT>::Bss->getFlags()}] = Out<ELFT>::Bss;
+       Out<ELFT>::Bss->getFlags(), 0}] = Out<ELFT>::Bss;
 
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
-    for (InputSection<ELFT> *C : F->getSections()) {
+    for (InputSectionBase<ELFT> *C : F->getSections()) {
       if (!C || C == &InputSection<ELFT>::Discarded)
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
       uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
+      // For SHF_MERGE we create different output sections for each sh_entsize.
+      // This makes each output section simple and keeps a single level
+      // mapping from input to output.
+      auto *IS = dyn_cast<InputSection<ELFT>>(C);
+      uintX_t EntSize = IS ? 0 : H->sh_entsize;
       SectionKey<ELFT::Is64Bits> Key{getOutputName(C->getSectionName()),
-                                     H->sh_type, OutFlags};
-      OutputSection<ELFT> *&Sec = Map[Key];
+                                     H->sh_type, OutFlags, EntSize};
+      OutputSectionBase<ELFT> *&Sec = Map[Key];
       if (!Sec) {
-        Sec = new (SecAlloc.Allocate())
-            OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
+        if (IS)
+          Sec = new (SecAlloc.Allocate())
+              OutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
+        else
+          Sec = new (MSecAlloc.Allocate())
+              MergeOutputSection<ELFT>(Key.Name, Key.Type, Key.Flags);
         OutputSections.push_back(Sec);
         RegularSections.push_back(Sec);
       }
-      Sec->addSection(C);
+      if (IS)
+        static_cast<OutputSection<ELFT> *>(Sec)->addSection(IS);
+      else
+        static_cast<MergeOutputSection<ELFT> *>(Sec)
+            ->addSection(cast<MergeInputSection<ELFT>>(C));
     }
   }
 
-  Out<ELFT>::Dynamic->PreInitArraySec =
-      Map.lookup({".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC});
+  Out<ELFT>::Dynamic->PreInitArraySec = Map.lookup(
+      {".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC, 0});
   Out<ELFT>::Dynamic->InitArraySec =
-      Map.lookup({".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC});
+      Map.lookup({".init_array", SHT_INIT_ARRAY, SHF_WRITE | SHF_ALLOC, 0});
   Out<ELFT>::Dynamic->FiniArraySec =
-      Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC});
+      Map.lookup({".fini_array", SHT_FINI_ARRAY, SHF_WRITE | SHF_ALLOC, 0});
 
   auto AddStartEnd = [&](StringRef Start, StringRef End,
                          OutputSectionBase<ELFT> *OS) {
@@ -455,9 +472,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles())
-    for (InputSection<ELFT> *S : F->getSections())
-      if (S && S != &InputSection<ELFT>::Discarded)
-        scanRelocs(*S);
+    for (InputSectionBase<ELFT> *B : F->getSections())
+      if (auto *S = dyn_cast_or_null<InputSection<ELFT>>(B))
+        if (S != &InputSection<ELFT>::Discarded)
+          scanRelocs(*S);
 
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
@@ -516,7 +534,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // If we have a .opd section (used under PPC64 for function descriptors),
   // store a pointer to it here so that we can use it later when processing
   // relocations.
-  Out<ELFT>::Opd = Map.lookup({".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC});
+  Out<ELFT>::Opd = Map.lookup({".opd", SHT_PROGBITS, SHF_WRITE | SHF_ALLOC, 0});
 }
 
 static bool isAlpha(char C) {

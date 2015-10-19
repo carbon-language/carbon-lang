@@ -150,15 +150,27 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
       uint32_t RelocatedSectionIndex = Sec.sh_info;
       if (RelocatedSectionIndex >= Size)
         error("Invalid relocated section index");
-      InputSection<ELFT> *RelocatedSection = Sections[RelocatedSectionIndex];
+      InputSectionBase<ELFT> *RelocatedSection =
+          Sections[RelocatedSectionIndex];
       if (!RelocatedSection)
         error("Unsupported relocation reference");
-      RelocatedSection->RelocSections.push_back(&Sec);
+      if (auto *S = dyn_cast<InputSection<ELFT>>(RelocatedSection))
+        S->RelocSections.push_back(&Sec);
+      else
+        error("Relocations pointing to SHF_MERGE are not supported");
       break;
     }
-    default:
-      Sections[I] = new (this->Alloc) InputSection<ELFT>(this, &Sec);
+    default: {
+      uintX_t Flags = Sec.sh_flags;
+      if (Flags & SHF_MERGE && !(Flags & SHF_STRINGS)) {
+        if (Flags & SHF_WRITE)
+          error("Writable SHF_MERGE sections are not supported");
+        Sections[I] = new (this->Alloc) MergeInputSection<ELFT>(this, &Sec);
+      } else {
+        Sections[I] = new (this->Alloc) InputSection<ELFT>(this, &Sec);
+      }
       break;
+    }
     }
   }
 }
@@ -173,7 +185,7 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
 }
 
 template <class ELFT>
-InputSection<ELFT> *
+InputSectionBase<ELFT> *
 elf2::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
   uint32_t Index = Sym.st_shndx;
   if (Index == ELF::SHN_XINDEX)
@@ -209,7 +221,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_GLOBAL:
   case STB_WEAK:
   case STB_GNU_UNIQUE: {
-    InputSection<ELFT> *Sec = getSection(*Sym);
+    InputSectionBase<ELFT> *Sec = getSection(*Sym);
     if (Sec == &InputSection<ELFT>::Discarded)
       return new (this->Alloc) Undefined<ELFT>(Name, *Sym);
     return new (this->Alloc) DefinedRegular<ELFT>(Name, *Sym, *Sec);
