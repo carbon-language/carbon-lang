@@ -334,6 +334,12 @@ Language::GetFormatterPrefixSuffix (ValueObject& valobj, ConstString type_hint,
     return false;
 }
 
+DumpValueObjectOptions::DeclPrintingHelper
+Language::GetDeclPrintingHelper ()
+{
+    return nullptr;
+}
+
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------

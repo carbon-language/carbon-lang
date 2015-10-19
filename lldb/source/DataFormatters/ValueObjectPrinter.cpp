@@ -13,21 +13,15 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/Debugger.h"
+#include "lldb/Core/Stream.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
-
-DumpValueObjectOptions::DumpValueObjectOptions (ValueObject& valobj) :
-DumpValueObjectOptions()
-{
-    m_use_dynamic = valobj.GetDynamicValueType();
-    m_use_synthetic = valobj.IsSynthetic();
-    m_varformat_language = valobj.GetPreferredDisplayLanguage();
-}
 
 ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
                                         Stream* s)
@@ -298,7 +292,7 @@ ValueObjectPrinter::PrintDecl ()
                     type_name_str.erase(iter, 2);
                 }
             }
-            typeName.Printf("(%s)", type_name_str.c_str());
+            typeName.Printf("%s", type_name_str.c_str());
         }
     }
     
@@ -320,6 +314,16 @@ ValueObjectPrinter::PrintDecl ()
     }
     
     bool decl_printed = false;
+    if (!options.m_decl_printing_helper)
+    {
+        // if the user didn't give us a custom helper, pick one based upon the language, either the one that this printer is bound to, or the preferred one for the ValueObject
+        lldb::LanguageType lang_type = (options.m_varformat_language == lldb::eLanguageTypeUnknown) ? m_valobj->GetPreferredDisplayLanguage() : options.m_varformat_language;
+        if (Language *lang_plugin = Language::FindPlugin(lang_type))
+        {
+            options.m_decl_printing_helper = lang_plugin->GetDeclPrintingHelper();
+        }
+    }
+    
     if (options.m_decl_printing_helper)
     {
         ConstString type_name_cstr(typeName.GetData());
@@ -336,10 +340,11 @@ ValueObjectPrinter::PrintDecl ()
         }
     }
     
+    // if the helper failed, or there is none, do a default thing
     if (!decl_printed)
     {
         if (typeName.GetSize())
-            m_stream->Printf("%s ", typeName.GetData());
+            m_stream->Printf("(%s) ", typeName.GetData());
         if (varName.GetSize())
             m_stream->Printf("%s =", varName.GetData());
         else if (!options.m_hide_name)

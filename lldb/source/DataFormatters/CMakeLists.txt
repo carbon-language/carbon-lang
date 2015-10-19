@@ -1,6 +1,7 @@
 add_lldb_library(lldbDataFormatters
   CXXFunctionPointer.cpp
   DataVisualization.cpp
+  DumpValueObjectOptions.cpp
   FormatCache.cpp
   FormatClasses.cpp
   FormatManager.cpp

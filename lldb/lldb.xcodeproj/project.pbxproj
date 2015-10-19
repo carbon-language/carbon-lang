@@ -747,6 +747,7 @@
 		944372DC171F6B4300E57C32 /* RegisterContextDummy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9447DE431BD5963300E67212 /* DumpValueObjectOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9447DE421BD5963300E67212 /* DumpValueObjectOptions.cpp */; };
 		945215DF17F639EE00521C0B /* ValueObjectPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945215DE17F639EE00521C0B /* ValueObjectPrinter.cpp */; };
 		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
 		945261BF1B9A11FC00BF138D /* CxxStringTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945261B31B9A11E800BF138D /* CxxStringTypes.cpp */; };
@@ -2461,6 +2462,8 @@
 		944372DB171F6B4300E57C32 /* RegisterContextDummy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDummy.h; path = Utility/RegisterContextDummy.h; sourceTree = "<group>"; };
 		9443B120140C18A90013457C /* SBData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBData.h; path = include/lldb/API/SBData.h; sourceTree = "<group>"; };
 		9443B121140C18C10013457C /* SBData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBData.cpp; path = source/API/SBData.cpp; sourceTree = "<group>"; };
+		9447DE411BD5962900E67212 /* DumpValueObjectOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DumpValueObjectOptions.h; path = include/lldb/DataFormatters/DumpValueObjectOptions.h; sourceTree = "<group>"; };
+		9447DE421BD5963300E67212 /* DumpValueObjectOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DumpValueObjectOptions.cpp; path = source/DataFormatters/DumpValueObjectOptions.cpp; sourceTree = "<group>"; };
 		9449B8031B30E0690019342B /* ThreadSafeDenseSet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ThreadSafeDenseSet.h; path = include/lldb/Core/ThreadSafeDenseSet.h; sourceTree = "<group>"; };
 		944DC3481774C99000D7D884 /* python-swigsafecast.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-swigsafecast.swig"; sourceTree = "<group>"; };
 		945215DD17F639E600521C0B /* ValueObjectPrinter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectPrinter.h; path = include/lldb/DataFormatters/ValueObjectPrinter.h; sourceTree = "<group>"; };
@@ -5431,6 +5434,8 @@
 				945261C71B9A14D300BF138D /* CXXFunctionPointer.cpp */,
 				94CB256016B069800059775D /* DataVisualization.h */,
 				94CB255816B069770059775D /* DataVisualization.cpp */,
+				9447DE411BD5962900E67212 /* DumpValueObjectOptions.h */,
+				9447DE421BD5963300E67212 /* DumpValueObjectOptions.cpp */,
 				94CB257516B1D3910059775D /* FormatCache.h */,
 				94CB257316B1D3870059775D /* FormatCache.cpp */,
 				94CB256116B069800059775D /* FormatClasses.h */,
@@ -6415,6 +6420,7 @@
 				2689008013353E2200698AC0 /* CommandInterpreter.cpp in Sources */,
 				AF77E0A41A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp in Sources */,
 				AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */,
+				9447DE431BD5963300E67212 /* DumpValueObjectOptions.cpp in Sources */,
 				2689008113353E2200698AC0 /* CommandObject.cpp in Sources */,
 				3F8160A61AB9F7DD001DA9DF /* Logging.cpp in Sources */,
 				26BF51F61B3C754400016294 /* ABISysV_i386.cpp in Sources */,

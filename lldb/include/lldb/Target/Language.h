@@ -22,6 +22,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/DataFormatters/DumpValueObjectOptions.h"
 #include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/StringPrinter.h"
 
@@ -112,6 +113,11 @@ public:
     virtual bool
     GetFormatterPrefixSuffix (ValueObject& valobj, ConstString type_hint,
                               std::string& prefix, std::string& suffix);
+    
+    // if a language has a custom format for printing variable declarations that it wants LLDB to honor
+    // it should return an appropriate closure here
+    virtual DumpValueObjectOptions::DeclPrintingHelper
+    GetDeclPrintingHelper ();
     
     // These are accessors for general information about the Languages lldb knows about:
     
