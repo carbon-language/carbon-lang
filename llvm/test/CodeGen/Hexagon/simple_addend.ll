@@ -7,4 +7,4 @@ define void @foo(i32 %a) {
   call void @bar(i32 %b)
   ret void
 }
-; CHECK:     0x8 R_HEX_B22_PCREL bar 0x4
+; CHECK:     0x4 R_HEX_B22_PCREL bar 0x4
