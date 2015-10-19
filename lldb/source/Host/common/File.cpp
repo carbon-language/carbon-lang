@@ -22,6 +22,8 @@
 #include <sys/ioctl.h>
 #endif
 
+#include "llvm/Support/Process.h" // for llvm::sys::Process::FileDescriptorHasColors()
+
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
@@ -1051,7 +1053,11 @@ File::CalculateInteractiveAndTerminal ()
             if (::ioctl (fd, TIOCGWINSZ, &window_size) == 0)
             {
                 if (window_size.ws_col > 0)
+                {
                     m_is_real_terminal = eLazyBoolYes;
+                    if (llvm::sys::Process::FileDescriptorHasColors(fd))
+                        m_supports_colors = eLazyBoolYes;
+                }
             }
         }
 #endif
@@ -1072,5 +1078,13 @@ File::GetIsRealTerminal ()
     if (m_is_real_terminal == eLazyBoolCalculate)
         CalculateInteractiveAndTerminal();
     return m_is_real_terminal == eLazyBoolYes;
+}
+
+bool
+File::GetIsTerminalWithColors ()
+{
+    if (m_supports_colors == eLazyBoolCalculate)
+        CalculateInteractiveAndTerminal();
+    return m_supports_colors == eLazyBoolYes;
 }
 

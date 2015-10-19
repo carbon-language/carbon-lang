@@ -203,6 +203,10 @@ public:
     
     bool
     IsTopIOHandler (const lldb::IOHandlerSP& reader_sp);
+    
+    bool
+    CheckTopIOHandlerTypes (IOHandler::Type top_type,
+                            IOHandler::Type second_top_type);
 
     void
     PrintAsync (const char *s, size_t len, bool is_stdout);
@@ -322,6 +326,24 @@ public:
     GetAutoOneLineSummaries () const;
     
     bool
+    GetAutoIndent () const;
+    
+    bool
+    SetAutoIndent (bool b);
+    
+    bool
+    GetPrintDecls () const;
+    
+    bool
+    SetPrintDecls (bool b);
+    
+    uint32_t
+    GetTabSize () const;
+    
+    bool
+    SetTabSize (uint32_t tab_size);
+
+    bool
     GetEscapeNonPrintables () const;
     
     bool
@@ -362,6 +384,7 @@ public:
 protected:
 
     friend class CommandInterpreter;
+    friend class REPL;
 
     bool
     StartEventHandlerThread();
@@ -373,10 +396,16 @@ protected:
     EventHandlerThread (lldb::thread_arg_t arg);
 
     bool
+    HasIOHandlerThread();
+
+    bool
     StartIOHandlerThread();
     
     void
     StopIOHandlerThread();
+    
+    void
+    JoinIOHandlerThread();
     
     static lldb::thread_result_t
     IOHandlerThread (lldb::thread_arg_t arg);

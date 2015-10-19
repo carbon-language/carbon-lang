@@ -444,6 +444,23 @@ public:
     GetTypeSystemEnumerateSupportedLanguagesCallbackForPluginName (const ConstString &name);
     
     //------------------------------------------------------------------
+    // REPL
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const ConstString &name,
+                    const char *description,
+                    REPLCreateInstance create_callback);
+    
+    static bool
+    UnregisterPlugin (REPLCreateInstance create_callback);
+    
+    static REPLCreateInstance
+    GetREPLCreateCallbackAtIndex (uint32_t idx);
+    
+    static REPLCreateInstance
+    GetREPLCreateCallbackForPluginName (const ConstString &name);
+    
+    //------------------------------------------------------------------
     // Some plug-ins might register a DebuggerInitializeCallback
     // callback when registering the plug-in. After a new Debugger
     // instance is created, this DebuggerInitialize function will get

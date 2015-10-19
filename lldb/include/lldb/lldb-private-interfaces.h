@@ -49,6 +49,7 @@ namespace lldb_private
     typedef lldb::InstrumentationRuntimeType (*InstrumentationRuntimeGetType) ();
     typedef lldb::InstrumentationRuntimeSP (*InstrumentationRuntimeCreateInstance) (const lldb::ProcessSP &process_sp);
     typedef lldb::TypeSystemSP (*TypeSystemCreateInstance) (lldb::LanguageType language, Module *module, Target *target);
+    typedef lldb::REPLSP (*REPLCreateInstance) (lldb::LanguageType language, Target *target);
     typedef void (*TypeSystemEnumerateSupportedLanguages) (std::set<lldb::LanguageType> &languages_for_types, std::set<lldb::LanguageType> &languages_for_expressions);
     typedef int (*ComparisonFunction)(const void *, const void *);
     typedef void (*DebuggerInitializeCallback)(Debugger &debugger);

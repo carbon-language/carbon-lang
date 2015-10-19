@@ -2648,6 +2648,106 @@ PluginManager::GetTypeSystemEnumerateSupportedLanguagesCallbackForPluginName (co
     return NULL;
 }
 
+#pragma mark REPL
+
+struct REPLInstance
+{
+    REPLInstance() :
+    name(),
+    description(),
+    create_callback(NULL)
+    {
+    }
+    
+    ConstString name;
+    std::string description;
+    REPLCreateInstance create_callback;
+};
+
+typedef std::vector<REPLInstance> REPLInstances;
+
+static Mutex &
+GetREPLMutex ()
+{
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static REPLInstances &
+GetREPLInstances ()
+{
+    static REPLInstances g_instances;
+    return g_instances;
+}
+
+bool
+PluginManager::RegisterPlugin (const ConstString &name,
+                               const char *description,
+                               REPLCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        REPLInstance instance;
+        assert ((bool)name);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        Mutex::Locker locker (GetREPLMutex ());
+        GetREPLInstances ().push_back (instance);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (REPLCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        Mutex::Locker locker (GetREPLMutex ());
+        REPLInstances &instances = GetREPLInstances ();
+        
+        REPLInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+REPLCreateInstance
+PluginManager::GetREPLCreateCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetREPLMutex ());
+    REPLInstances &instances = GetREPLInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
+    return NULL;
+}
+
+REPLCreateInstance
+PluginManager::GetREPLCreateCallbackForPluginName (const ConstString &name)
+{
+    if (name)
+    {
+        Mutex::Locker locker (GetREPLMutex ());
+        REPLInstances &instances = GetREPLInstances ();
+        
+        REPLInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name == pos->name)
+                return pos->create_callback;
+        }
+    }
+    return NULL;
+}
+
 #pragma mark PluginManager
 
 void

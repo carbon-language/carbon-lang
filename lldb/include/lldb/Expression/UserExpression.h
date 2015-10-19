@@ -273,9 +273,15 @@ public:
     /// @param[in,out] result_valobj_sp
     ///      If execution is successful, the result valobj is placed here.
     ///
-    /// @param[out]
+    /// @param[out] error
     ///     Filled in with an error in case the expression evaluation
     ///     fails to parse, run, or evaluated.
+    ///
+    /// @param[in] line_offset
+    ///     The offset of the first line of the expression from the "beginning" of a virtual source file used for error reporting and debug info.
+    ///
+    /// @param[out] jit_module_sp_ptr
+    ///     If non-NULL, used to persist the generated IR module.
     ///
     /// @result
     ///      A Process::ExpressionResults value.  eExpressionCompleted for success.
@@ -286,7 +292,9 @@ public:
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp,
-              Error &error);
+              Error &error,
+              uint32_t line_offset = 0,
+              lldb::ModuleSP *jit_module_sp_ptr = NULL);
 
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 protected:

@@ -41,8 +41,13 @@
 #define ANSI_CTRL_CONCEAL           8
 #define ANSI_CTRL_CROSSED_OUT       9
 
-#define ANSI_ESC_START          "\033["
-#define ANSI_ESC_END            "m"
+#define ANSI_ESC_START              "\033["
+#define ANSI_ESC_END                "m"
+
+#define ANSI_STR(s)                 #s
+#define ANSI_DEF_STR(s)             ANSI_STR(s)
+
+#define ANSI_ESCAPE1(s)             ANSI_ESC_START ANSI_DEF_STR(s) ANSI_ESC_END
 
 #define ANSI_1_CTRL(ctrl1)          "\033["##ctrl1 ANSI_ESC_END
 #define ANSI_2_CTRL(ctrl1,ctrl2)    "\033["##ctrl1";"##ctrl2 ANSI_ESC_END

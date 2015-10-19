@@ -668,6 +668,7 @@
 		449ACC98197DEA0B008D175E /* FastDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 449ACC96197DE9EC008D175E /* FastDemangle.cpp */; };
 		490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */; };
 		490A966B1628C3BF00F0002E /* SBDeclaration.h in Headers */ = {isa = PBXBuildFile; fileRef = 9452573816262CEF00325455 /* SBDeclaration.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4939EA8D1BD56B6D00084382 /* REPL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4939EA8C1BD56B6D00084382 /* REPL.cpp */; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
 		4959511F1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4959511E1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp */; };
 		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
@@ -2254,6 +2255,8 @@
 		491193501226386000578B7F /* ASTStructExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStructExtractor.cpp; path = ExpressionParser/Clang/ASTStructExtractor.cpp; sourceTree = "<group>"; };
 		49307AAD11DEA4D90081F992 /* IRForTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRForTarget.cpp; path = ExpressionParser/Clang/IRForTarget.cpp; sourceTree = "<group>"; };
 		49307AB111DEA4F20081F992 /* IRForTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRForTarget.h; path = ExpressionParser/Clang/IRForTarget.h; sourceTree = "<group>"; };
+		4939EA8B1BD56B3700084382 /* REPL.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = REPL.h; path = include/lldb/Expression/REPL.h; sourceTree = "<group>"; };
+		4939EA8C1BD56B6D00084382 /* REPL.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = REPL.cpp; path = source/Expression/REPL.cpp; sourceTree = "<group>"; };
 		494260D7145790D5003C1C78 /* VerifyDecl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VerifyDecl.h; path = include/lldb/Symbol/VerifyDecl.h; sourceTree = "<group>"; };
 		494260D914579144003C1C78 /* VerifyDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VerifyDecl.cpp; path = source/Symbol/VerifyDecl.cpp; sourceTree = "<group>"; };
 		49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionParser.cpp; path = ExpressionParser/Clang/ClangExpressionParser.cpp; sourceTree = "<group>"; };
@@ -4447,6 +4450,8 @@
 				496B01581406DE8900F830D5 /* IRInterpreter.cpp */,
 				49DCF6FF170E6FD90092F75E /* Materializer.h */,
 				49DCF700170E70120092F75E /* Materializer.cpp */,
+				4939EA8B1BD56B3700084382 /* REPL.h */,
+				4939EA8C1BD56B6D00084382 /* REPL.cpp */,
 			);
 			name = Expression;
 			sourceTree = "<group>";
@@ -6371,6 +6376,7 @@
 				2689005F13353E0E00698AC0 /* ClangFunctionCaller.cpp in Sources */,
 				2689006013353E0E00698AC0 /* ClangExpressionDeclMap.cpp in Sources */,
 				2689006113353E0E00698AC0 /* ClangExpressionParser.cpp in Sources */,
+				4939EA8D1BD56B6D00084382 /* REPL.cpp in Sources */,
 				B5EFAE861AE53B1D007059F3 /* RegisterContextFreeBSD_arm.cpp in Sources */,
 				2689006313353E0E00698AC0 /* ClangPersistentVariables.cpp in Sources */,
 				2689006413353E0E00698AC0 /* ClangUserExpression.cpp in Sources */,

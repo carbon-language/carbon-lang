@@ -494,6 +494,9 @@ public:
     //------------------------------------------------------------------
     bool
     GetIsRealTerminal ();
+    
+    bool
+    GetIsTerminalWithColors ();
 
     //------------------------------------------------------------------
     /// Output printf formatted output to the stream.
@@ -546,6 +549,7 @@ protected:
     bool m_own_stream;
     LazyBool m_is_interactive;
     LazyBool m_is_real_terminal;
+    LazyBool m_supports_colors;
 };
 
 } // namespace lldb_private

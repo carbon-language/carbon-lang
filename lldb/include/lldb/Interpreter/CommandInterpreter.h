@@ -659,6 +659,9 @@ public:
         return m_stopped_for_crash;
     }
     
+    bool
+    GetSpaceReplPrompts () const;
+    
 protected:
     friend class Debugger;
 

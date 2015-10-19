@@ -183,6 +183,7 @@ class   RegisterLocation;
 class   RegisterLocationList;
 class   RegisterValue;
 class   RegularExpression;
+class   REPL;
 class   Scalar;
 class   ScriptInterpreter;
 class   ScriptInterpreterLocker;
@@ -382,6 +383,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::Queue> QueueSP;
     typedef std::weak_ptr<lldb_private::Queue> QueueWP;
     typedef std::shared_ptr<lldb_private::QueueItem> QueueItemSP;
+    typedef std::shared_ptr<lldb_private::REPL> REPLSP;
     typedef std::shared_ptr<lldb_private::ScriptSummaryFormat> ScriptSummaryFormatSP;
     typedef std::shared_ptr<lldb_private::ScriptInterpreter> ScriptInterpreterSP;
     typedef std::unique_ptr<lldb_private::ScriptInterpreter> ScriptInterpreterUP;

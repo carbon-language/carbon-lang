@@ -156,6 +156,9 @@ g_properties[] =
 {   "use-external-editor",      OptionValue::eTypeBoolean     , true, false, NULL, NULL, "Whether to use an external editor or not." },
 {   "use-color",                OptionValue::eTypeBoolean     , true, true , NULL, NULL, "Whether to use Ansi color codes or not." },
 {   "auto-one-line-summaries",  OptionValue::eTypeBoolean     , true, true, NULL, NULL, "If true, LLDB will automatically display small structs in one-liner format (default: true)." },
+{   "auto-indent",              OptionValue::eTypeBoolean     , true, true , NULL, NULL, "If true, LLDB will auto indent/outdent code. Currently only supported in the REPL (default: true)." },
+{   "print-decls",              OptionValue::eTypeBoolean     , true, true , NULL, NULL, "If true, LLDB will print the values of variables declared in an expression. Currently only supported in the REPL (default: true)." },
+{   "tab-size",                 OptionValue::eTypeUInt64      , true, 4    , NULL, NULL, "The tab size to use when indenting code in multi-line input mode (default: 4)." },
 {   "escape-non-printables",    OptionValue::eTypeBoolean     , true, true, NULL, NULL, "If true, LLDB will automatically escape non-printable and escape characters when formatting strings." },
 {   NULL,                       OptionValue::eTypeInvalid     , true, 0    , NULL, NULL, NULL }
 };
@@ -177,6 +180,9 @@ enum
     ePropertyUseExternalEditor,
     ePropertyUseColor,
     ePropertyAutoOneLineSummaries,
+    ePropertyAutoIndent,
+    ePropertyPrintDecls,
+    ePropertyTabSize,
     ePropertyEscapeNonPrintables
 };
 
@@ -391,6 +397,49 @@ Debugger::GetEscapeNonPrintables () const
     const uint32_t idx = ePropertyEscapeNonPrintables;
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, true);
 }
+
+bool
+Debugger::GetAutoIndent () const
+{
+    const uint32_t idx = ePropertyAutoIndent;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, true);
+}
+
+bool
+Debugger::SetAutoIndent (bool b)
+{
+    const uint32_t idx = ePropertyAutoIndent;
+    return m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+bool
+Debugger::GetPrintDecls () const
+{
+    const uint32_t idx = ePropertyPrintDecls;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, true);
+}
+
+bool
+Debugger::SetPrintDecls (bool b)
+{
+    const uint32_t idx = ePropertyPrintDecls;
+    return m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+uint32_t
+Debugger::GetTabSize () const
+{
+    const uint32_t idx = ePropertyTabSize;
+    return m_collection_sp->GetPropertyAtIndexAsUInt64 (NULL, idx, g_properties[idx].default_uint_value);
+}
+
+bool
+Debugger::SetTabSize (uint32_t tab_size)
+{
+    const uint32_t idx = ePropertyTabSize;
+    return m_collection_sp->SetPropertyAtIndexAsUInt64 (NULL, idx, tab_size);
+}
+
 
 #pragma mark Debugger
 
@@ -917,6 +966,12 @@ bool
 Debugger::IsTopIOHandler (const lldb::IOHandlerSP& reader_sp)
 {
     return m_input_reader_stack.IsTop (reader_sp);
+}
+
+bool
+Debugger::CheckTopIOHandlerTypes (IOHandler::Type top_type, IOHandler::Type second_top_type)
+{
+    return m_input_reader_stack.CheckTopIOHandlerTypes (top_type, second_top_type);
 }
 
 void
@@ -1684,6 +1739,12 @@ Debugger::IOHandlerThread (lldb::thread_arg_t arg)
 }
 
 bool
+Debugger::HasIOHandlerThread()
+{
+    return m_io_handler_thread.IsJoinable();
+}
+
+bool
 Debugger::StartIOHandlerThread()
 {
     if (!m_io_handler_thread.IsJoinable())
@@ -1703,6 +1764,17 @@ Debugger::StopIOHandlerThread()
         if (m_input_file_sp)
             m_input_file_sp->GetFile().Close();
         m_io_handler_thread.Join(nullptr);
+    }
+}
+
+void
+Debugger::JoinIOHandlerThread()
+{
+    if (HasIOHandlerThread())
+    {
+        thread_result_t result;
+        m_io_handler_thread.Join(&result);
+        m_io_handler_thread = LLDB_INVALID_HOST_THREAD;
     }
 }
 

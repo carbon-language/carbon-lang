@@ -465,7 +465,9 @@ UserExpression::Evaluate (ExecutionContext &exe_ctx,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp,
-                               Error &error)
+                               Error &error,
+                               uint32_t line_offset,
+                               lldb::ModuleSP *jit_module_sp_ptr)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
@@ -567,6 +569,10 @@ UserExpression::Evaluate (ExecutionContext &exe_ctx,
     }
     else
     {
+        // If a pointer to a lldb::ModuleSP was passed in, return the JIT'ed module if one was created
+        if (jit_module_sp_ptr && user_expression_sp->m_execution_unit_sp)
+            *jit_module_sp_ptr = user_expression_sp->m_execution_unit_sp->GetJITModule();
+
         lldb::ExpressionVariableSP expr_result;
 
         if (execution_policy == eExecutionPolicyNever &&

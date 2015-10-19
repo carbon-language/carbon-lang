@@ -31,6 +31,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Expression/REPL.h"
 #include "lldb/Expression/UserExpression.h"
 #include "Plugins/ExpressionParser/Clang/ClangASTSource.h"
 #include "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h"
@@ -209,6 +210,37 @@ const lldb::ProcessSP &
 Target::GetProcessSP () const
 {
     return m_process_sp;
+}
+
+lldb::REPLSP
+Target::GetREPL (lldb::LanguageType language, bool can_create)
+{
+    if (language == eLanguageTypeUnknown)
+    {
+        return REPLSP(); // must provide a language
+    }
+    
+    REPLMap::iterator pos = m_repl_map.find(language);
+    
+    if (pos != m_repl_map.end())
+    {
+        return pos->second;
+    }
+    
+    if (!can_create)
+    {
+        return lldb::REPLSP();
+    }
+    
+    lldb::REPLSP ret = REPL::Create(language, this);
+    
+    if (ret)
+    {
+        m_repl_map[language] = ret;
+        return m_repl_map[language];
+    }
+    
+    return nullptr;
 }
 
 void

@@ -442,6 +442,18 @@ public:
     }
     
     bool
+    GetColorizeErrors () const
+    {
+        return m_ansi_color_errors;
+    }
+    
+    void
+    SetColorizeErrors (bool b)
+    {
+        m_ansi_color_errors = b;
+    }
+    
+    bool
     GetTrapExceptions() const
     {
         return m_trap_exceptions;
@@ -451,6 +463,18 @@ public:
     SetTrapExceptions (bool b)
     {
         m_trap_exceptions = b;
+    }
+    
+    bool
+    GetREPLEnabled() const
+    {
+        return m_repl;
+    }
+    
+    void
+    SetREPLEnabled (bool b)
+    {
+        m_repl = b;
     }
     
     void
@@ -467,6 +491,37 @@ public:
             return false;
         else
             return m_cancel_callback (phase, m_cancel_callback_baton);
+    }
+    
+    // Allows the expression contents to be remapped to point to the specified file and line
+    // using #line directives.
+    void
+    SetPoundLine (const char *path, uint32_t line) const
+    {
+        if (path && path[0])
+        {
+            m_pound_line_file = path;
+            m_pound_line_line = line;
+        }
+        else
+        {
+            m_pound_line_file.clear();
+            m_pound_line_line = 0;
+        }
+    }
+    
+    const char *
+    GetPoundLineFilePath () const
+    {
+        if (m_pound_line_file.empty())
+            return NULL;
+        return m_pound_line_file.c_str();
+    }
+    
+    uint32_t
+    GetPoundLineLine () const
+    {
+        return m_pound_line_line;
     }
 
     void
@@ -493,13 +548,20 @@ private:
     bool m_stop_others;
     bool m_debug;
     bool m_trap_exceptions;
+    bool m_repl;
     bool m_generate_debug_info;
+    bool m_ansi_color_errors;
     bool m_result_is_internal;
     lldb::DynamicValueType m_use_dynamic;
     uint32_t m_timeout_usec;
     uint32_t m_one_thread_timeout_usec;
     lldb::ExpressionCancelCallback m_cancel_callback;
     void *m_cancel_callback_baton;
+    // If m_pound_line_file is not empty and m_pound_line_line is non-zero,
+    // use #line %u "%s" before the expression content to remap where the source
+    // originates
+    mutable std::string m_pound_line_file;
+    mutable uint32_t m_pound_line_line;
 };
 
 //----------------------------------------------------------------------
@@ -1504,8 +1566,11 @@ public:
     
     lldb::SearchFilterSP
     GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles);
+    
+    lldb::REPLSP
+    GetREPL (lldb::LanguageType, bool can_create);
 
-protected:    
+protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
@@ -1527,6 +1592,9 @@ protected:
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
     TypeSystemMap m_scratch_type_system_map;
+    
+    typedef std::map<lldb::LanguageType, lldb::REPLSP> REPLMap;
+    REPLMap m_repl_map;
     
     lldb::ClangASTImporterUP m_ast_importer_ap;
     lldb::ClangModulesDeclVendorUP m_clang_modules_decl_vendor_ap;

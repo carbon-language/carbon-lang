@@ -85,6 +85,7 @@ g_properties[] =
     { "expand-regex-aliases", OptionValue::eTypeBoolean, true, false, nullptr, nullptr, "If true, regular expression alias commands will show the expanded command that will be executed. This can be used to debug new regular expression alias commands." },
     { "prompt-on-quit", OptionValue::eTypeBoolean, true, true, nullptr, nullptr, "If true, LLDB will prompt you before quitting if there are any live processes being debugged. If false, LLDB will quit without asking in any case." },
     { "stop-command-source-on-error", OptionValue::eTypeBoolean, true, true, nullptr, nullptr, "If true, LLDB will stop running a 'command source' script upon encountering an error." },
+    { "space-repl-prompts", OptionValue::eTypeBoolean, true, false, nullptr, nullptr, "If true, blank lines will be printed between between REPL submissions." },
     { nullptr                  , OptionValue::eTypeInvalid, true, 0    , nullptr, nullptr, nullptr }
 };
 
@@ -92,7 +93,8 @@ enum
 {
     ePropertyExpandRegexAliases = 0,
     ePropertyPromptOnQuit = 1,
-    ePropertyStopCmdSourceOnError = 2
+    ePropertyStopCmdSourceOnError = 2,
+    eSpaceReplPrompts = 3
 };
 
 ConstString &
@@ -164,6 +166,13 @@ bool
 CommandInterpreter::GetStopCmdSourceOnError () const
 {
     const uint32_t idx = ePropertyStopCmdSourceOnError;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (nullptr, idx, g_properties[idx].default_uint_value != 0);
+}
+
+bool
+CommandInterpreter::GetSpaceReplPrompts () const
+{
+    const uint32_t idx = eSpaceReplPrompts;
     return m_collection_sp->GetPropertyAtIndexAsBoolean (nullptr, idx, g_properties[idx].default_uint_value != 0);
 }
 

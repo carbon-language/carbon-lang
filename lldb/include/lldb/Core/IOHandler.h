@@ -42,6 +42,7 @@ namespace lldb_private {
             Confirm,
             Curses,
             Expression,
+            REPL,
             ProcessIO,
             PythonInterpreter,
             PythonCode,
