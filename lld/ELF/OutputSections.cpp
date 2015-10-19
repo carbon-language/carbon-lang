@@ -369,6 +369,9 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   uint32_t Flags = 0;
   if (Config->Bsymbolic)
     Flags |= DF_SYMBOLIC;
+  if (Flags)
+    WriteVal(DT_FLAGS, Flags);
+  Flags = 0;
   if (Config->ZNow)
     Flags |= DF_1_NOW;
   if (Flags)
