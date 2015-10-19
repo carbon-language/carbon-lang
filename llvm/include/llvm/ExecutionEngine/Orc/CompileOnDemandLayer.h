@@ -69,21 +69,12 @@ private:
 
     LogicalModuleResources() {}
 
-    LogicalModuleResources(LogicalModuleResources &&Other) {
-      SourceModule = std::move(Other.SourceModule);
-      StubsToClone = std::move(StubsToClone);
-      StubsMgr = std::move(StubsMgr);
-    }
-
     // Explicit move constructor to make MSVC happy.
-    LogicalModuleResources& operator=(LogicalModuleResources &&Other) {
-      SourceModule = std::move(Other.SourceModule);
-      StubsToClone = std::move(StubsToClone);
-      StubsMgr = std::move(StubsMgr);
-      return *this;
-    }
+    LogicalModuleResources(LogicalModuleResources &&Other) = default;
 
     // Explicit move assignment to make MSVC happy.
+    LogicalModuleResources& operator=(LogicalModuleResources &&Other) = default;
+
     JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) {
       if (Name.endswith("$stub_ptr") && !ExportedSymbolsOnly) {
         assert(!ExportedSymbolsOnly && "Stubs are never exported");
