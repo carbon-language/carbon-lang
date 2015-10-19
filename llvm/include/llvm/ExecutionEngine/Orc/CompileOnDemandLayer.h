@@ -22,6 +22,7 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <list>
+#include <memory>
 #include <set>
 
 #include "llvm/Support/Debug.h"
@@ -66,6 +67,23 @@ private:
     std::set<const Function*> StubsToClone;
     std::unique_ptr<IndirectStubsMgrT> StubsMgr;
 
+    LogicalModuleResources() {}
+
+    LogicalModuleResources(LogicalModuleResources &&Other) {
+      SourceModule = std::move(Other.SourceModule);
+      StubsToClone = std::move(StubsToClone);
+      StubsMgr = std::move(StubsMgr);
+    }
+
+    // Explicit move constructor to make MSVC happy.
+    LogicalModuleResources& operator=(LogicalModuleResources &&Other) {
+      SourceModule = std::move(Other.SourceModule);
+      StubsToClone = std::move(StubsToClone);
+      StubsMgr = std::move(StubsMgr);
+      return *this;
+    }
+
+    // Explicit move assignment to make MSVC happy.
     JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) {
       if (Name.endswith("$stub_ptr") && !ExportedSymbolsOnly) {
         assert(!ExportedSymbolsOnly && "Stubs are never exported");
