@@ -807,11 +807,12 @@ NativeRegisterContextLinux_arm64::WriteHardwareDebugRegs(int hwbType)
 
     memset (&dreg_state, 0, sizeof (dreg_state));
     ioVec.iov_base = &dreg_state;
-    ioVec.iov_len = sizeof (dreg_state);
 
     if (hwbType == eDREGTypeWATCH)
     {
         hwbType = NT_ARM_HW_WATCH;
+        ioVec.iov_len = sizeof (dreg_state.dbg_info) + sizeof (dreg_state.pad)
+                + (sizeof (dreg_state.dbg_regs [0]) * m_max_hwp_supported);
 
         for (uint32_t i = 0; i < m_max_hwp_supported; i++)
         {
@@ -822,6 +823,8 @@ NativeRegisterContextLinux_arm64::WriteHardwareDebugRegs(int hwbType)
     else
     {
         hwbType = NT_ARM_HW_BREAK;
+        ioVec.iov_len = sizeof (dreg_state.dbg_info) + sizeof (dreg_state.pad)
+                + (sizeof (dreg_state.dbg_regs [0]) * m_max_hbp_supported);
 
         for (uint32_t i = 0; i < m_max_hbp_supported; i++)
         {
