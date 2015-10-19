@@ -228,8 +228,8 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   for (std::unique_ptr<InputFile> &F : Files)
     Symtab.addFile(std::move(F));
 
-  for (auto &U : Config->Undefined)
-    Symtab.addUndefinedOpt(U);
+  for (StringRef S : Config->Undefined)
+    Symtab.addUndefinedOpt(S);
 
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
