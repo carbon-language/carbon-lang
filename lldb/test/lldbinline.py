@@ -127,6 +127,12 @@ class InlineTest(TestBase):
         self.buildDwarf()
         self.do_test()
 
+    def __test_with_dwo(self):
+        self.using_dsym = False
+        self.BuildMakefile()
+        self.buildDwo()
+        self.do_test()
+
     def execute_user_command(self, __command):
         exec __command in globals(), locals()
 
@@ -186,6 +192,7 @@ def MakeInlineTest(__file, __globals, decorators=None):
 
     test.test_with_dsym = ApplyDecoratorsToFunction(test._InlineTest__test_with_dsym, decorators)
     test.test_with_dwarf = ApplyDecoratorsToFunction(test._InlineTest__test_with_dwarf, decorators)
+    test.test_with_dwo = ApplyDecoratorsToFunction(test._InlineTest__test_with_dwo, decorators)
 
     # Add the test case to the globals, and hide InlineTest
     __globals.update({test_name : test})
