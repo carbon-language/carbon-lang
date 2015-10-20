@@ -323,3 +323,24 @@ define <16 x i8> @insert_v16i8(<16 x i8> %x, i8 %y, i8* %ptr) {
   %r2 = insertelement <16 x i8> %r1, i8 %y, i32 10
   ret <16 x i8> %r2
 }
+
+define <4 x i32> @shuffle_v4i32_0451(<4 x i32> %a, <4 x i32> %b) {
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 4, i32 5, i32 1>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @shuffle_v4i32_0142(<4 x i32> %a, <4 x i32> %b) {
+ %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 4, i32 2>
+  ret <4 x i32> %shuffle
+}
+
+define <16 x i8> @shuffle_v16i8_0101010101010101(<16 x i8> %a, <16 x i8> %b) {
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i16> @shuffle_v16i16_00_00_00_00_00_00_00_00_00_00_00_00_00_00_00_00(<16 x i16> %a, <16 x i16> %b) {
+  %shuffle = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <16 x i16> %shuffle
+}
+

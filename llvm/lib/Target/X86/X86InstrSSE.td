@@ -8318,29 +8318,45 @@ defm VPBLENDDY : AVX2_binop_rmi<0x02, "vpblendd", X86Blendi, v8i32,
 //
 multiclass avx2_broadcast<bits<8> opc, string OpcodeStr,
                           X86MemOperand x86memop, PatFrag ld_frag,
-                          ValueType OpVT128, ValueType OpVT256> {
-  def rr : AVX28I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                          ValueType OpVT128, ValueType OpVT256, Predicate prd> {
+  let Predicates = [HasAVX2, prd] in {
+    def rr : AVX28I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                  [(set VR128:$dst, (OpVT128 (X86VBroadcast (OpVT128 VR128:$src))))]>,
+                  [(set VR128:$dst,
+                   (OpVT128 (X86VBroadcast (OpVT128 VR128:$src))))]>,
                   Sched<[WriteShuffle]>, VEX;
-  def rm : AVX28I<opc, MRMSrcMem, (outs VR128:$dst), (ins x86memop:$src),
+    def rm : AVX28I<opc, MRMSrcMem, (outs VR128:$dst), (ins x86memop:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                  [(set VR128:$dst, (OpVT128 (X86VBroadcast (ld_frag addr:$src))))]>,
+                  [(set VR128:$dst,
+                   (OpVT128 (X86VBroadcast (ld_frag addr:$src))))]>,
                   Sched<[WriteLoad]>, VEX;
-  def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
+    def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                   [(set VR256:$dst, (OpVT256 (X86VBroadcast (OpVT128 VR128:$src))))]>,
+                   [(set VR256:$dst,
+                    (OpVT256 (X86VBroadcast (OpVT128 VR128:$src))))]>,
                    Sched<[WriteShuffle256]>, VEX, VEX_L;
-  def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst), (ins x86memop:$src),
+    def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst), (ins x86memop:$src),
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                   [(set VR256:$dst, (OpVT256 (X86VBroadcast (ld_frag addr:$src))))]>,
+                   [(set VR256:$dst,
+                    (OpVT256 (X86VBroadcast (ld_frag addr:$src))))]>,
                    Sched<[WriteLoad]>, VEX, VEX_L;
+
+    // Provide aliases for broadcast from the same register class that
+    // automatically does the extract.
+    def : Pat<(OpVT256 (X86VBroadcast (OpVT256 VR256:$src))),
+              (!cast<Instruction>(NAME#"Yrr")
+                  (OpVT128 (EXTRACT_SUBREG (OpVT256 VR256:$src),sub_xmm)))>;
+  }
 }
 
-defm VPBROADCASTB  : avx2_broadcast<0x78, "vpbroadcastb", i8mem, loadi8, v16i8, v32i8>;
-defm VPBROADCASTW  : avx2_broadcast<0x79, "vpbroadcastw", i16mem, loadi16, v8i16, v16i16>;
-defm VPBROADCASTD  : avx2_broadcast<0x58, "vpbroadcastd", i32mem, loadi32, v4i32, v8i32>;
-defm VPBROADCASTQ  : avx2_broadcast<0x59, "vpbroadcastq", i64mem, loadi64, v2i64, v4i64>;
+defm VPBROADCASTB  : avx2_broadcast<0x78, "vpbroadcastb", i8mem, loadi8,
+                                    v16i8, v32i8, NoVLX_Or_NoBWI>;
+defm VPBROADCASTW  : avx2_broadcast<0x79, "vpbroadcastw", i16mem, loadi16,
+                                    v8i16, v16i16, NoVLX_Or_NoBWI>;
+defm VPBROADCASTD  : avx2_broadcast<0x58, "vpbroadcastd", i32mem, loadi32,
+                                    v4i32, v8i32, NoVLX>;
+defm VPBROADCASTQ  : avx2_broadcast<0x59, "vpbroadcastq", i64mem, loadi64,
+                                    v2i64, v4i64, NoVLX>;
 
 let Predicates = [HasAVX2] in {
   // loadi16 is tricky to fold, because !isTypeDesirableForOp, justifiably.
@@ -8352,18 +8368,6 @@ let Predicates = [HasAVX2] in {
 
   // Provide aliases for broadcast from the same register class that
   // automatically does the extract.
-  def : Pat<(v32i8 (X86VBroadcast (v32i8 VR256:$src))),
-            (VPBROADCASTBYrr (v16i8 (EXTRACT_SUBREG (v32i8 VR256:$src),
-                                                    sub_xmm)))>;
-  def : Pat<(v16i16 (X86VBroadcast (v16i16 VR256:$src))),
-            (VPBROADCASTWYrr (v8i16 (EXTRACT_SUBREG (v16i16 VR256:$src),
-                                                    sub_xmm)))>;
-  def : Pat<(v8i32 (X86VBroadcast (v8i32 VR256:$src))),
-            (VPBROADCASTDYrr (v4i32 (EXTRACT_SUBREG (v8i32 VR256:$src),
-                                                    sub_xmm)))>;
-  def : Pat<(v4i64 (X86VBroadcast (v4i64 VR256:$src))),
-            (VPBROADCASTQYrr (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src),
-                                                    sub_xmm)))>;
   def : Pat<(v8f32 (X86VBroadcast (v8f32 VR256:$src))),
             (VBROADCASTSSYrr (v4f32 (EXTRACT_SUBREG (v8f32 VR256:$src),
                                                     sub_xmm)))>;
