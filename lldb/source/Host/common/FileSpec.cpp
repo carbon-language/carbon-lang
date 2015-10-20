@@ -1431,7 +1431,7 @@ FileSpec::AppendPathComponent(const char *new_path)
         return;
     }
     StreamString stream;
-    if (m_filename.IsEmpty())
+    if (m_filename.IsEmpty() || (m_filename.GetLength() == 1 && m_filename.GetCString()[0] == '.'))
         stream.Printf("%s/%s", m_directory.GetCString(), new_path);
     else if (m_directory.IsEmpty())
         stream.Printf("%s/%s", m_filename.GetCString(), new_path);
