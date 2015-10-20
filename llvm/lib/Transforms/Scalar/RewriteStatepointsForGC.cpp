@@ -1263,14 +1263,6 @@ normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent,
   return Ret;
 }
 
-static int find_index(ArrayRef<Value *> livevec, Value *val) {
-  auto itr = std::find(livevec.begin(), livevec.end(), val);
-  assert(livevec.end() != itr);
-  size_t index = std::distance(livevec.begin(), itr);
-  assert(index < livevec.size());
-  return index;
-}
-
 // Create new attribute set containing only attributes which can be transferred
 // from original call to the safepoint.
 static AttributeSet legalizeCallAttributes(AttributeSet AS) {
@@ -1325,7 +1317,15 @@ static void CreateGCRelocates(ArrayRef<Value *> LiveVariables,
                               IRBuilder<> Builder) {
   if (LiveVariables.empty())
     return;
-  
+
+  auto FindIndex = [](ArrayRef<Value *> LiveVec, Value *Val) {
+    auto ValIt = std::find(LiveVec.begin(), LiveVec.end(), Val);
+    assert(ValIt != LiveVec.end() && "Val not found in LiveVec!");
+    size_t Index = std::distance(LiveVec.begin(), ValIt);
+    assert(Index < LiveVec.size() && "Bug in std::find?");
+    return Index;
+  };
+
   // All gc_relocate are set to i8 addrspace(1)* type. We originally generated
   // unique declarations for each pointer type, but this proved problematic
   // because the intrinsic mangling code is incomplete and fragile.  Since
@@ -1341,9 +1341,9 @@ static void CreateGCRelocates(ArrayRef<Value *> LiveVariables,
   for (unsigned i = 0; i < LiveVariables.size(); i++) {
     // Generate the gc.relocate call and save the result
     Value *BaseIdx =
-      Builder.getInt32(LiveStart + find_index(LiveVariables, BasePtrs[i]));
+      Builder.getInt32(LiveStart + FindIndex(LiveVariables, BasePtrs[i]));
     Value *LiveIdx =
-      Builder.getInt32(LiveStart + find_index(LiveVariables, LiveVariables[i]));
+      Builder.getInt32(LiveStart + FindIndex(LiveVariables, LiveVariables[i]));
 
     // only specify a debug name if we can give a useful one
     CallInst *Reloc = Builder.CreateCall(
