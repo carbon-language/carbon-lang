@@ -169,7 +169,7 @@ public:
          LDI != LDE; ++LDI)
       if (auto Symbol = findSymbolIn(LDI, Name, ExportedSymbolsOnly))
         return Symbol;
-    return nullptr;
+    return BaseLayer.findSymbol(Name, ExportedSymbolsOnly);
   }
 
   /// @brief Get the address of a symbol provided by this layer, or some layer

@@ -20,6 +20,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/TypeBuilder.h"
+#include "llvm/ExecutionEngine/Orc/JITSymbol.h"
 #include <memory>
 
 namespace llvm {
@@ -60,6 +61,87 @@ namespace llvm {
     }
   };
 
+template <typename HandleT,
+          typename AddModuleSetFtor,
+          typename RemoveModuleSetFtor,
+          typename FindSymbolFtor,
+          typename FindSymbolInFtor>
+class MockBaseLayer {
+public:
+
+  typedef HandleT ModuleSetHandleT;
+
+  MockBaseLayer(AddModuleSetFtor &&AddModuleSet,
+                RemoveModuleSetFtor &&RemoveModuleSet,
+                FindSymbolFtor &&FindSymbol,
+                FindSymbolInFtor &&FindSymbolIn)
+      : AddModuleSet(AddModuleSet), RemoveModuleSet(RemoveModuleSet),
+        FindSymbol(FindSymbol), FindSymbolIn(FindSymbolIn)
+  {}
+
+  template <typename ModuleSetT, typename MemoryManagerPtrT,
+            typename SymbolResolverPtrT>
+  ModuleSetHandleT addModuleSet(ModuleSetT Ms, MemoryManagerPtrT MemMgr,
+                                SymbolResolverPtrT Resolver) {
+    return AddModuleSet(std::move(Ms), std::move(MemMgr), std::move(Resolver));
+  }
+
+  void removeModuleSet(ModuleSetHandleT H) {
+    RemoveModuleSet(H);
+  }
+
+  orc::JITSymbol findSymbol(const std::string &Name, bool ExportedSymbolsOnly) {
+    return FindSymbol(Name, ExportedSymbolsOnly);
+  }
+
+  orc::JITSymbol findSymbolIn(ModuleSetHandleT H, const std::string &Name,
+                         bool ExportedSymbolsOnly) {
+    return FindSymbolIn(H, Name, ExportedSymbolsOnly);
+  }
+
+private:
+  AddModuleSetFtor AddModuleSet;
+  RemoveModuleSetFtor RemoveModuleSet;
+  FindSymbolFtor FindSymbol;
+  FindSymbolInFtor FindSymbolIn;
+};
+
+template <typename ModuleSetHandleT,
+          typename AddModuleSetFtor,
+          typename RemoveModuleSetFtor,
+          typename FindSymbolFtor,
+          typename FindSymbolInFtor>
+MockBaseLayer<ModuleSetHandleT, AddModuleSetFtor, RemoveModuleSetFtor,
+              FindSymbolFtor, FindSymbolInFtor>
+createMockBaseLayer(AddModuleSetFtor &&AddModuleSet,
+                    RemoveModuleSetFtor &&RemoveModuleSet,
+                    FindSymbolFtor &&FindSymbol,
+                    FindSymbolInFtor &&FindSymbolIn) {
+  return MockBaseLayer<ModuleSetHandleT, AddModuleSetFtor, RemoveModuleSetFtor,
+                       FindSymbolFtor, FindSymbolInFtor>(
+                         std::forward<AddModuleSetFtor>(AddModuleSet),
+                         std::forward<RemoveModuleSetFtor>(RemoveModuleSet),
+                         std::forward<FindSymbolFtor>(FindSymbol),
+                         std::forward<FindSymbolInFtor>(FindSymbolIn));
+}
+
+template <typename ReturnT>
+class DoNothingAndReturn {
+public:
+  DoNothingAndReturn(ReturnT Val) : Val(Val) {}
+
+  template <typename... Args>
+  ReturnT operator()(Args...) const { return Val; }
+private:
+  ReturnT Val;
+};
+
+template <>
+class DoNothingAndReturn<void> {
+public:
+  template <typename... Args>
+  void operator()(Args...) const { }
+};
 
 } // namespace llvm
 
