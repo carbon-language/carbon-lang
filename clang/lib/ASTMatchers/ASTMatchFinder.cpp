@@ -621,9 +621,6 @@ private:
     if (Node.get<TranslationUnitDecl>() ==
         ActiveASTContext->getTranslationUnitDecl())
       return false;
-    assert(Node.getMemoizationData() &&
-           "Invariant broken: only nodes that support memoization may be "
-           "used in the parent map.");
 
     MatchKey Key;
     Key.MatcherID = Matcher.getID();
@@ -867,7 +864,11 @@ bool MatchASTVisitor::TraverseNestedNameSpecifier(NestedNameSpecifier *NNS) {
 
 bool MatchASTVisitor::TraverseNestedNameSpecifierLoc(
     NestedNameSpecifierLoc NNS) {
+  if (!NNS)
+    return true;
+
   match(NNS);
+
   // We only match the nested name specifier here (as opposed to traversing it)
   // because the traversal is already done in the parallel "Loc"-hierarchy.
   if (NNS.hasQualifier())

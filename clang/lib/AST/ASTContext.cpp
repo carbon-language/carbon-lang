@@ -8678,6 +8678,23 @@ bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
 
 namespace {
 
+/// Template specializations to abstract away from pointers and TypeLocs.
+/// @{
+template <typename T>
+ast_type_traits::DynTypedNode createDynTypedNode(const T &Node) {
+  return ast_type_traits::DynTypedNode::create(*Node);
+}
+template <>
+ast_type_traits::DynTypedNode createDynTypedNode(const TypeLoc &Node) {
+  return ast_type_traits::DynTypedNode::create(Node);
+}
+template <>
+ast_type_traits::DynTypedNode
+createDynTypedNode(const NestedNameSpecifierLoc &Node) {
+  return ast_type_traits::DynTypedNode::create(Node);
+}
+/// @}
+
   /// \brief A \c RecursiveASTVisitor that builds a map from nodes to their
   /// parents as defined by the \c RecursiveASTVisitor.
   ///
@@ -8685,7 +8702,8 @@ namespace {
   /// traversal - there are other relationships (for example declaration context)
   /// in the AST that are better modeled by special matchers.
   ///
-  /// FIXME: Currently only builds up the map using \c Stmt and \c Decl nodes.
+/// FIXME: Currently only builds up the map using \c Stmt, \c Decl,
+/// \c NestedNameSpecifierLoc and \c TypeLoc nodes.
   class ParentMapASTVisitor : public RecursiveASTVisitor<ParentMapASTVisitor> {
 
   public:
@@ -8717,21 +8735,11 @@ namespace {
     }
 
     template <typename T>
-    bool TraverseNode(T *Node, bool(VisitorBase:: *traverse) (T *)) {
+    bool TraverseNode(T Node, bool (VisitorBase::*traverse)(T)) {
       if (!Node)
         return true;
       if (ParentStack.size() > 0) {
-        // FIXME: Currently we add the same parent multiple times, but only
-        // when no memoization data is available for the type.
-        // For example when we visit all subexpressions of template
-        // instantiations; this is suboptimal, but benign: the only way to
-        // visit those is with hasAncestor / hasParent, and those do not create
-        // new matches.
-        // The plan is to enable DynTypedNode to be storable in a map or hash
-        // map. The main problem there is to implement hash functions /
-        // comparison operators for all types that DynTypedNode supports that
-        // do not have pointer identity.
-        auto &NodeOrVector = (*Parents)[Node];
+        auto &NodeOrVector = (*Parents)[createDynTypedNode(Node)];
         if (NodeOrVector.isNull()) {
           NodeOrVector = new ast_type_traits::DynTypedNode(ParentStack.back());
         } else {
@@ -8757,7 +8765,7 @@ namespace {
             Vector->push_back(ParentStack.back());
         }
       }
-      ParentStack.push_back(ast_type_traits::DynTypedNode::create(*Node));
+      ParentStack.push_back(createDynTypedNode(Node));
       bool Result = (this ->* traverse) (Node);
       ParentStack.pop_back();
       return Result;
@@ -8771,6 +8779,15 @@ namespace {
       return TraverseNode(StmtNode, &VisitorBase::TraverseStmt);
     }
 
+    bool TraverseTypeLoc(TypeLoc TypeLocNode) {
+      return TraverseNode(TypeLocNode, &VisitorBase::TraverseTypeLoc);
+    }
+
+    bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNSLocNode) {
+      return TraverseNode(NNSLocNode,
+                          &VisitorBase::TraverseNestedNameSpecifierLoc);
+    }
+
     ASTContext::ParentMap *Parents;
     llvm::SmallVector<ast_type_traits::DynTypedNode, 16> ParentStack;
 
@@ -8781,16 +8798,13 @@ namespace {
 
 ArrayRef<ast_type_traits::DynTypedNode>
 ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
-  assert(Node.getMemoizationData() &&
-         "Invariant broken: only nodes that support memoization may be "
-         "used in the parent map.");
   if (!AllParents) {
     // We always need to run over the whole translation unit, as
     // hasAncestor can escape any subtree.
     AllParents.reset(
         ParentMapASTVisitor::buildMap(*getTranslationUnitDecl()));
   }
-  ParentMap::const_iterator I = AllParents->find(Node.getMemoizationData());
+  ParentMap::const_iterator I = AllParents->find(Node);
   if (I == AllParents->end()) {
     return None;
   }
