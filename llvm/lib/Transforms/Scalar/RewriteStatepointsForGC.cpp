@@ -1342,8 +1342,7 @@ static void CreateGCRelocates(ArrayRef<Value *> LiveVariables,
     // Generate the gc.relocate call and save the result
     Value *BaseIdx =
       Builder.getInt32(LiveStart + FindIndex(LiveVariables, BasePtrs[i]));
-    Value *LiveIdx =
-      Builder.getInt32(LiveStart + FindIndex(LiveVariables, LiveVariables[i]));
+    Value *LiveIdx = Builder.getInt32(LiveStart + i);
 
     // only specify a debug name if we can give a useful one
     CallInst *Reloc = Builder.CreateCall(
