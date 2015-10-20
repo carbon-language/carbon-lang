@@ -220,3 +220,6 @@ _start:
 
 # RUN: not ld.lld2 %t -o %t -m wrong_emul 2>&1 | FileCheck --check-prefix=UNKNOWN_EMUL %s
 # UNKNOWN_EMUL: Unknown emulation: wrong_emul
+
+# RUN: not ld.lld2 %t -o %t -z notanoption 2>&1 | FileCheck --check-prefix=UNKNOWN_ZOPT %s
+# UNKNOWN_ZOPT: notanoption: unknown -z option
