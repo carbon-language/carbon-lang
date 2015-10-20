@@ -388,7 +388,7 @@ OBSOLETE                     "%1$s: granularity=core will be used."
 EnvLockWarn                  "%1$s must be set prior to first OMP lock call or critical section; ignored."
 FutexNotSupported            "futex system call not supported; %1$s=%2$s ignored."
 AffGranUsing                 "%1$s: granularity=%2$s will be used."
-AffThrPlaceInvalid           "%1$s: invalid value \"%2$s\", valid format is \"nS[,nO],nC[,nO],nT "
+AffThrPlaceInvalid           "%1$s: invalid value \"%2$s\", valid format is \"Ns[@N],Nc[@N],Nt "
                              "(nSockets@offset, nCores@offset, nTthreads per core)\"."
 AffThrPlaceUnsupported       "KMP_PLACE_THREADS ignored: unsupported architecture."
 AffThrPlaceManyCores         "KMP_PLACE_THREADS ignored: too many cores requested."
@@ -404,6 +404,7 @@ AffThrPlaceNonThreeLevel     "KMP_PLACE_THREADS ignored: only three-level topolo
 AffGranTopGroup              "%1$s: granularity=%2$s is not supported with KMP_TOPOLOGY_METHOD=group. Using \"granularity=fine\"."
 AffGranGroupType             "%1$s: granularity=group is not supported with KMP_AFFINITY=%2$s. Using \"granularity=core\"."
 AffThrPlaceManySockets       "KMP_PLACE_THREADS ignored: too many sockets requested."
+AffThrPlaceDeprecated        "KMP_PLACE_THREADS \"o\" offset designator deprecated, please use @ prefix for offset value."
 
 
 # --------------------------------------------------------------------------------------------------

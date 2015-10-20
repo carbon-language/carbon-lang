@@ -4117,13 +4117,16 @@ static void
 __kmp_stg_parse_place_threads( char const * name, char const * value, void * data ) {
     // Value example: 5Cx2Tx15O
     // Which means "use 5 cores with offset 15, 2 threads per core"
-    // AC: extended to sockets level:
-    //     2s,6o,2c,2o,2t   or   2s,6o,2c,2t,2o
-    //     (to not break legacy code core-offset can be last).
+    // AC: extended to sockets level, examples of
+    //     "use 2 sockets with offset 6, 2 cores with offset 2 per socket, 2 threads per core":
+    //     2s,6o,2c,2o,2t; 2s,6o,2c,2t,2o; 2s@6,2c@2,2t
+    //     To not break legacy code core-offset can be last;
+    //     postfix "o" or prefix @ can be offset designator.
     // Note: not all syntax errors are analyzed, some may be skipped.
-#define CHECK_DELIM(_x)   (*(_x) == ',' || *(_x) == '@' || *(_x) == 'x')
+#define CHECK_DELIM(_x)   (*(_x) == ',' || *(_x) == 'x')
     int         num;
-    int         flagS = 0, flagC = 0, flagT = 0;
+    int single_warning = 0;
+    int flagS = 0, flagC = 0, flagT = 0, flagSO = 0, flagCO = 0;
     const char *next = value;
     const char *prev;
 
@@ -4136,14 +4139,36 @@ __kmp_stg_parse_place_threads( char const * name, char const * value, void * dat
         SKIP_DIGITS(next);
         num = __kmp_str_to_int(prev, *next);
         SKIP_WS(next);
-        if (*next == 's' || *next == 'S') {
+        if (*next == 's' || *next == 'S') {  // e.g. "2s"
             __kmp_place_num_sockets = num;
             flagS = 1; // got num sockets
             next++;
+            if (*next == '@') { // socket offset, e.g. "2s@4"
+                flagSO = 1;
+                prev = ++next;  // don't allow spaces for simplicity
+                if (!(*next >= '0' && *next <= '9')) {
+                    KMP_WARNING(AffThrPlaceInvalid, name, value);
+                    return;
+                }
+                SKIP_DIGITS(next);
+                num = __kmp_str_to_int(prev, *next);
+                __kmp_place_socket_offset = num;
+            }
         } else if (*next == 'c' || *next == 'C') {
             __kmp_place_num_cores = num;
             flagS = flagC = 1; // sockets were not specified - use default
             next++;
+            if (*next == '@') { // core offset, e.g. "2c@6"
+                flagCO = 1;
+                prev = ++next;  // don't allow spaces for simplicity
+                if (!(*next >= '0' && *next <= '9')) {
+                    KMP_WARNING(AffThrPlaceInvalid, name, value);
+                    return;
+                }
+                SKIP_DIGITS(next);
+                num = __kmp_str_to_int(prev, *next);
+                __kmp_place_core_offset = num;
+            }
         } else if (CHECK_DELIM(next)) {
             __kmp_place_num_cores = num; // no letter-designator - num cores
             flagS = flagC = 1; // sockets were not specified - use default
@@ -4178,17 +4203,32 @@ __kmp_stg_parse_place_threads( char const * name, char const * value, void * dat
         SKIP_DIGITS(next);
         num = __kmp_str_to_int(prev, *next);
         SKIP_WS(next);
-        if (*next == 'o' || *next == 'O') { // offset specified
-            if (flagC) { // whether num_cores already specified (when sockets skipped)
-                __kmp_place_core_offset = num;
-            } else {
-                __kmp_place_socket_offset = num;
-            }
-            next++;
-        } else if (*next == 'c' || *next == 'C') {
+        if (*next == 'c' || *next == 'C') {
             KMP_DEBUG_ASSERT(flagC == 0);
             __kmp_place_num_cores = num;
             flagC = 1;
+            next++;
+            if (*next == '@') { // core offset, e.g. "2c@6"
+                flagCO = 1;
+                prev = ++next;  // don't allow spaces for simplicity
+                if (!(*next >= '0' && *next <= '9')) {
+                    KMP_WARNING(AffThrPlaceInvalid, name, value);
+                    return;
+                }
+                SKIP_DIGITS(next);
+                num = __kmp_str_to_int(prev, *next);
+                __kmp_place_core_offset = num;
+            }
+        } else if (*next == 'o' || *next == 'O') { // offset specified
+            KMP_WARNING(AffThrPlaceDeprecated);
+            single_warning = 1;
+            if (flagC) { // whether num_cores already specified (sockets skipped)
+                KMP_DEBUG_ASSERT(!flagCO); // either "o" or @, not both
+                __kmp_place_core_offset = num;
+            } else {
+                KMP_DEBUG_ASSERT(!flagSO); // either "o" or @, not both
+                __kmp_place_socket_offset = num;
+            }
             next++;
         } else if (*next == 't' || *next == 'T') {
             KMP_DEBUG_ASSERT(flagT == 0);
@@ -4222,22 +4262,26 @@ __kmp_stg_parse_place_threads( char const * name, char const * value, void * dat
         SKIP_DIGITS(next);
         num = __kmp_str_to_int(prev, *next);
         SKIP_WS(next);
-        if (*next == 'c' || *next == 'C') {
-            KMP_DEBUG_ASSERT(flagC == 0);
-            __kmp_place_num_cores = num;
-            flagC = 1;
-            next++;
-        } else if (*next == 'o' || *next == 'O') {
-            KMP_DEBUG_ASSERT(flagC);
-            __kmp_place_core_offset = num;
-            next++;
-        } else if (*next == 't' || *next == 'T') {
+        if (*next == 't' || *next == 'T') {
             KMP_DEBUG_ASSERT(flagT == 0);
             __kmp_place_num_threads_per_core = num;
             if (flagC == 0)
                 return; // num_cores could be skipped (e.g. 2s,4o,2t)
             flagT = 1;
             next++; // can have core-offset specified later (e.g. 2s,1c,2t,3o)
+        } else if (*next == 'c' || *next == 'C') {
+            KMP_DEBUG_ASSERT(flagC == 0);
+            __kmp_place_num_cores = num;
+            flagC = 1;
+            next++;
+            //KMP_DEBUG_ASSERT(*next != '@'); // socket offset used "o" designator
+        } else if (*next == 'o' || *next == 'O') {
+            KMP_WARNING(AffThrPlaceDeprecated);
+            single_warning = 1;
+            KMP_DEBUG_ASSERT(flagC);
+            //KMP_DEBUG_ASSERT(!flagSO); // socket offset couldn't use @ designator
+            __kmp_place_core_offset = num;
+            next++;
         } else {
             KMP_WARNING(AffThrPlaceInvalid, name, value);
             return;
@@ -4262,6 +4306,10 @@ __kmp_stg_parse_place_threads( char const * name, char const * value, void * dat
         num = __kmp_str_to_int(prev, *next);
         SKIP_WS(next);
         if (*next == 'o' || *next == 'O') {
+            if (!single_warning) { // warn once
+                KMP_WARNING(AffThrPlaceDeprecated);
+            }
+            KMP_DEBUG_ASSERT(!flagSO); // socket offset couldn't use @ designator
             __kmp_place_core_offset = num;
             next++;
         } else if (*next == 't' || *next == 'T') {
@@ -4292,7 +4340,11 @@ __kmp_stg_parse_place_threads( char const * name, char const * value, void * dat
         num = __kmp_str_to_int(prev, *next);
         SKIP_WS(next);
         if (*next == 'o' || *next == 'O') {
+            if (!single_warning) { // warn once
+                KMP_WARNING(AffThrPlaceDeprecated);
+            }
             KMP_DEBUG_ASSERT(flagT);
+            KMP_DEBUG_ASSERT(!flagSO); // socket offset couldn't use @ designator
             __kmp_place_core_offset = num;
         } else if (*next == 't' || *next == 'T') {
             KMP_DEBUG_ASSERT(flagT == 0);
@@ -4320,13 +4372,13 @@ __kmp_stg_print_place_threads( kmp_str_buf_t * buffer, char const * name, void *
         if (__kmp_place_num_sockets) {
             __kmp_str_buf_print(&buf, "%ds", __kmp_place_num_sockets);
             if (__kmp_place_socket_offset)
-                __kmp_str_buf_print(&buf, "@%do", __kmp_place_socket_offset);
+                __kmp_str_buf_print(&buf, "@%d", __kmp_place_socket_offset);
             comma = 1;
         }
         if (__kmp_place_num_cores) {
             __kmp_str_buf_print(&buf, "%s%dc", comma?",":"", __kmp_place_num_cores);
             if (__kmp_place_core_offset)
-                __kmp_str_buf_print(&buf, "@%do", __kmp_place_core_offset);
+                __kmp_str_buf_print(&buf, "@%d", __kmp_place_core_offset);
             comma = 1;
         }
         if (__kmp_place_num_threads_per_core)
