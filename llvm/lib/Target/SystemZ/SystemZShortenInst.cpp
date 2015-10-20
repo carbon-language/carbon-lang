@@ -16,6 +16,8 @@
 #include "SystemZTargetMachine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/LivePhysRegs.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
 
@@ -35,20 +37,16 @@ public:
   bool runOnMachineFunction(MachineFunction &F) override;
 
 private:
-  bool shortenIIF(MachineInstr &MI, unsigned *GPRMap, unsigned LiveOther,
-                  unsigned LLIxL, unsigned LLIxH);
+  bool shortenIIF(MachineInstr &MI, unsigned LLIxL, unsigned LLIxH);
   bool shortenOn0(MachineInstr &MI, unsigned Opcode);
   bool shortenOn01(MachineInstr &MI, unsigned Opcode);
   bool shortenOn001(MachineInstr &MI, unsigned Opcode);
-  bool shortenOn001AddCC(MachineInstr &MI, unsigned Opcode, bool CCLive);
+  bool shortenOn001AddCC(MachineInstr &MI, unsigned Opcode);
   bool shortenFPConv(MachineInstr &MI, unsigned Opcode);
 
   const SystemZInstrInfo *TII;
-
-  // LowGPRs[I] has bit N set if LLVM register I includes the low
-  // word of GPR N.  HighGPRs is the same for the high word.
-  unsigned LowGPRs[SystemZ::NUM_TARGET_REGS];
-  unsigned HighGPRs[SystemZ::NUM_TARGET_REGS];
+  const TargetRegisterInfo *TRI;
+  LivePhysRegs LiveRegs;
 };
 
 char SystemZShortenInst::ID = 0;
@@ -59,33 +57,24 @@ FunctionPass *llvm::createSystemZShortenInstPass(SystemZTargetMachine &TM) {
 }
 
 SystemZShortenInst::SystemZShortenInst(const SystemZTargetMachine &tm)
-  : MachineFunctionPass(ID), TII(nullptr), LowGPRs(), HighGPRs() {
-  // Set up LowGPRs and HighGPRs.
-  for (unsigned I = 0; I < 16; ++I) {
-    LowGPRs[SystemZMC::GR32Regs[I]] |= 1 << I;
-    LowGPRs[SystemZMC::GR64Regs[I]] |= 1 << I;
-    HighGPRs[SystemZMC::GRH32Regs[I]] |= 1 << I;
-    HighGPRs[SystemZMC::GR64Regs[I]] |= 1 << I;
-    if (unsigned GR128 = SystemZMC::GR128Regs[I]) {
-      LowGPRs[GR128] |= 3 << I;
-      HighGPRs[GR128] |= 3 << I;
-    }
-  }
-}
+  : MachineFunctionPass(ID), TII(nullptr) {}
 
 // MI loads one word of a GPR using an IIxF instruction and LLIxL and LLIxH
 // are the halfword immediate loads for the same word.  Try to use one of them
-// instead of IIxF.  If MI loads the high word, GPRMap[X] is the set of high
-// words referenced by LLVM register X while LiveOther is the mask of low
-// words that are currently live, and vice versa.
-bool SystemZShortenInst::shortenIIF(MachineInstr &MI, unsigned *GPRMap,
-                                    unsigned LiveOther, unsigned LLIxL,
-                                    unsigned LLIxH) {
+// instead of IIxF. 
+bool SystemZShortenInst::shortenIIF(MachineInstr &MI,
+                                    unsigned LLIxL, unsigned LLIxH) {
   unsigned Reg = MI.getOperand(0).getReg();
-  assert(Reg < SystemZ::NUM_TARGET_REGS && "Invalid register number");
-  unsigned GPRs = GPRMap[Reg];
-  assert(GPRs != 0 && "Register must be a GPR");
-  if (GPRs & LiveOther)
+  // The new opcode will clear the other half of the GR64 reg, so
+  // cancel if that is live.
+  unsigned thisSubRegIdx = (SystemZ::GRH32BitRegClass.contains(Reg) ?
+			    SystemZ::subreg_h32 : SystemZ::subreg_l32);
+  unsigned otherSubRegIdx = (thisSubRegIdx == SystemZ::subreg_l32 ?
+			     SystemZ::subreg_h32 : SystemZ::subreg_l32);
+  unsigned GR64BitReg = TRI->getMatchingSuperReg(Reg, thisSubRegIdx,
+						 &SystemZ::GR64BitRegClass);
+  unsigned OtherReg = TRI->getSubReg(GR64BitReg, otherSubRegIdx);
+  if (LiveRegs.contains(OtherReg))
     return false;
 
   uint64_t Imm = MI.getOperand(1).getImm();
@@ -137,9 +126,9 @@ bool SystemZShortenInst::shortenOn001(MachineInstr &MI, unsigned Opcode) {
 
 // Calls shortenOn001 if CCLive is false. CC def operand is added in
 // case of success.
-bool SystemZShortenInst::shortenOn001AddCC(MachineInstr &MI, unsigned Opcode,
-					   bool CCLive) {
-  if (!CCLive && shortenOn001(MI, Opcode)) {
+bool SystemZShortenInst::shortenOn001AddCC(MachineInstr &MI,
+					   unsigned Opcode) {
+  if (!LiveRegs.contains(SystemZ::CC) && shortenOn001(MI, Opcode)) {
     MachineInstrBuilder(*MI.getParent()->getParent(), &MI)
       .addReg(SystemZ::CC, RegState::ImplicitDefine);
     return true;
@@ -177,37 +166,24 @@ bool SystemZShortenInst::shortenFPConv(MachineInstr &MI, unsigned Opcode) {
 bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
 
-  // Work out which words are live on exit from the block.
-  unsigned LiveLow = 0;
-  unsigned LiveHigh = 0;
-  bool CCLive = false;
-  for (auto SI = MBB.succ_begin(), SE = MBB.succ_end(); SI != SE; ++SI) {
-    for (const auto &LI : (*SI)->liveins()) {
-      unsigned Reg = LI.PhysReg;
-      assert(Reg < SystemZ::NUM_TARGET_REGS && "Invalid register number");
-      LiveLow |= LowGPRs[Reg];
-      LiveHigh |= HighGPRs[Reg];
-      if (Reg == SystemZ::CC)
-	CCLive = true;
-    }
-  }
+  // Set up the set of live registers at the end of MBB (live out)
+  LiveRegs.clear();
+  LiveRegs.addLiveOuts(&MBB);
 
   // Iterate backwards through the block looking for instructions to change.
   for (auto MBBI = MBB.rbegin(), MBBE = MBB.rend(); MBBI != MBBE; ++MBBI) {
     MachineInstr &MI = *MBBI;
     switch (MI.getOpcode()) {
     case SystemZ::IILF:
-      Changed |= shortenIIF(MI, LowGPRs, LiveHigh, SystemZ::LLILL,
-                            SystemZ::LLILH);
+      Changed |= shortenIIF(MI, SystemZ::LLILL, SystemZ::LLILH);
       break;
 
     case SystemZ::IIHF:
-      Changed |= shortenIIF(MI, HighGPRs, LiveLow, SystemZ::LLIHL,
-                            SystemZ::LLIHH);
+      Changed |= shortenIIF(MI, SystemZ::LLIHL, SystemZ::LLIHH);
       break;
 
     case SystemZ::WFADB:
-      Changed |= shortenOn001AddCC(MI, SystemZ::ADBR, CCLive);
+      Changed |= shortenOn001AddCC(MI, SystemZ::ADBR);
       break;
 
     case SystemZ::WFDDB:
@@ -247,7 +223,7 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
       break;
 
     case SystemZ::WFSDB:
-      Changed |= shortenOn001AddCC(MI, SystemZ::SDBR, CCLive);
+      Changed |= shortenOn001AddCC(MI, SystemZ::SDBR);
       break;
 
     case SystemZ::WFCDB:
@@ -272,38 +248,17 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
       break;
     }
 
-    unsigned UsedLow = 0;
-    unsigned UsedHigh = 0;
-    for (auto MOI = MI.operands_begin(), MOE = MI.operands_end();
-         MOI != MOE; ++MOI) {
-      MachineOperand &MO = *MOI;
-      if (MO.isReg()) {
-        if (unsigned Reg = MO.getReg()) {
-          assert(Reg < SystemZ::NUM_TARGET_REGS && "Invalid register number");
-          if (MO.isDef()) {
-            LiveLow &= ~LowGPRs[Reg];
-            LiveHigh &= ~HighGPRs[Reg];
-          } else if (!MO.isUndef()) {
-            UsedLow |= LowGPRs[Reg];
-            UsedHigh |= HighGPRs[Reg];
-          }
-        }
-      }
-    }
-    LiveLow |= UsedLow;
-    LiveHigh |= UsedHigh;
-
-    if (MI.definesRegister(SystemZ::CC))
-      CCLive = false;
-    if (MI.readsRegister(SystemZ::CC))
-      CCLive = true;
+    LiveRegs.stepBackward(MI);
   }
 
   return Changed;
 }
 
 bool SystemZShortenInst::runOnMachineFunction(MachineFunction &F) {
-  TII = static_cast<const SystemZInstrInfo *>(F.getSubtarget().getInstrInfo());
+  const SystemZSubtarget &ST = F.getSubtarget<SystemZSubtarget>();
+  TII = ST.getInstrInfo();
+  TRI = ST.getRegisterInfo();
+  LiveRegs.init(TRI);
 
   bool Changed = false;
   for (auto &MBB : F)
