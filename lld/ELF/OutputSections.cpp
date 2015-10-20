@@ -294,7 +294,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     ++NumEntries; // DT_INIT
   if (FiniSym)
     ++NumEntries; // DT_FINI
-  if (Config->Bsymbolic)
+  if (Config->Bsymbolic || Config->ZNow)
     ++NumEntries; // DT_FLAGS
   if (Config->ZNodelete || Config->ZNow)
     ++NumEntries; // DT_FLAGS_1
@@ -371,6 +371,8 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   uint32_t Flags = 0;
   if (Config->Bsymbolic)
     Flags |= DF_SYMBOLIC;
+  if (Config->ZNow)
+    Flags |= DF_BIND_NOW;
   if (Flags)
     WriteVal(DT_FLAGS, Flags);
   Flags = 0;
