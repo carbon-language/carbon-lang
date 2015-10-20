@@ -66,7 +66,7 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
                -DLLVM_CONFIG_PATH=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-config
                -DCOMPILER_RT_OUTPUT_DIR=${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}
                -DCOMPILER_RT_EXEC_OUTPUT_DIR=${LLVM_RUNTIME_OUTPUT_INTDIR}
-               -DCOMPILER_RT_INSTALL_PATH=${CMAKE_INSTALL_PREFIX}/lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}
+               -DCOMPILER_RT_INSTALL_PATH:STRING=lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}
                -DCOMPILER_RT_INCLUDE_TESTS=${LLVM_INCLUDE_TESTS}
                -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                ${COMPILER_RT_PASSTHROUGH_VARIABLES}
@@ -87,7 +87,7 @@ if(LLVM_BUILD_EXTERNAL_COMPILER_RT AND EXISTS ${COMPILER_RT_SRC_ROOT}/)
 
   add_dependencies(compiler-rt-configure clang llvm-config)
 
-  install(CODE "execute_process\(COMMAND ${CMAKE_COMMAND} -P ${BINARY_DIR}/cmake_install.cmake \)"
+  install(CODE "execute_process\(COMMAND \${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\${CMAKE_INSTALL_PREFIX} -P ${BINARY_DIR}/cmake_install.cmake \)"
     COMPONENT compiler-rt)
 
   add_custom_target(install-compiler-rt
