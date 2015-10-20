@@ -160,6 +160,104 @@ static cl::list<int>
                       cl::Hidden, cl::ZeroOrMore, cl::CommaSeparated,
                       cl::cat(PollyCategory));
 
+/// @brief Create an isl_union_set, which describes the isolate option based
+///        on IsoalteDomain.
+///
+/// @param IsolateDomain An isl_set whose last dimension is the only one that
+///                      should belong to the current band node.
+static __isl_give isl_union_set *
+getIsolateOptions(__isl_take isl_set *IsolateDomain) {
+  auto Dims = isl_set_dim(IsolateDomain, isl_dim_set);
+  auto *IsolateRelation = isl_map_from_domain(IsolateDomain);
+  IsolateRelation = isl_map_move_dims(IsolateRelation, isl_dim_out, 0,
+                                      isl_dim_in, Dims - 1, 1);
+  auto *IsolateOption = isl_map_wrap(IsolateRelation);
+  auto *Id = isl_id_alloc(isl_set_get_ctx(IsolateOption), "isolate", NULL);
+  return isl_union_set_from_set(isl_set_set_tuple_id(IsolateOption, Id));
+}
+
+/// @brief Create an isl_union_set, which describes the atomic option for the
+///        dimension of the current node.
+///
+/// It may help to reduce the size of generated code.
+///
+/// @param Ctx An isl_ctx, which is used to create the isl_union_set.
+static __isl_give isl_union_set *getAtomicOptions(__isl_take isl_ctx *Ctx) {
+  auto *Space = isl_space_set_alloc(Ctx, 0, 1);
+  auto *AtomicOption = isl_set_universe(Space);
+  auto *Id = isl_id_alloc(Ctx, "atomic", NULL);
+  return isl_union_set_from_set(isl_set_set_tuple_id(AtomicOption, Id));
+}
+
+/// @brief Make the last dimension of Set to take values
+///        from 0 to VectorWidth - 1.
+///
+/// @param Set         A set, which should be modified.
+/// @param VectorWidth A parameter, which determines the constraint.
+static __isl_give isl_set *addExtentConstraints(__isl_take isl_set *Set,
+                                                int VectorWidth) {
+  auto Dims = isl_set_dim(Set, isl_dim_set);
+  auto Space = isl_set_get_space(Set);
+  auto *LocalSpace = isl_local_space_from_space(Space);
+  auto *ExtConstr =
+      isl_constraint_alloc_inequality(isl_local_space_copy(LocalSpace));
+  ExtConstr = isl_constraint_set_constant_si(ExtConstr, 0);
+  ExtConstr =
+      isl_constraint_set_coefficient_si(ExtConstr, isl_dim_set, Dims - 1, 1);
+  Set = isl_set_add_constraint(Set, ExtConstr);
+  ExtConstr = isl_constraint_alloc_inequality(LocalSpace);
+  ExtConstr = isl_constraint_set_constant_si(ExtConstr, VectorWidth - 1);
+  ExtConstr =
+      isl_constraint_set_coefficient_si(ExtConstr, isl_dim_set, Dims - 1, -1);
+  return isl_set_add_constraint(Set, ExtConstr);
+}
+
+/// @brief Build the desired set of partial tile prefixes.
+///
+/// We build a set of partial tile prefixes, which are prefixes of the vector
+/// loop that have exactly VectorWidth iterations.
+///
+/// 1. Get all prefixes of the vector loop.
+/// 2. Extend it to a set, which has exactly VectorWidth iterations for
+///    any prefix from the set that was built on the previous step.
+/// 3. Subtract loop domain from it, project out the vector loop dimension and
+///    get a set of prefixes, which don’t have exactly VectorWidth iterations.
+/// 4. Subtract it from all prefixes of the vector loop and get the desired
+///    set.
+///
+/// @param ScheduleRange A range of a map, which describes a prefix schedule
+///                      relation.
+static __isl_give isl_set *
+getPartialTilePrefixes(__isl_take isl_set *ScheduleRange, int VectorWidth) {
+  auto Dims = isl_set_dim(ScheduleRange, isl_dim_set);
+  auto *LoopPrefixes = isl_set_project_out(isl_set_copy(ScheduleRange),
+                                           isl_dim_set, Dims - 1, 1);
+  auto *ExtentPrefixes =
+      isl_set_add_dims(isl_set_copy(LoopPrefixes), isl_dim_set, 1);
+  ExtentPrefixes = addExtentConstraints(ExtentPrefixes, VectorWidth);
+  auto *BadPrefixes = isl_set_subtract(ExtentPrefixes, ScheduleRange);
+  BadPrefixes = isl_set_project_out(BadPrefixes, isl_dim_set, Dims - 1, 1);
+  return isl_set_subtract(LoopPrefixes, BadPrefixes);
+}
+
+__isl_give isl_schedule_node *ScheduleTreeOptimizer::isolateFullPartialTiles(
+    __isl_take isl_schedule_node *Node, int VectorWidth) {
+  assert(isl_schedule_node_get_type(Node) == isl_schedule_node_band);
+  Node = isl_schedule_node_child(Node, 0);
+  Node = isl_schedule_node_child(Node, 0);
+  auto *SchedRelUMap = isl_schedule_node_get_prefix_schedule_relation(Node);
+  auto *ScheduleRelation = isl_map_from_union_map(SchedRelUMap);
+  auto *ScheduleRange = isl_map_range(ScheduleRelation);
+  auto *IsolateDomain = getPartialTilePrefixes(ScheduleRange, VectorWidth);
+  auto *AtomicOption = getAtomicOptions(isl_set_get_ctx(IsolateDomain));
+  auto *IsolateOption = getIsolateOptions(IsolateDomain);
+  Node = isl_schedule_node_parent(Node);
+  Node = isl_schedule_node_parent(Node);
+  auto *Options = isl_union_set_union(IsolateOption, AtomicOption);
+  Node = isl_schedule_node_band_set_ast_build_options(Node, Options);
+  return Node;
+}
+
 __isl_give isl_schedule_node *
 ScheduleTreeOptimizer::prevectSchedBand(__isl_take isl_schedule_node *Node,
                                         unsigned DimToVectorize,
@@ -183,6 +281,7 @@ ScheduleTreeOptimizer::prevectSchedBand(__isl_take isl_schedule_node *Node,
   Sizes =
       isl_multi_val_set_val(Sizes, 0, isl_val_int_from_si(Ctx, VectorWidth));
   Node = isl_schedule_node_band_tile(Node, Sizes);
+  Node = isolateFullPartialTiles(Node, VectorWidth);
   Node = isl_schedule_node_child(Node, 0);
   // Make sure the "trivially vectorizable loop" is not unrolled. Otherwise,
   // we will have troubles to match it in the backend.

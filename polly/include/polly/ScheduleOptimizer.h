@@ -64,6 +64,17 @@ public:
   static bool isProfitableSchedule(polly::Scop &S,
                                    __isl_keep isl_union_map *NewSchedule);
 
+  /// @brief Isolate a set of partial tile prefixes.
+  ///
+  /// This set should ensure that it contains only partial tile prefixes that
+  /// have exactly VectorWidth iterations.
+  ///
+  /// @param Node A schedule node band, which is a parent of a band node,
+  ///             that contains a vector loop.
+  /// @return Modified isl_schedule_node.
+  static __isl_give isl_schedule_node *
+  isolateFullPartialTiles(__isl_take isl_schedule_node *Node, int VectorWidth);
+
 private:
   /// @brief Tile a schedule node.
   ///
