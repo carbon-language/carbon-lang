@@ -501,6 +501,10 @@ void BinaryFunction::inferFallThroughCounts() {
   for (auto &CurBB : BasicBlocks) {
     auto SuccCount = CurBB.BranchInfo.begin();
     for (auto Succ : CurBB.successors()) {
+      // Do not update execution count of the entry block (when we have tail
+      // calls). We already accounted for those when computing the func count.
+      if (Succ == &*BasicBlocks.begin())
+        continue;
       if (SuccCount->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
         Succ->ExecutionCount += SuccCount->Count;
       ++SuccCount;
