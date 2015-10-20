@@ -813,6 +813,13 @@ Process::Process(lldb::TargetSP target_sp, Listener &listener, const UnixSignals
                                                      eBroadcastInternalStateControlResume);
     // We need something valid here, even if just the default UnixSignalsSP.
     assert (m_unix_signals_sp && "null m_unix_signals_sp after initialization");
+
+    // Allow the platform to override the default cache line size
+    OptionValueSP value_sp =
+        m_collection_sp->GetPropertyAtIndex(nullptr, true, ePropertyMemCacheLineSize)->GetValue();
+    uint32_t platform_cache_line_size = target_sp->GetPlatform()->GetDefaultMemoryCacheLineSize();
+    if (! value_sp->OptionWasSet() && platform_cache_line_size != 0)
+        value_sp->SetUInt64Value(platform_cache_line_size);
 }
 
 //----------------------------------------------------------------------

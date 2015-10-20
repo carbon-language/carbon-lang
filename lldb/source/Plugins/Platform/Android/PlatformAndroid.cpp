@@ -28,6 +28,7 @@ using namespace lldb_private;
 using namespace lldb_private::platform_android;
 
 static uint32_t g_initialize_count = 0;
+static const unsigned int g_android_default_cache_size = 2048; // Fits inside 4k adb packet.
 
 void
 PlatformAndroid::Initialize ()
@@ -272,6 +273,12 @@ PlatformAndroid::DisconnectRemote()
         m_sdk_version = 0;
     }
     return error;
+}
+
+uint32_t
+PlatformAndroid::GetDefaultMemoryCacheLineSize()
+{
+    return g_android_default_cache_size;
 }
 
 uint32_t

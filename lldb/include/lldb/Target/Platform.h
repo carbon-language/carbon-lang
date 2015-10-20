@@ -947,7 +947,6 @@ class ModuleCache;
         virtual const std::vector<ConstString> &
         GetTrapHandlerSymbolNames ();
 
-
         //------------------------------------------------------------------
         /// Find a support executable that may not live within in the
         /// standard locations related to LLDB.
@@ -969,6 +968,14 @@ class ModuleCache;
         {
             return FileSpec();
         }
+
+        //------------------------------------------------------------------
+        /// Allow the platform to set preferred memory cache line size. If non-zero (and the user
+        /// has not set cache line size explicitly), this value will be used as the cache line
+        /// size for memory reads.
+        //------------------------------------------------------------------
+        virtual uint32_t
+        GetDefaultMemoryCacheLineSize() { return 0; }
 
     protected:
         bool m_is_host;

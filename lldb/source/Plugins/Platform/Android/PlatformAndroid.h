@@ -83,6 +83,9 @@ namespace platform_android {
         Error
         DisconnectRemote () override;
 
+        uint32_t
+        GetDefaultMemoryCacheLineSize() override;
+
      protected:
         const char *
         GetCacheHostname () override;
