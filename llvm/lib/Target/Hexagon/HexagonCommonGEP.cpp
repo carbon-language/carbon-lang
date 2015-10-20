@@ -389,7 +389,7 @@ void HexagonCommonGEP::processGepInst(GetElementPtrInst *GepI,
 void HexagonCommonGEP::collect() {
   // Establish depth-first traversal order of the dominator tree.
   ValueVect BO;
-  getBlockTraversalOrder(Fn->begin(), BO);
+  getBlockTraversalOrder(&Fn->front(), BO);
 
   // The creation of gep nodes requires DT-traversal. When processing a GEP
   // instruction that uses another GEP instruction as the base pointer, the
@@ -722,7 +722,7 @@ namespace {
       Instruction *In = cast<Instruction>(V);
       if (In->getParent() != B)
         continue;
-      BasicBlock::iterator It = In;
+      BasicBlock::iterator It = In->getIterator();
       if (std::distance(FirstUse, BEnd) < std::distance(It, BEnd))
         FirstUse = It;
     }
@@ -1120,7 +1120,7 @@ Value *HexagonCommonGEP::fabricateGEP(NodeVect &NA, BasicBlock::iterator At,
     ArrayRef<Value*> A(IdxList, IdxC);
     Type *InpTy = Input->getType();
     Type *ElTy = cast<PointerType>(InpTy->getScalarType())->getElementType();
-    NewInst = GetElementPtrInst::Create(ElTy, Input, A, "cgep", At);
+    NewInst = GetElementPtrInst::Create(ElTy, Input, A, "cgep", &*At);
     DEBUG(dbgs() << "new GEP: " << *NewInst << '\n');
     Input = NewInst;
   } while (nax <= Num);
@@ -1198,7 +1198,7 @@ void HexagonCommonGEP::materialize(NodeToValueMap &Loc) {
       Last = Child;
     } while (true);
 
-    BasicBlock::iterator InsertAt = LastB->getTerminator();
+    BasicBlock::iterator InsertAt = LastB->getTerminator()->getIterator();
     if (LastUsed || LastCN > 0) {
       ValueVect Urs;
       getAllUsersForNode(Root, Urs, NCM);

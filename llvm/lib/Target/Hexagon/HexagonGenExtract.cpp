@@ -195,7 +195,7 @@ bool HexagonGenExtract::convert(Instruction *In) {
       return false;
   }
 
-  IRBuilder<> IRB(BB, In);
+  IRBuilder<> IRB(In);
   Intrinsic::ID IntId = (BW == 32) ? Intrinsic::hexagon_S2_extractu
                                    : Intrinsic::hexagon_S2_extractup;
   Module *Mod = BB->getParent()->getParent();

@@ -372,7 +372,7 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
   // Loop through all the bb's of the function
   for (MachineFunction::iterator MBBb = MF.begin(), MBBe = MF.end();
         MBBb != MBBe; ++MBBb) {
-    MachineBasicBlock* MBB = MBBb;
+    MachineBasicBlock *MBB = &*MBBb;
 
     DEBUG(dbgs() << "** dumping bb ** "
                  << MBB->getNumber() << "\n");

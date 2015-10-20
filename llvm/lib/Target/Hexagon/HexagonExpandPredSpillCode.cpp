@@ -74,7 +74,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
   // Loop over all of the basic blocks.
   for (MachineFunction::iterator MBBb = Fn.begin(), MBBe = Fn.end();
        MBBb != MBBe; ++MBBb) {
-    MachineBasicBlock* MBB = MBBb;
+    MachineBasicBlock *MBB = &*MBBb;
     // Traverse the basic block.
     for (MachineBasicBlock::iterator MII = MBB->begin(); MII != MBB->end();
          ++MII) {

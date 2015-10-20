@@ -955,7 +955,7 @@ void BT::visitBranchesFrom(const MachineInstr *BI) {
         Targets.insert(SB);
     }
     if (FallsThrough) {
-      MachineFunction::const_iterator BIt = &B;
+      MachineFunction::const_iterator BIt = B.getIterator();
       MachineFunction::const_iterator Next = std::next(BIt);
       if (Next != MF.end())
         Targets.insert(&*Next);
@@ -1104,7 +1104,7 @@ void BT::run() {
     }
     // If block end has been reached, add the fall-through edge to the queue.
     if (It == End) {
-      MachineFunction::const_iterator BIt = &B;
+      MachineFunction::const_iterator BIt = B.getIterator();
       MachineFunction::const_iterator Next = std::next(BIt);
       if (Next != MF.end()) {
         int ThisN = B.getNumber();

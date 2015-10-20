@@ -238,7 +238,7 @@ bool HexagonPacketizer::runOnMachineFunction(MachineFunction &Fn) {
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
       for(;I != MBB->begin(); --I, --RemainingCount) {
-        if (TII->isSchedulingBoundary(std::prev(I), MBB, Fn))
+        if (TII->isSchedulingBoundary(std::prev(I), &*MBB, Fn))
           break;
       }
       I = MBB->begin();
@@ -255,7 +255,7 @@ bool HexagonPacketizer::runOnMachineFunction(MachineFunction &Fn) {
         continue;
       }
 
-      Packetizer.PacketizeMIs(MBB, I, RegionEnd);
+      Packetizer.PacketizeMIs(&*MBB, I, RegionEnd);
       RegionEnd = I;
     }
   }

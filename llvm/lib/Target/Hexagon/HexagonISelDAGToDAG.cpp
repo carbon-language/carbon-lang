@@ -1397,7 +1397,7 @@ void HexagonDAGToDAGISel::EmitFunctionEntryCode() {
     return;
 
   MachineFrameInfo *MFI = MF->getFrameInfo();
-  MachineBasicBlock *EntryBB = MF->begin();
+  MachineBasicBlock *EntryBB = &MF->front();
   unsigned AR = FuncInfo->CreateReg(MVT::i32);
   unsigned MaxA = MFI->getMaxAlignment();
   auto &HII = *HST.getInstrInfo();

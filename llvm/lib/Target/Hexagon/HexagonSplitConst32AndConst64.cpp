@@ -81,7 +81,7 @@ bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBBb = Fn.begin(), MBBe = Fn.end();
        MBBb != MBBe; ++MBBb) {
-    MachineBasicBlock* MBB = MBBb;
+    MachineBasicBlock *MBB = &*MBBb;
     // Traverse the basic block
     MachineBasicBlock::iterator MII = MBB->begin();
     MachineBasicBlock::iterator MIE = MBB->end ();

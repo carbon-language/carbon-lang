@@ -183,8 +183,7 @@ unsigned HexagonInstrInfo::InsertBranch(
       MachineInstr *Term = MBB.getFirstTerminator();
       if (Term != MBB.end() && isPredicated(Term) &&
           !AnalyzeBranch(MBB, NewTBB, NewFBB, Cond, false)) {
-        MachineBasicBlock *NextBB =
-          std::next(MachineFunction::iterator(&MBB));
+        MachineBasicBlock *NextBB = &*++MBB.getIterator();
         if (NewTBB == NextBB) {
           ReverseBranchCondition(Cond);
           RemoveBranch(MBB);
@@ -327,17 +326,17 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return false;
     --I;
   }
-  if (!isUnpredicatedTerminator(I))
+  if (!isUnpredicatedTerminator(&*I))
     return false;
 
   // Get the last instruction in the block.
-  MachineInstr *LastInst = I;
+  MachineInstr *LastInst = &*I;
   MachineInstr *SecondLastInst = nullptr;
   // Find one more terminator if present.
-  do {
-    if (&*I != LastInst && !I->isBundle() && isUnpredicatedTerminator(I)) {
+  for (;;) {
+    if (&*I != LastInst && !I->isBundle() && isUnpredicatedTerminator(&*I)) {
       if (!SecondLastInst)
-        SecondLastInst = I;
+        SecondLastInst = &*I;
       else
         // This is a third branch.
         return true;
@@ -345,7 +344,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     if (I == MBB.instr_begin())
       break;
     --I;
-  } while(I);
+  }
 
   int LastOpcode = LastInst->getOpcode();
   int SecLastOpcode = SecondLastInst ? SecondLastInst->getOpcode() : 0;
@@ -418,7 +417,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // executed, so remove it.
   if (SecLastOpcode == Hexagon::J2_jump && LastOpcode == Hexagon::J2_jump) {
     TBB = SecondLastInst->getOperand(0).getMBB();
-    I = LastInst;
+    I = LastInst->getIterator();
     if (AllowModify)
       I->eraseFromParent();
     return false;
@@ -1072,7 +1071,7 @@ PredicateInstruction(MachineInstr *MI,
   for (unsigned i = 0, n = T->getNumOperands(); i < n; ++i)
     MI->addOperand(T->getOperand(i));
 
-  MachineBasicBlock::instr_iterator TI = &*T;
+  MachineBasicBlock::instr_iterator TI = T->getIterator();
   B.erase(TI);
 
   MachineRegisterInfo &MRI = B.getParent()->getRegInfo();

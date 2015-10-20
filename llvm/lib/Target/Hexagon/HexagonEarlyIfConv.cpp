@@ -943,8 +943,7 @@ void HexagonEarlyIfConversion::removeBlock(MachineBasicBlock *B) {
 
   Deleted.insert(B);
   MDT->eraseNode(B);
-  MachineFunction::iterator BI = B;
-  MFN->erase(BI);
+  MFN->erase(B->getIterator());
 }
 
 
