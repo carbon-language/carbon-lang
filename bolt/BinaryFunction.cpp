@@ -595,7 +595,7 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
     int I = 0, J = 0;
 
     // Case 1: BBSrc and BBDst are the same. Ignore this edge
-    if (BBSrc == BBDst)
+    if (BBSrc == BBDst || BBDst == Entry)
       continue;
 
     // Case 2: Both BBSrc and BBDst are already allocated
