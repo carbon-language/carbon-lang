@@ -730,12 +730,10 @@ function(canonicalize_tool_name name output)
   set(${output} "${nameUPPER}" PARENT_SCOPE)
 endfunction(canonicalize_tool_name)
 
-# Add external project that may want to be built as part of llvm such as Clang,
-# lld, and Polly. This adds two options. One for the source directory of the
-# project, which defaults to ${CMAKE_CURRENT_SOURCE_DIR}/${name}. Another to
-# enable or disable building it with everything else.
-# Additional parameter can be specified as the name of directory.
-macro(add_llvm_external_project name)
+# Custom add_subdirectory wrapper
+# Takes in a project name (i.e. LLVM), the the subdirectory name, and an
+# and an optional path if it differs from the name.
+macro(add_llvm_subdirectory project type name)
   set(add_llvm_external_dir "${ARGN}")
   if("${add_llvm_external_dir}" STREQUAL "")
     set(add_llvm_external_dir ${name})
@@ -743,39 +741,48 @@ macro(add_llvm_external_project name)
   canonicalize_tool_name(${name} nameUPPER)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}/CMakeLists.txt)
     # Treat it as in-tree subproject.
-    option(LLVM_TOOL_${nameUPPER}_BUILD
-           "Whether to build ${name} as part of LLVM" On)
-    mark_as_advanced(LLVM_TOOL_${name}_BUILD)
-    if(LLVM_TOOL_${nameUPPER}_BUILD)
+    option(${project}_${type}_${nameUPPER}_BUILD
+           "Whether to build ${name} as part of ${project}" On)
+    mark_as_advanced(${project}_${type}_${name}_BUILD)
+    if(${project}_${type}_${nameUPPER}_BUILD)
       add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir} ${add_llvm_external_dir})
       # Don't process it in add_llvm_implicit_projects().
-      set(LLVM_TOOL_${nameUPPER}_BUILD OFF)
+      set(${project}_${type}_${nameUPPER}_BUILD OFF)
     endif()
   else()
     set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR
       "${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}"
       CACHE PATH "Path to ${name} source directory")
-    set(LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT ON)
+    set(${project}_${type}_${nameUPPER}_BUILD_DEFAULT ON)
     if(NOT LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR OR NOT EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR})
-      set(LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT OFF)
+      set(${project}_${type}_${nameUPPER}_BUILD_DEFAULT OFF)
     endif()
     if("${LLVM_EXTERNAL_${nameUPPER}_BUILD}" STREQUAL "OFF")
-      set(LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT OFF)
+      set(${project}_${type}_${nameUPPER}_BUILD_DEFAULT OFF)
     endif()
-    option(LLVM_TOOL_${nameUPPER}_BUILD
+    option(${project}_${type}_${nameUPPER}_BUILD
       "Whether to build ${name} as part of LLVM"
-      ${LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT})
-    if (LLVM_TOOL_${nameUPPER}_BUILD)
+      ${${project}_${type}_${nameUPPER}_BUILD_DEFAULT})
+    if (${project}_${type}_${nameUPPER}_BUILD)
       if(EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR})
         add_subdirectory(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} ${add_llvm_external_dir})
       elseif(NOT "${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}" STREQUAL "")
         message(WARNING "Nonexistent directory for ${name}: ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}")
       endif()
       # FIXME: It'd be redundant.
-      set(LLVM_TOOL_${nameUPPER}_BUILD Off)
+      set(${project}_${type}_${nameUPPER}_BUILD Off)
     endif()
   endif()
-endmacro(add_llvm_external_project)
+endmacro()
+
+# Add external project that may want to be built as part of llvm such as Clang,
+# lld, and Polly. This adds two options. One for the source directory of the
+# project, which defaults to ${CMAKE_CURRENT_SOURCE_DIR}/${name}. Another to
+# enable or disable building it with everything else.
+# Additional parameter can be specified as the name of directory.
+macro(add_llvm_external_project name)
+  add_llvm_subdirectory(LLVM TOOL ${name})
+endmacro()
 
 macro(add_llvm_tool_subdirectory name)
   add_llvm_external_project(${name})
@@ -791,16 +798,20 @@ function(get_project_name_from_src_var var output)
   endif()
 endfunction()
 
-function(create_llvm_tool_options)
+function(create_subdirectory_options project type)
   file(GLOB sub-dirs "${CMAKE_CURRENT_SOURCE_DIR}/*")
   foreach(dir ${sub-dirs})
     if(IS_DIRECTORY "${dir}" AND EXISTS "${dir}/CMakeLists.txt")
       canonicalize_tool_name(${dir} name)
-      option(LLVM_TOOL_${name}_BUILD
-           "Whether to build ${name} as part of LLVM" On)
-      mark_as_advanced(LLVM_TOOL_${name}_BUILD)
+      option(${project}_${type}_${name}_BUILD
+           "Whether to build ${name} as part of ${project}" On)
+      mark_as_advanced(${project}_${type}_${name}_BUILD)
     endif()
   endforeach()
+endfunction(create_subdirectory_options)
+
+function(create_llvm_tool_options)
+  create_subdirectory_options(LLVM TOOL)
 endfunction(create_llvm_tool_options)
 
 function(add_llvm_implicit_projects)
