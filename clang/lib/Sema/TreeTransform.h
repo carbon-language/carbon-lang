@@ -9127,9 +9127,20 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
   SourceLocation TemplateKWLoc = Old->getTemplateKeywordLoc();
 
   // If we have neither explicit template arguments, nor the template keyword,
-  // it's a normal declaration name.
-  if (!Old->hasExplicitTemplateArgs() && !TemplateKWLoc.isValid())
+  // it's a normal declaration name or member reference.
+  if (!Old->hasExplicitTemplateArgs() && !TemplateKWLoc.isValid()) {
+    NamedDecl *D = R.getAsSingle<NamedDecl>();
+    // In a C++11 unevaluated context, an UnresolvedLookupExpr might refer to an
+    // instance member. In other contexts, BuildPossibleImplicitMemberExpr will
+    // give a good diagnostic.
+    if (D && D->isCXXInstanceMember()) {
+      return SemaRef.BuildPossibleImplicitMemberExpr(SS, TemplateKWLoc, R,
+                                                     /*TemplateArgs=*/nullptr,
+                                                     /*Scope=*/nullptr);
+    }
+
     return getDerived().RebuildDeclarationNameExpr(SS, R, Old->requiresADL());
+  }
 
   // If we have template arguments, rebuild them, then rebuild the
   // templateid expression.

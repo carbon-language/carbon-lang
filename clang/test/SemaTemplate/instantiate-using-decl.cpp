@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++98 -fsyntax-only -verify %s
 
 namespace test0 {
   namespace N { }
@@ -104,3 +105,65 @@ namespace PR16936 {
     x.f();
   }
 }
+
+namespace pr21923 {
+template <typename> struct Base {
+  int field;
+  void method();
+};
+template <typename Scalar> struct Derived : Base<Scalar> {
+  using Base<Scalar>::field;
+  using Base<Scalar>::method;
+  static void m_fn1() {
+    // expected-error@+1 {{invalid use of member 'field' in static member function}}
+    (void)field;
+    // expected-error@+1 {{invalid use of member 'field' in static member function}}
+    (void)&field;
+    // expected-error@+1 {{call to non-static member function without an object argument}}
+    (void)method;
+    // expected-error@+1 {{call to non-static member function without an object argument}}
+    (void)&method;
+    // expected-error@+1 {{call to non-static member function without an object argument}}
+    method();
+    (void)&Base<Scalar>::field;
+    (void)&Base<Scalar>::method;
+  }
+#if __cplusplus >= 201103L
+  // These usages are OK in C++11 due to the unevaluated context.
+  enum { TheSize = sizeof(field) };
+  typedef decltype(field) U;
+#else
+  // expected-error@+1 {{invalid use of non-static data member 'field'}}
+  enum { TheSize = sizeof(field) };
+#endif
+};
+
+#if __cplusplus < 201103L
+// C++98 has an extra note for TheSize.
+// expected-note@+2 {{requested here}}
+#endif
+template class Derived<int>; // expected-note {{requested here}}
+
+// This is interesting because we form an UnresolvedLookupExpr in the static
+// function template and an UnresolvedMemberExpr in the instance function
+// template. As a result, we get slightly different behavior.
+struct UnresolvedTemplateNames {
+  template <typename> void maybe_static();
+#if __cplusplus < 201103L
+  // expected-warning@+2 {{default template arguments for a function template are a C++11 extension}}
+#endif
+  template <typename T, typename T::type = 0> static void maybe_static();
+
+  template <typename T>
+  void instance_method() { (void)maybe_static<T>(); }
+  template <typename T>
+  static void static_method() {
+    // expected-error@+1 {{call to non-static member function without an object argument}}
+    (void)maybe_static<T>();
+  }
+};
+void force_instantiation(UnresolvedTemplateNames x) {
+  x.instance_method<int>();
+  UnresolvedTemplateNames::static_method<int>(); // expected-note {{requested here}}
+}
+} // pr21923
