@@ -249,7 +249,7 @@ template <class ELFT>
 class StringTableSection final : public OutputSectionBase<ELFT> {
 public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
-  StringTableSection(bool Dynamic);
+  StringTableSection(StringRef Name, bool Dynamic);
   void add(StringRef S) { StrTabBuilder.add(S); }
   size_t getFileOff(StringRef S) const { return StrTabBuilder.getOffset(S); }
   StringRef data() const { return StrTabBuilder.data(); }
@@ -321,6 +321,7 @@ template <class ELFT> struct Out {
   static RelocationSection<ELFT> *RelaDyn;
   static RelocationSection<ELFT> *RelaPlt;
   static StringTableSection<ELFT> *DynStrTab;
+  static StringTableSection<ELFT> *ShStrTab;
   static StringTableSection<ELFT> *StrTab;
   static SymbolTableSection<ELFT> *DynSymTab;
   static SymbolTableSection<ELFT> *SymTab;
@@ -338,6 +339,7 @@ template <class ELFT> PltSection<ELFT> *Out<ELFT>::Plt;
 template <class ELFT> RelocationSection<ELFT> *Out<ELFT>::RelaDyn;
 template <class ELFT> RelocationSection<ELFT> *Out<ELFT>::RelaPlt;
 template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::DynStrTab;
+template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::ShStrTab;
 template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::StrTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::DynSymTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::SymTab;

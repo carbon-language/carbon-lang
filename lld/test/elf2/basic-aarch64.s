@@ -26,14 +26,14 @@ _start:
 # CHECK-NEXT:   Version: 1
 # CHECK-NEXT:   Entry: [[ENTRY:0x[0-9A-F]+]]
 # CHECK-NEXT:   ProgramHeaderOffset: 0x40
-# CHECK-NEXT:   SectionHeaderOffset: 0x1088
+# CHECK-NEXT:   SectionHeaderOffset: 0x1098
 # CHECK-NEXT:   Flags [ (0x0)
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 64
 # CHECK-NEXT:   ProgramHeaderEntrySize: 56
 # CHECK-NEXT:   ProgramHeaderCount: 3
 # CHECK-NEXT:   SectionHeaderEntrySize: 64
-# CHECK-NEXT:   SectionHeaderCount: 6
+# CHECK-NEXT:   SectionHeaderCount: 7
 # CHECK-NEXT:   StringTableSectionIndex: 5
 # CHECK-NEXT: }
 # CHECK-NEXT: Sections [
@@ -108,20 +108,34 @@ _start:
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x1010
 # CHECK-NEXT:     Size: 72
-# CHECK-NEXT:     Link: 5
+# CHECK-NEXT:     Link: 6
 # CHECK-NEXT:     Info: 2
 # CHECK-NEXT:     AddressAlignment: 8
 # CHECK-NEXT:     EntrySize: 24
-# CHECK-NEXT:  }
-# CHECK-NEXT:  Section {
-# CHECK-NEXT:    Index: 5
-# CHECK-NEXT:     Name: .strtab
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Section {
+# CHECK-NEXT:     Index: 5
+# CHECK-NEXT:     Name: .shstrtab
 # CHECK-NEXT:     Type: SHT_STRTAB (0x3)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x1058
-# CHECK-NEXT:     Size: 46
+# CHECK-NEXT:     Size: 44
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 1
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Section {
+# CHECK-NEXT:     Index: 6
+# CHECK-NEXT:     Name: .strtab (22)
+# CHECK-NEXT:     Type: SHT_STRTAB (0x3)
+# CHECK-NEXT:     Flags [ (0x0)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x1084
+# CHECK-NEXT:     Size: 13
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
@@ -139,7 +153,7 @@ _start:
 # CHECK-NEXT:     Section: Undefined (0x0)
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: $x.0 (41)
+# CHECK-NEXT:     Name: $x.0
 # CHECK-NEXT:     Value: 0x11000
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Binding: Local (0x0)
@@ -148,7 +162,7 @@ _start:
 # CHECK-NEXT:     Section: .text
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: _start (7)
+# CHECK-NEXT:     Name: _start
 # CHECK-NEXT:     Value: [[ENTRY]]
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Binding: Global (0x1)

@@ -20,12 +20,8 @@
 // CHECK-NEXT:     AddressAlignment:
 // CHECK-NEXT:     EntrySize:
 // CHECK-NEXT:     SectionData (
-// CHECK-NEXT:       0000: 002E7465 7874002E 62737300 2E64796E  |..text..bss..dyn|
-// CHECK-NEXT:       0010: 73747200 2E4C6D79 76617200 2E4C6D79  |str..Lmyvar..Lmy|
-// CHECK-NEXT:       0020: 6F746865 72766172 002E6479 6E73796D  |othervar..dynsym|
-// CHECK-NEXT:       0030: 002E6861 7368002E 64796E61 6D696300  |..hash..dynamic.|
-// CHECK-NEXT:       0040: 2E737472 74616200 2E73796D 74616200  |.strtab..symtab.|
-// CHECK-NEXT:       0050: 2E646174 6100                        |.data.|
+// CHECK-NEXT:       0000: 002E4C6D 79766172 002E4C6D 796F7468  |..Lmyvar..Lmyoth|
+// CHECK-NEXT:       0010: 65727661 7200                        |ervar.|
 // CHECK-NEXT:     )
 // CHECK-NEXT:   }
 

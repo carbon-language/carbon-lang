@@ -23,9 +23,7 @@ _start:
 // CHECK-NEXT:     AddressAlignment:
 // CHECK-NEXT:     EntrySize:
 // CHECK-NEXT:     SectionData (
-// CHECK-NEXT:       0000: 002E7465 7874005F 73746172 74002E62  |..text._start..b|
-// CHECK-NEXT:       0010: 7373002E 73747274 6162002E 73796D74  |ss..strtab..symt|
-// CHECK-NEXT:       0020: 6162002E 64617461 00                 |ab..data.|
+// CHECK-NEXT:       0000: 005F7374 61727400                    |._start.|
 // CHECK-NEXT:     )
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

@@ -27,14 +27,14 @@ _start:
 # CHECK-NEXT:   Version: 1
 # CHECK-NEXT:   Entry: [[ENTRY:0x[0-9A-F]+]]
 # CHECK-NEXT:   ProgramHeaderOffset: 0x40
-# CHECK-NEXT:   SectionHeaderOffset: 0x1070
+# CHECK-NEXT:   SectionHeaderOffset: 0x1078
 # CHECK-NEXT:   Flags [ (0x0)
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 64
 # CHECK-NEXT:   ProgramHeaderEntrySize: 56
 # CHECK-NEXT:   ProgramHeaderCount: 3
 # CHECK-NEXT:   SectionHeaderEntrySize: 64
-# CHECK-NEXT:   SectionHeaderCount: 6
+# CHECK-NEXT:   SectionHeaderCount: 7
 # CHECK-NEXT:   StringTableSectionIndex: 5
 # CHECK-NEXT: }
 # CHECK-NEXT: Sections [
@@ -109,20 +109,34 @@ _start:
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x1010
 # CHECK-NEXT:     Size: 48
-# CHECK-NEXT:     Link: 5
+# CHECK-NEXT:     Link: 6
 # CHECK-NEXT:     Info: 1
 # CHECK-NEXT:     AddressAlignment: 8
 # CHECK-NEXT:     EntrySize: 24
-# CHECK-NEXT:  }
-# CHECK-NEXT:  Section {
-# CHECK-NEXT:    Index: 5
-# CHECK-NEXT:     Name: .strtab
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Section {
+# CHECK-NEXT:     Index: 5
+# CHECK-NEXT:     Name: .shstrtab
 # CHECK-NEXT:     Type: SHT_STRTAB (0x3)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x1040
-# CHECK-NEXT:     Size: 41
+# CHECK-NEXT:     Size: 44
+# CHECK-NEXT:     Link: 0
+# CHECK-NEXT:     Info: 0
+# CHECK-NEXT:     AddressAlignment: 1
+# CHECK-NEXT:     EntrySize: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Section {
+# CHECK-NEXT:     Index: 6
+# CHECK-NEXT:     Name: .strtab (22)
+# CHECK-NEXT:     Type: SHT_STRTAB (0x3)
+# CHECK-NEXT:     Flags [ (0x0)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x106C
+# CHECK-NEXT:     Size: 8
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
@@ -140,7 +154,7 @@ _start:
 # CHECK-NEXT:     Section: Undefined (0x0)
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: _start (7)
+# CHECK-NEXT:     Name: _start
 # CHECK-NEXT:     Value: [[ENTRY]]
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Binding: Global (0x1)
@@ -188,7 +202,6 @@ _start:
 # CHECK-NEXT:     Alignment: 4096
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
-
 
 # Test for the response file
 # RUN: echo " -o %t2" > %t.responsefile

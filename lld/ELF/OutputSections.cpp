@@ -625,9 +625,8 @@ unsigned MergeOutputSection<ELFT>::getOffset(ArrayRef<uint8_t> Val) {
 }
 
 template <class ELFT>
-StringTableSection<ELFT>::StringTableSection(bool Dynamic)
-    : OutputSectionBase<ELFT>(Dynamic ? ".dynstr" : ".strtab",
-                              llvm::ELF::SHT_STRTAB,
+StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
+    : OutputSectionBase<ELFT>(Name, llvm::ELF::SHT_STRTAB,
                               Dynamic ? (uintX_t)llvm::ELF::SHF_ALLOC : 0),
       Dynamic(Dynamic) {
   this->Header.sh_addralign = 1;

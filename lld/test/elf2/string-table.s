@@ -44,22 +44,38 @@ _start:
 
 // Test that the string "bar" is merged into "foobar".
 
-// CHECK:      Section {
-// CHECK:        Index:
+// CHECK:       Section {
+// CHECK:       Index:
+// CHECK:       Name: .shstrtab
+// CHECK-NEXT:  Type: SHT_STRTAB
+// CHECK-NEXT:  Flags [
+// CHECK-NEXT:  ]
+// CHECK-NEXT:  Address: 0x0
+// CHECK-NEXT:  Offset:
+// CHECK-NEXT:  Size: 51
+// CHECK-NEXT:  Link: 0
+// CHECK-NEXT:  Info: 0
+// CHECK-NEXT:  AddressAlignment: 1
+// CHECK-NEXT:  EntrySize: 0
+// CHECK-NEXT:  SectionData (
+// CHECK-NEXT:    0000: 002E7465 7874002E 62737300 666F6F62  |..text..bss.foob|
+// CHECK-NEXT:    0010: 6172002E 73687374 72746162 002E7374  |ar..shstrtab..st|
+// CHECK-NEXT:    0020: 72746162 002E7379 6D746162 002E6461  |rtab..symtab..da|
+// CHECK-NEXT:    0030: 746100                               |ta.|
+// CHECK-NEXT:  )
+// CHECK-NEXT:}
 // CHECK:        Name: .strtab
 // CHECK-NEXT:   Type: SHT_STRTAB (0x3)
 // CHECK-NEXT:   Flags [ (0x0)
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address: 0x0
 // CHECK-NEXT:   Offset:
-// CHECK-NEXT:   Size: 48
+// CHECK-NEXT:   Size: 15
 // CHECK-NEXT:   Link: 0
 // CHECK-NEXT:   Info: 0
 // CHECK-NEXT:   AddressAlignment: 1
 // CHECK-NEXT:   EntrySize: 0
 // CHECK-NEXT:   SectionData (
-// CHECK-NEXT:     0000: 002E7465 7874005F 73746172 74002E62  |..text._start..b|
-// CHECK-NEXT:     0010: 73730066 6F6F6261 72002E73 74727461  |ss.foobar..strta|
-// CHECK-NEXT:     0020: 62002E73 796D7461 62002E64 61746100  |b..symtab..data.|
+// CHECK-NEXT:     0000: 005F7374 61727400 666F6F62 617200    |._start.foobar.|
 // CHECK-NEXT:   )
 // CHECK-NEXT: }

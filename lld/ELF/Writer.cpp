@@ -94,9 +94,11 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   // Don't reorder because the order of initialization matters.
   InterpSection<ELFT> Interp;
   Out<ELFT>::Interp = &Interp;
-  StringTableSection<ELFT> StrTab(false);
+  StringTableSection<ELFT> ShStrTab(".shstrtab", false);
+  Out<ELFT>::ShStrTab = &ShStrTab;
+  StringTableSection<ELFT> StrTab(".strtab", false);
   Out<ELFT>::StrTab = &StrTab;
-  StringTableSection<ELFT> DynStrTab(true);
+  StringTableSection<ELFT> DynStrTab(".dynstr", true);
   Out<ELFT>::DynStrTab = &DynStrTab;
   OutputSection<ELFT> Bss(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   Out<ELFT>::Bss = &Bss;
@@ -516,6 +518,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // This order is not the same as the final output order
   // because we sort the sections using their attributes below.
   OutputSections.push_back(Out<ELFT>::SymTab);
+  OutputSections.push_back(Out<ELFT>::ShStrTab);
   OutputSections.push_back(Out<ELFT>::StrTab);
   if (isOutputDynamic()) {
     OutputSections.push_back(Out<ELFT>::DynSymTab);
@@ -541,7 +544,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections[I]->SectionIndex = I + 1;
 
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    Out<ELFT>::StrTab->add(Sec->getName());
+    Out<ELFT>::ShStrTab->add(Sec->getName());
 
   // Fill the DynStrTab early because Dynamic adds strings to
   // DynStrTab but .dynstr may appear before .dynamic.
@@ -739,14 +742,14 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_phnum = Phdrs.size();
   EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
-  EHdr->e_shstrndx = Out<ELFT>::StrTab->SectionIndex;
+  EHdr->e_shstrndx = Out<ELFT>::ShStrTab->SectionIndex;
   memcpy(Buf + EHdr->e_phoff, &Phdrs[0], Phdrs.size() * sizeof(Phdrs[0]));
 
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.
   ++SHdrs;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    Sec->setNameOffset(Out<ELFT>::StrTab->getFileOff(Sec->getName()));
+    Sec->setNameOffset(Out<ELFT>::ShStrTab->getFileOff(Sec->getName()));
     Sec->writeHeaderTo(SHdrs++);
   }
 }
