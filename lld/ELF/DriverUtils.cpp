@@ -91,6 +91,8 @@ std::string lld::elf2::findFromSearchPaths(StringRef Path) {
 // Searches a given library from input search paths, which are filled
 // from -L command line switches. Returns a path to an existent library file.
 std::string lld::elf2::searchLibrary(StringRef Path) {
+  if (Path.empty())
+    error("No library specified for -l");
   std::vector<std::string> Names;
   if (Path[0] == ':') {
     Names.push_back(Path.drop_front());
