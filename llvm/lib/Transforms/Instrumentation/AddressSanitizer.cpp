@@ -737,6 +737,7 @@ INITIALIZE_PASS_BEGIN(
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.", false,
     false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(
     AddressSanitizer, "asan",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs.", false,
