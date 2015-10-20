@@ -66,7 +66,7 @@ class EvaluateConstantInitializersAction : public clang::ASTFrontendAction {
  private:
   class Consumer : public clang::ASTConsumer {
    public:
-    ~Consumer() override = default;
+    ~Consumer() override {}
 
     void HandleTranslationUnit(clang::ASTContext &Ctx) override {
       VarInfoMap VarInfo;

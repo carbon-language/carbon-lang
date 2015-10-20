@@ -31,7 +31,7 @@ using namespace ento;
 //===----------------------------------------------------------------------===//
 
 // An out of line virtual method to provide a home for the class vtable.
-ExplodedNode::Auditor::~Auditor() = default;
+ExplodedNode::Auditor::~Auditor() {}
 
 #ifndef NDEBUG
 static ExplodedNode::Auditor* NodeAuditor = nullptr;
@@ -50,7 +50,7 @@ void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 ExplodedGraph::ExplodedGraph()
   : NumNodes(0), ReclaimNodeInterval(0) {}
 
-ExplodedGraph::~ExplodedGraph() = default;
+ExplodedGraph::~ExplodedGraph() {}
 
 //===----------------------------------------------------------------------===//
 // Node reclamation.

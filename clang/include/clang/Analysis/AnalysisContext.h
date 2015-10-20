@@ -44,7 +44,7 @@ namespace idx { class TranslationUnit; }
 /// to AnalysisDeclContext.
 class ManagedAnalysis {
 protected:
-  ManagedAnalysis() = default;
+  ManagedAnalysis() {}
 public:
   virtual ~ManagedAnalysis();
 
@@ -289,7 +289,7 @@ class StackFrameContext : public LocationContext {
       Block(blk), Index(idx) {}
 
 public:
-  ~StackFrameContext() override = default;
+  ~StackFrameContext() override {}
 
   const Stmt *getCallSite() const { return CallSite; }
 
@@ -324,7 +324,7 @@ class ScopeContext : public LocationContext {
     : LocationContext(Scope, ctx, parent), Enter(s) {}
 
 public:
-  ~ScopeContext() override = default;
+  ~ScopeContext() override {}
 
   void Profile(llvm::FoldingSetNodeID &ID) override;
 
@@ -352,7 +352,7 @@ class BlockInvocationContext : public LocationContext {
     : LocationContext(Block, ctx, parent), BD(bd), ContextData(contextData) {}
 
 public:
-  ~BlockInvocationContext() override = default;
+  ~BlockInvocationContext() override {}
 
   const BlockDecl *getBlockDecl() const { return BD; }
   

@@ -34,7 +34,8 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP, StringRef OutputFile,
   Buffer->IsComplete = false;
 }
 
-PCHGenerator::~PCHGenerator() = default;
+PCHGenerator::~PCHGenerator() {
+}
 
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   // Don't create a PCH if there were fatal failures during module loading.

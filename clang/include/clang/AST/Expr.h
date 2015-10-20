@@ -337,7 +337,7 @@ public:
     {}
 
   public:
-    Classification() = default;
+    Classification() {}
 
     Kinds getKind() const { return static_cast<Kinds>(Kind); }
     ModifiableType getModifiable() const {
@@ -4076,7 +4076,7 @@ public:
     friend class DesignatedInitExpr;
 
   public:
-    Designator() = default;
+    Designator() {}
 
     /// @brief Initializes a field designator.
     Designator(const IdentifierInfo *FieldName, SourceLocation DotLoc,

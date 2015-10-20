@@ -1128,7 +1128,7 @@ void CommentASTToXMLConverter::appendToResultWithCDATAEscaping(StringRef S) {
 }
 
 CommentToXMLConverter::CommentToXMLConverter() : FormatInMemoryUniqueId(0) {}
-CommentToXMLConverter::~CommentToXMLConverter() = default;
+CommentToXMLConverter::~CommentToXMLConverter() {}
 
 void CommentToXMLConverter::convertCommentToHTML(const FullComment *FC,
                                                  SmallVectorImpl<char> &HTML,

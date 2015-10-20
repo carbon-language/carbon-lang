@@ -47,7 +47,7 @@ class PTHEntry {
   Offset TokenData, PPCondData;
 
 public:
-  PTHEntry() = default;
+  PTHEntry() {}
 
   PTHEntry(Offset td, Offset ppcd)
     : TokenData(td), PPCondData(ppcd) {}
@@ -547,7 +547,7 @@ class StatListener : public FileSystemStatCache {
   PTHMap &PM;
 public:
   StatListener(PTHMap &pm) : PM(pm) {}
-  ~StatListener() override = default;
+  ~StatListener() override {}
 
   LookupResult getStat(const char *Path, FileData &Data, bool isFile,
                        std::unique_ptr<vfs::File> *F,

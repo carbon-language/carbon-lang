@@ -200,4 +200,4 @@ void FixItRewriter::Diag(SourceLocation Loc, unsigned DiagID) {
   Diags.setClient(this, false);
 }
 
-FixItOptions::~FixItOptions() = default;
+FixItOptions::~FixItOptions() {}

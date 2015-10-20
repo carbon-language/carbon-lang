@@ -69,7 +69,7 @@ DiagnosticRenderer::DiagnosticRenderer(const LangOptions &LangOpts,
                                        DiagnosticOptions *DiagOpts)
   : LangOpts(LangOpts), DiagOpts(DiagOpts), LastLevel() {}
 
-DiagnosticRenderer::~DiagnosticRenderer() = default;
+DiagnosticRenderer::~DiagnosticRenderer() {}
 
 namespace {
 
@@ -577,7 +577,7 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
     emitSingleMacroExpansion(*I, Level, Ranges, SM);
 }
 
-DiagnosticNoteRenderer::~DiagnosticNoteRenderer() = default;
+DiagnosticNoteRenderer::~DiagnosticNoteRenderer() {}
 
 void DiagnosticNoteRenderer::emitIncludeLocation(SourceLocation Loc,
                                                  PresumedLoc PLoc,

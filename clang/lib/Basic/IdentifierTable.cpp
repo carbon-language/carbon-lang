@@ -53,9 +53,9 @@ IdentifierInfo::IdentifierInfo() {
 // IdentifierTable Implementation
 //===----------------------------------------------------------------------===//
 
-IdentifierIterator::~IdentifierIterator() = default;
+IdentifierIterator::~IdentifierIterator() { }
 
-IdentifierInfoLookup::~IdentifierInfoLookup() = default;
+IdentifierInfoLookup::~IdentifierInfoLookup() {}
 
 namespace {
   /// \brief A simple identifier lookup iterator that represents an

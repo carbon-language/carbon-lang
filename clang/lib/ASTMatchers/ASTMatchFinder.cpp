@@ -902,13 +902,13 @@ MatchFinder::MatchResult::MatchResult(const BoundNodes &Nodes,
   : Nodes(Nodes), Context(Context),
     SourceManager(&Context->getSourceManager()) {}
 
-MatchFinder::MatchCallback::~MatchCallback() = default;
-MatchFinder::ParsingDoneTestCallback::~ParsingDoneTestCallback() = default;
+MatchFinder::MatchCallback::~MatchCallback() {}
+MatchFinder::ParsingDoneTestCallback::~ParsingDoneTestCallback() {}
 
 MatchFinder::MatchFinder(MatchFinderOptions Options)
     : Options(std::move(Options)), ParsingDone(nullptr) {}
 
-MatchFinder::~MatchFinder() = default;
+MatchFinder::~MatchFinder() {}
 
 void MatchFinder::addMatcher(const DeclarationMatcher &NodeMatch,
                              MatchCallback *Action) {

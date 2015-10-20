@@ -298,7 +298,7 @@ public:
 
   bool isMicrosoft() const { return IsMicrosoftABI; }
 
-  virtual ~VTableContextBase() = default;
+  virtual ~VTableContextBase() {}
 
 protected:
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;

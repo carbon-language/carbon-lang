@@ -424,7 +424,8 @@ PTHManager::PTHManager(
       StringIdLookup(std::move(stringIdLookup)), NumIds(numIds), PP(nullptr),
       SpellingBase(spellingBase), OriginalSourceFile(originalSourceFile) {}
 
-PTHManager::~PTHManager() = default;
+PTHManager::~PTHManager() {
+}
 
 static void InvalidPTH(DiagnosticsEngine &Diags, const char *Msg) {
   Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Error, "%0")) << Msg;

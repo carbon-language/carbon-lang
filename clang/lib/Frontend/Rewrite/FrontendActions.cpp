@@ -38,7 +38,7 @@ HTMLPrintAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
 }
 
 FixItAction::FixItAction() {}
-FixItAction::~FixItAction() = default;
+FixItAction::~FixItAction() {}
 
 std::unique_ptr<ASTConsumer>
 FixItAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {

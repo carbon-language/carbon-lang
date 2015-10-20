@@ -2278,7 +2278,7 @@ public:
     : Expr(ArrayTypeTraitExprClass, Empty), ATT(0), Value(false),
       QueriedType() { }
 
-  virtual ~ArrayTypeTraitExpr() = default;
+  virtual ~ArrayTypeTraitExpr() { }
 
   SourceLocation getLocStart() const LLVM_READONLY { return Loc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return RParen; }

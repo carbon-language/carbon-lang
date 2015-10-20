@@ -64,7 +64,7 @@ protected:
   PTHLexer(Preprocessor& pp, FileID FID, const unsigned char *D,
            const unsigned char* ppcond, PTHManager &PM);
 public:
-  ~PTHLexer() override = default;
+  ~PTHLexer() override {}
 
   /// Lex - Return the next token.
   bool Lex(Token &Tok);

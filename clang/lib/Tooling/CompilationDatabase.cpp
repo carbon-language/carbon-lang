@@ -32,7 +32,7 @@
 using namespace clang;
 using namespace tooling;
 
-CompilationDatabase::~CompilationDatabase() = default;
+CompilationDatabase::~CompilationDatabase() {}
 
 std::unique_ptr<CompilationDatabase>
 CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
@@ -106,7 +106,7 @@ CompilationDatabase::autoDetectFromDirectory(StringRef SourceDir,
   return DB;
 }
 
-CompilationDatabasePlugin::~CompilationDatabasePlugin() = default;
+CompilationDatabasePlugin::~CompilationDatabasePlugin() {}
 
 namespace {
 // Helper for recursively searching through a chain of actions and collecting

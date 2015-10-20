@@ -3172,7 +3172,7 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, SourceLocation Loc,
 //----------------------------------------------------------------------------
 // Search for all visible declarations.
 //----------------------------------------------------------------------------
-VisibleDeclConsumer::~VisibleDeclConsumer() = default;
+VisibleDeclConsumer::~VisibleDeclConsumer() { }
 
 bool VisibleDeclConsumer::includeHiddenDecls() const { return false; }
 

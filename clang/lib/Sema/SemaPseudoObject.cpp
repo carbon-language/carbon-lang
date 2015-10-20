@@ -202,7 +202,7 @@ namespace {
       : S(S), ResultIndex(PseudoObjectExpr::NoResult),
         GenericLoc(genericLoc) {}
 
-    virtual ~PseudoOpBuilder() = default;
+    virtual ~PseudoOpBuilder() {}
 
     /// Add a normal semantic expression.
     void addSemanticExpr(Expr *semantic) {

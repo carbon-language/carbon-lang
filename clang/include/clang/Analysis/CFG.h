@@ -704,11 +704,11 @@ public:
 /// operator error is found when building the CFG.
 class CFGCallback {
 public:
-  CFGCallback() = default;
+  CFGCallback() {}
   virtual void compareAlwaysTrue(const BinaryOperator *B, bool isAlwaysTrue) {}
   virtual void compareBitwiseEquality(const BinaryOperator *B,
                                       bool isAlwaysTrue) {}
-  virtual ~CFGCallback() = default;
+  virtual ~CFGCallback() {}
 };
 
 /// CFG - Represents a source-level, intra-procedural CFG that represents the

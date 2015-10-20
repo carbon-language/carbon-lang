@@ -21,7 +21,7 @@ namespace clang {
 
 namespace ento {
 
-SimpleConstraintManager::~SimpleConstraintManager() = default;
+SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
   Optional<nonloc::SymbolVal> SymVal = X.getAs<nonloc::SymbolVal>();

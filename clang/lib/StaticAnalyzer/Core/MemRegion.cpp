@@ -135,11 +135,12 @@ RegionTy* MemRegionManager::getSubRegion(const A1 a1, const A2 a2, const A3 a3,
 // Object destruction.
 //===----------------------------------------------------------------------===//
 
-MemRegion::~MemRegion() = default;
+MemRegion::~MemRegion() {}
 
-// All regions and their data are BumpPtrAllocated.  No need to call their
-// destructors.
-MemRegionManager::~MemRegionManager() = default;
+MemRegionManager::~MemRegionManager() {
+  // All regions and their data are BumpPtrAllocated.  No need to call
+  // their destructors.
+}
 
 //===----------------------------------------------------------------------===//
 // Basic methods.

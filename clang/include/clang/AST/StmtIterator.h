@@ -81,7 +81,7 @@ class StmtIteratorImpl : public StmtIteratorBase,
 protected:
   StmtIteratorImpl(const StmtIteratorBase& RHS) : StmtIteratorBase(RHS) {}
 public:
-  StmtIteratorImpl() = default;
+  StmtIteratorImpl() {}
   StmtIteratorImpl(Stmt **s) : StmtIteratorBase(s) {}
   StmtIteratorImpl(Decl **dgi, Decl **dge) : StmtIteratorBase(dgi, dge) {}
   StmtIteratorImpl(const VariableArrayType *t) : StmtIteratorBase(t) {}

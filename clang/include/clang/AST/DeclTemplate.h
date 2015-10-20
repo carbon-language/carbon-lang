@@ -664,7 +664,7 @@ protected:
             typename std::iterator_traits<typename llvm::FoldingSetVector<
                 EntryType>::iterator>::iterator_category,
             DeclType *, ptrdiff_t, DeclType *, DeclType *> {
-    SpecIterator() = default;
+    SpecIterator() {}
     explicit SpecIterator(
         typename llvm::FoldingSetVector<EntryType>::iterator SetIter)
         : SpecIterator::iterator_adaptor_base(std::move(SetIter)) {}

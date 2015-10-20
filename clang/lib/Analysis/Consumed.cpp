@@ -52,7 +52,7 @@ using namespace clang;
 using namespace consumed;
 
 // Key method definition
-ConsumedWarningsHandlerBase::~ConsumedWarningsHandlerBase() = default;
+ConsumedWarningsHandlerBase::~ConsumedWarningsHandlerBase() {}
 
 static SourceLocation getFirstStmtLoc(const CFGBlock *Block) {
   // Find the source location of the first statement in the block, if the block

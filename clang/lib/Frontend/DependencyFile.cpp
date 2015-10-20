@@ -137,7 +137,7 @@ bool DependencyCollector::sawDependency(StringRef Filename, bool FromModule,
          (needSystemDependencies() || !IsSystem);
 }
 
-DependencyCollector::~DependencyCollector() = default;
+DependencyCollector::~DependencyCollector() { }
 void DependencyCollector::attachToPreprocessor(Preprocessor &PP) {
   PP.addPPCallbacks(
       llvm::make_unique<DepCollectorPPCallbacks>(*this, PP.getSourceManager()));

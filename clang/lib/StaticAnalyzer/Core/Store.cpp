@@ -489,7 +489,7 @@ SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
                                                   Ctx));
 }
 
-StoreManager::BindingsHandler::~BindingsHandler() = default;
+StoreManager::BindingsHandler::~BindingsHandler() {}
 
 bool StoreManager::FindUniqueBinding::HandleBinding(StoreManager& SMgr,
                                                     Store store,

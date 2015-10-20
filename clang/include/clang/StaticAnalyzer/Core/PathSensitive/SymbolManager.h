@@ -57,7 +57,7 @@ protected:
   SymExpr(Kind k) : K(k) {}
 
 public:
-  virtual ~SymExpr() = default;
+  virtual ~SymExpr() {}
 
   Kind getKind() const { return K; }
 
@@ -109,7 +109,7 @@ protected:
   SymbolData(Kind k, SymbolID sym) : SymExpr(k), Sym(sym) {}
 
 public:
-  ~SymbolData() override = default;
+  ~SymbolData() override {}
 
   SymbolID getSymbolID() const { return Sym; }
 

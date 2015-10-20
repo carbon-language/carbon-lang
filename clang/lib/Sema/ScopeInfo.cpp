@@ -232,6 +232,6 @@ void LambdaScopeInfo::getPotentialVariableCapture(unsigned Idx, VarDecl *&VD,
   assert(VD);
 }
 
-FunctionScopeInfo::~FunctionScopeInfo() = default;
-BlockScopeInfo::~BlockScopeInfo() = default;
-CapturedRegionScopeInfo::~CapturedRegionScopeInfo() = default;
+FunctionScopeInfo::~FunctionScopeInfo() { }
+BlockScopeInfo::~BlockScopeInfo() { }
+CapturedRegionScopeInfo::~CapturedRegionScopeInfo() { }

@@ -20,7 +20,7 @@ namespace edit {
 
 class EditsReceiver {
 public:
-  virtual ~EditsReceiver() = default;
+  virtual ~EditsReceiver() { }
 
   virtual void insert(SourceLocation loc, StringRef text) = 0;
   virtual void replace(CharSourceRange range, StringRef text) = 0;

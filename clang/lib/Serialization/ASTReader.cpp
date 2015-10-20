@@ -164,7 +164,7 @@ bool ChainedASTReaderListener::visitInputFile(StringRef Filename,
 // PCH validator implementation
 //===----------------------------------------------------------------------===//
 
-ASTReaderListener::~ASTReaderListener() = default;
+ASTReaderListener::~ASTReaderListener() {}
 
 /// \brief Compare the given set of language options against an existing set of
 /// language options.

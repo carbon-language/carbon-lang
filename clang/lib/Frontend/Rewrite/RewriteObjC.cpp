@@ -193,7 +193,7 @@ namespace {
                 DiagnosticsEngine &D, const LangOptions &LOpts,
                 bool silenceMacroWarn);
 
-    ~RewriteObjC() override = default;
+    ~RewriteObjC() override {}
 
     void HandleTranslationUnit(ASTContext &C) override;
 
@@ -512,7 +512,7 @@ namespace {
                                                      D, LOpts,
                                                      silenceMacroWarn) {}
 
-    ~RewriteObjCFragileABI() override = default;
+    ~RewriteObjCFragileABI() override {}
     void Initialize(ASTContext &context) override;
 
     // Rewriting metadata

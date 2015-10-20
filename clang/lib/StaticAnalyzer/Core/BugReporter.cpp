@@ -46,7 +46,7 @@ STATISTIC(MaxValidBugClassSize,
           "The maximum number of bug reports in the same equivalence class "
           "where at least one report is valid (not suppressed)");
 
-BugReporterVisitor::~BugReporterVisitor() = default;
+BugReporterVisitor::~BugReporterVisitor() {}
 
 void BugReporterContext::anchor() {}
 
@@ -2731,9 +2731,9 @@ PathDiagnosticLocation BugReport::getLocation(const SourceManager &SM) const {
 // Methods for BugReporter and subclasses.
 //===----------------------------------------------------------------------===//
 
-BugReportEquivClass::~BugReportEquivClass() = default;
-GRBugReporter::~GRBugReporter() = default;
-BugReporterData::~BugReporterData() = default;
+BugReportEquivClass::~BugReportEquivClass() { }
+GRBugReporter::~GRBugReporter() { }
+BugReporterData::~BugReporterData() {}
 
 ExplodedGraph &GRBugReporter::getGraph() { return Eng.getGraph(); }
 

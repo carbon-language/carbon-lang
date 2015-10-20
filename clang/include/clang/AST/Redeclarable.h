@@ -248,7 +248,7 @@ Decl *getPrimaryMergedDecl(Decl *D);
 template<typename decl_type>
 class Mergeable {
 public:
-  Mergeable() = default;
+  Mergeable() {}
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.

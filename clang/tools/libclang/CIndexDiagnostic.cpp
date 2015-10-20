@@ -30,14 +30,14 @@ using namespace clang::cxloc;
 using namespace clang::cxdiag;
 using namespace llvm;
 
-CXDiagnosticSetImpl::~CXDiagnosticSetImpl() = default;
+CXDiagnosticSetImpl::~CXDiagnosticSetImpl() {}
 
 void
 CXDiagnosticSetImpl::appendDiagnostic(std::unique_ptr<CXDiagnosticImpl> D) {
   Diagnostics.push_back(std::move(D));
 }
 
-CXDiagnosticImpl::~CXDiagnosticImpl() = default;
+CXDiagnosticImpl::~CXDiagnosticImpl() {}
 
 namespace {
 class CXDiagnosticCustomNoteImpl : public CXDiagnosticImpl {
@@ -48,7 +48,7 @@ public:
     : CXDiagnosticImpl(CustomNoteDiagnosticKind),
       Message(Msg), Loc(L) {}
 
-  ~CXDiagnosticCustomNoteImpl() override = default;
+  ~CXDiagnosticCustomNoteImpl() override {}
 
   CXDiagnosticSeverity getSeverity() const override {
     return CXDiagnostic_Note;
@@ -92,7 +92,7 @@ public:
   : DiagnosticNoteRenderer(LangOpts, DiagOpts),
     CurrentSet(mainSet), MainSet(mainSet) {}
 
-  ~CXDiagnosticRenderer() override = default;
+  ~CXDiagnosticRenderer() override {}
 
   void beginDiagnostic(DiagOrStoredDiag D,
                        DiagnosticsEngine::Level Level) override {

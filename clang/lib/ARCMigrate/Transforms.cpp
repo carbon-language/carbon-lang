@@ -27,7 +27,7 @@ using namespace clang;
 using namespace arcmt;
 using namespace trans;
 
-ASTTraverser::~ASTTraverser() = default;
+ASTTraverser::~ASTTraverser() { }
 
 bool MigrationPass::CFBridgingFunctionsDefined() {
   if (!EnableCFBridgeFns.hasValue())

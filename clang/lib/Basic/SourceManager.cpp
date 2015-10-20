@@ -2204,7 +2204,7 @@ LLVM_DUMP_METHOD void SourceManager::dump() const {
   }
 }
 
-ExternalSLocEntrySource::~ExternalSLocEntrySource() = default;
+ExternalSLocEntrySource::~ExternalSLocEntrySource() { }
 
 /// Return the amount of memory used by memory buffers, breaking down
 /// by heap-backed versus mmap'ed memory.

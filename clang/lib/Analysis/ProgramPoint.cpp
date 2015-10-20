@@ -16,7 +16,7 @@
 
 using namespace clang;
 
-ProgramPointTag::~ProgramPointTag() = default;
+ProgramPointTag::~ProgramPointTag() {}
 
 ProgramPoint ProgramPoint::getProgramPoint(const Stmt *S, ProgramPoint::Kind K,
                                            const LocationContext *LC,

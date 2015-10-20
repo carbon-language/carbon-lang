@@ -62,7 +62,7 @@ public:
                  DiagnosticOptions *DiagOpts)
     : DiagnosticNoteRenderer(LangOpts, DiagOpts), Writer(Writer) {}
 
-  ~SDiagsRenderer() override = default;
+  ~SDiagsRenderer() override {}
 
 protected:
   void emitDiagnosticMessage(SourceLocation Loc,
@@ -159,7 +159,7 @@ public:
     EmitPreamble();
   }
 
-  ~SDiagsWriter() override = default;
+  ~SDiagsWriter() override {}
 
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) override;

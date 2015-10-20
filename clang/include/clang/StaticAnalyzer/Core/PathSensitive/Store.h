@@ -49,7 +49,7 @@ protected:
   StoreManager(ProgramStateManager &stateMgr);
 
 public:
-  virtual ~StoreManager() = default;
+  virtual ~StoreManager() {}
 
   /// Return the value bound to specified location in a given state.
   /// \param[in] store The analysis state.

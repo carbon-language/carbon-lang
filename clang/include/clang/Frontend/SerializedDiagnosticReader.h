@@ -58,8 +58,8 @@ struct Location {
 /// the various constructs that are found in serialized diagnostics.
 class SerializedDiagnosticReader {
 public:
-  SerializedDiagnosticReader() = default;
-  virtual ~SerializedDiagnosticReader() = default;
+  SerializedDiagnosticReader() {}
+  virtual ~SerializedDiagnosticReader() {}
 
   /// \brief Read the diagnostics in \c File
   std::error_code readDiagnostics(StringRef File);

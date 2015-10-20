@@ -26,7 +26,7 @@ using clang::analyze_format_string::ConversionSpecifier;
 using namespace clang;
 
 // Key function to FormatStringHandler.
-FormatStringHandler::~FormatStringHandler() = default;
+FormatStringHandler::~FormatStringHandler() {}
 
 //===----------------------------------------------------------------------===//
 // Functions for parsing format strings components in both printf and

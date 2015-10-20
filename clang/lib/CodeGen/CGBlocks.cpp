@@ -40,7 +40,7 @@ CGBlockInfo::CGBlockInfo(const BlockDecl *block, StringRef name)
 }
 
 // Anchor the vtable to this translation unit.
-BlockByrefHelpers::~BlockByrefHelpers() = default;
+BlockByrefHelpers::~BlockByrefHelpers() {}
 
 /// Build the given block as a global block.
 static llvm::Constant *buildGlobalBlock(CodeGenModule &CGM,

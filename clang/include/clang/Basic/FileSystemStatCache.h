@@ -51,7 +51,7 @@ protected:
   std::unique_ptr<FileSystemStatCache> NextStatCache;
 
 public:
-  virtual ~FileSystemStatCache() = default;
+  virtual ~FileSystemStatCache() {}
   
   enum LookupResult {
     CacheExists,   ///< We know the file exists and its cached stat data.

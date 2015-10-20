@@ -19,4 +19,5 @@ Tool::Tool(const char *_Name, const char *_ShortName, const ToolChain &TC,
       ResponseSupport(_ResponseSupport), ResponseEncoding(_ResponseEncoding),
       ResponseFlag(_ResponseFlag) {}
 
-Tool::~Tool() = default;
+Tool::~Tool() {
+}

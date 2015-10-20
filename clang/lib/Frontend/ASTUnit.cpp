@@ -2841,7 +2841,7 @@ void ASTUnit::ConcurrencyState::finish() {
 #else // NDEBUG
 
 ASTUnit::ConcurrencyState::ConcurrencyState() { Mutex = nullptr; }
-ASTUnit::ConcurrencyState::~ConcurrencyState() = default;
+ASTUnit::ConcurrencyState::~ConcurrencyState() {}
 void ASTUnit::ConcurrencyState::start() {}
 void ASTUnit::ConcurrencyState::finish() {}
 

@@ -42,7 +42,7 @@ public:
   BugType(const CheckerBase *checker, StringRef name, StringRef cat)
       : Check(checker->getCheckName()), Name(name), Category(cat),
         SuppressonSink(false) {}
-  virtual ~BugType() = default;
+  virtual ~BugType() {}
 
   // FIXME: Should these be made strings as well?
   StringRef getName() const { return Name; }

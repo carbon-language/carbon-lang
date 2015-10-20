@@ -605,5 +605,5 @@ void FileManager::PrintStats() const {
 }
 
 // Virtual destructors for abstract base classes that need live in Basic.
-PCHContainerWriter::~PCHContainerWriter() = default;
-PCHContainerReader::~PCHContainerReader() = default;
+PCHContainerWriter::~PCHContainerWriter() {}
+PCHContainerReader::~PCHContainerReader() {}

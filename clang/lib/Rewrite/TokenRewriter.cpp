@@ -46,7 +46,8 @@ TokenRewriter::TokenRewriter(FileID FID, SourceManager &SM,
   }
 }
 
-TokenRewriter::~TokenRewriter() = default;
+TokenRewriter::~TokenRewriter() {
+}
 
 
 /// RemapIterator - Convert from token_iterator (a const iterator) to

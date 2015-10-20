@@ -53,7 +53,7 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-ExternalPreprocessorSource::~ExternalPreprocessorSource() = default;
+ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
 Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                            DiagnosticsEngine &diags, LangOptions &opts,
@@ -897,11 +897,11 @@ bool Preprocessor::HandleComment(Token &result, SourceRange Comment) {
   return true;
 }
 
-ModuleLoader::~ModuleLoader() = default;
+ModuleLoader::~ModuleLoader() { }
 
-CommentHandler::~CommentHandler() = default;
+CommentHandler::~CommentHandler() { }
 
-CodeCompletionHandler::~CodeCompletionHandler() = default;
+CodeCompletionHandler::~CodeCompletionHandler() { }
 
 void Preprocessor::createPreprocessingRecord() {
   if (Record)

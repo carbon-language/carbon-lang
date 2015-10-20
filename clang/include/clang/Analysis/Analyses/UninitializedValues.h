@@ -99,7 +99,7 @@ public:
 
 class UninitVariablesHandler {
 public:
-  UninitVariablesHandler() = default;
+  UninitVariablesHandler() {}
   virtual ~UninitVariablesHandler();
 
   /// Called when the uninitialized variable is used at the given expression.

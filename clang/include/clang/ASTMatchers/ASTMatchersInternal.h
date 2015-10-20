@@ -131,7 +131,7 @@ public:
   /// BoundNodesTree.
   class Visitor {
   public:
-    virtual ~Visitor() = default;
+    virtual ~Visitor() {}
 
     /// \brief Called multiple times during a single call to VisitMatches(...).
     ///
@@ -209,7 +209,7 @@ public:
 template <typename T>
 class MatcherInterface : public DynMatcherInterface {
 public:
-  ~MatcherInterface() override = default;
+  ~MatcherInterface() override {}
 
   /// \brief Returns true if 'Node' can be matched.
   ///
@@ -798,7 +798,7 @@ public:
     AMM_ParentOnly
   };
 
-  virtual ~ASTMatchFinder() = default;
+  virtual ~ASTMatchFinder() {}
 
   /// \brief Returns true if the given class is directly or indirectly derived
   /// from a base type matching \c base.
@@ -1376,7 +1376,7 @@ class VariadicDynCastAllOfMatcher
         BindableMatcher<SourceT>, Matcher<TargetT>,
         makeDynCastAllOfComposite<SourceT, TargetT> > {
 public:
-  VariadicDynCastAllOfMatcher() = default;
+  VariadicDynCastAllOfMatcher() {}
 };
 
 /// \brief A \c VariadicAllOfMatcher<T> object is a variadic functor that takes
@@ -1394,7 +1394,7 @@ class VariadicAllOfMatcher : public llvm::VariadicFunction<
                                BindableMatcher<T>, Matcher<T>,
                                makeAllOfComposite<T> > {
 public:
-  VariadicAllOfMatcher() = default;
+  VariadicAllOfMatcher() {}
 };
 
 /// \brief Matches nodes of type \c TLoc for which the inner
@@ -1515,7 +1515,7 @@ public:
 
   struct Func : public llvm::VariadicFunction<Self, Matcher<InnerTBase>,
                                               &Self::create> {
-    Func() = default;
+    Func() {}
   };
 
 private:

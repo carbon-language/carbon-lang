@@ -25,7 +25,7 @@ namespace format {
 
 class FormatTokenSource {
 public:
-  virtual ~FormatTokenSource() = default;
+  virtual ~FormatTokenSource() {}
   virtual FormatToken *getNextToken() = 0;
 
   virtual unsigned getPosition() = 0;

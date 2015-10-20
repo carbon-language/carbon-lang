@@ -48,7 +48,7 @@ enum UnreachableKind {
 class Callback {
   virtual void anchor();
 public:
-  virtual ~Callback() = default;
+  virtual ~Callback() {}
   virtual void HandleUnreachable(UnreachableKind UK,
                                  SourceLocation L,
                                  SourceRange ConditionVal,

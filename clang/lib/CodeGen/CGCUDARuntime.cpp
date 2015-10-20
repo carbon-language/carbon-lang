@@ -22,7 +22,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-CGCUDARuntime::~CGCUDARuntime() = default;
+CGCUDARuntime::~CGCUDARuntime() {}
 
 RValue CGCUDARuntime::EmitCUDAKernelCallExpr(CodeGenFunction &CGF,
                                              const CUDAKernelCallExpr *E,

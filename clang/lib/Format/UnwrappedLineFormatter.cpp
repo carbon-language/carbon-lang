@@ -477,7 +477,7 @@ public:
                 UnwrappedLineFormatter *BlockFormatter)
       : Indenter(Indenter), Whitespaces(Whitespaces), Style(Style),
         BlockFormatter(BlockFormatter) {}
-  virtual ~LineFormatter() = default;
+  virtual ~LineFormatter() {}
 
   /// \brief Formats an \c AnnotatedLine and returns the penalty.
   ///

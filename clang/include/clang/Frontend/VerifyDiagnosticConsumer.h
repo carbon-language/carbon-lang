@@ -161,7 +161,7 @@ public:
     unsigned Min, Max;
     bool MatchAnyLine;
 
-    virtual ~Directive() = default;
+    virtual ~Directive() { }
 
     // Returns true if directive text is valid.
     // Otherwise returns false and populates E.

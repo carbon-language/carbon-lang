@@ -68,7 +68,7 @@ public:
       ArrayIndexTy(context.IntTy),
       ArrayIndexWidth(context.getTypeSize(ArrayIndexTy)) {}
 
-  virtual ~SValBuilder() = default;
+  virtual ~SValBuilder() {}
 
   bool haveSameType(const SymExpr *Sym1, const SymExpr *Sym2) {
     return haveSameType(Sym1->getType(), Sym2->getType());

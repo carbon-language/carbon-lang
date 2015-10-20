@@ -156,9 +156,9 @@ StringRef MachO::getMachOArchName(const ArgList &Args) const {
   }
 }
 
-Darwin::~Darwin() = default;
+Darwin::~Darwin() {}
 
-MachO::~MachO() = default;
+MachO::~MachO() {}
 
 std::string MachO::ComputeEffectiveClangTriple(const ArgList &Args,
                                                types::ID InputType) const {
@@ -2102,7 +2102,7 @@ Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple &Triple,
     getProgramPaths().push_back(getDriver().Dir);
 }
 
-Generic_GCC::~Generic_GCC() = default;
+Generic_GCC::~Generic_GCC() {}
 
 Tool *Generic_GCC::getTool(Action::ActionClass AC) const {
   switch (AC) {
@@ -2339,7 +2339,7 @@ HexagonToolChain::HexagonToolChain(const Driver &D, const llvm::Triple &Triple,
                          GetTargetCPU(Args), InstalledDir, LibPaths);
 }
 
-HexagonToolChain::~HexagonToolChain() = default;
+HexagonToolChain::~HexagonToolChain() {}
 
 Tool *HexagonToolChain::buildAssembler() const {
   return new tools::hexagon::Assembler(*this);
@@ -2642,7 +2642,7 @@ TCEToolChain::TCEToolChain(const Driver &D, const llvm::Triple &Triple,
   getProgramPaths().push_back(Path);
 }
 
-TCEToolChain::~TCEToolChain() = default;
+TCEToolChain::~TCEToolChain() {}
 
 bool TCEToolChain::IsMathErrnoDefault() const { return true; }
 
@@ -3987,7 +3987,7 @@ MyriadToolChain::MyriadToolChain(const Driver &D, const llvm::Triple &Triple,
   }
 }
 
-MyriadToolChain::~MyriadToolChain() = default;
+MyriadToolChain::~MyriadToolChain() {}
 
 void MyriadToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                                 ArgStringList &CC1Args) const {

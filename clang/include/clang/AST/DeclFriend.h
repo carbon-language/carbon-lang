@@ -180,7 +180,7 @@ class CXXRecordDecl::friend_iterator {
   friend class CXXRecordDecl;
   explicit friend_iterator(FriendDecl *Ptr) : Ptr(Ptr) {}
 public:
-  friend_iterator() = default;
+  friend_iterator() {}
 
   typedef FriendDecl *value_type;
   typedef FriendDecl *reference;

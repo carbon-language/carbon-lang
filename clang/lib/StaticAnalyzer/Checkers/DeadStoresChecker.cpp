@@ -142,7 +142,7 @@ public:
       : cfg(cfg), Ctx(ctx), BR(br), Checker(checker), AC(ac), Parents(parents),
         Escaped(escaped), currentBlock(nullptr) {}
 
-  ~DeadStoreObs() override = default;
+  ~DeadStoreObs() override {}
 
   bool isLive(const LiveVariables::LivenessValues &Live, const VarDecl *D) {
     if (Live.isLive(D))

@@ -4010,7 +4010,7 @@ public:
     }
   }
 
-  ~StmtPrinterHelper() override = default;
+  ~StmtPrinterHelper() override {}
 
   const LangOptions &getLangOpts() const { return LangOpts; }
   void setBlockID(signed i) { currentBlock = i; }

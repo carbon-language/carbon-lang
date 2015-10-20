@@ -38,7 +38,7 @@ namespace {
 class CXLoadedDiagnosticSetImpl : public CXDiagnosticSetImpl {
 public:
   CXLoadedDiagnosticSetImpl() : CXDiagnosticSetImpl(true), FakeFiles(FO) {}
-  ~CXLoadedDiagnosticSetImpl() override = default;
+  ~CXLoadedDiagnosticSetImpl() override {}
 
   llvm::BumpPtrAllocator Alloc;
   Strings Categories;
@@ -63,7 +63,7 @@ public:
 // Cleanup.
 //===----------------------------------------------------------------------===//
 
-CXLoadedDiagnostic::~CXLoadedDiagnostic() = default;
+CXLoadedDiagnostic::~CXLoadedDiagnostic() {}
 
 //===----------------------------------------------------------------------===//
 // Public CXLoadedDiagnostic methods.

@@ -56,7 +56,7 @@ private:
   ArrayRef<T> Arr;
 };
 struct MatchesAlways {
-  MatchesAlways() = default;
+  MatchesAlways() {}
   template <class T> bool operator()(T) { return true; }
 };
 

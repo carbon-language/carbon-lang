@@ -151,7 +151,9 @@ class SessionSkipBodyData {
 
 public:
   SessionSkipBodyData() : Mux(/*recursive=*/false) {}
-  ~SessionSkipBodyData() = default;
+  ~SessionSkipBodyData() {
+    //llvm::errs() << "RegionData: " << Skipped.size() << " - " << Skipped.getMemorySize() << "\n";
+  }
 
   void copyTo(PPRegionSetTy &Set) {
     llvm::MutexGuard MG(Mux);

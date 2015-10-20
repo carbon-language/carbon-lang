@@ -25,7 +25,7 @@ namespace clang {
 namespace tooling {
 
 struct PathComparator {
-  virtual ~PathComparator() = default;
+  virtual ~PathComparator() {}
   virtual bool equivalent(StringRef FileA, StringRef FileB) const = 0;
 };
 class FileMatchTrieNode;

@@ -594,7 +594,7 @@ SourceLocation TransformActionsImpl::getLocForEndOfToken(SourceLocation loc,
   return PP.getLocForEndOfToken(loc);
 }
 
-TransformActions::RewriteReceiver::~RewriteReceiver() = default;
+TransformActions::RewriteReceiver::~RewriteReceiver() { }
 
 TransformActions::TransformActions(DiagnosticsEngine &diag,
                                    CapturedDiagList &capturedDiags,

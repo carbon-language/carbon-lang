@@ -3058,4 +3058,4 @@ CodeGenFunction::EmitBlockCopyAndAutorelease(llvm::Value *Block, QualType Ty) {
 }
 
 
-CGObjCRuntime::~CGObjCRuntime() = default;
+CGObjCRuntime::~CGObjCRuntime() {}

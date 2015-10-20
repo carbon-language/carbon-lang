@@ -244,7 +244,7 @@ namespace {
                 DiagnosticsEngine &D, const LangOptions &LOpts,
                 bool silenceMacroWarn, bool LineInfo);
 
-    ~RewriteModernObjC() override = default;
+    ~RewriteModernObjC() override {}
 
     void HandleTranslationUnit(ASTContext &C) override;
 

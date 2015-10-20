@@ -126,7 +126,7 @@ public:
 
 FrontendAction::FrontendAction() : Instance(nullptr) {}
 
-FrontendAction::~FrontendAction() = default;
+FrontendAction::~FrontendAction() {}
 
 void FrontendAction::setCurrentInput(const FrontendInputFile &CurrentInput,
                                      std::unique_ptr<ASTUnit> AST) {

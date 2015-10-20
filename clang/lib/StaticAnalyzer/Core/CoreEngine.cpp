@@ -38,7 +38,7 @@ STATISTIC(NumPathsExplored,
 // Worklist classes for exploration of reachable states.
 //===----------------------------------------------------------------------===//
 
-WorkList::Visitor::~Visitor() = default;
+WorkList::Visitor::~Visitor() {}
 
 namespace {
 class DFS : public WorkList {
@@ -100,7 +100,7 @@ public:
 
 // Place the dstor for WorkList here because it contains virtual member
 // functions, and we the code for the dstor generated in one compilation unit.
-WorkList::~WorkList() = default;
+WorkList::~WorkList() {}
 
 WorkList *WorkList::makeDFS() { return new DFS(); }
 WorkList *WorkList::makeBFS() { return new BFS(); }

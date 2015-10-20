@@ -72,7 +72,8 @@ ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
           << A->getValue() << A->getAsString(Args);
 }
 
-ToolChain::~ToolChain() = default;
+ToolChain::~ToolChain() {
+}
 
 vfs::FileSystem &ToolChain::getVFS() const { return getDriver().getVFS(); }
 

@@ -40,7 +40,7 @@ class ModuleMapParser;
 /// reads module map files.
 class ModuleMapCallbacks {
 public:
-  virtual ~ModuleMapCallbacks() = default;
+  virtual ~ModuleMapCallbacks() {}
 
   /// \brief Called when a module map file has been read.
   ///
