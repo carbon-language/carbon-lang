@@ -1903,7 +1903,7 @@ def S4_addaddi : ALU64Inst <(outs IntRegs:$Rd),
                             (ins IntRegs:$Rs, IntRegs:$Ru, s6Ext:$s6),
   "$Rd = add($Rs, add($Ru, #$s6))" ,
   [(set (i32 IntRegs:$Rd), (add (i32 IntRegs:$Rs),
-                           (add (i32 IntRegs:$Ru), s16_16ImmPred:$s6)))],
+                           (add (i32 IntRegs:$Ru), s32ImmPred:$s6)))],
   "", ALU64_tc_2_SLOT23> {
     bits<5> Rd;
     bits<5> Rs;

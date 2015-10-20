@@ -2825,7 +2825,7 @@ let CextOpcode = "ADD_acc" in {
   let isExtentSigned = 1 in
   def M2_accii : T_MType_acc_ri <"+= add", 0b100, s8Ext,
                  [(set (i32 IntRegs:$dst),
-                       (add (add (i32 IntRegs:$src2), s16_16ImmPred:$src3),
+                       (add (add (i32 IntRegs:$src2), s32ImmPred:$src3),
                             (i32 IntRegs:$src1)))]>, ImmRegRel;
 
   def M2_acci  : T_MType_acc_rr <"+= add",  0b000, 0b001, 0,
@@ -2859,7 +2859,7 @@ class T_MType_acc_pat2 <InstHexagon MI, SDNode firstOp, SDNode secOp>
 def : T_MType_acc_pat2 <M2_xor_xacc, xor, xor>;
 def : T_MType_acc_pat1 <M2_macsin, mul, sub, u32ImmPred>;
 
-def : T_MType_acc_pat1 <M2_naccii, add, sub, s16_16ImmPred>;
+def : T_MType_acc_pat1 <M2_naccii, add, sub, s32ImmPred>;
 def : T_MType_acc_pat2 <M2_nacci, add, sub>;
 
 //===----------------------------------------------------------------------===//

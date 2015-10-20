@@ -161,7 +161,7 @@ def getNonNVStore : InstrMapping {
 def getBasedWithImmOffset : InstrMapping {
   let FilterClass = "AddrModeRel";
   let RowFields = ["CextOpcode", "PredSense", "PNewValue", "isNVStore",
-                   "isMEMri", "isFloat"];
+                   "isFloat"];
   let ColFields = ["addrMode"];
   let KeyCol = ["Absolute"];
   let ValueCols = [["BaseImmOffset"]];

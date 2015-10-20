@@ -691,15 +691,15 @@ def: T_RR_pat<A2_combine_hl, int_hexagon_A2_combine_hl>;
 def: T_RR_pat<A2_combine_lh, int_hexagon_A2_combine_lh>;
 def: T_RR_pat<A2_combine_ll, int_hexagon_A2_combine_ll>;
 
-def: T_II_pat<A2_combineii, int_hexagon_A2_combineii, s8ExtPred, s8ImmPred>;
+def: T_II_pat<A2_combineii, int_hexagon_A2_combineii, s32ImmPred, s8ImmPred>;
 
 def: Pat<(i32 (int_hexagon_C2_mux (I32:$Rp), (I32:$Rs), (I32:$Rt))),
          (i32 (C2_mux (C2_tfrrp IntRegs:$Rp), IntRegs:$Rs, IntRegs:$Rt))>;
 
 // Mux
-def : T_QRI_pat<C2_muxir, int_hexagon_C2_muxir, s8ExtPred>;
-def : T_QIR_pat<C2_muxri, int_hexagon_C2_muxri, s8ExtPred>;
-def : T_QII_pat<C2_muxii, int_hexagon_C2_muxii, s8ExtPred, s8ImmPred>;
+def : T_QRI_pat<C2_muxir, int_hexagon_C2_muxir, s32ImmPred>;
+def : T_QIR_pat<C2_muxri, int_hexagon_C2_muxri, s32ImmPred>;
+def : T_QII_pat<C2_muxii, int_hexagon_C2_muxii, s32ImmPred, s8ImmPred>;
 
 // Shift halfword
 def : T_R_pat<A2_aslh, int_hexagon_A2_aslh>;
@@ -720,17 +720,17 @@ def : T_RR_pat<C2_cmpeq,  int_hexagon_C2_cmpeq>;
 def : T_RR_pat<C2_cmpgt,  int_hexagon_C2_cmpgt>;
 def : T_RR_pat<C2_cmpgtu, int_hexagon_C2_cmpgtu>;
 
-def : T_RI_pat<C2_cmpeqi, int_hexagon_C2_cmpeqi, s10ExtPred>;
-def : T_RI_pat<C2_cmpgti, int_hexagon_C2_cmpgti, s10ExtPred>;
-def : T_RI_pat<C2_cmpgtui, int_hexagon_C2_cmpgtui, u9ExtPred>;
+def : T_RI_pat<C2_cmpeqi, int_hexagon_C2_cmpeqi, s32ImmPred>;
+def : T_RI_pat<C2_cmpgti, int_hexagon_C2_cmpgti, s32ImmPred>;
+def : T_RI_pat<C2_cmpgtui, int_hexagon_C2_cmpgtui, u32ImmPred>;
 
-def : Pat <(i32 (int_hexagon_C2_cmpgei (I32:$src1), s8ExtPred:$src2)),
+def : Pat <(i32 (int_hexagon_C2_cmpgei (I32:$src1), s32ImmPred:$src2)),
       (i32 (C2_cmpgti (I32:$src1),
-                      (DEC_CONST_SIGNED s8ExtPred:$src2)))>;
+                      (DEC_CONST_SIGNED s32ImmPred:$src2)))>;
 
-def : Pat <(i32 (int_hexagon_C2_cmpgeui (I32:$src1), u8ExtPred:$src2)),
+def : Pat <(i32 (int_hexagon_C2_cmpgeui (I32:$src1), u32ImmPred:$src2)),
       (i32 (C2_cmpgtui (I32:$src1),
-                       (DEC_CONST_UNSIGNED u8ExtPred:$src2)))>;
+                       (DEC_CONST_UNSIGNED u32ImmPred:$src2)))>;
 
 // The instruction, Pd=cmp.geu(Rs, #u8) -> Pd=cmp.eq(Rs,Rs) when #u8 == 0.
 def : Pat <(i32 (int_hexagon_C2_cmpgeui (I32:$src1), 0)),
