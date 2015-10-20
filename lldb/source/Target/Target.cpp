@@ -3162,19 +3162,26 @@ Target::Attach (ProcessAttachInfo &attach_info, Stream *stream)
         error = process_sp->Attach (attach_info);
     }
 
-    if (error.Success () && process_sp && async == false)
+    if (error.Success () && process_sp)
     {
-        state = process_sp->WaitForProcessToStop (nullptr, nullptr, false, attach_info.GetHijackListener ().get (), stream);
-        process_sp->RestoreProcessEvents ();
-
-        if (state != eStateStopped)
+        if (async)
         {
-            const char *exit_desc = process_sp->GetExitDescription ();
-            if (exit_desc)
-                error.SetErrorStringWithFormat ("%s", exit_desc);
-            else
-                error.SetErrorString ("process did not stop (no such process or permission problem?)");
-            process_sp->Destroy (false);
+            process_sp->RestoreProcessEvents ();
+        }
+        else
+        {
+            state = process_sp->WaitForProcessToStop (nullptr, nullptr, false, attach_info.GetHijackListener ().get (), stream);
+            process_sp->RestoreProcessEvents ();
+
+            if (state != eStateStopped)
+            {
+                const char *exit_desc = process_sp->GetExitDescription ();
+                if (exit_desc)
+                    error.SetErrorStringWithFormat ("%s", exit_desc);
+                else
+                    error.SetErrorString ("process did not stop (no such process or permission problem?)");
+                process_sp->Destroy (false);
+            }
         }
     }
     return error;
