@@ -597,7 +597,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         // Get instruction with delay slot.
         MachineBasicBlock::instr_iterator DSI(I);
 
-        if (InMicroMipsMode && TII->GetInstSizeInBytes(std::next(DSI)) == 2 &&
+        if (InMicroMipsMode && TII->GetInstSizeInBytes(&*std::next(DSI)) == 2 &&
             DSI->isCall()) {
           // If instruction in delay slot is 16b change opcode to
           // corresponding instruction with short delay slot.

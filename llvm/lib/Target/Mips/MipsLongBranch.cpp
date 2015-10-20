@@ -161,7 +161,7 @@ void MipsLongBranch::initMBBInfo() {
   // Split the MBBs if they have two branches. Each basic block should have at
   // most one branch after this loop is executed.
   for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E;)
-    splitMBB(I++);
+    splitMBB(&*I++);
 
   MF->RenumberBlocks();
   MBBInfos.clear();
@@ -434,7 +434,7 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     I.Br->addOperand(MachineOperand::CreateMBB(LongBrMBB));
   } else
     // Change branch destination and reverse condition.
-    replaceBranch(*MBB, I.Br, DL, FallThroughMBB);
+    replaceBranch(*MBB, I.Br, DL, &*FallThroughMBB);
 }
 
 static void emitGPDisp(MachineFunction &F, const MipsInstrInfo *TII) {

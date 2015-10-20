@@ -174,7 +174,7 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
 
-  MachineBasicBlock::const_instr_iterator I = MI;
+  MachineBasicBlock::const_instr_iterator I = MI->getIterator();
   MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
 
   do {
@@ -202,7 +202,7 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       llvm_unreachable("Pseudo opcode found in EmitInstruction()");
 
     MCInst TmpInst0;
-    MCInstLowering.Lower(I, TmpInst0);
+    MCInstLowering.Lower(&*I, TmpInst0);
     EmitToStreamer(*OutStreamer, TmpInst0);
   } while ((++I != E) && I->isInsideBundle()); // Delay slot check
 }

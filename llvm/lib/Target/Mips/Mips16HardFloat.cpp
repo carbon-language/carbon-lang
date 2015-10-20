@@ -535,7 +535,7 @@ bool Mips16HardFloat::runOnModule(Module &M) {
     FPParamVariant V = whichFPParamVariantNeeded(*F);
     if (V != NoSig) {
       Modified = true;
-      createFPFnStub(F, &M, V, TM);
+      createFPFnStub(&*F, &M, V, TM);
     }
   }
   return Modified;
