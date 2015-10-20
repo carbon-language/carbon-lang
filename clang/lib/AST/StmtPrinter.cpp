@@ -2338,4 +2338,4 @@ void Stmt::printPretty(raw_ostream &OS,
 //===----------------------------------------------------------------------===//
 
 // Implement virtual destructor.
-PrinterHelper::~PrinterHelper() {}
+PrinterHelper::~PrinterHelper() = default;

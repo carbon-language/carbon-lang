@@ -59,7 +59,7 @@ CompilerInvocationBase::CompilerInvocationBase(const CompilerInvocationBase &X)
     HeaderSearchOpts(new HeaderSearchOptions(X.getHeaderSearchOpts())),
     PreprocessorOpts(new PreprocessorOptions(X.getPreprocessorOpts())) {}
 
-CompilerInvocationBase::~CompilerInvocationBase() {}
+CompilerInvocationBase::~CompilerInvocationBase() = default;
 
 //===----------------------------------------------------------------------===//
 // Deserialization (from args)

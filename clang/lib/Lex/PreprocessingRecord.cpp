@@ -19,7 +19,7 @@
 
 using namespace clang;
 
-ExternalPreprocessingRecordSource::~ExternalPreprocessingRecordSource() { }
+ExternalPreprocessingRecordSource::~ExternalPreprocessingRecordSource() = default;
 
 
 InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,

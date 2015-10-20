@@ -393,7 +393,7 @@ bool DiagnosticsEngine::EmitCurrentDiagnostic(bool Force) {
 }
 
 
-DiagnosticConsumer::~DiagnosticConsumer() {}
+DiagnosticConsumer::~DiagnosticConsumer() = default;
 
 void DiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                         const Diagnostic &Info) {
@@ -981,7 +981,7 @@ bool DiagnosticConsumer::IncludeInDiagnosticCounts() const { return true; }
 
 void IgnoringDiagConsumer::anchor() { }
 
-ForwardingDiagnosticConsumer::~ForwardingDiagnosticConsumer() {}
+ForwardingDiagnosticConsumer::~ForwardingDiagnosticConsumer() = default;
 
 void ForwardingDiagnosticConsumer::HandleDiagnostic(
        DiagnosticsEngine::Level DiagLevel,

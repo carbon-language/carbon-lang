@@ -64,7 +64,7 @@ public:
                          ManglerKind Kind)
       : Context(Context), Diags(Diags), Kind(Kind) {}
 
-  virtual ~MangleContext() { }
+  virtual ~MangleContext() = default;
 
   ASTContext &getASTContext() const { return Context; }
 

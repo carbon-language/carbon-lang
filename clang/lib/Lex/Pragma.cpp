@@ -31,8 +31,7 @@ using namespace clang;
 #include "llvm/Support/raw_ostream.h"
 
 // Out-of-line destructor to provide a home for the class.
-PragmaHandler::~PragmaHandler() {
-}
+PragmaHandler::~PragmaHandler() = default;
 
 //===----------------------------------------------------------------------===//
 // EmptyPragmaHandler Implementation.

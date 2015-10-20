@@ -22,7 +22,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-CGOpenCLRuntime::~CGOpenCLRuntime() {}
+CGOpenCLRuntime::~CGOpenCLRuntime() = default;
 
 void CGOpenCLRuntime::EmitWorkGroupLocalVarDecl(CodeGenFunction &CGF,
                                                 const VarDecl &D) {

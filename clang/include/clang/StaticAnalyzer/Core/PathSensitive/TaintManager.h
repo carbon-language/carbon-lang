@@ -37,7 +37,7 @@ template<> struct ProgramStateTrait<TaintMap>
 
 class TaintManager {
 
-  TaintManager() {}
+  TaintManager() = default;
 };
 
 }

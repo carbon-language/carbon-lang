@@ -37,9 +37,9 @@
 namespace clang {
 namespace tooling {
 
-ToolAction::~ToolAction() {}
+ToolAction::~ToolAction() = default;
 
-FrontendActionFactory::~FrontendActionFactory() {}
+FrontendActionFactory::~FrontendActionFactory() = default;
 
 // FIXME: This file contains structural duplication with other parts of the
 // code that sets up a compiler to run tools on it, and we should refactor
@@ -319,7 +319,7 @@ ClangTool::ClangTool(const CompilationDatabase &Compilations,
   appendArgumentsAdjuster(getClangSyntaxOnlyAdjuster());
 }
 
-ClangTool::~ClangTool() {}
+ClangTool::~ClangTool() = default;
 
 void ClangTool::mapVirtualFile(StringRef FilePath, StringRef Content) {
   MappedFileContents.push_back(std::make_pair(FilePath, Content));

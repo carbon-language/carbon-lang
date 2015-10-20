@@ -26,7 +26,7 @@ using clang::tooling::FileContentMappings;
 
 class BoundNodesCallback {
 public:
-  virtual ~BoundNodesCallback() {}
+  virtual ~BoundNodesCallback() = default;
   virtual bool run(const BoundNodes *BoundNodes) = 0;
   virtual bool run(const BoundNodes *BoundNodes, ASTContext *Context) = 0;
   virtual void onEndOfTranslationUnit() {}

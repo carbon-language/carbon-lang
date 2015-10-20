@@ -66,7 +66,7 @@ Address ABIInfo::EmitMSVAArg(CodeGenFunction &CGF, Address VAListAddr,
   return Address::invalid();
 }
 
-ABIInfo::~ABIInfo() {}
+ABIInfo::~ABIInfo() = default;
 
 static CGCXXABI::RecordArgABI getRecordArgABI(const RecordType *RT,
                                               CGCXXABI &CXXABI) {

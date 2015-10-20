@@ -81,7 +81,7 @@ protected:
       ParsingFilename(false),
       LexingRawMode(false) {}
 
-  virtual ~PreprocessorLexer() {}
+  virtual ~PreprocessorLexer() = default;
 
   virtual void IndirectLex(Token& Result) = 0;
 

@@ -161,7 +161,7 @@ private:
   friend class MultiOnDiskHashTableGenerator;
 
 public:
-  MultiOnDiskHashTable() {}
+  MultiOnDiskHashTable() = default;
   MultiOnDiskHashTable(MultiOnDiskHashTable &&O)
       : Tables(std::move(O.Tables)),
         PendingOverrides(std::move(O.PendingOverrides)) {

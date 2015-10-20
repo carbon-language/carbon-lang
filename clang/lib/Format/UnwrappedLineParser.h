@@ -51,7 +51,7 @@ struct UnwrappedLine {
 
 class UnwrappedLineConsumer {
 public:
-  virtual ~UnwrappedLineConsumer() {}
+  virtual ~UnwrappedLineConsumer() = default;
   virtual void consumeUnwrappedLine(const UnwrappedLine &Line) = 0;
   virtual void finishRun() = 0;
 };

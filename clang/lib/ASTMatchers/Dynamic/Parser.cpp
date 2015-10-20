@@ -257,7 +257,7 @@ private:
   const char *CodeCompletionLocation;
 };
 
-Parser::Sema::~Sema() {}
+Parser::Sema::~Sema() = default;
 
 std::vector<ArgKind> Parser::Sema::getAcceptedCompletionTypes(
     llvm::ArrayRef<std::pair<MatcherCtor, unsigned>> Context) {
@@ -526,7 +526,7 @@ Parser::Parser(CodeTokenizer *Tokenizer, Sema *S,
     : Tokenizer(Tokenizer), S(S ? S : &*DefaultRegistrySema),
       NamedValues(NamedValues), Error(Error) {}
 
-Parser::RegistrySema::~RegistrySema() {}
+Parser::RegistrySema::~RegistrySema() = default;
 
 llvm::Optional<MatcherCtor>
 Parser::RegistrySema::lookupMatcherCtor(StringRef MatcherName) {

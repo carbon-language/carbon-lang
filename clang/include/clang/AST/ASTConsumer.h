@@ -43,7 +43,7 @@ class ASTConsumer {
 public:
   ASTConsumer() : SemaConsumer(false) { }
 
-  virtual ~ASTConsumer() {}
+  virtual ~ASTConsumer() = default;
 
   /// Initialize - This is called to initialize the consumer, providing the
   /// ASTContext.

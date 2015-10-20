@@ -333,7 +333,7 @@ template<typename T>
 class CanProxy : public CanProxyAdaptor<T> {
 public:
   /// \brief Build a NULL proxy.
-  CanProxy() { }
+  CanProxy() = default;
 
   /// \brief Build a proxy to the given canonical type.
   CanProxy(CanQual<T> Stored) { this->Stored = Stored; }
@@ -389,7 +389,7 @@ struct CanTypeIterator
           CanQualType,
           typename std::iterator_traits<InputIterator>::difference_type,
           CanProxy<Type>, CanQualType> {
-  CanTypeIterator() {}
+  CanTypeIterator() = default;
   explicit CanTypeIterator(InputIterator Iter)
       : CanTypeIterator::iterator_adaptor_base(std::move(Iter)) {}
 

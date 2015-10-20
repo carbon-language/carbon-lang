@@ -3600,7 +3600,7 @@ public:
     const TemplateArgumentLoc *operator->() const { return &Arg; }
   };
 
-  TemplateArgumentLocInventIterator() { }
+  TemplateArgumentLocInventIterator() = default;
 
   explicit TemplateArgumentLocInventIterator(TreeTransform<Derived> &Self,
                                              InputIterator Iter)
@@ -5249,7 +5249,7 @@ QualType TreeTransform<Derived>::TransformAtomicType(TypeLocBuilder &TLB,
     };
 
 
-    TemplateArgumentLocContainerIterator() {}
+    TemplateArgumentLocContainerIterator() = default;
 
     TemplateArgumentLocContainerIterator(ArgLocContainer &Container,
                                  unsigned Index)

@@ -176,7 +176,7 @@ template <class Self>
 class VisitReducer : public Traversal<Self, VisitReducerBase>,
                      public VisitReducerBase {
 public:
-  VisitReducer() {}
+  VisitReducer() = default;
 
 public:
   R_SExpr reduceNull() { return true; }

@@ -2229,7 +2229,7 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
   });
 }
 
-VTableLayout::~VTableLayout() { }
+VTableLayout::~VTableLayout() = default;
 
 ItaniumVTableContext::ItaniumVTableContext(ASTContext &Context)
     : VTableContextBase(/*MS=*/false) {}

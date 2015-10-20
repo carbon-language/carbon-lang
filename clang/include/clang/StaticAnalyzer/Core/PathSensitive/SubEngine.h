@@ -43,7 +43,7 @@ class MemRegion;
 class SubEngine {
   virtual void anchor();
 public:
-  virtual ~SubEngine() {}
+  virtual ~SubEngine() = default;
 
   virtual ProgramStateRef getInitialState(const LocationContext *InitLoc) = 0;
 

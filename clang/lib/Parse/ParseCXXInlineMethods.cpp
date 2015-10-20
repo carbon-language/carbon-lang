@@ -222,7 +222,7 @@ void Parser::ParseCXXNonStaticMemberInitializer(Decl *VarD) {
   Toks.push_back(Eof);
 }
 
-Parser::LateParsedDeclaration::~LateParsedDeclaration() {}
+Parser::LateParsedDeclaration::~LateParsedDeclaration() = default;
 void Parser::LateParsedDeclaration::ParseLexedMethodDeclarations() {}
 void Parser::LateParsedDeclaration::ParseLexedMemberInitializers() {}
 void Parser::LateParsedDeclaration::ParseLexedMethodDefs() {}

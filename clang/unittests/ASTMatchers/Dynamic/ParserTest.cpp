@@ -23,7 +23,7 @@ namespace {
 
 class MockSema : public Parser::Sema {
 public:
-  ~MockSema() override {}
+  ~MockSema() override = default;
 
   uint64_t expectMatcher(StringRef MatcherName) {
     // Optimizations on the matcher framework make simple matchers like

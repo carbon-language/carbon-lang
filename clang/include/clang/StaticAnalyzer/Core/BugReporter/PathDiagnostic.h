@@ -481,7 +481,7 @@ private:
 
 public:
   StackHintGeneratorForSymbol(SymbolRef S, StringRef M) : Sym(S), Msg(M) {}
-  ~StackHintGeneratorForSymbol() override {}
+  ~StackHintGeneratorForSymbol() override = default;
 
   /// \brief Search the call expression for the symbol Sym and dispatch the
   /// 'getMessageForX()' methods to construct a specific message.

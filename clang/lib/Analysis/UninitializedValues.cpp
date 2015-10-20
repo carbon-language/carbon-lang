@@ -837,7 +837,7 @@ struct PruneBlocksHandler : public UninitVariablesHandler {
     : hadUse(numBlocks, false), hadAnyUse(false),
       currentBlock(0) {}
 
-  ~PruneBlocksHandler() override {}
+  ~PruneBlocksHandler() override = default;
 
   /// Records if a CFGBlock had a potential use of an uninitialized variable.
   llvm::BitVector hadUse;
@@ -922,4 +922,4 @@ void clang::runUninitializedVariablesAnalysis(
   }
 }
 
-UninitVariablesHandler::~UninitVariablesHandler() {}
+UninitVariablesHandler::~UninitVariablesHandler() = default;

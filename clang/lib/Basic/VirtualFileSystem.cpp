@@ -84,9 +84,9 @@ bool Status::exists() const {
   return isStatusKnown() && Type != file_type::file_not_found;
 }
 
-File::~File() {}
+File::~File() = default;
 
-FileSystem::~FileSystem() {}
+FileSystem::~FileSystem() = default;
 
 ErrorOr<std::unique_ptr<MemoryBuffer>>
 FileSystem::getBufferForFile(const llvm::Twine &Name, int64_t FileSize,
@@ -315,7 +315,7 @@ OverlayFileSystem::setCurrentWorkingDirectory(const Twine &Path) {
   return std::error_code();
 }
 
-clang::vfs::detail::DirIterImpl::~DirIterImpl() { }
+clang::vfs::detail::DirIterImpl::~DirIterImpl() = default;
 
 namespace {
 class OverlayFSDirIterImpl : public clang::vfs::detail::DirIterImpl {
@@ -398,7 +398,7 @@ class InMemoryNode {
 public:
   InMemoryNode(Status Stat, InMemoryNodeKind Kind)
       : Stat(std::move(Stat)), Kind(Kind) {}
-  virtual ~InMemoryNode() {}
+  virtual ~InMemoryNode() = default;
   const Status &getStatus() const { return Stat; }
   InMemoryNodeKind getKind() const { return Kind; }
   virtual std::string toString(unsigned Indent) const = 0;
@@ -482,7 +482,7 @@ InMemoryFileSystem::InMemoryFileSystem(bool UseNormalizedPaths)
                  llvm::sys::fs::perms::all_all))),
       UseNormalizedPaths(UseNormalizedPaths) {}
 
-InMemoryFileSystem::~InMemoryFileSystem() {}
+InMemoryFileSystem::~InMemoryFileSystem() = default;
 
 std::string InMemoryFileSystem::toString() const {
   return Root->toString(/*Indent=*/0);

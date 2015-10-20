@@ -236,7 +236,7 @@ void PrettyStackTraceDecl::print(raw_ostream &OS) const {
 //===----------------------------------------------------------------------===//
 
 // Out-of-line virtual method providing a home for Decl.
-Decl::~Decl() { }
+Decl::~Decl() = default;
 
 void Decl::setDeclContext(DeclContext *DC) {
   DeclCtx = DC;
@@ -836,7 +836,7 @@ bool DeclContext::classof(const Decl *D) {
   }
 }
 
-DeclContext::~DeclContext() { }
+DeclContext::~DeclContext() = default;
 
 /// \brief Find the parent context of this context that will be
 /// used for unqualified name lookup.

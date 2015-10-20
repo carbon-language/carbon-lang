@@ -1255,7 +1255,7 @@ void Sema::ActOnComment(SourceRange Comment) {
 }
 
 // Pin this vtable to this file.
-ExternalSemaSource::~ExternalSemaSource() {}
+ExternalSemaSource::~ExternalSemaSource() = default;
 
 void ExternalSemaSource::ReadMethodPool(Selector Sel) { }
 

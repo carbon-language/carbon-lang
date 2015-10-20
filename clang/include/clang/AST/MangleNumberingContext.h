@@ -32,7 +32,7 @@ class VarDecl;
 /// literals within a particular context.
 class MangleNumberingContext : public RefCountedBase<MangleNumberingContext> {
 public:
-  virtual ~MangleNumberingContext() {}
+  virtual ~MangleNumberingContext() = default;
 
   /// \brief Retrieve the mangling number of a new lambda expression with the
   /// given call operator within this context.

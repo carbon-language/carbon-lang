@@ -255,7 +255,7 @@ public:
         IsObjCIvarLookup(false), IsAddressOfOperand(false), Typo(Typo),
         TypoNNS(TypoNNS) {}
 
-  virtual ~CorrectionCandidateCallback() {}
+  virtual ~CorrectionCandidateCallback() = default;
 
   /// \brief Simple predicate used by the default RankCandidate to
   /// determine whether to return an edit distance of 0 or InvalidDistance.

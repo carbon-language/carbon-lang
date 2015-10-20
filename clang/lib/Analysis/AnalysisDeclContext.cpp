@@ -551,7 +551,7 @@ ManagedAnalysis *&AnalysisDeclContext::getAnalysisImpl(const void *tag) {
 // Cleanup.
 //===----------------------------------------------------------------------===//
 
-ManagedAnalysis::~ManagedAnalysis() {}
+ManagedAnalysis::~ManagedAnalysis() = default;
 
 AnalysisDeclContext::~AnalysisDeclContext() {
   delete forcedBlkExprs;
@@ -568,7 +568,7 @@ AnalysisDeclContextManager::~AnalysisDeclContextManager() {
   llvm::DeleteContainerSeconds(Contexts);
 }
 
-LocationContext::~LocationContext() {}
+LocationContext::~LocationContext() = default;
 
 LocationContextManager::~LocationContextManager() {
   clear();

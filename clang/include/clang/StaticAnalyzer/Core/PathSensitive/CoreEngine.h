@@ -254,7 +254,7 @@ public:
     assert(hasNoSinksInFrontier());
   }
 
-  virtual ~NodeBuilder() {}
+  virtual ~NodeBuilder() = default;
 
   /// \brief Generates a node in the ExplodedGraph.
   ExplodedNode *generateNode(const ProgramPoint &PP,

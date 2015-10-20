@@ -75,7 +75,7 @@ VariantMatcher::MatcherOps::constructVariadicOperator(
   return DynTypedMatcher::constructVariadic(Op, NodeKind, DynMatchers);
 }
 
-VariantMatcher::Payload::~Payload() {}
+VariantMatcher::Payload::~Payload() = default;
 
 class VariantMatcher::SinglePayload : public VariantMatcher::Payload {
 public:
@@ -113,7 +113,7 @@ public:
   PolymorphicPayload(std::vector<DynTypedMatcher> MatchersIn)
       : Matchers(std::move(MatchersIn)) {}
 
-  ~PolymorphicPayload() override {}
+  ~PolymorphicPayload() override = default;
 
   llvm::Optional<DynTypedMatcher> getSingleMatcher() const override {
     if (Matchers.size() != 1)

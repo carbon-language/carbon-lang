@@ -100,7 +100,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
 }
 
 // Out of line virtual dtor for TargetInfo.
-TargetInfo::~TargetInfo() {}
+TargetInfo::~TargetInfo() = default;
 
 /// getTypeName - Return the user string for the specified integer type enum.
 /// For example, SignedShort -> "short".

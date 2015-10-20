@@ -59,7 +59,7 @@ class UnresolvedSetImpl {
   // UnresolvedSet.
 private:
   template <unsigned N> friend class UnresolvedSet;
-  UnresolvedSetImpl() {}
+  UnresolvedSetImpl() = default;
   UnresolvedSetImpl(const UnresolvedSetImpl &) {}
 
 public:

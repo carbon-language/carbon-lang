@@ -57,7 +57,7 @@ public:
   class NodeResolver {
     virtual void anchor();
   public:
-    virtual ~NodeResolver() {}
+    virtual ~NodeResolver() = default;
     virtual const ExplodedNode*
             getOriginalNode(const ExplodedNode *N) = 0;
   };
@@ -529,7 +529,7 @@ class BugReporterContext {
 public:
   BugReporterContext(GRBugReporter& br) : BR(br) {}
 
-  virtual ~BugReporterContext() {}
+  virtual ~BugReporterContext() = default;
 
   GRBugReporter& getBugReporter() { return BR; }
 

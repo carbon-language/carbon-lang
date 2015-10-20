@@ -18,7 +18,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-CGCXXABI::~CGCXXABI() { }
+CGCXXABI::~CGCXXABI() = default;
 
 void CGCXXABI::ErrorUnsupportedABI(CodeGenFunction &CGF, StringRef S) {
   DiagnosticsEngine &Diags = CGF.CGM.getDiags();

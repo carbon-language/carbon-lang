@@ -82,7 +82,7 @@ public:
 
   class Visitor {
   public:
-    Visitor() {}
+    Visitor() = default;
     virtual ~Visitor();
     virtual bool visit(const WorkListUnit &U) = 0;
   };

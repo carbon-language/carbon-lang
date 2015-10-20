@@ -606,7 +606,7 @@ enum PositionContext { FieldWidthPos = 0, PrecisionPos = 1 };
 
 class FormatStringHandler {
 public:
-  FormatStringHandler() {}
+  FormatStringHandler() = default;
   virtual ~FormatStringHandler();
 
   virtual void HandleNullChar(const char *nullCharacter) {}

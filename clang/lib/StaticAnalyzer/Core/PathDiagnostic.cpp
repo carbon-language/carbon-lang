@@ -55,11 +55,11 @@ PathDiagnosticPiece::PathDiagnosticPiece(StringRef s,
 PathDiagnosticPiece::PathDiagnosticPiece(Kind k, DisplayHint hint)
   : kind(k), Hint(hint), LastInMainSourceFile(false) {}
 
-PathDiagnosticPiece::~PathDiagnosticPiece() {}
-PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
-PathDiagnosticCallPiece::~PathDiagnosticCallPiece() {}
-PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
-PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {}
+PathDiagnosticPiece::~PathDiagnosticPiece() = default;
+PathDiagnosticEventPiece::~PathDiagnosticEventPiece() = default;
+PathDiagnosticCallPiece::~PathDiagnosticCallPiece() = default;
+PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() = default;
+PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() = default;
 
 
 void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
@@ -103,7 +103,7 @@ void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
 }
 
 
-PathDiagnostic::~PathDiagnostic() {}
+PathDiagnostic::~PathDiagnostic() = default;
 
 PathDiagnostic::PathDiagnostic(StringRef CheckName, const Decl *declWithIssue,
                                StringRef bugtype, StringRef verboseDesc,
@@ -1119,7 +1119,7 @@ void PathDiagnostic::FullProfile(llvm::FoldingSetNodeID &ID) const {
     ID.AddString(*I);
 }
 
-StackHintGenerator::~StackHintGenerator() {}
+StackHintGenerator::~StackHintGenerator() = default;
 
 std::string StackHintGeneratorForSymbol::getMessage(const ExplodedNode *N){
   ProgramPoint P = N->getLocation();

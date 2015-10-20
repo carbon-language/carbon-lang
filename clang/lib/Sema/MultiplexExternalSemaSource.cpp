@@ -28,7 +28,7 @@ MultiplexExternalSemaSource::MultiplexExternalSemaSource(ExternalSemaSource &s1,
 }
 
 // pin the vtable here.
-MultiplexExternalSemaSource::~MultiplexExternalSemaSource() {}
+MultiplexExternalSemaSource::~MultiplexExternalSemaSource() = default;
 
 ///\brief Appends new source to the source list.
 ///

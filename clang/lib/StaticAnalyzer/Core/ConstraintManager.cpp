@@ -16,7 +16,7 @@
 using namespace clang;
 using namespace ento;
 
-ConstraintManager::~ConstraintManager() {}
+ConstraintManager::~ConstraintManager() = default;
 
 static DefinedSVal getLocFromSymbol(const ProgramStateRef &State,
                                     SymbolRef Sym) {

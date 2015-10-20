@@ -426,7 +426,7 @@ CodeCompleteConsumer::OverloadCandidate::getFunctionType() const {
 // Code completion consumer implementation
 //===----------------------------------------------------------------------===//
 
-CodeCompleteConsumer::~CodeCompleteConsumer() { }
+CodeCompleteConsumer::~CodeCompleteConsumer() = default;
 
 void 
 PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,

@@ -5344,7 +5344,7 @@ ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
     = ToContext.getTranslationUnitDecl();
 }
 
-ASTImporter::~ASTImporter() { }
+ASTImporter::~ASTImporter() = default;
 
 QualType ASTImporter::Import(QualType FromT) {
   if (FromT.isNull())

@@ -92,7 +92,7 @@ class ClangDiagPathDiagConsumer : public PathDiagnosticConsumer {
 public:
   ClangDiagPathDiagConsumer(DiagnosticsEngine &Diag)
     : Diag(Diag), IncludePath(false) {}
-  ~ClangDiagPathDiagConsumer() override {}
+  ~ClangDiagPathDiagConsumer() override = default;
   StringRef getName() const override { return "ClangDiags"; }
 
   bool supportsLogicalOpControlFlow() const override { return true; }

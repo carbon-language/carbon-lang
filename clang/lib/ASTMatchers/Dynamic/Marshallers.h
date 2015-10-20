@@ -103,7 +103,7 @@ public:
 /// arguments, and various other methods for type introspection.
 class MatcherDescriptor {
 public:
-  virtual ~MatcherDescriptor() {}
+  virtual ~MatcherDescriptor() = default;
   virtual VariantMatcher create(SourceRange NameRange,
                                 ArrayRef<ParserValue> Args,
                                 Diagnostics *Error) const = 0;
@@ -491,7 +491,7 @@ public:
   OverloadedMatcherDescriptor(ArrayRef<MatcherDescriptor *> Callbacks)
       : Overloads(Callbacks.begin(), Callbacks.end()) {}
 
-  ~OverloadedMatcherDescriptor() override {}
+  ~OverloadedMatcherDescriptor() override = default;
 
   VariantMatcher create(SourceRange NameRange,
                         ArrayRef<ParserValue> Args,

@@ -24,7 +24,7 @@
 #include "llvm/Support/Path.h"
 using namespace clang;
 
-PPCallbacks::~PPCallbacks() {}
+PPCallbacks::~PPCallbacks() = default;
 
 //===----------------------------------------------------------------------===//
 // Miscellaneous Methods.

@@ -1313,7 +1313,7 @@ public:
     TypeDiagnoser(bool Suppressed = false) : Suppressed(Suppressed) { }
 
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) = 0;
-    virtual ~TypeDiagnoser() {}
+    virtual ~TypeDiagnoser() = default;
   };
 
   static int getPrintable(int I) { return I; }
@@ -2297,7 +2297,7 @@ public:
     virtual SemaDiagnosticBuilder diagnoseConversion(
         Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) = 0;
 
-    virtual ~ContextualImplicitConverter() {}
+    virtual ~ContextualImplicitConverter() = default;
   };
 
   class ICEConvertDiagnoser : public ContextualImplicitConverter {
@@ -8597,7 +8597,7 @@ public:
 
     virtual void diagnoseNotICE(Sema &S, SourceLocation Loc, SourceRange SR) =0;
     virtual void diagnoseFold(Sema &S, SourceLocation Loc, SourceRange SR);
-    virtual ~VerifyICEDiagnoser() { }
+    virtual ~VerifyICEDiagnoser() = default;
   };
 
   /// VerifyIntegerConstantExpression - Verifies that an expression is an ICE,

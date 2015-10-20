@@ -385,7 +385,7 @@ private:
   void operator=(const IdentifierIterator &) = delete;
 
 protected:
-  IdentifierIterator() { }
+  IdentifierIterator() = default;
   
 public:
   virtual ~IdentifierIterator();

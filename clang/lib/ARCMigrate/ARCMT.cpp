@@ -498,7 +498,7 @@ public:
 } // end anonymous namespace.
 
 /// \brief Anchor for VTable.
-MigrationProcess::RewriteListener::~RewriteListener() { }
+MigrationProcess::RewriteListener::~RewriteListener() = default;
 
 MigrationProcess::MigrationProcess(
     const CompilerInvocation &CI,

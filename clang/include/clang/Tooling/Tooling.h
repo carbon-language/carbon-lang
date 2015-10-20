@@ -110,7 +110,7 @@ std::unique_ptr<FrontendActionFactory> newFrontendActionFactory();
 /// newFrontendActionFactory.
 class SourceFileCallbacks {
 public:
-  virtual ~SourceFileCallbacks() {}
+  virtual ~SourceFileCallbacks() = default;
 
   /// \brief Called before a source file is processed by a FrontEndAction.
   /// \see clang::FrontendAction::BeginSourceFileAction

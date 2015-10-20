@@ -11,5 +11,5 @@
 
 using namespace clang;
 
-CodeInjector::CodeInjector() {}
-CodeInjector::~CodeInjector() {}
+CodeInjector::CodeInjector() = default;
+CodeInjector::~CodeInjector() = default;

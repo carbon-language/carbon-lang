@@ -44,7 +44,7 @@ AttributeFactory::AttributeFactory() {
   // Go ahead and configure all the inline capacity.  This is just a memset.
   FreeLists.resize(InlineFreeListsCapacity);
 }
-AttributeFactory::~AttributeFactory() {}
+AttributeFactory::~AttributeFactory() = default;
 
 static size_t getFreeListIndexForSize(size_t size) {
   assert(size >= sizeof(AttributeList));

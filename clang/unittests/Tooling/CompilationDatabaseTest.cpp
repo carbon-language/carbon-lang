@@ -173,7 +173,7 @@ TEST(JSONCompilationDatabase, ArgumentsPreferredOverCommand) {
 }
 
 struct FakeComparator : public PathComparator {
-  ~FakeComparator() override {}
+  ~FakeComparator() override = default;
   bool equivalent(StringRef FileA, StringRef FileB) const override {
     return FileA.equals_lower(FileB);
   }

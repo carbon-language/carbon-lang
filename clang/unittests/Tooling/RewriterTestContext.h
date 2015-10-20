@@ -50,7 +50,7 @@ class RewriterTestContext {
     OverlayFileSystem->pushOverlay(InMemoryFileSystem);
   }
 
-  ~RewriterTestContext() {}
+  ~RewriterTestContext() = default;
 
   FileID createInMemoryFile(StringRef Name, StringRef Content) {
     std::unique_ptr<llvm::MemoryBuffer> Source =

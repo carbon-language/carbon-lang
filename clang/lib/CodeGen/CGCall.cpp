@@ -584,7 +584,7 @@ struct TypeExpansion {
   const TypeExpansionKind Kind;
 
   TypeExpansion(TypeExpansionKind K) : Kind(K) {}
-  virtual ~TypeExpansion() {}
+  virtual ~TypeExpansion() = default;
 };
 
 struct ConstantArrayExpansion : TypeExpansion {

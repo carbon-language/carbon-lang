@@ -67,7 +67,7 @@ bool FormatToken::isSimpleTypeSpecifier() const {
   }
 }
 
-TokenRole::~TokenRole() {}
+TokenRole::~TokenRole() = default;
 
 void TokenRole::precomputeFormattingInfos(const FormatToken *Token) {}
 

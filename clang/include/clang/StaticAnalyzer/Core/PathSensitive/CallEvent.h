@@ -168,7 +168,7 @@ protected:
                  RegionAndSymbolInvalidationTraits *ETraits) const {}
 
 public:
-  virtual ~CallEvent() {}
+  virtual ~CallEvent() = default;
 
   /// \brief Returns the kind of call this is.
   virtual Kind getKind() const = 0;

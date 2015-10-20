@@ -88,7 +88,7 @@ public:
   // FIXME: This really shouldn't be copyable, but is currently copied in some
   // error handling in Driver::generateCompilationDiagnostics.
   Command(const Command &) = default;
-  virtual ~Command() {}
+  virtual ~Command() = default;
 
   virtual void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
                      CrashReportInfo *CrashInfo = nullptr) const;

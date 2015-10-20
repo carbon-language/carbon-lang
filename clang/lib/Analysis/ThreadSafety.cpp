@@ -48,7 +48,7 @@ using namespace clang;
 using namespace threadSafety;
 
 // Key method definition
-ThreadSafetyHandler::~ThreadSafetyHandler() {}
+ThreadSafetyHandler::~ThreadSafetyHandler() = default;
 
 namespace {
 class TILPrinter :
@@ -107,7 +107,7 @@ public:
       : CapabilityExpr(CE), LKind(LK), AcquireLoc(Loc), Asserted(Asrt),
         Declared(Declrd) {}
 
-  virtual ~FactEntry() {}
+  virtual ~FactEntry() = default;
 
   LockKind          kind()       const { return LKind;      }
   SourceLocation    loc()        const { return AcquireLoc; }

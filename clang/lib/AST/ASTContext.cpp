@@ -7914,7 +7914,7 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) const {
   }
 }
 
-ASTMutationListener::~ASTMutationListener() { }
+ASTMutationListener::~ASTMutationListener() = default;
 
 void ASTMutationListener::DeducedReturnType(const FunctionDecl *FD,
                                             QualType ReturnType) {}
@@ -8502,7 +8502,7 @@ MangleContext *ASTContext::createMangleContext() {
   llvm_unreachable("Unsupported ABI");
 }
 
-CXXABI::~CXXABI() {}
+CXXABI::~CXXABI() = default;
 
 size_t ASTContext::getSideTableAllocatedMemory() const {
   return ASTRecordLayouts.getMemorySize() +
