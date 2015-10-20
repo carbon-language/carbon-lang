@@ -2220,47 +2220,6 @@ SDValue SelectionDAGLegalize::ExpandIntLibCall(SDNode* Node, bool isSigned,
   return ExpandLibCall(LC, Node, isSigned);
 }
 
-/// Return true if divmod libcall is available.
-static bool isDivRemLibcallAvailable(SDNode *Node, bool isSigned,
-                                     const TargetLowering &TLI) {
-  RTLIB::Libcall LC;
-  switch (Node->getSimpleValueType(0).SimpleTy) {
-  default: llvm_unreachable("Unexpected request for libcall!");
-  case MVT::i8:   LC= isSigned ? RTLIB::SDIVREM_I8  : RTLIB::UDIVREM_I8;  break;
-  case MVT::i16:  LC= isSigned ? RTLIB::SDIVREM_I16 : RTLIB::UDIVREM_I16; break;
-  case MVT::i32:  LC= isSigned ? RTLIB::SDIVREM_I32 : RTLIB::UDIVREM_I32; break;
-  case MVT::i64:  LC= isSigned ? RTLIB::SDIVREM_I64 : RTLIB::UDIVREM_I64; break;
-  case MVT::i128: LC= isSigned ? RTLIB::SDIVREM_I128:RTLIB::UDIVREM_I128; break;
-  }
-
-  return TLI.getLibcallName(LC) != nullptr;
-}
-
-/// Only issue divrem libcall if both quotient and remainder are needed.
-static bool useDivRem(SDNode *Node, bool isSigned, bool isDIV) {
-  // The other use might have been replaced with a divrem already.
-  unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
-  unsigned OtherOpcode = 0;
-  if (isSigned)
-    OtherOpcode = isDIV ? ISD::SREM : ISD::SDIV;
-  else
-    OtherOpcode = isDIV ? ISD::UREM : ISD::UDIV;
-
-  SDValue Op0 = Node->getOperand(0);
-  SDValue Op1 = Node->getOperand(1);
-  for (SDNode::use_iterator UI = Op0.getNode()->use_begin(),
-         UE = Op0.getNode()->use_end(); UI != UE; ++UI) {
-    SDNode *User = *UI;
-    if (User == Node)
-      continue;
-    if ((User->getOpcode() == OtherOpcode || User->getOpcode() == DivRemOpc) &&
-        User->getOperand(0) == Op0 &&
-        User->getOperand(1) == Op1)
-      return true;
-  }
-  return false;
-}
-
 /// Issue libcalls to __{u}divmod to compute div / rem pairs.
 void
 SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
@@ -3548,11 +3507,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
     Tmp2 = Node->getOperand(0);
     Tmp3 = Node->getOperand(1);
-    if (TLI.isOperationLegalOrCustom(DivRemOpc, VT) ||
-        (isDivRemLibcallAvailable(Node, isSigned, TLI) &&
-         // If div is legal, it's better to do the normal expansion
-         !TLI.isOperationLegalOrCustom(DivOpc, Node->getValueType(0)) &&
-         useDivRem(Node, isSigned, false))) {
+    if (TLI.isOperationLegalOrCustom(DivRemOpc, VT)) {
       SDVTList VTs = DAG.getVTList(VT, VT);
       Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Tmp2, Tmp3).getValue(1);
     } else if (TLI.isOperationLegalOrCustom(DivOpc, VT)) {
@@ -3579,9 +3534,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
     EVT VT = Node->getValueType(0);
     SDVTList VTs = DAG.getVTList(VT, VT);
-    if (TLI.isOperationLegalOrCustom(DivRemOpc, VT) ||
-        (isDivRemLibcallAvailable(Node, isSigned, TLI) &&
-         useDivRem(Node, isSigned, true)))
+    if (TLI.isOperationLegalOrCustom(DivRemOpc, VT))
       Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Node->getOperand(0),
                          Node->getOperand(1));
     else if (isSigned)

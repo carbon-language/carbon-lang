@@ -236,6 +236,7 @@ namespace {
     SDValue visitADDE(SDNode *N);
     SDValue visitSUBE(SDNode *N);
     SDValue visitMUL(SDNode *N);
+    SDValue useDivRem(SDNode *N);
     SDValue visitSDIV(SDNode *N);
     SDValue visitUDIV(SDNode *N);
     SDValue visitREM(SDNode *N);
@@ -245,8 +246,6 @@ namespace {
     SDValue visitUMUL_LOHI(SDNode *N);
     SDValue visitSMULO(SDNode *N);
     SDValue visitUMULO(SDNode *N);
-    SDValue visitSDIVREM(SDNode *N);
-    SDValue visitUDIVREM(SDNode *N);
     SDValue visitIMINMAX(SDNode *N);
     SDValue visitAND(SDNode *N);
     SDValue visitANDLike(SDValue N0, SDValue N1, SDNode *LocReference);
@@ -1358,8 +1357,6 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::UMUL_LOHI:          return visitUMUL_LOHI(N);
   case ISD::SMULO:              return visitSMULO(N);
   case ISD::UMULO:              return visitUMULO(N);
-  case ISD::SDIVREM:            return visitSDIVREM(N);
-  case ISD::UDIVREM:            return visitUDIVREM(N);
   case ISD::SMIN:
   case ISD::SMAX:
   case ISD::UMIN:
@@ -2158,6 +2155,88 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   return SDValue();
 }
 
+/// Return true if divmod libcall is available.
+static bool isDivRemLibcallAvailable(SDNode *Node, bool isSigned,
+                                     const TargetLowering &TLI) {
+  RTLIB::Libcall LC;
+  switch (Node->getSimpleValueType(0).SimpleTy) {
+  default: return false; // No libcall for vector types.
+  case MVT::i8:   LC= isSigned ? RTLIB::SDIVREM_I8  : RTLIB::UDIVREM_I8;  break;
+  case MVT::i16:  LC= isSigned ? RTLIB::SDIVREM_I16 : RTLIB::UDIVREM_I16; break;
+  case MVT::i32:  LC= isSigned ? RTLIB::SDIVREM_I32 : RTLIB::UDIVREM_I32; break;
+  case MVT::i64:  LC= isSigned ? RTLIB::SDIVREM_I64 : RTLIB::UDIVREM_I64; break;
+  case MVT::i128: LC= isSigned ? RTLIB::SDIVREM_I128:RTLIB::UDIVREM_I128; break;
+  }
+
+  return TLI.getLibcallName(LC) != nullptr;
+}
+
+/// Issue divrem if both quotient and remainder are needed.
+SDValue DAGCombiner::useDivRem(SDNode *Node) {
+  if (Node->use_empty())
+    return SDValue(); // This is a dead node, leave it alone.
+
+  EVT VT = Node->getValueType(0);
+  if (!TLI.isTypeLegal(VT))
+    return SDValue();
+
+  unsigned Opcode = Node->getOpcode();
+  bool isSigned = (Opcode == ISD::SDIV) || (Opcode == ISD::SREM);
+
+  unsigned DivRemOpc = isSigned ? ISD::SDIVREM : ISD::UDIVREM;
+  // If DIVREM is going to get expanded into a libcall,
+  // but there is no libcall available, then don't combine.
+  if (!TLI.isOperationLegalOrCustom(DivRemOpc, VT) &&
+      !isDivRemLibcallAvailable(Node, isSigned, TLI))
+    return SDValue();
+
+  // If div is legal, it's better to do the normal expansion
+  unsigned OtherOpcode = 0;
+  if ((Opcode == ISD::SDIV) || (Opcode == ISD::UDIV)) {
+    OtherOpcode = isSigned ? ISD::SREM : ISD::UREM;
+    if (TLI.isOperationLegalOrCustom(Opcode, VT))
+      return SDValue();
+  } else {
+    OtherOpcode = isSigned ? ISD::SDIV : ISD::UDIV;
+    if (TLI.isOperationLegalOrCustom(OtherOpcode, VT))
+      return SDValue();
+  }
+
+  SDValue Op0 = Node->getOperand(0);
+  SDValue Op1 = Node->getOperand(1);
+  SDValue combined;
+  for (SDNode::use_iterator UI = Op0.getNode()->use_begin(),
+         UE = Op0.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User == Node || User->use_empty())
+      continue;
+    // Convert the other matching node(s), too;
+    // otherwise, the DIVREM may get target-legalized into something
+    // target-specific that we won't be able to recognize.
+    unsigned UserOpc = User->getOpcode();
+    if ((UserOpc == Opcode || UserOpc == OtherOpcode || UserOpc == DivRemOpc) &&
+        User->getOperand(0) == Op0 &&
+        User->getOperand(1) == Op1) {
+      if (!combined) {
+        if (UserOpc == OtherOpcode) {
+          SDVTList VTs = DAG.getVTList(VT, VT);
+          combined = DAG.getNode(DivRemOpc, SDLoc(Node), VTs, Op0, Op1);
+        } else if (UserOpc == DivRemOpc) {
+          combined = SDValue(User, 0);
+        } else {
+          assert(UserOpc == Opcode);
+          continue;
+        }
+      }
+      if (UserOpc == ISD::SDIV || UserOpc == ISD::UDIV)
+        CombineTo(User, combined);
+      else if (UserOpc == ISD::SREM || UserOpc == ISD::UREM)
+        CombineTo(User, combined.getValue(1));
+    }
+  }
+  return combined;
+}
+
 SDValue DAGCombiner::visitSDIV(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -2240,6 +2319,10 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     if (SDValue Op = BuildSDIV(N))
       return Op;
 
+  // sdiv, srem -> sdivrem
+  if (SDValue DivRem = useDivRem(N))
+    return DivRem;
+
   // undef / X -> 0
   if (N0.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, DL, VT);
@@ -2296,6 +2379,10 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
   if (N1C && !TLI.isIntDivCheap(N->getValueType(0), Attr))
     if (SDValue Op = BuildUDIV(N))
       return Op;
+
+  // sdiv, srem -> sdivrem
+  if (SDValue DivRem = useDivRem(N))
+    return DivRem;
 
   // undef / X -> 0
   if (N0.getOpcode() == ISD::UNDEF)
@@ -2366,6 +2453,10 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
       return Sub;
     }
   }
+
+  // sdiv, srem -> sdivrem
+  if (SDValue DivRem = useDivRem(N))
+    return DivRem.getValue(1);
 
   // undef % X -> 0
   if (N0.getOpcode() == ISD::UNDEF)
@@ -2583,20 +2674,6 @@ SDValue DAGCombiner::visitUMULO(SDNode *N) {
     if (C2->getAPIntValue() == 2)
       return DAG.getNode(ISD::UADDO, SDLoc(N), N->getVTList(),
                          N->getOperand(0), N->getOperand(0));
-
-  return SDValue();
-}
-
-SDValue DAGCombiner::visitSDIVREM(SDNode *N) {
-  if (SDValue Res = SimplifyNodeWithTwoResults(N, ISD::SDIV, ISD::SREM))
-    return Res;
-
-  return SDValue();
-}
-
-SDValue DAGCombiner::visitUDIVREM(SDNode *N) {
-  if (SDValue Res = SimplifyNodeWithTwoResults(N, ISD::UDIV, ISD::UREM))
-    return Res;
 
   return SDValue();
 }
