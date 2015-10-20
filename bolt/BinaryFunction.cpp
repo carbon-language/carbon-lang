@@ -252,6 +252,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               TargetSymbol = LI->second;
             }
           } else {
+            if (!IsCall && Size == 2) {
+              errs() << "FLO-WARNING: relaxed tail call detected at 0x"
+                     << Twine::utohexstr(AbsoluteInstrAddr)
+                     << ". Code size will be increased.\n";
+            }
+
             // This is a call regardless of the opcode (e.g. tail call).
             IsCall = true;
             TargetSymbol = BC.getOrCreateGlobalSymbol(InstructionTarget,
@@ -536,7 +542,10 @@ void BinaryFunction::inferFallThroughCounts() {
       Inferred = BBExecCount - ReportedBranches;
     if (BBExecCount < ReportedBranches)
       errs() << "FLO-WARNING: Fall-through inference is slightly inconsistent. "
-                "BB exec frequency is less than the outgoing edges frequency\n";
+                "exec frequency is less than the outgoing edges frequency ("
+             << BBExecCount << " < " << ReportedBranches
+             << ") for  BB at offset 0x"
+             << Twine::utohexstr(getAddress() + CurBB.getOffset()) << '\n';
 
     // Put this information into the fall-through edge
     if (CurBB.succ_size() == 0)

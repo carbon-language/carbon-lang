@@ -193,6 +193,11 @@ public:
     return Alignment;
   }
 
+  /// Return offset of the basic block from the function start.
+  uint64_t getOffset() const {
+    return Offset;
+  }
+
   /// Adds block to successor list, and also updates predecessor list for
   /// successor block.
   /// Set branch info for this path.
