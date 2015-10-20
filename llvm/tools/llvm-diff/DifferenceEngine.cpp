@@ -599,7 +599,7 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
   TerminatorInst *RTerm = RStart->getParent()->getTerminator();
   if (isa<BranchInst>(LTerm) && isa<InvokeInst>(RTerm)) {
     if (cast<BranchInst>(LTerm)->isConditional()) return;
-    BasicBlock::iterator I = LTerm;
+    BasicBlock::iterator I = LTerm->getIterator();
     if (I == LStart->getParent()->begin()) return;
     --I;
     if (!isa<CallInst>(*I)) return;
@@ -612,7 +612,7 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
     tryUnify(LTerm->getSuccessor(0), RInvoke->getNormalDest());
   } else if (isa<InvokeInst>(LTerm) && isa<BranchInst>(RTerm)) {
     if (cast<BranchInst>(RTerm)->isConditional()) return;
-    BasicBlock::iterator I = RTerm;
+    BasicBlock::iterator I = RTerm->getIterator();
     if (I == RStart->getParent()->begin()) return;
     --I;
     if (!isa<CallInst>(*I)) return;
