@@ -668,7 +668,7 @@ bool PPCCTRLoopsVerify::runOnMachineFunction(MachineFunction &MF) {
   // any other instructions that might clobber the ctr register.
   for (MachineFunction::iterator I = MF.begin(), IE = MF.end();
        I != IE; ++I) {
-    MachineBasicBlock *MBB = I;
+    MachineBasicBlock *MBB = &*I;
     if (!MDT->isReachableFromEntry(MBB))
       continue;
 

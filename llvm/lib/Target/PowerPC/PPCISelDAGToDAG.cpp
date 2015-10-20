@@ -3305,7 +3305,7 @@ void PPCDAGToDAGISel::PreprocessISelDAG() {
 
   bool MadeChange = false;
   while (Position != CurDAG->allnodes_begin()) {
-    SDNode *N = --Position;
+    SDNode *N = &*--Position;
     if (N->use_empty())
       continue;
 
@@ -3989,7 +3989,7 @@ void PPCDAGToDAGISel::PeepholePPC64ZExt() {
 
   bool MadeChange = false;
   while (Position != CurDAG->allnodes_begin()) {
-    SDNode *N = --Position;
+    SDNode *N = &*--Position;
     // Skip dead nodes and any non-machine opcodes.
     if (N->use_empty() || !N->isMachineOpcode())
       continue;
@@ -4145,7 +4145,7 @@ void PPCDAGToDAGISel::PeepholePPC64() {
   ++Position;
 
   while (Position != CurDAG->allnodes_begin()) {
-    SDNode *N = --Position;
+    SDNode *N = &*--Position;
     // Skip dead nodes and any non-machine opcodes.
     if (N->use_empty() || !N->isMachineOpcode())
       continue;

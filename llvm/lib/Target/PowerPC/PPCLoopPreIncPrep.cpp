@@ -302,7 +302,7 @@ bool PPCLoopPreIncPrep::runOnLoop(Loop *L) {
       NewPHI->addIncoming(BasePtrStart, LoopPredecessor);
     }
 
-    Instruction *InsPoint = Header->getFirstInsertionPt();
+    Instruction *InsPoint = &*Header->getFirstInsertionPt();
     GetElementPtrInst *PtrInc = GetElementPtrInst::Create(
         I8Ty, NewPHI, BasePtrIncSCEV->getValue(),
         MemI->hasName() ? MemI->getName() + ".inc" : "", InsPoint);
@@ -346,7 +346,7 @@ bool PPCLoopPreIncPrep::runOnLoop(Loop *L) {
             cast<Instruction>(NewBasePtr)->getParent() == PtrIP->getParent())
           PtrIP = 0;
         else if (isa<PHINode>(PtrIP))
-          PtrIP = PtrIP->getParent()->getFirstInsertionPt();
+          PtrIP = &*PtrIP->getParent()->getFirstInsertionPt();
         else if (!PtrIP)
           PtrIP = I->second;
 

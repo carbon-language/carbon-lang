@@ -3193,15 +3193,15 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
             EVT ObjType = (ObjSize == 1 ? MVT::i8 :
                            (ObjSize == 2 ? MVT::i16 : MVT::i32));
             Store = DAG.getTruncStore(Val.getValue(1), dl, Val, Arg,
-                                      MachinePointerInfo(FuncArg),
-                                      ObjType, false, false, 0);
+                                      MachinePointerInfo(&*FuncArg), ObjType,
+                                      false, false, 0);
           } else {
             // For sizes that don't fit a truncating store (3, 5, 6, 7),
             // store the whole register as-is to the parameter save area
             // slot.
-            Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                                 MachinePointerInfo(FuncArg),
-                                 false, false, 0);
+            Store =
+                DAG.getStore(Val.getValue(1), dl, Val, FIN,
+                             MachinePointerInfo(&*FuncArg), false, false, 0);
           }
 
           MemOps.push_back(Store);
@@ -3228,9 +3228,9 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
           SDValue Off = DAG.getConstant(j, dl, PtrVT);
           Addr = DAG.getNode(ISD::ADD, dl, Off.getValueType(), Addr, Off);
         }
-        SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, Addr,
-                                     MachinePointerInfo(FuncArg, j),
-                                     false, false, 0);
+        SDValue Store =
+            DAG.getStore(Val.getValue(1), dl, Val, Addr,
+                         MachinePointerInfo(&*FuncArg, j), false, false, 0);
         MemOps.push_back(Store);
         ++GPR_idx;
       }
@@ -3608,7 +3608,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
           EVT ObjType = ObjSize == 1 ? MVT::i8 : MVT::i16;
           SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
-                                            MachinePointerInfo(FuncArg),
+                                            MachinePointerInfo(&*FuncArg),
                                             ObjType, false, false, 0);
           MemOps.push_back(Store);
           ++GPR_idx;
@@ -3631,9 +3631,9 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
           int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
-          SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                                       MachinePointerInfo(FuncArg, j),
-                                       false, false, 0);
+          SDValue Store =
+              DAG.getStore(Val.getValue(1), dl, Val, FIN,
+                           MachinePointerInfo(&*FuncArg, j), false, false, 0);
           MemOps.push_back(Store);
           ++GPR_idx;
           ArgOffset += PtrByteSize;
@@ -8130,8 +8130,7 @@ PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction *F = BB->getParent();
-  MachineFunction::iterator It = BB;
-  ++It;
+  MachineFunction::iterator It = ++BB->getIterator();
 
   unsigned dest = MI->getOperand(0).getReg();
   unsigned ptrA = MI->getOperand(1).getReg();
@@ -8201,8 +8200,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
 
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction *F = BB->getParent();
-  MachineFunction::iterator It = BB;
-  ++It;
+  MachineFunction::iterator It = ++BB->getIterator();
 
   unsigned dest = MI->getOperand(0).getReg();
   unsigned ptrA = MI->getOperand(1).getReg();
@@ -8324,8 +8322,7 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
   const BasicBlock *BB = MBB->getBasicBlock();
-  MachineFunction::iterator I = MBB;
-  ++I;
+  MachineFunction::iterator I = ++MBB->getIterator();
 
   // Memory Reference
   MachineInstr::mmo_iterator MMOBegin = MI->memoperands_begin();
@@ -8603,8 +8600,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   // To "insert" these instructions we actually have to insert their
   // control-flow patterns.
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It;
+  MachineFunction::iterator It = ++BB->getIterator();
 
   MachineFunction *F = BB->getParent();
 
