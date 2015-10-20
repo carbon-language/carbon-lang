@@ -98,6 +98,9 @@ public:
     int32_t
     GetSignalAtIndex(int32_t index) const;
 
+    ConstString
+    GetShortName(ConstString name) const;
+
     // We assume that the elements of this object are constant once it is constructed,
     // since a process should never need to add or remove symbols as it runs.  So don't
     // call these functions anywhere but the constructor of your subclass of UnixSignals or in
@@ -106,11 +109,11 @@ public:
     void
     AddSignal (int signo,
                const char *name,
-               const char *short_name,
                bool default_suppress,
                bool default_stop,
                bool default_notify,
-               const char *description);
+               const char *description,
+               const char *alias = nullptr);
 
     void
     RemoveSignal (int signo);
@@ -123,18 +126,18 @@ protected:
     struct Signal
     {
         ConstString m_name;
-        ConstString m_short_name;
+        ConstString m_alias;
         std::string m_description;
         bool m_suppress:1,
              m_stop:1,
              m_notify:1;
 
         Signal (const char *name,
-                const char *short_name,
                 bool default_suppress,
                 bool default_stop,
                 bool default_notify,
-                const char *description);
+                const char *description,
+                const char *alias);
 
         ~Signal () {}
     };

@@ -914,13 +914,8 @@ PlatformRemoteGDBServer::GetRemoteUnixSignals()
                 return false;
 
             // We can live without short_name, description, etc.
-            std::string short_name{""};
-            auto object_sp = dict->GetValueForKey("short_name");
-            if (object_sp && object_sp->IsValid())
-                short_name = object_sp->GetStringValue();
-
             bool suppress{false};
-            object_sp = dict->GetValueForKey("suppress");
+            auto object_sp = dict->GetValueForKey("suppress");
             if (object_sp && object_sp->IsValid())
                 suppress = object_sp->GetBooleanValue();
 
@@ -941,7 +936,6 @@ PlatformRemoteGDBServer::GetRemoteUnixSignals()
 
             remote_signals_sp->AddSignal(signo,
                                          name.c_str(),
-                                         short_name.c_str(),
                                          suppress, stop, notify,
                                          description.c_str());
             return true;
