@@ -158,9 +158,13 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
 
-  for (auto *Arg : Args.filtered(OPT_z))
-    if (Arg->getValue() == StringRef("now"))
+  // FIXME: Group -z options together in Config.
+  for (auto *Arg : Args.filtered(OPT_z)) {
+    if (Arg->getValue() == StringRef("nodelete"))
+      Config->ZNodelete = true;
+    else if (Arg->getValue() == StringRef("now"))
       Config->ZNow = true;
+  }
 
   for (auto *Arg : Args) {
     switch (Arg->getOption().getID()) {
