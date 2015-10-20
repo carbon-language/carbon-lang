@@ -12,7 +12,7 @@ declare void @something()
 ; CHECK-LABEL: test0:
 ; CHECK: loop
 ; CHECK: add
-; CHECK: brif
+; CHECK: br_if
 ; CHECK: call
 ; CHECK: br $BB0_1{{$}}
 ; CHECK: return{{$}}
@@ -40,7 +40,7 @@ back:
 ; CHECK-LABEL: test1:
 ; CHECK: loop
 ; CHECK: add
-; CHECK: brif
+; CHECK: br_if
 ; CHECK: call
 ; CHECK: br $BB1_1{{$}}
 ; CHECK: return{{$}}
@@ -67,9 +67,9 @@ back:
 
 ; CHECK-LABEL: test2:
 ; CHECK: block $BB2_2{{$}}
-; CHECK: brif $BB2_2, {{.*}}
+; CHECK: br_if $BB2_2, {{.*}}
 ; CHECK: BB2_1:
-; CHECK: brif $BB2_1, (get_local 16){{$}}
+; CHECK: br_if $BB2_1, (get_local 16){{$}}
 ; CHECK: BB2_2:
 ; CHECK: return{{$}}
 define void @test2(double* nocapture %p, i32 %n) {
@@ -101,10 +101,10 @@ for.end:
 ; CHECK: block $BB3_5{{$}}
 ; CHECK: block $BB3_4{{$}}
 ; CHECK: block $BB3_2{{$}}
-; CHECK: brif $BB3_2, (get_local 7){{$}}
+; CHECK: br_if $BB3_2, (get_local 7){{$}}
 ; CHECK: br $BB3_5{{$}}
 ; CHECK: BB3_2:
-; CHECK: brif $BB3_4, (get_local 10){{$}}
+; CHECK: br_if $BB3_4, (get_local 10){{$}}
 ; CHECK: br $BB3_5{{$}}
 ; CHECK: BB3_4:
 ; CHECK: BB3_5:
@@ -134,7 +134,7 @@ exit:
 
 ; CHECK-LABEL: triangle:
 ; CHECK: block $BB4_2{{$}}
-; CHECK: brif $BB4_2, (get_local 5){{$}}
+; CHECK: br_if $BB4_2, (get_local 5){{$}}
 ; CHECK: BB4_2:
 ; CHECK: return (get_local 4){{$}}
 define i32 @triangle(i32* %p, i32 %a) {
@@ -153,7 +153,7 @@ exit:
 ; CHECK-LABEL: diamond:
 ; CHECK: block $BB5_3{{$}}
 ; CHECK: block $BB5_2{{$}}
-; CHECK: brif $BB5_2, (get_local 5){{$}}
+; CHECK: br_if $BB5_2, (get_local 5){{$}}
 ; CHECK: br $BB5_3{{$}}
 ; CHECK: BB5_2:
 ; CHECK: BB5_3:
@@ -201,7 +201,7 @@ loop:
 ; CHECK-NOT: br
 ; CHECK: BB8_1:
 ; CHECK: loop $BB8_2{{$}}
-; CHECK: brif $BB8_1, (get_local 6){{$}}
+; CHECK: br_if $BB8_1, (get_local 6){{$}}
 ; CHECK: return (get_local 4){{$}}
 define i32 @simple_loop(i32* %p, i32 %a) {
 entry:
@@ -219,8 +219,8 @@ exit:
 ; CHECK-LABEL: doubletriangle:
 ; CHECK: block $BB9_4{{$}}
 ; CHECK: block $BB9_3{{$}}
-; CHECK: brif $BB9_4, (get_local 7){{$}}
-; CHECK: brif $BB9_3, (get_local 10){{$}}
+; CHECK: br_if $BB9_4, (get_local 7){{$}}
+; CHECK: br_if $BB9_3, (get_local 10){{$}}
 ; CHECK: BB9_3:
 ; CHECK: BB9_4:
 ; CHECK: return (get_local 6){{$}}
@@ -247,10 +247,10 @@ exit:
 ; CHECK-LABEL: ifelse_earlyexits:
 ; CHECK: block $BB10_4{{$}}
 ; CHECK: block $BB10_2{{$}}
-; CHECK: brif $BB10_2, (get_local 7){{$}}
+; CHECK: br_if $BB10_2, (get_local 7){{$}}
 ; CHECK: br $BB10_4{{$}}
 ; CHECK: BB10_2:
-; CHECK: brif $BB10_4, (get_local 10){{$}}
+; CHECK: br_if $BB10_4, (get_local 10){{$}}
 ; CHECK: BB10_4:
 ; CHECK: return (get_local 6){{$}}
 define i32 @ifelse_earlyexits(i32 %a, i32 %b, i32* %p) {
