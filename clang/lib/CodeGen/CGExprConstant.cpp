@@ -636,6 +636,8 @@ public:
   }
 
   llvm::Constant *VisitCastExpr(CastExpr* E) {
+    if (const auto *ECE = dyn_cast<ExplicitCastExpr>(E))
+      CGM.EmitExplicitCastExprType(ECE, CGF);
     Expr *subExpr = E->getSubExpr();
     llvm::Constant *C = CGM.EmitConstantExpr(subExpr, subExpr->getType(), CGF);
     if (!C) return nullptr;

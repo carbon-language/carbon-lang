@@ -154,6 +154,8 @@ public:
     return EmitCast(E->getCastKind(), E->getSubExpr(), E->getType());
   }
   ComplexPairTy VisitCastExpr(CastExpr *E) {
+    if (const auto *ECE = dyn_cast<ExplicitCastExpr>(E))
+      CGF.CGM.EmitExplicitCastExprType(ECE, &CGF);
     return EmitCast(E->getCastKind(), E->getSubExpr(), E->getType());
   }
   ComplexPairTy VisitCallExpr(const CallExpr *E);
