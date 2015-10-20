@@ -105,7 +105,12 @@ static std::string OpcodeName(const WebAssemblyInstrInfo *TII,
   bool HasType = std::string::npos != Under;
   std::string::size_type NameEnd = HasType ? Under : Len;
   std::string Name(&N[0], &N[NameEnd]);
-  return HasType ? (std::string(&N[NameEnd + 1], &N[Len]) + '.' + Name) : Name;
+  if (!HasType)
+    return Name;
+  for (const char *typelessOpcode : { "return", "call" })
+    if (Name == typelessOpcode)
+      return Name;
+  return std::string(&N[NameEnd + 1], &N[Len]) + '.' + Name;
 }
 
 static std::string toSymbol(StringRef S) { return ("$" + S).str(); }
