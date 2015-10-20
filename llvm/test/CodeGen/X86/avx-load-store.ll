@@ -88,7 +88,7 @@ entry:
   ret void
 }
 
-declare void @llvm.x86.avx.maskstore.ps.256(i8*, <8 x float>, <8 x float>) nounwind
+declare void @llvm.x86.avx.maskstore.ps.256(i8*, <8 x i32>, <8 x float>) nounwind
 
 ; CHECK_O0: _f_f
 ; CHECK-O0: vmovss LCPI
@@ -105,7 +105,7 @@ cif_mask_mixed:                                   ; preds = %allocas
   br i1 undef, label %cif_mixed_test_all, label %cif_mixed_test_any_check
 
 cif_mixed_test_all:                               ; preds = %cif_mask_mixed
-  call void @llvm.x86.avx.maskstore.ps.256(i8* undef, <8 x float> <float 0xFFFFFFFFE0000000, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00>, <8 x float> undef) nounwind
+  call void @llvm.x86.avx.maskstore.ps.256(i8* undef, <8 x i32> <i32 -1, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <8 x float> undef) nounwind
   unreachable
 
 cif_mixed_test_any_check:                         ; preds = %cif_mask_mixed

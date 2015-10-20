@@ -1760,16 +1760,16 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // Conditional load ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_maskload_pd : GCCBuiltin<"__builtin_ia32_maskloadpd">,
-        Intrinsic<[llvm_v2f64_ty], [llvm_ptr_ty, llvm_v2f64_ty],
+        Intrinsic<[llvm_v2f64_ty], [llvm_ptr_ty, llvm_v2i64_ty],
                   [IntrReadArgMem]>;
   def int_x86_avx_maskload_ps : GCCBuiltin<"__builtin_ia32_maskloadps">,
-        Intrinsic<[llvm_v4f32_ty], [llvm_ptr_ty, llvm_v4f32_ty],
+        Intrinsic<[llvm_v4f32_ty], [llvm_ptr_ty, llvm_v4i32_ty],
                   [IntrReadArgMem]>;
   def int_x86_avx_maskload_pd_256 : GCCBuiltin<"__builtin_ia32_maskloadpd256">,
-        Intrinsic<[llvm_v4f64_ty], [llvm_ptr_ty, llvm_v4f64_ty],
+        Intrinsic<[llvm_v4f64_ty], [llvm_ptr_ty, llvm_v4i64_ty],
                   [IntrReadArgMem]>;
   def int_x86_avx_maskload_ps_256 : GCCBuiltin<"__builtin_ia32_maskloadps256">,
-        Intrinsic<[llvm_v8f32_ty], [llvm_ptr_ty, llvm_v8f32_ty],
+        Intrinsic<[llvm_v8f32_ty], [llvm_ptr_ty, llvm_v8i32_ty],
                   [IntrReadArgMem]>;
   def int_x86_avx512_mask_loadu_ps_512 : GCCBuiltin<"__builtin_ia32_loadups512_mask">,
         Intrinsic<[llvm_v16f32_ty], [llvm_ptr_ty, llvm_v16f32_ty, llvm_i16_ty],
@@ -1789,18 +1789,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_maskstore_pd : GCCBuiltin<"__builtin_ia32_maskstorepd">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v2f64_ty, llvm_v2f64_ty], [IntrReadWriteArgMem]>;
+                  llvm_v2i64_ty, llvm_v2f64_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_maskstore_ps : GCCBuiltin<"__builtin_ia32_maskstoreps">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v4f32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
+                  llvm_v4i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_maskstore_pd_256 :
         GCCBuiltin<"__builtin_ia32_maskstorepd256">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v4f64_ty, llvm_v4f64_ty], [IntrReadWriteArgMem]>;
+                  llvm_v4i64_ty, llvm_v4f64_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx_maskstore_ps_256 :
         GCCBuiltin<"__builtin_ia32_maskstoreps256">,
         Intrinsic<[], [llvm_ptr_ty,
-                  llvm_v8f32_ty, llvm_v8f32_ty], [IntrReadWriteArgMem]>;
+                  llvm_v8i32_ty, llvm_v8f32_ty], [IntrReadWriteArgMem]>;
   def int_x86_avx512_mask_storeu_ps_512 :
         GCCBuiltin<"__builtin_ia32_storeups512_mask">,
         Intrinsic<[], [llvm_ptr_ty, llvm_v16f32_ty, llvm_i16_ty],

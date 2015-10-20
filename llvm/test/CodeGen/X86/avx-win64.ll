@@ -42,6 +42,4 @@ safe_if_after_false:                              ; preds = %safe_if_run_false, 
 }
 
 declare i32 @llvm.x86.avx.movmsk.ps.256(<8 x float>) nounwind readnone
-declare <8 x float> @llvm.x86.avx.maskload.ps.256(i8*, <8 x float>) nounwind readonly
-declare void @llvm.x86.avx.maskstore.ps.256(i8*, <8 x float>, <8 x float>) nounwind
 declare <8 x float> @llvm.x86.avx.blendv.ps.256(<8 x float>, <8 x float>, <8 x float>) nounwind readnone
