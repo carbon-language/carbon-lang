@@ -2386,9 +2386,9 @@ public:
   StringRef getABI() const override {
     if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX512F)
       return "avx512";
-    else if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX)
+    if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX)
       return "avx";
-    else if (getTriple().getArch() == llvm::Triple::x86 &&
+    if (getTriple().getArch() == llvm::Triple::x86 &&
              MMX3DNowLevel == NoMMX3DNow)
       return "no-mmx";
     return "";
@@ -3025,11 +3025,10 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
   // LLVM doesn't have a separate switch for fpmath, so only accept it if it
   // matches the selected sse level.
-  if (FPMath == FP_SSE && SSELevel < SSE1) {
-    Diags.Report(diag::err_target_unsupported_fpmath) << "sse";
-    return false;
-  } else if (FPMath == FP_387 && SSELevel >= SSE1) {
-    Diags.Report(diag::err_target_unsupported_fpmath) << "387";
+  if ((FPMath == FP_SSE && SSELevel < SSE1) ||
+      (FPMath == FP_387 && SSELevel >= SSE1)) {
+    Diags.Report(diag::err_target_unsupported_fpmath) <<
+      (FPMath == FP_SSE ? "sse" : "387");
     return false;
   }
 
