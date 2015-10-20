@@ -348,6 +348,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   }
 
   switch (TLI.getOperationAction(Node->getOpcode(), QueryType)) {
+  default: llvm_unreachable("This action is not supported yet!");
   case TargetLowering::Promote:
     Result = Promote(Op);
     Changed = true;
