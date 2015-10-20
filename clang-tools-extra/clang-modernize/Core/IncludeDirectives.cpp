@@ -60,7 +60,7 @@ class IncludeDirectivesPPCallback : public clang::PPCallbacks {
 public:
   IncludeDirectivesPPCallback(IncludeDirectives *Self)
       : Self(Self), Guard(nullptr) {}
-  ~IncludeDirectivesPPCallback() override {}
+  ~IncludeDirectivesPPCallback() override = default;
 
 private:
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,

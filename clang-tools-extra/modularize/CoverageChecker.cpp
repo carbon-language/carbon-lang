@@ -83,7 +83,7 @@ namespace sys = llvm::sys;
 class CoverageCheckerCallbacks : public PPCallbacks {
 public:
   CoverageCheckerCallbacks(CoverageChecker &Checker) : Checker(Checker) {}
-  ~CoverageCheckerCallbacks() override {}
+  ~CoverageCheckerCallbacks() override = default;
 
   // Include directive callback.
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,

@@ -96,7 +96,7 @@ PPCallbacksTracker::PPCallbacksTracker(llvm::SmallSet<std::string, 4> &Ignore,
                                        clang::Preprocessor &PP)
     : CallbackCalls(CallbackCalls), Ignore(Ignore), PP(PP) {}
 
-PPCallbacksTracker::~PPCallbacksTracker() {}
+PPCallbacksTracker::~PPCallbacksTracker() = default;
 
 // Callback functions.
 

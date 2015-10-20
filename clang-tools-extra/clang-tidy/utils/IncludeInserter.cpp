@@ -38,7 +38,7 @@ IncludeInserter::IncludeInserter(const SourceManager &SourceMgr,
                                  IncludeSorter::IncludeStyle Style)
     : SourceMgr(SourceMgr), LangOpts(LangOpts), Style(Style) {}
 
-IncludeInserter::~IncludeInserter() {}
+IncludeInserter::~IncludeInserter() = default;
 
 std::unique_ptr<PPCallbacks> IncludeInserter::CreatePPCallbacks() {
   return llvm::make_unique<IncludeInserterCallback>(this);

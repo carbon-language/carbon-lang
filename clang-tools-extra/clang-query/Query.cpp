@@ -20,7 +20,7 @@ using namespace clang::ast_matchers::dynamic;
 namespace clang {
 namespace query {
 
-Query::~Query() {}
+Query::~Query() = default;
 
 bool InvalidQuery::run(llvm::raw_ostream &OS, QuerySession &QS) const {
   OS << ErrStr << "\n";

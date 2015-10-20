@@ -98,7 +98,7 @@ class CXXSystemIncludeInserterCheck : public IncludeInserterCheckBase {
 public:
   CXXSystemIncludeInserterCheck(StringRef CheckName, ClangTidyContext *Context)
       : IncludeInserterCheckBase(CheckName, Context) {}
-  virtual ~CXXSystemIncludeInserterCheck() {}
+  virtual ~CXXSystemIncludeInserterCheck() = default;
 
   std::vector<StringRef> HeadersToInclude() const override { return {"set"}; }
   bool IsAngledInclude() const override { return true; }
