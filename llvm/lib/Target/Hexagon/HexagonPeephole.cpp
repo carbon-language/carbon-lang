@@ -180,7 +180,7 @@ bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
         unsigned DstReg = Dst.getReg();
         unsigned SrcReg = Src1.getReg();
         PeepholeDoubleRegsMap[DstReg] =
-          std::make_pair(*&SrcReg, 1/*Hexagon::subreg_hireg*/);
+          std::make_pair(*&SrcReg, Hexagon::subreg_hireg);
       }
 
       // Look for P=NOT(P).
