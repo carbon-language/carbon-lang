@@ -10,6 +10,14 @@
 #ifndef utility_TaskPool_h_
 #define utility_TaskPool_h_
 
+#if defined(__cplusplus) && defined(_MSC_VER) && (_HAS_EXCEPTIONS == 0)
+// Compiling MSVC libraries with _HAS_EXCEPTIONS=0, eliminates most but not all
+// calls to __uncaught_exception.  Unfortunately, it does seem to eliminate
+// the delcaration of __uncaught_excpeiton.  Including <eh.h> ensures that it is
+// declared.  This may not be necessary after MSVC 12.
+#include <eh.h>
+#endif
+
 #include <cassert>
 #include <cstdint>
 #include <future>
