@@ -422,3 +422,11 @@ template <typename TX> struct A {
   };
 };
 }
+
+namespace PR25265 {
+struct S {
+  int fn() throw(); // expected-note {{previous declaration is here}}
+};
+
+int S::fn() { return 0; } // expected-warning {{is missing exception specification}}
+}
