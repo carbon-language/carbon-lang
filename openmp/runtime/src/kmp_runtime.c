@@ -4891,12 +4891,6 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
             }
 # endif /* KMP_AFFINITY_SUPPORTED */
 #endif /* OMP_40_ENABLED */
-
-            if (level) {
-                for(f = 0; f < new_nproc; ++f) {
-                    team->t.t_threads[f]->th.th_task_state = 0;
-                }
-            }
         }
         else if( team->t.t_nproc > new_nproc ) {
             KA_TRACE( 20, ("__kmp_allocate_team: decreasing hot team thread count to %d\n", new_nproc ));
@@ -4959,7 +4953,8 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
 
             /* update the remaining threads */
             if (level) {
-                for(f = 0; f < new_nproc; ++f) {
+                team->t.t_threads[0]->th.th_team_nproc = new_nproc;
+                for(f = 1; f < new_nproc; ++f) {
                     team->t.t_threads[f]->th.th_team_nproc = new_nproc;
                     team->t.t_threads[f]->th.th_task_state = 0;
                 }
@@ -5100,8 +5095,12 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
             /* reinitialize the threads */
             KMP_DEBUG_ASSERT(team->t.t_nproc == new_nproc);
             if (level) {
+                int old_state = team->t.t_threads[0]->th.th_task_state;
                 for (f=0;  f < team->t.t_nproc; ++f)
                     __kmp_initialize_info( team->t.t_threads[ f ], team, f, __kmp_gtid_from_tid( f, team ) );
+                // th_task_state for master thread will be put in stack of states in __kmp_fork_call()
+                // before zeroing, for workers it was just zeroed in __kmp_initialize_info()
+                team->t.t_threads[0]->th.th_task_state = old_state;
             }
             else {
                 int old_state = team->t.t_threads[0]->th.th_task_state;
@@ -5141,10 +5140,9 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
 #endif /* OMP_40_ENABLED */
 #if KMP_NESTED_HOT_TEAMS
         if( level ) {
-            // Sync task (TODO: and barrier?) state for nested hot teams, not needed for outermost hot team.
+            // Sync barrier state for nested hot teams, not needed for outermost hot team.
             for( f = 1; f < new_nproc; ++f ) {
                 kmp_info_t *thr = team->t.t_threads[f];
-                thr->th.th_task_state = 0;
                 int b;
                 kmp_balign_t * balign = thr->th.th_bar;
                 for( b = 0; b < bs_last_barrier; ++ b ) {
