@@ -24,12 +24,18 @@ public:
   uint64_t getVAStart() const { return VAStart; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
+  unsigned getPltReloc() const { return PltReloc; }
   unsigned getGotRefReloc() const { return GotRefReloc; }
   unsigned getRelativeReloc() const { return RelativeReloc; }
+  unsigned getPltZeroEntrySize() const { return PltZeroEntrySize; }
   unsigned getPltEntrySize() const { return PltEntrySize; }
+  bool supportsLazyRelocations() const { return LazyRelocations; }
   virtual unsigned getPLTRefReloc(unsigned Type) const;
+  virtual void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const = 0;
+  virtual void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
+                                 uint64_t PltEntryAddr) const = 0;
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
-                             uint64_t PltEntryAddr) const = 0;
+                             uint64_t PltEntryAddr, int32_t Index) const = 0;
   virtual bool isRelRelative(uint32_t Type) const;
   virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
   virtual bool relocPointsToGot(uint32_t Type) const;
@@ -54,8 +60,11 @@ protected:
   unsigned PCRelReloc;
   unsigned GotRefReloc;
   unsigned GotReloc;
+  unsigned PltReloc;
   unsigned RelativeReloc;
   unsigned PltEntrySize = 8;
+  unsigned PltZeroEntrySize = 0;
+  bool LazyRelocations = false;
 };
 
 uint64_t getPPC64TocBase();

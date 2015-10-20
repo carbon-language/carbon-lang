@@ -14,7 +14,7 @@
 // SEC-NEXT: ]
 // SEC-NEXT: Address: 0x11030
 // SEC-NEXT: Offset: 0x1030
-// SEC-NEXT: Size: 8
+// SEC-NEXT: Size: 32
 
 // SEC:         Name: .got
 // SEC-NEXT:   Type: SHT_PROGBITS
@@ -22,14 +22,29 @@
 // SEC-NEXT:     SHF_ALLOC
 // SEC-NEXT:     SHF_WRITE
 // SEC-NEXT:   ]
-// SEC-NEXT:   Address: 0x120A0
+// SEC-NEXT:   Address: 0x120E0
 // SEC-NEXT:   Offset:
-// SEC-NEXT:   Size: 16
+// SEC-NEXT:   Size: 8
 // SEC-NEXT:   Link: 0
 // SEC-NEXT:   Info: 0
 // SEC-NEXT:   AddressAlignment: 8
 // SEC-NEXT:   EntrySize: 0
 // SEC-NEXT: }
+
+// SEC:        Name: .got.plt 
+// SEC-NEXT:   Type: SHT_PROGBITS
+// SEC-NEXT:   Flags [
+// SEC-NEXT:     SHF_ALLOC
+// SEC-NEXT:     SHF_WRITE
+// SEC-NEXT:   ]
+// SEC-NEXT:   Address: 0x120E8
+// SEC-NEXT:   Offset: 0x20E8
+// SEC-NEXT:   Size: 32
+// SEC-NEXT:   Link: 0
+// SEC-NEXT:   Info: 0
+// SEC-NEXT:   AddressAlignment: 8
+// SEC-NEXT:   EntrySize: 0
+// SEC-NEXT:   }
 
 .section       .text,"ax",@progbits,unique,1
 .global _start
@@ -76,12 +91,12 @@ R_X86_64_32S:
 R_X86_64_PC32:
  call bar
  movl $bar, %eax
-// 0x11030 - (0x11017 + 5) = 20
-// 0x11030 = 69680
+//16 is a size of PLT[0]
+// 0x11030 + 16 - (0x11017 + 5) = 20
 // CHECK:      Disassembly of section .R_X86_64_PC32:
 // CHECK-NEXT: R_X86_64_PC32:
-// CHECK-NEXT:  11017:   {{.*}}  callq  20
-// CHECK-NEXT:  1101c:   {{.*}}  movl $69680, %eax
+// CHECK-NEXT:  11017:   {{.*}}  callq  36
+// CHECK-NEXT:  1101c:   {{.*}}  movl $69696, %eax
 
 .section .R_X86_64_64,"a",@progbits
 .global R_X86_64_64
@@ -99,4 +114,4 @@ R_X86_64_GOTPCREL:
 // 0x120A8 - 0x10160 = 8008
 // 8008 = 0x481f0000   in little endian
 // CHECK:      Contents of section .R_X86_64_GOTPCREL
-// CHECK-NEXT:   10160 481f0000
+// CHECK-NEXT:   10160 801f0000

@@ -30,6 +30,44 @@ OutputSectionBase<ELFT>::OutputSectionBase(StringRef Name, uint32_t sh_type,
 }
 
 template <class ELFT>
+GotPltSection<ELFT>::GotPltSection()
+    : OutputSectionBase<ELFT>(".got.plt", llvm::ELF::SHT_PROGBITS,
+                              llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE) {
+  this->Header.sh_addralign = sizeof(uintX_t);
+  // .got.plt has 3 reserved entry
+  Entries.resize(3);
+}
+
+template <class ELFT> void GotPltSection<ELFT>::addEntry(SymbolBody *Sym) {
+  Sym->GotPltIndex = Entries.size();
+  Entries.push_back(Sym);
+}
+
+template <class ELFT> bool GotPltSection<ELFT>::empty() const {
+  return Entries.size() == 3;
+}
+
+template <class ELFT>
+typename GotPltSection<ELFT>::uintX_t
+GotPltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
+  return this->getVA() + B.GotPltIndex * sizeof(uintX_t);
+}
+
+template <class ELFT> void GotPltSection<ELFT>::finalize() {
+  this->Header.sh_size = Entries.size() * sizeof(uintX_t);
+}
+
+template <class ELFT> void GotPltSection<ELFT>::writeTo(uint8_t *Buf) {
+  write<uintX_t, ELFT::TargetEndianness, sizeof(uintX_t)>(
+      Buf, Out<ELFT>::Dynamic->getVA());
+  for (const SymbolBody *B : Entries) {
+    if (B)
+      Target->writeGotPltEntry(Buf, Out<ELFT>::Plt->getEntryAddr(*B));
+    Buf += sizeof(uintX_t);
+  }
+}
+
+template <class ELFT>
 GotSection<ELFT>::GotSection()
     : OutputSectionBase<ELFT>(".got", llvm::ELF::SHT_PROGBITS,
                               llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE) {
@@ -67,10 +105,17 @@ PltSection<ELFT>::PltSection()
 
 template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   size_t Off = 0;
+  bool LazyReloc = Target->supportsLazyRelocations();
+  if (LazyReloc) {
+    // First write PLT[0] entry which is special.
+    Target->writePltZeroEntry(Buf, Out<ELFT>::GotPlt->getVA(), this->getVA());
+    Off += Target->getPltZeroEntrySize();
+  }
   for (const SymbolBody *E : Entries) {
-    uint64_t Got = Out<ELFT>::Got->getEntryAddr(*E);
+    uint64_t Got = LazyReloc ? Out<ELFT>::GotPlt->getEntryAddr(*E)
+                             : Out<ELFT>::Got->getEntryAddr(*E);
     uint64_t Plt = this->getVA() + Off;
-    Target->writePltEntry(Buf + Off, Got, Plt);
+    Target->writePltEntry(Buf + Off, Got, Plt, E->PltIndex);
     Off += Target->getPltEntrySize();
   }
 }
@@ -83,17 +128,18 @@ template <class ELFT> void PltSection<ELFT>::addEntry(SymbolBody *Sym) {
 template <class ELFT>
 typename PltSection<ELFT>::uintX_t
 PltSection<ELFT>::getEntryAddr(const SymbolBody &B) const {
-  return this->getVA() + B.PltIndex * Target->getPltEntrySize();
+  return this->getVA() + Target->getPltZeroEntrySize() +
+         B.PltIndex * Target->getPltEntrySize();
+}
+
+template <class ELFT> void PltSection<ELFT>::finalize() {
+  this->Header.sh_size = Target->getPltZeroEntrySize() +
+                         Entries.size() * Target->getPltEntrySize();
 }
 
 template <class ELFT>
-void PltSection<ELFT>::finalize() {
-  this->Header.sh_size = Entries.size() * Target->getPltEntrySize();
-}
-
-template <class ELFT>
-RelocationSection<ELFT>::RelocationSection(bool IsRela)
-    : OutputSectionBase<ELFT>(IsRela ? ".rela.dyn" : ".rel.dyn",
+RelocationSection<ELFT>::RelocationSection(StringRef Name, bool IsRela)
+    : OutputSectionBase<ELFT>(Name,
                               IsRela ? llvm::ELF::SHT_RELA : llvm::ELF::SHT_REL,
                               llvm::ELF::SHF_ALLOC),
       IsRela(IsRela) {
@@ -118,11 +164,15 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
     uint32_t Type = RI.getType(Config->Mips64EL);
     bool NeedsGot = Body && Target->relocNeedsGot(Type, *Body);
     bool CanBePreempted = canBePreempted(Body, NeedsGot);
+    bool LazyReloc = Body && Target->supportsLazyRelocations() &&
+                     Target->relocNeedsPlt(Type, *Body);
 
     if (CanBePreempted) {
       if (NeedsGot)
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
-                            Target->getGotReloc(), Config->Mips64EL);
+                            LazyReloc ? Target->getPltReloc()
+                                      : Target->getGotReloc(),
+                            Config->Mips64EL);
       else
         P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
                             Config->Mips64EL);
@@ -130,10 +180,14 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       P->setSymbolAndType(0, Target->getRelativeReloc(), Config->Mips64EL);
     }
 
-    if (NeedsGot)
-      P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
-    else
+    if (NeedsGot) {
+      if (LazyReloc)
+        P->r_offset = Out<ELFT>::GotPlt->getEntryAddr(*Body);
+      else
+        P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
+    } else {
       P->r_offset = RI.r_offset + C.OutSec->getVA() + C.OutSecOff;
+    }
 
     uintX_t OrigAddend = 0;
     if (IsRela && !NeedsGot)
@@ -256,6 +310,13 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     ++NumEntries; // DT_RELASZ / DT_RELSZ
     ++NumEntries; // DT_RELAENT / DT_RELENT
   }
+  if (Out<ELFT>::RelaPlt && Out<ELFT>::RelaPlt->hasRelocs()) {
+    ++NumEntries; // DT_JMPREL
+    ++NumEntries; // DT_PLTRELSZ
+    ++NumEntries; // DT_PLTGOT
+    ++NumEntries; // DT_PLTREL
+  }
+
   ++NumEntries; // DT_SYMTAB
   ++NumEntries; // DT_SYMENT
   ++NumEntries; // DT_STRTAB
@@ -324,6 +385,12 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     WriteVal(IsRela ? DT_RELASZ : DT_RELSZ, Out<ELFT>::RelaDyn->getSize());
     WriteVal(IsRela ? DT_RELAENT : DT_RELENT,
              IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel));
+  }
+  if (Out<ELFT>::RelaPlt && Out<ELFT>::RelaPlt->hasRelocs()) {
+    WritePtr(DT_JMPREL, Out<ELFT>::RelaPlt->getVA());
+    WriteVal(DT_PLTRELSZ, Out<ELFT>::RelaPlt->getSize());
+    WritePtr(DT_PLTGOT, Out<ELFT>::GotPlt->getVA());
+    WriteVal(DT_PLTREL, Out<ELFT>::RelaPlt->isRela() ? DT_RELA : DT_REL);
   }
 
   WritePtr(DT_SYMTAB, Out<ELFT>::DynSymTab->getVA());
@@ -764,6 +831,11 @@ template class OutputSectionBase<ELF32LE>;
 template class OutputSectionBase<ELF32BE>;
 template class OutputSectionBase<ELF64LE>;
 template class OutputSectionBase<ELF64BE>;
+
+template class GotPltSection<ELF32LE>;
+template class GotPltSection<ELF32BE>;
+template class GotPltSection<ELF64LE>;
+template class GotPltSection<ELF64BE>;
 
 template class GotSection<ELF32LE>;
 template class GotSection<ELF32BE>;

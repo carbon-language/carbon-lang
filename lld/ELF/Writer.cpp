@@ -102,6 +102,9 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   Out<ELFT>::Bss = &Bss;
   GotSection<ELFT> Got;
   Out<ELFT>::Got = &Got;
+  GotPltSection<ELFT> GotPlt;
+  if (Target->supportsLazyRelocations())
+    Out<ELFT>::GotPlt = &GotPlt;
   PltSection<ELFT> Plt;
   Out<ELFT>::Plt = &Plt;
   SymbolTableSection<ELFT> SymTab(*Symtab, *Out<ELFT>::StrTab);
@@ -110,8 +113,12 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   Out<ELFT>::DynSymTab = &DynSymTab;
   HashTableSection<ELFT> HashTab;
   Out<ELFT>::HashTab = &HashTab;
-  RelocationSection<ELFT> RelaDyn(Symtab->shouldUseRela());
+  bool IsRela = Symtab->shouldUseRela();
+  RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
   Out<ELFT>::RelaDyn = &RelaDyn;
+  RelocationSection<ELFT> RelaPlt(IsRela ? ".rela.plt" : ".rel.plt", IsRela);
+  if (Target->supportsLazyRelocations())
+    Out<ELFT>::RelaPlt = &RelaPlt;
   DynamicSection<ELFT> Dynamic(*Symtab);
   Out<ELFT>::Dynamic = &Dynamic;
 
@@ -189,17 +196,23 @@ void Writer<ELFT>::scanRelocs(
     if (Body)
       Body = Body->repl();
     bool NeedsGot = false;
+    bool NeedsPlt = false;
     if (Body) {
-      if (Target->relocNeedsPlt(Type, *Body)) {
+      NeedsPlt = Target->relocNeedsPlt(Type, *Body);
+      if (NeedsPlt) {
         if (Body->isInPlt())
           continue;
         Out<ELFT>::Plt->addEntry(Body);
       }
       NeedsGot = Target->relocNeedsGot(Type, *Body);
       if (NeedsGot) {
-        if (Body->isInGot())
-          continue;
-        Out<ELFT>::Got->addEntry(Body);
+        if (NeedsPlt && Target->supportsLazyRelocations()) {
+          Out<ELFT>::GotPlt->addEntry(Body);
+        } else {
+          if (Body->isInGot())
+            continue;
+          Out<ELFT>::Got->addEntry(Body);
+        }
       }
     }
 
@@ -208,7 +221,10 @@ void Writer<ELFT>::scanRelocs(
       continue;
     if (CBP)
       Body->setUsedInDynamicReloc();
-    Out<ELFT>::RelaDyn->addReloc({C, RI});
+    if (NeedsPlt && Target->supportsLazyRelocations())
+      Out<ELFT>::RelaPlt->addReloc({C, RI});
+    else
+      Out<ELFT>::RelaDyn->addReloc({C, RI});
   }
 }
 
@@ -508,9 +524,13 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     OutputSections.push_back(Out<ELFT>::DynStrTab);
     if (Out<ELFT>::RelaDyn->hasRelocs())
       OutputSections.push_back(Out<ELFT>::RelaDyn);
+    if (Out<ELFT>::RelaPlt && Out<ELFT>::RelaPlt->hasRelocs())
+      OutputSections.push_back(Out<ELFT>::RelaPlt);
   }
   if (!Out<ELFT>::Got->empty())
     OutputSections.push_back(Out<ELFT>::Got);
+  if (Out<ELFT>::GotPlt && !Out<ELFT>::GotPlt->empty())
+    OutputSections.push_back(Out<ELFT>::GotPlt);
   if (!Out<ELFT>::Plt->empty())
     OutputSections.push_back(Out<ELFT>::Plt);
 

@@ -26,6 +26,8 @@ _start:
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
 // CHECK-NEXT:     0x{{.*}} R_X86_64_GLOB_DAT sym1 0x0
-// CHECK-NEXT:     0x{{.*}} R_X86_64_GLOB_DAT sym2 0x0
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section ({{.*}}) .rela.plt {
+// CHECK-NEXT:     0x{{.*}} R_X86_64_JUMP_SLOT sym2 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

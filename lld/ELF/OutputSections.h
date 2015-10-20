@@ -122,6 +122,22 @@ private:
   std::vector<const SymbolBody *> Entries;
 };
 
+template <class ELFT>
+class GotPltSection final : public OutputSectionBase<ELFT> {
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+
+public:
+  GotPltSection();
+  void finalize() override;
+  void writeTo(uint8_t *Buf) override;
+  void addEntry(SymbolBody *Sym);
+  bool empty() const;
+  uintX_t getEntryAddr(const SymbolBody &B) const;
+
+private:
+  std::vector<const SymbolBody *> Entries;
+};
+
 template <class ELFT> class PltSection final : public OutputSectionBase<ELFT> {
   typedef OutputSectionBase<ELFT> Base;
   typedef typename Base::uintX_t uintX_t;
@@ -177,7 +193,7 @@ class RelocationSection final : public OutputSectionBase<ELFT> {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
-  RelocationSection(bool IsRela);
+  RelocationSection(StringRef Name, bool IsRela);
   void addReloc(const DynamicReloc<ELFT> &Reloc) { Relocs.push_back(Reloc); }
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
@@ -294,6 +310,7 @@ private:
 // until Writer is initialized.
 template <class ELFT> struct Out {
   static DynamicSection<ELFT> *Dynamic;
+  static GotPltSection<ELFT> *GotPlt;
   static GotSection<ELFT> *Got;
   static HashTableSection<ELFT> *HashTab;
   static InterpSection<ELFT> *Interp;
@@ -302,6 +319,7 @@ template <class ELFT> struct Out {
   static uint8_t *OpdBuf;
   static PltSection<ELFT> *Plt;
   static RelocationSection<ELFT> *RelaDyn;
+  static RelocationSection<ELFT> *RelaPlt;
   static StringTableSection<ELFT> *DynStrTab;
   static StringTableSection<ELFT> *StrTab;
   static SymbolTableSection<ELFT> *DynSymTab;
@@ -309,6 +327,7 @@ template <class ELFT> struct Out {
 };
 
 template <class ELFT> DynamicSection<ELFT> *Out<ELFT>::Dynamic;
+template <class ELFT> GotPltSection<ELFT> *Out<ELFT>::GotPlt;
 template <class ELFT> GotSection<ELFT> *Out<ELFT>::Got;
 template <class ELFT> HashTableSection<ELFT> *Out<ELFT>::HashTab;
 template <class ELFT> InterpSection<ELFT> *Out<ELFT>::Interp;
@@ -317,6 +336,7 @@ template <class ELFT> OutputSectionBase<ELFT> *Out<ELFT>::Opd;
 template <class ELFT> uint8_t *Out<ELFT>::OpdBuf;
 template <class ELFT> PltSection<ELFT> *Out<ELFT>::Plt;
 template <class ELFT> RelocationSection<ELFT> *Out<ELFT>::RelaDyn;
+template <class ELFT> RelocationSection<ELFT> *Out<ELFT>::RelaPlt;
 template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::DynStrTab;
 template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::StrTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::DynSymTab;
