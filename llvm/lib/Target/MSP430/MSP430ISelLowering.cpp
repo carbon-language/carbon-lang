@@ -1228,8 +1228,7 @@ MSP430TargetLowering::EmitShiftInstr(MachineInstr *MI,
   }
 
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator I = BB;
-  ++I;
+  MachineFunction::iterator I = ++BB->getIterator();
 
   // Create loop block
   MachineBasicBlock *LoopBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -1317,8 +1316,7 @@ MSP430TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   // to set, the condition code register to branch on, the true/false values to
   // select between, and a branch opcode to use.
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator I = BB;
-  ++I;
+  MachineFunction::iterator I = ++BB->getIterator();
 
   //  thisMBB:
   //  ...

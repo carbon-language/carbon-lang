@@ -64,7 +64,7 @@ bool MSP430BSel::runOnMachineFunction(MachineFunction &Fn) {
   unsigned FuncSize = 0;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
        ++MFI) {
-    MachineBasicBlock *MBB = MFI;
+    MachineBasicBlock *MBB = &*MFI;
 
     unsigned BlockSize = 0;
     for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
