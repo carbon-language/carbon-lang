@@ -22,6 +22,8 @@ for available options.
 
 from __future__ import print_function
 
+import lldb_shared
+
 import atexit
 import commands
 import importlib
@@ -39,6 +41,8 @@ from test_results import EventBuilder
 import inspect
 import unittest2
 import lldbtest_config
+
+import six
 
 
 def is_exe(fpath):
