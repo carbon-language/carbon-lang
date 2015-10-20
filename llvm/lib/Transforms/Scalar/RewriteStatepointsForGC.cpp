@@ -1239,12 +1239,12 @@ static void recomputeLiveInValues(
   }
 }
 
-// When inserting gc.relocate calls, we need to ensure there are no uses
-// of the original value between the gc.statepoint and the gc.relocate call.
-// One case which can arise is a phi node starting one of the successor blocks.
-// We also need to be able to insert the gc.relocates only on the path which
-// goes through the statepoint.  We might need to split an edge to make this
-// possible.
+// When inserting gc.relocate and gc.result calls, we need to ensure there are
+// no uses of the original value / return value between the gc.statepoint and
+// the gc.relocate / gc.result call.  One case which can arise is a phi node
+// starting one of the successor blocks.  We also need to be able to insert the
+// gc.relocates only on the path which goes through the statepoint.  We might
+// need to split an edge to make this possible.
 static BasicBlock *
 normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent,
                             DominatorTree &DT) {
@@ -1252,14 +1252,14 @@ normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent,
   if (!BB->getUniquePredecessor())
     Ret = SplitBlockPredecessors(BB, InvokeParent, "", &DT);
 
-  // Now that 'ret' has unique predecessor we can safely remove all phi nodes
+  // Now that 'Ret' has unique predecessor we can safely remove all phi nodes
   // from it
   FoldSingleEntryPHINodes(Ret);
   assert(!isa<PHINode>(Ret->begin()) &&
          "All PHI nodes should have been removed!");
 
-  // At this point, we can safely insert a gc.relocate as the first instruction
-  // in Ret if needed.
+  // At this point, we can safely insert a gc.relocate or gc.result as the first
+  // instruction in Ret if needed.
   return Ret;
 }
 
