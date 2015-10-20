@@ -10,7 +10,7 @@
 #ifndef liblldb_VectorIterator_h_
 #define liblldb_VectorIterator_h_
 
-#include "lldb-forward.h"
+#include "lldb/lldb-forward.h"
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Target/ExecutionContext.h"

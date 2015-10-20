@@ -10,7 +10,7 @@
 #ifndef liblldb_CXXFunctionPointer_h_
 #define liblldb_CXXFunctionPointer_h_
 
-#include "lldb-forward.h"
+#include "lldb/lldb-forward.h"
 
 namespace lldb_private {
     namespace formatters

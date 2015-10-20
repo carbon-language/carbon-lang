@@ -79,7 +79,7 @@ class   DataExtractor;
 class   Debugger;
 class   Declaration;
 class   Disassembler;
-struct  DumpValueObjectOptions;
+class   DumpValueObjectOptions;
 class   DynamicCheckerFunctions;
 class   DynamicLoader;
 class   Editline;

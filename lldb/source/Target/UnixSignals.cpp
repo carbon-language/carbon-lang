@@ -32,11 +32,11 @@ UnixSignals::Signal::Signal
     const char *alias
 ) :
     m_name (name),
+    m_alias (alias),
     m_description (),
     m_suppress (default_suppress),
     m_stop (default_stop),
-    m_notify (default_notify),
-    m_alias (alias)
+    m_notify (default_notify)
 {
     if (description)
         m_description.assign (description);
