@@ -134,10 +134,14 @@ typename MergeInputSection<ELFT>::uintX_t
 MergeInputSection<ELFT>::getOffset(uintX_t Offset) const {
   ArrayRef<uint8_t> Data = this->getSectionData();
   uintX_t EntSize = this->Header->sh_entsize;
+  uintX_t Addend = Offset % EntSize;
+  Offset -= Addend;
   if (Offset + EntSize > Data.size())
     error("Entry is past the end of the section");
   Data = Data.slice(Offset, EntSize);
-  return static_cast<MergeOutputSection<ELFT> *>(this->OutSec)->getOffset(Data);
+  return static_cast<MergeOutputSection<ELFT> *>(this->OutSec)
+             ->getOffset(Data) +
+         Addend;
 }
 
 namespace lld {

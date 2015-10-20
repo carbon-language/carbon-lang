@@ -530,8 +530,7 @@ lld::elf2::getLocalRelTarget(const ObjectFile<ELFT> &File,
   uintX_t Offset = Sym->st_value;
   if (Sym->getType() == STT_SECTION) {
     Offset += Addend;
-    Addend = Offset % Section->getSectionHdr()->sh_entsize;
-    Offset -= Addend;
+    Addend = 0;
   }
   return VA + cast<MergeInputSection<ELFT>>(Section)->getOffset(Offset) +
          Addend;
