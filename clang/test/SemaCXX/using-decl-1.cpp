@@ -327,3 +327,16 @@ namespace PR24033 {
     using PR24033::st; // expected-error {{target of using declaration conflicts with declaration already in scope}}
   }
 }
+
+namespace field_use {
+struct A { int field; };
+struct B : A {
+  // Previously Clang rejected this valid C++11 code because it didn't look
+  // through the UsingShadowDecl.
+  using A::field;
+#if __cplusplus < 201103L
+  // expected-error@+2 {{invalid use of non-static data member 'field'}}
+#endif
+  enum { X = sizeof(field) };
+};
+}
