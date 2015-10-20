@@ -49,7 +49,7 @@ def fini : Separate<["-"], "fini">, MetaVarName<"<symbol>">,
 def init : Separate<["-"], "init">, MetaVarName<"<symbol>">,
   HelpText<"Specify an initializer function">;
 
-def l : Joined<["-"], "l">, MetaVarName<"<libName>">,
+def l : JoinedOrSeparate<["-"], "l">, MetaVarName<"<libName>">,
   HelpText<"Root name of library to use">;
 
 def m : Separate<["-"], "m">,
