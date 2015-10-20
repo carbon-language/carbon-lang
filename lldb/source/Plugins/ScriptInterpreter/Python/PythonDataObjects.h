@@ -334,6 +334,7 @@ public:
 class PythonFile : public PythonObject
 {
   public:
+    PythonFile();
     PythonFile(File &file, const char *mode);
     PythonFile(const char *path, const char *mode);
     PythonFile(PyRefType type, PyObject *o);

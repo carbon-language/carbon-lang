@@ -605,6 +605,11 @@ PythonDictionary::CreateStructuredDictionary() const
     return result;
 }
 
+PythonFile::PythonFile()
+    : PythonObject()
+{
+}
+
 PythonFile::PythonFile(File &file, const char *mode)
 {
     Reset(file, mode);

@@ -612,7 +612,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
                 // Flush the file before giving it to python to avoid interleaved output.
                 in_file.Flush();
 
-                m_saved_stdin = sys_module_dict.GetItemForKey(PythonString("stdin"));
+                m_saved_stdin = sys_module_dict.GetItemForKey(PythonString("stdin")).AsType<PythonFile>();
                 // This call can deadlock your process if the file is locked
                 PythonFile new_file(in_file, "r");
                 sys_module_dict.SetItemForKey (PythonString("stdin"), new_file);
@@ -626,7 +626,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
             // Flush the file before giving it to python to avoid interleaved output.
             out_file.Flush();
 
-            m_saved_stdout = sys_module_dict.GetItemForKey(PythonString("stdout"));
+            m_saved_stdout = sys_module_dict.GetItemForKey(PythonString("stdout")).AsType<PythonFile>();
 
             PythonFile new_file(out_file, "w");
             sys_module_dict.SetItemForKey (PythonString("stdout"), new_file);
@@ -641,7 +641,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
             // Flush the file before giving it to python to avoid interleaved output.
             err_file.Flush();
 
-            m_saved_stderr = sys_module_dict.GetItemForKey(PythonString("stderr"));
+            m_saved_stderr = sys_module_dict.GetItemForKey(PythonString("stderr")).AsType<PythonFile>();
 
             PythonFile new_file(err_file, "w");
             sys_module_dict.SetItemForKey (PythonString("stderr"), new_file);
@@ -812,48 +812,55 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         FILE *in_file = input_file_sp->GetFile().GetStream();
         FILE *out_file = output_file_sp->GetFile().GetStream();
         FILE *err_file = error_file_sp->GetFile().GetStream();
-        Locker locker(this,
-                      ScriptInterpreterPython::Locker::AcquireLock |
-                      ScriptInterpreterPython::Locker::InitSession |
-                      (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::InitGlobals : 0) |
-                      ((result && result->GetInteractive()) ? 0: Locker::NoSTDIN),
-                      ScriptInterpreterPython::Locker::FreeAcquiredLock |
-                      ScriptInterpreterPython::Locker::TearDownSession,
-                      in_file,
-                      out_file,
-                      err_file);
-        
         bool success = false;
-        
-        // Find the correct script interpreter dictionary in the main module.
-        PythonDictionary &session_dict = GetSessionDictionary ();
-        if (session_dict.IsValid())
         {
-            if (GetEmbeddedInterpreterModuleObjects ())
+            // WARNING!  It's imperative that this RAII scope be as tight as possible.  In particular, the
+            // scope must end *before* we try to join the read thread.  The reason for this is that a
+            // pre-requisite for joining the read thread is that we close the write handle (to break the
+            // pipe and cause it to wake up and exit).  But acquiring the GIL as below will redirect Python's
+            // stdio to use this same handle.  If we close the handle while Python is still using it, bad
+            // things will happen.
+            Locker locker(this,
+                          ScriptInterpreterPython::Locker::AcquireLock |
+                          ScriptInterpreterPython::Locker::InitSession |
+                          (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::InitGlobals : 0) |
+                          ((result && result->GetInteractive()) ? 0: Locker::NoSTDIN),
+                          ScriptInterpreterPython::Locker::FreeAcquiredLock |
+                          ScriptInterpreterPython::Locker::TearDownSession,
+                          in_file,
+                          out_file,
+                          err_file);
+        
+            // Find the correct script interpreter dictionary in the main module.
+            PythonDictionary &session_dict = GetSessionDictionary ();
+            if (session_dict.IsValid())
             {
-                if (PyCallable_Check(m_run_one_line_function.get()))
+                if (GetEmbeddedInterpreterModuleObjects ())
                 {
-                    PythonObject pargs(PyRefType::Owned, Py_BuildValue("(Os)", session_dict.get(), command));
-                    if (pargs.IsValid())
+                    if (PyCallable_Check(m_run_one_line_function.get()))
                     {
-                        PythonObject return_value(PyRefType::Owned,
-                            PyObject_CallObject(m_run_one_line_function.get(), pargs.get()));
-                        if (return_value.IsValid())
-                            success = true;
-                        else if (options.GetMaskoutErrors() && PyErr_Occurred ())
+                        PythonObject pargs(PyRefType::Owned, Py_BuildValue("(Os)", session_dict.get(), command));
+                        if (pargs.IsValid())
                         {
-                            PyErr_Print();
-                            PyErr_Clear();
+                            PythonObject return_value(PyRefType::Owned,
+                                PyObject_CallObject(m_run_one_line_function.get(), pargs.get()));
+                            if (return_value.IsValid())
+                                success = true;
+                            else if (options.GetMaskoutErrors() && PyErr_Occurred ())
+                            {
+                                PyErr_Print();
+                                PyErr_Clear();
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Flush our output and error file handles
-        ::fflush (out_file);
-        if (out_file != err_file)
-            ::fflush (err_file);
+            // Flush our output and error file handles
+            ::fflush (out_file);
+            if (out_file != err_file)
+                ::fflush (err_file);
+        }
         
         if (join_read_thread)
         {
