@@ -16,6 +16,7 @@
 // Project includes
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Interpreter/CommandObject.h"
+#include "lldb/Interpreter/OptionGroupBoolean.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -101,6 +102,7 @@ protected:
     OptionGroupOptions m_option_group;
     OptionGroupFormat m_format_options;
     OptionGroupValueObjectDisplay m_varobj_options;
+    OptionGroupBoolean m_repl_option;
     CommandOptions m_command_options;
     uint32_t m_expr_line_count;
     std::string m_expr_lines; // Multi-line expression support

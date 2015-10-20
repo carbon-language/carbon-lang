@@ -19,6 +19,7 @@
 #include "Plugins/ExpressionParser/Clang/ClangExpressionVariable.h"
 #include "lldb/Expression/UserExpression.h"
 #include "lldb/Expression/DWARFExpression.h"
+#include "lldb/Expression/REPL.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Core/Debugger.h"
@@ -198,6 +199,7 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
     IOHandlerDelegate (IOHandlerDelegate::Completion::Expression),
     m_option_group (interpreter),
     m_format_options (eFormatDefault),
+    m_repl_option (LLDB_OPT_SET_1, false, "repl", 'r', "Drop into REPL", false, true),
     m_command_options (),
     m_expr_line_count (0),
     m_expr_lines ()
@@ -253,6 +255,7 @@ Examples:
     m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_GDB_FMT, LLDB_OPT_SET_1);
     m_option_group.Append (&m_command_options);
     m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1 | LLDB_OPT_SET_2);
+    m_option_group.Append (&m_repl_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_3);
     m_option_group.Finalize();
 }
 
@@ -502,8 +505,70 @@ CommandObjectExpression::DoExecute
                 return false;
             }
             
+            if (m_repl_option.GetOptionValue().GetCurrentValue())
+            {
+                Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
+                if (target)
+                {
+                    // Drop into REPL
+                    m_expr_lines.clear();
+                    m_expr_line_count = 0;
+                    
+                    Debugger &debugger = target->GetDebugger();
+                    
+                    // Check if the LLDB command interpreter is sitting on top of a REPL that
+                    // launched it...
+                    if (debugger.CheckTopIOHandlerTypes(IOHandler::Type::CommandInterpreter, IOHandler::Type::REPL))
+                    {
+                        // the LLDB command interpreter is sitting on top of a REPL that launched it,
+                        // so just say the command interpreter is done and fall back to the existing REPL
+                        m_interpreter.GetIOHandler(false)->SetIsDone(true);
+                    }
+                    else
+                    {
+                        // We are launching the REPL on top of the current LLDB command interpreter,
+                        // so just push one
+                        bool initialize = false;
+                        Error repl_error;
+                        REPLSP repl_sp (target->GetREPL(repl_error, m_command_options.language, nullptr, false));
+                        
+                        if (!repl_sp)
+                        {
+                            initialize = true;
+                            repl_sp = target->GetREPL(repl_error, m_command_options.language, nullptr, true);
+                            if (!repl_error.Success())
+                            {
+                                result.SetError(repl_error);
+                                return result.Succeeded();
+                            }
+                        }
+                        
+                        if (repl_sp)
+                        {
+                            if (initialize)
+                            {
+                                repl_sp->SetCommandOptions(m_command_options);
+                                repl_sp->SetFormatOptions(m_format_options);
+                                repl_sp->SetValueObjectDisplayOptions(m_varobj_options);
+                            }
+                            
+                            IOHandlerSP io_handler_sp (repl_sp->GetIOHandler());
+                            
+                            io_handler_sp->SetIsDone(false);
+                            
+                            debugger.PushIOHandler(io_handler_sp);
+                        }
+                        else
+                        {
+                            repl_error.SetErrorStringWithFormat("Couldn't create a REPL for %s", Language::GetNameForLanguageType(m_command_options.language));
+                            result.SetError(repl_error);
+                            return result.Succeeded();
+                        }
+                    }
+                }
+            }
             // No expression following options
-            if (expr == NULL || expr[0] == '\0')
+            else if (expr == NULL || expr[0] == '\0')
             {
                 GetMultilineExpression ();
                 return result.Succeeded();
