@@ -3053,8 +3053,7 @@ SparcTargetLowering::expandSelectCC(MachineInstr *MI,
   // to set, the condition code register to branch on, the true/false values to
   // select between, and a branch opcode to use.
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It;
+  MachineFunction::iterator It = ++BB->getIterator();
 
   //  thisMBB:
   //  ...
@@ -3139,7 +3138,7 @@ SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
     .addReg(AddrReg).addImm(0);
 
   // Split the basic block MBB before MI and insert the loop block in the hole.
-  MachineFunction::iterator MFI = MBB;
+  MachineFunction::iterator MFI = MBB->getIterator();
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
   MachineFunction *MF = MBB->getParent();
   MachineBasicBlock *LoopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
