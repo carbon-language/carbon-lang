@@ -547,8 +547,7 @@ BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   // to set, the condition code register to branch on, the true/false values to
   // select between, and a branch opcode to use.
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator I = BB;
-  ++I;
+  MachineFunction::iterator I = ++BB->getIterator();
 
   // ThisMBB:
   // ...
