@@ -189,7 +189,7 @@ define i32 @g4(i32 %a, i32 %b) {
 ; DARWIN-LABEL: g4:
 entry:
   %div = sdiv i32 %a, %b
-; EABI: __aeabi_idivmod
+; EABI: __aeabi_idiv{{$}}
 ; EABI: mov [[div:r[0-9]+]], r0
 ; GNU: __aeabi_idiv
 ; GNU: mov [[sum:r[0-9]+]], r0

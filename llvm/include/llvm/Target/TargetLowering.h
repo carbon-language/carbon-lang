@@ -87,6 +87,7 @@ public:
     Legal,      // The target natively supports this operation.
     Promote,    // This operation should be executed in a larger type.
     Expand,     // Try to expand this to other ops, otherwise use a libcall.
+    LibCall,    // Don't try to expand this to other ops, always use a libcall.
     Custom      // Use the LowerOperation hook to implement custom lowering.
   };
 

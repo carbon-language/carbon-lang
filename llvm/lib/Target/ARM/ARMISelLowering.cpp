@@ -742,8 +742,8 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   if (!(Subtarget->hasDivide() && Subtarget->isThumb2()) &&
       !(Subtarget->hasDivideInARMMode() && !Subtarget->isThumb())) {
     // These are expanded into libcalls if the cpu doesn't have HW divider.
-    setOperationAction(ISD::SDIV,  MVT::i32, Expand);
-    setOperationAction(ISD::UDIV,  MVT::i32, Expand);
+    setOperationAction(ISD::SDIV,  MVT::i32, LibCall);
+    setOperationAction(ISD::UDIV,  MVT::i32, LibCall);
   }
 
   if (Subtarget->isTargetWindows() && !Subtarget->hasDivide()) {
