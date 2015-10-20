@@ -348,6 +348,10 @@ macro(set_clang_windows_version_resource_properties name)
   endif()
 endmacro()
 
+macro(add_clang_subdirectory name)
+  add_llvm_subdirectory(CLANG TOOL ${name})
+endmacro()
+
 macro(add_clang_library name)
   cmake_parse_arguments(ARG
     ""
