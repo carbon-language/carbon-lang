@@ -939,7 +939,7 @@ void WinException::emitCLRExceptionTable(const MachineFunction *MF) {
            "ill-formed state numbering");
   }
   // Map the main function to the NullState.
-  HandlerStates[MF->begin()] = NullState;
+  HandlerStates[&MF->front()] = NullState;
 
   // Write out a sentinel indicating the end of the standard (Windows) xdata
   // and the start of the additional (CLR) info.
@@ -973,12 +973,12 @@ void WinException::emitCLRExceptionTable(const MachineFunction *MF) {
                                        FuncletEnd = MF->begin(),
                                        End = MF->end();
        FuncletStart != End; FuncletStart = FuncletEnd) {
-    int FuncletState = HandlerStates[FuncletStart];
+    int FuncletState = HandlerStates[&*FuncletStart];
     // Find the end of the funclet
     MCSymbol *EndSymbol = FuncEndSym;
     while (++FuncletEnd != End) {
       if (FuncletEnd->isEHFuncletEntry()) {
-        EndSymbol = getMCSymbolForMBB(Asm, FuncletEnd);
+        EndSymbol = getMCSymbolForMBB(Asm, &*FuncletEnd);
         break;
       }
     }
