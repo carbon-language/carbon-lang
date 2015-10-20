@@ -141,8 +141,7 @@ static void foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
   if (!MRI.isSSA())
     return;
 
-  assert(TII->isVOP1(MI.getOpcode()) || TII->isVOP2(MI.getOpcode()) ||
-         TII->isVOPC(MI.getOpcode()));
+  assert(TII->isVOP1(MI) || TII->isVOP2(MI) || TII->isVOPC(MI));
 
   const SIRegisterInfo &TRI = TII->getRegisterInfo();
   int Src0Idx = AMDGPU::getNamedOperandIdx(MI.getOpcode(), AMDGPU::OpName::src0);

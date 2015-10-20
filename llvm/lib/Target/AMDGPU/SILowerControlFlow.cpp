@@ -486,11 +486,11 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
       Next = std::next(I);
 
       MachineInstr &MI = *I;
-      if (TII->isWQM(MI.getOpcode()) || TII->isDS(MI.getOpcode()))
+      if (TII->isWQM(MI) || TII->isDS(MI))
         NeedWQM = true;
 
       // Flat uses m0 in case it needs to access LDS.
-      if (TII->isFLAT(MI.getOpcode()))
+      if (TII->isFLAT(MI))
         NeedFlat = true;
 
       switch (MI.getOpcode()) {

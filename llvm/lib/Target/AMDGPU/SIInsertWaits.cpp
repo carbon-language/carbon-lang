@@ -155,7 +155,7 @@ Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
   // LGKM may uses larger values
   if (TSFlags & SIInstrFlags::LGKM_CNT) {
 
-    if (TII->isSMRD(MI.getOpcode())) {
+    if (TII->isSMRD(MI)) {
 
       if (MI.getNumOperands() != 0) {
         assert(MI.getOperand(0).isReg() &&
@@ -206,7 +206,7 @@ bool SIInsertWaits::isOpRelevant(MachineOperand &Op) {
   // operand comes before the value operand and it may have
   // multiple data operands.
 
-  if (TII->isDS(MI.getOpcode())) {
+  if (TII->isDS(MI)) {
     MachineOperand *Data = TII->getNamedOperand(MI, AMDGPU::OpName::data);
     if (Data && Op.isIdenticalTo(*Data))
       return true;
@@ -278,7 +278,7 @@ void SIInsertWaits::pushInstruction(MachineBasicBlock &MBB,
     // and destination registers don't overlap, e.g. this is illegal:
     //   r0 = load r2
     //   r2 = load r0
-    if ((LastOpcodeType == SMEM && TII->isSMRD(I->getOpcode())) ||
+    if ((LastOpcodeType == SMEM && TII->isSMRD(*I)) ||
         (LastOpcodeType == VMEM && Increment.Named.VM)) {
       // Insert a NOP to break the clause.
       BuildMI(MBB, I, DebugLoc(), TII->get(AMDGPU::S_NOP))
@@ -286,7 +286,7 @@ void SIInsertWaits::pushInstruction(MachineBasicBlock &MBB,
       LastInstWritesM0 = false;
     }
 
-    if (TII->isSMRD(I->getOpcode()))
+    if (TII->isSMRD(*I))
       LastOpcodeType = SMEM;
     else if (Increment.Named.VM)
       LastOpcodeType = VMEM;

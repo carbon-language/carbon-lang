@@ -205,7 +205,8 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
                                         unsigned &Offset,
                                         const TargetRegisterInfo *TRI) const {
   unsigned Opc = LdSt->getOpcode();
-  if (isDS(Opc)) {
+
+  if (isDS(*LdSt)) {
     const MachineOperand *OffsetImm = getNamedOperand(*LdSt,
                                                       AMDGPU::OpName::offset);
     if (OffsetImm) {
@@ -255,7 +256,7 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
     return false;
   }
 
-  if (isMUBUF(Opc) || isMTBUF(Opc)) {
+  if (isMUBUF(*LdSt) || isMTBUF(*LdSt)) {
     if (AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::soffset) != -1)
       return false;
 
@@ -271,7 +272,7 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
     return true;
   }
 
-  if (isSMRD(Opc)) {
+  if (isSMRD(*LdSt)) {
     const MachineOperand *OffsetImm = getNamedOperand(*LdSt,
                                                       AMDGPU::OpName::offset);
     if (!OffsetImm)
@@ -290,20 +291,18 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
 bool SIInstrInfo::shouldClusterLoads(MachineInstr *FirstLdSt,
                                      MachineInstr *SecondLdSt,
                                      unsigned NumLoads) const {
-  unsigned Opc0 = FirstLdSt->getOpcode();
-  unsigned Opc1 = SecondLdSt->getOpcode();
-
   // TODO: This needs finer tuning
   if (NumLoads > 4)
     return false;
 
-  if (isDS(Opc0) && isDS(Opc1))
+  if (isDS(*FirstLdSt) && isDS(*SecondLdSt))
     return true;
 
-  if (isSMRD(Opc0) && isSMRD(Opc1))
+  if (isSMRD(*FirstLdSt) && isSMRD(*SecondLdSt))
     return true;
 
-  if ((isMUBUF(Opc0) || isMTBUF(Opc0)) && (isMUBUF(Opc1) || isMTBUF(Opc1)))
+  if ((isMUBUF(*FirstLdSt) || isMTBUF(*FirstLdSt)) &&
+      (isMUBUF(*SecondLdSt) || isMTBUF(*SecondLdSt)))
     return true;
 
   return false;
@@ -815,7 +814,7 @@ MachineInstr *SIInstrInfo::commuteInstructionImpl(MachineInstr *MI,
   MachineOperand &Src1 = MI->getOperand(Src1Idx);
 
   // Make sure it's legal to commute operands for VOP2.
-  if (isVOP2(MI->getOpcode()) &&
+  if (isVOP2(*MI) &&
       (!isOperandLegal(MI, Src0Idx, &Src1) ||
        !isOperandLegal(MI, Src1Idx, &Src0))) {
     return nullptr;
@@ -824,7 +823,7 @@ MachineInstr *SIInstrInfo::commuteInstructionImpl(MachineInstr *MI,
   if (!Src1.isReg()) {
     // Allow commuting instructions with Imm operands.
     if (NewMI || !Src1.isImm() ||
-       (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))) {
+       (!isVOP2(*MI) && !isVOP3(*MI))) {
       return nullptr;
     }
 
@@ -1098,9 +1097,6 @@ bool SIInstrInfo::checkInstOffsetsDoNotOverlap(MachineInstr *MIa,
 bool SIInstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
                                                   MachineInstr *MIb,
                                                   AliasAnalysis *AA) const {
-  unsigned Opc0 = MIa->getOpcode();
-  unsigned Opc1 = MIb->getOpcode();
-
   assert(MIa && (MIa->mayLoad() || MIa->mayStore()) &&
          "MIa must load from or modify a memory location");
   assert(MIb && (MIb->mayLoad() || MIb->mayStore()) &&
@@ -1118,29 +1114,29 @@ bool SIInstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
   // underlying address space, even if it was lowered to a different one,
   // e.g. private accesses lowered to use MUBUF instructions on a scratch
   // buffer.
-  if (isDS(Opc0)) {
-    if (isDS(Opc1))
+  if (isDS(*MIa)) {
+    if (isDS(*MIb))
       return checkInstOffsetsDoNotOverlap(MIa, MIb);
 
-    return !isFLAT(Opc1);
+    return !isFLAT(*MIb);
   }
 
-  if (isMUBUF(Opc0) || isMTBUF(Opc0)) {
-    if (isMUBUF(Opc1) || isMTBUF(Opc1))
+  if (isMUBUF(*MIa) || isMTBUF(*MIa)) {
+    if (isMUBUF(*MIb) || isMTBUF(*MIb))
       return checkInstOffsetsDoNotOverlap(MIa, MIb);
 
-    return !isFLAT(Opc1) && !isSMRD(Opc1);
+    return !isFLAT(*MIb) && !isSMRD(*MIb);
   }
 
-  if (isSMRD(Opc0)) {
-    if (isSMRD(Opc1))
+  if (isSMRD(*MIa)) {
+    if (isSMRD(*MIb))
       return checkInstOffsetsDoNotOverlap(MIa, MIb);
 
-    return !isFLAT(Opc1) && !isMUBUF(Opc0) && !isMTBUF(Opc0);
+    return !isFLAT(*MIb) && !isMUBUF(*MIa) && !isMTBUF(*MIa);
   }
 
-  if (isFLAT(Opc0)) {
-    if (isFLAT(Opc1))
+  if (isFLAT(*MIa)) {
+    if (isFLAT(*MIb))
       return checkInstOffsetsDoNotOverlap(MIa, MIb);
 
     return false;
@@ -1402,7 +1398,7 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
 
 
   // Verify VOP*
-  if (isVOP1(Opcode) || isVOP2(Opcode) || isVOP3(Opcode) || isVOPC(Opcode)) {
+  if (isVOP1(*MI) || isVOP2(*MI) || isVOP3(*MI) || isVOPC(*MI)) {
     // Only look at the true operands. Only a real operand can use the constant
     // bus, and we don't want to check pseudo-operands like the source modifier
     // flags.
@@ -1653,7 +1649,7 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
   if (!MO)
     MO = &MI->getOperand(OpIdx);
 
-  if (isVALU(InstDesc.Opcode) &&
+  if (isVALU(*MI) &&
       usesConstantBus(MRI, *MO, DefinedRC->getSize())) {
     unsigned SGPRUsed =
         MO->isReg() ? MO->getReg() : (unsigned)AMDGPU::NoRegister;
@@ -1710,7 +1706,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
                                            AMDGPU::OpName::src2);
 
   // Legalize VOP2
-  if (isVOP2(MI->getOpcode()) && Src1Idx != -1) {
+  if (isVOP2(*MI) && Src1Idx != -1) {
     // Legalize src0
     if (!isOperandLegal(MI, Src0Idx))
       legalizeOpWithMove(MI, Src0Idx);
@@ -1735,7 +1731,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
 
   // XXX - Do any VOP3 instructions read VCC?
   // Legalize VOP3
-  if (isVOP3(MI->getOpcode())) {
+  if (isVOP3(*MI)) {
     int VOP3Idx[3] = { Src0Idx, Src1Idx, Src2Idx };
 
     // Find the one SGPR operand we are allowed to use.
@@ -2217,7 +2213,7 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
     // Handle some special cases
     switch (Opcode) {
     default:
-      if (isSMRD(Inst->getOpcode())) {
+      if (isSMRD(*Inst)) {
         moveSMRDToVALU(Inst, MRI, Worklist);
         continue;
       }

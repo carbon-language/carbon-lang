@@ -131,7 +131,7 @@ bool SIPrepareScratchRegs::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr &MI = *I;
       RS.forward(I);
       DebugLoc DL = MI.getDebugLoc();
-      if (!TII->isVGPRSpill(MI.getOpcode()))
+      if (!TII->isVGPRSpill(MI))
         continue;
 
       // Scratch resource

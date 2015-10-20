@@ -2146,7 +2146,7 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   TII->legalizeOperands(MI);
 
-  if (TII->isMIMG(MI->getOpcode())) {
+  if (TII->isMIMG(*MI)) {
     unsigned VReg = MI->getOperand(0).getReg();
     unsigned Writemask = MI->getOperand(1).getImm();
     unsigned BitsSet = 0;

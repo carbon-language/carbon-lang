@@ -148,76 +148,152 @@ public:
                                       MachineBasicBlock::iterator &MI,
                                       LiveVariables *LV) const override;
 
+  static bool isSALU(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::SALU;
+  }
+
   bool isSALU(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SALU;
+  }
+
+  static bool isVALU(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::VALU;
   }
 
   bool isVALU(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::VALU;
   }
 
+  static bool isSOP1(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::SOP1;
+  }
+
   bool isSOP1(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SOP1;
+  }
+
+  static bool isSOP2(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::SOP2;
   }
 
   bool isSOP2(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SOP2;
   }
 
+  static bool isSOPC(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::SOPC;
+  }
+
   bool isSOPC(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SOPC;
+  }
+
+  static bool isSOPK(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::SOPK;
   }
 
   bool isSOPK(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SOPK;
   }
 
+  static bool isSOPP(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::SOPP;
+  }
+
   bool isSOPP(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SOPP;
+  }
+
+  static bool isVOP1(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::VOP1;
   }
 
   bool isVOP1(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::VOP1;
   }
 
+  static bool isVOP2(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::VOP2;
+  }
+
   bool isVOP2(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::VOP2;
+  }
+
+  static bool isVOP3(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::VOP3;
   }
 
   bool isVOP3(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::VOP3;
   }
 
+  static bool isVOPC(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::VOPC;
+  }
+
   bool isVOPC(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::VOPC;
+  }
+
+  static bool isMUBUF(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::MUBUF;
   }
 
   bool isMUBUF(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::MUBUF;
   }
 
+  static bool isMTBUF(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::MTBUF;
+  }
+
   bool isMTBUF(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::MTBUF;
+  }
+
+  static bool isSMRD(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::SMRD;
   }
 
   bool isSMRD(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SMRD;
   }
 
+  static bool isDS(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::DS;
+  }
+
   bool isDS(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::DS;
+  }
+
+  static bool isMIMG(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::MIMG;
   }
 
   bool isMIMG(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::MIMG;
   }
 
+  static bool isFLAT(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::FLAT;
+  }
+
   bool isFLAT(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::FLAT;
   }
 
+  static bool isWQM(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::WQM;
+  }
+
   bool isWQM(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::WQM;
+  }
+
+  static bool isVGPRSpill(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::VGPRSpill;
   }
 
   bool isVGPRSpill(uint16_t Opcode) const {
