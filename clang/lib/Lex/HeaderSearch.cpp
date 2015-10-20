@@ -256,6 +256,8 @@ const FileEntry *HeaderSearch::getFileAndSuggestModule(
   // If we have a module map that might map this header, load it and
   // check whether we'll have a suggestion for a module.
   const FileEntry *File = getFileMgr().getFile(FileName, /*OpenFile=*/true);
+  if (!File)
+    return nullptr;
 
   // If there is a module that corresponds to this header, suggest it.
   if (!findUsableModuleForHeader(File, Dir ? Dir : File->getDir(),
