@@ -82,7 +82,7 @@ Transform::Transform(llvm::StringRef Name, const TransformOptions &Options)
   Reset();
 }
 
-Transform::~Transform() = default;
+Transform::~Transform() {}
 
 bool Transform::isFileModifiable(const SourceManager &SM,
                                  SourceLocation Loc) const {
@@ -150,7 +150,7 @@ Version Version::getFromString(llvm::StringRef VersionStr) {
   return V;
 }
 
-TransformFactory::~TransformFactory() = default;
+TransformFactory::~TransformFactory() {}
 
 namespace {
 bool versionSupported(Version Required, Version AvailableSince) {

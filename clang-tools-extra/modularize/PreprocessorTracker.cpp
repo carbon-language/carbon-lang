@@ -746,7 +746,7 @@ public:
   PreprocessorCallbacks(PreprocessorTrackerImpl &ppTracker,
                         clang::Preprocessor &PP, llvm::StringRef rootHeaderFile)
       : PPTracker(ppTracker), PP(PP), RootHeaderFile(rootHeaderFile) {}
-  ~PreprocessorCallbacks() override = default;
+  ~PreprocessorCallbacks() override {}
 
   // Overridden handlers.
   void InclusionDirective(clang::SourceLocation HashLoc,
@@ -812,7 +812,7 @@ public:
     }
   }
 
-  ~PreprocessorTrackerImpl() override = default;
+  ~PreprocessorTrackerImpl() override {}
 
   // Handle entering a preprocessing session.
   void handlePreprocessorEntry(clang::Preprocessor &PP,
@@ -1288,7 +1288,7 @@ private:
 // PreprocessorTracker functions.
 
 // PreprocessorTracker desctructor.
-PreprocessorTracker::~PreprocessorTracker() = default;
+PreprocessorTracker::~PreprocessorTracker() {}
 
 // Create instance of PreprocessorTracker.
 PreprocessorTracker *PreprocessorTracker::create(

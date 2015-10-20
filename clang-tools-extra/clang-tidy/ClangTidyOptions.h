@@ -88,7 +88,7 @@ struct ClangTidyOptions {
 /// \brief Abstract interface for retrieving various ClangTidy options.
 class ClangTidyOptionsProvider {
 public:
-  virtual ~ClangTidyOptionsProvider() = default;
+  virtual ~ClangTidyOptionsProvider() {}
 
   /// \brief Returns global options, which are independent of the file.
   virtual const ClangTidyGlobalOptions &getGlobalOptions() = 0;
