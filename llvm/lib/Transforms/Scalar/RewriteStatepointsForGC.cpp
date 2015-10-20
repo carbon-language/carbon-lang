@@ -1249,14 +1249,14 @@ static BasicBlock *
 normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent,
                             DominatorTree &DT) {
   BasicBlock *Ret = BB;
-  if (!BB->getUniquePredecessor()) {
+  if (!BB->getUniquePredecessor())
     Ret = SplitBlockPredecessors(BB, InvokeParent, "", &DT);
-  }
 
   // Now that 'ret' has unique predecessor we can safely remove all phi nodes
   // from it
   FoldSingleEntryPHINodes(Ret);
-  assert(!isa<PHINode>(Ret->begin()));
+  assert(!isa<PHINode>(Ret->begin()) &&
+         "All PHI nodes should have been removed!");
 
   // At this point, we can safely insert a gc.relocate as the first instruction
   // in Ret if needed.
