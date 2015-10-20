@@ -91,7 +91,8 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
 
   for (auto BB : BasicBlocksLayout) {
     OS << BB->getName() << " ("
-       << BB->Instructions.size() << " instructions)\n";
+       << BB->Instructions.size() << " instructions, align : "
+       << BB->getAlignment() << ")\n";
 
     uint64_t BBExecCount = BB->getExecutionCount();
     if (BBExecCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
@@ -342,12 +343,14 @@ bool BinaryFunction::buildCFG() {
   // sorted by offsets.
   BinaryBasicBlock *InsertBB{nullptr};
   BinaryBasicBlock *PrevBB{nullptr};
+  bool IsLastInstrNop = false;
   for (auto &InstrInfo : Instructions) {
     auto LI = Labels.find(InstrInfo.first);
     if (LI != Labels.end()) {
       // Always create new BB at branch destination.
       PrevBB = InsertBB;
-      InsertBB = addBasicBlock(LI->first, LI->second);
+      InsertBB = addBasicBlock(LI->first, LI->second,
+                               /* DeriveAlignment = */ IsLastInstrNop);
     }
     if (!InsertBB) {
       // It must be a fallthrough. Create a new block unless we see an
@@ -358,10 +361,20 @@ bool BinaryFunction::buildCFG() {
         InsertBB = PrevBB;
       } else {
         InsertBB = addBasicBlock(InstrInfo.first,
-                                 BC.Ctx->createTempSymbol("FT", true));
+                                 BC.Ctx->createTempSymbol("FT", true),
+                                 /* DeriveAlignment = */ IsLastInstrNop);
       }
     }
 
+    // Ignore nops. We use nops to derive alignment of the next basic block.
+    // It will not always work, as some blocks are naturally aligned, but
+    // it's just part of heuristic for block alignment.
+    if (MIA->isNoop(InstrInfo.second)) {
+      IsLastInstrNop = true;
+      continue;
+    }
+
+    IsLastInstrNop = false;
     InsertBB->addInstruction(InstrInfo.second);
 
     // How well do we detect tail calls here?
@@ -416,7 +429,9 @@ bool BinaryFunction::buildCFG() {
     }
 
     MCInst &LastInst = BB.back();
-    if (BB.succ_size() == 0) {
+    if (BB.empty()) {
+      IsPrevFT = true;
+    } else if (BB.succ_size() == 0) {
       IsPrevFT = MIA->isTerminator(LastInst) ? false : true;
     } else if (BB.succ_size() == 1) {
       IsPrevFT =  MIA->isConditionalBranch(LastInst) ? true : false;

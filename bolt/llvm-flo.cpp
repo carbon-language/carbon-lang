@@ -95,8 +95,8 @@ EliminateUnreachable("eliminate-unreachable",
 
 static cl::opt<bool>
 ReorderBlocks("reorder-blocks",
-                     cl::desc("redo basic block layout based on profiling data"),
-                     cl::Optional);
+              cl::desc("redo basic block layout based on profiling data"),
+              cl::Optional);
 
 static cl::opt<bool>
 DumpData("dump-data", cl::desc("dump parsed flo data (debugging)"),
@@ -104,11 +104,11 @@ DumpData("dump-data", cl::desc("dump parsed flo data (debugging)"),
 
 static cl::opt<bool>
 DumpFunctions("dump-functions", cl::desc("dump parsed functions (debugging)"),
-         cl::Hidden);
+              cl::Hidden);
 
 static cl::opt<bool>
 DumpLayout("dump-layout", cl::desc("dump parsed flo data (debugging)"),
-         cl::Hidden);
+           cl::Hidden);
 } // namespace opts
 
 static StringRef ToolName;
@@ -588,6 +588,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     // Emit code.
     for (auto BB : Function.layout()) {
+      if (BB->getAlignment() > 1)
+        Streamer->EmitCodeAlignment(BB->getAlignment());
       Streamer->EmitLabel(BB->getLabel());
       for (const auto &Instr : *BB) {
         Streamer->EmitInstruction(Instr, *BC->STI);

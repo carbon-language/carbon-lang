@@ -93,6 +93,7 @@ public:
   typedef std::reverse_iterator<const_iterator>          const_reverse_iterator;
   typedef std::reverse_iterator<iterator>                      reverse_iterator;
 
+  bool         empty()            const { return Instructions.empty(); }
   MCInst       &front()                 { return Instructions.front();  }
   MCInst       &back()                  { return Instructions.back();   }
   const MCInst &front()           const { return Instructions.front();  }
@@ -180,6 +181,11 @@ public:
   /// Add instruction at the end of this basic block.
   void addInstruction(MCInst &Inst) {
     Instructions.emplace_back(Inst);
+  }
+
+  /// Set minimum alignment for the basic block.
+  void setAlignment(uint64_t Align) {
+    Alignment = Align;
   }
 
   /// Return required alignment for the block.

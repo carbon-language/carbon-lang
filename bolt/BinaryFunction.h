@@ -260,21 +260,23 @@ public:
 
   /// Create a basic block at a given \p Offset in the
   /// function and append it to the end of list of blocks.
+  /// If \p DeriveAlignment is true, set the alignment of the block based
+  /// on the alignment of the existing offset.
+  /// 
   /// Returns NULL if basic block already exists at the \p Offset.
-  BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label = nullptr) {
+  BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label,
+                                  bool DeriveAlignment = false) {
     assert(!getBasicBlockAtOffset(Offset) && "basic block already exists");
     if (!Label)
       Label = BC.Ctx->createTempSymbol("BB", true);
     BasicBlocks.emplace_back(BinaryBasicBlock(Label, Offset));
 
-    return &BasicBlocks.back();
-  }
+    auto BB = &BasicBlocks.back();
 
-  BinaryBasicBlock *getOrCreateBasicBlockAt(uint64_t Offset,
-                                            MCSymbol *Label = nullptr) {
-    BinaryBasicBlock *BB = getBasicBlockAtOffset(Offset);
-    if (!BB)
-      BB = addBasicBlock(Offset, Label);
+    if (DeriveAlignment) {
+      uint64_t DerivedAlignment = Offset & (1 + ~Offset);
+      BB->setAlignment(std::min(DerivedAlignment, uint64_t(16)));
+    }
 
     return BB;
   }
