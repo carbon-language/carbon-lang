@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/DataFormatters/TypeSummary.h"
+
 // C Includes
 
 // C++ Includes
@@ -19,15 +21,12 @@
 
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Core/Timer.h"
-#include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
-
-#include "lldb/Host/Host.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -226,15 +225,9 @@ ScriptSummaryFormat::FormatObject (ValueObject *valobj,
                                    std::string& retval,
                                    const TypeSummaryOptions& options)
 {
-    Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
-    
     if (!valobj)
         return false;
     
-    Host::SetCrashDescriptionWithFormat("[Python summary] Name: %s - Function: %s",
-                                        valobj->GetName().AsCString("unknown"),
-                                        m_function_name.c_str());
-
     TargetSP target_sp(valobj->GetTargetSP());
     
     if (!target_sp)

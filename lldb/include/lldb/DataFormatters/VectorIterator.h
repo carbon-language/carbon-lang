@@ -10,9 +10,10 @@
 #ifndef liblldb_VectorIterator_h_
 #define liblldb_VectorIterator_h_
 
-#include "lldb/Core/Stream.h"
-#include "lldb/Core/ValueObject.h"
-#include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb-forward.h"
+
+#include "lldb/Core/ConstString.h"
+#include "lldb/Target/ExecutionContext.h"
 
 namespace lldb_private {
     namespace formatters

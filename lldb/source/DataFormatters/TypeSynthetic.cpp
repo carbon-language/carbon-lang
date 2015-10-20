@@ -23,7 +23,6 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Symbol/CompilerType.h"
-#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

@@ -27,8 +27,6 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/StructuredData.h"
-#include "lldb/Core/ValueObject.h"
-#include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
     class TypeSummaryOptions

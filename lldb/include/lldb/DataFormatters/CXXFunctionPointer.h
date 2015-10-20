@@ -10,9 +10,7 @@
 #ifndef liblldb_CXXFunctionPointer_h_
 #define liblldb_CXXFunctionPointer_h_
 
-#include "lldb/Core/Stream.h"
-#include "lldb/Core/ValueObject.h"
-#include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb-forward.h"
 
 namespace lldb_private {
     namespace formatters

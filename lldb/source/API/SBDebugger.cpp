@@ -43,6 +43,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/DynamicLibrary.h"
 

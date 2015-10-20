@@ -13,6 +13,7 @@
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/TypeSystem.h"
+#include "lldb/Target/Target.h"
 
 #include "lldb/Utility/LLDBAssert.h"
 

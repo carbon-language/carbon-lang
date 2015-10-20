@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/DataFormatters/TypeFormat.h"
+
 // C Includes
 
 // C++ Includes
@@ -17,15 +19,11 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
-#include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Core/Timer.h"
 #include "lldb/DataFormatters/FormatManager.h"
-#include "lldb/DataFormatters/TypeFormat.h"
-#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/CompilerType.h"
+#include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/TypeList.h"
-#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

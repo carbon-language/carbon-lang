@@ -9,20 +9,19 @@
 
 #include "lldb/DataFormatters/FormatManager.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
 
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/Log.h"
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/DataFormatters/LanguageCategory.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Language.h"
-#include "lldb/Target/Platform.h"
-#include "llvm/ADT/STLExtras.h"
-
-#include <initializer_list>
 
 using namespace lldb;
 using namespace lldb_private;

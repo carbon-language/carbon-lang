@@ -9,7 +9,6 @@
 
 #include "lldb/DataFormatters/StringPrinter.h"
 
-#include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/ValueObject.h"

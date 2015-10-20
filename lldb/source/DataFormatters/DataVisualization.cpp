@@ -14,8 +14,6 @@
 // Other libraries and framework includes
 // Project includes
 
-#include "lldb/Core/Debugger.h"
-
 using namespace lldb;
 using namespace lldb_private;
 

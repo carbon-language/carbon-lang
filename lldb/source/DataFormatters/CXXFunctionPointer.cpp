@@ -9,6 +9,8 @@
 
 #include "lldb/DataFormatters/CXXFunctionPointer.h"
 
+#include "lldb/Core/Stream.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 

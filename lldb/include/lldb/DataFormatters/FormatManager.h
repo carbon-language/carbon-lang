@@ -18,8 +18,6 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
-#include "lldb/Core/ThreadSafeDenseMap.h"
-
 #include "lldb/DataFormatters/FormatCache.h"
 #include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/FormattersContainer.h"

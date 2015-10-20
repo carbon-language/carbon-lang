@@ -7,9 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringRef.h"
-
 #include "lldb/Core/FormatEntity.h"
+
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Debugger.h"
