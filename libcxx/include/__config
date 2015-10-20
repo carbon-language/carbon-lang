@@ -451,8 +451,11 @@ namespace std {
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
 
-// No version of GCC supports relaxed constexpr rules
+// Determine if GCC supports relaxed constexpr
+#if !defined(__cpp_constexpr) || __cpp_constexpr < 201304L
 #define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
+#endif
+
 // GCC 5 will support variable templates
 #define _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 
