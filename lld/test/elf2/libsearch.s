@@ -13,7 +13,7 @@
 // Should fail if no library specified
 // RUN: not ld.lld2 -l 2>&1 \
 // RUN:   | FileCheck --check-prefix=NOLIBRARY %s
-// NOLIBRARY: No library specified for -l
+// NOLIBRARY: missing arg value for "-l", expected 1 argument.
 
 // Should not link because of undefined symbol _bar
 // RUN: not ld.lld2 -o %t3 %t.o 2>&1 \
