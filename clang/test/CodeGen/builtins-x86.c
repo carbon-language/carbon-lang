@@ -465,14 +465,14 @@ void f0() {
   __builtin_ia32_movntdq256(tmp_V4LLip, tmp_V4LLi);
   __builtin_ia32_movntpd256(tmp_dp, tmp_V4d);
   __builtin_ia32_movntps256(tmp_fp, tmp_V8f);
-  tmp_V2d = __builtin_ia32_maskloadpd(tmp_V2dCp, tmp_V2d);
-  tmp_V4f = __builtin_ia32_maskloadps(tmp_V4fCp, tmp_V4f);
-  tmp_V4d = __builtin_ia32_maskloadpd256(tmp_V4dCp, tmp_V4d);
-  tmp_V8f = __builtin_ia32_maskloadps256(tmp_V8fCp, tmp_V8f);
-  __builtin_ia32_maskstorepd(tmp_V2dp, tmp_V2d, tmp_V2d);
-  __builtin_ia32_maskstoreps(tmp_V4fp, tmp_V4f, tmp_V4f);
-  __builtin_ia32_maskstorepd256(tmp_V4dp, tmp_V4d, tmp_V4d);
-  __builtin_ia32_maskstoreps256(tmp_V8fp, tmp_V8f, tmp_V8f);
+  tmp_V2d = __builtin_ia32_maskloadpd(tmp_V2dCp, tmp_V2LLi);
+  tmp_V4f = __builtin_ia32_maskloadps(tmp_V4fCp, tmp_V4i);
+  tmp_V4d = __builtin_ia32_maskloadpd256(tmp_V4dCp, tmp_V4LLi);
+  tmp_V8f = __builtin_ia32_maskloadps256(tmp_V8fCp, tmp_V8i);
+  __builtin_ia32_maskstorepd(tmp_V2dp, tmp_V2LLi, tmp_V2d);
+  __builtin_ia32_maskstoreps(tmp_V4fp, tmp_V4i, tmp_V4f);
+  __builtin_ia32_maskstorepd256(tmp_V4dp, tmp_V4LLi, tmp_V4d);
+  __builtin_ia32_maskstoreps256(tmp_V8fp, tmp_V8i, tmp_V8f);
 
 #ifdef USE_3DNOW
   tmp_V8c = __builtin_ia32_pavgusb(tmp_V8c, tmp_V8c);
