@@ -1,4 +1,4 @@
-//===-- ObjCLanguage.h ----------------------------------------*- C++ -*-===//
+//===-- ObjCLanguage.h ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -119,6 +119,7 @@ public:
         //  names[3] => "-[NSString myStringWithCString:]"
         size_t
         GetFullNames (std::vector<ConstString> &names, bool append);
+
     protected:
         ConstString m_full;     // Full name:   "+[NSString(my_additions) myStringWithCString:]"
         ConstString m_class;    // Class name:  "NSString"
@@ -127,13 +128,12 @@ public:
         ConstString m_selector; // Selector:    "myStringWithCString:"
         Type m_type;
         bool m_category_is_valid;
-
     };
 
-    virtual ~ObjCLanguage() = default;
-    
-    ObjCLanguage () = default;
-    
+    ObjCLanguage() = default;
+
+    ~ObjCLanguage() override = default;
+
     lldb::LanguageType
     GetLanguageType () const override
     {
@@ -195,13 +195,13 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual ConstString
+    ConstString
     GetPluginName() override;
     
-    virtual uint32_t
+    uint32_t
     GetPluginVersion() override;
 };
     
 } // namespace lldb_private
 
-#endif  // liblldb_ObjCLanguage_h_
+#endif // liblldb_ObjCLanguage_h_

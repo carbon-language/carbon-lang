@@ -1,4 +1,4 @@
-//===-- ObjCPlusPlusLanguage.h ----------------------------------------*- C++ -*-===//
+//===-- ObjCPlusPlusLanguage.h ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,12 +23,12 @@ class ObjCPlusPlusLanguage :
     public Language
 {
 public:
-    virtual ~ObjCPlusPlusLanguage() = default;
-    
-    ObjCPlusPlusLanguage () = default;
-    
+    ObjCPlusPlusLanguage() = default;
+
+    ~ObjCPlusPlusLanguage() override = default;
+
     lldb::LanguageType
-    GetLanguageType () const
+    GetLanguageType() const override
     {
         return lldb::eLanguageTypeObjC_plus_plus;
     }
@@ -51,13 +51,13 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual ConstString
-    GetPluginName();
+    ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 };
     
 } // namespace lldb_private
 
-#endif  // liblldb_CPlusPlusLanguage_h_
+#endif // liblldb_CPlusPlusLanguage_h_

@@ -1,4 +1,4 @@
-//===-- LibCxxInitializerList.cpp ----------------------------------*- C++ -*-===//
+//===-- LibCxxInitializerList.cpp -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "LibCxx.h"
 
 #include "lldb/Core/ConstString.h"
@@ -23,24 +27,24 @@ namespace lldb_private {
         {
         public:
             LibcxxInitializerListSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~LibcxxInitializerListSyntheticFrontEnd() override;
+
+            size_t
+            CalculateNumChildren() override;
             
-            virtual size_t
-            CalculateNumChildren ();
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            bool
+            Update() override;
             
-            virtual bool
-            Update();
+            bool
+            MightHaveChildren() override;
             
-            virtual bool
-            MightHaveChildren ();
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~LibcxxInitializerListSyntheticFrontEnd ();
         private:
             ValueObject* m_start;
             CompilerType m_element_type;
@@ -48,8 +52,8 @@ namespace lldb_private {
             size_t m_num_elements;
             std::map<size_t,lldb::ValueObjectSP> m_children;
         };
-    }
-}
+    } // namespace formatters
+} // namespace lldb_private
 
 lldb_private::formatters::LibcxxInitializerListSyntheticFrontEnd::LibcxxInitializerListSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
@@ -61,6 +65,12 @@ m_children()
 {
     if (valobj_sp)
         Update();
+}
+
+lldb_private::formatters::LibcxxInitializerListSyntheticFrontEnd::~LibcxxInitializerListSyntheticFrontEnd()
+{
+    // this needs to stay around because it's a child object who will follow its parent's life cycle
+    // delete m_start;
 }
 
 size_t
@@ -128,12 +138,6 @@ lldb_private::formatters::LibcxxInitializerListSyntheticFrontEnd::GetIndexOfChil
     return ExtractIndexFromString(name.GetCString());
 }
 
-lldb_private::formatters::LibcxxInitializerListSyntheticFrontEnd::~LibcxxInitializerListSyntheticFrontEnd ()
-{
-    // this needs to stay around because it's a child object who will follow its parent's life cycle
-    // delete m_start;
-}
-
 lldb_private::SyntheticChildrenFrontEnd*
 lldb_private::formatters::LibcxxInitializerListSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
 {
@@ -141,4 +145,3 @@ lldb_private::formatters::LibcxxInitializerListSyntheticFrontEndCreator (CXXSynt
         return NULL;
     return (new LibcxxInitializerListSyntheticFrontEnd(valobj_sp));
 }
-

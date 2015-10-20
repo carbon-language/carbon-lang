@@ -1,4 +1,4 @@
-//===-- NSSet.cpp ------------------------------------------------*- C++ -*-===//
+//===-- NSSet.cpp -----------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "NSSet.h"
 
 #include "lldb/Core/DataBufferHeap.h"
@@ -43,45 +47,45 @@ namespace lldb_private {
     namespace formatters {
         class NSSetISyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
+        public:
+            NSSetISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~NSSetISyntheticFrontEnd() override;
+
+            size_t
+            CalculateNumChildren() override;
+            
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
+            
+            bool
+            Update() override;
+            
+            bool
+            MightHaveChildren() override;
+            
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
+
         private:
             struct DataDescriptor_32
             {
                 uint32_t _used : 26;
                 uint32_t _szidx : 6;
             };
+
             struct DataDescriptor_64
             {
                 uint64_t _used : 58;
                 uint32_t _szidx : 6;
             };
-            
+
             struct SetItemDescriptor
             {
                 lldb::addr_t item_ptr;
                 lldb::ValueObjectSP valobj_sp;
             };
-            
-        public:
-            NSSetISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
-            
-            virtual size_t
-            CalculateNumChildren ();
-            
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
-            
-            virtual bool
-            Update();
-            
-            virtual bool
-            MightHaveChildren ();
-            
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~NSSetISyntheticFrontEnd ();
-        private:
+
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
             DataDescriptor_32 *m_data_32;
@@ -92,28 +96,26 @@ namespace lldb_private {
         
         class NSOrderedSetSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
-        private:
-            
         public:
             NSOrderedSetSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~NSOrderedSetSyntheticFrontEnd() override = default;
+
+            size_t
+            CalculateNumChildren() override;
             
-            virtual size_t
-            CalculateNumChildren ();
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            bool
+            Update() override;
             
-            virtual bool
-            Update();
+            bool
+            MightHaveChildren() override;
             
-            virtual bool
-            MightHaveChildren ();
-            
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~NSOrderedSetSyntheticFrontEnd ();
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
+
         private:
             uint32_t m_count;
             std::map<uint32_t,lldb::ValueObjectSP> m_children;
@@ -121,6 +123,26 @@ namespace lldb_private {
         
         class NSSetMSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
+        public:
+            NSSetMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~NSSetMSyntheticFrontEnd() override;
+
+            size_t
+            CalculateNumChildren() override;
+            
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
+            
+            bool
+            Update() override;
+            
+            bool
+            MightHaveChildren() override;
+            
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
+
         private:
             struct DataDescriptor_32
             {
@@ -129,6 +151,7 @@ namespace lldb_private {
                 uint32_t _mutations;
                 uint32_t _objs_addr;
             };
+
             struct DataDescriptor_64
             {
                 uint64_t _used : 58;
@@ -136,32 +159,13 @@ namespace lldb_private {
                 uint64_t _mutations;
                 uint64_t _objs_addr;
             };
+
             struct SetItemDescriptor
             {
                 lldb::addr_t item_ptr;
                 lldb::ValueObjectSP valobj_sp;
             };
-        public:
-            NSSetMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
-            
-            virtual size_t
-            CalculateNumChildren ();
-            
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
-            
-            virtual bool
-            Update();
-            
-            virtual bool
-            MightHaveChildren ();
-            
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~NSSetMSyntheticFrontEnd ();
-        private:
+
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
             DataDescriptor_32 *m_data_32;
@@ -173,27 +177,26 @@ namespace lldb_private {
         {
         public:
             NSSetCodeRunningSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~NSSetCodeRunningSyntheticFrontEnd() override;
+
+            size_t
+            CalculateNumChildren() override;
             
-            virtual size_t
-            CalculateNumChildren ();
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            bool
+            Update() override;
             
-            virtual bool
-            Update();
+            bool
+            MightHaveChildren() override;
             
-            virtual bool
-            MightHaveChildren ();
-            
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~NSSetCodeRunningSyntheticFrontEnd ();
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
         };
-    }
-}
+    } // namespace formatters
+} // namespace lldb_private
 
 template<bool cf_style>
 bool
@@ -748,13 +751,8 @@ lldb_private::formatters::NSOrderedSetSyntheticFrontEnd::GetIndexOfChildWithName
     return idx;
 }
 
-lldb_private::formatters::NSOrderedSetSyntheticFrontEnd::~NSOrderedSetSyntheticFrontEnd ()
-{
-}
-
 template bool
 lldb_private::formatters::NSSetSummaryProvider<true> (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
 
 template bool
 lldb_private::formatters::NSSetSummaryProvider<false> (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
-

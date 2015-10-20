@@ -1,4 +1,4 @@
-//===-- Cocoa.cpp -------------------------------------------------*- C++ -*-===//
+//===-- Cocoa.cpp -----------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "Cocoa.h"
 
 #include "lldb/Core/DataBufferHeap.h"
@@ -319,6 +323,7 @@ NSNumber_FormatChar (ValueObject& valobj,
                   value,
                   suffix.c_str());
 }
+
 static void
 NSNumber_FormatShort (ValueObject& valobj,
                       Stream& stream,
@@ -342,6 +347,7 @@ NSNumber_FormatShort (ValueObject& valobj,
                   value,
                   suffix.c_str());
 }
+
 static void
 NSNumber_FormatInt (ValueObject& valobj,
                     Stream& stream,
@@ -365,6 +371,7 @@ NSNumber_FormatInt (ValueObject& valobj,
                   value,
                   suffix.c_str());
 }
+
 static void
 NSNumber_FormatLong (ValueObject& valobj,
                      Stream& stream,
@@ -388,6 +395,7 @@ NSNumber_FormatLong (ValueObject& valobj,
                   value,
                   suffix.c_str());
 }
+
 static void
 NSNumber_FormatFloat (ValueObject& valobj,
                       Stream& stream,
@@ -411,6 +419,7 @@ NSNumber_FormatFloat (ValueObject& valobj,
                   value,
                   suffix.c_str());
 }
+
 static void
 NSNumber_FormatDouble (ValueObject& valobj,
                        Stream& stream,
@@ -745,39 +754,36 @@ public:
     {
     }
     
-    virtual size_t
-    CalculateNumChildren ()
+    ~ObjCClassSyntheticChildrenFrontEnd() override = default;
+
+    size_t
+    CalculateNumChildren() override
     {
         return 0;
     }
     
-    virtual lldb::ValueObjectSP
-    GetChildAtIndex (size_t idx)
+    lldb::ValueObjectSP
+    GetChildAtIndex(size_t idx) override
     {
         return lldb::ValueObjectSP();
     }
     
-    virtual bool
-    Update()
+    bool
+    Update() override
     {
         return false;
     }
     
-    virtual bool
-    MightHaveChildren ()
+    bool
+    MightHaveChildren() override
     {
         return false;
     }
     
-    virtual size_t
-    GetIndexOfChildWithName (const ConstString &name)
+    size_t
+    GetIndexOfChildWithName(const ConstString &name) override
     {
         return UINT32_MAX;
-    }
-    
-    virtual
-    ~ObjCClassSyntheticChildrenFrontEnd ()
-    {
     }
 };
 
@@ -944,13 +950,13 @@ lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject
 }
 
 template bool
-lldb_private::formatters::NSDataSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
+lldb_private::formatters::NSDataSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&);
 
 template bool
-lldb_private::formatters::NSDataSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
+lldb_private::formatters::NSDataSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&);
 
 template bool
-lldb_private::formatters::ObjCSELSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
+lldb_private::formatters::ObjCSELSummaryProvider<true> (ValueObject&, Stream&, const TypeSummaryOptions&);
 
 template bool
-lldb_private::formatters::ObjCSELSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&) ;
+lldb_private::formatters::ObjCSELSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&);

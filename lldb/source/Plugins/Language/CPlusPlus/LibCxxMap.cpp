@@ -1,4 +1,4 @@
-//===-- LibCxxList.cpp -------------------------------------------*- C++ -*-===//
+//===-- LibCxxList.cpp ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "LibCxx.h"
 
 #include "lldb/Core/DataBufferHeap.h"
@@ -29,24 +33,24 @@ namespace lldb_private {
         {
         public:
             LibcxxStdMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~LibcxxStdMapSyntheticFrontEnd() override = default;
+
+            size_t
+            CalculateNumChildren() override;
             
-            virtual size_t
-            CalculateNumChildren ();
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            bool
+            Update() override;
             
-            virtual bool
-            Update();
+            bool
+            MightHaveChildren() override;
             
-            virtual bool
-            MightHaveChildren ();
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~LibcxxStdMapSyntheticFrontEnd ();
         private:
             bool
             GetDataType();
@@ -61,13 +65,13 @@ namespace lldb_private {
             size_t m_count;
             std::map<size_t,lldb::ValueObjectSP> m_children;
         };
-    }
-}
+    } // namespace formatters
+} // namespace lldb_private
 
 class MapEntry
 {
 public:
-    MapEntry () {}
+    MapEntry() = default;
     explicit MapEntry (ValueObjectSP entry_sp) : m_entry_sp(entry_sp) {}
     MapEntry (const MapEntry& rhs) : m_entry_sp(rhs.m_entry_sp) {}
     explicit MapEntry (ValueObject* entry) : m_entry_sp(entry ? entry->GetSP() : ValueObjectSP()) {}
@@ -146,7 +150,7 @@ private:
 class MapIterator
 {
 public:
-    MapIterator () {}
+    MapIterator() = default;
     MapIterator (MapEntry entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth), m_error(false) {}
     MapIterator (ValueObjectSP entry, size_t depth = 0) : m_entry(entry), m_max_depth(depth), m_error(false) {}
     MapIterator (const MapIterator& rhs) : m_entry(rhs.m_entry),m_max_depth(rhs.m_max_depth), m_error(false) {}
@@ -176,6 +180,7 @@ public:
         }
         return m_entry.GetEntry();
     }
+
 protected:
     void
     next ()
@@ -439,9 +444,6 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetIndexOfChildWithName
 {
     return ExtractIndexFromString(name.GetCString());
 }
-
-lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::~LibcxxStdMapSyntheticFrontEnd ()
-{}
 
 SyntheticChildrenFrontEnd*
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)

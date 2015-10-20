@@ -1,4 +1,4 @@
-//===-- LibCxxUnorderedMap.cpp -----------------------------------*- C++ -*-===//
+//===-- LibCxxUnorderedMap.cpp ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "LibCxx.h"
 
 #include "lldb/Core/DataBufferHeap.h"
@@ -29,34 +33,33 @@ namespace lldb_private {
         {
         public:
             LibcxxStdUnorderedMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~LibcxxStdUnorderedMapSyntheticFrontEnd() override = default;
+
+            size_t
+            CalculateNumChildren() override;
             
-            virtual size_t
-            CalculateNumChildren ();
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            bool
+            Update() override;
             
-            virtual bool
-            Update();
+            bool
+            MightHaveChildren() override;
             
-            virtual bool
-            MightHaveChildren ();
-            
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~LibcxxStdUnorderedMapSyntheticFrontEnd ();
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
+
         private:
-            
             ValueObject* m_tree;
             size_t m_num_elements;
             ValueObject* m_next_element;
             std::map<size_t,lldb::ValueObjectSP> m_children;
             std::vector<std::pair<ValueObject*, uint64_t> > m_elements_cache;
         };
-    }
-}
+    } // namespace formatters
+} // namespace lldb_private
 
 lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEnd::LibcxxStdUnorderedMapSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
@@ -159,9 +162,6 @@ lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEnd::GetIndexOfChil
 {
     return ExtractIndexFromString(name.GetCString());
 }
-
-lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEnd::~LibcxxStdUnorderedMapSyntheticFrontEnd ()
-{}
 
 SyntheticChildrenFrontEnd*
 lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)

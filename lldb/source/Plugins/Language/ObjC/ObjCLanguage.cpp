@@ -1,4 +1,4 @@
-//===-- ObjCLanguage.cpp --------------------------------------*- C++ -*-===//
+//===-- ObjCLanguage.cpp ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ObjCLanguage.h"
-
+// C Includes
+// C++ Includes
 #include <mutex>
+
+// Other libraries and framework includes
+// Project includes
+#include "ObjCLanguage.h"
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginManager.h"
@@ -51,7 +55,6 @@ ObjCLanguage::GetPluginNameStatic()
     static ConstString g_name("objc");
     return g_name;
 }
-
 
 //------------------------------------------------------------------
 // PluginInterface protocol
@@ -441,7 +444,6 @@ LoadObjCFormatters(TypeCategoryImplSP objc_category_sp)
     
     appkit_flags.SetDontShowChildren(false);
     
-    
 #ifndef LLDB_DISABLE_PYTHON
     AddCXXSummary(objc_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("NSArray"), appkit_flags);
     AddCXXSummary(objc_category_sp, lldb_private::formatters::NSArraySummaryProvider, "NSArray summary provider", ConstString("NSMutableArray"), appkit_flags);
@@ -610,7 +612,6 @@ LoadCoreMediaFormatters(TypeCategoryImplSP objc_category_sp)
 #endif // LLDB_DISABLE_PYTHON
 }
 
-
 lldb::TypeCategoryImplSP
 ObjCLanguage::GetFormatters ()
 {
@@ -696,7 +697,8 @@ ObjCLanguage::GetTypeScavenger ()
                 return false;
             }
 
-            virtual ~ObjCScavengerResult() = default;
+            ~ObjCScavengerResult() override = default;
+
         private:
             CompilerType m_compiler_type;
         };
@@ -704,7 +706,7 @@ ObjCLanguage::GetTypeScavenger ()
     protected:
         ObjCTypeScavenger() = default;
         
-        virtual ~ObjCTypeScavenger() = default;
+        ~ObjCTypeScavenger() override = default;
         
         bool
         Find_Impl (ExecutionContextScope *exe_scope,

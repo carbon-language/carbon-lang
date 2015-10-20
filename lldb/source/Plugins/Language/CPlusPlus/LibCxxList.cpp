@@ -1,4 +1,4 @@
-//===-- LibCxxList.cpp -------------------------------------------*- C++ -*-===//
+//===-- LibCxxList.cpp ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "LibCxx.h"
 
 #include "lldb/Core/DataBufferHeap.h"
@@ -29,24 +33,24 @@ namespace lldb_private {
         {
         public:
             LibcxxStdListSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
+
+            ~LibcxxStdListSyntheticFrontEnd() override = default;
+
+            size_t
+            CalculateNumChildren() override;
             
-            virtual size_t
-            CalculateNumChildren ();
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            bool
+            Update() override;
             
-            virtual bool
-            Update();
+            bool
+            MightHaveChildren() override;
             
-            virtual bool
-            MightHaveChildren ();
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
-            
-            virtual
-            ~LibcxxStdListSyntheticFrontEnd ();
         private:
             bool
             HasLoop(size_t);
@@ -61,13 +65,13 @@ namespace lldb_private {
             size_t m_count;
             std::map<size_t,lldb::ValueObjectSP> m_children;
         };
-    }
-}
+    } // namespace formatters
+} // namespace lldb_private
 
 class ListEntry
 {
 public:
-    ListEntry () {}
+    ListEntry() = default;
     ListEntry (ValueObjectSP entry_sp) : m_entry_sp(entry_sp) {}
     ListEntry (const ListEntry& rhs) : m_entry_sp(rhs.m_entry_sp) {}
     ListEntry (ValueObject* entry) : m_entry_sp(entry ? entry->GetSP() : ValueObjectSP()) {}
@@ -132,7 +136,7 @@ private:
 class ListIterator
 {
 public:
-    ListIterator () {}
+    ListIterator() = default;
     ListIterator (ListEntry entry) : m_entry(entry) {}
     ListIterator (ValueObjectSP entry) : m_entry(entry) {}
     ListIterator (const ListIterator& rhs) : m_entry(rhs.m_entry) {}
@@ -182,6 +186,7 @@ protected:
     {
         m_entry = m_entry.prev();
     }
+
 private:
     ListEntry m_entry;
 };
@@ -357,9 +362,6 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::GetIndexOfChildWithNam
     return ExtractIndexFromString(name.GetCString());
 }
 
-lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::~LibcxxStdListSyntheticFrontEnd ()
-{}
-
 SyntheticChildrenFrontEnd*
 lldb_private::formatters::LibcxxStdListSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
 {
@@ -367,4 +369,3 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEndCreator (CXXSyntheticChi
         return NULL;
     return (new LibcxxStdListSyntheticFrontEnd(valobj_sp));
 }
-
