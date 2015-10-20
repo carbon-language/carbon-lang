@@ -163,8 +163,6 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       Config->ZNodelete = true;
     else if (Arg->getValue() == StringRef("now"))
       Config->ZNow = true;
-    else
-      error(Twine(Arg->getValue()) + ": unknown -z option");
   }
 
   for (auto *Arg : Args) {
