@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -disable-hsdr -hexagon-expand-condsets=0 < %s | FileCheck %s
+; RUN: llc -march=hexagon -disable-hsdr -hexagon-expand-condsets=0 -hexagon-bit=0 < %s | FileCheck %s
 
 ; CHECK: r{{[0-9]+:[0-9]+}} = #1
 ; CHECK: r{{[0-9]+:[0-9]+}} = #0
