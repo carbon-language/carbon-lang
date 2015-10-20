@@ -41,10 +41,6 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   reserveRegisterTuples(Reserved, AMDGPU::EXEC);
   reserveRegisterTuples(Reserved, AMDGPU::FLAT_SCR);
 
-  // Reserve some VGPRs to use as temp registers in case we have to spill VGPRs
-  reserveRegisterTuples(Reserved, AMDGPU::VGPR254);
-  reserveRegisterTuples(Reserved, AMDGPU::VGPR255);
-
   // Tonga and Iceland can only allocate a fixed number of SGPRs due
   // to a hw bug.
   if (MF.getSubtarget<AMDGPUSubtarget>().hasSGPRInitBug()) {
