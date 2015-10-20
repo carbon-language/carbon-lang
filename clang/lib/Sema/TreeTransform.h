@@ -9128,18 +9128,8 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
 
   // If we have neither explicit template arguments, nor the template keyword,
   // it's a normal declaration name.
-  if (!Old->hasExplicitTemplateArgs() && !TemplateKWLoc.isValid()) {
-    // If an UnresolvedLookupExpr resolved to an instance member, that's an
-    // error.
-    NamedDecl *D = R.getAsSingle<NamedDecl>();
-    if (D && D->isCXXInstanceMember()) {
-      SemaRef.DiagnoseInstanceReference(SS, D, Old->getNameInfo());
-      R.clear();
-      return ExprError();
-    }
-
+  if (!Old->hasExplicitTemplateArgs() && !TemplateKWLoc.isValid())
     return getDerived().RebuildDeclarationNameExpr(SS, R, Old->requiresADL());
-  }
 
   // If we have template arguments, rebuild them, then rebuild the
   // templateid expression.

@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
-// RUN: %clang_cc1 -DCXX11 -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 extern "C" { void f(bool); }
 
@@ -326,53 +326,4 @@ namespace PR24033 {
     using PR24033::ft; // expected-error {{target of using declaration conflicts with declaration already in scope}}
     using PR24033::st; // expected-error {{target of using declaration conflicts with declaration already in scope}}
   }
-}
-
-namespace pr21923 {
-template <typename> struct Base {
-  int field;
-  void method();
-};
-template <typename Scalar> struct Derived : Base<Scalar> {
-  using Base<Scalar>::field;
-  using Base<Scalar>::method;
-  static void m_fn1() {
-    // expected-error@+1 {{invalid use of member 'field' in static member function}}
-    (void)field;
-    // expected-error@+1 {{invalid use of member 'field' in static member function}}
-    (void)&field;
-    // expected-error@+1 {{call to non-static member function without an object argument}}
-    (void)method;
-    // expected-error@+1 {{call to non-static member function without an object argument}}
-    (void)&method;
-    // expected-error@+1 {{call to non-static member function without an object argument}}
-    method();
-    (void)&Base<Scalar>::field;
-    (void)&Base<Scalar>::method;
-  }
-};
-// expected-note@+1 {{in instantiation of member function 'pr21923::Derived<int>::m_fn1' requested here}}
-template class Derived<int>;
-
-#ifdef CXX11
-// This is interesting because we form an UnresolvedLookupExpr in the static
-// function template and an UnresolvedMemberExpr in the instance function
-// template. As a result, we get slightly different behavior.
-struct UnresolvedTemplateNames {
-  template <typename> void maybe_static();
-  template <typename T, typename T::type = 0> static void maybe_static();
-
-  template <typename T>
-  void instance_method() { (void)maybe_static<T>(); }
-  template <typename T>
-  static void static_method() {
-    // expected-error@+1 {{call to non-static member function without an object argument}}
-    (void)maybe_static<T>();
-  }
-};
-void force_instantiation(UnresolvedTemplateNames x) {
-  x.instance_method<int>();
-  UnresolvedTemplateNames::static_method<int>(); // expected-note {{requested here}}
-}
-#endif // CXX11
 }

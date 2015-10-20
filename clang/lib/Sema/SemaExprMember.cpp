@@ -192,8 +192,10 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
 }
 
 /// Diagnose a reference to a field with no object available.
-void Sema::DiagnoseInstanceReference(const CXXScopeSpec &SS, NamedDecl *Rep,
-                                     const DeclarationNameInfo &nameInfo) {
+static void diagnoseInstanceReference(Sema &SemaRef,
+                                      const CXXScopeSpec &SS,
+                                      NamedDecl *Rep,
+                                      const DeclarationNameInfo &nameInfo) {
   SourceLocation Loc = nameInfo.getLoc();
   SourceRange Range(Loc);
   if (SS.isSet()) Range.setBegin(SS.getRange().getBegin());
@@ -201,7 +203,7 @@ void Sema::DiagnoseInstanceReference(const CXXScopeSpec &SS, NamedDecl *Rep,
   // Look through using shadow decls and aliases.
   Rep = Rep->getUnderlyingDecl();
 
-  DeclContext *FunctionLevelDC = getFunctionLevelDeclContext();
+  DeclContext *FunctionLevelDC = SemaRef.getFunctionLevelDeclContext();
   CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FunctionLevelDC);
   CXXRecordDecl *ContextClass = Method ? Method->getParent() : nullptr;
   CXXRecordDecl *RepClass = dyn_cast<CXXRecordDecl>(Rep->getDeclContext());
@@ -211,19 +213,20 @@ void Sema::DiagnoseInstanceReference(const CXXScopeSpec &SS, NamedDecl *Rep,
 
   if (IsField && InStaticMethod)
     // "invalid use of member 'x' in static member function"
-    Diag(Loc, diag::err_invalid_member_use_in_static_method)
+    SemaRef.Diag(Loc, diag::err_invalid_member_use_in_static_method)
         << Range << nameInfo.getName();
   else if (ContextClass && RepClass && SS.isEmpty() && !InStaticMethod &&
            !RepClass->Equals(ContextClass) && RepClass->Encloses(ContextClass))
     // Unqualified lookup in a non-static member function found a member of an
     // enclosing class.
-    Diag(Loc, diag::err_nested_non_static_member_use)
-        << IsField << RepClass << nameInfo.getName() << ContextClass << Range;
+    SemaRef.Diag(Loc, diag::err_nested_non_static_member_use)
+      << IsField << RepClass << nameInfo.getName() << ContextClass << Range;
   else if (IsField)
-    Diag(Loc, diag::err_invalid_non_static_member_use) << nameInfo.getName()
-                                                       << Range;
+    SemaRef.Diag(Loc, diag::err_invalid_non_static_member_use)
+      << nameInfo.getName() << Range;
   else
-    Diag(Loc, diag::err_member_call_without_object) << Range;
+    SemaRef.Diag(Loc, diag::err_member_call_without_object)
+      << Range;
 }
 
 /// Builds an expression which might be an implicit member expression.
@@ -257,7 +260,7 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
 
   case IMA_Error_StaticContext:
   case IMA_Error_Unrelated:
-    DiagnoseInstanceReference(SS, R.getRepresentativeDecl(),
+    diagnoseInstanceReference(*this, SS, R.getRepresentativeDecl(),
                               R.getLookupNameInfo());
     return ExprError();
   }
@@ -471,7 +474,7 @@ static void DiagnoseQualifiedMemberReference(Sema &SemaRef,
   // If this is an implicit member access, use a different set of
   // diagnostics.
   if (!BaseExpr)
-    return SemaRef.DiagnoseInstanceReference(SS, rep, nameInfo);
+    return diagnoseInstanceReference(SemaRef, SS, rep, nameInfo);
 
   SemaRef.Diag(nameInfo.getLoc(), diag::err_qualified_member_of_unrelated)
     << SS.getRange() << rep << BaseType;
