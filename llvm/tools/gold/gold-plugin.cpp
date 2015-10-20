@@ -544,7 +544,7 @@ static const char *getResolutionName(ld_plugin_symbol_resolution R) {
 }
 
 namespace {
-class LocalValueMaterializer : public ValueMaterializer {
+class LocalValueMaterializer final : public ValueMaterializer {
   DenseSet<GlobalValue *> &Dropped;
   DenseMap<GlobalObject *, GlobalObject *> LocalVersions;
 
