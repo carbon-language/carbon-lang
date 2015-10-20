@@ -48,6 +48,21 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   return &(*--I);
 }
 
+unsigned BinaryFunction::eraseDeadBBs(
+    std::map<BinaryBasicBlock *, bool> &ToPreserve) {
+  BasicBlockOrderType NewLayout;
+  unsigned Count = 0;
+  for (auto I = BasicBlocksLayout.begin(), E = BasicBlocksLayout.end(); I != E;
+       ++I) {
+    if (ToPreserve[*I])
+      NewLayout.push_back(*I);
+    else
+      ++Count;
+  }
+  BasicBlocksLayout = std::move(NewLayout);
+  return Count;
+}
+
 void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
   StringRef SectionName;
   Section.getName(SectionName);
@@ -537,12 +552,13 @@ void BinaryFunction::inferFallThroughCounts() {
 
 void BinaryFunction::optimizeLayout(bool DumpLayout) {
   // Bail if no profiling information or if empty
-  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE || empty()) {
+  if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE ||
+      BasicBlocksLayout.empty()) {
     return;
   }
 
   // Work on optimal solution if problem is small enough
-  if (BasicBlocks.size() <= FUNC_SIZE_THRESHOLD)
+  if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD)
     return solveOptimalLayout(DumpLayout);
 
   if (DumpLayout) {
@@ -567,19 +583,19 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
   BBToClusterMapTy BBToClusterMap;
 
   // Populating priority queue with all edges
-  for (auto &BB : BasicBlocks) {
-    BBToClusterMap[&BB] = -1; // Mark as unmapped
-    auto BI = BB.BranchInfo.begin();
-    for (auto &I : BB.successors()) {
+  for (auto BB : BasicBlocksLayout) {
+    BBToClusterMap[BB] = -1; // Mark as unmapped
+    auto BI = BB->BranchInfo.begin();
+    for (auto &I : BB->successors()) {
       if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
-        Weight[std::make_pair(&BB, I)] = BI->Count;
-      Queue.push(std::make_pair(&BB, I));
+        Weight[std::make_pair(BB, I)] = BI->Count;
+      Queue.push(std::make_pair(BB, I));
       ++BI;
     }
   }
 
   // Start a cluster with the entry point
-  BinaryBasicBlock *Entry = &*BasicBlocks.begin();
+  BinaryBasicBlock *Entry = *BasicBlocksLayout.begin();
   Clusters.emplace_back();
   auto &EntryCluster = Clusters.back();
   EntryCluster.push_back(Entry);
@@ -661,6 +677,14 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
     BBToClusterMap[BBDst] = I;
   }
 
+  // Create an extra cluster for unvisited basic blocks
+  std::vector<BinaryBasicBlock *> Unvisited;
+  for (auto BB : BasicBlocksLayout) {
+    if (BBToClusterMap[BB] == -1) {
+      Unvisited.push_back(BB);
+    }
+  }
+
   // Define final function layout based on clusters
   BasicBlocksLayout.clear();
   for (auto &Cluster : Clusters) {
@@ -670,11 +694,8 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
 
   // Finalize layout with BBs that weren't assigned to any cluster, preserving
   // their relative order
-  for (auto &BB : BasicBlocks) {
-    if (BBToClusterMap[&BB] == -1) {
-      BasicBlocksLayout.push_back(&BB);
-    }
-  }
+  BasicBlocksLayout.insert(BasicBlocksLayout.end(), Unvisited.begin(),
+                           Unvisited.end());
 
   fixBranches();
 
@@ -705,19 +726,19 @@ void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
     dbgs() << "finding optimal block layout for " << getName() << "\n";
   }
 
-  unsigned N = BasicBlocks.size();
+  unsigned N = BasicBlocksLayout.size();
   // Populating weight map and index map
-  for (auto &BB : BasicBlocks) {
-    BBToIndex[&BB] = IndexToBB.size();
-    IndexToBB.push_back(&BB);
+  for (auto BB : BasicBlocksLayout) {
+    BBToIndex[BB] = IndexToBB.size();
+    IndexToBB.push_back(BB);
   }
   Weight.resize(N);
-  for (auto &BB : BasicBlocks) {
-    auto BI = BB.BranchInfo.begin();
-    Weight[BBToIndex[&BB]].resize(N);
-    for (auto &I : BB.successors()) {
+  for (auto BB : BasicBlocksLayout) {
+    auto BI = BB->BranchInfo.begin();
+    Weight[BBToIndex[BB]].resize(N);
+    for (auto I : BB->successors()) {
       if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
-        Weight[BBToIndex[&BB]][BBToIndex[I]] = BI->Count;
+        Weight[BBToIndex[BB]][BBToIndex[I]] = BI->Count;
       ++BI;
     }
   }
@@ -765,6 +786,8 @@ void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
     }
   }
 
+  std::vector<BinaryBasicBlock *> PastLayout = BasicBlocksLayout;
+
   // Define final function layout based on layout that maximizes weight
   BasicBlocksLayout.clear();
   unsigned Last = BestLast;
@@ -791,9 +814,9 @@ void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
   std::reverse(BasicBlocksLayout.begin(), BasicBlocksLayout.end());
 
   // Finalize layout with BBs that weren't assigned to the layout
-  for (auto &BB : BasicBlocks) {
-    if (Visited[BBToIndex[&BB]] == false)
-      BasicBlocksLayout.push_back(&BB);
+  for (auto BB : PastLayout) {
+    if (Visited[BBToIndex[BB]] == false)
+      BasicBlocksLayout.push_back(BB);
   }
 
   fixBranches();

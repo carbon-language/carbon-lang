@@ -51,6 +51,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 #include <map>
+#include <stack>
 #include <system_error>
 
 #undef  DEBUG_TYPE
@@ -465,6 +466,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   // Run optimization passes.
   //
   // FIXME: use real optimization passes.
+  bool NagUser = true;
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
     // Detect and eliminate unreachable basic blocks. We could have those
@@ -473,19 +475,41 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     // FIXME: this wouldn't work with C++ exceptions until we implement
     //        support for those as there will be "invisible" edges
     //        in the graph.
-    if (opts::EliminateUnreachable) {
-      bool IsFirst = true;
-      for (auto &BB : Function) {
-        if (!IsFirst && BB.pred_empty()) {
-          outs() << "FLO: basic block " << BB.getName() << " in function "
-                 << Function.getName() << " is dead\n";
-          // TODO: currently lacking interface to eliminate basic block.
-        }
-        IsFirst = false;
+    if (opts::EliminateUnreachable && Function.layout_size() > 0) {
+      if (NagUser) {
+        outs()
+            << "FLO-WARNING: Using -eliminate-unreachable is experimental and "
+               "unsafe for exceptions\n";
+        NagUser = false;
       }
+
+      std::stack<BinaryBasicBlock*> Stack;
+      std::map<BinaryBasicBlock *, bool> Reachable;
+      BinaryBasicBlock *Entry = *Function.layout_begin();
+      Stack.push(Entry);
+      Reachable[Entry] = true;
+      // Determine reachable BBs from the entry point
+      while (!Stack.empty()) {
+        auto BB = Stack.top();
+        Stack.pop();
+        for (auto Succ : BB->successors()) {
+          if (Reachable[Succ])
+            continue;
+          Reachable[Succ] = true;
+          Stack.push(Succ);
+        }
+      }
+
+      if (unsigned Count = Function.eraseDeadBBs(Reachable)) {
+        outs() << "FLO: Removed " << Count
+               << " dead basic block(s) in function " << Function.getName()
+               << "\n";
+      }
+
       DEBUG(dbgs() << "*** After unreachable block elimination ***\n");
       DEBUG(Function.print(dbgs(), /* PrintInstructions = */ true));
     }
+
     if (opts::ReorderBlocks) {
       BFI.second.optimizeLayout(opts::DumpLayout);
     }

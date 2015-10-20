@@ -32,6 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
+#include <map>
 
 using namespace llvm::object;
 
@@ -161,6 +162,7 @@ public:
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
   typedef BasicBlockOrderType::iterator order_iterator;
+  typedef BasicBlockOrderType::const_iterator const_order_iterator;
 
   // CFG iterators.
   iterator                 begin()       { return BasicBlocks.begin(); }
@@ -179,6 +181,14 @@ public:
         BinaryBasicBlock &front()        { return BasicBlocks.front(); }
   const BinaryBasicBlock & back() const  { return BasicBlocks.back(); }
         BinaryBasicBlock & back()        { return BasicBlocks.back(); }
+
+  unsigned layout_size() const {
+    return (unsigned)BasicBlocksLayout.size();
+  }
+  const_order_iterator layout_begin() const {
+    return BasicBlocksLayout.begin();
+  }
+  order_iterator layout_begin() { return BasicBlocksLayout.begin(); }
 
   inline iterator_range<order_iterator> layout() {
     return iterator_range<order_iterator>(BasicBlocksLayout.begin(),
@@ -280,6 +290,10 @@ public:
 
     return BB;
   }
+
+  /// Rebuilds BBs layout, ignoring dead BBs. Returns the number of removed
+  /// BBs.
+  unsigned eraseDeadBBs(std::map<BinaryBasicBlock *, bool> &ToPreserve);
 
   /// Return basic block that started at offset \p Offset.
   BinaryBasicBlock *getBasicBlockAtOffset(uint64_t Offset) {
