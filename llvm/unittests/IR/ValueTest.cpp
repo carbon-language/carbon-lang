@@ -39,9 +39,9 @@ TEST(ValueTest, UsedInBasicBlock) {
 
   Function *F = M->getFunction("f");
 
-  EXPECT_FALSE(F->isUsedInBasicBlock(F->begin()));
-  EXPECT_TRUE((++F->arg_begin())->isUsedInBasicBlock(F->begin()));
-  EXPECT_TRUE(F->arg_begin()->isUsedInBasicBlock(F->begin()));
+  EXPECT_FALSE(F->isUsedInBasicBlock(&F->front()));
+  EXPECT_TRUE((++F->arg_begin())->isUsedInBasicBlock(&F->front()));
+  EXPECT_TRUE(F->arg_begin()->isUsedInBasicBlock(&F->front()));
 }
 
 TEST(GlobalTest, CreateAddressSpace) {
@@ -127,9 +127,9 @@ TEST(ValueTest, printSlots) {
   BasicBlock &BB = F->getEntryBlock();
   ASSERT_EQ(3u, BB.size());
 
-  Instruction *I0 = BB.begin();
+  Instruction *I0 = &*BB.begin();
   ASSERT_TRUE(I0);
-  Instruction *I1 = ++BB.begin();
+  Instruction *I1 = &*++BB.begin();
   ASSERT_TRUE(I1);
 
   ModuleSlotTracker MST(M.get());
@@ -194,12 +194,12 @@ TEST(ValueTest, getLocalSlots) {
   ASSERT_FALSE(F->empty());
   BasicBlock &EntryBB = F->getEntryBlock();
   ASSERT_EQ(3u, EntryBB.size());
-  BasicBlock *BB2 = ++F->begin();
+  BasicBlock *BB2 = &*++F->begin();
   ASSERT_TRUE(BB2);
 
-  Instruction *I0 = EntryBB.begin();
+  Instruction *I0 = &*EntryBB.begin();
   ASSERT_TRUE(I0);
-  Instruction *I1 = ++EntryBB.begin();
+  Instruction *I1 = &*++EntryBB.begin();
   ASSERT_TRUE(I1);
 
   ModuleSlotTracker MST(M.get());
@@ -227,7 +227,7 @@ TEST(ValueTest, getLocalSlotDeath) {
   Function *F = M->getFunction("f");
   ASSERT_TRUE(F);
   ASSERT_FALSE(F->empty());
-  BasicBlock *BB2 = ++F->begin();
+  BasicBlock *BB2 = &*++F->begin();
   ASSERT_TRUE(BB2);
 
   ModuleSlotTracker MST(M.get());

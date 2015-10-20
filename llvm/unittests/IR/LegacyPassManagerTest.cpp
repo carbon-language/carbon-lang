@@ -510,7 +510,7 @@ namespace llvm {
       // Function: test4 (func_test4)
       {
         Function::arg_iterator args = func_test4->arg_begin();
-        Value* int1_f = args++;
+        Value *int1_f = &*args++;
         int1_f->setName("f");
 
         BasicBlock* label_entry_11 = BasicBlock::Create(getGlobalContext(), "entry",func_test4,nullptr);

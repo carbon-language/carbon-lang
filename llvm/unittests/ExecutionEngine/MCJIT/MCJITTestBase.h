@@ -69,9 +69,8 @@ protected:
 
     SmallVector<Value*, 1> CallArgs;
 
-    Function::arg_iterator arg_iter = Result->arg_begin();
-    for(;arg_iter != Result->arg_end(); ++arg_iter)
-      CallArgs.push_back(arg_iter);
+    for (Argument &A : Result->args())
+      CallArgs.push_back(&A);
 
     Value *ReturnCode = Builder.CreateCall(Callee, CallArgs);
     Builder.CreateRet(ReturnCode);
@@ -97,8 +96,8 @@ protected:
     Function *Result = startFunction<int32_t(int32_t, int32_t)>(M, Name);
 
     Function::arg_iterator args = Result->arg_begin();
-    Value *Arg1 = args;
-    Value *Arg2 = ++args;
+    Value *Arg1 = &*args;
+    Value *Arg2 = &*++args;
     Value *AddResult = Builder.CreateAdd(Arg1, Arg2);
 
     endFunctionWithRet(Result, AddResult);
@@ -169,7 +168,7 @@ protected:
     BasicBlock *RecursiveCase = BasicBlock::Create(Context, "", Result);
 
     // if (num == 0)
-    Value *Param = Result->arg_begin();
+    Value *Param = &*Result->arg_begin();
     Value *Zero = ConstantInt::get(Context, APInt(32, 0));
     Builder.CreateCondBr(Builder.CreateICmpEQ(Param, Zero),
                          BaseCase, RecursiveCase);

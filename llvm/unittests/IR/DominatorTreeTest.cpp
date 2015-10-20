@@ -32,29 +32,29 @@ namespace llvm {
         PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
         Function::iterator FI = F.begin();
 
-        BasicBlock *BB0 = FI++;
+        BasicBlock *BB0 = &*FI++;
         BasicBlock::iterator BBI = BB0->begin();
-        Instruction *Y1 = BBI++;
-        Instruction *Y2 = BBI++;
-        Instruction *Y3 = BBI++;
+        Instruction *Y1 = &*BBI++;
+        Instruction *Y2 = &*BBI++;
+        Instruction *Y3 = &*BBI++;
 
-        BasicBlock *BB1 = FI++;
+        BasicBlock *BB1 = &*FI++;
         BBI = BB1->begin();
-        Instruction *Y4 = BBI++;
+        Instruction *Y4 = &*BBI++;
 
-        BasicBlock *BB2 = FI++;
+        BasicBlock *BB2 = &*FI++;
         BBI = BB2->begin();
-        Instruction *Y5 = BBI++;
+        Instruction *Y5 = &*BBI++;
 
-        BasicBlock *BB3 = FI++;
+        BasicBlock *BB3 = &*FI++;
         BBI = BB3->begin();
-        Instruction *Y6 = BBI++;
-        Instruction *Y7 = BBI++;
+        Instruction *Y6 = &*BBI++;
+        Instruction *Y7 = &*BBI++;
 
-        BasicBlock *BB4 = FI++;
+        BasicBlock *BB4 = &*FI++;
         BBI = BB4->begin();
-        Instruction *Y8 = BBI++;
-        Instruction *Y9 = BBI++;
+        Instruction *Y8 = &*BBI++;
+        Instruction *Y9 = &*BBI++;
 
         // Reachability
         EXPECT_TRUE(DT->isReachableFromEntry(BB0));

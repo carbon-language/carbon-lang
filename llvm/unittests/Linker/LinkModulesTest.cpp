@@ -76,7 +76,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
 
   std::vector<Value *> GEPIndices;
   GEPIndices.push_back(ConstantInt::get(Type::getInt32Ty(Ctx), 0));
-  GEPIndices.push_back(F->arg_begin());
+  GEPIndices.push_back(&*F->arg_begin());
 
   Value *GEP = Builder.CreateGEP(AT, GV, GEPIndices, "switch.gep");
   Value *Load = Builder.CreateLoad(GEP, "switch.load");

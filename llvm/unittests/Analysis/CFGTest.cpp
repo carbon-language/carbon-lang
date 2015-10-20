@@ -378,7 +378,7 @@ TEST_F(IsPotentiallyReachableTest, BranchInsideLoop) {
 TEST_F(IsPotentiallyReachableTest, ModifyTest) {
   ParseAssembly(BranchInsideLoopIR);
 
-  succ_iterator S = succ_begin(++M->getFunction("test")->begin());
+  succ_iterator S = succ_begin(&*++M->getFunction("test")->begin());
   BasicBlock *OldBB = S[0];
   S[0] = S[1];
   ExpectPath(false);

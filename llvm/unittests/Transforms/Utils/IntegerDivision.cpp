@@ -35,8 +35,8 @@ TEST(IntegerDivision, SDiv) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Div = Builder.CreateSDiv(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::SDiv);
@@ -65,8 +65,8 @@ TEST(IntegerDivision, UDiv) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Div = Builder.CreateUDiv(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::UDiv);
@@ -95,8 +95,8 @@ TEST(IntegerDivision, SRem) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Rem = Builder.CreateSRem(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::SRem);
@@ -125,8 +125,8 @@ TEST(IntegerDivision, URem) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Rem = Builder.CreateURem(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::URem);
@@ -156,8 +156,8 @@ TEST(IntegerDivision, SDiv64) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Div = Builder.CreateSDiv(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::SDiv);
@@ -186,8 +186,8 @@ TEST(IntegerDivision, UDiv64) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Div = Builder.CreateUDiv(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::UDiv);
@@ -216,8 +216,8 @@ TEST(IntegerDivision, SRem64) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Rem = Builder.CreateSRem(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::SRem);
@@ -246,8 +246,8 @@ TEST(IntegerDivision, URem64) {
   Builder.SetInsertPoint(BB);
 
   Function::arg_iterator AI = F->arg_begin();
-  Value *A = AI++;
-  Value *B = AI++;
+  Value *A = &*AI++;
+  Value *B = &*AI++;
 
   Value *Rem = Builder.CreateURem(A, B);
   EXPECT_TRUE(BB->front().getOpcode() == Instruction::URem);

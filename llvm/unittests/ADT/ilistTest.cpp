@@ -81,7 +81,7 @@ TEST(ilistTest, UnsafeClear) {
   // List with contents.
   List.push_back(1);
   ASSERT_EQ(1u, List.size());
-  Node *N = List.begin();
+  Node *N = &*List.begin();
   EXPECT_EQ(1, N->Value);
   List.clearAndLeakNodesUnsafely();
   EXPECT_EQ(0u, List.size());
