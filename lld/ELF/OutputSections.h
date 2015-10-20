@@ -172,9 +172,12 @@ public:
 
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
-  void addSymbol(StringRef Name, bool isLocal = false);
+  void addLocalSymbol(StringRef Name);
+  void addSymbol(SymbolBody *Body);
   StringTableSection<ELFT> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }
+
+  ArrayRef<SymbolBody *> getSymbols() const { return Symbols; }
 
 private:
   void writeLocalSymbols(uint8_t *&Buf);
@@ -184,6 +187,7 @@ private:
 
   SymbolTable<ELFT> &Table;
   StringTableSection<ELFT> &StrTabSec;
+  std::vector<SymbolBody *> Symbols;
   unsigned NumVisible = 0;
   unsigned NumLocals = 0;
 };
@@ -275,12 +279,8 @@ class HashTableSection final : public OutputSectionBase<ELFT> {
 
 public:
   HashTableSection();
-  void addSymbol(SymbolBody *S);
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
-
-private:
-  std::vector<uint32_t> Hashes;
 };
 
 template <class ELFT>

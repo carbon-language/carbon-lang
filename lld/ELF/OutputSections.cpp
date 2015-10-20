@@ -250,17 +250,9 @@ static uint32_t hash(StringRef Name) {
   return H;
 }
 
-template <class ELFT> void HashTableSection<ELFT>::addSymbol(SymbolBody *S) {
-  StringRef Name = S->getName();
-  Out<ELFT>::DynSymTab->addSymbol(Name);
-  Hashes.push_back(hash(Name));
-  S->setDynamicSymbolTableIndex(Hashes.size());
-}
-
 template <class ELFT> void HashTableSection<ELFT>::finalize() {
   this->Header.sh_link = Out<ELFT>::DynSymTab->SectionIndex;
 
-  assert(Out<ELFT>::DynSymTab->getNumSymbols() == Hashes.size() + 1);
   unsigned NumEntries = 2;                 // nbucket and nchain.
   NumEntries += Out<ELFT>::DynSymTab->getNumSymbols(); // The chain entries.
 
@@ -280,8 +272,10 @@ template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
   Elf_Word *Buckets = P;
   Elf_Word *Chains = P + NumSymbols;
 
-  for (unsigned I = 1; I < NumSymbols; ++I) {
-    uint32_t Hash = Hashes[I - 1] % NumSymbols;
+  for (SymbolBody *Body : Out<ELFT>::DynSymTab->getSymbols()) {
+    StringRef Name = Body->getName();
+    unsigned I = Body->getDynamicSymbolTableIndex();
+    uint32_t Hash = hash(Name) % NumSymbols;
     Chains[I] = Buckets[Hash];
     Buckets[Hash] = I;
   }
@@ -696,14 +690,32 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   this->Header.sh_size = getNumSymbols() * sizeof(Elf_Sym);
   this->Header.sh_link = StrTabSec.SectionIndex;
   this->Header.sh_info = NumLocals + 1;
+
+  if (!StrTabSec.isDynamic()) {
+    std::stable_sort(Symbols.begin(), Symbols.end(),
+                     [](SymbolBody *L, SymbolBody *R) {
+                       return getSymbolBinding(L) == STB_LOCAL &&
+                              getSymbolBinding(R) != STB_LOCAL;
+                     });
+    return;
+  }
+  size_t I = 0;
+  for (SymbolBody *Body : Symbols)
+    Body->setDynamicSymbolTableIndex(++I);
 }
 
 template <class ELFT>
-void SymbolTableSection<ELFT>::addSymbol(StringRef Name, bool isLocal) {
+void SymbolTableSection<ELFT>::addLocalSymbol(StringRef Name) {
   StrTabSec.add(Name);
   ++NumVisible;
-  if (isLocal)
-    ++NumLocals;
+  ++NumLocals;
+}
+
+template <class ELFT>
+void SymbolTableSection<ELFT>::addSymbol(SymbolBody *Body) {
+  StrTabSec.add(Body->getName());
+  Symbols.push_back(Body);
+  ++NumVisible;
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -754,18 +766,9 @@ template <class ELFT>
 void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
   // pointed by Buf.
-  uint8_t *Start = Buf;
-  for (const std::pair<StringRef, Symbol *> &P : Table.getSymbols()) {
-    StringRef Name = P.first;
-    Symbol *Sym = P.second;
-    SymbolBody *Body = Sym->Body;
-    if (!includeInSymtab<ELFT>(*Body))
-      continue;
-    if (StrTabSec.isDynamic() && !includeInDynamicSymtab(*Body))
-      continue;
-
-    auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-    Buf += sizeof(*ESym);
+  auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
+  for (SymbolBody *Body : Symbols) {
+    StringRef Name = Body->getName();
 
     ESym->st_name = StrTabSec.getFileOff(Name);
 
@@ -809,13 +812,9 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
       ESym->st_shndx = SHN_ABS;
     else if (OutSec)
       ESym->st_shndx = OutSec->SectionIndex;
+
+    ++ESym;
   }
-  if (!StrTabSec.isDynamic())
-    std::stable_sort(
-        reinterpret_cast<Elf_Sym *>(Start), reinterpret_cast<Elf_Sym *>(Buf),
-        [](const Elf_Sym &A, const Elf_Sym &B) -> bool {
-          return A.getBinding() == STB_LOCAL && B.getBinding() != STB_LOCAL;
-        });
 }
 
 template <class ELFT>

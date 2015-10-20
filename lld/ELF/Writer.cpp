@@ -282,7 +282,7 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       StringRef SymName = *SymNameOrErr;
       if (!shouldKeepInSymtab<ELFT>(*F, SymName, Sym))
         continue;
-      Out<ELFT>::SymTab->addSymbol(SymName, true);
+      Out<ELFT>::SymTab->addLocalSymbol(SymName);
     }
   }
 }
@@ -498,7 +498,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
-    StringRef Name = P.first;
     SymbolBody *Body = P.second->Body;
     if (auto *U = dyn_cast<Undefined<ELFT>>(Body))
       if (!U->isWeak() && !U->canKeepUndefined())
@@ -508,10 +507,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       CommonSymbols.push_back(C);
     if (!includeInSymtab<ELFT>(*Body))
       continue;
-    Out<ELFT>::SymTab->addSymbol(Name);
+    Out<ELFT>::SymTab->addSymbol(Body);
 
     if (isOutputDynamic() && includeInDynamicSymtab(*Body))
-      Out<ELFT>::HashTab->addSymbol(Body);
+      Out<ELFT>::DynSymTab->addSymbol(Body);
   }
   addCommonSymbols(CommonSymbols);
 
