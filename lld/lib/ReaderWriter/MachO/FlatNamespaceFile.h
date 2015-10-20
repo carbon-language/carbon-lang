@@ -22,8 +22,8 @@ namespace mach_o {
 //
 class FlatNamespaceFile : public SharedLibraryFile {
 public:
-    FlatNamespaceFile(const MachOLinkingContext &context)
-      : SharedLibraryFile("flat namespace") { }
+  FlatNamespaceFile(const MachOLinkingContext &context)
+    : SharedLibraryFile("flat namespace") { }
 
   const SharedLibraryAtom *exports(StringRef name,
                                    bool dataSymbolOnly) const override {
