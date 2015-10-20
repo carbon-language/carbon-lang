@@ -180,6 +180,8 @@ private:
   void writeLocalSymbols(uint8_t *&Buf);
   void writeGlobalSymbols(uint8_t *Buf);
 
+  static uint8_t getSymbolBinding(SymbolBody *Body);
+
   SymbolTable<ELFT> &Table;
   StringTableSection<ELFT> &StrTabSec;
   unsigned NumVisible = 0;

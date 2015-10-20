@@ -789,23 +789,17 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
       break;
     }
 
-    unsigned char Binding = Body->isWeak() ? STB_WEAK : STB_GLOBAL;
     unsigned char Type = STT_NOTYPE;
     uintX_t Size = 0;
     if (const auto *EBody = dyn_cast<ELFSymbolBody<ELFT>>(Body)) {
       const Elf_Sym &InputSym = EBody->Sym;
-      Binding = InputSym.getBinding();
       Type = InputSym.getType();
       Size = InputSym.st_size;
     }
 
-    unsigned char Visibility = Body->getMostConstrainingVisibility();
-    if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
-      Binding = STB_LOCAL;
-
-    ESym->setBindingAndType(Binding, Type);
+    ESym->setBindingAndType(getSymbolBinding(Body), Type);
     ESym->st_size = Size;
-    ESym->setVisibility(Visibility);
+    ESym->setVisibility(Body->getMostConstrainingVisibility());
     ESym->st_value = getSymVA<ELFT>(*Body);
 
     if (Section)
@@ -822,6 +816,16 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
         [](const Elf_Sym &A, const Elf_Sym &B) -> bool {
           return A.getBinding() == STB_LOCAL && B.getBinding() != STB_LOCAL;
         });
+}
+
+template <class ELFT>
+uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
+  uint8_t Visibility = Body->getMostConstrainingVisibility();
+  if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
+    return STB_LOCAL;
+  if (const auto *EBody = dyn_cast<ELFSymbolBody<ELFT>>(Body))
+    return EBody->Sym.getBinding();
+  return Body->isWeak() ? STB_WEAK : STB_GLOBAL;
 }
 
 namespace lld {
