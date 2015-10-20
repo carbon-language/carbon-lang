@@ -344,6 +344,7 @@ bool BinaryFunction::buildCFG() {
   BinaryBasicBlock *InsertBB{nullptr};
   BinaryBasicBlock *PrevBB{nullptr};
   bool IsLastInstrNop = false;
+  MCInst *PrevInstr{nullptr};
   for (auto &InstrInfo : Instructions) {
     auto LI = Labels.find(InstrInfo.first);
     if (LI != Labels.end()) {
@@ -353,10 +354,12 @@ bool BinaryFunction::buildCFG() {
                                /* DeriveAlignment = */ IsLastInstrNop);
     }
     if (!InsertBB) {
-      // It must be a fallthrough. Create a new block unless we see an
-      // unconditional branch.
+      // It must be a fallthrough or unreachable code. Create a new block unless
+      // we see an unconditional branch following a conditional one.
       assert(PrevBB && "no previous basic block for a fall through");
-      if (MIA->isUnconditionalBranch(InstrInfo.second)) {
+      assert(PrevInstr && "no previous instruction for a fall through");
+      if (MIA->isUnconditionalBranch(InstrInfo.second) &&
+          !MIA->isUnconditionalBranch(*PrevInstr)) {
         // Temporarily restore inserter basic block.
         InsertBB = PrevBB;
       } else {
@@ -376,6 +379,7 @@ bool BinaryFunction::buildCFG() {
 
     IsLastInstrNop = false;
     InsertBB->addInstruction(InstrInfo.second);
+    PrevInstr = &InstrInfo.second;
 
     // How well do we detect tail calls here?
     if (MIA->isTerminator(InstrInfo.second)) {
