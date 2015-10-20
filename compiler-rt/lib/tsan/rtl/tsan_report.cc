@@ -67,9 +67,8 @@ ReportMop::ReportMop()
     : mset(MBlockReportMutex) {
 }
 
-ReportDesc::~ReportDesc() {
-  // FIXME(dvyukov): it must be leaking a lot of memory.
-}
+// FIXME(dvyukov): it must be leaking a lot of memory.
+ReportDesc::~ReportDesc() = default;
 
 #ifndef SANITIZER_GO
 

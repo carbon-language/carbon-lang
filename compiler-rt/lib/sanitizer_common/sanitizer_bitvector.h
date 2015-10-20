@@ -87,7 +87,7 @@ class BasicBitVector {
   // }
   class Iterator {
    public:
-    Iterator() { }
+    Iterator() = default;
     explicit Iterator(const BasicBitVector &bv) : bv_(bv) {}
     bool hasNext() const { return !bv_.empty(); }
     uptr next() { return bv_.getAndClearFirstOne(); }
@@ -273,7 +273,7 @@ class TwoLevelBitVector {
   // }
   class Iterator {
    public:
-    Iterator() { }
+    Iterator() = default;
     explicit Iterator(const TwoLevelBitVector &bv) : bv_(bv), i0_(0), i1_(0) {
       it1_.clear();
       it2_.clear();

@@ -26,7 +26,7 @@ struct MsanThreadLocalMallocStorage {
 
  private:
   // These objects are allocated via mmap() and are zero-initialized.
-  MsanThreadLocalMallocStorage() {}
+  MsanThreadLocalMallocStorage() = default;
 };
 
 } // namespace __msan

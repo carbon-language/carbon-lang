@@ -155,7 +155,7 @@ class FakeStack {
   void ForEachFakeFrame(RangeIteratorCallback callback, void *arg);
 
  private:
-  FakeStack() { }
+  FakeStack() = default;
   static const uptr kFlagsOffset = 4096;  // This is were the flags begin.
   // Must match the number of uses of DEFINE_STACK_MALLOC_FREE_WITH_CLASS_ID
   COMPILER_CHECK(kNumberOfSizeClasses == 11);

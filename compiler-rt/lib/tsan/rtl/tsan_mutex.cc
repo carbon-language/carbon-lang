@@ -126,9 +126,8 @@ void InitializeMutex() {
 #endif
 }
 
-InternalDeadlockDetector::InternalDeadlockDetector() {
-  // Rely on zero initialization because some mutexes can be locked before ctor.
-}
+// Rely on zero initialization because some mutexes can be locked before ctor.
+InternalDeadlockDetector::InternalDeadlockDetector() = default;
 
 #if SANITIZER_DEBUG && !SANITIZER_GO
 void InternalDeadlockDetector::Lock(MutexType t) {

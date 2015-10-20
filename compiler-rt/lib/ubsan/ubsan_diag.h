@@ -150,7 +150,7 @@ public:
 
   /// An individual diagnostic message argument.
   struct Arg {
-    Arg() {}
+    Arg() = default;
     Arg(const char *String) : Kind(AK_String), String(String) {}
     Arg(TypeName TN) : Kind(AK_TypeName), String(TN.getName()) {}
     Arg(UIntMax UInt) : Kind(AK_UInt), UInt(UInt) {}
