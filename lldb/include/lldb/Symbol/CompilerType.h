@@ -462,6 +462,9 @@ public:
     LazyBool
     ShouldPrintAsOneLiner () const;
     
+    bool
+    IsMeaninglessWithoutDynamicResolution () const;
+    
     //------------------------------------------------------------------
     // Pointers & References
     //------------------------------------------------------------------

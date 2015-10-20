@@ -109,6 +109,12 @@ TypeSystem::ShouldPrintAsOneLiner (void* type)
     return eLazyBoolCalculate;
 }
 
+bool
+TypeSystem::IsMeaninglessWithoutDynamicResolution (void* type)
+{
+    return false;
+}
+
 #pragma mark TypeSystemMap
 
 TypeSystemMap::TypeSystemMap() :
