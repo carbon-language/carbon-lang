@@ -31,6 +31,7 @@
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/DataFormatters/TypeSummary.h"
+#include "lldb/Expression/REPL.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Terminal.h"
@@ -44,6 +45,7 @@
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/TargetList.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/SectionLoadList.h"
@@ -1796,5 +1798,37 @@ Debugger::GetSelectedOrDummyTarget(bool prefer_dummy)
     }
     
     return GetDummyTarget();
+}
+
+Error
+Debugger::RunREPL (LanguageType language, const char *repl_options)
+{
+    Error err;
+    FileSpec repl_executable;
+    if (language == eLanguageTypeUnknown)
+    {
+        err.SetErrorString ("must specify a language for a REPL"); // TODO make it possible to specify a default language
+        return err;
+    }
+    
+    Target *const target = nullptr; // passing in an empty target means the REPL must create one
+    
+    REPLSP repl_sp(REPL::Create(err, language, target, repl_options));
+
+    if (!err.Success())
+    {
+        return err;
+    }
+    
+    if (!repl_sp)
+    {
+        err.SetErrorStringWithFormat("couldn't find a REPL for %s", Language::GetNameForLanguageType(language));
+        return err;
+    }
+    
+    repl_sp->SetCompilerOptions(repl_options);
+    repl_sp->RunLoop();
+    
+    return err;
 }
 

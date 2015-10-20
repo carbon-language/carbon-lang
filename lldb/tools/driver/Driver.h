@@ -105,6 +105,9 @@ public:
         bool m_print_python_path;
         bool m_print_help;
         bool m_wait_for;
+        bool m_repl;
+        lldb::LanguageType m_repl_lang;
+        std::string m_repl_options;
         std::string m_process_name;
         lldb::pid_t m_process_pid;
         bool m_use_external_editor;  // FIXME: When we have set/show variables we can remove this from here.

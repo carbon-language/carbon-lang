@@ -35,6 +35,7 @@
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBHostOS.h"
+#include "lldb/API/SBLanguageRuntime.h"
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBTarget.h"
@@ -132,6 +133,10 @@ static OptionDefinition g_options[] =
         "extensions have been implemented." },
     { LLDB_3_TO_5,       false, "debug"          , 'd', no_argument      , 0,  eArgTypeNone,
         "Tells the debugger to print out extra information for debugging itself." },
+    { LLDB_OPT_SET_7,  true , "repl"               , 'r', optional_argument, 0,  eArgTypeNone,
+        "Runs lldb in REPL mode with a stub process." },
+    { LLDB_OPT_SET_7,  true , "repl-language"      , 'R', required_argument, 0,  eArgTypeNone,
+        "Chooses the language for the REPL." },
     { 0,                 false, NULL             , 0  , 0                , 0,  eArgTypeNone,         NULL }
 };
 
@@ -408,6 +413,9 @@ Driver::OptionData::OptionData () :
     m_print_python_path (false),
     m_print_help (false),
     m_wait_for(false),
+    m_repl (false),
+    m_repl_lang (eLanguageTypeUnknown),
+    m_repl_options (),
     m_process_name(),
     m_process_pid(LLDB_INVALID_PROCESS_ID),
     m_use_external_editor(false),
@@ -769,6 +777,23 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
                                                                 optarg);
                         }
                         break;
+                        
+                    case 'r':
+                        m_option_data.m_repl = true;
+                        if (optarg && optarg[0])
+                            m_option_data.m_repl_options = optarg;
+                        else
+                            m_option_data.m_repl_options.clear();
+                        break;
+                    
+                    case 'R':
+                        m_option_data.m_repl_lang = SBLanguageRuntime::GetLanguageTypeFromString (optarg);
+                        if (m_option_data.m_repl_lang == eLanguageTypeUnknown)
+                        {
+                            error.SetErrorStringWithFormat ("Unrecognized language name: \"%s\"", optarg);
+                        }
+                        break;
+
                     case 's':
                         m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, true, error);
                         break;
@@ -1056,96 +1081,114 @@ Driver::MainLoop ()
     bool handle_events = true;
     bool spawn_thread = false;
 
-    // Check if we have any data in the commands stream, and if so, save it to a temp file
-    // so we can then run the command interpreter using the file contents.
-    const char *commands_data = commands_stream.GetData();
-    const size_t commands_size = commands_stream.GetSize();
-
-    // The command file might have requested that we quit, this variable will track that.
-    bool quit_requested = false;
-    bool stopped_for_crash = false;
-    if (commands_data && commands_size)
+    if (m_option_data.m_repl)
     {
-        int initial_commands_fds[2];
-        bool success = true;
-        FILE *commands_file = PrepareCommandsForSourcing (commands_data, commands_size, initial_commands_fds);
-        if (commands_file)
+        const char *repl_options = NULL;
+        if (!m_option_data.m_repl_options.empty())
+            repl_options = m_option_data.m_repl_options.c_str();
+        SBError error (m_debugger.RunREPL(m_option_data.m_repl_lang, repl_options));
+        if (error.Fail())
         {
-            m_debugger.SetInputFileHandle (commands_file, true);
-
-            // Set the debugger into Sync mode when running the command file.  Otherwise command files
-            // that run the target won't run in a sensible way.
-            bool old_async = m_debugger.GetAsync();
-            m_debugger.SetAsync(false);
-            int num_errors;
-            
-            SBCommandInterpreterRunOptions options;
-            options.SetStopOnError (true);
-            if (m_option_data.m_batch)
-                options.SetStopOnCrash (true);
-
-            m_debugger.RunCommandInterpreter(handle_events,
-                                             spawn_thread,
-                                             options,
-                                             num_errors,
-                                             quit_requested,
-                                             stopped_for_crash);
-
-            if (m_option_data.m_batch && stopped_for_crash && !m_option_data.m_after_crash_commands.empty())
-            {
-                int crash_command_fds[2];
-                SBStream crash_commands_stream;
-                WriteCommandsForSourcing (eCommandPlacementAfterCrash, crash_commands_stream);
-                const char *crash_commands_data = crash_commands_stream.GetData();
-                const size_t crash_commands_size = crash_commands_stream.GetSize();
-                commands_file  = PrepareCommandsForSourcing (crash_commands_data, crash_commands_size, crash_command_fds);
-                if (commands_file)
-                {
-                    bool local_quit_requested;
-                    bool local_stopped_for_crash;
-                    m_debugger.SetInputFileHandle (commands_file, true);
-
-                    m_debugger.RunCommandInterpreter(handle_events,
-                                                     spawn_thread,
-                                                     options,
-                                                     num_errors,
-                                                     local_quit_requested,
-                                                     local_stopped_for_crash);
-                    if (local_quit_requested)
-                        quit_requested = true;
-
-                }
-            }
-            m_debugger.SetAsync(old_async);
+            const char *error_cstr = error.GetCString();
+            if (error_cstr && error_cstr[0])
+                fprintf (stderr, "error: %s\n", error_cstr);
+            else
+                fprintf (stderr, "error: %u\n", error.GetError());
         }
-        else
-            success = false;
-
-        // Close any pipes that we still have ownership of
-        CleanupAfterCommandSourcing(initial_commands_fds);
-
-        // Something went wrong with command pipe
-        if (!success)
-        {
-            exit(1);
-        }
-
     }
-
-    // Now set the input file handle to STDIN and run the command
-    // interpreter again in interactive mode and let the debugger
-    // take ownership of stdin
-
-    bool go_interactive = true;
-    if (quit_requested)
-        go_interactive = false;
-    else if (m_option_data.m_batch && !stopped_for_crash)
-        go_interactive = false;
-
-    if (go_interactive)
+    else
     {
-        m_debugger.SetInputFileHandle (stdin, true);
-        m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+        // Check if we have any data in the commands stream, and if so, save it to a temp file
+        // so we can then run the command interpreter using the file contents.
+        const char *commands_data = commands_stream.GetData();
+        const size_t commands_size = commands_stream.GetSize();
+
+        // The command file might have requested that we quit, this variable will track that.
+        bool quit_requested = false;
+        bool stopped_for_crash = false;
+        if (commands_data && commands_size)
+        {
+            int initial_commands_fds[2];
+            bool success = true;
+            FILE *commands_file = PrepareCommandsForSourcing (commands_data, commands_size, initial_commands_fds);
+            if (commands_file)
+            {
+                m_debugger.SetInputFileHandle (commands_file, true);
+
+                // Set the debugger into Sync mode when running the command file.  Otherwise command files
+                // that run the target won't run in a sensible way.
+                bool old_async = m_debugger.GetAsync();
+                m_debugger.SetAsync(false);
+                int num_errors;
+                
+                SBCommandInterpreterRunOptions options;
+                options.SetStopOnError (true);
+                if (m_option_data.m_batch)
+                    options.SetStopOnCrash (true);
+
+                m_debugger.RunCommandInterpreter(handle_events,
+                                                 spawn_thread,
+                                                 options,
+                                                 num_errors,
+                                                 quit_requested,
+                                                 stopped_for_crash);
+
+                if (m_option_data.m_batch && stopped_for_crash && !m_option_data.m_after_crash_commands.empty())
+                {
+                    int crash_command_fds[2];
+                    SBStream crash_commands_stream;
+                    WriteCommandsForSourcing (eCommandPlacementAfterCrash, crash_commands_stream);
+                    const char *crash_commands_data = crash_commands_stream.GetData();
+                    const size_t crash_commands_size = crash_commands_stream.GetSize();
+                    commands_file  = PrepareCommandsForSourcing (crash_commands_data, crash_commands_size, crash_command_fds);
+                    if (commands_file)
+                    {
+                        bool local_quit_requested;
+                        bool local_stopped_for_crash;
+                        m_debugger.SetInputFileHandle (commands_file, true);
+
+                        m_debugger.RunCommandInterpreter(handle_events,
+                                                         spawn_thread,
+                                                         options,
+                                                         num_errors,
+                                                         local_quit_requested,
+                                                         local_stopped_for_crash);
+                        if (local_quit_requested)
+                            quit_requested = true;
+
+                    }
+                }
+                m_debugger.SetAsync(old_async);
+            }
+            else
+                success = false;
+
+            // Close any pipes that we still have ownership of
+            CleanupAfterCommandSourcing(initial_commands_fds);
+
+            // Something went wrong with command pipe
+            if (!success)
+            {
+                exit(1);
+            }
+
+        }
+
+        // Now set the input file handle to STDIN and run the command
+        // interpreter again in interactive mode and let the debugger
+        // take ownership of stdin
+
+        bool go_interactive = true;
+        if (quit_requested)
+            go_interactive = false;
+        else if (m_option_data.m_batch && !stopped_for_crash)
+            go_interactive = false;
+
+        if (go_interactive)
+        {
+            m_debugger.SetInputFileHandle (stdin, true);
+            m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+        }
     }
     
     reset_stdin_termios();

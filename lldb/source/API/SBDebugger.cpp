@@ -1000,6 +1000,17 @@ SBDebugger::RunCommandInterpreter (bool auto_handle_events,
     }
 }
 
+SBError
+SBDebugger::RunREPL (lldb::LanguageType language, const char *repl_options)
+{
+    SBError error;
+    if (m_opaque_sp)
+        error.ref() = m_opaque_sp->RunREPL(language, repl_options);
+    else
+        error.SetErrorString ("invalid debugger");
+    return error;
+}
+
 void
 SBDebugger::reset (const DebuggerSP &debugger_sp)
 {

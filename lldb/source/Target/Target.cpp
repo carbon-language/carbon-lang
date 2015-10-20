@@ -213,7 +213,7 @@ Target::GetProcessSP () const
 }
 
 lldb::REPLSP
-Target::GetREPL (lldb::LanguageType language, bool can_create)
+Target::GetREPL (Error &err, lldb::LanguageType language, const char *repl_options, bool can_create)
 {
     if (language == eLanguageTypeUnknown)
     {
@@ -229,10 +229,11 @@ Target::GetREPL (lldb::LanguageType language, bool can_create)
     
     if (!can_create)
     {
+        err.SetErrorStringWithFormat("Couldn't find an existing REPL for %s, and can't create a new one", Language::GetNameForLanguageType(language));
         return lldb::REPLSP();
     }
     
-    lldb::REPLSP ret = REPL::Create(language, this);
+    lldb::REPLSP ret = REPL::Create(err, language, this, repl_options);
     
     if (ret)
     {
@@ -240,7 +241,12 @@ Target::GetREPL (lldb::LanguageType language, bool can_create)
         return m_repl_map[language];
     }
     
-    return nullptr;
+    if (err.Success())
+    {
+        err.SetErrorStringWithFormat("Couldn't create a REPL for %s", Language::GetNameForLanguageType(language));
+    }
+    
+    return lldb::REPLSP();
 }
 
 void

@@ -375,6 +375,9 @@ public:
     {
         return m_event_handler_thread.IsJoinable();
     }
+    
+    Error
+    RunREPL (lldb::LanguageType language, const char *repl_options);
 
     // This is for use in the command interpreter, when you either want the selected target, or if no target
     // is present you want to prime the dummy target with entities that will be copied over to new targets.

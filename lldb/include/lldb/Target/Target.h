@@ -1568,7 +1568,7 @@ public:
     GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles);
     
     lldb::REPLSP
-    GetREPL (lldb::LanguageType, bool can_create);
+    GetREPL (Error &err, lldb::LanguageType language, const char *repl_options, bool can_create);
 
 protected:
     //------------------------------------------------------------------
