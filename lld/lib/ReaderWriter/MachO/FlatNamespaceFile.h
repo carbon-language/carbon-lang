@@ -58,4 +58,4 @@ private:
 } // namespace mach_o
 } // namespace lld
 
-#endif // LLD_READER_WRITER_MACHO_EXECUTABLE_ATOMS_H
+#endif // LLD_READER_WRITER_MACHO_FLAT_NAMESPACE_FILE_H
