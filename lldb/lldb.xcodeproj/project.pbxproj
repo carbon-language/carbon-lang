@@ -719,6 +719,7 @@
 		6D95DC021B9DC057000E318A /* SymbolFileDWARFDwo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D95DBFF1B9DC057000E318A /* SymbolFileDWARFDwo.cpp */; };
 		6D99A3631BBC2F3200979793 /* ArmUnwindInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D99A3621BBC2F3200979793 /* ArmUnwindInfo.cpp */; };
 		6D9AB3DD1BB2B74E003F2289 /* TypeMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D9AB3DC1BB2B74E003F2289 /* TypeMap.cpp */; };
+		6DEC6F391BD66D750091ABA6 /* TaskPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEC6F381BD66D750091ABA6 /* TaskPool.cpp */; };
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
 		8C2D6A5E197A250F006989C9 /* MemoryHistoryASan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */; };
 		8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */; };
@@ -2421,6 +2422,8 @@
 		6D99A3621BBC2F3200979793 /* ArmUnwindInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArmUnwindInfo.cpp; path = source/Symbol/ArmUnwindInfo.cpp; sourceTree = "<group>"; };
 		6D9AB3DC1BB2B74E003F2289 /* TypeMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeMap.cpp; path = source/Symbol/TypeMap.cpp; sourceTree = "<group>"; };
 		6D9AB3DE1BB2B76B003F2289 /* TypeMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeMap.h; path = include/lldb/Symbol/TypeMap.h; sourceTree = "<group>"; };
+		6DEC6F381BD66D750091ABA6 /* TaskPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TaskPool.cpp; path = source/Utility/TaskPool.cpp; sourceTree = "<group>"; };
+		6DEC6F3A1BD66D950091ABA6 /* TaskPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TaskPool.h; path = include/lldb/Utility/TaskPool.h; sourceTree = "<group>"; };
 		8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryHistory.cpp; path = source/Target/MemoryHistory.cpp; sourceTree = "<group>"; };
 		8C2D6A54197A1EBE006989C9 /* MemoryHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MemoryHistory.h; path = include/lldb/Target/MemoryHistory.h; sourceTree = "<group>"; };
 		8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryHistoryASan.cpp; sourceTree = "<group>"; };
@@ -3625,6 +3628,8 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				6DEC6F3A1BD66D950091ABA6 /* TaskPool.h */,
+				6DEC6F381BD66D750091ABA6 /* TaskPool.cpp */,
 				257E47151AA56C2000A62F81 /* ModuleCache.cpp */,
 				257E47161AA56C2000A62F81 /* ModuleCache.h */,
 				33064C9B1A5C7A490033D415 /* UriParser.h */,
@@ -6687,6 +6692,7 @@
 				265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */,
 				265205AA13D3E3F700132FE2 /* RegisterContextKDP_i386.cpp in Sources */,
 				AF77E0A31A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp in Sources */,
+				6DEC6F391BD66D750091ABA6 /* TaskPool.cpp in Sources */,
 				265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */,
 				2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */,
 				26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */,
