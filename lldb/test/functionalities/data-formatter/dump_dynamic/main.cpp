@@ -30,6 +30,6 @@ int main (int argc, char const *argv[])
     //% base = self.frame().FindVariable("base")
     //% base.SetPreferDynamicValue(lldb.eDynamicDontRunTarget)
     //% base.GetDescription(stream)
-    //% if self.TraceOn(): print stream.GetData()
+    //% if self.TraceOn(): print(stream.GetData())
     //% self.assertTrue(stream.GetData().startswith("(Derived *"))
 }

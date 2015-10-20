@@ -181,7 +181,7 @@ class CommandLineCompletionTestCase(TestBase):
     @no_debug_info_test
     def test_settings_set_ta(self):
         """Test that 'settings set ta' completes to 'settings set target.'."""
-        self.complete_from_to('settings set ta', 'settings set target.')
+        self.complete_from_to('settings set target.ma', 'settings set target.max-')
 
     @expectedFailureHostWindows("llvm.org/pr24679")
     @skipIfFreeBSD # timing out on the FreeBSD buildbot
