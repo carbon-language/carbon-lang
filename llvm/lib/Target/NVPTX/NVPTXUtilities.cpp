@@ -367,7 +367,7 @@ void llvm::dumpBlock(Value *v, char *blockName) {
     return;
 
   for (Function::iterator it = F->begin(), ie = F->end(); it != ie; ++it) {
-    BasicBlock *B = it;
+    BasicBlock *B = &*it;
     if (strcmp(B->getName().data(), blockName) == 0) {
       B->dump();
       return;

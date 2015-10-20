@@ -267,14 +267,14 @@ bool NVPTXFavorNonGenericAddrSpaces::runOnFunction(Function &F) {
     return false;
 
   bool Changed = false;
-  for (Function::iterator B = F.begin(), BE = F.end(); B != BE; ++B) {
-    for (BasicBlock::iterator I = B->begin(), IE = B->end(); I != IE; ++I) {
+  for (BasicBlock &B : F) {
+    for (Instruction &I : B) {
       if (isa<LoadInst>(I)) {
         // V = load P
-        Changed |= optimizeMemoryInstruction(I, 0);
+        Changed |= optimizeMemoryInstruction(&I, 0);
       } else if (isa<StoreInst>(I)) {
         // store V, P
-        Changed |= optimizeMemoryInstruction(I, 1);
+        Changed |= optimizeMemoryInstruction(&I, 1);
       }
     }
   }

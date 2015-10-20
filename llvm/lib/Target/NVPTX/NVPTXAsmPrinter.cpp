@@ -718,7 +718,7 @@ static bool useFuncSeen(const Constant *C,
 void NVPTXAsmPrinter::emitDeclarations(const Module &M, raw_ostream &O) {
   llvm::DenseMap<const Function *, bool> seenMap;
   for (Module::const_iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
-    const Function *F = FI;
+    const Function *F = &*FI;
 
     if (F->isDeclaration()) {
       if (F->use_empty())
@@ -868,9 +868,8 @@ void NVPTXAsmPrinter::emitGlobals(const Module &M) {
   DenseSet<const GlobalVariable *> GVVisiting;
 
   // Visit each global variable, in order
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    VisitGlobalVariableForEmission(I, Globals, GVVisited, GVVisiting);
+  for (const GlobalVariable &I : M.globals())
+    VisitGlobalVariableForEmission(&I, Globals, GVVisited, GVVisiting);
 
   assert(GVVisited.size() == M.getGlobalList().size() &&
          "Missed a global variable");

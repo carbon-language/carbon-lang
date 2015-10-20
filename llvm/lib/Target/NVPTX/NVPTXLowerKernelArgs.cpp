@@ -173,8 +173,7 @@ void NVPTXLowerKernelArgs::markPointerAsGlobal(Value *Ptr) {
     InsertPt = Arg->getParent()->getEntryBlock().begin();
   } else {
     // Insert right after Ptr if Ptr is an instruction.
-    InsertPt = cast<Instruction>(Ptr);
-    ++InsertPt;
+    InsertPt = ++cast<Instruction>(Ptr)->getIterator();
     assert(InsertPt != InsertPt->getParent()->end() &&
            "We don't call this function with Ptr being a terminator.");
   }
@@ -182,9 +181,9 @@ void NVPTXLowerKernelArgs::markPointerAsGlobal(Value *Ptr) {
   Instruction *PtrInGlobal = new AddrSpaceCastInst(
       Ptr, PointerType::get(Ptr->getType()->getPointerElementType(),
                             ADDRESS_SPACE_GLOBAL),
-      Ptr->getName(), InsertPt);
+      Ptr->getName(), &*InsertPt);
   Value *PtrInGeneric = new AddrSpaceCastInst(PtrInGlobal, Ptr->getType(),
-                                              Ptr->getName(), InsertPt);
+                                              Ptr->getName(), &*InsertPt);
   // Replace with PtrInGeneric all uses of Ptr except PtrInGlobal.
   Ptr->replaceAllUsesWith(PtrInGeneric);
   PtrInGlobal->setOperand(0, Ptr);
