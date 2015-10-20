@@ -100,7 +100,7 @@ BugDriver::deleteInstructionFromProgram(const Instruction *I,
 
   BasicBlock::iterator RI = RBI->begin(); // Get iterator to corresponding inst
   std::advance(RI, std::distance(PBB->begin(), BasicBlock::const_iterator(I)));
-  Instruction *TheInst = RI;              // Got the corresponding instruction!
+  Instruction *TheInst = &*RI; // Got the corresponding instruction!
 
   // If this instruction produces a value, replace any users with null values
   if (!TheInst->getType()->isVoidTy())
@@ -306,16 +306,14 @@ llvm::SplitFunctionsOutOfModule(Module *M,
 
   
   // Remove the Safe functions from the Test module
-  for (Module::iterator I = New->begin(), E = New->end(); I != E; ++I)
-    if (!TestFunctions.count(I))
-      DeleteFunctionBody(I);
-  
+  for (Function &I : *New)
+    if (!TestFunctions.count(&I))
+      DeleteFunctionBody(&I);
 
   // Try to split the global initializers evenly
-  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I) {
-    GlobalVariable *GV = cast<GlobalVariable>(NewVMap[I]);
-    if (Function *TestFn = globalInitUsesExternalBA(I)) {
+  for (GlobalVariable &I : M->globals()) {
+    GlobalVariable *GV = cast<GlobalVariable>(NewVMap[&I]);
+    if (Function *TestFn = globalInitUsesExternalBA(&I)) {
       if (Function *SafeFn = globalInitUsesExternalBA(GV)) {
         errs() << "*** Error: when reducing functions, encountered "
                   "the global '";
@@ -325,7 +323,7 @@ llvm::SplitFunctionsOutOfModule(Module *M,
                << "' and from test function '" << TestFn->getName() << "'.\n";
         exit(1);
       }
-      I->setInitializer(nullptr);  // Delete the initializer to make it external
+      I.setInitializer(nullptr); // Delete the initializer to make it external
     } else {
       // If we keep it in the safe module, then delete it in the test module
       GV->setInitializer(nullptr);

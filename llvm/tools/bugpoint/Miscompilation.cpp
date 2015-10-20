@@ -545,9 +545,8 @@ static bool ExtractBlocks(BugDriver &BD,
 
   std::vector<BasicBlock*> Blocks;
   for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
-    for (Function::iterator I = MiscompiledFunctions[i]->begin(),
-           E = MiscompiledFunctions[i]->end(); I != E; ++I)
-      Blocks.push_back(I);
+    for (BasicBlock &BB : *MiscompiledFunctions[i])
+      Blocks.push_back(&BB);
 
   // Use the list reducer to identify blocks that can be extracted without
   // obscuring the bug.  The Blocks list will end up containing blocks that must
@@ -628,9 +627,9 @@ DebugAMiscompilation(BugDriver &BD,
   // the program.
   std::vector<Function*> MiscompiledFunctions;
   Module *Prog = BD.getProgram();
-  for (Module::iterator I = Prog->begin(), E = Prog->end(); I != E; ++I)
-    if (!I->isDeclaration())
-      MiscompiledFunctions.push_back(I);
+  for (Function &F : *Prog)
+    if (!F.isDeclaration())
+      MiscompiledFunctions.push_back(&F);
 
   // Do the reduction...
   if (!BugpointIsInterrupted)
@@ -802,7 +801,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
              I = newMain->arg_begin(), E = newMain->arg_end(),
              OI = oldMain->arg_begin(); I != E; ++I, ++OI) {
         I->setName(OI->getName());    // Copy argument names from oldMain
-        args.push_back(I);
+        args.push_back(&*I);
       }
 
       // Call the old main function and return its result
@@ -905,9 +904,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Save the argument list.
           std::vector<Value*> Args;
-          for (Function::arg_iterator i = FuncWrapper->arg_begin(),
-                 e = FuncWrapper->arg_end(); i != e; ++i)
-            Args.push_back(i);
+          for (Argument &A : FuncWrapper->args())
+            Args.push_back(&A);
 
           // Pass on the arguments to the real function, return its result
           if (F->getReturnType()->isVoidTy()) {

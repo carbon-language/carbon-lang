@@ -155,11 +155,10 @@ ReduceCrashingGlobalVariables::TestGlobalVariables(
 
   // Loop over and delete any global variables which we aren't supposed to be
   // playing with...
-  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I)
-    if (I->hasInitializer() && !GVSet.count(I)) {
-      I->setInitializer(nullptr);
-      I->setLinkage(GlobalValue::ExternalLinkage);
+  for (GlobalVariable &I : M->globals())
+    if (I.hasInitializer() && !GVSet.count(&I)) {
+      I.setInitializer(nullptr);
+      I.setLinkage(GlobalValue::ExternalLinkage);
     }
 
   // Try running the hacked up program...
@@ -253,9 +252,9 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   if (!ReplaceFuncsWithNull) {
     // Loop over and delete any functions which we aren't supposed to be playing
     // with...
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-      if (!I->isDeclaration() && !Functions.count(I))
-        DeleteFunctionBody(I);
+    for (Function &I : *M)
+      if (!I.isDeclaration() && !Functions.count(&I))
+        DeleteFunctionBody(&I);
   } else {
     std::vector<GlobalValue*> ToRemove;
     // First, remove aliases to functions we're about to purge.
@@ -280,12 +279,12 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
       ToRemove.push_back(&Alias);
     }
 
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-      if (!I->isDeclaration() && !Functions.count(I)) {
-        PointerType *Ty = cast<PointerType>(I->getType());
+    for (Function &I : *M) {
+      if (!I.isDeclaration() && !Functions.count(&I)) {
+        PointerType *Ty = cast<PointerType>(I.getType());
         Constant *Replacement = ConstantPointerNull::get(Ty);
-        I->replaceAllUsesWith(Replacement);
-        ToRemove.push_back(I);
+        I.replaceAllUsesWith(Replacement);
+        ToRemove.push_back(&I);
       }
     }
 
@@ -361,11 +360,12 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   // Loop over and delete any hack up any blocks that are not listed...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     for (Function::iterator BB = I->begin(), E = I->end(); BB != E; ++BB)
-      if (!Blocks.count(BB) && BB->getTerminator()->getNumSuccessors()) {
+      if (!Blocks.count(&*BB) && BB->getTerminator()->getNumSuccessors()) {
         // Loop over all of the successors of this block, deleting any PHI nodes
         // that might include it.
-        for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
-          (*SI)->removePredecessor(BB);
+        for (succ_iterator SI = succ_begin(&*BB), E = succ_end(&*BB); SI != E;
+             ++SI)
+          (*SI)->removePredecessor(&*BB);
 
         TerminatorInst *BBTerm = BB->getTerminator();
 
@@ -374,7 +374,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
 
         // Replace the old terminator instruction.
         BB->getInstList().pop_back();
-        new UnreachableInst(BB->getContext(), BB);
+        new UnreachableInst(BB->getContext(), &*BB);
       }
 
   // The CFG Simplifier pass may delete one of the basic blocks we are
@@ -468,7 +468,7 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
   for (Module::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
     for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE; ++FI)
       for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E;) {
-        Instruction *Inst = I++;
+        Instruction *Inst = &*I++;
         if (!Instructions.count(Inst) && !isa<TerminatorInst>(Inst) &&
             !Inst->isEHPad()) {
           if (!Inst->getType()->isVoidTy())
@@ -538,7 +538,7 @@ static bool DebugACrash(BugDriver &BD,
         for (Module::global_iterator I = BD.getProgram()->global_begin(),
                E = BD.getProgram()->global_end(); I != E; ++I)
           if (I->hasInitializer())
-            GVs.push_back(I);
+            GVs.push_back(&*I);
 
         if (GVs.size() > 1 && !BugpointIsInterrupted) {
           outs() << "\n*** Attempting to reduce the number of global "
@@ -558,10 +558,9 @@ static bool DebugACrash(BugDriver &BD,
 
   // Now try to reduce the number of functions in the module to something small.
   std::vector<Function*> Functions;
-  for (Module::iterator I = BD.getProgram()->begin(),
-         E = BD.getProgram()->end(); I != E; ++I)
-    if (!I->isDeclaration())
-      Functions.push_back(I);
+  for (Function &F : *BD.getProgram())
+    if (!F.isDeclaration())
+      Functions.push_back(&F);
 
   if (Functions.size() > 1 && !BugpointIsInterrupted) {
     outs() << "\n*** Attempting to reduce the number of functions "
@@ -581,10 +580,9 @@ static bool DebugACrash(BugDriver &BD,
   //
   if (!DisableSimplifyCFG && !BugpointIsInterrupted) {
     std::vector<const BasicBlock*> Blocks;
-    for (Module::const_iterator I = BD.getProgram()->begin(),
-           E = BD.getProgram()->end(); I != E; ++I)
-      for (Function::const_iterator FI = I->begin(), E = I->end(); FI !=E; ++FI)
-        Blocks.push_back(FI);
+    for (Function &F : *BD.getProgram())
+      for (BasicBlock &BB : F)
+        Blocks.push_back(&BB);
     unsigned OldSize = Blocks.size();
     ReduceCrashingBlocks(BD, TestFn).reduceList(Blocks, Error);
     if (Blocks.size() < OldSize)
@@ -595,14 +593,11 @@ static bool DebugACrash(BugDriver &BD,
   // cases with large basic blocks where the problem is at one end.
   if (!BugpointIsInterrupted) {
     std::vector<const Instruction*> Insts;
-    for (Module::const_iterator MI = BD.getProgram()->begin(),
-           ME = BD.getProgram()->end(); MI != ME; ++MI)
-      for (Function::const_iterator FI = MI->begin(), FE = MI->end(); FI != FE;
-           ++FI)
-        for (BasicBlock::const_iterator I = FI->begin(), E = FI->end();
-             I != E; ++I)
-          if (!isa<TerminatorInst>(I))
-            Insts.push_back(I);
+    for (const Function &F : *BD.getProgram())
+      for (const BasicBlock &BB : F)
+        for (const Instruction &I : BB)
+          if (!isa<TerminatorInst>(&I))
+            Insts.push_back(&I);
 
     ReduceCrashingInstructions(BD, TestFn).reduceList(Insts, Error);
   }
@@ -647,7 +642,7 @@ static bool DebugACrash(BugDriver &BD,
 
               outs() << "Checking instruction: " << *I;
               std::unique_ptr<Module> M =
-                  BD.deleteInstructionFromProgram(I, Simplification);
+                  BD.deleteInstructionFromProgram(&*I, Simplification);
 
               // Find out if the pass still crashes on this pass...
               if (TestFn(BD, M.get())) {
