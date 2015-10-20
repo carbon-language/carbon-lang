@@ -188,7 +188,7 @@ bool HexagonEvaluator::evaluate(const MachineInstr *MI,
     return true;
   };
   // Get the cell corresponding to the N-th operand.
-  auto cop = [this,Reg,MI,Inputs] (unsigned N, uint16_t W)
+  auto cop = [this,&Reg,&MI,&Inputs] (unsigned N, uint16_t W)
         -> BT::RegisterCell {
     const MachineOperand &Op = MI->getOperand(N);
     if (Op.isImm())
