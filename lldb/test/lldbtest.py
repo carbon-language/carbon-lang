@@ -33,6 +33,8 @@ $
 
 from __future__ import print_function
 
+import lldb_shared
+
 import abc
 import gc
 import glob
@@ -48,7 +50,8 @@ import unittest2
 import lldb
 import lldbtest_config
 import lldbutil
-from _pyio import __metaclass__
+
+from six import add_metaclass
 
 if sys.version_info.major < 3:
     import urlparse
@@ -254,8 +257,8 @@ class recording(StringIO.StringIO):
             print(self.getvalue(), file=self.session)
         self.close()
 
+@add_metaclass(abc.ABCMeta)
 class _BaseProcess(object):
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractproperty
     def pid(self):
@@ -2279,6 +2282,8 @@ class LLDBTestCaseFactory(type):
                 newattrs[attrname] = attrvalue
         return super(LLDBTestCaseFactory, cls).__new__(cls, name, bases, newattrs)
 
+# Setup the metaclass for this class to change the list of the test methods when a new class is loaded
+@add_metaclass(LLDBTestCaseFactory)
 class TestBase(Base):
     """
     This abstract base class is meant to be subclassed.  It provides default
@@ -2338,9 +2343,6 @@ class TestBase(Base):
     # Time to wait before the next launching attempt in second(s).
     # Can be overridden by the LLDB_TIME_WAIT_NEXT_LAUNCH environment variable.
     timeWaitNextLaunch = 1.0;
-
-    # Setup the metaclass for this class to change the list of the test methods when a new class is loaded
-    __metaclass__ = LLDBTestCaseFactory
 
     def doDelay(self):
         """See option -w of dotest.py."""

@@ -44,7 +44,6 @@ import lldbtest_config
 
 import six
 
-
 def is_exe(fpath):
     """Returns true if fpath is an executable."""
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
