@@ -684,7 +684,7 @@ def: Pat<(i64 (zext (i32 IntRegs:$src1))),
 // Template class for store instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
 let isExtended = 1, opExtendable = 1, opExtentBits = 6,
-    addrMode = AbsoluteSet, isNVStorable = 1 in
+    addrMode = AbsoluteSet in
 class T_ST_absset <string mnemonic, string BaseOp, RegisterClass RC,
                    bits<3> MajOp, MemAccessSize AccessSz, bit isHalf = 0>
   : STInst<(outs IntRegs:$dst),
@@ -695,6 +695,9 @@ class T_ST_absset <string mnemonic, string BaseOp, RegisterClass RC,
     bits<5> src;
     let accessSize = AccessSz;
     let BaseOpcode = BaseOp#"_AbsSet";
+
+    // Store upper-half and store doubleword cannot be NV.
+    let isNVStorable = !if (!eq(mnemonic, "memd"), 0, !if(isHalf,0,1));
 
     let IClass = 0b1010;
 
@@ -750,7 +753,7 @@ let mayStore = 1, addrMode = AbsoluteSet in {
 }
 
 let isExtended = 1, opExtendable = 2, opExtentBits = 6, InputType = "imm",
-addrMode = BaseLongOffset, AddedComplexity = 40 in
+    addrMode = BaseLongOffset, AddedComplexity = 40 in
 class T_StoreAbsReg <string mnemonic, string CextOp, RegisterClass RC,
                      bits<3> MajOp, MemAccessSize AccessSz, bit isHalf = 0>
   : STInst<(outs),
@@ -766,6 +769,10 @@ class T_StoreAbsReg <string mnemonic, string CextOp, RegisterClass RC,
     let accessSize = AccessSz;
     let CextOpcode = CextOp;
     let BaseOpcode = CextOp#"_shl";
+
+    // Store upper-half and store doubleword cannot be NV.
+    let isNVStorable = !if (!eq(mnemonic, "memd"), 0, !if(isHalf,0,1));
+
     let IClass = 0b1010;
 
     let Inst{27-24} =0b1101;
@@ -856,6 +863,9 @@ class T_store_rr <string mnemonic, RegisterClass RC, bits<3> MajOp, bit isH>
     bits<2> u2;
     bits<5> Rt;
 
+    // Store upper-half and store doubleword cannot be NV.
+    let isNVStorable = !if (!eq(mnemonic, "memd"), 0, !if(isH,0,1));
+
     let IClass = 0b0011;
 
     let Inst{27-24} = 0b1011;
@@ -888,6 +898,8 @@ class T_pstore_rr <string mnemonic, RegisterClass RC, bits<3> MajOp,
 
     let isPredicatedFalse = isNot;
     let isPredicatedNew = isPredNew;
+    // Store upper-half and store doubleword cannot be NV.
+    let isNVStorable = !if (!eq(mnemonic, "memd"), 0, !if(isH,0,1));
 
     let IClass = 0b0011;
 
@@ -3306,7 +3318,7 @@ let isCall = 1, Uses = [R29, R31], isAsmParserOnly = 1 in {
 // Template class for non predicated store instructions with
 // GP-Relative or absolute addressing.
 //===----------------------------------------------------------------------===//
-let hasSideEffects = 0, isPredicable = 1, isNVStorable = 1 in
+let hasSideEffects = 0, isPredicable = 1 in
 class T_StoreAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
                     bits<2>MajOp, Operand AddrOp, bit isAbs, bit isHalf>
   : STInst<(outs), (ins AddrOp:$addr, RC:$src),
@@ -3321,6 +3333,9 @@ class T_StoreAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
                      !if (!eq(ImmOpStr, "u16_2Imm"), addr{17-2},
                      !if (!eq(ImmOpStr, "u16_1Imm"), addr{16-1},
                                       /* u16_0Imm */ addr{15-0})));
+    // Store upper-half and store doubleword cannot be NV.
+    let isNVStorable = !if (!eq(mnemonic, "memd"), 0, !if(isHalf,0,1));
+
     let IClass = 0b0100;
     let Inst{27} = 1;
     let Inst{26-25} = offsetBits{15-14};
@@ -3337,8 +3352,7 @@ class T_StoreAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
 // Template class for predicated store instructions with
 // GP-Relative or absolute addressing.
 //===----------------------------------------------------------------------===//
-let hasSideEffects = 0, isPredicated = 1, isNVStorable = 1, opExtentBits = 6,
-    opExtendable = 1 in
+let hasSideEffects = 0, isPredicated = 1, opExtentBits = 6, opExtendable = 1 in
 class T_StoreAbs_Pred <string mnemonic, RegisterClass RC, bits<2> MajOp,
                        bit isHalf, bit isNot, bit isNew>
   : STInst<(outs), (ins PredRegs:$src1, u6Ext:$absaddr, RC: $src2),
@@ -3351,6 +3365,8 @@ class T_StoreAbs_Pred <string mnemonic, RegisterClass RC, bits<2> MajOp,
 
     let isPredicatedNew = isNew;
     let isPredicatedFalse = isNot;
+    // Store upper-half and store doubleword cannot be NV.
+    let isNVStorable = !if (!eq(mnemonic, "memd"), 0, !if(isHalf,0,1));
 
     let IClass = 0b1010;
 
