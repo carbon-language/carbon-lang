@@ -1986,7 +1986,7 @@ bool HexagonInstrInfo::NonExtEquivalentExists (const MachineInstr *MI) const {
     case HexagonII::Absolute :
       // Load/store with absolute addressing mode can be converted into
       // base+offset mode.
-      NonExtOpcode = Hexagon::getBasedWithImmOffset(MI->getOpcode());
+      NonExtOpcode = Hexagon::getBaseWithImmOffset(MI->getOpcode());
       break;
     case HexagonII::BaseImmOffset :
       // Load/store with base+offset addressing mode can be converted into
@@ -2017,7 +2017,7 @@ short HexagonInstrInfo::getNonExtOpcode (const MachineInstr *MI) const {
     // Check addressing mode and retrieve non-ext equivalent instruction.
     switch (getAddrMode(MI)) {
     case HexagonII::Absolute :
-      return Hexagon::getBasedWithImmOffset(MI->getOpcode());
+      return Hexagon::getBaseWithImmOffset(MI->getOpcode());
     case HexagonII::BaseImmOffset :
       return Hexagon::getBaseWithRegOffset(MI->getOpcode());
     default:

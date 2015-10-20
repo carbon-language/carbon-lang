@@ -158,7 +158,7 @@ def getNonNVStore : InstrMapping {
   let ValueCols = [["false"]];
 }
 
-def getBasedWithImmOffset : InstrMapping {
+def getBaseWithImmOffset : InstrMapping {
   let FilterClass = "AddrModeRel";
   let RowFields = ["CextOpcode", "PredSense", "PNewValue", "isNVStore",
                    "isFloat"];
