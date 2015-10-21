@@ -1417,11 +1417,8 @@ static void printArchiveChild(Archive::Child &C, bool verbose,
   outs() << format("%3d/", UID);
   unsigned GID = C.getGID();
   outs() << format("%-3d ", GID);
-  ErrorOr<uint64_t> Size = C.getRawSize();
-  if (Size.getError())
-    outs() << "bad size" << " ";
-  else
-    outs() << format("%5" PRId64, Size.get()) << " ";
+  uint64_t Size = C.getRawSize();
+  outs() << format("%5" PRId64, Size) << " ";
 
   StringRef RawLastModified = C.getRawLastModified();
   if (verbose) {
@@ -1457,16 +1454,12 @@ static void printArchiveChild(Archive::Child &C, bool verbose,
 static void printArchiveHeaders(Archive *A, bool verbose, bool print_offset) {
   if (A->hasSymbolTable()) {
     Archive::child_iterator S = A->getSymbolTableChild();
-    if (!S->getError()) {
-      Archive::Child C = S->get();
-      printArchiveChild(C, verbose, print_offset);
-    }
+    Archive::Child C = *S;
+    printArchiveChild(C, verbose, print_offset);
   }
   for (Archive::child_iterator I = A->child_begin(), E = A->child_end(); I != E;
        ++I) {
-    if(I->getError())
-      break;
-    Archive::Child C = I->get();
+    Archive::Child C = *I;
     printArchiveChild(C, verbose, print_offset);
   }
 }
@@ -1503,10 +1496,7 @@ void llvm::ParseInputMachO(StringRef Filename) {
       printArchiveHeaders(A, !NonVerbose, ArchiveMemberOffsets);
     for (Archive::child_iterator I = A->child_begin(), E = A->child_end();
          I != E; ++I) {
-      if (I->getError())
-        break;
-      auto &C = I->get();
-      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
+      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = I->getAsBinary();
       if (ChildOrErr.getError())
         continue;
       if (MachOObjectFile *O = dyn_cast<MachOObjectFile>(&*ChildOrErr.get())) {
@@ -1554,10 +1544,7 @@ void llvm::ParseInputMachO(StringRef Filename) {
               for (Archive::child_iterator AI = A->child_begin(),
                                            AE = A->child_end();
                    AI != AE; ++AI) {
-                if (AI->getError())
-                  break;
-                auto &C = AI->get();
-                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
+                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = AI->getAsBinary();
                 if (ChildOrErr.getError())
                   continue;
                 if (MachOObjectFile *O =
@@ -1599,10 +1586,7 @@ void llvm::ParseInputMachO(StringRef Filename) {
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
                  AI != AE; ++AI) {
-              if (AI->getError())
-                break;
-              auto &C = AI->get();
-              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
+              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = AI->getAsBinary();
               if (ChildOrErr.getError())
                 continue;
               if (MachOObjectFile *O =
@@ -1638,10 +1622,7 @@ void llvm::ParseInputMachO(StringRef Filename) {
           printArchiveHeaders(A.get(), !NonVerbose, ArchiveMemberOffsets);
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
-          if (AI->getError())
-            break;
-          auto &C = AI->get();
-          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
+          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = AI->getAsBinary();
           if (ChildOrErr.getError())
             continue;
           if (MachOObjectFile *O =

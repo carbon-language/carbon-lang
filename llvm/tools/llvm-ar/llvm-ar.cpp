@@ -338,11 +338,7 @@ static void doDisplayTable(StringRef Name, const object::Archive::Child &C) {
     printMode(Mode & 007);
     outs() << ' ' << C.getUID();
     outs() << '/' << C.getGID();
-    ErrorOr<uint32_t> Size = C.getSize();
-    if (Size.getError())
-      outs() << ' ' << "bad size";
-    else
-      outs() << ' ' << format("%6llu", Size.get());
+    outs() << ' ' << format("%6llu", C.getSize());
     outs() << ' ' << C.getLastModified().str();
     outs() << ' ';
   }
@@ -407,14 +403,7 @@ static void performReadOperation(ArchiveOperation Operation,
   }
 
   bool Filter = !Members.empty();
-  for (auto &ChildOrErr : OldArchive->children()) {
-    if (ChildOrErr.getError()) {
-      errs() << ToolName << ": error reading '" << ArchiveName
-             << "': " << ChildOrErr.getError().message() << "!\n";
-      return;
-    }
-    const object::Archive::Child &C = *ChildOrErr;
-
+  for (const object::Archive::Child &C : OldArchive->children()) {
     ErrorOr<StringRef> NameOrErr = C.getName();
     failIfError(NameOrErr.getError());
     StringRef Name = NameOrErr.get();
@@ -459,9 +448,7 @@ void addMember(std::vector<NewArchiveIterator> &Members, StringRef FileName,
 void addMember(std::vector<NewArchiveIterator> &Members,
                object::Archive::child_iterator I, StringRef Name,
                int Pos = -1) {
-  if (I->getError())
-    fail("New member is not valid: " + I->getError().message());
-  if (Thin && !(*I)->getParent()->isThin())
+  if (Thin && !I->getParent()->isThin())
     fail("Cannot convert a regular archive to a thin one");
   NewArchiveIterator NI(I, Name);
   if (Pos == -1)
@@ -482,9 +469,6 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
                                         object::Archive::child_iterator I,
                                         StringRef Name,
                                         std::vector<StringRef>::iterator &Pos) {
-  if (I->getError())
-    fail("Invalid member: " + I->getError().message());
-
   if (Operation == QuickAppend || Members.empty())
     return IA_AddOldMember;
 
@@ -516,7 +500,7 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
     // operation.
     sys::fs::file_status Status;
     failIfError(sys::fs::status(*MI, Status), *MI);
-    if (Status.getLastModificationTime() < (*I)->getLastModified()) {
+    if (Status.getLastModificationTime() < I->getLastModified()) {
       if (PosName.empty())
         return IA_AddOldMember;
       return IA_MoveOldMember;
@@ -539,9 +523,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   int InsertPos = -1;
   StringRef PosName = sys::path::filename(RelPos);
   if (OldArchive) {
-    for (auto &ChildOrErr : OldArchive->children()) {
-      failIfError(ChildOrErr.getError());
-      auto &Child = ChildOrErr.get();
+    for (auto &Child : OldArchive->children()) {
       int Pos = Ret.size();
       ErrorOr<StringRef> NameOrErr = Child.getName();
       failIfError(NameOrErr.getError());
@@ -744,9 +726,7 @@ static void runMRIScript() {
       failIfError(LibOrErr.getError(), "Could not parse library");
       Archives.push_back(std::move(*LibOrErr));
       object::Archive &Lib = *Archives.back();
-      for (auto &MemberOrErr : Lib.children()) {
-        failIfError(MemberOrErr.getError());
-        auto &Member = MemberOrErr.get();
+      for (auto &Member : Lib.children()) {
         ErrorOr<StringRef> NameOrErr = Member.getName();
         failIfError(NameOrErr.getError());
         addMember(NewMembers, Member, *NameOrErr);

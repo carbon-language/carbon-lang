@@ -482,12 +482,7 @@ static void dumpCXXData(const ObjectFile *Obj) {
 }
 
 static void dumpArchive(const Archive *Arc) {
-  for (auto &ErrorOrChild : Arc->children()) {
-    if (std::error_code EC = ErrorOrChild.getError()) {
-      reportError(Arc->getFileName(), EC.message());
-      break;
-    }
-    const Archive::Child &ArcC = *ErrorOrChild;
+  for (const Archive::Child &ArcC : Arc->children()) {
     ErrorOr<std::unique_ptr<Binary>> ChildOrErr = ArcC.getAsBinary();
     if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.

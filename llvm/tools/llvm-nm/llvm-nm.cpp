@@ -945,11 +945,10 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       if (I != E) {
         outs() << "Archive map\n";
         for (; I != E; ++I) {
-          ErrorOr<Archive::child_iterator> ErrorOrChild = I->getMember();
-          if (error(ErrorOrChild.getError()))
+          ErrorOr<Archive::child_iterator> C = I->getMember();
+          if (error(C.getError()))
             return;
-          auto &C = *(ErrorOrChild.get());
-          ErrorOr<StringRef> FileNameOrErr = C.get().getName();
+          ErrorOr<StringRef> FileNameOrErr = C.get()->getName();
           if (error(FileNameOrErr.getError()))
             return;
           StringRef SymName = I->getName();
@@ -961,10 +960,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
 
     for (Archive::child_iterator I = A->child_begin(), E = A->child_end();
          I != E; ++I) {
-      if (I->getError())
-        break;
-      auto &C = I->get();
-      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary(&Context);
+      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = I->getAsBinary(&Context);
       if (ChildOrErr.getError())
         continue;
       if (SymbolicFile *O = dyn_cast<SymbolicFile>(&*ChildOrErr.get())) {
@@ -1019,11 +1015,8 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
               for (Archive::child_iterator AI = A->child_begin(),
                                            AE = A->child_end();
                    AI != AE; ++AI) {
-                if(AI->getError())
-                  break;
-                auto &C = AI->get();
                 ErrorOr<std::unique_ptr<Binary>> ChildOrErr =
-                    C.getAsBinary(&Context);
+                    AI->getAsBinary(&Context);
                 if (ChildOrErr.getError())
                   continue;
                 if (SymbolicFile *O =
@@ -1076,11 +1069,8 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
                  AI != AE; ++AI) {
-              if(AI->getError())
-                break;
-              auto &C = AI->get();
               ErrorOr<std::unique_ptr<Binary>> ChildOrErr =
-                  C.getAsBinary(&Context);
+                  AI->getAsBinary(&Context);
               if (ChildOrErr.getError())
                 continue;
               if (SymbolicFile *O =
@@ -1128,11 +1118,8 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
         std::unique_ptr<Archive> &A = *AOrErr;
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
-          if(AI->getError())
-            continue;
-          auto &C = AI->get();
           ErrorOr<std::unique_ptr<Binary>> ChildOrErr =
-              C.getAsBinary(&Context);
+              AI->getAsBinary(&Context);
           if (ChildOrErr.getError())
             continue;
           if (SymbolicFile *O = dyn_cast<SymbolicFile>(&*ChildOrErr.get())) {
