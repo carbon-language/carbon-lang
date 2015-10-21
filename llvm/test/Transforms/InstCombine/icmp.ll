@@ -1635,7 +1635,7 @@ entry:
 
 ; CHECK-LABEL: @cmp_sgt_rhs_dec
 ; CHECK-NOT: sub
-; CHECK: icmp sge
+; CHECK: icmp sge i32 %conv, %i
 define i1 @cmp_sgt_rhs_dec(float %x, i32 %i) {
   %conv = fptosi float %x to i32
   %dec = sub nsw i32 %i, 1
@@ -1645,7 +1645,7 @@ define i1 @cmp_sgt_rhs_dec(float %x, i32 %i) {
 
 ; CHECK-LABEL: @cmp_sle_rhs_dec
 ; CHECK-NOT: sub
-; CHECK: icmp slt
+; CHECK: icmp slt i32 %conv, %i
 define i1 @cmp_sle_rhs_dec(float %x, i32 %i) {
   %conv = fptosi float %x to i32
   %dec = sub nsw i32 %i, 1
@@ -1655,7 +1655,7 @@ define i1 @cmp_sle_rhs_dec(float %x, i32 %i) {
 
 ; CHECK-LABEL: @cmp_sge_rhs_inc
 ; CHECK-NOT: add
-; CHECK: icmp sgt
+; CHECK: icmp sgt i32 %conv, %i
 define i1 @cmp_sge_rhs_inc(float %x, i32 %i) {
   %conv = fptosi float %x to i32
   %inc = add nsw i32 %i, 1
@@ -1665,7 +1665,7 @@ define i1 @cmp_sge_rhs_inc(float %x, i32 %i) {
 
 ; CHECK-LABEL: @cmp_slt_rhs_inc
 ; CHECK-NOT: add
-; CHECK: icmp sle
+; CHECK: icmp sle i32 %conv, %i
 define i1 @cmp_slt_rhs_inc(float %x, i32 %i) {
   %conv = fptosi float %x to i32
   %inc = add nsw i32 %i, 1
