@@ -1624,9 +1624,9 @@ RenderScriptRuntime::SaveAllocation(Stream &strm, const uint32_t alloc_id, const
     head.hdr_size = static_cast<uint16_t>(sizeof(AllocationDetails::FileHeader));
     head.type = static_cast<uint16_t>(*alloc->type.get());
     head.kind = static_cast<uint32_t>(*alloc->type_kind.get());
-    head.dims[1] = static_cast<uint32_t>(alloc->dimension.get()->dim_1);
-    head.dims[2] = static_cast<uint32_t>(alloc->dimension.get()->dim_2);
-    head.dims[3] = static_cast<uint32_t>(alloc->dimension.get()->dim_3);
+    head.dims[0] = static_cast<uint32_t>(alloc->dimension.get()->dim_1);
+    head.dims[1] = static_cast<uint32_t>(alloc->dimension.get()->dim_2);
+    head.dims[2] = static_cast<uint32_t>(alloc->dimension.get()->dim_3);
     head.element_size = static_cast<uint32_t>(GetElementSize(alloc));
 
     // Write the file header
