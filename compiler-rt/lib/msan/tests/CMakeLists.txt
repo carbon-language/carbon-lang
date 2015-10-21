@@ -51,10 +51,6 @@ set(MSAN_UNITTEST_LINK_FLAGS
 )
 
 append_list_if(COMPILER_RT_HAS_LIBDL -ldl MSAN_UNITTEST_LINK_FLAGS)
-set(MSAN_LOADABLE_LINK_FLAGS
-  -fsanitize=memory
-  -shared
-)
 
 # Compile source for the given architecture, using compiler
 # options in ${ARGN}, and add it to the object list.
@@ -107,7 +103,7 @@ macro(add_msan_tests_for_arch arch kind)
   # Instrumented loadable module objects.
   set(MSAN_INST_LOADABLE_OBJECTS)
   msan_compile(MSAN_INST_LOADABLE_OBJECTS ${MSAN_LOADABLE_SOURCE} ${arch} "${kind}"
-               ${MSAN_UNITTEST_INSTRUMENTED_CFLAGS} ${ARGN})
+               ${MSAN_UNITTEST_INSTRUMENTED_CFLAGS} "-fPIC" ${ARGN})
 
   # Instrumented loadable library tests.
   set(MSAN_LOADABLE_SO)
