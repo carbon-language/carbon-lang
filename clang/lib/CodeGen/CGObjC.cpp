@@ -1759,7 +1759,7 @@ llvm::Value *CodeGenFunction::EmitObjCExtendObjectLifetime(QualType type,
 /// Given a number of pointers, inform the optimizer that they're
 /// being intrinsically used up until this point in the program.
 void CodeGenFunction::EmitARCIntrinsicUse(ArrayRef<llvm::Value*> values) {
-  llvm::Constant *&fn = CGM.getARCEntrypoints().clang_arc_use;
+  llvm::Constant *&fn = CGM.getObjCEntrypoints().clang_arc_use;
   if (!fn) {
     llvm::FunctionType *fnType =
       llvm::FunctionType::get(CGM.VoidTy, None, true);
@@ -1917,7 +1917,7 @@ llvm::Value *CodeGenFunction::EmitARCRetain(QualType type, llvm::Value *value) {
 ///   call i8* \@objc_retain(i8* %value)
 llvm::Value *CodeGenFunction::EmitARCRetainNonBlock(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
-                               CGM.getARCEntrypoints().objc_retain,
+                               CGM.getObjCEntrypoints().objc_retain,
                                "objc_retain");
 }
 
@@ -1931,7 +1931,7 @@ llvm::Value *CodeGenFunction::EmitARCRetainBlock(llvm::Value *value,
                                                  bool mandatory) {
   llvm::Value *result
     = emitARCValueOperation(*this, value,
-                            CGM.getARCEntrypoints().objc_retainBlock,
+                            CGM.getObjCEntrypoints().objc_retainBlock,
                             "objc_retainBlock");
 
   // If the copy isn't mandatory, add !clang.arc.copy_on_escape to
@@ -1941,7 +1941,7 @@ llvm::Value *CodeGenFunction::EmitARCRetainBlock(llvm::Value *value,
   if (!mandatory && isa<llvm::Instruction>(result)) {
     llvm::CallInst *call
       = cast<llvm::CallInst>(result->stripPointerCasts());
-    assert(call->getCalledValue() == CGM.getARCEntrypoints().objc_retainBlock);
+    assert(call->getCalledValue() == CGM.getObjCEntrypoints().objc_retainBlock);
 
     call->setMetadata("clang.arc.copy_on_escape",
                       llvm::MDNode::get(Builder.getContext(), None));
@@ -1960,7 +1960,7 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
   // Fetch the void(void) inline asm which marks that we're going to
   // retain the autoreleased return value.
   llvm::InlineAsm *&marker
-    = CGM.getARCEntrypoints().retainAutoreleasedReturnValueMarker;
+    = CGM.getObjCEntrypoints().retainAutoreleasedReturnValueMarker;
   if (!marker) {
     StringRef assembly
       = CGM.getTargetCodeGenInfo()
@@ -1997,7 +1997,7 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
     Builder.CreateCall(marker);
 
   return emitARCValueOperation(*this, value,
-                     CGM.getARCEntrypoints().objc_retainAutoreleasedReturnValue,
+                     CGM.getObjCEntrypoints().objc_retainAutoreleasedReturnValue,
                                "objc_retainAutoreleasedReturnValue");
 }
 
@@ -2007,7 +2007,7 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value,
                                      ARCPreciseLifetime_t precise) {
   if (isa<llvm::ConstantPointerNull>(value)) return;
 
-  llvm::Constant *&fn = CGM.getARCEntrypoints().objc_release;
+  llvm::Constant *&fn = CGM.getObjCEntrypoints().objc_release;
   if (!fn) {
     llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), Int8PtrTy, false);
@@ -2054,7 +2054,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(Address addr,
                                                      bool ignored) {
   assert(addr.getElementType() == value->getType());
 
-  llvm::Constant *&fn = CGM.getARCEntrypoints().objc_storeStrong;
+  llvm::Constant *&fn = CGM.getObjCEntrypoints().objc_storeStrong;
   if (!fn) {
     llvm::Type *argTypes[] = { Int8PtrPtrTy, Int8PtrTy };
     llvm::FunctionType *fnType
@@ -2112,7 +2112,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrong(LValue dst,
 ///   call i8* \@objc_autorelease(i8* %value)
 llvm::Value *CodeGenFunction::EmitARCAutorelease(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
-                               CGM.getARCEntrypoints().objc_autorelease,
+                               CGM.getObjCEntrypoints().objc_autorelease,
                                "objc_autorelease");
 }
 
@@ -2121,7 +2121,7 @@ llvm::Value *CodeGenFunction::EmitARCAutorelease(llvm::Value *value) {
 llvm::Value *
 CodeGenFunction::EmitARCAutoreleaseReturnValue(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
-                            CGM.getARCEntrypoints().objc_autoreleaseReturnValue,
+                            CGM.getObjCEntrypoints().objc_autoreleaseReturnValue,
                                "objc_autoreleaseReturnValue",
                                /*isTailCall*/ true);
 }
@@ -2131,7 +2131,7 @@ CodeGenFunction::EmitARCAutoreleaseReturnValue(llvm::Value *value) {
 llvm::Value *
 CodeGenFunction::EmitARCRetainAutoreleaseReturnValue(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
-                     CGM.getARCEntrypoints().objc_retainAutoreleaseReturnValue,
+                     CGM.getObjCEntrypoints().objc_retainAutoreleaseReturnValue,
                                "objc_retainAutoreleaseReturnValue",
                                /*isTailCall*/ true);
 }
@@ -2160,14 +2160,22 @@ llvm::Value *CodeGenFunction::EmitARCRetainAutorelease(QualType type,
 llvm::Value *
 CodeGenFunction::EmitARCRetainAutoreleaseNonBlock(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
-                               CGM.getARCEntrypoints().objc_retainAutorelease,
+                               CGM.getObjCEntrypoints().objc_retainAutorelease,
                                "objc_retainAutorelease");
+}
+
+/// i8* \@objc_loadWeak(i8** %addr)
+/// Essentially objc_autorelease(objc_loadWeakRetained(addr)).
+llvm::Value *CodeGenFunction::EmitARCLoadWeak(Address addr) {
+  return emitARCLoadOperation(*this, addr,
+                              CGM.getObjCEntrypoints().objc_loadWeak,
+                              "objc_loadWeak");
 }
 
 /// i8* \@objc_loadWeakRetained(i8** %addr)
 llvm::Value *CodeGenFunction::EmitARCLoadWeakRetained(Address addr) {
   return emitARCLoadOperation(*this, addr,
-                              CGM.getARCEntrypoints().objc_loadWeakRetained,
+                              CGM.getObjCEntrypoints().objc_loadWeakRetained,
                               "objc_loadWeakRetained");
 }
 
@@ -2177,7 +2185,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreWeak(Address addr,
                                                llvm::Value *value,
                                                bool ignored) {
   return emitARCStoreOperation(*this, addr, value,
-                               CGM.getARCEntrypoints().objc_storeWeak,
+                               CGM.getObjCEntrypoints().objc_storeWeak,
                                "objc_storeWeak", ignored);
 }
 
@@ -2197,14 +2205,14 @@ void CodeGenFunction::EmitARCInitWeak(Address addr, llvm::Value *value) {
   }
 
   emitARCStoreOperation(*this, addr, value,
-                        CGM.getARCEntrypoints().objc_initWeak,
+                        CGM.getObjCEntrypoints().objc_initWeak,
                         "objc_initWeak", /*ignored*/ true);
 }
 
 /// void \@objc_destroyWeak(i8** %addr)
 /// Essentially objc_storeWeak(addr, nil).
 void CodeGenFunction::EmitARCDestroyWeak(Address addr) {
-  llvm::Constant *&fn = CGM.getARCEntrypoints().objc_destroyWeak;
+  llvm::Constant *&fn = CGM.getObjCEntrypoints().objc_destroyWeak;
   if (!fn) {
     llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), Int8PtrPtrTy, false);
@@ -2222,7 +2230,7 @@ void CodeGenFunction::EmitARCDestroyWeak(Address addr) {
 /// Essentially (objc_copyWeak(dest, src), objc_destroyWeak(src)).
 void CodeGenFunction::EmitARCMoveWeak(Address dst, Address src) {
   emitARCCopyOperation(*this, dst, src,
-                       CGM.getARCEntrypoints().objc_moveWeak,
+                       CGM.getObjCEntrypoints().objc_moveWeak,
                        "objc_moveWeak");
 }
 
@@ -2231,14 +2239,14 @@ void CodeGenFunction::EmitARCMoveWeak(Address dst, Address src) {
 ///   objc_release(objc_initWeak(dest, objc_readWeakRetained(src)))
 void CodeGenFunction::EmitARCCopyWeak(Address dst, Address src) {
   emitARCCopyOperation(*this, dst, src,
-                       CGM.getARCEntrypoints().objc_copyWeak,
+                       CGM.getObjCEntrypoints().objc_copyWeak,
                        "objc_copyWeak");
 }
 
 /// Produce the code to do a objc_autoreleasepool_push.
 ///   call i8* \@objc_autoreleasePoolPush(void)
 llvm::Value *CodeGenFunction::EmitObjCAutoreleasePoolPush() {
-  llvm::Constant *&fn = CGM.getRREntrypoints().objc_autoreleasePoolPush;
+  llvm::Constant *&fn = CGM.getObjCEntrypoints().objc_autoreleasePoolPush;
   if (!fn) {
     llvm::FunctionType *fnType =
       llvm::FunctionType::get(Int8PtrTy, false);
@@ -2253,7 +2261,7 @@ llvm::Value *CodeGenFunction::EmitObjCAutoreleasePoolPush() {
 void CodeGenFunction::EmitObjCAutoreleasePoolPop(llvm::Value *value) {
   assert(value->getType() == Int8PtrTy);
 
-  llvm::Constant *&fn = CGM.getRREntrypoints().objc_autoreleasePoolPop;
+  llvm::Constant *&fn = CGM.getObjCEntrypoints().objc_autoreleasePoolPop;
   if (!fn) {
     llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), Int8PtrTy, false);

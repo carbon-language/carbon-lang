@@ -2151,9 +2151,9 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
 
   bool doRetainAutorelease;
 
-  if (call->getCalledValue() == CGF.CGM.getARCEntrypoints().objc_retain) {
+  if (call->getCalledValue() == CGF.CGM.getObjCEntrypoints().objc_retain) {
     doRetainAutorelease = true;
-  } else if (call->getCalledValue() == CGF.CGM.getARCEntrypoints()
+  } else if (call->getCalledValue() == CGF.CGM.getObjCEntrypoints()
                                           .objc_retainAutoreleasedReturnValue) {
     doRetainAutorelease = false;
 
@@ -2162,7 +2162,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
     // for that call.  If we can't find it, we can't do this
     // optimization.  But it should always be the immediately previous
     // instruction, unless we needed bitcasts around the call.
-    if (CGF.CGM.getARCEntrypoints().retainAutoreleasedReturnValueMarker) {
+    if (CGF.CGM.getObjCEntrypoints().retainAutoreleasedReturnValueMarker) {
       llvm::Instruction *prev = call->getPrevNode();
       assert(prev);
       if (isa<llvm::BitCastInst>(prev)) {
@@ -2171,7 +2171,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
       }
       assert(isa<llvm::CallInst>(prev));
       assert(cast<llvm::CallInst>(prev)->getCalledValue() ==
-               CGF.CGM.getARCEntrypoints().retainAutoreleasedReturnValueMarker);
+               CGF.CGM.getObjCEntrypoints().retainAutoreleasedReturnValueMarker);
       insnsToKill.push_back(prev);
     }
   } else {
@@ -2216,7 +2216,7 @@ static llvm::Value *tryRemoveRetainOfSelf(CodeGenFunction &CGF,
   llvm::CallInst *retainCall =
     dyn_cast<llvm::CallInst>(result->stripPointerCasts());
   if (!retainCall ||
-      retainCall->getCalledValue() != CGF.CGM.getARCEntrypoints().objc_retain)
+      retainCall->getCalledValue() != CGF.CGM.getObjCEntrypoints().objc_retain)
     return nullptr;
 
   // Look for an ordinary load of 'self'.

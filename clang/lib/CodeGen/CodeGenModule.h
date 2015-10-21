@@ -108,17 +108,14 @@ struct OrderGlobalInits {
   }
 };
 
-struct RREntrypoints {
-  RREntrypoints() { memset(this, 0, sizeof(*this)); }
-  /// void objc_autoreleasePoolPop(void*);
+struct ObjCEntrypoints {
+  ObjCEntrypoints() { memset(this, 0, sizeof(*this)); }
+
+    /// void objc_autoreleasePoolPop(void*);
   llvm::Constant *objc_autoreleasePoolPop;
 
   /// void *objc_autoreleasePoolPush(void);
   llvm::Constant *objc_autoreleasePoolPush;
-};
-
-struct ARCEntrypoints {
-  ARCEntrypoints() { memset(this, 0, sizeof(*this)); }
 
   /// id objc_autorelease(id);
   llvm::Constant *objc_autorelease;
@@ -288,9 +285,8 @@ private:
   CGOpenMPRuntime* OpenMPRuntime;
   CGCUDARuntime* CUDARuntime;
   CGDebugInfo* DebugInfo;
-  ARCEntrypoints *ARCData;
+  ObjCEntrypoints *ObjCData;
   llvm::MDNode *NoObjCARCExceptionsMetadata;
-  RREntrypoints *RRData;
   std::unique_ptr<llvm::IndexedInstrProfReader> PGOReader;
   InstrProfStats PGOStats;
 
@@ -530,14 +526,9 @@ public:
     return *CUDARuntime;
   }
 
-  ARCEntrypoints &getARCEntrypoints() const {
-    assert(getLangOpts().ObjCAutoRefCount && ARCData != nullptr);
-    return *ARCData;
-  }
-
-  RREntrypoints &getRREntrypoints() const {
-    assert(RRData != nullptr);
-    return *RRData;
+  ObjCEntrypoints &getObjCEntrypoints() const {
+    assert(ObjCData != nullptr);
+    return *ObjCData;
   }
 
   InstrProfStats &getPGOStats() { return PGOStats; }

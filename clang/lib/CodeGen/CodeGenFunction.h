@@ -2768,6 +2768,7 @@ public:
   // ARC primitives.
   void EmitARCInitWeak(Address addr, llvm::Value *value);
   void EmitARCDestroyWeak(Address addr);
+  llvm::Value *EmitARCLoadWeak(Address addr);
   llvm::Value *EmitARCLoadWeakRetained(Address addr);
   llvm::Value *EmitARCStoreWeak(Address addr, llvm::Value *value, bool ignored);
   void EmitARCCopyWeak(Address dst, Address src);
