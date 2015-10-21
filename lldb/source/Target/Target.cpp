@@ -56,6 +56,7 @@
 #include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadSpec.h"
+#include "lldb/Utility/LLDBAssert.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -248,6 +249,14 @@ Target::GetREPL (Error &err, lldb::LanguageType language, const char *repl_optio
     }
     
     return lldb::REPLSP();
+}
+
+void
+Target::SetREPL (lldb::LanguageType language, lldb::REPLSP repl_sp)
+{
+    lldbassert(!m_repl_map.count(language));
+    
+    m_repl_map[language] = repl_sp;
 }
 
 void

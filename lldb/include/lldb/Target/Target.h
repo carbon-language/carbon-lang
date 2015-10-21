@@ -1569,6 +1569,9 @@ public:
     
     lldb::REPLSP
     GetREPL (Error &err, lldb::LanguageType language, const char *repl_options, bool can_create);
+    
+    void
+    SetREPL (lldb::LanguageType language, lldb::REPLSP repl_sp);
 
 protected:
     //------------------------------------------------------------------
