@@ -94,6 +94,11 @@ CheckFiles("check",
            cl::ZeroOrMore);
 
 static cl::opt<uint64_t>
+PreallocMemory("preallocate",
+              cl::desc("Allocate memory upfront rather than on-demand"),
+              cl::init(0));
+
+static cl::opt<uint64_t>
 TargetAddrStart("target-addr-start",
                 cl::desc("For -verify only: start of phony target address "
                          "range."),
@@ -173,14 +178,48 @@ public:
                         size_t Size) override {}
   void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr,
                           size_t Size) override {}
+
+  void preallocateSlab(uint64_t Size) {
+    std::string Err;
+    sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, &Err);
+    if (!MB.base())
+      report_fatal_error("Can't allocate enough memory: " + Err);
+
+    PreallocSlab = MB;
+    UsePreallocation = true;
+    SlabSize = Size;
+  }
+
+  uint8_t *allocateFromSlab(uintptr_t Size, unsigned Alignment, bool isCode) {
+    Size = RoundUpToAlignment(Size, Alignment);
+    if (CurrentSlabOffset + Size > SlabSize)
+      report_fatal_error("Can't allocate enough memory. Tune --preallocate");
+
+    uintptr_t OldSlabOffset = CurrentSlabOffset;
+    sys::MemoryBlock MB((void *)OldSlabOffset, Size);
+    if (isCode)
+      FunctionMemory.push_back(MB);
+    else
+      DataMemory.push_back(MB);
+    CurrentSlabOffset += Size;
+    return (uint8_t*)OldSlabOffset;
+  }
+
 private:
   std::map<std::string, uint64_t> DummyExterns;
+  sys::MemoryBlock PreallocSlab;
+  bool UsePreallocation = false;
+  uintptr_t SlabSize = 0;
+  uintptr_t CurrentSlabOffset = 0;
 };
 
 uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
                                                    unsigned Alignment,
                                                    unsigned SectionID,
                                                    StringRef SectionName) {
+  if (UsePreallocation)
+    return allocateFromSlab(Size, Alignment, true /* isCode */);
+
   std::string Err;
   sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, &Err);
   if (!MB.base())
@@ -194,6 +233,9 @@ uint8_t *TrivialMemoryManager::allocateDataSection(uintptr_t Size,
                                                    unsigned SectionID,
                                                    StringRef SectionName,
                                                    bool IsReadOnly) {
+  if (UsePreallocation)
+    return allocateFromSlab(Size, Alignment, false /* isCode */);
+
   std::string Err;
   sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, &Err);
   if (!MB.base())
@@ -332,12 +374,24 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
   return 0;
 }
 
+static void doPreallocation(TrivialMemoryManager &MemMgr) {
+  // Allocate a slab of memory upfront, if required. This is used if
+  // we want to test small code models.
+  if (static_cast<intptr_t>(PreallocMemory) < 0)
+    report_fatal_error("Pre-allocated bytes of memory must be a positive integer.");
+
+  // FIXME: Limit the amount of memory that can be preallocated?
+  if (PreallocMemory != 0)
+    MemMgr.preallocateSlab(PreallocMemory);
+}
+
 static int executeInput() {
   // Load any dylibs requested on the command line.
   loadDylibs();
 
   // Instantiate a dynamic linker.
   TrivialMemoryManager MemMgr;
+  doPreallocation(MemMgr);
   RuntimeDyld Dyld(MemMgr, MemMgr);
 
   // FIXME: Preserve buffers until resolveRelocations time to work around a bug
@@ -613,6 +667,7 @@ static int linkAndVerify() {
 
   // Instantiate a dynamic linker.
   TrivialMemoryManager MemMgr;
+  doPreallocation(MemMgr);
   RuntimeDyld Dyld(MemMgr, MemMgr);
   Dyld.setProcessAllSections(true);
   RuntimeDyldChecker Checker(Dyld, Disassembler.get(), InstPrinter.get(),
