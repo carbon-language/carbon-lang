@@ -159,7 +159,7 @@ void notifyBlock(id dependentBlock) {
 
 void test_empty_block() {
 // 01 00
-// CHECK-LP64: block variable layout for block: 0x01, 0x00
+// CHECK-LP64: block variable layout for block: 0x01, 0x30, 0x00
   void (^wrapperBlock)() = ^() {
   };
  wrapperBlock();

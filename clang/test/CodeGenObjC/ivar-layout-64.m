@@ -112,3 +112,50 @@ typedef unsigned int FSCatalogInfoBitmap;
 // CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"\02\10\00"
 
 @implementation Foo @end
+
+// GC layout strings aren't capable of expressing __strong ivars at
+// non-word alignments.
+struct __attribute__((packed)) PackedStruct {
+  char c;
+  __strong id x;
+};
+@interface Packed : NSObject {
+  struct PackedStruct _packed;
+}
+@end
+@implementation Packed @end
+// CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"Packed\00"
+// CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"\01 \00"
+//  ' ' == 0x20
+
+// Ensure that layout descends into anonymous unions and structs.
+// Hilariously, anonymous unions and structs that appear directly as ivars
+// are completely ignored by layout.
+
+@interface AnonymousUnion : NSObject {
+  struct {
+    union {
+      id _object;
+      void *_ptr;
+    };
+  } a;
+}
+@end
+@implementation AnonymousUnion @end
+// CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"AnonymousUnion\00"
+// CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"\02\00"
+
+@interface AnonymousStruct : NSObject {
+  struct {
+    struct {
+      id _object;
+      __weak id _weakref;
+    };
+  } a;
+}
+@end
+@implementation AnonymousStruct @end
+// CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"AnonymousStruct\00"
+// CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"\02\10\00"
+// CHECK: @OBJC_CLASS_NAME_{{.*}} = private global {{.*}} c"!\00"
+//  '!' == 0x21
