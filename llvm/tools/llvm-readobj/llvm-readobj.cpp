@@ -377,7 +377,12 @@ static void dumpObject(const ObjectFile *Obj) {
 
 /// @brief Dumps each object file in \a Arc;
 static void dumpArchive(const Archive *Arc) {
-  for (const auto &Child : Arc->children()) {
+  for (auto &ErrorOrChild : Arc->children()) {
+    if (std::error_code EC = ErrorOrChild.getError()) {
+      reportError(Arc->getFileName(), EC.message());
+      break;
+    }
+    const auto &Child = *ErrorOrChild;
     ErrorOr<std::unique_ptr<Binary>> ChildOrErr = Child.getAsBinary();
     if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.

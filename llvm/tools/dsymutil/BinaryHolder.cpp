@@ -109,7 +109,10 @@ BinaryHolder::GetArchiveMemberBuffers(StringRef Filename,
   Buffers.reserve(CurrentArchives.size());
 
   for (const auto &CurrentArchive : CurrentArchives) {
-    for (const auto &Child : CurrentArchive->children()) {
+    for (auto ChildOrErr : CurrentArchive->children()) {
+      if (auto Err = ChildOrErr.getError())
+        return Err;
+      const auto &Child = *ChildOrErr;
       if (auto NameOrErr = Child.getName()) {
         if (*NameOrErr == Filename) {
           if (Timestamp != sys::TimeValue::PosixZeroTime() &&

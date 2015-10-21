@@ -65,7 +65,10 @@ public:
     bool isThinMember() const;
 
   public:
-    Child(const Archive *Parent, const char *Start);
+    Child(const Archive *Parent, const char *Start,
+          std::error_code *EC);
+    static ErrorOr<std::unique_ptr<Child>> create(const Archive *Parent,
+                                                  const char *Start);
 
     bool operator ==(const Child &other) const {
       assert(Parent == other.Parent);
@@ -77,7 +80,7 @@ public:
     }
 
     const Archive *getParent() const { return Parent; }
-    Child getNext() const;
+    ErrorOr<Child> getNext() const;
 
     ErrorOr<StringRef> getName() const;
     StringRef getRawName() const { return getHeader()->getName(); }
@@ -93,9 +96,9 @@ public:
       return getHeader()->getAccessMode();
     }
     /// \return the size of the archive member without the header or padding.
-    uint64_t getSize() const;
+    ErrorOr<uint64_t> getSize() const;
     /// \return the size in the archive header for this member.
-    uint64_t getRawSize() const;
+    ErrorOr<uint64_t> getRawSize() const;
 
     ErrorOr<StringRef> getBuffer() const;
     uint64_t getChildOffset() const;
@@ -107,28 +110,35 @@ public:
   };
 
   class child_iterator {
-    Child child;
+    ErrorOr<Child> child;
 
   public:
-    child_iterator() : child(Child(nullptr, nullptr)) {}
+    child_iterator() : child(Child(nullptr, nullptr, nullptr)) {}
     child_iterator(const Child &c) : child(c) {}
-    const Child *operator->() const { return &child; }
-    const Child &operator*() const { return child; }
+    child_iterator(std::error_code EC) : child(EC) {}
+    const ErrorOr<Child> *operator->() const { return &child; }
+    const ErrorOr<Child> &operator*() const { return child; }
 
     bool operator==(const child_iterator &other) const {
-      return child == other.child;
+      if ((*this)->getError())
+        return false;
+      if (other->getError())
+        return false;
+      return (*this)->get() == other->get();
     }
 
     bool operator!=(const child_iterator &other) const {
       return !(*this == other);
     }
 
-    bool operator<(const child_iterator &other) const {
-      return child < other.child;
-    }
+    // No operator< as we can't do less than compares with iterators that
+    // contain errors.
 
+    // Code in loops with child_iterators must check for errors on each loop
+    // iteration.  And if there is an error break out of the loop.
     child_iterator &operator++() { // Preincrement
-      child = child.getNext();
+      assert(child && "Can't increment iterator with error");
+      child = child->getNext();
       return *this;
     }
   };
@@ -212,7 +222,7 @@ public:
   StringRef getSymbolTable() const {
     // We know that the symbol table is not an external file,
     // so we just assert there is no error.
-    return *SymbolTable->getBuffer();
+    return *(*SymbolTable)->getBuffer();
   }
   uint32_t getNumberOfSymbols() const;
 

@@ -427,7 +427,13 @@ static void PrintFileSectionSizes(StringRef file) {
     for (object::Archive::child_iterator i = a->child_begin(),
                                          e = a->child_end();
          i != e; ++i) {
-      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+      if (i->getError()) {
+        errs() << ToolName << ": " << file << ": " << i->getError().message()
+               << ".\n";
+        break;
+      }
+      auto &c = i->get();
+      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
       if (std::error_code EC = ChildOrErr.getError()) {
         errs() << ToolName << ": " << file << ": " << EC.message() << ".\n";
         continue;
@@ -489,7 +495,13 @@ static void PrintFileSectionSizes(StringRef file) {
               for (object::Archive::child_iterator i = UA->child_begin(),
                                                    e = UA->child_end();
                    i != e; ++i) {
-                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+                if (std::error_code EC = i->getError()) {
+                  errs() << ToolName << ": " << file << ": " << EC.message()
+                         << ".\n";
+                  break;
+                }
+                auto &c = i->get();
+                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
                 if (std::error_code EC = ChildOrErr.getError()) {
                   errs() << ToolName << ": " << file << ": " << EC.message()
                          << ".\n";
@@ -566,7 +578,13 @@ static void PrintFileSectionSizes(StringRef file) {
             for (object::Archive::child_iterator i = UA->child_begin(),
                                                  e = UA->child_end();
                  i != e; ++i) {
-              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+              if (std::error_code EC = i->getError()) {
+                errs() << ToolName << ": " << file << ": " << EC.message()
+                       << ".\n";
+                break;
+              }
+              auto &c = i->get();
+              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
               if (std::error_code EC = ChildOrErr.getError()) {
                 errs() << ToolName << ": " << file << ": " << EC.message()
                        << ".\n";
@@ -630,7 +648,13 @@ static void PrintFileSectionSizes(StringRef file) {
         for (object::Archive::child_iterator i = UA->child_begin(),
                                              e = UA->child_end();
              i != e; ++i) {
-          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+          if (std::error_code EC = i->getError()) {
+            errs() << ToolName << ": " << file << ": " << EC.message()
+                   << ".\n";
+            break;
+          }
+          auto &c = i->get();
+          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = c.getAsBinary();
           if (std::error_code EC = ChildOrErr.getError()) {
             errs() << ToolName << ": " << file << ": " << EC.message() << ".\n";
             continue;
