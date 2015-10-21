@@ -2662,7 +2662,6 @@ struct REPLInstance
     ConstString name;
     std::string description;
     REPLCreateInstance create_callback;
-    REPLEnumerateSupportedLanguages enumerate_languages_callback;
 };
 
 typedef std::vector<REPLInstance> REPLInstances;
@@ -2684,8 +2683,7 @@ GetREPLInstances ()
 bool
 PluginManager::RegisterPlugin (const ConstString &name,
                                const char *description,
-                               REPLCreateInstance create_callback,
-                               REPLEnumerateSupportedLanguages enumerate_languages_callback)
+                               REPLCreateInstance create_callback)
 {
     if (create_callback)
     {
@@ -2695,7 +2693,6 @@ PluginManager::RegisterPlugin (const ConstString &name,
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        instance.enumerate_languages_callback = enumerate_languages_callback;
         Mutex::Locker locker (GetREPLMutex ());
         GetREPLInstances ().push_back (instance);
     }

@@ -149,9 +149,6 @@ public:
     static void
     GetLanguagesSupportingTypeSystems (std::set<lldb::LanguageType> &languages,
                                        std::set<lldb::LanguageType> &languages_for_expressions);
-
-    static void
-    GetLanguagesSupportingREPLs (std::set<lldb::LanguageType> &languages);
     
 protected:
     //------------------------------------------------------------------

@@ -299,17 +299,6 @@ Language::GetLanguagesSupportingTypeSystems (std::set<lldb::LanguageType> &langu
     }
 }
 
-static void
-GetLanguagesSupportingREPLs (std::set<lldb::LanguageType> &languages)
-{
-    uint32_t idx = 0;
-    
-    while (REPLEnumerateSupportedLanguages enumerate = PluginManager::GetREPLEnumerateSupportedLanguagesCallbackAtIndex(idx++))
-    {
-        (*enumerate)(languages);
-    }
-}
-
 std::unique_ptr<Language::TypeScavenger>
 Language::GetTypeScavenger ()
 {

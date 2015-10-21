@@ -1805,6 +1805,11 @@ Debugger::RunREPL (LanguageType language, const char *repl_options)
 {
     Error err;
     FileSpec repl_executable;
+    if (language == eLanguageTypeUnknown)
+    {
+        err.SetErrorString ("must specify a language for a REPL"); // TODO make it possible to specify a default language
+        return err;
+    }
     
     Target *const target = nullptr; // passing in an empty target means the REPL must create one
     
