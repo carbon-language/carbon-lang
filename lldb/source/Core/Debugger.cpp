@@ -1806,6 +1806,28 @@ Debugger::RunREPL (LanguageType language, const char *repl_options)
     Error err;
     FileSpec repl_executable;
     
+    if (language == eLanguageTypeUnknown)
+    {
+        std::set<LanguageType> repl_languages;
+        
+        Language::GetLanguagesSupportingREPLs(repl_languages);
+        
+        if (repl_languages.size() == 1)
+        {
+            language = *repl_languages.begin();
+        }
+        else if (repl_languages.size() == 0)
+        {
+            err.SetErrorStringWithFormat("LLDB isn't configured with support support for any REPLs.");
+            return err;
+        }
+        else
+        {
+            err.SetErrorStringWithFormat("Multiple possible REPL languages.  Please specify a language.");
+            return err;
+        }
+    }
+
     Target *const target = nullptr; // passing in an empty target means the REPL must create one
     
     REPLSP repl_sp(REPL::Create(err, language, this, target, repl_options));

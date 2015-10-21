@@ -226,10 +226,15 @@ Target::GetREPL (Error &err, lldb::LanguageType language, const char *repl_optio
         {
             language = *repl_languages.begin();
         }
+        else if (repl_languages.size() == 0)
+        {
+            err.SetErrorStringWithFormat("LLDB isn't configured with support support for any REPLs.");
+            return REPLSP();
+        }
         else
         {
             err.SetErrorStringWithFormat("Multiple possible REPL languages.  Please specify a language.");
-            return REPLSP(); // must provide a language
+            return REPLSP();
         }
     }
     
