@@ -200,6 +200,7 @@ namespace {
     bool matchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM);
     bool matchWrapper(SDValue N, X86ISelAddressMode &AM);
     bool matchAddress(SDValue N, X86ISelAddressMode &AM);
+    bool matchAdd(SDValue N, X86ISelAddressMode &AM, unsigned Depth);
     bool matchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                  unsigned Depth);
     bool matchAddressBase(SDValue N, X86ISelAddressMode &AM);
@@ -856,6 +857,40 @@ bool X86DAGToDAGISel::matchAddress(SDValue N, X86ISelAddressMode &AM) {
   return false;
 }
 
+bool X86DAGToDAGISel::matchAdd(SDValue N, X86ISelAddressMode &AM,
+                               unsigned Depth) {
+  // Add an artificial use to this node so that we can keep track of
+  // it if it gets CSE'd with a different node.
+  HandleSDNode Handle(N);
+
+  X86ISelAddressMode Backup = AM;
+  if (!matchAddressRecursively(N.getOperand(0), AM, Depth+1) &&
+      !matchAddressRecursively(Handle.getValue().getOperand(1), AM, Depth+1))
+    return false;
+  AM = Backup;
+
+  // Try again after commuting the operands.
+  if (!matchAddressRecursively(Handle.getValue().getOperand(1), AM, Depth+1) &&
+      !matchAddressRecursively(Handle.getValue().getOperand(0), AM, Depth+1))
+    return false;
+  AM = Backup;
+
+  // If we couldn't fold both operands into the address at the same time,
+  // see if we can just put each operand into a register and fold at least
+  // the add.
+  if (AM.BaseType == X86ISelAddressMode::RegBase &&
+      !AM.Base_Reg.getNode() &&
+      !AM.IndexReg.getNode()) {
+    N = Handle.getValue();
+    AM.Base_Reg = N.getOperand(0);
+    AM.IndexReg = N.getOperand(1);
+    AM.Scale = 1;
+    return false;
+  }
+  N = Handle.getValue();
+  return true;
+}
+
 // Insert a node into the DAG at least before the Pos node's position. This
 // will reposition the node as needed, and will assign it a node ID that is <=
 // the Pos node's ID. Note that this does *not* preserve the uniqueness of node
@@ -1298,38 +1333,10 @@ bool X86DAGToDAGISel::matchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     return false;
   }
 
-  case ISD::ADD: {
-    // Add an artificial use to this node so that we can keep track of
-    // it if it gets CSE'd with a different node.
-    HandleSDNode Handle(N);
-
-    X86ISelAddressMode Backup = AM;
-    if (!matchAddressRecursively(N.getOperand(0), AM, Depth+1) &&
-        !matchAddressRecursively(Handle.getValue().getOperand(1), AM, Depth+1))
+  case ISD::ADD:
+    if (!matchAdd(N, AM, Depth))
       return false;
-    AM = Backup;
-
-    // Try again after commuting the operands.
-    if (!matchAddressRecursively(Handle.getValue().getOperand(1), AM, Depth+1)&&
-        !matchAddressRecursively(Handle.getValue().getOperand(0), AM, Depth+1))
-      return false;
-    AM = Backup;
-
-    // If we couldn't fold both operands into the address at the same time,
-    // see if we can just put each operand into a register and fold at least
-    // the add.
-    if (AM.BaseType == X86ISelAddressMode::RegBase &&
-        !AM.Base_Reg.getNode() &&
-        !AM.IndexReg.getNode()) {
-      N = Handle.getValue();
-      AM.Base_Reg = N.getOperand(0);
-      AM.IndexReg = N.getOperand(1);
-      AM.Scale = 1;
-      return false;
-    }
-    N = Handle.getValue();
     break;
-  }
 
   case ISD::OR:
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
