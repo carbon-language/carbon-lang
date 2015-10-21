@@ -18,7 +18,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
-#include <climits>
+#include <limits>
 using namespace llvm;
 using namespace dwarf;
 using namespace syntax;
@@ -565,7 +565,7 @@ Optional<uint64_t> DWARFFormValue::getAsUnsignedConstant() const {
 
 Optional<int64_t> DWARFFormValue::getAsSignedConstant() const {
   if ((!isFormClass(FC_Constant) && !isFormClass(FC_Flag)) ||
-      (Form == DW_FORM_udata && uint64_t(LLONG_MAX) < Value.uval))
+      (Form == DW_FORM_udata && uint64_t(std::numeric_limits<int64_t>::max()) < Value.uval))
     return None;
   switch (Form) {
   case DW_FORM_data4:
