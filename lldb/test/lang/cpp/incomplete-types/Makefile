@@ -30,6 +30,6 @@ length_nolimit.o: length.cpp
 a.o: a.cpp
 	$(CXX) $(CFLAGS_NO_DEBUG) -c a.cpp -o a.o
 
-clean: OBJECTS += limit nolimit length_limit.o length_nolimit.o
+clean: OBJECTS += limit nolimit length_limit.o length_nolimit.o length_limit.dwo length_nolimit.dwo
 
 include $(LEVEL)/Makefile.rules

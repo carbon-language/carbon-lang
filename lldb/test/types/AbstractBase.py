@@ -46,9 +46,6 @@ class GenericTester(TestBase):
     # functions.  There are also three optional keyword arguments of interest, #
     # as follows:                                                              #
     #                                                                          #
-    # dsym -> build for dSYM (defaulted to True)                               #
-    #         True: build dSYM file                                            #
-    #         False: build DWARF map                                           #
     # bc -> blockCaptured (defaulted to False)                                 #
     #         True: testing vars of various basic types from inside a block    #
     #         False: testing vars of various basic types from a function       #

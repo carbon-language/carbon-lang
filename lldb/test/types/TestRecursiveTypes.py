@@ -33,7 +33,7 @@ class RecursiveTypesTestCase(TestBase):
 
     def test_recursive_type_2(self):
         """Test that recursive structs are displayed correctly."""
-        self.build(dictionary=self.d1)
+        self.build(dictionary=self.d2)
         self.setTearDownCleanup(dictionary=self.d2)
         self.print_struct()
 

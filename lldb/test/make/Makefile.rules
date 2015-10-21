@@ -489,7 +489,7 @@ endif
 # files by replacing all .c files with .d.
 #----------------------------------------------------------------------
 PREREQS := $(OBJECTS:.o=.d)
-DWOS := $(OBJECTS:.o=.dwo)
+DWOS := $(OBJECTS:.o=.dwo) $(ARCHIVE_OBJECTS:.o=.dwo)
 ifneq "$(DYLIB_NAME)" ""
 	DYLIB_PREREQS := $(DYLIB_OBJECTS:.o=.d)
 	DYLIB_DWOS := $(DYLIB_OBJECTS:.o=.dwo)
