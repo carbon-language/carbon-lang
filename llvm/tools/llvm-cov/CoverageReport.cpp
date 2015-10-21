@@ -91,6 +91,17 @@ static Column column(StringRef Str, unsigned Width, const T &Value) {
 static size_t FileReportColumns[] = {25, 10, 8, 8, 10, 10};
 static size_t FunctionReportColumns[] = {25, 10, 8, 8, 10, 8, 8};
 
+/// \brief  Adjust column widths to fit long file paths and function names.
+static void adjustColumnWidths(coverage::CoverageMapping *CM) {
+  for (StringRef Filename : CM->getUniqueSourceFiles()) {
+    FileReportColumns[0] = std::max(FileReportColumns[0], Filename.size());
+    for (const auto &F : CM->getCoveredFunctions(Filename)) {
+      FunctionReportColumns[0] =
+          std::max(FunctionReportColumns[0], F.Name.size());
+    }
+  }
+}
+
 /// \brief Prints a horizontal divider which spans across the given columns.
 template <typename T, size_t N>
 static void renderDivider(T (&Columns)[N], raw_ostream &OS) {
@@ -162,6 +173,7 @@ void CoverageReport::render(const FunctionCoverageSummary &Function,
 
 void CoverageReport::renderFunctionReports(ArrayRef<std::string> Files,
                                            raw_ostream &OS) {
+  adjustColumnWidths(Coverage.get());
   bool isFirst = true;
   for (StringRef Filename : Files) {
     if (isFirst)
@@ -196,15 +208,7 @@ void CoverageReport::renderFunctionReports(ArrayRef<std::string> Files,
 }
 
 void CoverageReport::renderFileReports(raw_ostream &OS) {
-  // Adjust column widths to accomodate long paths and names.
-  for (StringRef Filename : Coverage->getUniqueSourceFiles()) {
-    FileReportColumns[0] = std::max(FileReportColumns[0], Filename.size());
-    for (const auto &F : Coverage->getCoveredFunctions(Filename)) {
-      FunctionReportColumns[0] =
-          std::max(FunctionReportColumns[0], F.Name.size());
-    }
-  }
-
+  adjustColumnWidths(Coverage.get());
   OS << column("Filename", FileReportColumns[0])
      << column("Regions", FileReportColumns[1], Column::RightAlignment)
      << column("Miss", FileReportColumns[2], Column::RightAlignment)
