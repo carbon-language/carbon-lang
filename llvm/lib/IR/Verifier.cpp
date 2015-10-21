@@ -39,8 +39,7 @@
 //    only by the unwind edge of an invoke instruction.
 //  * A landingpad instruction must be the first non-PHI instruction in the
 //    block.
-//  * All landingpad instructions must use the same personality function with
-//    the same function.
+//  * Landingpad instructions must be in a function with a personality function.
 //  * All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
