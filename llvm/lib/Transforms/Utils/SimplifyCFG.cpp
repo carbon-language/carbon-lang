@@ -2571,7 +2571,8 @@ static bool SimplifyTerminatorOnSelect(TerminatorInst *OldTerm, Value *Cond,
     else if (Succ == KeepEdge2)
       KeepEdge2 = nullptr;
     else
-      Succ->removePredecessor(OldTerm->getParent());
+      Succ->removePredecessor(OldTerm->getParent(),
+                              /*DontDeleteUselessPHIs=*/true);
   }
 
   IRBuilder<> Builder(OldTerm);
