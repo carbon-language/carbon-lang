@@ -5538,6 +5538,7 @@ std::error_code FunctionIndexBitcodeReader::parseFunctionSummary(
   // importing is added so that it can be tested.
   SmallVector<uint64_t, 64> Record;
   switch (Stream.readRecord(Entry.ID, Record)) {
+    case bitc::FS_CODE_COMBINED_ENTRY:
     default:
       return error("Invalid record");
   }
