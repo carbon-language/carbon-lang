@@ -358,9 +358,9 @@ bool TargetInfo::isValidGCCRegisterName(StringRef Name) const {
 
   // If we have a number it maps to an entry in the register name array.
   if (isDigit(Name[0])) {
-    int n;
+    unsigned n;
     if (!Name.getAsInteger(0, n))
-      return n >= 0 && (unsigned)n < Names.size();
+      return n < Names.size();
   }
 
   // Check register names.
@@ -406,10 +406,9 @@ TargetInfo::getNormalizedGCCRegisterName(StringRef Name) const {
 
   // First, check if we have a number.
   if (isDigit(Name[0])) {
-    int n;
+    unsigned n;
     if (!Name.getAsInteger(0, n)) {
-      assert(n >= 0 && (unsigned)n < Names.size() &&
-             "Out of bounds register number!");
+      assert(n < Names.size() && "Out of bounds register number!");
       return Names[n];
     }
   }
