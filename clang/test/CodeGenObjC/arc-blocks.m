@@ -263,8 +263,7 @@ void test7(void) {
   // 0x42800000 - has signature, copy/dispose helpers, as well as BLOCK_HAS_EXTENDED_LAYOUT
   // CHECK:      store i32 -1040187392,
   // CHECK:      [[SLOT:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
-  // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_loadWeakRetained(i8** [[VAR]])
-  // CHECK-NEXT: call i8* @objc_initWeak(i8** [[SLOT]], i8* [[T0]])
+  // CHECK-NEXT: call void @objc_copyWeak(i8** [[SLOT]], i8** [[VAR]])
   // CHECK:      call void @test7_helper(
   // CHECK-NEXT: call void @objc_destroyWeak(i8** {{%.*}})
   // CHECK-NEXT: call void @objc_destroyWeak(i8** [[VAR]])

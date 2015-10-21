@@ -324,3 +324,13 @@ template void test40_helper<int>();
 // CHECK-NEXT: [[T0:%.*]] = load i8*, i8** [[TEMP]]
 // CHECK-NEXT: call i8* @objc_retain(i8* [[T0]])
 
+// Check that moves out of __weak variables are compiled to use objc_moveWeak.
+void test41(__weak id &&x) {
+  __weak id y = static_cast<__weak id &&>(x);
+}
+// CHECK-LABEL: define void @_Z6test41OU6__weakP11objc_object
+// CHECK:      [[X:%.*]] = alloca i8**
+// CHECK:      [[Y:%.*]] = alloca i8*
+// CHECK:      [[T0:%.*]] = load i8**, i8*** [[X]]
+// CHECK-NEXT: call void @objc_moveWeak(i8** [[Y]], i8** [[T0]])
+// CHECK-NEXT: call void @objc_destroyWeak(i8** [[Y]])

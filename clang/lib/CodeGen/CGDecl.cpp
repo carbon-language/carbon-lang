@@ -597,6 +597,47 @@ static bool isAccessedBy(const ValueDecl *decl, const Expr *e) {
   return isAccessedBy(*var, e);
 }
 
+static bool tryEmitARCCopyWeakInit(CodeGenFunction &CGF,
+                                   const LValue &destLV, const Expr *init) {
+  while (auto castExpr = dyn_cast<CastExpr>(init->IgnoreParens())) {
+    switch (castExpr->getCastKind()) {
+    // Look through casts that don't require representation changes.
+    case CK_NoOp:
+    case CK_BitCast:
+    case CK_BlockPointerToObjCPointerCast:
+      break;
+
+    // If we find an l-value to r-value cast from a __weak variable,
+    // emit this operation as a copy or move.
+    case CK_LValueToRValue: {
+      const Expr *srcExpr = castExpr->getSubExpr();
+      if (srcExpr->getType().getObjCLifetime() != Qualifiers::OCL_Weak)
+        return false;
+
+      // Emit the source l-value.
+      LValue srcLV = CGF.EmitLValue(srcExpr);
+
+      // If it was an l-value, use objc_copyWeak.
+      if (srcExpr->getValueKind() == VK_LValue) {
+        CGF.EmitARCCopyWeak(destLV.getAddress(), srcLV.getAddress());
+      } else {
+        assert(srcExpr->getValueKind() == VK_XValue);
+        CGF.EmitARCMoveWeak(destLV.getAddress(), srcLV.getAddress());
+      }
+      return true;
+    }
+
+    // Stop at anything else.
+    default:
+      return false;
+    }
+
+    init = castExpr->getSubExpr();
+    continue;
+  }
+  return false;
+}
+
 static void drillIntoBlockVariable(CodeGenFunction &CGF,
                                    LValue &lvalue,
                                    const VarDecl *var) {
@@ -673,6 +714,12 @@ void CodeGenFunction::EmitScalarInit(const Expr *init, const ValueDecl *D,
   }
 
   case Qualifiers::OCL_Weak: {
+    // If it's not accessed by the initializer, try to emit the
+    // initialization with a copy or move.
+    if (!accessedByInit && tryEmitARCCopyWeakInit(*this, lvalue, init)) {
+      return;
+    }
+
     // No way to optimize a producing initializer into this.  It's not
     // worth optimizing for, because the value will immediately
     // disappear in the common case.
