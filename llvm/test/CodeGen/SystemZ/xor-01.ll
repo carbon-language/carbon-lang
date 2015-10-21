@@ -1,6 +1,6 @@
 ; Test 32-bit XORs in which the second operand is variable.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z196 | FileCheck %s
 
 declare i32 @foo()

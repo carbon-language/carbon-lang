@@ -994,11 +994,17 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         LiveInts && !LiveInts->isNotInMIMap(MI)) {
       LiveInterval &LI = LiveStks->getInterval(MO->getIndex());
       SlotIndex Idx = LiveInts->getInstructionIndex(MI);
-      if (MI->mayLoad() && !LI.liveAt(Idx.getRegSlot(true))) {
+
+      // For a memory-to-memory move, we don't know if MI is using
+      // this frame index for loading or storing, so check for
+      // liveness at reg-slot only in the simple load case.
+      bool stores = MI->mayStore();
+      bool simpleLoad = (MI->mayLoad() && !stores);
+      if (simpleLoad && !LI.liveAt(Idx.getRegSlot(true))) {
         report("Instruction loads from dead spill slot", MO, MONum);
         errs() << "Live stack: " << LI << '\n';
       }
-      if (MI->mayStore() && !LI.liveAt(Idx.getRegSlot())) {
+      if (stores && !LI.liveAt(Idx.getRegSlot())) {
         report("Instruction stores to dead spill slot", MO, MONum);
         errs() << "Live stack: " << LI << '\n';
       }
