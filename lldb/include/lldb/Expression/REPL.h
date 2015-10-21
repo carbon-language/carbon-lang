@@ -38,13 +38,16 @@ public:
     virtual ~REPL();
     
     //------------------------------------------------------------------
-    /// Get a REPL with an (optional) existing target, and (optional) extra arguments for the compiler.
+    /// Get a REPL with an existing target (or, failing that, a debugger to use), and (optional) extra arguments for the compiler.
     ///
     /// @param[out] error
     ///     If this language is supported but the REPL couldn't be created, this error is populated with the reason.
     ///
     /// @param[in] language
     ///     The language to create a REPL for.
+    ///
+    /// @param[in] debugger
+    ///     If provided, and target is NULL, the debugger to use when setting up a top-level REPL.
     ///
     /// @param[in] target
     ///     If provided, the target to put the REPL inside.
@@ -56,7 +59,7 @@ public:
     ///     The range of the containing object in the target process.
     //------------------------------------------------------------------
     static lldb::REPLSP
-    Create (Error &Error, lldb::LanguageType language, Target *target, const char *repl_options);
+    Create (Error &Error, lldb::LanguageType language, Debugger *debugger, Target *target, const char *repl_options);
 
     void
     SetFormatOptions (const OptionGroupFormat &options)

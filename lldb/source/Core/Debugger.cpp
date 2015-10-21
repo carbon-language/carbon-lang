@@ -1813,7 +1813,7 @@ Debugger::RunREPL (LanguageType language, const char *repl_options)
     
     Target *const target = nullptr; // passing in an empty target means the REPL must create one
     
-    REPLSP repl_sp(REPL::Create(err, language, target, repl_options));
+    REPLSP repl_sp(REPL::Create(err, language, this, target, repl_options));
 
     if (!err.Success())
     {

@@ -23,14 +23,14 @@
 using namespace lldb_private;
 
 lldb::REPLSP
-REPL::Create(Error &err, lldb::LanguageType language, Target *target, const char *repl_options)
+REPL::Create(Error &err, lldb::LanguageType language, Debugger *debugger, Target *target, const char *repl_options)
 {
     uint32_t idx = 0;
     lldb::REPLSP ret;
     
     while (REPLCreateInstance create_instance = PluginManager::GetREPLCreateCallbackAtIndex(idx++))
     {
-        ret = (*create_instance)(err, language, target, repl_options);
+        ret = (*create_instance)(err, language, debugger, target, repl_options);
         if (ret)
         {
             break;

@@ -233,7 +233,8 @@ Target::GetREPL (Error &err, lldb::LanguageType language, const char *repl_optio
         return lldb::REPLSP();
     }
     
-    lldb::REPLSP ret = REPL::Create(err, language, this, repl_options);
+    Debugger *const debugger = nullptr;
+    lldb::REPLSP ret = REPL::Create(err, language, debugger, this, repl_options);
     
     if (ret)
     {
