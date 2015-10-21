@@ -1392,3 +1392,19 @@ vmovq %xmm0, %rax
 // CHECK: seto 3735928559(%r10,%r9,8)
 // CHECK:  encoding: [0x43,0x0f,0x90,0x84,0xca,0xef,0xbe,0xad,0xde]
 	seto 0xdeadbeef(%r10,%r9,8)
+
+// CHECK: 	monitorx
+// CHECK:  encoding: [0x0f,0x01,0xfa]
+        	monitorx
+
+// CHECK: 	monitorx
+// CHECK:  encoding: [0x0f,0x01,0xfa]
+        	monitorx %rax, %rcx, %rdx
+
+// CHECK: 	mwaitx
+// CHECK:  encoding: [0x0f,0x01,0xfb]
+        	mwaitx
+
+// CHECK: 	mwaitx
+// CHECK:  encoding: [0x0f,0x01,0xfb]
+        	mwaitx %rax, %rcx, %rbx

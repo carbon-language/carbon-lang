@@ -10742,3 +10742,23 @@ btcq $4, (%eax)
 // CHECK: getsec
 // CHECK:  encoding: [0x0f,0x37]
         	getsec
+
+// CHECK: 	monitorx
+// CHECK:  encoding: [0x0f,0x01,0xfa]
+        	monitorx
+
+// CHECK: 	monitorx
+// CHECK:  encoding: [0x0f,0x01,0xfa]
+        	monitorx %eax, %ecx, %edx
+
+// CHECK: 	mwaitx
+// CHECK:  encoding: [0x0f,0x01,0xfb]
+        	mwaitx
+
+// CHECK: 	mwaitx
+// CHECK:  encoding: [0x0f,0x01,0xfb]
+        	mwaitx %eax, %ecx, %ebx
+
+// CHECK: 	clzero
+// CHECK:  encoding: [0x0f,0x01,0xfc]
+        	clzero
