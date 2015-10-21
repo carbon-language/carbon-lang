@@ -59,6 +59,7 @@ struct Configuration {
   bool Verbose;
   bool ZNodelete = false;
   bool ZNow = false;
+  bool ZOrigin = false;
   ELFKind EKind = ELFNoneKind;
   uint16_t EMachine = llvm::ELF::EM_NONE;
   uint64_t EntryAddr = -1;

@@ -163,6 +163,8 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       Config->ZNodelete = true;
     else if (Arg->getValue() == StringRef("now"))
       Config->ZNow = true;
+    else if (Arg->getValue() == StringRef("origin"))
+      Config->ZOrigin = true;
   }
 
   for (auto *Arg : Args) {
