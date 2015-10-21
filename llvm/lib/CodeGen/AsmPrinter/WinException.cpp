@@ -611,7 +611,6 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
     computeIP2StateTable(MF, FuncInfo, IPToStateTable);
   } else {
     FuncInfoXData = Asm->OutContext.getOrCreateLSDASymbol(FuncLinkageName);
-    emitEHRegistrationOffsetLabel(FuncInfo, FuncLinkageName);
   }
 
   int UnwindHelpOffset = 0;
