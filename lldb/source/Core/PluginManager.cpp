@@ -2662,6 +2662,7 @@ struct REPLInstance
     ConstString name;
     std::string description;
     REPLCreateInstance create_callback;
+    REPLEnumerateSupportedLanguages enumerate_languages_callback;
 };
 
 typedef std::vector<REPLInstance> REPLInstances;
@@ -2683,7 +2684,8 @@ GetREPLInstances ()
 bool
 PluginManager::RegisterPlugin (const ConstString &name,
                                const char *description,
-                               REPLCreateInstance create_callback)
+                               REPLCreateInstance create_callback,
+                               REPLEnumerateSupportedLanguages enumerate_languages_callback)
 {
     if (create_callback)
     {
@@ -2693,6 +2695,7 @@ PluginManager::RegisterPlugin (const ConstString &name,
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.enumerate_languages_callback = enumerate_languages_callback;
         Mutex::Locker locker (GetREPLMutex ());
         GetREPLInstances ().push_back (instance);
     }
@@ -2743,6 +2746,35 @@ PluginManager::GetREPLCreateCallbackForPluginName (const ConstString &name)
         {
             if (name == pos->name)
                 return pos->create_callback;
+        }
+    }
+    return NULL;
+}
+
+REPLEnumerateSupportedLanguages
+PluginManager::GetREPLEnumerateSupportedLanguagesCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetREPLMutex ());
+    REPLInstances &instances = GetREPLInstances ();
+    if (idx < instances.size())
+        return instances[idx].enumerate_languages_callback;
+    return NULL;
+}
+
+
+REPLEnumerateSupportedLanguages
+PluginManager::GetREPLSystemEnumerateSupportedLanguagesCallbackForPluginName (const ConstString &name)
+{
+    if (name)
+    {
+        Mutex::Locker locker (GetREPLMutex ());
+        REPLInstances &instances = GetREPLInstances ();
+        
+        REPLInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name == pos->name)
+                return pos->enumerate_languages_callback;
         }
     }
     return NULL;

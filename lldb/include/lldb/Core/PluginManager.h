@@ -449,7 +449,8 @@ public:
     static bool
     RegisterPlugin (const ConstString &name,
                     const char *description,
-                    REPLCreateInstance create_callback);
+                    REPLCreateInstance create_callback,
+                    REPLEnumerateSupportedLanguages enumerate_languages_callback);
     
     static bool
     UnregisterPlugin (REPLCreateInstance create_callback);
@@ -459,6 +460,12 @@ public:
     
     static REPLCreateInstance
     GetREPLCreateCallbackForPluginName (const ConstString &name);
+    
+    static REPLEnumerateSupportedLanguages
+    GetREPLEnumerateSupportedLanguagesCallbackAtIndex (uint32_t idx);
+    
+    static REPLEnumerateSupportedLanguages
+    GetREPLSystemEnumerateSupportedLanguagesCallbackForPluginName (const ConstString &name);
     
     //------------------------------------------------------------------
     // Some plug-ins might register a DebuggerInitializeCallback
