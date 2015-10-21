@@ -10,9 +10,18 @@
 #ifndef liblldb_DisassemblerLLVMC_h_
 #define liblldb_DisassemblerLLVMC_h_
 
+// C Includes
+// C++ Includes
 #include <string>
 
+// Other libraries and framework includes
 #include "llvm-c/Disassembler.h"
+
+// Project includes
+#include "lldb/Core/Address.h"
+#include "lldb/Core/Disassembler.h"
+#include "lldb/Core/PluginManager.h"
+#include "lldb/Host/Mutex.h"
 
 // Opaque references to C++ Objects in LLVM's MC.
 namespace llvm
@@ -25,12 +34,7 @@ namespace llvm
     class MCInstPrinter;
     class MCAsmInfo;
     class MCSubtargetInfo;
-}
-
-#include "lldb/Core/Address.h"
-#include "lldb/Core/Disassembler.h"
-#include "lldb/Core/PluginManager.h"
-#include "lldb/Host/Mutex.h"
+} // namespace llvm
 
 class InstructionLLVMC;
 
@@ -43,7 +47,7 @@ class DisassemblerLLVMC : public lldb_private::Disassembler
     public:
         LLVMCDisassembler (const char *triple, const char *cpu, const char *features_str, unsigned flavor, DisassemblerLLVMC &owner);
 
-        ~LLVMCDisassembler();
+        ~LLVMCDisassembler() = default;
 
         uint64_t GetMCInst (const uint8_t *opcode_data, size_t opcode_data_len, lldb::addr_t pc, llvm::MCInst &mc_inst);
         uint64_t PrintMCInst (llvm::MCInst &mc_inst, char *output_buffer, size_t out_buffer_len);
@@ -67,6 +71,10 @@ class DisassemblerLLVMC : public lldb_private::Disassembler
     };
 
 public:
+    DisassemblerLLVMC(const lldb_private::ArchSpec &arch, const char *flavor /* = NULL */);
+
+    ~DisassemblerLLVMC() override = default;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -82,33 +90,28 @@ public:
     static lldb_private::Disassembler *
     CreateInstance(const lldb_private::ArchSpec &arch, const char *flavor);
 
-    DisassemblerLLVMC(const lldb_private::ArchSpec &arch, const char *flavor /* = NULL */);
-
-    virtual
-    ~DisassemblerLLVMC();
-
-    virtual size_t
-    DecodeInstructions (const lldb_private::Address &base_addr,
-                        const lldb_private::DataExtractor& data,
-                        lldb::offset_t data_offset,
-                        size_t num_instructions,
-                        bool append,
-                        bool data_from_file);
+    size_t
+    DecodeInstructions(const lldb_private::Address &base_addr,
+                       const lldb_private::DataExtractor& data,
+                       lldb::offset_t data_offset,
+                       size_t num_instructions,
+                       bool append,
+                       bool data_from_file) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     friend class InstructionLLVMC;
 
-    virtual bool
-    FlavorValidForArchSpec (const lldb_private::ArchSpec &arch, const char *flavor);
+    bool
+    FlavorValidForArchSpec(const lldb_private::ArchSpec &arch, const char *flavor) override;
 
     bool
     IsValid()
@@ -164,4 +167,4 @@ protected:
     std::unique_ptr<LLVMCDisassembler> m_alternate_disasm_ap;
 };
 
-#endif  // liblldb_DisassemblerLLVM_h_
+#endif // liblldb_DisassemblerLLVM_h_

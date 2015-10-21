@@ -1,4 +1,4 @@
-//===-- ClangFunctionCaller.h -----------------------------------------*- C++ -*-===//
+//===-- ClangFunctionCaller.h -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,6 @@
 
 // C Includes
 // C++ Includes
-#include <vector>
-#include <list>
 // Other libraries and framework includes
 // Project includes
 #include "ClangExpressionHelper.h"
@@ -78,7 +76,7 @@ class ClangFunctionCaller : public FunctionCaller
         {
         }
         
-        ~ClangFunctionCallerHelper() {}
+        ~ClangFunctionCallerHelper() override = default;
         
         //------------------------------------------------------------------
         /// Return the object that the parser should use when resolving external
@@ -100,6 +98,7 @@ class ClangFunctionCaller : public FunctionCaller
         //------------------------------------------------------------------
         clang::ASTConsumer *
         ASTTransformer(clang::ASTConsumer *passthrough) override;
+
     private:
         ClangFunctionCaller                      &m_owner;
         std::unique_ptr<ASTStructExtractor> m_struct_extractor;         ///< The class that generates the argument struct layout.
@@ -133,9 +132,6 @@ public:
                          const ValueList &arg_value_list,
                          const char *name);
     
-    //------------------------------------------------------------------
-    /// Destructor
-    //------------------------------------------------------------------
     ~ClangFunctionCaller() override;
 
     //------------------------------------------------------------------
@@ -155,11 +151,13 @@ public:
     {
         return &m_type_system_helper;
     }
+
 protected:
     const char *GetWrapperStructName()
     {
         return m_wrapper_struct_name.c_str();
     }
+
 private:
     //------------------------------------------------------------------
     // For ClangFunctionCaller only
@@ -168,9 +166,8 @@ private:
     // Note: the parser needs to be destructed before the execution unit, so
     // declare the execution unit first.
     ClangFunctionCallerHelper   m_type_system_helper;
-
 };
 
-} // Namespace lldb_private
+} // namespace lldb_private
 
 #endif // liblldb_ClangFunctionCaller_h_

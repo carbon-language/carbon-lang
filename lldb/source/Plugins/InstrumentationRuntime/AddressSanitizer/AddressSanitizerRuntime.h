@@ -10,6 +10,10 @@
 #ifndef liblldb_AddressSanitizerRuntime_h_
 #define liblldb_AddressSanitizerRuntime_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/InstrumentationRuntime.h"
@@ -21,7 +25,8 @@ namespace lldb_private {
 class AddressSanitizerRuntime : public lldb_private::InstrumentationRuntime
 {
 public:
-    
+    ~AddressSanitizerRuntime() override;
+
     static lldb::InstrumentationRuntimeSP
     CreateInstance (const lldb::ProcessSP &process_sp);
     
@@ -36,26 +41,30 @@ public:
     
     static lldb::InstrumentationRuntimeType
     GetTypeStatic();
-    
-    virtual
-    ~AddressSanitizerRuntime();
-    
-    virtual lldb_private::ConstString
-    GetPluginName() { return GetPluginNameStatic(); }
+
+    lldb_private::ConstString
+    GetPluginName() override
+    { 
+        return GetPluginNameStatic();
+    }
     
     virtual lldb::InstrumentationRuntimeType
     GetType() { return GetTypeStatic(); }
     
-    virtual uint32_t
-    GetPluginVersion() { return 1; }
+    uint32_t
+    GetPluginVersion() override
+    {
+        return 1;
+    }
     
-    virtual void
-    ModulesDidLoad(lldb_private::ModuleList &module_list);
+    void
+    ModulesDidLoad(lldb_private::ModuleList &module_list) override;
     
-    virtual bool
-    IsActive();
+    bool
+    IsActive() override;
     
 private:
+    AddressSanitizerRuntime(const lldb::ProcessSP &process_sp);
 
     lldb::ProcessSP
     GetProcessSP ()
@@ -63,8 +72,6 @@ private:
         return m_process_wp.lock();
     }
 
-    AddressSanitizerRuntime(const lldb::ProcessSP &process_sp);
-    
     void
     Activate();
     
@@ -84,9 +91,8 @@ private:
     lldb::ModuleSP m_runtime_module;
     lldb::ProcessWP m_process_wp;
     lldb::user_id_t m_breakpoint_id;
-
 };
     
 } // namespace lldb_private
 
-#endif  // liblldb_InstrumentationRuntime_h_
+#endif // liblldb_AddressSanitizerRuntime_h_

@@ -7,36 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ClangExpressionParser.h"
-
-#include "ClangASTSource.h"
-#include "ClangExpressionHelper.h"
-#include "ClangExpressionDeclMap.h"
-#include "ClangModulesDeclVendor.h"
-#include "ClangPersistentVariables.h"
-#include "IRForTarget.h"
-
-#include "lldb/Core/ArchSpec.h"
-#include "lldb/Core/DataBufferHeap.h"
-#include "lldb/Core/Debugger.h"
-#include "lldb/Core/Disassembler.h"
-#include "lldb/Core/Log.h"
-#include "lldb/Core/Module.h"
-#include "lldb/Core/Stream.h"
-#include "lldb/Core/StreamFile.h"
-#include "lldb/Core/StreamString.h"
-#include "lldb/Expression/IRExecutionUnit.h"
-#include "lldb/Expression/IRDynamicChecks.h"
-#include "lldb/Expression/IRInterpreter.h"
-#include "lldb/Host/File.h"
-#include "lldb/Host/HostInfo.h"
-#include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/SymbolVendor.h"
-#include "lldb/Target/ExecutionContext.h"
-#include "lldb/Target/ObjCLanguageRuntime.h"
-#include "lldb/Target/Process.h"
-#include "lldb/Target/Target.h"
-
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/Basic/FileManager.h"
@@ -73,6 +46,37 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Signals.h"
 
+// Project includes
+#include "ClangExpressionParser.h"
+
+#include "ClangASTSource.h"
+#include "ClangExpressionHelper.h"
+#include "ClangExpressionDeclMap.h"
+#include "ClangModulesDeclVendor.h"
+#include "ClangPersistentVariables.h"
+#include "IRForTarget.h"
+
+#include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Debugger.h"
+#include "lldb/Core/Disassembler.h"
+#include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/Stream.h"
+#include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StreamString.h"
+#include "lldb/Expression/IRExecutionUnit.h"
+#include "lldb/Expression/IRDynamicChecks.h"
+#include "lldb/Expression/IRInterpreter.h"
+#include "lldb/Host/File.h"
+#include "lldb/Host/HostInfo.h"
+#include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
+
 using namespace clang;
 using namespace llvm;
 using namespace lldb_private;
@@ -103,6 +107,7 @@ class ClangExpressionParser::LLDBPreprocessorCallbacks : public PPCallbacks
     ClangPersistentVariables   &m_persistent_vars;
     StreamString                m_error_stream;
     bool                        m_has_errors = false;
+
 public:
     LLDBPreprocessorCallbacks(ClangModulesDeclVendor &decl_vendor,
                               ClangPersistentVariables &persistent_vars) :
@@ -111,9 +116,10 @@ public:
     {
     }
     
-    virtual void moduleImport(SourceLocation import_location,
-                              clang::ModuleIdPath path,
-                              const clang::Module * /*null*/)
+    void
+    moduleImport(SourceLocation import_location,
+                 clang::ModuleIdPath path,
+                 const clang::Module * /*null*/) override
     {
         std::vector<ConstString> string_path;
         

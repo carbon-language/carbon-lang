@@ -12,12 +12,11 @@
 
 // C Includes
 // C++ Includes
-#include <map>
 #include <vector>
 #include <string>
 
 // Other libraries and framework includes
-
+// Project includes
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/TimeValue.h"
@@ -28,6 +27,10 @@
 class DynamicLoaderDarwinKernel : public lldb_private::DynamicLoader
 {
 public:
+    DynamicLoaderDarwinKernel(lldb_private::Process *process, lldb::addr_t kernel_addr);
+
+    ~DynamicLoaderDarwinKernel() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -49,38 +52,33 @@ public:
     static void
     DebuggerInitialize (lldb_private::Debugger &debugger);
 
-    DynamicLoaderDarwinKernel (lldb_private::Process *process, lldb::addr_t kernel_addr);
-
-    virtual
-    ~DynamicLoaderDarwinKernel ();
-
     //------------------------------------------------------------------
     /// Called after attaching a process.
     ///
     /// Allow DynamicLoader plug-ins to execute some code after
     /// attaching to a process.
     //------------------------------------------------------------------
-    virtual void
-    DidAttach ();
+    void
+    DidAttach() override;
 
-    virtual void
-    DidLaunch ();
+    void
+    DidLaunch() override;
 
-    virtual lldb::ThreadPlanSP
-    GetStepThroughTrampolinePlan (lldb_private::Thread &thread,
-                                  bool stop_others);
+    lldb::ThreadPlanSP
+    GetStepThroughTrampolinePlan(lldb_private::Thread &thread,
+                                 bool stop_others) override;
 
-    virtual lldb_private::Error
-    CanLoadImage ();
+    lldb_private::Error
+    CanLoadImage() override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     void
@@ -263,7 +261,6 @@ protected:
         lldb::addr_t             m_load_address;
         uint64_t                 m_size;
         bool                     m_kernel_image;         // true if this is the kernel, false if this is a kext
-
     };
 
     struct OSKextLoadedKextSummaryHeader
@@ -371,4 +368,4 @@ private:
     DISALLOW_COPY_AND_ASSIGN (DynamicLoaderDarwinKernel);
 };
 
-#endif  // liblldb_DynamicLoaderDarwinKernel_h_
+#endif // liblldb_DynamicLoaderDarwinKernel_h_

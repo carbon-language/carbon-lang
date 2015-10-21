@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DynamicLoaderHexagon_H_
-#define liblldb_DynamicLoaderHexagon_H_
+#ifndef liblldb_DynamicLoaderHexagonDYLD_h_
+#define liblldb_DynamicLoaderHexagonDYLD_h_
 
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+// Project includes
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Target/DynamicLoader.h"
 
@@ -21,6 +22,9 @@
 class DynamicLoaderHexagonDYLD : public lldb_private::DynamicLoader
 {
 public:
+    DynamicLoaderHexagonDYLD(lldb_private::Process *process);
+
+    ~DynamicLoaderHexagonDYLD() override;
 
     static void
     Initialize();
@@ -37,38 +41,33 @@ public:
     static lldb_private::DynamicLoader *
     CreateInstance(lldb_private::Process *process, bool force);
 
-    DynamicLoaderHexagonDYLD(lldb_private::Process *process);
-
-    virtual
-    ~DynamicLoaderHexagonDYLD();
-
     //------------------------------------------------------------------
     // DynamicLoader protocol
     //------------------------------------------------------------------
 
-    virtual void
+    void
     DidAttach() override;
 
-    virtual void
+    void
     DidLaunch() override;
 
     lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan(lldb_private::Thread &thread,
                                  bool stop_others) override;
 
-    virtual lldb_private::Error
+    lldb_private::Error
     CanLoadImage() override;
 
-    virtual lldb::addr_t
-    GetThreadLocalData (const lldb::ModuleSP module, const lldb::ThreadSP thread) override;
+    lldb::addr_t
+    GetThreadLocalData(const lldb::ModuleSP module, const lldb::ThreadSP thread) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
+    lldb_private::ConstString
     GetPluginName() override;
 
-    virtual uint32_t
+    uint32_t
     GetPluginVersion() override;
 
 protected:
@@ -168,10 +167,10 @@ protected:
     FindRendezvousBreakpointAddress( );
 
 private:
-    DISALLOW_COPY_AND_ASSIGN(DynamicLoaderHexagonDYLD);
-
     const lldb_private::SectionList *
     GetSectionListFromModule(const lldb::ModuleSP module) const;
+
+    DISALLOW_COPY_AND_ASSIGN(DynamicLoaderHexagonDYLD);
 };
 
-#endif  // liblldb_DynamicLoaderHexagonDYLD_H_
+#endif // liblldb_DynamicLoaderHexagonDYLD_h_

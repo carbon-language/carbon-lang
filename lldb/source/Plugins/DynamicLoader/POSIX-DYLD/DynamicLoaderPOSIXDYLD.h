@@ -1,4 +1,4 @@
-//===-- DynamicLoaderPOSIX.h ------------------------------------*- C++ -*-===//
+//===-- DynamicLoaderPOSIXDYLD.h --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DynamicLoaderPOSIX_H_
-#define liblldb_DynamicLoaderPOSIX_H_
+#ifndef liblldb_DynamicLoaderPOSIXDYLD_h_
+#define liblldb_DynamicLoaderPOSIXDYLD_h_
 
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+// Project includes
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Target/DynamicLoader.h"
 
@@ -23,6 +24,9 @@ class AuxVector;
 class DynamicLoaderPOSIXDYLD : public lldb_private::DynamicLoader
 {
 public:
+    DynamicLoaderPOSIXDYLD(lldb_private::Process *process);
+
+    ~DynamicLoaderPOSIXDYLD() override;
 
     static void
     Initialize();
@@ -39,38 +43,33 @@ public:
     static lldb_private::DynamicLoader *
     CreateInstance(lldb_private::Process *process, bool force);
 
-    DynamicLoaderPOSIXDYLD(lldb_private::Process *process);
-
-    virtual
-    ~DynamicLoaderPOSIXDYLD();
-
     //------------------------------------------------------------------
     // DynamicLoader protocol
     //------------------------------------------------------------------
 
-    virtual void
+    void
     DidAttach() override;
 
-    virtual void
+    void
     DidLaunch() override;
 
     lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan(lldb_private::Thread &thread,
                                  bool stop_others) override;
 
-    virtual lldb_private::Error
+    lldb_private::Error
     CanLoadImage() override;
 
-    virtual lldb::addr_t
-    GetThreadLocalData (const lldb::ModuleSP module, const lldb::ThreadSP thread) override;
+    lldb::addr_t
+    GetThreadLocalData(const lldb::ModuleSP module, const lldb::ThreadSP thread) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
+    lldb_private::ConstString
     GetPluginName() override;
 
-    virtual uint32_t
+    uint32_t
     GetPluginVersion() override;
 
 protected:
@@ -168,4 +167,4 @@ private:
     DISALLOW_COPY_AND_ASSIGN(DynamicLoaderPOSIXDYLD);
 };
 
-#endif  // liblldb_DynamicLoaderPOSIXDYLD_H_
+#endif // liblldb_DynamicLoaderPOSIXDYLD_h_

@@ -1,4 +1,4 @@
-//===-- EmulateInstructionARM64.h ------------------------------------*- C++ -*-===//
+//===-- EmulateInstructionARM64.h -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,6 +10,10 @@
 #ifndef EmulateInstructionARM64_h_
 #define EmulateInstructionARM64_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Interpreter/OptionValue.h"
@@ -18,6 +22,14 @@
 class EmulateInstructionARM64 : public lldb_private::EmulateInstruction
 {
 public: 
+    EmulateInstructionARM64 (const lldb_private::ArchSpec &arch) :
+        EmulateInstruction (arch),
+        m_opcode_pstate (),
+        m_emulated_pstate (),
+        m_ignore_conditions (false)
+    {
+    }
+
     static void
     Initialize ();
     
@@ -50,55 +62,46 @@ public:
         return false;
     }
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion()
+    uint32_t
+    GetPluginVersion() override
     {
         return 1;
     }
 
     bool
-    SetTargetTriple (const lldb_private::ArchSpec &arch);
+    SetTargetTriple(const lldb_private::ArchSpec &arch) override;
     
-    EmulateInstructionARM64 (const lldb_private::ArchSpec &arch) :
-        EmulateInstruction (arch),
-        m_opcode_pstate (),
-        m_emulated_pstate (),
-        m_ignore_conditions (false)
-    {
-    }
-
-    virtual bool
-    SupportsEmulatingInstructionsOfType (lldb_private::InstructionType inst_type)
+    bool
+    SupportsEmulatingInstructionsOfType(lldb_private::InstructionType inst_type) override
     {
         return SupportsEmulatingInstructionsOfTypeStatic (inst_type);
     }
 
-    virtual bool 
-    ReadInstruction ();
+    bool
+    ReadInstruction() override;
     
-    virtual bool
-    EvaluateInstruction (uint32_t evaluate_options);
+    bool
+    EvaluateInstruction(uint32_t evaluate_options) override;
     
-    virtual bool
-    TestEmulation (lldb_private::Stream *out_stream, 
-                   lldb_private::ArchSpec &arch, 
-                   lldb_private::OptionValueDictionary *test_data)
+    bool
+    TestEmulation(lldb_private::Stream *out_stream,
+                  lldb_private::ArchSpec &arch,
+                  lldb_private::OptionValueDictionary *test_data) override
     {
         return false;
     }
 
-    virtual bool
-    GetRegisterInfo (lldb::RegisterKind reg_kind,
-                     uint32_t reg_num, 
-                     lldb_private::RegisterInfo &reg_info);
+    bool
+    GetRegisterInfo(lldb::RegisterKind reg_kind,
+                    uint32_t reg_num,
+                    lldb_private::RegisterInfo &reg_info) override;
 
-    virtual bool
-    CreateFunctionEntryUnwind (lldb_private::UnwindPlan &unwind_plan);
+    bool
+    CreateFunctionEntryUnwind(lldb_private::UnwindPlan &unwind_plan) override;
 
-    
     typedef enum 
     {
         AddrMode_OFF, 
@@ -135,7 +138,6 @@ public:
         BitwiseOp_NOT, 
         BitwiseOp_RBIT
     } BitwiseOp;
-    
 
     typedef enum
     {
@@ -246,7 +248,6 @@ public:
     } ProcState;
 
 protected:
-
     typedef struct
     {
         uint32_t mask;
@@ -297,4 +298,4 @@ protected:
     bool m_ignore_conditions;
 };
 
-#endif  // EmulateInstructionARM64_h_
+#endif // EmulateInstructionARM64_h_

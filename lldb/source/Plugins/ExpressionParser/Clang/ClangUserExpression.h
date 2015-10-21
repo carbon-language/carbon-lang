@@ -12,13 +12,10 @@
 
 // C Includes
 // C++ Includes
-#include <string>
-#include <map>
 #include <vector>
 
 // Other libraries and framework includes
 // Project includes
-
 #include "ASTStructExtractor.h"
 #include "ASTResultSynthesizer.h"
 #include "ClangExpressionDeclMap.h"
@@ -49,9 +46,7 @@ namespace lldb_private
 class ClangUserExpression : public UserExpression
 {
 public:
-
     enum { kDefaultTimeout = 500000u };
-
 
     class ClangUserExpressionHelper : public ClangExpressionHelper
     {
@@ -61,7 +56,7 @@ public:
         {
         }
         
-        ~ClangUserExpressionHelper() {}
+        ~ClangUserExpressionHelper() override = default;
         
         //------------------------------------------------------------------
         /// Return the object that the parser should use when resolving external
@@ -92,6 +87,7 @@ public:
         //------------------------------------------------------------------
         clang::ASTConsumer *
         ASTTransformer(clang::ASTConsumer *passthrough) override;
+
     private:
         Target                                  &m_target;
         std::unique_ptr<ClangExpressionDeclMap> m_expr_decl_map_up;
@@ -124,9 +120,6 @@ public:
                          lldb::LanguageType language,
                          ResultType desired_type);
 
-    //------------------------------------------------------------------
-    /// Destructor
-    //------------------------------------------------------------------
     ~ClangUserExpression() override;
 
     //------------------------------------------------------------------
@@ -209,6 +202,7 @@ private:
         
         void RegisterPersistentState(PersistentExpressionState *persistent_state);
         lldb::ExpressionVariableSP &GetVariable();
+
     private:
         PersistentExpressionState *m_persistent_state;
         lldb::ExpressionVariableSP m_variable;

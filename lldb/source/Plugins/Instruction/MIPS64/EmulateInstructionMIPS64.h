@@ -1,4 +1,4 @@
-//===-- EmulateInstructionMIPS64.h ------------------------------------*- C++ -*-===//
+//===-- EmulateInstructionMIPS64.h ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,6 +10,14 @@
 #ifndef EmulateInstructionMIPS64_h_
 #define EmulateInstructionMIPS64_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
+#include "lldb/Core/EmulateInstruction.h"
+#include "lldb/Core/Error.h"
+#include "lldb/Interpreter/OptionValue.h"
+
 namespace llvm
 {
     class MCDisassembler;
@@ -19,15 +27,13 @@ namespace llvm
     class MCContext;
     class MCInstrInfo;
     class MCInst;
-}
-
-#include "lldb/Core/EmulateInstruction.h"
-#include "lldb/Core/Error.h"
-#include "lldb/Interpreter/OptionValue.h"
+} // namespace llvm
 
 class EmulateInstructionMIPS64 : public lldb_private::EmulateInstruction
 {
 public: 
+    EmulateInstructionMIPS64(const lldb_private::ArchSpec &arch);
+
     static void
     Initialize ();
 
@@ -60,51 +66,47 @@ public:
         return false;
     }
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion()
+    uint32_t
+    GetPluginVersion() override
     {
         return 1;
     }
 
     bool
-    SetTargetTriple (const lldb_private::ArchSpec &arch);
+    SetTargetTriple(const lldb_private::ArchSpec &arch) override;
     
-    EmulateInstructionMIPS64 (const lldb_private::ArchSpec &arch);
-
-    virtual bool
-    SupportsEmulatingInstructionsOfType (lldb_private::InstructionType inst_type)
+    bool
+    SupportsEmulatingInstructionsOfType(lldb_private::InstructionType inst_type) override
     {
         return SupportsEmulatingInstructionsOfTypeStatic (inst_type);
     }
 
-    virtual bool 
-    ReadInstruction ();
+    bool
+    ReadInstruction() override;
     
-    virtual bool
-    EvaluateInstruction (uint32_t evaluate_options);
+    bool
+    EvaluateInstruction(uint32_t evaluate_options) override;
     
-    virtual bool
-    TestEmulation (lldb_private::Stream *out_stream, 
-                   lldb_private::ArchSpec &arch, 
-                   lldb_private::OptionValueDictionary *test_data)
+    bool
+    TestEmulation(lldb_private::Stream *out_stream,
+                  lldb_private::ArchSpec &arch,
+                  lldb_private::OptionValueDictionary *test_data) override
     {
         return false;
     }
 
-    virtual bool
-    GetRegisterInfo (lldb::RegisterKind reg_kind,
-                     uint32_t reg_num, 
-                     lldb_private::RegisterInfo &reg_info);
+    bool
+    GetRegisterInfo(lldb::RegisterKind reg_kind,
+                    uint32_t reg_num,
+                    lldb_private::RegisterInfo &reg_info) override;
 
-    virtual bool
-    CreateFunctionEntryUnwind (lldb_private::UnwindPlan &unwind_plan);
-
+    bool
+    CreateFunctionEntryUnwind(lldb_private::UnwindPlan &unwind_plan) override;
 
 protected:
-
     typedef struct
     {
         const char *op_name;
@@ -346,4 +348,4 @@ private:
     std::unique_ptr<llvm::MCInstrInfo>      m_insn_info;
 };
 
-#endif  // EmulateInstructionMIPS64_h_
+#endif // EmulateInstructionMIPS64_h_

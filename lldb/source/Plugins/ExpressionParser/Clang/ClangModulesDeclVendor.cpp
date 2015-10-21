@@ -7,8 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <mutex> // std::once
+// C Includes
+// C++ Includes
+#include <mutex>
 
+// Other libraries and framework includes
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendActions.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/Parser.h"
+#include "clang/Sema/Lookup.h"
+#include "clang/Serialization/ASTReader.h"
+
+// Project includes
 #include "ClangModulesDeclVendor.h"
 
 #include "lldb/Core/Log.h"
@@ -20,15 +32,6 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/LLDBAssert.h"
 
-#include "clang/Basic/TargetInfo.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/FrontendActions.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/Parser.h"
-#include "clang/Sema/Lookup.h"
-#include "clang/Serialization/ASTReader.h"
-
-
 using namespace lldb_private;
 
 namespace {
@@ -38,14 +41,17 @@ namespace {
     {
     public:
         StoringDiagnosticConsumer ();
+
         void
-        HandleDiagnostic (clang::DiagnosticsEngine::Level DiagLevel, const clang::Diagnostic &info);
+        HandleDiagnostic(clang::DiagnosticsEngine::Level DiagLevel,
+                         const clang::Diagnostic &info) override;
         
         void
         ClearDiagnostics ();
         
         void
         DumpDiagnostics (Stream &error_stream);
+
     private:
         typedef std::pair<clang::DiagnosticsEngine::Level, std::string> IDAndDiagnostic;
         std::vector<IDAndDiagnostic> m_diagnostics;
@@ -61,28 +67,28 @@ namespace {
                                    llvm::IntrusiveRefCntPtr<clang::CompilerInvocation> &compiler_invocation,
                                    std::unique_ptr<clang::CompilerInstance> &&compiler_instance,
                                    std::unique_ptr<clang::Parser> &&parser);
-        
-        virtual bool
+
+        ~ClangModulesDeclVendorImpl() override = default;
+
+        bool
         AddModule(ModulePath &path,
                   ModuleVector *exported_modules,
                   Stream &error_stream) override;
-        
-        virtual bool
+
+        bool
         AddModulesForCompileUnit(CompileUnit &cu,
                                  ModuleVector &exported_modules,
                                  Stream &error_stream) override;
+
+        uint32_t
+        FindDecls(const ConstString &name,
+                  bool append,
+                  uint32_t max_matches,
+                  std::vector <clang::NamedDecl*> &decls) override;
         
-        virtual uint32_t
-        FindDecls (const ConstString &name,
-                   bool append,
-                   uint32_t max_matches,
-                   std::vector <clang::NamedDecl*> &decls) override;
-        
-        virtual void
+        void
         ForEachMacro(const ModuleVector &modules,
                      std::function<bool (const std::string &)> handler) override;
-        
-        ~ClangModulesDeclVendorImpl();
         
     private:
         void
@@ -110,7 +116,7 @@ namespace {
         ImportedModuleMap                                   m_imported_modules;
         ImportedModuleSet                                   m_user_imported_modules;
     };
-}
+} // anonymous namespace
 
 StoringDiagnosticConsumer::StoringDiagnosticConsumer ()
 {
@@ -163,7 +169,6 @@ GetResourceDir ()
     
     return g_cached_resource_dir;
 }
-
 
 ClangModulesDeclVendor::ClangModulesDeclVendor()
 {
@@ -317,7 +322,6 @@ ClangModulesDeclVendorImpl::AddModule(ModulePath &path,
     
     return false;
 }
-
 
 bool
 ClangModulesDeclVendor::LanguageSupportsClangModules (lldb::LanguageType language)
@@ -595,10 +599,6 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
             }
         }
     }
-}
-
-ClangModulesDeclVendorImpl::~ClangModulesDeclVendorImpl()
-{
 }
 
 clang::ModuleLoadResult

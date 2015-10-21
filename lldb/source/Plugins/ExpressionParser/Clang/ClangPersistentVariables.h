@@ -10,12 +10,16 @@
 #ifndef liblldb_ClangPersistentVariables_h_
 #define liblldb_ClangPersistentVariables_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+#include "llvm/ADT/DenseMap.h"
+
+// Project includes
 #include "ClangExpressionVariable.h"
 #include "ClangModulesDeclVendor.h"
 
 #include "lldb/Expression/ExpressionVariable.h"
-
-#include "llvm/ADT/DenseMap.h"
 
 namespace lldb_private
 {
@@ -31,14 +35,10 @@ namespace lldb_private
 class ClangPersistentVariables : public PersistentExpressionState
 {
 public:
-    
-    //----------------------------------------------------------------------
-    /// Constructor
-    //----------------------------------------------------------------------
-    ClangPersistentVariables ();
-    
-    ~ClangPersistentVariables () { }
-    
+    ClangPersistentVariables();
+
+    ~ClangPersistentVariables() override = default;
+
     //------------------------------------------------------------------
     // llvm casting support
     //------------------------------------------------------------------
@@ -101,6 +101,6 @@ private:
                                                                                             ///< priority source for macros.
 };
 
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_ClangPersistentVariables_h_

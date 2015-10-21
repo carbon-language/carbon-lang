@@ -12,12 +12,8 @@
 
 // C Includes
 // C++ Includes
-#include <map>
-#include <vector>
-#include <string>
-
 // Other libraries and framework includes
-
+// Project includes
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/UUID.h"
@@ -27,6 +23,10 @@
 class DynamicLoaderStatic : public lldb_private::DynamicLoader
 {
 public:
+    DynamicLoaderStatic(lldb_private::Process *process);
+
+    ~DynamicLoaderStatic() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -45,37 +45,33 @@ public:
     static lldb_private::DynamicLoader *
     CreateInstance (lldb_private::Process *process, bool force);
 
-    DynamicLoaderStatic (lldb_private::Process *process);
-
-    virtual
-    ~DynamicLoaderStatic ();
     //------------------------------------------------------------------
     /// Called after attaching a process.
     ///
     /// Allow DynamicLoader plug-ins to execute some code after
     /// attaching to a process.
     //------------------------------------------------------------------
-    virtual void
-    DidAttach ();
+    void
+    DidAttach() override;
 
-    virtual void
-    DidLaunch ();
+    void
+    DidLaunch() override;
 
-    virtual lldb::ThreadPlanSP
-    GetStepThroughTrampolinePlan (lldb_private::Thread &thread,
-                                  bool stop_others);
+    lldb::ThreadPlanSP
+    GetStepThroughTrampolinePlan(lldb_private::Thread &thread,
+                                 bool stop_others) override;
 
-    virtual lldb_private::Error
-    CanLoadImage ();
+    lldb_private::Error
+    CanLoadImage() override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 private:
     void
@@ -84,4 +80,4 @@ private:
     DISALLOW_COPY_AND_ASSIGN (DynamicLoaderStatic);
 };
 
-#endif  // liblldb_DynamicLoaderStatic_h_
+#endif // liblldb_DynamicLoaderStatic_h_

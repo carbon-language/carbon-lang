@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DisassemblerLLVMC.h"
-
+// C Includes
+// C++ Includes
+// Project includes
 #include "llvm-c/Disassembler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -25,6 +26,8 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/ADT/SmallString.h"
 
+// Other libraries and framework includes
+#include "DisassemblerLLVMC.h"
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/DataExtractor.h"
@@ -58,13 +61,10 @@ public:
     {
     }
 
-    virtual
-    ~InstructionLLVMC ()
-    {
-    }
+    ~InstructionLLVMC() override = default;
 
-    virtual bool
-    DoesBranch ()
+    bool
+    DoesBranch() override
     {
         if (m_does_branch == eLazyBoolCalculate)
         {
@@ -100,8 +100,8 @@ public:
         return m_does_branch == eLazyBoolYes;
     }
 
-    virtual bool
-    HasDelaySlot ()
+    bool
+    HasDelaySlot() override
     {
         if (m_has_delay_slot == eLazyBoolCalculate)
         {
@@ -155,10 +155,10 @@ public:
         return llvm_disasm.m_disasm_ap.get();
     }
 
-    virtual size_t
-    Decode (const lldb_private::Disassembler &disassembler,
-            const lldb_private::DataExtractor &data,
-            lldb::offset_t data_offset)
+    size_t
+    Decode(const lldb_private::Disassembler &disassembler,
+           const lldb_private::DataExtractor &data,
+           lldb::offset_t data_offset) override
     {
         // All we have to do is read the opcode which can be easy for some
         // architectures
@@ -272,8 +272,8 @@ public:
         }
     }
 
-    virtual void
-    CalculateMnemonicOperandsAndComment (const lldb_private::ExecutionContext *exe_ctx)
+    void
+    CalculateMnemonicOperandsAndComment(const lldb_private::ExecutionContext *exe_ctx) override
     {
         DataExtractor data;
         const AddressClass address_class = GetAddressClass ();
@@ -452,8 +452,6 @@ protected:
     bool                    m_using_file_addr;
 };
 
-
-
 DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, const char *cpu, const char *features_str, unsigned flavor, DisassemblerLLVMC &owner):
     m_is_valid(true)
 {
@@ -519,10 +517,6 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, con
     }
     else
         m_is_valid = false;
-}
-
-DisassemblerLLVMC::LLVMCDisassembler::~LLVMCDisassembler()
-{
 }
 
 uint64_t
@@ -604,7 +598,6 @@ DisassemblerLLVMC::FlavorValidForArchSpec (const lldb_private::ArchSpec &arch, c
     else
         return false;
 }
-
 
 Disassembler *
 DisassemblerLLVMC::CreateInstance (const ArchSpec &arch, const char *flavor)
@@ -780,10 +773,6 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
             m_alternate_disasm_ap.reset();
         }
     }
-}
-
-DisassemblerLLVMC::~DisassemblerLLVMC()
-{
 }
 
 size_t
