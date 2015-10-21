@@ -364,10 +364,8 @@ bool TargetInfo::isValidGCCRegisterName(StringRef Name) const {
   }
 
   // Check register names.
-  for (unsigned i = 0; i < Names.size(); i++) {
-    if (Name == Names[i])
-      return true;
-  }
+  if (std::find(Names.begin(), Names.end(), Name) != Names.end())
+    return true;
 
   // Check any additional names that we have.
   ArrayRef<AddlRegName> AddlNames = getGCCAddlRegNames();
