@@ -47,7 +47,7 @@ static const opt::OptTable::Info infoTable[] = {
 
 class ELFOptTable : public opt::OptTable {
 public:
-  ELFOptTable() : OptTable(infoTable, array_lengthof(infoTable)) {}
+  ELFOptTable() : OptTable(infoTable) {}
 };
 
 // Parses a given list of options.

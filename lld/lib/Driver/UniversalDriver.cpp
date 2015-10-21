@@ -63,7 +63,7 @@ static const llvm::opt::OptTable::Info infoTable[] = {
 class UniversalDriverOptTable : public llvm::opt::OptTable {
 public:
   UniversalDriverOptTable()
-      : OptTable(infoTable, llvm::array_lengthof(infoTable)) {}
+      : OptTable(infoTable) {}
 };
 
 enum class Flavor {

@@ -72,7 +72,7 @@ static const llvm::opt::OptTable::Info infoTable[] = {
 // Create OptTable class for parsing actual command line arguments
 class GnuLdOptTable : public llvm::opt::OptTable {
 public:
-  GnuLdOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
+  GnuLdOptTable() : OptTable(infoTable){}
 };
 
 } // anonymous namespace

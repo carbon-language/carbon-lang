@@ -56,7 +56,7 @@ static const llvm::opt::OptTable::Info infoTable[] = {
 // Create OptTable class for parsing actual command line arguments
 class CoreOptTable : public llvm::opt::OptTable {
 public:
-  CoreOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
+  CoreOptTable() : OptTable(infoTable) {}
 };
 
 } // namespace anonymous

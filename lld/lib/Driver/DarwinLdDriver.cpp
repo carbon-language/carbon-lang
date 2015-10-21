@@ -69,7 +69,7 @@ static const llvm::opt::OptTable::Info infoTable[] = {
 // Create OptTable class for parsing actual command line arguments
 class DarwinLdOptTable : public llvm::opt::OptTable {
 public:
-  DarwinLdOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
+  DarwinLdOptTable() : OptTable(infoTable) {}
 };
 
 std::vector<std::unique_ptr<File>>
