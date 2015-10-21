@@ -22,8 +22,8 @@
 #include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
-#if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips64)) \
-    && (SANITIZER_WORDSIZE == 64)
+#if (SANITIZER_LINUX && !SANITIZER_ANDROID) && (SANITIZER_WORDSIZE == 64) \
+     && (defined(__x86_64__) ||  defined(__mips64) ||  defined(__aarch64__))
 #define CAN_SANITIZE_LEAKS 1
 #else
 #define CAN_SANITIZE_LEAKS 0
