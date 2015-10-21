@@ -43,8 +43,8 @@ template <class ELFT> int SymbolBody::compare(SymbolBody *Other) {
   Visibility = Other->Visibility =
       getMinVisibility(Visibility, Other->Visibility);
 
-  IsUsedInRegularObj |= Other->IsUsedInRegularObj;
-  Other->IsUsedInRegularObj |= IsUsedInRegularObj;
+  if (IsUsedInRegularObj || Other->IsUsedInRegularObj)
+    IsUsedInRegularObj = Other->IsUsedInRegularObj = true;
 
   if (L != R)
     return -1;
