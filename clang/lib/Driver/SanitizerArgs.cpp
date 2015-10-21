@@ -29,7 +29,7 @@ enum : SanitizerMask {
   NeedsUbsanRt = Undefined | Integer | CFI,
   NeedsUbsanCxxRt = Vptr | CFI,
   NotAllowedWithTrap = Vptr,
-  RequiresPIE = DataFlow,
+  RequiresPIE = Memory | DataFlow,
   NeedsUnwindTables = Address | Thread | Memory | DataFlow,
   SupportsCoverage = Address | Memory | Leak | Undefined | Integer | DataFlow,
   RecoverableByDefault = Undefined | Integer,
