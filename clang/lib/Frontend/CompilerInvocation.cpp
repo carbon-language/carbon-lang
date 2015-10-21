@@ -1296,7 +1296,7 @@ static Visibility parseVisibility(Arg *arg, ArgList &args,
   StringRef value = arg->getValue();
   if (value == "default") {
     return DefaultVisibility;
-  } else if (value == "hidden") {
+  } else if (value == "hidden" || value == "internal") {
     return HiddenVisibility;
   } else if (value == "protected") {
     // FIXME: diagnose if target does not support protected visibility
