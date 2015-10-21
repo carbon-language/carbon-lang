@@ -9,6 +9,7 @@ add_clang_library(clangTidyModernizeModule
   ReplaceAutoPtrCheck.cpp
   ShrinkToFitCheck.cpp
   UseAutoCheck.cpp
+  UseDefaultCheck.cpp
   UseNullptrCheck.cpp
   UseOverrideCheck.cpp
 

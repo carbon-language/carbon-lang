@@ -55,6 +55,7 @@ List of clang-tidy Checks
    modernize-replace-auto-ptr
    modernize-shrink-to-fit
    modernize-use-auto
+   modernize-use-default
    modernize-use-nullptr
    modernize-use-override
    readability-braces-around-statements
