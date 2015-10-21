@@ -848,10 +848,8 @@ public:
                          BoundNodesTreeBuilder *Builder,
                          AncestorMatchMode MatchMode) {
     static_assert(std::is_base_of<Decl, T>::value ||
-                      std::is_base_of<NestedNameSpecifierLoc, T>::value ||
-                      std::is_base_of<Stmt, T>::value ||
-                      std::is_base_of<TypeLoc, T>::value,
-                  "type not allowed for recursive matching");
+                  std::is_base_of<Stmt, T>::value,
+                  "only Decl or Stmt allowed for recursive matching");
     return matchesAncestorOf(ast_type_traits::DynTypedNode::create(Node),
                              Matcher, Builder, MatchMode);
   }

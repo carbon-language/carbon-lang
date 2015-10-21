@@ -38,19 +38,6 @@ TEST(GetParents, ReturnsParentForStmt) {
                              ifStmt(hasParent(compoundStmt()))));
 }
 
-TEST(GetParents, ReturnsParentForTypeLoc) {
-  MatchVerifier<TypeLoc> Verifier;
-  EXPECT_TRUE(
-      Verifier.match("namespace a { class b {}; } void f(a::b) {}",
-                     typeLoc(hasParent(typeLoc(hasParent(functionDecl()))))));
-}
-
-TEST(GetParents, ReturnsParentForNestedNameSpecifierLoc) {
-  MatchVerifier<NestedNameSpecifierLoc> Verifier;
-  EXPECT_TRUE(Verifier.match("namespace a { class b {}; } void f(a::b) {}",
-                             nestedNameSpecifierLoc(hasParent(typeLoc()))));
-}
-
 TEST(GetParents, ReturnsParentInsideTemplateInstantiations) {
   MatchVerifier<Decl> DeclVerifier;
   EXPECT_TRUE(DeclVerifier.match(

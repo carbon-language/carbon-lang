@@ -452,7 +452,7 @@ public:
   typedef llvm::SmallVector<ast_type_traits::DynTypedNode, 2> ParentVector;
 
   /// \brief Maps from a node to its parents.
-  typedef llvm::DenseMap<ast_type_traits::DynTypedNode,
+  typedef llvm::DenseMap<const void *,
                          llvm::PointerUnion<ast_type_traits::DynTypedNode *,
                                             ParentVector *>> ParentMap;
 
