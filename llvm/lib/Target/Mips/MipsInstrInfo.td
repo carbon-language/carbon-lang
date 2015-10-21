@@ -178,6 +178,8 @@ def IsGP32bit    :    Predicate<"!Subtarget->isGP64bit()">,
                       AssemblerPredicate<"!FeatureGP64Bit">;
 def HasMips64    :    Predicate<"Subtarget->hasMips64()">,
                       AssemblerPredicate<"FeatureMips64">;
+def NotMips64    :    Predicate<"!Subtarget->hasMips64()">,
+                      AssemblerPredicate<"!FeatureMips64">;
 def HasMips64r2  :    Predicate<"Subtarget->hasMips64r2()">,
                       AssemblerPredicate<"FeatureMips64r2">;
 def HasMips64r6  :    Predicate<"Subtarget->hasMips64r6()">,
@@ -308,6 +310,10 @@ class INSN_MIPS5_32R2_NOT_32R6_64R6 {
 
 class ASE_MSA {
   list<Predicate> InsnPredicates = [HasMSA];
+}
+
+class ASE_MSA_NOT_MSA64 {
+  list<Predicate> InsnPredicates = [HasMSA, NotMips64];
 }
 
 class ASE_MSA64 {

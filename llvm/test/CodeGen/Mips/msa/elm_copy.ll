@@ -170,7 +170,8 @@ declare i32 @llvm.mips.copy.u.w(<4 x i32>, i32) nounwind
 ; MIPS32-DAG: lw [[R1:\$[0-9]+]], %got(llvm_mips_copy_u_w_ARG1)
 ; MIPS64-DAG: ld [[R1:\$[0-9]+]], %got_disp(llvm_mips_copy_u_w_ARG1)
 ; MIPS-ANY-DAG: ld.w [[WS:\$w[0-9]+]], 0([[R1]])
-; MIPS-ANY-DAG: copy_u.w [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS32-DAG: copy_s.w [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS64-DAG: copy_u.w [[RD:\$[0-9]+]], [[WS]][1]
 ; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_w_RES)
 ; MIPS64-DAG: ld [[RES:\$[0-9]+]], %got_disp(llvm_mips_copy_u_w_RES)
 ; MIPS-ANY-DAG: sw [[RD]], 0([[RES]])
@@ -196,7 +197,7 @@ declare i64 @llvm.mips.copy.u.d(<2 x i64>, i32) nounwind
 ; MIPS64-DAG: ld.d [[WS:\$w[0-9]+]], 0([[R1]])
 ; MIPS32-DAG: copy_s.w [[RD1:\$[0-9]+]], [[WS]][2]
 ; MIPS32-DAG: copy_s.w [[RD2:\$[0-9]+]], [[WS]][3]
-; MIPS64-DAG: copy_u.d [[RD:\$[0-9]+]], [[WS]][1]
+; MIPS64-DAG: copy_s.d [[RD:\$[0-9]+]], [[WS]][1]
 ; MIPS32-DAG: lw [[RES:\$[0-9]+]], %got(llvm_mips_copy_u_d_RES)
 ; MIPS64-DAG: ld [[RES:\$[0-9]+]], %got_disp(llvm_mips_copy_u_d_RES)
 ; MIPS32-DAG: sw [[RD1]], 0([[RES]])

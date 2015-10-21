@@ -63,6 +63,8 @@ def MipsVExtractSExt : SDNode<"MipsISD::VEXTRACT_SEXT_ELT",
 def MipsVExtractZExt : SDNode<"MipsISD::VEXTRACT_ZEXT_ELT",
     SDTypeProfile<1, 3, [SDTCisPtrTy<2>]>, []>;
 
+def immZExt1Ptr : ImmLeaf<iPTR, [{return isUInt<1>(Imm);}]>;
+def immZExt2Ptr : ImmLeaf<iPTR, [{return isUInt<2>(Imm);}]>;
 def immZExt4Ptr : ImmLeaf<iPTR, [{return isUInt<4>(Imm);}]>;
 def immZExt6Ptr : ImmLeaf<iPTR, [{return isUInt<6>(Imm);}]>;
 
@@ -639,7 +641,6 @@ class COPY_S_D_ENC : MSA_ELM_COPY_D_FMT<0b0010, 0b011001>;
 class COPY_U_B_ENC : MSA_ELM_COPY_B_FMT<0b0011, 0b011001>;
 class COPY_U_H_ENC : MSA_ELM_COPY_H_FMT<0b0011, 0b011001>;
 class COPY_U_W_ENC : MSA_ELM_COPY_W_FMT<0b0011, 0b011001>;
-class COPY_U_D_ENC : MSA_ELM_COPY_D_FMT<0b0011, 0b011001>;
 
 class CTCMSA_ENC : MSA_ELM_CTCMSA_FMT<0b0000111110, 0b011001>;
 
@@ -1934,8 +1935,6 @@ class COPY_U_H_DESC : MSA_COPY_DESC_BASE<"copy_u.h", vextract_zext_i16, v8i16,
                                          GPR32Opnd, MSA128HOpnd>;
 class COPY_U_W_DESC : MSA_COPY_DESC_BASE<"copy_u.w", vextract_zext_i32, v4i32,
                                          GPR32Opnd, MSA128WOpnd>;
-class COPY_U_D_DESC : MSA_COPY_DESC_BASE<"copy_u.d", vextract_zext_i64, v2i64,
-                                         GPR64Opnd, MSA128DOpnd>;
 
 class COPY_FW_PSEUDO_DESC : MSA_COPY_PSEUDO_BASE<vector_extract, v4f32, FGR32,
                                                  MSA128W>;
@@ -2995,8 +2994,7 @@ def COPY_S_D : COPY_S_D_ENC, COPY_S_D_DESC, ASE_MSA64;
 
 def COPY_U_B : COPY_U_B_ENC, COPY_U_B_DESC;
 def COPY_U_H : COPY_U_H_ENC, COPY_U_H_DESC;
-def COPY_U_W : COPY_U_W_ENC, COPY_U_W_DESC;
-def COPY_U_D : COPY_U_D_ENC, COPY_U_D_DESC, ASE_MSA64;
+def COPY_U_W : COPY_U_W_ENC, COPY_U_W_DESC, ASE_MSA64;
 
 def COPY_FW_PSEUDO : COPY_FW_PSEUDO_DESC;
 def COPY_FD_PSEUDO : COPY_FD_PSEUDO_DESC;
@@ -3786,6 +3784,28 @@ def SZ_D_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllZero, v2i64,
                                                MSA128D, NoItinerary>;
 def SZ_V_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAnyZero, v16i8,
                                                MSA128B, NoItinerary>;
+
+// Vector extraction with fixed index.
+//
+// Extracting 32-bit values on MSA32 should always use COPY_S_W rather than
+// COPY_U_W, even for the zero-extended case. This is because our forward
+// compatibility strategy is to consider registers to be infinitely
+// sign-extended so that a MIPS64 can execute MIPS32 code without getting
+// different register values.
+def : MSAPat<(vextract_zext_i32 (v4i32 MSA128W:$ws), immZExt2Ptr:$idx),
+             (COPY_S_W MSA128W:$ws, immZExt2:$idx)>, ASE_MSA_NOT_MSA64;
+def : MSAPat<(vextract_zext_i32 (v4f32 MSA128W:$ws), immZExt2Ptr:$idx),
+             (COPY_S_W MSA128W:$ws, immZExt2:$idx)>, ASE_MSA_NOT_MSA64;
+
+// Extracting 64-bit values on MSA64 should always use COPY_S_D rather than
+// COPY_U_D, even for the zero-extended case. This is because our forward
+// compatibility strategy is to consider registers to be infinitely
+// sign-extended so that a hypothetical MIPS128 would be able to execute MIPS64
+// code without getting different register values.
+def : MSAPat<(vextract_zext_i64 (v2i64 MSA128D:$ws), immZExt1Ptr:$idx),
+             (COPY_S_D MSA128D:$ws, immZExt1:$idx)>, ASE_MSA64;
+def : MSAPat<(vextract_zext_i64 (v2f64 MSA128D:$ws), immZExt1Ptr:$idx),
+             (COPY_S_D MSA128D:$ws, immZExt1:$idx)>, ASE_MSA64;
 
 // Vector extraction with variable index
 def : MSAPat<(i32 (vextract_sext_i8 v16i8:$ws, i32:$idx)),

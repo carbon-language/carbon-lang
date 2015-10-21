@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // ImmLeaf
+def immZExt1 : ImmLeaf<i32, [{return isUInt<1>(Imm);}]>;
 def immZExt2 : ImmLeaf<i32, [{return isUInt<2>(Imm);}]>;
 def immZExt3 : ImmLeaf<i32, [{return isUInt<3>(Imm);}]>;
 def immZExt4 : ImmLeaf<i32, [{return isUInt<4>(Imm);}]>;
