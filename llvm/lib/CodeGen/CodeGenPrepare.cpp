@@ -1121,35 +1121,68 @@ static bool OptimizeExtractBits(BinaryOperator *ShiftI, ConstantInt *CI,
 //
 static void ScalarizeMaskedLoad(CallInst *CI) {
   Value *Ptr  = CI->getArgOperand(0);
-  Value *Src0 = CI->getArgOperand(3);
+  Value *Alignment = CI->getArgOperand(1);
   Value *Mask = CI->getArgOperand(2);
-  VectorType *VecType = dyn_cast<VectorType>(CI->getType());
-  Type *EltTy = VecType->getElementType();
+  Value *Src0 = CI->getArgOperand(3);
 
+  unsigned AlignVal = cast<ConstantInt>(Alignment)->getZExtValue();
+  VectorType *VecType = dyn_cast<VectorType>(CI->getType());
   assert(VecType && "Unexpected return type of masked load intrinsic");
+
+  Type *EltTy = CI->getType()->getVectorElementType();
 
   IRBuilder<> Builder(CI->getContext());
   Instruction *InsertPt = CI;
   BasicBlock *IfBlock = CI->getParent();
   BasicBlock *CondBlock = nullptr;
   BasicBlock *PrevIfBlock = CI->getParent();
-  Builder.SetInsertPoint(InsertPt);
 
+  Builder.SetInsertPoint(InsertPt);
   Builder.SetCurrentDebugLocation(CI->getDebugLoc());
 
+  // Short-cut if the mask is all-true.
+  bool IsAllOnesMask = isa<Constant>(Mask) &&
+    cast<Constant>(Mask)->isAllOnesValue();
+
+  if (IsAllOnesMask) {
+    Value *NewI = Builder.CreateAlignedLoad(Ptr, AlignVal);
+    CI->replaceAllUsesWith(NewI);
+    CI->eraseFromParent();
+    return;
+  }
+
+  // Adjust alignment for the scalar instruction.
+  AlignVal = std::min(AlignVal, VecType->getScalarSizeInBits()/8);
   // Bitcast %addr fron i8* to EltTy*
   Type *NewPtrType =
     EltTy->getPointerTo(cast<PointerType>(Ptr->getType())->getAddressSpace());
   Value *FirstEltPtr = Builder.CreateBitCast(Ptr, NewPtrType);
+  unsigned VectorWidth = VecType->getNumElements();
+
   Value *UndefVal = UndefValue::get(VecType);
 
   // The result vector
   Value *VResult = UndefVal;
 
+  if (isa<ConstantVector>(Mask)) {
+    for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
+      if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
+          continue;
+      Value *Gep =
+          Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
+      LoadInst* Load = Builder.CreateAlignedLoad(Gep, AlignVal);
+      VResult = Builder.CreateInsertElement(VResult, Load,
+                                            Builder.getInt32(Idx));
+    }
+    Value *NewI = Builder.CreateSelect(Mask, VResult, Src0);
+    CI->replaceAllUsesWith(NewI);
+    CI->eraseFromParent();
+    return;
+  }
+
   PHINode *Phi = nullptr;
   Value *PrevPhi = UndefVal;
 
-  unsigned VectorWidth = VecType->getNumElements();
   for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
 
     // Fill the "else" block, created in the previous iteration
@@ -1182,7 +1215,7 @@ static void ScalarizeMaskedLoad(CallInst *CI) {
 
     Value *Gep =
         Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
-    LoadInst* Load = Builder.CreateLoad(Gep, false);
+    LoadInst* Load = Builder.CreateAlignedLoad(Gep, AlignVal);
     VResult = Builder.CreateInsertElement(VResult, Load, Builder.getInt32(Idx));
 
     // Create "else" block, fill it in the next iteration
@@ -1233,14 +1266,16 @@ static void ScalarizeMaskedLoad(CallInst *CI) {
 //   br label %else2
 //   . . .
 static void ScalarizeMaskedStore(CallInst *CI) {
-  Value *Ptr  = CI->getArgOperand(1);
   Value *Src = CI->getArgOperand(0);
+  Value *Ptr  = CI->getArgOperand(1);
+  Value *Alignment = CI->getArgOperand(2);
   Value *Mask = CI->getArgOperand(3);
 
+  unsigned AlignVal = cast<ConstantInt>(Alignment)->getZExtValue();
   VectorType *VecType = dyn_cast<VectorType>(Src->getType());
-  Type *EltTy = VecType->getElementType();
-
   assert(VecType && "Unexpected data type in masked store intrinsic");
+
+  Type *EltTy = VecType->getElementType();
 
   IRBuilder<> Builder(CI->getContext());
   Instruction *InsertPt = CI;
@@ -1248,19 +1283,44 @@ static void ScalarizeMaskedStore(CallInst *CI) {
   Builder.SetInsertPoint(InsertPt);
   Builder.SetCurrentDebugLocation(CI->getDebugLoc());
 
+  // Short-cut if the mask is all-true.
+  bool IsAllOnesMask = isa<Constant>(Mask) &&
+    cast<Constant>(Mask)->isAllOnesValue();
+
+  if (IsAllOnesMask) {
+    Builder.CreateAlignedStore(Src, Ptr, AlignVal);
+    CI->eraseFromParent();
+    return;
+  }
+
+  // Adjust alignment for the scalar instruction.
+  AlignVal = std::max(AlignVal, VecType->getScalarSizeInBits()/8);
   // Bitcast %addr fron i8* to EltTy*
   Type *NewPtrType =
     EltTy->getPointerTo(cast<PointerType>(Ptr->getType())->getAddressSpace());
   Value *FirstEltPtr = Builder.CreateBitCast(Ptr, NewPtrType);
-
   unsigned VectorWidth = VecType->getNumElements();
+
+  if (isa<ConstantVector>(Mask)) {
+    for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
+      if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
+          continue;
+      Value *OneElt = Builder.CreateExtractElement(Src, Builder.getInt32(Idx));
+      Value *Gep =
+          Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
+      Builder.CreateAlignedStore(OneElt, Gep, AlignVal);
+    }
+    CI->eraseFromParent();
+    return;
+  }
+
   for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
 
     // Fill the "else" block, created in the previous iteration
     //
     //  %mask_1 = extractelement <16 x i1> %mask, i32 Idx
     //  %to_store = icmp eq i1 %mask_1, true
-    //  br i1 %to_load, label %cond.store, label %else
+    //  br i1 %to_store, label %cond.store, label %else
     //
     Value *Predicate = Builder.CreateExtractElement(Mask, Builder.getInt32(Idx));
     Value *Cmp = Builder.CreateICmp(ICmpInst::ICMP_EQ, Predicate,
@@ -1279,7 +1339,7 @@ static void ScalarizeMaskedStore(CallInst *CI) {
     Value *OneElt = Builder.CreateExtractElement(Src, Builder.getInt32(Idx));
     Value *Gep =
         Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
-    Builder.CreateStore(OneElt, Gep);
+    Builder.CreateAlignedStore(OneElt, Gep, AlignVal);
 
     // Create "else" block, fill it in the next iteration
     BasicBlock *NewIfBlock =
