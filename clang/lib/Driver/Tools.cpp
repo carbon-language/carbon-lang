@@ -9898,13 +9898,11 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                             options::OPT_e, options::OPT_s, options::OPT_t,
                             options::OPT_Z_Flag, options::OPT_r});
 
-  if (UseDefaultLibs) {
-    // The linker doesn't use these builtin paths unless directed to,
-    // because it was not compiled for support with sysroots, nor does
-    // it have a default of little-endian with FPU.
-    CmdArgs.push_back(Args.MakeArgString("-L" + BuiltinLibDir));
-    CmdArgs.push_back(Args.MakeArgString("-L" + StartFilesDir));
-  }
+  // The linker doesn't use these builtin paths unless directed to,
+  // because it was not compiled for support with sysroots, nor does
+  // it have a default of little-endian with FPU.
+  CmdArgs.push_back(Args.MakeArgString("-L" + BuiltinLibDir));
+  CmdArgs.push_back(Args.MakeArgString("-L" + StartFilesDir));
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
