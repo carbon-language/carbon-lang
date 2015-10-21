@@ -30,7 +30,6 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Config/config.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TimeValue.h"
