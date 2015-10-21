@@ -20,8 +20,8 @@ entry:
 }
 ; stel: .section .mips16.fn.v_sf,"ax",@progbits
 ; stel: .ent __fn_stub_v_sf
-; stel: la $25,v_sf
-; stel: mfc1 $4,$f12
+; stel: la $25, v_sf
+; stel: mfc1 $4, $f12
 ; stel: jr $25
 ; stel: __fn_local_v_sf = v_sf
 ; stel: .end __fn_stub_v_sf
@@ -40,9 +40,9 @@ entry:
 
 ; stel: .section .mips16.fn.v_df,"ax",@progbits
 ; stel: .ent __fn_stub_v_df
-; stel: la $25,v_df
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f13
+; stel: la $25, v_df
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f13
 ; stel: jr $25
 ; stel: __fn_local_v_df = v_df
 ; stel: .end __fn_stub_v_df
@@ -63,9 +63,9 @@ entry:
 
 ; stel: .section .mips16.fn.v_sf_sf,"ax",@progbits
 ; stel: .ent __fn_stub_v_sf_sf
-; stel: la $25,v_sf_sf
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f14
+; stel: la $25, v_sf_sf
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f14
 ; stel: jr $25
 ; stel: __fn_local_v_sf_sf = v_sf_sf
 ; stel: .end __fn_stub_v_sf_sf
@@ -86,10 +86,10 @@ entry:
 
 ; stel: .section .mips16.fn.v_sf_df,"ax",@progbits
 ; stel: .ent __fn_stub_v_sf_df
-; stel: la $25,v_sf_df
-; stel: mfc1 $4,$f12
-; stel: mfc1 $6,$f14
-; stel: mfc1 $7,$f15
+; stel: la $25, v_sf_df
+; stel: mfc1 $4, $f12
+; stel: mfc1 $6, $f14
+; stel: mfc1 $7, $f15
 ; stel: jr $25
 ; stel: __fn_local_v_sf_df = v_sf_df
 ; stel: .end __fn_stub_v_sf_df
@@ -110,10 +110,10 @@ entry:
 
 ; stel: .section .mips16.fn.v_df_sf,"ax",@progbits
 ; stel: .ent __fn_stub_v_df_sf
-; stel: la $25,v_df_sf
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f13
-; stel: mfc1 $6,$f14
+; stel: la $25, v_df_sf
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f13
+; stel: mfc1 $6, $f14
 ; stel: jr $25
 ; stel: __fn_local_v_df_sf = v_df_sf
 ; stel: .end __fn_stub_v_df_sf
@@ -134,11 +134,11 @@ entry:
 
 ; stel: .section .mips16.fn.v_df_df,"ax",@progbits
 ; stel: .ent __fn_stub_v_df_df
-; stel: la $25,v_df_df
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f13
-; stel: mfc1 $6,$f14
-; stel: mfc1 $7,$f15
+; stel: la $25, v_df_df
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f13
+; stel: mfc1 $6, $f14
+; stel: mfc1 $7, $f15
 ; stel: jr $25
 ; stel: __fn_local_v_df_df = v_df_df
 ; stel: .end __fn_stub_v_df_df
@@ -164,8 +164,8 @@ entry:
 
 ; stel: .section .mips16.fn.sf_sf,"ax",@progbits
 ; stel: .ent __fn_stub_sf_sf
-; stel: la $25,sf_sf
-; stel: mfc1 $4,$f12
+; stel: la $25, sf_sf
+; stel: mfc1 $4, $f12
 ; stel: jr $25
 ; stel: __fn_local_sf_sf = sf_sf
 ; stel: .end __fn_stub_sf_sf
@@ -184,9 +184,9 @@ entry:
 
 ; stel: .section .mips16.fn.sf_df,"ax",@progbits
 ; stel: .ent __fn_stub_sf_df
-; stel: la $25,sf_df
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f13
+; stel: la $25, sf_df
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f13
 ; stel: jr $25
 ; stel: __fn_local_sf_df = sf_df
 ; stel: .end __fn_stub_sf_df
@@ -208,9 +208,9 @@ entry:
 
 ; stel: .section .mips16.fn.sf_sf_sf,"ax",@progbits
 ; stel: .ent __fn_stub_sf_sf_sf
-; stel: la $25,sf_sf_sf
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f14
+; stel: la $25, sf_sf_sf
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f14
 ; stel: jr $25
 ; stel: __fn_local_sf_sf_sf = sf_sf_sf
 ; stel: .end __fn_stub_sf_sf_sf
@@ -232,10 +232,10 @@ entry:
 
 ; stel: .section .mips16.fn.sf_sf_df,"ax",@progbits
 ; stel: .ent __fn_stub_sf_sf_df
-; stel: la $25,sf_sf_df
-; stel: mfc1 $4,$f12
-; stel: mfc1 $6,$f14
-; stel: mfc1 $7,$f15
+; stel: la $25, sf_sf_df
+; stel: mfc1 $4, $f12
+; stel: mfc1 $6, $f14
+; stel: mfc1 $7, $f15
 ; stel: jr $25
 ; stel: __fn_local_sf_sf_df = sf_sf_df
 ; stel: .end __fn_stub_sf_sf_df
@@ -257,10 +257,10 @@ entry:
 
 ; stel: .section .mips16.fn.sf_df_sf,"ax",@progbits
 ; stel: .ent __fn_stub_sf_df_sf
-; stel: la $25,sf_df_sf
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f13
-; stel: mfc1 $6,$f14
+; stel: la $25, sf_df_sf
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f13
+; stel: mfc1 $6, $f14
 ; stel: jr $25
 ; stel: __fn_local_sf_df_sf = sf_df_sf
 ; stel: .end __fn_stub_sf_df_sf
@@ -282,11 +282,11 @@ entry:
 
 ; stel: .section .mips16.fn.sf_df_df,"ax",@progbits
 ; stel: .ent __fn_stub_sf_df_df
-; stel: la $25,sf_df_df
-; stel: mfc1 $4,$f12
-; stel: mfc1 $5,$f13
-; stel: mfc1 $6,$f14
-; stel: mfc1 $7,$f15
+; stel: la $25, sf_df_df
+; stel: mfc1 $4, $f12
+; stel: mfc1 $5, $f13
+; stel: mfc1 $6, $f14
+; stel: mfc1 $7, $f15
 ; stel: jr $25
 ; stel: __fn_local_sf_df_df = sf_df_df
 ; stel: .end __fn_stub_sf_df_df
