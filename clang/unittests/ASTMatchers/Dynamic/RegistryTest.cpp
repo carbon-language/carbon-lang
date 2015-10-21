@@ -455,8 +455,8 @@ TEST_F(RegistryTest, Completion) {
   // Polymorphic.
   EXPECT_TRUE(hasCompletion(
       Comps, "hasDescendant(",
-      "Matcher<NestedNameSpecifier|NestedNameSpecifierLoc|QualType|...> "
-      "hasDescendant(Matcher<CXXCtorInitializer|NestedNameSpecifier|"
+      "Matcher<TemplateArgument|NestedNameSpecifier|NestedNameSpecifierLoc|...>"
+      " hasDescendant(Matcher<TemplateArgument|NestedNameSpecifier|"
       "NestedNameSpecifierLoc|...>)"));
 
   CompVector WhileComps = getCompletions("whileStmt", 0);
