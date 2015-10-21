@@ -648,8 +648,7 @@ public:
   // a constraint is valid and provides information about it.
   // FIXME: These should return a real error instead of just true/false.
   bool validateOutputConstraint(ConstraintInfo &Info) const;
-  bool validateInputConstraint(ConstraintInfo *OutputConstraints,
-                               unsigned NumOutputs,
+  bool validateInputConstraint(MutableArrayRef<ConstraintInfo> OutputConstraints,
                                ConstraintInfo &info) const;
 
   virtual bool validateOutputSize(StringRef /*Constraint*/,
@@ -673,8 +672,8 @@ public:
                         TargetInfo::ConstraintInfo &info) const = 0;
 
   bool resolveSymbolicName(const char *&Name,
-                           ConstraintInfo *OutputConstraints,
-                           unsigned NumOutputs, unsigned &Index) const;
+                           ArrayRef<ConstraintInfo> OutputConstraints,
+                           unsigned &Index) const;
 
   // Constraint parm will be left pointing at the last character of
   // the constraint.  In practice, it won't be changed unless the
