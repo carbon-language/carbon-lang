@@ -591,10 +591,7 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   }
 }
 
-AArch64TargetInfo::AArch64TargetInfo() {
-  // PCRelReloc = FIXME
-  // GotReloc = FIXME
-}
+AArch64TargetInfo::AArch64TargetInfo() {}
 
 void AArch64TargetInfo::writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const {}
 void AArch64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -675,8 +672,6 @@ void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
 }
 
 template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
-  // PCRelReloc = FIXME
-  // GotReloc = FIXME
   PageSize = 65536;
 }
 
