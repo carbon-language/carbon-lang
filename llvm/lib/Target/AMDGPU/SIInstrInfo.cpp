@@ -1325,6 +1325,26 @@ bool SIInstrInfo::usesConstantBus(const MachineRegisterInfo &MRI,
   return false;
 }
 
+static unsigned findImplicitSGPRRead(const MachineInstr &MI) {
+  for (const MachineOperand &MO : MI.implicit_operands()) {
+    // We only care about reads.
+    if (MO.isDef())
+      continue;
+
+    switch (MO.getReg()) {
+    case AMDGPU::VCC:
+    case AMDGPU::M0:
+    case AMDGPU::FLAT_SCR:
+      return MO.getReg();
+
+    default:
+      break;
+    }
+  }
+
+  return AMDGPU::NoRegister;
+}
+
 bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
                                     StringRef &ErrInfo) const {
   uint16_t Opcode = MI->getOpcode();
@@ -1405,7 +1425,10 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
     const int OpIndices[] = { Src0Idx, Src1Idx, Src2Idx };
 
     unsigned ConstantBusCount = 0;
-    unsigned SGPRUsed = AMDGPU::NoRegister;
+    unsigned SGPRUsed = findImplicitSGPRRead(*MI);
+    if (SGPRUsed != AMDGPU::NoRegister)
+      ++ConstantBusCount;
+
     for (int OpIdx : OpIndices) {
       if (OpIdx == -1)
         break;
@@ -2636,11 +2659,10 @@ const TargetRegisterClass *SIInstrInfo::getDestEquivalentVGPRClass(
 
 unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,
                                    int OpIndices[3]) const {
-  const MCInstrDesc &Desc = get(MI->getOpcode());
+  const MCInstrDesc &Desc = MI->getDesc();
 
   // Find the one SGPR operand we are allowed to use.
-  unsigned SGPRReg = AMDGPU::NoRegister;
-
+  //
   // First we need to consider the instruction's operand requirements before
   // legalizing. Some operands are required to be SGPRs, such as implicit uses
   // of VCC, but we are still bound by the constant bus requirement to only use
@@ -2648,17 +2670,9 @@ unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,
   //
   // If the operand's class is an SGPR, we can never move it.
 
-  for (const MachineOperand &MO : MI->implicit_operands()) {
-    // We only care about reads.
-    if (MO.isDef())
-      continue;
-
-    if (MO.getReg() == AMDGPU::VCC)
-      return AMDGPU::VCC;
-
-    if (MO.getReg() == AMDGPU::FLAT_SCR)
-      return AMDGPU::FLAT_SCR;
-  }
+  unsigned SGPRReg = findImplicitSGPRRead(*MI);
+  if (SGPRReg != AMDGPU::NoRegister)
+    return SGPRReg;
 
   unsigned UsedSGPRs[3] = { AMDGPU::NoRegister };
   const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
