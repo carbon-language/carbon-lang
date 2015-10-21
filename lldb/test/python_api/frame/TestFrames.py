@@ -3,6 +3,8 @@ Use lldb Python SBFrame API to get the argument values of the call stacks.
 And other SBFrame API tests.
 """
 
+import lldb_shared
+
 import os, time
 import re
 import unittest2
@@ -42,8 +44,8 @@ class FrameAPITestCase(TestBase):
         # depth of 3 of the 'c' leaf function.
         callsOfA = 0
 
-        import StringIO
-        session = StringIO.StringIO()
+        from six import StringIO as SixStringIO
+        session = SixStringIO()
         while process.GetState() == lldb.eStateStopped:
             thread = process.GetThreadAtIndex(0)
             # Inspect at most 3 frames.

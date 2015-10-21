@@ -8,8 +8,9 @@ Provides classes used by the test results reporting infrastructure
 within the LLDB test suite.
 """
 
+import lldb_shared
+
 import argparse
-import cPickle
 import inspect
 import os
 import pprint
@@ -19,6 +20,8 @@ import threading
 import time
 import traceback
 import xml.sax.saxutils
+
+from six.moves import cPickle
 
 
 class EventBuilder(object):

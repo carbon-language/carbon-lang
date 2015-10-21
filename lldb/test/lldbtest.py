@@ -43,7 +43,6 @@ import os.path
 import re
 import signal
 from subprocess import *
-import StringIO
 import time
 import types
 import unittest2
@@ -52,11 +51,8 @@ import lldbtest_config
 import lldbutil
 
 from six import add_metaclass
-
-if sys.version_info.major < 3:
-    import urlparse
-else:
-    import urllib.parse as urlparse
+from six import StringIO as SixStringIO
+from six.moves.urllib import parse as urlparse
 
 # dosep.py starts lots and lots of dotest instances
 # This option helps you find if two (or more) dotest instances are using the same
@@ -224,15 +220,15 @@ def which(program):
                 return exe_file
     return None
 
-class recording(StringIO.StringIO):
+class recording(SixStringIO):
     """
     A nice little context manager for recording the debugger interactions into
     our session object.  If trace flag is ON, it also emits the interactions
     into the stderr.
     """
     def __init__(self, test, trace):
-        """Create a StringIO instance; record the session obj and trace flag."""
-        StringIO.StringIO.__init__(self)
+        """Create a SixStringIO instance; record the session obj and trace flag."""
+        SixStringIO.__init__(self)
         # The test might not have undergone the 'setUp(self)' phase yet, so that
         # the attribute 'session' might not even exist yet.
         self.session = getattr(test, "session", None) if test else None
@@ -241,7 +237,7 @@ class recording(StringIO.StringIO):
     def __enter__(self):
         """
         Context management protocol on entry to the body of the with statement.
-        Just return the StringIO object.
+        Just return the SixStringIO object.
         """
         return self
 
@@ -249,7 +245,7 @@ class recording(StringIO.StringIO):
         """
         Context management protocol on exit from the body of the with statement.
         If trace is ON, it emits the recordings into stderr.  Always add the
-        recordings to our session object.  And close the StringIO object, too.
+        recordings to our session object.  And close the SixStringIO object, too.
         """
         if self.trace:
             print(self.getvalue(), file=sys.stderr)

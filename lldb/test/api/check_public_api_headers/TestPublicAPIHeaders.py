@@ -3,7 +3,9 @@
 There should be nothing unwanted there and a simpe main.cpp which includes SB*.h
 should compile and link with the LLDB framework."""
 
-import os, re, StringIO
+import lldb_shared
+
+import os, re
 import unittest2
 from lldbtest import *
 import lldbutil

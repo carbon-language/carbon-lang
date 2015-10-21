@@ -1,9 +1,13 @@
-import Queue
+
+import lldb_shared
+
 import re
 import select
 import threading
 import traceback
 import codecs
+
+from six.moves import queue
 
 def _handle_output_packet_string(packet_contents):
     if (not packet_contents) or (len(packet_contents) < 1):
@@ -38,8 +42,8 @@ class SocketPacketPump(object):
         if not pump_socket:
             raise Exception("pump_socket cannot be None")
 
-        self._output_queue = Queue.Queue()
-        self._packet_queue = Queue.Queue()
+        self._output_queue = queue.Queue()
+        self._packet_queue = queue.Queue()
         self._thread = None
         self._stop_thread = False
         self._socket = pump_socket

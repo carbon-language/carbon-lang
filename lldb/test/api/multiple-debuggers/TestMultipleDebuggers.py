@@ -1,6 +1,8 @@
 """Test the lldb public C++ api when doing multiple debug sessions simultaneously."""
 
-import os, re, StringIO
+import lldb_shared
+
+import os, re
 import unittest2
 from lldbtest import *
 import lldbutil

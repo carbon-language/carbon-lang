@@ -1,7 +1,6 @@
 """
 Test some lldb command abbreviations.
 """
-import commands
 import lldb
 import os
 import time

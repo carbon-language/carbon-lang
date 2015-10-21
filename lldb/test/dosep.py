@@ -34,6 +34,8 @@ echo core.%p | sudo tee /proc/sys/kernel/core_pattern
 
 from __future__ import print_function
 
+import lldb_shared
+
 # system packages and modules
 import asyncore
 import distutils.version
@@ -42,11 +44,12 @@ import multiprocessing
 import multiprocessing.pool
 import os
 import platform
-import Queue
 import re
 import signal
 import sys
 import threading
+
+from six.moves import queue
 
 # Add our local test_runner/lib dir to the python path.
 sys.path.append(os.path.join(os.path.dirname(__file__), "test_runner", "lib"))
@@ -336,7 +339,7 @@ def process_dir_worker_multiprocessing(
             result = process_dir(job[0], job[1], job[2], job[3],
                                  inferior_pid_events)
             result_queue.put(result)
-        except Queue.Empty:
+        except queue.Empty:
             # Fine, we're done.
             pass
 
@@ -359,7 +362,7 @@ def process_dir_worker_threading(job_queue, result_queue, inferior_pid_events):
             result = process_dir(job[0], job[1], job[2], job[3],
                                  inferior_pid_events)
             result_queue.put(result)
-        except Queue.Empty:
+        except queue.Empty:
             # Fine, we're done.
             pass
 
@@ -641,7 +644,7 @@ def handle_ctrl_c(ctrl_c_count, job_queue, workers, inferior_pid_events,
             try:
                 # Just drain it to stop more work from being started.
                 job_queue.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 pass
         with output_lock:
             print("Stopped more work from being started.")
@@ -834,16 +837,16 @@ def threading_test_runner(num_threads, test_work_items):
     initialize_global_vars_threading(num_threads, test_work_items)
 
     # Create jobs.
-    job_queue = Queue.Queue()
+    job_queue = queue.Queue()
     for test_work_item in test_work_items:
         job_queue.put(test_work_item)
 
-    result_queue = Queue.Queue()
+    result_queue = queue.Queue()
 
     # Create queues for started child pids.  Terminating
     # the threading threads does not terminate the
     # child processes they spawn.
-    inferior_pid_events = Queue.Queue()
+    inferior_pid_events = queue.Queue()
 
     # Create workers. We don't use multiprocessing.pool.ThreadedPool
     # due to challenges with handling ^C keyboard interrupts.

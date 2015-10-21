@@ -1,15 +1,18 @@
 """Module for supporting unit testing of the lldb-server debug monitor exe.
 """
 
+import lldb_shared
+
 import os
 import os.path
 import platform
-import Queue
 import re
 import socket_packet_pump
 import subprocess
 import time
 from lldbtest import *
+
+from six.moves import queue
 
 def _get_debug_monitor_from_lldb(lldb_exe, debug_monitor_basename):
     """Return the debug monitor exe path given the lldb exe path.
@@ -215,14 +218,14 @@ def expect_lldb_gdbserver_replay(
                     try:
                         # Grab next entry from the output queue.
                         content = pump.output_queue().get(True, timeout_seconds)
-                    except Queue.Empty:
+                    except queue.Empty:
                         if logger:
                             logger.warning("timeout waiting for stub output (accumulated output:{})".format(pump.get_accumulated_output()))
                         raise Exception("timed out while waiting for output match (accumulated output: {})".format(pump.get_accumulated_output()))
                 else:
                     try:
                         content = pump.packet_queue().get(True, timeout_seconds)
-                    except Queue.Empty:
+                    except queue.Empty:
                         if logger:
                             logger.warning("timeout waiting for packet match (receive buffer: {})".format(pump.get_receive_buffer()))
                         raise Exception("timed out while waiting for packet match (receive buffer: {})".format(pump.get_receive_buffer()))

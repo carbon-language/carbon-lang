@@ -1,7 +1,6 @@
 """
 Test that argdumper is a viable launching strategy.
 """
-import commands
 import lldb
 import os
 import time

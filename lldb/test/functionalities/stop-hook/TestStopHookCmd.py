@@ -2,9 +2,10 @@
 Test lldb target stop-hook command.
 """
 
+import lldb_shared
+
 import os
 import unittest2
-import StringIO
 import lldb
 from lldbtest import *
 import lldbutil

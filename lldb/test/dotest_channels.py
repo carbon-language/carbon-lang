@@ -14,10 +14,12 @@ This module provides asyncore channels used within the LLDB test
 framework.
 """
 
+import lldb_shared
+
 import asyncore
-import cPickle
 import socket
 
+from six.moves import cPickle
 
 class UnpicklingForwardingReaderChannel(asyncore.dispatcher):
     """Provides an unpickling, forwarding asyncore dispatch channel reader.
