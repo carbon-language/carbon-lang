@@ -858,8 +858,6 @@ void BinaryFunction::fixBranches() {
 
   for (unsigned I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
     BinaryBasicBlock *BB = BasicBlocksLayout[I];
-    if (BB->begin() == BB->end())
-      continue;
 
     const MCSymbol *TBB = nullptr;
     const MCSymbol *FBB = nullptr;
@@ -884,7 +882,7 @@ void BinaryFunction::fixBranches() {
     if (CondBranch == nullptr && UncondBranch == nullptr) {
       // Case 1a: Last instruction is a return, so it does *not* fall through to
       // the next block.
-      if (MIA->isReturn(BB->back()))
+      if (!BB->empty() && MIA->isReturn(BB->back()))
         continue;
       // Case 1b: Layout has changed and the fallthrough is not the same. Need
       // to add a new unconditional branch to jump to the old fallthrough.
