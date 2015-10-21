@@ -2199,7 +2199,7 @@ ScriptInterpreterPython::WatchpointCallbackFunction
 }
 
 size_t
-ScriptInterpreterPython::CalculateNumChildren(const StructuredData::ObjectSP &implementor_sp)
+ScriptInterpreterPython::CalculateNumChildren(const StructuredData::ObjectSP &implementor_sp, uint32_t max)
 {
     if (!implementor_sp)
         return 0;
@@ -2217,7 +2217,7 @@ ScriptInterpreterPython::CalculateNumChildren(const StructuredData::ObjectSP &im
     
     {
         Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
-        ret_val = g_swig_calc_children (implementor);
+        ret_val = g_swig_calc_children (implementor, max);
     }
     
     return ret_val;

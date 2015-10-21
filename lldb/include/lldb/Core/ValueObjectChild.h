@@ -56,7 +56,7 @@ public:
     GetValueType() const override;
 
     size_t
-    CalculateNumChildren() override;
+    CalculateNumChildren(uint32_t max) override;
 
     ConstString
     GetTypeName() override;

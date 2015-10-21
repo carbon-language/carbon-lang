@@ -330,6 +330,9 @@ public:
     uint32_t
     GetNumChildren ();
 
+    uint32_t
+    GetNumChildren (uint32_t max);
+
     void *
     GetOpaqueType();
 

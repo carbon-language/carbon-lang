@@ -68,9 +68,10 @@ ValueObjectCast::GetCompilerTypeImpl ()
 }
 
 size_t
-ValueObjectCast::CalculateNumChildren()
+ValueObjectCast::CalculateNumChildren(uint32_t max)
 {
-    return GetCompilerType().GetNumChildren (true);
+    auto children_count = GetCompilerType().GetNumChildren (true);
+    return children_count <= max ? children_count : max;
 }
 
 uint64_t

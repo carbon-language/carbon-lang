@@ -349,7 +349,7 @@ public:
     }
 
     virtual size_t
-    CalculateNumChildren(const StructuredData::ObjectSP &implementor)
+    CalculateNumChildren(const StructuredData::ObjectSP &implementor, uint32_t max)
     {
         return 0;
     }

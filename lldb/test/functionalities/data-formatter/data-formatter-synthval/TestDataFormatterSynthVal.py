@@ -66,6 +66,7 @@ class DataFormatterSynthValueTestCase(TestBase):
         # now set up the synth
         self.runCmd("script from myIntSynthProvider import *")
         self.runCmd("type synth add -l myIntSynthProvider myInt")
+        self.runCmd("type synth add -l myArraySynthProvider myArray")
         
         if self.TraceOn():
             print "x_val = %s; y_val = %s; z_val = %s" % (x_val(),y_val(),z_val())
@@ -84,6 +85,12 @@ class DataFormatterSynthValueTestCase(TestBase):
         self.runCmd("type summary add hasAnInt -s ${var.theInt}")
         hi = self.frame().FindVariable("hi")
         self.assertEqual(hi.GetSummary(), "42")
+
+        ma = self.frame().FindVariable("ma")
+        self.assertTrue(ma.IsValid())
+        self.assertEqual(ma.GetNumChildren(15), 15)
+        self.assertEqual(ma.GetNumChildren(16), 16)
+        self.assertEqual(ma.GetNumChildren(17), 16)
 
 if __name__ == '__main__':
     import atexit

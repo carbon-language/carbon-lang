@@ -73,7 +73,7 @@ public:
                                                const char *session_dictionary_name,
                                                const lldb::ProcessSP& process_sp);
     
-    typedef size_t          (*SWIGPythonCalculateNumChildren)                   (void *implementor);
+    typedef size_t          (*SWIGPythonCalculateNumChildren)                   (void *implementor, uint32_t max);
     typedef void*           (*SWIGPythonGetChildAtIndex)                        (void *implementor, uint32_t idx);
     typedef int             (*SWIGPythonGetIndexOfChildWithName)                (void *implementor, const char* child_name);
     typedef void*           (*SWIGPythonCastPyObjectToSBValue)                  (void* data);
@@ -200,7 +200,7 @@ public:
     StructuredData::DictionarySP GetDynamicSettings(StructuredData::ObjectSP plugin_module_sp, Target *target, const char *setting_name,
                                                     lldb_private::Error &error) override;
 
-    size_t CalculateNumChildren(const StructuredData::ObjectSP &implementor) override;
+    size_t CalculateNumChildren(const StructuredData::ObjectSP &implementor, uint32_t max) override;
 
     lldb::ValueObjectSP GetChildAtIndex(const StructuredData::ObjectSP &implementor, uint32_t idx) override;
 

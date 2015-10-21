@@ -56,13 +56,20 @@ namespace lldb_private {
         ~SyntheticChildrenFrontEnd ()
         {
         }
-        
+
         virtual size_t
         CalculateNumChildren () = 0;
+
+        virtual size_t
+        CalculateNumChildren (uint32_t max)
+        {
+            auto count = CalculateNumChildren ();
+            return count <= max ? count : max;
+        }
         
         virtual lldb::ValueObjectSP
         GetChildAtIndex (size_t idx) = 0;
-        
+
         virtual size_t
         GetIndexOfChildWithName (const ConstString &name) = 0;
         
@@ -454,7 +461,7 @@ namespace lldb_private {
                     return lldb::ValueObjectSP();
                 return m_backend.GetSyntheticExpressionPathChild(filter->GetExpressionPathAtIndex(idx), true);
             }
-            
+
             bool
             Update() override { return false; }
             
@@ -589,13 +596,16 @@ namespace lldb_private {
             IsValid ();
             
             ~FrontEnd() override;
-            
+
             size_t
             CalculateNumChildren() override;
+
+            size_t
+            CalculateNumChildren(uint32_t max) override;
             
             lldb::ValueObjectSP
             GetChildAtIndex(size_t idx) override;
-            
+
             bool
             Update() override;
             

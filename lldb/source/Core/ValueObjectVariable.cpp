@@ -91,7 +91,7 @@ ValueObjectVariable::GetQualifiedTypeName()
 }
 
 size_t
-ValueObjectVariable::CalculateNumChildren()
+ValueObjectVariable::CalculateNumChildren(uint32_t max)
 {    
     CompilerType type(GetCompilerType());
     
@@ -99,7 +99,8 @@ ValueObjectVariable::CalculateNumChildren()
         return 0;
     
     const bool omit_empty_base_classes = true;
-    return type.GetNumChildren(omit_empty_base_classes);
+    auto child_count = type.GetNumChildren(omit_empty_base_classes);
+    return child_count <= max ? child_count : max;
 }
 
 uint64_t

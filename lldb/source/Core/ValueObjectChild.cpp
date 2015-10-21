@@ -62,9 +62,10 @@ ValueObjectChild::GetValueType() const
 }
 
 size_t
-ValueObjectChild::CalculateNumChildren()
+ValueObjectChild::CalculateNumChildren(uint32_t max)
 {
-    return GetCompilerType().GetNumChildren (true);
+    auto children_count = GetCompilerType().GetNumChildren (true);
+    return children_count <= max ? children_count : max;
 }
 
 static void

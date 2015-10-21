@@ -149,7 +149,7 @@ LLDBSWIGPythonCallThreadPlan (void *implementor,
                               bool &got_error);
 
 extern "C" size_t
-LLDBSwigPython_CalculateNumChildren (void *implementor);
+LLDBSwigPython_CalculateNumChildren (void *implementor, uint32_t max);
 
 extern "C" void *
 LLDBSwigPython_GetChildAtIndex (void *implementor, uint32_t idx);

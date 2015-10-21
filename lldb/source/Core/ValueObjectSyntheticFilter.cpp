@@ -26,7 +26,7 @@ public:
     {}
 
     size_t
-    CalculateNumChildren()
+    CalculateNumChildren ()
     {
         return m_backend.GetNumChildren();
     }
@@ -36,7 +36,7 @@ public:
     {
         return m_backend.GetChildAtIndex(idx, true);
     }
-    
+
     size_t
     GetIndexOfChildWithName (const ConstString &name)
     {
@@ -107,12 +107,16 @@ ValueObjectSynthetic::GetDisplayTypeName()
 }
 
 size_t
-ValueObjectSynthetic::CalculateNumChildren()
+ValueObjectSynthetic::CalculateNumChildren(uint32_t max)
 {
     UpdateValueIfNeeded();
     if (m_synthetic_children_count < UINT32_MAX)
-        return m_synthetic_children_count;
-    return (m_synthetic_children_count = m_synth_filter_ap->CalculateNumChildren());
+        return m_synthetic_children_count <= max ? m_synthetic_children_count : max;
+
+    if (max < UINT32_MAX)
+        return m_synth_filter_ap->CalculateNumChildren(max);
+    else
+        return (m_synthetic_children_count = m_synth_filter_ap->CalculateNumChildren(max));
 }
 
 lldb::ValueObjectSP

@@ -113,13 +113,16 @@ ValueObjectDynamicValue::GetDisplayTypeName()
 }
 
 size_t
-ValueObjectDynamicValue::CalculateNumChildren()
+ValueObjectDynamicValue::CalculateNumChildren(uint32_t max)
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_dynamic_type_info.HasType())
-        return GetCompilerType().GetNumChildren (true);
+    {
+        auto children_count = GetCompilerType().GetNumChildren (true);
+        return children_count <= max ? children_count : max;
+    }
     else
-        return m_parent->GetNumChildren();
+        return m_parent->GetNumChildren(max);
 }
 
 uint64_t

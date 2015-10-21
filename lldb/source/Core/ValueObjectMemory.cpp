@@ -156,12 +156,17 @@ ValueObjectMemory::GetDisplayTypeName()
 }
 
 size_t
-ValueObjectMemory::CalculateNumChildren()
+ValueObjectMemory::CalculateNumChildren(uint32_t max)
 {
     if (m_type_sp)
-        return m_type_sp->GetNumChildren(true);
+    {
+        auto child_count = m_type_sp->GetNumChildren(true);
+        return child_count <= max ? child_count : max;
+    }
+
     const bool omit_empty_base_classes = true;
-    return m_compiler_type.GetNumChildren (omit_empty_base_classes);
+    auto child_count = m_compiler_type.GetNumChildren (omit_empty_base_classes);
+    return child_count <= max ? child_count : max;
 }
 
 uint64_t

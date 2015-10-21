@@ -770,9 +770,21 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
 
 
 size_t
-ValueObject::GetNumChildren ()
+ValueObject::GetNumChildren (uint32_t max)
 {
     UpdateValueIfNeeded();
+
+    if (max < UINT32_MAX)
+    {
+        if (m_children_count_valid)
+        {
+            size_t children_count = m_children.GetChildrenCount();
+            return children_count <= max ? children_count : max;
+        }
+        else
+            return CalculateNumChildren(max);
+    }
+
     if (!m_children_count_valid)
     {
         SetNumChildren (CalculateNumChildren());

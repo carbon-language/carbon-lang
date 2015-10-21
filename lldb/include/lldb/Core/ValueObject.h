@@ -595,7 +595,7 @@ public:
     GetIndexOfChildWithName (const ConstString &name);
 
     size_t
-    GetNumChildren ();
+    GetNumChildren (uint32_t max=UINT32_MAX);
 
     const Value &
     GetValue() const;
@@ -1204,7 +1204,7 @@ protected:
 
     // Should only be called by ValueObject::GetNumChildren()
     virtual size_t
-    CalculateNumChildren() = 0;
+    CalculateNumChildren(uint32_t max=UINT32_MAX) = 0;
 
     void
     SetNumChildren (size_t num_children);

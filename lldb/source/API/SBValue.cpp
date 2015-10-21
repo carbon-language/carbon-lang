@@ -1266,21 +1266,26 @@ SBValue::IsRuntimeSupportValue ()
 uint32_t
 SBValue::GetNumChildren ()
 {
+    return GetNumChildren (UINT32_MAX);
+}
+
+uint32_t
+SBValue::GetNumChildren (uint32_t max)
+{
     uint32_t num_children = 0;
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ValueLocker locker;
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
-        num_children = value_sp->GetNumChildren();
+        num_children = value_sp->GetNumChildren(max);
 
     if (log)
-        log->Printf ("SBValue(%p)::GetNumChildren () => %u",
-                     static_cast<void*>(value_sp.get()), num_children);
+        log->Printf ("SBValue(%p)::GetNumChildren (%u) => %u",
+                     static_cast<void*>(value_sp.get()), max, num_children);
 
     return num_children;
 }
-
 
 SBValue
 SBValue::Dereference ()

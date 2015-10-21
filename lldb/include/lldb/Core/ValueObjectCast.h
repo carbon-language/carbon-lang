@@ -35,7 +35,7 @@ public:
     GetByteSize() override;
     
     size_t
-    CalculateNumChildren() override;
+    CalculateNumChildren(uint32_t max) override;
     
     lldb::ValueType
     GetValueType() const override;

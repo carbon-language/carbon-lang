@@ -67,9 +67,10 @@ ValueObjectRegisterContext::GetQualifiedTypeName()
 }
 
 size_t
-ValueObjectRegisterContext::CalculateNumChildren()
+ValueObjectRegisterContext::CalculateNumChildren(uint32_t max)
 {
-    return m_reg_ctx_sp->GetRegisterSetCount();
+    auto reg_set_count = m_reg_ctx_sp->GetRegisterSetCount();
+    return reg_set_count <= max ? reg_set_count : max;
 }
 
 uint64_t
@@ -163,11 +164,14 @@ ValueObjectRegisterSet::GetQualifiedTypeName()
 }
 
 size_t
-ValueObjectRegisterSet::CalculateNumChildren()
+ValueObjectRegisterSet::CalculateNumChildren(uint32_t max)
 {
     const RegisterSet *reg_set = m_reg_ctx_sp->GetRegisterSet(m_reg_set_idx);
     if (reg_set)
-        return reg_set->num_registers;
+    {
+        auto reg_count = reg_set->num_registers;
+        return reg_count <= max ? reg_count : max;
+    }
     return 0;
 }
 
@@ -338,9 +342,10 @@ ValueObjectRegister::GetTypeName()
 }
 
 size_t
-ValueObjectRegister::CalculateNumChildren()
+ValueObjectRegister::CalculateNumChildren(uint32_t max)
 {
-    return GetCompilerType().GetNumChildren(true);
+    auto children_count = GetCompilerType().GetNumChildren (true);
+    return children_count <= max ? children_count : max;
 }
 
 uint64_t

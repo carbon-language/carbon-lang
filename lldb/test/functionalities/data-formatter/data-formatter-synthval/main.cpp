@@ -5,6 +5,11 @@ class myInt {
     int val() { return theValue; }
 };
 
+class myArray {
+public:
+    int array[16];
+};
+
 class hasAnInt {
     public:
         myInt theInt;
@@ -18,5 +23,7 @@ int main() {
     myInt y{4};
     myInt z {x+y};
     hasAnInt hi;
+    myArray ma;
+
     return z.val(); // break here
 }

@@ -113,9 +113,18 @@ public:
     argc
     GetNumArguments ()
     {
-        if (m_callable && PyFunction_Check(m_callable))
+        PyObject *py_func_obj = NULL;
+        if (m_callable)
         {
-            PyCodeObject* code = (PyCodeObject*)PyFunction_GET_CODE(m_callable);
+            if (PyMethod_Check(m_callable))
+                py_func_obj = PyMethod_GET_FUNCTION(m_callable);
+            else
+                py_func_obj = m_callable;
+        }
+
+        if (py_func_obj)
+        {
+            PyCodeObject* code = (PyCodeObject*)PyFunction_GET_CODE(py_func_obj);
             if (code)
             {
                 size_t args = code->co_argcount;
@@ -632,15 +641,24 @@ LLDBSwigPython_CallOptionalMember
 SWIGEXPORT size_t
 LLDBSwigPython_CalculateNumChildren
 (
-    PyObject *implementor
+    PyObject *implementor,
+    uint32_t max
 )
 {
-    size_t ret_val = UINT32_MAX;
+    size_t ret_val = 0;
     bool int_match = false;
 
-    static char callee_name[] = "num_children";
+    PyCallable pfunc = PyCallable::FindWithMemberFunction(implementor, "num_children");
 
-    PyObject* py_return = LLDBSwigPython_CallOptionalMember(implementor,callee_name, NULL);
+    if (!pfunc)
+        return ret_val;
+
+    PyObject* py_return = NULL;
+    auto argc = pfunc.GetNumArguments();
+    if (argc.num_args == 1)
+        py_return = pfunc();
+    else if (argc.num_args == 2)
+        py_return = pfunc(max);
 
     if (!py_return)
         return ret_val;
@@ -674,6 +692,9 @@ LLDBSwigPython_CalculateNumChildren
         PyErr_Print();
         PyErr_Clear();
     }
+
+    if (argc.num_args == 1 && ret_val > max)
+        ret_val = max;
 
     return ret_val;
 }
