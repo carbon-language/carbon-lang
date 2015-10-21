@@ -122,6 +122,7 @@ protected:
   void buildEdges(Function &F);
   bool propagateThroughEdges(Function &F);
   void computeDominanceAndLoopInfo(Function &F);
+  unsigned getOffset(unsigned L, unsigned H) const;
 
   /// \brief Map basic blocks to their computed weights.
   ///
@@ -172,6 +173,17 @@ protected:
   /// \brief Flag indicating whether the profile input loaded successfully.
   bool ProfileIsValid;
 };
+}
+
+/// \brief Returns the offset of lineno \p L to head_lineno \p H
+///
+/// \param L  Lineno
+/// \param H  Header lineno of the function
+///
+/// \returns offset to the header lineno. 16 bits are used to represent offset.
+/// We assume that a single function will not exceed 65535 LOC.
+unsigned SampleProfileLoader::getOffset(unsigned L, unsigned H) const {
+  return (L - H) & 0xffff;
 }
 
 /// \brief Print the weight of edge \p E on stream \p OS.
@@ -229,11 +241,9 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
   const DILocation *DIL = DLoc;
   unsigned Lineno = DLoc.getLine();
   unsigned HeaderLineno = DIL->getScope()->getSubprogram()->getLine();
-  if (Lineno < HeaderLineno)
-    return std::error_code();
 
-  ErrorOr<uint64_t> R =
-      FS->findSamplesAt(Lineno - HeaderLineno, DIL->getDiscriminator());
+  ErrorOr<uint64_t> R = FS->findSamplesAt(getOffset(Lineno, HeaderLineno),
+                                          DIL->getDiscriminator());
   if (R)
     DEBUG(dbgs() << "    " << Lineno << "." << DIL->getDiscriminator() << ":"
                  << Inst << " (line offset: " << Lineno - HeaderLineno << "."
@@ -308,7 +318,7 @@ SampleProfileLoader::findCalleeFunctionSamples(const CallInst &Inst) const {
     return nullptr;
   }
   DISubprogram *SP = DIL->getScope()->getSubprogram();
-  if (!SP || DIL->getLine() < SP->getLine())
+  if (!SP)
     return nullptr;
 
   Function *CalleeFunc = Inst.getCalledFunction();
@@ -321,8 +331,9 @@ SampleProfileLoader::findCalleeFunctionSamples(const CallInst &Inst) const {
   if (FS == nullptr)
     return nullptr;
 
-  return FS->findFunctionSamplesAt(CallsiteLocation(
-      DIL->getLine() - SP->getLine(), DIL->getDiscriminator(), CalleeName));
+  return FS->findFunctionSamplesAt(
+      CallsiteLocation(getOffset(DIL->getLine(), SP->getLine()),
+                       DIL->getDiscriminator(), CalleeName));
 }
 
 /// \brief Get the FunctionSamples for an instruction.
@@ -345,10 +356,10 @@ SampleProfileLoader::findFunctionSamples(const Instruction &Inst) const {
   for (const DILocation *DIL = Inst.getDebugLoc(); DIL;
        DIL = DIL->getInlinedAt()) {
     DISubprogram *SP = DIL->getScope()->getSubprogram();
-    if (!SP || DIL->getLine() < SP->getLine())
+    if (!SP)
       return nullptr;
     if (!CalleeName.empty()) {
-      S.push_back(CallsiteLocation(DIL->getLine() - SP->getLine(),
+      S.push_back(CallsiteLocation(getOffset(DIL->getLine(), SP->getLine()),
                                    DIL->getDiscriminator(), CalleeName));
     }
     CalleeName = SP->getLinkageName();

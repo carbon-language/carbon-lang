@@ -100,6 +100,12 @@ static bool ParseHead(const StringRef &Input, StringRef &FName,
   return true;
 }
 
+
+/// \brief Returns true if line offset \p L is legal (only has 16 bits).
+static bool isOffsetLegal(unsigned L) {
+  return (L & 0xffff) == L;
+}
+
 /// \brief Parse \p Input as line sample.
 ///
 /// \param Input input line.
@@ -124,7 +130,7 @@ static bool ParseLine(const StringRef &Input, bool &IsCallsite, uint32_t &Depth,
   StringRef Loc = Input.substr(Depth, n1 - Depth);
   size_t n2 = Loc.find('.');
   if (n2 == StringRef::npos) {
-    if (Loc.getAsInteger(10, LineOffset))
+    if (Loc.getAsInteger(10, LineOffset) || !isOffsetLegal(LineOffset))
       return false;
     Discriminator = 0;
   } else {
@@ -307,6 +313,10 @@ SampleProfileReaderBinary::readProfile(FunctionSamples &FProfile) {
     auto LineOffset = readNumber<uint64_t>();
     if (std::error_code EC = LineOffset.getError())
       return EC;
+
+    if (!isOffsetLegal(*LineOffset)) {
+      return std::error_code();
+    }
 
     auto Discriminator = readNumber<uint64_t>();
     if (std::error_code EC = Discriminator.getError())
