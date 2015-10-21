@@ -3063,7 +3063,8 @@ enum FragileClassFlags {
   FragileABI_Class_Factory                 = 0x00001,
   FragileABI_Class_Meta                    = 0x00002,
   FragileABI_Class_HasCXXStructors         = 0x02000,
-  FragileABI_Class_Hidden                  = 0x20000
+  FragileABI_Class_Hidden                  = 0x20000,
+  FragileABI_Class_CompiledByARC           = 0x04000000
 };
 
 enum NonFragileClassFlags {
@@ -3125,6 +3126,10 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   unsigned Flags = FragileABI_Class_Factory;
   if (ID->hasNonZeroConstructors() || ID->hasDestructors())
     Flags |= FragileABI_Class_HasCXXStructors;
+
+  if (CGM.getLangOpts().ObjCAutoRefCount)
+    Flags |= FragileABI_Class_CompiledByARC;
+
   CharUnits Size =
     CGM.getContext().getASTObjCImplementationLayout(ID).getSize();
 
@@ -4847,7 +4852,7 @@ CGObjCCommonMac::BuildIvarLayout(const ObjCImplementationDecl *OMD,
 
     if (isNonFragileABI()) {
       baseOffset = beginOffset; // InstanceStart
-    } else if (auto superClass = OMD->getSuperClass()) {
+    } else if (auto superClass = OI->getSuperClass()) {
       auto startOffset =
         CGM.getContext().getASTObjCInterfaceLayout(superClass).getSize();
       baseOffset = startOffset.RoundUpToAlignment(CGM.getPointerAlign());
