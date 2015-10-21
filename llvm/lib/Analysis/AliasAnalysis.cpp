@@ -364,6 +364,39 @@ bool AAResults::canInstructionRangeModRef(const Instruction &I1,
 // Provide a definition for the root virtual destructor.
 AAResults::Concept::~Concept() {}
 
+namespace {
+/// A wrapper pass for external alias analyses. This just squirrels away the
+/// callback used to run any analyses and register their results.
+struct ExternalAAWrapperPass : ImmutablePass {
+  typedef std::function<void(Pass &, Function &, AAResults &)> CallbackT;
+
+  CallbackT CB;
+
+  static char ID;
+
+  ExternalAAWrapperPass() : ImmutablePass(ID) {
+    initializeExternalAAWrapperPassPass(*PassRegistry::getPassRegistry());
+  }
+  explicit ExternalAAWrapperPass(CallbackT CB)
+      : ImmutablePass(ID), CB(std::move(CB)) {
+    initializeExternalAAWrapperPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesAll();
+  }
+};
+}
+
+char ExternalAAWrapperPass::ID = 0;
+INITIALIZE_PASS(ExternalAAWrapperPass, "external-aa", "External Alias Analysis",
+                false, true)
+
+ImmutablePass *
+llvm::createExternalAAWrapperPass(ExternalAAWrapperPass::CallbackT Callback) {
+  return new ExternalAAWrapperPass(std::move(Callback));
+}
+
 AAResultsWrapperPass::AAResultsWrapperPass() : FunctionPass(ID) {
   initializeAAResultsWrapperPassPass(*PassRegistry::getPassRegistry());
 }
@@ -374,6 +407,7 @@ INITIALIZE_PASS_BEGIN(AAResultsWrapperPass, "aa",
                       "Function Alias Analysis Results", false, true)
 INITIALIZE_PASS_DEPENDENCY(BasicAAWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(CFLAAWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(ExternalAAWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ObjCARCAAWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(SCEVAAWrapperPass)
@@ -424,6 +458,12 @@ bool AAResultsWrapperPass::runOnFunction(Function &F) {
     AAR->addAAResult(WrapperPass->getResult());
   if (auto *WrapperPass = getAnalysisIfAvailable<CFLAAWrapperPass>())
     AAR->addAAResult(WrapperPass->getResult());
+
+  // If available, run an external AA providing callback over the results as
+  // well.
+  if (auto *WrapperPass = getAnalysisIfAvailable<ExternalAAWrapperPass>())
+    if (WrapperPass->CB)
+      WrapperPass->CB(*this, F, *AAR);
 
   // Analyses don't mutate the IR, so return false.
   return false;
