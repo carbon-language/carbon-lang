@@ -257,7 +257,7 @@ writeSocketIdToPipe(Pipe &port_pipe, const std::string &socket_id)
 {
     size_t bytes_written = 0;
     // Write the port number as a C string with the NULL terminator.
-    return port_pipe.Write(socket_id.c_str(), socket_id.size(), bytes_written);
+    return port_pipe.Write(socket_id.c_str(), socket_id.size() + 1, bytes_written);
 }
 
 Error
