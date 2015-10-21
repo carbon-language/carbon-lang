@@ -218,6 +218,10 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     virtual void ModulesDidLoad(const ModuleList &module_list );
 
+    bool LoadAllocation(Stream &strm, const uint32_t alloc_id, const char* filename, StackFrame* frame_ptr);
+
+    bool SaveAllocation(Stream &strm, const uint32_t alloc_id, const char* filename, StackFrame* frame_ptr);
+
     void Update();
 
     void Initiate();
@@ -264,7 +268,7 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
         const HookDefn  *defn;
         lldb::BreakpointSP bp_sp;
     };
-    
+
     typedef std::shared_ptr<RuntimeHook> RuntimeHookSP;
 
     lldb::ModuleSP m_libRS;
@@ -301,6 +305,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     void CaptureSetGlobalVar1(RuntimeHook* hook_info, ExecutionContext& context);
 
     AllocationDetails* FindAllocByID(Stream &strm, const uint32_t alloc_id);
+    std::shared_ptr<uint8_t> GetAllocationData(AllocationDetails* allocation, StackFrame* frame_ptr);
+    unsigned int GetElementSize(const AllocationDetails* allocation);
 
     //
     // Helper functions for jitting the runtime

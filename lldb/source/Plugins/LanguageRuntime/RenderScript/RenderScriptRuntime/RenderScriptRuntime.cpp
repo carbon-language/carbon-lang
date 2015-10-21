@@ -179,6 +179,18 @@ struct RenderScriptRuntime::AllocationDetails
         }
     };
 
+    // Header for reading and writing allocation contents
+    // to a binary file.
+    struct FileHeader
+    {
+        uint8_t ident[4];      // ASCII 'RSAD' identifying the file
+        uint16_t hdr_size;     // Header size in bytes, for backwards compatability
+        uint16_t type;         // DataType enum
+        uint32_t kind;         // DataKind enum
+        uint32_t dims[3];      // Dimensions
+        uint32_t element_size; // Size of a single element, including padding
+    };
+
     // Monotonically increasing from 1
     static unsigned int ID;
 
@@ -1365,6 +1377,283 @@ RenderScriptRuntime::RefreshAllocation(AllocationDetails* allocation, StackFrame
     if (!JITElementPacked(allocation, frame_ptr))
         return false;
 
+    // Use GetOffsetPointer() to infer size of the allocation
+    const unsigned int element_size = GetElementSize(allocation);
+    if (!JITAllocationSize(allocation, frame_ptr, element_size))
+        return false;
+
+    return true;
+}
+
+// Returns the size of a single allocation element including padding.
+// Assumes the relevant allocation information has already been jitted.
+unsigned int
+RenderScriptRuntime::GetElementSize(const AllocationDetails* allocation)
+{
+    const AllocationDetails::DataType type = *allocation->type.get();
+    assert(type >= AllocationDetails::RS_TYPE_NONE && type <= AllocationDetails::RS_TYPE_BOOLEAN
+                                                   && "Invalid allocation type");
+
+    const unsigned int vec_size = *allocation->type_vec_size.get();
+    const unsigned int data_size = vec_size * AllocationDetails::RSTypeToFormat[type][eElementSize];
+    const unsigned int padding = vec_size == 3 ? AllocationDetails::RSTypeToFormat[type][eElementSize] : 0;
+
+    return data_size + padding;
+}
+
+// Given an allocation, this function copies the allocation contents from device into a buffer on the heap.
+// Returning a shared pointer to the buffer containing the data.
+std::shared_ptr<uint8_t>
+RenderScriptRuntime::GetAllocationData(AllocationDetails* allocation, StackFrame* frame_ptr)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    // JIT all the allocation details
+    if (!allocation->data_ptr.isValid() || !allocation->type.isValid() || !allocation->type_vec_size.isValid()
+        || !allocation->size.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::GetAllocationData - Allocation details not calculated yet, jitting info");
+
+        if (!RefreshAllocation(allocation, frame_ptr))
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::GetAllocationData - Couldn't JIT allocation details");
+            return nullptr;
+        }
+    }
+
+    assert(allocation->data_ptr.isValid() && allocation->type.isValid() && allocation->type_vec_size.isValid()
+           && allocation->size.isValid() && "Allocation information not available");
+
+    // Allocate a buffer to copy data into
+    const unsigned int size = *allocation->size.get();
+    std::shared_ptr<uint8_t> buffer(new uint8_t[size]);
+    if (!buffer)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::GetAllocationData - Couldn't allocate a %u byte buffer", size);
+        return nullptr;
+    }
+
+    // Read the inferior memory
+    Error error;
+    lldb::addr_t data_ptr = *allocation->data_ptr.get();
+    GetProcess()->ReadMemory(data_ptr, buffer.get(), size, error);
+    if (error.Fail())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::GetAllocationData - '%s' Couldn't read %u bytes of allocation data from 0x%" PRIx64,
+                        error.AsCString(), size, data_ptr);
+        return nullptr;
+    }
+
+    return buffer;
+}
+
+// Function copies data from a binary file into an allocation.
+// There is a header at the start of the file, FileHeader, before the data content itself.
+// Information from this header is used to display warnings to the user about incompatabilities
+bool
+RenderScriptRuntime::LoadAllocation(Stream &strm, const uint32_t alloc_id, const char* filename, StackFrame* frame_ptr)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    // Find allocation with the given id
+    AllocationDetails* alloc = FindAllocByID(strm, alloc_id);
+    if (!alloc)
+        return false;
+
+    if (log)
+        log->Printf("RenderScriptRuntime::LoadAllocation - Found allocation 0x%" PRIx64, *alloc->address.get());
+
+    // JIT all the allocation details
+    if (!alloc->data_ptr.isValid() || !alloc->type.isValid() || !alloc->type_vec_size.isValid() || !alloc->size.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::LoadAllocation - Allocation details not calculated yet, jitting info");
+
+        if (!RefreshAllocation(alloc, frame_ptr))
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::LoadAllocation - Couldn't JIT allocation details");
+            return nullptr;
+        }
+    }
+
+    assert(alloc->data_ptr.isValid() && alloc->type.isValid() && alloc->type_vec_size.isValid() && alloc->size.isValid()
+           && "Allocation information not available");
+
+    // Check we can read from file
+    FileSpec file(filename, true);
+    if (!file.Exists())
+    {
+        strm.Printf("Error: File %s does not exist", filename);
+        strm.EOL();
+        return false;
+    }
+
+    if (!file.Readable())
+    {
+        strm.Printf("Error: File %s does not have readable permissions", filename);
+        strm.EOL();
+        return false;
+    }
+
+    // Read file into data buffer
+    DataBufferSP data_sp(file.ReadFileContents());
+
+    // Cast start of buffer to FileHeader and use pointer to read metadata
+    void* file_buffer = data_sp->GetBytes();
+    const AllocationDetails::FileHeader* head = static_cast<AllocationDetails::FileHeader*>(file_buffer);
+
+    // Advance buffer past header
+    file_buffer = static_cast<uint8_t*>(file_buffer) + head->hdr_size;
+
+    if (log)
+        log->Printf("RenderScriptRuntime::LoadAllocation - header type %u, element size %u",
+                    head->type, head->element_size);
+
+    // Check if the target allocation and file both have the same number of bytes for an Element
+    const unsigned int elem_size = GetElementSize(alloc);
+    if (elem_size != head->element_size)
+    {
+        strm.Printf("Warning: Mismatched Element sizes - file %u bytes, allocation %u bytes",
+                    head->element_size, elem_size);
+        strm.EOL();
+    }
+
+    // Check if the target allocation and file both have the same integral type
+    const unsigned int type = static_cast<unsigned int>(*alloc->type.get());
+    if (type != head->type)
+    {
+        const char* file_type_cstr = AllocationDetails::RsDataTypeToString[head->type][0];
+        const char* alloc_type_cstr = AllocationDetails::RsDataTypeToString[type][0];
+
+        strm.Printf("Warning: Mismatched Types - file '%s' type, allocation '%s' type",
+                    file_type_cstr, alloc_type_cstr);
+        strm.EOL();
+    }
+
+    // Calculate size of allocation data in file
+    size_t length = data_sp->GetByteSize() - head->hdr_size;
+
+    // Check if the target allocation and file both have the same total data size.
+    const unsigned int alloc_size = *alloc->size.get();
+    if (alloc_size != length)
+    {
+        strm.Printf("Warning: Mismatched allocation sizes - file 0x%" PRIx64 " bytes, allocation 0x%x bytes",
+                    length, alloc_size);
+        strm.EOL();
+        length = alloc_size < length ? alloc_size : length; // Set length to copy to minimum
+    }
+
+    // Copy file data from our buffer into the target allocation.
+    lldb::addr_t alloc_data = *alloc->data_ptr.get();
+    Error error;
+    size_t bytes_written = GetProcess()->WriteMemory(alloc_data, file_buffer, length, error);
+    if (!error.Success() || bytes_written != length)
+    {
+        strm.Printf("Error: Couldn't write data to allocation %s", error.AsCString());
+        strm.EOL();
+        return false;
+    }
+
+    strm.Printf("Contents of file '%s' read into allocation %u", filename, alloc->id);
+    strm.EOL();
+
+    return true;
+}
+
+// Function copies allocation contents into a binary file.
+// This file can then be loaded later into a different allocation.
+// There is a header, FileHeader, before the allocation data containing meta-data.
+bool
+RenderScriptRuntime::SaveAllocation(Stream &strm, const uint32_t alloc_id, const char* filename, StackFrame* frame_ptr)
+{
+    Log* log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+
+    // Find allocation with the given id
+    AllocationDetails* alloc = FindAllocByID(strm, alloc_id);
+    if (!alloc)
+        return false;
+
+    if (log)
+        log->Printf("RenderScriptRuntime::SaveAllocation - Found allocation 0x%" PRIx64, *alloc->address.get());
+
+     // JIT all the allocation details
+    if (!alloc->data_ptr.isValid() || !alloc->type.isValid() || !alloc->type_vec_size.isValid()
+        || !alloc->type_kind.isValid() || !alloc->dimension.isValid())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::SaveAllocation - Allocation details not calculated yet, jitting info");
+
+        if (!RefreshAllocation(alloc, frame_ptr))
+        {
+            if (log)
+                log->Printf("RenderScriptRuntime::SaveAllocation - Couldn't JIT allocation details");
+            return nullptr;
+        }
+    }
+
+    assert(alloc->data_ptr.isValid() && alloc->type.isValid() && alloc->type_vec_size.isValid() && alloc->type_kind.isValid()
+           && alloc->dimension.isValid() && "Allocation information not available");
+
+    // Check we can create writable file
+    FileSpec file_spec(filename, true);
+    File file(file_spec, File::eOpenOptionWrite | File::eOpenOptionCanCreate | File::eOpenOptionTruncate);
+    if (!file)
+    {
+        strm.Printf("Error: Failed to open '%s' for writing", filename);
+        strm.EOL();
+        return false;
+    }
+
+    // Read allocation into buffer of heap memory
+    const std::shared_ptr<uint8_t> buffer = GetAllocationData(alloc, frame_ptr);
+    if (!buffer)
+    {
+        strm.Printf("Error: Couldn't read allocation data into buffer");
+        strm.EOL();
+        return false;
+    }
+
+    // Create the file header
+    AllocationDetails::FileHeader head;
+    head.ident[0] = 'R'; head.ident[1] = 'S'; head.ident[2] = 'A'; head.ident[3] = 'D';
+    head.hdr_size = static_cast<uint16_t>(sizeof(AllocationDetails::FileHeader));
+    head.type = static_cast<uint16_t>(*alloc->type.get());
+    head.kind = static_cast<uint32_t>(*alloc->type_kind.get());
+    head.dims[1] = static_cast<uint32_t>(alloc->dimension.get()->dim_1);
+    head.dims[2] = static_cast<uint32_t>(alloc->dimension.get()->dim_2);
+    head.dims[3] = static_cast<uint32_t>(alloc->dimension.get()->dim_3);
+    head.element_size = static_cast<uint32_t>(GetElementSize(alloc));
+
+    // Write the file header
+    size_t num_bytes = sizeof(AllocationDetails::FileHeader);
+    Error err = file.Write(static_cast<const void*>(&head), num_bytes);
+    if (!err.Success())
+    {
+        strm.Printf("Error: '%s' when writing to file '%s'", err.AsCString(), filename);
+        strm.EOL();
+        return false;
+    }
+
+    // Write allocation data to file
+    num_bytes = static_cast<size_t>(*alloc->size.get());
+    if (log)
+        log->Printf("RenderScriptRuntime::SaveAllocation - Writing %" PRIx64  "bytes from %p", num_bytes, buffer.get());
+
+    err = file.Write(buffer.get(), num_bytes);
+    if (!err.Success())
+    {
+        strm.Printf("Error: '%s' when writing to file '%s'", err.AsCString(), filename);
+        strm.EOL();
+        return false;
+    }
+
+    strm.Printf("Allocation written to file '%s'", filename);
+    strm.EOL();
     return true;
 }
 
@@ -1742,6 +2031,15 @@ RenderScriptRuntime::DumpAllocation(Stream &strm, StackFrame* frame_ptr, const u
         log->Printf("RenderScriptRuntime::DumpAllocation - Element size %u bytes, element padding %u bytes",
                     data_size, elem_padding);
 
+    // Allocate a buffer to copy data into
+    std::shared_ptr<uint8_t> buffer = GetAllocationData(alloc, frame_ptr);
+    if (!buffer)
+    {
+        strm.Printf("Error: Couldn't allocate a read allocation data into memory");
+        strm.EOL();
+        return false;
+    }
+
     // Calculate stride between rows as there may be padding at end of rows since
     // allocated memory is 16-byte aligned
     if (!alloc->stride.isValid())
@@ -1756,48 +2054,10 @@ RenderScriptRuntime::DumpAllocation(Stream &strm, StackFrame* frame_ptr, const u
         }
     }
     const unsigned int stride = *alloc->stride.get();
-
-    // Calculate data size
-    if (!alloc->size.isValid() && !JITAllocationSize(alloc, frame_ptr, data_size + elem_padding))
-    {
-        strm.Printf("Error: Couldn't calculate allocation size");
-        strm.EOL();
-        return false;
-    }
     const unsigned int size = *alloc->size.get(); //size of last element
 
     if (log)
         log->Printf("RenderScriptRuntime::DumpAllocation - stride %u bytes, size %u bytes", stride, size);
-
-    // Allocate a buffer to copy data into
-    uint8_t* buffer = new uint8_t[size];
-    if (!buffer)
-    {
-        strm.Printf("Error: Couldn't allocate a %u byte buffer to read memory into", size);
-        strm.EOL();
-        return false;
-    }
-
-    // Read Memory into buffer
-    Error error;
-    Process* process = GetProcess();
-    const addr_t data_ptr = *alloc->data_ptr.get();
-    const uint32_t archByteSize = process->GetTarget().GetArchitecture().GetAddressByteSize();
-    DataExtractor alloc_data(buffer, size, process->GetByteOrder(), archByteSize);
-
-    if (log)
-        log->Printf("RenderScriptRuntime::DumpAllocation - Reading %u bytes of allocation data from 0x%" PRIx64,
-                    size, data_ptr);
-
-    // Read the inferior memory
-    process->ReadMemory(data_ptr, buffer, size, error);
-    if (error.Fail())
-    {
-        strm.Printf("Error: Couldn't read %u bytes of allocation data from 0x%" PRIx64, size, data_ptr);
-        strm.EOL();
-        delete[] buffer; // remember to free memory
-        return false;
-    }
 
     // Find dimensions used to index loops, so need to be non-zero
     unsigned int dim_x = alloc->dimension.get()->dim_1;
@@ -1808,6 +2068,10 @@ RenderScriptRuntime::DumpAllocation(Stream &strm, StackFrame* frame_ptr, const u
 
     unsigned int dim_z = alloc->dimension.get()->dim_3;
     dim_z = dim_z == 0 ? 1 : dim_z;
+
+    // Use data extractor to format output
+    const uint32_t archByteSize = GetProcess()->GetTarget().GetArchitecture().GetAddressByteSize();
+    DataExtractor alloc_data(buffer.get(), size, GetProcess()->GetByteOrder(), archByteSize);
 
     unsigned int offset = 0;   // Offset in buffer to next element to be printed
     unsigned int prev_row = 0; // Offset to the start of the previous row
@@ -1834,7 +2098,6 @@ RenderScriptRuntime::DumpAllocation(Stream &strm, StackFrame* frame_ptr, const u
     }
     strm.EOL();
 
-    delete[] buffer;
     return true;
 }
 
@@ -2646,6 +2909,105 @@ CommandObjectRenderScriptRuntimeAllocationList::CommandOptions::g_option_table[]
 };
 
 
+class CommandObjectRenderScriptRuntimeAllocationLoad : public CommandObjectParsed
+{
+  private:
+  public:
+    CommandObjectRenderScriptRuntimeAllocationLoad(CommandInterpreter &interpreter)
+        : CommandObjectParsed(interpreter, "renderscript allocation load",
+                              "Loads renderscript allocation contents from a file.", "renderscript allocation load <ID> <filename>",
+                              eCommandRequiresProcess | eCommandProcessMustBeLaunched)
+    {
+    }
+
+    ~CommandObjectRenderScriptRuntimeAllocationLoad() {}
+
+    bool
+    DoExecute(Args &command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc != 2)
+        {
+            result.AppendErrorWithFormat("'%s' takes 2 arguments, an allocation ID and filename to read from.", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        RenderScriptRuntime *runtime =
+          static_cast<RenderScriptRuntime *>(m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript));
+
+        const char* id_cstr = command.GetArgumentAtIndex(0);
+        bool convert_complete = false;
+        const uint32_t id = StringConvert::ToUInt32(id_cstr, UINT32_MAX, 0, &convert_complete);
+        if (!convert_complete)
+        {
+            result.AppendErrorWithFormat ("invalid allocation id argument '%s'", id_cstr);
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        const char* filename = command.GetArgumentAtIndex(1);
+        bool success = runtime->LoadAllocation(result.GetOutputStream(), id, filename, m_exe_ctx.GetFramePtr());
+
+        if (success)
+            result.SetStatus(eReturnStatusSuccessFinishResult);
+        else
+            result.SetStatus(eReturnStatusFailed);
+
+        return true;
+    }
+};
+
+
+class CommandObjectRenderScriptRuntimeAllocationSave : public CommandObjectParsed
+{
+  private:
+  public:
+    CommandObjectRenderScriptRuntimeAllocationSave(CommandInterpreter &interpreter)
+        : CommandObjectParsed(interpreter, "renderscript allocation save",
+                              "Write renderscript allocation contents to a file.", "renderscript allocation save <ID> <filename>",
+                              eCommandRequiresProcess | eCommandProcessMustBeLaunched)
+    {
+    }
+
+    ~CommandObjectRenderScriptRuntimeAllocationSave() {}
+
+    bool
+    DoExecute(Args &command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc != 2)
+        {
+            result.AppendErrorWithFormat("'%s' takes 2 arguments, an allocation ID and filename to read from.", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        RenderScriptRuntime *runtime =
+          static_cast<RenderScriptRuntime *>(m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript));
+
+        const char* id_cstr = command.GetArgumentAtIndex(0);
+        bool convert_complete = false;
+        const uint32_t id = StringConvert::ToUInt32(id_cstr, UINT32_MAX, 0, &convert_complete);
+        if (!convert_complete)
+        {
+            result.AppendErrorWithFormat ("invalid allocation id argument '%s'", id_cstr);
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        const char* filename = command.GetArgumentAtIndex(1);
+        bool success = runtime->SaveAllocation(result.GetOutputStream(), id, filename, m_exe_ctx.GetFramePtr());
+
+        if (success)
+            result.SetStatus(eReturnStatusSuccessFinishResult);
+        else
+            result.SetStatus(eReturnStatusFailed);
+
+        return true;
+    }
+};
+
 class CommandObjectRenderScriptRuntimeAllocation : public CommandObjectMultiword
 {
   private:
@@ -2656,6 +3018,8 @@ class CommandObjectRenderScriptRuntimeAllocation : public CommandObjectMultiword
     {
         LoadSubCommand("list", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationList(interpreter)));
         LoadSubCommand("dump", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationDump(interpreter)));
+        LoadSubCommand("save", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationSave(interpreter)));
+        LoadSubCommand("load", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationLoad(interpreter)));
     }
 
     ~CommandObjectRenderScriptRuntimeAllocation() {}
