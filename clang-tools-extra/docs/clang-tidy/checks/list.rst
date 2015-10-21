@@ -9,6 +9,7 @@ List of clang-tidy Checks
    cppcoreguidelines-pro-type-reinterpret-cast
    cppcoreguidelines-pro-type-static-cast-downcast
    cppcoreguidelines-pro-type-union-access
+   cppcoreguidelines-pro-type-vararg
    google-build-explicit-make-pair
    google-build-namespaces
    google-build-using-namespace
