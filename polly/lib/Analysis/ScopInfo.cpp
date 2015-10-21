@@ -2549,14 +2549,18 @@ void Scop::hoistInvariantLoads() {
       // not loaded inside the SCoP. This can happened e.g., if a readnone call
       // returns a pointer that is used as a base address. However, as we want
       // to hoist indirect pointers, we allow the base pointer to be defined in
-      // the region if it is also a memory access. Hence, if the ScopArrayInfo
-      // object has a base pointer origin we know the base pointer is loaded and
-      // that it is invariant, thus it will be hoisted too.
+      // the region if it is also a memory access. Each ScopArrayInfo object
+      // that has a base pointer origin has a base pointer that is loaded and
+      // that it is invariant, thus it will be hoisted too. However, if there is
+      // no bease pointer origin we check that the base pointer is defined
+      // outside the region.
       const ScopArrayInfo *SAI = MA->getScopArrayInfo();
-      if (!SAI->getBasePtrOriginSAI())
-        if (auto *BasePtrInst = dyn_cast<Instruction>(SAI->getBasePtr()))
-          if (R.contains(BasePtrInst))
-            continue;
+      while (auto *BasePtrOriginSAI = SAI->getBasePtrOriginSAI())
+        SAI = BasePtrOriginSAI;
+
+      if (auto *BasePtrInst = dyn_cast<Instruction>(SAI->getBasePtr()))
+        if (R.contains(BasePtrInst))
+          continue;
 
       // Skip accesses in non-affine subregions as they might not be executed
       // under the same condition as the entry of the non-affine subregion.
