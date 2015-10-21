@@ -16,7 +16,6 @@
 #ifndef LLVM_TRANSFORMS_UTILS_LOOPVERSIONING_H
 #define LLVM_TRANSFORMS_UTILS_LOOPVERSIONING_H
 
-#include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 
