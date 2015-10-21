@@ -127,7 +127,17 @@ void test6(unsigned cond) {
   switch (cond) {
   case 0:
     ;
-    id x; // expected-note {{jump bypasses initialization of retaining variable}}
+    id x; // expected-note {{jump bypasses initialization of __strong variable}}
+
+  case 1: // expected-error {{cannot jump}}
+    break;
+  }
+}
+void test6a(unsigned cond) {
+  switch (cond) {
+  case 0:
+    ;
+    __weak id x; // expected-note {{jump bypasses initialization of __weak variable}}
 
   case 1: // expected-error {{cannot jump}}
     break;

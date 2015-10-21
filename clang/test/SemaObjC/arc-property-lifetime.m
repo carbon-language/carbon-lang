@@ -70,7 +70,7 @@
 // rdar://9341593
 @interface Gorf  {
    id __unsafe_unretained x;
-   id y; // expected-error {{existing instance variable 'y' for property 'y' with  assign attribute must be __unsafe_unretained}}
+   id y; // expected-error {{existing instance variable 'y' for property 'y' with assign attribute must be __unsafe_unretained}}
 }
 @property(assign) id __unsafe_unretained x;
 @property(assign) id y; // expected-note {{property declared here}}
@@ -180,7 +180,7 @@ void foo(Baz *f) {
 @end
 
 @interface Foo2 {
-  id _prop; // expected-error {{existing instance variable '_prop' for property 'prop' with  assign attribute must be __unsafe_unretained}}
+  id _prop; // expected-error {{existing instance variable '_prop' for property 'prop' with assign attribute must be __unsafe_unretained}}
 }
 @property (nonatomic, assign) id prop; // expected-note {{property declared here}}
 @end

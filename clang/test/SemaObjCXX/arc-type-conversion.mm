@@ -6,8 +6,8 @@ void * cvt(id arg) // expected-note{{candidate function not viable: cannot conve
   void* voidp_val;
   (void)(int*)arg; // expected-error {{cast of an Objective-C pointer to 'int *' is disallowed with ARC}}
   (void)(id)arg;
-  (void)(__autoreleasing id*)arg; // expected-error{{C-style cast from 'id' to '__autoreleasing id *' casts away qualifiers}}
-  (void)(id*)arg; // expected-error{{C-style cast from 'id' to '__strong id *' casts away qualifiers}}
+  (void)(__autoreleasing id*)arg; // expected-error{{cast of an Objective-C pointer to '__autoreleasing id *' is disallowed with ARC}}
+  (void)(id*)arg; // expected-error{{cast of an Objective-C pointer to '__strong id *' is disallowed with ARC}}
 
   (void)(__autoreleasing id**)voidp_val;
   (void)(void*)voidp_val;

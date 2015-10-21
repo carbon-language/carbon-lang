@@ -180,7 +180,7 @@ void test6(unsigned cond) {
   switch (cond) {
   case 0:
     ;
-    id x; // expected-note {{jump bypasses initialization of retaining variable}}
+    id x; // expected-note {{jump bypasses initialization of __strong variable}}
 
   case 1: // expected-error {{cannot jump}}
     x = 0;
