@@ -438,7 +438,6 @@ void SILowerControlFlowPass::IndirectSrc(MachineInstr &MI) {
   MachineInstr *MovRel =
     BuildMI(*MBB.getParent(), DL, TII->get(AMDGPU::V_MOVRELS_B32_e32), Dst)
             .addReg(Reg)
-            .addReg(AMDGPU::M0, RegState::Implicit)
             .addReg(Vec, RegState::Implicit);
 
   LoadM0(MI, MovRel, Off);
@@ -460,7 +459,6 @@ void SILowerControlFlowPass::IndirectDst(MachineInstr &MI) {
     BuildMI(*MBB.getParent(), DL, TII->get(AMDGPU::V_MOVRELD_B32_e32))
             .addReg(Reg, RegState::Define)
             .addReg(Val)
-            .addReg(AMDGPU::M0, RegState::Implicit)
             .addReg(Dst, RegState::Implicit);
 
   LoadM0(MI, MovRel, Off);
