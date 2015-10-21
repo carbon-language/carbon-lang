@@ -1255,6 +1255,16 @@ val linkage : llvalue -> Linkage.t
     See the method [llvm::GlobalValue::setLinkage]. *)
 val set_linkage : Linkage.t -> llvalue -> unit
 
+(** [unnamed_addr g] returns [true] if the global value [g] has the unnamed_addr
+    attribute. Returns [false] otherwise.
+    See the method [llvm::GlobalValue::getUnnamedAddr]. *)
+val unnamed_addr : llvalue -> bool
+
+(** [set_unnamed_addr b g] if [b] is [true], sets the unnamed_addr attribute of
+    the global value [g]. Unset it otherwise.
+    See the method [llvm::GlobalValue::setUnnamedAddr]. *)
+val set_unnamed_addr : bool -> llvalue -> unit
+
 (** [section g] returns the linker section of the global value [g].
     See the method [llvm::GlobalValue::getSection]. *)
 val section : llvalue -> string
