@@ -1,4 +1,4 @@
-//===-- UnwindAssembly-x86.h -------------------------------------*- C++ -*-===//
+//===-- UnwindAssembly-x86.h ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,41 +10,43 @@
 #ifndef liblldb_UnwindAssembly_x86_h_
 #define liblldb_UnwindAssembly_x86_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
 #include "llvm-c/Disassembler.h"
 
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/UnwindAssembly.h"
 
 class UnwindAssembly_x86 : public lldb_private::UnwindAssembly
 {
 public:
+    ~UnwindAssembly_x86() override;
 
-    ~UnwindAssembly_x86 ();
+    bool
+    GetNonCallSiteUnwindPlanFromAssembly(lldb_private::AddressRange& func,
+                                         lldb_private::Thread& thread,
+                                         lldb_private::UnwindPlan& unwind_plan) override;
 
-    virtual bool
-    GetNonCallSiteUnwindPlanFromAssembly (lldb_private::AddressRange& func, 
-                                          lldb_private::Thread& thread, 
-                                          lldb_private::UnwindPlan& unwind_plan);
+    bool
+    AugmentUnwindPlanFromCallSite(lldb_private::AddressRange& func,
+                                  lldb_private::Thread& thread,
+                                  lldb_private::UnwindPlan& unwind_plan) override;
 
-    virtual bool
-    AugmentUnwindPlanFromCallSite (lldb_private::AddressRange& func,
-                                   lldb_private::Thread& thread,
-                                   lldb_private::UnwindPlan& unwind_plan);
-
-    virtual bool
-    GetFastUnwindPlan (lldb_private::AddressRange& func, 
-                       lldb_private::Thread& thread, 
-                       lldb_private::UnwindPlan &unwind_plan);
+    bool
+    GetFastUnwindPlan(lldb_private::AddressRange& func,
+                      lldb_private::Thread& thread,
+                      lldb_private::UnwindPlan &unwind_plan) override;
 
     // thread may be NULL in which case we only use the Target (e.g. if this is called pre-process-launch).
-    virtual bool
-    FirstNonPrologueInsn (lldb_private::AddressRange& func, 
-                          const lldb_private::ExecutionContext &exe_ctx,
-                          lldb_private::Address& first_non_prologue_insn);
+    bool
+    FirstNonPrologueInsn(lldb_private::AddressRange& func,
+                         const lldb_private::ExecutionContext &exe_ctx,
+                         lldb_private::Address& first_non_prologue_insn) override;
 
     static lldb_private::UnwindAssembly *
     CreateInstance (const lldb_private::ArchSpec &arch);
-
 
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -61,11 +63,11 @@ public:
     static const char *
     GetPluginDescriptionStatic();
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
     
 private:
     UnwindAssembly_x86 (const lldb_private::ArchSpec &arch, int cpu);
@@ -73,6 +75,5 @@ private:
     int m_cpu;
     lldb_private::ArchSpec m_arch;
 };
-
 
 #endif // liblldb_UnwindAssembly_x86_h_

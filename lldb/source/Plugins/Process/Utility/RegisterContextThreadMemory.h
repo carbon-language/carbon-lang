@@ -10,8 +10,12 @@
 #ifndef lldb_RegisterContextThreadMemory_h_
 #define lldb_RegisterContextThreadMemory_h_
 
+// C Includes
+// C++ Includes
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -24,30 +28,28 @@ public:
     RegisterContextThreadMemory (Thread &thread,
                                  lldb::addr_t register_data_addr);
     
-    virtual ~RegisterContextThreadMemory();
-    //------------------------------------------------------------------
-    // Subclasses must override these functions
-    //------------------------------------------------------------------
-    virtual void
-    InvalidateAllRegisters ();
+    ~RegisterContextThreadMemory() override;
+
+    void
+    InvalidateAllRegisters() override;
     
-    virtual size_t
-    GetRegisterCount ();
+    size_t
+    GetRegisterCount() override;
     
-    virtual const RegisterInfo *
-    GetRegisterInfoAtIndex (size_t reg);
+    const RegisterInfo *
+    GetRegisterInfoAtIndex(size_t reg) override;
     
-    virtual size_t
-    GetRegisterSetCount ();
+    size_t
+    GetRegisterSetCount() override;
     
-    virtual const RegisterSet *
-    GetRegisterSet (size_t reg_set);
+    const RegisterSet *
+    GetRegisterSet(size_t reg_set) override;
     
-    virtual bool
-    ReadRegister (const RegisterInfo *reg_info, RegisterValue &reg_value);
+    bool
+    ReadRegister(const RegisterInfo *reg_info, RegisterValue &reg_value) override;
     
-    virtual bool
-    WriteRegister (const RegisterInfo *reg_info, const RegisterValue &reg_value);
+    bool
+    WriteRegister(const RegisterInfo *reg_info, const RegisterValue &reg_value) override;
     
     // These two functions are used to implement "push" and "pop" of register states.  They are used primarily
     // for expression evaluation, where we need to push a new state (storing the old one in data_sp) and then
@@ -56,48 +58,50 @@ public:
     // may mean e.g. interrupting a thread that is sitting in a kernel trap.  That is a somewhat disruptive operation,
     // so these API's should only be used when this behavior is needed.
     
-    virtual bool
-    ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
+    bool
+    ReadAllRegisterValues(lldb::DataBufferSP &data_sp) override;
     
-    virtual bool
-    WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
+    bool
+    WriteAllRegisterValues(const lldb::DataBufferSP &data_sp) override;
     
     bool
     CopyFromRegisterContext (lldb::RegisterContextSP context);
     
-    virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
+    uint32_t
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num) override;
     
-    //------------------------------------------------------------------
-    // Subclasses can override these functions if desired
-    //------------------------------------------------------------------
-    virtual uint32_t
-    NumSupportedHardwareBreakpoints ();
+    uint32_t
+    NumSupportedHardwareBreakpoints() override;
     
-    virtual uint32_t
-    SetHardwareBreakpoint (lldb::addr_t addr, size_t size);
+    uint32_t
+    SetHardwareBreakpoint(lldb::addr_t addr, size_t size) override;
     
-    virtual bool
-    ClearHardwareBreakpoint (uint32_t hw_idx);
+    bool
+    ClearHardwareBreakpoint(uint32_t hw_idx) override;
     
-    virtual uint32_t
-    NumSupportedHardwareWatchpoints ();
+    uint32_t
+    NumSupportedHardwareWatchpoints() override;
     
-    virtual uint32_t
-    SetHardwareWatchpoint (lldb::addr_t addr, size_t size, bool read, bool write);
+    uint32_t
+    SetHardwareWatchpoint(lldb::addr_t addr, size_t size, bool read, bool write) override;
     
-    virtual bool
-    ClearHardwareWatchpoint (uint32_t hw_index);
+    bool
+    ClearHardwareWatchpoint(uint32_t hw_index) override;
     
-    virtual bool
-    HardwareSingleStep (bool enable);
+    bool
+    HardwareSingleStep(bool enable) override;
     
-    virtual Error
-    ReadRegisterValueFromMemory (const lldb_private::RegisterInfo *reg_info, lldb::addr_t src_addr, uint32_t src_len, RegisterValue &reg_value);
+    Error
+    ReadRegisterValueFromMemory(const lldb_private::RegisterInfo *reg_info,
+                                lldb::addr_t src_addr,
+                                uint32_t src_len,
+                                RegisterValue &reg_value) override;
     
-    virtual Error
-    WriteRegisterValueToMemory (const lldb_private::RegisterInfo *reg_info, lldb::addr_t dst_addr, uint32_t dst_len, const RegisterValue &reg_value);
-    
+    Error
+    WriteRegisterValueToMemory(const lldb_private::RegisterInfo *reg_info,
+                               lldb::addr_t dst_addr, uint32_t dst_len,
+                               const RegisterValue &reg_value) override;
+
 protected:
     void
     UpdateRegisterContext ();
@@ -106,9 +110,11 @@ protected:
     lldb::RegisterContextSP m_reg_ctx_sp;
     lldb::addr_t m_register_data_addr;
     uint32_t m_stop_id;
+
 private:
     DISALLOW_COPY_AND_ASSIGN (RegisterContextThreadMemory);
 };
+
 } // namespace lldb_private
 
-#endif  // lldb_RegisterContextThreadMemory_h_
+#endif // lldb_RegisterContextThreadMemory_h_

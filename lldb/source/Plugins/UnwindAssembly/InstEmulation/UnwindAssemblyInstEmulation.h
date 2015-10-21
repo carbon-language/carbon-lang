@@ -1,4 +1,4 @@
-//===-- UnwindAssemblyInstEmulation.h ----------------------------*- C++ -*-===//
+//===-- UnwindAssemblyInstEmulation.h ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,6 +10,10 @@
 #ifndef liblldb_UnwindAssemblyInstEmulation_h_
 #define liblldb_UnwindAssemblyInstEmulation_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/RegisterValue.h"
@@ -19,32 +23,28 @@
 class UnwindAssemblyInstEmulation : public lldb_private::UnwindAssembly
 {
 public:
+    ~UnwindAssemblyInstEmulation() override = default;
 
-    virtual
-    ~UnwindAssemblyInstEmulation () 
-    {
-    }
+    bool
+    GetNonCallSiteUnwindPlanFromAssembly(lldb_private::AddressRange& func,
+                                         lldb_private::Thread& thread,
+                                         lldb_private::UnwindPlan& unwind_plan) override;
 
-    virtual bool
-    GetNonCallSiteUnwindPlanFromAssembly (lldb_private::AddressRange& func, 
-                                          lldb_private::Thread& thread, 
-                                          lldb_private::UnwindPlan& unwind_plan);
+    bool
+    AugmentUnwindPlanFromCallSite(lldb_private::AddressRange& func,
+                                  lldb_private::Thread& thread,
+                                  lldb_private::UnwindPlan& unwind_plan) override;
 
-    virtual bool
-    AugmentUnwindPlanFromCallSite (lldb_private::AddressRange& func,
-                                   lldb_private::Thread& thread,
-                                   lldb_private::UnwindPlan& unwind_plan);
-
-    virtual bool
-    GetFastUnwindPlan (lldb_private::AddressRange& func, 
-                       lldb_private::Thread& thread, 
-                       lldb_private::UnwindPlan &unwind_plan);
+    bool
+    GetFastUnwindPlan(lldb_private::AddressRange& func,
+                      lldb_private::Thread& thread,
+                      lldb_private::UnwindPlan &unwind_plan) override;
 
     // thread may be NULL in which case we only use the Target (e.g. if this is called pre-process-launch).
-    virtual bool
-    FirstNonPrologueInsn (lldb_private::AddressRange& func, 
-                          const lldb_private::ExecutionContext &exe_ctx, 
-                          lldb_private::Address& first_non_prologue_insn);
+    bool
+    FirstNonPrologueInsn(lldb_private::AddressRange& func,
+                         const lldb_private::ExecutionContext &exe_ctx,
+                         lldb_private::Address& first_non_prologue_insn) override;
 
     static lldb_private::UnwindAssembly *
     CreateInstance (const lldb_private::ArchSpec &arch);
@@ -64,14 +64,36 @@ public:
     static const char *
     GetPluginDescriptionStatic();
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
     
 private:
-    
+    // Call CreateInstance to get an instance of this class
+    UnwindAssemblyInstEmulation(const lldb_private::ArchSpec &arch,
+                                lldb_private::EmulateInstruction *inst_emulator) :
+        UnwindAssembly (arch),
+        m_inst_emulator_ap (inst_emulator),
+        m_range_ptr (NULL),
+        m_thread_ptr (NULL),
+        m_unwind_plan_ptr (NULL),
+        m_curr_row (),
+        m_cfa_reg_info (),
+        m_fp_is_cfa (false),
+        m_register_values (),
+        m_pushed_regs(),
+        m_curr_row_modified (false),
+        m_forward_branch_offset (0)
+    {
+        if (m_inst_emulator_ap.get())
+        {
+            m_inst_emulator_ap->SetBaton (this);
+            m_inst_emulator_ap->SetCallbacks (ReadMemory, WriteMemory, ReadRegister, WriteRegister);
+        }
+    }
+
     static size_t
     ReadMemory (lldb_private::EmulateInstruction *instruction,
                 void *baton,
@@ -101,7 +123,6 @@ private:
                    const lldb_private::RegisterInfo *reg_info,
                    const lldb_private::RegisterValue &reg_value);
 
-
 //    size_t
 //    ReadMemory (lldb_private::EmulateInstruction *instruction,
 //                const lldb_private::EmulateInstruction::Context &context, 
@@ -126,29 +147,6 @@ private:
                    const lldb_private::EmulateInstruction::Context &context, 
                    const lldb_private::RegisterInfo *reg_info,
                    const lldb_private::RegisterValue &reg_value);
-
-    // Call CreateInstance to get an instance of this class
-    UnwindAssemblyInstEmulation (const lldb_private::ArchSpec &arch,
-                                 lldb_private::EmulateInstruction *inst_emulator) :
-        UnwindAssembly (arch),
-        m_inst_emulator_ap (inst_emulator),
-        m_range_ptr (NULL),
-        m_thread_ptr (NULL),
-        m_unwind_plan_ptr (NULL),
-        m_curr_row (),
-        m_cfa_reg_info (),
-        m_fp_is_cfa (false),
-        m_register_values (),
-        m_pushed_regs(),
-        m_curr_row_modified (false),
-        m_forward_branch_offset (0)
-    {
-        if (m_inst_emulator_ap.get())
-        {
-            m_inst_emulator_ap->SetBaton (this);
-            m_inst_emulator_ap->SetCallbacks (ReadMemory, WriteMemory, ReadRegister, WriteRegister);
-        }
-    }
 
     static uint64_t 
     MakeRegisterKindValuePair (const lldb_private::RegisterInfo &reg_info);

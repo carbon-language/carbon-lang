@@ -12,12 +12,11 @@
 
 // C Includes
 // C++ Includes
-#include <map>
 #include <vector>
 #include <string>
 
-// Other libraries and framework includes
-
+// Other libraries and framework include
+// Project includes
 #include "lldb/Target/SystemRuntime.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/ModuleList.h"
@@ -36,6 +35,10 @@
 class SystemRuntimeMacOSX : public lldb_private::SystemRuntime
 {
 public:
+    SystemRuntimeMacOSX(lldb_private::Process *process);
+
+    ~SystemRuntimeMacOSX() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -54,36 +57,31 @@ public:
     static lldb_private::SystemRuntime *
     CreateInstance (lldb_private::Process *process);
 
-
     //------------------------------------------------------------------
     // instance methods
     //------------------------------------------------------------------
 
-    SystemRuntimeMacOSX (lldb_private::Process *process);
-
-    virtual
-    ~SystemRuntimeMacOSX ();
+    void
+    Clear(bool clear_process);
 
     void
-    Clear (bool clear_process);
-
-    void
-    Detach ();
+    Detach() override;
 
     const std::vector<lldb_private::ConstString> &
-    GetExtendedBacktraceTypes ();
+    GetExtendedBacktraceTypes() override;
 
     lldb::ThreadSP
-    GetExtendedBacktraceThread (lldb::ThreadSP thread, lldb_private::ConstString type);
+    GetExtendedBacktraceThread(lldb::ThreadSP thread, lldb_private::ConstString type) override;
 
     lldb::ThreadSP
-    GetExtendedBacktraceForQueueItem (lldb::QueueItemSP queue_item_sp, lldb_private::ConstString type);
+    GetExtendedBacktraceForQueueItem(lldb::QueueItemSP queue_item_sp,
+                                     lldb_private::ConstString type) override;
 
     lldb::ThreadSP
     GetExtendedBacktraceFromItemRef (lldb::addr_t item_ref);
 
     void
-    PopulateQueueList (lldb_private::QueueList &queue_list);
+    PopulateQueueList(lldb_private::QueueList &queue_list) override;
 
     void
     PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint64_t queues_buffer_size, uint64_t count, lldb_private::QueueList &queue_list);
@@ -92,45 +90,43 @@ public:
     PopulatePendingQueuesUsingLibBTR (lldb::addr_t items_buffer, uint64_t items_buffer_size, uint64_t count, lldb_private::Queue *queue);
 
     std::string
-    GetQueueNameFromThreadQAddress (lldb::addr_t dispatch_qaddr);
+    GetQueueNameFromThreadQAddress(lldb::addr_t dispatch_qaddr) override;
 
     lldb::queue_id_t
-    GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr);
+    GetQueueIDFromThreadQAddress(lldb::addr_t dispatch_qaddr) override;
 
     lldb::addr_t
-    GetLibdispatchQueueAddressFromThreadQAddress (lldb::addr_t dispatch_qaddr);
+    GetLibdispatchQueueAddressFromThreadQAddress(lldb::addr_t dispatch_qaddr) override;
 
     void
-    PopulatePendingItemsForQueue (lldb_private::Queue *queue);
+    PopulatePendingItemsForQueue(lldb_private::Queue *queue) override;
 
     void
-    CompleteQueueItem (lldb_private::QueueItem *queue_item, lldb::addr_t item_ref);
+    CompleteQueueItem(lldb_private::QueueItem *queue_item, lldb::addr_t item_ref) override;
 
     virtual lldb::QueueKind
     GetQueueKind (lldb::addr_t dispatch_queue_addr);
 
-    virtual void
-    AddThreadExtendedInfoPacketHints (lldb_private::StructuredData::ObjectSP dict);
+    void
+    AddThreadExtendedInfoPacketHints(lldb_private::StructuredData::ObjectSP dict) override;
 
-    virtual bool
-    SafeToCallFunctionsOnThisThread (lldb::ThreadSP thread_sp);
+    bool
+    SafeToCallFunctionsOnThisThread(lldb::ThreadSP thread_sp) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
-
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     lldb::user_id_t m_break_id;
     mutable lldb_private::Mutex m_mutex;
 
 private:
-
     struct libBacktraceRecording_info {
         uint16_t    queue_info_version;
         uint16_t    queue_info_data_offset;
@@ -143,7 +139,6 @@ private:
             item_info_version(0),
             item_info_data_offset(0) {}
     };
-
 
     // A structure which reflects the data recorded in the
     // libBacktraceRecording introspection_dispatch_item_info_s.
@@ -338,4 +333,4 @@ private:
     DISALLOW_COPY_AND_ASSIGN (SystemRuntimeMacOSX);
 };
 
-#endif  // liblldb_SystemRuntimeMacOSX_h_
+#endif // liblldb_SystemRuntimeMacOSX_h_

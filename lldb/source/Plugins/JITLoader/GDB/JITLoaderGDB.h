@@ -13,15 +13,19 @@
 // C Includes
 // C++ Includes
 #include <map>
-#include <vector>
-#include <string>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Target/JITLoader.h"
 #include "lldb/Target/Process.h"
 
 class JITLoaderGDB : public lldb_private::JITLoader
 {
 public:
+    JITLoaderGDB(lldb_private::Process *process);
+
+    ~JITLoaderGDB() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -40,34 +44,29 @@ public:
     static lldb::JITLoaderSP
     CreateInstance (lldb_private::Process *process, bool force);
 
-    JITLoaderGDB (lldb_private::Process *process);
-
     static void
     DebuggerInitialize(lldb_private::Debugger &debugger);
-
-    virtual
-    ~JITLoaderGDB ();
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
     //------------------------------------------------------------------
     // JITLoader interface
     //------------------------------------------------------------------
-    virtual void
-    DidAttach ();
+    void
+    DidAttach() override;
 
-    virtual void
-    DidLaunch ();
+    void
+    DidLaunch() override;
 
-    virtual void
-    ModulesDidLoad (lldb_private::ModuleList &module_list);
+    void
+    ModulesDidLoad(lldb_private::ModuleList &module_list) override;
 
 private:
     lldb::addr_t
@@ -108,4 +107,4 @@ private:
 
 };
 
-#endif
+#endif // liblldb_JITLoaderGDB_h_

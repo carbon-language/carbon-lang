@@ -15,7 +15,6 @@
 #include <vector>
 
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/Unwind.h"
@@ -24,29 +23,26 @@ class UnwindMacOSXFrameBackchain : public lldb_private::Unwind
 {
 public: 
     UnwindMacOSXFrameBackchain (lldb_private::Thread &thread);
-    
-    virtual
-    ~UnwindMacOSXFrameBackchain()
-    {
-    }
-    
+
+    ~UnwindMacOSXFrameBackchain() override = default;
+
 protected:
-    virtual void
-    DoClear()
+    void
+    DoClear() override
     {
         m_cursors.clear();
     }
 
-    virtual uint32_t
-    DoGetFrameCount();
+    uint32_t
+    DoGetFrameCount() override;
 
     bool
-    DoGetFrameInfoAtIndex (uint32_t frame_idx,
-                         lldb::addr_t& cfa, 
-                         lldb::addr_t& pc);
+    DoGetFrameInfoAtIndex(uint32_t frame_idx,
+                          lldb::addr_t& cfa,
+                          lldb::addr_t& pc) override;
     
     lldb::RegisterContextSP
-    DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    DoCreateRegisterContextForFrame(lldb_private::StackFrame *frame) override;
 
     friend class RegisterContextMacOSXFrameBackchain;
 
@@ -71,4 +67,4 @@ private:
     DISALLOW_COPY_AND_ASSIGN (UnwindMacOSXFrameBackchain);
 };
 
-#endif  // lldb_UnwindMacOSXFrameBackchain_h_
+#endif // lldb_UnwindMacOSXFrameBackchain_h_

@@ -10,8 +10,12 @@
 #ifndef lldb_UnwindLLDB_h_
 #define lldb_UnwindLLDB_h_
 
+// C Includes
+// C++ Includes
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Symbol/FuncUnwinders.h"
@@ -27,9 +31,8 @@ class UnwindLLDB : public lldb_private::Unwind
 {
 public: 
     UnwindLLDB (lldb_private::Thread &thread);
-    
-    virtual
-    ~UnwindLLDB() { }
+
+    ~UnwindLLDB() override = default;
 
     enum RegisterSearchResult
     {
@@ -62,23 +65,23 @@ protected:
     };
 
     void
-    DoClear()
+    DoClear() override
     {
         m_frames.clear();
         m_candidate_frame.reset();
         m_unwind_complete = false;
     }
 
-    virtual uint32_t
-    DoGetFrameCount();
+    uint32_t
+    DoGetFrameCount() override;
 
     bool
-    DoGetFrameInfoAtIndex (uint32_t frame_idx,
-                         lldb::addr_t& cfa, 
-                         lldb::addr_t& start_pc);
+    DoGetFrameInfoAtIndex(uint32_t frame_idx,
+                          lldb::addr_t& cfa,
+                          lldb::addr_t& start_pc) override;
     
     lldb::RegisterContextSP
-    DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
+    DoCreateRegisterContextForFrame(lldb_private::StackFrame *frame) override;
 
     typedef std::shared_ptr<RegisterContextLLDB> RegisterContextLLDBSP;
 
@@ -112,7 +115,6 @@ protected:
     }
 
 private:
-
     struct Cursor
     {
         lldb::addr_t start_pc;  // The start address of the function/symbol for this frame - current pc if unknown
@@ -149,6 +151,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN (UnwindLLDB);
 };
 
-}   // namespace lldb_private
+} // namespace lldb_private
 
-#endif  // lldb_UnwindLLDB_h_
+#endif // lldb_UnwindLLDB_h_

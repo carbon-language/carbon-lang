@@ -1,4 +1,4 @@
-//===-- OperatingSystemPython.h ---------------------------*- C++ -*-===//
+//===-- OperatingSystemPython.h ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,14 +6,16 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLDB_DISABLE_PYTHON
 
 #ifndef liblldb_OperatingSystemPython_h_
 #define liblldb_OperatingSystemPython_h_
 
+#ifndef LLDB_DISABLE_PYTHON
+
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+// Project includes
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Target/OperatingSystem.h"
 
@@ -27,6 +29,11 @@ class ScriptInterpreter;
 class OperatingSystemPython : public lldb_private::OperatingSystem
 {
 public:
+    OperatingSystemPython(lldb_private::Process *process,
+                          const lldb_private::FileSpec &python_module_path);
+
+    ~OperatingSystemPython() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -46,49 +53,39 @@ public:
     GetPluginDescriptionStatic();
     
     //------------------------------------------------------------------
-    // Class Methods
-    //------------------------------------------------------------------
-    OperatingSystemPython (lldb_private::Process *process,
-                           const lldb_private::FileSpec &python_module_path);
-    
-    virtual
-    ~OperatingSystemPython ();
-    
-    //------------------------------------------------------------------
     // lldb_private::PluginInterface Methods
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
     
     //------------------------------------------------------------------
     // lldb_private::OperatingSystem Methods
     //------------------------------------------------------------------
-    virtual bool
-    UpdateThreadList (lldb_private::ThreadList &old_thread_list,
-                      lldb_private::ThreadList &real_thread_list,
-                      lldb_private::ThreadList &new_thread_list);
+    bool
+    UpdateThreadList(lldb_private::ThreadList &old_thread_list,
+                     lldb_private::ThreadList &real_thread_list,
+                     lldb_private::ThreadList &new_thread_list) override;
     
-    virtual void
-    ThreadWasSelected (lldb_private::Thread *thread);
+    void
+    ThreadWasSelected(lldb_private::Thread *thread) override;
 
-    virtual lldb::RegisterContextSP
-    CreateRegisterContextForThread (lldb_private::Thread *thread,
-                                    lldb::addr_t reg_data_addr);
+    lldb::RegisterContextSP
+    CreateRegisterContextForThread(lldb_private::Thread *thread,
+                                   lldb::addr_t reg_data_addr) override;
 
-    virtual lldb::StopInfoSP
-    CreateThreadStopReason (lldb_private::Thread *thread);
+    lldb::StopInfoSP
+    CreateThreadStopReason(lldb_private::Thread *thread) override;
 
     //------------------------------------------------------------------
     // Method for lazy creation of threads on demand
     //------------------------------------------------------------------
-    virtual lldb::ThreadSP
-    CreateThread (lldb::tid_t tid, lldb::addr_t context);
+    lldb::ThreadSP
+    CreateThread(lldb::tid_t tid, lldb::addr_t context) override;
 
 protected:
-    
     bool IsValid() const
     {
         return m_python_object_sp && m_python_object_sp->IsValid();
@@ -107,5 +104,6 @@ protected:
     lldb_private::StructuredData::ObjectSP m_python_object_sp;
 };
 
-#endif // #ifndef liblldb_OperatingSystemPython_h_
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif // LLDB_DISABLE_PYTHON
+
+#endif // liblldb_OperatingSystemPython_h_

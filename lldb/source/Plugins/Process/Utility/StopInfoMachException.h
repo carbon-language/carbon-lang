@@ -38,19 +38,16 @@ public:
     {
     }
 
-    virtual ~StopInfoMachException()
-    {
-    }
+    ~StopInfoMachException() override = default;
 
-
-    virtual lldb::StopReason
-    GetStopReason () const
+    lldb::StopReason
+    GetStopReason() const override
     {
         return lldb::eStopReasonException;
     }
 
-    virtual const char *
-    GetDescription ();
+    const char *
+    GetDescription() override;
 
     // Since some mach exceptions will be reported as breakpoints, signals,
     // or trace, we use this static accessor which will translate the mach
@@ -71,7 +68,6 @@ protected:
     uint64_t m_exc_subcode;
 };
 
-
 } // namespace lldb_private
 
-#endif  // liblldb_StopInfoMachException_h_
+#endif // liblldb_StopInfoMachException_h_
