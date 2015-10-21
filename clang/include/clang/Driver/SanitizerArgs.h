@@ -32,9 +32,9 @@ class SanitizerArgs {
   int MsanTrackOrigins;
   bool MsanUseAfterDtor;
   int AsanFieldPadding;
-  bool AsanZeroBaseShadow;
   bool AsanSharedRuntime;
   bool LinkCXXRuntimes;
+  bool NeedPIE;
 
  public:
   /// Parses the sanitizer arguments from an argument list.
