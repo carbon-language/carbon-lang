@@ -573,7 +573,7 @@ bool lld::elf2::canBePreempted(const SymbolBody *Body, bool NeedsGot) {
   }
   if (!Config->Shared)
     return false;
-  return Body->getMostConstrainingVisibility() == STV_DEFAULT;
+  return Body->getVisibility() == STV_DEFAULT;
 }
 
 template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -645,7 +645,7 @@ template <class ELFT> bool lld::elf2::includeInSymtab(const SymbolBody &B) {
 }
 
 bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
-  uint8_t V = B.getMostConstrainingVisibility();
+  uint8_t V = B.getVisibility();
   if (V != STV_DEFAULT && V != STV_PROTECTED)
     return false;
 
@@ -803,7 +803,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
 
     ESym->setBindingAndType(getSymbolBinding(Body), Type);
     ESym->st_size = Size;
-    ESym->setVisibility(Body->getMostConstrainingVisibility());
+    ESym->setVisibility(Body->getVisibility());
     ESym->st_value = getSymVA<ELFT>(*Body);
 
     if (Section)
@@ -820,7 +820,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
 
 template <class ELFT>
 uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
-  uint8_t Visibility = Body->getMostConstrainingVisibility();
+  uint8_t Visibility = Body->getVisibility();
   if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
     return STB_LOCAL;
   if (const auto *EBody = dyn_cast<ELFSymbolBody<ELFT>>(Body))

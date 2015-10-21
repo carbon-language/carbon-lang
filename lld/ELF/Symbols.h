@@ -83,9 +83,7 @@ public:
   // Returns the symbol name.
   StringRef getName() const { return Name; }
 
-  uint8_t getMostConstrainingVisibility() const {
-    return MostConstrainingVisibility;
-  }
+  uint8_t getVisibility() const { return Visibility; }
 
   unsigned getDynamicSymbolTableIndex() const {
     return DynamicSymbolTableIndex;
@@ -116,15 +114,15 @@ public:
 protected:
   SymbolBody(Kind K, StringRef Name, bool IsWeak, uint8_t Visibility,
              bool IsTLS)
-      : SymbolKind(K), IsWeak(IsWeak), MostConstrainingVisibility(Visibility),
-        IsTLS(IsTLS), Name(Name) {
+      : SymbolKind(K), IsWeak(IsWeak), Visibility(Visibility), IsTLS(IsTLS),
+        Name(Name) {
     IsUsedInRegularObj = K != SharedKind && K != LazyKind;
     IsUsedInDynamicReloc = 0;
   }
 
   const unsigned SymbolKind : 8;
   unsigned IsWeak : 1;
-  unsigned MostConstrainingVisibility : 2;
+  unsigned Visibility : 2;
   unsigned IsUsedInRegularObj : 1;
   unsigned IsUsedInDynamicReloc : 1;
   unsigned IsTLS : 1;
