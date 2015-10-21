@@ -8565,6 +8565,27 @@ bool clang::isBetterOverloadCandidate(Sema &S, const OverloadCandidate &Cand1,
   return false;
 }
 
+/// Determine whether two function declarations are "equivalent" for overload
+/// resolution purposes. This applies when the same internal linkage function
+/// is defined by two modules (textually including the same header). In such
+/// a case, we don't consider the declarations to declare the same entity, but
+/// we also don't want lookups with both declarations visible to be ambiguous
+/// in some cases (this happens when using a modularized libstdc++).
+static bool isEquivalentCompatibleOverload(Sema &S,
+                                           const OverloadCandidate &Best,
+                                           const OverloadCandidate &Cand) {
+  return Best.Function && Cand.Function &&
+         Best.Function->getDeclContext()->getRedeclContext()->Equals(
+             Cand.Function->getDeclContext()->getRedeclContext()) &&
+         S.getOwningModule(Best.Function) != S.getOwningModule(Cand.Function) &&
+         !Best.Function->isExternallyVisible() &&
+         !Cand.Function->isExternallyVisible() &&
+         !S.IsOverload(Best.Function, Cand.Function, /*UsingDecl*/false);
+}
+
+static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
+                                  unsigned NumArgs);
+
 /// \brief Computes the best viable function (C++ 13.3.3)
 /// within an overload candidate set.
 ///
@@ -8592,6 +8613,8 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
   if (Best == end())
     return OR_No_Viable_Function;
 
+  llvm::SmallVector<const OverloadCandidate *, 4> EquivalentCands;
+
   // Make sure that this function is better than every other viable
   // function. If not, we have an ambiguity.
   for (iterator Cand = begin(); Cand != end(); ++Cand) {
@@ -8599,6 +8622,11 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
         Cand != Best &&
         !isBetterOverloadCandidate(S, *Best, *Cand, Loc,
                                    UserDefinedConversion)) {
+      if (isEquivalentCompatibleOverload(S, *Best, *Cand)) {
+        EquivalentCands.push_back(Cand);
+        continue;
+      }
+
       Best = end();
       return OR_Ambiguous;
     }
@@ -8609,6 +8637,14 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
       (Best->Function->isDeleted() ||
        S.isFunctionConsideredUnavailable(Best->Function)))
     return OR_Deleted;
+
+  if (!EquivalentCands.empty()) {
+    S.Diag(Loc, diag::ext_ovl_equivalent_internal_linkage_functions_in_modules)
+      << Best->Function;
+    S.NoteOverloadCandidate(Best->Function);
+    for (auto *Cand : EquivalentCands)
+      S.NoteOverloadCandidate(Cand->Function);
+  }
 
   return OR_Success;
 }

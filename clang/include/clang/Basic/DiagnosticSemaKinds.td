@@ -2974,6 +2974,9 @@ def note_ovl_candidate : Note<"candidate "
     "%select{none|const|restrict|const and restrict|volatile|const and volatile"
     "|volatile and restrict|const, volatile, and restrict}4)"
     "| made ineligible by enable_if}2">;
+def ext_ovl_equivalent_internal_linkage_functions_in_modules : ExtWarn<
+  "ambiguous use of internal linkage function %0 defined in multiple modules">,
+  InGroup<DiagGroup<"modules-ambiguous-internal-linkage-function">>;
 
 def note_ovl_candidate_inherited_constructor : Note<"inherited from here">;
 def note_ovl_candidate_illegal_constructor : Note<
