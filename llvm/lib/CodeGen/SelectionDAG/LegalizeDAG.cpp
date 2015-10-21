@@ -4303,6 +4303,36 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
                                   Tmp2, DAG.getIntPtrConstant(0, dl)));
     break;
   }
+  case ISD::BUILD_VECTOR: {
+    MVT EltVT = OVT.getVectorElementType();
+    MVT NewEltVT = NVT.getVectorElementType();
+
+    // Handle bitcasts to a different vector type with the same total bit size
+    //
+    // e.g. v2i64 = build_vector i64:x, i64:y => v4i32
+    //  =>
+    //  v4i32 = concat_vectors (v2i32 (bitcast i64:x)), (v2i32 (bitcast i64:y))
+
+    assert(NVT.isVector() && OVT.getSizeInBits() == NVT.getSizeInBits() &&
+           "Invalid promote type for build_vector");
+    assert(NewEltVT.bitsLT(EltVT) && "not handled");
+
+    unsigned OldEltsPerNewElt = EltVT.getSizeInBits() / NewEltVT.getSizeInBits();
+    MVT MidVT = MVT::getVectorVT(NewEltVT, OldEltsPerNewElt);
+    assert(TLI.isTypeLegal(MidVT) && "unexpected");
+
+    SmallVector<SDValue, 8> NewOps;
+    for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
+      SDValue Op = Node->getOperand(I);
+      NewOps.push_back(DAG.getNode(ISD::BITCAST, SDLoc(Op), MidVT, Op));
+    }
+
+    SDLoc SL(Node);
+    SDValue Concat = DAG.getNode(ISD::CONCAT_VECTORS, SL, NVT, NewOps);
+    SDValue CvtVec = DAG.getNode(ISD::BITCAST, SL, OVT, Concat);
+    Results.push_back(CvtVec);
+    break;
+  }
   }
 
   // Replace the original node with the legalized result.
