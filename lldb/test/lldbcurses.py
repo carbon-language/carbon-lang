@@ -430,7 +430,7 @@ class Window(object):
            n is the number of times to go through the event loop before exiting'''
         done = False
         while not done and n > 0:
-            c = self.get_key(timeoue_msec)
+            c = self.get_key(timeout_msec)
             if c != -1:
                 try:
                     self.handle_key(c)
