@@ -218,7 +218,19 @@ Target::GetREPL (Error &err, lldb::LanguageType language, const char *repl_optio
 {
     if (language == eLanguageTypeUnknown)
     {
-        return REPLSP(); // must provide a language
+        std::set<LanguageType> repl_languages;
+        
+        Language::GetLanguagesSupportingREPLs(repl_languages);
+        
+        if (repl_languages.size() == 1)
+        {
+            language = *repl_languages.begin();
+        }
+        else
+        {
+            err.SetErrorStringWithFormat("Multiple possible REPL languages.  Please specify a language.");
+            return REPLSP(); // must provide a language
+        }
     }
     
     REPLMap::iterator pos = m_repl_map.find(language);
