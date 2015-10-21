@@ -23,6 +23,9 @@
 #include <fstream>
 
 // Other libraries and framework includes
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FileUtilities.h"
+
 #include "lldb/Core/Error.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSpec.h"
@@ -30,8 +33,7 @@
 #include "lldb/Host/HostGetOpt.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/common/TCPSocket.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/FileUtilities.h"
+#include "Acceptor.h"
 #include "LLDBServerUtilities.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerPlatform.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
@@ -61,7 +63,7 @@ static struct option g_long_options[] =
     { "gdbserver-port",     required_argument,  NULL,               'P' },
     { "min-gdbserver-port", required_argument,  NULL,               'm' },
     { "max-gdbserver-port", required_argument,  NULL,               'M' },
-    { "port-file",          required_argument,  NULL,               'f' },
+    { "socket-file",        required_argument,  NULL,               'f' },
     { "server",             no_argument,        &g_server,          1   },
     { NULL,                 0,                  NULL,               0   }
 };
@@ -100,9 +102,9 @@ display_usage (const char *progname, const char *subcommand)
 }
 
 static Error
-save_port_to_file(const uint16_t port, const FileSpec &port_file_spec)
+save_socket_id_to_file(const std::string &socket_id, const FileSpec &file_spec)
 {
-    FileSpec temp_file_spec(port_file_spec.GetDirectory().AsCString(), false);
+    FileSpec temp_file_spec(file_spec.GetDirectory().AsCString(), false);
     auto error = FileSystem::MakeDirectory(temp_file_spec, eFilePermissionsDirectoryDefault);
     if (error.Fail())
        return Error("Failed to create directory %s: %s", temp_file_spec.GetCString(), error.AsCString());
@@ -119,13 +121,13 @@ save_port_to_file(const uint16_t port, const FileSpec &port_file_spec)
         std::ofstream temp_file(temp_file_path.c_str(), std::ios::out);
         if (!temp_file.is_open())
             return Error("Failed to open temp file %s", temp_file_path.c_str());
-        temp_file << port;
+        temp_file << socket_id;
     }
 
-    err_code = llvm::sys::fs::rename(temp_file_path.c_str(), port_file_spec.GetPath().c_str());
+    err_code = llvm::sys::fs::rename(temp_file_path.c_str(), file_spec.GetPath().c_str());
     if (err_code)
         return Error("Failed to rename file %s to %s: %s",
-                     temp_file_path.c_str(), port_file_spec.GetPath().c_str(), err_code.message().c_str());
+                     temp_file_path.c_str(), file_spec.GetPath().c_str(), err_code.message().c_str());
 
     tmp_file_remover.releaseFile();
     return Error();
@@ -156,7 +158,7 @@ main_platform (int argc, char *argv[])
     int max_gdbserver_port = 0;
     uint16_t port_offset = 0;
 
-    FileSpec port_file;
+    FileSpec socket_file;
     bool show_usage = false;
     int option_error = 0;
     int socket_error = -1;
@@ -191,9 +193,9 @@ main_platform (int argc, char *argv[])
                 log_channels = StringRef(optarg);
             break;
 
-        case 'f': // Port file
+        case 'f': // Socket file
             if (optarg && optarg[0])
-                port_file.SetFile(optarg, false);
+                socket_file.SetFile(optarg, false);
             break;
 
         case 'p':
@@ -282,39 +284,38 @@ main_platform (int argc, char *argv[])
         display_usage(progname, subcommand);
         exit(option_error);
     }
-    
-    Socket *socket = nullptr;
+
     const bool children_inherit_listen_socket = false;
-
     // the test suite makes many connections in parallel, let's not miss any.
-    // The highest this should get reasonably is a function of the number 
-    // of target CPUs.  For now, let's just use 100
+    // The highest this should get reasonably is a function of the number
+    // of target CPUs. For now, let's just use 100.
     const int backlog = 100;
-    std::unique_ptr<TCPSocket> listening_socket_up(new TCPSocket(children_inherit_listen_socket, error));
+
+    std::unique_ptr<Acceptor> acceptor_up(Acceptor::Create(listen_host_port, children_inherit_listen_socket, error));
     if (error.Fail())
     {
-        fprintf(stderr, "failed to create socket: %s", error.AsCString());
+        fprintf(stderr, "failed to create acceptor: %s", error.AsCString());
         exit(socket_error);
     }
 
-    error = listening_socket_up->Listen(listen_host_port.c_str(), backlog);
+    error = acceptor_up->Listen(backlog);
     if (error.Fail())
     {
-        printf("error: %s\n", error.AsCString());
+        printf("failed to listen: %s\n", error.AsCString());
         exit(socket_error);
     }
-    if (port_file)
+    if (socket_file)
     {
-        error = save_port_to_file(listening_socket_up->GetLocalPortNumber(), port_file);
+        error = save_socket_id_to_file(acceptor_up->GetLocalSocketId(), socket_file);
         if (error.Fail())
         {
-            fprintf(stderr, "failed to write port to %s: %s", port_file.GetPath().c_str(), error.AsCString());
+            fprintf(stderr, "failed to write socket id to %s: %s", socket_file.GetPath().c_str(), error.AsCString());
             return 1;
         }
     }
 
     do {
-        GDBRemoteCommunicationServerPlatform platform;
+        GDBRemoteCommunicationServerPlatform platform(acceptor_up->GetSocketProtocol());
         
         if (port_offset > 0)
             platform.SetPortOffset(port_offset);
@@ -325,8 +326,8 @@ main_platform (int argc, char *argv[])
         }
 
         const bool children_inherit_accept_socket = true;
-        socket = nullptr;
-        error = listening_socket_up->Accept(listen_host_port.c_str(), children_inherit_accept_socket, socket);
+        Connection* conn = nullptr;
+        error = acceptor_up->Accept(children_inherit_accept_socket, conn);
         if (error.Fail())
         {
             printf ("error: %s\n", error.AsCString());
@@ -340,8 +341,7 @@ main_platform (int argc, char *argv[])
             if (fork())
             {
                 // Parent doesn't need a connection to the lldb client
-                delete socket;
-                socket = nullptr;
+                delete conn;
 
                 // Parent will continue to listen for new connections.
                 continue;
@@ -351,16 +351,16 @@ main_platform (int argc, char *argv[])
                 // Child process will handle the connection and exit.
                 g_server = 0;
                 // Listening socket is owned by parent process.
-                listening_socket_up.release();
+                acceptor_up.release();
             }
         }
         else
         {
             // If not running as a server, this process will not accept
             // connections while a connection is active.
-            listening_socket_up.reset();
+            acceptor_up.reset();
         }
-        platform.SetConnection (new ConnectionFileDescriptor(socket));
+        platform.SetConnection (conn);
 
         if (platform.IsConnected())
         {

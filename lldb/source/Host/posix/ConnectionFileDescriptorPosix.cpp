@@ -50,8 +50,6 @@
 #include "lldb/Host/common/TCPSocket.h"
 #include "lldb/Interpreter/Args.h"
 
-#include "Utility/UriParser.h"
-
 using namespace lldb;
 using namespace lldb_private;
 
@@ -171,20 +169,6 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
             // unix://SOCKNAME
             return NamedSocketAccept(s + strlen("unix-accept://"), error_ptr);
         }
-        else if (strstr(s, "adb://") == s)
-        {
-            int port = -1;
-            std::string scheme, host, path;
-            if (!UriParser::Parse(s, scheme, host, port, path))
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorStringWithFormat("Failed to parse URL '%s'", s);
-                return eConnectionStatusError;
-            }
-            std::ostringstream host_and_port;
-            host_and_port << "localhost:" << port;
-            return ConnectTCP(host_and_port.str().c_str(), error_ptr);
-        }
         else if (strstr(s, "connect://") == s)
         {
             return ConnectTCP(s + strlen("connect://"), error_ptr);
@@ -196,6 +180,11 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
         else if (strstr(s, "udp://") == s)
         {
             return ConnectUDP(s + strlen("udp://"), error_ptr);
+        }
+        else if (strstr(s, "unix-connect://") == s)
+        {
+            // unix-connect://SOCKNAME
+            return NamedSocketConnect(s + strlen("unix-connect://"), error_ptr);
         }
 #ifndef LLDB_DISABLE_POSIX
         else if (strstr(s, "fd://") == s)

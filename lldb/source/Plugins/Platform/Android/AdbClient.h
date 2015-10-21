@@ -51,6 +51,9 @@ public:
     SetPortForwarding (const uint16_t local_port, const uint16_t remote_port);
 
     Error
+    SetPortForwarding (const uint16_t local_port, const char* remote_socket_name);
+
+    Error
     DeletePortForwarding (const uint16_t local_port);
 
     Error

@@ -145,6 +145,19 @@ AdbClient::SetPortForwarding (const uint16_t local_port, const uint16_t remote_p
 }
 
 Error
+AdbClient::SetPortForwarding (const uint16_t local_port, const char* remote_socket_name)
+{
+    char message[PATH_MAX];
+    snprintf (message, sizeof (message), "forward:tcp:%d;localfilesystem:%s", local_port, remote_socket_name);
+
+    const auto error = SendDeviceMessage (message);
+    if (error.Fail ())
+        return error;
+
+    return ReadResponseStatus ();
+}
+
+Error
 AdbClient::DeletePortForwarding (const uint16_t local_port)
 {
     char message[32];

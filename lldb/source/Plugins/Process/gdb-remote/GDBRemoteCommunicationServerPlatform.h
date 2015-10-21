@@ -12,6 +12,8 @@
 
 #include "GDBRemoteCommunicationServerCommon.h"
 
+#include "lldb/Host/Socket.h"
+
 #include <set>
 
 namespace lldb_private {
@@ -23,7 +25,7 @@ class GDBRemoteCommunicationServerPlatform :
 public:
     typedef std::map<uint16_t, lldb::pid_t> PortMap;
 
-    GDBRemoteCommunicationServerPlatform();
+    GDBRemoteCommunicationServerPlatform(const Socket::SocketProtocol socket_protocol);
 
     virtual
     ~GDBRemoteCommunicationServerPlatform();
@@ -61,6 +63,7 @@ public:
     SetPortOffset (uint16_t port_offset);
 
 protected:
+    const Socket::SocketProtocol m_socket_protocol;
     Mutex m_spawned_pids_mutex;
     std::set<lldb::pid_t> m_spawned_pids;
     lldb::PlatformSP m_platform_sp;
@@ -102,6 +105,12 @@ private:
                             bool exited,
                             int signal,
                             int status);
+
+    static const FileSpec&
+    GetDomainSocketDir();
+
+    static FileSpec
+    GetDomainSocketPath(const char* prefix);
 
     //------------------------------------------------------------------
     // For GDBRemoteCommunicationServerPlatform only

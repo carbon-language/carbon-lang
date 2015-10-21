@@ -3562,15 +3562,22 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
         // Set hostname being NULL to do the reverse connect where debugserver
         // will bind to port zero and it will communicate back to us the port
         // that we will connect to
-        const char *hostname = NULL;
+        const char *hostname = nullptr;
         uint16_t port = 0;
 #endif
 
-        error = m_gdb_comm.StartDebugserverProcess (hostname,
-                                                    port,
+        StreamString url_str;
+        const char* url = nullptr;
+        if (hostname != nullptr)
+        {
+            url_str.Printf("%s:%u", hostname, port);
+            url = url_str.GetData();
+        }
+
+        error = m_gdb_comm.StartDebugserverProcess (url,
                                                     GetTarget().GetPlatform().get(),
                                                     debugserver_launch_info,
-                                                    port);
+                                                    &port);
 
         if (error.Success ())
             m_debugserver_pid = debugserver_launch_info.GetProcessID();

@@ -103,6 +103,8 @@
 		2579065C1BD0488100178368 /* TCPSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2579065A1BD0488100178368 /* TCPSocket.cpp */; };
 		2579065D1BD0488100178368 /* UDPSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2579065B1BD0488100178368 /* UDPSocket.cpp */; };
 		2579065F1BD0488D00178368 /* DomainSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2579065E1BD0488D00178368 /* DomainSocket.cpp */; };
+		257906641BD5AFD000178368 /* Acceptor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 257906621BD5AFD000178368 /* Acceptor.cpp */; };
+		257906651BD5AFD000178368 /* Acceptor.h in Headers */ = {isa = PBXBuildFile; fileRef = 257906631BD5AFD000178368 /* Acceptor.h */; };
 		257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 257E47151AA56C2000A62F81 /* ModuleCache.cpp */; };
 		25EF23781AC09B3700908DF0 /* AdbClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25EF23751AC09AD800908DF0 /* AdbClient.cpp */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
@@ -1207,6 +1209,8 @@
 		2579065A1BD0488100178368 /* TCPSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TCPSocket.cpp; sourceTree = "<group>"; };
 		2579065B1BD0488100178368 /* UDPSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UDPSocket.cpp; sourceTree = "<group>"; };
 		2579065E1BD0488D00178368 /* DomainSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DomainSocket.cpp; sourceTree = "<group>"; };
+		257906621BD5AFD000178368 /* Acceptor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Acceptor.cpp; path = "tools/lldb-server/Acceptor.cpp"; sourceTree = "<group>"; };
+		257906631BD5AFD000178368 /* Acceptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Acceptor.h; path = "tools/lldb-server/Acceptor.h"; sourceTree = "<group>"; };
 		257E47151AA56C2000A62F81 /* ModuleCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleCache.cpp; path = source/Utility/ModuleCache.cpp; sourceTree = "<group>"; };
 		257E47161AA56C2000A62F81 /* ModuleCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ModuleCache.h; path = source/Utility/ModuleCache.h; sourceTree = "<group>"; };
 		25EF23751AC09AD800908DF0 /* AdbClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdbClient.cpp; sourceTree = "<group>"; };
@@ -5588,6 +5592,8 @@
 		E769331B1A94D10E00C73337 /* lldb-server */ = {
 			isa = PBXGroup;
 			children = (
+				257906621BD5AFD000178368 /* Acceptor.cpp */,
+				257906631BD5AFD000178368 /* Acceptor.h */,
 				6D762BEC1B1605CD006C929D /* LLDBServerUtilities.cpp */,
 				6D762BED1B1605CD006C929D /* LLDBServerUtilities.h */,
 				E769331D1A94D18100C73337 /* lldb-server.cpp */,
@@ -5703,6 +5709,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4984BA181B979C08008658D4 /* ExpressionVariable.h in Headers */,
+				257906651BD5AFD000178368 /* Acceptor.h in Headers */,
 				260A63171861008E00FECF8E /* IOHandler.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6539,6 +6546,7 @@
 				268900E513353E6F00698AC0 /* UnwindTable.cpp in Sources */,
 				268900E613353E6F00698AC0 /* Variable.cpp in Sources */,
 				268900E713353E6F00698AC0 /* VariableList.cpp in Sources */,
+				257906641BD5AFD000178368 /* Acceptor.cpp in Sources */,
 				268900E813353E6F00698AC0 /* ABI.cpp in Sources */,
 				4C56543119D1EFAA002E9C44 /* ThreadPlanPython.cpp in Sources */,
 				26AB92121819D74600E63F3E /* DWARFDataExtractor.cpp in Sources */,

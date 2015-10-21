@@ -15,14 +15,20 @@
 // C++ Includes
 #include <cstring>
 #include <chrono>
+#include <mutex>
+#include <sstream>
 
 // Other libraries and framework includes
+#include "llvm/Support/FileSystem.h"
+
 #include "lldb/Core/Log.h"
+#include "lldb/Core/StreamGDBRemote.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Host/Config.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Platform.h"
@@ -40,8 +46,9 @@ using namespace lldb_private::process_gdb_remote;
 //----------------------------------------------------------------------
 // GDBRemoteCommunicationServerPlatform constructor
 //----------------------------------------------------------------------
-GDBRemoteCommunicationServerPlatform::GDBRemoteCommunicationServerPlatform() :
+GDBRemoteCommunicationServerPlatform::GDBRemoteCommunicationServerPlatform(const Socket::SocketProtocol socket_protocol) :
     GDBRemoteCommunicationServerCommon ("gdb-remote.server", "gdb-remote.server.rx_packet"),
+    m_socket_protocol(socket_protocol),
     m_spawned_pids_mutex (Mutex::eMutexTypeRecursive),
     m_platform_sp (Platform::GetHostPlatform ()),
     m_port_map (),
@@ -138,11 +145,24 @@ GDBRemoteCommunicationServerPlatform::Handle_qLaunchGDBServer (StringExtractorGD
     bool ok = UriParser::Parse(GetConnection()->GetURI().c_str(), platform_scheme, platform_ip, platform_port, platform_path);
     UNUSED_IF_ASSERT_DISABLED(ok);
     assert(ok);
-    Error error = StartDebugserverProcess (platform_ip.c_str(),
-                                           port,
+
+    std::string socket_name;
+    std::ostringstream url;
+
+    uint16_t* port_ptr = &port;
+    if (m_socket_protocol == Socket::ProtocolTcp)
+        url << platform_ip << ":" << port;
+    else
+    {
+        socket_name = GetDomainSocketPath("gdbserver").GetPath();
+        url << socket_name;
+        port_ptr = nullptr;
+    }
+
+    Error error = StartDebugserverProcess (url.str().c_str(),
                                            nullptr,
                                            debugserver_launch_info,
-                                           port);
+                                           port_ptr);
 
     lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
 
@@ -165,11 +185,16 @@ GDBRemoteCommunicationServerPlatform::Handle_qLaunchGDBServer (StringExtractorGD
         if (log)
             log->Printf ("GDBRemoteCommunicationServerPlatform::%s() debugserver launched successfully as pid %" PRIu64, __FUNCTION__, debugserver_pid);
 
-        char response[256];
-        const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
-        assert (response_len < (int)sizeof(response));
-        PacketResult packet_result = SendPacketNoLock (response, response_len);
+        StreamGDBRemote response;
+        response.Printf("pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
+        if (!socket_name.empty())
+        {
+            response.PutCString("socket_name:");
+            response.PutCStringAsRawHex8(socket_name.c_str());
+            response.PutChar(';');
+        }
 
+        PacketResult packet_result = SendPacketNoLock(response.GetData(), response.GetSize());
         if (packet_result != PacketResult::Success)
         {
             if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
@@ -492,6 +517,36 @@ GDBRemoteCommunicationServerPlatform::FreePortForProcess (lldb::pid_t pid)
         }
     }
     return false;
+}
+
+const FileSpec&
+GDBRemoteCommunicationServerPlatform::GetDomainSocketDir()
+{
+    static FileSpec g_domainsocket_dir;
+    static std::once_flag g_once_flag;
+
+    std::call_once(g_once_flag, []() {
+        const char* domainsocket_dir_env = ::getenv("LLDB_DEBUGSERVER_DOMAINSOCKET_DIR");
+        if (domainsocket_dir_env != nullptr)
+            g_domainsocket_dir = FileSpec(domainsocket_dir_env, false);
+        else
+            HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, g_domainsocket_dir);
+    });
+
+    return g_domainsocket_dir;
+}
+
+FileSpec
+GDBRemoteCommunicationServerPlatform::GetDomainSocketPath(const char* prefix)
+{
+    llvm::SmallString<PATH_MAX> socket_path;
+    llvm::SmallString<PATH_MAX> socket_name((llvm::StringRef(prefix) + ".%%%%%%").str());
+
+    FileSpec socket_path_spec(GetDomainSocketDir());
+    socket_path_spec.AppendPathComponent(socket_name.c_str());
+
+    llvm::sys::fs::createUniqueFile(socket_path_spec.GetCString(), socket_path);
+    return FileSpec(socket_path.c_str(), false);
 }
 
 void

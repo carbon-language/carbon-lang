@@ -114,8 +114,11 @@ public:
     bool
     GetLaunchSuccess (std::string &error_str);
 
-    uint16_t
-    LaunchGDBserverAndGetPort (lldb::pid_t &pid, const char *remote_accept_hostname);
+    bool
+    LaunchGDBServer (const char *remote_accept_hostname,
+                     lldb::pid_t &pid,
+                     uint16_t &port,
+                     std::string &socket_name);
     
     bool
     KillSpawnedProcess (lldb::pid_t pid);

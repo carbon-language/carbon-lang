@@ -18,24 +18,18 @@ include_directories(../../source)
 
 include(../../cmake/LLDBDependencies.cmake)
 
-if (BUILD_SHARED_LIBS )
-  add_lldb_executable(lldb-server
+add_lldb_executable(lldb-server
+    Acceptor.cpp
     lldb-gdbserver.cpp
     lldb-platform.cpp
     lldb-server.cpp
     LLDBServerUtilities.cpp
-    )
+)
 
+if (BUILD_SHARED_LIBS )
   target_link_libraries(lldb-server liblldb)
   target_link_libraries(lldb-server ${LLDB_SYSTEM_LIBS})
 else()
-  add_lldb_executable(lldb-server
-    lldb-gdbserver.cpp
-    lldb-platform.cpp
-    lldb-server.cpp
-    LLDBServerUtilities.cpp
-    )
-
   # The Darwin linker doesn't understand --start-group/--end-group.
   if (LLDB_LINKER_SUPPORTS_GROUPS)
     target_link_libraries(lldb-server
