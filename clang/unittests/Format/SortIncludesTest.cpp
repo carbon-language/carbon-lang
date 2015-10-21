@@ -40,6 +40,15 @@ TEST_F(SortIncludesTest, BasicSorting) {
                  "#include \"b.h\"\n"));
 }
 
+TEST_F(SortIncludesTest, MixIncludeAndImport) {
+  EXPECT_EQ("#include \"a.h\"\n"
+            "#import \"b.h\"\n"
+            "#include \"c.h\"\n",
+            sort("#include \"a.h\"\n"
+                 "#include \"c.h\"\n"
+                 "#import \"b.h\"\n"));
+}
+
 TEST_F(SortIncludesTest, FixTrailingComments) {
   EXPECT_EQ("#include \"a.h\"  // comment\n"
             "#include \"bb.h\" // comment\n"

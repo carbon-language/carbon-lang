@@ -1732,7 +1732,7 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
   unsigned Prev = 0;
   unsigned SearchFrom = 0;
   llvm::Regex IncludeRegex(
-      R"(^[\t\ ]*#[\t\ ]*include[^"<]*(["<][^">]*[">]))");
+      R"(^[\t\ ]*#[\t\ ]*(import|include)[^"<]*(["<][^">]*[">]))");
   SmallVector<StringRef, 4> Matches;
   SmallVector<IncludeDirective, 16> IncludesInBlock;
 
@@ -1762,20 +1762,21 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
         Code.substr(Prev, (Pos != StringRef::npos ? Pos : Code.size()) - Prev);
     if (!Line.endswith("\\")) {
       if (IncludeRegex.match(Line, &Matches)) {
+        StringRef IncludeName = Matches[2];
         unsigned Category;
-        if (LookForMainHeader && !Matches[1].startswith("<")) {
+        if (LookForMainHeader && !IncludeName.startswith("<")) {
           Category = 0;
         } else {
           Category = UINT_MAX;
           for (unsigned i = 0, e = CategoryRegexs.size(); i != e; ++i) {
-            if (CategoryRegexs[i].match(Matches[1])) {
+            if (CategoryRegexs[i].match(IncludeName)) {
               Category = Style.IncludeCategories[i].Priority;
               break;
             }
           }
         }
         LookForMainHeader = false;
-        IncludesInBlock.push_back({Matches[1], Line, Prev, Category});
+        IncludesInBlock.push_back({IncludeName, Line, Prev, Category});
       } else if (!IncludesInBlock.empty()) {
         sortIncludes(Style, IncludesInBlock, Ranges, FileName, Replaces);
         IncludesInBlock.clear();
