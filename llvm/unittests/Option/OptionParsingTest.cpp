@@ -48,7 +48,7 @@ namespace {
 class TestOptTable : public OptTable {
 public:
   TestOptTable(bool IgnoreCase = false)
-    : OptTable(InfoTable, array_lengthof(InfoTable), IgnoreCase) {}
+    : OptTable(InfoTable, IgnoreCase) {}
 };
 }
 

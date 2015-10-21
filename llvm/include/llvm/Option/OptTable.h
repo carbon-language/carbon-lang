@@ -50,8 +50,7 @@ public:
 
 private:
   /// \brief The static option information table.
-  const Info *OptionInfos;
-  unsigned NumOptionInfos;
+  ArrayRef<Info> OptionInfos;
   bool IgnoreCase;
 
   unsigned TheInputOptionID;
@@ -74,14 +73,13 @@ private:
   }
 
 protected:
-  OptTable(const Info *OptionInfos, unsigned NumOptionInfos,
-           bool IgnoreCase = false);
+  OptTable(ArrayRef<Info> OptionInfos, bool IgnoreCase = false);
 
 public:
   ~OptTable();
 
   /// \brief Return the total number of option classes.
-  unsigned getNumOptions() const { return NumOptionInfos; }
+  unsigned getNumOptions() const { return OptionInfos.size(); }
 
   /// \brief Get the given Opt's Option instance, lazily creating it
   /// if necessary.

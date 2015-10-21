@@ -51,7 +51,7 @@ static const llvm::opt::OptTable::Info infoTable[] = {
 
 class LibOptTable : public llvm::opt::OptTable {
 public:
-  LibOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable), true) {}
+  LibOptTable() : OptTable(infoTable, true) {}
 };
 
 }
