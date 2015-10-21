@@ -77,8 +77,8 @@ private:
   void EmitJumpTableInfo() override;
   void EmitConstantPool() override;
   void EmitFunctionBodyStart() override;
-
   void EmitInstruction(const MachineInstr *MI) override;
+  void EmitEndOfAsmFile(Module &M) override;
 
   std::string getRegTypeName(unsigned RegNo) const;
   static std::string toString(const APFloat &APF);
@@ -328,6 +328,28 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OS << "\tset_local " << regToString(Operand) << ", pop";
     OutStreamer->EmitRawText(OS.str());
   }
+}
+
+void WebAssemblyAsmPrinter::EmitEndOfAsmFile(Module &M) {
+    SmallString<128> Str;
+    raw_svector_ostream OS(Str);
+  for (const Function &F : M)
+    if (F.isDeclarationForLinker()) {
+      assert(F.hasName() && "imported functions must have a name");
+      if (F.getName().startswith("llvm."))
+	continue;
+      if (Str.empty())
+	OS << "\t.imports\n";
+      Type *Rt = F.getReturnType();
+      OS << "\t.import " <<  toSymbol(F.getName()) << " \"\" \"" << F.getName()
+	 << "\"";
+      for (const Argument &A : F.args())
+	OS << " (param " << toString(A.getType()) << ')';
+      if (!Rt->isVoidTy())
+	OS << " (result " << toString(Rt) << ')';
+      OS << '\n';
+  }
+  OutStreamer->EmitRawText(OS.str());
 }
 
 // Force static initialization.
