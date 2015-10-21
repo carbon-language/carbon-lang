@@ -368,27 +368,24 @@ bool TargetInfo::isValidGCCRegisterName(StringRef Name) const {
     return true;
 
   // Check any additional names that we have.
-  ArrayRef<AddlRegName> AddlNames = getGCCAddlRegNames();
-  for (unsigned i = 0; i < AddlNames.size(); i++)
-    for (unsigned j = 0; j < llvm::array_lengthof(AddlNames[i].Names); j++) {
-      if (!AddlNames[i].Names[j])
+  for (const AddlRegName &ARN : getGCCAddlRegNames())
+    for (const char *AN : ARN.Names) {
+      if (!AN)
         break;
       // Make sure the register that the additional name is for is within
       // the bounds of the register names from above.
-      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < Names.size())
-        return true;
-  }
-
-  // Now check aliases.
-  ArrayRef<GCCRegAlias> Aliases = getGCCRegAliases();
-  for (unsigned i = 0; i < Aliases.size(); i++) {
-    for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
-      if (!Aliases[i].Aliases[j])
-        break;
-      if (Aliases[i].Aliases[j] == Name)
+      if (AN == Name && ARN.RegNum < Names.size())
         return true;
     }
-  }
+
+  // Now check aliases.
+  for (const GCCRegAlias &GRA : getGCCRegAliases())
+    for (const char *A : GRA.Aliases) {
+      if (!A)
+        break;
+      if (A == Name)
+        return true;
+    }
 
   return false;
 }
@@ -412,27 +409,24 @@ TargetInfo::getNormalizedGCCRegisterName(StringRef Name) const {
   }
 
   // Check any additional names that we have.
-  ArrayRef<AddlRegName> AddlNames = getGCCAddlRegNames();
-  for (unsigned i = 0; i < AddlNames.size(); i++)
-    for (unsigned j = 0; j < llvm::array_lengthof(AddlNames[i].Names); j++) {
-      if (!AddlNames[i].Names[j])
+  for (const AddlRegName &ARN : getGCCAddlRegNames())
+    for (const char *AN : ARN.Names) {
+      if (!AN)
         break;
       // Make sure the register that the additional name is for is within
       // the bounds of the register names from above.
-      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < Names.size())
+      if (AN == Name && ARN.RegNum < Names.size())
         return Name;
     }
 
   // Now check aliases.
-  ArrayRef<GCCRegAlias> Aliases = getGCCRegAliases();
-  for (unsigned i = 0; i < Aliases.size(); i++) {
-    for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
-      if (!Aliases[i].Aliases[j])
+  for (const GCCRegAlias &RA : getGCCRegAliases())
+    for (const char *A : RA.Aliases) {
+      if (!A)
         break;
-      if (Aliases[i].Aliases[j] == Name)
-        return Aliases[i].Register;
+      if (A == Name)
+        return RA.Register;
     }
-  }
 
   return Name;
 }
