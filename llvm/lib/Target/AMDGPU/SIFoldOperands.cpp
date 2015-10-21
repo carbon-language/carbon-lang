@@ -366,7 +366,10 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
           // Clear kill flags.
           if (!Fold.isImm()) {
             assert(Fold.OpToFold && Fold.OpToFold->isReg());
-            Fold.OpToFold->setIsKill(false);
+            // FIXME: Probably shouldn't bother trying to fold if not an
+            // SGPR. PeepholeOptimizer can eliminate redundant VGPR->VGPR
+            // copies.
+            MRI.clearKillFlags(Fold.OpToFold->getReg());
           }
           DEBUG(dbgs() << "Folded source from " << MI << " into OpNo " <<
                 Fold.UseOpNo << " of " << *Fold.UseMI << '\n');
