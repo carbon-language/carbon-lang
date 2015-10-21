@@ -159,11 +159,12 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     Config->Undefined.push_back(Arg->getValue());
 
   for (auto *Arg : Args.filtered(OPT_z)) {
-    if (Arg->getValue() == StringRef("nodelete"))
+    StringRef S = Arg->getValue();
+    if (S == "nodelete")
       Config->ZNodelete = true;
-    else if (Arg->getValue() == StringRef("now"))
+    else if (S == "now")
       Config->ZNow = true;
-    else if (Arg->getValue() == StringRef("origin"))
+    else if (S == "origin")
       Config->ZOrigin = true;
   }
 

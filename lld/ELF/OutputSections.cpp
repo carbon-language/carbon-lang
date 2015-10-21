@@ -349,9 +349,23 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     ++NumEntries; // DT_INIT
   if (FiniSym)
     ++NumEntries; // DT_FINI
-  if (Config->Bsymbolic || Config->ZNow || Config->ZOrigin)
+
+  if (Config->Bsymbolic)
+    DtFlags |= DF_SYMBOLIC;
+  if (Config->ZNodelete)
+    DtFlags1 |= DF_1_NODELETE;
+  if (Config->ZNow) {
+    DtFlags |= DF_BIND_NOW;
+    DtFlags1 |= DF_1_NOW;
+  }
+  if (Config->ZOrigin) {
+    DtFlags |= DF_ORIGIN;
+    DtFlags1 |= DF_1_ORIGIN;
+  }
+
+  if (DtFlags)
     ++NumEntries; // DT_FLAGS
-  if (Config->ZNodelete || Config->ZNow || Config->ZOrigin)
+  if (DtFlags1)
     ++NumEntries; // DT_FLAGS_1
   ++NumEntries; // DT_NULL
 
@@ -428,26 +442,10 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     WritePtr(DT_INIT, getSymVA<ELFT>(*InitSym));
   if (FiniSym)
     WritePtr(DT_FINI, getSymVA<ELFT>(*FiniSym));
-
-  uint32_t Flags = 0;
-  if (Config->Bsymbolic)
-    Flags |= DF_SYMBOLIC;
-  if (Config->ZNow)
-    Flags |= DF_BIND_NOW;
-  if (Config->ZOrigin)
-    Flags |= DF_ORIGIN;
-  if (Flags)
-    WriteVal(DT_FLAGS, Flags);
-  Flags = 0;
-  if (Config->ZNodelete)
-    Flags |= DF_1_NODELETE;
-  if (Config->ZNow)
-    Flags |= DF_1_NOW;
-  if (Config->ZOrigin)
-    Flags |= DF_1_ORIGIN;
-  if (Flags)
-    WriteVal(DT_FLAGS_1, Flags);
-
+  if (DtFlags)
+    WriteVal(DT_FLAGS, DtFlags);
+  if (DtFlags1)
+    WriteVal(DT_FLAGS_1, DtFlags1);
   WriteVal(DT_NULL, 0);
 }
 

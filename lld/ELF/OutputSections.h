@@ -305,6 +305,8 @@ private:
   SymbolTable<ELFT> &SymTab;
   const ELFSymbolBody<ELFT> *InitSym = nullptr;
   const ELFSymbolBody<ELFT> *FiniSym = nullptr;
+  uint32_t DtFlags = 0;
+  uint32_t DtFlags1 = 0;
 };
 
 // All output sections that are hadnled by the linker specially are
