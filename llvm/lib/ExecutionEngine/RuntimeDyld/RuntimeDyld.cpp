@@ -179,7 +179,8 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
       if (Flags & SymbolRef::SF_Exported)
         RTDyldSymFlags |= JITSymbolFlags::Exported;
 
-      if (Flags & SymbolRef::SF_Absolute) {
+      if (Flags & SymbolRef::SF_Absolute &&
+          SymType != object::SymbolRef::ST_File) {
         auto Addr = I->getAddress();
         Check(Addr.getError());
         uint64_t SectOffset = *Addr;
