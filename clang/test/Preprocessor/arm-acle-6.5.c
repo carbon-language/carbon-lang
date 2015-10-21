@@ -7,12 +7,15 @@
 
 // CHECK-NO-FP-NOT: __ARM_FP 0x{{.*}}
 
-// RUN: %clang -target arm-eabi -mfpu=vfpv3xd -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP
-// RUN: %clang -target arm-eabi -mfpu=vfpv3xd-fp16 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP
-// RUN: %clang -target arm-eabi -mfpu=fpv4-sp-d16 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP
-// RUN: %clang -target arm-eabi -mfpu=fpv5-sp-d16 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP
+// RUN: %clang -target arm-eabi -mfpu=vfpv3xd -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-ONLY
 
-// CHECK-SP: __ARM_FP 0x4
+// CHECK-SP-ONLY: __ARM_FP 0x4
+
+// RUN: %clang -target arm-eabi -mfpu=vfpv3xd-fp16 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-HP
+// RUN: %clang -target arm-eabi -mfpu=fpv4-sp-d16 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-HP
+// RUN: %clang -target arm-eabi -mfpu=fpv5-sp-d16 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-HP
+
+// CHECK-SP-HP: __ARM_FP 0x6
 
 // RUN: %clang -target arm-eabi -mfpu=vfp -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-DP
 // RUN: %clang -target arm-eabi -mfpu=vfpv2 -x c -E -dM %s -o - | FileCheck %s -check-prefix CHECK-SP-DP

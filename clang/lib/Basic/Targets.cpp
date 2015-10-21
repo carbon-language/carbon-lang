@@ -4529,7 +4529,7 @@ public:
       } else if (Feature == "+t2dsp") {
         DSP = 1;
       } else if (Feature == "+fp-only-sp") {
-        HW_FP_remove |= HW_FP_DP | HW_FP_HP;
+        HW_FP_remove |= HW_FP_DP; 
       } else if (Feature == "+strict-align") {
         Unaligned = 0;
       } else if (Feature == "+fp16") {
