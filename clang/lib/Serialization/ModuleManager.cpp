@@ -194,6 +194,9 @@ void ModuleManager::removeModules(
   if (first == last)
     return;
 
+  // Explicitly clear VisitOrder since we might not notice it is stale.
+  VisitOrder.clear();
+
   // Collect the set of module file pointers that we'll be removing.
   llvm::SmallPtrSet<ModuleFile *, 4> victimSet(first, last);
 
