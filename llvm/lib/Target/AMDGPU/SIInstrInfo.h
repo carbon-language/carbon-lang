@@ -378,6 +378,9 @@ public:
   bool isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
                       const MachineOperand *MO = nullptr) const;
 
+  /// \brief Fix operands in \p MI to satisfy constant bus requirements.
+  void legalizeOperandsVOP3(MachineRegisterInfo &MRI, MachineInstr *MI) const;
+
   /// \brief Legalize all operands in this instruction.  This function may
   /// create new instruction and insert them before \p MI.
   void legalizeOperands(MachineInstr *MI) const;

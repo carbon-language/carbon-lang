@@ -1718,18 +1718,58 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
   return isImmOperandLegal(MI, OpIdx, *MO);
 }
 
+// Legalize VOP3 operands. Because all operand types are supported for any
+// operand, and since literal constants are not allowed and should never be
+// seen, we only need to worry about inserting copies if we use multiple SGPR
+// operands.
+void SIInstrInfo::legalizeOperandsVOP3(
+  MachineRegisterInfo &MRI,
+  MachineInstr *MI) const {
+  unsigned Opc = MI->getOpcode();
+
+  int VOP3Idx[3] = {
+    AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src0),
+    AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src1),
+    AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2)
+  };
+
+  // Find the one SGPR operand we are allowed to use.
+  unsigned SGPRReg = findUsedSGPR(MI, VOP3Idx);
+
+  for (unsigned i = 0; i < 3; ++i) {
+    int Idx = VOP3Idx[i];
+    if (Idx == -1)
+      break;
+    MachineOperand &MO = MI->getOperand(Idx);
+
+    // We should never see a VOP3 instruction with an illegal immediate operand.
+    if (!MO.isReg())
+      continue;
+
+    if (!RI.isSGPRClass(MRI.getRegClass(MO.getReg())))
+      continue; // VGPRs are legal
+
+    if (SGPRReg == AMDGPU::NoRegister || SGPRReg == MO.getReg()) {
+      SGPRReg = MO.getReg();
+      // We can use one SGPR in each VOP3 instruction.
+      continue;
+    }
+
+    // If we make it this far, then the operand is not legal and we must
+    // legalize it.
+    legalizeOpWithMove(MI, Idx);
+  }
+}
+
 void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
-
-  int Src0Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
-                                           AMDGPU::OpName::src0);
-  int Src1Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
-                                           AMDGPU::OpName::src1);
-  int Src2Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
-                                           AMDGPU::OpName::src2);
+  unsigned Opc = MI->getOpcode();
 
   // Legalize VOP2
-  if (isVOP2(*MI) && Src1Idx != -1) {
+  if (isVOP2(*MI)) {
+    int Src0Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src0);
+    int Src1Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src1);
+
     // Legalize src0
     if (!isOperandLegal(MI, Src0Idx))
       legalizeOpWithMove(MI, Src0Idx);
@@ -1752,41 +1792,9 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     return;
   }
 
-  // XXX - Do any VOP3 instructions read VCC?
   // Legalize VOP3
   if (isVOP3(*MI)) {
-    int VOP3Idx[3] = { Src0Idx, Src1Idx, Src2Idx };
-
-    // Find the one SGPR operand we are allowed to use.
-    unsigned SGPRReg = findUsedSGPR(MI, VOP3Idx);
-
-    for (unsigned i = 0; i < 3; ++i) {
-      int Idx = VOP3Idx[i];
-      if (Idx == -1)
-        break;
-      MachineOperand &MO = MI->getOperand(Idx);
-
-      if (MO.isReg()) {
-        if (!RI.isSGPRClass(MRI.getRegClass(MO.getReg())))
-          continue; // VGPRs are legal
-
-        assert(MO.getReg() != AMDGPU::SCC && "SCC operand to VOP3 instruction");
-
-        if (SGPRReg == AMDGPU::NoRegister || SGPRReg == MO.getReg()) {
-          SGPRReg = MO.getReg();
-          // We can use one SGPR in each VOP3 instruction.
-          continue;
-        }
-      } else if (!isLiteralConstant(MO, getOpSize(MI->getOpcode(), Idx))) {
-        // If it is not a register and not a literal constant, then it must be
-        // an inline constant which is always legal.
-        continue;
-      }
-      // If we make it this far, then the operand is not legal and we must
-      // legalize it.
-      legalizeOpWithMove(MI, Idx);
-    }
-
+    legalizeOperandsVOP3(MRI, MI);
     return;
   }
 
