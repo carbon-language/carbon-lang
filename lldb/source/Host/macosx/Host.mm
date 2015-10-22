@@ -18,7 +18,22 @@
 #if !defined(NO_XPC_SERVICES)
 #define __XPC_PRIVATE_H__
 #include <xpc/xpc.h>
-#include "launcherXPCService/LauncherXPCService.h"
+
+#define LaunchUsingXPCRightName "com.apple.dt.Xcode.RootDebuggingXPCService"
+
+// These XPC messaging keys are used for communication between Host.mm and the XPC service.
+#define LauncherXPCServiceAuthKey               "auth-key"
+#define LauncherXPCServiceArgPrefxKey           "arg"
+#define LauncherXPCServiceEnvPrefxKey           "env"
+#define LauncherXPCServiceCPUTypeKey            "cpuType"
+#define LauncherXPCServicePosixspawnFlagsKey    "posixspawnFlags"
+#define LauncherXPCServiceStdInPathKeyKey       "stdInPath"
+#define LauncherXPCServiceStdOutPathKeyKey      "stdOutPath"
+#define LauncherXPCServiceStdErrPathKeyKey      "stdErrPath"
+#define LauncherXPCServiceChildPIDKey           "childPID"
+#define LauncherXPCServiceErrorTypeKey          "errorType"
+#define LauncherXPCServiceCodeTypeKey           "errorCode"
+
 #endif
 
 #include "llvm/Support/Host.h"

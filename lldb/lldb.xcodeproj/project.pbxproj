@@ -38,11 +38,8 @@
 			buildConfigurationList = 26CEF3B214FD592B007286B2 /* Build configuration list for PBXAggregateTarget "desktop" */;
 			buildPhases = (
 				AF90106415AB7D2900FF120D /* CopyFiles */,
-				AF030DA31A9C200000A2466A /* CopyFiles */,
 			);
 			dependencies = (
-				26CEF3B914FD5952007286B2 /* PBXTargetDependency */,
-				26CEF3B714FD594E007286B2 /* PBXTargetDependency */,
 				26CEF3BB14FD595B007286B2 /* PBXTargetDependency */,
 				26B391EF1A6DCCAF00456239 /* PBXTargetDependency */,
 				2687EACB1508115000DD8C2E /* PBXTargetDependency */,
@@ -860,8 +857,6 @@
 		AF2BA6EC1A707E3400C5248A /* UriParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33064C991A5C7A330033D415 /* UriParser.cpp */; };
 		AF2BCA6C18C7EFDE005B4526 /* JITLoaderGDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2BCA6918C7EFDE005B4526 /* JITLoaderGDB.cpp */; };
 		AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37E10917C861F20061E18E /* ProcessRunLock.cpp */; };
-		AF455D571A9C231700D6C4F7 /* com.apple.lldb.launcherXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		AF455D581A9C231700D6C4F7 /* com.apple.lldb.launcherRootXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */; };
 		AF77E08F1A033C700096C0EA /* ABISysV_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E08D1A033C700096C0EA /* ABISysV_ppc.cpp */; };
 		AF77E0931A033C7F0096C0EA /* ABISysV_ppc64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0911A033C7F0096C0EA /* ABISysV_ppc64.cpp */; };
@@ -900,11 +895,6 @@
 		E778E9A21B062D1700247609 /* EmulateInstructionMIPS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E778E99F1B062D1700247609 /* EmulateInstructionMIPS.cpp */; };
 		E7E94ABC1B54961F00D0AE30 /* GDBRemoteSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E73A15A41B548EC500786197 /* GDBRemoteSignals.cpp */; };
 		EB8375E71B553DE800BA907D /* ThreadPlanCallFunctionUsingABI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB8375E61B553DE800BA907D /* ThreadPlanCallFunctionUsingABI.cpp */; };
-		ED88244E15114A9200BC98B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
-		ED88245015114CA200BC98B9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED88244F15114CA200BC98B9 /* main.mm */; };
-		ED88245115114CA200BC98B9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED88244F15114CA200BC98B9 /* main.mm */; };
-		ED88245315114CFC00BC98B9 /* LauncherRootXPCService.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED88245215114CFC00BC98B9 /* LauncherRootXPCService.mm */; };
-		EDC6D4AA14E5C49E001B75F8 /* LauncherXPCService.mm in Sources */ = {isa = PBXBuildFile; fileRef = EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -999,20 +989,6 @@
 			remoteGlobalIDString = 26F5C26910F3D9A4009D5894;
 			remoteInfo = "lldb-tool";
 		};
-		26CEF3B614FD594E007286B2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = EDC6D49814E5C19B001B75F8;
-			remoteInfo = launcherXPCService;
-		};
-		26CEF3B814FD5952007286B2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = EDE274E214EDCE1F005B0F75;
-			remoteInfo = launcherRootXPCService;
-		};
 		26CEF3BA14FD595B007286B2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -1083,17 +1059,6 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
-		};
-		AF030DA31A9C200000A2466A /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
-			dstSubfolderSpec = 16;
-			files = (
-				AF455D571A9C231700D6C4F7 /* com.apple.lldb.launcherXPCService.xpc in CopyFiles */,
-				AF455D581A9C231700D6C4F7 /* com.apple.lldb.launcherRootXPCService.xpc in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF90106415AB7D2900FF120D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -2800,16 +2765,7 @@
 		E778E9A01B062D1700247609 /* EmulateInstructionMIPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmulateInstructionMIPS.h; sourceTree = "<group>"; };
 		EB8375E61B553DE800BA907D /* ThreadPlanCallFunctionUsingABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallFunctionUsingABI.cpp; path = source/Target/ThreadPlanCallFunctionUsingABI.cpp; sourceTree = "<group>"; };
 		EB8375E81B553DFE00BA907D /* ThreadPlanCallFunctionUsingABI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ThreadPlanCallFunctionUsingABI.h; path = include/lldb/Target/ThreadPlanCallFunctionUsingABI.h; sourceTree = "<group>"; };
-		ED88244F15114CA200BC98B9 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
-		ED88245215114CFC00BC98B9 /* LauncherRootXPCService.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LauncherRootXPCService.mm; sourceTree = "<group>"; };
-		EDB919B214F6EC85008FF64B /* LauncherXPCService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LauncherXPCService.h; sourceTree = "<group>"; };
 		EDB919B414F6F10D008FF64B /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
-		EDC6D49214E5C15C001B75F8 /* LauncherXPCService-Info.plist */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = "LauncherXPCService-Info.plist"; sourceTree = "<group>"; };
-		EDC6D49314E5C15C001B75F8 /* LauncherXPCService.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = LauncherXPCService.entitlements; sourceTree = "<group>"; };
-		EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LauncherXPCService.mm; sourceTree = "<group>"; };
-		EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.apple.lldb.launcherXPCService.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
-		EDE274E114EDCE0D005B0F75 /* LauncherRootXPCService-Info.plist */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = "LauncherRootXPCService-Info.plist"; sourceTree = "<group>"; };
-		EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.apple.lldb.launcherRootXPCService.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2885,21 +2841,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		EDC6D49614E5C19B001B75F8 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EDE274E514EDCE1F005B0F75 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				ED88244E15114A9200BC98B9 /* Security.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -2950,8 +2891,6 @@
 				26680207115FD0ED008E1FE4 /* LLDB.framework */,
 				26579F68126A25920007C5CB /* darwin-debug */,
 				26DC6A101337FE6900FF7998 /* lldb-server */,
-				EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */,
-				EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */,
 				2690CD171A6DC0D000E717C8 /* lldb-mi */,
 				942829C01A89835300521B30 /* argdumper */,
 			);
@@ -4777,7 +4716,6 @@
 				3FDFE56719AF9BB2009756A7 /* HostThreadMacOSX.h */,
 				2689B0B5113EE47E00A4AEDB /* Symbols.cpp */,
 				3FDFED0619B7C898009756A7 /* ThisThread.cpp */,
-				EDC6D49114E5C15C001B75F8 /* launcherXPCService */,
 			);
 			name = MacOSX;
 			sourceTree = "<group>";
@@ -5612,21 +5550,6 @@
 			path = MIPS;
 			sourceTree = "<group>";
 		};
-		EDC6D49114E5C15C001B75F8 /* launcherXPCService */ = {
-			isa = PBXGroup;
-			children = (
-				EDC6D49214E5C15C001B75F8 /* LauncherXPCService-Info.plist */,
-				EDE274E114EDCE0D005B0F75 /* LauncherRootXPCService-Info.plist */,
-				EDC6D49314E5C15C001B75F8 /* LauncherXPCService.entitlements */,
-				ED88244F15114CA200BC98B9 /* main.mm */,
-				EDB919B214F6EC85008FF64B /* LauncherXPCService.h */,
-				EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */,
-				ED88245215114CFC00BC98B9 /* LauncherRootXPCService.mm */,
-			);
-			name = launcherXPCService;
-			path = source/Host/macosx/launcherXPCService;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -5882,40 +5805,6 @@
 			productReference = 942829C01A89835300521B30 /* argdumper */;
 			productType = "com.apple.product-type.tool";
 		};
-		EDC6D49814E5C19B001B75F8 /* launcherXPCService */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = EDC6D4A614E5C19B001B75F8 /* Build configuration list for PBXNativeTarget "launcherXPCService" */;
-			buildPhases = (
-				EDC6D49514E5C19B001B75F8 /* Sources */,
-				EDC6D49614E5C19B001B75F8 /* Frameworks */,
-				EDC6D49714E5C19B001B75F8 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = launcherXPCService;
-			productName = launcherXPCService;
-			productReference = EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */;
-			productType = "com.apple.product-type.bundle";
-		};
-		EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = EDE274E814EDCE1F005B0F75 /* Build configuration list for PBXNativeTarget "launcherRootXPCService" */;
-			buildPhases = (
-				EDE274E314EDCE1F005B0F75 /* Sources */,
-				EDE274E514EDCE1F005B0F75 /* Frameworks */,
-				EDE274E714EDCE1F005B0F75 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = launcherRootXPCService;
-			productName = launcherXPCService;
-			productReference = EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */;
-			productType = "com.apple.product-type.bundle";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -5958,8 +5847,6 @@
 				26579F67126A25920007C5CB /* darwin-debug */,
 				2689FFC913353D7A00698AC0 /* lldb-core */,
 				26DC6A0F1337FE6900FF7998 /* lldb-server */,
-				EDC6D49814E5C19B001B75F8 /* launcherXPCService */,
-				EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */,
 				2687EAC51508110B00DD8C2E /* install-headers */,
 				235AFBB5199BC6AD00897A4B /* Linux */,
 				235AFBBB199BC6FD00897A4B /* MacOSX and Linux */,
@@ -5987,20 +5874,6 @@
 				94E829CA152D33C1006F96A3 /* lldb-server in Resources */,
 				262CFC7711A4510000946C6C /* debugserver in Resources */,
 				26368AF7126B960500E8659F /* darwin-debug in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EDC6D49714E5C19B001B75F8 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EDE274E714EDCE1F005B0F75 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6912,24 +6785,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		EDC6D49514E5C19B001B75F8 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				ED88245015114CA200BC98B9 /* main.mm in Sources */,
-				EDC6D4AA14E5C49E001B75F8 /* LauncherXPCService.mm in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EDE274E314EDCE1F005B0F75 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				ED88245115114CA200BC98B9 /* main.mm in Sources */,
-				ED88245315114CFC00BC98B9 /* LauncherRootXPCService.mm in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -6992,16 +6847,6 @@
 			isa = PBXTargetDependency;
 			target = 26F5C26910F3D9A4009D5894 /* lldb-tool */;
 			targetProxy = 26CEF3AF14FD591F007286B2 /* PBXContainerItemProxy */;
-		};
-		26CEF3B714FD594E007286B2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = EDC6D49814E5C19B001B75F8 /* launcherXPCService */;
-			targetProxy = 26CEF3B614FD594E007286B2 /* PBXContainerItemProxy */;
-		};
-		26CEF3B914FD5952007286B2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */;
-			targetProxy = 26CEF3B814FD5952007286B2 /* PBXContainerItemProxy */;
 		};
 		26CEF3BB14FD595B007286B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -7473,7 +7318,7 @@
 					Foundation,
 				);
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -7546,7 +7391,7 @@
 					Foundation,
 				);
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -7647,7 +7492,7 @@
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -7692,7 +7537,7 @@
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -7737,7 +7582,7 @@
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = BuildAndIntegration;
@@ -7938,7 +7783,7 @@
 				);
 				PRODUCT_NAME = LLDB;
 				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = BuildAndIntegration;
@@ -7975,7 +7820,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -8012,7 +7857,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = DebugClang;
@@ -8045,7 +7890,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -8093,7 +7938,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = BuildAndIntegration;
@@ -8243,7 +8088,7 @@
 				);
 				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = Debug;
 		};
@@ -8316,7 +8161,7 @@
 				);
 				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = Release;
 		};
@@ -8390,7 +8235,7 @@
 				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = BuildAndIntegration;
 		};
@@ -8665,7 +8510,7 @@
 					Foundation,
 				);
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = DebugClang;
@@ -8723,7 +8568,7 @@
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = DebugClang;
@@ -8799,72 +8644,7 @@
 				);
 				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
-			};
-			name = DebugClang;
-		};
-		49BB8F3D1611172B00BDD462 /* DebugClang */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
-			};
-			name = DebugClang;
-		};
-		49BB8F3E1611172B00BDD462 /* DebugClang */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherRootXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = DebugClang;
 		};
@@ -8957,7 +8737,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = Debug;
 		};
@@ -9026,7 +8806,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = DebugClang;
 		};
@@ -9092,7 +8872,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = Release;
 		};
@@ -9161,182 +8941,7 @@
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
-			};
-			name = BuildAndIntegration;
-		};
-		EDC6D4A714E5C19B001B75F8 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
-			};
-			name = Debug;
-		};
-		EDC6D4A814E5C19B001B75F8 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
-			};
-			name = Release;
-		};
-		EDC6D4A914E5C19B001B75F8 /* BuildAndIntegration */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
-			};
-			name = BuildAndIntegration;
-		};
-		EDE274E914EDCE1F005B0F75 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherRootXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
-			};
-			name = Debug;
-		};
-		EDE274EA14EDCE1F005B0F75 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherRootXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
-			};
-			name = Release;
-		};
-		EDE274EB14EDCE1F005B0F75 /* BuildAndIntegration */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_LINK_OBJC_RUNTIME = NO;
-				CLANG_OBJC_RUNTIME = NO;
-				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherRootXPCService-Info.plist";
-				INFOPLIST_PREPROCESS = YES;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"NO0=0",
-					"YES0=1",
-					"RC_XBS=${RC_XBS}0",
-					"RC_BUILDIT=${RC_BUILDIT}0",
-				);
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
-				MACH_O_TYPE = mh_execute;
-				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				WRAPPER_EXTENSION = xpc;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/lib/Target/ARM";
 			};
 			name = BuildAndIntegration;
 		};
@@ -9493,28 +9098,6 @@
 				942829C61A89835400521B30 /* DebugClang */,
 				942829C71A89835400521B30 /* Release */,
 				942829C81A89835400521B30 /* BuildAndIntegration */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = BuildAndIntegration;
-		};
-		EDC6D4A614E5C19B001B75F8 /* Build configuration list for PBXNativeTarget "launcherXPCService" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				EDC6D4A714E5C19B001B75F8 /* Debug */,
-				49BB8F3D1611172B00BDD462 /* DebugClang */,
-				EDC6D4A814E5C19B001B75F8 /* Release */,
-				EDC6D4A914E5C19B001B75F8 /* BuildAndIntegration */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = BuildAndIntegration;
-		};
-		EDE274E814EDCE1F005B0F75 /* Build configuration list for PBXNativeTarget "launcherRootXPCService" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				EDE274E914EDCE1F005B0F75 /* Debug */,
-				49BB8F3E1611172B00BDD462 /* DebugClang */,
-				EDE274EA14EDCE1F005B0F75 /* Release */,
-				EDE274EB14EDCE1F005B0F75 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;
