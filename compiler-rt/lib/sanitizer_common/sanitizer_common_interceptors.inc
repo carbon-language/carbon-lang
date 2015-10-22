@@ -5236,6 +5236,39 @@ INTERCEPTOR(int, mincore, void *addr, uptr length, unsigned char *vec) {
 #define INIT_MINCORE
 #endif
 
+#if SANITIZER_INTERCEPT_PROCESS_VM_READV
+INTERCEPTOR(SSIZE_T, process_vm_readv, int pid, __sanitizer_iovec *local_iov,
+            uptr liovcnt, __sanitizer_iovec *remote_iov, uptr riovcnt,
+            uptr flags) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, process_vm_readv, pid, local_iov, liovcnt,
+                           remote_iov, riovcnt, flags);
+  SSIZE_T res = REAL(process_vm_readv)(pid, local_iov, liovcnt, remote_iov,
+                                       riovcnt, flags);
+  if (res > 0)
+    write_iovec(ctx, local_iov, liovcnt, res);
+  return res;
+}
+
+INTERCEPTOR(SSIZE_T, process_vm_writev, int pid, __sanitizer_iovec *local_iov,
+            uptr liovcnt, __sanitizer_iovec *remote_iov, uptr riovcnt,
+            uptr flags) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, process_vm_writev, pid, local_iov, liovcnt,
+                           remote_iov, riovcnt, flags);
+  SSIZE_T res = REAL(process_vm_writev)(pid, local_iov, liovcnt, remote_iov,
+                                        riovcnt, flags);
+  if (res > 0)
+    read_iovec(ctx, local_iov, liovcnt, res);
+  return res;
+}
+#define INIT_PROCESS_VM_READV                                                  \
+  COMMON_INTERCEPT_FUNCTION(process_vm_readv);                                 \
+  COMMON_INTERCEPT_FUNCTION(process_vm_writev);
+#else
+#define INIT_PROCESS_VM_READV
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -5409,4 +5442,5 @@ static void InitializeCommonInterceptors() {
   INIT_SEM;
   INIT_PTHREAD_SETCANCEL;
   INIT_MINCORE;
+  INIT_PROCESS_VM_READV;
 }
