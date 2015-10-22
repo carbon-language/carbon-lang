@@ -1,7 +1,8 @@
 """Test convenience variables when you drop in from lldb prompt into an embedded interpreter."""
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -74,10 +75,3 @@ class ConvenienceVariablesCase(TestBase):
         child.expect_exact(python_prompt)
         self.expect(child.before, exe=False,
             patterns = ['frame #0: 0x[0-9a-f]+ a\.out`main\(argc=1, argv=0x[0-9a-f]+\) \+ \d+ at main\.c:%d' % self.line])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Check that SBValue.GetValueAsSigned() does the right thing for a 32-bit -1.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -49,9 +50,3 @@ class Radar12481949DataFormatterTestCase(TestBase):
         self.assertTrue(self.frame().FindVariable("myvar").GetValueAsUnsigned() != -1, "GetValueAsUnsigned() does not say -1")
         self.assertTrue(self.frame().FindVariable("myvar").GetValueAsUnsigned() == 0xFFFFFFFFFFFFFFFF, "GetValueAsUnsigned() says 0xFFFFFFFFFFFFFFFF")
         self.assertTrue(self.frame().FindVariable("myvar").GetValueAsSigned() != 0xFFFFFFFF, "GetValueAsUnsigned() does not say 0xFFFFFFFF")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

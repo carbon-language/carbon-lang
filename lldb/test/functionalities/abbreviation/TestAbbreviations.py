@@ -2,8 +2,9 @@
 Test some lldb command abbreviations and aliases for proper resolution.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -96,11 +97,3 @@ class AbbreviationsTestCase(TestBase):
         #self.runCmd("se cl prompt")
         #self.expect("set sh prompt",
         #            startstr = 'prompt (string) = "(lldb) "')
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

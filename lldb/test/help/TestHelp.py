@@ -4,8 +4,9 @@ Test some lldb help commands.
 See also CommandInterpreter::OutputFormattedHelpText().
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -160,10 +161,3 @@ class HelpCommandTestCase(TestBase):
             substrs = ['The following subcommands are supported:'],
             patterns = ['expression +--',
                         'variable +--'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

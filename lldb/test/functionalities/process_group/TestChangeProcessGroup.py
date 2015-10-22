@@ -1,7 +1,8 @@
 """Test that we handle inferiors which change their process group"""
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -97,9 +98,3 @@ class ChangeProcessGroupTestCase(TestBase):
         shell_command = lldb.SBPlatformShellCommand(cmd)
         err = platform.Run(shell_command)
         return (err, shell_command.GetStatus(), shell_command.GetOutput())
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

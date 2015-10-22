@@ -2,9 +2,10 @@
 Use lldb Python SBValue API to create a watchpoint for read_write of 'globl' var.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -87,10 +88,3 @@ class SetWatchpointAPITestCase(TestBase):
 
         # At this point, the inferior process should have exited.
         self.assertTrue(process.GetState() == lldb.eStateExited, PROCESS_EXITED)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

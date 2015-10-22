@@ -1,5 +1,7 @@
 """Test that types defined in shared libraries with stripped symbols work correctly."""
 
+import lldb_shared
+
 import unittest2
 import lldb
 from lldbtest import *
@@ -67,9 +69,3 @@ class SharedLibStrippedTestCase(TestBase):
         # The breakpoint should have a hit count of 1.
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
-                       
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

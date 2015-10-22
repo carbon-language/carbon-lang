@@ -2,9 +2,10 @@
 Test retrieval of SBAddress from function/symbol, disassembly, and SBAddress APIs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -105,9 +106,3 @@ class DisasmAPITestCase(TestBase):
         desc2 = get_description(sa2)
         self.assertTrue(desc1 and desc2 and desc1 == desc2,
                         "SBAddress.GetDescription() API of sa1 and sa2 should return the same string")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,10 @@
 Test that dynamic values update their child count correctly
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -72,9 +73,3 @@ class DynamicValueChildCountTestCase(TestBase):
         self.assertTrue(b.GetNumChildren() != 0, "b now has 1 child")
         self.runCmd("continue")
         self.assertTrue(b.GetNumChildren() == 0, "b didn't go back to 0 children")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import datetime
@@ -67,10 +68,3 @@ class DataFormatterBoolRefPtr(TestBase):
                     substrs = ['YES'])
         self.expect('frame variable no',
                     substrs = ['NO'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

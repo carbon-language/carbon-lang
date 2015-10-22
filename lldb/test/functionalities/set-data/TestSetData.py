@@ -2,8 +2,9 @@
 Set the contents of variables and registers using raw data
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -57,9 +58,3 @@ class SetDataTestCase(TestBase):
 
         self.expect("fr var -d run-target string", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['NSString *', 'nil'])
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

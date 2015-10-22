@@ -4,8 +4,9 @@ This exercises classes like ObjectFileELF and their support for opening
 foreign-architecture object files.
 """
 
+import lldb_shared
+
 import os.path
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -36,9 +37,3 @@ class TestImageListMultiArchitecture(TestBase):
             self.match("image list -t -A", [expected_triple_and_arch_regex])
         # Revert to the host platform after all of this is done
         self.runCmd("platform select host")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -47,9 +47,3 @@ class RvalueReferencesTestCase(TestBase):
 
     def set_breakpoint(self, line):
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", line, num_expected_locations=1, loc_exact=True)
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

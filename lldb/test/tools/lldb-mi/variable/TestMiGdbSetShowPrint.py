@@ -3,9 +3,10 @@
 Test lldb-mi -gdb-set and -gdb-show commands for 'print option-name'.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -225,6 +226,3 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that -gdb-set print aggregate-field-names fails when option is unknown
         self.runCmd("-gdb-set print aggregate-field-names unknown")
         self.expect("\^error,msg=\"The request ''print' expects option-name and \"on\" or \"off\"' failed.\"")
-
-if __name__ == '__main__':
-    unittest2.main()

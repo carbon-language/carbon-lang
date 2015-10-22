@@ -2,9 +2,10 @@
 Test that the lldb-mi handles signals properly.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -197,6 +198,3 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         # Exit
         self.runCmd("-gdb-exit")
         self.expect("\^exit")
-
-if __name__ == '__main__':
-    unittest2.main()

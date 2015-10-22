@@ -2,9 +2,10 @@
 Test getting return-values correctly when stepping out
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -206,9 +207,3 @@ class ReturnValueTestCase(TestBase):
             ret_child_str = ret_child.GetValue()
 
             self.assertEqual(in_child_str, ret_child_str)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

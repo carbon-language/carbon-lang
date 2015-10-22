@@ -52,9 +52,3 @@ class CStringsTestCase(TestBase):
 
         self.expect("expression !z",
                     substrs = ['false'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

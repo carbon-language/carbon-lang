@@ -10,8 +10,10 @@ until exit or a crash takes place, and the number of events seen by LLDB is
 verified to match the expected number of events.
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -484,10 +486,3 @@ class ConcurrentEventsTestCase(TestBase):
             watchpoint_hit_count = self.thread_watchpoint.GetHitCount() if expected_watchpoint_threads > 0 else 0
             self.assertEqual(expected_watchpoint_threads, watchpoint_hit_count,
                 "Expected %d watchpoint hits, got %d" % (expected_watchpoint_threads, watchpoint_hit_count))
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

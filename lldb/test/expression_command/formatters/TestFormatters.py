@@ -2,7 +2,8 @@
 Test using LLDB data formatters with frozen objects coming from the expression parser.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -162,9 +163,3 @@ class ExprFormattersTestCase(TestBase):
         self.assertTrue(a_data.GetUnsignedInt32(error, 8) == 3, 'numbers[2] == 3')
         self.assertTrue(a_data.GetUnsignedInt32(error, 12) == 4, 'numbers[3] == 4')
         self.assertTrue(a_data.GetUnsignedInt32(error, 16) == 5, 'numbers[4] == 5')
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

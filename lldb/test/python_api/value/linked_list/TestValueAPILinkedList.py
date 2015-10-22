@@ -3,9 +3,10 @@ Test SBValue API linked_list_iter which treats the SBValue as a linked list and
 supports iteration till the end of list is reached.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -127,9 +128,3 @@ class ValueAsLinkedListTestCase(TestBase):
             list.append(int(t.GetChildMemberWithName("id").GetValue()))
 
         self.assertTrue(len(list) == 3)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

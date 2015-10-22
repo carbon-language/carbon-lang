@@ -2,9 +2,10 @@
 Test lldb-mi -file-xxx commands.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiFileTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -76,6 +77,3 @@ class MiFileTestCase(lldbmi_testcase.MiTestCaseBase):
         path = "unknown_dir/%s" % self.myexe
         self.runCmd("-file-exec-and-symbols %s" % path)
         self.expect("\^error")
-
-if __name__ == '__main__':
-    unittest2.main()

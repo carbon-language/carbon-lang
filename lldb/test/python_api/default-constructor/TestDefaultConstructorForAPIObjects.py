@@ -11,9 +11,10 @@ SBCommadnReturnObject, SBStream, and SBSymbolContextList, are all valid objects
 after default construction.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -387,10 +388,3 @@ class APIDefaultConstructorTestCase(TestBase):
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_watchpoint
         sb_watchpoint.fuzz_obj(obj)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

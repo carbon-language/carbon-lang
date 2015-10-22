@@ -10,11 +10,13 @@ gdb remote packet functional areas.  For now it contains
 the initial set of tests implemented.
 """
 
+import lldb_shared
+
+import unittest2
 import gdbremote_testcase
 import lldbgdbserverutils
 import platform
 import signal
-import unittest2
 from lldbtest import *
 
 class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
@@ -1465,7 +1467,3 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.build()
         self.set_inferior_startup_launch()
         self.P_and_p_thread_suffix_work()
-
-
-if __name__ == '__main__':
-    unittest2.main()

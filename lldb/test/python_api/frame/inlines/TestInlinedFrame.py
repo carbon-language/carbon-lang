@@ -2,9 +2,10 @@
 Testlldb Python SBFrame APIs IsInlined() and GetFunctionName().
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -73,9 +74,3 @@ class InlinedFrameAPITestCase(TestBase):
                 print stack_traces2
                 self.expect(stack_traces2, "Second stop at %s:%d" % (self.source, self.second_stop), exe=False,
                             substrs = ['%s:%d' % (self.source, self.second_stop)])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

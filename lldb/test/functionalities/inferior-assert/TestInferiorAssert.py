@@ -1,7 +1,8 @@
 """Test that lldb functions correctly after the inferior has asserted."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb, lldbutil, lldbplatformutil
 from lldbtest import *
 
@@ -237,9 +238,3 @@ class AssertingInferiorTestCase(TestBase):
         self.expect("thread backtrace all",
             substrs = [stop_reason,
                        'main.c:%d' % self.line])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

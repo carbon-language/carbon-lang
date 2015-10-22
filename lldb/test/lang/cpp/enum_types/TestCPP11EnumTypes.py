@@ -1,7 +1,8 @@
 """Look up enum type information and check for correct display."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -105,8 +106,3 @@ class CPP11EnumTypesTestCase(TestBase):
             self.expect("frame variable day", 'check for valid enumeration value',
                 substrs = [enum_value])
             lldbutil.continue_to_breakpoint (self.process(), bkpt)
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,7 +2,8 @@
 Test that template instaniations of std::vector<long> and <short> in the same module have the correct types.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -57,10 +58,3 @@ class UniqueTypesTestCase(TestBase):
                 continue
             self.expect(x, "Expect type 'short'", exe=False,
                 substrs = ['short'])
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

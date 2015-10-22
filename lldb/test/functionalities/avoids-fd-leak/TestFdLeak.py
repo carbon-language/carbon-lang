@@ -2,8 +2,9 @@
 Test whether a process started by lldb has no extra file descriptors open.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -70,10 +71,3 @@ class AvoidsFdLeakTestCase(TestBase):
         self.assertTrue(process2.GetState() == lldb.eStateExited, "Process should have exited.")
         self.assertTrue(process2.GetExitStatus() == 0,
                 "Process returned non-zero status. Were incorrect file descriptors passed?")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test that clang produces the __apple accelerator tables, for example, __apple_types, correctly.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 from lldbutil import symbol_type_to_str
@@ -62,10 +63,3 @@ class AppleTypesTestCase(TestBase):
         self.assertTrue(dwarf_section.FindSubSection("__apple_names") and
                         dwarf_section.FindSubSection("__apple_namespac") and
                         dwarf_section.FindSubSection("__apple_objc"))
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

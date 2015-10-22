@@ -2,9 +2,10 @@
 Use lldb Python API to test dynamic values in C++
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -217,10 +218,3 @@ class DynamicValueTestCase(TestBase):
         contained_b_static_addr = int (contained_b_static.GetValue(), 16)
         
         self.assertTrue (contained_b_addr < contained_b_static_addr)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

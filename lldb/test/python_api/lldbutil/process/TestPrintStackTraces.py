@@ -2,9 +2,10 @@
 Test SBprocess and SBThread APIs with printing of the stack traces using lldbutil.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -47,10 +48,3 @@ class ThreadsStackTracesTestCase(TestBase):
         stacktraces = lldbutil.print_stacktraces(process, string_buffer=True)
         self.expect(stacktraces, exe=False,
             substrs = ['(int)argc=3'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

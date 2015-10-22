@@ -83,7 +83,3 @@ class TestStubReverseConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test(use_named_pipe=False)
         self.set_inferior_startup_launch()
         self.reverse_connect_works()
-
-
-if __name__ == '__main__':
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test lldb breakpoint command add/list/delete.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -201,9 +202,3 @@ class BreakpointCommandTestCase(TestBase):
 
         # Now remove 'output-2.txt'
         os.remove ('output-2.txt')
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

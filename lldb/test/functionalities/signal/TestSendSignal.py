@@ -1,7 +1,8 @@
 ﻿"""Test that lldb command 'process signal SIGUSR1' to send a signal to the inferior works."""
 
+import lldb_shared
+
 import os, time, signal
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -100,9 +101,3 @@ class SendSignalTestCase(TestBase):
         self.assertTrue(state == expected_state,
                         "It was the %s state." %
                         lldb.SBDebugger_StateAsCString(expected_state))
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -3,8 +3,9 @@ Test lldb ability to unwind a stack with a function containing a call to the
 '__builtin_trap' intrinsic, which GCC (4.6) encodes to an illegal opcode.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -46,9 +47,3 @@ class BuiltinTrapTestCase(TestBase):
 
         # evaluate a local
         self.expect('p foo', substrs = ['= 5'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

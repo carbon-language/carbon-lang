@@ -1,7 +1,8 @@
 """Test Python APIs for working with formatters"""
 
+import lldb_shared
+
 import os, sys, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -339,10 +340,3 @@ class SBFormattersAPITestCase(TestBase):
         if self.TraceOn():
              print int_vector
         self.assertTrue(int_vector.GetNumChildren() == 0, 'synthetic vector is still empty')
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

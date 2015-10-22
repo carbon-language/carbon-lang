@@ -2,8 +2,9 @@
 Test that we are able to properly report a usable dynamic type
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -57,9 +58,3 @@ class ObjCDynamicSBTypeTestCase(TestBase):
 
         self.assertTrue(object_pointee_type.GetNumberOfFields() == 2, "The dynamic type for NSObject has 2 fields")
         self.assertTrue(base_pointee_type.GetNumberOfFields() == 2, "The dynamic type for Base has 2 fields")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

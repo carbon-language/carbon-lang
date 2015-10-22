@@ -1,7 +1,8 @@
 """Test stepping over and into inlined functions."""
 
+import lldb_shared
+
 import os, time, sys
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -267,9 +268,3 @@ class TestInlineStepping(TestBase):
         
         step_sequence = [["// In max_value specialized", "into"]]
         self.run_step_sequence(step_sequence)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

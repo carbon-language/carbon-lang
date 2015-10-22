@@ -1,7 +1,8 @@
 """Test settings and readings of program variables."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -106,10 +107,3 @@ class SetValuesTestCase(TestBase):
         self.runCmd("expression i = 1.5")
         self.expect("frame variable --show-types", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(long double) i = 1.5")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

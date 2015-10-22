@@ -98,10 +98,3 @@ class TestCppNsImport(TestBase):
         # Test function inside namespace
         test_result = frame.EvaluateExpression("fun_var")
         self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 5, "fun_var = 5")
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

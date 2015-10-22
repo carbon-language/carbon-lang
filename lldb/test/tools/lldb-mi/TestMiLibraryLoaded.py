@@ -2,9 +2,10 @@
 Test lldb-mi =library-loaded notifications.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiLibraryLoadedTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -29,6 +30,3 @@ class MiLibraryLoadedTestCase(lldbmi_testcase.MiTestCaseBase):
         def add_slashes(x): return x.replace("\\", "\\\\").replace("\"", "\\\"").replace("\'", "\\\'").replace("\0", "\\\0")
         self.expect([ "=library-loaded,id=\"%s\",target-name=\"%s\",host-name=\"%s\",symbols-loaded=\"1\",symbols-path=\"%s\",loaded_addr=\"-\",size=\"[0-9]+\"" % (add_slashes(path), add_slashes(path), add_slashes(path), add_slashes(symbols_path)),
                       "=library-loaded,id=\"%s\",target-name=\"%s\",host-name=\"%s\",symbols-loaded=\"0\",loaded_addr=\"-\",size=\"[0-9]+\"" % (add_slashes(path), add_slashes(path), add_slashes(path)) ])
-
-if __name__ == '__main__':
-    unittest2.main()

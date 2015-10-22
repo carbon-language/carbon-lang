@@ -9,7 +9,8 @@ o test_modify_source_file_while_debugging:
   Test the caching mechanism of the source manager.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 from lldbtest import *
 import lldbutil
@@ -168,10 +169,3 @@ class SourceManagerTestCase(TestBase):
         # Display the source code again.  We should see the updated line.
         self.expect("source list -f main.c -l %d" % self.line, SOURCE_DISPLAYED_CORRECTLY,
             substrs = ['Hello lldb'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

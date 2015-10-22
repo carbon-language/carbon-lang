@@ -1,7 +1,9 @@
 """Test that thread-local storage can be read correctly."""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -69,9 +71,3 @@ class TlsGlobalTestCase(TestBase):
             patterns = ["\(int\) \$.* = 44"])
         self.expect("expr var_shared", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = ["\(int\) \$.* = 33"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

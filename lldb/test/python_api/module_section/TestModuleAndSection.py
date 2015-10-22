@@ -2,9 +2,10 @@
 Test some SBModule and SBSection APIs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 from lldbutil import symbol_type_to_str
@@ -121,9 +122,3 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         INDENT2 = INDENT * 2
         for cu in exe_module.compile_unit_iter():
             print cu
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

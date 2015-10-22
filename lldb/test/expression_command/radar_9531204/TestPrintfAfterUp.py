@@ -2,8 +2,9 @@
 The evaluating printf(...) after break stop and then up a stack frame.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -37,10 +38,3 @@ class Radar9531204TestCase(TestBase):
 
         # This does not currently.
         self.runCmd('expression (int)printf("argc is: %d.\\n", argc)')
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

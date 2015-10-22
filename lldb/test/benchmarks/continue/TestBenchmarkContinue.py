@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbbench import *
 import lldbutil
@@ -61,9 +62,3 @@ class TestBenchmarkContinue(BenchBase):
             lldbutil_sw.stop()
             
         print "runCmd: %s\nlldbutil: %s" % (runCmd_sw,lldbutil_sw)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -1,7 +1,8 @@
 """Test that lldb functions correctly after the inferior has crashed."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb, lldbutil, lldbplatformutil
 from lldbtest import *
 
@@ -214,10 +215,3 @@ class CrashingInferiorTestCase(TestBase):
         # The lldb expression interpreter should be able to read from addresses of the inferior after a crash.
         self.expect("p argv[0]",
             substrs = ['a.out'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

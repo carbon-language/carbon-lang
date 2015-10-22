@@ -2,9 +2,10 @@
 Test that you can set breakpoint commands successfully with the Python API's:
 """
 
+import lldb_shared
+
 import os
 import re
-import unittest2
 import lldb, lldbutil
 import sys
 from lldbtest import *
@@ -89,10 +90,3 @@ print 'Hit breakpoint'")
         self.assertTrue(os.path.isfile("output2.txt"),
                         "'output2.txt' exists due to breakpoint command for breakpoint function.")
         self.RemoveTempFile("output2.txt")
-
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

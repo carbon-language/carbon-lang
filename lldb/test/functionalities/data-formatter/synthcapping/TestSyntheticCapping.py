@@ -2,8 +2,9 @@
 Check for an issue where capping does not work because the Target pointer appears to be changing behind our backs
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -70,9 +71,3 @@ class SyntheticCappingTestCase(TestBase):
 
         self.expect("frame variable f00_1", matching=True,
                     substrs = ['r = 33']);
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

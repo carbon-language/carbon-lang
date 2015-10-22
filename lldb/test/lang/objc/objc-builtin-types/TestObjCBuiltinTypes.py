@@ -1,7 +1,8 @@
 """Test that the expression parser doesn't get confused by 'id' and 'Class'"""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -50,9 +51,3 @@ class TestObjCBuiltinTypes(TestBase):
         self.expect("expr (foo)", patterns = ["\(ns::id\) \$.* = 0"])
 
         self.expect("expr id my_id = 0; my_id", patterns = ["\(id\) \$.* = nil"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

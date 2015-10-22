@@ -2,8 +2,9 @@
 Test example snippets from the lldb 'help expression' output.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -36,10 +37,3 @@ class Radar9673644TestCase(TestBase):
             substrs = ["'f'"])
         # runCmd: expr char c[] = "foo"; c[0]
         # output: (char) $0 = 'f'
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

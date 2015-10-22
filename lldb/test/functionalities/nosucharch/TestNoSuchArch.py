@@ -1,8 +1,9 @@
 """
 Test that using a non-existent architecture name does not crash LLDB.
 """
+import lldb_shared
+
 import lldb
-import unittest2
 from lldbtest import *
 import lldbutil
 
@@ -24,10 +25,3 @@ class NoSuchArchTestCase(TestBase):
         # Now just create the target with the default arch and check it's fine
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), "This target should now be valid")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

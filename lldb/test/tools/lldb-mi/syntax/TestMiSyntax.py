@@ -2,9 +2,10 @@
 Test that the lldb-mi driver understands MI command syntax.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -78,6 +79,3 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that a process output is wrapped correctly
         self.expect("\@\"'\\\\r\\\\n\"")
         self.expect("\@\"` - it's \\\\\\\\n\\\\x12\\\\\"\\\\\\\\\\\\\"")
-
-if __name__ == '__main__':
-    unittest2.main()

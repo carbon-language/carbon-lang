@@ -1,7 +1,8 @@
 """Test breakpoint on a class constructor; and variable list the this object."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -210,9 +211,3 @@ class ClassTypesTestCase(TestBase):
         self.assertTrue (frame.IsValid(), "Got a valid frame.")
 
         self.assertTrue ("C::C" in frame.name, "Constructor name includes class name.")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

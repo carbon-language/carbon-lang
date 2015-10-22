@@ -1,7 +1,8 @@
 """Test that forward declaration of a data structure gets resolved correctly."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -42,10 +43,3 @@ class ForwardDeclarationTestCase(TestBase):
             substrs = ['(bar)',
                        '(int) a = 1',
                        '(int) b = 2'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

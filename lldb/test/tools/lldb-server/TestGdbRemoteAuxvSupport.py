@@ -1,4 +1,4 @@
-import unittest2
+import lldb_shared
 
 import gdbremote_testcase
 from lldbtest import *
@@ -197,7 +197,3 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.build()
         self.set_inferior_startup_launch()
         self.auxv_chunked_reads_work()
-
-
-if __name__ == '__main__':
-    unittest2.main()

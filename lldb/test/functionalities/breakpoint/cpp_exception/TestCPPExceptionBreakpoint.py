@@ -2,9 +2,10 @@
 Test that you can set breakpoint and hit the C++ language exception breakpoint
 """
 
+import lldb_shared
+
 import os
 import re
-import unittest2
 import lldb, lldbutil
 import sys
 from lldbtest import *
@@ -42,9 +43,3 @@ class TestCPPExceptionBreakpoint (TestBase):
         
         thread_list = lldbutil.get_threads_stopped_at_breakpoint (process, exception_bkpt)
         self.assertTrue (len(thread_list) == 1, "One thread stopped at the exception breakpoint.")
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

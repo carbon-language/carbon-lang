@@ -1,7 +1,8 @@
 """Test Python APIs for target (launch and attach), breakpoint, and process."""
 
+import lldb_shared
+
 import os, sys, time
-import unittest2
 import lldb
 import time
 from lldbtest import *
@@ -139,9 +140,3 @@ class HelloWorldTestCase(TestBase):
         self.expect(stacktraces, exe=False,
             substrs = ['main.c:%d' % self.line2,
                        '(int)argc=3'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

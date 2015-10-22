@@ -1,7 +1,8 @@
 """Test that we can debug inferiors that handle SIGSEGV by themselves"""
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -38,9 +39,3 @@ class HandleSegvTestCase(TestBase):
         process.Continue()
         self.assertEqual(process.GetState(), lldb.eStateExited)
         self.assertEqual(process.GetExitStatus(), 0)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,10 @@
 Use lldb Python API to disassemble raw machine code bytes
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -33,9 +34,3 @@ class DisassembleRawDataTestCase(TestBase):
  
         self.assertTrue (inst.GetMnemonic(target) == "movq")
         self.assertTrue (inst.GetOperands(target) == '%' + "rsp, " + '%' + "rbp")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

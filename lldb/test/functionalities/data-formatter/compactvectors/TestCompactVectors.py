@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -53,9 +54,3 @@ class CompactVectorsFormattingTestCase(TestBase):
                        '(vSInt16) valueS16 = (1, 0, 4, 0, 0, 1, 0, 4)',
                        '(vSInt32) valueS32 = (4, 3, 2, 1)',
                        '(vBool32) valueBool32 = (0, 1, 0, 1)'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

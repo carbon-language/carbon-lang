@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -51,9 +52,3 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.expect("frame variable x", substrs = ['T is a non-pointer type']);
             
         self.expect("frame variable y", substrs = ['T is a pointer type']);
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

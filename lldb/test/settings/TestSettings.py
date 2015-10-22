@@ -2,8 +2,9 @@
 Test lldb settings command.
 """
 
+import lldb_shared
+
 import os, time, re
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -490,11 +491,3 @@ class SettingsCommandTestCase(TestBase):
                                  "target.process.extra-startup-command",
                                  "target.process.thread.step-avoid-regexp",
                                  "target.process.thread.trace-thread"])
-                                 
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

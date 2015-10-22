@@ -2,8 +2,9 @@
 Verify the default cache line size for android targets
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -33,9 +34,3 @@ class DefaultCacheLineSizeTestCase(TestBase):
         # Run to completion.
         process.Continue()
         self.assertEqual(process.GetState(), lldb.eStateExited, PROCESS_EXITED)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,10 @@
 Test SBType for ObjC classes.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -58,9 +59,3 @@ class ObjCSBTypeTestCase(TestBase):
         aBarField = aBarType.GetFieldAtIndex(0)
 
         self.assertTrue(aBarField.GetName() == "_iVar", "The field has the right name")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

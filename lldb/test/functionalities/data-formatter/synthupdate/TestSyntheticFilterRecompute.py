@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import datetime
@@ -69,10 +70,3 @@ class SyntheticFilterRecomputingTestCase(TestBase):
         self.assertFalse(id_x.GetNumChildren() == 7, "dictionary still looks synthetic")
         id_x.SetPreferSyntheticValue(True)
         self.assertTrue(id_x.GetSummary() == "7 key/value pairs", "dictionary does not get correct summary")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

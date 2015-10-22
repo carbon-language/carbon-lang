@@ -2,9 +2,10 @@
 Test that dynamically discovered ivars of type IMP do not crash LLDB
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 import commands
@@ -57,9 +58,3 @@ class ObjCiVarIMPTestCase(TestBase):
         self.expect('disassemble --start-address `((MyClass*)object)->myImp`', substrs=[
             '-[MyClass init]'
         ])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

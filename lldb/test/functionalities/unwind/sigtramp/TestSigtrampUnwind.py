@@ -2,8 +2,9 @@
 Test that we can backtrace correctly with 'sigtramp' functions on the stack
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -76,9 +77,3 @@ class SigtrampUnwind(TestBase):
 
         if found_main == False:
             self.fail("Unable to find main() in backtrace.")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

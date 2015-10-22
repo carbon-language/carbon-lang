@@ -1,4 +1,4 @@
-import unittest2
+import lldb_shared
 
 import gdbremote_testcase
 from lldbtest import *
@@ -122,7 +122,3 @@ class TestGdbRemoteRegisterState(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.build()
         self.set_inferior_startup_launch()
         self.grp_register_save_restore_works(USE_THREAD_SUFFIX)
-
-
-if __name__ == '__main__':
-    unittest2.main()

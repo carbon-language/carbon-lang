@@ -2,8 +2,9 @@
 Test jumping to different places.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -55,9 +56,3 @@ class ThreadJumpTestCase(TestBase):
         self.runCmd("thread step-out")                  # return out
         self.runCmd("thread step-over")                 # assign to the global
         self.expect("expr %s" % var, substrs = [value]) # check it
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

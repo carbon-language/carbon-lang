@@ -24,9 +24,3 @@ class CPPBoolTestCase(TestBase):
 
         self.expect("expression -- my_bool = true",
                     startstr = "(bool) $1 = true")
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -260,9 +261,3 @@ class CppDataFormatterTestCase(TestBase):
         self.expect("frame variable iAmInt --format hex", substrs = ['(int) iAmInt = 0x00000001'])
         self.expect("frame variable iAmInt", matching=False, substrs = ['(int) iAmInt = 0x00000001'])
         self.expect("frame variable iAmInt", substrs = ['(int) iAmInt = 1'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

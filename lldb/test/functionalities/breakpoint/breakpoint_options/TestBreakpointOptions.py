@@ -2,8 +2,9 @@
 Test breakpoint command for different options.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -88,9 +89,3 @@ class BreakpointOptionsTestCase(TestBase):
         # We should exit.
         self.expect("process status", "Process exited successfully",
             patterns = ["^Process [0-9]+ exited with status = 0"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

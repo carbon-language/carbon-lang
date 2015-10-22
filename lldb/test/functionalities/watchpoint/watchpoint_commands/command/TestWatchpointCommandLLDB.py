@@ -2,8 +2,9 @@
 Test 'watchpoint command'.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -134,10 +135,3 @@ class WatchpointLLDBCommandTestCase(TestBase):
         # be 'exited'.
         self.expect("process status",
             substrs = ['exited'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,10 @@
 Test lldb watchpoint that uses '-s size' to watch a pointed location with size.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -92,10 +93,3 @@ class HelloWatchLocationTestCase(TestBase):
             substrs = ['hit_count = 1'])
 
         self.runCmd("thread backtrace all")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

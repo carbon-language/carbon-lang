@@ -1,7 +1,8 @@
 """Test that lldb functions correctly after the inferior has crashed while in a recursive routine."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb, lldbutil, lldbplatformutil
 import sys
 from lldbtest import *
@@ -214,9 +215,3 @@ class CrashingRecursiveInferiorTestCase(TestBase):
             startstr = '(char *) $1 = 0x0')
 
         self.check_stop_reason()
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

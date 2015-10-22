@@ -2,8 +2,9 @@
 Test 'watchpoint command'.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -82,10 +83,3 @@ class WatchpointPythonCommandTestCase(TestBase):
         # The watchpoint command "forced" our global variable 'cookie' to become 777.
         self.expect("frame variable --show-globals cookie",
             substrs = ['(int32_t)', 'cookie = 777'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

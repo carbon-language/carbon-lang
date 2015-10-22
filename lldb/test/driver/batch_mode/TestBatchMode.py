@@ -2,13 +2,10 @@
 Test that the lldb driver's batch mode works correctly.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
-try:
-    import pexpect
-except:
-    pexpect = None
 from lldbtest import *
 
 class DriverBatchModeTest (TestBase):
@@ -31,6 +28,7 @@ class DriverBatchModeTest (TestBase):
         self.source = 'main.c'
 
     def expect_string (self, string):
+        import pexpect
         """This expects for "string", with timeout & EOF being test fails."""
         try:
             self.child.expect_exact(string)
@@ -40,6 +38,7 @@ class DriverBatchModeTest (TestBase):
             self.fail ("Timed out waiting for '%s'"%(string))
 
     def batch_mode (self):
+        import pexpect
         exe = os.path.join(os.getcwd(), "a.out")
         prompt = "(lldb) "
 

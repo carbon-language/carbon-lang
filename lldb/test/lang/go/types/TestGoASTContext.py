@@ -1,7 +1,8 @@
 """Test the go DWARF type parsing."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -128,10 +129,3 @@ class TestGoASTContext(TestBase):
         self.assertEqual(5, v.GetNumChildren())
         for i in xrange(5):
             self.assertEqual(str(i + 1), v.GetChildAtIndex(i).value)
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

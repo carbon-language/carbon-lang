@@ -1,7 +1,8 @@
 """Test the SBCommandInterpreter APIs."""
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -68,10 +69,3 @@ class CommandInterpreterAPICase(TestBase):
 
         if self.TraceOn():
             lldbutil.print_stacktraces(process)        
-                        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

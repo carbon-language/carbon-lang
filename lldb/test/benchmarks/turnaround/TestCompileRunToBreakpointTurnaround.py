@@ -1,7 +1,8 @@
 """Benchmark the turnaround time starting a debugger and run to the breakpont with lldb vs. gdb."""
 
+import lldb_shared
+
 import os, sys
-import unittest2
 import lldb
 from lldbbench import *
 
@@ -116,10 +117,3 @@ class CompileRunToBreakpointBench(BenchBase):
 
         self.gdb_avg = self.stopwatch.avg()
         self.child = None
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

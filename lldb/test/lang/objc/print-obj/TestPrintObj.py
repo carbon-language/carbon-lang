@@ -2,8 +2,9 @@
 Test "print object" where another thread blocks the print object from making progress.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -82,10 +83,3 @@ class PrintObjTestCase(TestBase):
 
         self.expect("po lock_me", OBJECT_PRINTED_CORRECTLY,
             substrs = ['I am pretty special.'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

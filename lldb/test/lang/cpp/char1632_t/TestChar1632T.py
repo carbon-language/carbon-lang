@@ -3,8 +3,9 @@
 Test that the C++11 support for char16_t and char32_t works correctly.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -85,9 +86,3 @@ class Char1632TestCase(TestBase):
         # Check that we can run expressions that return charN_t
         self.expect("expression u'a'",substrs = ['(char16_t) $',"61 u'a'"])
         self.expect("expression U'a'",substrs = ['(char32_t) $',"61 U'a'"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

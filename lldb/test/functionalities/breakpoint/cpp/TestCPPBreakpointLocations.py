@@ -2,8 +2,9 @@
 Test lldb breakpoint ids.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -57,11 +58,3 @@ class TestCPPBreakpointLocations(TestBase):
         
         for bp_dict in bp_dicts:
             self.verify_breakpoint_locations(target, bp_dict)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

@@ -1,6 +1,7 @@
+import lldb_shared
+
 import gdbremote_testcase
 import lldbgdbserverutils
-import unittest2
 
 from lldbtest import *
 
@@ -55,7 +56,3 @@ class TestGdbRemoteAttach(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.build()
         self.set_inferior_startup_attach_manually()
         self.attach_with_vAttach()
-
-
-if __name__ == '__main__':
-    unittest2.main()

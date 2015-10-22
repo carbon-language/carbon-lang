@@ -2,8 +2,9 @@
 Test displayed value of a vector variable while doing watchpoint operations
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -42,9 +43,3 @@ class TestValueOfVectorVariableTestCase(TestBase):
         # Value of a vector variable should be displayed correctly
         self.expect("watchpoint set variable global_vector", WATCHPOINT_CREATED,
             substrs = ['new value: (1, 2, 3, 4)'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

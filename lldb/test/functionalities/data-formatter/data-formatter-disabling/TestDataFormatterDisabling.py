@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -75,10 +76,3 @@ class DataFormatterDisablingTestCase(TestBase):
         # last check - our cleanup will re-enable everything
         self.runCmd('type category disable *')
         self.expect('type category list', substrs = ['system','disabled'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

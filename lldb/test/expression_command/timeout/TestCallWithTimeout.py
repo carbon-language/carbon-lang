@@ -2,7 +2,8 @@
 Test calling a function that waits a while, and make sure the timeout option to expr works.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -87,10 +88,3 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         value = frame.EvaluateExpression ("wait_a_while (1000)", options)
         self.assertTrue(value.IsValid())
         self.assertTrue (value.GetError().Success() == True)
-        
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

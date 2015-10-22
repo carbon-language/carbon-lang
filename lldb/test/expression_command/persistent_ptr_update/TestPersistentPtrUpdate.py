@@ -2,7 +2,8 @@
 Test that we can have persistent pointer variables
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -36,9 +37,3 @@ class PersistentPtrUpdateTestCase(TestBase):
         self.runCmd("continue")
         
         self.expect("expr $foo", substrs=['$foo','0x0'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

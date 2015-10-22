@@ -2,8 +2,9 @@
 Base class for lldb-mi test cases.
 """
 
+import lldb_shared
+
 from lldbtest import *
-import unittest2
 
 class MiTestCaseBase(Base):
 

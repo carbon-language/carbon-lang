@@ -2,8 +2,9 @@
 Test that lldb watchpoint works for multiple threads.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import re
 import lldb
 from lldbtest import *
@@ -132,10 +133,3 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
                 continue
             else:
                 self.fail("The stop reason should be either break or watchpoint")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

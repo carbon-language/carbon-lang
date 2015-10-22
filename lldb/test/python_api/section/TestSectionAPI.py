@@ -2,7 +2,8 @@
 Test SBSection APIs.
 """
 
-import unittest2
+import lldb_shared
+
 from lldbtest import *
 
 class SectionAPITestCase(TestBase):
@@ -36,9 +37,3 @@ class SectionAPITestCase(TestBase):
 
         self.assertIsNotNone(data_section)
         self.assertEquals(data_section.target_byte_size, 1)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

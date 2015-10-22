@@ -1,7 +1,8 @@
 """Test lldb's expression evaluations and collect statistics."""
 
+import lldb_shared
+
 import os, sys
-import unittest2
 import lldb
 from lldbbench import *
 
@@ -68,10 +69,3 @@ class ExpressionEvaluationCase(BenchBase):
                 pass
 
         self.child = None
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

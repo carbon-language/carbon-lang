@@ -2,9 +2,10 @@
 Test SBBreakpoint APIs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -39,10 +40,3 @@ class BreakpointAPITestCase(TestBase):
 
         # Finally make sure the original breakpoint is no longer valid.
         self.assertTrue (not breakpoint, "Breakpoint we deleted is no longer valid.")
-
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

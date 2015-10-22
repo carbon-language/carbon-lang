@@ -2,9 +2,10 @@
 Use lldb Python SBtarget.WatchAddress() API to create a watchpoint for write of '*g_char_ptr'.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -124,10 +125,3 @@ class TargetWatchAddressAPITestCase(TestBase):
         self.assertFalse(watchpoint)
         self.expect(error.GetCString(), exe=False,
             substrs = ['watch size of %d is not supported' % 365])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

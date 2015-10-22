@@ -2,9 +2,10 @@
 Use lldb Python API to test base class resolution for ObjC classes
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -52,9 +53,3 @@ class ObjCDynamicValueTestCase(TestBase):
         self.assertTrue(var_pte_type.GetDirectBaseClassAtIndex(0).IsValid(), "Foo * has a valid base class")
 
         self.assertTrue(var_ptr_type.GetDirectBaseClassAtIndex(0).GetName() == var_pte_type.GetDirectBaseClassAtIndex(0).GetName(), "Foo and its pointer type don't agree on their base class")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

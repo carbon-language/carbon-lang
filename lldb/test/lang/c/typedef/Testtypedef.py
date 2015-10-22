@@ -1,7 +1,8 @@
 """Look up type information for typedefs of same name at different lexical scope and check for correct display."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -43,9 +44,3 @@ class TypedefTestCase(TestBase):
             self.expect("image lookup -t a", DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ['name = "' + t + '"'])
             self.runCmd("continue")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

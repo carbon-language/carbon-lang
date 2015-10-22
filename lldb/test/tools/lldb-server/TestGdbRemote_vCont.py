@@ -1,4 +1,4 @@
-import unittest2
+import lldb_shared
 
 import gdbremote_testcase
 from lldbtest import *
@@ -112,7 +112,3 @@ class TestGdbRemote_vCont(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.build()
         self.set_inferior_startup_launch()
         self.single_step_only_steps_one_instruction(use_Hc_packet=False, step_instruction="vCont;s:{thread}")
-
-
-if __name__ == '__main__':
-    unittest2.main()

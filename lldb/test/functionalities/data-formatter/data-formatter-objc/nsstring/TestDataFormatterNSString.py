@@ -3,8 +3,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import datetime
@@ -102,10 +103,3 @@ class NSStringDataFormatterTestCase(TestBase):
         self.expect('po strwithNULs2', substrs=['a very much boring task to write'])
         self.expect('expr [strwithNULs2 length]', substrs=['52'])
         self.expect('frame variable strwithNULs2', substrs=['@"a very much boring task to write\\0a string this way!!'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

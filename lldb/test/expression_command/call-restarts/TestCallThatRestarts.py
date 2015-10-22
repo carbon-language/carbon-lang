@@ -2,7 +2,8 @@
 Test calling a function that hits a signal set to auto-restart, make sure the call completes.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -134,9 +135,3 @@ class ExprCommandThatRestartsTestCase(TestBase):
         
         frame = self.thread.GetFrameAtIndex(0)
         self.assertTrue (frame.GetPC() == self.orig_frame_pc, "Continuing returned to the place we started.")
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

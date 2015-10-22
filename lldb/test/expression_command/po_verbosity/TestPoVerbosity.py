@@ -2,7 +2,8 @@
 Test that the po command acts correctly.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -56,10 +57,3 @@ class PoVerbosityTestCase(TestBase):
 
         self.expect("expr -O -v -- 22",
             substrs = ['(int) $', ' = 22'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

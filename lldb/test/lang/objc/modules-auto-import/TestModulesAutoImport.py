@@ -1,7 +1,9 @@
 """Test that importing modules in Objective-C works as expected."""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 import platform
 import lldbutil
@@ -47,9 +49,3 @@ class ObjCModulesAutoImportTestCase(TestBase):
 
         self.expect("p getpid()", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["pid_t"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

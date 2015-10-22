@@ -1,7 +1,8 @@
 """Test lldb's response time for 'frame variable' command."""
 
+import lldb_shared
+
 import os, sys
-import unittest2
 import lldb
 from lldbbench import *
 
@@ -72,10 +73,3 @@ class FrameVariableResponseBench(BenchBase):
         # The test is about to end and if we come to here, the child process has
         # been terminated.  Mark it so.
         self.child = None
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,10 @@
 Test the iteration protocol for some lldb container objects.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -117,9 +118,3 @@ class LLDBIteratorTestCase(TestBase):
                     print frame
 
         self.assertTrue(stopped_due_to_breakpoint)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

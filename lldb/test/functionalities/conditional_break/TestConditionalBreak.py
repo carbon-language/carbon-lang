@@ -2,9 +2,10 @@
 Test conditionally break on a function and inspect its variables.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -128,11 +129,3 @@ class ConditionalBreakTestCase(TestBase):
         self.runCmd("frame select 1")
         self.expect("frame info", "The immediate caller should be a()",
             substrs = ["a.out`a"])
-
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

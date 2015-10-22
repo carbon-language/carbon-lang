@@ -2,9 +2,10 @@
 Test some SBValue APIs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -129,9 +130,3 @@ class ValueAPITestCase(TestBase):
         val_a = target.EvaluateExpression('a')
         self.assertTrue(val_s.GetChildMemberWithName('a').AddressOf(), VALID_VARIABLE)
         self.assertTrue(val_a.Cast(val_i.GetType()).AddressOf(), VALID_VARIABLE)
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

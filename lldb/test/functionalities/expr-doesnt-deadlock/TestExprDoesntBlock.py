@@ -2,9 +2,10 @@
 Test that expr will time out and allow other threads to run if it blocks.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -51,9 +52,3 @@ class ExprDoesntDeadlockTestCase(TestBase):
         var = frame0.EvaluateExpression ("call_me_to_get_lock()")
         self.assertTrue (var.IsValid())
         self.assertTrue (var.GetValueAsSigned (0) == 567)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

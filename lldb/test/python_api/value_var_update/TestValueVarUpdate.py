@@ -1,7 +1,8 @@
 """Test SBValue::GetValueDidChange"""
 
+import lldb_shared
+
 import os, sys, time
-import unittest2
 import lldb
 import time
 from lldbtest import *
@@ -54,9 +55,3 @@ class HelloWorldTestCase(TestBase):
         # Check complex type
         self.assertTrue(c.GetChildAtIndex(0).GetChildAtIndex(0).GetValueDidChange() and
                         not c.GetChildAtIndex(1).GetValueDidChange(), "GetValueDidChange() is saying a lie")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

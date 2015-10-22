@@ -2,8 +2,9 @@
 Make sure that ivars of Objective-C++ classes are visible in LLDB.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -28,9 +29,3 @@ class ObjCXXTestCase(TestBase):
 
         self.expect("expr f->f", "Found ivar in class",
             substrs = ["= 3"])
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test lldb breakpoint command for CPP methods & functions in a namespace.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -79,11 +80,3 @@ class CPPBreakpointCommandsTestCase(TestBase):
                                                             a_out_module,
                                                             nested_comp_unit)
         self.assertTrue (plain_method_break.GetNumLocations() == 1)
-
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,11 @@
 Test lldb-mi -break-xxx commands.
 """
 
+import lldb_shared
+
+import unittest2
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -247,6 +249,3 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-continue")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"exited-normally\"")
-
-if __name__ == '__main__':
-    unittest2.main()

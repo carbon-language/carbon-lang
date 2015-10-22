@@ -2,9 +2,10 @@
 Test denied process attach.
 """
 
+import lldb_shared
+
 import os
 import time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -54,10 +55,3 @@ class AttachDeniedTestCase(TestBase):
         self.expect('process attach -p ' + pid,
                     startstr = 'error: attach failed:',
                     error = True)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

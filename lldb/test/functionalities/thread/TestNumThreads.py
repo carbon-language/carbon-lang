@@ -2,8 +2,9 @@
 Test number of threads.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -48,9 +49,3 @@ class NumberOfThreadsTestCase(TestBase):
         # Using std::thread may involve extra threads, so we assert that there are
         # at least 4 rather than exactly 4.
         self.assertTrue(num_threads >= 4, 'Number of expected threads and actual threads do not match.')
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test the robustness of lldb expression parser.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -34,10 +35,3 @@ class Radar8638051TestCase(TestBase):
         self.expect("expression &val",
             startstr = "(int *) $2 = ")
         # (int *) $2 = 0x....
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

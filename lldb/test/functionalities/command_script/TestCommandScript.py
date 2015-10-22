@@ -2,8 +2,9 @@
 Test lldb Python commands.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -137,10 +138,3 @@ class CmdPythonTestCase(TestBase):
         self.runCmd('command script add -f bug11569 bug11569')
         # This should not crash.
         self.runCmd('bug11569', check=False)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

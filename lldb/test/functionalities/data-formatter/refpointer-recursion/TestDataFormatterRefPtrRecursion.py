@@ -2,8 +2,9 @@
 Test that ValueObjectPrinter does not cause an infinite loop when a reference to a struct that contains a pointer to itself is printed.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -36,9 +37,3 @@ class DataFormatterRefPtrRecursionTestCase(TestBase):
         self.expect("frame variable foo --ptr-depth=1", substrs = ['ID = 1']);
         self.expect("frame variable foo --ptr-depth=2", substrs = ['ID = 1']);
         self.expect("frame variable foo --ptr-depth=3", substrs = ['ID = 1']);
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

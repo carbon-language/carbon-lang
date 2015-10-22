@@ -2,8 +2,9 @@
 Check that types only get completed when necessary.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -111,9 +112,3 @@ class TypeCompletionTestCase(TestBase):
         string = field0.GetType().GetPointeeType()
         self.assertTrue(string.IsValid(), 'std::string should be valid')
         self.assertTrue(string.IsTypeComplete(), 'std::string should now be complete')
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -1,4 +1,5 @@
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -64,9 +65,3 @@ class ExprCharTestCase(TestBase):
     @expectedFailureWindows("llvm.org/pr21765")
     def test_unsigned_char(self):
         self.do_test(dictionary={'CFLAGS_EXTRAS': '-funsigned-char'})
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test lldb exception breakpoint command for CPP.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -60,10 +61,3 @@ class CPPBreakpointTestCase(TestBase):
         self.assertTrue (frame_functions.count ("throws_exception_on_even(int)") == 0, "At catch our throw function is off the stack")
         self.assertTrue (frame_functions.count ("intervening_function(int)") == 0,     "At catch our intervening function is off the stack")
         self.assertTrue (frame_functions.count ("catches_exception(int)") == 1, "At catch our catch function is on the stack")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

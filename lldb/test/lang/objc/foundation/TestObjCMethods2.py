@@ -2,8 +2,9 @@
 Test more expression command sequences with objective-c.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -164,9 +165,3 @@ class FoundationTestCase2(TestBase):
                     error = True, 
                     patterns = ["no known method", "cast the message send to the method's return type"])
         self.runCmd("process continue")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,11 @@
 Test lldb-mi -gdb-set and -gdb-show commands.
 """
 
+import lldb_shared
+
+import unittest2
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -191,6 +193,3 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done");
         self.runCmd("-var-evaluate-expression var_a");
         self.expect("\^done,value=\"10\"");
-
-if __name__ == '__main__':
-    unittest2.main()

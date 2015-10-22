@@ -2,9 +2,10 @@
 Use lldb Python API to test dynamic values in ObjC
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -171,9 +172,3 @@ class ObjCDynamicValueTestCase(TestBase):
         derivedValue = object.GetChildMemberWithName ('_derivedValue')
         self.assertTrue (derivedValue)
         self.assertTrue (int (derivedValue.GetValue(), 0) == 30)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

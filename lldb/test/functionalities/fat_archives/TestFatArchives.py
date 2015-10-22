@@ -1,11 +1,12 @@
 """
 Test some lldb command abbreviations.
 """
+import lldb_shared
+
 import commands
 import lldb
 import os
 import time
-import unittest2
 from lldbtest import *
 import lldbutil
 
@@ -53,10 +54,3 @@ class FatArchiveTestCase(TestBase):
             self.assertTrue(function.IsValid(), "Verify breakpoint in fat BSD archive has valid function debug info")
             self.assertTrue(line_entry.GetFileSpec(), "Verify breakpoint in fat BSD archive has source file information")
             self.assertTrue(line_entry.GetLine() != 0, "Verify breakpoint in fat BSD archive has source line information")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

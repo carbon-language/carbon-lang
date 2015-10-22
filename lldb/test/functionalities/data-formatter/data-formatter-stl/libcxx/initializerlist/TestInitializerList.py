@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -35,9 +36,3 @@ class InitializerListTestCase(TestBase):
         self.expect("frame variable ils", substrs = ['[4] = "surprise it is a long string!! yay!!"'])
 
         self.expect('image list', substrs = self.getLibcPlusPlusLibs())
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -1,7 +1,9 @@
 """Test for the JITLoaderGDB interface"""
 
-import os
+import lldb_shared
+
 import unittest2
+import os
 import lldb
 from lldbtest import *
 import lldbutil
@@ -31,9 +33,3 @@ class JITLoaderGDBTestCase(TestBase):
 
         self.assertEqual(process.GetState(), lldb.eStateExited)
         self.assertEqual(process.GetExitStatus(), 0)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

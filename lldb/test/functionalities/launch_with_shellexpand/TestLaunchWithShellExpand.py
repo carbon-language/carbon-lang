@@ -1,10 +1,11 @@
 """
 Test that argdumper is a viable launching strategy.
 """
+import lldb_shared
+
 import lldb
 import os
 import time
-import unittest2
 from lldbtest import *
 import lldbutil
 
@@ -92,10 +93,3 @@ class LaunchWithShellExpandTestCase(TestBase):
                          "Thread in process stopped in 'main' should have a stop reason of eStopReasonBreakpoint");
         
         self.expect("frame variable argv[1]", substrs=['foo bar'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

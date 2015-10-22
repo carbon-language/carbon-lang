@@ -2,6 +2,8 @@
 Base class for gdb-remote test cases.
 """
 
+import lldb_shared
+
 import errno
 import os
 import os.path
@@ -16,7 +18,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import unittest2
 from lldbtest import *
 from lldbgdbserverutils import *
 import logging

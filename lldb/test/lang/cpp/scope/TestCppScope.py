@@ -65,9 +65,3 @@ class TestCppScopes(TestBase):
             value = frame.EvaluateExpression(name)
             assert_value = global_variables_assert[name]
             self.assertTrue(value.IsValid() and value.GetValueAsSigned() == assert_value, name + " = " + str(assert_value))
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

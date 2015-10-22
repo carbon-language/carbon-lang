@@ -1,7 +1,8 @@
 """Disassemble lldb's Driver::MainLoop() functions comparing Xcode 4.1 vs. 4.2's gdb."""
 
+import lldb_shared
+
 import os, sys
-import unittest2
 import lldb
 from lldbbench import *
 
@@ -90,10 +91,3 @@ class XCode41Vs42GDBDisassembly(BenchBase):
         if self.TraceOn():
             print "gdb disassembly benchmark:", str(self.stopwatch)
         self.child = None
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

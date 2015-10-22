@@ -2,8 +2,10 @@
 Test lldb command aliases.
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -33,10 +35,3 @@ class LaunchInTerminalTestCase(TestBase):
         self.assertTrue(error.Success(), "Make sure launch happened successfully in a terminal window")
         # Running in synchronous mode our process should have run and already exited by the time target.Launch() returns
         self.assertTrue(process.GetState() == lldb.eStateExited)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

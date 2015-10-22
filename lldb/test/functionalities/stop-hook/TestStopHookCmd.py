@@ -5,7 +5,6 @@ Test lldb target stop-hook command.
 import lldb_shared
 
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -62,10 +61,3 @@ class StopHookCmdTestCase(TestBase):
 
         self.expect('target stop-hook list', 'Stop Hook deleted successfully',
             substrs = ['No stop hooks.'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

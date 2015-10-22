@@ -2,9 +2,10 @@
 Use lldb Python SBValue.WatchPointee() API to create a watchpoint for write of '*g_char_ptr'.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -84,10 +85,3 @@ class SetWatchlocationAPITestCase(TestBase):
             substrs = [self.violating_func])
 
         # This finishes our test.
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

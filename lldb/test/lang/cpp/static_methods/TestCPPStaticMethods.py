@@ -34,9 +34,3 @@ class CPPStaticMethodsTestCase(TestBase):
 
         self.expect("expression -- my_a.getMemberValue()",
                     startstr = "(int) $1 = 3")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

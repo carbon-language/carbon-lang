@@ -2,9 +2,10 @@
 Use lldb Python API to verify that expression evaluation for property references uses the correct getters and setters
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -108,9 +109,3 @@ class ObjCPropertyTestCase(TestBase):
         idWithProtocol_error = idWithProtocol_value.GetError()
         self.assertTrue (idWithProtocol_error.Success())
         self.assertTrue (idWithProtocol_value.GetTypeName() == "id")
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

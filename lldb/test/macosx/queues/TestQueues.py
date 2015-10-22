@@ -1,7 +1,9 @@
 """Test queues inspection SB APIs."""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 import lldbutil
 from lldbtest import *
@@ -237,9 +239,3 @@ class TestQueues(TestBase):
         self.assertTrue(queue_performer_2.GetPendingItemAtIndex(9998).IsValid(), "queue 2's pending item #9998 is valid")
         self.assertTrue(queue_performer_2.GetPendingItemAtIndex(9998).GetAddress().GetSymbol().GetName() == "doing_the_work_2", "queue 2's pending item #0 should be doing_the_work_2")
         self.assertTrue(queue_performer_2.GetPendingItemAtIndex(9999).IsValid() == False, "queue 2's pending item #9999 is invalid")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

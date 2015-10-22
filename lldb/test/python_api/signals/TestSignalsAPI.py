@@ -2,8 +2,9 @@
 Test SBProcess APIs, including ReadMemory(), WriteMemory(), and others.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbutil import get_stopped_thread, state_type_to_str
 from lldbtest import *
@@ -42,10 +43,3 @@ class SignalsAPITestCase(TestBase):
         process.Continue()
         self.assertTrue(process.state == lldb.eStateExited, "The process should have exited")
         self.assertTrue(process.GetExitStatus() == 0, "The process should have returned 0")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

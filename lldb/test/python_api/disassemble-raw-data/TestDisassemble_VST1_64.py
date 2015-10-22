@@ -2,9 +2,10 @@
 Use lldb Python API to disassemble raw machine code bytes
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -52,10 +53,3 @@ class Disassemble_VST1_64(TestBase):
             print "Disassembled%s" % str(inst)
  
         self.assertTrue (inst.GetMnemonic(target) == "vst1.64")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

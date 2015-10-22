@@ -2,8 +2,10 @@
 Test the lldb disassemble command on lib stdc++.
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -104,10 +106,3 @@ class StdCXXDisassembleTestCase(TestBase):
             else:
                 # This entry is not a Code entry.  Reset SA = None.
                 SA = None
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

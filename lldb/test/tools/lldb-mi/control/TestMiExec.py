@@ -2,9 +2,10 @@
 Test lldb-mi -exec-xxx commands.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -466,6 +467,3 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-finish --thread 1 --frame 0")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
-
-if __name__ == '__main__':
-    unittest2.main()

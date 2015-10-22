@@ -2,7 +2,8 @@
 Test basics of mini dump debugging.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 from lldbtest import *
 import lldbutil
@@ -36,9 +37,3 @@ class MiniDumpTestCase(TestBase):
         self.dbg.CreateTarget("")
         self.target = self.dbg.GetSelectedTarget()
         self.process = self.target.LoadCore("fizzbuzz_no_heap.dmp")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

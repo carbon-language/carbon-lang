@@ -1,6 +1,8 @@
-import sys
-import unittest2
+import lldb_shared
 
+import sys
+
+import unittest2
 import gdbremote_testcase
 from lldbtest import *
 
@@ -144,7 +146,3 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.build()
         self.set_inferior_startup_launch()
         self.qThreadStopInfo_has_valid_thread_names(self.THREAD_COUNT, "a.out")
-
-
-if __name__ == '__main__':
-    unittest2.main()

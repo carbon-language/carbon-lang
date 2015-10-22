@@ -2,8 +2,9 @@
 Check that vector types format properly
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -68,9 +69,3 @@ class VectorTypesFormattingTestCase(TestBase):
         v.SetFormat(lldb.eFormatVectorOfFloat32)
         oldValueAgain = v.GetChildAtIndex(0).GetValue()
         self.assertTrue(oldValue == oldValueAgain, "same format but different values")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

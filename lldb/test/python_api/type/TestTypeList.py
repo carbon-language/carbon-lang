@@ -2,9 +2,10 @@
 Test SBType and SBTypeList API.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -105,9 +106,3 @@ class TypeAndTypeListTestCase(TestBase):
         # SBType.GetBasicType() takes an enum 'BasicType' (lldb-enumerations.h).
         int_type = id_type.GetBasicType(lldb.eBasicTypeInt)
         self.assertTrue(id_type == int_type)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

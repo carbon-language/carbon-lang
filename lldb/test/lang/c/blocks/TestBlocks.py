@@ -1,7 +1,9 @@
 """Test that lldb can invoke blocks and access variables inside them"""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -55,9 +57,3 @@ class BlocksTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['stopped',
                        'stop reason = breakpoint'])
-            
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

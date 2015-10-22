@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -64,9 +65,3 @@ class LibcxxSetDataFormatterTestCase(TestBase):
         self.expect("frame variable ss[2]",substrs = [' = "b"'])
         lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ss",substrs = ["size=3",'[0] = "a"','[1] = "a very long string is right here"','[2] = "c"'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

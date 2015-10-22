@@ -3,8 +3,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -62,9 +63,3 @@ class StdStringDataFormatterTestCase(TestBase):
         self.runCmd("next")
 
         self.assertTrue(var_S.GetSummary() == 'L"!!!!!"', "new S summary wrong")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

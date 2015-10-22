@@ -1,7 +1,9 @@
 """Test that the Objective-C syntax for dictionary/array literals and indexing works"""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 import platform
 import lldbutil
@@ -97,9 +99,3 @@ class ObjCNewSyntaxTestCase(TestBase):
             substrs = ["4"])
         self.expect("expr -- @((char*)\"Hello world\" + 6)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSString", "world"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

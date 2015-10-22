@@ -2,10 +2,11 @@
 Test that recursive types are handled correctly.
 """
 
+import lldb_shared
+
 import lldb
 import lldbutil
 import sys
-import unittest2
 from lldbtest import *
 
 class RecursiveTypesTestCase(TestBase):
@@ -46,9 +47,3 @@ class RecursiveTypesTestCase(TestBase):
 
         self.expect("print tpi", RUN_SUCCEEDED)
         self.expect("print *tpi", RUN_SUCCEEDED)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

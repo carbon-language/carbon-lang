@@ -2,8 +2,9 @@
 Test that nested persistent types work.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -36,9 +37,3 @@ class NestedPersistentTypesTestCase(TestBase):
 
         self.expect("expression $my_bar.end.b",
                     substrs = ['(int)', '5'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

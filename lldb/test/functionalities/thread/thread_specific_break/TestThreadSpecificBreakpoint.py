@@ -2,9 +2,10 @@
 Test that we obey thread conditioned breakpoints.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -59,10 +60,3 @@ class ThreadSpecificBreakTestCase(TestBase):
 
         next_stop_state = process.GetState()
         self.assertTrue (next_stop_state == lldb.eStateExited, "We should have not hit the breakpoint again.")
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

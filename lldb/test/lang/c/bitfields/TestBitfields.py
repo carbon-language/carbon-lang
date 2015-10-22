@@ -1,7 +1,8 @@
 """Show bitfields and check that they display correctly."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -157,10 +158,3 @@ class BitfieldsTestCase(TestBase):
         # Now kill the process, and we are done.
         rc = target.GetProcess().Kill()
         self.assertTrue(rc.Success())
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -1,8 +1,9 @@
 """
 Test breakpoint command with AT_comp_dir set to symbolic link.
 """
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -58,10 +59,3 @@ class CompDirSymLinkTestCase(TestBase):
 
         exe = os.path.join(os.getcwd(), _EXE_NAME)
         self.runCmd('file ' + exe, CURRENT_EXECUTABLE_SET)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

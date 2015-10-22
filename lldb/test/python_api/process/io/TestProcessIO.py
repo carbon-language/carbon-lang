@@ -1,7 +1,8 @@
 """Test Python APIs for process IO."""
 
+import lldb_shared
+
 import os, sys, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -201,9 +202,3 @@ class ProcessIOTestCase(TestBase):
         for line in self.lines:
             check_line = 'input line to stderr: %s' % (line)
             self.assertTrue(check_line in error, "verify stderr line shows up in STDERR")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

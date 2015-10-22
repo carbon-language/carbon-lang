@@ -2,8 +2,10 @@
 Test some expressions involving STL data types.
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 import lldbutil
 from lldbtest import *
@@ -112,10 +114,3 @@ class STLTestCase(TestBase):
 
         # Check that both entries of the dictionary have 'True' as the value.
         self.assertTrue(all(expected_types.values()))
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

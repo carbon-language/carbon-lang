@@ -1,7 +1,8 @@
+import lldb_shared
+
 import gdbremote_testcase
 import lldbgdbserverutils
 import sys
-import unittest2
 
 from lldbtest import *
 
@@ -174,7 +175,3 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test()
         self.build()
         self.qProcessInfo_does_not_contain_keys(set(['cputype', 'cpusubtype']))
-
-
-if __name__ == '__main__':
-    unittest2.main()

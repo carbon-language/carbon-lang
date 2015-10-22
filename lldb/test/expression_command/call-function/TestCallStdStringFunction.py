@@ -2,7 +2,8 @@
 Test calling std::String member functions.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -38,9 +39,3 @@ class ExprCommandCallFunctionTestCase(TestBase):
         # const char *, and thus don't invoke the Summary formatter.
         self.expect("print str.c_str()",
             substrs = ['Hello world'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

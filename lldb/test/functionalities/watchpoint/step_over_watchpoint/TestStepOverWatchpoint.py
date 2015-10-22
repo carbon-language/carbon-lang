@@ -1,6 +1,7 @@
 """Test stepping over watchpoints."""
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -103,9 +104,3 @@ class TestStepOverWatchpoint(TestBase):
                 self.assertTrue(stop_reason == lldb.eStopReasonPlanComplete,
                                 STOPPED_DUE_TO_STEP_IN)
         self.assertTrue(watchpoint_hit, "Watchpoint never hit.")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

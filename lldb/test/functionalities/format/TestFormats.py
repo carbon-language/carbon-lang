@@ -2,8 +2,9 @@
 Test the command history mechanism
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -54,9 +55,3 @@ class TestFormats(TestBase):
         # child.sendline('Help__')
         # child.expect_exact("error: 'Help__' is not a valid command")
         # child.expect_exact(prompt)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

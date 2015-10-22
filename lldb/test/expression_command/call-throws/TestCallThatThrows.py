@@ -2,7 +2,8 @@
 Test calling a function that throws an ObjC exception, make sure that it doesn't propagate the exception.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -107,9 +108,3 @@ class ExprCommandWithThrowTestCase(TestBase):
 
         self.assertTrue (value.IsValid() and value.GetError().Success() == False)
         self.check_after_call()
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

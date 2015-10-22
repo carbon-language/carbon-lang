@@ -2,9 +2,10 @@
 Test lldb-mi -target-xxx commands.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiTargetTestCase(lldbmi_testcase.MiTestCaseBase):
 

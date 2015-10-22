@@ -2,9 +2,10 @@
 Test SBValue.GetObjectDescription() with the value from SBTarget.FindGlobalVariables().
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -65,10 +66,3 @@ class ObjectDescriptionAPITestCase(TestBase):
                 print "object description:", v.GetObjectDescription()
             if v.GetName() == 'my_global_str':
                 self.assertTrue(v.GetObjectDescription() == 'This is a global string')
-
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

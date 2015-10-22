@@ -2,8 +2,9 @@
 Test breakpoint commands for a breakpoint ID with multiple locations.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -83,10 +84,3 @@ class BreakpointLocationsTestCase(TestBase):
             patterns = ["1\.1: .+ unresolved, hit count = 0 +Options: disabled",
                         "1\.2: .+ resolved, hit count = 1",
                         "1\.3: .+ resolved, hit count = 1"])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

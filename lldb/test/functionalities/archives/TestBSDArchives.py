@@ -1,7 +1,8 @@
 """Test breaking inside functions defined within a BSD archive file libfoo.a."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -52,10 +53,3 @@ class BSDArchivesTestCase(TestBase):
             substrs = ['(int) arg = 2'])
         self.expect("frame variable __b_global", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(int) __b_global = 2'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

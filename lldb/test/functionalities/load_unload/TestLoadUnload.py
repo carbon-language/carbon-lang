@@ -2,9 +2,10 @@
 Test that breakpoint by symbol name works correctly with dynamic libs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -310,9 +311,3 @@ class LoadUnloadTestCase(TestBase):
         self.expect("thread list", "step over succeeded.", 
             substrs = ['stopped',
                       'stop reason = step over'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

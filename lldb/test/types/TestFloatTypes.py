@@ -2,8 +2,9 @@
 Test that variables of floating point types are displayed correctly.
 """
 
+import lldb_shared
+
 import AbstractBase
-import unittest2
 import lldb
 import sys
 from lldbtest import *
@@ -36,9 +37,3 @@ class FloatTypesTestCase(AbstractBase.GenericTester):
     def test_double_type_from_block(self):
         """Test that double-type variables are displayed correctly from a block."""
         self.build_and_run('double.cpp', set(['double']), bc=True)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

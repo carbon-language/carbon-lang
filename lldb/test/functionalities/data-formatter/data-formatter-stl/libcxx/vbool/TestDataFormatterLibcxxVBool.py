@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -53,9 +54,3 @@ class LibcxxVBoolDataFormatterTestCase(TestBase):
 
         self.expect("expr vBool",
             substrs = ['size=49','[0] = false','[1] = true','[18] = false','[27] = true','[36] = false','[47] = true','[48] = true'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

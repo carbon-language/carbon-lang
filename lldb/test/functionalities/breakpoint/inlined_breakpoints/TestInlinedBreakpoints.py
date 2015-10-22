@@ -3,8 +3,9 @@ Test that inlined breakpoints (breakpoint set on a file/line included from
 another source file) works correctly.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -52,10 +53,3 @@ class InlinedBreakpointsTestCase(TestBase):
             substrs = ['stopped',
                        'stop reason = breakpoint',
                        'basic_type.cpp:%d' % self.line])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

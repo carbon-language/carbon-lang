@@ -1,7 +1,8 @@
 """Test lldb reloads the inferior after it was changed during the session."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -77,10 +78,3 @@ class ChangedInferiorTestCase(TestBase):
             substrs = ['= 7'])
         self.expect("expression *int_ptr",
             substrs = ['= 7'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

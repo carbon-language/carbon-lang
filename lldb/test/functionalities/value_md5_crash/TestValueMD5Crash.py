@@ -2,8 +2,9 @@
 Verify that the hash computing logic for ValueObject's values can't crash us.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -47,9 +48,3 @@ class ValueMD5CrashTestCase(TestBase):
         v = value.GetValue()
         
         # if we are here, instead of crashed, the test succeeded
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

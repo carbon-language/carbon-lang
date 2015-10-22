@@ -2,8 +2,9 @@
 Test watchpoint condition API.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -84,10 +85,3 @@ class WatchpointConditionAPITestCase(TestBase):
 
         # Verify that the condition is met.
         self.assertTrue(value.GetValueAsUnsigned() == 5)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test SBProcess APIs, including ReadMemory(), WriteMemory(), and others.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbutil import get_stopped_thread, state_type_to_str
 from lldbtest import *
@@ -283,10 +284,3 @@ class ProcessAPITestCase(TestBase):
         num = process.GetNumSupportedHardwareWatchpoints(error)
         if self.TraceOn() and error.Success():
             print "Number of supported hardware watchpoints: %d" % num
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

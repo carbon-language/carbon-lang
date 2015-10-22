@@ -2,8 +2,9 @@
 Test that we can backtrace correctly with 'noreturn' functions on the stack
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -71,10 +72,3 @@ class NoreturnUnwind(TestBase):
 
         if thread.GetFrameAtIndex (main_frame_number).GetFunctionName() != "main":
             self.fail("Did not find main() above func_a().")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

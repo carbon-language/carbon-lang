@@ -2,9 +2,10 @@
 Use lldb Python API to make sure the dynamic checkers are doing their jobs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -69,9 +70,3 @@ class ObjCCheckerTestCase(TestBase):
         # Make sure the error is helpful:
         err_string = expr_error.GetCString()
         self.assertTrue ("selector" in err_string)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

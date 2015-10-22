@@ -3,8 +3,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -81,9 +82,3 @@ class LibcxxStringDataFormatterTestCase(TestBase):
                     '(std::__1::string) Q = "quite a long std::strin with lots of info inside it"',
                     '(std::__1::string) IHaveEmbeddedZeros = "a\\0b\\0c\\0d"',
                     '(std::__1::wstring) IHaveEmbeddedZerosToo = L"hello world!\\0てざ ル゜䋨ミ㠧槊 きゅへ狦穤襩 じゃ馩リョ 䤦監"'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

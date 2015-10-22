@@ -1,4 +1,4 @@
-import unittest2
+import lldb_shared
 
 import gdbremote_testcase
 import lldbgdbserverutils

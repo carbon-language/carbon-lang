@@ -2,8 +2,10 @@
 Test the lldb disassemble command on foundation framework.
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -128,10 +130,3 @@ class FoundationDisassembleTestCase(TestBase):
 
         # Do the disassemble for the currently stopped function.
         self.runCmd("disassemble -f")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

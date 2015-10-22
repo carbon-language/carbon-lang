@@ -2,8 +2,9 @@
 Test lldb target stop-hook mechanism to see whether it fires off correctly .
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -95,10 +96,3 @@ class StopHookMechanismTestCase(TestBase):
         # Verify that the 'Stop Hooks' mechanism is NOT BEING fired off.
         self.expect(child.before, exe=False, matching=False,
             substrs = ['(void *) $'])
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

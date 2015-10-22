@@ -10,8 +10,10 @@ file up and generate a test case from it in run time (with name test_standard_un
 after escaping some special characters).
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -139,9 +141,3 @@ for f in test_source_files:
 
         test_function_dwarf.__name__ = test_name
         setattr(StandardUnwindTest, test_function_dwarf.__name__, test_function_dwarf)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

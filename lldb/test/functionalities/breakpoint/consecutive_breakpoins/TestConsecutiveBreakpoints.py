@@ -2,6 +2,8 @@
 Test continue from a breakpoint when there is a breakpoint on the next instruction also.
 """
 
+import lldb_shared
+
 import unittest2
 import lldb, lldbutil
 from lldbtest import *
@@ -61,10 +63,3 @@ class ConsecutiveBreakpoitsTestCase(TestBase):
 
         # Run the process until termination
         process.Continue()
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

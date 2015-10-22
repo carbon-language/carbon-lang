@@ -2,8 +2,9 @@
 Test that Objective-C methods from the runtime work correctly.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -43,9 +44,3 @@ class RuntimeTypesTestCase(TestBase):
 
         self.expect("po $1", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["foo"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

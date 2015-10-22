@@ -2,9 +2,10 @@
 Test SBType APIs to fetch member function types.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -71,9 +72,3 @@ class SBTypeMemberFunctionsTest(TestBase):
         self.assertTrue(Thingy.GetMemberFunctionAtIndex(0).GetReturnType().GetName() == "id", "Thingy::init returns an id")
         self.assertTrue(Thingy.GetMemberFunctionAtIndex(1).GetNumberOfArguments() == 2, "Thingy::foo takes two arguments")
         self.assertTrue(Thingy.GetMemberFunctionAtIndex(1).GetArgumentTypeAtIndex(0).GetName() == "int", "Thingy::foo takes an int")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

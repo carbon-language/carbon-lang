@@ -2,9 +2,10 @@
 Test lldb Python event APIs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -280,9 +281,3 @@ class EventAPITestCase(TestBase):
         # The final judgement. :-)
         self.assertTrue(self.state == 'stopped',
                         "Both expected state changed events received")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

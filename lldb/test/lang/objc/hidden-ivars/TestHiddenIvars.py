@@ -1,7 +1,9 @@
 """Test that hidden ivars in a shared library are visible from the main executable."""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -168,10 +170,3 @@ class HiddenIvarsTestCase(TestBase):
         else:
             self.expect("frame variable *k", VARIABLES_DISPLAYED_CORRECTLY,
                 substrs = ["foo = 2", "bar = 3", '_filteredDataSource = 0x', '"2 elements"'])
-
-                       
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

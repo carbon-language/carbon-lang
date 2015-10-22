@@ -2,7 +2,8 @@
 Test that we can p *objcObject
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import lldbutil
 from lldbtest import *
@@ -45,9 +46,3 @@ class PersistObjCPointeeType(TestBase):
         '_sc_name6 = nil',
         '_sc_name7 = nil',
         '_sc_name8 = nil'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

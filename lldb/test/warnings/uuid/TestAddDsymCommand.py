@@ -1,7 +1,8 @@
 """Test that the 'add-dsym', aka 'target symbols add', command informs the user about success or failure."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -102,10 +103,3 @@ class AddDsymCommandCase(TestBase):
         right_path = "%s.dSYM" % exe_name
         self.expect("add-dsym " + right_path,
             substrs = ['symbol file', 'has been added to'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

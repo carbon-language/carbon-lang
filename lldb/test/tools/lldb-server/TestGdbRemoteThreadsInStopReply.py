@@ -1,4 +1,4 @@
-import unittest2
+import lldb_shared
 
 import gdbremote_testcase
 from lldbtest import *
@@ -160,7 +160,3 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.build()
         self.set_inferior_startup_launch()
         self.stop_reply_reports_correct_threads(5)
-
-
-if __name__ == '__main__':
-    unittest2.main()

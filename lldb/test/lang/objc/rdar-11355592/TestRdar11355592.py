@@ -2,8 +2,9 @@
 Test that we do not attempt to make a dynamic type for a 'const char*'
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -60,9 +61,3 @@ class Rdar10967107TestCase(TestBase):
         # check that expr also gets it right
         self.expect("expr my_foolie", substrs = ['FoolMeOnce *'])
         self.expect("expr -d run -- my_foolie", substrs = ['FoolMeOnce *'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

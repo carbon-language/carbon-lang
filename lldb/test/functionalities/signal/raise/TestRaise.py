@@ -1,7 +1,8 @@
 """Test that we handle inferiors that send signals to themselves"""
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -216,9 +217,3 @@ class RaiseTestCase(TestBase):
 
         # We are done
         process.Kill()
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

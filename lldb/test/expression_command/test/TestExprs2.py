@@ -2,8 +2,9 @@
 Test some more expression commands.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -55,10 +56,3 @@ class ExprCommands2TestCase(TestBase):
         self.expect("expression $4 + 1",
             startstr = "(int) $5 = 24")
         # (int) $5 = 6
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

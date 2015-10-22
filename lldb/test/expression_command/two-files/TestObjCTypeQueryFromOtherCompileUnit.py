@@ -4,7 +4,8 @@ Regression test for <rdar://problem/8981098>:
 The expression parser's type search only looks in the current compilation unit for types.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 from lldbtest import *
 import lldbutil
@@ -34,10 +35,3 @@ class ObjCTypeQueryTestCase(TestBase):
         self.expect("expression (NSArray*)array_token",
             substrs = ['(NSArray *) $0 = 0x'])
         # (NSArray *) $0 = 0x00007fff70118398
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

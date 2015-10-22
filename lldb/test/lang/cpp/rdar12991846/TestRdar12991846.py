@@ -3,8 +3,10 @@
 Test that the expression parser returns proper Unicode strings.
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -79,9 +81,3 @@ class Rdar12991846TestCase(TestBase):
         if expr == 2: self.expect('expression u"hello"', substrs = ['hello'])
 
         if expr == 3: self.expect('expression U"hello"', substrs = ['hello'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

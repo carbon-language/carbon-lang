@@ -2,9 +2,10 @@
 Test lldb-mi -var-xxx commands.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -353,6 +354,3 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test for std::string
         self.runCmd("-var-create - * std_string")
         self.expect('\^done,name="var\d+",numchild="[0-9]+",value="\\\\"hello\\\\"",type="std::[\S]*?string",thread-id="1",has_more="0"')
-
-if __name__ == '__main__':
-    unittest2.main()

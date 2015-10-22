@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -170,10 +171,3 @@ class SkipSummaryDataFormatterTestCase(TestBase):
                     substrs = ['(DeepData_5) data2.m_child4.m_child2.m_child2 = {',
                                'm_some_text = "Just a test"',
                                '}'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

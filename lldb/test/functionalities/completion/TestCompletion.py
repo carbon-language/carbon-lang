@@ -2,8 +2,9 @@
 Test the lldb command line completion mechanism.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -318,10 +319,3 @@ class CommandLineCompletionTestCase(TestBase):
                 else:
                     self.expect(from_child, msg=COMPLETION_MSG(str_input, p), exe=False,
                         patterns = [p])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

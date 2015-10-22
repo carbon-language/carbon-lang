@@ -2,9 +2,10 @@
 Use lldb Python SBWatchpoint API to set the ignore count.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -83,10 +84,3 @@ class WatchpointIgnoreCountTestCase(TestBase):
         self.assertTrue(watchpoint.GetWatchSize() == 4)
         self.assertTrue(watchpoint.GetHitCount() == 2)
         print watchpoint
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

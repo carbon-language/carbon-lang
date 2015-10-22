@@ -2,8 +2,9 @@
 Test lldb logging.  This test just makes sure logging doesn't crash, and produces some output.
 """
 
+import lldb_shared
+
 import os, time, string
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -102,10 +103,3 @@ class LogTestCase(TestBase):
 
         # check that it is still there
         self.assertTrue(string.find(contents, "bacon") == 0)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

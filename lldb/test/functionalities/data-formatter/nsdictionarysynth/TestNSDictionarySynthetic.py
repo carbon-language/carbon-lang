@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import datetime
@@ -64,10 +65,3 @@ class NSDictionarySyntheticTestCase(TestBase):
 
         self.assertTrue(self.frame().FindVariable("dictionary").MightHaveChildren(), "dictionary says it does not have children!")
         self.assertTrue(self.frame().FindVariable("mutabledict").MightHaveChildren(), "mutable says it does not have children!")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -1,7 +1,8 @@
 """Test calling methods on super."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -54,9 +55,3 @@ class TestObjCSuperMethod(TestBase):
         cmd_value = frame.EvaluateExpression ("[super get]")
         self.assertTrue (cmd_value.IsValid())
         self.assertTrue (cmd_value.GetValueAsUnsigned() == 1)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

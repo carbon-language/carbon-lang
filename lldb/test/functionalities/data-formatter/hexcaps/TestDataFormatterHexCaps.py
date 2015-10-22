@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -77,10 +78,3 @@ class DataFormatterHexCapsTestCase(TestBase):
         self.runCmd("type summary add -s \"${var.first%X} and ${var.second%X}\" foo")
         self.expect('frame variable mine',
                     substrs = ['(foo) mine = 0xAABBCCDD and 0xFF00FF00'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,10 @@
 Test that the lldb-mi driver exits properly.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiExitTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -82,6 +83,3 @@ class MiExitTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("q")
         import pexpect
         self.expect(pexpect.EOF)
-
-if __name__ == '__main__':
-    unittest2.main()

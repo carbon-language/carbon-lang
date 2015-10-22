@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -184,9 +185,3 @@ class StdListDataFormatterTestCase(TestBase):
 
         # check that MightHaveChildren() gets it right
         self.assertTrue(self.frame().FindVariable("text_list").MightHaveChildren(), "text_list.MightHaveChildren() says False for non empty!")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

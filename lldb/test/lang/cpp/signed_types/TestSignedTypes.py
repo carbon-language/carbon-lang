@@ -2,9 +2,10 @@
 Test that variables with signed types display correctly.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -55,10 +56,3 @@ class UnsignedTypesTestCase(TestBase):
             substrs = ["(int) the_signed_int = 99",
                        "(long) the_signed_long = 99",
                        "(long long) the_signed_long_long = 99"])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

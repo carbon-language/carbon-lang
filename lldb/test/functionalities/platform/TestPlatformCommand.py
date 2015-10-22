@@ -2,8 +2,9 @@
 Test some lldb platform commands.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -60,10 +61,3 @@ class PlatformCommandTestCase(TestBase):
         self.skipTest("due to taking too long to complete.")
         self.expect("platform shell sleep 15", error=True,
                 substrs = ["error: timed out waiting for shell command to complete"])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

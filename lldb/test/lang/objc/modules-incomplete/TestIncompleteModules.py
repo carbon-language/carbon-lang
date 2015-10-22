@@ -1,7 +1,9 @@
 """Test that DWARF types are trusted over module types"""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 import platform
 import lldbutil
@@ -55,9 +57,3 @@ class IncompleteModulesTestCase(TestBase):
 
         self.expect("expr MAX(2,3)", "#undefd macro was correcltly not found",
             error=True)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

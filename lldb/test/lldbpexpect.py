@@ -1,8 +1,9 @@
+import lldb_shared
+
 import lldb
 from lldbtest import *
 import lldbutil
 import os
-import unittest2
 import sys
 import pexpect
 

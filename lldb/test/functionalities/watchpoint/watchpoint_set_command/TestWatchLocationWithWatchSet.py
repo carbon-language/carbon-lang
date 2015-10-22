@@ -2,8 +2,9 @@
 Test lldb watchpoint that uses 'watchpoint set -w write -s size' to watch a pointed location with size.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -82,10 +83,3 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
             substrs = ['hit_count = 1'])
 
         self.runCmd("thread backtrace all")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

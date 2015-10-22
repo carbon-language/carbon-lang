@@ -2,8 +2,9 @@
 Test the lldb disassemble command on each call frame when stopped on C's ctor.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -89,9 +90,3 @@ class IterateFrameAndDisassembleTestCase(TestBase):
         # We should be stopped on the ctor function of class C.
         # self.expect("thread backtrace", BACKTRACE_DISPLAYED_CORRECTLY,
         #  substrs = ['C::C'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

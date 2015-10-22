@@ -2,7 +2,8 @@
 Test some target commands: create, list, select, variable.
 """
 
-import unittest2
+import lldb_shared
+
 import lldb
 import sys
 from lldbtest import *
@@ -196,9 +197,3 @@ class targetCommandTestCase(TestBase):
                     substrs = ['a'])
         self.expect("target variable my_global_char", VARIABLES_DISPLAYED_CORRECTLY,
                     substrs = ["my_global_char", "'X'"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

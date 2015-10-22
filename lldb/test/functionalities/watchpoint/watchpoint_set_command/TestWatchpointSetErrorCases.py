@@ -2,8 +2,9 @@
 Test error cases for the 'watchpoint set' command to make sure it errors out when necessary.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -62,10 +63,3 @@ class WatchpointSetErrorTestCase(TestBase):
         # Wrong size parameter is an error.
         self.expect("watchpoint set variable -s -128", error=True,
             substrs = ['invalid enumeration value'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

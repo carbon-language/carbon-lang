@@ -2,8 +2,9 @@
 Test quoting of arguments to lldb commands
 """
 
+import lldb_shared
+
 import os, time, re
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -87,9 +88,3 @@ class SettingsCommandTestCase(TestBase):
         self.RemoveTempFile("stdout.txt")
 
         self.assertEqual(output, args_out)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

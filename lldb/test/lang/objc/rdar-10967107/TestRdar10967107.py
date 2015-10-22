@@ -2,8 +2,9 @@
 Test that CoreFoundation classes CFGregorianDate and CFRange are not improperly uniqued
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -39,9 +40,3 @@ class Rdar10967107TestCase(TestBase):
         self.expect("frame variable cf_range --raw", substrs = ['location','length'])
         # check that printing both does not somehow confuse LLDB
         self.expect("frame variable  --raw", substrs = ['year','month','day','hour','minute','second','location','length'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

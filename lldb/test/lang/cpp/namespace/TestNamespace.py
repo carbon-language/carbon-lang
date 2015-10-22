@@ -2,8 +2,9 @@
 Test the printing of anonymous and named namespace variables.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -106,9 +107,3 @@ class NamespaceTestCase(TestBase):
 
         self.expect("p variadic_sum",
             patterns = ['\(anonymous namespace\)::variadic_sum\(int, ...\)'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

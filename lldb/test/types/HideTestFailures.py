@@ -2,8 +2,9 @@
 Test that variables of integer basic types are displayed correctly.
 """
 
+import lldb_shared
+
 import AbstractBase
-import unittest2
 import sys
 import lldb
 from lldbtest import *
@@ -73,9 +74,3 @@ class DebugIntegerTypesFailures(TestBase):
         self.build(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
         self.generic_type_tester(set(['long long']))
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

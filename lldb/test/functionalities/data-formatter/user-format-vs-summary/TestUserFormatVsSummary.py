@@ -2,8 +2,9 @@
 Test that the user can input a format but it will not prevail over summary format's choices.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -54,9 +55,3 @@ class UserFormatVSSummaryTestCase(TestBase):
 
         self.expect("frame variable p1", substrs = ['(Pair) p1 = x=0x00000003,y=4294967293']);
         self.expect("frame variable -f d p1", substrs = ['(Pair) p1 = x=3,y=-3'],matching=False);
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

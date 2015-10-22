@@ -2,9 +2,10 @@
 Test some SBValue APIs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -142,9 +143,3 @@ class ChangeValueAPITestCase(TestBase):
         self.assertTrue(thread == None, "We should not have managed to hit our second breakpoint with sp == 1")
         
         process.Kill()
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

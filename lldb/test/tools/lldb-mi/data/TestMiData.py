@@ -2,9 +2,11 @@
 Test lldb-mi -data-xxx commands.
 """
 
+import lldb_shared
+
+import unittest2
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -334,6 +336,3 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         # Check 2d array 
         self.runCmd("-data-evaluate-expression array2d")
         self.expect("\^done,value=\"\{\[0\] = \{\[0\] = 1, \[1\] = 2, \[2\] = 3\}, \[1\] = \{\[0\] = 4, \[1\] = 5, \[2\] = 6\}\}\"")
-
-if __name__ == '__main__':
-    unittest2.main()

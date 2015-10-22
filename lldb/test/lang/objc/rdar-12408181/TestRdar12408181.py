@@ -2,8 +2,9 @@
 Test that we are able to find out how many children NSWindow has
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -40,9 +41,3 @@ class Rdar12408181TestCase(TestBase):
         self.assertTrue(window_dynamic.GetNumChildren() > 1, "NSWindow (dynamic) only has 1 child!")
         self.assertTrue(window.GetChildAtIndex(0).IsValid(), "NSWindow (static) has an invalid child")
         self.assertTrue(window_dynamic.GetChildAtIndex(0).IsValid(), "NSWindow (dynamic) has an invalid child")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

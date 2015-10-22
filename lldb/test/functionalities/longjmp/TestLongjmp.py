@@ -2,8 +2,9 @@
 Test the use of setjmp/longjmp for non-local goto operations in a single-threaded inferior.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -80,9 +81,3 @@ class LongjmpTestCase(TestBase):
         self.runCmd("thread step-in", RUN_SUCCEEDED)
         self.runCmd("thread step-out", RUN_SUCCEEDED)
         self.check_status()
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

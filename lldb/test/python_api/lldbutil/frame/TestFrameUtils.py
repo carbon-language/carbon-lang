@@ -2,8 +2,9 @@
 Test utility functions for the frame object.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -54,10 +55,3 @@ class FrameUtilsTestCase(TestBase):
             lldbutil.print_stacktrace(thread)
             print "Current frame: %s" % frame0_args
             print "Parent frame: %s" % parent_args
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

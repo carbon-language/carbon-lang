@@ -1,7 +1,8 @@
 """Test SBValue::Persist"""
 
+import lldb_shared
+
 import os, sys, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -69,9 +70,3 @@ class SBValuePersistTestCase(TestBase):
         self.assertTrue(bazPersist.GetSummary() == '"85"', "bazPersist != 85")
         
         self.expect("expr *(%s)" % (barPersist.GetName()), substrs = ['= 4'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

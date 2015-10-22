@@ -2,9 +2,10 @@
 Test thread step-in, step-over and step-out work with the "Avoid no debug" option.
 """
 
+import lldb_shared
+
 import os
 import re
-import unittest2
 import lldb, lldbutil
 import sys
 from lldbtest import *
@@ -107,10 +108,3 @@ class ReturnValueTestCase(TestBase):
         # frame.  In gdb, step-over/step-in move to the end of the line they stepped out to.
         # If we ever change this we will need to fix this test.
         self.hit_correct_line ("int return_value = no_debug_caller(5, called_from_nodebug)")
-
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

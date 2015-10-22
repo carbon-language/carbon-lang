@@ -1,7 +1,8 @@
 """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -237,9 +238,3 @@ class TestCStepping(TestBase):
 
         thread.StepInto("NoSuchFunction")
         self.assertTrue (thread.GetFrameAtIndex(0).GetFunctionName() == "main")
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,11 @@
 Test SBTarget APIs.
 """
 
+import lldb_shared
+
+import unittest2
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -365,10 +367,3 @@ class TargetAPITestCase(TestBase):
         desc2 = get_description(symbol2)
         self.assertTrue(desc1 and desc2 and desc1 == desc2,
                         "The two addresses should resolve to the same symbol")
-
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

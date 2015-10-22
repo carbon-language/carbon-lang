@@ -2,9 +2,10 @@
 Test lldb-mi -stack-xxx commands.
 """
 
+import lldb_shared
+
 import lldbmi_testcase
 from lldbtest import *
-import unittest2
 
 class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
@@ -481,6 +482,3 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that current frame is #0 and it has the same information
         self.runCmd("-stack-info-frame")
         self.expect("\^done,frame=\{level=\"0\",addr=\"0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\"\}")
-
-if __name__ == '__main__':
-    unittest2.main()

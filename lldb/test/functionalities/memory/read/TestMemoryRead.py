@@ -2,9 +2,10 @@
 Test the 'memory read' command.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -86,10 +87,3 @@ class MemoryReadTestCase(TestBase):
         # 0x7fff5fbff598: error: unsupported byte size (20) for float format
         self.expect("memory read --format 'float' --count 1 --size 20 `&my_double`",
             substrs = ['unsupported byte size (20) for float format'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

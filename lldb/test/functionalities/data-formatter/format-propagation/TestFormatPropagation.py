@@ -2,8 +2,9 @@
 Check if changing Format on an SBValue correctly propagates that new format to children as it should
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -70,9 +71,3 @@ class FormatPropagationTestCase(TestBase):
         Y.SetFormat(lldb.eFormatDefault)
         self.assertTrue(X.GetValue() == "0x00000004", "X is not hex as it asked")
         self.assertTrue(Y.GetValue() == "2", "Y is not defaulted")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

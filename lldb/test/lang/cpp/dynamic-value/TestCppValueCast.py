@@ -2,9 +2,11 @@
 Test lldb Python API SBValue::Cast(SBType) for C++ types.
 """
 
+import lldb_shared
+
+import unittest2
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -122,10 +124,3 @@ class CppValueCastTestCase(TestBase):
         b_member_val = instanceB.GetChildMemberWithName('m_b_val')
         self.DebugSBValue(b_member_val)
         self.assertTrue(b_member_val.GetValueAsUnsigned(error, 0) == 36)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

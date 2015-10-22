@@ -31,9 +31,3 @@ class CallCPPFunctionTestCase(TestBase):
 
         self.expect("expression -- a_function_to_call()",
                     startstr = "(int) $0 = 0")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

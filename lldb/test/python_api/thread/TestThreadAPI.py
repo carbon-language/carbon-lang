@@ -2,8 +2,9 @@
 Test SBThread APIs.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbutil import get_stopped_thread, get_caller_symbol
 from lldbtest import *
@@ -240,10 +241,3 @@ class ThreadAPITestCase(TestBase):
         thread.RunToAddress(start_addr)
         self.runCmd("process status")
         #self.runCmd("thread backtrace")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import datetime
@@ -47,10 +48,3 @@ class DataFormatterOSTypeTestCase(TestBase):
         # Now check that we use the right summary for OSType
         self.expect('frame variable',
                     substrs = ["'test'","'best'"])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

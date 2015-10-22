@@ -3,7 +3,6 @@
 import lldb_shared
 
 import os, re
-import unittest2
 from lldbtest import *
 import lldbutil
 import lldb
@@ -46,9 +45,3 @@ class TestMultipleSimultaneousDebuggers(TestBase):
         else:
             with open(os.devnull, 'w') as fnull:
                 check_call([self.driver_exe, self.inferior_exe], env=env, stdout=fnull, stderr=fnull)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

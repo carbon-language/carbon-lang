@@ -1,10 +1,11 @@
 """
 Test that argdumper is a viable launching strategy.
 """
+import lldb_shared
+
 import lldb
 import os
 import time
-import unittest2
 from lldbtest import *
 import lldbutil
 
@@ -71,11 +72,3 @@ class TestRerun(TestBase):
         self.expect("frame variable argv[1]", substrs=['1'])
         self.expect("frame variable argv[2]", substrs=['2'])
         self.expect("frame variable argv[3]", substrs=['3'])
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

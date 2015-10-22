@@ -1,7 +1,8 @@
 """Test evaluating expressions which ref. index variable 'i' which just goes
 from out of scope to in scope when stopped at the breakpoint."""
 
-import unittest2
+import lldb_shared
+
 import lldb
 from lldbtest import *
 import lldbutil
@@ -38,9 +39,3 @@ class NonOverlappingIndexVariableCase(TestBase):
         self.runCmd('expr ptr[0]->point.y')
         self.runCmd('expr ptr[i]->point.x')
         self.runCmd('expr ptr[i]->point.y')
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

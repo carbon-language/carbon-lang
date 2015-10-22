@@ -1,7 +1,8 @@
 """Test the Go OS Plugin."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -80,10 +81,3 @@ class TestGoASTContext(TestBase):
         self.dbg.HandleCommand("settings set plugin.os.goroutines.enable false")
         self.thread().StepInstruction(False)
         self.assertLess(len(self.process().threads), 20)
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

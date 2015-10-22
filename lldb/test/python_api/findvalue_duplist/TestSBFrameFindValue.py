@@ -1,7 +1,8 @@
 """Test that SBFrame::FindValue finds things but does not duplicate the entire variables list"""
 
+import lldb_shared
+
 import os, sys, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -45,9 +46,3 @@ class SBFrameFindValueTestCase(TestBase):
         self.assertTrue(self.frame.GetVariables(True,True,False,True).GetSize() == 2, "variable count is off after failed FindValue()")
         self.assertTrue(self.frame.FindValue("a",lldb.eValueTypeVariableArgument,lldb.eDynamicCanRunTarget).IsValid(), "FindValue() didn't find an argument")
         self.assertTrue(self.frame.GetVariables(True,True,False,True).GetSize() == 2, "variable count is off after successful FindValue()")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

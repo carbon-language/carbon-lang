@@ -3,8 +3,9 @@ This tests that we do not lose control of the inferior, while doing an instructi
 over a thread creation instruction.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -61,9 +62,3 @@ class CreateDuringInstructionStepTestCase(TestBase):
 
         # At this point, the inferior process should have exited.
         self.assertEqual(process.GetState(), lldb.eStateExited, PROCESS_EXITED)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,8 +2,9 @@
 Test that step-inst over a crash behaves correctly.
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -47,10 +48,3 @@ class CreateDuringStepTestCase(TestBase):
         self.assertEqual(process.GetState(), lldb.eStateStopped, PROCESS_STOPPED)
         self.assertTrue(lldbutil.is_thread_crashed(self, thread), "Thread has crashed")
         process.Kill()
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

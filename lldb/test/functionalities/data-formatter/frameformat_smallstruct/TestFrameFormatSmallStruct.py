@@ -2,8 +2,9 @@
 Test that the user can input a format but it will not prevail over summary format's choices.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -33,9 +34,3 @@ class FrameFormatSmallStructTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         self.expect("thread list", substrs = ['addPair(p=(x = 3, y = -3))'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

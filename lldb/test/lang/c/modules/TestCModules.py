@@ -1,7 +1,8 @@
 """Test that importing modules in C works as expected."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import platform
 import lldbutil
@@ -60,9 +61,3 @@ class CModulesTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set breakpoint 0 here.')
-            
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

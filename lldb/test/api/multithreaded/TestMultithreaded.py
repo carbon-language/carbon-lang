@@ -3,7 +3,6 @@
 import lldb_shared
 
 import os, re
-import unittest2
 from lldbtest import *
 import lldbutil
 import subprocess
@@ -91,9 +90,3 @@ class SBBreakpointCallbackCase(TestBase):
 
     def build_program(self, sources, program):
         return self.buildDriver(sources, program)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

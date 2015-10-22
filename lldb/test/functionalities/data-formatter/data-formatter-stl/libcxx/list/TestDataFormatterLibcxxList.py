@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time, re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -181,9 +182,3 @@ class LibcxxListDataFormatterTestCase(TestBase):
 
         self.assertTrue(countingList.GetChildAtIndex(0).GetValueAsUnsigned(0) == 3141, "uniqued list[0] == 3141")
         self.assertTrue(countingList.GetChildAtIndex(1).GetValueAsUnsigned(0) == 3142, "uniqued list[1] == 3142")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

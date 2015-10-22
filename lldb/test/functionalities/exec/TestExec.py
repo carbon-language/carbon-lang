@@ -1,11 +1,12 @@
 """
 Test some lldb command abbreviations.
 """
+import lldb_shared
+
 import commands
 import lldb
 import os
 import time
-import unittest2
 from lldbtest import *
 import lldbutil
 
@@ -80,10 +81,3 @@ class ExecTestCase(TestBase):
         
              # Run and we should stop at breakpoint in main after exec
             process.Continue()        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

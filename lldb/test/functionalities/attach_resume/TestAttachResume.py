@@ -2,8 +2,9 @@
 Test process attach/resume.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -66,9 +67,3 @@ class AttachResumeTestCase(TestBase):
         # make sure to detach while in running state (r204759)
         self.runCmd("detach")
         lldbutil.expect_state_changes(self, listener, [lldb.eStateDetached])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

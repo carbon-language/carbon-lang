@@ -1,7 +1,8 @@
 """Test printing ivars and ObjC objects captured in blocks that are made in methods of an ObjC class."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -98,9 +99,3 @@ class TestObjCIvarsInBlocks(TestBase):
         ret_value_signed = expr.GetValueAsSigned (error)
         # print 'ret_value_signed = %i' % (ret_value_signed)
         self.assertTrue (ret_value_signed == 5, "The local variable in the block was what we expected.")
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

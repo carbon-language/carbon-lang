@@ -1,7 +1,8 @@
 """Test calling functions in static methods."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -56,9 +57,3 @@ class TestObjCStaticMethod(TestBase):
         self.assertTrue (cmd_value.IsValid())
         string_length = cmd_value.GetValueAsUnsigned()
         self.assertTrue (string_length == 27, "Got the right value from another class method on the same class.")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

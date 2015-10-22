@@ -1,7 +1,9 @@
 """Test that inline functions from modules are imported correctly"""
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 import platform
 import lldbutil
@@ -48,9 +50,3 @@ class ModulesInlineFunctionsTestCase(TestBase):
 
         self.expect("expr isInline(2)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["4"])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

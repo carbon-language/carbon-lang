@@ -2,8 +2,10 @@
 Test that a variable watchpoint should only hit when in scope.
 """
 
-import os, time
+import lldb_shared
+
 import unittest2
+import os, time
 import lldb
 from lldbtest import *
 import lldbutil
@@ -77,10 +79,3 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
         # The hit count should now be 1.
         self.expect("watchpoint list -v",
             substrs = ['hit_count = 1'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

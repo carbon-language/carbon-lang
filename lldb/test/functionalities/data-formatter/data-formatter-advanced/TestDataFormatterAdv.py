@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -280,10 +281,3 @@ class AdvDataFormatterTestCase(TestBase):
                                'o_2'])
         self.expect('frame variable a_long_guy --show-all-children', matching=False,
                     substrs = ['...'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

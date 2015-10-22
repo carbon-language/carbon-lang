@@ -2,9 +2,10 @@
 Test that debug symbols have the correct order as specified by the order file.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -31,9 +32,3 @@ class OrderFileTestCase(TestBase):
                         "Symbols have correct order by the order file")
 
         self.runCmd("run", RUN_COMPLETED)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

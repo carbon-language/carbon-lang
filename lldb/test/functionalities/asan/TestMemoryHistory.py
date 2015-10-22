@@ -2,8 +2,9 @@
 Test that ASan memory history provider returns correct stack traces
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -102,9 +103,3 @@ class AsanTestCase(TestBase):
         self.expect("memory history 'another_pointer'",
             substrs = [
                 'Memory allocated at', 'a.out`f1', 'main.c:%d' % self.line_malloc2])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

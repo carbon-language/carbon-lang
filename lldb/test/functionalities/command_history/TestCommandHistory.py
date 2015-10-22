@@ -2,8 +2,9 @@
 Test the command history mechanism
 """
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -63,10 +64,3 @@ class CommandHistoryTestCase(TestBase):
 
         self.expect ("command history -c 1 -e 3 -s 5",error=True, inHistory=True,
                      substrs = ['error: --count, --start-index and --end-index cannot be all specified in the same invocation'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

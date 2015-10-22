@@ -1,10 +1,11 @@
 """
 Test some lldb command abbreviations.
 """
+import lldb_shared
+
 import lldb
 import os
 import time
-import unittest2
 from lldbtest import *
 import lldbutil
 
@@ -43,10 +44,3 @@ class TestPaths(TestBase):
         fspec = lldb.SBFileSpec("C:\\dummy1\\dummy2//unknown_file", True);
         self.assertEqual(os.path.normpath(fspec.GetDirectory()), os.path.normpath("C:/dummy1/dummy2"));
         self.assertEqual(fspec.GetFilename(), "unknown_file");
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

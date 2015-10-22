@@ -2,9 +2,10 @@
 Test that the Python operating system plugin works correctly
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -145,10 +146,3 @@ class PluginPythonOSPlugin(TestBase):
         
         self.assertTrue(line_entry.GetFileSpec().GetFilename() == 'main.c', "Make sure we stepped from line 5 to line 6 in main.c")
         self.assertTrue(line_entry.GetLine() == 6, "Make sure we stepped from line 5 to line 6 in main.c")
-        
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

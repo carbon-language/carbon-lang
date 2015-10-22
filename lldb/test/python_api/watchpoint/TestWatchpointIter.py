@@ -2,9 +2,10 @@
 Use lldb Python SBTarget API to iterate on the watchpoint(s) for the target.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -108,10 +109,3 @@ class WatchpointIteratorTestCase(TestBase):
             self.assertTrue(watchpoint.GetWatchSize() == 4)
             self.assertTrue(watchpoint.GetHitCount() == 1)
             print watchpoint
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

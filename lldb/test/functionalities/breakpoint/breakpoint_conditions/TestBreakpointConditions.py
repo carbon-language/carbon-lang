@@ -2,9 +2,10 @@
 Test breakpoint conditions with 'breakpoint modify -c <expr> id'.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -172,10 +173,3 @@ class BreakpointConditionsTestCase(TestBase):
         self.assertTrue(breakpoint.GetHitCount() == 1)
 
         process.Continue()
-
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

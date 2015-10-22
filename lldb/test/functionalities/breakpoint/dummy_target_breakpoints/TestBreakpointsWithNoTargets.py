@@ -2,8 +2,9 @@
 Test breakpoint commands set before we have a target
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -62,9 +63,3 @@ class BreakpointInDummyTarget (TestBase):
         # Stopped again.
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ["stop reason = breakpoint 2."])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

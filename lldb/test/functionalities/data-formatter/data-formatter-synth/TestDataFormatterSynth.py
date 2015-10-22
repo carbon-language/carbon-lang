@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -201,10 +202,3 @@ class SynthDataFormatterTestCase(TestBase):
         self.runCmd('type summary add -e -h -s "I am really empty" EmptyStruct')
         self.expect('frame variable es', substrs = ["I am really empty"])
         self.expect('frame variable es', substrs = ["I am really empty {}"], matching=False)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

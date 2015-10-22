@@ -1,7 +1,8 @@
 """Test stepping and setting breakpoints in indirect and re-exported symbols."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -83,11 +84,3 @@ class TestIndirectFunctions(TestBase):
         self.assertTrue (len(threads) == 1, "Stopped at breakpoint in reexported function target.")
         curr_function = thread.GetFrameAtIndex(0).GetFunctionName()
         self.assertTrue (curr_function == "call_through_indirect_hidden", "Stepped into indirect symbols.")
-
-
- 
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

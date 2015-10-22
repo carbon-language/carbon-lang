@@ -3,8 +3,9 @@ Set breakpoints on objective-c class and instance methods in foundation.
 Also lookup objective-c data types and evaluate expressions.
 """
 
+import lldb_shared
+
 import os, os.path, time
-import unittest2
 import lldb
 import string
 from lldbtest import *
@@ -79,7 +80,6 @@ class FoundationTestCase(TestBase):
         self.expect("thread backtrace", "Stop at -[NSAutoreleasePool release]",
             substrs = ["Foundation`-[NSAutoreleasePool release]"])
 
-    #@unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
     def test_data_type_and_expr(self):
@@ -258,9 +258,3 @@ class FoundationTestCase(TestBase):
                     print line,
             self.assertTrue(num_errors == 0, "Spurious lookups detected")
             f.close()
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -1,7 +1,8 @@
 """Test function call thread safety."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -58,9 +59,3 @@ class TestSafeFuncCalls(TestBase):
 
     def safe_to_call_func_on_select_thread (self, select_thread):
         self.assertTrue(select_thread.SafeToCallFunctions() == False, "It is not safe to call functions on the select thread")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -2,9 +2,10 @@
 Test the 'register' command.
 """
 
+import lldb_shared
+
 import os, sys, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -352,9 +353,3 @@ class RegisterCommandsTestCase(TestBase):
         if test_16bit_regs:
             self.expect("expr -- $ax == (($ah << 8) | $al)",
                 substrs = ['true'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

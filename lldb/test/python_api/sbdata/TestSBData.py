@@ -1,7 +1,8 @@
 """Test the SBData APIs."""
 
+import lldb_shared
+
 import os
-import unittest2
 import lldb
 from lldbtest import *
 from math import fabs
@@ -343,9 +344,3 @@ class SBDataAPICase(TestBase):
                                                                    arg,
                                                                    stream.GetData()))
         self.assertTrue(expected == result, "%s(error, %s) == %s != %s" % (func.__name__, arg, result, expected))
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

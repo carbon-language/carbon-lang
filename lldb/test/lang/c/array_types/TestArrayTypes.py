@@ -1,7 +1,8 @@
 """Test breakpoint by file/line number; and list variables with array types."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -193,10 +194,3 @@ class ArrayTypesTestCase(TestBase):
         self.assertTrue(argc.GetValueType() == lldb.eValueTypeVariableArgument,
                         "Variable 'argc' should have '%s' value type." %
                         value_type_to_str(lldb.eValueTypeVariableArgument))
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

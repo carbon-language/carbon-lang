@@ -1,7 +1,8 @@
 """Test variable with function ptr type and that break on the function works."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -71,9 +72,3 @@ class FunctionTypesTestCase(TestBase):
         # The breakpoint should have a hit count of 1.
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
                     substrs = [' resolved, hit count = 1'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

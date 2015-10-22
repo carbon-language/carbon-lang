@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import datetime
@@ -69,9 +70,3 @@ class NSSetSyntheticTestCase(TestBase):
                     substrs = ['4 elements'])
         self.expect('frame variable mutable --ptr-depth 1 -d run -T',
                     substrs = ['4 elements','[0]','[1]','[2]','[3]','hello','world','(int)1','(int)2'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

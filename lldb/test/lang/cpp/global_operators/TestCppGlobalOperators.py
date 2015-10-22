@@ -52,10 +52,3 @@ class TestCppGlobalOperators(TestBase):
 
         test_result = frame.EvaluateExpression("operator==(s2, s3)")
         self.assertTrue(test_result.IsValid() and test_result.GetValue() == "false", "operator==(s2, s3) = false")
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

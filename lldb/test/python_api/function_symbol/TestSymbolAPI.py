@@ -2,9 +2,10 @@
 Test newly added SBSymbol and SBAddress APIs.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -75,10 +76,3 @@ class SymbolAPITestCase(TestBase):
         if self.TraceOn():
             print "UUID:", addr_line1.GetModule().GetUUIDString()
         self.assertTrue(addr_line1.GetModule().GetUUIDString() == addr_line2.GetModule().GetUUIDString())
-
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

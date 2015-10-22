@@ -7,7 +7,6 @@ import lldb_shared
 
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
@@ -200,10 +199,3 @@ class FrameAPITestCase(TestBase):
 
         # The latest two frames should not be equal.
         self.assertFalse(frameOutOfC.IsEqual(frameNow))
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

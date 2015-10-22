@@ -2,8 +2,9 @@
 Test that variable expressions of integer basic types are evaluated correctly.
 """
 
+import lldb_shared
+
 import AbstractBase
-import unittest2
 import lldb
 import sys
 from lldbtest import *
@@ -108,10 +109,3 @@ class IntegerTypesExprTestCase(AbstractBase.GenericTester):
     def test_unsigned_long_long_type_from_block(self):
         """Test that 'unsigned_long_long'-type variables are displayed correctly from a block."""
         self.build_and_run_expr('unsigned_long_long.cpp', set(['unsigned', 'long long']), bc=True)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

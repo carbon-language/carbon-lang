@@ -1,7 +1,8 @@
 """Test stepping through ObjC method dispatch in various forms."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import lldbutil
 from lldbtest import *
@@ -167,9 +168,3 @@ class TestObjCStepping(TestBase):
         thread.StepInto()
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.stepped_past_nil_line, "Step in over dispatch to nil stepped over.")
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

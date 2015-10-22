@@ -2,9 +2,10 @@
 Test that plugins that load commands work correctly.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -59,10 +60,3 @@ class PluginCommandTestCase(TestBase):
             print retobj.GetOutput()
 
         self.expect(retobj,substrs = ['abc def ghi'], exe=False)
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

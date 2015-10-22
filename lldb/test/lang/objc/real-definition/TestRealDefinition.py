@@ -1,7 +1,8 @@
 """Test that types defined in shared libraries work correctly."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -81,9 +82,3 @@ class TestRealDefinition(TestBase):
         # Break inside the foo function which takes a bar_ptr argument.
         line = line_number('main.m', '// Set breakpoint in main')
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

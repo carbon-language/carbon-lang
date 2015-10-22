@@ -2,8 +2,9 @@
 Test type lookup command.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import datetime
@@ -38,9 +39,3 @@ class TypeLookupTestCase(TestBase):
         self.expect('type lookup NSURL', substrs=['NSURL'])
         self.expect('type lookup NSArray', substrs=['NSArray'])
         self.expect('type lookup NSObject', substrs=['NSObject', 'isa'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

@@ -1,7 +1,8 @@
 """Test custom import command to import files by path."""
 
+import lldb_shared
+
 import os, sys, time
-import unittest2
 import lldb
 from lldbtest import *
 
@@ -68,10 +69,3 @@ class ImportTestCase(TestBase):
                 substrs = ['barutil says', 'bar told me', 'hello'])
         self.expect("foobarcmd hello",
                 substrs = ['foobar says', 'hello'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

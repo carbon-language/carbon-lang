@@ -2,8 +2,9 @@
 Test some lldb command abbreviations.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -45,10 +46,3 @@ class DisassemblyTestCase(TestBase):
 
         # make sure a few reasonable assembly instructions are here
         self.expect(disassembly, exe=False, startstr = "a.out`sum", substrs = instructions)
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
-

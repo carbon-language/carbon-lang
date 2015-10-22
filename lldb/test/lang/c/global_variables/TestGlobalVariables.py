@@ -1,7 +1,8 @@
 """Show global variables and check that they do indeed have global scopes."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -72,10 +73,3 @@ class GlobalVariablesTestCase(TestBase):
                     substrs = ['g_marked_spot.y', '21'])
         self.expect("target variable g_marked_spot.y", VARIABLES_DISPLAYED_CORRECTLY, matching=False,
                     substrs = ["can't be resolved"])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

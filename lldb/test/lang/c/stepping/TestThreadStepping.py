@@ -2,9 +2,10 @@
 Test thread stepping features in combination with frame select.
 """
 
+import lldb_shared
+
 import os, time
 import re
-import unittest2
 import lldb, lldbutil
 from lldbtest import *
 import lldbutil
@@ -75,10 +76,3 @@ class ThreadSteppingTestCase(TestBase):
         self.expect("thread backtrace", STEP_OUT_SUCCEEDED,
             substrs = ["stop reason = step out"],
             patterns = ["frame #0.*main.c:%d" % self.line4])
-        
-        
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

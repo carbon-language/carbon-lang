@@ -2,8 +2,9 @@
 Test lldb data formatter subsystem.
 """
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
@@ -52,10 +53,3 @@ class PtrToArrayDataFormatterTestCase(TestBase):
             substrs = ['01 00 00 00 02 00 00 00 03 00 00 00'])
         self.expect('p *(int (*)[3])foo', matching=False,
             substrs = ['0x000000030000000200000001'])
-
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()

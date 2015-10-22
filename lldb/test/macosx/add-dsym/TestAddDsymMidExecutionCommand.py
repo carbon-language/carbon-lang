@@ -1,7 +1,8 @@
 """Test that the 'add-dsym', aka 'target symbols add', succeeds in the middle of debug session."""
 
+import lldb_shared
+
 import os, time
-import unittest2
 import lldb
 import sys
 from lldbtest import *
@@ -40,9 +41,3 @@ class AddDsymMidExecutionCommandCase(TestBase):
 
         self.expect("frame select",
                     substrs = ['a.out`main at main.c'])
-
-if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
-    unittest2.main()
