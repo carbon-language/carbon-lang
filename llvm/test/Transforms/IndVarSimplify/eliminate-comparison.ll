@@ -477,4 +477,63 @@ define void @func_21(i32* %length.ptr, i32 %init) {
   ret void
 }
 
+define void @func_22(i32* %length.ptr) {
+; CHECK-LABEL: @func_22(
+
+; This checks that the backedge condition, (I + 1) < Length - 1 implies
+; (I + 1) < Length
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %lim = sub i32 %length, 1
+  %entry.cond = icmp sgt i32 %length, 1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp slt i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %lim
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_23(i32* %length.ptr) {
+; CHECK-LABEL: @func_23(
+
+; This checks that the backedge condition, (I + 1) < Length - 1 implies
+; (I + 1) < Length
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %lim = sub i32 %length, 1
+  %entry.cond = icmp sgt i32 %length, 1
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp sle i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp sle i32 %iv.inc, %lim
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+
 !0 = !{i32 0, i32 2147483647}
