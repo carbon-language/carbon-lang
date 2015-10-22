@@ -759,8 +759,12 @@ public:
   }
 
   FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) {
-    if (const Function *F = CS.getCalledFunction())
-      return getBestAAResults().getModRefBehavior(F);
+    if (!CS.hasOperandBundles())
+      // If CS has operand bundles then aliasing attributes from the function it
+      // calls do not directly apply to the CallSite.  This can be made more
+      // precise in the future.
+      if (const Function *F = CS.getCalledFunction())
+        return getBestAAResults().getModRefBehavior(F);
 
     return FMRB_UnknownModRefBehavior;
   }

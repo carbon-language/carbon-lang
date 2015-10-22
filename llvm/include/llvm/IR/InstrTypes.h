@@ -1255,8 +1255,8 @@ protected:
   /// \brief Is the function attribute S disallowed by some operand bundle on
   /// this operand bundle user?
   bool isFnAttrDisallowedByOpBundle(StringRef S) const {
-    // Operand bundles only possibly disallow readnone and readonly attributes.
-    // All String attributes are fine.
+    // Operand bundles only possibly disallow readnone, readonly and argmenonly
+    // attributes.  All String attributes are fine.
     return false;
   }
 
@@ -1266,6 +1266,9 @@ protected:
     switch (A) {
     default:
       return false;
+
+    case Attribute::ArgMemOnly:
+      return hasReadingOperandBundles();
 
     case Attribute::ReadNone:
       return hasReadingOperandBundles();
