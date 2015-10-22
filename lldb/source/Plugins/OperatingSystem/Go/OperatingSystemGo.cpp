@@ -1,4 +1,4 @@
-//===-- OperatingSystemGo.cpp --------------------------------*- C++ -*-===//
+//===-- OperatingSystemGo.cpp -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,13 +6,15 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#include "OperatingSystemGo.h"
 
 // C Includes
 // C++ Includes
 #include <unordered_map>
 
 // Other libraries and framework includes
+// Project includes
+#include "OperatingSystemGo.h"
+
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
@@ -56,13 +58,7 @@ enum
 
 class PluginProperties : public Properties
 {
-  public:
-    static ConstString
-    GetSettingName()
-    {
-        return OperatingSystemGo::GetPluginNameStatic();
-    }
-
+public:
     PluginProperties()
         : Properties()
     {
@@ -70,7 +66,13 @@ class PluginProperties : public Properties
         m_collection_sp->Initialize(g_properties);
     }
 
-    virtual ~PluginProperties() {}
+    ~PluginProperties() override = default;
+
+    static ConstString
+    GetSettingName()
+    {
+        return OperatingSystemGo::GetPluginNameStatic();
+    }
 
     bool
     GetEnableGoroutines()
@@ -100,10 +102,7 @@ GetGlobalPluginProperties()
 
 class RegisterContextGo : public RegisterContextMemory
 {
-  public:
-    //------------------------------------------------------------------
-    // Constructors and Destructors
-    //------------------------------------------------------------------
+public:
     RegisterContextGo(lldb_private::Thread &thread, uint32_t concrete_frame_idx, DynamicRegisterInfo &reg_info,
                       lldb::addr_t reg_data_addr)
         : RegisterContextMemory(thread, concrete_frame_idx, reg_info, reg_data_addr)
@@ -118,10 +117,11 @@ class RegisterContextGo : public RegisterContextMemory
         m_reg_data.SetData(reg_data_sp);
     }
 
-    virtual ~RegisterContextGo() {}
+    ~RegisterContextGo() override = default;
 
-    virtual bool
-    ReadRegister(const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &reg_value)
+    bool
+    ReadRegister(const lldb_private::RegisterInfo *reg_info,
+                 lldb_private::RegisterValue &reg_value) override
     {
         switch (reg_info->kinds[eRegisterKindGeneric])
         {
@@ -134,8 +134,9 @@ class RegisterContextGo : public RegisterContextMemory
         }
     }
 
-    virtual bool
-    WriteRegister(const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &reg_value)
+    bool
+    WriteRegister(const lldb_private::RegisterInfo *reg_info,
+                  const lldb_private::RegisterValue &reg_value) override
     {
         switch (reg_info->kinds[eRegisterKindGeneric])
         {
@@ -147,11 +148,11 @@ class RegisterContextGo : public RegisterContextMemory
         }
     }
 
-  private:
+private:
     DISALLOW_COPY_AND_ASSIGN(RegisterContextGo);
 };
 
-}  // namespace
+} // anonymous namespace
 
 struct OperatingSystemGo::Goroutine
 {
@@ -219,6 +220,14 @@ OperatingSystemGo::CreateInstance(Process *process, bool force)
     return new OperatingSystemGo(process);
 }
 
+OperatingSystemGo::OperatingSystemGo(lldb_private::Process *process)
+    : OperatingSystem(process)
+    , m_reginfo(new DynamicRegisterInfo)
+{
+}
+
+OperatingSystemGo::~OperatingSystemGo() = default;
+
 ConstString
 OperatingSystemGo::GetPluginNameStatic()
 {
@@ -230,16 +239,6 @@ const char *
 OperatingSystemGo::GetPluginDescriptionStatic()
 {
     return "Operating system plug-in that reads runtime data-structures for goroutines.";
-}
-
-OperatingSystemGo::OperatingSystemGo(lldb_private::Process *process)
-    : OperatingSystem(process)
-    , m_reginfo(new DynamicRegisterInfo)
-{
-}
-
-OperatingSystemGo::~OperatingSystemGo()
-{
 }
 
 bool

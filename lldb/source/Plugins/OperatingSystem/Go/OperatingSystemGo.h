@@ -1,24 +1,32 @@
-//===-- OperatingSystemGo.h ----------------------------------*- C++ -*-===//
+//===-- OperatingSystemGo.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===-------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #ifndef _liblldb_OperatingSystemGo_h_
 #define _liblldb_OperatingSystemGo_h_
 
-#include <iostream>
+// C Includes
+// C++ Includes
+#include <memory>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Target/OperatingSystem.h"
 
 class DynamicRegisterInfo;
 
 class OperatingSystemGo : public lldb_private::OperatingSystem
 {
-  public:
+public:
+    OperatingSystemGo(lldb_private::Process *process);
+
+    ~OperatingSystemGo() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -35,38 +43,32 @@ class OperatingSystemGo : public lldb_private::OperatingSystem
     static const char *GetPluginDescriptionStatic();
 
     //------------------------------------------------------------------
-    // Class Methods
-    //------------------------------------------------------------------
-    OperatingSystemGo(lldb_private::Process *process);
-
-    virtual ~OperatingSystemGo();
-
-    //------------------------------------------------------------------
     // lldb_private::PluginInterface Methods
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString GetPluginName();
+    lldb_private::ConstString GetPluginName() override;
 
-    virtual uint32_t GetPluginVersion();
+    uint32_t GetPluginVersion() override;
 
     //------------------------------------------------------------------
     // lldb_private::OperatingSystem Methods
     //------------------------------------------------------------------
-    virtual bool UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &real_thread_list,
-                                  lldb_private::ThreadList &new_thread_list);
+    bool UpdateThreadList(lldb_private::ThreadList &old_thread_list,
+                          lldb_private::ThreadList &real_thread_list,
+                          lldb_private::ThreadList &new_thread_list) override;
 
-    virtual void ThreadWasSelected(lldb_private::Thread *thread);
+    void ThreadWasSelected(lldb_private::Thread *thread) override;
 
-    virtual lldb::RegisterContextSP CreateRegisterContextForThread(lldb_private::Thread *thread,
-                                                                   lldb::addr_t reg_data_addr);
+    lldb::RegisterContextSP CreateRegisterContextForThread(lldb_private::Thread *thread,
+                                                           lldb::addr_t reg_data_addr) override;
 
-    virtual lldb::StopInfoSP CreateThreadStopReason(lldb_private::Thread *thread);
+    lldb::StopInfoSP CreateThreadStopReason(lldb_private::Thread *thread) override;
 
     //------------------------------------------------------------------
     // Method for lazy creation of threads on demand
     //------------------------------------------------------------------
-    virtual lldb::ThreadSP CreateThread(lldb::tid_t tid, lldb::addr_t context);
+    lldb::ThreadSP CreateThread(lldb::tid_t tid, lldb::addr_t context) override;
 
-  private:
+private:
     struct Goroutine;
 
     static lldb::ValueObjectSP FindGlobal(lldb::TargetSP target, const char *name);
@@ -82,4 +84,4 @@ class OperatingSystemGo : public lldb_private::OperatingSystem
     lldb::ValueObjectSP m_allglen_sp;
 };
 
-#endif // #ifndef liblldb_OperatingSystemGo_h_
+#endif // liblldb_OperatingSystemGo_h_
