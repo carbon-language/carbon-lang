@@ -10,7 +10,7 @@ target triple = "wasm32-unknown-unknown"
 ; CHECK-LABEL: test0:
 ; CHECK: get_local 0{{$}}
 ; CHECK: set_local [[REG:.*]], pop
-; CHECK: sdiv (get_local [[REG]]), {{.*}}
+; CHECK: div_s (get_local [[REG]]), {{.*}}
 ; CHECK: set_local [[REG]], pop
 ; CHECK: return (get_local [[REG]])
 define i32 @test0(i32 %p) {

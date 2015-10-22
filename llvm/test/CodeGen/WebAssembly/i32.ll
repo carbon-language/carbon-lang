@@ -69,7 +69,7 @@ define i32 @mul32(i32 %x, i32 %y) {
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
-; CHECK-NEXT: sdiv (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: div_s (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: return (get_local 4){{$}}
 define i32 @sdiv32(i32 %x, i32 %y) {
@@ -86,7 +86,7 @@ define i32 @sdiv32(i32 %x, i32 %y) {
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
-; CHECK-NEXT: udiv (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: div_u (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: return (get_local 4){{$}}
 define i32 @udiv32(i32 %x, i32 %y) {
@@ -103,7 +103,7 @@ define i32 @udiv32(i32 %x, i32 %y) {
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
-; CHECK-NEXT: srem (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: rem_s (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: return (get_local 4){{$}}
 define i32 @srem32(i32 %x, i32 %y) {
@@ -120,7 +120,7 @@ define i32 @srem32(i32 %x, i32 %y) {
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
-; CHECK-NEXT: urem (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: rem_u (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: return (get_local 4){{$}}
 define i32 @urem32(i32 %x, i32 %y) {

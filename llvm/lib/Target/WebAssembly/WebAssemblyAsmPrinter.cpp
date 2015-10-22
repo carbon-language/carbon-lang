@@ -107,7 +107,7 @@ static std::string OpcodeName(const WebAssemblyInstrInfo *TII,
   std::string Name(&N[0], &N[NameEnd]);
   if (!HasType)
     return Name;
-  for (const char *typelessOpcode : { "return", "call" })
+  for (const char *typelessOpcode : { "return", "call", "br_if" })
     if (Name == typelessOpcode)
       return Name;
   return std::string(&N[NameEnd + 1], &N[Len]) + '.' + Name;
