@@ -7207,8 +7207,7 @@ public:
                                         AttributeList *attrList);
 
   void FindProtocolDeclaration(bool WarnOnDeclarations, bool ForObjCContainer,
-                               const IdentifierLocPair *ProtocolId,
-                               unsigned NumProtocols,
+                               ArrayRef<IdentifierLocPair> ProtocolId,
                                SmallVectorImpl<Decl *> &Protocols);
 
   /// Given a list of identifiers (and their locations), resolve the

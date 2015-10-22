@@ -342,8 +342,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
       }
       Actions.FindProtocolDeclaration(/*WarnOnDeclarations=*/true,
                                       /*ForObjCContainer=*/true,
-                                      &ProtocolIdents[0], ProtocolIdents.size(),
-                                      protocols);
+                                      ProtocolIdents, protocols);
     }
   } else if (protocols.empty() && Tok.is(tok::less) &&
              ParseObjCProtocolReferences(protocols, protocolLocs, true, true,
@@ -1584,8 +1583,7 @@ ParseObjCProtocolReferences(SmallVectorImpl<Decl *> &Protocols,
 
   // Convert the list of protocols identifiers into a list of protocol decls.
   Actions.FindProtocolDeclaration(WarnOnDeclarations, ForObjCContainer,
-                                  &ProtocolIdents[0], ProtocolIdents.size(),
-                                  Protocols);
+                                  ProtocolIdents, Protocols);
   return false;
 }
 
