@@ -4842,7 +4842,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
         // Pseudo-destructor calls should not have any arguments.
         Diag(Fn->getLocStart(), diag::err_pseudo_dtor_call_with_args)
           << FixItHint::CreateRemoval(
-                                    SourceRange(ArgExprs[0]->getLocStart(),
+                                    SourceRange(ArgExprs.front()->getLocStart(),
                                                 ArgExprs.back()->getLocEnd()));
       }
 
