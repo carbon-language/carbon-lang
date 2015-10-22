@@ -454,7 +454,7 @@ void CGRecordLowering::accumulateBases() {
     // contain only a trailing array member.
     const CXXRecordDecl *BaseDecl = Base.getType()->getAsCXXRecordDecl();
     if (!BaseDecl->isEmpty() &&
-        !Context.getASTRecordLayout(BaseDecl).getSize().isZero())
+        !Context.getASTRecordLayout(BaseDecl).getNonVirtualSize().isZero())
       Members.push_back(MemberInfo(Layout.getBaseClassOffset(BaseDecl),
           MemberInfo::Base, getStorageType(BaseDecl), BaseDecl));
   }
