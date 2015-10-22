@@ -11,7 +11,6 @@
 #define liblldb_Options_h_
 
 // C Includes
-
 // C++ Includes
 #include <set>
 #include <vector>
@@ -31,7 +30,6 @@ namespace lldb_private {
           return false;
       return isprint(ch);
   }
-
 
 //----------------------------------------------------------------------
 /// @class Options Options.h "lldb/Interpreter/Options.h"
@@ -119,7 +117,6 @@ namespace lldb_private {
 class Options
 {
 public:
-
     Options (CommandInterpreter &interpreter);
 
     virtual
@@ -153,7 +150,6 @@ public:
     // Verify that the options given are in the options table and can 
     // be used together, but there may be some required options that are
     // missing (used to verify options that get folded into command aliases).
-
     bool
     VerifyPartialOptions (CommandReturnObject &result);
 
@@ -359,15 +355,11 @@ protected:
     class OptionGroup
     {
     public:
-        OptionGroup () 
-        {
-        }
-        
+        OptionGroup() = default;
+
         virtual 
-        ~OptionGroup () 
-        {
-        }
-        
+        ~OptionGroup() = default;
+
         virtual uint32_t
         GetNumDefinitions () = 0;
 
@@ -395,7 +387,6 @@ protected:
     class OptionGroupOptions : public Options
     {
     public:
-        
         OptionGroupOptions (CommandInterpreter &interpreter) :
             Options (interpreter),
             m_option_defs (),
@@ -404,12 +395,8 @@ protected:
         {
         }
         
-        virtual
-        ~OptionGroupOptions ()
-        {
-        }
-        
-        
+        ~OptionGroupOptions() override = default;
+
         //----------------------------------------------------------------------
         /// Append options from a OptionGroup class.
         ///
@@ -459,18 +446,18 @@ protected:
             return m_did_finalize;
         }
         
-        virtual Error
-        SetOptionValue (uint32_t option_idx, 
-                        const char *option_arg);
+        Error
+        SetOptionValue(uint32_t option_idx, 
+                       const char *option_arg) override;
         
-        virtual void
-        OptionParsingStarting ();
+        void
+        OptionParsingStarting() override;
         
-        virtual Error
-        OptionParsingFinished ();
+        Error
+        OptionParsingFinished() override;
         
         const OptionDefinition*
-        GetDefinitions ()
+        GetDefinitions() override
         {
             assert (m_did_finalize);
             return &m_option_defs[0];
@@ -495,8 +482,7 @@ protected:
         OptionInfos m_option_infos;
         bool m_did_finalize;
     };
-    
 
 } // namespace lldb_private
 
-#endif  // liblldb_Options_h_
+#endif // liblldb_Options_h_

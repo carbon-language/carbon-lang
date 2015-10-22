@@ -1,4 +1,4 @@
-//===-- OptionGroupFile.h -------------------------------*- C++ -*-===//
+//===-- OptionGroupFile.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,7 +27,6 @@ namespace lldb_private {
 class OptionGroupFile : public OptionGroup
 {
 public:
-    
     OptionGroupFile (uint32_t usage_mask,
                      bool required,
                      const char *long_option, 
@@ -36,29 +35,27 @@ public:
                      lldb::CommandArgumentType argument_type,
                      const char *usage_text);
     
-    virtual
-    ~OptionGroupFile ();
+    ~OptionGroupFile() override;
 
-    
-    virtual uint32_t
-    GetNumDefinitions ()
+    uint32_t
+    GetNumDefinitions() override
     {
         return 1;
     }
     
-    virtual const OptionDefinition*
-    GetDefinitions ()
+    const OptionDefinition*
+    GetDefinitions() override
     {
         return &m_option_definition;
     }
     
-    virtual Error
-    SetOptionValue (CommandInterpreter &interpreter,
-                    uint32_t option_idx,
-                    const char *option_value);
+    Error
+    SetOptionValue(CommandInterpreter &interpreter,
+                   uint32_t option_idx,
+                   const char *option_value) override;
     
-    virtual void
-    OptionParsingStarting (CommandInterpreter &interpreter);
+    void
+    OptionParsingStarting(CommandInterpreter &interpreter) override;
     
     OptionValueFileSpec &
     GetOptionValue ()
@@ -75,7 +72,6 @@ public:
 protected:
     OptionValueFileSpec m_file;
     OptionDefinition m_option_definition;
-    
 };
 
 //-------------------------------------------------------------------------
@@ -94,30 +90,27 @@ public:
                          lldb::CommandArgumentType argument_type,
                          const char *usage_text);
     
-    virtual
-    ~OptionGroupFileList ();
+    ~OptionGroupFileList() override;
     
-    
-    virtual uint32_t
-    GetNumDefinitions ()
+    uint32_t
+    GetNumDefinitions() override
     {
         return 1;
     }
     
-    virtual const OptionDefinition*
-    GetDefinitions ()
+    const OptionDefinition*
+    GetDefinitions() override
     {
         return &m_option_definition;
     }
     
-    virtual Error
-    SetOptionValue (CommandInterpreter &interpreter,
-                    uint32_t option_idx,
-                    const char *option_value);
+    Error
+    SetOptionValue(CommandInterpreter &interpreter,
+                   uint32_t option_idx,
+                   const char *option_value) override;
     
-    virtual void
-    OptionParsingStarting (CommandInterpreter &interpreter);
-    
+    void
+    OptionParsingStarting(CommandInterpreter &interpreter) override;
 
     OptionValueFileSpecList &
     GetOptionValue ()
@@ -134,9 +127,8 @@ public:
 protected:
     OptionValueFileSpecList m_file_list;
     OptionDefinition m_option_definition;
-    
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupFile_h_
+#endif // liblldb_OptionGroupFile_h_

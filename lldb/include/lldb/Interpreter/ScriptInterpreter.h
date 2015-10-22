@@ -10,6 +10,10 @@
 #ifndef liblldb_ScriptInterpreter_h_
 #define liblldb_ScriptInterpreter_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 
 #include "lldb/Core/Broadcaster.h"
@@ -19,20 +23,16 @@
 
 #include "lldb/Utility/PseudoTerminal.h"
 
-
 namespace lldb_private {
     
 class ScriptInterpreterLocker
 {
 public:
     
-    ScriptInterpreterLocker ()
-    {
-    }
+    ScriptInterpreterLocker() = default;
     
-    virtual ~ScriptInterpreterLocker ()
-    {
-    }
+    virtual ~ScriptInterpreterLocker() = default;
+
 private:
     DISALLOW_COPY_AND_ASSIGN (ScriptInterpreterLocker);
 };
@@ -40,7 +40,6 @@ private:
 class ScriptInterpreter : public PluginInterface
 {
 public:
-
     typedef enum
     {
         eScriptReturnTypeCharPtr,
@@ -62,7 +61,7 @@ public:
     
     ScriptInterpreter (CommandInterpreter &interpreter, lldb::ScriptLanguage script_lang);
 
-    virtual ~ScriptInterpreter ();
+    ~ScriptInterpreter() override;
 
     struct ExecuteScriptOptions
     {
@@ -324,7 +323,6 @@ public:
     SetBreakpointCommandCallbackFunction (BreakpointOptions *bp_options,
                                   const char *function_name)
     {
-        return;
     }
     
     /// Set a one-liner as the callback for the watchpoint.
@@ -332,7 +330,6 @@ public:
     SetWatchpointCommandCallback (WatchpointOptions *wp_options,
                                   const char *oneliner)
     {
-        return;
     }
 
     virtual bool
@@ -459,7 +456,7 @@ public:
     virtual bool
     GetDocumentationForItem (const char* item, std::string& dest)
     {
-		dest.clear();
+        dest.clear();
         return false;
     }
     
@@ -514,8 +511,8 @@ public:
     int
     GetMasterFileDescriptor ();
 
-	CommandInterpreter &
-	GetCommandInterpreter ();
+    CommandInterpreter &
+    GetCommandInterpreter();
 
     static std::string
     LanguageToString (lldb::ScriptLanguage language);
@@ -530,4 +527,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif // #ifndef liblldb_ScriptInterpreter_h_
+#endif // liblldb_ScriptInterpreter_h_

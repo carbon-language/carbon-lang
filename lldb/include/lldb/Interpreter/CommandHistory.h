@@ -17,7 +17,6 @@
 
 // Other libraries and framework includes
 // Project includes
-
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/Mutex.h"

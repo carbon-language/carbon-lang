@@ -10,11 +10,14 @@
 #ifndef liblldb_CommandObject_h_
 #define liblldb_CommandObject_h_
 
+// C Includes
+// C++ Includes
 #include <map>
-#include <set>
 #include <string>
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
@@ -28,7 +31,6 @@ namespace lldb_private {
 class CommandObject
 {
 public:
-
     typedef const char *(ArgumentHelpCallbackFunction) ();
     
     struct ArgumentHelpCallback
@@ -46,7 +48,6 @@ public:
         {
             return (help_callback != NULL);
         }
-
     };
     
     struct ArgumentTableEntry  // Entries in the main argument information table
@@ -85,7 +86,6 @@ public:
     virtual
     ~CommandObject ();
 
-    
     static const char * 
     GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type);
     
@@ -326,7 +326,6 @@ public:
     /// @return
     ///     The number of completions.
     //------------------------------------------------------------------
-
     virtual int
     HandleArgumentCompletion (Args &input,
                               int &cursor_index,
@@ -488,13 +487,11 @@ protected:
     // to the specified command argument entry.
     static void
     AddIDsArgumentData(CommandArgumentEntry &arg, lldb::CommandArgumentType ID, lldb::CommandArgumentType IDRange);
-    
 };
 
 class CommandObjectParsed : public CommandObject
 {
 public:
-
     CommandObjectParsed (CommandInterpreter &interpreter,
                          const char *name,
                          const char *help = NULL,
@@ -502,25 +499,26 @@ public:
                          uint32_t flags = 0) :
         CommandObject (interpreter, name, help, syntax, flags) {}
 
-    virtual
-    ~CommandObjectParsed () {}
+    ~CommandObjectParsed() override = default;
     
-    virtual bool
-    Execute (const char *args_string, CommandReturnObject &result);
+    bool
+    Execute(const char *args_string, CommandReturnObject &result) override;
     
 protected:
     virtual bool
     DoExecute (Args& command,
              CommandReturnObject &result) = 0;
     
-    virtual bool
-    WantsRawCommandString() { return false; }
+    bool
+    WantsRawCommandString() override
+    {
+        return false;
+    }
 };
 
 class CommandObjectRaw : public CommandObject
 {
 public:
-
     CommandObjectRaw (CommandInterpreter &interpreter,
                          const char *name,
                          const char *help = NULL,
@@ -528,22 +526,22 @@ public:
                          uint32_t flags = 0) :
         CommandObject (interpreter, name, help, syntax, flags) {}
 
-    virtual
-    ~CommandObjectRaw () {}
+    ~CommandObjectRaw() override = default;
     
-    virtual bool
-    Execute (const char *args_string, CommandReturnObject &result);
+    bool
+    Execute(const char *args_string, CommandReturnObject &result) override;
 
 protected:    
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result) = 0;
 
-    virtual bool
-    WantsRawCommandString() { return true; }
+    bool
+    WantsRawCommandString() override
+    {
+        return true;
+    }
 };
-
 
 } // namespace lldb_private
 
-
-#endif  // liblldb_CommandObject_h_
+#endif // liblldb_CommandObject_h_

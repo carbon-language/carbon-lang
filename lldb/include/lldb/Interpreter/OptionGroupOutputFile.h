@@ -1,4 +1,4 @@
-//===-- OptionGroupOutputFile.h -------------------------------*- C++ -*-===//
+//===-- OptionGroupOutputFile.h ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,26 +26,23 @@ namespace lldb_private {
 class OptionGroupOutputFile : public OptionGroup
 {
 public:
-    
     OptionGroupOutputFile ();
     
-    virtual
-    ~OptionGroupOutputFile ();
+    ~OptionGroupOutputFile() override;
 
+    uint32_t
+    GetNumDefinitions() override;
     
-    virtual uint32_t
-    GetNumDefinitions ();
+    const OptionDefinition*
+    GetDefinitions() override;
     
-    virtual const OptionDefinition*
-    GetDefinitions ();
+    Error
+    SetOptionValue(CommandInterpreter &interpreter,
+                   uint32_t option_idx,
+                   const char *option_value) override;
     
-    virtual Error
-    SetOptionValue (CommandInterpreter &interpreter,
-                    uint32_t option_idx,
-                    const char *option_value);
-    
-    virtual void
-    OptionParsingStarting (CommandInterpreter &interpreter);
+    void
+    OptionParsingStarting(CommandInterpreter &interpreter) override;
     
     const OptionValueFileSpec &
     GetFile ()
@@ -68,9 +65,8 @@ public:
 protected:
     OptionValueFileSpec m_file;
     OptionValueBoolean m_append;
-    
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupOutputFile_h_
+#endif // liblldb_OptionGroupOutputFile_h_

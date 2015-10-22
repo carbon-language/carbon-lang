@@ -54,7 +54,6 @@ public:
         // so you can add custom enums starting from here in your Option class.
         // Also if you & in this bit the base code will not process the option.
         eCustomCompletion         = (1u << 9)
-
     } CommonCompletionTypes;
 
     struct CommonCompletionElement
@@ -83,6 +82,7 @@ public:
                SearchFilter *searcher,
                bool &word_complete,
                StringList &matches);
+
     static int
     DiskDirectories (CommandInterpreter &interpreter,
                      const char *partial_file_name,
@@ -170,16 +170,16 @@ public:
                    int max_return_elements,
                    StringList &matches);
 
-        virtual ~Completer ();
+        ~Completer() override;
 
-        virtual CallbackReturn
-        SearchCallback (SearchFilter &filter,
-                        SymbolContext &context,
-                        Address *addr,
-                        bool complete) = 0;
+        CallbackReturn
+        SearchCallback(SearchFilter &filter,
+                       SymbolContext &context,
+                       Address *addr,
+                       bool complete) override = 0;
 
-        virtual Depth
-        GetDepth () = 0;
+        Depth
+        GetDepth() override = 0;
 
         virtual size_t
         DoCompletion (SearchFilter *filter) = 0;
@@ -190,8 +190,9 @@ public:
             int m_match_start_point;
             int m_max_return_elements;
             StringList &m_matches;
+
         private:
-            DISALLOW_COPY_AND_ASSIGN (Completer);
+            DISALLOW_COPY_AND_ASSIGN(Completer);
     };
 
     //----------------------------------------------------------------------
@@ -200,7 +201,6 @@ public:
     class SourceFileCompleter : public Completer
     {
     public:
-
         SourceFileCompleter (CommandInterpreter &interpreter,
                              bool include_support_files,
                              const char *completion_str,
@@ -208,24 +208,24 @@ public:
                              int max_return_elements,
                              StringList &matches);
         
-        virtual Searcher::Depth GetDepth ();
+        Searcher::Depth GetDepth() override;
 
-        virtual Searcher::CallbackReturn
-        SearchCallback (SearchFilter &filter,
-                        SymbolContext &context,
-                        Address *addr,
-                        bool complete);
+        Searcher::CallbackReturn
+        SearchCallback(SearchFilter &filter,
+                       SymbolContext &context,
+                       Address *addr,
+                       bool complete) override;
 
         size_t
-        DoCompletion (SearchFilter *filter);
+        DoCompletion(SearchFilter *filter) override;
 
     private:
         bool m_include_support_files;
         FileSpecList m_matching_files;
         const char *m_file_name;
         const char *m_dir_name;
-        DISALLOW_COPY_AND_ASSIGN (SourceFileCompleter);
 
+        DISALLOW_COPY_AND_ASSIGN(SourceFileCompleter);
     };
 
     //----------------------------------------------------------------------
@@ -234,29 +234,28 @@ public:
     class ModuleCompleter : public Completer
     {
     public:
-
         ModuleCompleter (CommandInterpreter &interpreter,
                          const char *completion_str,
                          int match_start_point,
                          int max_return_elements,
                          StringList &matches);
         
-        virtual Searcher::Depth GetDepth ();
+        Searcher::Depth GetDepth() override;
 
-        virtual Searcher::CallbackReturn
-        SearchCallback (SearchFilter &filter,
-                        SymbolContext &context,
-                        Address *addr,
-                        bool complete);
+        Searcher::CallbackReturn
+        SearchCallback(SearchFilter &filter,
+                       SymbolContext &context,
+                       Address *addr,
+                       bool complete) override;
 
         size_t
-        DoCompletion (SearchFilter *filter);
+        DoCompletion(SearchFilter *filter) override;
 
     private:
         const char *m_file_name;
         const char *m_dir_name;
-        DISALLOW_COPY_AND_ASSIGN (ModuleCompleter);
 
+        DISALLOW_COPY_AND_ASSIGN(ModuleCompleter);
     };
 
     //----------------------------------------------------------------------
@@ -265,23 +264,22 @@ public:
     class SymbolCompleter : public Completer
     {
     public:
-
         SymbolCompleter (CommandInterpreter &interpreter,
                          const char *completion_str,
                          int match_start_point,
                          int max_return_elements,
                          StringList &matches);
         
-        virtual Searcher::Depth GetDepth ();
+        Searcher::Depth GetDepth() override;
 
-        virtual Searcher::CallbackReturn
-        SearchCallback (SearchFilter &filter,
-                        SymbolContext &context,
-                        Address *addr,
-                        bool complete);
+        Searcher::CallbackReturn
+        SearchCallback(SearchFilter &filter,
+                       SymbolContext &context,
+                       Address *addr,
+                       bool complete) override;
 
         size_t
-        DoCompletion (SearchFilter *filter);
+        DoCompletion(SearchFilter *filter) override;
 
     private:
 //        struct NameCmp {
@@ -294,14 +292,14 @@ public:
         RegularExpression m_regex;
         typedef std::set<ConstString> collection;
         collection m_match_set;
-        DISALLOW_COPY_AND_ASSIGN (SymbolCompleter);
 
+        DISALLOW_COPY_AND_ASSIGN(SymbolCompleter);
     };
 
 private:
     static CommonCompletionElement g_common_completions[];
-
 };
 
 } // namespace lldb_private
-#endif  // lldb_CommandCompletions_h_
+
+#endif // lldb_CommandCompletions_h_

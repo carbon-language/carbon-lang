@@ -26,25 +26,23 @@ namespace lldb_private {
     class OptionGroupVariable : public OptionGroup
     {
     public:
-        
         OptionGroupVariable (bool show_frame_options);
 
-        virtual
-        ~OptionGroupVariable ();
+        ~OptionGroupVariable() override;
+
+        uint32_t
+        GetNumDefinitions() override;
         
-        virtual uint32_t
-        GetNumDefinitions ();
+        const OptionDefinition*
+        GetDefinitions() override;
         
-        virtual const OptionDefinition*
-        GetDefinitions ();
+        Error
+        SetOptionValue(CommandInterpreter &interpreter,
+                       uint32_t option_idx,
+                       const char *option_arg) override;
         
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx, 
-                        const char *option_arg);
-        
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter);
+        void
+        OptionParsingStarting(CommandInterpreter &interpreter) override;
         
         bool include_frame_options:1,
              show_args:1,       // Frame option only (include_frame_options == true)
@@ -62,4 +60,4 @@ namespace lldb_private {
     
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupVariable_h_
+#endif // liblldb_OptionGroupVariable_h_

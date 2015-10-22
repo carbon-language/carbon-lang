@@ -36,29 +36,27 @@ namespace lldb_private {
                             bool default_value,
                             bool no_argument_toggle_default);
         
-        virtual
-        ~OptionGroupBoolean ();
-        
-        
-        virtual uint32_t
-        GetNumDefinitions ()
+        ~OptionGroupBoolean() override;
+
+        uint32_t
+        GetNumDefinitions() override
         {
             return 1;
         }
         
-        virtual const OptionDefinition*
-        GetDefinitions ()
+        const OptionDefinition*
+        GetDefinitions() override
         {
             return &m_option_definition;
         }
         
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx,
-                        const char *option_value);
+        Error
+        SetOptionValue(CommandInterpreter &interpreter,
+                       uint32_t option_idx,
+                       const char *option_value) override;
         
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter);
+        void
+        OptionParsingStarting(CommandInterpreter &interpreter) override;
         
         OptionValueBoolean &
         GetOptionValue ()
@@ -75,9 +73,8 @@ namespace lldb_private {
     protected:
         OptionValueBoolean m_value;
         OptionDefinition m_option_definition;
-        
     };
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupBoolean_h_
+#endif // liblldb_OptionGroupBoolean_h_

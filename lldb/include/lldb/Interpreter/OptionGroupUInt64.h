@@ -1,4 +1,4 @@
-//===-- OptionGroupUInt64.h ------------------------------------*- C++ -*-===//
+//===-- OptionGroupUInt64.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,6 +18,7 @@
 #include "lldb/Interpreter/OptionValueUInt64.h"
 
 namespace lldb_private {
+
     //-------------------------------------------------------------------------
     // OptionGroupUInt64
     //-------------------------------------------------------------------------
@@ -25,7 +26,6 @@ namespace lldb_private {
     class OptionGroupUInt64 : public OptionGroup
     {
     public:
-        
         OptionGroupUInt64 (uint32_t usage_mask,
                            bool required,
                            const char *long_option, 
@@ -35,29 +35,27 @@ namespace lldb_private {
                            const char *usage_text,
                            uint64_t default_value);
         
-        virtual
-        ~OptionGroupUInt64 ();
-        
-        
-        virtual uint32_t
-        GetNumDefinitions ()
+        ~OptionGroupUInt64() override;
+
+        uint32_t
+        GetNumDefinitions() override
         {
             return 1;
         }
         
-        virtual const OptionDefinition*
-        GetDefinitions ()
+        const OptionDefinition*
+        GetDefinitions() override
         {
             return &m_option_definition;
         }
         
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx,
-                        const char *option_value);
+        Error
+        SetOptionValue(CommandInterpreter &interpreter,
+                       uint32_t option_idx,
+                       const char *option_value) override;
         
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter);
+        void
+        OptionParsingStarting(CommandInterpreter &interpreter) override;
         
         OptionValueUInt64 &
         GetOptionValue ()
@@ -74,9 +72,8 @@ namespace lldb_private {
     protected:
         OptionValueUInt64 m_value;
         OptionDefinition m_option_definition;
-        
     };
     
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupUInt64_h_
+#endif // liblldb_OptionGroupUInt64_h_

@@ -28,7 +28,6 @@ namespace lldb_private {
 class CommandObjectRegexCommand : public CommandObjectRaw
 {
 public:
-
     CommandObjectRegexCommand (CommandInterpreter &interpreter,
                                const char *name, 
                                const char *help, 
@@ -37,8 +36,7 @@ public:
                                uint32_t completion_type_mask,
                                bool is_removable);
     
-    virtual
-    ~CommandObjectRegexCommand ();
+    ~CommandObjectRegexCommand() override;
 
     bool
     IsRemovable () const override { return m_is_removable; }
@@ -83,4 +81,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectRegexCommand_h_
+#endif // liblldb_CommandObjectRegexCommand_h_

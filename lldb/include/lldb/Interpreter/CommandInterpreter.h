@@ -200,8 +200,6 @@ class CommandInterpreter :
     public IOHandlerDelegate
 {
 public:
-
-
     typedef std::map<std::string, OptionArgVectorSP> OptionArgMap;
 
     enum
@@ -229,11 +227,17 @@ public:
         eCommandTypesAllThem = 0xFFFF   // all commands
     };
 
+    CommandInterpreter(Debugger &debugger,
+                       lldb::ScriptLanguage script_language,
+                       bool synchronous_execution);
+
+    ~CommandInterpreter() override;
+
     // These two functions fill out the Broadcaster interface:
     
     static ConstString &GetStaticBroadcasterClass ();
 
-    virtual ConstString &GetBroadcasterClass() const
+    ConstString &GetBroadcasterClass() const override
     {
         return GetStaticBroadcasterClass();
     }
@@ -241,13 +245,6 @@ public:
     void
     SourceInitFile (bool in_cwd, 
                     CommandReturnObject &result);
-
-    CommandInterpreter (Debugger &debugger,
-                        lldb::ScriptLanguage script_language,
-                        bool synchronous_execution);
-
-    virtual
-    ~CommandInterpreter ();
 
     bool
     AddCommand (const char *name, 
@@ -305,7 +302,6 @@ public:
 
     OptionArgVectorSP
     GetAliasOptions (const char *alias_name);
-
 
     bool
     ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp, 
@@ -394,7 +390,6 @@ public:
     // Otherwise, returns the number of matches.
     //
     // FIXME: Only max_return_elements == -1 is supported at present.
-
     int
     HandleCompletion (const char *current_line,
                       const char *cursor,
@@ -407,7 +402,6 @@ public:
     // Help command can call it for the first argument.
     // word_complete tells whether the completions are considered a "complete" response (so the
     // completer should complete the quote & put a space after the word.
-
     int
     HandleCompletionMatches (Args &input,
                              int &cursor_index,
@@ -416,7 +410,6 @@ public:
                              int max_return_elements,
                              bool &word_complete,
                              StringList &matches);
-
 
     int
     GetCommandNamesMatchingPartialString (const char *cmd_cstr, 
@@ -496,7 +489,6 @@ public:
 
     void
     SetScriptLanguage (lldb::ScriptLanguage lang);
-
 
     bool
     HasCommands ();
@@ -668,20 +660,20 @@ protected:
     //------------------------------------------------------------------
     // IOHandlerDelegate functions
     //------------------------------------------------------------------
-    virtual void
-    IOHandlerInputComplete (IOHandler &io_handler,
-                            std::string &line);
+    void
+    IOHandlerInputComplete(IOHandler &io_handler,
+                           std::string &line) override;
 
-    virtual ConstString
-    IOHandlerGetControlSequence (char ch)
+    ConstString
+    IOHandlerGetControlSequence(char ch) override
     {
         if (ch == 'd')
             return ConstString("quit\n");
         return ConstString();
     }
     
-    virtual bool
-    IOHandlerInterrupt (IOHandler &io_handler);
+    bool
+    IOHandlerInterrupt(IOHandler &io_handler) override;
 
     size_t
     GetProcessOutput ();
@@ -691,10 +683,8 @@ protected:
 
     lldb::CommandObjectSP
     GetCommandSP (const char *cmd, bool include_aliases = true, bool exact = true, StringList *matches = NULL);
-
     
 private:
-    
     Error
     PreprocessCommand (std::string &command);
 
@@ -703,7 +693,6 @@ private:
     // and translated command.
     CommandObject *
     ResolveCommandImpl(std::string &command_line, CommandReturnObject &result);
-
 
     Debugger &m_debugger;                       // The debugger session that this interpreter is associated with
     ExecutionContextRef m_exe_ctx_ref;          // The current execution context to use when handling commands
@@ -726,10 +715,8 @@ private:
     uint32_t m_num_errors;
     bool m_quit_requested;
     bool m_stopped_for_crash;
-    
 };
-
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandInterpreter_h_
+#endif // liblldb_CommandInterpreter_h_

@@ -25,28 +25,26 @@ namespace lldb_private {
     class OptionGroupWatchpoint : public OptionGroup
     {
     public:
-        
+        OptionGroupWatchpoint ();
+
+        ~OptionGroupWatchpoint() override;
+
         static bool
         IsWatchSizeSupported(uint32_t watch_size);
 
-        OptionGroupWatchpoint ();
-
-        virtual
-        ~OptionGroupWatchpoint ();
+        uint32_t
+        GetNumDefinitions() override;
         
-        virtual uint32_t
-        GetNumDefinitions ();
+        const OptionDefinition*
+        GetDefinitions() override;
         
-        virtual const OptionDefinition*
-        GetDefinitions ();
+        Error
+        SetOptionValue(CommandInterpreter &interpreter,
+                       uint32_t option_idx,
+                       const char *option_arg) override;
         
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx, 
-                        const char *option_arg);
-        
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter);
+        void
+        OptionParsingStarting(CommandInterpreter &interpreter) override;
         
         // Note:
         // eWatchRead == LLDB_WATCH_TYPE_READ; and
@@ -68,4 +66,4 @@ namespace lldb_private {
     
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupWatchpoint_h_
+#endif // liblldb_OptionGroupWatchpoint_h_

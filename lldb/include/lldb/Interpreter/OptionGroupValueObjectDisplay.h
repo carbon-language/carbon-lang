@@ -1,4 +1,4 @@
-//===-- OptionGroupValueObjectDisplay.h -------------------------------*- C++ -*-===//
+//===-- OptionGroupValueObjectDisplay.h -------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,41 +26,38 @@ namespace lldb_private {
 class OptionGroupValueObjectDisplay : public OptionGroup
 {
 public:
-    
     OptionGroupValueObjectDisplay ();
     
-    virtual
-    ~OptionGroupValueObjectDisplay ();
+    ~OptionGroupValueObjectDisplay() override;
 
+    uint32_t
+    GetNumDefinitions() override;
     
-    virtual uint32_t
-    GetNumDefinitions ();
+    const OptionDefinition*
+    GetDefinitions() override;
     
-    virtual const OptionDefinition*
-    GetDefinitions ();
+    Error
+    SetOptionValue(CommandInterpreter &interpreter,
+                   uint32_t option_idx,
+                   const char *option_value) override;
     
-    virtual Error
-    SetOptionValue (CommandInterpreter &interpreter,
-                    uint32_t option_idx,
-                    const char *option_value);
-    
-    virtual void
-    OptionParsingStarting (CommandInterpreter &interpreter);
+    void
+    OptionParsingStarting(CommandInterpreter &interpreter) override;
     
     bool
     AnyOptionWasSet () const
     {
-        return show_types == true ||
-               no_summary_depth  != 0 ||
-               show_location == true ||
-               flat_output == true ||
-               use_objc == true ||
+        return show_types ||
+               no_summary_depth != 0 ||
+               show_location ||
+               flat_output ||
+               use_objc ||
                max_depth != UINT32_MAX ||
                ptr_depth != 0 ||
-               use_synth == false ||
-               be_raw == true ||
-               ignore_cap == true ||
-               run_validator == true;
+               !use_synth ||
+               be_raw ||
+               ignore_cap ||
+               run_validator;
     }
     
     DumpValueObjectOptions
@@ -85,4 +82,4 @@ public:
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupValueObjectDisplay_h_
+#endif // liblldb_OptionGroupValueObjectDisplay_h_

@@ -1,4 +1,4 @@
-//===-- OptionGroupString.h ------------------------------------*- C++ -*-===//
+//===-- OptionGroupString.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,7 +25,6 @@ namespace lldb_private {
     class OptionGroupString : public OptionGroup
     {
     public:
-        
         OptionGroupString (uint32_t usage_mask,
                            bool required,
                            const char *long_option, 
@@ -35,29 +34,27 @@ namespace lldb_private {
                            const char *usage_text,
                            const char *default_value);
         
-        virtual
-        ~OptionGroupString ();
-        
-        
-        virtual uint32_t
-        GetNumDefinitions ()
+        ~OptionGroupString() override;
+
+        uint32_t
+        GetNumDefinitions() override
         {
             return 1;
         }
         
-        virtual const OptionDefinition*
-        GetDefinitions ()
+        const OptionDefinition*
+        GetDefinitions() override
         {
             return &m_option_definition;
         }
         
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx,
-                        const char *option_value);
+        Error
+        SetOptionValue(CommandInterpreter &interpreter,
+                       uint32_t option_idx,
+                       const char *option_value) override;
         
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter);
+        void
+        OptionParsingStarting(CommandInterpreter &interpreter) override;
         
         OptionValueString &
         GetOptionValue ()
@@ -74,9 +71,8 @@ namespace lldb_private {
     protected:
         OptionValueString m_value;
         OptionDefinition m_option_definition;
-        
     };
     
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupString_h_
+#endif // liblldb_OptionGroupString_h_

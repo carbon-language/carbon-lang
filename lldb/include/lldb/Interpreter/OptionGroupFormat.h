@@ -1,4 +1,4 @@
-//===-- OptionGroupFormat.h -------------------------------*- C++ -*-===//
+//===-- OptionGroupFormat.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -37,23 +37,21 @@ public:
                        uint64_t default_byte_size = UINT64_MAX,  // Pass UINT64_MAX to disable the "--size" option
                        uint64_t default_count = UINT64_MAX);     // Pass UINT64_MAX to disable the "--count" option
     
-    virtual
-    ~OptionGroupFormat ();
+    ~OptionGroupFormat() override;
 
+    uint32_t
+    GetNumDefinitions() override;
     
-    virtual uint32_t
-    GetNumDefinitions ();
+    const OptionDefinition*
+    GetDefinitions() override;
     
-    virtual const OptionDefinition*
-    GetDefinitions ();
+    Error
+    SetOptionValue(CommandInterpreter &interpreter,
+                   uint32_t option_idx,
+                   const char *option_value) override;
     
-    virtual Error
-    SetOptionValue (CommandInterpreter &interpreter,
-                    uint32_t option_idx,
-                    const char *option_value);
-    
-    virtual void
-    OptionParsingStarting (CommandInterpreter &interpreter);
+    void
+    OptionParsingStarting(CommandInterpreter &interpreter) override;
     
     lldb::Format
     GetFormat () const
@@ -112,7 +110,6 @@ public:
     }
 
 protected:
-
     bool
     ParserGDBFormatLetter (CommandInterpreter &interpreter,
                            char format_letter,
@@ -124,10 +121,9 @@ protected:
     OptionValueUInt64 m_count;
     char m_prev_gdb_format;
     char m_prev_gdb_size;
-    
     bool m_has_gdb_format;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionGroupFormat_h_
+#endif // liblldb_OptionGroupFormat_h_
