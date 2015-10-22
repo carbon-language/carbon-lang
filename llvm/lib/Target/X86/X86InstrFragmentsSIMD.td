@@ -507,6 +507,12 @@ def X86cvtps2UInt     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTFloatToInt>;
 def X86cvtpd2Int      : SDNode<"X86ISD::FP_TO_SINT_RND",  SDTDoubleToInt>;
 def X86cvtpd2UInt     : SDNode<"X86ISD::FP_TO_UINT_RND",  SDTDoubleToInt>;
 
+def X86cvtph2ps     : SDNode<"ISD::FP16_TO_FP",
+                              SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
+                                                   SDTCVecEltisVT<0, f32>,
+                                                   SDTCVecEltisVT<1, i16>,
+                                                   SDTCisFP<0>, SDTCisInt<2>]> >;
+
 def X86vfpextRnd  : SDNode<"X86ISD::VFPEXT",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                              SDTCisFP<0>, SDTCisFP<1>,

@@ -5269,3 +5269,49 @@ define <2 x i64>@test_int_x86_avx512_pbroadcastq_128(<2 x i64> %x0, <2 x i64> %x
   ret <2 x i64> %res4
 }
 
+define <4 x float> @test_x86_vcvtph2ps_128(<8 x i16> %a0) {
+  ; CHECK: test_x86_vcvtph2ps_128
+  ; CHECK: vcvtph2ps  %xmm0, %xmm0    
+  %res = call <4 x float> @llvm.x86.avx512.mask.vcvtph2ps.128(<8 x i16> %a0, <4 x float> zeroinitializer, i8 -1)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_x86_vcvtph2ps_128_rrk(<8 x i16> %a0,<4 x float> %a1, i8 %mask) {
+  ; CHECK: test_x86_vcvtph2ps_128_rrk
+  ; CHECK: vcvtph2ps  %xmm0, %xmm1 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.vcvtph2ps.128(<8 x i16> %a0, <4 x float> %a1, i8 %mask)
+  ret <4 x float> %res
+}
+
+
+define <4 x float> @test_x86_vcvtph2ps_128_rrkz(<8 x i16> %a0, i8 %mask) {
+  ; CHECK: test_x86_vcvtph2ps_128_rrkz
+  ; CHECK: vcvtph2ps  %xmm0, %xmm0 {%k1} {z}
+  %res = call <4 x float> @llvm.x86.avx512.mask.vcvtph2ps.128(<8 x i16> %a0, <4 x float> zeroinitializer, i8 %mask)
+  ret <4 x float> %res
+}
+
+declare <4 x float> @llvm.x86.avx512.mask.vcvtph2ps.128(<8 x i16>, <4 x float>, i8) nounwind readonly
+
+define <8 x float> @test_x86_vcvtph2ps_256(<8 x i16> %a0) {
+  ; CHECK: test_x86_vcvtph2ps_256
+  ; CHECK: vcvtph2ps  %xmm0, %ymm0
+  %res = call <8 x float> @llvm.x86.avx512.mask.vcvtph2ps.256(<8 x i16> %a0, <8 x float> zeroinitializer, i8 -1)
+  ret <8 x float> %res
+}
+
+define <8 x float> @test_x86_vcvtph2ps_256_rrk(<8 x i16> %a0,<8 x float> %a1, i8 %mask) {
+  ; CHECK: test_x86_vcvtph2ps_256_rrk
+  ; CHECK: vcvtph2ps  %xmm0, %ymm1 {%k1} 
+  %res = call <8 x float> @llvm.x86.avx512.mask.vcvtph2ps.256(<8 x i16> %a0, <8 x float> %a1, i8 %mask)
+  ret <8 x float> %res
+}
+
+define <8 x float> @test_x86_vcvtph2ps_256_rrkz(<8 x i16> %a0, i8 %mask) {
+  ; CHECK: test_x86_vcvtph2ps_256_rrkz
+  ; CHECK: vcvtph2ps  %xmm0, %ymm0 {%k1} {z}
+  %res = call <8 x float> @llvm.x86.avx512.mask.vcvtph2ps.256(<8 x i16> %a0, <8 x float> zeroinitializer, i8 %mask)
+  ret <8 x float> %res
+}
+
+declare <8 x float> @llvm.x86.avx512.mask.vcvtph2ps.256(<8 x i16>, <8 x float>, i8) nounwind readonly

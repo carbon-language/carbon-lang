@@ -322,10 +322,40 @@ define i64 @test_x86_avx512_cvtsd2usi64(<2 x double> %a0) {
 declare i64 @llvm.x86.avx512.cvtsd2usi64(<2 x double>) nounwind readnone
 
 define <16 x float> @test_x86_vcvtph2ps_512(<16 x i16> %a0) {
+  ; CHECK: test_x86_vcvtph2ps_512
   ; CHECK: vcvtph2ps  %ymm0, %zmm0    ## encoding: [0x62,0xf2,0x7d,0x48,0x13,0xc0]
   %res = call <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16> %a0, <16 x float> zeroinitializer, i16 -1, i32 4)
   ret <16 x float> %res
 }
+
+define <16 x float> @test_x86_vcvtph2ps_512_sae(<16 x i16> %a0) {
+; CHECK: test_x86_vcvtph2ps_512_sae
+  ; CHECK: vcvtph2ps  {sae}, %ymm0, %zmm0
+  %res = call <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16> %a0, <16 x float> zeroinitializer, i16 -1, i32 8)
+  ret <16 x float> %res
+}
+
+define <16 x float> @test_x86_vcvtph2ps_512_rrk(<16 x i16> %a0,<16 x float> %a1, i16 %mask) {
+  ; CHECK: test_x86_vcvtph2ps_512_rrk
+  ; CHECK: vcvtph2ps  %ymm0, %zmm1 {%k1}
+  %res = call <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16> %a0, <16 x float> %a1, i16 %mask, i32 4)
+  ret <16 x float> %res
+}
+
+define <16 x float> @test_x86_vcvtph2ps_512_sae_rrkz(<16 x i16> %a0, i16 %mask) {
+  ; CHECK: test_x86_vcvtph2ps_512_sae_rrkz
+  ; CHECK: vcvtph2ps  {sae}, %ymm0, %zmm0 {%k1} {z}
+  %res = call <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16> %a0, <16 x float> zeroinitializer, i16 %mask, i32 8)
+  ret <16 x float> %res
+}
+
+define <16 x float> @test_x86_vcvtph2ps_512_rrkz(<16 x i16> %a0, i16 %mask) {
+  ; CHECK: test_x86_vcvtph2ps_512_rrkz
+  ; CHECK: vcvtph2ps  %ymm0, %zmm0 {%k1} {z}
+  %res = call <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16> %a0, <16 x float> zeroinitializer, i16 %mask, i32 4)
+  ret <16 x float> %res
+}
+
 declare <16 x float> @llvm.x86.avx512.mask.vcvtph2ps.512(<16 x i16>, <16 x float>, i16, i32) nounwind readonly
 
 
