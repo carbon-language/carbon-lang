@@ -840,8 +840,7 @@ bool AddressSanitizer::isInterestingAlloca(AllocaInst &AI) {
        getAllocaSizeInBytes(&AI) > 0 &&
        // We are only interested in allocas not promotable to registers.
        // Promotable allocas are common under -O0.
-       (!ClSkipPromotableAllocas || !isAllocaPromotable(&AI) ||
-        isDynamicAlloca(AI)));
+       (!ClSkipPromotableAllocas || !isAllocaPromotable(&AI)));
 
   ProcessedAllocas[&AI] = IsInteresting;
   return IsInteresting;
@@ -1799,6 +1798,16 @@ void FunctionStackPoisoner::createDynamicAllocasInitStorage() {
 void FunctionStackPoisoner::poisonStack() {
   assert(AllocaVec.size() > 0 || DynamicAllocaVec.size() > 0);
 
+  // Insert poison calls for lifetime intrinsics for alloca.
+  bool HavePoisonedAllocas = false;
+  for (const auto &APC : AllocaPoisonCallVec) {
+    assert(APC.InsBefore);
+    assert(APC.AI);
+    IRBuilder<> IRB(APC.InsBefore);
+    poisonAlloca(APC.AI, APC.Size, IRB, APC.DoPoison);
+    HavePoisonedAllocas |= APC.DoPoison;
+  }
+
   if (ClInstrumentAllocas && DynamicAllocaVec.size() > 0) {
     // Handle dynamic allocas.
     createDynamicAllocasInitStorage();
@@ -1904,16 +1913,6 @@ void FunctionStackPoisoner::poisonStack() {
     FakeStack = ConstantInt::get(IntptrTy, 0);
     LocalStackBase =
         DoDynamicAlloca ? createAllocaForLayout(IRB, L, true) : StaticAlloca;
-  }
-
-  // Insert poison calls for lifetime intrinsics for alloca.
-  bool HavePoisonedAllocas = false;
-  for (const auto &APC : AllocaPoisonCallVec) {
-    assert(APC.InsBefore);
-    assert(APC.AI);
-    IRBuilder<> IRB(APC.InsBefore);
-    poisonAlloca(APC.AI, APC.Size, IRB, APC.DoPoison);
-    HavePoisonedAllocas |= APC.DoPoison;
   }
 
   // Replace Alloca instructions with base+offset.
