@@ -53,6 +53,7 @@ static const u64 kMagic32 = 0xC0BFFFFFFFFFFF32ULL;
 static atomic_uint32_t dump_once_guard;  // Ensure that CovDump runs only once.
 
 static atomic_uintptr_t coverage_counter;
+static atomic_uintptr_t caller_callee_counter;
 
 // pc_array is the array containing the covered PCs.
 // To make the pc_array thread- and async-signal-safe it has to be large enough.
@@ -435,7 +436,7 @@ void CoverageData::IndirCall(uptr caller, uptr callee, uptr callee_cache[],
     uptr was = 0;
     if (atomic_compare_exchange_strong(&atomic_callee_cache[i], &was, callee,
                                        memory_order_seq_cst)) {
-      atomic_fetch_add(&coverage_counter, 1, memory_order_relaxed);
+      atomic_fetch_add(&caller_callee_counter, 1, memory_order_relaxed);
       return;
     }
     if (was == callee)  // Already have this callee.
@@ -905,6 +906,11 @@ sptr __sanitizer_maybe_open_cov_file(const char *name) {
 SANITIZER_INTERFACE_ATTRIBUTE
 uptr __sanitizer_get_total_unique_coverage() {
   return atomic_load(&coverage_counter, memory_order_relaxed);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_total_unique_caller_callee_pairs() {
+  return atomic_load(&caller_callee_counter, memory_order_relaxed);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
