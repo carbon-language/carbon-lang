@@ -1997,7 +1997,7 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
         } else {
           PT.consumeClose();
           Res = Actions.ActOnBuiltinOffsetOf(getCurScope(), StartLoc, TypeLoc,
-                                             Ty.get(), &Comps[0], Comps.size(),
+                                             Ty.get(), Comps,
                                              PT.getCloseLocation());
         }
         break;

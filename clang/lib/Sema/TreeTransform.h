@@ -1850,12 +1850,11 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildOffsetOfExpr(SourceLocation OperatorLoc,
-                                       TypeSourceInfo *Type,
-                                       Sema::OffsetOfComponent *Components,
-                                       unsigned NumComponents,
-                                       SourceLocation RParenLoc) {
+                                 TypeSourceInfo *Type,
+                                 ArrayRef<Sema::OffsetOfComponent> Components,
+                                 SourceLocation RParenLoc) {
     return getSema().BuildBuiltinOffsetOf(OperatorLoc, Type, Components,
-                                          NumComponents, RParenLoc);
+                                          RParenLoc);
   }
 
   /// \brief Build a new sizeof, alignof or vec_step expression with a
@@ -7816,8 +7815,7 @@ TreeTransform<Derived>::TransformOffsetOfExpr(OffsetOfExpr *E) {
 
   // Build a new offsetof expression.
   return getDerived().RebuildOffsetOfExpr(E->getOperatorLoc(), Type,
-                                          Components.data(), Components.size(),
-                                          E->getRParenLoc());
+                                          Components, E->getRParenLoc());
 }
 
 template<typename Derived>
