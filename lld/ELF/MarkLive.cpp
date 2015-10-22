@@ -85,7 +85,8 @@ template <class ELFT> static bool isReserved(InputSectionBase<ELFT> *Sec) {
     return true;
   default:
     StringRef S = Sec->getSectionName();
-    return S.startswith(".init") || S.startswith(".fini");
+    return S.startswith(".init") || S.startswith(".fini") ||
+           S.startswith(".jcr") || S == ".eh_frame";
   }
 }
 
