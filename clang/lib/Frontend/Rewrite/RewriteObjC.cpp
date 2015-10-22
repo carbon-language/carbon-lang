@@ -346,7 +346,7 @@ namespace {
     // Misc. AST transformation routines. Sometimes they end up calling
     // rewriting routines on the new ASTs.
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD,
-                                           Expr **args, unsigned nargs,
+                                           ArrayRef<Expr *> Args,
                                            SourceLocation StartLoc=SourceLocation(),
                                            SourceLocation EndLoc=SourceLocation());
     CallExpr *SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFlavor,
@@ -1997,15 +1997,17 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
   SmallVector<Expr*, 8> SelExprs;
   SelExprs.push_back(getStringLiteral(Exp->getSelector().getAsString()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
-                                                 &SelExprs[0], SelExprs.size());
+                                                  SelExprs);
   ReplaceStmt(Exp, SelExp);
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
   return SelExp;
 }
 
-CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
-  FunctionDecl *FD, Expr **args, unsigned nargs, SourceLocation StartLoc,
-                                                    SourceLocation EndLoc) {
+CallExpr *
+RewriteObjC::SynthesizeCallToFunctionDecl(FunctionDecl *FD,
+                                          ArrayRef<Expr *> Args,
+                                          SourceLocation StartLoc,
+                                          SourceLocation EndLoc) {
   // Get the type, we will need to reference it in a couple spots.
   QualType msgSendType = FD->getType();
 
@@ -2021,10 +2023,9 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 
-  CallExpr *Exp =  
-    new (Context) CallExpr(*Context, ICE, llvm::makeArrayRef(args, nargs),
-                           FT->getCallResultType(*Context),
-                           VK_RValue, EndLoc);
+  CallExpr *Exp = new (Context) CallExpr(*Context, ICE, Args,
+                                         FT->getCallResultType(*Context),
+                                         VK_RValue, EndLoc);
   return Exp;
 }
 
@@ -2680,20 +2681,15 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     SmallVector<Expr*, 8> ClsExprs;
     ClsExprs.push_back(getStringLiteral(ClassDecl->getIdentifier()->getName()));
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
-                                                 &ClsExprs[0],
-                                                 ClsExprs.size(),
-                                                 StartLoc,
-                                                 EndLoc);
+                                                 ClsExprs, StartLoc, EndLoc);
     // (Class)objc_getClass("CurrentClass")
     CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
                                              Context->getObjCClassType(),
                                              CK_BitCast, Cls);
     ClsExprs.clear();
     ClsExprs.push_back(ArgExpr);
-    Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
-                                       &ClsExprs[0], ClsExprs.size(),
+    Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl, ClsExprs,
                                        StartLoc, EndLoc);
-    
     // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
     // To turn off a warning, type-cast to 'id'
     InitExprs.push_back( // set 'super class', using class_getSuperclass().
@@ -2752,9 +2748,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       = Exp->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
     IdentifierInfo *clsName = Class->getIdentifier();
     ClsExprs.push_back(getStringLiteral(clsName->getName()));
-    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
-                                                 &ClsExprs[0],
-                                                 ClsExprs.size(), 
+    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl, ClsExprs,
                                                  StartLoc, EndLoc);
     MsgExprs.push_back(Cls);
     break;
@@ -2780,9 +2774,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
     SmallVector<Expr*, 8> ClsExprs;
     ClsExprs.push_back(getStringLiteral(ClassDecl->getIdentifier()->getName()));
-    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
-                                                 &ClsExprs[0],
-                                                 ClsExprs.size(), 
+    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl, ClsExprs,
                                                  StartLoc, EndLoc);
     // (Class)objc_getClass("CurrentClass")
     CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
@@ -2790,8 +2782,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                                  CK_BitCast, Cls);
     ClsExprs.clear();
     ClsExprs.push_back(ArgExpr);
-    Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
-                                       &ClsExprs[0], ClsExprs.size(),
+    Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl, ClsExprs,
                                        StartLoc, EndLoc);
     
     // (id)class_getSuperclass((Class)objc_getClass("CurrentClass"))
@@ -2862,9 +2853,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   SmallVector<Expr*, 8> SelExprs;
   SelExprs.push_back(getStringLiteral(Exp->getSelector().getAsString()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
-                                                 &SelExprs[0], SelExprs.size(),
-                                                  StartLoc,
-                                                  EndLoc);
+                                                  SelExprs, StartLoc, EndLoc);
   MsgExprs.push_back(SelExp);
 
   // Now push any user supplied arguments.
