@@ -6,14 +6,15 @@
 
 #include <assert.h>
 #include <string.h>
+#include <sanitizer/asan_interface.h>
 
 int main(int argc, char **argv) {
   size_t r;
   char s1[] = "ab";
-  char s2[] = {'a'};
-  char s3 = 0;
+  char s2[4] = "abc";
+  __asan_poison_memory_region ((char *)&s2[2], 2);
   r = strcspn(s1, s2);
-  // CHECK:'s{{[2|3]}}' <== Memory access at offset {{[0-9]+ .*}}flows this variable
+  // CHECK:'s2' <== Memory access at offset {{[0-9]+}} partially overflows this variable
   assert(r == 0);
   return 0;
 }

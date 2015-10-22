@@ -11,14 +11,15 @@
 #define _GNU_SOURCE
 #include <assert.h>
 #include <string.h>
+#include <sanitizer/asan_interface.h>
 
 int main(int argc, char **argv) {
   char *r = 0;
   char s1[] = "ab";
-  char s2[] = {'c'};
-  char s3 = 0;
+  char s2[4] = "cba";
+  __asan_poison_memory_region ((char *)&s2[2], 2);
   r = strcasestr(s1, s2);
   assert(r == 0);
-  // CHECK:'s{{[2|3]}}' <== Memory access at offset {{[0-9]+ .*}}flows this variable
+  // CHECK:'s2' <== Memory access at offset {{[0-9]+}} partially overflows this variable
   return 0;
 }
