@@ -1554,19 +1554,21 @@ def t2STRBT  : T2IstT<0b00, "strbt", IIC_iStore_bh_i>;
 def t2STRHT  : T2IstT<0b01, "strht", IIC_iStore_bh_i>;
 
 // ldrd / strd pre / post variants
-// For disassembly only.
 
+let mayLoad = 1 in
 def t2LDRD_PRE  : T2Ii8s4<1, 1, 1, (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
                  (ins t2addrmode_imm8s4_pre:$addr), IIC_iLoad_d_ru,
                  "ldrd", "\t$Rt, $Rt2, $addr!", "$addr.base = $wb", []> {
   let DecoderMethod = "DecodeT2LDRDPreInstruction";
 }
 
+let mayLoad = 1 in
 def t2LDRD_POST : T2Ii8s4post<0, 1, 1, (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
                  (ins addr_offset_none:$addr, t2am_imm8s4_offset:$imm),
                  IIC_iLoad_d_ru, "ldrd", "\t$Rt, $Rt2, $addr$imm",
                  "$addr.base = $wb", []>;
 
+let mayStore = 1 in
 def t2STRD_PRE  : T2Ii8s4<1, 1, 0, (outs GPR:$wb),
                  (ins rGPR:$Rt, rGPR:$Rt2, t2addrmode_imm8s4_pre:$addr),
                  IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, $addr!",
@@ -1574,6 +1576,7 @@ def t2STRD_PRE  : T2Ii8s4<1, 1, 0, (outs GPR:$wb),
   let DecoderMethod = "DecodeT2STRDPreInstruction";
 }
 
+let mayStore = 1 in
 def t2STRD_POST : T2Ii8s4post<0, 1, 0, (outs GPR:$wb),
                  (ins rGPR:$Rt, rGPR:$Rt2, addr_offset_none:$addr,
                       t2am_imm8s4_offset:$imm),
