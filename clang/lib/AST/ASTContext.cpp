@@ -3638,20 +3638,18 @@ static bool areSortedAndUniqued(ObjCProtocolDecl * const *Protocols,
   return true;
 }
 
-static void SortAndUniqueProtocols(ObjCProtocolDecl **Protocols,
-                                   unsigned &NumProtocols) {
-  ObjCProtocolDecl **ProtocolsEnd = Protocols+NumProtocols;
-
+static void
+SortAndUniqueProtocols(SmallVectorImpl<ObjCProtocolDecl *> &Protocols) {
   // Sort protocols, keyed by name.
-  llvm::array_pod_sort(Protocols, ProtocolsEnd, CmpProtocolNames);
+  llvm::array_pod_sort(Protocols.begin(), Protocols.end(), CmpProtocolNames);
 
   // Canonicalize.
-  for (unsigned I = 0, N = NumProtocols; I != N; ++I)
-    Protocols[I] = Protocols[I]->getCanonicalDecl();
-  
+  for (ObjCProtocolDecl *&P : Protocols)
+    P = P->getCanonicalDecl();
+
   // Remove duplicates.
-  ProtocolsEnd = std::unique(Protocols, ProtocolsEnd);
-  NumProtocols = ProtocolsEnd-Protocols;
+  auto ProtocolsEnd = std::unique(Protocols.begin(), Protocols.end());
+  Protocols.erase(ProtocolsEnd, Protocols.end());
 }
 
 QualType ASTContext::getObjCObjectType(QualType BaseType,
@@ -3716,12 +3714,9 @@ QualType ASTContext::getObjCObjectType(
     ArrayRef<ObjCProtocolDecl *> canonProtocols;
     SmallVector<ObjCProtocolDecl*, 8> canonProtocolsVec;
     if (!protocolsSorted) {
-      canonProtocolsVec.insert(canonProtocolsVec.begin(),
-                               protocols.begin(), 
-                               protocols.end());
-      unsigned uniqueCount = protocols.size();
-      SortAndUniqueProtocols(&canonProtocolsVec[0], uniqueCount);
-      canonProtocols = llvm::makeArrayRef(&canonProtocolsVec[0], uniqueCount);
+      canonProtocolsVec.append(protocols.begin(), protocols.end());
+      SortAndUniqueProtocols(canonProtocolsVec);
+      canonProtocols = canonProtocolsVec;
     } else {
       canonProtocols = protocols;
     }
