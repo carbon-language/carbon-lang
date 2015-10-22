@@ -797,8 +797,7 @@ void ASTContext::ReleaseParentMapEntries() {
   for (const auto &Entry : *AllParents) {
     if (Entry.second.is<ast_type_traits::DynTypedNode *>()) {
       delete Entry.second.get<ast_type_traits::DynTypedNode *>();
-    } else {
-      assert(Entry.second.is<ParentVector *>());
+    } else if (Entry.second.is<ParentVector *>()) {
       delete Entry.second.get<ParentVector *>();
     }
   }
@@ -8673,6 +8672,15 @@ bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
 
 namespace {
 
+ast_type_traits::DynTypedNode
+getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
+  if (const auto *D = U.template dyn_cast<const Decl *>())
+    return ast_type_traits::DynTypedNode::create(*D);
+  if (const auto *S = U.template dyn_cast<const Stmt *>())
+    return ast_type_traits::DynTypedNode::create(*S);
+  return *U.template get<ast_type_traits::DynTypedNode *>();
+}
+
   /// \brief A \c RecursiveASTVisitor that builds a map from nodes to their
   /// parents as defined by the \c RecursiveASTVisitor.
   ///
@@ -8728,16 +8736,23 @@ namespace {
         // do not have pointer identity.
         auto &NodeOrVector = (*Parents)[Node];
         if (NodeOrVector.isNull()) {
-          NodeOrVector = new ast_type_traits::DynTypedNode(ParentStack.back());
+          if (const auto *D = ParentStack.back().get<Decl>())
+            NodeOrVector = D;
+          else if (const auto *S = ParentStack.back().get<Stmt>())
+            NodeOrVector = S;
+          else
+            NodeOrVector =
+                new ast_type_traits::DynTypedNode(ParentStack.back());
         } else {
-          if (NodeOrVector.template is<ast_type_traits::DynTypedNode *>()) {
-            auto *Node =
-                NodeOrVector.template get<ast_type_traits::DynTypedNode *>();
-            auto *Vector = new ASTContext::ParentVector(1, *Node);
+          if (!NodeOrVector.template is<ASTContext::ParentVector *>()) {
+            auto *Vector = new ASTContext::ParentVector(
+                1, getSingleDynTypedNodeFromParentMap(NodeOrVector));
             NodeOrVector = Vector;
-            delete Node;
+            if (auto *Node =
+                    NodeOrVector
+                        .template dyn_cast<ast_type_traits::DynTypedNode *>())
+              delete Node;
           }
-          assert(NodeOrVector.template is<ASTContext::ParentVector *>());
 
           auto *Vector =
               NodeOrVector.template get<ASTContext::ParentVector *>();
@@ -8774,7 +8789,7 @@ namespace {
 
 } // end namespace
 
-ArrayRef<ast_type_traits::DynTypedNode>
+ASTContext::DynTypedNodeList
 ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
   assert(Node.getMemoizationData() &&
          "Invariant broken: only nodes that support memoization may be "
@@ -8787,12 +8802,12 @@ ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
   }
   ParentMap::const_iterator I = AllParents->find(Node.getMemoizationData());
   if (I == AllParents->end()) {
-    return None;
+    return llvm::ArrayRef<ast_type_traits::DynTypedNode>();
   }
-  if (auto *N = I->second.dyn_cast<ast_type_traits::DynTypedNode *>()) {
-    return llvm::makeArrayRef(N, 1);
+  if (auto *V = I->second.dyn_cast<ParentVector *>()) {
+    return llvm::makeArrayRef(*V);
   }
-  return *I->second.get<ParentVector *>();
+  return getSingleDynTypedNodeFromParentMap(I->second);
 }
 
 bool

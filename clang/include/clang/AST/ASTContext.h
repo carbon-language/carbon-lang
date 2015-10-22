@@ -453,8 +453,47 @@ public:
 
   /// \brief Maps from a node to its parents.
   typedef llvm::DenseMap<const void *,
-                         llvm::PointerUnion<ast_type_traits::DynTypedNode *,
-                                            ParentVector *>> ParentMap;
+                         llvm::PointerUnion4<const Decl *, const Stmt *,
+                                             ast_type_traits::DynTypedNode *,
+                                             ParentVector *>> ParentMap;
+
+  /// Container for either a single DynTypedNode or for an ArrayRef to
+  /// DynTypedNode. For use with ParentMap.
+  class DynTypedNodeList {
+    typedef ast_type_traits::DynTypedNode DynTypedNode;
+    llvm::AlignedCharArrayUnion<ast_type_traits::DynTypedNode,
+                                ArrayRef<DynTypedNode>> Storage;
+    bool IsSingleNode;
+
+  public:
+    DynTypedNodeList(const DynTypedNode &N) : IsSingleNode(true) {
+      new (Storage.buffer) DynTypedNode(N);
+    }
+    DynTypedNodeList(ArrayRef<DynTypedNode> A) : IsSingleNode(false) {
+      new (Storage.buffer) ArrayRef<DynTypedNode>(A);
+    }
+
+    const ast_type_traits::DynTypedNode *begin() const {
+      if (!IsSingleNode)
+        return reinterpret_cast<const ArrayRef<DynTypedNode> *>(Storage.buffer)
+            ->begin();
+      return reinterpret_cast<const DynTypedNode *>(Storage.buffer);
+    }
+
+    const ast_type_traits::DynTypedNode *end() const {
+      if (!IsSingleNode)
+        return reinterpret_cast<const ArrayRef<DynTypedNode> *>(Storage.buffer)
+            ->end();
+      return reinterpret_cast<const DynTypedNode *>(Storage.buffer) + 1;
+    }
+
+    size_t size() const { return end() - begin(); }
+    bool empty() const { return begin() == end(); }
+    const DynTypedNode &operator[](size_t N) const {
+      assert(N < size() && "Out of bounds!");
+      return *(begin() + N);
+    }
+  };
 
   /// \brief Returns the parents of the given node.
   ///
@@ -480,13 +519,11 @@ public:
   ///
   /// 'NodeT' can be one of Decl, Stmt, Type, TypeLoc,
   /// NestedNameSpecifier or NestedNameSpecifierLoc.
-  template <typename NodeT>
-  ArrayRef<ast_type_traits::DynTypedNode> getParents(const NodeT &Node) {
+  template <typename NodeT> DynTypedNodeList getParents(const NodeT &Node) {
     return getParents(ast_type_traits::DynTypedNode::create(Node));
   }
 
-  ArrayRef<ast_type_traits::DynTypedNode>
-  getParents(const ast_type_traits::DynTypedNode &Node);
+  DynTypedNodeList getParents(const ast_type_traits::DynTypedNode &Node);
 
   const clang::PrintingPolicy &getPrintingPolicy() const {
     return PrintingPolicy;
