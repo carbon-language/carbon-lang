@@ -535,5 +535,55 @@ define void @func_23(i32* %length.ptr) {
   ret void
 }
 
+define void @func_24(i32* %length.ptr) {
+; CHECK-LABEL: @func_24(
+ entry:
+  %length = load i32, i32* %length.ptr, !range !0
+  %entry.cond = icmp ult i32 4, %length
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ 4, %entry ], [ %iv.inc, %be ]
+  %iv.inc = add i32 %iv, 1
+  %range.check = icmp slt i32 %iv, %length
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp slt i32 %iv.inc, %length
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
+define void @func_25(i32* %init.ptr) {
+; CHECK-LABEL: @func_25(
+ entry:
+  %init = load i32, i32* %init.ptr, !range !0
+  %entry.cond = icmp ugt i32 %init, 4
+  br i1 %entry.cond, label %loop, label %leave
+
+ loop:
+; CHECK: loop:
+  %iv = phi i32 [ %init, %entry ], [ %iv.dec, %be ]
+  %iv.dec = add i32 %iv, -1
+  %range.check = icmp sgt i32 %iv, 4
+  br i1 %range.check, label %be, label %leave
+; CHECK:   br i1 true, label %be, label %leave.loopexit
+; CHECK: be:
+
+ be:
+  call void @side_effect()
+  %be.cond = icmp sgt i32 %iv.dec, 4
+  br i1 %be.cond, label %loop, label %leave
+
+ leave:
+  ret void
+}
+
 
 !0 = !{i32 0, i32 2147483647}
