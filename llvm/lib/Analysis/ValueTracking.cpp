@@ -193,6 +193,17 @@ bool llvm::isKnownNonNegative(Value *V, const DataLayout &DL, unsigned Depth,
   return NonNegative;
 }
 
+static bool isKnownNonEqual(Value *V1, Value *V2, const DataLayout &DL,
+                           const Query &Q);
+
+bool llvm::isKnownNonEqual(Value *V1, Value *V2, const DataLayout &DL,
+                          AssumptionCache *AC, const Instruction *CxtI,
+                          const DominatorTree *DT) {
+  return ::isKnownNonEqual(V1, V2, DL, Query(AC,
+                                             safeCxtI(V1, safeCxtI(V2, CxtI)),
+                                             DT));
+}
+
 static bool MaskedValueIsZero(Value *V, const APInt &Mask, const DataLayout &DL,
                               unsigned Depth, const Query &Q);
 
@@ -1948,6 +1959,51 @@ bool isKnownNonZero(Value *V, const DataLayout &DL, unsigned Depth,
   APInt KnownOne(BitWidth, 0);
   computeKnownBits(V, KnownZero, KnownOne, DL, Depth, Q);
   return KnownOne != 0;
+}
+
+/// Return true if V2 == V1 + X, where X is known non-zero.
+static bool isAddOfNonZero(Value *V1, Value *V2, const DataLayout &DL,
+                           const Query &Q) {
+  BinaryOperator *BO = dyn_cast<BinaryOperator>(V1);
+  if (!BO || BO->getOpcode() != Instruction::Add)
+    return false;
+  Value *Op = nullptr;
+  if (V2 == BO->getOperand(0))
+    Op = BO->getOperand(1);
+  else if (V2 == BO->getOperand(1))
+    Op = BO->getOperand(0);
+  else
+    return false;
+  return isKnownNonZero(Op, DL, 0, Q);
+}
+
+/// Return true if it is known that V1 != V2.
+static bool isKnownNonEqual(Value *V1, Value *V2, const DataLayout &DL,
+                            const Query &Q) {
+  if (V1->getType()->isVectorTy() || V1 == V2)
+    return false;
+  if (V1->getType() != V2->getType())
+    // We can't look through casts yet.
+    return false;
+  if (isAddOfNonZero(V1, V2, DL, Q) || isAddOfNonZero(V2, V1, DL, Q))
+    return true;
+
+  if (IntegerType *Ty = dyn_cast<IntegerType>(V1->getType())) {
+    // Are any known bits in V1 contradictory to known bits in V2? If V1
+    // has a known zero where V2 has a known one, they must not be equal.
+    auto BitWidth = Ty->getBitWidth();
+    APInt KnownZero1(BitWidth, 0);
+    APInt KnownOne1(BitWidth, 0);
+    computeKnownBits(V1, KnownZero1, KnownOne1, DL, 0, Q);
+    APInt KnownZero2(BitWidth, 0);
+    APInt KnownOne2(BitWidth, 0);
+    computeKnownBits(V2, KnownZero2, KnownOne2, DL, 0, Q);
+
+    auto OppositeBits = (KnownZero1 & KnownOne2) | (KnownZero2 & KnownOne1);
+    if (OppositeBits.getBoolValue())
+      return true;
+  }
+  return false;
 }
 
 /// Return true if 'V & Mask' is known to be zero.  We use this predicate to

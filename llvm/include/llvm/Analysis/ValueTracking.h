@@ -90,6 +90,13 @@ namespace llvm {
                           const Instruction *CxtI = nullptr,
                           const DominatorTree *DT = nullptr);
 
+  /// isKnownNonEqual - Return true if the given values are known to be
+  /// non-equal when defined. Supports scalar integer types only.
+  bool isKnownNonEqual(Value *V1, Value *V2, const DataLayout &DL,
+                      AssumptionCache *AC = nullptr,
+                      const Instruction *CxtI = nullptr,
+                      const DominatorTree *DT = nullptr);
+
   /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
   /// this predicate to simplify operations downstream.  Mask is known to be
   /// zero for bits that V cannot have.
