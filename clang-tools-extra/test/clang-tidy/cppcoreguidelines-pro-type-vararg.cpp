@@ -36,7 +36,7 @@ void CallFooIfAvailable(T& t) {
   CallFooIfAvailableImpl(t, 0); // OK to call variadic function when the argument is a literal 0
 }
 
-#include <cstdarg>
+#include <stdarg.h>
 void my_printf(const char* format, ...) {
   va_list ap;
   va_start(ap, format);
