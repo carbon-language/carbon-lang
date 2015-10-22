@@ -4843,7 +4843,7 @@ void RewriteModernObjC::RewriteImplicitCastObjCExpr(CastExpr *IC) {
   std::string Str = "(";
   Str += TypeString;
   Str += ")";
-  InsertText(IC->getSubExpr()->getLocStart(), &Str[0], Str.size());
+  InsertText(IC->getSubExpr()->getLocStart(), Str);
 
   return;
 }
@@ -5622,7 +5622,7 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 
     // FIXME: Missing definition of
     // InsertText(clang::SourceLocation, char const*, unsigned int).
-    // InsertText(startLoc, messString.c_str(), messString.size());
+    // InsertText(startLoc, messString);
     // Tried this, but it didn't work either...
     // ReplaceText(startLoc, 0, messString.c_str(), messString.size());
 #endif
@@ -5748,7 +5748,7 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     const std::string &Str = Buf.str();
 
     printf("CAST = %s\n", &Str[0]);
-    InsertText(ICE->getSubExpr()->getLocStart(), &Str[0], Str.size());
+    InsertText(ICE->getSubExpr()->getLocStart(), Str);
     delete S;
     return Replacement;
   }
