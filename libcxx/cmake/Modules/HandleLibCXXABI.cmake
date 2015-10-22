@@ -61,19 +61,6 @@ macro(setup_abi_lib abidefines abilib abifiles abidirs)
 
 endmacro()
 
-# Setup the default options if LIBCXX_CXX_ABI is not specified.
-if (NOT LIBCXX_CXX_ABI)
-  if (NOT DEFINED LIBCXX_BUILT_STANDALONE AND
-      IS_DIRECTORY "${CMAKE_SOURCE_DIR}/projects/libcxxabi")
-    set(LIBCXX_CXX_ABI_LIBNAME "libcxxabi")
-    set(LIBCXX_CXX_ABI_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/projects/libcxxabi/include")
-    set(LIBCXX_CXX_ABI_INTREE 1)
-  else ()
-    set(LIBCXX_CXX_ABI_LIBNAME "none")
-  endif ()
-else ()
-  set(LIBCXX_CXX_ABI_LIBNAME "${LIBCXX_CXX_ABI}")
-endif ()
 
 # Configure based on the selected ABI library.
 if ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libstdc++" OR
