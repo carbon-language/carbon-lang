@@ -1921,8 +1921,9 @@ namespace {
 static SCEV::NoWrapFlags
 StrengthenNoWrapFlags(ScalarEvolution *SE, SCEVTypes Type,
                       const SmallVectorImpl<const SCEV *> &Ops,
-                      SCEV::NoWrapFlags OldFlags) {
+                      SCEV::NoWrapFlags Flags) {
   using namespace std::placeholders;
+  typedef OverflowingBinaryOperator OBO;
 
   bool CanAnalyze =
       Type == scAddExpr || Type == scAddRecExpr || Type == scMulExpr;
@@ -1931,7 +1932,7 @@ StrengthenNoWrapFlags(ScalarEvolution *SE, SCEVTypes Type,
 
   int SignOrUnsignMask = SCEV::FlagNUW | SCEV::FlagNSW;
   SCEV::NoWrapFlags SignOrUnsignWrap =
-      ScalarEvolution::maskFlags(OldFlags, SignOrUnsignMask);
+      ScalarEvolution::maskFlags(Flags, SignOrUnsignMask);
 
   // If FlagNSW is true and all the operands are non-negative, infer FlagNUW.
   auto IsKnownNonNegative =
@@ -1939,10 +1940,34 @@ StrengthenNoWrapFlags(ScalarEvolution *SE, SCEVTypes Type,
 
   if (SignOrUnsignWrap == SCEV::FlagNSW &&
       std::all_of(Ops.begin(), Ops.end(), IsKnownNonNegative))
-    return ScalarEvolution::setFlags(OldFlags,
-                                     (SCEV::NoWrapFlags)SignOrUnsignMask);
+    Flags =
+        ScalarEvolution::setFlags(Flags, (SCEV::NoWrapFlags)SignOrUnsignMask);
 
-  return OldFlags;
+  SignOrUnsignWrap = ScalarEvolution::maskFlags(Flags, SignOrUnsignMask);
+
+  if (SignOrUnsignWrap != SignOrUnsignMask && Type == scAddExpr &&
+      Ops.size() == 2 && isa<SCEVConstant>(Ops[0])) {
+
+    // (A + C) --> (A + C)<nsw> if the addition does not sign overflow
+    // (A + C) --> (A + C)<nuw> if the addition does not unsign overflow
+
+    const APInt &C = cast<SCEVConstant>(Ops[0])->getValue()->getValue();
+    if (!(SignOrUnsignWrap & SCEV::FlagNSW)) {
+      auto NSWRegion =
+        ConstantRange::makeNoWrapRegion(Instruction::Add, C, OBO::NoSignedWrap);
+      if (NSWRegion.contains(SE->getSignedRange(Ops[1])))
+        Flags = ScalarEvolution::setFlags(Flags, SCEV::FlagNSW);
+    }
+    if (!(SignOrUnsignWrap & SCEV::FlagNUW)) {
+      auto NUWRegion =
+        ConstantRange::makeNoWrapRegion(Instruction::Add, C,
+                                        OBO::NoUnsignedWrap);
+      if (NUWRegion.contains(SE->getUnsignedRange(Ops[1])))
+        Flags = ScalarEvolution::setFlags(Flags, SCEV::FlagNUW);
+    }
+  }
+
+  return Flags;
 }
 
 /// getAddExpr - Get a canonical add expression, or something simpler if

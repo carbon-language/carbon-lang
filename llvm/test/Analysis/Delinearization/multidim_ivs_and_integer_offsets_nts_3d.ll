@@ -11,7 +11,7 @@
 ; AddRec: {{{(56 + (8 * (-4 + (3 * %m)) * (%o + %p)) + %A),+,(8 * (%o + %p) * %m)}<%for.cond4.preheader.lr.ph.us>,+,(8 * (%o + %p))}<%for.body6.lr.ph.us.us>,+,8}<%for.body6.us.us>
 ; CHECK: Base offset: %A
 ; CHECK: ArrayDecl[UnknownSize][%m][(%o + %p)] with elements of 8 bytes.
-; CHECK: ArrayRef[{3,+,1}<nw><%for.cond4.preheader.lr.ph.us>][{-4,+,1}<nw><%for.body6.lr.ph.us.us>][{7,+,1}<nw><%for.body6.us.us>]
+; CHECK: ArrayRef[{3,+,1}<nuw><%for.cond4.preheader.lr.ph.us>][{-4,+,1}<nw><%for.body6.lr.ph.us.us>][{7,+,1}<nw><%for.body6.us.us>]
 
 define void @foo(i64 %n, i64 %m, i64 %o, i64 %p, double* nocapture %A) nounwind uwtable {
 entry:
