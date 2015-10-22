@@ -47,21 +47,21 @@ class StdStringDataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.expect("frame variable",
-                    substrs = ['(std::wstring) s = L"hello world! מזל טוב!"',
-                    '(std::wstring) S = L"!!!!"',
-                    '(const wchar_t *) mazeltov = 0x','L"מזל טוב"',
-                    '(std::string) q = "hello world"',
-                    '(std::string) Q = "quite a long std::strin with lots of info inside it"'])
+        var_s = self.frame().FindVariable('s')
+        var_S = self.frame().FindVariable('S')
+        var_mazeltov = self.frame().FindVariable('mazeltov')
+        var_q = self.frame().FindVariable('q')
+        var_Q = self.frame().FindVariable('Q')
 
-        self.runCmd("n")
+        self.assertTrue(var_s.GetSummary() == 'L"hello world! מזל טוב!"', "s summary wrong")
+        self.assertTrue(var_S.GetSummary() == 'L"!!!!"', "S summary wrong")
+        self.assertTrue(var_mazeltov.GetSummary() == 'L"מזל טוב"', "mazeltov summary wrong")
+        self.assertTrue(var_q.GetSummary() == '"hello world"', "q summary wrong")
+        self.assertTrue(var_Q.GetSummary() == '"quite a long std::strin with lots of info inside it"', "Q summary wrong")
 
-        self.expect("frame variable",
-                    substrs = ['(std::wstring) s = L"hello world! מזל טוב!"',
-                    '(std::wstring) S = L"!!!!!"',
-                    '(const wchar_t *) mazeltov = 0x','L"מזל טוב"',
-                    '(std::string) q = "hello world"',
-                    '(std::string) Q = "quite a long std::strin with lots of info inside it"'])
+        self.runCmd("next")
+
+        self.assertTrue(var_S.GetSummary() == 'L"!!!!!"', "new S summary wrong")
 
 if __name__ == '__main__':
     import atexit

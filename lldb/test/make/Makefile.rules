@@ -296,12 +296,12 @@ ifeq (1,$(USE_LIBCPP))
 		ifeq "$(OS)" "Linux"
 			# This is the default install location on Ubuntu 14.04
 			ifneq ($(wildcard /usr/include/c++/v1/.),)
-				CXXFLAGS += -stdlib=libc++
+				CXXFLAGS += -stdlib=libc++ -DLLDB_USING_LIBCPP
 				LDFLAGS += -stdlib=libc++
 				CXXFLAGS += -I/usr/include/c++/v1
 			endif
 		else
-			CXXFLAGS += -stdlib=libc++
+			CXXFLAGS += -stdlib=libc++ -DLLDB_USING_LIBCPP
 			LDFLAGS += -stdlib=libc++
 		endif
 	endif

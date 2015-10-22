@@ -18,6 +18,12 @@
 namespace lldb_private {
     namespace formatters
     {
+        bool
+        LibStdcppStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // libcstdc++ c++11 std::string
+
+        bool
+        LibStdcppWStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options); // libcstdc++ c++11 std::wstring
+
         SyntheticChildrenFrontEnd* LibstdcppMapIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
         SyntheticChildrenFrontEnd* LibStdcppVectorIteratorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
