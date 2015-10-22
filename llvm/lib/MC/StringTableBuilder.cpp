@@ -15,9 +15,10 @@
 
 using namespace llvm;
 
-static int compareBySuffix(const StringRef *AP, const StringRef *BP) {
-  StringRef a = *AP;
-  StringRef b = *BP;
+static int compareBySuffix(StringMapEntry<size_t> *const *AP,
+                           StringMapEntry<size_t> *const *BP) {
+  StringRef a = (*AP)->first();
+  StringRef b = (*BP)->first();
   size_t sizeA = a.size();
   size_t sizeB = b.size();
   size_t len = std::min(sizeA, sizeB);
@@ -31,11 +32,10 @@ static int compareBySuffix(const StringRef *AP, const StringRef *BP) {
 }
 
 void StringTableBuilder::finalize(Kind kind) {
-  SmallVector<StringRef, 8> Strings;
+  std::vector<StringMapEntry<size_t> *> Strings;
   Strings.reserve(StringIndexMap.size());
-
-  for (auto i = StringIndexMap.begin(), e = StringIndexMap.end(); i != e; ++i)
-    Strings.push_back(i->getKey());
+  for (StringMapEntry<size_t> &P : StringIndexMap)
+    Strings.push_back(&P);
 
   array_pod_sort(Strings.begin(), Strings.end(), compareBySuffix);
 
@@ -52,16 +52,17 @@ void StringTableBuilder::finalize(Kind kind) {
   }
 
   StringRef Previous;
-  for (StringRef s : Strings) {
+  for (StringMapEntry<size_t> *P : Strings) {
+    StringRef s = P->first();
     if (kind == WinCOFF)
       assert(s.size() > COFF::NameSize && "Short string in COFF string table!");
 
     if (Previous.endswith(s)) {
-      StringIndexMap[s] = StringTable.size() - 1 - s.size();
+      P->second = StringTable.size() - 1 - s.size();
       continue;
     }
 
-    StringIndexMap[s] = StringTable.size();
+    P->second = StringTable.size();
     StringTable += s;
     StringTable += '\x00';
     Previous = s;
