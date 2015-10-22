@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-sizeof-container %t -- -std=c++11 -target x86_64-unknown-unknown
+// RUN: %check_clang_tidy %s misc-sizeof-container %t -- -std=c++11 -target x86_64-unknown-unknown
 
 namespace std {
 

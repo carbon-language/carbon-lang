@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s cppcoreguidelines-pro-type-static-cast-downcast %t
+// RUN: %check_clang_tidy %s cppcoreguidelines-pro-type-static-cast-downcast %t
 
 class Base {
 };

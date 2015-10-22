@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s readability-else-after-return %t
+// RUN: %check_clang_tidy %s readability-else-after-return %t
 
 void f(int a) {
   if (a > 0)

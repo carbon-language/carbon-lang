@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-non-copyable-objects %t
+// RUN: %check_clang_tidy %s misc-non-copyable-objects %t
 
 namespace std {
 typedef struct FILE {} FILE;

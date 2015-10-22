@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s readability-simplify-boolean-expr %t
+// RUN: %check_clang_tidy %s readability-simplify-boolean-expr %t
 
 bool a1 = false;
 

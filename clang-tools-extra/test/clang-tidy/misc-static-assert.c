@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-static-assert %t -- -std=c11
+// RUN: %check_clang_tidy %s misc-static-assert %t -- -std=c11
 // RUN: clang-tidy %s -checks=-*,misc-static-assert -- -std=c99 | count 0
 
 void abort() {}

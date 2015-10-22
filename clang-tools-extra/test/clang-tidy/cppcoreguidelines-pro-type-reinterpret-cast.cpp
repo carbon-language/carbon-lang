@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s cppcoreguidelines-pro-type-reinterpret-cast %t
+// RUN: %check_clang_tidy %s cppcoreguidelines-pro-type-reinterpret-cast %t
 
 int i = 0;
 void *j;

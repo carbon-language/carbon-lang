@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-unused-alias-decls %t
+// RUN: %check_clang_tidy %s misc-unused-alias-decls %t
 
 namespace my_namespace {
 class C {};

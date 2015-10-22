@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-argument-comment %t
+// RUN: %check_clang_tidy %s misc-argument-comment %t
 
 // FIXME: clang-tidy should provide a -verify mode to make writing these checks
 // easier and more accurate.

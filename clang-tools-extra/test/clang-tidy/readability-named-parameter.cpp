@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s readability-named-parameter %t
+// RUN: %check_clang_tidy %s readability-named-parameter %t
 
 void Method(char *) { /* */ }
 // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: all parameters should be named in a function

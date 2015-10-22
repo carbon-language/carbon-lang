@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s modernize-use-override %t
+// RUN: %check_clang_tidy %s modernize-use-override %t
 
 #define ABSTRACT = 0
 

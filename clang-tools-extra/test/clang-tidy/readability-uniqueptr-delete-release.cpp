@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s readability-uniqueptr-delete-release %t
+// RUN: %check_clang_tidy %s readability-uniqueptr-delete-release %t
 
 namespace std {
 template <typename T>

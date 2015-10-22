@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-unused-parameters %t -- -xc
+// RUN: %check_clang_tidy %s misc-unused-parameters %t -- -xc
 
 // Basic removal
 // =============

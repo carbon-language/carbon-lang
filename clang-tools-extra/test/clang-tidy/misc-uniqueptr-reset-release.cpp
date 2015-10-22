@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-uniqueptr-reset-release %t
+// RUN: %check_clang_tidy %s misc-uniqueptr-reset-release %t
 
 namespace std {
 

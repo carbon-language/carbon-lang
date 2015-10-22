@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-assign-operator-signature %t
+// RUN: %check_clang_tidy %s misc-assign-operator-signature %t
 
 struct Good {
   Good& operator=(const Good&);

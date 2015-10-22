@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-static-assert %t
+// RUN: %check_clang_tidy %s misc-static-assert %t
 
 void abort() {}
 #ifdef NDEBUG

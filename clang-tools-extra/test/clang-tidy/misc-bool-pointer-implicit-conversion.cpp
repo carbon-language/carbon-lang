@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-bool-pointer-implicit-conversion %t
+// RUN: %check_clang_tidy %s misc-bool-pointer-implicit-conversion %t
 
 bool *SomeFunction();
 void SomeOtherFunction(bool*);

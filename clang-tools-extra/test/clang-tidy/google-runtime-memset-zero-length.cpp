@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s google-runtime-memset %t
+// RUN: %check_clang_tidy %s google-runtime-memset %t
 
 void *memset(void *, int, __SIZE_TYPE__);
 

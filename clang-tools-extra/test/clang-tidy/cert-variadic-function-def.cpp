@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s cert-dcl50-cpp %t
+// RUN: %check_clang_tidy %s cert-dcl50-cpp %t
 
 // Variadic function definitions are diagnosed.
 void f1(int, ...) {}

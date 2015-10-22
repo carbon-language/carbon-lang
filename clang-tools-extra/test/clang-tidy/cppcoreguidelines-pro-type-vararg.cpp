@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s cppcoreguidelines-pro-type-vararg %t
+// RUN: %check_clang_tidy %s cppcoreguidelines-pro-type-vararg %t
 
 void f(int i);
 void f_vararg(int i, ...);

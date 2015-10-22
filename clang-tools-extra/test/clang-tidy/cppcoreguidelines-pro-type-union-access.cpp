@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s cppcoreguidelines-pro-type-union-access %t
+// RUN: %check_clang_tidy %s cppcoreguidelines-pro-type-union-access %t
 
 union U {
   bool union_member1;

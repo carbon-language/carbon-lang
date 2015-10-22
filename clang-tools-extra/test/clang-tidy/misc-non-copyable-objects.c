@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-non-copyable-objects %t
+// RUN: %check_clang_tidy %s misc-non-copyable-objects %t
 
 typedef struct FILE {} FILE;
 typedef struct pthread_cond_t {} pthread_cond_t;

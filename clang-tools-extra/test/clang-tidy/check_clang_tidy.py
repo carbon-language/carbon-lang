@@ -20,7 +20,7 @@ Usage:
     [optional clang-tidy arguments]
 
 Example:
-  // RUN: %python %S/check_clang_tidy.py %s llvm-include-order %t -- -isystem $(dirname %s)/Inputs/Headers
+  // RUN: %check_clang_tidy %s llvm-include-order %t -- -isystem $(dirname %s)/Inputs/Headers
 """
 
 import re

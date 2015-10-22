@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s llvm-twine-local %t
+// RUN: %check_clang_tidy %s llvm-twine-local %t
 
 namespace llvm {
 class Twine {

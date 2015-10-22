@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s google-readability-casting %t
+// RUN: %check_clang_tidy %s google-readability-casting %t
 
 bool g() { return false; }
 

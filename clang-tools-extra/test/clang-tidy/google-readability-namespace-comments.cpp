@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s google-readability-namespace-comments %t
+// RUN: %check_clang_tidy %s google-readability-namespace-comments %t
 
 namespace n1 {
 namespace n2 {

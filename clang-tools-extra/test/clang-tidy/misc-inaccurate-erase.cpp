@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-inaccurate-erase %t
+// RUN: %check_clang_tidy %s misc-inaccurate-erase %t
 
 namespace std {
 template <typename T> struct vec_iterator {

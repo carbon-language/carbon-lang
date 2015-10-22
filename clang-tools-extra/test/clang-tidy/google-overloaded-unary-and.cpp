@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s google-runtime-operator %t
+// RUN: %check_clang_tidy %s google-runtime-operator %t
 
 struct Foo {
   void *operator&();

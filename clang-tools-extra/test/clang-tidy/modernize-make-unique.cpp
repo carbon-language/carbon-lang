@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s modernize-make-unique %t
+// RUN: %check_clang_tidy %s modernize-make-unique %t
 
 namespace std {
 

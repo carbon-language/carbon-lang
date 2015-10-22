@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s cppcoreguidelines-pro-bounds-pointer-arithmetic %t
+// RUN: %check_clang_tidy %s cppcoreguidelines-pro-bounds-pointer-arithmetic %t
 
 enum E {
   ENUM_LITERAL = 1

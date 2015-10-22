@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s readability-identifier-naming %t \
+// RUN: %check_clang_tidy %s readability-identifier-naming %t \
 // RUN:   -config='{CheckOptions: [ \
 // RUN:     {key: readability-identifier-naming.AbstractClassCase, value: CamelCase}, \
 // RUN:     {key: readability-identifier-naming.AbstractClassPrefix, value: 'A'}, \

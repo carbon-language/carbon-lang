@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-swapped-arguments %t
+// RUN: %check_clang_tidy %s misc-swapped-arguments %t
 
 void F(int, double);
 

@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s llvm-include-order %t -- -isystem %S/Inputs/Headers
+// RUN: %check_clang_tidy %s llvm-include-order %t -- -isystem %S/Inputs/Headers
 
 // CHECK-MESSAGES: [[@LINE+2]]:1: warning: #includes are not sorted properly
 #include "j.h"

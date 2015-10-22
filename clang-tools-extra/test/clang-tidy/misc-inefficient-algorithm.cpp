@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s misc-inefficient-algorithm %t
+// RUN: %check_clang_tidy %s misc-inefficient-algorithm %t
 
 namespace std {
 template <typename T> struct less {

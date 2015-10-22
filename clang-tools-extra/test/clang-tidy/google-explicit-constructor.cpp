@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s google-explicit-constructor %t
+// RUN: %check_clang_tidy %s google-explicit-constructor %t
 
 namespace std {
   typedef decltype(sizeof(int)) size_t;

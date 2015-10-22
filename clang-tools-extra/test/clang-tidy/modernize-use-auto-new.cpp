@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s modernize-use-auto %t
+// RUN: %check_clang_tidy %s modernize-use-auto %t
 
 class MyType {};
 
