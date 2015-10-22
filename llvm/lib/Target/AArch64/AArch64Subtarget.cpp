@@ -114,6 +114,11 @@ void AArch64Subtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
   // bi-directional scheduling. 253.perlbmk.
   Policy.OnlyTopDown = false;
   Policy.OnlyBottomUp = false;
+  // Enabling or Disabling the latency heuristic is a close call: It seems to
+  // help nearly no benchmark on out-of-order architectures, on the other hand
+  // it regresses register pressure on a few benchmarking.
+  if (isCyclone())
+    Policy.DisableLatencyHeuristic = true;
 }
 
 bool AArch64Subtarget::enableEarlyIfConversion() const {
