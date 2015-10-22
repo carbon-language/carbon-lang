@@ -10,6 +10,7 @@
 #ifndef LLD_ELF_INPUT_SECTION_H
 #define LLD_ELF_INPUT_SECTION_H
 
+#include "Config.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/Object/ELF.h"
 
@@ -38,6 +39,11 @@ public:
   InputSectionBase(ObjectFile<ELFT> *File, const Elf_Shdr *Header,
                    Kind SectionKind);
   OutputSectionBase<ELFT> *OutSec = nullptr;
+
+  // Used for garbage collection.
+  // Live bit makes sense only when Config->GcSections is true.
+  bool isLive() const { return !Config->GcSections || Live; }
+  bool Live = false;
 
   // Returns the size of this section (even if this is a common or BSS.)
   size_t getSize() const { return Header->sh_size; }

@@ -122,6 +122,7 @@ public:
   }
 
   Elf_Sym_Range getLocalSymbols();
+  const Elf_Sym *getLocalSymbol(uintX_t SymIndex);
 
   const Elf_Shdr *getSymbolTable() const { return this->Symtab; };
   ArrayRef<Elf_Word> getSymbolTableShndx() const { return SymtabSHNDX; };

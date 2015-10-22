@@ -142,6 +142,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->DiscardNone = Args.hasArg(OPT_discard_none);
   Config->EnableNewDtags = !Args.hasArg(OPT_disable_new_dtags);
   Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
+  Config->GcSections = Args.hasArg(OPT_gc_sections);
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->Shared = Args.hasArg(OPT_shared);
@@ -253,5 +254,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   // Write the result to the file.
   Symtab.scanShlibUndefined();
+  if (Config->GcSections)
+    markLive<ELFT>(&Symtab);
   writeResult<ELFT>(&Symtab);
 }

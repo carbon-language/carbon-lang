@@ -9,6 +9,7 @@ add_llvm_library(lldELF2
   InputFiles.cpp
   InputSection.cpp
   LinkerScript.cpp
+  MarkLive.cpp
   OutputSections.cpp
   SymbolTable.cpp
   Symbols.cpp

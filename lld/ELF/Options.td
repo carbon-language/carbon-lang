@@ -49,6 +49,9 @@ def fini : Separate<["-"], "fini">, MetaVarName<"<symbol>">,
 def hash_style : Separate<["--", "-"], "hash-style">,
   HelpText<"Specify hash style (sysv, gnu or both)">;
 
+def gc_sections : Flag<["--"], "gc-sections">,
+  HelpText<"Enable garbage collection of unused sections">;
+
 def init : Separate<["-"], "init">, MetaVarName<"<symbol>">,
   HelpText<"Specify an initializer function">;
 
@@ -127,7 +130,6 @@ def build_id : Flag<["--"], "build-id">;
 def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def end_group : Flag<["--"], "end-group">;
 def fatal_warnings : Flag<["--"], "fatal-warnings">;
-def gc_sections : Flag<["--"], "gc-sections">;
 def no_add_needed : Flag<["--"], "no-add-needed">;
 def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;
 def no_warn_mismatch : Flag<["--"], "no-warn-mismatch">;

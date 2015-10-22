@@ -225,7 +225,7 @@ public:
     return S->kind() == Base::DefinedRegularKind;
   }
 
-  const InputSectionBase<ELFT> &Section;
+  InputSectionBase<ELFT> &Section;
 };
 
 template <class ELFT> class DefinedSynthetic : public Defined<ELFT> {

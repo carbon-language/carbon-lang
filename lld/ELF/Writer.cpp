@@ -426,7 +426,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
     for (InputSectionBase<ELFT> *C : F->getSections()) {
-      if (!C || C == &InputSection<ELFT>::Discarded)
+      if (!C || !C->isLive() || C == &InputSection<ELFT>::Discarded)
         continue;
       const Elf_Shdr *H = C->getSectionHdr();
       uintX_t OutFlags = H->sh_flags & ~SHF_GROUP;
@@ -497,7 +497,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     for (InputSectionBase<ELFT> *B : F->getSections())
       if (auto *S = dyn_cast_or_null<InputSection<ELFT>>(B))
         if (S != &InputSection<ELFT>::Discarded)
-          scanRelocs(*S);
+          if (S->isLive())
+            scanRelocs(*S);
 
   // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;

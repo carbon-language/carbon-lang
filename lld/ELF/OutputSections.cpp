@@ -898,21 +898,23 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         continue;
 
       auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-      Buf += sizeof(*ESym);
-      ESym->st_name = StrTabSec.getFileOff(SymName);
-      ESym->st_size = Sym.st_size;
-      ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
       uintX_t VA = 0;
       if (Sym.st_shndx == SHN_ABS) {
         ESym->st_shndx = SHN_ABS;
         VA = Sym.st_value;
       } else {
         const InputSectionBase<ELFT> *Section = File->getSection(Sym);
+        if (!Section->isLive())
+          continue;
         const OutputSectionBase<ELFT> *OutSec = Section->OutSec;
         ESym->st_shndx = OutSec->SectionIndex;
         VA += OutSec->getVA() + Section->getOffset(Sym);
       }
+      ESym->st_name = StrTabSec.getFileOff(SymName);
+      ESym->st_size = Sym.st_size;
+      ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
       ESym->st_value = VA;
+      Buf += sizeof(*ESym);
     }
   }
 }
@@ -924,20 +926,19 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
   for (const SymbolData &Item : Symbols) {
     SymbolBody *Body = Item.Body;
-    StringRef Name = Body->getName();
-
-    ESym->st_name = StrTabSec.getFileOff(Name);
-
     const OutputSectionBase<ELFT> *OutSec = nullptr;
-    const InputSectionBase<ELFT> *Section = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::DefinedSyntheticKind:
       OutSec = &cast<DefinedSynthetic<ELFT>>(Body)->Section;
       break;
-    case SymbolBody::DefinedRegularKind:
-      Section = &cast<DefinedRegular<ELFT>>(Body)->Section;
+    case SymbolBody::DefinedRegularKind: {
+      auto *Sym = cast<DefinedRegular<ELFT>>(Body->repl());
+      if (!Sym->Section.isLive())
+        continue;
+      OutSec = Sym->Section.OutSec;
       break;
+    }
     case SymbolBody::DefinedCommonKind:
       OutSec = Out<ELFT>::Bss;
       break;
@@ -947,6 +948,9 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     case SymbolBody::LazyKind:
       break;
     }
+
+    StringRef Name = Body->getName();
+    ESym->st_name = StrTabSec.getFileOff(Name);
 
     unsigned char Type = STT_NOTYPE;
     uintX_t Size = 0;
@@ -960,9 +964,6 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     ESym->st_size = Size;
     ESym->setVisibility(Body->getVisibility());
     ESym->st_value = getSymVA<ELFT>(*Body);
-
-    if (Section)
-      OutSec = Section->OutSec;
 
     if (isa<DefinedAbsolute<ELFT>>(Body))
       ESym->st_shndx = SHN_ABS;

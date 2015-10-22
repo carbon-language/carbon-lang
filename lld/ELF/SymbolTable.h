@@ -55,6 +55,7 @@ public:
   void addIgnoredSym(StringRef Name);
   bool isUndefined(StringRef Name);
   void scanShlibUndefined();
+  SymbolBody *find(StringRef Name);
 
 private:
   Symbol *insert(SymbolBody *New);
@@ -63,7 +64,6 @@ private:
   void addMemberFile(Lazy *Body);
   void checkCompatibility(std::unique_ptr<InputFile> &File);
   void resolve(SymbolBody *Body);
-  SymbolBody *find(StringRef Name);
   void reportConflict(const Twine &Message, const SymbolBody &Old,
                       const SymbolBody &New, bool Warning);
 

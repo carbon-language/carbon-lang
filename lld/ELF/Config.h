@@ -51,6 +51,7 @@ struct Configuration {
   bool DiscardNone;
   bool EnableNewDtags;
   bool ExportDynamic;
+  bool GcSections;
   bool GnuHash = false;
   bool Mips64EL = false;
   bool NoInhibitExec;

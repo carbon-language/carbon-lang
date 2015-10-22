@@ -75,6 +75,16 @@ typename ObjectFile<ELFT>::Elf_Sym_Range ObjectFile<ELFT>::getLocalSymbols() {
 }
 
 template <class ELFT>
+const typename ObjectFile<ELFT>::Elf_Sym *
+ObjectFile<ELFT>::getLocalSymbol(uintX_t SymIndex) {
+  uint32_t FirstNonLocal = this->Symtab->sh_info;
+  if (SymIndex >= FirstNonLocal)
+    return nullptr;
+  Elf_Sym_Range Syms = this->ELFObj.symbols(this->Symtab);
+  return Syms.begin() + SymIndex;
+}
+
+template <class ELFT>
 void elf2::ObjectFile<ELFT>::parse(DenseSet<StringRef> &Comdats) {
   // Read section and symbol tables.
   initializeSections(Comdats);
