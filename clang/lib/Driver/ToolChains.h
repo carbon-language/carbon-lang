@@ -282,8 +282,8 @@ public:
 
   /// Add any profiling runtime libraries that are needed. This is essentially a
   /// MachO specific version of addProfileRT in Tools.cpp.
-  virtual void addProfileRTLibs(const llvm::opt::ArgList &Args,
-                                llvm::opt::ArgStringList &CmdArgs) const {
+  void addProfileRTLibs(const llvm::opt::ArgList &Args,
+                        llvm::opt::ArgStringList &CmdArgs) const override {
     // There aren't any profiling libs for embedded targets currently.
   }
 

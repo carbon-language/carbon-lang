@@ -300,15 +300,7 @@ void MachO::AddLinkRuntimeLib(const ArgList &Args, ArgStringList &CmdArgs,
 
 void Darwin::addProfileRTLibs(const ArgList &Args,
                               ArgStringList &CmdArgs) const {
-  if (!(Args.hasFlag(options::OPT_fprofile_arcs, options::OPT_fno_profile_arcs,
-                     false) ||
-        Args.hasArg(options::OPT_fprofile_generate) ||
-        Args.hasArg(options::OPT_fprofile_generate_EQ) ||
-        Args.hasArg(options::OPT_fprofile_instr_generate) ||
-        Args.hasArg(options::OPT_fprofile_instr_generate_EQ) ||
-        Args.hasArg(options::OPT_fcreate_profile) ||
-        Args.hasArg(options::OPT_coverage)))
-    return;
+  if (!needsProfileRT(Args)) return;
 
   // Select the appropriate runtime library for the target.
   if (isTargetIOSBased())
@@ -317,6 +309,7 @@ void Darwin::addProfileRTLibs(const ArgList &Args,
   else
     AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_osx.a",
                       /*AlwaysLink*/ true);
+  return;
 }
 
 void DarwinClang::AddLinkSanitizerLibArgs(const ArgList &Args,

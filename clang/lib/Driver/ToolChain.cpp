@@ -301,9 +301,28 @@ std::string ToolChain::getCompilerRT(const ArgList &Args, StringRef Component,
   return Path.str();
 }
 
+const char *ToolChain::getCompilerRTArgString(const llvm::opt::ArgList &Args,
+                                              StringRef Component,
+                                              bool Shared) const {
+  return Args.MakeArgString(getCompilerRT(Args, Component, Shared));
+}
+
+bool ToolChain::needsProfileRT(const ArgList &Args) {
+  if (Args.hasFlag(options::OPT_fprofile_arcs, options::OPT_fno_profile_arcs,
+                   false) ||
+      Args.hasArg(options::OPT_fprofile_generate) ||
+      Args.hasArg(options::OPT_fprofile_generate_EQ) ||
+      Args.hasArg(options::OPT_fprofile_instr_generate) ||
+      Args.hasArg(options::OPT_fprofile_instr_generate_EQ) ||
+      Args.hasArg(options::OPT_fcreate_profile) ||
+      Args.hasArg(options::OPT_coverage))
+    return true;
+
+  return false;
+}
+
 Tool *ToolChain::SelectTool(const JobAction &JA) const {
-  if (getDriver().ShouldUseClangCompiler(JA))
-    return getClang();
+  if (getDriver().ShouldUseClangCompiler(JA)) return getClang();
   Action::ActionClass AC = JA.getKind();
   if (AC == Action::AssembleJobClass && useIntegratedAs())
     return getClangAs();
@@ -491,9 +510,16 @@ void ToolChain::addClangTargetOptions(const ArgList &DriverArgs,
 
 void ToolChain::addClangWarningOptions(ArgStringList &CC1Args) const {}
 
+void ToolChain::addProfileRTLibs(const llvm::opt::ArgList &Args,
+                                 llvm::opt::ArgStringList &CmdArgs) const {
+  if (!needsProfileRT(Args)) return;
+
+  CmdArgs.push_back(getCompilerRTArgString(Args, "profile"));
+  return;
+}
+
 ToolChain::RuntimeLibType ToolChain::GetRuntimeLibType(
-  const ArgList &Args) const
-{
+    const ArgList &Args) const {
   if (Arg *A = Args.getLastArg(options::OPT_rtlib_EQ)) {
     StringRef Value = A->getValue();
     if (Value == "compiler-rt")

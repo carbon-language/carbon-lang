@@ -258,6 +258,12 @@ public:
                                     StringRef Component,
                                     bool Shared = false) const;
 
+  const char *getCompilerRTArgString(const llvm::opt::ArgList &Args,
+                                     StringRef Component,
+                                     bool Shared = false) const;
+  /// needsProfileRT - returns true if instrumentation profile is on.
+  static bool needsProfileRT(const llvm::opt::ArgList &Args);
+
   /// IsUnwindTablesDefault - Does this tool chain use -funwind-tables
   /// by default.
   virtual bool IsUnwindTablesDefault() const;
@@ -378,8 +384,11 @@ public:
   /// global flags for unsafe floating point math, add it and return true.
   ///
   /// This checks for presence of the -Ofast, -ffast-math or -funsafe-math flags.
-  virtual bool
-  AddFastMathRuntimeIfAvailable(const llvm::opt::ArgList &Args,
+  virtual bool AddFastMathRuntimeIfAvailable(
+      const llvm::opt::ArgList &Args, llvm::opt::ArgStringList &CmdArgs) const;
+  /// addProfileRTLibs - When -fprofile-instr-profile is specified, add profile
+  /// runtime library, otherwise return false.
+  virtual void addProfileRTLibs(const llvm::opt::ArgList &Args,
                                 llvm::opt::ArgStringList &CmdArgs) const;
 
   /// \brief Return sanitizers which are available in this toolchain.
