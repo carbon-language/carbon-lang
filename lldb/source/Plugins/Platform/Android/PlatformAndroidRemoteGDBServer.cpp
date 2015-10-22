@@ -126,7 +126,8 @@ PlatformAndroidRemoteGDBServer::ConnectRemote (Args& args)
         return Error("URL is null.");
     if (!UriParser::Parse (url, scheme, host, remote_port, path))
         return Error("Invalid URL: %s", url);
-    m_device_id = host;
+    if (scheme == "adb")
+        m_device_id = host;
 
     std::string connect_url;
     auto error = MakeConnectURL (g_remote_platform_pid,

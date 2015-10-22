@@ -196,7 +196,8 @@ PlatformAndroid::ConnectRemote(Args& args)
         return Error("URL is null.");
     if (!UriParser::Parse(url, scheme, host, port, path))
         return Error("Invalid URL: %s", url);
-    m_device_id = host;
+    if (scheme == "adb")
+        m_device_id = host;
 
     auto error = PlatformLinux::ConnectRemote(args);
     if (error.Success())
