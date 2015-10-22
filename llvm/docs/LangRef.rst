@@ -715,7 +715,7 @@ Aliases may have an optional :ref:`linkage type <linkage>`, an optional
 
 Syntax::
 
-    @<Name> = [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal] [unnamed_addr] alias <AliaseeTy> @<Aliasee>
+    @<Name> = [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal] [unnamed_addr] alias <AliaseeTy>, <AliaseeTy>* @<Aliasee>
 
 The linkage must be one of ``private``, ``internal``, ``linkonce``, ``weak``,
 ``linkonce_odr``, ``weak_odr``, ``external``. Note that some system linkers
