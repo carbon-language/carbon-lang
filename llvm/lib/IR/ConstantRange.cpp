@@ -21,7 +21,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -123,6 +125,57 @@ ConstantRange ConstantRange::makeSatisfyingICmpRegion(CmpInst::Predicate Pred,
   //
   return makeAllowedICmpRegion(CmpInst::getInversePredicate(Pred), CR)
       .inverse();
+}
+
+ConstantRange ConstantRange::makeNoWrapRegion(Instruction::BinaryOps BinOp,
+                                              const APInt &C,
+                                              unsigned NoWrapKind) {
+  typedef OverflowingBinaryOperator OBO;
+
+  // Computes the intersection of CR0 and CR1.  It is different from
+  // intersectWith in that the ConstantRange returned will only contain elements
+  // in both CR0 and CR1 (i.e. SubsetIntersect(X, Y) is a *subset*, proper or
+  // not, of both X and Y).
+  auto SubsetIntersect =
+      [](const ConstantRange &CR0, const ConstantRange &CR1) {
+    return CR0.inverse().unionWith(CR1.inverse()).inverse();
+  };
+
+  assert(BinOp >= Instruction::BinaryOpsBegin &&
+         BinOp < Instruction::BinaryOpsEnd && "Binary operators only!");
+
+  assert((NoWrapKind == OBO::NoSignedWrap ||
+          NoWrapKind == OBO::NoUnsignedWrap ||
+          NoWrapKind == (OBO::NoUnsignedWrap | OBO::NoSignedWrap)) &&
+         "NoWrapKind invalid!");
+
+  unsigned BitWidth = C.getBitWidth();
+  if (BinOp != Instruction::Add)
+    // Conservative answer: empty set
+    return ConstantRange(BitWidth, false);
+
+  if (C.isMinValue())
+    // Full set: nothing signed / unsigned wraps when added to 0.
+    return ConstantRange(BitWidth);
+
+  ConstantRange Result(BitWidth);
+
+  if (NoWrapKind & OBO::NoUnsignedWrap)
+    Result = SubsetIntersect(Result,
+                             ConstantRange(APInt::getNullValue(BitWidth), -C));
+
+  if (NoWrapKind & OBO::NoSignedWrap) {
+    if (C.isStrictlyPositive())
+      Result = SubsetIntersect(
+          Result, ConstantRange(APInt::getSignedMinValue(BitWidth),
+                                APInt::getSignedMinValue(BitWidth) - C));
+    else
+      Result = SubsetIntersect(
+          Result, ConstantRange(APInt::getSignedMinValue(BitWidth) - C,
+                                APInt::getSignedMinValue(BitWidth)));
+  }
+
+  return Result;
 }
 
 /// isFullSet - Return true if this set contains all of the elements possible

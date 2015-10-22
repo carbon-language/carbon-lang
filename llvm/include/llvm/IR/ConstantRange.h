@@ -82,6 +82,17 @@ public:
   static ConstantRange makeSatisfyingICmpRegion(CmpInst::Predicate Pred,
                                                 const ConstantRange &Other);
 
+  /// Return the largest range containing all X such that "X BinOpC C" does not
+  /// wrap (overflow).
+  ///
+  /// Example:
+  ///  typedef OverflowingBinaryOperator OBO;
+  ///  makeNoWrapRegion(Add, i8 1, OBO::NoSignedWrap) == [-128, 127)
+  ///  makeNoWrapRegion(Add, i8 1, OBO::NoUnsignedWrap) == [0, -1)
+  ///  makeNoWrapRegion(Add, i8 0, OBO::NoUnsignedWrap) == Full Set
+  static ConstantRange makeNoWrapRegion(Instruction::BinaryOps BinOp,
+                                        const APInt &C, unsigned NoWrapKind);
+
   /// Return the lower value for this range.
   ///
   const APInt &getLower() const { return Lower; }

@@ -9,6 +9,7 @@
 
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Operator.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -566,6 +567,57 @@ TEST(ConstantRange, MakeSatisfyingICmpRegion) {
   EXPECT_EQ(
       ConstantRange::makeSatisfyingICmpRegion(ICmpInst::ICMP_SGE, SignedSample),
       ConstantRange(APInt(8, 4), APInt(8, -128)));
+}
+
+TEST(ConstantRange, MakeOverflowingRegion) {
+  const int IntMin4Bits = 8;
+  const int IntMax4Bits = 7;
+  typedef OverflowingBinaryOperator OBO;
+
+  for (int Const : {0, -1, -2, 1, 2, IntMin4Bits, IntMax4Bits}) {
+    APInt C(4, Const, true /* = isSigned */);
+
+    auto NUWRegion =
+      ConstantRange::makeNoWrapRegion(Instruction::Add, C, OBO::NoUnsignedWrap);
+
+    EXPECT_FALSE(NUWRegion.isEmptySet());
+
+    auto NSWRegion =
+      ConstantRange::makeNoWrapRegion(Instruction::Add, C, OBO::NoSignedWrap);
+
+    EXPECT_FALSE(NSWRegion.isEmptySet());
+
+    auto NoWrapRegion = ConstantRange::makeNoWrapRegion(
+        Instruction::Add, C, OBO::NoSignedWrap | OBO::NoUnsignedWrap);
+
+    EXPECT_FALSE(NoWrapRegion.isEmptySet());
+    EXPECT_TRUE(NUWRegion.intersectWith(NSWRegion).contains(NoWrapRegion));
+
+    for (APInt I = NUWRegion.getLower(), E = NUWRegion.getUpper(); I != E;
+         ++I) {
+      bool Overflow = false;
+      I.uadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+    }
+
+    for (APInt I = NSWRegion.getLower(), E = NSWRegion.getUpper(); I != E;
+         ++I) {
+      bool Overflow = false;
+      I.sadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+    }
+
+    for (APInt I = NoWrapRegion.getLower(), E = NoWrapRegion.getUpper(); I != E;
+         ++I) {
+      bool Overflow = false;
+
+      I.sadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+
+      I.uadd_ov(C, Overflow);
+      EXPECT_FALSE(Overflow);
+    }
+  }
 }
 
 }  // anonymous namespace
