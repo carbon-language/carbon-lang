@@ -14,18 +14,18 @@
 // C++ Includes
 #include <map>
 #include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Host/Mutex.h"
-
+#include "lldb/Expression/UtilityFunction.h"
 
 namespace lldb_private
 {
   
 class AppleObjCTrampolineHandler {
 public:
-    
     AppleObjCTrampolineHandler (const lldb::ProcessSP &process_sp, 
                                 const lldb::ModuleSP &objc_module_sp);
     
@@ -44,7 +44,6 @@ public:
         return (addr == m_msg_forward_addr || addr == m_msg_forward_stret_addr);
     }
 
-    
     struct DispatchFunction {
     public:
         typedef enum 
@@ -91,7 +90,6 @@ private:
             uint32_t flags;
             lldb::addr_t code_start;
         };
-
 
         class VTableRegion 
         {
@@ -189,7 +187,6 @@ private:
         lldb::break_id_t m_trampolines_changed_bp_id;
         region_collection m_regions;
         lldb::ModuleSP m_objc_module_sp;
-        
     };
     
     static const DispatchFunction g_dispatch_functions[];
@@ -205,10 +202,8 @@ private:
     lldb::addr_t m_msg_forward_addr;
     lldb::addr_t m_msg_forward_stret_addr;
     std::unique_ptr<AppleObjCVTables> m_vtables_ap;
-    
-     
 };
 
-}  // using namespace lldb_private
+} // namespace lldb_private
 
-#endif	// lldb_AppleObjCTrampolineHandler_h_
+#endif // lldb_AppleObjCTrampolineHandler_h_
