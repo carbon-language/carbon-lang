@@ -87,8 +87,11 @@ void Fuzzer::PrintStats(const char *Where, size_t Cov, const char *End) {
   if (!Options.Verbosity) return;
   size_t Seconds = secondsSinceProcessStartUp();
   size_t ExecPerSec = (Seconds ? TotalNumberOfRuns / Seconds : 0);
-  Printf("#%zd\t%s cov: %zd bits: %zd units: %zd exec/s: %zd",
-         TotalNumberOfRuns, Where, Cov, TotalBits(), Corpus.size(), ExecPerSec);
+  Printf("#%zd\t%s", TotalNumberOfRuns, Where);
+  Printf(" cov: %zd", Cov);
+  if (auto TB = TotalBits())
+    Printf(" bits: %zd", TB);
+  Printf(" units: %zd exec/s: %zd", Corpus.size(), ExecPerSec);
   if (TotalNumberOfExecutedTraceBasedMutations)
     Printf(" tbm: %zd", TotalNumberOfExecutedTraceBasedMutations);
   Printf("%s", End);
@@ -112,18 +115,16 @@ void Fuzzer::RereadOutputCorpus() {
     if (UnitHashesAddedToCorpus.insert(Hash(X)).second) {
       CurrentUnit.clear();
       CurrentUnit.insert(CurrentUnit.begin(), X.begin(), X.end());
-      size_t NewCoverage = RunOne(CurrentUnit);
-      if (NewCoverage) {
+      if (RunOne(CurrentUnit)) {
         Corpus.push_back(X);
         if (Options.Verbosity >= 1)
-          PrintStats("RELOAD", NewCoverage);
+          PrintStats("RELOAD", LastRecordedBlockCoverage);
       }
     }
   }
 }
 
 void Fuzzer::ShuffleAndMinimize() {
-  size_t MaxCov = 0;
   bool PreferSmall = (Options.PreferSmallDuringInitialShuffle == 1 ||
                       (Options.PreferSmallDuringInitialShuffle == -1 &&
                        USF.GetRand().RandBool()));
@@ -146,28 +147,32 @@ void Fuzzer::ShuffleAndMinimize() {
       U.insert(U.begin(), C.begin() + First, C.begin() + Last);
       if (Options.OnlyASCII)
         ToASCII(U);
-      size_t NewCoverage = RunOne(U);
-      if (NewCoverage) {
-        MaxCov = NewCoverage;
+      if (RunOne(U)) {
         NewCorpus.push_back(U);
         if (Options.Verbosity >= 2)
-          Printf("NEW0: %zd L %zd\n", NewCoverage, U.size());
+          Printf("NEW0: %zd L %zd\n", LastRecordedBlockCoverage, U.size());
       }
     }
   }
   Corpus = NewCorpus;
   for (auto &X : Corpus)
     UnitHashesAddedToCorpus.insert(Hash(X));
-  PrintStats("INITED", MaxCov);
+  PrintStats("INITED", LastRecordedBlockCoverage);
 }
 
-size_t Fuzzer::RunOne(const Unit &U) {
+bool Fuzzer::RunOne(const Unit &U) {
   UnitStartTime = system_clock::now();
   TotalNumberOfRuns++;
-  size_t Res = RunOneMaximizeTotalCoverage(U);
+
+  PrepareCoverageBeforeRun();
+  ExecuteCallback(U);
+  bool Res = CheckCoverageAfterRun();
+
   auto UnitStopTime = system_clock::now();
   auto TimeOfUnit =
       duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
+  if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity)
+    PrintStats("pulse ", LastRecordedBlockCoverage);
   if (TimeOfUnit > TimeOfLongestUnitInSeconds &&
       TimeOfUnit >= Options.ReportSlowUnits) {
     TimeOfLongestUnitInSeconds = TimeOfUnit;
@@ -182,7 +187,8 @@ void Fuzzer::RunOneAndUpdateCorpus(Unit &U) {
     return;
   if (Options.OnlyASCII)
     ToASCII(U);
-  ReportNewCoverage(RunOne(U), U);
+  if (RunOne(U))
+    ReportNewCoverage(U);
 }
 
 void Fuzzer::ExecuteCallback(const Unit &U) {
@@ -191,26 +197,27 @@ void Fuzzer::ExecuteCallback(const Unit &U) {
   assert(Res == 0);
 }
 
-size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {
-  size_t NumCounters = __sanitizer_get_number_of_counters();
+size_t Fuzzer::RecordBlockCoverage() {
+  return LastRecordedBlockCoverage = __sanitizer_get_total_unique_coverage();
+}
+
+void Fuzzer::PrepareCoverageBeforeRun() {
   if (Options.UseCounters) {
+    size_t NumCounters = __sanitizer_get_number_of_counters();
     CounterBitmap.resize(NumCounters);
     __sanitizer_update_counter_bitset_and_clear_counters(0);
   }
-  size_t OldCoverage = __sanitizer_get_total_unique_coverage();
-  ExecuteCallback(U);
-  size_t NewCoverage = __sanitizer_get_total_unique_coverage();
+  RecordBlockCoverage();
+}
+
+bool Fuzzer::CheckCoverageAfterRun() {
+  size_t OldCoverage = LastRecordedBlockCoverage;
+  size_t NewCoverage = RecordBlockCoverage();
   size_t NumNewBits = 0;
   if (Options.UseCounters)
     NumNewBits = __sanitizer_update_counter_bitset_and_clear_counters(
         CounterBitmap.data());
-
-  if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity)
-    PrintStats("pulse ", NewCoverage);
-
-  if (NewCoverage > OldCoverage || NumNewBits)
-    return NewCoverage;
-  return 0;
+  return NewCoverage > OldCoverage || NumNewBits;
 }
 
 void Fuzzer::WriteToOutputCorpus(const Unit &U) {
@@ -244,11 +251,10 @@ void Fuzzer::SaveCorpus() {
            Options.OutputCorpus.c_str());
 }
 
-void Fuzzer::ReportNewCoverage(size_t NewCoverage, const Unit &U) {
-  if (!NewCoverage) return;
+void Fuzzer::ReportNewCoverage(const Unit &U) {
   Corpus.push_back(U);
   UnitHashesAddedToCorpus.insert(Hash(U));
-  PrintStats("NEW   ", NewCoverage, "");
+  PrintStats("NEW   ", LastRecordedBlockCoverage, "");
   if (Options.Verbosity) {
     Printf(" L: %zd", U.size());
     if (U.size() < 30) {

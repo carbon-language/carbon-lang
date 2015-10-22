@@ -123,17 +123,20 @@ class Fuzzer {
  private:
   void AlarmCallback();
   void MutateAndTestOne(Unit *U);
-  void ReportNewCoverage(size_t NewCoverage, const Unit &U);
-  size_t RunOne(const Unit &U);
+  void ReportNewCoverage(const Unit &U);
+  bool RunOne(const Unit &U);
   void RunOneAndUpdateCorpus(Unit &U);
-  size_t RunOneMaximizeTotalCoverage(const Unit &U);
-  size_t RunOneMaximizeCoveragePairs(const Unit &U);
   void WriteToOutputCorpus(const Unit &U);
   void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
   void PrintStats(const char *Where, size_t Cov, const char *End = "\n");
   void PrintUnitInASCII(const Unit &U, const char *PrintAfter = "");
 
   void SyncCorpus();
+
+  size_t RecordBlockCoverage();
+  void PrepareCoverageBeforeRun();
+  bool CheckCoverageAfterRun();
+
 
   // Trace-based fuzzing: we run a unit with some kind of tracing
   // enabled and record potentially useful mutations. Then
@@ -172,6 +175,7 @@ class Fuzzer {
   system_clock::time_point UnitStartTime;
   long TimeOfLongestUnitInSeconds = 0;
   long EpochOfLastReadOfOutputCorpus = 0;
+  size_t LastRecordedBlockCoverage = 0;
 };
 
 class SimpleUserSuppliedFuzzer: public UserSuppliedFuzzer {
