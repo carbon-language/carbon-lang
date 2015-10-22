@@ -989,18 +989,31 @@ ModuleList::GetSharedModule
         // If we get in here we got the correct arch, now we just need
         // to verify the UUID if one was given
         if (uuid_ptr && *uuid_ptr != module_sp->GetUUID())
+        {
             module_sp.reset();
+        }
         else
         {
-            if (did_create_ptr)
-                *did_create_ptr = true;
+            if (module_sp->GetObjectFile() && module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeStubLibrary)
+            {
+                module_sp.reset();
+            }
+            else
+            {
+                if (did_create_ptr)
+                {
+                    *did_create_ptr = true;
+                }
 
-            shared_module_list.ReplaceEquivalent(module_sp);
-            return error;
+                shared_module_list.ReplaceEquivalent(module_sp);
+                return error;
+            }
         }
     }
     else
+    {
         module_sp.reset();
+    }
 
     if (module_search_paths_ptr)
     {
@@ -1024,18 +1037,29 @@ ModuleList::GetSharedModule
                 // If we get in here we got the correct arch, now we just need
                 // to verify the UUID if one was given
                 if (uuid_ptr && *uuid_ptr != module_sp->GetUUID())
+                {
                     module_sp.reset();
+                }
                 else
                 {
-                    if (did_create_ptr)
-                        *did_create_ptr = true;
-
-                    shared_module_list.ReplaceEquivalent(module_sp);
-                    return Error();
+                    if (module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeStubLibrary)
+                    {
+                        module_sp.reset();
+                    }
+                    else
+                    {
+                        if (did_create_ptr)
+                            *did_create_ptr = true;
+    
+                        shared_module_list.ReplaceEquivalent(module_sp);
+                        return Error();
+                    }
                 }
             }
             else
+            {
                 module_sp.reset();
+            }
         }
     }
 
@@ -1119,10 +1143,17 @@ ModuleList::GetSharedModule
             // By getting the object file we can guarantee that the architecture matches
             if (module_sp && module_sp->GetObjectFile())
             {
-                if (did_create_ptr)
-                    *did_create_ptr = true;
+                if (module_sp->GetObjectFile()->GetType() == ObjectFile::eTypeStubLibrary)
+                {
+                    module_sp.reset();
+                }
+                else
+                {
+                    if (did_create_ptr)
+                        *did_create_ptr = true;
 
-                shared_module_list.ReplaceEquivalent(module_sp);
+                    shared_module_list.ReplaceEquivalent(module_sp);
+                }
             }
             else
             {
