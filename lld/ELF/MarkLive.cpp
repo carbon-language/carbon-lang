@@ -102,7 +102,7 @@ template <class ELFT> void lld::elf2::markLive(SymbolTable<ELFT> *Symtab) {
 
   auto MarkSymbol = [&](SymbolBody *Sym) {
     if (Sym)
-      if (auto *D = dyn_cast_or_null<DefinedRegular<ELFT>>(Sym->repl()))
+      if (auto *D = dyn_cast<DefinedRegular<ELFT>>(Sym->repl()))
         Enqueue(&D->Section);
   };
 
