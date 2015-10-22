@@ -119,7 +119,7 @@ bool Sinking::runOnFunction(Function &F) {
 
 bool Sinking::ProcessBlock(BasicBlock &BB) {
   // Can't sink anything out of a block that has less than two successors.
-  if (BB.getTerminator()->getNumSuccessors() <= 1 || BB.empty()) return false;
+  if (BB.getTerminator()->getNumSuccessors() <= 1) return false;
 
   // Don't bother sinking code out of unreachable blocks. In addition to being
   // unprofitable, it can also lead to infinite looping, because in an
