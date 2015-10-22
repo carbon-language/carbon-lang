@@ -36,7 +36,9 @@ public:
     {
         if (ccstr)
         {
-            const StringPoolEntryType&entry = GetStringMapEntryFromKeyData (ccstr);
+            const uint8_t h = hash (llvm::StringRef(ccstr));
+            llvm::sys::SmartScopedReader<false> rlock(m_string_pools[h].m_mutex);
+            const StringPoolEntryType& entry = GetStringMapEntryFromKeyData (ccstr);
             return entry.getKey().size();
         }
         return 0;
@@ -46,7 +48,11 @@ public:
     GetMangledCounterpart (const char *ccstr) const
     {
         if (ccstr)
+        {
+            const uint8_t h = hash (llvm::StringRef(ccstr));
+            llvm::sys::SmartScopedReader<false> rlock(m_string_pools[h].m_mutex);
             return GetStringMapEntryFromKeyData (ccstr).getValue();
+        }
         return 0;
     }
 
@@ -55,8 +61,16 @@ public:
     {
         if (key_ccstr && value_ccstr)
         {
-            GetStringMapEntryFromKeyData (key_ccstr).setValue(value_ccstr);
-            GetStringMapEntryFromKeyData (value_ccstr).setValue(key_ccstr);
+            {
+                const uint8_t h = hash (llvm::StringRef(key_ccstr));
+                llvm::sys::SmartScopedWriter<false> wlock(m_string_pools[h].m_mutex);
+                GetStringMapEntryFromKeyData (key_ccstr).setValue(value_ccstr);
+            }
+            {
+                const uint8_t h = hash (llvm::StringRef(value_ccstr));
+                llvm::sys::SmartScopedWriter<false> wlock(m_string_pools[h].m_mutex);
+                GetStringMapEntryFromKeyData (value_ccstr).setValue(key_ccstr);
+            }
             return true;
         }
         return false;
@@ -83,7 +97,7 @@ public:
     {
         if (string_ref.data())
         {
-            uint8_t h = hash (string_ref);
+            const uint8_t h = hash (string_ref);
 
             {
                 llvm::sys::SmartScopedReader<false> rlock(m_string_pools[h].m_mutex);
@@ -104,18 +118,29 @@ public:
     {
         if (demangled_cstr)
         {
-            llvm::StringRef string_ref (demangled_cstr);
-            uint8_t h = hash (string_ref);
-            llvm::sys::SmartScopedWriter<false> wlock(m_string_pools[h].m_mutex);
+            const char *demangled_ccstr = nullptr;
 
-            // Make string pool entry with the mangled counterpart already set
-            StringPoolEntryType& entry = *m_string_pools[h].m_string_map.insert (std::make_pair (string_ref, mangled_ccstr)).first;
+            {
+                llvm::StringRef string_ref (demangled_cstr);
+                const uint8_t h = hash (string_ref);
+                llvm::sys::SmartScopedWriter<false> wlock(m_string_pools[h].m_mutex);
 
-            // Extract the const version of the demangled_cstr
-            const char *demangled_ccstr = entry.getKeyData();
-            // Now assign the demangled const string as the counterpart of the
-            // mangled const string...
-            GetStringMapEntryFromKeyData (mangled_ccstr).setValue(demangled_ccstr);
+                // Make string pool entry with the mangled counterpart already set
+                StringPoolEntryType& entry = *m_string_pools[h].m_string_map.insert (
+                    std::make_pair (string_ref, mangled_ccstr)).first;
+
+                // Extract the const version of the demangled_cstr
+                demangled_ccstr = entry.getKeyData();
+            }
+
+            {
+                // Now assign the demangled const string as the counterpart of the
+                // mangled const string...
+                const uint8_t h = hash (llvm::StringRef(mangled_ccstr));
+                llvm::sys::SmartScopedWriter<false> wlock(m_string_pools[h].m_mutex);
+                GetStringMapEntryFromKeyData (mangled_ccstr).setValue(demangled_ccstr);
+            }
+
             // Return the constant demangled C string
             return demangled_ccstr;
         }
@@ -153,7 +178,7 @@ public:
 
 protected:
     uint8_t
-    hash(const llvm::StringRef &s)
+    hash(const llvm::StringRef &s) const
     {
         uint32_t h = llvm::HashString(s);
         return ((h >> 24) ^ (h >> 16) ^ (h >> 8) ^ h) & 0xff;
