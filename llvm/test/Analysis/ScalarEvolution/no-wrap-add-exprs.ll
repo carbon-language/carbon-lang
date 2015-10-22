@@ -83,3 +83,40 @@ define void @f1(i8* %len_addr) {
 
   ret void
 }
+
+define void @f2(i8* %len_addr) {
+; CHECK-LABEL: Classifying expressions for: @f2
+ entry:
+  %len = load i8, i8* %len_addr, !range !0
+  %len_norange = load i8, i8* %len_addr
+; CHECK:  %len = load i8, i8* %len_addr, !range !0
+; CHECK-NEXT:  -->  %len U: [0,127) S: [0,127)
+; CHECK:  %len_norange = load i8, i8* %len_addr
+; CHECK-NEXT:  -->  %len_norange U: full-set S: full-set
+
+  %t0 = add i8 %len, 1
+  %t1 = add i8 %len, 2
+; CHECK:  %t0 = add i8 %len, 1
+; CHECK-NEXT:  -->  (1 + %len)<nuw><nsw>
+; CHECK:  %t1 = add i8 %len, 2
+; CHECK-NEXT:  -->  (2 + %len)<nuw>
+
+  %t0.zext = zext i8 %t0 to i16
+  %t1.zext = zext i8 %t1 to i16
+; CHECK:  %t0.zext = zext i8 %t0 to i16
+; CHECK-NEXT: -->  (1 + (zext i8 %len to i16))<nuw><nsw> U: [1,128) S: [1,128)
+; CHECK:  %t1.zext = zext i8 %t1 to i16
+; CHECK-NEXT:  -->  (2 + (zext i8 %len to i16))<nuw><nsw> U: [2,129) S: [2,129)
+
+  %q0 = add i8 %len_norange, 1
+  %q1 = add i8 %len_norange, 2
+  %q0.zext = zext i8 %q0 to i16
+  %q1.zext = zext i8 %q1 to i16
+
+; CHECK:  %q0.zext = zext i8 %q0 to i16
+; CHECK-NEXT:  -->  (zext i8 (1 + %len_norange) to i16) U: [0,256) S: [0,256)
+; CHECK:  %q1.zext = zext i8 %q1 to i16
+; CHECK-NEXT:  -->  (zext i8 (2 + %len_norange) to i16) U: [0,256) S: [0,256)
+
+  ret void
+}
