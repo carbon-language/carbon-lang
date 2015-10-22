@@ -79,6 +79,7 @@ class Fuzzer {
     int  MutateDepth = 5;
     bool ExitOnFirst = false;
     bool UseCounters = false;
+    bool UseIndirCalls = true;
     bool UseTraces = false;
     bool UseFullCoverageSet  = false;
     bool Reload = true;
@@ -134,6 +135,7 @@ class Fuzzer {
   void SyncCorpus();
 
   size_t RecordBlockCoverage();
+  size_t RecordCallerCalleeCoverage();
   void PrepareCoverageBeforeRun();
   bool CheckCoverageAfterRun();
 
@@ -176,6 +178,7 @@ class Fuzzer {
   long TimeOfLongestUnitInSeconds = 0;
   long EpochOfLastReadOfOutputCorpus = 0;
   size_t LastRecordedBlockCoverage = 0;
+  size_t LastRecordedCallerCalleeCoverage = 0;
 };
 
 class SimpleUserSuppliedFuzzer: public UserSuppliedFuzzer {

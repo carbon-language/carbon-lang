@@ -92,6 +92,8 @@ void Fuzzer::PrintStats(const char *Where, const char *End) {
     Printf(" cov: %zd", LastRecordedBlockCoverage);
   if (auto TB = TotalBits())
     Printf(" bits: %zd", TB);
+  if (LastRecordedCallerCalleeCoverage)
+    Printf(" indir: %zd", LastRecordedCallerCalleeCoverage);
   Printf(" units: %zd exec/s: %zd", Corpus.size(), ExecPerSec);
   if (TotalNumberOfExecutedTraceBasedMutations)
     Printf(" tbm: %zd", TotalNumberOfExecutedTraceBasedMutations);
@@ -202,6 +204,13 @@ size_t Fuzzer::RecordBlockCoverage() {
   return LastRecordedBlockCoverage = __sanitizer_get_total_unique_coverage();
 }
 
+size_t Fuzzer::RecordCallerCalleeCoverage() {
+  if (!Options.UseIndirCalls)
+    return 0;
+  return LastRecordedCallerCalleeCoverage =
+             __sanitizer_get_total_unique_caller_callee_pairs();
+}
+
 void Fuzzer::PrepareCoverageBeforeRun() {
   if (Options.UseCounters) {
     size_t NumCounters = __sanitizer_get_number_of_counters();
@@ -209,16 +218,20 @@ void Fuzzer::PrepareCoverageBeforeRun() {
     __sanitizer_update_counter_bitset_and_clear_counters(0);
   }
   RecordBlockCoverage();
+  RecordCallerCalleeCoverage();
 }
 
 bool Fuzzer::CheckCoverageAfterRun() {
   size_t OldCoverage = LastRecordedBlockCoverage;
   size_t NewCoverage = RecordBlockCoverage();
+  size_t OldCallerCalleeCoverage = LastRecordedCallerCalleeCoverage;
+  size_t NewCallerCalleeCoverage = RecordCallerCalleeCoverage();
   size_t NumNewBits = 0;
   if (Options.UseCounters)
     NumNewBits = __sanitizer_update_counter_bitset_and_clear_counters(
         CounterBitmap.data());
-  return NewCoverage > OldCoverage || NumNewBits;
+  return NewCoverage > OldCoverage ||
+         NewCallerCalleeCoverage > OldCallerCalleeCoverage || NumNewBits;
 }
 
 void Fuzzer::WriteToOutputCorpus(const Unit &U) {

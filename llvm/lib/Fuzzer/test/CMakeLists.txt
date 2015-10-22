@@ -13,6 +13,7 @@ set(DFSanTests
   )
 
 set(Tests
+  CallerCalleeTest
   CounterTest
   FourIndependentBranchesTest
   FullCoverageSetTest
