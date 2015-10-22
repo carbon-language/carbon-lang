@@ -1451,6 +1451,7 @@ with certain LLVM instructions (currently only ``call`` s and
 incorrect and will change program semantics.
 
 Syntax::
+
     operand bundle set ::= '[' operand bundle ']'
     operand bundle ::= tag '(' [ bundle operand ] (, bundle operand )* ')'
     bundle operand ::= SSA value
@@ -1472,16 +1473,14 @@ long as the behavior of an operand bundle is describable within these
 restrictions, LLVM does not need to have special knowledge of the
 operand bundle to not miscompile programs containing it.
 
- - The bundle operands for an unknown operand bundle escape in unknown
-   ways before control is transferred to the callee or invokee.
-
- - Calls and invokes with operand bundles have unknown read / write
-   effect on the heap on entry and exit (even if the call target is
-   ``readnone`` or ``readonly``).
-
- - An operand bundle at a call site cannot change the implementation
-   of the called function.  Inter-procedural optimizations work as
-   usual as long as they take into account the first two properties.
+- The bundle operands for an unknown operand bundle escape in unknown
+  ways before control is transferred to the callee or invokee.
+- Calls and invokes with operand bundles have unknown read / write
+  effect on the heap on entry and exit (even if the call target is
+  ``readnone`` or ``readonly``).
+- An operand bundle at a call site cannot change the implementation
+  of the called function.  Inter-procedural optimizations work as
+  usual as long as they take into account the first two properties.
 
 .. _moduleasm:
 
