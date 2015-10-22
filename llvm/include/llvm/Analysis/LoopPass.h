@@ -134,11 +134,6 @@ public:
   // the top level if \c ParentLoop is null.
   Loop &addLoop(Loop *ParentLoop);
 
-  // Reoptimize this loop. LPPassManager will re-insert this loop into the
-  // queue. This allows LoopPass to change loop nest for the loop. This
-  // utility may send LPPassManager into infinite loops so use caution.
-  void redoLoop(Loop *L);
-
   //===--------------------------------------------------------------------===//
   /// SimpleAnalysis - Provides simple interface to update analysis info
   /// maintained by various passes. Note, if required this interface can
@@ -161,7 +156,6 @@ public:
 private:
   std::deque<Loop *> LQ;
   bool skipThisLoop;
-  bool redoThisLoop;
   LoopInfo *LI;
   Loop *CurrentLoop;
 };

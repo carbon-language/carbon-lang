@@ -67,7 +67,6 @@ char LPPassManager::ID = 0;
 LPPassManager::LPPassManager()
   : FunctionPass(ID), PMDataManager() {
   skipThisLoop = false;
-  redoThisLoop = false;
   LI = nullptr;
   CurrentLoop = nullptr;
 }
@@ -124,14 +123,6 @@ Loop &LPPassManager::addLoop(Loop *ParentLoop) {
     }
   }
   return *L;
-}
-
-// Reoptimize this loop. LPPassManager will re-insert this loop into the
-// queue. This allows LoopPass to change loop nest for the loop. This
-// utility may send LPPassManager into infinite loops so use caution.
-void LPPassManager::redoLoop(Loop *L) {
-  assert (CurrentLoop == L && "Can redo only CurrentLoop");
-  redoThisLoop = true;
 }
 
 /// cloneBasicBlockSimpleAnalysis - Invoke cloneBasicBlockAnalysis hook for
@@ -223,7 +214,6 @@ bool LPPassManager::runOnFunction(Function &F) {
 
     CurrentLoop  = LQ.back();
     skipThisLoop = false;
-    redoThisLoop = false;
 
     // Run all passes on the current Loop.
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
@@ -288,9 +278,6 @@ bool LPPassManager::runOnFunction(Function &F) {
 
     // Pop the loop from queue after running all passes.
     LQ.pop_back();
-
-    if (redoThisLoop)
-      LQ.push_back(CurrentLoop);
   }
 
   // Finalization
