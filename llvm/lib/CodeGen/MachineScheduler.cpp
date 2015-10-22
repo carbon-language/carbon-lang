@@ -2722,8 +2722,8 @@ void GenericScheduler::tryCandidate(SchedCandidate &Cand,
 
   // Avoid serializing long latency dependence chains.
   // For acyclic path limited loops, latency was already checked above.
-  if (Cand.Policy.ReduceLatency && !Rem.IsAcyclicLatencyLimited
-      && tryLatency(TryCand, Cand, Zone)) {
+  if (!RegionPolicy.DisableLatencyHeuristic && Cand.Policy.ReduceLatency &&
+      !Rem.IsAcyclicLatencyLimited && tryLatency(TryCand, Cand, Zone)) {
     return;
   }
 

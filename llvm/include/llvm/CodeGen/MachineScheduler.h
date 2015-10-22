@@ -156,8 +156,12 @@ struct MachineSchedPolicy {
   bool OnlyTopDown;
   bool OnlyBottomUp;
 
+  // Disable heuristic that tries to fetch nodes from long dependency chains
+  // first.
+  bool DisableLatencyHeuristic;
+
   MachineSchedPolicy(): ShouldTrackPressure(false), OnlyTopDown(false),
-    OnlyBottomUp(false) {}
+    OnlyBottomUp(false), DisableLatencyHeuristic(false) {}
 };
 
 /// MachineSchedStrategy - Interface to the scheduling algorithm used by
