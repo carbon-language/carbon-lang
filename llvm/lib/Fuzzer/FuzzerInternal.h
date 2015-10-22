@@ -128,7 +128,7 @@ class Fuzzer {
   void RunOneAndUpdateCorpus(Unit &U);
   void WriteToOutputCorpus(const Unit &U);
   void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
-  void PrintStats(const char *Where, size_t Cov, const char *End = "\n");
+  void PrintStats(const char *Where, const char *End = "\n");
   void PrintUnitInASCII(const Unit &U, const char *PrintAfter = "");
 
   void SyncCorpus();

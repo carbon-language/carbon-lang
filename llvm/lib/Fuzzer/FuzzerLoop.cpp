@@ -83,12 +83,13 @@ void Fuzzer::AlarmCallback() {
   }
 }
 
-void Fuzzer::PrintStats(const char *Where, size_t Cov, const char *End) {
+void Fuzzer::PrintStats(const char *Where, const char *End) {
   if (!Options.Verbosity) return;
   size_t Seconds = secondsSinceProcessStartUp();
   size_t ExecPerSec = (Seconds ? TotalNumberOfRuns / Seconds : 0);
   Printf("#%zd\t%s", TotalNumberOfRuns, Where);
-  Printf(" cov: %zd", Cov);
+  if (LastRecordedBlockCoverage)
+    Printf(" cov: %zd", LastRecordedBlockCoverage);
   if (auto TB = TotalBits())
     Printf(" bits: %zd", TB);
   Printf(" units: %zd exec/s: %zd", Corpus.size(), ExecPerSec);
@@ -118,7 +119,7 @@ void Fuzzer::RereadOutputCorpus() {
       if (RunOne(CurrentUnit)) {
         Corpus.push_back(X);
         if (Options.Verbosity >= 1)
-          PrintStats("RELOAD", LastRecordedBlockCoverage);
+          PrintStats("RELOAD");
       }
     }
   }
@@ -130,7 +131,7 @@ void Fuzzer::ShuffleAndMinimize() {
                        USF.GetRand().RandBool()));
   if (Options.Verbosity)
     Printf("PreferSmall: %d\n", PreferSmall);
-  PrintStats("READ  ", 0);
+  PrintStats("READ  ");
   std::vector<Unit> NewCorpus;
   if (Options.ShuffleAtStartUp) {
     std::random_shuffle(Corpus.begin(), Corpus.end(), USF.GetRand());
@@ -157,7 +158,7 @@ void Fuzzer::ShuffleAndMinimize() {
   Corpus = NewCorpus;
   for (auto &X : Corpus)
     UnitHashesAddedToCorpus.insert(Hash(X));
-  PrintStats("INITED", LastRecordedBlockCoverage);
+  PrintStats("INITED");
 }
 
 bool Fuzzer::RunOne(const Unit &U) {
@@ -172,7 +173,7 @@ bool Fuzzer::RunOne(const Unit &U) {
   auto TimeOfUnit =
       duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
   if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity)
-    PrintStats("pulse ", LastRecordedBlockCoverage);
+    PrintStats("pulse ");
   if (TimeOfUnit > TimeOfLongestUnitInSeconds &&
       TimeOfUnit >= Options.ReportSlowUnits) {
     TimeOfLongestUnitInSeconds = TimeOfUnit;
@@ -254,7 +255,7 @@ void Fuzzer::SaveCorpus() {
 void Fuzzer::ReportNewCoverage(const Unit &U) {
   Corpus.push_back(U);
   UnitHashesAddedToCorpus.insert(Hash(U));
-  PrintStats("NEW   ", LastRecordedBlockCoverage, "");
+  PrintStats("NEW   ", "");
   if (Options.Verbosity) {
     Printf(" L: %zd", U.size());
     if (U.size() < 30) {
