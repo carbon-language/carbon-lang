@@ -447,38 +447,8 @@ define void @func_20(i32* %length.ptr) {
   ret void
 }
 
-define void @func_21(i32* %length.ptr, i32 %init) {
-; Like @func_19, but it is no longer possible to prove %iv's start
-; value is positive without doing some control flow analysis.
-
+define void @func_21(i32* %length.ptr) {
 ; CHECK-LABEL: @func_21(
- entry:
-  %length = load i32, i32* %length.ptr, !range !0
-  %length.is.nonzero = icmp ne i32 %length, 0
-  %init.is.positive = icmp sgt i32 %init, 0
-  %entry.cond = and i1 %length.is.nonzero, %init.is.positive
-  br i1 %length.is.nonzero, label %loop, label %leave
-
- loop:
-; CHECK: loop:
-  %iv = phi i32 [ 0, %entry ], [ %iv.inc, %be ]
-  %iv.inc = add i32 %iv, 1
-  %range.check = icmp ult i32 %iv, %length
-  br i1 %range.check, label %be, label %leave
-; CHECK:   br i1 true, label %be, label %leave.loopexit
-; CHECK: be:
-
- be:
-  call void @side_effect()
-  %be.cond = icmp slt i32 %iv.inc, %length
-  br i1 %be.cond, label %loop, label %leave
-
- leave:
-  ret void
-}
-
-define void @func_22(i32* %length.ptr) {
-; CHECK-LABEL: @func_22(
 
 ; This checks that the backedge condition, (I + 1) < Length - 1 implies
 ; (I + 1) < Length
@@ -506,8 +476,8 @@ define void @func_22(i32* %length.ptr) {
   ret void
 }
 
-define void @func_23(i32* %length.ptr) {
-; CHECK-LABEL: @func_23(
+define void @func_22(i32* %length.ptr) {
+; CHECK-LABEL: @func_22(
 
 ; This checks that the backedge condition, (I + 1) < Length - 1 implies
 ; (I + 1) < Length
@@ -535,8 +505,8 @@ define void @func_23(i32* %length.ptr) {
   ret void
 }
 
-define void @func_24(i32* %length.ptr) {
-; CHECK-LABEL: @func_24(
+define void @func_23(i32* %length.ptr) {
+; CHECK-LABEL: @func_23(
  entry:
   %length = load i32, i32* %length.ptr, !range !0
   %entry.cond = icmp ult i32 4, %length
@@ -560,8 +530,8 @@ define void @func_24(i32* %length.ptr) {
   ret void
 }
 
-define void @func_25(i32* %init.ptr) {
-; CHECK-LABEL: @func_25(
+define void @func_24(i32* %init.ptr) {
+; CHECK-LABEL: @func_24(
  entry:
   %init = load i32, i32* %init.ptr, !range !0
   %entry.cond = icmp ugt i32 %init, 4
