@@ -1,4 +1,4 @@
-//===-- ItaniumABILanguageRuntime.h ----------------------------------------*- C++ -*-===//
+//===-- ItaniumABILanguageRuntime.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -20,33 +22,13 @@
 #include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Core/Value.h"
 
-#include <map>
-#include <vector>
-
 namespace lldb_private {
     
     class ItaniumABILanguageRuntime :
     public lldb_private::CPPLanguageRuntime
     {
     public:
-        ~ItaniumABILanguageRuntime() { }
-        
-        virtual bool
-        IsVTableName (const char *name);
-        
-        virtual bool
-        GetDynamicTypeAndAddress (ValueObject &in_value, 
-                                  lldb::DynamicValueType use_dynamic, 
-                                  TypeAndOrName &class_type_or_name, 
-                                  Address &address,
-                                  Value::ValueType &value_type);
-        
-        virtual TypeAndOrName
-        FixUpDynamicType (const TypeAndOrName& type_and_or_name,
-                          ValueObject& static_value);
-        
-        virtual bool
-        CouldHaveDynamicValue (ValueObject &in_value);
+        ~ItaniumABILanguageRuntime() override = default;
         
         //------------------------------------------------------------------
         // Static Functions
@@ -63,38 +45,54 @@ namespace lldb_private {
         static lldb_private::ConstString
         GetPluginNameStatic();
 
+        bool
+        IsVTableName(const char *name) override;
+        
+        bool
+        GetDynamicTypeAndAddress(ValueObject &in_value,
+                                 lldb::DynamicValueType use_dynamic,
+                                 TypeAndOrName &class_type_or_name,
+                                 Address &address,
+                                 Value::ValueType &value_type) override;
+        
+        TypeAndOrName
+        FixUpDynamicType(const TypeAndOrName& type_and_or_name,
+                         ValueObject& static_value) override;
+        
+        bool
+        CouldHaveDynamicValue(ValueObject &in_value) override;
+        
+        void
+        SetExceptionBreakpoints() override;
+        
+        void
+        ClearExceptionBreakpoints() override;
+        
+        bool
+        ExceptionBreakpointsAreSet() override;
+        
+        bool
+        ExceptionBreakpointsExplainStop(lldb::StopInfoSP stop_reason) override;
+
+        lldb::BreakpointResolverSP
+        CreateExceptionResolver(Breakpoint *bkpt, bool catch_bp, bool throw_bp) override;
+        
+        lldb::SearchFilterSP
+        CreateExceptionSearchFilter() override;
+
+        size_t
+        GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates) override;
+
         //------------------------------------------------------------------
         // PluginInterface protocol
         //------------------------------------------------------------------
-        virtual lldb_private::ConstString
-        GetPluginName();
+        lldb_private::ConstString
+        GetPluginName() override;
         
-        virtual uint32_t
-        GetPluginVersion();
-        
-        virtual void
-        SetExceptionBreakpoints ();
-        
-        virtual void
-        ClearExceptionBreakpoints ();
-        
-        virtual bool
-        ExceptionBreakpointsAreSet ();
-        
-        virtual bool
-        ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
-
-        virtual lldb::BreakpointResolverSP
-        CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
-        
-        virtual lldb::SearchFilterSP
-        CreateExceptionSearchFilter ();
-
-        virtual size_t
-        GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates);
+        uint32_t
+        GetPluginVersion() override;
 
     protected:
-
         lldb::BreakpointResolverSP
         CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp, bool for_expressions);
 
@@ -112,4 +110,4 @@ namespace lldb_private {
     
 } // namespace lldb_private
 
-#endif  // liblldb_ItaniumABILanguageRuntime_h_
+#endif // liblldb_ItaniumABILanguageRuntime_h_

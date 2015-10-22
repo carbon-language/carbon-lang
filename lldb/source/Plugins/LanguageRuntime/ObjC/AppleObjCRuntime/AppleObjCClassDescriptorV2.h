@@ -1,4 +1,4 @@
-//===-- AppleObjCClassDescriptorV2.h --------------------------------*- C++ -*-===//
+//===-- AppleObjCClassDescriptorV2.h ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
@@ -27,71 +26,57 @@ class ClassDescriptorV2 : public ObjCLanguageRuntime::ClassDescriptor
 public:
     friend class lldb_private::AppleObjCRuntimeV2;
     
-private:
-    // The constructor should only be invoked by the runtime as it builds its caches
-    // or populates them.  A ClassDescriptorV2 should only ever exist in a cache.
-    ClassDescriptorV2 (AppleObjCRuntimeV2 &runtime, ObjCLanguageRuntime::ObjCISA isa, const char *name) :
-        m_runtime (runtime),
-        m_objc_class_ptr (isa),
-        m_name (name),
-        m_ivars_storage()
-    {
-    }
+    ~ClassDescriptorV2() override = default;
+
+    ConstString
+    GetClassName() override;
     
-public:
-    virtual ConstString
-    GetClassName ();
+    ObjCLanguageRuntime::ClassDescriptorSP
+    GetSuperclass() override;
     
-    virtual ObjCLanguageRuntime::ClassDescriptorSP
-    GetSuperclass ();
+    ObjCLanguageRuntime::ClassDescriptorSP
+    GetMetaclass() const override;
     
-    virtual ObjCLanguageRuntime::ClassDescriptorSP
-    GetMetaclass () const;
-    
-    virtual bool
-    IsValid ()
+    bool
+    IsValid() override
     {
         return true;    // any Objective-C v2 runtime class descriptor we vend is valid
     }
     
     // a custom descriptor is used for tagged pointers
-    virtual bool
-    GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                          uint64_t* value_bits = NULL,
-                          uint64_t* payload = NULL)
+    bool
+    GetTaggedPointerInfo(uint64_t* info_bits = nullptr,
+                         uint64_t* value_bits = nullptr,
+                         uint64_t* payload = nullptr) override
     {
         return false;
     }
     
-    virtual uint64_t
-    GetInstanceSize ();
+    uint64_t
+    GetInstanceSize() override;
     
-    virtual ObjCLanguageRuntime::ObjCISA
-    GetISA ()
+    ObjCLanguageRuntime::ObjCISA
+    GetISA() override
     {
         return m_objc_class_ptr;
     }
     
-    virtual bool
-    Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
-              std::function <bool (const char *, const char *)> const &instance_method_func,
-              std::function <bool (const char *, const char *)> const &class_method_func,
-              std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> const &ivar_func) const;
-    
-    virtual
-    ~ClassDescriptorV2 ()
-    {
-    }
-    
-    virtual size_t
-    GetNumIVars ()
+    bool
+    Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
+             std::function <bool (const char *, const char *)> const &instance_method_func,
+             std::function <bool (const char *, const char *)> const &class_method_func,
+             std::function <bool (const char *, const char *,
+             lldb::addr_t, uint64_t)> const &ivar_func) const override;
+
+    size_t
+    GetNumIVars() override
     {
         GetIVarInformation();
         return m_ivars_storage.size();
     }
     
-    virtual iVarDescriptor
-    GetIVarAtIndex (size_t idx)
+    iVarDescriptor
+    GetIVarAtIndex(size_t idx) override
     {
         if (idx >= GetNumIVars())
             return iVarDescriptor();
@@ -265,6 +250,16 @@ private:
         Mutex m_mutex;
     };
     
+    // The constructor should only be invoked by the runtime as it builds its caches
+    // or populates them.  A ClassDescriptorV2 should only ever exist in a cache.
+    ClassDescriptorV2(AppleObjCRuntimeV2 &runtime, ObjCLanguageRuntime::ObjCISA isa, const char *name) :
+        m_runtime (runtime),
+        m_objc_class_ptr (isa),
+        m_name (name),
+        m_ivars_storage()
+    {
+    }
+    
     bool
     Read_objc_class (Process* process, std::unique_ptr<objc_class_t> &objc_class) const;
     
@@ -316,14 +311,16 @@ public:
         m_value_bits = (m_payload & ~0x0FULL) >> 4;
     }
     
-    virtual ConstString
-    GetClassName ()
+    ~ClassDescriptorV2Tagged() override = default;
+
+    ConstString
+    GetClassName() override
     {
         return m_name;
     }
     
-    virtual ObjCLanguageRuntime::ClassDescriptorSP
-    GetSuperclass ()
+    ObjCLanguageRuntime::ClassDescriptorSP
+    GetSuperclass() override
     {
         // tagged pointers can represent a class that has a superclass, but since that information is not
         // stored in the object itself, we would have to query the runtime to discover the hierarchy
@@ -331,34 +328,34 @@ public:
         return ObjCLanguageRuntime::ClassDescriptorSP();
     }
     
-    virtual ObjCLanguageRuntime::ClassDescriptorSP
-    GetMetaclass () const
+    ObjCLanguageRuntime::ClassDescriptorSP
+    GetMetaclass() const override
     {
         return ObjCLanguageRuntime::ClassDescriptorSP();
     }
     
-    virtual bool
-    IsValid ()
+    bool
+    IsValid() override
     {
         return m_valid;
     }
     
-    virtual bool
-    IsKVO ()
+    bool
+    IsKVO() override
     {
         return false; // tagged pointers are not KVO'ed
     }
     
-    virtual bool
-    IsCFType ()
+    bool
+    IsCFType() override
     {
         return false; // tagged pointers are not CF objects
     }
     
-    virtual bool
-    GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                          uint64_t* value_bits = NULL,
-                          uint64_t* payload = NULL)
+    bool
+    GetTaggedPointerInfo(uint64_t* info_bits = nullptr,
+                         uint64_t* value_bits = nullptr,
+                         uint64_t* payload = nullptr) override
     {
         if (info_bits)
             *info_bits = GetInfoBits();
@@ -369,14 +366,14 @@ public:
         return true;
     }
     
-    virtual uint64_t
-    GetInstanceSize ()
+    uint64_t
+    GetInstanceSize() override
     {
         return (IsValid() ? m_pointer_size : 0);
     }
     
-    virtual ObjCLanguageRuntime::ObjCISA
-    GetISA ()
+    ObjCLanguageRuntime::ObjCISA
+    GetISA() override
     {
         return 0; // tagged pointers have no ISA
     }
@@ -399,11 +396,7 @@ public:
     {
         return (IsValid() ? m_payload : 0);
     }
-    
-    virtual
-    ~ClassDescriptorV2Tagged ()
-    {}
-    
+
 private:
     ConstString m_name;
     uint8_t m_pointer_size;
@@ -411,10 +404,8 @@ private:
     uint64_t m_info_bits;
     uint64_t m_value_bits;
     uint64_t m_payload;
-    
 };
     
 } // namespace lldb_private
 
-#endif  // liblldb_AppleObjCRuntime_h_
-
+#endif // liblldb_AppleObjCClassDescriptorV2_h_

@@ -1,4 +1,4 @@
-//===-- AppleThreadPlanStepThroughObjCTrampoline.h --------------------------*- C++ -*-===//
+//===-- AppleThreadPlanStepThroughObjCTrampoline.h --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,67 +26,56 @@ namespace lldb_private
 class AppleThreadPlanStepThroughObjCTrampoline : public ThreadPlan
 {
 public:
-	//------------------------------------------------------------------
-	// Constructors and Destructors
-	//------------------------------------------------------------------
-	AppleThreadPlanStepThroughObjCTrampoline(Thread &thread, 
+    AppleThreadPlanStepThroughObjCTrampoline(Thread &thread, 
                                              AppleObjCTrampolineHandler *trampoline_handler, 
                                              ValueList &values,
                                              lldb::addr_t isa_addr,
                                              lldb::addr_t sel_addr,
                                              bool stop_others);
-    
-	virtual ~AppleThreadPlanStepThroughObjCTrampoline();
 
-    virtual void
-    GetDescription (Stream *s,
-                    lldb::DescriptionLevel level);
+    ~AppleThreadPlanStepThroughObjCTrampoline() override;
+
+    static bool
+    PreResumeInitializeFunctionCaller(void *myself);
+
+    void
+    GetDescription(Stream *s,
+                   lldb::DescriptionLevel level) override;
                     
-    virtual bool
-    ValidatePlan (Stream *error);
+    bool
+    ValidatePlan(Stream *error) override;
 
-    virtual lldb::StateType
-    GetPlanRunState ();
+    lldb::StateType
+    GetPlanRunState() override;
 
-    virtual bool
-    ShouldStop (Event *event_ptr);
+    bool
+    ShouldStop(Event *event_ptr) override;
     
-    virtual bool
-    StopOthers()
+    bool
+    StopOthers() override
     {
         return m_stop_others;
     }
 
     // The base class MischiefManaged does some cleanup - so you have to call it
     // in your MischiefManaged derived class.
-    virtual bool
-    MischiefManaged ();
+    bool
+    MischiefManaged() override;
     
-    virtual void
-    DidPush();
+    void
+    DidPush() override;
     
-    static bool
-    PreResumeInitializeFunctionCaller(void *myself);
-
-    virtual bool
-    WillStop();
-
-
+    bool
+    WillStop() override;
 
 protected:
-	//------------------------------------------------------------------
-	// Classes that inherit from AppleThreadPlanStepThroughObjCTrampoline can see and modify these
-	//------------------------------------------------------------------
-    virtual bool
-    DoPlanExplainsStop (Event *event_ptr);
+    bool
+    DoPlanExplainsStop(Event *event_ptr) override;
 	
 private:
     bool
     InitializeFunctionCaller ();
 
-	//------------------------------------------------------------------
-	// For AppleThreadPlanStepThroughObjCTrampoline only
-	//------------------------------------------------------------------
     AppleObjCTrampolineHandler *m_trampoline_handler; // FIXME - ensure this doesn't go away on us?  SP maybe?
     lldb::addr_t m_args_addr;     // Stores the address for our step through function result structure.
     //lldb::addr_t m_object_addr;  // This is only for Description.
@@ -103,4 +92,4 @@ private:
 
 } // namespace lldb_private
 
-#endif	// lldb_AppleThreadPlanStepThroughObjCTrampoline_h_
+#endif // lldb_AppleThreadPlanStepThroughObjCTrampoline_h_

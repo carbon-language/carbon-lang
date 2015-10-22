@@ -1,4 +1,4 @@
-//===-- GoLanguageRuntime.h ----------------------------------------*- C++ -*-===//
+//===-- GoLanguageRuntime.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,7 +25,22 @@ namespace lldb_private {
     public lldb_private::LanguageRuntime
     {
     public:
-        ~GoLanguageRuntime() { }
+        ~GoLanguageRuntime() override = default;
+
+        //------------------------------------------------------------------
+        // Static Functions
+        //------------------------------------------------------------------
+        static void
+        Initialize();
+        
+        static void
+        Terminate();
+        
+        static lldb_private::LanguageRuntime *
+        CreateInstance(Process *process, lldb::LanguageType language);
+        
+        static lldb_private::ConstString
+        GetPluginNameStatic();
 
         lldb::LanguageType
         GetLanguageType() const override
@@ -61,21 +76,6 @@ namespace lldb_private {
         TypeAndOrName FixUpDynamicType(const TypeAndOrName &type_and_or_name, ValueObject &static_value) override;
 
         //------------------------------------------------------------------
-        // Static Functions
-        //------------------------------------------------------------------
-        static void
-        Initialize();
-        
-        static void
-        Terminate();
-        
-        static lldb_private::LanguageRuntime *
-        CreateInstance (Process *process, lldb::LanguageType language);
-        
-        static lldb_private::ConstString
-        GetPluginNameStatic();
-        
-        //------------------------------------------------------------------
         // PluginInterface protocol
         //------------------------------------------------------------------
         lldb_private::ConstString
@@ -90,4 +90,4 @@ namespace lldb_private {
     
 } // namespace lldb_private
 
-#endif  // liblldb_GoLanguageRuntime_h_
+#endif // liblldb_GoLanguageRuntime_h_

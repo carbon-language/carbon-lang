@@ -12,11 +12,7 @@
 
 // C Includes
 // C++ Includes
-
-#include <map>
-
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -32,13 +28,14 @@ class AppleObjCDeclVendor : public DeclVendor
 public:
     AppleObjCDeclVendor(ObjCLanguageRuntime &runtime);
     
-    virtual uint32_t
-    FindDecls (const ConstString &name,
-               bool append,
-               uint32_t max_matches,
-               std::vector <clang::NamedDecl *> &decls);
+    uint32_t
+    FindDecls(const ConstString &name,
+              bool append,
+              uint32_t max_matches,
+              std::vector <clang::NamedDecl *> &decls) override;
         
     friend class AppleObjCExternalASTSource;
+
 private:
     clang::ObjCInterfaceDecl   *GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa);
     bool                        FinishDecl(clang::ObjCInterfaceDecl *decl);
@@ -55,4 +52,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_AppleObjCDeclVendor_h_
+#endif // liblldb_AppleObjCDeclVendor_h_

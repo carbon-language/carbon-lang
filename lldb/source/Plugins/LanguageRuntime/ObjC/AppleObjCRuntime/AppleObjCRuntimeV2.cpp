@@ -1,4 +1,4 @@
-//===-- AppleObjCRuntimeV2.cpp --------------------------------------*- C++ -*-===//
+//===-- AppleObjCRuntimeV2.cpp ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
-#include <vector>
+// C Includes
 #include <stdint.h>
 
+// C++ Includes
+#include <string>
+#include <vector>
+
+// Other libraries and framework includes
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclObjC.h"
+
+// Project includes
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Symbol/CompilerType.h"
@@ -52,12 +60,7 @@
 #include "AppleObjCDeclVendor.h"
 #include "AppleObjCTrampolineHandler.h"
 
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/DeclObjC.h"
-
 #include "Plugins/Platform/MacOSX/PlatformiOSSimulator.h"
-
-#include <vector>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -342,7 +345,6 @@ ExtractRuntimeGlobalSymbol (Process* process,
         error.SetErrorString("no symbol");
         return default_value;
     }
-
 }
 
 AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
@@ -366,10 +368,6 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
 {
     static const ConstString g_gdb_object_getClass("gdb_object_getClass");
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_object_getClass, eSymbolTypeCode) != NULL);
-}
-
-AppleObjCRuntimeV2::~AppleObjCRuntimeV2()
-{
 }
 
 bool
@@ -450,7 +448,6 @@ AppleObjCRuntimeV2::CreateInstance (Process *process, LanguageType language)
 class CommandObjectObjC_ClassTable_Dump : public CommandObjectParsed
 {
 public:
-    
     CommandObjectObjC_ClassTable_Dump (CommandInterpreter &interpreter) :
     CommandObjectParsed (interpreter,
                          "dump",
@@ -461,14 +458,12 @@ public:
                          eCommandProcessMustBePaused   )
     {
     }
-    
-    ~CommandObjectObjC_ClassTable_Dump ()
-    {
-    }
-    
+
+    ~CommandObjectObjC_ClassTable_Dump() override = default;
+
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute(Args& command, CommandReturnObject &result) override
     {
         Process *process = m_exe_ctx.GetProcessPtr();
         ObjCLanguageRuntime *objc_runtime = process->GetObjCLanguageRuntime();
@@ -510,7 +505,6 @@ protected:
 class CommandObjectMultiwordObjC_TaggedPointer_Info : public CommandObjectParsed
 {
 public:
-    
     CommandObjectMultiwordObjC_TaggedPointer_Info (CommandInterpreter &interpreter) :
     CommandObjectParsed (interpreter,
                          "info",
@@ -533,14 +527,12 @@ public:
         // Push the data for the first argument into the m_arguments vector.
         m_arguments.push_back (arg);
     }
-    
-    ~CommandObjectMultiwordObjC_TaggedPointer_Info ()
-    {
-    }
-    
+
+    ~CommandObjectMultiwordObjC_TaggedPointer_Info() override = default;
+
 protected:
     bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    DoExecute(Args& command, CommandReturnObject &result) override
     {
         if (command.GetArgumentCount() == 0)
         {
@@ -610,7 +602,6 @@ protected:
 class CommandObjectMultiwordObjC_ClassTable : public CommandObjectMultiword
 {
 public:
-    
     CommandObjectMultiwordObjC_ClassTable (CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
                             "class-table",
@@ -619,11 +610,8 @@ public:
     {
         LoadSubCommand ("dump",   CommandObjectSP (new CommandObjectObjC_ClassTable_Dump (interpreter)));
     }
-    
-    virtual
-    ~CommandObjectMultiwordObjC_ClassTable ()
-    {
-    }
+
+    ~CommandObjectMultiwordObjC_ClassTable() override = default;
 };
 
 class CommandObjectMultiwordObjC_TaggedPointer : public CommandObjectMultiword
@@ -638,17 +626,13 @@ public:
     {
         LoadSubCommand ("info",   CommandObjectSP (new CommandObjectMultiwordObjC_TaggedPointer_Info (interpreter)));
     }
-    
-    virtual
-    ~CommandObjectMultiwordObjC_TaggedPointer ()
-    {
-    }
+
+    ~CommandObjectMultiwordObjC_TaggedPointer() override = default;
 };
 
 class CommandObjectMultiwordObjC : public CommandObjectMultiword
 {
 public:
-    
     CommandObjectMultiwordObjC (CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
                             "objc",
@@ -658,11 +642,8 @@ public:
         LoadSubCommand ("class-table",   CommandObjectSP (new CommandObjectMultiwordObjC_ClassTable (interpreter)));
         LoadSubCommand ("tagged-pointer",   CommandObjectSP (new CommandObjectMultiwordObjC_TaggedPointer (interpreter)));
     }
-    
-    virtual
-    ~CommandObjectMultiwordObjC ()
-    {
-    }
+
+    ~CommandObjectMultiwordObjC() override = default;
 };
 
 void
@@ -688,7 +669,6 @@ AppleObjCRuntimeV2::GetPluginNameStatic()
     static ConstString g_name("apple-objc-v2");
     return g_name;
 }
-
 
 //------------------------------------------------------------------
 // PluginInterface protocol
@@ -836,7 +816,6 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (CompilerType &parent_ast_type, const c
     return ivar_offset;
 }
 
-
 // tagged pointers are special not-a-real-pointer values that contain both type and value information
 // this routine attempts to check with as little computational effort as possible whether something
 // could possibly be a tagged pointer - false positives are possible but false negatives shouldn't
@@ -851,7 +830,6 @@ AppleObjCRuntimeV2::IsTaggedPointer(addr_t ptr)
 class RemoteNXMapTable
 {
 public:
-    
     RemoteNXMapTable () :
         m_count (0),
         m_num_buckets_minus_one (0),
@@ -996,6 +974,7 @@ public:
             
             return element(ConstString(key_string.c_str()), (ObjCLanguageRuntime::ObjCISA)value);
         }
+
     private:
         void AdvanceToValidIndex ()
         {
@@ -1071,8 +1050,6 @@ private:
     size_t m_map_pair_size;
     lldb::addr_t m_invalid_key;
 };
-
-
 
 AppleObjCRuntimeV2::HashTableSignature::HashTableSignature() :
     m_count (0),
@@ -1312,10 +1289,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         }
         arguments = get_class_info_function->GetArgumentValues();
     }
-    
-    
-    
-    
+
     errors.Clear();
     
     const uint32_t class_info_byte_size = addr_size + 4;
@@ -1672,7 +1646,6 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     return DescriptorMapUpdateResult(success, any_found);
 }
 
-
 bool
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapFromMemory (RemoteNXMapTable &hash_table)
 {
@@ -1780,7 +1753,6 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
             else
                 m_loaded_objc_opt = true;
         }
-        
     }
     else
     {

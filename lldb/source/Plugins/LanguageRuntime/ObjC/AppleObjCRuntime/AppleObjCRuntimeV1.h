@@ -1,4 +1,4 @@
-//===-- AppleObjCRuntimeV1.h ----------------------------------------*- C++ -*-===//
+//===-- AppleObjCRuntimeV1.h ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,6 +24,23 @@ class AppleObjCRuntimeV1 :
         public AppleObjCRuntime
 {
 public:
+    ~AppleObjCRuntimeV1() override = default;
+
+    //------------------------------------------------------------------
+    // Static Functions
+    //------------------------------------------------------------------
+    static void
+    Initialize();
+    
+    static void
+    Terminate();
+    
+    static lldb_private::LanguageRuntime *
+    CreateInstance(Process *process, lldb::LanguageType language);
+    
+    static lldb_private::ConstString
+    GetPluginNameStatic();
+
     static bool classof(const ObjCLanguageRuntime* runtime)
     {
         switch (runtime->GetRuntimeVersion())
@@ -41,55 +58,54 @@ public:
         ClassDescriptorV1 (ValueObject &isa_pointer);
         ClassDescriptorV1 (ObjCISA isa, lldb::ProcessSP process_sp);
         
-        virtual ConstString
-        GetClassName ()
+        ~ClassDescriptorV1() override = default;
+
+        ConstString
+        GetClassName() override
         {
             return m_name;
         }
         
-        virtual ClassDescriptorSP
-        GetSuperclass ();
+        ClassDescriptorSP
+        GetSuperclass() override;
         
-        virtual ClassDescriptorSP
-        GetMetaclass () const;
+        ClassDescriptorSP
+        GetMetaclass() const override;
         
-        virtual bool
-        IsValid ()
+        bool
+        IsValid() override
         {
             return m_valid;
         }
         
         // v1 does not support tagged pointers
-        virtual bool
-        GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                              uint64_t* value_bits = NULL,
-                              uint64_t* payload = NULL)
+        bool
+        GetTaggedPointerInfo(uint64_t* info_bits = nullptr,
+                             uint64_t* value_bits = nullptr,
+                             uint64_t* payload = nullptr) override
         {
             return false;
         }
         
-        virtual uint64_t
-        GetInstanceSize ()
+        uint64_t
+        GetInstanceSize() override
         {
             return m_instance_size;
         }
         
-        virtual ObjCISA
-        GetISA ()
+        ObjCISA
+        GetISA() override
         {
             return m_isa;
         }
         
-        virtual bool
-        Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
-                  std::function <bool (const char *, const char *)> const &instance_method_func,
-                  std::function <bool (const char *, const char *)> const &class_method_func,
-                  std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> const &ivar_func) const;
-        
-        virtual
-        ~ClassDescriptorV1 ()
-        {}
-        
+        bool
+        Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
+                 std::function <bool (const char *, const char *)> const &instance_method_func,
+                 std::function <bool (const char *, const char *)> const &class_method_func,
+                 std::function <bool (const char *, const char *,
+                 lldb::addr_t, uint64_t)> const &ivar_func) const override;
+
     protected:
         void
         Initialize (ObjCISA isa, lldb::ProcessSP process_sp);
@@ -102,60 +118,42 @@ public:
         lldb::ProcessWP m_process_wp;
         uint64_t m_instance_size;
     };
-    
-    virtual ~AppleObjCRuntimeV1() { }
-    
+
     // These are generic runtime functions:
-    virtual bool
-    GetDynamicTypeAndAddress (ValueObject &in_value, 
-                              lldb::DynamicValueType use_dynamic, 
-                              TypeAndOrName &class_type_or_name, 
-                              Address &address,
-                              Value::ValueType &value_type);
+    bool
+    GetDynamicTypeAndAddress(ValueObject &in_value, 
+                             lldb::DynamicValueType use_dynamic, 
+                             TypeAndOrName &class_type_or_name, 
+                             Address &address,
+                             Value::ValueType &value_type) override;
 
-    virtual UtilityFunction *
-    CreateObjectChecker (const char *);
+    UtilityFunction *
+    CreateObjectChecker(const char *) override;
 
-    //------------------------------------------------------------------
-    // Static Functions
-    //------------------------------------------------------------------
-    static void
-    Initialize();
-    
-    static void
-    Terminate();
-    
-    static lldb_private::LanguageRuntime *
-    CreateInstance (Process *process, lldb::LanguageType language);
-    
-    static lldb_private::ConstString
-    GetPluginNameStatic();
-    
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual ConstString
-    GetPluginName();
+    ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
     
-    virtual ObjCRuntimeVersions
-    GetRuntimeVersion () const
+    ObjCRuntimeVersions
+    GetRuntimeVersion() const override
     {
         return ObjCRuntimeVersions::eAppleObjC_V1;
     }
     
-    virtual void
-    UpdateISAToDescriptorMapIfNeeded();
+    void
+    UpdateISAToDescriptorMapIfNeeded() override;
     
-    virtual DeclVendor *
-    GetDeclVendor();
+    DeclVendor *
+    GetDeclVendor() override;
 
 protected:
-    virtual lldb::BreakpointResolverSP
-    CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
-    
+    lldb::BreakpointResolverSP
+    CreateExceptionResolver(Breakpoint *bkpt, bool catch_bp, bool throw_bp) override;
     
     class HashTableSignature
     {
@@ -193,17 +191,17 @@ protected:
         lldb::addr_t m_buckets_ptr;
     };
     
-
     lldb::addr_t
     GetISAHashTablePointer ();
     
     HashTableSignature m_hash_signature;
     lldb::addr_t m_isa_hash_table_ptr;
     std::unique_ptr<DeclVendor> m_decl_vendor_ap;
+
 private:
     AppleObjCRuntimeV1(Process *process);
 };
     
 } // namespace lldb_private
 
-#endif  // liblldb_AppleObjCRuntimeV1_h_
+#endif // liblldb_AppleObjCRuntimeV1_h_

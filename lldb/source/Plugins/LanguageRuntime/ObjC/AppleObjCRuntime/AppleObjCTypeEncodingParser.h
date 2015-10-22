@@ -12,14 +12,12 @@
 
 // C Includes
 // C++ Includes
-
 // Other libraries and framework includes
+#include "clang/AST/ASTContext.h"
 
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
-
-#include "clang/AST/ASTContext.h"
 
 namespace lldb_utility {
     class StringLexer;
@@ -31,9 +29,10 @@ namespace lldb_private {
     {
     public:
         AppleObjCTypeEncodingParser (ObjCLanguageRuntime& runtime);
-        virtual CompilerType RealizeType (clang::ASTContext &ast_ctx, const char* name, bool for_expression);
-        virtual ~AppleObjCTypeEncodingParser() {}
+        ~AppleObjCTypeEncodingParser() override = default;
         
+        CompilerType RealizeType(clang::ASTContext &ast_ctx, const char* name, bool for_expression) override;
+
     private:
         struct StructElement {
             std::string name;
@@ -79,4 +78,4 @@ namespace lldb_private {
     
 } // namespace lldb_private
 
-#endif  // liblldb_AppleObjCTypeEncodingParser_h_
+#endif // liblldb_AppleObjCTypeEncodingParser_h_

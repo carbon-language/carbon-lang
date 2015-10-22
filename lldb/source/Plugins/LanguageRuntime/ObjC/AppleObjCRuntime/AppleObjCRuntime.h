@@ -1,4 +1,4 @@
-//===-- AppleObjCRuntime.h ----------------------------------------*- C++ -*-===//
+//===-- AppleObjCRuntime.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,6 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
-
 #include "llvm/ADT/Optional.h"
 
 // Project includes
@@ -29,6 +28,14 @@ class AppleObjCRuntime :
         public lldb_private::ObjCLanguageRuntime
 {
 public:
+    ~AppleObjCRuntime() override;
+
+    //------------------------------------------------------------------
+    // Static Functions
+    //------------------------------------------------------------------
+    // Note there is no CreateInstance, Initialize & Terminate functions here, because
+    // you can't make an instance of this generic runtime.
+
     static bool classof(const ObjCLanguageRuntime* runtime)
     {
         switch (runtime->GetRuntimeVersion())
@@ -40,8 +47,6 @@ public:
                 return false;
         }
     }
-    
-    virtual ~AppleObjCRuntime();
     
     // These are generic runtime functions:
     bool
@@ -86,54 +91,45 @@ public:
     lldb::ModuleSP
     GetObjCModule ();
     
-    //------------------------------------------------------------------
-    // Static Functions
-    //------------------------------------------------------------------
-    // Note there is no CreateInstance, Initialize & Terminate functions here, because
-    // you can't make an instance of this generic runtime.
-
-
     // Sync up with the target
 
     void
     ModulesDidLoad (const ModuleList &module_list) override;
 
-protected:
-    bool
-    CalculateHasNewLiteralsAndIndexing() override;
-    
-    static bool
-    AppleIsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
-
-    static ObjCRuntimeVersions
-    GetObjCVersion (Process *process, lldb::ModuleSP &objc_module_sp);
-
-    void
-    ReadObjCLibraryIfNeeded (const ModuleList &module_list);
-
-    //------------------------------------------------------------------
-    // PluginInterface protocol
-    //------------------------------------------------------------------
-public:
     void
     SetExceptionBreakpoints() override;
 
     void
-    ClearExceptionBreakpoints () override;
+    ClearExceptionBreakpoints() override;
     
     bool
-    ExceptionBreakpointsAreSet () override;
+    ExceptionBreakpointsAreSet() override;
     
     bool
-    ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason) override;
+    ExceptionBreakpointsExplainStop(lldb::StopInfoSP stop_reason) override;
     
     lldb::SearchFilterSP
-    CreateExceptionSearchFilter () override;
+    CreateExceptionSearchFilter() override;
     
     uint32_t
-    GetFoundationVersion ();
+    GetFoundationVersion();
     
 protected:
+    // Call CreateInstance instead.
+    AppleObjCRuntime(Process *process);
+
+    bool
+    CalculateHasNewLiteralsAndIndexing() override;
+    
+    static bool
+    AppleIsModuleObjCLibrary(const lldb::ModuleSP &module_sp);
+
+    static ObjCRuntimeVersions
+    GetObjCVersion(Process *process, lldb::ModuleSP &objc_module_sp);
+
+    void
+    ReadObjCLibraryIfNeeded(const ModuleList &module_list);
+
     Address *
     GetPrintForDebuggerAddr();
     
@@ -145,11 +141,8 @@ protected:
     std::unique_ptr<FunctionCaller>  m_print_object_caller_up;
     
     llvm::Optional<uint32_t> m_Foundation_major;
-
-    // Call CreateInstance instead.
-    AppleObjCRuntime(Process *process);
 };
     
 } // namespace lldb_private
 
-#endif  // liblldb_AppleObjCRuntime_h_
+#endif // liblldb_AppleObjCRuntime_h_
