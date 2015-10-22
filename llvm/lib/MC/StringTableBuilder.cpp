@@ -13,6 +13,8 @@
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Endian.h"
 
+#include <vector>
+
 using namespace llvm;
 
 static int compareBySuffix(StringMapEntry<size_t> *const *AP,
