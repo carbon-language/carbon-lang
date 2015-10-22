@@ -2121,27 +2121,5 @@ void Interpreter::run() {
 
     DEBUG(dbgs() << "About to interpret: " << I);
     visit(I);   // Dispatch to one of the visit* methods...
-#if 0
-    // This is not safe, as visiting the instruction could lower it and free I.
-DEBUG(
-    if (!isa<CallInst>(I) && !isa<InvokeInst>(I) && 
-        I.getType() != Type::VoidTy) {
-      dbgs() << "  --> ";
-      const GenericValue &Val = SF.Values[&I];
-      switch (I.getType()->getTypeID()) {
-      default: llvm_unreachable("Invalid GenericValue Type");
-      case Type::VoidTyID:    dbgs() << "void"; break;
-      case Type::FloatTyID:   dbgs() << "float " << Val.FloatVal; break;
-      case Type::DoubleTyID:  dbgs() << "double " << Val.DoubleVal; break;
-      case Type::PointerTyID: dbgs() << "void* " << intptr_t(Val.PointerVal);
-        break;
-      case Type::IntegerTyID: 
-        dbgs() << "i" << Val.IntVal.getBitWidth() << " "
-               << Val.IntVal.toStringUnsigned(10)
-               << " (0x" << Val.IntVal.toStringUnsigned(16) << ")\n";
-        break;
-      }
-    });
-#endif
   }
 }
