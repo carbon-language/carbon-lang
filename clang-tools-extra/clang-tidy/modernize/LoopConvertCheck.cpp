@@ -405,7 +405,7 @@ static bool containerIsConst(const Expr *ContainerExpr, bool Dereference) {
 
 LoopConvertCheck::RangeDescriptor::RangeDescriptor()
     : ContainerNeedsDereference(false), DerefByConstRef(false),
-      DerefByValue(false), IsTriviallyCopyable(false) {}
+      DerefByValue(false) {}
 
 LoopConvertCheck::LoopConvertCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context), TUInfo(new TUTrackingInfo),
@@ -554,30 +554,33 @@ void LoopConvertCheck::doConversion(
   // Now, we need to construct the new range expression.
   SourceRange ParenRange(Loop->getLParenLoc(), Loop->getRParenLoc());
 
-  QualType AutoType = Context->getAutoDeductType();
+  QualType Type = Context->getAutoDeductType();
+  if (!Descriptor.ElemType.isNull() && Descriptor.ElemType->isFundamentalType())
+    Type = Descriptor.ElemType.getUnqualifiedType();
 
   // If the new variable name is from the aliased variable, then the reference
   // type for the new variable should only be used if the aliased variable was
   // declared as a reference.
+  bool IsTriviallyCopyable =
+      !Descriptor.ElemType.isNull() &&
+      Descriptor.ElemType.isTriviallyCopyableType(*Context);
   bool UseCopy =
-      CanCopy &&
-      ((VarNameFromAlias && !AliasVarIsRef) ||
-       (Descriptor.DerefByConstRef && Descriptor.IsTriviallyCopyable));
+      CanCopy && ((VarNameFromAlias && !AliasVarIsRef) ||
+                  (Descriptor.DerefByConstRef && IsTriviallyCopyable));
 
   if (!UseCopy) {
     if (Descriptor.DerefByConstRef) {
-      AutoType =
-          Context->getLValueReferenceType(Context->getConstType(AutoType));
+      Type = Context->getLValueReferenceType(Context->getConstType(Type));
     } else if (Descriptor.DerefByValue) {
-      if (!Descriptor.IsTriviallyCopyable)
-        AutoType = Context->getRValueReferenceType(AutoType);
+      if (!IsTriviallyCopyable)
+        Type = Context->getRValueReferenceType(Type);
     } else {
-      AutoType = Context->getLValueReferenceType(AutoType);
+      Type = Context->getLValueReferenceType(Type);
     }
   }
 
   StringRef MaybeDereference = Descriptor.ContainerNeedsDereference ? "*" : "";
-  std::string TypeString = AutoType.getAsString();
+  std::string TypeString = Type.getAsString(getLangOpts());
   std::string Range = ("(" + TypeString + " " + VarName + " : " +
                        MaybeDereference + Descriptor.ContainerString + ")")
                           .str();
@@ -633,7 +636,7 @@ void LoopConvertCheck::getArrayLoopQualifiers(ASTContext *Context,
       }
       Type = Type->getPointeeType();
     }
-    Descriptor.IsTriviallyCopyable = Type.isTriviallyCopyableType(*Context);
+    Descriptor.ElemType = Type;
   }
 }
 
@@ -654,8 +657,7 @@ void LoopConvertCheck::getIteratorLoopQualifiers(ASTContext *Context,
     // If the dereference operator returns by value then test for the
     // canonical const qualification of the init variable type.
     Descriptor.DerefByConstRef = CanonicalInitVarType.isConstQualified();
-    Descriptor.IsTriviallyCopyable =
-        DerefByValueType->isTriviallyCopyableType(*Context);
+    Descriptor.ElemType = *DerefByValueType;
   } else {
     if (const auto *DerefType =
             Nodes.getNodeAs<QualType>(DerefByRefResultName)) {
@@ -665,8 +667,7 @@ void LoopConvertCheck::getIteratorLoopQualifiers(ASTContext *Context,
       auto ValueType = DerefType->getNonReferenceType();
 
       Descriptor.DerefByConstRef = ValueType.isConstQualified();
-      Descriptor.IsTriviallyCopyable =
-          ValueType.isTriviallyCopyableType(*Context);
+      Descriptor.ElemType = ValueType;
     } else {
       // By nature of the matcher this case is triggered only for built-in
       // iterator types (i.e. pointers).
@@ -676,9 +677,7 @@ void LoopConvertCheck::getIteratorLoopQualifiers(ASTContext *Context,
       // We test for const qualification of the pointed-at type.
       Descriptor.DerefByConstRef =
           CanonicalInitVarType->getPointeeType().isConstQualified();
-      Descriptor.IsTriviallyCopyable =
-          CanonicalInitVarType->getPointeeType().isTriviallyCopyableType(
-              *Context);
+      Descriptor.ElemType = CanonicalInitVarType->getPointeeType();
     }
   }
 }

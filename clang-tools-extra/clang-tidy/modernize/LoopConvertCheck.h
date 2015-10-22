@@ -30,8 +30,8 @@ private:
     bool ContainerNeedsDereference;
     bool DerefByConstRef;
     bool DerefByValue;
-    bool IsTriviallyCopyable;
     std::string ContainerString;
+    QualType ElemType;
   };
 
   void getAliasRange(SourceManager &SM, SourceRange &DeclRange);
