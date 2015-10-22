@@ -1737,7 +1737,9 @@ public:
       }
     }
 
-    return getSema().BuildCXXForRangeStmt(ForLoc, ColonLoc, Range, BeginEnd,
+    SourceLocation CoawaitLoc; // FIXME
+    return getSema().BuildCXXForRangeStmt(ForLoc, CoawaitLoc, ColonLoc,
+                                          Range, BeginEnd,
                                           Cond, Inc, LoopVar, RParenLoc,
                                           Sema::BFRK_Rebuild);
   }

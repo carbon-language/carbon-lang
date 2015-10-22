@@ -142,6 +142,11 @@ public:
   /// optimization, or if we need to infer a return type.
   SmallVector<ReturnStmt*, 4> Returns;
 
+  /// \brief The list of coroutine control flow constructs (co_await, co_yield,
+  /// co_return) that occur within the function or block. Empty if and only if
+  /// this function or block is not (yet known to be) a coroutine.
+  SmallVector<Stmt*, 4> CoroutineStmts;
+
   /// \brief The stack of currently active compound stamement scopes in the
   /// function.
   SmallVector<CompoundScopeInfo, 4> CompoundScopes;

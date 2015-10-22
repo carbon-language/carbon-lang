@@ -1691,8 +1691,8 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
   StmtResult ForEachStmt;
 
   if (ForRange) {
-    // FIXME: Pass CoawaitLoc to Sema.
-    ForRangeStmt = Actions.ActOnCXXForRangeStmt(ForLoc, FirstPart.get(),
+    ForRangeStmt = Actions.ActOnCXXForRangeStmt(ForLoc, CoawaitLoc,
+                                                FirstPart.get(),
                                                 ForRangeInit.ColonLoc,
                                                 ForRangeInit.RangeExpr.get(),
                                                 T.getCloseLocation(),
@@ -1851,7 +1851,8 @@ StmtResult Parser::ParseReturnStatement() {
       return StmtError();
     }
   }
-  // FIXME: Pass IsCoreturn to Sema.
+  if (IsCoreturn)
+    return Actions.ActOnCoreturnStmt(ReturnLoc, R.get());
   return Actions.ActOnReturnStmt(ReturnLoc, R.get(), getCurScope());
 }
 

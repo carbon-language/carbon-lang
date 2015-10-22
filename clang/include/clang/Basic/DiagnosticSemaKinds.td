@@ -7827,6 +7827,27 @@ def err_module_import_in_implementation : Error<
   "@import of module '%0' in implementation of '%1'; use #import">;
 }
 
+let CategoryName = "Coroutines Issue" in {
+def err_return_in_coroutine : Error<"return statement in coroutine">;
+def note_declared_coroutine_here : Note<
+  "function is a coroutine due to use of "
+  "'%select{co_await|co_yield|co_return}0' here">;
+def err_coroutine_objc_method : Error<
+  "Objective-C methods as coroutines are not yet supported">;
+def err_coroutine_outside_function : Error<
+  "'%0' cannot be used outside a function">;
+def err_coroutine_ctor_dtor : Error<
+  "'%1' cannot be used in a %select{constructor|destructor}0">;
+def err_coroutine_constexpr : Error<
+  "'%0' cannot be used in a constexpr function">;
+def err_coroutine_varargs : Error<
+  "'%0' cannot be used in a varargs function">;
+def ext_coroutine_without_coawait_coyield : ExtWarn<
+  "'co_return' used in a function "
+  "that uses neither 'co_await' nor 'co_yield'">,
+  InGroup<DiagGroup<"coreturn-without-coawait">>;
+}
+
 let CategoryName = "Documentation Issue" in {
 def warn_not_a_doxygen_trailing_member_comment : Warning<
   "not a Doxygen trailing comment">, InGroup<Documentation>, DefaultIgnore;

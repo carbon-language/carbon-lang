@@ -1045,10 +1045,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   }
 
   case tok::kw_co_await: {  // unary-expression: 'co_await' cast-expression
-    SourceLocation SavedLoc = ConsumeToken();
+    SourceLocation CoawaitLoc = ConsumeToken();
     Res = ParseCastExpression(false);
-    (void)SavedLoc;
-    // FIXME: Pass to Sema.
+    if (!Res.isInvalid())
+      Res = Actions.ActOnCoawaitExpr(CoawaitLoc, Res.get());
     return Res;
   }
 

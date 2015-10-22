@@ -1567,8 +1567,8 @@ ExprResult Parser::ParseCoyieldExpression() {
 
   SourceLocation Loc = ConsumeToken();
   ExprResult Expr = ParseAssignmentExpression();
-  (void)Loc;
-  // FIXME: Pass to Sema.
+  if (!Expr.isInvalid())
+    Expr = Actions.ActOnCoyieldExpr(Loc, Expr.get());
   return Expr;
 }
 
