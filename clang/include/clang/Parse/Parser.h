@@ -1580,7 +1580,9 @@ private:
                          SourceLocation Loc, bool ConvertToBoolean);
 
   //===--------------------------------------------------------------------===//
-  // C++ types
+  // C++ Coroutines
+
+  ExprResult ParseCoyieldExpression();
 
   //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.

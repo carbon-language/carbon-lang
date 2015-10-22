@@ -163,6 +163,8 @@ ExprResult Parser::ParseAssignmentExpression(TypeCastState isTypeCast) {
 
   if (Tok.is(tok::kw_throw))
     return ParseThrowExpression();
+  if (Tok.is(tok::kw_co_yield))
+    return ParseCoyieldExpression();
 
   ExprResult LHS = ParseCastExpression(/*isUnaryExpression=*/false,
                                        /*isAddressOfOperand=*/false,
@@ -522,6 +524,7 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
 ///         postfix-expression
 ///         '++' unary-expression
 ///         '--' unary-expression
+/// [Coro]  'co_await' cast-expression
 ///         unary-operator cast-expression
 ///         'sizeof' unary-expression
 ///         'sizeof' '(' type-name ')'
@@ -1038,6 +1041,14 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
       Res = Actions.ActOnUnaryOp(getCurScope(), SavedLoc, SavedKind, Res.get());
+    return Res;
+  }
+
+  case tok::kw_co_await: {  // unary-expression: 'co_await' cast-expression
+    SourceLocation SavedLoc = ConsumeToken();
+    Res = ParseCastExpression(false);
+    (void)SavedLoc;
+    // FIXME: Pass to Sema.
     return Res;
   }
 

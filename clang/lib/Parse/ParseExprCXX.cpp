@@ -1558,6 +1558,20 @@ ExprResult Parser::ParseThrowExpression() {
   }
 }
 
+/// \brief Parse the C++ Coroutines co_yield expression.
+///
+///       co_yield-expression:
+///         'co_yield' assignment-expression[opt]
+ExprResult Parser::ParseCoyieldExpression() {
+  assert(Tok.is(tok::kw_co_yield) && "Not co_yield!");
+
+  SourceLocation Loc = ConsumeToken();
+  ExprResult Expr = ParseAssignmentExpression();
+  (void)Loc;
+  // FIXME: Pass to Sema.
+  return Expr;
+}
+
 /// ParseCXXThis - This handles the C++ 'this' pointer.
 ///
 /// C++ 9.3.2: In the body of a non-static member function, the keyword this is
