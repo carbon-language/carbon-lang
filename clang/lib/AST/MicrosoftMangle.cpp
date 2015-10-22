@@ -1046,6 +1046,14 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO,
     break;
   }
 
+  case OO_Coawait: {
+    DiagnosticsEngine &Diags = Context.getDiags();
+    unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
+      "cannot mangle this operator co_await yet");
+    Diags.Report(Loc, DiagID);
+    break;
+  }
+
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
     llvm_unreachable("Not an overloaded operator");

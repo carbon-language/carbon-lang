@@ -101,6 +101,7 @@ OVERLOADED_OPERATOR_MULTI(Subscript      , "[]"                       , false, t
 // ?: can *not* be overloaded, but we need the overload
 // resolution machinery for it.
 OVERLOADED_OPERATOR_MULTI(Conditional    , "?"                        , false, true , false)
+OVERLOADED_OPERATOR(Coawait              , "co_await", kw_co_await    , true , false, false)
 
 #undef OVERLOADED_OPERATOR_MULTI
 #undef OVERLOADED_OPERATOR

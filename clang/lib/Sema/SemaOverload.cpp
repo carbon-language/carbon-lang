@@ -8228,6 +8228,7 @@ void Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_Array_New:
   case OO_Array_Delete:
   case OO_Call:
+  case OO_Coawait:
     llvm_unreachable(
                     "Special operators don't use AddBuiltinOperatorCandidates");
 
