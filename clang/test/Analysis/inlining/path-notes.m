@@ -577,7 +577,7 @@ void testNullDereferenceInDispatch() {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
-// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>ad3081ebf0d1e26cc4edb01c88faa1c1</string>
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>24947a6942bfa6030ab81e53a201d816</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testReturnZeroIfNil</string>
 // CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>

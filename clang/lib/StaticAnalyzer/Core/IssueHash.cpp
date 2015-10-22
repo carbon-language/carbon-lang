@@ -51,7 +51,7 @@ static std::string GetSignature(const FunctionDecl *Target) {
   const auto *TargetT =
       llvm::dyn_cast_or_null<FunctionType>(Target->getType().getTypePtr());
 
-  if (!TargetT)
+  if (!TargetT || !isa<CXXMethodDecl>(Target))
     return Signature;
 
   if (TargetT->isConst())
