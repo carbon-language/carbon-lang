@@ -194,7 +194,7 @@ static cl::opt<std::string> ClMemoryAccessCallbackPrefix(
     cl::init("__asan_"));
 static cl::opt<bool> ClInstrumentAllocas("asan-instrument-allocas",
                                          cl::desc("instrument dynamic allocas"),
-                                         cl::Hidden, cl::init(false));
+                                         cl::Hidden, cl::init(true));
 static cl::opt<bool> ClSkipPromotableAllocas(
     "asan-skip-promotable-allocas",
     cl::desc("Do not instrument promotable allocas"), cl::Hidden,
