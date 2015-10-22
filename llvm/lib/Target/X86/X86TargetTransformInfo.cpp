@@ -1191,8 +1191,10 @@ int X86TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
 
 bool X86TTIImpl::isLegalMaskedLoad(Type *DataTy) {
   Type *ScalarTy = DataTy->getScalarType();
-  int DataWidth = ScalarTy->isPointerTy() ? DL.getPointerSizeInBits() :
-    ScalarTy->getPrimitiveSizeInBits();
+  // TODO: Pointers should also be legal,
+  // but it requires additional support in composing intrinsics name.
+  // getPrimitiveSizeInBits() returns 0 for PointerType
+  int DataWidth = ScalarTy->getPrimitiveSizeInBits();
 
   return (DataWidth >= 32 && ST->hasAVX2());
 }
