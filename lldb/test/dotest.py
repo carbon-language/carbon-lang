@@ -1116,13 +1116,8 @@ def setupSysPath():
     os.environ["LLDB_SRC"] = os.path.join(scriptPath, os.pardir)
 
     pluginPath = os.path.join(scriptPath, 'plugins')
-    pexpectPath = os.path.join(scriptPath, 'pexpect-2.4')
     toolsLLDBMIPath = os.path.join(scriptPath, 'tools', 'lldb-mi')
     toolsLLDBServerPath = os.path.join(scriptPath, 'tools', 'lldb-server')
-
-    # Put embedded pexpect at front of the load path so we ensure we
-    # use that version.
-    sys.path.insert(0, pexpectPath)
 
     # Insert script dir, plugin dir, lldb-mi dir and lldb-server dir to the sys.path.
     sys.path.insert(0, scriptPath)
