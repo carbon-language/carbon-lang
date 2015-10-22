@@ -74,9 +74,12 @@ option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 # Generate and install a linker script inplace of libc++.so. The linker script
 # will link libc++ to the correct ABI library. This option is on by default
 # On UNIX platforms other than Apple unless 'LIBCXX_ENABLE_STATIC_ABI_LIBRARY'
-# is on.
+# is on. This option is also disabled when the ABI library is not specified
+# or is specified to be "none".
 set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE OFF)
 if (LLVM_HAVE_LINK_VERSION_SCRIPT AND NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY
+      AND LIBCXX_CXX_ABI
+      AND NOT LIBCXX_CXX_ABI STREQUAL "none"
       AND PYTHONINTERP_FOUND)
     set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE ON)
 endif()
