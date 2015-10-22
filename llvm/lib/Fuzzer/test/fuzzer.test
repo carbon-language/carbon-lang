@@ -37,8 +37,6 @@ RUN: not LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2
 
 RUN: not LLVMFuzzer-SimpleCmpTest -use_traces=1 -seed=1 -runs=1000000 -timeout=5 2>&1 | FileCheck %s
 
-RUN: not LLVMFuzzer-CxxTokensTest -seed=1 -timeout=15 -deprecated_tokens=%S/../cxx_fuzzer_tokens.txt 2>&1 | FileCheck %s
-
 RUN: not LLVMFuzzer-UserSuppliedFuzzerTest -seed=1 -timeout=15 2>&1 | FileCheck %s
 
 RUN: not LLVMFuzzer-MemcmpTest -use_traces=1 -seed=1 -runs=100000   2>&1 | FileCheck %s

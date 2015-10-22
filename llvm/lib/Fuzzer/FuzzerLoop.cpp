@@ -35,14 +35,8 @@ void Fuzzer::SetDeathCallback() {
   __sanitizer_set_death_callback(StaticDeathCallback);
 }
 
-void Fuzzer::PrintUnitInASCIIOrTokens(const Unit &U, const char *PrintAfter) {
-  if (Options.Tokens.empty()) {
-    PrintASCII(U, PrintAfter);
-  } else {
-    auto T = SubstituteTokens(U);
-    T.push_back(0);
-    Printf("%s%s", T.data(), PrintAfter);
-  }
+void Fuzzer::PrintUnitInASCII(const Unit &U, const char *PrintAfter) {
+  PrintASCII(U, PrintAfter);
 }
 
 void Fuzzer::StaticDeathCallback() {
@@ -54,7 +48,7 @@ void Fuzzer::DeathCallback() {
   Printf("DEATH:\n");
   if (CurrentUnit.size() <= kMaxUnitSizeToPrint) {
     Print(CurrentUnit, "\n");
-    PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
+    PrintUnitInASCII(CurrentUnit, "\n");
   }
   WriteUnitToFileWithPrefix(CurrentUnit, "crash-");
 }
@@ -77,7 +71,7 @@ void Fuzzer::AlarmCallback() {
            Options.UnitTimeoutSec);
     if (CurrentUnit.size() <= kMaxUnitSizeToPrint) {
       Print(CurrentUnit, "\n");
-      PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
+      PrintUnitInASCII(CurrentUnit, "\n");
     }
     WriteUnitToFileWithPrefix(CurrentUnit, "timeout-");
     Printf("==%d== ERROR: libFuzzer: timeout after %d seconds\n", GetPid(),
@@ -191,28 +185,9 @@ void Fuzzer::RunOneAndUpdateCorpus(Unit &U) {
   ReportNewCoverage(RunOne(U), U);
 }
 
-Unit Fuzzer::SubstituteTokens(const Unit &U) const {
-  Unit Res;
-  for (auto Idx : U) {
-    if (Idx < Options.Tokens.size()) {
-      std::string Token = Options.Tokens[Idx];
-      Res.insert(Res.end(), Token.begin(), Token.end());
-    } else {
-      Res.push_back(' ');
-    }
-  }
-  // FIXME: Apply DFSan labels.
-  return Res;
-}
-
 void Fuzzer::ExecuteCallback(const Unit &U) {
-  int Res = 0;
-  if (Options.Tokens.empty()) {
-    Res = USF.TargetFunction(U.data(), U.size());
-  } else {
-    auto T = SubstituteTokens(U);
-    Res = USF.TargetFunction(T.data(), T.size());
-  }
+  int Res = USF.TargetFunction(U.data(), U.size());
+  (void)Res;
   assert(Res == 0);
 }
 
@@ -278,7 +253,7 @@ void Fuzzer::ReportNewCoverage(size_t NewCoverage, const Unit &U) {
     Printf(" L: %zd", U.size());
     if (U.size() < 30) {
       Printf(" ");
-      PrintUnitInASCIIOrTokens(U, "\t");
+      PrintUnitInASCII(U, "\t");
       Print(U);
     }
     Printf("\n");

@@ -93,7 +93,6 @@ class Fuzzer {
     std::string OutputCorpus;
     std::string SyncCommand;
     std::string ArtifactPrefix = "./";
-    std::vector<std::string> Tokens;
     std::vector<Unit> Dictionary;
     bool SaveArtifacts = true;
   };
@@ -119,7 +118,6 @@ class Fuzzer {
 
   static void StaticAlarmCallback();
 
-  Unit SubstituteTokens(const Unit &U) const;
   void ExecuteCallback(const Unit &U);
 
  private:
@@ -133,7 +131,7 @@ class Fuzzer {
   void WriteToOutputCorpus(const Unit &U);
   void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
   void PrintStats(const char *Where, size_t Cov, const char *End = "\n");
-  void PrintUnitInASCIIOrTokens(const Unit &U, const char *PrintAfter = "");
+  void PrintUnitInASCII(const Unit &U, const char *PrintAfter = "");
 
   void SyncCorpus();
 

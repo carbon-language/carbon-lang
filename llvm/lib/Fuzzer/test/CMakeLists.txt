@@ -14,7 +14,6 @@ set(DFSanTests
 
 set(Tests
   CounterTest
-  CxxTokensTest
   FourIndependentBranchesTest
   FullCoverageSetTest
   InfiniteTest

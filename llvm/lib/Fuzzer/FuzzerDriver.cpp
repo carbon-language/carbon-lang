@@ -182,26 +182,6 @@ static int RunInMultipleProcesses(const std::vector<std::string> &Args,
   return HasErrors ? 1 : 0;
 }
 
-std::vector<std::string> ReadTokensFile(const char *TokensFilePath) {
-  if (!TokensFilePath) return {};
-  std::string TokensFileContents = FileToString(TokensFilePath);
-  std::istringstream ISS(TokensFileContents);
-  std::vector<std::string> Res = {std::istream_iterator<std::string>{ISS},
-                                  std::istream_iterator<std::string>{}};
-  Res.push_back(" ");
-  Res.push_back("\t");
-  Res.push_back("\n");
-  return Res;
-}
-
-int ApplyTokens(const Fuzzer &F, const char *InputFilePath) {
-  Unit U = FileToVector(InputFilePath);
-  auto T = F.SubstituteTokens(U);
-  T.push_back(0);
-  Printf("%s", T.data());
-  return 0;
-}
-
 int RunOneTest(Fuzzer *F, const char *InputFilePath) {
   Unit U = FileToVector(InputFilePath);
   F->ExecuteCallback(U);
@@ -258,7 +238,6 @@ int FuzzerDriver(const std::vector<std::string> &Args,
   Options.ShuffleAtStartUp = Flags.shuffle;
   Options.PreferSmallDuringInitialShuffle =
       Flags.prefer_small_during_initial_shuffle;
-  Options.Tokens = ReadTokensFile(Flags.deprecated_tokens);
   Options.Reload = Flags.reload;
   Options.OnlyASCII = Flags.only_ascii;
   Options.TBMDepth = Flags.tbm_depth;
@@ -282,9 +261,6 @@ int FuzzerDriver(const std::vector<std::string> &Args,
 
   Fuzzer F(USF, Options);
 
-  if (Flags.apply_tokens)
-    return ApplyTokens(F, Flags.apply_tokens);
-
   // Timer
   if (Flags.timeout > 0)
     SetTimer(Flags.timeout / 2 + 1);
@@ -299,13 +275,6 @@ int FuzzerDriver(const std::vector<std::string> &Args,
   if (Flags.verbosity)
     Printf("Seed: %u\n", Seed);
   USF.GetRand().ResetSeed(Seed);
-
-  if (Flags.verbosity >= 2) {
-    Printf("Tokens: {");
-    for (auto &T : Options.Tokens)
-      Printf("%s,", T.c_str());
-    Printf("}\n");
-  }
 
   F.RereadOutputCorpus();
   for (auto &inp : *Inputs)
