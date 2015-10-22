@@ -2945,8 +2945,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB, const DataLayout &DL,
   // of the function down.  This jives well with the way that it adds all uses
   // of instructions to the worklist after doing a transformation, thus avoiding
   // some N^2 behavior in pathological cases.
-  ICWorklist.AddInitialGroup(&InstrsForInstCombineWorklist[0],
-                             InstrsForInstCombineWorklist.size());
+  ICWorklist.AddInitialGroup(InstrsForInstCombineWorklist);
 
   return MadeIRChange;
 }
