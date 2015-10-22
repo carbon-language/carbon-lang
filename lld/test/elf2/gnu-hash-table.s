@@ -1,3 +1,5 @@
+# REQUIRES: x86,ppc
+
 # RUN: echo ".globl foo" > %te.s
 # RUN: llvm-mc -filetype=obj -triple=i386-pc-linux      %te.s -o %te-i386.o
 # RUN: llvm-mc -filetype=obj -triple=i386-pc-linux      %s    -o %t-i386.o
