@@ -6,6 +6,7 @@ add_clang_library(clangStaticAnalyzerCore
   AnalyzerOptions.cpp
   BasicValueFactory.cpp
   BlockCounter.cpp
+  IssueHash.cpp
   BugReporter.cpp
   BugReporterVisitors.cpp
   CallEvent.cpp

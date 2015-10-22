@@ -16,7 +16,10 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/CallGraph.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
+#include "clang/StaticAnalyzer/Core/IssueHash.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "llvm/Support/Process.h"
@@ -208,4 +211,36 @@ public:
 
 void ento::registerExplodedGraphViewer(CheckerManager &mgr) {
   mgr.registerChecker<ExplodedGraphViewer>();
+}
+
+//===----------------------------------------------------------------------===//
+// DumpBugHash 
+//===----------------------------------------------------------------------===//
+
+namespace {
+class BugHashDumper : public Checker<check::PostStmt<Stmt>> {
+public:
+  mutable std::unique_ptr<BugType> BT;
+
+  void checkPostStmt(const Stmt *S, CheckerContext &C) const {
+    if (!BT)
+      BT.reset(new BugType(this, "Dump hash components", "debug"));
+
+    ExplodedNode *N = C.generateNonFatalErrorNode();
+    if (!N)
+      return;
+
+    const SourceManager &SM = C.getSourceManager();
+    FullSourceLoc FL(S->getLocStart(), SM);
+    std::string HashContent =
+        GetIssueString(SM, FL, getCheckName().getName(), BT->getCategory(),
+                       C.getLocationContext()->getDecl());
+
+    C.emitReport(llvm::make_unique<BugReport>(*BT, HashContent, N));
+  }
+};
+}
+
+void ento::registerBugHashDumper(CheckerManager &mgr) {
+  mgr.registerChecker<BugHashDumper>();
 }

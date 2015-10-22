@@ -306,9 +306,11 @@ void testTrackConstraintBRVisitorIsTrackingTurnedOn(struct S syz, int *pp) {
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>5cafa075eb4d5b0bf1f228608a3ec87e</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>11</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>11</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>23</integer>
@@ -644,9 +646,11 @@ void testTrackConstraintBRVisitorIsTrackingTurnedOn(struct S syz, int *pp) {
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>a213f858dacf7993492e6b32080aaa64</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testTrackConstraintBRVisitorIsTrackingTurnedOn</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>11</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>11</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>38</integer>

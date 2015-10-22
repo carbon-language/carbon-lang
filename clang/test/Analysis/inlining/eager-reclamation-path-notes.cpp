@@ -373,9 +373,11 @@ int memberCallBaseDisappears() {
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>f4a4cee851880ebbe93d3b657920ebe9</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>memberCallBaseDisappears</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>19</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>19</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>33</integer>

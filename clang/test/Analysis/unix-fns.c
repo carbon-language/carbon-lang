@@ -407,9 +407,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Improper use of &apos;open&apos;</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>5ef25c5c47db3dbfb329901d426452e7</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_open</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>6</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>6</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>55</integer>
@@ -556,9 +558,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>API Misuse (Apple)</string>
 // CHECK-NEXT:    <key>type</key><string>Improper use of &apos;dispatch_once&apos;</string>
 // CHECK-NEXT:    <key>check_name</key><string>osx.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>173fbcac3fc64dbaec32768d4cfda250</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_dispatch_once</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>62</integer>
@@ -637,9 +641,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Improper use of &apos;pthread_once&apos;</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>1e2f657a65cf8ee3c3ac2227de05ade4</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_pthread_once</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>73</integer>
@@ -718,9 +724,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>0e841458f0cb7cf161d35f9db5862dcf</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>pr2899</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>82</integer>
@@ -799,9 +807,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>a267ff573c7e8b959a3f886677893eb0</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_calloc</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>94</integer>
@@ -880,9 +890,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>14eb72957baab3c63bac610a10e6f48b</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_calloc2</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>100</integer>
@@ -961,9 +973,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>7f6f67ebe3d481aed7750005bea7e371</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_realloc</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>112</integer>
@@ -1042,9 +1056,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>4941698efbd81601653dff10ef9c645b</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_reallocf</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>118</integer>
@@ -1123,9 +1139,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>b7ca3488e81d9d9d4b8dc545258ce97c</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_alloca</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>136</integer>
@@ -1204,9 +1222,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>1ec52551362b070237f47f6bb6c3847d</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_builtin_alloca</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>148</integer>
@@ -1285,9 +1305,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Unix API</string>
 // CHECK-NEXT:    <key>type</key><string>Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>675741e04c8d0071d280324e23f41d35</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_valloc</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>160</integer>
@@ -1366,9 +1388,11 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>API Misuse (Apple)</string>
 // CHECK-NEXT:    <key>type</key><string>Improper use of &apos;dispatch_once&apos;</string>
 // CHECK-NEXT:    <key>check_name</key><string>osx.API</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>8ded1f2025c1e4a4bcd5302dc97006d9</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_dispatch_once_in_macro</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash_function_offset</key><string>2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>184</integer>
@@ -1776,6 +1800,8 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>5d3f4c433004c7a6d4a06aa30cc3ea85</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>192</integer>
@@ -2163,6 +2189,8 @@ void test_inline_dispatch_once() {
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
+// CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:    <key>issue_hash_content_of_line_in_context</key><string>265c4fd608dafee211bfa93d21c28866</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>202</integer>

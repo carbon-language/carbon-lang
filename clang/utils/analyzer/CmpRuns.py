@@ -70,8 +70,8 @@ class AnalysisDiagnostic:
         id = self.getFileName() + "+"
         if 'issue_context' in self._data :
           id += self._data['issue_context'] + "+"
-        if 'issue_hash' in self._data :
-          id += str(self._data['issue_hash'])
+        if 'issue_hash_content_of_line_in_context' in self._data :
+          id += str(self._data['issue_hash_content_of_line_in_context'])
         return id
 
     def getReport(self):

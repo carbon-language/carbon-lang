@@ -289,10 +289,12 @@ void test() {
 // CHECK-NEXT:   <key>description</key><string>Memory allocated by &apos;new[]&apos; should be deallocated by &apos;delete[]&apos;, not &apos;delete&apos;</string>
 // CHECK-NEXT:   <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:   <key>type</key><string>Bad deallocator</string>
-// CHECK-NEXT:   <key>check_name</key><string>unix.MismatchedDeallocator</string> 
+// CHECK-NEXT:   <key>check_name</key><string>unix.MismatchedDeallocator</string>
+// CHECK-NEXT:   <!-- This hash is experimental and going to change! -->
+// CHECK-NEXT:   <key>issue_hash_content_of_line_in_context</key><string>2009ca1da75217064b6052ba7465dff9</string>
 // CHECK-NEXT:  <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:  <key>issue_context</key><string>test</string>
-// CHECK-NEXT:  <key>issue_hash</key><string>4</string>
+// CHECK-NEXT:  <key>issue_hash_function_offset</key><string>4</string>
 // CHECK-NEXT:  <key>location</key>
 // CHECK-NEXT:  <dict>
 // CHECK-NEXT:   <key>line</key><integer>13</integer>
