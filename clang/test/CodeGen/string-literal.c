@@ -102,6 +102,30 @@ def)" "ghi";
 ??=
 def)";
 
+  // CHECK-CXX11: private unnamed_addr constant [13 x i8] c"def\5C\0A??=\0Aabc\00", align 1
+  const char *s = u8R\
+"(def\
+??=
+abc)";
+
+  // CHECK-CXX11: private unnamed_addr constant [13 x i16] [i16 97, i16 98, i16 99, i16 92, i16 10, i16 63, i16 63, i16 61, i16 10, i16 100, i16 101, i16 102, i16 0], align 2
+  const char16_t *t = uR\
+"(abc\
+??=
+def)";
+
+  // CHECK-CXX11: private unnamed_addr constant [13 x i32] [i32 97, i32 98, i32 99, i32 92, i32 10, i32 63, i32 63, i32 61, i32 10, i32 100, i32 101, i32 102, i32 0], align 4
+  const char32_t *u = UR\
+"(abc\
+??=
+def)";
+
+  // CHECK-CXX11: private unnamed_addr constant [13 x i32] [i32 100, i32 101, i32 102, i32 92, i32 10, i32 63, i32 63, i32 61, i32 10, i32 97, i32 98, i32 99, i32 0], align 4
+  const wchar_t *v = LR\
+"(def\
+??=
+abc)";
+
 #endif
 #endif
 }

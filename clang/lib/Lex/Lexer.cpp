@@ -235,7 +235,7 @@ static size_t getSpellingSlow(const Token &Tok, const char *BufPtr,
   size_t Length = 0;
   const char *BufEnd = BufPtr + Tok.getLength();
 
-  if (Tok.is(tok::string_literal)) {
+  if (tok::isStringLiteral(Tok.getKind())) {
     // Munch the encoding-prefix and opening double-quote.
     while (BufPtr < BufEnd) {
       unsigned Size;
