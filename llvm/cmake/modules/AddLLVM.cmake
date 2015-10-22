@@ -781,7 +781,7 @@ endmacro()
 # enable or disable building it with everything else.
 # Additional parameter can be specified as the name of directory.
 macro(add_llvm_external_project name)
-  add_llvm_subdirectory(LLVM TOOL ${name})
+  add_llvm_subdirectory(LLVM TOOL ${name} ${ARGN})
 endmacro()
 
 macro(add_llvm_tool_subdirectory name)
