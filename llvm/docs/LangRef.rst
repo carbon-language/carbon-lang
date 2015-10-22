@@ -1481,6 +1481,15 @@ operand bundle to not miscompile programs containing it.
 - An operand bundle at a call site cannot change the implementation
   of the called function.  Inter-procedural optimizations work as
   usual as long as they take into account the first two properties.
+- The bundle operands for an unknown operand bundle escape in unknown
+  ways before control is transferred to the callee or invokee.
+- Calls and invokes with operand bundles have unknown read / write
+  effect on the heap on entry and exit (even if the call target is
+  ``readnone`` or ``readonly``), unless they're overriden with
+  callsite specific attributes.
+- An operand bundle at a call site cannot change the implementation
+  of the called function.  Inter-procedural optimizations work as
+  usual as long as they take into account the first two properties.
 
 .. _moduleasm:
 

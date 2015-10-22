@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/IR/Attributes.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/OperandTraits.h"
@@ -1232,8 +1233,50 @@ public:
     return None;
   }
 
+  /// \brief Return true if this operand bundle user has operand bundles that
+  /// may read from the heap.
+  bool hasReadingOperandBundles() const {
+    // Implementation note: this is a conservative implementation of operand
+    // bundle semantics, where *any* operand bundle forces a callsite to be at
+    // least readonly.
+    return hasOperandBundles();
+  }
+
+  /// \brief Return true if this operand bundle user has operand bundles that
+  /// may write to the heap.
+  bool hasClobberingOperandBundles() const {
+    // Implementation note: this is a conservative implementation of operand
+    // bundle semantics, where *any* operand bundle forces a callsite to be
+    // read-write.
+    return hasOperandBundles();
+  }
 
 protected:
+  /// \brief Is the function attribute S disallowed by some operand bundle on
+  /// this operand bundle user?
+  bool isFnAttrDisallowedByOpBundle(StringRef S) const {
+    // Operand bundles only possibly disallow readnone and readonly attributes.
+    // All String attributes are fine.
+    return false;
+  }
+
+  /// \brief Is the function attribute A disallowed by some operand bundle on
+  /// this operand bundle user?
+  bool isFnAttrDisallowedByOpBundle(Attribute::AttrKind A) const {
+    switch (A) {
+    default:
+      return false;
+
+    case Attribute::ReadNone:
+      return hasReadingOperandBundles();
+
+    case Attribute::ReadOnly:
+      return hasClobberingOperandBundles();
+    }
+
+    llvm_unreachable("switch has a default case!");
+  }
+
   /// \brief Used to keep track of an operand bundle.  See the main comment on
   /// OperandBundleUser above.
   struct BundleOpInfo {

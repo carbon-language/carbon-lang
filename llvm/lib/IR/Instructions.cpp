@@ -563,6 +563,12 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 bool InvokeInst::hasFnAttrImpl(Attribute::AttrKind A) const {
   if (AttributeList.hasAttribute(AttributeSet::FunctionIndex, A))
     return true;
+
+  // Operand bundles override attributes on the called function, but don't
+  // override attributes directly present on the invoke instruction.
+  if (isFnAttrDisallowedByOpBundle(A))
+    return false;
+
   if (const Function *F = getCalledFunction())
     return F->getAttributes().hasAttribute(AttributeSet::FunctionIndex, A);
   return false;
