@@ -776,10 +776,9 @@ static AliasResult aliasSameBasePointerGEPs(const GEPOperator *GEP1,
   ConstantInt *C2 =
       dyn_cast<ConstantInt>(GEP2->getOperand(GEP2->getNumOperands() - 1));
 
-  // If the last (struct) indices aren't constants, we can't say anything.
-  // If they're identical, the other indices might be also be dynamically
-  // equal, so the GEPs can alias.
-  if (!C1 || !C2 || C1 == C2)
+  // If the last (struct) indices are constants and are equal, the other indices
+  // might be also be dynamically equal, so the GEPs can alias.
+  if (C1 && C2 && C1 == C2)
     return MayAlias;
 
   // Find the last-indexed type of the GEP, i.e., the type you'd get if
@@ -802,12 +801,43 @@ static AliasResult aliasSameBasePointerGEPs(const GEPOperator *GEP1,
     IntermediateIndices.push_back(GEP1->getOperand(i + 1));
   }
 
-  StructType *LastIndexedStruct =
-      dyn_cast<StructType>(GetElementPtrInst::getIndexedType(
-          GEP1->getSourceElementType(), IntermediateIndices));
+  auto *Ty = GetElementPtrInst::getIndexedType(
+    GEP1->getSourceElementType(), IntermediateIndices);
+  StructType *LastIndexedStruct = dyn_cast<StructType>(Ty);
 
-  if (!LastIndexedStruct)
+  if (isa<SequentialType>(Ty)) {
+    // We know that:
+    // - both GEPs begin indexing from the exact same pointer;
+    // - the last indices in both GEPs are constants, indexing into a sequential
+    //   type (array or pointer);
+    // - both GEPs only index through arrays prior to that.
+    //
+    // Because array indices greater than the number of elements are valid in
+    // GEPs, unless we know the intermediate indices are identical between
+    // GEP1 and GEP2 we cannot guarantee that the last indexed arrays don't
+    // partially overlap.
+    for (unsigned i = 0, e = GEP1->getNumIndices() - 1; i != e; ++i)
+      if (GEP1->getOperand(i + 1) != GEP2->getOperand(i + 1))
+        return MayAlias;
+    
+    // Now we know that the array/pointer that GEP1 indexes into and that
+    // that GEP2 indexes into must either precisely overlap or be disjoint.
+    // Because they cannot partially overlap and because fields in an array
+    // cannot overlap, if we can prove the final indices are different between
+    // GEP1 and GEP2, we can conclude GEP1 and GEP2 don't alias.
+    
+    // If the last indices are constants, we've already checked they don't
+    // equal each other so we can exit early.
+    if (C1 && C2)
+      return NoAlias;
+    if (isKnownNonEqual(GEP1->getOperand(GEP1->getNumOperands() - 1),
+                        GEP2->getOperand(GEP2->getNumOperands() - 1),
+                        DL))
+      return NoAlias;
     return MayAlias;
+  } else if (!LastIndexedStruct || !C1 || !C2) {
+    return MayAlias;
+  }
 
   // We know that:
   // - both GEPs begin indexing from the exact same pointer;
