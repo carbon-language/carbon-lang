@@ -30,6 +30,10 @@
 #include <sys/un.h>
 #endif
 
+#ifdef __linux__
+#include "lldb/Host/linux/AbstractSocket.h"
+#endif
+
 #ifdef __ANDROID_NDK__
 #include <linux/tcp.h>
 #include <bits/error_constants.h>
@@ -186,6 +190,44 @@ Error Socket::UnixDomainAccept(llvm::StringRef name, bool child_processes_inheri
     error = listen_socket->Accept(name, child_processes_inherit, socket);
 #else
     error.SetErrorString("Unix domain sockets are not supported on this platform.");
+#endif
+    return error;
+}
+
+Error
+Socket::UnixAbstractConnect(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
+{
+    Error error;
+#ifdef __linux__
+    std::unique_ptr<Socket> connect_socket(new AbstractSocket(child_processes_inherit, error));
+    if (error.Fail())
+        return error;
+
+    error = connect_socket->Connect(name);
+    if (error.Success())
+      socket = connect_socket.release();
+#else
+    error.SetErrorString("Abstract domain sockets are not supported on this platform.");
+#endif
+    return error;
+}
+
+Error
+Socket::UnixAbstractAccept(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
+{
+    Error error;
+#ifdef __linux__
+    std::unique_ptr<Socket> listen_socket(new AbstractSocket(child_processes_inherit, error));
+    if (error.Fail())
+        return error;
+
+    error = listen_socket->Listen(name, 5);
+    if (error.Fail())
+        return error;
+
+    error = listen_socket->Accept(name, child_processes_inherit, socket);
+#else
+    error.SetErrorString("Abstract domain sockets are not supported on this platform.");
 #endif
     return error;
 }

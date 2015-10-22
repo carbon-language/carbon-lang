@@ -186,6 +186,11 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
             // unix-connect://SOCKNAME
             return NamedSocketConnect(s + strlen("unix-connect://"), error_ptr);
         }
+        else if (strstr(s, "unix-abstract-connect://") == s)
+        {
+            // unix-abstract-connect://SOCKNAME
+            return UnixAbstractSocketConnect(s + strlen("unix-abstract-connect://"), error_ptr);
+        }
 #ifndef LLDB_DISABLE_POSIX
         else if (strstr(s, "fd://") == s)
         {
@@ -751,6 +756,23 @@ ConnectionFileDescriptor::NamedSocketConnect(const char *socket_name, Error *err
 {
     Socket *socket = nullptr;
     Error error = Socket::UnixDomainConnect(socket_name, m_child_processes_inherit, socket);
+    if (error_ptr)
+        *error_ptr = error;
+    m_write_sp.reset(socket);
+    m_read_sp = m_write_sp;
+    if (error.Fail())
+    {
+        return eConnectionStatusError;
+    }
+    m_uri.assign(socket_name);
+    return eConnectionStatusSuccess;
+}
+
+lldb::ConnectionStatus
+ConnectionFileDescriptor::UnixAbstractSocketConnect(const char *socket_name, Error *error_ptr)
+{
+    Socket *socket = nullptr;
+    Error error = Socket::UnixAbstractConnect(socket_name, m_child_processes_inherit, socket);
     if (error_ptr)
         *error_ptr = error;
     m_write_sp.reset(socket);

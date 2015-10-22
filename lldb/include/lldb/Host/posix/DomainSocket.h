@@ -22,6 +22,13 @@ namespace lldb_private
         Error Connect(llvm::StringRef name) override;
         Error Listen(llvm::StringRef name, int backlog) override;
         Error Accept(llvm::StringRef name, bool child_processes_inherit, Socket *&socket) override;
+
+    protected:
+        DomainSocket(SocketProtocol protocol, bool child_processes_inherit, Error &error);
+
+        virtual size_t GetNameOffset() const;
+        virtual void DeleteSocketFile(llvm::StringRef name);
+
     private:
         DomainSocket(NativeSocket socket);
     };

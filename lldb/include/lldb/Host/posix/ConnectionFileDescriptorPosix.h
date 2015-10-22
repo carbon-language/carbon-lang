@@ -84,6 +84,8 @@ class ConnectionFileDescriptor : public Connection
 
     lldb::ConnectionStatus NamedSocketAccept(const char *socket_name, Error *error_ptr);
 
+    lldb::ConnectionStatus UnixAbstractSocketConnect(const char *socket_name, Error *error_ptr);
+
     lldb::IOObjectSP m_read_sp;
     lldb::IOObjectSP m_write_sp;
 

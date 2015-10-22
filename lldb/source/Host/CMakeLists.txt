@@ -121,6 +121,7 @@ else()
         android/HostInfoAndroid.cpp
         android/LibcGlue.cpp
         android/ProcessLauncherAndroid.cpp
+        linux/AbstractSocket.cpp
         linux/Host.cpp
         linux/HostInfoLinux.cpp
         linux/HostThreadLinux.cpp
@@ -129,6 +130,7 @@ else()
         )
     else()
       add_host_subdirectory(linux
+        linux/AbstractSocket.cpp
         linux/Host.cpp
         linux/HostInfoLinux.cpp
         linux/HostThreadLinux.cpp

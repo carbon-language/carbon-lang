@@ -29,14 +29,19 @@ namespace {
 const int kDomain = AF_UNIX;
 const int kType   = SOCK_STREAM;
 
-void SetSockAddr(llvm::StringRef name, sockaddr_un* saddr_un)
+bool SetSockAddr(llvm::StringRef name, const size_t name_offset, sockaddr_un* saddr_un)
 {
+    if (name.size() + name_offset > sizeof(saddr_un->sun_path))
+        return false;
+
     saddr_un->sun_family = kDomain;
-    ::strncpy(saddr_un->sun_path, name.data(), sizeof(saddr_un->sun_path) - 1);
-    saddr_un->sun_path[sizeof(saddr_un->sun_path) - 1] = '\0';
+    memset(saddr_un->sun_path, 0, sizeof(saddr_un->sun_path));
+
+    strncpy(&saddr_un->sun_path[name_offset], name.data(), name.size());
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
     saddr_un->sun_len = SUN_LEN (saddr_un);
 #endif
+    return true;
 }
 
 }
@@ -51,14 +56,20 @@ DomainSocket::DomainSocket(bool child_processes_inherit, Error &error)
 {
 }
 
+DomainSocket::DomainSocket(SocketProtocol protocol, bool child_processes_inherit, Error &error)
+    : Socket(CreateSocket(kDomain, kType, 0, child_processes_inherit, error), protocol, true)
+{
+}
+
 Error
 DomainSocket::Connect(llvm::StringRef name)
 {
     sockaddr_un saddr_un;
-    SetSockAddr(name, &saddr_un);
+    if (!SetSockAddr(name, GetNameOffset(), &saddr_un))
+        return Error("Failed to set socket address");
 
     Error error;
-    if (::connect(GetNativeSocket(), (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) < 0)
+    if (::connect(GetNativeSocket(), (struct sockaddr *)&saddr_un, sizeof(saddr_un)) < 0)
         SetLastError (error);
 
     return error;
@@ -68,12 +79,13 @@ Error
 DomainSocket::Listen(llvm::StringRef name, int backlog)
 {
     sockaddr_un saddr_un;
-    SetSockAddr(name, &saddr_un);
+    if (!SetSockAddr(name, GetNameOffset(), &saddr_un))
+        return Error("Failed to set socket address");
 
-    FileSystem::Unlink(FileSpec{name, true});
+    DeleteSocketFile(name);
 
     Error error;
-    if (::bind(GetNativeSocket(), (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) == 0)
+    if (::bind(GetNativeSocket(), (struct sockaddr *)&saddr_un, sizeof(saddr_un)) == 0)
         if (::listen(GetNativeSocket(), backlog) == 0)
             return error;
 
@@ -90,4 +102,16 @@ DomainSocket::Accept(llvm::StringRef name, bool child_processes_inherit, Socket 
         socket = new DomainSocket(conn_fd);
 
     return error;
+}
+
+size_t
+DomainSocket::GetNameOffset() const
+{
+    return 0;
+}
+
+void
+DomainSocket::DeleteSocketFile(llvm::StringRef name)
+{
+    FileSystem::Unlink(FileSpec{name, true});
 }

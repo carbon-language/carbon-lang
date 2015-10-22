@@ -45,7 +45,8 @@ public:
     {
         ProtocolTcp,
         ProtocolUdp,
-        ProtocolUnixDomain
+        ProtocolUnixDomain,
+        ProtocolUnixAbstract
     } SocketProtocol;
 
     static const NativeSocket kInvalidSocketValue;
@@ -69,6 +70,8 @@ public:
     static Error UdpConnect(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&send_socket, Socket *&recv_socket);
     static Error UnixDomainConnect(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket);
     static Error UnixDomainAccept(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket);
+    static Error UnixAbstractConnect(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket);
+    static Error UnixAbstractAccept(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket);
 
     int GetOption (int level, int option_name, int &option_value);
     int SetOption (int level, int option_name, int option_value);
