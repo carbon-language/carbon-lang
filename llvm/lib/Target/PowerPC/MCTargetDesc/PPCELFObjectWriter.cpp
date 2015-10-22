@@ -113,6 +113,13 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
         break;
       }
       break;
+    case PPC::fixup_ppc_half16ds: {
+      raw_ostream &OS = *(new raw_fd_ostream(2, false));
+      Target.print(OS);
+      OS << "\n";
+      report_fatal_error("Invalid PC-relative half16ds relocation");
+      break;
+    }
     case FK_Data_4:
     case FK_PCRel_4:
       Type = ELF::R_PPC_REL32;
