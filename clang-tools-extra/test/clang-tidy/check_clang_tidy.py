@@ -16,13 +16,15 @@ ClangTidy Test Helper
 This script runs clang-tidy in fix mode and verify fixes, messages or both.
 
 Usage:
-  check_clang_tidy.py <source-file> <check-name> <temp-file> \
-    [optional clang-tidy arguments]
+  check_clang_tidy.py [-resource-dir <resource-dir>] \
+    <source-file> <check-name> <temp-file> \
+    -- [optional clang-tidy arguments]
 
 Example:
   // RUN: %check_clang_tidy %s llvm-include-order %t -- -isystem $(dirname %s)/Inputs/Headers
 """
 
+import argparse
 import re
 import subprocess
 import sys
@@ -34,21 +36,30 @@ def write_file(file_name, text):
     f.truncate()
 
 def main():
-  if len(sys.argv) < 4:
-    sys.exit('Not enough arguments.')
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-resource-dir')
+  parser.add_argument('input_file_name')
+  parser.add_argument('check_name')
+  parser.add_argument('temp_file_name')
 
-  input_file_name = sys.argv[1]
+  args, extra_args = parser.parse_known_args()
+
+  resource_dir = args.resource_dir
+  input_file_name = args.input_file_name
+  check_name = args.check_name
+  temp_file_name = args.temp_file_name
+
   extension = '.cpp'
   if (input_file_name.endswith('.c')):
     extension = '.c'
+  temp_file_name = temp_file_name + extension
 
-  check_name = sys.argv[2]
-  temp_file_name = sys.argv[3] + extension
-
-  clang_tidy_extra_args = sys.argv[4:]
+  clang_tidy_extra_args = extra_args
   if len(clang_tidy_extra_args) == 0:
     clang_tidy_extra_args = ['--', '--std=c++11'] if extension == '.cpp' \
                        else ['--']
+  if resource_dir is not None:
+    clang_tidy_extra_args.append('-resource-dir=%s' % resource_dir)
 
   with open(input_file_name, 'r') as input_file:
     input_text = input_file.read()

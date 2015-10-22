@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s modernize-use-nullptr %t \
+// RUN: %check_clang_tidy %s modernize-use-nullptr %t -- \
 // RUN:   -config="{CheckOptions: [{key: modernize-use-nullptr.NullMacros, value: 'MY_NULL,NULL'}]}" \
 // RUN:   -- -std=c++11
 

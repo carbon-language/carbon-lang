@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s modernize-use-nullptr %t -- \
+// RUN: %check_clang_tidy %s modernize-use-nullptr %t -- -- \
 // RUN:   -std=c++98 -Wno-non-literal-null-conversion
 //
 // Some parts of the test (e.g. assignment of `const int` to `int *`) fail in

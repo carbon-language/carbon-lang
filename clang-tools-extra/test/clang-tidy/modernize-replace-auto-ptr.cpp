@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s modernize-replace-auto-ptr %t -- \
+// RUN: %check_clang_tidy %s modernize-replace-auto-ptr %t -- -- \
 // RUN:   -std=c++11 -I %S/Inputs/modernize-replace-auto-ptr
 
 // CHECK-FIXES: #include <utility>

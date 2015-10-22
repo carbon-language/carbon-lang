@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s google-readability-casting %t -- -x c
+// RUN: %check_clang_tidy %s google-readability-casting %t -- -- -x c
 // The testing script always adds .cpp extension to the input file name, so we
 // need to run clang-tidy directly in order to verify handling of .c files:
 // RUN: clang-tidy --checks=-*,google-readability-casting %s -- -x c++ | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not='{{warning|error}}:'

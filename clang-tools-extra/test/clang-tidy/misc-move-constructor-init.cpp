@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s misc-move-constructor-init %t -- -std=c++11 -isystem %S/Inputs/Headers
+// RUN: %check_clang_tidy %s misc-move-constructor-init %t -- -- -std=c++11 -isystem %S/Inputs/Headers
 
 #include <s.h>
 

@@ -1,6 +1,6 @@
 // RUN: echo "static void staticFunctionHeader(int i) {}" > %T/header.h
 // RUN: echo "static void staticFunctionHeader(int  /*i*/) {}" > %T/header-fixed.h
-// RUN: %check_clang_tidy %s misc-unused-parameters %t -header-filter='.*' -- -std=c++11 -fno-delayed-template-parsing
+// RUN: %check_clang_tidy %s misc-unused-parameters %t -- -header-filter='.*' -- -std=c++11 -fno-delayed-template-parsing
 // RUN: diff %T/header.h %T/header-fixed.h
 
 #include "header.h"

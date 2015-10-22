@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s modernize-loop-convert %t \
+// RUN: %check_clang_tidy %s modernize-loop-convert %t -- \
 // RUN:   -config="{CheckOptions: [{key: modernize-loop-convert.NamingStyle, value: 'UPPER_CASE'}]}" \
 // RUN:   -- -std=c++11 -I %S/Inputs/modernize-loop-convert
 

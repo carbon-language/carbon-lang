@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s google-runtime-int %t \
+// RUN: %check_clang_tidy %s google-runtime-int %t -- \
 // RUN:   -config='{CheckOptions: [ \
 // RUN:     {key: google-runtime-int.UnsignedTypePrefix, value: "std::uint"}, \
 // RUN:     {key: google-runtime-int.SignedTypePrefix, value: "std::int"}, \
