@@ -429,7 +429,6 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     UserID (0),  // Used by SymbolFileDWARFDebugMap to when this class parses .o files to contain the .o file index/ID
     m_debug_map_module_wp (),
     m_debug_map_symfile (NULL),
-    m_flags(),
     m_data_debug_abbrev (),
     m_data_debug_aranges (),
     m_data_debug_frame (),
@@ -509,7 +508,6 @@ SymbolFileDWARF::InitializeObject()
     if (module_sp)
     {
         const SectionList *section_list = module_sp->GetSectionList();
-
         const Section* section = section_list->FindSectionByName(GetDWARFMachOSegmentName ()).get();
 
         // Memory map the DWARF mach-o segment so we have everything mmap'ed
@@ -517,19 +515,24 @@ SymbolFileDWARF::InitializeObject()
         if (section)
             m_obj_file->MemoryMapSectionData(section, m_dwarf_data);
     }
+
     get_apple_names_data();
-    if (m_data_apple_names.GetByteSize() > 0)
+    if (m_data_apple_names.m_data.GetByteSize() > 0)
     {
-        m_apple_names_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_names, get_debug_str_data(), ".apple_names"));
+        m_apple_names_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_names.m_data,
+                                                                  get_debug_str_data(),
+                                                                  ".apple_names"));
         if (m_apple_names_ap->IsValid())
             m_using_apple_tables = true;
         else
             m_apple_names_ap.reset();
     }
     get_apple_types_data();
-    if (m_data_apple_types.GetByteSize() > 0)
+    if (m_data_apple_types.m_data.GetByteSize() > 0)
     {
-        m_apple_types_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_types, get_debug_str_data(), ".apple_types"));
+        m_apple_types_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_types.m_data,
+                                                                  get_debug_str_data(),
+                                                                  ".apple_types"));
         if (m_apple_types_ap->IsValid())
             m_using_apple_tables = true;
         else
@@ -537,9 +540,11 @@ SymbolFileDWARF::InitializeObject()
     }
 
     get_apple_namespaces_data();
-    if (m_data_apple_namespaces.GetByteSize() > 0)
+    if (m_data_apple_namespaces.m_data.GetByteSize() > 0)
     {
-        m_apple_namespaces_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_namespaces, get_debug_str_data(), ".apple_namespaces"));
+        m_apple_namespaces_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_namespaces.m_data,
+                                                                       get_debug_str_data(),
+                                                                       ".apple_namespaces"));
         if (m_apple_namespaces_ap->IsValid())
             m_using_apple_tables = true;
         else
@@ -547,9 +552,11 @@ SymbolFileDWARF::InitializeObject()
     }
 
     get_apple_objc_data();
-    if (m_data_apple_objc.GetByteSize() > 0)
+    if (m_data_apple_objc.m_data.GetByteSize() > 0)
     {
-        m_apple_objc_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_objc, get_debug_str_data(), ".apple_objc"));
+        m_apple_objc_ap.reset (new DWARFMappedHash::MemoryTable (m_data_apple_objc.m_data,
+                                                                 get_debug_str_data(),
+                                                                 ".apple_objc"));
         if (m_apple_objc_ap->IsValid())
             m_using_apple_tables = true;
         else
@@ -591,46 +598,10 @@ SymbolFileDWARF::CalculateAbilities ()
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugAbbrev, true).get();
             if (section)
                 debug_abbrev_file_size = section->GetFileSize();
-            else
-                m_flags.Set (flagsGotDebugAbbrevData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugAranges, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugArangesData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugFrame, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugFrameData);
 
             section = section_list->FindSectionByType (eSectionTypeDWARFDebugLine, true).get();
             if (section)
                 debug_line_file_size = section->GetFileSize();
-            else
-                m_flags.Set (flagsGotDebugLineData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugLoc, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugLocData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugMacInfo, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugMacInfoData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugPubNames, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugPubNamesData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugPubTypes, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugPubTypesData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugRanges, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugRangesData);
-
-            section = section_list->FindSectionByType (eSectionTypeDWARFDebugStr, true).get();
-            if (!section)
-                m_flags.Set (flagsGotDebugStrData);
         }
         else
         {
@@ -665,116 +636,122 @@ SymbolFileDWARF::CalculateAbilities ()
 }
 
 const DWARFDataExtractor&
-SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type, DWARFDataExtractor &data)
+SymbolFileDWARF::GetCachedSectionData (lldb::SectionType sect_type, DWARFDataSegment& data_segment)
 {
-    if (m_flags.IsClear (got_flag))
+    std::call_once(data_segment.m_flag,
+                   &SymbolFileDWARF::LoadSectionData,
+                   this,
+                   sect_type,
+                   std::ref(data_segment.m_data));
+    return data_segment.m_data;
+}
+
+void
+SymbolFileDWARF::LoadSectionData (lldb::SectionType sect_type, DWARFDataExtractor& data)
+{
+    ModuleSP module_sp (m_obj_file->GetModule());
+    const SectionList *section_list = module_sp->GetSectionList();
+    if (section_list)
     {
-        ModuleSP module_sp (m_obj_file->GetModule());
-        m_flags.Set (got_flag);
-        const SectionList *section_list = module_sp->GetSectionList();
-        if (section_list)
+        SectionSP section_sp (section_list->FindSectionByType(sect_type, true));
+        if (section_sp)
         {
-            SectionSP section_sp (section_list->FindSectionByType(sect_type, true));
-            if (section_sp)
+            // See if we memory mapped the DWARF segment?
+            if (m_dwarf_data.GetByteSize())
             {
-                // See if we memory mapped the DWARF segment?
-                if (m_dwarf_data.GetByteSize())
-                {
-                    data.SetData(m_dwarf_data, section_sp->GetOffset (), section_sp->GetFileSize());
-                }
-                else
-                {
-                    if (m_obj_file->ReadSectionData (section_sp.get(), data) == 0)
-                        data.Clear();
-                }
+                data.SetData(m_dwarf_data, section_sp->GetOffset(), section_sp->GetFileSize());
+            }
+            else
+            {
+                if (m_obj_file->ReadSectionData(section_sp.get(), data) == 0)
+                    data.Clear();
             }
         }
     }
-    return data;
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_abbrev_data()
 {
-    return GetCachedSectionData (flagsGotDebugAbbrevData, eSectionTypeDWARFDebugAbbrev, m_data_debug_abbrev);
+    return GetCachedSectionData (eSectionTypeDWARFDebugAbbrev, m_data_debug_abbrev);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_addr_data()
 {
-    return GetCachedSectionData (flagsGotDebugAddrData, eSectionTypeDWARFDebugAddr, m_data_debug_addr);
+    return GetCachedSectionData (eSectionTypeDWARFDebugAddr, m_data_debug_addr);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_aranges_data()
 {
-    return GetCachedSectionData (flagsGotDebugArangesData, eSectionTypeDWARFDebugAranges, m_data_debug_aranges);
+    return GetCachedSectionData (eSectionTypeDWARFDebugAranges, m_data_debug_aranges);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_frame_data()
 {
-    return GetCachedSectionData (flagsGotDebugFrameData, eSectionTypeDWARFDebugFrame, m_data_debug_frame);
+    return GetCachedSectionData (eSectionTypeDWARFDebugFrame, m_data_debug_frame);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_info_data()
 {
-    return GetCachedSectionData (flagsGotDebugInfoData, eSectionTypeDWARFDebugInfo, m_data_debug_info);
+    return GetCachedSectionData (eSectionTypeDWARFDebugInfo, m_data_debug_info);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_line_data()
 {
-    return GetCachedSectionData (flagsGotDebugLineData, eSectionTypeDWARFDebugLine, m_data_debug_line);
+    return GetCachedSectionData (eSectionTypeDWARFDebugLine, m_data_debug_line);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_loc_data()
 {
-    return GetCachedSectionData (flagsGotDebugLocData, eSectionTypeDWARFDebugLoc, m_data_debug_loc);
+    return GetCachedSectionData (eSectionTypeDWARFDebugLoc, m_data_debug_loc);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_ranges_data()
 {
-    return GetCachedSectionData (flagsGotDebugRangesData, eSectionTypeDWARFDebugRanges, m_data_debug_ranges);
+    return GetCachedSectionData (eSectionTypeDWARFDebugRanges, m_data_debug_ranges);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_str_data()
 {
-    return GetCachedSectionData (flagsGotDebugStrData, eSectionTypeDWARFDebugStr, m_data_debug_str);
+    return GetCachedSectionData (eSectionTypeDWARFDebugStr, m_data_debug_str);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_str_offsets_data()
 {
-    return GetCachedSectionData (flagsGotDebugStrOffsetsData, eSectionTypeDWARFDebugStrOffsets, m_data_debug_str_offsets);
+    return GetCachedSectionData (eSectionTypeDWARFDebugStrOffsets, m_data_debug_str_offsets);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_names_data()
 {
-    return GetCachedSectionData (flagsGotAppleNamesData, eSectionTypeDWARFAppleNames, m_data_apple_names);
+    return GetCachedSectionData (eSectionTypeDWARFAppleNames, m_data_apple_names);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_types_data()
 {
-    return GetCachedSectionData (flagsGotAppleTypesData, eSectionTypeDWARFAppleTypes, m_data_apple_types);
+    return GetCachedSectionData (eSectionTypeDWARFAppleTypes, m_data_apple_types);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_namespaces_data()
 {
-    return GetCachedSectionData (flagsGotAppleNamespacesData, eSectionTypeDWARFAppleNamespaces, m_data_apple_namespaces);
+    return GetCachedSectionData (eSectionTypeDWARFAppleNamespaces, m_data_apple_namespaces);
 }
 
 const DWARFDataExtractor&
 SymbolFileDWARF::get_apple_objc_data()
 {
-    return GetCachedSectionData (flagsGotAppleObjCData, eSectionTypeDWARFAppleObjC, m_data_apple_objc);
+    return GetCachedSectionData (eSectionTypeDWARFAppleObjC, m_data_apple_objc);
 }
 
 
