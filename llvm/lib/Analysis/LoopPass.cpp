@@ -101,38 +101,29 @@ void LPPassManager::deleteLoopFromQueue(Loop *L) {
 }
 
 // Inset loop into loop nest (LoopInfo) and loop queue (LQ).
-void LPPassManager::insertLoop(Loop *L, Loop *ParentLoop) {
+Loop &LPPassManager::addLoop(Loop *ParentLoop) {
+  // Create a new loop. LI will take ownership.
+  Loop *L = new Loop();
 
-  assert (CurrentLoop != L && "Cannot insert CurrentLoop");
-
-  // Insert into loop nest
-  if (ParentLoop)
-    ParentLoop->addChildLoop(L);
-  else
+  // Insert into the loop nest and the loop queue.
+  if (!ParentLoop) {
+    // This is the top level loop.
     LI->addTopLevelLoop(L);
-
-  insertLoopIntoQueue(L);
-}
-
-void LPPassManager::insertLoopIntoQueue(Loop *L) {
-  // Insert L into loop queue
-  if (L == CurrentLoop)
-    redoLoop(L);
-  else if (!L->getParentLoop())
-    // This is top level loop.
     LQ.push_front(L);
-  else {
-    // Insert L after the parent loop.
-    for (std::deque<Loop *>::iterator I = LQ.begin(),
-           E = LQ.end(); I != E; ++I) {
-      if (*I == L->getParentLoop()) {
-        // deque does not support insert after.
-        ++I;
-        LQ.insert(I, 1, L);
-        break;
-      }
+    return *L;
+  }
+
+  ParentLoop->addChildLoop(L);
+  // Insert L into the loop queue after the parent loop.
+  for (auto I = LQ.begin(), E = LQ.end(); I != E; ++I) {
+    if (*I == L->getParentLoop()) {
+      // deque does not support insert after.
+      ++I;
+      LQ.insert(I, 1, L);
+      break;
     }
   }
+  return *L;
 }
 
 // Reoptimize this loop. LPPassManager will re-insert this loop into the
