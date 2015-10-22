@@ -1039,23 +1039,22 @@ SDValue DAGTypeLegalizer::LibCallify(RTLIB::Libcall LC, SDNode *N,
   unsigned NumOps = N->getNumOperands();
   SDLoc dl(N);
   if (NumOps == 0) {
-    return TLI.makeLibCall(DAG, LC, N->getValueType(0), nullptr, 0, isSigned,
+    return TLI.makeLibCall(DAG, LC, N->getValueType(0), None, isSigned,
                            dl).first;
   } else if (NumOps == 1) {
     SDValue Op = N->getOperand(0);
-    return TLI.makeLibCall(DAG, LC, N->getValueType(0), &Op, 1, isSigned,
+    return TLI.makeLibCall(DAG, LC, N->getValueType(0), Op, isSigned,
                            dl).first;
   } else if (NumOps == 2) {
     SDValue Ops[2] = { N->getOperand(0), N->getOperand(1) };
-    return TLI.makeLibCall(DAG, LC, N->getValueType(0), Ops, 2, isSigned,
+    return TLI.makeLibCall(DAG, LC, N->getValueType(0), Ops, isSigned,
                            dl).first;
   }
   SmallVector<SDValue, 8> Ops(NumOps);
   for (unsigned i = 0; i < NumOps; ++i)
     Ops[i] = N->getOperand(i);
 
-  return TLI.makeLibCall(DAG, LC, N->getValueType(0),
-                         &Ops[0], NumOps, isSigned, dl).first;
+  return TLI.makeLibCall(DAG, LC, N->getValueType(0), Ops, isSigned, dl).first;
 }
 
 // ExpandChainLibCall - Expand a node into a call to a libcall. Similar to

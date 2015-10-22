@@ -3915,7 +3915,7 @@ SDValue ARMTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) const {
     else
       LC = RTLIB::getFPTOUINT(Op.getOperand(0).getValueType(),
                               Op.getValueType());
-    return makeLibCall(DAG, LC, Op.getValueType(), &Op.getOperand(0), 1,
+    return makeLibCall(DAG, LC, Op.getValueType(), Op.getOperand(0),
                        /*isSigned*/ false, SDLoc(Op)).first;
   }
 
@@ -3967,7 +3967,7 @@ SDValue ARMTargetLowering::LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) const {
     else
       LC = RTLIB::getUINTTOFP(Op.getOperand(0).getValueType(),
                               Op.getValueType());
-    return makeLibCall(DAG, LC, Op.getValueType(), &Op.getOperand(0), 1,
+    return makeLibCall(DAG, LC, Op.getValueType(), Op.getOperand(0),
                        /*isSigned*/ false, SDLoc(Op)).first;
   }
 
@@ -11383,8 +11383,8 @@ SDValue ARMTargetLowering::LowerFP_EXTEND(SDValue Op, SelectionDAG &DAG) const {
   LC = RTLIB::getFPEXT(Op.getOperand(0).getValueType(), Op.getValueType());
 
   SDValue SrcVal = Op.getOperand(0);
-  return makeLibCall(DAG, LC, Op.getValueType(), &SrcVal, 1,
-                     /*isSigned*/ false, SDLoc(Op)).first;
+  return makeLibCall(DAG, LC, Op.getValueType(), SrcVal, /*isSigned*/ false,
+                     SDLoc(Op)).first;
 }
 
 SDValue ARMTargetLowering::LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const {
@@ -11396,8 +11396,8 @@ SDValue ARMTargetLowering::LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const {
   LC = RTLIB::getFPROUND(Op.getOperand(0).getValueType(), Op.getValueType());
 
   SDValue SrcVal = Op.getOperand(0);
-  return makeLibCall(DAG, LC, Op.getValueType(), &SrcVal, 1,
-                     /*isSigned*/ false, SDLoc(Op)).first;
+  return makeLibCall(DAG, LC, Op.getValueType(), SrcVal, /*isSigned*/ false,
+                     SDLoc(Op)).first;
 }
 
 bool

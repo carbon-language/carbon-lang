@@ -85,19 +85,19 @@ void TargetLowering::ArgListEntry::setAttributes(ImmutableCallSite *CS,
 std::pair<SDValue, SDValue>
 TargetLowering::makeLibCall(SelectionDAG &DAG,
                             RTLIB::Libcall LC, EVT RetVT,
-                            const SDValue *Ops, unsigned NumOps,
+                            ArrayRef<SDValue> Ops,
                             bool isSigned, SDLoc dl,
                             bool doesNotReturn,
                             bool isReturnValueUsed) const {
   TargetLowering::ArgListTy Args;
-  Args.reserve(NumOps);
+  Args.reserve(Ops.size());
 
   TargetLowering::ArgListEntry Entry;
-  for (unsigned i = 0; i != NumOps; ++i) {
-    Entry.Node = Ops[i];
+  for (SDValue Op : Ops) {
+    Entry.Node = Op;
     Entry.Ty = Entry.Node.getValueType().getTypeForEVT(*DAG.getContext());
-    Entry.isSExt = shouldSignExtendTypeInLibCall(Ops[i].getValueType(), isSigned);
-    Entry.isZExt = !shouldSignExtendTypeInLibCall(Ops[i].getValueType(), isSigned);
+    Entry.isSExt = shouldSignExtendTypeInLibCall(Op.getValueType(), isSigned);
+    Entry.isZExt = !shouldSignExtendTypeInLibCall(Op.getValueType(), isSigned);
     Args.push_back(Entry);
   }
   if (LC == RTLIB::UNKNOWN_LIBCALL)
@@ -206,8 +206,8 @@ void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
   // Use the target specific return value for comparions lib calls.
   EVT RetVT = getCmpLibcallReturnType();
   SDValue Ops[2] = {NewLHS, NewRHS};
-  NewLHS =
-      makeLibCall(DAG, LC1, RetVT, Ops, 2, false /*sign irrelevant*/, dl).first;
+  NewLHS = makeLibCall(DAG, LC1, RetVT, Ops, false /*sign irrelevant*/,
+                       dl).first;
   NewRHS = DAG.getConstant(0, dl, RetVT);
 
   CCCode = getCmpLibcallCC(LC1);
@@ -219,8 +219,8 @@ void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
         ISD::SETCC, dl,
         getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), RetVT),
         NewLHS, NewRHS, DAG.getCondCode(CCCode));
-    NewLHS = makeLibCall(DAG, LC2, RetVT, Ops, 2, false/*sign irrelevant*/,
-      dl).first;
+    NewLHS = makeLibCall(DAG, LC2, RetVT, Ops, false/*sign irrelevant*/,
+                         dl).first;
     NewLHS = DAG.getNode(
         ISD::SETCC, dl,
         getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), RetVT),
