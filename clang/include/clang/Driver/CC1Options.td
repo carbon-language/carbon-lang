@@ -580,6 +580,10 @@ def fnative_half_type: Flag<["-"], "fnative-half-type">,
 def fallow_half_arguments_and_returns : Flag<["-"], "fallow-half-arguments-and-returns">,
   HelpText<"Allow function arguments and returns of type half">;
 
+// C++ TSes.
+def fcoroutines : Flag<["-"], "fcoroutines">,
+  HelpText<"Enable support for the C++ Coroutines TS">;
+
 //===----------------------------------------------------------------------===//
 // Header Search Options
 //===----------------------------------------------------------------------===//

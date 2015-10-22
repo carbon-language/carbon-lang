@@ -242,6 +242,8 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //   KEYZVECTOR - This is a keyword for the System z vector extensions,
 //                which are heavily based on AltiVec
 //   KEYBORLAND - This is a keyword if Borland extensions are enabled
+//   KEYCOROUTINES - This is a keyword if support for the C++ coroutines
+//                   TS is enabled
 //   BOOLSUPPORT - This is a keyword if 'bool' is a built-in type
 //   HALFSUPPORT - This is a keyword if 'half' is a built-in type
 //   WCHARSUPPORT - This is a keyword if 'wchar_t' is a built-in type
@@ -355,6 +357,11 @@ CXX11_KEYWORD(thread_local          , 0)
 // C++ concepts TS keywords
 CONCEPTS_KEYWORD(concept)
 CONCEPTS_KEYWORD(requires)
+
+// C++ coroutines TS keywords
+KEYWORD(co_await                    , KEYCOROUTINES)
+KEYWORD(co_return                   , KEYCOROUTINES)
+KEYWORD(co_yield                    , KEYCOROUTINES)
 
 // GNU Extensions (in impl-reserved namespace)
 KEYWORD(_Decimal32                  , KEYALL)
