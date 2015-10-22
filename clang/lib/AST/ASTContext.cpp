@@ -8674,11 +8674,11 @@ namespace {
 
 ast_type_traits::DynTypedNode
 getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
-  if (const auto *D = U.template dyn_cast<const Decl *>())
+  if (const auto *D = U.dyn_cast<const Decl *>())
     return ast_type_traits::DynTypedNode::create(*D);
-  if (const auto *S = U.template dyn_cast<const Stmt *>())
+  if (const auto *S = U.dyn_cast<const Stmt *>())
     return ast_type_traits::DynTypedNode::create(*S);
-  return *U.template get<ast_type_traits::DynTypedNode *>();
+  return *U.get<ast_type_traits::DynTypedNode *>();
 }
 
   /// \brief A \c RecursiveASTVisitor that builds a map from nodes to their
