@@ -158,17 +158,16 @@ public:
 
   /// \brief Set the specified list of identifiers as the argument list for
   /// this macro.
-  void setArgumentList(IdentifierInfo *const *List, unsigned NumArgs,
+  void setArgumentList(ArrayRef<IdentifierInfo *> List,
                        llvm::BumpPtrAllocator &PPAllocator) {
     assert(ArgumentList == nullptr && NumArguments == 0 &&
            "Argument list already set!");
-    if (NumArgs == 0)
+    if (List.empty())
       return;
 
-    NumArguments = NumArgs;
-    ArgumentList = PPAllocator.Allocate<IdentifierInfo *>(NumArgs);
-    for (unsigned i = 0; i != NumArgs; ++i)
-      ArgumentList[i] = List[i];
+    NumArguments = List.size();
+    ArgumentList = PPAllocator.Allocate<IdentifierInfo *>(List.size());
+    std::copy(List.begin(), List.end(), ArgumentList);
   }
 
   /// Arguments - The list of arguments for a function-like macro.  This can be
