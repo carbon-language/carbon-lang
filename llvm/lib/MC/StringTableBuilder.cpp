@@ -9,12 +9,15 @@
 
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Endian.h"
 
 using namespace llvm;
 
-static bool compareBySuffix(StringRef a, StringRef b) {
+static int compareBySuffix(const StringRef *AP, const StringRef *BP) {
+  StringRef a = *AP;
+  StringRef b = *BP;
   size_t sizeA = a.size();
   size_t sizeB = b.size();
   size_t len = std::min(sizeA, sizeB);
@@ -22,9 +25,9 @@ static bool compareBySuffix(StringRef a, StringRef b) {
     char ca = a[sizeA - i - 1];
     char cb = b[sizeB - i - 1];
     if (ca != cb)
-      return ca > cb;
+      return cb - ca;
   }
-  return sizeA > sizeB;
+  return sizeB - sizeA;
 }
 
 void StringTableBuilder::finalize(Kind kind) {
@@ -34,7 +37,7 @@ void StringTableBuilder::finalize(Kind kind) {
   for (auto i = StringIndexMap.begin(), e = StringIndexMap.end(); i != e; ++i)
     Strings.push_back(i->getKey());
 
-  std::sort(Strings.begin(), Strings.end(), compareBySuffix);
+  array_pod_sort(Strings.begin(), Strings.end(), compareBySuffix);
 
   switch (kind) {
   case ELF:
