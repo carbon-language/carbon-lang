@@ -382,8 +382,11 @@ AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
 {
     if (!process)
         return ObjCRuntimeVersions::eObjC_VersionUnknown;
-        
+
     Target &target = process->GetTarget();
+    if (target.GetArchitecture().GetTriple().getVendor() != llvm::Triple::VendorType::Apple)
+        return ObjCRuntimeVersions::eObjC_VersionUnknown;
+
     const ModuleList &target_modules = target.GetImages();
     Mutex::Locker modules_locker(target_modules.GetMutex());
     
