@@ -879,7 +879,7 @@ static bool isMachO(const CodeGenModule &CGM) {
 }
 
 static StringRef getCoverageSection(const CodeGenModule &CGM) {
-  return isMachO(CGM) ? "__DATA,__llvm_covmap" : "__llvm_covmap";
+  return llvm::getInstrProfCoverageSectionName(isMachO(CGM));
 }
 
 static void dump(llvm::raw_ostream &OS, StringRef FunctionName,
@@ -1011,7 +1011,7 @@ void CoverageMappingModuleGen::emit() {
   auto CovData = new llvm::GlobalVariable(CGM.getModule(), CovDataTy, true,
                                           llvm::GlobalValue::InternalLinkage,
                                           CovDataVal,
-                                          "__llvm_coverage_mapping");
+                                          llvm::getCoverageMappingVarName());
 
   CovData->setSection(getCoverageSection(CGM));
   CovData->setAlignment(8);

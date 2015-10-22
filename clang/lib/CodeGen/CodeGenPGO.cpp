@@ -73,7 +73,7 @@ void CodeGenPGO::createFuncNameVar(llvm::GlobalValue::LinkageTypes Linkage) {
       llvm::ConstantDataArray::getString(CGM.getLLVMContext(), FuncName, false);
   FuncNameVar =
       new llvm::GlobalVariable(CGM.getModule(), Value->getType(), true, Linkage,
-                               Value, "__llvm_profile_name_" + FuncName);
+                               Value, llvm::getInstrProfNameVarPrefix() + FuncName);
 
   // Hide the symbol so that we correctly get a copy for each executable.
   if (!llvm::GlobalValue::isLocalLinkage(FuncNameVar->getLinkage()))
