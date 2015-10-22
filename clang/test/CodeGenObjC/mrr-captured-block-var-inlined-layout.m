@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fblocks -fobjc-runtime-has-weak -triple x86_64-apple-darwin -print-ivar-layout -emit-llvm -o /dev/null %s > %t-64.layout
+// RUN: %clang_cc1 -fblocks -fobjc-runtime-has-weak -fobjc-arc -triple x86_64-apple-darwin -print-ivar-layout -emit-llvm -o /dev/null %s > %t-64.layout
 // RUN: FileCheck -check-prefix=CHECK -check-prefix=CHECK-64 --input-file=%t-64.layout %s
-// RUN: %clang_cc1 -fblocks -fobjc-runtime-has-weak -triple i386-apple-darwin -print-ivar-layout -emit-llvm -o /dev/null %s > %t-32.layout
+// RUN: %clang_cc1 -fblocks -fobjc-runtime-has-weak -fobjc-arc -triple i386-apple-darwin -print-ivar-layout -emit-llvm -o /dev/null %s > %t-32.layout
 // RUN: FileCheck -check-prefix=CHECK -check-prefix=CHECK-32 --input-file=%t-32.layout %s
 // rdar://12184410
 // rdar://12184410

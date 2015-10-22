@@ -84,7 +84,7 @@ void test2(Test2 *x) {
   // CHECK:      [[T0:%.*]] = bitcast [[WEAK_T]]* [[WEAKX]] to i8*
   // CHECK:      call void @_Block_object_dispose(i8* [[T0]], i32 8)
 
-  __weak __block Test2 *weakX = x;
+  __attribute__((objc_gc(weak))) __block Test2 *weakX = x;
   test2_helper(^{ [weakX destroy]; });
 }
 

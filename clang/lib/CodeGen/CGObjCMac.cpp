@@ -913,10 +913,28 @@ protected:
   /// BuildIvarLayout - Builds ivar layout bitmap for the class
   /// implementation for the __strong or __weak case.
   ///
+  /// \param hasMRCWeakIvars - Whether we are compiling in MRC and there
+  ///   are any weak ivars defined directly in the class.  Meaningless unless
+  ///   building a weak layout.  Does not guarantee that the layout will
+  ///   actually have any entries, because the ivar might be under-aligned.
   llvm::Constant *BuildIvarLayout(const ObjCImplementationDecl *OI,
                                   CharUnits beginOffset,
                                   CharUnits endOffset,
-                                  bool ForStrongLayout);
+                                  bool forStrongLayout,
+                                  bool hasMRCWeakIvars);
+
+  llvm::Constant *BuildStrongIvarLayout(const ObjCImplementationDecl *OI,
+                                        CharUnits beginOffset,
+                                        CharUnits endOffset) {
+    return BuildIvarLayout(OI, beginOffset, endOffset, true, false);
+  }
+
+  llvm::Constant *BuildWeakIvarLayout(const ObjCImplementationDecl *OI,
+                                      CharUnits beginOffset,
+                                      CharUnits endOffset,
+                                      bool hasMRCWeakIvars) {
+    return BuildIvarLayout(OI, beginOffset, endOffset, false, hasMRCWeakIvars);
+  }
   
   Qualifiers::ObjCLifetime getBlockCaptureLifetime(QualType QT, bool ByrefLayout);
   
@@ -1060,7 +1078,8 @@ private:
   /// to store the weak ivar layout and properties. The return value
   /// has type ClassExtensionPtrTy.
   llvm::Constant *EmitClassExtension(const ObjCImplementationDecl *ID,
-                                     CharUnits InstanceSize);
+                                     CharUnits instanceSize,
+                                     bool hasMRCWeakIvars);
 
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given class.
@@ -2049,8 +2068,7 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
                                                 const CGBlockInfo &blockInfo) {
   
   llvm::Constant *nullPtr = llvm::Constant::getNullValue(CGM.Int8PtrTy);
-  if (CGM.getLangOpts().getGC() == LangOptions::NonGC &&
-      !CGM.getLangOpts().ObjCAutoRefCount)
+  if (CGM.getLangOpts().getGC() == LangOptions::NonGC)
     return nullPtr;
 
   IvarLayoutBuilder builder(CGM, CharUnits::Zero(), blockInfo.BlockSize,
@@ -2129,10 +2147,15 @@ void IvarLayoutBuilder::visitBlock(const CGBlockInfo &blockInfo) {
 /// the type of the variable captured in the block.
 Qualifiers::ObjCLifetime CGObjCCommonMac::getBlockCaptureLifetime(QualType FQT,
                                                                   bool ByrefLayout) {
+  // If it has an ownership qualifier, we're done.
+  if (auto lifetime = FQT.getObjCLifetime())
+    return lifetime;
+
+  // If it doesn't, and this is ARC, it has no ownership.
   if (CGM.getLangOpts().ObjCAutoRefCount)
-    return FQT.getObjCLifetime();
+    return Qualifiers::OCL_None;
   
-  // MRR.
+  // In MRC, retainable pointers are owned by non-__block variables.
   if (FQT->isObjCObjectPointerType() || FQT->isBlockPointerType())
     return ByrefLayout ? Qualifiers::OCL_ExplicitNone : Qualifiers::OCL_Strong;
   
@@ -3060,11 +3083,24 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
 }
 
 enum FragileClassFlags {
+  /// Apparently: is not a meta-class.
   FragileABI_Class_Factory                 = 0x00001,
+
+  /// Is a meta-class.
   FragileABI_Class_Meta                    = 0x00002,
+
+  /// Has a non-trivial constructor or destructor.
   FragileABI_Class_HasCXXStructors         = 0x02000,
+
+  /// Has hidden visibility.
   FragileABI_Class_Hidden                  = 0x20000,
-  FragileABI_Class_CompiledByARC           = 0x04000000
+
+  /// Class implementation was compiled under ARC.
+  FragileABI_Class_CompiledByARC           = 0x04000000,
+
+  /// Class implementation was compiled under MRC and has MRC weak ivars.
+  /// Exclusive with CompiledByARC.
+  FragileABI_Class_HasMRCWeakIvars         = 0x08000000,
 };
 
 enum NonFragileClassFlags {
@@ -3074,7 +3110,7 @@ enum NonFragileClassFlags {
   /// Is a root class.
   NonFragileABI_Class_Root                 = 0x00002,
 
-  /// Has a C++ constructor and destructor.
+  /// Has a non-trivial constructor or destructor.
   NonFragileABI_Class_HasCXXStructors      = 0x00004,
 
   /// Has hidden visibility.
@@ -3090,8 +3126,45 @@ enum NonFragileClassFlags {
   NonFragileABI_Class_CompiledByARC        = 0x00080,
 
   /// Class has non-trivial destructors, but zero-initialization is okay.
-  NonFragileABI_Class_HasCXXDestructorOnly = 0x00100
+  NonFragileABI_Class_HasCXXDestructorOnly = 0x00100,
+
+  /// Class implementation was compiled under MRC and has MRC weak ivars.
+  /// Exclusive with CompiledByARC.
+  NonFragileABI_Class_HasMRCWeakIvars      = 0x00200,
 };
+
+static bool hasWeakMember(QualType type) {
+  if (type.getObjCLifetime() == Qualifiers::OCL_Weak) {
+    return true;
+  }
+
+  if (auto recType = type->getAs<RecordType>()) {
+    for (auto field : recType->getDecl()->fields()) {
+      if (hasWeakMember(field->getType()))
+        return true;
+    }
+  }
+
+  return false;
+}
+
+/// For compatibility, we only want to set the "HasMRCWeakIvars" flag
+/// (and actually fill in a layout string) if we really do have any
+/// __weak ivars.
+static bool hasMRCWeakIvars(CodeGenModule &CGM,
+                            const ObjCImplementationDecl *ID) {
+  if (!CGM.getLangOpts().ObjCWeak) return false;
+  assert(CGM.getLangOpts().getGC() == LangOptions::NonGC);
+
+  for (const ObjCIvarDecl *ivar =
+         ID->getClassInterface()->all_declared_ivar_begin();
+       ivar; ivar = ivar->getNextIvar()) {
+    if (hasWeakMember(ivar->getType()))
+      return true;
+  }
+
+  return false;
+}
 
 /*
   struct _objc_class {
@@ -3127,8 +3200,12 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (ID->hasNonZeroConstructors() || ID->hasDestructors())
     Flags |= FragileABI_Class_HasCXXStructors;
 
+  bool hasMRCWeak = false;
+
   if (CGM.getLangOpts().ObjCAutoRefCount)
     Flags |= FragileABI_Class_CompiledByARC;
+  else if ((hasMRCWeak = hasMRCWeakIvars(CGM, ID)))
+    Flags |= FragileABI_Class_HasMRCWeakIvars;
 
   CharUnits Size =
     CGM.getContext().getASTObjCImplementationLayout(ID).getSize();
@@ -3183,8 +3260,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   // cache is always NULL.
   Values[ 8] = llvm::Constant::getNullValue(ObjCTypes.CachePtrTy);
   Values[ 9] = Protocols;
-  Values[10] = BuildIvarLayout(ID, CharUnits::Zero(), Size, true);
-  Values[11] = EmitClassExtension(ID, Size);
+  Values[10] = BuildStrongIvarLayout(ID, CharUnits::Zero(), Size);
+  Values[11] = EmitClassExtension(ID, Size, hasMRCWeak);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
   std::string Name("OBJC_CLASS_");
@@ -3323,13 +3400,14 @@ llvm::Value *CGObjCMac::EmitSuperClassRef(const ObjCInterfaceDecl *ID) {
 */
 llvm::Constant *
 CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID,
-                              CharUnits InstanceSize) {
+                              CharUnits InstanceSize, bool hasMRCWeakIvars) {
   uint64_t Size =
     CGM.getDataLayout().getTypeAllocSize(ObjCTypes.ClassExtensionTy);
 
   llvm::Constant *Values[3];
   Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
-  Values[1] = BuildIvarLayout(ID, CharUnits::Zero(), InstanceSize, false);
+  Values[1] = BuildWeakIvarLayout(ID, CharUnits::Zero(), InstanceSize,
+                                  hasMRCWeakIvars);
   Values[2] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getName(),
                                ID, ID->getClassInterface(), ObjCTypes);
 
@@ -4827,10 +4905,13 @@ llvm::Constant *IvarLayoutBuilder::buildBitmap(CGObjCCommonMac &CGObjC,
 llvm::Constant *
 CGObjCCommonMac::BuildIvarLayout(const ObjCImplementationDecl *OMD,
                                  CharUnits beginOffset, CharUnits endOffset,
-                                 bool ForStrongLayout) {
+                                 bool ForStrongLayout, bool HasMRCWeakIvars) {
+  // If this is MRC, and we're either building a strong layout or there
+  // are no weak ivars, bail out early.
   llvm::Type *PtrTy = CGM.Int8PtrTy;
   if (CGM.getLangOpts().getGC() == LangOptions::NonGC &&
-      !CGM.getLangOpts().ObjCAutoRefCount)
+      !CGM.getLangOpts().ObjCAutoRefCount &&
+      (ForStrongLayout || !HasMRCWeakIvars))
     return llvm::Constant::getNullValue(PtrTy);
 
   const ObjCInterfaceDecl *OI = OMD->getClassInterface();
@@ -4844,8 +4925,10 @@ CGObjCCommonMac::BuildIvarLayout(const ObjCImplementationDecl *OMD,
   // runtimes, that means starting at InstanceStart.  In fragile runtimes,
   // there's no InstanceStart, so it means starting at the end of the
   // superclass, rounded up to word alignment.
+  //
+  // MRC weak layout strings follow the ARC style.
   CharUnits baseOffset;
-  if (CGM.getLangOpts().ObjCAutoRefCount) {
+  if (CGM.getLangOpts().getGC() == LangOptions::NonGC) {
     for (const ObjCIvarDecl *IVD = OI->all_declared_ivar_begin(); 
          IVD; IVD = IVD->getNextIvar())
       ivars.push_back(IVD);
@@ -5662,8 +5745,11 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   CharUnits beginInstance = CharUnits::fromQuantity(InstanceStart);
   CharUnits endInstance = CharUnits::fromQuantity(InstanceSize);
 
+  bool hasMRCWeak = false;
   if (CGM.getLangOpts().ObjCAutoRefCount)
     flags |= NonFragileABI_Class_CompiledByARC;
+  else if ((hasMRCWeak = hasMRCWeakIvars(CGM, ID)))
+    flags |= NonFragileABI_Class_HasMRCWeakIvars;
 
   Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
   Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceStart);
@@ -5671,7 +5757,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   // FIXME. For 64bit targets add 0 here.
   Values[ 3] = (flags & NonFragileABI_Class_Meta)
     ? GetIvarLayoutName(nullptr, ObjCTypes)
-    : BuildIvarLayout(ID, beginInstance, endInstance, true);
+    : BuildStrongIvarLayout(ID, beginInstance, endInstance);
   Values[ 4] = GetClassName(ID->getObjCRuntimeNameAsString());
   // const struct _method_list_t * const baseMethods;
   std::vector<llvm::Constant*> Methods;
@@ -5718,7 +5804,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
     Values[ 9] = llvm::Constant::getNullValue(ObjCTypes.PropertyListPtrTy);
   } else {
     Values[ 7] = EmitIvarList(ID);
-    Values[ 8] = BuildIvarLayout(ID, beginInstance, endInstance, false);
+    Values[ 8] = BuildWeakIvarLayout(ID, beginInstance, endInstance,
+                                     hasMRCWeak);
     Values[ 9] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getObjCRuntimeNameAsString(),
                                   ID, ID->getClassInterface(), ObjCTypes);
   }

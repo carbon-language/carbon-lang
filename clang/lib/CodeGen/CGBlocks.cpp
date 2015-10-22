@@ -1393,31 +1393,31 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
         flags = BLOCK_FIELD_IS_BLOCK;
 
       // Special rules for ARC captures:
-      if (getLangOpts().ObjCAutoRefCount) {
-        Qualifiers qs = type.getQualifiers();
+      Qualifiers qs = type.getQualifiers();
 
-        // We need to register __weak direct captures with the runtime.
-        if (qs.getObjCLifetime() == Qualifiers::OCL_Weak) {
-          useARCWeakCopy = true;
+      // We need to register __weak direct captures with the runtime.
+      if (qs.getObjCLifetime() == Qualifiers::OCL_Weak) {
+        useARCWeakCopy = true;
 
-        // We need to retain the copied value for __strong direct captures.
-        } else if (qs.getObjCLifetime() == Qualifiers::OCL_Strong) {
-          // If it's a block pointer, we have to copy the block and
-          // assign that to the destination pointer, so we might as
-          // well use _Block_object_assign.  Otherwise we can avoid that.
-          if (!isBlockPointer)
-            useARCStrongCopy = true;
-
-        // Otherwise the memcpy is fine.
-        } else {
-          continue;
-        }
+      // We need to retain the copied value for __strong direct captures.
+      } else if (qs.getObjCLifetime() == Qualifiers::OCL_Strong) {
+        // If it's a block pointer, we have to copy the block and
+        // assign that to the destination pointer, so we might as
+        // well use _Block_object_assign.  Otherwise we can avoid that.
+        if (!isBlockPointer)
+          useARCStrongCopy = true;
 
       // Non-ARC captures of retainable pointers are strong and
       // therefore require a call to _Block_object_assign.
-      } else {
+      } else if (!qs.getObjCLifetime() && !getLangOpts().ObjCAutoRefCount) {
         // fall through
+
+      // Otherwise the memcpy is fine.
+      } else {
+        continue;
       }
+
+    // For all other types, the memcpy is fine.
     } else {
       continue;
     }
@@ -1564,21 +1564,24 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
         flags = BLOCK_FIELD_IS_BLOCK;
 
       // Special rules for ARC captures.
-      if (getLangOpts().ObjCAutoRefCount) {
-        Qualifiers qs = type.getQualifiers();
+      Qualifiers qs = type.getQualifiers();
 
-        // Don't generate special dispose logic for a captured object
-        // unless it's __strong or __weak.
-        if (!qs.hasStrongOrWeakObjCLifetime())
-          continue;
+      // Use objc_storeStrong for __strong direct captures; the
+      // dynamic tools really like it when we do this.
+      if (qs.getObjCLifetime() == Qualifiers::OCL_Strong) {
+        useARCStrongDestroy = true;
 
-        // Support __weak direct captures.
-        if (qs.getObjCLifetime() == Qualifiers::OCL_Weak)
-          useARCWeakDestroy = true;
+      // Support __weak direct captures.
+      } else if (qs.getObjCLifetime() == Qualifiers::OCL_Weak) {
+        useARCWeakDestroy = true;
 
-        // Tools really want us to use objc_storeStrong here.
-        else
-          useARCStrongDestroy = true;
+      // Non-ARC captures are strong, and we need to use _Block_object_dispose.
+      } else if (!qs.hasObjCLifetime() && !getLangOpts().ObjCAutoRefCount) {
+        // fall through
+
+      // Otherwise, we have nothing to do.
+      } else {
+        continue;
       }
     } else {
       continue;
@@ -1958,8 +1961,6 @@ CodeGenFunction::buildByrefHelpers(llvm::StructType &byrefType,
 
   // If we have lifetime, that dominates.
   if (Qualifiers::ObjCLifetime lifetime = qs.getObjCLifetime()) {
-    assert(getLangOpts().ObjCAutoRefCount);
-
     switch (lifetime) {
     case Qualifiers::OCL_None: llvm_unreachable("impossible");
 

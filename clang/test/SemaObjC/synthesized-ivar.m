@@ -57,5 +57,5 @@ int f0(I *a) { return a->IP; } // expected-error {{instance variable 'IP' is pri
 
 @implementation A
 // rdar://9605088
-@synthesize testObjectWeakProperty; // expected-error {{@synthesize of 'weak' property is only allowed in ARC or GC mode}}
+@synthesize testObjectWeakProperty; // expected-error {{the current deployment target does not support automated __weak references}}
 @end

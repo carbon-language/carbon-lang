@@ -108,6 +108,10 @@ def err_arc_unsupported_on_runtime : Error<
   "-fobjc-arc is not supported on platforms using the legacy runtime">;
 def err_arc_unsupported_on_toolchain : Error< // feel free to generalize this
   "-fobjc-arc is not supported on versions of OS X prior to 10.6">;
+def err_objc_weak_with_gc : Error<
+  "-fobjc-weak is not supported in Objective-C garbage collection">;
+def err_objc_weak_unsupported : Error<
+  "-fobjc-weak is not supported on the current deployment target">;
 def err_drv_mg_requires_m_or_mm : Error<
   "option '-MG' requires '-M' or '-MM'">;
 def err_drv_unknown_objc_runtime : Error<

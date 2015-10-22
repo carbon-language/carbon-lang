@@ -907,8 +907,6 @@ def error_bad_property_context : Error<
 def error_missing_property_ivar_decl : Error<
   "synthesized property %0 must either be named the same as a compatible"
   " instance variable or must explicitly name an instance variable">;
-def error_synthesize_weak_non_arc_or_gc : Error<
-  "@synthesize of 'weak' property is only allowed in ARC or GC mode">;
 def err_arc_perform_selector_retains : Error<
   "performSelector names a selector which retains the object">;
 def warn_arc_perform_selector_leaks : Warning<
@@ -4527,6 +4525,11 @@ let CategoryName = "ARC Weak References" in {
 
 def err_arc_weak_no_runtime : Error<
   "the current deployment target does not support automated __weak references">;
+def err_arc_weak_disabled : Error<
+  "automated __weak references are disabled in manual reference counting">;
+def warn_objc_weak_compat : Warning<
+  "the meaning of __weak has changed in manual reference-counting">,
+  InGroup<DiagGroup<"objc-weak-compat">>, DefaultIgnore;
 def err_arc_unsupported_weak_class : Error<
   "class is incompatible with __weak references">;
 def err_arc_weak_unavailable_assign : Error<
