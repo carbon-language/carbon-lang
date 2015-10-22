@@ -19,19 +19,19 @@ namespace clang {
 namespace tidy {
 namespace modernize {
 
-const char LoopNameArray[] = "forLoopArray";
-const char LoopNameIterator[] = "forLoopIterator";
-const char LoopNamePseudoArray[] = "forLoopPseudoArray";
-const char ConditionBoundName[] = "conditionBound";
-const char ConditionVarName[] = "conditionVar";
-const char IncrementVarName[] = "incrementVar";
-const char InitVarName[] = "initVar";
-const char BeginCallName[] = "beginCall";
-const char EndCallName[] = "endCall";
-const char ConditionEndVarName[] = "conditionEndVar";
-const char EndVarName[] = "endVar";
-const char DerefByValueResultName[] = "derefByValueResult";
-const char DerefByRefResultName[] = "derefByRefResult";
+static const char LoopNameArray[] = "forLoopArray";
+static const char LoopNameIterator[] = "forLoopIterator";
+static const char LoopNamePseudoArray[] = "forLoopPseudoArray";
+static const char ConditionBoundName[] = "conditionBound";
+static const char ConditionVarName[] = "conditionVar";
+static const char IncrementVarName[] = "incrementVar";
+static const char InitVarName[] = "initVar";
+static const char BeginCallName[] = "beginCall";
+static const char EndCallName[] = "endCall";
+static const char ConditionEndVarName[] = "conditionEndVar";
+static const char EndVarName[] = "endVar";
+static const char DerefByValueResultName[] = "derefByValueResult";
+static const char DerefByRefResultName[] = "derefByRefResult";
 
 // shared matchers
 static const TypeMatcher AnyType = anything();

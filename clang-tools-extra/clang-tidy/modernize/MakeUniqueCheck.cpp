@@ -18,9 +18,9 @@ namespace clang {
 namespace tidy {
 namespace modernize {
 
-const char PointerType[] = "pointerType";
-const char ConstructorCall[] = "constructorCall";
-const char NewExpression[] = "newExpression";
+static const char PointerType[] = "pointerType";
+static const char ConstructorCall[] = "constructorCall";
+static const char NewExpression[] = "newExpression";
 
 void MakeUniqueCheck::registerMatchers(MatchFinder *Finder) {
   if (getLangOpts().CPlusPlus11) {

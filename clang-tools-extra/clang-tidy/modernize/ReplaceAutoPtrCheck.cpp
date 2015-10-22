@@ -21,8 +21,8 @@ namespace clang {
 namespace tidy {
 namespace modernize {
 
-const char AutoPtrTokenId[] = "AutoPrTokenId";
-const char AutoPtrOwnershipTransferId[] = "AutoPtrOwnershipTransferId";
+static const char AutoPtrTokenId[] = "AutoPrTokenId";
+static const char AutoPtrOwnershipTransferId[] = "AutoPtrOwnershipTransferId";
 
 /// \brief Matches expressions that are lvalues.
 ///
