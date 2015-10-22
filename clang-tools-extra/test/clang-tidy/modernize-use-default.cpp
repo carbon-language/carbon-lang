@@ -1,4 +1,4 @@
-// RUN: %python %S/check_clang_tidy.py %s modernize-use-default %t
+// RUN: %python %S/check_clang_tidy.py %s modernize-use-default %t -- -std=c++11 -fno-delayed-template-parsing
 
 class A {
 public:
