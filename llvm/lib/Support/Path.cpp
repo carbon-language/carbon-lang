@@ -455,17 +455,15 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
   if (!c.isTriviallyEmpty()) components.push_back(c.toStringRef(c_storage));
   if (!d.isTriviallyEmpty()) components.push_back(d.toStringRef(d_storage));
 
-  for (SmallVectorImpl<StringRef>::const_iterator i = components.begin(),
-                                                  e = components.end();
-                                                  i != e; ++i) {
+  for (auto &component : components) {
     bool path_has_sep = !path.empty() && is_separator(path[path.size() - 1]);
-    bool component_has_sep = !i->empty() && is_separator((*i)[0]);
-    bool is_root_name = has_root_name(*i);
+    bool component_has_sep = !component.empty() && is_separator(component[0]);
+    bool is_root_name = has_root_name(component);
 
     if (path_has_sep) {
       // Strip separators from beginning of component.
-      size_t loc = i->find_first_not_of(separators);
-      StringRef c = i->substr(loc);
+      size_t loc = component.find_first_not_of(separators);
+      StringRef c = component.substr(loc);
 
       // Append it.
       path.append(c.begin(), c.end());
@@ -477,7 +475,7 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
       path.push_back(preferred_separator);
     }
 
-    path.append(i->begin(), i->end());
+    path.append(component.begin(), component.end());
   }
 }
 
