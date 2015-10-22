@@ -11,7 +11,7 @@
 #define LLVM_MC_STRINGTABLEBUILDER_H
 
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/DenseMap.h"
 #include <cassert>
 
 namespace llvm {
@@ -19,15 +19,12 @@ namespace llvm {
 /// \brief Utility for building string tables with deduplicated suffixes.
 class StringTableBuilder {
   SmallString<256> StringTable;
-  StringMap<size_t> StringIndexMap;
+  DenseMap<StringRef, size_t> StringIndexMap;
 
 public:
   /// \brief Add a string to the builder. Returns a StringRef to the internal
   /// copy of s. Can only be used before the table is finalized.
-  StringRef add(StringRef s) {
-    assert(!isFinalized());
-    return StringIndexMap.insert(std::make_pair(s, 0)).first->first();
-  }
+  void add(StringRef s);
 
   enum Kind {
     ELF,
@@ -48,12 +45,7 @@ public:
 
   /// \brief Get the offest of a string in the string table. Can only be used
   /// after the table is finalized.
-  size_t getOffset(StringRef s) const {
-    assert(isFinalized());
-    auto I = StringIndexMap.find(s);
-    assert(I != StringIndexMap.end() && "String is not in table!");
-    return I->second;
-  }
+  size_t getOffset(StringRef s) const;
 
   void clear();
 

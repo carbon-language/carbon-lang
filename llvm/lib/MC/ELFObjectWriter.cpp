@@ -33,6 +33,7 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/StringSaver.h"
 #include <vector>
 using namespace llvm;
 
@@ -106,6 +107,8 @@ class ELFObjectWriter : public MCObjectWriter {
     /// @name Symbol Table Data
     /// @{
 
+    BumpPtrAllocator Alloc;
+    StringSaver VersionSymSaver{Alloc};
     StringTableBuilder StrTabBuilder;
 
     /// @}
@@ -847,13 +850,15 @@ void ELFObjectWriter::computeSymbolTable(
         Buf += Name.substr(0, Pos);
         unsigned Skip = MSD.SectionIndex == ELF::SHN_UNDEF ? 2 : 1;
         Buf += Name.substr(Pos + Skip);
-        Name = Buf;
+        Name = VersionSymSaver.save(Buf.c_str());
       }
     }
 
     // Sections have their own string table
-    if (Symbol.getType() != ELF::STT_SECTION)
-      MSD.Name = StrTabBuilder.add(Name);
+    if (Symbol.getType() != ELF::STT_SECTION) {
+      MSD.Name = Name;
+      StrTabBuilder.add(Name);
+    }
 
     if (Local)
       LocalSymbolData.push_back(MSD);

@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/StringTableBuilder.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Endian.h"
@@ -17,10 +16,10 @@
 
 using namespace llvm;
 
-static int compareBySuffix(StringMapEntry<size_t> *const *AP,
-                           StringMapEntry<size_t> *const *BP) {
-  StringRef a = (*AP)->first();
-  StringRef b = (*BP)->first();
+static int compareBySuffix(std::pair<StringRef, size_t> *const *AP,
+                           std::pair<StringRef, size_t> *const *BP) {
+  StringRef a = (*AP)->first;
+  StringRef b = (*BP)->first;
   size_t sizeA = a.size();
   size_t sizeB = b.size();
   size_t len = std::min(sizeA, sizeB);
@@ -34,9 +33,9 @@ static int compareBySuffix(StringMapEntry<size_t> *const *AP,
 }
 
 void StringTableBuilder::finalize(Kind kind) {
-  std::vector<StringMapEntry<size_t> *> Strings;
+  std::vector<std::pair<StringRef, size_t> *> Strings;
   Strings.reserve(StringIndexMap.size());
-  for (StringMapEntry<size_t> &P : StringIndexMap)
+  for (std::pair<StringRef, size_t> &P : StringIndexMap)
     Strings.push_back(&P);
 
   array_pod_sort(Strings.begin(), Strings.end(), compareBySuffix);
@@ -54,8 +53,8 @@ void StringTableBuilder::finalize(Kind kind) {
   }
 
   StringRef Previous;
-  for (StringMapEntry<size_t> *P : Strings) {
-    StringRef s = P->first();
+  for (std::pair<StringRef, size_t> *P : Strings) {
+    StringRef s = P->first;
     if (kind == WinCOFF)
       assert(s.size() > COFF::NameSize && "Short string in COFF string table!");
 
@@ -91,4 +90,16 @@ void StringTableBuilder::finalize(Kind kind) {
 void StringTableBuilder::clear() {
   StringTable.clear();
   StringIndexMap.clear();
+}
+
+size_t StringTableBuilder::getOffset(StringRef s) const {
+  assert(isFinalized());
+  auto I = StringIndexMap.find(s);
+  assert(I != StringIndexMap.end() && "String is not in table!");
+  return I->second;
+}
+
+void StringTableBuilder::add(StringRef s) {
+  assert(!isFinalized());
+  StringIndexMap.insert(std::make_pair(s, 0));
 }
