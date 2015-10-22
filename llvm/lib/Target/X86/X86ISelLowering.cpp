@@ -1328,6 +1328,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::BR_CC,              MVT::i1,    Expand);
     setOperationAction(ISD::SETCC,              MVT::i1,    Custom);
+    setOperationAction(ISD::SELECT_CC,          MVT::i1,    Expand);
     setOperationAction(ISD::XOR,                MVT::i1,    Legal);
     setOperationAction(ISD::OR,                 MVT::i1,    Legal);
     setOperationAction(ISD::AND,                MVT::i1,    Legal);
