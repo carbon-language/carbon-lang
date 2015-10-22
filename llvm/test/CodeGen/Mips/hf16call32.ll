@@ -765,7 +765,7 @@ declare void @v_df(double) #1
 ; stel: .section .mips16.call.fp.v_df,"ax",@progbits
 ; stel: .ent __call_stub_fp_v_df
 ; stel: #APP
-; setl: .set reorder
+; stel: .set reorder
 ; stel: mtc1 $4, $f12
 ; stel: mtc1 $5, $f13
 ; stel: lui $25, %hi(v_df)
