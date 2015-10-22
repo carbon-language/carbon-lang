@@ -365,7 +365,8 @@ bool MicrosoftMangleContextImpl::shouldMangleCXXName(const NamedDecl *D) {
         DC = getEffectiveParentContext(DC);
 
     if (DC->isTranslationUnit() && D->getFormalLinkage() == InternalLinkage &&
-        !isa<VarTemplateSpecializationDecl>(D))
+        !isa<VarTemplateSpecializationDecl>(D) &&
+        D->getIdentifier() != nullptr)
       return false;
   }
 
@@ -801,7 +802,7 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       } else {
         // Otherwise, number the types using a $S prefix.
         Name += "$S";
-        Name += llvm::utostr(Context.getAnonymousStructId(TD));
+        Name += llvm::utostr(Context.getAnonymousStructId(TD) + 1);
       }
       Name += ">";
       mangleSourceName(Name.str());

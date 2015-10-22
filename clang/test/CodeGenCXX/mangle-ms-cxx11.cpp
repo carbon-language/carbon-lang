@@ -277,3 +277,12 @@ void g() {
 // CHECK-DAG: @"\01??$f@W4<unnamed-type-E>@?1??g@PR24651@@YAXXZ@@PR24651@@YAXW4<unnamed-type-E>@?1??g@0@YAXXZ@@Z"
 // CHECK-DAG: @"\01??$f@W4<unnamed-type-E>@?2??g@PR24651@@YAXXZ@@PR24651@@YAXW4<unnamed-type-E>@?2??g@0@YAXXZ@@Z"
 }
+
+namespace PR18204 {
+template <typename T>
+int f(T *);
+static union {
+  int n = f(this);
+};
+// CHECK-DAG: @"\01??$f@T<unnamed-type-$S1>@PR18204@@@PR18204@@YAHPAT<unnamed-type-$S1>@0@@Z"
+}

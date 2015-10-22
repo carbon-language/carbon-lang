@@ -89,17 +89,7 @@ public:
   }
 
   bool isNearlyEmpty(const CXXRecordDecl *RD) const override {
-    // FIXME: Audit the corners
-    if (!RD->isDynamicClass())
-      return false;
-
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-
-    // In the Microsoft ABI, classes can have one or two vtable pointers.
-    CharUnits PointerSize =
-        Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
-    return Layout.getNonVirtualSize() == PointerSize ||
-      Layout.getNonVirtualSize() == PointerSize * 2;
+    llvm_unreachable("unapplicable to the MS ABI");
   }
 
   void addDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
