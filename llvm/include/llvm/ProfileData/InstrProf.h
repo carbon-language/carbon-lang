@@ -27,6 +27,37 @@
 #include <vector>
 
 namespace llvm {
+
+inline StringRef getInstrProfCountersSectionName(bool AddSegment) {
+  return AddSegment ? "__DATA,__llvm_prf_cnts" : "__llvm_prf_cnts";
+}
+
+inline StringRef getInstrProfNameSectionName(bool AddSegment) {
+  return AddSegment ? "__DATA,__llvm_prf_names" : "__llvm_prf_names";
+}
+
+inline StringRef getInstrProfDataSectionName(bool AddSegment) {
+  return AddSegment ? "__DATA,__llvm_prf_data" : "__llvm_prf_data";
+}
+
+inline StringRef getInstrProfCoverageSectionName(bool AddSegment) {
+  return AddSegment ? "__DATA,__llvm_covmap" : "__llvm_covmap";
+}
+
+inline StringRef getInstrProfNameVarPrefix() { return "__llvm_profile_names_"; }
+
+inline StringRef getInstrProfDataVarPrefix() { return "__llvm_profile_data_"; }
+
+inline StringRef getInstrProfCountersVarPrefix() {
+  return "__llvm_profile_counters_";
+}
+
+inline StringRef getInstrProfComdatPrefix() { return "__llvm_profile_vars_"; }
+
+inline StringRef getCoverageMappingVarName() {
+  return "__llvm_coverage_mapping";
+}
+
 const std::error_category &instrprof_category();
 
 enum class instrprof_error {

@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Transforms/Instrumentation.h"
 
 #include "llvm/ADT/Triple.h"
@@ -58,22 +59,22 @@ private:
 
   /// Get the section name for the counter variables.
   StringRef getCountersSection() const {
-    return isMachO() ? "__DATA,__llvm_prf_cnts" : "__llvm_prf_cnts";
+    return getInstrProfCountersSectionName(isMachO());
   }
 
   /// Get the section name for the name variables.
   StringRef getNameSection() const {
-    return isMachO() ? "__DATA,__llvm_prf_names" : "__llvm_prf_names";
+    return getInstrProfNameSectionName(isMachO());
   }
 
   /// Get the section name for the profile data variables.
   StringRef getDataSection() const {
-    return isMachO() ? "__DATA,__llvm_prf_data" : "__llvm_prf_data";
+    return getInstrProfDataSectionName(isMachO());
   }
 
   /// Get the section name for the coverage mapping data.
   StringRef getCoverageSection() const {
-    return isMachO() ? "__DATA,__llvm_covmap" : "__llvm_covmap";
+    return getInstrProfCoverageSectionName(isMachO());
   }
 
   /// Replace instrprof_increment with an increment of the appropriate value.
@@ -127,7 +128,8 @@ bool InstrProfiling::runOnModule(Module &M) {
           lowerIncrement(Inc);
           MadeChange = true;
         }
-  if (GlobalVariable *Coverage = M.getNamedGlobal("__llvm_coverage_mapping")) {
+  if (GlobalVariable *Coverage =
+          M.getNamedGlobal(getCoverageMappingVarName())) {
     lowerCoverageData(Coverage);
     MadeChange = true;
   }
@@ -183,10 +185,10 @@ void InstrProfiling::lowerCoverageData(GlobalVariable *CoverageData) {
 }
 
 /// Get the name of a profiling variable for a particular function.
-static std::string getVarName(InstrProfIncrementInst *Inc, StringRef VarName) {
+static std::string getVarName(InstrProfIncrementInst *Inc, StringRef Prefix) {
   auto *Arr = cast<ConstantDataArray>(Inc->getName()->getInitializer());
   StringRef Name = Arr->isCString() ? Arr->getAsCString() : Arr->getAsString();
-  return ("__llvm_profile_" + VarName + "_" + Name).str();
+  return (Prefix + Name).str();
 }
 
 GlobalVariable *
@@ -203,7 +205,8 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   Function *Fn = Inc->getParent()->getParent();
   Comdat *ProfileVarsComdat = nullptr;
   if (Fn->hasComdat())
-    ProfileVarsComdat = M->getOrInsertComdat(StringRef(getVarName(Inc, "vars")));
+    ProfileVarsComdat = M->getOrInsertComdat(
+        StringRef(getVarName(Inc, getInstrProfComdatPrefix())));
   Name->setSection(getNameSection());
   Name->setAlignment(1);
   Name->setComdat(ProfileVarsComdat);
@@ -213,9 +216,10 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   ArrayType *CounterTy = ArrayType::get(Type::getInt64Ty(Ctx), NumCounters);
 
   // Create the counters variable.
-  auto *Counters = new GlobalVariable(*M, CounterTy, false, Name->getLinkage(),
-                                      Constant::getNullValue(CounterTy),
-                                      getVarName(Inc, "counters"));
+  auto *Counters =
+      new GlobalVariable(*M, CounterTy, false, Name->getLinkage(),
+                         Constant::getNullValue(CounterTy),
+                         getVarName(Inc, getInstrProfCountersVarPrefix()));
   Counters->setVisibility(Name->getVisibility());
   Counters->setSection(getCountersSection());
   Counters->setAlignment(8);
@@ -240,7 +244,7 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
       ConstantExpr::getBitCast(Counters, Int64PtrTy)};
   auto *Data = new GlobalVariable(*M, DataTy, true, Name->getLinkage(),
                                   ConstantStruct::get(DataTy, DataVals),
-                                  getVarName(Inc, "data"));
+                                  getVarName(Inc, getInstrProfDataVarPrefix()));
   Data->setVisibility(Name->getVisibility());
   Data->setSection(getDataSection());
   Data->setAlignment(8);

@@ -477,10 +477,11 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
                                 : support::endianness::big;
 
   // Look for the sections that we are interested in.
-  auto NamesSection = lookupSection(*OF, "__llvm_prf_names");
+  auto NamesSection = lookupSection(*OF, getInstrProfNameSectionName(false));
   if (auto EC = NamesSection.getError())
     return EC;
-  auto CoverageSection = lookupSection(*OF, "__llvm_covmap");
+  auto CoverageSection =
+      lookupSection(*OF, getInstrProfCoverageSectionName(false));
   if (auto EC = CoverageSection.getError())
     return EC;
 
