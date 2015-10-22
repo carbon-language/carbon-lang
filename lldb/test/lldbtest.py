@@ -186,7 +186,7 @@ def SETTING_MSG(setting):
 
 def EnvArray():
     """Returns an env variable array from the os.environ map object."""
-    return map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values())
+    return list(map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values()))
 
 def line_number(filename, string_to_match):
     """Helper function to return the line number of the first matched string."""

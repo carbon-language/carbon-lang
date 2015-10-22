@@ -857,7 +857,7 @@ def parseOptionsAndInitTestdirs():
 
     # Gather all the dirs passed on the command line.
     if len(args.args) > 0:
-        testdirs = map(os.path.abspath, args.args)
+        testdirs = list(map(os.path.abspath, args.args))
         # Shut off multiprocessing mode when test directories are specified.
         no_multiprocess_test_runner = True
 

@@ -921,7 +921,7 @@ def inprocess_exec_test_runner(test_work_items):
         socket_thread.start()
 
     # Do the work.
-    test_results = map(process_dir_mapper_inprocess, test_work_items)
+    test_results = list(map(process_dir_mapper_inprocess, test_work_items))
 
     # If we have a listener channel, shut it down here.
     if RESULTS_LISTENER_CHANNEL is not None:
