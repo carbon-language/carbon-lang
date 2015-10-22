@@ -44,7 +44,7 @@ inline StringRef getInstrProfCoverageSectionName(bool AddSegment) {
   return AddSegment ? "__DATA,__llvm_covmap" : "__llvm_covmap";
 }
 
-inline StringRef getInstrProfNameVarPrefix() { return "__llvm_profile_names_"; }
+inline StringRef getInstrProfNameVarPrefix() { return "__llvm_profile_name_"; }
 
 inline StringRef getInstrProfDataVarPrefix() { return "__llvm_profile_data_"; }
 
