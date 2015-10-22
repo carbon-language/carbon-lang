@@ -51,11 +51,13 @@ struct Configuration {
   bool DiscardNone;
   bool EnableNewDtags;
   bool ExportDynamic;
+  bool GnuHash = false;
   bool Mips64EL = false;
   bool NoInhibitExec;
   bool NoUndefined;
   bool Shared;
   bool Static = false;
+  bool SysvHash = true;
   bool Verbose;
   bool ZNodelete = false;
   bool ZNow = false;

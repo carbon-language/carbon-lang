@@ -57,6 +57,7 @@ bool canBePreempted(const SymbolBody *Body, bool NeedsGot);
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 
 bool includeInDynamicSymtab(const SymbolBody &B);
+bool includeInGnuHashTable(const SymbolBody &B);
 
 template <class ELFT>
 bool shouldKeepInSymtab(
@@ -176,8 +177,16 @@ public:
   void addSymbol(SymbolBody *Body);
   StringTableSection<ELFT> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }
+  unsigned getNumGnuHashSymbols() const { return NumGnuHashed; }
 
-  ArrayRef<SymbolBody *> getSymbols() const { return Symbols; }
+  struct SymbolData {
+    SymbolData(SymbolBody *Body, bool HasGnuHash);
+    SymbolBody *Body;
+    bool HasGnuHash;
+    uint32_t GnuHash;
+  };
+  ArrayRef<SymbolData> getSymbols() const { return Symbols; }
+  ArrayRef<SymbolData> getGnuHashSymbols() const;
 
 private:
   void writeLocalSymbols(uint8_t *&Buf);
@@ -187,9 +196,10 @@ private:
 
   SymbolTable<ELFT> &Table;
   StringTableSection<ELFT> &StrTabSec;
-  std::vector<SymbolBody *> Symbols;
+  std::vector<SymbolData> Symbols;
   unsigned NumVisible = 0;
   unsigned NumLocals = 0;
+  unsigned NumGnuHashed = 0;
 };
 
 template <class ELFT>
@@ -283,6 +293,33 @@ public:
   void writeTo(uint8_t *Buf) override;
 };
 
+// Outputs GNU Hash section. For detailed explanation see:
+// https://blogs.oracle.com/ali/entry/gnu_hash_elf_sections
+template <class ELFT>
+class GnuHashTableSection final : public OutputSectionBase<ELFT> {
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Off Elf_Off;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+
+public:
+  GnuHashTableSection();
+  void finalize() override;
+  void writeTo(uint8_t *Buf) override;
+
+  static unsigned calcNBuckets(unsigned NumHashed);
+
+private:
+  static unsigned calcMaskWords(unsigned NumHashed);
+
+  void writeHeader(uint8_t *&Buf);
+  void writeBloomFilter(uint8_t *&Buf);
+  void writeHashTable(uint8_t *Buf);
+
+  unsigned MaskWords;
+  unsigned NBuckets;
+  unsigned Shift2;
+};
+
 template <class ELFT>
 class DynamicSection final : public OutputSectionBase<ELFT> {
   typedef OutputSectionBase<ELFT> Base;
@@ -314,6 +351,7 @@ private:
 // until Writer is initialized.
 template <class ELFT> struct Out {
   static DynamicSection<ELFT> *Dynamic;
+  static GnuHashTableSection<ELFT> *GnuHashTab;
   static GotPltSection<ELFT> *GotPlt;
   static GotSection<ELFT> *Got;
   static HashTableSection<ELFT> *HashTab;
@@ -332,6 +370,7 @@ template <class ELFT> struct Out {
 };
 
 template <class ELFT> DynamicSection<ELFT> *Out<ELFT>::Dynamic;
+template <class ELFT> GnuHashTableSection<ELFT> *Out<ELFT>::GnuHashTab;
 template <class ELFT> GotPltSection<ELFT> *Out<ELFT>::GotPlt;
 template <class ELFT> GotSection<ELFT> *Out<ELFT>::Got;
 template <class ELFT> HashTableSection<ELFT> *Out<ELFT>::HashTab;

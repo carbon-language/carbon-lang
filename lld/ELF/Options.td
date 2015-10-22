@@ -46,6 +46,9 @@ def export_dynamic : Flag<["--", "-"], "export-dynamic">,
 def fini : Separate<["-"], "fini">, MetaVarName<"<symbol>">,
   HelpText<"Specify a finalizer function">;
 
+def hash_style : Separate<["--", "-"], "hash-style">,
+  HelpText<"Specify hash style (sysv, gnu or both)">;
+
 def init : Separate<["-"], "init">, MetaVarName<"<symbol>">,
   HelpText<"Specify an initializer function">;
 
@@ -107,6 +110,7 @@ def alias_discard_all_x: Flag<["-"], "x">, Alias<discard_all>;
 def alias_discard_locals_X: Flag<["-"], "X">, Alias<discard_locals>;
 def alias_entry_e : Separate<["-"], "e">, Alias<entry>;
 def alias_fini_fini : Joined<["-"], "fini=">, Alias<fini>;
+def alias_hash_style_hash_style : Joined<["--", "-"], "hash-style=">, Alias<hash_style>;
 def alias_init_init : Joined<["-"], "init=">, Alias<init>;
 def alias_l__library : Joined<["--"], "library=">, Alias<l>;
 def alias_o_output : Joined<["--"], "output=">, Alias<o>;
@@ -124,7 +128,6 @@ def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def end_group : Flag<["--"], "end-group">;
 def fatal_warnings : Flag<["--"], "fatal-warnings">;
 def gc_sections : Flag<["--"], "gc-sections">;
-def hash_style : Joined<["--"], "hash-style=">;
 def no_add_needed : Flag<["--"], "no-add-needed">;
 def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;
 def no_warn_mismatch : Flag<["--"], "no-warn-mismatch">;

@@ -114,7 +114,11 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   SymbolTableSection<ELFT> DynSymTab(*Symtab, *Out<ELFT>::DynStrTab);
   Out<ELFT>::DynSymTab = &DynSymTab;
   HashTableSection<ELFT> HashTab;
-  Out<ELFT>::HashTab = &HashTab;
+  if (Config->SysvHash)
+    Out<ELFT>::HashTab = &HashTab;
+  GnuHashTableSection<ELFT> GnuHashTab;
+  if (Config->GnuHash)
+    Out<ELFT>::GnuHashTab = &GnuHashTab;
   bool IsRela = Symtab->shouldUseRela();
   RelocationSection<ELFT> RelaDyn(IsRela ? ".rela.dyn" : ".rel.dyn", IsRela);
   Out<ELFT>::RelaDyn = &RelaDyn;
@@ -521,7 +525,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   OutputSections.push_back(Out<ELFT>::StrTab);
   if (isOutputDynamic()) {
     OutputSections.push_back(Out<ELFT>::DynSymTab);
-    OutputSections.push_back(Out<ELFT>::HashTab);
+    if (Out<ELFT>::GnuHashTab)
+      OutputSections.push_back(Out<ELFT>::GnuHashTab);
+    if (Out<ELFT>::HashTab)
+      OutputSections.push_back(Out<ELFT>::HashTab);
     OutputSections.push_back(Out<ELFT>::Dynamic);
     OutputSections.push_back(Out<ELFT>::DynStrTab);
     if (Out<ELFT>::RelaDyn->hasRelocs())

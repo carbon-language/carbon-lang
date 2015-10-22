@@ -155,6 +155,17 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 
+  if (auto *Arg = Args.getLastArg(OPT_hash_style)) {
+    StringRef S = Arg->getValue();
+    if (S == "gnu") {
+      Config->GnuHash = true;
+      Config->SysvHash = false;
+    } else if (S == "both") {
+      Config->GnuHash = true;
+    } else if (S != "sysv")
+      error("Unknown hash style: " + S);
+  }
+
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
 
