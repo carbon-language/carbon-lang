@@ -432,6 +432,13 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
                     my_extractor.PutToLog(log, 0, my_buffer.GetByteSize(), record.m_process_address, 16, DataExtractor::TypeUInt8);
                 }
             }
+            else
+            {
+                record.dump(log);
+                
+                DataExtractor my_extractor ((const void*)record.m_host_address, record.m_size, lldb::eByteOrderBig, 8);
+                my_extractor.PutToLog(log, 0, record.m_size, record.m_host_address, 16, DataExtractor::TypeUInt8);
+            }
         }
     }
 
@@ -883,12 +890,13 @@ IRExecutionUnit::AllocationRecord::dump (Log *log)
     if (!log)
         return;
 
-    log->Printf("[0x%llx+0x%llx]->0x%llx (alignment %d, section ID %d)",
+    log->Printf("[0x%llx+0x%llx]->0x%llx (alignment %d, section ID %d, name %s)",
                 (unsigned long long)m_host_address,
                 (unsigned long long)m_size,
                 (unsigned long long)m_process_address,
                 (unsigned)m_alignment,
-                (unsigned)m_section_id);
+                (unsigned)m_section_id,
+                m_name.c_str());
 }
 
 
