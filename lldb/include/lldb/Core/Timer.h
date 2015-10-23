@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string>
+#include <mutex>
 #include "lldb/lldb-private.h"
 #include "lldb/Host/TimeValue.h"
 
@@ -84,9 +85,12 @@ protected:
     TimeValue m_timer_start;
     uint64_t m_total_ticks; // Total running time for this timer including when other timers below this are running
     uint64_t m_timer_ticks; // Ticks for this timer that do not include when other timers below this one are running
-    static uint32_t g_depth;
-    static uint32_t g_display_depth;
-    static FILE * g_file;
+
+    static std::atomic_bool g_quiet;
+    static std::atomic_uint g_display_depth;
+    static std::mutex g_file_mutex;
+    static FILE* g_file;
+
 private:
     Timer();
     DISALLOW_COPY_AND_ASSIGN (Timer);

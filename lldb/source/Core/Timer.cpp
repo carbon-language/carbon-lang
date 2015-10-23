@@ -21,12 +21,27 @@
 using namespace lldb_private;
 
 #define TIMER_INDENT_AMOUNT 2
-static bool g_quiet = true;
-uint32_t Timer::g_depth = 0;
-uint32_t Timer::g_display_depth = 0;
-FILE * Timer::g_file = NULL;
-typedef std::vector<Timer *> TimerStack;
-typedef std::map<const char *, uint64_t> TimerCategoryMap;
+
+namespace
+{
+    typedef std::map<const char*, uint64_t> TimerCategoryMap;
+
+    struct TimerStack
+    {
+        TimerStack() :
+            m_depth(0)
+        {}
+
+        uint32_t m_depth;
+        std::vector<Timer*> m_stack;
+    };
+} // end of anonymous namespace
+
+std::atomic_bool Timer::g_quiet(true);
+std::atomic_uint Timer::g_display_depth(0);
+std::mutex Timer::g_file_mutex;
+FILE* Timer::g_file = nullptr;
+
 static lldb::thread_key_t g_key;
 
 static Mutex &
@@ -82,12 +97,18 @@ Timer::Timer (const char *category, const char *format, ...) :
     m_total_ticks (0),
     m_timer_ticks (0)
 {
-    if (g_depth++ < g_display_depth)
+    TimerStack *stack = GetTimerStackForCurrentThread ();
+    if (!stack)
+        return;
+
+    if (stack->m_depth++ < g_display_depth)
     {
         if (g_quiet == false)
         {
+            std::lock_guard<std::mutex> lock(g_file_mutex);
+
             // Indent
-            ::fprintf (g_file, "%*s", g_depth * TIMER_INDENT_AMOUNT, "");
+            ::fprintf (g_file, "%*s", stack->m_depth * TIMER_INDENT_AMOUNT, "");
             // Print formatted string
             va_list args;
             va_start (args, format);
@@ -100,19 +121,19 @@ Timer::Timer (const char *category, const char *format, ...) :
         TimeValue start_time(TimeValue::Now());
         m_total_start = start_time;
         m_timer_start = start_time;
-        TimerStack *stack = GetTimerStackForCurrentThread ();
-        if (stack)
-        {
-            if (stack->empty() == false)
-                stack->back()->ChildStarted (start_time);
-            stack->push_back(this);
-        }
+
+        if (!stack->m_stack.empty())
+            stack->m_stack.back()->ChildStarted (start_time);
+        stack->m_stack.push_back(this);
     }
 }
 
-
 Timer::~Timer()
 {
+    TimerStack *stack = GetTimerStackForCurrentThread ();
+    if (!stack)
+        return;
+
     if (m_total_start.IsValid())
     {
         TimeValue stop_time = TimeValue::Now();
@@ -127,14 +148,10 @@ Timer::~Timer()
             m_timer_start.Clear();
         }
 
-        TimerStack *stack = GetTimerStackForCurrentThread ();
-        if (stack)
-        {
-            assert (stack->back() == this);
-            stack->pop_back();
-            if (stack->empty() == false)
-                stack->back()->ChildStopped(stop_time);
-        }
+        assert (stack->m_stack.back() == this);
+        stack->m_stack.pop_back();
+        if (stack->m_stack.empty() == false)
+            stack->m_stack.back()->ChildStopped(stop_time);
 
         const uint64_t total_nsec_uint = GetTotalElapsedNanoSeconds();
         const uint64_t timer_nsec_uint = GetTimerElapsedNanoSeconds();
@@ -143,10 +160,10 @@ Timer::~Timer()
 
         if (g_quiet == false)
         {
-
+            std::lock_guard<std::mutex> lock(g_file_mutex);
             ::fprintf (g_file,
                        "%*s%.9f sec (%.9f sec)\n",
-                       (g_depth - 1) *TIMER_INDENT_AMOUNT, "",
+                       (stack->m_depth - 1) *TIMER_INDENT_AMOUNT, "",
                        total_nsec / 1000000000.0,
                        timer_nsec / 1000000000.0);
         }
@@ -156,8 +173,8 @@ Timer::~Timer()
         TimerCategoryMap &category_map = GetCategoryMap();
         category_map[m_category] += timer_nsec_uint;
     }
-    if (g_depth > 0)
-        --g_depth;
+    if (stack->m_depth > 0)
+        --stack->m_depth;
 }
 
 uint64_t
