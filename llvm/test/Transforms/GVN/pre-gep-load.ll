@@ -47,3 +47,34 @@ return:                                           ; preds = %sw.default, %sw.bb2
   %retval.0 = phi double [ 0.000000e+00, %sw.default ], [ %sub6, %sw.bb2 ], [ %sub, %if.then ]
   ret double %retval.0
 }
+
+; The load causes the GEP's operands to be PREd earlier than normal. The
+; resulting sext ends up in pre.dest and in the GVN system before that BB is
+; actually processed. Make sure we can deal with the situation.
+
+define void @test_shortcut_safe(i1 %tst, i32 %p1, i32* %a) {
+; CHECK-LABEL: define void @test_shortcut_safe
+; CHECK: [[SEXT1:%.*]] = sext i32 %p1 to i64
+; CHECK: [[PHI1:%.*]] = phi i64 [ [[SEXT1]], {{%.*}} ], [ [[PHI2:%.*]], {{%.*}} ]
+; CHECK: [[SEXT2:%.*]] = sext i32 %p1 to i64
+; CHECK: [[PHI2]] = phi i64 [ [[SEXT2]], {{.*}} ], [ [[PHI1]], {{%.*}} ]
+; CHECK: getelementptr inbounds i32, i32* %a, i64 [[PHI2]]
+
+  br i1 %tst, label %sext1, label %pre.dest
+
+pre.dest:
+  br label %sext.use
+
+sext1:
+  %idxprom = sext i32 %p1 to i64
+  br label %sext.use
+
+sext.use:
+  %idxprom2 = sext i32 %p1 to i64
+  %arrayidx3 = getelementptr inbounds i32, i32* %a, i64 %idxprom2
+  %val = load i32, i32* %arrayidx3, align 4
+  tail call void (i32) @g(i32 %val)
+  br label %pre.dest
+}
+
+declare void @g(i32)

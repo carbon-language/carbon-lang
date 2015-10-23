@@ -2387,17 +2387,21 @@ bool GVN::processInstruction(Instruction *I) {
 
   // Perform fast-path value-number based elimination of values inherited from
   // dominators.
-  Value *repl = findLeader(I->getParent(), Num);
-  if (!repl) {
+  Value *Repl = findLeader(I->getParent(), Num);
+  if (!Repl) {
     // Failure, just remember this instance for future use.
     addToLeaderTable(Num, I, I->getParent());
+    return false;
+  } else if (Repl == I) {
+    // If I was the result of a shortcut PRE, it might already be in the table
+    // and the best replacement for itself. Nothing to do.
     return false;
   }
 
   // Remove it!
-  patchAndReplaceAllUsesWith(I, repl);
-  if (MD && repl->getType()->getScalarType()->isPointerTy())
-    MD->invalidateCachedPointerInfo(repl);
+  patchAndReplaceAllUsesWith(I, Repl);
+  if (MD && Repl->getType()->getScalarType()->isPointerTy())
+    MD->invalidateCachedPointerInfo(Repl);
   markInstructionForDeletion(I);
   return true;
 }
