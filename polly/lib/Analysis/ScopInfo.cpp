@@ -3240,11 +3240,7 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
       continue;
 
     // Check whether or not the use is in the SCoP.
-    // If there is single exiting block, the single incoming value exit for node
-    // PHIs are handled like any escaping SCALAR. Otherwise, as if the PHI
-    // belongs to the the scop region.
-    bool IsExitNodePHI = isa<PHINode>(UI) && UI->getParent() == R->getExit();
-    if (!R->contains(UseParent) && (R->getExitingBlock() || !IsExitNodePHI)) {
+    if (!R->contains(UseParent)) {
       AnyCrossStmtUse = true;
       continue;
     }
