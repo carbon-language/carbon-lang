@@ -12,6 +12,8 @@ def Bstatic: Flag<["-"], "Bstatic">,
 def L : Joined<["-"], "L">, MetaVarName<"<dir>">,
   HelpText<"Directory to search for libraries">;
 
+def O : Joined<["-"], "O">, HelpText<"Optimize">;
+
 def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
   HelpText<"Allow multiple definitions">;
 
@@ -125,7 +127,6 @@ def alias_script_T : Separate<["-"], "T">, Alias<script>;
 def alias_undefined_u : Separate<["-"], "u">, Alias<undefined>;
 
 // Options listed below are silently ignored now.
-def O3 : Flag<["-"], "O3">;
 def build_id : Flag<["--"], "build-id">;
 def eh_frame_hdr : Flag<["--"], "eh-frame-hdr">;
 def end_group : Flag<["--"], "end-group">;

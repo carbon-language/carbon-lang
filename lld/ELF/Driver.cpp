@@ -156,6 +156,12 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->SoName = getString(Args, OPT_soname);
   Config->Sysroot = getString(Args, OPT_sysroot);
 
+  if (auto *Arg = Args.getLastArg(OPT_O)) {
+    StringRef Val = Arg->getValue();
+    if (Val.getAsInteger(10, Config->Optimize))
+      error("Invalid optimization level");
+  }
+
   if (auto *Arg = Args.getLastArg(OPT_hash_style)) {
     StringRef S = Arg->getValue();
     if (S == "gnu") {
