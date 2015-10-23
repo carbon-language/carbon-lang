@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
@@ -48,10 +52,8 @@
 #include "Plugins/Process/Utility/UnwindLLDB.h"
 #include "Plugins/Process/Utility/UnwindMacOSXFrameBackchain.h"
 
-
 using namespace lldb;
 using namespace lldb_private;
-
 
 const ThreadPropertiesSP &
 Thread::GetGlobalProperties()
@@ -82,7 +84,6 @@ enum {
     ePropertyEnableThreadTrace
 };
 
-
 class ThreadOptionValueProperties : public OptionValueProperties
 {
 public:
@@ -99,8 +100,8 @@ public:
     {
     }
     
-    virtual const Property *
-    GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
+    const Property *
+    GetPropertyAtIndex(const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const override
     {
         // When getting the value for a key from the thread options, we will always
         // try and grab the setting from the current thread if there is one. Else we just
@@ -119,8 +120,6 @@ public:
     }
 };
 
-
-
 ThreadProperties::ThreadProperties (bool is_global) :
     Properties ()
 {
@@ -133,9 +132,7 @@ ThreadProperties::ThreadProperties (bool is_global) :
         m_collection_sp.reset (new ThreadOptionValueProperties(Thread::GetGlobalProperties().get()));
 }
 
-ThreadProperties::~ThreadProperties()
-{
-}
+ThreadProperties::~ThreadProperties() = default;
 
 const RegularExpression *
 ThreadProperties::GetSymbolsToAvoidRegexp()
@@ -174,11 +171,9 @@ ThreadProperties::GetStepOutAvoidsNoDebug() const
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
-
 //------------------------------------------------------------------
 // Thread Event Data
 //------------------------------------------------------------------
-
 
 const ConstString &
 Thread::ThreadEventData::GetFlavorString ()
@@ -205,14 +200,11 @@ Thread::ThreadEventData::ThreadEventData () :
 {
 }
 
-Thread::ThreadEventData::~ThreadEventData ()
-{
-}
+Thread::ThreadEventData::~ThreadEventData() = default;
 
 void
 Thread::ThreadEventData::Dump (Stream *s) const
 {
-
 }
 
 const Thread::ThreadEventData *
@@ -308,7 +300,6 @@ Thread::Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id) :
     CheckInWithManager();
     QueueFundamentalPlan(true);
 }
-
 
 Thread::~Thread()
 {
@@ -434,7 +425,6 @@ Thread::FunctionOptimizationWarning (StackFrame *frame)
     }
 }
 
-
 lldb::StopInfoSP
 Thread::GetStopInfo ()
 {
@@ -513,7 +503,6 @@ Thread::GetPrivateStopInfo ()
     return m_stop_info_sp;
 }
 
-
 lldb::StopReason
 Thread::GetStopReason()
 {
@@ -522,7 +511,6 @@ Thread::GetStopReason()
         return stop_info_sp->GetStopReason();
     return eStopReasonNone;
 }
-
 
 bool
 Thread::StopInfoIsUpToDate() const
@@ -682,7 +670,6 @@ Thread::SetupForResume ()
 {
     if (GetResumeState() != eStateSuspended)
     {
-    
         // If we're at a breakpoint push the step-over breakpoint plan.  Do this before
         // telling the current plan it will resume, since we might change what the current
         // plan is.
@@ -933,7 +920,6 @@ Thread::ShouldStop (Event* event_ptr)
 
                     break;
                 }
-
             }
         }
     }
@@ -981,7 +967,6 @@ Thread::ShouldStop (Event* event_ptr)
                     }
                     else
                     {
-
                         PopPlan();
 
                         current_plan = GetCurrentPlan();
@@ -1000,7 +985,6 @@ Thread::ShouldStop (Event* event_ptr)
 
         if (over_ride_stop)
             should_stop = false;
-
     }
 
     // One other potential problem is that we set up a master plan, then stop in before it is complete - for instance
@@ -1327,7 +1311,6 @@ Thread::QueueThreadPlan (ThreadPlanSP &thread_plan_sp, bool abort_other_plans)
     PushPlan (thread_plan_sp);
 }
 
-
 void
 Thread::EnableTracer (bool value, bool single_stepping)
 {
@@ -1378,7 +1361,6 @@ Thread::DiscardUserThreadPlansUpToIndex (uint32_t thread_index)
     DiscardThreadPlansUpToPlan(up_to_plan_ptr);
     return true;
 }
-    
 
 void
 Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
@@ -1423,7 +1405,6 @@ Thread::DiscardThreadPlansUpToPlan (ThreadPlan *up_to_plan_ptr)
             }
         }
     }
-    return;
 }
 
 void
@@ -1447,7 +1428,6 @@ Thread::DiscardThreadPlans(bool force)
 
     while (1)
     {
-
         int master_plan_idx;
         bool discard = true;
 
@@ -1466,7 +1446,6 @@ Thread::DiscardThreadPlans(bool force)
             // First pop all the dependent plans:
             for (int i = m_plan_stack.size() - 1; i > master_plan_idx; i--)
             {
-
                 // FIXME: Do we need a finalize here, or is the rule that "PrepareForStop"
                 // for the plan leaves it in a state that it is safe to pop the plan
                 // with no more notice?
@@ -1486,7 +1465,6 @@ Thread::DiscardThreadPlans(bool force)
             // If the master plan doesn't want to get discarded, then we're done.
             break;
         }
-
     }
 }
 
@@ -1522,7 +1500,6 @@ Thread::UnwindInnermostExpression()
     return error;
 }
 
-
 ThreadPlanSP
 Thread::QueueFundamentalPlan (bool abort_other_plans)
 {
@@ -1532,12 +1509,9 @@ Thread::QueueFundamentalPlan (bool abort_other_plans)
 }
 
 ThreadPlanSP
-Thread::QueueThreadPlanForStepSingleInstruction
-(
-    bool step_over, 
-    bool abort_other_plans, 
-    bool stop_other_threads
-)
+Thread::QueueThreadPlanForStepSingleInstruction(bool step_over,
+                                                bool abort_other_plans,
+                                                bool stop_other_threads)
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanStepInstruction (*this, step_over, stop_other_threads, eVoteNoOpinion, eVoteNoOpinion));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
@@ -1545,14 +1519,11 @@ Thread::QueueThreadPlanForStepSingleInstruction
 }
 
 ThreadPlanSP
-Thread::QueueThreadPlanForStepOverRange
-(
-    bool abort_other_plans, 
-    const AddressRange &range, 
-    const SymbolContext &addr_context,
-    lldb::RunMode stop_other_threads,
-    LazyBool step_out_avoids_code_withoug_debug_info
-)
+Thread::QueueThreadPlanForStepOverRange(bool abort_other_plans,
+                                        const AddressRange &range,
+                                        const SymbolContext &addr_context,
+                                        lldb::RunMode stop_other_threads,
+                                        LazyBool step_out_avoids_code_withoug_debug_info)
 {
     ThreadPlanSP thread_plan_sp;
     thread_plan_sp.reset (new ThreadPlanStepOverRange (*this, range, addr_context, stop_other_threads, step_out_avoids_code_withoug_debug_info));
@@ -1562,16 +1533,13 @@ Thread::QueueThreadPlanForStepOverRange
 }
 
 ThreadPlanSP
-Thread::QueueThreadPlanForStepInRange
-(
-    bool abort_other_plans, 
-    const AddressRange &range, 
-    const SymbolContext &addr_context,
-    const char *step_in_target,
-    lldb::RunMode stop_other_threads,
-    LazyBool step_in_avoids_code_without_debug_info,
-    LazyBool step_out_avoids_code_without_debug_info
-)
+Thread::QueueThreadPlanForStepInRange(bool abort_other_plans,
+                                      const AddressRange &range,
+                                      const SymbolContext &addr_context,
+                                      const char *step_in_target,
+                                      lldb::RunMode stop_other_threads,
+                                      LazyBool step_in_avoids_code_without_debug_info,
+                                      LazyBool step_out_avoids_code_without_debug_info)
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanStepInRange (*this,
                                                              range,
@@ -1588,19 +1556,15 @@ Thread::QueueThreadPlanForStepInRange
     return thread_plan_sp;
 }
 
-
 ThreadPlanSP
-Thread::QueueThreadPlanForStepOut 
-(
-    bool abort_other_plans, 
-    SymbolContext *addr_context, 
-    bool first_insn,
-    bool stop_other_threads, 
-    Vote stop_vote, 
-    Vote run_vote,
-    uint32_t frame_idx,
-    LazyBool step_out_avoids_code_withoug_debug_info
-)
+Thread::QueueThreadPlanForStepOut(bool abort_other_plans,
+                                  SymbolContext *addr_context,
+                                  bool first_insn,
+                                  bool stop_other_threads,
+                                  Vote stop_vote,
+                                  Vote run_vote,
+                                  uint32_t frame_idx,
+                                  LazyBool step_out_avoids_code_withoug_debug_info)
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanStepOut (*this, 
                                                         addr_context, 
@@ -1623,16 +1587,13 @@ Thread::QueueThreadPlanForStepOut
 }
 
 ThreadPlanSP
-Thread::QueueThreadPlanForStepOutNoShouldStop
-(
-    bool abort_other_plans, 
-    SymbolContext *addr_context, 
-    bool first_insn,
-    bool stop_other_threads, 
-    Vote stop_vote, 
-    Vote run_vote,
-    uint32_t frame_idx
-)
+Thread::QueueThreadPlanForStepOutNoShouldStop(bool abort_other_plans,
+                                              SymbolContext *addr_context,
+                                              bool first_insn,
+                                              bool stop_other_threads,
+                                              Vote stop_vote,
+                                              Vote run_vote,
+                                              uint32_t frame_idx)
 {
     ThreadPlanSP thread_plan_sp(new ThreadPlanStepOut (*this,
                                                         addr_context, 
@@ -1709,7 +1670,6 @@ Thread::QueueThreadPlanForStepScripted (bool abort_other_plans,
     }
     else
         return thread_plan_sp;
-
 }
 
 uint32_t
@@ -1827,7 +1787,6 @@ Thread::CalculateExecutionContext (ExecutionContext &exe_ctx)
     exe_ctx.SetContext (shared_from_this());
 }
 
-
 StackFrameListSP
 Thread::GetStackFrameList ()
 {
@@ -1870,7 +1829,6 @@ Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 {
     return GetStackFrameList()->GetFrameWithConcreteFrameIndex (unwind_idx);
 }
-
 
 Error
 Thread::ReturnFromFrameWithIndex (uint32_t frame_idx, lldb::ValueObjectSP return_value_sp, bool broadcast)
@@ -2151,7 +2109,6 @@ Thread::StopReasonAsCString (lldb::StopReason reason)
     case eStopReasonInstrumentation: return "instrumentation break";
     }
 
-
     static char unknown_state_string[64];
     snprintf(unknown_state_string, sizeof (unknown_state_string), "StopReason = %i", reason);
     return unknown_state_string;
@@ -2364,7 +2321,6 @@ Thread::GetUnwinder ()
     return m_unwinder_ap.get();
 }
 
-
 void
 Thread::Flush ()
 {
@@ -2395,7 +2351,6 @@ Thread::IsStillAtLastBreakpointHit ()
     }
     return false;
 }
-
 
 Error
 Thread::StepIn (bool source_step,

@@ -7,12 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Target/Target.h"
-
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Target/Target.h"
 #include "lldb/Breakpoint/BreakpointResolver.h"
 #include "lldb/Breakpoint/BreakpointResolverAddress.h"
 #include "lldb/Breakpoint/BreakpointResolverFileLine.h"
@@ -68,9 +67,6 @@ Target::GetStaticBroadcasterClass ()
     return class_name;
 }
 
-//----------------------------------------------------------------------
-// Target constructor
-//----------------------------------------------------------------------
 Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::PlatformSP &platform_sp, bool is_dummy_target) :
     TargetProperties (this),
     Broadcaster (&debugger, Target::GetStaticBroadcasterClass().AsCString()),
@@ -113,6 +109,14 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     }
 }
 
+Target::~Target()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+        log->Printf ("%p Target::~Target()", static_cast<void*>(this));
+    DeleteCurrentProcess ();
+}
+
 void
 Target::PrimeFromDummyTarget(Target *target)
 {
@@ -129,17 +133,6 @@ Target::PrimeFromDummyTarget(Target *target)
         BreakpointSP new_bp (new Breakpoint (*this, *breakpoint_sp.get()));
         AddBreakpoint (new_bp, false);
     }
-}
-
-//----------------------------------------------------------------------
-// Destructor
-//----------------------------------------------------------------------
-Target::~Target()
-{
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
-    if (log)
-        log->Printf ("%p Target::~Target()", static_cast<void*>(this));
-    DeleteCurrentProcess ();
 }
 
 void
@@ -298,7 +291,6 @@ Target::Destroy()
     m_suppress_stop_hooks = false;
 }
 
-
 BreakpointList &
 Target::GetBreakpointList(bool internal)
 {
@@ -344,7 +336,6 @@ Target::CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
     BreakpointResolverSP resolver_sp(new BreakpointResolverFileRegex (NULL, source_regex, !static_cast<bool>(move_to_nearest_code)));
     return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware, true);
 }
-
 
 BreakpointSP
 Target::CreateBreakpoint (const FileSpecList *containingModules,
@@ -402,7 +393,6 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                                                                      !static_cast<bool>(move_to_nearest_code)));
     return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware, true);
 }
-
 
 BreakpointSP
 Target::CreateBreakpoint (lldb::addr_t addr, bool internal, bool hardware)
@@ -516,7 +506,6 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
             skip_prologue = GetSkipPrologue() ? eLazyBoolYes : eLazyBoolNo;
         if (language == lldb::eLanguageTypeUnknown)
             language = GetLanguage();
-
 
         BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL,
                                                                       func_names,
@@ -1248,7 +1237,6 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
     }
 }
 
-
 bool
 Target::SetArchitecture (const ArchSpec &arch_spec)
 {
@@ -1519,7 +1507,6 @@ Target::ReadMemory (const Address& addr,
     }
     if (!resolved_addr.IsValid())
         resolved_addr = addr;
-    
 
     if (prefer_file_cache)
     {
@@ -1605,7 +1592,6 @@ Target::ReadCStringFromMemory (const Address& addr, std::string &out_str, Error 
     }
     return out_str.size();
 }
-
 
 size_t
 Target::ReadCStringFromMemory (const Address& addr, char *dst, size_t dst_max_len, Error &result_error)
@@ -1901,7 +1887,6 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
     return module_sp;
 }
 
-
 TargetSP
 Target::CalculateTarget ()
 {
@@ -1940,11 +1925,8 @@ Target::GetImageSearchPathList ()
 }
 
 void
-Target::ImageSearchPathsChanged 
-(
-    const PathMappingList &path_list,
-    void *baton
-)
+Target::ImageSearchPathsChanged(const PathMappingList &path_list,
+                                void *baton)
 {
     Target *target = (Target *)baton;
     ModuleSP exe_module_sp (target->GetExecutableModule());
@@ -2090,7 +2072,6 @@ Target::GetScratchClangASTContext(bool create_on_demand)
     return nullptr;
 }
 
-
 ClangASTImporter *
 Target::GetClangASTImporter()
 {
@@ -2183,13 +2164,10 @@ Target::GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, const Symbol
 }
 
 ExpressionResults
-Target::EvaluateExpression
-(
-    const char *expr_cstr,
-    StackFrame *frame,
-    lldb::ValueObjectSP &result_valobj_sp,
-    const EvaluateExpressionOptions& options
-)
+Target::EvaluateExpression(const char *expr_cstr,
+                           StackFrame *frame,
+                           lldb::ValueObjectSP &result_valobj_sp,
+                           const EvaluateExpressionOptions& options)
 {
     result_valobj_sp.reset();
     
@@ -2246,7 +2224,6 @@ Target::EvaluateExpression
     
     return execution_results;
 }
-
 
 lldb::ExpressionVariableSP
 Target::GetPersistentVariable(const ConstString &name)
@@ -2866,7 +2843,6 @@ Target::SetSectionLoadAddress (const SectionSP &section_sp, addr_t new_section_l
             return true; // Return true if the section load address was changed...
     }
     return false; // Return false to indicate nothing changed
-
 }
 
 size_t
@@ -2932,7 +2908,6 @@ Target::ClearAllLoadedSections ()
 {
     m_section_load_history.Clear();
 }
-
 
 Error
 Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
@@ -3245,10 +3220,7 @@ Target::StopHook::StopHook (const StopHook &rhs) :
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
 }
         
-
-Target::StopHook::~StopHook ()
-{
-}
+Target::StopHook::~StopHook() = default;
 
 void
 Target::StopHook::SetSpecifier(SymbolContextSpecifier *specifier)
@@ -3261,7 +3233,6 @@ Target::StopHook::SetThreadSpecifier (ThreadSpec *specifier)
 {
     m_thread_spec_ap.reset (specifier);
 }
-        
 
 void
 Target::StopHook::GetDescription (Stream *s, lldb::DescriptionLevel level) const
@@ -3361,7 +3332,6 @@ g_load_script_from_sym_file_values[] =
     { eLoadScriptFromSymFileWarn,    "warn",    "Warn about debug scripts inside symbol files but do not load them."},
     { 0, NULL, NULL }
 };
-
 
 static OptionEnumValueElement
 g_memory_module_load_level_values[] =
@@ -3473,7 +3443,6 @@ enum
     ePropertyNonStopModeEnabled
 };
 
-
 class TargetOptionValueProperties : public OptionValueProperties
 {
 public:
@@ -3494,8 +3463,8 @@ public:
     {
     }
 
-    virtual const Property *
-    GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
+    const Property *
+    GetPropertyAtIndex(const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const override
     {
         // When getting the value for a key from the target options, we will always
         // try and grab the setting from the current target if there is one. Else we just
@@ -3523,7 +3492,6 @@ public:
     }
     
 protected:
-    
     void
     GetHostEnvironmentIfNeeded () const
     {
@@ -3622,12 +3590,10 @@ TargetProperties::TargetProperties (Target *target) :
                                         true,
                                         Process::GetGlobalProperties()->GetValueProperties());
     }
-
 }
 
-TargetProperties::~TargetProperties ()
-{
-}
+TargetProperties::~TargetProperties() = default;
+
 ArchSpec
 TargetProperties::GetDefaultArchitecture () const
 {
@@ -3665,7 +3631,6 @@ TargetProperties::SetPreferDynamicValue (lldb::DynamicValueType d)
     const uint32_t idx = ePropertyPreferDynamic;
     return m_collection_sp->SetPropertyAtIndexAsEnumeration(NULL, idx, d);
 }
-
 
 bool
 TargetProperties::GetDisableASLR () const
@@ -4141,9 +4106,7 @@ Target::TargetEventData::TargetEventData (const lldb::TargetSP &target_sp, const
 {
 }
 
-Target::TargetEventData::~TargetEventData()
-{
-}
+Target::TargetEventData::~TargetEventData() = default;
 
 const ConstString &
 Target::TargetEventData::GetFlavorString ()

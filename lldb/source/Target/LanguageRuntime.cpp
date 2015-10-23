@@ -1,4 +1,4 @@
-//===-- LanguageRuntime.cpp -------------------------------------------------*- C++ -*-===//
+//===-- LanguageRuntime.cpp -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
@@ -16,7 +20,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
 
 class ExceptionSearchFilter : public SearchFilter
 {
@@ -33,8 +36,7 @@ public:
             UpdateModuleListIfNeeded ();
     }
 
-    virtual
-    ~ExceptionSearchFilter() {}
+    ~ExceptionSearchFilter() override = default;
 
     bool
     ModulePasses (const lldb::ModuleSP &module_sp) override
@@ -52,7 +54,6 @@ public:
         if (m_filter_sp)
             return m_filter_sp->ModulePasses (spec);
         return false;
-        
     }
     
     void
@@ -133,11 +134,8 @@ public:
     {
     }
 
-    virtual
-    ~ExceptionBreakpointResolver()
-    {
-    }
-    
+    ~ExceptionBreakpointResolver() override = default;
+
     Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
                     SymbolContext &context,
@@ -187,6 +185,7 @@ public:
     static inline bool classof(const BreakpointResolver *V) {
         return V->getResolverID() == BreakpointResolver::ExceptionResolver;
     }
+
 protected:
     BreakpointResolverSP
     CopyForBreakpoint (Breakpoint &breakpoint) override
@@ -244,7 +243,6 @@ protected:
     bool m_throw_bp;
 };
 
-
 LanguageRuntime*
 LanguageRuntime::FindPlugin (Process *process, lldb::LanguageType language)
 {
@@ -264,20 +262,12 @@ LanguageRuntime::FindPlugin (Process *process, lldb::LanguageType language)
     return NULL;
 }
 
-//----------------------------------------------------------------------
-// Constructor
-//----------------------------------------------------------------------
 LanguageRuntime::LanguageRuntime(Process *process) :
     m_process (process)
 {
 }
 
-//----------------------------------------------------------------------
-// Destructor
-//----------------------------------------------------------------------
-LanguageRuntime::~LanguageRuntime()
-{
-}
+LanguageRuntime::~LanguageRuntime() = default;
 
 Breakpoint::BreakpointPreconditionSP
 LanguageRuntime::CreateExceptionPrecondition (lldb::LanguageType language,

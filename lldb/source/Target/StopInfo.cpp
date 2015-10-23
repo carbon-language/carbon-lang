@@ -1,4 +1,4 @@
-//===-- StopInfo.cpp ---------------------------------------------*- C++ -*-===//
+//===-- StopInfo.cpp --------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Target/StopInfo.h"
-
 // C Includes
 // C++ Includes
 #include <string>
 
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
@@ -133,6 +132,8 @@ public:
         StoreBPInfo();
     }
 
+    ~StopInfoBreakpoint() override = default;
+
     void
     StoreBPInfo ()
     {
@@ -156,12 +157,8 @@ public:
         }
     }
 
-    virtual ~StopInfoBreakpoint ()
-    {
-    }
-
-    virtual bool
-    IsValidForOperatingSystemThread (Thread &thread)
+    bool
+    IsValidForOperatingSystemThread(Thread &thread) override
     {
         ProcessSP process_sp (thread.GetProcess());
         if (process_sp)
@@ -173,14 +170,14 @@ public:
         return false;
     }
 
-    virtual StopReason
-    GetStopReason () const
+    StopReason
+    GetStopReason() const override
     {
         return eStopReasonBreakpoint;
     }
 
-    virtual bool
-    ShouldStopSynchronous (Event *event_ptr)
+    bool
+    ShouldStopSynchronous(Event *event_ptr) override
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
@@ -212,8 +209,8 @@ public:
         return false;
     }
 
-    virtual bool
-    DoShouldNotify (Event *event_ptr)
+    bool
+    DoShouldNotify(Event *event_ptr) override
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
@@ -237,8 +234,8 @@ public:
         return true;
     }
 
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription() override
     {
         if (m_description.empty())
         {
@@ -312,7 +309,7 @@ public:
 
 protected:
     bool
-    ShouldStop (Event *event_ptr)
+    ShouldStop(Event *event_ptr) override
     {
         // This just reports the work done by PerformAction or the synchronous stop.  It should
         // only ever get called after they have had a chance to run.
@@ -320,8 +317,8 @@ protected:
         return m_should_stop;
     }
 
-    virtual void
-    PerformAction (Event *event_ptr)
+    void
+    PerformAction(Event *event_ptr) override
     {
         if (!m_should_perform_action)
             return;
@@ -575,7 +572,6 @@ private:
     bool m_was_one_shot;
 };
 
-
 //----------------------------------------------------------------------
 // StopInfoWatchpoint
 //----------------------------------------------------------------------
@@ -597,6 +593,7 @@ public:
                 process->DisableWatchpoint(watchpoint, notify);
             }
         }
+
         ~WatchpointSentry()
         {
             if (process && watchpoint)
@@ -609,6 +606,7 @@ public:
                 watchpoint->TurnOffEphemeralMode();
             }
         }
+
     private:
         Process *process;
         Watchpoint *watchpoint;
@@ -621,19 +619,17 @@ public:
         m_watch_hit_addr(watch_hit_addr)
     {
     }
-    
-    virtual ~StopInfoWatchpoint ()
-    {
-    }
 
-    virtual StopReason
-    GetStopReason () const
+    ~StopInfoWatchpoint() override = default;
+
+    StopReason
+    GetStopReason() const override
     {
         return eStopReasonWatchpoint;
     }
 
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription() override
     {
         if (m_description.empty())
         {
@@ -645,8 +641,8 @@ public:
     }
 
 protected:
-    virtual bool
-    ShouldStopSynchronous (Event *event_ptr)
+    bool
+    ShouldStopSynchronous(Event *event_ptr) override
     {
         // ShouldStop() method is idempotent and should not affect hit count.
         // See Process::RunPrivateStateThread()->Process()->HandlePrivateEvent()
@@ -685,7 +681,7 @@ protected:
     }
     
     bool
-    ShouldStop (Event *event_ptr)
+    ShouldStop(Event *event_ptr) override
     {
         // This just reports the work done by PerformAction or the synchronous stop.  It should
         // only ever get called after they have had a chance to run.
@@ -693,8 +689,8 @@ protected:
         return m_should_stop;
     }
     
-    virtual void
-    PerformAction (Event *event_ptr)
+    void
+    PerformAction(Event *event_ptr) override
     {
         Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS);
         // We're going to calculate if we should stop or not in some way during the course of
@@ -879,8 +875,6 @@ private:
     lldb::addr_t m_watch_hit_addr;
 };
 
-
-
 //----------------------------------------------------------------------
 // StopInfoUnixSignal
 //----------------------------------------------------------------------
@@ -888,26 +882,22 @@ private:
 class StopInfoUnixSignal : public StopInfo
 {
 public:
-
     StopInfoUnixSignal (Thread &thread, int signo, const char *description) :
         StopInfo (thread, signo)
     {
         SetDescription (description);
     }
-    
-    virtual ~StopInfoUnixSignal ()
-    {
-    }
 
+    ~StopInfoUnixSignal() override = default;
 
-    virtual StopReason
-    GetStopReason () const
+    StopReason
+    GetStopReason() const override
     {
         return eStopReasonSignal;
     }
 
-    virtual bool
-    ShouldStopSynchronous (Event *event_ptr)
+    bool
+    ShouldStopSynchronous(Event *event_ptr) override
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
@@ -915,19 +905,18 @@ public:
         return false;
     }
 
-    virtual bool
-    ShouldStop (Event *event_ptr)
+    bool
+    ShouldStop(Event *event_ptr) override
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
             return thread_sp->GetProcess()->GetUnixSignals()->GetShouldStop(m_value);
         return false;
     }
-    
-    
+
     // If should stop returns false, check if we should notify of this event
-    virtual bool
-    DoShouldNotify (Event *event_ptr)
+    bool
+    DoShouldNotify(Event *event_ptr) override
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
@@ -946,9 +935,8 @@ public:
         return true;
     }
 
-    
-    virtual void
-    WillResume (lldb::StateType resume_state)
+    void
+    WillResume(lldb::StateType resume_state) override
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
@@ -958,8 +946,8 @@ public:
         }
     }
 
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription() override
     {
         if (m_description.empty())
         {
@@ -986,32 +974,28 @@ public:
 class StopInfoTrace : public StopInfo
 {
 public:
-
     StopInfoTrace (Thread &thread) :
         StopInfo (thread, LLDB_INVALID_UID)
     {
     }
-    
-    virtual ~StopInfoTrace ()
-    {
-    }
-    
-    virtual StopReason
-    GetStopReason () const
+
+    ~StopInfoTrace() override = default;
+
+    StopReason
+    GetStopReason() const override
     {
         return eStopReasonTrace;
     }
 
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription() override
     {
         if (m_description.empty())
-        return "trace";
+            return "trace";
         else
             return m_description.c_str();
     }
 };
-
 
 //----------------------------------------------------------------------
 // StopInfoException
@@ -1020,27 +1004,23 @@ public:
 class StopInfoException : public StopInfo
 {
 public:
-    
     StopInfoException (Thread &thread, const char *description) :
         StopInfo (thread, LLDB_INVALID_UID)
     {
         if (description)
             SetDescription (description);
     }
-    
-    virtual 
-    ~StopInfoException ()
-    {
-    }
-    
-    virtual StopReason
-    GetStopReason () const
+
+    ~StopInfoException() override = default;
+
+    StopReason
+    GetStopReason() const override
     {
         return eStopReasonException;
     }
     
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription() override
     {
         if (m_description.empty())
             return "exception";
@@ -1049,7 +1029,6 @@ public:
     }
 };
 
-
 //----------------------------------------------------------------------
 // StopInfoThreadPlan
 //----------------------------------------------------------------------
@@ -1057,7 +1036,6 @@ public:
 class StopInfoThreadPlan : public StopInfo
 {
 public:
-
     StopInfoThreadPlan (ThreadPlanSP &plan_sp, ValueObjectSP &return_valobj_sp, ExpressionVariableSP &expression_variable_sp) :
         StopInfo (plan_sp->GetThread(), LLDB_INVALID_UID),
         m_plan_sp (plan_sp),
@@ -1065,19 +1043,17 @@ public:
         m_expression_variable_sp (expression_variable_sp)
     {
     }
-    
-    virtual ~StopInfoThreadPlan ()
-    {
-    }
 
-    virtual StopReason
-    GetStopReason () const
+    ~StopInfoThreadPlan() override = default;
+
+    StopReason
+    GetStopReason() const override
     {
         return eStopReasonPlanComplete;
     }
 
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription() override
     {
         if (m_description.empty())
         {
@@ -1101,8 +1077,8 @@ public:
     }
     
 protected:
-    virtual bool
-    ShouldStop (Event *event_ptr)
+    bool
+    ShouldStop(Event *event_ptr) override
     {
         if (m_plan_sp)
             return m_plan_sp->ShouldStop(event_ptr);
@@ -1119,33 +1095,29 @@ private:
 class StopInfoExec : public StopInfo
 {
 public:
-    
     StopInfoExec (Thread &thread) :
         StopInfo (thread, LLDB_INVALID_UID),
         m_performed_action (false)
     {
     }
-    
-    virtual
-    ~StopInfoExec ()
-    {
-    }
-    
-    virtual StopReason
-    GetStopReason () const
+
+    ~StopInfoExec() override = default;
+
+    StopReason
+    GetStopReason() const override
     {
         return eStopReasonExec;
     }
     
-    virtual const char *
-    GetDescription ()
+    const char *
+    GetDescription() override
     {
         return "exec";
     }
+
 protected:
-    
-    virtual void
-    PerformAction (Event *event_ptr)
+    void
+    PerformAction(Event *event_ptr) override
     {
         // Only perform the action once
         if (m_performed_action)

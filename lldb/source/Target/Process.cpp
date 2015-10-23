@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Target/Process.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
@@ -58,7 +62,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-
 // Comment out line below to disable memory caching, overriding the process setting
 // target.process.disable-memory-cache
 #define ENABLE_MEMORY_CACHING
@@ -85,8 +88,8 @@ public:
     {
     }
     
-    virtual const Property *
-    GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
+    const Property *
+    GetPropertyAtIndex(const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const override
     {
         // When getting the value for a key from the process options, we will always
         // try and grab the setting from the current process if there is one. Else we just
@@ -154,9 +157,7 @@ ProcessProperties::ProcessProperties (lldb_private::Process *process) :
     }
 }
 
-ProcessProperties::~ProcessProperties()
-{
-}
+ProcessProperties::~ProcessProperties() = default;
 
 void
 ProcessProperties::OptionValueChangedCallback (void *baton, OptionValue *option_value)
@@ -209,7 +210,6 @@ ProcessProperties::SetPythonOSPluginPath (const FileSpec &file)
     const uint32_t idx = ePropertyPythonOSPluginPath;
     m_collection_sp->SetPropertyAtIndexAsFileSpec(NULL, idx, file);
 }
-
 
 bool
 ProcessProperties::GetIgnoreBreakpointsInExpressions () const
@@ -564,8 +564,6 @@ ProcessLaunchCommandOptions::g_option_table[] =
 { 0               , false, NULL,             0,  0,                 NULL, NULL, 0, eArgTypeNone,    NULL }
 };
 
-
-
 bool
 ProcessInstanceInfoMatch::NameMatches (const char *process_name) const
 {
@@ -645,7 +643,6 @@ ProcessInstanceInfoMatch::MatchAllProcesses () const
         return false;
 
     return true;
-
 }
 
 void
@@ -708,9 +705,6 @@ Process::GetStaticBroadcasterClass ()
     return class_name;
 }
 
-//----------------------------------------------------------------------
-// Process constructor
-//----------------------------------------------------------------------
 Process::Process(lldb::TargetSP target_sp, Listener &listener) :
     Process(target_sp, listener, UnixSignals::Create(HostInfo::GetArchitecture()))
 {
@@ -822,9 +816,6 @@ Process::Process(lldb::TargetSP target_sp, Listener &listener, const UnixSignals
         value_sp->SetUInt64Value(platform_cache_line_size);
 }
 
-//----------------------------------------------------------------------
-// Destructor
-//----------------------------------------------------------------------
 Process::~Process()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
@@ -1274,14 +1265,10 @@ Process::HandleProcessStateChangedEvent (const EventSP &event_sp,
     return true;
 }
 
-
 StateType
-Process::WaitForState
-(
-    const TimeValue *timeout,
-    const StateType *match_states,
-    const uint32_t num_match_states
-)
+Process::WaitForState(const TimeValue *timeout,
+                      const StateType *match_states,
+                      const uint32_t num_match_states)
 {
     EventSP event_sp;
     uint32_t i;
@@ -1456,7 +1443,6 @@ Process::GetExitStatus ()
     return -1;
 }
 
-
 const char *
 Process::GetExitDescription ()
 {
@@ -1555,7 +1541,6 @@ Process::SetProcessExitStatus (void *callback_baton,
     }
     return false;
 }
-
 
 void
 Process::UpdateThreadListIfNeeded ()
@@ -1670,15 +1655,7 @@ Process::GetNextThreadIndexID (uint64_t thread_id)
 bool
 Process::HasAssignedIndexIDToThread(uint64_t thread_id)
 {
-    std::map<uint64_t, uint32_t>::iterator iterator = m_thread_id_to_index_id_map.find(thread_id);
-    if (iterator == m_thread_id_to_index_id_map.end())
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    return (m_thread_id_to_index_id_map.find(thread_id) != m_thread_id_to_index_id_map.end());
 }
 
 uint32_t
@@ -2192,7 +2169,6 @@ Process::GetBreakpointSiteList() const
     return m_breakpoint_site_list;
 }
 
-
 void
 Process::DisableAllBreakpointSites ()
 {
@@ -2349,7 +2325,6 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
     }
     // We failed to enable the breakpoint
     return LLDB_INVALID_BREAK_ID;
-
 }
 
 void
@@ -2364,7 +2339,6 @@ Process::RemoveOwnerFromBreakpointSite (lldb::user_id_t owner_id, lldb::user_id_
         m_breakpoint_site_list.RemoveByAddress(bp_site_sp->GetLoadAddress());
     }
 }
-
 
 size_t
 Process::RemoveBreakpointOpcodesFromBuffer (addr_t bp_addr, size_t size, uint8_t *buf) const
@@ -2393,8 +2367,6 @@ Process::RemoveBreakpointOpcodesFromBuffer (addr_t bp_addr, size_t size, uint8_t
     }
     return bytes_removed;
 }
-
-
 
 size_t
 Process::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
@@ -2575,7 +2547,6 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
                      (uint64_t)bp_addr,
                      error.AsCString());
     return error;
-
 }
 
 // Uncomment to verify memory caching works after making changes to caching code
@@ -2646,7 +2617,6 @@ Process::ReadCStringFromMemory (addr_t addr, std::string &out_str, Error &error)
     }
     return out_str.size();
 }
-
 
 size_t
 Process::ReadStringFromMemory (addr_t addr, char *dst, size_t max_bytes, Error &error,
@@ -2796,7 +2766,6 @@ Process::ReadPointerFromMemory (lldb::addr_t vm_addr, Error &error)
         return scalar.ULongLong(LLDB_INVALID_ADDRESS);
     return LLDB_INVALID_ADDRESS;
 }
-
 
 bool
 Process::WritePointerToMemory (lldb::addr_t vm_addr, 
@@ -3068,7 +3037,6 @@ Process::DeallocateMemory (addr_t ptr)
     return error;
 }
 
-
 ModuleSP
 Process::ReadModuleFromMemory (const FileSpec& file_spec, 
                                lldb::addr_t header_addr,
@@ -3245,7 +3213,6 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                     }
                     else if (state == eStateStopped || state == eStateCrashed)
                     {
-
                         DidLaunch ();
 
                         DynamicLoader *dyld = GetDynamicLoader ();
@@ -3294,7 +3261,6 @@ Process::Launch (ProcessLaunchInfo &launch_info)
     }
     return error;
 }
-
 
 Error
 Process::LoadCore ()
@@ -3773,7 +3739,6 @@ Process::ConnectRemote (Stream *strm, const char *remote_url)
     return error;
 }
 
-
 Error
 Process::PrivateResume ()
 {
@@ -4159,7 +4124,6 @@ Process::GetAddressByteSize () const
     return GetTarget().GetArchitecture().GetAddressByteSize();
 }
 
-
 bool
 Process::ShouldBroadcastEvent (Event *event_ptr)
 {
@@ -4293,7 +4257,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                         ProcessEventData::SetRestartedInEvent(event_ptr, true);
                         PrivateResume ();
                     }
-
                 }
                 else
                 {
@@ -4325,7 +4288,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                      return_value ? "YES" : "NO");
     return return_value;
 }
-
 
 bool
 Process::StartPrivateStateThread (bool is_secondary_thread)
@@ -4725,9 +4687,7 @@ Process::ProcessEventData::ProcessEventData (const ProcessSP &process_sp, StateT
         m_process_wp = process_sp;
 }
 
-Process::ProcessEventData::~ProcessEventData()
-{
-}
+Process::ProcessEventData::~ProcessEventData() = default;
 
 const ConstString &
 Process::ProcessEventData::GetFlavorString ()
@@ -4858,7 +4818,6 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
                     still_should_stop = this_thread_wants_to_stop;
             }
         }
-
         
         if (!GetRestarted())
         {
@@ -5092,7 +5051,6 @@ Process::GetAsyncProfileData (char *buf, size_t buf_size, Error &error)
     return bytes_available;
 }
 
-
 //------------------------------------------------------------------
 // Process STDIO
 //------------------------------------------------------------------
@@ -5123,7 +5081,6 @@ Process::GetSTDOUT (char *buf, size_t buf_size, Error &error)
     }
     return bytes_available;
 }
-
 
 size_t
 Process::GetSTDERR (char *buf, size_t buf_size, Error &error)
@@ -5175,12 +5132,8 @@ public:
         m_read_file.SetDescriptor(GetInputFD(), false);
     }
 
-    virtual
-    ~IOHandlerProcessSTDIO ()
-    {
-        
-    }
-    
+    ~IOHandlerProcessSTDIO() override = default;
+
     // Each IOHandler gets to run until it is done. It should read data
     // from the "in" and place output into "out" and "err and return
     // when done.
@@ -5303,7 +5256,6 @@ public:
     void
     GotEOF() override
     {
-        
     }
     
 protected:
@@ -5421,6 +5373,7 @@ namespace
                 m_thread_plan_sp->SetOkayToDiscard(m_okay_to_discard);
             }
         }
+
     private:
         lldb::ThreadPlanSP m_thread_plan_sp;
         bool m_already_reset;
@@ -5428,7 +5381,7 @@ namespace
         bool m_is_master;
         bool m_okay_to_discard;
     };
-}
+} // anonymous namespace
 
 ExpressionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
@@ -5650,7 +5603,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 }
                 one_thread_timeout_usec = computed_one_thread_timeout;
                 all_threads_timeout_usec = timeout_usec - one_thread_timeout_usec;
-                
             }
         }
         
@@ -5692,8 +5644,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 #endif
         TimeValue one_thread_timeout;
         TimeValue final_timeout;
-        
-        
+
         while (1)
         {
             // We usually want to resume the process if we get to the top of the loop.
@@ -5893,7 +5844,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                        keep_going = true;
                                        do_resume = false;
                                        handle_running_event = true;
-
                                     }
                                     else
                                     {
@@ -6475,7 +6425,6 @@ Process::GetThreadStatus (Stream &strm,
             Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
             if (log)
                 log->Printf("Process::GetThreadStatus - thread 0x" PRIu64 " vanished while running Thread::GetStatus.");
-            
         }
     }
     return num_thread_infos_dumped;
