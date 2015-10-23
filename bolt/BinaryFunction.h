@@ -51,6 +51,19 @@ public:
     Assembled,        /// Function has been assembled in memory
   };
 
+  // Choose which strategy should the block layout heuristic prioritize when
+  // facing conflicting goals.
+  enum HeuristicPriority : char {
+    HP_NONE = 0,
+    // HP_BRANCH_PREDICTOR is an implementation of what is suggested in Pettis'
+    // paper (PLDI '90) about block reordering, trying to minimize branch
+    // mispredictions.
+    HP_BRANCH_PREDICTOR,
+    // HP_CACHE_UTILIZATION pigbacks on the idea from Ispike paper (CGO '04)
+    // that suggests putting frequently executed chains first in the layout.
+    HP_CACHE_UTILIZATION,
+  };
+
   static constexpr uint64_t COUNT_NO_PROFILE =
     std::numeric_limits<uint64_t>::max();
   // Function size, in number of BBs, above which we fallback to a heuristic
@@ -202,7 +215,7 @@ public:
 
   /// Perform optimal code layout based on edge frequencies making necessary
   /// adjustments to instructions at the end of basic blocks.
-  void optimizeLayout();
+  void optimizeLayout(HeuristicPriority Priority);
 
   /// Dynamic programming implementation for the TSP, applied to BB layout. Find
   /// the optimal way to maximize weight during a path traversing all BBs. In

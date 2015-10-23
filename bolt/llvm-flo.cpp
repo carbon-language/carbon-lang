@@ -94,10 +94,11 @@ EliminateUnreachable("eliminate-unreachable",
                      cl::desc("eliminate unreachable code"),
                      cl::Optional);
 
-static cl::opt<bool>
-ReorderBlocks("reorder-blocks",
-              cl::desc("redo basic block layout based on profiling data"),
-              cl::Optional);
+static cl::opt<std::string> ReorderBlocks(
+    "reorder-blocks",
+    cl::desc("redo basic block layout based on profiling data with a specific "
+             "priority (none, branch-predictor or cache)"),
+    cl::value_desc("priority"), cl::init("disable"));
 
 static cl::opt<bool>
 DumpData("dump-data", cl::desc("dump parsed flo data and exit (debugging)"),
@@ -518,6 +519,15 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   //
   // FIXME: use real optimization passes.
   bool NagUser = true;
+  if (opts::ReorderBlocks != "" &&
+      opts::ReorderBlocks != "disable" &&
+      opts::ReorderBlocks != "none" &&
+      opts::ReorderBlocks != "branch-predictor" &&
+      opts::ReorderBlocks != "cache") {
+    errs() << ToolName << ": Unrecognized block reordering priority \""
+           << opts::ReorderBlocks << "\".\n";
+    exit(1);
+  }
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
 
@@ -566,9 +576,14 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
         Function.print(errs(), "after unreachable code elimination");
     }
 
-    if (opts::ReorderBlocks) {
-      Function.optimizeLayout();
-
+    if (opts::ReorderBlocks != "disable") {
+      if (opts::ReorderBlocks == "branch-predictor") {
+        BFI.second.optimizeLayout(BinaryFunction::HP_BRANCH_PREDICTOR);
+      } else if (opts::ReorderBlocks == "cache") {
+        BFI.second.optimizeLayout(BinaryFunction::HP_CACHE_UTILIZATION);
+      } else {
+        BFI.second.optimizeLayout(BinaryFunction::HP_NONE);
+      }
       if (opts::PrintAll || opts::PrintReordered)
         Function.print(errs(), "after reordering blocks");
     }

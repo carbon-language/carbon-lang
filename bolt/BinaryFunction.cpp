@@ -568,7 +568,7 @@ void BinaryFunction::inferFallThroughCounts() {
   return;
 }
 
-void BinaryFunction::optimizeLayout() {
+void BinaryFunction::optimizeLayout(HeuristicPriority Priority) {
   // Bail if no profiling information or if empty
   if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE ||
       BasicBlocksLayout.empty()) {
@@ -598,9 +598,18 @@ void BinaryFunction::optimizeLayout() {
   std::vector<ClusterTy> Clusters;
   BBToClusterMapTy BBToClusterMap;
 
-  // Populating priority queue with all edges
+  // Encode relative weights between two clusters
+  std::vector<std::map<uint32_t, uint64_t>> ClusterEdges;
+  ClusterEdges.resize(BasicBlocksLayout.size());
+
   for (auto BB : BasicBlocksLayout) {
-    BBToClusterMap[BB] = -1; // Mark as unmapped
+    // Create a cluster for this BB
+    uint32_t I = Clusters.size();
+    Clusters.emplace_back();
+    auto &Cluster = Clusters.back();
+    Cluster.push_back(BB);
+    BBToClusterMap[BB] = I;
+    // Populate priority queue with edges
     auto BI = BB->BranchInfo.begin();
     for (auto &I : BB->successors()) {
       if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
@@ -610,13 +619,6 @@ void BinaryFunction::optimizeLayout() {
     }
   }
 
-  // Start a cluster with the entry point
-  BinaryBasicBlock *Entry = *BasicBlocksLayout.begin();
-  Clusters.emplace_back();
-  auto &EntryCluster = Clusters.back();
-  EntryCluster.push_back(Entry);
-  BBToClusterMap[Entry] = 0;
-
   // Grow clusters in a greedy fashion
   while (!Queue.empty()) {
     auto elmt = Queue.top();
@@ -624,94 +626,165 @@ void BinaryFunction::optimizeLayout() {
 
     BinaryBasicBlock *BBSrc = elmt.first;
     BinaryBasicBlock *BBDst = elmt.second;
-    int I = 0, J = 0;
 
     // Case 1: BBSrc and BBDst are the same. Ignore this edge
-    if (BBSrc == BBDst || BBDst == Entry)
+    if (BBSrc == BBDst || BBDst == *BasicBlocksLayout.begin())
       continue;
 
-    // Case 2: Both BBSrc and BBDst are already allocated
-    if ((I = BBToClusterMap[BBSrc]) != -1 &&
-        (J = BBToClusterMap[BBDst]) != -1) {
-      // Case 2a: If they are already allocated at the same cluster, ignore
-      if (I == J)
+    int I = BBToClusterMap[BBSrc];
+    int J = BBToClusterMap[BBDst];
+
+    // Case 2: If they are already allocated at the same cluster, just increase
+    // the weight of this cluster
+    if (I == J) {
+      ClusterEdges[I][I] += Weight[elmt];
+      continue;
+    }
+
+    auto &ClusterA = Clusters[I];
+    auto &ClusterB = Clusters[J];
+    if (ClusterA.back() == BBSrc && ClusterB.front() == BBDst) {
+      // Case 3: BBSrc is at the end of a cluster and BBDst is at the start,
+      // allowing us to merge two clusters
+      for (auto BB : ClusterB)
+        BBToClusterMap[BB] = I;
+      ClusterA.insert(ClusterA.end(), ClusterB.begin(), ClusterB.end());
+      ClusterB.clear();
+      // Iterate through all inter-cluster edges and transfer edges targeting
+      // cluster B to cluster A.
+      // It is bad to have to iterate though all edges when we could have a list
+      // of predecessors for cluster B. However, it's not clear if it is worth
+      // the added code complexity to create a data structure for clusters that
+      // maintains a list of predecessors. Maybe change this if it becomes a
+      // deal breaker.
+      for (uint32_t K = 0, E = ClusterEdges.size(); K != E; ++K)
+        ClusterEdges[K][I] += ClusterEdges[K][J];
+    } else {
+      // Case 4: Both BBSrc and BBDst are allocated in positions we cannot
+      // merge them. Annotate the weight of this edge in the weight between
+      // clusters to help us decide ordering between these clusters.
+      ClusterEdges[I][J] += Weight[elmt];
+    }
+  }
+
+  std::vector<uint32_t> Order;  // Cluster layout order
+
+  // Here we have 3 conflicting goals as to how to layout clusters. If we want
+  // to minimize jump offsets, we should put clusters with heavy inter-cluster
+  // dependence as close as possible. If we want to maximize the probability
+  // that all inter-cluster edges are predicted as not-taken, we should enforce
+  // a topological order to make targets appear after sources, creating forward
+  // branches. If we want to separate hot from cold blocks to maximize the
+  // probability that unfrequently executed code doesn't pollute the cache, we
+  // should put clusters in descending order of hotness.
+  std::vector<double> AvgFreq;
+  AvgFreq.resize(Clusters.size(), 0.0);
+  for (uint32_t I = 1, E = Clusters.size(); I < E; ++I) {
+    double Freq = 0.0;
+    for (auto BB : Clusters[I]) {
+      if (!BB->empty())
+        Freq += BB->getExecutionCount() / BB->size();
+    }
+    AvgFreq[I] = Freq;
+  }
+
+  switch(Priority) {
+  case HP_NONE: {
+    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
+      if (!Clusters[I].empty())
+        Order.push_back(I);
+    break;
+  }
+  case HP_BRANCH_PREDICTOR: {
+    // Do a topological sort for clusters, prioritizing frequently-executed BBs
+    // during the traversal.
+    std::stack<uint32_t> Stack;
+    std::vector<uint32_t> Status;
+    std::vector<uint32_t> Parent;
+    Status.resize(Clusters.size(), 0);
+    Parent.resize(Clusters.size(), 0);
+    constexpr uint32_t STACKED = 1;
+    constexpr uint32_t VISITED = 2;
+    Status[0] = STACKED;
+    Stack.push(0);
+    while (!Stack.empty()) {
+      uint32_t I = Stack.top();
+      if (!(Status[I] & VISITED)) {
+        Status[I] |= VISITED;
+        // Order successors by weight
+        auto ClusterComp = [&ClusterEdges, I](uint32_t A, uint32_t B) {
+          return ClusterEdges[I][A] > ClusterEdges[I][B];
+        };
+        std::priority_queue<uint32_t, std::vector<uint32_t>,
+                            decltype(ClusterComp)> SuccQueue(ClusterComp);
+        for (auto &Target: ClusterEdges[I]) {
+          if (Target.second > 0 && !(Status[Target.first] & STACKED) &&
+              !Clusters[Target.first].empty()) {
+            Parent[Target.first] = I;
+            Status[Target.first] = STACKED;
+            SuccQueue.push(Target.first);
+          }
+        }
+        while (!SuccQueue.empty()) {
+          Stack.push(SuccQueue.top());
+          SuccQueue.pop();
+        }
         continue;
-      auto &ClusterA = Clusters[I];
-      auto &ClusterB = Clusters[J];
-      if (ClusterA.back() == BBSrc && ClusterB.front() == BBDst) {
-        // Case 2b: BBSrc is at the end of a cluster and BBDst is at the start,
-        // allowing us to merge two clusters
-        for (auto BB : ClusterB)
-          BBToClusterMap[BB] = I;
-        ClusterA.insert(ClusterA.end(), ClusterB.begin(), ClusterB.end());
-        ClusterB.clear();
-      } else {
-        // Case 2c: Both BBSrc and BBDst are allocated in positions we cannot
-        // merge them, so we ignore this edge.
       }
-      continue;
+      // Already visited this node
+      Stack.pop();
+      Order.push_back(I);
     }
+    std::reverse(Order.begin(), Order.end());
+    // Put unreachable clusters at the end
+    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
+      if (!(Status[I] & VISITED) && !Clusters[I].empty())
+        Order.push_back(I);
 
-    // Case 3: BBSrc is already allocated in a cluster
-    if ((I = BBToClusterMap[BBSrc]) != -1) {
-      auto &Cluster = Clusters[I];
-      if (Cluster.back() == BBSrc) {
-        // Case 3a: BBSrc is allocated at the end of this cluster. We put
-        // BBSrc and BBDst together.
-        Cluster.push_back(BBDst);
-        BBToClusterMap[BBDst] = I;
-      } else {
-        // Case 3b: We cannot put BBSrc and BBDst in consecutive positions,
-        // so we ignore this edge.
-      }
-      continue;
-    }
+    // Sort nodes with equal precedence
+    auto Beg = Order.begin();
+    // Don't reorder the first cluster, which contains the function entry point
+    ++Beg;
+    std::stable_sort(Beg, Order.end(),
+                     [&AvgFreq, &Parent](uint32_t A, uint32_t B) {
+                       uint32_t P = Parent[A];
+                       while (Parent[P] != 0) {
+                         if (Parent[P] == B)
+                           return false;
+                         P = Parent[P];
+                       }
+                       P = Parent[B];
+                       while (Parent[P] != 0) {
+                         if (Parent[P] == A)
+                           return true;
+                         P = Parent[P];
+                       }
+                       return AvgFreq[A] > AvgFreq[B];
+                     });
+    break;
+  }
+  case HP_CACHE_UTILIZATION: {
+    // Order clusters based on average instruction execution frequency
+    for (uint32_t I = 0, E = Clusters.size(); I < E; ++I)
+      if (!Clusters[I].empty())
+        Order.push_back(I);
+    auto Beg = Order.begin();
+    // Don't reorder the first cluster, which contains the function entry point
+    ++Beg;
+    std::stable_sort(Beg, Order.end(), [&AvgFreq](uint32_t A, uint32_t B) {
+      return AvgFreq[A] > AvgFreq[B];
+    });
 
-    // Case 4: BBSrc is not in a cluster, but BBDst is
-    if ((I = BBToClusterMap[BBDst]) != -1) {
-      auto &Cluster = Clusters[I];
-      if (Cluster.front() == BBDst) {
-        // Case 4a: BBDst is allocated at the start of this cluster. We put
-        // BBSrc and BBDst together.
-        Cluster.insert(Cluster.begin(), BBSrc);
-        BBToClusterMap[BBSrc] = I;
-      } else {
-        // Case 4b: We cannot put BBSrc and BBDst in consecutive positions,
-        // so we ignore this edge.
-      }
-      continue;
-    }
-
-    // Case 5: Both BBSrc and BBDst are unallocated, so we create a new cluster
-    // with them
-    I = Clusters.size();
-    Clusters.emplace_back();
-    auto &Cluster = Clusters.back();
-    Cluster.push_back(BBSrc);
-    Cluster.push_back(BBDst);
-    BBToClusterMap[BBSrc] = I;
-    BBToClusterMap[BBDst] = I;
+    break;
+  }
   }
 
-  // Create an extra cluster for unvisited basic blocks
-  std::vector<BinaryBasicBlock *> Unvisited;
-  for (auto BB : BasicBlocksLayout) {
-    if (BBToClusterMap[BB] == -1) {
-      Unvisited.push_back(BB);
-    }
-  }
-
-  // Define final function layout based on clusters
   BasicBlocksLayout.clear();
-  for (auto &Cluster : Clusters) {
+  for (auto I : Order) {
+    auto &Cluster = Clusters[I];
     BasicBlocksLayout.insert(BasicBlocksLayout.end(), Cluster.begin(),
                              Cluster.end());
   }
-
-  // Finalize layout with BBs that weren't assigned to any cluster, preserving
-  // their relative order
-  BasicBlocksLayout.insert(BasicBlocksLayout.end(), Unvisited.begin(),
-                           Unvisited.end());
 
   fixBranches();
 }

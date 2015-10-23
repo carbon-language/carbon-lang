@@ -94,6 +94,7 @@ public:
   typedef std::reverse_iterator<iterator>                      reverse_iterator;
 
   bool         empty()            const { return Instructions.empty(); }
+  unsigned     size()     const { return (unsigned)Instructions.size(); }
   MCInst       &front()                 { return Instructions.front();  }
   MCInst       &back()                  { return Instructions.back();   }
   const MCInst &front()           const { return Instructions.front();  }
