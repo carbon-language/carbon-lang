@@ -203,9 +203,8 @@ As a whole, the ``.cpp`` file looks like:
     static RegisterPass<Hello> X("hello", "Hello World Pass", false, false);
 
 Now that it's all together, compile the file with a simple "``gmake``" command
-in the local directory and you should get a new file
-"``Debug+Asserts/lib/Hello.so``" under the top level directory of the LLVM
-source tree (not in the local directory).  Note that everything in this file is
+from the top level of your build directory and you should get a new file
+"``Debug+Asserts/lib/Hello.so``".  Note that everything in this file is
 contained in an anonymous namespace --- this reflects the fact that passes
 are self contained units that do not need external interfaces (although they
 can have them) to be useful.
@@ -225,7 +224,7 @@ will work):
 
 .. code-block:: console
 
-  $ opt -load ../../../Debug+Asserts/lib/Hello.so -hello < hello.bc > /dev/null
+  $ opt -load ../../Debug+Asserts/lib/Hello.so -hello < hello.bc > /dev/null
   Hello: __main
   Hello: puts
   Hello: main
@@ -242,7 +241,7 @@ To see what happened to the other string you registered, try running
 
 .. code-block:: console
 
-  $ opt -load ../../../Debug+Asserts/lib/Hello.so -help
+  $ opt -load ../../Debug+Asserts/lib/Hello.so -help
   OVERVIEW: llvm .bc -> .bc modular optimizer
 
   USAGE: opt [options] <input bitcode>
@@ -269,7 +268,7 @@ you queue up.  For example:
 
 .. code-block:: console
 
-  $ opt -load ../../../Debug+Asserts/lib/Hello.so -hello -time-passes < hello.bc > /dev/null
+  $ opt -load ../../Debug+Asserts/lib/Hello.so -hello -time-passes < hello.bc > /dev/null
   Hello: __main
   Hello: puts
   Hello: main
@@ -1089,7 +1088,7 @@ passes.  Lets try it out with the gcse and licm passes:
 
 .. code-block:: console
 
-  $ opt -load ../../../Debug+Asserts/lib/Hello.so -gcse -licm --debug-pass=Structure < hello.bc > /dev/null
+  $ opt -load ../../Debug+Asserts/lib/Hello.so -gcse -licm --debug-pass=Structure < hello.bc > /dev/null
   Module Pass Manager
     Function Pass Manager
       Dominator Set Construction
@@ -1126,7 +1125,7 @@ Lets see how this changes when we run the :ref:`Hello World
 
 .. code-block:: console
 
-  $ opt -load ../../../Debug+Asserts/lib/Hello.so -gcse -hello -licm --debug-pass=Structure < hello.bc > /dev/null
+  $ opt -load ../../Debug+Asserts/lib/Hello.so -gcse -hello -licm --debug-pass=Structure < hello.bc > /dev/null
   Module Pass Manager
     Function Pass Manager
       Dominator Set Construction
@@ -1167,7 +1166,7 @@ Now when we run our pass, we get this output:
 
 .. code-block:: console
 
-  $ opt -load ../../../Debug+Asserts/lib/Hello.so -gcse -hello -licm --debug-pass=Structure < hello.bc > /dev/null
+  $ opt -load ../../Debug+Asserts/lib/Hello.so -gcse -hello -licm --debug-pass=Structure < hello.bc > /dev/null
   Pass Arguments:  -gcse -hello -licm
   Module Pass Manager
     Function Pass Manager
