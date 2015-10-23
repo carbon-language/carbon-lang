@@ -96,9 +96,11 @@ typedef enum
     eLaunchFlavorSpringBoard = 3,
 #endif
 #ifdef WITH_BKS
-    eLaunchFlavorBKS = 4
+    eLaunchFlavorBKS = 4,
 #endif
-
+#ifdef WITH_FBS
+    eLaunchFlavorFBS = 5
+#endif
 } nub_launch_flavor_t;
 
 #define NUB_STATE_IS_RUNNING(s) ((s) == eStateAttaching ||\

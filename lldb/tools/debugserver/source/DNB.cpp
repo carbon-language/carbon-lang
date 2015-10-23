@@ -747,7 +747,7 @@ DNBProcessAttachWait (const char *waitfor_process_name,
         if (attach_token != NULL)
         {
             nub_process_t pid;
-            pid = MachProcess::CheckForProcess(attach_token);
+            pid = MachProcess::CheckForProcess(attach_token, launch_flavor);
             if (pid != INVALID_NUB_PROCESS)
             {
                 waitfor_pid = pid;
@@ -825,7 +825,7 @@ DNBProcessAttachWait (const char *waitfor_process_name,
     }
 
     bool success = waitfor_pid != INVALID_NUB_PROCESS;
-    MachProcess::CleanupAfterAttach (attach_token, success, prepare_error);
+    MachProcess::CleanupAfterAttach (attach_token, launch_flavor, success, prepare_error);
 
     return waitfor_pid;
 }

@@ -9,5 +9,7 @@
 		<string>/Developer/usr/bin/debugserver</string>
 		<string>--lockdown</string>
 	</array>
+    <key>AllowByProxy</key>
+    <true/>
 </dict>
 </plist>

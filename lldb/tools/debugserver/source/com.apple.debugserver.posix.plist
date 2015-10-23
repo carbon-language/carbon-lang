@@ -12,5 +12,7 @@
 		<string>--lockdown</string>
 		<string>--launch=posix</string>
 	</array>
+    <key>AllowByProxy</key>
+    <true/>
 </dict>
 </plist>

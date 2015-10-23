@@ -54,7 +54,17 @@ DNBError::AsString() const
                 // You have to call ObjC routines to get the error string from BackBoardServices.
                 // Not sure I want to make DNBError.cpp an .mm file.  For now just make sure you
                 // pre-populate the error string when you make the DNBError of type BackBoard.
-                m_str.assign("Should have set Backboard error when making the error string.");
+                m_str.assign("Should have set BackBoard error when making the error string.");
+            }
+            break;
+#endif
+#ifdef WITH_FBS
+        case FrontBoard:
+            {
+                // You have to call ObjC routines to get the error string from FrontBoardServices.
+                // Not sure I want to make DNBError.cpp an .mm file.  For now just make sure you
+                // pre-populate the error string when you make the DNBError of type FrontBoard.
+                m_str.assign("Should have set FrontBoard error when making the error string.");
             }
             break;
 #endif

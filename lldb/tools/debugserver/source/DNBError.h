@@ -34,6 +34,9 @@ public:
 #ifdef WITH_BKS
         , BackBoard = 4
 #endif
+#ifdef WITH_FBS
+        , FrontBoard = 5
+#endif
     } FlavorType;
 
     explicit DNBError(    ValueType err = 0,

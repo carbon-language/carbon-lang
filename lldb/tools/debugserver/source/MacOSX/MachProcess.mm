@@ -44,44 +44,6 @@
 #include "CFData.h"
 #include "CFString.h"
 
-#if defined (WITH_SPRINGBOARD) || defined (WITH_BKS)
-// This returns a CFRetained pointer to the Bundle ID for app_bundle_path,
-// or NULL if there was some problem getting the bundle id.
-static CFStringRef
-CopyBundleIDForPath (const char *app_bundle_path, DNBError &err_str)
-{
-    CFBundle bundle(app_bundle_path);
-    CFStringRef bundleIDCFStr = bundle.GetIdentifier();
-    std::string bundleID;
-    if (CFString::UTF8(bundleIDCFStr, bundleID) == NULL)
-    {
-        struct stat app_bundle_stat;
-        char err_msg[PATH_MAX];
-        
-        if (::stat (app_bundle_path, &app_bundle_stat) < 0)
-        {
-            err_str.SetError(errno, DNBError::POSIX);
-            snprintf(err_msg, sizeof(err_msg), "%s: \"%s\"", err_str.AsString(), app_bundle_path);
-            err_str.SetErrorString(err_msg);
-            DNBLogThreadedIf(LOG_PROCESS, "%s() error: %s", __FUNCTION__, err_msg);
-        }
-        else
-        {
-            err_str.SetError(-1, DNBError::Generic);
-            snprintf(err_msg, sizeof(err_msg), "failed to extract CFBundleIdentifier from %s", app_bundle_path);
-            err_str.SetErrorString(err_msg);
-            DNBLogThreadedIf(LOG_PROCESS, "%s() error: failed to extract CFBundleIdentifier from '%s'", __FUNCTION__, app_bundle_path);
-        }
-        return NULL;
-    }
-    
-    DNBLogThreadedIf(LOG_PROCESS, "%s() extracted CFBundleIdentifier: %s", __FUNCTION__, bundleID.c_str());
-    CFRetain (bundleIDCFStr);
-    
-    return bundleIDCFStr;
-}
-#endif // #if defined 9WITH_SPRINGBOARD) || defined (WITH_BKS)
-
 #ifdef WITH_SPRINGBOARD
 
 #include <CoreFoundation/CoreFoundation.h>
@@ -96,6 +58,123 @@ IsSBProcess (nub_process_t pid)
 }
 
 #endif // WITH_SPRINGBOARD
+
+#if defined (WITH_SPRINGBOARD) || defined (WITH_BKS) || defined (WITH_FBS)
+// This returns a CFRetained pointer to the Bundle ID for app_bundle_path,
+// or NULL if there was some problem getting the bundle id.
+static CFStringRef CopyBundleIDForPath (const char *app_bundle_path, DNBError &err_str);
+#endif
+
+#if defined(WITH_BKS) || defined(WITH_FBS)
+#import <Foundation/Foundation.h>
+static const int OPEN_APPLICATION_TIMEOUT_ERROR = 111;
+typedef void (*SetErrorFunction) (NSInteger, DNBError &);
+typedef bool (*CallOpenApplicationFunction) (NSString *bundleIDNSStr, NSDictionary *options, DNBError &error, pid_t *return_pid);
+// This function runs the BKSSystemService (or FBSSystemService) method openApplication:options:clientPort:withResult,
+// messaging the app passed in bundleIDNSStr.
+// The function should be run inside of an NSAutoReleasePool.
+//
+// It will use the "options" dictionary passed in, and fill the error passed in if there is an error.
+// If return_pid is not NULL, we'll fetch the pid that was made for the bundleID.
+// If bundleIDNSStr is NULL, then the system application will be messaged.
+
+template <typename OpenFlavor, typename ErrorFlavor, ErrorFlavor no_error_enum_value, SetErrorFunction error_function>
+static bool
+CallBoardSystemServiceOpenApplication (NSString *bundleIDNSStr, NSDictionary *options, DNBError &error, pid_t *return_pid)
+{
+    // Now make our systemService:
+    OpenFlavor *system_service = [[OpenFlavor alloc] init];
+    
+    if (bundleIDNSStr == nil)
+    {
+        bundleIDNSStr = [system_service systemApplicationBundleIdentifier];
+        if (bundleIDNSStr == nil)
+        {
+            // Okay, no system app...
+            error.SetErrorString("No system application to message.");
+            return false;
+        }
+    }
+        
+    mach_port_t client_port = [system_service createClientPort];
+    __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block  ErrorFlavor open_app_error = no_error_enum_value;
+    bool wants_pid = (return_pid != NULL);
+    __block pid_t pid_in_block;
+    
+    const char *cstr = [bundleIDNSStr UTF8String];
+    if (!cstr)
+        cstr = "<Unknown Bundle ID>";
+    
+    DNBLog ("About to launch process for bundle ID: %s", cstr);
+    [system_service openApplication: bundleIDNSStr
+                    options: options
+                    clientPort: client_port
+                    withResult: ^(NSError *bks_error)
+        {
+                        // The system service will cleanup the client port we created for us.
+                        if (bks_error)
+                            open_app_error = (ErrorFlavor)[bks_error code];
+                                        
+                        if (open_app_error == no_error_enum_value)
+                        {
+                            if (wants_pid)
+                            {
+                                pid_in_block = [system_service pidForApplication: bundleIDNSStr];
+                                DNBLog("In completion handler, got pid for bundle id, pid: %d.", pid_in_block);
+                                DNBLogThreadedIf(LOG_PROCESS, "In completion handler, got pid for bundle id, pid: %d.", pid_in_block);
+                            }
+                            else
+                                DNBLogThreadedIf (LOG_PROCESS, "In completion handler: success.");
+        }
+        else
+        {
+                            const char *error_str = [(NSString *)[bks_error localizedDescription] UTF8String];
+                            DNBLogThreadedIf(LOG_PROCESS, "In completion handler for send event, got error \"%s\"(%ld).",
+                                             error_str ? error_str : "<unknown error>",
+                                             open_app_error);
+                            // REMOVE ME
+                            DNBLogError ("In completion handler for send event, got error \"%s\"(%ld).",
+                                             error_str ? error_str : "<unknown error>",
+                                             open_app_error);
+        }
+ 
+                        [system_service release];
+                        dispatch_semaphore_signal(semaphore);
+    }
+    
+    ];
+    
+    const uint32_t timeout_secs = 9;
+
+    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, timeout_secs * NSEC_PER_SEC);
+
+    long success = dispatch_semaphore_wait(semaphore, timeout) == 0;
+
+    dispatch_release(semaphore);
+    
+    if (!success)
+{
+        DNBLogError("timed out trying to send openApplication to %s.", cstr);
+        error.SetError (OPEN_APPLICATION_TIMEOUT_ERROR, DNBError::Generic);
+        error.SetErrorString ("timed out trying to launch app");
+    }
+    else if (open_app_error != no_error_enum_value)
+    {
+        error_function (open_app_error, error);
+        DNBLogError("unable to launch the application with CFBundleIdentifier '%s' bks_error = %u", cstr, open_app_error);
+        success = false;
+    }
+    else if (wants_pid)
+    {
+        *return_pid = pid_in_block;
+        DNBLogThreadedIf (LOG_PROCESS, "Out of completion handler, pid from block %d and passing out: %d", pid_in_block, *return_pid);
+}
+
+
+    return success;
+}
+#endif
 
 #ifdef WITH_BKS
 #import <Foundation/Foundation.h>
@@ -115,10 +194,10 @@ IsBKSProcess (nub_process_t pid)
 }
 
 static void
-SetBKSError (BKSOpenApplicationErrorCode error_code, DNBError &error)
+SetBKSError (NSInteger error_code, DNBError &error)
 {
     error.SetError (error_code, DNBError::BackBoard);
-    NSString *err_nsstr = ::BKSOpenApplicationErrorCodeToString(error_code);
+    NSString *err_nsstr = ::BKSOpenApplicationErrorCodeToString((BKSOpenApplicationErrorCode) error_code);
     const char *err_str = NULL;
     if (err_nsstr == NULL)
         err_str = "unknown BKS error";
@@ -131,8 +210,164 @@ SetBKSError (BKSOpenApplicationErrorCode error_code, DNBError &error)
     error.SetErrorString(err_str);
 }
 
-static const int BKS_OPEN_APPLICATION_TIMEOUT_ERROR = 111;
+static bool
+BKSAddEventDataToOptions (NSMutableDictionary *options, const char *event_data, DNBError &option_error)
+{
+    if (strcmp (event_data, "BackgroundContentFetching") == 0)
+    {
+        DNBLog("Setting ActivateForEvent key in options dictionary.");
+        NSDictionary *event_details = [NSDictionary dictionary];
+        NSDictionary *event_dictionary = [NSDictionary dictionaryWithObject:event_details forKey:BKSActivateForEventOptionTypeBackgroundContentFetching];
+        [options setObject: event_dictionary forKey: BKSOpenApplicationOptionKeyActivateForEvent];
+        return true;
+    }
+    else
+    {
+        DNBLogError ("Unrecognized event type: %s.  Ignoring.", event_data);
+        option_error.SetErrorString("Unrecognized event data.");
+        return false;
+    }
+    
+}
+
+static NSMutableDictionary *
+BKSCreateOptionsDictionary(const char *app_bundle_path, NSMutableArray *launch_argv, NSMutableDictionary *launch_envp, NSString *stdio_path, bool disable_aslr, const char *event_data)
+{
+    NSMutableDictionary *debug_options = [NSMutableDictionary dictionary];
+    if (launch_argv != nil)
+        [debug_options setObject: launch_argv forKey: BKSDebugOptionKeyArguments];
+    if (launch_envp != nil)
+        [debug_options setObject: launch_envp forKey: BKSDebugOptionKeyEnvironment];
+
+    [debug_options setObject: stdio_path forKey: BKSDebugOptionKeyStandardOutPath];
+    [debug_options setObject: stdio_path forKey: BKSDebugOptionKeyStandardErrorPath];
+    [debug_options setObject: [NSNumber numberWithBool: YES] forKey: BKSDebugOptionKeyWaitForDebugger];
+    if (disable_aslr)
+        [debug_options setObject: [NSNumber numberWithBool: YES] forKey: BKSDebugOptionKeyDisableASLR];
+    
+    // That will go in the overall dictionary:
+    
+    NSMutableDictionary *options = [NSMutableDictionary dictionary];
+    [options setObject: debug_options forKey: BKSOpenApplicationOptionKeyDebuggingOptions];
+    // And there are some other options at the top level in this dictionary:
+    [options setObject: [NSNumber numberWithBool: YES] forKey: BKSOpenApplicationOptionKeyUnlockDevice];
+
+    DNBError error;
+    BKSAddEventDataToOptions (options, event_data, error);
+
+    return options;
+}
+
+static CallOpenApplicationFunction BKSCallOpenApplicationFunction = CallBoardSystemServiceOpenApplication<BKSSystemService, BKSOpenApplicationErrorCode, BKSOpenApplicationErrorCodeNone, SetBKSError>;
 #endif // WITH_BKS
+
+#ifdef WITH_FBS
+#import <Foundation/Foundation.h>
+extern "C"
+{
+#import <FrontBoardServices/FrontBoardServices.h>
+#import <FrontBoardServices/FBSSystemService_LaunchServices.h>
+#import <FrontBoardServices/FBSOpenApplicationConstants_Private.h>
+#import <MobileCoreServices/MobileCoreServices.h>
+#import <MobileCoreServices/LSResourceProxy.h>
+}
+
+#ifdef WITH_BKS
+static bool
+IsFBSProcess (nub_process_t pid)
+{
+    BKSApplicationStateMonitor *state_monitor = [[BKSApplicationStateMonitor alloc] init];
+    BKSApplicationState app_state = [state_monitor mostElevatedApplicationStateForPID: pid];
+    return app_state != BKSApplicationStateUnknown;
+}
+#else
+static bool
+IsFBSProcess (nub_process_t pid)
+{
+    // FIXME: What is the FBS equivalent of BKSApplicationStateMonitor
+    return true;
+}
+#endif
+
+static void
+SetFBSError (NSInteger error_code, DNBError &error)
+{
+    error.SetError ((DNBError::ValueType) error_code, DNBError::FrontBoard);
+    NSString *err_nsstr = ::FBSOpenApplicationErrorCodeToString((FBSOpenApplicationErrorCode) error_code);
+    const char *err_str = NULL;
+    if (err_nsstr == NULL)
+        err_str = "unknown FBS error";
+    else
+    {
+        err_str = [err_nsstr UTF8String];
+        if (err_str == NULL)
+            err_str = "unknown FBS error";
+    }
+    error.SetErrorString(err_str);
+}
+
+static bool
+FBSAddEventDataToOptions (NSMutableDictionary *options, const char *event_data, DNBError &option_error)
+{
+    if (strcmp (event_data, "BackgroundContentFetching") == 0)
+    {
+        DNBLog("Setting ActivateForEvent key in options dictionary.");
+        NSDictionary *event_details = [NSDictionary dictionary];
+        NSDictionary *event_dictionary = [NSDictionary dictionaryWithObject:event_details forKey:FBSActivateForEventOptionTypeBackgroundContentFetching];
+        [options setObject: event_dictionary forKey: FBSOpenApplicationOptionKeyActivateForEvent];
+        return true;
+    }
+    else
+    {
+        DNBLogError ("Unrecognized event type: %s.  Ignoring.", event_data);
+        option_error.SetErrorString("Unrecognized event data.");
+        return false;
+    }
+    
+}
+
+static NSMutableDictionary *
+FBSCreateOptionsDictionary(const char *app_bundle_path, NSMutableArray *launch_argv, NSDictionary *launch_envp, NSString *stdio_path, bool disable_aslr, const char *event_data)
+{
+    NSMutableDictionary *debug_options = [NSMutableDictionary dictionary];
+
+    if (launch_argv != nil)
+        [debug_options setObject: launch_argv forKey: FBSDebugOptionKeyArguments];
+    if (launch_envp != nil)
+        [debug_options setObject: launch_envp forKey: FBSDebugOptionKeyEnvironment];
+
+    [debug_options setObject: stdio_path forKey: FBSDebugOptionKeyStandardOutPath];
+    [debug_options setObject: stdio_path forKey: FBSDebugOptionKeyStandardErrorPath];
+    [debug_options setObject: [NSNumber numberWithBool: YES] forKey: FBSDebugOptionKeyWaitForDebugger];
+    if (disable_aslr)
+        [debug_options setObject: [NSNumber numberWithBool: YES] forKey: FBSDebugOptionKeyDisableASLR];
+    
+    // That will go in the overall dictionary:
+    
+    NSMutableDictionary *options = [NSMutableDictionary dictionary];
+    [options setObject: debug_options forKey: FBSOpenApplicationOptionKeyDebuggingOptions];
+    // And there are some other options at the top level in this dictionary:
+    [options setObject: [NSNumber numberWithBool: YES] forKey: FBSOpenApplicationOptionKeyUnlockDevice];
+
+    // We have to get the "sequence ID & UUID" for this app bundle path and send them to FBS:
+
+    NSURL *app_bundle_url = [NSURL fileURLWithPath: [NSString stringWithUTF8String: app_bundle_path] isDirectory: YES];
+    LSApplicationProxy *app_proxy = [LSApplicationProxy applicationProxyForBundleURL: app_bundle_url];
+    if (app_proxy)
+    {
+        DNBLog("Sending AppProxy info: sequence no: %lu, GUID: %s.", app_proxy.sequenceNumber, [app_proxy.cacheGUID.UUIDString UTF8String]);
+        [options setObject: [NSNumber numberWithUnsignedInteger: app_proxy.sequenceNumber] forKey: FBSOpenApplicationOptionKeyLSSequenceNumber];
+        [options setObject: app_proxy.cacheGUID.UUIDString forKey: FBSOpenApplicationOptionKeyLSCacheGUID];
+    }
+
+    DNBError error;
+    FBSAddEventDataToOptions (options, event_data, error);
+
+    return options;
+}
+static CallOpenApplicationFunction FBSCallOpenApplicationFunction = CallBoardSystemServiceOpenApplication<FBSSystemService, FBSOpenApplicationErrorCode, FBSOpenApplicationErrorCodeNone, SetFBSError>;
+#endif // WITH_FBS
+
 #if 0
 #define DEBUG_LOG(fmt, ...) printf(fmt, ## __VA_ARGS__)
 #else
@@ -863,8 +1098,9 @@ MachProcess::SendEvent (const char *event, DNBError &send_err)
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SendEvent (event = %s) to pid: %d", event, m_pid);
     if (m_pid == INVALID_NUB_PROCESS)
         return false;
-#if WITH_BKS
-    return BKSSendEvent (event, send_err);
+    // FIXME: Shouldn't we use the launch flavor we were started with?
+#if defined(WITH_FBS) || defined(WITH_BKS)
+    return BoardServiceSendEvent (event, send_err);
 #endif
     return true;
 }
@@ -1970,9 +2206,22 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
         SetState(eStateAttaching);
         m_pid = pid;
         // Let ourselves know we are going to be using SBS or BKS if the correct flag bit is set...
-#if defined (WITH_BKS)
-        if (IsBKSProcess (pid))
+#if defined (WITH_FBS) || defined (WITH_BKS)
+        bool found_app_flavor = false;
+#endif
+        
+#if defined (WITH_FBS)
+        if (!found_app_flavor && IsFBSProcess (pid))
+        {
+            found_app_flavor = true;
+            m_flags |= eMachProcessFlagsUsingFBS;
+        }
+#elif defined (WITH_BKS)
+        if (!found_app_flavor && IsBKSProcess (pid))
+        {
+            found_app_flavor = true;
             m_flags |= eMachProcessFlagsUsingBKS;
+        }
 #elif defined (WITH_SPRINGBOARD)
         if (IsSBProcess(pid))
             m_flags |= eMachProcessFlagsUsingSBS;
@@ -2058,7 +2307,7 @@ MachProcess::GetOSVersionNumbers (uint64_t *major, uint64_t *minor, uint64_t *pa
 const void *
 MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flavor, bool waitfor, DNBError &attach_err)
 {
-#if defined (WITH_SPRINGBOARD) || defined (WITH_BKS)
+#if defined (WITH_SPRINGBOARD) || defined (WITH_BKS) || defined (WITH_FBS)
     // Tell SpringBoard to halt the next launch of this application on startup.
 
     if (!waitfor)
@@ -2074,7 +2323,12 @@ MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flav
         return NULL;
     }
 
-#if defined (WITH_BKS)
+#if defined (WITH_FBS)
+    if (launch_flavor == eLaunchFlavorDefault)
+        launch_flavor = eLaunchFlavorFBS;
+    if (launch_flavor != eLaunchFlavorFBS)
+        return NULL;
+#elif defined (WITH_BKS)
     if (launch_flavor == eLaunchFlavorDefault)
         launch_flavor = eLaunchFlavorBKS;
     if (launch_flavor != eLaunchFlavorBKS)
@@ -2101,6 +2355,76 @@ MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flav
         return NULL;
     }
 
+#if defined (WITH_FBS)
+    if (launch_flavor == eLaunchFlavorFBS)
+    {
+        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+        NSString *stdio_path = nil;
+        NSFileManager *file_manager = [NSFileManager defaultManager];
+        const char *null_path = "/dev/null";
+        stdio_path = [file_manager stringWithFileSystemRepresentation: null_path length: strlen(null_path)];
+
+        NSMutableDictionary *debug_options = [NSMutableDictionary dictionary];
+        NSMutableDictionary *options       = [NSMutableDictionary dictionary];
+
+        DNBLogThreadedIf(LOG_PROCESS, "Calling BKSSystemService openApplication: @\"%s\",options include stdio path: \"%s\", "
+                                      "BKSDebugOptionKeyDebugOnNextLaunch & BKSDebugOptionKeyWaitForDebugger )",
+                                      bundleIDStr.c_str(),
+                                      null_path);
+        
+        [debug_options setObject: stdio_path forKey: FBSDebugOptionKeyStandardOutPath];
+        [debug_options setObject: stdio_path forKey: FBSDebugOptionKeyStandardErrorPath];
+        [debug_options setObject: [NSNumber numberWithBool: YES] forKey: FBSDebugOptionKeyWaitForDebugger];
+        [debug_options setObject: [NSNumber numberWithBool: YES] forKey: FBSDebugOptionKeyDebugOnNextLaunch];
+        
+        [options setObject: debug_options forKey: FBSOpenApplicationOptionKeyDebuggingOptions];
+
+        FBSSystemService *system_service = [[FBSSystemService alloc] init];
+                
+        mach_port_t client_port = [system_service createClientPort];
+        __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+        __block FBSOpenApplicationErrorCode attach_error_code = FBSOpenApplicationErrorCodeNone;
+        
+        NSString *bundleIDNSStr = (NSString *) bundleIDCFStr;
+        
+        [system_service openApplication: bundleIDNSStr
+                       options: options
+                       clientPort: client_port
+                       withResult: ^(NSError *error)
+                       {
+                            // The system service will cleanup the client port we created for us.
+                            if (error)
+                                attach_error_code = (FBSOpenApplicationErrorCode)[error code];
+                                                                       
+                            [system_service release];
+                            dispatch_semaphore_signal(semaphore);
+                        }
+        ];
+        
+        const uint32_t timeout_secs = 9;
+        
+        dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, timeout_secs * NSEC_PER_SEC);
+        
+        long success = dispatch_semaphore_wait(semaphore, timeout) == 0;
+        
+        if (!success)
+        {
+            DNBLogError("timed out trying to launch %s.", bundleIDStr.c_str());
+            attach_err.SetErrorString("debugserver timed out waiting for openApplication to complete.");
+            attach_err.SetError (OPEN_APPLICATION_TIMEOUT_ERROR, DNBError::Generic);
+        }
+        else if (attach_error_code != FBSOpenApplicationErrorCodeNone)
+        {
+            SetFBSError (attach_error_code, attach_err);
+            DNBLogError("unable to launch the application with CFBundleIdentifier '%s' bks_error = %ld",
+                        bundleIDStr.c_str(),
+                        (NSInteger) attach_error_code);
+        }
+        dispatch_release(semaphore);
+        [pool drain];
+    }
+#endif
 #if defined (WITH_BKS)
     if (launch_flavor == eLaunchFlavorBKS)
     {
@@ -2158,19 +2482,21 @@ MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flav
         {
             DNBLogError("timed out trying to launch %s.", bundleIDStr.c_str());
             attach_err.SetErrorString("debugserver timed out waiting for openApplication to complete.");
-            attach_err.SetError (BKS_OPEN_APPLICATION_TIMEOUT_ERROR, DNBError::Generic);
+            attach_err.SetError (OPEN_APPLICATION_TIMEOUT_ERROR, DNBError::Generic);
         }
         else if (attach_error_code != BKSOpenApplicationErrorCodeNone)
         {
             SetBKSError (attach_error_code, attach_err);
-            DNBLogError("unable to launch the application with CFBundleIdentifier '%s' bks_error = %u",
+            DNBLogError("unable to launch the application with CFBundleIdentifier '%s' bks_error = %ld",
                         bundleIDStr.c_str(),
                         attach_error_code);
         }
         dispatch_release(semaphore);
         [pool drain];
     }
-#elif defined (WITH_SPRINGBOARD)
+#endif
+
+#if defined (WITH_SPRINGBOARD)
     if (launch_flavor == eLaunchFlavorSpringBoard)
     {
         SBSApplicationLaunchError sbs_error = 0;
@@ -2203,7 +2529,7 @@ MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flav
 
     DNBLogThreadedIf(LOG_PROCESS, "Successfully set DebugOnNextLaunch.");
     return bundleIDCFStr;
-# else  // defined (WITH_SPRINGBOARD) || defined (WITH_BKS)
+# else  // !(defined (WITH_SPRINGBOARD) || defined (WITH_BKS) || defined (WITH_FBS))
   return NULL;
 #endif
 }
@@ -2213,12 +2539,28 @@ MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flav
 // will be returned.
 
 nub_process_t
-MachProcess::CheckForProcess (const void *attach_token)
+MachProcess::CheckForProcess (const void *attach_token, nub_launch_flavor_t launch_flavor)
 {
     if (attach_token == NULL)
         return INVALID_NUB_PROCESS;
 
+#if defined (WITH_FBS)
+    if (launch_flavor == eLaunchFlavorFBS)
+    {
+        NSString *bundleIDNSStr = (NSString *) attach_token;
+        FBSSystemService *systemService = [[FBSSystemService alloc] init];
+        pid_t pid = [systemService pidForApplication: bundleIDNSStr];
+        [systemService release];
+        if (pid == 0)
+            return INVALID_NUB_PROCESS;
+        else
+            return pid;
+    }
+#endif
+
 #if defined (WITH_BKS)
+    if (launch_flavor == eLaunchFlavorBKS)
+    {
     NSString *bundleIDNSStr = (NSString *) attach_token;
     BKSSystemService *systemService = [[BKSSystemService alloc] init];
     pid_t pid = [systemService pidForApplication: bundleIDNSStr];
@@ -2227,7 +2569,12 @@ MachProcess::CheckForProcess (const void *attach_token)
         return INVALID_NUB_PROCESS;
     else
         return pid;
-#elif defined (WITH_SPRINGBOARD)
+    }
+#endif
+
+#if defined (WITH_SPRINGBOARD)
+    if (launch_flavor == eLaunchFlavorSpringBoard)
+    {
     CFStringRef bundleIDCFStr = (CFStringRef) attach_token;
     Boolean got_it;
     nub_process_t attach_pid;
@@ -2236,9 +2583,9 @@ MachProcess::CheckForProcess (const void *attach_token)
         return attach_pid;
     else
         return INVALID_NUB_PROCESS;
-#else
-    return INVALID_NUB_PROCESS;
+    }
 #endif
+    return INVALID_NUB_PROCESS;
 }
 
 // Call this to clean up after you have either attached or given up on the attach.
@@ -2247,22 +2594,39 @@ MachProcess::CheckForProcess (const void *attach_token)
 // this method.
 
 void
-MachProcess::CleanupAfterAttach (const void *attach_token, bool success, DNBError &err_str)
+MachProcess::CleanupAfterAttach (const void *attach_token, nub_launch_flavor_t launch_flavor, bool success, DNBError &err_str)
 {
     if (attach_token == NULL)
         return;
 
+#if defined (WITH_FBS)
+    if (launch_flavor == eLaunchFlavorFBS)
+    {
+        if (!success)
+        {
+            FBSCleanupAfterAttach (attach_token, err_str);
+        }
+        CFRelease((CFStringRef) attach_token);
+    }
+#endif
+
 #if defined (WITH_BKS)
 
+    if (launch_flavor == eLaunchFlavorBKS)
+    {
     if (!success)
     {
         BKSCleanupAfterAttach (attach_token, err_str);
     }
     CFRelease((CFStringRef) attach_token);
+    }
+#endif
     
-#elif defined (WITH_SPRINGBOARD)
+#if defined (WITH_SPRINGBOARD)
     // Tell SpringBoard to cancel the debug on next launch of this application
     // if we failed to attach
+    if (launch_flavor == eMachProcessFlagsUsingSpringBoard)
+    {
     if (!success)
     {
         SBSApplicationLaunchError sbs_error = 0;
@@ -2284,6 +2648,7 @@ MachProcess::CleanupAfterAttach (const void *attach_token, bool success, DNBErro
     }
 
     CFRelease((CFStringRef) attach_token);
+    }
 #endif
 }
 
@@ -2317,6 +2682,22 @@ MachProcess::LaunchForDebug
     case eLaunchFlavorForkExec:
         m_pid = MachProcess::ForkChildForPTraceDebugging (path, argv, envp, this, launch_err);
         break;
+#ifdef WITH_FBS
+    case eLaunchFlavorFBS:
+        {
+            const char *app_ext = strstr(path, ".app");
+            if (app_ext && (app_ext[4] == '\0' || app_ext[4] == '/'))
+            {
+                std::string app_bundle_path(path, app_ext + strlen(".app"));
+                m_flags |= eMachProcessFlagsUsingFBS;
+                if (BoardServiceLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, disable_aslr, event_data, launch_err) != 0)
+                    return m_pid; // A successful SBLaunchForDebug() returns and assigns a non-zero m_pid.
+                else
+                    break; // We tried a FBS launch, but didn't succeed lets get out
+            }
+        }
+        break;
+#endif
 #ifdef WITH_BKS
     case eLaunchFlavorBKS:
         {
@@ -2324,7 +2705,8 @@ MachProcess::LaunchForDebug
             if (app_ext && (app_ext[4] == '\0' || app_ext[4] == '/'))
             {
                 std::string app_bundle_path(path, app_ext + strlen(".app"));
-                if (BKSLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, disable_aslr, event_data, launch_err) != 0)
+                m_flags |= eMachProcessFlagsUsingBKS;
+                if (BoardServiceLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, disable_aslr, event_data, launch_err) != 0)
                     return m_pid; // A successful SBLaunchForDebug() returns and assigns a non-zero m_pid.
                 else
                     break; // We tried a BKS launch, but didn't succeed lets get out
@@ -2719,6 +3101,43 @@ MachProcess::ForkChildForPTraceDebugging
     return pid;
 }
 
+#if defined (WITH_SPRINGBOARD) || defined (WITH_BKS) || defined (WITH_FBS)
+// This returns a CFRetained pointer to the Bundle ID for app_bundle_path,
+// or NULL if there was some problem getting the bundle id.
+static CFStringRef
+CopyBundleIDForPath (const char *app_bundle_path, DNBError &err_str)
+{
+    CFBundle bundle(app_bundle_path);
+    CFStringRef bundleIDCFStr = bundle.GetIdentifier();
+    std::string bundleID;
+    if (CFString::UTF8(bundleIDCFStr, bundleID) == NULL)
+    {
+        struct stat app_bundle_stat;
+        char err_msg[PATH_MAX];
+
+        if (::stat (app_bundle_path, &app_bundle_stat) < 0)
+        {
+            err_str.SetError(errno, DNBError::POSIX);
+            snprintf(err_msg, sizeof(err_msg), "%s: \"%s\"", err_str.AsString(), app_bundle_path);
+            err_str.SetErrorString(err_msg);
+            DNBLogThreadedIf(LOG_PROCESS, "%s() error: %s", __FUNCTION__, err_msg);
+        }
+        else
+        {
+            err_str.SetError(-1, DNBError::Generic);
+            snprintf(err_msg, sizeof(err_msg), "failed to extract CFBundleIdentifier from %s", app_bundle_path);
+            err_str.SetErrorString(err_msg);
+            DNBLogThreadedIf(LOG_PROCESS, "%s() error: failed to extract CFBundleIdentifier from '%s'", __FUNCTION__, app_bundle_path);
+        }
+        return NULL;
+    }
+
+    DNBLogThreadedIf(LOG_PROCESS, "%s() extracted CFBundleIdentifier: %s", __FUNCTION__, bundleID.c_str());
+    CFRetain (bundleIDCFStr);
+
+    return bundleIDCFStr;
+}
+#endif // #if defined (WITH_SPRINGBOARD) || defined (WITH_BKS) || defined (WITH_FBS)
 #ifdef WITH_SPRINGBOARD
 
 pid_t
@@ -2929,178 +3348,19 @@ MachProcess::SBForkChildForPTraceDebugging (const char *app_bundle_path, char co
 
 #endif // #ifdef WITH_SPRINGBOARD
 
-#ifdef WITH_BKS
-
-
-// This function runs the BKSSystemService method openApplication:options:clientPort:withResult,
-// messaging the app passed in bundleIDNSStr.
-// The function should be run inside of an NSAutoReleasePool.
-//
-// It will use the "options" dictionary passed in, and fill the error passed in if there is an error.
-// If return_pid is not NULL, we'll fetch the pid that was made for the bundleID.
-// If bundleIDNSStr is NULL, then the system application will be messaged.
-
-static bool
-CallBKSSystemServiceOpenApplication (NSString *bundleIDNSStr, NSDictionary *options, DNBError &error, pid_t *return_pid)
-{
-    // Now make our systemService:
-    BKSSystemService *system_service = [[BKSSystemService alloc] init];
-    
-    if (bundleIDNSStr == nil)
-    {
-        bundleIDNSStr = [system_service systemApplicationBundleIdentifier];
-        if (bundleIDNSStr == nil)
-        {
-            // Okay, no system app...
-            error.SetErrorString("No system application to message.");
-            return false;
-        }
-    }
-    
-    mach_port_t client_port = [system_service createClientPort];
-    __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BKSOpenApplicationErrorCode open_app_error = BKSOpenApplicationErrorCodeNone;
-    bool wants_pid = (return_pid != NULL);
-    __block pid_t pid_in_block;
-    
-    const char *cstr = [bundleIDNSStr UTF8String];
-    if (!cstr)
-        cstr = "<Unknown Bundle ID>";
-    
-    DNBLog ("About to launch process for bundle ID: %s", cstr);
-    [system_service openApplication: bundleIDNSStr
-                    options: options
-                    clientPort: client_port
-                    withResult: ^(NSError *bks_error)
-                    {
-                        // The system service will cleanup the client port we created for us.
-                        if (bks_error)
-                            open_app_error = (BKSOpenApplicationErrorCode)[bks_error code];
-                                        
-                        if (open_app_error == BKSOpenApplicationErrorCodeNone)
-                        {
-                            if (wants_pid)
-                            {
-                                pid_in_block = [system_service pidForApplication: bundleIDNSStr];
-                                DNBLog("In completion handler, got pid for bundle id, pid: %d.", pid_in_block);
-                                DNBLogThreadedIf(LOG_PROCESS, "In completion handler, got pid for bundle id, pid: %d.", pid_in_block);
-                            }
-                            else
-                                DNBLogThreadedIf (LOG_PROCESS, "In completion handler: success.");
-                        }
-                        else
-                        {
-                            const char *error_str = [[bks_error localizedDescription] UTF8String];
-                            DNBLogThreadedIf(LOG_PROCESS, "In completion handler for send event, got error \"%s\"(%d).",
-                                             error_str ? error_str : "<unknown error>",
-                                             open_app_error);
-                            // REMOVE ME
-                            DNBLogError ("In completion handler for send event, got error \"%s\"(%d).",
-                                             error_str ? error_str : "<unknown error>",
-                                             open_app_error);
-                        }
- 
-                        [system_service release];
-                        dispatch_semaphore_signal(semaphore);
-                    }
-
-    ];
-    
-    const uint32_t timeout_secs = 9;
-    
-    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, timeout_secs * NSEC_PER_SEC);
-    
-    long success = dispatch_semaphore_wait(semaphore, timeout) == 0;
-    
-    dispatch_release(semaphore);
-    
-    if (!success)
-    {
-        DNBLogError("timed out trying to send openApplication to %s.", cstr);
-        error.SetError (BKS_OPEN_APPLICATION_TIMEOUT_ERROR, DNBError::Generic);
-        error.SetErrorString ("timed out trying to launch app");
-    }
-    else if (open_app_error != BKSOpenApplicationErrorCodeNone)
-    {
-        SetBKSError (open_app_error, error);
-        DNBLogError("unable to launch the application with CFBundleIdentifier '%s' bks_error = %u", cstr, open_app_error);
-        success = false;
-    }
-    else if (wants_pid)
-    {
-        *return_pid = pid_in_block;
-        DNBLogThreadedIf (LOG_PROCESS, "Out of completion handler, pid from block %d and passing out: %d", pid_in_block, *return_pid);
-    }
     
 
-    return success;
-}
-
-void
-MachProcess::BKSCleanupAfterAttach (const void *attach_token, DNBError &err_str)
-{
-    bool success;
-    
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    
-    // Instead of rewriting CopyBundleIDForPath for NSStrings, we'll just use toll-free bridging here:
-    NSString *bundleIDNSStr = (NSString *) attach_token;
-
-    // Okay, now let's assemble all these goodies into the BackBoardServices options mega-dictionary:
-    
-    // First we have the debug sub-dictionary:
-    NSMutableDictionary *debug_options = [NSMutableDictionary dictionary];
-    [debug_options setObject: [NSNumber numberWithBool: YES] forKey: BKSDebugOptionKeyCancelDebugOnNextLaunch];
-    
-    // That will go in the overall dictionary:
-    
-    NSMutableDictionary *options = [NSMutableDictionary dictionary];
-    [options setObject: debug_options forKey: BKSOpenApplicationOptionKeyDebuggingOptions];
-
-    success = CallBKSSystemServiceOpenApplication(bundleIDNSStr, options, err_str, NULL);
-    
-    if (!success)
-    {
-        DNBLogError ("error trying to cancel debug on next launch for %s: %s", [bundleIDNSStr UTF8String], err_str.AsString());
-    }
-
-    [pool drain];
-}
-
-bool
-AddEventDataToOptions (NSMutableDictionary *options, const char *event_data, DNBError &option_error)
-{
-    if (strcmp (event_data, "BackgroundContentFetching") == 0)
-    {
-        DNBLog("Setting ActivateForEvent key in options dictionary.");
-        NSDictionary *event_details = [NSDictionary dictionary];
-        NSDictionary *event_dictionary = [NSDictionary dictionaryWithObject:event_details forKey:BKSActivateForEventOptionTypeBackgroundContentFetching];
-        [options setObject: event_dictionary forKey: BKSOpenApplicationOptionKeyActivateForEvent];
-        return true;
-    }
-    else
-    {
-        DNBLogError ("Unrecognized event type: %s.  Ignoring.", event_data);
-        option_error.SetErrorString("Unrecognized event data.");
-        return false;
-    }
-    
-}
-
+#if defined (WITH_BKS) || defined (WITH_FBS)
 pid_t
-MachProcess::BKSLaunchForDebug (const char *path, char const *argv[], char const *envp[], bool no_stdio, bool disable_aslr, const char *event_data, DNBError &launch_err)
+MachProcess::BoardServiceLaunchForDebug (const char *path, char const *argv[], char const *envp[], bool no_stdio, bool disable_aslr, const char *event_data, DNBError &launch_err)
 {
-    // Clear out and clean up from any current state
-    Clear();
-
     DNBLogThreadedIf(LOG_PROCESS, "%s( '%s', argv)", __FUNCTION__, path);
 
     // Fork a child process for debugging
     SetState(eStateLaunching);
-    m_pid = BKSForkChildForPTraceDebugging(path, argv, envp, no_stdio, disable_aslr, event_data, launch_err);
+    m_pid = BoardServiceForkChildForPTraceDebugging(path, argv, envp, no_stdio, disable_aslr, event_data, launch_err);
     if (m_pid != 0)
     {
-        m_flags |= eMachProcessFlagsUsingBKS;
         m_path = path;
         size_t i;
         char const *arg;
@@ -3136,7 +3396,7 @@ MachProcess::BKSLaunchForDebug (const char *path, char const *argv[], char const
 }
 
 pid_t
-MachProcess::BKSForkChildForPTraceDebugging (const char *app_bundle_path,
+MachProcess::BoardServiceForkChildForPTraceDebugging (const char *app_bundle_path,
                                              char const *argv[],
                                              char const *envp[],
                                              bool no_stdio,
@@ -3242,40 +3502,24 @@ MachProcess::BKSForkChildForPTraceDebugging (const char *app_bundle_path,
 
     // Okay, now let's assemble all these goodies into the BackBoardServices options mega-dictionary:
     
-    // First we have the debug sub-dictionary:
-    NSMutableDictionary *debug_options = [NSMutableDictionary dictionary];
-    if (launch_argv != nil)
-        [debug_options setObject: launch_argv forKey: BKSDebugOptionKeyArguments];
-    if (launch_envp != nil)
-        [debug_options setObject: launch_envp forKey: BKSDebugOptionKeyEnvironment];
-
-    [debug_options setObject: stdio_path forKey: BKSDebugOptionKeyStandardOutPath];
-    [debug_options setObject: stdio_path forKey: BKSDebugOptionKeyStandardErrorPath];
-    [debug_options setObject: [NSNumber numberWithBool: YES] forKey: BKSDebugOptionKeyWaitForDebugger];
-    if (disable_aslr)
-        [debug_options setObject: [NSNumber numberWithBool: YES] forKey: BKSDebugOptionKeyDisableASLR];
-    
-    // That will go in the overall dictionary:
-    
-    NSMutableDictionary *options = [NSMutableDictionary dictionary];
-    [options setObject: debug_options forKey: BKSOpenApplicationOptionKeyDebuggingOptions];
-
-    // For now we only support one kind of event: the "fetch" event, which is indicated by the fact that its data
-    // is an empty dictionary.
-    if (event_data != NULL && *event_data != '\0')
-    {
-        if (!AddEventDataToOptions(options, event_data, launch_err))
-        {
-            [pool drain];
-            return INVALID_NUB_PROCESS;
-        }
-    }
-    
-    // And there are some other options at the top level in this dictionary:
-    [options setObject: [NSNumber numberWithBool: YES] forKey: BKSOpenApplicationOptionKeyUnlockDevice];
-
+    NSMutableDictionary *options = nullptr;
     pid_t return_pid = INVALID_NUB_PROCESS;
-    bool success = CallBKSSystemServiceOpenApplication(bundleIDNSStr, options, launch_err, &return_pid);
+    bool success = false;
+
+#ifdef WITH_BKS
+    if (m_flags & eMachProcessFlagsUsingBKS)
+        {
+        options = BKSCreateOptionsDictionary(app_bundle_path, launch_argv, launch_envp, stdio_path, disable_aslr, event_data);
+        success = BKSCallOpenApplicationFunction (bundleIDNSStr, options, launch_err, &return_pid);
+        }
+#endif
+#ifdef WITH_FBS
+    if (m_flags & eMachProcessFlagsUsingFBS)
+    {
+        options = FBSCreateOptionsDictionary(app_bundle_path, launch_argv, launch_envp, stdio_path, disable_aslr, event_data);
+        success = FBSCallOpenApplicationFunction (bundleIDNSStr, options, launch_err, &return_pid);
+    }
+#endif
     
     if (success)
     {
@@ -3290,7 +3534,7 @@ MachProcess::BKSForkChildForPTraceDebugging (const char *app_bundle_path,
 }
 
 bool
-MachProcess::BKSSendEvent (const char *event_data, DNBError &send_err)
+MachProcess::BoardServiceSendEvent (const char *event_data, DNBError &send_err)
 {
     bool return_value = true;
     
@@ -3306,7 +3550,18 @@ MachProcess::BKSSendEvent (const char *event_data, DNBError &send_err)
     if (strcmp (event_data, "BackgroundApplication") == 0)
     {
         // This is an event I cooked up.  What you actually do is foreground the system app, so:
-        return_value = CallBKSSystemServiceOpenApplication(nil, nil, send_err, NULL);
+#ifdef WITH_BKS
+        if (m_flags & eMachProcessFlagsUsingBKS)
+        {
+            return_value = BKSCallOpenApplicationFunction(nil, nil, send_err, NULL);
+        }
+#endif
+#ifdef WITH_FBS
+        if (m_flags & eMachProcessFlagsUsingFBS)
+        {
+            return_value = FBSCallOpenApplicationFunction(nil, nil, send_err, NULL);
+        }
+#endif
         if (!return_value)
         {
             DNBLogError ("Failed to background application, error: %s.", send_err.AsString());
@@ -3326,14 +3581,31 @@ MachProcess::BKSSendEvent (const char *event_data, DNBError &send_err)
         
         NSMutableDictionary *options = [NSMutableDictionary dictionary];
 
-        if (!AddEventDataToOptions(options, event_data, send_err))
+#ifdef WITH_BKS
+        if (m_flags & eMachProcessFlagsUsingBKS)
+        {
+            if (!BKSAddEventDataToOptions(options, event_data, send_err))
         {
             [pool drain];
             return false;
         }
+            return_value = BKSCallOpenApplicationFunction (bundleIDNSStr, options, send_err, NULL);
+            DNBLogThreadedIf (LOG_PROCESS, "Called BKSCallOpenApplicationFunction to send event.");
 
-
-        return_value = CallBKSSystemServiceOpenApplication(bundleIDNSStr, options, send_err, NULL);
+        }
+#endif
+#ifdef WITH_FBS
+        if (m_flags & eMachProcessFlagsUsingFBS)
+        {
+            if (!FBSAddEventDataToOptions(options, event_data, send_err))
+            {
+                [pool drain];
+                return false;
+            }
+            return_value = FBSCallOpenApplicationFunction (bundleIDNSStr, options, send_err, NULL);
+            DNBLogThreadedIf (LOG_PROCESS, "Called FBSCallOpenApplicationFunction to send event.");
+        }
+#endif
         
         if (!return_value)
         {
@@ -3344,4 +3616,70 @@ MachProcess::BKSSendEvent (const char *event_data, DNBError &send_err)
     [pool drain];
     return return_value;
 }
+#endif // defined(WITH_BKS) || defined (WITH_FBS)
+
+#ifdef WITH_BKS
+void
+MachProcess::BKSCleanupAfterAttach (const void *attach_token, DNBError &err_str)
+{
+    bool success;
+    
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    // Instead of rewriting CopyBundleIDForPath for NSStrings, we'll just use toll-free bridging here:
+    NSString *bundleIDNSStr = (NSString *) attach_token;
+
+    // Okay, now let's assemble all these goodies into the BackBoardServices options mega-dictionary:
+    
+    // First we have the debug sub-dictionary:
+    NSMutableDictionary *debug_options = [NSMutableDictionary dictionary];
+    [debug_options setObject: [NSNumber numberWithBool: YES] forKey: BKSDebugOptionKeyCancelDebugOnNextLaunch];
+    
+    // That will go in the overall dictionary:
+    
+    NSMutableDictionary *options = [NSMutableDictionary dictionary];
+    [options setObject: debug_options forKey: BKSOpenApplicationOptionKeyDebuggingOptions];
+
+    success = BKSCallOpenApplicationFunction (bundleIDNSStr, options, err_str, NULL);
+    
+    if (!success)
+    {
+        DNBLogError ("error trying to cancel debug on next launch for %s: %s", [bundleIDNSStr UTF8String], err_str.AsString());
+    }
+
+    [pool drain];
+}
 #endif // WITH_BKS
+
+#ifdef WITH_FBS
+void
+MachProcess::FBSCleanupAfterAttach (const void *attach_token, DNBError &err_str)
+{
+    bool success;
+    
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    // Instead of rewriting CopyBundleIDForPath for NSStrings, we'll just use toll-free bridging here:
+    NSString *bundleIDNSStr = (NSString *) attach_token;
+
+    // Okay, now let's assemble all these goodies into the BackBoardServices options mega-dictionary:
+    
+    // First we have the debug sub-dictionary:
+    NSMutableDictionary *debug_options = [NSMutableDictionary dictionary];
+    [debug_options setObject: [NSNumber numberWithBool: YES] forKey: FBSDebugOptionKeyCancelDebugOnNextLaunch];
+    
+    // That will go in the overall dictionary:
+    
+    NSMutableDictionary *options = [NSMutableDictionary dictionary];
+    [options setObject: debug_options forKey: FBSOpenApplicationOptionKeyDebuggingOptions];
+
+    success = FBSCallOpenApplicationFunction (bundleIDNSStr, options, err_str, NULL);
+
+    if (!success)
+    {
+        DNBLogError ("error trying to cancel debug on next launch for %s: %s", [bundleIDNSStr UTF8String], err_str.AsString());
+    }
+
+    [pool drain];
+}
+#endif // WITH_FBS

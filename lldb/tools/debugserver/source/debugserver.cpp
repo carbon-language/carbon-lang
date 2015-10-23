@@ -202,7 +202,13 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
         // Our default launch method is posix spawn
         launch_flavor = eLaunchFlavorPosixSpawn;
 
-#if defined WITH_BKS
+#if defined WITH_FBS
+        // Check if we have an app bundle, if so launch using BackBoard Services.
+        if (strstr(inferior_argv[0], ".app"))
+        {
+            launch_flavor = eLaunchFlavorFBS;
+        }
+#elif defined WITH_BKS
         // Check if we have an app bundle, if so launch using BackBoard Services.
         if (strstr(inferior_argv[0], ".app"))
         {
@@ -1094,6 +1100,10 @@ main (int argc, char *argv[])
                     else if (strcasestr(optarg, "backboard") == optarg)
                         g_launch_flavor = eLaunchFlavorBKS;
 #endif
+#ifdef WITH_FBS
+                    else if (strcasestr(optarg, "frontboard") == optarg)
+                        g_launch_flavor = eLaunchFlavorFBS;
+#endif
 
                     else
                     {
@@ -1107,6 +1117,9 @@ main (int argc, char *argv[])
 #endif
 #ifdef WITH_BKS
                         RNBLogSTDERR ("  backboard  Launch the executable through BackBoard Services.\n");
+#endif
+#ifdef WITH_FBS
+                        RNBLogSTDERR ("  frontboard  Launch the executable through FrontBoard Services.\n");
 #endif
                         exit (5);
                     }
@@ -1484,7 +1497,13 @@ main (int argc, char *argv[])
                         // Our default launch method is posix spawn
                         launch_flavor = eLaunchFlavorPosixSpawn;
 
-#if defined WITH_BKS
+#if defined WITH_FBS
+                        // Check if we have an app bundle, if so launch using SpringBoard.
+                        if (waitfor_pid_name.find (".app") != std::string::npos)
+                        {
+                            launch_flavor = eLaunchFlavorFBS;
+                        }
+#elif defined WITH_BKS
                         // Check if we have an app bundle, if so launch using SpringBoard.
                         if (waitfor_pid_name.find (".app") != std::string::npos)
                         {
