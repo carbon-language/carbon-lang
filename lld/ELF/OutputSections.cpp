@@ -610,7 +610,7 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     return cast<DefinedAbsolute<ELFT>>(S).Sym.st_value;
   case SymbolBody::DefinedRegularKind: {
     const auto &DR = cast<DefinedRegular<ELFT>>(S);
-    const InputSectionBase<ELFT> &SC = DR.Section;
+    InputSectionBase<ELFT> &SC = DR.Section;
     return SC.OutSec->getVA() + SC.getOffset(DR.Sym);
   }
   case SymbolBody::DefinedCommonKind:
@@ -903,7 +903,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         ESym->st_shndx = SHN_ABS;
         VA = Sym.st_value;
       } else {
-        const InputSectionBase<ELFT> *Section = File->getSection(Sym);
+        InputSectionBase<ELFT> *Section = File->getSection(Sym);
         if (!Section->isLive())
           continue;
         const OutputSectionBase<ELFT> *OutSec = Section->OutSec;

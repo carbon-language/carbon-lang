@@ -61,7 +61,7 @@ public:
     return std::max<uintX_t>(Header->sh_addralign, 1);
   }
 
-  uintX_t getOffset(const Elf_Sym &Sym) const;
+  uintX_t getOffset(const Elf_Sym &Sym);
   ArrayRef<uint8_t> getSectionData() const;
 };
 
@@ -80,7 +80,7 @@ template <class ELFT> class MergeInputSection : public InputSectionBase<ELFT> {
 public:
   MergeInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header);
   static bool classof(const InputSectionBase<ELFT> *S);
-  uintX_t getOffset(uintX_t Offset) const;
+  uintX_t getOffset(uintX_t Offset);
 };
 
 // This corresponds to a non SHF_MERGE section of an input file.

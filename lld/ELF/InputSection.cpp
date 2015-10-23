@@ -43,7 +43,7 @@ ArrayRef<uint8_t> InputSectionBase<ELFT>::getSectionData() const {
 
 template <class ELFT>
 typename ELFFile<ELFT>::uintX_t
-InputSectionBase<ELFT>::getOffset(const Elf_Sym &Sym) const {
+InputSectionBase<ELFT>::getOffset(const Elf_Sym &Sym) {
   if (auto *S = dyn_cast<InputSection<ELFT>>(this))
     return S->OutSecOff + Sym.st_value;
   return cast<MergeInputSection<ELFT>>(this)->getOffset(Sym.st_value);
@@ -132,7 +132,7 @@ bool MergeInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
 // FIXME: Optimize this by keeping an offset for each element.
 template <class ELFT>
 typename MergeInputSection<ELFT>::uintX_t
-MergeInputSection<ELFT>::getOffset(uintX_t Offset) const {
+MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
   ArrayRef<uint8_t> Data = this->getSectionData();
   uintX_t EntSize = this->Header->sh_entsize;
   uintX_t Addend = Offset % EntSize;
