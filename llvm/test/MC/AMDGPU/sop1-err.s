@@ -33,5 +33,14 @@ s_mov_b32 s1, 0xfffffffff
 s_mov_b64 s[0:1], 0xfffffffff
 // CHECK: error: invalid immediate: only 32-bit values are legal
 
+s_mov_b64 s[0:1], 0xfffffffff
+// CHECK: error: invalid immediate: only 32-bit values are legal
+
+s_mov_b64 s[0:1], 0xfffffffff
+// CHECK: error: invalid immediate: only 32-bit values are legal
+
+s_mov_b64 s[0:1], 0x0000000200000000
+// CHECK: error: invalid immediate: only 32-bit values are legal
+
 // Out of range register
 s_mov_b32 s
