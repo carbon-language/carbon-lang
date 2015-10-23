@@ -18,6 +18,14 @@
 #include <eh.h>
 #endif
 
+#if defined(_MSC_VER)
+// Due to another bug in MSVC 2013, including <future> will generate hundreds of
+// warnings in the Concurrency Runtime.  This can be removed when we switch to
+// MSVC 2015
+#pragma warning(push)
+#pragma warning(disable:4062)
+#endif
+
 #include <cassert>
 #include <cstdint>
 #include <future>
@@ -205,5 +213,10 @@ TaskRunner<T>::WaitForAllTasks()
 {
     while (WaitForNextCompletedTask().valid());
 }
+
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #endif // #ifndef utility_TaskPool_h_
