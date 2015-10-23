@@ -5846,13 +5846,11 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
                     DNBLogThreadedIf (LOG_RNB_PROC, "LC_VERSION_MIN_MACOSX -> 'ostype:macosx;'");
                     break;
 
-#if defined (DT_VARIANT_PONDEROSA) || TARGET_OS_TV == 1
                 case LC_VERSION_MIN_TVOS:
                     os_handled = true;
                     rep << "ostype:tvos;";
                     DNBLogThreadedIf (LOG_RNB_PROC, "LC_VERSION_MIN_TVOS -> 'ostype:tvos;'");
                     break;
-#endif
 
                 case LC_VERSION_MIN_WATCHOS:
                     os_handled = true;
