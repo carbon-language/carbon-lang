@@ -123,31 +123,13 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
     const MIuint nChildren = m_rValue.GetNumChildren();
     if (nChildren == 0)
     {
-        if (m_bHandleCharType && IsCharType())
-        {
-            vwrValue = GetSimpleValueChar();
-            return MIstatus::success;
-        }
-        else
-        {
-            const char *pValue = m_rValue.GetValue();
-            vwrValue = pValue != nullptr ? pValue : m_pUnkwn;
-            return MIstatus::success;
-        }
+        vwrValue = GetValueSummary(!m_bHandleCharType && IsCharType(), m_pUnkwn);
+        return MIstatus::success;
     }
     else if (IsPointerType())
     {
-        if (m_bHandleCharType && IsPointeeCharType())
-        {
-            vwrValue = GetSimpleValueCStringPointer();
-            return MIstatus::success;
-        }
-        else
-        {
-            const char *pValue = m_rValue.GetValue();
-            vwrValue = pValue != nullptr ? pValue : m_pUnkwn;
-            return MIstatus::success;
-        }
+        vwrValue = GetValueSummary(!m_bHandleCharType && IsPointeeCharType(), m_pUnkwn);
+        return MIstatus::success;
     }
     else if (IsArrayType())
     {
@@ -157,7 +139,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
                                                                         bPrintCharArrayAsString) && bPrintCharArrayAsString;
         if (bPrintCharArrayAsString && m_bHandleCharType && IsFirstChildCharType())
         {
-            vwrValue = GetSimpleValueCStringArray();
+            vwrValue = GetValueSummary(false);
             return MIstatus::success;
         }
         else if (vbHandleArrayType)
@@ -170,150 +152,13 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
     {
         // Treat composite value which has registered summary
         // (for example with AddCXXSummary) as simple value
-        vwrValue = GetValueSummary();
+        vwrValue = GetValueSummary(false);
         if (!vwrValue.empty())
             return MIstatus::success;
     }
 
     // Composite variable type i.e. struct
     return MIstatus::failure;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Retrieve from the LLDB SB Value object the char value of the variable.
-// Type:    Method.
-// Args:    None.
-// Return:  CMIUtilString   - The char value of the variable.
-// Throws:  None.
-//--
-CMIUtilString
-CMICmnLLDBUtilSBValue::GetSimpleValueChar() const
-{
-    const CMIUtilString& summary = GetValueSummary();
-    if (!summary.empty())
-        return summary;
-
-    const uint64_t value = m_rValue.GetValueAsUnsigned();
-    if (value == 0)
-    {
-        const uint64_t nFailValue = 1;
-        if (nFailValue == m_rValue.GetValueAsUnsigned(nFailValue))
-            return m_pUnkwn;
-    }
-
-    const lldb::BasicType eType = m_rValue.GetType().GetBasicType();
-    switch (eType)
-    {
-        default:
-            assert(0 && "value must be a char type");
-        case lldb::eBasicTypeChar:
-        case lldb::eBasicTypeSignedChar:
-        case lldb::eBasicTypeUnsignedChar:
-        {
-            const CMIUtilString prefix(CMIUtilString::ConvertToPrintableASCII((char)value));
-            return CMIUtilString::Format("%" PRIu8 " '%s'", (uint8_t)value, prefix.c_str());
-        }
-        case lldb::eBasicTypeChar16:
-        {
-            const CMIUtilString prefix(CMIUtilString::ConvertToPrintableASCII((char16_t)value));
-            return CMIUtilString::Format("U+%04" PRIx16 " u'%s'", (uint16_t)value, prefix.c_str());
-        }
-        case lldb::eBasicTypeChar32:
-        {
-            const CMIUtilString prefix(CMIUtilString::ConvertToPrintableASCII((char32_t)value));
-            return CMIUtilString::Format("U+%08" PRIx32 " U'%s'", (uint32_t)value, prefix.c_str());
-        }
-    }
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Retrieve from the LLDB SB Value object of type char* the c-string value.
-// Type:    Method.
-// Args:    None.
-// Return:  CMIUtilString   - The c-string value of the variable.
-// Throws:  None.
-//--
-CMIUtilString
-CMICmnLLDBUtilSBValue::GetSimpleValueCStringPointer() const
-{
-    const CMIUtilString& summary = GetValueSummary();
-    if (!summary.empty())
-        return summary;
-
-    const char *value = m_rValue.GetValue();
-    if (value == nullptr)
-        return m_pUnkwn;
-
-    lldb::SBValue child = m_rValue.GetChildAtIndex(0);
-    const lldb::BasicType eType = child.GetType().GetBasicType();
-    switch (eType)
-    {
-        default:
-            assert(0 && "child must be a char type");
-        case lldb::eBasicTypeChar:
-        case lldb::eBasicTypeSignedChar:
-        case lldb::eBasicTypeUnsignedChar:
-        {
-            const CMIUtilString prefix(ReadCStringFromHostMemory<char>(child));
-            // Note code that has const in will not show the text suffix to the string pointer
-            // i.e. const char * pMyStr = "blah"; ==> "0x00007000"" <-- Eclipse shows this
-            // but        char * pMyStr = "blah"; ==> "0x00007000" "blah"" <-- Eclipse shows this
-            return CMIUtilString::Format("%s \"%s\"", value, prefix.c_str());
-        }
-        case lldb::eBasicTypeChar16:
-        {
-            const CMIUtilString prefix(ReadCStringFromHostMemory<char16_t>(child));
-            return CMIUtilString::Format("%s u\"%s\"", value, prefix.c_str());
-        }
-        case lldb::eBasicTypeChar32:
-        {
-            const CMIUtilString prefix(ReadCStringFromHostMemory<char32_t>(child));
-            return CMIUtilString::Format("%s U\"%s\"", value, prefix.c_str());
-        }
-    }
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Retrieve from the LLDB SB Value object of type char[] the c-string value.
-// Type:    Method.
-// Args:    None.
-// Return:  CMIUtilString   - The c-string value of the variable.
-// Throws:  None.
-//--
-CMIUtilString
-CMICmnLLDBUtilSBValue::GetSimpleValueCStringArray() const
-{
-    const CMIUtilString& summary = GetValueSummary();
-    if (!summary.empty())
-        return summary;
-
-    const MIuint nChildren = m_rValue.GetNumChildren();
-    lldb::SBValue child = m_rValue.GetChildAtIndex(0);
-    const lldb::BasicType eType = child.GetType().GetBasicType();
-    switch (eType)
-    {
-        default:
-            assert(0 && "value must be a char[] type");
-        case lldb::eBasicTypeChar:
-        case lldb::eBasicTypeSignedChar:
-        case lldb::eBasicTypeUnsignedChar:
-        {
-            const CMIUtilString prefix(ReadCStringFromHostMemory<char>(m_rValue, nChildren));
-            // TODO: to match char* it should be the following
-            //       return CMIUtilString::Format("[%u] \"%s\"", nChildren, prefix.c_str());
-            return CMIUtilString::Format("\"%s\"", prefix.c_str());
-        }
-        case lldb::eBasicTypeChar16:
-        {
-            const CMIUtilString prefix(ReadCStringFromHostMemory<char16_t>(m_rValue, nChildren));
-            return CMIUtilString::Format("u\"%s\"", prefix.c_str());
-        }
-        case lldb::eBasicTypeChar32:
-        {
-            const CMIUtilString prefix(ReadCStringFromHostMemory<char32_t>(m_rValue, nChildren));
-            return CMIUtilString::Format("U\"%s\"", prefix.c_str());
-        }
-    }
 }
 
 bool
@@ -368,30 +213,37 @@ CMICmnLLDBUtilSBValue::GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIV
     return MIstatus::success;
 }
 
+// Returns value or value + summary, depending on valueOnly parameter value.
+// If result is an empty string returns failVal.
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetValueSummary() const
-{
-    CMIUtilString valSummary;
-    if (m_rValue.IsValid())
+CMICmnLLDBUtilSBValue::GetValueSummary(bool valueOnly, const CMIUtilString& failVal) const
+{    
+    if (!m_rValue.IsValid())
+        return failVal;
+ 
+    CMIUtilString value, valSummary;
+    const char* c_value = m_rValue.GetValue();
+    if (valueOnly)
+        return c_value == nullptr ? failVal : c_value;
+    
+    const char* c_summary = m_rValue.GetSummary();   
+    if (c_value)
+        value = c_value;
+    else if (c_summary == nullptr)
+        return failVal;
+    
+    if (c_summary && c_summary[0])
     {
-#ifndef LLDB_DISABLE_PYTHON
-        const char *c_str = m_rValue.GetSummary();
-        if (c_str && c_str[0])
+        valSummary = c_summary;
+        lldb::SBTypeSummary summary = m_rValue.GetTypeSummary();
+        if (summary.IsValid() && summary.DoesPrintValue(m_rValue) && !value.empty())
         {
-            valSummary = c_str;
-            lldb::SBTypeSummary summary = m_rValue.GetTypeSummary();
-            if (summary.IsValid() && summary.DoesPrintValue(m_rValue))
-            {
-                c_str = m_rValue.GetValue();
-                if (c_str && c_str[0])
-                {
-                    valSummary.insert(0, std::string(c_str) + " ");
-                }
-            }
+            valSummary.insert(0, value + " ");
         }
-#endif
+        return valSummary;
     }
-    return valSummary;
+    // no summary - return just value
+    return value;
 }
 
 //++ ------------------------------------------------------------------------------------

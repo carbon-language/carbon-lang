@@ -51,11 +51,8 @@ class CMICmnLLDBUtilSBValue
   private:
     template <typename charT> CMIUtilString ReadCStringFromHostMemory(lldb::SBValue &vrValue, const MIuint vnMaxLen = UINT32_MAX) const;
     bool GetSimpleValue(const bool vbHandleArrayType, CMIUtilString &vrValue) const;
-    CMIUtilString GetSimpleValueChar() const;
-    CMIUtilString GetSimpleValueCStringPointer() const;
-    CMIUtilString GetSimpleValueCStringArray() const;
     bool GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIValueTuple &vwrMiValueTuple, const MIuint vnDepth = 1) const;
-    CMIUtilString GetValueSummary() const;
+    CMIUtilString GetValueSummary(bool valueOnly, const CMIUtilString& failVal = CMIUtilString()) const;
 
     // Statics:
   private:

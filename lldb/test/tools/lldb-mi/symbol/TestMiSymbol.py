@@ -32,8 +32,8 @@ class MiSymbolTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Get address of main and its line
         self.runCmd("-data-evaluate-expression main")
-        self.expect("\^done,value=\"0x[0-9a-f]+\"")
-        addr = int(self.child.after.split("\"")[1], 16)
+        self.expect("\^done,value=\"0x[0-9a-f]+ \(a.out`main at main.cpp:[0-9]+\)\"")
+        addr = int(self.child.after.split("\"")[1].split(" ")[0], 16)
         line = line_number('main.cpp', '// FUNC_main')
 
         # Test that -symbol-list-lines works on valid data

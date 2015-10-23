@@ -33,8 +33,8 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Get an address for disassembling: use main
         self.runCmd("-data-evaluate-expression main")
-        self.expect("\^done,value=\"0x[0-9a-f]+\"")
-        addr = int(self.child.after.split("\"")[1], 16)
+        self.expect("\^done,value=\"0x[0-9a-f]+ \(a.out`main at main.cpp:[0-9]+\)\"")
+        addr = int(self.child.after.split("\"")[1].split(" ")[0], 16)
 
         # Test -data-disassemble: try to disassemble some address
         self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
@@ -49,8 +49,8 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Get an address for disassembling: use hello_world
         self.runCmd("-data-evaluate-expression hello_world")
-        self.expect("\^done,value=\"0x[0-9a-f]+\"")
-        addr = int(self.child.after.split("\"")[1], 16)
+        self.expect("\^done,value=\"0x[0-9a-f]+ \(a.out`hello_world\(\) at main.cpp:[0-9]+\)\"")
+        addr = int(self.child.after.split("\"")[1].split(" ")[0], 16)
 
         # Test -data-disassemble: try to disassemble some address
         self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
@@ -288,8 +288,8 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Get the address of main and its line
         self.runCmd("-data-evaluate-expression main")
-        self.expect("\^done,value=\"0x[0-9a-f]+\"")
-        addr = int(self.child.after.split("\"")[1], 16)
+        self.expect("\^done,value=\"0x[0-9a-f]+ \(a.out`main at main.cpp:[0-9]+\)\"")
+        addr = int(self.child.after.split("\"")[1].split(" ")[0], 16)
         line = line_number('main.cpp', '// FUNC_main')
 
         # Test that -data-info-line works for address

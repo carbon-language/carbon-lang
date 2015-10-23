@@ -12,6 +12,11 @@
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBTypeSummary.h"
+#include "lldb/API/SBTypeCategory.h"
+#include "lldb/API/SBTypeNameSpecifier.h"
+#include "lldb/API/SBStream.h"
+#include "lldb/API/SBType.h"
 
 // In-house headers:
 #include "MICmnLLDBDebugger.h"
@@ -22,6 +27,40 @@
 #include "MICmnLLDBDebuggerHandleEvents.h"
 #include "MICmnLLDBDebugSessionInfo.h"
 #include "MIUtilSingletonHelper.h"
+
+//++ ------------------------------------------------------------------------------------
+// MI private summary providers
+static inline bool
+MI_char_summary_provider(lldb::SBValue value, lldb::SBTypeSummaryOptions options, lldb::SBStream &stream)
+{
+    bool is_signed;
+    if (!value.IsValid())
+        return false;
+
+    lldb::SBType value_type = value.GetType();
+    if(!value_type.IsValid())
+        return false;
+    
+    lldb::BasicType type_code = value_type.GetBasicType();
+    if (type_code == lldb::eBasicTypeSignedChar)
+        stream.Printf("%d %s", (int)value.GetValueAsSigned(), value.GetValue());
+    else if (type_code == lldb::eBasicTypeUnsignedChar)
+        stream.Printf("%u %s", (unsigned)value.GetValueAsUnsigned(), value.GetValue());
+    else
+        return false;
+    
+    return true;
+}
+
+//++ ------------------------------------------------------------------------------------
+// MI summary helper routines
+static inline bool
+MI_add_summary(lldb::SBTypeCategory category, const char *typeName, lldb::SBTypeSummary::FormatCallback cb,
+               uint32_t options, bool regex = false)
+{
+    lldb::SBTypeSummary summary = lldb::SBTypeSummary::CreateWithCallback(cb, options);
+    return summary.IsValid() ? category.AddTypeSummary(lldb::SBTypeNameSpecifier(typeName, regex), summary) : false;
+} 
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnLLDBDebugger constructor.
@@ -98,7 +137,7 @@ CMICmnLLDBDebugger::Initialize()
         errMsg += GetErrorDescription().c_str();
     }
     bOk = bOk && InitStdStreams();
-
+    bOk = bOk && RegisterMISummaryProviders();
     m_bInitialized = bOk;
 
     if (!bOk && !HaveErrorDescription())
@@ -790,4 +829,55 @@ const CMIUtilString &
 CMICmnLLDBDebugger::ThreadGetName() const
 {
     return m_constStrThisThreadId;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Loads lldb-mi formatters
+// Type:    Method.
+// Args:    None.
+// Return:  true - Functionality succeeded.
+//          false - Functionality failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebugger::LoadMIFormatters(lldb::SBTypeCategory miCategory)
+{
+    if (!MI_add_summary(miCategory, "char", MI_char_summary_provider,
+                        lldb::eTypeOptionHideValue | lldb::eTypeOptionSkipPointers))
+        return false;
+
+    if (!MI_add_summary(miCategory, "unsigned char", MI_char_summary_provider,
+                        lldb::eTypeOptionHideValue | lldb::eTypeOptionSkipPointers))
+        return false;
+
+    if (!MI_add_summary(miCategory, "signed char", MI_char_summary_provider,
+                       lldb::eTypeOptionHideValue | lldb::eTypeOptionSkipPointers))
+        return false;
+
+    return true;        
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Registers lldb-mi custom summary providers
+// Type:    Method.
+// Args:    None.
+// Return:  true - Functionality succeeded.
+//          false - Functionality failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebugger::RegisterMISummaryProviders()
+{
+    static const char* miCategoryName = "lldb-mi";
+    lldb::SBTypeCategory miCategory = m_lldbDebugger.CreateCategory(miCategoryName);
+    if (!miCategory.IsValid())
+        return false;
+
+    if (!LoadMIFormatters(miCategory))
+    {
+        m_lldbDebugger.DeleteCategory(miCategoryName);
+        return false;
+    }
+    miCategory.SetEnabled(true);
+    return true;
 }

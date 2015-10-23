@@ -93,7 +93,8 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
     bool ClientSaveMask(const CMIUtilString &vClientName, const CMIUtilString &vBroadcasterClass, const MIuint vEventMask);
     bool ClientRemoveTheirMask(const CMIUtilString &vClientName, const CMIUtilString &vBroadcasterClass);
     bool ClientGetTheirMask(const CMIUtilString &vClientName, const CMIUtilString &vBroadcasterClass, MIuint &vwEventMask);
-
+    bool LoadMIFormatters(lldb::SBTypeCategory miCategory);
+    bool RegisterMISummaryProviders();
     // Overridden:
   private:
     // From CMICmnBase
