@@ -23,7 +23,6 @@
 
 namespace fuzzer {
 
-typedef void (*DeprecatedUserCallback)(const uint8_t *Data, size_t Size);
 /// Returns an int 0. Values other than zero are reserved for future.
 typedef int (*UserCallback)(const uint8_t *Data, size_t Size);
 /** Simple C-like interface with a single user-supplied callback.
@@ -46,7 +45,6 @@ int main(int argc, char **argv) {
 #\endcode
 */
 int FuzzerDriver(int argc, char **argv, UserCallback Callback);
-int FuzzerDriver(int argc, char **argv, DeprecatedUserCallback Callback);
 
 class FuzzerRandomBase {
  public:
@@ -137,7 +135,6 @@ int main(int argc, char **argv) {
 */
 class UserSuppliedFuzzer {
  public:
-  UserSuppliedFuzzer();  // Deprecated, don't use.
   UserSuppliedFuzzer(FuzzerRandomBase *Rand);
   /// Executes the target function on 'Size' bytes of 'Data'.
   virtual int TargetFunction(const uint8_t *Data, size_t Size) = 0;

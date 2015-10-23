@@ -15,6 +15,7 @@
 
 extern "C" {
 __attribute__((weak)) void __sanitizer_print_stack_trace();
+__attribute__((weak)) size_t __sanitizer_get_total_unique_caller_callee_pairs();
 }
 
 namespace fuzzer {
@@ -206,6 +207,8 @@ size_t Fuzzer::RecordBlockCoverage() {
 
 size_t Fuzzer::RecordCallerCalleeCoverage() {
   if (!Options.UseIndirCalls)
+    return 0;
+  if (!__sanitizer_get_total_unique_caller_callee_pairs)
     return 0;
   return LastRecordedCallerCalleeCoverage =
              __sanitizer_get_total_unique_caller_callee_pairs();

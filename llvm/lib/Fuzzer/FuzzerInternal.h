@@ -186,17 +186,11 @@ class SimpleUserSuppliedFuzzer: public UserSuppliedFuzzer {
   SimpleUserSuppliedFuzzer(FuzzerRandomBase *Rand, UserCallback Callback)
       : UserSuppliedFuzzer(Rand), Callback(Callback) {}
 
-  SimpleUserSuppliedFuzzer(FuzzerRandomBase *Rand, DeprecatedUserCallback Callback)
-      : UserSuppliedFuzzer(Rand), DeprecatedCallback(Callback) {}
-
   virtual int TargetFunction(const uint8_t *Data, size_t Size) override {
-    if (Callback) return Callback(Data, Size);
-    DeprecatedCallback(Data, Size);
-    return 0;
+    return Callback(Data, Size);
   }
 
  private:
-  DeprecatedUserCallback DeprecatedCallback = nullptr;
   UserCallback Callback = nullptr;
 };
 
