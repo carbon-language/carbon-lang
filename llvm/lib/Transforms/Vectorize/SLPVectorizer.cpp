@@ -1943,6 +1943,59 @@ void BoUpSLP::reorderAltShuffleOperands(ArrayRef<Value *> VL,
   }
 }
 
+
+// Return true if I should be commuted before adding it's left and right
+// operands to the arrays Left and Right.
+//
+// The vectorizer is trying to either have all elements one side being
+// instruction with the same opcode to enable further vectorization, or having
+// a splat to lower the vectorizing cost.
+static bool shouldReorderOperands(int i, Instruction &I,
+                                  SmallVectorImpl<Value *> &Left,
+                                  SmallVectorImpl<Value *> &Right) {
+  Value *VLeft = I.getOperand(0);
+  Value *VRight = I.getOperand(1);
+  Instruction *ILeft = dyn_cast<Instruction>(VLeft);
+  Instruction *IRight = dyn_cast<Instruction>(VRight);
+
+  // Sort two opcodes. In the code below we try to preserve the ability to use
+  // broadcast of values instead of individual inserts.
+  // vl1 = load
+  // vl2 = phi
+  // vr1 = load
+  // vr2 = vr2
+  //    = vl1 x vr1
+  //    = vl2 x vr2
+  // If we just sorted according to opcode we would leave the first line in
+  // tact but we would swap vl2 with vr2 because opcode(phi) > opcode(load).
+  //    = vl1 x vr1
+  //    = vr2 x vl2
+  // Because vr2 and vr1 are from the same load we loose the opportunity of a
+  // broadcast for the packed right side in the backend: we have [vr1, vl2]
+  // instead of [vr1, vr2=vr1].
+  if (ILeft && IRight) {
+    if (ILeft->getOpcode() > IRight->getOpcode() &&
+               Right[i - 1] != IRight) {
+      // Try not to destroy a broad cast for no apparent benefit.
+      return true;
+    } else if (ILeft->getOpcode() == IRight->getOpcode() &&
+               Right[i - 1] == ILeft) {
+      // Try preserve broadcasts.
+      return true;
+    } else if (ILeft->getOpcode() == IRight->getOpcode() &&
+               Left[i - 1] == IRight) {
+      // Try preserve broadcasts.
+      return true;
+    }
+    return false;
+  }
+  // One opcode, put the instruction on the right.
+  if (ILeft) {
+    return true;
+  }
+  return false;
+}
+
 void BoUpSLP::reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
                                              SmallVectorImpl<Value *> &Left,
                                              SmallVectorImpl<Value *> &Right) {
@@ -1951,28 +2004,42 @@ void BoUpSLP::reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
 
   bool AllSameOpcodeLeft = true;
   bool AllSameOpcodeRight = true;
-  for (unsigned i = 0, e = VL.size(); i != e; ++i) {
-    Instruction *I = cast<Instruction>(VL[i]);
-    Value *VLeft = I->getOperand(0);
-    Value *VRight = I->getOperand(1);
 
+  if (VL.size()) {
+    // Peel the first iteration out of the loop since there's nothing
+    // interesting to do anyway and it simplifies the checks
+    auto VLeft = cast<Instruction>(VL[0])->getOperand(0);
+    auto VRight = cast<Instruction>(VL[0])->getOperand(1);
     OrigLeft.push_back(VLeft);
     OrigRight.push_back(VRight);
+    if (!isa<Instruction>(VRight) && isa<Instruction>(VLeft))
+      // Favor having instruction to the right. FIXME: why?
+      std::swap(VLeft, VRight);
+    Left.push_back(VLeft);
+    Right.push_back(VRight);
+  }
 
+  for (unsigned i = 1, e = VL.size(); i != e; ++i) {
+    Instruction *I = cast<Instruction>(VL[i]);
+
+    Value *VLeft = I->getOperand(0);
+    Value *VRight = I->getOperand(1);
+    OrigLeft.push_back(VLeft);
+    OrigRight.push_back(VRight);
     Instruction *ILeft = dyn_cast<Instruction>(VLeft);
     Instruction *IRight = dyn_cast<Instruction>(VRight);
 
     // Check whether all operands on one side have the same opcode. In this case
     // we want to preserve the original order and not make things worse by
     // reordering.
-    if (i && AllSameOpcodeLeft && ILeft) {
+    if (AllSameOpcodeLeft && ILeft) {
       if (Instruction *PLeft = dyn_cast<Instruction>(OrigLeft[i - 1])) {
         if (PLeft->getOpcode() != ILeft->getOpcode())
           AllSameOpcodeLeft = false;
       } else
         AllSameOpcodeLeft = false;
     }
-    if (i && AllSameOpcodeRight && IRight) {
+    if (AllSameOpcodeRight && IRight) {
       if (Instruction *PRight = dyn_cast<Instruction>(OrigRight[i - 1])) {
         if (PRight->getOpcode() != IRight->getOpcode())
           AllSameOpcodeRight = false;
@@ -1980,54 +2047,16 @@ void BoUpSLP::reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
         AllSameOpcodeRight = false;
     }
 
-    // Sort two opcodes. In the code below we try to preserve the ability to use
-    // broadcast of values instead of individual inserts.
-    // vl1 = load
-    // vl2 = phi
-    // vr1 = load
-    // vr2 = vr2
-    //    = vl1 x vr1
-    //    = vl2 x vr2
-    // If we just sorted according to opcode we would leave the first line in
-    // tact but we would swap vl2 with vr2 because opcode(phi) > opcode(load).
-    //    = vl1 x vr1
-    //    = vr2 x vl2
-    // Because vr2 and vr1 are from the same load we loose the opportunity of a
-    // broadcast for the packed right side in the backend: we have [vr1, vl2]
-    // instead of [vr1, vr2=vr1].
-    if (ILeft && IRight) {
-      if (!i && ILeft->getOpcode() > IRight->getOpcode()) {
-        Left.push_back(IRight);
-        Right.push_back(ILeft);
-      } else if (i && ILeft->getOpcode() > IRight->getOpcode() &&
-                 Right[i - 1] != IRight) {
-        // Try not to destroy a broad cast for no apparent benefit.
-        Left.push_back(IRight);
-        Right.push_back(ILeft);
-      } else if (i && ILeft->getOpcode() == IRight->getOpcode() &&
-                 Right[i - 1] == ILeft) {
-        // Try preserve broadcasts.
-        Left.push_back(IRight);
-        Right.push_back(ILeft);
-      } else if (i && ILeft->getOpcode() == IRight->getOpcode() &&
-                 Left[i - 1] == IRight) {
-        // Try preserve broadcasts.
-        Left.push_back(IRight);
-        Right.push_back(ILeft);
-      } else {
-        Left.push_back(ILeft);
-        Right.push_back(IRight);
-      }
-      continue;
+
+    // Commute to favor either a splat or maximizing having the same opcodes on
+    // one side.
+    if (shouldReorderOperands(i, *I, Left, Right)) {
+      Left.push_back(I->getOperand(1));
+      Right.push_back(I->getOperand(0));
+    } else {
+      Left.push_back(I->getOperand(0));
+      Right.push_back(I->getOperand(1));
     }
-    // One opcode, put the instruction on the right.
-    if (ILeft) {
-      Left.push_back(VRight);
-      Right.push_back(ILeft);
-      continue;
-    }
-    Left.push_back(VLeft);
-    Right.push_back(VRight);
   }
 
   bool LeftBroadcast = isSplat(Left);
