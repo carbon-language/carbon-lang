@@ -24,7 +24,7 @@ class StringTableBuilder {
 public:
   /// \brief Add a string to the builder. Returns a StringRef to the internal
   /// copy of s. Can only be used before the table is finalized.
-  void add(StringRef s);
+  void add(StringRef S);
 
   enum Kind {
     ELF,
@@ -34,7 +34,7 @@ public:
 
   /// \brief Analyze the strings and build the final table. No more strings can
   /// be added after this point.
-  void finalize(Kind kind);
+  void finalize(Kind K);
 
   /// \brief Retrieve the string table data. Can only be used after the table
   /// is finalized.
@@ -45,7 +45,7 @@ public:
 
   /// \brief Get the offest of a string in the string table. Can only be used
   /// after the table is finalized.
-  size_t getOffset(StringRef s) const;
+  size_t getOffset(StringRef S) const;
 
   void clear();
 
