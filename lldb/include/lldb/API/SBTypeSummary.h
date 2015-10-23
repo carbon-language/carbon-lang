@@ -69,6 +69,9 @@ namespace lldb {
     public:
         
         SBTypeSummary();
+
+        // Native function summary formatter callback
+        typedef bool (*FormatCallback) (SBValue, SBTypeSummaryOptions, SBStream&);
         
         static SBTypeSummary
         CreateWithSummaryString (const char* data,
@@ -81,6 +84,10 @@ namespace lldb {
         static SBTypeSummary
         CreateWithScriptCode (const char* data,
                               uint32_t options = 0); // see lldb::eTypeOption values
+
+        static SBTypeSummary
+        CreateWithCallback (FormatCallback cb, 
+                            uint32_t options = 0);
         
         SBTypeSummary (const lldb::SBTypeSummary &rhs);
         

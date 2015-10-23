@@ -146,6 +146,25 @@ SBTypeSummary::CreateWithScriptCode (const char* data, uint32_t options)
     return SBTypeSummary(TypeSummaryImplSP(new ScriptSummaryFormat(options, "", data)));
 }
 
+SBTypeSummary
+SBTypeSummary::CreateWithCallback (FormatCallback cb, uint32_t options)
+{
+    return SBTypeSummary(
+               TypeSummaryImplSP(
+                   cb ? new CXXFunctionSummaryFormat(options,
+                       [cb] (ValueObject& valobj, Stream& stm, const TypeSummaryOptions& opt) -> bool {
+                            BStream stream;
+                            if (!cb(SBValue(valobj.GetSP()), SBTypeSummaryOptions(&opt), stream))
+                                return false;
+                            stm.Write(stream.GetData(), stream.GetSize());
+                            return true;
+                       },
+                       "SBTypeSummary formatter callback"
+                   ) : nullptr
+                )
+            );
+}
+
 SBTypeSummary::SBTypeSummary (const lldb::SBTypeSummary &rhs) :
 m_opaque_sp(rhs.m_opaque_sp)
 {
