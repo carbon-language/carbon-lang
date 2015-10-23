@@ -1433,7 +1433,7 @@ private:
   /// The units of the current debug map object.
   std::vector<CompileUnit> Units;
 
-  /// The debug map object curently under consideration.
+  /// The debug map object currently under consideration.
   DebugMapObject *CurrentDebugObject;
 
   /// \brief The Dwarf string pool
