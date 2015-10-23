@@ -96,7 +96,7 @@ public:
     }
 
     case COFF::IMAGE_REL_AMD64_ADDR64: {
-      writeBytesUnaligned(0, Target, Value + RE.Addend);
+      writeBytesUnaligned(Value + RE.Addend, Target, 8);
       break;
     }
 

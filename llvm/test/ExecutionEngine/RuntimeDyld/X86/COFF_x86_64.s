@@ -28,6 +28,12 @@ inst1:
 .Ltmp2:
 	.seh_endproc
 
+        .data
+	.globl  x                       # @x
+# rtdyld-check: *{8}x = F
+x:
+	.quad	F
+
 # Make sure the JIT doesn't bail out on BSS sections.
         .bss
 bss_check:
