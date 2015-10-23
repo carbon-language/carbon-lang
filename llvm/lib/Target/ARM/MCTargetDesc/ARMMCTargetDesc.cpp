@@ -144,7 +144,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
       // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSP,
       //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
       //      FeatureT2XtPk, FeatureCrypto, FeatureCRC
-      ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
+      ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+dsp,+mp,+hwdiv,+hwdiv-arm,"
                        "+trustzone,+t2xtpk,+crypto,+crc";
     else
       // Use CPU to figure out the exact features
@@ -155,7 +155,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
       // v8.1a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSP,
       //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
       //      FeatureT2XtPk, FeatureCrypto, FeatureCRC, FeatureV8_1a
-      ARMArchFeature = "+v8.1a,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
+      ARMArchFeature = "+v8.1a,+db,+fp-armv8,+neon,+dsp,+mp,+hwdiv,+hwdiv-arm,"
                        "+trustzone,+t2xtpk,+crypto,+crc";
     else
       // Use CPU to figure out the exact features
@@ -174,7 +174,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     if (NoCPU)
       // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSP,
       //       FeatureT2XtPk, FeatureMClass
-      ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,+t2xtpk,+mclass";
+      ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+dsp,+t2xtpk,+mclass";
     else
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
@@ -183,7 +183,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     if (NoCPU)
       // v7s: FeatureNEON, FeatureDB, FeatureDSP, FeatureHasRAS
       //      Swift
-      ARMArchFeature = "+v7,+swift,+neon,+db,+t2dsp,+ras";
+      ARMArchFeature = "+v7,+swift,+neon,+db,+dsp,+ras";
     else
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
@@ -195,7 +195,7 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     // features.
     if (NoCPU)
       // v7a: FeatureNEON, FeatureDB, FeatureDSP, FeatureT2XtPk
-      ARMArchFeature = "+v7,+neon,+db,+t2dsp,+t2xtpk";
+      ARMArchFeature = "+v7,+neon,+db,+dsp,+t2xtpk";
     else
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";

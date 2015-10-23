@@ -119,8 +119,8 @@ def FeatureAvoidMOVsShOp : SubtargetFeature<"avoid-movs-shop",
 def FeatureHasRAS : SubtargetFeature<"ras", "HasRAS", "true",
                                      "Has return address stack">;
 
-/// DSP extension (called "t2dsp" for backwards compatibility only).
-def FeatureDSP : SubtargetFeature<"t2dsp", "HasDSP", "true",
+/// DSP extension.
+def FeatureDSP : SubtargetFeature<"dsp", "HasDSP", "true",
                               "Supports DSP instructions in ARM and/or Thumb2">;
 
 // Multiprocessing extension.
