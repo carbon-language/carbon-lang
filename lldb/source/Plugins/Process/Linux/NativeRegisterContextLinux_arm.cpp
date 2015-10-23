@@ -20,6 +20,10 @@
 
 #define REG_CONTEXT_SIZE (GetGPRSize() + sizeof (m_fpr))
 
+#ifndef PTRACE_GETVFPREGS
+  #define PTRACE_GETVFPREGS 27
+  #define PTRACE_SETVFPREGS 28
+#endif
 #ifndef PTRACE_GETHBPREGS
   #define PTRACE_GETHBPREGS 29
   #define PTRACE_SETHBPREGS 30
@@ -851,6 +855,47 @@ uint32_t
 NativeRegisterContextLinux_arm::CalculateFprOffset(const RegisterInfo* reg_info) const
 {
     return reg_info->byte_offset - GetRegisterInfoAtIndex(m_reg_info.first_fpr)->byte_offset;
+}
+
+Error
+NativeRegisterContextLinux_arm::DoWriteRegisterValue(uint32_t offset,
+                                                     const char* reg_name,
+                                                     const RegisterValue &value)
+{
+    // PTRACE_POKEUSER don't work in the aarch64 liux kernel used on android devices (always return
+    // "Bad address"). To avoid using PTRACE_POKEUSER we read out the full GPR register set, modify
+    // the requested register and write it back. This approach is about 4 times slower but the
+    // performance overhead is negligible in comparision to processing time in lldb-server.
+    assert(offset % 4 == 0 && "Try to write a register with unaligned offset");
+    if (offset + sizeof(uint32_t) > sizeof(m_gpr_arm))
+        return Error("Register isn't fit into the size of the GPR area");
+
+    Error error = DoReadGPR(m_gpr_arm, sizeof(m_gpr_arm));
+    if (error.Fail())
+        return error;
+
+    m_gpr_arm[offset / sizeof(uint32_t)] = value.GetAsUInt32();
+    return DoWriteGPR(m_gpr_arm, sizeof(m_gpr_arm));
+}
+
+Error
+NativeRegisterContextLinux_arm::DoReadFPR(void *buf, size_t buf_size)
+{
+    return NativeProcessLinux::PtraceWrapper(PTRACE_GETVFPREGS,
+                                             m_thread.GetID(),
+                                             nullptr,
+                                             buf,
+                                             buf_size);
+}
+
+Error
+NativeRegisterContextLinux_arm::DoWriteFPR(void *buf, size_t buf_size)
+{
+    return NativeProcessLinux::PtraceWrapper(PTRACE_SETVFPREGS,
+                                             m_thread.GetID(),
+                                             nullptr,
+                                             buf,
+                                             buf_size);
 }
 
 #endif // defined(__arm__)

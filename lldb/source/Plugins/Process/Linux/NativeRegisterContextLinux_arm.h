@@ -90,6 +90,17 @@ namespace process_linux {
         };
 
     protected:
+        Error
+        DoWriteRegisterValue(uint32_t offset,
+                             const char* reg_name,
+                             const RegisterValue &value) override;
+
+        Error
+        DoReadFPR(void *buf, size_t buf_size) override;
+
+        Error
+        DoWriteFPR(void *buf, size_t buf_size) override;
+
         void*
         GetGPRBuffer() override { return &m_gpr_arm; }
 
