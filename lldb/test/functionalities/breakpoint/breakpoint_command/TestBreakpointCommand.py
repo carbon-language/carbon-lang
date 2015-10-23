@@ -52,7 +52,7 @@ class BreakpointCommandTestCase(TestBase):
 
         # Now add callbacks for the breakpoints just created.
         self.runCmd("breakpoint command add -s command -o 'frame variable --show-types --scope' 1 4")
-        self.runCmd("breakpoint command add -s python -o 'here = open(\"output.txt\", \"w\"); print(\"lldb\", file=here); here.close()' 2")
+        self.runCmd("breakpoint command add -s python -o 'here = open(\"output.txt\", \"w\"); here.write(\"lldb\\n\"); here.close()' 2")
         self.runCmd("breakpoint command add --python-function bktptcmd.function 3")
 
         # Check that the breakpoint commands are correctly set.
@@ -74,7 +74,7 @@ class BreakpointCommandTestCase(TestBase):
         self.expect("breakpoint command list 2", "Breakpoint 2 command ok",
             substrs = ["Breakpoint commands:",
                           "here = open",
-                          "print(file=here)",
+                          "here.write",
                           "here.close()"])
         self.expect("breakpoint command list 3", "Breakpoint 3 command ok",
             substrs = ["Breakpoint commands:",
@@ -178,7 +178,7 @@ class BreakpointCommandTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         # Now add callbacks for the breakpoints just created.
-        self.runCmd("breakpoint command add -s python -o 'here = open(\"output-2.txt\", \"w\"); print(frame, file=here); print(bp_loc, file=here); here.close()' 1")
+        self.runCmd("breakpoint command add -s python -o 'here = open(\"output-2.txt\", \"w\"); here.write(str(frame) + \"\\n\"); here.write(str(bp_loc) + \"\\n\"); here.close()' 1")
 
         # Remove 'output-2.txt' if it already exists.
 
