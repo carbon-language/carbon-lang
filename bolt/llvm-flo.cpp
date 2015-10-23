@@ -100,16 +100,60 @@ ReorderBlocks("reorder-blocks",
               cl::Optional);
 
 static cl::opt<bool>
-DumpData("dump-data", cl::desc("dump parsed flo data (debugging)"),
+DumpData("dump-data", cl::desc("dump parsed flo data and exit (debugging)"),
          cl::Hidden);
 
 static cl::opt<bool>
-DumpFunctions("dump-functions", cl::desc("dump parsed functions (debugging)"),
-              cl::Hidden);
+PrintAll("print-all", cl::desc("print functions after each stage"),
+         cl::Hidden);
 
 static cl::opt<bool>
-DumpLayout("dump-layout", cl::desc("dump parsed flo data (debugging)"),
-           cl::Hidden);
+PrintCFG("print-cfg", cl::desc("print functions after CFG construction"),
+         cl::Hidden);
+
+static cl::opt<bool>
+PrintUCE("print-uce",
+         cl::desc("print functions after unreachable code elimination"),
+         cl::Hidden);
+
+static cl::opt<bool>
+PrintDisasm("print-disasm", cl::desc("print function after disassembly"),
+            cl::Hidden);
+
+static cl::opt<bool>
+PrintReordered("print-reordered",
+               cl::desc("print functions after layout optimization"),
+               cl::Hidden);
+
+
+// Check against lists of functions from options if we should
+// optimize the function with a given name.
+bool shouldProcess(StringRef FunctionName) {
+  bool IsValid = true;
+  if (!FunctionNames.empty()) {
+    IsValid = false;
+    for (auto &Name : FunctionNames) {
+      if (FunctionName == Name) {
+        IsValid = true;
+        break;
+      }
+    }
+  }
+  if (!IsValid)
+    return false;
+
+  if (!SkipFunctionNames.empty()) {
+    for (auto &Name : SkipFunctionNames) {
+      if (FunctionName == Name) {
+        IsValid = false;
+        break;
+      }
+    }
+  }
+
+  return IsValid;
+}
+
 } // namespace opts
 
 static StringRef ToolName;
@@ -406,6 +450,12 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
+    if (!opts::shouldProcess(Function.getName())) {
+      DEBUG(dbgs() << "FLO: skipping processing function " << Function.getName()
+                   << " per user request.\n");
+      continue;
+    }
+
     SectionRef Section = Function.getSection();
     assert(Section.containsSymbol(Function.getSymbol()) &&
            "symbol not in section");
@@ -453,15 +503,16 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (!Function.disassemble(FunctionData))
       continue;
 
+    if (opts::PrintAll || opts::PrintDisasm)
+      Function.print(errs(), "after disassembly");
+
     if (!Function.buildCFG())
       continue;
 
-    if (opts::DumpFunctions)
-      Function.print(errs(), true);
-  } // Iterate over all functions
+    if (opts::PrintAll || opts::PrintCFG)
+      Function.print(errs(), "after building cfg");
 
-  if (opts::DumpFunctions)
-    return;
+  } // Iterate over all functions
 
   // Run optimization passes.
   //
@@ -469,6 +520,10 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   bool NagUser = true;
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
+
+    if (!opts::shouldProcess(Function.getName()))
+      continue;
+
     // Detect and eliminate unreachable basic blocks. We could have those
     // filled with nops and they are used for alignment.
     //
@@ -500,18 +555,22 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
         }
       }
 
-      if (unsigned Count = Function.eraseDeadBBs(Reachable)) {
-        outs() << "FLO: Removed " << Count
-               << " dead basic block(s) in function " << Function.getName()
-               << "\n";
+      auto Count = Function.eraseDeadBBs(Reachable);
+      if (Count) {
+        DEBUG(dbgs() << "FLO: Removed " << Count
+                     << " dead basic block(s) in function "
+                     << Function.getName() << '\n');
       }
 
-      DEBUG(dbgs() << "*** After unreachable block elimination ***\n");
-      DEBUG(Function.print(dbgs(), /* PrintInstructions = */ true));
+      if (opts::PrintAll || opts::PrintUCE)
+        Function.print(errs(), "after unreachable code elimination");
     }
 
     if (opts::ReorderBlocks) {
-      BFI.second.optimizeLayout(opts::DumpLayout);
+      Function.optimizeLayout();
+
+      if (opts::PrintAll || opts::PrintReordered)
+        Function.print(errs(), "after reordering blocks");
     }
   }
 
@@ -560,30 +619,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (!Function.isSimple())
       continue;
 
-    // Check against lists of functions from options if we should
-    // optimize the function.
-    bool IsValid = true;
-    if (!opts::FunctionNames.empty()) {
-      IsValid = false;
-      for (auto &Name : opts::FunctionNames) {
-        if (Function.getName() == Name) {
-          IsValid = true;
-          break;
-        }
-      }
-    }
-    if (!IsValid)
-      continue;
-
-    if (!opts::SkipFunctionNames.empty()) {
-      for (auto &Name : opts::SkipFunctionNames) {
-        if (Function.getName() == Name) {
-          IsValid = false;
-          break;
-        }
-      }
-    }
-    if (!IsValid)
+    if (!opts::shouldProcess(Function.getName()))
       continue;
 
     DEBUG(dbgs() << "FLO: generating code for function \""

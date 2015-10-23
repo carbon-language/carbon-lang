@@ -202,7 +202,7 @@ public:
 
   /// Perform optimal code layout based on edge frequencies making necessary
   /// adjustments to instructions at the end of basic blocks.
-  void optimizeLayout(bool DumpLayout);
+  void optimizeLayout();
 
   /// Dynamic programming implementation for the TSP, applied to BB layout. Find
   /// the optimal way to maximize weight during a path traversing all BBs. In
@@ -210,7 +210,7 @@ public:
   ///
   /// Uses exponential amount of memory on the number of basic blocks and should
   /// only be used for small functions.
-  void solveOptimalLayout(bool DumpLayout);
+  void solveOptimalLayout();
 
   /// View CFG in graphviz program
   void viewGraph();
@@ -310,12 +310,13 @@ public:
 
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.
-  void dump(bool PrintInstructions = false) const {
-    print(dbgs(), PrintInstructions);
+  void dump(std::string Annotation = "", bool PrintInstructions = true) const {
+    print(dbgs(), Annotation, PrintInstructions);
   }
 
   /// Print function information to the \p OS stream.
-  void print(raw_ostream &OS, bool PrintInstructions = false) const;
+  void print(raw_ostream &OS, std::string Annotation = "",
+             bool PrintInstructions = true) const;
 
   void addInstruction(uint64_t Offset, MCInst &&Instruction) {
     Instructions.emplace(Offset, std::forward<MCInst>(Instruction));

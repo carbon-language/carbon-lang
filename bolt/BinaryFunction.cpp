@@ -63,10 +63,11 @@ unsigned BinaryFunction::eraseDeadBBs(
   return Count;
 }
 
-void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
+void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
+                           bool PrintInstructions) const {
   StringRef SectionName;
   Section.getName(SectionName);
-  OS << "Binary Function \"" << getName() << "\" {"
+  OS << "Binary Function \"" << getName() << "\" " << Annotation << " {"
      << "\n  State       : "   << CurrentState
      << "\n  Address     : 0x" << Twine::utohexstr(Address)
      << "\n  Size        : 0x" << Twine::utohexstr(Size)
@@ -75,10 +76,20 @@ void BinaryFunction::print(raw_ostream &OS, bool PrintInstructions) const {
      << "\n  Section     : "   << SectionName
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  IsSimple    : "   << IsSimple
-     << "\n  BB count    : "   << BasicBlocks.size()
-     << "\n  Image       : 0x" << Twine::utohexstr(ImageAddress);
+     << "\n  BB Count    : "   << BasicBlocksLayout.size();
+  if (BasicBlocksLayout.size()) {
+    OS << "\n  BB Layout   : ";
+    auto Sep = "";
+    for (auto BB : BasicBlocksLayout) {
+      OS << Sep << BB->getName();
+      Sep = ", ";
+    }
+  }
+  if (ImageAddress)
+    OS << "\n  Image       : 0x" << Twine::utohexstr(ImageAddress);
   if (ExecutionCount != COUNT_NO_PROFILE)
     OS << "\n  Exec Count  : " << ExecutionCount;
+
   OS << "\n}\n";
 
   if (!PrintInstructions || !BC.InstPrinter)
@@ -321,9 +332,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // Update state.
   updateState(State::Disassembled);
 
-  // Print the function in the new state.
-  DEBUG(print(dbgs(), /* PrintInstructions = */ true));
-
   return true;
 }
 
@@ -415,7 +423,7 @@ bool BinaryFunction::buildCFG() {
   }
 
   // Intermediate dump.
-  DEBUG(print(dbgs(), /* PrintInstructions = */ true));
+  DEBUG(print(dbgs(), "after creating basic blocks"));
 
   // TODO: handle properly calls to no-return functions,
   // e.g. exit(3), etc. Otherwise we'll see a false fall-through
@@ -485,9 +493,6 @@ bool BinaryFunction::buildCFG() {
 
   // Update the state.
   CurrentState = State::CFG;
-
-  // Print the function in the new state.
-  DEBUG(print(dbgs(), /* PrintInstructions = */ true));
 
   return true;
 }
@@ -563,7 +568,7 @@ void BinaryFunction::inferFallThroughCounts() {
   return;
 }
 
-void BinaryFunction::optimizeLayout(bool DumpLayout) {
+void BinaryFunction::optimizeLayout() {
   // Bail if no profiling information or if empty
   if (getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE ||
       BasicBlocksLayout.empty()) {
@@ -572,11 +577,9 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
 
   // Work on optimal solution if problem is small enough
   if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD)
-    return solveOptimalLayout(DumpLayout);
+    return solveOptimalLayout();
 
-  if (DumpLayout) {
-    dbgs() << "running block layout heuristics on " << getName() << "\n";
-  }
+  DEBUG(dbgs() << "running block layout heuristics on " << getName() << "\n");
 
   // Greedy heuristic implementation for the TSP, applied to BB layout. Try to
   // maximize weight during a path traversing all BBs. In this way, we will
@@ -711,33 +714,14 @@ void BinaryFunction::optimizeLayout(bool DumpLayout) {
                            Unvisited.end());
 
   fixBranches();
-
-  if (DumpLayout) {
-    dbgs() << "original BB order is: ";
-    auto Sep = "";
-    for (auto &BB : BasicBlocks) {
-      dbgs() << Sep << BB.getName();
-      Sep = ",";
-    }
-    dbgs() << "\nnew order is:         ";
-    Sep = "";
-    for (auto BB : BasicBlocksLayout) {
-      dbgs() << Sep << BB->getName();
-      Sep = ",";
-    }
-    dbgs() << "\n";
-    print(dbgs(), /* PrintInstructions = */ true);
-  }
 }
 
-void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
+void BinaryFunction::solveOptimalLayout() {
   std::vector<std::vector<uint64_t>> Weight;
   std::map<BinaryBasicBlock *, int> BBToIndex;
   std::vector<BinaryBasicBlock *> IndexToBB;
 
-  if (DumpLayout) {
-    dbgs() << "finding optimal block layout for " << getName() << "\n";
-  }
+  DEBUG(dbgs() << "finding optimal block layout for " << getName() << "\n");
 
   unsigned N = BasicBlocksLayout.size();
   // Populating weight map and index map
@@ -833,23 +817,6 @@ void BinaryFunction::solveOptimalLayout(bool DumpLayout) {
   }
 
   fixBranches();
-
-  if (DumpLayout) {
-    dbgs() << "original BB order is: ";
-    auto Sep = "";
-    for (auto &BB : BasicBlocks) {
-      dbgs() << Sep << BB.getName();
-      Sep = ",";
-    }
-    dbgs() << "\nnew order is:         ";
-    Sep = "";
-    for (auto BB : BasicBlocksLayout) {
-      dbgs() << Sep << BB->getName();
-      Sep = ",";
-    }
-    dbgs() << "\n";
-    print(dbgs(), /* PrintInstructions = */ true);
-  }
 }
 
 const BinaryBasicBlock *
