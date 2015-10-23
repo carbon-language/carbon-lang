@@ -14,6 +14,7 @@
 #include "clang/Basic/Specifiers.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/LineIterator.h"
@@ -179,7 +180,7 @@ std::string clang::GetIssueString(const SourceManager &SM,
 
   return (llvm::Twine(CheckerName) + Delimiter +
           GetEnclosingDeclContextSignature(D) + Delimiter +
-          std::to_string(IssueLoc.getExpansionColumnNumber()) + Delimiter +
+          llvm::utostr(IssueLoc.getExpansionColumnNumber()) + Delimiter +
           NormalizeLine(SM, IssueLoc, D) + Delimiter + BugType)
       .str();
 }
