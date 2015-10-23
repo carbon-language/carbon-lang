@@ -18,7 +18,7 @@ namespace tidy {
 namespace type_traits {
 
 // \brief Returns true If \c Type is expensive to copy.
-bool isExpensiveToCopy(QualType Type, ASTContext &Context);
+llvm::Optional<bool> isExpensiveToCopy(QualType Type, ASTContext &Context);
 
 } // type_traits
 } // namespace tidy

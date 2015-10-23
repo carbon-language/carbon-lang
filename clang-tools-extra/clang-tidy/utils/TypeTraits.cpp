@@ -24,9 +24,11 @@ bool classHasTrivialCopyAndDestroy(QualType Type) {
 }
 } // namespace
 
-bool isExpensiveToCopy(QualType Type, ASTContext &Context) {
+llvm::Optional<bool> isExpensiveToCopy(QualType Type, ASTContext &Context) {
+  if (Type->isDependentType())
+    return llvm::None;
   return !Type.isTriviallyCopyableType(Context) &&
-      !classHasTrivialCopyAndDestroy(Type);
+         !classHasTrivialCopyAndDestroy(Type);
 }
 
 } // type_traits

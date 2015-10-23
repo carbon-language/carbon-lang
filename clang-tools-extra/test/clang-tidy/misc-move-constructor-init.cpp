@@ -120,11 +120,6 @@ struct NegativeParamTriviallyCopyable {
   int I_;
 };
 
-template <typename T> struct NegativeDependentType {
-  NegativeDependentType(T Value) : T_(Value) {}
-  T T_;
-};
-
 struct NegativeNotPassedByValue {
   NegativeNotPassedByValue(const Movable &M) : M_(M) {}
   NegativeNotPassedByValue(const Movable M) : M_(M) {}

@@ -18,7 +18,9 @@ namespace tidy {
 namespace matchers {
 
 AST_MATCHER(QualType, isExpensiveToCopy) {
-  return type_traits::isExpensiveToCopy(Node, Finder->getASTContext());
+  llvm::Optional<bool> IsExpensive =
+      type_traits::isExpensiveToCopy(Node, Finder->getASTContext());
+  return IsExpensive && *IsExpensive;
 }
 
 } // namespace matchers
