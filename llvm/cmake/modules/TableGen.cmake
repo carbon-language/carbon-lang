@@ -77,6 +77,13 @@ if(LLVM_USE_HOST_TOOLS)
       WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
       COMMENT "Building libLLVMSupport for native TableGen...")
   add_custom_target(NATIVE_LIB_LLVMSUPPORT DEPENDS LIB_LLVMSUPPORT)
+
+  add_custom_command(OUTPUT LIB_LLVMTABLEGEN
+      COMMAND ${CMAKE_COMMAND} --build . --target LLVMTableGen --config Release
+      DEPENDS CONFIGURE_LLVM_NATIVE
+      WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
+      COMMENT "Building libLLVMTableGen for native TableGen...")
+  add_custom_target(NATIVE_LIB_LLVMTABLEGEN DEPENDS LIB_LLVMTABLEGEN)
 endif(LLVM_USE_HOST_TOOLS)
 
 macro(add_tablegen target project)
@@ -118,7 +125,7 @@ macro(add_tablegen target project)
 
       add_custom_command(OUTPUT ${${project}_TABLEGEN_EXE}
         COMMAND ${CMAKE_COMMAND} --build . --target ${target} --config Release
-        DEPENDS ${target} NATIVE_LIB_LLVMSUPPORT
+        DEPENDS ${target} NATIVE_LIB_LLVMSUPPORT NATIVE_LIB_LLVMTABLEGEN
         WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
         COMMENT "Building native TableGen...")
       add_custom_target(${project}-tablegen-host DEPENDS ${${project}_TABLEGEN_EXE})
