@@ -38,4 +38,4 @@ int main(int argc, char **argv) {
 // to dump coverage.
 // CHECK1:  1 PCs written
 // CHECK2:  3 PCs written
-// CHECK3:  4 PCs written
+// CHECK3:  3 PCs written
