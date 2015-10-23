@@ -429,6 +429,33 @@ enum {
 #include "ELFRelocs/ARM.def"
 };
 
+// AVR specific e_flags
+enum : unsigned {
+  EF_AVR_ARCH_AVR1    = 1,
+  EF_AVR_ARCH_AVR2    = 2,
+  EF_AVR_ARCH_AVR25   = 25,
+  EF_AVR_ARCH_AVR3    = 3,
+  EF_AVR_ARCH_AVR31   = 31,
+  EF_AVR_ARCH_AVR35   = 35,
+  EF_AVR_ARCH_AVR4    = 4,
+  EF_AVR_ARCH_AVR5    = 5,
+  EF_AVR_ARCH_AVR51   = 51,
+  EF_AVR_ARCH_AVR6    = 6,
+  EF_AVR_ARCH_AVRTINY = 100,
+  EF_AVR_ARCH_XMEGA1  = 101,
+  EF_AVR_ARCH_XMEGA2  = 102,
+  EF_AVR_ARCH_XMEGA3  = 103,
+  EF_AVR_ARCH_XMEGA4  = 104,
+  EF_AVR_ARCH_XMEGA5  = 105,
+  EF_AVR_ARCH_XMEGA6  = 106,
+  EF_AVR_ARCH_XMEGA7  = 107
+};
+
+// ELF Relocation types for AVR
+enum {
+#include "ELFRelocs/AVR.def"
+};
+
 // Mips Specific e_flags
 enum : unsigned {
   EF_MIPS_NOREORDER = 0x00000001, // Don't reorder instructions
