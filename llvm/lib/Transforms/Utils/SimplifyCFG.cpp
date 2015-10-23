@@ -2905,80 +2905,26 @@ bool SimplifyCFGOpt::SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder) {
   // exception then zap the landing pad, turning its invokes into calls.
   BasicBlock *BB = RI->getParent();
   LandingPadInst *LPInst = dyn_cast<LandingPadInst>(BB->getFirstNonPHI());
-
-  // If RI->getValue() is a landing pad, check if the first instruction is
-  // the same landing pad that caused control to branch here. If RI->getValue
-  // is a phi of landing pad, check its predecessor blocks to see if any of
-  // them contains a trivial landing pad.
-  if (RI->getValue() != LPInst && !isa<PHINode>(RI->getValue()))
+  if (RI->getValue() != LPInst)
+    // Not a landing pad, or the resume is not unwinding the exception that
+    // caused control to branch here.
     return false;
 
-  // Check that there are no other instructions except for debug intrinsics
-  // between the landing pad (or phi of landing pad) and resume instruction.
-  BasicBlock::iterator I = cast<Instruction>(RI->getValue()), E = RI;
+  // Check that there are no other instructions except for debug intrinsics.
+  BasicBlock::iterator I = LPInst->getIterator(), E = RI->getIterator();
   while (++I != E)
     if (!isa<DbgInfoIntrinsic>(I))
       return false;
 
-  SmallVector<BasicBlock *, 4> TrivialUnwindBlocks;
-  if (RI->getValue() == LPInst) {
-    // Landing pad is in current block, which has already been checked.
-    TrivialUnwindBlocks.push_back(BB);
-  } else {
-    // Check incoming blocks to see if any of them are trivial.
-    auto *PhiLPInst = cast<PHINode>(RI->getValue());
-    for (unsigned i = 0; i < PhiLPInst->getNumIncomingValues(); i++) {
-      auto *IncomingBB = PhiLPInst->getIncomingBlock(i);
-      auto *IncomingValue = PhiLPInst->getIncomingValue(i);
-
-      auto *LandingPad =
-          dyn_cast<LandingPadInst>(IncomingBB->getFirstNonPHI());
-      // Not the landing pad that caused the control to branch here.
-      if (IncomingValue != LandingPad)
-        continue;
-
-      bool isTrivial = true;
-
-      I = IncomingBB->getFirstNonPHI();
-      E = IncomingBB->getTerminator();
-      while (++I != E)
-        if (!isa<DbgInfoIntrinsic>(I)) {
-          isTrivial = false;
-          break;
-        }
-
-      if (isTrivial)
-        TrivialUnwindBlocks.push_back(IncomingBB);
-    }
-  }
-
   // Turn all invokes that unwind here into calls and delete the basic block.
-  for (auto *TrivialBB : TrivialUnwindBlocks) {
-    if (isa<PHINode>(RI->getValue())) {
-      // Blocks that will be deleted should also be removed
-      // from the phi node.
-      BB->removePredecessor(TrivialBB, true);
-    }
-
-    for (pred_iterator PI = pred_begin(TrivialBB), PE = pred_end(TrivialBB);
-         PI != PE;) {
-      BasicBlock *Pred = *PI++;
-      removeUnwindEdge(Pred);
-    }
-
-    // The landingpad is now unreachable.  Zap it.
-    if (TrivialBB == BB)
-      BB = nullptr;
-    TrivialBB->eraseFromParent();
+  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;) {
+    BasicBlock *Pred = *PI++;
+    removeUnwindEdge(Pred);
   }
 
-  // Delete the resume block if all its predecessors have been deleted, and we
-  // haven't already deleted it above when deleting the landing pad blocks.
-  if (BB && pred_begin(BB) == pred_end(BB)) {
-    BB->eraseFromParent();
-  }
-
-  return TrivialUnwindBlocks.size() != 0;
+  // The landingpad is now unreachable.  Zap it.
+  BB->eraseFromParent();
+  return true;
 }
 
 bool SimplifyCFGOpt::SimplifyCleanupReturn(CleanupReturnInst *RI) {
