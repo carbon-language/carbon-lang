@@ -1086,28 +1086,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     log->Printf("  CEDM::FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
                 }
 
-                TypeFromParser class_type = CopyClassType(class_user_type, current_id);
-
-                if (!class_type.IsValid())
-                    return;
-
-                TypeSourceInfo *type_source_info = m_ast_context->getTrivialTypeSourceInfo(QualType::getFromOpaquePtr(class_type.GetOpaqueQualType()));
-
-                if (!type_source_info)
-                    return;
-
-                TypedefDecl *typedef_decl = TypedefDecl::Create(*m_ast_context,
-                                                                m_ast_context->getTranslationUnitDecl(),
-                                                                SourceLocation(),
-                                                                SourceLocation(),
-                                                                context.m_decl_name.getAsIdentifierInfo(),
-                                                                type_source_info);
-
-
-                if (!typedef_decl)
-                    return;
-
-                context.AddNamedDecl(typedef_decl);
+                AddThisType(context, class_user_type, current_id);
 
                 if (method_decl->isInstance())
                 {
@@ -1143,20 +1122,17 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     if (!this_type)
                         return;
 
-                    CompilerType pointee_type = this_type->GetForwardCompilerType ().GetPointeeType();
+                    TypeFromUser pointee_type = this_type->GetForwardCompilerType ().GetPointeeType();
 
                     if (pointee_type.IsValid())
                     {
                         if (log)
                         {
-                            ASTDumper ast_dumper(this_type->GetFullCompilerType ());
-                            log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
+                            ASTDumper ast_dumper(pointee_type);
+                            log->Printf("  FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
                         }
-
-                        TypeFromUser class_user_type(pointee_type);
-                        AddOneType(context, class_user_type, current_id);
-
-
+                        
+                        AddThisType(context, pointee_type, current_id);
                         TypeFromUser this_user_type(this_type->GetFullCompilerType ());
                         m_struct_vars->m_object_pointer_type = this_user_type;
                         return;
@@ -2156,9 +2132,10 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     }
 }
 
-TypeFromParser
-ClangExpressionDeclMap::CopyClassType(TypeFromUser &ut,
-                                      unsigned int current_id)
+void
+ClangExpressionDeclMap::AddThisType(NameSearchContext &context,
+                                    TypeFromUser &ut,
+                                    unsigned int current_id)
 {
     CompilerType copied_clang_type = GuardedCopyType(ut);
 
@@ -2167,9 +2144,9 @@ ClangExpressionDeclMap::CopyClassType(TypeFromUser &ut,
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
         if (log)
-            log->Printf("ClangExpressionDeclMap::CopyClassType - Couldn't import the type");
+            log->Printf("ClangExpressionDeclMap::AddThisType - Couldn't import the type");
 
-        return TypeFromParser();
+        return;
     }
 
     if (copied_clang_type.IsAggregateType() && copied_clang_type.GetCompleteType ())
@@ -2204,7 +2181,31 @@ ClangExpressionDeclMap::CopyClassType(TypeFromUser &ut,
                                       is_artificial);
     }
 
-    return TypeFromParser(copied_clang_type);
+    if (!copied_clang_type.IsValid())
+        return;
+    
+    TypeSourceInfo *type_source_info = m_ast_context->getTrivialTypeSourceInfo(QualType::getFromOpaquePtr(copied_clang_type.GetOpaqueQualType()));
+    
+    if (!type_source_info)
+        return;
+    
+    // Construct a typedef type because if "*this" is a templated type we can't just return ClassTemplateSpecializationDecls in response to name queries.
+    // Using a typedef makes this much more robust.
+    
+    TypedefDecl *typedef_decl = TypedefDecl::Create(*m_ast_context,
+                                                    m_ast_context->getTranslationUnitDecl(),
+                                                    SourceLocation(),
+                                                    SourceLocation(),
+                                                    context.m_decl_name.getAsIdentifierInfo(),
+                                                    type_source_info);
+    
+    
+    if (!typedef_decl)
+        return;
+    
+    context.AddNamedDecl(typedef_decl);
+
+    return;
 }
 
 void

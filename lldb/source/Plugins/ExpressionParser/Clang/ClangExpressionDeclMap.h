@@ -694,16 +694,19 @@ private:
                 unsigned int current_id);
     
     //------------------------------------------------------------------
-    /// Copy a C++ class type into the parser's AST context and add a
-    /// member function declaration to it for the expression.
+    /// Generate a Decl for "*this" and add a member function declaration
+    /// to it for the expression, then report it.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext to use when constructing the Decl.
     ///
     /// @param[in] type
-    ///     The type that needs to be created.
+    ///     The type for *this.
     //------------------------------------------------------------------
-
-    TypeFromParser
-    CopyClassType(TypeFromUser &type,
-                  unsigned int current_id);
+    void
+    AddThisType(NameSearchContext &context,
+                TypeFromUser &type,
+                unsigned int current_id);
 };
     
 } // namespace lldb_private
