@@ -8774,11 +8774,11 @@ createDynTypedNode(const NestedNameSpecifierLoc &Node) {
           if (!NodeOrVector.template is<ASTContext::ParentVector *>()) {
             auto *Vector = new ASTContext::ParentVector(
                 1, getSingleDynTypedNodeFromParentMap(NodeOrVector));
-            NodeOrVector = Vector;
             if (auto *Node =
                     NodeOrVector
                         .template dyn_cast<ast_type_traits::DynTypedNode *>())
               delete Node;
+            NodeOrVector = Vector;
           }
 
           auto *Vector =
