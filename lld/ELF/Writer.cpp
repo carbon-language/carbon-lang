@@ -704,11 +704,9 @@ template <class ELFT> int Writer<ELFT>::getPhdrsNum() const {
 
 template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
+  memcpy(Buf, "\177ELF", 4);
+
   auto *EHdr = reinterpret_cast<Elf_Ehdr *>(Buf);
-  EHdr->e_ident[EI_MAG0] = 0x7F;
-  EHdr->e_ident[EI_MAG1] = 'E';
-  EHdr->e_ident[EI_MAG2] = 'L';
-  EHdr->e_ident[EI_MAG3] = 'F';
   EHdr->e_ident[EI_CLASS] = ELFT::Is64Bits ? ELFCLASS64 : ELFCLASS32;
   EHdr->e_ident[EI_DATA] = ELFT::TargetEndianness == llvm::support::little
                                ? ELFDATA2LSB
