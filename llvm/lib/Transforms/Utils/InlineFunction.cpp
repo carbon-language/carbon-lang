@@ -1029,6 +1029,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       CalledFunc->isDeclaration() || // call, or call to a vararg function!
       CalledFunc->getFunctionType()->isVarArg()) return false;
 
+  // The inliner does not know how to inline through calls with operand bundles.
+  if (CS.hasOperandBundles())
+    return false;
+
   // If the call to the callee cannot throw, set the 'nounwind' flag on any
   // calls that we inline.
   bool MarkNoUnwind = CS.doesNotThrow();
