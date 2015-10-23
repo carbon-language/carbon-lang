@@ -1,3 +1,6 @@
+import lldb_shared
+import six
+
 def command(debugger, command, result, internal_dict):
-	result.PutCString(u"hello world A")
+	result.PutCString(six.u("hello world A"))
 	return None

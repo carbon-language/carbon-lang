@@ -2,6 +2,9 @@
 
 from __future__ import print_function
 
+import lldb_shared
+import six
+
 import sys
 import time
 
@@ -17,17 +20,17 @@ class ProgressBar(object):
         format  Format
         incremental
     """
-    light_block = unichr(0x2591).encode("utf-8")
-    solid_block = unichr(0x2588).encode("utf-8")
-    solid_right_arrow = unichr(0x25BA).encode("utf-8")
+    light_block = six.unichr(0x2591).encode("utf-8")
+    solid_block = six.unichr(0x2588).encode("utf-8")
+    solid_right_arrow = six.unichr(0x25BA).encode("utf-8")
     
     def __init__(self, 
                  start=0, 
                  end=10, 
                  width=12, 
-                 fill=unichr(0x25C9).encode("utf-8"), 
-                 blank=unichr(0x25CC).encode("utf-8"), 
-                 marker=unichr(0x25CE).encode("utf-8"), 
+                 fill=six.unichr(0x25C9).encode("utf-8"), 
+                 blank=six.unichr(0x25CC).encode("utf-8"), 
+                 marker=six.unichr(0x25CE).encode("utf-8"), 
                  format='[%(fill)s%(marker)s%(blank)s] %(progress)s%%', 
                  incremental=True):
         super(ProgressBar, self).__init__()
@@ -81,9 +84,9 @@ class AnimatedProgressBar(ProgressBar):
                  start=0, 
                  end=10, 
                  width=12, 
-                 fill=unichr(0x25C9).encode("utf-8"), 
-                 blank=unichr(0x25CC).encode("utf-8"), 
-                 marker=unichr(0x25CE).encode("utf-8"), 
+                 fill=six.unichr(0x25C9).encode("utf-8"), 
+                 blank=six.unichr(0x25CC).encode("utf-8"), 
+                 marker=six.unichr(0x25CE).encode("utf-8"), 
                  format='[%(fill)s%(marker)s%(blank)s] %(progress)s%%', 
                  incremental=True,
                  stdout=sys.stdout):
@@ -107,9 +110,9 @@ class ProgressWithEvents(AnimatedProgressBar):
                  start=0, 
                  end=10, 
                  width=12, 
-                 fill=unichr(0x25C9).encode("utf-8"), 
-                 blank=unichr(0x25CC).encode("utf-8"), 
-                 marker=unichr(0x25CE).encode("utf-8"), 
+                 fill=six.unichr(0x25C9).encode("utf-8"), 
+                 blank=six.unichr(0x25CC).encode("utf-8"), 
+                 marker=six.unichr(0x25CE).encode("utf-8"), 
                  format='[%(fill)s%(marker)s%(blank)s] %(progress)s%%', 
                  incremental=True,
                  stdout=sys.stdout):
