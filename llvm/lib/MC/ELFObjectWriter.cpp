@@ -109,7 +109,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
     BumpPtrAllocator Alloc;
     StringSaver VersionSymSaver{Alloc};
-    StringTableBuilder StrTabBuilder;
+    StringTableBuilder StrTabBuilder{StringTableBuilder::ELF};
 
     /// @}
 
@@ -880,7 +880,7 @@ void ELFObjectWriter::computeSymbolTable(
   for (const std::string &Name : FileNames)
     StrTabBuilder.add(Name);
 
-  StrTabBuilder.finalize(StringTableBuilder::ELF);
+  StrTabBuilder.finalize();
 
   for (const std::string &Name : FileNames)
     Writer.writeSymbol(StrTabBuilder.getOffset(Name),

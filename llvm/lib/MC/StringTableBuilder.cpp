@@ -16,6 +16,8 @@
 
 using namespace llvm;
 
+StringTableBuilder::StringTableBuilder(Kind K) : K(K) {}
+
 static int compareBySuffix(std::pair<StringRef, size_t> *const *AP,
                            std::pair<StringRef, size_t> *const *BP) {
   StringRef A = (*AP)->first;
@@ -32,7 +34,7 @@ static int compareBySuffix(std::pair<StringRef, size_t> *const *AP,
   return SizeB - SizeA;
 }
 
-void StringTableBuilder::finalize(Kind K) {
+void StringTableBuilder::finalize() {
   std::vector<std::pair<StringRef, size_t> *> Strings;
   Strings.reserve(StringIndexMap.size());
   for (std::pair<StringRef, size_t> &P : StringIndexMap)
@@ -41,6 +43,8 @@ void StringTableBuilder::finalize(Kind K) {
   array_pod_sort(Strings.begin(), Strings.end(), compareBySuffix);
 
   switch (K) {
+  case RAW:
+    break;
   case ELF:
   case MachO:
     // Start the table with a NUL byte.
@@ -59,17 +63,19 @@ void StringTableBuilder::finalize(Kind K) {
       assert(S.size() > COFF::NameSize && "Short string in COFF string table!");
 
     if (Previous.endswith(S)) {
-      P->second = StringTable.size() - 1 - S.size();
+      P->second = StringTable.size() - S.size() - (K != RAW);
       continue;
     }
 
     P->second = StringTable.size();
     StringTable += S;
-    StringTable += '\x00';
+    if (K != RAW)
+      StringTable += '\x00';
     Previous = S;
   }
 
   switch (K) {
+  case RAW:
   case ELF:
     break;
   case MachO:
@@ -85,6 +91,8 @@ void StringTableBuilder::finalize(Kind K) {
         StringTable.data(), Size);
     break;
   }
+
+  Size = StringTable.size();
 }
 
 void StringTableBuilder::clear() {
@@ -99,7 +107,10 @@ size_t StringTableBuilder::getOffset(StringRef S) const {
   return I->second;
 }
 
-void StringTableBuilder::add(StringRef S) {
+size_t StringTableBuilder::add(StringRef S) {
   assert(!isFinalized());
-  StringIndexMap.insert(std::make_pair(S, 0));
+  auto P = StringIndexMap.insert(std::make_pair(S, Size));
+  if (P.second)
+    Size += S.size() + (K != RAW);
+  return P.first->second;
 }

@@ -18,23 +18,26 @@ namespace llvm {
 
 /// \brief Utility for building string tables with deduplicated suffixes.
 class StringTableBuilder {
+public:
+  enum Kind { ELF, WinCOFF, MachO, RAW };
+
+private:
   SmallString<256> StringTable;
   DenseMap<StringRef, size_t> StringIndexMap;
+  size_t Size = 0;
+  Kind K;
 
 public:
-  /// \brief Add a string to the builder. Returns a StringRef to the internal
-  /// copy of s. Can only be used before the table is finalized.
-  void add(StringRef S);
+  StringTableBuilder(Kind K);
 
-  enum Kind {
-    ELF,
-    WinCOFF,
-    MachO
-  };
+  /// \brief Add a string to the builder. Returns the position of S in the
+  /// table. The position will be changed if finalize is used.
+  /// Can only be used before the table is finalized.
+  size_t add(StringRef S);
 
   /// \brief Analyze the strings and build the final table. No more strings can
   /// be added after this point.
-  void finalize(Kind K);
+  void finalize();
 
   /// \brief Retrieve the string table data. Can only be used after the table
   /// is finalized.
@@ -47,6 +50,8 @@ public:
   /// after the table is finalized.
   size_t getOffset(StringRef S) const;
 
+  const DenseMap<StringRef, size_t> &getMap() const { return StringIndexMap; }
+  size_t getSize() const { return Size; }
   void clear();
 
 private:

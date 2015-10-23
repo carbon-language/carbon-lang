@@ -104,7 +104,7 @@ class MachObjectWriter : public MCObjectWriter {
   /// \name Symbol Table Data
   /// @{
 
-  StringTableBuilder StringTable;
+  StringTableBuilder StringTable{StringTableBuilder::MachO};
   std::vector<MachSymbolData> LocalSymbolData;
   std::vector<MachSymbolData> ExternalSymbolData;
   std::vector<MachSymbolData> UndefinedSymbolData;

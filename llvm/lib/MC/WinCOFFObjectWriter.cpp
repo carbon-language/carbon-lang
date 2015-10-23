@@ -127,7 +127,7 @@ public:
   COFF::header Header;
   sections Sections;
   symbols Symbols;
-  StringTableBuilder Strings;
+  StringTableBuilder Strings{StringTableBuilder::WinCOFF};
 
   // Maps used during object file creation.
   section_map SectionMap;
@@ -908,7 +908,7 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
   for (const auto &S : Symbols)
     if (S->should_keep() && S->Name.size() > COFF::NameSize)
       Strings.add(S->Name);
-  Strings.finalize(StringTableBuilder::WinCOFF);
+  Strings.finalize();
 
   // Set names.
   for (const auto &S : Sections)

@@ -520,7 +520,7 @@ void MachObjectWriter::computeSymbolTable(
 
     StringTable.add(Symbol.getName());
   }
-  StringTable.finalize(StringTableBuilder::MachO);
+  StringTable.finalize();
 
   // Build the symbol arrays but only for non-local symbols.
   //
