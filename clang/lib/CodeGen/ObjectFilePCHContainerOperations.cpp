@@ -159,8 +159,7 @@ public:
   }
 
   bool HandleTopLevelDecl(DeclGroupRef D) override {
-    if (Diags.hasErrorOccurred() ||
-        (CodeGenOpts.getDebugInfo() == CodeGenOptions::NoDebugInfo))
+    if (Diags.hasErrorOccurred())
       return true;
 
     // Collect debug info for all decls in this group.
