@@ -4518,7 +4518,7 @@ public:
         CRC = 1;
       } else if (Feature == "+crypto") {
         Crypto = 1;
-      } else if (Feature == "+t2dsp") {
+      } else if (Feature == "+dsp") {
         DSP = 1;
       } else if (Feature == "+fp-only-sp") {
         HW_FP_remove |= HW_FP_DP; 
