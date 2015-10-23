@@ -39,6 +39,7 @@
 #include "RegisterContextPOSIXProcessMonitor_powerpc.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_arm.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_i386.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_mips64.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_powerpc.h"
@@ -160,6 +161,9 @@ FreeBSDThread::GetRegisterContext()
         assert(target_arch.GetTriple().getOS() == llvm::Triple::FreeBSD);
         switch (target_arch.GetMachine())
         {
+            case llvm::Triple::aarch64:
+                reg_interface = new RegisterContextFreeBSD_arm64(target_arch);
+                break;
             case llvm::Triple::arm:
                 reg_interface = new RegisterContextFreeBSD_arm(target_arch);
                 break;
