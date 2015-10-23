@@ -272,7 +272,7 @@ public:
   void writeTo(uint8_t *Buf) override;
 
   void finalize() override {
-    StrTabBuilder.finalize(llvm::StringTableBuilder::ELF);
+    StrTabBuilder.finalize();
     this->Header.sh_size = StrTabBuilder.data().size();
   }
 
@@ -280,7 +280,7 @@ public:
 
 private:
   const bool Dynamic;
-  llvm::StringTableBuilder StrTabBuilder;
+  llvm::StringTableBuilder StrTabBuilder{llvm::StringTableBuilder::ELF};
 };
 
 template <class ELFT>
