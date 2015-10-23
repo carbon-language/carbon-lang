@@ -451,11 +451,21 @@ public:
   /// \brief Contains parents of a node.
   typedef llvm::SmallVector<ast_type_traits::DynTypedNode, 2> ParentVector;
 
-  /// \brief Maps from a node to its parents.
+  /// \brief Maps from a node to its parents. This is used for nodes that have
+  /// pointer identity only, which are more common and we can save space by
+  /// only storing a unique pointer to them.
   typedef llvm::DenseMap<const void *,
                          llvm::PointerUnion4<const Decl *, const Stmt *,
                                              ast_type_traits::DynTypedNode *,
-                                             ParentVector *>> ParentMap;
+                                             ParentVector *>> ParentMapPointers;
+
+  /// Parent map for nodes without pointer identity. We store a full
+  /// DynTypedNode for all keys.
+  typedef llvm::DenseMap<
+      ast_type_traits::DynTypedNode,
+      llvm::PointerUnion4<const Decl *, const Stmt *,
+                          ast_type_traits::DynTypedNode *, ParentVector *>>
+      ParentMapOtherNodes;
 
   /// Container for either a single DynTypedNode or for an ArrayRef to
   /// DynTypedNode. For use with ParentMap.
@@ -2513,7 +2523,8 @@ private:
   void ReleaseDeclContextMaps();
   void ReleaseParentMapEntries();
 
-  std::unique_ptr<ParentMap> AllParents;
+  std::unique_ptr<ParentMapPointers> PointerParents;
+  std::unique_ptr<ParentMapOtherNodes> OtherParents;
 
   std::unique_ptr<VTableContextBase> VTContext;
 

@@ -448,7 +448,9 @@ TEST_F(RegistryTest, Completion) {
   CompVector Comps = getCompletions();
   // Overloaded
   EXPECT_TRUE(hasCompletion(
-      Comps, "hasParent(", "Matcher<Decl|Stmt> hasParent(Matcher<Decl|Stmt>)"));
+      Comps, "hasParent(",
+      "Matcher<TemplateArgument|NestedNameSpecifierLoc|Decl|...> "
+      "hasParent(Matcher<TemplateArgument|NestedNameSpecifierLoc|Decl|...>)"));
   // Variadic.
   EXPECT_TRUE(hasCompletion(Comps, "whileStmt(",
                             "Matcher<Stmt> whileStmt(Matcher<WhileStmt>...)"));
@@ -464,7 +466,9 @@ TEST_F(RegistryTest, Completion) {
   EXPECT_TRUE(hasCompletion(WhileComps, "hasBody(",
                             "Matcher<WhileStmt> hasBody(Matcher<Stmt>)"));
   EXPECT_TRUE(hasCompletion(WhileComps, "hasParent(",
-                            "Matcher<Stmt> hasParent(Matcher<Decl|Stmt>)"));
+                            "Matcher<Stmt> "
+                            "hasParent(Matcher<TemplateArgument|"
+                            "NestedNameSpecifierLoc|Decl|...>)"));
   EXPECT_TRUE(
       hasCompletion(WhileComps, "allOf(", "Matcher<T> allOf(Matcher<T>...)"));
 

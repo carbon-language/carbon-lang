@@ -268,6 +268,28 @@ public:
   /// FIXME: Implement comparsion for other node types (currently
   /// only Stmt, Decl, Type and NestedNameSpecifier return memoization data).
   bool operator<(const DynTypedNode &Other) const {
+    if (!NodeKind.isSame(Other.NodeKind))
+      return NodeKind < Other.NodeKind;
+
+    if (ASTNodeKind::getFromNodeKind<TypeLoc>().isSame(NodeKind)) {
+      auto TLA = getUnchecked<TypeLoc>();
+      auto TLB = Other.getUnchecked<TypeLoc>();
+      return std::make_pair(TLA.getType().getAsOpaquePtr(),
+                            TLA.getOpaqueData()) <
+             std::make_pair(TLB.getType().getAsOpaquePtr(),
+                            TLB.getOpaqueData());
+    }
+
+    if (ASTNodeKind::getFromNodeKind<NestedNameSpecifierLoc>().isSame(
+            NodeKind)) {
+      auto NNSLA = getUnchecked<NestedNameSpecifierLoc>();
+      auto NNSLB = Other.getUnchecked<NestedNameSpecifierLoc>();
+      return std::make_pair(NNSLA.getNestedNameSpecifier(),
+                            NNSLA.getOpaqueData()) <
+             std::make_pair(NNSLB.getNestedNameSpecifier(),
+                            NNSLB.getOpaqueData());
+    }
+
     assert(getMemoizationData() && Other.getMemoizationData());
     return getMemoizationData() < Other.getMemoizationData();
   }
@@ -281,6 +303,13 @@ public:
     if (ASTNodeKind::getFromNodeKind<QualType>().isSame(NodeKind))
       return getUnchecked<QualType>() == Other.getUnchecked<QualType>();
 
+    if (ASTNodeKind::getFromNodeKind<TypeLoc>().isSame(NodeKind))
+      return getUnchecked<TypeLoc>() == Other.getUnchecked<TypeLoc>();
+
+    if (ASTNodeKind::getFromNodeKind<NestedNameSpecifierLoc>().isSame(NodeKind))
+      return getUnchecked<NestedNameSpecifierLoc>() ==
+             Other.getUnchecked<NestedNameSpecifierLoc>();
+
     assert(getMemoizationData() && Other.getMemoizationData());
     return getMemoizationData() == Other.getMemoizationData();
   }
@@ -288,6 +317,47 @@ public:
     return !operator==(Other);
   }
   /// @}
+
+  /// \brief Hooks for using DynTypedNode as a key in a DenseMap.
+  struct DenseMapInfo {
+    static inline DynTypedNode getEmptyKey() {
+      DynTypedNode Node;
+      Node.NodeKind = ASTNodeKind::DenseMapInfo::getEmptyKey();
+      return Node;
+    }
+    static inline DynTypedNode getTombstoneKey() {
+      DynTypedNode Node;
+      Node.NodeKind = ASTNodeKind::DenseMapInfo::getTombstoneKey();
+      return Node;
+    }
+    static unsigned getHashValue(const DynTypedNode &Val) {
+      // FIXME: Add hashing support for the remaining types.
+      if (ASTNodeKind::getFromNodeKind<TypeLoc>().isSame(Val.NodeKind)) {
+        auto TL = Val.getUnchecked<TypeLoc>();
+        return llvm::hash_combine(TL.getType().getAsOpaquePtr(),
+                                  TL.getOpaqueData());
+      }
+
+      if (ASTNodeKind::getFromNodeKind<NestedNameSpecifierLoc>().isSame(
+              Val.NodeKind)) {
+        auto NNSL = Val.getUnchecked<NestedNameSpecifierLoc>();
+        return llvm::hash_combine(NNSL.getNestedNameSpecifier(),
+                                  NNSL.getOpaqueData());
+      }
+
+      assert(Val.getMemoizationData());
+      return llvm::hash_value(Val.getMemoizationData());
+    }
+    static bool isEqual(const DynTypedNode &LHS, const DynTypedNode &RHS) {
+      auto Empty = ASTNodeKind::DenseMapInfo::getEmptyKey();
+      auto TombStone = ASTNodeKind::DenseMapInfo::getTombstoneKey();
+      return (ASTNodeKind::DenseMapInfo::isEqual(LHS.NodeKind, Empty) &&
+              ASTNodeKind::DenseMapInfo::isEqual(RHS.NodeKind, Empty)) ||
+             (ASTNodeKind::DenseMapInfo::isEqual(LHS.NodeKind, TombStone) &&
+              ASTNodeKind::DenseMapInfo::isEqual(RHS.NodeKind, TombStone)) ||
+             LHS == RHS;
+    }
+  };
 
 private:
   /// \brief Takes care of converting from and to \c T.
@@ -425,6 +495,10 @@ namespace llvm {
 template <>
 struct DenseMapInfo<clang::ast_type_traits::ASTNodeKind>
     : clang::ast_type_traits::ASTNodeKind::DenseMapInfo {};
+
+template <>
+struct DenseMapInfo<clang::ast_type_traits::DynTypedNode>
+    : clang::ast_type_traits::DynTypedNode::DenseMapInfo {};
 
 }  // end namespace llvm
 

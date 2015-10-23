@@ -793,8 +793,15 @@ ASTContext::~ASTContext() {
 }
 
 void ASTContext::ReleaseParentMapEntries() {
-  if (!AllParents) return;
-  for (const auto &Entry : *AllParents) {
+  if (!PointerParents) return;
+  for (const auto &Entry : *PointerParents) {
+    if (Entry.second.is<ast_type_traits::DynTypedNode *>()) {
+      delete Entry.second.get<ast_type_traits::DynTypedNode *>();
+    } else if (Entry.second.is<ParentVector *>()) {
+      delete Entry.second.get<ParentVector *>();
+    }
+  }
+  for (const auto &Entry : *OtherParents) {
     if (Entry.second.is<ast_type_traits::DynTypedNode *>()) {
       delete Entry.second.get<ast_type_traits::DynTypedNode *>();
     } else if (Entry.second.is<ParentVector *>()) {
@@ -8670,14 +8677,31 @@ bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
 
 namespace {
 
-ast_type_traits::DynTypedNode
-getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
+ast_type_traits::DynTypedNode getSingleDynTypedNodeFromParentMap(
+    ASTContext::ParentMapPointers::mapped_type U) {
   if (const auto *D = U.dyn_cast<const Decl *>())
     return ast_type_traits::DynTypedNode::create(*D);
   if (const auto *S = U.dyn_cast<const Stmt *>())
     return ast_type_traits::DynTypedNode::create(*S);
   return *U.get<ast_type_traits::DynTypedNode *>();
 }
+
+/// Template specializations to abstract away from pointers and TypeLocs.
+/// @{
+template <typename T>
+ast_type_traits::DynTypedNode createDynTypedNode(const T &Node) {
+  return ast_type_traits::DynTypedNode::create(*Node);
+}
+template <>
+ast_type_traits::DynTypedNode createDynTypedNode(const TypeLoc &Node) {
+  return ast_type_traits::DynTypedNode::create(Node);
+}
+template <>
+ast_type_traits::DynTypedNode
+createDynTypedNode(const NestedNameSpecifierLoc &Node) {
+  return ast_type_traits::DynTypedNode::create(Node);
+}
+/// @}
 
   /// \brief A \c RecursiveASTVisitor that builds a map from nodes to their
   /// parents as defined by the \c RecursiveASTVisitor.
@@ -8693,17 +8717,21 @@ getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
     /// \brief Builds and returns the translation unit's parent map.
     ///
     ///  The caller takes ownership of the returned \c ParentMap.
-    static ASTContext::ParentMap *buildMap(TranslationUnitDecl &TU) {
-      ParentMapASTVisitor Visitor(new ASTContext::ParentMap);
+    static std::pair<ASTContext::ParentMapPointers *,
+                     ASTContext::ParentMapOtherNodes *>
+    buildMap(TranslationUnitDecl &TU) {
+      ParentMapASTVisitor Visitor(new ASTContext::ParentMapPointers,
+                                  new ASTContext::ParentMapOtherNodes);
       Visitor.TraverseDecl(&TU);
-      return Visitor.Parents;
+      return std::make_pair(Visitor.Parents, Visitor.OtherParents);
     }
 
   private:
     typedef RecursiveASTVisitor<ParentMapASTVisitor> VisitorBase;
 
-    ParentMapASTVisitor(ASTContext::ParentMap *Parents) : Parents(Parents) {
-    }
+    ParentMapASTVisitor(ASTContext::ParentMapPointers *Parents,
+                        ASTContext::ParentMapOtherNodes *OtherParents)
+        : Parents(Parents), OtherParents(OtherParents) {}
 
     bool shouldVisitTemplateInstantiations() const {
       return true;
@@ -8717,8 +8745,9 @@ getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
       return false;
     }
 
-    template <typename T>
-    bool TraverseNode(T *Node, bool(VisitorBase:: *traverse) (T *)) {
+    template <typename T, typename MapNodeTy, typename MapTy>
+    bool TraverseNode(T Node, MapNodeTy MapNode,
+                      bool (VisitorBase::*traverse)(T), MapTy *Parents) {
       if (!Node)
         return true;
       if (ParentStack.size() > 0) {
@@ -8732,7 +8761,7 @@ getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
         // map. The main problem there is to implement hash functions /
         // comparison operators for all types that DynTypedNode supports that
         // do not have pointer identity.
-        auto &NodeOrVector = (*Parents)[Node];
+        auto &NodeOrVector = (*Parents)[MapNode];
         if (NodeOrVector.isNull()) {
           if (const auto *D = ParentStack.back().get<Decl>())
             NodeOrVector = D;
@@ -8765,21 +8794,36 @@ getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
             Vector->push_back(ParentStack.back());
         }
       }
-      ParentStack.push_back(ast_type_traits::DynTypedNode::create(*Node));
+      ParentStack.push_back(createDynTypedNode(Node));
       bool Result = (this ->* traverse) (Node);
       ParentStack.pop_back();
       return Result;
     }
 
     bool TraverseDecl(Decl *DeclNode) {
-      return TraverseNode(DeclNode, &VisitorBase::TraverseDecl);
+      return TraverseNode(DeclNode, DeclNode, &VisitorBase::TraverseDecl,
+                          Parents);
     }
 
     bool TraverseStmt(Stmt *StmtNode) {
-      return TraverseNode(StmtNode, &VisitorBase::TraverseStmt);
+      return TraverseNode(StmtNode, StmtNode, &VisitorBase::TraverseStmt,
+                          Parents);
     }
 
-    ASTContext::ParentMap *Parents;
+    bool TraverseTypeLoc(TypeLoc TypeLocNode) {
+      return TraverseNode(TypeLocNode,
+                          ast_type_traits::DynTypedNode::create(TypeLocNode),
+                          &VisitorBase::TraverseTypeLoc, OtherParents);
+    }
+
+    bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNSLocNode) {
+      return TraverseNode(
+          NNSLocNode, ast_type_traits::DynTypedNode::create(NNSLocNode),
+          &VisitorBase::TraverseNestedNameSpecifierLoc, OtherParents);
+    }
+
+    ASTContext::ParentMapPointers *Parents;
+    ASTContext::ParentMapOtherNodes *OtherParents;
     llvm::SmallVector<ast_type_traits::DynTypedNode, 16> ParentStack;
 
     friend class RecursiveASTVisitor<ParentMapASTVisitor>;
@@ -8787,25 +8831,31 @@ getSingleDynTypedNodeFromParentMap(ASTContext::ParentMap::mapped_type U) {
 
 } // end namespace
 
-ASTContext::DynTypedNodeList
-ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
-  assert(Node.getMemoizationData() &&
-         "Invariant broken: only nodes that support memoization may be "
-         "used in the parent map.");
-  if (!AllParents) {
-    // We always need to run over the whole translation unit, as
-    // hasAncestor can escape any subtree.
-    AllParents.reset(
-        ParentMapASTVisitor::buildMap(*getTranslationUnitDecl()));
-  }
-  ParentMap::const_iterator I = AllParents->find(Node.getMemoizationData());
-  if (I == AllParents->end()) {
+template <typename NodeTy, typename MapTy>
+static ASTContext::DynTypedNodeList getDynNodeFromMap(const NodeTy &Node,
+                                                      const MapTy &Map) {
+  auto I = Map.find(Node);
+  if (I == Map.end()) {
     return llvm::ArrayRef<ast_type_traits::DynTypedNode>();
   }
-  if (auto *V = I->second.dyn_cast<ParentVector *>()) {
+  if (auto *V = I->second.template dyn_cast<ASTContext::ParentVector *>()) {
     return llvm::makeArrayRef(*V);
   }
   return getSingleDynTypedNodeFromParentMap(I->second);
+}
+
+ASTContext::DynTypedNodeList
+ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
+  if (!PointerParents) {
+    // We always need to run over the whole translation unit, as
+    // hasAncestor can escape any subtree.
+    auto Maps = ParentMapASTVisitor::buildMap(*getTranslationUnitDecl());
+    PointerParents.reset(Maps.first);
+    OtherParents.reset(Maps.second);
+  }
+  if (Node.getNodeKind().hasPointerIdentity())
+    return getDynNodeFromMap(Node.getMemoizationData(), *PointerParents);
+  return getDynNodeFromMap(Node, *OtherParents);
 }
 
 bool
