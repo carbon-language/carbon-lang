@@ -37,8 +37,8 @@ namespace
     };
 } // end of anonymous namespace
 
-std::atomic_bool Timer::g_quiet(true);
-std::atomic_uint Timer::g_display_depth(0);
+std::atomic<bool> Timer::g_quiet(true);
+std::atomic<unsigned> Timer::g_display_depth(0);
 std::mutex Timer::g_file_mutex;
 FILE* Timer::g_file = nullptr;
 

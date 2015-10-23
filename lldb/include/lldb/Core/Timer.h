@@ -13,8 +13,11 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <string>
+
+#include <atomic>
 #include <mutex>
+#include <string>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Host/TimeValue.h"
 
@@ -86,8 +89,8 @@ protected:
     uint64_t m_total_ticks; // Total running time for this timer including when other timers below this are running
     uint64_t m_timer_ticks; // Ticks for this timer that do not include when other timers below this one are running
 
-    static std::atomic_bool g_quiet;
-    static std::atomic_uint g_display_depth;
+    static std::atomic<bool> g_quiet;
+    static std::atomic<unsigned> g_display_depth;
     static std::mutex g_file_mutex;
     static FILE* g_file;
 
