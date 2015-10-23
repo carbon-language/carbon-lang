@@ -270,9 +270,7 @@ define <2 x i32> @test31(<2 x i32> %x) {
   %div = udiv <2 x i32> %shr, <i32 2147483647, i32 2147483647>
   ret <2 x i32> %div
 ; CHECK-LABEL: @test31(
-; CHECK-NEXT: %[[shr:.*]] = lshr <2 x i32> %x, <i32 31, i32 31>
-; CHECK-NEXT: udiv <2 x i32> %[[shr]], <i32 2147483647, i32 2147483647>
-; CHECK-NEXT: ret <2 x i32>
+; CHECK-NEXT: ret <2 x i32> zeroinitializer
 }
 
 define i32 @test32(i32 %a, i32 %b) {

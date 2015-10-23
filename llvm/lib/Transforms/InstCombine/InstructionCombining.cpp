@@ -2734,6 +2734,27 @@ bool InstCombiner::run() {
       }
     }
 
+    // In general, it is possible for computeKnownBits to determine all bits in a
+    // value even when the operands are not all constants.
+    if (!I->use_empty() && I->getType()->isIntegerTy()) {
+      unsigned BitWidth = I->getType()->getScalarSizeInBits();
+      APInt KnownZero(BitWidth, 0);
+      APInt KnownOne(BitWidth, 0);
+      computeKnownBits(I, KnownZero, KnownOne, /*Depth*/0, I);
+      if ((KnownZero | KnownOne).isAllOnesValue()) {
+        Constant *C = ConstantInt::get(I->getContext(), KnownOne);
+        DEBUG(dbgs() << "IC: ConstFold (all bits known) to: " << *C <<
+                        " from: " << *I << '\n');
+
+        // Add operands to the worklist.
+        ReplaceInstUsesWith(*I, C);
+        ++NumConstProp;
+        EraseInstFromFunction(*I);
+        MadeIRChange = true;
+        continue;
+      }
+    }
+
     // See if we can trivially sink this instruction to a successor basic block.
     if (I->hasOneUse()) {
       BasicBlock *BB = I->getParent();

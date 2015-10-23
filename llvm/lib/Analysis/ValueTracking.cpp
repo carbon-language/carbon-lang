@@ -393,6 +393,12 @@ static bool isEphemeralValueOf(Instruction *I, const Value *E) {
   SmallPtrSet<const Value *, 32> Visited;
   SmallPtrSet<const Value *, 16> EphValues;
 
+  // The instruction defining an assumption's condition itself is always
+  // considered ephemeral to that assumption (even if it has other
+  // non-ephemeral users). See r246696's test case for an example.
+  if (std::find(I->op_begin(), I->op_end(), E) != I->op_end())
+    return true;
+
   while (!WorkSet.empty()) {
     const Value *V = WorkSet.pop_back_val();
     if (!Visited.insert(V).second)
@@ -967,6 +973,71 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
   }
 }
 
+// Compute known bits from a shift operator, including those with a
+// non-constant shift amount. KnownZero and KnownOne are the outputs of this
+// function. KnownZero2 and KnownOne2 are pre-allocated temporaries with the
+// same bit width as KnownZero and KnownOne. KZF and KOF are operator-specific
+// functors that, given the known-zero or known-one bits respectively, and a
+// shift amount, compute the implied known-zero or known-one bits of the shift
+// operator's result respectively for that shift amount. The results from calling
+// KZF and KOF are conservatively combined for all permitted shift amounts.
+template <typename KZFunctor, typename KOFunctor>
+static void computeKnownBitsFromShiftOperator(Operator *I,
+              APInt &KnownZero, APInt &KnownOne,
+              APInt &KnownZero2, APInt &KnownOne2,
+              const DataLayout &DL, unsigned Depth, const Query &Q,
+              KZFunctor KZF, KOFunctor KOF) {
+  unsigned BitWidth = KnownZero.getBitWidth();
+
+  if (auto *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
+    unsigned ShiftAmt = SA->getLimitedValue(BitWidth-1);
+
+    computeKnownBits(I->getOperand(0), KnownZero, KnownOne, DL, Depth + 1, Q);
+    KnownZero = KZF(KnownZero, ShiftAmt);
+    KnownOne  = KOF(KnownOne, ShiftAmt);
+    return;
+  }
+
+  computeKnownBits(I->getOperand(1), KnownZero, KnownOne, DL, Depth + 1, Q);
+
+  // Note: We cannot use KnownZero.getLimitedValue() here, because if
+  // BitWidth > 64 and any upper bits are known, we'll end up returning the
+  // limit value (which implies all bits are known).
+  uint64_t ShiftAmtKZ = KnownZero.zextOrTrunc(64).getZExtValue();
+  uint64_t ShiftAmtKO = KnownOne.zextOrTrunc(64).getZExtValue();
+
+  // It would be more-clearly correct to use the two temporaries for this
+  // calculation. Reusing the APInts here to prevent unnecessary allocations.
+  KnownZero.clearAllBits(), KnownOne.clearAllBits();
+
+  // Early exit if we can't constrain any well-defined shift amount.
+  if (!(ShiftAmtKZ & (BitWidth-1)) && !(ShiftAmtKO & (BitWidth-1)))
+    return;
+
+  computeKnownBits(I->getOperand(0), KnownZero2, KnownOne2, DL, Depth + 1, Q);
+
+  KnownZero = KnownOne = APInt::getAllOnesValue(BitWidth);
+  for (unsigned ShiftAmt = 0; ShiftAmt < BitWidth; ++ShiftAmt) {
+    // Combine the shifted known input bits only for those shift amounts
+    // compatible with its known constraints.
+    if ((ShiftAmt & ~ShiftAmtKZ) != ShiftAmt)
+      continue;
+    if ((ShiftAmt | ShiftAmtKO) != ShiftAmt)
+      continue;
+
+    KnownZero &= KZF(KnownZero2, ShiftAmt);
+    KnownOne  &= KOF(KnownOne2, ShiftAmt);
+  }
+
+  // If there are no compatible shift amounts, then we've proven that the shift
+  // amount must be >= the BitWidth, and the result is undefined. We could
+  // return anything we'd like, but we need to make sure the sets of known bits
+  // stay disjoint (it should be better for some other code to actually
+  // propagate the undef than to pick a value here using known bits).
+  if ((KnownZero & KnownOne) != 0)
+    KnownZero.clearAllBits(), KnownOne.clearAllBits();
+}
+
 static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
                                          APInt &KnownOne, const DataLayout &DL,
                                          unsigned Depth, const Query &Q) {
@@ -1104,48 +1175,54 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
       KnownOne |= APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth);
     break;
   }
-  case Instruction::Shl:
+  case Instruction::Shl: {
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
-    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
-      computeKnownBits(I->getOperand(0), KnownZero, KnownOne, DL, Depth + 1, Q);
-      KnownZero <<= ShiftAmt;
-      KnownOne  <<= ShiftAmt;
-      KnownZero |= APInt::getLowBitsSet(BitWidth, ShiftAmt); // low bits known 0
-    }
+    auto KZF = [BitWidth](const APInt &KnownZero, unsigned ShiftAmt) {
+      return (KnownZero << ShiftAmt) |
+             APInt::getLowBitsSet(BitWidth, ShiftAmt); // Low bits known 0.
+    };
+
+    auto KOF = [BitWidth](const APInt &KnownOne, unsigned ShiftAmt) {
+      return KnownOne << ShiftAmt;
+    };
+
+    computeKnownBitsFromShiftOperator(I, KnownZero, KnownOne,
+                                      KnownZero2, KnownOne2, DL, Depth, Q,
+                                      KZF, KOF);
     break;
-  case Instruction::LShr:
+  }
+  case Instruction::LShr: {
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
-    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      // Compute the new bits that are at the top now.
-      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
+    auto KZF = [BitWidth](const APInt &KnownZero, unsigned ShiftAmt) {
+      return APIntOps::lshr(KnownZero, ShiftAmt) |
+             // High bits known zero.
+             APInt::getHighBitsSet(BitWidth, ShiftAmt);
+    };
 
-      // Unsigned shift right.
-      computeKnownBits(I->getOperand(0), KnownZero, KnownOne, DL, Depth + 1, Q);
-      KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
-      KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
-      // high bits known zero.
-      KnownZero |= APInt::getHighBitsSet(BitWidth, ShiftAmt);
-    }
+    auto KOF = [BitWidth](const APInt &KnownOne, unsigned ShiftAmt) {
+      return APIntOps::lshr(KnownOne, ShiftAmt);
+    };
+
+    computeKnownBitsFromShiftOperator(I, KnownZero, KnownOne,
+                                      KnownZero2, KnownOne2, DL, Depth, Q,
+                                      KZF, KOF);
     break;
-  case Instruction::AShr:
+  }
+  case Instruction::AShr: {
     // (ashr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
-    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      // Compute the new bits that are at the top now.
-      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth-1);
+    auto KZF = [BitWidth](const APInt &KnownZero, unsigned ShiftAmt) {
+      return APIntOps::ashr(KnownZero, ShiftAmt);
+    };
 
-      // Signed shift right.
-      computeKnownBits(I->getOperand(0), KnownZero, KnownOne, DL, Depth + 1, Q);
-      KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
-      KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
+    auto KOF = [BitWidth](const APInt &KnownOne, unsigned ShiftAmt) {
+      return APIntOps::ashr(KnownOne, ShiftAmt);
+    };
 
-      APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
-      if (KnownZero[BitWidth-ShiftAmt-1])    // New bits are known zero.
-        KnownZero |= HighBits;
-      else if (KnownOne[BitWidth-ShiftAmt-1])  // New bits are known one.
-        KnownOne |= HighBits;
-    }
+    computeKnownBitsFromShiftOperator(I, KnownZero, KnownOne,
+                                      KnownZero2, KnownOne2, DL, Depth, Q,
+                                      KZF, KOF);
     break;
+  }
   case Instruction::Sub: {
     bool NSW = cast<OverflowingBinaryOperator>(I)->hasNoSignedWrap();
     computeKnownBitsAddSub(false, I->getOperand(0), I->getOperand(1), NSW,
