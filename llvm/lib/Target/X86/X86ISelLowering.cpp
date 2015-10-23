@@ -2458,17 +2458,27 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                        MachinePointerInfo(), MachinePointerInfo());
 }
 
-/// Return true if the calling convention is one that
-/// supports tail call optimization.
-static bool IsTailCallConvention(CallingConv::ID CC) {
+/// Return true if the calling convention is one that we can guarantee TCO for.
+static bool canGuaranteeTCO(CallingConv::ID CC) {
   return (CC == CallingConv::Fast || CC == CallingConv::GHC ||
           CC == CallingConv::HiPE || CC == CallingConv::HHVM);
 }
 
 /// \brief Return true if the calling convention is a C calling convention.
-static bool IsCCallConvention(CallingConv::ID CC) {
+static bool isCCallConvention(CallingConv::ID CC) {
   return (CC == CallingConv::C || CC == CallingConv::X86_64_Win64 ||
           CC == CallingConv::X86_64_SysV);
+}
+
+/// Return true if we might ever do TCO for calls with this calling convention.
+static bool mayTailCallThisCC(CallingConv::ID CC) {
+  return isCCallConvention(CC) || canGuaranteeTCO(CC);
+}
+
+/// Return true if the function is being made into a tailcall target by
+/// changing its ABI.
+static bool shouldGuaranteeTCO(CallingConv::ID CC, bool GuaranteedTailCallOpt) {
+  return GuaranteedTailCallOpt && canGuaranteeTCO(CC);
 }
 
 bool X86TargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
@@ -2479,17 +2489,10 @@ bool X86TargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
 
   CallSite CS(CI);
   CallingConv::ID CalleeCC = CS.getCallingConv();
-  if (!IsTailCallConvention(CalleeCC) && !IsCCallConvention(CalleeCC))
+  if (!mayTailCallThisCC(CalleeCC))
     return false;
 
   return true;
-}
-
-/// Return true if the function is being made into
-/// a tailcall target by changing its ABI.
-static bool FuncIsMadeTailCallSafe(CallingConv::ID CC,
-                                   bool GuaranteedTailCallOpt) {
-  return GuaranteedTailCallOpt && IsTailCallConvention(CC);
 }
 
 SDValue
@@ -2502,7 +2505,7 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
                                     unsigned i) const {
   // Create the nodes corresponding to a load from this parameter slot.
   ISD::ArgFlagsTy Flags = Ins[i].Flags;
-  bool AlwaysUseMutable = FuncIsMadeTailCallSafe(
+  bool AlwaysUseMutable = shouldGuaranteeTCO(
       CallConv, DAG.getTarget().Options.GuaranteedTailCallOpt);
   bool isImmutable = !AlwaysUseMutable && !Flags.isByVal();
   EVT ValVT;
@@ -2605,7 +2608,7 @@ SDValue X86TargetLowering::LowerFormalArguments(
   bool Is64Bit = Subtarget->is64Bit();
   bool IsWin64 = Subtarget->isCallingConvWin64(CallConv);
 
-  assert(!(isVarArg && IsTailCallConvention(CallConv)) &&
+  assert(!(isVarArg && canGuaranteeTCO(CallConv)) &&
          "Var args not supported with calling convention fastcc, ghc or hipe");
 
   // Assign locations to all of the incoming arguments.
@@ -2716,8 +2719,8 @@ SDValue X86TargetLowering::LowerFormalArguments(
 
   unsigned StackSize = CCInfo.getNextStackOffset();
   // Align stack specially for tail calls.
-  if (FuncIsMadeTailCallSafe(CallConv,
-                             MF.getTarget().Options.GuaranteedTailCallOpt))
+  if (shouldGuaranteeTCO(CallConv,
+                         MF.getTarget().Options.GuaranteedTailCallOpt))
     StackSize = GetAlignedArgumentStackSize(StackSize, DAG);
 
   // If the function takes variable number of arguments, make a frame index for
@@ -2870,7 +2873,7 @@ SDValue X86TargetLowering::LowerFormalArguments(
   } else {
     FuncInfo->setBytesToPopOnReturn(0); // Callee pops nothing.
     // If this is an sret function, the return should pop the hidden pointer.
-    if (!Is64Bit && !IsTailCallConvention(CallConv) &&
+    if (!Is64Bit && !canGuaranteeTCO(CallConv) &&
         !Subtarget->getTargetTriple().isOSMSVCRT() &&
         argsAreStructReturn(Ins) == StackStructReturn)
       FuncInfo->setBytesToPopOnReturn(4);
@@ -3037,7 +3040,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       ++NumTailCalls;
   }
 
-  assert(!(isVarArg && IsTailCallConvention(CallConv)) &&
+  assert(!(isVarArg && canGuaranteeTCO(CallConv)) &&
          "Var args not supported with calling convention fastcc, ghc or hipe");
 
   // Analyze operands of the call, assigning locations to each operand.
@@ -3057,7 +3060,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // own caller's stack.
     NumBytes = 0;
   else if (MF.getTarget().Options.GuaranteedTailCallOpt &&
-           IsTailCallConvention(CallConv))
+           canGuaranteeTCO(CallConv))
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
@@ -3461,7 +3464,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (X86::isCalleePop(CallConv, Is64Bit, isVarArg,
                        DAG.getTarget().Options.GuaranteedTailCallOpt))
     NumBytesForCalleeToPop = NumBytes;    // Callee pops everything
-  else if (!Is64Bit && !IsTailCallConvention(CallConv) &&
+  else if (!Is64Bit && !canGuaranteeTCO(CallConv) &&
            !Subtarget->getTargetTriple().isOSMSVCRT() &&
            SR == StackStructReturn)
     // If this is a call to a struct-return function, the callee
@@ -3603,11 +3606,11 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
     const SmallVectorImpl<ISD::OutputArg> &Outs,
     const SmallVectorImpl<SDValue> &OutVals,
     const SmallVectorImpl<ISD::InputArg> &Ins, SelectionDAG &DAG) const {
-  if (!IsTailCallConvention(CalleeCC) && !IsCCallConvention(CalleeCC))
+  if (!mayTailCallThisCC(CalleeCC))
     return false;
 
   // If -tailcallopt is specified, make fastcc functions tail-callable.
-  const MachineFunction &MF = DAG.getMachineFunction();
+  MachineFunction &MF = DAG.getMachineFunction();
   const Function *CallerF = MF.getFunction();
 
   // If the function return type is x86_fp80 and the callee return type is not,
@@ -3628,7 +3631,7 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
     return false;
 
   if (DAG.getTarget().Options.GuaranteedTailCallOpt) {
-    if (IsTailCallConvention(CalleeCC) && CCMatch)
+    if (canGuaranteeTCO(CalleeCC) && CCMatch)
       return true;
     return false;
   }
@@ -3647,13 +3650,15 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
   if (isCalleeStructRet || isCallerStructRet)
     return false;
 
-  // An stdcall/thiscall caller is expected to clean up its arguments; the
-  // callee isn't going to do that.
+  // Don't do TCO when the current function is expected to clear its stack and
+  // the callee's convention does not match.
   // FIXME: this is more restrictive than needed. We could produce a tailcall
   // when the stack adjustment matches. For example, with a thiscall that takes
   // only one argument.
-  if (!CCMatch && (CallerCC == CallingConv::X86_StdCall ||
-                   CallerCC == CallingConv::X86_ThisCall))
+  bool CallerPopsArgs =
+      X86::isCalleePop(CallerCC, Subtarget->is64Bit(), CallerF->isVarArg(),
+                       /*GuaranteeTCO=*/false);
+  if (CallerPopsArgs && !CCMatch)
     return false;
 
   // Do not sibcall optimize vararg calls unless all arguments are passed via
@@ -3742,7 +3747,6 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
 
     CCInfo.AnalyzeCallOperands(Outs, CC_X86);
     if (CCInfo.getNextStackOffset()) {
-      MachineFunction &MF = DAG.getMachineFunction();
       if (MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn())
         return false;
 
@@ -3931,10 +3935,11 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
 /// Determines whether the callee is required to pop its own arguments.
 /// Callee pop is necessary to support tail calls.
 bool X86::isCalleePop(CallingConv::ID CallingConv,
-                      bool is64Bit, bool IsVarArg, bool TailCallOpt) {
-
-  if (IsTailCallConvention(CallingConv))
-    return IsVarArg ? false : TailCallOpt;
+                      bool is64Bit, bool IsVarArg, bool GuaranteeTCO) {
+  // If GuaranteeTCO is true, we force some calls to be callee pop so that we
+  // can guarantee TCO.
+  if (!IsVarArg && shouldGuaranteeTCO(CallingConv, GuaranteeTCO))
+    return true;
 
   switch (CallingConv) {
   default:
@@ -3942,6 +3947,7 @@ bool X86::isCalleePop(CallingConv::ID CallingConv,
   case CallingConv::X86_StdCall:
   case CallingConv::X86_FastCall:
   case CallingConv::X86_ThisCall:
+  case CallingConv::X86_VectorCall:
     return !is64Bit;
   }
 }
