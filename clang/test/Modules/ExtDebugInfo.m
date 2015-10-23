@@ -19,6 +19,7 @@
 #endif
 
 int foo(ObjCClass *c) {
+  InnerEnum e = e0;
   [c instanceMethodWithInt: 0];
   return [c property];
 }
@@ -30,3 +31,6 @@ int foo(ObjCClass *c) {
 // CHECK-NOT: !DICompositeType(tag: DW_TAG_structure_type,
 // CHECK: ![[MOD]] = !DIModule(scope: null, name: {{.*}}DebugObjC
 // CHECK-NOT: !DICompositeType(tag: DW_TAG_structure_type,
+// CHECK: !DICompositeType(tag: DW_TAG_enumeration_type,
+// CHECK-SAME:             scope: ![[MOD]],
+// CHECK-SAME:             flags: DIFlagFwdDecl)

@@ -12,3 +12,13 @@
 @interface ObjCClass (Category)
 - categoryMethod;
 @end
+
+@protocol ObjCProtocol
+
+typedef enum {
+  e0 = 0
+}  InnerEnum;
+
++ (InnerEnum)protocolMethod;
+
+@end

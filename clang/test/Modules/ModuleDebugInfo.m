@@ -33,6 +33,7 @@
 // CHECK: !DISubprogram(name: "+[ObjCClass classMethod]"
 // CHECK: !DISubprogram(name: "-[ObjCClass instanceMethodWithInt:]"
 // CHECK: !DISubprogram(name: "-[ categoryMethod]"
+// CHECK: !DITypedefType(name: "InnerEnum"
 
 // MODULE-CHECK: !DICompositeType(tag: DW_TAG_structure_type,
 // MODULE-CHECK-SAME:             name: "FwdDecl",

@@ -171,6 +171,10 @@ public:
     return true;
   }
 
+  void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) override {
+    HandleTopLevelDecl(D);
+  }
+
   void HandleTagDeclDefinition(TagDecl *D) override {
     if (Diags.hasErrorOccurred())
       return;
