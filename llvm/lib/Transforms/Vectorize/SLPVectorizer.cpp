@@ -2002,9 +2002,6 @@ void BoUpSLP::reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
 
   SmallVector<Value *, 16> OrigLeft, OrigRight;
 
-  bool AllSameOpcodeLeft = true;
-  bool AllSameOpcodeRight = true;
-
   if (VL.size()) {
     // Peel the first iteration out of the loop since there's nothing
     // interesting to do anyway and it simplifies the checks
@@ -2018,6 +2015,10 @@ void BoUpSLP::reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
     Left.push_back(VLeft);
     Right.push_back(VRight);
   }
+
+  // Keep track if we have instructions with all the same opcode on one side.
+  bool AllSameOpcodeLeft = isa<Instruction>(Left[0]);
+  bool AllSameOpcodeRight = isa<Instruction>(Right[0]);
 
   for (unsigned i = 1, e = VL.size(); i != e; ++i) {
     Instruction *I = cast<Instruction>(VL[i]);
