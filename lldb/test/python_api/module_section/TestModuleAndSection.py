@@ -2,6 +2,8 @@
 Test some SBModule and SBSection APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -28,31 +30,31 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         if not self.TraceOn():
             self.HideStdout()
 
-        print "Number of modules for the target: %d" % target.GetNumModules()
+        print("Number of modules for the target: %d" % target.GetNumModules())
         for module in target.module_iter():
-            print module
+            print(module)
 
         # Get the executable module at index 0.
         exe_module = target.GetModuleAtIndex(0)
 
-        print "Exe module: %s" % str(exe_module)
-        print "Number of sections: %d" % exe_module.GetNumSections()
+        print("Exe module: %s" % str(exe_module))
+        print("Number of sections: %d" % exe_module.GetNumSections())
         INDENT = ' ' * 4
         INDENT2 = INDENT * 2
         for sec in exe_module.section_iter():
-            print sec
-            print INDENT + "Number of subsections: %d" % sec.GetNumSubSections()
+            print(sec)
+            print(INDENT + "Number of subsections: %d" % sec.GetNumSubSections())
             if sec.GetNumSubSections() == 0:
                 for sym in exe_module.symbol_in_section_iter(sec):
-                    print INDENT + str(sym)
-                    print INDENT + "symbol type: %s" % symbol_type_to_str(sym.GetType())
+                    print(INDENT + str(sym))
+                    print(INDENT + "symbol type: %s" % symbol_type_to_str(sym.GetType()))
             else:
                 for subsec in sec:
-                    print INDENT + str(subsec)
+                    print(INDENT + str(subsec))
                     # Now print the symbols belonging to the subsection....
                     for sym in exe_module.symbol_in_section_iter(subsec):
-                        print INDENT2 + str(sym)
-                        print INDENT2 + "symbol type: %s" % symbol_type_to_str(sym.GetType())
+                        print(INDENT2 + str(sym))
+                        print(INDENT2 + "symbol type: %s" % symbol_type_to_str(sym.GetType()))
 
     @python_api_test
     def test_module_and_section_boundary_condition(self):
@@ -68,15 +70,15 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         if not self.TraceOn():
             self.HideStdout()
 
-        print "Number of modules for the target: %d" % target.GetNumModules()
+        print("Number of modules for the target: %d" % target.GetNumModules())
         for module in target.module_iter():
-            print module
+            print(module)
 
         # Get the executable module at index 0.
         exe_module = target.GetModuleAtIndex(0)
 
-        print "Exe module: %s" % str(exe_module)
-        print "Number of sections: %d" % exe_module.GetNumSections()
+        print("Exe module: %s" % str(exe_module))
+        print("Number of sections: %d" % exe_module.GetNumSections())
 
         # Boundary condition testings.  Should not crash lldb!
         exe_module.FindFirstType(None)
@@ -88,7 +90,7 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         # Get the section at index 1.
         if exe_module.GetNumSections() > 1:
             sec1 = exe_module.GetSectionAtIndex(1)
-            print sec1
+            print(sec1)
         else:
             sec1 = None
 
@@ -109,16 +111,17 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         if not self.TraceOn():
             self.HideStdout()
 
-        print "Number of modules for the target: %d" % target.GetNumModules()
+        print("Number of modules for the target: %d" % target.GetNumModules())
         for module in target.module_iter():
-            print module
+            print(module)
 
         # Get the executable module at index 0.
         exe_module = target.GetModuleAtIndex(0)
 
-        print "Exe module: %s" % str(exe_module)
-        print "Number of compile units: %d" % exe_module.GetNumCompileUnits()
+        print("Exe module: %s" % str(exe_module))
+        print("Number of compile units: %d" % exe_module.GetNumCompileUnits())
         INDENT = ' ' * 4
         INDENT2 = INDENT * 2
         for cu in exe_module.compile_unit_iter():
-            print cu
+            print(cu)
+

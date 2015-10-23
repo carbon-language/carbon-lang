@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import lldb_shared
 
 import sys

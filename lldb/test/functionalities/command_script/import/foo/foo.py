@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 def foo_function(debugger, args, result, dict):
-	print >>result,  ("foo says " + args)
+	print("foo says " + args, file=result)
 	return None

@@ -2,6 +2,8 @@
 Test breakpoint conditions with 'breakpoint modify -c <expr> id'.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -126,7 +128,7 @@ class BreakpointConditionsTestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)

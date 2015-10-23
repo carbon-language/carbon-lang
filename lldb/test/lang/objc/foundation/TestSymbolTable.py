@@ -2,6 +2,8 @@
 Test symbol table access for main.m.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -53,14 +55,14 @@ class FoundationSymtabTestCase(TestBase):
         expected_symbols = set(self.symbols_list)
         for symbol in module:
             self.assertTrue(symbol, VALID_SYMBOL)
-            #print "symbol:", symbol
+            #print("symbol:", symbol)
             name = symbol.GetName()
             if name in expected_symbols:
-                #print "Removing %s from known_symbols %s" % (name, expected_symbols)
+                #print("Removing %s from known_symbols %s" % (name, expected_symbols))
                 expected_symbols.remove(name)
 
         # At this point, the known_symbols set should have become an empty set.
         # If not, raise an error.
-        #print "symbols unaccounted for:", expected_symbols
+        #print("symbols unaccounted for:", expected_symbols)
         self.assertTrue(len(expected_symbols) == 0,
                         "All the known symbols are accounted for")

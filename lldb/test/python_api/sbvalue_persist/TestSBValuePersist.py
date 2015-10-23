@@ -1,5 +1,7 @@
 """Test SBValue::Persist"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys, time

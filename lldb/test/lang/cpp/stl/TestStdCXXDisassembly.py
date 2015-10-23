@@ -2,6 +2,8 @@
 Test the lldb disassemble command on lib stdc++.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2
@@ -96,9 +98,9 @@ class StdCXXDisassembleTestCase(TestBase):
             if match:
                 LA = match.group(1)
                 if self.TraceOn():
-                    print "line:", line
-                    print "load address:", LA
-                    print "SA:", SA
+                    print("line:", line)
+                    print("load address:", LA)
+                    print("SA:", SA)
                 if SA and LA:
                     if int(LA, 16) > int(SA, 16):
                         self.runCmd("disassemble -s %s -e %s" % (SA, LA))

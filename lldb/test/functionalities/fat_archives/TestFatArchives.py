@@ -1,6 +1,8 @@
 """
 Test some lldb command abbreviations.
 """
+from __future__ import print_function
+
 import lldb_shared
 
 import commands
@@ -11,11 +13,11 @@ from lldbtest import *
 import lldbutil
 
 def execute_command (command):
-    # print '%% %s' % (command)
+    # print('%% %s' % (command))
     (exit_status, output) = commands.getstatusoutput (command)
     # if output:
-    #     print output
-    # print 'status = %u' % (exit_status)
+    #     print(output)
+    # print('status = %u' % (exit_status))
     return exit_status
 
 class FatArchiveTestCase(TestBase):

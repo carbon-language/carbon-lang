@@ -2,6 +2,8 @@
 Test SBType for ObjC classes.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

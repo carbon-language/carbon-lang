@@ -2,6 +2,8 @@
 Test the use of setjmp/longjmp for non-local goto operations in a single-threaded inferior.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os

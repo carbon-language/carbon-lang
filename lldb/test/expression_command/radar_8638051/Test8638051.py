@@ -2,6 +2,8 @@
 Test the robustness of lldb expression parser.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

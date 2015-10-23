@@ -2,6 +2,8 @@
 Test SBThread APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -85,7 +87,7 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("process status")
 
         proc_of_thread = thread.GetProcess()
-        #print "proc_of_thread:", proc_of_thread
+        #print("proc_of_thread:", proc_of_thread)
         self.assertTrue(proc_of_thread.GetProcessID() == process.GetProcessID())
 
     def get_stop_description(self):
@@ -224,8 +226,8 @@ class ThreadAPITestCase(TestBase):
         start_addr = lineEntry.GetStartAddress().GetLoadAddress(target)
         end_addr = lineEntry.GetEndAddress().GetLoadAddress(target)
         if self.TraceOn():
-            print "start addr:", hex(start_addr)
-            print "end addr:", hex(end_addr)
+            print("start addr:", hex(start_addr))
+            print("end addr:", hex(end_addr))
 
         # Disable the breakpoint.
         self.assertTrue(target.DisableAllBreakpoints())

@@ -2,6 +2,8 @@
 Test that expr will time out and allow other threads to run if it blocks.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -33,7 +35,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
         main_file_spec = lldb.SBFileSpec ("locking.c")
         breakpoint = target.BreakpointCreateBySourceRegex('Break here', main_file_spec)
         if self.TraceOn():
-            print "breakpoint:", breakpoint
+            print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)

@@ -1,5 +1,7 @@
 """Look up type information for typedefs of same name at different lexical scope and check for correct display."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

@@ -1,5 +1,7 @@
 """Test lldb's stepping speed."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys
@@ -21,9 +23,9 @@ class RunHooksThenSteppingsBench(BenchBase):
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldb_runhooks_then_steppings(self):
         """Test lldb steppings on a large executable."""
-        print
+        print()
         self.run_lldb_runhooks_then_steppings(self.count)
-        print "lldb stepping benchmark:", self.stopwatch
+        print("lldb stepping benchmark:", self.stopwatch)
 
     def run_lldb_runhooks_then_steppings(self, count):
         import pexpect

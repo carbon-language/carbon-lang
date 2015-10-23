@@ -2,6 +2,8 @@
 Test the iteration protocol for frame registers.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -44,35 +46,35 @@ class RegistersIteratorTestCase(TestBase):
                 for frame in thread:
                     # Dump the registers of this frame using lldbutil.get_GPRs() and friends.
                     if self.TraceOn():
-                        print frame
+                        print(frame)
 
                     REGs = lldbutil.get_GPRs(frame)
                     num = len(REGs)
                     if self.TraceOn():
-                        print "\nNumber of general purpose registers: %d" % num
+                        print("\nNumber of general purpose registers: %d" % num)
                     for reg in REGs:
                         self.assertTrue(reg)
                         if self.TraceOn():
-                            print "%s => %s" % (reg.GetName(), reg.GetValue())
+                            print("%s => %s" % (reg.GetName(), reg.GetValue()))
 
                     REGs = lldbutil.get_FPRs(frame)
                     num = len(REGs)
                     if self.TraceOn():
-                        print "\nNumber of floating point registers: %d" % num
+                        print("\nNumber of floating point registers: %d" % num)
                     for reg in REGs:
                         self.assertTrue(reg)
                         if self.TraceOn():
-                            print "%s => %s" % (reg.GetName(), reg.GetValue())
+                            print("%s => %s" % (reg.GetName(), reg.GetValue()))
 
                     REGs = lldbutil.get_ESRs(frame)
                     if self.platformIsDarwin():
                         num = len(REGs)
                         if self.TraceOn():
-                            print "\nNumber of exception state registers: %d" % num
+                            print("\nNumber of exception state registers: %d" % num)
                         for reg in REGs:
                             self.assertTrue(reg)
                             if self.TraceOn():
-                                print "%s => %s" % (reg.GetName(), reg.GetValue())
+                                print("%s => %s" % (reg.GetName(), reg.GetValue()))
                     else:
                         self.assertIsNone(REGs)
 

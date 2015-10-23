@@ -130,7 +130,7 @@ class Curses(test_results.ResultsFormatter):
                     worker_index = test_event['worker_index']
                 if 'event' in test_event:
                     check_for_one_key = True
-                    #print >>self.events_file, str(test_event)
+                    #print(str(test_event), file=self.events_file)
                     event = test_event['event']   
                     if self.status_panel:
                         self.status_panel.update_status('time', str(datetime.timedelta(seconds=math.floor(time.time() - self.start_time))))

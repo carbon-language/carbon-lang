@@ -796,7 +796,7 @@ def print_registers(frame, string_buffer = False):
     registerSet = frame.GetRegisters() # Return type of SBValueList.
     print("Frame registers (size of register set = %d):" % registerSet.GetSize(), file=output)
     for value in registerSet:
-        #print >> output, value 
+        #print(value, file=output)
         print("%s (number of children = %d):" % (value.GetName(), value.GetNumChildren()), file=output)
         for child in value:
             print("Name: %s, Value: %s" % (child.GetName(), child.GetValue()), file=output)
@@ -824,7 +824,7 @@ def get_GPRs(frame):
         from lldbutil import get_GPRs
         regs = get_GPRs(frame)
         for reg in regs:
-            print "%s => %s" % (reg.GetName(), reg.GetValue())
+            print("%s => %s" % (reg.GetName(), reg.GetValue()))
         ...
     """
     return get_registers(frame, "general purpose")
@@ -837,7 +837,7 @@ def get_FPRs(frame):
         from lldbutil import get_FPRs
         regs = get_FPRs(frame)
         for reg in regs:
-            print "%s => %s" % (reg.GetName(), reg.GetValue())
+            print("%s => %s" % (reg.GetName(), reg.GetValue()))
         ...
     """
     return get_registers(frame, "floating point")
@@ -850,7 +850,7 @@ def get_ESRs(frame):
         from lldbutil import get_ESRs
         regs = get_ESRs(frame)
         for reg in regs:
-            print "%s => %s" % (reg.GetName(), reg.GetValue())
+            print("%s => %s" % (reg.GetName(), reg.GetValue()))
         ...
     """
     return get_registers(frame, "exception state")

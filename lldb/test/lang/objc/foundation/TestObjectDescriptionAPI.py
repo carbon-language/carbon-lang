@@ -2,6 +2,8 @@
 Test SBValue.GetObjectDescription() with the value from SBTarget.FindGlobalVariables().
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -52,8 +54,8 @@ class ObjectDescriptionAPITestCase(TestBase):
         for v in value_list1:
             self.DebugSBValue(v)
             if self.TraceOn():
-                print "val:", v
-                print "object description:", v.GetObjectDescription()
+                print("val:", v)
+                print("object description:", v.GetObjectDescription())
             if v.GetName() == 'my_global_str':
                 self.assertTrue(v.GetObjectDescription() == 'This is a global string')
 
@@ -62,7 +64,7 @@ class ObjectDescriptionAPITestCase(TestBase):
         for v in value_list2:
             self.DebugSBValue(v)
             if self.TraceOn():
-                print "val:", v
-                print "object description:", v.GetObjectDescription()
+                print("val:", v)
+                print("object description:", v.GetObjectDescription())
             if v.GetName() == 'my_global_str':
                 self.assertTrue(v.GetObjectDescription() == 'This is a global string')

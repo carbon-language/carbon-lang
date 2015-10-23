@@ -2,6 +2,8 @@
 Test that clang produces the __apple accelerator tables, for example, __apple_types, correctly.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -35,29 +37,29 @@ class AppleTypesTestCase(TestBase):
         if not self.TraceOn():
             self.HideStdout()
 
-        print "Number of modules for the target: %d" % target.GetNumModules()
+        print("Number of modules for the target: %d" % target.GetNumModules())
         for module in target.module_iter():
-            print module
+            print(module)
 
         # Get the executable module at index 0.
         exe_module = target.GetModuleAtIndex(0)
 
         dwarf_section = exe_module.FindSection("__DWARF")
         self.assertTrue(dwarf_section)
-        print "__DWARF section:", dwarf_section
-        print "Number of sub-sections: %d" % dwarf_section.GetNumSubSections()
+        print("__DWARF section:", dwarf_section)
+        print("Number of sub-sections: %d" % dwarf_section.GetNumSubSections())
         INDENT = ' ' * 4
         for subsec in dwarf_section:
-            print INDENT + str(subsec)
+            print(INDENT + str(subsec))
 
         debug_str_sub_section = dwarf_section.FindSubSection("__debug_str")
         self.assertTrue(debug_str_sub_section)
-        print "__debug_str sub-section:", debug_str_sub_section
+        print("__debug_str sub-section:", debug_str_sub_section)
 
         # Find our __apple_types section by name.
         apple_types_sub_section = dwarf_section.FindSubSection("__apple_types")
         self.assertTrue(apple_types_sub_section)
-        print "__apple_types sub-section:", apple_types_sub_section
+        print("__apple_types sub-section:", apple_types_sub_section)
 
         # These other three all important subsections should also be present.
         self.assertTrue(dwarf_section.FindSubSection("__apple_names") and

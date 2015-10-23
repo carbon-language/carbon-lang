@@ -1,5 +1,7 @@
 """Test variable with function ptr type and that break on the function works."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

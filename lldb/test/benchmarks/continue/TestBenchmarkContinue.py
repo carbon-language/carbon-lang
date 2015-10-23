@@ -2,6 +2,8 @@
 Test lldb data formatter subsystem.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -61,4 +63,4 @@ class TestBenchmarkContinue(BenchBase):
             lldbutil.continue_to_breakpoint(self.process(), bkpt)
             lldbutil_sw.stop()
             
-        print "runCmd: %s\nlldbutil: %s" % (runCmd_sw,lldbutil_sw)
+        print("runCmd: %s\nlldbutil: %s" % (runCmd_sw,lldbutil_sw))

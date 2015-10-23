@@ -1,5 +1,7 @@
 """Test the go DWARF type parsing."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -103,8 +105,8 @@ class TestGoASTContext(TestBase):
         self.assertEqual(1, v.GetNumChildren())
         self.assertEqual('-10', v.GetChildAtIndex(0).value)
         
-        # print
-        # print os.getpid()
+        # print()
+        # print(os.getpid())
         # time.sleep(60)
         v = self.var('theStruct')
         if v.TypeIsPointerType():

@@ -2,6 +2,8 @@
 Test SBProcess APIs, including ReadMemory(), WriteMemory(), and others.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

@@ -1,5 +1,7 @@
 """Test that we can debug inferiors that handle SIGSEGV by themselves"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os

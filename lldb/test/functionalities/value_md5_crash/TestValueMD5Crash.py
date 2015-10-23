@@ -2,6 +2,8 @@
 Verify that the hash computing logic for ValueObject's values can't crash us.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

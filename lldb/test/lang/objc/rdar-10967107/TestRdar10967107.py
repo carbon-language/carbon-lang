@@ -2,6 +2,8 @@
 Test that CoreFoundation classes CFGregorianDate and CFRange are not improperly uniqued
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

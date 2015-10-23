@@ -1,5 +1,7 @@
 """Test the SBData APIs."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -41,16 +43,16 @@ class SBDataAPICase(TestBase):
 
         frame = thread.GetSelectedFrame()
         if self.TraceOn():
-            print frame
+            print(frame)
         foobar = frame.FindVariable('foobar')
         self.assertTrue(foobar.IsValid())
         if self.TraceOn():
-            print foobar
+            print(foobar)
 
         data = foobar.GetPointeeData(0, 2)
 
         if self.TraceOn():
-            print data
+            print(data)
 
         offset = 0
         error = lldb.SBError()
@@ -96,7 +98,7 @@ class SBDataAPICase(TestBase):
         data = star_foobar.GetData()
 
         if self.TraceOn():
-            print data
+            print(data)
         
         offset = 0
         self.assert_data(data.GetUnsignedInt32, offset, 1)
@@ -114,12 +116,12 @@ class SBDataAPICase(TestBase):
         new_foobar = foobar.CreateValueFromAddress("f00", foobar_addr, star_foobar.GetType())
         self.assertTrue(new_foobar.IsValid())
         if self.TraceOn():
-            print new_foobar
+            print(new_foobar)
         
         data = new_foobar.GetData()
 
         if self.TraceOn():
-            print data
+            print(data)
 
         self.assertTrue(data.uint32[0] == 8, 'then foo[1].a == 8')
         self.assertTrue(data.uint32[1] == 7, 'then foo[1].b == 7')
@@ -138,7 +140,7 @@ class SBDataAPICase(TestBase):
         data = new_foobar.GetData()
 
         if self.TraceOn():
-            print data
+            print(data)
 
         offset = 0
         self.assert_data(data.GetUnsignedInt32, offset, 8)
@@ -155,10 +157,10 @@ class SBDataAPICase(TestBase):
         data = barfoo.GetData()
 
         if self.TraceOn():
-            print barfoo
+            print(barfoo)
 
         if self.TraceOn():
-            print data
+            print(data)
 
         offset = 0
         self.assert_data(data.GetUnsignedInt32, offset, 1)
@@ -178,7 +180,7 @@ class SBDataAPICase(TestBase):
         new_object = barfoo.CreateValueFromData("new_object",data,barfoo.GetType().GetBasicType(lldb.eBasicTypeInt))
 
         if self.TraceOn():
-            print new_object
+            print(new_object)
         
         self.assertTrue(new_object.GetValue() == "1", 'new_object == 1')
 
@@ -192,7 +194,7 @@ class SBDataAPICase(TestBase):
         data.Append(data2)
         
         if self.TraceOn():
-            print data
+            print(data)
 
         # this breaks on EBCDIC
         offset = 0

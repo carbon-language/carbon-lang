@@ -2,6 +2,8 @@
 Test SBSection APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 from lldbtest import *

@@ -2,6 +2,8 @@
 Test that we are able to properly report a usable dynamic type
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

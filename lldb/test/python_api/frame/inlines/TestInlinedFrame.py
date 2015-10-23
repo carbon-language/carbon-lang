@@ -2,6 +2,8 @@
 Testlldb Python SBFrame APIs IsInlined() and GetFunctionName().
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -33,7 +35,7 @@ class InlinedFrameAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by the name of 'inner_inline'.
         breakpoint = target.BreakpointCreateByName('inner_inline', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() > 1,
                         VALID_BREAKPOINT)
@@ -48,8 +50,8 @@ class InlinedFrameAPITestCase(TestBase):
         import lldbutil
         stack_traces1 = lldbutil.print_stacktraces(process, string_buffer=True)
         if self.TraceOn():
-            print "Full stack traces when first stopped on the breakpoint 'inner_inline':"
-            print stack_traces1
+            print("Full stack traces when first stopped on the breakpoint 'inner_inline':")
+            print(stack_traces1)
 
         # The first breakpoint should correspond to an inlined call frame.
         # If it's an inlined call frame, expect to find, in the stack trace,
@@ -70,7 +72,7 @@ class InlinedFrameAPITestCase(TestBase):
                             PROCESS_STOPPED)
             stack_traces2 = lldbutil.print_stacktraces(process, string_buffer=True)
             if self.TraceOn():
-                print "Full stack traces when stopped on the breakpoint 'inner_inline' for the second time:"
-                print stack_traces2
+                print("Full stack traces when stopped on the breakpoint 'inner_inline' for the second time:")
+                print(stack_traces2)
                 self.expect(stack_traces2, "Second stop at %s:%d" % (self.source, self.second_stop), exe=False,
                             substrs = ['%s:%d' % (self.source, self.second_stop)])

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import lldb_shared
 
 import gdbremote_testcase
@@ -99,7 +101,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Ensure auxv data is a multiple of 2*word_size (there should be two unsigned long fields per auxv entry).
         self.assertEquals(len(auxv_data) % (2*word_size), 0)
-        # print "auxv contains {} entries".format(len(auxv_data) / (2*word_size))
+        # print("auxv contains {} entries".format(len(auxv_data) / (2*word_size)))
 
     @debugserver_test
     def test_auxv_data_is_correct_size_debugserver(self):
@@ -137,7 +139,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         for auxv_key in auxv_dict:
             self.assertTrue(auxv_key >= 1)
             self.assertTrue(auxv_key <= 1000)
-        # print "auxv dict: {}".format(auxv_dict)
+        # print("auxv dict: {}".format(auxv_dict))
 
     @debugserver_test
     def test_auxv_keys_look_valid_debugserver(self):

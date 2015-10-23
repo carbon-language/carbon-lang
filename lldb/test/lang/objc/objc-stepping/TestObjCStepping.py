@@ -1,5 +1,7 @@
 """Test stepping through ObjC method dispatch in various forms."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -85,7 +87,7 @@ class TestObjCStepping(TestBase):
         className = mySource_isa.GetSummary ()
 
         if self.TraceOn():
-             print mySource_isa
+             print(mySource_isa)
 
         # Lets delete mySource so we can check that after stepping a child variable
         # with no parent persists and is useful.
@@ -127,7 +129,7 @@ class TestObjCStepping(TestBase):
         newClassName = mySource_isa.GetSummary ()
 
         if self.TraceOn():
-             print mySource_isa
+             print(mySource_isa)
 
         self.assertTrue (newClassName != className, "The isa did indeed change, swizzled!")
 

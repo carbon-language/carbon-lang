@@ -1,5 +1,7 @@
 """Test for the JITLoaderGDB interface"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2

@@ -2,6 +2,8 @@
 Use lldb Python SBWatchpoint API to set the ignore count.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -68,12 +70,12 @@ class WatchpointIgnoreCountTestCase(TestBase):
         self.assertTrue(watchpoint.GetIgnoreCount() == 0)
         watch_id = watchpoint.GetID()
         self.assertTrue(watch_id != 0)
-        print watchpoint
+        print(watchpoint)
 
         # Now immediately set the ignore count to 2.  When we continue, expect the
         # inferior to run to its completion without stopping due to watchpoint.
         watchpoint.SetIgnoreCount(2)
-        print watchpoint
+        print(watchpoint)
         process.Continue()
 
         # At this point, the inferior process should have exited.
@@ -83,4 +85,4 @@ class WatchpointIgnoreCountTestCase(TestBase):
         self.assertTrue(watchpoint)
         self.assertTrue(watchpoint.GetWatchSize() == 4)
         self.assertTrue(watchpoint.GetHitCount() == 2)
-        print watchpoint
+        print(watchpoint)

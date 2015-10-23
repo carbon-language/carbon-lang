@@ -2,6 +2,8 @@
 Use lldb Python SBtarget.WatchAddress() API to create a watchpoint for write of '*g_char_ptr'.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -68,7 +70,7 @@ class TargetWatchAddressAPITestCase(TestBase):
         if not self.TraceOn():
             self.HideStdout()
 
-        print watchpoint
+        print(watchpoint)
 
         # Continue.  Expect the program to stop due to the variable being written to.
         process.Continue()

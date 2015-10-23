@@ -2,6 +2,8 @@
 Test some SBValue APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -73,10 +75,10 @@ class ValueAPITestCase(TestBase):
         cvf = lldbutil.ChildVisitingFormatter(indent_child=2)
         rdf = lldbutil.RecursiveDecentFormatter(indent_child=2)
         if self.TraceOn():
-            print fmt.format(days_of_week)
-            print cvf.format(days_of_week)
-            print cvf.format(weekdays)
-            print rdf.format(g_table)
+            print(fmt.format(days_of_week))
+            print(cvf.format(days_of_week))
+            print(cvf.format(weekdays))
+            print(rdf.format(g_table))
 
         # Get variable 'my_int_ptr'.
         value = frame0.FindVariable('my_int_ptr')

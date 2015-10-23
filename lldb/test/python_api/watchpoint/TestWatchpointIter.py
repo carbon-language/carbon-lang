@@ -2,6 +2,8 @@
 Use lldb Python SBTarget API to iterate on the watchpoint(s) for the target.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -84,11 +86,11 @@ class WatchpointIteratorTestCase(TestBase):
         # We currently only support hardware watchpoint.  Verify that we have a
         # meaningful hardware index at this point.  Exercise the printed repr of
         # SBWatchpointLocation.
-        print watchpoint
+        print(watchpoint)
         self.assertTrue(watchpoint.GetHardwareIndex() != -1)
 
         # SBWatchpoint.GetDescription() takes a description level arg.
-        print lldbutil.get_description(watchpoint, lldb.eDescriptionLevelFull)
+        print(lldbutil.get_description(watchpoint, lldb.eDescriptionLevelFull))
 
         # Now disable the 'rw' watchpoint.  The program won't stop when it reads
         # 'global' next.
@@ -108,4 +110,5 @@ class WatchpointIteratorTestCase(TestBase):
             self.assertTrue(watchpoint)
             self.assertTrue(watchpoint.GetWatchSize() == 4)
             self.assertTrue(watchpoint.GetHitCount() == 1)
-            print watchpoint
+            print(watchpoint)
+

@@ -2,6 +2,8 @@
 Test some target commands: create, list, select, variable.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb
@@ -76,7 +78,7 @@ class targetCommandTestCase(TestBase):
                 if match:
                     # We will start from (index + 1) ....
                     base = int(match.group(1), 10) + 1
-                    #print "base is:", base
+                    #print("base is:", base)
                     break;
 
         self.runCmd("target create " + exe_a, CURRENT_EXECUTABLE_SET)

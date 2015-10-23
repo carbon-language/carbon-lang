@@ -2,6 +2,8 @@
 Test that the Python operating system plugin works correctly
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

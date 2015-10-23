@@ -1,5 +1,7 @@
 """Test that we are able to evaluate expressions when the inferior is blocked in a syscall"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os

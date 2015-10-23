@@ -2,6 +2,8 @@
 Test lldb breakpoint ids.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -32,7 +34,7 @@ class TestCPPBreakpointLocations(TestBase):
         for name in names:
             found = name in bp_loc_names
             if not found:
-                print "Didn't find '%s' in: %s" % (name, bp_loc_names)
+                print("Didn't find '%s' in: %s" % (name, bp_loc_names))
             self.assertTrue (found, "Make sure we find all required locations")
         
     def breakpoint_id_tests (self):

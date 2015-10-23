@@ -2,6 +2,8 @@
 Test SBprocess and SBThread APIs with printing of the stack traces using lldbutil.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

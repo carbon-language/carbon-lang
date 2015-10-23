@@ -2,6 +2,8 @@
 Test lldb-mi -data-xxx commands.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2

@@ -1,6 +1,8 @@
 """Test evaluating expressions which ref. index variable 'i' which just goes
 from out of scope to in scope when stopped at the breakpoint."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb

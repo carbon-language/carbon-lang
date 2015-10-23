@@ -1,5 +1,7 @@
 """Test that lldb functions correctly after the inferior has crashed."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

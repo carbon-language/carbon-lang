@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
+from __future__ import print_function
+
 import math, os.path, re, sys, time, unittest
 
 def setupSysPath():
   testPath = sys.path[0]
   rem = re.match("(^.*/)test$", testPath)
   if not rem:
-    print "This script expects to reside in .../test."
+    print("This script expects to reside in .../test.")
     sys.exit(-1)
   lldbBasePath = rem.group(1)
   lldbDebugPythonPath = "build/Debug/LLDB.framework/Resources/Python"
@@ -18,8 +20,8 @@ def setupSysPath():
   if os.path.isfile(lldbReleasePythonPath + "/lldb.py"):
     lldbPythonPath = lldbReleasePythonPath
   if not lldbPythonPath:
-    print "This script requires lldb.py to be in either " + lldbDebugPythonPath,
-    print "or" + lldbReleasePythonPath
+    print("This script requires lldb.py to be in either " + lldbDebugPythonPath, end='')
+    print("or" + lldbReleasePythonPath)
     sys.exit(-1)
   sys.path.append(lldbPythonPath)
 
@@ -72,8 +74,8 @@ class ExecutionTimes:
           sampleVariance += (time - sampleMean) ** 2
         sampleVariance /= sampleCount
         sampleStandardDeviation = math.sqrt(sampleVariance)
-        print key + ": [" + prettyTime(sampleMin) + ", " + prettyTime(sampleMax) + "] ",
-        print "µ " + prettyTime(sampleMean) + ", σ " + prettyTime(sampleStandardDeviation)
+        print(key + ": [" + prettyTime(sampleMin) + ", " + prettyTime(sampleMax) + "] ", end='')
+        print("µ " + prettyTime(sampleMean) + ", σ " + prettyTime(sampleStandardDeviation))
   m_executionTimes = None
 
 setupSysPath()
@@ -86,7 +88,7 @@ class LLDBTestCase(unittest.TestCase):
     debugger.SetAsync(True)
     self.m_commandInterpreter = debugger.GetCommandInterpreter()
     if not self.m_commandInterpreter:
-      print "Couldn't get the command interpreter"
+      print("Couldn't get the command interpreter")
       sys.exit(-1)
   def runCommand(self, command, component):
     res = lldb.SBCommandReturnObject()
@@ -104,7 +106,7 @@ class LLDBTestCase(unittest.TestCase):
 class SanityCheckTestCase(LLDBTestCase):
   def runTest(self):
     ret = self.runCommand("show arch", "show-arch")
-    #print ret
+    #print(ret)
   def getCategories(self):
     return []
 

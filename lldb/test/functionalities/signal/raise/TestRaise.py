@@ -1,5 +1,7 @@
 """Test that we handle inferiors that send signals to themselves"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -184,7 +186,7 @@ class RaiseTestCase(TestBase):
         # The last WaitForEvent call will time out after 2 seconds.
         while listener.WaitForEvent(2, event):
             if self.TraceOn():
-                print "Process changing state to:", self.dbg.StateAsCString(process.GetStateFromEvent(event))
+                print("Process changing state to:", self.dbg.StateAsCString(process.GetStateFromEvent(event)))
 
         # now the process should be stopped
         self.assertEqual(process.GetState(), lldb.eStateStopped, PROCESS_STOPPED)
@@ -204,7 +206,7 @@ class RaiseTestCase(TestBase):
         # Clear the events again
         while listener.WaitForEvent(2, event):
             if self.TraceOn():
-                print "Process changing state to:", self.dbg.StateAsCString(process.GetStateFromEvent(event))
+                print("Process changing state to:", self.dbg.StateAsCString(process.GetStateFromEvent(event)))
 
         # The process should be stopped due to a signal
         self.assertEqual(process.GetState(), lldb.eStateStopped)

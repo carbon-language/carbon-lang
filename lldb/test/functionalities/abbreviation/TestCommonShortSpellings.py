@@ -3,6 +3,8 @@ Test some lldb command abbreviations to make sure the common short spellings of
 many commands remain available even after we add/delete commands in the future.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

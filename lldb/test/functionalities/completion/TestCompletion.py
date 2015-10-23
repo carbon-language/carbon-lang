@@ -2,6 +2,8 @@
 Test the lldb command line completion mechanism.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -301,13 +303,13 @@ class CommandLineCompletionTestCase(TestBase):
         
         with open('child_send.txt', 'r') as fs:
             if self.TraceOn():
-                print "\n\nContents of child_send.txt:"
-                print fs.read()
+                print("\n\nContents of child_send.txt:")
+                print(fs.read())
         with open('child_read.txt', 'r') as fr:
             from_child = fr.read()
             if self.TraceOn():
-                print "\n\nContents of child_read.txt:"
-                print from_child
+                print("\n\nContents of child_read.txt:")
+                print(from_child)
 
             # The matching could be verbatim or using generic re pattern.
             for p in patterns:

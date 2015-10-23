@@ -4,6 +4,8 @@ Test that lldb command "command source" works correctly.
 See also http://llvm.org/viewvc/llvm-project?view=rev&revision=109673.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys

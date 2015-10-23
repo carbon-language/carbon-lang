@@ -2,6 +2,8 @@
 Test that we can backtrace correctly with 'sigtramp' functions on the stack
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -62,9 +64,9 @@ class SigtrampUnwind(TestBase):
                 found_main = True
 
         if self.TraceOn():
-            print "Backtrace once we're stopped:"
+            print("Backtrace once we're stopped:")
             for f in thread.frames:
-                print "  %d %s" % (f.GetFrameID(), f.GetFunctionName())
+                print("  %d %s" % (f.GetFrameID(), f.GetFunctionName()))
 
         if found_handler == False:
             self.fail("Unable to find handler() in backtrace.")

@@ -2,6 +2,8 @@
 Test conditionally break on a function and inspect its variables.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -61,7 +63,7 @@ class ConditionalBreakTestCase(TestBase):
         # like to try for at most 10 times.
         for j in range(10):
             if self.TraceOn():
-                print "j is: ", j
+                print("j is: ", j)
             thread = process.GetThreadAtIndex(0)
             
             if thread.GetNumFrames() >= 2:
@@ -94,7 +96,7 @@ class ConditionalBreakTestCase(TestBase):
         # breakpoint such that lldb only stops when the caller of c() is a().
         # the "my" package that defines the date() function.
         if self.TraceOn():
-            print "About to source .lldb"
+            print("About to source .lldb")
 
         if not self.TraceOn():
             self.HideStdout()
@@ -107,13 +109,13 @@ class ConditionalBreakTestCase(TestBase):
         self.runCmd ("break list")
 
         if self.TraceOn():
-            print "About to run."
+            print("About to run.")
         self.runCmd("run", RUN_SUCCEEDED)
 
         self.runCmd ("break list")
 
         if self.TraceOn():
-            print "Done running"
+            print("Done running")
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

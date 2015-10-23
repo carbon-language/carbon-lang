@@ -2,6 +2,8 @@
 Test "print object" where another thread blocks the print object from making progress.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -65,7 +67,7 @@ class PrintObjTestCase(TestBase):
         self.assertTrue(other_thread)
         process.SetSelectedThread(other_thread)
         if self.TraceOn():
-            print "selected thread:" + lldbutil.get_description(other_thread)
+            print("selected thread:" + lldbutil.get_description(other_thread))
         self.runCmd("thread backtrace")
 
         # We want to traverse the frame to the one corresponding to blocked.m to
@@ -78,7 +80,7 @@ class PrintObjTestCase(TestBase):
             if name == 'main':
                 other_thread.SetSelectedFrame(i)
                 if self.TraceOn():
-                    print "selected frame:" + lldbutil.get_description(frame)
+                    print("selected frame:" + lldbutil.get_description(frame))
                 break
 
         self.expect("po lock_me", OBJECT_PRINTED_CORRECTLY,

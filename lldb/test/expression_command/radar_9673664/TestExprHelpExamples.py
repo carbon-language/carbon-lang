@@ -2,6 +2,8 @@
 Test example snippets from the lldb 'help expression' output.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

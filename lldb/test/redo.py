@@ -90,7 +90,7 @@ def redo(suffix, dir, names):
 
     for name in names:
         if name.endswith(suffix):
-            #print "Find a log file:", name
+            #print("Find a log file:", name)
             if name.startswith("Error") or name.startswith("Failure"):
                 if filename_components:
                     if not all([comp in name for comp in filename_components]):
@@ -166,7 +166,7 @@ def main():
             print("No default session directory found, please specify it explicitly.")
             usage()
 
-    #print "The test directory:", test_dir
+    #print("The test directory:", test_dir)
     session_dir_path = where(session_dir, test_dir)
 
     print("Using session dir path:", session_dir_path)

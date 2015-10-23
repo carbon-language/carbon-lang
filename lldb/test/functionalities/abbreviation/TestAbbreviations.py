@@ -2,6 +2,8 @@
 Test some lldb command abbreviations and aliases for proper resolution.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -79,9 +81,9 @@ class AbbreviationsTestCase(TestBase):
         self.assertFalse(result.Succeeded())
 
         # Check a command that wants the raw input.
-        command_interpreter.ResolveCommand(r'''sc print "\n\n\tHello!\n"''', result)
+        command_interpreter.ResolveCommand(r'''sc print("\n\n\tHello!\n")''', result)
         self.assertTrue(result.Succeeded())
-        self.assertEqual(r'''script print "\n\n\tHello!\n"''', result.GetOutput())
+        self.assertEqual(r'''script print("\n\n\tHello!\n")''', result.GetOutput())
 
         # Prompt changing stuff should be tested, but this doesn't seem like the
         # right test to do it in.  It has nothing to do with aliases or abbreviations.

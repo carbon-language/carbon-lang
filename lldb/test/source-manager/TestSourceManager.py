@@ -9,6 +9,8 @@ o test_modify_source_file_while_debugging:
   Test the caching mechanism of the source manager.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb
@@ -135,24 +137,24 @@ class SourceManagerTestCase(TestBase):
         with open('main.c', 'r') as f:
             original_content = f.read()
             if self.TraceOn():
-                print "original content:", original_content
+                print("original content:", original_content)
 
         # Modify the in-memory copy of the original source code.
         new_content = original_content.replace('Hello world', 'Hello lldb', 1)
 
         # This is the function to restore the original content.
         def restore_file():
-            #print "os.path.getmtime() before restore:", os.path.getmtime('main.c')
+            #print("os.path.getmtime() before restore:", os.path.getmtime('main.c'))
             time.sleep(1)
             with open('main.c', 'wb') as f:
                 f.write(original_content)
             if self.TraceOn():
                 with open('main.c', 'r') as f:
-                    print "content restored to:", f.read()
+                    print("content restored to:", f.read())
             # Touch the file just to be sure.
             os.utime('main.c', None)
             if self.TraceOn():
-                print "os.path.getmtime() after restore:", os.path.getmtime('main.c')
+                print("os.path.getmtime() after restore:", os.path.getmtime('main.c'))
 
 
 
@@ -161,8 +163,8 @@ class SourceManagerTestCase(TestBase):
             time.sleep(1)
             f.write(new_content)
             if self.TraceOn():
-                print "new content:", new_content
-                print "os.path.getmtime() after writing new content:", os.path.getmtime('main.c')
+                print("new content:", new_content)
+                print("os.path.getmtime() after writing new content:", os.path.getmtime('main.c'))
             # Add teardown hook to restore the file to the original content.
             self.addTearDownHook(restore_file)
 

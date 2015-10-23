@@ -2,6 +2,8 @@
 Test the lldb command line takes a filename with single quote chars.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -57,13 +59,13 @@ class SingleQuoteInCommandLineTestCase(TestBase):
         
         with open('child_send.txt', 'r') as fs:
             if self.TraceOn():
-                print "\n\nContents of child_send.txt:"
-                print fs.read()
+                print("\n\nContents of child_send.txt:")
+                print(fs.read())
         with open('child_read.txt', 'r') as fr:
             from_child = fr.read()
             if self.TraceOn():
-                print "\n\nContents of child_read.txt:"
-                print from_child
+                print("\n\nContents of child_read.txt:")
+                print(from_child)
 
             self.expect(from_child, exe=False,
                 substrs = ["Current executable set to"])

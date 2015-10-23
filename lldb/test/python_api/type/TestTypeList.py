@@ -2,6 +2,8 @@
 Test SBType and SBTypeList API.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -51,7 +53,7 @@ class TypeAndTypeListTestCase(TestBase):
         # Get the type 'Task'.
         type_list = target.FindTypes('Task')
         if self.TraceOn():
-            print "Size of type_list from target.FindTypes('Task') query: %d" % type_list.GetSize()
+            print("Size of type_list from target.FindTypes('Task') query: %d" % type_list.GetSize())
         self.assertTrue(len(type_list) >= 1) # a second Task make be scared up by the Objective-C runtime
         for type in type_list:
             self.assertTrue(type)

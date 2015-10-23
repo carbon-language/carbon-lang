@@ -8,6 +8,8 @@ Provides classes used by the test results reporting infrastructure
 within the LLDB test suite.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import argparse

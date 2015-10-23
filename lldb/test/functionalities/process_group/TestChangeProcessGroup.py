@@ -1,5 +1,7 @@
 """Test that we handle inferiors which change their process group"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -39,7 +41,7 @@ class ChangeProcessGroupTestCase(TestBase):
             if err.Success() and retcode == 0:
                 break
             else:
-                print msg
+                print(msg)
             if i < max_attempts:
                 # Exponential backoff!
                 time.sleep(pow(2, i) * 0.25)

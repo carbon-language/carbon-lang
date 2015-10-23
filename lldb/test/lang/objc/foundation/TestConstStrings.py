@@ -3,6 +3,8 @@ Test that objective-c constant strings are generated correctly by the expression
 parser.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

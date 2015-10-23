@@ -2,6 +2,8 @@
 Test that dynamically discovered ivars of type IMP do not crash LLDB
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -11,11 +13,11 @@ from lldbtest import *
 import commands
 
 def execute_command (command):
-    # print '%% %s' % (command)
+    # print('%% %s' % (command))
     (exit_status, output) = commands.getstatusoutput (command)
     # if output:
-    #     print output
-    # print 'status = %u' % (exit_status)
+    #     print(output)
+    # print('status = %u' % (exit_status))
     return exit_status
 
 class ObjCiVarIMPTestCase(TestBase):

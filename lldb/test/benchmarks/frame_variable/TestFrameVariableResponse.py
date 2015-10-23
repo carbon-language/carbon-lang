@@ -1,5 +1,7 @@
 """Test lldb's response time for 'frame variable' command."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys
@@ -30,9 +32,9 @@ class FrameVariableResponseBench(BenchBase):
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_startup_delay(self):
         """Test response time for the 'frame variable' command."""
-        print
+        print()
         self.run_frame_variable_bench(self.exe, self.break_spec, self.count)
-        print "lldb frame variable benchmark:", self.stopwatch
+        print("lldb frame variable benchmark:", self.stopwatch)
 
     def run_frame_variable_bench(self, exe, break_spec, count):
         import pexpect

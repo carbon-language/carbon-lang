@@ -902,7 +902,7 @@ def parseOptionsAndInitTestdirs():
             copytree(os.path.join(scriptdir, 'make'), os.path.join(rdir, 'make'),
                      ignore=ignore_patterns('.svn'))
 
-    #print "testdirs:", testdirs
+    #print("testdirs:", testdirs)
 
     # Source the configFile if specified.
     # The side effect, if any, will be felt from this point on.  An example
@@ -919,7 +919,7 @@ def parseOptionsAndInitTestdirs():
     if configFile:
         # Pass config (a dictionary) as the locals namespace for side-effect.
         execfile(configFile, globals(), config)
-        #print "config:", config
+        #print("config:", config)
         if "pre_flight" in config:
             pre_flight = config["pre_flight"]
             if not callable(pre_flight):
@@ -934,8 +934,8 @@ def parseOptionsAndInitTestdirs():
             lldbtest_remote_sandbox = config["lldbtest_remote_sandbox"]
         if "lldbtest_remote_shell_template" in config:
             lldbtest_remote_shell_template = config["lldbtest_remote_shell_template"]
-        #print "sys.stderr:", sys.stderr
-        #print "sys.stdout:", sys.stdout
+        #print("sys.stderr:", sys.stderr)
+        #print("sys.stdout:", sys.stdout)
 
 def getXcodeOutputPaths(lldbRootDirectory):
     result = []
@@ -1295,7 +1295,7 @@ def visit(prefix, dir, names):
     global all_tests
 
     if set(dir.split(os.sep)).intersection(excluded):
-        #print "Detected an excluded dir component: %s" % dir
+        #print("Detected an excluded dir component: %s" % dir)
         return
 
     for name in names:
@@ -1312,10 +1312,10 @@ def visit(prefix, dir, names):
             if regexp:
                 import re
                 if re.search(regexp, name):
-                    #print "Filename: '%s' matches pattern: '%s'" % (name, regexp)
+                    #print("Filename: '%s' matches pattern: '%s'" % (name, regexp))
                     pass
                 else:
-                    #print "Filename: '%s' does not match pattern: '%s'" % (name, regexp)
+                    #print("Filename: '%s' does not match pattern: '%s'" % (name, regexp))
                     continue
 
             # We found a match for our test.  Add it to the suite.
@@ -1344,7 +1344,7 @@ def visit(prefix, dir, names):
 
                 # If filtered, we have a good filterspec.  Add it.
                 if filtered:
-                    #print "adding filter spec %s to module %s" % (filterspec, module)
+                    #print("adding filter spec %s to module %s" % (filterspec, module))
                     suite.addTests(
                         unittest2.defaultTestLoader.loadTestsFromName(filterspec, module))
                     continue
@@ -1761,8 +1761,8 @@ if __name__ == "__main__":
                 if not parsable:
                     sys.stderr.write("\nConfiguration: " + configString + "\n")
 
-            #print "sys.stderr name is", sys.stderr.name
-            #print "sys.stdout name is", sys.stdout.name
+            #print("sys.stderr name is", sys.stderr.name)
+            #print("sys.stdout name is", sys.stdout.name)
 
             # First, write out the number of collected test cases.
             if not parsable:

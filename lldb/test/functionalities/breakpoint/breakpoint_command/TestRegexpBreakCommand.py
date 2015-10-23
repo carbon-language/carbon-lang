@@ -2,6 +2,8 @@
 Test _regexp-break command which uses regular expression matching to dispatch to other built in breakpoint commands.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

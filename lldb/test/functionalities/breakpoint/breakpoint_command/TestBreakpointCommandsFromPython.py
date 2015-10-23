@@ -2,6 +2,8 @@
 Test that you can set breakpoint commands successfully with the Python API's:
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -49,7 +51,7 @@ class PythonBreakpointCommandSettingTestCase(TestBase):
         got_one_in_B = False
         for idx in range(0, num_locations):
             comp_unit = no_files_bkpt.GetLocationAtIndex(idx).GetAddress().GetSymbolContext(lldb.eSymbolContextCompUnit).GetCompileUnit().GetFileSpec()
-            print "Got comp unit: ", comp_unit.GetFilename()
+            print("Got comp unit: ", comp_unit.GetFilename())
             if comp_unit.GetFilename() == "a.c":
                 got_one_in_A = True
             elif comp_unit.GetFilename() == "b.c":
@@ -64,7 +66,7 @@ class PythonBreakpointCommandSettingTestCase(TestBase):
         error = body_bkpt.SetScriptCallbackBody("\
 import TestBreakpointCommandsFromPython\n\
 TestBreakpointCommandsFromPython.PythonBreakpointCommandSettingTestCase.my_var = 20\n\
-print 'Hit breakpoint'")
+print('Hit breakpoint')")
         self.assertTrue (error.Success(), "Failed to set the script callback body: %s."%(error.GetCString()))
 
         self.dbg.HandleCommand("command script import --allow-reload ./bktptcmd.py")

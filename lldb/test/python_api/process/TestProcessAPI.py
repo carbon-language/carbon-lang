@@ -2,6 +2,8 @@
 Test SBProcess APIs, including ReadMemory(), WriteMemory(), and others.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -50,7 +52,7 @@ class ProcessAPITestCase(TestBase):
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
         if self.TraceOn():
-            print "memory content:", content
+            print("memory content:", content)
 
         self.expect(content, "Result from SBProcess.ReadMemory() matches our expected output: 'x'",
                     exe=False,
@@ -63,7 +65,7 @@ class ProcessAPITestCase(TestBase):
         if not error.Success():
             self.fail("SBProcess.ReadCStringFromMemory() failed")
         if self.TraceOn():
-            print "cstring read is:", cstring
+            print("cstring read is:", cstring)
 
         self.expect(cstring, "Result from SBProcess.ReadCStringFromMemory() matches our expected output",
                     exe=False,
@@ -80,7 +82,7 @@ class ProcessAPITestCase(TestBase):
         if not error.Success():
             self.fail("SBProcess.ReadCStringFromMemory() failed")
         if self.TraceOn():
-            print "cstring read is:", cstring
+            print("cstring read is:", cstring)
 
         self.expect(cstring, "Result from SBProcess.ReadCStringFromMemory() matches our expected output",
                     exe=False,
@@ -97,7 +99,7 @@ class ProcessAPITestCase(TestBase):
         if not error.Success():
             self.fail("SBProcess.ReadCStringFromMemory() failed")
         if self.TraceOn():
-            print "uint32 read is:", my_uint32
+            print("uint32 read is:", my_uint32)
 
         if my_uint32 != 12345:
             self.fail("Result from SBProcess.ReadUnsignedFromMemory() does not match our expected output")
@@ -148,7 +150,7 @@ class ProcessAPITestCase(TestBase):
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
         if self.TraceOn():
-            print "memory content:", content
+            print("memory content:", content)
 
         self.expect(content, "Result from SBProcess.ReadMemory() matches our expected output: 'a'",
                     exe=False,
@@ -242,7 +244,7 @@ class ProcessAPITestCase(TestBase):
         # Dump the memory content....
         if self.TraceOn():
             for i in new_bytes:
-                print "byte:", i
+                print("byte:", i)
 
     @python_api_test
     def test_remote_launch(self):
@@ -257,7 +259,7 @@ class ProcessAPITestCase(TestBase):
         process = target.LaunchSimple (None, None, self.get_process_working_directory())
 
         if self.TraceOn():
-            print "process state:", state_type_to_str(process.GetState())
+            print("process state:", state_type_to_str(process.GetState()))
         self.assertTrue(process.GetState() != lldb.eStateConnected)
 
         error = lldb.SBError()
@@ -283,4 +285,5 @@ class ProcessAPITestCase(TestBase):
         error = lldb.SBError();
         num = process.GetNumSupportedHardwareWatchpoints(error)
         if self.TraceOn() and error.Success():
-            print "Number of supported hardware watchpoints: %d" % num
+            print("Number of supported hardware watchpoints: %d" % num)
+

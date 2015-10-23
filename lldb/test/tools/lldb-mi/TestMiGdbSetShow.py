@@ -2,6 +2,8 @@
 Test lldb-mi -gdb-set and -gdb-show commands.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2

@@ -2,6 +2,8 @@
 Test the 'register' command.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys, time
@@ -176,8 +178,8 @@ class RegisterCommandsTestCase(TestBase):
         for str1 in substrs:
             matched = output.find(str1) != -1
             with recording(self, False) as sbuf:
-                print >> sbuf, "%s sub string: %s" % ('Expecting', str1)
-                print >> sbuf, "Matched" if matched else "Not Matched"
+                print("%s sub string: %s" % ('Expecting', str1), file=sbuf)
+                print("Matched" if matched else "Not Matched", file=sbuf)
             if matched:
                 break
         self.assertTrue(matched, STOPPED_DUE_TO_SIGNAL)
@@ -339,7 +341,7 @@ class RegisterCommandsTestCase(TestBase):
         self.addTearDownHook(self.cleanupSubprocesses)
 
         if self.TraceOn():
-            print "pid of spawned process: %d" % pid
+            print("pid of spawned process: %d" % pid)
 
         self.runCmd("process attach -p %d" % pid)
 

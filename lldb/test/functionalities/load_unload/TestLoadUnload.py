@@ -2,6 +2,8 @@
 Test that breakpoint by symbol name works correctly with dynamic libs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -110,7 +112,7 @@ class LoadUnloadTestCase(TestBase):
         # Inform (DY)LD_LIBRARY_PATH of the new path, too.
         env_cmd_string = "settings set target.env-vars " + self.dylibPath + "=" + new_dir
         if self.TraceOn():
-            print "Set environment to: ", env_cmd_string
+            print("Set environment to: ", env_cmd_string)
         self.runCmd(env_cmd_string)
         self.runCmd("settings show target.env-vars")
 
@@ -224,7 +226,7 @@ class LoadUnloadTestCase(TestBase):
         output = self.res.GetOutput()
         pattern = re.compile("Image ([0-9]+) loaded")
         for l in output.split(os.linesep):
-            #print "l:", l
+            #print("l:", l)
             match = pattern.search(l)
             if match:
                 break

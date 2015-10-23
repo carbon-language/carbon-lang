@@ -2,6 +2,8 @@
 Test newly added SBSymbol and SBAddress APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -34,8 +36,8 @@ class SymbolAPITestCase(TestBase):
         # Now create the two breakpoints inside function 'a'.
         breakpoint1 = target.BreakpointCreateByLocation('main.c', self.line1)
         breakpoint2 = target.BreakpointCreateByLocation('main.c', self.line2)
-        #print "breakpoint1:", breakpoint1
-        #print "breakpoint2:", breakpoint2
+        #print("breakpoint1:", breakpoint1)
+        #print("breakpoint2:", breakpoint2)
         self.assertTrue(breakpoint1 and
                         breakpoint1.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -74,5 +76,5 @@ class SymbolAPITestCase(TestBase):
 
         # Now verify that both addresses point to the same module.
         if self.TraceOn():
-            print "UUID:", addr_line1.GetModule().GetUUIDString()
+            print("UUID:", addr_line1.GetModule().GetUUIDString())
         self.assertTrue(addr_line1.GetModule().GetUUIDString() == addr_line2.GetModule().GetUUIDString())

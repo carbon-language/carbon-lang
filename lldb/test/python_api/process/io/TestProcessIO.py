@@ -1,5 +1,7 @@
 """Test Python APIs for process IO."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys, time
@@ -164,7 +166,7 @@ class ProcessIOTestCase(TestBase):
         self.assertTrue(self.process, PROCESS_IS_VALID)
 
         if self.TraceOn():
-            print "process launched."
+            print("process launched.")
 
         # Frame #0 should be at our breakpoint.
         threads = lldbutil.get_threads_stopped_at_breakpoint (self.process, self.breakpoint)
@@ -175,7 +177,7 @@ class ProcessIOTestCase(TestBase):
         self.assertTrue(self.frame, "Frame 0 is valid.")
 
         if self.TraceOn():
-            print "process stopped at breakpoint, sending STDIN via LLDB API."
+            print("process stopped at breakpoint, sending STDIN via LLDB API.")
 
         # Write data to stdin via the public API if we were asked to
         if put_stdin:
@@ -193,8 +195,8 @@ class ProcessIOTestCase(TestBase):
             # once "input line=>1" appears in stdout.
             # See also main.c.
         if self.TraceOn():
-            print "output = '%s'" % output
-            print "error = '%s'" % error
+            print("output = '%s'" % output)
+            print("error = '%s'" % error)
         
         for line in self.lines:
             check_line = 'input line to stdout: %s' % (line)

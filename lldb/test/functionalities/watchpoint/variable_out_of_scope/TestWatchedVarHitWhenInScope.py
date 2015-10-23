@@ -2,6 +2,8 @@
 Test that a variable watchpoint should only hit when in scope.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2

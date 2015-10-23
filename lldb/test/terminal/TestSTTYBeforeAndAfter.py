@@ -2,6 +2,8 @@
 Test that 'stty -a' displays the same output before and after running the lldb command.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -89,30 +91,30 @@ class CommandLineCompletionTestCase(TestBase):
 
         with open('child_send1.txt', 'r') as fs:
             if self.TraceOn():
-                print "\n\nContents of child_send1.txt:"
-                print fs.read()
+                print("\n\nContents of child_send1.txt:")
+                print(fs.read())
         with open('child_read1.txt', 'r') as fr:
             from_child1 = fr.read()
             if self.TraceOn():
-                print "\n\nContents of child_read1.txt:"
-                print from_child1
+                print("\n\nContents of child_read1.txt:")
+                print(from_child1)
 
         with open('child_send2.txt', 'r') as fs:
             if self.TraceOn():
-                print "\n\nContents of child_send2.txt:"
-                print fs.read()
+                print("\n\nContents of child_send2.txt:")
+                print(fs.read())
         with open('child_read2.txt', 'r') as fr:
             from_child2 = fr.read()
             if self.TraceOn():
-                print "\n\nContents of child_read2.txt:"
-                print from_child2
+                print("\n\nContents of child_read2.txt:")
+                print(from_child2)
 
         stty_output1_lines = from_child1.splitlines()
         stty_output2_lines = from_child2.splitlines()
         zipped = zip(stty_output1_lines, stty_output2_lines)
         for tuple in zipped:
             if self.TraceOn():
-                print "tuple->%s" % str(tuple)
+                print("tuple->%s" % str(tuple))
             # Every line should compare equal until the first blank line.
             if len(tuple[0]) == 0:
                 break

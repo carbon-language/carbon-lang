@@ -1,5 +1,7 @@
 """Test Python APIs for working with formatters"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys, time
@@ -324,19 +326,19 @@ class SBFormattersAPITestCase(TestBase):
         frame = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
         int_vector = frame.FindVariable("int_vector")
         if self.TraceOn():
-             print int_vector
+             print(int_vector)
         self.assertTrue(int_vector.GetNumChildren() == 0, 'synthetic vector is empty')
 
         self.runCmd('settings set target.enable-synthetic-value false')
         frame = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
         int_vector = frame.FindVariable("int_vector")
         if self.TraceOn():
-             print int_vector
+             print(int_vector)
         self.assertFalse(int_vector.GetNumChildren() == 0, '"physical" vector is not empty')
 
         self.runCmd('settings set target.enable-synthetic-value true')
         frame = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
         int_vector = frame.FindVariable("int_vector")
         if self.TraceOn():
-             print int_vector
+             print(int_vector)
         self.assertTrue(int_vector.GetNumChildren() == 0, 'synthetic vector is still empty')

@@ -1,5 +1,7 @@
 """Test lldb's expression evaluations and collect statistics."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys
@@ -25,9 +27,9 @@ class ExpressionEvaluationCase(BenchBase):
         self.build()
         self.exe_name = 'a.out'
 
-        print
+        print()
         self.run_lldb_repeated_exprs(self.exe_name, self.count)
-        print "lldb expr cmd benchmark:", self.stopwatch
+        print("lldb expr cmd benchmark:", self.stopwatch)
 
     def run_lldb_repeated_exprs(self, exe_name, count):
         import pexpect

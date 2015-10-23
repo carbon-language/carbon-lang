@@ -1,5 +1,7 @@
 """Test that the expression parser doesn't get confused by 'id' and 'Class'"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

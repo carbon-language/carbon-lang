@@ -2,6 +2,8 @@
 Test the command history mechanism
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os

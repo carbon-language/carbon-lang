@@ -1,5 +1,7 @@
 """Test that lldb functions correctly after the inferior has asserted."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -167,7 +169,7 @@ class AssertingInferiorTestCase(TestBase):
             frame = thread.GetFrameAtIndex(i)
             self.assertTrue(frame.IsValid(), "current frame is valid")
             if self.TraceOn():
-                print "Checking if function %s is main" % frame.GetFunctionName()
+                print("Checking if function %s is main" % frame.GetFunctionName())
 
             if 'main' == frame.GetFunctionName():
                 frame_id = frame.GetFrameID()

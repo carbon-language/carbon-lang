@@ -1,6 +1,8 @@
+from __future__ import print_function
+
 def bar_function(debugger, args, result, dict):
 	global UtilityModule
-	print >>result,  (UtilityModule.barutil_function("bar told me " + args))
+	print(UtilityModule.barutil_function("bar told me " + args), file=result)
 	return None
 
 def __lldb_init_module(debugger, session_dict):

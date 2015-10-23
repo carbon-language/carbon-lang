@@ -2,6 +2,8 @@
 Test thread stepping features in combination with frame select.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

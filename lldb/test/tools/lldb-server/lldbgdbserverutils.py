@@ -1,6 +1,8 @@
 """Module for supporting unit testing of the lldb-server debug monitor exe.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -701,12 +703,12 @@ class MatchRemoteOutputEntry(GdbRemoteEntryBase):
 
         # If we don't match, wait to try again after next $O content, or time out.
         if not match:
-            # print "re pattern \"{}\" did not match against \"{}\"".format(self._regex.pattern, accumulated_output)
+            # print("re pattern \"{}\" did not match against \"{}\"".format(self._regex.pattern, accumulated_output))
             return context
 
         # We do match.
         self._matched = True
-        # print "re pattern \"{}\" matched against \"{}\"".format(self._regex.pattern, accumulated_output)
+        # print("re pattern \"{}\" matched against \"{}\"".format(self._regex.pattern, accumulated_output))
 
         # Collect up any captures into the context.
         if self._capture:
@@ -835,6 +837,6 @@ def process_is_running(pid, unknown_value=True):
 if __name__ == '__main__':
     EXE_PATH = get_lldb_server_exe()
     if EXE_PATH:
-        print "lldb-server path detected: {}".format(EXE_PATH)
+        print("lldb-server path detected: {}".format(EXE_PATH))
     else:
-        print "lldb-server could not be found"
+        print("lldb-server could not be found")

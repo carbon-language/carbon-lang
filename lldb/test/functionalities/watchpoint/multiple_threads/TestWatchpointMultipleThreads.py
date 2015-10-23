@@ -2,6 +2,8 @@
 Test that lldb watchpoint works for multiple threads.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -126,7 +128,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
                     self.fail("Watchpoint hits not supposed to exceed 1 by design!")
                 # Good, we verified that the watchpoint works!  Now delete the watchpoint.
                 if self.TraceOn():
-                    print "watchpoint_stops=%d at the moment we delete the watchpoint" % watchpoint_stops
+                    print("watchpoint_stops=%d at the moment we delete the watchpoint" % watchpoint_stops)
                 self.runCmd("watchpoint delete 1")
                 self.expect("watchpoint list -v",
                     substrs = ['No watchpoints currently set.'])

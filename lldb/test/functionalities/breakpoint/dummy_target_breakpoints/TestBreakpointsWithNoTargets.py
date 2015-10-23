@@ -2,6 +2,8 @@
 Test breakpoint commands set before we have a target
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

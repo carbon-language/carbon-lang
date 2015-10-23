@@ -2,6 +2,8 @@
 Use lldb Python API to make sure the dynamic checkers are doing their jobs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

@@ -14,6 +14,8 @@ This module provides asyncore channels used within the LLDB test
 framework.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import asyncore
@@ -121,7 +123,7 @@ class UnpicklingForwardingReaderChannel(asyncore.dispatcher):
 
     def handle_read(self):
         data = self.recv(8192)
-        # print 'driver socket READ: %d bytes' % len(data)
+        # print('driver socket READ: %d bytes' % len(data))
 
         while data and (len(data) > 0):
             # If we're reading the header, gather header bytes.
@@ -131,7 +133,7 @@ class UnpicklingForwardingReaderChannel(asyncore.dispatcher):
                 data = self.consume_payload_bytes(data)
 
     def handle_close(self):
-        # print "socket reader: closing port"
+        # print("socket reader: closing port")
         self.close()
 
 
@@ -167,7 +169,7 @@ class UnpicklingForwardingListenerChannel(asyncore.dispatcher):
     def handle_accept(self):
         (sock, addr) = self.socket.accept()
         if sock and addr:
-            # print 'Incoming connection from %s' % repr(addr)
+            # print('Incoming connection from %s' % repr(addr))
             self.handler = UnpicklingForwardingReaderChannel(
                 sock, self.async_map, self.forwarding_func)
 

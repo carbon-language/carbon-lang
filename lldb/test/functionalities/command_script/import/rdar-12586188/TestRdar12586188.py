@@ -1,5 +1,7 @@
 """Check that we handle an ImportError in a special way when command script importing files."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys, time

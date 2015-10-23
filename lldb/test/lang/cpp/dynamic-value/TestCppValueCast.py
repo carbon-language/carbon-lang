@@ -2,6 +2,8 @@
 Test lldb Python API SBValue::Cast(SBType) for C++ types.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2
@@ -81,8 +83,8 @@ class CppValueCastTestCase(TestBase):
 
         if self.TraceOn():
             for child in tellerA:
-                print "child name:", child.GetName()
-                print child
+                print("child name:", child.GetName())
+                print(child)
 
         # Call SBValue.Cast() to obtain instanceA.
         instanceA = tellerA.Cast(typeA.GetPointerType())
@@ -91,8 +93,8 @@ class CppValueCastTestCase(TestBase):
         # Iterate through all the children and print their values.
         if self.TraceOn():
             for child in instanceA:
-                print "child name:", child.GetName()
-                print child
+                print("child name:", child.GetName())
+                print(child)
         a_member_val = instanceA.GetChildMemberWithName('m_a_val')
         self.DebugSBValue(a_member_val)
         self.assertTrue(a_member_val.GetValueAsUnsigned(error, 0) == 10)
@@ -109,8 +111,8 @@ class CppValueCastTestCase(TestBase):
 
         if self.TraceOn():
             for child in tellerB:
-                print "child name:", child.GetName()
-                print child
+                print("child name:", child.GetName())
+                print(child)
 
         # Call SBValue.Cast() to obtain instanceB.
         instanceB = tellerB.Cast(typeB.GetPointerType())
@@ -119,8 +121,8 @@ class CppValueCastTestCase(TestBase):
         # Iterate through all the children and print their values.
         if self.TraceOn():
             for child in instanceB:
-                print "child name:", child.GetName()
-                print child
+                print("child name:", child.GetName())
+                print(child)
         b_member_val = instanceB.GetChildMemberWithName('m_b_val')
         self.DebugSBValue(b_member_val)
         self.assertTrue(b_member_val.GetValueAsUnsigned(error, 0) == 36)

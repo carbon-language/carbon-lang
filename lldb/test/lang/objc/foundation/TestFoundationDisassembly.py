@@ -2,6 +2,8 @@
 Test the lldb disassemble command on foundation framework.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2
@@ -35,7 +37,7 @@ class FoundationDisassembleTestCase(TestBase):
 
         foundation_framework = None
         for module in target.modules:
-            print module
+            print(module)
             if module.file.basename == "Foundation":
                 foundation_framework = module.file.fullpath
                 break
@@ -58,8 +60,8 @@ class FoundationDisassembleTestCase(TestBase):
             match = codeRE.search(line)
             if match:
                 func = match.group(1)
-                #print "line:", line
-                #print "func:", func
+                #print("line:", line)
+                #print("func:", func)
                 self.runCmd('disassemble -n "%s"' % func)
         
 
@@ -71,9 +73,9 @@ class FoundationDisassembleTestCase(TestBase):
         target = self.dbg.CreateTarget("a.out")
         self.assertTrue(target, VALID_TARGET)
 
-        print target
+        print(target)
         for module in target.modules:
-            print module
+            print(module)
 
         # Stop at +[NSString stringWithFormat:].
         symbol_name = "+[NSString stringWithFormat:]"

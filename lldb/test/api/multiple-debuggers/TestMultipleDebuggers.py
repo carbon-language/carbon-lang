@@ -1,5 +1,7 @@
 """Test the lldb public C++ api when doing multiple debug sessions simultaneously."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, re
@@ -40,7 +42,7 @@ class TestMultipleSimultaneousDebuggers(TestBase):
 # will recognize it as a test failure.
 
         if self.TraceOn():
-            print "Running test %s" % self.driver_exe
+            print("Running test %s" % self.driver_exe)
             check_call([self.driver_exe, self.inferior_exe], env=env)
         else:
             with open(os.devnull, 'w') as fnull:

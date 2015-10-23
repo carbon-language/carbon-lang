@@ -2,6 +2,8 @@
 Test that variable expressions of integer basic types are evaluated correctly.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import AbstractBase

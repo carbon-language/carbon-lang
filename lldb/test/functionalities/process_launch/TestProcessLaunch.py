@@ -2,6 +2,8 @@
 Test lldb process launch flags.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -160,7 +162,7 @@ class ProcessLaunchTestCase(TestBase):
             # Check to see if the 'stdout' file contains the right output
             line = out_f.readline();
             if self.TraceOn():
-                print "line:", line
+                print("line:", line)
             if not re.search(mywd, line):
                 success = False
                 err_msg = err_msg + "The current working directory was not set correctly.\n"

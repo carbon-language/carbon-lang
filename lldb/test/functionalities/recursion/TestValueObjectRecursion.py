@@ -2,6 +2,8 @@
 Test lldb data formatter subsystem.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -45,12 +47,12 @@ class ValueObjectRecursionTestCase(TestBase):
         root = self.frame().FindVariable("root")
         child = root.GetChildAtIndex(1)
         if self.TraceOn():
-             print root
-             print child
+             print(root)
+             print(child)
         for i in range(0,24500):
              child = child.GetChildAtIndex(1)
         if self.TraceOn():
-             print child
+             print(child)
         self.assertTrue(child.IsValid(),"could not retrieve the deep ValueObject")
         self.assertTrue(child.GetChildAtIndex(0).IsValid(),"the deep ValueObject has no value")
         self.assertTrue(child.GetChildAtIndex(0).GetValueAsUnsigned() != 0,"the deep ValueObject has a zero value")

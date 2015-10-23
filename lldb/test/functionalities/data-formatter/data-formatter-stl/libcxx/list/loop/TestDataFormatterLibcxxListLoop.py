@@ -3,6 +3,8 @@ Test that the debugger handles loops in std::list (which can appear as a result 
 corruption).
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time, re

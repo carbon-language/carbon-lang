@@ -2,6 +2,8 @@
 Test the iteration protocol for some lldb container objects.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -49,8 +51,8 @@ class LLDBIteratorTestCase(TestBase):
         self.assertTrue(len(yours) == len(mine))
         for i in range(len(yours)):
             if self.TraceOn():
-                print "yours[%d]='%s'" % (i, get_description(yours[i]))
-                print "mine[%d]='%s'" % (i, get_description(mine[i]))
+                print("yours[%d]='%s'" % (i, get_description(yours[i])))
+                print("mine[%d]='%s'" % (i, get_description(mine[i])))
             self.assertTrue(yours[i] == mine[i],
                             "UUID+FileSpec of yours[{0}] and mine[{0}] matches".format(i))
 
@@ -81,8 +83,8 @@ class LLDBIteratorTestCase(TestBase):
         self.assertTrue(len(yours) == len(mine))
         for i in range(len(yours)):
             if self.TraceOn():
-                print "yours[%d]='%s'" % (i, get_description(yours[i]))
-                print "mine[%d]='%s'" % (i, get_description(mine[i]))
+                print("yours[%d]='%s'" % (i, get_description(yours[i])))
+                print("mine[%d]='%s'" % (i, get_description(mine[i])))
             self.assertTrue(yours[i] == mine[i],
                             "ID of yours[{0}] and mine[{0}] matches".format(i))
 
@@ -115,6 +117,6 @@ class LLDBIteratorTestCase(TestBase):
             for frame in thread:
                 self.assertTrue(frame.GetThread().GetThreadID() == ID)
                 if self.TraceOn():
-                    print frame
+                    print(frame)
 
         self.assertTrue(stopped_due_to_breakpoint)

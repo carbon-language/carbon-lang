@@ -4,6 +4,8 @@ This exercises classes like ObjectFileELF and their support for opening
 foreign-architecture object files.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os.path

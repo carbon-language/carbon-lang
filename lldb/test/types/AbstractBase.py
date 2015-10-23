@@ -2,6 +2,8 @@
 Abstract base class of basic types provides a generic type tester method.
 """
 
+from __future__ import print_function
+
 import os, time
 import re
 import lldb
@@ -33,7 +35,7 @@ class GenericTester(TestBase):
 
     def tearDown(self):
         """Cleanup the test byproducts."""
-        #print "Removing golden-output.txt..."
+        #print("Removing golden-output.txt...")
         if os.path.exists(self.golden_filename):
             os.remove(self.golden_filename)
         TestBase.tearDown(self)
@@ -117,7 +119,7 @@ class GenericTester(TestBase):
             if match:
                 var, val = match.group(1), match.group(2)
                 gl.append((var, val))
-        #print "golden list:", gl
+        #print("golden list:", gl)
 
         # This test uses a #include of "basic_type.cpp" so we need to enable
         # always setting inlined breakpoints.
@@ -201,7 +203,7 @@ class GenericTester(TestBase):
             if match:
                 var, val = match.group(1), match.group(2)
                 gl.append((var, val))
-        #print "golden list:", gl
+        #print("golden list:", gl)
 
         # This test uses a #include of "basic_type.cpp" so we need to enable
         # always setting inlined breakpoints.

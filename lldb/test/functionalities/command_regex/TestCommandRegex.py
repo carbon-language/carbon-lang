@@ -2,6 +2,8 @@
 Test lldb 'commands regex' command which allows the user to create a regular expression command.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os

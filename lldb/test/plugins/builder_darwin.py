@@ -1,9 +1,11 @@
+
+from __future__ import print_function
 import os
 import lldbtest
 
 from builder_base import *
 
-#print "Hello, darwin plugin!"
+#print("Hello, darwin plugin!")
 
 def buildDsym(sender=None, architecture=None, compiler=None, dictionary=None, clean=True):
     """Build the binaries with dsym debug info."""

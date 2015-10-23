@@ -2,6 +2,8 @@
 Test C++ virtual function and virtual inheritance.
 """
 
+from __future__ import print_function
+
 import os, time
 import re
 import lldb
@@ -71,7 +73,7 @@ class CppVirtualMadness(TestBase):
             if match:
                 my_expr, val = match.group(1), match.group(2)
                 gl.append((my_expr, val))
-        #print "golden list:", gl
+        #print("golden list:", gl)
 
         # Now iterate through the golden list, comparing against the output from
         # 'expression var'.

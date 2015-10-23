@@ -1,5 +1,7 @@
 """Test that the 'add-dsym', aka 'target symbols add', command informs the user about success or failure."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

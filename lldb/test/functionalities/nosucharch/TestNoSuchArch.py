@@ -1,6 +1,8 @@
 """
 Test that using a non-existent architecture name does not crash LLDB.
 """
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb

@@ -2,6 +2,8 @@
 Test that the lldb-mi handles signals properly.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldbmi_testcase

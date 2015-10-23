@@ -1,5 +1,7 @@
 """Test that importing modules in C works as expected."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

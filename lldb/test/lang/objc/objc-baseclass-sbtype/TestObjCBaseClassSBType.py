@@ -2,6 +2,8 @@
 Use lldb Python API to test base class resolution for ObjC classes
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

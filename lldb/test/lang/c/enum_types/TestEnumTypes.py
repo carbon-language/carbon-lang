@@ -1,5 +1,7 @@
 """Look up enum type information and check for correct display."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

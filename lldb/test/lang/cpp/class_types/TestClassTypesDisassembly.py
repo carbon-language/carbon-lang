@@ -2,6 +2,8 @@
 Test the lldb disassemble command on each call frame when stopped on C's ctor.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -30,8 +32,8 @@ class IterateFrameAndDisassembleTestCase(TestBase):
             match = frameRE.search(line)
             if match:
                 function = match.group(1)
-                #print "line:", line
-                #print "function:", function
+                #print("line:", line)
+                #print("function:", function)
                 self.runCmd("disassemble -n '%s'" % function)
 
     @python_api_test
@@ -51,8 +53,8 @@ class IterateFrameAndDisassembleTestCase(TestBase):
             function = frame.GetFunction()
             # Print the function header.
             if self.TraceOn():
-                print
-                print function
+                print()
+                print(function)
             if function:
                 # Get all instructions for this function and print them out.
                 insts = function.GetInstructions(target)
@@ -61,7 +63,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
                     # But we want to print to stdout only if self.TraceOn() is True.
                     disasm = str(inst)
                     if self.TraceOn():
-                        print disasm
+                        print(disasm)
 
     def setUp(self):
         # Call super's setUp().

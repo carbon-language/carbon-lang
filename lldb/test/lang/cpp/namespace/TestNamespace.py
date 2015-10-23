@@ -2,6 +2,8 @@
 Test the printing of anonymous and named namespace variables.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

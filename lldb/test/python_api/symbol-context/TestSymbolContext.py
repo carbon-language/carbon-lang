@@ -2,6 +2,8 @@
 Test SBSymbolContext APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -32,7 +34,7 @@ class SymbolContextAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -64,14 +66,14 @@ class SymbolContextAPITestCase(TestBase):
 
         function = context.GetFunction()
         self.assertTrue(function)
-        #print "function:", function
+        #print("function:", function)
 
         block = context.GetBlock()
         self.assertTrue(block)
-        #print "block:", block
+        #print("block:", block)
 
         lineEntry = context.GetLineEntry()
-        #print "line entry:", lineEntry
+        #print("line entry:", lineEntry)
         self.expect(lineEntry.GetFileSpec().GetDirectory(), "The line entry should have the correct directory",
                     exe=False,
             substrs = [self.mydir])

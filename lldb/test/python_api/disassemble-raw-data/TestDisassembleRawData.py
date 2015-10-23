@@ -2,6 +2,8 @@
 Use lldb Python API to disassemble raw machine code bytes
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -28,9 +30,9 @@ class DisassembleRawDataTestCase(TestBase):
         inst = insts.GetInstructionAtIndex(0)
 
         if self.TraceOn():
-            print
-            print "Raw bytes:    ", [hex(x) for x in raw_bytes]
-            print "Disassembled%s" % str(inst)
+            print()
+            print("Raw bytes:    ", [hex(x) for x in raw_bytes])
+            print("Disassembled%s" % str(inst))
  
         self.assertTrue (inst.GetMnemonic(target) == "movq")
         self.assertTrue (inst.GetOperands(target) == '%' + "rsp, " + '%' + "rbp")

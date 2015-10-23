@@ -2,6 +2,8 @@
 Test that we can backtrace correctly with 'noreturn' functions on the stack
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -42,9 +44,9 @@ class NoreturnUnwind(TestBase):
             abort_frame_number = abort_frame_number + 1
 
         if self.TraceOn():
-            print "Backtrace once we're stopped:"
+            print("Backtrace once we're stopped:")
             for f in thread.frames:
-                print "  %d %s" % (f.GetFrameID(), f.GetFunctionName())
+                print("  %d %s" % (f.GetFrameID(), f.GetFunctionName()))
 
         # I'm going to assume that abort() ends up calling/invoking another
         # function before halting the process.  In which case if abort_frame_number

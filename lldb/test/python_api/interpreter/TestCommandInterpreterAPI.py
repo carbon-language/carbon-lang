@@ -1,5 +1,7 @@
 """Test the SBCommandInterpreter APIs."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -56,7 +58,7 @@ class CommandInterpreterAPICase(TestBase):
         res.AppendMessage("Just appended a message.")
         res.AppendMessage(None)
         if self.TraceOn():
-            print res
+            print(res)
 
         process = ci.GetProcess()
         self.assertTrue(process)

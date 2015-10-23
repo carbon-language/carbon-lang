@@ -1,5 +1,7 @@
 """Test that hidden ivars in a shared library are visible from the main executable."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2

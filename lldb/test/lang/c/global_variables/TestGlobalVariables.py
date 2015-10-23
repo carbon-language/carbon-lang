@@ -1,5 +1,7 @@
 """Show global variables and check that they do indeed have global scopes."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

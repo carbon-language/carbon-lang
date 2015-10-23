@@ -2,6 +2,8 @@
 Check that types only get completed when necessary.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -72,11 +74,11 @@ class TypeCompletionTestCase(TestBase):
         self.assertTrue(name_address_type.IsTypeComplete(), 'NameAndAddress should now be complete')
         field0 = name_address_type.GetFieldAtIndex(0)
         if self.TraceOn():
-             print 'field0: ' + str(field0)
+             print('field0: ' + str(field0))
         self.assertTrue(field0.IsValid(), 'NameAndAddress::m_name should be valid')
         string = field0.GetType().GetPointeeType()
         if self.TraceOn():
-             print 'string: ' + str(string)
+             print('string: ' + str(string))
         self.assertTrue(string.IsValid(), 'std::string should be valid')
         self.assertFalse(string.IsTypeComplete(), 'std::string complete but it should not be')
 
@@ -90,11 +92,11 @@ class TypeCompletionTestCase(TestBase):
         self.assertTrue(name_address_type.IsTypeComplete(), 'NameAndAddress should now be complete')
         field0 = name_address_type.GetFieldAtIndex(0)
         if self.TraceOn():
-             print 'field0: ' + str(field0)
+             print('field0: ' + str(field0))
         self.assertTrue(field0.IsValid(), 'NameAndAddress::m_name should be valid')
         string = field0.GetType().GetPointeeType()
         if self.TraceOn():
-             print 'string: ' + str(string)
+             print('string: ' + str(string))
         self.assertTrue(string.IsValid(), 'std::string should be valid')
         self.assertFalse(string.IsTypeComplete(), 'std::string complete but it should not be')
 

@@ -115,22 +115,22 @@ class Window(object):
                 child.resize(new_frame.size)
             
             if adjust_neighbors:
-                #print 'orig_frame = %s\r\n' % (str(orig_frame)),
+                #print('orig_frame = %s\r\n' % (str(orig_frame)), end='')
                 for curr_child in self.children:
                     if curr_child is child:
                         continue
                     curr_child_frame = curr_child.get_frame()
                     if delta_size.w != 0:
-                        #print 'curr_child_frame = %s\r\n' % (str(curr_child_frame)),
+                        #print('curr_child_frame = %s\r\n' % (str(curr_child_frame)), end='')
                         if curr_child_frame.get_min_x() == orig_frame.get_max_x(): 
                             curr_child_frame.origin.x += delta_size.w
                             curr_child_frame.size.w -= delta_size.w
-                            #print 'adjusted curr_child_frame = %s\r\n' % (str(curr_child_frame)),
+                            #print('adjusted curr_child_frame = %s\r\n' % (str(curr_child_frame)), end='')
                             curr_child.resize (curr_child_frame.size)
                             curr_child.slide_position (Size(w=delta_size.w, h=0))
                         elif curr_child_frame.get_max_x() == orig_frame.get_min_x():
                             curr_child_frame.size.w -= delta_size.w
-                            #print 'adjusted curr_child_frame = %s\r\n' % (str(curr_child_frame)),
+                            #print('adjusted curr_child_frame = %s\r\n' % (str(curr_child_frame)), end='')
                             curr_child.resize (curr_child_frame.size)
     
     def add_key_action(self, arg, callback, decription):

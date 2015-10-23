@@ -2,6 +2,8 @@
 Test lldb target stop-hook mechanism to see whether it fires off correctly .
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os
@@ -83,7 +85,7 @@ class StopHookMechanismTestCase(TestBase):
         # make up a whole nother test case for it.
         child.sendline('frame info')
         at_line = 'at main.cpp:%d' % (self.correct_step_line)
-        print 'expecting "%s"' % at_line
+        print('expecting "%s"' % at_line)
         child.expect_exact(at_line)
 
         # Now continue the inferior, we'll stop at another breakpoint which is outside the stop-hook range.

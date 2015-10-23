@@ -2,6 +2,8 @@
 Test calling a function that waits a while, and make sure the timeout option to expr works.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb

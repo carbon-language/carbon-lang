@@ -3,6 +3,8 @@ Use lldb Python SBFrame API to get the argument values of the call stacks.
 And other SBFrame API tests.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -27,7 +29,7 @@ class FrameAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -52,7 +54,7 @@ class FrameAPITestCase(TestBase):
             for i in range(numFrames):
                 frame = thread.GetFrameAtIndex(i)
                 if self.TraceOn():
-                    print "frame:", frame
+                    print("frame:", frame)
 
                 name = frame.GetFunction().GetName()
                 if name == 'a':
@@ -70,7 +72,7 @@ class FrameAPITestCase(TestBase):
                     argList.append("(%s)%s=%s" % (val.GetTypeName(),
                                                   val.GetName(),
                                                   val.GetValue()))
-                print >> session, "%s(%s)" % (name, ", ".join(argList))
+                print("%s(%s)" % (name, ", ".join(argList)), file=session)
                 
                 # Also check the generic pc & stack pointer.  We can't test their absolute values,
                 # but they should be valid.  Uses get_GPRs() from the lldbutil module.
@@ -84,7 +86,7 @@ class FrameAPITestCase(TestBase):
                 self.assertTrue (sp_value, "We should have a valid Stack Pointer.")
                 self.assertTrue (int(sp_value.GetValue(), 0) == frame.GetSP(), "SP gotten as a value should equal frame's GetSP")
 
-            print >> session, "---"
+            print("---", file=session)
             process.Continue()
 
         # At this point, the inferior process should have exited.
@@ -97,8 +99,8 @@ class FrameAPITestCase(TestBase):
         #     o a((int)val=1, (char)ch='A')
         #     o a((int)val=3, (char)ch='A')
         if self.TraceOn():
-            print "Full stack traces when stopped on the breakpoint 'c':"
-            print session.getvalue()
+            print("Full stack traces when stopped on the breakpoint 'c':")
+            print(session.getvalue())
         self.expect(session.getvalue(), "Argugment values displayed correctly",
                     exe=False,
             substrs = ["a((int)val=1, (char)ch='A')",
@@ -116,7 +118,7 @@ class FrameAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -131,15 +133,15 @@ class FrameAPITestCase(TestBase):
         thread = process.GetThreadAtIndex(0)
         frame = thread.GetFrameAtIndex(0)
         if self.TraceOn():
-            print "frame:", frame
+            print("frame:", frame)
 
         # Boundary condition testings.
         val1 = frame.FindVariable(None, True)
         val2 = frame.FindVariable(None, False)
         val3 = frame.FindValue(None, lldb.eValueTypeVariableGlobal)
         if self.TraceOn():
-            print "val1:", val1
-            print "val2:", val2
+            print("val1:", val1)
+            print("val2:", val2)
 
         frame.EvaluateExpression(None)
 
@@ -155,7 +157,7 @@ class FrameAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -172,7 +174,7 @@ class FrameAPITestCase(TestBase):
 
         frameEntered = thread.GetFrameAtIndex(0)
         if self.TraceOn():
-            print frameEntered
+            print(frameEntered)
             lldbutil.print_stacktrace(thread)
         self.assertTrue(frameEntered)
 
@@ -182,7 +184,7 @@ class FrameAPITestCase(TestBase):
         self.assertTrue(thread)
         frameNow = thread.GetFrameAtIndex(0)
         if self.TraceOn():
-            print frameNow
+            print(frameNow)
             lldbutil.print_stacktrace(thread)
         self.assertTrue(frameNow)
 
@@ -193,7 +195,7 @@ class FrameAPITestCase(TestBase):
         thread.StepOutOfFrame(frameNow)
         frameOutOfC = thread.GetFrameAtIndex(0)
         if self.TraceOn():
-            print frameOutOfC
+            print(frameOutOfC)
             lldbutil.print_stacktrace(thread)
         self.assertTrue(frameOutOfC)
 

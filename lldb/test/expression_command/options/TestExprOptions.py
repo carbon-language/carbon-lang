@@ -7,6 +7,8 @@ o test_expr_options:
   Test expression command options.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

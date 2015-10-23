@@ -1,5 +1,7 @@
 """Test that lldb works correctly on compile units form different languages."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time, re

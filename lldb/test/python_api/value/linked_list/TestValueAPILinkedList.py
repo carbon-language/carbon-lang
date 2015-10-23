@@ -3,6 +3,8 @@ Test SBValue API linked_list_iter which treats the SBValue as a linked list and
 supports iteration till the end of list is reached.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -63,12 +65,12 @@ class ValueAsLinkedListTestCase(TestBase):
             # Make sure that 'next' corresponds to an SBValue with pointer type.
             self.assertTrue(t.TypeIsPointerType())
             if self.TraceOn():
-                print cvf.format(t)
+                print(cvf.format(t))
             list.append(int(t.GetChildMemberWithName("id").GetValue()))
 
         # Sanity checks that the we visited all the items (no more, no less).
         if self.TraceOn():
-            print "visited IDs:", list
+            print("visited IDs:", list)
         self.assertTrue(visitedIDs == list)
 
         # Let's exercise the linked_list_iter() API again, this time supplying
@@ -93,12 +95,12 @@ class ValueAsLinkedListTestCase(TestBase):
             # Make sure that 'next' corresponds to an SBValue with pointer type.
             self.assertTrue(t.TypeIsPointerType())
             if self.TraceOn():
-                print cvf.format(t)
+                print(cvf.format(t))
             list.append(int(t.GetChildMemberWithName("id").GetValue()))
 
         # Sanity checks that the we visited all the items (no more, no less).
         if self.TraceOn():
-            print "visited IDs:", list
+            print("visited IDs:", list)
         self.assertTrue(visitedIDs == list)
         
         # Get variable 'empty_task_head'.
@@ -110,7 +112,7 @@ class ValueAsLinkedListTestCase(TestBase):
         # There is no iterable item from empty_task_head.linked_list_iter().
         for t in empty_task_head.linked_list_iter('next', eol):
             if self.TraceOn():
-                print cvf.format(t)
+                print(cvf.format(t))
             list.append(int(t.GetChildMemberWithName("id").GetValue()))
 
         self.assertTrue(len(list) == 0)
@@ -124,7 +126,7 @@ class ValueAsLinkedListTestCase(TestBase):
         # There 3 iterable items from task_evil.linked_list_iter(). :-)
         for t in task_evil.linked_list_iter('next'):
             if self.TraceOn():
-                print cvf.format(t)
+                print(cvf.format(t))
             list.append(int(t.GetChildMemberWithName("id").GetValue()))
 
         self.assertTrue(len(list) == 3)

@@ -2,6 +2,8 @@
 Check that vector types format properly
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -49,7 +51,7 @@ class VectorTypesFormattingTestCase(TestBase):
         v.SetPreferSyntheticValue(True)
         v.SetFormat(lldb.eFormatVectorOfFloat32)
         
-        if self.TraceOn(): print v
+        if self.TraceOn(): print(v)
         
         self.assertTrue(v.GetNumChildren() == 4, "v as float32[] has 4 children")
         self.assertTrue(v.GetChildAtIndex(0).GetData().float[0] == 1.25, "child 0 == 1.25")

@@ -4,6 +4,8 @@ Test some lldb help commands.
 See also CommandInterpreter::OutputFormattedHelpText().
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

@@ -2,6 +2,8 @@
 Test that dynamic values update their child count correctly
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

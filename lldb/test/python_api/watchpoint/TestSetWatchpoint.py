@@ -2,6 +2,8 @@
 Use lldb Python SBValue API to create a watchpoint for read_write of 'globl' var.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -61,7 +63,7 @@ class SetWatchpointAPITestCase(TestBase):
         if not self.TraceOn():
             self.HideStdout()
 
-        print watchpoint
+        print(watchpoint)
 
         # Continue.  Expect the program to stop due to the variable being written to.
         process.Continue()

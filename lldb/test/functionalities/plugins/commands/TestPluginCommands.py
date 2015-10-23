@@ -2,6 +2,8 @@
 Test that plugins that load commands work correctly.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -47,7 +49,7 @@ class PluginCommandTestCase(TestBase):
         retval = debugger.GetCommandInterpreter().HandleCommand("plugin_loaded_command child abc def ghi",retobj)
 
         if self.TraceOn():
-            print retobj.GetOutput()
+            print(retobj.GetOutput())
 
         self.expect(retobj,substrs = ['abc def ghi'], exe=False)
 
@@ -57,6 +59,6 @@ class PluginCommandTestCase(TestBase):
         retval = debugger.GetCommandInterpreter().HandleCommand("plugin_loaded_ ch abc def ghi",retobj)
 
         if self.TraceOn():
-            print retobj.GetOutput()
+            print(retobj.GetOutput())
 
         self.expect(retobj,substrs = ['abc def ghi'], exe=False)

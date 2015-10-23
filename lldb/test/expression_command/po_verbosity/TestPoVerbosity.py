@@ -2,6 +2,8 @@
 Test that the po command acts correctly.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb

@@ -1,5 +1,7 @@
 """Test the lldb public C++ api breakpoint callbacks."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, re
@@ -82,7 +84,7 @@ class SBBreakpointCallbackCase(TestBase):
 
         env = {self.dylibPath : self.getLLDBLibraryEnvVal()}
         if self.TraceOn():
-            print "Running test %s" % " ".join(exe)
+            print("Running test %s" % " ".join(exe))
             check_call(exe, env=env)
         else:
             with open(os.devnull, 'w') as fnull:

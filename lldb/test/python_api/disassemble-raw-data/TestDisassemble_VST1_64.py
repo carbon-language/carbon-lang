@@ -2,6 +2,8 @@
 Use lldb Python API to disassemble raw machine code bytes
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -31,9 +33,9 @@ class Disassemble_VST1_64(TestBase):
         insts = target.GetInstructions(lldb.SBAddress(), raw_bytes)
 
         if self.TraceOn():
-            print
+            print()
             for i in insts:
-                print "Disassembled%s" % str(i)
+                print("Disassembled%s" % str(i))
 
         # Remove the following return statement when the radar is fixed.
         return
@@ -48,8 +50,8 @@ class Disassemble_VST1_64(TestBase):
         inst = insts.GetInstructionAtIndex(0)
 
         if self.TraceOn():
-            print
-            print "Raw bytes:    ", [hex(x) for x in raw_bytes]
-            print "Disassembled%s" % str(inst)
+            print()
+            print("Raw bytes:    ", [hex(x) for x in raw_bytes])
+            print("Disassembled%s" % str(inst))
  
         self.assertTrue (inst.GetMnemonic(target) == "vst1.64")

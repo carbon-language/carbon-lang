@@ -1,5 +1,7 @@
 """Test stepping and setting breakpoints in indirect and re-exported symbols."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

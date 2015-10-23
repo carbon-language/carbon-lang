@@ -1,5 +1,7 @@
 """Test lldb's startup delays creating a target, setting a breakpoint, and run to breakpoint stop."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys
@@ -35,11 +37,11 @@ class StartupDelaysBench(BenchBase):
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_startup_delay(self):
         """Test start up delays creating a target, setting a breakpoint, and run to breakpoint stop."""
-        print
+        print()
         self.run_startup_delays_bench(self.exe, self.break_spec, self.count)
-        print "lldb startup delay (create fresh target) benchmark:", self.stopwatch
-        print "lldb startup delay (set first breakpoint) benchmark:", self.stopwatch2
-        print "lldb startup delay (run to breakpoint) benchmark:", self.stopwatch3
+        print("lldb startup delay (create fresh target) benchmark:", self.stopwatch)
+        print("lldb startup delay (set first breakpoint) benchmark:", self.stopwatch2)
+        print("lldb startup delay (run to breakpoint) benchmark:", self.stopwatch3)
 
     def run_startup_delays_bench(self, exe, break_spec, count):
         import pexpect

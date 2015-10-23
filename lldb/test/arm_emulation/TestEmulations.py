@@ -2,6 +2,8 @@
 Test some ARM instruction emulation.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -46,7 +48,7 @@ class ARMEmulationTestCase(TestBase):
         success = insn.TestEmulation (stream, filename);
         output = stream.GetData();
         if self.TraceOn():
-            print '\nRunning test ' + os.path.basename(filename)
-            print output
+            print('\nRunning test ' + os.path.basename(filename))
+            print(output)
 
         self.assertTrue (success, 'Emulation test succeeded.')

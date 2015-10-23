@@ -2,6 +2,8 @@
 Test using LLDB data formatters with frozen objects coming from the expression parser.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb

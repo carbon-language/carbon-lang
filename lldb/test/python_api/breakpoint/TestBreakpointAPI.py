@@ -2,6 +2,8 @@
 Test SBBreakpoint APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -25,7 +27,7 @@ class BreakpointAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'AFunction'.
         breakpoint = target.BreakpointCreateByName('AFunction', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)

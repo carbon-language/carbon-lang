@@ -2,6 +2,8 @@
 The evaluating printf(...) after break stop and then up a stack frame.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

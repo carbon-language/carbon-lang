@@ -3,6 +3,8 @@ Test lldb ability to unwind a stack with a function containing a call to the
 '__builtin_trap' intrinsic, which GCC (4.6) encodes to an illegal opcode.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os

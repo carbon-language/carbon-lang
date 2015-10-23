@@ -2,6 +2,8 @@
 Test lldb-mi can interpret CLI commands directly.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldbmi_testcase

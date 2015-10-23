@@ -11,6 +11,8 @@ SBCommadnReturnObject, SBStream, and SBSymbolContextList, are all valid objects
 after default construction.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -27,7 +29,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBAddress(self):
         obj = lldb.SBAddress()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_address
@@ -38,7 +40,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBBlock(self):
         obj = lldb.SBBlock()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_block
@@ -49,7 +51,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBBreakpoint(self):
         obj = lldb.SBBreakpoint()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_breakpoint
@@ -60,7 +62,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBBreakpointLocation(self):
         obj = lldb.SBBreakpointLocation()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_breakpointlocation
@@ -71,7 +73,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBBroadcaster(self):
         obj = lldb.SBBroadcaster()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_broadcaster
@@ -83,7 +85,7 @@ class APIDefaultConstructorTestCase(TestBase):
         """SBCommandReturnObject object is valid after default construction."""
         obj = lldb.SBCommandReturnObject()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertTrue(obj)
 
     @python_api_test
@@ -91,7 +93,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBCommunication(self):
         obj = lldb.SBCommunication()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_communication
@@ -102,7 +104,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBCompileUnit(self):
         obj = lldb.SBCompileUnit()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_compileunit
@@ -113,7 +115,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBDebugger(self):
         obj = lldb.SBDebugger()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_debugger
@@ -125,7 +127,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBError(self):
         obj = lldb.SBError()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_error
@@ -138,7 +140,7 @@ class APIDefaultConstructorTestCase(TestBase):
         # This is just to test that typemap, as defined in lldb.swig, works.
         obj2 = lldb.SBEvent(0, "abc")
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_event
@@ -150,7 +152,7 @@ class APIDefaultConstructorTestCase(TestBase):
         # This is just to test that FileSpec(None) does not crash.
         obj2 = lldb.SBFileSpec(None, True)
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_filespec
@@ -161,7 +163,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBFrame(self):
         obj = lldb.SBFrame()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_frame
@@ -172,7 +174,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBFunction(self):
         obj = lldb.SBFunction()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_function
@@ -183,7 +185,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBInstruction(self):
         obj = lldb.SBInstruction()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_instruction
@@ -194,7 +196,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBInstructionList(self):
         obj = lldb.SBInstructionList()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_instructionlist
@@ -205,7 +207,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBLineEntry(self):
         obj = lldb.SBLineEntry()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_lineentry
@@ -216,7 +218,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBListener(self):
         obj = lldb.SBListener()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_listener
@@ -227,7 +229,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBModule(self):
         obj = lldb.SBModule()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_module
@@ -238,7 +240,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBProcess(self):
         obj = lldb.SBProcess()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_process
@@ -249,7 +251,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBSection(self):
         obj = lldb.SBSection()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_section
@@ -261,7 +263,7 @@ class APIDefaultConstructorTestCase(TestBase):
         """SBStream object is valid after default construction."""
         obj = lldb.SBStream()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertTrue(obj)
 
     @python_api_test
@@ -269,7 +271,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBStringList(self):
         obj = lldb.SBStringList()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_stringlist
@@ -280,7 +282,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBSymbol(self):
         obj = lldb.SBSymbol()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_symbol
@@ -291,7 +293,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBSymbolContext(self):
         obj = lldb.SBSymbolContext()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_symbolcontext
@@ -303,7 +305,7 @@ class APIDefaultConstructorTestCase(TestBase):
         """SBSymbolContextList object is valid after default construction."""
         obj = lldb.SBSymbolContextList()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertTrue(obj)
 
     @python_api_test
@@ -311,7 +313,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBTarget(self):
         obj = lldb.SBTarget()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_target
@@ -322,7 +324,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBThread(self):
         obj = lldb.SBThread()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_thread
@@ -334,7 +336,7 @@ class APIDefaultConstructorTestCase(TestBase):
         try:
             obj = lldb.SBType()
             if self.TraceOn():
-                print obj
+                print(obj)
             self.assertFalse(obj)
             # If we reach here, the test fails.
             self.fail("lldb.SBType() should fail, not succeed!")
@@ -353,7 +355,7 @@ class APIDefaultConstructorTestCase(TestBase):
         """SBTypeList object is valid after default construction."""
         obj = lldb.SBTypeList()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertTrue(obj)
 
     @python_api_test
@@ -361,7 +363,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBValue(self):
         obj = lldb.SBValue()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_value
@@ -372,7 +374,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBValueList(self):
         obj = lldb.SBValueList()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_valuelist
@@ -383,7 +385,7 @@ class APIDefaultConstructorTestCase(TestBase):
     def test_SBWatchpoint(self):
         obj = lldb.SBWatchpoint()
         if self.TraceOn():
-            print obj
+            print(obj)
         self.assertFalse(obj)
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_watchpoint

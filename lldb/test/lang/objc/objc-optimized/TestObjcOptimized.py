@@ -7,6 +7,8 @@ or 'self' variable was not properly read if the compiler
 optimized it into a register.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

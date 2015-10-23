@@ -11,6 +11,8 @@ o test_expr_commands_can_handle_quotes:
   Throw some expression commands with quotes at lldb.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2

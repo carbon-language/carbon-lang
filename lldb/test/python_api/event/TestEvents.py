@@ -2,6 +2,8 @@
 Test lldb Python event APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -69,17 +71,17 @@ class EventAPITestCase(TestBase):
                 # After that, the thread exits.
                 while not count > 3:
                     if traceOn:
-                        print "Try wait for event..."
+                        print("Try wait for event...")
                     if listener.WaitForEvent(5, event):
                         if traceOn:
                             desc = lldbutil.get_description(event)
-                            print "Event description:", desc
-                            print "Event data flavor:", event.GetDataFlavor()
-                            print "Process state:", lldbutil.state_type_to_str(process.GetState())
-                            print
+                            print("Event description:", desc)
+                            print("Event data flavor:", event.GetDataFlavor())
+                            print("Process state:", lldbutil.state_type_to_str(process.GetState()))
+                            print()
                     else:
                         if traceOn:
-                            print "timeout occurred waiting for event..."
+                            print("timeout occurred waiting for event...")
                     count = count + 1
                 return
 
@@ -112,7 +114,7 @@ class EventAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -146,12 +148,12 @@ class EventAPITestCase(TestBase):
                 # Let's only try at most 3 times to retrieve any kind of event.
                 while not count > 3:
                     if listener.WaitForEvent(5, event):
-                        #print "Got a valid event:", event
-                        #print "Event data flavor:", event.GetDataFlavor()
-                        #print "Event type:", lldbutil.state_type_to_str(event.GetType())
+                        #print("Got a valid event:", event)
+                        #print("Event data flavor:", event.GetDataFlavor())
+                        #print("Event type:", lldbutil.state_type_to_str(event.GetType()))
                         return
                     count = count + 1
-                    print "Timeout: listener.WaitForEvent"
+                    print("Timeout: listener.WaitForEvent")
 
                 return
 
@@ -186,7 +188,7 @@ class EventAPITestCase(TestBase):
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
-        #print "breakpoint:", breakpoint
+        #print("breakpoint:", breakpoint)
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -225,7 +227,7 @@ class EventAPITestCase(TestBase):
         import threading
         class MyListeningThread(threading.Thread):
             def run(self):
-                #print "Running MyListeningThread:", self
+                #print("Running MyListeningThread:", self)
 
                 # Regular expression pattern for the event description.
                 pattern = re.compile("data = {.*, state = (.*)}$")
@@ -235,7 +237,7 @@ class EventAPITestCase(TestBase):
                 while True:
                     if listener.WaitForEvent(5, event):
                         desc = lldbutil.get_description(event)
-                        #print "Event description:", desc
+                        #print("Event description:", desc)
                         match = pattern.search(desc)
                         if not match:
                             break;
@@ -256,7 +258,7 @@ class EventAPITestCase(TestBase):
                             break
                         else:
                             break
-                    print "Timeout: listener.WaitForEvent"
+                    print("Timeout: listener.WaitForEvent")
                     count = count + 1
                     if count > 6:
                         break

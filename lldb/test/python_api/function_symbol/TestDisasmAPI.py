@@ -2,6 +2,8 @@
 Test retrieval of SBAddress from function/symbol, disassembly, and SBAddress APIs.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -33,8 +35,8 @@ class DisasmAPITestCase(TestBase):
         # Now create the two breakpoints inside function 'a'.
         breakpoint1 = target.BreakpointCreateByLocation('main.c', self.line1)
         breakpoint2 = target.BreakpointCreateByLocation('main.c', self.line2)
-        #print "breakpoint1:", breakpoint1
-        #print "breakpoint2:", breakpoint2
+        #print("breakpoint1:", breakpoint1)
+        #print("breakpoint2:", breakpoint2)
         self.assertTrue(breakpoint1 and
                         breakpoint1.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
@@ -55,14 +57,14 @@ class DisasmAPITestCase(TestBase):
         self.assertTrue(lineEntry.GetLine() == self.line1)
 
         address1 = lineEntry.GetStartAddress()
-        #print "address1:", address1
+        #print("address1:", address1)
 
         # Now call SBTarget.ResolveSymbolContextForAddress() with address1.
         context1 = target.ResolveSymbolContextForAddress(address1, lldb.eSymbolContextEverything)
 
         self.assertTrue(context1)
         if self.TraceOn():
-            print "context1:", context1
+            print("context1:", context1)
 
         # Continue the inferior, the breakpoint 2 should be hit.
         process.Continue()
@@ -80,24 +82,24 @@ class DisasmAPITestCase(TestBase):
 
         disasm_output = lldbutil.disassemble(target, symbol)
         if self.TraceOn():
-            print "symbol:", symbol
-            print "disassembly=>\n", disasm_output
+            print("symbol:", symbol)
+            print("disassembly=>\n", disasm_output)
 
         disasm_output = lldbutil.disassemble(target, function)
         if self.TraceOn():
-            print "function:", function
-            print "disassembly=>\n", disasm_output
+            print("function:", function)
+            print("disassembly=>\n", disasm_output)
 
         sa1 = symbol.GetStartAddress()
-        #print "sa1:", sa1
-        #print "sa1.GetFileAddress():", hex(sa1.GetFileAddress())
+        #print("sa1:", sa1)
+        #print("sa1.GetFileAddress():", hex(sa1.GetFileAddress()))
         #ea1 = symbol.GetEndAddress()
-        #print "ea1:", ea1
+        #print("ea1:", ea1)
         sa2 = function.GetStartAddress()
-        #print "sa2:", sa2
-        #print "sa2.GetFileAddress():", hex(sa2.GetFileAddress())
+        #print("sa2:", sa2)
+        #print("sa2.GetFileAddress():", hex(sa2.GetFileAddress()))
         #ea2 = function.GetEndAddress()
-        #print "ea2:", ea2
+        #print("ea2:", ea2)
         self.assertTrue(sa1 and sa2 and sa1 == sa2,
                         "The two starting addresses should be the same")
 

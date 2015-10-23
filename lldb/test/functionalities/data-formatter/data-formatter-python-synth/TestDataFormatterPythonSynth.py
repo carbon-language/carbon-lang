@@ -2,6 +2,8 @@
 Test lldb data formatter subsystem.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -225,7 +227,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         str_cast = str(test_cast)
 
         if self.TraceOn():
-             print str_cast
+             print(str_cast)
 
         self.assertTrue(str_cast.find('A') != -1, 'could not find A in output')
         self.assertTrue(str_cast.find('B') != -1, 'could not find B in output')
@@ -238,7 +240,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         str_cast = str(test_cast)
 
         if self.TraceOn():
-             print str_cast
+             print(str_cast)
 
         # we detect that all the values of the child objects have changed - but the counter-generated item
         # is still fixed at 0 because it is cached - this would fail if update(self): in ftsp returned False

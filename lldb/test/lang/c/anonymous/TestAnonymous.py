@@ -1,5 +1,7 @@
 """Test that anonymous structs/unions are transparent to member access"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

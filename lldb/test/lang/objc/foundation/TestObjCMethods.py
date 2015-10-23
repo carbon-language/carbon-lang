@@ -3,6 +3,8 @@ Set breakpoints on objective-c class and instance methods in foundation.
 Also lookup objective-c data types and evaluate expressions.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, os.path, time
@@ -253,8 +255,8 @@ class FoundationTestCase(TestBase):
             for line in lines:
                 if string.find(line, "$__lldb") != -1:
                     if num_errors == 0:
-                        print "error: found spurious name lookups when evaluating an expression:"
+                        print("error: found spurious name lookups when evaluating an expression:")
                     num_errors += 1
-                    print line,
+                    print(line, end='')
             self.assertTrue(num_errors == 0, "Spurious lookups detected")
             f.close()

@@ -2,6 +2,8 @@
 Test that variables of floating point types are displayed correctly.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import AbstractBase

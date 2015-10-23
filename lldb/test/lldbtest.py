@@ -1584,7 +1584,7 @@ class Base(unittest2.TestCase):
         During test execution, there might be cases where we don't want to show the
         standard output to the user.  For example,
 
-            self.runCmd(r'''sc print "\n\n\tHello!\n"''')
+            self.runCmd(r'''sc print("\n\n\tHello!\n")''')
 
         tests whether command abbreviation for 'script' works or not.  There is no
         need to show the 'Hello' output to the user as long as the 'script' command

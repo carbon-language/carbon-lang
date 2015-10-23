@@ -4,6 +4,8 @@ Regression test for <rdar://problem/8981098>:
 The expression parser's type search only looks in the current compilation unit for types.
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import lldb

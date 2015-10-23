@@ -1,3 +1,4 @@
+from __future__ import print_function
 import lldb, sys
 
 class WelcomeCommand(object):
@@ -8,7 +9,7 @@ class WelcomeCommand(object):
         return "Just a docstring for welcome_impl\nA command that says hello to LLDB users"
         
     def __call__(self, debugger, args, exe_ctx, result):
-        print >>result,  ('Hello ' + args + ', welcome to LLDB');
+        print('Hello ' + args + ', welcome to LLDB',  file=result);
         return None;
 
 class TargetnameCommand(object):
@@ -18,7 +19,7 @@ class TargetnameCommand(object):
     def __call__(self, debugger, args, exe_ctx, result):
         target = debugger.GetSelectedTarget()
         file = target.GetExecutable()
-        print >>result,  ('Current target ' + file.GetFilename())
+        print('Current target ' + file.GetFilename(), file=result)
         if args == 'fail':
             result.SetError('a test for error in command')
     
@@ -27,19 +28,19 @@ class TargetnameCommand(object):
 
 def print_wait_impl(debugger, args, result, dict):
     result.SetImmediateOutputFile(sys.stdout)
-    print >>result,  ('Trying to do long task..')
+    print('Trying to do long task..', file=result)
     import time
     time.sleep(1)
-    print >>result,  ('Still doing long task..')
+    print('Still doing long task..', file=result)
     time.sleep(1)
-    print >>result,  ('Done; if you saw the delays I am doing OK')
+    print('Done; if you saw the delays I am doing OK', file=result)
 
 def check_for_synchro(debugger, args, result, dict):
     if debugger.GetAsync() == True:
-        print >>result,  ('I am running async')
+        print('I am running async', file=result)
     if debugger.GetAsync() == False:
-        print >>result,  ('I am running sync')
+        print('I am running sync', file=result)
 
 def takes_exe_ctx(debugger, args, exe_ctx, result, dict):
-    print >>result, str(exe_ctx.GetTarget())
+    print(str(exe_ctx.GetTarget()), file=result)
 

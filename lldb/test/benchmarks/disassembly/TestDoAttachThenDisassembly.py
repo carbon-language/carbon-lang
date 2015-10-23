@@ -2,6 +2,8 @@
 inferior and traverses the stack for thread0 to arrive at frame with function
 'MainLoop'.  It is important to specify an lldb executable as the inferior."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, sys
@@ -26,9 +28,9 @@ class AttachThenDisassemblyBench(BenchBase):
     @no_debug_info_test
     def test_attach_then_disassembly(self):
         """Attach to a spawned lldb process then run disassembly benchmarks."""
-        print
+        print()
         self.run_lldb_attach_then_disassembly(self.exe, self.count)
-        print "lldb disassembly benchmark:", self.stopwatch
+        print("lldb disassembly benchmark:", self.stopwatch)
 
     def run_lldb_attach_then_disassembly(self, exe, count):
         target = self.dbg.CreateTarget(exe)
@@ -38,7 +40,7 @@ class AttachThenDisassemblyBench(BenchBase):
         popen = subprocess.Popen([exe, self.lldbOption],
                                  stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
         if self.TraceOn():
-            print "pid of spawned process: %d" % popen.pid
+            print("pid of spawned process: %d" % popen.pid)
 
         # Attach to the launched lldb process.
         listener = lldb.SBListener("my.attach.listener")
@@ -52,12 +54,12 @@ class AttachThenDisassemblyBench(BenchBase):
         i = 0
         found = False
         for f in thread0:
-            #print "frame#%d %s" % (i, f.GetFunctionName())
+            #print("frame#%d %s" % (i, f.GetFunctionName()))
             if "MainLoop" in f.GetFunctionName():
                 found = True
                 thread0.SetSelectedFrame(i)
                 if self.TraceOn():
-                    print "Found frame#%d for function 'MainLoop'" % i
+                    print("Found frame#%d for function 'MainLoop'" % i)
                 break
             i += 1
             

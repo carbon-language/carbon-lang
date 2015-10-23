@@ -1,5 +1,7 @@
 """Test that adding, deleting and modifying watchpoints sends the appropriate events."""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time
@@ -82,6 +84,6 @@ class TestWatchpointEvents (TestBase):
         # There shouldn't be another event waiting around:
         found_event = self.listener.PeekAtNextEventForBroadcasterWithType (self.target_bcast, lldb.SBTarget.eBroadcastBitBreakpointChanged, event)
         if found_event:
-            print "Found an event I didn't expect: ", event
+            print("Found an event I didn't expect: ", event)
 
         self.assertTrue (not found_event, "Only one event per change.")

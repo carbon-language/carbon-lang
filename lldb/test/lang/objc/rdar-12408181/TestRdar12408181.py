@@ -2,6 +2,8 @@
 Test that we are able to find out how many children NSWindow has
 """
 
+from __future__ import print_function
+
 import lldb_shared
 
 import os, time

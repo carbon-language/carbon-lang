@@ -1,5 +1,7 @@
 """Test that the Objective-C syntax for dictionary/array literals and indexing works"""
 
+from __future__ import print_function
+
 import lldb_shared
 
 import unittest2

@@ -1,5 +1,7 @@
+from __future__ import print_function
+
 def foo2_function(debugger, args, result, dict):
-	print >>result,  ("foo2 says " + args)
+	print("foo2 says " + args, file=result)
 	return None
 
 def __lldb_init_module(debugger, session_dict):
