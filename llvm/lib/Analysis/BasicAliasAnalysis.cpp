@@ -815,11 +815,17 @@ static AliasResult aliasSameBasePointerGEPs(const GEPOperator *GEP1,
     // Because array indices greater than the number of elements are valid in
     // GEPs, unless we know the intermediate indices are identical between
     // GEP1 and GEP2 we cannot guarantee that the last indexed arrays don't
-    // partially overlap.
+    // partially overlap. We also need to check that the loaded size matches
+    // the element size, otherwise we could still have overlap.
+    const uint64_t ElementSize =
+        DL.getTypeStoreSize(cast<SequentialType>(Ty)->getElementType());
+    if (V1Size != ElementSize || V2Size != ElementSize)
+      return MayAlias;
+
     for (unsigned i = 0, e = GEP1->getNumIndices() - 1; i != e; ++i)
       if (GEP1->getOperand(i + 1) != GEP2->getOperand(i + 1))
         return MayAlias;
-    
+
     // Now we know that the array/pointer that GEP1 indexes into and that
     // that GEP2 indexes into must either precisely overlap or be disjoint.
     // Because they cannot partially overlap and because fields in an array

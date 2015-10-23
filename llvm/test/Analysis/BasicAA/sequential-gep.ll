@@ -40,4 +40,15 @@ define void @t4([8 x i32]* %p, i32 %addend, i32* %q) {
   ret void
 }
 
+; CHECK: Function: t5
+; CHECK: PartialAlias: i32* %gep2, i64* %bc
+define void @t5([8 x i32]* %p, i32 %addend, i32* %q) {
+  %knownnonzero = load i32, i32* %q, !range !0
+  %add = add nsw nuw i32 %addend, %knownnonzero
+  %gep1 = getelementptr [8 x i32], [8 x i32]* %p, i32 2, i32 %addend
+  %gep2 = getelementptr [8 x i32], [8 x i32]* %p, i32 2, i32 %add
+  %bc = bitcast i32* %gep1 to i64*
+  ret void
+}
+
 !0 = !{ i32 1, i32 5 }
