@@ -67,6 +67,7 @@ private:
     return !Symtab.getSharedFiles().empty() || Config->Shared;
   }
   uintX_t getVAStart() const { return Config->Shared ? 0 : Target->getVAStart(); }
+  uintX_t getEntryAddr() const;
   int getPhdrsNum() const;
 
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
@@ -723,12 +724,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_type = Config->Shared ? ET_DYN : ET_EXEC;
   EHdr->e_machine = FirstObj.getEMachine();
   EHdr->e_version = EV_CURRENT;
-  if (Config->EntrySym) {
-    if (auto *E = dyn_cast<ELFSymbolBody<ELFT>>(Config->EntrySym->repl()))
-      EHdr->e_entry = getSymVA<ELFT>(*E);
-  } else if (Config->EntryAddr != uint64_t(-1)) {
-    EHdr->e_entry = Config->EntryAddr;
-  }
+  EHdr->e_entry = getEntryAddr();
   EHdr->e_phoff = sizeof(Elf_Ehdr);
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
@@ -769,6 +765,18 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
     if (Sec != Out<ELFT>::Opd)
       Sec->writeTo(Buf + Sec->getFileOff());
+}
+
+template <class ELFT>
+typename ELFFile<ELFT>::uintX_t Writer<ELFT>::getEntryAddr() const {
+  if (Config->EntrySym) {
+    if (auto *E = dyn_cast<ELFSymbolBody<ELFT>>(Config->EntrySym->repl()))
+      return getSymVA<ELFT>(*E);
+    return 0;
+  }
+  if (Config->EntryAddr != uint64_t(-1))
+    return Config->EntryAddr;
+  return 0;
 }
 
 template <class ELFT>
