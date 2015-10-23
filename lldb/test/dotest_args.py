@@ -1,33 +1,25 @@
 from __future__ import print_function
 
+import argparse
 import sys
 import multiprocessing
 import os
 import textwrap
-
-if sys.version_info >= (2, 7):
-    argparse = __import__('argparse')
-else:
-    argparse = __import__('argparse_compat')
 
 class ArgParseNamespace(object):
     pass
 
 def parse_args(parser, argv):
     """ Returns an argument object. LLDB_TEST_ARGUMENTS environment variable can
-        be used to pass additional arguments if a compatible (>=2.7) argparse
-        library is available.
+        be used to pass additional arguments.
     """
-    if sys.version_info >= (2, 7):
-        args = ArgParseNamespace()
+    args = ArgParseNamespace()
 
-        if ('LLDB_TEST_ARGUMENTS' in os.environ):
-            print("Arguments passed through environment: '%s'" % os.environ['LLDB_TEST_ARGUMENTS'])
-            args = parser.parse_args([sys.argv[0]].__add__(os.environ['LLDB_TEST_ARGUMENTS'].split()),namespace=args)
+    if ('LLDB_TEST_ARGUMENTS' in os.environ):
+        print("Arguments passed through environment: '%s'" % os.environ['LLDB_TEST_ARGUMENTS'])
+        args = parser.parse_args([sys.argv[0]].__add__(os.environ['LLDB_TEST_ARGUMENTS'].split()),namespace=args)
 
-        return parser.parse_args(args=argv, namespace=args)
-    else:
-        return parser.parse_args(args=argv)
+    return parser.parse_args(args=argv, namespace=args)
 
 
 def default_thread_count():
