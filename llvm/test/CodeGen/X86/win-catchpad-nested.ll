@@ -31,8 +31,10 @@ exit:
 
 ; Check the catchret targets
 ; CHECK-LABEL: test1: # @test1
-; CHECK: [[Exit:^[^: ]+]]: # %exit
-; CHECK: [[OuterRet:^[^: ]+]]: # %outer.ret
+; CHECK: [[Exit:^[^: ]+]]: # Block address taken
+; CHECK-NEXT:              # %exit
+; CHECK: [[OuterRet:^[^: ]+]]: # Block address taken
+; CHECK-NEXT:                  # %outer.ret
 ; CHECK-NEXT: leaq [[Exit]](%rip), %rax
 ; CHECK:      retq   # CATCHRET
 ; CHECK: {{^[^: ]+}}: # %inner.pad

@@ -1178,6 +1178,9 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
           .addReg(ReturnReg)
           .addMBB(RestoreMBB);
     }
+    // Record that we've taken the address of RestoreMBB and no longer just
+    // reference it in a terminator.
+    RestoreMBB->setHasAddressTaken();
   }
 
   if (MBBI != MBB.end())

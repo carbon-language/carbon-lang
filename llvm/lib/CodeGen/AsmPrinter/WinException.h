@@ -18,6 +18,7 @@
 
 namespace llvm {
 class Function;
+class GlobalValue;
 class MachineFunction;
 class MCExpr;
 class Value;
@@ -66,7 +67,7 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
                                      StringRef FLinkageName);
 
   const MCExpr *create32bitRef(const MCSymbol *Value);
-  const MCExpr *create32bitRef(const Value *V);
+  const MCExpr *create32bitRef(const GlobalValue *GV);
   const MCExpr *getLabelPlusOne(const MCSymbol *Label);
   const MCExpr *getOffset(const MCSymbol *OffsetOf, const MCSymbol *OffsetFrom);
   const MCExpr *getOffsetPlusOne(const MCSymbol *OffsetOf,

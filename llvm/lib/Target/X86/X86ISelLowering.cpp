@@ -21471,7 +21471,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   // For v = setjmp(buf), we generate
   //
   // thisMBB:
-  //  buf[LabelOffset] = restoreMBB
+  //  buf[LabelOffset] = restoreMBB <-- takes address of restoreMBB
   //  SjLjSetup restoreMBB
   //
   // mainMBB:
@@ -21491,6 +21491,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   MF->insert(I, mainMBB);
   MF->insert(I, sinkMBB);
   MF->push_back(restoreMBB);
+  restoreMBB->setHasAddressTaken();
 
   MachineInstrBuilder MIB;
 

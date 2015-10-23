@@ -74,13 +74,15 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X86: [[contbb:LBB0_[0-9]+]]: # %try.cont
 ; X86: retl
 
-; X86: [[restorebb1:LBB0_[0-9]+]]: # %invoke.cont.2
+; X86: [[restorebb1:LBB0_[0-9]+]]: # Block address taken
+; X86-NEXT:                        # %invoke.cont.2
 ; X86: movl -16(%ebp), %esp
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
 
 ; FIXME: These should be de-duplicated.
-; X86: [[restorebb2:LBB0_[0-9]+]]: # %invoke.cont.3
+; X86: [[restorebb2:LBB0_[0-9]+]]: # Block address taken
+; X86-NEXT:                        # %invoke.cont.3
 ; X86: movl -16(%ebp), %esp
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
@@ -140,7 +142,8 @@ catchendblock:                                    ; preds = %catch, %catch.2, %c
 ; X64-DAG: leaq -[[local_offs:[0-9]+]](%rbp), %rdx
 ; X64-DAG: movl $1, %ecx
 ; X64: callq f
-; X64: [[contbb:\.LBB0_[0-9]+]]: # %try.cont
+; X64: [[contbb:\.LBB0_[0-9]+]]: # Block address taken
+; X64-NEXT:                      # %try.cont
 ; X64: addq $48, %rsp
 ; X64: popq %rbp
 ; X64: retq
@@ -253,7 +256,8 @@ catchendblock:
 ; X86: [[contbb:LBB1_[0-9]+]]: # %try.cont
 ; X86: retl
 
-; X86: [[restorebb:LBB1_[0-9]+]]: # %catch.done
+; X86: [[restorebb:LBB1_[0-9]+]]: # Block address taken
+; X86-NEXT:                       # %catch.done
 ; X86: movl -16(%ebp), %esp
 ; X86: addl $12, %ebp
 ; X86: jmp [[contbb]]
@@ -294,7 +298,8 @@ catchendblock:
 ; X64: .Ltmp[[before_call:[0-9]+]]:
 ; X64: callq f
 ; X64: .Ltmp[[after_call:[0-9]+]]:
-; X64: [[contbb:\.LBB1_[0-9]+]]: # %try.cont
+; X64: [[contbb:\.LBB1_[0-9]+]]: # Block address taken
+; X64-NEXT:                      # %try.cont
 ; X64: addq $48, %rsp
 ; X64: popq %rbp
 ; X64: retq
