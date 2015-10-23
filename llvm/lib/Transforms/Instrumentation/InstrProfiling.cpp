@@ -271,15 +271,14 @@ void InstrProfiling::emitRegistration() {
   auto *VoidPtrTy = Type::getInt8PtrTy(M->getContext());
   auto *RegisterFTy = FunctionType::get(VoidTy, false);
   auto *RegisterF = Function::Create(RegisterFTy, GlobalValue::InternalLinkage,
-                                     "__llvm_profile_register_functions", M);
+                                     getInstrProfRegFuncsName(), M);
   RegisterF->setUnnamedAddr(true);
-  if (Options.NoRedZone)
-    RegisterF->addFnAttr(Attribute::NoRedZone);
+  if (Options.NoRedZone) RegisterF->addFnAttr(Attribute::NoRedZone);
 
   auto *RuntimeRegisterTy = FunctionType::get(VoidTy, VoidPtrTy, false);
   auto *RuntimeRegisterF =
       Function::Create(RuntimeRegisterTy, GlobalVariable::ExternalLinkage,
-                       "__llvm_profile_register_function", M);
+                       getInstrProfRegFuncName(), M);
 
   IRBuilder<> IRB(BasicBlock::Create(M->getContext(), "", RegisterF));
   for (Value *Data : UsedVars)
@@ -288,26 +287,22 @@ void InstrProfiling::emitRegistration() {
 }
 
 void InstrProfiling::emitRuntimeHook() {
-  const char *const RuntimeVarName = "__llvm_profile_runtime";
-  const char *const RuntimeUserName = "__llvm_profile_runtime_user";
 
   // If the module's provided its own runtime, we don't need to do anything.
-  if (M->getGlobalVariable(RuntimeVarName))
-    return;
+  if (M->getGlobalVariable(getInstrProfRuntimeHookVarName())) return;
 
   // Declare an external variable that will pull in the runtime initialization.
   auto *Int32Ty = Type::getInt32Ty(M->getContext());
   auto *Var =
       new GlobalVariable(*M, Int32Ty, false, GlobalValue::ExternalLinkage,
-                         nullptr, RuntimeVarName);
+                         nullptr, getInstrProfRuntimeHookVarName());
 
   // Make a function that uses it.
-  auto *User =
-      Function::Create(FunctionType::get(Int32Ty, false),
-                       GlobalValue::LinkOnceODRLinkage, RuntimeUserName, M);
+  auto *User = Function::Create(FunctionType::get(Int32Ty, false),
+                                GlobalValue::LinkOnceODRLinkage,
+                                getInstrProfRuntimeHookVarUseFuncName(), M);
   User->addFnAttr(Attribute::NoInline);
-  if (Options.NoRedZone)
-    User->addFnAttr(Attribute::NoRedZone);
+  if (Options.NoRedZone) User->addFnAttr(Attribute::NoRedZone);
   User->setVisibility(GlobalValue::HiddenVisibility);
 
   IRBuilder<> IRB(BasicBlock::Create(M->getContext(), "", User));
@@ -350,19 +345,17 @@ void InstrProfiling::emitUses() {
 void InstrProfiling::emitInitialization() {
   std::string InstrProfileOutput = Options.InstrProfileOutput;
 
-  Constant *RegisterF = M->getFunction("__llvm_profile_register_functions");
-  if (!RegisterF && InstrProfileOutput.empty())
-    return;
+  Constant *RegisterF = M->getFunction(getInstrProfRegFuncsName());
+  if (!RegisterF && InstrProfileOutput.empty()) return;
 
   // Create the initialization function.
   auto *VoidTy = Type::getVoidTy(M->getContext());
-  auto *F =
-      Function::Create(FunctionType::get(VoidTy, false),
-                       GlobalValue::InternalLinkage, "__llvm_profile_init", M);
+  auto *F = Function::Create(FunctionType::get(VoidTy, false),
+                             GlobalValue::InternalLinkage,
+                             getInstrProfInitFuncName(), M);
   F->setUnnamedAddr(true);
   F->addFnAttr(Attribute::NoInline);
-  if (Options.NoRedZone)
-    F->addFnAttr(Attribute::NoRedZone);
+  if (Options.NoRedZone) F->addFnAttr(Attribute::NoRedZone);
 
   // Add the basic block and the necessary calls.
   IRBuilder<> IRB(BasicBlock::Create(M->getContext(), "", F));
@@ -371,9 +364,8 @@ void InstrProfiling::emitInitialization() {
   if (!InstrProfileOutput.empty()) {
     auto *Int8PtrTy = Type::getInt8PtrTy(M->getContext());
     auto *SetNameTy = FunctionType::get(VoidTy, Int8PtrTy, false);
-    auto *SetNameF =
-        Function::Create(SetNameTy, GlobalValue::ExternalLinkage,
-                         "__llvm_profile_override_default_filename", M);
+    auto *SetNameF = Function::Create(SetNameTy, GlobalValue::ExternalLinkage,
+                                      getInstrProfFileOverriderFuncName(), M);
 
     // Create variable for profile name.
     Constant *ProfileNameConst =
