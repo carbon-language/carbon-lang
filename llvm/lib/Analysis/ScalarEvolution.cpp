@@ -7191,7 +7191,7 @@ bool ScalarEvolution::isKnownPredicateViaNoOverflow(ICmpInst::Predicate Pred,
       return false;
 
     OutY = cast<SCEVConstant>(ConstOp)->getValue()->getValue();
-    return (FlagsPresent & ExpectedFlags) != 0;
+    return (FlagsPresent & ExpectedFlags) == ExpectedFlags;
   };
 
   APInt C;
