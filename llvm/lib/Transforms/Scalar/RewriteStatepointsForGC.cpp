@@ -92,10 +92,10 @@ struct RewriteStatepointsForGC : public ModulePass {
       Changed |= runOnFunction(F);
 
     if (Changed) {
-      // stripDereferenceabilityInfo asserts that shouldRewriteStatepointsIn
+      // stripNonValidAttributes asserts that shouldRewriteStatepointsIn
       // returns true for at least one function in the module.  Since at least
       // one function changed, we know that the precondition is satisfied.
-      stripDereferenceabilityInfo(M);
+      stripNonValidAttributes(M);
     }
 
     return Changed;
@@ -112,15 +112,15 @@ struct RewriteStatepointsForGC : public ModulePass {
   /// dereferenceability that are no longer valid/correct after
   /// RewriteStatepointsForGC has run.  This is because semantically, after
   /// RewriteStatepointsForGC runs, all calls to gc.statepoint "free" the entire
-  /// heap.  stripDereferenceabilityInfo (conservatively) restores correctness
+  /// heap.  stripNonValidAttributes (conservatively) restores correctness
   /// by erasing all attributes in the module that externally imply
   /// dereferenceability.
   ///
-  void stripDereferenceabilityInfo(Module &M);
+  void stripNonValidAttributes(Module &M);
 
-  // Helpers for stripDereferenceabilityInfo
-  void stripDereferenceabilityInfoFromBody(Function &F);
-  void stripDereferenceabilityInfoFromPrototype(Function &F);
+  // Helpers for stripNonValidAttributes
+  void stripNonValidAttributesFromBody(Function &F);
+  void stripNonValidAttributesFromPrototype(Function &F);
 };
 } // namespace
 
@@ -2492,8 +2492,8 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
 
 // Handles both return values and arguments for Functions and CallSites.
 template <typename AttrHolder>
-static void RemoveDerefAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
-                                   unsigned Index) {
+static void RemoveNonValidAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
+                                      unsigned Index) {
   AttrBuilder R;
   if (AH.getDereferenceableBytes(Index))
     R.addAttribute(Attribute::get(Ctx, Attribute::Dereferenceable,
@@ -2508,18 +2508,18 @@ static void RemoveDerefAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
 }
 
 void
-RewriteStatepointsForGC::stripDereferenceabilityInfoFromPrototype(Function &F) {
+RewriteStatepointsForGC::stripNonValidAttributesFromPrototype(Function &F) {
   LLVMContext &Ctx = F.getContext();
 
   for (Argument &A : F.args())
     if (isa<PointerType>(A.getType()))
-      RemoveDerefAttrAtIndex(Ctx, F, A.getArgNo() + 1);
+      RemoveNonValidAttrAtIndex(Ctx, F, A.getArgNo() + 1);
 
   if (isa<PointerType>(F.getReturnType()))
-    RemoveDerefAttrAtIndex(Ctx, F, AttributeSet::ReturnIndex);
+    RemoveNonValidAttrAtIndex(Ctx, F, AttributeSet::ReturnIndex);
 }
 
-void RewriteStatepointsForGC::stripDereferenceabilityInfoFromBody(Function &F) {
+void RewriteStatepointsForGC::stripNonValidAttributesFromBody(Function &F) {
   if (F.empty())
     return;
 
@@ -2549,9 +2549,9 @@ void RewriteStatepointsForGC::stripDereferenceabilityInfoFromBody(Function &F) {
     if (CallSite CS = CallSite(&I)) {
       for (int i = 0, e = CS.arg_size(); i != e; i++)
         if (isa<PointerType>(CS.getArgument(i)->getType()))
-          RemoveDerefAttrAtIndex(Ctx, CS, i + 1);
+          RemoveNonValidAttrAtIndex(Ctx, CS, i + 1);
       if (isa<PointerType>(CS.getType()))
-        RemoveDerefAttrAtIndex(Ctx, CS, AttributeSet::ReturnIndex);
+        RemoveNonValidAttrAtIndex(Ctx, CS, AttributeSet::ReturnIndex);
     }
   }
 }
@@ -2570,17 +2570,17 @@ static bool shouldRewriteStatepointsIn(Function &F) {
     return false;
 }
 
-void RewriteStatepointsForGC::stripDereferenceabilityInfo(Module &M) {
+void RewriteStatepointsForGC::stripNonValidAttributes(Module &M) {
 #ifndef NDEBUG
   assert(std::any_of(M.begin(), M.end(), shouldRewriteStatepointsIn) &&
          "precondition!");
 #endif
 
   for (Function &F : M)
-    stripDereferenceabilityInfoFromPrototype(F);
+    stripNonValidAttributesFromPrototype(F);
 
   for (Function &F : M)
-    stripDereferenceabilityInfoFromBody(F);
+    stripNonValidAttributesFromBody(F);
 }
 
 bool RewriteStatepointsForGC::runOnFunction(Function &F) {
