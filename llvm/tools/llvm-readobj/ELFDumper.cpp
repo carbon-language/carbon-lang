@@ -321,7 +321,7 @@ static void printVersionSymbolSection(ELFDumper<ELFT> *Dumper,
   W.printNumber("Link", Sec->sh_link);
 
   const typename ELFO::Elf_Shdr *DynSymSec = Dumper->getDotDynSymSec();
-  uint8_t *P = (uint8_t *)Obj->base() + Sec->sh_offset;
+  const uint8_t *P = (const uint8_t *)Obj->base() + Sec->sh_offset;
   ErrorOr<StringRef> StrTableOrErr =
       Obj->getStringTableForSymtab(*DynSymSec);
   error(StrTableOrErr.getError());
@@ -359,9 +359,10 @@ static void printVersionDefinitionSection(ELFDumper<ELFT> *Dumper,
     if (Dyn.d_tag == DT_VERDEFNUM)
       verdef_entries = Dyn.d_un.d_val;
   }
-  uint8_t *SecStartAddress = (uint8_t *)Obj->base() + Sec->sh_offset;
-  uint8_t *SecEndAddress = SecStartAddress + Sec->sh_size;
-  uint8_t *P = SecStartAddress;
+  const uint8_t *SecStartAddress =
+      (const uint8_t *)Obj->base() + Sec->sh_offset;
+  const uint8_t *SecEndAddress = SecStartAddress + Sec->sh_size;
+  const uint8_t *P = SecStartAddress;
   ErrorOr<const typename ELFO::Elf_Shdr *> StrTabOrErr =
       Obj->getSection(Sec->sh_link);
   error(StrTabOrErr.getError());
@@ -378,9 +379,9 @@ static void printVersionDefinitionSection(ELFDumper<ELFT> *Dumper,
     W.printNumber("Flags", VD->vd_flags);
     W.printNumber("Index", VD->vd_ndx);
     W.printNumber("Cnt", VD->vd_cnt);
-    W.printString("Name", StringRef((char *)(
-                              Obj->base() + (*StrTabOrErr)->sh_offset +
-                              VD->getAux()->vda_name)));
+    W.printString("Name", StringRef((const char *)(Obj->base() +
+                                                   (*StrTabOrErr)->sh_offset +
+                                                   VD->getAux()->vda_name)));
     P += VD->vd_next;
   }
 }
