@@ -29,14 +29,14 @@ class LibcxxListDataFormatterTestCase(TestBase):
         self.build()
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
         
-        lldbutil.skip_if_library_missing(self, self.target(), lldbutil.PrintableRegex("libc\+\+"))
-
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line2, num_expected_locations=-1)
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line3, num_expected_locations=-1)
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line4, num_expected_locations=-1)
 
         self.runCmd("run", RUN_SUCCEEDED)
+
+        lldbutil.skip_if_library_missing(self, self.target(), lldbutil.PrintableRegex("libc\+\+"))
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
