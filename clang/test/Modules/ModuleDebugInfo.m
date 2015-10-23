@@ -30,15 +30,17 @@
 // CHECK-SAME:             name: "ObjCClass",
 // CHECK: !DIObjCProperty(name: "property",
 // CHECK: !DIDerivedType(tag: DW_TAG_member, name: "ivar"
+// CHECK: !DIDerivedType(tag: DW_TAG_typedef, name: "InnerEnum"
 // CHECK: !DISubprogram(name: "+[ObjCClass classMethod]"
 // CHECK: !DISubprogram(name: "-[ObjCClass instanceMethodWithInt:]"
 // CHECK: !DISubprogram(name: "-[ categoryMethod]"
-// CHECK: !DITypedefType(name: "InnerEnum"
 
-// MODULE-CHECK: !DICompositeType(tag: DW_TAG_structure_type,
-// MODULE-CHECK-SAME:             name: "FwdDecl",
+// MODULE-CHECK: !DICompositeType(tag: DW_TAG_enumeration_type,
 // MODULE-CHECK-SAME:             scope: ![[MODULE:[0-9]+]],
 // MODULE-CHECK: ![[MODULE]] = !DIModule(scope: null, name: "DebugObjC"
+// MODULE-CHECK: !DICompositeType(tag: DW_TAG_structure_type,
+// MODULE-CHECK-SAME:             name: "FwdDecl",
+// MODULE-CHECK-SAME:             scope: ![[MODULE]],
 // MODULE-CHECK: !DICompositeType(tag: DW_TAG_structure_type,
 // MODULE-CHECK-SAME:             name: "ObjCClass",
 // MODULE-CHECK-SAME:             scope: ![[MODULE]],
