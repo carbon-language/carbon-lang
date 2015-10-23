@@ -334,21 +334,12 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 // #higher(value), #highera(value), #highest(value), and #highesta(value)
 // macros defined in section 4.5.1. Relocation Types of the PPC-elf64abi
 // document.
-
-static uint16_t applyPPCLo(uint64_t V) { return V & 0xffff; }
-
-static uint16_t applyPPCHi(uint64_t V) { return (V >> 16) & 0xffff; }
-
-static uint16_t applyPPCHa(uint64_t V) { return ((V + 0x8000) >> 16) & 0xffff; }
-
-static uint16_t applyPPCHigher(uint64_t V) { return (V >> 32) & 0xffff; }
-
-static uint16_t applyPPCHighera(uint64_t V) {
-  return ((V + 0x8000) >> 32) & 0xffff;
-}
-
+static uint16_t applyPPCLo(uint64_t V) { return V; }
+static uint16_t applyPPCHi(uint64_t V) { return V >> 16; }
+static uint16_t applyPPCHa(uint64_t V) { return (V + 0x8000) >> 16; }
+static uint16_t applyPPCHigher(uint64_t V) { return V >> 32; }
+static uint16_t applyPPCHighera(uint64_t V) { return (V + 0x8000) >> 32; }
 static uint16_t applyPPCHighest(uint64_t V) { return V >> 48; }
-
 static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 
 PPC64TargetInfo::PPC64TargetInfo() {
