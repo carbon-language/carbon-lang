@@ -164,7 +164,7 @@ if (LIBCXX_INSTALL_LIBRARY)
   if (LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
     # Replace the libc++ filename with $<TARGET_LINKER_FILE:cxx>
     # after we required CMake 3.0.
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libc++${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    install(FILES "${LIBCXX_LIBRARY_DIR}/libc++${CMAKE_SHARED_LIBRARY_SUFFIX}"
       DESTINATION lib${LIBCXX_LIBDIR_SUFFIX}
       COMPONENT libcxx)
   endif()
