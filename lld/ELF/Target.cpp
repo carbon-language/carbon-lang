@@ -55,8 +55,7 @@ public:
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocPointsToGot(uint32_t Type) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                   uint32_t Type, uint64_t BaseAddr,
+  void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
 };
 
@@ -71,8 +70,7 @@ public:
                      uint64_t PltEntryAddr, int32_t Index) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                   uint32_t Type, uint64_t BaseAddr,
+  void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
@@ -87,8 +85,7 @@ public:
                      uint64_t PltEntryAddr, int32_t Index) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                   uint32_t Type, uint64_t BaseAddr,
+  void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
   bool isRelRelative(uint32_t Type) const override;
 };
@@ -103,8 +100,7 @@ public:
                      uint64_t PltEntryAddr, int32_t Index) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                   uint32_t Type, uint64_t BaseAddr,
+  void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
 };
 
@@ -118,8 +114,7 @@ public:
                      uint64_t PltEntryAddr, int32_t Index) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
-  void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                   uint32_t Type, uint64_t BaseAddr,
+  void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
                    uint64_t SA) const override;
 };
 } // anonymous namespace
@@ -187,20 +182,14 @@ bool X86TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   return Type == R_386_PLT32 || (Type == R_386_PC32 && S.isShared());
 }
 
-void X86TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                                uint32_t Type, uint64_t BaseAddr,
-                                uint64_t SA) const {
-  typedef ELFFile<ELF32LE>::Elf_Rel Elf_Rel;
-  auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
-
-  uint32_t Offset = Rel.r_offset;
-  uint8_t *Loc = Buf + Offset;
+void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                                uint64_t P, uint64_t SA) const {
   switch (Type) {
   case R_386_GOT32:
     add32le(Loc, SA - Out<ELF32LE>::Got->getVA());
     break;
   case R_386_PC32:
-    add32le(Loc, SA - BaseAddr - Offset);
+    add32le(Loc, SA - P);
     break;
   case R_386_32:
     add32le(Loc, SA);
@@ -317,19 +306,13 @@ bool X86_64TargetInfo::isRelRelative(uint32_t Type) const {
   }
 }
 
-void X86_64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                   const void *RelP, uint32_t Type,
-                                   uint64_t BaseAddr, uint64_t SA) const {
-  typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
-  auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
-
-  uint64_t Offset = Rel.r_offset;
-  uint8_t *Loc = Buf + Offset;
+void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                                   uint64_t P, uint64_t SA) const {
   switch (Type) {
   case R_X86_64_PC32:
   case R_X86_64_GOTPCREL:
   case R_X86_64_PLT32:
-    write32le(Loc, SA - BaseAddr - Offset);
+    write32le(Loc, SA - P);
     break;
   case R_X86_64_64:
     write64le(Loc, SA);
@@ -462,14 +445,8 @@ bool PPC64TargetInfo::isRelRelative(uint32_t Type) const {
   }
 }
 
-void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                  const void *RelP, uint32_t Type,
-                                  uint64_t BaseAddr, uint64_t SA) const {
-  typedef ELFFile<ELF64BE>::Elf_Rela Elf_Rela;
-  auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
-
-  uint8_t *L = Buf + Rel.r_offset;
-  uint64_t P = BaseAddr + Rel.r_offset;
+void PPC64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                                  uint64_t P, uint64_t SA) const {
   uint64_t TB = getPPC64TocBase();
 
   // For a TOC-relative relocation, adjust the addend and proceed in terms of
@@ -488,59 +465,59 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
   case R_PPC64_ADDR16:
     if (!isInt<16>(SA))
       error("Relocation R_PPC64_ADDR16 overflow");
-    write16be(L, SA);
+    write16be(Loc, SA);
     break;
   case R_PPC64_ADDR16_DS:
     if (!isInt<16>(SA))
       error("Relocation R_PPC64_ADDR16_DS overflow");
-    write16be(L, (read16be(L) & 3) | (SA & ~3));
+    write16be(Loc, (read16be(Loc) & 3) | (SA & ~3));
     break;
   case R_PPC64_ADDR16_LO:
-    write16be(L, applyPPCLo(SA));
+    write16be(Loc, applyPPCLo(SA));
     break;
   case R_PPC64_ADDR16_LO_DS:
-    write16be(L, (read16be(L) & 3) | (applyPPCLo(SA) & ~3));
+    write16be(Loc, (read16be(Loc) & 3) | (applyPPCLo(SA) & ~3));
     break;
   case R_PPC64_ADDR16_HI:
-    write16be(L, applyPPCHi(SA));
+    write16be(Loc, applyPPCHi(SA));
     break;
   case R_PPC64_ADDR16_HA:
-    write16be(L, applyPPCHa(SA));
+    write16be(Loc, applyPPCHa(SA));
     break;
   case R_PPC64_ADDR16_HIGHER:
-    write16be(L, applyPPCHigher(SA));
+    write16be(Loc, applyPPCHigher(SA));
     break;
   case R_PPC64_ADDR16_HIGHERA:
-    write16be(L, applyPPCHighera(SA));
+    write16be(Loc, applyPPCHighera(SA));
     break;
   case R_PPC64_ADDR16_HIGHEST:
-    write16be(L, applyPPCHighest(SA));
+    write16be(Loc, applyPPCHighest(SA));
     break;
   case R_PPC64_ADDR16_HIGHESTA:
-    write16be(L, applyPPCHighesta(SA));
+    write16be(Loc, applyPPCHighesta(SA));
     break;
   case R_PPC64_ADDR14: {
     if ((SA & 3) != 0)
       error("Improper alignment for relocation R_PPC64_ADDR14");
 
     // Preserve the AA/LK bits in the branch instruction
-    uint8_t AALK = L[3];
-    write16be(L + 2, (AALK & 3) | (SA & 0xfffc));
+    uint8_t AALK = Loc[3];
+    write16be(Loc + 2, (AALK & 3) | (SA & 0xfffc));
     break;
   }
   case R_PPC64_REL16_LO:
-    write16be(L, applyPPCLo(SA - P));
+    write16be(Loc, applyPPCLo(SA - P));
     break;
   case R_PPC64_REL16_HI:
-    write16be(L, applyPPCHi(SA - P));
+    write16be(Loc, applyPPCHi(SA - P));
     break;
   case R_PPC64_REL16_HA:
-    write16be(L, applyPPCHa(SA - P));
+    write16be(Loc, applyPPCHa(SA - P));
     break;
   case R_PPC64_ADDR32:
     if (!isInt<32>(SA))
       error("Relocation R_PPC64_ADDR32 overflow");
-    write32be(L, SA);
+    write32be(Loc, SA);
     break;
   case R_PPC64_REL24: {
     // If we have an undefined weak symbol, we might get here with a symbol
@@ -567,24 +544,24 @@ void PPC64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
     uint32_t Mask = 0x03FFFFFC;
     if (!isInt<24>(SA - P))
       error("Relocation R_PPC64_REL24 overflow");
-    write32be(L, (read32be(L) & ~Mask) | ((SA - P) & Mask));
+    write32be(Loc, (read32be(Loc) & ~Mask) | ((SA - P) & Mask));
 
-    if (InPlt && L + 8 <= BufEnd &&
-        read32be(L + 4) == 0x60000000 /* nop */)
-      write32be(L + 4, 0xe8410028); // ld %r2, 40(%r1)
+    uint32_t Nop = 0x60000000;
+    if (InPlt && Loc + 8 <= BufEnd && read32be(Loc + 4) == Nop)
+      write32be(Loc + 4, 0xe8410028); // ld %r2, 40(%r1)
     break;
   }
   case R_PPC64_REL32:
     if (!isInt<32>(SA - P))
       error("Relocation R_PPC64_REL32 overflow");
-    write32be(L, SA - P);
+    write32be(Loc, SA - P);
     break;
   case R_PPC64_REL64:
-    write64be(L, SA - P);
+    write64be(Loc, SA - P);
     break;
   case R_PPC64_ADDR64:
   case R_PPC64_TOC:
-    write64be(L, SA);
+    write64be(Loc, SA);
     break;
   default:
     error("unrecognized reloc " + Twine(Type));
@@ -621,49 +598,44 @@ static uint64_t getAArch64Page(uint64_t Expr) {
   return Expr & (~static_cast<uint64_t>(0xFFF));
 }
 
-void AArch64TargetInfo::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                    const void *RelP, uint32_t Type,
-                                    uint64_t BaseAddr, uint64_t SA) const {
-  typedef ELFFile<ELF64LE>::Elf_Rela Elf_Rela;
-  auto &Rel = *reinterpret_cast<const Elf_Rela *>(RelP);
-
-  uint8_t *L = Buf + Rel.r_offset;
-  uint64_t P = BaseAddr + Rel.r_offset;
+void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
+                                    uint32_t Type, uint64_t P,
+                                    uint64_t SA) const {
   switch (Type) {
   case R_AARCH64_ABS16:
     if (!isInt<16>(SA))
       error("Relocation R_AARCH64_ABS16 out of range");
-    write16le(L, SA);
+    write16le(Loc, SA);
     break;
   case R_AARCH64_ABS32:
     if (!isInt<32>(SA))
       error("Relocation R_AARCH64_ABS32 out of range");
-    write32le(L, SA);
+    write32le(Loc, SA);
     break;
   case R_AARCH64_ABS64:
     // No overflow check needed.
-    write64le(L, SA);
+    write64le(Loc, SA);
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
     // No overflow check needed.
     // This relocation stores 12 bits and there's no instruction
     // to do it. Instead, we do a 32 bits store of the value
-    // of r_addend bitwise-or'ed L. This assumes that the addend
-    // bits in L are zero.
-    or32le(L, (SA & 0xFFF) << 10);
+    // of r_addend bitwise-or'ed Loc. This assumes that the addend
+    // bits in Loc are zero.
+    or32le(Loc, (SA & 0xFFF) << 10);
     break;
   case R_AARCH64_ADR_PREL_LO21: {
     uint64_t X = SA - P;
     if (!isInt<21>(X))
       error("Relocation R_AARCH64_ADR_PREL_LO21 out of range");
-    updateAArch64Adr(L, X & 0x1FFFFF);
+    updateAArch64Adr(Loc, X & 0x1FFFFF);
     break;
   }
   case R_AARCH64_ADR_PREL_PG_HI21: {
     uint64_t X = getAArch64Page(SA) - getAArch64Page(P);
     if (!isInt<33>(X))
       error("Relocation R_AARCH64_ADR_PREL_PG_HI21 out of range");
-    updateAArch64Adr(L, (X >> 12) & 0x1FFFFF); // X[32:12]
+    updateAArch64Adr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
     break;
   }
   default:
@@ -697,16 +669,13 @@ bool MipsTargetInfo<ELFT>::relocNeedsPlt(uint32_t Type,
 }
 
 template <class ELFT>
-void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Buf, uint8_t *BufEnd,
-                                       const void *RelP, uint32_t Type,
-                                       uint64_t BaseAddr, uint64_t SA) const {
+void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
+                                       uint32_t Type, uint64_t P,
+                                       uint64_t SA) const {
   const bool IsLE = ELFT::TargetEndianness == support::little;
-  typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
-  auto &Rel = *reinterpret_cast<const Elf_Rel *>(RelP);
-
   switch (Type) {
   case R_MIPS_32:
-    add32<IsLE>(Buf + Rel.r_offset, SA);
+    add32<IsLE>(Loc, SA);
     break;
   default:
     error("unrecognized reloc " + Twine(Type));

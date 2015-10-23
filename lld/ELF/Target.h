@@ -40,9 +40,8 @@ public:
   virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
   virtual bool relocPointsToGot(uint32_t Type) const;
   virtual bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const = 0;
-  virtual void relocateOne(uint8_t *Buf, uint8_t *BufEnd, const void *RelP,
-                           uint32_t Type, uint64_t BaseAddr,
-                           uint64_t SymVA) const = 0;
+  virtual void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
+                           uint64_t P, uint64_t SA) const = 0;
 
   virtual ~TargetInfo();
 

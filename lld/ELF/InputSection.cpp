@@ -74,7 +74,8 @@ void InputSection<ELFT>::relocate(
     const Elf_Shdr *SymTab = File.getSymbolTable();
     if (SymIndex < SymTab->sh_info) {
       uintX_t SymVA = getLocalRelTarget(File, RI);
-      Target->relocateOne(Buf, BufEnd, &RI, Type, BaseAddr, SymVA);
+      Target->relocateOne(Buf + RI.r_offset, BufEnd, Type,
+                          BaseAddr + RI.r_offset, SymVA);
       continue;
     }
 
@@ -92,7 +93,7 @@ void InputSection<ELFT>::relocate(
     } else if (isa<SharedSymbol<ELFT>>(Body)) {
       continue;
     }
-    Target->relocateOne(Buf, BufEnd, &RI, Type, BaseAddr,
+    Target->relocateOne(Buf + RI.r_offset, BufEnd, Type, BaseAddr + RI.r_offset,
                         SymVA + getAddend<ELFT>(RI));
   }
 }
