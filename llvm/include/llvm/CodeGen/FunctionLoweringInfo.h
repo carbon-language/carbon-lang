@@ -114,11 +114,6 @@ public:
   /// MBB - The current insert position inside the current block.
   MachineBasicBlock::iterator InsertPt;
 
-#ifndef NDEBUG
-  SmallPtrSet<const Instruction *, 8> CatchInfoLost;
-  SmallPtrSet<const Instruction *, 8> CatchInfoFound;
-#endif
-
   struct LiveOutInfo {
     unsigned NumSignBits : 31;
     bool IsValid : 1;

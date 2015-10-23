@@ -341,16 +341,9 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 /// FunctionLoweringInfo to an empty state, ready to be used for a
 /// different function.
 void FunctionLoweringInfo::clear() {
-  assert(CatchInfoFound.size() == CatchInfoLost.size() &&
-         "Not all catch info was assigned to a landing pad!");
-
   MBBMap.clear();
   ValueMap.clear();
   StaticAllocaMap.clear();
-#ifndef NDEBUG
-  CatchInfoLost.clear();
-  CatchInfoFound.clear();
-#endif
   LiveOutRegInfo.clear();
   VisitedBBs.clear();
   ArgDbgValues.clear();
