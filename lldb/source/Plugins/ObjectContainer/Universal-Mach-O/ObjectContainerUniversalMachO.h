@@ -10,15 +10,27 @@
 #ifndef liblldb_ObjectContainerUniversalMachO_h_
 #define liblldb_ObjectContainerUniversalMachO_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Symbol/ObjectContainer.h"
 #include "lldb/Host/FileSpec.h"
-
 #include "lldb/Utility/SafeMachO.h"
 
 class ObjectContainerUniversalMachO :
     public lldb_private::ObjectContainer
 {
 public:
+    ObjectContainerUniversalMachO(const lldb::ModuleSP &module_sp,
+                                  lldb::DataBufferSP& data_sp,
+                                  lldb::offset_t data_offset,
+                                  const lldb_private::FileSpec *file,
+                                  lldb::offset_t offset,
+                                  lldb::offset_t length);
+
+    ~ObjectContainerUniversalMachO() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -56,39 +68,29 @@ public:
     //------------------------------------------------------------------
     // Member Functions
     //------------------------------------------------------------------
-    ObjectContainerUniversalMachO (const lldb::ModuleSP &module_sp,
-                                   lldb::DataBufferSP& data_sp,
-                                   lldb::offset_t data_offset,
-                                   const lldb_private::FileSpec *file,
-                                   lldb::offset_t offset,
-                                   lldb::offset_t length);
+    bool
+    ParseHeader() override;
 
-    virtual
-    ~ObjectContainerUniversalMachO();
+    void
+    Dump(lldb_private::Stream *s) const override;
 
-    virtual bool
-    ParseHeader ();
+    size_t
+    GetNumArchitectures() const override;
 
-    virtual void
-    Dump (lldb_private::Stream *s) const;
+    bool
+    GetArchitectureAtIndex(uint32_t cpu_idx, lldb_private::ArchSpec& arch) const override;
 
-    virtual size_t
-    GetNumArchitectures () const;
-
-    virtual bool
-    GetArchitectureAtIndex (uint32_t cpu_idx, lldb_private::ArchSpec& arch) const;
-
-    virtual lldb::ObjectFileSP
-    GetObjectFile (const lldb_private::FileSpec *file);
+    lldb::ObjectFileSP
+    GetObjectFile(const lldb_private::FileSpec *file) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     llvm::MachO::fat_header m_header;
@@ -98,7 +100,6 @@ protected:
     ParseHeader (lldb_private::DataExtractor &data,
                  llvm::MachO::fat_header &header,
                  std::vector<llvm::MachO::fat_arch> &fat_archs);
-
 };
 
-#endif  // liblldb_ObjectContainerUniversalMachO_h_
+#endif // liblldb_ObjectContainerUniversalMachO_h_

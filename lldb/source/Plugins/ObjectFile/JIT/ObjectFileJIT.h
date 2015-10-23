@@ -10,9 +10,12 @@
 #ifndef liblldb_ObjectFileJIT_h_
 #define liblldb_ObjectFileJIT_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/Address.h"
 #include "lldb/Symbol/ObjectFile.h"
-
 
 //----------------------------------------------------------------------
 // This class needs to be hidden as eventually belongs in a plugin that
@@ -22,6 +25,11 @@ class ObjectFileJIT :
     public lldb_private::ObjectFile
 {
 public:
+    ObjectFileJIT(const lldb::ModuleSP &module_sp,
+                  const lldb::ObjectFileJITDelegateSP &delegate_sp);
+
+    ~ObjectFileJIT() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -62,81 +70,77 @@ public:
     //------------------------------------------------------------------
     // Member Functions
     //------------------------------------------------------------------
-    ObjectFileJIT (const lldb::ModuleSP &module_sp,
-                   const lldb::ObjectFileJITDelegateSP &delegate_sp);
-    
-    virtual
-    ~ObjectFileJIT();
+    bool
+    ParseHeader() override;
 
-    virtual bool
-    ParseHeader ();
-
-    virtual bool
+    bool
     SetLoadAddress(lldb_private::Target &target,
                    lldb::addr_t value,
-                   bool value_is_offset);
+                   bool value_is_offset) override;
     
-    virtual lldb::ByteOrder
-    GetByteOrder () const;
+    lldb::ByteOrder
+    GetByteOrder() const override;
     
-    virtual bool
-    IsExecutable () const;
+    bool
+    IsExecutable() const override;
 
-    virtual uint32_t
-    GetAddressByteSize ()  const;
+    uint32_t
+    GetAddressByteSize() const override;
 
-    virtual lldb_private::Symtab *
-    GetSymtab();
+    lldb_private::Symtab *
+    GetSymtab() override;
 
-    virtual bool
-    IsStripped ();
+    bool
+    IsStripped() override;
     
-    virtual void
-    CreateSections (lldb_private::SectionList &unified_section_list);
+    void
+    CreateSections(lldb_private::SectionList &unified_section_list) override;
 
-    virtual void
-    Dump (lldb_private::Stream *s);
+    void
+    Dump(lldb_private::Stream *s) override;
 
-    virtual bool
-    GetArchitecture (lldb_private::ArchSpec &arch);
+    bool
+    GetArchitecture(lldb_private::ArchSpec &arch) override;
 
-    virtual bool
-    GetUUID (lldb_private::UUID* uuid);
+    bool
+    GetUUID(lldb_private::UUID* uuid) override;
 
-    virtual uint32_t
-    GetDependentModules (lldb_private::FileSpecList& files);
+    uint32_t
+    GetDependentModules(lldb_private::FileSpecList& files) override;
     
-    virtual size_t
-    ReadSectionData (const lldb_private::Section *section,
-                     lldb::offset_t section_offset,
-                     void *dst,
-                     size_t dst_len) const;
-    virtual size_t
-    ReadSectionData (const lldb_private::Section *section,
-                     lldb_private::DataExtractor& section_data) const;
+    size_t
+    ReadSectionData(const lldb_private::Section *section,
+                    lldb::offset_t section_offset,
+                    void *dst,
+                    size_t dst_len) const override;
+
+    size_t
+    ReadSectionData(const lldb_private::Section *section,
+                    lldb_private::DataExtractor& section_data) const override;
     
+    lldb_private::Address
+    GetEntryPointAddress() override;
+    
+    lldb_private::Address
+    GetHeaderAddress() override;
+    
+    ObjectFile::Type
+    CalculateType() override;
+    
+    ObjectFile::Strata
+    CalculateStrata() override;
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
-    virtual lldb_private::Address
-    GetEntryPointAddress ();
-    
-    virtual lldb_private::Address
-    GetHeaderAddress ();
-    
-    virtual ObjectFile::Type
-    CalculateType();
-    
-    virtual ObjectFile::Strata
-    CalculateStrata();
 protected:
     lldb::ObjectFileJITDelegateWP m_delegate_wp;
 };
 
-#endif  // liblldb_ObjectFileJIT_h_
+#endif // liblldb_ObjectFileJIT_h_

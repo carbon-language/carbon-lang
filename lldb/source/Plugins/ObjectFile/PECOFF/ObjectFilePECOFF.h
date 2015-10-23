@@ -10,8 +10,12 @@
 #ifndef liblldb_ObjectFilePECOFF_h_
 #define liblldb_ObjectFilePECOFF_h_
 
+// C Includes
+// C++ Includes
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Symbol/ObjectFile.h"
 
 class ObjectFilePECOFF : 
@@ -44,6 +48,15 @@ public:
         MachineWcemIpsv2 = 0x169
     } MachineType;
     
+    ObjectFilePECOFF(const lldb::ModuleSP &module_sp,
+                     lldb::DataBufferSP& data_sp,
+                     lldb::offset_t data_offset,
+                     const lldb_private::FileSpec* file,
+                     lldb::offset_t file_offset,
+                     lldb::offset_t length);
+
+    ~ObjectFilePECOFF() override;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -84,74 +97,63 @@ public:
     static bool
     MagicBytesMatch (lldb::DataBufferSP& data_sp);
     
+    bool
+    ParseHeader() override;
     
-    ObjectFilePECOFF (const lldb::ModuleSP &module_sp,
-                      lldb::DataBufferSP& data_sp,
-                      lldb::offset_t data_offset,
-                      const lldb_private::FileSpec* file,
-                      lldb::offset_t file_offset,
-                      lldb::offset_t length);
-    
-	virtual 
-    ~ObjectFilePECOFF();
-    
-    virtual bool
-    ParseHeader ();
-    
-    virtual bool
-    SetLoadAddress(lldb_private::Target &target, lldb::addr_t value, bool value_is_offset);
+    bool
+    SetLoadAddress(lldb_private::Target &target, lldb::addr_t value, bool value_is_offset) override;
 
-    virtual lldb::ByteOrder
-    GetByteOrder () const;
+    lldb::ByteOrder
+    GetByteOrder() const override;
     
-    virtual bool
-    IsExecutable () const;
+    bool
+    IsExecutable() const override;
     
-    virtual uint32_t
-    GetAddressByteSize ()  const;
+    uint32_t
+    GetAddressByteSize() const override;
     
 //    virtual lldb_private::AddressClass
 //    GetAddressClass (lldb::addr_t file_addr);
-//    
-    virtual lldb_private::Symtab *
-    GetSymtab ();
-    
-    virtual bool
-    IsStripped ();
 
-    virtual void
-    CreateSections (lldb_private::SectionList &unified_section_list);
+    lldb_private::Symtab *
+    GetSymtab() override;
     
-    virtual void
-    Dump (lldb_private::Stream *s);
+    bool
+    IsStripped() override;
+
+    void
+    CreateSections(lldb_private::SectionList &unified_section_list) override;
     
-    virtual bool
-    GetArchitecture (lldb_private::ArchSpec &arch);
+    void
+    Dump(lldb_private::Stream *s) override;
     
-    virtual bool
-    GetUUID (lldb_private::UUID* uuid);
+    bool
+    GetArchitecture(lldb_private::ArchSpec &arch) override;
     
-    virtual uint32_t
-    GetDependentModules (lldb_private::FileSpecList& files);
+    bool
+    GetUUID(lldb_private::UUID* uuid) override;
+    
+    uint32_t
+    GetDependentModules(lldb_private::FileSpecList& files) override;
+    
+//    virtual lldb_private::Address
+//    GetEntryPointAddress ();
+    
+    ObjectFile::Type
+    CalculateType() override;
+    
+    ObjectFile::Strata
+    CalculateStrata() override;
     
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
     
-    virtual uint32_t
-    GetPluginVersion();
-//    
-//    virtual lldb_private::Address
-//    GetEntryPointAddress ();
-    
-    virtual ObjectFile::Type
-    CalculateType();
-    
-    virtual ObjectFile::Strata
-    CalculateStrata();
-    
+    uint32_t
+    GetPluginVersion() override;
+
 protected:
 	bool NeedsEndianSwap() const;    
     
@@ -293,4 +295,4 @@ private:
     lldb::addr_t		m_image_base;
 };
 
-#endif  // #ifndef liblldb_ObjectFilePECOFF_h_
+#endif // liblldb_ObjectFilePECOFF_h_

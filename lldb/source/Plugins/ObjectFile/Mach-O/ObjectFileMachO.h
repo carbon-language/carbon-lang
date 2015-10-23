@@ -10,8 +10,11 @@
 #ifndef liblldb_ObjectFileMachO_h_
 #define liblldb_ObjectFileMachO_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Utility/SafeMachO.h"
-
 #include "lldb/Core/Address.h"
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/RangeMap.h"
@@ -27,6 +30,20 @@ class ObjectFileMachO :
     public lldb_private::ObjectFile
 {
 public:
+    ObjectFileMachO(const lldb::ModuleSP &module_sp,
+                    lldb::DataBufferSP& data_sp,
+                    lldb::offset_t data_offset,
+                    const lldb_private::FileSpec* file,
+                    lldb::offset_t offset,
+                    lldb::offset_t length);
+
+    ObjectFileMachO(const lldb::ModuleSP &module_sp,
+                    lldb::DataBufferSP& data_sp,
+                    const lldb::ProcessSP &process_sp,
+                    lldb::addr_t header_addr);
+
+    ~ObjectFileMachO() override = default;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -77,113 +94,98 @@ public:
     //------------------------------------------------------------------
     // Member Functions
     //------------------------------------------------------------------
-    ObjectFileMachO (const lldb::ModuleSP &module_sp,
-                     lldb::DataBufferSP& data_sp,
-                     lldb::offset_t data_offset,
-                     const lldb_private::FileSpec* file,
-                     lldb::offset_t offset,
-                     lldb::offset_t length);
+    bool
+    ParseHeader() override;
 
-    ObjectFileMachO (const lldb::ModuleSP &module_sp,
-                     lldb::DataBufferSP& data_sp,
-                     const lldb::ProcessSP &process_sp,
-                     lldb::addr_t header_addr);
-
-    virtual
-    ~ObjectFileMachO();
-
-    virtual bool
-    ParseHeader ();
-
-    virtual bool
+    bool
     SetLoadAddress(lldb_private::Target &target,
                    lldb::addr_t value,
-                   bool value_is_offset);
+                   bool value_is_offset) override;
     
-    virtual lldb::ByteOrder
-    GetByteOrder () const;
+    lldb::ByteOrder
+    GetByteOrder() const override;
     
-    virtual bool
-    IsExecutable () const;
+    bool
+    IsExecutable() const override;
 
-    virtual uint32_t
-    GetAddressByteSize ()  const;
+    uint32_t
+    GetAddressByteSize() const override;
 
-    virtual lldb::AddressClass
-    GetAddressClass (lldb::addr_t file_addr);
+    lldb::AddressClass
+    GetAddressClass(lldb::addr_t file_addr) override;
 
-    virtual lldb_private::Symtab *
-    GetSymtab();
+    lldb_private::Symtab *
+    GetSymtab() override;
 
-    virtual bool
-    IsStripped ();
+    bool
+    IsStripped() override;
     
-    virtual void
-    CreateSections (lldb_private::SectionList &unified_section_list);
+    void
+    CreateSections(lldb_private::SectionList &unified_section_list) override;
 
-    virtual void
-    Dump (lldb_private::Stream *s);
+    void
+    Dump(lldb_private::Stream *s) override;
 
-    virtual bool
-    GetArchitecture (lldb_private::ArchSpec &arch);
+    bool
+    GetArchitecture(lldb_private::ArchSpec &arch) override;
 
-    virtual bool
-    GetUUID (lldb_private::UUID* uuid);
+    bool
+    GetUUID(lldb_private::UUID* uuid) override;
 
-    virtual uint32_t
-    GetDependentModules (lldb_private::FileSpecList& files);
+    uint32_t
+    GetDependentModules(lldb_private::FileSpecList& files) override;
 
-    virtual lldb_private::FileSpecList
-    GetReExportedLibraries ()
+    lldb_private::FileSpecList
+    GetReExportedLibraries() override
     {
         return m_reexported_dylibs;
     }
-    //------------------------------------------------------------------
-    // PluginInterface protocol
-    //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
 
-    virtual uint32_t
-    GetPluginVersion();
-
-    virtual lldb_private::Address
-    GetEntryPointAddress ();
+    lldb_private::Address
+    GetEntryPointAddress() override;
     
-    virtual lldb_private::Address
-    GetHeaderAddress ();
+    lldb_private::Address
+    GetHeaderAddress() override;
     
-    virtual uint32_t
-    GetNumThreadContexts ();
+    uint32_t
+    GetNumThreadContexts() override;
     
-    virtual lldb::RegisterContextSP
-    GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &thread);
+    lldb::RegisterContextSP
+    GetThreadContextAtIndex(uint32_t idx, lldb_private::Thread &thread) override;
 
-    virtual ObjectFile::Type
-    CalculateType();
+    ObjectFile::Type
+    CalculateType() override;
     
-    virtual ObjectFile::Strata
-    CalculateStrata();
+    ObjectFile::Strata
+    CalculateStrata() override;
 
-    virtual uint32_t
-    GetVersion (uint32_t *versions, uint32_t num_versions);
+    uint32_t
+    GetVersion(uint32_t *versions, uint32_t num_versions) override;
 
-    virtual uint32_t
-    GetMinimumOSVersion (uint32_t *versions, uint32_t num_versions);
+    uint32_t
+    GetMinimumOSVersion(uint32_t *versions, uint32_t num_versions) override;
     
-    virtual uint32_t
-    GetSDKVersion (uint32_t *versions, uint32_t num_versions);
+    uint32_t
+    GetSDKVersion(uint32_t *versions, uint32_t num_versions) override;
 
-    virtual bool
-    GetIsDynamicLinkEditor();
+    bool
+    GetIsDynamicLinkEditor() override;
 
     static bool
     ParseHeader (lldb_private::DataExtractor &data,
                  lldb::offset_t *data_offset_ptr,
                  llvm::MachO::mach_header &header);
     
+    //------------------------------------------------------------------
+    // PluginInterface protocol
+    //------------------------------------------------------------------
+    lldb_private::ConstString
+    GetPluginName() override;
+
+    uint32_t
+    GetPluginVersion() override;
+
 protected:
-    
     static bool
     GetUUID (const llvm::MachO::mach_header &header,
              const lldb_private::DataExtractor &data,
@@ -220,6 +222,9 @@ protected:
                                               const lldb_private::Section *mach_header_section,
                                               const lldb_private::Section *section);
 
+    size_t
+    ParseSymtab();
+
     llvm::MachO::mach_header m_header;
     static const lldb_private::ConstString &GetSegmentNameTEXT();
     static const lldb_private::ConstString &GetSegmentNameDATA();
@@ -239,10 +244,6 @@ protected:
     FileRangeArray m_thread_context_offsets;
     bool m_thread_context_offsets_valid;
     lldb_private::FileSpecList m_reexported_dylibs;
-
-    size_t
-    ParseSymtab ();
-
 };
 
-#endif  // liblldb_ObjectFileMachO_h_
+#endif // liblldb_ObjectFileMachO_h_

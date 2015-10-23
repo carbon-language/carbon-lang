@@ -10,8 +10,11 @@
 #ifndef liblldb_ObjectContainerBSDArchive_h_
 #define liblldb_ObjectContainerBSDArchive_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Symbol/ObjectContainer.h"
-
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Host/FileSpec.h"
@@ -22,6 +25,14 @@ class ObjectContainerBSDArchive :
     public lldb_private::ObjectContainer
 {
 public:
+    ObjectContainerBSDArchive(const lldb::ModuleSP &module_sp,
+                              lldb::DataBufferSP& data_sp,
+                              lldb::offset_t data_offset,
+                              const lldb_private::FileSpec *file,
+                              lldb::offset_t offset,
+                              lldb::offset_t length);
+
+    ~ObjectContainerBSDArchive() override;
 
     //------------------------------------------------------------------
     // Static Functions
@@ -60,43 +71,33 @@ public:
     //------------------------------------------------------------------
     // Member Functions
     //------------------------------------------------------------------
-    ObjectContainerBSDArchive (const lldb::ModuleSP &module_sp,
-                               lldb::DataBufferSP& data_sp,
-                               lldb::offset_t data_offset,
-                               const lldb_private::FileSpec *file,
-                               lldb::offset_t offset,
-                               lldb::offset_t length);
+    bool
+    ParseHeader() override;
 
-    virtual
-    ~ObjectContainerBSDArchive();
-
-    virtual bool
-    ParseHeader ();
-
-    virtual size_t
-    GetNumObjects () const
+    size_t
+    GetNumObjects() const override
     {
         if (m_archive_sp)
             return m_archive_sp->GetNumObjects();
         return 0;
     }
-    virtual void
-    Dump (lldb_private::Stream *s) const;
 
-    virtual lldb::ObjectFileSP
-    GetObjectFile (const lldb_private::FileSpec *file);
+    void
+    Dump(lldb_private::Stream *s) const override;
+
+    lldb::ObjectFileSP
+    GetObjectFile(const lldb_private::FileSpec *file) override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
-
     struct Object
     {
         Object();
@@ -127,6 +128,13 @@ protected:
         typedef std::shared_ptr<Archive> shared_ptr;
         typedef std::multimap<lldb_private::FileSpec, shared_ptr> Map;
 
+        Archive(const lldb_private::ArchSpec &arch,
+                const lldb_private::TimeValue &mod_time,
+                lldb::offset_t file_offset,
+                lldb_private::DataExtractor &data);
+
+        ~Archive();
+
         static Map &
         GetArchiveCache ();
 
@@ -145,13 +153,6 @@ protected:
                                      const lldb_private::TimeValue &mod_time,
                                      lldb::offset_t file_offset,
                                      lldb_private::DataExtractor &data);
-
-        Archive (const lldb_private::ArchSpec &arch,
-                 const lldb_private::TimeValue &mod_time,
-                 lldb::offset_t file_offset,
-                 lldb_private::DataExtractor &data);
-
-        ~Archive ();
 
         size_t
         GetNumObjects () const
@@ -226,4 +227,4 @@ protected:
     Archive::shared_ptr m_archive_sp;
 };
 
-#endif  // liblldb_ObjectContainerBSDArchive_h_
+#endif // liblldb_ObjectContainerBSDArchive_h_
