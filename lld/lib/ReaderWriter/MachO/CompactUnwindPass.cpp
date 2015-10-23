@@ -310,6 +310,9 @@ private:
     std::vector<CompactUnwindEntry> unwindInfos = createUnwindInfoEntries(
         mergedFile, unwindLocs, personalities, dwarfFrames);
 
+    // Remove any unused eh-frame atoms.
+    pruneUnusedEHFrames(mergedFile, unwindInfos, unwindLocs, dwarfFrames);
+
     // Finally, we can start creating pages based on these entries.
 
     DEBUG(llvm::dbgs() << "  Splitting entries into pages\n");
@@ -469,6 +472,54 @@ private:
 
     return unwindInfos;
   }
+
+  /// Remove unused EH frames.
+  ///
+  /// An EH frame is considered unused if there is a corresponding compact
+  /// unwind atom that doesn't require the EH frame.
+  void pruneUnusedEHFrames(
+                   SimpleFile &mergedFile,
+                   const std::vector<CompactUnwindEntry> &unwindInfos,
+                   const std::map<const Atom *, CompactUnwindEntry> &unwindLocs,
+                   const std::map<const Atom *, const Atom *> &dwarfFrames) {
+
+    // Worklist of all 'used' FDEs.
+    std::vector<const DefinedAtom *> usedDwarfWorklist;
+
+    // We have to check two conditions when building the worklist:
+    // (1) EH frames used by compact unwind entries.
+    for (auto &entry : unwindInfos)
+      if (entry.ehFrame)
+        usedDwarfWorklist.push_back(cast<DefinedAtom>(entry.ehFrame));
+
+    // (2) EH frames that reference functions with no corresponding compact
+    //     unwind info.
+    for (auto &entry : dwarfFrames)
+      if (!unwindLocs.count(entry.first))
+        usedDwarfWorklist.push_back(cast<DefinedAtom>(entry.second));
+
+    // Add all transitively referenced CFI atoms by processing the worklist.
+    std::set<const Atom *> usedDwarfFrames;
+    while (!usedDwarfWorklist.empty()) {
+      const DefinedAtom *cfiAtom = usedDwarfWorklist.back();
+      usedDwarfWorklist.pop_back();
+      usedDwarfFrames.insert(cfiAtom);
+      for (const auto *ref : *cfiAtom) {
+        const DefinedAtom *cfiTarget = dyn_cast<DefinedAtom>(ref->target());
+        if (cfiTarget->contentType() == DefinedAtom::typeCFI)
+          usedDwarfWorklist.push_back(cfiTarget);
+      }
+    }
+
+    // Finally, delete all unreferenced CFI atoms.
+    mergedFile.removeDefinedAtomsIf([&](const DefinedAtom *atom) {
+      if ((atom->contentType() == DefinedAtom::typeCFI) &&
+          !usedDwarfFrames.count(atom))
+        return true;
+      return false;
+    });
+  }
+
 
   CompactUnwindEntry finalizeUnwindInfoEntryForAtom(
       const DefinedAtom *function,
