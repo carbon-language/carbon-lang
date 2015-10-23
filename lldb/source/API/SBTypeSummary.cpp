@@ -153,7 +153,7 @@ SBTypeSummary::CreateWithCallback (FormatCallback cb, uint32_t options)
                TypeSummaryImplSP(
                    cb ? new CXXFunctionSummaryFormat(options,
                        [cb] (ValueObject& valobj, Stream& stm, const TypeSummaryOptions& opt) -> bool {
-                            BStream stream;
+                            SBStream stream;
                             if (!cb(SBValue(valobj.GetSP()), SBTypeSummaryOptions(&opt), stream))
                                 return false;
                             stm.Write(stream.GetData(), stream.GetSize());
