@@ -517,7 +517,7 @@ class GdbRemoteTestCaseBase(TestBase):
         process_info_dict = { match.group(1):match.group(2) for match in re.finditer(r"([^:]+):([^;]+);", process_info_raw) }
 
         # Validate keys are known.
-        for (key, val) in process_info_dict.items():
+        for (key, val) in list(process_info_dict.items()):
             self.assertTrue(key in self._KNOWN_PROCESS_INFO_KEYS)
             self.assertIsNotNone(val)
 
@@ -625,7 +625,7 @@ class GdbRemoteTestCaseBase(TestBase):
         mem_region_dict = self.parse_key_val_dict(context.get("memory_region_response"))
 
         # Validate keys are known.
-        for (key, val) in mem_region_dict.items():
+        for (key, val) in list(mem_region_dict.items()):
             self.assertTrue(key in ["start", "size", "permissions", "error"])
             self.assertIsNotNone(val)
 
@@ -808,7 +808,7 @@ class GdbRemoteTestCaseBase(TestBase):
         kv_dict = self.parse_key_val_dict(stop_key_vals_text)
 
         registers = {}
-        for (key, val) in kv_dict.items():
+        for (key, val) in list(kv_dict.items()):
             if re.match(r"^[0-9a-fA-F]+$", key):
                 registers[int(key, 16)] = val
         return registers

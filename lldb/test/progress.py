@@ -132,7 +132,7 @@ class ProgressWithEvents(AnimatedProgressBar):
         if len(self.events) == 0:
             return
         self.stdout.write('\n')
-        for key in self.events.keys():
+        for key in list(self.events.keys()):
             self.stdout.write(str(key) + ' = ' + str(self.events[key]) + ' ')
         if isatty:
             self.stdout.write('\033[1A')

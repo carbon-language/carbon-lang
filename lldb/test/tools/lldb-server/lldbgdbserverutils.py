@@ -481,7 +481,7 @@ class GdbRemoteEntry(GdbRemoteEntryBase):
 
         if self.capture:
             # Handle captures.
-            for group_index, var_name in self.capture.items():
+            for group_index, var_name in list(self.capture.items()):
                 capture_text = match.group(group_index)
                 # It is okay for capture text to be None - which it will be if it is a group that can match nothing.
                 # The user must be okay with it since the regex itself matched above.
@@ -489,7 +489,7 @@ class GdbRemoteEntry(GdbRemoteEntryBase):
 
         if self.expect_captures:
             # Handle comparing matched groups to context dictionary entries.
-            for group_index, var_name in self.expect_captures.items():
+            for group_index, var_name in list(self.expect_captures.items()):
                 capture_text = match.group(group_index)
                 if not capture_text:
                     raise Exception("No content to expect for group index {}".format(group_index))
@@ -713,7 +713,7 @@ class MatchRemoteOutputEntry(GdbRemoteEntryBase):
         # Collect up any captures into the context.
         if self._capture:
             # Handle captures.
-            for group_index, var_name in self._capture.items():
+            for group_index, var_name in list(self._capture.items()):
                 capture_text = match.group(group_index)
                 if not capture_text:
                     raise Exception("No content for group index {}".format(group_index))

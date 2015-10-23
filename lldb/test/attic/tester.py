@@ -55,7 +55,7 @@ class ExecutionTimes:
       self.m_times[component] = list()
     self.m_times[component].append(e - self.m_start)
   def dumpStats(self):
-    for key in self.m_times.keys():
+    for key in list(self.m_times.keys()):
       if len(self.m_times[key]):
         sampleMin = float('inf')
         sampleMax = float('-inf')

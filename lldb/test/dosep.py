@@ -1355,7 +1355,7 @@ def main(print_details_on_success, num_threads, test_subdir,
         raise Exception(
             "specified testrunner name '{}' unknown. Valid choices: {}".format(
                 test_runner_name,
-                runner_strategies_by_name.keys()))
+                list(runner_strategies_by_name.keys())))
     test_runner_func = runner_strategies_by_name[test_runner_name]
 
     summary_results = walk_and_invoke(

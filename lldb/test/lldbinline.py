@@ -89,7 +89,7 @@ class InlineTest(TestBase):
         for f in os.listdir(os.getcwd()):
             t = source_type(f)
             if t:
-                if t in categories.keys():
+                if t in list(categories.keys()):
                     categories[t].append(f)
                 else:
                     categories[t] = [f]
@@ -100,14 +100,14 @@ class InlineTest(TestBase):
 
         makefile.write("LEVEL = " + level + "\n")
 
-        for t in categories.keys():
+        for t in list(categories.keys()):
             line = t + " := " + " ".join(categories[t])
             makefile.write(line + "\n")
 
-        if ('OBJCXX_SOURCES' in categories.keys()) or ('OBJC_SOURCES' in categories.keys()):
+        if ('OBJCXX_SOURCES' in list(categories.keys())) or ('OBJC_SOURCES' in list(categories.keys())):
             makefile.write("LDFLAGS = $(CFLAGS) -lobjc -framework Foundation\n")
 
-        if ('CXX_SOURCES' in categories.keys()):
+        if ('CXX_SOURCES' in list(categories.keys())):
             makefile.write("CXXFLAGS += -std=c++11\n")
 
         makefile.write("include $(LEVEL)/Makefile.rules\n")

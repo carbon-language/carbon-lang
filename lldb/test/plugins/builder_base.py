@@ -85,7 +85,7 @@ def getCmdLine(d):
         if k in append_vars and os.environ.has_key(k):
             v = os.environ[k] + " " + v
         return pattern % (k, v)
-    cmdline = " ".join([setOrAppendVariable(k, v) for k, v in d.items()])
+    cmdline = " ".join([setOrAppendVariable(k, v) for k, v in list(d.items())])
 
     return cmdline
 

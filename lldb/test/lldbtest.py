@@ -186,7 +186,7 @@ def SETTING_MSG(setting):
 
 def EnvArray():
     """Returns an env variable array from the os.environ map object."""
-    return list(map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values()))
+    return list(map(lambda k,v: k+"="+v, list(os.environ.keys()), list(os.environ.values())))
 
 def line_number(filename, string_to_match):
     """Helper function to return the line number of the first matched string."""
@@ -2249,7 +2249,7 @@ class Base(unittest2.TestCase):
 class LLDBTestCaseFactory(type):
     def __new__(cls, name, bases, attrs):
         newattrs = {}
-        for attrname, attrvalue in attrs.iteritems():
+        for attrname, attrvalue in attrs.items():
             if attrname.startswith("test") and not getattr(attrvalue, "__no_debug_info_test__", False):
                 @dsym_test
                 def dsym_test_method(self, attrvalue=attrvalue):

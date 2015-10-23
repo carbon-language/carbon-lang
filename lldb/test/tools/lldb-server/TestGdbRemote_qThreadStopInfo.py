@@ -101,8 +101,8 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         (stop_replies, _) = self.gather_stop_replies_via_qThreadStopInfo(thread_count)
         self.assertIsNotNone(stop_replies)
 
-        no_stop_reason_count   = sum(1 for stop_reason in stop_replies.values() if stop_reason == 0)
-        with_stop_reason_count = sum(1 for stop_reason in stop_replies.values() if stop_reason != 0)
+        no_stop_reason_count   = sum(1 for stop_reason in list(stop_replies.values()) if stop_reason == 0)
+        with_stop_reason_count = sum(1 for stop_reason in list(stop_replies.values()) if stop_reason != 0)
 
         # All but one thread should report no stop reason.
         self.assertEqual(no_stop_reason_count, thread_count - 1)
@@ -128,7 +128,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         (_, thread_dicts) = self.gather_stop_replies_via_qThreadStopInfo(thread_count)
         self.assertIsNotNone(thread_dicts)
 
-        for thread_dict in thread_dicts.values():
+        for thread_dict in list(thread_dicts.values()):
             name = thread_dict.get("name")
             self.assertIsNotNone(name)
             self.assertEquals(name, expected_thread_name)

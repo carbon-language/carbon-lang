@@ -74,7 +74,7 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Generate a stop reply, parse out expedited registers from stop notification.
         expedited_registers = self.gather_expedited_registers()
         # Verify no expedited register was specified multiple times.
-        for (reg_num, value) in expedited_registers.items():
+        for (reg_num, value) in list(expedited_registers.items()):
             if (type(value) == list) and (len(value) > 0):
                 self.fail("expedited register number {} specified more than once ({} times)".format(reg_num, len(value)))
 

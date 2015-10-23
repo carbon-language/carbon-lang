@@ -413,7 +413,7 @@ def validate_categories(categories):
         if (category not in validCategories) or category == None:
             print("fatal error: category '" + origCategory + "' is not a valid category")
             print("if you have added a new category, please edit dotest.py, adding your new category to validCategories")
-            print("else, please specify one or more of the following: " + str(validCategories.keys()))
+            print("else, please specify one or more of the following: " + str(list(validCategories.keys())))
             sys.exit(1)
         result.append(category)
     return result
