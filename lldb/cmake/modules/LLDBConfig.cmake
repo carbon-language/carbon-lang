@@ -210,6 +210,12 @@ if (CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
 endif ()
 
+check_cxx_compiler_flag("-Wno-strict-aliasing"
+                        CXX_SUPPORTS_NO_STRICT_ALIASING)
+if (CXX_SUPPORTS_NO_STRICT_ALIASING)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-strict-aliasing")
+endif ()
+
 # Disable Clang warnings
 check_cxx_compiler_flag("-Wno-deprecated-register"
                         CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
