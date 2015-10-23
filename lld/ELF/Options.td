@@ -90,9 +90,6 @@ def shared : Flag<["-"], "shared">,
 def soname : Joined<["-"], "soname=">,
   HelpText<"Set DT_SONAME">;
 
-def strip_all : Flag<["--"], "strip-all">,
-  HelpText<"Strip all symbols">;
-
 def sysroot : Joined<["--"], "sysroot=">,
   HelpText<"Set the system root">;
 
@@ -127,7 +124,6 @@ def alias_shared_Bshareable : Flag<["-"], "Bshareable">, Alias<shared>;
 def alias_soname_h : Separate<["-"], "h">, Alias<soname>;
 def alias_soname_soname : Separate<["-"], "soname">, Alias<soname>;
 def alias_script_T : Separate<["-"], "T">, Alias<script>;
-def alias_strip_all: Flag<["-"], "s">, Alias<strip_all>;
 def alias_undefined_u : Separate<["-"], "u">, Alias<undefined>;
 
 // Options listed below are silently ignored now.
@@ -139,6 +135,7 @@ def no_add_needed : Flag<["--"], "no-add-needed">;
 def no_fatal_warnings : Flag<["--"], "no-fatal-warnings">;
 def no_warn_mismatch : Flag<["--"], "no-warn-mismatch">;
 def start_group : Flag<["--"], "start-group">;
+def strip_all : Flag<["--"], "strip-all">;
 def version_script : Separate<["--"], "version-script">;
 def warn_common : Flag<["--"], "warn-common">;
 def warn_shared_textrel : Flag<["--"], "warn-shared-textrel">;

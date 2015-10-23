@@ -146,7 +146,6 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
   Config->NoInhibitExec = Args.hasArg(OPT_noinhibit_exec);
   Config->NoUndefined = Args.hasArg(OPT_no_undefined);
   Config->Shared = Args.hasArg(OPT_shared);
-  Config->StripAll = Args.hasArg(OPT_strip_all);
   Config->Verbose = Args.hasArg(OPT_verbose);
 
   Config->DynamicLinker = getString(Args, OPT_dynamic_linker);

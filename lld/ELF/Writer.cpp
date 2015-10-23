@@ -97,8 +97,7 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
   StringTableSection<ELFT> ShStrTab(".shstrtab", false);
   Out<ELFT>::ShStrTab = &ShStrTab;
   StringTableSection<ELFT> StrTab(".strtab", false);
-  if (!Config->StripAll)
-    Out<ELFT>::StrTab = &StrTab;
+  Out<ELFT>::StrTab = &StrTab;
   StringTableSection<ELFT> DynStrTab(".dynstr", true);
   Out<ELFT>::DynStrTab = &DynStrTab;
   OutputSection<ELFT> Bss(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
@@ -110,11 +109,8 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
     Out<ELFT>::GotPlt = &GotPlt;
   PltSection<ELFT> Plt;
   Out<ELFT>::Plt = &Plt;
-  std::unique_ptr<SymbolTableSection<ELFT>> SymTab;
-  if (!Config->StripAll) {
-    SymTab.reset(new SymbolTableSection<ELFT>(*Symtab, *Out<ELFT>::StrTab));
-    Out<ELFT>::SymTab = SymTab.get();
-  }
+  SymbolTableSection<ELFT> SymTab(*Symtab, *Out<ELFT>::StrTab);
+  Out<ELFT>::SymTab = &SymTab;
   SymbolTableSection<ELFT> DynSymTab(*Symtab, *Out<ELFT>::DynStrTab);
   Out<ELFT>::DynSymTab = &DynSymTab;
   HashTableSection<ELFT> HashTab;
@@ -290,8 +286,7 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       StringRef SymName = *SymNameOrErr;
       if (!shouldKeepInSymtab<ELFT>(*F, SymName, Sym))
         continue;
-      if (Out<ELFT>::SymTab)
-        Out<ELFT>::SymTab->addLocalSymbol(SymName);
+      Out<ELFT>::SymTab->addLocalSymbol(SymName);
     }
   }
 }
@@ -517,8 +512,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       CommonSymbols.push_back(C);
     if (!includeInSymtab<ELFT>(*Body))
       continue;
-    if (Out<ELFT>::SymTab)
-      Out<ELFT>::SymTab->addSymbol(Body);
+    Out<ELFT>::SymTab->addSymbol(Body);
 
     if (isOutputDynamic() && includeInDynamicSymtab(*Body))
       Out<ELFT>::DynSymTab->addSymbol(Body);
@@ -527,11 +521,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   // This order is not the same as the final output order
   // because we sort the sections using their attributes below.
-  if (Out<ELFT>::SymTab)
-    OutputSections.push_back(Out<ELFT>::SymTab);
+  OutputSections.push_back(Out<ELFT>::SymTab);
   OutputSections.push_back(Out<ELFT>::ShStrTab);
-  if (Out<ELFT>::StrTab)
-    OutputSections.push_back(Out<ELFT>::StrTab);
+  OutputSections.push_back(Out<ELFT>::StrTab);
   if (isOutputDynamic()) {
     OutputSections.push_back(Out<ELFT>::DynSymTab);
     if (Out<ELFT>::GnuHashTab)

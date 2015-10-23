@@ -58,7 +58,6 @@ struct Configuration {
   bool NoUndefined;
   bool Shared;
   bool Static = false;
-  bool StripAll;
   bool SysvHash = true;
   bool Verbose;
   bool ZNodelete = false;
