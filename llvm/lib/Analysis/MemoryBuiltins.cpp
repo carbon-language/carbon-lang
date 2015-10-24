@@ -107,18 +107,13 @@ static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
   if (!TLI || !TLI->getLibFunc(FnName, TLIFn) || !TLI->has(TLIFn))
     return nullptr;
 
-  unsigned i = 0;
-  bool found = false;
-  for ( ; i < array_lengthof(AllocationFnData); ++i) {
-    if (AllocationFnData[i].Func == TLIFn) {
-      found = true;
-      break;
-    }
-  }
-  if (!found)
+  const AllocFnsTy *FnData =
+      std::find_if(std::begin(AllocationFnData), std::end(AllocationFnData),
+                   [TLIFn](const AllocFnsTy &Fn) { return Fn.Func == TLIFn; });
+
+  if (FnData == std::end(AllocationFnData))
     return nullptr;
 
-  const AllocFnsTy *FnData = &AllocationFnData[i];
   if ((FnData->AllocTy & AllocTy) != FnData->AllocTy)
     return nullptr;
 
