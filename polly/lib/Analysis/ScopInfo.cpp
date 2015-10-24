@@ -3218,8 +3218,11 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
 
     BasicBlock *UseParent = UI->getParent();
 
-    // Ignore the users in the same BB (statement)
-    if (UseParent == ParentBB)
+    // Ignore basic block local uses. A value that is defined in a scop, but
+    // used in a PHI node in the same basic block does not count as basic block
+    // local, as for such cases a control flow edge is passed between definition
+    // and use.
+    if (UseParent == ParentBB && !isa<PHINode>(UI))
       continue;
 
     // Do not build scalar dependences inside a non-affine subregion.
@@ -3243,6 +3246,27 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     if (!R->contains(UseParent)) {
       AnyCrossStmtUse = true;
       continue;
+    }
+
+    // Uses by PHI nodes in the entry node count as external uses in case the
+    // use is through an incoming block that is itself not contained in the
+    // region.
+    if (R->getEntry() == UseParent) {
+      if (auto *PHI = dyn_cast<PHINode>(UI)) {
+        bool ExternalUse = false;
+        for (unsigned i = 0; i < PHI->getNumIncomingValues(); i++) {
+          if (PHI->getIncomingValue(i) == Inst &&
+              !R->contains(PHI->getIncomingBlock(i))) {
+            ExternalUse = true;
+            break;
+          }
+        }
+
+        if (ExternalUse) {
+          AnyCrossStmtUse = true;
+          continue;
+        }
+      }
     }
 
     // If the instruction can be synthesized and the user is in the region
