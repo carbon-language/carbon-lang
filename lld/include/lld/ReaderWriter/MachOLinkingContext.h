@@ -27,6 +27,7 @@ namespace mach_o {
 class ArchHandler;
 class MachODylibFile;
 class MachOFile;
+class SectCreateFile;
 }
 
 class MachOLinkingContext : public LinkingContext {
@@ -272,6 +273,10 @@ public:
   /// Add section alignment constraint on final layout.
   void addSectionAlignment(StringRef seg, StringRef sect, uint16_t align);
 
+  /// \brief Add a section based on a command-line sectcreate option.
+  void addSectCreateSection(StringRef seg, StringRef sect,
+                            std::unique_ptr<MemoryBuffer> content);
+
   /// Returns true if specified section had alignment constraints.
   bool sectionAligned(StringRef seg, StringRef sect, uint16_t &align) const;
 
@@ -416,6 +421,7 @@ private:
   llvm::StringMap<std::vector<OrderFileNode>> _orderFiles;
   unsigned _orderFileEntries;
   File *_flatNamespaceFile;
+  mach_o::SectCreateFile *_sectCreateFile = nullptr;
 };
 
 } // end namespace lld

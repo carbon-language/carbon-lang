@@ -177,7 +177,10 @@ def arch : Separate<["-"], "arch">,
      HelpText<"Architecture to link">;
 def sectalign : MultiArg<["-"], "sectalign", 3>,
      MetaVarName<"<segname> <sectname> <alignment>">,
-     HelpText<"alignment for segment/section">;
+     HelpText<"Alignment for segment/section">;
+def sectcreate : MultiArg<["-"], "sectcreate", 3>,
+     MetaVarName<"<segname> <sectname> <file>">,
+     HelpText<"Create section <segname>/<sectname> from contents of <file>">;
 def image_base : Separate<["-"], "image_base">;
 def seg1addr : Separate<["-"], "seg1addr">, Alias<image_base>;
 def demangle : Flag<["-"], "demangle">,

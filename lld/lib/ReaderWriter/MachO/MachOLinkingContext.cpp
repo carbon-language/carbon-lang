@@ -13,6 +13,7 @@
 #include "FlatNamespaceFile.h"
 #include "MachONormalizedFile.h"
 #include "MachOPasses.h"
+#include "SectCreateFile.h"
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Reader.h"
@@ -747,6 +748,20 @@ void MachOLinkingContext::addSectionAlignment(StringRef seg, StringRef sect,
                                               uint16_t align) {
   SectionAlign entry = { seg, sect, align };
   _sectAligns.push_back(entry);
+}
+
+void MachOLinkingContext::addSectCreateSection(
+                                        StringRef seg, StringRef sect,
+                                        std::unique_ptr<MemoryBuffer> content) {
+
+  if (!_sectCreateFile) {
+    auto sectCreateFile = llvm::make_unique<mach_o::SectCreateFile>();
+    _sectCreateFile = sectCreateFile.get();
+    getNodes().push_back(llvm::make_unique<FileNode>(std::move(sectCreateFile)));
+  }
+
+  assert(_sectCreateFile && "sectcreate file does not exist.");
+  _sectCreateFile->addSection(seg, sect, std::move(content));
 }
 
 bool MachOLinkingContext::sectionAligned(StringRef seg, StringRef sect,

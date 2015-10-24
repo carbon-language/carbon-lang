@@ -151,6 +151,7 @@ public:
     typeNoAlloc,            // Identifies non allocatable sections [ELF]
     typeGroupComdat,        // Identifies a section group [ELF, COFF]
     typeGnuLinkOnce,        // Identifies a gnu.linkonce section [ELF]
+    typeSectCreate,         // Created via the -sectcreate option [Darwin]
   };
 
   // Permission bits for atoms and segments. The order of these values are

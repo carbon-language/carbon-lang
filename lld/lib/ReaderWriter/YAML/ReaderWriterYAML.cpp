@@ -437,6 +437,7 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
     io.enumCase(value, "no-alloc",        DefinedAtom::typeNoAlloc);
     io.enumCase(value, "group-comdat", DefinedAtom::typeGroupComdat);
     io.enumCase(value, "gnu-linkonce", DefinedAtom::typeGnuLinkOnce);
+    io.enumCase(value, "sectcreate",      DefinedAtom::typeSectCreate);
   }
 };
 

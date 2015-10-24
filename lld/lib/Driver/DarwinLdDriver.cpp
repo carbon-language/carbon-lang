@@ -822,7 +822,7 @@ bool DarwinLdDriver::parse(llvm::ArrayRef<const char *> args,
     }
   }
 
-  // Handle input files
+  // Handle input files and sectcreate.
   for (auto &arg : parsedArgs) {
     bool upward;
     ErrorOr<StringRef> resolvedPath = StringRef();
@@ -874,6 +874,22 @@ bool DarwinLdDriver::parse(llvm::ArrayRef<const char *> args,
                     << ", processing '-filelist " << arg->getValue()
                     << "'\n";
         return false;
+      }
+      break;
+    case OPT_sectcreate: {
+        const char* seg  = arg->getValue(0);
+        const char* sect = arg->getValue(1);
+        const char* fileName = arg->getValue(2);
+
+        ErrorOr<std::unique_ptr<MemoryBuffer>> contentOrErr =
+          MemoryBuffer::getFile(fileName);
+
+        if (!contentOrErr) {
+          diagnostics << "error: can't open -sectcreate file " << fileName << "\n";
+          return false;
+        }
+
+        ctx.addSectCreateSection(seg, sect, std::move(*contentOrErr));
       }
       break;
     }
