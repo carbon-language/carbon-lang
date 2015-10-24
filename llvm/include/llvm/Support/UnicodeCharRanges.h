@@ -51,6 +51,11 @@ public:
   /// the constructor, so it makes sense to create as few UnicodeCharSet
   /// instances per each array of ranges, as possible.
 #ifdef NDEBUG
+
+  // FIXME: This could use constexpr + static_assert. This way we
+  // may get rid of NDEBUG in this header. Unfortunately there are some
+  // problems to get this working with MSVC 2013. Change this when
+  // the support for MSVC 2013 is dropped.
   LLVM_CONSTEXPR UnicodeCharSet(CharRanges Ranges) : Ranges(Ranges) {}
 #else
   UnicodeCharSet(CharRanges Ranges) : Ranges(Ranges) {
