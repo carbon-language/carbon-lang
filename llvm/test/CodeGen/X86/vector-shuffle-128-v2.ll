@@ -1082,8 +1082,6 @@ define <2 x double> @insert_mem_hi_v2f64(double* %ptr, <2 x double> %b) {
 }
 
 define <2 x double> @insert_dup_reg_v2f64(double %a) {
-; FIXME: We should match movddup for SSE3 and higher here.
-;
 ; SSE2-LABEL: insert_dup_reg_v2f64:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0,0]
@@ -1112,6 +1110,7 @@ define <2 x double> @insert_dup_reg_v2f64(double %a) {
   %shuffle = shufflevector <2 x double> %v, <2 x double> undef, <2 x i32> <i32 0, i32 0>
   ret <2 x double> %shuffle
 }
+
 define <2 x double> @insert_dup_mem_v2f64(double* %ptr) {
 ; SSE2-LABEL: insert_dup_mem_v2f64:
 ; SSE2:       # BB#0:
