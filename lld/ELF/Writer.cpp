@@ -502,7 +502,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
           if (S->isLive())
             scanRelocs(*S);
 
-  // FIXME: Try to avoid the extra walk over all global symbols.
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
   for (auto &P : Symtab.getSymbols()) {
     SymbolBody *Body = P.second->Body;
@@ -715,9 +714,6 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 
   auto &FirstObj = cast<ELFFileBase<ELFT>>(*Config->FirstElf);
   EHdr->e_ident[EI_OSABI] = FirstObj.getOSABI();
-
-  // FIXME: Generalize the segment construction similar to how we create
-  // output sections.
 
   EHdr->e_type = Config->Shared ? ET_DYN : ET_EXEC;
   EHdr->e_machine = FirstObj.getEMachine();
