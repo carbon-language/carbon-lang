@@ -2,6 +2,8 @@
   add_subdirectory(Linux)
 #elseif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
   add_subdirectory(FreeBSD)
+#elseif (CMAKE_SYSTEM_NAME MATCHES "NetBSD")
+  add_subdirectory(NetBSD)
 #elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_subdirectory(MacOSX)
 #elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
