@@ -281,9 +281,8 @@ int AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::FP_TO_UINT, MVT::v2i8,  MVT::v2f64, 2 },
   };
 
-  int Idx = ConvertCostTableLookup<MVT>(
-      ConversionTbl, array_lengthof(ConversionTbl), ISD, DstTy.getSimpleVT(),
-      SrcTy.getSimpleVT());
+  int Idx = ConvertCostTableLookup(ConversionTbl, ISD, DstTy.getSimpleVT(),
+                                   SrcTy.getSimpleVT());
   if (Idx != -1)
     return ConversionTbl[Idx].Cost;
 
