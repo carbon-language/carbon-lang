@@ -11,7 +11,7 @@ LLDB_LEVEL := ../../..
 
 include $(LLDB_LEVEL)/../../Makefile.config
 
-PARALLEL_DIRS := gdb-server MacOSX Linux FreeBSD POSIX Windows Kalimba Android
+PARALLEL_DIRS := gdb-server MacOSX Linux FreeBSD NetBSD POSIX Windows Kalimba Android
 
 # ifeq ($(HOST_OS),Darwin)
 #   DIRS += MacOSX
@@ -24,9 +24,13 @@ PARALLEL_DIRS := gdb-server MacOSX Linux FreeBSD POSIX Windows Kalimba Android
 # ifeq ($(HOST_OS),FreeBSD)
 #   DIRS += FreeBSD
 # endif
-# 
+#
 # ifeq ($(HOST_OS),GNU/kFreeBSD)
 #   DIRS += FreeBSD
+# endif
+#
+# ifeq ($(HOST_OS),NetBSD)
+#   DIRS += NetBSD
 # endif
 
 include $(LLDB_LEVEL)/Makefile

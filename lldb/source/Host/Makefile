@@ -43,6 +43,11 @@ $(eval $(call DIR_SOURCES,posix))
 $(eval $(call DIR_SOURCES,freebsd))
 endif
 
+ifeq ($(HOST_OS),NetBSD)
+$(eval $(call DIR_SOURCES,posix))
+$(eval $(call DIR_SOURCES,netbsd))
+endif
+
 ifeq ($(HOST_OS),MingW)
 $(eval $(call DIR_SOURCES,windows))
 endif
