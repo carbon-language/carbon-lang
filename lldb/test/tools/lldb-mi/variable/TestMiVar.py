@@ -356,3 +356,45 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test for std::string
         self.runCmd("-var-create - * std_string")
         self.expect('\^done,name="var\d+",numchild="[0-9]+",value="\\\\"hello\\\\"",type="std::[\S]*?string",thread-id="1",has_more="0"')
+ 
+    @lldbmi_test
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
+    def test_lldbmi_var_create_for_unnamed_objects(self):
+        """Test that 'lldb-mi --interpreter' can expand unnamed structures and unions."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to breakpoint
+        line = line_number('main.cpp', '// BP_unnamed_objects_test')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Evaluate struct_with_unions type and its children
+        self.runCmd("-var-create v0 * swu")
+        self.expect('\^done,name="v0",numchild="2",value="\{\.\.\.\}",type="struct_with_unions",thread-id="1",has_more="0"')
+       
+        self.runCmd("-var-list-children v0")
+        
+        # inspect the first unnamed union
+        self.runCmd("-var-list-children v0.$0")
+        self.runCmd("-var-evaluate-expression v0.$0.u_i")
+        self.expect('\^done,value="1"')
+        
+        # inspect the second unnamed union
+        self.runCmd("-var-list-children v0.$1")
+        self.runCmd("-var-evaluate-expression v0.$1.u1")
+        self.expect('\^done,value="-1"')
+        # inspect unnamed structure
+        self.runCmd("-var-list-children v0.$1.$1")
+        self.runCmd("-var-evaluate-expression v0.$1.$1.s1")
+        self.expect('\^done,value="-1"')
+

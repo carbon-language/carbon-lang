@@ -27,6 +27,25 @@ struct pcomplex_type : complex_type
 
 int pcomplex_type::si;
 
+struct struct_with_unions
+{
+    struct_with_unions(): u_i(1), u1(-1) {}
+    union 
+    {
+        int u_i;
+        int u_j;  
+    };
+    union 
+    {
+        int  u1;
+        struct
+        {
+            short s1;
+            short s2;
+        };
+    };
+};
+
 void
 var_update_test(void)
 {
@@ -80,6 +99,13 @@ cpp_stl_types_test(void)
     // BP_cpp_stl_types_test
 }
 
+void
+unnamed_objects_test(void)
+{
+    struct_with_unions swu;
+    // BP_unnamed_objects_test
+}
+
 struct not_str
 {
     not_str(char _c, int _f)
@@ -119,6 +145,7 @@ main(int argc, char const *argv[])
     var_list_children_test();
     gdb_set_show_print_char_array_as_string_test();
     cpp_stl_types_test();
+    unnamed_objects_test();
     gdb_set_show_print_expand_aggregates();
     gdb_set_show_print_aggregate_field_names();
     return 0; // BP_return

@@ -61,7 +61,7 @@ CMIUtilString
 CMICmnLLDBUtilSBValue::GetName() const
 {
     const char *pName = m_bValidSBValue ? m_rValue.GetName() : nullptr;
-    const CMIUtilString text((pName != nullptr) ? pName : m_pUnkwn);
+    const CMIUtilString text((pName != nullptr) ? pName : CMIUtilString());
 
     return text;
 }

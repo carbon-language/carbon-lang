@@ -1015,7 +1015,9 @@ CMICmdCmdVarListChildren::Execute()
         lldb::SBValue member = rValue.GetChildAtIndex(i);
         const CMICmnLLDBUtilSBValue utilValue(member);
         const CMIUtilString strExp = utilValue.GetName();
-        const CMIUtilString name(CMIUtilString::Format("%s.%s", rVarObjName.c_str(), strExp.c_str()));
+        const CMIUtilString name(strExp.empty() ?
+            CMIUtilString::Format("%s.$%u", rVarObjName.c_str(), i) :
+            CMIUtilString::Format("%s.%s", rVarObjName.c_str(), strExp.c_str()));
         const MIuint nChildren = member.GetNumChildren();
         const CMIUtilString strThreadId(CMIUtilString::Format("%u", member.GetThread().GetIndexID()));
 
