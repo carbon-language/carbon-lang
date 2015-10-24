@@ -49,7 +49,7 @@ class ValueObjectRecursionTestCase(TestBase):
         if self.TraceOn():
              print(root)
              print(child)
-        for i in range(0,24500):
+        for i in range(0,15000):
              child = child.GetChildAtIndex(1)
         if self.TraceOn():
              print(child)
