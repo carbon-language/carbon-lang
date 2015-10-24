@@ -45,14 +45,8 @@ static void completeEphemeralValues(SmallVector<const Value *, 16> &WorkSet,
       continue;
 
     // If all uses of this value are ephemeral, then so is this value.
-    bool FoundNEUse = false;
-    for (const User *I : V->users())
-      if (!EphValues.count(I)) {
-        FoundNEUse = true;
-        break;
-      }
-
-    if (FoundNEUse)
+    if (!std::all_of(V->user_begin(), V->user_end(),
+                     [&](const User *U) { return EphValues.count(U); }))
       continue;
 
     EphValues.insert(V);
