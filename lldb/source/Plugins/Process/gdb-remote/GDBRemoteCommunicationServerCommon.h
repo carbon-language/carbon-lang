@@ -12,13 +12,14 @@
 
 // C Includes
 // C++ Includes
+#include <string>
 
 // Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private-forward.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
 
-// Project includes
 #include "GDBRemoteCommunicationServer.h"
 #include "GDBRemoteCommunicationServerCommon.h"
 
@@ -35,8 +36,7 @@ class GDBRemoteCommunicationServerCommon :
 public:
     GDBRemoteCommunicationServerCommon(const char *comm_name, const char *listener_name);
 
-    virtual
-    ~GDBRemoteCommunicationServerCommon();
+    ~GDBRemoteCommunicationServerCommon() override;
 
 protected:
     ProcessLaunchInfo m_process_launch_info;
@@ -204,4 +204,4 @@ protected:
 } // namespace process_gdb_remote
 } // namespace lldb_private
 
-#endif  // liblldb_GDBRemoteCommunicationServerCommon_h_
+#endif // liblldb_GDBRemoteCommunicationServerCommon_h_

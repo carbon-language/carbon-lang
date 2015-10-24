@@ -1,4 +1,4 @@
-//===-- MemoryHistoryASan.h ----------------------------------------*- C++ -*-===//
+//===-- MemoryHistoryASan.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,7 +24,8 @@ namespace lldb_private {
 class MemoryHistoryASan : public lldb_private::MemoryHistory
 {
 public:
-    
+    ~MemoryHistoryASan() override = default;
+
     static lldb::MemoryHistorySP
     CreateInstance (const lldb::ProcessSP &process_sp);
     
@@ -36,27 +37,28 @@ public:
     
     static lldb_private::ConstString
     GetPluginNameStatic();
+
+    lldb_private::ConstString
+    GetPluginName() override
+    {
+        return GetPluginNameStatic();
+    }
     
-    virtual
-    ~MemoryHistoryASan () {}
+    uint32_t
+    GetPluginVersion() override
+    {
+        return 1;
+    }
     
-    virtual lldb_private::ConstString
-    GetPluginName() { return GetPluginNameStatic(); }
-    
-    virtual uint32_t
-    GetPluginVersion() { return 1; }
-    
-    virtual lldb_private::HistoryThreads
-    GetHistoryThreads(lldb::addr_t address);
+    lldb_private::HistoryThreads
+    GetHistoryThreads(lldb::addr_t address) override;
     
 private:
-    
     MemoryHistoryASan(const lldb::ProcessSP &process_sp);
     
     lldb::ProcessWP m_process_wp;
-    
 };
 
 } // namespace lldb_private
     
-#endif  // liblldb_MemoryHistoryASan_h_
+#endif // liblldb_MemoryHistoryASan_h_

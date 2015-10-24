@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Host/Config.h"
-
 // C Includes
 #include <errno.h>
 #include <stdlib.h>
@@ -25,6 +23,9 @@
 #include <map>
 #include <mutex>
 
+// Other libraries and framework includes
+// Project includes
+#include "lldb/Host/Config.h"
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/ArchSpec.h"
@@ -65,7 +66,6 @@
 #include "lldb/Target/SystemRuntime.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
-// Project includes
 #include "lldb/Host/Host.h"
 #include "Plugins/Process/Utility/GDBRemoteSignals.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
@@ -78,6 +78,7 @@
 #include "ThreadGDBRemote.h"
 
 #define DEBUGSERVER_BASENAME    "debugserver"
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_gdb_remote;
@@ -98,7 +99,7 @@ namespace lldb
         if (error.Success())
             ((ProcessGDBRemote *)p)->GetGDBRemote().DumpHistory (strm);
     }
-}
+} // namespace lldb
 
 namespace {
 
@@ -119,7 +120,6 @@ namespace {
     class PluginProperties : public Properties
     {
     public:
-        
         static ConstString
         GetSettingName ()
         {
@@ -132,12 +132,9 @@ namespace {
             m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
             m_collection_sp->Initialize(g_properties);
         }
-        
-        virtual
-        ~PluginProperties()
-        {
-        }
-        
+
+        ~PluginProperties() override = default;
+
         uint64_t
         GetPacketTimeout()
         {
@@ -171,16 +168,14 @@ namespace {
         return g_settings_sp;
     }
     
-} // anonymous namespace end
+} // anonymous namespace
 
 class ProcessGDBRemote::GDBLoadedModuleInfoList
 {
 public:
-
     class LoadedModuleInfo
     {
     public:
-
         enum e_data_point
         {
             e_has_name      = 0,
@@ -201,6 +196,7 @@ public:
             m_name = name;
             m_has[e_has_name] = true;
         }
+
         bool get_name (std::string & out) const
         {
             out = m_name;
@@ -212,6 +208,7 @@ public:
             m_base = base;
             m_has[e_has_base] = true;
         }
+
         bool get_base (lldb::addr_t & out) const
         {
             out = m_base;
@@ -222,6 +219,7 @@ public:
         {
             m_base_is_offset = is_offset;
         }
+
         bool get_base_is_offset(bool & out) const
         {
             out = m_base_is_offset;
@@ -233,6 +231,7 @@ public:
             m_link_map = addr;
             m_has[e_has_link_map] = true;
         }
+
         bool get_link_map (lldb::addr_t & out) const
         {
             out = m_link_map;
@@ -244,6 +243,7 @@ public:
             m_dynamic = addr;
             m_has[e_has_dynamic] = true;
         }
+
         bool get_dynamic (lldb::addr_t & out) const
         {
             out = m_dynamic;
@@ -257,7 +257,6 @@ public:
         }
 
     protected:
-
         bool m_has[e_num];
         std::string m_name;
         lldb::addr_t m_link_map;
@@ -333,7 +332,6 @@ ProcessGDBRemote::Terminate()
     PluginManager::UnregisterPlugin (ProcessGDBRemote::CreateInstance);
 }
 
-
 lldb::ProcessSP
 ProcessGDBRemote::CreateInstance (lldb::TargetSP target_sp, Listener &listener, const FileSpec *crash_file_path)
 {
@@ -376,9 +374,6 @@ ProcessGDBRemote::CanDebug (lldb::TargetSP target_sp, bool plugin_specified_by_n
     return true;
 }
 
-//----------------------------------------------------------------------
-// ProcessGDBRemote constructor
-//----------------------------------------------------------------------
 ProcessGDBRemote::ProcessGDBRemote(lldb::TargetSP target_sp, Listener &listener) :
     Process (target_sp, listener),
     m_flags (0),
@@ -433,9 +428,6 @@ ProcessGDBRemote::ProcessGDBRemote(lldb::TargetSP target_sp, Listener &listener)
         m_gdb_comm.SetPacketTimeout(timeout_seconds);
 }
 
-//----------------------------------------------------------------------
-// Destructor
-//----------------------------------------------------------------------
 ProcessGDBRemote::~ProcessGDBRemote()
 {
     //  m_mach_process.UnregisterNotificationCallbacks (this);
@@ -562,7 +554,6 @@ SplitCommaSeparatedRegisterNumberString(const llvm::StringRef &comma_separated_r
     } while (!value_pair.second.empty());
     return regnums.size();
 }
-
 
 void
 ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
@@ -1156,9 +1147,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
                                         exe_module->GetArchitecture().GetArchitectureName());
     }
     return error;
-
 }
-
 
 Error
 ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
@@ -1205,7 +1194,6 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
             error.SetErrorString("not connected to remote gdb server");
         return error;
     }
-
 
     // Start the communications read thread so all incoming data can be
     // parsed into packets and queued as they arrive.
@@ -1473,7 +1461,6 @@ ProcessGDBRemote::DidAttach (ArchSpec &process_arch)
     process_arch.Clear();
     DidLaunchOrAttach (process_arch);
 }
-
 
 Error
 ProcessGDBRemote::WillResume ()
@@ -1927,7 +1914,6 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
     return true;
 }
 
-
 bool
 ProcessGDBRemote::GetThreadStopInfoFromJSON (ThreadGDBRemote *thread, const StructuredData::ObjectSP &thread_infos_sp)
 {
@@ -1984,7 +1970,6 @@ ProcessGDBRemote::CalculateThreadStopInfo (ThreadGDBRemote *thread)
         return SetThreadStopInfo (stop_packet) == eStateStopped;
     return false;
 }
-
 
 ThreadSP
 ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
@@ -2359,7 +2344,6 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
                     return true; // Keep iterating through all array items
                 });
             }
-
         }
         else if (key == g_key_signal)
             signo = object->GetIntegerValue(LLDB_INVALID_SIGNAL_NUMBER);
@@ -2680,7 +2664,6 @@ ProcessGDBRemote::RefreshStateAfterStop ()
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
     m_thread_list_real.RefreshStateAfterStop();
-    
 }
 
 Error
@@ -2741,7 +2724,6 @@ ProcessGDBRemote::DoDetach(bool keep_stopped)
     //KillDebugserverProcess ();
     return error;
 }
-
 
 Error
 ProcessGDBRemote::DoDestroy ()
@@ -3172,7 +3154,6 @@ Error
 ProcessGDBRemote::GetMemoryRegionInfo (addr_t load_addr, 
                                        MemoryRegionInfo &region_info)
 {
-    
     Error error (m_gdb_comm.GetMemoryRegionInfo (load_addr, region_info));
     return error;
 }
@@ -3180,7 +3161,6 @@ ProcessGDBRemote::GetMemoryRegionInfo (addr_t load_addr,
 Error
 ProcessGDBRemote::GetWatchpointSupportInfo (uint32_t &num)
 {
-    
     Error error (m_gdb_comm.GetWatchpointSupportInfo (num));
     return error;
 }
@@ -3226,7 +3206,6 @@ ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
 
     return error;
 }
-
 
 //------------------------------------------------------------------
 // Process STDIO
@@ -4030,7 +4009,6 @@ ProcessGDBRemote::NewThreadNotifyBreakpointHit (void *baton,
     return false;
 }
 
-
 bool
 ProcessGDBRemote::StartNoticingNewThreads()
 {
@@ -4197,7 +4175,6 @@ ProcessGDBRemote::GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_addres
     }
     return object_sp;
 }
-
 
 // Establish the largest memory read/write payloads we should use.
 // If the remote stub has a max packet size, stay under that size.
@@ -4491,7 +4468,7 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
     return true;
 }
     
-} // namespace {}
+} // anonymous namespace
 
 
 // query the target of gdb-remote for extended target information
@@ -4522,7 +4499,6 @@ ProcessGDBRemote::GetGDBServerRegisterInfo ()
     {
         return false;
     }
-    
 
     XMLDocument xml_document;
 
@@ -4890,7 +4866,6 @@ ProcessGDBRemote::GetFileLoadAddress(const FileSpec& file, bool& is_loaded, lldb
     return Error("Unknown error happened during sending the load address packet");
 }
 
-
 void
 ProcessGDBRemote::ModulesDidLoad (ModuleList &module_list)
 {
@@ -4901,7 +4876,6 @@ ProcessGDBRemote::ModulesDidLoad (ModuleList &module_list)
     // it needs any symbols.
     m_gdb_comm.ServeSymbolLookups(this);
 }
-
 
 class CommandObjectProcessGDBRemoteSpeedTest: public CommandObjectParsed
 {
@@ -4924,10 +4898,7 @@ public:
         m_option_group.Finalize();
     }
 
-    ~CommandObjectProcessGDBRemoteSpeedTest ()
-    {
-    }
-
+    ~CommandObjectProcessGDBRemoteSpeedTest() override = default;
 
     Options *
     GetOptions () override
@@ -4968,19 +4939,17 @@ public:
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
+
 protected:
     OptionGroupOptions m_option_group;
     OptionGroupUInt64 m_num_packets;
     OptionGroupUInt64 m_max_send;
     OptionGroupUInt64 m_max_recv;
     OptionGroupBoolean m_json;
-
 };
 
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
-private:
-    
 public:
     CommandObjectProcessGDBRemotePacketHistory(CommandInterpreter &interpreter) :
     CommandObjectParsed (interpreter,
@@ -4989,11 +4958,9 @@ public:
                          NULL)
     {
     }
-    
-    ~CommandObjectProcessGDBRemotePacketHistory ()
-    {
-    }
-    
+
+    ~CommandObjectProcessGDBRemotePacketHistory() override = default;
+
     bool
     DoExecute (Args& command, CommandReturnObject &result) override
     {
@@ -5019,8 +4986,6 @@ public:
 
 class CommandObjectProcessGDBRemotePacketXferSize : public CommandObjectParsed
 {
-private:
-    
 public:
     CommandObjectProcessGDBRemotePacketXferSize(CommandInterpreter &interpreter) :
     CommandObjectParsed (interpreter,
@@ -5029,11 +4994,9 @@ public:
                          NULL)
     {
     }
-    
-    ~CommandObjectProcessGDBRemotePacketXferSize ()
-    {
-    }
-    
+
+    ~CommandObjectProcessGDBRemotePacketXferSize() override = default;
+
     bool
     DoExecute (Args& command, CommandReturnObject &result) override
     {
@@ -5063,11 +5026,8 @@ public:
     }
 };
 
-
 class CommandObjectProcessGDBRemotePacketSend : public CommandObjectParsed
 {
-private:
-    
 public:
     CommandObjectProcessGDBRemotePacketSend(CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -5077,11 +5037,9 @@ public:
                              NULL)
     {
     }
-    
-    ~CommandObjectProcessGDBRemotePacketSend ()
-    {
-    }
-    
+
+    ~CommandObjectProcessGDBRemotePacketSend() override = default;
+
     bool
     DoExecute (Args& command, CommandReturnObject &result) override
     {
@@ -5124,8 +5082,6 @@ public:
 
 class CommandObjectProcessGDBRemotePacketMonitor : public CommandObjectRaw
 {
-private:
-    
 public:
     CommandObjectProcessGDBRemotePacketMonitor(CommandInterpreter &interpreter) :
         CommandObjectRaw (interpreter,
@@ -5135,11 +5091,9 @@ public:
                          NULL)
     {
     }
-    
-    ~CommandObjectProcessGDBRemotePacketMonitor ()
-    {
-    }
-    
+
+    ~CommandObjectProcessGDBRemotePacketMonitor() override = default;
+
     bool
     DoExecute (const char *command, CommandReturnObject &result) override
     {
@@ -5177,8 +5131,6 @@ public:
 
 class CommandObjectProcessGDBRemotePacket : public CommandObjectMultiword
 {
-private:
-    
 public:
     CommandObjectProcessGDBRemotePacket(CommandInterpreter &interpreter) :
         CommandObjectMultiword (interpreter,
@@ -5192,10 +5144,8 @@ public:
         LoadSubCommand ("xfer-size", CommandObjectSP (new CommandObjectProcessGDBRemotePacketXferSize (interpreter)));
         LoadSubCommand ("speed-test", CommandObjectSP (new CommandObjectProcessGDBRemoteSpeedTest (interpreter)));
     }
-    
-    ~CommandObjectProcessGDBRemotePacket ()
-    {
-    }    
+
+    ~CommandObjectProcessGDBRemotePacket() override = default;
 };
 
 class CommandObjectMultiwordProcessGDBRemote : public CommandObjectMultiword
@@ -5210,9 +5160,7 @@ public:
         LoadSubCommand ("packet", CommandObjectSP (new CommandObjectProcessGDBRemotePacket    (interpreter)));
     }
 
-    ~CommandObjectMultiwordProcessGDBRemote ()
-    {
-    }
+    ~CommandObjectMultiwordProcessGDBRemote() override = default;
 };
 
 CommandObject *

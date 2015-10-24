@@ -39,8 +39,7 @@ public:
     GDBRemoteCommunicationServer(const char *comm_name,
                                  const char *listener_name);
 
-    virtual
-    ~GDBRemoteCommunicationServer();
+    ~GDBRemoteCommunicationServer() override;
 
     void RegisterPacketHandler(StringExtractorGDBRemote::ServerPacketType packet_type,
                                PacketHandler handler);
@@ -73,13 +72,10 @@ protected:
     SendOKResponse ();
 
 private:
-    //------------------------------------------------------------------
-    // For GDBRemoteCommunicationServer only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunicationServer);
 };
 
 } // namespace process_gdb_remote
 } // namespace lldb_private
 
-#endif  // liblldb_GDBRemoteCommunicationServer_h_
+#endif // liblldb_GDBRemoteCommunicationServer_h_

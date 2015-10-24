@@ -42,32 +42,22 @@ public:
     {
     }
 
-    ~GDBRemoteDynamicRegisterInfo ()
-    {
-    }
+    ~GDBRemoteDynamicRegisterInfo() override = default;
 
     void
     HardcodeARMRegisters(bool from_scratch);
-
 };
 
 class GDBRemoteRegisterContext : public RegisterContext
 {
 public:
-    //------------------------------------------------------------------
-    // Constructors and Destructors
-    //------------------------------------------------------------------
     GDBRemoteRegisterContext (ThreadGDBRemote &thread,
                               uint32_t concrete_frame_idx,
                               GDBRemoteDynamicRegisterInfo &reg_info,
                               bool read_all_at_once);
 
-    virtual
-    ~GDBRemoteRegisterContext ();
+    ~GDBRemoteRegisterContext() override;
 
-    //------------------------------------------------------------------
-    // Subclasses must override these functions
-    //------------------------------------------------------------------
     void
     InvalidateAllRegisters () override;
 
@@ -166,13 +156,10 @@ private:
     bool SetPrimordialRegister(const RegisterInfo *reg_info,
                                GDBRemoteCommunicationClient &gdb_comm);
 
-    //------------------------------------------------------------------
-    // For GDBRemoteRegisterContext only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteRegisterContext);
 };
 
 } // namespace process_gdb_remote
 } // namespace lldb_private
 
-#endif  // lldb_GDBRemoteRegisterContext_h_
+#endif // lldb_GDBRemoteRegisterContext_h_

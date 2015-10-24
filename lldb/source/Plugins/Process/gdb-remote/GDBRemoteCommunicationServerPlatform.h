@@ -10,11 +10,15 @@
 #ifndef liblldb_GDBRemoteCommunicationServerPlatform_h_
 #define liblldb_GDBRemoteCommunicationServerPlatform_h_
 
-#include "GDBRemoteCommunicationServerCommon.h"
-
-#include "lldb/Host/Socket.h"
-
+// C Includes
+// C++ Includes
+#include <map>
 #include <set>
+
+// Other libraries and framework includes
+// Project includes
+#include "GDBRemoteCommunicationServerCommon.h"
+#include "lldb/Host/Socket.h"
 
 namespace lldb_private {
 namespace process_gdb_remote {
@@ -27,8 +31,7 @@ public:
 
     GDBRemoteCommunicationServerPlatform(const Socket::SocketProtocol socket_protocol);
 
-    virtual
-    ~GDBRemoteCommunicationServerPlatform();
+    ~GDBRemoteCommunicationServerPlatform() override;
 
     Error
     LaunchProcess () override;
@@ -112,13 +115,10 @@ private:
     static FileSpec
     GetDomainSocketPath(const char* prefix);
 
-    //------------------------------------------------------------------
-    // For GDBRemoteCommunicationServerPlatform only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunicationServerPlatform);
 };
 
 } // namespace process_gdb_remote
 } // namespace lldb_private
 
-#endif  // liblldb_GDBRemoteCommunicationServerPlatform_h_
+#endif // liblldb_GDBRemoteCommunicationServerPlatform_h_

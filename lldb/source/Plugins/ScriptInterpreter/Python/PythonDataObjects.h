@@ -1,4 +1,4 @@
-//===-- PythonDataObjects.h----------------------------------------*- C++ -*-===//
+//===-- PythonDataObjects.h--------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,6 @@
 
 // C Includes
 // C++ Includes
-
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-defines.h"
@@ -23,6 +22,7 @@
 #include "lldb/Interpreter/OptionValue.h"
 
 namespace lldb_private {
+
 class PythonString;
 class PythonList;
 class PythonDictionary;
@@ -30,7 +30,7 @@ class PythonInteger;
 
 class StructuredPythonObject : public StructuredData::Generic
 {
-  public:
+public:
     StructuredPythonObject()
         : StructuredData::Generic()
     {
@@ -42,7 +42,7 @@ class StructuredPythonObject : public StructuredData::Generic
         Py_XINCREF(GetValue());
     }
 
-    virtual ~StructuredPythonObject()
+    ~StructuredPythonObject() override
     {
         if (Py_IsInitialized())
             Py_XDECREF(GetValue());
@@ -57,7 +57,7 @@ class StructuredPythonObject : public StructuredData::Generic
 
     void Dump(Stream &s) const override;
 
-  private:
+private:
     DISALLOW_COPY_AND_ASSIGN(StructuredPythonObject);
 };
 
@@ -106,7 +106,10 @@ public:
         Reset(rhs);
     }
 
-    virtual ~PythonObject() { Reset(); }
+    virtual ~PythonObject()
+    {
+        Reset();
+    }
 
     void
     Reset()
@@ -235,6 +238,7 @@ public:
     explicit PythonString(const char *string);
     PythonString(PyRefType type, PyObject *o);
     PythonString(const PythonString &object);
+
     ~PythonString() override;
 
     static bool Check(PyObject *py_obj);
@@ -262,6 +266,7 @@ public:
     explicit PythonInteger(int64_t value);
     PythonInteger(PyRefType type, PyObject *o);
     PythonInteger(const PythonInteger &object);
+
     ~PythonInteger() override;
 
     static bool Check(PyObject *py_obj);
@@ -286,6 +291,7 @@ public:
     explicit PythonList(int list_size);
     PythonList(PyRefType type, PyObject *o);
     PythonList(const PythonList &list);
+
     ~PythonList() override;
 
     static bool Check(PyObject *py_obj);
@@ -312,6 +318,7 @@ public:
     explicit PythonDictionary(PyInitialValue value);
     PythonDictionary(PyRefType type, PyObject *o);
     PythonDictionary(const PythonDictionary &dict);
+
     ~PythonDictionary() override;
 
     static bool Check(PyObject *py_obj);
@@ -338,6 +345,7 @@ class PythonFile : public PythonObject
     PythonFile(File &file, const char *mode);
     PythonFile(const char *path, const char *mode);
     PythonFile(PyRefType type, PyObject *o);
+
     ~PythonFile() override;
 
     static bool Check(PyObject *py_obj);
@@ -352,4 +360,4 @@ class PythonFile : public PythonObject
 
 } // namespace lldb_private
 
-#endif  // LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_PYTHONDATAOBJECTS_H
+#endif // LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_PYTHONDATAOBJECTS_H

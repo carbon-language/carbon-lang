@@ -12,9 +12,9 @@
 
 // C Includes
 // C++ Includes
-#include <list>
 #include <string>
 #include <queue>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes
@@ -94,14 +94,10 @@ public:
         uint32_t m_saved_timeout;
     };
 
-    //------------------------------------------------------------------
-    // Constructors and Destructors
-    //------------------------------------------------------------------
     GDBRemoteCommunication(const char *comm_name, 
                            const char *listener_name);
 
-    virtual
-    ~GDBRemoteCommunication();
+    ~GDBRemoteCommunication() override;
 
     PacketResult
     GetAck ();
@@ -117,12 +113,13 @@ public:
                         size_t payload_length);
 
     bool
-    GetSequenceMutex (Mutex::Locker& locker, const char *failure_message = NULL);
+    GetSequenceMutex(Mutex::Locker& locker, const char *failure_message = nullptr);
 
     PacketType
     CheckForPacket (const uint8_t *src, 
                     size_t src_len, 
                     StringExtractorGDBRemote &packet);
+
     bool
     IsRunning() const
     {
@@ -162,21 +159,21 @@ public:
     {
         return m_packet_timeout * TimeValue::MicroSecPerSec;
     }
+
     //------------------------------------------------------------------
     // Start a debugserver instance on the current host using the
     // supplied connection URL.
     //------------------------------------------------------------------
     Error
-    StartDebugserverProcess (const char *url,
-                             Platform *platform, // If non NULL, then check with the platform for the GDB server binary if it can't be located
-                             ProcessLaunchInfo &launch_info,
-                             uint16_t *port);
+    StartDebugserverProcess(const char *url,
+                            Platform *platform, // If non nullptr, then check with the platform for the GDB server binary if it can't be located
+                            ProcessLaunchInfo &launch_info,
+                            uint16_t *port);
 
     void
     DumpHistory(Stream &strm);
     
 protected:
-
     class History
     {
     public:
@@ -223,6 +220,7 @@ protected:
         AddPacket (char packet_char,
                    PacketType type,
                    uint32_t bytes_transmitted);
+
         void
         AddPacket (const std::string &src,
                    uint32_t src_len,
@@ -241,7 +239,7 @@ protected:
             return m_dumped_to_log;
         }
     
-protected:
+    protected:
         uint32_t
         GetFirstSavedPacketIndex () const
         {
@@ -275,12 +273,29 @@ protected:
             return i % m_packets.size();
         }
 
-        
         std::vector<Entry> m_packets;
         uint32_t m_curr_idx;
         uint32_t m_total_packet_count;
         mutable bool m_dumped_to_log;
     };
+
+    uint32_t m_packet_timeout;
+    uint32_t m_echo_number;
+    LazyBool m_supports_qEcho;
+#ifdef ENABLE_MUTEX_ERROR_CHECKING
+    TrackingMutex m_sequence_mutex;
+#else
+    Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
+#endif
+    Predicate<bool> m_public_is_running;
+    Predicate<bool> m_private_is_running;
+    History m_history;
+    bool m_send_acks;
+    bool m_is_platform; // Set to true if this class represents a platform,
+                        // false if this class represents a debug session for
+                        // a single process
+    
+    CompressionType m_compression_type;
 
     PacketResult
     SendPacket (const char *payload,
@@ -321,27 +336,6 @@ protected:
     bool
     DecompressPacket ();
 
-    //------------------------------------------------------------------
-    // Classes that inherit from GDBRemoteCommunication can see and modify these
-    //------------------------------------------------------------------
-    uint32_t m_packet_timeout;
-    uint32_t m_echo_number;
-    LazyBool m_supports_qEcho;
-#ifdef ENABLE_MUTEX_ERROR_CHECKING
-    TrackingMutex m_sequence_mutex;
-#else
-    Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
-#endif
-    Predicate<bool> m_public_is_running;
-    Predicate<bool> m_private_is_running;
-    History m_history;
-    bool m_send_acks;
-    bool m_is_platform; // Set to true if this class represents a platform,
-                        // false if this class represents a debug session for
-                        // a single process
-    
-    CompressionType m_compression_type;
-
     Error
     StartListenThread (const char *hostname = "127.0.0.1", uint16_t port = 0);
 
@@ -361,10 +355,12 @@ protected:
 
     // This method is defined as part of communication.h
     // when the read thread gets any bytes it will pass them on to this function
-    virtual void AppendBytesToCache (const uint8_t * bytes, size_t len, bool broadcast, lldb::ConnectionStatus status);
+    void AppendBytesToCache(const uint8_t * bytes,
+                            size_t len,
+                            bool broadcast,
+                            lldb::ConnectionStatus status) override;
 
 private:
-
     std::queue<StringExtractorGDBRemote> m_packet_queue; // The packet queue
     lldb_private::Mutex m_packet_queue_mutex;            // Mutex for accessing queue
     Condition m_condition_queue_not_empty;               // Condition variable to wait for packets
@@ -372,13 +368,10 @@ private:
     HostThread m_listen_thread;
     std::string m_listen_url;
 
-    //------------------------------------------------------------------
-    // For GDBRemoteCommunication only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (GDBRemoteCommunication);
 };
 
 } // namespace process_gdb_remote
 } // namespace lldb_private
 
-#endif  // liblldb_GDBRemoteCommunication_h_
+#endif // liblldb_GDBRemoteCommunication_h_
