@@ -1,7 +1,8 @@
 set(system_libs)
 if( NOT MSVC )
   if( MINGW )
-    set(system_libs ${system_libs} psapi shell32 ole32)
+    # libuuid required for FOLDERID_Profile usage in lib/Support/Windows/Path.inc.
+    set(system_libs ${system_libs} psapi shell32 ole32 uuid)
   elseif( CMAKE_HOST_UNIX )
     if( HAVE_LIBRT )
       set(system_libs ${system_libs} rt)
