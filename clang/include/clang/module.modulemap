@@ -25,6 +25,7 @@ module Clang_Basic {
   umbrella "Basic"
 
   textual header "Basic/BuiltinsAArch64.def"
+  textual header "Basic/BuiltinsAMDGPU.def"
   textual header "Basic/BuiltinsARM.def"
   textual header "Basic/Builtins.def"
   textual header "Basic/BuiltinsHexagon.def"
@@ -33,7 +34,6 @@ module Clang_Basic {
   textual header "Basic/BuiltinsNEON.def"
   textual header "Basic/BuiltinsNVPTX.def"
   textual header "Basic/BuiltinsPPC.def"
-  textual header "Basic/BuiltinsR600.def"
   textual header "Basic/BuiltinsSystemZ.def"
   textual header "Basic/BuiltinsWebAssembly.def"
   textual header "Basic/BuiltinsX86.def"
