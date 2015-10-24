@@ -741,7 +741,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   // First entry is null.
   ++SHdrs;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    Sec->setNameOffset(Out<ELFT>::ShStrTab->getFileOff(Sec->getName()));
+    Sec->setNameOffset(Out<ELFT>::ShStrTab->getOffset(Sec->getName()));
     Sec->writeHeaderTo(SHdrs++);
   }
 }

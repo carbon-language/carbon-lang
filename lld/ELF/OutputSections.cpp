@@ -548,10 +548,10 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
     // dependencies of the object it's contained in, while
     // DT_RPATH is used for indirect dependencies as well.
     WriteVal(Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
-             Out<ELFT>::DynStrTab->getFileOff(Config->RPath));
+             Out<ELFT>::DynStrTab->getOffset(Config->RPath));
 
   if (!Config->SoName.empty())
-    WriteVal(DT_SONAME, Out<ELFT>::DynStrTab->getFileOff(Config->SoName));
+    WriteVal(DT_SONAME, Out<ELFT>::DynStrTab->getOffset(Config->SoName));
 
   auto WriteArray = [&](int32_t T1, int32_t T2,
                         const OutputSectionBase<ELFT> *Sec) {
@@ -566,7 +566,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 
   for (const std::unique_ptr<SharedFile<ELFT>> &F : SymTab.getSharedFiles())
     if (F->isNeeded())
-      WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getFileOff(F->getSoName()));
+      WriteVal(DT_NEEDED, Out<ELFT>::DynStrTab->getOffset(F->getSoName()));
 
   if (InitSym)
     WritePtr(DT_INIT, getSymVA<ELFT>(*InitSym));
@@ -910,7 +910,7 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
         ESym->st_shndx = OutSec->SectionIndex;
         VA += OutSec->getVA() + Section->getOffset(Sym);
       }
-      ESym->st_name = StrTabSec.getFileOff(SymName);
+      ESym->st_name = StrTabSec.getOffset(SymName);
       ESym->st_size = Sym.st_size;
       ESym->setBindingAndType(Sym.getBinding(), Sym.getType());
       ESym->st_value = VA;
@@ -950,7 +950,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     }
 
     StringRef Name = Body->getName();
-    ESym->st_name = StrTabSec.getFileOff(Name);
+    ESym->st_name = StrTabSec.getOffset(Name);
 
     unsigned char Type = STT_NOTYPE;
     uintX_t Size = 0;

@@ -267,7 +267,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   StringTableSection(StringRef Name, bool Dynamic);
   void add(StringRef S) { StrTabBuilder.add(S); }
-  size_t getFileOff(StringRef S) const { return StrTabBuilder.getOffset(S); }
+  size_t getOffset(StringRef S) const { return StrTabBuilder.getOffset(S); }
   StringRef data() const { return StrTabBuilder.data(); }
   void writeTo(uint8_t *Buf) override;
 
