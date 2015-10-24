@@ -1641,7 +1641,7 @@ void Record::dump() const { errs() << *this; }
 raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
   OS << R.getNameInitAsString();
 
-  const std::vector<Init *> &TArgs = R.getTemplateArgs();
+  ArrayRef<Init *> TArgs = R.getTemplateArgs();
   if (!TArgs.empty()) {
     OS << "<";
     bool NeedComma = false;

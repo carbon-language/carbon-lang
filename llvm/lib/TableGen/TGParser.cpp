@@ -152,7 +152,7 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
     if (AddValue(CurRec, SubClass.RefRange.Start, Val))
       return true;
 
-  const std::vector<Init *> &TArgs = SC->getTemplateArgs();
+  ArrayRef<Init *> TArgs = SC->getTemplateArgs();
 
   // Ensure that an appropriate number of template arguments are specified.
   if (TArgs.size() < SubClass.TemplateArgs.size())
@@ -228,7 +228,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
     CurMC->DefPrototypes.push_back(std::move(NewDef));
   }
 
-  const std::vector<Init *> &SMCTArgs = SMC->Rec.getTemplateArgs();
+  ArrayRef<Init *> SMCTArgs = SMC->Rec.getTemplateArgs();
 
   // Ensure that an appropriate number of template arguments are
   // specified.
@@ -1641,7 +1641,7 @@ std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec,
   RecTy *ItemType = EltTy;
   unsigned int ArgN = 0;
   if (ArgsRec && !EltTy) {
-    const std::vector<Init *> &TArgs = ArgsRec->getTemplateArgs();
+    ArrayRef<Init *> TArgs = ArgsRec->getTemplateArgs();
     if (TArgs.empty()) {
       TokError("template argument provided to non-template class");
       return std::vector<Init*>();
@@ -1662,7 +1662,7 @@ std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec,
     Lex.Lex();  // Eat the comma
 
     if (ArgsRec && !EltTy) {
-      const std::vector<Init *> &TArgs = ArgsRec->getTemplateArgs();
+      ArrayRef<Init *> TArgs = ArgsRec->getTemplateArgs();
       if (ArgN >= TArgs.size()) {
         TokError("too many template arguments");
         return std::vector<Init*>();
@@ -2313,13 +2313,11 @@ bool TGParser::ParseMultiClass() {
   return false;
 }
 
-Record *TGParser::
-InstantiateMulticlassDef(MultiClass &MC,
-                         Record *DefProto,
-                         Init *&DefmPrefix,
-                         SMRange DefmPrefixRange,
-                         const std::vector<Init *> &TArgs,
-                         std::vector<Init *> &TemplateVals) {
+Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
+                                           Init *&DefmPrefix,
+                                           SMRange DefmPrefixRange,
+                                           ArrayRef<Init *> TArgs,
+                                           std::vector<Init *> &TemplateVals) {
   // We need to preserve DefProto so it can be reused for later
   // instantiations, so create a new Record to inherit from it.
 
@@ -2437,11 +2435,9 @@ InstantiateMulticlassDef(MultiClass &MC,
   return CurRec.release();
 }
 
-bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC,
-                                        Record *CurRec,
-                                        SMLoc DefmPrefixLoc,
-                                        SMLoc SubClassLoc,
-                                        const std::vector<Init *> &TArgs,
+bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC, Record *CurRec,
+                                        SMLoc DefmPrefixLoc, SMLoc SubClassLoc,
+                                        ArrayRef<Init *> TArgs,
                                         std::vector<Init *> &TemplateVals,
                                         bool DeleteArgs) {
   // Loop over all of the template arguments, setting them to the specified
@@ -2540,7 +2536,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     std::vector<Init*> &TemplateVals = Ref.TemplateArgs;
 
     // Verify that the correct number of template arguments were specified.
-    const std::vector<Init *> &TArgs = MC->Rec.getTemplateArgs();
+    ArrayRef<Init *> TArgs = MC->Rec.getTemplateArgs();
     if (TArgs.size() < TemplateVals.size())
       return Error(SubClassLoc,
                    "more template args specified than multiclass expects");
