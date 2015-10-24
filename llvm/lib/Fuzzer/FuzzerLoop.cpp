@@ -286,6 +286,38 @@ void Fuzzer::ReportNewCoverage(const Unit &U) {
     exit(0);
 }
 
+void Fuzzer::Merge(const std::vector<std::string> &Corpora) {
+  if (Corpora.size() <= 1) {
+    Printf("Merge requires two or more corpus dirs\n");
+    return;
+  }
+  auto InitialCorpusDir = Corpora[0];
+  ReadDir(InitialCorpusDir, nullptr);
+  Printf("Merge: running the initial corpus '%s' of %d units\n",
+         InitialCorpusDir.c_str(), Corpus.size());
+  for (auto &U : Corpus)
+    RunOne(U);
+
+  std::vector<std::string> ExtraCorpora(Corpora.begin() + 1, Corpora.end());
+
+  size_t NumTried = 0;
+  size_t NumMerged = 0;
+  for (auto &C : ExtraCorpora) {
+    Corpus.clear();
+    ReadDir(C, nullptr);
+    Printf("Merge: merging the extra corpus '%s' of %zd units\n", C.c_str(),
+           Corpus.size());
+    for (auto &U : Corpus) {
+      NumTried++;
+      if (RunOne(U)) {
+        WriteToOutputCorpus(U);
+        NumMerged++;
+      }
+    }
+  }
+  Printf("Merge: written %zd out of %zd units\n", NumMerged, NumTried);
+}
+
 void Fuzzer::MutateAndTestOne(Unit *U) {
   for (int i = 0; i < Options.MutateDepth; i++) {
     StartTraceRecording();

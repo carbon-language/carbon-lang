@@ -269,6 +269,11 @@ int FuzzerDriver(const std::vector<std::string> &Args,
   if (Flags.test_single_input)
     return RunOneTest(&F, Flags.test_single_input);
 
+  if (Flags.merge) {
+    F.Merge(*Inputs);
+    exit(0);
+  }
+
   unsigned Seed = Flags.seed;
   // Initialize Seed.
   if (Seed == 0)

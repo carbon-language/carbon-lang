@@ -104,6 +104,7 @@ class Fuzzer {
   void InitializeTraceState();
   size_t CorpusSize() const { return Corpus.size(); }
   void ReadDir(const std::string &Path, long *Epoch) {
+    Printf("Loading corpus: %s\n", Path.c_str());
     ReadDirToVectorOfUnits(Path.c_str(), &Corpus, Epoch);
   }
   void RereadOutputCorpus();
@@ -120,6 +121,9 @@ class Fuzzer {
   static void StaticAlarmCallback();
 
   void ExecuteCallback(const Unit &U);
+
+  // Merge Corpora[1:] into Corpora[0].
+  void Merge(const std::vector<std::string> &Corpora);
 
  private:
   void AlarmCallback();
