@@ -26,16 +26,6 @@ using namespace lld;
 using namespace lld::elf2;
 
 namespace {
-
-static uint32_t toPhdrFlags(uint64_t Flags) {
-  uint32_t Ret = PF_R;
-  if (Flags & SHF_WRITE)
-    Ret |= PF_W;
-  if (Flags & SHF_EXECINSTR)
-    Ret |= PF_X;
-  return Ret;
-}
-
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
 public:
@@ -610,6 +600,15 @@ void Writer<ELFT>::addStartStopSymbols(OutputSectionBase<ELFT> *Sec) {
 
 template <class ELFT> static bool needsPhdr(OutputSectionBase<ELFT> *Sec) {
   return Sec->getFlags() & SHF_ALLOC;
+}
+
+static uint32_t toPhdrFlags(uint64_t Flags) {
+  uint32_t Ret = PF_R;
+  if (Flags & SHF_WRITE)
+    Ret |= PF_W;
+  if (Flags & SHF_EXECINSTR)
+    Ret |= PF_X;
+  return Ret;
 }
 
 // Visits all sections to create PHDRs and to assign incremental,
