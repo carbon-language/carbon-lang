@@ -28,11 +28,11 @@ class CommandObjectMultiword : public CommandObject
 friend class CommandInterpreter;
 friend class CommandObjectSyntax;
 public:
-    CommandObjectMultiword (CommandInterpreter &interpreter,
-                            const char *name,
-                            const char *help = NULL,
-                            const char *syntax = NULL,
-                            uint32_t flags = 0);
+    CommandObjectMultiword(CommandInterpreter &interpreter,
+                           const char *name,
+                           const char *help = nullptr,
+                           const char *syntax = nullptr,
+                           uint32_t flags = 0);
     
     ~CommandObjectMultiword() override;
 
@@ -50,10 +50,10 @@ public:
     GenerateHelpText(Stream &output_stream) override;
 
     lldb::CommandObjectSP
-    GetSubcommandSP(const char *sub_cmd, StringList *matches = NULL) override;
+    GetSubcommandSP(const char *sub_cmd, StringList *matches = nullptr) override;
 
     CommandObject *
-    GetSubcommandObject(const char *sub_cmd, StringList *matches = NULL) override;
+    GetSubcommandObject(const char *sub_cmd, StringList *matches = nullptr) override;
 
     void
     AproposAllSubCommands(const char *prefix,
@@ -104,11 +104,11 @@ protected:
 class CommandObjectProxy : public CommandObject
 {
 public:
-    CommandObjectProxy (CommandInterpreter &interpreter,
-                        const char *name,
-                        const char *help = NULL,
-                        const char *syntax = NULL,
-                        uint32_t flags = 0);
+    CommandObjectProxy(CommandInterpreter &interpreter,
+                       const char *name,
+                       const char *help = nullptr,
+                       const char *syntax = nullptr,
+                       uint32_t flags = 0);
     
     ~CommandObjectProxy() override;
     
@@ -127,10 +127,10 @@ public:
     IsMultiwordObject() override;
     
     lldb::CommandObjectSP
-    GetSubcommandSP(const char *sub_cmd, StringList *matches = NULL) override;
+    GetSubcommandSP(const char *sub_cmd, StringList *matches = nullptr) override;
     
     CommandObject *
-    GetSubcommandObject(const char *sub_cmd, StringList *matches = NULL) override;
+    GetSubcommandObject(const char *sub_cmd, StringList *matches = nullptr) override;
     
     void
     AproposAllSubCommands(const char *prefix,

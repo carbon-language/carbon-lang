@@ -70,7 +70,7 @@ namespace lldb_private {
 ///             case 'g': debug = true; break;
 ///             case 'v': verbose = true; break;
 ///             case 'l': log_file = option_arg; break;
-///             case 'f': log_flags = strtoull(option_arg, NULL, 0); break;
+///             case 'f': log_flags = strtoull(option_arg, nullptr, 0); break;
 ///             default:
 ///                 error.SetErrorStringWithFormat("unrecognized short option %c", option_val);
 ///                 break;
@@ -93,11 +93,11 @@ namespace lldb_private {
 ///
 ///     struct option CommandOptions::g_options[] =
 ///     {
-///         { "debug",              no_argument,        NULL,   'g' },
-///         { "log-file",           required_argument,  NULL,   'l' },
-///         { "log-flags",          required_argument,  NULL,   'f' },
-///         { "verbose",            no_argument,        NULL,   'v' },
-///         { NULL,                 0,                  NULL,   0   }
+///         { "debug",              no_argument,        nullptr,   'g' },
+///         { "log-file",           required_argument,  nullptr,   'l' },
+///         { "log-flags",          required_argument,  nullptr,   'f' },
+///         { "verbose",            no_argument,        nullptr,   'v' },
+///         { nullptr,              0,                  nullptr,   0   }
 ///     };
 ///
 ///     int main (int argc, const char **argv, const char **envp)
@@ -169,7 +169,10 @@ public:
     // class that inherits from this class.
 
     virtual const OptionDefinition*
-    GetDefinitions () { return NULL; }
+    GetDefinitions()
+    {
+        return nullptr;
+    }
 
     // Call this prior to parsing any options. This call will call the
     // subclass OptionParsingStarting() and will avoid the need for all
@@ -191,7 +194,7 @@ public:
     ///
     /// @param[in] option_arg
     ///     The argument value for the option that the user entered, or
-    ///     NULL if there is no argument for the current option.
+    ///     nullptr if there is no argument for the current option.
     ///
     ///
     /// @see Args::ParseOptions (Options&)

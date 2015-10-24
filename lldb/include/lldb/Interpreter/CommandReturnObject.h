@@ -22,11 +22,9 @@
 
 namespace lldb_private {
 
-
 class CommandReturnObject
 {
 public:
-
     CommandReturnObject ();
     
     ~CommandReturnObject ();
@@ -142,8 +140,8 @@ public:
     AppendErrorWithFormat (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
-    SetError (const Error &error,
-              const char *fallback_error_cstr = NULL);
+    SetError(const Error &error,
+             const char *fallback_error_cstr = nullptr);
     
     void
     SetError (const char *error_cstr);
@@ -189,4 +187,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandReturnObject_h_
+#endif // liblldb_CommandReturnObject_h_

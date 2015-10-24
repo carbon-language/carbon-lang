@@ -46,7 +46,7 @@ public:
         
         explicit operator bool() const
         {
-            return (help_callback != NULL);
+            return (help_callback != nullptr);
         }
     };
     
@@ -77,11 +77,11 @@ public:
 
     typedef std::map<std::string, lldb::CommandObjectSP> CommandMap;
 
-    CommandObject (CommandInterpreter &interpreter,
-                   const char *name,
-                   const char *help = NULL,
-                   const char *syntax = NULL,
-                   uint32_t flags = 0);
+    CommandObject(CommandInterpreter &interpreter,
+                  const char *name,
+                  const char *help = nullptr,
+                  const char *syntax = nullptr,
+                  uint32_t flags = 0);
 
     virtual
     ~CommandObject ();
@@ -141,15 +141,15 @@ public:
     IsMultiwordObject () { return false; }
 
     virtual lldb::CommandObjectSP
-    GetSubcommandSP (const char *sub_cmd, StringList *matches = NULL)
+    GetSubcommandSP(const char *sub_cmd, StringList *matches = nullptr)
     {
         return lldb::CommandObjectSP();
     }
     
     virtual CommandObject *
-    GetSubcommandObject (const char *sub_cmd, StringList *matches = NULL)
+    GetSubcommandObject(const char *sub_cmd, StringList *matches = nullptr)
     {
-        return NULL;
+        return nullptr;
     }
     
     virtual void
@@ -373,13 +373,13 @@ public:
     ///    The complete current command line.
     ///
     /// @return
-    ///     NULL if there is no special repeat command - it will use the current command line.
+    ///     nullptr if there is no special repeat command - it will use the current command line.
     ///     Otherwise a pointer to the command to be repeated.
     ///     If the returned string is the empty string, the command won't be repeated.    
     //------------------------------------------------------------------
     virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index)
     {
-        return NULL;
+        return nullptr;
     }
 
     bool
@@ -492,11 +492,11 @@ protected:
 class CommandObjectParsed : public CommandObject
 {
 public:
-    CommandObjectParsed (CommandInterpreter &interpreter,
-                         const char *name,
-                         const char *help = NULL,
-                         const char *syntax = NULL,
-                         uint32_t flags = 0) :
+    CommandObjectParsed(CommandInterpreter &interpreter,
+                        const char *name,
+                        const char *help = nullptr,
+                        const char *syntax = nullptr,
+                        uint32_t flags = 0) :
         CommandObject (interpreter, name, help, syntax, flags) {}
 
     ~CommandObjectParsed() override = default;
@@ -519,11 +519,11 @@ protected:
 class CommandObjectRaw : public CommandObject
 {
 public:
-    CommandObjectRaw (CommandInterpreter &interpreter,
-                         const char *name,
-                         const char *help = NULL,
-                         const char *syntax = NULL,
-                         uint32_t flags = 0) :
+    CommandObjectRaw(CommandInterpreter &interpreter,
+                     const char *name,
+                     const char *help = nullptr,
+                     const char *syntax = nullptr,
+                     uint32_t flags = 0) :
         CommandObject (interpreter, name, help, syntax, flags) {}
 
     ~CommandObjectRaw() override = default;

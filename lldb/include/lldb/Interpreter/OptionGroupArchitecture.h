@@ -26,7 +26,6 @@ namespace lldb_private {
 class OptionGroupArchitecture : public OptionGroup
 {
 public:
-    
     OptionGroupArchitecture ();
     
     ~OptionGroupArchitecture() override;
@@ -55,15 +54,12 @@ public:
     }
 
     const char *
-    GetArchitectureName ()
+    GetArchitectureName()
     {
-        if (m_arch_str.empty())
-            return NULL;
-        return m_arch_str.c_str();
+        return (m_arch_str.empty() ? nullptr : m_arch_str.c_str());
     }
 
 protected:
-
     std::string m_arch_str; // Save the arch triple in case a platform is specified after the architecture
 };
 

@@ -1,4 +1,4 @@
-//===-- OptionValueString.h --------------------------------------*- C++ -*-===//
+//===-- OptionValueString.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,7 +24,6 @@ namespace lldb_private {
 class OptionValueString : public OptionValue
 {
 public:
-    
     typedef Error (*ValidatorCallback) (const char* string,
                                         void* baton);
     
@@ -43,8 +42,8 @@ public:
     {
     }
     
-    OptionValueString (ValidatorCallback validator,
-                       void* baton = NULL) :
+    OptionValueString(ValidatorCallback validator,
+                      void* baton = nullptr) :
         OptionValue(),
         m_current_value (),
         m_default_value (),
@@ -84,9 +83,9 @@ public:
             m_default_value.assign (default_value);
     }
     
-    OptionValueString (const char *value,
-                       ValidatorCallback validator,
-                       void* baton = NULL) :
+    OptionValueString(const char *value,
+                      ValidatorCallback validator,
+                      void* baton = nullptr) :
     OptionValue(),
     m_current_value (),
     m_default_value (),
@@ -101,10 +100,10 @@ public:
         }
     }
     
-    OptionValueString (const char *current_value,
-                       const char *default_value,
-                       ValidatorCallback validator,
-                       void* baton = NULL) :
+    OptionValueString(const char *current_value,
+                      const char *default_value,
+                      ValidatorCallback validator,
+                      void* baton = nullptr) :
     OptionValue(),
     m_current_value (),
     m_default_value (),
@@ -118,10 +117,8 @@ public:
             m_default_value.assign (default_value);
     }
     
-    ~OptionValueString() override
-    {
-    }
-    
+    ~OptionValueString() override = default;
+
     //---------------------------------------------------------------------
     // Virtual subclass pure virtual overrides
     //---------------------------------------------------------------------

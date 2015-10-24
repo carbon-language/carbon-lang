@@ -1,4 +1,4 @@
-//===-- OptionValueProperties.h --------------------------------------*- C++ -*-===//
+//===-- OptionValueProperties.h ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ConstString.h"
@@ -27,10 +29,6 @@ class OptionValueProperties :
     public std::enable_shared_from_this<OptionValueProperties>
 {
 public:
-
-    //---------------------------------------------------------------------
-    // OptionValueProperties
-    //---------------------------------------------------------------------
     OptionValueProperties () :
         OptionValue(),
         m_name (),
@@ -42,11 +40,9 @@ public:
     OptionValueProperties (const ConstString &name);
 
     OptionValueProperties (const OptionValueProperties &global_properties);
-    
-    ~OptionValueProperties() override
-    {
-    }
-    
+
+    ~OptionValueProperties() override = default;
+
     Type
     GetType() const override
     {
@@ -256,21 +252,16 @@ public:
                              void *baton);
 
 protected:
-
     Property *
-    ProtectedGetPropertyAtIndex (uint32_t idx)
+    ProtectedGetPropertyAtIndex(uint32_t idx)
     {
-        if (idx < m_properties.size())
-            return &m_properties[idx];
-        return NULL;
+        return ((idx < m_properties.size()) ? &m_properties[idx] : nullptr);
     }
 
     const Property *
-    ProtectedGetPropertyAtIndex (uint32_t idx) const
+    ProtectedGetPropertyAtIndex(uint32_t idx) const
     {
-        if (idx < m_properties.size())
-            return &m_properties[idx];
-        return NULL;
+        return ((idx < m_properties.size()) ? &m_properties[idx] : nullptr);
     }
 
     typedef UniqueCStringMap<size_t> NameToIndex;

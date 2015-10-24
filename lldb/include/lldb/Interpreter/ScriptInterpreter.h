@@ -173,13 +173,13 @@ public:
     }
     
     virtual bool
-    GenerateTypeScriptFunction (const char* oneliner, std::string& output, const void* name_token = NULL)
+    GenerateTypeScriptFunction(const char* oneliner, std::string& output, const void* name_token = nullptr)
     {
         return false;
     }
     
     virtual bool
-    GenerateTypeScriptFunction (StringList &input, std::string& output, const void* name_token = NULL)
+    GenerateTypeScriptFunction(StringList &input, std::string& output, const void* name_token = nullptr)
     {
         return false;
     }
@@ -191,13 +191,13 @@ public:
     }
     
     virtual bool
-    GenerateTypeSynthClass (StringList &input, std::string& output, const void* name_token = NULL)
+    GenerateTypeSynthClass(StringList &input, std::string& output, const void* name_token = nullptr)
     {
         return false;
     }
     
     virtual bool
-    GenerateTypeSynthClass (const char* oneliner, std::string& output, const void* name_token = NULL)
+    GenerateTypeSynthClass(const char* oneliner, std::string& output, const void* name_token = nullptr)
     {
         return false;
     }

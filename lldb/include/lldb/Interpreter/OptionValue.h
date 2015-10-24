@@ -1,4 +1,4 @@
-//===-- OptionValue.h --------------------------------------*- C++ -*-===//
+//===-- OptionValue.h -------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -61,7 +61,6 @@ namespace lldb_private {
             eDumpGroupHelp          = (eDumpOptionName | eDumpOptionType | eDumpOptionDescription)
         };
 
-        
         OptionValue () :
             m_callback (nullptr),
             m_baton(nullptr),
@@ -76,9 +75,8 @@ namespace lldb_private {
         {
         }
 
-        virtual ~OptionValue ()
-        {
-        }
+        virtual ~OptionValue() = default;
+
         //-----------------------------------------------------------------
         // Subclasses should override these functions
         //-----------------------------------------------------------------
@@ -99,7 +97,6 @@ namespace lldb_private {
             return GetBuiltinTypeAsCString(GetType());
         }
 
-        
         static const char *
         GetBuiltinTypeAsCString (Type t);
     
@@ -156,6 +153,7 @@ namespace lldb_private {
         
         virtual bool
         DumpQualifiedName (Stream &strm) const;
+
         //-----------------------------------------------------------------
         // Subclasses should NOT override these functions as they use the
         // above functions to implement functionality
@@ -376,7 +374,7 @@ namespace lldb_private {
         SetSInt64Value (int64_t new_value);
 
         const char *
-        GetStringValue (const char *fail_value = NULL) const;
+        GetStringValue(const char *fail_value = nullptr) const;
 
         bool
         SetStringValue (const char *new_value);
@@ -415,7 +413,7 @@ namespace lldb_private {
         SetValueChangedCallback (OptionValueChangedCallback callback,
                                  void *baton)
         {
-            assert (m_callback == NULL);
+            assert (m_callback == nullptr);
             m_callback = callback;
             m_baton = baton;
         }
@@ -426,6 +424,7 @@ namespace lldb_private {
             if (m_callback)
                 m_callback (m_baton, this);
         }
+
     protected:
         lldb::OptionValueWP m_parent_wp;
         OptionValueChangedCallback m_callback;
@@ -436,9 +435,8 @@ namespace lldb_private {
                               // the command line or as a setting, versus if we
                               // just have the default value that was already
                               // populated in the option value.
-        
     };
 
 } // namespace lldb_private
 
-#endif  // liblldb_OptionValue_h_
+#endif // liblldb_OptionValue_h_

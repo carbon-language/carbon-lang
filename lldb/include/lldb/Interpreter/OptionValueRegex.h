@@ -12,8 +12,6 @@
 
 // C Includes
 // C++ Includes
-#include <string>
-
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/RegularExpression.h"
@@ -24,16 +22,14 @@ namespace lldb_private {
 class OptionValueRegex : public OptionValue
 {
 public:
-    OptionValueRegex (const char *value = NULL) :
+    OptionValueRegex(const char *value = nullptr) :
         OptionValue(),
         m_regex (value)
     {
     }
 
-    ~OptionValueRegex() override
-    {
-    }
-    
+    ~OptionValueRegex() override = default;
+
     //---------------------------------------------------------------------
     // Virtual subclass pure virtual overrides
     //---------------------------------------------------------------------
@@ -68,9 +64,7 @@ public:
     const RegularExpression *
     GetCurrentValue() const
     {
-        if (m_regex.IsValid())
-            return &m_regex;
-        return NULL;
+        return (m_regex.IsValid() ? &m_regex : nullptr);
     }
     
     void

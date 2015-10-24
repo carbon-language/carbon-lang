@@ -265,8 +265,8 @@ public:
                            bool include_aliases);
 
     CommandObject *
-    GetCommandObject (const char *cmd, 
-                      StringList *matches = NULL);
+    GetCommandObject(const char *cmd,
+                     StringList *matches = nullptr);
 
     bool
     CommandExists (const char *cmd);
@@ -322,12 +322,12 @@ public:
                       CommandReturnObject &result);
 
     bool
-    HandleCommand (const char *command_line, 
-                   LazyBool add_to_history,
-                   CommandReturnObject &result, 
-                   ExecutionContext *override_context = NULL,
-                   bool repeat_on_empty_command = true,
-                   bool no_context_switching = false);
+    HandleCommand(const char *command_line,
+                  LazyBool add_to_history,
+                  CommandReturnObject &result,
+                  ExecutionContext *override_context = nullptr,
+                  bool repeat_on_empty_command = true,
+                  bool no_context_switching = false);
     
     //------------------------------------------------------------------
     /// Execute a list of commands in sequence.
@@ -335,7 +335,7 @@ public:
     /// @param[in] commands
     ///    The list of commands to execute.
     /// @param[in,out] context
-    ///    The execution context in which to run the commands.  Can be NULL in which case the default
+    ///    The execution context in which to run the commands. Can be nullptr in which case the default
     ///    context will be used.
     /// @param[in] options
     ///    This object holds the options used to control when to stop, whether to execute commands,
@@ -356,7 +356,7 @@ public:
     /// @param[in] file
     ///    The file from which to read in commands.
     /// @param[in,out] context
-    ///    The execution context in which to run the commands.  Can be NULL in which case the default
+    ///    The execution context in which to run the commands. Can be nullptr in which case the default
     ///    context will be used.
     /// @param[in] options
     ///    This object holds the options used to control when to stop, whether to execute commands,
@@ -643,7 +643,7 @@ public:
     }
 
     lldb::IOHandlerSP
-    GetIOHandler(bool force_create = false, CommandInterpreterRunOptions *options = NULL);
+    GetIOHandler(bool force_create = false, CommandInterpreterRunOptions *options = nullptr);
 
     bool
     GetStoppedForCrash () const
@@ -682,7 +682,7 @@ protected:
     SetSynchronous (bool value);
 
     lldb::CommandObjectSP
-    GetCommandSP (const char *cmd, bool include_aliases = true, bool exact = true, StringList *matches = NULL);
+    GetCommandSP(const char *cmd, bool include_aliases = true, bool exact = true, StringList *matches = nullptr);
     
 private:
     Error
