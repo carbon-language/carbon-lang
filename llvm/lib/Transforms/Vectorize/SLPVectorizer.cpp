@@ -168,10 +168,8 @@ static unsigned getAltOpcode(unsigned Op) {
 /// of an alternate sequence which can later be merged as
 /// a ShuffleVector instruction.
 static bool canCombineAsAltInst(unsigned Op) {
-  if (Op == Instruction::FAdd || Op == Instruction::FSub ||
-      Op == Instruction::Sub || Op == Instruction::Add)
-    return true;
-  return false;
+  return Op == Instruction::FAdd || Op == Instruction::FSub ||
+         Op == Instruction::Sub || Op == Instruction::Add;
 }
 
 /// \returns ShuffleVector instruction if instructions in \p VL have
@@ -1990,10 +1988,7 @@ static bool shouldReorderOperands(int i, Instruction &I,
     return false;
   }
   // One opcode, put the instruction on the right.
-  if (ILeft) {
-    return true;
-  }
-  return false;
+  return ILeft != nullptr;
 }
 
 void BoUpSLP::reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,

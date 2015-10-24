@@ -5215,9 +5215,8 @@ static bool isLikelyComplexAddressComputation(Value *Ptr,
 }
 
 static bool isStrideMul(Instruction *I, LoopVectorizationLegality *Legal) {
-  if (Legal->hasStride(I->getOperand(0)) || Legal->hasStride(I->getOperand(1)))
-    return true;
-  return false;
+  return Legal->hasStride(I->getOperand(0)) ||
+         Legal->hasStride(I->getOperand(1));
 }
 
 unsigned
