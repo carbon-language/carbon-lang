@@ -60,6 +60,7 @@ STATISTIC(NumAdjusted,  "Number of scalar allocas adjusted to allow promotion");
 STATISTIC(NumConverted, "Number of aggregates converted to scalar");
 
 namespace {
+#define SROA SROA_
   struct SROA : public FunctionPass {
     SROA(int T, bool hasDT, char &ID, int ST, int AT, int SLT)
       : FunctionPass(ID), HasDomTree(hasDT) {
