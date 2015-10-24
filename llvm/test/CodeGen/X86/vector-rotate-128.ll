@@ -1446,8 +1446,8 @@ define <2 x i64> @splatconstant_rotate_mask_v2i64(<2 x i64> %a) nounwind {
 ; X32-SSE-NEXT:    retl
   %shl = shl <2 x i64> %a, <i64 15, i64 15>
   %lshr = lshr <2 x i64> %a, <i64 49, i64 49>
-  %rmask = and <2 x i64> %lshr, <i64 255, i64 255>
-  %lmask = and <2 x i64> %shl, <i64 33, i64 33>
+  %rmask = and <2 x i64> %lshr, <i64 255, i64 127>
+  %lmask = and <2 x i64> %shl, <i64 65, i64 33>
   %or = or <2 x i64> %lmask, %rmask
   ret <2 x i64> %or
 }
@@ -1464,38 +1464,20 @@ define <4 x i32> @splatconstant_rotate_mask_v4i32(<4 x i32> %a) nounwind {
 ; SSE-NEXT:    movdqa %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: splatconstant_rotate_mask_v4i32:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vpslld $4, %xmm0, %xmm1
-; AVX1-NEXT:    vpsrld $28, %xmm0, %xmm0
-; AVX1-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
-; AVX1-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm1
-; AVX1-NEXT:    vpor %xmm0, %xmm1, %xmm0
-; AVX1-NEXT:    retq
+; AVX-LABEL: splatconstant_rotate_mask_v4i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpslld $4, %xmm0, %xmm1
+; AVX-NEXT:    vpsrld $28, %xmm0, %xmm0
+; AVX-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm1
+; AVX-NEXT:    vpor %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    retq
 ;
-; AVX2-LABEL: splatconstant_rotate_mask_v4i32:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vpslld $4, %xmm0, %xmm1
-; AVX2-NEXT:    vpsrld $28, %xmm0, %xmm0
-; AVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm2
-; AVX2-NEXT:    vpand %xmm2, %xmm0, %xmm0
-; AVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm2
-; AVX2-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; AVX2-NEXT:    vpor %xmm0, %xmm1, %xmm0
-; AVX2-NEXT:    retq
-;
-; XOPAVX1-LABEL: splatconstant_rotate_mask_v4i32:
-; XOPAVX1:       # BB#0:
-; XOPAVX1-NEXT:    vprotd $4, %xmm0, %xmm0
-; XOPAVX1-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
-; XOPAVX1-NEXT:    retq
-;
-; XOPAVX2-LABEL: splatconstant_rotate_mask_v4i32:
-; XOPAVX2:       # BB#0:
-; XOPAVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm1
-; XOPAVX2-NEXT:    vprotd $4, %xmm0, %xmm0
-; XOPAVX2-NEXT:    vpand %xmm1, %xmm0, %xmm0
-; XOPAVX2-NEXT:    retq
+; XOP-LABEL: splatconstant_rotate_mask_v4i32:
+; XOP:       # BB#0:
+; XOP-NEXT:    vprotd $4, %xmm0, %xmm0
+; XOP-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
+; XOP-NEXT:    retq
 ;
 ; X32-SSE-LABEL: splatconstant_rotate_mask_v4i32:
 ; X32-SSE:       # BB#0:
@@ -1509,8 +1491,8 @@ define <4 x i32> @splatconstant_rotate_mask_v4i32(<4 x i32> %a) nounwind {
 ; X32-SSE-NEXT:    retl
   %shl = shl <4 x i32> %a, <i32 4, i32 4, i32 4, i32 4>
   %lshr = lshr <4 x i32> %a, <i32 28, i32 28, i32 28, i32 28>
-  %rmask = and <4 x i32> %lshr, <i32 32, i32 32, i32 32, i32 32>
-  %lmask = and <4 x i32> %shl, <i32 33, i32 33, i32 33, i32 33>
+  %rmask = and <4 x i32> %lshr, <i32 127, i32 255, i32 511, i32 1023>
+  %lmask = and <4 x i32> %shl, <i32 1023, i32 511, i32 255, i32 127>
   %or = or <4 x i32> %lmask, %rmask
   ret <4 x i32> %or
 }

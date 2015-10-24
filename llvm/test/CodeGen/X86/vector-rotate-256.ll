@@ -892,10 +892,8 @@ define <4 x i64> @splatconstant_rotate_mask_v4i64(<4 x i64> %a) nounwind {
 ; AVX1-NEXT:    vinsertf128 $1, %xmm3, %ymm1, %ymm1
 ; AVX1-NEXT:    vpsrlq $49, %xmm0, %xmm0
 ; AVX1-NEXT:    vpsrlq $49, %xmm2, %xmm2
-; AVX1-NEXT:    vmovdqa {{.*#+}} xmm3 = [255,0,0,0,0,0,0,0,255,0,0,0,0,0,0,0]
-; AVX1-NEXT:    vpand %xmm3, %xmm2, %xmm2
-; AVX1-NEXT:    vpand %xmm3, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
 ; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm1, %ymm1
 ; AVX1-NEXT:    vorps %ymm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
@@ -905,20 +903,17 @@ define <4 x i64> @splatconstant_rotate_mask_v4i64(<4 x i64> %a) nounwind {
 ; AVX2-NEXT:    vpsllq $15, %ymm0, %ymm1
 ; AVX2-NEXT:    vpsrlq $49, %ymm0, %ymm0
 ; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
-; AVX2-NEXT:    vpbroadcastq {{.*}}(%rip), %ymm2
-; AVX2-NEXT:    vpand %ymm2, %ymm1, %ymm1
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm1, %ymm1
 ; AVX2-NEXT:    vpor %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; XOPAVX1-LABEL: splatconstant_rotate_mask_v4i64:
 ; XOPAVX1:       # BB#0:
-; XOPAVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; XOPAVX1-NEXT:    vprotq $15, %xmm1, %xmm1
-; XOPAVX1-NEXT:    vmovdqa {{.*#+}} xmm2 = [255,0,0,0,0,0,0,0,255,0,0,0,0,0,0,0]
-; XOPAVX1-NEXT:    vpand %xmm2, %xmm1, %xmm1
+; XOPAVX1-NEXT:    vprotq $15, %xmm0, %xmm1
+; XOPAVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
 ; XOPAVX1-NEXT:    vprotq $15, %xmm0, %xmm0
-; XOPAVX1-NEXT:    vpand %xmm2, %xmm0, %xmm0
-; XOPAVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; XOPAVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; XOPAVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
 ; XOPAVX1-NEXT:    retq
 ;
 ; XOPAVX2-LABEL: splatconstant_rotate_mask_v4i64:
@@ -931,8 +926,8 @@ define <4 x i64> @splatconstant_rotate_mask_v4i64(<4 x i64> %a) nounwind {
 ; XOPAVX2-NEXT:    retq
   %shl = shl <4 x i64> %a, <i64 15, i64 15, i64 15, i64 15>
   %lshr = lshr <4 x i64> %a, <i64 49, i64 49, i64 49, i64 49>
-  %rmask = and <4 x i64> %lshr, <i64 255, i64 255, i64 255, i64 255>
-  %lmask = and <4 x i64> %shl, <i64 33, i64 33, i64 33, i64 33>
+  %rmask = and <4 x i64> %lshr, <i64 255, i64 127, i64 127, i64 255>
+  %lmask = and <4 x i64> %shl, <i64 33, i64 65, i64 129, i64 257>
   %or = or <4 x i64> %lmask, %rmask
   ret <4 x i64> %or
 }
@@ -956,10 +951,8 @@ define <8 x i32> @splatconstant_rotate_mask_v8i32(<8 x i32> %a) nounwind {
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vpslld $4, %ymm0, %ymm1
 ; AVX2-NEXT:    vpsrld $28, %ymm0, %ymm0
-; AVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm2
-; AVX2-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; AVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm2
-; AVX2-NEXT:    vpand %ymm2, %ymm1, %ymm1
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm1, %ymm1
 ; AVX2-NEXT:    vpor %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
@@ -974,17 +967,16 @@ define <8 x i32> @splatconstant_rotate_mask_v8i32(<8 x i32> %a) nounwind {
 ;
 ; XOPAVX2-LABEL: splatconstant_rotate_mask_v8i32:
 ; XOPAVX2:       # BB#0:
-; XOPAVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm1
-; XOPAVX2-NEXT:    vprotd $4, %xmm0, %xmm2
+; XOPAVX2-NEXT:    vprotd $4, %xmm0, %xmm1
 ; XOPAVX2-NEXT:    vextracti128 $1, %ymm0, %xmm0
 ; XOPAVX2-NEXT:    vprotd $4, %xmm0, %xmm0
-; XOPAVX2-NEXT:    vinserti128 $1, %xmm0, %ymm2, %ymm0
-; XOPAVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; XOPAVX2-NEXT:    vinserti128 $1, %xmm0, %ymm1, %ymm0
+; XOPAVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; XOPAVX2-NEXT:    retq
   %shl = shl <8 x i32> %a, <i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4, i32 4>
   %lshr = lshr <8 x i32> %a, <i32 28, i32 28, i32 28, i32 28, i32 28, i32 28, i32 28, i32 28>
-  %rmask = and <8 x i32> %lshr, <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32>
-  %lmask = and <8 x i32> %shl, <i32 33, i32 33, i32 33, i32 33, i32 33, i32 33, i32 33, i32 33>
+  %rmask = and <8 x i32> %lshr, <i32 3, i32 7, i32 15, i32 31, i32 63, i32 127, i32 255, i32 511>
+  %lmask = and <8 x i32> %shl, <i32 511, i32 255, i32 127, i32 63, i32 31, i32 15, i32 7, i32 3>
   %or = or <8 x i32> %lmask, %rmask
   ret <8 x i32> %or
 }
