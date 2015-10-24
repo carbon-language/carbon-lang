@@ -3801,8 +3801,8 @@ static bool IsAvailableOnEntry(const Loop *L, DominatorTree &DT, const SCEV *S,
       switch (S->getSCEVType()) {
       case scConstant: case scTruncate: case scZeroExtend: case scSignExtend:
       case scAddExpr: case scMulExpr: case scUMaxExpr: case scSMaxExpr:
-      // These expressions are available if their operand(s) is/are.
-      return true;
+        // These expressions are available if their operand(s) is/are.
+        return true;
 
       case scAddRecExpr: {
         // We allow add recurrences that are on the loop BB is in, or some

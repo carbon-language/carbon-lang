@@ -2447,7 +2447,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
     if (auto *I = dyn_cast<Instruction>(LHS))
       if (auto *Ranges = I->getMetadata(LLVMContext::MD_range))
-        LHS_CR = LHS_CR.intersectWith(GetConstantRangeFromMetadata(Ranges, Width));
+        LHS_CR =
+          LHS_CR.intersectWith(GetConstantRangeFromMetadata(Ranges, Width));
 
     if (!LHS_CR.isFullSet()) {
       if (RHS_CR.contains(LHS_CR))
