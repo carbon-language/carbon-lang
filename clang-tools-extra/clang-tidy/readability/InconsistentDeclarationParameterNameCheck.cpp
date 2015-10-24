@@ -66,9 +66,9 @@ bool checkIfFixItHintIsApplicable(
     const ParmVarDecl *SourceParam, const FunctionDecl *OriginalDeclaration) {
   // Assumptions with regard to function declarations/definition:
   //  * If both function declaration and definition are seen, assume that
-  //  definition is most up-to-date, and use it to generate replacements.
+  //    definition is most up-to-date, and use it to generate replacements.
   //  * If only function declarations are seen, there is no easy way to tell
-  //  which is up-to-date and which is not, so don't do anything.
+  //    which is up-to-date and which is not, so don't do anything.
   // TODO: This may be changed later, but for now it seems the reasonable
   // solution.
   if (!ParameterSourceDeclaration->isThisDeclarationADefinition())
