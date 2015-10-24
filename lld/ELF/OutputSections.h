@@ -80,7 +80,6 @@ public:
   void setFileOffset(uintX_t Off) { Header.sh_offset = Off; }
   void writeHeaderTo(Elf_Shdr *SHdr);
   StringRef getName() { return Name; }
-  void setNameOffset(uintX_t Offset) { Header.sh_name = Offset; }
 
   unsigned SectionIndex;
 

@@ -224,6 +224,7 @@ InterpSection<ELFT>::InterpSection()
 
 template <class ELFT>
 void OutputSectionBase<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
+  Header.sh_name = Out<ELFT>::ShStrTab->getOffset(Name);
   *SHdr = Header;
 }
 

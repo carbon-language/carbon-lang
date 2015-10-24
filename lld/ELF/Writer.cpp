@@ -740,10 +740,8 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
   // First entry is null.
   ++SHdrs;
-  for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    Sec->setNameOffset(Out<ELFT>::ShStrTab->getOffset(Sec->getName()));
+  for (OutputSectionBase<ELFT> *Sec : OutputSections)
     Sec->writeHeaderTo(SHdrs++);
-  }
 }
 
 template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
