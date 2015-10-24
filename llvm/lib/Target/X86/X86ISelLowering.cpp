@@ -18834,11 +18834,10 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget *Subtarget,
   SDLoc DL(Op);
   SDValue R = Op.getOperand(0);
   SDValue Amt = Op.getOperand(1);
-  unsigned Opc = Op.getOpcode();
 
   assert(VT.isVector() && "Custom lowering only for vector rotates!");
   assert(Subtarget->hasXOP() && "XOP support required for vector rotates!");
-  assert((Opc == ISD::ROTL) && "Only ROTL supported");
+  assert((Op.getOpcode() == ISD::ROTL) && "Only ROTL supported");
 
   // XOP has 128-bit vector variable + immediate rotates.
   // +ve/-ve Amt = rotate left/right.
