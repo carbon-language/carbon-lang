@@ -2475,15 +2475,22 @@ static bool canGuaranteeTCO(CallingConv::ID CC) {
           CC == CallingConv::HiPE || CC == CallingConv::HHVM);
 }
 
-/// \brief Return true if the calling convention is a C calling convention.
-static bool isCCallConvention(CallingConv::ID CC) {
-  return (CC == CallingConv::C || CC == CallingConv::X86_64_Win64 ||
-          CC == CallingConv::X86_64_SysV);
-}
-
 /// Return true if we might ever do TCO for calls with this calling convention.
 static bool mayTailCallThisCC(CallingConv::ID CC) {
-  return isCCallConvention(CC) || canGuaranteeTCO(CC);
+  switch (CC) {
+  // C calling conventions:
+  case CallingConv::C:
+  case CallingConv::X86_64_Win64:
+  case CallingConv::X86_64_SysV:
+  // Callee pop conventions:
+  case CallingConv::X86_ThisCall:
+  case CallingConv::X86_StdCall:
+  case CallingConv::X86_VectorCall:
+  case CallingConv::X86_FastCall:
+    return true;
+  default:
+    return canGuaranteeTCO(CC);
+  }
 }
 
 /// Return true if the function is being made into a tailcall target by
@@ -3661,21 +3668,9 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
   if (isCalleeStructRet || isCallerStructRet)
     return false;
 
-  // Don't do TCO when the current function is expected to clear its stack and
-  // the callee's convention does not match.
-  // FIXME: this is more restrictive than needed. We could produce a tailcall
-  // when the stack adjustment matches. For example, with a thiscall that takes
-  // only one argument.
-  bool CallerPopsArgs =
-      X86::isCalleePop(CallerCC, Subtarget->is64Bit(), CallerF->isVarArg(),
-                       /*GuaranteeTCO=*/false);
-  if (CallerPopsArgs && !CCMatch)
-    return false;
-
   // Do not sibcall optimize vararg calls unless all arguments are passed via
   // registers.
   if (isVarArg && !Outs.empty()) {
-
     // Optimizing for varargs on Win64 is unlikely to be safe without
     // additional testing.
     if (IsCalleeWin64 || IsCallerWin64)
@@ -3743,6 +3738,8 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
     }
   }
 
+  unsigned StackArgsSize = 0;
+
   // If the callee takes no arguments then go on to check the results of the
   // call.
   if (!Outs.empty()) {
@@ -3757,10 +3754,9 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
       CCInfo.AllocateStack(32, 8);
 
     CCInfo.AnalyzeCallOperands(Outs, CC_X86);
-    if (CCInfo.getNextStackOffset()) {
-      if (MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn())
-        return false;
+    StackArgsSize = CCInfo.getNextStackOffset();
 
+    if (CCInfo.getNextStackOffset()) {
       // Check if the arguments are already laid out in the right way as
       // the caller's fixed stack objects.
       MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -3809,6 +3805,21 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(
         }
       }
     }
+  }
+
+  bool CalleeWillPop =
+      X86::isCalleePop(CalleeCC, Subtarget->is64Bit(), isVarArg,
+                       MF.getTarget().Options.GuaranteedTailCallOpt);
+
+  if (unsigned BytesToPop =
+          MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn()) {
+    // If we have bytes to pop, the callee must pop them.
+    bool CalleePopMatches = CalleeWillPop && BytesToPop == StackArgsSize;
+    if (!CalleePopMatches)
+      return false;
+  } else if (CalleeWillPop && StackArgsSize > 0) {
+    // If we don't have bytes to pop, make sure the callee doesn't pop any.
+    return false;
   }
 
   return true;
