@@ -426,11 +426,9 @@ private:
   friend struct ilist_traits<SDNode>;
 
 public:
-#ifndef NDEBUG
   /// Unique and persistent id per SDNode in the DAG.
   /// Used for debug printing.
   uint16_t PersistentId;
-#endif
 
   //===--------------------------------------------------------------------===//
   //  Accessors

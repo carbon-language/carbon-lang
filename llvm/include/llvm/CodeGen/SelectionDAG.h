@@ -215,9 +215,7 @@ class SelectionDAG {
   /// Tracks dbg_value information through SDISel.
   SDDbgInfo *DbgInfo;
 
-#ifndef NDEBUG
   uint16_t NextPersistentId;
-#endif
 
 public:
   /// Clients of various APIs that cause global effects on
