@@ -5871,83 +5871,83 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     // to set it correctly by using the cpu type and other tricks
     if (!os_handled)
     {
-    // The OS in the triple should be "ios" or "macosx" which doesn't match our
-    // "Darwin" which gets returned from "kern.ostype", so we need to hardcode
-    // this for now.
-    if (cputype == CPU_TYPE_ARM || cputype == CPU_TYPE_ARM64)
+        // The OS in the triple should be "ios" or "macosx" which doesn't match our
+        // "Darwin" which gets returned from "kern.ostype", so we need to hardcode
+        // this for now.
+        if (cputype == CPU_TYPE_ARM || cputype == CPU_TYPE_ARM64)
         {
 #if defined (TARGET_OS_TV) && TARGET_OS_TV == 1
             rep << "ostype:tvos;";
 #elif defined (TARGET_OS_WATCH) && TARGET_OS_WATCH == 1
             rep << "ostype:watchos;";
 #else
-        rep << "ostype:ios;";
+            rep << "ostype:ios;";
 #endif
         }
-    else
-    {
-        bool is_ios_simulator = false;
-        if (cputype == CPU_TYPE_X86 || cputype == CPU_TYPE_X86_64)
+        else
         {
-            // Check for iOS simulator binaries by getting the process argument
-            // and environment and checking for SIMULATOR_UDID in the environment
-            int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, (int)pid };
-            
-            uint8_t arg_data[8192];
-            size_t arg_data_size = sizeof(arg_data);
-            if (::sysctl (proc_args_mib, 3, arg_data, &arg_data_size , NULL, 0) == 0)
+            bool is_ios_simulator = false;
+            if (cputype == CPU_TYPE_X86 || cputype == CPU_TYPE_X86_64)
             {
-                DNBDataRef data (arg_data, arg_data_size, false);
-                DNBDataRef::offset_t offset = 0;
-                uint32_t argc = data.Get32 (&offset);
-                const char *cstr;
+                // Check for iOS simulator binaries by getting the process argument
+                // and environment and checking for SIMULATOR_UDID in the environment
+                int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, (int)pid };
                 
-                cstr = data.GetCStr (&offset);
-                if (cstr)
+                uint8_t arg_data[8192];
+                size_t arg_data_size = sizeof(arg_data);
+                if (::sysctl (proc_args_mib, 3, arg_data, &arg_data_size , NULL, 0) == 0)
                 {
-                    // Skip NULLs
-                    while (1)
-                    {
-                        const char *p = data.PeekCStr(offset);
-                        if ((p == NULL) || (*p != '\0'))
-                            break;
-                        ++offset;
-                    }
-                    // Now skip all arguments
-                    for (uint32_t i = 0; i < argc; ++i)
-                    {
-                        data.GetCStr(&offset);
-                    }
+                    DNBDataRef data (arg_data, arg_data_size, false);
+                    DNBDataRef::offset_t offset = 0;
+                    uint32_t argc = data.Get32 (&offset);
+                    const char *cstr;
                     
-                    // Now iterate across all environment variables
-                    while ((cstr = data.GetCStr(&offset)))
+                    cstr = data.GetCStr (&offset);
+                    if (cstr)
                     {
-                        if (strncmp(cstr, "SIMULATOR_UDID=", strlen("SIMULATOR_UDID=")) == 0)
+                        // Skip NULLs
+                        while (1)
                         {
-                            is_ios_simulator = true;
-                            break;
+                            const char *p = data.PeekCStr(offset);
+                            if ((p == NULL) || (*p != '\0'))
+                                break;
+                            ++offset;
                         }
-                        if (cstr[0] == '\0')
-                            break;
+                        // Now skip all arguments
+                        for (uint32_t i = 0; i < argc; ++i)
+                        {
+                            data.GetCStr(&offset);
+                        }
                         
+                        // Now iterate across all environment variables
+                        while ((cstr = data.GetCStr(&offset)))
+                        {
+                            if (strncmp(cstr, "SIMULATOR_UDID=", strlen("SIMULATOR_UDID=")) == 0)
+                            {
+                                is_ios_simulator = true;
+                                break;
+                            }
+                            if (cstr[0] == '\0')
+                                break;
+                            
+                        }
                     }
                 }
             }
-        }
-        if (is_ios_simulator)
+            if (is_ios_simulator)
             {
 #if defined (TARGET_OS_TV) && TARGET_OS_TV == 1
                 rep << "ostype:tvos;";
 #elif defined (TARGET_OS_WATCH) && TARGET_OS_WATCH == 1
                 rep << "ostype:watchos;";
 #else
-            rep << "ostype:ios;";
+                rep << "ostype:ios;";
 #endif
             }
-        else
+            else
             {
-            rep << "ostype:macosx;";
-    }
+                rep << "ostype:macosx;";
+            }
         }
     }
 
@@ -5964,37 +5964,37 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     if (addr_size == 0)
     {
 #if (defined (__x86_64__) || defined (__i386__)) && defined (x86_THREAD_STATE)
-    nub_thread_t thread = DNBProcessGetCurrentThreadMachPort (pid);
-    kern_return_t kr;
-    x86_thread_state_t gp_regs;
-    mach_msg_type_number_t gp_count = x86_THREAD_STATE_COUNT;
-    kr = thread_get_state (static_cast<thread_act_t>(thread),
-                           x86_THREAD_STATE,
-                           (thread_state_t) &gp_regs,
-                           &gp_count);
-    if (kr == KERN_SUCCESS)
-    {
-        if (gp_regs.tsh.flavor == x86_THREAD_STATE64)
-            rep << "ptrsize:8;";
-        else
-            rep << "ptrsize:4;";
-    }
+        nub_thread_t thread = DNBProcessGetCurrentThreadMachPort (pid);
+        kern_return_t kr;
+        x86_thread_state_t gp_regs;
+        mach_msg_type_number_t gp_count = x86_THREAD_STATE_COUNT;
+        kr = thread_get_state (static_cast<thread_act_t>(thread),
+                               x86_THREAD_STATE,
+                               (thread_state_t) &gp_regs,
+                               &gp_count);
+        if (kr == KERN_SUCCESS)
+        {
+            if (gp_regs.tsh.flavor == x86_THREAD_STATE64)
+                rep << "ptrsize:8;";
+            else
+                rep << "ptrsize:4;";
+        }
 #elif defined (__arm__)
-    rep << "ptrsize:4;";
+        rep << "ptrsize:4;";
 #elif (defined (__arm64__) || defined (__aarch64__)) && defined (ARM_UNIFIED_THREAD_STATE)
-    nub_thread_t thread = DNBProcessGetCurrentThreadMachPort (pid);
-    kern_return_t kr;
-    arm_unified_thread_state_t gp_regs;
-    mach_msg_type_number_t gp_count = ARM_UNIFIED_THREAD_STATE_COUNT;
-    kr = thread_get_state (thread, ARM_UNIFIED_THREAD_STATE,
-                           (thread_state_t) &gp_regs, &gp_count);
-    if (kr == KERN_SUCCESS)
-    {
-        if (gp_regs.ash.flavor == ARM_THREAD_STATE64)
-            rep << "ptrsize:8;";
-        else
-            rep << "ptrsize:4;";
-    }
+        nub_thread_t thread = DNBProcessGetCurrentThreadMachPort (pid);
+        kern_return_t kr;
+        arm_unified_thread_state_t gp_regs;
+        mach_msg_type_number_t gp_count = ARM_UNIFIED_THREAD_STATE_COUNT;
+        kr = thread_get_state (thread, ARM_UNIFIED_THREAD_STATE,
+                               (thread_state_t) &gp_regs, &gp_count);
+        if (kr == KERN_SUCCESS)
+        {
+            if (gp_regs.ash.flavor == ARM_THREAD_STATE64)
+                rep << "ptrsize:8;";
+            else
+                rep << "ptrsize:4;";
+        }
 #endif
     }
 
