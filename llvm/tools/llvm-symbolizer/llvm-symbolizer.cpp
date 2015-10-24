@@ -121,9 +121,7 @@ static bool parseCommand(bool &IsData, std::string &ModuleName,
   // Skip delimiters and parse module offset.
   pos += strspn(pos, kDelimiters);
   int offset_length = strcspn(pos, kDelimiters);
-  if (StringRef(pos, offset_length).getAsInteger(0, ModuleOffset))
-    return false;
-  return true;
+  return !StringRef(pos, offset_length).getAsInteger(0, ModuleOffset);
 }
 
 int main(int argc, char **argv) {
