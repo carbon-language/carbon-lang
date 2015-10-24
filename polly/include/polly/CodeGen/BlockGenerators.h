@@ -396,6 +396,22 @@ protected:
   /// @param S The scop for which to generate the scalar initializers.
   void createScalarInitialization(Scop &S);
 
+  /// @brief Create exit PHI node merges for PHI nodes with more than two edges
+  ///        from inside the scop.
+  ///
+  /// For scops which have a PHI node in the exit block that has more than two
+  /// incoming edges from inside the scop region, we require some special
+  /// handling to understand which of the possible values will be passed to the
+  /// PHI node from inside the optimized version of the scop. To do so ScopInfo
+  /// models the possible incoming values as write accesses of the ScopStmts.
+  ///
+  /// This function creates corresponding code to reload the computed outgoing
+  /// value from the stack slot it has been stored into and to pass it on to the
+  /// PHI node in the original exit block.
+  ///
+  /// @param S The scop for which to generate the exiting PHI nodes.
+  void createExitPHINodeMerges(Scop &S);
+
   /// @brief Promote the values of demoted scalars after the SCoP.
   ///
   /// If a scalar value was used outside the SCoP we need to promote the value

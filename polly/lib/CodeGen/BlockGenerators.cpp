@@ -568,22 +568,6 @@ void BlockGenerator::createScalarFinalization(Region &R) {
 
 void BlockGenerator::findOutsideUsers(Scop &S) {
   auto &R = S.getRegion();
-
-  // Handle PHI nodes that were in the original exit and are now
-  // moved into the region exiting block.
-  if (!S.hasSingleExitEdge()) {
-    for (Instruction &I : *S.getRegion().getExitingBlock()) {
-      PHINode *PHI = dyn_cast<PHINode>(&I);
-      if (!PHI)
-        break;
-
-      assert(PHI->getNumUses() == 1);
-      assert(ScalarMap.count(PHI->user_back()));
-
-      handleOutsideUsers(S.getRegion(), PHI, ScalarMap[PHI->user_back()]);
-    }
-  }
-
   for (auto &Pair : S.arrays()) {
     auto &Array = Pair.second;
 
@@ -608,9 +592,53 @@ void BlockGenerator::findOutsideUsers(Scop &S) {
   }
 }
 
+void BlockGenerator::createExitPHINodeMerges(Scop &S) {
+  if (S.hasSingleExitEdge())
+    return;
+
+  Region &R = S.getRegion();
+
+  auto *ExitBB = R.getExitingBlock();
+  auto *MergeBB = R.getExit();
+  auto *AfterMergeBB = MergeBB->getSingleSuccessor();
+  BasicBlock *OptExitBB = *(pred_begin(MergeBB));
+  if (OptExitBB == ExitBB)
+    OptExitBB = *(++pred_begin(MergeBB));
+
+  Builder.SetInsertPoint(OptExitBB->getTerminator());
+
+  for (auto &Pair : S.arrays()) {
+    auto &SAI = Pair.second;
+    auto *Val = SAI->getBasePtr();
+
+    PHINode *PHI = dyn_cast<PHINode>(Val);
+    if (!PHI)
+      continue;
+
+    if (PHI->getParent() != AfterMergeBB) {
+      assert(R.contains(PHI) &&
+             "Modeled PHI nodes are expected to be in the region");
+      continue;
+    }
+
+    std::string Name = PHI->getName();
+    Value *ScalarAddr = getOrCreateScalarAlloca(PHI);
+    Value *Reload = Builder.CreateLoad(ScalarAddr, Name + ".ph.final_reload");
+    Reload = Builder.CreateBitOrPointerCast(Reload, PHI->getType());
+    Value *OriginalValue = PHI->getIncomingValueForBlock(MergeBB);
+    auto *MergePHI = PHINode::Create(PHI->getType(), 2, Name + ".ph.merge");
+    MergePHI->insertBefore(MergeBB->getFirstInsertionPt());
+    MergePHI->addIncoming(Reload, OptExitBB);
+    MergePHI->addIncoming(OriginalValue, ExitBB);
+    int Idx = PHI->getBasicBlockIndex(MergeBB);
+    PHI->setIncomingValue(Idx, MergePHI);
+  }
+}
+
 void BlockGenerator::finalizeSCoP(Scop &S) {
   findOutsideUsers(S);
   createScalarInitialization(S);
+  createExitPHINodeMerges(S);
   createScalarFinalization(S.getRegion());
 }
 
