@@ -129,20 +129,36 @@ bool MergeInputSection<ELFT>::classof(const InputSectionBase<ELFT> *S) {
   return S->SectionKind == Base::Merge;
 }
 
-// FIXME: Optimize this by keeping an offset for each element.
 template <class ELFT>
 typename MergeInputSection<ELFT>::uintX_t
 MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
-  ArrayRef<uint8_t> Data = this->getSectionData();
-  uintX_t EntSize = this->Header->sh_entsize;
-  uintX_t Addend = Offset % EntSize;
-  Offset -= Addend;
-  if (Offset + EntSize > Data.size())
+  ArrayRef<uint8_t> D = this->getSectionData();
+  StringRef Data((char *)D.data(), D.size());
+  uintX_t Size = Data.size();
+  if (Offset >= Size)
     error("Entry is past the end of the section");
-  Data = Data.slice(Offset, EntSize);
-  return static_cast<MergeOutputSection<ELFT> *>(this->OutSec)
-             ->getOffset(Data) +
-         Addend;
+
+  // Find the element this offset points to.
+  auto I = std::upper_bound(
+      this->Offsets.begin(), this->Offsets.end(), Offset,
+      [](const uintX_t &A, const std::pair<uintX_t, uintX_t> &B) {
+        return A < B.first;
+      });
+  size_t End = I == this->Offsets.end() ? Data.size() : I->first;
+  --I;
+  uintX_t Start = I->first;
+
+  // Compute the Addend and if the Base is cached, return.
+  uintX_t Addend = Offset - Start;
+  uintX_t &Base = I->second;
+  if (Base != uintX_t(-1))
+    return Base + Addend;
+
+  // Map the base to the offset in the output section and cashe it.
+  StringRef Entry = Data.substr(Start, End - Start);
+  Base =
+      static_cast<MergeOutputSection<ELFT> *>(this->OutSec)->getOffset(Entry);
+  return Base + Addend;
 }
 
 namespace lld {

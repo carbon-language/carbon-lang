@@ -718,11 +718,28 @@ MergeOutputSection<ELFT>::MergeOutputSection(StringRef Name, uint32_t sh_type,
     : OutputSectionBase<ELFT>(Name, sh_type, sh_flags) {}
 
 template <class ELFT> void MergeOutputSection<ELFT>::writeTo(uint8_t *Buf) {
-  for (const std::pair<ArrayRef<uint8_t>, uintX_t> &P : Offsets) {
-    ArrayRef<uint8_t> Data = P.first;
+  if (shouldTailMerge()) {
+    StringRef Data = Builder.data();
     memcpy(Buf, Data.data(), Data.size());
-    Buf += Data.size();
+    return;
   }
+  for (const std::pair<StringRef, size_t> &P : Builder.getMap()) {
+    StringRef Data = P.first;
+    memcpy(Buf + P.second, Data.data(), Data.size());
+  }
+}
+
+static size_t findNull(StringRef S, size_t EntSize) {
+  // Optimize the common case.
+  if (EntSize == 1)
+    return S.find(0);
+
+  for (unsigned I = 0, N = S.size(); I != N; I += EntSize) {
+    const char *B = S.begin() + I;
+    if (std::all_of(B, B + EntSize, [](char C) { return C == 0; }))
+      return I;
+  }
+  return StringRef::npos;
 }
 
 template <class ELFT>
@@ -732,22 +749,48 @@ void MergeOutputSection<ELFT>::addSection(MergeInputSection<ELFT> *S) {
   if (Align > this->Header.sh_addralign)
     this->Header.sh_addralign = Align;
 
-  uintX_t Off = this->Header.sh_size;
-  ArrayRef<uint8_t> Data = S->getSectionData();
+  ArrayRef<uint8_t> D = S->getSectionData();
+  StringRef Data((char *)D.data(), D.size());
   uintX_t EntSize = S->getSectionHdr()->sh_entsize;
-  if (Data.size() % EntSize)
-    error("SHF_MERGE section size must be a multiple of sh_entsize");
-  for (unsigned I = 0, N = Data.size(); I != N; I += EntSize) {
-    auto P = Offsets.insert(std::make_pair(Data.slice(I, EntSize), Off));
-    if (P.second)
-      Off += EntSize;
+  uintX_t Offset = 0;
+
+  if (this->Header.sh_flags & SHF_STRINGS) {
+    while (!Data.empty()) {
+      size_t End = findNull(Data, EntSize);
+      if (End == StringRef::npos)
+        error("String is not null terminated");
+      StringRef Entry = Data.substr(0, End + EntSize);
+      size_t OutputOffset = Builder.add(Entry);
+      if (shouldTailMerge())
+        OutputOffset = -1;
+      S->Offsets.push_back(std::make_pair(Offset, OutputOffset));
+      uintX_t Size = End + EntSize;
+      Data = Data.substr(Size);
+      Offset += Size;
+    }
+  } else {
+    for (unsigned I = 0, N = Data.size(); I != N; I += EntSize) {
+      StringRef Entry = Data.substr(I, EntSize);
+      size_t OutputOffset = Builder.add(Entry);
+      S->Offsets.push_back(std::make_pair(Offset, OutputOffset));
+      Offset += EntSize;
+    }
   }
-  this->Header.sh_size = Off;
 }
 
 template <class ELFT>
-unsigned MergeOutputSection<ELFT>::getOffset(ArrayRef<uint8_t> Val) {
-  return Offsets.find(Val)->second;
+unsigned MergeOutputSection<ELFT>::getOffset(StringRef Val) {
+  return Builder.getOffset(Val);
+}
+
+template <class ELFT> bool MergeOutputSection<ELFT>::shouldTailMerge() const {
+  return Config->Optimize >= 2 && this->Header.sh_flags & SHF_STRINGS;
+}
+
+template <class ELFT> void MergeOutputSection<ELFT>::finalize() {
+  if (shouldTailMerge())
+    Builder.finalize();
+  this->Header.sh_size = Builder.getSize();
 }
 
 template <class ELFT>

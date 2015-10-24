@@ -240,17 +240,17 @@ template <class ELFT>
 class MergeOutputSection final : public OutputSectionBase<ELFT> {
   typedef typename OutputSectionBase<ELFT>::uintX_t uintX_t;
 
+  bool shouldTailMerge() const;
+
 public:
   MergeOutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags);
   void addSection(MergeInputSection<ELFT> *S);
   void writeTo(uint8_t *Buf) override;
-
-  unsigned getOffset(ArrayRef<uint8_t> Val);
+  unsigned getOffset(StringRef Val);
+  void finalize() override;
 
 private:
-  // This map is used to find if we already have an entry for a given value and,
-  // if so, at what offset it is.
-  llvm::MapVector<ArrayRef<uint8_t>, uintX_t> Offsets;
+  llvm::StringTableBuilder Builder{llvm::StringTableBuilder::RAW};
 };
 
 template <class ELFT>
