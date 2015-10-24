@@ -33,7 +33,6 @@
 static inline bool
 MI_char_summary_provider(lldb::SBValue value, lldb::SBTypeSummaryOptions options, lldb::SBStream &stream)
 {
-    bool is_signed;
     if (!value.IsValid())
         return false;
 
