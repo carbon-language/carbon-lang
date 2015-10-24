@@ -615,11 +615,8 @@ void BlockGenerator::createExitPHINodeMerges(Scop &S) {
     if (!PHI)
       continue;
 
-    if (PHI->getParent() != AfterMergeBB) {
-      assert(R.contains(PHI) &&
-             "Modeled PHI nodes are expected to be in the region");
+    if (PHI->getParent() != AfterMergeBB)
       continue;
-    }
 
     std::string Name = PHI->getName();
     Value *ScalarAddr = getOrCreateScalarAlloca(PHI);
