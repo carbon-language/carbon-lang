@@ -1538,11 +1538,10 @@ bool BasicAAResult::constantOffsetHeuristic(
 
   // If we've been sext'ed then zext'd the maximum difference between Var0 and
   // Var1 is possible to calculate, but we're just interested in the absolute
-  // minumum difference between the two. The minimum distance may occur due to
+  // minimum difference between the two. The minimum distance may occur due to
   // wrapping; consider "add i3 %i, 5": if %i == 7 then 7 + 5 mod 8 == 4, and so
   // the minimum distance between %i and %i + 5 is 3.
-  APInt MinDiff = V0Offset - V1Offset,
-        Wrapped = APInt::getMaxValue(Width) - MinDiff + APInt(Width, 1);
+  APInt MinDiff = V0Offset - V1Offset, Wrapped = -MinDiff;
   MinDiff = APIntOps::umin(MinDiff, Wrapped);
   uint64_t MinDiffBytes = MinDiff.getZExtValue() * std::abs(Var0.Scale);
 
