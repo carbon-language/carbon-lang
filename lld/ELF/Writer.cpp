@@ -713,6 +713,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   uint8_t *Buf = Buffer->getBufferStart();
   memcpy(Buf, "\177ELF", 4);
 
+  // Write the ELF header.
   auto *EHdr = reinterpret_cast<Elf_Ehdr *>(Buf);
   EHdr->e_ident[EI_CLASS] = ELFT::Is64Bits ? ELFCLASS64 : ELFCLASS32;
   EHdr->e_ident[EI_DATA] = ELFT::TargetEndianness == llvm::support::little
@@ -735,13 +736,14 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_shentsize = sizeof(Elf_Shdr);
   EHdr->e_shnum = getNumSections();
   EHdr->e_shstrndx = Out<ELFT>::ShStrTab->SectionIndex;
+
+  // Write the program header table.
   memcpy(Buf + EHdr->e_phoff, &Phdrs[0], Phdrs.size() * sizeof(Phdrs[0]));
 
+  // Write the section header table. Note that the first table entry is null.
   auto SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
-  // First entry is null.
-  ++SHdrs;
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
-    Sec->writeHeaderTo(SHdrs++);
+    Sec->writeHeaderTo(++SHdrs);
 }
 
 template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
