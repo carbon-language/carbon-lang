@@ -50,9 +50,7 @@ bool PseudoSourceValue::isAliased(const MachineFrameInfo *) const {
 }
 
 bool PseudoSourceValue::mayAlias(const MachineFrameInfo *) const {
-  if (isGOT() || isConstantPool() || isJumpTable())
-    return false;
-  return true;
+  return !(isGOT() || isConstantPool() || isJumpTable());
 }
 
 bool FixedStackPseudoSourceValue::isConstant(

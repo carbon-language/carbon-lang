@@ -2361,9 +2361,7 @@ class TypePromotionHelper {
   /// \brief Utility function to determine if \p OpIdx should be promoted when
   /// promoting \p Inst.
   static bool shouldExtOperand(const Instruction *Inst, int OpIdx) {
-    if (isa<SelectInst>(Inst) && OpIdx == 0)
-      return false;
-    return true;
+    return !(isa<SelectInst>(Inst) && OpIdx == 0);
   }
 
   /// \brief Utility function to promote the operand of \p Ext when this
@@ -2500,10 +2498,8 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
     return false;
 
   // #2 check that the truncate just drops extended bits.
-  if (Inst->getType()->getIntegerBitWidth() >= OpndType->getIntegerBitWidth())
-    return true;
-
-  return false;
+  return Inst->getType()->getIntegerBitWidth() >=
+         OpndType->getIntegerBitWidth();
 }
 
 TypePromotionHelper::Action TypePromotionHelper::getAction(
@@ -3913,11 +3909,8 @@ static bool sinkSelectOperand(const TargetTransformInfo *TTI, Value *V) {
   auto *I = dyn_cast<Instruction>(V);
   // If it's safe to speculatively execute, then it should not have side
   // effects; therefore, it's safe to sink and possibly *not* execute.
-  if (I && I->hasOneUse() && isSafeToSpeculativelyExecute(I) &&
-      TTI->getUserCost(I) >= TargetTransformInfo::TCC_Expensive)
-    return true;
-
-  return false;
+  return I && I->hasOneUse() && isSafeToSpeculativelyExecute(I) &&
+         TTI->getUserCost(I) >= TargetTransformInfo::TCC_Expensive;
 }
 
 /// Returns true if a SelectInst should be turned into an explicit branch.

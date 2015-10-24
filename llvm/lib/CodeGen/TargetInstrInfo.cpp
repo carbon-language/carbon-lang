@@ -576,10 +576,7 @@ bool TargetInstrInfo::hasReassociableOperands(
     MI2 = MRI.getUniqueVRegDef(Op2.getReg());
 
   // And they need to be in the trace (otherwise, they won't have a depth).
-  if (MI1 && MI2 && MI1->getParent() == MBB && MI2->getParent() == MBB)
-    return true;
-
-  return false;
+  return MI1 && MI2 && MI1->getParent() == MBB && MI2->getParent() == MBB;
 }
 
 bool TargetInstrInfo::hasReassociableSibling(const MachineInstr &Inst,
@@ -600,11 +597,9 @@ bool TargetInstrInfo::hasReassociableSibling(const MachineInstr &Inst,
   // 2. The previous instruction must have virtual register definitions for its
   //    operands in the same basic block as Inst.
   // 3. The previous instruction's result must only be used by Inst.
-  if (MI1->getOpcode() == AssocOpcode && hasReassociableOperands(*MI1, MBB) &&
-      MRI.hasOneNonDBGUse(MI1->getOperand(0).getReg()))
-    return true;
-
-  return false;
+  return MI1->getOpcode() == AssocOpcode &&
+         hasReassociableOperands(*MI1, MBB) &&
+         MRI.hasOneNonDBGUse(MI1->getOperand(0).getReg());
 }
 
 // 1. The operation must be associative and commutative.
@@ -613,12 +608,9 @@ bool TargetInstrInfo::hasReassociableSibling(const MachineInstr &Inst,
 // 3. The instruction must have a reassociable sibling.
 bool TargetInstrInfo::isReassociationCandidate(const MachineInstr &Inst,
                                                bool &Commuted) const {
-  if (isAssociativeAndCommutative(Inst) &&
-      hasReassociableOperands(Inst, Inst.getParent()) &&
-      hasReassociableSibling(Inst, Commuted))
-    return true;
-
-  return false;
+  return isAssociativeAndCommutative(Inst) &&
+         hasReassociableOperands(Inst, Inst.getParent()) &&
+         hasReassociableSibling(Inst, Commuted);
 }
 
 // The concept of the reassociation pass is that these operations can benefit
@@ -940,10 +932,7 @@ bool TargetInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   // modification.
   const TargetLowering &TLI = *MF.getSubtarget().getTargetLowering();
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
-  if (MI->modifiesRegister(TLI.getStackPointerRegisterToSaveRestore(), TRI))
-    return true;
-
-  return false;
+  return MI->modifiesRegister(TLI.getStackPointerRegisterToSaveRestore(), TRI);
 }
 
 // Provide a global flag for disabling the PreRA hazard recognizer that targets

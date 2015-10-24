@@ -91,9 +91,7 @@ public:
   bool dominates(MachineBasicBlock *MBB) {
     if (LBlocks.empty())
       LS.getMachineBasicBlocks(DL, LBlocks);
-    if (LBlocks.count(MBB) != 0 || LS.dominates(DL, MBB))
-      return true;
-    return false;
+    return LBlocks.count(MBB) != 0 || LS.dominates(DL, MBB);
   }
 };
 } // end anonymous namespace

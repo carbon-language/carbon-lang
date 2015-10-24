@@ -465,10 +465,7 @@ bool StackProtector::InsertStackProtectors() {
 
   // Return if we didn't modify any basic blocks. i.e., there are no return
   // statements in the function.
-  if (!HasPrologue)
-    return false;
-
-  return true;
+  return HasPrologue;
 }
 
 /// CreateFailBB - Create a basic block to jump to when the stack protector

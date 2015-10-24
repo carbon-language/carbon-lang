@@ -468,11 +468,8 @@ static bool isNoReturnDef(const MachineOperand &MO) {
   if (MF.getFunction()->hasFnAttribute(Attribute::UWTable))
     return false;
   const Function *Called = getCalledFunction(MI);
-  if (Called == nullptr || !Called->hasFnAttribute(Attribute::NoReturn)
-      || !Called->hasFnAttribute(Attribute::NoUnwind))
-    return false;
-
-  return true;
+  return !(Called == nullptr || !Called->hasFnAttribute(Attribute::NoReturn) ||
+           !Called->hasFnAttribute(Attribute::NoUnwind));
 }
 
 bool MachineRegisterInfo::isPhysRegModified(unsigned PhysReg) const {

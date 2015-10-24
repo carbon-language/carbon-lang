@@ -462,11 +462,9 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 /// Return true if MI is an instruction we are unable to reason about
 /// (like a call or something with unmodeled side effects).
 static inline bool isGlobalMemoryObject(AliasAnalysis *AA, MachineInstr *MI) {
-  if (MI->isCall() || MI->hasUnmodeledSideEffects() ||
-      (MI->hasOrderedMemoryRef() &&
-       (!MI->mayLoad() || !MI->isInvariantLoad(AA))))
-    return true;
-  return false;
+  return MI->isCall() || MI->hasUnmodeledSideEffects() ||
+         (MI->hasOrderedMemoryRef() &&
+          (!MI->mayLoad() || !MI->isInvariantLoad(AA)));
 }
 
 // This MI might have either incomplete info, or known to be unsafe

@@ -620,11 +620,8 @@ ProfitableToMerge(MachineBasicBlock *MBB1, MachineBasicBlock *MBB2,
   // branch instruction, which is likely to be smaller than the 2
   // instructions that would be deleted in the merge.
   MachineFunction *MF = MBB1->getParent();
-  if (EffectiveTailLen >= 2 && MF->getFunction()->optForSize() &&
-      (I1 == MBB1->begin() || I2 == MBB2->begin()))
-    return true;
-
-  return false;
+  return EffectiveTailLen >= 2 && MF->getFunction()->optForSize() &&
+         (I1 == MBB1->begin() || I2 == MBB2->begin());
 }
 
 /// ComputeSameTails - Look through all the blocks in MergePotentials that have

@@ -686,10 +686,7 @@ bool PeepholeOptimizer::findNextSource(unsigned Reg, unsigned SubReg,
   }
 
   // If we did not find a more suitable source, there is nothing to optimize.
-  if (CurSrcPair.Reg == Reg)
-    return false;
-
-  return true;
+  return CurSrcPair.Reg != Reg;
 }
 
 /// \brief Insert a PHI instruction with incoming edges \p SrcRegs that are
