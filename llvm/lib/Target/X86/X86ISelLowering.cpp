@@ -1050,6 +1050,17 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SRA,               MVT::v4i32, Custom);
   }
 
+  if (Subtarget->hasXOP()) {
+    setOperationAction(ISD::ROTL,              MVT::v16i8, Custom);
+    setOperationAction(ISD::ROTL,              MVT::v8i16, Custom);
+    setOperationAction(ISD::ROTL,              MVT::v4i32, Custom);
+    setOperationAction(ISD::ROTL,              MVT::v2i64, Custom);
+    setOperationAction(ISD::ROTL,              MVT::v32i8, Custom);
+    setOperationAction(ISD::ROTL,              MVT::v16i16, Custom);
+    setOperationAction(ISD::ROTL,              MVT::v8i32, Custom);
+    setOperationAction(ISD::ROTL,              MVT::v4i64, Custom);
+  }
+
   if (!Subtarget->useSoftFloat() && Subtarget->hasFp256()) {
     addRegisterClass(MVT::v32i8,  &X86::VR256RegClass);
     addRegisterClass(MVT::v16i16, &X86::VR256RegClass);
@@ -18817,6 +18828,41 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
   return SDValue();
 }
 
+static SDValue LowerRotate(SDValue Op, const X86Subtarget *Subtarget,
+                           SelectionDAG &DAG) {
+  MVT VT = Op.getSimpleValueType();
+  SDLoc DL(Op);
+  SDValue R = Op.getOperand(0);
+  SDValue Amt = Op.getOperand(1);
+  unsigned Opc = Op.getOpcode();
+
+  assert(VT.isVector() && "Custom lowering only for vector rotates!");
+  assert(Subtarget->hasXOP() && "XOP support required for vector rotates!");
+  assert((Opc == ISD::ROTL) && "Only ROTL supported");
+
+  // XOP has 128-bit vector variable + immediate rotates.
+  // +ve/-ve Amt = rotate left/right.
+
+  // Split 256-bit integers.
+  if (VT.getSizeInBits() == 256)
+    return Lower256IntArith(Op, DAG);
+
+  assert(VT.getSizeInBits() == 128 && "Only rotate 128-bit vectors!");
+
+  // Attempt to rotate by immediate.
+  if (auto *BVAmt = dyn_cast<BuildVectorSDNode>(Amt)) {
+    if (auto *RotateConst = BVAmt->getConstantSplatNode()) {
+      uint64_t RotateAmt = RotateConst->getAPIntValue().getZExtValue();
+      assert(RotateAmt < VT.getScalarSizeInBits() && "Rotation out of range");
+      return DAG.getNode(X86ISD::VPROTI, DL, VT, R,
+                         DAG.getConstant(RotateAmt, DL, MVT::i8));
+    }
+  }
+
+  // Use general rotate by variable (per-element).
+  return DAG.getNode(X86ISD::VPROT, DL, VT, R, Amt);
+}
+
 static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
   // Lower the "add/sub/mul with overflow" instruction into a regular ins plus
   // a "setcc" instruction that checks the overflow flag. The "brcond" lowering
@@ -19675,6 +19721,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::MUL:                return LowerMUL(Op, Subtarget, DAG);
   case ISD::UMUL_LOHI:
   case ISD::SMUL_LOHI:          return LowerMUL_LOHI(Op, Subtarget, DAG);
+  case ISD::ROTL:               return LowerRotate(Op, Subtarget, DAG);
   case ISD::SRA:
   case ISD::SRL:
   case ISD::SHL:                return LowerShift(Op, Subtarget, DAG);
