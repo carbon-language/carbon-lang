@@ -66,12 +66,14 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2127">2127</a></td><td>Move-construction with <tt>raw_storage_iterator</tt></td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2133">2133</a></td><td>Attitude to overloaded comma for iterators</td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2156">2156</a></td><td>Unordered containers' <tt>reserve(n)</tt> reserves for <tt>n-1</tt> elements</td><td>Kona</td><td></td></tr>
-	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2181">2181</a></td><td>Exceptions from <em>seed sequence</em> operations</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2218">2218</a></td><td>Unclear how containers use <tt>allocator_traits::construct()</tt></td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2219">2219</a></td><td><tt><i>INVOKE</i></tt>-ing a pointer to member with a <tt>reference_wrapper</tt> as the object expression</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2224">2224</a></td><td>Ambiguous status of access to non-live objects</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2234">2234</a></td><td><tt>assert()</tt> should allow usage in constant expressions</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2244">2244</a></td><td>Issue on <tt>basic_istream::seekg</tt></td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2250">2250</a></td><td>Follow-up On Library Issue 2207</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2259">2259</a></td><td>Issues in 17.6.5.5 rules for member functions</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2273">2273</a></td><td><tt>regex_match</tt> ambiguity</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2336">2336</a></td><td><tt>is_trivially_constructible/is_trivially_assignable</tt> traits are always false</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2353">2353</a></td><td><tt>std::next</tt> is over-constrained</td><td>Kona</td><td></td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2367">2367</a></td><td><tt>pair</tt> and <tt>tuple</tt> are not correctly implemented for <tt>is_constructible</tt> with no args</td><td>Kona</td><td>Patch Ready</td></tr>
@@ -94,6 +96,7 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2489">2489</a></td><td><tt>mem_fn()</tt> should be <tt>noexcept</tt></td><td>Kona</td><td>Patch Ready</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2492">2492</a></td><td>Clarify requirements for <tt>comp</tt></td><td>Kona</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2494">2494</a></td><td>[fund.ts.v2] <tt>ostream_joiner</tt> needs <tt>noexcept</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2495">2495</a></td><td>There is no such thing as an Exception Safety element</td><td>Kona</td><td></td></tr>
 
 <!--
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#1214">1214</a></td><td>Insufficient/inconsistent key immutability requirements for associative containers</td><td>Urbana</td><td></td></tr>
@@ -114,9 +117,12 @@
 <li>2181 - I suspect that this will not require any code changes, but will need to be read carefully.</li>
 <li>2218 - Shouldn't require any code changes.</li>
 <li>2219 - Sizable changes required. INVOKE needs 2 additional overloads and plenty of tests. I'm not going to back port this to C++03. (Eric)</li>
+<li>2224 - </li>
+<li>2234 - </li>
 <li><i>2244 - We don't do this; easy fix. <b>Patch Available</b></i></li>
 <li>2250 - Looks like wording cleanup. Need to check more closely, but I think there's no code changes here.</li>
 <li><i>2259 - No code changes needed here.</i></li>
+<li>2273 - </li>
 <li>2336 - <b>Check later</b></li>
 <li>2353 - Simple change, needs a test. (test probably used to exist)</li>
 <li><i>2367 - <b>Patch Available as D13750</b> (Eric)</i></li>
@@ -139,6 +145,7 @@
 <li><i>2489 - Looks easy. Just add some NOEXCEPT, and tests.</i> <b>Patch Available</b></li>
 <li><i>2492 - Wording cleanup; no code changes needed.</i></li>
 <li>2494 - My implementation of this (not checked in) already has these.</li>
+<li>2494 - </li>
 </ul>
 
 <p>Last Updated: 5-Oct-2015</p>

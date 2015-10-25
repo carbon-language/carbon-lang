@@ -69,6 +69,14 @@
 	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4508">N4508</a></td><td>LWG</td></td><td>shared_mutex for C++17</td><td>Lenexa</td><td>Complete</td><td>3.7</td></tr>
 	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4366">N4366</a></td><td>LWG</td></td><td>LWG 2228 missing SFINAE rule</td><td>Lenexa</td><td>Complete</td><td>3.1</td></tr>
 	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4510">N4510</a></td><td>LWG</td></td><td>Minimal incomplete type support for standard containers, revision 4</td><td>Lenexa</td><td>Complete</td><td>3.6</td></tr>
+  	<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/P0004R1.html">P0004R1</a></td><td>LWG</td><td>Remove Deprecated iostreams aliases.</td><td>Kona</td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/P0006R0.html">P0006R0</a></td><td>LWG</td><td>Adopt Type Traits Variable Templates for C++17.</td><td>Kona</td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/P0092R1.html">P0092R1</a></td><td>LWG</td><td>Polishing &lt;chrono&gt;</td><td>Kona</td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/P0007R1.html">P0007R1</a></td><td>LWG</td><td>Constant View: A proposal for a <tt>std::as_const</tt> helper function template.</td><td>Kona</td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/P0156R0.htm" >P0156R0</a></td><td>LWG</td><td>Variadic lock_guard(rev 3).</td><td>Kona</td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/P0074R0.html">P0074R0</a></td><td>LWG</td><td>Making <tt>std::owner_less</tt> more flexible</td><td>Kona</td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/P0013R1.html">P0013R1</a></td><td>LWG</td><td>Logical type traits rev 2</td><td>Kona</td><td></td><td></td></tr>
 <!--  	<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr> -->
   </table>
 
@@ -138,6 +146,46 @@
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2470">2470</td><td>Allocator's destroy function should be allowed to fail to instantiate</td><td>Lenexa</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2482">2482</td><td>[c.strings] Table 73 mentions nonexistent functions</td><td>Lenexa</td><td>Complete</td></tr>
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2488">2488</td><td>Placeholders should be allowed and encouraged to be constexpr</td><td>Lenexa</td><td></td></tr>
+ 	<tr><td></td><td></td><td></td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#1169">1169</a></td><td><tt>num_get</tt> not fully compatible with <tt>strto*</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2072">2072</a></td><td>Unclear wording about capacity of temporary buffers</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2101">2101</a></td><td>Some transformation types can produce impossible types</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2111">2111</a></td><td>Which <tt>unexpected</tt>&#47;<tt>terminate</tt> handler is called from the exception handling runtime?</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2119">2119</a></td><td>Missing <tt>hash</tt> specializations for extended integer types</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2127">2127</a></td><td>Move-construction with <tt>raw_storage_iterator</tt></td><td>Kona</td><td>Patch Ready</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2133">2133</a></td><td>Attitude to overloaded comma for iterators</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2156">2156</a></td><td>Unordered containers' <tt>reserve(n)</tt> reserves for <tt>n-1</tt> elements</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2218">2218</a></td><td>Unclear how containers use <tt>allocator_traits::construct()</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2219">2219</a></td><td><tt><i>INVOKE</i></tt>-ing a pointer to member with a <tt>reference_wrapper</tt> as the object expression</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2224">2224</a></td><td>Ambiguous status of access to non-live objects</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2234">2234</a></td><td><tt>assert()</tt> should allow usage in constant expressions</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2244">2244</a></td><td>Issue on <tt>basic_istream::seekg</tt></td><td>Kona</td><td>Patch Ready</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2250">2250</a></td><td>Follow-up On Library Issue 2207</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2259">2259</a></td><td>Issues in 17.6.5.5 rules for member functions</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2273">2273</a></td><td><tt>regex_match</tt> ambiguity</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2336">2336</a></td><td><tt>is_trivially_constructible/is_trivially_assignable</tt> traits are always false</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2353">2353</a></td><td><tt>std::next</tt> is over-constrained</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2367">2367</a></td><td><tt>pair</tt> and <tt>tuple</tt> are not correctly implemented for <tt>is_constructible</tt> with no args</td><td>Kona</td><td>Patch Ready</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2380">2380</a></td><td>May <tt>&lt;cstdlib&gt;</tt> provide <tt>long ::abs(long)</tt> and <tt>long long ::abs(long long)</tt>?</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2384">2384</a></td><td>Allocator's <tt>deallocate</tt> function needs better specification</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2385">2385</a></td><td><tt>function::assign</tt> allocator argument doesn't make sense</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2435">2435</a></td><td><tt>reference_wrapper::operator()</tt>'s Remark should be deleted</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2447">2447</a></td><td>Allocators and <tt>volatile</tt>-qualified value types</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2462">2462</a></td><td><tt>std::ios_base::failure</tt> is overspecified</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2466">2466</a></td><td><tt>allocator_traits::max_size()</tt> default behavior is incorrect</td><td>Kona</td><td>Patch Ready</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2469">2469</a></td><td>Wrong specification of Requires clause of <tt>operator[]</tt> for <tt>map</tt> and <tt>unordered_map</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2473">2473</a></td><td><tt>basic_filebuf</tt>'s relation to C <tt>FILE</tt> semantics</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2476">2476</a></td><td><tt>scoped_allocator_adaptor</tt> is not assignable</td><td>Kona</td><td>Patch Ready</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2477">2477</a></td><td>Inconsistency of wordings in <tt>std::vector::erase()</tt> and <tt>std::deque::erase()</tt></td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2483">2483</a></td><td><tt>throw_with_nested()</tt> should use <tt>is_final</tt></td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2484">2484</a></td><td><tt>rethrow_if_nested()</tt> is doubly unimplementable</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2485">2485</a></td><td><tt>get()</tt> should be overloaded for <tt>const tuple&amp;&amp;</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2486">2486</a></td><td><tt>mem_fn()</tt> should be required to use perfect forwarding</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2487">2487</a></td><td><tt>bind()</tt> should be <tt>const</tt>-overloaded, not <i>cv</i>-overloaded</td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2489">2489</a></td><td><tt>mem_fn()</tt> should be <tt>noexcept</tt></td><td>Kona</td><td>Patch Ready</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2492">2492</a></td><td>Clarify requirements for <tt>comp</tt></td><td>Kona</td><td>Complete</td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2494">2494</a></td><td>[fund.ts.v2] <tt>ostream_joiner</tt> needs <tt>noexcept</tt></td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2495">2495</a></td><td>There is no such thing as an Exception Safety element</td><td>Kona</td><td></td></tr>
 
 <!--
 	<tr><td><a href="http://cplusplus.github.io/LWG/lwg-defects.html#1214">1214</a></td><td>Insufficient/inconsistent key immutability requirements for associative containers</td><td>Urbana</td><td></td></tr>
