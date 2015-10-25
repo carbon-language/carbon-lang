@@ -83,6 +83,7 @@ enum RejectReasonKind {
   rrkLoopBound,
 
   rrkFuncCall,
+  rrkNonSimpleMemoryAccess,
 
   rrkAlias,
 
@@ -759,6 +760,30 @@ public:
   virtual std::string getMessage() const override;
   virtual std::string getEndUserMessage() const override;
   virtual const DebugLoc &getDebugLoc() const override;
+  //@}
+};
+
+//===----------------------------------------------------------------------===//
+/// @brief Captures errors with non-simple memory accesses.
+class ReportNonSimpleMemoryAccess : public ReportOther {
+  //===--------------------------------------------------------------------===//
+
+  // The offending call instruction.
+  Instruction *Inst;
+
+public:
+  ReportNonSimpleMemoryAccess(Instruction *Inst);
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
+  /// @name RejectReason interface
+  //@{
+  virtual std::string getMessage() const override;
+  virtual const DebugLoc &getDebugLoc() const override;
+  virtual std::string getEndUserMessage() const override;
   //@}
 };
 

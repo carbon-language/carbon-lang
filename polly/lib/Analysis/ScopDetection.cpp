@@ -749,6 +749,15 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
   if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst)) {
     Context.hasStores |= isa<StoreInst>(Inst);
     Context.hasLoads |= isa<LoadInst>(Inst);
+    if (auto *Load = dyn_cast<LoadInst>(&Inst))
+      if (!Load->isSimple())
+        return invalid<ReportNonSimpleMemoryAccess>(Context, /*Assert=*/true,
+                                                    &Inst);
+    if (auto *Store = dyn_cast<StoreInst>(&Inst))
+      if (!Store->isSimple())
+        return invalid<ReportNonSimpleMemoryAccess>(Context, /*Assert=*/true,
+                                                    &Inst);
+
     return isValidMemoryAccess(Inst, Context);
   }
 

@@ -349,6 +349,29 @@ bool ReportFuncCall::classof(const RejectReason *RR) {
 }
 
 //===----------------------------------------------------------------------===//
+// ReportNonSimpleMemoryAccess
+
+ReportNonSimpleMemoryAccess::ReportNonSimpleMemoryAccess(Instruction *Inst)
+    : ReportOther(rrkNonSimpleMemoryAccess), Inst(Inst) {}
+
+std::string ReportNonSimpleMemoryAccess::getMessage() const {
+  return "Non-simple memory access: " + *Inst;
+}
+
+const DebugLoc &ReportNonSimpleMemoryAccess::getDebugLoc() const {
+  return Inst->getDebugLoc();
+}
+
+std::string ReportNonSimpleMemoryAccess::getEndUserMessage() const {
+  return "Volatile memory accesses or memory accesses for atomic types "
+         "are not supported.";
+}
+
+bool ReportNonSimpleMemoryAccess::classof(const RejectReason *RR) {
+  return RR->getKind() == rrkNonSimpleMemoryAccess;
+}
+
+//===----------------------------------------------------------------------===//
 // ReportAlias.
 
 ReportAlias::ReportAlias(Instruction *Inst, AliasSet &AS)
