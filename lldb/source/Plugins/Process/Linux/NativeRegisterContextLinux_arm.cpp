@@ -440,7 +440,7 @@ NativeRegisterContextLinux_arm::SetHardwareBreakpoint (lldb::addr_t addr, size_t
      if (bp_index == LLDB_INVALID_INDEX32)
          return LLDB_INVALID_INDEX32;
 
-    // Add new or update existing watchpoint
+    // Add new or update existing breakpoint
     if ((m_hbr_regs[bp_index].control & 1) == 0)
     {
         m_hbr_regs[bp_index].address = addr;
@@ -473,7 +473,7 @@ NativeRegisterContextLinux_arm::ClearHardwareBreakpoint (uint32_t hw_idx)
     error = ReadHardwareDebugInfo ();
 
     if (error.Fail())
-        return LLDB_INVALID_INDEX32;
+        return false;
 
     if (hw_idx >= m_max_hbp_supported)
         return false;
@@ -494,7 +494,7 @@ NativeRegisterContextLinux_arm::ClearHardwareBreakpoint (uint32_t hw_idx)
         WriteHardwareDebugRegs(eDREGTypeBREAK, hw_idx);
 
         if (error.Fail())
-            return LLDB_INVALID_INDEX32;
+            return false;
 
         return true;
     }
@@ -636,7 +636,7 @@ NativeRegisterContextLinux_arm::ClearHardwareWatchpoint (uint32_t wp_index)
     error = ReadHardwareDebugInfo ();
 
     if (error.Fail())
-        return LLDB_INVALID_INDEX32;
+        return false;
 
     if (wp_index >= m_max_hwp_supported)
         return false;
