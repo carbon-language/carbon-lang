@@ -444,16 +444,14 @@ typename Tr::RegionT *RegionBase<Tr>::getExpandedRegion() const {
   if (NumSuccessors == 0)
     return nullptr;
 
-  for (PredIterTy PI = InvBlockTraits::child_begin(getExit()),
-                  PE = InvBlockTraits::child_end(getExit());
-       PI != PE; ++PI) {
-    if (!DT->dominates(getEntry(), *PI))
-      return nullptr;
-  }
-
   RegionT *R = RI->getRegionFor(exit);
 
   if (R->getEntry() != exit) {
+    for (PredIterTy PI = InvBlockTraits::child_begin(getExit()),
+                    PE = InvBlockTraits::child_end(getExit());
+         PI != PE; ++PI)
+      if (!contains(*PI))
+        return nullptr;
     if (Tr::getNumSuccessors(exit) == 1)
       return new RegionT(getEntry(), *BlockTraits::child_begin(exit), RI, DT);
     return nullptr;
@@ -462,13 +460,11 @@ typename Tr::RegionT *RegionBase<Tr>::getExpandedRegion() const {
   while (R->getParent() && R->getParent()->getEntry() == exit)
     R = R->getParent();
 
-  if (!DT->dominates(getEntry(), R->getExit())) {
-    for (PredIterTy PI = InvBlockTraits::child_begin(getExit()),
-                    PE = InvBlockTraits::child_end(getExit());
-         PI != PE; ++PI) {
-      if (!DT->dominates(R->getExit(), *PI))
-        return nullptr;
-    }
+  for (PredIterTy PI = InvBlockTraits::child_begin(getExit()),
+                  PE = InvBlockTraits::child_end(getExit());
+       PI != PE; ++PI) {
+    if (!(contains(*PI) || R->contains(*PI)))
+      return nullptr;
   }
 
   return new RegionT(getEntry(), R->getExit(), RI, DT);
