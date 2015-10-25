@@ -316,6 +316,12 @@ public:
   bool isLegalMaskedStore(Type *DataType) const;
   bool isLegalMaskedLoad(Type *DataType) const;
 
+  /// \brief Return true if the target supports masked gather/scatter
+  /// AVX-512 fully supports gather and scatter for vectors with 32 and 64
+  /// bits scalar type.
+  bool isLegalMaskedScatter(Type *DataType) const;
+  bool isLegalMaskedGather(Type *DataType) const;
+
   /// \brief Return the cost of the scaling factor used in the addressing
   /// mode represented by AM for this target, for a load/store
   /// of the specified type.
@@ -569,6 +575,8 @@ public:
                                      unsigned AddrSpace) = 0;
   virtual bool isLegalMaskedStore(Type *DataType) = 0;
   virtual bool isLegalMaskedLoad(Type *DataType) = 0;
+  virtual bool isLegalMaskedScatter(Type *DataType) = 0;
+  virtual bool isLegalMaskedGather(Type *DataType) = 0;
   virtual int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
                                    int64_t BaseOffset, bool HasBaseReg,
                                    int64_t Scale, unsigned AddrSpace) = 0;
@@ -697,6 +705,12 @@ public:
   }
   bool isLegalMaskedLoad(Type *DataType) override {
     return Impl.isLegalMaskedLoad(DataType);
+  }
+  bool isLegalMaskedScatter(Type *DataType) override {
+    return Impl.isLegalMaskedScatter(DataType);
+  }
+  bool isLegalMaskedGather(Type *DataType) override {
+    return Impl.isLegalMaskedGather(DataType);
   }
   int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
                            bool HasBaseReg, int64_t Scale,

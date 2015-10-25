@@ -1203,6 +1203,33 @@ bool X86TTIImpl::isLegalMaskedStore(Type *DataType) {
   return isLegalMaskedLoad(DataType);
 }
 
+bool X86TTIImpl::isLegalMaskedGather(Type *DataTy) {
+  // This function is called now in two cases: from the Loop Vectorizer
+  // and from the Scalarizer.
+  // When the Loop Vectorizer asks about legality of the feature,
+  // the vectorization factor is not calculated yet. The Loop Vectorizer
+  // sends a scalar type and the decision is based on the width of the
+  // scalar element.
+  // Later on, the cost model will estimate usage this intrinsic based on
+  // the vector type.
+  // The Scalarizer asks again about legality. It sends a vector type.
+  // In this case we can reject non-power-of-2 vectors.
+  if (isa<VectorType>(DataTy) && !isPowerOf2_32(DataTy->getVectorNumElements()))
+    return false;
+  Type *ScalarTy = DataTy->getScalarType();
+  // TODO: Pointers should also be legal,
+  // but it requires additional support in composing intrinsics name.
+  // getPrimitiveSizeInBits() returns 0 for PointerType
+  int DataWidth = ScalarTy->getPrimitiveSizeInBits();
+
+  // AVX-512 allows gather and scatter
+  return DataWidth >= 32 && ST->hasAVX512();
+}
+
+bool X86TTIImpl::isLegalMaskedScatter(Type *DataType) {
+  return isLegalMaskedGather(DataType);
+}
+
 bool X86TTIImpl::areInlineCompatible(const Function *Caller,
                                      const Function *Callee) const {
   const TargetMachine &TM = getTLI()->getTargetMachine();

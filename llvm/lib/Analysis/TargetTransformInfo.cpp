@@ -121,6 +121,14 @@ bool TargetTransformInfo::isLegalMaskedLoad(Type *DataType) const {
   return TTIImpl->isLegalMaskedLoad(DataType);
 }
 
+bool TargetTransformInfo::isLegalMaskedGather(Type *DataType) const {
+  return TTIImpl->isLegalMaskedGather(DataType);
+}
+
+bool TargetTransformInfo::isLegalMaskedScatter(Type *DataType) const {
+  return TTIImpl->isLegalMaskedGather(DataType);
+}
+
 int TargetTransformInfo::getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
                                               int64_t BaseOffset,
                                               bool HasBaseReg,

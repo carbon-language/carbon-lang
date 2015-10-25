@@ -1,4 +1,6 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin  -mcpu=knl < %s | FileCheck %s -check-prefix=KNL
+; RUN: opt -mtriple=x86_64-apple-darwin -codegenprepare -mcpu=corei7-avx -S < %s | FileCheck %s -check-prefix=SCALAR
+
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -6,6 +8,14 @@ target triple = "x86_64-unknown-linux-gnu"
 ; KNL-LABEL: test1
 ; KNL: kxnorw  %k1, %k1, %k1
 ; KNL: vgatherdps      (%rdi,%zmm0,4), %zmm1 {%k1}
+
+; SCALAR-LABEL: test1
+; SCALAR:      extractelement <16 x float*> 
+; SCALAR-NEXT: load float
+; SCALAR-NEXT: insertelement <16 x float>
+; SCALAR-NEXT: extractelement <16 x float*>
+; SCALAR-NEXT: load float
+
 define <16 x float> @test1(float* %base, <16 x i32> %ind) {
 
   %broadcast.splatinsert = insertelement <16 x float*> undef, float* %base, i32 0
@@ -25,6 +35,18 @@ declare <8 x i32> @llvm.masked.gather.v8i32(<8 x i32*> , i32, <8 x i1> , <8 x i3
 ; KNL-LABEL: test2
 ; KNL: kmovw %esi, %k1
 ; KNL: vgatherdps      (%rdi,%zmm0,4), %zmm1 {%k1}
+
+; SCALAR-LABEL: test2
+; SCALAR:      extractelement <16 x float*> 
+; SCALAR-NEXT: load float
+; SCALAR-NEXT: insertelement <16 x float>
+; SCALAR-NEXT: br label %else
+; SCALAR: else:
+; SCALAR-NEXT:  %res.phi.else = phi 
+; SCALAR-NEXT:  %Mask1 = extractelement <16 x i1> %imask, i32 1
+; SCALAR-NEXT:  %ToLoad1 = icmp eq i1 %Mask1, true
+; SCALAR-NEXT:  br i1 %ToLoad1, label %cond.load1, label %else2
+
 define <16 x float> @test2(float* %base, <16 x i32> %ind, i16 %mask) {
 
   %broadcast.splatinsert = insertelement <16 x float*> undef, float* %base, i32 0
@@ -76,6 +98,20 @@ define <16 x i32> @test4(i32* %base, <16 x i32> %ind, i16 %mask) {
 ; KNL: vpscatterdd {{.*}}%k2
 ; KNL: vpscatterdd {{.*}}%k1
 
+; SCALAR-LABEL: test5
+; SCALAR:        %Mask0 = extractelement <16 x i1> %imask, i32 0
+; SCALAR-NEXT:   %ToStore0 = icmp eq i1 %Mask0, true
+; SCALAR-NEXT:   br i1 %ToStore0, label %cond.store, label %else
+; SCALAR: cond.store:
+; SCALAR-NEXT:  %Elt0 = extractelement <16 x i32> %val, i32 0
+; SCALAR-NEXT:  %Ptr0 = extractelement <16 x i32*> %gep.random, i32 0
+; SCALAR-NEXT:  store i32 %Elt0, i32* %Ptr0, align 4
+; SCALAR-NEXT:  br label %else
+; SCALAR: else:
+; SCALAR-NEXT: %Mask1 = extractelement <16 x i1> %imask, i32 1
+; SCALAR-NEXT:  %ToStore1 = icmp eq i1 %Mask1, true
+; SCALAR-NEXT:  br i1 %ToStore1, label %cond.store1, label %else2
+
 define void @test5(i32* %base, <16 x i32> %ind, i16 %mask, <16 x i32>%val) {
 
   %broadcast.splatinsert = insertelement <16 x i32*> undef, i32* %base, i32 0
@@ -96,6 +132,16 @@ declare void @llvm.masked.scatter.v16i32(<16 x i32> , <16 x i32*> , i32 , <16 x 
 ; KNL: kxnorw  %k2, %k2, %k2
 ; KNL: vpgatherqd      (,%zmm{{.*}}), %ymm{{.*}} {%k2}
 ; KNL: vpscatterqd     %ymm{{.*}}, (,%zmm{{.*}}) {%k1}
+
+; SCALAR-LABEL: test6
+; SCALAR:        store i32 %Elt0, i32* %Ptr01, align 4
+; SCALAR-NEXT:   %Elt1 = extractelement <8 x i32> %a1, i32 1
+; SCALAR-NEXT:   %Ptr12 = extractelement <8 x i32*> %ptr, i32 1
+; SCALAR-NEXT:   store i32 %Elt1, i32* %Ptr12, align 4
+; SCALAR-NEXT:   %Elt2 = extractelement <8 x i32> %a1, i32 2
+; SCALAR-NEXT:   %Ptr23 = extractelement <8 x i32*> %ptr, i32 2
+; SCALAR-NEXT:   store i32 %Elt2, i32* %Ptr23, align 4
+
 define <8 x i32> @test6(<8 x i32>%a1, <8 x i32*> %ptr) {
 
   %a = call <8 x i32> @llvm.masked.gather.v8i32(<8 x i32*> %ptr, i32 4, <8 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, <8 x i32> undef)
@@ -244,4 +290,43 @@ define <16 x float> @test14(float* %base, i32 %ind, <16 x float*> %vec) {
   ret <16 x float>%res
 }
 
+
+; KNL-LABEL: test15
+; KNL: kmovw %eax, %k1
+; KNL: vgatherdps      (%rdi,%zmm0,4), %zmm1 {%k1}
+
+; SCALAR-LABEL: test15
+; SCALAR:      extractelement <16 x float*> 
+; SCALAR-NEXT: load float
+; SCALAR-NEXT: insertelement <16 x float>
+; SCALAR-NEXT: extractelement <16 x float*>
+; SCALAR-NEXT: load float
+
+define <16 x float> @test15(float* %base, <16 x i32> %ind) {
+
+  %broadcast.splatinsert = insertelement <16 x float*> undef, float* %base, i32 0
+  %broadcast.splat = shufflevector <16 x float*> %broadcast.splatinsert, <16 x float*> undef, <16 x i32> zeroinitializer
+
+  %sext_ind = sext <16 x i32> %ind to <16 x i64>
+  %gep.random = getelementptr float, <16 x float*> %broadcast.splat, <16 x i64> %sext_ind
+
+  %res = call <16 x float> @llvm.masked.gather.v16f32(<16 x float*> %gep.random, i32 4, <16 x i1> <i1 false, i1 false, i1 true, i1 true, i1 false, i1 true, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false>, <16 x float> undef)
+  ret <16 x float>%res
+}
+
+; Check non-power-of-2 case. It should be scalarized.
+declare <3 x i32> @llvm.masked.gather.v3i32(<3 x i32*>, i32, <3 x i1>, <3 x i32>)
+; KNL-LABEL: test16
+; KNL: testb
+; KNL: je
+; KNL: testb
+; KNL: je
+; KNL: testb
+; KNL: je
+define <3 x i32> @test16(<3 x i32*> %base, <3 x i32> %ind, <3 x i1> %mask, <3 x i32> %src0) {
+  %sext_ind = sext <3 x i32> %ind to <3 x i64>
+  %gep.random = getelementptr i32, <3 x i32*> %base, <3 x i64> %sext_ind
+  %res = call <3 x i32> @llvm.masked.gather.v3i32(<3 x i32*> %gep.random, i32 4, <3 x i1> %mask, <3 x i32> %src0)
+  ret <3 x i32>%res
+}
 
