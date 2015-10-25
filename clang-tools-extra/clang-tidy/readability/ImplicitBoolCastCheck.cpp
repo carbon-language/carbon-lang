@@ -84,6 +84,7 @@ getZeroLiteralToCompareWithForGivenType(CastKind CastExpressionKind,
   default:
     assert(false && "Unexpected cast kind");
   }
+  return "";
 }
 
 bool isUnaryLogicalNotOperator(const Stmt *Statement) {
