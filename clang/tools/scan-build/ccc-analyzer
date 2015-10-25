@@ -667,6 +667,15 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     next;
   }
 
+  # Handle -Xclang some-arg. Add both arguments to the compiler options.
+  if ($Arg =~ /^-Xclang$/) {
+    # FIXME: Check if we are going off the end.
+    ++$i;
+    push @CompileOpts, $Arg;
+    push @CompileOpts, $ARGV[$i];
+    next;
+  }
+
   if (!($Arg =~ /^-/)) {
     push @Files, $Arg;
     next;
