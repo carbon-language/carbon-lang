@@ -123,6 +123,12 @@ VerifySCEV("verify-scev",
 // Implementation of the SCEV class.
 //
 
+LLVM_DUMP_METHOD
+void SCEV::dump() const {
+  print(dbgs());
+  dbgs() << '\n';
+}
+
 void SCEV::print(raw_ostream &OS) const {
   switch (static_cast<SCEVTypes>(getSCEVType())) {
   case scConstant:
