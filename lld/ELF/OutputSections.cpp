@@ -750,7 +750,7 @@ void MergeOutputSection<ELFT>::addSection(MergeInputSection<ELFT> *S) {
     this->Header.sh_addralign = Align;
 
   ArrayRef<uint8_t> D = S->getSectionData();
-  StringRef Data((char *)D.data(), D.size());
+  StringRef Data((const char *)D.data(), D.size());
   uintX_t EntSize = S->getSectionHdr()->sh_entsize;
   uintX_t Offset = 0;
 
