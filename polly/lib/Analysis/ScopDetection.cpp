@@ -523,7 +523,8 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
                 }
               }
             }
-            Terms.push_back(SE->getMulExpr(Operands));
+            if (Operands.size())
+              Terms.push_back(SE->getMulExpr(Operands));
           }
         }
       }
