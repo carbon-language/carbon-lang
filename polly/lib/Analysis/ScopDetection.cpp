@@ -535,28 +535,25 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
     SE->findArrayDimensions(Terms, Shape->DelinearizedSizes,
                             Context.ElementSize[BasePointer]);
 
-    if (!AllowNonAffine)
-      for (const SCEV *DelinearizedSize : Shape->DelinearizedSizes) {
-        if (auto *Unknown = dyn_cast<SCEVUnknown>(DelinearizedSize)) {
-          auto *V = dyn_cast<Value>(Unknown->getValue());
-          if (isa<UndefValue>(V)) {
-            invalid<ReportDifferentArrayElementSize>(
-                Context, /*Assert=*/true,
-                Context.Accesses[BasePointer].front().first, BaseValue);
-            return false;
-          }
-          if (auto *Load = dyn_cast<LoadInst>(V)) {
-            if (Context.CurRegion.contains(Load) &&
-                isHoistableLoad(Load, CurRegion, *LI, *SE))
-              Context.RequiredILS.insert(Load);
-            continue;
-          }
-        }
-        if (hasScalarDepsInsideRegion(DelinearizedSize, &CurRegion))
-          invalid<ReportNonAffineAccess>(
-              Context, /*Assert=*/true, DelinearizedSize,
-              Context.Accesses[BasePointer].front().first, BaseValue);
+    for (const SCEV *DelinearizedSize : Shape->DelinearizedSizes) {
+      if (!isAffine(DelinearizedSize, Context, nullptr)) {
+        Shape->DelinearizedSizes.clear();
+        break;
       }
+      if (auto *Unknown = dyn_cast<SCEVUnknown>(DelinearizedSize)) {
+        auto *V = dyn_cast<Value>(Unknown->getValue());
+        if (auto *Load = dyn_cast<LoadInst>(V)) {
+          if (Context.CurRegion.contains(Load) &&
+              isHoistableLoad(Load, CurRegion, *LI, *SE))
+            Context.RequiredILS.insert(Load);
+          continue;
+        }
+      }
+      if (hasScalarDepsInsideRegion(DelinearizedSize, &CurRegion))
+        invalid<ReportNonAffineAccess>(
+            Context, /*Assert=*/true, DelinearizedSize,
+            Context.Accesses[BasePointer].front().first, BaseValue);
+    }
 
     // No array shape derived.
     if (Shape->DelinearizedSizes.empty()) {
