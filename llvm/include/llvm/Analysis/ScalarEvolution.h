@@ -127,12 +127,6 @@ namespace llvm {
     /// Print out the internal representation of this scalar to the specified
     /// stream.  This should really only be used for debugging purposes.
     void print(raw_ostream &OS) const;
-
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-    /// This method is used for debugging.
-    ///
-    void dump() const;
-#endif
   };
 
   // Specialize FoldingSetTrait for SCEV to avoid needing to compute
