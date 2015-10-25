@@ -799,6 +799,7 @@ class X86_32ABIInfo : public ABIInfo {
   bool IsRetSmallStructInRegABI;
   bool IsWin32StructABI;
   bool IsSoftFloatABI;
+  bool IsMCUABI;
   unsigned DefaultNumRegisterParameters;
 
   static bool isRegisterSize(unsigned Size) {
@@ -853,6 +854,7 @@ public:
       IsRetSmallStructInRegABI(RetSmallStructInRegABI), 
       IsWin32StructABI(Win32StructABI),
       IsSoftFloatABI(SoftFloatABI),
+      IsMCUABI(CGT.getTarget().getTriple().isEnvironmentIAMCU()),
       DefaultNumRegisterParameters(NumRegisterParameters) {}
 };
 
@@ -986,7 +988,7 @@ void X86_32TargetCodeGenInfo::addReturnRegisterOutputs(
 }
 
 /// shouldReturnTypeInRegister - Determine if the given type should be
-/// returned in a register (for the Darwin ABI).
+/// returned in a register (for the Darwin and MCU ABI).
 bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
                                                ASTContext &Context) const {
   uint64_t Size = Context.getTypeSize(Ty);
@@ -1226,9 +1228,18 @@ bool X86_32ABIInfo::shouldUseInReg(QualType Ty, CCState &State,
   if (SizeInRegs == 0)
     return false;
 
-  if (SizeInRegs > State.FreeRegs) {
-    State.FreeRegs = 0;
-    return false;
+  if (!IsMCUABI) {
+    if (SizeInRegs > State.FreeRegs) {
+      State.FreeRegs = 0;
+      return false;
+    }
+  } else {
+    // The MCU psABI allows passing parameters in-reg even if there are
+    // earlier parameters that are passed on the stack. Also,
+    // it does not allow passing >8-byte structs in-register,
+    // even if there are 3 free registers available.
+    if (SizeInRegs > State.FreeRegs || SizeInRegs > 2)
+      return false;
   }
 
   State.FreeRegs -= SizeInRegs;
@@ -1372,6 +1383,8 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
     State.FreeSSERegs = 6;
   } else if (FI.getHasRegParm())
     State.FreeRegs = FI.getRegParm();
+  else if (IsMCUABI)
+    State.FreeRegs = 3;
   else
     State.FreeRegs = DefaultNumRegisterParameters;
 
@@ -1520,7 +1533,7 @@ bool X86_32TargetCodeGenInfo::isStructReturnInRegABI(
     return true;
   }
 
-  if (Triple.isOSDarwin())
+  if (Triple.isOSDarwin() || Triple.isEnvironmentIAMCU())
     return true;
 
   switch (Triple.getOS()) {
