@@ -45,12 +45,12 @@ int main()
     {
         A<int> a;
         assert(std::allocator_traits<A<int> >::max_size(a) ==
-               std::numeric_limits<std::size_t>::max());
+               std::numeric_limits<std::size_t>::max() / sizeof(int));
     }
     {
         const A<int> a = {};
         assert(std::allocator_traits<A<int> >::max_size(a) ==
-               std::numeric_limits<std::size_t>::max());
+               std::numeric_limits<std::size_t>::max() / sizeof(int));
     }
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
     {
