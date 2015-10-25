@@ -58,6 +58,8 @@ public:
     template <class OuterA2>
         scoped_allocator_adaptor(const scoped_allocator_adaptor<OuterA2, InnerAllocs...>&& other) noexcept;
 
+    scoped_allocator_adaptor& operator=(const scoped_allocator_adaptor&) = default;
+    scoped_allocator_adaptor& operator=(scoped_allocator_adaptor&&) = default;
     ~scoped_allocator_adaptor();
 
     inner_allocator_type& inner_allocator() noexcept;
@@ -457,6 +459,8 @@ public:
             scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>&& __other) _NOEXCEPT
                 : base(_VSTD::move(__other)) {}
 
+    // scoped_allocator_adaptor& operator=(const scoped_allocator_adaptor&) = default;
+    // scoped_allocator_adaptor& operator=(scoped_allocator_adaptor&&) = default;
     // ~scoped_allocator_adaptor() = default;
 
     _LIBCPP_INLINE_VISIBILITY
