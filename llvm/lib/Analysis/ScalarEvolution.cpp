@@ -5461,14 +5461,6 @@ ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
     break;
   }
   default:
-#if 0
-    dbgs() << "computeBackedgeTakenCount ";
-    if (ExitCond->getOperand(0)->getType()->isUnsigned())
-      dbgs() << "[unsigned] ";
-    dbgs() << *LHS << "   "
-         << Instruction::getOpcodeName(Instruction::ICmp)
-         << "   " << *RHS << "\n";
-#endif
     break;
   }
   return computeExitCountExhaustively(L, ExitCond, !L->contains(TBB));
@@ -5581,11 +5573,6 @@ ScalarEvolution::computeLoadConstantCompareExitLimit(
     Result = ConstantExpr::getICmp(predicate, Result, RHS);
     if (!isa<ConstantInt>(Result)) break;  // Couldn't decide for sure
     if (cast<ConstantInt>(Result)->getValue().isMinValue()) {
-#if 0
-      dbgs() << "\n***\n*** Computed loop count " << *ItCst
-             << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
-             << "***\n";
-#endif
       ++NumArrayLenItCounts;
       return getConstant(ItCst);   // Found terminating iteration!
     }
@@ -6392,10 +6379,6 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool ControlsExit) {
     const SCEVConstant *R1 = dyn_cast<SCEVConstant>(Roots.first);
     const SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1 && R2) {
-#if 0
-      dbgs() << "HFTZ: " << *V << " - sol#1: " << *R1
-             << "  sol#2: " << *R2 << "\n";
-#endif
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
           dyn_cast<ConstantInt>(ConstantExpr::getICmp(CmpInst::ICMP_ULT,
