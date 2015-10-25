@@ -262,8 +262,8 @@ bool llvm::formLCSSARecursively(Loop &L, DominatorTree &DT, LoopInfo *LI,
   bool Changed = false;
 
   // Recurse depth-first through inner loops.
-  for (Loop *L : L.getSubLoops())
-    Changed |= formLCSSARecursively(*L, DT, LI, SE);
+  for (Loop *SubLoop : L.getSubLoops())
+    Changed |= formLCSSARecursively(*SubLoop, DT, LI, SE);
 
   Changed |= formLCSSA(L, DT, LI, SE);
   return Changed;
