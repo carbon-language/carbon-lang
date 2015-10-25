@@ -1591,6 +1591,43 @@ define <4 x i32> @shuffle_v4i32_bitcast_0415(<4 x i32> %a, <4 x i32> %b) {
   ret <4 x i32> %bitcast32
 }
 
+define <4 x float> @shuffle_v4f32_bitcast_4401(<4 x float> %a, <4 x i32> %b) {
+; SSE-LABEL: shuffle_v4f32_bitcast_4401:
+; SSE:       # BB#0:
+; SSE-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,0,1,1]
+; SSE-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0]
+; SSE-NEXT:    movapd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v4f32_bitcast_4401:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,0,1,1]
+; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; AVX-NEXT:    retq
+  %1 = shufflevector <4 x i32> %b, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+  %2 = bitcast <4 x i32> %1 to <2 x double>
+  %3 = bitcast <4 x float> %a to <2 x double>
+  %4 = shufflevector <2 x double> %2, <2 x double> %3, <2 x i32> <i32 0, i32 2>
+  %5 = bitcast <2 x double> %4 to <4 x float>
+  ret <4 x float> %5
+}
+
+define <4 x float> @shuffle_v4f32_bitcast_0045(<4 x float> %a, <4 x i32> %b) {
+; SSE-LABEL: shuffle_v4f32_bitcast_0045:
+; SSE:       # BB#0:
+; SSE-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,0],xmm1[0,1]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v4f32_bitcast_0045:
+; AVX:       # BB#0:
+; AVX-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[0,0],xmm1[0,1]
+; AVX-NEXT:    retq
+  %1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+  %2 = bitcast <4 x i32> %b to <4 x float>
+  %3 = shufflevector <4 x float> %1, <4 x float> %2, <4 x i32> <i32 1, i32 0, i32 4, i32 5>
+  ret <4 x float> %3
+}
+
 define <4 x i32> @insert_reg_and_zero_v4i32(i32 %a) {
 ; SSE-LABEL: insert_reg_and_zero_v4i32:
 ; SSE:       # BB#0:
