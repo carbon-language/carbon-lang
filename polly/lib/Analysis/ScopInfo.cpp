@@ -2552,7 +2552,7 @@ void Scop::hoistInvariantLoads() {
       // the region if it is also a memory access. Each ScopArrayInfo object
       // that has a base pointer origin has a base pointer that is loaded and
       // that it is invariant, thus it will be hoisted too. However, if there is
-      // no bease pointer origin we check that the base pointer is defined
+      // no base pointer origin we check that the base pointer is defined
       // outside the region.
       const ScopArrayInfo *SAI = MA->getScopArrayInfo();
       while (auto *BasePtrOriginSAI = SAI->getBasePtrOriginSAI())
