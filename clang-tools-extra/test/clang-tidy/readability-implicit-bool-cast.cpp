@@ -94,9 +94,9 @@ void implicitCastFromBoolLiterals() {
   // CHECK-MESSAGES: :[[@LINE-1]]:33: warning: implicit cast bool -> 'unsigned long'
   // CHECK-FIXES: functionTaking<unsigned long>(0u);
 
-  functionTaking<char>(true);
-  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: implicit cast bool -> 'char'
-  // CHECK-FIXES: functionTaking<char>(1);
+  functionTaking<signed char>(true);
+  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: implicit cast bool -> 'signed char'
+  // CHECK-FIXES: functionTaking<signed char>(1);
 
   functionTaking<float>(false);
   // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: implicit cast bool -> 'float'
@@ -183,9 +183,9 @@ void implicitCastToBoolSimpleCases() {
   // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: implicit cast 'double' -> bool
   // CHECK-FIXES: functionTaking<bool>(doubleFloating != 0.0);
 
-  char character = 'a';
+  signed char character = 'a';
   functionTaking<bool>(character);
-  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: implicit cast 'char' -> bool
+  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: implicit cast 'signed char' -> bool
   // CHECK-FIXES: functionTaking<bool>(character != 0);
 
   int* pointer = nullptr;
@@ -210,9 +210,9 @@ void implicitCastToBoolInSingleExpressions() {
   // CHECK-MESSAGES: :[[@LINE-1]]:30: warning: implicit cast 'float' -> bool
   // CHECK-FIXES: bool boolComingFromFloat = floating != 0.0f;
 
-  char character = 'a';
+  signed char character = 'a';
   bool boolComingFromChar = character;
-  // CHECK-MESSAGES: :[[@LINE-1]]:29: warning: implicit cast 'char' -> bool
+  // CHECK-MESSAGES: :[[@LINE-1]]:29: warning: implicit cast 'signed char' -> bool
   // CHECK-FIXES: bool boolComingFromChar = character != 0;
 
   int* pointer = nullptr;
@@ -252,9 +252,9 @@ void implicitCastInNegationExpressions() {
   // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: implicit cast 'float' -> bool
   // CHECK-FIXES: bool boolComingFromNegatedFloat = floating == 0.0f;
 
-  char character = 'a';
+  signed char character = 'a';
   bool boolComingFromNegatedChar = (! character);
-  // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: implicit cast 'char' -> bool
+  // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: implicit cast 'signed char' -> bool
   // CHECK-FIXES: bool boolComingFromNegatedChar = (character == 0);
 
   int* pointer = nullptr;
