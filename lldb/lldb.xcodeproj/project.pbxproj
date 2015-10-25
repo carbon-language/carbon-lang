@@ -1103,6 +1103,19 @@
 		23059A0F1958B319007B8189 /* SBUnixSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBUnixSignals.cpp; path = source/API/SBUnixSignals.cpp; sourceTree = "<group>"; };
 		23059A111958B37B007B8189 /* SBUnixSignals.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBUnixSignals.h; path = include/lldb/API/SBUnixSignals.h; sourceTree = "<group>"; };
 		23173F8B192BA93F005C708F /* lldb-x86-register-enums.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-x86-register-enums.h"; path = "Utility/lldb-x86-register-enums.h"; sourceTree = "<group>"; };
+		2321F9381BDD332400BA9A93 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		2321F9391BDD332400BA9A93 /* SocketAddressTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SocketAddressTest.cpp; sourceTree = "<group>"; };
+		2321F93A1BDD332400BA9A93 /* SocketTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SocketTest.cpp; sourceTree = "<group>"; };
+		2321F93B1BDD332400BA9A93 /* SymbolsTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolsTest.cpp; sourceTree = "<group>"; };
+		2321F93D1BDD33CE00BA9A93 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		2321F93E1BDD33CE00BA9A93 /* TestArgs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TestArgs.cpp; sourceTree = "<group>"; };
+		2321F9401BDD340D00BA9A93 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		2321F9431BDD346100BA9A93 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		2321F9441BDD346100BA9A93 /* StringExtractorTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StringExtractorTest.cpp; sourceTree = "<group>"; };
+		2321F9451BDD346100BA9A93 /* TaskPoolTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TaskPoolTest.cpp; sourceTree = "<group>"; };
+		2321F9461BDD346100BA9A93 /* UriParserTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UriParserTest.cpp; sourceTree = "<group>"; };
+		2321F94C1BDD360F00BA9A93 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		2321F94D1BDD360F00BA9A93 /* PythonDataObjectsTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PythonDataObjectsTests.cpp; sourceTree = "<group>"; };
 		232CB60B191E00CC00EF39FC /* NativeBreakpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NativeBreakpoint.cpp; path = source/Host/common/NativeBreakpoint.cpp; sourceTree = "<group>"; };
 		232CB60D191E00CC00EF39FC /* NativeBreakpointList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NativeBreakpointList.cpp; path = source/Host/common/NativeBreakpointList.cpp; sourceTree = "<group>"; };
 		232CB60F191E00CC00EF39FC /* NativeProcessProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = NativeProcessProtocol.cpp; path = source/Host/common/NativeProcessProtocol.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
@@ -2853,6 +2866,7 @@
 				26F5C22410F3D950009D5894 /* Tools */,
 				2690CD181A6DC0D000E717C8 /* lldb-mi */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
+				2321F9331BDD326500BA9A93 /* unittests */,
 			);
 			name = lldb;
 			sourceTree = "<group>";
@@ -2905,6 +2919,66 @@
 				23042D101976CA0A00621B2C /* PlatformKalimba.cpp */,
 			);
 			path = Kalimba;
+			sourceTree = "<group>";
+		};
+		2321F9331BDD326500BA9A93 /* unittests */ = {
+			isa = PBXGroup;
+			children = (
+				2321F9371BDD32ED00BA9A93 /* Host */,
+				2321F93C1BDD339A00BA9A93 /* Interpreter */,
+				2321F93F1BDD33D800BA9A93 /* ScriptInterpreter */,
+				2321F9421BDD343A00BA9A93 /* Utility */,
+			);
+			path = unittests;
+			sourceTree = "<group>";
+		};
+		2321F9371BDD32ED00BA9A93 /* Host */ = {
+			isa = PBXGroup;
+			children = (
+				2321F9381BDD332400BA9A93 /* CMakeLists.txt */,
+				2321F9391BDD332400BA9A93 /* SocketAddressTest.cpp */,
+				2321F93A1BDD332400BA9A93 /* SocketTest.cpp */,
+				2321F93B1BDD332400BA9A93 /* SymbolsTest.cpp */,
+			);
+			path = Host;
+			sourceTree = "<group>";
+		};
+		2321F93C1BDD339A00BA9A93 /* Interpreter */ = {
+			isa = PBXGroup;
+			children = (
+				2321F93D1BDD33CE00BA9A93 /* CMakeLists.txt */,
+				2321F93E1BDD33CE00BA9A93 /* TestArgs.cpp */,
+			);
+			path = Interpreter;
+			sourceTree = "<group>";
+		};
+		2321F93F1BDD33D800BA9A93 /* ScriptInterpreter */ = {
+			isa = PBXGroup;
+			children = (
+				2321F9401BDD340D00BA9A93 /* CMakeLists.txt */,
+				2321F94B1BDD35D500BA9A93 /* Python */,
+			);
+			path = ScriptInterpreter;
+			sourceTree = "<group>";
+		};
+		2321F9421BDD343A00BA9A93 /* Utility */ = {
+			isa = PBXGroup;
+			children = (
+				2321F9431BDD346100BA9A93 /* CMakeLists.txt */,
+				2321F9441BDD346100BA9A93 /* StringExtractorTest.cpp */,
+				2321F9451BDD346100BA9A93 /* TaskPoolTest.cpp */,
+				2321F9461BDD346100BA9A93 /* UriParserTest.cpp */,
+			);
+			path = Utility;
+			sourceTree = "<group>";
+		};
+		2321F94B1BDD35D500BA9A93 /* Python */ = {
+			isa = PBXGroup;
+			children = (
+				2321F94C1BDD360F00BA9A93 /* CMakeLists.txt */,
+				2321F94D1BDD360F00BA9A93 /* PythonDataObjectsTests.cpp */,
+			);
+			path = Python;
 			sourceTree = "<group>";
 		};
 		233B008B196106E90090E598 /* Linux */ = {
