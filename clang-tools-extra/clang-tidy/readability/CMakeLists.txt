@@ -6,6 +6,7 @@ add_clang_library(clangTidyReadabilityModule
   ElseAfterReturnCheck.cpp
   FunctionSizeCheck.cpp
   IdentifierNamingCheck.cpp
+  ImplicitBoolCastCheck.cpp
   InconsistentDeclarationParameterNameCheck.cpp
   NamedParameterCheck.cpp
   NamespaceCommentCheck.cpp
