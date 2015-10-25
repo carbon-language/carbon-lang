@@ -254,7 +254,11 @@ bool ScopDetection::isMaxRegionInScop(const Region &R, bool Verify) const {
     return false;
 
   if (Verify) {
-    DetectionContext Context(const_cast<Region &>(R), *AA, false /*verifying*/);
+    DetectionContextMap.erase(&R);
+    const auto &It = DetectionContextMap.insert(
+        std::make_pair(&R, DetectionContext(const_cast<Region &>(R), *AA,
+                                            false /*verifying*/)));
+    DetectionContext &Context = It.first->second;
     return isValidRegion(Context);
   }
 

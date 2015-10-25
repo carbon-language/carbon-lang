@@ -201,7 +201,7 @@ private:
 
   /// @brief Map to remember detection contexts for valid regions.
   using DetectionContextMapTy = DenseMap<const Region *, DetectionContext>;
-  DetectionContextMapTy DetectionContextMap;
+  mutable DetectionContextMapTy DetectionContextMap;
 
   // Remember a list of errors for every region.
   mutable RejectLogsContainer RejectLogs;
