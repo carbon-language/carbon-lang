@@ -13,6 +13,8 @@
 #include <type_traits>
 #include <cassert>
 
+#include <MoveOnly.h>
+
 int A_constructed = 0;
 
 struct A
@@ -29,16 +31,33 @@ public:
 
 int main()
 {
-    typedef std::aligned_storage<3*sizeof(A), std::alignment_of<A>::value>::type
+    {
+    typedef A S;
+    typedef std::aligned_storage<3*sizeof(S), std::alignment_of<S>::value>::type
             Storage;
     Storage buffer;
-    std::raw_storage_iterator<A*, A> it((A*)&buffer);
+    std::raw_storage_iterator<S*, S> it((S*)&buffer);
     assert(A_constructed == 0);
     for (int i = 0; i < 3; ++i)
     {
-        *it++ = A(i+1);
-        A* ap = (A*)&buffer + i;
+        *it++ = S(i+1);
+        S* ap = (S*)&buffer + i;
         assert(*ap == i+1);
         assert(A_constructed == i+1);
     }
+    }
+#if _LIBCPP_STD_VER >= 14
+    {
+    typedef MoveOnly S;
+    typedef std::aligned_storage<3*sizeof(S), std::alignment_of<S>::value>::type
+            Storage;
+    Storage buffer;
+    std::raw_storage_iterator<S*, S> it((S*)&buffer);
+    S m{1};
+    *it++ = std::move(m);
+    assert(m.get() == 0); // moved from
+    S *ap = (S*) &buffer;
+    assert(ap->get() == 1); // original value
+    }
+#endif
 }
