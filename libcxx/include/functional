@@ -1249,7 +1249,7 @@ private:
     type __f_;
 
 public:
-    _LIBCPP_INLINE_VISIBILITY __mem_fn(type __f) : __f_(__f) {}
+    _LIBCPP_INLINE_VISIBILITY __mem_fn(type __f) _NOEXCEPT : __f_(__f) {}
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     // invoke
@@ -1364,7 +1364,7 @@ public:
 template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 __mem_fn<_Rp _Tp::*>
-mem_fn(_Rp _Tp::* __pm)
+mem_fn(_Rp _Tp::* __pm) _NOEXCEPT
 {
     return __mem_fn<_Rp _Tp::*>(__pm);
 }

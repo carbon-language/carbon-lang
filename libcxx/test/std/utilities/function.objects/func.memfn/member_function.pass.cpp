@@ -69,4 +69,7 @@ int main()
     test0(std::mem_fn(&A::test0));
     test1(std::mem_fn(&A::test1));
     test2(std::mem_fn(&A::test2));
+#if __has_feature(cxx_noexcept)
+    static_assert((noexcept(std::mem_fn(&A::test0))), ""); // LWG#2489
+#endif
 }
