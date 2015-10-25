@@ -133,7 +133,7 @@ template <class ELFT>
 typename MergeInputSection<ELFT>::uintX_t
 MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
   ArrayRef<uint8_t> D = this->getSectionData();
-  StringRef Data((char *)D.data(), D.size());
+  StringRef Data((const char *)D.data(), D.size());
   uintX_t Size = Data.size();
   if (Offset >= Size)
     error("Entry is past the end of the section");
