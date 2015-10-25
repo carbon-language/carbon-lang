@@ -186,7 +186,8 @@ int AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   if (!SrcTy.isSimple() || !DstTy.isSimple())
     return BaseT::getCastInstrCost(Opcode, Dst, Src);
 
-  static const TypeConversionCostTblEntry<MVT> ConversionTbl[] = {
+  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+  ConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
     { ISD::ZERO_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
     { ISD::SIGN_EXTEND, MVT::v2i64, MVT::v2i32, 1 },
