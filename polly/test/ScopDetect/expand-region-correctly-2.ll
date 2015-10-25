@@ -1,9 +1,7 @@
-; RUN: opt %loadPolly -analyze -polly-scops %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect \
+; RUN:     -analyze < %s | FileCheck %s
 ;
-; At some point this caused a problem in the schedule generation and we
-; keep the test to avoid regressions there.
-;
-; CHECK: Statements
+; CHECK: Valid Region for Scop: if.end.1631 => for.cond.1647.outer
 ;
 target triple = "x86_64-unknown-linux-gnu"
 
