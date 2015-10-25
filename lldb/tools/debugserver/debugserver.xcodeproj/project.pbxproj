@@ -783,7 +783,7 @@
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -885,7 +885,7 @@
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -985,7 +985,7 @@
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1236,7 +1236,7 @@
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
 					"$(SDKROOT)/Developer/Library/PrivateFrameworks",
-			);
+				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_BUILDANDINTEGRATION;
@@ -1278,7 +1278,7 @@
 				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
-		};
+			};
 			name = BuildAndIntegration;
 		};
 		4968B7A916657FAE00741ABB /* DebugClang */ = {
@@ -1408,7 +1408,7 @@
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1544,7 +1544,7 @@
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1750,7 +1750,7 @@
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1877,7 +1877,7 @@
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
