@@ -19,6 +19,9 @@
 
 int main()
 {
+    // LWG2462 std::ios_base::failure is overspecified
+    static_assert((std::is_base_of<std::system_error, std::ios_base::failure>::value), "");
+
     {
         std::string what_arg("io test message");
         std::ios_base::failure se(what_arg, make_error_code(std::errc::is_a_directory));
