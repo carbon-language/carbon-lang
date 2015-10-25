@@ -293,7 +293,7 @@ int X86TTIImpl::getArithmeticInstrCost(
 
   if (ISD == ISD::SHL &&
       Op2Info == TargetTransformInfo::OK_NonUniformConstantValue) {
-    EVT VT = LT.second;
+    MVT VT = LT.second;
     // Vector shift left by non uniform constant can be lowered
     // into vector multiply (pmullw/pmulld).
     if ((VT == MVT::v8i16 && ST->hasSSE2()) ||
@@ -391,7 +391,7 @@ int X86TTIImpl::getArithmeticInstrCost(
 
   // Look for AVX1 lowering tricks.
   if (ST->hasAVX() && !ST->hasAVX2()) {
-    EVT VT = LT.second;
+    MVT VT = LT.second;
 
     int Idx = CostTableLookup(AVX1CostTable, ISD, VT);
     if (Idx != -1)
