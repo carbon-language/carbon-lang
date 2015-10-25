@@ -82,7 +82,7 @@ getZeroLiteralToCompareWithForGivenType(CastKind CastExpressionKind,
     return Context.getLangOpts().CPlusPlus11 ? "nullptr" : "0";
 
   default:
-    assert(false && "Unexpected cast kind");
+    llvm_unreachable("Unexpected cast kind");
   }
   return "";
 }
