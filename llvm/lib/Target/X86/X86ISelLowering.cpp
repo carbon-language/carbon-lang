@@ -27492,3 +27492,27 @@ bool X86TargetLowering::isIntDivCheap(EVT VT, AttributeSet Attr) const {
                                    Attribute::MinSize);
   return OptSize && !VT.isVector();
 }
+
+void X86TargetLowering::markInRegArguments(SelectionDAG &DAG,
+       TargetLowering::ArgListTy& Args) const {
+  // The MCU psABI requires some arguments to be passed in-register.
+  // For regular calls, the inreg arguments are marked by the front-end.
+  // However, for compiler generated library calls, we have to patch this
+  // up here.
+  if (!Subtarget->isTargetMCU() || !Args.size())
+    return;
+
+  unsigned FreeRegs = 3;
+  for (auto &Arg : Args) {
+    // For library functions, we do not expect any fancy types.
+    unsigned Size = DAG.getDataLayout().getTypeSizeInBits(Arg.Ty);
+    unsigned SizeInRegs = (Size + 31) / 32;
+    if (SizeInRegs > 2 || SizeInRegs > FreeRegs)
+      continue;
+
+    Arg.isInReg = true;
+    FreeRegs -= SizeInRegs;
+    if (!FreeRegs)
+      break;
+  }
+}

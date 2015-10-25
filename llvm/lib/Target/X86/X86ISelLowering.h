@@ -917,6 +917,9 @@ namespace llvm {
 
     bool isIntDivCheap(EVT VT, AttributeSet Attr) const override;
 
+    void markInRegArguments(SelectionDAG &DAG, TargetLowering::ArgListTy& Args)
+      const override;
+
   protected:
     std::pair<const TargetRegisterClass *, uint8_t>
     findRepresentativeClass(const TargetRegisterInfo *TRI,
