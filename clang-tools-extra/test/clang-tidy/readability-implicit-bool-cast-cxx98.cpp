@@ -1,6 +1,9 @@
 // RUN: clang-tidy %s -checks=-*,readability-implicit-bool-cast -- -std=c++98
 
-#include <cstddef> // for NULL
+// We need NULL macro, but some buildbots don't like including <cstddef> header
+// This is a portable way of getting it to work
+#undef NULL
+#define NULL 0L
 
 template<typename T>
 void functionTaking(T);
