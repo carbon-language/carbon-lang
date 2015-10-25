@@ -23,6 +23,7 @@ function(add_lldb_unittest test_name)
   llvm_config(${test_name} ${LLVM_LINK_COMPONENTS})
 endfunction()
 
+add_subdirectory(Editline)
 add_subdirectory(Host)
 add_subdirectory(Interpreter)
 add_subdirectory(ScriptInterpreter)

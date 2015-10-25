@@ -68,6 +68,12 @@
 		23059A0719532B96007B8189 /* LinuxSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23059A0519532B96007B8189 /* LinuxSignals.cpp */; };
 		23059A101958B319007B8189 /* SBUnixSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23059A0F1958B319007B8189 /* SBUnixSignals.cpp */; };
 		23059A121958B3B2007B8189 /* SBUnixSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = 23059A111958B37B007B8189 /* SBUnixSignals.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2326CF441BDD643700A5CEAC /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
+		2326CF491BDD67D800A5CEAC /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2326CF471BDD67C100A5CEAC /* libncurses.dylib */; };
+		2326CF4B1BDD681800A5CEAC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2326CF4A1BDD681800A5CEAC /* libz.dylib */; };
+		2326CF4D1BDD684B00A5CEAC /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2326CF4C1BDD684B00A5CEAC /* libedit.dylib */; };
+		2326CF4F1BDD687800A5CEAC /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2326CF4E1BDD687800A5CEAC /* libpanel.dylib */; };
+		2326CF521BDD693B00A5CEAC /* EditlineTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2326CF511BDD693B00A5CEAC /* EditlineTest.cpp */; };
 		232CB615191E00CD00EF39FC /* NativeBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232CB60B191E00CC00EF39FC /* NativeBreakpoint.cpp */; };
 		232CB617191E00CD00EF39FC /* NativeBreakpointList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232CB60D191E00CC00EF39FC /* NativeBreakpointList.cpp */; };
 		232CB619191E00CD00EF39FC /* NativeProcessProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232CB60F191E00CC00EF39FC /* NativeProcessProtocol.cpp */; };
@@ -78,6 +84,14 @@
 		236124A41986B4E2004EFC37 /* IOObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A21986B4E2004EFC37 /* IOObject.cpp */; };
 		236124A51986B4E2004EFC37 /* Socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A31986B4E2004EFC37 /* Socket.cpp */; };
 		2377C2F819E613C100737875 /* PipePosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2377C2F719E613C100737875 /* PipePosix.cpp */; };
+		239504DE1BDD453200963CEA /* SocketAddressTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F9391BDD332400BA9A93 /* SocketAddressTest.cpp */; };
+		239504DF1BDD453200963CEA /* SocketTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F93A1BDD332400BA9A93 /* SocketTest.cpp */; };
+		239504E01BDD453200963CEA /* SymbolsTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F93B1BDD332400BA9A93 /* SymbolsTest.cpp */; };
+		239504E11BDD453E00963CEA /* TestArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F93E1BDD33CE00BA9A93 /* TestArgs.cpp */; };
+		239504E21BDD454500963CEA /* PythonDataObjectsTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F94D1BDD360F00BA9A93 /* PythonDataObjectsTests.cpp */; };
+		239504E31BDD454B00963CEA /* StringExtractorTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F9441BDD346100BA9A93 /* StringExtractorTest.cpp */; };
+		239504E41BDD454B00963CEA /* TaskPoolTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F9451BDD346100BA9A93 /* TaskPoolTest.cpp */; };
+		239504E51BDD454B00963CEA /* UriParserTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2321F9461BDD346100BA9A93 /* UriParserTest.cpp */; };
 		23DDF226196C3EE600BB8417 /* CommandOptionValidators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */; };
 		23EDE33319269E7C00F6A132 /* NativeRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -898,6 +912,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		2326CF411BDD636100A5CEAC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26680206115FD0ED008E1FE4;
+			remoteInfo = LLDB;
+		};
 		235AFBC1199BC70700897A4B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -1048,6 +1069,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		239504D21BDD451400963CEA /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		940B04E31A89875C0045D5F7 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1123,6 +1153,13 @@
 		2321F9461BDD346100BA9A93 /* UriParserTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UriParserTest.cpp; sourceTree = "<group>"; };
 		2321F94C1BDD360F00BA9A93 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		2321F94D1BDD360F00BA9A93 /* PythonDataObjectsTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PythonDataObjectsTests.cpp; sourceTree = "<group>"; };
+		2326CF3F1BDD613E00A5CEAC /* Python.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Python.framework; path = System/Library/Frameworks/Python.framework; sourceTree = SDKROOT; };
+		2326CF451BDD647400A5CEAC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		2326CF471BDD67C100A5CEAC /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = ../../../../../../usr/lib/libncurses.dylib; sourceTree = "<group>"; };
+		2326CF4A1BDD681800A5CEAC /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = ../../../../../../usr/lib/libz.dylib; sourceTree = "<group>"; };
+		2326CF4C1BDD684B00A5CEAC /* libedit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libedit.dylib; path = ../../../../../../usr/lib/libedit.dylib; sourceTree = "<group>"; };
+		2326CF4E1BDD687800A5CEAC /* libpanel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpanel.dylib; path = ../../../../../../usr/lib/libpanel.dylib; sourceTree = "<group>"; };
+		2326CF511BDD693B00A5CEAC /* EditlineTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EditlineTest.cpp; sourceTree = "<group>"; };
 		232CB60B191E00CC00EF39FC /* NativeBreakpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NativeBreakpoint.cpp; path = source/Host/common/NativeBreakpoint.cpp; sourceTree = "<group>"; };
 		232CB60D191E00CC00EF39FC /* NativeBreakpointList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NativeBreakpointList.cpp; path = source/Host/common/NativeBreakpointList.cpp; sourceTree = "<group>"; };
 		232CB60F191E00CC00EF39FC /* NativeProcessProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = NativeProcessProtocol.cpp; path = source/Host/common/NativeProcessProtocol.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
@@ -1150,6 +1187,7 @@
 		237C577A19AF9D9F00213D59 /* HostInfoLinux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoLinux.h; path = include/lldb/Host/linux/HostInfoLinux.h; sourceTree = SOURCE_ROOT; };
 		239504C21BDD3FD600963CEA /* gtest_common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gtest_common.h; sourceTree = "<group>"; };
 		239504C61BDD3FF300963CEA /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		239504D41BDD451400963CEA /* lldb-gtest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-gtest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		23AB052D199FF639003B8084 /* FreeBSDThread.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FreeBSDThread.cpp; sourceTree = "<group>"; };
 		23AB052E199FF639003B8084 /* FreeBSDThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FreeBSDThread.h; sourceTree = "<group>"; };
 		23AB052F199FF639003B8084 /* ProcessFreeBSD.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessFreeBSD.cpp; sourceTree = "<group>"; };
@@ -2791,6 +2829,18 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		239504D11BDD451400963CEA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2326CF4F1BDD687800A5CEAC /* libpanel.dylib in Frameworks */,
+				2326CF4D1BDD684B00A5CEAC /* libedit.dylib in Frameworks */,
+				2326CF4B1BDD681800A5CEAC /* libz.dylib in Frameworks */,
+				2326CF491BDD67D800A5CEAC /* libncurses.dylib in Frameworks */,
+				2326CF441BDD643700A5CEAC /* liblldb-core.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		26579F66126A25920007C5CB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -2869,6 +2919,12 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
+				2326CF4E1BDD687800A5CEAC /* libpanel.dylib */,
+				2326CF4C1BDD684B00A5CEAC /* libedit.dylib */,
+				2326CF4A1BDD681800A5CEAC /* libz.dylib */,
+				2326CF471BDD67C100A5CEAC /* libncurses.dylib */,
+				2326CF451BDD647400A5CEAC /* Foundation.framework */,
+				2326CF3F1BDD613E00A5CEAC /* Python.framework */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				264E8576159BE51A00E9D7A2 /* Resources */,
 				08FB7795FE84155DC02AAC07 /* Source */,
@@ -2916,6 +2972,7 @@
 				26DC6A101337FE6900FF7998 /* lldb-server */,
 				2690CD171A6DC0D000E717C8 /* lldb-mi */,
 				942829C01A89835300521B30 /* argdumper */,
+				239504D41BDD451400963CEA /* lldb-gtest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -2937,6 +2994,7 @@
 				239504C21BDD3FD600963CEA /* gtest_common.h */,
 				2321F9371BDD32ED00BA9A93 /* Host */,
 				2321F93C1BDD339A00BA9A93 /* Interpreter */,
+				2326CF501BDD68CA00A5CEAC /* Editline */,
 				2321F93F1BDD33D800BA9A93 /* ScriptInterpreter */,
 				2321F9421BDD343A00BA9A93 /* Utility */,
 			);
@@ -2990,6 +3048,14 @@
 				2321F94D1BDD360F00BA9A93 /* PythonDataObjectsTests.cpp */,
 			);
 			path = Python;
+			sourceTree = "<group>";
+		};
+		2326CF501BDD68CA00A5CEAC /* Editline */ = {
+			isa = PBXGroup;
+			children = (
+				2326CF511BDD693B00A5CEAC /* EditlineTest.cpp */,
+			);
+			path = Editline;
 			sourceTree = "<group>";
 		};
 		233B008B196106E90090E598 /* Linux */ = {
@@ -5757,6 +5823,24 @@
 /* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
+		239504D31BDD451400963CEA /* lldb-gtest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 239504DD1BDD451400963CEA /* Build configuration list for PBXNativeTarget "lldb-gtest" */;
+			buildPhases = (
+				239504D01BDD451400963CEA /* Sources */,
+				239504D11BDD451400963CEA /* Frameworks */,
+				239504D21BDD451400963CEA /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2326CF421BDD636100A5CEAC /* PBXTargetDependency */,
+			);
+			name = "lldb-gtest";
+			productName = "lldb-gtest";
+			productReference = 239504D41BDD451400963CEA /* lldb-gtest */;
+			productType = "com.apple.product-type.tool";
+		};
 		26579F67126A25920007C5CB /* darwin-debug */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 26579F6D126A25BF0007C5CB /* Build configuration list for PBXNativeTarget "darwin-debug" */;
@@ -5900,6 +5984,9 @@
 				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0610;
 				TargetAttributes = {
+					239504D31BDD451400963CEA = {
+						CreatedOnToolsVersion = 7.1;
+					};
 					2690CD161A6DC0D000E717C8 = {
 						CreatedOnToolsVersion = 6.3;
 					};
@@ -5938,6 +6025,7 @@
 				235AFBBB199BC6FD00897A4B /* MacOSX and Linux */,
 				2690CD161A6DC0D000E717C8 /* lldb-mi */,
 				942829BF1A89835300521B30 /* argdumper */,
+				239504D31BDD451400963CEA /* lldb-gtest */,
 			);
 		};
 /* End PBXProject section */
@@ -6110,6 +6198,22 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		239504D01BDD451400963CEA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				239504E51BDD454B00963CEA /* UriParserTest.cpp in Sources */,
+				239504DF1BDD453200963CEA /* SocketTest.cpp in Sources */,
+				239504E11BDD453E00963CEA /* TestArgs.cpp in Sources */,
+				239504E21BDD454500963CEA /* PythonDataObjectsTests.cpp in Sources */,
+				239504E01BDD453200963CEA /* SymbolsTest.cpp in Sources */,
+				239504E31BDD454B00963CEA /* StringExtractorTest.cpp in Sources */,
+				239504E41BDD454B00963CEA /* TaskPoolTest.cpp in Sources */,
+				239504DE1BDD453200963CEA /* SocketAddressTest.cpp in Sources */,
+				2326CF521BDD693B00A5CEAC /* EditlineTest.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		26579F65126A25920007C5CB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -6881,6 +6985,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		2326CF421BDD636100A5CEAC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26680206115FD0ED008E1FE4 /* LLDB */;
+			targetProxy = 2326CF411BDD636100A5CEAC /* PBXContainerItemProxy */;
+		};
 		235AFBC2199BC70700897A4B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 26F5C26910F3D9A4009D5894 /* lldb-tool */;
@@ -7060,6 +7169,9 @@
 					"$(LLDB_COMPRESSION_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
 				);
+				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework;
+				PYTHON_VERSION_MAJOR = 2;
+				PYTHON_VERSION_MINOR = 7;
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
@@ -7141,6 +7253,9 @@
 					"$(LLDB_COMPRESSION_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
 				);
+				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework;
+				PYTHON_VERSION_MAJOR = 2;
+				PYTHON_VERSION_MINOR = 7;
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
@@ -7301,6 +7416,222 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = BuildAndIntegration;
+		};
+		239504D81BDD451400963CEA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CODE_SIGN_IDENTITY = "-";
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks/CoreServices.framework/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
+				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/$(LLVM_CONFIGURATION)/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				OTHER_CFLAGS = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+					"$(LLDB_GTESTS_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		239504D91BDD451400963CEA /* DebugClang */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CODE_SIGN_IDENTITY = "-";
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks/CoreServices.framework/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
+				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/$(LLVM_CONFIGURATION)/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				OTHER_CFLAGS = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+					"$(LLDB_GTESTS_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = DebugClang;
+		};
+		239504DA1BDD451400963CEA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CODE_SIGN_IDENTITY = "-";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks/CoreServices.framework/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
+				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/$(LLVM_CONFIGURATION)/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+					"$(LLDB_GTESTS_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		239504DB1BDD451400963CEA /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CODE_SIGN_IDENTITY = "-";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+					"$(SYSTEM_LIBRARY_DIR)/Frameworks/CoreServices.framework/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				LLDB_GTESTS_CFLAGS = "-I $(LLVM_SOURCE_DIR)/utils/unittest/googletest/include -I $(LLVM_SOURCE_DIR)/include -I $(LLVM_BUILD_DIR)/x86_64/include -I include -I source -I $(PYTHON_FRAMEWORK_PATH)/Headers";
+				LLDB_GTESTS_LDFLAGS = "$(LLVM_BUILD_DIR)/x86_64/$(LLVM_CONFIGURATION)/lib/libgtest.a -L $(PYTHON_FRAMEWORK_PATH)/Versions/$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)/lib -l python$(PYTHON_VERSION_MAJOR).$(PYTHON_VERSION_MINOR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = (
+					"-flimit-debug-info",
+					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+					"$(LLDB_GTESTS_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
 			};
 			name = BuildAndIntegration;
 		};
@@ -7758,6 +8089,9 @@
 					"$(LLDB_COMPRESSION_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
 				);
+				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework;
+				PYTHON_VERSION_MAJOR = 2;
+				PYTHON_VERSION_MINOR = 7;
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
@@ -8472,6 +8806,9 @@
 					"$(LLDB_COMPRESSION_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
 				);
+				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework;
+				PYTHON_VERSION_MAJOR = 2;
+				PYTHON_VERSION_MINOR = 7;
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
@@ -9070,6 +9407,17 @@
 				235AFBBE199BC6FD00897A4B /* DebugClang */,
 				235AFBBF199BC6FD00897A4B /* Release */,
 				235AFBC0199BC6FD00897A4B /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		239504DD1BDD451400963CEA /* Build configuration list for PBXNativeTarget "lldb-gtest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				239504D81BDD451400963CEA /* Debug */,
+				239504D91BDD451400963CEA /* DebugClang */,
+				239504DA1BDD451400963CEA /* Release */,
+				239504DB1BDD451400963CEA /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;
