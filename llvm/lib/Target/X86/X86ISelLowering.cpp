@@ -10957,8 +10957,7 @@ static SDValue lower1BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   EVT ExtVT;
   switch (VT.SimpleTy) {
   default:
-    assert(false && "Expected a vector of i1 elements");
-    break;
+    llvm_unreachable("Expected a vector of i1 elements");
   case MVT::v2i1:
     ExtVT = MVT::v2i64;
     break;

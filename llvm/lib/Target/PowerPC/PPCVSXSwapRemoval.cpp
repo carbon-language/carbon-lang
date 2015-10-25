@@ -789,7 +789,7 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
   switch (SwapVector[EntryIdx].SpecialHandling) {
 
   default:
-    assert(false && "Unexpected special handling type");
+    llvm_unreachable("Unexpected special handling type");
     break;
 
   // For splats based on an index into a vector, add N/2 modulo N
@@ -803,7 +803,7 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
 
     switch (MI->getOpcode()) {
     default:
-      assert(false && "Unexpected splat opcode");
+      llvm_unreachable("Unexpected splat opcode");
     case PPC::VSPLTB: NElts = 16; break;
     case PPC::VSPLTH: NElts = 8;  break;
     case PPC::VSPLTW: NElts = 4;  break;

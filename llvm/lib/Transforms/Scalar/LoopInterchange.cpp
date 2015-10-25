@@ -996,7 +996,7 @@ void LoopInterchangeTransform::removeChildLoop(Loop *OuterLoop,
       return;
     }
   }
-  assert(false && "Couldn't find loop");
+  llvm_unreachable("Couldn't find loop");
 }
 
 void LoopInterchangeTransform::restructureLoops(Loop *InnerLoop,

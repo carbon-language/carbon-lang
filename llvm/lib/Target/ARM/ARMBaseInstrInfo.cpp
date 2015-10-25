@@ -97,7 +97,7 @@ ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
     Subtarget(STI) {
   for (unsigned i = 0, e = array_lengthof(ARM_MLxTable); i != e; ++i) {
     if (!MLxEntryMap.insert(std::make_pair(ARM_MLxTable[i].MLxOpc, i)).second)
-      assert(false && "Duplicated entries?");
+      llvm_unreachable("Duplicated entries?");
     MLxHazardOpcodes.insert(ARM_MLxTable[i].AddSubOpc);
     MLxHazardOpcodes.insert(ARM_MLxTable[i].MulOpc);
   }
