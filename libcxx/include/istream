@@ -1407,6 +1407,7 @@ basic_istream<_CharT, _Traits>::seekg(off_type __off, ios_base::seekdir __dir)
     try
     {
 #endif  // _LIBCPP_NO_EXCEPTIONS
+        this->clear(this->rdstate() & ~ios_base::eofbit);
         sentry __sen(*this, true);
         if (__sen)
         {

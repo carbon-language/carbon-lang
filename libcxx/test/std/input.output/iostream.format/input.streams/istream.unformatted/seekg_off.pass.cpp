@@ -71,4 +71,13 @@ int main()
         assert(is.fail());
         assert(seekoff_called == 4);
     }
+    {
+        testbuf<char> sb(" 123456789");
+        std::istream is(&sb);
+        is.setstate(std::ios_base::eofbit);
+        assert(is.eof());
+        is.seekg(5, std::ios_base::beg);
+        assert(is.good());
+        assert(!is.eof());
+    }
 }
