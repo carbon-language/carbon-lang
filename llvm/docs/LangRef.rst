@@ -1569,6 +1569,8 @@ as follows:
       symbols get a ``_`` prefix.
     * ``w``: Windows COFF prefix:  Similar to Mach-O, but stdcall and fastcall
       functions also get a suffix based on the frame size.
+    * ``x``: Windows x86 COFF prefix:  Similar to Windows COFF, but use a ``_``
+      prefix for ``__cdecl`` functions.
 ``n<size1>:<size2>:<size3>...``
     This specifies a set of native integer widths for the target CPU in
     bits. For example, it might contain ``n32`` for 32-bit PowerPC,
