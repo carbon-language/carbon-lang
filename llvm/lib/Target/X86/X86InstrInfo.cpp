@@ -2287,7 +2287,35 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
   case X86::FsVMOVAPSrm:
   case X86::FsVMOVAPDrm:
   case X86::FsMOVAPSrm:
-  case X86::FsMOVAPDrm: {
+  case X86::FsMOVAPDrm:
+  // AVX-512
+  case X86::VMOVAPDZ128rm:
+  case X86::VMOVAPDZ256rm:
+  case X86::VMOVAPDZrm:
+  case X86::VMOVAPSZ128rm:
+  case X86::VMOVAPSZ256rm:
+  case X86::VMOVAPSZrm:
+  case X86::VMOVDQA32Z128rm:
+  case X86::VMOVDQA32Z256rm:
+  case X86::VMOVDQA32Zrm:
+  case X86::VMOVDQA64Z128rm:
+  case X86::VMOVDQA64Z256rm:
+  case X86::VMOVDQA64Zrm:
+  case X86::VMOVDQU16Z128rm:
+  case X86::VMOVDQU16Z256rm:
+  case X86::VMOVDQU16Zrm:
+  case X86::VMOVDQU32Z128rm:
+  case X86::VMOVDQU32Z256rm:
+  case X86::VMOVDQU32Zrm:
+  case X86::VMOVDQU64Z128rm:
+  case X86::VMOVDQU64Z256rm:
+  case X86::VMOVDQU64Zrm:
+  case X86::VMOVDQU8Z128rm:
+  case X86::VMOVDQU8Z256rm:
+  case X86::VMOVDQU8Zrm:
+  case X86::VMOVUPSZ128rm:
+  case X86::VMOVUPSZ256rm:
+  case X86::VMOVUPSZrm: {
     // Loads from constant pools are trivially rematerializable.
     if (MI->getOperand(1+X86::AddrBaseReg).isReg() &&
         MI->getOperand(1+X86::AddrScaleAmt).isImm() &&
