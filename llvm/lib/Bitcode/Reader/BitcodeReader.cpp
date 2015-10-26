@@ -3113,10 +3113,9 @@ std::error_code BitcodeReader::parseBitcodeVersion() {
     case bitc::IDENTIFICATION_CODE_EPOCH: { // EPOCH:      [epoch#]
       unsigned epoch = (unsigned)Record[0];
       if (epoch != bitc::BITCODE_CURRENT_EPOCH) {
-        auto BitcodeEpoch = std::to_string(epoch);
-        auto CurrentEpoch = std::to_string(bitc::BITCODE_CURRENT_EPOCH);
-        return error(Twine("Incompatible epoch: Bitcode '") + BitcodeEpoch +
-                     "' vs current: '" + CurrentEpoch + "'");
+        return error(
+          Twine("Incompatible epoch: Bitcode '") + Twine(epoch) +
+          "' vs current: '" + Twine(bitc::BITCODE_CURRENT_EPOCH) + "'");
       }
     }
     }
