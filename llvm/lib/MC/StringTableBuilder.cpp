@@ -18,20 +18,47 @@ using namespace llvm;
 
 StringTableBuilder::StringTableBuilder(Kind K) : K(K) {}
 
-static int compareBySuffix(std::pair<StringRef, size_t> *const *AP,
-                           std::pair<StringRef, size_t> *const *BP) {
-  StringRef A = (*AP)->first;
-  StringRef B = (*BP)->first;
-  size_t SizeA = A.size();
-  size_t SizeB = B.size();
-  size_t Len = std::min(SizeA, SizeB);
-  for (size_t I = 0; I < Len; ++I) {
-    char CA = A[SizeA - I - 1];
-    char CB = B[SizeB - I - 1];
-    if (CA != CB)
-      return CB - CA;
+typedef std::pair<StringRef, size_t> StringPair;
+
+// Returns the character at Pos from end of a string.
+static int charTailAt(StringPair *P, size_t Pos) {
+  StringRef S = P->first;
+  if (Pos >= S.size())
+    return -1;
+  return (unsigned char)S[S.size() - Pos - 1];
+}
+
+// Three-way radix quicksort. This is much faster than std::sort with strcmp
+// because it does not compare characters that we already know the same.
+static void qsort(StringPair **Begin, StringPair **End, int Pos) {
+tailcall:
+  if (End - Begin <= 1)
+    return;
+
+  // Partition items. Items in [Begin, P) are greater than the pivot,
+  // [P, Q) are the same as the pivot, and [Q, End) are less than the pivot.
+  int Pivot = charTailAt(*Begin, Pos);
+  StringPair **P = Begin;
+  StringPair **Q = End;
+  for (StringPair **R = Begin + 1; R < Q;) {
+    int C = charTailAt(*R, Pos);
+    if (C > Pivot)
+      std::swap(*P++, *R++);
+    else if (C < Pivot)
+      std::swap(*--Q, *R);
+    else
+      R++;
   }
-  return SizeB - SizeA;
+
+  qsort(Begin, P, Pos);
+  qsort(Q, End, Pos);
+  if (Pivot != -1) {
+    // qsort(P, Q, Pos + 1), but with tail call optimization.
+    Begin = P;
+    End = Q;
+    ++Pos;
+    goto tailcall;
+  }
 }
 
 void StringTableBuilder::finalize() {
@@ -40,7 +67,8 @@ void StringTableBuilder::finalize() {
   for (std::pair<StringRef, size_t> &P : StringIndexMap)
     Strings.push_back(&P);
 
-  array_pod_sort(Strings.begin(), Strings.end(), compareBySuffix);
+  if (!Strings.empty())
+    qsort(&Strings[0], &Strings[0] + Strings.size(), 0);
 
   switch (K) {
   case RAW:
