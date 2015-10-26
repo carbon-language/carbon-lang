@@ -1,6 +1,6 @@
 ; Test 128-bit floating-point loads.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -verify-machineinstrs | FileCheck %s
 
 ; Check loads with no offset.
 define double @f1(i64 %src) {
