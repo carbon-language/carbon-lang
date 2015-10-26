@@ -424,7 +424,7 @@ let hasSideEffects = 0 in {
   def LGFR : UnaryRRE<"lgf", 0xB914, sext32, GR64, GR32>;
 }
 let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
-  def LTGFR : UnaryRRE<"ltgf", 0xB912, null_frag, GR64, GR64>;
+  def LTGFR : UnaryRRE<"ltgf", 0xB912, null_frag, GR64, GR32>;
 
 // Match 32-to-64-bit sign extensions in which the source is already
 // in a 64-bit register.

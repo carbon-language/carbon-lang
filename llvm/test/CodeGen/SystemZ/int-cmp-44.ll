@@ -1,7 +1,8 @@
 ; Test that compares are omitted if CC already has the right value
 ; (z10 version).
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 -no-integrated-as | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 -no-integrated-as \
+; RUN:   -verify-machineinstrs| FileCheck %s
 
 declare void @foo()
 
