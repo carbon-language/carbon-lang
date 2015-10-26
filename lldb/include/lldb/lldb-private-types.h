@@ -35,7 +35,7 @@ namespace lldb_private
     // name (optional), encoding, size in bytes and the default display
     // format.
     //----------------------------------------------------------------------
-    typedef struct
+    struct RegisterInfo
     {
         const char *name;        // Name of this register, can't be NULL
         const char *alt_name;    // Alternate name of this register, can be NULL
@@ -54,12 +54,12 @@ namespace lldb_private
                                    // null, all registers in this list will be invalidated when the value of this
                                    // register changes.  For example, the invalidate list for eax would be rax
                                    // ax, ah, and al.
-    } RegisterInfo;
+    };
 
     //----------------------------------------------------------------------
     // Registers are grouped into register sets
     //----------------------------------------------------------------------
-    typedef struct
+    struct RegisterSet
     {
         const char *name;           // Name of this register set
         const char *short_name;     // A short name for this register set
@@ -69,14 +69,14 @@ namespace lldb_private
                                     // register array.  For example, if eax is defined at index 4 for a
                                     // particular RegisterContext, eax would be included in this RegisterSet
                                     // by adding the value 4.  Not by adding the value lldb_eax_i386.
-    } RegisterSet;
+    };
 
-    typedef struct
+    struct OptionEnumValueElement
     {
         int64_t value;
         const char *string_value;
         const char *usage;
-    } OptionEnumValueElement;
+    };
 
     struct OptionValidator
     {
@@ -85,7 +85,7 @@ namespace lldb_private
         virtual const char * ShortConditionString() const = 0;
         virtual const char * LongConditionString() const = 0;
     };
-    
+
     struct OptionDefinition
     {
         uint32_t usage_mask;                     // Used to mark options that can be used together.  If (1 << n & usage_mask) != 0
