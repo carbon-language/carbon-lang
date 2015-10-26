@@ -548,8 +548,8 @@ void MipsSEFrameLowering::emitInterruptPrologueStub(
   // clearing is not provided so reject that configuration.
   if (!STI.hasMips32r2())
     report_fatal_error(
-        "\"interrupt\" attribute is not supported on pre-r2 MIPS or"
-        "Mips16 targets.");
+        "\"interrupt\" attribute is not supported on pre-MIPS32R2 or "
+        "MIPS16 targets.");
 
   // The GP register contains the "user" value, so we cannot perform
   // any gp relative loads until we restore the "kernel" or "system" gp
@@ -561,7 +561,7 @@ void MipsSEFrameLowering::emitInterruptPrologueStub(
 
   if (!STI.isABI_O32() || STI.hasMips64())
     report_fatal_error("\"interrupt\" attribute is only supported for the "
-                       "O32 ABI on MIPS32r2+ at the present time.");
+                       "O32 ABI on MIPS32R2+ at the present time.");
 
   // Perform ISR handling like GCC
   StringRef IntKind =

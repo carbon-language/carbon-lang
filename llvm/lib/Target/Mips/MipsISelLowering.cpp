@@ -2952,9 +2952,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   const Function *Func = DAG.getMachineFunction().getFunction();
   Function::const_arg_iterator FuncArg = Func->arg_begin();
 
-  if (Func->hasFnAttribute("interrupt"))
-    assert(Func->arg_empty() &&
-           "Functions with the interrupt attribute cannot have arguments!");
+  if (Func->hasFnAttribute("interrupt") && !Func->arg_empty())
+    report_fatal_error(
+        "Functions with the interrupt attribute cannot have arguments!");
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_Mips_FixedArg);
   MipsFI->setFormalArgInfo(CCInfo.getNextStackOffset(),
