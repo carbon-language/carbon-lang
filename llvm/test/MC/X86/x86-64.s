@@ -413,7 +413,7 @@ fcmovae %st(1), %st(0)  // CHECK: fcmovnb	%st(1), %st(0)
 fcmova %st(1), %st(0)   // CHECK: fcmovnbe	%st(1), %st(0)
 
 // rdar://8456417
-.byte 88 + 1 & 15  // CHECK: .byte	9
+.byte (88 + 1) & 15  // CHECK: .byte	9
 
 // rdar://8456412
 mov %rdx, %cr0
