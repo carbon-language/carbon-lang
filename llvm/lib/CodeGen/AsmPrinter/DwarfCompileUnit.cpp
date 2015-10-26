@@ -343,8 +343,8 @@ void DwarfCompileUnit::constructScopeDIE(
     if (!includeMinimalInlineScopes()) {
       // There is no need to emit empty lexical block DIE.
       for (const auto *IE : ImportedEntities[DS])
-          Children.push_back(
-              constructImportedEntityDIE(cast<DIImportedEntity>(IE)));
+        Children.push_back(
+            constructImportedEntityDIE(cast<DIImportedEntity>(IE)));
     }
 
     // If there are only other scopes as children, put them directly in the
