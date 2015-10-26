@@ -31,7 +31,7 @@ D: Config, ADT, Support, inlining & related passes, SROA/mem2reg & related passe
 
 N: Evan Cheng
 E: evan.cheng@apple.com
-D: ARM target, parts of code generator not covered by someone else
+D: parts of code generator not covered by someone else
 
 N: Eric Christopher
 E: echristo@gmail.com
@@ -120,7 +120,7 @@ D: IR Constant Folder, InstCombine
 
 N: Tim Northover
 E: t.p.northover@gmail.com
-D: AArch64 backend
+D: AArch64 backend, misc ARM backend
 
 N: Diego Novillo
 E: dnovillo@google.com
