@@ -1567,6 +1567,10 @@ BasicAAResult BasicAA::run(Function &F, AnalysisManager<Function> *AM) {
                        AM->getCachedResult<LoopAnalysis>(F));
 }
 
+BasicAAWrapperPass::BasicAAWrapperPass() : FunctionPass(ID) {
+    initializeBasicAAWrapperPassPass(*PassRegistry::getPassRegistry());
+}
+
 char BasicAAWrapperPass::ID = 0;
 void BasicAAWrapperPass::anchor() {}
 

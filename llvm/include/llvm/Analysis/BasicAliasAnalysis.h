@@ -203,7 +203,7 @@ class BasicAAWrapperPass : public FunctionPass {
 public:
   static char ID;
 
-  BasicAAWrapperPass() : FunctionPass(ID) {}
+  BasicAAWrapperPass();
 
   BasicAAResult &getResult() { return *Result; }
   const BasicAAResult &getResult() const { return *Result; }
