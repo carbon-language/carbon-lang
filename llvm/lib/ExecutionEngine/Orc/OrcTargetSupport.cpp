@@ -1,8 +1,16 @@
+//===------- OrcTargetSupport.cpp - Target support utilities for Orc ------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Orc/OrcTargetSupport.h"
 #include "llvm/Support/Process.h"
 #include <array>
-
 
 using namespace llvm::orc;
 
