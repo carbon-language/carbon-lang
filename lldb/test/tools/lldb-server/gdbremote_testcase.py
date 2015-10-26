@@ -445,7 +445,7 @@ class GdbRemoteTestCaseBase(TestBase):
             if can_write and sock in can_write:
                 written_byte_count = sock.send(request_bytes_remaining)
                 request_bytes_remaining = request_bytes_remaining[written_byte_count:]
-        self.assertEquals(len(request_bytes_remaining), 0)
+        self.assertEqual(len(request_bytes_remaining), 0)
 
     def do_handshake(self, stub_socket, timeout_seconds=5):
         # Write the ack.
@@ -454,7 +454,7 @@ class GdbRemoteTestCaseBase(TestBase):
         # Send the start no ack mode packet.
         NO_ACK_MODE_REQUEST = "$QStartNoAckMode#b0"
         bytes_sent = stub_socket.send(NO_ACK_MODE_REQUEST)
-        self.assertEquals(bytes_sent, len(NO_ACK_MODE_REQUEST))
+        self.assertEqual(bytes_sent, len(NO_ACK_MODE_REQUEST))
 
         # Receive the ack and "OK"
         self.expect_socket_recv(stub_socket, re.compile(r"^\+\$OK#[0-9a-fA-F]{2}$"), timeout_seconds)
@@ -876,7 +876,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
             # Handle ending entry.
             if key == 0:
-                self.assertEquals(value, 0)
+                self.assertEqual(value, 0)
                 return auxv_dict
 
             # The key should not already be present.
@@ -1156,7 +1156,7 @@ class GdbRemoteTestCaseBase(TestBase):
             context = self.expect_gdbremote_sequence()
             self.assertIsNotNone(context)
             self.assertIsNotNone(context.get("stop_signo"))
-            self.assertEquals(int(context.get("stop_signo"), 16),
+            self.assertEqual(int(context.get("stop_signo"), 16),
                     lldbutil.get_signal_number('SIGTRAP'))
 
             single_step_count += 1
@@ -1270,19 +1270,19 @@ class GdbRemoteTestCaseBase(TestBase):
         args["expected_g_c2"] = "0"
         (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
         self.assertTrue(state_reached)
-        self.assertEquals(step_count, 1)
+        self.assertEqual(step_count, 1)
 
         # Verify we hit the next state.
         args["expected_g_c1"] = "0"
         args["expected_g_c2"] = "0"
         (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
         self.assertTrue(state_reached)
-        self.assertEquals(step_count, 1)
+        self.assertEqual(step_count, 1)
 
         # Verify we hit the next state.
         args["expected_g_c1"] = "0"
         args["expected_g_c2"] = "1"
         (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
         self.assertTrue(state_reached)
-        self.assertEquals(step_count, 1)
+        self.assertEqual(step_count, 1)
 

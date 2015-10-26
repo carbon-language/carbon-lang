@@ -23,7 +23,7 @@ class TestGdbRemoteAbort(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         hex_exit_code = context.get("hex_exit_code")
         self.assertIsNotNone(hex_exit_code)
-        self.assertEquals(int(hex_exit_code, 16),
+        self.assertEqual(int(hex_exit_code, 16),
                           lldbutil.get_signal_number('SIGABRT'))
 
     @debugserver_test

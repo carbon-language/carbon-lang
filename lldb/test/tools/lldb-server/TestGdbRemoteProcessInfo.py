@@ -125,7 +125,7 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
             if expected_key not in process_info:
                 missing_key_set.add(expected_key)
 
-        self.assertEquals(missing_key_set, set(), "the listed keys are missing in the qProcessInfo result")
+        self.assertEqual(missing_key_set, set(), "the listed keys are missing in the qProcessInfo result")
 
     def qProcessInfo_does_not_contain_keys(self, absent_key_set):
         procs = self.prep_debug_monitor_and_inferior()
@@ -145,7 +145,7 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
             if unexpected_key in process_info:
                 unexpected_key_set.add(unexpected_key)
 
-        self.assertEquals(unexpected_key_set, set(), "the listed keys were present but unexpected in qProcessInfo result")
+        self.assertEqual(unexpected_key_set, set(), "the listed keys were present but unexpected in qProcessInfo result")
 
     @skipUnlessDarwin
     @debugserver_test

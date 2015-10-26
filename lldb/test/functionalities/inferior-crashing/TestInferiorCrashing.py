@@ -65,7 +65,7 @@ class CrashingInferiorTestCase(TestBase):
 
     def check_stop_reason(self):
         # We should have one crashing thread
-        self.assertEquals(
+        self.assertEqual(
                 len(lldbutil.get_crashed_threads(self, self.dbg.GetSelectedTarget().GetProcess())),
                 1,
                 STOPPED_DUE_TO_EXC_BAD_ACCESS)

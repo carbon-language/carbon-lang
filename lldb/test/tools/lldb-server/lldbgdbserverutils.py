@@ -493,7 +493,7 @@ class GdbRemoteEntry(GdbRemoteEntryBase):
                 capture_text = match.group(group_index)
                 if not capture_text:
                     raise Exception("No content to expect for group index {}".format(group_index))
-                asserter.assertEquals(capture_text, context[var_name])
+                asserter.assertEqual(capture_text, context[var_name])
 
         return context
 

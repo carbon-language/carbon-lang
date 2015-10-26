@@ -28,15 +28,15 @@ class TestStubSetSIDTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     def sid_is_same_without_setsid(self):
         stub_sid = self.get_stub_sid()
-        self.assertEquals(stub_sid, os.getsid(0))
+        self.assertEqual(stub_sid, os.getsid(0))
 
     def sid_is_different_with_setsid(self):
         stub_sid = self.get_stub_sid(["--setsid"])
-        self.assertNotEquals(stub_sid, os.getsid(0))
+        self.assertNotEqual(stub_sid, os.getsid(0))
 
     def sid_is_different_with_S(self):
         stub_sid = self.get_stub_sid(["-S"])
-        self.assertNotEquals(stub_sid, os.getsid(0))
+        self.assertNotEqual(stub_sid, os.getsid(0))
 
     @debugserver_test
     @skipIfRemote # --setsid not used on remote platform and currently it is also impossible to get the sid of lldb-platform running on a remote target

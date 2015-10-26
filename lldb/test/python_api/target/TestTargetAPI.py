@@ -81,7 +81,7 @@ class TargetAPITestCase(TestBase):
         self.build(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
         target = self.create_simple_target('b.out')
-        self.assertEquals(target.data_byte_size, 1)
+        self.assertEqual(target.data_byte_size, 1)
 
     @add_test_categories(['pyapi'])
     def test_get_code_byte_size(self):
@@ -89,7 +89,7 @@ class TargetAPITestCase(TestBase):
         self.build(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
         target = self.create_simple_target('b.out')
-        self.assertEquals(target.code_byte_size, 1)
+        self.assertEqual(target.code_byte_size, 1)
 
     @add_test_categories(['pyapi'])
     def test_resolve_file_address(self):
@@ -108,11 +108,11 @@ class TargetAPITestCase(TestBase):
         res_file_addr = target.ResolveFileAddress(data_section_addr)
         self.assertTrue(res_file_addr.IsValid())
 
-        self.assertEquals(data_section_addr, res_file_addr.file_addr) 
+        self.assertEqual(data_section_addr, res_file_addr.file_addr) 
 
         data_section2 = res_file_addr.section
         self.assertIsNotNone(data_section2)
-        self.assertEquals(data_section.name, data_section2.name) 
+        self.assertEqual(data_section.name, data_section2.name) 
 
     @add_test_categories(['pyapi'])
     def test_read_memory(self):
@@ -138,7 +138,7 @@ class TargetAPITestCase(TestBase):
         error = lldb.SBError()
         content = target.ReadMemory(sb_addr, 1, error)
         self.assertTrue(error.Success(), "Make sure memory read succeeded")
-        self.assertEquals(len(content), 1)
+        self.assertEqual(len(content), 1)
 
     def create_simple_target(self, fn):
         exe = os.path.join(os.getcwd(), fn)

@@ -68,7 +68,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Ensure we end up with all auxv data in one packet.
         # FIXME don't assume it all comes back in one packet.
-        self.assertEquals(context.get("response_type"), "l")
+        self.assertEqual(context.get("response_type"), "l")
 
         # Decode binary data.
         content_raw = context.get("content_raw")
@@ -100,7 +100,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(auxv_data)
 
         # Ensure auxv data is a multiple of 2*word_size (there should be two unsigned long fields per auxv entry).
-        self.assertEquals(len(auxv_data) % (2*word_size), 0)
+        self.assertEqual(len(auxv_data) % (2*word_size), 0)
         # print("auxv contains {} entries".format(len(auxv_data) / (2*word_size)))
 
     @debugserver_test
@@ -184,7 +184,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertIsNotNone(auxv_dict_iterated)
 
         # Verify both types of data collection returned same content.
-        self.assertEquals(auxv_dict_iterated, auxv_dict)
+        self.assertEqual(auxv_dict_iterated, auxv_dict)
 
     @debugserver_test
     def test_auxv_chunked_reads_work_debugserver(self):

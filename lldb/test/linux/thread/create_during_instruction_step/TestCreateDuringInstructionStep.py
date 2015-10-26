@@ -40,7 +40,7 @@ class CreateDuringInstructionStepTestCase(TestBase):
         self.assertEqual(process.GetState(), lldb.eStateStopped, PROCESS_STOPPED)
 
         threads = lldbutil.get_threads_stopped_at_breakpoint(process, breakpoint)
-        self.assertEquals(len(threads), 1, STOPPED_DUE_TO_BREAKPOINT)
+        self.assertEqual(len(threads), 1, STOPPED_DUE_TO_BREAKPOINT)
 
         thread = threads[0]
         self.assertTrue(thread and thread.IsValid(), "Thread is valid")

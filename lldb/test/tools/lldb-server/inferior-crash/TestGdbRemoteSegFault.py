@@ -25,7 +25,7 @@ class TestGdbRemoteSegFault(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         hex_exit_code = context.get("hex_exit_code")
         self.assertIsNotNone(hex_exit_code)
-        self.assertEquals(int(hex_exit_code, 16), expected_signo)
+        self.assertEqual(int(hex_exit_code, 16), expected_signo)
 
     @debugserver_test
     def test_inferior_seg_fault_received_debugserver(self):

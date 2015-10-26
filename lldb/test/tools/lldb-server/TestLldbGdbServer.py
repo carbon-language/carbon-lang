@@ -497,7 +497,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Collect all generics found.
         register_sets = { reg_info['set']:1 for reg_info in reg_infos if 'set' in reg_info }
-        self.assertEquals(self.targetHasAVX(), "Advanced Vector Extensions" in register_sets)
+        self.assertEqual(self.targetHasAVX(), "Advanced Vector Extensions" in register_sets)
 
     @llgs_test
     def test_qRegisterInfo_contains_avx_registers_llgs(self):
@@ -574,7 +574,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         QC_thread_id = int(QC_thread_id_hex, 16)
 
         # Those two should be the same.
-        self.assertEquals(threads[0], QC_thread_id)
+        self.assertEqual(threads[0], QC_thread_id)
 
     @debugserver_test
     def test_qThreadInfo_matches_qC_launch_debugserver(self):
@@ -640,7 +640,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             # Verify the response length.
             p_response = context.get("p_response")
             self.assertIsNotNone(p_response)
-            self.assertEquals(len(p_response), 2 * int(reg_info["bitsize"]) / 8)
+            self.assertEqual(len(p_response), 2 * int(reg_info["bitsize"]) / 8)
 
             # Increment loop
             reg_index += 1
@@ -682,7 +682,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Wait at most x seconds for 3 threads to be present.
         threads = self.wait_for_thread_count(3, timeout_seconds=5)
-        self.assertEquals(len(threads), 3)
+        self.assertEqual(len(threads), 3)
 
         # verify we can $H to each thead, and $qC matches the thread we set.
         for thread in threads:
@@ -700,7 +700,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
             # Verify the thread id.
             self.assertIsNotNone(context.get("thread_id"))
-            self.assertEquals(int(context.get("thread_id"), 16), thread)
+            self.assertEqual(int(context.get("thread_id"), 16), thread)
 
     @debugserver_test
     def test_Hg_switches_to_3_threads_launch_debugserver(self):
@@ -830,7 +830,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             post_handle_thread_id = context.get("post_handle_thread_id")
             self.assertIsNotNone(post_handle_thread_id)
             post_handle_thread_id = int(post_handle_thread_id, 16)
-            self.assertEquals(post_handle_thread_id, print_thread_id)
+            self.assertEqual(post_handle_thread_id, print_thread_id)
 
     @unittest2.expectedFailure()
     @debugserver_test
@@ -892,7 +892,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Ensure what we read from inferior memory is what we wrote.
         self.assertIsNotNone(context.get("read_contents"))
         read_contents = context.get("read_contents").decode("hex")
-        self.assertEquals(read_contents, MEMORY_CONTENTS)
+        self.assertEqual(read_contents, MEMORY_CONTENTS)
 
     @debugserver_test
     def test_m_packet_reads_memory_debugserver(self):
@@ -1172,12 +1172,12 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Verify the stop signal reported was the breakpoint signal number.
         stop_signo = context.get("stop_signo")
         self.assertIsNotNone(stop_signo)
-        self.assertEquals(int(stop_signo,16), lldbutil.get_signal_number('SIGTRAP'))
+        self.assertEqual(int(stop_signo,16), lldbutil.get_signal_number('SIGTRAP'))
 
         # Ensure we did not receive any output.  If the breakpoint was not set, we would
         # see output (from a launched process with captured stdio) printing a hello, world message.
         # That would indicate the breakpoint didn't take.
-        self.assertEquals(len(context["O_content"]), 0)
+        self.assertEqual(len(context["O_content"]), 0)
 
         # Verify that the PC for the main thread is where we expect it - right at the breakpoint address.
         # This acts as a another validation on the register reading code.
@@ -1199,7 +1199,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Convert from target endian to int.
         returned_pc = lldbgdbserverutils.unpack_register_hex_unsigned(endian, p_response)
-        self.assertEquals(returned_pc, function_address)
+        self.assertEqual(returned_pc, function_address)
 
         # Verify that a breakpoint remove and continue gets us the expected output.
         self.reset_test_sequence()
@@ -1304,7 +1304,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Ensure what we read from inferior memory is what we wrote.
         printed_message = context.get("printed_message")
         self.assertIsNotNone(printed_message)
-        self.assertEquals(printed_message, TEST_MESSAGE + "X")
+        self.assertEqual(printed_message, TEST_MESSAGE + "X")
 
     @debugserver_test
     def test_written_M_content_reads_back_correctly_debugserver(self):
@@ -1394,7 +1394,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Wait for 3 threads to be present.
         threads = self.wait_for_thread_count(3, timeout_seconds=5)
-        self.assertEquals(len(threads), 3)
+        self.assertEqual(len(threads), 3)
 
         expected_reg_values = []
         register_increment = 1
@@ -1452,7 +1452,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             read_value = lldbgdbserverutils.unpack_register_hex_unsigned(endian, p_response)
 
             # Make sure we read back what we wrote.
-            self.assertEquals(read_value, expected_reg_values[thread_index])
+            self.assertEqual(read_value, expected_reg_values[thread_index])
             thread_index += 1
 
     # Note: as of this moment, a hefty number of the GPR writes are failing with E32 (everything except rax-rdx, rdi, rsi, rbp).

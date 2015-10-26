@@ -45,7 +45,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Wait until all threads have started.
         threads = self.wait_for_thread_count(thread_count, timeout_seconds=3)
         self.assertIsNotNone(threads)
-        self.assertEquals(len(threads), thread_count)
+        self.assertEqual(len(threads), thread_count)
 
         # Run, then stop the process, grab the stop reply content.
         self.reset_test_sequence()
@@ -94,7 +94,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
     def stop_reply_reports_multiple_threads(self, thread_count):
         # Gather threads from stop notification when QThreadsInStopReply is enabled.
         stop_reply_threads = self.gather_stop_reply_threads(self.ENABLE_THREADS_IN_STOP_REPLY_ENTRIES, thread_count)
-        self.assertEquals(len(stop_reply_threads), thread_count)
+        self.assertEqual(len(stop_reply_threads), thread_count)
 
     @debugserver_test
     def test_stop_reply_reports_multiple_threads_debugserver(self):
@@ -113,7 +113,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
     def no_QListThreadsInStopReply_supplies_no_threads(self, thread_count):
         # Gather threads from stop notification when QThreadsInStopReply is not enabled.
         stop_reply_threads = self.gather_stop_reply_threads(None, thread_count)
-        self.assertEquals(len(stop_reply_threads), 0)
+        self.assertEqual(len(stop_reply_threads), 0)
 
     @debugserver_test
     def test_no_QListThreadsInStopReply_supplies_no_threads_debugserver(self):
@@ -132,7 +132,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
     def stop_reply_reports_correct_threads(self, thread_count):
         # Gather threads from stop notification when QThreadsInStopReply is enabled.
         stop_reply_threads = self.gather_stop_reply_threads(self.ENABLE_THREADS_IN_STOP_REPLY_ENTRIES, thread_count)
-        self.assertEquals(len(stop_reply_threads), thread_count)
+        self.assertEqual(len(stop_reply_threads), thread_count)
 
         # Gather threads from q{f,s}ThreadInfo.
         self.reset_test_sequence()
@@ -143,7 +143,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         threads = self.parse_threadinfo_packets(context)
         self.assertIsNotNone(threads)
-        self.assertEquals(len(threads), thread_count)
+        self.assertEqual(len(threads), thread_count)
         
         # Ensure each thread in q{f,s}ThreadInfo appears in stop reply threads
         for tid in threads:

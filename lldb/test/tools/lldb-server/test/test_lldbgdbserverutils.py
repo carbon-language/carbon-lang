@@ -31,7 +31,7 @@ class TestLldbGdbServerUtils(unittest2.TestCase):
     def test_entry_regex_saves_match(self):
         entry = GdbRemoteEntry(is_send_to_remote=False, regex=re.compile(r"^\$QC([0-9a-fA-F]+)#"), capture={ 1:"thread_id" })
         context = entry.assert_match(self, "$QC980#00")
-        self.assertEquals(context["thread_id"], "980")
+        self.assertEqual(context["thread_id"], "980")
 
     def test_entry_regex_expect_captures_success(self):
         context = { "thread_id":"980" }

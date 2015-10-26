@@ -42,7 +42,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         # Wait until all threads have started.
         threads = self.wait_for_thread_count(thread_count, timeout_seconds=3)
         self.assertIsNotNone(threads)
-        self.assertEquals(len(threads), thread_count)
+        self.assertEqual(len(threads), thread_count)
 
         # Grab stop reply for each thread via qThreadStopInfo{tid:hex}.
         stop_replies = {}
@@ -67,7 +67,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
             kv_thread = kv_dict.get("thread")
             self.assertIsNotNone(kv_thread)
             kv_thread_id = int(kv_thread, 16)
-            self.assertEquals(kv_thread_id, thread)
+            self.assertEqual(kv_thread_id, thread)
 
             # Grab the stop id reported.
             stop_result_text = context.get("stop_result")
@@ -81,7 +81,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     def qThreadStopInfo_works_for_multiple_threads(self, thread_count):
         (stop_replies, _) = self.gather_stop_replies_via_qThreadStopInfo(thread_count)
-        self.assertEquals(len(stop_replies), thread_count)
+        self.assertEqual(len(stop_replies), thread_count)
 
     @debugserver_test
     def test_qThreadStopInfo_works_for_multiple_threads_debugserver(self):
@@ -131,7 +131,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         for thread_dict in list(thread_dicts.values()):
             name = thread_dict.get("name")
             self.assertIsNotNone(name)
-            self.assertEquals(name, expected_thread_name)
+            self.assertEqual(name, expected_thread_name)
 
     @unittest2.skip("MacOSX doesn't have a default thread name")
     @debugserver_test

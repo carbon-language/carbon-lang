@@ -43,7 +43,7 @@ class ChangedInferiorTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         # We should have one crashing thread
-        self.assertEquals(
+        self.assertEqual(
                 len(lldbutil.get_crashed_threads(self, self.dbg.GetSelectedTarget().GetProcess())),
                 1,
                 STOPPED_DUE_TO_EXC_BAD_ACCESS)
@@ -60,7 +60,7 @@ class ChangedInferiorTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("process status")
 
-        self.assertNotEquals(
+        self.assertNotEqual(
                 len(lldbutil.get_crashed_threads(self, self.dbg.GetSelectedTarget().GetProcess())),
                 1,
                 "Inferior changed, but lldb did not perform a reload")

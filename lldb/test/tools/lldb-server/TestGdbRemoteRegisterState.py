@@ -91,7 +91,7 @@ class TestGdbRemoteRegisterState(gdbremote_testcase.GdbRemoteTestCaseBase):
         final_reg_values = self.read_register_values(gpr_reg_infos, endian, thread_id=thread_id)
         # print("final_reg_values: {}".format(final_reg_values))
         self.assertIsNotNone(final_reg_values)
-        self.assertEquals(final_reg_values, initial_reg_values)
+        self.assertEqual(final_reg_values, initial_reg_values)
 
     @debugserver_test
     def test_grp_register_save_restore_works_with_suffix_debugserver(self):

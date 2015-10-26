@@ -38,4 +38,4 @@ class SectionAPITestCase(TestBase):
                         break                    
 
         self.assertIsNotNone(data_section)
-        self.assertEquals(data_section.target_byte_size, 1)
+        self.assertEqual(data_section.target_byte_size, 1)
