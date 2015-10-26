@@ -27,6 +27,10 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Path.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -848,4 +852,64 @@ void
 PlatformPOSIX::CalculateTrapHandlerSymbolNames ()
 {   
     m_trap_handlers.push_back (ConstString ("_sigtramp"));
-}   
+}
+
+static bool isAlphanumeric(const char c)
+{
+    return ((c >= '0' && c <= '9') ||
+            (c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z'));
+}
+
+static void appendUserToPath(llvm::SmallVectorImpl<char> &Result)
+{
+    const char *username = getenv("LOGNAME");
+
+    if (username)
+    {
+        // Validate that LoginName can be used in a path, and get its length.
+        size_t Len = 0;
+        for (const char *P = username; *P; ++P, ++Len) {
+            if (!isAlphanumeric(*P) && *P != '_') {
+                username = nullptr;
+                break;
+            }
+        }
+        
+        if (username && Len > 0) {
+            Result.append(username, username + Len);
+            return;
+        }
+    }
+    
+    // Fallback to user id.
+    std::string UID = llvm::utostr(getuid());
+
+    Result.append(UID.begin(), UID.end());
+}
+
+void
+PlatformPOSIX::AddClangModuleCompilationOptions (Target *target, std::vector<std::string> &options)
+{
+    std::vector<std::string> default_compilation_options =
+    {
+        "-x", "c++", "-Xclang", "-nostdsysteminc", "-Xclang", "-nostdsysteminc"
+    };
+    
+    options.insert(options.end(),
+                   default_compilation_options.begin(),
+                   default_compilation_options.end());
+    
+    {
+        llvm::SmallString<128> DefaultModuleCache;
+        const bool erased_on_reboot = false;
+        llvm::sys::path::system_temp_directory(erased_on_reboot, DefaultModuleCache);
+        llvm::sys::path::append(DefaultModuleCache, "org.llvm.clang.");
+        appendUserToPath(DefaultModuleCache);
+        llvm::sys::path::append(DefaultModuleCache, "ModuleCache");
+        std::string module_cache_argument("-fmodules-cache-path=");
+        module_cache_argument.append(DefaultModuleCache.str().str());
+        options.push_back(module_cache_argument);
+    }
+}
+

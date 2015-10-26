@@ -35,6 +35,10 @@
 #include "lldb/Target/Target.h"
 #include "llvm/ADT/STLExtras.h"
 
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Path.h"
+
 using namespace lldb;
 using namespace lldb_private;
     
@@ -1475,6 +1479,17 @@ PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (Target *target, std:
     options.insert(options.end(),
                    apple_arguments.begin(),
                    apple_arguments.end());
+    
+    {
+        llvm::SmallString<128> DefaultModuleCache;
+        const bool erased_on_reboot = false;
+        llvm::sys::path::system_temp_directory(erased_on_reboot, DefaultModuleCache);
+        llvm::sys::path::append(DefaultModuleCache, "org.llvm.clang");
+        llvm::sys::path::append(DefaultModuleCache, "ModuleCache");
+        std::string module_cache_argument("-fmodules-cache-path=");
+        module_cache_argument.append(DefaultModuleCache.str().str());
+        options.push_back(module_cache_argument);
+    }
     
     StreamString minimum_version_option;
     uint32_t versions[3] = { 0, 0, 0 };
