@@ -54,6 +54,8 @@ import test_categories
 from six import add_metaclass
 from six import StringIO as SixStringIO
 from six.moves.urllib import parse as urlparse
+import six
+import collections
 
 # dosep.py starts lots and lots of dotest instances
 # This option helps you find if two (or more) dotest instances are using the same
@@ -622,7 +624,7 @@ def expectedFailure(expected_fn, bugnumber=None):
         return wrapper
     # if bugnumber is not-callable(incluing None), that means decorator function is called with optional arguments
     # return decorator in this case, so it will be used to decorating original method
-    if callable(bugnumber):
+    if six.callable(bugnumber):
         return expectedFailure_impl(bugnumber)
     else:
         return expectedFailure_impl
@@ -762,7 +764,7 @@ def expectedFlakey(expected_fn, bugnumber=None):
         return wrapper
     # if bugnumber is not-callable(incluing None), that means decorator function is called with optional arguments
     # return decorator in this case, so it will be used to decorating original method
-    if callable(bugnumber):
+    if six.callable(bugnumber):
         return expectedFailure_impl(bugnumber)
     else:
         return expectedFailure_impl
@@ -1088,7 +1090,7 @@ def skipTestIfFn(expected_fn, bugnumber=None, skipReason=None):
             else:
                 func(*args, **kwargs)
         return wrapper
-    if callable(bugnumber):
+    if six.callable(bugnumber):
         return skipTestIfFn_impl(bugnumber)
     else:
         return skipTestIfFn_impl
@@ -1606,7 +1608,7 @@ class Base(unittest2.TestCase):
 
         Hooks are executed in a first come first serve manner.
         """
-        if callable(hook):
+        if six.callable(hook):
             with recording(self, traceAlways) as sbuf:
                 print("Adding tearDown hook:", getsource_if_available(hook), file=sbuf)
             self.hooks.append(hook)

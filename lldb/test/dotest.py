@@ -860,12 +860,12 @@ def parseOptionsAndInitTestdirs():
         #print("config:", config)
         if "pre_flight" in config:
             pre_flight = config["pre_flight"]
-            if not callable(pre_flight):
+            if not six.callable(pre_flight):
                 print("fatal error: pre_flight is not callable, exiting.")
                 sys.exit(1)
         if "post_flight" in config:
             post_flight = config["post_flight"]
-            if not callable(post_flight):
+            if not six.callable(post_flight):
                 print("fatal error: post_flight is not callable, exiting.")
                 sys.exit(1)
         if "lldbtest_remote_sandbox" in config:

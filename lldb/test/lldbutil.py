@@ -13,6 +13,8 @@ import os, sys
 import re
 
 from six import StringIO as SixStringIO
+import six
+import collections
 
 # ===================================================
 # Utilities for locating/checking executable programs
@@ -979,7 +981,7 @@ class PrintableRegex(object):
         return "re.compile(%s) -> %s" % (self.text, self.regex)
 
 def skip_if_callable(test, callable, reason):
-    if callable(test) == True:
+    if six.callable(test):
         test.skipTest(reason)
         return True
     return False

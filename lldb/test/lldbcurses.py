@@ -176,7 +176,7 @@ class Window(object):
 
     def set_first_responder(self, window):
         if window.can_become_first_responder:
-            if callable(getattr(window, "hidden", None)) and window.hidden():
+            if six.callable(getattr(window, "hidden", None)) and window.hidden():
                 return False
             if not window in self.children:
                 self.add_child(window)
@@ -386,7 +386,7 @@ class Window(object):
             return True
         # Check if the window delegate wants to handle this key press
         if self.delegate:      
-            if callable(getattr(self.delegate, "handle_key", None)):
+            if six.callable(getattr(self.delegate, "handle_key", None)):
                 if self.delegate.handle_key(self, key):
                     return True
             if self.delegate(self, key):
