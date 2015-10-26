@@ -62,8 +62,31 @@ private:
 
   typedef typename BaseLayerT::ModuleSetHandleT BaseLayerModuleSetHandleT;
 
+  class ModuleOwner {
+  public:
+    ModuleOwner() = default;
+    ModuleOwner(const ModuleOwner&) = delete;
+    ModuleOwner& operator=(const ModuleOwner&) = delete;
+    virtual ~ModuleOwner() { }
+    virtual Module& getModule() const = 0;
+  };
+
+  template <typename ModulePtrT>
+  class ModuleOwnerImpl : public ModuleOwner {
+  public:
+    ModuleOwnerImpl(ModulePtrT ModulePtr) : ModulePtr(std::move(ModulePtr)) {}
+    Module& getModule() const override { return *ModulePtr; }
+  private:
+    ModulePtrT ModulePtr;
+  };
+
+  template <typename ModulePtrT>
+  std::unique_ptr<ModuleOwner> wrapOwnership(ModulePtrT ModulePtr) {
+    return llvm::make_unique<ModuleOwnerImpl<ModulePtrT>>(std::move(ModulePtr));
+  }
+
   struct LogicalModuleResources {
-    std::shared_ptr<Module> SourceModule;
+    std::unique_ptr<ModuleOwner> SourceModuleOwner;
     std::set<const Function*> StubsToClone;
     std::unique_ptr<IndirectStubsMgrT> StubsMgr;
 
@@ -71,13 +94,13 @@ private:
 
     // Explicit move constructor to make MSVC happy.
     LogicalModuleResources(LogicalModuleResources &&Other)
-        : SourceModule(std::move(Other.SourceModule)),
+        : SourceModuleOwner(std::move(Other.SourceModuleOwner)),
           StubsToClone(std::move(Other.StubsToClone)),
           StubsMgr(std::move(Other.StubsMgr)) {}
 
     // Explicit move assignment to make MSVC happy.
     LogicalModuleResources& operator=(LogicalModuleResources &&Other) {
-      SourceModule = std::move(Other.SourceModule);
+      SourceModuleOwner = std::move(Other.SourceModuleOwner);
       StubsToClone = std::move(Other.StubsToClone);
       StubsMgr = std::move(Other.StubsMgr);
     }
@@ -91,6 +114,8 @@ private:
     }
 
   };
+
+
 
   struct LogicalDylibResources {
     typedef std::function<RuntimeDyld::SymbolInfo(const std::string&)>
@@ -146,8 +171,7 @@ public:
 
     // Process each of the modules in this module set.
     for (auto &M : Ms)
-      addLogicalModule(LogicalDylibs.back(),
-                       std::shared_ptr<Module>(std::move(M)));
+      addLogicalModule(LogicalDylibs.back(), std::move(M));
 
     return std::prev(LogicalDylibs.end());
   }
@@ -181,29 +205,32 @@ public:
 
 private:
 
-  void addLogicalModule(CODLogicalDylib &LD, std::shared_ptr<Module> SrcM) {
+  template <typename ModulePtrT>
+  void addLogicalModule(CODLogicalDylib &LD, ModulePtrT SrcMPtr) {
 
     // Bump the linkage and rename any anonymous/privote members in SrcM to
     // ensure that everything will resolve properly after we partition SrcM.
-    makeAllSymbolsExternallyAccessible(*SrcM);
+    makeAllSymbolsExternallyAccessible(*SrcMPtr);
 
     // Create a logical module handle for SrcM within the logical dylib.
     auto LMH = LD.createLogicalModule();
     auto &LMResources =  LD.getLogicalModuleResources(LMH);
 
-    LMResources.SourceModule = SrcM;
+    LMResources.SourceModuleOwner = wrapOwnership(std::move(SrcMPtr));
+
+    Module &SrcM = LMResources.SourceModuleOwner->getModule();
 
     // Create the GlobalValues module.
-    const DataLayout &DL = SrcM->getDataLayout();
-    auto GVsM = llvm::make_unique<Module>((SrcM->getName() + ".globals").str(),
-                                          SrcM->getContext());
+    const DataLayout &DL = SrcM.getDataLayout();
+    auto GVsM = llvm::make_unique<Module>((SrcM.getName() + ".globals").str(),
+                                          SrcM.getContext());
     GVsM->setDataLayout(DL);
 
     // Create function stubs.
     ValueToValueMapTy VMap;
     {
       typename IndirectStubsMgrT::StubInitsMap StubInits;
-      for (auto &F : *SrcM) {
+      for (auto &F : SrcM) {
         // Skip declarations.
         if (F.isDeclaration())
           continue;
@@ -215,7 +242,7 @@ private:
         // Create a callback, associate it with the stub for the function,
         // and set the compile action to compile the partition containing the
         // function.
-        auto CCInfo = CompileCallbackMgr.getCompileCallback(SrcM->getContext());
+        auto CCInfo = CompileCallbackMgr.getCompileCallback(SrcM.getContext());
         StubInits[mangle(F.getName(), DL)] =
           std::make_pair(CCInfo.getAddress(),
                          JITSymbolBase::flagsFromGlobalValue(F));
@@ -234,12 +261,12 @@ private:
     }
 
     // Clone global variable decls.
-    for (auto &GV : SrcM->globals())
+    for (auto &GV : SrcM.globals())
       if (!GV.isDeclaration() && !VMap.count(&GV))
         cloneGlobalVariableDecl(*GVsM, GV, &VMap);
 
     // And the aliases.
-    for (auto &A : SrcM->aliases())
+    for (auto &A : SrcM.aliases())
       if (!VMap.count(&A))
         cloneGlobalAliasDecl(*GVsM, A, VMap);
 
@@ -276,12 +303,12 @@ private:
       });
 
     // Clone the global variable initializers.
-    for (auto &GV : SrcM->globals())
+    for (auto &GV : SrcM.globals())
       if (!GV.isDeclaration())
         moveGlobalVariableInitializer(GV, VMap, &Materializer);
 
     // Clone the global alias initializers.
-    for (auto &A : SrcM->aliases()) {
+    for (auto &A : SrcM.aliases()) {
       auto *NewA = cast<GlobalAlias>(VMap[&A]);
       assert(NewA && "Alias not cloned?");
       Value *Init = MapValue(A.getAliasee(), VMap, RF_None, nullptr,
@@ -323,7 +350,7 @@ private:
                                   LogicalModuleHandle LMH,
                                   Function &F) {
     auto &LMResources = LD.getLogicalModuleResources(LMH);
-    Module &SrcM = *LMResources.SourceModule;
+    Module &SrcM = LMResources.SourceModuleOwner->getModule();
 
     // If F is a declaration we must already have compiled it.
     if (F.isDeclaration())
@@ -361,7 +388,7 @@ private:
                                           LogicalModuleHandle LMH,
                                           const PartitionT &Part) {
     auto &LMResources = LD.getLogicalModuleResources(LMH);
-    Module &SrcM = *LMResources.SourceModule;
+    Module &SrcM = LMResources.SourceModuleOwner->getModule();
 
     // Create the module.
     std::string NewName = SrcM.getName();
