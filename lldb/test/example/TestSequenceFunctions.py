@@ -8,7 +8,7 @@ class SequenceFunctionsTestCase(unittest.TestCase):
 
     def setUp(self):
         #traceback.print_stack()
-        self.seq = range(10)
+        self.seq = list(range(10))
 
     def tearDown(self):
         #traceback.print_stack()
@@ -18,7 +18,7 @@ class SequenceFunctionsTestCase(unittest.TestCase):
         # make sure the shuffled sequence does not lose any elements
         random.shuffle(self.seq)
         self.seq.sort()
-        self.assertEqual(self.seq, range(10))
+        self.assertEqual(self.seq, list(range(10)))
 
     def test_choice(self):
         element = random.choice(self.seq)

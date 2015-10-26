@@ -129,5 +129,5 @@ class TestGoASTContext(TestBase):
 
         v = self.var('theArray')
         self.assertEqual(5, v.GetNumChildren())
-        for i in xrange(5):
+        for i in list(range(5)):
             self.assertEqual(str(i + 1), v.GetChildAtIndex(i).value)

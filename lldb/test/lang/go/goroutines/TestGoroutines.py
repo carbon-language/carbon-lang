@@ -75,7 +75,7 @@ class TestGoASTContext(TestBase):
         # self.dbg.HandleCommand("log enable lldb os")
 
         # Now test that stepping works if the memory thread moves to a different backing thread.
-        for i in xrange(11):
+        for i in list(range(11)):
             self.thread().StepOver()
             self.assertEqual(lldb.eStopReasonPlanComplete, self.thread().GetStopReason(), self.thread().GetStopDescription(100))
         

@@ -20,7 +20,7 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting()
 
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
-    @expectedFailureAndroid(api_levels=range(16 + 1)) # b.android.com/179836
+    @expectedFailureAndroid(api_levels=list(range(16 + 1))) # b.android.com/179836
     def test_inferior_asserting_register(self):
         """Test that lldb reliably reads registers from the inferior after asserting (command)."""
         self.build()
@@ -58,7 +58,7 @@ class AssertingInferiorTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", line, num_expected_locations=1, loc_exact=True)
 
     def check_stop_reason(self):
-        if matchAndroid(api_levels=range(1, 16+1))(self):
+        if matchAndroid(api_levels=list(range(1, 16+1)))(self):
             # On android until API-16 the abort() call ended in a sigsegv instead of in a sigabrt
             stop_reason = 'stop reason = signal SIGSEGV'
         else:

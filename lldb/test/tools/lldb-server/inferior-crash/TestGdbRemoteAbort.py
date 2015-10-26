@@ -34,7 +34,7 @@ class TestGdbRemoteAbort(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     # std::abort() on <= API 16 raises SIGSEGV - b.android.com/179836
-    @expectedFailureAndroid(api_levels=range(16 + 1))
+    @expectedFailureAndroid(api_levels=list(range(16 + 1)))
     def test_inferior_abort_received_llgs(self):
         self.init_llgs_test()
         self.build()

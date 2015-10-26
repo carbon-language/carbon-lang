@@ -607,7 +607,7 @@ def get_function_names(thread):
     def GetFuncName(i):
         return thread.GetFrameAtIndex(i).GetFunctionName()
 
-    return list(map(GetFuncName, range(thread.GetNumFrames())))
+    return list(map(GetFuncName, list(range(thread.GetNumFrames()))))
 
 
 def get_symbol_names(thread):
@@ -617,7 +617,7 @@ def get_symbol_names(thread):
     def GetSymbol(i):
         return thread.GetFrameAtIndex(i).GetSymbol().GetName()
 
-    return list(map(GetSymbol, range(thread.GetNumFrames())))
+    return list(map(GetSymbol, list(range(thread.GetNumFrames()))))
 
 
 def get_pc_addresses(thread):
@@ -627,7 +627,7 @@ def get_pc_addresses(thread):
     def GetPCAddress(i):
         return thread.GetFrameAtIndex(i).GetPCAddress()
 
-    return list(map(GetPCAddress, range(thread.GetNumFrames())))
+    return list(map(GetPCAddress, list(range(thread.GetNumFrames()))))
 
 
 def get_filenames(thread):
@@ -637,7 +637,7 @@ def get_filenames(thread):
     def GetFilename(i):
         return thread.GetFrameAtIndex(i).GetLineEntry().GetFileSpec().GetFilename()
 
-    return list(map(GetFilename, range(thread.GetNumFrames())))
+    return list(map(GetFilename, list(range(thread.GetNumFrames()))))
 
 
 def get_line_numbers(thread):
@@ -647,7 +647,7 @@ def get_line_numbers(thread):
     def GetLineNumber(i):
         return thread.GetFrameAtIndex(i).GetLineEntry().GetLine()
 
-    return list(map(GetLineNumber, range(thread.GetNumFrames())))
+    return list(map(GetLineNumber, list(range(thread.GetNumFrames()))))
 
 
 def get_module_names(thread):
@@ -657,7 +657,7 @@ def get_module_names(thread):
     def GetModuleName(i):
         return thread.GetFrameAtIndex(i).GetModule().GetFileSpec().GetFilename()
 
-    return list(map(GetModuleName, range(thread.GetNumFrames())))
+    return list(map(GetModuleName, list(range(thread.GetNumFrames()))))
 
 
 def get_stack_frames(thread):
@@ -667,7 +667,7 @@ def get_stack_frames(thread):
     def GetStackFrame(i):
         return thread.GetFrameAtIndex(i)
 
-    return list(map(GetStackFrame, range(thread.GetNumFrames())))
+    return list(map(GetStackFrame, list(range(thread.GetNumFrames()))))
 
 
 def print_stacktrace(thread, string_buffer = False):
