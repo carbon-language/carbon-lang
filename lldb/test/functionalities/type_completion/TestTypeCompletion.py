@@ -73,14 +73,10 @@ class TypeCompletionTestCase(TestBase):
         self.assertTrue(name_address_type.IsValid(), 'NameAndAddress should be valid')
         self.assertTrue(name_address_type.IsTypeComplete(), 'NameAndAddress should now be complete')
         field0 = name_address_type.GetFieldAtIndex(0)
-        if self.TraceOn():
-             print('field0: ' + str(field0))
         self.assertTrue(field0.IsValid(), 'NameAndAddress::m_name should be valid')
         string = field0.GetType().GetPointeeType()
-        if self.TraceOn():
-             print('string: ' + str(string))
-        self.assertTrue(string.IsValid(), 'std::string should be valid')
-        self.assertFalse(string.IsTypeComplete(), 'std::string complete but it should not be')
+        self.assertTrue(string.IsValid(), 'CustomString should be valid')
+        self.assertFalse(string.IsTypeComplete(), 'CustomString complete but it should not be')
 
         self.runCmd("continue")
 
@@ -91,17 +87,13 @@ class TypeCompletionTestCase(TestBase):
         self.assertTrue(name_address_type.IsValid(), 'NameAndAddress should be valid')
         self.assertTrue(name_address_type.IsTypeComplete(), 'NameAndAddress should now be complete')
         field0 = name_address_type.GetFieldAtIndex(0)
-        if self.TraceOn():
-             print('field0: ' + str(field0))
         self.assertTrue(field0.IsValid(), 'NameAndAddress::m_name should be valid')
         string = field0.GetType().GetPointeeType()
-        if self.TraceOn():
-             print('string: ' + str(string))
-        self.assertTrue(string.IsValid(), 'std::string should be valid')
-        self.assertFalse(string.IsTypeComplete(), 'std::string complete but it should not be')
+        self.assertTrue(string.IsValid(), 'CustomString should be valid')
+        self.assertFalse(string.IsTypeComplete(), 'CustomString complete but it should not be')
 
         self.runCmd('type category enable -l c++', check=False)
-        self.runCmd('frame variable guy --show-types')
+        self.runCmd('frame variable guy --show-types --ptr-depth=1')
 
         p_vector = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable('p')
         p_type = p_vector.GetType()
@@ -112,5 +104,5 @@ class TypeCompletionTestCase(TestBase):
         field0 = name_address_type.GetFieldAtIndex(0)
         self.assertTrue(field0.IsValid(), 'NameAndAddress::m_name should be valid')
         string = field0.GetType().GetPointeeType()
-        self.assertTrue(string.IsValid(), 'std::string should be valid')
-        self.assertTrue(string.IsTypeComplete(), 'std::string should now be complete')
+        self.assertTrue(string.IsValid(), 'CustomString should be valid')
+        self.assertTrue(string.IsTypeComplete(), 'CustomString should now be complete')

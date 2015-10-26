@@ -7,16 +7,45 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
+#include <string.h>
 #include <vector>
 #include <iostream>
+
+class CustomString
+{
+public:
+  CustomString (const char* buffer) :
+    m_buffer(nullptr)
+  {
+    if (buffer)
+    {
+      auto l = strlen(buffer);
+      m_buffer = new char[1 + l];
+      strcpy(m_buffer, buffer);
+    }
+  }
+  
+  ~CustomString ()
+  {
+    delete[] m_buffer;
+  }
+  
+  const char*
+  GetBuffer ()
+  {
+    return m_buffer;
+  }
+  
+private:
+  char *m_buffer;
+};
 
 class NameAndAddress
 	{
 	public:
-		std::string& GetName() { return *m_name; }
-		std::string& GetAddress() { return *m_address; }
-		NameAndAddress(const char* N, const char* A) : m_name(new std::string(N)), m_address(new std::string(A))
+		CustomString& GetName() { return *m_name; }
+		CustomString& GetAddress() { return *m_address; }
+		NameAndAddress(const char* N, const char* A) : m_name(new CustomString(N)), m_address(new CustomString(A))
 		{
 		}
 		~NameAndAddress()
@@ -24,8 +53,8 @@ class NameAndAddress
 		}
 		
 	private:
-		std::string* m_name;
-		std::string* m_address;
+		CustomString* m_name;
+		CustomString* m_address;
 };
 
 typedef std::vector<NameAndAddress> People;
@@ -43,7 +72,7 @@ int main (int argc, const char * argv[])
 	for (int j = 0; j<p.size(); j++)
 	{
 		NameAndAddress guy = p[j];
-		std::cout << "Person " << j << " is named " << guy.GetName() << " and lives at " << guy.GetAddress() << std::endl; // Set break point at this line.
+		std::cout << "Person " << j << " is named " << guy.GetName().GetBuffer() << " and lives at " << guy.GetAddress().GetBuffer() << std::endl; // Set break point at this line.
 	}
 
 	return 0;
