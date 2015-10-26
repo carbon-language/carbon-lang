@@ -24,7 +24,7 @@ class APIDefaultConstructorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBAddress(self):
         obj = lldb.SBAddress()
@@ -35,7 +35,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_address
         sb_address.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBBlock(self):
         obj = lldb.SBBlock()
@@ -46,7 +46,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_block
         sb_block.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBBreakpoint(self):
         obj = lldb.SBBreakpoint()
@@ -57,7 +57,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_breakpoint
         sb_breakpoint.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBBreakpointLocation(self):
         obj = lldb.SBBreakpointLocation()
@@ -68,7 +68,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_breakpointlocation
         sb_breakpointlocation.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBBroadcaster(self):
         obj = lldb.SBBroadcaster()
@@ -79,7 +79,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_broadcaster
         sb_broadcaster.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBCommandReturnObject(self):
         """SBCommandReturnObject object is valid after default construction."""
@@ -88,7 +88,7 @@ class APIDefaultConstructorTestCase(TestBase):
             print(obj)
         self.assertTrue(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBCommunication(self):
         obj = lldb.SBCommunication()
@@ -99,7 +99,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_communication
         sb_communication.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBCompileUnit(self):
         obj = lldb.SBCompileUnit()
@@ -110,7 +110,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_compileunit
         sb_compileunit.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBDebugger(self):
         obj = lldb.SBDebugger()
@@ -121,7 +121,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_debugger
         sb_debugger.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     # darwin: This test passes with swig 3.0.2, fails w/3.0.5 other tests fail with 2.0.12 http://llvm.org/pr23488
     def test_SBError(self):
@@ -133,7 +133,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_error
         sb_error.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBEvent(self):
         obj = lldb.SBEvent()
@@ -146,7 +146,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_event
         sb_event.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_SBFileSpec(self):
         obj = lldb.SBFileSpec()
         # This is just to test that FileSpec(None) does not crash.
@@ -158,7 +158,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_filespec
         sb_filespec.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBFrame(self):
         obj = lldb.SBFrame()
@@ -169,7 +169,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_frame
         sb_frame.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBFunction(self):
         obj = lldb.SBFunction()
@@ -180,7 +180,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_function
         sb_function.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBInstruction(self):
         obj = lldb.SBInstruction()
@@ -191,7 +191,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_instruction
         sb_instruction.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBInstructionList(self):
         obj = lldb.SBInstructionList()
@@ -202,7 +202,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_instructionlist
         sb_instructionlist.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBLineEntry(self):
         obj = lldb.SBLineEntry()
@@ -213,7 +213,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_lineentry
         sb_lineentry.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBListener(self):
         obj = lldb.SBListener()
@@ -224,7 +224,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_listener
         sb_listener.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBModule(self):
         obj = lldb.SBModule()
@@ -235,7 +235,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_module
         sb_module.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBProcess(self):
         obj = lldb.SBProcess()
@@ -246,7 +246,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_process
         sb_process.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBSection(self):
         obj = lldb.SBSection()
@@ -257,7 +257,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_section
         sb_section.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBStream(self):
         """SBStream object is valid after default construction."""
@@ -266,7 +266,7 @@ class APIDefaultConstructorTestCase(TestBase):
             print(obj)
         self.assertTrue(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBStringList(self):
         obj = lldb.SBStringList()
@@ -277,7 +277,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_stringlist
         sb_stringlist.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBSymbol(self):
         obj = lldb.SBSymbol()
@@ -288,7 +288,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_symbol
         sb_symbol.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBSymbolContext(self):
         obj = lldb.SBSymbolContext()
@@ -299,7 +299,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_symbolcontext
         sb_symbolcontext.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBSymbolContextList(self):
         """SBSymbolContextList object is valid after default construction."""
@@ -308,7 +308,7 @@ class APIDefaultConstructorTestCase(TestBase):
             print(obj)
         self.assertTrue(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBTarget(self):
         obj = lldb.SBTarget()
@@ -319,7 +319,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_target
         sb_target.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBThread(self):
         obj = lldb.SBThread()
@@ -330,7 +330,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_thread
         sb_thread.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBType(self):
         try:
@@ -349,7 +349,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_type
         sb_type.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBTypeList(self):
         """SBTypeList object is valid after default construction."""
@@ -358,7 +358,7 @@ class APIDefaultConstructorTestCase(TestBase):
             print(obj)
         self.assertTrue(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBValue(self):
         obj = lldb.SBValue()
@@ -369,7 +369,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_value
         sb_value.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBValueList(self):
         obj = lldb.SBValueList()
@@ -380,7 +380,7 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_valuelist
         sb_valuelist.fuzz_obj(obj)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_SBWatchpoint(self):
         obj = lldb.SBWatchpoint()

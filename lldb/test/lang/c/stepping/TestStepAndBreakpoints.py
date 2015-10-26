@@ -25,7 +25,7 @@ class TestCStepping(TestBase):
     @expectedFailureFreeBSD('llvm.org/pr17932')
     @expectedFailureLinux # llvm.org/pr14437
     @expectedFailureWindows("llvm.org/pr24777")
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_and_python_api(self):
         """Test stepping over vrs. hitting breakpoints & subsequent stepping in various forms."""
         self.build()

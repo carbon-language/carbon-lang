@@ -52,7 +52,7 @@ class ClassTypesTestCase(TestBase):
             substrs = ['C *',
                        ' this = '])
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
         self.build()

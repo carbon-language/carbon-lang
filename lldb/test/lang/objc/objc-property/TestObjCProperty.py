@@ -23,7 +23,7 @@ class ObjCPropertyTestCase(TestBase):
         self.source_name = 'main.m'
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_objc_properties(self):
         """Test that expr uses the correct property getters and setters"""
         if self.getArchitecture() == 'i386':

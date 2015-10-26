@@ -13,7 +13,7 @@ class SBFrameFindValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_formatters_api(self):
         """Test that SBFrame::FindValue finds things but does not duplicate the entire variables list"""
         self.build()

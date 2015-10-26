@@ -15,7 +15,7 @@ class BreakpointAPITestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_breakpoint_is_valid(self):
         """Make sure that if an SBBreakpoint gets deleted its IsValid returns false."""
         self.build()

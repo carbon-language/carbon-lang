@@ -21,7 +21,7 @@ class TestObjCIvarOffsets(TestBase):
         self.stop_line = line_number(self.main_source, '// Set breakpoint here.')
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Test printing ObjC objects that use unbacked properties"""
         self.build()

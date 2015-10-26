@@ -95,7 +95,7 @@ class BitfieldsTestCase(TestBase):
         self.expect("expr (more_bits.d)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['uint8_t', '\\0'])
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @skipIfWindows # BitFields exhibit crashes in record layout on Windows (http://llvm.org/pr21800)
     def test_and_python_api(self):
         """Use Python APIs to inspect a bitfields variable."""

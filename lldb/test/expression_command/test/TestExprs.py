@@ -98,7 +98,7 @@ class BasicExprCommandsTestCase(TestBase):
                        "a.out"])
         # (const char *) $8 = 0x... "/Volumes/data/lldb/svn/trunk/test/expression_command/test/a.out"
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     @expectedFailureWindows # Test crashes
     def test_evaluate_expression_python(self):

@@ -16,14 +16,14 @@ class ReturnValueTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_step_out_with_python(self):
         """Test stepping out using avoid-no-debug with dsyms."""
         self.build()
         self.get_to_starting_point()
         self.do_step_out_past_nodebug()
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureGcc("llvm.org/pr19247")
     def test_step_over_with_python(self):
         """Test stepping over using avoid-no-debug with dwarf."""
@@ -31,7 +31,7 @@ class ReturnValueTestCase(TestBase):
         self.get_to_starting_point()
         self.do_step_over_past_nodebug()
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureGcc("llvm.org/pr19247")
     def test_step_in_with_python(self):
         """Test stepping in using avoid-no-debug with dwarf."""

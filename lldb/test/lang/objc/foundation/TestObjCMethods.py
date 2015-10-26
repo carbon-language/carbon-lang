@@ -174,7 +174,7 @@ class FoundationTestCase(TestBase):
         self.expect("expression --object-description -- my", "Object description displayed correctly",
             patterns = ["Hello from.*a.out.*with timestamp: "])
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_print_ivars_correctly (self):
         self.build()
         # See: <rdar://problem/8717050> lldb needs to use the ObjC runtime symbols for ivar offsets

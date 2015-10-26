@@ -22,7 +22,7 @@ class ObjCDynamicValueTestCase(TestBase):
         self.line = line_number('main.m', '// Set breakpoint here.')
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_get_baseclass(self):
         """Test fetching ObjC dynamic values."""
         if self.getArchitecture() == 'i386':

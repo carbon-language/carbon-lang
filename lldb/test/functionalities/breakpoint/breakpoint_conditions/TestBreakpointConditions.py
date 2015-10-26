@@ -28,7 +28,7 @@ class BreakpointConditionsTestCase(TestBase):
         self.breakpoint_conditions(inline=True)
 
     @skipIfWindows # Requires EE to support COFF on Windows (http://llvm.org/pr22232)
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_breakpoint_condition_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.build()

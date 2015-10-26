@@ -24,7 +24,7 @@ class ObjectDescriptionAPITestCase(TestBase):
 
     # rdar://problem/10857337
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_find_global_variables_then_object_description(self):
         """Exercise SBTarget.FindGlobalVariables() API."""
         d = {'EXE': 'b.out'}

@@ -20,7 +20,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
         self.build()
         self.breakpoint_ignore_count()
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Use Python APIs to set breakpoint ignore count."""
         self.build()

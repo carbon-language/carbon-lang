@@ -28,7 +28,7 @@ class ProcessIOTestCase(TestBase):
         self.lines = ["Line 1", "Line 2", "Line 3"]
 
     @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_stdin_by_api(self):
         """Exercise SBProcess.PutSTDIN()."""
         self.build()
@@ -38,7 +38,7 @@ class ProcessIOTestCase(TestBase):
         self.check_process_output(output, output)
 
     @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_stdin_redirection(self):
         """Exercise SBLaunchInfo::AddOpenFileAction() for STDIN without specifying STDOUT or STDERR."""
         self.build()
@@ -49,7 +49,7 @@ class ProcessIOTestCase(TestBase):
         self.check_process_output(output, output)
 
     @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_stdout_redirection(self):
         """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT without specifying STDIN or STDERR."""
         self.build()
@@ -61,7 +61,7 @@ class ProcessIOTestCase(TestBase):
         self.check_process_output(output, error)
 
     @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_stderr_redirection(self):
         """Exercise SBLaunchInfo::AddOpenFileAction() for STDERR without specifying STDIN or STDOUT."""
         self.build()
@@ -73,7 +73,7 @@ class ProcessIOTestCase(TestBase):
         self.check_process_output(output, error)
 
     @skipIfWindows # stdio manipulation unsupported on Windows
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_stdout_stderr_redirection(self):
         """Exercise SBLaunchInfo::AddOpenFileAction() for STDOUT and STDERR without redirecting STDIN."""
         self.build()

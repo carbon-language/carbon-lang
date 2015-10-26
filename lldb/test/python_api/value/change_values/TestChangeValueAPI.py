@@ -26,7 +26,7 @@ class ChangeValueAPITestCase(TestBase):
         self.end_line = line_number ('main.c', '// Set a breakpoint here at the end')
 
     @expectedFailureWindows("llvm.org/pr24772")
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_change_value(self):
         """Exercise the SBValue::SetValueFromCString API."""
         d = {'EXE': self.exe_name}

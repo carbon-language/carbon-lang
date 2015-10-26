@@ -21,7 +21,7 @@ class SymbolContextAPITestCase(TestBase):
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Find the line number of function "c" here.')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureWindows("llvm.org/pr24778")
     def test(self):
         """Exercise SBSymbolContext API extensively."""

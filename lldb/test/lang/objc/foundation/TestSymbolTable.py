@@ -27,7 +27,7 @@ class FoundationSymtabTestCase(TestBase):
                     'main'
                     ]
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Test symbol table access with Python APIs."""
         self.build()

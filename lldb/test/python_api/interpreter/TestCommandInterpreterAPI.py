@@ -18,7 +18,7 @@ class CommandInterpreterAPICase(TestBase):
         # Find the line number to break on inside main.cpp.
         self.line = line_number('main.c', 'Hello world.')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_process_launch_api(self):
         """Test the SBCommandInterpreter APIs."""
         self.build()

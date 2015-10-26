@@ -55,8 +55,6 @@ def create_parser():
     # Test filtering options
     group = parser.add_argument_group('Test filtering options')
     group.add_argument('-N', choices=['dwarf', 'dwo', 'dsym'], help="Don't do test cases marked with the @dsym_test/@dwarf_test/@dwo_test decorator by passing dsym/dwarf/dwo as the option arg")
-    X('-a', "Don't do lldb Python API tests")
-    X('+a', "Just do lldb Python API tests. Do not specify along with '-a'", dest='plus_a')
     X('+b', 'Just do benchmark tests', dest='plus_b')
     group.add_argument('-b', metavar='blacklist', help='Read a blacklist file specified after this option')
     group.add_argument('-f', metavar='filterspec', action='append', help='Specify a filter, which consists of the test class name, a dot, followed by the test method, to only admit such test into the test suite')  # FIXME: Example?
@@ -182,6 +180,13 @@ def create_parser():
               'the value to an int'))
     # Remove the reference to our helper function
     del X
+
+    D = lambda optstr, **kwargs: group.add_argument(optstr, action='store_true', **kwargs)
+    group = parser.add_argument_group('Deprecated options (do not use)')
+    # Deprecated on 23.10.2015. Remove completely after a grace period.
+    D('-a')
+    D('+a', dest='plus_a')
+    del D
 
     group = parser.add_argument_group('Test directories')
     group.add_argument('args', metavar='test-dir', nargs='*', help='Specify a list of directory names to search for test modules named after Test*.py (test discovery). If empty, search from the current working directory instead.')

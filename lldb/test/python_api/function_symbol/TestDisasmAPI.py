@@ -22,7 +22,7 @@ class DisasmAPITestCase(TestBase):
         self.line1 = line_number('main.c', '// Find the line number for breakpoint 1 here.')
         self.line2 = line_number('main.c', '// Find the line number for breakpoint 2 here.')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test(self):
         """Exercise getting SBAddress objects, disassembly, and SBAddress APIs."""
         self.build()

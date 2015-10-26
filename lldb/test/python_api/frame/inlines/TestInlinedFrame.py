@@ -23,7 +23,7 @@ class InlinedFrameAPITestCase(TestBase):
         self.first_stop = line_number(self.source, '// This should correspond to the first break stop.')
         self.second_stop = line_number(self.source, '// This should correspond to the second break stop.')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_stop_at_outer_inline(self):
         """Exercise SBFrame.IsInlined() and SBFrame.GetFunctionName()."""
         self.build()

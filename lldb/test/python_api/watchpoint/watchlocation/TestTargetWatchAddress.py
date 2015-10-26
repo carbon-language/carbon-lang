@@ -25,7 +25,7 @@ class TargetWatchAddressAPITestCase(TestBase):
         # This is for verifying that watch location works.
         self.violating_func = "do_bad_thing_with_location";
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446")
     def test_watch_address(self):
@@ -88,7 +88,7 @@ class TargetWatchAddressAPITestCase(TestBase):
 
         # This finishes our test.
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @skipIf(archs=['mips', 'mipsel', 'mips64', 'mips64el']) # No size constraint on MIPS for watches
     def test_watch_address_with_invalid_watch_size(self):

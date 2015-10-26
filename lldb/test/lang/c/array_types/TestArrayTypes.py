@@ -68,7 +68,7 @@ class ArrayTypesTestCase(TestBase):
         self.expect("frame variable --show-types long_6", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(long [6])')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_and_python_api(self):
         """Use Python APIs to inspect variables with array types."""
         self.build()

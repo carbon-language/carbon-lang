@@ -28,7 +28,7 @@ class SourceManagerTestCase(TestBase):
         self.line = line_number('main.c', '// Set break point at this line.')
         lldb.skip_build_and_cleanup = False
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_display_source_python(self):
         """Test display of source using the SBSourceManager API."""
         self.build()

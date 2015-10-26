@@ -21,7 +21,7 @@ class EventAPITestCase(TestBase):
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Find the line number of function "c" here.')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureLinux("llvm.org/pr23730") # Flaky, fails ~1/10 cases
     @skipIfLinux # skip to avoid crashes
     def test_listen_for_and_print_event(self):
@@ -100,7 +100,7 @@ class EventAPITestCase(TestBase):
         # Wait until the 'MyListeningThread' terminates.
         my_thread.join()
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_wait_for_event(self):
         """Exercise SBListener.WaitForEvent() API."""
         self.build()
@@ -172,7 +172,7 @@ class EventAPITestCase(TestBase):
                         "My listening thread successfully received an event")
 
     @skipIfFreeBSD # llvm.org/pr21325
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFlakeyLinux("llvm.org/pr23617")  # Flaky, fails ~1/10 cases
     @expectedFailureWindows("llvm.org/pr24778")
     def test_add_listener_to_broadcaster(self):

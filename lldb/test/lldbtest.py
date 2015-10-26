@@ -49,6 +49,7 @@ import unittest2
 import lldb
 import lldbtest_config
 import lldbutil
+import test_categories
 
 from six import add_metaclass
 from six import StringIO as SixStringIO
@@ -469,21 +470,14 @@ def android_device_api():
 #
 # Decorators for categorizing test cases.
 #
-
 from functools import wraps
-def python_api_test(func):
-    """Decorate the item as a Python API only test."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@python_api_test can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_python_api_test:
-            self.skipTest("python api tests")
-        return func(self, *args, **kwargs)
-
-    # Mark this function as such to separate them from lldb command line tests.
-    wrapper.__python_api_test__ = True
-    return wrapper
+def add_test_categories(cat):
+    """Decorate an item with test categories"""
+    cat = test_categories.validate(cat, True)
+    def impl(func):
+        func.getCategories = lambda test: cat
+        return func
+    return impl
 
 def lldbmi_test(func):
     """Decorate the item as a lldb-mi only test."""
@@ -1388,19 +1382,6 @@ class Base(unittest2.TestCase):
         # used for all the test cases.
         self.testMethodName = self._testMethodName
 
-        # Python API only test is decorated with @python_api_test,
-        # which also sets the "__python_api_test__" attribute of the
-        # function object to True.
-        try:
-            if lldb.just_do_python_api_test:
-                testMethod = getattr(self, self._testMethodName)
-                if getattr(testMethod, "__python_api_test__", False):
-                    pass
-                else:
-                    self.skipTest("non python api test")
-        except AttributeError:
-            pass
-
         # lldb-mi only test is decorated with @lldbmi_test,
         # which also sets the "__lldbmi_test__" attribute of the
         # function object to True.
@@ -2252,6 +2233,7 @@ class LLDBTestCaseFactory(type):
         for attrname, attrvalue in attrs.items():
             if attrname.startswith("test") and not getattr(attrvalue, "__no_debug_info_test__", False):
                 @dsym_test
+                @wraps(attrvalue)
                 def dsym_test_method(self, attrvalue=attrvalue):
                     self.debug_info = "dsym"
                     return attrvalue(self)
@@ -2260,6 +2242,7 @@ class LLDBTestCaseFactory(type):
                 newattrs[dsym_method_name] = dsym_test_method
 
                 @dwarf_test
+                @wraps(attrvalue)
                 def dwarf_test_method(self, attrvalue=attrvalue):
                     self.debug_info = "dwarf"
                     return attrvalue(self)
@@ -2268,6 +2251,7 @@ class LLDBTestCaseFactory(type):
                 newattrs[dwarf_method_name] = dwarf_test_method
                 
                 @dwo_test
+                @wraps(attrvalue)
                 def dwo_test_method(self, attrvalue=attrvalue):
                     self.debug_info = "dwo"
                     return attrvalue(self)

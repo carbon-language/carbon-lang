@@ -28,7 +28,7 @@ class TestObjCStepping(TestBase):
         self.stepped_past_nil_line = line_number (self.main_source, '// Step over nil should stop here.')
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Test stepping through ObjC method dispatch in various forms."""
         self.build()

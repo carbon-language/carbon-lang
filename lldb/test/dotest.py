@@ -41,6 +41,7 @@ from test_results import EventBuilder
 import inspect
 import unittest2
 import lldbtest_config
+import test_categories
 
 import six
 
@@ -80,32 +81,8 @@ class _WritelnDecorator(object):
 # Global variables:
 #
 
-# Dictionary of categories
-# When you define a new category for your testcases, be sure to add it here, or the test suite
-# will gladly complain as soon as you try to use it. This allows us to centralize which categories
-# exist, and to provide a description for each one
-validCategories = {
-'dataformatters':'Tests related to the type command and the data formatters subsystem',
-'expression':'Tests related to the expression parser',
-'objc':'Tests related to the Objective-C programming language support',
-'pyapi':'Tests related to the Python API',
-'basic_process': 'Basic process execution sniff tests.',
-'cmdline' : 'Tests related to the LLDB command-line interface',
-'dyntype' : 'Tests related to dynamic type support',
-'stresstest' : 'Tests related to stressing lldb limits',
-'flakey' : 'Flakey test cases, i.e. tests that do not reliably pass at each execution'
-}
-
 # The test suite.
 suite = unittest2.TestSuite()
-
-# By default, both command line and Python API tests are performed.
-# Use @python_api_test decorator, defined in lldbtest.py, to mark a test as
-# a Python API test.
-dont_do_python_api_test = False
-
-# By default, both command line and Python API tests are performed.
-just_do_python_api_test = False
 
 # By default, lldb-mi tests are performed if lldb-mi can be found.
 # Use @lldbmi_test decorator, defined in lldbtest.py, to mark a test as
@@ -389,35 +366,6 @@ o GDB_REMOTE_LOG: if defined, specifies the log file pathname for the
     sys.exit(0)
 
 
-def unique_string_match(yourentry,list):
-	candidate = None
-	for item in list:
-		if item.startswith(yourentry):
-			if candidate:
-				return None
-			candidate = item
-	return candidate
-
-def validate_categories(categories):
-    """For each category in categories, ensure that it's a valid category (or a prefix thereof).
-       If a category is invalid, print a message and quit.
-       If all categories are valid, return the list of categories. Prefixes are expanded in the
-       returned list.
-    """
-    global validCategories
-    result = []
-    for category in categories:
-        origCategory = category
-        if category not in validCategories:
-            category = unique_string_match(category, validCategories)
-        if (category not in validCategories) or category == None:
-            print("fatal error: category '" + origCategory + "' is not a valid category")
-            print("if you have added a new category, please edit dotest.py, adding your new category to validCategories")
-            print("else, please specify one or more of the following: " + str(list(validCategories.keys())))
-            sys.exit(1)
-        result.append(category)
-    return result
-
 def setCrashInfoHook_Mac(text):
     import crashinfo
     crashinfo.setCrashReporterDescription(text)
@@ -472,8 +420,6 @@ def parseOptionsAndInitTestdirs():
     '-h/--help as the first option prints out usage info and exit the program.
     """
 
-    global dont_do_python_api_test
-    global just_do_python_api_test
     global dont_do_lldbmi_test
     global just_do_lldbmi_test
     global just_do_benchmarks_test
@@ -592,13 +538,13 @@ def parseOptionsAndInitTestdirs():
         archs = [platform_machine]
 
     if args.categoriesList:
-        categoriesList = set(validate_categories(args.categoriesList))
+        categoriesList = set(test_categories.validate(args.categoriesList, False))
         useCategories = True
     else:
         categoriesList = []
 
     if args.skipCategories:
-        skipCategories = validate_categories(args.skipCategories)
+        skipCategories = test_categories.validate(args.skipCategories, False)
 
     if args.D:
         dumpSysPath = True
@@ -615,14 +561,10 @@ def parseOptionsAndInitTestdirs():
     elif args.N == 'dsym':
         dont_do_dsym_test = True
 
-    if args.a:
-        dont_do_python_api_test = True
-
-    if args.plus_a:
-        if dont_do_python_api_test:
-            print("Warning: -a and +a can't both be specified! Using only -a")
-        else:
-            just_do_python_api_test = True
+    if args.a or args.plus_a:
+        print("Options '-a' and '+a' have been deprecated. Please use the test category\n"
+              "functionality (-G pyapi, --skip-category pyapi) instead.")
+        sys.exit(1)
 
     if args.plus_b:
         just_do_benchmarks_test = True
@@ -783,10 +725,6 @@ def parseOptionsAndInitTestdirs():
         os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(args.hide_inferior_console)
 
     if do_help == True:
-        usage(parser)
-
-    # Do not specify both '-a' and '+a' at the same time.
-    if dont_do_python_api_test and just_do_python_api_test:
         usage(parser)
 
     # Do not specify both '-m' and '+m' at the same time.
@@ -1579,8 +1517,6 @@ if __name__ == "__main__":
     lldb.lldbtest_remote_shell_template = lldbtest_remote_shell_template
 
     # Put all these test decorators in the lldb namespace.
-    lldb.dont_do_python_api_test = dont_do_python_api_test
-    lldb.just_do_python_api_test = just_do_python_api_test
     lldb.dont_do_lldbmi_test = dont_do_lldbmi_test
     lldb.just_do_lldbmi_test = just_do_lldbmi_test
     lldb.just_do_benchmarks_test = just_do_benchmarks_test

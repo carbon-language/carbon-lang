@@ -29,7 +29,7 @@ class DynamicValueTestCase(TestBase):
 
     @expectedFailureFreeBSD # FIXME: This needs to be root-caused.
     @expectedFailureWindows("llvm.org/pr24663")
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_get_dynamic_vals(self):
         """Test fetching C++ dynamic values from pointers & references."""
         self.build(dictionary=self.getBuildFlags())

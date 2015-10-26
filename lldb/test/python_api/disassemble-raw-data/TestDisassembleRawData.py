@@ -15,7 +15,7 @@ class DisassembleRawDataTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @no_debug_info_test
     def test_disassemble_raw_data(self):
         """Test disassembling raw bytes with the API."""

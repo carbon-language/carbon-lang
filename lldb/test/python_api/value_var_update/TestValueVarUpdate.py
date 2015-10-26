@@ -20,7 +20,7 @@ class HelloWorldTestCase(TestBase):
         self.exe = os.path.join(os.getcwd(), self.testMethodName)
         self.d = {'EXE': self.testMethodName}
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_process_launch_api(self):
         """Test SBValue::GetValueDidChange"""
         self.build(dictionary=self.d)

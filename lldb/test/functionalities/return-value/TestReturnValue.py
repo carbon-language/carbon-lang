@@ -17,7 +17,7 @@ class ReturnValueTestCase(TestBase):
 
     @expectedFailurei386
     @expectedFailureWindows("llvm.org/pr24778")
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python(self):
         """Test getting return values from stepping out."""
         self.build()

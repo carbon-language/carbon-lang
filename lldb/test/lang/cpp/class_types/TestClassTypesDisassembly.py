@@ -36,7 +36,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
                 #print("function:", function)
                 self.runCmd("disassemble -n '%s'" % function)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_and_python_api(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.build()

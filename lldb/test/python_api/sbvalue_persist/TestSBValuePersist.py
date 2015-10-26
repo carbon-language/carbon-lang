@@ -13,7 +13,7 @@ class SBValuePersistTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureWindows("llvm.org/pr24772")
     def test(self):
         """Test SBValue::Persist"""

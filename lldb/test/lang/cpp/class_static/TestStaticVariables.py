@@ -52,7 +52,7 @@ class StaticVariableTestCase(TestBase):
     @expectedFailureClang('Clang emits incomplete debug info.')
     @expectedFailureFreeBSD('llvm.org/pr20550 failing on FreeBSD-11')
     @expectedFailureGcc('GCC emits incomplete debug info.')
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Test Python APIs on file and class static variables."""
         self.build()

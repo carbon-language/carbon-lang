@@ -19,7 +19,7 @@ class TestWatchpointEvents (TestBase):
         # Find the line numbers that we will step to in main:
         self.main_source = "main.c"
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_with_python_api(self):

@@ -21,7 +21,7 @@ class ConditionalBreakTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @expectedFailureWindows("llvm.org/pr24778")
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python(self):
         """Exercise some thread and frame APIs to break if c() is called by a()."""
         self.build()

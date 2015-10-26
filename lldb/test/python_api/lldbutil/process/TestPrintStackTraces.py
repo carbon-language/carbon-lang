@@ -23,7 +23,7 @@ class ThreadsStackTracesTestCase(TestBase):
 
     @expectedFailureAll("llvm.org/pr23043", ["linux"], archs=["i386"]) # We are unable to produce a backtrace of the main thread when the thread is blocked in fgets
     @expectedFailureWindows("llvm.org/pr24778")
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_stack_traces(self):
         """Test SBprocess and SBThread APIs with printing of the stack traces."""
         self.build()

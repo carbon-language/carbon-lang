@@ -33,7 +33,7 @@ class AssertingInferiorTestCase(TestBase):
         self.build()
         self.inferior_asserting_disassemble()
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting_python(self):
         """Test that lldb reliably catches the inferior asserting (Python API)."""

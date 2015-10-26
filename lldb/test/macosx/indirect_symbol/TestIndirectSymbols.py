@@ -20,7 +20,7 @@ class TestIndirectFunctions(TestBase):
         self.main_source = "main.c"
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Test stepping and setting breakpoints in indirect and re-exported symbols."""
         self.build()

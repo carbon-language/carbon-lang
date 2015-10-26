@@ -23,7 +23,7 @@ class TestObjCIvarStripped(TestBase):
     @skipUnlessDarwin
     @skipIfDwarf    # This test requires a stripped binary and a dSYM
     @skipIfDWO      # This test requires a stripped binary and a dSYM
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Test that we can find stripped Objective-C ivars in the runtime"""
         self.build()

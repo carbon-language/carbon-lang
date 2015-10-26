@@ -21,7 +21,7 @@ class TestObjCStaticMethod(TestBase):
         self.break_line = line_number(self.main_source, '// Set breakpoint here.')
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     #<rdar://problem/9745789> "expression" can't call functions in class methods
     def test_with_python_api(self):
         """Test calling functions in static methods."""

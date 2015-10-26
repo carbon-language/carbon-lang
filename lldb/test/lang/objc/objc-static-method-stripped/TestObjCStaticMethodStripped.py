@@ -21,7 +21,7 @@ class TestObjCStaticMethodStripped(TestBase):
         self.break_line = line_number(self.main_source, '// Set breakpoint here.')
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @skipIfDwarf    # This test requires a stripped binary and a dSYM
     @skipIfDWO      # This test requires a stripped binary and a dSYM
     #<rdar://problem/12042992>

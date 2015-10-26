@@ -26,7 +26,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.build()
         self.recursive_inferior_crashing_registers()
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureWindows("llvm.org/pr24778")
     def test_recursive_inferior_crashing_python(self):
         """Test that lldb reliably catches the inferior crashing (Python API)."""

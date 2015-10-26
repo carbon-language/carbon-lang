@@ -21,7 +21,7 @@ class ObjCSBTypeTestCase(TestBase):
         self.line = line_number("main.m", '// Break at this line')
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test(self):
         """Test SBType for ObjC classes."""
         self.build()

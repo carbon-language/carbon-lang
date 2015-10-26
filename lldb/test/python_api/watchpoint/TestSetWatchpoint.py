@@ -23,7 +23,7 @@ class SetWatchpointAPITestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watch_val(self):

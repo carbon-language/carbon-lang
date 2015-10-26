@@ -16,7 +16,7 @@ class ModuleAndSectionAPIsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_module_and_section(self):
         """Test module and section APIs."""
         self.build()
@@ -56,7 +56,7 @@ class ModuleAndSectionAPIsTestCase(TestBase):
                         print(INDENT2 + str(sym))
                         print(INDENT2 + "symbol type: %s" % symbol_type_to_str(sym.GetType()))
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_module_and_section_boundary_condition(self):
         """Test module and section APIs by passing None when it expects a Python string."""
         self.build()
@@ -97,7 +97,7 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         if sec1:
             sec1.FindSubSection(None)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_module_compile_unit_iter(self):
         """Test module's compile unit iterator APIs."""
         self.build()

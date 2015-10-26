@@ -29,7 +29,7 @@ class ObjCDynamicValueTestCase(TestBase):
                                                        '// Break here to see if we can step into real method.')
 
     @skipUnlessDarwin
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")
     def test_get_objc_dynamic_vals(self):
         """Test fetching ObjC dynamic values."""

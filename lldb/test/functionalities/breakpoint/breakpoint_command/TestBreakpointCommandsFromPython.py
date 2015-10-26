@@ -17,7 +17,7 @@ class PythonBreakpointCommandSettingTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
     my_var = 10
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_step_out_python(self):
         """Test stepping out using avoid-no-debug with dsyms."""
         self.build()

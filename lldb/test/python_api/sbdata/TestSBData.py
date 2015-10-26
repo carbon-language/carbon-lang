@@ -20,7 +20,7 @@ class SBDataAPICase(TestBase):
         # Find the line number to break on inside main.cpp.
         self.line = line_number('main.cpp', '// set breakpoint here')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_run_command(self):
         """Test the SBData APIs."""
         self.build()

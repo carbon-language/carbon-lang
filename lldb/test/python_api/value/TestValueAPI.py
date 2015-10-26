@@ -24,7 +24,7 @@ class ValueAPITestCase(TestBase):
         self.line = line_number('main.c', '// Break at this line')
 
     @expectedFailureWindows("llvm.org/pr24772")
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test(self):
         """Exercise some SBValue APIs."""
         d = {'EXE': self.exe_name}

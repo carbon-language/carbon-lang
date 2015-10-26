@@ -21,7 +21,7 @@ class ProcessAPITestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number("main.cpp", "// Set break point at this line and check variable 'my_char'.")
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_read_memory(self):
         """Test Python SBProcess.ReadMemory() API."""
         self.build()
@@ -104,7 +104,7 @@ class ProcessAPITestCase(TestBase):
         if my_uint32 != 12345:
             self.fail("Result from SBProcess.ReadUnsignedFromMemory() does not match our expected output")
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_write_memory(self):
         """Test Python SBProcess.WriteMemory() API."""
         self.build()
@@ -156,7 +156,7 @@ class ProcessAPITestCase(TestBase):
                     exe=False,
             startstr = 'a')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_access_my_int(self):
         """Test access 'my_int' using Python SBProcess.GetByteOrder() and other APIs."""
         self.build()
@@ -246,7 +246,7 @@ class ProcessAPITestCase(TestBase):
             for i in new_bytes:
                 print("byte:", i)
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_remote_launch(self):
         """Test SBProcess.RemoteLaunch() API with a process not in eStateConnected, and it should fail."""
         self.build()
@@ -266,7 +266,7 @@ class ProcessAPITestCase(TestBase):
         success = process.RemoteLaunch(None, None, None, None, None, None, 0, False, error)
         self.assertTrue(not success, "RemoteLaunch() should fail for process state != eStateConnected")
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_get_num_supported_hardware_watchpoints(self):
         """Test SBProcess.GetNumSupportedHardwareWatchpoints() API with a process."""
         self.build()

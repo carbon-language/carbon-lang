@@ -20,7 +20,7 @@ class UniversalTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 
-    @python_api_test
+    @add_test_categories(['pyapi'])
     @skipUnlessDarwin
     @unittest2.skipUnless(hasattr(os, "uname") and os.uname()[4] in ['i386', 'x86_64'],
             "requires i386 or x86_64")

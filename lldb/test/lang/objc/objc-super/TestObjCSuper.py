@@ -22,7 +22,7 @@ class TestObjCSuperMethod(TestBase):
 
     @skipUnlessDarwin
     @expectedFailurei386
-    @python_api_test
+    @add_test_categories(['pyapi'])
     def test_with_python_api(self):
         """Test calling methods on super."""
         self.build()
