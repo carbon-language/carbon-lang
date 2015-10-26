@@ -77,7 +77,7 @@ class LLVMSymbolizer(Symbolizer):
     cmd = [self.symbolizer_path,
            '--use-symbol-table=true',
            '--demangle=%s' % demangle,
-           '--functions=short',
+           '--functions=linkage',
            '--inlining=true',
            '--default-arch=%s' % self.default_arch]
     if self.system == 'Darwin':
