@@ -1522,7 +1522,7 @@ DWARFASTParserClang::ParseTypeFromDWARF (const SymbolContext& sc,
                         CompilerType pointee_clang_type = pointee_type->GetForwardCompilerType ();
                         CompilerType class_clang_type = class_type->GetLayoutCompilerType ();
                         
-                        clang_type = ClangASTContext::CreateMemberPointerType(pointee_clang_type, class_clang_type);
+                        clang_type = ClangASTContext::CreateMemberPointerType(class_clang_type, pointee_clang_type);
                         
                         byte_size = clang_type.GetByteSize(nullptr);
                         
