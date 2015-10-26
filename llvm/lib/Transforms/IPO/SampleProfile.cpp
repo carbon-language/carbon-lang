@@ -387,6 +387,7 @@ SampleProfileLoader::findFunctionSamples(const Instruction &Inst) const {
 /// \returns True if there is any inline happened.
 bool SampleProfileLoader::inlineHotFunctions(Function &F) {
   bool Changed = false;
+  LLVMContext &Ctx = F.getContext();
   while (true) {
     bool LocalChanged = false;
     SmallVector<CallInst *, 10> CIS;
@@ -403,8 +404,17 @@ bool SampleProfileLoader::inlineHotFunctions(Function &F) {
     }
     for (auto CI : CIS) {
       InlineFunctionInfo IFI;
-      if (InlineFunction(CI, IFI))
+      Function *CalledFunction = CI->getCalledFunction();
+      DebugLoc DLoc = CI->getDebugLoc();
+      uint64_t NumSamples = findCalleeFunctionSamples(*CI)->getTotalSamples();
+      if (InlineFunction(CI, IFI)) {
         LocalChanged = true;
+        emitOptimizationRemark(Ctx, DEBUG_TYPE, F, DLoc,
+                               Twine("inlined hot callee '") +
+                                   CalledFunction->getName() + "' with " +
+                                   Twine(NumSamples) + " samples into '" +
+                                   F.getName() + "'");
+      }
     }
     if (LocalChanged) {
       Changed = true;
@@ -724,7 +734,8 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   // Generate MD_prof metadata for every branch instruction using the
   // edge weights computed during propagation.
   DEBUG(dbgs() << "\nPropagation complete. Setting branch weights\n");
-  MDBuilder MDB(F.getContext());
+  LLVMContext &Ctx = F.getContext();
+  MDBuilder MDB(Ctx);
   for (auto &BI : F) {
     BasicBlock *BB = &BI;
     TerminatorInst *TI = BB->getTerminator();
@@ -736,7 +747,9 @@ void SampleProfileLoader::propagateWeights(Function &F) {
     DEBUG(dbgs() << "\nGetting weights for branch at line "
                  << TI->getDebugLoc().getLine() << ".\n");
     SmallVector<uint32_t, 4> Weights;
-    bool AllWeightsZero = true;
+    uint32_t MaxWeight = 0;
+    BasicBlock *MaxDestBB = nullptr;
+    DebugLoc MaxDestLoc;
     for (unsigned I = 0; I < TI->getNumSuccessors(); ++I) {
       BasicBlock *Succ = TI->getSuccessor(I);
       Edge E = std::make_pair(BB, Succ);
@@ -750,16 +763,27 @@ void SampleProfileLoader::propagateWeights(Function &F) {
         Weight = std::numeric_limits<uint32_t>::max();
       }
       Weights.push_back(static_cast<uint32_t>(Weight));
-      if (Weight != 0)
-        AllWeightsZero = false;
+      if (Weight != 0) {
+        if (Weight > MaxWeight) {
+          MaxWeight = Weight;
+          MaxDestBB = Succ;
+          MaxDestLoc = Succ->getFirstNonPHIOrDbgOrLifetime()->getDebugLoc();
+        }
+      }
     }
 
     // Only set weights if there is at least one non-zero weight.
     // In any other case, let the analyzer set weights.
-    if (!AllWeightsZero) {
+    if (MaxWeight > 0) {
       DEBUG(dbgs() << "SUCCESS. Found non-zero weights.\n");
       TI->setMetadata(llvm::LLVMContext::MD_prof,
                       MDB.createBranchWeights(Weights));
+      DebugLoc BranchLoc = TI->getDebugLoc();
+      emitOptimizationRemark(
+          Ctx, DEBUG_TYPE, F, MaxDestLoc,
+          Twine("most popular destination for conditional branches at ") +
+              BranchLoc->getFilename() + ":" + Twine(BranchLoc.getLine()) +
+              ":" + Twine(BranchLoc.getCol()));
     } else {
       DEBUG(dbgs() << "SKIPPED. All branch weights are zero.\n");
     }
