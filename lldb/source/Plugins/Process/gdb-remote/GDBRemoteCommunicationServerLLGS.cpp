@@ -426,7 +426,7 @@ WriteRegisterValueInHexFixedWidth (StreamString &response,
 }
 
 static JSONObject::SP
-GetRegistersAsJSON(NativeThreadProtocol &thread)
+GetRegistersAsJSON(NativeThreadProtocol &thread, bool abridged)
 {
     Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_THREAD));
 
@@ -448,11 +448,17 @@ GetRegistersAsJSON(NativeThreadProtocol &thread)
     // Expedite only a couple of registers until we figure out why sending registers is
     // expensive.
     static const uint32_t k_expedited_registers[] = {
-        LLDB_REGNUM_GENERIC_PC, LLDB_REGNUM_GENERIC_SP, LLDB_REGNUM_GENERIC_FP, LLDB_REGNUM_GENERIC_RA
+        LLDB_REGNUM_GENERIC_PC, LLDB_REGNUM_GENERIC_SP, LLDB_REGNUM_GENERIC_FP, LLDB_REGNUM_GENERIC_RA, LLDB_INVALID_REGNUM
     };
-    for (uint32_t generic_reg: k_expedited_registers)
+    static const uint32_t k_abridged_expedited_registers[] = {
+        LLDB_REGNUM_GENERIC_PC, LLDB_INVALID_REGNUM
+    };
+
+    for (const uint32_t *generic_reg_p = abridged ? k_abridged_expedited_registers : k_expedited_registers;
+         *generic_reg_p != LLDB_INVALID_REGNUM;
+         ++generic_reg_p)
     {
-        uint32_t reg_num = reg_ctx_sp->ConvertRegisterKindToRegisterNumber(eRegisterKindGeneric, generic_reg);
+        uint32_t reg_num = reg_ctx_sp->ConvertRegisterKindToRegisterNumber(eRegisterKindGeneric, *generic_reg_p);
         if (reg_num == LLDB_INVALID_REGNUM)
             continue; // Target does not support the given register.
 #endif
@@ -518,7 +524,7 @@ GetStopReasonString(StopReason stop_reason)
 }
 
 static JSONArray::SP
-GetJSONThreadsInfo(NativeProcessProtocol &process, bool threads_with_valid_stop_info_only)
+GetJSONThreadsInfo(NativeProcessProtocol &process, bool abridged)
 {
     Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_THREAD));
 
@@ -551,11 +557,11 @@ GetJSONThreadsInfo(NativeProcessProtocol &process, bool threads_with_valid_stop_
                     tid_stop_info.details.exception.type);
         }
 
-        if (threads_with_valid_stop_info_only && tid_stop_info.reason == eStopReasonNone)
-            continue; // No stop reason, skip this thread completely.
-
         JSONObject::SP thread_obj_sp = std::make_shared<JSONObject>();
         threads_array_sp->AppendObject(thread_obj_sp);
+
+        if (JSONObject::SP registers_sp = GetRegistersAsJSON(*thread_sp, abridged))
+            thread_obj_sp->SetObject("registers", registers_sp);
 
         thread_obj_sp->SetObject("tid", std::make_shared<JSONNumber>(tid));
         if (signum != 0)
@@ -584,12 +590,6 @@ GetJSONThreadsInfo(NativeProcessProtocol &process, bool threads_with_valid_stop_
             }
             thread_obj_sp->SetObject("medata", medata_array_sp);
         }
-
-        if (threads_with_valid_stop_info_only)
-            continue; // Only send the abridged stop info.
-
-        if (JSONObject::SP registers_sp = GetRegistersAsJSON(*thread_sp))
-            thread_obj_sp->SetObject("registers", registers_sp);
 
         // TODO: Expedite interesting regions of inferior memory
     }
