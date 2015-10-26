@@ -2940,7 +2940,7 @@ bool ARMFastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
 unsigned ARMFastISel::ARMLowerPICELF(const GlobalValue *GV,
                                      unsigned Align, MVT VT) {
   bool UseGOT_PREL =
-      !(GV->hasHiddenVisibility() || GV->isStrongDefinitionForLinker());
+      !(GV->hasHiddenVisibility() || GV->hasLocalLinkage());
 
   LLVMContext *Context = &MF->getFunction()->getContext();
   unsigned ARMPCLabelIndex = AFI->createPICLabelUId();

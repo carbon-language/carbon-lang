@@ -2637,7 +2637,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     bool UseGOT_PREL =
-        !(GV->hasHiddenVisibility() || GV->isStrongDefinitionForLinker());
+        !(GV->hasHiddenVisibility() || GV->hasLocalLinkage());
 
     MachineFunction &MF = DAG.getMachineFunction();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
