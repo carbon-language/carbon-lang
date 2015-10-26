@@ -197,7 +197,7 @@ class Configuration(object):
     def configure_obj_root(self):
         self.project_obj_root = self.get_lit_conf('project_obj_root')
         self.libcxx_obj_root = self.get_lit_conf('libcxx_obj_root')
-        if not self.libcxx_obj_root:
+        if not self.libcxx_obj_root and self.project_obj_root is not None:
             possible_root = os.path.join(self.project_obj_root, 'projects', 'libcxx')
             if os.path.isdir(possible_root):
                 self.libcxx_obj_root = possible_root
@@ -425,6 +425,8 @@ class Configuration(object):
     def configure_config_site_header(self):
         # Check for a possible __config_site in the build directory. We
         # use this if it exists.
+        if self.libcxx_obj_root is None:
+            return
         config_site_header = os.path.join(self.libcxx_obj_root, '__config_site')
         if not os.path.isfile(config_site_header):
             return
