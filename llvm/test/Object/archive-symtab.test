@@ -86,7 +86,7 @@ MACHO: Archive map
 MACHO-NEXT: _main in trivial-object-test.macho-x86-64
 MACHO-NEXT: _foo in trivial-object-test2.macho-x86-64
 MACHO-NEXT: _main in trivial-object-test2.macho-x86-64
-MACHO-NOT: bar
+MACHO-NOT: {{^}}bar
 
 MACHO: trivial-object-test.macho-x86-64
 MACHO-NEXT: 0000000000000028 s L_.str
