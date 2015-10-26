@@ -421,7 +421,7 @@ class Window(object):
             self.timeout(timeout_msec)
         return c        
         
-    def key_event_loop(self, timeout_msec=-1, n=sys.maxint):
+    def key_event_loop(self, timeout_msec=-1, n=sys.maxsize):
         '''Run an event loop to receive key presses and pass them along to the
            responder chain.
            
@@ -974,7 +974,7 @@ class MenuBar(Panel):
         self.add_key_action(curses.KEY_ENTER, self.perform_action, "Select the next menu item")
         self.add_key_action(10, self.perform_action, "Select the next menu item")
 
-    def insert_menu(self, menu, index=sys.maxint):
+    def insert_menu(self, menu, index=sys.maxsize):
         if index >= len(self.menus):
             self.menus.append(menu)
         else:

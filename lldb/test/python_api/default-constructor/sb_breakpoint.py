@@ -8,8 +8,8 @@ import lldb
 def fuzz_obj(obj):
     obj.GetID()
     obj.ClearAllBreakpointSites()
-    obj.FindLocationByAddress(sys.maxint)
-    obj.FindLocationIDByAddress(sys.maxint)
+    obj.FindLocationByAddress(sys.maxsize)
+    obj.FindLocationIDByAddress(sys.maxsize)
     obj.FindLocationByID(0)
     obj.GetLocationAtIndex(0)
     obj.SetEnabled(True)
