@@ -16,7 +16,7 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
             # Start up the inferior.
             "read packet: $c#63",
             # Immediately tell it to stop.  We want to see what it reports.
-            "read packet: {}".format(chr(03)),
+            "read packet: {}".format(chr(3)),
             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result", 2:"key_vals_text"} },
             ], True)
 

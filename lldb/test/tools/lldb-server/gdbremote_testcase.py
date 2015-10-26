@@ -774,7 +774,7 @@ class GdbRemoteTestCaseBase(TestBase):
         # Send an interrupt, capture a T response.
         self.reset_test_sequence()
         self.test_sequence.add_log_lines(
-            ["read packet: {}".format(chr(03)),
+            ["read packet: {}".format(chr(3)),
              {"direction":"send", "regex":r"^\$T([0-9a-fA-F]+)([^#]+)#[0-9a-fA-F]{2}$", "capture":{1:"stop_result"} }],
             True)
         context = self.expect_gdbremote_sequence()
@@ -923,7 +923,7 @@ class GdbRemoteTestCaseBase(TestBase):
     def add_interrupt_packets(self):
         self.test_sequence.add_log_lines([
             # Send the intterupt.
-            "read packet: {}".format(chr(03)),
+            "read packet: {}".format(chr(3)),
             # And wait for the stop notification.
             {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})(.*)#[0-9a-fA-F]{2}$", "capture":{1:"stop_signo", 2:"stop_key_val_text" } },
             ], True)
@@ -1209,7 +1209,7 @@ class GdbRemoteTestCaseBase(TestBase):
              { "type":"output_match", "regex":r"^code address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\ndata address: 0x([0-9a-fA-F]+)\r\n$", 
                "capture":{ 1:"function_address", 2:"g_c1_address", 3:"g_c2_address"} },
              # Now stop the inferior.
-             "read packet: {}".format(chr(03)),
+             "read packet: {}".format(chr(3)),
              # And wait for the stop notification.
              {"direction":"send", "regex":r"^\$T([0-9a-fA-F]{2})thread:([0-9a-fA-F]+);", "capture":{1:"stop_signo", 2:"stop_thread_id"} }],
             True)

@@ -2433,7 +2433,7 @@ class TestBase(Base):
                     self.getArchitecture(),
                     str(self.test_number),
                     self.mydir)
-            error = lldb.remote_platform.MakeDirectory(remote_test_dir, 0700)
+            error = lldb.remote_platform.MakeDirectory(remote_test_dir, 448) # 448 = 0o700
             if error.Success():
                 lldb.remote_platform.SetWorkingDirectory(remote_test_dir)
 
