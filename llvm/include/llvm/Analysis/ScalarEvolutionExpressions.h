@@ -553,12 +553,88 @@ namespace llvm {
     T.visitAll(Root);
   }
 
+  /// Recursively visits a SCEV expression and re-writes it.
+  template<typename SC>
+  class SCEVRewriteVisitor : public SCEVVisitor<SC, const SCEV *> {
+  protected:
+    ScalarEvolution &SE;
+  public:
+    SCEVRewriteVisitor(ScalarEvolution &SE) : SE(SE) {}
+
+    const SCEV *visitConstant(const SCEVConstant *Constant) {
+      return Constant;
+    }
+
+    const SCEV *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
+      const SCEV *Operand = ((SC*)this)->visit(Expr->getOperand());
+      return SE.getTruncateExpr(Operand, Expr->getType());
+    }
+
+    const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+      const SCEV *Operand = ((SC*)this)->visit(Expr->getOperand());
+      return SE.getZeroExtendExpr(Operand, Expr->getType());
+    }
+
+    const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
+      const SCEV *Operand = ((SC*)this)->visit(Expr->getOperand());
+      return SE.getSignExtendExpr(Operand, Expr->getType());
+    }
+
+    const SCEV *visitAddExpr(const SCEVAddExpr *Expr) {
+      SmallVector<const SCEV *, 2> Operands;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
+      return SE.getAddExpr(Operands);
+    }
+
+    const SCEV *visitMulExpr(const SCEVMulExpr *Expr) {
+      SmallVector<const SCEV *, 2> Operands;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
+      return SE.getMulExpr(Operands);
+    }
+
+    const SCEV *visitUDivExpr(const SCEVUDivExpr *Expr) {
+      return SE.getUDivExpr(((SC*)this)->visit(Expr->getLHS()),
+                            ((SC*)this)->visit(Expr->getRHS()));
+    }
+
+    const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+      SmallVector<const SCEV *, 2> Operands;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
+      return SE.getAddRecExpr(Operands, Expr->getLoop(),
+                              Expr->getNoWrapFlags());
+    }
+
+    const SCEV *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
+      SmallVector<const SCEV *, 2> Operands;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
+      return SE.getSMaxExpr(Operands);
+    }
+
+    const SCEV *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
+      SmallVector<const SCEV *, 2> Operands;
+      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
+        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
+      return SE.getUMaxExpr(Operands);
+    }
+
+    const SCEV *visitUnknown(const SCEVUnknown *Expr) {
+      return Expr;
+    }
+
+    const SCEV *visitCouldNotCompute(const SCEVCouldNotCompute *Expr) {
+      return Expr;
+    }
+  };
+
   typedef DenseMap<const Value*, Value*> ValueToValueMap;
 
   /// The SCEVParameterRewriter takes a scalar evolution expression and updates
   /// the SCEVUnknown components following the Map (Value -> Value).
-  struct SCEVParameterRewriter
-    : public SCEVVisitor<SCEVParameterRewriter, const SCEV*> {
+  class SCEVParameterRewriter : public SCEVRewriteVisitor<SCEVParameterRewriter> {
   public:
     static const SCEV *rewrite(const SCEV *Scev, ScalarEvolution &SE,
                                ValueToValueMap &Map,
@@ -567,67 +643,8 @@ namespace llvm {
       return Rewriter.visit(Scev);
     }
 
-    SCEVParameterRewriter(ScalarEvolution &S, ValueToValueMap &M, bool C)
-      : SE(S), Map(M), InterpretConsts(C) {}
-
-    const SCEV *visitConstant(const SCEVConstant *Constant) {
-      return Constant;
-    }
-
-    const SCEV *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
-      const SCEV *Operand = visit(Expr->getOperand());
-      return SE.getTruncateExpr(Operand, Expr->getType());
-    }
-
-    const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
-      const SCEV *Operand = visit(Expr->getOperand());
-      return SE.getZeroExtendExpr(Operand, Expr->getType());
-    }
-
-    const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
-      const SCEV *Operand = visit(Expr->getOperand());
-      return SE.getSignExtendExpr(Operand, Expr->getType());
-    }
-
-    const SCEV *visitAddExpr(const SCEVAddExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getAddExpr(Operands);
-    }
-
-    const SCEV *visitMulExpr(const SCEVMulExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getMulExpr(Operands);
-    }
-
-    const SCEV *visitUDivExpr(const SCEVUDivExpr *Expr) {
-      return SE.getUDivExpr(visit(Expr->getLHS()), visit(Expr->getRHS()));
-    }
-
-    const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getAddRecExpr(Operands, Expr->getLoop(),
-                              Expr->getNoWrapFlags());
-    }
-
-    const SCEV *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getSMaxExpr(Operands);
-    }
-
-    const SCEV *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getUMaxExpr(Operands);
-    }
+    SCEVParameterRewriter(ScalarEvolution &SE, ValueToValueMap &M, bool C)
+      : SCEVRewriteVisitor(SE), Map(M), InterpretConsts(C) {}
 
     const SCEV *visitUnknown(const SCEVUnknown *Expr) {
       Value *V = Expr->getValue();
@@ -640,12 +657,7 @@ namespace llvm {
       return Expr;
     }
 
-    const SCEV *visitCouldNotCompute(const SCEVCouldNotCompute *Expr) {
-      return Expr;
-    }
-
   private:
-    ScalarEvolution &SE;
     ValueToValueMap &Map;
     bool InterpretConsts;
   };
@@ -654,8 +666,7 @@ namespace llvm {
 
   /// The SCEVApplyRewriter takes a scalar evolution expression and applies
   /// the Map (Loop -> SCEV) to all AddRecExprs.
-  struct SCEVApplyRewriter
-    : public SCEVVisitor<SCEVApplyRewriter, const SCEV*> {
+  class SCEVApplyRewriter : public SCEVRewriteVisitor<SCEVApplyRewriter> {
   public:
     static const SCEV *rewrite(const SCEV *Scev, LoopToScevMapT &Map,
                                ScalarEvolution &SE) {
@@ -663,45 +674,8 @@ namespace llvm {
       return Rewriter.visit(Scev);
     }
 
-    SCEVApplyRewriter(ScalarEvolution &S, LoopToScevMapT &M)
-      : SE(S), Map(M) {}
-
-    const SCEV *visitConstant(const SCEVConstant *Constant) {
-      return Constant;
-    }
-
-    const SCEV *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
-      const SCEV *Operand = visit(Expr->getOperand());
-      return SE.getTruncateExpr(Operand, Expr->getType());
-    }
-
-    const SCEV *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
-      const SCEV *Operand = visit(Expr->getOperand());
-      return SE.getZeroExtendExpr(Operand, Expr->getType());
-    }
-
-    const SCEV *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
-      const SCEV *Operand = visit(Expr->getOperand());
-      return SE.getSignExtendExpr(Operand, Expr->getType());
-    }
-
-    const SCEV *visitAddExpr(const SCEVAddExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getAddExpr(Operands);
-    }
-
-    const SCEV *visitMulExpr(const SCEVMulExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getMulExpr(Operands);
-    }
-
-    const SCEV *visitUDivExpr(const SCEVUDivExpr *Expr) {
-      return SE.getUDivExpr(visit(Expr->getLHS()), visit(Expr->getRHS()));
-    }
+    SCEVApplyRewriter(ScalarEvolution &SE, LoopToScevMapT &M)
+      : SCEVRewriteVisitor(SE), Map(M) {}
 
     const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
@@ -718,30 +692,7 @@ namespace llvm {
       return Rec->evaluateAtIteration(Map[L], SE);
     }
 
-    const SCEV *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getSMaxExpr(Operands);
-    }
-
-    const SCEV *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
-      SmallVector<const SCEV *, 2> Operands;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i)
-        Operands.push_back(visit(Expr->getOperand(i)));
-      return SE.getUMaxExpr(Operands);
-    }
-
-    const SCEV *visitUnknown(const SCEVUnknown *Expr) {
-      return Expr;
-    }
-
-    const SCEV *visitCouldNotCompute(const SCEVCouldNotCompute *Expr) {
-      return Expr;
-    }
-
   private:
-    ScalarEvolution &SE;
     LoopToScevMapT &Map;
   };
 
