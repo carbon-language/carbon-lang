@@ -1145,6 +1145,9 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
 
   // Write values visible to other statements.
   generateScalarStores(Stmt, LTS, ValueMap);
+  BlockMap.clear();
+  RegionMaps.clear();
+  IncompletePHINodeMap.clear();
 }
 
 void RegionGenerator::generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
