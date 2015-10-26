@@ -530,7 +530,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
 
   if (!Objects.first) {
     // Failed to find valid object file.
-    Modules.emplace(ModuleName, nullptr);
+    Modules.insert(make_pair(ModuleName, nullptr));
     return nullptr;
   }
   std::unique_ptr<DIContext> Context;
