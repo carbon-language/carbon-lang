@@ -25,7 +25,7 @@ entry:
 ; ARMv7-ELF: LoadGV
 ; ARMv7-ELF: ldr r[[reg2:[0-9]+]],
 ; ARMv7-ELF: .LPC
-; ARMv7-ELF-NEXT: add r[[reg2]], pc
+; ARMv7-ELF-NEXT: ldr r[[reg2]], [pc, r[[reg2]]]
 ; ARMv7-ELF: ldr r[[reg2]], [r[[reg2]]]
   %tmp = load i32, i32* @g
   ret i32 %tmp
