@@ -13,12 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Utils/LoopVersioning.h"
+
 #include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/LoopVersioning.h"
 
 using namespace llvm;
 
