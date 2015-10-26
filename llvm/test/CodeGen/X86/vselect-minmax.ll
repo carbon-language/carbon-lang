@@ -5,27 +5,11 @@
 ; RUN: llc -march=x86-64 -mcpu=knl < %s | FileCheck %s  -check-prefix=AVX2 -check-prefix=AVX512F
 ; RUN: llc -march=x86-64 -mcpu=skx < %s | FileCheck %s  -check-prefix=AVX512BW -check-prefix=AVX512VL -check-prefix=AVX512F
 
-define void @test1(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp slt <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test1(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp slt <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test1:
 ; SSE4: pminsb
@@ -40,27 +24,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test2(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp sle <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test2(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp sle <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test2:
 ; SSE4: pminsb
@@ -75,27 +43,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test3(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp sgt <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test3(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp sgt <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test3:
 ; SSE4: pmaxsb
@@ -110,27 +62,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb
 }
 
-define void @test4(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp sge <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test4(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp sge <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test4:
 ; SSE4: pmaxsb
@@ -145,27 +81,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb
 }
 
-define void @test5(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp ult <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test5(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp ult <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test5:
 ; SSE2: pminub
@@ -180,27 +100,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub 
 }
 
-define void @test6(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp ule <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test6(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp ule <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test6:
 ; SSE2: pminub
@@ -215,27 +119,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub
 }
 
-define void @test7(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp ugt <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test7(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp ugt <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test7:
 ; SSE2: pmaxub
@@ -250,27 +138,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test8(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp uge <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.a, <16 x i8> %load.b
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test8(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp uge <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test8:
 ; SSE2: pmaxub
@@ -285,27 +157,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test9(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp slt <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test9(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp slt <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test9:
 ; SSE2: pminsw
@@ -320,27 +176,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw 
 }
 
-define void @test10(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp sle <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test10(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp sle <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test10:
 ; SSE2: pminsw
@@ -355,27 +195,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw
 }
 
-define void @test11(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp sgt <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test11(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp sgt <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test11:
 ; SSE2: pmaxsw
@@ -390,27 +214,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test12(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp sge <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test12(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp sge <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test12:
 ; SSE2: pmaxsw
@@ -425,27 +233,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test13(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp ult <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test13(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp ult <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test13:
 ; SSE4: pminuw
@@ -460,27 +252,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw
 }
 
-define void @test14(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp ule <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test14(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp ule <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test14:
 ; SSE4: pminuw
@@ -495,27 +271,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw 
 }
 
-define void @test15(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp ugt <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test15(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp ugt <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test15:
 ; SSE4: pmaxuw
@@ -530,27 +290,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test16(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp uge <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.a, <8 x i16> %load.b
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test16(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp uge <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test16:
 ; SSE4: pmaxuw
@@ -565,27 +309,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test17(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp slt <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test17(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp slt <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test17:
 ; SSE4: pminsd
@@ -600,27 +328,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test18(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp sle <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test18(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp sle <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test18:
 ; SSE4: pminsd
@@ -635,27 +347,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test19(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp sgt <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test19(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp sgt <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test19:
 ; SSE4: pmaxsd
@@ -670,27 +366,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test20(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp sge <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test20(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp sge <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test20:
 ; SSE4: pmaxsd
@@ -705,27 +385,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test21(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp ult <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test21(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp ult <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test21:
 ; SSE4: pminud
@@ -740,27 +404,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminud
 }
 
-define void @test22(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp ule <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test22(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp ule <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test22:
 ; SSE4: pminud
@@ -775,27 +423,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminud
 }
 
-define void @test23(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp ugt <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test23(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp ugt <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test23:
 ; SSE4: pmaxud
@@ -810,27 +442,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test24(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp uge <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.a, <4 x i32> %load.b
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test24(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp uge <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test24:
 ; SSE4: pmaxud
@@ -845,27 +461,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test25(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp slt <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test25(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp slt <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test25:
 ; AVX2: vpminsb
@@ -874,27 +474,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test26(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp sle <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test26(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp sle <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test26:
 ; AVX2: vpminsb
@@ -903,27 +487,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test27(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp sgt <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test27(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp sgt <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test27:
 ; AVX2: vpmaxsb
@@ -932,27 +500,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb
 }
 
-define void @test28(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp sge <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test28(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp sge <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test28:
 ; AVX2: vpmaxsb
@@ -961,27 +513,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb
 }
 
-define void @test29(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp ult <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test29(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp ult <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test29:
 ; AVX2: vpminub
@@ -990,27 +526,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub
 }
 
-define void @test30(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp ule <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test30(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp ule <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test30:
 ; AVX2: vpminub
@@ -1019,27 +539,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub
 }
 
-define void @test31(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp ugt <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test31(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp ugt <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test31:
 ; AVX2: vpmaxub
@@ -1048,27 +552,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test32(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp uge <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.a, <32 x i8> %load.b
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test32(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp uge <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %a, <32 x i8> %b
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test32:
 ; AVX2: vpmaxub
@@ -1077,27 +565,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test33(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp slt <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test33(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp slt <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test33:
 ; AVX2: vpminsw
@@ -1106,27 +578,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw 
 }
 
-define void @test34(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp sle <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test34(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp sle <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test34:
 ; AVX2: vpminsw
@@ -1135,27 +591,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw
 }
 
-define void @test35(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp sgt <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test35(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp sgt <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test35:
 ; AVX2: vpmaxsw
@@ -1164,27 +604,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test36(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp sge <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test36(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp sge <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test36:
 ; AVX2: vpmaxsw
@@ -1193,27 +617,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test37(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp ult <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test37(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp ult <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test37:
 ; AVX2: vpminuw
@@ -1222,27 +630,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw
 }
 
-define void @test38(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp ule <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test38(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp ule <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test38:
 ; AVX2: vpminuw
@@ -1251,27 +643,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw
 }
 
-define void @test39(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp ugt <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test39(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp ugt <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test39:
 ; AVX2: vpmaxuw
@@ -1280,27 +656,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test40(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp uge <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.a, <16 x i16> %load.b
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test40(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp uge <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %a, <16 x i16> %b
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test40:
 ; AVX2: vpmaxuw
@@ -1309,27 +669,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test41(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp slt <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test41(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp slt <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test41:
 ; AVX2: vpminsd
@@ -1338,27 +682,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test42(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp sle <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test42(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp sle <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test42:
 ; AVX2: vpminsd
@@ -1367,27 +695,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test43(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp sgt <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test43(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp sgt <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test43:
 ; AVX2: vpmaxsd
@@ -1396,27 +708,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test44(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp sge <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test44(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp sge <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test44:
 ; AVX2: vpmaxsd
@@ -1425,27 +721,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test45(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp ult <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test45(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp ult <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test45:
 ; AVX2: vpminud
@@ -1454,27 +734,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminud
 }
 
-define void @test46(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp ule <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test46(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp ule <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test46:
 ; AVX2: vpminud
@@ -1483,27 +747,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminud
 }
 
-define void @test47(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp ugt <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test47(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp ugt <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test47:
 ; AVX2: vpmaxud
@@ -1512,27 +760,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test48(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp uge <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.a, <8 x i32> %load.b
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test48(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp uge <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %a, <8 x i32> %b
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test48:
 ; AVX2: vpmaxud
@@ -1541,27 +773,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test49(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp slt <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test49(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp slt <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test49:
 ; SSE4: pmaxsb
@@ -1576,27 +792,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb
 }
 
-define void @test50(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp sle <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test50(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp sle <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test50:
 ; SSE4: pmaxsb
@@ -1611,27 +811,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb
 }
 
-define void @test51(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp sgt <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test51(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp sgt <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test51:
 ; SSE4: pminsb
@@ -1646,27 +830,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test52(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp sge <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test52(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp sge <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE4-LABEL: test52:
 ; SSE4: pminsb
@@ -1681,27 +849,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test53(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp ult <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test53(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp ult <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test53:
 ; SSE2: pmaxub
@@ -1716,27 +868,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test54(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp ule <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test54(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp ule <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test54:
 ; SSE2: pmaxub
@@ -1751,27 +887,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test55(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp ugt <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test55(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp ugt <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test55:
 ; SSE2: pminub
@@ -1786,27 +906,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub
 }
 
-define void @test56(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <16 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <16 x i8>*
-  %load.a = load <16 x i8>, <16 x i8>* %ptr.a, align 2
-  %load.b = load <16 x i8>, <16 x i8>* %ptr.b, align 2
-  %cmp = icmp uge <16 x i8> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i8> %load.b, <16 x i8> %load.a
-  store <16 x i8> %sel, <16 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i8> @test56(<16 x i8> %a, <16 x i8> %b) {
+entry:
+  %cmp = icmp uge <16 x i8> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i8> %b, <16 x i8> %a
+  ret <16 x i8> %sel
 
 ; SSE2-LABEL: test56:
 ; SSE2: pminub
@@ -1821,27 +925,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub
 }
 
-define void @test57(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp slt <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test57(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp slt <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test57:
 ; SSE2: pmaxsw
@@ -1856,27 +944,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test58(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp sle <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test58(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp sle <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test58:
 ; SSE2: pmaxsw
@@ -1891,27 +963,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test59(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp sgt <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test59(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp sgt <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test59:
 ; SSE2: pminsw
@@ -1926,27 +982,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw
 }
 
-define void @test60(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp sge <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test60(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp sge <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE2-LABEL: test60:
 ; SSE2: pminsw
@@ -1961,27 +1001,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw
 }
 
-define void @test61(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp ult <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test61(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp ult <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test61:
 ; SSE4: pmaxuw
@@ -1996,27 +1020,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test62(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp ule <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test62(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp ule <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test62:
 ; SSE4: pmaxuw
@@ -2031,27 +1039,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test63(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp ugt <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test63(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp ugt <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test63:
 ; SSE4: pminuw
@@ -2066,27 +1058,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw
 }
 
-define void @test64(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <8 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <8 x i16>*
-  %load.a = load <8 x i16>, <8 x i16>* %ptr.a, align 2
-  %load.b = load <8 x i16>, <8 x i16>* %ptr.b, align 2
-  %cmp = icmp uge <8 x i16> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i16> %load.b, <8 x i16> %load.a
-  store <8 x i16> %sel, <8 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i16> @test64(<8 x i16> %a, <8 x i16> %b) {
+entry:
+  %cmp = icmp uge <8 x i16> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i16> %b, <8 x i16> %a
+  ret <8 x i16> %sel
 
 ; SSE4-LABEL: test64:
 ; SSE4: pminuw
@@ -2101,27 +1077,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw
 }
 
-define void @test65(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp slt <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test65(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp slt <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test65:
 ; SSE4: pmaxsd
@@ -2136,27 +1096,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test66(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp sle <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test66(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp sle <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test66:
 ; SSE4: pmaxsd
@@ -2171,27 +1115,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test67(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp sgt <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test67(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp sgt <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test67:
 ; SSE4: pminsd
@@ -2206,27 +1134,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test68(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp sge <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test68(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp sge <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test68:
 ; SSE4: pminsd
@@ -2241,27 +1153,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test69(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp ult <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test69(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp ult <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test69:
 ; SSE4: pmaxud
@@ -2276,27 +1172,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test70(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp ule <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test70(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp ule <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test70:
 ; SSE4: pmaxud
@@ -2311,27 +1191,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test71(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp ugt <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test71(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp ugt <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test71:
 ; SSE4: pminud
@@ -2346,27 +1210,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminud
 }
 
-define void @test72(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i32>*
-  %load.a = load <4 x i32>, <4 x i32>* %ptr.a, align 2
-  %load.b = load <4 x i32>, <4 x i32>* %ptr.b, align 2
-  %cmp = icmp uge <4 x i32> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i32> %load.b, <4 x i32> %load.a
-  store <4 x i32> %sel, <4 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 4
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i32> @test72(<4 x i32> %a, <4 x i32> %b) {
+entry:
+  %cmp = icmp uge <4 x i32> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i32> %b, <4 x i32> %a
+  ret <4 x i32> %sel
 
 ; SSE4-LABEL: test72:
 ; SSE4: pminud
@@ -2381,27 +1229,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminud
 }
 
-define void @test73(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp slt <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test73(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp slt <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test73:
 ; AVX2: vpmaxsb
@@ -2410,27 +1242,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb
 }
 
-define void @test74(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp sle <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test74(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp sle <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test74:
 ; AVX2: vpmaxsb
@@ -2439,27 +1255,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsb 
 }
 
-define void @test75(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp sgt <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test75(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp sgt <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test75:
 ; AVX2: vpminsb
@@ -2468,27 +1268,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test76(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp sge <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test76(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp sge <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test76:
 ; AVX2: vpminsb
@@ -2497,27 +1281,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsb
 }
 
-define void @test77(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp ult <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test77(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp ult <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test77:
 ; AVX2: vpmaxub
@@ -2526,27 +1294,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test78(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp ule <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test78(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp ule <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test78:
 ; AVX2: vpmaxub
@@ -2555,27 +1307,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxub
 }
 
-define void @test79(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp ugt <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test79(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp ugt <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test79:
 ; AVX2: vpminub
@@ -2584,27 +1320,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub
 }
 
-define void @test80(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <32 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <32 x i8>*
-  %load.a = load <32 x i8>, <32 x i8>* %ptr.a, align 2
-  %load.b = load <32 x i8>, <32 x i8>* %ptr.b, align 2
-  %cmp = icmp uge <32 x i8> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i8> %load.b, <32 x i8> %load.a
-  store <32 x i8> %sel, <32 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i8> @test80(<32 x i8> %a, <32 x i8> %b) {
+entry:
+  %cmp = icmp uge <32 x i8> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i8> %b, <32 x i8> %a
+  ret <32 x i8> %sel
 
 ; AVX2-LABEL: test80:
 ; AVX2: vpminub
@@ -2613,27 +1333,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminub
 }
 
-define void @test81(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp slt <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test81(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp slt <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test81:
 ; AVX2: vpmaxsw
@@ -2642,27 +1346,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test82(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp sle <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test82(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp sle <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test82:
 ; AVX2: vpmaxsw
@@ -2671,27 +1359,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsw
 }
 
-define void @test83(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp sgt <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test83(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp sgt <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test83:
 ; AVX2: vpminsw
@@ -2700,27 +1372,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw
 }
 
-define void @test84(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp sge <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test84(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp sge <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test84:
 ; AVX2: vpminsw
@@ -2729,27 +1385,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsw
 }
 
-define void @test85(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp ult <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test85(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp ult <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test85:
 ; AVX2: vpmaxuw
@@ -2758,27 +1398,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test86(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp ule <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test86(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp ule <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test86:
 ; AVX2: vpmaxuw
@@ -2787,27 +1411,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxuw
 }
 
-define void @test87(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp ugt <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test87(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp ugt <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test87:
 ; AVX2: vpminuw
@@ -2816,27 +1424,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw
 }
 
-define void @test88(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <16 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <16 x i16>*
-  %load.a = load <16 x i16>, <16 x i16>* %ptr.a, align 2
-  %load.b = load <16 x i16>, <16 x i16>* %ptr.b, align 2
-  %cmp = icmp uge <16 x i16> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i16> %load.b, <16 x i16> %load.a
-  store <16 x i16> %sel, <16 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i16> @test88(<16 x i16> %a, <16 x i16> %b) {
+entry:
+  %cmp = icmp uge <16 x i16> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i16> %b, <16 x i16> %a
+  ret <16 x i16> %sel
 
 ; AVX2-LABEL: test88:
 ; AVX2: vpminuw
@@ -2845,27 +1437,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminuw
 }
 
-define void @test89(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp slt <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test89(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp slt <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test89:
 ; AVX2: vpmaxsd
@@ -2874,27 +1450,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test90(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp sle <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test90(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp sle <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test90:
 ; AVX2: vpmaxsd
@@ -2903,27 +1463,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxsd
 }
 
-define void @test91(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp sgt <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test91(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp sgt <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test91:
 ; AVX2: vpminsd
@@ -2932,27 +1476,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test92(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp sge <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test92(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp sge <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test92:
 ; AVX2: vpminsd
@@ -2961,27 +1489,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminsd
 }
 
-define void @test93(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp ult <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test93(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp ult <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test93:
 ; AVX2: vpmaxud
@@ -2990,27 +1502,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test94(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp ule <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test94(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp ule <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test94:
 ; AVX2: vpmaxud
@@ -3019,27 +1515,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpmaxud
 }
 
-define void @test95(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp ugt <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test95(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp ugt <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test95:
 ; AVX2: vpminud
@@ -3048,27 +1528,11 @@ for.end:                                          ; preds = %vector.body
 ; AVX512VL: vpminud
 }
 
-define void @test96(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i32>*
-  %load.a = load <8 x i32>, <8 x i32>* %ptr.a, align 2
-  %load.b = load <8 x i32>, <8 x i32>* %ptr.b, align 2
-  %cmp = icmp uge <8 x i32> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i32> %load.b, <8 x i32> %load.a
-  store <8 x i32> %sel, <8 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i32> @test96(<8 x i32> %a, <8 x i32> %b) {
+entry:
+  %cmp = icmp uge <8 x i32> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i32> %b, <8 x i32> %a
+  ret <8 x i32> %sel
 
 ; AVX2-LABEL: test96:
 ; AVX2: vpminud
@@ -3079,1457 +1543,561 @@ for.end:                                          ; preds = %vector.body
 
 ; ----------------------------
 
-define void @test97(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp slt <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test97(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp slt <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test97:
 ; AVX512BW: vpminsb {{.*}}
 }
 
-define void @test98(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp sle <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test98(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp sle <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test98:
 ; AVX512BW: vpminsb {{.*}}
 }
 
-define void @test99(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp sgt <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test99(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp sgt <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test99:
 ; AVX512BW: vpmaxsb {{.*}}
 }
 
-define void @test100(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp sge <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test100(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp sge <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test100:
 ; AVX512BW: vpmaxsb {{.*}}
 }
 
-define void @test101(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp ult <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test101(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp ult <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test101:
 ; AVX512BW: vpminub {{.*}}
 }
 
-define void @test102(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp ule <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test102(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp ule <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test102:
 ; AVX512BW: vpminub {{.*}}
 }
 
-define void @test103(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp ugt <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test103(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp ugt <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test103:
 ; AVX512BW: vpmaxub {{.*}}
 }
 
-define void @test104(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp uge <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.a, <64 x i8> %load.b
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test104(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp uge <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %a, <64 x i8> %b
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test104:
 ; AVX512BW: vpmaxub {{.*}}
 }
 
-define void @test105(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp slt <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test105(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp slt <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test105:
 ; AVX512BW: vpminsw {{.*}}
 }
 
-define void @test106(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp sle <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test106(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp sle <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test106:
 ; AVX512BW: vpminsw {{.*}}
 }
 
-define void @test107(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp sgt <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test107(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp sgt <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test107:
 ; AVX512BW: vpmaxsw {{.*}}
 }
 
-define void @test108(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp sge <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test108(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp sge <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test108:
 ; AVX512BW: vpmaxsw {{.*}}
 }
 
-define void @test109(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp ult <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test109(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp ult <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test109:
 ; AVX512BW: vpminuw {{.*}}
 }
 
-define void @test110(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp ule <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test110(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp ule <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test110:
 ; AVX512BW: vpminuw {{.*}}
 }
 
-define void @test111(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp ugt <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test111(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp ugt <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test111:
 ; AVX512BW: vpmaxuw {{.*}}
 }
 
-define void @test112(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp uge <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.a, <32 x i16> %load.b
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test112(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp uge <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %a, <32 x i16> %b
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test112:
 ; AVX512BW: vpmaxuw {{.*}}
 }
 
-define void @test113(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp slt <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test113(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp slt <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test113:
 ; AVX512F: vpminsd {{.*}}
 }
 
-define void @test114(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp sle <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test114(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp sle <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test114:
 ; AVX512F: vpminsd {{.*}}
 }
 
-define void @test115(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp sgt <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test115(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp sgt <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test115:
 ; AVX512F: vpmaxsd {{.*}}
 }
 
-define void @test116(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp sge <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test116(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp sge <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test116:
 ; AVX512F: vpmaxsd {{.*}}
 }
 
-define void @test117(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp ult <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test117(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp ult <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test117:
 ; AVX512F: vpminud {{.*}}
 }
 
-define void @test118(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp ule <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test118(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp ule <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test118:
 ; AVX512F: vpminud {{.*}}
 }
 
-define void @test119(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp ugt <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test119(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp ugt <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test119:
 ; AVX512F: vpmaxud {{.*}}
 }
 
-define void @test120(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp uge <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.a, <16 x i32> %load.b
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test120(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp uge <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %a, <16 x i32> %b
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test120:
 ; AVX512F: vpmaxud {{.*}}
 }
 
-define void @test121(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp slt <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test121(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp slt <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test121:
 ; AVX512F: vpminsq {{.*}}
 }
 
-define void @test122(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp sle <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test122(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp sle <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test122:
 ; AVX512F: vpminsq {{.*}}
 }
 
-define void @test123(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp sgt <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test123(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp sgt <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test123:
 ; AVX512F: vpmaxsq {{.*}}
 }
 
-define void @test124(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp sge <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test124(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp sge <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test124:
 ; AVX512F: vpmaxsq {{.*}}
 }
 
-define void @test125(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp ult <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test125(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp ult <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test125:
 ; AVX512F: vpminuq {{.*}}
 }
 
-define void @test126(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp ule <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test126(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp ule <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test126:
 ; AVX512F: vpminuq {{.*}}
 }
 
-define void @test127(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp ugt <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test127(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp ugt <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test127:
 ; AVX512F: vpmaxuq {{.*}}
 }
 
-define void @test128(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp uge <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.a, <8 x i64> %load.b
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test128(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp uge <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %a, <8 x i64> %b
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test128:
 ; AVX512F: vpmaxuq {{.*}}
 }
 
-define void @test129(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp slt <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test129(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp slt <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test129:
 ; AVX512BW: vpmaxsb
 }
 
-define void @test130(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp sle <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test130(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp sle <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test130:
 ; AVX512BW: vpmaxsb
 }
 
-define void @test131(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp sgt <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test131(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp sgt <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test131:
 ; AVX512BW: vpminsb
 }
 
-define void @test132(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp sge <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test132(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp sge <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test132:
 ; AVX512BW: vpminsb
 }
 
-define void @test133(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp ult <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test133(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp ult <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test133:
 ; AVX512BW: vpmaxub
 }
 
-define void @test134(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp ule <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test134(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp ule <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test134:
 ; AVX512BW: vpmaxub
 }
 
-define void @test135(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp ugt <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test135(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp ugt <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test135:
 ; AVX512BW: vpminub
 }
 
-define void @test136(i8* nocapture %a, i8* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
-  %ptr.a = bitcast i8* %gep.a to <64 x i8>*
-  %ptr.b = bitcast i8* %gep.b to <64 x i8>*
-  %load.a = load <64 x i8>, <64 x i8>* %ptr.a, align 2
-  %load.b = load <64 x i8>, <64 x i8>* %ptr.b, align 2
-  %cmp = icmp uge <64 x i8> %load.a, %load.b
-  %sel = select <64 x i1> %cmp, <64 x i8> %load.b, <64 x i8> %load.a
-  store <64 x i8> %sel, <64 x i8>* %ptr.a, align 2
-  %index.next = add i64 %index, 32
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <64 x i8> @test136(<64 x i8> %a, <64 x i8> %b) {
+entry:
+  %cmp = icmp uge <64 x i8> %a, %b
+  %sel = select <64 x i1> %cmp, <64 x i8> %b, <64 x i8> %a
+  ret <64 x i8> %sel
 
 ; AVX512BW-LABEL: test136:
 ; AVX512BW: vpminub
 }
 
-define void @test137(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp slt <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test137(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp slt <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test137:
 ; AVX512BW: vpmaxsw
 }
 
-define void @test138(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp sle <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test138(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp sle <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test138:
 ; AVX512BW: vpmaxsw
 }
 
-define void @test139(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp sgt <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test139(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp sgt <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test139:
 ; AVX512BW: vpminsw
 }
 
-define void @test140(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp sge <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test140(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp sge <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test140:
 ; AVX512BW: vpminsw
 }
 
-define void @test141(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp ult <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test141(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp ult <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test141:
 ; AVX512BW: vpmaxuw
 }
 
-define void @test142(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp ule <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test142(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp ule <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test142:
 ; AVX512BW: vpmaxuw
 }
 
-define void @test143(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp ugt <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test143(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp ugt <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test143:
 ; AVX512BW: vpminuw
 }
 
-define void @test144(i16* nocapture %a, i16* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
-  %ptr.a = bitcast i16* %gep.a to <32 x i16>*
-  %ptr.b = bitcast i16* %gep.b to <32 x i16>*
-  %load.a = load <32 x i16>, <32 x i16>* %ptr.a, align 2
-  %load.b = load <32 x i16>, <32 x i16>* %ptr.b, align 2
-  %cmp = icmp uge <32 x i16> %load.a, %load.b
-  %sel = select <32 x i1> %cmp, <32 x i16> %load.b, <32 x i16> %load.a
-  store <32 x i16> %sel, <32 x i16>* %ptr.a, align 2
-  %index.next = add i64 %index, 16
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <32 x i16> @test144(<32 x i16> %a, <32 x i16> %b) {
+entry:
+  %cmp = icmp uge <32 x i16> %a, %b
+  %sel = select <32 x i1> %cmp, <32 x i16> %b, <32 x i16> %a
+  ret <32 x i16> %sel
 
 ; AVX512BW-LABEL: test144:
 ; AVX512BW: vpminuw
 }
 
-define void @test145(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp slt <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test145(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp slt <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test145:
 ; AVX512F: vpmaxsd
 }
 
-define void @test146(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp sle <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test146(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp sle <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test146:
 ; AVX512F: vpmaxsd
 }
 
-define void @test147(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp sgt <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test147(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp sgt <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test147:
 ; AVX512F: vpminsd
 }
 
-define void @test148(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp sge <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test148(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp sge <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test148:
 ; AVX512F: vpminsd
 }
 
-define void @test149(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp ult <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test149(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp ult <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test149:
 ; AVX512F: vpmaxud
 }
 
-define void @test150(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp ule <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test150(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp ule <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test150:
 ; AVX512F: vpmaxud
 }
 
-define void @test151(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp ugt <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test151(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp ugt <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test151:
 ; AVX512F: vpminud
 }
 
-define void @test152(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <16 x i32>*
-  %ptr.b = bitcast i32* %gep.b to <16 x i32>*
-  %load.a = load <16 x i32>, <16 x i32>* %ptr.a, align 2
-  %load.b = load <16 x i32>, <16 x i32>* %ptr.b, align 2
-  %cmp = icmp uge <16 x i32> %load.a, %load.b
-  %sel = select <16 x i1> %cmp, <16 x i32> %load.b, <16 x i32> %load.a
-  store <16 x i32> %sel, <16 x i32>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <16 x i32> @test152(<16 x i32> %a, <16 x i32> %b) {
+entry:
+  %cmp = icmp uge <16 x i32> %a, %b
+  %sel = select <16 x i1> %cmp, <16 x i32> %b, <16 x i32> %a
+  ret <16 x i32> %sel
 
 ; AVX512F-LABEL: test152:
 ; AVX512F: vpminud
@@ -4537,1041 +2105,401 @@ for.end:                                          ; preds = %vector.body
 
 ; -----------------------
 
-define void @test153(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp slt <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test153(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp slt <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test153:
 ; AVX512F: vpmaxsq
 }
 
-define void @test154(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp sle <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test154(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp sle <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test154:
 ; AVX512F: vpmaxsq
 }
 
-define void @test155(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp sgt <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test155(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp sgt <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test155:
 ; AVX512F: vpminsq
 }
 
-define void @test156(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp sge <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test156(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp sge <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test156:
 ; AVX512F: vpminsq
 }
 
-define void @test157(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp ult <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test157(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp ult <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test157:
 ; AVX512F: vpmaxuq
 }
 
-define void @test158(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp ule <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test158(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp ule <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test158:
 ; AVX512F: vpmaxuq
 }
 
-define void @test159(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp ugt <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test159(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp ugt <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test159:
 ; AVX512F: vpminuq
 }
 
-define void @test160(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <8 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <8 x i64>*
-  %load.a = load <8 x i64>, <8 x i64>* %ptr.a, align 2
-  %load.b = load <8 x i64>, <8 x i64>* %ptr.b, align 2
-  %cmp = icmp uge <8 x i64> %load.a, %load.b
-  %sel = select <8 x i1> %cmp, <8 x i64> %load.b, <8 x i64> %load.a
-  store <8 x i64> %sel, <8 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <8 x i64> @test160(<8 x i64> %a, <8 x i64> %b) {
+entry:
+  %cmp = icmp uge <8 x i64> %a, %b
+  %sel = select <8 x i1> %cmp, <8 x i64> %b, <8 x i64> %a
+  ret <8 x i64> %sel
 
 ; AVX512F-LABEL: test160:
 ; AVX512F: vpminuq
 }
 
-define void @test161(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp slt <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test161(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp slt <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test161:
 ; AVX512VL: vpminsq
 }
 
-define void @test162(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp sle <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test162(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp sle <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test162:
 ; AVX512VL: vpminsq
 }
 
-define void @test163(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp sgt <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test163(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp sgt <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test163:
 ; AVX512VL: vpmaxsq 
 }
 
-define void @test164(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp sge <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test164(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp sge <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test164:
 ; AVX512VL: vpmaxsq
 }
 
-define void @test165(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp ult <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test165(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp ult <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test165:
 ; AVX512VL: vpminuq 
 }
 
-define void @test166(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp ule <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test166(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp ule <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test166:
 ; AVX512VL: vpminuq
 }
 
-define void @test167(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp ugt <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test167(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp ugt <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test167:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test168(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp uge <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.a, <4 x i64> %load.b
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test168(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp uge <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %a, <4 x i64> %b
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test168:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test169(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp slt <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test169(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp slt <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test169:
 ; AVX512VL: vpmaxsq
 }
 
-define void @test170(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp sle <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test170(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp sle <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test170:
 ; AVX512VL: vpmaxsq
 }
 
-define void @test171(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp sgt <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test171(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp sgt <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test171:
 ; AVX512VL: vpminsq
 }
 
-define void @test172(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp sge <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test172(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp sge <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test172:
 ; AVX512VL: vpminsq
 }
 
-define void @test173(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp ult <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test173(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp ult <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test173:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test174(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp ule <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test174(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp ule <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test174:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test175(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp ugt <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test175(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp ugt <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test175:
 ; AVX512VL: vpminuq
 }
 
-define void @test176(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <4 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <4 x i64>*
-  %load.a = load <4 x i64>, <4 x i64>* %ptr.a, align 2
-  %load.b = load <4 x i64>, <4 x i64>* %ptr.b, align 2
-  %cmp = icmp uge <4 x i64> %load.a, %load.b
-  %sel = select <4 x i1> %cmp, <4 x i64> %load.b, <4 x i64> %load.a
-  store <4 x i64> %sel, <4 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <4 x i64> @test176(<4 x i64> %a, <4 x i64> %b) {
+entry:
+  %cmp = icmp uge <4 x i64> %a, %b
+  %sel = select <4 x i1> %cmp, <4 x i64> %b, <4 x i64> %a
+  ret <4 x i64> %sel
 
 ; AVX512VL-LABEL: test176:
 ; AVX512VL: vpminuq
 }
 
-define void @test177(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp slt <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test177(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp slt <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test177:
 ; AVX512VL: vpminsq
 }
 
-define void @test178(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp sle <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test178(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp sle <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test178:
 ; AVX512VL: vpminsq
 }
 
-define void @test179(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp sgt <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test179(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp sgt <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test179:
 ; AVX512VL: vpmaxsq
 }
 
-define void @test180(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp sge <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test180(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp sge <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test180:
 ; AVX512VL: vpmaxsq
 }
 
-define void @test181(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp ult <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test181(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp ult <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test181:
 ; AVX512VL: vpminuq
 }
 
-define void @test182(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp ule <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test182(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp ule <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test182:
 ; AVX512VL: vpminuq
 }
 
-define void @test183(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp ugt <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test183(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp ugt <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test183:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test184(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp uge <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.a, <2 x i64> %load.b
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test184(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp uge <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %a, <2 x i64> %b
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test184:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test185(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp slt <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test185(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp slt <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test185:
 ; AVX512VL: vpmaxsq
 }
 
-define void @test186(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp sle <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test186(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp sle <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test186:
 ; AVX512VL: vpmaxsq
 }
 
-define void @test187(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp sgt <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test187(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp sgt <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test187:
 ; AVX512VL: vpminsq
 }
 
-define void @test188(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp sge <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test188(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp sge <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test188:
 ; AVX512VL: vpminsq
 }
 
-define void @test189(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp ult <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test189(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp ult <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test189:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test190(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp ule <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test190(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp ule <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test190:
 ; AVX512VL: vpmaxuq
 }
 
-define void @test191(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp ugt <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test191(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp ugt <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test191:
 ; AVX512VL: vpminuq
 }
 
-define void @test192(i32* nocapture %a, i32* nocapture %b) nounwind {
-vector.ph:
-  br label %vector.body
-
-vector.body:                                      ; preds = %vector.body, %vector.ph
-  %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
-  %ptr.a = bitcast i32* %gep.a to <2 x i64>*
-  %ptr.b = bitcast i32* %gep.b to <2 x i64>*
-  %load.a = load <2 x i64>, <2 x i64>* %ptr.a, align 2
-  %load.b = load <2 x i64>, <2 x i64>* %ptr.b, align 2
-  %cmp = icmp uge <2 x i64> %load.a, %load.b
-  %sel = select <2 x i1> %cmp, <2 x i64> %load.b, <2 x i64> %load.a
-  store <2 x i64> %sel, <2 x i64>* %ptr.a, align 2
-  %index.next = add i64 %index, 8
-  %loop = icmp eq i64 %index.next, 16384
-  br i1 %loop, label %for.end, label %vector.body
-
-for.end:                                          ; preds = %vector.body
-  ret void
+define <2 x i64> @test192(<2 x i64> %a, <2 x i64> %b) {
+entry:
+  %cmp = icmp uge <2 x i64> %a, %b
+  %sel = select <2 x i1> %cmp, <2 x i64> %b, <2 x i64> %a
+  ret <2 x i64> %sel
 
 ; AVX512VL-LABEL: test192:
 ; AVX512VL: vpminuq
