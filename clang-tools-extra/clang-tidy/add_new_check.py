@@ -193,7 +193,7 @@ def write_test(module_path, module, check_name):
   print('Creating %s...' % filename)
   with open(filename, 'wb') as f:
     f.write(
-"""// RUN: %%python %%S/check_clang_tidy.py %%s %(check_name_dashes)s %%t
+"""// RUN: %%check_clang_tidy %%s %(check_name_dashes)s %%t
 
 // FIXME: Add something that triggers the check here.
 void f();
