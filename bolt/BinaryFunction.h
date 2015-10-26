@@ -139,6 +139,12 @@ private:
     return *this;
   }
 
+  BinaryFunction &clearFTBranches() {
+    LocalBranchesListType TempList;
+    FTBranches.swap(TempList);
+    return *this;
+  }
+
   BinaryFunction &updateState(BinaryFunction::State State) {
     CurrentState = State;
     return *this;
@@ -150,6 +156,7 @@ private:
   /// Storage for all local branches in the function (non-fall-throughs).
   using LocalBranchesListType = std::vector<std::pair<uint32_t, uint32_t>>;
   LocalBranchesListType LocalBranches;
+  LocalBranchesListType FTBranches;
 
   /// Map offset in the function to a local label.
   using LabelsMapType = std::map<uint32_t, MCSymbol *>;

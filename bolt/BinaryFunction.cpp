@@ -233,6 +233,7 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // If the target *is* the function address it could be either a branch
         // or a recursive call.
         bool IsCall = MIA->isCall(Instruction);
+        bool IsCondBranch = MIA->isConditionalBranch(Instruction);
         MCSymbol *TargetSymbol{nullptr};
         uint64_t TargetOffset{0};
 
@@ -285,6 +286,10 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         if (!IsCall) {
           // Add local branch info.
           LocalBranches.push_back({Offset, TargetOffset});
+        }
+        if (IsCondBranch) {
+          // Add fallthrough branch info.
+          FTBranches.push_back({Offset, Offset + Size});
         }
 
       } else {
@@ -430,7 +435,6 @@ bool BinaryFunction::buildCFG() {
   // blocks.
 
   for (auto &Branch : LocalBranches) {
-
     DEBUG(dbgs() << "registering branch [0x" << Twine::utohexstr(Branch.first)
                  << "] -> [0x" << Twine::utohexstr(Branch.second) << "]\n");
     BinaryBasicBlock *FromBB = getBasicBlockContainingOffset(Branch.first);
@@ -438,12 +442,12 @@ bool BinaryFunction::buildCFG() {
     BinaryBasicBlock *ToBB = getBasicBlockAtOffset(Branch.second);
     assert(ToBB && "cannot find BB containing TO branch");
 
-    if (std::error_code EC = BranchDataOrErr.getError()) {
+    if (BranchDataOrErr.getError()) {
       FromBB->addSuccessor(ToBB);
     } else {
       const FuncBranchData &BranchData = BranchDataOrErr.get();
       auto BranchInfoOrErr = BranchData.getBranch(Branch.first, Branch.second);
-      if (std::error_code EC = BranchInfoOrErr.getError()) {
+      if (BranchInfoOrErr.getError()) {
         FromBB->addSuccessor(ToBB);
       } else {
         const BranchInfo &BInfo = BranchInfoOrErr.get();
@@ -452,7 +456,32 @@ bool BinaryFunction::buildCFG() {
     }
   }
 
-  // Add fall-through branches.
+  for (auto &Branch : FTBranches) {
+    DEBUG(dbgs() << "registering fallthrough [0x"
+                 << Twine::utohexstr(Branch.first) << "] -> [0x"
+                 << Twine::utohexstr(Branch.second) << "]\n");
+    BinaryBasicBlock *FromBB = getBasicBlockContainingOffset(Branch.first);
+    assert(FromBB && "cannot find BB containing FROM branch");
+    BinaryBasicBlock *ToBB = getBasicBlockAtOffset(Branch.second);
+    // We have a fall-through that does not point to another BB, ignore it as
+    // it may happen in cases where we have a BB finished by two branches.
+    if (ToBB == nullptr)
+      continue;
+
+    // Does not add a successor if we can't find profile data, leave it to the
+    // inference pass to guess its frequency
+    if (!BranchDataOrErr.getError()) {
+      const FuncBranchData &BranchData = BranchDataOrErr.get();
+      auto BranchInfoOrErr = BranchData.getBranch(Branch.first, Branch.second);
+      if (!BranchInfoOrErr.getError()) {
+        const BranchInfo &BInfo = BranchInfoOrErr.get();
+        FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
+      }
+    }
+  }
+
+  // Add fall-through branches (except for non-taken conditional branches with
+  // profile data, which were already accounted for in LocalBranches).
   PrevBB = nullptr;
   bool IsPrevFT = false; // Is previous block a fall-through.
   for (auto &BB : BasicBlocks) {
@@ -469,7 +498,8 @@ bool BinaryFunction::buildCFG() {
     } else if (BB.succ_size() == 1) {
       IsPrevFT =  MIA->isConditionalBranch(LastInst) ? true : false;
     } else {
-      // Either ends with 2 branches, or with an indirect jump.
+      // Ends with 2 branches, with an indirect jump or it is a conditional
+      // branch whose frequency has been inferred from LBR
       IsPrevFT = false;
     }
 
@@ -490,6 +520,7 @@ bool BinaryFunction::buildCFG() {
   clearInstructions();
   clearLabels();
   clearLocalBranches();
+  clearFTBranches();
 
   // Update the state.
   CurrentState = State::CFG;
@@ -666,6 +697,15 @@ void BinaryFunction::optimizeLayout(HeuristicPriority Priority) {
       ClusterEdges[I][J] += Weight[elmt];
     }
   }
+  DEBUG(for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
+    dbgs() << "Cluster number " << I << ": ";
+    auto Sep = "";
+    for (auto BB : Clusters[I]) {
+      dbgs() << Sep << BB->getName();
+      Sep = ", ";
+    }
+    dbgs() << "\n";
+  });
 
   std::vector<uint32_t> Order;  // Cluster layout order
 
