@@ -16,7 +16,7 @@
 // RUN: %env_asan_opts=coverage=1:coverage_pcs=0:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3_NOPCS
 //
 // REQUIRES: asan-64-bits
-
+// UNSUPPORTED: android
 volatile int sink;
 int main(int argc, char **argv) {
   if (argc == 0)

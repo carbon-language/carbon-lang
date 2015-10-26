@@ -11,6 +11,7 @@
 // RUN: rm -f caller-callee*.sancov
 //
 // REQUIRES: asan-64-bits
+// UNSUPPORTED: android
 //
 // CHECK-10-1: CovDump: 10 caller-callee pairs written
 // CHECK-9-2: CovDump: 18 caller-callee pairs written

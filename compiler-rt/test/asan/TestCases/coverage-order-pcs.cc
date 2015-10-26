@@ -20,6 +20,7 @@
 // RUN: rm -rf $DIR
 // Ordering works only in 64-bit mode for now.
 // REQUIRES: asan-64-bits
+// UNSUPPORTED: android
 #include <stdio.h>
 
 void foo() { fprintf(stderr, "FOO\n"); }

@@ -1,4 +1,5 @@
 // REQUIRES: asan-64-bits
+// UNSUPPORTED: android
 // Stress test dynamic TLS + dlopen + threads.
 //
 // Note that glibc 2.15 seems utterly broken on this test,

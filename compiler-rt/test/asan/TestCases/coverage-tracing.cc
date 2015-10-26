@@ -25,6 +25,7 @@
 // RUN: rm -rf   %T/coverage-tracing
 //
 // REQUIRES: asan-64-bits
+// UNSUPPORTED: android
 
 #include <stdlib.h>
 volatile int sink;
