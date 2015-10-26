@@ -908,10 +908,8 @@ static bool isInterestingPointerComparisonOrSubtraction(Instruction *I) {
   } else {
     return false;
   }
-  if (!isPointerOperand(I->getOperand(0)) ||
-      !isPointerOperand(I->getOperand(1)))
-    return false;
-  return true;
+  return isPointerOperand(I->getOperand(0)) &&
+         isPointerOperand(I->getOperand(1));
 }
 
 bool AddressSanitizer::GlobalIsLinkerInitialized(GlobalVariable *G) {
