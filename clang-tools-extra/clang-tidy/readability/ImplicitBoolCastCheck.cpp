@@ -84,7 +84,6 @@ getZeroLiteralToCompareWithForGivenType(CastKind CastExpressionKind,
   default:
     llvm_unreachable("Unexpected cast kind");
   }
-  return "";
 }
 
 bool isUnaryLogicalNotOperator(const Stmt *Statement) {
