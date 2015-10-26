@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "../misc/AssignOperatorSignatureCheck.h"
+#include "ProBoundsArrayToPointerDecayCheck.h"
 #include "ProBoundsPointerArithmeticCheck.h"
 #include "ProTypeConstCastCheck.h"
 #include "ProTypeReinterpretCastCheck.h"
@@ -26,6 +27,8 @@ namespace cppcoreguidelines {
 class CppCoreGuidelinesModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<ProBoundsArrayToPointerDecayCheck>(
+        "cppcoreguidelines-pro-bounds-array-to-pointer-decay");
     CheckFactories.registerCheck<ProBoundsPointerArithmeticCheck>(
         "cppcoreguidelines-pro-bounds-pointer-arithmetic");
     CheckFactories.registerCheck<ProTypeConstCastCheck>(
