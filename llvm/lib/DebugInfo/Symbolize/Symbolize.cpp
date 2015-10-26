@@ -530,7 +530,8 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
 
   if (!Objects.first) {
     // Failed to find valid object file.
-    Modules.insert(make_pair(ModuleName, nullptr));
+    Modules.insert(
+        std::make_pair(ModuleName, std::unique_ptr<ModuleInfo>(nullptr)));
     return nullptr;
   }
   std::unique_ptr<DIContext> Context;
@@ -549,7 +550,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   assert(Context);
   auto Info = llvm::make_unique<ModuleInfo>(Objects.first, std::move(Context));
   ModuleInfo *Res = Info.get();
-  Modules.emplace(ModuleName, std::move(Info));
+  Modules.insert(std::make_pair(ModuleName, std::move(Info)));
   return Res;
 }
 
