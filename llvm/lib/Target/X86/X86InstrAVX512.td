@@ -739,7 +739,7 @@ defm : vextract_for_size_lowering<"VEXTRACTI32x4Z", v8i64_info, v2i64x_info,
           vextract128_extract, EXTRACT_get_vextract128_imm, [HasAVX512, NoDQI]>;
 
 defm : vextract_for_size_lowering<"VEXTRACTF64x4Z", v16f32_info, v8f32x_info,
-          vextract128_extract, EXTRACT_get_vextract128_imm, [HasAVX512, NoDQI]>;
+          vextract256_extract, EXTRACT_get_vextract256_imm, [HasAVX512, NoDQI]>;
 defm : vextract_for_size_lowering<"VEXTRACTI64x4Z", v16i32_info, v8i32x_info,
           vextract256_extract, EXTRACT_get_vextract256_imm, [HasAVX512, NoDQI]>;
 

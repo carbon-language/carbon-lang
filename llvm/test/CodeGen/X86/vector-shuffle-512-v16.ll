@@ -120,3 +120,14 @@ define <16 x i32> @shuffle_v16i32_0_1_2_13_u_u_u_u_u_u_u_u_u_u_u_u(<16 x i32> %a
   ret <16 x i32> %c
 }
 
+define <8 x float> @shuffle_v16f32_extract_256(float* %RET, float* %a) {
+; ALL-LABEL: shuffle_v16f32_extract_256:
+; ALL:       # BB#0:
+; ALL-NEXT:    vmovups (%rsi), %zmm0
+; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm0
+; ALL-NEXT:    retq
+  %ptr_a = bitcast float* %a to <16 x float>*
+  %v_a = load <16 x float>, <16 x float>* %ptr_a, align 4
+  %v2 = shufflevector <16 x float> %v_a, <16 x float> undef, <8 x i32>  <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <8 x float> %v2
+}
