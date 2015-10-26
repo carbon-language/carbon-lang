@@ -2829,6 +2829,29 @@ static void WriteCombinedFunctionSummary(const FunctionInfoIndex &I,
   Stream.ExitBlock();
 }
 
+// Create the "IDENTIFICATION_BLOCK_ID" containing a single string with the
+// current llvm version, and a record for the epoch number.
+static void WriteIdentificationBlock(const Module *M, BitstreamWriter &Stream) {
+  Stream.EnterSubblock(bitc::IDENTIFICATION_BLOCK_ID, 5);
+
+  // Write the "user readable" string identifying the bitcode producer
+  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::IDENTIFICATION_CODE_STRING));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
+  auto StringAbbrev = Stream.EmitAbbrev(Abbv);
+  WriteStringRecord(bitc::IDENTIFICATION_CODE_STRING,
+                    "LLVM" LLVM_VERSION_STRING, StringAbbrev, Stream);
+
+  // Write the epoch version
+  Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::IDENTIFICATION_CODE_EPOCH));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
+  SmallVector<unsigned, 1> Vals = {bitc::BITCODE_CURRENT_EPOCH};
+  Stream.EmitRecord(bitc::IDENTIFICATION_CODE_EPOCH, Vals);
+  Stream.ExitBlock();
+}
+
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream,
                         bool ShouldPreserveUseListOrder,
@@ -2999,6 +3022,8 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out,
 
     // Emit the file header.
     WriteBitcodeHeader(Stream);
+
+    WriteIdentificationBlock(M, Stream);
 
     // Emit the module.
     WriteModule(M, Stream, ShouldPreserveUseListOrder, BitcodeStartBit,

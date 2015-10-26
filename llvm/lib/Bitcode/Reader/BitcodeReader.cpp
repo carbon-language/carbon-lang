@@ -152,6 +152,8 @@ class BitcodeReader : public GVMaterializer {
   uint64_t LastFunctionBlockBit = 0;
   bool SeenValueSymbolTable = false;
   unsigned VSTOffset = 0;
+  // Contains an arbitrary and optional string identifying the bitcode producer
+  std::string ProducerIdentification;
 
   std::vector<Type*> TypeList;
   BitcodeReaderValueList ValueList;
@@ -273,6 +275,11 @@ public:
   void setStripDebugInfo() override;
 
 private:
+  /// Parse the "IDENTIFICATION_BLOCK_ID" block, populate the
+  // ProducerIdentification data member, and do some basic enforcement on the
+  // "epoch" encoded in the bitcode.
+  std::error_code parseBitcodeVersion();
+
   std::vector<StructType *> IdentifiedStructTypes;
   StructType *createIdentifiedStructType(LLVMContext &Context, StringRef Name);
   StructType *createIdentifiedStructType(LLVMContext &Context);
@@ -518,10 +525,21 @@ static std::error_code error(DiagnosticHandlerFunction DiagnosticHandler,
 }
 
 std::error_code BitcodeReader::error(BitcodeError E, const Twine &Message) {
+  if (!ProducerIdentification.empty()) {
+    Twine MsgWithID = Message + " (Producer: '" + ProducerIdentification +
+                      "' Reader: 'LLVM " + LLVM_VERSION_STRING "')";
+    return ::error(DiagnosticHandler, make_error_code(E), MsgWithID);
+  }
   return ::error(DiagnosticHandler, make_error_code(E), Message);
 }
 
 std::error_code BitcodeReader::error(const Twine &Message) {
+  if (!ProducerIdentification.empty()) {
+    Twine MsgWithID = Message + " (Producer: '" + ProducerIdentification +
+                      "' Reader: 'LLVM " + LLVM_VERSION_STRING "')";
+    return ::error(DiagnosticHandler,
+                   make_error_code(BitcodeError::CorruptedBitcode), MsgWithID);
+  }
   return ::error(DiagnosticHandler,
                  make_error_code(BitcodeError::CorruptedBitcode), Message);
 }
@@ -3061,6 +3079,50 @@ std::error_code BitcodeReader::rememberAndSkipFunctionBodies() {
   }
 }
 
+std::error_code BitcodeReader::parseBitcodeVersion() {
+  if (Stream.EnterSubBlock(bitc::IDENTIFICATION_BLOCK_ID))
+    return error("Invalid record");
+
+  // Read all the records.
+  SmallVector<uint64_t, 64> Record;
+  while (1) {
+    BitstreamEntry Entry = Stream.advance();
+
+    switch (Entry.Kind) {
+    default:
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return std::error_code();
+    case BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
+    // Read a record.
+    Record.clear();
+    unsigned BitCode = Stream.readRecord(Entry.ID, Record);
+    switch (BitCode) {
+    default: // Default behavior: reject
+      return error("Invalid value");
+    case bitc::IDENTIFICATION_CODE_STRING: { // IDENTIFICATION:      [strchr x
+                                             // N]
+      convertToString(Record, 0, ProducerIdentification);
+      break;
+    }
+    case bitc::IDENTIFICATION_CODE_EPOCH: { // EPOCH:      [epoch#]
+      unsigned epoch = (unsigned)Record[0];
+      if (epoch != bitc::BITCODE_CURRENT_EPOCH) {
+        auto BitcodeEpoch = std::to_string(epoch);
+        auto CurrentEpoch = std::to_string(bitc::BITCODE_CURRENT_EPOCH);
+        return error(Twine("Incompatible epoch: Bitcode '") + BitcodeEpoch +
+                     "' vs current: '" + CurrentEpoch + "'");
+      }
+    }
+    }
+  }
+}
+
 std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
                                            bool ShouldLazyLoadMetadata) {
   if (ResumeBit)
@@ -3551,6 +3613,11 @@ BitcodeReader::parseBitcodeInto(std::unique_ptr<DataStreamer> Streamer,
 
     if (Entry.Kind != BitstreamEntry::SubBlock)
       return error("Malformed block");
+
+    if (Entry.ID == bitc::IDENTIFICATION_BLOCK_ID) {
+      parseBitcodeVersion();
+      continue;
+    }
 
     if (Entry.ID == bitc::MODULE_BLOCK_ID)
       return parseModule(0, ShouldLazyLoadMetadata);
