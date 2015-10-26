@@ -90,8 +90,7 @@ private:
     MemoryBuffers.push_back(std::move(MemBuf));
   }
 
-  // Owns module info objects.
-  std::map<std::string, ModuleInfo *> Modules;
+  std::map<std::string, std::unique_ptr<ModuleInfo>> Modules;
   std::map<std::pair<MachOUniversalBinary *, std::string>, ObjectFile *>
       ObjectFileForArch;
   std::map<std::pair<std::string, std::string>, ObjectPair>
@@ -103,7 +102,7 @@ private:
 
 class ModuleInfo {
 public:
-  ModuleInfo(ObjectFile *Obj, DIContext *DICtx);
+  ModuleInfo(ObjectFile *Obj, std::unique_ptr<DIContext> DICtx);
 
   DILineInfo symbolizeCode(uint64_t ModuleOffset,
                            const LLVMSymbolizer::Options &Opts) const;

@@ -61,8 +61,8 @@ getDILineInfoSpecifier(const LLVMSymbolizer::Options &Opts) {
       Opts.PrintFunctions);
 }
 
-ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
-    : Module(Obj), DebugInfoContext(DICtx) {
+ModuleInfo::ModuleInfo(ObjectFile *Obj, std::unique_ptr<DIContext> DICtx)
+    : Module(Obj), DebugInfoContext(std::move(DICtx)) {
   std::unique_ptr<DataExtractor> OpdExtractor;
   uint64_t OpdAddress = 0;
   // Find the .opd (function descriptor) section if any, for big-endian
@@ -308,7 +308,7 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
 }
 
 void LLVMSymbolizer::flush() {
-  DeleteContainerSeconds(Modules);
+  Modules.clear();
   ObjectPairForPathArch.clear();
   ObjectFileForArch.clear();
 }
@@ -512,7 +512,7 @@ ModuleInfo *
 LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   const auto &I = Modules.find(ModuleName);
   if (I != Modules.end())
-    return I->second;
+    return I->second.get();
   std::string BinaryName = ModuleName;
   std::string ArchName = Opts.DefaultArch;
   size_t ColonPos = ModuleName.find_last_of(':');
@@ -528,10 +528,10 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
 
   if (!Objects.first) {
     // Failed to find valid object file.
-    Modules.insert(make_pair(ModuleName, (ModuleInfo *)nullptr));
+    Modules.emplace(ModuleName, nullptr);
     return nullptr;
   }
-  DIContext *Context = nullptr;
+  std::unique_ptr<DIContext> Context;
   if (auto CoffObject = dyn_cast<COFFObjectFile>(Objects.first)) {
     // If this is a COFF object, assume it contains PDB debug information.  If
     // we don't find any we will fall back to the DWARF case.
@@ -539,15 +539,16 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     PDB_ErrorCode Error = loadDataForEXE(PDB_ReaderType::DIA,
                                          Objects.first->getFileName(), Session);
     if (Error == PDB_ErrorCode::Success) {
-      Context = new PDBContext(*CoffObject, std::move(Session));
+      Context.reset(new PDBContext(*CoffObject, std::move(Session)));
     }
   }
   if (!Context)
-    Context = new DWARFContextInMemory(*Objects.second);
+    Context.reset(new DWARFContextInMemory(*Objects.second));
   assert(Context);
-  ModuleInfo *Info = new ModuleInfo(Objects.first, Context);
-  Modules.insert(make_pair(ModuleName, Info));
-  return Info;
+  auto Info = make_unique<ModuleInfo>(Objects.first, std::move(Context));
+  ModuleInfo *Res = Info.get();
+  Modules.emplace(ModuleName, std::move(Info));
+  return Res;
 }
 
 std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
