@@ -11,7 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLVMSymbolize.h"
+#include "llvm/DebugInfo/Symbolize/Symbolize.h"
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -45,6 +46,7 @@
 namespace llvm {
 namespace symbolize {
 
+// FIXME: Move this to llvm-symbolizer tool.
 static bool error(std::error_code ec) {
   if (!ec)
     return false;

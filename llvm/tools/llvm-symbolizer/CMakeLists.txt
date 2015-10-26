@@ -8,9 +8,9 @@ set(LLVM_LINK_COMPONENTS
   DebugInfoPDB
   Object
   Support
+  Symbolize
   )
 
 add_llvm_tool(llvm-symbolizer
-  LLVMSymbolize.cpp
   llvm-symbolizer.cpp
   )

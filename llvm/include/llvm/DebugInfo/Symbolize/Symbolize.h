@@ -1,4 +1,4 @@
-//===-- LLVMSymbolize.h ----------------------------------------- C++ -----===//
+//===-- Symbolize.h --------------------------------------------- C++ -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,8 +10,8 @@
 // Header for LLVM symbolization library.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_LLVM_SYMBOLIZER_LLVMSYMBOLIZE_H
-#define LLVM_TOOLS_LLVM_SYMBOLIZER_LLVMSYMBOLIZE_H
+#ifndef LLVM_DEBUGINFO_SYMBOLIZE_SYMBOLIZE_H
+#define LLVM_DEBUGINFO_SYMBOLIZE_SYMBOLIZE_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DIContext.h"
@@ -24,12 +24,10 @@
 #include <string>
 
 namespace llvm {
-
-typedef DILineInfoSpecifier::FunctionNameKind FunctionNameKind;
-using namespace object;
-
 namespace symbolize {
 
+using namespace object;
+using FunctionNameKind = DILineInfoSpecifier::FunctionNameKind;
 class ModuleInfo;
 
 class LLVMSymbolizer {

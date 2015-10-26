@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLVMSymbolize.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/DebugInfo/Symbolize/Symbolize.h"
 #include "llvm/Support/COM.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
