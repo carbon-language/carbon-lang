@@ -38,12 +38,11 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/UnixSignals.h"
 #include "lldb/Utility/Utils.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 
 #include "Utility/ModuleCache.h"
+
 
 // Define these constants from POSIX mman.h rather than include the file
 // so that they will be correct even when compiled on Linux.
@@ -622,17 +621,6 @@ Platform::AddClangModuleCompilationOptions (Target *target, std::vector<std::str
     options.insert(options.end(),
                    default_compilation_options.begin(),
                    default_compilation_options.end());
-    
-    {
-        llvm::SmallString<128> DefaultModuleCache;
-        const bool erased_on_reboot = false;
-        llvm::sys::path::system_temp_directory(erased_on_reboot, DefaultModuleCache);
-        llvm::sys::path::append(DefaultModuleCache, "org.llvm.clang");
-        llvm::sys::path::append(DefaultModuleCache, "ModuleCache");
-        std::string module_cache_argument("-fmodules-cache-path=");
-        module_cache_argument.append(DefaultModuleCache.str().str());
-        options.push_back(module_cache_argument);
-    }
 }
 
 

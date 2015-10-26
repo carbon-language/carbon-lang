@@ -641,7 +641,18 @@ ClangModulesDeclVendor::Create(Target &target)
     compiler_invocation_arguments.push_back(ModuleImportBufferName);
 
     // Add additional search paths with { "-I", path } or { "-F", path } here.
-       
+   
+    {
+        llvm::SmallString<128> DefaultModuleCache;
+        const bool erased_on_reboot = false;
+        llvm::sys::path::system_temp_directory(erased_on_reboot, DefaultModuleCache);
+        llvm::sys::path::append(DefaultModuleCache, "org.llvm.clang");
+        llvm::sys::path::append(DefaultModuleCache, "ModuleCache");
+        std::string module_cache_argument("-fmodules-cache-path=");
+        module_cache_argument.append(DefaultModuleCache.str().str());
+        compiler_invocation_arguments.push_back(module_cache_argument);
+    }
+    
     FileSpecList &module_search_paths = target.GetClangModuleSearchPaths();
     
     for (size_t spi = 0, spe = module_search_paths.GetSize(); spi < spe; ++spi)

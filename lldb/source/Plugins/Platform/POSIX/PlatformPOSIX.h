@@ -176,9 +176,6 @@ public:
     lldb_private::Error
     DisconnectRemote () override;
 
-    void
-    AddClangModuleCompilationOptions (lldb_private::Target *target, std::vector<std::string> &options) override;
-
 protected:
     std::unique_ptr<lldb_private::OptionGroupOptions> m_options;
         
