@@ -39,6 +39,12 @@ class DwarfCompileUnit : public DwarfUnit {
   /// The start of the unit within its section.
   MCSymbol *LabelBegin;
 
+  typedef llvm::SmallVector<const MDNode *, 8> ImportedEntityList;
+  typedef llvm::DenseMap<const MDNode *, ImportedEntityList>
+  ImportedEntityMap;
+
+  ImportedEntityMap ImportedEntities;
+
   /// GlobalNames - A map of globally visible named entities for this unit.
   StringMap<const DIE *> GlobalNames;
 
@@ -97,6 +103,10 @@ public:
   DwarfCompileUnit &getCU() override { return *this; }
 
   unsigned getOrCreateSourceID(StringRef FileName, StringRef DirName) override;
+
+  void addImportedEntity(const DIImportedEntity* IE) {
+    ImportedEntities[IE->getScope()].push_back(IE);
+  }
 
   /// addRange - Add an address range to the list of ranges for this unit.
   void addRange(RangeSpan Range);

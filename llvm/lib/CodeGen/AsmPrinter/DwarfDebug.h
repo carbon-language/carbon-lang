@@ -289,11 +289,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// Holders for the various debug information flags that we might need to
   /// have exposed. See accessor functions below for description.
 
-  /// Holder for imported entities.
-  typedef SmallVector<std::pair<const MDNode *, const MDNode *>, 32>
-  ImportedEntityMap;
-  ImportedEntityMap ScopesWithImportedEntities;
-
   /// Map from MDNodes for user-defined types to the type units that
   /// describe them.
   DenseMap<const MDNode *, const DwarfTypeUnit *> DwarfTypeUnits;
@@ -625,14 +620,6 @@ public:
   void addAccelType(StringRef Name, const DIE &Die, char Flags);
 
   const MachineFunction *getCurrentFunction() const { return CurFn; }
-
-  iterator_range<ImportedEntityMap::const_iterator>
-  findImportedEntitiesForScope(const MDNode *Scope) const {
-    return make_range(std::equal_range(
-        ScopesWithImportedEntities.begin(), ScopesWithImportedEntities.end(),
-        std::pair<const MDNode *, const MDNode *>(Scope, nullptr),
-        less_first()));
-  }
 
   /// A helper function to check whether the DIE for a given Scope is
   /// going to be null.

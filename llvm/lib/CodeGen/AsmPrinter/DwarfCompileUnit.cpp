@@ -342,9 +342,9 @@ void DwarfCompileUnit::constructScopeDIE(
     // Skip imported directives in gmlt-like data.
     if (!includeMinimalInlineScopes()) {
       // There is no need to emit empty lexical block DIE.
-      for (const auto &E : DD->findImportedEntitiesForScope(DS))
-        Children.push_back(
-            constructImportedEntityDIE(cast<DIImportedEntity>(E.second)));
+      for (const auto *IE : ImportedEntities[DS])
+          Children.push_back(
+              constructImportedEntityDIE(cast<DIImportedEntity>(IE)));
     }
 
     // If there are only other scopes as children, put them directly in the

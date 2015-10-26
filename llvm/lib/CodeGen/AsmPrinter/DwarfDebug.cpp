@@ -489,12 +489,7 @@ void DwarfDebug::beginModule() {
     auto *CUNode = cast<DICompileUnit>(N);
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
     for (auto *IE : CUNode->getImportedEntities())
-      ScopesWithImportedEntities.push_back(std::make_pair(IE->getScope(), IE));
-    // Stable sort to preserve the order of appearance of imported entities.
-    // This is to avoid out-of-order processing of interdependent declarations
-    // within the same scope, e.g. { namespace A = base; namespace B = A; }
-    std::stable_sort(ScopesWithImportedEntities.begin(),
-                     ScopesWithImportedEntities.end(), less_first());
+      CU.addImportedEntity(IE);
     for (auto *GV : CUNode->getGlobalVariables())
       CU.getOrCreateGlobalVariableDIE(GV);
     for (auto *SP : CUNode->getSubprograms())
