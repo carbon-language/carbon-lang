@@ -348,7 +348,8 @@ public:
            AttributeSets.hasAttribute(2, Attribute::StructRet);
   }
 
-  /// @brief Determine if the parameter does not alias other parameters.
+  /// @brief Determine if the parameter or return value is marked with NoAlias
+  /// attribute.
   /// @param n The parameter to check. 1 is the first parameter, 0 is the return
   bool doesNotAlias(unsigned n) const {
     return AttributeSets.hasAttribute(n, Attribute::NoAlias);

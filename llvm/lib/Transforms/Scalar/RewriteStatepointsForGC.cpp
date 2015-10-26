@@ -115,7 +115,8 @@ struct RewriteStatepointsForGC : public ModulePass {
   /// heap.  stripNonValidAttributes (conservatively) restores correctness
   /// by erasing all attributes in the module that externally imply
   /// dereferenceability.
-  ///
+  /// Similar reasoning also applies to the noalias attributes. gc.statepoint
+  /// can touch the entire heap including noalias objects.
   void stripNonValidAttributes(Module &M);
 
   // Helpers for stripNonValidAttributes
@@ -2501,6 +2502,8 @@ static void RemoveNonValidAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
   if (AH.getDereferenceableOrNullBytes(Index))
     R.addAttribute(Attribute::get(Ctx, Attribute::DereferenceableOrNull,
                                   AH.getDereferenceableOrNullBytes(Index)));
+  if (AH.doesNotAlias(Index))
+    R.addAttribute(Attribute::NoAlias);
 
   if (!R.empty())
     AH.setAttributes(AH.getAttributes().removeAttributes(

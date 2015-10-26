@@ -1618,6 +1618,13 @@ public:
     return AttributeList.getDereferenceableOrNullBytes(i);
   }
 
+  /// @brief Determine if the parameter or return value is marked with NoAlias
+  /// attribute.
+  /// @param n The parameter to check. 1 is the first parameter, 0 is the return
+  bool doesNotAlias(unsigned n) const {
+    return AttributeList.hasAttribute(n, Attribute::NoAlias);
+  }
+
   /// \brief Return true if the call should not be treated as a call to a
   /// builtin.
   bool isNoBuiltin() const {
@@ -3478,6 +3485,13 @@ public:
   /// parameter (0=unknown).
   uint64_t getDereferenceableOrNullBytes(unsigned i) const {
     return AttributeList.getDereferenceableOrNullBytes(i);
+  }
+
+  /// @brief Determine if the parameter or return value is marked with NoAlias
+  /// attribute.
+  /// @param n The parameter to check. 1 is the first parameter, 0 is the return
+  bool doesNotAlias(unsigned n) const {
+    return AttributeList.hasAttribute(n, Attribute::NoAlias);
   }
 
   /// \brief Return true if the call should not be treated as a call to a

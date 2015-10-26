@@ -262,6 +262,13 @@ public:
     CALLSITE_DELEGATE_GETTER(getDereferenceableOrNullBytes(i));
   }
 
+  /// @brief Determine if the parameter or return value is marked with NoAlias
+  /// attribute.
+  /// @param n The parameter to check. 1 is the first parameter, 0 is the return
+  bool doesNotAlias(unsigned n) const {
+    CALLSITE_DELEGATE_GETTER(doesNotAlias(n));
+  }
+
   /// \brief Return true if the call should not be treated as a call to a
   /// builtin.
   bool isNoBuiltin() const {
