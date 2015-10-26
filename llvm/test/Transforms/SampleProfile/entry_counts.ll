@@ -13,7 +13,7 @@ entry:
 !llvm.ident = !{!8}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 3.7.0 (trunk 237249) (llvm/trunk 237261)", isOptimized: false, runtimeVersion: 0, emissionKind: 2, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !DIFile(filename: "entry_counts.c", directory: "/usr/local/google/home/dnovillo/llvm/test/pgo")
+!1 = !DIFile(filename: "entry_counts.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
 !4 = distinct !DISubprogram(name: "empty", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: false, function: void ()* @empty, variables: !2)
