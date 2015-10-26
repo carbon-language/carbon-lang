@@ -1662,6 +1662,19 @@ TargetLoweringBase::getTypeLegalizationCost(const DataLayout &DL,
   }
 }
 
+Value *TargetLoweringBase::getSafeStackPointerLocation(IRBuilder<> &IRB) const {
+  if (!TM.getTargetTriple().isAndroid())
+    return nullptr;
+
+  // Android provides a libc function to retrieve the address of the current
+  // thread's unsafe stack pointer.
+  Module *M = IRB.GetInsertBlock()->getParent()->getParent();
+  Type *StackPtrTy = Type::getInt8PtrTy(M->getContext());
+  Value *Fn = M->getOrInsertFunction("__safestack_pointer_address",
+                                     StackPtrTy->getPointerTo(0), nullptr);
+  return IRB.CreateCall(Fn);
+}
+
 //===----------------------------------------------------------------------===//
 //  Loop Strength Reduction hooks
 //===----------------------------------------------------------------------===//

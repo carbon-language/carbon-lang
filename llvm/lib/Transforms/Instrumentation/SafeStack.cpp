@@ -46,9 +46,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "safestack"
 
-static const char *const kUnsafeStackPtrVar = "__safestack_unsafe_stack_ptr";
-static const char *const kUnsafeStackPtrAddrFn = "__safestack_pointer_address";
-
 namespace llvm {
 
 STATISTIC(NumFunctions, "Total number of functions");
@@ -182,8 +179,7 @@ class SafeStack : public FunctionPass {
   /// might expect to appear on the stack on most common targets.
   enum { StackAlignment = 16 };
 
-  /// \brief Build a constant representing a pointer to the unsafe stack
-  /// pointer.
+  /// \brief Build a value representing a pointer to the unsafe stack pointer.
   Value *getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F);
 
   /// \brief Find all static allocas, dynamic allocas, return instructions and
@@ -248,51 +244,33 @@ public:
 }; // class SafeStack
 
 Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
+  // Check if there is a target-specific location for the unsafe stack pointer.
+  if (TLI)
+    if (Value *V = TLI->getSafeStackPointerLocation(IRB))
+      return V;
+
+  // Otherwise, assume the target links with compiler-rt, which provides a
+  // thread-local variable with a magic name.
   Module &M = *F.getParent();
-  Triple TargetTriple(M.getTargetTriple());
+  const char *UnsafeStackPtrVar = "__safestack_unsafe_stack_ptr";
+  auto UnsafeStackPtr =
+      dyn_cast_or_null<GlobalVariable>(M.getNamedValue(UnsafeStackPtrVar));
 
-  unsigned Offset;
-  unsigned AddressSpace;
-  // Check if the target keeps the unsafe stack pointer at a fixed offset.
-  if (TLI && TLI->getSafeStackPointerLocation(AddressSpace, Offset)) {
-    Constant *OffsetVal =
-        ConstantInt::get(Type::getInt32Ty(F.getContext()), Offset);
-    return ConstantExpr::getIntToPtr(OffsetVal,
-                                     StackPtrTy->getPointerTo(AddressSpace));
-  }
-
-  // Android provides a libc function that returns the stack pointer address.
-  if (TargetTriple.isAndroid()) {
-    Value *Fn = M.getOrInsertFunction(kUnsafeStackPtrAddrFn,
-                                      StackPtrTy->getPointerTo(0), nullptr);
-    return IRB.CreateCall(Fn);
+  if (!UnsafeStackPtr) {
+    // The global variable is not defined yet, define it ourselves.
+    // We use the initial-exec TLS model because we do not support the
+    // variable living anywhere other than in the main executable.
+    UnsafeStackPtr = new GlobalVariable(
+        M, StackPtrTy, false, GlobalValue::ExternalLinkage, 0,
+        UnsafeStackPtrVar, nullptr, GlobalValue::InitialExecTLSModel);
   } else {
-    // Otherwise, declare a thread-local variable with a magic name.
-    auto UnsafeStackPtr =
-        dyn_cast_or_null<GlobalVariable>(M.getNamedValue(kUnsafeStackPtrVar));
-
-    if (!UnsafeStackPtr) {
-      // The global variable is not defined yet, define it ourselves.
-      // We use the initial-exec TLS model because we do not support the
-      // variable living anywhere other than in the main executable.
-      UnsafeStackPtr = new GlobalVariable(
-          /*Module=*/M, /*Type=*/StackPtrTy,
-          /*isConstant=*/false, /*Linkage=*/GlobalValue::ExternalLinkage,
-          /*Initializer=*/nullptr, /*Name=*/kUnsafeStackPtrVar,
-          /*InsertBefore=*/nullptr,
-          /*ThreadLocalMode=*/GlobalValue::InitialExecTLSModel);
-    } else {
-      // The variable exists, check its type and attributes.
-      if (UnsafeStackPtr->getValueType() != StackPtrTy) {
-        report_fatal_error(Twine(kUnsafeStackPtrVar) + " must have void* type");
-      }
-
-      if (!UnsafeStackPtr->isThreadLocal()) {
-        report_fatal_error(Twine(kUnsafeStackPtrVar) + " must be thread-local");
-      }
-    }
-    return UnsafeStackPtr;
+    // The variable exists, check its type and attributes.
+    if (UnsafeStackPtr->getValueType() != StackPtrTy)
+      report_fatal_error(Twine(UnsafeStackPtrVar) + " must have void* type");
+    if (!UnsafeStackPtr->isThreadLocal())
+      report_fatal_error(Twine(UnsafeStackPtrVar) + " must be thread-local");
   }
+  return UnsafeStackPtr;
 }
 
 void SafeStack::findInsts(Function &F,

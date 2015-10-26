@@ -903,8 +903,7 @@ namespace llvm {
     /// Return true if the target stores SafeStack pointer at a fixed offset in
     /// some non-standard address space, and populates the address space and
     /// offset as appropriate.
-    bool getSafeStackPointerLocation(unsigned &AddressSpace,
-                                     unsigned &Offset) const override;
+    Value *getSafeStackPointerLocation(IRBuilder<> &IRB) const override;
 
     SDValue BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain, SDValue StackSlot,
                       SelectionDAG &DAG) const;
