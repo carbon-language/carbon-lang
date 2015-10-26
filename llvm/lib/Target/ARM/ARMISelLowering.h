@@ -348,6 +348,8 @@ namespace llvm {
     getInlineAsmMemConstraint(StringRef ConstraintCode) const override {
       if (ConstraintCode == "Q")
         return InlineAsm::Constraint_Q;
+      else if (ConstraintCode == "o")
+        return InlineAsm::Constraint_o;
       else if (ConstraintCode.size() == 2) {
         if (ConstraintCode[0] == 'U') {
           switch(ConstraintCode[1]) {

@@ -3924,6 +3924,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
     //        be an immediate and not a memory constraint.
     // Fallthrough.
   case InlineAsm::Constraint_m:
+  case InlineAsm::Constraint_o:
   case InlineAsm::Constraint_Q:
   case InlineAsm::Constraint_Um:
   case InlineAsm::Constraint_Un:
