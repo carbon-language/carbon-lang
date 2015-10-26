@@ -19,6 +19,7 @@
 #include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Core/Module.h"
 
+#include <array>
 namespace lldb_private
 {
 
@@ -206,7 +207,8 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     void ListAllocations(Stream &strm, StackFrame* frame_ptr, bool recompute);
 
-    void AttemptBreakpointAtKernelName(Stream &strm, const char *name, Error &error, lldb::TargetSP target);
+    void PlaceBreakpointOnKernel(Stream &strm, const char *name, const std::array<int,3> coords,
+                                 Error &error, lldb::TargetSP target);
 
     void SetBreakAllKernels(bool do_break, lldb::TargetSP target);
 
@@ -225,7 +227,7 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     void Update();
 
     void Initiate();
-    
+
   protected:
 
     struct ScriptDetails;
@@ -281,6 +283,7 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
 
     std::map<lldb::addr_t, lldb_renderscript::RSModuleDescriptorSP> m_scriptMappings;
     std::map<lldb::addr_t, RuntimeHookSP> m_runtimeHooks;
+    std::map<lldb::user_id_t, std::shared_ptr<int>> m_conditional_breaks;
 
     lldb::SearchFilterSP m_filtersp; // Needed to create breakpoints through Target API
 
@@ -296,6 +299,9 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     static bool HookCallback(void *baton, StoppointCallbackContext *ctx, lldb::user_id_t break_id,
                              lldb::user_id_t break_loc_id);
 
+    static bool KernelBreakpointHit(void *baton, StoppointCallbackContext *ctx,
+                                    lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
+
     void HookCallback(RuntimeHook* hook_info, ExecutionContext& context);
 
     bool GetArgSimple(ExecutionContext& context, uint32_t arg, uint64_t* data);
@@ -307,6 +313,7 @@ class RenderScriptRuntime : public lldb_private::CPPLanguageRuntime
     AllocationDetails* FindAllocByID(Stream &strm, const uint32_t alloc_id);
     std::shared_ptr<uint8_t> GetAllocationData(AllocationDetails* allocation, StackFrame* frame_ptr);
     unsigned int GetElementSize(const AllocationDetails* allocation);
+    static bool GetFrameVarAsUnsigned(const lldb::StackFrameSP, const char* var_name, uint64_t& val);
 
     //
     // Helper functions for jitting the runtime

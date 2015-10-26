@@ -14,11 +14,13 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -2301,8 +2303,124 @@ RenderScriptRuntime::CreateKernelBreakpoint(const ConstString& name)
     return bp;
 }
 
+// Given an expression for a variable this function tries to calculate the variable's value.
+// If this is possible it returns true and sets the uint64_t parameter to the variables unsigned value.
+// Otherwise function returns false.
+bool
+RenderScriptRuntime::GetFrameVarAsUnsigned(const StackFrameSP frame_sp, const char* var_name, uint64_t& val)
+{
+    Log* log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_LANGUAGE));
+    Error error;
+    VariableSP var_sp;
+
+    // Find variable in stack frame
+    ValueObjectSP value_sp(frame_sp->GetValueForVariableExpressionPath(var_name,
+                                                                       eNoDynamicValues,
+                                                                       StackFrame::eExpressionPathOptionCheckPtrVsMember |
+                                                                       StackFrame::eExpressionPathOptionsAllowDirectIVarAccess,
+                                                                       var_sp,
+                                                                       error));
+    if (!error.Success())
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::GetFrameVarAsUnsigned - Error, couldn't find '%s' in frame", var_name);
+
+        return false;
+    }
+
+    // Find the unsigned int value for the variable
+    bool success = false;
+    val = value_sp->GetValueAsUnsigned(0, &success);
+    if (!success)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::GetFrameVarAsUnsigned - Error, couldn't parse '%s' as an unsigned int", var_name);
+
+        return false;
+    }
+
+    return true;
+}
+
+// Callback when a kernel breakpoint hits and we're looking for a specific coordinate.
+// Baton parameter contains a pointer to the target coordinate we want to break on.
+// Function then checks the .expand frame for the current coordinate and breaks to user if it matches.
+// Parameter 'break_id' is the id of the Breakpoint which made the callback.
+// Parameter 'break_loc_id' is the id for the BreakpointLocation which was hit,
+// a single logical breakpoint can have multiple addresses.
+bool
+RenderScriptRuntime::KernelBreakpointHit(void *baton, StoppointCallbackContext *ctx,
+                                         user_id_t break_id, user_id_t break_loc_id)
+{
+    Log* log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_LANGUAGE | LIBLLDB_LOG_BREAKPOINTS));
+
+    assert(baton && "Error: null baton in conditional kernel breakpoint callback");
+
+    // Coordinate we want to stop on
+    const int* target_coord = static_cast<const int*>(baton);
+
+    if (log)
+        log->Printf("RenderScriptRuntime::KernelBreakpointHit - Break ID %" PRIu64 ", target coord (%d, %d, %d)",
+                    break_id, target_coord[0], target_coord[1], target_coord[2]);
+
+    // Go up one stack frame to .expand kernel
+    ExecutionContext context(ctx->exe_ctx_ref);
+    ThreadSP thread_sp = context.GetThreadSP();
+    if (!thread_sp->SetSelectedFrameByIndex(1))
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::KernelBreakpointHit - Error, couldn't go up stack frame");
+
+       return false;
+    }
+
+    StackFrameSP frame_sp = thread_sp->GetSelectedFrame();
+    if (!frame_sp)
+    {
+        if (log)
+            log->Printf("RenderScriptRuntime::KernelBreakpointHit - Error, couldn't select .expand stack frame");
+
+        return false;
+    }
+
+    // Get values for variables in .expand frame that tell us the current kernel invocation
+    const char* coord_expressions[] = {"rsIndex", "p->current.y", "p->current.z"};
+    uint64_t current_coord[3] = {0, 0, 0};
+
+    for(int i = 0; i < 3; ++i)
+    {
+        if (!GetFrameVarAsUnsigned(frame_sp, coord_expressions[i], current_coord[i]))
+            return false;
+
+        if (log)
+            log->Printf("RenderScriptRuntime::KernelBreakpointHit, %s = %" PRIu64, coord_expressions[i], current_coord[i]);
+    }
+
+    // Check if the current kernel invocation coordinate matches our target coordinate
+    if (current_coord[0] == static_cast<uint64_t>(target_coord[0]) &&
+        current_coord[1] == static_cast<uint64_t>(target_coord[1]) &&
+        current_coord[2] == static_cast<uint64_t>(target_coord[2]))
+    {
+        if (log)
+             log->Printf("RenderScriptRuntime::KernelBreakpointHit, BREAKING %" PRIu64 ", %" PRIu64 ", %" PRIu64,
+                         current_coord[0], current_coord[1], current_coord[2]);
+
+        BreakpointSP breakpoint_sp = context.GetTargetPtr()->GetBreakpointByID(break_id);
+        assert(breakpoint_sp != nullptr && "Error: Couldn't find breakpoint matching break id for callback");
+        breakpoint_sp->SetEnabled(false); // Optimise since conditional breakpoint should only be hit once.
+        return true;
+    }
+
+    // No match on coordinate
+    return false;
+}
+
+// Tries to set a breakpoint on the start of a kernel, resolved using the kernel name.
+// Argument 'coords', represents a three dimensional coordinate which can be used to specify
+// a single kernel instance to break on. If this is set then we add a callback to the breakpoint.
 void
-RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* name, Error& error, TargetSP target)
+RenderScriptRuntime::PlaceBreakpointOnKernel(Stream &strm, const char* name, const std::array<int,3> coords,
+                                             Error& error, TargetSP target)
 {
     if (!name)
     {
@@ -2314,6 +2432,25 @@ RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* nam
 
     ConstString kernel_name(name);
     BreakpointSP bp = CreateKernelBreakpoint(kernel_name);
+
+    // We have a conditional breakpoint on a specific coordinate
+    if (coords[0] != -1)
+    {
+        strm.Printf("Conditional kernel breakpoint on coordinate %d, %d, %d", coords[0], coords[1], coords[2]);
+        strm.EOL();
+
+        // Allocate memory for the baton, and copy over coordinate
+        int* baton = new int[3];
+        baton[0] = coords[0]; baton[1] = coords[1]; baton[2] = coords[2];
+
+        // Create a callback that will be invoked everytime the breakpoint is hit.
+        // The baton object passed to the handler is the target coordinate we want to break on.
+        bp->SetCallback(KernelBreakpointHit, baton, true);
+
+        // Store a shared pointer to the baton, so the memory will eventually be cleaned up after destruction
+        m_conditional_breaks[bp->GetID()] = std::shared_ptr<int>(baton);
+    }
+
     if (bp)
         bp->GetDescription(&strm, lldb::eDescriptionLevelInitial, false);
 
@@ -2562,10 +2699,93 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObject
   public:
     CommandObjectRenderScriptRuntimeKernelBreakpointSet(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript kernel breakpoint set",
-                              "Sets a breakpoint on a renderscript kernel.", "renderscript kernel breakpoint set <kernel_name>",
-                              eCommandRequiresProcess | eCommandProcessMustBeLaunched | eCommandProcessMustBePaused)
+                              "Sets a breakpoint on a renderscript kernel.", "renderscript kernel breakpoint set <kernel_name> [-c x,y,z]",
+                              eCommandRequiresProcess | eCommandProcessMustBeLaunched | eCommandProcessMustBePaused), m_options(interpreter)
     {
     }
+
+    virtual Options*
+    GetOptions()
+    {
+        return &m_options;
+    }
+
+    class CommandOptions : public Options
+    {
+      public:
+        CommandOptions(CommandInterpreter &interpreter) : Options(interpreter)
+        {
+        }
+
+        virtual
+        ~CommandOptions()
+        {
+        }
+
+        virtual Error
+        SetOptionValue(uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            const int short_option = m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'c':
+                    if (!ParseCoordinate(option_arg))
+                        error.SetErrorStringWithFormat("Couldn't parse coordinate '%s', should be in format 'x,y,z'.", option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat("unrecognized option '%c'", short_option);
+                    break;
+            }
+            return error;
+        }
+
+        // -c takes an argument of the form 'num[,num][,num]'.
+        // Where 'id_cstr' is this argument with the whitespace trimmed.
+        // Missing coordinates are defaulted to zero.
+        bool
+        ParseCoordinate(const char* id_cstr)
+        {
+            RegularExpression regex;
+            RegularExpression::Match regex_match(3);
+
+            bool matched = false;
+            if(regex.Compile("^([0-9]+),([0-9]+),([0-9]+)$") && regex.Execute(id_cstr, &regex_match))
+                matched = true;
+            else if(regex.Compile("^([0-9]+),([0-9]+)$") && regex.Execute(id_cstr, &regex_match))
+                matched = true;
+            else if(regex.Compile("^([0-9]+)$") && regex.Execute(id_cstr, &regex_match))
+                matched = true;
+            for(uint32_t i = 0; i < 3; i++)
+            {
+                std::string group;
+                if(regex_match.GetMatchAtIndex(id_cstr, i + 1, group))
+                    m_coord[i] = (uint32_t)strtoul(group.c_str(), NULL, 0);
+                else
+                    m_coord[i] = 0;
+            }
+            return matched;
+        }
+
+        void
+        OptionParsingStarting()
+        {
+            // -1 means the -c option hasn't been set
+            m_coord[0] = -1;
+            m_coord[1] = -1;
+            m_coord[2] = -1;
+        }
+
+        const OptionDefinition*
+        GetDefinitions()
+        {
+            return g_option_table;
+        }
+
+        static OptionDefinition g_option_table[];
+        std::array<int,3> m_coord;
+    };
 
     ~CommandObjectRenderScriptRuntimeKernelBreakpointSet() {}
 
@@ -2573,31 +2793,45 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObject
     DoExecute(Args &command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
-        if (argc == 1)
+        if (argc < 1)
         {
-            RenderScriptRuntime *runtime =
-                (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
-
-            Error error;
-            runtime->AttemptBreakpointAtKernelName(result.GetOutputStream(), command.GetArgumentAtIndex(0),
-                                                   error, m_exe_ctx.GetTargetSP());
-
-            if (error.Success())
-            {
-                result.AppendMessage("Breakpoint(s) created");
-                result.SetStatus(eReturnStatusSuccessFinishResult);
-                return true;
-            }
+            result.AppendErrorWithFormat("'%s' takes 1 argument of kernel name, and an optional coordinate.", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
-            result.AppendErrorWithFormat("Error: %s", error.AsCString());
             return false;
         }
 
-        result.AppendErrorWithFormat("'%s' takes 1 argument of kernel name", m_cmd_name.c_str());
+        RenderScriptRuntime *runtime =
+                (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
+
+        Error error;
+        runtime->PlaceBreakpointOnKernel(result.GetOutputStream(), command.GetArgumentAtIndex(0), m_options.m_coord,
+                                         error, m_exe_ctx.GetTargetSP());
+
+        if (error.Success())
+        {
+            result.AppendMessage("Breakpoint(s) created");
+            result.SetStatus(eReturnStatusSuccessFinishResult);
+            return true;
+        }
         result.SetStatus(eReturnStatusFailed);
+        result.AppendErrorWithFormat("Error: %s", error.AsCString());
         return false;
-    }
+   }
+
+    private:
+        CommandOptions m_options;
 };
+
+OptionDefinition
+CommandObjectRenderScriptRuntimeKernelBreakpointSet::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "coordinate", 'c', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeValue,
+      "Set a breakpoint on a single invocation of the kernel with specified coordinate.\n"
+      "Coordinate takes the form 'x[,y][,z] where x,y,z are positive integers representing kernel dimensions. "
+      "Any unset dimensions will be defaulted to zero."},
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+};
+
 
 class CommandObjectRenderScriptRuntimeKernelBreakpointAll : public CommandObjectParsed
 {
