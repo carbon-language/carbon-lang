@@ -111,7 +111,7 @@ class CommandLineCompletionTestCase(TestBase):
 
         stty_output1_lines = from_child1.splitlines()
         stty_output2_lines = from_child2.splitlines()
-        zipped = zip(stty_output1_lines, stty_output2_lines)
+        zipped = list(zip(stty_output1_lines, stty_output2_lines))
         for tuple in zipped:
             if self.TraceOn():
                 print("tuple->%s" % str(tuple))
