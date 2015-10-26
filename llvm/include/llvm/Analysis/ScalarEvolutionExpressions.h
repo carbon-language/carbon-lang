@@ -664,18 +664,19 @@ namespace llvm {
 
   typedef DenseMap<const Loop*, const SCEV*> LoopToScevMapT;
 
-  /// The SCEVApplyRewriter takes a scalar evolution expression and applies
+  /// The SCEVLoopAddRecRewriter takes a scalar evolution expression and applies
   /// the Map (Loop -> SCEV) to all AddRecExprs.
-  class SCEVApplyRewriter : public SCEVRewriteVisitor<SCEVApplyRewriter> {
+  class SCEVLoopAddRecRewriter
+      : public SCEVRewriteVisitor<SCEVLoopAddRecRewriter> {
   public:
     static const SCEV *rewrite(const SCEV *Scev, LoopToScevMapT &Map,
                                ScalarEvolution &SE) {
-      SCEVApplyRewriter Rewriter(SE, Map);
+      SCEVLoopAddRecRewriter Rewriter(SE, Map);
       return Rewriter.visit(Scev);
     }
 
-    SCEVApplyRewriter(ScalarEvolution &SE, LoopToScevMapT &M)
-      : SCEVRewriteVisitor(SE), Map(M) {}
+    SCEVLoopAddRecRewriter(ScalarEvolution &SE, LoopToScevMapT &M)
+        : SCEVRewriteVisitor(SE), Map(M) {}
 
     const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
@@ -688,7 +689,7 @@ namespace llvm {
       if (0 == Map.count(L))
         return Res;
 
-      const SCEVAddRecExpr *Rec = (const SCEVAddRecExpr *) Res;
+      const SCEVAddRecExpr *Rec = cast<SCEVAddRecExpr>(Res);
       return Rec->evaluateAtIteration(Map[L], SE);
     }
 
@@ -699,7 +700,7 @@ namespace llvm {
 /// Applies the Map (Loop -> SCEV) to the given Scev.
 static inline const SCEV *apply(const SCEV *Scev, LoopToScevMapT &Map,
                                 ScalarEvolution &SE) {
-  return SCEVApplyRewriter::rewrite(Scev, Map, SE);
+  return SCEVLoopAddRecRewriter::rewrite(Scev, Map, SE);
 }
 
 }
