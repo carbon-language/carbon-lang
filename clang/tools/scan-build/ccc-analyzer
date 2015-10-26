@@ -586,7 +586,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
   }
 
   # Compile mode flags.
-  if ($Arg =~ /^-[D,I,U,isystem](.*)$/) {
+  if ($Arg =~ /^-(?:[DIU]|isystem)(.*)$/) {
     my $Tmp = $Arg;
     if ($1 eq '') {
       # FIXME: Check if we are going off the end.
