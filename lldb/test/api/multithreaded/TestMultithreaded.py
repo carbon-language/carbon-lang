@@ -69,8 +69,6 @@ class SBBreakpointCallbackCase(TestBase):
         if self.getLldbArchitecture() != self.getArchitecture():
             self.skipTest("This test is only run if the target arch is the same as the lldb binary arch")
 
-        self.lib_dir = os.environ["LLDB_LIB_DIR"]
-        self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
         self.inferior = 'inferior_program'
         self.buildProgram('inferior.cpp', self.inferior)
         self.addTearDownHook(lambda: os.remove(self.inferior))

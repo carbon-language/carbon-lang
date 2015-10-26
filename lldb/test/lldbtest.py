@@ -870,7 +870,7 @@ def skipIfNoSBHeaders(func):
         from unittest2 import case
         self = args[0]
         if sys.platform.startswith("darwin"):
-            header = os.path.join(self.lib_dir, 'LLDB.framework', 'Versions','Current','Headers','LLDB.h')
+            header = os.path.join(os.environ["LLDB_LIB_DIR"], 'LLDB.framework', 'Versions','Current','Headers','LLDB.h')
         else:
             header = os.path.join(os.environ["LLDB_SRC"], "include", "lldb", "API", "LLDB.h")
         platform = sys.platform
@@ -2034,25 +2034,26 @@ class Base(unittest2.TestCase):
 
         stdflag = self.getstdFlag()
         stdlibflag = self.getstdlibFlag()
-
+                                            
+        lib_dir = os.environ["LLDB_LIB_DIR"]
         if sys.platform.startswith("darwin"):
-            dsym = os.path.join(self.lib_dir, 'LLDB.framework', 'LLDB')
+            dsym = os.path.join(lib_dir, 'LLDB.framework', 'LLDB')
             d = {'CXX_SOURCES' : sources,
                  'EXE' : exe_name,
                  'CFLAGS_EXTRAS' : "%s %s" % (stdflag, stdlibflag),
-                 'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
-                 'LD_EXTRAS' : "%s -Wl,-rpath,%s" % (dsym, self.lib_dir),
+                 'FRAMEWORK_INCLUDES' : "-F%s" % lib_dir,
+                 'LD_EXTRAS' : "%s -Wl,-rpath,%s" % (dsym, lib_dir),
                 }
         elif sys.platform.startswith('freebsd') or sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {'CXX_SOURCES' : sources,
                  'EXE' : exe_name,
                  'CFLAGS_EXTRAS' : "%s %s -I%s" % (stdflag, stdlibflag, os.path.join(os.environ["LLDB_SRC"], "include")),
-                 'LD_EXTRAS' : "-L%s -llldb" % self.lib_dir}
+                 'LD_EXTRAS' : "-L%s -llldb" % lib_dir}
         elif sys.platform.startswith('win'):
             d = {'CXX_SOURCES' : sources,
                  'EXE' : exe_name,
                  'CFLAGS_EXTRAS' : "%s %s -I%s" % (stdflag, stdlibflag, os.path.join(os.environ["LLDB_SRC"], "include")),
-                 'LD_EXTRAS' : "-L%s -lliblldb" % self.implib_dir}
+                 'LD_EXTRAS' : "-L%s -lliblldb" % os.environ["LLDB_IMPLIB_DIR"]}
         if self.TraceOn():
             print("Building LLDB Driver (%s) from sources %s" % (exe_name, sources))
 
@@ -2063,24 +2064,25 @@ class Base(unittest2.TestCase):
 
         stdflag = self.getstdFlag()
 
+        lib_dir = os.environ["LLDB_LIB_DIR"]
         if self.platformIsDarwin():
-            dsym = os.path.join(self.lib_dir, 'LLDB.framework', 'LLDB')
+            dsym = os.path.join(lib_dir, 'LLDB.framework', 'LLDB')
             d = {'DYLIB_CXX_SOURCES' : sources,
                  'DYLIB_NAME' : lib_name,
                  'CFLAGS_EXTRAS' : "%s -stdlib=libc++" % stdflag,
-                 'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
-                 'LD_EXTRAS' : "%s -Wl,-rpath,%s -dynamiclib" % (dsym, self.lib_dir),
+                 'FRAMEWORK_INCLUDES' : "-F%s" % lib_dir,
+                 'LD_EXTRAS' : "%s -Wl,-rpath,%s -dynamiclib" % (dsym, lib_dir),
                 }
         elif self.getPlatform() == 'freebsd' or self.getPlatform() == 'linux' or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {'DYLIB_CXX_SOURCES' : sources,
                  'DYLIB_NAME' : lib_name,
                  'CFLAGS_EXTRAS' : "%s -I%s -fPIC" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
-                 'LD_EXTRAS' : "-shared -L%s -llldb" % self.lib_dir}
+                 'LD_EXTRAS' : "-shared -L%s -llldb" % lib_dir}
         elif self.getPlatform() == 'windows':
             d = {'DYLIB_CXX_SOURCES' : sources,
                  'DYLIB_NAME' : lib_name,
                  'CFLAGS_EXTRAS' : "%s -I%s -fPIC" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
-                 'LD_EXTRAS' : "-shared -l%s\liblldb.lib" % self.implib_dir}
+                 'LD_EXTRAS' : "-shared -l%s\liblldb.lib" % self.os.environ["LLDB_IMPLIB_DIR"]}
         if self.TraceOn():
             print("Building LLDB Library (%s) from sources %s" % (lib_name, sources))
 
@@ -2210,12 +2212,13 @@ class Base(unittest2.TestCase):
             the new path is appended to it and returned.
         """
         existing_library_path = os.environ[self.dylibPath] if self.dylibPath in os.environ else None
+        lib_dir = os.environ["LLDB_LIB_DIR"]
         if existing_library_path:
-            return "%s:%s" % (existing_library_path, self.lib_dir)
+            return "%s:%s" % (existing_library_path, lib_dir)
         elif sys.platform.startswith("darwin"):
-            return os.path.join(self.lib_dir, 'LLDB.framework')
+            return os.path.join(lib_dir, 'LLDB.framework')
         else:
-            return self.lib_dir
+            return lib_dir
 
     def getLibcPlusPlusLibs(self):
         if self.getPlatform() == 'freebsd' or self.getPlatform() == 'linux':

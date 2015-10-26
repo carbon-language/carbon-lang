@@ -16,12 +16,6 @@ class PluginCommandTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-        self.lib_dir = os.environ["LLDB_LIB_DIR"]
-        self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
-
     @skipIfNoSBHeaders
     @skipIfHostIncompatibleWithRemote # Requires a compatible arch and platform to link against the host's built lldb lib.
     @expectedFailureWindows("llvm.org/pr24778")
