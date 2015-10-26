@@ -623,6 +623,11 @@ getEdgeProbability(const BasicBlock *Src, unsigned IndexInSuccessors) const {
   uint32_t N = getEdgeWeight(Src, IndexInSuccessors);
   uint32_t D = getSumForBlock(Src);
 
+  // It is possible that the edge weight on the only successor edge of Src is
+  // zero, in which case we return 100%.
+  if (N == 0 && D == 0)
+    return BranchProbability::getOne();
+
   return BranchProbability(N, D);
 }
 
@@ -633,6 +638,11 @@ getEdgeProbability(const BasicBlock *Src, const BasicBlock *Dst) const {
 
   uint32_t N = getEdgeWeight(Src, Dst);
   uint32_t D = getSumForBlock(Src);
+
+  // It is possible that the edge weight on the only successor edge of Src is
+  // zero, in which case we return 100%.
+  if (N == 0 && D == 0)
+    return BranchProbability::getOne();
 
   return BranchProbability(N, D);
 }
