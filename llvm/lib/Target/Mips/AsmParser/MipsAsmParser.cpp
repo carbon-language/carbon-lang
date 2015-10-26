@@ -167,12 +167,16 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool parseOperand(OperandVector &, StringRef Mnemonic);
 
-  bool needsExpansion(MCInst &Inst);
+  enum MacroExpanderResultTy {
+    MER_NotAMacro,
+    MER_Success,
+    MER_Fail,
+  };
 
   // Expands assembly pseudo instructions.
-  // Returns false on success, true otherwise.
-  bool expandInstruction(MCInst &Inst, SMLoc IDLoc,
-                         SmallVectorImpl<MCInst> &Instructions);
+  MacroExpanderResultTy
+  tryExpandInstruction(MCInst &Inst, SMLoc IDLoc,
+                       SmallVectorImpl<MCInst> &Instructions);
 
   bool expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
                          SmallVectorImpl<MCInst> &Instructions);
@@ -1601,8 +1605,8 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     }
   }
 
-  // This expansion is not in a function called by expandInstruction() because
-  // the pseudo-instruction doesn't have a distinct opcode.
+  // This expansion is not in a function called by tryExpandInstruction()
+  // because the pseudo-instruction doesn't have a distinct opcode.
   if ((Inst.getOpcode() == Mips::JAL || Inst.getOpcode() == Mips::JAL_MM) &&
       inPicMode()) {
     warnIfNoMacro(IDLoc);
@@ -1869,11 +1873,17 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     }
   }
 
-  if (needsExpansion(Inst)) {
-    if (expandInstruction(Inst, IDLoc, Instructions))
-      return true;
-  } else
+  MacroExpanderResultTy ExpandResult =
+      tryExpandInstruction(Inst, IDLoc, Instructions);
+  switch (ExpandResult) {
+  case MER_NotAMacro:
     Instructions.push_back(Inst);
+    break;
+  case MER_Success:
+    break;
+  case MER_Fail:
+    return true;
+  }
 
   // If this instruction has a delay slot and .set reorder is active,
   // emit a NOP after it.
@@ -1905,109 +1915,30 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
   return false;
 }
 
-bool MipsAsmParser::needsExpansion(MCInst &Inst) {
-
+MipsAsmParser::MacroExpanderResultTy
+MipsAsmParser::tryExpandInstruction(MCInst &Inst, SMLoc IDLoc,
+                                    SmallVectorImpl<MCInst> &Instructions) {
   switch (Inst.getOpcode()) {
-  case Mips::LoadImm32:
-  case Mips::LoadImm64:
-  case Mips::LoadAddrImm32:
-  case Mips::LoadAddrImm64:
-  case Mips::LoadAddrReg32:
-  case Mips::LoadAddrReg64:
-  case Mips::B_MM_Pseudo:
-  case Mips::B_MMR6_Pseudo:
-  case Mips::LWM_MM:
-  case Mips::SWM_MM:
-  case Mips::JalOneReg:
-  case Mips::JalTwoReg:
-  case Mips::BneImm:
-  case Mips::BeqImm:
-  case Mips::BLT:
-  case Mips::BLE:
-  case Mips::BGE:
-  case Mips::BGT:
-  case Mips::BLTU:
-  case Mips::BLEU:
-  case Mips::BGEU:
-  case Mips::BGTU:
-  case Mips::BLTL:
-  case Mips::BLEL:
-  case Mips::BGEL:
-  case Mips::BGTL:
-  case Mips::BLTUL:
-  case Mips::BLEUL:
-  case Mips::BGEUL:
-  case Mips::BGTUL:
-  case Mips::BLTImmMacro:
-  case Mips::BLEImmMacro:
-  case Mips::BGEImmMacro:
-  case Mips::BGTImmMacro:
-  case Mips::BLTUImmMacro:
-  case Mips::BLEUImmMacro:
-  case Mips::BGEUImmMacro:
-  case Mips::BGTUImmMacro:
-  case Mips::BLTLImmMacro:
-  case Mips::BLELImmMacro:
-  case Mips::BGELImmMacro:
-  case Mips::BGTLImmMacro:
-  case Mips::BLTULImmMacro:
-  case Mips::BLEULImmMacro:
-  case Mips::BGEULImmMacro:
-  case Mips::BGTULImmMacro:
-  case Mips::SDivMacro:
-  case Mips::UDivMacro:
-  case Mips::DSDivMacro:
-  case Mips::DUDivMacro:
-  case Mips::Ulh:
-  case Mips::Ulhu:
-  case Mips::Ulw:
-  case Mips::NORImm:
-    return true;
-  case Mips::ADDi:
-  case Mips::ADDiu:
-  case Mips::SLTi:
-  case Mips::SLTiu:
-    if ((Inst.getNumOperands() == 3) &&
-        Inst.getOperand(0).isReg() &&
-        Inst.getOperand(1).isReg() &&
-        Inst.getOperand(2).isImm()) {
-      int64_t ImmValue = Inst.getOperand(2).getImm();
-      return !isInt<16>(ImmValue);
-    }
-    return false;
-  case Mips::ANDi:
-  case Mips::ORi:
-  case Mips::XORi:
-    if ((Inst.getNumOperands() == 3) &&
-        Inst.getOperand(0).isReg() &&
-        Inst.getOperand(1).isReg() &&
-        Inst.getOperand(2).isImm()) {
-      int64_t ImmValue = Inst.getOperand(2).getImm();
-      return !isUInt<16>(ImmValue);
-    }
-    return false;
   default:
-    return false;
-  }
-}
-
-bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
-                                      SmallVectorImpl<MCInst> &Instructions) {
-  switch (Inst.getOpcode()) {
-  default: llvm_unreachable("unimplemented expansion");
+    return MER_NotAMacro;
   case Mips::LoadImm32:
-    return expandLoadImm(Inst, true, IDLoc, Instructions);
+    return expandLoadImm(Inst, true, IDLoc, Instructions) ? MER_Fail
+                                                          : MER_Success;
   case Mips::LoadImm64:
-    return expandLoadImm(Inst, false, IDLoc, Instructions);
+    return expandLoadImm(Inst, false, IDLoc, Instructions) ? MER_Fail
+                                                           : MER_Success;
   case Mips::LoadAddrImm32:
   case Mips::LoadAddrImm64:
     assert(Inst.getOperand(0).isReg() && "expected register operand kind");
     assert((Inst.getOperand(1).isImm() || Inst.getOperand(1).isExpr()) &&
            "expected immediate operand kind");
 
-    return expandLoadAddress(
-        Inst.getOperand(0).getReg(), Mips::NoRegister, Inst.getOperand(1),
-        Inst.getOpcode() == Mips::LoadAddrImm32, IDLoc, Instructions);
+    return expandLoadAddress(Inst.getOperand(0).getReg(), Mips::NoRegister,
+                             Inst.getOperand(1),
+                             Inst.getOpcode() == Mips::LoadAddrImm32, IDLoc,
+                             Instructions)
+               ? MER_Fail
+               : MER_Success;
   case Mips::LoadAddrReg32:
   case Mips::LoadAddrReg64:
     assert(Inst.getOperand(0).isReg() && "expected register operand kind");
@@ -2015,21 +1946,27 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
     assert((Inst.getOperand(2).isImm() || Inst.getOperand(2).isExpr()) &&
            "expected immediate operand kind");
 
-    return expandLoadAddress(
-        Inst.getOperand(0).getReg(), Inst.getOperand(1).getReg(), Inst.getOperand(2),
-        Inst.getOpcode() == Mips::LoadAddrReg32, IDLoc, Instructions);
+    return expandLoadAddress(Inst.getOperand(0).getReg(),
+                             Inst.getOperand(1).getReg(), Inst.getOperand(2),
+                             Inst.getOpcode() == Mips::LoadAddrReg32, IDLoc,
+                             Instructions)
+               ? MER_Fail
+               : MER_Success;
   case Mips::B_MM_Pseudo:
   case Mips::B_MMR6_Pseudo:
-    return expandUncondBranchMMPseudo(Inst, IDLoc, Instructions);
+    return expandUncondBranchMMPseudo(Inst, IDLoc, Instructions) ? MER_Fail
+                                                                 : MER_Success;
   case Mips::SWM_MM:
   case Mips::LWM_MM:
-    return expandLoadStoreMultiple(Inst, IDLoc, Instructions);
+    return expandLoadStoreMultiple(Inst, IDLoc, Instructions) ? MER_Fail
+                                                              : MER_Success;
   case Mips::JalOneReg:
   case Mips::JalTwoReg:
-    return expandJalWithRegs(Inst, IDLoc, Instructions);
+    return expandJalWithRegs(Inst, IDLoc, Instructions) ? MER_Fail
+                                                        : MER_Success;
   case Mips::BneImm:
   case Mips::BeqImm:
-    return expandBranchImm(Inst, IDLoc, Instructions);
+    return expandBranchImm(Inst, IDLoc, Instructions) ? MER_Fail : MER_Success;
   case Mips::BLT:
   case Mips::BLE:
   case Mips::BGE:
@@ -2062,30 +1999,54 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::BLEULImmMacro:
   case Mips::BGEULImmMacro:
   case Mips::BGTULImmMacro:
-    return expandCondBranches(Inst, IDLoc, Instructions);
+    return expandCondBranches(Inst, IDLoc, Instructions) ? MER_Fail
+                                                         : MER_Success;
   case Mips::SDivMacro:
-    return expandDiv(Inst, IDLoc, Instructions, false, true);
+    return expandDiv(Inst, IDLoc, Instructions, false, true) ? MER_Fail
+                                                             : MER_Success;
   case Mips::DSDivMacro:
-    return expandDiv(Inst, IDLoc, Instructions, true, true);
+    return expandDiv(Inst, IDLoc, Instructions, true, true) ? MER_Fail
+                                                            : MER_Success;
   case Mips::UDivMacro:
-    return expandDiv(Inst, IDLoc, Instructions, false, false);
+    return expandDiv(Inst, IDLoc, Instructions, false, false) ? MER_Fail
+                                                              : MER_Success;
   case Mips::DUDivMacro:
-    return expandDiv(Inst, IDLoc, Instructions, true, false);
+    return expandDiv(Inst, IDLoc, Instructions, true, false) ? MER_Fail
+                                                             : MER_Success;
   case Mips::Ulh:
-    return expandUlh(Inst, true, IDLoc, Instructions);
+    return expandUlh(Inst, true, IDLoc, Instructions) ? MER_Fail : MER_Success;
   case Mips::Ulhu:
-    return expandUlh(Inst, false, IDLoc, Instructions);
+    return expandUlh(Inst, false, IDLoc, Instructions) ? MER_Fail : MER_Success;
   case Mips::Ulw:
-    return expandUlw(Inst, IDLoc, Instructions);
+    return expandUlw(Inst, IDLoc, Instructions) ? MER_Fail : MER_Success;
+  case Mips::NORImm:
+    return expandAliasImmediate(Inst, IDLoc, Instructions) ? MER_Fail
+                                                           : MER_Success;
   case Mips::ADDi:
   case Mips::ADDiu:
-  case Mips::ANDi:
-  case Mips::NORImm:
-  case Mips::ORi:
   case Mips::SLTi:
   case Mips::SLTiu:
+    if ((Inst.getNumOperands() == 3) && Inst.getOperand(0).isReg() &&
+        Inst.getOperand(1).isReg() && Inst.getOperand(2).isImm()) {
+      int64_t ImmValue = Inst.getOperand(2).getImm();
+      if (isInt<16>(ImmValue))
+        return MER_NotAMacro;
+      return expandAliasImmediate(Inst, IDLoc, Instructions) ? MER_Fail
+                                                             : MER_Success;
+    }
+    return MER_NotAMacro;
+  case Mips::ANDi:
+  case Mips::ORi:
   case Mips::XORi:
-    return expandAliasImmediate(Inst, IDLoc, Instructions);
+    if ((Inst.getNumOperands() == 3) && Inst.getOperand(0).isReg() &&
+        Inst.getOperand(1).isReg() && Inst.getOperand(2).isImm()) {
+      int64_t ImmValue = Inst.getOperand(2).getImm();
+      if (isUInt<16>(ImmValue))
+        return MER_NotAMacro;
+      return expandAliasImmediate(Inst, IDLoc, Instructions) ? MER_Fail
+                                                             : MER_Success;
+    }
+    return MER_NotAMacro;
   }
 }
 
