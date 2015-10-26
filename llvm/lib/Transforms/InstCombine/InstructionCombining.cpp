@@ -1453,8 +1453,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       }
     }
 
-    GetElementPtrInst *NewGEP = cast<GetElementPtrInst>(Op1->clone());
+    // If not all GEPs are identical we'll have to create a new PHI node.
+    // Check that the old PHI node has only one use so that it will get
+    // removed.
+    if (DI != -1 && !PN->hasOneUse())
+      return nullptr;
 
+    GetElementPtrInst *NewGEP = cast<GetElementPtrInst>(Op1->clone());
     if (DI == -1) {
       // All the GEPs feeding the PHI are identical. Clone one down into our
       // BB so that it can be merged with the current GEP.
