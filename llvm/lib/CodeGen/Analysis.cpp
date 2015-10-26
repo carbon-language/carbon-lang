@@ -649,17 +649,14 @@ bool llvm::canBeOmittedFromSymbolTable(const GlobalValue *GV) {
 static void collectFuncletMembers(
     DenseMap<const MachineBasicBlock *, int> &FuncletMembership, int Funclet,
     const MachineBasicBlock *MBB) {
+  // Add this MBB to our funclet.
+  auto P = FuncletMembership.insert(std::make_pair(MBB, Funclet));
+
   // Don't revisit blocks.
-  if (FuncletMembership.count(MBB) > 0) {
-    if (FuncletMembership[MBB] != Funclet) {
-      assert(false && "MBB is part of two funclets!");
-      report_fatal_error("MBB is part of two funclets!");
-    }
+  if (!P.second) {
+    assert(P.first->second == Funclet && "MBB is part of two funclets!");
     return;
   }
-
-  // Add this MBB to our funclet.
-  FuncletMembership[MBB] = Funclet;
 
   bool IsReturn = false;
   int NumTerminators = 0;
