@@ -1022,7 +1022,7 @@ MemRegionManager::getCXXThisRegion(QualType thisPointerTy,
   // 'this' refers to a this to the enclosing scope, there is no right region to
   // return.
   while (!LC->inTopFrame() &&
-         PT != D->getThisType(getContext())->getAs<PointerType>()) {
+         (!D || PT != D->getThisType(getContext())->getAs<PointerType>())) {
     LC = LC->getParent();
     D = dyn_cast<CXXMethodDecl>(LC->getDecl());
   }
