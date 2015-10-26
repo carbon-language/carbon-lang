@@ -209,7 +209,8 @@ DILineInfo ModuleInfo::symbolizeCode(
         ModuleOffset, getDILineInfoSpecifier(Opts));
   }
   // Override function name from symbol table if necessary.
-  if (Opts.PrintFunctions != FunctionNameKind::None && Opts.UseSymbolTable) {
+  if (Opts.PrintFunctions == FunctionNameKind::LinkageName &&
+      Opts.UseSymbolTable) {
     std::string FunctionName;
     uint64_t Start, Size;
     if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
@@ -233,7 +234,8 @@ DIInliningInfo ModuleInfo::symbolizeInlinedCode(
     InlinedContext.addFrame(DILineInfo());
   }
   // Override the function name in lower frame with name from symbol table.
-  if (Opts.PrintFunctions != FunctionNameKind::None && Opts.UseSymbolTable) {
+  if (Opts.PrintFunctions == FunctionNameKind::LinkageName &&
+      Opts.UseSymbolTable) {
     DIInliningInfo PatchedInlinedContext;
     for (uint32_t i = 0, n = InlinedContext.getNumberOfFrames(); i < n; i++) {
       DILineInfo LineInfo = InlinedContext.getFrame(i);

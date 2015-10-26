@@ -154,7 +154,7 @@ RUN:   | FileCheck %s --check-prefix=STRIPPED
 STRIPPED:  global_func
 
 RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" > %t.input7
-RUN: llvm-symbolizer --functions=short --use-symbol-table=false --demangle=false < %t.input7 \
+RUN: llvm-symbolizer --functions=short --demangle=false < %t.input7 \
 RUN:    | FileCheck %s --check-prefix=SHORT_FUNCTION_NAME
 
 SHORT_FUNCTION_NAME-NOT: _Z1cv
