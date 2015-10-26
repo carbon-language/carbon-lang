@@ -59,6 +59,13 @@ FunctionPass *llvm::createSystemZShortenInstPass(SystemZTargetMachine &TM) {
 SystemZShortenInst::SystemZShortenInst(const SystemZTargetMachine &tm)
   : MachineFunctionPass(ID), TII(nullptr) {}
 
+// Tie operands if MI has become a two-address instruction.
+static void tieOpsIfNeeded(MachineInstr &MI) {
+  if (MI.getDesc().getOperandConstraint(0, MCOI::TIED_TO) &&
+      !MI.getOperand(0).isTied())
+    MI.tieOperands(0, 1);
+}
+
 // MI loads one word of a GPR using an IIxF instruction and LLIxL and LLIxH
 // are the halfword immediate loads for the same word.  Try to use one of them
 // instead of IIxF. 
@@ -113,12 +120,14 @@ bool SystemZShortenInst::shortenOn01(MachineInstr &MI, unsigned Opcode) {
 }
 
 // Change MI's opcode to Opcode if register operands 0, 1 and 2 have a
-// 4-bit encoding and if operands 0 and 1 are tied.
+// 4-bit encoding and if operands 0 and 1 are tied. Also ties op 0
+// with op 1, if MI becomes 2-address.
 bool SystemZShortenInst::shortenOn001(MachineInstr &MI, unsigned Opcode) {
   if (SystemZMC::getFirstReg(MI.getOperand(0).getReg()) < 16 &&
       MI.getOperand(1).getReg() == MI.getOperand(0).getReg() &&
       SystemZMC::getFirstReg(MI.getOperand(2).getReg()) < 16) {
     MI.setDesc(TII->get(Opcode));
+    tieOpsIfNeeded(MI);
     return true;
   }
   return false;
