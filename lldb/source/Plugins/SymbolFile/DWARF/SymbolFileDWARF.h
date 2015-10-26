@@ -457,7 +457,7 @@ protected:
     DWARFDIE
     FindBlockContainingSpecification (const DWARFDIE &die, dw_offset_t spec_block_die_offset);
     
-    UniqueDWARFASTTypeMap &
+    virtual UniqueDWARFASTTypeMap &
     GetUniqueDWARFASTTypeMap ();
     
     bool

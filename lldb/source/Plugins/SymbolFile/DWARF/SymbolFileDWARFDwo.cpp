@@ -100,6 +100,12 @@ SymbolFileDWARFDwo::GetForwardDeclClangTypeToDie()
     return GetBaseSymbolFile()->GetForwardDeclClangTypeToDie();
 }
 
+UniqueDWARFASTTypeMap&
+SymbolFileDWARFDwo::GetUniqueDWARFASTTypeMap()
+{
+    return GetBaseSymbolFile()->GetUniqueDWARFASTTypeMap();
+}
+
 lldb::TypeSP
 SymbolFileDWARFDwo::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx)
 {

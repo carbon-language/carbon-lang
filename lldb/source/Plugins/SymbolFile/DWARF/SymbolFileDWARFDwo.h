@@ -54,6 +54,9 @@ protected:
     ClangTypeToDIE&
     GetForwardDeclClangTypeToDie() override;
 
+    UniqueDWARFASTTypeMap&
+    GetUniqueDWARFASTTypeMap() override;
+
     lldb::TypeSP
     FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx) override;
 
