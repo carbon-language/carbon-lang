@@ -3,7 +3,7 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 \
 ; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-SCALAR %s
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 \
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 -verify-machineinstrs\
 ; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-VECTOR %s
 
 declare double @foo()
