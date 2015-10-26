@@ -748,7 +748,6 @@ void SampleProfileLoader::propagateWeights(Function &F) {
                  << TI->getDebugLoc().getLine() << ".\n");
     SmallVector<uint32_t, 4> Weights;
     uint32_t MaxWeight = 0;
-    BasicBlock *MaxDestBB = nullptr;
     DebugLoc MaxDestLoc;
     for (unsigned I = 0; I < TI->getNumSuccessors(); ++I) {
       BasicBlock *Succ = TI->getSuccessor(I);
@@ -766,7 +765,6 @@ void SampleProfileLoader::propagateWeights(Function &F) {
       if (Weight != 0) {
         if (Weight > MaxWeight) {
           MaxWeight = Weight;
-          MaxDestBB = Succ;
           MaxDestLoc = Succ->getFirstNonPHIOrDbgOrLifetime()->getDebugLoc();
         }
       }
