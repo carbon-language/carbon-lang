@@ -243,7 +243,7 @@ public:
 
     // Compute the size of the block, in words, not counting the size field.
     unsigned SizeInWords = GetWordIndex() - B.StartSizeWord - 1;
-    uint64_t BitNo = B.StartSizeWord * 32;
+    uint64_t BitNo = uint64_t(B.StartSizeWord) * 32;
 
     // Update the block size field in the header of this sub-block.
     BackpatchWord(BitNo, SizeInWords);
