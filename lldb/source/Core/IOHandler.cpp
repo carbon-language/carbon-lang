@@ -7,9 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+#ifndef LLDB_DISABLE_CURSES
+#include <ncurses.h>
+#include <panel.h>
+#endif
 
+// C++ Includes
 #include <string>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Core/Debugger.h"
@@ -28,11 +36,6 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/ThreadPlan.h"
 
-#ifndef LLDB_DISABLE_CURSES
-#include <ncurses.h>
-#include <panel.h>
-#endif
-
 using namespace lldb;
 using namespace lldb_private;
 
@@ -45,7 +48,6 @@ IOHandler::IOHandler (Debugger &debugger, IOHandler::Type type) :
                0)               // Flags
 {
 }
-
 
 IOHandler::IOHandler (Debugger &debugger,
                       IOHandler::Type type,
@@ -71,10 +73,7 @@ IOHandler::IOHandler (Debugger &debugger,
                                                   m_error_sp);
 }
 
-IOHandler::~IOHandler()
-{
-}
-
+IOHandler::~IOHandler() = default;
 
 int
 IOHandler::GetInputFD()
@@ -135,7 +134,6 @@ IOHandler::GetOutputStreamFile()
 {
     return m_output_sp;
 }
-
 
 StreamFileSP &
 IOHandler::GetErrorStreamFile()
@@ -204,10 +202,7 @@ IOHandlerConfirm::IOHandlerConfirm (Debugger &debugger,
     
 }
 
-
-IOHandlerConfirm::~IOHandlerConfirm ()
-{
-}
+IOHandlerConfirm::~IOHandlerConfirm() = default;
 
 int
 IOHandlerConfirm::IOHandlerComplete (IOHandler &io_handler,
@@ -334,10 +329,8 @@ IOHandlerDelegate::IOHandlerComplete (IOHandler &io_handler,
         break;
     }
     
-    
     return 0;
 }
-
 
 IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
                                       IOHandler::Type type,
@@ -443,7 +436,6 @@ IOHandlerEditline::Deactivate ()
     IOHandler::Deactivate();
     m_delegate.IOHandlerDeactivated(*this);
 }
-
 
 bool
 IOHandlerEditline::GetLine (std::string &line, bool &interrupted)
@@ -619,7 +611,6 @@ IOHandlerEditline::GetContinuationPrompt ()
     return m_continuation_prompt.c_str();
 }
 
-
 void
 IOHandlerEditline::SetContinuationPrompt (const char *p)
 {
@@ -633,7 +624,6 @@ IOHandlerEditline::SetContinuationPrompt (const char *p)
         m_editline_ap->SetContinuationPrompt (m_continuation_prompt.empty() ? NULL : m_continuation_prompt.c_str());
 #endif
 }
-
 
 void
 IOHandlerEditline::SetBaseLineNumber (uint32_t line)
@@ -824,6 +814,7 @@ type summary add -s "x=${var.x}, y=${var.y}" curses::Point
 type summary add -s "w=${var.width}, h=${var.height}" curses::Size
 type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
 #endif
+
     struct Point
     {
         int x;
@@ -855,13 +846,13 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         {
             printf ("(x=%i, y=%i)\n", x, y);
         }
-
     };
     
     bool operator == (const Point &lhs, const Point &rhs)
     {
         return lhs.x == rhs.x && lhs.y == rhs.y;
     }
+
     bool operator != (const Point &lhs, const Point &rhs)
     {
         return lhs.x != rhs.x || lhs.y != rhs.y;
@@ -889,13 +880,13 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         {
             printf ("(w=%i, h=%i)\n", width, height);
         }
-
     };
     
     bool operator == (const Size &lhs, const Size &rhs)
     {
         return lhs.width == rhs.width && lhs.height == rhs.height;
     }
+
     bool operator != (const Size &lhs, const Size &rhs)
     {
         return lhs.width != rhs.width || lhs.height != rhs.height;
@@ -942,6 +933,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                 size.height -= h*2;
             origin.y += h;
         }
+
         // Return a status bar rectangle which is the last line of
         // this rectangle. This rectangle will be modified to not
         // include the status bar area.
@@ -1011,7 +1003,6 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
             VerticalSplit (left_width, left, right);
         }
 
-
         void
         VerticalSplit (int left_width, Rect &left, Rect &right) const
         {
@@ -1035,6 +1026,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
     {
         return lhs.origin == rhs.origin && lhs.size == rhs.size;
     }
+
     bool operator != (const Rect &lhs, const Rect &rhs)
     {
         return lhs.origin != rhs.origin || lhs.size != rhs.size;
@@ -1064,9 +1056,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
     {
     public:
         virtual
-        ~WindowDelegate()
-        {
-        }
+        ~WindowDelegate() = default;
 
         virtual bool
         WindowDelegateDraw (Window &window, bool force)
@@ -1098,9 +1088,9 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
     {
     public:
         HelpDialogDelegate (const char *text, KeyHelp *key_help_array);
-        
+
         ~HelpDialogDelegate() override;
-        
+
         bool
         WindowDelegateDraw (Window &window, bool force) override;
         
@@ -1124,11 +1114,9 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         int m_first_visible_line;
     };
 
-
     class Window
     {
     public:
-
         Window (const char *name) :
             m_name (name),
             m_window (NULL),
@@ -1726,6 +1714,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         {
             return m_name.c_str();
         }
+
     protected:
         std::string m_name;
         WINDOW *m_window;
@@ -1747,8 +1736,8 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
     class MenuDelegate
     {
     public:
-        virtual ~MenuDelegate() {}
-        
+        virtual ~MenuDelegate() = default;
+
         virtual MenuActionResult
         MenuDelegateAction (Menu &menu) = 0;
     };
@@ -1772,10 +1761,8 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
               const char *key_name,
               int key_value,
               uint64_t identifier);
-        
-        ~Menu () override
-        {
-        }
+
+        ~Menu() override = default;
 
         const MenuDelegateSP &
         GetDelegate () const
@@ -1912,7 +1899,6 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
             return m_max_submenu_name_length + m_max_submenu_key_name_length + 8;
         }
 
-        
         uint64_t
         GetIdentifier() const
         {
@@ -2314,11 +2300,9 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         }
         else if (menu_type == Menu::Type::Separator)
         {
-            
         }
         return result;
     }
-
 
     class Application
     {
@@ -2496,7 +2480,6 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
             }
             
             debugger.CancelForwardEvents (listener_sp);
-
         }
         
         WindowSP &
@@ -2520,10 +2503,8 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         FILE *m_in;
         FILE *m_out;
     };
-    
 
 } // namespace curses
-
 
 using namespace curses;
 
@@ -2661,11 +2642,13 @@ class TreeDelegate
 {
 public:
     TreeDelegate() {}
-    virtual ~TreeDelegate() {}
+    virtual ~TreeDelegate() = default;
+
     virtual void TreeDelegateDrawTreeItem (TreeItem &item, Window &window) = 0;
     virtual void TreeDelegateGenerateChildren (TreeItem &item) = 0;
     virtual bool TreeDelegateItemSelected (TreeItem &item) = 0; // Return true if we need to update views
 };
+
 typedef std::shared_ptr<TreeDelegate> TreeDelegateSP;
 
 class TreeItem
@@ -2751,6 +2734,7 @@ public:
     {
         m_delegate.TreeDelegateItemSelected(*this);
     }
+
     void
     CalculateRowIndexes (int &row_idx)
     {
@@ -2944,7 +2928,6 @@ public:
     {
         m_identifier = identifier;
     }
-    
 
     void
     SetMightHaveChildren (bool b)
@@ -2961,7 +2944,6 @@ protected:
     std::vector<TreeItem> m_children;
     bool m_might_have_children;
     bool m_is_expanded;
-
 };
 
 class TreeWindowDelegate : public WindowDelegate
@@ -3052,8 +3034,7 @@ public:
         
         return true; // Drawing handled
     }
-    
-    
+
     const char *
     WindowDelegateGetHelpText () override
     {
@@ -3125,6 +3106,7 @@ public:
                         m_selected_item->ItemWasSelected ();
                 }
                 return eKeyHandled;
+
             case KEY_DOWN:
                 if (m_selected_row_idx + 1 < m_num_rows)
                 {
@@ -3191,7 +3173,6 @@ protected:
     int m_min_y;
     int m_max_x;
     int m_max_y;
-
 };
 
 class FrameTreeDelegate : public TreeDelegate
@@ -3203,11 +3184,9 @@ public:
         FormatEntity::Parse ("frame #${frame.index}: {${function.name}${function.pc-offset}}}",
                              m_format);
     }
-    
-    ~FrameTreeDelegate() override
-    {
-    }
-    
+
+    ~FrameTreeDelegate() override = default;
+
     void
     TreeDelegateDrawTreeItem (TreeItem &item, Window &window) override
     {
@@ -3229,6 +3208,7 @@ public:
             }
         }
     }
+
     void
     TreeDelegateGenerateChildren (TreeItem &item)  override
     {
@@ -3248,6 +3228,7 @@ public:
         }
         return false;
     }
+
 protected:
     FormatEntity::Entry m_format;
 };
@@ -3264,11 +3245,9 @@ public:
         FormatEntity::Parse ("thread #${thread.index}: tid = ${thread.id}{, stop reason = ${thread.stop-reason}}",
                              m_format);
     }
-    
-    ~ThreadTreeDelegate()  override
-    {
-    }
-    
+
+    ~ThreadTreeDelegate() override = default;
+
     ProcessSP
     GetProcess ()
     {
@@ -3299,6 +3278,7 @@ public:
             }
         }
     }
+
     void
     TreeDelegateGenerateChildren (TreeItem &item) override
     {
@@ -3369,7 +3349,6 @@ protected:
     lldb::user_id_t m_tid;
     uint32_t m_stop_id;
     FormatEntity::Entry m_format;
-
 };
 
 class ThreadsTreeDelegate : public TreeDelegate
@@ -3384,11 +3363,9 @@ public:
         FormatEntity::Parse("process ${process.id}{, name = ${process.name}}",
                             m_format);
     }
-    
-    ~ThreadsTreeDelegate() override
-    {
-    }
-    
+
+    ~ThreadsTreeDelegate() override = default;
+
     ProcessSP
     GetProcess ()
     {
@@ -3460,7 +3437,6 @@ protected:
     Debugger &m_debugger;
     uint32_t m_stop_id;
     FormatEntity::Entry m_format;
-
 };
 
 class ValueObjectListDelegate : public WindowDelegate
@@ -3490,10 +3466,8 @@ public:
     {
         SetValues (valobj_list);
     }
-    
-    ~ValueObjectListDelegate() override
-    {
-    }
+
+    ~ValueObjectListDelegate() override = default;
 
     void
     SetValues (ValueObjectList &valobj_list)
@@ -3586,7 +3560,6 @@ public:
         return g_source_view_key_help;
     }
 
-    
     HandleCharResult
     WindowDelegateHandleChar (Window &window, int c) override
     {
@@ -3646,6 +3619,7 @@ public:
                 if (m_selected_row_idx > 0)
                     --m_selected_row_idx;
                 return eKeyHandled;
+
             case KEY_DOWN:
                 if (m_selected_row_idx + 1 < m_num_rows)
                     ++m_selected_row_idx;
@@ -3784,6 +3758,7 @@ protected:
         
         return true;
     }
+
     void
     DisplayRows (Window &window,
                  std::vector<Row> &rows,
@@ -3845,6 +3820,7 @@ protected:
         }
         return row_count;
     }
+
     static Row *
     GetRowForRowIndexImpl (std::vector<Row> &rows, size_t &row_index)
     {
@@ -3890,11 +3866,9 @@ public:
         m_frame_block (NULL)
     {
     }
-    
-    ~FrameVariablesWindowDelegate() override
-    {
-    }
-    
+
+    ~FrameVariablesWindowDelegate() override = default;
+
     const char *
     WindowDelegateGetHelpText () override
     {
@@ -3924,7 +3898,6 @@ public:
             }
         }
 
-        
         ValueObjectList local_values;
         if (frame_block)
         {
@@ -3964,14 +3937,12 @@ public:
         }
         
         return ValueObjectListDelegate::WindowDelegateDraw (window, force);
-
     }
 
 protected:
     Debugger &m_debugger;
     Block *m_frame_block;
 };
-
 
 class RegistersWindowDelegate : public ValueObjectListDelegate
 {
@@ -3982,10 +3953,8 @@ public:
     {
     }
 
-    ~RegistersWindowDelegate()
-    {
-    }
-    
+    ~RegistersWindowDelegate() override = default;
+
     const char *
     WindowDelegateGetHelpText () override
     {
@@ -4168,9 +4137,7 @@ HelpDialogDelegate::HelpDialogDelegate (const char *text, KeyHelp *key_help_arra
     }
 }
 
-HelpDialogDelegate::~HelpDialogDelegate()
-{
-}
+HelpDialogDelegate::~HelpDialogDelegate() = default;
     
 bool
 HelpDialogDelegate::WindowDelegateDraw (Window &window, bool force)
@@ -4235,6 +4202,7 @@ HelpDialogDelegate::WindowDelegateHandleChar (Window &window, int key)
                         m_first_visible_line = 0;
                 }
                 break;
+
             case KEY_NPAGE:
             case '.':
                 if (m_first_visible_line + num_visible_lines < num_lines)
@@ -4244,6 +4212,7 @@ HelpDialogDelegate::WindowDelegateHandleChar (Window &window, int key)
                         m_first_visible_line = num_lines - num_visible_lines;
                 }
                 break;
+
             default:
                 done = true;
                 break;
@@ -4298,10 +4267,8 @@ public:
         m_debugger (debugger)
     {
     }
-    
-    ~ApplicationDelegate ()
-    {
-    }
+
+    ~ApplicationDelegate() override = default;
 
     bool
     WindowDelegateDraw (Window &window, bool force) override
@@ -4330,8 +4297,7 @@ public:
         }
         return eKeyNotHandled;
     }
-    
-    
+
     const char *
     WindowDelegateGetHelpText () override
     {
@@ -4626,7 +4592,6 @@ protected:
     Debugger &m_debugger;
 };
 
-
 class StatusBarWindowDelegate : public WindowDelegate
 {
 public:
@@ -4636,10 +4601,8 @@ public:
         FormatEntity::Parse("Thread: ${thread.id%tid}",
                             m_format);
     }
-    
-    ~StatusBarWindowDelegate ()
-    {
-    }
+
+    ~StatusBarWindowDelegate() override = default;
 
     bool
     WindowDelegateDraw (Window &window, bool force) override
@@ -4713,9 +4676,7 @@ public:
     {
     }
 
-    ~SourceFileWindowDelegate() override
-    {
-    }
+    ~SourceFileWindowDelegate() override = default;
 
     void
     Update (const SymbolContext &sc)
@@ -5063,7 +5024,6 @@ public:
                     }
                     if (highlight_attr)
                         window.AttributeOff(highlight_attr);
-
                 }
                 else
                 {
@@ -5240,6 +5200,7 @@ public:
             return m_file_sp->GetNumLines();
         return 0;
     }
+
     size_t
     GetNumDisassemblyLines () const
     {
@@ -5404,6 +5365,7 @@ public:
                     }
                 }
                 return eKeyHandled;
+
             case 'n':   // 'n' == step over
             case 'N':   // 'N' == step over instruction
                 {
@@ -5415,6 +5377,7 @@ public:
                     }
                 }
                 return eKeyHandled;
+
             case 's':   // 's' == step into
             case 'S':   // 'S' == step into instruction
                 {
@@ -5460,7 +5423,6 @@ protected:
     int m_min_y;
     int m_max_x;
     int m_max_y;
-
 };
 
 DisplayOptions ValueObjectListDelegate::g_options = { true };
@@ -5477,8 +5439,7 @@ IOHandlerCursesGUI::Activate ()
     if (!m_app_ap)
     {
         m_app_ap.reset (new Application (GetInputFILE(), GetOutputFILE()));
-        
-        
+
         // This is both a window and a menu delegate
         std::shared_ptr<ApplicationDelegate> app_delegate_sp(new ApplicationDelegate(*m_app_ap, m_debugger));
         
@@ -5578,7 +5539,6 @@ IOHandlerCursesGUI::Activate ()
         init_pair (3, COLOR_MAGENTA , COLOR_WHITE );
         init_pair (4, COLOR_MAGENTA , COLOR_BLACK );
         init_pair (5, COLOR_RED     , COLOR_BLACK );
-
     }
 }
 
@@ -5595,11 +5555,7 @@ IOHandlerCursesGUI::Run ()
     SetIsDone(true);
 }
 
-
-IOHandlerCursesGUI::~IOHandlerCursesGUI ()
-{
-    
-}
+IOHandlerCursesGUI::~IOHandlerCursesGUI() = default;
 
 void
 IOHandlerCursesGUI::Cancel ()
@@ -5612,10 +5568,9 @@ IOHandlerCursesGUI::Interrupt ()
     return false;
 }
 
-
 void
 IOHandlerCursesGUI::GotEOF()
 {
 }
 
-#endif // #ifndef LLDB_DISABLE_CURSES
+#endif // LLDB_DISABLE_CURSES

@@ -1,4 +1,4 @@
-//===-- VectorType.cpp ---------------------------------------------*- C++ -*-===//
+//===-- VectorType.cpp ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/DataFormatters/VectorType.h"
 
 #include "lldb/Core/ValueObject.h"
@@ -200,15 +204,17 @@ namespace lldb_private {
             m_child_type(),
             m_num_children(0)
             {}
-            
-            virtual size_t
-            CalculateNumChildren ()
+
+            ~VectorTypeSyntheticFrontEnd() override = default;
+
+            size_t
+            CalculateNumChildren() override
             {
                 return m_num_children;
             }
-            
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx)
+
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override
             {
                 if (idx >= CalculateNumChildren())
                     return lldb::ValueObjectSP();
@@ -226,8 +232,8 @@ namespace lldb_private {
                 return child_sp;
             }
 
-            virtual bool
-            Update()
+            bool
+            Update() override
             {
                 m_parent_format = m_backend.GetFormat();
                 CompilerType parent_type(m_backend.GetCompilerType());
@@ -243,15 +249,15 @@ namespace lldb_private {
                                                        m_child_type);
                 return false;
             }
-            
-            virtual bool
-            MightHaveChildren ()
+
+            bool
+            MightHaveChildren() override
             {
                 return true;
             }
-            
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name)
+
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override
             {
                 const char* item_name = name.GetCString();
                 uint32_t idx = ExtractIndexFromString(item_name);
@@ -259,18 +265,16 @@ namespace lldb_private {
                     return UINT32_MAX;
                 return idx;
             }
-            
-            virtual
-            ~VectorTypeSyntheticFrontEnd () {}
-            
+
         private:
             lldb::Format m_parent_format;
             lldb::Format m_item_format;
             CompilerType m_child_type;
             size_t m_num_children;
         };
-    }
-}
+
+    } // namespace formatters
+} // namespace lldb_private
 
 bool
 lldb_private::formatters::VectorTypeSummaryProvider (ValueObject& valobj,
@@ -321,6 +325,6 @@ lldb_private::SyntheticChildrenFrontEnd*
 lldb_private::formatters::VectorTypeSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
 {
     if (!valobj_sp)
-        return NULL;
-    return (new VectorTypeSyntheticFrontEnd(valobj_sp));
+        return nullptr;
+    return new VectorTypeSyntheticFrontEnd(valobj_sp);
 }

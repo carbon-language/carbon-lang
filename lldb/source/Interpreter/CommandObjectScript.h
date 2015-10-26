@@ -25,18 +25,16 @@ namespace lldb_private {
 class CommandObjectScript : public CommandObjectRaw
 {
 public:
+    CommandObjectScript(CommandInterpreter &interpreter,
+                        lldb::ScriptLanguage script_lang);
 
-    CommandObjectScript (CommandInterpreter &interpreter,
-                         lldb::ScriptLanguage script_lang);
-
-    virtual
-    ~CommandObjectScript ();
+    ~CommandObjectScript() override;
 
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result);
+    bool
+    DoExecute(const char *command, CommandReturnObject &result) override;
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CommandObjectScript_h_
+#endif // liblldb_CommandObjectScript_h_
