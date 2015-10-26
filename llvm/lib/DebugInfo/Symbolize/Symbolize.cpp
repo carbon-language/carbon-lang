@@ -545,7 +545,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   if (!Context)
     Context.reset(new DWARFContextInMemory(*Objects.second));
   assert(Context);
-  auto Info = make_unique<ModuleInfo>(Objects.first, std::move(Context));
+  auto Info = llvm::make_unique<ModuleInfo>(Objects.first, std::move(Context));
   ModuleInfo *Res = Info.get();
   Modules.emplace(ModuleName, std::move(Info));
   return Res;
