@@ -10,7 +10,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <elf.h>
-#if __mips64
+#if __mips64 || __arm__
  #include <asm/ptrace.h>
  #include <sys/procfs.h>
 #endif
@@ -43,23 +43,34 @@ int main(void) {
       printf("%x\n", fpregs.mxcsr);
 #endif // __x86_64__
 
-#if (__powerpc64__ || __mips64)
+#if (__powerpc64__ || __mips64 || __arm__)
     struct pt_regs regs;
     res = ptrace((enum __ptrace_request)PTRACE_GETREGS, pid, NULL, &regs);
     assert(!res);
 #if (__powerpc64__)
     if (regs.nip)
       printf("%lx\n", regs.nip);
-#else
+#elif (__mips64)
     if (regs.cp0_epc)
     printf("%lx\n", regs.cp0_epc);
+#elif (__arm__)
+    if (regs.ARM_pc)
+    printf("%lx\n", regs.ARM_pc);
 #endif
+#if (__powerpc64 || __mips64)
     elf_fpregset_t fpregs;
     res = ptrace((enum __ptrace_request)PTRACE_GETFPREGS, pid, NULL, &fpregs);
     assert(!res);
     if ((elf_greg_t)fpregs[32]) // fpscr
       printf("%lx\n", (elf_greg_t)fpregs[32]);
-#endif // (__powerpc64__ || __mips64)
+#elif (__arm__)
+    char regbuf[ARM_VFPREGS_SIZE];
+    res = ptrace((enum __ptrace_request)PTRACE_GETVFPREGS, pid, 0, regbuf);
+    assert(!res);
+    unsigned fpscr = *(unsigned*)(regbuf + (32 * 8));
+    printf ("%x\n", fpscr);
+#endif
+#endif // (__powerpc64__ || __mips64 || __arm__)
 
 #if (__aarch64__)
     struct iovec regset_io;

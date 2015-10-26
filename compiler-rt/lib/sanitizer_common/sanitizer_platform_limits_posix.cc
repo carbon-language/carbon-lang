@@ -119,8 +119,11 @@
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
 # include <utime.h>
 # include <sys/ptrace.h>
-# if defined(__mips64) || defined(__aarch64__)
+# if defined(__mips64) || defined(__aarch64__) || defined(__arm__)
 #  include <asm/ptrace.h>
+#  ifdef __arm__
+typedef struct user_fpregs elf_fpregset_t;
+#  endif
 # endif
 # include <semaphore.h>
 #endif
@@ -304,8 +307,8 @@ unsigned struct_ElfW_Phdr_sz = sizeof(Elf_Phdr);
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
     (defined(__i386) || defined(__x86_64) || defined(__mips64) || \
-      defined(__powerpc64__) || defined(__aarch64__))
-#if defined(__mips64) || defined(__powerpc64__)
+      defined(__powerpc64__) || defined(__aarch64__) || defined(__arm__))
+#if defined(__mips64) || defined(__powerpc64__) || defined(__arm__)
   unsigned struct_user_regs_struct_sz = sizeof(struct pt_regs);
   unsigned struct_user_fpregs_struct_sz = sizeof(elf_fpregset_t);
 #elif defined(__aarch64__)
@@ -316,11 +319,16 @@ unsigned struct_ElfW_Phdr_sz = sizeof(Elf_Phdr);
   unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
 #endif // __mips64 || __powerpc64__ || __aarch64__
 #if defined(__x86_64) || defined(__mips64) || defined(__powerpc64__) || \
-    defined(__aarch64__)
+    defined(__aarch64__) || defined(__arm__)
   unsigned struct_user_fpxregs_struct_sz = 0;
 #else
   unsigned struct_user_fpxregs_struct_sz = sizeof(struct user_fpxregs_struct);
-#endif // __x86_64 || __mips64 || __powerpc64__ || __aarch64__
+#endif // __x86_64 || __mips64 || __powerpc64__ || __aarch64__ || __arm__
+#ifdef __arm__
+  unsigned struct_user_vfpregs_struct_sz = ARM_VFPREGS_SIZE;
+#else
+  unsigned struct_user_vfpregs_struct_sz = 0;
+#endif
 
   int ptrace_peektext = PTRACE_PEEKTEXT;
   int ptrace_peekdata = PTRACE_PEEKDATA;
@@ -346,6 +354,13 @@ unsigned struct_ElfW_Phdr_sz = sizeof(Elf_Phdr);
   int ptrace_getfpxregs = -1;
   int ptrace_setfpxregs = -1;
 #endif // PTRACE_GETFPXREGS/PTRACE_SETFPXREGS
+#if defined(PTRACE_GETVFPREGS) && defined(PTRACE_SETVFPREGS)
+  int ptrace_getvfpregs = PTRACE_GETVFPREGS;
+  int ptrace_setvfpregs = PTRACE_SETVFPREGS;
+#else
+  int ptrace_getvfpregs = -1;
+  int ptrace_setvfpregs = -1;
+#endif
   int ptrace_geteventmsg = PTRACE_GETEVENTMSG;
 #if (defined(PTRACE_GETSIGINFO) && defined(PTRACE_SETSIGINFO)) ||              \
     (defined(PT_GETSIGINFO) && defined(PT_SETSIGINFO))

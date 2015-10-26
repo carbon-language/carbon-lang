@@ -736,10 +736,11 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
   (defined(__i386) || defined(__x86_64) || defined(__mips64) || \
-    defined(__powerpc64__) || defined(__aarch64__))
+    defined(__powerpc64__) || defined(__aarch64__) || defined(__arm__))
   extern unsigned struct_user_regs_struct_sz;
   extern unsigned struct_user_fpregs_struct_sz;
   extern unsigned struct_user_fpxregs_struct_sz;
+  extern unsigned struct_user_vfpregs_struct_sz;
 
   extern int ptrace_peektext;
   extern int ptrace_peekdata;
@@ -750,6 +751,8 @@ namespace __sanitizer {
   extern int ptrace_setfpregs;
   extern int ptrace_getfpxregs;
   extern int ptrace_setfpxregs;
+  extern int ptrace_getvfpregs;
+  extern int ptrace_setvfpregs;
   extern int ptrace_getsiginfo;
   extern int ptrace_setsiginfo;
   extern int ptrace_getregset;

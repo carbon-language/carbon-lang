@@ -133,7 +133,7 @@
 #define SANITIZER_INTERCEPT_READDIR64 SI_LINUX_NOT_ANDROID
 #define SANITIZER_INTERCEPT_PTRACE SI_LINUX_NOT_ANDROID && \
   (defined(__i386) || defined(__x86_64) || defined(__mips64) || \
-    defined(__powerpc64__) || defined(__aarch64__))
+    defined(__powerpc64__) || defined(__aarch64__) || defined(__arm__))
 #define SANITIZER_INTERCEPT_SETLOCALE SI_NOT_WINDOWS
 #define SANITIZER_INTERCEPT_GETCWD SI_NOT_WINDOWS
 #define SANITIZER_INTERCEPT_GET_CURRENT_DIR_NAME SI_LINUX_NOT_ANDROID

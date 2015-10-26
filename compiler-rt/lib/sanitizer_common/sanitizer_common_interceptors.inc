@@ -2454,6 +2454,8 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_fpregs_struct_sz);
     else if (request == ptrace_setfpxregs)
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_fpxregs_struct_sz);
+    else if (request == ptrace_setvfpregs)
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_vfpregs_struct_sz);
     else if (request == ptrace_setsiginfo)
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, siginfo_t_sz);
     else if (request == ptrace_setregset) {
@@ -2476,6 +2478,8 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_fpregs_struct_sz);
     else if (request == ptrace_getfpxregs)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_fpxregs_struct_sz);
+    else if (request == ptrace_getvfpregs)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_vfpregs_struct_sz);
     else if (request == ptrace_getsiginfo)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, siginfo_t_sz);
     else if (request == ptrace_geteventmsg)
