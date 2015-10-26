@@ -33,14 +33,14 @@ public:
     struct FileNameEntry
     {
         FileNameEntry() :
-            name(),
+            name(nullptr),
             dir_idx(0),
             mod_time(0),
             length(0)
         {
         }
 
-        std::string     name;
+        const char*     name;
         dw_sleb128_t    dir_idx;
         dw_sleb128_t    mod_time;
         dw_sleb128_t    length;
@@ -80,7 +80,7 @@ public:
         uint8_t     line_range;     // This parameter affects the meaning of the special opcodes. See below.
         uint8_t     opcode_base;    // The number assigned to the first special opcode.
         std::vector<uint8_t>            standard_opcode_lengths;
-        std::vector<std::string>        include_directories;
+        std::vector<const char *>       include_directories;
         std::vector<FileNameEntry>      file_names;
 
         int32_t MaxLineIncrementForSpecialOpcode() const { return line_base + (int8_t)line_range - 1; }
@@ -95,7 +95,7 @@ public:
             include_directories.clear();
             file_names.clear();
         }
-        bool GetFile(uint32_t file_idx, std::string& file, std::string& dir) const;
+        bool GetFile(uint32_t file_idx, const char *comp_dir, lldb_private::FileSpec &file) const;
 
     };
 
