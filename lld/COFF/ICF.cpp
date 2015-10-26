@@ -58,7 +58,6 @@ using namespace llvm;
 namespace lld {
 namespace coff {
 
-static const size_t NJOBS = 256;
 typedef std::vector<SectionChunk *>::iterator ChunkIterator;
 typedef bool (*Comparator)(const SectionChunk *, const SectionChunk *);
 
@@ -191,11 +190,11 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
         SC->GroupID = getHash(SC) | (uint64_t(1) << 63);
     }
   });
-  std::vector<std::vector<SectionChunk *>> VChunks(NJOBS);
+  std::vector<SectionChunk *> Chunks;
   for (Chunk *C : Vec) {
     if (auto *SC = dyn_cast<SectionChunk>(C)) {
       if (SC->GroupID) {
-        VChunks[SC->GroupID % NJOBS].push_back(SC);
+        Chunks.push_back(SC);
       } else {
         SC->GroupID = NextID++;
       }
@@ -204,29 +203,17 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
 
   // From now on, sections in Chunks are ordered so that sections in
   // the same group are consecutive in the vector.
-  parallel_for_each(VChunks.begin(), VChunks.end(),
-                    [&](std::vector<SectionChunk *> &Chunks) {
-    std::sort(Chunks.begin(), Chunks.end(),
-              [](SectionChunk *A, SectionChunk *B) {
-                return A->GroupID < B->GroupID;
-              });
-  });
+  std::sort(Chunks.begin(), Chunks.end(),
+            [](SectionChunk *A, SectionChunk *B) {
+              return A->GroupID < B->GroupID;
+            });
 
   // Split groups until we get a convergence.
   int Cnt = 1;
-  parallel_for_each(VChunks.begin(), VChunks.end(),
-                    [&](std::vector<SectionChunk *> &Chunks) {
-    forEachGroup(Chunks, equalsConstant);
-  });
+  forEachGroup(Chunks, equalsConstant);
 
   for (;;) {
-    std::atomic<bool> Redo(false);
-    parallel_for_each(VChunks.begin(), VChunks.end(),
-                      [&](std::vector<SectionChunk *> &Chunks) {
-      if (forEachGroup(Chunks, equalsVariable))
-        Redo = true;
-    });
-    if (!Redo)
+    if (!forEachGroup(Chunks, equalsVariable))
       break;
     ++Cnt;
   }
@@ -234,22 +221,20 @@ void ICF::run(const std::vector<Chunk *> &Vec) {
     llvm::outs() << "\nICF needed " << Cnt << " iterations.\n";
 
   // Merge sections in the same group.
-  for (std::vector<SectionChunk *> &Chunks : VChunks) {
-    for (auto It = Chunks.begin(), End = Chunks.end(); It != End;) {
-      SectionChunk *Head = *It++;
-      auto Bound = std::find_if(It, End, [&](SectionChunk *SC) {
-        return Head->GroupID != SC->GroupID;
-      });
-      if (It == Bound)
-        continue;
+  for (auto It = Chunks.begin(), End = Chunks.end(); It != End;) {
+    SectionChunk *Head = *It++;
+    auto Bound = std::find_if(It, End, [&](SectionChunk *SC) {
+      return Head->GroupID != SC->GroupID;
+    });
+    if (It == Bound)
+      continue;
+    if (Config->Verbose)
+      llvm::outs() << "Selected " << Head->getDebugName() << "\n";
+    while (It != Bound) {
+      SectionChunk *SC = *It++;
       if (Config->Verbose)
-        llvm::outs() << "Selected " << Head->getDebugName() << "\n";
-      while (It != Bound) {
-        SectionChunk *SC = *It++;
-        if (Config->Verbose)
-          llvm::outs() << "  Removed " << SC->getDebugName() << "\n";
-        Head->replace(SC);
-      }
+        llvm::outs() << "  Removed " << SC->getDebugName() << "\n";
+      Head->replace(SC);
     }
   }
 }
