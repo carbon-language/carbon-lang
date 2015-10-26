@@ -23123,40 +23123,21 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
                      EltNo);
 }
 
-static SDValue PerformBITCASTCombine(SDNode *N, SelectionDAG &DAG,
-                                     const X86Subtarget *Subtarget) {
-  SDValue N0 = N->getOperand(0);
-  EVT VT = N->getValueType(0);
+/// \brief Detect bitcasts between i32 to x86mmx low word. Since MMX types are
+/// special and don't usually play with other vector types, it's better to
+/// handle them early to be sure we emit efficient code by avoiding
+/// store-load conversions.
+static SDValue PerformBITCASTCombine(SDNode *N, SelectionDAG &DAG) {
+  if (N->getValueType(0) != MVT::x86mmx ||
+      N->getOperand(0)->getOpcode() != ISD::BUILD_VECTOR ||
+      N->getOperand(0)->getValueType(0) != MVT::v2i32)
+    return SDValue();
 
-  // Detect bitcasts between i32 to x86mmx low word. Since MMX types are
-  // special and don't usually play with other vector types, it's better to
-  // handle them early to be sure we emit efficient code by avoiding
-  // store-load conversions.
-  if (VT == MVT::x86mmx && N0.getOpcode() == ISD::BUILD_VECTOR &&
-      N0.getValueType() == MVT::v2i32 &&
-      isa<ConstantSDNode>(N0.getOperand(1))) {
-    SDValue N00 = N0->getOperand(0);
-    if (N0.getConstantOperandVal(1) == 0 && N00.getValueType() == MVT::i32)
-      return DAG.getNode(X86ISD::MMX_MOVW2D, SDLoc(N00), VT, N00);
-  }
-
-  if ((Subtarget->hasSSE1() && VT == MVT::f32) ||
-      (Subtarget->hasSSE2() && VT == MVT::f64)) {
-    if (N0.getOpcode() == ISD::AND) {
-      if (isa<ConstantSDNode>(N0.getOperand(1))) {
-        SDValue N00 = N0.getOperand(0);
-        if (N00.getOpcode() == ISD::BITCAST) {
-          SDValue N000 = N00.getOperand(0);
-          if (N00.getOperand(0).getValueType() == VT) {
-            unsigned FPOpcode = X86ISD::FAND;
-            SDValue FPConst = DAG.getBitcast(VT, N0.getOperand(1));
-            SDValue FPLogic = DAG.getNode(FPOpcode, SDLoc(N0), VT, N000, FPConst);
-            return FPLogic;
-          }
-        }
-      }
-    }
-  }
+  SDValue V = N->getOperand(0);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V.getOperand(1));
+  if (C && C->getZExtValue() == 0 && V.getOperand(0).getValueType() == MVT::i32)
+    return DAG.getNode(X86ISD::MMX_MOVW2D, SDLoc(V.getOperand(0)),
+                       N->getValueType(0), V.getOperand(0));
 
   return SDValue();
 }
