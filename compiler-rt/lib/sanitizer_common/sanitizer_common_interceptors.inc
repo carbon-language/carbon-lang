@@ -2446,6 +2446,7 @@ INTERCEPTOR(int, readdir64_r, void *dirp, __sanitizer_dirent64 *entry,
 INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, ptrace, request, pid, addr, data);
+  __sanitizer_iovec local_iovec;
 
   if (data) {
     if (request == ptrace_setregs)
@@ -2458,9 +2459,15 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_vfpregs_struct_sz);
     else if (request == ptrace_setsiginfo)
       COMMON_INTERCEPTOR_READ_RANGE(ctx, data, siginfo_t_sz);
-    else if (request == ptrace_setregset) {
-      __sanitizer_iovec *iov = (__sanitizer_iovec *)data;
-      COMMON_INTERCEPTOR_READ_RANGE(ctx, iov->iov_base, iov->iov_len);
+    // Some kernel might zero the iovec::iov_base in case of invalid
+    // write access.  In this case copy the invalid address for further
+    // inspection.
+    else if (request == ptrace_setregset || request == ptrace_getregset) {
+      __sanitizer_iovec *iovec = (__sanitizer_iovec*)data;
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, iovec, sizeof(*iovec));
+      local_iovec = *iovec;
+      if (request == ptrace_setregset)
+        COMMON_INTERCEPTOR_READ_RANGE(ctx, iovec->iov_base, iovec->iov_len);
     }
   }
 
@@ -2485,8 +2492,10 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
     else if (request == ptrace_geteventmsg)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, sizeof(unsigned long));
     else if (request == ptrace_getregset) {
-      __sanitizer_iovec *iov = (__sanitizer_iovec *)data;
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iov->iov_base, iov->iov_len);
+      __sanitizer_iovec *iovec = (__sanitizer_iovec*)data;
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iovec, sizeof(*iovec));
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, local_iovec.iov_base,
+                                     local_iovec.iov_len);
     }
   }
   return res;
