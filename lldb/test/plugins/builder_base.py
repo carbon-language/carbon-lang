@@ -82,7 +82,7 @@ def getCmdLine(d):
 
     def setOrAppendVariable(k, v):
         append_vars = ["CFLAGS_EXTRAS", "LD_EXTRAS"]
-        if k in append_vars and os.environ.has_key(k):
+        if k in append_vars and k in os.environ:
             v = os.environ[k] + " " + v
         return pattern % (k, v)
     cmdline = " ".join([setOrAppendVariable(k, v) for k, v in list(d.items())])
