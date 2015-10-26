@@ -110,11 +110,6 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// pass.
   DenseMap<unsigned, unsigned> CPEClones;
 
-  /// GlobalBaseReg - keeps track of the virtual register initialized for
-  /// use as the global base register. This is used for PIC in some PIC
-  /// relocation models.
-  unsigned GlobalBaseReg;
-
   /// ArgumentStackSize - amount of bytes on stack consumed by the arguments
   /// being passed on the stack
   unsigned ArgumentStackSize;
@@ -133,7 +128,7 @@ public:
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSAlignGapSize(0), DPRCSSize(0),
     NumAlignedDPRCS2Regs(0), PICLabelUId(0),
-    VarArgsFrameIndex(0), HasITBlocks(false), GlobalBaseReg(0) {}
+    VarArgsFrameIndex(0), HasITBlocks(false) {}
 
   explicit ARMFunctionInfo(MachineFunction &MF);
 
@@ -203,9 +198,6 @@ public:
 
   bool hasITBlocks() const { return HasITBlocks; }
   void setHasITBlocks(bool h) { HasITBlocks = h; }
-
-  unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
-  void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
 
   void recordCPEClone(unsigned CPIdx, unsigned CPCloneIdx) {
     if (!CPEClones.insert(std::make_pair(CPCloneIdx, CPIdx)).second)

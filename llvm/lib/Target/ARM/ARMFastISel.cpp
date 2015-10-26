@@ -2939,48 +2939,51 @@ bool ARMFastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
 
 unsigned ARMFastISel::ARMLowerPICELF(const GlobalValue *GV,
                                      unsigned Align, MVT VT) {
-  bool UseGOTOFF = GV->hasLocalLinkage() || GV->hasHiddenVisibility();
-  ARMConstantPoolConstant *CPV =
-    ARMConstantPoolConstant::Create(GV, UseGOTOFF ? ARMCP::GOTOFF : ARMCP::GOT);
-  unsigned Idx = MCP.getConstantPoolIndex(CPV, Align);
+  bool UseGOT_PREL =
+      !(GV->hasHiddenVisibility() || GV->isStrongDefinitionForLinker());
 
-  unsigned Opc;
-  unsigned DestReg1 = createResultReg(TLI.getRegClassFor(VT));
-  // Load value.
-  if (isThumb2) {
-    DestReg1 = constrainOperandRegClass(TII.get(ARM::t2LDRpci), DestReg1, 0);
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                            TII.get(ARM::t2LDRpci), DestReg1)
-                    .addConstantPoolIndex(Idx));
-    Opc = UseGOTOFF ? ARM::t2ADDrr : ARM::t2LDRs;
-  } else {
-    // The extra immediate is for addrmode2.
-    DestReg1 = constrainOperandRegClass(TII.get(ARM::LDRcp), DestReg1, 0);
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
-                            DbgLoc, TII.get(ARM::LDRcp), DestReg1)
-                    .addConstantPoolIndex(Idx).addImm(0));
-    Opc = UseGOTOFF ? ARM::ADDrr : ARM::LDRrs;
-  }
+  LLVMContext *Context = &MF->getFunction()->getContext();
+  unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
+  unsigned PCAdj = Subtarget->isThumb() ? 4 : 8;
+  ARMConstantPoolValue *CPV = ARMConstantPoolConstant::Create(
+      GV, ARMPCLabelIndex, ARMCP::CPValue, PCAdj,
+      UseGOT_PREL ? ARMCP::GOT_PREL : ARMCP::no_modifier,
+      /*AddCurrentAddress=*/UseGOT_PREL);
 
-  unsigned GlobalBaseReg = AFI->getGlobalBaseReg();
-  if (GlobalBaseReg == 0) {
-    GlobalBaseReg = MRI.createVirtualRegister(TLI.getRegClassFor(VT));
-    AFI->setGlobalBaseReg(GlobalBaseReg);
-  }
+  unsigned ConstAlign =
+      MF->getDataLayout().getPrefTypeAlignment(Type::getInt32PtrTy(*Context));
+  unsigned Idx = MF->getConstantPool()->getConstantPoolIndex(CPV, ConstAlign);
 
-  unsigned DestReg2 = createResultReg(TLI.getRegClassFor(VT));
-  DestReg2 = constrainOperandRegClass(TII.get(Opc), DestReg2, 0);
-  DestReg1 = constrainOperandRegClass(TII.get(Opc), DestReg1, 1);
-  GlobalBaseReg = constrainOperandRegClass(TII.get(Opc), GlobalBaseReg, 2);
-  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
-                                    DbgLoc, TII.get(Opc), DestReg2)
-                            .addReg(DestReg1)
-                            .addReg(GlobalBaseReg);
-  if (!UseGOTOFF)
+  unsigned TempReg = MF->getRegInfo().createVirtualRegister(&ARM::rGPRRegClass);
+  unsigned Opc = isThumb2 ? ARM::t2LDRpci : ARM::LDRcp;
+  MachineInstrBuilder MIB =
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), TempReg)
+          .addConstantPoolIndex(Idx);
+  if (Opc == ARM::LDRcp)
     MIB.addImm(0);
-  AddOptionalDefs(MIB);
+  AddDefaultPred(MIB);
 
-  return DestReg2;
+  // Fix the address by adding pc.
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
+  Opc = Subtarget->isThumb() ? ARM::tPICADD : UseGOT_PREL ? ARM::PICLDR
+                                                          : ARM::PICADD;
+  DestReg = constrainOperandRegClass(TII.get(Opc), DestReg, 0);
+  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), DestReg)
+            .addReg(TempReg)
+            .addImm(ARMPCLabelIndex);
+  if (!Subtarget->isThumb())
+    AddDefaultPred(MIB);
+
+  if (UseGOT_PREL && Subtarget->isThumb()) {
+    unsigned NewDestReg = createResultReg(TLI.getRegClassFor(VT));
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                  TII.get(ARM::t2LDRi12), NewDestReg)
+              .addReg(DestReg)
+              .addImm(0);
+    DestReg = NewDestReg;
+    AddOptionalDefs(MIB);
+  }
+  return DestReg;
 }
 
 bool ARMFastISel::fastLowerArguments() {

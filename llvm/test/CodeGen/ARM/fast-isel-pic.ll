@@ -1,7 +1,7 @@
 ; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 ; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARMv7
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=pic -mtriple=thumbv7-none-linux-gnueabi | FileCheck %s --check-prefix=THUMB-ELF
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=pic -mtriple=armv7-none-linux-gnueabi | FileCheck %s --check-prefix=ARMv7-ELF
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -arm-force-fast-isel -relocation-model=pic -mtriple=thumbv7-none-linux-gnueabi | FileCheck %s --check-prefix=THUMB-ELF
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -arm-force-fast-isel -relocation-model=pic -mtriple=armv7-none-linux-gnueabi | FileCheck %s --check-prefix=ARMv7-ELF
 
 @g = global i32 0, align 4
 
@@ -13,8 +13,8 @@ entry:
 ; THUMB: add  [[reg0]], pc
 ; THUMB-ELF: LoadGV
 ; THUMB-ELF: ldr r[[reg0:[0-9]+]],
-; THUMB-ELF: ldr r[[reg1:[0-9]+]],
-; THUMB-ELF: ldr r[[reg0]], [r[[reg0]], r[[reg1]]]
+; THUMB-ELF: add r[[reg0]], pc
+; THUMB-ELF: ldr r[[reg0]], [r[[reg0]]]
 ; ARM: LoadGV
 ; ARM: ldr [[reg1:r[0-9]+]],
 ; ARM: add [[reg1]], pc, [[reg1]]
@@ -26,8 +26,7 @@ entry:
 ; ARMv7-ELF: ldr r[[reg2:[0-9]+]],
 ; ARMv7-ELF: .LPC
 ; ARMv7-ELF-NEXT: add r[[reg2]], pc
-; ARMv7-ELF: ldr r[[reg3:[0-9]+]],
-; ARMv7-ELF: ldr r[[reg2]], [r[[reg3]], r[[reg2]]]
+; ARMv7-ELF: ldr r[[reg2]], [r[[reg2]]]
   %tmp = load i32, i32* @g
   ret i32 %tmp
 }
@@ -43,8 +42,8 @@ entry:
 ; THUMB: ldr  r[[reg3]], [r[[reg3]]]
 ; THUMB-ELF: LoadIndirectSymbol
 ; THUMB-ELF: ldr r[[reg3:[0-9]+]],
-; THUMB-ELF: ldr r[[reg4:[0-9]+]],
-; THUMB-ELF: ldr r[[reg3]], [r[[reg3]], r[[reg4]]]
+; THUMB-ELF: ldr r[[reg4:[0-9]+]], [r[[reg3]]]
+; THUMB-ELF: ldr r0, [r[[reg4]]]
 ; ARM: LoadIndirectSymbol
 ; ARM: ldr [[reg4:r[0-9]+]],
 ; ARM: ldr [[reg4]], [pc, [[reg4]]]
@@ -56,9 +55,8 @@ entry:
 ; ARMv7-ELF: LoadIndirectSymbol
 ; ARMv7-ELF: ldr r[[reg5:[0-9]+]],
 ; ARMv7-ELF: .LPC
-; ARMv7-ELF-NEXT: add r[[reg5]], pc
-; ARMv7-ELF: ldr r[[reg6:[0-9]+]],
-; ARMv7-ELF: ldr r[[reg5]], [r[[reg6]], r[[reg5]]]
+; ARMv7-ELF: ldr r[[reg6:[0-9]+]], [pc, r[[reg5]]]
+; ARMv7-ELF: ldr r0, [r[[reg5]]]
   %tmp = load i32, i32* @i
   ret i32 %tmp
 }

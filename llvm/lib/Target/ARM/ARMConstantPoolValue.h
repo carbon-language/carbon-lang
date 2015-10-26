@@ -39,8 +39,7 @@ namespace ARMCP {
   enum ARMCPModifier {
     no_modifier,
     TLSGD,
-    GOT,
-    GOTOFF,
+    GOT_PREL,
     GOTTPOFF,
     TPOFF
   };

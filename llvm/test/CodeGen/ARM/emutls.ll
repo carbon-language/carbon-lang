@@ -10,9 +10,7 @@ declare i8* @my_emutls_get_address(i8*)
 define i32 @my_get_xyz() {
 ; ARM32-LABEL: my_get_xyz:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl my_emutls_get_address(PLT)
 ; ARM32-NEXT:   ldr r0, [r0]
 
@@ -34,9 +32,7 @@ entry:
 define i32 @f1() {
 ; ARM32-LABEL: f1:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldr r0, [r0]
 
@@ -48,9 +44,7 @@ entry:
 define i32* @f2() {
 ; ARM32-LABEL: f2:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   pop
 
@@ -61,9 +55,7 @@ entry:
 define i32 @f3() nounwind {
 ; ARM32-LABEL: f3:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldr r0, [r0]
 
@@ -75,9 +67,7 @@ entry:
 define i32* @f4() {
 ; ARM32-LABEL: f4:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   pop
 
@@ -88,9 +78,7 @@ entry:
 define i32 @f5() nounwind {
 ; ARM32-LABEL: f5:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldr r0, [r0]
 
@@ -102,9 +90,7 @@ entry:
 define i32* @f6() {
 ; ARM32-LABEL: f6:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   pop
 
@@ -115,9 +101,7 @@ entry:
 define i32 @f7() {
 ; ARM32-LABEL: f7:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldr r0, [r0]
 
@@ -129,9 +113,7 @@ entry:
 define i32* @f8() {
 ; ARM32-LABEL: f8:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   pop
 
@@ -142,9 +124,7 @@ entry:
 define i32 @f9() {
 ; ARM32-LABEL: f9:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldr r0, [r0]
 
@@ -156,9 +136,7 @@ entry:
 define i32* @f10() {
 ; ARM32-LABEL: f10:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   pop
 
@@ -169,9 +147,7 @@ entry:
 define i16 @f11() {
 ; ARM32-LABEL: f11:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldrh r0, [r0]
 
@@ -183,9 +159,7 @@ entry:
 define i32 @f12() {
 ; ARM32-LABEL: f12:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldrsh r0, [r0]
 
@@ -198,9 +172,7 @@ entry:
 define i8 @f13() {
 ; ARM32-LABEL: f13:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldrb r0, [r0]
 ; ARM32-NEXT: pop
@@ -213,9 +185,7 @@ entry:
 define i32 @f14() {
 ; ARM32-LABEL: f14:
 ; ARM32:        ldr r0,
-; ARM32-NEXT:   ldr r1,
-; ARM32:        add r0, pc, r0
-; ARM32-NEXT:   ldr r0, [r1, r0]
+; ARM32:        ldr r0, [pc, r0]
 ; ARM32-NEXT:   bl __emutls_get_address(PLT)
 ; ARM32-NEXT:   ldrsb r0, [r0]
 ; ARM32-NEXT: pop

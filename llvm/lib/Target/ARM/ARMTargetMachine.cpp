@@ -362,9 +362,6 @@ bool ARMPassConfig::addPreISel() {
 
 bool ARMPassConfig::addInstSelector() {
   addPass(createARMISelDag(getARMTargetMachine(), getOptLevel()));
-
-  if (TM->getTargetTriple().isOSBinFormatELF() && TM->Options.EnableFastISel)
-    addPass(createARMGlobalBaseRegPass());
   return false;
 }
 

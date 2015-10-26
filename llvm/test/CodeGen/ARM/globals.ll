@@ -60,16 +60,13 @@ define i32 @test1() {
 
 ; LinuxPIC-LABEL: test1:
 ; LinuxPIC: 	ldr r0, .LCPI0_0
-; LinuxPIC: 	ldr r1, .LCPI0_1
 	
 ; LinuxPIC: .LPC0_0:
-; LinuxPIC: 	add r0, pc, r0
-; LinuxPIC: 	ldr r0, [r1, r0]
+; LinuxPIC: 	ldr r0, [pc, r0]
 ; LinuxPIC: 	ldr r0, [r0]
 ; LinuxPIC: 	bx lr
 
 ; LinuxPIC: .align 2
 ; LinuxPIC: .LCPI0_0:
-; LinuxPIC:     .long _GLOBAL_OFFSET_TABLE_-(.LPC0_0+8)
-; LinuxPIC: .LCPI0_1:
-; LinuxPIC:     .long	G(GOT)
+; LinuxPIC: .Ltmp0:
+; LinuxPIC:     .long   G(GOT_PREL)-((.LPC0_0+8)-.Ltmp0)
