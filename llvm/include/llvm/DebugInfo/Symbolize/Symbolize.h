@@ -104,10 +104,11 @@ class ModuleInfo {
 public:
   ModuleInfo(ObjectFile *Obj, std::unique_ptr<DIContext> DICtx);
 
-  DILineInfo symbolizeCode(uint64_t ModuleOffset,
-                           const LLVMSymbolizer::Options &Opts) const;
-  DIInliningInfo symbolizeInlinedCode(
-      uint64_t ModuleOffset, const LLVMSymbolizer::Options &Opts) const;
+  DILineInfo symbolizeCode(uint64_t ModuleOffset, FunctionNameKind FNKind,
+                           bool UseSymbolTable) const;
+  DIInliningInfo symbolizeInlinedCode(uint64_t ModuleOffset,
+                                      FunctionNameKind FNKind,
+                                      bool UseSymbolTable) const;
   bool symbolizeData(uint64_t ModuleOffset, std::string &Name, uint64_t &Start,
                      uint64_t &Size) const;
 

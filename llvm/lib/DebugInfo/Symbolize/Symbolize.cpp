@@ -55,10 +55,9 @@ static bool error(std::error_code ec) {
 }
 
 static DILineInfoSpecifier
-getDILineInfoSpecifier(const LLVMSymbolizer::Options &Opts) {
+getDILineInfoSpecifier(FunctionNameKind FNKind) {
   return DILineInfoSpecifier(
-      DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath,
-      Opts.PrintFunctions);
+      DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath, FNKind);
 }
 
 ModuleInfo::ModuleInfo(ObjectFile *Obj, std::unique_ptr<DIContext> DICtx)
@@ -201,16 +200,16 @@ bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
   return true;
 }
 
-DILineInfo ModuleInfo::symbolizeCode(
-    uint64_t ModuleOffset, const LLVMSymbolizer::Options &Opts) const {
+DILineInfo ModuleInfo::symbolizeCode(uint64_t ModuleOffset,
+                                     FunctionNameKind FNKind,
+                                     bool UseSymbolTable) const {
   DILineInfo LineInfo;
   if (DebugInfoContext) {
     LineInfo = DebugInfoContext->getLineInfoForAddress(
-        ModuleOffset, getDILineInfoSpecifier(Opts));
+        ModuleOffset, getDILineInfoSpecifier(FNKind));
   }
   // Override function name from symbol table if necessary.
-  if (Opts.PrintFunctions == FunctionNameKind::LinkageName &&
-      Opts.UseSymbolTable) {
+  if (FNKind == FunctionNameKind::LinkageName && UseSymbolTable) {
     std::string FunctionName;
     uint64_t Start, Size;
     if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
@@ -221,21 +220,21 @@ DILineInfo ModuleInfo::symbolizeCode(
   return LineInfo;
 }
 
-DIInliningInfo ModuleInfo::symbolizeInlinedCode(
-    uint64_t ModuleOffset, const LLVMSymbolizer::Options &Opts) const {
+DIInliningInfo ModuleInfo::symbolizeInlinedCode(uint64_t ModuleOffset,
+                                                FunctionNameKind FNKind,
+                                                bool UseSymbolTable) const {
   DIInliningInfo InlinedContext;
 
   if (DebugInfoContext) {
     InlinedContext = DebugInfoContext->getInliningInfoForAddress(
-        ModuleOffset, getDILineInfoSpecifier(Opts));
+        ModuleOffset, getDILineInfoSpecifier(FNKind));
   }
   // Make sure there is at least one frame in context.
   if (InlinedContext.getNumberOfFrames() == 0) {
     InlinedContext.addFrame(DILineInfo());
   }
   // Override the function name in lower frame with name from symbol table.
-  if (Opts.PrintFunctions == FunctionNameKind::LinkageName &&
-      Opts.UseSymbolTable) {
+  if (FNKind == FunctionNameKind::LinkageName && UseSymbolTable) {
     DIInliningInfo PatchedInlinedContext;
     for (uint32_t i = 0, n = InlinedContext.getNumberOfFrames(); i < n; i++) {
       DILineInfo LineInfo = InlinedContext.getFrame(i);
@@ -274,8 +273,8 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
     ModuleOffset += Info->getModulePreferredBase();
 
   if (Opts.PrintInlining) {
-    DIInliningInfo InlinedContext =
-        Info->symbolizeInlinedCode(ModuleOffset, Opts);
+    DIInliningInfo InlinedContext = Info->symbolizeInlinedCode(
+        ModuleOffset, Opts.PrintFunctions, Opts.UseSymbolTable);
     uint32_t FramesNum = InlinedContext.getNumberOfFrames();
     assert(FramesNum > 0);
     std::string Result;
@@ -285,7 +284,8 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
     }
     return Result;
   }
-  DILineInfo LineInfo = Info->symbolizeCode(ModuleOffset, Opts);
+  DILineInfo LineInfo = Info->symbolizeCode(ModuleOffset, Opts.PrintFunctions,
+                                            Opts.UseSymbolTable);
   return printDILineInfo(LineInfo, Info);
 }
 
