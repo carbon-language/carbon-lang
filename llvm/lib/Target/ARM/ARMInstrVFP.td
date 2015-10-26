@@ -92,7 +92,7 @@ def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$Dd), (ins addrmode5:$addr),
 
 def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$Sd), (ins addrmode5:$addr),
                  IIC_fpLoad32, "vldr", "\t$Sd, $addr",
-                 [(set SPR:$Sd, (load addrmode5:$addr))]> {
+                 [(set SPR:$Sd, (alignedload32 addrmode5:$addr))]> {
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
   let D = VFPNeonDomain;
@@ -106,7 +106,7 @@ def VSTRD : ADI5<0b1101, 0b00, (outs), (ins DPR:$Dd, addrmode5:$addr),
 
 def VSTRS : ASI5<0b1101, 0b00, (outs), (ins SPR:$Sd, addrmode5:$addr),
                  IIC_fpStore32, "vstr", "\t$Sd, $addr",
-                 [(store SPR:$Sd, addrmode5:$addr)]> {
+                 [(alignedstore32 SPR:$Sd, addrmode5:$addr)]> {
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
   let D = VFPNeonDomain;
@@ -1018,7 +1018,7 @@ let Predicates=[HasVFP2, HasDPVFP] in {
   def : VFPPat<(f64 (sint_to_fp GPR:$a)),
                (VSITOD (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
-  def : VFPPat<(f64 (sint_to_fp (i32 (load addrmode5:$a)))),
+  def : VFPPat<(f64 (sint_to_fp (i32 (alignedload32 addrmode5:$a)))),
                (VSITOD (VLDRS addrmode5:$a))>;
 }
 
@@ -1036,7 +1036,7 @@ def VSITOS : AVConv1InSs_Encode<0b11101, 0b11, 0b1000, 0b1010,
 def : VFPNoNEONPat<(f32 (sint_to_fp GPR:$a)),
                    (VSITOS (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
-def : VFPNoNEONPat<(f32 (sint_to_fp (i32 (load addrmode5:$a)))),
+def : VFPNoNEONPat<(f32 (sint_to_fp (i32 (alignedload32 addrmode5:$a)))),
                    (VSITOS (VLDRS addrmode5:$a))>;
 
 def VUITOD : AVConv1IDs_Encode<0b11101, 0b11, 0b1000, 0b1011,
@@ -1050,7 +1050,7 @@ let Predicates=[HasVFP2, HasDPVFP] in {
   def : VFPPat<(f64 (uint_to_fp GPR:$a)),
                (VUITOD (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
-  def : VFPPat<(f64 (uint_to_fp (i32 (load addrmode5:$a)))),
+  def : VFPPat<(f64 (uint_to_fp (i32 (alignedload32 addrmode5:$a)))),
                (VUITOD (VLDRS addrmode5:$a))>;
 }
 
@@ -1068,7 +1068,7 @@ def VUITOS : AVConv1InSs_Encode<0b11101, 0b11, 0b1000, 0b1010,
 def : VFPNoNEONPat<(f32 (uint_to_fp GPR:$a)),
                    (VUITOS (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
-def : VFPNoNEONPat<(f32 (uint_to_fp (i32 (load addrmode5:$a)))),
+def : VFPNoNEONPat<(f32 (uint_to_fp (i32 (alignedload32 addrmode5:$a)))),
                    (VUITOS (VLDRS addrmode5:$a))>;
 
 // FP -> Int:
@@ -1121,7 +1121,7 @@ let Predicates=[HasVFP2, HasDPVFP] in {
   def : VFPPat<(i32 (fp_to_sint (f64 DPR:$a))),
                (COPY_TO_REGCLASS (VTOSIZD DPR:$a), GPR)>;
 
-  def : VFPPat<(store (i32 (fp_to_sint (f64 DPR:$a))), addrmode5:$ptr),
+  def : VFPPat<(alignedstore32 (i32 (fp_to_sint (f64 DPR:$a))), addrmode5:$ptr),
                (VSTRS (VTOSIZD DPR:$a), addrmode5:$ptr)>;
 }
 
@@ -1139,7 +1139,8 @@ def VTOSIZS : AVConv1InsS_Encode<0b11101, 0b11, 0b1101, 0b1010,
 def : VFPNoNEONPat<(i32 (fp_to_sint SPR:$a)),
                    (COPY_TO_REGCLASS (VTOSIZS SPR:$a), GPR)>;
 
-def : VFPNoNEONPat<(store (i32 (fp_to_sint (f32 SPR:$a))), addrmode5:$ptr),
+def : VFPNoNEONPat<(alignedstore32 (i32 (fp_to_sint (f32 SPR:$a))),
+                                   addrmode5:$ptr),
                    (VSTRS (VTOSIZS SPR:$a), addrmode5:$ptr)>;
 
 def VTOUIZD : AVConv1IsD_Encode<0b11101, 0b11, 0b1100, 0b1011,
@@ -1153,7 +1154,7 @@ let Predicates=[HasVFP2, HasDPVFP] in {
   def : VFPPat<(i32 (fp_to_uint (f64 DPR:$a))),
                (COPY_TO_REGCLASS (VTOUIZD DPR:$a), GPR)>;
 
-  def : VFPPat<(store (i32 (fp_to_uint (f64 DPR:$a))), addrmode5:$ptr),
+  def : VFPPat<(alignedstore32 (i32 (fp_to_uint (f64 DPR:$a))), addrmode5:$ptr),
                (VSTRS (VTOUIZD DPR:$a), addrmode5:$ptr)>;
 }
 
@@ -1171,7 +1172,8 @@ def VTOUIZS : AVConv1InsS_Encode<0b11101, 0b11, 0b1100, 0b1010,
 def : VFPNoNEONPat<(i32 (fp_to_uint SPR:$a)),
                    (COPY_TO_REGCLASS (VTOUIZS SPR:$a), GPR)>;
 
-def : VFPNoNEONPat<(store (i32 (fp_to_uint (f32 SPR:$a))), addrmode5:$ptr),
+def : VFPNoNEONPat<(alignedstore32 (i32 (fp_to_uint (f32 SPR:$a))),
+                                   addrmode5:$ptr),
                   (VSTRS (VTOUIZS SPR:$a), addrmode5:$ptr)>;
 
 // And the Z bit '0' variants, i.e. use the rounding mode specified by FPSCR.
