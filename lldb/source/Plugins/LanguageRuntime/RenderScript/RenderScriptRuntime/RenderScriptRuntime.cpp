@@ -1522,7 +1522,7 @@ RenderScriptRuntime::LoadAllocation(Stream &strm, const uint32_t alloc_id, const
         {
             if (log)
                 log->Printf("RenderScriptRuntime::LoadAllocation - Couldn't JIT allocation details");
-            return nullptr;
+            return false;
         }
     }
 
@@ -1637,7 +1637,7 @@ RenderScriptRuntime::SaveAllocation(Stream &strm, const uint32_t alloc_id, const
         {
             if (log)
                 log->Printf("RenderScriptRuntime::SaveAllocation - Couldn't JIT allocation details");
-            return nullptr;
+            return false;
         }
     }
 
