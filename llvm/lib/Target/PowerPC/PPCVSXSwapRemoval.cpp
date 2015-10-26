@@ -790,7 +790,6 @@ void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
 
   default:
     llvm_unreachable("Unexpected special handling type");
-    break;
 
   // For splats based on an index into a vector, add N/2 modulo N
   // to the index, where N is the number of vector elements.
