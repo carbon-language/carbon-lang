@@ -17,6 +17,7 @@
 #include "MipsMachineFunction.h"
 #include "MipsSEInstrInfo.h"
 #include "MipsSubtarget.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -415,6 +416,9 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
   BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
       .addCFIIndex(CFIIndex);
 
+  if (MF.getFunction()->hasFnAttribute("interrupt"))
+    emitInterruptPrologueStub(MF, MBB);
+
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
   if (CSI.size()) {
@@ -530,6 +534,135 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
   }
 }
 
+void MipsSEFrameLowering::emitInterruptPrologueStub(
+    MachineFunction &MF, MachineBasicBlock &MBB) const {
+
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  MachineBasicBlock::iterator MBBI = MBB.begin();
+  DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+
+  // Report an error the target doesn't support Mips32r2 or later.
+  // The epilogue relies on the use of the "ehb" to clear execution
+  // hazards. Pre R2 Mips relies on an implementation defined number
+  // of "ssnop"s to clear the execution hazard. Support for ssnop hazard
+  // clearing is not provided so reject that configuration.
+  if (!STI.hasMips32r2())
+    report_fatal_error(
+        "\"interrupt\" attribute is not supported on pre-r2 MIPS or"
+        "Mips16 targets.");
+
+  // The GP register contains the "user" value, so we cannot perform
+  // any gp relative loads until we restore the "kernel" or "system" gp
+  // value. Until support is written we shall only accept the static
+  // relocation model.
+  if ((STI.getRelocationModel() != Reloc::Static))
+    report_fatal_error("\"interrupt\" attribute is only supported for the "
+                       "static relocation model on MIPS at the present time.");
+
+  if (!STI.isABI_O32() || STI.hasMips64())
+    report_fatal_error("\"interrupt\" attribute is only supported for the "
+                       "O32 ABI on MIPS32r2+ at the present time.");
+
+  // Perform ISR handling like GCC
+  StringRef IntKind =
+      MF.getFunction()->getFnAttribute("interrupt").getValueAsString();
+  const TargetRegisterClass *PtrRC = &Mips::GPR32RegClass;
+
+  // EIC interrupt handling needs to read the Cause register to disable
+  // interrupts.
+  if (IntKind == "eic") {
+    // Coprocessor registers are always live per se.
+    MBB.addLiveIn(Mips::COP013);
+    BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::MFC0), Mips::K0)
+        .addReg(Mips::COP013)
+        .addImm(0)
+        .setMIFlag(MachineInstr::FrameSetup);
+
+    BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::EXT), Mips::K0)
+        .addReg(Mips::K0)
+        .addImm(10)
+        .addImm(6)
+        .setMIFlag(MachineInstr::FrameSetup);
+  }
+
+  // Fetch and spill EPC
+  MBB.addLiveIn(Mips::COP014);
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::MFC0), Mips::K1)
+      .addReg(Mips::COP014)
+      .addImm(0)
+      .setMIFlag(MachineInstr::FrameSetup);
+
+  STI.getInstrInfo()->storeRegToStack(MBB, MBBI, Mips::K1, false,
+                                      MipsFI->getISRRegFI(0), PtrRC,
+                                      STI.getRegisterInfo(), 0);
+
+  // Fetch and Spill Status
+  MBB.addLiveIn(Mips::COP012);
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::MFC0), Mips::K1)
+      .addReg(Mips::COP012)
+      .addImm(0)
+      .setMIFlag(MachineInstr::FrameSetup);
+
+  STI.getInstrInfo()->storeRegToStack(MBB, MBBI, Mips::K1, false,
+                                      MipsFI->getISRRegFI(1), PtrRC,
+                                      STI.getRegisterInfo(), 0);
+
+  // Build the configuration for disabling lower priority interrupts. Non EIC
+  // interrupts need to be masked off with zero, EIC from the Cause register.
+  unsigned InsPosition = 8;
+  unsigned InsSize = 0;
+  unsigned SrcReg = Mips::ZERO;
+
+  // If the interrupt we're tied to is the EIC, switch the source for the
+  // masking off interrupts to the cause register.
+  if (IntKind == "eic") {
+    SrcReg = Mips::K0;
+    InsPosition = 10;
+    InsSize = 6;
+  } else
+    InsSize = StringSwitch<unsigned>(IntKind)
+                  .Case("sw0", 1)
+                  .Case("sw1", 2)
+                  .Case("hw0", 3)
+                  .Case("hw1", 4)
+                  .Case("hw2", 5)
+                  .Case("hw3", 6)
+                  .Case("hw4", 7)
+                  .Case("hw5", 8)
+                  .Default(0);
+  assert(InsSize != 0 && "Unknown interrupt type!");
+
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::INS), Mips::K1)
+      .addReg(SrcReg)
+      .addImm(InsPosition)
+      .addImm(InsSize)
+      .addReg(Mips::K1)
+      .setMIFlag(MachineInstr::FrameSetup);
+
+  // Mask off KSU, ERL, EXL
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::INS), Mips::K1)
+      .addReg(Mips::ZERO)
+      .addImm(1)
+      .addImm(4)
+      .addReg(Mips::K1)
+      .setMIFlag(MachineInstr::FrameSetup);
+
+  // Disable the FPU as we are not spilling those register sets.
+  if (!STI.useSoftFloat())
+    BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::INS), Mips::K1)
+        .addReg(Mips::ZERO)
+        .addImm(29)
+        .addImm(1)
+        .addReg(Mips::K1)
+        .setMIFlag(MachineInstr::FrameSetup);
+
+  // Set the new status
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::MTC0), Mips::COP012)
+      .addReg(Mips::K1)
+      .addImm(0)
+      .setMIFlag(MachineInstr::FrameSetup);
+}
+
 void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
@@ -541,7 +674,7 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
   const MipsRegisterInfo &RegInfo =
       *static_cast<const MipsRegisterInfo *>(STI.getRegisterInfo());
 
-  DebugLoc dl = MBBI->getDebugLoc();
+  DebugLoc DL = MBBI->getDebugLoc();
   MipsABIInfo ABI = STI.getABI();
   unsigned SP = ABI.GetStackPtr();
   unsigned FP = ABI.GetFramePtr();
@@ -557,7 +690,7 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
       --I;
 
     // Insert instruction "move $sp, $fp" at this location.
-    BuildMI(MBB, I, dl, TII.get(MOVE), SP).addReg(FP).addReg(ZERO);
+    BuildMI(MBB, I, DL, TII.get(MOVE), SP).addReg(FP).addReg(ZERO);
   }
 
   if (MipsFI->callsEhReturn()) {
@@ -576,6 +709,9 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
     }
   }
 
+  if (MF.getFunction()->hasFnAttribute("interrupt"))
+    emitInterruptEpilogueStub(MF, MBB);
+
   // Get the number of bytes from FrameInfo
   uint64_t StackSize = MFI->getStackSize();
 
@@ -584,6 +720,37 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Adjust stack.
   TII.adjustStackPtr(SP, StackSize, MBB, MBBI);
+}
+
+void MipsSEFrameLowering::emitInterruptEpilogueStub(
+    MachineFunction &MF, MachineBasicBlock &MBB) const {
+
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+
+  // Perform ISR handling like GCC
+  const TargetRegisterClass *PtrRC = &Mips::GPR32RegClass;
+
+  // Disable Interrupts.
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::DI), Mips::ZERO);
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::EHB));
+
+  // Restore EPC
+  STI.getInstrInfo()->loadRegFromStackSlot(MBB, MBBI, Mips::K1,
+                                           MipsFI->getISRRegFI(0), PtrRC,
+                                           STI.getRegisterInfo());
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::MTC0), Mips::COP014)
+      .addReg(Mips::K1)
+      .addImm(0);
+
+  // Restore Status
+  STI.getInstrInfo()->loadRegFromStackSlot(MBB, MBBI, Mips::K1,
+                                           MipsFI->getISRRegFI(1), PtrRC,
+                                           STI.getRegisterInfo());
+  BuildMI(MBB, MBBI, DL, STI.getInstrInfo()->get(Mips::MTC0), Mips::COP012)
+      .addReg(Mips::K1)
+      .addImm(0);
 }
 
 bool MipsSEFrameLowering::
@@ -606,6 +773,26 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
         && MF->getFrameInfo()->isReturnAddressTaken();
     if (!IsRAAndRetAddrIsTaken)
       EntryBlock->addLiveIn(Reg);
+
+    // ISRs require HI/LO to be spilled into kernel registers to be then
+    // spilled to the stack frame.
+    bool IsLOHI = (Reg == Mips::LO0 || Reg == Mips::LO0_64 ||
+                   Reg == Mips::HI0 || Reg == Mips::HI0_64);
+    const Function *Func = MBB.getParent()->getFunction();
+    if (IsLOHI && Func->hasFnAttribute("interrupt")) {
+      DebugLoc DL = MI->getDebugLoc();
+
+      unsigned Op = 0;
+      if (!STI.getABI().ArePtrs64bit()) {
+        Op = (Reg == Mips::HI0) ? Mips::MFHI : Mips::MFLO;
+        Reg = Mips::K0;
+      } else {
+        Op = (Reg == Mips::HI0) ? Mips::MFHI64 : Mips::MFLO64;
+        Reg = Mips::K0_64;
+      }
+      BuildMI(MBB, MI, DL, TII.get(Op), Mips::K0)
+          .setMIFlag(MachineInstr::FrameSetup);
+    }
 
     // Insert the spill to the stack frame.
     bool IsKill = !IsRAAndRetAddrIsTaken;
@@ -656,6 +843,10 @@ void MipsSEFrameLowering::determineCalleeSaves(MachineFunction &MF,
   // Create spill slots for eh data registers if function calls eh_return.
   if (MipsFI->callsEhReturn())
     MipsFI->createEhDataRegsFI();
+
+  // Create spill slots for Coprocessor 0 registers if function is an ISR.
+  if (MipsFI->isISR())
+    MipsFI->createISRRegFI();
 
   // Expand pseudo instructions which load, store or copy accumulators.
   // Add an emergency spill slot if a pseudo was expanded.

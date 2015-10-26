@@ -84,6 +84,16 @@ MipsRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 const MCPhysReg *
 MipsRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   const MipsSubtarget &Subtarget = MF->getSubtarget<MipsSubtarget>();
+  const Function *F = MF->getFunction();
+  if (F->hasFnAttribute("interrupt")) {
+    if (Subtarget.hasMips64())
+      return Subtarget.hasMips64r6() ? CSR_Interrupt_64R6_SaveList
+                                     : CSR_Interrupt_64_SaveList;
+    else
+      return Subtarget.hasMips32r6() ? CSR_Interrupt_32R6_SaveList
+                                     : CSR_Interrupt_32_SaveList;
+  }
+
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_SaveList;
 

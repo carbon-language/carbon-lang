@@ -1181,6 +1181,10 @@ bool MipsSETargetLowering::isEligibleForTailCallOptimization(
   if (!EnableMipsTailCalls)
     return false;
 
+  // Exception has to be cleared with eret.
+  if (FI.isISR())
+    return false;
+
   // Return false if either the callee or caller has a byval argument.
   if (CCInfo.getInRegsParamsCount() > 0 || FI.hasByvalArg())
     return false;

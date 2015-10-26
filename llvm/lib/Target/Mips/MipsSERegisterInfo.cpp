@@ -126,17 +126,19 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
   }
 
   bool EhDataRegFI = MipsFI->isEhDataRegFI(FrameIndex);
-
+  bool IsISRRegFI = MipsFI->isISRRegFI(FrameIndex);
   // The following stack frame objects are always referenced relative to $sp:
   //  1. Outgoing arguments.
   //  2. Pointer to dynamically allocated stack space.
   //  3. Locations for callee-saved registers.
   //  4. Locations for eh data registers.
+  //  5. Locations for ISR saved Coprocessor 0 registers 12 & 14.
   // Everything else is referenced relative to whatever register
   // getFrameRegister() returns.
   unsigned FrameReg;
 
-  if ((FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI) || EhDataRegFI)
+  if ((FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI) || EhDataRegFI ||
+      IsISRRegFI)
     FrameReg = ABI.GetStackPtr();
   else if (RegInfo->needsStackRealignment(MF)) {
     if (MFI->hasVarSizedObjects() && !MFI->isFixedObjectIndex(FrameIndex))

@@ -77,6 +77,9 @@ def MipsThreadPointer: SDNode<"MipsISD::ThreadPointer", SDT_MipsThreadPointer>;
 def MipsRet : SDNode<"MipsISD::Ret", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
+def MipsERet : SDNode<"MipsISD::ERet", SDTNone,
+                      [SDNPHasChain, SDNPOptInGlue, SDNPSideEffect]>;
+
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
                            [SDNPHasChain, SDNPSideEffect, SDNPOutGlue]>;
@@ -1145,6 +1148,9 @@ class TrapBase<Instruction RealInst>
 // Return RA.
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1 in
 def RetRA : PseudoSE<(outs), (ins), [(MipsRet)]>;
+
+let isReturn=1, isTerminator=1, isBarrier=1, hasCtrlDep=1, hasSideEffects=1 in
+def ERet : PseudoSE<(outs), (ins), [(MipsERet)]>;
 
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def ADJCALLSTACKDOWN : MipsPseudo<(outs), (ins i32imm:$amt),

@@ -117,6 +117,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::GPRel:             return "MipsISD::GPRel";
   case MipsISD::ThreadPointer:     return "MipsISD::ThreadPointer";
   case MipsISD::Ret:               return "MipsISD::Ret";
+  case MipsISD::ERet:              return "MipsISD::ERet";
   case MipsISD::EH_RETURN:         return "MipsISD::EH_RETURN";
   case MipsISD::FPBrcond:          return "MipsISD::FPBrcond";
   case MipsISD::FPCmp:             return "MipsISD::FPCmp";
@@ -2948,8 +2949,12 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   MipsCCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), ArgLocs,
                      *DAG.getContext());
   CCInfo.AllocateStack(ABI.GetCalleeAllocdArgSizeInBytes(CallConv), 1);
-  Function::const_arg_iterator FuncArg =
-    DAG.getMachineFunction().getFunction()->arg_begin();
+  const Function *Func = DAG.getMachineFunction().getFunction();
+  Function::const_arg_iterator FuncArg = Func->arg_begin();
+
+  if (Func->hasFnAttribute("interrupt"))
+    assert(Func->arg_empty() &&
+           "Functions with the interrupt attribute cannot have arguments!");
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_Mips_FixedArg);
   MipsFI->setFormalArgInfo(CCInfo.getNextStackOffset(),
@@ -3101,8 +3106,20 @@ MipsTargetLowering::shouldSignExtendTypeInLibCall(EVT Type, bool IsSigned) const
 }
 
 SDValue
-MipsTargetLowering::LowerReturn(SDValue Chain,
-                                CallingConv::ID CallConv, bool IsVarArg,
+MipsTargetLowering::LowerInterruptReturn(SmallVectorImpl<SDValue> &RetOps,
+                                         SDLoc DL, SelectionDAG &DAG) const {
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+
+  MipsFI->setISR();
+
+  return DAG.getNode(MipsISD::ERet, DL, MVT::Other, RetOps);
+}
+
+SDValue
+MipsTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
+                                bool IsVarArg,
                                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                                 const SmallVectorImpl<SDValue> &OutVals,
                                 SDLoc DL, SelectionDAG &DAG) const {
@@ -3195,7 +3212,11 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
-  // Return on Mips is always a "jr $ra"
+  // ISRs must use "eret".
+  if (DAG.getMachineFunction().getFunction()->hasFnAttribute("interrupt"))
+    return LowerInterruptReturn(RetOps, DL, DAG);
+
+  // Standard return on Mips is a "jr $ra"
   return DAG.getNode(MipsISD::Ret, DL, MVT::Other, RetOps);
 }
 

@@ -427,3 +427,28 @@ def CSR_Mips16RetHelper :
   CalleeSavedRegs<(add V0, V1, FP,
                    (sequence "A%u", 3, 0), (sequence "S%u", 7, 0),
                    (sequence "D%u", 15, 10))>;
+
+def CSR_Interrupt_32R6 : CalleeSavedRegs<(add (sequence "A%u", 3, 0),
+                                              (sequence "S%u", 7, 0),
+                                              (sequence "V%u", 1, 0),
+                                              (sequence "T%u", 9, 0),
+                                              RA, FP, GP, AT)>;
+
+def CSR_Interrupt_32 : CalleeSavedRegs<(add (sequence "A%u", 3, 0),
+                                            (sequence "S%u", 7, 0),
+                                            (sequence "V%u", 1, 0),
+                                            (sequence "T%u", 9, 0),
+                                            RA, FP, GP, AT, LO0, HI0)>;
+
+def CSR_Interrupt_64R6 : CalleeSavedRegs<(add (sequence "A%u_64", 3, 0),
+                                              (sequence "V%u_64", 1, 0),
+                                              (sequence "S%u_64", 7, 0),
+                                              (sequence "T%u_64", 9, 0),
+                                              RA_64, FP_64, GP_64, AT_64)>;
+
+def CSR_Interrupt_64 : CalleeSavedRegs<(add (sequence "A%u_64", 3, 0),
+                                            (sequence "S%u_64", 7, 0),
+                                            (sequence "T%u_64", 9, 0),
+                                            (sequence "V%u_64", 1, 0),
+                                            RA_64, FP_64, GP_64, AT_64,
+                                            LO0_64, HI0_64)>;
