@@ -182,7 +182,7 @@ class ArrayTypesTestCase(TestBase):
                         "Variable 'long_6' should have 6 children")
         child5 = variable.GetChildAtIndex(5)
         self.DebugSBValue(child5)
-        self.assertTrue(long(child5.GetValue(), 0) == 6,
+        self.assertTrue(int(child5.GetValue(), 0) == 6,
                         "long_6[5] == 6")
 
         # Last, check that "long_6" has a value type of eValueTypeVariableLocal

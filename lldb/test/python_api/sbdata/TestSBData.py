@@ -220,8 +220,8 @@ class SBDataAPICase(TestBase):
         self.assertTrue(data2.uint8[4] == 111, 'o == 111')
         self.assert_data(data2.GetUnsignedInt8, 5, 33) # !
 
-        uint_lists = [ [1,2,3,4,5], [long(i) for i in [1, 2, 3, 4, 5]] ]
-        int_lists = [ [2, -2], [long(i) for i in [2, -2]] ]
+        uint_lists = [ [1,2,3,4,5], [int(i) for i in [1, 2, 3, 4, 5]] ]
+        int_lists = [ [2, -2], [int(i) for i in [2, -2]] ]
 
         for l in uint_lists:
             data2 = lldb.SBData.CreateDataFromUInt64Array(process.GetByteOrder(), process.GetAddressByteSize(), l)

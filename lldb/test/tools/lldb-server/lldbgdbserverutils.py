@@ -9,6 +9,7 @@ import os
 import os.path
 import platform
 import re
+import six
 import socket_packet_pump
 import subprocess
 import time
@@ -808,8 +809,8 @@ def process_is_running(pid, unknown_value=True):
         If we don't know how to check running process ids on the given OS:
         return the value provided by the unknown_value arg.
     """
-    if type(pid) not in [int, long]:
-        raise Exception("pid must be of type int (actual type: %s)" % str(type(pid)))
+    if not isinstance(pid, six.integer_types):
+        raise Exception("pid must be an integral type (actual type: %s)" % str(type(pid)))
 
     process_ids = []
 

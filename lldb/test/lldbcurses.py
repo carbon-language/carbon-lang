@@ -1,5 +1,8 @@
+import lldb_shared
+
 import curses, curses.panel
 import sys
+import six
 import time 
 
 class Point(object):
@@ -138,7 +141,7 @@ class Window(object):
             for key in arg:
                 self.add_key_action(key, callback, description)
         else:
-            if isinstance(arg, ( int, long )):
+            if isinstance(arg, six.integer_types):
                 key_action_dict = { 'key'         : arg, 
                                     'callback'    : callback,
                                     'description' : decription }

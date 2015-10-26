@@ -32,7 +32,7 @@ class CommonShortSpellingsTestCase(TestBase):
             ('ta st li', 'target stop-hook list'),
         ]
 
-        for (short, long) in abbrevs:
-            command_interpreter.ResolveCommand(short, result)
+        for (short_val, long_val) in abbrevs:
+            command_interpreter.ResolveCommand(short_val, result)
             self.assertTrue(result.Succeeded())
-            self.assertEqual(long, result.GetOutput())
+            self.assertEqual(long_val, result.GetOutput())
