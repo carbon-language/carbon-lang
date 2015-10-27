@@ -33,17 +33,17 @@ extern "C" {
 #endif
 
 #include <dlfcn.h>  // for dladdr()
+#include <fcntl.h>
+#include <libkern/OSAtomic.h>
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
+#include <pthread.h>
+#include <stdlib.h>  // for free()
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <stdlib.h>  // for free()
 #include <unistd.h>
-#include <libkern/OSAtomic.h>
 
 namespace __asan {
 
