@@ -89,7 +89,7 @@ protected:
 public:
   /// \brief What kind of scope we are describing.
   ///
-  ScopeKind Kind : 2;
+  ScopeKind Kind : 3;
 
   /// \brief Whether this function contains a VLA, \@try, try, C++
   /// initializer, or anything else that can't be jumped past.
