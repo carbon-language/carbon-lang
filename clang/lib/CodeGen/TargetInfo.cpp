@@ -854,7 +854,7 @@ public:
       IsRetSmallStructInRegABI(RetSmallStructInRegABI), 
       IsWin32StructABI(Win32StructABI),
       IsSoftFloatABI(SoftFloatABI),
-      IsMCUABI(CGT.getTarget().getTriple().isEnvironmentIAMCU()),
+      IsMCUABI(CGT.getTarget().getTriple().isOSIAMCU()),
       DefaultNumRegisterParameters(NumRegisterParameters) {}
 };
 
@@ -1533,7 +1533,7 @@ bool X86_32TargetCodeGenInfo::isStructReturnInRegABI(
     return true;
   }
 
-  if (Triple.isOSDarwin() || Triple.isEnvironmentIAMCU())
+  if (Triple.isOSDarwin() || Triple.isOSIAMCU())
     return true;
 
   switch (Triple.getOS()) {
