@@ -87,7 +87,8 @@ namespace lldb {
 
         static SBTypeSummary
         CreateWithCallback (FormatCallback cb, 
-                            uint32_t options = 0);
+                            uint32_t options = 0,
+                            const char* description = nullptr);
         
         SBTypeSummary (const lldb::SBTypeSummary &rhs);
         
