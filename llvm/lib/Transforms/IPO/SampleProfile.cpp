@@ -780,8 +780,10 @@ void SampleProfileLoader::propagateWeights(Function &F) {
       emitOptimizationRemark(
           Ctx, DEBUG_TYPE, F, MaxDestLoc,
           Twine("most popular destination for conditional branches at ") +
-              BranchLoc->getFilename() + ":" + Twine(BranchLoc.getLine()) +
-              ":" + Twine(BranchLoc.getCol()));
+              ((BranchLoc) ? Twine(BranchLoc->getFilename() + ":" +
+                                   Twine(BranchLoc.getLine()) + ":" +
+                                   Twine(BranchLoc.getCol()))
+                           : Twine("<UNKNOWN LOCATION>")));
     } else {
       DEBUG(dbgs() << "SKIPPED. All branch weights are zero.\n");
     }
