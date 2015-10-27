@@ -41,6 +41,7 @@ extern char **environ;
 #include <libkern/OSAtomic.h>
 #include <mach-o/dyld.h>
 #include <mach/mach.h>
+#include <mach/vm_statistics.h>
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
@@ -59,6 +60,7 @@ namespace __sanitizer {
 // ---------------------- sanitizer_libc.h
 uptr internal_mmap(void *addr, size_t length, int prot, int flags,
                    int fd, u64 offset) {
+  if (fd == -1) fd = VM_MAKE_TAG(VM_MEMORY_ANALYSIS_TOOL);
   return (uptr)mmap(addr, length, prot, flags, fd, offset);
 }
 
