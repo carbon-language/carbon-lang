@@ -12,7 +12,7 @@ after escaping some special characters).
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import unittest2
 import os, time

@@ -4,7 +4,7 @@ Test that you can set breakpoint and hit the C++ language exception breakpoint
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os
 import re

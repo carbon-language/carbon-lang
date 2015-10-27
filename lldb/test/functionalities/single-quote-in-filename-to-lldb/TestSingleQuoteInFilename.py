@@ -4,7 +4,7 @@ Test the lldb command line takes a filename with single quote chars.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os
 import lldb

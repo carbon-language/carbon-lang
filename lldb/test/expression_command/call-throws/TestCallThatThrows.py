@@ -4,7 +4,7 @@ Test calling a function that throws an ObjC exception, make sure that it doesn't
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import lldb
 import lldbutil

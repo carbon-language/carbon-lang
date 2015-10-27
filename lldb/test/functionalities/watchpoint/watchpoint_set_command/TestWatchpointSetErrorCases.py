@@ -4,7 +4,7 @@ Test error cases for the 'watchpoint set' command to make sure it errors out whe
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import lldb

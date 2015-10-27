@@ -4,7 +4,7 @@ Use lldb Python SBTarget API to iterate on the watchpoint(s) for the target.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import re

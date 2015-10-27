@@ -4,7 +4,7 @@ Test that variable expressions of floating point types are evaluated correctly.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import AbstractBase
 import lldb

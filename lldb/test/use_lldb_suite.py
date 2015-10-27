@@ -17,6 +17,6 @@ def find_lldb_root():
 lldb_root = find_lldb_root()
 if lldb_root is not None:
     import imp
-    module = imp.find_module("lldb_shared_base", [lldb_root])
+    module = imp.find_module("use_lldb_suite_root", [lldb_root])
     if module is not None:
-        imp.load_module("lldb_shared_base", *module)
+        imp.load_module("use_lldb_suite_root", *module)

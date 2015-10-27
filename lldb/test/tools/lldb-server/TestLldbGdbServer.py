@@ -12,7 +12,7 @@ the initial set of tests implemented.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import unittest2
 import gdbremote_testcase

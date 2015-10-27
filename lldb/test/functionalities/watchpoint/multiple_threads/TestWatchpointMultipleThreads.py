@@ -4,7 +4,7 @@ Test that lldb watchpoint works for multiple threads.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import re

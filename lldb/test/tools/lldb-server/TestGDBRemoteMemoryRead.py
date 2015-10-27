@@ -4,7 +4,7 @@ Tests the binary ($x) and hex ($m) memory read packets of the remote stub
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os
 import lldb

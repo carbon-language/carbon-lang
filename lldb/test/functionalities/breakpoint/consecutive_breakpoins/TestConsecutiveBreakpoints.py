@@ -4,7 +4,7 @@ Test continue from a breakpoint when there is a breakpoint on the next instructi
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import unittest2
 import lldb, lldbutil

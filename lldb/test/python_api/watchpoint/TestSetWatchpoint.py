@@ -4,7 +4,7 @@ Use lldb Python SBValue API to create a watchpoint for read_write of 'globl' var
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import re

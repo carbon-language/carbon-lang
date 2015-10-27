@@ -1,6 +1,6 @@
 """Test result object"""
 
-import lldb_shared
+import use_lldb_suite
 
 import sys
 import traceback

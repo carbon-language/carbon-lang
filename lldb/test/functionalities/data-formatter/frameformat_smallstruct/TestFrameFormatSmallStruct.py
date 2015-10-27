@@ -4,7 +4,7 @@ Test that the user can input a format but it will not prevail over summary forma
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import lldb

@@ -5,7 +5,7 @@ Test lldb-mi -gdb-set and -gdb-show commands for 'print option-name'.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import lldbmi_testcase
 from lldbtest import *

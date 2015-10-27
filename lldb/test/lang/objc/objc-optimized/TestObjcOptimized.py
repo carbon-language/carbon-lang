@@ -9,7 +9,7 @@ optimized it into a register.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import lldb

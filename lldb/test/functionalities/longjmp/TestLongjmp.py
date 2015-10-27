@@ -4,7 +4,7 @@ Test the use of setjmp/longjmp for non-local goto operations in a single-threade
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os
 import lldb

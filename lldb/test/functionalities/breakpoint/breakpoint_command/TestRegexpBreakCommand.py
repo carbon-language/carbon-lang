@@ -4,7 +4,7 @@ Test _regexp-break command which uses regular expression matching to dispatch to
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import lldb

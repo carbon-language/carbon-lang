@@ -4,7 +4,7 @@ Tests that C++ member and static variables have correct layout and scope.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import unittest2
 import lldb

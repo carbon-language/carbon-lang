@@ -4,7 +4,7 @@ Base class for lldb-mi test cases.
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 from lldbtest import *
 

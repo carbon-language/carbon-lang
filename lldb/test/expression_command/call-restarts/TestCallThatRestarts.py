@@ -4,7 +4,7 @@ Test calling a function that hits a signal set to auto-restart, make sure the ca
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import lldb
 import lldbutil

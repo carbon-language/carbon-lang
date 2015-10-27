@@ -4,7 +4,7 @@ Check for an issue where capping does not work because the Target pointer appear
 
 from __future__ import print_function
 
-import lldb_shared
+import use_lldb_suite
 
 import os, time
 import lldb
