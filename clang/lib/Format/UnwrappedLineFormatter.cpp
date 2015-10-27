@@ -709,7 +709,7 @@ private:
 
       // Cut off the analysis of certain solutions if the analysis gets too
       // complex. See description of IgnoreStackForComparison.
-      if (Count > 10000)
+      if (Count > 50000)
         Node->State.IgnoreStackForComparison = true;
 
       if (!Seen.insert(&Node->State).second)
