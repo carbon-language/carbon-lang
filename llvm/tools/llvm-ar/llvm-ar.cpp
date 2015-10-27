@@ -797,9 +797,9 @@ int main(int argc, char **argv) {
     "  This program archives bitcode files into single libraries\n"
   );
 
-  if (Stem.find("ar") != StringRef::npos)
-    return ar_main();
   if (Stem.find("ranlib") != StringRef::npos)
     return ranlib_main();
+  if (Stem.find("ar") != StringRef::npos)
+    return ar_main();
   fail("Not ranlib, ar or lib!");
 }
