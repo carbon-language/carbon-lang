@@ -425,6 +425,12 @@ public:
   /// Note that duplicate Machine CFG edges are not allowed.
   void addSuccessor(MachineBasicBlock *Succ, uint32_t Weight = 0);
 
+  /// Add Succ as a successor of this MachineBasicBlock.  The Predecessors list
+  /// of Succ is automatically updated. The weight is not provided because BPI
+  /// is not available (e.g. -O0 is used), in which case edge weights won't be
+  /// used. Using this interface can save some space.
+  void addSuccessorWithoutWeight(MachineBasicBlock *Succ);
+
   /// Set successor weight of a given iterator.
   void setSuccWeight(succ_iterator I, uint32_t Weight);
 

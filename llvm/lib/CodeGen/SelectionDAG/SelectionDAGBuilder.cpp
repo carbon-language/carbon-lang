@@ -1499,9 +1499,13 @@ uint32_t SelectionDAGBuilder::getEdgeWeight(const MachineBasicBlock *Src,
 void SelectionDAGBuilder::
 addSuccessorWithWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst,
                        uint32_t Weight /* = 0 */) {
-  if (!Weight)
-    Weight = getEdgeWeight(Src, Dst);
-  Src->addSuccessor(Dst, Weight);
+  if (!FuncInfo.BPI)
+    Src->addSuccessorWithoutWeight(Dst);
+  else {
+    if (!Weight)
+      Weight = getEdgeWeight(Src, Dst);
+    Src->addSuccessor(Dst, Weight);
+  }
 }
 
 

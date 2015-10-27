@@ -506,15 +506,19 @@ void MachineBasicBlock::updateTerminator() {
 }
 
 void MachineBasicBlock::addSuccessor(MachineBasicBlock *Succ, uint32_t Weight) {
-
-  // If we see non-zero value for the first time it means we actually use Weight
-  // list, so we fill all Weights with 0's.
-  if (Weight != 0 && Weights.empty())
-    Weights.resize(Successors.size());
-
-  if (Weight != 0 || !Weights.empty())
+  // Weight list is either empty (if successor list isn't empty, this means
+  // disabled optimization) or has the same size as successor list.
+  if (!(Weights.empty() && !Successors.empty()))
     Weights.push_back(Weight);
+  Successors.push_back(Succ);
+  Succ->addPredecessor(this);
+}
 
+void MachineBasicBlock::addSuccessorWithoutWeight(MachineBasicBlock *Succ) {
+  // We need to make sure weight list is either empty or has the same size of
+  // successor list. When this function is called, we can safely delete all
+  // weight in the list.
+  Weights.clear();
   Successors.push_back(Succ);
   Succ->addPredecessor(this);
 }

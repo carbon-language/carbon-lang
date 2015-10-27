@@ -2376,11 +2376,12 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
         .addMBB(Target);
 
     // Obtain the branch weight and add the target to the successor list.
-    uint32_t BranchWeight = 0;
-    if (FuncInfo.BPI)
-      BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
-                                                 Target->getBasicBlock());
-    FuncInfo.MBB->addSuccessor(Target, BranchWeight);
+    if (FuncInfo.BPI) {
+      uint32_t BranchWeight =
+          FuncInfo.BPI->getEdgeWeight(BI->getParent(), Target->getBasicBlock());
+      FuncInfo.MBB->addSuccessor(Target, BranchWeight);
+    } else
+      FuncInfo.MBB->addSuccessorWithoutWeight(Target);
     return true;
   } else if (foldXALUIntrinsic(CC, I, BI->getCondition())) {
     // Fake request the condition, otherwise the intrinsic might be completely

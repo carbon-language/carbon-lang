@@ -1394,25 +1394,28 @@ void FastISel::fastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
     TII.InsertBranch(*FuncInfo.MBB, MSucc, nullptr,
                      SmallVector<MachineOperand, 0>(), DbgLoc);
   }
-  uint32_t BranchWeight = 0;
-  if (FuncInfo.BPI)
-    BranchWeight = FuncInfo.BPI->getEdgeWeight(FuncInfo.MBB->getBasicBlock(),
-                                               MSucc->getBasicBlock());
-  FuncInfo.MBB->addSuccessor(MSucc, BranchWeight);
+  if (FuncInfo.BPI) {
+    uint32_t BranchWeight = FuncInfo.BPI->getEdgeWeight(
+        FuncInfo.MBB->getBasicBlock(), MSucc->getBasicBlock());
+    FuncInfo.MBB->addSuccessor(MSucc, BranchWeight);
+  } else
+    FuncInfo.MBB->addSuccessorWithoutWeight(MSucc);
 }
 
 void FastISel::finishCondBranch(const BasicBlock *BranchBB,
                                 MachineBasicBlock *TrueMBB,
                                 MachineBasicBlock *FalseMBB) {
-  uint32_t BranchWeight = 0;
-  if (FuncInfo.BPI)
-    BranchWeight = FuncInfo.BPI->getEdgeWeight(BranchBB,
-                                               TrueMBB->getBasicBlock());
   // Add TrueMBB as successor unless it is equal to the FalseMBB: This can
   // happen in degenerate IR and MachineIR forbids to have a block twice in the
   // successor/predecessor lists.
-  if (TrueMBB != FalseMBB)
-    FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+  if (TrueMBB != FalseMBB) {
+    if (FuncInfo.BPI) {
+      uint32_t BranchWeight =
+          FuncInfo.BPI->getEdgeWeight(BranchBB, TrueMBB->getBasicBlock());
+      FuncInfo.MBB->addSuccessor(TrueMBB, BranchWeight);
+    } else
+      FuncInfo.MBB->addSuccessorWithoutWeight(TrueMBB);
+  }
 
   fastEmitBranch(FalseMBB, DbgLoc);
 }
