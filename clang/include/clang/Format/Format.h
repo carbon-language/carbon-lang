@@ -43,15 +43,34 @@ struct FormatStyle {
   /// \brief The extra indent or outdent of access modifiers, e.g. \c public:.
   int AccessModifierOffset;
 
+  /// \brief Different styles for aligning after open brackets.
+  enum BracketAlignmentStyle {
+    /// \brief Align parameters on the open bracket, e.g.:
+    /// \code
+    ///   someLongFunction(argument1,
+    ///                    argument2);
+    /// \endcode
+    BAS_Align,
+    /// \brief Don't align, instead use \c ContinuationIndentWidth, e.g.:
+    /// \code
+    ///   someLongFunction(argument1,
+    ///       argument2);
+    /// \endcode
+    BAS_DontAlign,
+    /// \brief Always break after an open bracket, if the parameters don't fit
+    /// on a single line, e.g.:
+    /// \code
+    ///   someLongFunction(
+    ///       argument1, argument2);
+    /// \endcode
+    BAS_AlwaysBreak,
+  };
+
   /// \brief If \c true, horizontally aligns arguments after an open bracket.
   ///
   /// This applies to round brackets (parentheses), angle brackets and square
-  /// brackets. This will result in formattings like
-  /// \code
-  ///   someLongFunction(argument1,
-  ///                    argument2);
-  /// \endcode
-  bool AlignAfterOpenBracket;
+  /// brackets.
+  BracketAlignmentStyle AlignAfterOpenBracket;
 
   /// \brief If \c true, aligns consecutive assignments.
   ///

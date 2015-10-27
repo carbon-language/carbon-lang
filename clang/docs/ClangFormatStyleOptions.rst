@@ -150,16 +150,37 @@ the configuration (without a prefix: ``Auto``).
 **AccessModifierOffset** (``int``)
   The extra indent or outdent of access modifiers, e.g. ``public:``.
 
-**AlignAfterOpenBracket** (``bool``)
+**AlignAfterOpenBracket** (``BracketAlignmentStyle``)
   If ``true``, horizontally aligns arguments after an open bracket.
 
   This applies to round brackets (parentheses), angle brackets and square
   brackets. This will result in formattings like
 
-  .. code-block:: c++
+  Possible values:
 
-    someLongFunction(argument1,
-                     argument2);
+  * ``BAS_Align`` (in configuration: ``Align``)
+    Align parameters on the open bracket, e.g.:
+
+    .. code-block:: c++
+
+      someLongFunction(argument1,
+                       argument2);
+  * ``BAS_DontAlign`` (in configuration: ``DontAlign``)
+    Don't align, instead use ``ContinuationIndentWidth``, e.g.:
+
+    .. code-block:: c++
+
+      someLongFunction(argument1,
+          argument2);
+  * ``BAS_AlwaysBreak`` (in configuration: ``AlwaysBreak``)
+    Always break after an open bracket, if the parameters don't fit
+    on a single line, e.g.:
+
+    .. code-block:: c++
+
+      someLongFunction(
+          argument1, argument2);
+
 
 **AlignConsecutiveAssignments** (``bool``)
   If ``true``, aligns consecutive assignments.
@@ -286,6 +307,9 @@ the configuration (without a prefix: ``Auto``).
   * ``bool BeforeElse`` Wrap before ``else``.
   * ``bool IndentBraces`` Indent the wrapped braces themselves.
 
+
+**BreakAfterJavaFieldAnnotations** (``bool``)
+  Break after each annotation on a field in Java files.
 
 **BreakBeforeBinaryOperators** (``BinaryOperatorStyle``)
   The way to wrap binary operators.

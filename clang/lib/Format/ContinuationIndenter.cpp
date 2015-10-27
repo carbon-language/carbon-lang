@@ -327,8 +327,17 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
       State.Stack.back().ColonPos = State.Column + Spaces + Current.ColumnWidth;
   }
 
-  if (Style.AlignAfterOpenBracket && Previous.opensScope() &&
-      Previous.isNot(TT_ObjCMethodExpr) &&
+  // In "AlwaysBreak" mode, enforce wrapping directly after the parenthesis by
+  // disallowing any further line breaks if there is no line break after the
+  // opening parenthesis. Don't break if it doesn't conserve columns.
+  if (Style.AlignAfterOpenBracket == FormatStyle::BAS_AlwaysBreak &&
+      Previous.is(tok::l_paren) && State.Column > getNewLineColumn(State) &&
+      (!Previous.Previous ||
+       !Previous.Previous->isOneOf(tok::kw_for, tok::kw_while, tok::kw_switch)))
+    State.Stack.back().NoLineBreak = true;
+
+  if (Style.AlignAfterOpenBracket != FormatStyle::BAS_DontAlign &&
+      Previous.opensScope() && Previous.isNot(TT_ObjCMethodExpr) &&
       (Current.isNot(TT_LineComment) || Previous.BlockKind == BK_BracedInit))
     State.Stack.back().Indent = State.Column + Spaces;
   if (State.Stack.back().AvoidBinPacking && startsNextParameter(Current, Style))
@@ -794,8 +803,8 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
         (Style.AlignOperands || *I < prec::Assignment) &&
         (!Previous || Previous->isNot(tok::kw_return) ||
          (Style.Language != FormatStyle::LK_Java && *I > 0)) &&
-        (Style.AlignAfterOpenBracket || *I != prec::Comma ||
-         Current.NestingLevel == 0))
+        (Style.AlignAfterOpenBracket != FormatStyle::BAS_DontAlign ||
+         *I != prec::Comma || Current.NestingLevel == 0))
       NewParenState.Indent =
           std::max(std::max(State.Column, NewParenState.Indent),
                    State.Stack.back().LastSpace);
@@ -874,8 +883,15 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   bool BreakBeforeParameter = false;
   unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
                                         State.Stack.back().NestedBlockIndent);
+  // Generally inherit NoLineBreak from the current scope to nested scope.
+  // However, don't do this for nested blocks, e.g. lambdas as these follow
+  // different indentation rules.
+  bool NoLineBreak = State.Stack.back().NoLineBreak ||
+                     (Current.is(TT_TemplateOpener) &&
+                      State.Stack.back().ContainsUnwrappedBuilder);
   if (Current.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare)) {
     if (Current.opensBlockTypeList(Style)) {
+      NoLineBreak = false;
       NewIndent = State.Stack.back().NestedBlockIndent + Style.IndentWidth;
       NewIndent = std::min(State.Column + 2, NewIndent);
       ++NewIndentLevel;
@@ -933,9 +949,6 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
       }
     }
   }
-  bool NoLineBreak = State.Stack.back().NoLineBreak ||
-                     (Current.is(TT_TemplateOpener) &&
-                      State.Stack.back().ContainsUnwrappedBuilder);
   State.Stack.push_back(ParenState(NewIndent, NewIndentLevel, LastSpace,
                                    AvoidBinPacking, NoLineBreak));
   State.Stack.back().NestedBlockIndent = NestedBlockIndent;
@@ -974,7 +987,7 @@ void ContinuationIndenter::moveStateToNewBlock(LineState &State) {
   State.Stack.push_back(ParenState(
       NewIndent, /*NewIndentLevel=*/State.Stack.back().IndentLevel + 1,
       State.Stack.back().LastSpace, /*AvoidBinPacking=*/true,
-      State.Stack.back().NoLineBreak));
+      /*NoLineBreak=*/false));
   State.Stack.back().NestedBlockIndent = NestedBlockIndent;
   State.Stack.back().BreakBeforeParameter = true;
 }
