@@ -1091,6 +1091,12 @@ namespace llvm {
                      SmallVectorImpl<const SCEV *> &Sizes,
                      const SCEV *ElementSize);
 
+    /// Return the DataLayout associated with the module this SCEV instance is
+    /// operating on.
+    const DataLayout &getDataLayout() const {
+      return F.getParent()->getDataLayout();
+    }
+
   private:
     /// Compute the backedge taken count knowing the interval difference, the
     /// stride and presence of the equality in the comparison.

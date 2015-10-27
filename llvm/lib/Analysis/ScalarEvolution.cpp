@@ -3218,8 +3218,7 @@ const SCEV *ScalarEvolution::getSizeOfExpr(Type *IntTy, Type *AllocTy) {
   // We can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
-  return getConstant(IntTy,
-                     F.getParent()->getDataLayout().getTypeAllocSize(AllocTy));
+  return getConstant(IntTy, getDataLayout().getTypeAllocSize(AllocTy));
 }
 
 const SCEV *ScalarEvolution::getOffsetOfExpr(Type *IntTy,
@@ -3229,9 +3228,7 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(Type *IntTy,
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
   return getConstant(
-      IntTy,
-      F.getParent()->getDataLayout().getStructLayout(STy)->getElementOffset(
-          FieldNo));
+      IntTy, getDataLayout().getStructLayout(STy)->getElementOffset(FieldNo));
 }
 
 const SCEV *ScalarEvolution::getUnknown(Value *V) {
@@ -3273,7 +3270,7 @@ bool ScalarEvolution::isSCEVable(Type *Ty) const {
 /// for which isSCEVable must return true.
 uint64_t ScalarEvolution::getTypeSizeInBits(Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
-  return F.getParent()->getDataLayout().getTypeSizeInBits(Ty);
+  return getDataLayout().getTypeSizeInBits(Ty);
 }
 
 /// getEffectiveSCEVType - Return a type with the same bitwidth as
@@ -3288,7 +3285,7 @@ Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
 
   // The only other support type is pointer.
   assert(Ty->isPointerTy() && "Unexpected non-pointer non-integer type!");
-  return F.getParent()->getDataLayout().getIntPtrType(Ty);
+  return getDataLayout().getIntPtrType(Ty);
 }
 
 const SCEV *ScalarEvolution::getCouldNotCompute() {
@@ -3924,8 +3921,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
   // PHI's incoming blocks are in a different loop, in which case doing so
   // risks breaking LCSSA form. Instcombine would normally zap these, but
   // it doesn't have DominatorTree information, so it may miss cases.
-  if (Value *V = SimplifyInstruction(PN, F.getParent()->getDataLayout(), &TLI,
-                                     &DT, &AC))
+  if (Value *V = SimplifyInstruction(PN, getDataLayout(), &TLI, &DT, &AC))
     if (LI.replacementPreservesLCSSAForm(PN, V))
       return getSCEV(V);
 
@@ -4120,8 +4116,8 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
     // For a SCEVUnknown, ask ValueTracking.
     unsigned BitWidth = getTypeSizeInBits(U->getType());
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    computeKnownBits(U->getValue(), Zeros, Ones, F.getParent()->getDataLayout(),
-                     0, &AC, nullptr, &DT);
+    computeKnownBits(U->getValue(), Zeros, Ones, getDataLayout(), 0, &AC,
+                     nullptr, &DT);
     return Zeros.countTrailingOnes();
   }
 
@@ -4334,7 +4330,7 @@ ScalarEvolution::getRange(const SCEV *S,
     // Split here to avoid paying the compile-time cost of calling both
     // computeKnownBits and ComputeNumSignBits.  This restriction can be lifted
     // if needed.
-    const DataLayout &DL = F.getParent()->getDataLayout();
+    const DataLayout &DL = getDataLayout();
     if (SignHint == ScalarEvolution::HINT_RANGE_UNSIGNED) {
       // For a SCEVUnknown, ask ValueTracking.
       APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
@@ -4542,8 +4538,8 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       unsigned TZ = A.countTrailingZeros();
       unsigned BitWidth = A.getBitWidth();
       APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-      computeKnownBits(U->getOperand(0), KnownZero, KnownOne,
-                       F.getParent()->getDataLayout(), 0, &AC, nullptr, &DT);
+      computeKnownBits(U->getOperand(0), KnownZero, KnownOne, getDataLayout(),
+                       0, &AC, nullptr, &DT);
 
       APInt EffectiveMask =
           APInt::getLowBitsSet(BitWidth, BitWidth - LZ - TZ).shl(TZ);
@@ -5776,7 +5772,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
 
   unsigned NumIterations = BEs.getZExtValue(); // must be in range
   unsigned IterationNum = 0;
-  const DataLayout &DL = F.getParent()->getDataLayout();
+  const DataLayout &DL = getDataLayout();
   for (; ; ++IterationNum) {
     if (IterationNum == NumIterations)
       return RetVal = CurrentIterVals[PN];  // Got exit value!
@@ -5865,7 +5861,7 @@ const SCEV *ScalarEvolution::computeExitCountExhaustively(const Loop *L,
   // the loop symbolically to determine when the condition gets a value of
   // "ExitWhen".
   unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
-  const DataLayout &DL = F.getParent()->getDataLayout();
+  const DataLayout &DL = getDataLayout();
   for (unsigned IterationNum = 0; IterationNum != MaxIterations;++IterationNum){
     auto *CondVal = dyn_cast_or_null<ConstantInt>(
         EvaluateExpression(Cond, L, CurrentIterVals, DL, &TLI));
@@ -6097,7 +6093,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
         // Check to see if getSCEVAtScope actually made an improvement.
         if (MadeImprovement) {
           Constant *C = nullptr;
-          const DataLayout &DL = F.getParent()->getDataLayout();
+          const DataLayout &DL = getDataLayout();
           if (const CmpInst *CI = dyn_cast<CmpInst>(I))
             C = ConstantFoldCompareInstOperands(CI->getPredicate(), Operands[0],
                                                 Operands[1], DL, &TLI);
