@@ -240,6 +240,9 @@ def mconstructor_aliases : Flag<["-"], "mconstructor-aliases">,
   HelpText<"Emit complete constructors and destructors as aliases when possible">;
 def mlink_bitcode_file : Separate<["-"], "mlink-bitcode-file">,
   HelpText<"Link the given bitcode file before performing optimizations.">;
+def mlink_cuda_bitcode : Separate<["-"], "mlink-cuda-bitcode">,
+  HelpText<"Link and internalize needed symbols from the given bitcode file "
+           "before performing optimizations.">;
 def vectorize_loops : Flag<["-"], "vectorize-loops">,
   HelpText<"Run the Loop vectorization passes">;
 def vectorize_slp : Flag<["-"], "vectorize-slp">,
@@ -671,8 +674,6 @@ def fcuda_include_gpubinary : Separate<["-"], "fcuda-include-gpubinary">,
   HelpText<"Incorporate CUDA device-side binary into host object file.">;
 def fcuda_target_overloads : Flag<["-"], "fcuda-target-overloads">,
   HelpText<"Enable function overloads based on CUDA target attributes.">;
-def fcuda_uses_libdevice : Flag<["-"], "fcuda-uses-libdevice">,
-  HelpText<"Selectively link and internalize bitcode.">;
 
 } // let Flags = [CC1Option]
 

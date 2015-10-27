@@ -25,6 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
@@ -539,7 +540,13 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.EmitOpenCLArgMetadata = Args.hasArg(OPT_cl_kernel_arg_info);
   Opts.CompressDebugSections = Args.hasArg(OPT_compress_debug_sections);
   Opts.DebugCompilationDir = Args.getLastArgValue(OPT_fdebug_compilation_dir);
-  Opts.LinkBitcodeFile = Args.getLastArgValue(OPT_mlink_bitcode_file);
+  for (auto A : Args.filtered(OPT_mlink_bitcode_file, OPT_mlink_cuda_bitcode)) {
+    unsigned LinkFlags = llvm::Linker::Flags::None;
+    if (A->getOption().matches(OPT_mlink_cuda_bitcode))
+      LinkFlags = llvm::Linker::Flags::LinkOnlyNeeded |
+                  llvm::Linker::Flags::InternalizeLinkedSymbols;
+    Opts.LinkBitcodeFiles.push_back(std::make_pair(LinkFlags, A->getValue()));
+  }
   Opts.SanitizeCoverageType =
       getLastArgIntValue(Args, OPT_fsanitize_coverage_type, 0, Diags);
   Opts.SanitizeCoverageIndirectCalls =
@@ -1393,9 +1400,6 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   if (Args.hasArg(OPT_fcuda_is_device))
     Opts.CUDAIsDevice = 1;
-
-  if (Args.hasArg(OPT_fcuda_uses_libdevice))
-    Opts.CUDAUsesLibDevice = 1;
 
   if (Args.hasArg(OPT_fcuda_allow_host_calls_from_host_device))
     Opts.CUDAAllowHostCallsFromHostDevice = 1;

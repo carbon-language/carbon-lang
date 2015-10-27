@@ -130,7 +130,7 @@ public:
   std::string LimitFloatPrecision;
 
   /// The name of the bitcode file to link before optzns.
-  std::string LinkBitcodeFile;
+  std::vector<std::pair<unsigned, std::string>> LinkBitcodeFiles;
 
   /// The user provided name for the "main file", if non-empty. This is useful
   /// in situations where the input file name does not match the original input

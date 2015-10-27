@@ -6,12 +6,20 @@
 // Prepare bitcode file to link with
 // RUN: %clang_cc1 -triple nvptx-unknown-cuda -emit-llvm-bc -o %t.bc \
 // RUN:    %S/Inputs/device-code.ll
+// RUN: %clang_cc1 -triple nvptx-unknown-cuda -emit-llvm-bc -o %t-2.bc \
+// RUN:    %S/Inputs/device-code-2.ll
 //
 // Make sure function in device-code gets linked in and internalized.
 // RUN: %clang_cc1 -triple nvptx-unknown-cuda -fcuda-is-device \
-// RUN:    -mlink-bitcode-file %t.bc -fcuda-uses-libdevice -emit-llvm \
+// RUN:    -mlink-cuda-bitcode %t.bc  -emit-llvm \
 // RUN:    -disable-llvm-passes -o - %s \
 // RUN:    | FileCheck %s -check-prefix CHECK-IR
+//
+// Make sure we can link two bitcode files.
+// RUN: %clang_cc1 -triple nvptx-unknown-cuda -fcuda-is-device \
+// RUN:    -mlink-cuda-bitcode %t.bc -mlink-cuda-bitcode %t-2.bc \
+// RUN:    -emit-llvm -disable-llvm-passes -o - %s \
+// RUN:    | FileCheck %s -check-prefix CHECK-IR -check-prefix CHECK-IR-2
 //
 // Make sure function in device-code gets linked but is not internalized
 // without -fcuda-uses-libdevice
@@ -22,7 +30,7 @@
 //
 // Make sure NVVMReflect pass is enabled in NVPTX back-end.
 // RUN: %clang_cc1 -triple nvptx-unknown-cuda -fcuda-is-device \
-// RUN:    -mlink-bitcode-file %t.bc -fcuda-uses-libdevice -S -o /dev/null %s \
+// RUN:    -mlink-cuda-bitcode %t.bc -S -o /dev/null %s \
 // RUN:    -backend-option -debug-pass=Structure 2>&1 \
 // RUN:    | FileCheck %s -check-prefix CHECK-REFLECT
 
@@ -51,6 +59,12 @@ __global__ __attribute__((used)) void kernel(float *out, float *in) {
 // CHECK-IR-NLD-LABEL: define float @_Z17device_mul_or_addff(
 // CHECK-IR: call i32 @__nvvm_reflect
 // CHECK-IR: ret float
+
+// Make sure we've linked in and internalized only needed functions
+// from the second bitcode file.
+// CHECK-IR-2-LABEL: define internal double @__nv_sin
+// CHECK-IR-2-LABEL: define internal double @__nv_exp
+// CHECK-IR-2-NOT: double @__unused
 
 // Verify that NVVMReflect pass is among the passes run by NVPTX back-end.
 // CHECK-REFLECT: Replace occurrences of __nvvm_reflect() calls with 0/1
