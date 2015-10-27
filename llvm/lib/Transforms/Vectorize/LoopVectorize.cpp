@@ -254,19 +254,6 @@ static Type* ToVectorTy(Type *Scalar, unsigned VF) {
   return VectorType::get(Scalar, VF);
 }
 
-/// A helper function that returns GEP instruction and knows to skip
-/// 'bitcast'.
-static GetElementPtrInst *getGEPInstruction(Value *Ptr) {
-
-  if (isa<GetElementPtrInst>(Ptr))
-    return cast<GetElementPtrInst>(Ptr);
-
-  if (isa<BitCastInst>(Ptr) &&
-      isa<GetElementPtrInst>(cast<BitCastInst>(Ptr)->getOperand(0)))
-    return cast<GetElementPtrInst>(cast<BitCastInst>(Ptr)->getOperand(0));
-  return nullptr;
-}
-
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
 /// This class performs the widening of scalars into vectors, or multiple
@@ -1956,7 +1943,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
     return II.getConsecutiveDirection();
   }
 
-  GetElementPtrInst *Gep = getGEPInstruction(Ptr);
+  GetElementPtrInst *Gep = dyn_cast_or_null<GetElementPtrInst>(Ptr);
   if (!Gep)
     return 0;
 
@@ -2350,7 +2337,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   VectorParts &Entry = WidenMap.get(Instr);
 
   // Handle consecutive loads/stores.
-  GetElementPtrInst *Gep = getGEPInstruction(Ptr);
+  GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
   if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
     setDebugLocFromInst(Builder, Gep);
     Value *PtrOperand = Gep->getPointerOperand();
@@ -2410,7 +2397,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
     // We don't want to update the value in the map as it might be used in
     // another expression. So don't use a reference type for "StoredVal".
     VectorParts StoredVal = getVectorValue(SI->getValueOperand());
-
+    
     for (unsigned Part = 0; Part < UF; ++Part) {
       // Calculate the pointer for the specific unroll-part.
       Value *PartPtr =
