@@ -50,11 +50,7 @@ QualType CallEvent::getResultType() const {
   return ResultTy;
 }
 
-static bool isCallbackArg(SVal V, QualType T) {
-  // If the parameter is 0, it's harmless.
-  if (V.isZeroConstant())
-    return false;
-
+static bool isCallback(QualType T) {
   // If a parameter is a block or a callback, assume it can modify pointer.
   if (T->isBlockPointerType() ||
       T->isFunctionPointerType() ||
@@ -75,30 +71,51 @@ static bool isCallbackArg(SVal V, QualType T) {
         return true;
     }
   }
-
   return false;
 }
 
-bool CallEvent::hasNonZeroCallbackArg() const {
+static bool isVoidPointerToNonConst(QualType T) {
+  if (const PointerType *PT = T->getAs<PointerType>()) {
+    QualType PointeeTy = PT->getPointeeType();
+    if (PointeeTy.isConstQualified())
+      return false;
+    return PointeeTy->isVoidType();
+  } else
+    return false;
+}
+
+bool CallEvent::hasNonNullArgumentsWithType(bool (*Condition)(QualType)) const {
   unsigned NumOfArgs = getNumArgs();
 
   // If calling using a function pointer, assume the function does not
-  // have a callback. TODO: We could check the types of the arguments here.
+  // satisfy the callback.
+  // TODO: We could check the types of the arguments here.
   if (!getDecl())
     return false;
 
   unsigned Idx = 0;
   for (CallEvent::param_type_iterator I = param_type_begin(),
-                                       E = param_type_end();
+                                      E = param_type_end();
        I != E && Idx < NumOfArgs; ++I, ++Idx) {
     if (NumOfArgs <= Idx)
       break;
 
-    if (isCallbackArg(getArgSVal(Idx), *I))
+    // If the parameter is 0, it's harmless.
+    if (getArgSVal(Idx).isZeroConstant())
+      continue;
+
+    if (Condition(*I))
       return true;
   }
-
   return false;
+}
+
+bool CallEvent::hasNonZeroCallbackArg() const {
+  return hasNonNullArgumentsWithType(isCallback);
+}
+
+bool CallEvent::hasVoidPointerToNonConstArg() const {
+  return hasNonNullArgumentsWithType(isVoidPointerToNonConst);
 }
 
 bool CallEvent::isGlobalCFunction(StringRef FunctionName) const {
@@ -326,7 +343,7 @@ void AnyFunctionCall::getInitialStackFrameContents(
 }
 
 bool AnyFunctionCall::argumentsMayEscape() const {
-  if (hasNonZeroCallbackArg())
+  if (CallEvent::argumentsMayEscape() || hasVoidPointerToNonConstArg())
     return true;
 
   const FunctionDecl *D = getDecl();

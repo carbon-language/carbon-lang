@@ -1657,6 +1657,23 @@ int *radar15580979() {
   return p;
 }
 
+// Some data structures may hold onto the pointer and free it later.
+void testEscapeThroughSystemCallTakingVoidPointer1(void *queue) {
+  int *data = (int *)malloc(32);
+  fake_insque(queue, data); // no warning
+}
+
+void testEscapeThroughSystemCallTakingVoidPointer2(fake_rb_tree_t *rbt) {
+  int *data = (int *)malloc(32);
+  fake_rb_tree_init(rbt, data);
+} //expected-warning{{Potential leak}}
+
+void testEscapeThroughSystemCallTakingVoidPointer3(fake_rb_tree_t *rbt) {
+  int *data = (int *)malloc(32);
+  fake_rb_tree_init(rbt, data);
+  fake_rb_tree_insert_node(rbt, data); // no warning
+}
+
 // ----------------------------------------------------------------------------
 // False negatives.
 

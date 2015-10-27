@@ -82,6 +82,12 @@ void xpc_connection_resume(xpc_connection_t connection);
 void fakeSystemHeaderCallInt(int *);
 void fakeSystemHeaderCallIntPtr(int **);
 
+// Some data strauctures may hold onto the pointer and free it later.
+void fake_insque(void *, void *);
+typedef struct fake_rb_tree { void *opaque[8]; } fake_rb_tree_t;
+void fake_rb_tree_init(fake_rb_tree_t *, const void *);
+void *fake_rb_tree_insert_node(fake_rb_tree_t *, void *);
+
 typedef struct __SomeStruct {
   char * p;
 } SomeStruct;

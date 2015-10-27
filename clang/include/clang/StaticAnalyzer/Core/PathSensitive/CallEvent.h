@@ -254,8 +254,15 @@ public:
   /// which the return value has already been bound to the origin expression.
   SVal getReturnValue() const;
 
+  /// \brief Returns true if the type of any of the non-null arguments satisfies
+  /// the condition.
+  bool hasNonNullArgumentsWithType(bool (*Condition)(QualType)) const;
+
   /// \brief Returns true if any of the arguments appear to represent callbacks.
   bool hasNonZeroCallbackArg() const;
+
+  /// \brief Returns true if any of the arguments is void*.
+  bool hasVoidPointerToNonConstArg() const;
 
   /// \brief Returns true if any of the arguments are known to escape to long-
   /// term storage, even if this method will not modify them.

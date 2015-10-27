@@ -2390,7 +2390,7 @@ bool MallocChecker::mayFreeAnyEscapedMemoryOrIsModeledExplicitly(
   if (const ObjCMethodCall *Msg = dyn_cast<ObjCMethodCall>(Call)) {
     // If it's not a framework call, or if it takes a callback, assume it
     // can free memory.
-    if (!Call->isInSystemHeader() || Call->hasNonZeroCallbackArg())
+    if (!Call->isInSystemHeader() || Call->argumentsMayEscape())
       return true;
 
     // If it's a method we know about, handle it explicitly post-call.
