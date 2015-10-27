@@ -115,6 +115,10 @@ elseif( ANDROID_ABI STREQUAL "mips" )
   list( APPEND LLDB_SYSTEM_LIBS atomic )
   set( LLDB_SYSTEM_LIBS ${LLDB_SYSTEM_LIBS} CACHE INTERNAL "" FORCE )
  endif()
+ if( LLVM_BUILD_STATIC )
+  # Temporary workaround for static linking with the latest API.
+  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -DANDROID_MIPS_BUILD_STATIC" )
+ endif()
 endif()
 
 if( NOT LLVM_BUILD_STATIC )

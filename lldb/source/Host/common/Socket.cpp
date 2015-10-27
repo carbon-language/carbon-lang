@@ -40,11 +40,11 @@
 #include <asm-generic/errno-base.h>
 #include <errno.h>
 #include <arpa/inet.h>
-#if defined(ANDROID_ARM_BUILD_STATIC)
+#if defined(ANDROID_ARM_BUILD_STATIC) || defined(ANDROID_MIPS_BUILD_STATIC)
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <fcntl.h>
-#endif // ANDROID_ARM_BUILD_STATIC
+#endif // ANDROID_ARM_BUILD_STATIC || ANDROID_MIPS_BUILD_STATIC
 #endif // __ANDROID_NDK__
 
 using namespace lldb;
@@ -457,7 +457,7 @@ Socket::AcceptSocket(NativeSocket sockfd,
                      Error& error)
 {
     error.Clear();
-#if defined(ANDROID_ARM_BUILD_STATIC)
+#if defined(ANDROID_ARM_BUILD_STATIC) || defined(ANDROID_MIPS_BUILD_STATIC)
     // Temporary workaround for statically linking Android lldb-server with the
     // latest API.
     int fd = syscall(__NR_accept, sockfd, addr, addrlen);
