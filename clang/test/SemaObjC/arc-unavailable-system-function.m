@@ -3,7 +3,7 @@
 
 # 1 "<command line>"
 # 1 "/System/Library/Frameworks/Foundation.framework/Headers/Foundation.h" 1 3
-id * foo(); // expected-note {{'foo' has been explicitly marked unavailable here}}
+id * foo(); // expected-note {{unsupported declaration here}}
 
 # 1 "arc-unavailable-system-function.m" 2
 void ret() {

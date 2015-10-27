@@ -2,7 +2,7 @@
 
 // rdar://problem/9150784
 void test(void) {
-  __weak id x; // expected-error {{the current deployment target does not support automated __weak references}}
+  __weak id x; // expected-error {{cannot create __weak reference because the current deployment target does not support weak references}}
   __weak void *v; // expected-warning {{'__weak' only applies to Objective-C object or block pointer types}}
 }
 
@@ -12,5 +12,5 @@ void test(void) {
 
 @implementation A
 // rdar://9605088
-@synthesize testObjectWeakProperty; // expected-error {{the current deployment target does not support automated __weak references}}
+@synthesize testObjectWeakProperty; // expected-error {{cannot synthesize weak property because the current deployment target does not support weak references}}
 @end

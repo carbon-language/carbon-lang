@@ -38,31 +38,31 @@
 
 @interface Bat 
 @property(strong) __unsafe_unretained id x; // expected-error {{strong property 'x' may not also be declared __unsafe_unretained}}
-@property(strong) __weak id y; // expected-error {{strong property 'y' may not also be declared __weak}} expected-error {{property attributes 'strong' and 'weak' are mutually exclusive}}
+@property(strong) __weak id y; // expected-error {{strong property 'y' may not also be declared __weak}}
 @property(strong) __autoreleasing id z; // expected-error {{strong property 'z' may not also be declared __autoreleasing}}
 @end
 
 @interface Bau
 @property(retain) __unsafe_unretained id x; // expected-error {{strong property 'x' may not also be declared __unsafe_unretained}}
-@property(retain) __weak id y; // expected-error {{strong property 'y' may not also be declared __weak}} expected-error {{property attributes 'retain' and 'weak' are mutually exclusive}}
+@property(retain) __weak id y; // expected-error {{strong property 'y' may not also be declared __weak}}
 @property(retain) __autoreleasing id z; // expected-error {{strong property 'z' may not also be declared __autoreleasing}}
 @end
 
 @interface Bav 
 @property(copy) __unsafe_unretained id x; // expected-error {{strong property 'x' may not also be declared __unsafe_unretained}}
-@property(copy) __weak id y; // expected-error {{strong property 'y' may not also be declared __weak}} expected-error {{property attributes 'copy' and 'weak' are mutually exclusive}}
+@property(copy) __weak id y; // expected-error {{strong property 'y' may not also be declared __weak}}
 @property(copy) __autoreleasing id z; // expected-error {{strong property 'z' may not also be declared __autoreleasing}}
 @end
 
 @interface Bingo 
 @property(assign) __unsafe_unretained id x;
-@property(assign) __weak id y; // expected-error {{property attributes 'assign' and 'weak' are mutually exclusive}}
+@property(assign) __weak id y; // expected-error {{unsafe_unretained property 'y' may not also be declared __weak}}
 @property(assign) __autoreleasing id z; // expected-error {{unsafe_unretained property 'z' may not also be declared __autoreleasing}}
 @end
 
 @interface Batman 
 @property(unsafe_unretained) __unsafe_unretained id x;
-@property(unsafe_unretained) __weak id y; // expected-error {{property attributes 'unsafe_unretained' and 'weak' are mutually exclusive}}
+@property(unsafe_unretained) __weak id y; // expected-error {{unsafe_unretained property 'y' may not also be declared __weak}}
 @property(unsafe_unretained) __autoreleasing id z; // expected-error {{unsafe_unretained property 'z' may not also be declared __autoreleasing}}
 @end
 

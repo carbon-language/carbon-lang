@@ -1212,16 +1212,6 @@ public:
 
   bool CheckFunctionReturnType(QualType T, SourceLocation Loc);
 
-  unsigned deduceWeakPropertyFromType(QualType T) {
-    if ((getLangOpts().getGC() != LangOptions::NonGC &&
-         T.isObjCGCWeak()) ||
-        (getLangOpts().ObjCAutoRefCount &&
-         T.getObjCLifetime() == Qualifiers::OCL_Weak))
-        return ObjCDeclSpec::DQ_PR_weak;
-    return 0;
-  }
-
-
   /// \brief Build a function type.
   ///
   /// This routine checks the function type according to C++ rules and

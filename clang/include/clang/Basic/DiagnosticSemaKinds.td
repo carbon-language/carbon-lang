@@ -3992,6 +3992,8 @@ def err_unavailable_message : Error<"%0 is unavailable: %1">;
 def warn_unavailable_fwdclass_message : Warning<
     "%0 may be unavailable because the receiver type is unknown">,
     InGroup<UnavailableDeclarations>;
+def note_unavailability_inferred_here : Note<
+    "unsupported declaration here">;
 def note_availability_specified_here : Note<
   "%0 has been explicitly marked "
   "%select{unavailable|deleted|deprecated|partial}1 here">;
@@ -4524,9 +4526,15 @@ let CategoryName = "ARC Semantic Issue" in {
 let CategoryName = "ARC Weak References" in {
 
 def err_arc_weak_no_runtime : Error<
-  "the current deployment target does not support automated __weak references">;
+  "cannot create __weak reference because the current deployment target "
+  "does not support weak references">;
 def err_arc_weak_disabled : Error<
-  "automated __weak references are disabled in manual reference counting">;
+  "cannot create __weak reference in file using manual reference counting">;
+def err_synthesizing_arc_weak_property_disabled : Error<
+  "cannot synthesize weak property in file using manual reference counting">;
+def err_synthesizing_arc_weak_property_no_runtime : Error<
+  "cannot synthesize weak property because the current deployment target "
+  "does not support weak references">;
 def warn_objc_weak_compat : Warning<
   "the meaning of __weak has changed in manual reference-counting">,
   InGroup<DiagGroup<"objc-weak-compat">>, DefaultIgnore;

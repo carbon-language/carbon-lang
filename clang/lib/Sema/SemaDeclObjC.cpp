@@ -3495,6 +3495,23 @@ void Sema::DiagnoseDuplicateIvars(ObjCInterfaceDecl *ID,
   }
 }
 
+/// Diagnose attempts to define ARC-__weak ivars when __weak is disabled.
+static void DiagnoseWeakIvars(Sema &S, ObjCImplementationDecl *ID) {
+  if (S.getLangOpts().ObjCWeak) return;
+
+  for (auto ivar = ID->getClassInterface()->all_declared_ivar_begin();
+         ivar; ivar = ivar->getNextIvar()) {
+    if (ivar->isInvalidDecl()) continue;
+    if (ivar->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
+      if (S.getLangOpts().ObjCWeakRuntime) {
+        S.Diag(ivar->getLocation(), diag::err_arc_weak_disabled);
+      } else {
+        S.Diag(ivar->getLocation(), diag::err_arc_weak_no_runtime);
+      }
+    }
+  }
+}
+
 Sema::ObjCContainerKind Sema::getObjCContainerKind() const {
   switch (CurContext->getDeclKind()) {
     case Decl::ObjCInterface:
@@ -3644,6 +3661,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
       DiagnoseUnusedBackingIvarInAccessor(S, IC);
       if (IDecl->hasDesignatedInitializers())
         DiagnoseMissingDesignatedInitOverrides(IC, IDecl);
+      DiagnoseWeakIvars(*this, IC);
 
       bool HasRootClassAttr = IDecl->hasAttr<ObjCRootClassAttr>();
       if (IDecl->getSuperClass() == nullptr) {

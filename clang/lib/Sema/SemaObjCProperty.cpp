@@ -61,8 +61,10 @@ static Qualifiers::ObjCLifetime getImpliedARCOwnership(
   return Qualifiers::OCL_None;
 }
 
-/// Check the internal consistency of a property declaration.
-static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
+/// Check the internal consistency of a property declaration with
+/// an explicit ownership qualifier.
+static void checkPropertyDeclWithOwnership(Sema &S,
+                                           ObjCPropertyDecl *property) {
   if (property->isInvalidDecl()) return;
 
   ObjCPropertyDecl::PropertyAttributeKind propertyKind
@@ -70,8 +72,7 @@ static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
   Qualifiers::ObjCLifetime propertyLifetime
     = property->getType().getObjCLifetime();
 
-  // Nothing to do if we don't have a lifetime.
-  if (propertyLifetime == Qualifiers::OCL_None) return;
+  assert(propertyLifetime != Qualifiers::OCL_None);
 
   Qualifiers::ObjCLifetime expectedLifetime
     = getImpliedARCOwnership(propertyKind, property->getType());
@@ -127,6 +128,40 @@ CheckPropertyAgainstProtocol(Sema &S, ObjCPropertyDecl *Prop,
     CheckPropertyAgainstProtocol(S, Prop, P, Known);
 }
 
+static unsigned deducePropertyOwnershipFromType(Sema &S, QualType T) {
+  // In GC mode, just look for the __weak qualifier.
+  if (S.getLangOpts().getGC() != LangOptions::NonGC) {
+    if (T.isObjCGCWeak()) return ObjCDeclSpec::DQ_PR_weak;
+
+  // In ARC/MRC, look for an explicit ownership qualifier.
+  // For some reason, this only applies to __weak.
+  } else if (auto ownership = T.getObjCLifetime()) {
+    switch (ownership) {
+    case Qualifiers::OCL_Weak:
+      return ObjCDeclSpec::DQ_PR_weak;
+    case Qualifiers::OCL_Strong:
+      return ObjCDeclSpec::DQ_PR_strong;
+    case Qualifiers::OCL_ExplicitNone:
+      return ObjCDeclSpec::DQ_PR_unsafe_unretained;
+    case Qualifiers::OCL_Autoreleasing:
+    case Qualifiers::OCL_None:
+      return 0;
+    }
+    llvm_unreachable("bad qualifier");
+  }
+
+  return 0;
+}
+
+static unsigned getOwnershipRule(unsigned attr) {
+  return attr & (ObjCPropertyDecl::OBJC_PR_assign |
+                 ObjCPropertyDecl::OBJC_PR_retain |
+                 ObjCPropertyDecl::OBJC_PR_copy   |
+                 ObjCPropertyDecl::OBJC_PR_weak   |
+                 ObjCPropertyDecl::OBJC_PR_strong |
+                 ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
+}
+
 Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                           SourceLocation LParenLoc,
                           FieldDeclarator &FD,
@@ -140,19 +175,25 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   FD.D.setObjCWeakProperty((Attributes & ObjCDeclSpec::DQ_PR_weak) != 0);
   TypeSourceInfo *TSI = GetTypeForDeclarator(FD.D, S);
   QualType T = TSI->getType();
-  Attributes |= deduceWeakPropertyFromType(T);
+  if (!getOwnershipRule(Attributes)) {
+    Attributes |= deducePropertyOwnershipFromType(*this, T);
+  }
   bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
                       // default is readwrite!
                       !(Attributes & ObjCDeclSpec::DQ_PR_readonly));
-  // property is defaulted to 'assign' if it is readwrite and is
-  // not retain or copy
-  bool isAssign = ((Attributes & ObjCDeclSpec::DQ_PR_assign) ||
-                   (isReadWrite &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_strong) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_copy) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_weak)));
+
+  // Property defaults to 'assign' if it is readwrite, unless this is ARC
+  // and the type is retainable.
+  bool isAssign;
+  if (Attributes & (ObjCDeclSpec::DQ_PR_assign |
+                    ObjCDeclSpec::DQ_PR_unsafe_unretained)) {
+    isAssign = true;
+  } else if (getOwnershipRule(Attributes) || !isReadWrite) {
+    isAssign = false;
+  } else {
+    isAssign = (!getLangOpts().ObjCAutoRefCount ||
+                !T->isObjCRetainableType());
+  }
 
   // Proceed with constructing the ObjCPropertyDecls.
   ObjCContainerDecl *ClassDecl = cast<ObjCContainerDecl>(CurContext);
@@ -185,8 +226,9 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                               (isa<ObjCInterfaceDecl>(ClassDecl) ||
                                isa<ObjCProtocolDecl>(ClassDecl)));
 
-  if (getLangOpts().ObjCAutoRefCount)
-    checkARCPropertyDecl(*this, Res);
+  // Check consistency if the type has explicit ownership qualification.
+  if (Res->getType().getObjCLifetime())
+    checkPropertyDeclWithOwnership(*this, Res);
 
   llvm::SmallPtrSet<ObjCProtocolDecl *, 16> KnownProtos;
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
@@ -291,15 +333,6 @@ static bool LocPropertyAttribute( ASTContext &Context, const char *attrName,
   } while (Tok.isNot(tok::r_paren));
   return false;
   
-}
-
-static unsigned getOwnershipRule(unsigned attr) {
-  return attr & (ObjCPropertyDecl::OBJC_PR_assign |
-                 ObjCPropertyDecl::OBJC_PR_retain |
-                 ObjCPropertyDecl::OBJC_PR_copy   |
-                 ObjCPropertyDecl::OBJC_PR_weak   |
-                 ObjCPropertyDecl::OBJC_PR_strong |
-                 ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
 }
 
 ObjCPropertyDecl *
@@ -425,7 +458,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
     PIkind &= ~ObjCPropertyDecl::OBJC_PR_readonly;
     PIkind |= ObjCPropertyDecl::OBJC_PR_readwrite;
-    PIkind |= deduceWeakPropertyFromType(PIDecl->getType());
+    PIkind |= deducePropertyOwnershipFromType(*this, PIDecl->getType());
     unsigned ClassExtensionMemoryModel = getOwnershipRule(Attributes);
     unsigned PrimaryClassMemoryModel = getOwnershipRule(PIkind);
     if (PrimaryClassMemoryModel && ClassExtensionMemoryModel &&
@@ -972,12 +1005,15 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // the property type.
       } else {
         if (!getLangOpts().ObjCWeak) {
-          if (getLangOpts().ObjCWeakRuntime) {
-            Diag(PropertyDiagLoc, diag::err_arc_weak_disabled);
-          } else {
-            Diag(PropertyDiagLoc, diag::err_arc_weak_no_runtime);
+          // Only complain here when synthesizing an ivar.
+          if (!Ivar) {
+            Diag(PropertyDiagLoc,
+                 getLangOpts().ObjCWeakRuntime
+                   ? diag::err_synthesizing_arc_weak_property_disabled
+                   : diag::err_synthesizing_arc_weak_property_no_runtime);
+            Diag(property->getLocation(), diag::note_property_declare);
           }
-          Diag(property->getLocation(), diag::note_property_declare);
+          CompleteTypeErr = true; // suppress later diagnostics about the ivar
         } else {
           isARCWeak = true;
           if (const ObjCObjectPointerType *ObjT =
@@ -2201,15 +2237,6 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
   
   ObjCPropertyDecl *PropertyDecl = cast<ObjCPropertyDecl>(PDecl);
   QualType PropertyTy = PropertyDecl->getType();
-  unsigned PropertyOwnership = getOwnershipRule(Attributes);
-
-  // 'readonly' property with no obvious lifetime.
-  // its life time will be determined by its backing ivar.
-  if (getLangOpts().ObjCAutoRefCount &&
-      Attributes & ObjCDeclSpec::DQ_PR_readonly &&
-      PropertyTy->isObjCRetainableType() &&
-      !PropertyOwnership)
-    return;
 
   // Check for copy or retain on non-object types.
   if ((Attributes & (ObjCDeclSpec::DQ_PR_weak | ObjCDeclSpec::DQ_PR_copy |
@@ -2319,16 +2346,14 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
 
   // Warn if user supplied no assignment attribute, property is
   // readwrite, and this is an object type.
-  if (!(Attributes & (ObjCDeclSpec::DQ_PR_assign | ObjCDeclSpec::DQ_PR_copy |
-                      ObjCDeclSpec::DQ_PR_unsafe_unretained |
-                      ObjCDeclSpec::DQ_PR_retain | ObjCDeclSpec::DQ_PR_strong |
-                      ObjCDeclSpec::DQ_PR_weak)) &&
-      PropertyTy->isObjCObjectPointerType()) {
-      if (getLangOpts().ObjCAutoRefCount)
-        // With arc,  @property definitions should default to (strong) when 
-        // not specified; including when property is 'readonly'.
-        PropertyDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
-      else if (!(Attributes & ObjCDeclSpec::DQ_PR_readonly)) {
+  if (!getOwnershipRule(Attributes) && PropertyTy->isObjCRetainableType()) {
+    if (Attributes & ObjCDeclSpec::DQ_PR_readonly) {
+      // do nothing
+    } else if (getLangOpts().ObjCAutoRefCount) {
+      // With arc, @property definitions should default to strong when 
+      // not specified.
+      PropertyDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
+    } else if (PropertyTy->isObjCObjectPointerType()) {
         bool isAnyClassTy = 
           (PropertyTy->isObjCClassType() || 
            PropertyTy->isObjCQualifiedClassType());
@@ -2347,7 +2372,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
           if (getLangOpts().getGC() == LangOptions::NonGC)
             Diag(Loc, diag::warn_objc_property_default_assign_on_object);
         }
-      }
+    }
 
     // FIXME: Implement warning dependent on NSCopying being
     // implemented. See also:

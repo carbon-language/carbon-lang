@@ -5332,26 +5332,53 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
 }
 
 /// Is the given declaration allowed to use a forbidden type?
-static bool isForbiddenTypeAllowed(Sema &S, Decl *decl) {
+/// If so, it'll still be annotated with an attribute that makes it
+/// illegal to actually use.
+static bool isForbiddenTypeAllowed(Sema &S, Decl *decl,
+                                   const DelayedDiagnostic &diag,
+                                   llvm::StringRef &explanation) {
   // Private ivars are always okay.  Unfortunately, people don't
   // always properly make their ivars private, even in system headers.
   // Plus we need to make fields okay, too.
-  // Function declarations in sys headers will be marked unavailable.
   if (!isa<FieldDecl>(decl) && !isa<ObjCPropertyDecl>(decl) &&
       !isa<FunctionDecl>(decl))
     return false;
 
-  // Require it to be declared in a system header.
-  return S.Context.getSourceManager().isInSystemHeader(decl->getLocation());
+  // All of these declarations are allowed in all system headers. which
+  // we assume to not be defined in user code.
+  if (S.Context.getSourceManager().isInSystemHeader(decl->getLocation())) {
+    explanation = "this system declaration uses an unsupported type";
+    return true;
+  }
+
+  // We do also need to allow __weak in user declarations when it's been
+  // disabled, for ease of integration with -fno-objc-arc files, but we
+  // have to take some care against attempts to define such things.
+  // For now, that care only extends to ivars and properties.
+  if ((isa<ObjCIvarDecl>(decl) || isa<ObjCPropertyDecl>(decl))) {
+    // TODO: find a way to localize these.
+    if (diag.getForbiddenTypeDiagnostic() == diag::err_arc_weak_disabled) {
+      explanation = "cannot use weak references in file using manual "
+                    "reference counting";
+      return true;
+    }
+    if (diag.getForbiddenTypeDiagnostic() == diag::err_arc_weak_no_runtime) {
+      explanation = "cannot use weak references because the current "
+                    "deployment target does not support them";
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /// Handle a delayed forbidden-type diagnostic.
 static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
                                        Decl *decl) {
-  if (decl && isForbiddenTypeAllowed(S, decl)) {
-    decl->addAttr(UnavailableAttr::CreateImplicit(S.Context,
-                        "this system declaration uses an unsupported type",
-                        diag.Loc));
+  llvm::StringRef explanation;
+  if (decl && isForbiddenTypeAllowed(S, decl, diag, explanation)) {
+    decl->addAttr(UnavailableAttr::CreateImplicit(S.Context, explanation,
+                                                  diag.Loc));
     return;
   }
   if (S.getLangOpts().ObjCAutoRefCount)
@@ -5404,6 +5431,7 @@ static void DoEmitAvailabilityWarning(Sema &S, Sema::AvailabilityDiagnostic K,
                                       bool ObjCPropertyAccess) {
   // Diagnostics for deprecated or unavailable.
   unsigned diag, diag_message, diag_fwdclass_message;
+  unsigned diag_available_here = diag::note_availability_specified_here;
 
   // Matches 'diag::note_property_attribute' options.
   unsigned property_note_select;
@@ -5433,6 +5461,13 @@ static void DoEmitAvailabilityWarning(Sema &S, Sema::AvailabilityDiagnostic K,
     diag_fwdclass_message = diag::warn_unavailable_fwdclass_message;
     property_note_select = /* unavailable */ 1;
     available_here_select_kind = /* unavailable */ 0;
+
+    if (!Message.empty()) {
+      if (auto attr = D->getAttr<UnavailableAttr>())
+        if (attr->isImplicit())
+          diag_available_here = diag::note_unavailability_inferred_here;
+    }
+
     break;
 
   case Sema::AD_Partial:
@@ -5459,7 +5494,7 @@ static void DoEmitAvailabilityWarning(Sema &S, Sema::AvailabilityDiagnostic K,
     S.Diag(UnknownObjCClass->getLocation(), diag::note_forward_class);
   }
 
-  S.Diag(D->getLocation(), diag::note_availability_specified_here)
+  S.Diag(D->getLocation(), diag_available_here)
       << D << available_here_select_kind;
   if (K == Sema::AD_Partial)
     S.Diag(Loc, diag::note_partial_availability_silence) << D;
