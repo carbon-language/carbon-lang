@@ -278,7 +278,7 @@ static void SharedPrintfCode(bool append_pid, const char *format,
 #   undef CHECK_NEEDED_LENGTH
   }
   RawWrite(buffer);
-  if (common_flags()->log_to_syslog)
+  if (common_flags()->log_to_syslog && ShouldLogAfterPrintf())
     WriteToSyslog(buffer);
   CallPrintfAndReportCallback(buffer);
   // If we had mapped any memory, clean up.

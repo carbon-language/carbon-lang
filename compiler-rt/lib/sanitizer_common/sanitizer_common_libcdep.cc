@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common.h"
+#include "sanitizer_allocator_internal.h"
 #include "sanitizer_flags.h"
 #include "sanitizer_stackdepot.h"
 #include "sanitizer_stacktrace.h"
@@ -114,6 +115,27 @@ void BackgroundThread(void *arg) {
       }
     }
   }
+}
+
+void WriteToSyslog(const char *buffer) {
+  char *copy = internal_strdup(buffer);
+  char *p = copy;
+  char *q;
+
+  // Remove color sequences since syslogs cannot print them.
+  RemoveANSIEscapeSequencesFromString(copy);
+
+  // Print one line at a time.
+  // syslog, at least on Android, has an implicit message length limit.
+  do {
+    q = internal_strchr(p, '\n');
+    if (q)
+      *q = '\0';
+    WriteOneLineToSyslog(p);
+    if (q)
+      p = q + 1;
+  } while (q);
+  InternalFree(copy);
 }
 
 void MaybeStartBackgroudThread() {

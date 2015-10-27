@@ -548,16 +548,16 @@ void AndroidLogInit() {
   atomic_store(&android_log_initialized, 1, memory_order_release);
 }
 
-static bool IsSyslogAvailable() {
+bool ShouldLogAfterPrintf() {
   return atomic_load(&android_log_initialized, memory_order_acquire);
 }
 #else
 void AndroidLogInit() {}
 
-static bool IsSyslogAvailable() { return true; }
+bool ShouldLogAfterPrintf() { return true; }
 #endif  // SANITIZER_ANDROID
 
-static void WriteOneLineToSyslog(const char *s) {
+void WriteOneLineToSyslog(const char *s) {
 #if SANITIZER_ANDROID &&__ANDROID_API__ < 21
   __android_log_write(ANDROID_LOG_INFO, NULL, s);
 #else
@@ -565,24 +565,6 @@ static void WriteOneLineToSyslog(const char *s) {
 #endif
 }
 
-void WriteToSyslog(const char *buffer) {
-  if (!IsSyslogAvailable())
-    return;
-  char *copy = internal_strdup(buffer);
-  char *p = copy;
-  char *q;
-  // syslog, at least on Android, has an implicit message length limit.
-  // Print one line at a time.
-  do {
-    q = internal_strchr(p, '\n');
-    if (q)
-      *q = '\0';
-    WriteOneLineToSyslog(p);
-    if (q)
-      p = q + 1;
-  } while (q);
-  InternalFree(copy);
-}
 #endif // SANITIZER_LINUX
 
 } // namespace __sanitizer
