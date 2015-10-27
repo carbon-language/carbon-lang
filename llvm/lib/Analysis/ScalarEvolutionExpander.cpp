@@ -86,6 +86,41 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
   return Ret;
 }
 
+static BasicBlock::iterator findInsertPointAfter(Instruction *I,
+                                                 DominatorTree &DT,
+                                                 BasicBlock *MustDominate) {
+  BasicBlock::iterator IP = ++I->getIterator();
+  if (auto *II = dyn_cast<InvokeInst>(I))
+    IP = II->getNormalDest()->begin();
+  if (auto *CPI = dyn_cast<CatchPadInst>(I))
+    IP = CPI->getNormalDest()->begin();
+
+  while (isa<PHINode>(IP))
+    ++IP;
+
+  while (IP->isEHPad()) {
+    if (isa<LandingPadInst>(IP) || isa<CleanupPadInst>(IP)) {
+      ++IP;
+    } else if (auto *TPI = dyn_cast<TerminatePadInst>(IP)) {
+      IP = TPI->getUnwindDest()->getFirstNonPHI();
+    } else if (auto *CEPI = dyn_cast<CatchEndPadInst>(IP)) {
+      IP = CEPI->getUnwindDest()->getFirstNonPHI();
+    } else if (auto *CEPI = dyn_cast<CleanupEndPadInst>(IP)) {
+      IP = CEPI->getUnwindDest()->getFirstNonPHI();
+    } else if (auto *CPI = dyn_cast<CatchPadInst>(IP)) {
+      BasicBlock *NormalDest = CPI->getNormalDest();
+      if (NormalDest == MustDominate || DT.dominates(NormalDest, MustDominate))
+        IP = NormalDest->getFirstNonPHI();
+      else
+        IP = CPI->getUnwindDest()->getFirstNonPHI();
+    } else {
+      llvm_unreachable("unexpected eh pad!");
+    }
+  }
+
+  return IP;
+}
+
 /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
 /// which must be possible with a noop cast, doing what we can to share
 /// the casts.
@@ -135,21 +170,15 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
     while ((isa<BitCastInst>(IP) &&
             isa<Argument>(cast<BitCastInst>(IP)->getOperand(0)) &&
             cast<BitCastInst>(IP)->getOperand(0) != A) ||
-           isa<DbgInfoIntrinsic>(IP) ||
-           isa<LandingPadInst>(IP))
+           isa<DbgInfoIntrinsic>(IP))
       ++IP;
     return ReuseOrCreateCast(A, Ty, Op, IP);
   }
 
   // Cast the instruction immediately after the instruction.
   Instruction *I = cast<Instruction>(V);
-  BasicBlock::iterator IP = ++I->getIterator();
-  if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-    IP = II->getNormalDest()->begin();
-  if (CatchPadInst *CPI = dyn_cast<CatchPadInst>(I))
-    IP = CPI->getNormalDest()->begin();
-  while (isa<PHINode>(IP) || isa<LandingPadInst>(IP))
-    ++IP;
+  BasicBlock::iterator IP =
+      findInsertPointAfter(I, SE.DT, Builder.GetInsertBlock());
   return ReuseOrCreateCast(I, Ty, Op, IP);
 }
 
@@ -1394,12 +1423,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
       NewOps[i] = SE.getAnyExtendExpr(S->op_begin()[i], CanonicalIV->getType());
     Value *V = expand(SE.getAddRecExpr(NewOps, S->getLoop(),
                                        S->getNoWrapFlags(SCEV::FlagNW)));
-    BasicBlock::iterator NewInsertPt =
-      std::next(BasicBlock::iterator(cast<Instruction>(V)));
-    BuilderType::InsertPointGuard Guard(Builder);
-    while (isa<PHINode>(NewInsertPt) || isa<DbgInfoIntrinsic>(NewInsertPt) ||
-           isa<LandingPadInst>(NewInsertPt))
-      ++NewInsertPt;
+    BasicBlock::iterator NewInsertPt = findInsertPointAfter(
+        cast<Instruction>(V), SE.DT, Builder.GetInsertBlock());
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), nullptr,
                       &*NewInsertPt);
     return V;
