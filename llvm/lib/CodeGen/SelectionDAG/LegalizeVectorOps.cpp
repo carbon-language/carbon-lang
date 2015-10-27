@@ -219,9 +219,8 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
             assert(Result.getValue(1).use_empty() &&
                    "There are still live users of the old chain!");
             return LegalizeOp(Lowered);
-          } else {
-            return TranslateLegalizeResults(Op, Lowered);
           }
+          return TranslateLegalizeResults(Op, Lowered);
         }
       case TargetLowering::Expand:
         Changed = true;
