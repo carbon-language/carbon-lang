@@ -43,7 +43,7 @@ typedef elf_fpregset_t fpregs_struct;
 #define PRINT_REG_FP(__fpregs)  printf ("%lx\n", (elf_greg_t)fpregs[32])
 #define ARCH_IOVEC_FOR_GETREGSET
 
-#elif defined(__mips64)
+#elif defined(__mips__)
 typedef struct pt_regs regs_struct;
 typedef elf_fpregset_t fpregs_struct;
 #define PRINT_REG_PC(__regs)    printf ("%lx\n", (unsigned long) (__regs.cp0_epc))
