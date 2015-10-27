@@ -58,8 +58,8 @@ TEST(ToolChainTest, VFSGCCInstallation) {
     InMemoryFileSystem->addFile(Path, 0,
                                 llvm::MemoryBuffer::getMemBuffer("\n"));
 
-  std::unique_ptr<Compilation> C(
-      TheDriver.BuildCompilation({"-fsyntax-only", "foo.cpp"}));
+  std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(
+      {"-fsyntax-only", "--gcc-toolchain=", "foo.cpp"}));
 
   std::string S;
   {
@@ -97,8 +97,8 @@ TEST(ToolChainTest, VFSGCCInstallationRelativeDir) {
     InMemoryFileSystem->addFile(Path, 0,
                                 llvm::MemoryBuffer::getMemBuffer("\n"));
 
-  std::unique_ptr<Compilation> C(
-      TheDriver.BuildCompilation({"-fsyntax-only", "foo.cpp"}));
+  std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(
+      {"-fsyntax-only", "--gcc-toolchain=", "foo.cpp"}));
 
   std::string S;
   {
