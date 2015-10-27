@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-elfiamcu | FileCheck %s
+; RUN: llc < %s -mtriple=i686-pc-elfiamcu | FileCheck %s
 
 ; CHECK-LABEL: test_lib_args:
 ; CHECK: movl %edx, %eax

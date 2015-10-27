@@ -181,6 +181,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case NVCL: return "nvcl";
   case AMDHSA: return "amdhsa";
   case PS4: return "ps4";
+  case ELFIAMCU: return "elfiamcu";
   }
 
   llvm_unreachable("Invalid OSType");
@@ -202,7 +203,6 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   case Cygnus: return "cygnus";
   case AMDOpenCL: return "amdopencl";
   case CoreCLR: return "coreclr";
-  case ELFIAMCU: return "elfiamcu";
   }
 
   llvm_unreachable("Invalid EnvironmentType!");
@@ -436,6 +436,7 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("nvcl", Triple::NVCL)
     .StartsWith("amdhsa", Triple::AMDHSA)
     .StartsWith("ps4", Triple::PS4)
+    .StartsWith("elfiamcu", Triple::ELFIAMCU)
     .Default(Triple::UnknownOS);
 }
 
@@ -454,7 +455,6 @@ static Triple::EnvironmentType parseEnvironment(StringRef EnvironmentName) {
     .StartsWith("cygnus", Triple::Cygnus)
     .StartsWith("amdopencl", Triple::AMDOpenCL)
     .StartsWith("coreclr", Triple::CoreCLR)
-    .StartsWith("elfiamcu", Triple::ELFIAMCU)
     .Default(Triple::UnknownEnvironment);
 }
 

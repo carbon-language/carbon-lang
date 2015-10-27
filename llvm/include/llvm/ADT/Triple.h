@@ -155,7 +155,8 @@ public:
     NVCL,       // NVIDIA OpenCL
     AMDHSA,     // AMD HSA Runtime
     PS4,
-    LastOSType = PS4
+    ELFIAMCU,
+    LastOSType = ELFIAMCU
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -174,8 +175,7 @@ public:
     Cygnus,
     AMDOpenCL,
     CoreCLR,
-    ELFIAMCU,
-    LastEnvironmentType = ELFIAMCU
+    LastEnvironmentType = CoreCLR
   };
   enum ObjectFormatType {
     UnknownObjectFormat,
@@ -432,8 +432,8 @@ public:
     return getOS() == Triple::Bitrig;
   }
 
-  bool isEnvironmentIAMCU() const {
-    return getEnvironment() == Triple::ELFIAMCU;
+  bool isOSIAMCU() const {
+    return getOS() == Triple::ELFIAMCU;
   }
 
   bool isWindowsMSVCEnvironment() const {
