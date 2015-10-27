@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Host/FileSpec.h"
@@ -20,11 +22,10 @@
 class PlatformDarwin : public PlatformPOSIX
 {
 public:
-    PlatformDarwin (bool is_host);
+    PlatformDarwin(bool is_host);
 
-    virtual
-    ~PlatformDarwin();
-    
+    ~PlatformDarwin() override;
+
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
@@ -92,7 +93,6 @@ public:
     LocateExecutable (const char *basename) override;
 
 protected:
-
     void
     ReadLibdispatchOffsetsAddress (lldb_private::Process *process);
 
@@ -105,8 +105,7 @@ protected:
                                    const lldb_private::FileSpecList *module_search_paths_ptr,
                                    lldb::ModuleSP *old_module_sp_ptr,
                                    bool *did_create_ptr);
-    
-    
+
     enum class SDKType {
         MacOSX = 0,
         iPhoneSimulator,
@@ -146,7 +145,6 @@ protected:
     
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformDarwin);
-
 };
 
-#endif  // liblldb_PlatformDarwin_h_
+#endif // liblldb_PlatformDarwin_h_

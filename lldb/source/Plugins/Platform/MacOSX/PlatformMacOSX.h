@@ -19,6 +19,9 @@
 class PlatformMacOSX : public PlatformDarwin
 {
 public:
+    PlatformMacOSX(bool is_host);
+
+    ~PlatformMacOSX() override;
 
     //------------------------------------------------------------
     // Class functions
@@ -38,14 +41,6 @@ public:
     static const char *
     GetDescriptionStatic(bool is_host);
     
-    //------------------------------------------------------------
-    // Class Methods
-    //------------------------------------------------------------
-    PlatformMacOSX (bool is_host);
-
-    virtual
-    ~PlatformMacOSX();
-
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
@@ -104,7 +99,6 @@ public:
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformMacOSX);
-
 };
 
-#endif  // liblldb_PlatformMacOSX_h_
+#endif // liblldb_PlatformMacOSX_h_

@@ -1,4 +1,4 @@
-//===-- PlatformWindows.cpp ---------------------------------------*- C++ -*-===//
+//===-- PlatformWindows.cpp -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -66,7 +66,7 @@ namespace
 
         std::vector<ArchSpec> m_archs;
     };
-}
+} // anonymous namespace
 
 PlatformSP
 PlatformWindows::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
@@ -113,7 +113,6 @@ PlatformWindows::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
     if (create)
         return PlatformSP(new PlatformWindows (is_host));
     return PlatformSP();
-
 }
 
 lldb_private::ConstString
@@ -140,13 +139,13 @@ PlatformWindows::GetPluginDescriptionStatic(bool is_host)
 }
 
 lldb_private::ConstString
-PlatformWindows::GetPluginName(void)
+PlatformWindows::GetPluginName()
 {
     return GetPluginNameStatic(IsHost());
 }
 
 void
-PlatformWindows::Initialize(void)
+PlatformWindows::Initialize()
 {
     Platform::Initialize ();
 
@@ -197,9 +196,7 @@ PlatformWindows::PlatformWindows (bool is_host) :
 /// The destructor is virtual since this class is designed to be
 /// inherited from by the plug-in instance.
 //------------------------------------------------------------------
-PlatformWindows::~PlatformWindows()
-{
-}
+PlatformWindows::~PlatformWindows() = default;
 
 bool
 PlatformWindows::GetModuleSpec (const FileSpec& module_file_spec,
@@ -263,13 +260,13 @@ PlatformWindows::ResolveExecutable (const ModuleSpec &ms,
     {
         if (resolved_module_spec.GetArchitecture().IsValid())
         {
-            error = ModuleList::GetSharedModule (resolved_module_spec,
-                                                 exe_module_sp,
-                                                 NULL,
-                                                 NULL,
-                                                 NULL);
+            error = ModuleList::GetSharedModule(resolved_module_spec,
+                                                exe_module_sp,
+                                                nullptr,
+                                                nullptr,
+                                                nullptr);
 
-            if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
+            if (!exe_module_sp || exe_module_sp->GetObjectFile() == nullptr)
             {
                 exe_module_sp.reset();
                 error.SetErrorStringWithFormat ("'%s' doesn't contain the architecture %s",
@@ -285,11 +282,11 @@ PlatformWindows::ResolveExecutable (const ModuleSpec &ms,
             StreamString arch_names;
             for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, resolved_module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (resolved_module_spec,
-                                                     exe_module_sp,
-                                                     NULL,
-                                                     NULL,
-                                                     NULL);
+                error = ModuleList::GetSharedModule(resolved_module_spec,
+                                                    exe_module_sp,
+                                                    nullptr,
+                                                    nullptr,
+                                                    nullptr);
                 // Did we find an executable using one of the
                 if (error.Success())
                 {
@@ -328,7 +325,7 @@ size_t
 PlatformWindows::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site)
 {
     ArchSpec arch = target.GetArchitecture();
-    const uint8_t *trap_opcode = NULL;
+    const uint8_t *trap_opcode = nullptr;
     size_t trap_opcode_size = 0;
 
     switch (arch.GetMachine())
@@ -405,7 +402,7 @@ PlatformWindows::GetHostname ()
 
     if (m_remote_platform_sp)
         return m_remote_platform_sp->GetHostname ();
-    return NULL;
+    return nullptr;
 }
 
 bool
@@ -581,18 +578,18 @@ PlatformWindows::Attach(ProcessAttachInfo &attach_info,
         return process_sp;
     }
 
-    if (target == NULL)
+    if (target == nullptr)
     {
         TargetSP new_target_sp;
         FileSpec emptyFileSpec;
         ArchSpec emptyArchSpec;
 
-        error = debugger.GetTargetList().CreateTarget (debugger,
-                                                        NULL,
-                                                        NULL,
-                                                        false,
-                                                        NULL,
-                                                        new_target_sp);
+        error = debugger.GetTargetList().CreateTarget(debugger,
+                                                      nullptr,
+                                                      nullptr,
+                                                      false,
+                                                      nullptr,
+                                                      new_target_sp);
         target = new_target_sp.get();
     }
 
@@ -602,7 +599,7 @@ PlatformWindows::Attach(ProcessAttachInfo &attach_info,
     debugger.GetTargetList().SetSelectedTarget(target);
 
     const char *plugin_name = attach_info.GetProcessPluginName();
-    process_sp = target->CreateProcess(attach_info.GetListenerForProcess(debugger), plugin_name, NULL);
+    process_sp = target->CreateProcess(attach_info.GetListenerForProcess(debugger), plugin_name, nullptr);
 
     process_sp->HijackProcessEvents(attach_info.GetHijackListener().get());
     if (process_sp)
@@ -621,7 +618,7 @@ PlatformWindows::GetUserName (uint32_t uid)
 
     if (IsRemote() && m_remote_platform_sp)
         return m_remote_platform_sp->GetUserName(uid);
-    return NULL;
+    return nullptr;
 }
 
 const char *
@@ -633,7 +630,7 @@ PlatformWindows::GetGroupName (uint32_t gid)
 
     if (IsRemote() && m_remote_platform_sp)
         return m_remote_platform_sp->GetGroupName(gid);
-    return NULL;
+    return nullptr;
 }
 
 Error

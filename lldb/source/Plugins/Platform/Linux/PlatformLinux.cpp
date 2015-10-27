@@ -56,13 +56,12 @@ namespace
     class PlatformLinuxProperties : public Properties
     {
     public:
-        static ConstString&
-        GetSettingName ();
-
         PlatformLinuxProperties();
 
-        virtual
-        ~PlatformLinuxProperties() = default;
+        ~PlatformLinuxProperties() override = default;
+
+        static ConstString&
+        GetSettingName ();
 
     private:
         static const PropertyDefinition*
@@ -121,7 +120,6 @@ PlatformLinux::DebuggerInitialize (Debugger &debugger)
     }
 }
 
-
 //------------------------------------------------------------------
 
 PlatformSP
@@ -176,7 +174,6 @@ PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
 
     return PlatformSP();
 }
-
 
 ConstString
 PlatformLinux::GetPluginNameStatic (bool is_host)
@@ -393,7 +390,6 @@ PlatformLinux::GetFileWithUUID (const FileSpec &platform_file,
     return Error();
 }
 
-
 //------------------------------------------------------------------
 /// Default Constructor
 //------------------------------------------------------------------
@@ -408,9 +404,7 @@ PlatformLinux::PlatformLinux (bool is_host) :
 /// The destructor is virtual since this class is designed to be
 /// inherited from by the plug-in instance.
 //------------------------------------------------------------------
-PlatformLinux::~PlatformLinux()
-{
-}
+PlatformLinux::~PlatformLinux() = default;
 
 bool
 PlatformLinux::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)

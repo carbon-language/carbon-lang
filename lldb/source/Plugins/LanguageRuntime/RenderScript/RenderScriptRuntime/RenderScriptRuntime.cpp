@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "RenderScriptRuntime.h"
 
 #include "lldb/Core/ConstString.h"
@@ -43,7 +47,7 @@ namespace {
 template <typename type_t>
 class empirical_type
 {
-  public:
+public:
     // Ctor. Contents is invalid when constructed.
     empirical_type()
         : valid(false)
@@ -97,17 +101,17 @@ class empirical_type
         return data;
     }
 
-  protected:
+protected:
     bool valid;
     type_t data;
 };
 
-} // namespace {}
+} // anonymous namespace
 
 // The ScriptDetails class collects data associated with a single script instance.
 struct RenderScriptRuntime::ScriptDetails
 {
-    ~ScriptDetails() {};
+    ~ScriptDetails() = default;
 
     enum ScriptType
     {
@@ -226,7 +230,6 @@ struct RenderScriptRuntime::AllocationDetails
     AllocationDetails(): id(ID++)
     {
     }
-
 };
 
 unsigned int RenderScriptRuntime::AllocationDetails::ID = 1;
@@ -401,7 +404,6 @@ RenderScriptRuntime::IsRenderScriptModule(const lldb::ModuleSP &module_sp)
     return GetModuleKind(module_sp) != eModuleKindIgnored;
 }
 
-
 void 
 RenderScriptRuntime::ModulesDidLoad(const ModuleList &module_list )
 {
@@ -417,7 +419,6 @@ RenderScriptRuntime::ModulesDidLoad(const ModuleList &module_list )
         }
     }
 }
-
 
 //------------------------------------------------------------------
 // PluginInterface protocol
@@ -467,7 +468,6 @@ RenderScriptRuntime::CreateExceptionResolver(Breakpoint *bkpt, bool catch_bp, bo
     BreakpointResolverSP resolver_sp;
     return resolver_sp;
 }
-
 
 const RenderScriptRuntime::HookDefn RenderScriptRuntime::s_runtimeHookDefns[] =
 {
@@ -531,8 +531,8 @@ const RenderScriptRuntime::HookDefn RenderScriptRuntime::s_runtimeHookDefns[] =
         nullptr // handler
     },
 };
-const size_t RenderScriptRuntime::s_runtimeHookCount = sizeof(s_runtimeHookDefns)/sizeof(s_runtimeHookDefns[0]);
 
+const size_t RenderScriptRuntime::s_runtimeHookCount = sizeof(s_runtimeHookDefns)/sizeof(s_runtimeHookDefns[0]);
 
 bool
 RenderScriptRuntime::HookCallback(void *baton, StoppointCallbackContext *ctx, lldb::user_id_t break_id, lldb::user_id_t break_loc_id)
@@ -547,7 +547,6 @@ RenderScriptRuntime::HookCallback(void *baton, StoppointCallbackContext *ctx, ll
     return false;
 }
 
-
 void 
 RenderScriptRuntime::HookCallback(RuntimeHook* hook_info, ExecutionContext& context)
 {
@@ -561,7 +560,6 @@ RenderScriptRuntime::HookCallback(RuntimeHook* hook_info, ExecutionContext& cont
         (this->*(hook_info->defn->grabber))(hook_info, context);
     }
 }
-
 
 bool
 RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint64_t *data)
@@ -713,7 +711,6 @@ RenderScriptRuntime::GetArgSimple(ExecutionContext &context, uint32_t arg, uint6
 
         }
     }
-
 
     return success;
 }
@@ -868,7 +865,6 @@ RenderScriptRuntime::CaptureScriptInit1(RuntimeHook* hook_info, ExecutionContext
     {
         log->Printf ("RenderScriptRuntime::CaptureScriptInit1 - resource name invalid, Script not tagged");
     }
-
 }
 
 void
@@ -1810,7 +1806,6 @@ RenderScriptRuntime::Update()
     }
 }
 
-
 // The maximum line length of an .rs.info packet
 #define MAXLINE 500
 
@@ -2453,8 +2448,6 @@ RenderScriptRuntime::PlaceBreakpointOnKernel(Stream &strm, const char* name, con
 
     if (bp)
         bp->GetDescription(&strm, lldb::eDescriptionLevelInitial, false);
-
-    return;
 }
 
 void
@@ -2593,8 +2586,7 @@ RSKernelDescriptor::Dump(Stream &strm) const
 
 class CommandObjectRenderScriptRuntimeModuleProbe : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeModuleProbe(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript module probe",
                               "Initiates a Probe of all loaded modules for kernels and other renderscript objects.",
@@ -2603,10 +2595,10 @@ class CommandObjectRenderScriptRuntimeModuleProbe : public CommandObjectParsed
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeModuleProbe() {}
+    ~CommandObjectRenderScriptRuntimeModuleProbe() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc == 0)
@@ -2632,8 +2624,7 @@ class CommandObjectRenderScriptRuntimeModuleProbe : public CommandObjectParsed
 
 class CommandObjectRenderScriptRuntimeModuleDump : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeModuleDump(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript module dump",
                               "Dumps renderscript specific information for all modules.", "renderscript module dump",
@@ -2641,10 +2632,10 @@ class CommandObjectRenderScriptRuntimeModuleDump : public CommandObjectParsed
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeModuleDump() {}
+    ~CommandObjectRenderScriptRuntimeModuleDump() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         RenderScriptRuntime *runtime =
             (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
@@ -2656,8 +2647,7 @@ class CommandObjectRenderScriptRuntimeModuleDump : public CommandObjectParsed
 
 class CommandObjectRenderScriptRuntimeModule : public CommandObjectMultiword
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeModule(CommandInterpreter &interpreter)
         : CommandObjectMultiword(interpreter, "renderscript module", "Commands that deal with renderscript modules.",
                                  NULL)
@@ -2666,13 +2656,12 @@ class CommandObjectRenderScriptRuntimeModule : public CommandObjectMultiword
         LoadSubCommand("dump", CommandObjectSP(new CommandObjectRenderScriptRuntimeModuleDump(interpreter)));
     }
 
-    ~CommandObjectRenderScriptRuntimeModule() {}
+    ~CommandObjectRenderScriptRuntimeModule() override = default;
 };
 
 class CommandObjectRenderScriptRuntimeKernelList : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeKernelList(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript kernel list",
                               "Lists renderscript kernel names and associated script resources.", "renderscript kernel list",
@@ -2680,10 +2669,10 @@ class CommandObjectRenderScriptRuntimeKernelList : public CommandObjectParsed
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeKernelList() {}
+    ~CommandObjectRenderScriptRuntimeKernelList() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         RenderScriptRuntime *runtime =
             (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
@@ -2695,8 +2684,7 @@ class CommandObjectRenderScriptRuntimeKernelList : public CommandObjectParsed
 
 class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeKernelBreakpointSet(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript kernel breakpoint set",
                               "Sets a breakpoint on a renderscript kernel.", "renderscript kernel breakpoint set <kernel_name> [-c x,y,z]",
@@ -2704,26 +2692,25 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObject
     {
     }
 
-    virtual Options*
-    GetOptions()
+    ~CommandObjectRenderScriptRuntimeKernelBreakpointSet() override = default;
+
+    Options*
+    GetOptions() override
     {
         return &m_options;
     }
 
     class CommandOptions : public Options
     {
-      public:
+    public:
         CommandOptions(CommandInterpreter &interpreter) : Options(interpreter)
         {
         }
 
-        virtual
-        ~CommandOptions()
-        {
-        }
+        ~CommandOptions() override = default;
 
-        virtual Error
-        SetOptionValue(uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue(uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -2769,7 +2756,7 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObject
         }
 
         void
-        OptionParsingStarting()
+        OptionParsingStarting() override
         {
             // -1 means the -c option hasn't been set
             m_coord[0] = -1;
@@ -2778,7 +2765,7 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObject
         }
 
         const OptionDefinition*
-        GetDefinitions()
+        GetDefinitions() override
         {
             return g_option_table;
         }
@@ -2787,10 +2774,8 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObject
         std::array<int,3> m_coord;
     };
 
-    ~CommandObjectRenderScriptRuntimeKernelBreakpointSet() {}
-
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc < 1)
@@ -2816,10 +2801,10 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointSet : public CommandObject
         result.SetStatus(eReturnStatusFailed);
         result.AppendErrorWithFormat("Error: %s", error.AsCString());
         return false;
-   }
+    }
 
-    private:
-        CommandOptions m_options;
+private:
+    CommandOptions m_options;
 };
 
 OptionDefinition
@@ -2832,11 +2817,9 @@ CommandObjectRenderScriptRuntimeKernelBreakpointSet::CommandOptions::g_option_ta
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
-
 class CommandObjectRenderScriptRuntimeKernelBreakpointAll : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeKernelBreakpointAll(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript kernel breakpoint all",
                               "Automatically sets a breakpoint on all renderscript kernels that are or will be loaded.\n"
@@ -2847,10 +2830,10 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointAll : public CommandObject
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeKernelBreakpointAll() {}
+    ~CommandObjectRenderScriptRuntimeKernelBreakpointAll() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc != 1)
@@ -2891,8 +2874,7 @@ class CommandObjectRenderScriptRuntimeKernelBreakpointAll : public CommandObject
 
 class CommandObjectRenderScriptRuntimeKernelBreakpoint : public CommandObjectMultiword
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeKernelBreakpoint(CommandInterpreter &interpreter)
         : CommandObjectMultiword(interpreter, "renderscript kernel", "Commands that generate breakpoints on renderscript kernels.",
                                  nullptr)
@@ -2901,13 +2883,12 @@ class CommandObjectRenderScriptRuntimeKernelBreakpoint : public CommandObjectMul
         LoadSubCommand("all", CommandObjectSP(new CommandObjectRenderScriptRuntimeKernelBreakpointAll(interpreter)));
     }
 
-    ~CommandObjectRenderScriptRuntimeKernelBreakpoint() {}
+    ~CommandObjectRenderScriptRuntimeKernelBreakpoint() override = default;
 };
 
 class CommandObjectRenderScriptRuntimeKernel : public CommandObjectMultiword
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeKernel(CommandInterpreter &interpreter)
         : CommandObjectMultiword(interpreter, "renderscript kernel", "Commands that deal with renderscript kernels.",
                                  NULL)
@@ -2916,13 +2897,12 @@ class CommandObjectRenderScriptRuntimeKernel : public CommandObjectMultiword
         LoadSubCommand("breakpoint", CommandObjectSP(new CommandObjectRenderScriptRuntimeKernelBreakpoint(interpreter)));
     }
 
-    ~CommandObjectRenderScriptRuntimeKernel() {}
+    ~CommandObjectRenderScriptRuntimeKernel() override = default;
 };
 
 class CommandObjectRenderScriptRuntimeContextDump : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeContextDump(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript context dump",
                               "Dumps renderscript context information.", "renderscript context dump",
@@ -2930,10 +2910,10 @@ class CommandObjectRenderScriptRuntimeContextDump : public CommandObjectParsed
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeContextDump() {}
+    ~CommandObjectRenderScriptRuntimeContextDump() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         RenderScriptRuntime *runtime =
             (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
@@ -2945,8 +2925,7 @@ class CommandObjectRenderScriptRuntimeContextDump : public CommandObjectParsed
 
 class CommandObjectRenderScriptRuntimeContext : public CommandObjectMultiword
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeContext(CommandInterpreter &interpreter)
         : CommandObjectMultiword(interpreter, "renderscript context", "Commands that deal with renderscript contexts.",
                                  NULL)
@@ -2954,14 +2933,12 @@ class CommandObjectRenderScriptRuntimeContext : public CommandObjectMultiword
         LoadSubCommand("dump", CommandObjectSP(new CommandObjectRenderScriptRuntimeContextDump(interpreter)));
     }
 
-    ~CommandObjectRenderScriptRuntimeContext() {}
+    ~CommandObjectRenderScriptRuntimeContext() override = default;
 };
-
 
 class CommandObjectRenderScriptRuntimeAllocationDump : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeAllocationDump(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript allocation dump",
                               "Displays the contents of a particular allocation", "renderscript allocation dump <ID>",
@@ -2969,26 +2946,25 @@ class CommandObjectRenderScriptRuntimeAllocationDump : public CommandObjectParse
     {
     }
 
-    virtual Options*
-    GetOptions()
+    ~CommandObjectRenderScriptRuntimeAllocationDump() override = default;
+
+    Options*
+    GetOptions() override
     {
         return &m_options;
     }
 
     class CommandOptions : public Options
     {
-      public:
+    public:
         CommandOptions(CommandInterpreter &interpreter) : Options(interpreter)
         {
         }
 
-        virtual
-        ~CommandOptions()
-        {
-        }
+        ~CommandOptions() override = default;
 
-        virtual Error
-        SetOptionValue(uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue(uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3011,13 +2987,13 @@ class CommandObjectRenderScriptRuntimeAllocationDump : public CommandObjectParse
         }
 
         void
-        OptionParsingStarting()
+        OptionParsingStarting() override
         {
             m_outfile.Clear();
         }
 
         const OptionDefinition*
-        GetDefinitions()
+        GetDefinitions() override
         {
             return g_option_table;
         }
@@ -3026,10 +3002,8 @@ class CommandObjectRenderScriptRuntimeAllocationDump : public CommandObjectParse
         FileSpec m_outfile;
     };
 
-    ~CommandObjectRenderScriptRuntimeAllocationDump() {}
-
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc < 1)
@@ -3088,8 +3062,8 @@ class CommandObjectRenderScriptRuntimeAllocationDump : public CommandObjectParse
         return true;
     }
 
-    private:
-        CommandOptions m_options;
+private:
+    CommandOptions m_options;
 };
 
 OptionDefinition
@@ -3100,10 +3074,9 @@ CommandObjectRenderScriptRuntimeAllocationDump::CommandOptions::g_option_table[]
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
-
 class CommandObjectRenderScriptRuntimeAllocationList : public CommandObjectParsed
 {
-  public:
+public:
     CommandObjectRenderScriptRuntimeAllocationList(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript allocation list",
                               "List renderscript allocations and their information.", "renderscript allocation list",
@@ -3111,26 +3084,25 @@ class CommandObjectRenderScriptRuntimeAllocationList : public CommandObjectParse
     {
     }
 
-    virtual Options*
-    GetOptions()
+    ~CommandObjectRenderScriptRuntimeAllocationList() override = default;
+
+    Options*
+    GetOptions() override
     {
         return &m_options;
     }
 
     class CommandOptions : public Options
     {
-      public:
+    public:
         CommandOptions(CommandInterpreter &interpreter) : Options(interpreter), m_refresh(false)
         {
         }
 
-        virtual
-        ~CommandOptions()
-        {
-        }
+        ~CommandOptions() override = default;
 
-        virtual Error
-        SetOptionValue(uint32_t option_idx, const char *option_arg)
+        Error
+        SetOptionValue(uint32_t option_idx, const char *option_arg) override
         {
             Error error;
             const int short_option = m_getopt_table[option_idx].val;
@@ -3148,13 +3120,13 @@ class CommandObjectRenderScriptRuntimeAllocationList : public CommandObjectParse
         }
 
         void
-        OptionParsingStarting()
+        OptionParsingStarting() override
         {
             m_refresh = false;
         }
 
         const OptionDefinition*
-        GetDefinitions()
+        GetDefinitions() override
         {
             return g_option_table;
         }
@@ -3163,10 +3135,8 @@ class CommandObjectRenderScriptRuntimeAllocationList : public CommandObjectParse
         bool m_refresh;
     };
 
-    ~CommandObjectRenderScriptRuntimeAllocationList() {}
-
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         RenderScriptRuntime *runtime =
           static_cast<RenderScriptRuntime *>(m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript));
@@ -3175,7 +3145,7 @@ class CommandObjectRenderScriptRuntimeAllocationList : public CommandObjectParse
         return true;
     }
 
-  private:
+private:
     CommandOptions m_options;
 };
 
@@ -3187,11 +3157,9 @@ CommandObjectRenderScriptRuntimeAllocationList::CommandOptions::g_option_table[]
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
-
 class CommandObjectRenderScriptRuntimeAllocationLoad : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeAllocationLoad(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript allocation load",
                               "Loads renderscript allocation contents from a file.", "renderscript allocation load <ID> <filename>",
@@ -3199,10 +3167,10 @@ class CommandObjectRenderScriptRuntimeAllocationLoad : public CommandObjectParse
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeAllocationLoad() {}
+    ~CommandObjectRenderScriptRuntimeAllocationLoad() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc != 2)
@@ -3237,11 +3205,9 @@ class CommandObjectRenderScriptRuntimeAllocationLoad : public CommandObjectParse
     }
 };
 
-
 class CommandObjectRenderScriptRuntimeAllocationSave : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeAllocationSave(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript allocation save",
                               "Write renderscript allocation contents to a file.", "renderscript allocation save <ID> <filename>",
@@ -3249,10 +3215,10 @@ class CommandObjectRenderScriptRuntimeAllocationSave : public CommandObjectParse
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeAllocationSave() {}
+    ~CommandObjectRenderScriptRuntimeAllocationSave() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         const size_t argc = command.GetArgumentCount();
         if (argc != 2)
@@ -3289,8 +3255,7 @@ class CommandObjectRenderScriptRuntimeAllocationSave : public CommandObjectParse
 
 class CommandObjectRenderScriptRuntimeAllocation : public CommandObjectMultiword
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeAllocation(CommandInterpreter &interpreter)
         : CommandObjectMultiword(interpreter, "renderscript allocation", "Commands that deal with renderscript allocations.",
                                  NULL)
@@ -3301,14 +3266,12 @@ class CommandObjectRenderScriptRuntimeAllocation : public CommandObjectMultiword
         LoadSubCommand("load", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocationLoad(interpreter)));
     }
 
-    ~CommandObjectRenderScriptRuntimeAllocation() {}
+    ~CommandObjectRenderScriptRuntimeAllocation() override = default;
 };
-
 
 class CommandObjectRenderScriptRuntimeStatus : public CommandObjectParsed
 {
-  private:
-  public:
+public:
     CommandObjectRenderScriptRuntimeStatus(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript status",
                               "Displays current renderscript runtime status.", "renderscript status",
@@ -3316,10 +3279,10 @@ class CommandObjectRenderScriptRuntimeStatus : public CommandObjectParsed
     {
     }
 
-    ~CommandObjectRenderScriptRuntimeStatus() {}
+    ~CommandObjectRenderScriptRuntimeStatus() override = default;
 
     bool
-    DoExecute(Args &command, CommandReturnObject &result)
+    DoExecute(Args &command, CommandReturnObject &result) override
     {
         RenderScriptRuntime *runtime =
             (RenderScriptRuntime *)m_exe_ctx.GetProcessPtr()->GetLanguageRuntime(eLanguageTypeExtRenderScript);
@@ -3331,7 +3294,7 @@ class CommandObjectRenderScriptRuntimeStatus : public CommandObjectParsed
 
 class CommandObjectRenderScriptRuntime : public CommandObjectMultiword
 {
-  public:
+public:
     CommandObjectRenderScriptRuntime(CommandInterpreter &interpreter)
         : CommandObjectMultiword(interpreter, "renderscript", "A set of commands for operating on renderscript.",
                                  "renderscript <subcommand> [<subcommand-options>]")
@@ -3343,7 +3306,7 @@ class CommandObjectRenderScriptRuntime : public CommandObjectMultiword
         LoadSubCommand("allocation", CommandObjectSP(new CommandObjectRenderScriptRuntimeAllocation(interpreter)));
     }
 
-    ~CommandObjectRenderScriptRuntime() {}
+    ~CommandObjectRenderScriptRuntime() override = default;
 };
 
 void

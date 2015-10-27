@@ -22,6 +22,9 @@ namespace platform_freebsd {
     class PlatformFreeBSD : public Platform
     {
     public:
+        PlatformFreeBSD(bool is_host);
+
+        ~PlatformFreeBSD() override;
 
         //------------------------------------------------------------
         // Class functions
@@ -40,14 +43,6 @@ namespace platform_freebsd {
 
         static const char *
         GetDescriptionStatic (bool is_host);
-
-        //------------------------------------------------------------
-        // Class Methods
-        //------------------------------------------------------------
-        PlatformFreeBSD (bool is_host);
-
-        virtual
-        ~PlatformFreeBSD();
 
         //------------------------------------------------------------
         // lldb_private::PluginInterface functions
@@ -179,4 +174,4 @@ namespace platform_freebsd {
 } // namespace platform_freebsd
 } // namespace lldb_private
 
-#endif  // liblldb_PlatformFreeBSD_h_
+#endif // liblldb_PlatformFreeBSD_h_

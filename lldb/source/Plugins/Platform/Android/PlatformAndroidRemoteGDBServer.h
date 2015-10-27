@@ -25,10 +25,9 @@ namespace platform_android {
 class PlatformAndroidRemoteGDBServer : public platform_gdb_server::PlatformRemoteGDBServer
 {
 public:
-    PlatformAndroidRemoteGDBServer ();
+    PlatformAndroidRemoteGDBServer();
 
-    virtual
-    ~PlatformAndroidRemoteGDBServer ();
+    ~PlatformAndroidRemoteGDBServer() override;
 
     Error
     ConnectRemote (Args& args) override;
@@ -57,10 +56,9 @@ protected:
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformAndroidRemoteGDBServer);
-
 };
 
 } // namespace platform_android
 } // namespace lldb_private
 
-#endif  // liblldb_PlatformAndroidRemoteGDBServer_h_
+#endif // liblldb_PlatformAndroidRemoteGDBServer_h_

@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "PlatformDarwin.h"
@@ -19,6 +21,9 @@
 class PlatformiOSSimulator : public PlatformDarwin
 {
 public:
+    PlatformiOSSimulator ();
+
+    ~PlatformiOSSimulator() override;
 
     //------------------------------------------------------------
     // Class Functions
@@ -38,14 +43,6 @@ public:
     static const char *
     GetDescriptionStatic();
     
-    //------------------------------------------------------------
-    // Class Methods
-    //------------------------------------------------------------
-    PlatformiOSSimulator ();
-
-    virtual
-    ~PlatformiOSSimulator();
-
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
@@ -115,7 +112,6 @@ protected:
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformiOSSimulator);
-
 };
 
-#endif  // liblldb_PlatformiOSSimulator_h_
+#endif // liblldb_PlatformiOSSimulator_h_

@@ -1,4 +1,4 @@
-//===-- PlatformKalimba.h -----------------------------------------*- C++ -*-===//
+//===-- PlatformKalimba.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -21,6 +21,9 @@ namespace lldb_private {
     class PlatformKalimba : public Platform
     {
     public:
+        PlatformKalimba(bool is_host);
+
+        ~PlatformKalimba() override;
 
         static void
         Initialize ();
@@ -28,11 +31,6 @@ namespace lldb_private {
         static void
         Terminate ();
         
-        PlatformKalimba (bool is_host);
-
-        virtual
-        ~PlatformKalimba();
-
         //------------------------------------------------------------
         // lldb_private::PluginInterface functions
         //------------------------------------------------------------
@@ -95,6 +93,7 @@ namespace lldb_private {
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformKalimba);
     };
+
 } // namespace lldb_private
 
-#endif  // liblldb_PlatformKalimba_h_
+#endif // liblldb_PlatformKalimba_h_

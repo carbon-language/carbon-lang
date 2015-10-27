@@ -12,7 +12,6 @@
 
 // C Includes
 // C++ Includes
-
 #include <string>
 
 // Other libraries and framework includes
@@ -25,16 +24,15 @@ namespace platform_android {
     class PlatformAndroid : public platform_linux::PlatformLinux
     {
     public:
+        PlatformAndroid(bool is_host);
+
+        ~PlatformAndroid() override;
+
         static void
         Initialize ();
 
         static void
         Terminate ();
-
-        PlatformAndroid (bool is_host);
-
-        virtual
-        ~PlatformAndroid();
 
         //------------------------------------------------------------
         // lldb_private::PluginInterface functions
@@ -110,4 +108,4 @@ namespace platform_android {
 } // namespace platofor_android
 } // namespace lldb_private
 
-#endif  // liblldb_PlatformAndroid_h_
+#endif // liblldb_PlatformAndroid_h_

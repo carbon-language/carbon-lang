@@ -1,4 +1,4 @@
-//===-- PlatformWindows.h --------------------------------------/*- C++ -*-===//
+//===-- PlatformWindows.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -22,24 +22,21 @@ namespace lldb_private
 class PlatformWindows : public Platform
 {
 public:
-
-    static void
-    Initialize(void);
-
-    static void
-    Terminate(void);
-
     PlatformWindows(bool is_host);
 
-    virtual
-    ~PlatformWindows(void);
+    ~PlatformWindows() override;
+
+    static void
+    Initialize();
+
+    static void
+    Terminate();
 
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
     static lldb::PlatformSP
     CreateInstance (bool force, const lldb_private::ArchSpec *arch);
-
 
     static lldb_private::ConstString
     GetPluginNameStatic(bool is_host);
@@ -48,10 +45,10 @@ public:
     GetPluginDescriptionStatic(bool is_host);
 
     lldb_private::ConstString
-    GetPluginName(void) override;
+    GetPluginName() override;
 
     uint32_t
-    GetPluginVersion(void) override
+    GetPluginVersion() override
     {
         return 1;
     }
@@ -70,7 +67,7 @@ public:
                       const FileSpecList *module_search_paths_ptr) override;
 
     const char *
-    GetDescription(void) override
+    GetDescription() override
     {
         return GetPluginDescriptionStatic(IsHost());
     }
@@ -80,7 +77,7 @@ public:
                                     lldb_private::BreakpointSite *bp_site) override;
 
     bool
-    GetRemoteOSVersion(void) override;
+    GetRemoteOSVersion() override;
 
     bool
     GetRemoteOSBuildString(std::string &s) override;
@@ -90,19 +87,19 @@ public:
 
     // Remote Platform subclasses need to override this function
     lldb_private::ArchSpec
-    GetRemoteSystemArchitecture(void) override;
+    GetRemoteSystemArchitecture() override;
 
     bool
-    IsConnected(void) const override;
+    IsConnected() const override;
 
     lldb_private::Error
     ConnectRemote(lldb_private::Args& args) override;
 
     lldb_private::Error
-    DisconnectRemote( void ) override;
+    DisconnectRemote() override;
 
     const char *
-    GetHostname( void ) override;
+    GetHostname() override;
 
     const char *
     GetUserName(uint32_t uid) override;
@@ -167,6 +164,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN (PlatformWindows);
 };
 
-}
+} // namespace lldb_private
 
-#endif  // liblldb_PlatformWindows_h_
+#endif // liblldb_PlatformWindows_h_

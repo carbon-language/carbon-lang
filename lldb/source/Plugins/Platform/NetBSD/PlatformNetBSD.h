@@ -1,4 +1,4 @@
-//===-- PlatformNetBSD.h ---------------------------------------*- C++ -*-===//
+//===-- PlatformNetBSD.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -22,6 +22,9 @@ namespace platform_netbsd {
     class PlatformNetBSD : public Platform
     {
     public:
+        PlatformNetBSD (bool is_host);
+
+        ~PlatformNetBSD() override = default;
 
         //------------------------------------------------------------
         // Class functions
@@ -40,14 +43,6 @@ namespace platform_netbsd {
 
         static const char *
         GetDescriptionStatic (bool is_host);
-
-        //------------------------------------------------------------
-        // Class Methods
-        //------------------------------------------------------------
-        PlatformNetBSD (bool is_host);
-
-        virtual
-        ~PlatformNetBSD() override = default;
 
         //------------------------------------------------------------
         // lldb_private::PluginInterface functions
@@ -179,4 +174,4 @@ namespace platform_netbsd {
 } // namespace platform_netbsd
 } // namespace lldb_private
 
-#endif  // liblldb_PlatformNetBSD_h_
+#endif // liblldb_PlatformNetBSD_h_

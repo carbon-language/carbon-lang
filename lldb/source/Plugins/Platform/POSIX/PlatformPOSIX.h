@@ -12,7 +12,6 @@
 
 // C Includes
 // C++ Includes
-
 #include <memory>
 
 // Other libraries and framework includes
@@ -23,11 +22,10 @@
 class PlatformPOSIX : public lldb_private::Platform
 {
 public:
-    PlatformPOSIX (bool is_host);
-    
-    virtual
-    ~PlatformPOSIX();
-    
+    PlatformPOSIX(bool is_host);
+
+    ~PlatformPOSIX() override;
+
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
@@ -37,9 +35,8 @@ public:
                    const lldb_private::ArchSpec& arch,
                    lldb_private::ModuleSpec &module_spec) override;
 
-    lldb_private::OptionGroupOptions
-    *GetConnectionOptions(
-        lldb_private::CommandInterpreter &interpreter) override;
+    lldb_private::OptionGroupOptions*
+    GetConnectionOptions(lldb_private::CommandInterpreter &interpreter) override;
 
     const char *
     GetHostname () override;
@@ -119,11 +116,11 @@ public:
     IsConnected () const override;
 
     lldb_private::Error
-    RunShellCommand(const char *command,                       // Shouldn't be NULL
+    RunShellCommand(const char *command,                       // Shouldn't be nullptr
                     const lldb_private::FileSpec &working_dir, // Pass empty FileSpec to use the current working directory
-                    int *status_ptr,                           // Pass NULL if you don't want the process exit status
-                    int *signo_ptr,                            // Pass NULL if you don't want the signal that caused the process to exit
-                    std::string *command_output,               // Pass NULL if you don't want the command output
+                    int *status_ptr,                           // Pass nullptr if you don't want the process exit status
+                    int *signo_ptr,                            // Pass nullptr if you don't want the signal that caused the process to exit
+                    std::string *command_output,               // Pass nullptr if you don't want the command output
                     uint32_t timeout_sec) override;            // Timeout in seconds to wait for shell program to finish
 
     lldb_private::Error
@@ -150,13 +147,13 @@ public:
     lldb::ProcessSP
     Attach (lldb_private::ProcessAttachInfo &attach_info,
             lldb_private::Debugger &debugger,
-            lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+            lldb_private::Target *target,       // Can be nullptr, if nullptr create a new target, else use existing one
             lldb_private::Error &error) override;
 
     lldb::ProcessSP
     DebugProcess (lldb_private::ProcessLaunchInfo &launch_info,
                   lldb_private::Debugger &debugger,
-                  lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                  lldb_private::Target *target,       // Can be nullptr, if nullptr create a new target, else use existing one
                   lldb_private::Error &error) override;
 
     std::string
@@ -183,7 +180,6 @@ protected:
     
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformPOSIX);
-    
 };
 
-#endif  // liblldb_PlatformPOSIX_h_
+#endif // liblldb_PlatformPOSIX_h_
