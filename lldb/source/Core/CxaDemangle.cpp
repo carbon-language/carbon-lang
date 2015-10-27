@@ -13,6 +13,7 @@
 // - Included win32.h for snprintf implementation for MSVC
 // - Removed constexpr member initialization for MSVC
 // - Changed argument to alignas() to a literal for MSVC
+// - Include <cstdio> for fprintf, stderr like entities.
 //----------------------------------------------------------------------
 
 #if defined(_MSC_VER)
@@ -40,6 +41,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
+#include <cstdio>
 
 namespace lldb_private
 {
