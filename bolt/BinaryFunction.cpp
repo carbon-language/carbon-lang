@@ -590,7 +590,7 @@ void BinaryFunction::optimizeLayout() {
   std::map<EdgeTy, uint64_t> Weight;
 
   // Define a comparison function to establish SWO between edges
-  auto Comp = [&Weight](EdgeTy A, EdgeTy B) { return Weight[A] > Weight[B]; };
+  auto Comp = [&Weight](EdgeTy A, EdgeTy B) { return Weight[A] < Weight[B]; };
   std::priority_queue<EdgeTy, std::vector<EdgeTy>, decltype(Comp)> Queue(Comp);
 
   typedef std::vector<BinaryBasicBlock *> ClusterTy;
