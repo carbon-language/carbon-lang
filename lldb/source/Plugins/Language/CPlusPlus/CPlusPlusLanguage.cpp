@@ -9,7 +9,6 @@
 
 #include "CPlusPlusLanguage.h"
 
-#include <string.h>
 
 #include "llvm/ADT/StringRef.h"
 
@@ -26,6 +25,8 @@
 #include "LibCxx.h"
 #include "LibStdcpp.h"
 
+#include <cstring>
+#include <cctype>
 #include <functional>
 #include <mutex>
 
