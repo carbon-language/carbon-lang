@@ -10,14 +10,14 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-typedef ssize_t (*process_vm_readv_fn)(pid_t, const iovec *, unsigned long,
+typedef ssize_t (*process_vm_readwritev_fn)(pid_t, const iovec *, unsigned long,
                                             const iovec *, unsigned long,
                                             unsigned long);
 
 int main(void) {
   // This requires glibc 2.15.
-  process_vm_readv_fn libc_process_vm_readv =
-      (process_vm_readv_fn)dlsym(RTLD_NEXT, "process_vm_readv");
+  process_vm_readwritev_fn libc_process_vm_readv =
+      (process_vm_readwritev_fn)dlsym(RTLD_NEXT, "process_vm_readv");
   if (!libc_process_vm_readv) {
 // Exit with success, emulating the expected output.
 #ifdef POSITIVE
@@ -29,6 +29,11 @@ int main(void) {
     return 0;
 #endif
   }
+
+  process_vm_readwritev_fn process_vm_readv =
+      (process_vm_readwritev_fn)dlsym(RTLD_DEFAULT, "process_vm_readv");
+  process_vm_readwritev_fn process_vm_writev =
+      (process_vm_readwritev_fn)dlsym(RTLD_DEFAULT, "process_vm_writev");
 
   char a[100];
   memset(a, 0xab, 100);
