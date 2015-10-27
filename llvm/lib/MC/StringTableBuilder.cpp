@@ -30,7 +30,7 @@ static int charTailAt(StringPair *P, size_t Pos) {
 
 // Three-way radix quicksort. This is much faster than std::sort with strcmp
 // because it does not compare characters that we already know the same.
-static void qsort(StringPair **Begin, StringPair **End, int Pos) {
+static void multikey_qsort(StringPair **Begin, StringPair **End, int Pos) {
 tailcall:
   if (End - Begin <= 1)
     return;
@@ -50,8 +50,8 @@ tailcall:
       R++;
   }
 
-  qsort(Begin, P, Pos);
-  qsort(Q, End, Pos);
+  multikey_qsort(Begin, P, Pos);
+  multikey_qsort(Q, End, Pos);
   if (Pivot != -1) {
     // qsort(P, Q, Pos + 1), but with tail call optimization.
     Begin = P;
@@ -68,7 +68,7 @@ void StringTableBuilder::finalize() {
     Strings.push_back(&P);
 
   if (!Strings.empty())
-    qsort(&Strings[0], &Strings[0] + Strings.size(), 0);
+    multikey_qsort(&Strings[0], &Strings[0] + Strings.size(), 0);
 
   switch (K) {
   case RAW:
