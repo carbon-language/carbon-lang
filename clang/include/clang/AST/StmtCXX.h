@@ -298,7 +298,9 @@ class CoroutineBodyStmt : public Stmt {
   friend class ASTStmtReader;
 public:
   CoroutineBodyStmt(Stmt *Body)
-      : Stmt(CoroutineBodyStmtClass), SubStmts{Body} {}
+      : Stmt(CoroutineBodyStmtClass) {
+    SubStmts[CoroutineBodyStmt::Body] = Body;
+  }
 
   /// \brief Retrieve the body of the coroutine as written. This will be either
   /// a CompoundStmt or a TryStmt.

@@ -4040,16 +4040,29 @@ public:
              Resume->isValueDependent(),
              Operand->isInstantiationDependent(),
              Operand->containsUnexpandedParameterPack()),
-      CoawaitLoc(CoawaitLoc),
-      SubExprs{Operand, Ready, Suspend, Resume} {}
+      CoawaitLoc(CoawaitLoc) {
+    SubExprs[CoawaitExpr::Operand] = Operand;
+    SubExprs[CoawaitExpr::Ready] = Ready;
+    SubExprs[CoawaitExpr::Suspend] = Suspend;
+    SubExprs[CoawaitExpr::Resume] = Resume;
+  }
   CoawaitExpr(SourceLocation CoawaitLoc, QualType Ty, Expr *Operand)
       : Expr(CoawaitExprClass, Ty, VK_RValue, OK_Ordinary,
              true, true, true, Operand->containsUnexpandedParameterPack()),
-        CoawaitLoc(CoawaitLoc), SubExprs{Operand} {
+        CoawaitLoc(CoawaitLoc) {
     assert(Operand->isTypeDependent() && Ty->isDependentType() &&
            "wrong constructor for non-dependent co_await expression");
+    SubExprs[CoawaitExpr::Operand] = Operand;
+    SubExprs[CoawaitExpr::Ready] = nullptr;
+    SubExprs[CoawaitExpr::Suspend] = nullptr;
+    SubExprs[CoawaitExpr::Resume] = nullptr;
   }
-  CoawaitExpr(EmptyShell Empty) : Expr(CoawaitExprClass, Empty) {}
+  CoawaitExpr(EmptyShell Empty) : Expr(CoawaitExprClass, Empty) {
+    SubExprs[CoawaitExpr::Operand] = nullptr;
+    SubExprs[CoawaitExpr::Ready] = nullptr;
+    SubExprs[CoawaitExpr::Suspend] = nullptr;
+    SubExprs[CoawaitExpr::Resume] = nullptr;
+  }
 
   SourceLocation getKeywordLoc() const { return CoawaitLoc; }
   Expr *getOperand() const {
