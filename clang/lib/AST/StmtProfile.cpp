@@ -1362,6 +1362,22 @@ void StmtProfiler::VisitCXXFoldExpr(const CXXFoldExpr *S) {
   ID.AddInteger(S->getOperator());
 }
 
+void StmtProfiler::VisitCoroutineBodyStmt(const CoroutineBodyStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitCoreturnStmt(const CoreturnStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitCoawaitExpr(const CoawaitExpr *S) {
+  VisitExpr(S);
+}
+
+void StmtProfiler::VisitCoyieldExpr(const CoyieldExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
   VisitExpr(E);  
 }

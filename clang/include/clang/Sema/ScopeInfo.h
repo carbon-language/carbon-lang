@@ -89,40 +89,43 @@ protected:
 public:
   /// \brief What kind of scope we are describing.
   ///
-  ScopeKind Kind;
+  ScopeKind Kind : 2;
 
   /// \brief Whether this function contains a VLA, \@try, try, C++
   /// initializer, or anything else that can't be jumped past.
-  bool HasBranchProtectedScope;
+  bool HasBranchProtectedScope : 1;
 
   /// \brief Whether this function contains any switches or direct gotos.
-  bool HasBranchIntoScope;
+  bool HasBranchIntoScope : 1;
 
   /// \brief Whether this function contains any indirect gotos.
-  bool HasIndirectGoto;
+  bool HasIndirectGoto : 1;
 
   /// \brief Whether a statement was dropped because it was invalid.
-  bool HasDroppedStmt;
+  bool HasDroppedStmt : 1;
 
   /// A flag that is set when parsing a method that must call super's
   /// implementation, such as \c -dealloc, \c -finalize, or any method marked
   /// with \c __attribute__((objc_requires_super)).
-  bool ObjCShouldCallSuper;
+  bool ObjCShouldCallSuper : 1;
 
   /// True when this is a method marked as a designated initializer.
-  bool ObjCIsDesignatedInit;
+  bool ObjCIsDesignatedInit : 1;
   /// This starts true for a method marked as designated initializer and will
   /// be set to false if there is an invocation to a designated initializer of
   /// the super class.
-  bool ObjCWarnForNoDesignatedInitChain;
+  bool ObjCWarnForNoDesignatedInitChain : 1;
 
   /// True when this is an initializer method not marked as a designated
   /// initializer within a class that has at least one initializer marked as a
   /// designated initializer.
-  bool ObjCIsSecondaryInit;
+  bool ObjCIsSecondaryInit : 1;
   /// This starts true for a secondary initializer method and will be set to
   /// false if there is an invocation of an initializer on 'self'.
-  bool ObjCWarnForNoInitDelegation;
+  bool ObjCWarnForNoInitDelegation : 1;
+
+  /// First 'return' statement in the current function.
+  SourceLocation FirstReturnLoc;
 
   /// First C++ 'try' statement in the current function.
   SourceLocation FirstCXXTryLoc;
@@ -141,6 +144,9 @@ public:
   /// block, if there is any chance of applying the named return value
   /// optimization, or if we need to infer a return type.
   SmallVector<ReturnStmt*, 4> Returns;
+
+  /// \brief The promise object for this coroutine, if any.
+  VarDecl *CoroutinePromise;
 
   /// \brief The list of coroutine control flow constructs (co_await, co_yield,
   /// co_return) that occur within the function or block. Empty if and only if

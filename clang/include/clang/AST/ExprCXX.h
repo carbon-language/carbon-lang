@@ -4008,6 +4008,129 @@ public:
   child_range children() { return child_range(SubExprs, SubExprs + 2); }
 };
 
+/// \brief Represents a 'co_await' expression. This expression checks whether its
+/// operand is ready, and suspends the coroutine if not. Then (after the resume
+/// if suspended) it resumes the coroutine and extracts the value from the
+/// operand. This implies making four calls:
+///
+///   <operand>.operator co_await() or operator co_await(<operand>)
+///   <result>.await_ready()
+///   <result>.await_suspend(h)
+///   <result>.await_resume()
+///
+/// where h is a handle to the coroutine, and <result> is the result of calling
+/// operator co_await() if it exists or the original operand otherwise.
+///
+/// Note that the coroutine is prepared for suspension before the 'await_suspend'
+/// call, but resumes after that call, which may cause parts of the
+/// 'await_suspend' expression to occur much later than expected.
+class CoawaitExpr : public Expr {
+  SourceLocation CoawaitLoc;
+
+  enum SubExpr { Operand, Ready, Suspend, Resume, Count };
+  Stmt *SubExprs[SubExpr::Count];
+
+  friend class ASTStmtReader;
+public:
+  CoawaitExpr(SourceLocation CoawaitLoc, Expr *Operand, Expr *Ready,
+              Expr *Suspend, Expr *Resume)
+      : Expr(CoawaitExprClass, Resume->getType(), Resume->getValueKind(),
+             Resume->getObjectKind(),
+             Resume->isTypeDependent(),
+             Resume->isValueDependent(),
+             Operand->isInstantiationDependent(),
+             Operand->containsUnexpandedParameterPack()),
+      CoawaitLoc(CoawaitLoc),
+      SubExprs{Operand, Ready, Suspend, Resume} {}
+  CoawaitExpr(SourceLocation CoawaitLoc, QualType Ty, Expr *Operand)
+      : Expr(CoawaitExprClass, Ty, VK_RValue, OK_Ordinary,
+             true, true, true, Operand->containsUnexpandedParameterPack()),
+        CoawaitLoc(CoawaitLoc), SubExprs{Operand} {
+    assert(Operand->isTypeDependent() && Ty->isDependentType() &&
+           "wrong constructor for non-dependent co_await expression");
+  }
+  CoawaitExpr(EmptyShell Empty) : Expr(CoawaitExprClass, Empty) {}
+
+  SourceLocation getKeywordLoc() const { return CoawaitLoc; }
+  Expr *getOperand() const {
+    return static_cast<Expr*>(SubExprs[SubExpr::Operand]);
+  }
+
+  Expr *getReadyExpr() const {
+    return static_cast<Expr*>(SubExprs[SubExpr::Ready]);
+  }
+  Expr *getSuspendExpr() const {
+    return static_cast<Expr*>(SubExprs[SubExpr::Suspend]);
+  }
+  Expr *getResumeExpr() const {
+    return static_cast<Expr*>(SubExprs[SubExpr::Resume]);
+  }
+
+  SourceLocation getLocStart() const LLVM_READONLY {
+    return CoawaitLoc;
+  }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return getOperand()->getLocEnd();
+  }
+
+  child_range children() {
+    return child_range(SubExprs, SubExprs + SubExpr::Count);
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CoawaitExprClass;
+  }
+};
+
+/// \brief Represents a 'co_yield' expression. This expression provides a value
+/// to the coroutine promise and optionally suspends the coroutine. This implies
+/// a making call to <promise>.yield_value(<operand>), which we name the "promise
+/// call".
+class CoyieldExpr : public Expr {
+  SourceLocation CoyieldLoc;
+
+  /// The operand of the 'co_yield' expression.
+  Stmt *Operand;
+  /// The implied call to the promise object. May be null if the
+  /// coroutine has not yet been finalized.
+  Stmt *PromiseCall;
+
+  friend class ASTStmtReader;
+public:
+  CoyieldExpr(SourceLocation CoyieldLoc, QualType Void, Expr *Operand)
+      : Expr(CoyieldExprClass, Void, VK_RValue, OK_Ordinary, false, false,
+             Operand->isInstantiationDependent(),
+             Operand->containsUnexpandedParameterPack()),
+        CoyieldLoc(CoyieldLoc), Operand(Operand), PromiseCall(nullptr) {}
+  CoyieldExpr(EmptyShell Empty) : Expr(CoyieldExprClass, Empty) {}
+
+  SourceLocation getKeywordLoc() const { return CoyieldLoc; }
+  Expr *getOperand() const { return static_cast<Expr*>(Operand); }
+
+  /// \brief Get the call to the promise objet that is implied by an evaluation
+  /// of this expression. Will be nullptr if the coroutine has not yet been
+  /// finalized.
+  Expr *getPromiseCall() const { return static_cast<Expr*>(PromiseCall); }
+
+  /// \brief Set the resolved promise call. This is delayed until the
+  /// complete coroutine body has been parsed and the promise type is known.
+  void finalize(Stmt *PC) { PromiseCall = PC; }
+
+  SourceLocation getLocStart() const LLVM_READONLY { return CoyieldLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return Operand->getLocEnd();
+  }
+
+  child_range children() {
+    Stmt **Which = PromiseCall ? &PromiseCall : &Operand;
+    return child_range(Which, Which + 1);
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == CoyieldExprClass;
+  }
+};
+
 }  // end namespace clang
 
 #endif

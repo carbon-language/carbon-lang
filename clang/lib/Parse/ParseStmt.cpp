@@ -1691,13 +1691,10 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
   StmtResult ForEachStmt;
 
   if (ForRange) {
-    ForRangeStmt = Actions.ActOnCXXForRangeStmt(ForLoc, CoawaitLoc,
-                                                FirstPart.get(),
-                                                ForRangeInit.ColonLoc,
-                                                ForRangeInit.RangeExpr.get(),
-                                                T.getCloseLocation(),
-                                                Sema::BFRK_Build);
-
+    ForRangeStmt = Actions.ActOnCXXForRangeStmt(
+        getCurScope(), ForLoc, CoawaitLoc, FirstPart.get(),
+        ForRangeInit.ColonLoc, ForRangeInit.RangeExpr.get(),
+        T.getCloseLocation(), Sema::BFRK_Build);
 
   // Similarly, we need to do the semantic analysis for a for-range
   // statement immediately in order to close over temporaries correctly.

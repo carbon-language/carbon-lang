@@ -1063,8 +1063,10 @@ CanThrowResult Sema::canThrow(const Expr *E) {
 
     // Many other things have subexpressions, so we have to test those.
     // Some are simple:
+  case Expr::CoawaitExprClass:
   case Expr::ConditionalOperatorClass:
   case Expr::CompoundLiteralExprClass:
+  case Expr::CoyieldExprClass:
   case Expr::CXXConstCastExprClass:
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXStdInitializerListExprClass:

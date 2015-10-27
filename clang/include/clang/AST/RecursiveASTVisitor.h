@@ -43,7 +43,7 @@
   OPERATOR(PostInc) OPERATOR(PostDec) OPERATOR(PreInc) OPERATOR(PreDec)        \
       OPERATOR(AddrOf) OPERATOR(Deref) OPERATOR(Plus) OPERATOR(Minus)          \
       OPERATOR(Not) OPERATOR(LNot) OPERATOR(Real) OPERATOR(Imag)               \
-      OPERATOR(Extension)
+      OPERATOR(Extension) OPERATOR(Coawait)
 
 // All binary operators (excluding compound assign operators).
 #define BINOP_LIST()                                                           \
@@ -2345,6 +2345,34 @@ DEF_TRAVERSE_STMT(FunctionParmPackExpr, {})
 DEF_TRAVERSE_STMT(MaterializeTemporaryExpr, {})
 DEF_TRAVERSE_STMT(CXXFoldExpr, {})
 DEF_TRAVERSE_STMT(AtomicExpr, {})
+
+// For coroutines expressions, traverse either the operand
+// as written or the implied calls, depending on what the
+// derived class requests.
+DEF_TRAVERSE_STMT(CoroutineBodyStmt, {
+  if (!getDerived().shouldVisitImplicitCode()) {
+    TRY_TO(TraverseStmt(S->getBody()));
+    return true;
+  }
+})
+DEF_TRAVERSE_STMT(CoreturnStmt, {
+  if (!getDerived().shouldVisitImplicitCode()) {
+    TRY_TO(TraverseStmt(S->getOperand()));
+    return true;
+  }
+})
+DEF_TRAVERSE_STMT(CoawaitExpr, {
+  if (!getDerived().shouldVisitImplicitCode()) {
+    TRY_TO(TraverseStmt(S->getOperand()));
+    return true;
+  }
+})
+DEF_TRAVERSE_STMT(CoyieldExpr, {
+  if (!getDerived().shouldVisitImplicitCode()) {
+    TRY_TO(TraverseStmt(S->getOperand()));
+    return true;
+  }
+})
 
 // These literals (all of them) do not need any action.
 DEF_TRAVERSE_STMT(IntegerLiteral, {})

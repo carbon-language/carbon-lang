@@ -1048,7 +1048,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation CoawaitLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid())
-      Res = Actions.ActOnCoawaitExpr(CoawaitLoc, Res.get());
+      Res = Actions.ActOnCoawaitExpr(getCurScope(), CoawaitLoc, Res.get());
     return Res;
   }
 

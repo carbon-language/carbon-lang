@@ -1287,6 +1287,30 @@ public:
                                     Constraints, Clobbers, Exprs, EndLoc);
   }
 
+  /// \brief Build a new co_return statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  StmtResult RebuildCoreturnStmt(SourceLocation CoreturnLoc, Expr *Result) {
+    return getSema().BuildCoreturnStmt(CoreturnLoc, Result);
+  }
+
+  /// \brief Build a new co_await expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildCoawaitExpr(SourceLocation CoawaitLoc, Expr *Result) {
+    return getSema().BuildCoawaitExpr(CoawaitLoc, Result);
+  }
+
+  /// \brief Build a new co_yield expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildCoyieldExpr(SourceLocation CoyieldLoc, Expr *Result) {
+    return getSema().BuildCoyieldExpr(CoyieldLoc, Result);
+  }
+
   /// \brief Build a new Objective-C \@try statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -1715,6 +1739,7 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildCXXForRangeStmt(SourceLocation ForLoc,
+                                    SourceLocation CoawaitLoc,
                                     SourceLocation ColonLoc,
                                     Stmt *Range, Stmt *BeginEnd,
                                     Expr *Cond, Expr *Inc,
@@ -1737,7 +1762,6 @@ public:
       }
     }
 
-    SourceLocation CoawaitLoc; // FIXME
     return getSema().BuildCXXForRangeStmt(ForLoc, CoawaitLoc, ColonLoc,
                                           Range, BeginEnd,
                                           Cond, Inc, LoopVar, RParenLoc,
@@ -6403,6 +6427,56 @@ TreeTransform<Derived>::TransformMSAsmStmt(MSAsmStmt *S) {
                                        TransformedExprs, S->getEndLoc());
 }
 
+// C++ Coroutines TS
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformCoroutineBodyStmt(CoroutineBodyStmt *S) {
+  // The coroutine body should be re-formed by the caller if necessary.
+  return getDerived().TransformStmt(S->getBody());
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformCoreturnStmt(CoreturnStmt *S) {
+  ExprResult Result = getDerived().TransformInitializer(S->getOperand(),
+                                                        /*NotCopyInit*/false);
+  if (Result.isInvalid())
+    return StmtError();
+
+  // Always rebuild; we don't know if this needs to be injected into a new
+  // context or if the promise type has changed.
+  return getDerived().RebuildCoreturnStmt(S->getKeywordLoc(), Result.get());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformCoawaitExpr(CoawaitExpr *E) {
+  ExprResult Result = getDerived().TransformInitializer(E->getOperand(),
+                                                        /*NotCopyInit*/false);
+  if (Result.isInvalid())
+    return ExprError();
+
+  // Always rebuild; we don't know if this needs to be injected into a new
+  // context or if the promise type has changed.
+  return getDerived().RebuildCoawaitExpr(E->getKeywordLoc(), Result.get());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformCoyieldExpr(CoyieldExpr *E) {
+  ExprResult Result = getDerived().TransformInitializer(E->getOperand(),
+                                                        /*NotCopyInit*/false);
+  if (Result.isInvalid())
+    return ExprError();
+
+  // Always rebuild; we don't know if this needs to be injected into a new
+  // context or if the promise type has changed.
+  return getDerived().RebuildCoyieldExpr(E->getKeywordLoc(), Result.get());
+}
+
+// Objective-C Statements.
+
 template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformObjCAtTryStmt(ObjCAtTryStmt *S) {
@@ -6692,6 +6766,7 @@ TreeTransform<Derived>::TransformCXXForRangeStmt(CXXForRangeStmt *S) {
       Inc.get() != S->getInc() ||
       LoopVar.get() != S->getLoopVarStmt()) {
     NewStmt = getDerived().RebuildCXXForRangeStmt(S->getForLoc(),
+                                                  S->getCoawaitLoc(),
                                                   S->getColonLoc(), Range.get(),
                                                   BeginEnd.get(), Cond.get(),
                                                   Inc.get(), LoopVar.get(),
@@ -6708,6 +6783,7 @@ TreeTransform<Derived>::TransformCXXForRangeStmt(CXXForRangeStmt *S) {
   // it now so we have a new statement to attach the body to.
   if (Body.get() != S->getBody() && NewStmt.get() == S) {
     NewStmt = getDerived().RebuildCXXForRangeStmt(S->getForLoc(),
+                                                  S->getCoawaitLoc(),
                                                   S->getColonLoc(), Range.get(),
                                                   BeginEnd.get(), Cond.get(),
                                                   Inc.get(), LoopVar.get(),

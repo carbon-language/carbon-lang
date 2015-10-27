@@ -445,6 +445,7 @@ til::SExpr *SExprBuilder::translateUnaryOperator(const UnaryOperator *UO,
   case UO_Real:
   case UO_Imag:
   case UO_Extension:
+  case UO_Coawait:
     return new (Arena) til::Undefined(UO);
   }
   return new (Arena) til::Undefined(UO);

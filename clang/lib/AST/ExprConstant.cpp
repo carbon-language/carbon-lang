@@ -9017,6 +9017,8 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
   case Expr::AtomicExprClass:
   case Expr::LambdaExprClass:
   case Expr::CXXFoldExprClass:
+  case Expr::CoawaitExprClass:
+  case Expr::CoyieldExprClass:
     return ICEDiag(IK_NotICE, E->getLocStart());
 
   case Expr::InitListExprClass: {
@@ -9102,6 +9104,7 @@ static ICEDiag CheckICE(const Expr* E, const ASTContext &Ctx) {
     case UO_PreDec:
     case UO_AddrOf:
     case UO_Deref:
+    case UO_Coawait:
       // C99 6.6/3 allows increment and decrement within unevaluated
       // subexpressions of constant expressions, but they can never be ICEs
       // because an ICE cannot contain an lvalue operand.

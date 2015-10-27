@@ -8228,15 +8228,16 @@ void Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_Array_New:
   case OO_Array_Delete:
   case OO_Call:
-  case OO_Coawait:
     llvm_unreachable(
                     "Special operators don't use AddBuiltinOperatorCandidates");
 
   case OO_Comma:
   case OO_Arrow:
+  case OO_Coawait:
     // C++ [over.match.oper]p3:
-    //   -- For the operator ',', the unary operator '&', or the
-    //      operator '->', the built-in candidates set is empty.
+    //   -- For the operator ',', the unary operator '&', the
+    //      operator '->', or the operator 'co_await', the
+    //      built-in candidates set is empty.
     break;
 
   case OO_Plus: // '+' is either unary or binary
@@ -12481,13 +12482,14 @@ ExprResult Sema::BuildLiteralOperatorCall(LookupResult &R,
 /// otherwise CallExpr is set to ExprError() and some non-success value
 /// is returned.
 Sema::ForRangeStatus
-Sema::BuildForRangeBeginEndCall(Scope *S, SourceLocation Loc,
-                                SourceLocation RangeLoc, VarDecl *Decl,
-                                BeginEndFunction BEF,
+Sema::BuildForRangeBeginEndCall(SourceLocation Loc,
+                                SourceLocation RangeLoc,
                                 const DeclarationNameInfo &NameInfo,
                                 LookupResult &MemberLookup,
                                 OverloadCandidateSet *CandidateSet,
                                 Expr *Range, ExprResult *CallExpr) {
+  Scope *S = nullptr;
+
   CandidateSet->clear();
   if (!MemberLookup.empty()) {
     ExprResult MemberRef =
@@ -12499,15 +12501,11 @@ Sema::BuildForRangeBeginEndCall(Scope *S, SourceLocation Loc,
                                  /*TemplateArgs=*/nullptr, S);
     if (MemberRef.isInvalid()) {
       *CallExpr = ExprError();
-      Diag(Range->getLocStart(), diag::note_in_for_range)
-          << RangeLoc << BEF << Range->getType();
       return FRS_DiagnosticIssued;
     }
     *CallExpr = ActOnCallExpr(S, MemberRef.get(), Loc, None, Loc, nullptr);
     if (CallExpr->isInvalid()) {
       *CallExpr = ExprError();
-      Diag(Range->getLocStart(), diag::note_in_for_range)
-          << RangeLoc << BEF << Range->getType();
       return FRS_DiagnosticIssued;
     }
   } else {
@@ -12538,8 +12536,6 @@ Sema::BuildForRangeBeginEndCall(Scope *S, SourceLocation Loc,
                                          /*AllowTypoCorrection=*/false);
     if (CallExpr->isInvalid() || OverloadResult != OR_Success) {
       *CallExpr = ExprError();
-      Diag(Range->getLocStart(), diag::note_in_for_range)
-          << RangeLoc << BEF << Range->getType();
       return FRS_DiagnosticIssued;
     }
   }

@@ -1079,6 +1079,7 @@ StringRef UnaryOperator::getOpcodeStr(Opcode Op) {
   case UO_Real:    return "__real";
   case UO_Imag:    return "__imag";
   case UO_Extension: return "__extension__";
+  case UO_Coawait: return "co_await";
   }
   llvm_unreachable("Unknown unary operator");
 }
@@ -1095,6 +1096,7 @@ UnaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO, bool Postfix) {
   case OO_Minus:      return UO_Minus;
   case OO_Tilde:      return UO_Not;
   case OO_Exclaim:    return UO_LNot;
+  case OO_Coawait:    return UO_Coawait;
   }
 }
 
@@ -1108,6 +1110,7 @@ OverloadedOperatorKind UnaryOperator::getOverloadedOperator(Opcode Opc) {
   case UO_Minus: return OO_Minus;
   case UO_Not: return OO_Tilde;
   case UO_LNot: return OO_Exclaim;
+  case UO_Coawait: return OO_Coawait;
   default: return OO_None;
   }
 }
@@ -2050,6 +2053,9 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     case UO_LNot:
     case UO_Deref:
       break;
+    case UO_Coawait:
+      // This is just the 'operator co_await' call inside the guts of a
+      // dependent co_await call.
     case UO_PostInc:
     case UO_PostDec:
     case UO_PreInc:
@@ -3005,6 +3011,8 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CXXNewExprClass:
   case CXXDeleteExprClass:
   case ExprWithCleanupsClass:
+  case CoawaitExprClass:
+  case CoyieldExprClass:
     // These always have a side-effect.
     return true;
 

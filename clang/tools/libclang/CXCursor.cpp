@@ -227,6 +227,10 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::AtomicExprClass:
   case Stmt::BinaryConditionalOperatorClass:
   case Stmt::TypeTraitExprClass:
+  case Stmt::CoroutineBodyStmtClass:
+  case Stmt::CoawaitExprClass:
+  case Stmt::CoreturnStmtClass:
+  case Stmt::CoyieldExprClass:
   case Stmt::CXXBindTemporaryExprClass:
   case Stmt::CXXDefaultArgExprClass:
   case Stmt::CXXDefaultInitExprClass:

@@ -7839,7 +7839,8 @@ def err_module_import_in_implementation : Error<
 }
 
 let CategoryName = "Coroutines Issue" in {
-def err_return_in_coroutine : Error<"return statement in coroutine">;
+def err_return_in_coroutine : Error<
+  "return statement not allowed in coroutine; did you mean 'co_return'?">;
 def note_declared_coroutine_here : Note<
   "function is a coroutine due to use of "
   "'%select{co_await|co_yield|co_return}0' here">;
@@ -7853,10 +7854,24 @@ def err_coroutine_constexpr : Error<
   "'%0' cannot be used in a constexpr function">;
 def err_coroutine_varargs : Error<
   "'%0' cannot be used in a varargs function">;
-def ext_coroutine_without_coawait_coyield : ExtWarn<
+def ext_coroutine_without_co_await_co_yield : ExtWarn<
   "'co_return' used in a function "
   "that uses neither 'co_await' nor 'co_yield'">,
   InGroup<DiagGroup<"coreturn-without-coawait">>;
+def err_co_await_no_viable_function : Error<
+  "invalid co_await operand of type %0; "
+  "no viable '%1' function %select{|for awaited type %3 }2available">;
+def err_implied_std_coroutine_traits_not_found : Error<
+  "you need to include <coroutine> before defining a coroutine">;
+def err_malformed_std_coroutine_traits : Error<
+  "std::coroutine_traits must be a class template">;
+def err_implied_std_coroutine_traits_promise_type_not_found : Error<
+  "this function cannot be a coroutine: %0 has no member named 'promise_type'">;
+def err_implied_std_coroutine_traits_promise_type_not_class : Error<
+  "this function cannot be a coroutine: %0 is not a class">;
+def err_coroutine_traits_missing_specialization : Error<
+  "this function cannot be a coroutine: missing definition of "
+  "specialization %0">;
 }
 
 let CategoryName = "Documentation Issue" in {

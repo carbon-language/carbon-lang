@@ -52,8 +52,10 @@ CXXTryStmt::CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
 CXXForRangeStmt::CXXForRangeStmt(DeclStmt *Range, DeclStmt *BeginEndStmt,
                                  Expr *Cond, Expr *Inc, DeclStmt *LoopVar,
                                  Stmt *Body, SourceLocation FL,
-                                 SourceLocation CL, SourceLocation RPL)
-    : Stmt(CXXForRangeStmtClass), ForLoc(FL), ColonLoc(CL), RParenLoc(RPL) {
+                                 SourceLocation CAL, SourceLocation CL,
+                                 SourceLocation RPL)
+    : Stmt(CXXForRangeStmtClass), ForLoc(FL), CoawaitLoc(CAL), ColonLoc(CL),
+      RParenLoc(RPL) {
   SubExprs[RANGE] = Range;
   SubExprs[BEGINEND] = BeginEndStmt;
   SubExprs[COND] = Cond;

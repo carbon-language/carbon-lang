@@ -1568,7 +1568,7 @@ ExprResult Parser::ParseCoyieldExpression() {
   SourceLocation Loc = ConsumeToken();
   ExprResult Expr = ParseAssignmentExpression();
   if (!Expr.isInvalid())
-    Expr = Actions.ActOnCoyieldExpr(Loc, Expr.get());
+    Expr = Actions.ActOnCoyieldExpr(getCurScope(), Loc, Expr.get());
   return Expr;
 }
 
