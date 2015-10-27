@@ -41,6 +41,7 @@ STATISTIC(NumPostFolded, "Number of post-index updates folded");
 STATISTIC(NumPreFolded, "Number of pre-index updates folded");
 STATISTIC(NumUnscaledPairCreated,
           "Number of load/store from unscaled generated");
+STATISTIC(NumSmallTypeMerged, "Number of small type loads merged");
 
 static cl::opt<unsigned> ScanLimit("aarch64-load-store-scan-limit",
                                    cl::init(20), cl::Hidden);
@@ -77,12 +78,13 @@ typedef struct LdStPairFlags {
 
 struct AArch64LoadStoreOpt : public MachineFunctionPass {
   static char ID;
-  AArch64LoadStoreOpt() : MachineFunctionPass(ID) {
+  AArch64LoadStoreOpt() : MachineFunctionPass(ID), IsStrictAlign(false) {
     initializeAArch64LoadStoreOptPass(*PassRegistry::getPassRegistry());
   }
 
   const AArch64InstrInfo *TII;
   const TargetRegisterInfo *TRI;
+  bool IsStrictAlign;
 
   // Scan the instructions looking for a load/store that can be combined
   // with the current instruction into a load/store pair.
@@ -122,6 +124,9 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   mergeUpdateInsn(MachineBasicBlock::iterator I,
                   MachineBasicBlock::iterator Update, bool IsPreIdx);
 
+  // Find and merge foldable ldr/str instructions.
+  bool tryToMergeLdStInst(MachineBasicBlock::iterator &MBBI);
+
   bool optimizeBlock(MachineBasicBlock &MBB);
 
   bool runOnMachineFunction(MachineFunction &Fn) override;
@@ -151,12 +156,27 @@ static bool isUnscaledLdSt(unsigned Opc) {
   case AArch64::LDURWi:
   case AArch64::LDURXi:
   case AArch64::LDURSWi:
+  case AArch64::LDURHHi:
     return true;
   }
 }
 
 static bool isUnscaledLdSt(MachineInstr *MI) {
   return isUnscaledLdSt(MI->getOpcode());
+}
+
+static bool isSmallTypeLdMerge(unsigned Opc) {
+  switch (Opc) {
+  default:
+    return false;
+  case AArch64::LDRHHui:
+  case AArch64::LDURHHi:
+    return true;
+    // FIXME: Add other instructions (e.g, LDRBBui, LDURSHWi, LDRSHWui, etc.).
+  }
+}
+static bool isSmallTypeLdMerge(MachineInstr *MI) {
+  return isSmallTypeLdMerge(MI->getOpcode());
 }
 
 // Scaling factor for unscaled load or store.
@@ -168,6 +188,7 @@ static int getMemScale(MachineInstr *MI) {
   case AArch64::STRBBui:
     return 1;
   case AArch64::LDRHHui:
+  case AArch64::LDURHHi:
   case AArch64::STRHHui:
     return 2;
   case AArch64::LDRSui:
@@ -238,6 +259,8 @@ static unsigned getMatchingNonSExtOpcode(unsigned Opc,
   case AArch64::STURSi:
   case AArch64::LDRSui:
   case AArch64::LDURSi:
+  case AArch64::LDRHHui:
+  case AArch64::LDURHHi:
     return Opc;
   case AArch64::LDRSWui:
     return AArch64::LDRWui;
@@ -283,6 +306,10 @@ static unsigned getMatchingPairOpcode(unsigned Opc) {
   case AArch64::LDRSWui:
   case AArch64::LDURSWi:
     return AArch64::LDPSWi;
+  case AArch64::LDRHHui:
+    return AArch64::LDRWui;
+  case AArch64::LDURHHi:
+    return AArch64::LDURWi;
   }
 }
 
@@ -440,6 +467,21 @@ static const MachineOperand &getLdStOffsetOp(const MachineInstr *MI) {
   return MI->getOperand(Idx);
 }
 
+// Copy MachineMemOperands from Op0 and Op1 to a new array assigned to MI.
+static void concatenateMemOperands(MachineInstr *MI, MachineInstr *Op0,
+                                   MachineInstr *Op1) {
+  assert(MI->memoperands_empty() && "expected a new machineinstr");
+  size_t numMemRefs = (Op0->memoperands_end() - Op0->memoperands_begin()) +
+                      (Op1->memoperands_end() - Op1->memoperands_begin());
+
+  MachineFunction *MF = MI->getParent()->getParent();
+  MachineSDNode::mmo_iterator MemBegin = MF->allocateMemRefsArray(numMemRefs);
+  MachineSDNode::mmo_iterator MemEnd =
+      std::copy(Op0->memoperands_begin(), Op0->memoperands_end(), MemBegin);
+  MemEnd = std::copy(Op1->memoperands_begin(), Op1->memoperands_end(), MemEnd);
+  MI->setMemRefs(MemBegin, MemEnd);
+}
+
 MachineBasicBlock::iterator
 AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
                                       MachineBasicBlock::iterator Paired,
@@ -484,8 +526,79 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
     RtMI = I;
     Rt2MI = Paired;
   }
-  // Handle Unscaled
+
   int OffsetImm = getLdStOffsetOp(RtMI).getImm();
+
+  if (isSmallTypeLdMerge(Opc)) {
+    // Change the scaled offset from small to large type.
+    if (!IsUnscaled)
+      OffsetImm /= 2;
+    MachineInstr *RtNewDest = MergeForward ? I : Paired;
+    // Construct the new load instruction.
+    // FIXME: currently we support only halfword unsigned load. We need to
+    // handle byte type, signed, and store instructions as well.
+    MachineInstr *NewMemMI, *BitExtMI1, *BitExtMI2;
+    NewMemMI = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
+                       TII->get(NewOpc))
+                   .addOperand(getLdStRegOp(RtNewDest))
+                   .addOperand(BaseRegOp)
+                   .addImm(OffsetImm);
+
+    // Copy MachineMemOperands from the original loads.
+    concatenateMemOperands(NewMemMI, I, Paired);
+
+    DEBUG(
+        dbgs()
+        << "Creating the new load and extract. Replacing instructions:\n    ");
+    DEBUG(I->print(dbgs()));
+    DEBUG(dbgs() << "    ");
+    DEBUG(Paired->print(dbgs()));
+    DEBUG(dbgs() << "  with instructions:\n    ");
+    DEBUG((NewMemMI)->print(dbgs()));
+
+    MachineInstr *ExtDestMI = MergeForward ? Paired : I;
+    if (ExtDestMI == Rt2MI) {
+      // Create the bitfield extract for high half.
+      BitExtMI1 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
+                          TII->get(AArch64::UBFMWri))
+                      .addOperand(getLdStRegOp(Rt2MI))
+                      .addReg(getLdStRegOp(RtNewDest).getReg())
+                      .addImm(16)
+                      .addImm(31);
+      // Create the bitfield extract for low half.
+      BitExtMI2 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
+                          TII->get(AArch64::ANDWri))
+                      .addOperand(getLdStRegOp(RtMI))
+                      .addReg(getLdStRegOp(RtNewDest).getReg())
+                      .addImm(15);
+    } else {
+      // Create the bitfield extract for low half.
+      BitExtMI1 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
+                          TII->get(AArch64::ANDWri))
+                      .addOperand(getLdStRegOp(RtMI))
+                      .addReg(getLdStRegOp(RtNewDest).getReg())
+                      .addImm(15);
+      // Create the bitfield extract for high half.
+      BitExtMI2 = BuildMI(*I->getParent(), InsertionPoint, I->getDebugLoc(),
+                          TII->get(AArch64::UBFMWri))
+                      .addOperand(getLdStRegOp(Rt2MI))
+                      .addReg(getLdStRegOp(RtNewDest).getReg())
+                      .addImm(16)
+                      .addImm(31);
+    }
+    DEBUG(dbgs() << "    ");
+    DEBUG((BitExtMI1)->print(dbgs()));
+    DEBUG(dbgs() << "    ");
+    DEBUG((BitExtMI2)->print(dbgs()));
+    DEBUG(dbgs() << "\n");
+
+    // Erase the old instructions.
+    I->eraseFromParent();
+    Paired->eraseFromParent();
+    return NextI;
+  }
+
+  // Handle Unscaled
   if (IsUnscaled)
     OffsetImm /= OffsetStride;
 
@@ -622,8 +735,7 @@ static bool mayAlias(MachineInstr *MIa,
 /// be combined with the current instruction into a load/store pair.
 MachineBasicBlock::iterator
 AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
-                                      LdStPairFlags &Flags,
-                                      unsigned Limit) {
+                                      LdStPairFlags &Flags, unsigned Limit) {
   MachineBasicBlock::iterator E = I->getParent()->end();
   MachineBasicBlock::iterator MBBI = I;
   MachineInstr *FirstMI = I;
@@ -645,7 +757,8 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   // range, plus allow an extra one in case we find a later insn that matches
   // with Offset-1)
   int OffsetStride = IsUnscaled ? getMemScale(FirstMI) : 1;
-  if (!inBoundsForPair(IsUnscaled, Offset, OffsetStride))
+  if (!isSmallTypeLdMerge(Opc) &&
+      !inBoundsForPair(IsUnscaled, Offset, OffsetStride))
     return E;
 
   // Track which registers have been modified and used between the first insn
@@ -704,18 +817,32 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // If the resultant immediate offset of merging these instructions
         // is out of range for a pairwise instruction, bail and keep looking.
         bool MIIsUnscaled = isUnscaledLdSt(MI);
-        if (!inBoundsForPair(MIIsUnscaled, MinOffset, OffsetStride)) {
+        bool IsSmallTypeLd = isSmallTypeLdMerge(MI->getOpcode());
+        if (!IsSmallTypeLd &&
+            !inBoundsForPair(MIIsUnscaled, MinOffset, OffsetStride)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
           MemInsns.push_back(MI);
           continue;
         }
-        // If the alignment requirements of the paired (scaled) instruction
-        // can't express the offset of the unscaled input, bail and keep
-        // looking.
-        if (IsUnscaled && (alignTo(MinOffset, OffsetStride) != MinOffset)) {
-          trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
-          MemInsns.push_back(MI);
-          continue;
+
+        if (IsSmallTypeLd) {
+          // If the alignment requirements of the larger type scaled load
+          // instruction can't express the scaled offset of the smaller type
+          // input, bail and keep looking.
+          if (!IsUnscaled && alignTo(MinOffset, 2) != MinOffset) {
+            trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
+            MemInsns.push_back(MI);
+            continue;
+          }
+        } else {
+          // If the alignment requirements of the paired (scaled) instruction
+          // can't express the offset of the unscaled input, bail and keep
+          // looking.
+          if (IsUnscaled && (alignTo(MinOffset, OffsetStride) != MinOffset)) {
+            trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
+            MemInsns.push_back(MI);
+            continue;
+          }
         }
         // If the destination register of the loads is the same register, bail
         // and keep looking. A load-pair instruction with both destination
@@ -996,23 +1123,93 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
   return E;
 }
 
+bool AArch64LoadStoreOpt::tryToMergeLdStInst(
+    MachineBasicBlock::iterator &MBBI) {
+  MachineInstr *MI = MBBI;
+  MachineBasicBlock::iterator E = MI->getParent()->end();
+  // If this is a volatile load/store, don't mess with it.
+  if (MI->hasOrderedMemoryRef())
+    return false;
+
+  // Make sure this is a reg+imm (as opposed to an address reloc).
+  if (!getLdStOffsetOp(MI).isImm())
+    return false;
+
+  // Check if this load/store has a hint to avoid pair formation.
+  // MachineMemOperands hints are set by the AArch64StorePairSuppress pass.
+  if (TII->isLdStPairSuppressed(MI))
+    return false;
+
+  // Look ahead up to ScanLimit instructions for a pairable instruction.
+  LdStPairFlags Flags;
+  MachineBasicBlock::iterator Paired = findMatchingInsn(MBBI, Flags, ScanLimit);
+  if (Paired != E) {
+    if (isSmallTypeLdMerge(MI)) {
+      ++NumSmallTypeMerged;
+    } else {
+      ++NumPairCreated;
+      if (isUnscaledLdSt(MI))
+        ++NumUnscaledPairCreated;
+    }
+
+    // Merge the loads into a pair. Keeping the iterator straight is a
+    // pain, so we let the merge routine tell us what the next instruction
+    // is after it's done mucking about.
+    MBBI = mergePairedInsns(MBBI, Paired, Flags);
+    return true;
+  }
+  return false;
+}
+
 bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
   bool Modified = false;
-  // Two tranformations to do here:
-  // 1) Find loads and stores that can be merged into a single load or store
+  // Three tranformations to do here:
+  // 1) Find halfword loads that can be merged into a single 32-bit word load
+  //    with bitfield extract instructions.
+  //      e.g.,
+  //        ldrh w0, [x2]
+  //        ldrh w1, [x2, #2]
+  //        ; becomes
+  //        ldr w0, [x2]
+  //        ubfx w1, w0, #16, #16
+  //        and w0, w0, #ffff
+  // 2) Find loads and stores that can be merged into a single load or store
   //    pair instruction.
   //      e.g.,
   //        ldr x0, [x2]
   //        ldr x1, [x2, #8]
   //        ; becomes
   //        ldp x0, x1, [x2]
-  // 2) Find base register updates that can be merged into the load or store
+  // 3) Find base register updates that can be merged into the load or store
   //    as a base-reg writeback.
   //      e.g.,
   //        ldr x0, [x2]
   //        add x2, x2, #4
   //        ; becomes
   //        ldr x0, [x2], #4
+
+  for (MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
+       !IsStrictAlign && MBBI != E;) {
+    MachineInstr *MI = MBBI;
+    switch (MI->getOpcode()) {
+    default:
+      // Just move on to the next instruction.
+      ++MBBI;
+      break;
+    // Scaled instructions.
+    case AArch64::LDRHHui:
+    // Unscaled instructions.
+    case AArch64::LDURHHi: {
+      if (tryToMergeLdStInst(MBBI)) {
+        Modified = true;
+        break;
+      }
+      ++MBBI;
+      break;
+    }
+      // FIXME: Do the other instructions.
+    }
+  }
 
   for (MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
        MBBI != E;) {
@@ -1046,35 +1243,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
     case AArch64::LDURWi:
     case AArch64::LDURXi:
     case AArch64::LDURSWi: {
-      // If this is a volatile load/store, don't mess with it.
-      if (MI->hasOrderedMemoryRef()) {
-        ++MBBI;
-        break;
-      }
-      // Make sure this is a reg+imm (as opposed to an address reloc).
-      if (!getLdStOffsetOp(MI).isImm()) {
-        ++MBBI;
-        break;
-      }
-      // Check if this load/store has a hint to avoid pair formation.
-      // MachineMemOperands hints are set by the AArch64StorePairSuppress pass.
-      if (TII->isLdStPairSuppressed(MI)) {
-        ++MBBI;
-        break;
-      }
-      // Look ahead up to ScanLimit instructions for a pairable instruction.
-      LdStPairFlags Flags;
-      MachineBasicBlock::iterator Paired =
-          findMatchingInsn(MBBI, Flags, ScanLimit);
-      if (Paired != E) {
-        ++NumPairCreated;
-        if (isUnscaledLdSt(MI))
-          ++NumUnscaledPairCreated;
-
-        // Merge the loads into a pair. Keeping the iterator straight is a
-        // pain, so we let the merge routine tell us what the next instruction
-        // is after it's done mucking about.
-        MBBI = mergePairedInsns(MBBI, Paired, Flags);
+      if (tryToMergeLdStInst(MBBI)) {
         Modified = true;
         break;
       }
@@ -1206,6 +1375,8 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
 bool AArch64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   TII = static_cast<const AArch64InstrInfo *>(Fn.getSubtarget().getInstrInfo());
   TRI = Fn.getSubtarget().getRegisterInfo();
+  IsStrictAlign = (static_cast<const AArch64Subtarget &>(Fn.getSubtarget()))
+                      .requiresStrictAlign();
 
   bool Modified = false;
   for (auto &MBB : Fn)
