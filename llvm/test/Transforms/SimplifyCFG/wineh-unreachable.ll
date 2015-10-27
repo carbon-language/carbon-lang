@@ -86,3 +86,23 @@ unreachable.unwind:
   cleanuppad []
   unreachable
 }
+
+; CHECK-LABEL: define void @test5()
+define void @test5() personality i8* bitcast (void ()* @Personality to i8*) {
+entry:
+  invoke void @f()
+          to label %exit unwind label %catch.pad
+
+catch.pad:
+  %catch = catchpad []
+          to label %catch.body unwind label %catch.end
+
+catch.body:
+  catchret %catch to label %exit
+
+catch.end:
+  catchendpad unwind to caller
+
+exit:
+  unreachable
+}

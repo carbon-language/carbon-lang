@@ -3178,8 +3178,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
                isa<CatchEndPadInst>(TI) || isa<TerminatePadInst>(TI)) {
       removeUnwindEdge(TI->getParent());
       Changed = true;
-    } else if (isa<CleanupReturnInst>(TI) || isa<CleanupEndPadInst>(TI) ||
-               isa<CatchReturnInst>(TI)) {
+    } else if (isa<CleanupReturnInst>(TI) || isa<CleanupEndPadInst>(TI)) {
       new UnreachableInst(TI->getContext(), TI);
       TI->eraseFromParent();
       Changed = true;
