@@ -341,10 +341,15 @@ bool CodeGenFunction::checkBuiltinTargetFeatures(
   // true, otherwise return false.
   SmallVector<StringRef, 1> AttrFeatures;
   StringRef(FeatureList).split(AttrFeatures, ",");
-  for (const auto &Feature : AttrFeatures)
-    if (FeatureMap[Feature])
-      return true;
-  return false;
+  return std::all_of(AttrFeatures.begin(), AttrFeatures.end(),
+                     [&](StringRef &Feature) {
+                       SmallVector<StringRef, 1> OrFeatures;
+                       Feature.split(OrFeatures, "|");
+                       return std::any_of(OrFeatures.begin(), OrFeatures.end(),
+                                          [&](StringRef &Feature) {
+                                            return FeatureMap[Feature];
+                                          });
+                     });
 }
 
 RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
