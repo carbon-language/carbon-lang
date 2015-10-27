@@ -1049,7 +1049,6 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     Mutex::Locker locker(m_sequence_mutex);
     StateType state = eStateRunning;
 
-    BroadcastEvent(eBroadcastBitRunPacketSent, NULL);
     m_public_is_running.SetValue (true, eBroadcastNever);
     // Set the starting continue packet into "continue_packet". This packet
     // may change if we are interrupted and we continue after an async packet...
@@ -1059,6 +1058,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     const auto sigint_signo = process->GetUnixSignals()->GetSignalNumberFromName("SIGINT");
 
     bool got_async_packet = false;
+    bool broadcast_sent = false;
     
     while (state == eStateRunning)
     {
@@ -1071,6 +1071,12 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
             else
                 m_interrupt_sent = false;
         
+            if (! broadcast_sent)
+            {
+                BroadcastEvent(eBroadcastBitRunPacketSent, NULL);
+                broadcast_sent = true;
+            }
+
             m_private_is_running.SetValue (true, eBroadcastAlways);
         }
         
