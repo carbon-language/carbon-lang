@@ -36,6 +36,15 @@ namespace lldb {
         const char*
         GetName();
         
+        lldb::LanguageType
+        GetLanguageAtIndex (uint32_t idx);
+        
+        uint32_t
+        GetNumLanguages ();
+        
+        void
+        AddLanguage (lldb::LanguageType language);
+        
         bool
         GetDescription (lldb::SBStream &description, 
                         lldb::DescriptionLevel description_level);
