@@ -174,51 +174,51 @@ declare void @g.f1()
 ;                   [unnamed_addr] alias <AliaseeTy> @<Aliasee>
 
 ; Aliases -- Linkage
-@a.private = private alias i32, i32* @g.private
+@a.private = private alias i32* @g.private
 ; CHECK: @a.private = private alias i32, i32* @g.private
-@a.internal = internal alias i32, i32* @g.internal
+@a.internal = internal alias i32* @g.internal
 ; CHECK: @a.internal = internal alias i32, i32* @g.internal
-@a.linkonce = linkonce alias i32, i32* @g.linkonce
+@a.linkonce = linkonce alias i32* @g.linkonce
 ; CHECK: @a.linkonce = linkonce alias i32, i32* @g.linkonce
-@a.weak = weak alias i32, i32* @g.weak
+@a.weak = weak alias i32* @g.weak
 ; CHECK: @a.weak = weak alias i32, i32* @g.weak
-@a.linkonce_odr = linkonce_odr alias i32, i32* @g.linkonce_odr
+@a.linkonce_odr = linkonce_odr alias i32* @g.linkonce_odr
 ; CHECK: @a.linkonce_odr = linkonce_odr alias i32, i32* @g.linkonce_odr
-@a.weak_odr = weak_odr alias i32, i32* @g.weak_odr
+@a.weak_odr = weak_odr alias i32* @g.weak_odr
 ; CHECK: @a.weak_odr = weak_odr alias i32, i32* @g.weak_odr
-@a.external = external alias i32, i32* @g1
+@a.external = external alias i32* @g1
 ; CHECK: @a.external = alias i32, i32* @g1
 
 ; Aliases -- Visibility
-@a.default = default alias i32, i32* @g.default
+@a.default = default alias i32* @g.default
 ; CHECK: @a.default = alias i32, i32* @g.default
-@a.hidden = hidden alias i32, i32* @g.hidden
+@a.hidden = hidden alias i32* @g.hidden
 ; CHECK: @a.hidden = hidden alias i32, i32* @g.hidden
-@a.protected = protected alias i32, i32* @g.protected
+@a.protected = protected alias i32* @g.protected
 ; CHECK: @a.protected = protected alias i32, i32* @g.protected
 
 ; Aliases -- DLLStorageClass
-@a.dlldefault = default alias i32, i32* @g.dlldefault
+@a.dlldefault = default alias i32* @g.dlldefault
 ; CHECK: @a.dlldefault = alias i32, i32* @g.dlldefault
-@a.dllimport = dllimport alias i32, i32* @g1
+@a.dllimport = dllimport alias i32* @g1
 ; CHECK: @a.dllimport = dllimport alias i32, i32* @g1
-@a.dllexport = dllexport alias i32, i32* @g.dllexport
+@a.dllexport = dllexport alias i32* @g.dllexport
 ; CHECK: @a.dllexport = dllexport alias i32, i32* @g.dllexport
 
 ; Aliases -- ThreadLocal
-@a.notthreadlocal = alias i32, i32* @g.notthreadlocal
+@a.notthreadlocal = alias i32* @g.notthreadlocal
 ; CHECK: @a.notthreadlocal = alias i32, i32* @g.notthreadlocal
-@a.generaldynamic = thread_local alias i32, i32* @g.generaldynamic
+@a.generaldynamic = thread_local alias i32* @g.generaldynamic
 ; CHECK: @a.generaldynamic = thread_local alias i32, i32* @g.generaldynamic
-@a.localdynamic = thread_local(localdynamic) alias i32, i32* @g.localdynamic
+@a.localdynamic = thread_local(localdynamic) alias i32* @g.localdynamic
 ; CHECK: @a.localdynamic = thread_local(localdynamic) alias i32, i32* @g.localdynamic
-@a.initialexec = thread_local(initialexec) alias i32, i32* @g.initialexec
+@a.initialexec = thread_local(initialexec) alias i32* @g.initialexec
 ; CHECK: @a.initialexec = thread_local(initialexec) alias i32, i32* @g.initialexec
-@a.localexec = thread_local(localexec) alias i32, i32* @g.localexec
+@a.localexec = thread_local(localexec) alias i32* @g.localexec
 ; CHECK: @a.localexec = thread_local(localexec) alias i32, i32* @g.localexec
 
 ; Aliases -- unnamed_addr
-@a.unnamed_addr = unnamed_addr alias i32, i32* @g.unnamed_addr
+@a.unnamed_addr = unnamed_addr alias i32* @g.unnamed_addr
 ; CHECK: @a.unnamed_addr = unnamed_addr alias i32, i32* @g.unnamed_addr
 
 ;; Functions
