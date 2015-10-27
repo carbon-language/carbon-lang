@@ -25,41 +25,41 @@
 
 namespace llvm {
 
-  class ModuleBuilder {
-  public:
-    ModuleBuilder(LLVMContext &Context, StringRef Triple,
-                  StringRef Name);
+class ModuleBuilder {
+public:
+  ModuleBuilder(LLVMContext &Context, StringRef Triple,
+                StringRef Name);
 
-    template <typename FuncType>
-    Function* createFunctionDecl(Module *M, StringRef Name) {
-      return Function::Create(
-               TypeBuilder<FuncType, false>::get(M->getContext()),
-               GlobalValue::ExternalLinkage, Name, M);
-    }
+  template <typename FuncType>
+  Function* createFunctionDecl(Module *M, StringRef Name) {
+    return Function::Create(
+             TypeBuilder<FuncType, false>::get(M->getContext()),
+             GlobalValue::ExternalLinkage, Name, M);
+  }
 
-    Module* getModule() { return M.get(); }
-    const Module* getModule() const { return M.get(); }
-    std::unique_ptr<Module> takeModule() { return std::move(M); }
+  Module* getModule() { return M.get(); }
+  const Module* getModule() const { return M.get(); }
+  std::unique_ptr<Module> takeModule() { return std::move(M); }
 
-  private:
-    std::unique_ptr<Module> M;
-    IRBuilder<> Builder;
-  };
+private:
+  std::unique_ptr<Module> M;
+  IRBuilder<> Builder;
+};
 
-  // Dummy struct type.
-  struct DummyStruct {
-    int X[256];
-  };
+// Dummy struct type.
+struct DummyStruct {
+  int X[256];
+};
 
-  // TypeBuilder specialization for DummyStruct.
-  template <bool XCompile>
-  class TypeBuilder<DummyStruct, XCompile> {
-  public:
-    static StructType *get(LLVMContext &Context) {
-      return StructType::get(
-          TypeBuilder<types::i<32>[256], XCompile>::get(Context), nullptr);
-    }
-  };
+// TypeBuilder specialization for DummyStruct.
+template <bool XCompile>
+class TypeBuilder<DummyStruct, XCompile> {
+public:
+  static StructType *get(LLVMContext &Context) {
+    return StructType::get(
+      TypeBuilder<types::i<32>[256], XCompile>::get(Context), nullptr);
+  }
+};
 
 template <typename HandleT,
           typename AddModuleSetFtor,
