@@ -95,7 +95,7 @@ void AliasSet::removeFromTracker(AliasSetTracker &AST) {
 
 void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
                           uint64_t Size, const AAMDNodes &AAInfo,
-                          bool KnownMustAlias) {
+                          ModRefInfo MR, bool KnownMustAlias) {
   assert(!Entry.hasAliasSet() && "Entry already in set!");
 
   // Check to see if we have to downgrade to _may_ alias.
@@ -112,6 +112,9 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
       assert(Result != NoAlias && "Cannot be part of must set!");
     }
 
+  // upgrading access if existing UnknownInst has ModRef with new pointer
+  Access |= MR;
+
   Entry.setAliasSet(this);
   Entry.updateSizeAndAAInfo(Size, AAInfo);
 
@@ -123,20 +126,34 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
   addRef();               // Entry points to alias set.
 }
 
-void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA) {
+void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA,
+                              ModRefInfo MR) {
   if (UnknownInsts.empty())
     addRef();
   UnknownInsts.emplace_back(I);
 
   if (!I->mayWriteToMemory()) {
     Alias = SetMayAlias;
-    Access |= RefAccess;
+    Access |= MRI_Ref;
     return;
   }
 
-  // FIXME: This should use mod/ref information to make this not suck so bad
   Alias = SetMayAlias;
-  Access = ModRefAccess;
+  Access |= MR;
+}
+
+namespace {
+  /// returns true if there is no request of worst ModRefInfo
+  ///   (MRcommonPtr is null)
+  /// or when achieved maximum ModRefInfo (MRI_ModRef).
+  bool processMR(ModRefInfo MR, ModRefInfo* MRcommonPtr, ModRefInfo& MRcommon) {
+    MRcommon = ModRefInfo(MRcommon | MR);
+    return !MRcommonPtr || (MRcommon == MRI_ModRef);
+  }
+  bool fillExitMR(ModRefInfo* MRcommonPtr, ModRefInfo& MRcommon) {
+    if (MRcommonPtr) *MRcommonPtr = MRcommon;
+    return MRcommon != MRI_NoModRef;
+  }
 }
 
 /// aliasesPointer - Return true if the specified pointer "may" (or must)
@@ -144,7 +161,8 @@ void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA) {
 ///
 bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
                               const AAMDNodes &AAInfo,
-                              AliasAnalysis &AA) const {
+                              AliasAnalysis &AA,
+                              ModRefInfo* MRcommonPtr) const {
   if (Alias == SetMustAlias) {
     assert(UnknownInsts.empty() && "Illegal must alias set!");
 
@@ -164,35 +182,44 @@ bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
                  MemoryLocation(I.getPointer(), I.getSize(), I.getAAInfo())))
       return true;
 
+  // to gather worst ModRefInfo
+  ModRefInfo MRcommon = MRI_NoModRef;
+
   // Check the unknown instructions...
   if (!UnknownInsts.empty()) {
     for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i)
-      if (AA.getModRefInfo(UnknownInsts[i],
-                           MemoryLocation(Ptr, Size, AAInfo)) != MRI_NoModRef)
-        return true;
+      if (processMR(AA.getModRefInfo(UnknownInsts[i],
+          MemoryLocation(Ptr, Size, AAInfo)), MRcommonPtr, MRcommon))
+        return fillExitMR(MRcommonPtr, MRcommon);
   }
 
-  return false;
+  return fillExitMR(MRcommonPtr, MRcommon);
 }
 
 bool AliasSet::aliasesUnknownInst(const Instruction *Inst,
-                                  AliasAnalysis &AA) const {
+                                  AliasAnalysis &AA,
+                                  ModRefInfo* MRcommonPtr) const {
   if (!Inst->mayReadOrWriteMemory())
     return false;
 
+  // to gather worst ModRefInfo
+  ModRefInfo MRcommon = MRI_NoModRef;
+
   for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i) {
     ImmutableCallSite C1(getUnknownInst(i)), C2(Inst);
-    if (!C1 || !C2 || AA.getModRefInfo(C1, C2) != MRI_NoModRef ||
-        AA.getModRefInfo(C2, C1) != MRI_NoModRef)
-      return true;
+    if (!C1 || !C2 ||
+      processMR(AA.getModRefInfo(C1, C2), MRcommonPtr, MRcommon) ||
+      processMR(AA.getModRefInfo(C2, C1), MRcommonPtr, MRcommon))
+      return fillExitMR(MRcommonPtr, MRcommon);
   }
 
-  for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.getModRefInfo(Inst, MemoryLocation(I.getPointer(), I.getSize(),
-                                              I.getAAInfo())) != MRI_NoModRef)
-      return true;
-
-  return false;
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    ModRefInfo MR = AA.getModRefInfo(
+      Inst, MemoryLocation(I.getPointer(), I.getSize(), I.getAAInfo()));
+    if (processMR(MR, MRcommonPtr, MRcommon))
+      return fillExitMR(MRcommonPtr, MRcommon);
+  }
+  return fillExitMR(MRcommonPtr, MRcommon);
 }
 
 void AliasSetTracker::clear() {
@@ -214,11 +241,15 @@ void AliasSetTracker::clear() {
 ///
 AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr,
                                                   uint64_t Size,
-                                                  const AAMDNodes &AAInfo) {
+                                                  const AAMDNodes &AAInfo,
+                                                  ModRefInfo* MRcommonPtr) {
   AliasSet *FoundSet = nullptr;
   for (iterator I = begin(), E = end(); I != E;) {
     iterator Cur = I++;
-    if (Cur->Forward || !Cur->aliasesPointer(Ptr, Size, AAInfo, AA)) continue;
+    ModRefInfo MR = MRI_NoModRef;
+    if (Cur->Forward || !Cur->aliasesPointer(Ptr, Size, AAInfo, AA, &MR))
+      continue;
+    *MRcommonPtr = ModRefInfo(*MRcommonPtr | MR);
     
     if (!FoundSet) {      // If this is the first alias set ptr can go into.
       FoundSet = &*Cur;   // Remember it.
@@ -248,12 +279,15 @@ bool AliasSetTracker::containsUnknown(const Instruction *Inst) const {
   return false;
 }
 
-AliasSet *AliasSetTracker::findAliasSetForUnknownInst(Instruction *Inst) {
+AliasSet *AliasSetTracker::findAliasSetForUnknownInst(Instruction *Inst,
+                                                      ModRefInfo* MRcommonPtr) {
   AliasSet *FoundSet = nullptr;
   for (iterator I = begin(), E = end(); I != E;) {
     iterator Cur = I++;
-    if (Cur->Forward || !Cur->aliasesUnknownInst(Inst, AA))
+    ModRefInfo MR = MRI_NoModRef;
+    if (Cur->Forward || !Cur->aliasesUnknownInst(Inst, AA, &MR))
       continue;
+    *MRcommonPtr = ModRefInfo(*MRcommonPtr | MR);
     if (!FoundSet)            // If this is the first alias set ptr can go into.
       FoundSet = &*Cur;       // Remember it.
     else if (!Cur->Forward)   // Otherwise, we must merge the sets.
@@ -279,22 +313,23 @@ AliasSet &AliasSetTracker::getAliasSetForPointer(Value *Pointer, uint64_t Size,
     return *Entry.getAliasSet(*this)->getForwardedTarget(*this);
   }
   
-  if (AliasSet *AS = findAliasSetForPointer(Pointer, Size, AAInfo)) {
+  ModRefInfo MR = MRI_NoModRef;
+  if (AliasSet *AS = findAliasSetForPointer(Pointer, Size, AAInfo, &MR)) {
     // Add it to the alias set it aliases.
-    AS->addPointer(*this, Entry, Size, AAInfo);
+    AS->addPointer(*this, Entry, Size, AAInfo, MR);
     return *AS;
   }
   
   if (New) *New = true;
   // Otherwise create a new alias set to hold the loaded pointer.
   AliasSets.push_back(new AliasSet());
-  AliasSets.back().addPointer(*this, Entry, Size, AAInfo);
+  AliasSets.back().addPointer(*this, Entry, Size, AAInfo, MRI_NoModRef);
   return AliasSets.back();
 }
 
 bool AliasSetTracker::add(Value *Ptr, uint64_t Size, const AAMDNodes &AAInfo) {
   bool NewPtr;
-  addPointer(Ptr, Size, AAInfo, AliasSet::NoAccess, NewPtr);
+  addPointer(Ptr, Size, AAInfo, MRI_NoModRef, NewPtr);
   return NewPtr;
 }
 
@@ -305,7 +340,7 @@ bool AliasSetTracker::add(LoadInst *LI) {
   AAMDNodes AAInfo;
   LI->getAAMetadata(AAInfo);
 
-  AliasSet::AccessLattice Access = AliasSet::RefAccess;
+  AliasSet::AccessLattice Access = MRI_Ref;
   bool NewPtr;
   const DataLayout &DL = LI->getModule()->getDataLayout();
   AliasSet &AS = addPointer(LI->getOperand(0),
@@ -321,7 +356,7 @@ bool AliasSetTracker::add(StoreInst *SI) {
   AAMDNodes AAInfo;
   SI->getAAMetadata(AAInfo);
 
-  AliasSet::AccessLattice Access = AliasSet::ModAccess;
+  AliasSet::AccessLattice Access = MRI_Mod;
   bool NewPtr;
   const DataLayout &DL = SI->getModule()->getDataLayout();
   Value *Val = SI->getOperand(0);
@@ -338,7 +373,7 @@ bool AliasSetTracker::add(VAArgInst *VAAI) {
 
   bool NewPtr;
   addPointer(VAAI->getOperand(0), MemoryLocation::UnknownSize, AAInfo,
-             AliasSet::ModRefAccess, NewPtr);
+             MRI_ModRef, NewPtr);
   return NewPtr;
 }
 
@@ -349,14 +384,15 @@ bool AliasSetTracker::addUnknown(Instruction *Inst) {
   if (!Inst->mayReadOrWriteMemory())
     return true; // doesn't alias anything
 
-  AliasSet *AS = findAliasSetForUnknownInst(Inst);
+  ModRefInfo MR = MRI_NoModRef;
+  AliasSet *AS = findAliasSetForUnknownInst(Inst, &MR);
   if (AS) {
-    AS->addUnknownInst(Inst, AA);
+    AS->addUnknownInst(Inst, AA, MR);
     return false;
   }
   AliasSets.push_back(new AliasSet());
   AS = &AliasSets.back();
-  AS->addUnknownInst(Inst, AA);
+  AS->addUnknownInst(Inst, AA, MR);
   return true;
 }
 
@@ -556,7 +592,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   I = PointerMap.find_as(From);
   AliasSet *AS = I->second->getAliasSet(*this);
   AS->addPointer(*this, Entry, I->second->getSize(),
-                 I->second->getAAInfo(),
+                 I->second->getAAInfo(), MRI_NoModRef,
                  true);
 }
 
@@ -570,10 +606,10 @@ void AliasSet::print(raw_ostream &OS) const {
   OS << "  AliasSet[" << (const void*)this << ", " << RefCount << "] ";
   OS << (Alias == SetMustAlias ? "must" : "may") << " alias, ";
   switch (Access) {
-  case NoAccess:     OS << "No access "; break;
-  case RefAccess:    OS << "Ref       "; break;
-  case ModAccess:    OS << "Mod       "; break;
-  case ModRefAccess: OS << "Mod/Ref   "; break;
+  case MRI_NoModRef:     OS << "No access "; break;
+  case MRI_Ref:          OS << "Ref       "; break;
+  case MRI_Mod:          OS << "Mod       "; break;
+  case MRI_ModRef:       OS << "Mod/Ref   "; break;
   default: llvm_unreachable("Bad value for Access!");
   }
   if (isVolatile()) OS << "[volatile] ";

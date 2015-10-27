@@ -124,12 +124,7 @@ class AliasSet : public ilist_node<AliasSet> {
   /// memory (and not any particular access), whether it modifies or references
   /// the memory, or whether it does both. The lattice goes from "NoAccess" to
   /// either RefAccess or ModAccess, then to ModRefAccess as necessary.
-  enum AccessLattice {
-    NoAccess = 0,
-    RefAccess = 1,
-    ModAccess = 2,
-    ModRefAccess = RefAccess | ModAccess
-  };
+  typedef ModRefInfo AccessLattice;
   unsigned Access : 2;
 
   /// The kind of alias relationship between pointers of the set.
@@ -160,8 +155,8 @@ class AliasSet : public ilist_node<AliasSet> {
 
 public:
   /// Accessors...
-  bool isRef() const { return Access & RefAccess; }
-  bool isMod() const { return Access & ModAccess; }
+  bool isRef() const { return Access & MRI_Ref; }
+  bool isMod() const { return Access & MRI_Mod; }
   bool isMustAlias() const { return Alias == SetMustAlias; }
   bool isMayAlias()  const { return Alias == SetMayAlias; }
 
@@ -226,7 +221,7 @@ private:
   friend struct ilist_sentinel_traits<AliasSet>;
   AliasSet()
     : PtrList(nullptr), PtrListEnd(&PtrList), Forward(nullptr), RefCount(0),
-      Access(NoAccess), Alias(SetMustAlias), Volatile(false) {
+      Access(MRI_NoModRef), Alias(SetMustAlias), Volatile(false) {
   }
 
   AliasSet(const AliasSet &AS) = delete;
@@ -254,9 +249,9 @@ private:
   void removeFromTracker(AliasSetTracker &AST);
 
   void addPointer(AliasSetTracker &AST, PointerRec &Entry, uint64_t Size,
-                  const AAMDNodes &AAInfo,
+                  const AAMDNodes &AAInfo, ModRefInfo MR,
                   bool KnownMustAlias = false);
-  void addUnknownInst(Instruction *I, AliasAnalysis &AA);
+  void addUnknownInst(Instruction *I, AliasAnalysis &AA, ModRefInfo MR);
   void removeUnknownInst(AliasSetTracker &AST, Instruction *I) {
     bool WasEmpty = UnknownInsts.empty();
     for (size_t i = 0, e = UnknownInsts.size(); i != e; ++i)
@@ -273,10 +268,18 @@ private:
 public:
   /// aliasesPointer - Return true if the specified pointer "may" (or must)
   /// alias one of the members in the set.
-  ///
+  /// MRcommon - if Ptr is aliased by existing UnknownInsts,
+  /// then not-null MRcommon will be set to the worst ModRefInfo met
+  /// 
   bool aliasesPointer(const Value *Ptr, uint64_t Size, const AAMDNodes &AAInfo,
-                      AliasAnalysis &AA) const;
-  bool aliasesUnknownInst(const Instruction *Inst, AliasAnalysis &AA) const;
+                      AliasAnalysis &AA, ModRefInfo* MRcommon = nullptr) const;
+  /// aliasesUnknownInst - Return true if the specified UnknownInst
+  /// has not-null ModRefInfo (not MRI_NoModRef) with some
+  /// pointer or UnknownInst already existing in AliasSet
+  /// MRcommon - not-null MRcommon will be set to the worst ModRefInfo met
+  /// 
+  bool aliasesUnknownInst(const Instruction *Inst, AliasAnalysis &AA,
+                          ModRefInfo* MRcommon = nullptr) const;
 };
 
 inline raw_ostream& operator<<(raw_ostream &OS, const AliasSet &AS) {
@@ -434,9 +437,11 @@ private:
     return AS;
   }
   AliasSet *findAliasSetForPointer(const Value *Ptr, uint64_t Size,
-                                   const AAMDNodes &AAInfo);
+                                   const AAMDNodes &AAInfo,
+                                   ModRefInfo* MRcommonPtr = nullptr);
 
-  AliasSet *findAliasSetForUnknownInst(Instruction *Inst);
+  AliasSet *findAliasSetForUnknownInst(Instruction *Inst,
+                                   ModRefInfo* MRcommonPtr = nullptr);
 };
 
 inline raw_ostream& operator<<(raw_ostream &OS, const AliasSetTracker &AST) {
