@@ -50,6 +50,7 @@ endif
 
 ifeq ($(HOST_OS),MingW)
 $(eval $(call DIR_SOURCES,windows))
+SOURCES += posix/ConnectionFileDescriptorPosix.cpp
 endif
 
 ifeq ($(HOST_OS),Android)
