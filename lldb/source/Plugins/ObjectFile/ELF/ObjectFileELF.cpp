@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <unordered_map>
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
@@ -1943,6 +1944,13 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
     // makes it highly unlikely that this will collide with anything else.
     bool skip_oatdata_oatexec = m_file.GetFilename() == ConstString("system@framework@boot.oat");
 
+    ArchSpec arch;
+    GetArchitecture(arch);
+
+    // Local cache to avoid doing a FindSectionByName for each symbol. The "const char*" key must
+    // came from a ConstString object so they can be compared by pointer
+    std::unordered_map<const char*, lldb::SectionSP> section_name_to_section;
+
     unsigned i;
     for (i = 0; i < num_symbols; ++i)
     {
@@ -2048,8 +2056,7 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
         int64_t symbol_value_offset = 0;
         uint32_t additional_flags = 0;
 
-        ArchSpec arch;
-        if (GetArchitecture(arch))
+        if (arch.IsValid())
         {
             if (arch.GetMachine() == llvm::Triple::arm)
             {
@@ -2175,11 +2182,13 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                 if (module_section_list && module_section_list != section_list)
                 {
                     const ConstString &sect_name = symbol_section_sp->GetName();
-                    lldb::SectionSP section_sp (module_section_list->FindSectionByName (sect_name));
-                    if (section_sp && section_sp->GetFileSize())
-                    {
-                        symbol_section_sp = section_sp;
-                    }
+                    auto section_it = section_name_to_section.find(sect_name.GetCString());
+                    if (section_it == section_name_to_section.end())
+                        section_it = section_name_to_section.emplace(
+                            sect_name.GetCString(),
+                            module_section_list->FindSectionByName (sect_name)).first;
+                    if (section_it->second && section_it->second->GetFileSize())
+                        symbol_section_sp = section_it->second;
                 }
             }
         }
