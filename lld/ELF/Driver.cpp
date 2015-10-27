@@ -38,7 +38,6 @@ void lld::elf2::link(ArrayRef<const char *> Args) {
 }
 
 static std::pair<ELFKind, uint16_t> parseEmulation(StringRef S) {
-  Config->Emulation = S;
   if (S == "elf32btsmip")
     return {ELF32BEKind, EM_MIPS};
   if (S == "elf32ltsmip")
@@ -130,9 +129,11 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
 
   if (auto *Arg = Args.getLastArg(OPT_m)) {
-    std::pair<ELFKind, uint16_t> P = parseEmulation(Arg->getValue());
+    StringRef S = Arg->getValue();
+    std::pair<ELFKind, uint16_t> P = parseEmulation(S);
     Config->EKind = P.first;
     Config->EMachine = P.second;
+    Config->Emulation = S;
   }
 
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
