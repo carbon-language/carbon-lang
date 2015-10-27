@@ -380,9 +380,7 @@ void llvm::computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
     ConstantInt *Upper =
         mdconst::extract<ConstantInt>(Ranges.getOperand(2 * i + 1));
     ConstantRange Range(Lower->getValue(), Upper->getValue());
-    if (Range.isWrappedSet())
-      MinLeadingZeros = 0; // -1 has no zeros
-    unsigned LeadingZeros = (Upper->getValue() - 1).countLeadingZeros();
+    unsigned LeadingZeros = Range.getUnsignedMax().countLeadingZeros();
     MinLeadingZeros = std::min(LeadingZeros, MinLeadingZeros);
   }
 
