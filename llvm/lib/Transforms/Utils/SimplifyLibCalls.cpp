@@ -1427,10 +1427,8 @@ LibCallSimplifier::classifyArgUse(Value *Val, BasicBlock *BB, bool IsFloat,
 
 void LibCallSimplifier::replaceTrigInsts(SmallVectorImpl<CallInst *> &Calls,
                                          Value *Res) {
-  for (SmallVectorImpl<CallInst *>::iterator I = Calls.begin(), E = Calls.end();
-       I != E; ++I) {
-    replaceAllUsesWith(*I, Res);
-  }
+  for (CallInst *C : Calls)
+    replaceAllUsesWith(C, Res);
 }
 
 void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
