@@ -412,16 +412,16 @@ struct FormatToken {
 
   /// \brief Returns \c true if this tokens starts a block-type list, i.e. a
   /// list that should be indented with a block indent.
-  bool opensBlockTypeList(const FormatStyle &Style) const {
+  bool opensBlockOrBlockTypeList(const FormatStyle &Style) const {
     return is(TT_ArrayInitializerLSquare) ||
            (is(tok::l_brace) &&
             (BlockKind == BK_Block || is(TT_DictLiteral) ||
              (!Style.Cpp11BracedListStyle && NestingLevel == 0)));
   }
 
-  /// \brief Same as opensBlockTypeList, but for the closing token.
-  bool closesBlockTypeList(const FormatStyle &Style) const {
-    return MatchingParen && MatchingParen->opensBlockTypeList(Style);
+  /// \brief Same as opensBlockOrBlockTypeList, but for the closing token.
+  bool closesBlockOrBlockTypeList(const FormatStyle &Style) const {
+    return MatchingParen && MatchingParen->opensBlockOrBlockTypeList(Style);
   }
 
 private:

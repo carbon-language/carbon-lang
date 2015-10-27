@@ -95,7 +95,7 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   assert(&Previous == Current.Previous);
   if (!Current.CanBreakBefore &&
       !(State.Stack.back().BreakBeforeClosingBrace &&
-        Current.closesBlockTypeList(Style)))
+        Current.closesBlockOrBlockTypeList(Style)))
     return false;
   // The opening "{" of a braced list has to be on the same line as the first
   // element if it is nested in another braced init list or function call.
@@ -139,7 +139,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   if (Current.MustBreakBefore || Current.is(TT_InlineASMColon))
     return true;
   if (State.Stack.back().BreakBeforeClosingBrace &&
-      Current.closesBlockTypeList(Style))
+      Current.closesBlockOrBlockTypeList(Style))
     return true;
   if (Previous.is(tok::semi) && State.LineContainsContinuedForLoopSection)
     return true;
@@ -574,7 +574,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return Current.NestingLevel == 0 ? State.FirstIndent
                                      : State.Stack.back().Indent;
   if (Current.isOneOf(tok::r_brace, tok::r_square) && State.Stack.size() > 1) {
-    if (Current.closesBlockTypeList(Style))
+    if (Current.closesBlockOrBlockTypeList(Style))
       return State.Stack[State.Stack.size() - 2].NestedBlockIndent;
     if (Current.MatchingParen &&
         Current.MatchingParen->BlockKind == BK_BracedInit)
@@ -883,15 +883,8 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   bool BreakBeforeParameter = false;
   unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
                                         State.Stack.back().NestedBlockIndent);
-  // Generally inherit NoLineBreak from the current scope to nested scope.
-  // However, don't do this for nested blocks, e.g. lambdas as these follow
-  // different indentation rules.
-  bool NoLineBreak = State.Stack.back().NoLineBreak ||
-                     (Current.is(TT_TemplateOpener) &&
-                      State.Stack.back().ContainsUnwrappedBuilder);
   if (Current.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare)) {
-    if (Current.opensBlockTypeList(Style)) {
-      NoLineBreak = false;
+    if (Current.opensBlockOrBlockTypeList(Style)) {
       NewIndent = State.Stack.back().NestedBlockIndent + Style.IndentWidth;
       NewIndent = std::min(State.Column + 2, NewIndent);
       ++NewIndentLevel;
@@ -949,6 +942,15 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
       }
     }
   }
+  // Generally inherit NoLineBreak from the current scope to nested scope.
+  // However, don't do this for non-empty nested blocks, dict literals and
+  // array literals as these follow different indentation rules.
+  bool NoLineBreak =
+      Current.Children.empty() &&
+      !Current.isOneOf(TT_DictLiteral, TT_ArrayInitializerLSquare) &&
+      (State.Stack.back().NoLineBreak ||
+       (Current.is(TT_TemplateOpener) &&
+        State.Stack.back().ContainsUnwrappedBuilder));
   State.Stack.push_back(ParenState(NewIndent, NewIndentLevel, LastSpace,
                                    AvoidBinPacking, NoLineBreak));
   State.Stack.back().NestedBlockIndent = NestedBlockIndent;
