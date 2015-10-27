@@ -49,6 +49,28 @@ InputSectionBase<ELFT>::getOffset(const Elf_Sym &Sym) {
   return cast<MergeInputSection<ELFT>>(this)->getOffset(Sym.st_value);
 }
 
+// Returns a section that Rel relocation is pointing to.
+template <class ELFT>
+InputSectionBase<ELFT> *
+InputSectionBase<ELFT>::getRelocTarget(const Elf_Rel &Rel) {
+  // Global symbol
+  uint32_t SymIndex = Rel.getSymbol(Config->Mips64EL);
+  if (SymbolBody *B = File->getSymbolBody(SymIndex))
+    if (auto *D = dyn_cast<DefinedRegular<ELFT>>(B->repl()))
+      return &D->Section;
+  // Local symbol
+  if (const Elf_Sym *Sym = File->getLocalSymbol(SymIndex))
+    if (InputSectionBase<ELFT> *Sec = File->getSection(*Sym))
+      return Sec;
+  return nullptr;
+}
+
+template <class ELFT>
+InputSectionBase<ELFT> *
+InputSectionBase<ELFT>::getRelocTarget(const Elf_Rela &Rel) {
+  return getRelocTarget(reinterpret_cast<const Elf_Rel &>(Rel));
+}
+
 template <class ELFT>
 InputSection<ELFT>::InputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header)
     : InputSectionBase<ELFT>(F, Header, Base::Regular) {}

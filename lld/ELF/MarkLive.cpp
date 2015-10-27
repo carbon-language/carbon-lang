@@ -37,40 +37,25 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf2;
 
-template <class ELFT, bool isRela>
-static void
-doForEachSuccessor(InputSectionBase<ELFT> *Sec,
-                   std::function<void(InputSectionBase<ELFT> *)> Fn,
-                   iterator_range<const Elf_Rel_Impl<ELFT, isRela> *> Rels) {
-  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  typedef Elf_Rel_Impl<ELFT, isRela> RelType;
-
-  ObjectFile<ELFT> *File = Sec->getFile();
-  for (const RelType &RI : Rels) {
-    // Global symbol
-    uint32_t SymIndex = RI.getSymbol(Config->Mips64EL);
-    if (SymbolBody *B = File->getSymbolBody(SymIndex)) {
-      if (auto *D = dyn_cast<DefinedRegular<ELFT>>(B->repl()))
-        Fn(&D->Section);
-      continue;
-    }
-    // Local symbol
-    if (const Elf_Sym *Sym = File->getLocalSymbol(SymIndex))
-      if (InputSectionBase<ELFT> *Sec = File->getSection(*Sym))
-        Fn(Sec);
-  }
-}
-
 // Calls Fn for each section that Sec refers to.
 template <class ELFT>
 static void forEachSuccessor(InputSection<ELFT> *Sec,
                              std::function<void(InputSectionBase<ELFT> *)> Fn) {
+  typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+
+  ELFFile<ELFT> &Obj = Sec->getFile()->getObj();
   for (const Elf_Shdr *RelSec : Sec->RelocSections) {
-    if (RelSec->sh_type == SHT_RELA)
-      doForEachSuccessor(Sec, Fn, Sec->getFile()->getObj().relas(RelSec));
-    else
-      doForEachSuccessor(Sec, Fn, Sec->getFile()->getObj().rels(RelSec));
+    if (RelSec->sh_type == SHT_RELA) {
+      for (const Elf_Rela &RI : Obj.relas(RelSec))
+        if (InputSectionBase<ELFT> *Succ = Sec->getRelocTarget(RI))
+          Fn(Succ);
+    } else {
+      for (const Elf_Rel &RI : Obj.rels(RelSec))
+        if (InputSectionBase<ELFT> *Succ = Sec->getRelocTarget(RI))
+          Fn(Succ);
+    }
   }
 }
 

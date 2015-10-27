@@ -24,6 +24,8 @@ template <class ELFT> class OutputSectionBase;
 // This corresponds to a section of an input file.
 template <class ELFT> class InputSectionBase {
 protected:
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
@@ -63,6 +65,10 @@ public:
 
   uintX_t getOffset(const Elf_Sym &Sym);
   ArrayRef<uint8_t> getSectionData() const;
+
+  // Returns a section that Rel is pointing to. Used by the garbage collector.
+  InputSectionBase<ELFT> *getRelocTarget(const Elf_Rel &Rel);
+  InputSectionBase<ELFT> *getRelocTarget(const Elf_Rela &Rel);
 };
 
 template <class ELFT>
