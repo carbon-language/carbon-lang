@@ -26,6 +26,8 @@ the bug is reached?</a></li>
   <li><a href="#null_pointer">The analyzer reports a null dereference, but I know that the
 pointer is never null. How can I tell the analyzer that a pointer can never be
 null?</a></li>
+  <li><a href="#dead_store">How do I tell the static analyzer that I don't care about a specific dead store?</a></li>
+  <li><a href="#unused_ivar">How do I tell the static analyzer that I don't care about a specific unused instance variable in Objective C?</a></li>
   <li><a href="#use_assert">The analyzer assumes that a loop body is never entered.  How can I tell it that the loop body will be entered at least once?</a></li>
   <li><a href="#suppress_issue">How can I suppress a specific analyzer warning?</a></li>
   <li><a href="#exclude_code">How can I selectively exclude code the analyzer examines?</a></li>
@@ -63,6 +65,18 @@ int foo(int *b) {
   usePointer(b);
   return *b;
 }</pre>
+
+<h4 id="dead_store" class="faq">Q: How do I tell the static analyzer that I don't care about a specific dead store?</h4>
+
+<p>When the analyzer sees that a value stored into a variable is never used, it's going to produce a message similar to this one:
+<pre class="code_example">Value stored to 'x' is never read</pre>
+You can use the <tt>(void)x;</tt> idiom to acknowledge that there is a dead store in your code but you do not want it to be reported in the future.</p>
+
+<h4 id="unused_ivar" class="faq">Q: How do I tell the static analyzer that I don't care about a specific unused instance variable in Objective C?</h4>
+
+<p>When the analyzer sees that a value stored into a variable is never used, it is going to produce a message similar to this one:
+<pre class="code_example">Instance variable 'commonName' in class 'HappyBird' is never used by the methods in its @implementation</pre>
+You can add <tt>__attribute__((unused))</tt> to the instance variable declaration to suppress the warning.</p>
 
 <h4 id="use_assert" class="faq">Q: The analyzer assumes that a loop body is never entered.  How can I tell it that the loop body will be entered at least once?</h4>
 
