@@ -451,7 +451,13 @@ NativeRegisterContextLinux_arm::SetHardwareBreakpoint (lldb::addr_t addr, size_t
         error = WriteHardwareDebugRegs(eDREGTypeBREAK, bp_index);
 
         if (error.Fail())
+        {
+            m_hbr_regs[bp_index].address = 0;
+            m_hbr_regs[bp_index].control &= ~1;
+            m_hbr_regs[bp_index].refcount = 0;
+
             return LLDB_INVALID_INDEX32;
+        }
     }
     else
         m_hbr_regs[bp_index].refcount++;
@@ -486,6 +492,11 @@ NativeRegisterContextLinux_arm::ClearHardwareBreakpoint (uint32_t hw_idx)
     }
     else if (m_hbr_regs[hw_idx].refcount == 1)
     {
+        // Create a backup we can revert to in case of failure.
+        lldb::addr_t tempAddr = m_hbr_regs[hw_idx].address;
+        uint32_t tempControl = m_hbr_regs[hw_idx].control;
+        uint32_t tempRefCount = m_hbr_regs[hw_idx].refcount;
+
         m_hbr_regs[hw_idx].control &= ~1;
         m_hbr_regs[hw_idx].address = 0;
         m_hbr_regs[hw_idx].refcount = 0;
@@ -494,7 +505,13 @@ NativeRegisterContextLinux_arm::ClearHardwareBreakpoint (uint32_t hw_idx)
         WriteHardwareDebugRegs(eDREGTypeBREAK, hw_idx);
 
         if (error.Fail())
+        {
+            m_hbr_regs[hw_idx].control = tempControl;
+            m_hbr_regs[hw_idx].address = tempAddr;
+            m_hbr_regs[hw_idx].refcount = tempRefCount;
+
             return false;
+        }
 
         return true;
     }
@@ -614,7 +631,13 @@ NativeRegisterContextLinux_arm::SetHardwareWatchpoint (lldb::addr_t addr, size_t
         error = WriteHardwareDebugRegs(eDREGTypeWATCH, wp_index);
 
         if (error.Fail())
+        {
+            m_hwp_regs[wp_index].address = 0;
+            m_hwp_regs[wp_index].control &= ~1;
+            m_hwp_regs[wp_index].refcount = 0;
+
             return LLDB_INVALID_INDEX32;
+        }
     }
     else
         m_hwp_regs[wp_index].refcount++;
@@ -649,6 +672,11 @@ NativeRegisterContextLinux_arm::ClearHardwareWatchpoint (uint32_t wp_index)
     }
     else if (m_hwp_regs[wp_index].refcount == 1)
     {
+        // Create a backup we can revert to in case of failure.
+        lldb::addr_t tempAddr = m_hwp_regs[wp_index].address;
+        uint32_t tempControl = m_hwp_regs[wp_index].control;
+        uint32_t tempRefCount = m_hwp_regs[wp_index].refcount;
+
         // Update watchpoint in local cache
         m_hwp_regs[wp_index].control &= ~1;
         m_hwp_regs[wp_index].address = 0;
@@ -658,7 +686,13 @@ NativeRegisterContextLinux_arm::ClearHardwareWatchpoint (uint32_t wp_index)
         error = WriteHardwareDebugRegs(eDREGTypeWATCH, wp_index);
 
         if (error.Fail())
+        {
+            m_hwp_regs[wp_index].control = tempControl;
+            m_hwp_regs[wp_index].address = tempAddr;
+            m_hwp_regs[wp_index].refcount = tempRefCount;
+
             return false;
+        }
 
         return true;
     }
@@ -682,10 +716,18 @@ NativeRegisterContextLinux_arm::ClearAllHardwareWatchpoints ()
     if (error.Fail())
         return error;
 
+    lldb::addr_t tempAddr = 0;
+    uint32_t tempControl = 0, tempRefCount = 0;
+
     for (uint32_t i = 0; i < m_max_hwp_supported; i++)
     {
         if (m_hwp_regs[i].control & 0x01)
         {
+            // Create a backup we can revert to in case of failure.
+            tempAddr = m_hwp_regs[i].address;
+            tempControl = m_hwp_regs[i].control;
+            tempRefCount = m_hwp_regs[i].refcount;
+
             // Clear watchpoints in local cache
             m_hwp_regs[i].control &= ~1;
             m_hwp_regs[i].address = 0;
@@ -695,7 +737,13 @@ NativeRegisterContextLinux_arm::ClearAllHardwareWatchpoints ()
             error = WriteHardwareDebugRegs(eDREGTypeWATCH, i);
 
             if (error.Fail())
+            {
+                m_hwp_regs[i].control = tempControl;
+                m_hwp_regs[i].address = tempAddr;
+                m_hwp_regs[i].refcount = tempRefCount;
+
                 return error;
+            }
         }
     }
 
