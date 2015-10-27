@@ -1205,7 +1205,7 @@ def adjust_inferior_options(dotest_argv):
         # every dotest invocation from creating its own directory
         import datetime
         # The windows platforms don't like ':' in the pathname.
-        timestamp_started = datetime.datetime.now().strftime("%F-%H_%M_%S")
+        timestamp_started = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
         dotest_argv.append('-s')
         dotest_argv.append(timestamp_started)
         dotest_options.s = timestamp_started

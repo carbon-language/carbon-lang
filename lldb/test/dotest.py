@@ -1048,6 +1048,8 @@ def setupSysPath():
 
     # Set up the LLDB_SRC environment variable, so that the tests can locate
     # the LLDB source code.
+    # When this changes over to a package instead of a standalone script, this
+    # will be `lldbsuite.lldb_root`
     os.environ["LLDB_SRC"] = os.path.join(scriptPath, os.pardir)
 
     pluginPath = os.path.join(scriptPath, 'plugins')
@@ -1063,6 +1065,8 @@ def setupSysPath():
                                              # to "import lldbgdbserverutils" from the lldb-server tests
 
     # This is the root of the lldb git/svn checkout
+    # When this changes over to a package instead of a standalone script, this
+    # will be `lldbsuite.lldb_root`
     lldbRootDirectory = os.path.abspath(os.path.join(scriptPath, os.pardir))
 
     # Some of the tests can invoke the 'lldb' command directly.
@@ -1294,6 +1298,7 @@ def visit(prefix, dir, names):
 
 
 def disabledynamics():
+    import lldb
     ci = lldb.DBG.GetCommandInterpreter()
     res = lldb.SBCommandReturnObject()
     ci.HandleCommand("setting set target.prefer-dynamic-value no-dynamic-values", res, False)    
@@ -1301,6 +1306,7 @@ def disabledynamics():
         raise Exception('disabling dynamic type support failed')
 
 def lldbLoggings():
+    import lldb
     """Check and do lldb loggings if necessary."""
 
     # Turn on logging for debugging purposes if ${LLDB_LOG} environment variable is
@@ -1366,6 +1372,7 @@ def checkDsymForUUIDIsNotOn():
         sys.exit(0)
 
 def exitTestSuite(exitCode = None):
+    import lldb
     lldb.SBDebugger.Terminate()
     if exitCode:
         sys.exit(exitCode)
@@ -1378,7 +1385,58 @@ def isMultiprocessTestRunner():
     # test runner
     return not (is_inferior_test_runner or no_multiprocess_test_runner)
 
-if __name__ == "__main__":
+def run_suite():
+    global just_do_benchmarks_test
+    global dont_do_dsym_test
+    global dont_do_dwarf_test
+    global dont_do_dwo_test
+    global blacklist
+    global blacklistConfig
+    global categoriesList
+    global validCategories
+    global useCategories
+    global skipCategories
+    global lldbFrameworkPath
+    global configFile
+    global archs
+    global compilers
+    global count
+    global dumpSysPath
+    global bmExecutable
+    global bmBreakpointSpec
+    global bmIterationCount
+    global failed
+    global failfast
+    global filters
+    global fs4all
+    global ignore
+    global progress_bar
+    global runHooks
+    global skip_build_and_cleanup
+    global skip_long_running_test
+    global noHeaders
+    global parsable
+    global regexp
+    global rdir
+    global sdir_name
+    global svn_silent
+    global verbose
+    global testdirs
+    global lldb_platform_name
+    global lldb_platform_url
+    global lldb_platform_working_dir
+    global setCrashInfoHook
+    global is_inferior_test_runner
+    global multiprocess_test_subdir
+    global num_threads
+    global output_on_success
+    global no_multiprocess_test_runner
+    global test_runner_name
+    global results_filename
+    global results_formatter_name
+    global results_formatter_options
+    global results_port
+
     # On MacOS X, check to make sure that domain for com.apple.DebugSymbols defaults
     # does not exist before proceeding to running the test suite.
     if sys.platform.startswith("darwin"):
@@ -1976,3 +2034,6 @@ if __name__ == "__main__":
 
     # Exiting.
     exitTestSuite(failed)
+
+if __name__ == "__main__":
+    run_suite()
