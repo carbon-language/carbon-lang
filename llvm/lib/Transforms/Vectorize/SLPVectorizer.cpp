@@ -3714,11 +3714,11 @@ public:
       return false;
 
     // Post order traverse the reduction tree starting at B. We only handle true
-    // trees containing only binary operators.
-    SmallVector<std::pair<BinaryOperator *, unsigned>, 32> Stack;
+    // trees containing only binary operators or selects.
+    SmallVector<std::pair<Instruction *, unsigned>, 32> Stack;
     Stack.push_back(std::make_pair(B, 0));
     while (!Stack.empty()) {
-      BinaryOperator *TreeN = Stack.back().first;
+      Instruction *TreeN = Stack.back().first;
       unsigned EdgeToVist = Stack.back().second++;
       bool IsReducedValue = TreeN->getOpcode() != ReductionOpcode;
 
@@ -3754,9 +3754,10 @@ public:
 
       // Visit left or right.
       Value *NextV = TreeN->getOperand(EdgeToVist);
-      BinaryOperator *Next = dyn_cast<BinaryOperator>(NextV);
-      if (Next)
-        Stack.push_back(std::make_pair(Next, 0));
+      // We currently only allow BinaryOperator's and SelectInst's as reduction
+      // values in our tree.
+      if (isa<BinaryOperator>(NextV) || isa<SelectInst>(NextV))
+        Stack.push_back(std::make_pair(cast<Instruction>(NextV), 0));
       else if (NextV != Phi)
         return false;
     }
