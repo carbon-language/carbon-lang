@@ -611,6 +611,15 @@ static uint32_t toPhdrFlags(uint64_t Flags) {
   return Ret;
 }
 
+template <class ELFT>
+static bool consumesVirtualAddressSpace(OutputSectionBase<ELFT> *Sec) {
+  return (Sec->getFlags() & SHF_ALLOC) &&
+         // Don't allocate VA space for TLS NOBITS sections. The PT_TLS PHDR is
+         // responsible for allocating space for them, not the PT_LOAD that
+         // contains the TLS initialization image.
+         !((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS);
+}
+
 // Visits all sections to create PHDRs and to assign incremental,
 // non-overlapping addresses to output sections.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
@@ -659,7 +668,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       }
     }
 
-    if (Sec->getFlags() & SHF_ALLOC) {
+    if (consumesVirtualAddressSpace<ELFT>(Sec)) {
       VA = RoundUpToAlignment(VA, Sec->getAlign());
       Sec->setVA(VA);
       VA += Sec->getSize();
