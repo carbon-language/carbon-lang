@@ -24,6 +24,10 @@ template <> void A<int>::meth();
 template class A<int>;
 }
 
+class B {
+  mutable int x_;
+  int y_;
+};
 // RUN: c-index-test -index-file %s > %t
 // RUN: FileCheck %s -input-file=%t
 
@@ -31,3 +35,5 @@ template class A<int>;
 // CHECK: [indexDeclaration]: kind: struct-template-spec | name: TS | {{.*}} | loc: 11:8
 // CHECK: [indexDeclaration]: kind: function-template-spec | name: tfoo | {{.*}} | loc: 15:6
 // CHECK: [indexDeclaration]: kind: c++-instance-method | name: meth | {{.*}} | loc: 23:26
+// CHECK: [indexDeclaration]: kind: field | name: x_ | USR: c:@S@B@FI@x_ | lang: C++ | cursor: FieldDecl=x_:28:15 (Definition) (mutable) | loc: 28:15 | semantic-container: [B:27:7] | lexical-container: [B:27:7] | isRedecl: 0 | isDef: 1 | isContainer: 0 | isImplicit: 0
+// CHECK: [indexDeclaration]: kind: field | name: y_ | USR: c:@S@B@FI@y_ | lang: C++ | cursor: FieldDecl=y_:29:7 (Definition) | loc: 29:7 | semantic-container: [B:27:7] | lexical-container: [B:27:7] | isRedecl: 0 | isDef: 1 | isContainer: 0 | isImplicit: 0

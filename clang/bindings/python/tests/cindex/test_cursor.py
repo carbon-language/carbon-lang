@@ -112,6 +112,21 @@ def test_is_const_method():
     assert foo.is_const_method()
     assert not bar.is_const_method()
 
+def test_is_mutable_field():
+    """Ensure Cursor.is_mutable_field works."""
+    source = 'class X { int x_; mutable int y_; };'
+    tu = get_tu(source, lang='cpp')
+
+    cls = get_cursor(tu, 'X')
+    x_ = get_cursor(tu, 'x_')
+    y_ = get_cursor(tu, 'y_')
+    assert cls is not None
+    assert x_ is not None
+    assert y_ is not None
+
+    assert not x_.is_mutable_field()
+    assert y_.is_mutable_field()
+
 def test_is_static_method():
     """Ensure Cursor.is_static_method works."""
 

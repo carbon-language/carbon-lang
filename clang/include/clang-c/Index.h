@@ -3957,6 +3957,11 @@ CXFile clang_Module_getTopLevelHeader(CXTranslationUnit,
  */
 
 /**
+ * \brief Determine if a C++ field is declared 'mutable'.
+ */
+CINDEX_LINKAGE unsigned clang_CXXField_isMutable(CXCursor C);
+
+/**
  * \brief Determine if a C++ member function or member function template is
  * pure virtual.
  */

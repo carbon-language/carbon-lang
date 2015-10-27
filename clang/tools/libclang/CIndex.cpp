@@ -6888,6 +6888,16 @@ CXFile clang_Module_getTopLevelHeader(CXTranslationUnit TU,
 //===----------------------------------------------------------------------===//
 
 extern "C" {
+unsigned clang_CXXField_isMutable(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+
+  if (const auto D = cxcursor::getCursorDecl(C))
+    if (const auto FD = dyn_cast_or_null<FieldDecl>(D))
+      return FD->isMutable() ? 1 : 0;
+  return 0;
+}
+
 unsigned clang_CXXMethod_isPureVirtual(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;

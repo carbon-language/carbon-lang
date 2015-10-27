@@ -1170,6 +1170,12 @@ class Cursor(Structure):
         """
         return conf.lib.clang_CXXMethod_isConst(self)
 
+    def is_mutable_field(self):
+        """Returns True if the cursor refers to a C++ field that is declared
+        'mutable'.
+        """
+        return conf.lib.clang_CXXField_isMutable(self)
+
     def is_pure_virtual_method(self):
         """Returns True if the cursor refers to a C++ member function or member
         function template that is declared pure virtual.
@@ -2896,6 +2902,10 @@ functionList = [
   ("clang_createTranslationUnit",
    [Index, c_char_p],
    c_object_p),
+
+  ("clang_CXXField_isMutable",
+   [Cursor],
+   bool),
 
   ("clang_CXXMethod_isConst",
    [Cursor],

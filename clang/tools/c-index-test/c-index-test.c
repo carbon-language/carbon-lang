@@ -767,6 +767,8 @@ static void PrintCursor(CXCursor Cursor, const char *CommentSchemaFile) {
     clang_disposeString(DeprecatedMessage);
     clang_disposeString(UnavailableMessage);
     
+    if (clang_CXXField_isMutable(Cursor))
+      printf(" (mutable)");
     if (clang_CXXMethod_isStatic(Cursor))
       printf(" (static)");
     if (clang_CXXMethod_isVirtual(Cursor))
