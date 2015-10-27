@@ -2386,6 +2386,36 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
         continue;
       }
 
+      switch (C.getDefaultToolChain().getArch()) {
+      default:
+        break;
+      case llvm::Triple::mips:
+      case llvm::Triple::mipsel:
+      case llvm::Triple::mips64:
+      case llvm::Triple::mips64el:
+        if (Value == "--trap") {
+          CmdArgs.push_back("-target-feature");
+          CmdArgs.push_back("+use-tcc-in-div");
+          continue;
+        }
+        if (Value == "--break") {
+          CmdArgs.push_back("-target-feature");
+          CmdArgs.push_back("-use-tcc-in-div");
+          continue;
+        }
+        if (Value.startswith("-msoft-float")) {
+          CmdArgs.push_back("-target-feature");
+          CmdArgs.push_back("+soft-float");
+          continue;
+        }
+        if (Value.startswith("-mhard-float")) {
+          CmdArgs.push_back("-target-feature");
+          CmdArgs.push_back("-soft-float");
+          continue;
+        }
+        break;
+      }
+
       if (Value == "-force_cpusubtype_ALL") {
         // Do nothing, this is the default and we don't support anything else.
       } else if (Value == "-L") {
@@ -2418,18 +2448,6 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
       } else if (Value.startswith("-mcpu") || Value.startswith("-mfpu") ||
                  Value.startswith("-mhwdiv") || Value.startswith("-march")) {
         // Do nothing, we'll validate it later.
-      } else if (Value == "--trap") {
-        CmdArgs.push_back("-target-feature");
-        CmdArgs.push_back("+use-tcc-in-div");
-      } else if (Value == "--break") {
-        CmdArgs.push_back("-target-feature");
-        CmdArgs.push_back("-use-tcc-in-div");
-      } else if (Value.startswith("-msoft-float")) {
-        CmdArgs.push_back("-target-feature");
-        CmdArgs.push_back("+soft-float");
-      } else if (Value.startswith("-mhard-float")) {
-        CmdArgs.push_back("-target-feature");
-        CmdArgs.push_back("-soft-float");
       } else {
         D.Diag(diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;
