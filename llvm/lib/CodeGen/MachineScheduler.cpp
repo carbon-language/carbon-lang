@@ -3310,11 +3310,6 @@ struct DOTGraphTraits<ScheduleDAGMI*> : public DefaultDOTGraphTraits {
          || Node->Succs.size() > ViewMISchedCutoff);
   }
 
-  static bool hasNodeAddressLabel(const SUnit *Node,
-                                  const ScheduleDAG *Graph) {
-    return false;
-  }
-
   /// If you want to override the dot attributes printed for a particular
   /// edge, override this method.
   static std::string getEdgeAttributes(const SUnit *Node,

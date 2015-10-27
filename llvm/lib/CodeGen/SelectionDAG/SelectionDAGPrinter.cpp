@@ -80,9 +80,16 @@ namespace llvm {
       return true;
     }
 
-    static bool hasNodeAddressLabel(const SDNode *Node,
-                                    const SelectionDAG *Graph) {
-      return true;
+    static std::string getNodeIdentifierLabel(const SDNode *Node,
+                                              const SelectionDAG *Graph) {
+      std::string R;
+      raw_string_ostream OS(R);
+#ifndef NDEBUG
+      OS << 't' << Node->PersistentId;
+#else
+      OS << static_cast<const void *>(Node);
+#endif
+      return R;
     }
 
     /// If you want to override the dot attributes printed for a particular
