@@ -186,6 +186,12 @@ struct DontCrash {
   int x;
   void f() {
     callLambda([&](){ ++x; });
+    callLambdaFromStatic([&](){ ++x; });
+  }
+  
+  template<typename T>
+  static void callLambdaFromStatic(T t) {
+    t();
   }
 };
 
