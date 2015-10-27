@@ -10,6 +10,12 @@
 #ifndef liblldb_Iterable_h_
 #define liblldb_Iterable_h_
 
+// C Includes
+// C++ Includes
+#include <utility>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Host/Mutex.h"
 
 namespace lldb_private
@@ -34,9 +40,7 @@ template <typename C, typename E, E (*A)(typename C::const_iterator &)> class Ad
 {
 public:
     typedef typename C::const_iterator BackingIterator;
-private:
-    BackingIterator m_iter;
-public:
+
     // Wrapping constructor
     AdaptedConstIterator (BackingIterator backing_iterator) :
         m_iter(backing_iterator)
@@ -63,7 +67,7 @@ public:
     }
     
     // Destructible
-    ~AdaptedConstIterator () { }
+    ~AdaptedConstIterator() = default;
     
     // Comparable
     bool operator== (const AdaptedConstIterator &rhs)
@@ -160,6 +164,9 @@ public:
 
     template <typename C1, typename E1, E1 (*A1)(typename C1::const_iterator &)>
     friend void swap(AdaptedConstIterator<C1, E1, A1> &, AdaptedConstIterator<C1, E1, A1> &);
+
+private:
+    BackingIterator m_iter;
 };
     
 template <typename C, typename E, E (*A)(typename C::const_iterator &)>
@@ -203,8 +210,6 @@ public:
     
 template <typename C, typename E, E (*A)(typename C::const_iterator &)> class LockingAdaptedIterable : public AdaptedIterable<C, E, A>
 {
-private:
-    Mutex *m_mutex = nullptr;
 public:
     LockingAdaptedIterable (C &container, Mutex &mutex) :
         AdaptedIterable<C,E,A>(container),
@@ -217,7 +222,7 @@ public:
         AdaptedIterable<C,E,A>(rhs),
         m_mutex(rhs.m_mutex)
     {
-        rhs.m_mutex = NULL;
+        rhs.m_mutex = nullptr;
     }
     
     ~LockingAdaptedIterable ()
@@ -227,9 +232,11 @@ public:
     }
     
 private:
+    Mutex *m_mutex = nullptr;
+
     DISALLOW_COPY_AND_ASSIGN(LockingAdaptedIterable);
 };
     
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_Iterable_h_

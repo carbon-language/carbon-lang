@@ -12,8 +12,9 @@
 
 // C Includes
 // C++ Includes
-#include <vector>
 #include <map>
+#include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -56,7 +57,7 @@ public:
     ///     The address to look for.
     ///
     /// @result
-    ///     A shared pointer to the breakpoint.  May contain a NULL
+    ///     A shared pointer to the breakpoint. May contain a nullptr
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointLocationSP
@@ -70,7 +71,7 @@ public:
     ///     The breakpoint location ID to seek for.
     ///
     /// @result
-    ///     A shared pointer to the breakpoint.  May contain a NULL
+    ///     A shared pointer to the breakpoint. May contain a nullptr
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
@@ -116,7 +117,7 @@ public:
     ///     The breakpoint location index to seek for.
     ///
     /// @result
-    ///     A shared pointer to the breakpoint.  May contain a NULL
+    ///     A shared pointer to the breakpoint. May contain a nullptr
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
@@ -130,7 +131,7 @@ public:
     ///     The breakpoint location index to seek for.
     ///
     /// @result
-    ///     A shared pointer to the breakpoint.  May contain a NULL
+    ///     A shared pointer to the breakpoint. May contain a nullptr
     ///     pointer if the breakpoint doesn't exist.
     //------------------------------------------------------------------
     const lldb::BreakpointLocationSP
@@ -216,7 +217,6 @@ public:
                     lldb::DescriptionLevel level);
 
 protected:
-
     //------------------------------------------------------------------
     /// This is the standard constructor.
     ///
@@ -246,9 +246,9 @@ protected:
     StopRecordingNewLocations();
     
     lldb::BreakpointLocationSP
-    AddLocation (const Address &addr,
-                 bool resolve_indirect_symbols,
-                 bool *new_location = NULL);
+    AddLocation(const Address &addr,
+                bool resolve_indirect_symbols,
+                bool *new_location = nullptr);
     
     void
     SwapLocation (lldb::BreakpointLocationSP to_location_sp, lldb::BreakpointLocationSP from_location_sp);
@@ -273,16 +273,17 @@ protected:
     mutable Mutex m_mutex;
     lldb::break_id_t m_next_id;
     BreakpointLocationCollection *m_new_location_recorder;
+
 public:
     typedef AdaptedIterable<collection, lldb::BreakpointLocationSP, vector_adapter> BreakpointLocationIterable;
+
     BreakpointLocationIterable
     BreakpointLocations()
     {
         return BreakpointLocationIterable(m_locations);
     }
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_BreakpointLocationList_h_
+#endif // liblldb_BreakpointLocationList_h_

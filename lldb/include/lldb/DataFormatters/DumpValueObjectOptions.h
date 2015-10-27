@@ -1,4 +1,4 @@
-//===-- DumpValueObjectOptions.h ---------------------------------------*- C++ -*-===//
+//===-- DumpValueObjectOptions.h --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <string>
 
 // Other libraries and framework includes
 // Project includes
@@ -60,7 +61,6 @@ public:
                                const DumpValueObjectOptions &,
                                Stream&)> DeclPrintingHelper;
     
-public:
     static const DumpValueObjectOptions
     DefaultOptions()
     {
@@ -124,7 +124,7 @@ public:
     SetSummary (lldb::TypeSummaryImplSP summary = lldb::TypeSummaryImplSP());
     
     DumpValueObjectOptions&
-    SetRootValueObjectName (const char* name = NULL);
+    SetRootValueObjectName(const char* name = nullptr);
     
     DumpValueObjectOptions&
     SetHideRootType (bool hide_root_type = false);
@@ -150,7 +150,6 @@ public:
     DumpValueObjectOptions&
     SetAllowOnelinerMode (bool oneliner = false);    
 
-public:
     uint32_t m_max_depth = UINT32_MAX;
     lldb::DynamicValueType m_use_dynamic = lldb::eNoDynamicValues;
     uint32_t m_omit_summary_depth = 0;
@@ -174,8 +173,8 @@ public:
     bool m_use_type_display_name : 1;
     bool m_allow_oneliner_mode : 1;
     bool m_hide_pointer_value : 1;
-
 };
+
 } // namespace lldb_private
 
-#endif	// lldb_DumpValueObjectOptions_h_
+#endif // lldb_DumpValueObjectOptions_h_

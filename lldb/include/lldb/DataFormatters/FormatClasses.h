@@ -10,12 +10,14 @@
 #ifndef lldb_FormatClasses_h_
 #define lldb_FormatClasses_h_
 
+// C Includes
 // C++ Includes
+#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
@@ -47,7 +49,6 @@ public:
 class FormattersMatchCandidate
 {
 public:
-    
     FormattersMatchCandidate (ConstString name,
                               uint32_t reason,
                               bool strip_ptr,
@@ -60,10 +61,9 @@ public:
     m_stripped_typedef(strip_tydef)
     {
     }
-    
-    ~FormattersMatchCandidate ()
-    {}
-    
+
+    ~FormattersMatchCandidate() = default;
+
     ConstString
     GetTypeName () const
     {
@@ -195,7 +195,7 @@ public:
     {
         if (m_type.m_type_name.size())
             return m_type.m_type_name.c_str();
-        return NULL;
+        return nullptr;
     }
     
     lldb::TypeSP
@@ -230,12 +230,11 @@ private:
         TypePair m_type_pair;
     };
     TypeOrName m_type;
-    
-    
+
 private:
     DISALLOW_COPY_AND_ASSIGN(TypeNameSpecifierImpl);
 };
     
 } // namespace lldb_private
 
-#endif	// lldb_FormatClasses_h_
+#endif // lldb_FormatClasses_h_

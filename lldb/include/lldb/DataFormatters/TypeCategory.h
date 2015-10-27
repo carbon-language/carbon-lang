@@ -1,4 +1,4 @@
-//===-- TypeCategory.h -------------------------------------------*- C++ -*-===//
+//===-- TypeCategory.h ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,10 @@
 
 // C Includes
 // C++ Includes
+#include <initializer_list>
+#include <memory>
+#include <string>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes
@@ -75,10 +79,9 @@ namespace lldb_private {
         
 #ifndef LLDB_DISABLE_PYTHON
         typedef FormatterContainerPair<ScriptedSyntheticChildren> SynthContainer;
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif // LLDB_DISABLE_PYTHON
 
     public:
-        
         typedef uint16_t FormatCategoryItems;
         static const uint16_t ALL_ITEM_TYPES = UINT16_MAX;
 
@@ -93,7 +96,7 @@ namespace lldb_private {
 #ifndef LLDB_DISABLE_PYTHON
         typedef SynthContainer::ExactMatchContainerSP SynthContainerSP;
         typedef SynthContainer::RegexMatchContainerSP RegexSynthContainerSP;
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif // LLDB_DISABLE_PYTHON
         
         typedef ValidatorContainer::ExactMatchContainerSP ValidatorContainerSP;
         typedef ValidatorContainer::RegexMatchContainerSP RegexValidatorContainerSP;
@@ -191,7 +194,7 @@ namespace lldb_private {
         
         lldb::TypeNameSpecifierImplSP
         GetTypeNameSpecifierForSyntheticAtIndex (size_t index);
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif // LLDB_DISABLE_PYTHON
         
         ValidatorContainerSP
         GetTypeValidatorsContainer ()
@@ -227,28 +230,28 @@ namespace lldb_private {
         }
         
         bool
-        Get (ValueObject& valobj,
-             const FormattersMatchVector& candidates,
-             lldb::TypeFormatImplSP& entry,
-             uint32_t* reason = NULL);
+        Get(ValueObject& valobj,
+            const FormattersMatchVector& candidates,
+            lldb::TypeFormatImplSP& entry,
+            uint32_t* reason = nullptr);
         
         bool
-        Get (ValueObject& valobj,
-             const FormattersMatchVector& candidates,
-             lldb::TypeSummaryImplSP& entry,
-             uint32_t* reason = NULL);
+        Get(ValueObject& valobj,
+            const FormattersMatchVector& candidates,
+            lldb::TypeSummaryImplSP& entry,
+            uint32_t* reason = nullptr);
         
         bool
-        Get (ValueObject& valobj,
-             const FormattersMatchVector& candidates,
-             lldb::SyntheticChildrenSP& entry,
-             uint32_t* reason = NULL);
+        Get(ValueObject& valobj,
+            const FormattersMatchVector& candidates,
+            lldb::SyntheticChildrenSP& entry,
+            uint32_t* reason = nullptr);
         
         bool
-        Get (ValueObject& valobj,
-             const FormattersMatchVector& candidates,
-             lldb::TypeValidatorImplSP& entry,
-             uint32_t* reason = NULL);
+        Get(ValueObject& valobj,
+            const FormattersMatchVector& candidates,
+            lldb::TypeValidatorImplSP& entry,
+            uint32_t* reason = nullptr);
         
         void
         Clear (FormatCategoryItems items = ALL_ITEM_TYPES);
@@ -282,11 +285,11 @@ namespace lldb_private {
         GetDescription ();
         
         bool
-        AnyMatches (ConstString type_name,
-                    FormatCategoryItems items = ALL_ITEM_TYPES,
-                    bool only_enabled = true,
-                    const char** matching_category = NULL,
-                    FormatCategoryItems* matching_type = NULL);
+        AnyMatches(ConstString type_name,
+                   FormatCategoryItems items = ALL_ITEM_TYPES,
+                   bool only_enabled = true,
+                   const char** matching_category = nullptr,
+                   FormatCategoryItems* matching_type = nullptr);
         
         typedef std::shared_ptr<TypeCategoryImpl> SharedPointer;
         
@@ -296,7 +299,7 @@ namespace lldb_private {
         FilterContainer m_filter_cont;
 #ifndef LLDB_DISABLE_PYTHON
         SynthContainer m_synth_cont;
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif // LLDB_DISABLE_PYTHON
         ValidatorContainer m_validator_cont;
         
         bool m_enabled;
@@ -351,7 +354,7 @@ namespace lldb_private {
 #ifndef LLDB_DISABLE_PYTHON
         friend class FormattersContainer<ConstString, ScriptedSyntheticChildren>;
         friend class FormattersContainer<lldb::RegularExpressionSP, ScriptedSyntheticChildren>;
-#endif // #ifndef LLDB_DISABLE_PYTHON
+#endif // LLDB_DISABLE_PYTHON
         
         friend class FormattersContainer<ConstString, TypeValidatorImpl>;
         friend class FormattersContainer<lldb::RegularExpressionSP, TypeValidatorImpl>;
@@ -359,4 +362,4 @@ namespace lldb_private {
     
 } // namespace lldb_private
 
-#endif	// lldb_TypeCategory_h_
+#endif // lldb_TypeCategory_h_

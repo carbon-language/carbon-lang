@@ -11,12 +11,10 @@
 #define liblldb_BreakpointLocation_h_
 
 // C Includes
-
 // C++ Includes
-#include <list>
+#include <memory>
 
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Breakpoint/StoppointLocation.h"
@@ -172,11 +170,11 @@ public:
     /// Return a pointer to the text of the condition expression.
     ///
     /// @return
-    ///    A pointer to the condition expression text, or NULL if no
+    ///    A pointer to the condition expression text, or nullptr if no
     //     condition has been set.
     //------------------------------------------------------------------
     const char *
-    GetConditionText (size_t *hash = NULL) const;
+    GetConditionText(size_t *hash = nullptr) const;
     
     bool
     ConditionSaysStop (ExecutionContext &exe_ctx, Error &error);
@@ -459,7 +457,7 @@ private:
     bool m_is_indirect;
     Address m_address; ///< The address defining this location.
     Breakpoint &m_owner; ///< The breakpoint that produced this object.
-    std::unique_ptr<BreakpointOptions> m_options_ap; ///< Breakpoint options pointer, NULL if we're using our breakpoint's options.
+    std::unique_ptr<BreakpointOptions> m_options_ap; ///< Breakpoint options pointer, nullptr if we're using our breakpoint's options.
     lldb::BreakpointSiteSP m_bp_site_sp; ///< Our breakpoint site (it may be shared by more than one location.)
     lldb::UserExpressionSP m_user_expression_sp; ///< The compiled expression to use in testing our condition.
     Mutex m_condition_mutex; ///< Guards parsing and evaluation of the condition, which could be evaluated by multiple processes.

@@ -10,6 +10,8 @@
 #ifndef utility_SharingPtr_h_
 #define utility_SharingPtr_h_
 
+// C Includes
+// C++ Includes
 #include <algorithm>
 #include <memory>
 
@@ -21,6 +23,9 @@
 #else
 #include <atomic>
 #endif
+
+// Other libraries and framework includes
+// Project includes
 
 //#define ENABLE_SP_LOGGING 1 // DON'T CHECK THIS LINE IN UNLESS COMMENTED OUT
 #if defined (ENABLE_SP_LOGGING)
@@ -38,16 +43,6 @@ class shared_count
     shared_count(const shared_count&);
     shared_count& operator=(const shared_count&);
 
-protected:
-#ifdef _MSC_VER
-    long shared_owners_;
-#else
-    std::atomic<long> shared_owners_;
-#endif
-    virtual ~shared_count();
-private:
-    virtual void on_zero_shared() = 0;
-
 public:
     explicit shared_count(long refs = 0)
         : shared_owners_(refs) {}
@@ -55,6 +50,16 @@ public:
     void add_shared();
     void release_shared();
     long use_count() const {return shared_owners_ + 1;}
+protected:
+#ifdef _MSC_VER
+    long shared_owners_;
+#else
+    std::atomic<long> shared_owners_;
+#endif
+    virtual ~shared_count();
+
+private:
+    virtual void on_zero_shared() = 0;
 };
 
 template <class T>
@@ -125,18 +130,20 @@ shared_ptr_emplace<T>::on_zero_shared()
 {
 }
 
-}  // namespace
+} // namespace imp
 
 template<class T>
 class SharingPtr
 {
 public: 
     typedef T element_type; 
+
 private:
     element_type*      ptr_;
     imp::shared_count* cntrl_;
 
     struct nat {int for_bool_;};
+
 public:
     SharingPtr();
     SharingPtr(std::nullptr_t);
@@ -162,7 +169,7 @@ public:
     element_type* operator->() const {return ptr_;}
     long use_count() const {return cntrl_ ? cntrl_->use_count() : 0;}
     bool unique() const {return use_count() == 1;}
-    bool empty() const {return cntrl_ == 0;}
+    bool empty() const {return cntrl_ == nullptr;}
     operator nat*() const {return (nat*)get();}
 
     static SharingPtr<T> make_shared();
@@ -183,30 +190,29 @@ public:
         static SharingPtr<T> make_shared(A0&, A1&, A2&, A3&, A4&);
 
 private:
-
     template <class U> friend class SharingPtr;
 };
 
 template<class T>
 inline
 SharingPtr<T>::SharingPtr()
-    : ptr_(0),
-      cntrl_(0)
+    : ptr_(nullptr),
+      cntrl_(nullptr)
 {
 }
     
 template<class T>
 inline
 SharingPtr<T>::SharingPtr(std::nullptr_t)
-: ptr_(0),
-cntrl_(0)
+: ptr_(nullptr),
+cntrl_(nullptr)
 {
 }
 
 template<class T>
 template<class Y>
 SharingPtr<T>::SharingPtr(Y* p)
-    : ptr_(p), cntrl_(0)
+    : ptr_(p), cntrl_(nullptr)
 {
     std::unique_ptr<Y> hold(p);
     typedef imp::shared_ptr_pointer<Y*> _CntrlBlk;
@@ -432,7 +438,6 @@ make_shared(A0& a0, A1& a1, A2& a2, A3& a3, A4& a4)
     return SharingPtr<T>::make_shared(a0, a1, a2, a3, a4);
 }
 
-
 template<class T, class U>
 inline
 bool
@@ -491,12 +496,8 @@ public:
     // action:  false means increment just happened
     //          true  means decrement is about to happen
 
-private:
-    Callback cb_;
-    void* baton_;
+    LoggingSharingPtr() : cb_(0), baton_(nullptr) {}
 
-public:
-    LoggingSharingPtr() : cb_(0), baton_(0) {}
     LoggingSharingPtr(Callback cb, void* baton)
         : cb_(cb), baton_(baton)
     {
@@ -506,7 +507,7 @@ public:
 
     template <class Y>
     LoggingSharingPtr(Y* p)
-        : base(p), cb_(0), baton_(0) {}
+        : base(p), cb_(0), baton_(nullptr) {}
 
     template <class Y>
     LoggingSharingPtr(Y* p, Callback cb, void* baton)
@@ -569,9 +570,12 @@ public:
         cb_ = 0;
         baton_ = 0;
     }
+
+private:
+    Callback cb_;
+    void* baton_;
 };
-    
-    
+
 template <class T>
 class IntrusiveSharingPtr;
 
@@ -638,11 +642,9 @@ public:
         imp::shared_count(-1)
     {
     }
-    
-    ~ReferenceCountedBaseVirtual() override
-    {
-    }
-    
+
+    ~ReferenceCountedBaseVirtual() override = default;
+
     void on_zero_shared() override;
 };
 
@@ -715,7 +717,7 @@ public:
         // those would be builds for release. But for debug and release builds
         // that are for development, we NULL out the pointers to catch potential
         // issues.
-        ptr_ = NULL; 
+        ptr_ = nullptr; 
 #endif  // #if defined (LLDB_CONFIGURATION_DEBUG) || defined (LLDB_CONFIGURATION_RELEASE)
     }
     
@@ -753,7 +755,7 @@ public:
     }
 
     void 
-    reset(T* ptr = NULL) 
+    reset(T* ptr = nullptr) 
     {
         IntrusiveSharingPtr(ptr).swap(*this);
     }
@@ -792,7 +794,7 @@ private:
         if (ptr_) 
         {
 #if defined (ENABLE_SP_LOGGING)
-            track_sp (this, NULL, ptr_->use_count() - 1);
+            track_sp (this, nullptr, ptr_->use_count() - 1);
 #endif
             ptr_->release_shared(); 
         }

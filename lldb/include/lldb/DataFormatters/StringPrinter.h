@@ -10,12 +10,16 @@
 #ifndef liblldb_StringPrinter_h_
 #define liblldb_StringPrinter_h_
 
+// C Includes
+// C++ Includes
+#include <functional>
+#include <string>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-forward.h"
 
 #include "lldb/Core/DataExtractor.h"
-
-#include <functional>
-#include <string>
 
 namespace lldb_private {
     namespace formatters
@@ -23,7 +27,6 @@ namespace lldb_private {
         class StringPrinter
         {
         public:
-
             enum class StringElementType
             {
                 ASCII,
@@ -41,11 +44,10 @@ namespace lldb_private {
             class ReadStringAndDumpToStreamOptions
             {
             public:
-                
                 ReadStringAndDumpToStreamOptions () :
                 m_location(0),
                 m_process_sp(),
-                m_stream(NULL),
+                m_stream(nullptr),
                 m_prefix_token(),
                 m_suffix_token(),
                 m_quote('"'),
@@ -249,10 +251,9 @@ namespace lldb_private {
             class ReadBufferAndDumpToStreamOptions
             {
             public:
-                
                 ReadBufferAndDumpToStreamOptions () :
                 m_data(),
-                m_stream(NULL),
+                m_stream(nullptr),
                 m_prefix_token(),
                 m_suffix_token(),
                 m_quote('"'),
@@ -455,6 +456,13 @@ namespace lldb_private {
                     rhs.m_data = nullptr; // this is why m_data has to be mutable
                 }
                 
+                ~StringPrinterBufferPointer()
+                {
+                    if (m_data && m_deleter)
+                        m_deleter(m_data);
+                    m_data = nullptr;
+                }
+
                 const T*
                 GetBytes () const
                 {
@@ -465,13 +473,6 @@ namespace lldb_private {
                 GetSize () const
                 {
                     return m_size;
-                }
-                
-                ~StringPrinterBufferPointer ()
-                {
-                    if (m_data && m_deleter)
-                        m_deleter(m_data);
-                    m_data = nullptr;
                 }
                 
                 StringPrinterBufferPointer&

@@ -1,4 +1,4 @@
-//===-- TypeSynthetic.h -------------------------------------------*- C++ -*-===//
+//===-- TypeSynthetic.h -----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,12 +14,13 @@
 #include <stdint.h>
 
 // C++ Includes
+#include <initializer_list>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
@@ -46,16 +47,13 @@ namespace lldb_private {
         }
         
     public:
-        
         SyntheticChildrenFrontEnd (ValueObject &backend) :
         m_backend(backend),
         m_valid(true)
         {}
-        
+
         virtual
-        ~SyntheticChildrenFrontEnd ()
-        {
-        }
+        ~SyntheticChildrenFrontEnd() = default;
 
         virtual size_t
         CalculateNumChildren () = 0;
@@ -125,11 +123,9 @@ namespace lldb_private {
         SyntheticValueProviderFrontEnd (ValueObject &backend) :
         SyntheticChildrenFrontEnd(backend)
         {}
-        
-        ~SyntheticValueProviderFrontEnd() override
-        {
-        }
-        
+
+        ~SyntheticValueProviderFrontEnd() override = default;
+
         size_t
         CalculateNumChildren() override { return 0; }
         
@@ -155,7 +151,6 @@ namespace lldb_private {
     class SyntheticChildren
     {
     public:
-        
         class Flags
         {
         public:
@@ -279,27 +274,28 @@ namespace lldb_private {
         m_flags(flags)
         {
         }
-        
+
         virtual
-        ~SyntheticChildren ()
-        {
-        }
-        
+        ~SyntheticChildren() = default;
+
         bool
         Cascades () const
         {
             return m_flags.GetCascades();
         }
+
         bool
         SkipsPointers () const
         {
             return m_flags.GetSkipPointers();
         }
+
         bool
         SkipsReferences () const
         {
             return m_flags.GetSkipReferences();
         }
+
         bool
         NonCacheable () const
         {
@@ -434,20 +430,15 @@ namespace lldb_private {
         
         class FrontEnd : public SyntheticChildrenFrontEnd
         {
-        private:
-            TypeFilterImpl* filter;
         public:
-            
             FrontEnd(TypeFilterImpl* flt,
                      ValueObject &backend) :
             SyntheticChildrenFrontEnd(backend),
             filter(flt)
             {}
-            
-            ~FrontEnd() override
-            {
-            }
-            
+
+            ~FrontEnd() override = default;
+
             size_t
             CalculateNumChildren() override
             {
@@ -477,6 +468,8 @@ namespace lldb_private {
             typedef std::shared_ptr<SyntheticChildrenFrontEnd> SharedPointer;
             
         private:
+            TypeFilterImpl* filter;
+
             DISALLOW_COPY_AND_ASSIGN(FrontEnd);
         };
         
@@ -534,9 +527,9 @@ namespace lldb_private {
         std::string m_python_code;
     public:
         
-        ScriptedSyntheticChildren (const SyntheticChildren::Flags& flags,
-                                   const char* pclass,
-                                   const char* pcode = NULL) :
+        ScriptedSyntheticChildren(const SyntheticChildren::Flags& flags,
+                                  const char* pclass,
+                                  const char* pcode = nullptr) :
         SyntheticChildren(flags),
         m_python_class(),
         m_python_code()
@@ -583,20 +576,15 @@ namespace lldb_private {
         
         class FrontEnd : public SyntheticChildrenFrontEnd
         {
-        private:
-            std::string m_python_class;
-            StructuredData::ObjectSP m_wrapper_sp;
-            ScriptInterpreter *m_interpreter;
         public:
-            
             FrontEnd (std::string pclass,
                       ValueObject &backend);
             
+            ~FrontEnd() override;
+
             bool
             IsValid ();
             
-            ~FrontEnd() override;
-
             size_t
             CalculateNumChildren() override;
 
@@ -621,6 +609,10 @@ namespace lldb_private {
             typedef std::shared_ptr<SyntheticChildrenFrontEnd> SharedPointer;
             
         private:
+            std::string m_python_class;
+            StructuredData::ObjectSP m_wrapper_sp;
+            ScriptInterpreter *m_interpreter;
+
             DISALLOW_COPY_AND_ASSIGN(FrontEnd);
         };
         
@@ -630,7 +622,7 @@ namespace lldb_private {
             auto synth_ptr = SyntheticChildrenFrontEnd::AutoPointer(new FrontEnd(m_python_class, backend));
             if (synth_ptr && ((FrontEnd*)synth_ptr.get())->IsValid())
                 return synth_ptr;
-            return NULL;
+            return nullptr;
         }
         
     private:

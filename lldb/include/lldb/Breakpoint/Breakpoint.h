@@ -12,7 +12,10 @@
 
 // C Includes
 // C++ Includes
+#include <memory>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes
@@ -81,7 +84,6 @@ class Breakpoint:
     public Stoppoint
 {
 public:
-
     static const ConstString &
     GetEventIdentifier ();
 
@@ -142,7 +144,6 @@ public:
         GetEventDataFromEvent (const Event *event_sp);
 
     private:
-
         lldb::BreakpointEventType m_breakpoint_event;
         lldb::BreakpointSP m_new_breakpoint_sp;
         BreakpointLocationCollection m_locations;
@@ -153,7 +154,7 @@ public:
     class BreakpointPrecondition
     {
     public:
-        virtual ~BreakpointPrecondition() {}
+        virtual ~BreakpointPrecondition() = default;
 
         virtual bool
         EvaluatePrecondition(StoppointCallbackContext &context);
@@ -287,8 +288,8 @@ public:
     ///    Returns a pointer to the new location.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    AddLocation (const Address &addr,
-                 bool *new_location = NULL);
+    AddLocation(const Address &addr,
+                bool *new_location = nullptr);
 
     //------------------------------------------------------------------
     /// Find a breakpoint location by Address.
@@ -297,7 +298,7 @@ public:
     ///    The Address specifying the location.
     /// @return
     ///    Returns a shared pointer to the location at \a addr.  The pointer
-    ///    in the shared pointer will be NULL if there is no location at that address.
+    ///    in the shared pointer will be nullptr if there is no location at that address.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
     FindLocationByAddress (const Address &addr);
@@ -321,7 +322,7 @@ public:
     ///    The ID specifying the location.
     /// @return
     ///    Returns a shared pointer to the location with ID \a bp_loc_id.  The pointer
-    ///    in the shared pointer will be NULL if there is no location with that ID.
+    ///    in the shared pointer will be nullptr if there is no location with that ID.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
     FindLocationByID (lldb::break_id_t bp_loc_id);
@@ -334,7 +335,7 @@ public:
     ///
     /// @return
     ///     Returns a shared pointer to the location with index \a 
-    ///     index. The shared pointer might contain NULL if \a index is
+    ///     index. The shared pointer might contain nullptr if \a index is
     ///     greater than then number of actual locations.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
@@ -482,7 +483,7 @@ public:
     ///
     /// @param[in] condition
     ///    The condition expression to evaluate when the breakpoint is hit.
-    ///    Pass in NULL to clear the condition.
+    ///    Pass in nullptr to clear the condition.
     //------------------------------------------------------------------
     void SetCondition (const char *condition);
     
@@ -490,7 +491,7 @@ public:
     /// Return a pointer to the text of the condition expression.
     ///
     /// @return
-    ///    A pointer to the condition expression text, or NULL if no
+    ///    A pointer to the condition expression text, or nullptr if no
     //     condition has been set.
     //------------------------------------------------------------------
     const char *GetConditionText () const;
@@ -552,7 +553,7 @@ public:
     /// Return the "kind" description for a breakpoint.
     ///
     /// @return
-    ///     The breakpoint kind, or NULL if none is set.
+    ///     The breakpoint kind, or nullptr if none is set.
     //------------------------------------------------------------------
     const char *GetBreakpointKind () const
     {

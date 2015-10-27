@@ -11,13 +11,11 @@
 #define liblldb_Watchpoint_h_
 
 // C Includes
-
 // C++ Includes
-#include <list>
+#include <memory>
 #include <string>
 
 // Other libraries and framework includes
-
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Breakpoint/WatchpointOptions.h"
@@ -33,7 +31,6 @@ class Watchpoint :
     public StoppointLocation
 {
 public:
-
     class WatchpointEventData :
         public EventData
     {
@@ -68,7 +65,6 @@ public:
         GetEventDataFromEvent (const Event *event_sp);
 
     private:
-
         lldb::WatchpointEventType m_watchpoint_event;
         lldb::WatchpointSP m_new_watchpoint_sp;
 
@@ -76,6 +72,7 @@ public:
     };
 
     Watchpoint (Target& target, lldb::addr_t addr, uint32_t size, const CompilerType *type, bool hardware = true);
+
     ~Watchpoint() override;
 
     void
@@ -109,7 +106,7 @@ public:
 
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const override;
-    void        DumpSnapshots (Stream *s, const char * prefix = NULL) const;
+    void        DumpSnapshots(Stream *s, const char *prefix = nullptr) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
     Target      &GetTarget() { return m_target; }
     const Error &GetError() { return m_error; }
@@ -171,7 +168,7 @@ public:
     ///
     /// @param[in] condition
     ///    The condition expression to evaluate when the watchpoint is hit.
-    ///    Pass in NULL to clear the condition.
+    ///    Pass in nullptr to clear the condition.
     //------------------------------------------------------------------
     void SetCondition (const char *condition);
     
@@ -179,7 +176,7 @@ public:
     /// Return a pointer to the text of the condition expression.
     ///
     /// @return
-    ///    A pointer to the condition expression text, or NULL if no
+    ///    A pointer to the condition expression text, or nullptr if no
     //     condition has been set.
     //------------------------------------------------------------------
     const char *GetConditionText () const;
