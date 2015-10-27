@@ -25,6 +25,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
+#include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -3809,6 +3810,18 @@ SanitizerMask Linux::getSupportedSanitizers() const {
     Res |= SanitizerKind::Function;
   }
   return Res;
+}
+
+void Linux::addProfileRTLibs(const llvm::opt::ArgList &Args,
+                             llvm::opt::ArgStringList &CmdArgs) const {
+  if (!needsProfileRT(Args)) return;
+
+  // Add linker option -u__llvm_runtime_variable to cause runtime
+  // initialization module to be linked in.
+  if (!Args.hasArg(options::OPT_coverage))
+    CmdArgs.push_back(Args.MakeArgString(
+        Twine("-u", llvm::getInstrProfRuntimeHookVarName())));
+  ToolChain::addProfileRTLibs(Args, CmdArgs);
 }
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
