@@ -25,7 +25,6 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-create - * " + var)
         self.expect('\^done,name="var\d+",numchild="[0-9]+",value="%s",type="%s",thread-id="1",has_more="0"' % (value, typ))
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -108,7 +107,6 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-gdb-set print char-array-as-string unknown")
         self.expect("\^error,msg=\"The request ''print' expects option-name and \"on\" or \"off\"' failed.\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
     @expectedFailureGcc("https://llvm.org/bugs/show_bug.cgi?id=23357")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
@@ -168,7 +166,6 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-gdb-set print expand-aggregates unknown")
         self.expect("\^error,msg=\"The request ''print' expects option-name and \"on\" or \"off\"' failed.\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
     @expectedFailureGcc("https://llvm.org/bugs/show_bug.cgi?id=23357")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races

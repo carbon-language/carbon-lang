@@ -14,7 +14,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr24717", oslist=["linux"])
@@ -39,7 +38,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\".+?\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",pending=\[\"printf\"\],times=\"0\",original-location=\"printf\"}")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_break_insert_function(self):
@@ -101,7 +99,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.runCmd("-break-insert main.cpp:::main")
         #self.expect("\^done,bkpt={number=\"8\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_break_insert_file_line_pending(self):
@@ -123,7 +120,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_break_insert_file_line(self):
@@ -156,7 +152,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @unittest2.expectedFailure("-break-insert doesn't work for absolute path")
@@ -185,7 +180,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_break_insert_settings(self):

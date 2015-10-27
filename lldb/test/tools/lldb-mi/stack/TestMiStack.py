@@ -13,7 +13,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_arguments(self):
@@ -75,7 +74,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-stack-list-arguments 0 0")
         self.expect("\^error,msg=\"Command 'stack-list-arguments'\. Thread frame range invalid\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_locals(self):
@@ -202,7 +200,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-stack-list-locals --simple-values")
         self.expect("\^done,locals=\[{name=\"test_str\",type=\"const char \*\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",type=\"int\",value=\"24\"},{name=\"ptr\",type=\"int \*\",value=\".*?\"}\]")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_variables(self):
@@ -329,7 +326,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-stack-list-variables --simple-values")
         self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\",type=\"const char \*\",value=\".*?String.*?\"},{arg=\"1\",name=\"arg_ptr\",type=\"int \*\",value=\".*?\"},{name=\"test_str\",type=\"const char \*\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",type=\"int\",value=\"24\"},{name=\"ptr\",type=\"int \*\",value=\".*?\"}\]")
         
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_info_depth(self):
@@ -363,7 +359,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-stack-info-depth -1")
         #self.expect("\^error")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipUnlessDarwin
@@ -404,7 +399,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-stack-info-frame unknown_arg")
         #self.expect("\^error")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_frames(self):
@@ -427,7 +421,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-stack-list-frames 0 0")
         self.expect("\^done,stack=\[frame=\{level=\"0\",addr=\"0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\"\}\]")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_select_frame(self):

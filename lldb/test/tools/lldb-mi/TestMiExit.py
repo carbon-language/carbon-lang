@@ -13,7 +13,6 @@ class MiExitTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_gdb_exit(self):
@@ -38,7 +37,6 @@ class MiExitTestCase(lldbmi_testcase.MiTestCaseBase):
         import pexpect
         self.expect(pexpect.EOF)
 
-    @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_quit(self):
@@ -62,7 +60,6 @@ class MiExitTestCase(lldbmi_testcase.MiTestCaseBase):
         import pexpect
         self.expect(pexpect.EOF)
 
-    @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_q(self):

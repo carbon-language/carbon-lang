@@ -13,7 +13,6 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23560", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
@@ -125,7 +124,6 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         # FIXME: The name below is not correct. It should be "var.*argv[0]".
         self.expect("\^done,numchild=\"1\",children=\[child=\{name=\"var6\.\*\$[0-9]+\",exp=\"\*\$[0-9]+\",numchild=\"0\",type=\"const char\",thread-id=\"4294967295\",value=\"47 '/'\",has_more=\"0\"\}\],has_more=\"0\"") #FIXME -var-list-children shows invalid thread-id
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -190,7 +188,6 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-update --all-values var_complx_array")
         self.expect("\^done,changelist=\[\{name=\"var_complx_array\",value=\"\[2\]\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_var_create_register(self):
@@ -230,7 +227,6 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-list-register-values d 0")
         self.expect("\^done,register-values=\[{number=\"0\",value=\"6\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -332,7 +328,6 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-list-children 0 var_complx 0")
         self.expect("\^error,msg=\"Command 'var-list-children'. Variable children range invalid\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -357,7 +352,6 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-create - * std_string")
         self.expect('\^done,name="var\d+",numchild="[0-9]+",value="\\\\"hello\\\\"",type="std::[\S]*?string",thread-id="1",has_more="0"')
  
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots

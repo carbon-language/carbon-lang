@@ -14,7 +14,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_disassemble(self):
@@ -65,7 +64,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect([ "{address=\"0x[0-9a-f]+\",func-name=\"hello_world\(\)\",offset=\"[0-9]+\",size=\"[0-9]+\",inst=\".+?; \\\\\"Hello, World!\\\\\\\\n\\\\\"\"}",
                       "{address=\"0x[0-9a-f]+\",func-name=\"hello_world\(\)\",offset=\"[0-9]+\",size=\"[0-9]+\",inst=\".+?; symbol stub for: printf\"}" ])
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @unittest2.skip("-data-evaluate-expression doesn't work on globals") #FIXME: the global case worked before refactoring
@@ -105,7 +103,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-read-memory-bytes %#x %d" % (addr, size))
         self.expect("\^done,memory=\[{begin=\"0x0*%x\",offset=\"0x0+\",end=\"0x0*%x\",contents=\"1112131400\"}\]" % (addr, addr + size))
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_read_memory_bytes_local(self):
@@ -215,7 +212,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd('-data-read-memory-bytes --thread 1 &array')
         self.expect(r'\^error')
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_list_register_names(self):
@@ -242,7 +238,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-list-register-names 0")
         self.expect("\^done,register-names=\[\".+?\"\]")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_list_register_values(self):
@@ -269,7 +264,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-list-register-values x 0")
         self.expect("\^done,register-values=\[{number=\"0\",value=\"0x[0-9a-f]+\"}\]")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_info_line(self):
@@ -316,7 +310,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-info-line main.cpp:0")
         self.expect("\^error,msg=\"error: zero is an invalid line number")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_evaluate_expression(self):

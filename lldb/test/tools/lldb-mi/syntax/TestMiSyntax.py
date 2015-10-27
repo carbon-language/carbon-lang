@@ -13,7 +13,6 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_tokens(self):
@@ -37,7 +36,6 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("0000000000000000000003\^running")
         self.expect("\*stopped,reason=\"exited-normally\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_specialchars(self):
@@ -61,7 +59,6 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureLinux  # Failing in ~6/600 dosep runs (build 3120-3122)

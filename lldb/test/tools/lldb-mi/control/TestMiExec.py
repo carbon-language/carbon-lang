@@ -13,7 +13,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureLinux # llvm.org/pr25000: lldb-mi does not receive broadcasted notification from Core/Process about process stopped
@@ -33,7 +32,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that lldb-mi is ready to execute next commands
         self.expect(self.child_prompt, exactly = True)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
@@ -84,7 +82,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
         self.expect("\*stopped,reason=\"exited-normally\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
@@ -128,7 +125,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-interpreter-exec command \"print argv[4]\"")
         self.expect("\"fourth=\\\\\\\"4th arg\\\\\\\"\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
@@ -158,7 +154,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-evaluate-expression argc")
         self.expect("\^done,value=\"1\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_next(self):
@@ -210,7 +205,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-next --frame 10")
         #self.expect("\^error: Frame index 10 is out of range")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailurei386 #xfail to get buildbot green, failing config: i386 binary running on ubuntu 14.04 x86_64
@@ -266,7 +260,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-next-instruction --frame 10")
         #self.expect("\^error: Frame index 10 is out of range")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_step(self):
@@ -335,7 +328,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-step --frame 10")
         #self.expect("\^error: Frame index 10 is out of range")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_step_instruction(self):
@@ -397,7 +389,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-step-instruction --frame 10")
         #self.expect("\^error: Frame index 10 is out of range")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])

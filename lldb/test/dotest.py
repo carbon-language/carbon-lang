@@ -84,12 +84,6 @@ class _WritelnDecorator(object):
 # The test suite.
 suite = unittest2.TestSuite()
 
-# By default, lldb-mi tests are performed if lldb-mi can be found.
-# Use @lldbmi_test decorator, defined in lldbtest.py, to mark a test as
-# a lldb-mi test.
-dont_do_lldbmi_test = False
-just_do_lldbmi_test = False
-
 # By default, benchmarks tests are not run.
 just_do_benchmarks_test = False
 
@@ -414,14 +408,25 @@ def setupCrashInfoHook():
     else:
         pass
 
+def shouldSkipBecauseOfCategories(test_categories):
+    global useCategories, categoriesList, skipCategories
+
+    if useCategories:
+        if len(test_categories) == 0 or len(categoriesList & set(test_categories)) == 0:
+            return True
+
+    for category in skipCategories:
+        if category in test_categories:
+            return True
+
+    return False
+
 def parseOptionsAndInitTestdirs():
     """Initialize the list of directories containing our unittest scripts.
 
     '-h/--help as the first option prints out usage info and exit the program.
     """
 
-    global dont_do_lldbmi_test
-    global just_do_lldbmi_test
     global just_do_benchmarks_test
     global dont_do_dsym_test
     global dont_do_dwarf_test
@@ -566,6 +571,11 @@ def parseOptionsAndInitTestdirs():
               "functionality (-G pyapi, --skip-category pyapi) instead.")
         sys.exit(1)
 
+    if args.m or args.plus_m:
+        print("Options '-m' and '+m' have been deprecated. Please use the test category\n"
+              "functionality (-G lldb-mi, --skip-category lldb-mi) instead.")
+        sys.exit(1)
+
     if args.plus_b:
         just_do_benchmarks_test = True
 
@@ -630,15 +640,6 @@ def parseOptionsAndInitTestdirs():
 
     if args.l:
         skip_long_running_test = False
-
-    if args.m:
-        dont_do_lldbmi_test = True
-
-    if args.plus_m:
-        if dont_do_lldbmi_test:
-            print("Warning: -m and +m can't both be specified! Using only -m")
-        else:
-            just_do_lldbmi_test = True
 
     if args.framework:
         lldbFrameworkPath = args.framework
@@ -725,10 +726,6 @@ def parseOptionsAndInitTestdirs():
         os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(args.hide_inferior_console)
 
     if do_help == True:
-        usage(parser)
-
-    # Do not specify both '-m' and '+m' at the same time.
-    if dont_do_lldbmi_test and just_do_lldbmi_test:
         usage(parser)
 
     if args.no_multiprocess:
@@ -1071,8 +1068,6 @@ def setupSysPath():
     # Some of the tests can invoke the 'lldb' command directly.
     # We'll try to locate the appropriate executable right here.
 
-    lldbMiExec = None
-
     # The lldb executable can be set from the command line
     # if it's not set, we try to find it now
     # first, we try the environment
@@ -1113,15 +1108,13 @@ def setupSysPath():
 
     # Assume lldb-mi is in same place as lldb
     # If not found, disable the lldb-mi tests
-    global dont_do_lldbmi_test
+    lldbMiExec = None
     if lldbtest_config.lldbExec and is_exe(lldbtest_config.lldbExec + "-mi"):
         lldbMiExec = lldbtest_config.lldbExec + "-mi"
     if not lldbMiExec:
-        dont_do_lldbmi_test = True
-        if just_do_lldbmi_test:
+        if not shouldSkipBecauseOfCategories(["lldb-mi"]):
             print("The 'lldb-mi' executable cannot be located.  The lldb-mi tests can not be run as a result.")
-        else:
-            print("The 'lldb-mi' executable cannot be located.  Some of the tests may not be run as a result.")
+            skipCategories.append("lldb-mi")
     else:
         os.environ["LLDBMI_EXEC"] = lldbMiExec
 
@@ -1517,8 +1510,6 @@ if __name__ == "__main__":
     lldb.lldbtest_remote_shell_template = lldbtest_remote_shell_template
 
     # Put all these test decorators in the lldb namespace.
-    lldb.dont_do_lldbmi_test = dont_do_lldbmi_test
-    lldb.just_do_lldbmi_test = just_do_lldbmi_test
     lldb.just_do_benchmarks_test = just_do_benchmarks_test
     lldb.dont_do_dsym_test = dont_do_dsym_test
     lldb.dont_do_dwarf_test = dont_do_dwarf_test
@@ -1807,22 +1798,6 @@ if __name__ == "__main__":
                         test_categories = []
                     return test_categories
 
-                def shouldSkipBecauseOfCategories(self,test):
-                    global useCategories
-                    import inspect
-                    if useCategories:
-                        global categoriesList
-                        test_categories = self.getCategoriesForTest(test)
-                        if len(test_categories) == 0 or len(categoriesList & set(test_categories)) == 0:
-                            return True
-
-                    global skipCategories
-                    for category in skipCategories:
-                        if category in self.getCategoriesForTest(test):
-                            return True
-
-                    return False
-
                 def hardMarkAsSkipped(self,test):
                     getattr(test, test._testMethodName).__func__.__unittest_skip__ = True
                     getattr(test, test._testMethodName).__func__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
@@ -1830,7 +1805,7 @@ if __name__ == "__main__":
                     test.__class__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
 
                 def startTest(self, test):
-                    if self.shouldSkipBecauseOfCategories(test):
+                    if shouldSkipBecauseOfCategories(self.getCategoriesForTest(test)):
                         self.hardMarkAsSkipped(test)
                     global setCrashInfoHook
                     setCrashInfoHook("%s at %s" % (str(test),inspect.getfile(test.__class__)))

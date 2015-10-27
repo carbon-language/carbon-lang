@@ -481,20 +481,6 @@ def add_test_categories(cat):
         return func
     return impl
 
-def lldbmi_test(func):
-    """Decorate the item as a lldb-mi only test."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@lldbmi_test can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_lldbmi_test:
-            self.skipTest("lldb-mi tests")
-        return func(self, *args, **kwargs)
-
-    # Mark this function as such to separate them from lldb command line tests.
-    wrapper.__lldbmi_test__ = True
-    return wrapper
-
 def benchmarks_test(func):
     """Decorate the item as a benchmarks test."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -1367,7 +1353,6 @@ class Base(unittest2.TestCase):
             self.lldbMiExec = os.environ["LLDBMI_EXEC"]
         else:
             self.lldbMiExec = None
-            self.dont_do_lldbmi_test = True
 
         # If we spawn an lldb process for test (via pexpect), do not load the
         # init file unless told otherwise.
@@ -1383,19 +1368,6 @@ class Base(unittest2.TestCase):
         # module cacheing subsystem to be confused with executable name "a.out"
         # used for all the test cases.
         self.testMethodName = self._testMethodName
-
-        # lldb-mi only test is decorated with @lldbmi_test,
-        # which also sets the "__lldbmi_test__" attribute of the
-        # function object to True.
-        try:
-            if lldb.just_do_lldbmi_test:
-                testMethod = getattr(self, self._testMethodName)
-                if getattr(testMethod, "__lldbmi_test__", False):
-                    pass
-                else:
-                    self.skipTest("non lldb-mi test")
-        except AttributeError:
-            pass
 
         # Benchmarks test is decorated with @benchmarks_test,
         # which also sets the "__benchmarks_test__" attribute of the

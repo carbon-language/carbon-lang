@@ -13,7 +13,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_target_create(self):
@@ -32,7 +31,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -56,7 +54,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("=breakpoint-modified,bkpt={number=\"1\"")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -81,7 +78,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that arguments were passed properly
         self.expect("@\"argc=5\\\\r\\\\n\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -106,7 +102,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that arguments were passed properly
         self.expect("@\"argc=5\\\\r\\\\n\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -130,7 +125,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that breakpoint hit
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -161,7 +155,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         if it == 0:
             self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -187,7 +180,6 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("@\"argc=1\\\\r\\\\n\"")
         self.expect("\*stopped,reason=\"end-stepping-range\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots

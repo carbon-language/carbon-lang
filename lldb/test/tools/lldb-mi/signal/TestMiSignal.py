@@ -13,7 +13,6 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Fails on FreeBSD apparently due to thread race conditions
     def test_lldbmi_stopped_when_interrupt(self):
@@ -50,7 +49,6 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.child.sendintr() #FIXME: here uses self.child directly
         self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Fails on FreeBSD apparently due to thread race conditions
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -81,7 +79,6 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipUnlessDarwin
     def test_lldbmi_stopped_when_stopatentry_remote(self):
@@ -120,7 +117,6 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-gdb-exit")
         self.expect("\^exit")
 
-    @lldbmi_test
     @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
@@ -153,7 +149,6 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect([ "\*stopped,reason=\"exception-received\",exception=\"EXC_BAD_ACCESS \(code=1, address=0x0\)\",thread-id=\"1\",stopped-threads=\"all\"",
                       "\*stopped,reason=\"exception-received\",exception=\"invalid address \(fault address: 0x0\)\",thread-id=\"1\",stopped-threads=\"all\"" ])
 
-    @lldbmi_test
     @skipUnlessDarwin
     def test_lldbmi_stopped_when_segfault_remote(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped when segfault occurred (remote)."""
