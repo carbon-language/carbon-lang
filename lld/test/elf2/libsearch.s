@@ -26,7 +26,8 @@
 // NOLIB: Unable to find library -lls
 
 // Should use explicitly specified static library
-// RUN: ld.lld2 -o %t3 %t.o -L%t.dir -l:libls.a
+// Also ensure that we accept -L <arg>
+// RUN: ld.lld2 -o %t3 %t.o -L %t.dir -l:libls.a
 // RUN: llvm-readobj --symbols %t3 | FileCheck --check-prefix=STATIC %s
 // STATIC: Symbols [
 // STATIC: Name: _static

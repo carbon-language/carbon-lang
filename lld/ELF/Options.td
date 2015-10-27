@@ -9,7 +9,7 @@ def Bdynamic: Flag<["-"], "Bdynamic">,
 def Bstatic: Flag<["-"], "Bstatic">,
   HelpText<"Do not link against shared libraries">;
 
-def L : Joined<["-"], "L">, MetaVarName<"<dir>">,
+def L : JoinedOrSeparate<["-"], "L">, MetaVarName<"<dir>">,
   HelpText<"Directory to search for libraries">;
 
 def O : Joined<["-"], "O">, HelpText<"Optimize">;
