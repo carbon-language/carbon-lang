@@ -282,10 +282,10 @@ int AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::FP_TO_UINT, MVT::v2i8,  MVT::v2f64, 2 },
   };
 
-  int Idx = ConvertCostTableLookup(ConversionTbl, ISD, DstTy.getSimpleVT(),
-                                   SrcTy.getSimpleVT());
-  if (Idx != -1)
-    return ConversionTbl[Idx].Cost;
+  if (const auto *Entry = ConvertCostTableLookup(ConversionTbl, ISD,
+                                                 DstTy.getSimpleVT(),
+                                                 SrcTy.getSimpleVT()))
+    return Entry->Cost;
 
   return BaseT::getCastInstrCost(Opcode, Dst, Src);
 }
@@ -398,11 +398,10 @@ int AArch64TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
     EVT SelCondTy = TLI->getValueType(DL, CondTy);
     EVT SelValTy = TLI->getValueType(DL, ValTy);
     if (SelCondTy.isSimple() && SelValTy.isSimple()) {
-      int Idx =
-          ConvertCostTableLookup(VectorSelectTbl, ISD, SelCondTy.getSimpleVT(),
-                                 SelValTy.getSimpleVT());
-      if (Idx != -1)
-        return VectorSelectTbl[Idx].Cost;
+      if (const auto *Entry = ConvertCostTableLookup(VectorSelectTbl, ISD,
+                                                     SelCondTy.getSimpleVT(),
+                                                     SelValTy.getSimpleVT()))
+        return Entry->Cost;
     }
   }
   return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy);

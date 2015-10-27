@@ -62,9 +62,8 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   if (Src->isVectorTy() && ST->hasNEON() && (ISD == ISD::FP_ROUND ||
                                           ISD == ISD::FP_EXTEND)) {
     std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
-    int Idx = CostTableLookup(NEONFltDblTbl, ISD, LT.second);
-    if (Idx != -1)
-      return LT.first * NEONFltDblTbl[Idx].Cost;
+    if (const auto *Entry = CostTableLookup(NEONFltDblTbl, ISD, LT.second))
+      return LT.first * Entry->Cost;
   }
 
   EVT SrcTy = TLI->getValueType(DL, Src);
@@ -153,10 +152,10 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   };
 
   if (SrcTy.isVector() && ST->hasNEON()) {
-    int Idx = ConvertCostTableLookup(NEONVectorConversionTbl, ISD,
-                                     DstTy.getSimpleVT(), SrcTy.getSimpleVT());
-    if (Idx != -1)
-      return NEONVectorConversionTbl[Idx].Cost;
+    if (const auto *Entry = ConvertCostTableLookup(NEONVectorConversionTbl, ISD,
+                                                   DstTy.getSimpleVT(),
+                                                   SrcTy.getSimpleVT()))
+      return Entry->Cost;
   }
 
   // Scalar float to integer conversions.
@@ -184,10 +183,10 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::FP_TO_UINT,  MVT::i64, MVT::f64, 10 }
   };
   if (SrcTy.isFloatingPoint() && ST->hasNEON()) {
-    int Idx = ConvertCostTableLookup(NEONFloatConversionTbl, ISD,
-                                     DstTy.getSimpleVT(), SrcTy.getSimpleVT());
-    if (Idx != -1)
-        return NEONFloatConversionTbl[Idx].Cost;
+    if (const auto *Entry = ConvertCostTableLookup(NEONFloatConversionTbl, ISD,
+                                                   DstTy.getSimpleVT(),
+                                                   SrcTy.getSimpleVT()))
+      return Entry->Cost;
   }
 
   // Scalar integer to float conversions.
@@ -216,10 +215,10 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   };
 
   if (SrcTy.isInteger() && ST->hasNEON()) {
-    int Idx = ConvertCostTableLookup(NEONIntegerConversionTbl, ISD,
-                                     DstTy.getSimpleVT(), SrcTy.getSimpleVT());
-    if (Idx != -1)
-      return NEONIntegerConversionTbl[Idx].Cost;
+    if (const auto *Entry = ConvertCostTableLookup(NEONIntegerConversionTbl,
+                                                   ISD, DstTy.getSimpleVT(),
+                                                   SrcTy.getSimpleVT()))
+      return Entry->Cost;
   }
 
   // Scalar integer conversion costs.
@@ -236,10 +235,10 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   };
 
   if (SrcTy.isInteger()) {
-    int Idx = ConvertCostTableLookup(ARMIntegerConversionTbl, ISD,
-                                     DstTy.getSimpleVT(), SrcTy.getSimpleVT());
-    if (Idx != -1)
-      return ARMIntegerConversionTbl[Idx].Cost;
+    if (const auto *Entry = ConvertCostTableLookup(ARMIntegerConversionTbl, ISD,
+                                                   DstTy.getSimpleVT(),
+                                                   SrcTy.getSimpleVT()))
+      return Entry->Cost;
   }
 
   return BaseT::getCastInstrCost(Opcode, Dst, Src);
@@ -291,11 +290,10 @@ int ARMTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
     EVT SelCondTy = TLI->getValueType(DL, CondTy);
     EVT SelValTy = TLI->getValueType(DL, ValTy);
     if (SelCondTy.isSimple() && SelValTy.isSimple()) {
-      int Idx = ConvertCostTableLookup(NEONVectorSelectTbl, ISD,
-                                       SelCondTy.getSimpleVT(),
-                                       SelValTy.getSimpleVT());
-      if (Idx != -1)
-        return NEONVectorSelectTbl[Idx].Cost;
+      if (const auto *Entry = ConvertCostTableLookup(NEONVectorSelectTbl, ISD,
+                                                     SelCondTy.getSimpleVT(),
+                                                     SelValTy.getSimpleVT()))
+        return Entry->Cost;
     }
 
     std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
@@ -361,11 +359,11 @@ int ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
 
     std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
 
-    int Idx = CostTableLookup(NEONShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
-    if (Idx == -1)
-      return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
+    if (const auto *Entry = CostTableLookup(NEONShuffleTbl, ISD::VECTOR_SHUFFLE,
+                                            LT.second))
+      return LT.first * Entry->Cost;
 
-    return LT.first * NEONShuffleTbl[Idx].Cost;
+    return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
   }
   if (Kind == TTI::SK_Alternate) {
     static const CostTblEntry<MVT::SimpleValueType> NEONAltShuffleTbl[] = {
@@ -386,11 +384,10 @@ int ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         {ISD::VECTOR_SHUFFLE, MVT::v16i8, 32}};
 
     std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
-    int Idx =
-        CostTableLookup(NEONAltShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
-    if (Idx == -1)
-      return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
-    return LT.first * NEONAltShuffleTbl[Idx].Cost;
+    if (const auto *Entry = CostTableLookup(NEONAltShuffleTbl,
+                                            ISD::VECTOR_SHUFFLE, LT.second))
+      return LT.first * Entry->Cost;
+    return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
   }
   return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
 }
@@ -446,13 +443,9 @@ int ARMTTIImpl::getArithmeticInstrCost(
     // Multiplication.
   };
 
-  int Idx = -1;
-
   if (ST->hasNEON())
-    Idx = CostTableLookup(CostTbl, ISDOpcode, LT.second);
-
-  if (Idx != -1)
-    return LT.first * CostTbl[Idx].Cost;
+    if (const auto *Entry = CostTableLookup(CostTbl, ISDOpcode, LT.second))
+      return LT.first * Entry->Cost;
 
   int Cost = BaseT::getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info,
                                            Opd1PropInfo, Opd2PropInfo);
