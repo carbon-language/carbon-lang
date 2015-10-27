@@ -39,11 +39,13 @@ public:
     static std::unique_ptr<Acceptor>
     Create(llvm::StringRef name, const bool child_processes_inherit, Error &error);
 
-    Socket::SocketProtocol GetSocketProtocol() const;
+    Socket::SocketProtocol
+    GetSocketProtocol() const;
 
     // Returns either TCP port number as string or domain socket path.
     // Empty string is returned in case of error.
-    std::string GetLocalSocketId() const;
+    std::string
+    GetLocalSocketId() const;
 
 private:
     typedef std::function<std::string()> LocalSocketIdFunc;

@@ -10,6 +10,7 @@
 #ifndef liblldb_Host_Socket_h_
 #define liblldb_Host_Socket_h_
 
+#include <memory>
 #include <string>
 
 #include "lldb/lldb-private.h"
@@ -52,6 +53,8 @@ public:
     static const NativeSocket kInvalidSocketValue;
 
     ~Socket() override;
+
+    static std::unique_ptr<Socket> Create(const SocketProtocol protocol, bool child_processes_inherit, Error &error);
 
     virtual Error Connect(llvm::StringRef name) = 0;
     virtual Error Listen(llvm::StringRef name, int backlog) = 0;

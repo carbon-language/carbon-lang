@@ -17,11 +17,11 @@ namespace lldb_private
     class UDPSocket: public Socket
     {
     public:
-        static Error Connect(llvm::StringRef name, bool child_processes_inherit, Socket *&send_socket, Socket *&recv_socket);
+        UDPSocket(bool child_processes_inherit, Error &error);
 
+        static Error Connect(llvm::StringRef name, bool child_processes_inherit, Socket *&send_socket, Socket *&recv_socket);
     private:
         UDPSocket(NativeSocket socket);
-        UDPSocket(bool child_processes_inherit, Error &error);
 
         size_t Send(const void *buf, const size_t num_bytes) override;
         Error Connect(llvm::StringRef name) override;

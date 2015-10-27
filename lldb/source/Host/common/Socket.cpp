@@ -86,6 +86,41 @@ Socket::~Socket()
     Close();
 }
 
+std::unique_ptr<Socket> Socket::Create(const SocketProtocol protocol, bool child_processes_inherit, Error &error)
+{
+    error.Clear();
+
+    std::unique_ptr<Socket> socket_up;
+    switch (protocol)
+    {
+    case ProtocolTcp:
+        socket_up.reset(new TCPSocket(child_processes_inherit, error));
+        break;
+    case ProtocolUdp:
+        socket_up.reset(new UDPSocket(child_processes_inherit, error));
+        break;
+    case ProtocolUnixDomain:
+#ifndef LLDB_DISABLE_POSIX
+        socket_up.reset(new DomainSocket(child_processes_inherit, error));
+#else
+        error.SetErrorString("Unix domain sockets are not supported on this platform.");
+#endif
+        break;
+    case ProtocolUnixAbstract:
+#ifdef __linux__
+        socket_up.reset(new AbstractSocket(child_processes_inherit, error));
+#else
+        error.SetErrorString("Abstract domain sockets are not supported on this platform.");
+#endif
+        break;
+    }
+
+    if (error.Fail())
+        socket_up.reset();
+
+    return socket_up;
+}
+
 Error Socket::TcpConnect(llvm::StringRef host_and_port, bool child_processes_inherit, Socket *&socket)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION));
@@ -93,7 +128,7 @@ Error Socket::TcpConnect(llvm::StringRef host_and_port, bool child_processes_inh
         log->Printf ("Socket::%s (host/port = %s)", __FUNCTION__, host_and_port.data());
 
     Error error;
-    std::unique_ptr<TCPSocket> connect_socket(new TCPSocket(child_processes_inherit, error));
+    std::unique_ptr<Socket> connect_socket(Create(ProtocolTcp, child_processes_inherit, error));
     if (error.Fail())
         return error;
 
@@ -161,25 +196,21 @@ Error Socket::UdpConnect(llvm::StringRef host_and_port, bool child_processes_inh
 Error Socket::UnixDomainConnect(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
 {
     Error error;
-#ifndef LLDB_DISABLE_POSIX
-    std::unique_ptr<DomainSocket> connect_socket(new DomainSocket(child_processes_inherit, error));
+    std::unique_ptr<Socket> connect_socket(Create(ProtocolUnixDomain, child_processes_inherit, error));
     if (error.Fail())
         return error;
 
     error = connect_socket->Connect(name);
     if (error.Success())
       socket = connect_socket.release();
-#else
-    error.SetErrorString("Unix domain sockets are not supported on this platform.");
-#endif
+
     return error;
 }
 
 Error Socket::UnixDomainAccept(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
 {
     Error error;
-#ifndef LLDB_DISABLE_POSIX
-    std::unique_ptr<DomainSocket> listen_socket(new DomainSocket(child_processes_inherit, error));
+    std::unique_ptr<Socket> listen_socket(Create(ProtocolUnixDomain, child_processes_inherit, error));
     if (error.Fail())
         return error;
 
@@ -188,9 +219,6 @@ Error Socket::UnixDomainAccept(llvm::StringRef name, bool child_processes_inheri
         return error;
 
     error = listen_socket->Accept(name, child_processes_inherit, socket);
-#else
-    error.SetErrorString("Unix domain sockets are not supported on this platform.");
-#endif
     return error;
 }
 
@@ -198,17 +226,13 @@ Error
 Socket::UnixAbstractConnect(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
 {
     Error error;
-#ifdef __linux__
-    std::unique_ptr<Socket> connect_socket(new AbstractSocket(child_processes_inherit, error));
+    std::unique_ptr<Socket> connect_socket(Create(ProtocolUnixAbstract, child_processes_inherit, error));
     if (error.Fail())
         return error;
 
     error = connect_socket->Connect(name);
     if (error.Success())
       socket = connect_socket.release();
-#else
-    error.SetErrorString("Abstract domain sockets are not supported on this platform.");
-#endif
     return error;
 }
 
@@ -216,8 +240,7 @@ Error
 Socket::UnixAbstractAccept(llvm::StringRef name, bool child_processes_inherit, Socket *&socket)
 {
     Error error;
-#ifdef __linux__
-    std::unique_ptr<Socket> listen_socket(new AbstractSocket(child_processes_inherit, error));
+    std::unique_ptr<Socket> listen_socket(Create(ProtocolUnixAbstract,child_processes_inherit, error));
     if (error.Fail())
         return error;
 
@@ -226,9 +249,6 @@ Socket::UnixAbstractAccept(llvm::StringRef name, bool child_processes_inherit, S
         return error;
 
     error = listen_socket->Accept(name, child_processes_inherit, socket);
-#else
-    error.SetErrorString("Abstract domain sockets are not supported on this platform.");
-#endif
     return error;
 }
 
