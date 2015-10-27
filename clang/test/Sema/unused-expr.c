@@ -156,3 +156,11 @@ void t11(int i, int j) {
 #undef M5
 #undef M6
 #undef M7
+
+#define UNREFERENCED_PARAMETER(x) (x)
+
+void unused_parm(int a) {
+  // Don't warn if the warning is introduced by a macro that's spelled
+  // UNREFERENCED_PARAMETER, as that's a commonly used macro in Windows headers.
+  UNREFERENCED_PARAMETER(a);
+}

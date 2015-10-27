@@ -195,7 +195,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (isUnevaluatedContext())
     return;
 
-  SourceLocation ExprLoc = E->IgnoreParens()->getExprLoc();
+  SourceLocation ExprLoc = E->IgnoreParenImpCasts()->getExprLoc();
   // In most cases, we don't want to warn if the expression is written in a
   // macro body, or if the macro comes from a system header. If the offending
   // expression is a call to a function with the warn_unused_result attribute,
@@ -217,6 +217,15 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   // false positive.
   if (isa<StmtExpr>(E) && Loc.isMacroID())
     return;
+
+  // Check if this is the UNREFERENCED_PARAMETER from the Microsoft headers.
+  // That macro is frequently used to suppress "unused parameter" warnings,
+  // but its implementation makes clang's -Wunused-value fire.  Prevent this.
+  if (isa<ParenExpr>(E->IgnoreImpCasts()) && Loc.isMacroID()) {
+    SourceLocation SpellLoc = Loc;
+    if (findMacroSpelling(SpellLoc, "UNREFERENCED_PARAMETER"))
+      return;
+  }
 
   // Okay, we have an unused result.  Depending on what the base expression is,
   // we might want to make a more specific diagnostic.  Check for one of these
