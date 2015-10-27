@@ -130,39 +130,45 @@ checkFunctionMemoryAccess(Function &F, AAResults &AAR,
       if (CS.getCalledFunction() && SCCNodes.count(CS.getCalledFunction()))
         continue;
       FunctionModRefBehavior MRB = AAR.getModRefBehavior(CS);
-      // If the call doesn't access arbitrary memory, we may be able to
-      // figure out something.
-      if (AliasAnalysis::onlyAccessesArgPointees(MRB)) {
-        // If the call does access argument pointees, check each argument.
-        if (AliasAnalysis::doesAccessArgPointees(MRB))
-          // Check whether all pointer arguments point to local memory, and
-          // ignore calls that only access local memory.
-          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-               CI != CE; ++CI) {
-            Value *Arg = *CI;
-            if (Arg->getType()->isPointerTy()) {
-              AAMDNodes AAInfo;
-              I->getAAMetadata(AAInfo);
 
-              MemoryLocation Loc(Arg, MemoryLocation::UnknownSize, AAInfo);
-              if (!AAR.pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
-                if (MRB & MRI_Mod)
-                  // Writes non-local memory.  Give up.
-                  return MAK_MayWrite;
-                if (MRB & MRI_Ref)
-                  // Ok, it reads non-local memory.
-                  ReadsMemory = true;
-              }
-            }
-          }
+      // If the call doesn't access memory, we're done.
+      if (!(MRB & MRI_ModRef))
+        continue;
+
+      if (!AliasAnalysis::onlyAccessesArgPointees(MRB)) {
+        // The call could access any memory. If that includes writes, give up.
+        if (MRB & MRI_Mod)
+          return MAK_MayWrite;
+        // If it reads, note it.
+        if (MRB & MRI_Ref)
+          ReadsMemory = true;
         continue;
       }
-      // The call could access any memory. If that includes writes, give up.
-      if (MRB & MRI_Mod)
-        return MAK_MayWrite;
-      // If it reads, note it.
-      if (MRB & MRI_Ref)
-        ReadsMemory = true;
+
+      // Check whether all pointer arguments point to local memory, and
+      // ignore calls that only access local memory.
+      for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+           CI != CE; ++CI) {
+        Value *Arg = *CI;
+        if (!Arg->getType()->isPointerTy())
+          continue;
+
+        AAMDNodes AAInfo;
+        I->getAAMetadata(AAInfo);
+        MemoryLocation Loc(Arg, MemoryLocation::UnknownSize, AAInfo);
+
+        // Skip accesses to local or constant memory as they don't impact the
+        // externally visible mod/ref behavior.
+        if (AAR.pointsToConstantMemory(Loc, /*OrLocal=*/true))
+          continue;
+
+        if (MRB & MRI_Mod)
+          // Writes non-local memory.  Give up.
+          return MAK_MayWrite;
+        if (MRB & MRI_Ref)
+          // Ok, it reads non-local memory.
+          ReadsMemory = true;
+      }
       continue;
     } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       // Ignore non-volatile loads from local memory. (Atomic is okay here.)
