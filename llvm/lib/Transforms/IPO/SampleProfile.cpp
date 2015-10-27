@@ -805,7 +805,7 @@ unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
   if (DISubprogram *S = getDISubprogram(&F))
     return S->getLine();
 
-  // If could not find the start of \p F, emit a diagnostic to inform the user
+  // If the start of \p F is missing, emit a diagnostic to inform the user
   // about the missed opportunity.
   F.getContext().diagnose(DiagnosticInfoSampleProfile(
       "No debug information found in function " + F.getName() +
