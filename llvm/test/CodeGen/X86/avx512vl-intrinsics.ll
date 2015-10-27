@@ -5315,3 +5315,22 @@ define <8 x float> @test_x86_vcvtph2ps_256_rrkz(<8 x i16> %a0, i8 %mask) {
 }
 
 declare <8 x float> @llvm.x86.avx512.mask.vcvtph2ps.256(<8 x i16>, <8 x float>, i8) nounwind readonly
+
+define <8 x i16> @test_x86_vcvtps2ph_128(<4 x float> %a0) {
+  ; CHECK: test_x86_vcvtps2ph_128
+  ; CHECK: vcvtps2ph $2, %xmm0, %xmm0
+  %res = call <8 x i16> @llvm.x86.avx512.mask.vcvtps2ph.128(<4 x float> %a0, i32 2, <8 x i16> zeroinitializer, i8 -1)
+  ret <8 x i16> %res
+}
+
+
+declare <8 x i16> @llvm.x86.avx512.mask.vcvtps2ph.128(<4 x float>, i32, <8 x i16>, i8) nounwind readonly
+
+define <8 x i16> @test_x86_vcvtps2ph_256(<8 x float> %a0) {
+  ; CHECK: test_x86_vcvtps2ph_256
+  ; CHECK: vcvtps2ph $2, %ymm0, %xmm0
+  %res = call <8 x i16> @llvm.x86.avx512.mask.vcvtps2ph.256(<8 x float> %a0, i32 2, <8 x i16> zeroinitializer, i8 -1)
+  ret <8 x i16> %res
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.vcvtps2ph.256(<8 x float>, i32, <8 x i16>, i8) nounwind readonly
