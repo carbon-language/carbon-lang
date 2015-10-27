@@ -151,7 +151,7 @@ class BitcodeReader : public GVMaterializer {
   // Last function offset found in the VST.
   uint64_t LastFunctionBlockBit = 0;
   bool SeenValueSymbolTable = false;
-  unsigned VSTOffset = 0;
+  uint64_t VSTOffset = 0;
   // Contains an arbitrary and optional string identifying the bitcode producer
   std::string ProducerIdentification;
 
@@ -388,7 +388,7 @@ private:
 
   ErrorOr<Value *> recordValue(SmallVectorImpl<uint64_t> &Record,
                                unsigned NameIndex, Triple &TT);
-  std::error_code parseValueSymbolTable(unsigned Offset = 0);
+  std::error_code parseValueSymbolTable(uint64_t Offset = 0);
   std::error_code parseConstants();
   std::error_code rememberAndSkipFunctionBodies();
   std::error_code rememberAndSkipFunctionBody();
@@ -1764,7 +1764,7 @@ ErrorOr<Value *> BitcodeReader::recordValue(SmallVectorImpl<uint64_t> &Record,
 
 /// Parse the value symbol table at either the current parsing location or
 /// at the given bit offset if provided.
-std::error_code BitcodeReader::parseValueSymbolTable(unsigned Offset) {
+std::error_code BitcodeReader::parseValueSymbolTable(uint64_t Offset) {
   uint64_t CurrentBit;
   // Pass in the Offset to distinguish between calling for the module-level
   // VST (where we want to jump to the VST offset) and the function-level

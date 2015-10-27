@@ -47,9 +47,9 @@ class BitstreamWriter {
 
   struct Block {
     unsigned PrevCodeSize;
-    unsigned StartSizeWord;
+    size_t StartSizeWord;
     std::vector<IntrusiveRefCntPtr<BitCodeAbbrev>> PrevAbbrevs;
-    Block(unsigned PCS, unsigned SSW) : PrevCodeSize(PCS), StartSizeWord(SSW) {}
+    Block(unsigned PCS, size_t SSW) : PrevCodeSize(PCS), StartSizeWord(SSW) {}
   };
 
   /// BlockScope - This tracks the current blocks that we have entered.
@@ -73,12 +73,12 @@ class BitstreamWriter {
                reinterpret_cast<const char *>(&Value + 1));
   }
 
-  unsigned GetBufferOffset() const {
+  size_t GetBufferOffset() const {
     return Out.size();
   }
 
-  unsigned GetWordIndex() const {
-    unsigned Offset = GetBufferOffset();
+  size_t GetWordIndex() const {
+    size_t Offset = GetBufferOffset();
     assert((Offset & 3) == 0 && "Not 32-bit aligned");
     return Offset / 4;
   }
@@ -211,7 +211,7 @@ public:
     EmitVBR(CodeLen, bitc::CodeLenWidth);
     FlushToWord();
 
-    unsigned BlockSizeWordIndex = GetWordIndex();
+    size_t BlockSizeWordIndex = GetWordIndex();
     unsigned OldCodeSize = CurCodeSize;
 
     // Emit a placeholder, which will be replaced when the block is popped.
@@ -242,7 +242,7 @@ public:
     FlushToWord();
 
     // Compute the size of the block, in words, not counting the size field.
-    unsigned SizeInWords = GetWordIndex() - B.StartSizeWord - 1;
+    size_t SizeInWords = GetWordIndex() - B.StartSizeWord - 1;
     uint64_t BitNo = uint64_t(B.StartSizeWord) * 32;
 
     // Update the block size field in the header of this sub-block.
