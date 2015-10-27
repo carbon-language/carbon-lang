@@ -886,8 +886,11 @@ Editline::FixIndentationCommand (int ch)
     }
     else if (indent_correction < 0)
     {
-        info->cursor = info->buffer - indent_correction;
-        el_wdeletestr (m_editline, -indent_correction);
+        // Delete characters for the unindentation AND including the character we just added.
+        el_wdeletestr (m_editline, -indent_correction + 1);
+
+        // Rewrite the character that caused the unindentation.
+        el_winsertstr (m_editline, inserted);
     }
     info->cursor = info->buffer + cursor_position + indent_correction;
     return CC_REFRESH;
