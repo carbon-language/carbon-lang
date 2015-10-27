@@ -61,10 +61,12 @@ private:
   /*
    * Value::SubclassData
    *
-   * bit 0  : HasLazyArguments
-   * bit 1  : HasPrefixData
-   * bit 2  : HasPrologueData
-   * bit 3-6: CallingConvention
+   * bit 0      : HasLazyArguments
+   * bit 1      : HasPrefixData
+   * bit 2      : HasPrologueData
+   * bit 3      : [reserved]
+   * bits 4-13  : CallingConvention
+   * bits 14-15 : [reserved]
    */
 
   /// Bits from GlobalObject::GlobalObjectSubclassData.
@@ -158,11 +160,13 @@ public:
   /// calling convention of this function.  The enum values for the known
   /// calling conventions are defined in CallingConv.h.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(getSubclassDataFromValue() >> 3);
+    return static_cast<CallingConv::ID>((getSubclassDataFromValue() >> 4) &
+                                        CallingConv::MaxID);
   }
   void setCallingConv(CallingConv::ID CC) {
-    setValueSubclassData((getSubclassDataFromValue() & 7) |
-                         (static_cast<unsigned>(CC) << 3));
+    auto ID = static_cast<unsigned>(CC);
+    assert(!(ID & ~CallingConv::MaxID) && "Unsupported calling convention");
+    setValueSubclassData((getSubclassDataFromValue() & 0xc00f) | (ID << 4));
   }
 
   /// @brief Return the attribute list for this Function.

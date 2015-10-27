@@ -156,7 +156,10 @@ namespace CallingConv {
     HHVM = 81,
 
     /// \brief HHVM calling convention for invoking C/C++ helpers.
-    HHVM_C = 82
+    HHVM_C = 82,
+
+    /// The highest possible calling convention ID. Must be some 2^k - 1.
+    MaxID = 1023
   };
 } // End CallingConv namespace
 

@@ -3443,11 +3443,14 @@ std::error_code BitcodeReader::parseModule(uint64_t ResumeBit,
       auto *FTy = dyn_cast<FunctionType>(Ty);
       if (!FTy)
         return error("Invalid type for value");
+      auto CC = static_cast<CallingConv::ID>(Record[1]);
+      if (CC & ~CallingConv::MaxID)
+        return error("Invalid calling convention ID");
 
       Function *Func = Function::Create(FTy, GlobalValue::ExternalLinkage,
                                         "", TheModule);
 
-      Func->setCallingConv(static_cast<CallingConv::ID>(Record[1]));
+      Func->setCallingConv(CC);
       bool isProto = Record[2];
       uint64_t RawLinkage = Record[3];
       Func->setLinkage(getDecodedLinkage(RawLinkage));
@@ -4580,8 +4583,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       I = InvokeInst::Create(Callee, NormalBB, UnwindBB, Ops, OperandBundles);
       OperandBundles.clear();
       InstructionList.push_back(I);
-      cast<InvokeInst>(I)
-          ->setCallingConv(static_cast<CallingConv::ID>(~(1U << 13) & CCInfo));
+      cast<InvokeInst>(I)->setCallingConv(
+          static_cast<CallingConv::ID>(CallingConv::MaxID & CCInfo));
       cast<InvokeInst>(I)->setAttributes(PAL);
       break;
     }
@@ -4965,7 +4968,7 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       OperandBundles.clear();
       InstructionList.push_back(I);
       cast<CallInst>(I)->setCallingConv(
-          static_cast<CallingConv::ID>((~(1U << 14) & CCInfo) >> 1));
+          static_cast<CallingConv::ID>((0x7ff & CCInfo) >> 1));
       CallInst::TailCallKind TCK = CallInst::TCK_None;
       if (CCInfo & 1)
         TCK = CallInst::TCK_Tail;

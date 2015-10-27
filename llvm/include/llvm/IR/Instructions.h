@@ -1558,8 +1558,10 @@ public:
     return static_cast<CallingConv::ID>(getSubclassDataFromInstruction() >> 2);
   }
   void setCallingConv(CallingConv::ID CC) {
+    auto ID = static_cast<unsigned>(CC);
+    assert(!(ID & ~CallingConv::MaxID) && "Unsupported calling convention");
     setInstructionSubclassData((getSubclassDataFromInstruction() & 3) |
-                               (static_cast<unsigned>(CC) << 2));
+                               (ID << 2));
   }
 
   /// getAttributes - Return the parameter attributes for this call.
@@ -3436,7 +3438,9 @@ public:
     return static_cast<CallingConv::ID>(getSubclassDataFromInstruction());
   }
   void setCallingConv(CallingConv::ID CC) {
-    setInstructionSubclassData(static_cast<unsigned>(CC));
+    auto ID = static_cast<unsigned>(CC);
+    assert(!(ID & ~CallingConv::MaxID) && "Unsupported calling convention");
+    setInstructionSubclassData(ID);
   }
 
   /// getAttributes - Return the parameter attributes for this invoke.
