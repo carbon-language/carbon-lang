@@ -146,3 +146,45 @@ iter:                                             ; preds = %loop_body
 
 ; CHECK: blah2:
 ; CHECK-NEXT: ptrtoint i8* %phi2 to i32
+
+define void @i() personality i32 (...)* @_except_handler3 {
+entry:
+  br label %throw
+
+throw:                                            ; preds = %throw, %entry
+  %tmp96 = getelementptr inbounds i8, i8* undef, i32 1
+  invoke void @reserve()
+          to label %throw unwind label %catchpad
+
+catchpad:                                              ; preds = %throw
+  %phi2 = phi i8* [ %tmp96, %throw ]
+  catchpad [] to label %cp_body unwind label %catchendpad
+
+cp_body:
+  br label %loop_head
+
+catchendpad:
+  catchendpad unwind label %cleanuppad
+
+cleanuppad:
+  cleanuppad []
+  br label %loop_head
+
+loop_head:
+  br label %loop_body
+
+loop_body:                                        ; preds = %iter, %catchpad
+  %tmp99 = phi i8* [ %tmp101, %iter ], [ %phi2, %loop_head ]
+  %tmp100 = icmp eq i8* %tmp99, undef
+  br i1 %tmp100, label %unwind_out, label %iter
+
+iter:                                             ; preds = %loop_body
+  %tmp101 = getelementptr inbounds i8, i8* %tmp99, i32 1
+  br i1 undef, label %unwind_out, label %loop_body
+
+unwind_out:                                       ; preds = %iter, %loop_body
+  unreachable
+}
+
+; CHECK-LABEL: define void @i(
+; CHECK: ptrtoint i8* %phi2 to i32

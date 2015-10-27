@@ -87,7 +87,6 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
 }
 
 static BasicBlock::iterator findInsertPointAfter(Instruction *I,
-                                                 DominatorTree &DT,
                                                  BasicBlock *MustDominate) {
   BasicBlock::iterator IP = ++I->getIterator();
   if (auto *II = dyn_cast<InvokeInst>(I))
@@ -107,12 +106,8 @@ static BasicBlock::iterator findInsertPointAfter(Instruction *I,
       IP = CEPI->getUnwindDest()->getFirstNonPHI();
     } else if (auto *CEPI = dyn_cast<CleanupEndPadInst>(IP)) {
       IP = CEPI->getUnwindDest()->getFirstNonPHI();
-    } else if (auto *CPI = dyn_cast<CatchPadInst>(IP)) {
-      BasicBlock *NormalDest = CPI->getNormalDest();
-      if (NormalDest == MustDominate || DT.dominates(NormalDest, MustDominate))
-        IP = NormalDest->getFirstNonPHI();
-      else
-        IP = CPI->getUnwindDest()->getFirstNonPHI();
+    } else if (isa<CatchPadInst>(IP)) {
+      IP = MustDominate->getFirstInsertionPt();
     } else {
       llvm_unreachable("unexpected eh pad!");
     }
@@ -177,8 +172,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
 
   // Cast the instruction immediately after the instruction.
   Instruction *I = cast<Instruction>(V);
-  BasicBlock::iterator IP =
-      findInsertPointAfter(I, SE.DT, Builder.GetInsertBlock());
+  BasicBlock::iterator IP = findInsertPointAfter(I, Builder.GetInsertBlock());
   return ReuseOrCreateCast(I, Ty, Op, IP);
 }
 
@@ -1423,8 +1417,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
       NewOps[i] = SE.getAnyExtendExpr(S->op_begin()[i], CanonicalIV->getType());
     Value *V = expand(SE.getAddRecExpr(NewOps, S->getLoop(),
                                        S->getNoWrapFlags(SCEV::FlagNW)));
-    BasicBlock::iterator NewInsertPt = findInsertPointAfter(
-        cast<Instruction>(V), SE.DT, Builder.GetInsertBlock());
+    BasicBlock::iterator NewInsertPt =
+        findInsertPointAfter(cast<Instruction>(V), Builder.GetInsertBlock());
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), nullptr,
                       &*NewInsertPt);
     return V;
