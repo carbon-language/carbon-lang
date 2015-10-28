@@ -3,6 +3,9 @@
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
 // RUN: %env_asan_opts=coverage=1 %run %t
 
+// https://github.com/google/sanitizers/issues/618
+// UNSUPPORTED: android
+
 #include <sanitizer/coverage_interface.h>
 #include <stdio.h>
 #include <assert.h>
