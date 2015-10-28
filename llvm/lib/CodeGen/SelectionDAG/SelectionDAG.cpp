@@ -2285,7 +2285,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
     } else if (const MDNode *Ranges = LD->getRanges()) {
       if (LD->getExtensionType() == ISD::NON_EXTLOAD)
-        computeKnownBitsFromRangeMetadata(*Ranges, KnownZero);
+        computeKnownBitsFromRangeMetadata(*Ranges, KnownZero, KnownOne);
     }
     break;
   }

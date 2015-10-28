@@ -367,24 +367,30 @@ static void computeKnownBitsMul(Value *Op0, Value *Op1, bool NSW,
 }
 
 void llvm::computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
-                                             APInt &KnownZero) {
+                                             APInt &KnownZero,
+                                             APInt &KnownOne) {
   unsigned BitWidth = KnownZero.getBitWidth();
   unsigned NumRanges = Ranges.getNumOperands() / 2;
   assert(NumRanges >= 1);
 
-  // Use the high end of the ranges to find leading zeros.
-  unsigned MinLeadingZeros = BitWidth;
+  KnownZero.setAllBits();
+  KnownOne.setAllBits();
+
   for (unsigned i = 0; i < NumRanges; ++i) {
     ConstantInt *Lower =
         mdconst::extract<ConstantInt>(Ranges.getOperand(2 * i + 0));
     ConstantInt *Upper =
         mdconst::extract<ConstantInt>(Ranges.getOperand(2 * i + 1));
     ConstantRange Range(Lower->getValue(), Upper->getValue());
-    unsigned LeadingZeros = Range.getUnsignedMax().countLeadingZeros();
-    MinLeadingZeros = std::min(LeadingZeros, MinLeadingZeros);
-  }
 
-  KnownZero = APInt::getHighBitsSet(BitWidth, MinLeadingZeros);
+    // The first CommonPrefixBits of all values in Range are equal.
+    unsigned CommonPrefixBits =
+        (Range.getUnsignedMax() ^ Range.getUnsignedMin()).countLeadingZeros();
+
+    APInt Mask = APInt::getHighBitsSet(BitWidth, CommonPrefixBits);
+    KnownOne &= Range.getUnsignedMax() & Mask;
+    KnownZero &= ~Range.getUnsignedMax() & Mask;
+  }
 }
 
 static bool isEphemeralValueOf(Instruction *I, const Value *E) {
@@ -1060,7 +1066,7 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
   default: break;
   case Instruction::Load:
     if (MDNode *MD = cast<LoadInst>(I)->getMetadata(LLVMContext::MD_range))
-      computeKnownBitsFromRangeMetadata(*MD, KnownZero);
+      computeKnownBitsFromRangeMetadata(*MD, KnownZero, KnownOne);
     break;
   case Instruction::And: {
     // If either the LHS or the RHS are Zero, the result is zero.
@@ -1452,7 +1458,7 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
   case Instruction::Call:
   case Instruction::Invoke:
     if (MDNode *MD = cast<Instruction>(I)->getMetadata(LLVMContext::MD_range))
-      computeKnownBitsFromRangeMetadata(*MD, KnownZero);
+      computeKnownBitsFromRangeMetadata(*MD, KnownZero, KnownOne);
     // If a range metadata is attached to this IntrinsicInst, intersect the
     // explicit range specified by the metadata and the implicit range of
     // the intrinsic.

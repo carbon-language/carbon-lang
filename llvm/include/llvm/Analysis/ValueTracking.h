@@ -49,8 +49,9 @@ namespace llvm {
                         const DominatorTree *DT = nullptr);
   /// Compute known bits from the range metadata.
   /// \p KnownZero the set of bits that are known to be zero
+  /// \p KnownOne the set of bits that are known to be one
   void computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
-                                         APInt &KnownZero);
+                                         APInt &KnownZero, APInt &KnownOne);
   /// Return true if LHS and RHS have no common bits set.
   bool haveNoCommonBitsSet(Value *LHS, Value *RHS, const DataLayout &DL,
                            AssumptionCache *AC = nullptr,
