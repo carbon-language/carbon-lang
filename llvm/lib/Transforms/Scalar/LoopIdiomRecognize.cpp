@@ -333,7 +333,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
     return false;
 
   // If the stored value is a strided load in the same loop with the same stride
-  // this this may be transformable into a memcpy.  This kicks in for stuff like
+  // this may be transformable into a memcpy.  This kicks in for stuff like
   //   for (i) A[i] = B[i];
   if (LoadInst *LI = dyn_cast<LoadInst>(StoredVal)) {
     const SCEVAddRecExpr *LoadEv =
