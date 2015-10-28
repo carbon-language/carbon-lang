@@ -104,7 +104,7 @@ public:
     
     lldb::addr_t
     GetAddressOf(bool scalar_is_load_address = true,
-                 AddressType *address_type = NULL) override;
+                 AddressType *address_type = nullptr) override;
     
     size_t
     GetPointeeData(DataExtractor& data,

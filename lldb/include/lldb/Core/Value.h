@@ -12,8 +12,8 @@
 
 // C Includes
 // C++ Includes
-#include <string>
 #include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -27,7 +27,6 @@ namespace lldb_private {
 class Value
 {
 public:
-
     // Values Less than zero are an error, greater than or equal to zero
     // returns what the Scalar result is.
     enum ValueType
@@ -159,7 +158,7 @@ public:
     void
     ClearContext ()
     {
-        m_context = NULL;
+        m_context = nullptr;
         m_context_type = eContextTypeInvalid;
     }
 
@@ -268,10 +267,10 @@ public:
     GetValueByteSize (Error *error_ptr, ExecutionContext *exe_ctx);
 
     Error
-    GetValueAsData (ExecutionContext *exe_ctx, 
-                    DataExtractor &data, 
-                    uint32_t data_offset,
-                    Module *module);     // Can be NULL
+    GetValueAsData(ExecutionContext *exe_ctx, 
+                   DataExtractor &data, 
+                   uint32_t data_offset,
+                   Module *module);     // Can be nullptr
 
     static const char *
     GetValueTypeAsCString (ValueType context_type);
@@ -305,9 +304,7 @@ public:
 
     ValueList (const ValueList &rhs);
 
-    ~ValueList () 
-    {
-    }
+    ~ValueList() = default;
 
     const ValueList & operator= (const ValueList &rhs);
 
@@ -318,8 +315,6 @@ public:
     Value *GetValueAtIndex(size_t idx);
     void Clear();
 
-protected:
-
 private:
     typedef std::vector<Value> collection;
 
@@ -328,4 +323,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_Value_h_
+#endif // liblldb_Value_h_

@@ -1,4 +1,4 @@
-//===-- ValueObjectDynamicValue.h -----------------------------------*- C++ -*-===//
+//===-- ValueObjectDynamicValue.h -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,13 +24,13 @@ namespace lldb_private {
 class ValueObjectCast : public ValueObject
 {
 public:
+    ~ValueObjectCast() override;
+
     static lldb::ValueObjectSP
     Create (ValueObject &parent, 
             const ConstString &name, 
             const CompilerType &cast_type);
 
-    ~ValueObjectCast() override;
-    
     uint64_t
     GetByteSize() override;
     
@@ -46,22 +46,20 @@ public:
     ValueObject *
     GetParent() override
     {
-        if (m_parent)
-            return m_parent->GetParent();
-        else
-            return NULL;
+        return ((m_parent != nullptr) ? m_parent->GetParent() : nullptr);
     }
     
     const ValueObject *
     GetParent() const override
     {
-        if (m_parent)
-            return m_parent->GetParent();
-        else
-            return NULL;
+        return ((m_parent != nullptr) ? m_parent->GetParent() : nullptr);
     }
     
 protected:
+    ValueObjectCast(ValueObject &parent, 
+                    const ConstString &name, 
+                    const CompilerType &cast_type);
+
     bool
     UpdateValue () override;
     
@@ -70,14 +68,7 @@ protected:
     
     CompilerType m_cast_type;
     
-    ValueObjectCast (ValueObject &parent, 
-                     const ConstString &name, 
-                     const CompilerType &cast_type);
-    
 private:
-    //------------------------------------------------------------------
-    // For ValueObject only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (ValueObjectCast);
 };
 

@@ -9,15 +9,17 @@
 
 #ifndef liblldb_Timer_h_
 #define liblldb_Timer_h_
-#if defined(__cplusplus)
 
+// C Includes
 #include <stdarg.h>
 #include <stdio.h>
 
+// C++ Includes
 #include <atomic>
 #include <mutex>
-#include <string>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Host/TimeValue.h"
 
@@ -38,9 +40,6 @@ namespace lldb_private {
 class Timer
 {
 public:
-    static void
-    Initialize ();
-
     //--------------------------------------------------------------
     /// Default constructor.
     //--------------------------------------------------------------
@@ -50,6 +49,9 @@ public:
     /// Destructor
     //--------------------------------------------------------------
     ~Timer();
+
+    static void
+    Initialize ();
 
     void
     Dump ();
@@ -67,7 +69,6 @@ public:
     ResetCategoryTimes ();
 
 protected:
-
     void
     ChildStarted (const TimeValue& time);
 
@@ -80,9 +81,6 @@ protected:
     uint64_t
     GetTimerElapsedNanoSeconds();
 
-    //--------------------------------------------------------------
-    /// Member variables
-    //--------------------------------------------------------------
     const char *m_category;
     TimeValue m_total_start;
     TimeValue m_timer_start;
@@ -106,10 +104,8 @@ public:
         m_start (TimeValue::Now())
     {
     }
-    
-    ~IntervalTimer()
-    {
-    }
+
+    ~IntervalTimer() = default;
 
     uint64_t
     GetElapsedNanoSeconds() const
@@ -128,7 +124,7 @@ public:
     {
         TimeValue now (TimeValue::Now());
         const uint64_t elapsed_nsec = now - m_start;
-        const char *unit = NULL;
+        const char *unit = nullptr;
         float elapsed_value;
         if (elapsed_nsec < 1000)
         {
@@ -157,11 +153,11 @@ public:
         va_end (args);
         return result;
     }
+
 protected:
     TimeValue m_start;
 };
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif // #ifndef liblldb_Timer_h_
+#endif // liblldb_Timer_h_

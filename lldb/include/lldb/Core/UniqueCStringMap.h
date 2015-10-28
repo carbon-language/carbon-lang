@@ -9,17 +9,17 @@
 
 #ifndef liblldb_UniqueCStringMap_h_
 #define liblldb_UniqueCStringMap_h_
-#if defined(__cplusplus)
 
-#include <assert.h>
+// C Includes
+// C++ Includes
 #include <algorithm>
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/RegularExpression.h"
 
 namespace lldb_private {
-
-
 
 //----------------------------------------------------------------------
 // Templatized uniqued string map.
@@ -37,7 +37,7 @@ public:
     struct Entry
     {
         Entry () :
-            cstring(NULL),
+            cstring(nullptr),
             value()
         {
         }
@@ -146,9 +146,7 @@ public:
     const char *
     GetCStringAtIndex (uint32_t idx) const
     {
-        if (idx < m_map.size())
-            return m_map[idx].cstring;
-        return NULL;
+        return ((idx < m_map.size()) ? m_map[idx].cstring : nullptr);
     }
 
     //------------------------------------------------------------------
@@ -172,8 +170,9 @@ public:
         }
         return fail_value;
     }
+
     //------------------------------------------------------------------
-    // Get a pointer to the first entry that matches "name". NULL will
+    // Get a pointer to the first entry that matches "name". nullptr will
     // be returned if there is no entry that matches "name".
     //
     // The caller is responsible for ensuring that the collection does
@@ -191,12 +190,12 @@ public:
             if (pos_cstr == unique_cstr)
                 return &(*pos);
         }
-        return NULL;
+        return nullptr;
     }
 
     //------------------------------------------------------------------
     // Get a pointer to the next entry that matches "name" from a
-    // previously returned Entry pointer. NULL will be returned if there
+    // previously returned Entry pointer. nullptr will be returned if there
     // is no subsequent entry that matches "name".
     //
     // The caller is responsible for ensuring that the collection does
@@ -216,7 +215,7 @@ public:
                     return next_entry;
             }
         }
-        return NULL;
+        return nullptr;
     }
 
     size_t
@@ -260,7 +259,6 @@ public:
     {
         return m_map.size();
     }
-
 
     //------------------------------------------------------------------
     // Returns true if this map is empty.
@@ -346,6 +344,7 @@ public:
         }
         return num_removed;
     }
+
 protected:
     typedef std::vector<Entry> collection;
     typedef typename collection::iterator iterator;
@@ -353,9 +352,6 @@ protected:
     collection m_map;
 };
 
-
-
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_UniqueCStringMap_h_
+#endif // liblldb_UniqueCStringMap_h_

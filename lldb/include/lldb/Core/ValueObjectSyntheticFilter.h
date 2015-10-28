@@ -1,4 +1,4 @@
-//===-- ValueObjectSyntheticFilter.h -------------------------------*- C++ -*-===//
+//===-- ValueObjectSyntheticFilter.h ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 
 // C Includes
 // C++ Includes
-#include <vector>
+#include <memory>
 
 // Other libraries and framework includes
 // Project includes
@@ -89,46 +89,31 @@ public:
     bool
     IsDynamic() override
     {
-        if (m_parent)
-            return m_parent->IsDynamic();
-        else
-            return false;
+        return ((m_parent != nullptr) ? m_parent->IsDynamic() : false);
     }
     
     lldb::ValueObjectSP
     GetStaticValue() override
     {
-        if (m_parent)
-            return m_parent->GetStaticValue();
-        else
-            return GetSP();
+        return ((m_parent != nullptr) ? m_parent->GetStaticValue() : GetSP());
     }
     
     virtual lldb::DynamicValueType
     GetDynamicValueType ()
     {
-        if (m_parent)
-            return m_parent->GetDynamicValueType();
-        else
-            return lldb::eNoDynamicValues;
+        return ((m_parent != nullptr) ? m_parent->GetDynamicValueType() : lldb::eNoDynamicValues);
     }
 
     ValueObject *
     GetParent() override
     {
-        if (m_parent)
-            return m_parent->GetParent();
-        else
-            return NULL;
+        return ((m_parent != nullptr) ? m_parent->GetParent() : nullptr);
     }
 
     const ValueObject *
     GetParent() const override
     {
-        if (m_parent)
-            return m_parent->GetParent();
-        else
-            return NULL;
+        return ((m_parent != nullptr) ? m_parent->GetParent() : nullptr);
     }
     
     lldb::ValueObjectSP
@@ -207,9 +192,6 @@ private:
     void
     CopyValueData (ValueObject *source);
     
-    //------------------------------------------------------------------
-    // For ValueObject only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (ValueObjectSynthetic);
 };
 

@@ -1,4 +1,4 @@
-//===-- ValueObjectConstResultImpl.h -----------------------------*- C++ -*-===//
+//===-- ValueObjectConstResultImpl.h ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,15 +26,12 @@ namespace lldb_private {
 class ValueObjectConstResultImpl
 {
 public:
-    
     ValueObjectConstResultImpl (ValueObject* valobj,
                                 lldb::addr_t live_address = LLDB_INVALID_ADDRESS);
-    
+
     virtual
-    ~ValueObjectConstResultImpl()
-    {
-    }
-    
+    ~ValueObjectConstResultImpl() = default;
+
     lldb::ValueObjectSP
     Dereference (Error &error);
     
@@ -65,16 +62,15 @@ public:
     }
     
     virtual lldb::addr_t
-    GetAddressOf (bool scalar_is_load_address = true,
-                  AddressType *address_type = NULL);
+    GetAddressOf(bool scalar_is_load_address = true,
+                 AddressType *address_type = nullptr);
     
     virtual size_t
-    GetPointeeData (DataExtractor& data,
-                    uint32_t item_idx = 0,
-					uint32_t item_count = 1);
+    GetPointeeData(DataExtractor& data,
+                   uint32_t item_idx = 0,
+                   uint32_t item_count = 1);
     
 private:
-    
     ValueObject *m_impl_backend;
     lldb::addr_t m_live_address;
     AddressType m_live_address_type;
@@ -86,4 +82,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectConstResultImpl_h_
+#endif // liblldb_ValueObjectConstResultImpl_h_

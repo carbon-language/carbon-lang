@@ -9,13 +9,17 @@
 
 #ifndef liblldb_STLUtils_h_
 #define liblldb_STLUtils_h_
-#if defined(__cplusplus)
 
+// C Includes
 #include <string.h>
 
+// C++ Includes
 #include <map>
 #include <ostream>
 #include <vector>
+
+// Other libraries and framework includes
+// Project includes
 
 //----------------------------------------------------------------------
 // C string less than compare function object
@@ -28,7 +32,6 @@ struct CStringCompareFunctionObject
     }
 };
 
-
 //----------------------------------------------------------------------
 // C string equality function object (binary predicate).
 //----------------------------------------------------------------------
@@ -40,7 +43,6 @@ struct CStringEqualBinaryPredicate
     }
 };
 
-
 //----------------------------------------------------------------------
 // Templated type for finding an entry in a std::map<F,S> whose value
 // is equal to something
@@ -48,21 +50,26 @@ struct CStringEqualBinaryPredicate
 template <class F, class S>
 class ValueEquals
 {
-private:
-    S second_value;
-
 public:
     ValueEquals (const S& val) : second_value(val)
     {}
+
     // Compare the second item
     bool operator() (std::pair<const F, S> elem)
     {
         return elem.second == second_value;
     }
+
+private:
+    S second_value;
 };
 
 template <class T>
-inline void PrintAllCollectionElements (std::ostream &s, const T& coll, const char* header_cstr=NULL, const char* separator_cstr=" ")
+inline void
+PrintAllCollectionElements(std::ostream &s,
+                           const T& coll,
+                           const char* header_cstr = nullptr,
+                           const char* separator_cstr = " ")
 {
     typename T::const_iterator pos;
 
@@ -88,7 +95,4 @@ struct for_each_cplusplus_delete
 typedef std::vector<std::string> STLStringArray;
 typedef std::vector<const char *> CStringArray;
 
-
-
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_STLUtils_h_
+#endif // liblldb_STLUtils_h_

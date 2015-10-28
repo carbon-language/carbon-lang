@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <map>
+#include <memory>
 #include <vector>
 
 // Other libraries and framework includes
@@ -26,12 +27,11 @@ class SourceManager
 {
 public:
 #ifndef SWIG
-    
     class File
     {
-    friend bool operator== (const SourceManager::File &lhs, const SourceManager::File &rhs);
+        friend bool operator== (const SourceManager::File &lhs, const SourceManager::File &rhs);
+
     public:
-    
         File (const FileSpec &file_spec, Target *target);
         ~File();
 
@@ -83,7 +83,6 @@ public:
         GetNumLines ();
         
     protected:
-
         bool
         CalculateLineOffsets (uint32_t line = UINT32_MAX);
 
@@ -95,20 +94,18 @@ public:
         typedef std::vector<uint32_t> LineOffsets;
         LineOffsets m_offsets;
     };
-
 #endif // SWIG
 
     typedef std::shared_ptr<File> FileSP;
 
 #ifndef SWIG
-
    // The SourceFileCache class separates the source manager from the cache of source files, so the 
    // cache can be stored in the Debugger, but the source managers can be per target.     
     class SourceFileCache
     {
     public:
-        SourceFileCache () {}
-        ~SourceFileCache() {}
+        SourceFileCache() = default;
+        ~SourceFileCache() = default;
         
         void AddSourceFile (const FileSP &file_sp);
         FileSP FindSourceFile (const FileSpec &file_spec) const;
@@ -117,8 +114,7 @@ public:
         typedef std::map <FileSpec, FileSP> FileCache;
         FileCache m_file_cache;
     };
-#endif
-
+#endif // SWIG
 
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -130,7 +126,6 @@ public:
 
     ~SourceManager();
 
-
     FileSP
     GetLastFile () 
     {
@@ -138,28 +133,28 @@ public:
     }
 
     size_t
-    DisplaySourceLinesWithLineNumbers (const FileSpec &file,
-                                       uint32_t line,
-                                       uint32_t context_before,
-                                       uint32_t context_after,
-                                       const char* current_line_cstr,
-                                       Stream *s,
-                                       const SymbolContextList *bp_locs = NULL);
+    DisplaySourceLinesWithLineNumbers(const FileSpec &file,
+                                      uint32_t line,
+                                      uint32_t context_before,
+                                      uint32_t context_after,
+                                      const char* current_line_cstr,
+                                      Stream *s,
+                                      const SymbolContextList *bp_locs = nullptr);
 
     // This variant uses the last file we visited.
     size_t
-    DisplaySourceLinesWithLineNumbersUsingLastFile (uint32_t start_line,
-                                                    uint32_t count,
-                                                    uint32_t curr_line,
-                                                    const char* current_line_cstr,
-                                                    Stream *s,
-                                                    const SymbolContextList *bp_locs = NULL);
+    DisplaySourceLinesWithLineNumbersUsingLastFile(uint32_t start_line,
+                                                   uint32_t count,
+                                                   uint32_t curr_line,
+                                                   const char* current_line_cstr,
+                                                   Stream *s,
+                                                   const SymbolContextList *bp_locs = nullptr);
 
     size_t
-    DisplayMoreWithLineNumbers (Stream *s,
-                                uint32_t count,
-                                bool reverse,
-                                const SymbolContextList *bp_locs = NULL);
+    DisplayMoreWithLineNumbers(Stream *s,
+                               uint32_t count,
+                               bool reverse,
+                               const SymbolContextList *bp_locs = nullptr);
 
     bool
     SetDefaultFileAndLine (const FileSpec &file_spec, uint32_t line);
@@ -170,7 +165,7 @@ public:
     bool 
     DefaultFileAndLineSet ()
     {
-        return (m_last_file_sp.get() != NULL);
+        return (m_last_file_sp.get() != nullptr);
     }
 
     void
@@ -184,10 +179,6 @@ public:
     GetFile (const FileSpec &file_spec);
 
 protected:
-    
-    //------------------------------------------------------------------
-    // Classes that inherit from SourceManager can see and modify these
-    //------------------------------------------------------------------
     FileSP m_last_file_sp;
     uint32_t m_last_line;
     uint32_t m_last_count;
@@ -196,13 +187,11 @@ protected:
     lldb::DebuggerWP m_debugger_wp;
     
 private:
-    //------------------------------------------------------------------
-    // For SourceManager only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (SourceManager);
 };
 
 bool operator== (const SourceManager::File &lhs, const SourceManager::File &rhs);
+
 } // namespace lldb_private
 
-#endif  // liblldb_SourceManager_h_
+#endif // liblldb_SourceManager_h_

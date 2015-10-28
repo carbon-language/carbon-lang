@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <functional>
+#include <initializer_list>
 #include <map>
 #include <vector>
 
@@ -69,7 +71,6 @@ namespace lldb_private {
 class ValueObject : public UserID
 {
 public:
-    
     enum GetExpressionPathFormat
     {
         eGetExpressionPathFormatDereferencePointers = 1,
@@ -221,13 +222,11 @@ public:
             
             return g_default_options;
         }
-
     };
 
     class EvaluationPoint
     {
     public:
-        
         EvaluationPoint ();
         
         EvaluationPoint (ExecutionContextScope *exe_scope, bool use_selected = false);
@@ -326,6 +325,8 @@ public:
         bool m_needs_update;
     };
 
+    virtual ~ValueObject();
+
     const EvaluationPoint &
     GetUpdatePoint () const
     {
@@ -371,8 +372,6 @@ public:
     void
     SetNeedsUpdate ();
     
-    virtual ~ValueObject();
-    
     CompilerType
     GetCompilerType ();
     
@@ -408,7 +407,7 @@ public:
     GetObjectRuntimeLanguage();
 
     virtual uint32_t
-    GetTypeInfo (CompilerType *pointee_or_element_compiler_type = NULL);
+    GetTypeInfo(CompilerType *pointee_or_element_compiler_type = nullptr);
 
     virtual bool
     IsPointerType ();
@@ -454,20 +453,20 @@ public:
     
     lldb::ValueObjectSP
     GetValueForExpressionPath(const char* expression,
-                              const char** first_unparsed = NULL,
-                              ExpressionPathScanEndReason* reason_to_stop = NULL,
-                              ExpressionPathEndResultType* final_value_type = NULL,
+                              const char** first_unparsed = nullptr,
+                              ExpressionPathScanEndReason* reason_to_stop = nullptr,
+                              ExpressionPathEndResultType* final_value_type = nullptr,
                               const GetValueForExpressionPathOptions& options = GetValueForExpressionPathOptions::DefaultOptions(),
-                              ExpressionPathAftermath* final_task_on_target = NULL);
+                              ExpressionPathAftermath* final_task_on_target = nullptr);
     
     int
     GetValuesForExpressionPath(const char* expression,
                                lldb::ValueObjectListSP& list,
-                               const char** first_unparsed = NULL,
-                               ExpressionPathScanEndReason* reason_to_stop = NULL,
-                               ExpressionPathEndResultType* final_value_type = NULL,
+                               const char** first_unparsed = nullptr,
+                               ExpressionPathScanEndReason* reason_to_stop = nullptr,
+                               ExpressionPathEndResultType* final_value_type = nullptr,
                                const GetValueForExpressionPathOptions& options = GetValueForExpressionPathOptions::DefaultOptions(),
-                               ExpressionPathAftermath* final_task_on_target = NULL);
+                               ExpressionPathAftermath* final_task_on_target = nullptr);
     
     virtual bool
     IsInScope ()
@@ -517,10 +516,10 @@ public:
                        std::string& destination);
     
     virtual uint64_t
-    GetValueAsUnsigned (uint64_t fail_value, bool *success = NULL);
+    GetValueAsUnsigned(uint64_t fail_value, bool *success = nullptr);
 
     virtual int64_t
-    GetValueAsSigned (int64_t fail_value, bool *success = NULL);
+    GetValueAsSigned(int64_t fail_value, bool *success = nullptr);
     
     virtual bool
     SetValueFromCString (const char *value_str, Error& error);
@@ -556,37 +555,37 @@ public:
 
     // this will always create the children if necessary
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::initializer_list<size_t> &idxs,
-                         size_t* index_of_error = NULL);
+    GetChildAtIndexPath(const std::initializer_list<size_t> &idxs,
+                        size_t* index_of_error = nullptr);
     
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::vector<size_t> &idxs,
-                         size_t* index_of_error = NULL);
+    GetChildAtIndexPath(const std::vector<size_t> &idxs,
+                        size_t* index_of_error = nullptr);
     
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::initializer_list< std::pair<size_t, bool> > &idxs,
-                         size_t* index_of_error = NULL);
+    GetChildAtIndexPath(const std::initializer_list< std::pair<size_t, bool> > &idxs,
+                        size_t* index_of_error = nullptr);
 
     lldb::ValueObjectSP
-    GetChildAtIndexPath (const std::vector< std::pair<size_t, bool> > &idxs,
-                         size_t* index_of_error = NULL);
+    GetChildAtIndexPath(const std::vector< std::pair<size_t, bool> > &idxs,
+                        size_t* index_of_error = nullptr);
 
     // this will always create the children if necessary
     lldb::ValueObjectSP
-    GetChildAtNamePath (const std::initializer_list<ConstString> &names,
-                        ConstString* name_of_error = NULL);
+    GetChildAtNamePath(const std::initializer_list<ConstString> &names,
+                       ConstString* name_of_error = nullptr);
     
     lldb::ValueObjectSP
-    GetChildAtNamePath (const std::vector<ConstString> &names,
-                        ConstString* name_of_error = NULL);
+    GetChildAtNamePath(const std::vector<ConstString> &names,
+                       ConstString* name_of_error = nullptr);
     
     lldb::ValueObjectSP
-    GetChildAtNamePath (const std::initializer_list< std::pair<ConstString, bool> > &names,
-                        ConstString* name_of_error = NULL);
+    GetChildAtNamePath(const std::initializer_list< std::pair<ConstString, bool> > &names,
+                       ConstString* name_of_error = nullptr);
     
     lldb::ValueObjectSP
-    GetChildAtNamePath (const std::vector< std::pair<ConstString, bool> > &names,
-                        ConstString* name_of_error = NULL);
+    GetChildAtNamePath(const std::vector< std::pair<ConstString, bool> > &names,
+                       ConstString* name_of_error = nullptr);
     
     virtual lldb::ValueObjectSP
     GetChildMemberWithName (const ConstString &name, bool can_create);
@@ -672,11 +671,11 @@ public:
     SetName (const ConstString &name);
     
     virtual lldb::addr_t
-    GetAddressOf (bool scalar_is_load_address = true,
-                  AddressType *address_type = NULL);
+    GetAddressOf(bool scalar_is_load_address = true,
+                 AddressType *address_type = nullptr);
     
     lldb::addr_t
-    GetPointerValue (AddressType *address_type = NULL);
+    GetPointerValue(AddressType *address_type = nullptr);
     
     lldb::ValueObjectSP
     GetSyntheticChild (const ConstString &key) const;
@@ -882,8 +881,7 @@ public:
             ClearUserVisibleData(eClearUserVisibleDataItemsValue);
         m_format = format;
     }
-    
-    
+
     virtual lldb::LanguageType
     GetPreferredDisplayLanguage ();
     
@@ -1019,21 +1017,15 @@ protected:
         HasChildAtIndex (size_t idx)
         {
             Mutex::Locker locker(m_mutex);
-            ChildrenIterator iter = m_children.find(idx);
-            ChildrenIterator end = m_children.end();
-            return (iter != end);
+            return (m_children.find(idx) != m_children.end());
         }
         
         ValueObject*
         GetChildAtIndex (size_t idx)
         {
             Mutex::Locker locker(m_mutex);
-            ChildrenIterator iter = m_children.find(idx);
-            ChildrenIterator end = m_children.end();
-            if (iter == end)
-                return NULL;
-            else
-                return iter->second;
+            const auto iter = m_children.find(idx);
+            return ((iter == m_children.end()) ? nullptr : iter->second);
         }
         
         void
@@ -1076,8 +1068,8 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
     //------------------------------------------------------------------
-    ValueObject  *      m_parent;       // The parent value object, or NULL if this has no parent
-    ValueObject  *      m_root;         // The root of the hierarchy for this ValueObject (or NULL if never calculated)
+    ValueObject  *      m_parent;       // The parent value object, or nullptr if this has no parent
+    ValueObject  *      m_root;         // The root of the hierarchy for this ValueObject (or nullptr if never calculated)
     EvaluationPoint     m_update_point; // Stores both the stop id and the full context at which this value was last 
                                         // updated.  When we are asked to update the value object, we check whether
                                         // the context & stop id are the same before updating.
@@ -1246,10 +1238,6 @@ protected:
     SetPreferredDisplayLanguageIfNeeded (lldb::LanguageType);
     
 private:
-    //------------------------------------------------------------------
-    // For ValueObject only
-    //------------------------------------------------------------------
-    
     virtual CompilerType
     MaybeCalculateCompleteType ();
     
@@ -1274,12 +1262,10 @@ private:
                                ExpressionPathEndResultType* final_value_type,
                                const GetValueForExpressionPathOptions& options,
                                ExpressionPathAftermath* final_task_on_target);
-                               
-    
-    DISALLOW_COPY_AND_ASSIGN (ValueObject);
 
+    DISALLOW_COPY_AND_ASSIGN (ValueObject);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObject_h_
+#endif // liblldb_ValueObject_h_

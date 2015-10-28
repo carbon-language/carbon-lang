@@ -16,7 +16,6 @@
 
 // Other libraries and framework includes
 // Project includes
-
 #include "lldb/lldb-private.h"
 
 namespace lldb_private {
@@ -58,7 +57,7 @@ public:
     SetBytes (const void *uuid_bytes, uint32_t num_uuid_bytes = 16);
 
     std::string
-    GetAsString (const char *separator = NULL) const;
+    GetAsString(const char *separator = nullptr) const;
 
     size_t
     SetFromCString (const char *c_str, uint32_t num_uuid_bytes = 16);
@@ -80,7 +79,7 @@ public:
     ///     decoded UUID.
     ///
     /// @param[out] end
-    ///     If \a end is not NULL, it will be filled in with the a
+    ///     If \a end is not nullptr, it will be filled in with the a
     ///     pointer to the character after the last successfully decoded
     ///     byte.
     ///

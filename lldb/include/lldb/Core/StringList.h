@@ -10,18 +10,24 @@
 #ifndef liblldb_StringList_h_
 #define liblldb_StringList_h_
 
+// C Includes
 #include <stdint.h>
 
-#include "lldb/Core/STLUtils.h"
-#include "lldb/lldb-forward.h"
+// C++ Includes
+#include <string>
+
+// Other libraries and framework includes
 #include "llvm/ADT/StringRef.h"
+
+// Project includes
+#include "lldb/lldb-forward.h"
+#include "lldb/Core/STLUtils.h"
 
 namespace lldb_private {
 
 class StringList
 {
 public:
-
     StringList ();
 
     StringList (const char *str);
@@ -120,7 +126,7 @@ public:
     SplitIntoLines (const char *lines, size_t len);
     
     std::string
-    CopyList(const char* item_preamble = NULL,
+    CopyList(const char* item_preamble = nullptr,
              const char* items_sep = "\n") const;
     
     StringList&
@@ -142,7 +148,6 @@ public:
                   size_t &exact_matches_idx) const;
 
 private:
-
     STLStringArray m_strings;
 };
 

@@ -1,4 +1,4 @@
-//===-- ValueObjectDynamicValue.h -----------------------------------*- C++ -*-===//
+//===-- ValueObjectDynamicValue.h -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -64,19 +64,13 @@ public:
     ValueObject *
     GetParent() override
     {
-        if (m_parent)
-            return m_parent->GetParent();
-        else
-            return NULL;
+        return ((m_parent != nullptr) ? m_parent->GetParent() : nullptr);
     }
 
     const ValueObject *
     GetParent() const override
     {
-        if (m_parent)
-            return m_parent->GetParent();
-        else
-            return NULL;
+        return ((m_parent != nullptr) ? m_parent->GetParent() : nullptr);
     }
 
     lldb::ValueObjectSP
@@ -91,7 +85,7 @@ public:
         if (m_owning_valobj_sp == owning_sp)
             return;
             
-        assert (m_owning_valobj_sp.get() == NULL);
+        assert (m_owning_valobj_sp.get() == nullptr);
         m_owning_valobj_sp = owning_sp;
     }
     
@@ -149,9 +143,6 @@ private:
     friend class ValueObjectConstResult;
     ValueObjectDynamicValue (ValueObject &parent, lldb::DynamicValueType use_dynamic);
 
-    //------------------------------------------------------------------
-    // For ValueObject only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (ValueObjectDynamicValue);
 };
 

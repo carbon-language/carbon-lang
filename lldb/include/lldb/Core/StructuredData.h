@@ -12,16 +12,16 @@
 
 // C Includes
 // C++ Includes
-
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+// Other libraries and framework includes
 #include "llvm/ADT/StringRef.h"
 
-// Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-defines.h"
 #include "lldb/Core/ConstString.h"
@@ -47,7 +47,6 @@ namespace lldb_private {
 class StructuredData
 {
 public:
-
     class Object;
     class Array;
     class Integer;
@@ -89,9 +88,7 @@ public:
         {
         }
 
-        virtual ~Object ()
-        {
-        }
+        virtual ~Object() = default;
 
         virtual bool
         IsValid() const
@@ -120,80 +117,62 @@ public:
         Array *
         GetAsArray ()
         {
-            if (m_type == Type::eTypeArray)
-                return (Array *)this;
-            return NULL;
+            return ((m_type == Type::eTypeArray) ? static_cast<Array *>(this) : nullptr);
         }
 
         Dictionary *
         GetAsDictionary ()
         {
-            if (m_type == Type::eTypeDictionary)
-                return (Dictionary *)this;
-            return NULL;
+            return ((m_type == Type::eTypeDictionary) ? static_cast<Dictionary *>(this) : nullptr);
         }
 
         Integer *
         GetAsInteger ()
         {
-            if (m_type == Type::eTypeInteger)
-                return (Integer *)this;
-            return NULL;
+            return ((m_type == Type::eTypeInteger) ? static_cast<Integer *>(this) : nullptr);
         }
 
         uint64_t
         GetIntegerValue (uint64_t fail_value = 0)
         {
             Integer *integer = GetAsInteger ();
-            if (integer)
-                return integer->GetValue();
-            return fail_value;
+            return ((integer != nullptr) ? integer->GetValue() : fail_value);
         }
 
         Float *
         GetAsFloat ()
         {
-            if (m_type == Type::eTypeFloat)
-                return (Float *)this;
-            return NULL;
+            return ((m_type == Type::eTypeFloat) ? static_cast<Float *>(this) : nullptr);
         }
 
         double
         GetFloatValue (double fail_value = 0.0)
         {
             Float *f = GetAsFloat ();
-            if (f)
-                return f->GetValue();
-            return fail_value;
+            return ((f != nullptr) ? f->GetValue() : fail_value);
         }
 
         Boolean *
         GetAsBoolean ()
         {
-            if (m_type == Type::eTypeBoolean)
-                return (Boolean *)this;
-            return NULL;
+            return ((m_type == Type::eTypeBoolean) ? static_cast<Boolean *>(this) : nullptr);
         }
 
         bool
         GetBooleanValue (bool fail_value = false)
         {
             Boolean *b = GetAsBoolean ();
-            if (b)
-                return b->GetValue();
-            return fail_value;
+            return ((b != nullptr) ? b->GetValue() : fail_value);
         }
 
         String *
         GetAsString ()
         {
-            if (m_type == Type::eTypeString)
-                return (String *)this;
-            return NULL;
+            return ((m_type == Type::eTypeString) ? static_cast<String *>(this) : nullptr);
         }
 
         std::string
-        GetStringValue(const char *fail_value = NULL)
+        GetStringValue(const char *fail_value = nullptr)
         {
             String *s = GetAsString ();
             if (s)
@@ -208,9 +187,7 @@ public:
         Generic *
         GetAsGeneric()
         {
-            if (m_type == Type::eTypeGeneric)
-                return (Generic *)this;
-            return NULL;
+            return ((m_type == Type::eTypeGeneric) ? static_cast<Generic *>(this) : nullptr);
         }
 
         ObjectSP
@@ -233,9 +210,7 @@ public:
         {
         }
 
-        ~Array() override
-        {
-        }
+        ~Array() override = default;
 
         bool
         ForEach (std::function <bool(Object* object)> const &foreach_callback) const
@@ -382,9 +357,7 @@ public:
         {
         }
 
-        ~Integer() override
-        {
-        }
+        ~Integer() override = default;
 
         void
         SetValue (uint64_t value)
@@ -413,9 +386,7 @@ public:
         {
         }
 
-        ~Float() override
-        {
-        }
+        ~Float() override = default;
 
         void
         SetValue (double value)
@@ -444,9 +415,7 @@ public:
         {
         }
 
-        ~Boolean() override
-        {
-        }
+        ~Boolean() override = default;
 
         void
         SetValue (bool value)
@@ -469,7 +438,7 @@ public:
     class String : public Object
     {
     public:
-        String (const char *cstr = NULL) :
+        String(const char *cstr = nullptr) :
             Object (Type::eTypeString),
             m_value ()
         {
@@ -517,9 +486,7 @@ public:
         {
         }
 
-        ~Dictionary() override
-        {
-        }
+        ~Dictionary() override = default;
 
         size_t
         GetSize() const
@@ -723,9 +690,7 @@ public:
         {
         }
 
-        ~Null() override
-        {
-        }
+        ~Null() override = default;
 
         bool
         IsValid() const override
@@ -734,13 +699,11 @@ public:
         }
 
         void Dump(Stream &s) const override;
-
-    protected:
     };
 
     class Generic : public Object
     {
-      public:
+    public:
         explicit Generic(void *object = nullptr) :
             Object (Type::eTypeGeneric),
             m_object (object)
@@ -767,13 +730,13 @@ public:
 
         void Dump(Stream &s) const override;
 
-      private:
+    private:
         void *m_object;
     };
 
     static ObjectSP
     ParseJSON (std::string json_text);
-};  // class StructuredData
+};
 
 } // namespace lldb_private
 

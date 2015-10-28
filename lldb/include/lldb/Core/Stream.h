@@ -9,11 +9,15 @@
 
 #ifndef liblldb_Stream_h_
 #define liblldb_Stream_h_
-#if defined(__cplusplus)
 
+// C Includes
+#include <stdarg.h>
+
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Flags.h"
-#include <stdarg.h>
 
 namespace lldb_private {
 
@@ -353,13 +357,13 @@ public:
     ///     Size in bytes of the address, used for formatting.
     ///
     /// @param[in] prefix
-    ///     A prefix C string. If NULL, no prefix will be output.
+    ///     A prefix C string. If nullptr, no prefix will be output.
     ///
     /// @param[in] suffix
-    ///     A suffix C string. If NULL, no suffix will be output.
+    ///     A suffix C string. If nullptr, no suffix will be output.
     //------------------------------------------------------------------
     void
-    Address (uint64_t addr, uint32_t addr_size, const char *prefix = NULL, const char *suffix = NULL);
+    Address(uint64_t addr, uint32_t addr_size, const char *prefix = nullptr, const char *suffix = nullptr);
 
     //------------------------------------------------------------------
     /// Output an address range to this stream.
@@ -377,13 +381,13 @@ public:
     ///     Size in bytes of the address, used for formatting.
     ///
     /// @param[in] prefix
-    ///     A prefix C string. If NULL, no prefix will be output.
+    ///     A prefix C string. If nullptr, no prefix will be output.
     ///
     /// @param[in] suffix
-    ///     A suffix C string. If NULL, no suffix will be output.
+    ///     A suffix C string. If nullptr, no suffix will be output.
     //------------------------------------------------------------------
     void
-    AddressRange(uint64_t lo_addr, uint64_t hi_addr, uint32_t addr_size, const char *prefix = NULL, const char *suffix = NULL);
+    AddressRange(uint64_t lo_addr, uint64_t hi_addr, uint32_t addr_size, const char *prefix = nullptr, const char *suffix = nullptr);
 
     //------------------------------------------------------------------
     /// Output a C string to the stream.
@@ -475,11 +479,11 @@ public:
     /// print an optional string following the indentation spaces.
     ///
     /// @param[in] s
-    ///     A C string to print following the indentation. If NULL, just
+    ///     A C string to print following the indentation. If nullptr, just
     ///     output the indentation characters.
     //------------------------------------------------------------------
     size_t
-    Indent(const char *s = NULL);
+    Indent(const char *s = nullptr);
 
     //------------------------------------------------------------------
     /// Decrement the current indentation level.
@@ -607,6 +611,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
 #endif  // liblldb_Stream_h_
-
