@@ -11,10 +11,10 @@
 #------------------------------------------------------------------------------
 # CHECK-EL:    sdbbp                      # encoding: [0x00,0x00,0x7c,0xdb]
 # CHECK-EL:    sdbbp 34                   # encoding: [0x22,0x00,0x7c,0xdb]
-# CHECK-EL:    .set push
-# CHECK-EL:    .set mips32r2
-# CHECK-EL:    rdhwr $5, $29
-# CHECK-EL:    .set pop                   # encoding: [0xbd,0x00,0x3c,0x6b]
+# CHECK-EL-NOT:    .set push
+# CHECK-EL-NOT:    .set mips32r2
+# CHECK-EL:    rdhwr $5, $29              # encoding: [0xbd,0x00,0x3c,0x6b]
+# CHECK-EL-NOT:    .set pop
 # CHECK-EL:    cache 1, 8($5)             # encoding: [0x25,0x20,0x08,0x60]
 # CHECK-EL:    pref 1, 8($5)              # encoding: [0x25,0x60,0x08,0x20]
 # CHECK-EL:    ssnop                      # encoding: [0x00,0x00,0x00,0x08]
@@ -53,10 +53,10 @@
 #------------------------------------------------------------------------------
 # CHECK-EB:   sdbbp                       # encoding: [0x00,0x00,0xdb,0x7c]
 # CHECK-EB:   sdbbp 34                    # encoding: [0x00,0x22,0xdb,0x7c]
-# CHECK-EB:   .set push
-# CHECK-EB:   .set mips32r2
-# CHECK-EB:   rdhwr $5, $29
-# CHECK-EB:   .set pop                    # encoding: [0x00,0xbd,0x6b,0x3c]
+# CHECK-EB-NOT:    .set push
+# CHECK-EB-NOT:    .set mips32r2
+# CHECK-EB:   rdhwr $5, $29               # encoding: [0x00,0xbd,0x6b,0x3c]
+# CHECK-EB-NOT:    .set pop
 # CHECK-EB:   cache 1, 8($5)              # encoding: [0x20,0x25,0x60,0x08]
 # CHECK-EB:   pref 1, 8($5)               # encoding: [0x60,0x25,0x20,0x08]
 # CHECK-EB:   ssnop                       # encoding: [0x00,0x00,0x08,0x00]

@@ -952,9 +952,13 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def TLBWR_MM : MMRel, TLB<"tlbwr">, COP0_TLB_FM_MM<0xcd>;
 
   def SDBBP_MM : MMRel, SYS_FT<"sdbbp">, SDBBP_FM_MM;
-  def RDHWR_MM : MMRel, ReadHardware<GPR32Opnd, HWRegsOpnd>, RDHWR_FM_MM;
 
   def PREFX_MM : PrefetchIndexed<"prefx">, POOL32F_PREFX_FM_MM<0x15, 0x1A0>;
+}
+
+let DecoderNamespace = "MicroMips" in {
+  def RDHWR_MM : MMRel, R6MMR6Rel, ReadHardware<GPR32Opnd, HWRegsOpnd>,
+                 RDHWR_FM_MM, ISA_MICROMIPS32_NOT_MIPS32R6;
 }
 
 let Predicates = [InMicroMips] in {

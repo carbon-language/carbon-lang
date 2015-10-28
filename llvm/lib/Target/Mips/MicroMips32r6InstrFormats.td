@@ -228,6 +228,69 @@ class POOL32A_FM_MMR6<bits<10> funct> : MipsR6Inst {
   let Inst{9-0}   = funct;
 }
 
+class POOL32A_PAUSE_FM_MMR6<string instr_asm, bits<5> op> : MMR6Arch<instr_asm> {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = 0;
+  let Inst{20-16} = 0;
+  let Inst{15-11} = op;
+  let Inst{10-6} = 0;
+  let Inst{5-0} = 0;
+}
+
+class POOL32A_RDPGPR_FM_MMR6<bits<10> funct> {
+  bits<5> rt;
+  bits<5> rd;
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rd;
+  let Inst{15-6} = funct;
+  let Inst{5-0} = 0b111100;
+}
+
+class POOL32A_RDHWR_FM_MMR6 {
+  bits<5> rt;
+  bits<5> rs;
+  bits<3> sel;
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
+  let Inst{15-14} = 0;
+  let Inst{13-11} = sel;
+  let Inst{10} = 0;
+  let Inst{9-0} = 0b0111000000;
+}
+
+class POOL32A_SYNC_FM_MMR6 {
+  bits<5> stype;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = 0;
+  let Inst{20-16} = stype;
+  let Inst{15-6}  = 0b0110101101;
+  let Inst{5-0}   = 0b111100;
+}
+
+class POOL32I_SYNCI_FM_MMR6 {
+  bits<21> addr;
+  bits<5> base = addr{20-16};
+  bits<16> immediate = addr{15-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b010000;
+  let Inst{25-21} = 0b01100;
+  let Inst{20-16} = base;
+  let Inst{15-0}  = immediate;
+}
+
 class POOL32A_2R_FM_MMR6<bits<10> funct> : MipsR6Inst {
   bits<5> rs;
   bits<5> rt;
