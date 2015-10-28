@@ -5336,7 +5336,7 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
 /// illegal to actually use.
 static bool isForbiddenTypeAllowed(Sema &S, Decl *decl,
                                    const DelayedDiagnostic &diag,
-                                   llvm::StringRef &explanation) {
+                                   UnavailableAttr::ImplicitReason &reason) {
   // Private ivars are always okay.  Unfortunately, people don't
   // always properly make their ivars private, even in system headers.
   // Plus we need to make fields okay, too.
@@ -5344,29 +5344,25 @@ static bool isForbiddenTypeAllowed(Sema &S, Decl *decl,
       !isa<FunctionDecl>(decl))
     return false;
 
-  // All of these declarations are allowed in all system headers. which
-  // we assume to not be defined in user code.
-  if (S.Context.getSourceManager().isInSystemHeader(decl->getLocation())) {
-    explanation = "this system declaration uses an unsupported type";
-    return true;
+  // Silently accept unsupported uses of __weak in both user and system
+  // declarations when it's been disabled, for ease of integration with
+  // -fno-objc-arc files.  We do have to take some care against attempts
+  // to define such things;  for now, we've only done that for ivars
+  // and properties.
+  if ((isa<ObjCIvarDecl>(decl) || isa<ObjCPropertyDecl>(decl))) {
+    if (diag.getForbiddenTypeDiagnostic() == diag::err_arc_weak_disabled ||
+        diag.getForbiddenTypeDiagnostic() == diag::err_arc_weak_no_runtime) {
+      reason = UnavailableAttr::IR_ForbiddenWeak;
+      return true;
+    }
   }
 
-  // We do also need to allow __weak in user declarations when it's been
-  // disabled, for ease of integration with -fno-objc-arc files, but we
-  // have to take some care against attempts to define such things.
-  // For now, that care only extends to ivars and properties.
-  if ((isa<ObjCIvarDecl>(decl) || isa<ObjCPropertyDecl>(decl))) {
-    // TODO: find a way to localize these.
-    if (diag.getForbiddenTypeDiagnostic() == diag::err_arc_weak_disabled) {
-      explanation = "cannot use weak references in file using manual "
-                    "reference counting";
-      return true;
-    }
-    if (diag.getForbiddenTypeDiagnostic() == diag::err_arc_weak_no_runtime) {
-      explanation = "cannot use weak references because the current "
-                    "deployment target does not support them";
-      return true;
-    }
+  // Allow all sorts of things in system headers.
+  if (S.Context.getSourceManager().isInSystemHeader(decl->getLocation())) {
+    // Currently, all the failures dealt with this way are due to ARC
+    // restrictions.
+    reason = UnavailableAttr::IR_ARCForbiddenType;
+    return true;
   }
 
   return false;
@@ -5375,10 +5371,11 @@ static bool isForbiddenTypeAllowed(Sema &S, Decl *decl,
 /// Handle a delayed forbidden-type diagnostic.
 static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
                                        Decl *decl) {
-  llvm::StringRef explanation;
-  if (decl && isForbiddenTypeAllowed(S, decl, diag, explanation)) {
-    decl->addAttr(UnavailableAttr::CreateImplicit(S.Context, explanation,
-                                UnavailableAttr::ISK_ForbiddenType, diag.Loc));
+  auto reason = UnavailableAttr::IR_None;
+  if (decl && isForbiddenTypeAllowed(S, decl, diag, reason)) {
+    assert(reason && "didn't set reason?");
+    decl->addAttr(UnavailableAttr::CreateImplicit(S.Context, "", reason,
+                                                  diag.Loc));
     return;
   }
   if (S.getLangOpts().ObjCAutoRefCount)
@@ -5462,11 +5459,47 @@ static void DoEmitAvailabilityWarning(Sema &S, Sema::AvailabilityDiagnostic K,
     property_note_select = /* unavailable */ 1;
     available_here_select_kind = /* unavailable */ 0;
 
-    if (!Message.empty()) {
-      if (auto attr = D->getAttr<UnavailableAttr>())
-        if (attr->isImplicit() &&
-            attr->getImplicitSource() == UnavailableAttr::ISK_ForbiddenType)
-          diag_available_here = diag::note_unavailability_inferred_here;
+    if (auto attr = D->getAttr<UnavailableAttr>()) {
+      if (attr->isImplicit() && attr->getImplicitReason()) {
+        // Most of these failures are due to extra restrictions in ARC;
+        // reflect that in the primary diagnostic when applicable.
+        auto flagARCError = [&] {
+          if (S.getLangOpts().ObjCAutoRefCount &&
+              S.getSourceManager().isInSystemHeader(D->getLocation()))
+            diag = diag::err_unavailable_in_arc;
+        };
+
+        switch (attr->getImplicitReason()) {
+        case UnavailableAttr::IR_None: break;
+
+        case UnavailableAttr::IR_ARCForbiddenType:
+          flagARCError();
+          diag_available_here = diag::note_arc_forbidden_type;
+          break;
+
+        case UnavailableAttr::IR_ForbiddenWeak:
+          if (S.getLangOpts().ObjCWeakRuntime)
+            diag_available_here = diag::note_arc_weak_disabled;
+          else
+            diag_available_here = diag::note_arc_weak_no_runtime;
+          break;
+
+        case UnavailableAttr::IR_ARCForbiddenConversion:
+          flagARCError();
+          diag_available_here = diag::note_performs_forbidden_arc_conversion;
+          break;
+
+        case UnavailableAttr::IR_ARCInitReturnsUnrelated:
+          flagARCError();
+          diag_available_here = diag::note_arc_init_returns_unrelated;
+          break;
+
+        case UnavailableAttr::IR_ARCFieldWithOwnership:
+          flagARCError();
+          diag_available_here = diag::note_arc_field_with_ownership;
+          break;
+        }
+      }
     }
 
     break;

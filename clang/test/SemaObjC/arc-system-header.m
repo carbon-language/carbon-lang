@@ -5,26 +5,26 @@
 
 #ifndef NO_USE
 void test(id op, void *cp) {
-  cp = test0(op); // expected-error {{'test0' is unavailable: converts between Objective-C and C pointers in -fobjc-arc}}
-  cp = *test1(&op); // expected-error {{'test1' is unavailable: converts between Objective-C and C pointers in -fobjc-arc}}
-// expected-note@arc-system-header.h:1 {{'test0' has been explicitly marked unavailable here}}
-// expected-note@arc-system-header.h:5 {{'test1' has been explicitly marked unavailable here}}
+  cp = test0(op); // expected-error {{'test0' is unavailable in ARC}}
+  cp = *test1(&op); // expected-error {{'test1' is unavailable in ARC}}
+// expected-note@arc-system-header.h:1 {{inline function performs a conversion which is forbidden in ARC}}
+// expected-note@arc-system-header.h:5 {{inline function performs a conversion which is forbidden in ARC}}
 }
 
 void test3(struct Test3 *p) {
-  p->field = 0; // expected-error {{'field' is unavailable: this system declaration uses an unsupported type}}
-                // expected-note@arc-system-header.h:14 {{unsupported declaration here}}
+  p->field = 0; // expected-error {{'field' is unavailable in ARC}}
+                // expected-note@arc-system-header.h:14 {{declaration uses type that is ill-formed in ARC}}
 }
 
 void test4(Test4 *p) {
-  p->field1 = 0; // expected-error {{'field1' is unavailable: this system declaration uses an unsupported type}}
-                 // expected-note@arc-system-header.h:19 {{unsupported declaration here}}
+  p->field1 = 0; // expected-error {{'field1' is unavailable in ARC}}
+                 // expected-note@arc-system-header.h:19 {{declaration uses type that is ill-formed in ARC}}
   p->field2 = 0;
 }
 
 void test5(struct Test5 *p) {
-  p->field = 0; // expected-error {{'field' is unavailable: this system field has retaining ownership}}
-                // expected-note@arc-system-header.h:25 {{'field' has been explicitly marked unavailable here}}
+  p->field = 0; // expected-error {{'field' is unavailable in ARC}}
+                // expected-note@arc-system-header.h:25 {{field has non-trivial ownership qualification}}
 }
 
 id test6() {
@@ -39,11 +39,11 @@ id test6() {
 }
 
 void test7(Test7 *p) {
-  *p.prop = 0; // expected-error {{'prop' is unavailable: this system declaration uses an unsupported type}}
-  p.prop = 0; // expected-error {{'prop' is unavailable: this system declaration uses an unsupported type}}
-  *[p prop] = 0; // expected-error {{'prop' is unavailable: this system declaration uses an unsupported type}}
-  [p setProp: 0]; // expected-error {{'setProp:' is unavailable: this system declaration uses an unsupported type}}
-// expected-note@arc-system-header.h:41 4 {{unsupported declaration here}}
+  *p.prop = 0; // expected-error {{'prop' is unavailable in ARC}}
+  p.prop = 0; // expected-error {{'prop' is unavailable in ARC}}
+  *[p prop] = 0; // expected-error {{'prop' is unavailable in ARC}}
+  [p setProp: 0]; // expected-error {{'setProp:' is unavailable in ARC}}
+// expected-note@arc-system-header.h:41 4 {{declaration uses type that is ill-formed in ARC}}
 // expected-note@arc-system-header.h:41 2 {{property 'prop' is declared unavailable here}}
 }
 #endif

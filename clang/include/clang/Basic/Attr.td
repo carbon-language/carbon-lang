@@ -132,6 +132,9 @@ def HasFunctionProto : SubsetSubject<DeclBase,
 class Argument<string name, bit optional, bit fake = 0> {
   string Name = name;
   bit Optional = optional;
+
+  /// A fake argument is used to store and serialize additional information
+  /// in an attribute without actually changing its parsing or pretty-printing.
   bit Fake = fake;
 }
 
@@ -1353,9 +1356,14 @@ def TransparentUnion : InheritableAttr {
 def Unavailable : InheritableAttr {
   let Spellings = [GNU<"unavailable">];
   let Args = [StringArgument<"Message", 1>,
-              EnumArgument<"ImplicitSource", "ImplicitSourceKind",
-                           ["none", "forbiddenType"],
-                           ["ISK_None", "ISK_ForbiddenType"], 1, /*fake*/ 1>];
+              EnumArgument<"ImplicitReason", "ImplicitReason",
+                ["", "", "", ""],
+                ["IR_None",
+                 "IR_ARCForbiddenType",
+                 "IR_ForbiddenWeak",
+                 "IR_ARCForbiddenConversion",
+                 "IR_ARCInitReturnsUnrelated",
+                 "IR_ARCFieldWithOwnership"], 1, /*fake*/ 1>];
   let Documentation = [Undocumented];
 }
 

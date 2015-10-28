@@ -36,13 +36,13 @@ __attribute__((objc_root_class))
 
 @interface E : Root {
 @public
-  __weak id x; // expected-note 2 {{unsupported declaration here}}
+  __weak id x; // expected-note 2 {{declaration uses __weak, but ARC is disabled}}
 }
 @end
 
 void testE(E *e) {
-  id x = e->x; // expected-error {{'x' is unavailable: cannot use weak references in file using manual reference counting}}
-  e->x = x; // expected-error {{'x' is unavailable: cannot use weak references in file using manual reference counting}}
+  id x = e->x; // expected-error {{'x' is unavailable}}
+  e->x = x; // expected-error {{'x' is unavailable}}
 }
 
 @interface F : Root

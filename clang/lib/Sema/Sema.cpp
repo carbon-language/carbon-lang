@@ -296,7 +296,7 @@ Sema::~Sema() {
 /// make the relevant declaration unavailable instead of erroring, do
 /// so and return true.
 bool Sema::makeUnavailableInSystemHeader(SourceLocation loc,
-                                         StringRef msg) {
+                                      UnavailableAttr::ImplicitReason reason) {
   // If we're not in a function, it's an error.
   FunctionDecl *fn = dyn_cast<FunctionDecl>(CurContext);
   if (!fn) return false;
@@ -312,7 +312,7 @@ bool Sema::makeUnavailableInSystemHeader(SourceLocation loc,
   // If the function is already unavailable, it's not an error.
   if (fn->hasAttr<UnavailableAttr>()) return true;
 
-  fn->addAttr(UnavailableAttr::CreateImplicit(Context, msg, loc));
+  fn->addAttr(UnavailableAttr::CreateImplicit(Context, "", reason, loc));
   return true;
 }
 
