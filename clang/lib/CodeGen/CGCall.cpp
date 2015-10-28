@@ -2847,8 +2847,6 @@ struct DestroyUnpassedArg final : EHScopeStack::Cleanup {
   }
 };
 
-}
-
 struct DisableDebugLocationUpdates {
   CodeGenFunction &CGF;
   bool disabledDebugInfo;
@@ -2861,6 +2859,8 @@ struct DisableDebugLocationUpdates {
       CGF.enableDebugInfo();
   }
 };
+
+} // end anonymous namespace
 
 void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
                                   QualType type) {
