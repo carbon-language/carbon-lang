@@ -9750,8 +9750,7 @@ void CrossWindows::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  const std::string Linker = TC.GetProgramPath("ld");
-  Exec = Args.MakeArgString(Linker);
+  Exec = Args.MakeArgString(TC.GetLinkerPath());
 
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
