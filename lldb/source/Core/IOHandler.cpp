@@ -14,6 +14,9 @@
 #endif
 
 // C++ Includes
+#if defined(__APPLE__)
+#include <deque>
+#endif
 #include <string>
 
 // Other libraries and framework includes
@@ -35,6 +38,8 @@
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/ThreadPlan.h"
+
+
 
 using namespace lldb;
 using namespace lldb_private;
