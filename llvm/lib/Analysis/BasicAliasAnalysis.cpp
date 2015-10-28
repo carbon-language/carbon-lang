@@ -619,6 +619,9 @@ ModRefInfo BasicAAResult::getArgModRefInfo(ImmutableCallSite CS,
   if (CS.paramHasAttr(ArgIdx + 1, Attribute::ReadOnly))
     return MRI_Ref;
 
+  if (CS.paramHasAttr(ArgIdx + 1, Attribute::ReadNone))
+    return MRI_NoModRef;
+
   return AAResultBase::getArgModRefInfo(CS, ArgIdx);
 }
 

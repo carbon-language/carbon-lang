@@ -216,6 +216,17 @@ define i32 @test12(i32* %P, i32* %P2, i32* %P3) {
   ; CHECK: ret i32 %Diff
 }
 
+; CHECK-LABEL: @test13(
+define i32 @test13(i32* %P, i32* %P2) {
+  %V1 = load i32, i32* %P
+  call i32 @func_argmemonly(i32* readnone %P2)
+  %V2 = load i32, i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK-NOT: load
+  ; CHECK: ret i32 0
+}
+
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i8(i8* nocapture, i8, i8, i32, i1) nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i8(i8* nocapture, i8* nocapture, i8, i32, i1) nounwind
