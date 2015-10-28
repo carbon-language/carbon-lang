@@ -895,8 +895,9 @@ int X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
 
   // Legalize the type.
   std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, SrcVTy);
+  auto VT = TLI->getValueType(DL, SrcVTy);
   int Cost = 0;
-  if (LT.second != TLI->getValueType(DL, SrcVTy).getSimpleVT() &&
+  if (VT.isSimple() && LT.second != VT.getSimpleVT() &&
       LT.second.getVectorNumElements() == NumElem)
     // Promotion requires expand/truncate for data and a shuffle for mask.
     Cost += getShuffleCost(TTI::SK_Alternate, SrcVTy, 0, nullptr) +
