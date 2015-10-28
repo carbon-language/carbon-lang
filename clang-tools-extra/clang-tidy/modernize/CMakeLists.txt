@@ -6,6 +6,7 @@ add_clang_library(clangTidyModernizeModule
   MakeUniqueCheck.cpp
   ModernizeTidyModule.cpp
   PassByValueCheck.cpp
+  RedundantVoidArgCheck.cpp
   ReplaceAutoPtrCheck.cpp
   ShrinkToFitCheck.cpp
   UseAutoCheck.cpp

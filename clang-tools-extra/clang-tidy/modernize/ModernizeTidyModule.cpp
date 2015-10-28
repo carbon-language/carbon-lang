@@ -13,6 +13,7 @@
 #include "LoopConvertCheck.h"
 #include "MakeUniqueCheck.h"
 #include "PassByValueCheck.h"
+#include "RedundantVoidArgCheck.h"
 #include "ReplaceAutoPtrCheck.h"
 #include "ShrinkToFitCheck.h"
 #include "UseAutoCheck.h"
@@ -32,6 +33,8 @@ public:
     CheckFactories.registerCheck<LoopConvertCheck>("modernize-loop-convert");
     CheckFactories.registerCheck<MakeUniqueCheck>("modernize-make-unique");
     CheckFactories.registerCheck<PassByValueCheck>("modernize-pass-by-value");
+    CheckFactories.registerCheck<RedundantVoidArgCheck>(
+        "modernize-redundant-void-arg");
     CheckFactories.registerCheck<ReplaceAutoPtrCheck>(
         "modernize-replace-auto-ptr");
     CheckFactories.registerCheck<ShrinkToFitCheck>("modernize-shrink-to-fit");
