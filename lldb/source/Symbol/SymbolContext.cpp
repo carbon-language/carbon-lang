@@ -1089,7 +1089,7 @@ SymbolContextSpecifier::SymbolContextMatches(SymbolContext &sc)
             }
             else if (sc.symbol != nullptr)
             {
-                if (!sc.symbol->GetMangled().NameMatches(func_name, sc.function->GetLanguage()))
+                if (!sc.symbol->GetMangled().NameMatches(func_name, sc.symbol->GetLanguage()))
                     return false;
             }
         }
