@@ -63,6 +63,10 @@ static cl::opt<unsigned> SampleProfileMaxPropagateIterations(
     "sample-profile-max-propagate-iterations", cl::init(100),
     cl::desc("Maximum number of iterations to go through when propagating "
              "sample block/edge weights through the CFG."));
+static cl::opt<unsigned> SampleProfileCoverage(
+    "sample-profile-check-coverage", cl::init(0), cl::value_desc("N"),
+    cl::desc("Emit a warning if less than N% of samples in the input profile "
+             "are matched to the IR."));
 
 namespace {
 typedef DenseMap<const BasicBlock *, uint64_t> BlockWeightMap;
@@ -174,6 +178,64 @@ protected:
   /// \brief Flag indicating whether the profile input loaded successfully.
   bool ProfileIsValid;
 };
+
+class SampleCoverageTracker {
+public:
+  SampleCoverageTracker() : SampleCoverage() {}
+
+  void markSamplesUsed(const FunctionSamples *Samples, uint32_t LineOffset,
+                       uint32_t Discriminator);
+  unsigned computeCoverage(const FunctionSamples *Samples) const;
+  unsigned getNumUsedSamples(const FunctionSamples *Samples) const;
+
+private:
+  typedef DenseMap<LineLocation, unsigned> BodySampleCoverageMap;
+  typedef DenseMap<const FunctionSamples *, BodySampleCoverageMap>
+      FunctionSamplesCoverageMap;
+
+  /// Coverage map for sampling records.
+  ///
+  /// This map keeps a record of sampling records that have been matched to
+  /// an IR instruction. This is used to detect some form of staleness in
+  /// profiles (see flag -sample-profile-check-coverage).
+  ///
+  /// Each entry in the map corresponds to a FunctionSamples instance.  This is
+  /// another map that counts how many times the sample record at the
+  /// given location has been used.
+  FunctionSamplesCoverageMap SampleCoverage;
+};
+
+SampleCoverageTracker CoverageTracker;
+}
+
+/// Mark as used the sample record for the given function samples at
+/// (LineOffset, Discriminator).
+void SampleCoverageTracker::markSamplesUsed(const FunctionSamples *Samples,
+                                            uint32_t LineOffset,
+                                            uint32_t Discriminator) {
+  BodySampleCoverageMap &Coverage = SampleCoverage[Samples];
+  Coverage[LineLocation(LineOffset, Discriminator)]++;
+}
+
+/// Return the number of sample records that were applied from this profile.
+unsigned
+SampleCoverageTracker::getNumUsedSamples(const FunctionSamples *Samples) const {
+  auto I = SampleCoverage.find(Samples);
+  return (I != SampleCoverage.end()) ? I->second.size() : 0;
+}
+
+/// Return the fraction of sample records used in this profile.
+///
+/// The returned value is an unsigned integer in the range 0-100 indicating
+/// the percentage of sample records that were used while applying this
+/// profile to the associated function.
+unsigned
+SampleCoverageTracker::computeCoverage(const FunctionSamples *Samples) const {
+  uint32_t NumTotalRecords = Samples->getBodySamples().size();
+  uint32_t NumUsedRecords = getNumUsedSamples(Samples);
+  assert(NumUsedRecords <= NumTotalRecords &&
+         "number of used records cannot exceed the total number of records");
+  return NumTotalRecords > 0 ? NumUsedRecords * 100 / NumTotalRecords : 100;
 }
 
 /// Clear all the per-function data used to load samples and propagate weights.
@@ -257,13 +319,17 @@ SampleProfileLoader::getInstWeight(const Instruction &Inst) const {
   unsigned Lineno = DLoc.getLine();
   unsigned HeaderLineno = DIL->getScope()->getSubprogram()->getLine();
 
-  ErrorOr<uint64_t> R = FS->findSamplesAt(getOffset(Lineno, HeaderLineno),
-                                          DIL->getDiscriminator());
-  if (R)
+  uint32_t LineOffset = getOffset(Lineno, HeaderLineno);
+  uint32_t Discriminator = DIL->getDiscriminator();
+  ErrorOr<uint64_t> R = FS->findSamplesAt(LineOffset, Discriminator);
+  if (R) {
+    if (SampleProfileCoverage)
+      CoverageTracker.markSamplesUsed(FS, LineOffset, Discriminator);
     DEBUG(dbgs() << "    " << Lineno << "." << DIL->getDiscriminator() << ":"
                  << Inst << " (line offset: " << Lineno - HeaderLineno << "."
                  << DIL->getDiscriminator() << " - weight: " << R.get()
                  << ")\n");
+  }
   return R;
 }
 
@@ -309,6 +375,20 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
       Changed = true;
     }
     DEBUG(printBlockWeight(dbgs(), &BB));
+  }
+
+  if (SampleProfileCoverage) {
+    unsigned Coverage = CoverageTracker.computeCoverage(Samples);
+    if (Coverage < SampleProfileCoverage) {
+      const char *Filename = getDISubprogram(&F)->getFilename().str().c_str();
+      F.getContext().diagnose(DiagnosticInfoSampleProfile(
+          Filename, getFunctionLoc(F),
+          Twine(CoverageTracker.getNumUsedSamples(Samples)) + " of " +
+              Twine(Samples->getBodySamples().size()) +
+              " available profile records (" + Twine(Coverage) +
+              "%) were applied",
+          DS_Warning));
+    }
   }
 
   return Changed;
