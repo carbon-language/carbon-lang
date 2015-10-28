@@ -10923,18 +10923,19 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         return std::make_pair(0U, &PPC::QFRCRegClass);
       if (VT == MVT::v4f32 && Subtarget.hasQPX())
         return std::make_pair(0U, &PPC::QSRCRegClass);
-      return std::make_pair(0U, &PPC::VRRCRegClass);
+      if (Subtarget.hasAltivec())
+        return std::make_pair(0U, &PPC::VRRCRegClass);
     case 'y':   // crrc
       return std::make_pair(0U, &PPC::CRRCRegClass);
     }
   } else if (Constraint == "wc" && Subtarget.useCRBits()) {
     // An individual CR bit.
     return std::make_pair(0U, &PPC::CRBITRCRegClass);
-  } else if (Constraint == "wa" || Constraint == "wd" ||
-             Constraint == "wf") {
+  } else if ((Constraint == "wa" || Constraint == "wd" ||
+             Constraint == "wf") && Subtarget.hasVSX()) {
     return std::make_pair(0U, &PPC::VSRCRegClass);
-  } else if (Constraint == "ws") {
-    if (VT == MVT::f32)
+  } else if (Constraint == "ws" && Subtarget.hasVSX()) {
+    if (VT == MVT::f32 && Subtarget.hasP8Vector())
       return std::make_pair(0U, &PPC::VSSRCRegClass);
     else
       return std::make_pair(0U, &PPC::VSFRCRegClass);
