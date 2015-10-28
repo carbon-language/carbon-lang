@@ -370,9 +370,51 @@ data_type InstrProfLookupTrait::ReadData(StringRef K, const unsigned char *D,
   return DataBuffer;
 }
 
+std::error_code InstrProfReaderIndex::getRecords(
+    StringRef FuncName, ArrayRef<InstrProfRecord> &Data) {
+  auto Iter = Index->find(FuncName);
+  if (Iter == Index->end()) return instrprof_error::unknown_function;
+
+  Data = (*Iter);
+  if (Data.empty()) return instrprof_error::malformed;
+
+  return instrprof_error::success;
+}
+
+std::error_code InstrProfReaderIndex::getRecords(
+    ArrayRef<InstrProfRecord> &Data) {
+  if (atEnd()) return instrprof_error::eof;
+
+  Data = *RecordIterator;
+
+  if (Data.empty()) return instrprof_error::malformed;
+
+  return instrprof_error::success;
+}
+
+void InstrProfReaderIndex::Init(const unsigned char *Buckets,
+                                const unsigned char *const Payload,
+                                const unsigned char *const Base,
+                                IndexedInstrProf::HashT HashType,
+                                uint64_t Version) {
+  FormatVersion = Version;
+  Index.reset(IndexType::Create(Buckets, Payload, Base,
+                                InstrProfLookupTrait(HashType, Version)));
+  // Form the map of hash values to const char* keys in profiling data.
+  std::vector<std::pair<uint64_t, const char *>> HashKeys;
+  for (auto Key : Index->keys()) {
+    const char *KeyTableRef = StringTable.insertString(Key);
+    HashKeys.push_back(std::make_pair(ComputeHash(HashType, Key), KeyTableRef));
+  }
+  std::sort(HashKeys.begin(), HashKeys.end(), less_first());
+  HashKeys.erase(std::unique(HashKeys.begin(), HashKeys.end()), HashKeys.end());
+  // Set the hash key map for the InstrLookupTrait
+  Index->getInfoObj().setHashKeys(std::move(HashKeys));
+  RecordIterator = Index->data_begin();
+}
+
 bool IndexedInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
-  if (DataBuffer.getBufferSize() < 8)
-    return false;
+  if (DataBuffer.getBufferSize() < 8) return false;
   using namespace support;
   uint64_t Magic =
       endian::read<uint64_t, little, aligned>(DataBuffer.getBufferStart());
@@ -398,7 +440,7 @@ std::error_code IndexedInstrProfReader::readHeader() {
     return error(instrprof_error::bad_magic);
 
   // Read the version.
-  FormatVersion = endian::byte_swap<uint64_t, little>(Header->Version);
+  uint64_t FormatVersion = endian::byte_swap<uint64_t, little>(Header->Version);
   if (FormatVersion > IndexedInstrProf::Version)
     return error(instrprof_error::unsupported_version);
 
@@ -415,37 +457,19 @@ std::error_code IndexedInstrProfReader::readHeader() {
   uint64_t HashOffset = endian::byte_swap<uint64_t, little>(Header->HashOffset);
 
   // The rest of the file is an on disk hash table.
-  Index.reset(InstrProfReaderIndex::Create(
-      Start + HashOffset, Cur, Start,
-      InstrProfLookupTrait(HashType, FormatVersion)));
-
-  // Form the map of hash values to const char* keys in profiling data.
-  std::vector<std::pair<uint64_t, const char *>> HashKeys;
-  for (auto Key : Index->keys()) {
-    const char *KeyTableRef = StringTable.insertString(Key);
-    HashKeys.push_back(std::make_pair(ComputeHash(HashType, Key), KeyTableRef));
-  }
-  std::sort(HashKeys.begin(), HashKeys.end(), less_first());
-  HashKeys.erase(std::unique(HashKeys.begin(), HashKeys.end()), HashKeys.end());
-  // Set the hash key map for the InstrLookupTrait
-  Index->getInfoObj().setHashKeys(std::move(HashKeys));
-  // Set up our iterator for readNextRecord.
-  RecordIterator = Index->data_begin();
+  Index.Init(Start + HashOffset, Cur, Start, HashType, FormatVersion);
 
   return success();
 }
 
 std::error_code IndexedInstrProfReader::getFunctionCounts(
     StringRef FuncName, uint64_t FuncHash, std::vector<uint64_t> &Counts) {
-  auto Iter = Index->find(FuncName);
-  if (Iter == Index->end())
-    return error(instrprof_error::unknown_function);
+  ArrayRef<InstrProfRecord> Data;
+
+  std::error_code EC = Index.getRecords(FuncName, Data);
+  if (EC != instrprof_error::success) return EC;
 
   // Found it. Look for counters with the right hash.
-  ArrayRef<InstrProfRecord> Data = (*Iter);
-  if (Data.empty())
-    return error(instrprof_error::malformed);
-
   for (unsigned I = 0, E = Data.size(); I < E; ++I) {
     // Check for a match and fill the vector if there is one.
     if (Data[I].Hash == FuncHash) {
@@ -456,20 +480,18 @@ std::error_code IndexedInstrProfReader::getFunctionCounts(
   return error(instrprof_error::hash_mismatch);
 }
 
-std::error_code
-IndexedInstrProfReader::readNextRecord(InstrProfRecord &Record) {
-  // Are we out of records?
-  if (RecordIterator == Index->data_end())
-    return error(instrprof_error::eof);
-
-  if ((*RecordIterator).empty())
-    return error(instrprof_error::malformed);
-
+std::error_code IndexedInstrProfReader::readNextRecord(
+    InstrProfRecord &Record) {
   static unsigned RecordIndex = 0;
-  ArrayRef<InstrProfRecord> Data = (*RecordIterator);
+
+  ArrayRef<InstrProfRecord> Data;
+
+  std::error_code EC = Index.getRecords(Data);
+  if (EC != instrprof_error::success) return error(EC);
+
   Record = Data[RecordIndex++];
   if (RecordIndex >= Data.size()) {
-    ++RecordIterator;
+    Index.advanceToNextKey();
     RecordIndex = 0;
   }
   return success();

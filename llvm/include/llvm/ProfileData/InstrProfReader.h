@@ -64,10 +64,7 @@ public:
   InstrProfIterator begin() { return InstrProfIterator(this); }
   InstrProfIterator end() { return InstrProfIterator(); }
 
-protected:
-  /// String table for holding a unique copy of all the strings in the profile.
-  InstrProfStringTable StringTable;
-
+ protected:
   /// Set the current std::error_code and return same.
   std::error_code error(std::error_code EC) {
     LastError = EC;
@@ -221,8 +218,33 @@ public:
   data_type ReadData(StringRef K, const unsigned char *D, offset_type N);
 };
 
-typedef OnDiskIterableChainedHashTable<InstrProfLookupTrait>
-    InstrProfReaderIndex;
+class InstrProfReaderIndex {
+ private:
+  typedef OnDiskIterableChainedHashTable<InstrProfLookupTrait> IndexType;
+
+  std::unique_ptr<IndexType> Index;
+  IndexType::data_iterator RecordIterator;
+  uint64_t FormatVersion;
+
+  // String table for holding a unique copy of all the strings in the profile.
+  InstrProfStringTable StringTable;
+
+ public:
+  InstrProfReaderIndex() : Index(nullptr) {}
+  void Init(const unsigned char *Buckets, const unsigned char *const Payload,
+            const unsigned char *const Base, IndexedInstrProf::HashT HashType,
+            uint64_t Version);
+
+  // Read all the pofile records with the same key pointed to the current
+  // iterator.
+  std::error_code getRecords(ArrayRef<InstrProfRecord> &Data);
+  // Read all the profile records with the key equal to FuncName
+  std::error_code getRecords(StringRef FuncName,
+                             ArrayRef<InstrProfRecord> &Data);
+
+  void advanceToNextKey() { RecordIterator++; }
+  bool atEnd() const { return RecordIterator == Index->data_end(); }
+};
 
 /// Reader for the indexed binary instrprof format.
 class IndexedInstrProfReader : public InstrProfReader {
@@ -230,19 +252,16 @@ private:
   /// The profile data file contents.
   std::unique_ptr<MemoryBuffer> DataBuffer;
   /// The index into the profile data.
-  std::unique_ptr<InstrProfReaderIndex> Index;
-  /// Iterator over the profile data.
-  InstrProfReaderIndex::data_iterator RecordIterator;
-  /// The file format version of the profile data.
-  uint64_t FormatVersion;
+  InstrProfReaderIndex Index;
   /// The maximal execution count among all functions.
   uint64_t MaxFunctionCount;
 
   IndexedInstrProfReader(const IndexedInstrProfReader &) = delete;
   IndexedInstrProfReader &operator=(const IndexedInstrProfReader &) = delete;
-public:
+
+ public:
   IndexedInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
-      : DataBuffer(std::move(DataBuffer)), Index(nullptr) {}
+      : DataBuffer(std::move(DataBuffer)), Index() {}
 
   /// Return true if the given buffer is in an indexed instrprof format.
   static bool hasFormat(const MemoryBuffer &DataBuffer);
