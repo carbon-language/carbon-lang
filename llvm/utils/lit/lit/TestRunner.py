@@ -557,13 +557,13 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
             return lit.Test.Result(Test.UNSUPPORTED,
                  "Test requires one of the limit_to_features features %s" % msg)
 
-    return script,tmpBase,execdir
+    return script,tmpBase
 
-def _runShTest(test, litConfig, useExternalSh,
-                   script, tmpBase, execdir):
+def _runShTest(test, litConfig, useExternalSh, script, tmpBase):
     # Create the output directory if it does not already exist.
     lit.util.mkdir_p(os.path.dirname(tmpBase))
 
+    execdir = os.path.dirname(test.getExecPath())
     if useExternalSh:
         res = executeScript(test, litConfig, tmpBase, script, execdir)
     else:
@@ -601,14 +601,14 @@ def executeShTest(test, litConfig, useExternalSh,
     if litConfig.noExecute:
         return lit.Test.Result(Test.PASS)
 
-    script, tmpBase, execdir = res
+    script, tmpBase = res
 
     # Re-run failed tests up to test_retry_attempts times.
     attempts = 1
     if hasattr(test.config, 'test_retry_attempts'):
         attempts += test.config.test_retry_attempts
     for i in range(attempts):
-        res = _runShTest(test, litConfig, useExternalSh, script, tmpBase, execdir)
+        res = _runShTest(test, litConfig, useExternalSh, script, tmpBase)
         if res.code != Test.FAIL:
             break
     # If we had to run the test more than once, count it as a flaky pass. These
