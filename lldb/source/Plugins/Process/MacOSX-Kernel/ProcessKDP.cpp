@@ -244,6 +244,23 @@ ProcessKDP::WillAttachToProcessWithName (const char *process_name, bool wait_for
     return error;
 }
 
+bool
+ProcessKDP::GetHostArchitecture(ArchSpec &arch)
+{
+    uint32_t cpu = m_comm.GetCPUType();
+    if (cpu)
+    {
+        uint32_t sub = m_comm.GetCPUSubtype();
+        arch.SetArchitecture(eArchTypeMachO, cpu, sub);
+        // Leave architecture vendor as unspecified unknown
+        arch.GetTriple().setVendor(llvm::Triple::UnknownVendor);
+        arch.GetTriple().setVendorName(llvm::StringRef());
+        return true;
+    }
+    arch.Clear();
+    return false;
+}
+
 Error
 ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 {
@@ -288,13 +305,16 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                 if (m_comm.SendRequestConnect(reply_port, reply_port, "Greetings from LLDB..."))
                 {
                     m_comm.GetVersion();
-                    uint32_t cpu = m_comm.GetCPUType();
-                    uint32_t sub = m_comm.GetCPUSubtype();
-                    ArchSpec kernel_arch;
-                    kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
+
                     Target &target = GetTarget();
-                    
-                    target.SetArchitecture(kernel_arch);
+                    ArchSpec kernel_arch;
+                    // The host architecture
+                    GetHostArchitecture(kernel_arch);
+                    ArchSpec target_arch = target.GetArchitecture();
+                    // Merge in any unspecified stuff into the target architecture in
+                    // case the target arch isn't set at all or incompletely.
+                    target_arch.MergeFrom(kernel_arch);
+                    target.SetArchitecture(target_arch);
 
                     /* Get the kernel's UUID and load address via KDP_KERNELVERSION packet.  */
                     /* An EFI kdp session has neither UUID nor load address. */
@@ -333,8 +353,8 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 
                             if (module_spec.GetFileSpec().Exists())
                             {
-                                ModuleSP module_sp(new Module (module_spec.GetFileSpec(), target.GetArchitecture()));
-                                if (module_sp.get() && module_sp->MatchesModuleSpec (module_spec))
+                                ModuleSP module_sp(new Module (module_spec));
+                                if (module_sp.get() && module_sp->GetObjectFile())
                                 {
                                     // Get the current target executable
                                     ModuleSP exe_module_sp (target.GetExecutableModule ());
@@ -441,12 +461,7 @@ ProcessKDP::DidAttach (ArchSpec &process_arch)
         log->Printf ("ProcessKDP::DidAttach()");
     if (GetID() != LLDB_INVALID_PROCESS_ID)
     {
-        uint32_t cpu = m_comm.GetCPUType();
-        if (cpu)
-        {
-            uint32_t sub = m_comm.GetCPUSubtype();
-            process_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
-        }
+        GetHostArchitecture(process_arch);
     }
 }
 

@@ -218,7 +218,10 @@ protected:
     {
         return state == lldb::eStateExited;
     }
-    
+
+    bool
+    GetHostArchitecture (lldb_private::ArchSpec &arch);
+
     bool
     ProcessIDIsValid ( ) const;
     

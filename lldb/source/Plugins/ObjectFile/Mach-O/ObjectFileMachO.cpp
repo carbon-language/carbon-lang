@@ -4768,16 +4768,22 @@ ObjectFileMachO::GetArchitecture (const llvm::MachO::mach_header &header,
     if (arch.IsValid())
     {
         llvm::Triple &triple = arch.GetTriple();
+
+        // Set OS to an unspecified unknown or a "*" so it can match any OS
+        triple.setOS(llvm::Triple::UnknownOS);
+        triple.setOSName(llvm::StringRef());
+
         if (header.filetype == MH_PRELOAD)
         {
-            // Set OS to "unknown" - this is a standalone binary with no dyld et al
-            triple.setOS(llvm::Triple::UnknownOS);
+            // Set vendor to an unspecified unknown or a "*" so it can match any vendor
+            triple.setVendor(llvm::Triple::UnknownVendor);
+            triple.setVendorName(llvm::StringRef());
             return true;
         }
         else
         {
             struct load_command load_cmd;
-            
+
             lldb::offset_t offset = lc_offset;
             for (uint32_t i=0; i<header.ncmds; ++i)
             {
@@ -4802,14 +4808,13 @@ ObjectFileMachO::GetArchitecture (const llvm::MachO::mach_header &header,
                 offset = cmd_offset + load_cmd.cmdsize;
             }
             
-            // Only set the OS to iOS for ARM, we don't want to set it for x86 and x86_64.
-            // We do this because we now have MacOSX or iOS as the OS value for x86 and
-            // x86_64 for normal desktop (MacOSX) and simulator (iOS) binaries. And if
-            // we compare a "x86_64-apple-ios" to a "x86_64-apple-" triple, it will say
-            // it is compatible (because the OS is unspecified in the second one and will
-            // match anything in the first
-            if (header.cputype == CPU_TYPE_ARM || header.cputype == CPU_TYPE_ARM64)
-                triple.setOS (llvm::Triple::IOS);
+            if (header.filetype != MH_KEXT_BUNDLE)
+            {
+                // We didn't find a LC_VERSION_MIN load command and this isn't a KEXT
+                // so lets not say our Vendor is Apple, leave it as an unspecified unknown
+                triple.setVendor(llvm::Triple::UnknownVendor);
+                triple.setVendorName(llvm::StringRef());
+            }
         }
     }
     return arch.IsValid();
