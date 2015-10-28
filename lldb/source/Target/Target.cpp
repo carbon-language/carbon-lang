@@ -2165,7 +2165,7 @@ Target::GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, const Symbol
 
 ExpressionResults
 Target::EvaluateExpression(const char *expr_cstr,
-                           StackFrame *frame,
+                           ExecutionContextScope *exe_scope,
                            lldb::ValueObjectSP &result_valobj_sp,
                            const EvaluateExpressionOptions& options)
 {
@@ -2183,9 +2183,9 @@ Target::EvaluateExpression(const char *expr_cstr,
 
     ExecutionContext exe_ctx;
     
-    if (frame)
+    if (exe_scope)
     {
-        frame->CalculateExecutionContext(exe_ctx);
+        exe_scope->CalculateExecutionContext(exe_ctx);
     }
     else if (m_process_sp)
     {

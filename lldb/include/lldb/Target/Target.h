@@ -1381,7 +1381,7 @@ public:
     // in in th execution context. 
     lldb::ExpressionResults
     EvaluateExpression (const char *expression,
-                        StackFrame *frame,
+                        ExecutionContextScope *exe_scope,
                         lldb::ValueObjectSP &result_valobj_sp,
                         const EvaluateExpressionOptions& options = EvaluateExpressionOptions());
 
