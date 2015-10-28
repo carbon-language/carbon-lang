@@ -75,7 +75,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   MVT PtrVT = MVT::getIntegerVT(8 * TM.getPointerSize());
 
   // Set up the TargetLowering object.
-  static const MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };
 
   // X86 is weird. It always uses i8 for shift amounts and setcc results.
   setBooleanContents(ZeroOrOneBooleanContent);
@@ -270,8 +269,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   // (low) operations are left as Legal, as there are single-result
   // instructions for this in x86. Using the two-result multiply instructions
   // when both high and low results are needed must be arranged by dagcombine.
-  for (unsigned i = 0; i != array_lengthof(IntVTs); ++i) {
-    MVT VT = IntVTs[i];
+  for (auto VT : { MVT::i8, MVT::i16, MVT::i32, MVT::i64 }) {
     setOperationAction(ISD::MULHS, VT, Expand);
     setOperationAction(ISD::MULHU, VT, Expand);
     setOperationAction(ISD::SDIV, VT, Expand);
@@ -462,8 +460,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::ATOMIC_FENCE  , MVT::Other, Custom);
 
   // Expand certain atomics
-  for (unsigned i = 0; i != array_lengthof(IntVTs); ++i) {
-    MVT VT = IntVTs[i];
+  for (auto VT : { MVT::i8, MVT::i16, MVT::i32, MVT::i64 }) {
     setOperationAction(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, VT, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
     setOperationAction(ISD::ATOMIC_STORE, VT, Custom);
@@ -1753,9 +1750,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   // FIXME: We really should do custom legalization for addition and
   // subtraction on x86-32 once PR3203 is fixed.  We really can't do much better
   // than generic legalization for 64-bit multiplication-with-overflow, though.
-  for (unsigned i = 0, e = 3+Subtarget->is64Bit(); i != e; ++i) {
+  for (auto VT : { MVT::i8, MVT::i16, MVT::i32, MVT::i64 }) {
+    if (VT == MVT::i64 && !Subtarget->is64Bit())
+      continue;
     // Add/Sub/Mul with overflow operations are custom lowered.
-    MVT VT = IntVTs[i];
     setOperationAction(ISD::SADDO, VT, Custom);
     setOperationAction(ISD::UADDO, VT, Custom);
     setOperationAction(ISD::SSUBO, VT, Custom);
