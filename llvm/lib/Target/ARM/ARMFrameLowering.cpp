@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCContext.h"
@@ -58,7 +59,7 @@ bool ARMFrameLowering::hasFP(const MachineFunction &MF) const {
   const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
 
   // iOS requires FP not to be clobbered for backtracing purpose.
-  if (STI.isTargetIOS())
+  if (STI.isTargetIOS() || STI.isTargetWatchOS())
     return true;
 
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1073,7 +1074,7 @@ static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
   // slot offsets can be wrong. The offset for d8 will always be correct.
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned DNum = CSI[i].getReg() - ARM::D8;
-    if (DNum >= 8)
+    if (DNum > NumAlignedDPRCS2Regs - 1)
       continue;
     int FI = CSI[i].getFrameIdx();
     // The even-numbered registers will be 16-byte aligned, the odd-numbered

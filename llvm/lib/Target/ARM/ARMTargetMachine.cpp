@@ -66,7 +66,9 @@ static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
 static ARMBaseTargetMachine::ARMABI
 computeTargetABI(const Triple &TT, StringRef CPU,
                  const TargetOptions &Options) {
-  if (Options.MCOptions.getABIName().startswith("aapcs"))
+  if (Options.MCOptions.getABIName() == "aapcs16")
+    return ARMBaseTargetMachine::ARM_ABI_AAPCS16;
+  else if (Options.MCOptions.getABIName().startswith("aapcs"))
     return ARMBaseTargetMachine::ARM_ABI_AAPCS;
   else if (Options.MCOptions.getABIName().startswith("apcs"))
     return ARMBaseTargetMachine::ARM_ABI_APCS;
@@ -83,6 +85,8 @@ computeTargetABI(const Triple &TT, StringRef CPU,
         (TT.getOS() == llvm::Triple::UnknownOS && TT.isOSBinFormatMachO()) ||
         CPU.startswith("cortex-m")) {
       TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS;
+    } else if (TT.isWatchOS()) {
+      TargetABI = ARMBaseTargetMachine::ARM_ABI_AAPCS16;
     } else {
       TargetABI = ARMBaseTargetMachine::ARM_ABI_APCS;
     }
@@ -145,7 +149,7 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
   // to 64. We always ty to give them natural alignment.
   if (ABI == ARMBaseTargetMachine::ARM_ABI_APCS)
     Ret += "-v64:32:64-v128:32:128";
-  else
+  else if (ABI != ARMBaseTargetMachine::ARM_ABI_AAPCS16)
     Ret += "-v128:64:128";
 
   // Try to align aggregates to 32 bits (the default is 64 bits, which has no
@@ -157,7 +161,7 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
 
   // The stack is 128 bit aligned on NaCl, 64 bit aligned on AAPCS and 32 bit
   // aligned everywhere else.
-  if (TT.isOSNaCl())
+  if (TT.isOSNaCl() || ABI == ARMBaseTargetMachine::ARM_ABI_AAPCS16)
     Ret += "-S128";
   else if (ABI == ARMBaseTargetMachine::ARM_ABI_AAPCS)
     Ret += "-S64";

@@ -155,11 +155,18 @@ void ARMSubtarget::initializeEnvironment() {
 
 void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (CPUString.empty()) {
-    if (isTargetDarwin() && TargetTriple.getArchName().endswith("v7s"))
-      // Default to the Swift CPU when targeting armv7s/thumbv7s.
-      CPUString = "swift";
-    else
-      CPUString = "generic";
+    CPUString = "generic";
+
+    if (isTargetDarwin()) {
+      StringRef ArchName = TargetTriple.getArchName();
+      if (ArchName.endswith("v7s"))
+        // Default to the Swift CPU when targeting armv7s/thumbv7s.
+        CPUString = "swift";
+      else if (ArchName.endswith("v7k"))
+        // Default to the Cortex-a7 CPU when targeting armv7k/thumbv7k.
+        // ARMv7k does not use SjLj exception handling.
+        CPUString = "cortex-a7";
+    }
   }
 
   // Insert the architecture feature derived from the target triple into the
@@ -190,7 +197,7 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   if (isAAPCS_ABI())
     stackAlignment = 8;
-  if (isTargetNaCl())
+  if (isTargetNaCl() || isAAPCS16_ABI())
     stackAlignment = 16;
 
   // FIXME: Completely disable sibcall for Thumb1 since ThumbRegisterInfo::
@@ -241,8 +248,14 @@ bool ARMSubtarget::isAPCS_ABI() const {
 }
 bool ARMSubtarget::isAAPCS_ABI() const {
   assert(TM.TargetABI != ARMBaseTargetMachine::ARM_ABI_UNKNOWN);
-  return TM.TargetABI == ARMBaseTargetMachine::ARM_ABI_AAPCS;
+  return TM.TargetABI == ARMBaseTargetMachine::ARM_ABI_AAPCS ||
+         TM.TargetABI == ARMBaseTargetMachine::ARM_ABI_AAPCS16;
 }
+bool ARMSubtarget::isAAPCS16_ABI() const {
+  assert(TM.TargetABI != ARMBaseTargetMachine::ARM_ABI_UNKNOWN);
+  return TM.TargetABI == ARMBaseTargetMachine::ARM_ABI_AAPCS16;
+}
+
 
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol.
 bool

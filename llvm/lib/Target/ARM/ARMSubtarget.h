@@ -354,6 +354,7 @@ public:
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetIOS() const { return TargetTriple.isiOS(); }
+  bool isTargetWatchOS() const { return TargetTriple.isWatchOS(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetNetBSD() const { return TargetTriple.isOSNetBSD(); }
@@ -391,12 +392,13 @@ public:
     // FIXME: this is invalid for WindowsCE
     return TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
            TargetTriple.getEnvironment() == Triple::EABIHF ||
-           isTargetWindows();
+           isTargetWindows() || isAAPCS16_ABI();
   }
   bool isTargetAndroid() const { return TargetTriple.isAndroid(); }
 
   bool isAPCS_ABI() const;
   bool isAAPCS_ABI() const;
+  bool isAAPCS16_ABI() const;
 
   bool useSoftFloat() const { return UseSoftFloat; }
   bool isThumb() const { return InThumbMode; }
