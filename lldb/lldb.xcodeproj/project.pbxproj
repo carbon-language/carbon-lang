@@ -5944,7 +5944,6 @@
 			buildPhases = (
 				26F5C26710F3D9A4009D5894 /* Sources */,
 				26F5C26810F3D9A4009D5894 /* Frameworks */,
-				25ED0ED41A70979C00E3DA2E /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -6061,19 +6060,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		25ED0ED41A70979C00E3DA2E /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ \"${CONFIGURATION}\" != BuildAndIntegration ]\nthen\ncodesign -f -s lldb_codesign \"${TARGET_BUILD_DIR}/${PRODUCT_NAME}\"\nfi";
-		};
 		261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
