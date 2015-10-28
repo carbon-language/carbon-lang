@@ -19,6 +19,7 @@
 
 #include "CGCleanup.h"
 #include "CodeGenFunction.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -902,19 +903,19 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
     EmitBlock(EHEntry);
 
-    // Push terminate scopes around the potentially throwing destructor calls.
-    // We don't emit these when using funclets, because the runtime does it for
-    // us as part of unwinding out of a cleanuppad.
+    llvm::BasicBlock *NextAction = getEHDispatchBlock(EHParent);
+
+    // Push a terminate scope or cleanupendpad scope around the potentially
+    // throwing cleanups. For funclet EH personalities, the cleanupendpad models
+    // program termination when cleanups throw.
     bool PushedTerminate = false;
+    SaveAndRestore<bool> RestoreIsCleanupPadScope(IsCleanupPadScope);
+    llvm::CleanupPadInst *CPI = nullptr;
+    llvm::BasicBlock *CleanupEndBB = nullptr;
     if (!EHPersonality::get(*this).usesFuncletPads()) {
       EHStack.pushTerminate();
       PushedTerminate = true;
-    }
-
-    llvm::CleanupPadInst *CPI = nullptr;
-    llvm::BasicBlock *CleanupEndBB = nullptr;
-    llvm::BasicBlock *NextAction = getEHDispatchBlock(EHParent);
-    if (EHPersonality::get(*this).usesFuncletPads()) {
+    } else {
       CPI = Builder.CreateCleanupPad({});
 
       // Build a cleanupendpad to unwind through. Our insertion point should be
@@ -922,6 +923,10 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       CleanupEndBB = createBasicBlock("ehcleanup.end");
       CGBuilderTy(*this, CleanupEndBB).CreateCleanupEndPad(CPI, NextAction);
       EHStack.pushPadEnd(CleanupEndBB);
+
+      // Mark that we're inside a cleanuppad to block inlining.
+      // FIXME: Remove this once the inliner knows when it's safe to do so.
+      IsCleanupPadScope = true;
     }
 
     // We only actually emit the cleanup code if the cleanup is either

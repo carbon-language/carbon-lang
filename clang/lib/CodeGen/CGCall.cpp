@@ -3440,8 +3440,14 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         Attrs.addAttribute(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
                            llvm::Attribute::AlwaysInline);
 
-  // Disable inlining inside SEH __try blocks.
-  if (isSEHTryScope())
+  // Disable inlining inside SEH __try blocks and cleanup funclets. None of the
+  // funclet EH personalities that clang supports have tables that are
+  // expressive enough to describe catching an exception inside a cleanup.
+  // __CxxFrameHandler3, for example, will terminate the program without
+  // catching it.
+  // FIXME: Move this decision to the LLVM inliner. Before we can do that, the
+  // inliner needs to know if a given call site is part of a cleanuppad.
+  if (isSEHTryScope() || isCleanupPadScope())
     Attrs =
         Attrs.addAttribute(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
                            llvm::Attribute::NoInline);
