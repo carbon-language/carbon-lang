@@ -10927,7 +10927,8 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     case 'y':   // crrc
       return std::make_pair(0U, &PPC::CRRCRegClass);
     }
-  } else if (Constraint == "wc") { // an individual CR bit.
+  } else if (Constraint == "wc" && Subtarget.useCRBits()) {
+    // An individual CR bit.
     return std::make_pair(0U, &PPC::CRBITRCRegClass);
   } else if (Constraint == "wa" || Constraint == "wd" ||
              Constraint == "wf") {
