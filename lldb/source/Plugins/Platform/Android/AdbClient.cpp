@@ -359,7 +359,7 @@ AdbClient::PushFile (const FileSpec &local_file, const FileSpec &remote_file)
         return error;
 
     std::string response_id;
-    uint32_t data_len = 0;
+    uint32_t data_len;
     error = ReadSyncHeader (response_id, data_len);
     if (error.Fail ())
         return Error ("Failed to read DONE response: %s", error.AsCString ());
