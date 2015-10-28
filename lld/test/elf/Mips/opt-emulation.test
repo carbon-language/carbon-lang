@@ -3,6 +3,8 @@
 # RUN: yaml2obj -format=elf %s > %t-obj
 # RUN: lld -flavor gnu -target mipsel -m elf32ltsmip -o %t-exe %t-obj
 # RUN: llvm-readobj -file-headers %t-exe | FileCheck -check-prefix=LE-O32 %s
+# RUN: lld -flavor gnu -target mipsel -melf32ltsmip -o %t-exe %t-obj
+# RUN: llvm-readobj -file-headers %t-exe | FileCheck -check-prefix=LE-O32 %s
 
 # LE-O32:      Class: 32-bit (0x1)
 # LE-O32:      DataEncoding: LittleEndian (0x1)

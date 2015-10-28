@@ -60,7 +60,7 @@ def init : Separate<["-"], "init">, MetaVarName<"<symbol>">,
 def l : JoinedOrSeparate<["-"], "l">, MetaVarName<"<libName>">,
   HelpText<"Root name of library to use">;
 
-def m : Separate<["-"], "m">,
+def m : JoinedOrSeparate<["-"], "m">,
   HelpText<"Set target emulation">;
 
 def no_allow_shlib_undefined : Flag<["--"], "no-allow-shlib-undefined">;

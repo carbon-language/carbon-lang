@@ -118,6 +118,8 @@
 # RUN: llvm-mc -filetype=obj -triple=mipsel-unknown-linux %s -o %tmipsel
 # RUN: lld -flavor gnu2 -m elf32ltsmip -e _start %tmipsel -o %t2mipsel
 # RUN: llvm-readobj -file-headers %t2mipsel | FileCheck --check-prefix=MIPSEL %s
+# RUN: lld -flavor gnu2 -melf32ltsmip -e _start %tmipsel -o %t2mipsel
+# RUN: llvm-readobj -file-headers %t2mipsel | FileCheck --check-prefix=MIPSEL %s
 # RUN: lld -flavor gnu2 %tmipsel -e _start -o %t3mipsel
 # RUN: llvm-readobj -file-headers %t3mipsel | FileCheck --check-prefix=MIPSEL %s
 # MIPSEL:      ElfHeader {

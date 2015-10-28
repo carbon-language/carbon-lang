@@ -71,7 +71,7 @@ def grp_general : OptionGroup<"opts">,
 def output : Separate<["-"], "o">, MetaVarName<"<path>">,
      HelpText<"Path to file to write output">,
      Group<grp_general>;
-def m : Separate<["-"], "m">, MetaVarName<"<emulation>">,
+def m : JoinedOrSeparate<["-"], "m">, MetaVarName<"<emulation>">,
      HelpText<"Select target emulation">,
      Group<grp_general>;
 def build_id : Flag<["--"], "build-id">,
