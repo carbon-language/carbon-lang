@@ -446,14 +446,16 @@ static void ChooseSymbolizerTools(IntrusiveList<SymbolizerTool> *list,
 
   if (SymbolizerTool *tool = ChooseExternalSymbolizer(allocator)) {
     list->push_back(tool);
-  } else {
-    VReport(2, "No internal or external symbolizer found.\n");
   }
 
 #if SANITIZER_MAC
   VReport(2, "Using dladdr symbolizer.\n");
   list->push_back(new(*allocator) DlAddrSymbolizer());
 #endif  // SANITIZER_MAC
+
+  if (list->size() == 0) {
+    Report("WARNING: no internal or external symbolizer found.\n");
+  }
 }
 
 Symbolizer *Symbolizer::PlatformInit() {
