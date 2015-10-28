@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DBRegex_h_
-#define liblldb_DBRegex_h_
-#if defined(__cplusplus)
+#ifndef liblldb_RegularExpression_h_
+#define liblldb_RegularExpression_h_
 
 #ifdef _WIN32
 #include "../lib/Support/regex_impl.h"
@@ -37,7 +36,6 @@ inline void regfree(llvm_regex_t * a)
 {
     llvm_regfree(a);
 }
-
 #else
 #if __ANDROID_NDK__
 #include <regex>
@@ -52,7 +50,7 @@ inline void regfree(llvm_regex_t * a)
 namespace llvm
 {
     class StringRef;
-}
+} // namespace llvm
 
 namespace lldb_private {
 
@@ -95,9 +93,7 @@ public:
         regmatch_t *
         GetData ()
         {
-            if (m_matches.empty())
-                return NULL;
-            return m_matches.data();
+            return (m_matches.empty() ? nullptr : m_matches.data());
         }
         
         bool
@@ -110,9 +106,9 @@ public:
         GetMatchSpanningIndices (const char* s, uint32_t idx1, uint32_t idx2, llvm::StringRef& match_str) const;
 
     protected:
-        
         std::vector<regmatch_t> m_matches; ///< Where parenthesized subexpressions results are stored
     };
+
     //------------------------------------------------------------------
     /// Default constructor.
     ///
@@ -172,14 +168,14 @@ public:
     /// @param[in] match
     ///     A pointer to a RegularExpression::Match structure that was
     ///     properly initialized with the desired number of maximum
-    ///     matches, or NULL if no parenthesized matching is needed.
+    ///     matches, or nullptr if no parenthesized matching is needed.
     ///
     /// @return
     ///     \b true if \a string matches the compiled regular
     ///     expression, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    Execute (const char* string, Match *match = NULL) const;
+    Execute(const char* string, Match *match = nullptr) const;
 
     size_t
     GetErrorAsCString (char *err_str, size_t err_str_max_len) const;
@@ -246,5 +242,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_DBRegex_h_
+#endif // liblldb_RegularExpression_h_

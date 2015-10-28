@@ -10,6 +10,12 @@
 #ifndef liblldb_ModuleSpec_h_
 #define liblldb_ModuleSpec_h_
 
+// C Includes
+// C++ Includes
+#include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/UUID.h"
@@ -100,17 +106,13 @@ public:
     FileSpec *
     GetFileSpecPtr ()
     {
-        if (m_file)
-            return &m_file;
-        return NULL;
+        return (m_file ? &m_file : nullptr);
     }
 
     const FileSpec *
     GetFileSpecPtr () const
     {
-        if (m_file)
-            return &m_file;
-        return NULL;
+        return (m_file ? &m_file : nullptr);
     }
     
     FileSpec &
@@ -118,6 +120,7 @@ public:
     {
         return m_file;
     }
+
     const FileSpec &
     GetFileSpec () const
     {
@@ -127,17 +130,13 @@ public:
     FileSpec *
     GetPlatformFileSpecPtr ()
     {
-        if (m_platform_file)
-            return &m_platform_file;
-        return NULL;
+        return (m_platform_file ? &m_platform_file : nullptr);
     }
 
     const FileSpec *
     GetPlatformFileSpecPtr () const
     {
-        if (m_platform_file)
-            return &m_platform_file;
-        return NULL;
+        return (m_platform_file ? &m_platform_file : nullptr);
     }
 
     FileSpec &
@@ -155,17 +154,13 @@ public:
     FileSpec *
     GetSymbolFileSpecPtr ()
     {
-        if (m_symbol_file)
-            return &m_symbol_file;
-        return NULL;
+        return (m_symbol_file ? &m_symbol_file : nullptr);
     }
     
     const FileSpec *
     GetSymbolFileSpecPtr () const
     {
-        if (m_symbol_file)
-            return &m_symbol_file;
-        return NULL;
+        return (m_symbol_file ? &m_symbol_file : nullptr);
     }
     
     FileSpec &
@@ -180,21 +175,16 @@ public:
         return m_symbol_file;
     }
 
-    
     ArchSpec *
     GetArchitecturePtr ()
     {
-        if (m_arch.IsValid())
-            return &m_arch;
-        return NULL;
+        return (m_arch.IsValid() ? &m_arch : nullptr);
     }
     
     const ArchSpec *
     GetArchitecturePtr () const
     {
-        if (m_arch.IsValid())
-            return &m_arch;
-        return NULL;
+        return (m_arch.IsValid() ? &m_arch : nullptr);
     }
     
     ArchSpec &
@@ -212,17 +202,13 @@ public:
     UUID *
     GetUUIDPtr ()
     {
-        if (m_uuid.IsValid())
-            return &m_uuid;
-        return NULL;
+        return (m_uuid.IsValid() ? &m_uuid : nullptr);
     }
     
     const UUID *
     GetUUIDPtr () const
     {
-        if (m_uuid.IsValid())
-            return &m_uuid;
-        return NULL;
+        return (m_uuid.IsValid() ? &m_uuid : nullptr);
     }
     
     UUID &
@@ -306,7 +292,6 @@ public:
         m_object_mod_time.Clear();
     }
 
-    
     explicit operator bool () const
     {
         if (m_file)
@@ -477,9 +462,7 @@ public:
         m_specs = rhs.m_specs;
     }
 
-    ~ModuleSpecList ()
-    {
-    }
+    ~ModuleSpecList() = default;
 
     ModuleSpecList &
     operator = (const ModuleSpecList &rhs)
@@ -529,6 +512,7 @@ public:
     {
         return m_specs[i];
     }
+
     bool
     GetModuleSpecAtIndex (size_t i, ModuleSpec &module_spec) const
     {
@@ -541,8 +525,7 @@ public:
         module_spec.Clear();
         return false;
     }
-    
-    
+
     bool
     FindMatchingModuleSpec (const ModuleSpec &module_spec, ModuleSpec &match_module_spec) const
     {
@@ -621,4 +604,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ModuleSpec_h_
+#endif // liblldb_ModuleSpec_h_

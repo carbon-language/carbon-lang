@@ -16,6 +16,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "llvm/Support/MathExtras.h"
+
 // Project includes
 #include "lldb/Host/Endian.h"
 #include "lldb/lldb-public.h"
@@ -23,7 +24,7 @@
 namespace lldb
 {
     class SBInstruction;
-}
+} // namespace lldb
 
 namespace lldb_private {
 
@@ -76,6 +77,7 @@ namespace lldb_private {
             m_byte_order = lldb::eByteOrderInvalid;
             m_type = Opcode::eTypeInvalid;
         }
+
         Opcode::Type
         GetType () const
         {
@@ -189,7 +191,7 @@ namespace lldb_private {
         void
         SetOpcodeBytes (const void *bytes, size_t length)
         {
-            if (bytes && length > 0)
+            if (bytes != nullptr && length > 0)
             {
                 m_type = eTypeBytes;
                 m_data.inst.length = length;
@@ -210,9 +212,7 @@ namespace lldb_private {
         const void *
         GetOpcodeBytes () const
         {
-            if (m_type == Opcode::eTypeBytes)
-                return m_data.inst.bytes;
-            return NULL;
+            return ((m_type == Opcode::eTypeBytes) ? m_data.inst.bytes : nullptr);
         }
 
         uint32_t
@@ -252,7 +252,7 @@ namespace lldb_private {
                 case Opcode::eType64:    return &m_data.inst64;
                 case Opcode::eTypeBytes: return m_data.inst.bytes;
             }
-            return NULL;
+            return nullptr;
         }
 
         lldb::ByteOrder
@@ -284,4 +284,4 @@ namespace lldb_private {
 
 } // namespace lldb_private
 
-#endif	// lldb_Opcode_h
+#endif // lldb_Opcode_h

@@ -7,10 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef liblldb_PluginManager_h_
 #define liblldb_PluginManager_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Host/FileSpec.h"
 
@@ -42,7 +45,6 @@ public:
     static ABICreateInstance
     GetABICreateCallbackForPluginName (const ConstString &name);
 
-
     //------------------------------------------------------------------
     // Disassembler
     //------------------------------------------------------------------
@@ -60,15 +62,14 @@ public:
     static DisassemblerCreateInstance
     GetDisassemblerCreateCallbackForPluginName (const ConstString &name);
 
-
     //------------------------------------------------------------------
     // DynamicLoader
     //------------------------------------------------------------------
     static bool
-    RegisterPlugin (const ConstString &name,
-                    const char *description,
-                    DynamicLoaderCreateInstance create_callback,
-                    DebuggerInitializeCallback debugger_init_callback = NULL);
+    RegisterPlugin(const ConstString &name,
+                   const char *description,
+                   DynamicLoaderCreateInstance create_callback,
+                   DebuggerInitializeCallback debugger_init_callback = nullptr);
 
     static bool
     UnregisterPlugin (DynamicLoaderCreateInstance create_callback);
@@ -83,10 +84,10 @@ public:
     // JITLoader
     //------------------------------------------------------------------
     static bool
-    RegisterPlugin (const ConstString &name,
-                    const char *description,
-                    JITLoaderCreateInstance create_callback,
-                    DebuggerInitializeCallback debugger_init_callback = NULL);
+    RegisterPlugin(const ConstString &name,
+                   const char *description,
+                   JITLoaderCreateInstance create_callback,
+                   DebuggerInitializeCallback debugger_init_callback = nullptr);
 
     static bool
     UnregisterPlugin (JITLoaderCreateInstance create_callback);
@@ -168,7 +169,6 @@ public:
     static LanguageRuntimeCreateInstance
     GetLanguageRuntimeCreateCallbackForPluginName (const ConstString &name);
 
-
     //------------------------------------------------------------------
     // SystemRuntime
     //------------------------------------------------------------------
@@ -186,17 +186,16 @@ public:
     static SystemRuntimeCreateInstance
     GetSystemRuntimeCreateCallbackForPluginName (const ConstString &name);
 
-
     //------------------------------------------------------------------
     // ObjectFile
     //------------------------------------------------------------------
     static bool
-    RegisterPlugin (const ConstString &name,
-                    const char *description,
-                    ObjectFileCreateInstance create_callback,
-                    ObjectFileCreateMemoryInstance create_memory_callback,
-                    ObjectFileGetModuleSpecifications get_module_specifications,
-                    ObjectFileSaveCore save_core = NULL);
+    RegisterPlugin(const ConstString &name,
+                   const char *description,
+                   ObjectFileCreateInstance create_callback,
+                   ObjectFileCreateMemoryInstance create_memory_callback,
+                   ObjectFileGetModuleSpecifications get_module_specifications,
+                   ObjectFileSaveCore save_core = nullptr);
 
     static bool
     UnregisterPlugin (ObjectFileCreateInstance create_callback);
@@ -264,10 +263,10 @@ public:
     // Platform
     //------------------------------------------------------------------
     static bool
-    RegisterPlugin (const ConstString &name,
-                    const char *description,
-                    PlatformCreateInstance create_callback,
-                    DebuggerInitializeCallback debugger_init_callback = NULL);
+    RegisterPlugin(const ConstString &name,
+                   const char *description,
+                   PlatformCreateInstance create_callback,
+                   DebuggerInitializeCallback debugger_init_callback = nullptr);
 
     static bool
     UnregisterPlugin (PlatformCreateInstance create_callback);
@@ -291,10 +290,10 @@ public:
     // Process
     //------------------------------------------------------------------
     static bool
-    RegisterPlugin (const ConstString &name,
-                    const char *description,
-                    ProcessCreateInstance create_callback,
-                    DebuggerInitializeCallback debugger_init_callback = NULL);
+    RegisterPlugin(const ConstString &name,
+                   const char *description,
+                   ProcessCreateInstance create_callback,
+                   DebuggerInitializeCallback debugger_init_callback = nullptr);
     
     static bool
     UnregisterPlugin (ProcessCreateInstance create_callback);
@@ -345,7 +344,6 @@ public:
 
     static SymbolFileCreateInstance
     GetSymbolFileCreateCallbackForPluginName (const ConstString &name);
-
 
     //------------------------------------------------------------------
     // SymbolVendor
@@ -535,7 +533,6 @@ public:
                                                       const ConstString &description, bool is_global_property);
 };
 
-
 } // namespace lldb_private
 
-#endif  // liblldb_PluginManager_h_
+#endif // liblldb_PluginManager_h_

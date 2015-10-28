@@ -1,4 +1,4 @@
-//===-- RegisterValue.h ------------------------------------------*- C++ -*-===//
+//===-- RegisterValue.h -----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,11 +15,12 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/ADT/APInt.h"
+
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Endian.h"
-#include "llvm/ADT/APInt.h"
 #include "lldb/Core/Scalar.h"
 
 namespace lldb_private {
@@ -31,6 +32,7 @@ namespace lldb_private {
         {
             kMaxRegisterByteSize = 32u
         };
+
         enum Type
         {
             eTypeInvalid,
@@ -85,6 +87,7 @@ namespace lldb_private {
         {
             m_scalar = llvm::APInt(inst);
         }
+
         explicit 
         RegisterValue (float value) : 
             m_type (eTypeFloat)
@@ -159,7 +162,7 @@ namespace lldb_private {
         GetScalarValue (Scalar &scalar) const;
 
         uint8_t
-        GetAsUInt8 (uint8_t fail_value = UINT8_MAX, bool *success_ptr = NULL) const
+        GetAsUInt8(uint8_t fail_value = UINT8_MAX, bool *success_ptr = nullptr) const
         {
             if (m_type == eTypeUInt8)
             {
@@ -173,25 +176,25 @@ namespace lldb_private {
         }
 
         uint16_t
-        GetAsUInt16 (uint16_t fail_value = UINT16_MAX, bool *success_ptr = NULL) const;
+        GetAsUInt16(uint16_t fail_value = UINT16_MAX, bool *success_ptr = nullptr) const;
 
         uint32_t
-        GetAsUInt32 (uint32_t fail_value = UINT32_MAX, bool *success_ptr = NULL) const;
+        GetAsUInt32(uint32_t fail_value = UINT32_MAX, bool *success_ptr = nullptr) const;
 
         uint64_t
-        GetAsUInt64 (uint64_t fail_value = UINT64_MAX, bool *success_ptr = NULL) const;
+        GetAsUInt64(uint64_t fail_value = UINT64_MAX, bool *success_ptr = nullptr) const;
 
         llvm::APInt
-        GetAsUInt128 (const llvm::APInt& fail_value, bool *success_ptr = NULL) const;
+        GetAsUInt128(const llvm::APInt& fail_value, bool *success_ptr = nullptr) const;
 
         float
-        GetAsFloat (float fail_value = 0.0f, bool *success_ptr = NULL) const;
+        GetAsFloat(float fail_value = 0.0f, bool *success_ptr = nullptr) const;
 
         double
-        GetAsDouble (double fail_value = 0.0, bool *success_ptr = NULL) const;
+        GetAsDouble(double fail_value = 0.0, bool *success_ptr = nullptr) const;
 
         long double
-        GetAsLongDouble (long double fail_value = 0.0, bool *success_ptr = NULL) const;
+        GetAsLongDouble(long double fail_value = 0.0, bool *success_ptr = nullptr) const;
 
         void
         SetValueToInvalid ()
@@ -301,6 +304,7 @@ namespace lldb_private {
             m_type = eTypeUInt128;
             m_scalar = uint;
         }
+
         bool
         SetUInt (uint64_t uint, uint32_t byte_size);
     
@@ -377,9 +381,9 @@ namespace lldb_private {
         Clear();
 
     protected:
-
         RegisterValue::Type m_type;
         Scalar m_scalar;
+
         struct
         {
             uint8_t bytes[kMaxRegisterByteSize]; // This must be big enough to hold any register for any supported target.
@@ -390,4 +394,4 @@ namespace lldb_private {
 
 } // namespace lldb_private
 
-#endif	// lldb_RegisterValue_h
+#endif // lldb_RegisterValue_h
