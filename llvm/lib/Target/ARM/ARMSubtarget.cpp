@@ -151,6 +151,8 @@ void ARMSubtarget::initializeEnvironment() {
   UseNaClTrap = false;
   GenLongCalls = false;
   UnsafeFPMath = false;
+  UseSjLjEH = (isTargetDarwin() &&
+               TargetTriple.getSubArch() != Triple::ARMSubArch_v7k);
 }
 
 void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
@@ -324,7 +326,10 @@ bool ARMSubtarget::enableAtomicExpand() const {
 }
 
 bool ARMSubtarget::useStride4VFPs(const MachineFunction &MF) const {
-  return isSwift() && !MF.getFunction()->optForMinSize();
+  // For general targets, the prologue can grow when VFPs are allocated with
+  // stride 4 (more vpush instructions). But WatchOS uses a compact unwind
+  // format which it's more important to get right.
+  return isTargetWatchOS() || (isSwift() && !MF.getFunction()->optForMinSize());
 }
 
 bool ARMSubtarget::useMovt(const MachineFunction &MF) const {

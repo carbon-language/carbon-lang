@@ -212,6 +212,9 @@ protected:
   /// Target machine allowed unsafe FP math (such as use of NEON fp)
   bool UnsafeFPMath;
 
+  /// UseSjLjEH - If true, the target uses SjLj exception handling (e.g. iOS).
+  bool UseSjLjEH;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -345,6 +348,7 @@ public:
   bool hasMPExtension() const { return HasMPExtension; }
   bool hasDSP() const { return HasDSP; }
   bool useNaClTrap() const { return UseNaClTrap; }
+  bool useSjLjEH() const { return UseSjLjEH; }
   bool genLongCalls() const { return GenLongCalls; }
 
   bool hasFP16() const { return HasFP16; }

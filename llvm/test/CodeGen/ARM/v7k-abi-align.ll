@@ -33,6 +33,8 @@ define void @test_dpr_unwind_align() {
 ; CHECK: push {r5, r6, r7, lr}
 ; CHECK-NOT: sub sp
 ; CHECK: vpush {d8, d9}
+; CHECK: .cfi_offset d9, -24
+; CHECK: .cfi_offset d8, -32
 ; [...]
 ; CHECK: bl _test_i64_align
 ; CHECK-NOT: add sp,
@@ -56,6 +58,8 @@ define void @test_dpr_unwind_align_manually() {
 ; CHECK: push.w {r8, r11}
 ; CHECK: sub sp, #4
 ; CHECK: vpush {d8, d9}
+; CHECK: .cfi_offset d9, -40
+; CHECK: .cfi_offset d8, -48
 ; [...]
 ; CHECK: bl _test_i64_align
 ; CHECK-NOT: add sp,
@@ -77,6 +81,8 @@ define void @test_dpr_unwind_align_just_cs1() {
 ; CHECK: push {r4, r5, r6, r7, lr}
 ; CHECK: sub sp, #4
 ; CHECK: vpush {d8, d9}
+; CHECK: .cfi_offset d9, -32
+; CHECK: .cfi_offset d8, -40
 ; CHECK: sub sp, #8
 ; [...]
 ; CHECK: bl _test_i64_align

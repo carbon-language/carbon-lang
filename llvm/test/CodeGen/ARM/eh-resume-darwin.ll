@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm | FileCheck %s
-target triple = "armv6-apple-macosx10.6"
+; RUN: llc < %s -mtriple=armv7-apple-ios -arm-atomic-cfg-tidy=0 | FileCheck %s -check-prefix=IOS
+; RUN: llc < %s -mtriple=armv7k-apple-watchos -arm-atomic-cfg-tidy=0 | FileCheck %s -check-prefix=WATCHOS
 
 declare void @func()
 
@@ -19,4 +19,5 @@ lpad:
   resume { i8*, i32 } %exn
 }
 
-; CHECK: __Unwind_SjLj_Resume
+; IOS: __Unwind_SjLj_Resume
+; WATCHOS: __Unwind_Resume

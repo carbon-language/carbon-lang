@@ -29,6 +29,10 @@ static bool useCompactUnwind(const Triple &T) {
   if (T.getArch() == Triple::aarch64)
     return true;
 
+  // armv7k always has it.
+  if (T.isWatchOS())
+    return true;
+
   // Use it on newer version of OS X.
   if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6))
     return true;
@@ -47,6 +51,9 @@ void MCObjectFileInfo::initMachOMCObjectFileInfo(Triple T) {
 
   if (T.isOSDarwin() && T.getArch() == Triple::aarch64)
     SupportsCompactUnwindWithoutEHFrame = true;
+
+  if (T.isWatchOS())
+    OmitDwarfIfHaveCompactUnwind = true;
 
   PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel
     | dwarf::DW_EH_PE_sdata4;
@@ -193,9 +200,11 @@ void MCObjectFileInfo::initMachOMCObjectFileInfo(Triple T) {
                              SectionKind::getReadOnly());
 
     if (T.getArch() == Triple::x86_64 || T.getArch() == Triple::x86)
-      CompactUnwindDwarfEHFrameOnly = 0x04000000;
+      CompactUnwindDwarfEHFrameOnly = 0x04000000;  // UNWIND_X86_64_MODE_DWARF
     else if (T.getArch() == Triple::aarch64)
-      CompactUnwindDwarfEHFrameOnly = 0x03000000;
+      CompactUnwindDwarfEHFrameOnly = 0x03000000;  // UNWIND_ARM64_MODE_DWARF
+    else if (T.getArch() == Triple::arm || T.getArch() == Triple::thumb)
+      CompactUnwindDwarfEHFrameOnly = 0x04000000;  // UNWIND_ARM_MODE_DWARF
   }
 
   // Debug Information.
@@ -767,6 +776,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple,
   CommDirectiveSupportsAlignment = true;
   SupportsWeakOmittedEHFrame = true;
   SupportsCompactUnwindWithoutEHFrame = false;
+  OmitDwarfIfHaveCompactUnwind = false;
 
   PersonalityEncoding = LSDAEncoding = FDECFIEncoding = TTypeEncoding =
       dwarf::DW_EH_PE_absptr;
