@@ -274,9 +274,7 @@ template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
   Elf_Word *Buckets = P;
   Elf_Word *Chains = P + NumSymbols;
 
-  for (const typename SymbolTableSection<ELFT>::SymbolData &Item :
-       Out<ELFT>::DynSymTab->getSymbols()) {
-    SymbolBody *Body = Item.Body;
+  for (SymbolBody *Body : Out<ELFT>::DynSymTab->getSymbols()) {
     StringRef Name = Body->getName();
     unsigned I = Body->getDynamicSymbolTableIndex();
     uint32_t Hash = hashSysv(Name) % NumSymbols;
@@ -335,7 +333,8 @@ unsigned GnuHashTableSection<ELFT>::calcMaskWords(unsigned NumHashed) {
 }
 
 template <class ELFT> void GnuHashTableSection<ELFT>::finalize() {
-  const unsigned NumHashed = Out<ELFT>::DynSymTab->getNumGnuHashSymbols();
+  ArrayRef<SymbolBody *> A = Out<ELFT>::DynSymTab->getSymbols();
+  unsigned NumHashed = std::count_if(A.begin(), A.end(), includeInGnuHashTable);
   NBuckets = calcNBuckets(NumHashed);
   MaskWords = calcMaskWords(NumHashed);
   // Second hash shift estimation: just predefined values.
@@ -350,7 +349,7 @@ template <class ELFT> void GnuHashTableSection<ELFT>::finalize() {
 
 template <class ELFT> void GnuHashTableSection<ELFT>::writeTo(uint8_t *Buf) {
   writeHeader(Buf);
-  if (!NBuckets) // There are no hashed symbols
+  if (HashedSymbols.empty())
     return;
   writeBloomFilter(Buf);
   writeHashTable(Buf);
@@ -360,8 +359,7 @@ template <class ELFT>
 void GnuHashTableSection<ELFT>::writeHeader(uint8_t *&Buf) {
   auto *P = reinterpret_cast<Elf_Word *>(Buf);
   *P++ = NBuckets;
-  *P++ = Out<ELFT>::DynSymTab->getNumSymbols() -
-         Out<ELFT>::DynSymTab->getNumGnuHashSymbols();
+  *P++ = Out<ELFT>::DynSymTab->getNumSymbols() - HashedSymbols.size();
   *P++ = MaskWords;
   *P++ = Shift2;
   Buf = reinterpret_cast<uint8_t *>(P);
@@ -372,11 +370,10 @@ void GnuHashTableSection<ELFT>::writeBloomFilter(uint8_t *&Buf) {
   unsigned C = sizeof(Elf_Off) * 8;
 
   auto *Masks = reinterpret_cast<Elf_Off *>(Buf);
-  for (const typename SymbolTableSection<ELFT>::SymbolData &Item :
-       Out<ELFT>::DynSymTab->getGnuHashSymbols()) {
-    size_t Pos = (Item.GnuHash / C) & (MaskWords - 1);
-    uintX_t V = (uintX_t(1) << (Item.GnuHash % C)) |
-                (uintX_t(1) << ((Item.GnuHash >> Shift2) % C));
+  for (const HashedSymbolData &Item : HashedSymbols) {
+    size_t Pos = (Item.Hash / C) & (MaskWords - 1);
+    uintX_t V = (uintX_t(1) << (Item.Hash % C)) |
+                (uintX_t(1) << ((Item.Hash >> Shift2) % C));
     Masks[Pos] |= V;
   }
   Buf += sizeof(Elf_Off) * MaskWords;
@@ -389,9 +386,8 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
 
   int PrevBucket = -1;
   int I = 0;
-  for (const typename SymbolTableSection<ELFT>::SymbolData &Item :
-       Out<ELFT>::DynSymTab->getGnuHashSymbols()) {
-    int Bucket = Item.GnuHash % NBuckets;
+  for (const HashedSymbolData &Item : HashedSymbols) {
+    int Bucket = Item.Hash % NBuckets;
     assert(PrevBucket <= Bucket);
     if (Bucket != PrevBucket) {
       Buckets[Bucket] = Item.Body->getDynamicSymbolTableIndex();
@@ -399,11 +395,36 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
       if (I > 0)
         Values[I - 1] |= 1;
     }
-    Values[I] = Item.GnuHash & ~1;
+    Values[I] = Item.Hash & ~1;
     ++I;
   }
   if (I > 0)
     Values[I - 1] |= 1;
+}
+
+template <class ELFT>
+void GnuHashTableSection<ELFT>::addSymbols(std::vector<SymbolBody *> &Symbols) {
+  std::vector<SymbolBody *> NotHashed;
+  NotHashed.reserve(Symbols.size());
+  HashedSymbols.reserve(Symbols.size());
+  for (SymbolBody *B : Symbols) {
+    if (includeInGnuHashTable(B))
+      HashedSymbols.push_back(HashedSymbolData{B, hashGnu(B->getName())});
+    else
+      NotHashed.push_back(B);
+  }
+  if (HashedSymbols.empty())
+    return;
+
+  unsigned NBuckets = calcNBuckets(HashedSymbols.size());
+  std::stable_sort(HashedSymbols.begin(), HashedSymbols.end(),
+                   [&](const HashedSymbolData &L, const HashedSymbolData &R) {
+                     return L.Hash % NBuckets < R.Hash % NBuckets;
+                   });
+
+  Symbols = std::move(NotHashed);
+  for (const HashedSymbolData &Item : HashedSymbols)
+    Symbols.push_back(Item.Body);
 }
 
 template <class ELFT>
@@ -828,9 +849,9 @@ bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   return B.isUsedInDynamicReloc();
 }
 
-bool lld::elf2::includeInGnuHashTable(const SymbolBody &B) {
+bool lld::elf2::includeInGnuHashTable(SymbolBody *B) {
   // Assume that includeInDynamicSymtab() is already checked.
-  return !B.isUndefined();
+  return !B->isUndefined();
 }
 
 template <class ELFT>
@@ -850,12 +871,6 @@ bool lld::elf2::shouldKeepInSymtab(const ObjectFile<ELFT> &File,
   // ELF defines dynamic locals as symbols which name starts with ".L".
   return !(Config->DiscardLocals && SymName.startswith(".L"));
 }
-
-template <class ELFT>
-SymbolTableSection<ELFT>::SymbolData::SymbolData(SymbolBody *Body,
-                                                 bool HasGnuHash)
-    : Body(Body), HasGnuHash(HasGnuHash),
-      GnuHash(HasGnuHash ? hashGnu(Body->getName()) : 0) {}
 
 template <class ELFT>
 SymbolTableSection<ELFT>::SymbolTableSection(
@@ -879,24 +894,18 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
 
   if (!StrTabSec.isDynamic()) {
     std::stable_sort(Symbols.begin(), Symbols.end(),
-                     [](const SymbolData &L, const SymbolData &R) {
-                       return getSymbolBinding(L.Body) == STB_LOCAL &&
-                              getSymbolBinding(R.Body) != STB_LOCAL;
+                     [](SymbolBody *L, SymbolBody *R) {
+                       return getSymbolBinding(L) == STB_LOCAL &&
+                              getSymbolBinding(R) != STB_LOCAL;
                      });
     return;
   }
-  if (NumGnuHashed) {
-    unsigned NBuckets = GnuHashTableSection<ELFT>::calcNBuckets(NumGnuHashed);
-    std::stable_sort(Symbols.begin(), Symbols.end(),
-                     [NBuckets](const SymbolData &L, const SymbolData &R) {
-                       if (!L.HasGnuHash || !R.HasGnuHash)
-                         return R.HasGnuHash;
-                       return L.GnuHash % NBuckets < R.GnuHash % NBuckets;
-                     });
-  }
+  if (Out<ELFT>::GnuHashTab)
+    // NB: It also sorts Symbols to meet the GNU hash table requirements.
+    Out<ELFT>::GnuHashTab->addSymbols(Symbols);
   size_t I = 0;
-  for (const SymbolData &Item : Symbols)
-    Item.Body->setDynamicSymbolTableIndex(++I);
+  for (SymbolBody *B : Symbols)
+    B->setDynamicSymbolTableIndex(++I);
 }
 
 template <class ELFT>
@@ -909,12 +918,8 @@ void SymbolTableSection<ELFT>::addLocalSymbol(StringRef Name) {
 template <class ELFT>
 void SymbolTableSection<ELFT>::addSymbol(SymbolBody *Body) {
   StrTabSec.add(Body->getName());
-  const bool HasGnuHash = StrTabSec.isDynamic() && Out<ELFT>::GnuHashTab &&
-                          includeInGnuHashTable(*Body);
-  Symbols.emplace_back(Body, HasGnuHash);
+  Symbols.push_back(Body);
   ++NumVisible;
-  if (HasGnuHash)
-    ++NumGnuHashed;
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -968,8 +973,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // Write the internal symbol table contents to the output symbol table
   // pointed by Buf.
   auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
-  for (const SymbolData &Item : Symbols) {
-    SymbolBody *Body = Item.Body;
+  for (SymbolBody *Body : Symbols) {
     const OutputSectionBase<ELFT> *OutSec = nullptr;
 
     switch (Body->kind()) {
@@ -1026,12 +1030,6 @@ uint8_t SymbolTableSection<ELFT>::getSymbolBinding(SymbolBody *Body) {
   if (const auto *EBody = dyn_cast<ELFSymbolBody<ELFT>>(Body))
     return EBody->Sym.getBinding();
   return Body->isWeak() ? STB_WEAK : STB_GLOBAL;
-}
-
-template <class ELFT>
-ArrayRef<typename SymbolTableSection<ELFT>::SymbolData>
-SymbolTableSection<ELFT>::getGnuHashSymbols() const {
-  return getSymbols().slice(Symbols.size() - NumGnuHashed);
 }
 
 namespace lld {

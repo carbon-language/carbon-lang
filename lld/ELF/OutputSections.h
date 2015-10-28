@@ -57,7 +57,7 @@ bool canBePreempted(const SymbolBody *Body, bool NeedsGot);
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 
 bool includeInDynamicSymtab(const SymbolBody &B);
-bool includeInGnuHashTable(const SymbolBody &B);
+bool includeInGnuHashTable(SymbolBody *B);
 
 template <class ELFT>
 bool shouldKeepInSymtab(
@@ -176,16 +176,8 @@ public:
   void addSymbol(SymbolBody *Body);
   StringTableSection<ELFT> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return NumVisible + 1; }
-  unsigned getNumGnuHashSymbols() const { return NumGnuHashed; }
 
-  struct SymbolData {
-    SymbolData(SymbolBody *Body, bool HasGnuHash);
-    SymbolBody *Body;
-    bool HasGnuHash;
-    uint32_t GnuHash;
-  };
-  ArrayRef<SymbolData> getSymbols() const { return Symbols; }
-  ArrayRef<SymbolData> getGnuHashSymbols() const;
+  ArrayRef<SymbolBody *> getSymbols() const { return Symbols; }
 
 private:
   void writeLocalSymbols(uint8_t *&Buf);
@@ -195,10 +187,9 @@ private:
 
   SymbolTable<ELFT> &Table;
   StringTableSection<ELFT> &StrTabSec;
-  std::vector<SymbolData> Symbols;
+  std::vector<SymbolBody *> Symbols;
   unsigned NumVisible = 0;
   unsigned NumLocals = 0;
-  unsigned NumGnuHashed = 0;
 };
 
 template <class ELFT>
@@ -305,14 +296,24 @@ public:
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
 
-  static unsigned calcNBuckets(unsigned NumHashed);
+  // Adds symbols to the hash table.
+  // Sorts the input to satisfy GNU hash section requirements.
+  void addSymbols(std::vector<SymbolBody *> &Symbols);
 
 private:
+  static unsigned calcNBuckets(unsigned NumHashed);
   static unsigned calcMaskWords(unsigned NumHashed);
 
   void writeHeader(uint8_t *&Buf);
   void writeBloomFilter(uint8_t *&Buf);
   void writeHashTable(uint8_t *Buf);
+
+  struct HashedSymbolData {
+    SymbolBody *Body;
+    uint32_t Hash;
+  };
+
+  std::vector<HashedSymbolData> HashedSymbols;
 
   unsigned MaskWords;
   unsigned NBuckets;
