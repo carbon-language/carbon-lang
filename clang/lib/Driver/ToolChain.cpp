@@ -23,10 +23,12 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetParser.h"
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
 using namespace clang;
+using namespace llvm;
 using namespace llvm::opt;
 
 static llvm::opt::Arg *GetRTTIArgument(const ArgList &Args) {
@@ -466,9 +468,9 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
             : tools::arm::getARMTargetCPU(MCPU, MArch, Triple);
     StringRef Suffix =
       tools::arm::getLLVMArchSuffixForARM(CPU, MArch, Triple);
-    bool ThumbDefault = Suffix.startswith("v6m") || Suffix.startswith("v7m") ||
-      Suffix.startswith("v7em") ||
-      (Suffix.startswith("v7") && getTriple().isOSBinFormatMachO());
+    bool IsMProfile = ARM::parseArchProfile(Suffix) == ARM::PK_M;
+    bool ThumbDefault = IsMProfile || (ARM::parseArchVersion(Suffix) == 7 && 
+                                       getTriple().isOSBinFormatMachO());
     // FIXME: this is invalid for WindowsCE
     if (getTriple().isOSWindows())
       ThumbDefault = true;
@@ -478,9 +480,9 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     else
       ArchName = "arm";
 
-    // Assembly files should start in ARM mode.
-    if (InputType != types::TY_PP_Asm &&
-        Args.hasFlag(options::OPT_mthumb, options::OPT_mno_thumb, ThumbDefault))
+    // Assembly files should start in ARM mode, unless arch is M-profile.
+    if (IsMProfile || (InputType != types::TY_PP_Asm &&
+         Args.hasFlag(options::OPT_mthumb, options::OPT_mno_thumb, ThumbDefault)))
     {
       if (IsBigEndian)
         ArchName = "thumbeb";

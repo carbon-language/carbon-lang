@@ -62,3 +62,20 @@
 // RUN:   | FileCheck --check-prefix=CHECK-DUP-HDIV %s
 // CHECK-DUP-HDIV: "-target-feature" "-hwdiv-arm"
 // CHECK-DUP-HDIV: "-target-feature" "+hwdiv"
+
+// ========================================================== Triple
+// RUN: %clang -target armv7a-none-eabi -c %s -### 2>&1 \
+// RUN: %clang -target x86_64-apple-darwin -arch armv7 -c %s -### 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-A-PROFILE %s
+// CHECK-A-PROFILE: "-triple" "armv7-{{.*}}"
+
+// RUN: %clang -target armv7r-none-eabi -c %s -### 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-R-PROFILE %s
+// CHECK-R-PROFILE: "-triple" "armv7r-none--eabi"
+
+// RUN: %clang -target armv7m-none-eabi -c %s -### 2>&1 \
+// RUN: %clang -target thumbv7m-none-eabi -c %s -### 2>&1 \
+// RUN: %clang -target x86_64-apple-darwin -arch armv7m -c %s -### 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-M-PROFILE %s
+// CHECK-M-PROFILE: "-triple" "thumbv7m-{{.*}}"
+
