@@ -634,18 +634,20 @@
 # CHECK-LE: extsh. 2, 3                     # encoding: [0x35,0x07,0x62,0x7c]
             extsh. 2, 3
 
-# CHECK-BE: cntlz 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
-# CHECK-LE: cntlz 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
+# CHECK-BE: cntlzw 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
+# CHECK-LE: cntlzw 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
             cntlzw 2, 3
-# CHECK-BE: cntlz. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
-# CHECK-LE: cntlz. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
+# CHECK-BE: cntlzw. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
+# CHECK-LE: cntlzw. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
             cntlzw. 2, 3
-# CHECK-BE: cntlz 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
-# CHECK-LE: cntlz 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
-            cntlz  2, 3
-# CHECK-BE: cntlz. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
-# CHECK-LE: cntlz. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
-            cntlz.  2, 3
+#
+# The POWER variant of cntlzw
+# CHECK-BE: cntlzw 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
+# CHECK-LE: cntlzw 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
+            cntlz 2, 3
+# CHECK-BE: cntlzw. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
+# CHECK-LE: cntlzw. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
+            cntlz. 2, 3
             cmpb 7, 21, 4
 # CHECK-BE: cmpb 7, 21, 4                   # encoding: [0x7e,0xa7,0x23,0xf8]
 # CHECK-LE: cmpb 7, 21, 4                   # encoding: [0xf8,0x23,0xa7,0x7e]

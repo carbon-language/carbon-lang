@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc32 | grep cntlz
+; RUN: llc < %s -march=ppc32 | grep cntlzw
 ; RUN: llc < %s -march=ppc32 | not grep xori 
 ; RUN: llc < %s -march=ppc32 | not grep "li "
 ; RUN: llc < %s -march=ppc32 | not grep "mr "

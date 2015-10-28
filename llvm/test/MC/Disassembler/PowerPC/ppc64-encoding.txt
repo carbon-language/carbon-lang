@@ -508,10 +508,10 @@
 # CHECK: extsh. 2, 3                     
 0x7c 0x62 0x07 0x35
 
-# CHECK: cntlz 2, 3
+# CHECK: cntlzw 2, 3
 0x7c 0x62 0x00 0x34
 
-# CHECK: cntlz. 2, 3
+# CHECK: cntlzw. 2, 3
 0x7c 0x62 0x00 0x35
 
 # CHECK: popcntw 2, 3                    

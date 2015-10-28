@@ -5,7 +5,7 @@ define i32 @eq0(i32 %a) {
         %tmp.2 = zext i1 %tmp.1 to i32          ; <i32> [#uses=1]
         ret i32 %tmp.2
 
-; CHECK: cntlz [[REG:r[0-9]+]], r3
+; CHECK: cntlzw [[REG:r[0-9]+]], r3
 ; CHECK: rlwinm r3, [[REG]], 27, 31, 31
 ; CHECK: blr
 }

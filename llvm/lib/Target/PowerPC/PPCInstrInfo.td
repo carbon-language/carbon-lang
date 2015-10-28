@@ -3883,8 +3883,11 @@ def : InstAlias<"rotlw. $rA, $rS, $rB", (RLWNMo gprc:$rA, gprc:$rS, gprc:$rB, 0,
 def : InstAlias<"clrlwi $rA, $rS, $n", (RLWINM gprc:$rA, gprc:$rS, 0, u5imm:$n, 31)>;
 def : InstAlias<"clrlwi. $rA, $rS, $n", (RLWINMo gprc:$rA, gprc:$rS, 0, u5imm:$n, 31)>;
 
-def : InstAlias<"cntlz $rA, $rS", (CNTLZW gprc:$rA, gprc:$rS)>;
-def : InstAlias<"cntlz. $rA, $rS", (CNTLZWo gprc:$rA, gprc:$rS)>;
+def : InstAlias<"cntlzw $rA, $rS", (CNTLZW gprc:$rA, gprc:$rS)>;
+def : InstAlias<"cntlzw. $rA, $rS", (CNTLZWo gprc:$rA, gprc:$rS)>;
+// The POWER variant
+def : MnemonicAlias<"cntlz",  "cntlzw">;
+def : MnemonicAlias<"cntlz.", "cntlzw.">;
 
 def EXTLDI : PPCAsmPseudo<"extldi $rA, $rS, $n, $b",
                           (ins g8rc:$rA, g8rc:$rS, u6imm:$n, u6imm:$b)>;
