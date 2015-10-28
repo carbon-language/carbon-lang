@@ -343,6 +343,7 @@ public:
     Match_RequiresNotITBlock,
     Match_RequiresV6,
     Match_RequiresThumb2,
+    Match_RequiresV8,
 #define GET_OPERAND_DIAGNOSTIC_TYPES
 #include "ARMGenAsmMatcher.inc"
 
@@ -8529,18 +8530,29 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
     if (isThumbTwo() && Inst.getOperand(OpNo).getReg() == ARM::CPSR &&
         inITBlock())
       return Match_RequiresNotITBlock;
+  } else if (isThumbOne()) {
+    // Some high-register supporting Thumb1 encodings only allow both registers
+    // to be from r0-r7 when in Thumb2.
+    if (Opc == ARM::tADDhirr && !hasV6MOps() &&
+        isARMLowRegister(Inst.getOperand(1).getReg()) &&
+        isARMLowRegister(Inst.getOperand(2).getReg()))
+      return Match_RequiresThumb2;
+    // Others only require ARMv6 or later.
+    else if (Opc == ARM::tMOVr && !hasV6Ops() &&
+             isARMLowRegister(Inst.getOperand(0).getReg()) &&
+             isARMLowRegister(Inst.getOperand(1).getReg()))
+      return Match_RequiresV6;
   }
-  // Some high-register supporting Thumb1 encodings only allow both registers
-  // to be from r0-r7 when in Thumb2.
-  else if (Opc == ARM::tADDhirr && isThumbOne() && !hasV6MOps() &&
-           isARMLowRegister(Inst.getOperand(1).getReg()) &&
-           isARMLowRegister(Inst.getOperand(2).getReg()))
-    return Match_RequiresThumb2;
-  // Others only require ARMv6 or later.
-  else if (Opc == ARM::tMOVr && isThumbOne() && !hasV6Ops() &&
-           isARMLowRegister(Inst.getOperand(0).getReg()) &&
-           isARMLowRegister(Inst.getOperand(1).getReg()))
-    return Match_RequiresV6;
+
+  for (unsigned I = 0; I < MCID.NumOperands; ++I)
+    if (MCID.OpInfo[I].RegClass == ARM::rGPRRegClassID) {
+      // rGPRRegClass excludes PC, and also excluded SP before ARMv8
+      if ((Inst.getOperand(I).getReg() == ARM::SP) && !hasV8Ops())
+        return Match_RequiresV8;
+      else if (Inst.getOperand(I).getReg() == ARM::PC)
+        return Match_InvalidOperand;
+    }
+
   return Match_Success;
 }
 
@@ -8639,6 +8651,8 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(IDLoc, "instruction variant requires ARMv6 or later");
   case Match_RequiresThumb2:
     return Error(IDLoc, "instruction variant requires Thumb2");
+  case Match_RequiresV8:
+    return Error(IDLoc, "instruction variant requires ARMv8 or later");
   case Match_ImmRange0_15: {
     SMLoc ErrorLoc = ((ARMOperand &)*Operands[ErrorInfo]).getStartLoc();
     if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
@@ -9995,6 +10009,10 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
       assert((Value >= INT32_MIN && Value <= UINT32_MAX) &&
              "expression value must be representable in 32 bits");
     }
+    break;
+  case MCK_rGPR:
+    if (hasV8Ops() && Op.isReg() && Op.getReg() == ARM::SP)
+      return Match_Success;
     break;
   case MCK_GPRPair:
     if (Op.isReg() &&

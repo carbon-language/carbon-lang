@@ -1,4 +1,5 @@
-# RUN: not llvm-mc -disassemble %s -mcpu cortex-a8 -triple thumbv7 2>&1 | FileCheck %s
+# RUN: not llvm-mc -disassemble %s -mcpu cortex-a8 -triple thumbv7 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-V7
+# RUN: not llvm-mc -disassemble %s -mcpu cortex-a53 -triple thumbv8 2>&1 | FileCheck %s
 
 # This file is checking Thumbv7 encodings which are globally invalid, usually due
 # to the constraints of the instructions not being met. For example invalid
@@ -359,10 +360,22 @@
 # 32-bit Thumb STM instructions cannot have a writeback register which appears
 # in the list.
 
-[0xa1,0xe8,0x07,0x04]
+[0xa1 0xe8 0x07 0x04]
 # CHECK: warning: potentially undefined instruction encoding
-# CHECK-NEXT: [0xa1,0xe8,0x07,0x04]
+# CHECK-NEXT: [0xa1 0xe8 0x07 0x04]
 
-[0x21,0xe9,0x07,0x04]
+[0x21 0xe9 0x07 0x04]
 # CHECK: warning: potentially undefined instruction encoding
-# CHECK-NEXT: [0x21,0xe9,0x07,0x04]
+# CHECK-NEXT: [0x21 0xe9 0x07 0x04]
+
+#------------------------------------------------------------------------------
+# SP is invalid as rGPR before ARMv8
+#------------------------------------------------------------------------------
+
+[0x00 0xf0 0x00 0x0d]
+# CHECK-V7: warning: potentially undefined instruction encoding
+# CHECK-V7-NEXT: [0x00 0xf0 0x00 0x0d]
+
+[0x63 0xeb 0x2d 0x46]
+# CHECK-V7: warning: potentially undefined instruction encoding
+# CHECK-V7-NEXT: [0x63 0xeb 0x2d 0x46]

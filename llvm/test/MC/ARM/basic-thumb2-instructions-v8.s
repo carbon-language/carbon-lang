@@ -3,7 +3,7 @@
 @ RUN: llvm-mc -triple thumbv8 -show-encoding < %s | FileCheck %s --check-prefix=CHECK-V8
 @ RUN: not llvm-mc -triple thumbv7 -show-encoding < %s 2>&1 | FileCheck %s --check-prefix=CHECK-V7
 
-@ HLT
+@ HLT (in ARMv8 only)
         hlt  #0
         hlt  #63
 @ CHECK-V8: hlt  #0                       @ encoding: [0x80,0xba]
@@ -19,12 +19,23 @@
 @ CHECK-V8: hlt #24                       @ encoding: [0x98,0xba]
 @ CHECK-V7: error: instruction requires: armv8
 
-@ Can accept AL condition code
+@ Can accept AL condition code (in ARMv8 only)
         hltal #24
 @ CHECK-V8: hlt #24                       @ encoding: [0x98,0xba]
 @ CHECK-V7: error: instruction requires: armv8
 
-@ DCPS{1,2,3}
+@ Can accept SP as rGPR (in ARMv8 only)
+        sbc.w r6, r3, sp, asr #16
+        and.w r6, r3, sp, asr #16
+        and sp, r0, #0
+@ CHECK-V8: sbc.w r6, r3, sp, asr #16     @ encoding: [0x63,0xeb,0x2d,0x46]
+@ CHECK-V8: and.w r6, r3, sp, asr #16     @ encoding: [0x03,0xea,0x2d,0x46]
+@ CHECK-V8: and   sp, r0, #0              @ encoding: [0x00,0xf0,0x00,0x0d]
+@ CHECK-V7: error: instruction variant requires ARMv8 or later
+@ CHECK-V7: error: instruction variant requires ARMv8 or later
+@ CHECK-V7: error: invalid operand for instruction
+
+@ DCPS{1,2,3} (in ARMv8 only)
         dcps1
         dcps2
         dcps3
@@ -36,7 +47,7 @@
 @ CHECK-V7: error: instruction requires: armv8
 
 @------------------------------------------------------------------------------
-@ DMB (v8 barriers)
+@ DMB (ARMv8-only barriers)
 @------------------------------------------------------------------------------
         dmb ishld
         dmb oshld
@@ -53,7 +64,7 @@
 @ CHECK-V7: error: invalid operand for instruction
 
 @------------------------------------------------------------------------------
-@ DSB (v8 barriers)
+@ DSB (ARMv8-only barriers)
 @------------------------------------------------------------------------------
         dsb ishld
         dsb oshld
@@ -70,7 +81,7 @@
 @ CHECK-V7: error: invalid operand for instruction
 
 @------------------------------------------------------------------------------
-@ SEVL
+@ SEVL (in ARMv8 only)
 @------------------------------------------------------------------------------
         sevl
         sevl.w
