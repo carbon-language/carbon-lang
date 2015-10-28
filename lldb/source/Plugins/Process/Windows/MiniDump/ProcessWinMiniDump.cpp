@@ -123,7 +123,7 @@ ProcessWinMiniDump::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_
 
 ProcessWinMiniDump::ProcessWinMiniDump(lldb::TargetSP target_sp, Listener &listener,
                                        const FileSpec &core_file) :
-    Process(target_sp, listener),
+    ProcessWindows(target_sp, listener),
     m_data_up(new Data)
 {
     m_data_up->m_core_file = core_file;
@@ -283,18 +283,6 @@ ProcessWinMiniDump::Initialize()
                                       GetPluginDescriptionStatic(),
                                       CreateInstance);
     });
-}
-
-lldb::addr_t
-ProcessWinMiniDump::GetImageInfoAddress()
-{
-    Target *target = &GetTarget();
-    ObjectFile *obj_file = target->GetExecutableModule()->GetObjectFile();
-    Address addr = obj_file->GetImageInfoAddress(target);
-
-    if (addr.IsValid())
-        return addr.GetLoadAddress(target);
-    return LLDB_INVALID_ADDRESS;
 }
 
 ArchSpec

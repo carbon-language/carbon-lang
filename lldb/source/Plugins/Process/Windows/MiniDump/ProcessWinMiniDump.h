@@ -17,9 +17,11 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Target/Process.h"
 
+#include "Plugins/Process/Windows/Common/ProcessWindows.h"
+
 struct ThreadData;
 
-class ProcessWinMiniDump : public lldb_private::Process
+class ProcessWinMiniDump : public lldb_private::ProcessWindows
 {
 public:
     static lldb::ProcessSP
@@ -78,9 +80,6 @@ public:
 
     size_t
     DoReadMemory(lldb::addr_t addr, void *buf, size_t size, lldb_private::Error &error) override;
-
-    lldb::addr_t
-    GetImageInfoAddress() override;
 
     lldb_private::ArchSpec
     GetArchitecture();

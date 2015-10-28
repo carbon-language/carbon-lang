@@ -76,7 +76,7 @@
 
 #if defined(_MSC_VER)
 #include "lldb/Host/windows/windows.h"
-#include "Plugins/Process/Windows/Live/ProcessWindows.h"
+#include "Plugins/Process/Windows/Live/ProcessWindowsLive.h"
 #include "Plugins/Process/Windows/MiniDump/ProcessWinMiniDump.h"
 #endif
 
@@ -307,7 +307,7 @@ SystemInitializerFull::Initialize()
     ObjCPlusPlusLanguage::Initialize();
 
 #if defined(_MSC_VER)
-    ProcessWindows::Initialize();
+    ProcessWindowsLive::Initialize();
 #endif
 #if defined(__FreeBSD__)
     ProcessFreeBSD::Initialize();

@@ -23,7 +23,7 @@ using namespace lldb_private;
 // This is a do-nothing stub implementation for now.
 
 RegisterContextWindowsMiniDump::RegisterContextWindowsMiniDump(Thread &thread, uint32_t concrete_frame_idx)
-    : RegisterContext(thread, concrete_frame_idx)
+    : RegisterContextWindows(thread, concrete_frame_idx)
 {
 }
 

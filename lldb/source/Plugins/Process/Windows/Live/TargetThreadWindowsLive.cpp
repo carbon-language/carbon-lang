@@ -1,4 +1,4 @@
-//===-- TargetThreadWindows.cpp----------------------------------*- C++ -*-===//
+//===-- TargetThreadWindowsLive.cpp------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,33 +16,33 @@
 #include "lldb/Host/windows/windows.h"
 #include "lldb/Target/RegisterContext.h"
 
-#include "TargetThreadWindows.h"
+#include "TargetThreadWindowsLive.h"
 #include "ProcessWindows.h"
 #include "ProcessWindowsLog.h"
 #include "UnwindLLDB.h"
 
 #if defined(_WIN64)
-#include "x64/RegisterContextWindows_x64.h"
+#include "x64/RegisterContextWindowsLive_x64.h"
 #else
-#include "x86/RegisterContextWindows_x86.h"
+#include "x86/RegisterContextWindowsLive_x86.h"
 #endif
 
 using namespace lldb;
 using namespace lldb_private;
 
-TargetThreadWindows::TargetThreadWindows(ProcessWindows &process, const HostThread &thread)
-    : Thread(process, thread.GetNativeThread().GetThreadId())
+TargetThreadWindowsLive::TargetThreadWindowsLive(ProcessWindows &process, const HostThread &thread)
+    : TargetThreadWindows(process, thread)
     , m_host_thread(thread)
 {
 }
 
-TargetThreadWindows::~TargetThreadWindows()
+TargetThreadWindowsLive::~TargetThreadWindowsLive()
 {
     DestroyThread();
 }
 
 void
-TargetThreadWindows::RefreshStateAfterStop()
+TargetThreadWindowsLive::RefreshStateAfterStop()
 {
     ::SuspendThread(m_host_thread.GetNativeThread().GetSystemHandle());
     SetState(eStateStopped);
@@ -50,17 +50,17 @@ TargetThreadWindows::RefreshStateAfterStop()
 }
 
 void
-TargetThreadWindows::WillResume(lldb::StateType resume_state)
+TargetThreadWindowsLive::WillResume(lldb::StateType resume_state)
 {
 }
 
 void
-TargetThreadWindows::DidStop()
+TargetThreadWindowsLive::DidStop()
 {
 }
 
 RegisterContextSP
-TargetThreadWindows::GetRegisterContext()
+TargetThreadWindowsLive::GetRegisterContext()
 {
     if (!m_reg_context_sp)
         m_reg_context_sp = CreateRegisterContextForFrameIndex(0);
@@ -69,13 +69,13 @@ TargetThreadWindows::GetRegisterContext()
 }
 
 RegisterContextSP
-TargetThreadWindows::CreateRegisterContextForFrame(StackFrame *frame)
+TargetThreadWindowsLive::CreateRegisterContextForFrame(StackFrame *frame)
 {
     return CreateRegisterContextForFrameIndex(frame->GetConcreteFrameIndex());
 }
 
 RegisterContextSP
-TargetThreadWindows::CreateRegisterContextForFrameIndex(uint32_t idx)
+TargetThreadWindowsLive::CreateRegisterContextForFrameIndex(uint32_t idx)
 {
     if (!m_reg_context_sp)
     {
@@ -86,12 +86,12 @@ TargetThreadWindows::CreateRegisterContextForFrameIndex(uint32_t idx)
 #if defined(_WIN64)
                 // FIXME: This is a Wow64 process, create a RegisterContextWindows_Wow64
 #else
-                m_reg_context_sp.reset(new RegisterContextWindows_x86(*this, idx));
+                m_reg_context_sp.reset(new RegisterContextWindowsLive_x86(*this, idx));
 #endif
                 break;
             case llvm::Triple::x86_64:
 #if defined(_WIN64)
-                m_reg_context_sp.reset(new RegisterContextWindows_x64(*this, idx));
+                m_reg_context_sp.reset(new RegisterContextWindowsLive_x64(*this, idx));
 #else
                 // LLDB is 32-bit, but the target process is 64-bit.  We probably can't debug this.
 #endif
@@ -103,14 +103,14 @@ TargetThreadWindows::CreateRegisterContextForFrameIndex(uint32_t idx)
 }
 
 bool
-TargetThreadWindows::CalculateStopInfo()
+TargetThreadWindowsLive::CalculateStopInfo()
 {
     SetStopInfo(m_stop_info_sp);
     return true;
 }
 
 Unwind *
-TargetThreadWindows::GetUnwinder()
+TargetThreadWindowsLive::GetUnwinder()
 {
     // FIXME: Implement an unwinder based on the Windows unwinder exposed through DIA SDK.
     if (m_unwinder_ap.get() == NULL)
@@ -119,7 +119,7 @@ TargetThreadWindows::GetUnwinder()
 }
 
 bool
-TargetThreadWindows::DoResume()
+TargetThreadWindowsLive::DoResume()
 {
     StateType resume_state = GetTemporaryResumeState();
     StateType current_state = GetState();

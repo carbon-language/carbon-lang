@@ -10,22 +10,25 @@
 #ifndef liblldb_Plugins_Process_Windows_LocalDebugDelegate_H_
 #define liblldb_Plugins_Process_Windows_LocalDebugDelegate_H_
 
+#include <memory>
+
 #include "IDebugDelegate.h"
-#include "ProcessWindowsForward.h"
 
 #include "lldb/lldb-forward.h"
 
-class ProcessWindows;
-
 namespace lldb_private
 {
+
+class ProcessWindowsLive;
+typedef std::shared_ptr<ProcessWindowsLive> ProcessWindowsLiveSP;
+
 //----------------------------------------------------------------------
 // LocalDebugDelegate
 //
-// LocalDebugDelegate creates a connection between a ProcessWindows and the
-// debug driver.  This serves to decouple ProcessWindows from the debug driver.
+// LocalDebugDelegate creates a connection between a ProcessWindowsLive and the
+// debug driver.  This serves to decouple ProcessWindowsLive from the debug driver.
 // It would be possible to get a similar decoupling by just having
-// ProcessWindows implement this interface directly.  There are two reasons why
+// ProcessWindowsLive implement this interface directly.  There are two reasons why
 // we don't do this:
 //
 // 1) In the future when we add support for local debugging through LLGS, and we
@@ -55,7 +58,7 @@ class LocalDebugDelegate : public IDebugDelegate
     void OnDebuggerError(const Error &error, uint32_t type) override;
 
   private:
-    ProcessWindowsSP
+    ProcessWindowsLiveSP
     GetProcessPointer();
 
     lldb::ProcessWP m_process;

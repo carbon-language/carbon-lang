@@ -1,4 +1,4 @@
-//===-- ProcessWindows.cpp --------------------------------------*- C++ -*-===//
+//===-- ProcessWindowsLive.cpp ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -39,14 +39,13 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
-#include "Plugins/Process/Windows/Live/ProcessWindowsForward.h"
-#include "Plugins/Process/Windows/live/ProcessWindowsLog.h"
+#include "Plugins/Process/Windows/Common/ProcessWindowsLog.h"
 
 #include "DebuggerThread.h"
 #include "ExceptionRecord.h"
 #include "LocalDebugDelegate.h"
-#include "ProcessWindows.h"
-#include "TargetThreadWindows.h"
+#include "ProcessWindowsLive.h"
+#include "TargetThreadWindowsLive.h"
 
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -122,13 +121,13 @@ class ProcessWindowsData
 // Static functions.
 
 ProcessSP
-ProcessWindows::CreateInstance(lldb::TargetSP target_sp, Listener &listener, const FileSpec *)
+ProcessWindowsLive::CreateInstance(lldb::TargetSP target_sp, Listener &listener, const FileSpec *)
 {
-    return ProcessSP(new ProcessWindows(target_sp, listener));
+    return ProcessSP(new ProcessWindowsLive(target_sp, listener));
 }
 
 void
-ProcessWindows::Initialize()
+ProcessWindowsLive::Initialize()
 {
     static std::once_flag g_once_flag;
 
@@ -143,56 +142,35 @@ ProcessWindows::Initialize()
 //------------------------------------------------------------------------------
 // Constructors and destructors.
 
-ProcessWindows::ProcessWindows(lldb::TargetSP target_sp, Listener &listener)
-    : lldb_private::Process(target_sp, listener)
+ProcessWindowsLive::ProcessWindowsLive(lldb::TargetSP target_sp, Listener &listener)
+    : lldb_private::ProcessWindows(target_sp, listener)
 {
 }
 
-ProcessWindows::~ProcessWindows()
+ProcessWindowsLive::~ProcessWindowsLive()
 {
 }
 
 void
-ProcessWindows::Terminate()
+ProcessWindowsLive::Terminate()
 {
 }
 
 lldb_private::ConstString
-ProcessWindows::GetPluginNameStatic()
+ProcessWindowsLive::GetPluginNameStatic()
 {
     static ConstString g_name("windows");
     return g_name;
 }
 
 const char *
-ProcessWindows::GetPluginDescriptionStatic()
+ProcessWindowsLive::GetPluginDescriptionStatic()
 {
     return "Process plugin for Windows";
 }
 
-size_t
-ProcessWindows::GetSTDOUT(char *buf, size_t buf_size, Error &error)
-{
-    error.SetErrorString("GetSTDOUT unsupported on Windows");
-    return 0;
-}
-
-size_t
-ProcessWindows::GetSTDERR(char *buf, size_t buf_size, Error &error)
-{
-    error.SetErrorString("GetSTDERR unsupported on Windows");
-    return 0;
-}
-
-size_t
-ProcessWindows::PutSTDIN(const char *buf, size_t buf_size, Error &error)
-{
-    error.SetErrorString("PutSTDIN unsupported on Windows");
-    return 0;
-}
-
 Error
-ProcessWindows::EnableBreakpointSite(BreakpointSite *bp_site)
+ProcessWindowsLive::EnableBreakpointSite(BreakpointSite *bp_site)
 {
     WINLOG_IFALL(WINDOWS_LOG_BREAKPOINTS, "EnableBreakpointSite called with bp_site 0x%p "
                                           "(id=%d, addr=0x%x)",
@@ -207,7 +185,7 @@ ProcessWindows::EnableBreakpointSite(BreakpointSite *bp_site)
 }
 
 Error
-ProcessWindows::DisableBreakpointSite(BreakpointSite *bp_site)
+ProcessWindowsLive::DisableBreakpointSite(BreakpointSite *bp_site)
 {
     WINLOG_IFALL(WINDOWS_LOG_BREAKPOINTS, "DisableBreakpointSite called with bp_site 0x%p "
                                           "(id=%d, addr=0x%x)",
@@ -223,7 +201,7 @@ ProcessWindows::DisableBreakpointSite(BreakpointSite *bp_site)
 }
 
 bool
-ProcessWindows::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
+ProcessWindowsLive::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // Add all the threads that were previously running and for which we did not detect a thread
     // exited event.
@@ -255,7 +233,7 @@ ProcessWindows::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_th
     // Also add all the threads that are new since the last time we broke into the debugger.
     for (const auto &thread_info : m_session_data->m_new_threads)
     {
-        ThreadSP thread(new TargetThreadWindows(*this, thread_info.second));
+        ThreadSP thread(new TargetThreadWindowsLive(*this, thread_info.second));
         thread->SetID(thread_info.first);
         new_thread_list.AddThread(thread);
         ++new_size;
@@ -273,8 +251,8 @@ ProcessWindows::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_th
 }
 
 Error
-ProcessWindows::DoLaunch(Module *exe_module,
-                         ProcessLaunchInfo &launch_info)
+ProcessWindowsLive::DoLaunch(Module *exe_module,
+                             ProcessLaunchInfo &launch_info)
 {
     // Even though m_session_data is accessed here, it is before a debugger thread has been
     // kicked off.  So there's no race conditions, and it shouldn't be necessary to acquire
@@ -333,7 +311,7 @@ ProcessWindows::DoLaunch(Module *exe_module,
 }
 
 Error
-ProcessWindows::DoAttachToProcessWithID(lldb::pid_t pid, const ProcessAttachInfo &attach_info)
+ProcessWindowsLive::DoAttachToProcessWithID(lldb::pid_t pid, const ProcessAttachInfo &attach_info)
 {
     m_session_data.reset(new ProcessWindowsData(!attach_info.GetContinueOnceAttached()));
 
@@ -374,7 +352,7 @@ ProcessWindows::DoAttachToProcessWithID(lldb::pid_t pid, const ProcessAttachInfo
 }
 
 Error
-ProcessWindows::WaitForDebuggerConnection(DebuggerThreadSP debugger, HostProcess &process)
+ProcessWindowsLive::WaitForDebuggerConnection(DebuggerThreadSP debugger, HostProcess &process)
 {
     Error result;
     WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_BREAKPOINTS, "WaitForDebuggerConnection Waiting for loader breakpoint.");
@@ -392,7 +370,7 @@ ProcessWindows::WaitForDebuggerConnection(DebuggerThreadSP debugger, HostProcess
 }
 
 Error
-ProcessWindows::DoResume()
+ProcessWindowsLive::DoResume()
 {
     llvm::sys::ScopedLock lock(m_mutex);
     Error error;
@@ -419,7 +397,7 @@ ProcessWindows::DoResume()
 
         for (int i = 0; i < m_thread_list.GetSize(); ++i)
         {
-            auto thread = std::static_pointer_cast<TargetThreadWindows>(
+            auto thread = std::static_pointer_cast<TargetThreadWindowsLive>(
                 m_thread_list.GetThreadAtIndex(i));
             thread->DoResume();
         }
@@ -439,19 +417,19 @@ ProcessWindows::DoResume()
 // ProcessInterface protocol.
 
 lldb_private::ConstString
-ProcessWindows::GetPluginName()
+ProcessWindowsLive::GetPluginName()
 {
     return GetPluginNameStatic();
 }
 
 uint32_t
-ProcessWindows::GetPluginVersion()
+ProcessWindowsLive::GetPluginVersion()
 {
     return 1;
 }
 
 Error
-ProcessWindows::DoDetach(bool keep_stopped)
+ProcessWindowsLive::DoDetach(bool keep_stopped)
 {
     DebuggerThreadSP debugger_thread;
     StateType private_state;
@@ -500,7 +478,7 @@ ProcessWindows::DoDetach(bool keep_stopped)
 }
 
 Error
-ProcessWindows::DoDestroy()
+ProcessWindowsLive::DoDestroy()
 {
     DebuggerThreadSP debugger_thread;
     StateType private_state;
@@ -544,7 +522,7 @@ ProcessWindows::DoDestroy()
 }
 
 void
-ProcessWindows::RefreshStateAfterStop()
+ProcessWindowsLive::RefreshStateAfterStop()
 {
     llvm::sys::ScopedLock lock(m_mutex);
 
@@ -626,7 +604,7 @@ ProcessWindows::RefreshStateAfterStop()
 }
 
 bool
-ProcessWindows::IsAlive()
+ProcessWindowsLive::IsAlive()
 {
     StateType state = GetPrivateState();
     switch (state)
@@ -643,7 +621,7 @@ ProcessWindows::IsAlive()
 }
 
 Error
-ProcessWindows::DoHalt(bool &caused_stop)
+ProcessWindowsLive::DoHalt(bool &caused_stop)
 {
     Error error;
     StateType state = GetPrivateState();
@@ -663,14 +641,15 @@ ProcessWindows::DoHalt(bool &caused_stop)
     return error;
 }
 
-void ProcessWindows::DidLaunch()
+void
+ProcessWindowsLive::DidLaunch()
 {
     ArchSpec arch_spec;
     DidAttach(arch_spec);
 }
 
 void
-ProcessWindows::DidAttach(ArchSpec &arch_spec)
+ProcessWindowsLive::DidAttach(ArchSpec &arch_spec)
 {
     llvm::sys::ScopedLock lock(m_mutex);
 
@@ -680,10 +659,10 @@ ProcessWindows::DidAttach(ArchSpec &arch_spec)
 }
 
 size_t
-ProcessWindows::DoReadMemory(lldb::addr_t vm_addr,
-                             void *buf,
-                             size_t size,
-                             Error &error)
+ProcessWindowsLive::DoReadMemory(lldb::addr_t vm_addr,
+                                 void *buf,
+                                 size_t size,
+                                 Error &error)
 {
     llvm::sys::ScopedLock lock(m_mutex);
 
@@ -704,7 +683,7 @@ ProcessWindows::DoReadMemory(lldb::addr_t vm_addr,
 }
 
 size_t
-ProcessWindows::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
+ProcessWindowsLive::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
 {
     llvm::sys::ScopedLock lock(m_mutex);
     WINLOG_IFALL(WINDOWS_LOG_MEMORY, "DoWriteMemory attempting to write %u bytes into address 0x%I64x", size, vm_addr);
@@ -730,7 +709,7 @@ ProcessWindows::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size
 }
 
 Error
-ProcessWindows::GetMemoryRegionInfo(lldb::addr_t vm_addr, MemoryRegionInfo &info)
+ProcessWindowsLive::GetMemoryRegionInfo(lldb::addr_t vm_addr, MemoryRegionInfo &info)
 {
     Error error;
     llvm::sys::ScopedLock lock(m_mutex);
@@ -776,20 +755,8 @@ ProcessWindows::GetMemoryRegionInfo(lldb::addr_t vm_addr, MemoryRegionInfo &info
     return error;
 }
 
-lldb::addr_t
-ProcessWindows::GetImageInfoAddress()
-{
-    Target &target = GetTarget();
-    ObjectFile *obj_file = target.GetExecutableModule()->GetObjectFile();
-    Address addr = obj_file->GetImageInfoAddress(&target);
-    if (addr.IsValid())
-        return addr.GetLoadAddress(&target);
-    else
-        return LLDB_INVALID_ADDRESS;
-}
-
 bool
-ProcessWindows::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name)
+ProcessWindowsLive::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name)
 {
     if (plugin_specified_by_name)
         return true;
@@ -803,7 +770,7 @@ ProcessWindows::CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name
 }
 
 void
-ProcessWindows::OnExitProcess(uint32_t exit_code)
+ProcessWindowsLive::OnExitProcess(uint32_t exit_code)
 {
     // No need to acquire the lock since m_session_data isn't accessed.
     WINLOG_IFALL(WINDOWS_LOG_PROCESS, "Process %u exited with code %u", GetID(), exit_code);
@@ -822,7 +789,7 @@ ProcessWindows::OnExitProcess(uint32_t exit_code)
 }
 
 void
-ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
+ProcessWindowsLive::OnDebuggerConnected(lldb::addr_t image_base)
 {
     DebuggerThreadSP debugger = m_session_data->m_debugger;
 
@@ -868,7 +835,7 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
 }
 
 ExceptionResult
-ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &record)
+ProcessWindowsLive::OnDebugException(bool first_chance, const ExceptionRecord &record)
 {
     llvm::sys::ScopedLock lock(m_mutex);
 
@@ -933,7 +900,7 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
 }
 
 void
-ProcessWindows::OnCreateThread(const HostThread &new_thread)
+ProcessWindowsLive::OnCreateThread(const HostThread &new_thread)
 {
     llvm::sys::ScopedLock lock(m_mutex);
     const HostThreadWindows &wnew_thread = new_thread.GetNativeThread();
@@ -941,7 +908,7 @@ ProcessWindows::OnCreateThread(const HostThread &new_thread)
 }
 
 void
-ProcessWindows::OnExitThread(lldb::tid_t thread_id, uint32_t exit_code)
+ProcessWindowsLive::OnExitThread(lldb::tid_t thread_id, uint32_t exit_code)
 {
     llvm::sys::ScopedLock lock(m_mutex);
 
@@ -960,7 +927,7 @@ ProcessWindows::OnExitThread(lldb::tid_t thread_id, uint32_t exit_code)
 }
 
 void
-ProcessWindows::OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_addr)
+ProcessWindowsLive::OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_addr)
 {
     // Confusingly, there is no Target::AddSharedModule.  Instead, calling GetSharedModule() with
     // a new module will add it to the module list and return a corresponding ModuleSP.
@@ -975,7 +942,7 @@ ProcessWindows::OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_add
 }
 
 void
-ProcessWindows::OnUnloadDll(lldb::addr_t module_addr)
+ProcessWindowsLive::OnUnloadDll(lldb::addr_t module_addr)
 {
     Address resolved_addr;
     if (GetTarget().ResolveLoadAddress(module_addr, resolved_addr))
@@ -991,12 +958,12 @@ ProcessWindows::OnUnloadDll(lldb::addr_t module_addr)
 }
 
 void
-ProcessWindows::OnDebugString(const std::string &string)
+ProcessWindowsLive::OnDebugString(const std::string &string)
 {
 }
 
 void
-ProcessWindows::OnDebuggerError(const Error &error, uint32_t type)
+ProcessWindowsLive::OnDebuggerError(const Error &error, uint32_t type)
 {
     llvm::sys::ScopedLock lock(m_mutex);
 

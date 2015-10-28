@@ -1,4 +1,4 @@
-//===-- ProcessWindows.h ----------------------------------------*- C++ -*-===//
+//===-- ProcessWindowsLive.h ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_Plugins_Process_Windows_ProcessWindows_H_
-#define liblldb_Plugins_Process_Windows_ProcessWindows_H_
+#ifndef liblldb_Plugins_Process_Windows_Live_ProcessWindowsLive_H_
+#define liblldb_Plugins_Process_Windows_Live_ProcessWindowsLive_H_
 
 // C Includes
 
@@ -26,15 +26,16 @@
 
 #include "llvm/Support/Mutex.h"
 
+#include "plugins/Process/Windows/Common/ProcessWindows.h"
+
 class ProcessMonitor;
 
 namespace lldb_private
 {
 class HostProcess;
 class ProcessWindowsData;
-}
 
-class ProcessWindows : public lldb_private::Process, public lldb_private::IDebugDelegate
+class ProcessWindowsLive : public lldb_private::ProcessWindows, public lldb_private::IDebugDelegate
 {
 public:
     //------------------------------------------------------------------
@@ -60,18 +61,14 @@ public:
     //------------------------------------------------------------------
     // Constructors and destructors
     //------------------------------------------------------------------
-    ProcessWindows(lldb::TargetSP target_sp,
-                   lldb_private::Listener &listener);
+    ProcessWindowsLive(lldb::TargetSP target_sp,
+                       lldb_private::Listener &listener);
 
-    ~ProcessWindows();
+    ~ProcessWindowsLive();
 
     // lldb_private::Process overrides
     lldb_private::ConstString GetPluginName() override;
     uint32_t GetPluginVersion() override;
-
-    size_t GetSTDOUT(char *buf, size_t buf_size, lldb_private::Error &error) override;
-    size_t GetSTDERR(char *buf, size_t buf_size, lldb_private::Error &error) override;
-    size_t PutSTDIN(const char *buf, size_t buf_size, lldb_private::Error &error) override;
 
     lldb_private::Error EnableBreakpointSite(lldb_private::BreakpointSite *bp_site) override;
     lldb_private::Error DisableBreakpointSite(lldb_private::BreakpointSite *bp_site) override;
@@ -88,7 +85,6 @@ public:
     void DidAttach(lldb_private::ArchSpec &arch_spec) override;
 
     void RefreshStateAfterStop() override;
-    lldb::addr_t GetImageInfoAddress() override;
 
     bool CanDebug(lldb::TargetSP target_sp, bool plugin_specified_by_name) override;
     bool
@@ -124,4 +120,6 @@ public:
     std::unique_ptr<lldb_private::ProcessWindowsData> m_session_data;
 };
 
-#endif  // liblldb_Plugins_Process_Windows_ProcessWindows_H_
+}
+
+#endif  // liblldb_Plugins_Process_Windows_Live_ProcessWindowsLive_H_

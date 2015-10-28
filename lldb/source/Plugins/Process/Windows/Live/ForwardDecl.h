@@ -10,8 +10,6 @@
 #ifndef liblldb_Plugins_Process_Windows_ForwardDecl_H_
 #define liblldb_Plugins_Process_Windows_ForwardDecl_H_
 
-class ProcessWindows;
-
 #include <memory>
 
 // ExceptionResult is returned by the debug delegate to specify how it processed
@@ -27,6 +25,8 @@ enum class ExceptionResult
 
 namespace lldb_private
 {
+
+class ProcessWindows;
 
 class IDebugDelegate;
 class DebuggerThread;

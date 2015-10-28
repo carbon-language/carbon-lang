@@ -13,13 +13,15 @@
 #include "lldb/lldb-forward.h"
 #include "lldb/Target/RegisterContext.h"
 
+#include "Plugins/Process/Windows/Common/RegisterContextWindows.h"
+
 
 namespace lldb_private
 {
 
 class Thread;
 
-class RegisterContextWindowsMiniDump : public lldb_private::RegisterContext
+class RegisterContextWindowsMiniDump : public lldb_private::RegisterContextWindows
 {
   public:
     RegisterContextWindowsMiniDump(Thread &thread, uint32_t concrete_frame_idx);
