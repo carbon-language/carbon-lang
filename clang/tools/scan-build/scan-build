@@ -1447,8 +1447,11 @@ my $ForceDisplayHelp = 0;
 
 sub ProcessArgs {
   my $Args = shift;
+  my $NumArgs = 0;
 
   while (@$Args) {
+
+    $NumArgs++;
 
     # Scan for options we recognize.
 
@@ -1631,7 +1634,8 @@ sub ProcessArgs {
     if ($arg eq "-enable-checker") {
       shift @$Args;
       my $Checker = shift @$Args;
-      $Options{EnableCheckers}{$Checker} = 1;
+      # Store $NumArgs to preserve the order the checkers were enabled.
+      $Options{EnableCheckers}{$Checker} = $NumArgs;
       delete $Options{DisableCheckers}{$Checker};
       next;
     }
@@ -1639,7 +1643,8 @@ sub ProcessArgs {
     if ($arg eq "-disable-checker") {
       shift @$Args;
       my $Checker = shift @$Args;
-      $Options{DisableCheckers}{$Checker} = 1;
+      # Store $NumArgs to preserve the order the checkers were disabled.
+      $Options{DisableCheckers}{$Checker} = $NumArgs;
       delete $Options{EnableCheckers}{$Checker};
       next;
     }
@@ -1676,8 +1681,10 @@ sub ProcessArgs {
 
     DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
 
+    $NumArgs--;
     last;
   }
+  return $NumArgs;
 }
 
 if (!@ARGV) {
@@ -1751,8 +1758,16 @@ Diag("Using '$Clang' for static analysis\n");
 SetHtmlEnv(\@ARGV, $Options{OutputDir});
 
 my @AnalysesToRun;
-foreach (keys %{$Options{EnableCheckers}}) { push @AnalysesToRun, "-analyzer-checker", $_; }
-foreach (keys %{$Options{DisableCheckers}}) { push @AnalysesToRun, "-analyzer-disable-checker", $_; }
+foreach (sort { $Options{EnableCheckers}{$a} <=> $Options{EnableCheckers}{$b} } 
+         keys %{$Options{EnableCheckers}}) { 
+  # Push checkers in order they were enabled.
+  push @AnalysesToRun, "-analyzer-checker", $_;
+}
+foreach (sort { $Options{DisableCheckers}{$a} <=> $Options{DisableCheckers}{$b} } 
+         keys %{$Options{DisableCheckers}}) { 
+  # Push checkers in order they were disabled.
+  push @AnalysesToRun, "-analyzer-disable-checker", $_;
+}
 if ($Options{AnalyzeHeaders}) { push @AnalysesToRun, "-analyzer-opt-analyze-headers"; }
 if ($Options{AnalyzerStats}) { push @AnalysesToRun, '-analyzer-checker=debug.Stats'; }
 if ($Options{MaxLoop} > 0) { push @AnalysesToRun, "-analyzer-max-loop $Options{MaxLoop}"; }
