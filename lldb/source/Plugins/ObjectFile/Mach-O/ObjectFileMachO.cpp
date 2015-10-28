@@ -2068,7 +2068,7 @@ struct TrieEntryWithOffset
     }
 };
 
-static void
+static bool
 ParseTrieEntries (DataExtractor &data,
                   lldb::offset_t offset,
                   const bool is_arm,
@@ -2077,7 +2077,7 @@ ParseTrieEntries (DataExtractor &data,
                   std::vector<TrieEntryWithOffset>& output)
 {
 	if (!data.ValidOffset(offset))
-        return;
+        return true;
 
 	const uint64_t terminalSize = data.GetULEB128(&offset);
 	lldb::offset_t children_offset = offset + terminalSize;
@@ -2128,19 +2128,27 @@ ParseTrieEntries (DataExtractor &data,
     
 	const uint8_t childrenCount = data.GetU8(&children_offset);
 	for (uint8_t i=0; i < childrenCount; ++i) {
-        nameSlices.push_back(data.GetCStr(&children_offset));
+        const char *cstr = data.GetCStr(&children_offset);
+        if (cstr)
+            nameSlices.push_back(llvm::StringRef(cstr));
+        else
+            return false; // Corrupt data
         lldb::offset_t childNodeOffset = data.GetULEB128(&children_offset);
 		if (childNodeOffset)
         {
-            ParseTrieEntries(data,
-                             childNodeOffset,
-                             is_arm,
-                             nameSlices,
-                             resolver_addresses,
-                             output);
+            if (!ParseTrieEntries(data,
+                                 childNodeOffset,
+                                 is_arm,
+                                 nameSlices,
+                                 resolver_addresses,
+                                 output))
+            {
+                return false;
+            }
         }
         nameSlices.pop_back();
 	}
+    return true;
 }
 
 size_t
