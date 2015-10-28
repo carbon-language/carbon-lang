@@ -29,6 +29,7 @@
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
@@ -56,6 +57,13 @@ static cl::opt<unsigned>
 BBDuplicateThreshold("jump-threading-threshold",
           cl::desc("Max block size to duplicate for jump threading"),
           cl::init(6), cl::Hidden);
+
+static cl::opt<unsigned>
+ImplicationSearchThreshold(
+  "jump-threading-implication-search-threshold",
+  cl::desc("The number of predecessors to search for a stronger "
+           "condition to use to thread over a weaker condition"),
+  cl::init(3), cl::Hidden);
 
 namespace {
   // These are at global scope so static functions can use them too.
@@ -151,6 +159,7 @@ namespace {
 
     bool ProcessBranchOnPHI(PHINode *PN);
     bool ProcessBranchOnXOR(BinaryOperator *BO);
+    bool ProcessImpliedCondition(BasicBlock *BB);
 
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
     bool TryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB);
@@ -868,9 +877,38 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       CondInst->getParent() == BB && isa<BranchInst>(BB->getTerminator()))
     return ProcessBranchOnXOR(cast<BinaryOperator>(CondInst));
 
+  // Search for a stronger dominating condition that can be used to simplify a
+  // conditional branch leaving BB.
+  if (ProcessImpliedCondition(BB))
+    return true;
 
-  // TODO: If we have: "br (X > 0)"  and we have a predecessor where we know
-  // "(X == 4)", thread through this block.
+  return false;
+}
+
+bool JumpThreading::ProcessImpliedCondition(BasicBlock *BB) {
+  auto *BI = dyn_cast<BranchInst>(BB->getTerminator());
+  if (!BI || !BI->isConditional())
+    return false;
+
+  Value *Cond = BI->getCondition();
+  BasicBlock *CurrentBB = BB;
+  BasicBlock *CurrentPred = BB->getSinglePredecessor();
+  unsigned Iter = 0;
+
+  while (CurrentPred && Iter++ < ImplicationSearchThreshold) {
+    auto *PBI = dyn_cast<BranchInst>(CurrentPred->getTerminator());
+    if (!PBI || !PBI->isConditional() || PBI->getSuccessor(0) != CurrentBB)
+      return false;
+
+    if (isImpliedCondition(PBI->getCondition(), Cond)) {
+      BI->getSuccessor(1)->removePredecessor(BB);
+      BranchInst::Create(BI->getSuccessor(0), BI);
+      BI->eraseFromParent();
+      return true;
+    }
+    CurrentBB = CurrentPred;
+    CurrentPred = CurrentBB->getSinglePredecessor();
+  }
 
   return false;
 }
