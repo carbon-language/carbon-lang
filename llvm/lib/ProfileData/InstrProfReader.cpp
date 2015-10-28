@@ -220,30 +220,38 @@ std::error_code RawInstrProfReader<IntPtrT>::readHeader(
 }
 
 template <class IntPtrT>
-std::error_code
-RawInstrProfReader<IntPtrT>::readNextRecord(InstrProfRecord &Record) {
-  if (Data == DataEnd)
-    if (std::error_code EC = readNextHeader(ProfileEnd))
-      return EC;
+std::error_code RawInstrProfReader<IntPtrT>::readName(InstrProfRecord &Record) {
+  Record.Name = StringRef(getName(Data->NamePtr), swap(Data->NameSize));
+  if (Record.Name.data() < NamesStart ||
+      Record.Name.data() + Record.Name.size() > DataBuffer->getBufferEnd())
+    return error(instrprof_error::malformed);
 
-  // Get the raw data.
-  StringRef RawName(getName(Data->NamePtr), swap(Data->NameSize));
+  return success();
+}
+
+template <class IntPtrT>
+std::error_code RawInstrProfReader<IntPtrT>::readFuncHash(
+    InstrProfRecord &Record) {
+  Record.Hash = swap(Data->FuncHash);
+  return success();
+}
+
+template <class IntPtrT>
+std::error_code RawInstrProfReader<IntPtrT>::readRawCounts(
+    InstrProfRecord &Record) {
   uint32_t NumCounters = swap(Data->NumCounters);
+  IntPtrT CounterPtr = Data->CounterPtr;
   if (NumCounters == 0)
     return error(instrprof_error::malformed);
-  auto RawCounts = makeArrayRef(getCounter(Data->CounterPtr), NumCounters);
+
+  auto RawCounts = makeArrayRef(getCounter(CounterPtr), NumCounters);
+  auto *NamesStartAsCounter = reinterpret_cast<const uint64_t *>(NamesStart);
 
   // Check bounds.
-  auto *NamesStartAsCounter = reinterpret_cast<const uint64_t *>(NamesStart);
-  if (RawName.data() < NamesStart ||
-      RawName.data() + RawName.size() > DataBuffer->getBufferEnd() ||
-      RawCounts.data() < CountersStart ||
+  if (RawCounts.data() < CountersStart ||
       RawCounts.data() + RawCounts.size() > NamesStartAsCounter)
     return error(instrprof_error::malformed);
 
-  // Store the data in Record, byte-swapping as necessary.
-  Record.Hash = swap(Data->FuncHash);
-  Record.Name = RawName;
   if (ShouldSwapBytes) {
     Record.Counts.clear();
     Record.Counts.reserve(RawCounts.size());
@@ -252,8 +260,26 @@ RawInstrProfReader<IntPtrT>::readNextRecord(InstrProfRecord &Record) {
   } else
     Record.Counts = RawCounts;
 
+  return success();
+}
+
+template <class IntPtrT>
+std::error_code RawInstrProfReader<IntPtrT>::readNextRecord(
+    InstrProfRecord &Record) {
+  if (atEnd())
+    if (std::error_code EC = readNextHeader(ProfileEnd)) return EC;
+
+  // Read name ad set it in Record.
+  if (std::error_code EC = readName(Record)) return EC;
+
+  // Read FuncHash and set it in Record.
+  if (std::error_code EC = readFuncHash(Record)) return EC;
+
+  // Read raw counts and set Record.
+  if (std::error_code EC = readRawCounts(Record)) return EC;
+
   // Iterate.
-  ++Data;
+  advanceData();
   return success();
 }
 

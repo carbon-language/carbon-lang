@@ -156,6 +156,13 @@ private:
   IntT swap(IntT Int) const {
     return ShouldSwapBytes ? sys::getSwappedBytes(Int) : Int;
   }
+
+  std::error_code readName(InstrProfRecord &Record);
+  std::error_code readFuncHash(InstrProfRecord &Record);
+  std::error_code readRawCounts(InstrProfRecord &Record);
+  bool atEnd() const { return Data == DataEnd; }
+  void advanceData() { Data++; }
+
   const uint64_t *getCounter(IntPtrT CounterPtr) const {
     ptrdiff_t Offset = (swap(CounterPtr) - CountersDelta) / sizeof(uint64_t);
     return CountersStart + Offset;
