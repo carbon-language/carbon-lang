@@ -424,3 +424,47 @@ exit:
   ret void
 ; CHECK: ret void
 }
+
+; Recognize loops with a negative stride.
+define void @test15(i32* nocapture %f) {
+entry:
+  br label %for.body
+
+for.body:
+  %indvars.iv = phi i64 [ 65536, %entry ], [ %indvars.iv.next, %for.body ]
+  %arrayidx = getelementptr inbounds i32, i32* %f, i64 %indvars.iv
+  store i32 0, i32* %arrayidx, align 4
+  %indvars.iv.next = add nsw i64 %indvars.iv, -1
+  %cmp = icmp sgt i64 %indvars.iv, 0
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:
+  ret void
+; CHECK-LABEL: @test15(
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %f1, i8 0, i64 262148, i32 4, i1 false)
+; CHECK-NOT: store
+; CHECK: ret void
+}
+
+; Loop with a negative stride.  Verify an aliasing write to f[65536] prevents
+; the creation of a memset.
+define void @test16(i32* nocapture %f) {
+entry:
+  %arrayidx1 = getelementptr inbounds i32, i32* %f, i64 65536
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ 65536, %entry ], [ %indvars.iv.next, %for.body ]
+  %arrayidx = getelementptr inbounds i32, i32* %f, i64 %indvars.iv
+  store i32 0, i32* %arrayidx, align 4
+  store i32 1, i32* %arrayidx1, align 4
+  %indvars.iv.next = add nsw i64 %indvars.iv, -1
+  %cmp = icmp sgt i64 %indvars.iv, 0
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.body
+  ret void
+; CHECK-LABEL: @test16(
+; CHECK-NOT: call void @llvm.memset.p0i8.i64
+; CHECK: ret void
+}
