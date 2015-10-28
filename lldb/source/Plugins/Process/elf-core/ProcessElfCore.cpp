@@ -237,6 +237,25 @@ ProcessElfCore::DoLoadCore ()
 
     SetUnixSignals(UnixSignals::Create(GetArchitecture()));
 
+    // Core files are useless without the main executable. See if we can locate the main
+    // executable using data we found in the core file notes.
+    lldb::ModuleSP exe_module_sp = GetTarget().GetExecutableModule();
+    if (!exe_module_sp)
+    {
+        // The first entry in the NT_FILE might be our executable
+        if (!m_nt_file_entries.empty())
+        {
+            ModuleSpec exe_module_spec;
+            exe_module_spec.GetArchitecture() = arch;
+            exe_module_spec.GetFileSpec().SetFile(m_nt_file_entries[0].path.GetCString(), false);
+            if (exe_module_spec.GetFileSpec())
+            {
+                exe_module_sp = GetTarget().GetSharedModule(exe_module_spec);
+                if (exe_module_sp)
+                    GetTarget().SetExecutableModule(exe_module_sp, false);
+            }
+        }
+    }
     return error;
 }
 
@@ -385,7 +404,8 @@ enum {
     NT_PRPSINFO,
     NT_TASKSTRUCT,
     NT_PLATFORM,
-    NT_AUXV
+    NT_AUXV,
+    NT_FILE = 0x46494c45
 };
 
 namespace FREEBSD {
@@ -501,6 +521,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
 
         // Store the NOTE information in the current thread
         DataExtractor note_data (segment_data, note_start, note_size);
+        note_data.SetAddressByteSize(m_core_module_sp->GetArchitecture().GetAddressByteSize());
         if (note.n_name == "FreeBSD")
         {
             m_os = llvm::Triple::FreeBSD;
@@ -530,7 +551,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
                     break;
             }
         }
-        else
+        else if (note.n_name == "CORE")
         {
             switch (note.n_type)
             {
@@ -554,6 +575,28 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
                     break;
                 case NT_AUXV:
                     m_auxv = DataExtractor(note_data);
+                    break;
+                case NT_FILE:
+                    {
+                        m_nt_file_entries.clear();
+                        lldb::offset_t offset = 0;
+                        const uint64_t count = note_data.GetAddress(&offset);
+                        note_data.GetAddress(&offset); // Skip page size
+                        for (uint64_t i = 0; i<count; ++i)
+                        {
+                            NT_FILE_Entry entry;
+                            entry.start = note_data.GetAddress(&offset);
+                            entry.end = note_data.GetAddress(&offset);
+                            entry.file_ofs = note_data.GetAddress(&offset);
+                            m_nt_file_entries.push_back(entry);
+                        }
+                        for (uint64_t i = 0; i<count; ++i)
+                        {
+                            const char *path = note_data.GetCStr(&offset);
+                            if (path && path[0])
+                                m_nt_file_entries[i].path.SetCString(path);
+                        }
+                    }
                     break;
                 default:
                     break;

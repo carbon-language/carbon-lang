@@ -52,6 +52,12 @@ struct ELFNote
     ///    True if the ELFRel entry was successfully read and false otherwise.
     bool
     Parse(const lldb_private::DataExtractor &data, lldb::offset_t *offset);
+
+    size_t
+    GetByteSize() const
+    {
+        return 12 + llvm::RoundUpToAlignment (n_namesz, 4) + llvm::RoundUpToAlignment (n_descsz, 4);
+    }
 };
 
 //------------------------------------------------------------------------------
