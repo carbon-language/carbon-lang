@@ -10,6 +10,8 @@
 #ifndef LLVM_CLANG_SEMA_CODECOMPLETEOPTIONS_H
 #define LLVM_CLANG_SEMA_CODECOMPLETEOPTIONS_H
 
+namespace clang {
+
 /// Options controlling the behavior of code completion.
 class CodeCompleteOptions {
 public:
@@ -32,6 +34,8 @@ public:
       IncludeBriefComments(0)
   { }
 };
+
+} // namespace clang
 
 #endif
 

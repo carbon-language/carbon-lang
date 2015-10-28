@@ -5369,12 +5369,14 @@ static bool maybeConsumeDash(const std::string &EH, size_t &I) {
   return !HaveDash;
 }
 
+namespace {
 struct EHFlags {
   EHFlags() : Synch(false), Asynch(false), NoExceptC(false) {}
   bool Synch;
   bool Asynch;
   bool NoExceptC;
 };
+} // end anonymous namespace
 
 /// /EH controls whether to run destructor cleanups when exceptions are
 /// thrown.  There are three modifiers:

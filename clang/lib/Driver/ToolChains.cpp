@@ -1562,6 +1562,7 @@ static bool isMicroMips(const ArgList &Args) {
   return A && A->getOption().matches(options::OPT_mmicromips);
 }
 
+namespace {
 struct DetectedMultilibs {
   /// The set of multilibs that the detected installation supports.
   MultilibSet Multilibs;
@@ -1573,6 +1574,7 @@ struct DetectedMultilibs {
   /// targeting the non-default multilib. Otherwise, it is empty.
   llvm::Optional<Multilib> BiarchSibling;
 };
+} // end anonymous namespace
 
 static Multilib makeMultilib(StringRef commonSuffix) {
   return Multilib(commonSuffix, commonSuffix, commonSuffix);

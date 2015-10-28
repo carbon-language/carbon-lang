@@ -2192,6 +2192,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
   return P;
 }
 
+namespace {
 // Find the first node in the current function context that referred to the
 // tracked symbol and the memory location that value was stored to. Note, the
 // value is only reported if the allocation occurred in the same function as
@@ -2206,6 +2207,7 @@ struct AllocationInfo {
                  const LocationContext *InInterestingMethodContext) :
     N(InN), R(InR), InterestingMethodContext(InInterestingMethodContext) {}
 };
+} // end anonymous namespace
 
 static AllocationInfo
 GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,

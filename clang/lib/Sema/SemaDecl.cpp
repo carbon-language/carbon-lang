@@ -14011,6 +14011,7 @@ static bool ValidDuplicateEnum(EnumConstantDecl *ECD, EnumDecl *Enum) {
   return false;
 }
 
+namespace {
 struct DupKey {
   int64_t val;
   bool isTombstoneOrEmptyKey;
@@ -14034,6 +14035,7 @@ struct DenseMapInfoDupKey {
            LHS.val == RHS.val;
   }
 };
+} // end anonymous namespace
 
 // Emits a warning when an element is implicitly set a value that
 // a previous element has already been set to.

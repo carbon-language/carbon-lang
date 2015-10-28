@@ -2601,7 +2601,7 @@ void CGOpenMPRuntime::emitTaskCall(
 /// (references element of array in original variable).
 /// \param RedOpGen Generator of reduction operation with use of LHSVar and
 /// RHSVar.
-void EmitOMPAggregateReduction(
+static void EmitOMPAggregateReduction(
     CodeGenFunction &CGF, QualType Type, const VarDecl *LHSVar,
     const VarDecl *RHSVar,
     const llvm::function_ref<void(CodeGenFunction &CGF, const Expr *,
