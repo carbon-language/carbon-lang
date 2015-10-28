@@ -414,27 +414,18 @@ def parseIntegratedTestScriptCommands(source_path, keywords):
     finally:
         f.close()
 
-
-def parseIntegratedTestScript(test, normalize_slashes=False,
-                              extra_substitutions=[], require_script=True):
-    """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
-    script and extract the lines to 'RUN' as well as 'XFAIL' and 'REQUIRES'
-    and 'UNSUPPORTED' information. The RUN lines also will have variable
-    substitution performed. If 'require_script' is False an empty script may be
-    returned. This can be used for test formats where the actual script is
-    optional or ignored.
-    """
-
-    # Get the temporary location, this is always relative to the test suite
-    # root, not test source root.
-    #
-    # FIXME: This should not be here?
-    sourcepath = test.getSourcePath()
-    sourcedir = os.path.dirname(sourcepath)
+def getTempPaths(test):
+    """Get the temporary location, this is always relative to the test suite
+    root, not test source root."""
     execpath = test.getExecPath()
     execdir,execbase = os.path.split(execpath)
     tmpDir = os.path.join(execdir, 'Output')
     tmpBase = os.path.join(tmpDir, execbase)
+    return tmpDir, tmpBase
+
+def getDefaultSubstitutions(test, tmpDir, tmpBase, normalize_slashes=False):
+    sourcepath = test.getSourcePath()
+    sourcedir = os.path.dirname(sourcepath)
 
     # Normalize slashes, if requested.
     if normalize_slashes:
@@ -444,7 +435,7 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
         tmpBase = tmpBase.replace('\\', '/')
 
     # We use #_MARKER_# to hide %% while we do the other substitutions.
-    substitutions = list(extra_substitutions)
+    substitutions = []
     substitutions.extend([('%%', '#_MARKER_#')])
     substitutions.extend(test.config.substitutions)
     substitutions.extend([('%s', sourcepath),
@@ -463,8 +454,18 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
             ('%/t', tmpBase.replace('\\', '/') + '.tmp'),
             ('%/T', tmpDir.replace('\\', '/')),
             ])
+    return substitutions
 
+def parseIntegratedTestScript(test, substitutions, require_script=True):
+    """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
+    script and extract the lines to 'RUN' as well as 'XFAIL' and 'REQUIRES'
+    and 'UNSUPPORTED' information. The RUN lines also will have variable
+    substitution performed. If 'require_script' is False an empty script may be
+    returned. This can be used for test formats where the actual script is
+    optional or ignored.
+    """
     # Collect the test lines from the script.
+    sourcepath = test.getSourcePath()
     script = []
     requires = []
     unsupported = []
@@ -557,7 +558,7 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
             return lit.Test.Result(Test.UNSUPPORTED,
                  "Test requires one of the limit_to_features features %s" % msg)
 
-    return script,tmpBase
+    return script
 
 def _runShTest(test, litConfig, useExternalSh, script, tmpBase):
     # Create the output directory if it does not already exist.
@@ -595,13 +596,15 @@ def executeShTest(test, litConfig, useExternalSh,
     if test.config.unsupported:
         return (Test.UNSUPPORTED, 'Test is unsupported')
 
-    res = parseIntegratedTestScript(test, useExternalSh, extra_substitutions)
-    if isinstance(res, lit.Test.Result):
-        return res
+    tmpDir, tmpBase = getTempPaths(test)
+    substitutions = list(extra_substitutions)
+    substitutions += getDefaultSubstitutions(test, tmpDir, tmpBase,
+                                             normalize_slashes=useExternalSh)
+    script = parseIntegratedTestScript(test, substitutions)
+    if isinstance(script, lit.Test.Result):
+        return script
     if litConfig.noExecute:
         return lit.Test.Result(Test.PASS)
-
-    script, tmpBase = res
 
     # Re-run failed tests up to test_retry_attempts times.
     attempts = 1
