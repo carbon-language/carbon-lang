@@ -64,18 +64,9 @@ protected:
       RTDyld->mapSectionAddress(LocalAddress, TargetAddr);
     }
 
-    void takeOwnershipOfBuffer(std::unique_ptr<MemoryBuffer> B) {
-      OwnedBuffers.push_back(std::move(B));
-    }
-
   protected:
     std::unique_ptr<RuntimeDyld> RTDyld;
     enum { Raw, Finalizing, Finalized } State;
-
-    // FIXME: This ownership hack only exists because RuntimeDyldELF still
-    //        wants to be able to inspect the original object when resolving
-    //        relocations. As soon as that can be fixed this should be removed.
-    std::vector<std::unique_ptr<MemoryBuffer>> OwnedBuffers;
   };
 
   typedef std::list<std::unique_ptr<LinkedObjectSet>> LinkedObjectSetListT;
@@ -83,16 +74,6 @@ protected:
 public:
   /// @brief Handle to a set of loaded objects.
   typedef LinkedObjectSetListT::iterator ObjSetHandleT;
-
-  // Ownership hack.
-  // FIXME: Remove this as soon as RuntimeDyldELF can apply relocations without
-  //        referencing the original object.
-  template <typename OwningMBSet>
-  void takeOwnershipOfBuffers(ObjSetHandleT H, OwningMBSet MBs) {
-    for (auto &MB : MBs)
-      (*H)->takeOwnershipOfBuffer(std::move(MB));
-  }
-
 };
 
 /// @brief Default (no-op) action to perform when loading objects.
@@ -126,7 +107,6 @@ private:
       RTDyld->resolveRelocations();
       RTDyld->registerEHFrames();
       MemMgr->finalizeMemory();
-      OwnedBuffers.clear();
       State = Finalized;
     }
 

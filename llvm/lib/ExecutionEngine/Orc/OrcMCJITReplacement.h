@@ -175,12 +175,7 @@ public:
     std::tie(Obj, Buf) = O.takeBinary();
     std::vector<std::unique_ptr<object::ObjectFile>> Objs;
     Objs.push_back(std::move(Obj));
-    auto H =
-      ObjectLayer.addObjectSet(std::move(Objs), &MemMgr, &Resolver);
-
-    std::vector<std::unique_ptr<MemoryBuffer>> Bufs;
-    Bufs.push_back(std::move(Buf));
-    ObjectLayer.takeOwnershipOfBuffers(H, std::move(Bufs));
+    ObjectLayer.addObjectSet(std::move(Objs), &MemMgr, &Resolver);
   }
 
   void addArchive(object::OwningBinary<object::Archive> A) override {
