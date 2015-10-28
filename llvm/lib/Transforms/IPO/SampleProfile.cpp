@@ -123,6 +123,7 @@ protected:
   bool propagateThroughEdges(Function &F);
   void computeDominanceAndLoopInfo(Function &F);
   unsigned getOffset(unsigned L, unsigned H) const;
+  void clearFunctionData();
 
   /// \brief Map basic blocks to their computed weights.
   ///
@@ -173,6 +174,20 @@ protected:
   /// \brief Flag indicating whether the profile input loaded successfully.
   bool ProfileIsValid;
 };
+}
+
+/// Clear all the per-function data used to load samples and propagate weights.
+void SampleProfileLoader::clearFunctionData() {
+  BlockWeights.clear();
+  EdgeWeights.clear();
+  VisitedBlocks.clear();
+  VisitedEdges.clear();
+  EquivalenceClass.clear();
+  DT = nullptr;
+  PDT = nullptr;
+  LI = nullptr;
+  Predecessors.clear();
+  Successors.clear();
 }
 
 /// \brief Returns the offset of lineno \p L to head_lineno \p H
@@ -931,17 +946,19 @@ ModulePass *llvm::createSampleProfileLoaderPass(StringRef Name) {
 }
 
 bool SampleProfileLoader::runOnModule(Module &M) {
+  if (!ProfileIsValid)
+    return false;
+
   bool retval = false;
   for (auto &F : M)
-    if (!F.isDeclaration())
+    if (!F.isDeclaration()) {
+      clearFunctionData();
       retval |= runOnFunction(F);
+    }
   return retval;
 }
 
 bool SampleProfileLoader::runOnFunction(Function &F) {
-  if (!ProfileIsValid)
-    return false;
-
   Samples = Reader->getSamplesFor(F);
   if (!Samples->empty())
     return emitAnnotations(F);
