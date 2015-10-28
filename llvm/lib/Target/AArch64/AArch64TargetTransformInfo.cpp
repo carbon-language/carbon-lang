@@ -186,7 +186,7 @@ int AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   if (!SrcTy.isSimple() || !DstTy.isSimple())
     return BaseT::getCastInstrCost(Opcode, Dst, Src);
 
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+  static const TypeConversionCostTblEntry
   ConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
     { ISD::ZERO_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
@@ -385,7 +385,7 @@ int AArch64TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   if (ValTy->isVectorTy() && ISD == ISD::SELECT) {
     // We would need this many instructions to hide the scalarization happening.
     const int AmortizationCost = 20;
-    static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+    static const TypeConversionCostTblEntry
     VectorSelectTbl[] = {
       { ISD::SELECT, MVT::v16i1, MVT::v16i16, 16 },
       { ISD::SELECT, MVT::v8i1, MVT::v8i32, 8 },

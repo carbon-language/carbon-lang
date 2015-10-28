@@ -52,7 +52,7 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   assert(ISD && "Invalid opcode");
 
   // Single to/from double precision conversions.
-  static const CostTblEntry<MVT::SimpleValueType> NEONFltDblTbl[] = {
+  static const CostTblEntry NEONFltDblTbl[] = {
     // Vector fptrunc/fpext conversions.
     { ISD::FP_ROUND,   MVT::v2f64, 2 },
     { ISD::FP_EXTEND,  MVT::v2f32, 2 },
@@ -75,8 +75,7 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   // Some arithmetic, load and store operations have specific instructions
   // to cast up/down their types automatically at no extra cost.
   // TODO: Get these tables to know at least what the related operations are.
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  NEONVectorConversionTbl[] = {
+  static const TypeConversionCostTblEntry NEONVectorConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
     { ISD::ZERO_EXTEND, MVT::v4i32, MVT::v4i16, 0 },
     { ISD::SIGN_EXTEND, MVT::v2i64, MVT::v2i32, 1 },
@@ -159,8 +158,7 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   }
 
   // Scalar float to integer conversions.
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  NEONFloatConversionTbl[] = {
+  static const TypeConversionCostTblEntry NEONFloatConversionTbl[] = {
     { ISD::FP_TO_SINT,  MVT::i1, MVT::f32, 2 },
     { ISD::FP_TO_UINT,  MVT::i1, MVT::f32, 2 },
     { ISD::FP_TO_SINT,  MVT::i1, MVT::f64, 2 },
@@ -190,8 +188,7 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   }
 
   // Scalar integer to float conversions.
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  NEONIntegerConversionTbl[] = {
+  static const TypeConversionCostTblEntry NEONIntegerConversionTbl[] = {
     { ISD::SINT_TO_FP,  MVT::f32, MVT::i1, 2 },
     { ISD::UINT_TO_FP,  MVT::f32, MVT::i1, 2 },
     { ISD::SINT_TO_FP,  MVT::f64, MVT::i1, 2 },
@@ -222,8 +219,7 @@ int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   }
 
   // Scalar integer conversion costs.
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  ARMIntegerConversionTbl[] = {
+  static const TypeConversionCostTblEntry ARMIntegerConversionTbl[] = {
     // i16 -> i64 requires two dependent operations.
     { ISD::SIGN_EXTEND, MVT::i64, MVT::i16, 2 },
 
@@ -277,8 +273,7 @@ int ARMTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
   // On NEON a a vector select gets lowered to vbsl.
   if (ST->hasNEON() && ValTy->isVectorTy() && ISD == ISD::SELECT) {
     // Lowering of some vector selects is currently far from perfect.
-    static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-    NEONVectorSelectTbl[] = {
+    static const TypeConversionCostTblEntry NEONVectorSelectTbl[] = {
       { ISD::SELECT, MVT::v16i1, MVT::v16i16, 2*16 + 1 + 3*1 + 4*1 },
       { ISD::SELECT, MVT::v8i1, MVT::v8i32, 4*8 + 1*3 + 1*4 + 1*2 },
       { ISD::SELECT, MVT::v16i1, MVT::v16i32, 4*16 + 1*6 + 1*8 + 1*4 },
@@ -344,7 +339,7 @@ int ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
     return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
 
   if (Kind == TTI::SK_Reverse) {
-    static const CostTblEntry<MVT::SimpleValueType> NEONShuffleTbl[] = {
+    static const CostTblEntry NEONShuffleTbl[] = {
         // Reverse shuffle cost one instruction if we are shuffling within a
         // double word (vrev) or two if we shuffle a quad word (vrev, vext).
         {ISD::VECTOR_SHUFFLE, MVT::v2i32, 1},
@@ -366,7 +361,7 @@ int ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
     return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
   }
   if (Kind == TTI::SK_Alternate) {
-    static const CostTblEntry<MVT::SimpleValueType> NEONAltShuffleTbl[] = {
+    static const CostTblEntry NEONAltShuffleTbl[] = {
         // Alt shuffle cost table for ARM. Cost is the number of instructions
         // required to create the shuffled vector.
 
@@ -402,7 +397,7 @@ int ARMTTIImpl::getArithmeticInstrCost(
 
   const unsigned FunctionCallDivCost = 20;
   const unsigned ReciprocalDivCost = 10;
-  static const CostTblEntry<MVT::SimpleValueType> CostTbl[] = {
+  static const CostTblEntry CostTbl[] = {
     // Division.
     // These costs are somewhat random. Choose a cost of 20 to indicate that
     // vectorizing devision (added function call) is going to be very expensive.

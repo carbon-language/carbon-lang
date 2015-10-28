@@ -115,8 +115,7 @@ int X86TTIImpl::getArithmeticInstrCost(
     return Cost;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType>
-  AVX2UniformConstCostTable[] = {
+  static const CostTblEntry AVX2UniformConstCostTable[] = {
     { ISD::SRA,  MVT::v4i64,   4 }, // 2 x psrad + shuffle.
 
     { ISD::SDIV, MVT::v16i16,  6 }, // vpmulhw sequence
@@ -132,7 +131,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX512CostTable[] = {
+  static const CostTblEntry AVX512CostTable[] = {
     { ISD::SHL,     MVT::v16i32,    1 },
     { ISD::SRL,     MVT::v16i32,    1 },
     { ISD::SRA,     MVT::v16i32,    1 },
@@ -146,7 +145,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX2CostTable[] = {
+  static const CostTblEntry AVX2CostTable[] = {
     // Shifts on v4i64/v8i32 on AVX2 is legal even though we declare to
     // customize them to detect the cases where shift amount is a scalar one.
     { ISD::SHL,     MVT::v4i32,    1 },
@@ -174,7 +173,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType> XOPCostTable[] = {
+  static const CostTblEntry XOPCostTable[] = {
     // 128bit shifts take 1cy, but right shifts require negation beforehand.
     { ISD::SHL,     MVT::v16i8,    1 },
     { ISD::SRL,     MVT::v16i8,    2 },
@@ -209,7 +208,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX2CustomCostTable[] = {
+  static const CostTblEntry AVX2CustomCostTable[] = {
     { ISD::SHL,  MVT::v32i8,      11 }, // vpblendvb sequence.
     { ISD::SHL,  MVT::v16i16,     10 }, // extend/vpsrlvd/pack sequence.
 
@@ -239,7 +238,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType>
+  static const CostTblEntry
   SSE2UniformConstCostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
     // custom.
@@ -310,7 +309,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       ISD = ISD::MUL;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType> SSE2CostTable[] = {
+  static const CostTblEntry SSE2CostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
     // custom.
     // For some cases, where the shift amount is a scalar we would be able
@@ -367,7 +366,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTable[] = {
+  static const CostTblEntry AVX1CostTable[] = {
     // We don't have to scalarize unsupported ops. We can issue two half-sized
     // operations and we only need to extract the upper YMM half.
     // Two ops + 1 extract + 1 insert = 4.
@@ -394,7 +393,7 @@ int X86TTIImpl::getArithmeticInstrCost(
   }
 
   // Custom lowering of vectors.
-  static const CostTblEntry<MVT::SimpleValueType> CustomLowered[] = {
+  static const CostTblEntry CustomLowered[] = {
     // A v2i64/v4i64 and multiply is custom lowered as a series of long
     // multiplies(3), shifts(4) and adds(2).
     { ISD::MUL,     MVT::v2i64,    9 },
@@ -439,7 +438,7 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
     if (ST->hasAVX2() && LT.second == MVT::v16i16)
       return LT.first;
 
-    static const CostTblEntry<MVT::SimpleValueType> AVXAltShuffleTbl[] = {
+    static const CostTblEntry AVXAltShuffleTbl[] = {
       {ISD::VECTOR_SHUFFLE, MVT::v4i64, 1},  // vblendpd
       {ISD::VECTOR_SHUFFLE, MVT::v4f64, 1},  // vblendpd
 
@@ -460,7 +459,7 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
                                               ISD::VECTOR_SHUFFLE, LT.second))
         return LT.first * Entry->Cost;
 
-    static const CostTblEntry<MVT::SimpleValueType> SSE41AltShuffleTbl[] = {
+    static const CostTblEntry SSE41AltShuffleTbl[] = {
       // These are lowered into movsd.
       {ISD::VECTOR_SHUFFLE, MVT::v2i64, 1},
       {ISD::VECTOR_SHUFFLE, MVT::v2f64, 1},
@@ -483,7 +482,7 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
                                               LT.second))
         return LT.first * Entry->Cost;
 
-    static const CostTblEntry<MVT::SimpleValueType> SSSE3AltShuffleTbl[] = {
+    static const CostTblEntry SSSE3AltShuffleTbl[] = {
       {ISD::VECTOR_SHUFFLE, MVT::v2i64, 1},  // movsd
       {ISD::VECTOR_SHUFFLE, MVT::v2f64, 1},  // movsd
 
@@ -501,7 +500,7 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
                                               ISD::VECTOR_SHUFFLE, LT.second))
         return LT.first * Entry->Cost;
 
-    static const CostTblEntry<MVT::SimpleValueType> SSEAltShuffleTbl[] = {
+    static const CostTblEntry SSEAltShuffleTbl[] = {
       {ISD::VECTOR_SHUFFLE, MVT::v2i64, 1},  // movsd
       {ISD::VECTOR_SHUFFLE, MVT::v2f64, 1},  // movsd
 
@@ -529,8 +528,7 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  AVX512ConversionTbl[] = {
+  static const TypeConversionCostTblEntry AVX512ConversionTbl[] = {
     { ISD::FP_EXTEND, MVT::v8f64,   MVT::v8f32,  1 },
     { ISD::FP_EXTEND, MVT::v8f64,   MVT::v16f32, 3 },
     { ISD::FP_ROUND,  MVT::v8f32,   MVT::v8f64,  1 },
@@ -562,8 +560,7 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::SINT_TO_FP,  MVT::v8f64,  MVT::v8i32,  1 },
   };
 
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  AVX2ConversionTbl[] = {
+  static const TypeConversionCostTblEntry AVX2ConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v16i16, MVT::v16i8,  1 },
     { ISD::ZERO_EXTEND, MVT::v16i16, MVT::v16i8,  1 },
     { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i1,   3 },
@@ -594,8 +591,7 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::UINT_TO_FP,  MVT::v8f32,  MVT::v8i32,  8 },
   };
 
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  AVXConversionTbl[] = {
+  static const TypeConversionCostTblEntry AVXConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v16i16, MVT::v16i8, 4 },
     { ISD::ZERO_EXTEND, MVT::v16i16, MVT::v16i8, 4 },
     { ISD::SIGN_EXTEND, MVT::v8i32,  MVT::v8i1,  7 },
@@ -665,8 +661,7 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::FP_TO_UINT,  MVT::v4i32, MVT::v4f64, 4*4 },
   };
 
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  SSE2ConvTbl[] = {
+  static const TypeConversionCostTblEntry SSE2ConvTbl[] = {
     // These are somewhat magic numbers justified by looking at the output of
     // Intel's IACA, running some kernels and making sure when we take
     // legalization into account the throughput will be overestimated.
@@ -737,7 +732,7 @@ int X86TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  static const CostTblEntry<MVT::SimpleValueType> SSE42CostTbl[] = {
+  static const CostTblEntry SSE42CostTbl[] = {
     { ISD::SETCC,   MVT::v2f64,   1 },
     { ISD::SETCC,   MVT::v4f32,   1 },
     { ISD::SETCC,   MVT::v2i64,   1 },
@@ -746,7 +741,7 @@ int X86TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
     { ISD::SETCC,   MVT::v16i8,   1 },
   };
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTbl[] = {
+  static const CostTblEntry AVX1CostTbl[] = {
     { ISD::SETCC,   MVT::v4f64,   1 },
     { ISD::SETCC,   MVT::v8f32,   1 },
     // AVX1 does not support 8-wide integer compare.
@@ -756,14 +751,14 @@ int X86TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
     { ISD::SETCC,   MVT::v32i8,   4 },
   };
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX2CostTbl[] = {
+  static const CostTblEntry AVX2CostTbl[] = {
     { ISD::SETCC,   MVT::v4i64,   1 },
     { ISD::SETCC,   MVT::v8i32,   1 },
     { ISD::SETCC,   MVT::v16i16,  1 },
     { ISD::SETCC,   MVT::v32i8,   1 },
   };
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX512CostTbl[] = {
+  static const CostTblEntry AVX512CostTbl[] = {
     { ISD::SETCC,   MVT::v8i64,   1 },
     { ISD::SETCC,   MVT::v16i32,  1 },
     { ISD::SETCC,   MVT::v8f64,   1 },
@@ -946,7 +941,7 @@ int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
   // We use the Intel Architecture Code Analyzer(IACA) to measure the throughput
   // and make it as the cost.
 
-  static const CostTblEntry<MVT::SimpleValueType> SSE42CostTblPairWise[] = {
+  static const CostTblEntry SSE42CostTblPairWise[] = {
     { ISD::FADD,  MVT::v2f64,   2 },
     { ISD::FADD,  MVT::v4f32,   4 },
     { ISD::ADD,   MVT::v2i64,   2 },      // The data reported by the IACA tool is "1.6".
@@ -954,7 +949,7 @@ int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
     { ISD::ADD,   MVT::v8i16,   5 },
   };
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTblPairWise[] = {
+  static const CostTblEntry AVX1CostTblPairWise[] = {
     { ISD::FADD,  MVT::v4f32,   4 },
     { ISD::FADD,  MVT::v4f64,   5 },
     { ISD::FADD,  MVT::v8f32,   7 },
@@ -965,7 +960,7 @@ int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
     { ISD::ADD,   MVT::v8i32,   5 },
   };
 
-  static const CostTblEntry<MVT::SimpleValueType> SSE42CostTblNoPairWise[] = {
+  static const CostTblEntry SSE42CostTblNoPairWise[] = {
     { ISD::FADD,  MVT::v2f64,   2 },
     { ISD::FADD,  MVT::v4f32,   4 },
     { ISD::ADD,   MVT::v2i64,   2 },      // The data reported by the IACA tool is "1.6".
@@ -973,7 +968,7 @@ int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
     { ISD::ADD,   MVT::v8i16,   4 },      // The data reported by the IACA tool is "4.3".
   };
 
-  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTblNoPairWise[] = {
+  static const CostTblEntry AVX1CostTblNoPairWise[] = {
     { ISD::FADD,  MVT::v4f32,   3 },
     { ISD::FADD,  MVT::v4f64,   3 },
     { ISD::FADD,  MVT::v8f32,   4 },
