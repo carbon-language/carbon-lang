@@ -780,7 +780,8 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   }
   if (!II->isFromAST()) {
     II->setIsFromAST();
-    if (isInterestingIdentifier(Reader, *II, F.isModule()))
+    bool IsModule = Reader.PP.getCurrentModule() != nullptr;
+    if (isInterestingIdentifier(Reader, *II, IsModule))
       II->setChangedSinceDeserialization();
   }
   Reader.markIdentifierUpToDate(II);
@@ -3511,7 +3512,8 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
       // whether we need to serialize it.
       if (!II.isFromAST()) {
         II.setIsFromAST();
-        if (isInterestingIdentifier(*this, II, F.isModule()))
+        bool IsModule = PP.getCurrentModule() != nullptr;
+        if (isInterestingIdentifier(*this, II, IsModule))
           II.setChangedSinceDeserialization();
       }
 
