@@ -54,8 +54,8 @@ my %Options = (
   ViewResults => 0,          # View results when the build terminates.
   ExitStatusFoundBugs => 0,  # Exit status reflects whether bugs were found
   KeepEmpty => 0,            # Don't remove output directory even with 0 results.
-  EnableCheckers => [],
-  DisableCheckers => [],
+  EnableCheckers => {},
+  DisableCheckers => {},
   UseCC => undef,            # C compiler to use for compilation.
   UseCXX => undef,           # C++ compiler to use for compilation.
   AnalyzerTarget => undef,
@@ -1630,13 +1630,17 @@ sub ProcessArgs {
 
     if ($arg eq "-enable-checker") {
       shift @$Args;
-      push @{$Options{EnableCheckers}}, shift @$Args;
+      my $Checker = shift @$Args;
+      $Options{EnableCheckers}{$Checker} = 1;
+      delete $Options{DisableCheckers}{$Checker};
       next;
     }
 
     if ($arg eq "-disable-checker") {
       shift @$Args;
-      push @{$Options{DisableCheckers}}, shift @$Args;
+      my $Checker = shift @$Args;
+      $Options{DisableCheckers}{$Checker} = 1;
+      delete $Options{EnableCheckers}{$Checker};
       next;
     }
 
@@ -1747,8 +1751,8 @@ Diag("Using '$Clang' for static analysis\n");
 SetHtmlEnv(\@ARGV, $Options{OutputDir});
 
 my @AnalysesToRun;
-foreach (@{$Options{EnableCheckers}}) { push @AnalysesToRun, "-analyzer-checker", $_; }
-foreach (@{$Options{DisableCheckers}}) { push @AnalysesToRun, "-analyzer-disable-checker", $_; }
+foreach (keys %{$Options{EnableCheckers}}) { push @AnalysesToRun, "-analyzer-checker", $_; }
+foreach (keys %{$Options{DisableCheckers}}) { push @AnalysesToRun, "-analyzer-disable-checker", $_; }
 if ($Options{AnalyzeHeaders}) { push @AnalysesToRun, "-analyzer-opt-analyze-headers"; }
 if ($Options{AnalyzerStats}) { push @AnalysesToRun, '-analyzer-checker=debug.Stats'; }
 if ($Options{MaxLoop} > 0) { push @AnalysesToRun, "-analyzer-max-loop $Options{MaxLoop}"; }
