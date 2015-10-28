@@ -118,6 +118,10 @@ N: David Majnemer
 E: david.majnemer@gmail.com
 D: IR Constant Folder, InstCombine
 
+N: Dylan McKay
+E: dylanmckay34@gmail.com
+D: AVR Backend
+
 N: Tim Northover
 E: t.p.northover@gmail.com
 D: AArch64 backend, misc ARM backend
