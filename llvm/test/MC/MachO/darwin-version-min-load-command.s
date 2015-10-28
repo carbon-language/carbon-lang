@@ -3,12 +3,22 @@
 // RUN: llvm-mc -triple x86_64-apple-darwin %s -filetype=obj -o - | llvm-objdump -macho -private-headers - | FileCheck %s --check-prefix=CHECK-DARWIN
 
 // Test version-min load command should be inferred from triple and should always be generated on Darwin
-// CHECK:           cmd LC_VERSION_MIN_MACOSX
-// CHECK-NEXT:   cmdsize 16
-// CHECK-NEXT:   version 10.10
+// CHECK: Load command
+// CHECK:       cmd LC_VERSION_MIN_MACOSX
+// CHECK:   cmdsize 16
+// CHECK:   version 10.10
 
-// CHECK-IOS:           cmd LC_VERSION_MIN_IPHONEOS
-// CHECK-IOS-NEXT:   cmdsize 16
-// CHECK-IOS-NEXT:   version 8.0
+// CHECK-IOS: Load command
+// CHECK-IOS:       cmd LC_VERSION_MIN_IPHONEOS
+// CHECK-IOS:   cmdsize 16
+// CHECK-IOS:   version 8.0
 
 // CHECK-DARWIN-NOT: LC_VERSION_MIN
+
+
+// FIXME: llvm-objdump doesn't know about WATCHOS LC yet
+// FIXME: llvm-mc -triple x86_64-apple-watchos1.0.0 %s -filetype=obj -o - | llvm-objdump -macho -private-headers - | FileCheck %s --check-prefix=CHECK-WATCHOS
+// CHECK-WATCHOS: Load command
+// CHECK-WATCHOS:       cmd LC_VERSION_MIN_WATCHOS
+// CHECK-WATCHOS:   cmdsize 16
+// CHECK-WATCHOS:   version 1.0

@@ -71,6 +71,9 @@ public:
   bool Error(SMLoc L, const Twine &Msg) {
     return getParser().Error(L, Msg);
   }
+  void Note(SMLoc L, const Twine &Msg) {
+    getParser().Note(L, Msg);
+  }
   bool TokError(const Twine &Msg) {
     return getParser().TokError(Msg);
   }

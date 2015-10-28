@@ -99,6 +99,7 @@ public:
     ARMSubArch_v7em,
     ARMSubArch_v7m,
     ARMSubArch_v7s,
+    ARMSubArch_v7k,
     ARMSubArch_v6,
     ARMSubArch_v6m,
     ARMSubArch_v6k,
@@ -156,7 +157,9 @@ public:
     AMDHSA,     // AMD HSA Runtime
     PS4,
     ELFIAMCU,
-    LastOSType = ELFIAMCU
+    TvOS,       // Apple tvOS
+    WatchOS,    // Apple watchOS
+    LastOSType = WatchOS
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -401,13 +404,27 @@ public:
   }
 
   /// Is this an iOS triple.
+  /// Note: This identifies tvOS as a variant of iOS. If that ever
+  /// changes, i.e., if the two operating systems diverge or their version
+  /// numbers get out of sync, that will need to be changed.
+  /// watchOS has completely different version numbers so it is not included.
   bool isiOS() const {
-    return getOS() == Triple::IOS;
+    return getOS() == Triple::IOS || isTvOS();
   }
 
-  /// isOSDarwin - Is this a "Darwin" OS (OS X or iOS).
+  /// Is this an Apple tvOS triple.
+  bool isTvOS() const {
+    return getOS() == Triple::TvOS;
+  }
+
+  /// Is this an Apple watchOS triple.
+  bool isWatchOS() const {
+    return getOS() == Triple::WatchOS;
+  }
+
+  /// isOSDarwin - Is this a "Darwin" OS (OS X, iOS, or watchOS).
   bool isOSDarwin() const {
-    return isMacOSX() || isiOS();
+    return isMacOSX() || isiOS() || isWatchOS();
   }
 
   bool isOSNetBSD() const {

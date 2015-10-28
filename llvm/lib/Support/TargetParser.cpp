@@ -520,6 +520,7 @@ unsigned llvm::ARM::parseArchProfile(StringRef Arch) {
     return ARM::PK_R;
   case ARM::AK_ARMV7:
   case ARM::AK_ARMV7A:
+  case ARM::AK_ARMV7K:
   case ARM::AK_ARMV7L:
   case ARM::AK_ARMV8A:
   case ARM::AK_ARMV8_1A:

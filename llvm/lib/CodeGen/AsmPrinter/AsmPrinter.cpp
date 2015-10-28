@@ -196,10 +196,18 @@ bool AsmPrinter::doInitialization(Module &M) {
     unsigned Major, Minor, Update;
     TT.getOSVersion(Major, Minor, Update);
     // If there is a version specified, Major will be non-zero.
-    if (Major)
-      OutStreamer->EmitVersionMin((TT.isMacOSX() ?
-                                   MCVM_OSXVersionMin : MCVM_IOSVersionMin),
-                                  Major, Minor, Update);
+    if (Major) {
+      MCVersionMinType VersionType;
+      if (TT.isWatchOS())
+        VersionType = MCVM_WatchOSVersionMin;
+      else if (TT.isTvOS())
+        VersionType = MCVM_TvOSVersionMin;
+      else if (TT.isMacOSX())
+        VersionType = MCVM_OSXVersionMin;
+      else
+        VersionType = MCVM_IOSVersionMin;
+      OutStreamer->EmitVersionMin(VersionType, Major, Minor, Update);
+    }
   }
 
   // Allow the target to emit any magic that it wants at the start of the file.

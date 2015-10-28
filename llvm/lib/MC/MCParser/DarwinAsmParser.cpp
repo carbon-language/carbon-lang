@@ -40,6 +40,8 @@ class DarwinAsmParser : public MCAsmParserExtension {
                           unsigned TAA = 0, unsigned ImplicitAlign = 0,
                           unsigned StubSize = 0);
 
+  SMLoc LastVersionMinDirective;
+
 public:
   DarwinAsmParser() {}
 
@@ -166,9 +168,14 @@ public:
     addDirectiveHandler<&DarwinAsmParser::parseSectionDirectiveTLV>(".tlv");
 
     addDirectiveHandler<&DarwinAsmParser::parseSectionDirectiveIdent>(".ident");
+    addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(
+      ".watchos_version_min");
+    addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(".tvos_version_min");
     addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(".ios_version_min");
     addDirectiveHandler<&DarwinAsmParser::parseVersionMin>(
       ".macosx_version_min");
+
+    LastVersionMinDirective = SMLoc();
   }
 
   bool parseDirectiveDesc(StringRef, SMLoc);
@@ -892,9 +899,11 @@ bool DarwinAsmParser::parseDirectiveDataRegionEnd(StringRef, SMLoc) {
 /// parseVersionMin
 ///  ::= .ios_version_min major,minor[,update]
 ///  ::= .macosx_version_min major,minor[,update]
-bool DarwinAsmParser::parseVersionMin(StringRef Directive, SMLoc) {
+bool DarwinAsmParser::parseVersionMin(StringRef Directive, SMLoc Loc) {
   int64_t Major = 0, Minor = 0, Update = 0;
   int Kind = StringSwitch<int>(Directive)
+    .Case(".watchos_version_min", MCVM_WatchOSVersionMin)
+    .Case(".tvos_version_min", MCVM_TvOSVersionMin)
     .Case(".ios_version_min", MCVM_IOSVersionMin)
     .Case(".macosx_version_min", MCVM_OSXVersionMin);
   // Get the major version number.
@@ -926,6 +935,24 @@ bool DarwinAsmParser::parseVersionMin(StringRef Directive, SMLoc) {
     return TokError("invalid OS update number");
     Lex();
   }
+
+  const Triple &T = getContext().getObjectFileInfo()->getTargetTriple();
+  Triple::OSType ExpectedOS = Triple::UnknownOS;
+  switch ((MCVersionMinType)Kind) {
+  case MCVM_WatchOSVersionMin: ExpectedOS = Triple::WatchOS; break;
+  case MCVM_TvOSVersionMin:    ExpectedOS = Triple::TvOS;    break;
+  case MCVM_IOSVersionMin:     ExpectedOS = Triple::IOS;     break;
+  case MCVM_OSXVersionMin:     ExpectedOS = Triple::MacOSX;  break;
+  }
+  if (T.getOS() != ExpectedOS)
+    Warning(Loc, Directive + " should only be used for " +
+            Triple::getOSTypeName(ExpectedOS) + " targets");
+
+  if (LastVersionMinDirective.isValid()) {
+    Warning(Loc, "overriding previous version_min directive");
+    Note(LastVersionMinDirective, "previous definition is here");
+  }
+  LastVersionMinDirective = Loc;
 
   // We've parsed a correct version specifier, so send it to the streamer.
   getStreamer().EmitVersionMin((MCVersionMinType)Kind, Major, Minor, Update);
