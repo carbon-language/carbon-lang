@@ -42,6 +42,9 @@ public:
     Socket::SocketProtocol
     GetSocketProtocol() const;
 
+    const char*
+    GetSocketScheme() const;
+
     // Returns either TCP port number as string or domain socket path.
     // Empty string is returned in case of error.
     std::string

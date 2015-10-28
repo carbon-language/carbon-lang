@@ -37,7 +37,8 @@ SocketScheme socket_schemes[] = {
     {"unix-abstract", Socket::ProtocolUnixAbstract},
 };
 
-bool FindProtocolByScheme(const char* scheme, Socket::SocketProtocol& protocol)
+bool
+FindProtocolByScheme(const char* scheme, Socket::SocketProtocol& protocol)
 {
     for (auto s: socket_schemes)
     {
@@ -48,6 +49,17 @@ bool FindProtocolByScheme(const char* scheme, Socket::SocketProtocol& protocol)
         }
     }
     return false;
+}
+
+const char*
+FindSchemeByProtocol(const Socket::SocketProtocol protocol)
+{
+    for (auto s: socket_schemes)
+    {
+        if (s.m_protocol == protocol)
+            return s.m_scheme;
+    }
+    return nullptr;
 }
 
 }
@@ -76,6 +88,12 @@ Socket::SocketProtocol
 Acceptor::GetSocketProtocol() const
 {
     return m_listener_socket_up->GetSocketProtocol();
+}
+
+const char*
+Acceptor::GetSocketScheme() const
+{
+    return FindSchemeByProtocol(GetSocketProtocol());
 }
 
 std::string

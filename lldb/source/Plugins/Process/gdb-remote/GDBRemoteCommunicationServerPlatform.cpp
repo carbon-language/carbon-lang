@@ -46,9 +46,11 @@ using namespace lldb_private::process_gdb_remote;
 //----------------------------------------------------------------------
 // GDBRemoteCommunicationServerPlatform constructor
 //----------------------------------------------------------------------
-GDBRemoteCommunicationServerPlatform::GDBRemoteCommunicationServerPlatform(const Socket::SocketProtocol socket_protocol) :
+GDBRemoteCommunicationServerPlatform::GDBRemoteCommunicationServerPlatform(const Socket::SocketProtocol socket_protocol,
+                                                                           const char* socket_scheme) :
     GDBRemoteCommunicationServerCommon ("gdb-remote.server", "gdb-remote.server.rx_packet"),
     m_socket_protocol(socket_protocol),
+    m_socket_scheme(socket_scheme),
     m_spawned_pids_mutex (Mutex::eMutexTypeRecursive),
     m_platform_sp (Platform::GetHostPlatform ()),
     m_port_map (),
@@ -150,6 +152,7 @@ GDBRemoteCommunicationServerPlatform::Handle_qLaunchGDBServer (StringExtractorGD
     std::ostringstream url;
 
     uint16_t* port_ptr = &port;
+    url << m_socket_scheme << "://";
     if (m_socket_protocol == Socket::ProtocolTcp)
         url << platform_ip << ":" << port;
     else

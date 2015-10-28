@@ -315,7 +315,8 @@ main_platform (int argc, char *argv[])
     }
 
     do {
-        GDBRemoteCommunicationServerPlatform platform(acceptor_up->GetSocketProtocol());
+        GDBRemoteCommunicationServerPlatform platform(acceptor_up->GetSocketProtocol(),
+                                                      acceptor_up->GetSocketScheme());
         
         if (port_offset > 0)
             platform.SetPortOffset(port_offset);

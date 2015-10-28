@@ -29,7 +29,8 @@ class GDBRemoteCommunicationServerPlatform :
 public:
     typedef std::map<uint16_t, lldb::pid_t> PortMap;
 
-    GDBRemoteCommunicationServerPlatform(const Socket::SocketProtocol socket_protocol);
+    GDBRemoteCommunicationServerPlatform(const Socket::SocketProtocol socket_protocol,
+                                         const char* socket_scheme);
 
     ~GDBRemoteCommunicationServerPlatform() override;
 
@@ -67,6 +68,7 @@ public:
 
 protected:
     const Socket::SocketProtocol m_socket_protocol;
+    const std::string m_socket_scheme;
     Mutex m_spawned_pids_mutex;
     std::set<lldb::pid_t> m_spawned_pids;
     lldb::PlatformSP m_platform_sp;
