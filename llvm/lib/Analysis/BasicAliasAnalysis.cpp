@@ -616,6 +616,9 @@ ModRefInfo BasicAAResult::getArgModRefInfo(ImmutableCallSite CS,
   }
   // FIXME: Handle memset_pattern4 and memset_pattern8 also.
 
+  if (CS.paramHasAttr(ArgIdx + 1, Attribute::ReadOnly))
+    return MRI_Ref;
+
   return AAResultBase::getArgModRefInfo(CS, ArgIdx);
 }
 
