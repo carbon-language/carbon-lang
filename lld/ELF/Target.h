@@ -22,6 +22,7 @@ class TargetInfo {
 public:
   unsigned getPageSize() const { return PageSize; }
   uint64_t getVAStart() const { return VAStart; }
+  unsigned getCopyReloc() const { return CopyReloc; }
   unsigned getPCRelReloc() const { return PCRelReloc; }
   unsigned getGotReloc() const { return GotReloc; }
   unsigned getPltReloc() const { return PltReloc; }
@@ -37,6 +38,7 @@ public:
   virtual void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                              uint64_t PltEntryAddr, int32_t Index) const = 0;
   virtual bool isRelRelative(uint32_t Type) const;
+  virtual bool relocNeedsCopy(uint32_t Type, const SymbolBody &S) const;
   virtual bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const = 0;
   virtual bool relocPointsToGot(uint32_t Type) const;
   virtual bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const = 0;
@@ -56,6 +58,7 @@ protected:
   // 0x200000, but it looks like every OS uses 4k pages for executables.
   uint64_t VAStart = 0x10000;
 
+  unsigned CopyReloc;
   unsigned PCRelReloc;
   unsigned GotRefReloc;
   unsigned GotReloc;

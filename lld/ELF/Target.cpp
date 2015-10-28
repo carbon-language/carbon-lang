@@ -68,6 +68,7 @@ public:
                          uint64_t PltEntryAddr) const override;
   void writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                      uint64_t PltEntryAddr, int32_t Index) const override;
+  bool relocNeedsCopy(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsGot(uint32_t Type, const SymbolBody &S) const override;
   bool relocNeedsPlt(uint32_t Type, const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type, uint64_t P,
@@ -144,6 +145,10 @@ TargetInfo *createTarget() {
 
 TargetInfo::~TargetInfo() {}
 
+bool TargetInfo::relocNeedsCopy(uint32_t Type, const SymbolBody &S) const {
+  return false;
+}
+
 unsigned TargetInfo::getPLTRefReloc(unsigned Type) const { return PCRelReloc; }
 
 bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
@@ -200,6 +205,7 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
 }
 
 X86_64TargetInfo::X86_64TargetInfo() {
+  CopyReloc = R_X86_64_COPY;
   PCRelReloc = R_X86_64_PC32;
   GotReloc = R_X86_64_GLOB_DAT;
   GotRefReloc = R_X86_64_PC32;
@@ -242,6 +248,15 @@ void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   write32le(Buf + 12, -Index * PltEntrySize - PltZeroEntrySize - 16);
 }
 
+bool X86_64TargetInfo::relocNeedsCopy(uint32_t Type,
+                                      const SymbolBody &S) const {
+  if (Type == R_X86_64_32S || Type == R_X86_64_32 || Type == R_X86_64_PC32 ||
+      Type == R_X86_64_64)
+    if (auto *SS = dyn_cast<SharedSymbol<ELF64LE>>(&S))
+      return SS->Sym.getType() == STT_OBJECT;
+  return false;
+}
+
 bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
   return Type == R_X86_64_GOTPCREL || relocNeedsPlt(Type, S);
 }
@@ -258,6 +273,9 @@ unsigned X86_64TargetInfo::getPLTRefReloc(unsigned Type) const {
 }
 
 bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
+  if (relocNeedsCopy(Type, S))
+    return false;
+
   switch (Type) {
   default:
     return false;

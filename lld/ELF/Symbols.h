@@ -271,6 +271,7 @@ typename Undefined<ELFT>::Elf_Sym Undefined<ELFT>::Optional;
 template <class ELFT> class SharedSymbol : public Defined<ELFT> {
   typedef Defined<ELFT> Base;
   typedef typename Base::Elf_Sym Elf_Sym;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
   static bool classof(const SymbolBody *S) {
@@ -281,6 +282,10 @@ public:
       : Defined<ELFT>(Base::SharedKind, Name, Sym), File(F) {}
 
   SharedFile<ELFT> *File;
+
+  // Can have offset if requires copy relocation.
+  uintX_t OffsetInBSS = 0;
+  bool NeedsCopy = false;
 };
 
 // This class represents a symbol defined in an archive file. It is

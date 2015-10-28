@@ -163,6 +163,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       Body = Body->repl();
 
     uint32_t Type = RI.getType(Config->Mips64EL);
+    bool NeedsCopy = Body && Target->relocNeedsCopy(Type, *Body);
     bool NeedsGot = Body && Target->relocNeedsGot(Type, *Body);
     bool CanBePreempted = canBePreempted(Body, NeedsGot);
     bool LazyReloc = Body && Target->supportsLazyRelocations() &&
@@ -175,7 +176,8 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
                                       : Target->getGotReloc(),
                             Config->Mips64EL);
       else
-        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(), Type,
+        P->setSymbolAndType(Body->getDynamicSymbolTableIndex(),
+                            NeedsCopy ? Target->getCopyReloc() : Type,
                             Config->Mips64EL);
     } else {
       P->setSymbolAndType(0, Target->getRelativeReloc(), Config->Mips64EL);
@@ -186,6 +188,9 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
         P->r_offset = Out<ELFT>::GotPlt->getEntryAddr(*Body);
       else
         P->r_offset = Out<ELFT>::Got->getEntryAddr(*Body);
+    } else if (NeedsCopy) {
+      P->r_offset = Out<ELFT>::Bss->getVA() +
+                    dyn_cast<SharedSymbol<ELFT>>(Body)->OffsetInBSS;
     } else {
       P->r_offset = RI.r_offset + C.OutSec->getVA() + C.OutSecOff;
     }
@@ -195,7 +200,9 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       OrigAddend = static_cast<const Elf_Rela &>(RI).r_addend;
 
     uintX_t Addend;
-    if (CanBePreempted)
+    if (NeedsCopy)
+      Addend = 0;
+    else if (CanBePreempted)
       Addend = OrigAddend;
     else if (Body)
       Addend = getSymVA<ELFT>(cast<ELFSymbolBody<ELFT>>(*Body)) + OrigAddend;
@@ -637,7 +644,12 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
   }
   case SymbolBody::DefinedCommonKind:
     return Out<ELFT>::Bss->getVA() + cast<DefinedCommon<ELFT>>(S).OffsetInBSS;
-  case SymbolBody::SharedKind:
+  case SymbolBody::SharedKind: {
+    auto &SS = cast<SharedSymbol<ELFT>>(S);
+    if (SS.NeedsCopy)
+      return Out<ELFT>::Bss->getVA() + SS.OffsetInBSS;
+    return 0;
+  }
   case SymbolBody::UndefinedKind:
     return 0;
   case SymbolBody::LazyKind:
@@ -990,9 +1002,13 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     case SymbolBody::DefinedCommonKind:
       OutSec = Out<ELFT>::Bss;
       break;
+    case SymbolBody::SharedKind: {
+      if (cast<SharedSymbol<ELFT>>(Body)->NeedsCopy)
+        OutSec = Out<ELFT>::Bss;
+      break;
+    }
     case SymbolBody::UndefinedKind:
     case SymbolBody::DefinedAbsoluteKind:
-    case SymbolBody::SharedKind:
     case SymbolBody::LazyKind:
       break;
     }

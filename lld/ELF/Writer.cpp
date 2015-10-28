@@ -200,6 +200,11 @@ void Writer<ELFT>::scanRelocs(
     bool NeedsGot = false;
     bool NeedsPlt = false;
     if (Body) {
+      if (auto *E = dyn_cast<SharedSymbol<ELFT>>(Body)) {
+        if (E->NeedsCopy)
+          continue;
+        E->NeedsCopy = Target->relocNeedsCopy(Type, *Body);
+      }
       NeedsPlt = Target->relocNeedsPlt(Type, *Body);
       if (NeedsPlt) {
         if (Body->isInPlt())
@@ -395,6 +400,24 @@ static void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
   Out<ELFT>::Bss->setSize(Off);
 }
 
+template <class ELFT>
+static void addSharedCopySymbols(std::vector<SharedSymbol<ELFT> *> &Syms) {
+  typedef typename ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+
+  uintX_t Off = Out<ELFT>::Bss->getSize();
+  for (SharedSymbol<ELFT> *C : Syms) {
+    const Elf_Sym &Sym = C->Sym;
+    // We don't know the exact alignment requirement for the data copied by a
+    // copy relocation, so align that to 16 byte boundaries that should be large
+    // enough unconditionally.
+    Off = RoundUpToAlignment(Off, 16);
+    C->OffsetInBSS = Off;
+    Off += Sym.st_size;
+  }
+  Out<ELFT>::Bss->setSize(Off);
+}
+
 static StringRef getOutputName(StringRef S) {
   if (S.startswith(".text."))
     return ".text";
@@ -498,6 +521,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
             scanRelocs(*S);
 
   std::vector<DefinedCommon<ELFT> *> CommonSymbols;
+  std::vector<SharedSymbol<ELFT> *> SharedCopySymbols;
   for (auto &P : Symtab.getSymbols()) {
     SymbolBody *Body = P.second->Body;
     if (auto *U = dyn_cast<Undefined<ELFT>>(Body))
@@ -506,6 +530,10 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
     if (auto *C = dyn_cast<DefinedCommon<ELFT>>(Body))
       CommonSymbols.push_back(C);
+    if (auto *SC = dyn_cast<SharedSymbol<ELFT>>(Body))
+      if (SC->NeedsCopy)
+        SharedCopySymbols.push_back(SC);
+
     if (!includeInSymtab<ELFT>(*Body))
       continue;
     if (Out<ELFT>::SymTab)
@@ -515,6 +543,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Out<ELFT>::DynSymTab->addSymbol(Body);
   }
   addCommonSymbols(CommonSymbols);
+  addSharedCopySymbols(SharedCopySymbols);
 
   // This order is not the same as the final output order
   // because we sort the sections using their attributes below.

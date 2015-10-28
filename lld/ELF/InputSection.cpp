@@ -112,7 +112,8 @@ void InputSection<ELFT>::relocate(
     } else if (Target->relocPointsToGot(Type)) {
       SymVA = Out<ELFT>::Got->getVA();
       Type = Target->getPCRelReloc();
-    } else if (isa<SharedSymbol<ELFT>>(Body)) {
+    } else if (!Target->relocNeedsCopy(Type, Body) &&
+               isa<SharedSymbol<ELFT>>(Body)) {
       continue;
     }
     Target->relocateOne(Buf + RI.r_offset, BufEnd, Type, BaseAddr + RI.r_offset,
