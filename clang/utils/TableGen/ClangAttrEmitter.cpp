@@ -166,11 +166,12 @@ namespace {
     std::string lowerName, upperName;
     StringRef attrName;
     bool isOpt;
+    bool Fake;
 
   public:
     Argument(const Record &Arg, StringRef Attr)
       : lowerName(Arg.getValueAsString("Name")), upperName(lowerName),
-        attrName(Attr), isOpt(false) {
+        attrName(Attr), isOpt(false), Fake(false) {
       if (!lowerName.empty()) {
         lowerName[0] = std::tolower(lowerName[0]);
         upperName[0] = std::toupper(upperName[0]);
@@ -184,6 +185,9 @@ namespace {
 
     bool isOptional() const { return isOpt; }
     void setOptional(bool set) { isOpt = set; }
+
+    bool isFake() const { return Fake; }
+    void setFake(bool fake) { Fake = fake; }
 
     // These functions print the argument contents formatted in different ways.
     virtual void writeAccessors(raw_ostream &OS) const = 0;
@@ -1078,6 +1082,9 @@ createArgument(const Record &Arg, StringRef Attr,
   if (Ptr && Arg.getValueAsBit("Optional"))
     Ptr->setOptional(true);
 
+  if (Ptr && Arg.getValueAsBit("Fake"))
+    Ptr->setFake(true);
+
   return Ptr;
 }
 
@@ -1186,23 +1193,33 @@ writePrettyPrintFunction(Record &R,
       continue;
     }
 
+    // Fake arguments aren't part of the parsed form and should not be
+    // pretty-printed.
+    bool hasNonFakeArgs = false;
+    for (const auto &arg : Args) {
+      if (arg->isFake()) continue;
+      hasNonFakeArgs = true;
+    }
+
     // FIXME: always printing the parenthesis isn't the correct behavior for
     // attributes which have optional arguments that were not provided. For
     // instance: __attribute__((aligned)) will be pretty printed as
     // __attribute__((aligned())). The logic should check whether there is only
     // a single argument, and if it is optional, whether it has been provided.
-    if (!Args.empty())
+    if (hasNonFakeArgs)
       OS << "(";
     if (Spelling == "availability") {
       writeAvailabilityValue(OS);
     } else {
-      for (auto I = Args.begin(), E = Args.end(); I != E; ++ I) {
-        if (I != Args.begin()) OS << ", ";
-        (*I)->writeValue(OS);
+      unsigned index = 0;
+      for (const auto &arg : Args) {
+        if (arg->isFake()) continue;
+        if (index++) OS << ", ";
+        arg->writeValue(OS);
       }
     }
 
-    if (!Args.empty())
+    if (hasNonFakeArgs)
       OS << ")";
     OS << Suffix + "\";\n";
 
@@ -1474,10 +1491,19 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     std::vector<std::unique_ptr<Argument>> Args;
     Args.reserve(ArgRecords.size());
 
+    bool HasOptArg = false;
+    bool HasFakeArg = false;
     for (const auto *ArgRecord : ArgRecords) {
       Args.emplace_back(createArgument(*ArgRecord, R.getName()));
       Args.back()->writeDeclarations(OS);
       OS << "\n\n";
+
+      // For these purposes, fake takes priority over optional.
+      if (Args.back()->isFake()) {
+        HasFakeArg = true;
+      } else if (Args.back()->isOptional()) {
+        HasOptArg = true;
+      }
     }
 
     OS << "\npublic:\n";
@@ -1496,69 +1522,53 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     if (!ElideSpelling)
       OS << CreateSemanticSpellings(Spellings, SemanticToSyntacticMap);
 
-    OS << "  static " << R.getName() << "Attr *CreateImplicit(";
-    OS << "ASTContext &Ctx";
-    if (!ElideSpelling)
-      OS << ", Spelling S";
-    for (auto const &ai : Args) {
-      OS << ", ";
-      ai->writeCtorParameters(OS);
-    }
-    OS << ", SourceRange Loc = SourceRange()";
-    OS << ") {\n";
-    OS << "    " << R.getName() << "Attr *A = new (Ctx) " << R.getName();
-    OS << "Attr(Loc, Ctx, ";
-    for (auto const &ai : Args) {
-      ai->writeImplicitCtorArgs(OS);
-      OS << ", ";
-    }
-    OS << (ElideSpelling ? "0" : "S") << ");\n";
-    OS << "    A->setImplicit(true);\n";
-    OS << "    return A;\n  }\n\n";
+    // Emit CreateImplicit factory methods.
+    auto emitCreateImplicit = [&](bool emitFake) {
+      OS << "  static " << R.getName() << "Attr *CreateImplicit(";
+      OS << "ASTContext &Ctx";
+      if (!ElideSpelling)
+        OS << ", Spelling S";
+      for (auto const &ai : Args) {
+        if (ai->isFake() && !emitFake) continue;
+        OS << ", ";
+        ai->writeCtorParameters(OS);
+      }
+      OS << ", SourceRange Loc = SourceRange()";
+      OS << ") {\n";
+      OS << "    " << R.getName() << "Attr *A = new (Ctx) " << R.getName();
+      OS << "Attr(Loc, Ctx, ";
+      for (auto const &ai : Args) {
+        if (ai->isFake() && !emitFake) continue;
+        ai->writeImplicitCtorArgs(OS);
+        OS << ", ";
+      }
+      OS << (ElideSpelling ? "0" : "S") << ");\n";
+      OS << "    A->setImplicit(true);\n";
+      OS << "    return A;\n  }\n\n";
+    };
 
-    OS << "  " << R.getName() << "Attr(SourceRange R, ASTContext &Ctx\n";
-    
-    bool HasOpt = false;
-    for (auto const &ai : Args) {
-      OS << "              , ";
-      ai->writeCtorParameters(OS);
-      OS << "\n";
-      if (ai->isOptional())
-        HasOpt = true;
-    }
+    // Emit a CreateImplicit that takes all the arguments.
+    emitCreateImplicit(true);
 
-    OS << "              , ";
-    OS << "unsigned SI\n";
-
-    OS << "             )\n";
-    OS << "    : " << SuperName << "(attr::" << R.getName() << ", R, SI, "
-       << R.getValueAsBit("LateParsed") << ", "
-       << R.getValueAsBit("DuplicatesAllowedWhileMerging") << ")\n";
-
-    for (auto const &ai : Args) {
-      OS << "              , ";
-      ai->writeCtorInitializers(OS);
-      OS << "\n";
+    // Emit a CreateImplicit that takes all the non-fake arguments.
+    if (HasFakeArg) {
+      emitCreateImplicit(false);
     }
 
-    OS << "  {\n";
-  
-    for (auto const &ai : Args) {
-      ai->writeCtorBody(OS);
-      OS << "\n";
-    }
-    OS << "  }\n\n";
+    // Emit constructors.
+    auto emitCtor = [&](bool emitOpt, bool emitFake) {
+      auto shouldEmitArg = [=](const std::unique_ptr<Argument> &arg) {
+        if (arg->isFake()) return emitFake;
+        if (arg->isOptional()) return emitOpt;
+        return true;
+      };
 
-    // If there are optional arguments, write out a constructor that elides the
-    // optional arguments as well.
-    if (HasOpt) {
       OS << "  " << R.getName() << "Attr(SourceRange R, ASTContext &Ctx\n";
       for (auto const &ai : Args) {
-        if (!ai->isOptional()) {
-          OS << "              , ";
-          ai->writeCtorParameters(OS);
-          OS << "\n";
-        }
+        if (!shouldEmitArg(ai)) continue;
+        OS << "              , ";
+        ai->writeCtorParameters(OS);
+        OS << "\n";
       }
 
       OS << "              , ";
@@ -1571,19 +1581,37 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
 
       for (auto const &ai : Args) {
         OS << "              , ";
-        ai->writeCtorDefaultInitializers(OS);
+        if (!shouldEmitArg(ai)) {
+          ai->writeCtorDefaultInitializers(OS);
+        } else {
+          ai->writeCtorInitializers(OS);
+        }
         OS << "\n";
       }
 
       OS << "  {\n";
   
       for (auto const &ai : Args) {
-        if (!ai->isOptional()) {
-          ai->writeCtorBody(OS);
-          OS << "\n";
-        }
+        if (!shouldEmitArg(ai)) continue;
+        ai->writeCtorBody(OS);
+        OS << "\n";
       }
       OS << "  }\n\n";
+
+    };
+
+    // Emit a constructor that includes all the arguments.
+    // This is necessary for cloning.
+    emitCtor(true, true);
+
+    // Emit a constructor that takes all the non-fake arguments.
+    if (HasFakeArg) {
+      emitCtor(true, false);
+    }
+ 
+    // Emit a constructor that takes all the non-fake, non-optional arguments.
+    if (HasOptArg) {
+      emitCtor(false, false);
     }
 
     OS << "  " << R.getName() << "Attr *clone(ASTContext &C) const;\n";
@@ -1604,6 +1632,9 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     for (auto const &ai : Args) {
       ai->writeAccessors(OS);
       OS << "\n\n";
+
+      // Don't write conversion routines for fake arguments.
+      if (ai->isFake()) continue;
 
       if (ai->isEnumArg())
         static_cast<const EnumArgument *>(ai.get())->writeConversion(OS);

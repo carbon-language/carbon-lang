@@ -5378,7 +5378,7 @@ static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
   llvm::StringRef explanation;
   if (decl && isForbiddenTypeAllowed(S, decl, diag, explanation)) {
     decl->addAttr(UnavailableAttr::CreateImplicit(S.Context, explanation,
-                                                  diag.Loc));
+                                UnavailableAttr::ISK_ForbiddenType, diag.Loc));
     return;
   }
   if (S.getLangOpts().ObjCAutoRefCount)
@@ -5464,7 +5464,8 @@ static void DoEmitAvailabilityWarning(Sema &S, Sema::AvailabilityDiagnostic K,
 
     if (!Message.empty()) {
       if (auto attr = D->getAttr<UnavailableAttr>())
-        if (attr->isImplicit())
+        if (attr->isImplicit() &&
+            attr->getImplicitSource() == UnavailableAttr::ISK_ForbiddenType)
           diag_available_here = diag::note_unavailability_inferred_here;
     }
 
