@@ -17,13 +17,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-#ifdef __ANDROID__
-// Android does not have SUN_LEN
-#ifndef SUN_LEN
-#define SUN_LEN(ptr) ((size_t) (((struct sockaddr_un *) 0)->sun_path) + strlen((ptr)->sun_path))
-#endif
-#endif // #ifdef __ANDROID__
-
 namespace {
 
 const int kDomain = AF_UNIX;
