@@ -299,7 +299,8 @@ unsigned ARMSubtarget::getMispredictionPenalty() const {
 }
 
 bool ARMSubtarget::hasSinCos() const {
-  return getTargetTriple().isiOS() && !getTargetTriple().isOSVersionLT(7, 0);
+  return isTargetWatchOS() ||
+    (isTargetIOS() && !getTargetTriple().isOSVersionLT(7, 0));
 }
 
 bool ARMSubtarget::enableMachineScheduler() const {

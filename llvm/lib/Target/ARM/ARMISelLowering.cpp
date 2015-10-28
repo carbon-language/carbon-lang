@@ -242,6 +242,13 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
           setCmpLibcallCC(LC.Op, LC.Cond);
       }
     }
+
+    // Set the correct calling convention for ARMv7k WatchOS. It's just
+    // AAPCS_VFP for functions as simple as libcalls.
+    if (Subtarget->isTargetWatchOS()) {
+      for (int i = 0; i < RTLIB::UNKNOWN_LIBCALL; ++i)
+        setLibcallCallingConv((RTLIB::Libcall)i, CallingConv::ARM_AAPCS_VFP);
+    }
   }
 
   // These libcalls are not available in 32-bit.
@@ -377,8 +384,9 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   }
 
   // Use divmod compiler-rt calls for iOS 5.0 and later.
-  if (Subtarget->getTargetTriple().isiOS() &&
-      !Subtarget->getTargetTriple().isOSVersionLT(5, 0)) {
+  if (Subtarget->isTargetWatchOS() ||
+      (Subtarget->isTargetIOS() &&
+       !Subtarget->getTargetTriple().isOSVersionLT(5, 0))) {
     setLibcallName(RTLIB::SDIVREM_I32, "__divmodsi4");
     setLibcallName(RTLIB::UDIVREM_I32, "__udivmodsi4");
   }
@@ -941,7 +949,11 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   if (Subtarget->hasSinCos()) {
     setLibcallName(RTLIB::SINCOS_F32, "sincosf");
     setLibcallName(RTLIB::SINCOS_F64, "sincos");
-    if (Subtarget->getTargetTriple().isiOS()) {
+    if (Subtarget->isTargetWatchOS()) {
+      setLibcallCallingConv(RTLIB::SINCOS_F32, CallingConv::ARM_AAPCS_VFP);
+      setLibcallCallingConv(RTLIB::SINCOS_F64, CallingConv::ARM_AAPCS_VFP);
+    }
+    if (Subtarget->isTargetIOS() || Subtarget->isTargetWatchOS()) {
       // For iOS, we don't want to the normal expansion of a libcall to
       // sincos. We want to issue a libcall to __sincos_stret.
       setOperationAction(ISD::FSINCOS, MVT::f64, Custom);
@@ -6576,27 +6588,33 @@ SDValue ARMTargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
   auto PtrVT = getPointerTy(DAG.getDataLayout());
 
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Pair of floats / doubles used to pass the result.
-  StructType *RetTy = StructType::get(ArgTy, ArgTy, nullptr);
-
-  // Create stack object for sret.
+  Type *RetTy = StructType::get(ArgTy, ArgTy, nullptr);
   auto &DL = DAG.getDataLayout();
-  const uint64_t ByteSize = DL.getTypeAllocSize(RetTy);
-  const unsigned StackAlign = DL.getPrefTypeAlignment(RetTy);
-  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign, false);
-  SDValue SRet = DAG.getFrameIndex(FrameIdx, getPointerTy(DL));
 
   ArgListTy Args;
+  bool ShouldUseSRet = Subtarget->isAPCS_ABI();
+  SDValue SRet;
+  if (ShouldUseSRet) {
+    // Create stack object for sret.
+    const uint64_t ByteSize = DL.getTypeAllocSize(RetTy);
+    const unsigned StackAlign = DL.getPrefTypeAlignment(RetTy);
+    int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign, false);
+    SRet = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy(DL));
+
+    ArgListEntry Entry;
+    Entry.Node = SRet;
+    Entry.Ty = RetTy->getPointerTo();
+    Entry.isSExt = false;
+    Entry.isZExt = false;
+    Entry.isSRet = true;
+    Args.push_back(Entry);
+    RetTy = Type::getVoidTy(*DAG.getContext());
+  }
+
   ArgListEntry Entry;
-
-  Entry.Node = SRet;
-  Entry.Ty = RetTy->getPointerTo();
-  Entry.isSExt = false;
-  Entry.isZExt = false;
-  Entry.isSRet = true;
-  Args.push_back(Entry);
-
   Entry.Node = Arg;
   Entry.Ty = ArgTy;
   Entry.isSExt = false;
@@ -6605,15 +6623,20 @@ SDValue ARMTargetLowering::LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const {
 
   const char *LibcallName =
       (ArgVT == MVT::f64) ? "__sincos_stret" : "__sincosf_stret";
+  RTLIB::Libcall LC =
+      (ArgVT == MVT::f64) ? RTLIB::SINCOS_F64 : RTLIB::SINCOS_F32;
+  CallingConv::ID CC = getLibcallCallingConv(LC);
   SDValue Callee = DAG.getExternalSymbol(LibcallName, getPointerTy(DL));
 
   TargetLowering::CallLoweringInfo CLI(DAG);
-  CLI.setDebugLoc(dl).setChain(DAG.getEntryNode())
-    .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()), Callee,
-               std::move(Args), 0)
-    .setDiscardResult();
-
+  CLI.setDebugLoc(dl)
+      .setChain(DAG.getEntryNode())
+      .setCallee(CC, RetTy, Callee, std::move(Args), 0)
+      .setDiscardResult(ShouldUseSRet);
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
+
+  if (!ShouldUseSRet)
+    return CallResult.first;
 
   SDValue LoadSin = DAG.getLoad(ArgVT, dl, CallResult.second, SRet,
                                 MachinePointerInfo(), false, false, false, 0);

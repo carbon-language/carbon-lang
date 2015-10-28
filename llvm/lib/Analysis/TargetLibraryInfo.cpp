@@ -74,13 +74,14 @@ static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
   }
 
   // memset_pattern16 is only available on iOS 3.0 and Mac OS X 10.5 and later.
+  // All versions of watchOS support it.
   if (T.isMacOSX()) {
     if (T.isMacOSXVersionLT(10, 5))
       TLI.setUnavailable(LibFunc::memset_pattern16);
   } else if (T.isiOS()) {
     if (T.isOSVersionLT(3, 0))
       TLI.setUnavailable(LibFunc::memset_pattern16);
-  } else {
+  } else if (!T.isWatchOS()) {
     TLI.setUnavailable(LibFunc::memset_pattern16);
   }
 
@@ -288,8 +289,12 @@ static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
     }
     break;
   case Triple::IOS:
+  case Triple::WatchOS:
     TLI.setUnavailable(LibFunc::exp10l);
-    if (T.isOSVersionLT(7, 0)) {
+    if (!T.isWatchOS() && (T.isOSVersionLT(7, 0) ||
+                           (T.isOSVersionLT(9, 0) &&
+                            (T.getArch() == Triple::x86 ||
+                             T.getArch() == Triple::x86_64)))) {
       TLI.setUnavailable(LibFunc::exp10);
       TLI.setUnavailable(LibFunc::exp10f);
     } else {
@@ -319,6 +324,7 @@ static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
   case Triple::Darwin:
   case Triple::MacOSX:
   case Triple::IOS:
+  case Triple::WatchOS:
   case Triple::FreeBSD:
   case Triple::Linux:
     break;
