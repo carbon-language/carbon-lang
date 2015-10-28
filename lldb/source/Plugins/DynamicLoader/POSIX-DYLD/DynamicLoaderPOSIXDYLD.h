@@ -88,6 +88,10 @@ protected:
     /// Rendezvous breakpoint.
     lldb::break_id_t m_dyld_bid;
 
+    /// Contains AT_SYSINFO_EHDR, which means a vDSO has been
+    /// mapped to the address space
+    lldb::addr_t m_vdso_base;
+
     /// Loaded module list. (link map for each module)
     std::map<lldb::ModuleWP, lldb::addr_t, std::owner_less<lldb::ModuleWP>> m_loaded_modules;
 
@@ -158,6 +162,11 @@ protected:
     /// success and LLDB_INVALID_ADDRESS on failure.
     lldb::addr_t
     GetEntryPoint();
+
+    /// Evaluate if Aux vectors contain vDSO information
+    /// in case they do, read and assign the address to m_vdso_base
+    void
+    EvalVdsoStatus();
 
     /// Loads Module from inferior process.
     void

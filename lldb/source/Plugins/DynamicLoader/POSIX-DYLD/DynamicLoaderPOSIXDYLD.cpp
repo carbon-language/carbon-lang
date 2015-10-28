@@ -91,7 +91,8 @@ DynamicLoaderPOSIXDYLD::DynamicLoaderPOSIXDYLD(Process *process)
       m_load_offset(LLDB_INVALID_ADDRESS),
       m_entry_point(LLDB_INVALID_ADDRESS),
       m_auxv(),
-      m_dyld_bid(LLDB_INVALID_BREAK_ID)
+      m_dyld_bid(LLDB_INVALID_BREAK_ID),
+      m_vdso_base(LLDB_INVALID_ADDRESS)
 {
 }
 
@@ -125,6 +126,8 @@ DynamicLoaderPOSIXDYLD::DidAttach()
     addr_t load_offset = ComputeLoadOffset ();
     if (log)
         log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " executable '%s', load_offset 0x%" PRIx64, __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID, executable_sp ? executable_sp->GetFileSpec().GetPath().c_str () : "<null executable>", load_offset);
+
+    EvalVdsoStatus();
 
     // if we dont have a load address we cant re-base
     bool rebase_exec = (load_offset == LLDB_INVALID_ADDRESS) ? false : true;
@@ -213,6 +216,7 @@ DynamicLoaderPOSIXDYLD::DidLaunch()
 
     executable = GetTargetExecutable();
     load_offset = ComputeLoadOffset();
+    EvalVdsoStatus();
 
     if (executable.get() && load_offset != LLDB_INVALID_ADDRESS)
     {
@@ -503,7 +507,15 @@ DynamicLoaderPOSIXDYLD::LoadAllCurrentModules()
     // that ourselves here.
     ModuleSP executable = GetTargetExecutable();
     m_loaded_modules[executable] = m_rendezvous.GetLinkMapAddress();
-
+    if (m_vdso_base != LLDB_INVALID_ADDRESS)
+    {
+        FileSpec file_spec("[vdso]", false);
+        ModuleSP module_sp = LoadModuleAtAddress(file_spec, LLDB_INVALID_ADDRESS, m_vdso_base, false);
+        if (module_sp.get())
+        {
+            module_list.Append(module_sp);
+        }
+    }
     for (I = m_rendezvous.begin(), E = m_rendezvous.end(); I != E; ++I)
     {
         ModuleSP module_sp = LoadModuleAtAddress(I->file_spec, I->link_addr, I->base_addr, true);
@@ -549,6 +561,16 @@ DynamicLoaderPOSIXDYLD::ComputeLoadOffset()
             
     m_load_offset = virt_entry - file_entry.GetFileAddress();
     return m_load_offset;
+}
+
+void
+DynamicLoaderPOSIXDYLD::EvalVdsoStatus()
+{
+    AuxVector::iterator I = m_auxv->FindEntry(AuxVector::AT_SYSINFO_EHDR);
+
+    if (I != m_auxv->end())
+        m_vdso_base = I->value;
+
 }
 
 addr_t

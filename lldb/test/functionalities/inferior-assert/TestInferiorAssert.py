@@ -12,7 +12,6 @@ class AssertingInferiorTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
@@ -26,7 +25,6 @@ class AssertingInferiorTestCase(TestBase):
         self.build()
         self.inferior_asserting_registers()
 
-    @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting_disassemble(self):
         """Test that lldb reliably disassembles frames after asserting (command)."""
@@ -40,14 +38,12 @@ class AssertingInferiorTestCase(TestBase):
         self.build()
         self.inferior_asserting_python()
 
-    @expectedFailurei386('llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly')
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting_expr(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
         self.build()
         self.inferior_asserting_expr()
 
-    @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
@@ -146,6 +142,12 @@ class AssertingInferiorTestCase(TestBase):
         thread = process.GetThreadAtIndex(0)
         self.assertTrue(thread.IsValid(), "current thread is valid")
 
+        lastframeID = thread.GetFrameAtIndex(thread.GetNumFrames() - 1).GetFrameID()
+
+        isi386Arch = False
+        if "i386" in self.getArchitecture():
+            isi386Arch = True
+
         # lldb should be able to disassemble frames from the inferior after asserting.
         for frame in thread:
             self.assertTrue(frame.IsValid(), "current frame is valid")
@@ -160,6 +162,9 @@ class AssertingInferiorTestCase(TestBase):
             pc_backup_offset = 1
             if frame.GetFrameID() == 0:
                 pc_backup_offset = 0
+            if isi386Arch == True:
+                if lastframeID == frame.GetFrameID():
+                    pc_backup_offset = 0
             self.expect("disassemble -a %s" % (frame.GetPC() - pc_backup_offset),
                     substrs = ['<+0>: '])
 
