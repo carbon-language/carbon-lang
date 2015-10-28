@@ -46,7 +46,7 @@ public:
 
     const Triple& TT = TM->getTargetTriple();
 
-    if (TT.getArch() == Triple::x86_64)
+    if (TT.getArch() == Triple::x86_64 && TT.isOSDarwin())
       return std::move(TM);
 
     return nullptr;
