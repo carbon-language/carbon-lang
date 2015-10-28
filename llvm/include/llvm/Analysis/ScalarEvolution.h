@@ -482,6 +482,17 @@ namespace llvm {
                                                   const Loop *L,
                                                   ICmpInst::Predicate p);
 
+    /// Compute the exit limit of a loop that is controlled by a
+    /// "(IV >> 1) != 0" type comparison.  We cannot compute the exact trip
+    /// count in these cases (since SCEV has no way of expressing them), but we
+    /// can still sometimes compute an upper bound.
+    ///
+    /// Return an ExitLimit for a loop whose backedge is guarded by `LHS Pred
+    /// RHS`.
+    ExitLimit computeShiftCompareExitLimit(Value *LHS, Value *RHS,
+                                           const Loop *L,
+                                           ICmpInst::Predicate Pred);
+
     /// If the loop is known to execute a constant number of times (the
     /// condition evolves only from constants), try to evaluate a few iterations
     /// of the loop until we get the exit condition gets a value of ExitWhen
