@@ -44,12 +44,15 @@ public:
   std::unique_ptr<TargetMachine> getHostTargetMachineIfSupported() {
     std::unique_ptr<TargetMachine> TM(EngineBuilder().selectTarget());
 
+    if (!TM)
+      return nullptr;
+
     const Triple& TT = TM->getTargetTriple();
 
-    if (TT.getArch() == Triple::x86_64 && TT.isOSDarwin())
-      return TM;
+    if (TT.getArch() != Triple::x86_64 || !TT.isOSDarwin())
+      return nullptr;
 
-    return nullptr;
+    return TM;
   }
 
 private:
