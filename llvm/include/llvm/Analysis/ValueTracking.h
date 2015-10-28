@@ -436,6 +436,15 @@ namespace llvm {
   /// E.g. if RangeMD is !{i32 0, i32 10, i32 15, i32 20} then return [0, 20).
   ConstantRange getConstantRangeFromMetadata(MDNode &RangeMD);
 
+  /// Return true if RHS is known to be implied by LHS.  A & B must be i1
+  /// (boolean) values or a vector of such values. Note that the truth table for
+  /// implication is the same as <=u on i1 values (but not <=s!).  The truth
+  /// table for both is:
+  ///    | T | F (B)
+  ///  T | T | F
+  ///  F | T | T
+  /// (A)
+  bool isImpliedCondition(Value *LHS, Value *RHS);
 } // end namespace llvm
 
 #endif

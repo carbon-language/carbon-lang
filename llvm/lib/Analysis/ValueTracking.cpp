@@ -4081,3 +4081,43 @@ ConstantRange llvm::getConstantRangeFromMetadata(MDNode &Ranges) {
 
   return CR;
 }
+
+bool llvm::isImpliedCondition(Value *LHS, Value *RHS) {
+  assert(LHS->getType() == RHS->getType() && "mismatched type");
+  Type *OpTy = LHS->getType();
+  assert(OpTy->getScalarType()->isIntegerTy(1));
+
+  // LHS ==> RHS by definition
+  if (LHS == RHS) return true;
+
+  if (OpTy->isVectorTy())
+    // TODO: extending the code below to handle vectors
+    return false;
+  assert(OpTy->isIntegerTy(1) && "implied by above");
+
+  ICmpInst::Predicate APred, BPred;
+  Value *I;
+  Value *L;
+  ConstantInt *CI;
+  // i +_{nsw} C_{>0} <s L ==> i <s L
+  if (match(LHS, m_ICmp(APred,
+                        m_NSWAdd(m_Value(I), m_ConstantInt(CI)),
+                        m_Value(L))) &&
+      APred == ICmpInst::ICMP_SLT &&
+      !CI->isNegative() &&
+      match(RHS, m_ICmp(BPred, m_Specific(I), m_Specific(L))) &&
+      BPred == ICmpInst::ICMP_SLT)
+    return true;
+
+  // i +_{nuw} C_{>0} <u L ==> i <u L
+  if (match(LHS, m_ICmp(APred,
+                        m_NUWAdd(m_Value(I), m_ConstantInt(CI)),
+                        m_Value(L))) &&
+      APred == ICmpInst::ICMP_ULT &&
+      !CI->isNegative() &&
+      match(RHS, m_ICmp(BPred, m_Specific(I), m_Specific(L))) &&
+      BPred == ICmpInst::ICMP_ULT)
+    return true;
+
+  return false;
+}
