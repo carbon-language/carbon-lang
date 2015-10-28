@@ -1,6 +1,6 @@
 // RUN: clang-tidy -checks=-*,modernize-redundant-void-arg %s -- -x c | count 0
 
-#include <stddef.h>
+#define NULL 0
 
 extern int i;
 
