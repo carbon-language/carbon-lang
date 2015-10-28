@@ -456,13 +456,27 @@ def getDefaultSubstitutions(test, tmpDir, tmpBase, normalize_slashes=False):
             ])
     return substitutions
 
-def parseIntegratedTestScript(test, substitutions, require_script=True):
+def applySubstitutions(script, substitutions):
+    """Apply substitutions to the script.  Allow full regular expression syntax.
+    Replace each matching occurrence of regular expression pattern a with
+    substitution b in line ln."""
+    def processLine(ln):
+        # Apply substitutions
+        for a,b in substitutions:
+            if kIsWindows:
+                b = b.replace("\\","\\\\")
+            ln = re.sub(a, b, ln)
+
+        # Strip the trailing newline and any extra whitespace.
+        return ln.strip()
+    return map(processLine, script)
+
+def parseIntegratedTestScript(test, require_script=True):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'REQUIRES'
-    and 'UNSUPPORTED' information. The RUN lines also will have variable
-    substitution performed. If 'require_script' is False an empty script may be
-    returned. This can be used for test formats where the actual script is
-    optional or ignored.
+    and 'UNSUPPORTED' information. If 'require_script' is False an empty script
+    may be returned. This can be used for test formats where the actual script
+    is optional or ignored.
     """
     # Collect the test lines from the script.
     sourcepath = test.getSourcePath()
@@ -503,21 +517,6 @@ def parseIntegratedTestScript(test, substitutions, require_script=True):
         else:
             raise ValueError("unknown script command type: %r" % (
                     command_type,))
-
-    # Apply substitutions to the script.  Allow full regular
-    # expression syntax.  Replace each matching occurrence of regular
-    # expression pattern a with substitution b in line ln.
-    def processLine(ln):
-        # Apply substitutions
-        for a,b in substitutions:
-            if kIsWindows:
-                b = b.replace("\\","\\\\")
-            ln = re.sub(a, b, ln)
-
-        # Strip the trailing newline and any extra whitespace.
-        return ln.strip()
-    script = [processLine(ln)
-              for ln in script]
 
     # Verify the script contains a run line.
     if require_script and not script:
@@ -596,15 +595,17 @@ def executeShTest(test, litConfig, useExternalSh,
     if test.config.unsupported:
         return (Test.UNSUPPORTED, 'Test is unsupported')
 
-    tmpDir, tmpBase = getTempPaths(test)
-    substitutions = list(extra_substitutions)
-    substitutions += getDefaultSubstitutions(test, tmpDir, tmpBase,
-                                             normalize_slashes=useExternalSh)
-    script = parseIntegratedTestScript(test, substitutions)
+    script = parseIntegratedTestScript(test)
     if isinstance(script, lit.Test.Result):
         return script
     if litConfig.noExecute:
         return lit.Test.Result(Test.PASS)
+
+    tmpDir, tmpBase = getTempPaths(test)
+    substitutions = list(extra_substitutions)
+    substitutions += getDefaultSubstitutions(test, tmpDir, tmpBase,
+                                             normalize_slashes=useExternalSh)
+    script = applySubstitutions(script, substitutions)
 
     # Re-run failed tests up to test_retry_attempts times.
     attempts = 1
