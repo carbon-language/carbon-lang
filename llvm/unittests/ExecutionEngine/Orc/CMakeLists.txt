@@ -3,9 +3,7 @@ set(LLVM_LINK_COMPONENTS
   Core
   ExecutionEngine
   OrcJIT
-  MC
   Support
-  Target
   native
   )
 
