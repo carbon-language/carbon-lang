@@ -628,6 +628,10 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     updateAArch64Adr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
     break;
   }
+  case R_AARCH64_PREL64:
+    // No overflow check needed.
+    write64le(Loc, SA - P);
+    break;
   default:
     error("unrecognized reloc " + Twine(Type));
   }

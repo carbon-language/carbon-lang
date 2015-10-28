@@ -27,3 +27,14 @@
 // CHECK-NEXT:     1006:       24 00 00 00     .word
 //                             ^-- A = 0x24
 // CHECK-NEXT:     100a:       00 00 00 00     .word
+
+.section .R_AARCH64_PREL64, "ax",@progbits
+  .xword sym - . + 36
+
+// S + A = 0x24
+// P = 0x100e
+// SA - P = 0xfffffffffffff016
+// CHECK: Disassembly of section .R_AARCH64_PREL64:
+// CHECK-NEXT: $d.3:
+// CHECK-NEXT:     100e:       16 f0 ff ff     .word
+// CHECK-NEXT:     1012:       ff ff ff ff     .word
