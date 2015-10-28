@@ -1,11 +1,7 @@
-
 set(LLVM_LINK_COMPONENTS
   Core
   OrcJIT
-  MC
   Support
-  Target
-  native
   )
 
 add_llvm_unittest(OrcJITTests
@@ -14,6 +10,5 @@ add_llvm_unittest(OrcJITTests
   GlobalMappingLayerTest.cpp
   LazyEmittingLayerTest.cpp
   ObjectTransformLayerTest.cpp
-  OrcCAPITest.cpp
   OrcTestCommon.cpp
   )

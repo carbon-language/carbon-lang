@@ -18,7 +18,7 @@ namespace {
 
 TEST(IndirectionUtilsTest, MakeStub) {
   ModuleBuilder MB(getGlobalContext(), "x86_64-apple-macosx10.10", "");
-  Function *F = MB.createFunctionDecl<void(DummyStruct, DummyStruct)>("");
+  Function *F = MB.createFunctionDecl<void(DummyStruct, DummyStruct)>(MB.getModule(), "");
   SmallVector<AttributeSet, 4> Attrs;
   Attrs.push_back(
     AttributeSet::get(MB.getModule()->getContext(), 1U,
