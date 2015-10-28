@@ -9,7 +9,7 @@
 // CHECK:      Index: 1
 // CHECK-NEXT: Name: .dynsym
 
-// CHECK:      Name: .rela.dyn
+// CHECK:      Name: .rela.plt
 // CHECK-NEXT: Type: SHT_RELA
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
@@ -28,24 +28,25 @@
 // CHECK-NEXT:   SHF_ALLOC
 // CHECK-NEXT:   SHF_EXECINSTR
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: [[ADDR:.*]]
+// CHECK-NEXT: Address: 0x11000
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section ({{.*}}) .rela.dyn {
+// CHECK-NEXT:   Section ({{.*}}) .rela.plt {
 // CHECK-NEXT:     Relocation {
-// CHECK-NEXT:       Offset: [[ADDR]]
-// CHECK-NEXT:       Type: R_X86_64_64
+// CHECK-NEXT:       Offset: 0x120C8
+// CHECK-NEXT:       Type: R_X86_64_JUMP_SLOT
 // CHECK-NEXT:       Symbol: bar
-// CHECK-NEXT:       Addend: 0x42
+// CHECK-NEXT:       Addend: 0x0
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
 // CHECK: DynamicSection [
 // CHECK-NEXT:  Tag                Type                 Name/Value
-// CHECK-NEXT:  0x0000000000000007 RELA                 [[RELAADDR]]
-// CHECK-NEXT:  0x0000000000000008 RELASZ               [[RELASIZE]] (bytes)
-// CHECK-NEXT:  0x0000000000000009 RELAENT              24 (bytes)
+// CHECK-NEXT:  0x0000000000000017 JMPREL
+// CHECK-NEXT:  0x0000000000000002 PLTRELSZ             24 (bytes)
+// CHECK-NEXT:  0x0000000000000003 PLTGOT
+// CHECK-NEXT:  0x0000000000000014 PLTREL               RELA
 // CHECK-NEXT:  0x0000000000000006 SYMTAB
 // CHECK-NEXT:  0x000000000000000B SYMENT               24 (bytes)
 // CHECK-NEXT:  0x0000000000000005 STRTAB
@@ -54,7 +55,6 @@
 // CHECK-NEXT:  0x0000000000000001 NEEDED               SharedLibrary ({{.*}}2.so)
 // CHECK-NEXT:  0x0000000000000000 NULL                 0x0
 // CHECK-NEXT: ]
-
 
 .global _start
 _start:

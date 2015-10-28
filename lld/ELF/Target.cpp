@@ -262,14 +262,9 @@ bool X86_64TargetInfo::relocNeedsGot(uint32_t Type, const SymbolBody &S) const {
 }
 
 unsigned X86_64TargetInfo::getPLTRefReloc(unsigned Type) const {
-  switch (Type) {
-  case R_X86_64_32:
-    return R_X86_64_32;
-  case R_X86_64_PC32:
-  case R_X86_64_PLT32:
+  if (Type == R_X86_64_PLT32)
     return R_X86_64_PC32;
-  }
-  llvm_unreachable("Unexpected relocation");
+  return Type;
 }
 
 bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
@@ -280,6 +275,7 @@ bool X86_64TargetInfo::relocNeedsPlt(uint32_t Type, const SymbolBody &S) const {
   default:
     return false;
   case R_X86_64_32:
+  case R_X86_64_64:
   case R_X86_64_PC32:
     // This relocation is defined to have a value of (S + A - P).
     // The problems start when a non PIC program calls a function in a shared
