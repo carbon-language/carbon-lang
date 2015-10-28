@@ -395,11 +395,16 @@ bool GlobalsAAResult::AnalyzeUsesOfPointer(Value *V,
 /// Further, all loads out of GV must directly use the memory, not store the
 /// pointer somewhere.  If this is true, we consider the memory pointed to by
 /// GV to be owned by GV and can disambiguate other pointers from it.
-bool GlobalsAAResult::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
+bool GlobalsAAResult::AnalyzeIndirectGlobalMemory(GlobalVariable *GV) {
   // Keep track of values related to the allocation of the memory, f.e. the
   // value produced by the malloc call and any casts.
   std::vector<Value *> AllocRelatedValues;
 
+  // If the initializer is a valid pointer, bail.
+  if (Constant *C = GV->getInitializer())
+    if (!C->isNullValue())
+      return false;
+    
   // Walk the user list of the global.  If we find anything other than a direct
   // load or store, bail out.
   for (User *U : GV->users()) {

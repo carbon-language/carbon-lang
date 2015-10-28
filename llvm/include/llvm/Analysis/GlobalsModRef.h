@@ -107,7 +107,7 @@ private:
                             SmallPtrSetImpl<Function *> *Readers = nullptr,
                             SmallPtrSetImpl<Function *> *Writers = nullptr,
                             GlobalValue *OkayStoreDest = nullptr);
-  bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
+  bool AnalyzeIndirectGlobalMemory(GlobalVariable *GV);
   void CollectSCCMembership(CallGraph &CG);
 
   bool isNonEscapingGlobalNoAlias(const GlobalValue *GV, const Value *V);
