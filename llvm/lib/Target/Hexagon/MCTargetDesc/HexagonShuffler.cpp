@@ -27,6 +27,7 @@
 
 using namespace llvm;
 
+namespace {
 // Insn shuffling priority.
 class HexagonBid {
   // The priority is directly proportional to how restricted the insn is based
@@ -75,6 +76,7 @@ public:
       return false;
   };
 };
+} // end anonymous namespace
 
 unsigned HexagonResource::setWeight(unsigned s) {
   const unsigned SlotWeight = 8;

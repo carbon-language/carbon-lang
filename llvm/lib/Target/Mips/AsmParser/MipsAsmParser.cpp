@@ -2094,8 +2094,7 @@ bool MipsAsmParser::expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
 }
 
 /// Can the value be represented by a unsigned N-bit value and a shift left?
-template<unsigned N>
-bool isShiftedUIntAtAnyPosition(uint64_t x) {
+template <unsigned N> static bool isShiftedUIntAtAnyPosition(uint64_t x) {
   unsigned BitNum = findFirstSet(x);
 
   return (x == x >> BitNum << BitNum) && isUInt<N>(x >> BitNum);

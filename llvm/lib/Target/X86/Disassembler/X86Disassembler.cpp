@@ -95,11 +95,13 @@ X86GenericDisassembler::X86GenericDisassembler(
   llvm_unreachable("Invalid CPU mode");
 }
 
+namespace {
 struct Region {
   ArrayRef<uint8_t> Bytes;
   uint64_t Base;
   Region(ArrayRef<uint8_t> Bytes, uint64_t Base) : Bytes(Bytes), Base(Base) {}
 };
+} // end anonymous namespace
 
 /// A callback function that wraps the readByte method from Region.
 ///

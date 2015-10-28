@@ -7364,6 +7364,7 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   return false;
 }
 
+namespace {
 /// RAII wrapper to prevent recursive application of isImpliedCond.
 /// ScalarEvolution's PendingLoopPredicates set must be empty unless we are
 /// currently evaluating isImpliedCond.
@@ -7381,6 +7382,7 @@ struct MarkPendingLoopPredicate {
       LoopPreds.erase(Cond);
   }
 };
+} // end anonymous namespace
 
 /// isImpliedCond - Test whether the condition described by Pred, LHS,
 /// and RHS is true whenever the given Cond value evaluates to true.

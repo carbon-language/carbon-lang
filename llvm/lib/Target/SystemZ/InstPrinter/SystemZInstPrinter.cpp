@@ -60,15 +60,15 @@ void SystemZInstPrinter::printRegName(raw_ostream &O, unsigned RegNo) const {
   O << '%' << getRegisterName(RegNo);
 }
 
-template<unsigned N>
-void printUImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {
+template <unsigned N>
+static void printUImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {
   int64_t Value = MI->getOperand(OpNum).getImm();
   assert(isUInt<N>(Value) && "Invalid uimm argument");
   O << Value;
 }
 
-template<unsigned N>
-void printSImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {
+template <unsigned N>
+static void printSImmOperand(const MCInst *MI, int OpNum, raw_ostream &O) {
   int64_t Value = MI->getOperand(OpNum).getImm();
   assert(isInt<N>(Value) && "Invalid simm argument");
   O << Value;
