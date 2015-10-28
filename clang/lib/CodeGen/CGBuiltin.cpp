@@ -324,12 +324,10 @@ bool CodeGenFunction::checkBuiltinTargetFeatures(
     if (ParsedAttr.second != "")
       TargetCPU = ParsedAttr.second;
 
-    // Now populate the feature map, first with the TargetCPU which is
-    // either
-    // the default or a new one from the target attribute string. Then we'll
-    // use the passed in features (FeaturesAsWritten) along with the new
-    // ones
-    // from the attribute.
+    // Now populate the feature map, first with the TargetCPU which is either
+    // the default or a new one from the target attribute string. Then we'll use
+    // the passed in features (FeaturesAsWritten) along with the new ones from
+    // the attribute.
     Target.initFeatureMap(FeatureMap, CGM.getDiags(), TargetCPU,
                           ParsedAttr.first);
   } else {
