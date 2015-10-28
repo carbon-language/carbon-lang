@@ -858,14 +858,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // ISD::CTTZ_ZERO_UNDEF v2i64 - scalarization is faster.
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
-    for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
-      MVT VT = (MVT::SimpleValueType)i;
-      // Do not attempt to custom lower non-power-of-2 vectors
-      if (!isPowerOf2_32(VT.getVectorNumElements()))
-        continue;
-      // Do not attempt to custom lower non-128-bit vectors
-      if (!VT.is128BitVector())
-        continue;
+    for (auto VT : { MVT::v16i8, MVT::v8i16, MVT::v4i32 }) {
       setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
       setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
       setOperationAction(ISD::VSELECT,            VT, Custom);
@@ -903,13 +896,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
 
     // Promote v16i8, v8i16, v4i32 load, select, and, or, xor to v2i64.
-    for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
-      MVT VT = (MVT::SimpleValueType)i;
-
-      // Do not attempt to promote non-128-bit vectors
-      if (!VT.is128BitVector())
-        continue;
-
+    for (auto VT : { MVT::v16i8, MVT::v8i16, MVT::v4i32 }) {
       setOperationAction(ISD::AND,    VT, Promote);
       AddPromotedToType (ISD::AND,    VT, MVT::v2i64);
       setOperationAction(ISD::OR,     VT, Promote);
@@ -1288,13 +1275,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
 
     // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
-    for (int i = MVT::v32i8; i != MVT::v4i64; ++i) {
-      MVT VT = (MVT::SimpleValueType)i;
-
-      // Do not attempt to promote non-256-bit vectors
-      if (!VT.is256BitVector())
-        continue;
-
+    for (auto VT : { MVT::v32i8, MVT::v16i16, MVT::v8i32 }) {
       setOperationAction(ISD::AND,    VT, Promote);
       AddPromotedToType (ISD::AND,    VT, MVT::v4i64);
       setOperationAction(ISD::OR,     VT, Promote);
@@ -1602,13 +1583,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         setOperationAction(ISD::MSTORE,              VT, Legal);
       }
     }
-    for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
-      MVT VT = (MVT::SimpleValueType)i;
-
-      // Do not attempt to promote non-512-bit vectors.
-      if (!VT.is512BitVector())
-        continue;
-
+    for (auto VT : { MVT::v64i8, MVT::v32i16, MVT::v16i32 }) {
       setOperationAction(ISD::SELECT, VT, Promote);
       AddPromotedToType (ISD::SELECT, VT, MVT::v8i64);
     }
@@ -1685,19 +1660,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::v64i8,  Custom);
     }
 
-    for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
-      const MVT VT = (MVT::SimpleValueType)i;
-
-      const unsigned EltSize = VT.getVectorElementType().getSizeInBits();
-
-      // Do not attempt to promote non-512-bit vectors.
-      if (!VT.is512BitVector())
-        continue;
-
-      if (EltSize < 32) {
-        setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
-        setOperationAction(ISD::VSELECT,             VT, Legal);
-      }
+    for (auto VT : { MVT::v64i8, MVT::v32i16 }) {
+      setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
+      setOperationAction(ISD::VSELECT,             VT, Legal);
     }
   }
 
