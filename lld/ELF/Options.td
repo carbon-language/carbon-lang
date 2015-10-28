@@ -144,3 +144,4 @@ def start_group_paren: Flag<["-"], "(">;
 def version_script : Separate<["--"], "version-script">;
 def warn_common : Flag<["--"], "warn-common">;
 def warn_shared_textrel : Flag<["--"], "warn-shared-textrel">;
+def G : Separate<["-"], "G">;

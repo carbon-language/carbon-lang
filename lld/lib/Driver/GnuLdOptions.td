@@ -367,6 +367,9 @@ def Qy : Flag<["-"], "Qy">,
 def qmagic : Flag<["-"], "qmagic">,
      HelpText<"Ignored for Linux Compatibility">,
      Group<grp_ignored>;
+def G : Separate<["-"], "G">,
+     HelpText<"Ignored for MIPS GNU Linker Compatibility">,
+     Group<grp_ignored>;
 
 //===----------------------------------------------------------------------===//
 /// Help
