@@ -1,29 +1,37 @@
+//===-- MappedHash.h --------------------------------------------*- C++ -*-===//
 //
-//  MappedHash.h
+//                     The LLVM Compiler Infrastructure
 //
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef liblldb_MappedHash_h_
 #define liblldb_MappedHash_h_
 
+// C Includes
 #include <assert.h>
 #include <stdint.h>
 
+// C++ Includes
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Stream.h"
 
 class MappedHash
 {
 public:
-
     enum HashFunctionType
     {
         eHashFunctionDJB        = 0u    // Daniel J Bernstein hash function that is also used by the ELF GNU_HASH sections
     };
-
 
     static uint32_t
     HashStringUsingDJB (const char *s)
@@ -51,7 +59,6 @@ public:
         return 0;
     }
 
-
     static const uint32_t HASH_MAGIC = 0x48415348u;
     static const uint32_t HASH_CIGAM = 0x48534148u;
     
@@ -78,11 +85,9 @@ public:
             header_data ()
 		{
 		}
-        
+
         virtual 
-        ~Header()
-        {
-        }
+        ~Header() = default;
 
         size_t
         GetByteSize() const
@@ -255,8 +260,7 @@ public:
                 header.bucket_count = num_unique_hashes;
             if (header.bucket_count == 0)
                 header.bucket_count = 1;
-            
-            
+
             std::vector<HashToHashData> hash_buckets;
             std::vector<uint32_t> hash_indexes (header.bucket_count, 0);
             std::vector<uint32_t> hash_values;
@@ -346,10 +350,12 @@ public:
                 }
             }
         }
+
     protected:
         typedef std::vector<Entry> collection;
         collection m_entries;
     };
+
     // A class for reading and using a saved hash table from a block of data
     // in memory
     template <typename __KeyType, class __HeaderType, class __HashData>
@@ -376,9 +382,9 @@ public:
 
         MemoryTable (lldb_private::DataExtractor &data) :
             m_header (),
-            m_hash_indexes (NULL),
-            m_hash_values (NULL),
-            m_hash_offsets (NULL)
+            m_hash_indexes (nullptr),
+            m_hash_values (nullptr),
+            m_hash_offsets (nullptr)
         {
             lldb::offset_t offset = m_header.Read (data, 0);
             if (offset != LLDB_INVALID_OFFSET && IsValid ())
@@ -388,12 +394,10 @@ public:
                 m_hash_offsets = (const uint32_t *)data.GetData (&offset, m_header.hashes_count * sizeof(uint32_t));
             }
         }
-        
+
         virtual
-        ~MemoryTable ()
-        {
-        }
-        
+        ~MemoryTable() = default;
+
         bool
         IsValid () const
         {
@@ -484,7 +488,6 @@ public:
         // subclass and return a valie "const char *" given a "key". The value
         // could also be a C string pointer, in which case just returning "key"
         // will suffice.
-
         virtual const char *
         GetStringForKeyType (KeyType key) const = 0;
         
@@ -507,7 +510,6 @@ public:
         // should be returned. If anything else goes wrong during parsing,
         // return "eResultError" and the corresponding "Find()" function will
         // be canceled and return false.
-
         virtual Result
         GetHashDataForName (const char *name,
                             lldb::offset_t* hash_data_offset_ptr, 
@@ -519,7 +521,6 @@ public:
             return m_header;
         }
 
-        
         void
         ForEach (std::function <bool(const HashData &hash_data)> const &callback) const
         {
@@ -547,7 +548,6 @@ public:
         const uint32_t *m_hash_values;
         const uint32_t *m_hash_offsets;
     };
-    
 };
 
-#endif // #ifndef liblldb_MappedHash_h_
+#endif // liblldb_MappedHash_h_

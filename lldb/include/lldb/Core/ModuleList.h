@@ -10,10 +10,14 @@
 #ifndef liblldb_ModuleList_h_
 #define liblldb_ModuleList_h_
 
-#include <vector>
-#include <list>
+// C Includes
+// C++ Includes
 #include <functional>
+#include <list>
+#include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Utility/Iterable.h"
@@ -30,10 +34,12 @@ namespace lldb_private {
 class ModuleList
 {
 public:
-    
     class Notifier
     {
     public:
+        virtual
+        ~Notifier() = default;
+
         virtual void
         ModuleAdded (const ModuleList& module_list, const lldb::ModuleSP& module_sp) = 0;
         virtual void
@@ -43,10 +49,6 @@ public:
                        const lldb::ModuleSP& new_module_sp) = 0;
         virtual void
         WillClearList (const ModuleList& module_list) = 0;
-        
-        virtual
-        ~Notifier ()
-        {}
     };
     
     //------------------------------------------------------------------
@@ -144,6 +146,7 @@ public:
     //------------------------------------------------------------------
     void
     Destroy();
+
     //------------------------------------------------------------------
     /// Dump the description of each module contained in this list.
     ///
@@ -209,7 +212,7 @@ public:
     ///     An index into this module collection.
     ///
     /// @return
-    ///     A pointer to a Module which can by NULL if \a idx is out
+    ///     A pointer to a Module which can by nullptr if \a idx is out
     ///     of range.
     ///
     /// @see ModuleList::GetSize()
@@ -226,7 +229,7 @@ public:
     ///     An index into this module collection.
     ///
     /// @return
-    ///     A pointer to a Module which can by NULL if \a idx is out
+    ///     A pointer to a Module which can by nullptr if \a idx is out
     ///     of range.
     ///
     /// @see ModuleList::GetSize()
@@ -534,10 +537,10 @@ public:
     GetSize () const;
 
     bool
-    LoadScriptingResourcesInTarget (Target *target,
-                                    std::list<Error>& errors,
-                                    Stream* feedback_stream = NULL,
-                                    bool continue_on_error = true);
+    LoadScriptingResourcesInTarget(Target *target,
+                                   std::list<Error>& errors,
+                                   Stream* feedback_stream = nullptr,
+                                   bool continue_on_error = true);
     
     static bool
     ModuleIsInCache (const Module *module_ptr);
@@ -606,9 +609,8 @@ public:
     {
         return ModuleIterableNoLocking(m_modules);
     }
-    
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ModuleList_h_
+#endif // liblldb_ModuleList_h_

@@ -14,10 +14,8 @@
 // C++ Includes
 #include <list>
 #include <map>
-#include <set>
 #include <string>
 #include <vector>
-
 
 // Other libraries and framework includes
 // Project includes
@@ -118,13 +116,12 @@ public:
     HandleBroadcastEvent (lldb::EventSP &event_sp);
 
 private:
-
     //------------------------------------------------------------------
     // Classes that inherit from Listener can see and modify these
     //------------------------------------------------------------------
     struct BroadcasterInfo
     {
-        BroadcasterInfo(uint32_t mask, HandleBroadcastCallback cb = NULL, void *ud = NULL) :
+        BroadcasterInfo(uint32_t mask, HandleBroadcastCallback cb = nullptr, void *ud = nullptr) :
             event_mask (mask),
             callback (cb),
             callback_user_data (ud)
@@ -141,27 +138,27 @@ private:
     typedef std::vector<BroadcasterManager *> broadcaster_manager_collection;
 
     bool
-    FindNextEventInternal (Broadcaster *broadcaster,   // NULL for any broadcaster
-                           const ConstString *sources, // NULL for any event
-                           uint32_t num_sources,
-                           uint32_t event_type_mask,
-                           lldb::EventSP &event_sp,
-                           bool remove);
+    FindNextEventInternal(Broadcaster *broadcaster,   // nullptr for any broadcaster
+                          const ConstString *sources, // nullptr for any event
+                          uint32_t num_sources,
+                          uint32_t event_type_mask,
+                          lldb::EventSP &event_sp,
+                          bool remove);
 
     bool
-    GetNextEventInternal (Broadcaster *broadcaster,   // NULL for any broadcaster
-                          const ConstString *sources, // NULL for any event
+    GetNextEventInternal(Broadcaster *broadcaster,   // nullptr for any broadcaster
+                         const ConstString *sources, // nullptr for any event
+                         uint32_t num_sources,
+                         uint32_t event_type_mask,
+                         lldb::EventSP &event_sp);
+
+    bool
+    WaitForEventsInternal(const TimeValue *timeout,
+                          Broadcaster *broadcaster,   // nullptr for any broadcaster
+                          const ConstString *sources, // nullptr for any event
                           uint32_t num_sources,
                           uint32_t event_type_mask,
                           lldb::EventSP &event_sp);
-
-    bool
-    WaitForEventsInternal (const TimeValue *timeout,
-                           Broadcaster *broadcaster,   // NULL for any broadcaster
-                           const ConstString *sources, // NULL for any event
-                           uint32_t num_sources,
-                           uint32_t event_type_mask,
-                           lldb::EventSP &event_sp);
 
     std::string m_name;
     broadcaster_collection m_broadcasters;
@@ -191,4 +188,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_Select_h_
+#endif // liblldb_Select_h_

@@ -12,7 +12,7 @@
 
 // C Includes
 // C++ Includes
-#include <list>
+#include <memory>
 #include <string>
 
 // Other libraries and framework includes
@@ -123,10 +123,9 @@ class Event
     friend class EventData;
 
 public:
+    Event(Broadcaster *broadcaster, uint32_t event_type, EventData *data = nullptr);
 
-    Event (Broadcaster *broadcaster, uint32_t event_type, EventData *data = NULL);
-
-    Event (uint32_t event_type, EventData *data = NULL);
+    Event(uint32_t event_type, EventData *data = nullptr);
 
     ~Event ();
 
@@ -197,7 +196,6 @@ private:
     {
         m_broadcaster = broadcaster;
     }
-
 
     Broadcaster *   m_broadcaster;  // The broadcaster that sent this event
     uint32_t        m_type;         // The bit describing this event

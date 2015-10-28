@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <atomic>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -108,7 +109,6 @@ public:
     {
     }
 
-
     //------------------------------------------------------------------
     /// Copy constructor
     ///
@@ -176,6 +176,7 @@ public:
     const Address&
     operator= (const Address& rhs);
 #endif
+
     //------------------------------------------------------------------
     /// Clear the object's state.
     ///
@@ -216,7 +217,7 @@ public:
     class ModulePointerAndOffsetLessThanFunctionObject
     {
     public:
-        ModulePointerAndOffsetLessThanFunctionObject () {}
+        ModulePointerAndOffsetLessThanFunctionObject() = default;
 
         bool
         operator() (const Address& a, const Address& b) const
@@ -355,7 +356,7 @@ public:
     bool
     IsSectionOffset() const
     {
-        return IsValid() && (GetSection().get() != NULL);
+        return IsValid() && (GetSection().get() != nullptr);
     }
 
     //------------------------------------------------------------------
@@ -374,7 +375,6 @@ public:
     {
         return m_offset != LLDB_INVALID_ADDRESS;
     }
-
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
@@ -508,6 +508,7 @@ public:
     {
         m_section_wp.reset();
     }
+
     //------------------------------------------------------------------
     /// Reconstruct a symbol context from an address.
     ///
@@ -567,9 +568,7 @@ protected:
     //------------------------------------------------------------------
     bool
     SectionWasDeletedPrivate() const;
-
 };
-
 
 //----------------------------------------------------------------------
 // NOTE: Be careful using this operator. It can correctly compare two 
@@ -587,12 +586,9 @@ protected:
 //----------------------------------------------------------------------
 bool operator<  (const Address& lhs, const Address& rhs);
 bool operator>  (const Address& lhs, const Address& rhs);
-
-
-
 bool operator== (const Address& lhs, const Address& rhs);
 bool operator!= (const Address& lhs, const Address& rhs);
 
 } // namespace lldb_private
 
-#endif  // liblldb_Address_h_
+#endif // liblldb_Address_h_

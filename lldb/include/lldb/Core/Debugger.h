@@ -10,8 +10,16 @@
 #ifndef liblldb_Debugger_h_
 #define liblldb_Debugger_h_
 
+// C Includes
 #include <stdint.h>
 
+// C++ Includes
+#include <memory>
+#include <map>
+#include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/FormatEntity.h"
@@ -51,9 +59,10 @@ class Debugger :
 friend class SourceManager;  // For GetSourceFileCache.
 
 public:
+    ~Debugger() override;
 
     static lldb::DebuggerSP
-    CreateInstance (lldb::LogOutputCallback log_callback = NULL, void *baton = NULL);
+    CreateInstance(lldb::LogOutputCallback log_callback = nullptr, void *baton = nullptr);
 
     static lldb::TargetSP
     FindTargetWithProcessID (lldb::pid_t pid);
@@ -76,8 +85,26 @@ public:
     static void
     Destroy (lldb::DebuggerSP &debugger_sp);
 
-    ~Debugger() override;
+    static lldb::DebuggerSP
+    FindDebuggerWithID(lldb::user_id_t id);
     
+    static lldb::DebuggerSP
+    FindDebuggerWithInstanceName(const ConstString &instance_name);
+    
+    static size_t
+    GetNumDebuggers();
+    
+    static lldb::DebuggerSP
+    GetDebuggerAtIndex(size_t index);
+
+    static bool
+    FormatDisassemblerAddress(const FormatEntity::Entry *format,
+                              const SymbolContext *sc,
+                              const SymbolContext *prev_sc,
+                              const ExecutionContext *exe_ctx,
+                              const Address *addr,
+                              Stream &s);
+
     void Clear();
 
     bool
@@ -219,26 +246,6 @@ public:
 
     const char *
     GetIOHandlerHelpPrologue();
-
-    static lldb::DebuggerSP
-    FindDebuggerWithID (lldb::user_id_t id);
-    
-    static lldb::DebuggerSP
-    FindDebuggerWithInstanceName (const ConstString &instance_name);
-    
-    static size_t
-    GetNumDebuggers();
-    
-    static lldb::DebuggerSP
-    GetDebuggerAtIndex (size_t index);
-
-    static bool
-    FormatDisassemblerAddress (const FormatEntity::Entry *format,
-                               const SymbolContext *sc,
-                               const SymbolContext *prev_sc,
-                               const ExecutionContext *exe_ctx,
-                               const Address *addr,
-                               Stream &s);
 
     void
     ClearIOHandlers ();
@@ -385,7 +392,6 @@ public:
     Target *GetDummyTarget();
 
 protected:
-
     friend class CommandInterpreter;
     friend class REPL;
 
@@ -475,7 +481,6 @@ protected:
     };
 
 private:
-
     // Use Debugger::CreateInstance() to get a shared pointer to a new
     // debugger object
     Debugger (lldb::LogOutputCallback m_log_callback, void *baton);

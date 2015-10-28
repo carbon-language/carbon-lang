@@ -9,13 +9,14 @@
 
 #ifndef liblldb_ConstString_h_
 #define liblldb_ConstString_h_
-#if defined(__cplusplus)
 
-#include <assert.h>
-
-#include "lldb/lldb-private.h"
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
 #include "llvm/ADT/StringRef.h"
 
+// Project includes
+#include "lldb/lldb-private.h"
 
 namespace lldb_private {
 
@@ -41,11 +42,10 @@ public:
     ///
     /// Initializes the string to an empty string.
     //------------------------------------------------------------------
-    ConstString ():
-        m_string (NULL)
+    ConstString():
+        m_string(nullptr)
     {
     }
-
 
     //------------------------------------------------------------------
     /// Copy constructor
@@ -105,10 +105,7 @@ public:
     /// Since constant string values are currently not reference counted,
     /// there isn't much to do here.
     //------------------------------------------------------------------
-    ~ConstString ()
-    {
-    }
-
+    ~ConstString() = default;
 
     //----------------------------------------------------------------------
     /// C string equality binary predicate function object for ConstString
@@ -224,18 +221,16 @@ public:
     /// Get the value of the contained string as a NULL terminated C
     /// string value.
     ///
-    /// If \a value_if_empty is NULL, then NULL will be returned.
+    /// If \a value_if_empty is nullptr, then nullptr will be returned.
     ///
     /// @return
     ///     Returns \a value_if_empty if the string is empty, otherwise
     ///     the C string value contained in this object.
     //------------------------------------------------------------------
     const char *
-    AsCString(const char *value_if_empty = NULL) const
+    AsCString(const char *value_if_empty = nullptr) const
     {
-        if (IsEmpty())
-            return value_if_empty;
-        return m_string;
+        return (IsEmpty() ? value_if_empty : m_string);
     }
 
     //------------------------------------------------------------------
@@ -256,12 +251,12 @@ public:
     ///
     /// Get the value of the contained string as a NULL terminated C
     /// string value. Similar to the ConstString::AsCString() function,
-    /// yet this function will always return NULL if the string is not
+    /// yet this function will always return nullptr if the string is not
     /// valid. So this function is a direct accessor to the string 
     /// pointer value.
     ///
     /// @return
-    ///     Returns NULL the string is invalid, otherwise the C string
+    ///     Returns nullptr the string is invalid, otherwise the C string
     ///     value contained in this object.
     //------------------------------------------------------------------
     const char *
@@ -269,7 +264,6 @@ public:
     {
         return m_string;
     }
-
 
     //------------------------------------------------------------------
     /// Get the length in bytes of string value.
@@ -293,7 +287,7 @@ public:
     void
     Clear ()
     {
-        m_string = NULL;
+        m_string = nullptr;
     }
 
     //------------------------------------------------------------------
@@ -326,18 +320,18 @@ public:
     ///
     /// Dump the string value to the stream \a s. If the contained string
     /// is empty, print \a value_if_empty to the stream instead. If
-    /// \a value_if_empty is NULL, then nothing will be dumped to the
+    /// \a value_if_empty is nullptr, then nothing will be dumped to the
     /// stream.
     ///
     /// @param[in] s
     ///     The stream that will be used to dump the object description.
     ///
     /// @param[in] value_if_empty
-    ///     The value to dump if the string is empty. If NULL, nothing
+    ///     The value to dump if the string is empty. If nullptr, nothing
     ///     will be output to the stream.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s, const char *value_if_empty = NULL) const;
+    Dump(Stream *s, const char *value_if_empty = nullptr) const;
 
     //------------------------------------------------------------------
     /// Dump the object debug description to a stream.
@@ -358,7 +352,7 @@ public:
     bool
     IsEmpty () const
     {
-        return m_string == NULL || m_string[0] == '\0';
+        return m_string == nullptr || m_string[0] == '\0';
     }
 
     //------------------------------------------------------------------
@@ -473,7 +467,6 @@ public:
     {
         return sizeof(ConstString);
     }
-    
 
     //------------------------------------------------------------------
     /// Get the size in bytes of the current global string pool.
@@ -503,5 +496,4 @@ Stream& operator << (Stream& s, const ConstString& str);
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_ConstString_h_
+#endif // liblldb_ConstString_h_

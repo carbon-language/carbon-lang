@@ -10,8 +10,14 @@
 #ifndef liblldb_Module_h_
 #define liblldb_Module_h_
 
+// C Includes
+// C++ Includes
 #include <atomic>
+#include <string>
+#include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-forward.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/UUID.h"
@@ -88,11 +94,11 @@ public:
     ///     module within a module (.a files and modules that contain
     ///     multiple architectures).
     //------------------------------------------------------------------
-    Module (const FileSpec& file_spec,
-            const ArchSpec& arch,
-            const ConstString *object_name = NULL,
-            lldb::offset_t object_offset = 0,
-            const TimeValue *object_mod_time_ptr = NULL);
+    Module(const FileSpec& file_spec,
+           const ArchSpec& arch,
+           const ConstString *object_name = nullptr,
+           lldb::offset_t object_offset = 0,
+           const TimeValue *object_mod_time_ptr = nullptr);
 
     Module (const ModuleSpec &module_spec);
     
@@ -226,7 +232,7 @@ public:
     ///
     /// @return
     ///     Returns a valid symbol pointer if a symbol was found,
-    ///     NULL otherwise.
+    ///     nullptr otherwise.
     //------------------------------------------------------------------
     const Symbol *
     FindFirstSymbolWithNameAndType (const ConstString &name, 
@@ -646,10 +652,10 @@ public:
     IsLoadedInTarget (Target *target);
 
     bool
-    LoadScriptingResourceInTarget (Target *target,
-                                   Error& error,
-                                   Stream* feedback_stream = NULL);
-    
+    LoadScriptingResourceInTarget(Target *target,
+                                  Error& error,
+                                  Stream* feedback_stream = nullptr);
+
     //------------------------------------------------------------------
     /// Get the number of compile units for this module.
     ///
@@ -682,7 +688,7 @@ public:
     /// @return
     ///     If Module::m_file does not exist, or no plug-in was found
     ///     that can parse the file, or the object file doesn't contain
-    ///     the current architecture in Module::m_arch, NULL will be
+    ///     the current architecture in Module::m_arch, nullptr will be
     ///     returned, else a valid object file interface will be
     ///     returned. The returned pointer is owned by this object and
     ///     remains valid as long as the object is around.
@@ -730,7 +736,7 @@ public:
     /// process. 
     ///
     /// @return 
-    ///     The object file loaded from memory or NULL, if the operation 
+    ///     The object file loaded from memory or nullptr, if the operation 
     ///     failed (see the `error` for more information in that case).
     //------------------------------------------------------------------
     ObjectFile *
@@ -747,20 +753,20 @@ public:
     ///
     /// @return
     ///     If this module does not have a valid object file, or no
-    ///     plug-in can be found that can use the object file, NULL will
+    ///     plug-in can be found that can use the object file, nullptr will
     ///     be returned, else a valid symbol vendor plug-in interface
     ///     will be returned. The returned pointer is owned by this
     ///     object and remains valid as long as the object is around.
     //------------------------------------------------------------------
     virtual SymbolVendor*
     GetSymbolVendor(bool can_create = true,
-                    lldb_private::Stream *feedback_strm = NULL);
+                    lldb_private::Stream *feedback_strm = nullptr);
 
     //------------------------------------------------------------------
     /// Get accessor the type list for this module.
     ///
     /// @return
-    ///     A valid type list pointer, or NULL if there is no valid
+    ///     A valid type list pointer, or nullptr if there is no valid
     ///     symbol vendor for this module.
     //------------------------------------------------------------------
     TypeList*

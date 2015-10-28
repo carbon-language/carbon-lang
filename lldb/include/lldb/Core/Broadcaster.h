@@ -42,7 +42,7 @@ public:
     
     BroadcastEventSpec (const BroadcastEventSpec &rhs);
     
-    ~BroadcastEventSpec() {}
+    ~BroadcastEventSpec() = default;
         
     const ConstString &GetBroadcasterClass() const
     {
@@ -89,7 +89,7 @@ public:
 
     BroadcasterManager ();
 
-    ~BroadcasterManager () {}
+    ~BroadcasterManager() = default;
 
     uint32_t
     RegisterListenerForEvents (Listener &listener, BroadcastEventSpec event_spec);
@@ -128,7 +128,7 @@ private:
         {
         }
         
-        ~BroadcasterClassMatches () {}
+        ~BroadcasterClassMatches() = default;
         
         bool operator() (const event_listener_key input) const 
         {
@@ -147,7 +147,7 @@ private:
         {
         }
         
-        ~BroadcastEventSpecMatches () {}
+        ~BroadcastEventSpecMatches() = default;
         
         bool operator() (const event_listener_key input) const 
         {
@@ -168,7 +168,7 @@ private:
         {
         }
         
-        ~ListenerMatchesAndSharedBits () {}
+        ~ListenerMatchesAndSharedBits() = default;
         
         bool operator() (const event_listener_key input) const 
         {
@@ -190,7 +190,7 @@ private:
         {
         }
         
-        ~ListenerMatches() {}
+        ~ListenerMatches() = default;
         
         bool operator () (const event_listener_key input) const
         {
@@ -204,7 +204,6 @@ private:
         const Listener *m_listener;
     
     };
-    
 };
 
 //----------------------------------------------------------------------
@@ -286,10 +285,10 @@ public:
     BroadcastEventIfUnique (lldb::EventSP &event_sp);
 
     void
-    BroadcastEvent (uint32_t event_type, EventData *event_data = NULL);
+    BroadcastEvent(uint32_t event_type, EventData *event_data = nullptr);
 
     void
-    BroadcastEventIfUnique (uint32_t event_type, EventData *event_data = NULL);
+    BroadcastEventIfUnique(uint32_t event_type, EventData *event_data = nullptr);
 
     void
     Clear();
@@ -332,7 +331,6 @@ public:
     const ConstString &
     GetBroadcasterName ();
 
-
     //------------------------------------------------------------------
     /// Get the event name(s) for one or more event bits.
     ///
@@ -364,10 +362,10 @@ public:
     const char *
     GetEventName (uint32_t event_mask) const
     {
-        event_names_map::const_iterator pos = m_event_names.find (event_mask);
+        const auto pos = m_event_names.find (event_mask);
         if (pos != m_event_names.end())
             return pos->second.c_str();
-        return NULL;
+        return nullptr;
     }
 
     bool
@@ -437,8 +435,6 @@ public:
     BroadcasterManager *GetManager();
 
 protected:
-
-    
     void
     PrivateBroadcastEvent (lldb::EventSP &event_sp, bool unique);
 

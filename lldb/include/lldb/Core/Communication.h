@@ -155,7 +155,7 @@ public:
     /// @see bool Connection::Disconnect ();
     //------------------------------------------------------------------
     lldb::ConnectionStatus
-    Disconnect (Error *error_ptr = NULL);
+    Disconnect(Error *error_ptr = nullptr);
 
     //------------------------------------------------------------------
     /// Check if the connection is valid.
@@ -277,7 +277,7 @@ public:
     /// @see void Communication::AppendBytesToCache (const uint8_t * bytes, size_t len, bool broadcast);
     //------------------------------------------------------------------
     virtual bool
-    StartReadThread (Error *error_ptr = NULL);
+    StartReadThread(Error *error_ptr = nullptr);
 
     //------------------------------------------------------------------
     /// Stops the read thread by cancelling it.
@@ -287,10 +287,10 @@ public:
     ///     false otherwise.
     //------------------------------------------------------------------
     virtual bool
-    StopReadThread (Error *error_ptr = NULL);
+    StopReadThread(Error *error_ptr = nullptr);
 
     virtual bool
-    JoinReadThread (Error *error_ptr = NULL);
+    JoinReadThread(Error *error_ptr = nullptr);
     //------------------------------------------------------------------
     /// Checks if there is a currently running read thread.
     ///
@@ -322,7 +322,6 @@ public:
     SetReadThreadBytesReceivedCallback (ReadThreadBytesReceived callback,
                                         void *callback_baton);
 
-
     //------------------------------------------------------------------
     /// Wait for the read thread to process all outstanding data.
     ///
@@ -353,12 +352,6 @@ public:
     {
         return GetStaticBroadcasterClass();
     }
-
-private:
-    //------------------------------------------------------------------
-    // For Communication only
-    //------------------------------------------------------------------
-    DISALLOW_COPY_AND_ASSIGN (Communication);
 
 protected:
     lldb::ConnectionSP m_connection_sp; ///< The connection that is current in use by this communications class.
@@ -423,6 +416,9 @@ protected:
     //------------------------------------------------------------------
     size_t
     GetCachedBytes (void *dst, size_t dst_len);
+
+private:
+    DISALLOW_COPY_AND_ASSIGN (Communication);
 };
 
 } // namespace lldb_private
