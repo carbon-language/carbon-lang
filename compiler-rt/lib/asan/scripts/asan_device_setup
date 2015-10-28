@@ -276,6 +276,7 @@ if [[ -n "$ASAN_RT64" ]]; then
   adb_pull /system/bin/asanwrapper64 "$TMPDIROLD" || true
 else
   adb_pull /system/lib/"$ASAN_RT" "$TMPDIROLD" || true
+  adb_pull /system/bin/app_process32 "$TMPDIROLD" || true
   adb_pull /system/bin/app_process.wrap "$TMPDIROLD" || true
   adb_pull /system/bin/asanwrapper "$TMPDIROLD" || true
 fi
@@ -401,6 +402,7 @@ if ! ( cd "$TMPDIRBASE" && diff -qr old/ new/ ) ; then
       install "$TMPDIR/asanwrapper64" /system/bin 755
     else
       install "$TMPDIR/$ASAN_RT" /system/lib 644
+      install "$TMPDIR/app_process32" /system/bin 755 $CTX
       install "$TMPDIR/app_process.wrap" /system/bin 755 $CTX
       install "$TMPDIR/asanwrapper" /system/bin 755 $CTX
 
