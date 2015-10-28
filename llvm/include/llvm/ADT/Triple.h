@@ -303,9 +303,14 @@ public:
                         unsigned &Micro) const;
 
   /// getiOSVersion - Parse the version number as with getOSVersion.  This should
-  /// only be called with IOS triples.
+  /// only be called with IOS or generic triples.
   void getiOSVersion(unsigned &Major, unsigned &Minor,
                      unsigned &Micro) const;
+
+  /// getWatchOSVersion - Parse the version number as with getOSVersion.  This
+  /// should only be called with WatchOS or generic triples.
+  void getWatchOSVersion(unsigned &Major, unsigned &Minor,
+                         unsigned &Micro) const;
 
   /// @}
   /// @name Direct Component Access

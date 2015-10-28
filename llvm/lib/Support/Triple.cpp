@@ -958,7 +958,6 @@ void Triple::getiOSVersion(unsigned &Major, unsigned &Minor,
   default: llvm_unreachable("unexpected OS for Darwin triple");
   case Darwin:
   case MacOSX:
-  case WatchOS:
     // Ignore the version from the triple.  This is only handled because the
     // the clang driver combines OS X and IOS support into a common Darwin
     // toolchain that wants to know the iOS version number even when targeting
@@ -974,6 +973,32 @@ void Triple::getiOSVersion(unsigned &Major, unsigned &Minor,
     if (Major == 0)
       Major = (getArch() == aarch64) ? 7 : 5;
     break;
+  case WatchOS:
+    llvm_unreachable("conflicting triple info");
+  }
+}
+
+void Triple::getWatchOSVersion(unsigned &Major, unsigned &Minor,
+                               unsigned &Micro) const {
+  switch (getOS()) {
+  default: llvm_unreachable("unexpected OS for Darwin triple");
+  case Darwin:
+  case MacOSX:
+    // Ignore the version from the triple.  This is only handled because the
+    // the clang driver combines OS X and IOS support into a common Darwin
+    // toolchain that wants to know the iOS version number even when targeting
+    // OS X.
+    Major = 2;
+    Minor = 0;
+    Micro = 0;
+    break;
+  case WatchOS:
+    getOSVersion(Major, Minor, Micro);
+    if (Major == 0)
+      Major = 2;
+    break;
+  case IOS:
+    llvm_unreachable("conflicting triple info");
   }
 }
 
