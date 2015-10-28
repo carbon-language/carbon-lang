@@ -45,8 +45,14 @@ TEST_F(FormatTestSelective, RemovesTrailingWhitespaceOfFormattedLine) {
 }
 
 TEST_F(FormatTestSelective, FormatsCorrectRegionForLeadingWhitespace) {
-  EXPECT_EQ("int b;\nint a;", format("int b;\n   int a;", 7, 0));
-  EXPECT_EQ("int b;\n   int a;", format("int b;\n   int a;", 6, 0));
+  EXPECT_EQ("{int b;\n"
+            "  int a;\n"
+            "}",
+            format("{int b;\n  int  a;}", 8, 0));
+  EXPECT_EQ("{\n"
+            "  int b;\n"
+            "  int  a;}",
+            format("{int b;\n  int  a;}", 7, 0));
 
   Style.ColumnLimit = 12;
   EXPECT_EQ("#define A  \\\n"
@@ -84,11 +90,11 @@ TEST_F(FormatTestSelective, ReformatsMovedLines) {
       "template <typename T> T *getFETokenInfo() const {\n"
       "  return static_cast<T *>(FETokenInfo);\n"
       "}\n"
-      "  int a; // <- Should not be formatted",
+      "int  a; // <- Should not be formatted",
       format(
           "template<typename T>\n"
           "T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }\n"
-          "  int a; // <- Should not be formatted",
+          "int  a; // <- Should not be formatted",
           9, 5));
 }
 
@@ -142,12 +148,12 @@ TEST_F(FormatTestSelective, FormatsCommentsLocally) {
             "       // is\n"
             "       // a\n"
             "\n"
-            "  // This is unrelated",
+            "//This is unrelated",
             format("int a; // This\n"
                    "     // is\n"
                    "     // a\n"
                    "\n"
-                   "  // This is unrelated",
+                   "//This is unrelated",
                    0, 0));
   EXPECT_EQ("int a;\n"
             "// This is\n"
@@ -310,13 +316,17 @@ TEST_F(FormatTestSelective, ReformatRegionAdjustsIndent) {
   EXPECT_EQ("{\n"
             "{\n"
             "  a;\n"
-            "b;\n"
+            "  b;\n"
+            "  c;\n"
+            " d;\n"
             "}\n"
             "}",
             format("{\n"
                    "{\n"
                    "     a;\n"
-                   "b;\n"
+                   "   b;\n"
+                   "  c;\n"
+                   " d;\n"
                    "}\n"
                    "}",
                    9, 2));
