@@ -1490,7 +1490,7 @@ static llvm::Value *emitCopyprivateCopyFunction(
   auto *Fn = llvm::Function::Create(
       CGM.getTypes().GetFunctionType(CGFI), llvm::GlobalValue::InternalLinkage,
       ".omp.copyprivate.copy_func", &CGM.getModule());
-  CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, CGFI, Fn);
+  CGM.SetInternalFunctionAttributes(/*D=*/nullptr, Fn, CGFI);
   CodeGenFunction CGF(CGM);
   CGF.StartFunction(GlobalDecl(), C.VoidTy, Fn, CGFI, Args);
   // Dest = (void*[n])(LHSArg);
@@ -2048,7 +2048,7 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   auto *TaskEntry =
       llvm::Function::Create(TaskEntryTy, llvm::GlobalValue::InternalLinkage,
                              ".omp_task_entry.", &CGM.getModule());
-  CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, TaskEntryFnInfo, TaskEntry);
+  CGM.SetInternalFunctionAttributes(/*D=*/nullptr, TaskEntry, TaskEntryFnInfo);
   CodeGenFunction CGF(CGM);
   CGF.disableDebugInfo();
   CGF.StartFunction(GlobalDecl(), KmpInt32Ty, TaskEntry, TaskEntryFnInfo, Args);
@@ -2115,7 +2115,8 @@ static llvm::Value *emitDestructorsFunction(CodeGenModule &CGM,
   auto *DestructorFn =
       llvm::Function::Create(DestructorFnTy, llvm::GlobalValue::InternalLinkage,
                              ".omp_task_destructor.", &CGM.getModule());
-  CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, DestructorFnInfo, DestructorFn);
+  CGM.SetInternalFunctionAttributes(/*D=*/nullptr, DestructorFn,
+                                    DestructorFnInfo);
   CodeGenFunction CGF(CGM);
   CGF.disableDebugInfo();
   CGF.StartFunction(GlobalDecl(), KmpInt32Ty, DestructorFn, DestructorFnInfo,
@@ -2191,8 +2192,8 @@ emitTaskPrivateMappingFunction(CodeGenModule &CGM, SourceLocation Loc,
   auto *TaskPrivatesMap = llvm::Function::Create(
       TaskPrivatesMapTy, llvm::GlobalValue::InternalLinkage,
       ".omp_task_privates_map.", &CGM.getModule());
-  CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, TaskPrivatesMapFnInfo,
-                                TaskPrivatesMap);
+  CGM.SetInternalFunctionAttributes(/*D=*/nullptr, TaskPrivatesMap,
+                                    TaskPrivatesMapFnInfo);
   TaskPrivatesMap->addFnAttr(llvm::Attribute::AlwaysInline);
   CodeGenFunction CGF(CGM);
   CGF.disableDebugInfo();
@@ -2693,7 +2694,7 @@ static llvm::Value *emitReductionFunction(CodeGenModule &CGM,
   auto *Fn = llvm::Function::Create(
       CGM.getTypes().GetFunctionType(CGFI), llvm::GlobalValue::InternalLinkage,
       ".omp.reduction.reduction_func", &CGM.getModule());
-  CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, CGFI, Fn);
+  CGM.SetInternalFunctionAttributes(/*D=*/nullptr, Fn, CGFI);
   CodeGenFunction CGF(CGM);
   CGF.StartFunction(GlobalDecl(), C.VoidTy, Fn, CGFI, Args);
 
