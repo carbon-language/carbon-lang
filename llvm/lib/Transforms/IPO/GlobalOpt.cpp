@@ -545,7 +545,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
   if (NewGlobals.empty())
     return nullptr;
 
-  DEBUG(dbgs() << "PERFORMING GLOBAL SRA ON: " << *GV);
+  DEBUG(dbgs() << "PERFORMING GLOBAL SRA ON: " << *GV << "\n");
 
   Constant *NullInt =Constant::getNullValue(Type::getInt32Ty(GV->getContext()));
 
@@ -778,7 +778,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
   }
 
   if (Changed) {
-    DEBUG(dbgs() << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV);
+    DEBUG(dbgs() << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV << "\n");
     ++NumGlobUses;
   }
 
@@ -1613,7 +1613,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
     if (!isa<LoadInst>(U) && !isa<StoreInst>(U))
       return false;
 
-  DEBUG(dbgs() << "   *** SHRINKING TO BOOL: " << *GV);
+  DEBUG(dbgs() << "   *** SHRINKING TO BOOL: " << *GV << "\n");
 
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::getInt1Ty(GV->getContext()),
@@ -1700,7 +1700,7 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
   GV->removeDeadConstantUsers();
 
   if (GV->use_empty()) {
-    DEBUG(dbgs() << "GLOBAL DEAD: " << *GV);
+    DEBUG(dbgs() << "GLOBAL DEAD: " << *GV << "\n");
     GV->eraseFromParent();
     ++NumDeleted;
     return true;
