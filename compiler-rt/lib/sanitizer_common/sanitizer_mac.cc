@@ -36,12 +36,14 @@
 extern char **environ;
 #endif
 
+#include <asl.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <libkern/OSAtomic.h>
 #include <mach-o/dyld.h>
 #include <mach/mach.h>
 #include <mach/vm_statistics.h>
+#include <os/trace.h>
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
@@ -369,6 +371,45 @@ uptr GetRSS() {
     Die();
   }
   return info.resident_size;
+}
+
+static BlockingMutex syslog_lock(LINKER_INITIALIZED);
+
+void WriteOneLineToSyslog(const char *s) {
+  syslog_lock.CheckLocked();
+  asl_log(nullptr, nullptr, ASL_LEVEL_ERR, "%s", s);
+}
+
+void LogFullErrorReport(const char *buffer) {
+  // Log with os_trace. This will make it into the crash log.
+  if (GetMacosVersion() >= MACOS_VERSION_MAVERICKS) {
+    // os_trace requires the message (format parameter) to be a string literal.
+    if (internal_strncmp(SanitizerToolName, "AddressSanitizer",
+                         sizeof("AddressSanitizer") - 1) == 0)
+      os_trace("Address Sanitizer reported a failure.");
+    else if (internal_strncmp(SanitizerToolName, "UndefinedBehaviorSanitizer",
+                              sizeof("UndefinedBehaviorSanitizer") - 1) == 0)
+      os_trace("Undefined Behavior Sanitizer reported a failure.");
+    else if (internal_strncmp(SanitizerToolName, "ThreadSanitizer",
+                              sizeof("ThreadSanitizer") - 1) == 0)
+      os_trace("Thread Sanitizer reported a failure.");
+    else
+      os_trace("Sanitizer tool reported a failure.");
+
+    if (common_flags()->log_to_syslog)
+      os_trace("Consult syslog for more information.");
+  }
+
+  // Log to syslog.
+  // The logging on OS X may call pthread_create so we need the threading
+  // environment to be fully initialized. Also, this should never be called when
+  // holding the thread registry lock since that may result in a deadlock. If
+  // the reporting thread holds the thread registry mutex, and asl_log waits
+  // for GCD to dispatch a new thread, the process will deadlock, because the
+  // pthread_create wrapper needs to acquire the lock as well.
+  BlockingMutexLock l(&syslog_lock);
+  if (common_flags()->log_to_syslog)
+    WriteToSyslog(buffer);
 }
 
 void *internal_start_thread(void (*func)(void *arg), void *arg) { return 0; }

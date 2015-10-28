@@ -162,6 +162,7 @@ void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback);
 // IO
 void RawWrite(const char *buffer);
 bool ColorizeReports();
+void RemoveANSIEscapeSequencesFromString(char *buffer);
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
 void SetPrintfAndReportCallback(void (*callback)(const char *));
@@ -648,13 +649,27 @@ enum AndroidApiLevel {
   ANDROID_POST_LOLLIPOP = 23
 };
 
+void WriteToSyslog(const char *buffer);
+
+#if SANITIZER_MAC
+void LogFullErrorReport(const char *error_message_buffer);
+#else
+INLINE void LogFullErrorReport(const char *error_message_buffer) {}
+#endif
+
+#if SANITIZER_LINUX || SANITIZER_MAC
+void WriteOneLineToSyslog(const char *s);
+#else
+INLINE void WriteOneLineToSyslog(const char *s) {}
+#endif
+
 #if SANITIZER_LINUX
 // Initialize Android logging. Any writes before this are silently lost.
 void AndroidLogInit();
-void WriteToSyslog(const char *buffer);
+bool ShouldLogAfterPrintf();
 #else
 INLINE void AndroidLogInit() {}
-INLINE void WriteToSyslog(const char *buffer) {}
+INLINE bool ShouldLogAfterPrintf() { return false; }
 #endif
 
 #if SANITIZER_ANDROID
