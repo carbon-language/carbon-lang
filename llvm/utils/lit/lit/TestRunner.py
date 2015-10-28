@@ -362,7 +362,7 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
     return lit.util.executeCommand(command, cwd=cwd,
                                    env=test.config.environment)
 
-def parseIntegratedTestScriptCommands(source_path):
+def parseIntegratedTestScriptCommands(source_path, keywords):
     """
     parseIntegratedTestScriptCommands(source_path) -> commands
 
@@ -381,7 +381,6 @@ def parseIntegratedTestScriptCommands(source_path):
     # remaining code can work with "strings" agnostic of the executing Python
     # version.
 
-    keywords = ['RUN:', 'XFAIL:', 'REQUIRES:', 'UNSUPPORTED:', 'END.']
     keywords_re = re.compile(
         to_bytes("(%s)(.*)\n" % ("|".join(k for k in keywords),)))
 
@@ -469,8 +468,9 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     script = []
     requires = []
     unsupported = []
+    keywords = ['RUN:', 'XFAIL:', 'REQUIRES:', 'UNSUPPORTED:', 'END.']
     for line_number, command_type, ln in \
-            parseIntegratedTestScriptCommands(sourcepath):
+            parseIntegratedTestScriptCommands(sourcepath, keywords):
         if command_type == 'RUN':
             # Trim trailing whitespace.
             ln = ln.rstrip()
