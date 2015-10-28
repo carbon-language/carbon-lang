@@ -385,7 +385,6 @@ TypeCategoryMap::LoopThrough(CallbackType callback, void* param)
             for (begin = m_active_categories.begin(); begin != end; begin++)
             {
                 lldb::TypeCategoryImplSP category = *begin;
-                ConstString type = ConstString(category->GetName());
                 if (!callback(param, category))
                     break;
             }
