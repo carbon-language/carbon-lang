@@ -1,8 +1,8 @@
-add_lldb_executable(argdumper
+add_lldb_executable(lldb-argdumper
   argdumper.cpp
   )
 
-target_link_libraries(argdumper liblldb)
+target_link_libraries(lldb-argdumper liblldb)
 
-install(TARGETS argdumper
+install(TARGETS lldb-argdumper
   RUNTIME DESTINATION bin)

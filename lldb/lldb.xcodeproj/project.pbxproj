@@ -742,7 +742,7 @@
 		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
 		940B02F619DC96E700AD0F52 /* SBExecutionContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */; };
 		940B04D91A8984FF0045D5F7 /* argdumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B04D81A8984FF0045D5F7 /* argdumper.cpp */; };
-		940B04E41A8987680045D5F7 /* argdumper in CopyFiles */ = {isa = PBXBuildFile; fileRef = 942829C01A89835300521B30 /* argdumper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		940B04E41A8987680045D5F7 /* lldb-argdumper in CopyFiles */ = {isa = PBXBuildFile; fileRef = 942829C01A89835300521B30 /* lldb-argdumper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		94145431175E63B500284436 /* lldb-versioning.h in Headers */ = {isa = PBXBuildFile; fileRef = 94145430175D7FDE00284436 /* lldb-versioning.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9418EBCD1AA910910058B02E /* VectorType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9418EBCC1AA910910058B02E /* VectorType.cpp */; };
 		941BCC7F14E48C4000BB969C /* SBTypeFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568614E355F2003A195C /* SBTypeFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1081,7 +1081,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
-				940B04E41A8987680045D5F7 /* argdumper in CopyFiles */,
+				940B04E41A8987680045D5F7 /* lldb-argdumper in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2484,7 +2484,7 @@
 		942612F61B95000000EF842E /* LanguageCategory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LanguageCategory.cpp; path = source/DataFormatters/LanguageCategory.cpp; sourceTree = "<group>"; };
 		942829541A89614000521B30 /* JSON.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JSON.h; path = include/lldb/Utility/JSON.h; sourceTree = "<group>"; };
 		942829551A89614C00521B30 /* JSON.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JSON.cpp; path = source/Utility/JSON.cpp; sourceTree = "<group>"; };
-		942829C01A89835300521B30 /* argdumper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = argdumper; sourceTree = BUILT_PRODUCTS_DIR; };
+		942829C01A89835300521B30 /* lldb-argdumper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-argdumper"; sourceTree = BUILT_PRODUCTS_DIR; };
 		94380B8019940B0300BFE4A8 /* StringLexer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StringLexer.h; path = include/lldb/Utility/StringLexer.h; sourceTree = "<group>"; };
 		94380B8119940B0A00BFE4A8 /* StringLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringLexer.cpp; path = source/Utility/StringLexer.cpp; sourceTree = "<group>"; };
 		943B90FC1B991586007BA499 /* VectorIterator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VectorIterator.h; path = include/lldb/DataFormatters/VectorIterator.h; sourceTree = "<group>"; };
@@ -2968,7 +2968,7 @@
 				26579F68126A25920007C5CB /* darwin-debug */,
 				26DC6A101337FE6900FF7998 /* lldb-server */,
 				2690CD171A6DC0D000E717C8 /* lldb-mi */,
-				942829C01A89835300521B30 /* argdumper */,
+				942829C01A89835300521B30 /* lldb-argdumper */,
 				239504D41BDD451400963CEA /* lldb-gtest */,
 			);
 			name = Products;
@@ -5952,9 +5952,9 @@
 			productReference = 26F5C26A10F3D9A4009D5894 /* lldb */;
 			productType = "com.apple.product-type.tool";
 		};
-		942829BF1A89835300521B30 /* argdumper */ = {
+		942829BF1A89835300521B30 /* lldb-argdumper */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 942829C41A89835400521B30 /* Build configuration list for PBXNativeTarget "argdumper" */;
+			buildConfigurationList = 942829C41A89835400521B30 /* Build configuration list for PBXNativeTarget "lldb-argdumper" */;
 			buildPhases = (
 				942829BC1A89835300521B30 /* Sources */,
 				942829BD1A89835300521B30 /* Frameworks */,
@@ -5966,9 +5966,9 @@
 			dependencies = (
 				942829CA1A89836A00521B30 /* PBXTargetDependency */,
 			);
-			name = argdumper;
+			name = "lldb-argdumper";
 			productName = argdumper;
-			productReference = 942829C01A89835300521B30 /* argdumper */;
+			productReference = 942829C01A89835300521B30 /* lldb-argdumper */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -6020,7 +6020,7 @@
 				235AFBB5199BC6AD00897A4B /* Linux */,
 				235AFBBB199BC6FD00897A4B /* MacOSX and Linux */,
 				2690CD161A6DC0D000E717C8 /* lldb-mi */,
-				942829BF1A89835300521B30 /* argdumper */,
+				942829BF1A89835300521B30 /* lldb-argdumper */,
 				239504D31BDD451400963CEA /* lldb-gtest */,
 			);
 		};
@@ -7057,7 +7057,7 @@
 		};
 		942829CE1A89842900521B30 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 942829BF1A89835300521B30 /* argdumper */;
+			target = 942829BF1A89835300521B30 /* lldb-argdumper */;
 			targetProxy = 942829CD1A89842900521B30 /* PBXContainerItemProxy */;
 		};
 		94E829C9152D33B4006F96A3 /* PBXTargetDependency */ = {
@@ -9516,7 +9516,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;
 		};
-		942829C41A89835400521B30 /* Build configuration list for PBXNativeTarget "argdumper" */ = {
+		942829C41A89835400521B30 /* Build configuration list for PBXNativeTarget "lldb-argdumper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				942829C51A89835400521B30 /* Debug */,

@@ -188,23 +188,23 @@ then
     fi
 fi
 
-# Make symlink for argdumper on any platform
+# Make symlink for lldb-argdumper on any platform
 if [ $MakefileCalled -ne 0 ]
 then
     # We are being built by CMake
 
-    if [ ! -L "${framework_python_dir}/argdumper" ]
+    if [ ! -L "${framework_python_dir}/lldb-argdumper" ]
     then
         if [ $Debug -eq 1 ]
         then
-            echo "Creating symlink for argdumper"
+            echo "Creating symlink for lldb-argdumper"
         fi
         cd "${framework_python_dir}"
-        ln -s "../../../../bin/argdumper" argdumper
+        ln -s "../../../../bin/lldb-argdumper" lldb-argdumper
     else
         if [ $Debug -eq 1 ]
         then
-            echo "${framework_python_dir}/argdumper already exists."
+            echo "${framework_python_dir}/lldb-argdumper already exists."
         fi
     fi
 fi

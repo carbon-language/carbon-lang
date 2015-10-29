@@ -411,16 +411,16 @@ def make_symlink_darwin_debug( vDictArgs, vstrFrameworkPythonDir, vstrDarwinDebu
     return (bOk, strErrMsg);
 
 #++---------------------------------------------------------------------------
-# Details:  Make the symbolic link to the argdumper.
+# Details:  Make the symbolic link to the lldb-argdumper.
 # Args:     vDictArgs               - (R) Program input parameters.
 #           vstrFrameworkPythonDir  - (R) Python framework directory.
-#           vstrArgdumperFileName   - (R) File name for argdumper.
+#           vstrArgdumperFileName   - (R) File name for lldb-argdumper.
 # Returns:  Bool - True = function success, False = failure.
 #           Str - Error description on task failure.
 # Throws:   None.
 #--
-def make_symlink_argdumper( vDictArgs, vstrFrameworkPythonDir, vstrArgdumperFileName ):
-    dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_argdumper()" );
+def make_symlink_lldb_argdumper( vDictArgs, vstrFrameworkPythonDir, vstrArgdumperFileName ):
+    dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_lldb_argdumper()" );
     bOk = True;
     strErrMsg = "";
     strTarget = vstrArgdumperFileName;
@@ -437,7 +437,7 @@ def make_symlink_argdumper( vDictArgs, vstrFrameworkPythonDir, vstrArgdumperFile
         strExeFileExtn = "";
         if eOSType == utilsOsType.EnumOsType.Windows:
             strExeFileExtn = ".exe";
-        strSrc = os.path.join("bin", "argdumper" + strExeFileExtn);
+        strSrc = os.path.join("bin", "lldb-argdumper" + strExeFileExtn);
 
     bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
 
@@ -472,10 +472,10 @@ def create_symlinks( vDictArgs, vstrFrameworkPythonDir ):
                                                     vstrFrameworkPythonDir,
                                                     strDarwinDebugFileName );
 
-    # Make symlink for argdumper
-    strArgdumperFileName = "argdumper"
+    # Make symlink for lldb-argdumper
+    strArgdumperFileName = "lldb-argdumper"
     if bOk:
-        bOk, strErrMsg = make_symlink_argdumper( vDictArgs,
+        bOk, strErrMsg = make_symlink_lldb_argdumper( vDictArgs,
                                                  vstrFrameworkPythonDir,
                                                  strArgdumperFileName );
 
