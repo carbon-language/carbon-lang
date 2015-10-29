@@ -380,9 +380,9 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
   if (SampleProfileCoverage) {
     unsigned Coverage = CoverageTracker.computeCoverage(Samples);
     if (Coverage < SampleProfileCoverage) {
-      const char *Filename = getDISubprogram(&F)->getFilename().str().c_str();
+      StringRef Filename = getDISubprogram(&F)->getFilename();
       F.getContext().diagnose(DiagnosticInfoSampleProfile(
-          Filename, getFunctionLoc(F),
+          Filename.str().c_str(), getFunctionLoc(F),
           Twine(CoverageTracker.getNumUsedSamples(Samples)) + " of " +
               Twine(Samples->getBodySamples().size()) +
               " available profile records (" + Twine(Coverage) +
