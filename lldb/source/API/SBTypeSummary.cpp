@@ -328,8 +328,21 @@ SBTypeSummary::operator == (lldb::SBTypeSummary &rhs)
 bool
 SBTypeSummary::IsEqualTo (lldb::SBTypeSummary &rhs)
 {
-    if (IsValid() == false)
-        return !rhs.IsValid();
+    if (IsValid())
+    {
+        // valid and invalid are different
+        if (!rhs.IsValid())
+            return false;
+    }
+    else
+    {
+        // invalid and valid are different
+        if (rhs.IsValid())
+            return false;
+        else
+        // both invalid are the same
+            return true;
+    }
 
     if (m_opaque_sp->GetKind() != rhs.m_opaque_sp->GetKind())
         return false;
@@ -348,6 +361,8 @@ SBTypeSummary::IsEqualTo (lldb::SBTypeSummary &rhs)
             if (IsSummaryString() != rhs.IsSummaryString())
                 return false;
             return GetOptions() == rhs.GetOptions();
+        case TypeSummaryImpl::Kind::eInternal:
+            return (m_opaque_sp.get() == rhs.m_opaque_sp.get());
     }
     
     return false;

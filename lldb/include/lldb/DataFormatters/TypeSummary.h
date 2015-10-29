@@ -63,7 +63,8 @@ namespace lldb_private {
         {
             eSummaryString,
             eScript,
-            eCallback
+            eCallback,
+            eInternal
         };
 
         virtual
