@@ -1,4 +1,4 @@
-//===-- ObjCLanguageRuntime.h ---------------------------------------------------*- C++ -*-===//
+//===-- ObjCLanguageRuntime.h -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,9 +14,12 @@
 // C++ Includes
 #include <functional>
 #include <map>
+#include <memory>
 #include <unordered_set>
 
 // Other libraries and framework includes
+#include "llvm/Support/Casting.h"
+
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
@@ -25,8 +28,6 @@
 #include "lldb/Symbol/DeclVendor.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/LanguageRuntime.h"
-
-#include "llvm/Support/Casting.h"
 
 class CommandObjectObjC_ClassTable_Dump;
 
@@ -56,7 +57,6 @@ public:
     class ClassDescriptor
     {
     public:
-        
         ClassDescriptor() :
             m_is_kvo (eLazyBoolCalculate),
             m_is_cf (eLazyBoolCalculate),
@@ -65,10 +65,8 @@ public:
         }
 
         virtual
-        ~ClassDescriptor ()
-        {
-        }
-        
+        ~ClassDescriptor() = default;
+
         virtual ConstString
         GetClassName () = 0;
         
@@ -109,12 +107,12 @@ public:
         
         virtual bool
         IsValid () = 0;
-        
+
         virtual bool
-        GetTaggedPointerInfo (uint64_t* info_bits = NULL,
-                              uint64_t* value_bits = NULL,
-                              uint64_t* payload = NULL) = 0;
-        
+        GetTaggedPointerInfo(uint64_t* info_bits = nullptr,
+                             uint64_t* value_bits = nullptr,
+                             uint64_t* payload = nullptr) = 0;
+
         virtual uint64_t
         GetInstanceSize () = 0;
         
@@ -187,12 +185,12 @@ public:
     class EncodingToType
     {
     public:
+        virtual ~EncodingToType();
+
         virtual CompilerType RealizeType (ClangASTContext& ast_ctx, const char* name, bool for_expression);
         virtual CompilerType RealizeType (const char* name, bool for_expression);
         
         virtual CompilerType RealizeType (clang::ASTContext& ast_ctx, const char* name, bool for_expression) = 0;
-        
-        virtual ~EncodingToType();
         
     protected:
         std::unique_ptr<ClangASTContext> m_scratch_ast_ctx_ap;
@@ -203,7 +201,7 @@ public:
     public:
         ObjCExceptionPrecondition();
 
-        ~ObjCExceptionPrecondition() override {}
+        ~ObjCExceptionPrecondition() override = default;
 
         bool EvaluatePrecondition(StoppointCallbackContext &context) override;
         void DescribePrecondition(Stream &stream, lldb::DescriptionLevel level) override;
@@ -219,21 +217,24 @@ public:
     class TaggedPointerVendor
     {
     public:
+        virtual
+        ~TaggedPointerVendor() = default;
+
         virtual bool
         IsPossibleTaggedPointer (lldb::addr_t ptr) = 0;
         
         virtual ObjCLanguageRuntime::ClassDescriptorSP
         GetClassDescriptor (lldb::addr_t ptr) = 0;
-        
-        virtual
-        ~TaggedPointerVendor () { }
+
     protected:
-        TaggedPointerVendor () = default;
+        TaggedPointerVendor() = default;
 
     private:
         DISALLOW_COPY_AND_ASSIGN(TaggedPointerVendor);
     };
     
+    ~ObjCLanguageRuntime() override;
+
     virtual TaggedPointerVendor*
     GetTaggedPointerVendor ()
     {
@@ -259,8 +260,6 @@ public:
 
     ClassDescriptorSP
     GetNonKVOClassDescriptor (ObjCISA isa);
-    
-    ~ObjCLanguageRuntime() override;
     
     lldb::LanguageType
     GetLanguageType () const override
@@ -338,7 +337,7 @@ public:
     virtual DeclVendor *
     GetDeclVendor()
     {
-        return NULL;
+        return nullptr;
     }
     
     // Finds the byte offset of the child_type ivar in parent_type.  If it can't find the
@@ -385,7 +384,7 @@ protected:
     // Classes that inherit from ObjCLanguageRuntime can see and modify these
     //------------------------------------------------------------------
     ObjCLanguageRuntime(Process *process);
-    
+
     virtual bool CalculateHasNewLiteralsAndIndexing()
     {
         return false;

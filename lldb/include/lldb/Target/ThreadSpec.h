@@ -1,4 +1,4 @@
-//===-- ThreadSpec.h ------------------------------------------------*- C++ -*-===//
+//===-- ThreadSpec.h --------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,9 +10,12 @@
 #ifndef liblldb_ThreadSpec_h_
 #define liblldb_ThreadSpec_h_
 
-#include <map>
+// C Includes
+// C++ Includes
 #include <string>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 
 namespace lldb_private {
@@ -110,7 +113,7 @@ public:
     {
         if (m_name.empty())
             return true;
-        else if (name == NULL)
+        else if (name == nullptr)
             return false;
         else
             return m_name == name;
@@ -124,7 +127,7 @@ public:
     {
         if (m_queue_name.empty())
             return true;
-        else if (queue_name == NULL)
+        else if (queue_name == nullptr)
             return false;
         else
             return m_queue_name == queue_name;
@@ -142,7 +145,6 @@ public:
     void
     GetDescription (Stream *s, lldb::DescriptionLevel level) const;
 
-protected:
 private:
     uint32_t m_index;
     lldb::tid_t m_tid;
@@ -152,4 +154,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadSpec_h_
+#endif // liblldb_ThreadSpec_h_

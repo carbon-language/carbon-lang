@@ -74,9 +74,9 @@ public:
     //------------------------------------------------------------------
     ThreadPlanShouldStopHere (ThreadPlan *owner);
     
-    ThreadPlanShouldStopHere (ThreadPlan *owner,
-                              const ThreadPlanShouldStopHereCallbacks *callbacks,
-                              void *baton = NULL);
+    ThreadPlanShouldStopHere(ThreadPlan *owner,
+                             const ThreadPlanShouldStopHereCallbacks *callbacks,
+                             void *baton = nullptr);
     virtual
     ~ThreadPlanShouldStopHere();
     
@@ -139,23 +139,15 @@ protected:
     // Implement this, and call it in the plan's constructor to set the default flags.
     virtual void SetFlagsToDefault () = 0;
 
-    //------------------------------------------------------------------
-    // Classes that inherit from ThreadPlanShouldStopHere can see and modify these
-    //------------------------------------------------------------------
     ThreadPlanShouldStopHereCallbacks m_callbacks;
     void * m_baton;
     ThreadPlan *m_owner;
     lldb_private::Flags m_flags;
 
 private:
-    //------------------------------------------------------------------
-    // For ThreadPlanShouldStopHere only
-    //------------------------------------------------------------------
-
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanShouldStopHere);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadPlanShouldStopHere_h_
+#endif // liblldb_ThreadPlanShouldStopHere_h_

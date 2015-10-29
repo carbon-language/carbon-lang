@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <memory>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Error.h"
@@ -223,7 +225,7 @@ public:
     /// executing.
     ///
     /// @return
-    ///   A pointer to the current Block.  NULL is returned if this can
+    ///   A pointer to the current Block.  nullptr is returned if this can
     ///   not be provided.
     //------------------------------------------------------------------
     Block *
@@ -351,7 +353,7 @@ public:
     ///   Optional string that will be prepended to the frame output description.
     //------------------------------------------------------------------
     void
-    DumpUsingSettingsFormat (Stream *strm, const char *frame_marker = NULL);
+    DumpUsingSettingsFormat(Stream *strm, const char *frame_marker = nullptr);
 
     //------------------------------------------------------------------
     /// Print a description for this frame using a default format.
@@ -388,10 +390,10 @@ public:
     ///   Returns true if successful.
     //------------------------------------------------------------------
     bool
-    GetStatus (Stream &strm,
-               bool show_frame_info,
-               bool show_source,
-               const char *frame_marker = NULL);
+    GetStatus(Stream &strm,
+              bool show_frame_info,
+              bool show_source,
+              const char *frame_marker = nullptr);
 
     //------------------------------------------------------------------
     /// Query whether this frame is a concrete frame on the call stack,
@@ -530,6 +532,7 @@ private:
     ValueObjectList m_variable_list_value_objects;  // Value objects for each variable in m_variable_list_sp
     StreamString m_disassembly;
     Mutex m_mutex;
+
     DISALLOW_COPY_AND_ASSIGN (StackFrame);
 };
 

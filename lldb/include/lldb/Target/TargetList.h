@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Broadcaster.h"
@@ -37,7 +39,6 @@ private:
     TargetList(Debugger &debugger);
 
 public:
-
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
     //------------------------------------------------------------------
@@ -72,12 +73,12 @@ public:
     ///
     /// @param[in] file_spec
     ///     The main executable file for a debug target. This value
-    ///     can be NULL and the file can be set later using:
+    ///     can be nullptr and the file can be set later using:
     ///     Target::SetExecutableModule (ModuleSP&)
     ///
     /// @param[in] triple_cstr
     ///     A target triple string to be used for the target. This can 
-    ///     be NULL if the triple is not known or when attaching to a
+    ///     be nullptr if the triple is not known or when attaching to a
     ///     process.
     ///
     /// @param[in] get_dependent_modules
@@ -86,7 +87,7 @@ public:
     ///
     /// @param[in] platform_options
     ///     A pointer to the platform options to use when creating this
-    ///     target. If this value is NULL, then the currently selected 
+    ///     target. If this value is nullptr, then the currently selected 
     ///     platform will be used.
     ///
     /// @param[out] target_sp
@@ -149,7 +150,7 @@ public:
     //------------------------------------------------------------------
     /// Find the target that contains has an executable whose path
     /// matches \a exe_file_spec, and whose architecture matches
-    /// \a arch_ptr if arch_ptr is not NULL.
+    /// \a arch_ptr if arch_ptr is not nullptr.
     ///
     /// @param[in] exe_file_spec
     ///     A file spec containing a basename, or a full path (directory
@@ -160,18 +161,18 @@ public:
     ///     directory, then both must match.
     ///
     /// @param[in] exe_arch_ptr
-    ///     If not NULL then the architecture also needs to match, else
+    ///     If not nullptr then the architecture also needs to match, else
     ///     the architectures will be compared.
     ///
     /// @return
     ///     A shared pointer to a target object. The returned shared
-    ///     pointer will contain NULL if no target objects have a
+    ///     pointer will contain nullptr if no target objects have a
     ///     executable whose full or partial path matches
     ///     with a matching process ID.
     //------------------------------------------------------------------
     lldb::TargetSP
-    FindTargetWithExecutableAndArchitecture (const FileSpec &exe_file_spec,
-                                             const ArchSpec *exe_arch_ptr = NULL) const;
+    FindTargetWithExecutableAndArchitecture(const FileSpec &exe_file_spec,
+                                            const ArchSpec *exe_arch_ptr = nullptr) const;
 
     //------------------------------------------------------------------
     /// Find the target that contains a process with process ID \a
@@ -182,7 +183,7 @@ public:
     ///
     /// @return
     ///     A shared pointer to a target object. The returned shared
-    ///     pointer will contain NULL if no target objects own a process
+    ///     pointer will contain nullptr if no target objects own a process
     ///     with a matching process ID.
     //------------------------------------------------------------------
     lldb::TargetSP
@@ -232,7 +233,6 @@ protected:
     uint32_t m_selected_target_idx;
 
 private:
-
     lldb::TargetSP
     GetDummyTarget (lldb_private::Debugger &debugger);
 

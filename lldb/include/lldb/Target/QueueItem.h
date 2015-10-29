@@ -10,15 +10,20 @@
 #ifndef liblldb_QueueItem_h_
 #define liblldb_QueueItem_h_
 
+// C Includes
+// C++ Includes
+#include <memory>
+#include <string>
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-forward.h"
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ConstString.h"
-
 
 namespace lldb_private {
 
@@ -32,12 +37,10 @@ namespace lldb_private {
 // execution of the item begins.
 //------------------------------------------------------------------
 
-
 class QueueItem :
     public std::enable_shared_from_this<QueueItem>
 {
 public:
-
     QueueItem (lldb::QueueSP queue_sp, lldb::ProcessSP process_sp, lldb::addr_t item_ref, lldb_private::Address address);
 
     ~QueueItem ();
@@ -98,7 +101,7 @@ public:
     bool
     IsValid ()
     {
-        return m_queue_wp.lock() != NULL;
+        return m_queue_wp.lock() != nullptr;
     }
 
     //------------------------------------------------------------------
@@ -200,7 +203,6 @@ protected:
     void
     FetchEntireItem ();
 
-
     lldb::QueueWP           m_queue_wp;
     lldb::ProcessWP         m_process_wp;
 
@@ -220,16 +222,10 @@ protected:
     std::string             m_queue_label;
     std::string             m_target_queue_label;
 
-
 private:
-    //------------------------------------------------------------------
-    // For QueueItem only
-    //------------------------------------------------------------------
-
     DISALLOW_COPY_AND_ASSIGN (QueueItem);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_QueueItem_h_
+#endif // liblldb_QueueItem_h_

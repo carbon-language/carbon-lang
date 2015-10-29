@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <memory>
 #include <vector>
 
 // Other libraries and framework includes
@@ -84,15 +85,14 @@ public:
     GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);
 
     size_t
-    GetStatus (Stream &strm,
-               uint32_t first_frame,
-               uint32_t num_frames,
-               bool show_frame_info,
-               uint32_t num_frames_with_source,
-               const char *frame_marker = NULL);
+    GetStatus(Stream &strm,
+              uint32_t first_frame,
+              uint32_t num_frames,
+              bool show_frame_info,
+              uint32_t num_frames_with_source,
+              const char *frame_marker = nullptr);
     
 protected:
-
     friend class Thread;
 
     bool
@@ -129,9 +129,6 @@ protected:
     void
     SetCurrentInlinedDepth (uint32_t new_depth);
     
-    //------------------------------------------------------------------
-    // Classes that inherit from StackFrameList can see and modify these
-    //------------------------------------------------------------------
     typedef std::vector<lldb::StackFrameSP> collection;
     typedef collection::iterator iterator;
     typedef collection::const_iterator const_iterator;
@@ -147,12 +144,9 @@ protected:
     bool m_show_inlined_frames;
 
 private:
-    //------------------------------------------------------------------
-    // For StackFrameList only
-    //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (StackFrameList);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_StackFrameList_h_
+#endif // liblldb_StackFrameList_h_

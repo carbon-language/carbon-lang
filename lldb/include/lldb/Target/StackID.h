@@ -28,7 +28,7 @@ public:
     StackID () :
         m_pc (LLDB_INVALID_ADDRESS),
         m_cfa (LLDB_INVALID_ADDRESS),
-        m_symbol_scope (NULL)
+        m_symbol_scope (nullptr)
     {
     }
 
@@ -47,9 +47,7 @@ public:
     {
     }
 
-    ~StackID()
-    {
-    }
+    ~StackID() = default;
 
     lldb::addr_t
     GetPC() const
@@ -80,7 +78,7 @@ public:
     {
         m_pc = LLDB_INVALID_ADDRESS;
         m_cfa = LLDB_INVALID_ADDRESS;
-        m_symbol_scope = NULL;
+        m_symbol_scope = nullptr;
     }
     
     bool
@@ -108,7 +106,6 @@ public:
     }
 
 protected:
-
     friend class StackFrame;
 
     void
@@ -123,18 +120,15 @@ protected:
         m_cfa = cfa;
     }
 
-    //------------------------------------------------------------------
-    // Classes that inherit from StackID can see and modify these
-    //------------------------------------------------------------------
     lldb::addr_t m_pc;                  // The pc value for the function/symbol for this frame. This will
-                                        // only get used if the symbol scope is NULL (the code where we are
+                                        // only get used if the symbol scope is nullptr (the code where we are
                                         // stopped is not represented by any function or symbol in any
                                         // shared library).
     lldb::addr_t m_cfa;                 // The call frame address (stack pointer) value
                                         // at the beginning of the function that uniquely
                                         // identifies this frame (along with m_symbol_scope below)
-    SymbolContextScope *m_symbol_scope; // If NULL, there is no block or symbol for this frame.
-                                        // If not NULL, this will either be the scope for the 
+    SymbolContextScope *m_symbol_scope; // If nullptr, there is no block or symbol for this frame.
+                                        // If not nullptr, this will either be the scope for the 
                                         // lexical block for the frame, or the scope 
                                         // for the symbol. Symbol context scopes are 
                                         // always be unique pointers since the are part
@@ -151,4 +145,4 @@ bool operator<  (const StackID& lhs, const StackID& rhs);
 
 } // namespace lldb_private
 
-#endif  // liblldb_StackID_h_
+#endif // liblldb_StackID_h_
