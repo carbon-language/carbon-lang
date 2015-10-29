@@ -131,6 +131,14 @@ DataVisualization::Categories::GetCategory (const ConstString &category, lldb::T
     return (entry.get() != NULL);
 }
 
+bool
+DataVisualization::Categories::GetCategory (lldb::LanguageType language, lldb::TypeCategoryImplSP &entry)
+{
+    if (LanguageCategory *lang_category = GetFormatManager().GetCategoryForLanguage(language))
+        entry = lang_category->GetCategory();
+    return (entry.get() != nullptr);
+}
+
 void
 DataVisualization::Categories::Add (const ConstString &category)
 {

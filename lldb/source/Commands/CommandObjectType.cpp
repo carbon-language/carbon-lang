@@ -939,6 +939,9 @@ private:
                 case 'w':
                     m_category = std::string(option_arg);
                     break;
+                case 'l':
+                    m_language = Language::GetLanguageTypeFromString(option_arg);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -952,6 +955,7 @@ private:
         {
             m_delete_all = false;
             m_category = "default";
+            m_language = lldb::eLanguageTypeUnknown;
         }
         
         const OptionDefinition*
@@ -968,7 +972,7 @@ private:
         
         bool m_delete_all;
         std::string m_category;
-        
+        lldb::LanguageType m_language;
     };
     
     CommandOptions m_options;
@@ -1042,11 +1046,22 @@ protected:
             return result.Succeeded();
         }
         
-        lldb::TypeCategoryImplSP category;
-        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+        bool delete_category = false;
         
-        bool delete_category = category->Delete(typeCS,
-                                                eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+        if (m_options.m_language != lldb::eLanguageTypeUnknown)
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(m_options.m_language, category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+        }
+        else
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemValue | eFormatCategoryItemRegexValue);
+        }
         
         if (delete_category)
         {
@@ -1069,6 +1084,7 @@ CommandObjectTypeFormatDelete::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Delete from every category."},
     { LLDB_OPT_SET_2, false, "category", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Delete from given category."},
+    { LLDB_OPT_SET_3, false, "language", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,  "Delete from given language's category."},
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -1960,6 +1976,9 @@ private:
                 case 'w':
                     m_category = std::string(option_arg);
                     break;
+                case 'l':
+                    m_language = Language::GetLanguageTypeFromString(option_arg);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -1973,6 +1992,7 @@ private:
         {
             m_delete_all = false;
             m_category = "default";
+            m_language = lldb::eLanguageTypeUnknown;
         }
         
         const OptionDefinition*
@@ -1989,7 +2009,7 @@ private:
         
         bool m_delete_all;
         std::string m_category;
-        
+        lldb::LanguageType m_language;
     };
     
     CommandOptions m_options;
@@ -2063,12 +2083,24 @@ protected:
             return result.Succeeded();
         }
         
-        lldb::TypeCategoryImplSP category;
-        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+        bool delete_category = false;
+        bool delete_named = false;
         
-        bool delete_category = category->Delete(typeCS,
-                                                eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
-        bool delete_named = DataVisualization::NamedSummaryFormats::Delete(typeCS);
+        if (m_options.m_language != lldb::eLanguageTypeUnknown)
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(m_options.m_language, category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
+        }
+        else
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
+            delete_named = DataVisualization::NamedSummaryFormats::Delete(typeCS);
+        }
         
         if (delete_category || delete_named)
         {
@@ -2090,6 +2122,7 @@ CommandObjectTypeSummaryDelete::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Delete from every category."},
     { LLDB_OPT_SET_2, false, "category", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Delete from given category."},
+    { LLDB_OPT_SET_3, false, "language", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,  "Delete from given language's category."},
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -3502,6 +3535,9 @@ private:
                 case 'w':
                     m_category = std::string(option_arg);
                     break;
+                case 'l':
+                    m_language = Language::GetLanguageTypeFromString(option_arg);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -3515,6 +3551,7 @@ private:
         {
             m_delete_all = false;
             m_category = "default";
+            m_language = lldb::eLanguageTypeUnknown;
         }
         
         const OptionDefinition*
@@ -3531,7 +3568,7 @@ private:
         
         bool m_delete_all;
         std::string m_category;
-        
+        lldb::LanguageType m_language;
     };
     
     CommandOptions m_options;
@@ -3604,11 +3641,22 @@ protected:
             return result.Succeeded();
         }
         
-        lldb::TypeCategoryImplSP category;
-        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+        bool delete_category = false;
         
-        bool delete_category = category->GetTypeFiltersContainer()->Delete(typeCS);
-        delete_category = category->GetRegexTypeFiltersContainer()->Delete(typeCS) || delete_category;
+        if (m_options.m_language != lldb::eLanguageTypeUnknown)
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(m_options.m_language, category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
+        }
+        else
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
+        }
         
         if (delete_category)
         {
@@ -3617,11 +3665,10 @@ protected:
         }
         else
         {
-            result.AppendErrorWithFormat ("no custom synthetic provider for %s.\n", typeA);
+            result.AppendErrorWithFormat ("no custom filter for %s.\n", typeA);
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
-        
     }
 };
 
@@ -3630,6 +3677,7 @@ CommandObjectTypeFilterDelete::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Delete from every category."},
     { LLDB_OPT_SET_2, false, "category", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Delete from given category."},
+    { LLDB_OPT_SET_3, false, "language", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,  "Delete from given language's category."},
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -3667,6 +3715,9 @@ private:
                 case 'w':
                     m_category = std::string(option_arg);
                     break;
+                case 'l':
+                    m_language = Language::GetLanguageTypeFromString(option_arg);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -3680,6 +3731,7 @@ private:
         {
             m_delete_all = false;
             m_category = "default";
+            m_language = lldb::eLanguageTypeUnknown;
         }
         
         const OptionDefinition*
@@ -3696,7 +3748,7 @@ private:
         
         bool m_delete_all;
         std::string m_category;
-        
+        lldb::LanguageType m_language;
     };
     
     CommandOptions m_options;
@@ -3769,12 +3821,23 @@ protected:
             return result.Succeeded();
         }
         
-        lldb::TypeCategoryImplSP category;
-        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+        bool delete_category = false;
         
-        bool delete_category = category->GetTypeSyntheticsContainer()->Delete(typeCS);
-        delete_category = category->GetRegexTypeSyntheticsContainer()->Delete(typeCS) || delete_category;
-        
+        if (m_options.m_language != lldb::eLanguageTypeUnknown)
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(m_options.m_language, category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
+        }
+        else
+        {
+            lldb::TypeCategoryImplSP category;
+            DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
+            if (category)
+                delete_category = category->Delete(typeCS, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
+        }
+
         if (delete_category)
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -3786,7 +3849,6 @@ protected:
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
-        
     }
 };
 
@@ -3795,6 +3857,7 @@ CommandObjectTypeSynthDelete::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "all", 'a', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,  "Delete from every category."},
     { LLDB_OPT_SET_2, false, "category", 'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,  "Delete from given category."},
+    { LLDB_OPT_SET_3, false, "language", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,  "Delete from given language's category."},
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 

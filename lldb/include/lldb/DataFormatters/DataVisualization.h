@@ -115,6 +115,10 @@ public:
                      lldb::TypeCategoryImplSP &entry,
                      bool allow_create = true);
 
+        static bool
+        GetCategory (lldb::LanguageType language,
+                     lldb::TypeCategoryImplSP &entry);
+        
         static void
         Add (const ConstString &category);
         
