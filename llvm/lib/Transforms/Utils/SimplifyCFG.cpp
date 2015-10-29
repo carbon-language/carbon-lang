@@ -2390,6 +2390,19 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     if (CE->canTrap())
       return false;
 
+  // If BI is reached from the true path of PBI and PBI's condition implies
+  // BI's condition, we know the direction of the BI branch.
+  if (PBI->getSuccessor(0) == BI->getParent() &&
+      isImpliedCondition(PBI->getCondition(), BI->getCondition()) &&
+      PBI->getSuccessor(0) != PBI->getSuccessor(1) &&
+      BB->getSinglePredecessor()) {
+    // Turn this into a branch on constant.
+    auto *OldCond = BI->getCondition();
+    BI->setCondition(ConstantInt::getTrue(BB->getContext()));
+    RecursivelyDeleteTriviallyDeadInstructions(OldCond);
+    return true;  // Nuke the branch on constant.
+  }
+
   // If this is a conditional branch in an empty block, and if any
   // predecessors are a conditional branch to one of our destinations,
   // fold the conditions into logical ops and one cond br.
