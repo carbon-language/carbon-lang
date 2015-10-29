@@ -9746,6 +9746,22 @@ void CrossWindows::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  if (TC.getSanitizerArgs().needsAsanRt()) {
+    // TODO handle /MT[d] /MD[d]
+    if (Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back(TC.getCompilerRTArgString(Args, "asan_dll_thunk"));
+    } else {
+      for (const auto &Lib : {"asan_dynamic", "asan_dynamic_runtime_thunk"})
+        CmdArgs.push_back(TC.getCompilerRTArgString(Args, Lib));
+        // Make sure the dynamic runtime thunk is not optimized out at link time
+        // to ensure proper SEH handling.
+        CmdArgs.push_back(Args.MakeArgString("--undefined"));
+        CmdArgs.push_back(Args.MakeArgString(TC.getArch() == llvm::Triple::x86
+                                                 ? "___asan_seh_interceptor"
+                                                 : "__asan_seh_interceptor"));
+    }
+  }
+
   Exec = Args.MakeArgString(TC.GetLinkerPath());
 
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
