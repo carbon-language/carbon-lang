@@ -288,6 +288,11 @@ void InstrProfiling::emitRegistration() {
 
 void InstrProfiling::emitRuntimeHook() {
 
+  // We expect the linker to be invoked with -u<hook_var> flag for linux,
+  // for which case there is no need to emit the user function.
+  if (Triple(M->getTargetTriple()).isOSLinux())
+    return;
+
   // If the module's provided its own runtime, we don't need to do anything.
   if (M->getGlobalVariable(getInstrProfRuntimeHookVarName())) return;
 
