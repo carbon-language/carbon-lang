@@ -194,7 +194,11 @@ if (LLDB_DISABLE_PYTHON)
   add_definitions( -DLLDB_DISABLE_PYTHON )
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/tools/clang/include)
+if (LLVM_EXTERNAL_CLANG_SOURCE_DIR)
+  include_directories(${LLVM_EXTERNAL_CLANG_SOURCE_DIR}/include)
+else ()
+  include_directories(${CMAKE_SOURCE_DIR}/tools/clang/include)
+endif ()
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/../clang/include")
 
 # Disable GCC warnings
