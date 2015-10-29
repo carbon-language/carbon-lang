@@ -34,5 +34,5 @@ global-symbols:
 
 
 # CHECK-BINARY-WRITE: cmd LC_RPATH
-# CHECK-BINARY-WRITE-NEXT:  cmdsize 44
+# CHECK-BINARY-WRITE-NEXT:  cmdsize 40
 # CHECK-BINARY-WRITE-NEXT:  path @loader_path/../Frameworks (offset 12)

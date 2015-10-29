@@ -429,7 +429,7 @@ uint32_t MachOFileLayout::loadCommandsSize(uint32_t &count) {
 
   // Add LC_RPATH
   for (const StringRef &path : _file.rpaths) {
-    size += sizeof(rpath_command) + pointerAlign(path.size()+1);
+    size += pointerAlign(sizeof(rpath_command) + path.size() + 1);
     ++count;
   }
 
@@ -855,7 +855,7 @@ std::error_code MachOFileLayout::writeLoadCommands() {
     // Add LC_RPATH
     for (const StringRef &path : _file.rpaths) {
       rpath_command *rpc = reinterpret_cast<rpath_command *>(lc);
-      uint32_t size = sizeof(rpath_command) + pointerAlign(path.size()+1);
+      uint32_t size = pointerAlign(sizeof(rpath_command) + path.size() + 1);
       rpc->cmd                         = LC_RPATH;
       rpc->cmdsize                     = size;
       rpc->path                        = sizeof(rpath_command); // offset
