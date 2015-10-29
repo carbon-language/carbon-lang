@@ -230,6 +230,10 @@ public:
     CompileLayer.setObjectCache(NewCache);
   }
 
+  void setProcessAllSections(bool ProcessAllSections) override {
+    ObjectLayer.setProcessAllSections(ProcessAllSections);
+  }
+
 private:
 
   RuntimeDyld::SymbolInfo findMangledSymbol(StringRef Name) {

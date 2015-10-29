@@ -12,6 +12,7 @@ add_llvm_unittest(OrcJITTests
   IndirectionUtilsTest.cpp
   GlobalMappingLayerTest.cpp
   LazyEmittingLayerTest.cpp
+  ObjectLinkingLayerTest.cpp
   ObjectTransformLayerTest.cpp
   OrcCAPITest.cpp
   OrcTestCommon.cpp

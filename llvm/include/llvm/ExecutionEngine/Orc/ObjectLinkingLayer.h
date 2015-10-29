@@ -39,9 +39,12 @@ protected:
     void operator=(const LinkedObjectSet&) = delete;
   public:
     LinkedObjectSet(RuntimeDyld::MemoryManager &MemMgr,
-                    RuntimeDyld::SymbolResolver &Resolver)
+                    RuntimeDyld::SymbolResolver &Resolver,
+                    bool ProcessAllSections)
         : RTDyld(llvm::make_unique<RuntimeDyld>(MemMgr, Resolver)),
-          State(Raw) {}
+          State(Raw) {
+      RTDyld->setProcessAllSections(ProcessAllSections);
+    }
 
     virtual ~LinkedObjectSet() {}
 
@@ -98,9 +101,10 @@ private:
   class ConcreteLinkedObjectSet : public LinkedObjectSet {
   public:
     ConcreteLinkedObjectSet(MemoryManagerPtrT MemMgr,
-                            SymbolResolverPtrT Resolver)
-      : LinkedObjectSet(*MemMgr, *Resolver), MemMgr(std::move(MemMgr)),
-        Resolver(std::move(Resolver)) { }
+                            SymbolResolverPtrT Resolver,
+                            bool ProcessAllSections)
+      : LinkedObjectSet(*MemMgr, *Resolver, ProcessAllSections),
+        MemMgr(std::move(MemMgr)), Resolver(std::move(Resolver)) { }
 
     void Finalize() override {
       State = Finalizing;
@@ -117,9 +121,11 @@ private:
 
   template <typename MemoryManagerPtrT, typename SymbolResolverPtrT>
   std::unique_ptr<LinkedObjectSet>
-  createLinkedObjectSet(MemoryManagerPtrT MemMgr, SymbolResolverPtrT Resolver) {
+  createLinkedObjectSet(MemoryManagerPtrT MemMgr, SymbolResolverPtrT Resolver,
+                        bool ProcessAllSections) {
     typedef ConcreteLinkedObjectSet<MemoryManagerPtrT, SymbolResolverPtrT> LOS;
-    return llvm::make_unique<LOS>(std::move(MemMgr), std::move(Resolver));
+    return llvm::make_unique<LOS>(std::move(MemMgr), std::move(Resolver),
+                                  ProcessAllSections);
   }
 
 public:
@@ -138,7 +144,18 @@ public:
       NotifyLoadedFtor NotifyLoaded = NotifyLoadedFtor(),
       NotifyFinalizedFtor NotifyFinalized = NotifyFinalizedFtor())
       : NotifyLoaded(std::move(NotifyLoaded)),
-        NotifyFinalized(std::move(NotifyFinalized)) {}
+        NotifyFinalized(std::move(NotifyFinalized)),
+        ProcessAllSections(false) {}
+
+  /// @brief Set the 'ProcessAllSections' flag.
+  ///
+  /// If set to true, all sections in each object file will be allocated using
+  /// the memory manager, rather than just the sections required for execution.
+  ///
+  /// This is kludgy, and may be removed in the future.
+  void setProcessAllSections(bool ProcessAllSections) {
+    this->ProcessAllSections = ProcessAllSections;
+  }
 
   /// @brief Add a set of objects (or archives) that will be treated as a unit
   ///        for the purposes of symbol lookup and memory management.
@@ -160,7 +177,8 @@ public:
     ObjSetHandleT Handle =
       LinkedObjSetList.insert(
         LinkedObjSetList.end(),
-        createLinkedObjectSet(std::move(MemMgr), std::move(Resolver)));
+        createLinkedObjectSet(std::move(MemMgr), std::move(Resolver),
+                              ProcessAllSections));
 
     LinkedObjectSet &LOS = **Handle;
     LoadedObjInfoList LoadedObjInfos;
@@ -256,6 +274,7 @@ private:
   LinkedObjectSetListT LinkedObjSetList;
   NotifyLoadedFtor NotifyLoaded;
   NotifyFinalizedFtor NotifyFinalized;
+  bool ProcessAllSections;
 };
 
 } // End namespace orc.
