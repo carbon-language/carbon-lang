@@ -15,7 +15,6 @@
  * ompt include files
  ****************************************************************************/
 
-#include "kmp_config.h"
 #include "ompt-internal.h"
 #include "ompt-specific.c"
 
@@ -32,6 +31,9 @@
 
 #define OMPT_API_ROUTINE static
 
+#ifndef OMPT_STR_MATCH
+#define OMPT_STR_MATCH(haystack, needle) (!strcasecmp(haystack, needle))
+#endif
 
 
 /*****************************************************************************
@@ -87,17 +89,93 @@ static ompt_interface_fn_t ompt_fn_lookup(const char *s);
 OMPT_API_ROUTINE ompt_thread_id_t ompt_get_thread_id(void);
 
 
-
 /*****************************************************************************
  * initialization and finalization (private operations)
  ****************************************************************************/
 
-_OMP_EXTERN __attribute__ (( weak ))
+/* On Unix-like systems that support weak symbols the following implementation
+ * of ompt_tool() will be used in case no tool-supplied implementation of
+ * this function is present in the address space of a process.
+ *
+ * On Windows, the ompt_tool_windows function is used to find the
+ * ompt_tool symbol across all modules loaded by a process. If ompt_tool is
+ * found, ompt_tool's return value is used to initialize the tool. Otherwise,
+ * NULL is returned and OMPT won't be enabled */
+#if OMPT_HAVE_WEAK_ATTRIBUTE
+_OMP_EXTERN 
+__attribute__ (( weak ))
 ompt_initialize_t ompt_tool()
 {
+#if OMPT_DEBUG
+    printf("ompt_tool() is called from the RTL\n");
+#endif
     return NULL;
 }
 
+#elif OMPT_HAVE_PSAPI
+
+#include <psapi.h>
+#pragma comment(lib, "psapi.lib")
+#define ompt_tool ompt_tool_windows
+
+// The number of loaded modules to start enumeration with EnumProcessModules()
+#define NUM_MODULES 128
+
+static
+ompt_initialize_t ompt_tool_windows()
+{
+    int i;
+    DWORD needed, new_size;
+    HMODULE *modules;
+    HANDLE  process = GetCurrentProcess();
+    modules = (HMODULE*)malloc( NUM_MODULES * sizeof(HMODULE) );
+    ompt_initialize_t (*ompt_tool_p)() = NULL;
+
+#if OMPT_DEBUG
+    printf("ompt_tool_windows(): looking for ompt_tool\n");
+#endif
+    if( !EnumProcessModules( process, modules, NUM_MODULES * sizeof(HMODULE),
+                             &needed ) ) {
+        // Regardless of the error reason use the stub initialization function
+        return NULL;
+    }
+    // Check if NUM_MODULES is enough to list all modules
+    new_size = needed / sizeof(HMODULE);
+    if( new_size > NUM_MODULES ) {
+#if OMPT_DEBUG
+    printf("ompt_tool_windows(): resize buffer to %d bytes\n", needed);
+#endif
+        modules = (HMODULE*)realloc( modules, needed );
+        // If resizing failed use the stub function.
+        if( !EnumProcessModules( process, modules, needed, &needed ) ) {
+            return NULL;
+        }
+    }
+    for( i = 0; i < new_size; ++i ) {
+        (FARPROC &)ompt_tool_p = GetProcAddress(modules[i], "ompt_tool");
+        if( ompt_tool_p ) {
+#if OMPT_DEBUG
+            TCHAR modName[MAX_PATH];
+            if( GetModuleFileName(modules[i], modName, MAX_PATH))
+                printf("ompt_tool_windows(): ompt_tool found in module %s\n",
+                       modName);
+#endif
+            return ompt_tool_p();
+        }
+#if OMPT_DEBUG
+        else {
+            TCHAR modName[MAX_PATH];
+            if( GetModuleFileName(modules[i], modName, MAX_PATH) )
+                printf("ompt_tool_windows(): ompt_tool not found in module %s\n",
+                       modName);
+        }
+#endif
+    }
+    return NULL;
+}
+#else
+# error Either __attribute__((weak)) or psapi.dll are required for OMPT support
+#endif // OMPT_HAVE_WEAK_ATTRIBUTE
 
 void ompt_pre_init()
 {
@@ -118,11 +196,14 @@ void ompt_pre_init()
 
     if (!ompt_env_var  || !strcmp(ompt_env_var, ""))
         tool_setting = omp_tool_unset;
-    else if (!strcasecmp(ompt_env_var, "disabled"))
+    else if (OMPT_STR_MATCH(ompt_env_var, "disabled"))
         tool_setting = omp_tool_disabled;
-    else if (!strcasecmp(ompt_env_var, "enabled"))
+    else if (OMPT_STR_MATCH(ompt_env_var, "enabled"))
         tool_setting = omp_tool_enabled;
 
+#if OMPT_DEBUG
+    printf("ompt_pre_init(): tool_setting = %d\n", tool_setting);
+#endif
     switch(tool_setting) {
     case omp_tool_disabled:
         break;
@@ -142,7 +223,9 @@ void ompt_pre_init()
             "\"enabled\").\n", ompt_env_var);
         break;
     }
-
+#if OMPT_DEBUG
+    printf("ompt_pre_init():ompt_enabled = %d\n", ompt_enabled);
+#endif
 }
 
 

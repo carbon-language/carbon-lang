@@ -29,7 +29,7 @@
 #define NEXT_ID(id_ptr,tid) \
   ((KMP_TEST_THEN_INC64(id_ptr) << OMPT_THREAD_ID_BITS) | (tid))
 #else
-#define NEXT_ID(id_ptr,tid) (KMP_TEST_THEN_INC64(id_ptr))
+#define NEXT_ID(id_ptr,tid) (KMP_TEST_THEN_INC64((volatile kmp_int64 *)id_ptr))
 #endif
 
 //******************************************************************************

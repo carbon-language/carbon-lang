@@ -34,6 +34,14 @@ ompt_task_id_t __ompt_get_task_id_internal(int depth);
 ompt_frame_t *__ompt_get_task_frame_internal(int depth);
 
 
+/*****************************************************************************
+ * macros
+ ****************************************************************************/
+#define OMPT_DEBUG KMP_DEBUG
+#define OMPT_HAVE_WEAK_ATTRIBUTE KMP_HAVE_WEAK_ATTRIBUTE
+#define OMPT_HAVE_PSAPI KMP_HAVE_PSAPI
+#define OMPT_STR_MATCH(haystack, needle) __kmp_str_match(haystack, 0, needle)
+
 
 //******************************************************************************
 // inline functions
