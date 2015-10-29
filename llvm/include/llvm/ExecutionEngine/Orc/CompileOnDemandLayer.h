@@ -253,7 +253,7 @@ private:
       }
 
       LMResources.StubsMgr = CreateIndirectStubsManager();
-      auto EC = LMResources.StubsMgr->init(StubInits);
+      auto EC = LMResources.StubsMgr->createStubs(StubInits);
       (void)EC;
       // FIXME: This should be propagated back to the user. Stub creation may
       //        fail for remote JITs.

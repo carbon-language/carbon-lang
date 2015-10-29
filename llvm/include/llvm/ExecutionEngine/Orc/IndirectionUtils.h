@@ -236,7 +236,7 @@ public:
 
   /// @brief Create StubInits.size() stubs with the given names, target
   ///        addresses, and flags.
-  virtual std::error_code init(const StubInitsMap &StubInits) = 0;
+  virtual std::error_code createStubs(const StubInitsMap &StubInits) = 0;
 
   /// @brief Find the stub with the given name. If ExportedStubsOnly is true,
   ///        this will only return a result if the stub's flags indicate that it
@@ -259,7 +259,7 @@ class IndirectStubsManager : public IndirectStubsManagerBase {
 public:
 
   std::error_code
-  init(const StubInitsMap &StubInits) override {
+  createStubs(const StubInitsMap &StubInits) override {
     if (auto EC = TargetT::emitIndirectStubsBlock(IndirectStubsInfo,
                                                   StubInits.size(),
                                                   nullptr))

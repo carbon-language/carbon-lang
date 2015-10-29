@@ -33,7 +33,7 @@ public:
 
 class DummyStubsManager : public orc::IndirectStubsManagerBase {
 public:
-  std::error_code init(const StubInitsMap &StubInits) override {
+  std::error_code createStubs(const StubInitsMap &StubInits) override {
     llvm_unreachable("Not implemented");
   }
 
