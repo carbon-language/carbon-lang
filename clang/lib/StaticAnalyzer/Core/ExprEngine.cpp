@@ -26,6 +26,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/LoopWidening.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1395,8 +1396,25 @@ void ExprEngine::processCFGBlockEntrance(const BlockEdge &L,
                                          ExplodedNode *Pred) {
   PrettyStackTraceLocationContext CrashInfo(Pred->getLocationContext());
 
+  // If this block is terminated by a loop and it has already been visited the
+  // maximum number of times, widen the loop.
+  unsigned int BlockCount = nodeBuilder.getContext().blockCount();
+  if (BlockCount == AMgr.options.maxBlockVisitOnPath - 1 &&
+      AMgr.options.shouldWidenLoops()) {
+    const Stmt *Term = nodeBuilder.getContext().getBlock()->getTerminator();
+    if (!(Term &&
+          (isa<ForStmt>(Term) || isa<WhileStmt>(Term) || isa<DoStmt>(Term))))
+      return;
+    // Widen.
+    const LocationContext *LCtx = Pred->getLocationContext();
+    ProgramStateRef WidenedState =
+        getWidenedLoopState(Pred->getState(), LCtx, BlockCount, Term);
+    nodeBuilder.generateNode(WidenedState, Pred);
+    return;
+  }
+
   // FIXME: Refactor this into a checker.
-  if (nodeBuilder.getContext().blockCount() >= AMgr.options.maxBlockVisitOnPath) {
+  if (BlockCount >= AMgr.options.maxBlockVisitOnPath) {
     static SimpleProgramPointTag tag(TagProviderName, "Block count exceeded");
     const ExplodedNode *Sink =
                    nodeBuilder.generateSink(Pred->getState(), Pred, &tag);
