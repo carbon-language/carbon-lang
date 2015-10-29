@@ -89,3 +89,12 @@ class MemoryReadTestCase(TestBase):
         # 0x7fff5fbff598: error: unsupported byte size (20) for float format
         self.expect("memory read --format 'float' --count 1 --size 20 `&my_double`",
             substrs = ['unsupported byte size (20) for float format'])
+
+        self.expect('memory read --type int --count 5 `&my_ints[0]`',
+            substrs=['(int) 0x', '2','4','6','8','10'])
+
+        self.expect('memory read --type int --count 5 --format hex `&my_ints[0]`',
+            substrs=['(int) 0x', '0x','0a'])
+
+        self.expect('memory read --type int --count 5 --offset 5 `&my_ints[0]`',
+            substrs=['(int) 0x', '12', '14','16','18', '20'])

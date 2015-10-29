@@ -49,6 +49,7 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "num-per-line" ,'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeNumberPerLine ,"The number of items per line to display."},
     { LLDB_OPT_SET_2, false, "binary"       ,'b', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone          ,"If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
     { LLDB_OPT_SET_3, true , "type"         ,'t', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."},
+    { LLDB_OPT_SET_3, false , "offset"      ,'o', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeCount         ,"How many elements of the specified type to skip before starting to display data."},
     { LLDB_OPT_SET_1|
       LLDB_OPT_SET_2|
       LLDB_OPT_SET_3, false, "force"        ,'r', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone          ,"Necessary if reading over target.max-memory-read-size bytes."},
@@ -63,7 +64,8 @@ public:
     OptionGroupReadMemory () :
         m_num_per_line (1,1),
         m_output_as_binary (false),
-        m_view_as_type()
+        m_view_as_type(),
+        m_offset(0,0)
     {
     }
 
@@ -112,6 +114,10 @@ public:
                 m_force = true;
                 break;
                 
+            case 'o':
+                error = m_offset.SetValueFromString(option_arg);
+                break;
+                
             default:
                 error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
                 break;
@@ -126,6 +132,7 @@ public:
         m_output_as_binary = false;
         m_view_as_type.Clear();
         m_force = false;
+        m_offset.Clear();
     }
     
     Error
@@ -291,13 +298,15 @@ public:
     {
         return m_num_per_line.OptionWasSet() ||
                m_output_as_binary ||
-               m_view_as_type.OptionWasSet();
+               m_view_as_type.OptionWasSet() ||
+               m_offset.OptionWasSet();
     }
     
     OptionValueUInt64 m_num_per_line;
     bool m_output_as_binary;
     OptionValueString m_view_as_type;
     bool m_force;
+    OptionValueUInt64 m_offset;
 };
 
 
@@ -697,6 +706,9 @@ protected:
                 m_format_options.GetFormatValue().SetCurrentValue(eFormatDefault);
 
             bytes_read = clang_ast_type.GetByteSize(nullptr) * m_format_options.GetCountValue().GetCurrentValue();
+                
+            if (argc > 0)
+                addr = addr + (clang_ast_type.GetByteSize(nullptr) * m_memory_options.m_offset.GetCurrentValue());
         }
         else if (m_format_options.GetFormatValue().GetCurrentValue() != eFormatCString)
         {
