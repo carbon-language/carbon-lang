@@ -10,6 +10,14 @@
 #ifndef liblldb_Thread_h_
 #define liblldb_Thread_h_
 
+// C Includes
+// C++ Includes
+#include <memory>
+#include <string>
+#include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Core/Broadcaster.h"
@@ -38,7 +46,7 @@ public:
     ///
     /// @return
     ///    A pointer to a regular expression to compare against symbols,
-    ///    or NULL if all symbols are allowed.
+    ///    or nullptr if all symbols are allowed.
     ///
     //------------------------------------------------------------------
     const RegularExpression *
@@ -137,9 +145,9 @@ public:
     private:
         lldb::ThreadSP m_thread_sp;
         StackID        m_stack_id;
-    DISALLOW_COPY_AND_ASSIGN (ThreadEventData);
+
+        DISALLOW_COPY_AND_ASSIGN (ThreadEventData);
     };
-    
 
     struct ThreadStateCheckpoint
     {
@@ -149,15 +157,6 @@ public:
         uint32_t           current_inlined_depth;
         lldb::addr_t       current_inlined_pc;
     };
-
-    static void
-    SettingsInitialize ();
-
-    static void
-    SettingsTerminate ();
-
-    static const ThreadPropertiesSP &
-    GetGlobalProperties();
 
     //------------------------------------------------------------------
     /// Constructor
@@ -179,6 +178,15 @@ public:
     Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id = false);
 
     ~Thread() override;
+
+    static void
+    SettingsInitialize ();
+
+    static void
+    SettingsTerminate ();
+
+    static const ThreadPropertiesSP &
+    GetGlobalProperties();
 
     lldb::ProcessSP
     GetProcess() const
@@ -322,7 +330,7 @@ public:
     virtual const char *
     GetInfo ()
     {
-        return NULL;
+        return nullptr;
     }
 
     //------------------------------------------------------------------
@@ -350,7 +358,7 @@ public:
     virtual const char *
     GetName ()
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual void
@@ -392,12 +400,12 @@ public:
     ///
     /// @return
     ///     The Queue name, if the Thread subclass implements this, else
-    ///     NULL.
+    ///     nullptr.
     //------------------------------------------------------------------
     virtual const char *
     GetQueueName ()
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual void
@@ -477,7 +485,7 @@ public:
     ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return_value_sp, bool broadcast = false);
 
     Error
-    JumpToLine (const FileSpec &file, uint32_t line, bool can_leave_function, std::string *warnings = NULL);
+    JumpToLine(const FileSpec &file, uint32_t line, bool can_leave_function, std::string *warnings = nullptr);
 
     virtual lldb::StackFrameSP
     GetFrameWithStackID (const StackID &stack_id)
@@ -498,7 +506,6 @@ public:
 
     uint32_t
     SetSelectedFrame (lldb_private::StackFrame *frame, bool broadcast = false);
-
 
     bool
     SetSelectedFrameByIndex (uint32_t frame_idx, bool broadcast = false);
@@ -606,6 +613,7 @@ public:
     //------------------------------------------------------------------
     virtual Error
     StepOut ();
+
     //------------------------------------------------------------------
     /// Retrieves the per-thread data area.
     /// Most OSs maintain a per-thread pointer (e.g. the FS register on
@@ -682,7 +690,7 @@ public:
     ///    Otherwise this plan will go on the end of the plan stack.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueFundamentalPlan (bool abort_other_plans);
@@ -701,7 +709,7 @@ public:
     ///    \b true if we will stop other threads while we single step this one.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepSingleInstruction (bool step_over,
@@ -737,7 +745,7 @@ public:
     ///    If eLazyBoolCalculate, we will consult the default set in the thread.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepOverRange (bool abort_other_plans,
@@ -781,7 +789,7 @@ public:
     ///    If eLazyBoolCalculate, it will consult the default set in the thread.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepInRange (bool abort_other_plans,
@@ -822,7 +830,7 @@ public:
     ///    If eLazyBoolCalculate, it will consult the default set in the thread.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepOut (bool abort_other_plans,
@@ -861,7 +869,7 @@ public:
     ///    See standard meanings for the stop & run votes in ThreadPlan.h.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepOutNoShouldStop (bool abort_other_plans,
@@ -889,7 +897,7 @@ public:
     ///    \b true if we will stop other threads while we single step this one.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepThrough (StackID &return_stack_id,
@@ -912,7 +920,7 @@ public:
     ///    \b true if we will stop other threads while we single step this one.
     ///
     /// @return
-    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or nullptr if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForRunToAddress (bool abort_other_plans,
@@ -954,15 +962,6 @@ public:
 
     Error
     UnwindInnermostExpression();
-
-private:
-    bool
-    PlanIsBasePlan (ThreadPlan *plan_ptr);
-    
-    void
-    BroadcastSelectedFrameChange(StackID &new_frame_id);
-    
-public:
 
     //------------------------------------------------------------------
     /// Gets the outer-most plan that was popped off the plan stack in the
@@ -1038,7 +1037,6 @@ public:
     //------------------------------------------------------------------
     void
     QueueThreadPlan (lldb::ThreadPlanSP &plan_sp, bool abort_other_plans);
-
 
     //------------------------------------------------------------------
     /// Discards the plans queued on the plan stack of the current thread.  This is
@@ -1269,7 +1267,6 @@ public:
     }
 
 protected:
-
     friend class ThreadPlan;
     friend class ThreadList;
     friend class ThreadEventData;
@@ -1321,7 +1318,6 @@ protected:
 
     lldb::StackFrameListSP
     GetStackFrameList ();
-    
 
     void
     FunctionOptimizationWarning (lldb_private::StackFrame *frame);
@@ -1354,10 +1350,14 @@ protected:
 private:
     bool                m_extended_info_fetched;  // Have we tried to retrieve the m_extended_info for this thread?
     StructuredData::ObjectSP m_extended_info;     // The extended info for this thread
-    //------------------------------------------------------------------
-    // For Thread only
-    //------------------------------------------------------------------
 
+private:
+    bool
+    PlanIsBasePlan (ThreadPlan *plan_ptr);
+
+    void
+    BroadcastSelectedFrameChange(StackID &new_frame_id);
+    
     DISALLOW_COPY_AND_ASSIGN (Thread);
 };
 

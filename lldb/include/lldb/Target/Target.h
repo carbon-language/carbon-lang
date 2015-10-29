@@ -13,6 +13,10 @@
 // C Includes
 // C++ Includes
 #include <list>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes
@@ -233,7 +237,6 @@ private:
     static void DisableASLRValueChangedCallback(void *target_property_ptr, OptionValue *);
     static void DisableSTDIOValueChangedCallback(void *target_property_ptr, OptionValue *);
 
-private:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
@@ -299,9 +302,7 @@ public:
     const char *
     GetPrefix () const
     {
-        if (m_prefix.empty())
-            return NULL;
-        return m_prefix.c_str();
+        return (m_prefix.empty() ? nullptr : m_prefix.c_str());
     }
 
     void
@@ -487,10 +488,7 @@ public:
     bool
     InvokeCancelCallback (lldb::ExpressionEvaluationPhase phase) const
     {
-        if (m_cancel_callback == nullptr)
-            return false;
-        else
-            return m_cancel_callback (phase, m_cancel_callback_baton);
+        return ((m_cancel_callback != nullptr) ? m_cancel_callback(phase, m_cancel_callback_baton) : false);
     }
     
     // Allows the expression contents to be remapped to point to the specified file and line
@@ -513,9 +511,7 @@ public:
     const char *
     GetPoundLineFilePath () const
     {
-        if (m_pound_line_file.empty())
-            return NULL;
-        return m_pound_line_file.c_str();
+        return (m_pound_line_file.empty() ? nullptr : m_pound_line_file.c_str());
     }
     
     uint32_t
@@ -648,6 +644,8 @@ public:
         DISALLOW_COPY_AND_ASSIGN (TargetEventData);
     };
     
+    ~Target() override;
+
     static void
     SettingsInitialize ();
 
@@ -673,8 +671,8 @@ public:
 //    UpdateInstanceName ();
 
     lldb::ModuleSP
-    GetSharedModule (const ModuleSpec &module_spec,
-                     Error *error_ptr = NULL);
+    GetSharedModule(const ModuleSpec &module_spec,
+                    Error *error_ptr = nullptr);
 
     //----------------------------------------------------------------------
     // Settings accessors
@@ -682,35 +680,6 @@ public:
 
     static const lldb::TargetPropertiesSP &
     GetGlobalProperties();
-
-private:
-    //------------------------------------------------------------------
-    /// Construct with optional file and arch.
-    ///
-    /// This member is private. Clients must use
-    /// TargetList::CreateTarget(const FileSpec*, const ArchSpec*)
-    /// so all targets can be tracked from the central target list.
-    ///
-    /// @see TargetList::CreateTarget(const FileSpec*, const ArchSpec*)
-    //------------------------------------------------------------------
-    Target (Debugger &debugger,
-            const ArchSpec &target_arch,
-            const lldb::PlatformSP &platform_sp,
-            bool is_dummy_target);
-
-    // Helper function.
-    bool
-    ProcessIsValid ();
-
-    // Copy breakpoints, stop hooks and so forth from the dummy target:
-    void
-    PrimeFromDummyTarget(Target *dummy_target);
-
-    void
-    AddBreakpoint(lldb::BreakpointSP breakpoint_sp, bool internal);
-
-public:
-    ~Target() override;
 
     Mutex &
     GetAPIMutex ()
@@ -723,6 +692,7 @@ public:
 
     void
     CleanupProcess ();
+
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
     ///
@@ -782,7 +752,7 @@ public:
     lldb::BreakpointSP
     GetBreakpointByID (lldb::break_id_t break_id);
 
-    // Use this to create a file and line breakpoint to a given module or all module it is NULL
+    // Use this to create a file and line breakpoint to a given module or all module it is nullptr
     lldb::BreakpointSP
     CreateBreakpoint (const FileSpecList *containingModules,
                       const FileSpec &file,
@@ -814,7 +784,7 @@ public:
                       bool internal,
                       bool request_hardware);
 
-    // Use this to create a function breakpoint by regexp in containingModule/containingSourceFiles, or all modules if it is NULL
+    // Use this to create a function breakpoint by regexp in containingModule/containingSourceFiles, or all modules if it is nullptr
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
     // setting, else we use the values passed in
     lldb::BreakpointSP
@@ -825,7 +795,7 @@ public:
                                bool internal,
                                bool request_hardware);
 
-    // Use this to create a function breakpoint by name in containingModule, or all modules if it is NULL
+    // Use this to create a function breakpoint by name in containingModule, or all modules if it is nullptr
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
     // setting, else we use the values passed in.
     // func_name_type_mask is or'ed values from the FunctionNameType enum.
@@ -840,12 +810,12 @@ public:
                       bool request_hardware);
                       
     lldb::BreakpointSP
-    CreateExceptionBreakpoint (enum lldb::LanguageType language,
-                               bool catch_bp,
-                               bool throw_bp,
-                               bool internal,
-                               Args *additional_args = nullptr,
-                               Error *additional_args_error = nullptr);
+    CreateExceptionBreakpoint(enum lldb::LanguageType language,
+                              bool catch_bp,
+                              bool throw_bp,
+                              bool internal,
+                              Args *additional_args = nullptr,
+                              Error *additional_args_error = nullptr);
     
     // This is the same as the func_name breakpoint except that you can specify a vector of names.  This is cheaper
     // than a regular expression breakpoint in the case where you just want to set a breakpoint on a set of names
@@ -988,26 +958,6 @@ public:
     lldb::addr_t
     GetBreakableLoadAddress (lldb::addr_t addr);
 
-protected:
-    //------------------------------------------------------------------
-    /// Implementing of ModuleList::Notifier.
-    //------------------------------------------------------------------
-    
-    void
-    ModuleAdded(const ModuleList& module_list, const lldb::ModuleSP& module_sp) override;
-    
-    void
-    ModuleRemoved(const ModuleList& module_list, const lldb::ModuleSP& module_sp) override;
-    
-    void
-    ModuleUpdated(const ModuleList& module_list,
-		  const lldb::ModuleSP& old_module_sp,
-		  const lldb::ModuleSP& new_module_sp) override;
-    void
-    WillClearList(const ModuleList& module_list) override;
-
-public:
-    
     void
     ModulesDidLoad (ModuleList &module_list);
 
@@ -1044,7 +994,7 @@ public:
     ///
     /// @return
     ///     The shared pointer to the executable module which can
-    ///     contains a NULL Module object if no executable has been
+    ///     contains a nullptr Module object if no executable has been
     ///     set.
     ///
     /// @see DynamicLoader
@@ -1088,9 +1038,9 @@ public:
     SetExecutableModule (lldb::ModuleSP& module_sp, bool get_dependent_files);
 
     bool
-    LoadScriptingResources (std::list<Error>& errors,
-                            Stream* feedback_stream = NULL,
-                            bool continue_on_error = true)
+    LoadScriptingResources(std::list<Error>& errors,
+                           Stream* feedback_stream = nullptr,
+                           bool continue_on_error = true)
     {
         return m_images.LoadScriptingResourcesInTarget(this,errors,feedback_stream,continue_on_error);
     }
@@ -1220,12 +1170,12 @@ public:
     // 2 - if there is a valid process, try and read from its memory
     // 3 - if (prefer_file_cache == false) then read from object file cache
     size_t
-    ReadMemory (const Address& addr,
-                bool prefer_file_cache,
-                void *dst,
-                size_t dst_len,
-                Error &error,
-                lldb::addr_t *load_addr_ptr = NULL);
+    ReadMemory(const Address& addr,
+               bool prefer_file_cache,
+               void *dst,
+               size_t dst_len,
+               Error &error,
+               lldb::addr_t *load_addr_ptr = nullptr);
     
     size_t
     ReadCStringFromMemory (const Address& addr, std::string &out_str, Error &error);
@@ -1397,10 +1347,10 @@ public:
     class StopHook : public UserID
     {
     public:
-        ~StopHook ();
-        
         StopHook (const StopHook &rhs);
-                
+
+        ~StopHook ();
+
         StringList *
         GetCommandPointer ()
         {
@@ -1575,6 +1525,23 @@ public:
 
 protected:
     //------------------------------------------------------------------
+    /// Implementing of ModuleList::Notifier.
+    //------------------------------------------------------------------
+    
+    void
+    ModuleAdded(const ModuleList& module_list, const lldb::ModuleSP& module_sp) override;
+    
+    void
+    ModuleRemoved(const ModuleList& module_list, const lldb::ModuleSP& module_sp) override;
+    
+    void
+    ModuleUpdated(const ModuleList& module_list,
+		  const lldb::ModuleSP& old_module_sp,
+		  const lldb::ModuleSP& new_module_sp) override;
+    void
+    WillClearList(const ModuleList& module_list) override;
+
+    //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
     Debugger &      m_debugger;
@@ -1616,6 +1583,31 @@ protected:
                              void *baton);
 
 private:
+    //------------------------------------------------------------------
+    /// Construct with optional file and arch.
+    ///
+    /// This member is private. Clients must use
+    /// TargetList::CreateTarget(const FileSpec*, const ArchSpec*)
+    /// so all targets can be tracked from the central target list.
+    ///
+    /// @see TargetList::CreateTarget(const FileSpec*, const ArchSpec*)
+    //------------------------------------------------------------------
+    Target (Debugger &debugger,
+            const ArchSpec &target_arch,
+            const lldb::PlatformSP &platform_sp,
+            bool is_dummy_target);
+
+    // Helper function.
+    bool
+    ProcessIsValid ();
+
+    // Copy breakpoints, stop hooks and so forth from the dummy target:
+    void
+    PrimeFromDummyTarget(Target *dummy_target);
+
+    void
+    AddBreakpoint(lldb::BreakpointSP breakpoint_sp, bool internal);
+
     DISALLOW_COPY_AND_ASSIGN (Target);
 };
 
