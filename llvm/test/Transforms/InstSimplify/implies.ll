@@ -91,3 +91,14 @@ define <4 x i1> @test6(<4 x i1> %a, <4 x i1> %b) {
   %res = icmp ule <4 x i1> %a, %b
   ret <4 x i1> %res
 }
+
+; X >=(s) Y == X ==> Y (i1 1 becomes -1 for reasoning)
+define i1 @test_sge(i32 %length.i, i32 %i) {
+; CHECK-LABEL: @test_sge
+; CHECK: ret i1 true
+  %iplus1 = add nsw nuw i32 %i, 1
+  %var29 = icmp ult i32 %i, %length.i
+  %var30 = icmp ult i32 %iplus1, %length.i
+  %res = icmp sge i1 %var30, %var29
+  ret i1 %res
+}

@@ -2179,6 +2179,17 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       if (isImpliedCondition(RHS, LHS))
         return getTrue(ITy);
       break;
+    case ICmpInst::ICMP_SGE:
+      /// For signed comparison, the values for an i1 are 0 and -1 
+      /// respectively. This maps into a truth table of:
+      /// LHS | RHS | LHS >=s RHS   | LHS implies RHS
+      ///  0  |  0  |  1 (0 >= 0)   |  1
+      ///  0  |  1  |  1 (0 >= -1)  |  1
+      ///  1  |  0  |  0 (-1 >= 0)  |  0
+      ///  1  |  1  |  1 (-1 >= -1) |  1
+      if (isImpliedCondition(LHS, RHS))
+        return getTrue(ITy);
+      break;
     case ICmpInst::ICMP_SLT:
       // X <s 0 -> X
       if (match(RHS, m_Zero()))
