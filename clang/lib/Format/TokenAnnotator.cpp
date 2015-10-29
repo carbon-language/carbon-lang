@@ -727,7 +727,7 @@ public:
     while (CurrentToken) {
       if (CurrentToken->is(tok::kw_virtual))
         KeywordVirtualFound = true;
-      if (IsImportStatement(*CurrentToken))
+      if (isImportStatement(*CurrentToken))
         ImportStatement = true;
       if (!consumeToken())
         return LT_Invalid;
@@ -748,14 +748,15 @@ public:
   }
 
 private:
-  bool IsImportStatement(const FormatToken &Tok) {
+  bool isImportStatement(const FormatToken &Tok) {
     // FIXME: Closure-library specific stuff should not be hard-coded but be
     // configurable.
     return Style.Language == FormatStyle::LK_JavaScript &&
            Tok.TokenText == "goog" && Tok.Next && Tok.Next->is(tok::period) &&
            Tok.Next->Next && (Tok.Next->Next->TokenText == "module" ||
+                              Tok.Next->Next->TokenText == "provide" ||
                               Tok.Next->Next->TokenText == "require" ||
-                              Tok.Next->Next->TokenText == "provide") &&
+                              Tok.Next->Next->TokenText == "setTestOnly") &&
            Tok.Next->Next->Next && Tok.Next->Next->Next->is(tok::l_paren);
   }
 

@@ -252,6 +252,8 @@ TEST_F(FormatTestJS, GoogModules) {
                getGoogleJSStyleWithColumns(40));
   verifyFormat("var long = goog.require('this.is.really.absurdly.long');",
                getGoogleJSStyleWithColumns(40));
+  verifyFormat("goog.setTestOnly('this.is.really.absurdly.long');",
+               getGoogleJSStyleWithColumns(40));
 
   // These should be wrapped normally.
   verifyFormat(
