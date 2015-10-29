@@ -40,5 +40,17 @@
 
 // RUN: %clang -### -target armv7-windows-itanium --sysroot %S/Inputs/Windows/ARM/8.1 -B %S/Inputs/Windows/ARM/8.1/usr/bin -fuse-ld=lld-link2 -shared -o shared.dll -x c++ %s 2>&1 \
 // RUN:    | FileCheck %s --check-prefix CHECK-FUSE-LD
+
 // CHECK-FUSE-LD: "{{.*}}lld-link2"
+
+// RUN: %clang -### -target armv7-windows-itanium --sysroot %S/Inputs/Windows/ARM/8.1 -B %S/Inputs/Windows/ARM/8.1/usr/bin -fuse-ld=lld-link2 -shared -o shared.dll -fsanitize=address -x c++ %s 2>&1 \
+// RUN:    | FileCheck %s --check-prefix CHECK-SANITIZE-ADDRESS
+
+// CHECK-SANITIZE-ADDRESS: "-fsanitize=address"
+
+// RUN: %clang -### -target armv7-windows-itanium --sysroot %S/Inputs/Windows/ARM/8.1 -B %S/Inputs/Windows/ARM/8.1/usr/bin -fuse-ld=lld-link2 -shared -o shared.dll -fsanitize=tsan -x c++ %s 2>&1 \
+// RUN:    | FileCheck %s --check-prefix CHECK-SANITIZE-TSAN
+
+// CHECK-SANITIZE-TSAN: clang-3.8: error: unsupported argument 'tsan' to option 'fsanitize='
+// CHECK-SANITIZE-TSAN-NOT: "-fsanitize={{.*}}"
 

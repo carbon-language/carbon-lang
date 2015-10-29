@@ -107,6 +107,12 @@ AddCXXStdlibLibArgs(const llvm::opt::ArgList &DriverArgs,
   }
 }
 
+clang::SanitizerMask CrossWindowsToolChain::getSupportedSanitizers() const {
+  SanitizerMask Res = ToolChain::getSupportedSanitizers();
+  Res |= SanitizerKind::Address;
+  return Res;
+}
+
 Tool *CrossWindowsToolChain::buildLinker() const {
   return new tools::CrossWindows::Linker(*this);
 }
