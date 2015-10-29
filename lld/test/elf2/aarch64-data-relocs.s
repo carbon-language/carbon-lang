@@ -28,13 +28,31 @@
 //                             ^-- A = 0x24
 // CHECK-NEXT:     100a:       00 00 00 00     .word
 
+.section .R_AARCH64_PREL16, "ax",@progbits
+  .hword sym - . + 12
+.section .R_AARCH64_PREL32, "ax",@progbits
+  .word sym - . + 24
 .section .R_AARCH64_PREL64, "ax",@progbits
   .xword sym - . + 36
 
-// S + A = 0x24
+// S + A = 0xc
 // P = 0x100e
-// SA - P = 0xfffffffffffff016
-// CHECK: Disassembly of section .R_AARCH64_PREL64:
+// SA - P = 0xeffe
+// CHECK: Disassembly of section .R_AARCH64_PREL16:
 // CHECK-NEXT: $d.3:
-// CHECK-NEXT:     100e:       16 f0 ff ff     .word
-// CHECK-NEXT:     1012:       ff ff ff ff     .word
+// CHECK-NEXT:     100e:       fe ef   .short
+
+// S + A = 0x18
+// P = 0x1010
+// SA - P = 0xfffff016
+// CHECK: Disassembly of section .R_AARCH64_PREL32:
+// CHECK-NEXT: $d.4:
+// CHECK-NEXT:     1010:       08 f0 ff ff     .word
+
+// S + A = 0x24
+// P = 0x1014
+// SA - P = 0xfffffffffffff010
+// CHECK: Disassembly of section .R_AARCH64_PREL64:
+// CHECK-NEXT: $d.5:
+// CHECK-NEXT:     1014:       10 f0 ff ff     .word
+// CHECK-NEXT:     1018:       ff ff ff ff     .word

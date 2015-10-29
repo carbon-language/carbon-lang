@@ -642,6 +642,16 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     updateAArch64Adr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
     break;
   }
+  case R_AARCH64_PREL16:
+    if (!isInt<16>(SA))
+      error("Relocation R_AARCH64_PREL16 out of range");
+    write16le(Loc, SA - P);
+    break;
+  case R_AARCH64_PREL32:
+    if (!isInt<32>(SA))
+      error("Relocation R_AARCH64_PREL32 out of range");
+    write32le(Loc, SA - P);
+    break;
   case R_AARCH64_PREL64:
     // No overflow check needed.
     write64le(Loc, SA - P);
