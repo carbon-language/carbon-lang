@@ -70,14 +70,14 @@ using namespace llvm;
 #define DEBUG_TYPE "add-discriminators"
 
 namespace {
-  struct AddDiscriminators : public FunctionPass {
-    static char ID; // Pass identification, replacement for typeid
-    AddDiscriminators() : FunctionPass(ID) {
-      initializeAddDiscriminatorsPass(*PassRegistry::getPassRegistry());
-    }
+struct AddDiscriminators : public FunctionPass {
+  static char ID; // Pass identification, replacement for typeid
+  AddDiscriminators() : FunctionPass(ID) {
+    initializeAddDiscriminatorsPass(*PassRegistry::getPassRegistry());
+  }
 
-    bool runOnFunction(Function &F) override;
-  };
+  bool runOnFunction(Function &F) override;
+};
 }
 
 char AddDiscriminators::ID = 0;
@@ -89,9 +89,9 @@ INITIALIZE_PASS_END(AddDiscriminators, "add-discriminators",
 // Command line option to disable discriminator generation even in the
 // presence of debug information. This is only needed when debugging
 // debug info generation issues.
-static cl::opt<bool>
-NoDiscriminators("no-discriminators", cl::init(false),
-                 cl::desc("Disable generation of discriminator information."));
+static cl::opt<bool> NoDiscriminators(
+    "no-discriminators", cl::init(false),
+    cl::desc("Disable generation of discriminator information."));
 
 FunctionPass *llvm::createAddDiscriminatorsPass() {
   return new AddDiscriminators();
@@ -159,8 +159,7 @@ bool AddDiscriminators::runOnFunction(Function &F) {
   // Simlarly, if the function has no debug info, do nothing.
   // Finally, if this module is built with dwarf versions earlier than 4,
   // do nothing (discriminator support is a DWARF 4 feature).
-  if (NoDiscriminators ||
-      !hasDebugInfo(F) ||
+  if (NoDiscriminators || !hasDebugInfo(F) ||
       F.getParent()->getDwarfVersion() < 4)
     return false;
 
