@@ -61,7 +61,7 @@ define void @trunc_i32_to_i1(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) {
 }
 
 ; SI-LABEL: {{^}}sgpr_trunc_i32_to_i1:
-; SI: v_and_b32_e64 v{{[0-9]+}}, 1, s{{[0-9]+}}
+; SI: s_and_b32 s{{[0-9]+}}, 1, s{{[0-9]+}}
 ; SI: v_cmp_eq_i32
 define void @sgpr_trunc_i32_to_i1(i32 addrspace(1)* %out, i32 %a) {
   %trunc = trunc i32 %a to i1
@@ -72,9 +72,9 @@ define void @sgpr_trunc_i32_to_i1(i32 addrspace(1)* %out, i32 %a) {
 
 ; SI-LABEL: {{^}}s_trunc_i64_to_i1:
 ; SI: s_load_dwordx2 s{{\[}}[[SLO:[0-9]+]]:{{[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0xb
-; SI: v_and_b32_e64 [[MASKED:v[0-9]+]], 1, s[[SLO]]
-; SI: v_cmp_eq_i32_e32 vcc, 1, [[MASKED]]
-; SI: v_cndmask_b32_e64 {{v[0-9]+}}, -12, 63, vcc
+; SI: s_and_b32 [[MASKED:s[0-9]+]], 1, s[[SLO]]
+; SI: v_cmp_eq_i32_e64 s{{\[}}[[VLO:[0-9]+]]:[[VHI:[0-9]+]]], 1, [[MASKED]]
+; SI: v_cndmask_b32_e64 {{v[0-9]+}}, -12, 63, s{{\[}}[[VLO]]:[[VHI]]]
 define void @s_trunc_i64_to_i1(i32 addrspace(1)* %out, i64 %x) {
   %trunc = trunc i64 %x to i1
   %sel = select i1 %trunc, i32 63, i32 -12
