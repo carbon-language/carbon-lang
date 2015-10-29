@@ -125,7 +125,7 @@ public:
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
 private:
-  const StringRef _name;
+  const std::string _name;
   const Scope _scope;
   const uint64_t _size;
   const DefinedAtom::Alignment _align;
