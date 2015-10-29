@@ -15,6 +15,36 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_277">checker-277</h4>
+<p><b>built:</b> October 28, 2015</br>
+	<b>download:</b> <a href="downloads/checker-277.tar.bz2">checker-277.tar.bz2</a></p>
+	<p><b>highlights:</b></p>
+	<ul>
+    <li>Includes about 20 months of change to Clang itself.</li>
+    <li>New checker for C++ leaks is turned on by default.</li>
+    <li>Added various small checks and bug fixes.</li>
+    <li>Added experimental checkers for Objective-C:</li>
+    <ul>
+        <li>New localizability checks:
+        <ul>
+            <li>Checker warning about uses of non-localized <tt>NSString</tt>s passed to UI methods expecting localized strings.</li>
+            <li>Checker warning when the comment argument is missing from <tt>NSLocalizedString</tt> macros.</li>
+            <li>These can be enabled by passing the following command to <tt>scan-build</tt>:
+<br />
+  &nbsp;&nbsp;<tt>-enable-checker alpha.osx.cocoa.NonLocalizedStringChecker,alpha.osx.cocoa.EmptyLocalizationContextChecker</tt>
+</li>
+        </ul>
+        </li>
+        <li>New checks for <tt>_Nonnull</tt> type qualifiers. These can be enabled with:
+<br />
+  &nbsp;&nbsp;<tt>-enable-checker nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull</tt></li>
+        <li>New checks for misuse of Objective-C generics. These can be enabled with <tt>-enable-checker alpha.osx.cocoa.ObjCGenerics</tt>.</li>
+    </ul>
+    <li>Support for <tt>cf_returns_retained</tt> and <tt>cf_returns_not_retained</tt> attributes in out-parameters.</li>
+    <li>The analyzer now creates one state for a range switch case instead of multiple, resulting in performance improvements.</li>
+    <li>Now requires OS X 10.7 or later.
+	</ul>
+
 <h4 id="checker_276">checker-276</h4>
 <p><b>built:</b> February 19, 2014</br>
 	<b>download:</b> <a href="downloads/checker-276.tar.bz2">checker-276.tar.bz2</a></p>
