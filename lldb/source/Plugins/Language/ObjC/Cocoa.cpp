@@ -945,8 +945,13 @@ lldb_private::formatters::GetOSXEpoch ()
 bool
 lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
-    stream.Printf("%s",valobj.GetObjectDescription());
-    return true;
+    if (const char* description = valobj.GetObjectDescription())
+    {
+        stream.Printf("%s", description);
+        return true;
+    }
+    else
+        return false;
 }
 
 template bool
