@@ -111,7 +111,7 @@ public:
   void print(raw_ostream &O, const Module* = nullptr) const override;
 
 protected:
-  void scheduleRegions(ScheduleDAGInstrs &Scheduler, bool FixKillFlags);
+  void scheduleRegions(ScheduleDAGInstrs &Scheduler);
 };
 
 /// MachineScheduler runs after coalescing and before register allocation.
@@ -340,7 +340,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
   std::unique_ptr<ScheduleDAGInstrs> Scheduler(createMachineScheduler());
-  scheduleRegions(*Scheduler, false);
+  scheduleRegions(*Scheduler);
 
   DEBUG(LIS->dump());
   if (VerifyScheduling)
@@ -368,7 +368,7 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
   std::unique_ptr<ScheduleDAGInstrs> Scheduler(createPostMachineScheduler());
-  scheduleRegions(*Scheduler, true);
+  scheduleRegions(*Scheduler);
 
   if (VerifyScheduling)
     MF->verify(this, "After post machine scheduling.");
@@ -388,14 +388,15 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 static bool isSchedBoundary(MachineBasicBlock::iterator MI,
                             MachineBasicBlock *MBB,
                             MachineFunction *MF,
-                            const TargetInstrInfo *TII) {
+                            const TargetInstrInfo *TII,
+                            bool IsPostRA) {
   return MI->isCall() || TII->isSchedulingBoundary(MI, MBB, *MF);
 }
 
 /// Main driver for both MachineScheduler and PostMachineScheduler.
-void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
-                                           bool FixKillFlags) {
+void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
   const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
+  bool IsPostRA = Scheduler.isPostRA();
 
   // Visit all machine basic blocks.
   //
@@ -433,7 +434,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
 
       // Avoid decrementing RegionEnd for blocks with no terminator.
       if (RegionEnd != MBB->end() ||
-          isSchedBoundary(&*std::prev(RegionEnd), &*MBB, MF, TII)) {
+          isSchedBoundary(&*std::prev(RegionEnd), &*MBB, MF, TII, IsPostRA)) {
         --RegionEnd;
         // Count the boundary instruction.
         --RemainingInstrs;
@@ -444,7 +445,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
       unsigned NumRegionInstrs = 0;
       MachineBasicBlock::iterator I = RegionEnd;
       for(;I != MBB->begin(); --I, --RemainingInstrs) {
-        if (isSchedBoundary(&*std::prev(I), &*MBB, MF, TII))
+        if (isSchedBoundary(&*std::prev(I), &*MBB, MF, TII, IsPostRA))
           break;
         if (!I->isDebugValue())
           ++NumRegionInstrs;
@@ -460,7 +461,8 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
         Scheduler.exitRegion();
         continue;
       }
-      DEBUG(dbgs() << "********** MI Scheduling **********\n");
+      DEBUG(dbgs() << "********** " << ((Scheduler.isPostRA()) ? "PostRA " : "")
+            << "MI Scheduling **********\n");
       DEBUG(dbgs() << MF->getName()
             << ":BB#" << MBB->getNumber() << " " << MBB->getName()
             << "\n  From: " << *I << "    To: ";
@@ -487,11 +489,11 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
     }
     assert(RemainingInstrs == 0 && "Instruction count mismatch!");
     Scheduler.finishBlock();
-    // FIXME: Ideally, no further passes should rely on kill flags. However,
-    // thumb2 size reduction is currently an exception, so the PostMIScheduler
-    // needs to do this.
-    if (FixKillFlags)
-        Scheduler.fixupKills(&*MBB);
+    if (Scheduler.isPostRA()) {
+      // FIXME: Ideally, no further passes should rely on kill flags. However,
+      // thumb2 size reduction is currently an exception.
+      Scheduler.fixupKills(&*MBB);
+    }
   }
   Scheduler.finalizeSchedule();
 }

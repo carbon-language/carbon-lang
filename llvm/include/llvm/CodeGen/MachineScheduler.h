@@ -254,8 +254,9 @@ protected:
 #endif
 public:
   ScheduleDAGMI(MachineSchedContext *C, std::unique_ptr<MachineSchedStrategy> S,
-                bool RemoveKillFlags)
-      : ScheduleDAGInstrs(*C->MF, C->MLI, RemoveKillFlags, C->LIS),
+                bool IsPostRA)
+      : ScheduleDAGInstrs(*C->MF, C->MLI, IsPostRA,
+                          /*RemoveKillFlags=*/IsPostRA, C->LIS),
         AA(C->AA), SchedImpl(std::move(S)), Topo(SUnits, &ExitSU), CurrentTop(),
         CurrentBottom(), NextClusterPred(nullptr), NextClusterSucc(nullptr) {
 #ifndef NDEBUG
@@ -385,7 +386,7 @@ protected:
 public:
   ScheduleDAGMILive(MachineSchedContext *C,
                     std::unique_ptr<MachineSchedStrategy> S)
-      : ScheduleDAGMI(C, std::move(S), /*RemoveKillFlags=*/false),
+      : ScheduleDAGMI(C, std::move(S), /*IsPostRA=*/false),
         RegClassInfo(C->RegClassInfo), DFSResult(nullptr),
         ShouldTrackPressure(false), RPTracker(RegPressure),
         TopRPTracker(TopPressure), BotRPTracker(BotPressure) {}
