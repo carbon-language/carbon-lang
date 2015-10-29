@@ -80,6 +80,8 @@ private:
 
   std::string printDILineInfo(DILineInfo LineInfo,
                               const SymbolizableModule *ModInfo) const;
+  std::string printDIGlobal(DIGlobal Global,
+                            const SymbolizableModule *ModInfo) const;
 
   // Owns all the parsed binaries and object files.
   SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;

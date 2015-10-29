@@ -56,6 +56,10 @@ static bool error(std::error_code ec) {
 }
 
 
+// By default, DILineInfo contains "<invalid>" for function/filename it
+// cannot fetch. We replace it to "??" to make our output closer to addr2line.
+static const char kDILineInfoBadString[] = "<invalid>";
+
 const char LLVMSymbolizer::kBadString[] = "??";
 
 std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
@@ -88,9 +92,6 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
 
 std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
                                           uint64_t ModuleOffset) {
-  std::string Name = kBadString;
-  uint64_t Start = 0;
-  uint64_t Size = 0;
   if (Opts.UseSymbolTable) {
     if (SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName)) {
       // If the user is giving us relative addresses, add the preferred base of
@@ -98,13 +99,11 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
       // expects.
       if (Opts.RelativeAddresses)
         ModuleOffset += Info->getModulePreferredBase();
-      if (Info->symbolizeData(ModuleOffset, Name, Start, Size) && Opts.Demangle)
-        Name = DemangleName(Name, Info);
+      DIGlobal Global = Info->symbolizeData(ModuleOffset);
+      return printDIGlobal(Global, Info);
     }
   }
-  std::stringstream ss;
-  ss << Name << "\n" << Start << " " << Size << "\n";
-  return ss.str();
+  return printDIGlobal(DIGlobal(), nullptr);
 }
 
 void LLVMSymbolizer::flush() {
@@ -359,9 +358,6 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
 std::string
 LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
                                 const SymbolizableModule *ModInfo) const {
-  // By default, DILineInfo contains "<invalid>" for function/filename it
-  // cannot fetch. We replace it to "??" to make our output closer to addr2line.
-  static const std::string kDILineInfoBadString = "<invalid>";
   std::stringstream Result;
   if (Opts.PrintFunctions != FunctionNameKind::None) {
     std::string FunctionName = LineInfo.FunctionName;
@@ -375,6 +371,20 @@ LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
   if (Filename == kDILineInfoBadString)
     Filename = kBadString;
   Result << Filename << ":" << LineInfo.Line << ":" << LineInfo.Column << "\n";
+  return Result.str();
+}
+
+std::string
+LLVMSymbolizer::printDIGlobal(DIGlobal Global,
+                              const SymbolizableModule *ModInfo) const {
+  std::stringstream Result;
+  std::string Name = Global.Name;
+  if (Name == kDILineInfoBadString)
+    Name = kBadString;
+  else if (Opts.Demangle)
+    Name = DemangleName(Name, ModInfo);
+  Result << Name << "\n";
+  Result << Global.Start << " " << Global.Size << "\n";
   return Result.str();
 }
 
@@ -442,7 +452,7 @@ std::string LLVMSymbolizer::DemangleName(const std::string &Name,
     return (result == 0) ? Name : std::string(DemangledName);
   }
 #endif
-  if (ModInfo->isWin32Module())
+  if (ModInfo && ModInfo->isWin32Module())
     return std::string(demanglePE32ExternCFunc(Name));
   return Name;
 }

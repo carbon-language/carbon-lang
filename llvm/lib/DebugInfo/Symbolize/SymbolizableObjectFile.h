@@ -33,8 +33,7 @@ public:
   DIInliningInfo symbolizeInlinedCode(uint64_t ModuleOffset,
                                       FunctionNameKind FNKind,
                                       bool UseSymbolTable) const override;
-  bool symbolizeData(uint64_t ModuleOffset, std::string &Name, uint64_t &Start,
-                     uint64_t &Size) const override;
+  DIGlobal symbolizeData(uint64_t ModuleOffset) const override;
 
   // Return true if this is a 32-bit x86 PE COFF module.
   bool isWin32Module() const override;

@@ -239,11 +239,11 @@ DIInliningInfo SymbolizableObjectFile::symbolizeInlinedCode(
   return PatchedInlinedContext;
 }
 
-bool SymbolizableObjectFile::symbolizeData(uint64_t ModuleOffset,
-                                           std::string &Name, uint64_t &Start,
-                                           uint64_t &Size) const {
-  return getNameFromSymbolTable(SymbolRef::ST_Data, ModuleOffset, Name, Start,
-                                Size);
+DIGlobal SymbolizableObjectFile::symbolizeData(uint64_t ModuleOffset) const {
+  DIGlobal Res;
+  getNameFromSymbolTable(SymbolRef::ST_Data, ModuleOffset, Res.Name, Res.Start,
+                         Res.Size);
+  return Res;
 }
 
 }  // namespace symbolize

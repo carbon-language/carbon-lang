@@ -37,8 +37,7 @@ public:
   virtual DIInliningInfo symbolizeInlinedCode(uint64_t ModuleOffset,
                                               FunctionNameKind FNKind,
                                               bool UseSymbolTable) const = 0;
-  virtual bool symbolizeData(uint64_t ModuleOffset, std::string &Name,
-                             uint64_t &Start, uint64_t &Size) const = 0;
+  virtual DIGlobal symbolizeData(uint64_t ModuleOffset) const = 0;
 
   // Return true if this is a 32-bit x86 PE COFF module.
   virtual bool isWin32Module() const = 0;

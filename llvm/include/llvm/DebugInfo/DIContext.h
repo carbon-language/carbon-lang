@@ -65,6 +65,15 @@ class DIInliningInfo {
   }
 };
 
+/// DIGlobal - container for description of a global variable.
+struct DIGlobal {
+  std::string Name;
+  uint64_t Start;
+  uint64_t Size;
+
+  DIGlobal() : Name("<invalid>"), Start(0), Size(0) {}
+};
+
 /// A DINameKind is passed to name search methods to specify a
 /// preference regarding the type of name resolution the caller wants.
 enum class DINameKind { None, ShortName, LinkageName };
