@@ -120,16 +120,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "msan"
 
-// VMA size definition for architecture that support multiple sizes.
-// AArch64 has 3 VMA sizes: 39, 42 and 48.
-#ifndef SANITIZER_AARCH64_VMA
-# define SANITIZER_AARCH64_VMA 39
-#else
-# if SANITIZER_AARCH64_VMA != 39 && SANITIZER_AARCH64_VMA != 42
-#  error "invalid SANITIZER_AARCH64_VMA size"
-# endif
-#endif
-
 static const unsigned kOriginSize = 4;
 static const unsigned kMinOriginAlignment = 4;
 static const unsigned kShadowTLSAlignment = 8;
@@ -263,17 +253,10 @@ static const MemoryMapParams Linux_PowerPC64_MemoryMapParams = {
 
 // aarch64 Linux
 static const MemoryMapParams Linux_AArch64_MemoryMapParams = {
-#if SANITIZER_AARCH64_VMA == 39
-  0x007C00000000,  // AndMask
-  0x000100000000,  // XorMask
-  0x004000000000,  // ShadowBase
-  0x004300000000,  // OriginBase
-#elif SANITIZER_AARCH64_VMA == 42
-  0x03E000000000,  // AndMask
-  0x001000000000,  // XorMask
-  0x010000000000,  // ShadowBase
-  0x012000000000,  // OriginBase
-#endif
+  0,               // AndMask (not used)
+  0x06000000000,   // XorMask
+  0,               // ShadowBase (not used)
+  0x01000000000,   // OriginBase
 };
 
 // i386 FreeBSD
