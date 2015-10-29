@@ -1,5 +1,6 @@
 @ RUN: not llvm-mc -triple=armv7-apple-darwin -mcpu=cortex-a8 -show-encoding -mattr=-trustzone < %s | FileCheck %s -check-prefix=NOTZ
 @ RUN: llvm-mc -triple=armv7-apple-darwin -mcpu=cortex-a8 -show-encoding -mattr=trustzone < %s | FileCheck %s -check-prefix=TZ
+@ RUN: llvm-mc -triple=armv6kz -mcpu=arm1176jz-s -show-encoding < %s | FileCheck %s -check-prefix=TZ
 
   .syntax unified
   .globl _func
@@ -14,7 +15,7 @@ _func:
 @------------------------------------------------------------------------------
 @ SMC
 @------------------------------------------------------------------------------
-        smc #0xf
+        smi #0xf                        @ SMI is old (ARMv6KZ) name for SMC
         smceq #0
 
 @ NOTZ-NOT: smc 	#15

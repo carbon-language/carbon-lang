@@ -2329,6 +2329,7 @@ def SMC : ABI<0b0001, (outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{23-4} = 0b01100000000000000111;
   let Inst{3-0} = opt;
 }
+def : MnemonicAlias<"smi", "smc">;
 
 // Supervisor Call (Software Interrupt)
 let isCall = 1, Uses = [SP] in {

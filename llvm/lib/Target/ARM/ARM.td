@@ -360,8 +360,10 @@ def : Processor<"sc000",            ARMV6Itineraries, [HasV6MOps, FeatureNoARM,
                                                        FeatureDB, FeatureMClass]>;
 
 // V6K Processors.
-def : Processor<"arm1176jz-s",      ARMV6Itineraries, [HasV6KOps]>;
+def : Processor<"arm1176jz-s",      ARMV6Itineraries, [HasV6KOps,
+                                                       FeatureTrustZone]>;
 def : Processor<"arm1176jzf-s",     ARMV6Itineraries, [HasV6KOps, FeatureVFP2,
+                                                       FeatureTrustZone,
                                                        FeatureHasSlowFPVMLx]>;
 def : Processor<"mpcorenovfp",      ARMV6Itineraries, [HasV6KOps]>;
 def : Processor<"mpcore",           ARMV6Itineraries, [HasV6KOps, FeatureVFP2,

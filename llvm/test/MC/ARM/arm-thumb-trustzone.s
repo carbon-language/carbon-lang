@@ -1,5 +1,6 @@
 @ RUN: not llvm-mc -triple=thumbv7-apple-darwin -mcpu=cortex-a8 -show-encoding -mattr=-trustzone < %s | FileCheck %s -check-prefix=NOTZ
 @ RUN: llvm-mc -triple=thumbv7-apple-darwin -mcpu=cortex-a8 -show-encoding -mattr=trustzone < %s | FileCheck %s -check-prefix=TZ
+@ RUN: not llvm-mc -triple=thumbv6kz -mcpu=arm1176jzf-s -show-encoding < %s | FileCheck %s -check-prefix=NOTZ
 
   .syntax unified
   .globl _func
