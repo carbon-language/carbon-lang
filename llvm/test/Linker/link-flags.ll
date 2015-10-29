@@ -9,7 +9,7 @@ C-LABEL: @X = global i32 5
 CI-LABEL: @X = internal global i32 5
 CU-LABEL:@U = global i32 6
 CI-LABEL:@U = internal global i32 6
-CN-LABEL-NOT:@U
+CN-NOT:@U
 
 B-LABEL: define void @bar() {
 
@@ -18,4 +18,4 @@ CI-LABEL: define internal i32 @foo()
 
 CU-LABEL:define i32 @unused() {
 CI-LABEL:define internal i32 @unused() {
-CN-LABEL-NOT:@unused()
+CN-NOT:@unused()
