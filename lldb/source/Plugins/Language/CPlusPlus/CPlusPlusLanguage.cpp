@@ -620,14 +620,6 @@ LoadLibStdcppFormatters(lldb::TypeCategoryImplSP cpp_category_sp)
     cpp_category_sp->GetRegexTypeSyntheticsContainer()->Add(RegularExpressionSP(new RegularExpression("^std::(__cxx11::)?list<.+>(( )?&)?$")),
                                                             SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
                                                                                                               "lldb.formatters.cpp.gnu_libstdcpp.StdListSynthProvider")));
-#if 0
-    // With only this, I get std::list showing the content, all children on the same line.
-    // With this and the section below, I see one child element per line.
-    cpp_category_sp->GetRegexTypeSyntheticsContainer()->Add(RegularExpressionSP(new RegularExpression("^std::__cxx11::_List_base<.+>(( )?&)?$")),
-                                                            SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
-                                                                                                              "lldb.formatters.cpp.gnu_libstdcpp.StdListSynthProvider")));
-#endif
-    
     stl_summary_flags.SetDontShowChildren(false);stl_summary_flags.SetSkipPointers(true);
     cpp_category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression("^std::vector<.+>(( )?&)?$")),
                                                            TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
@@ -638,12 +630,6 @@ LoadLibStdcppFormatters(lldb::TypeCategoryImplSP cpp_category_sp)
     cpp_category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression("^std::(__cxx11::)?list<.+>(( )?&)?$")),
                                                            TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
                                                                                                      "size=${svar%#}")));
-#if 0
-    // With this, I get std::list showing one child per line.  Requires the change above to get anything, though.
-    cpp_category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression("^std::__cxx11::_List_base<.+>(( )?&)?$")),
-                                                           TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
-                                                                                                     "size=${svar%#}")));
-#endif
 
     AddCXXSynthetic(cpp_category_sp, lldb_private::formatters::LibStdcppVectorIteratorSyntheticFrontEndCreator, "std::vector iterator synthetic children", ConstString("^__gnu_cxx::__normal_iterator<.+>$"), stl_synth_flags, true);
     
