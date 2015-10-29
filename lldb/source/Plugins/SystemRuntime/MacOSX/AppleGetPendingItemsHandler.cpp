@@ -178,7 +178,6 @@ AppleGetPendingItemsHandler::SetupGetPendingItemsFunction (Thread &thread, Value
             {
                 if (log)
                     log->Printf("No pending-items introspection code found.");
-                errors.Printf ("No pending-items introspection code found.");
                 return LLDB_INVALID_ADDRESS;
             }
             
@@ -201,6 +200,13 @@ AppleGetPendingItemsHandler::SetupGetPendingItemsFunction (Thread &thread, Value
     }
     
     errors.Clear();
+    
+    if (get_pending_items_caller == nullptr)
+    {
+        if (log)
+            log->Printf ("Failed to get get_pending_items_caller.");
+        return LLDB_INVALID_ADDRESS;
+    }
     
     // Now write down the argument values for this particular call.  This looks like it might be a race condition
     // if other threads were calling into here, but actually it isn't because we allocate a new args structure for
