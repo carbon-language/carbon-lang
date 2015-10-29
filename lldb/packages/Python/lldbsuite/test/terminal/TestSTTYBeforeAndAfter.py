@@ -10,7 +10,7 @@ import os
 import lldb
 from lldbtest import *
 
-class CommandLineCompletionTestCase(TestBase):
+class TestSTTYBeforeAndAfter(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
