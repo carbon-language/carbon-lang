@@ -112,6 +112,39 @@ static bool SemaBuiltinAddressof(Sema &S, CallExpr *TheCall) {
   return false;
 }
 
+static bool SemaBuiltinOverflow(Sema &S, CallExpr *TheCall) {
+  if (checkArgCount(S, TheCall, 3))
+    return true;
+
+  // First two arguments should be integers.
+  for (unsigned I = 0; I < 2; ++I) {
+    Expr *Arg = TheCall->getArg(I);
+    QualType Ty = Arg->getType();
+    if (!Ty->isIntegerType()) {
+      S.Diag(Arg->getLocStart(), diag::err_overflow_builtin_must_be_int)
+          << Ty << Arg->getSourceRange();
+      return true;
+    }
+  }
+
+  // Third argument should be a pointer to a non-const integer.
+  // IRGen correctly handles volatile, restrict, and address spaces, and
+  // the other qualifiers aren't possible.
+  {
+    Expr *Arg = TheCall->getArg(2);
+    QualType Ty = Arg->getType();
+    const auto *PtrTy = Ty->getAs<PointerType>();
+    if (!(PtrTy && PtrTy->getPointeeType()->isIntegerType() &&
+          !PtrTy->getPointeeType().isConstQualified())) {
+      S.Diag(Arg->getLocStart(), diag::err_overflow_builtin_must_be_ptr_int)
+          << Ty << Arg->getSourceRange();
+      return true;
+    }
+  }
+
+  return false;
+}
+
 static void SemaBuiltinMemChkCall(Sema &S, FunctionDecl *FDecl,
 		                  CallExpr *TheCall, unsigned SizeIdx,
                                   unsigned DstSizeIdx) {
@@ -457,6 +490,12 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
     if (SemaBuiltinAddressof(*this, TheCall))
       return ExprError();
     break;
+  case Builtin::BI__builtin_add_overflow:
+  case Builtin::BI__builtin_sub_overflow:
+  case Builtin::BI__builtin_mul_overflow:
+      if (SemaBuiltinOverflow(*this, TheCall))
+          return ExprError();
+      break;
   case Builtin::BI__builtin_operator_new:
   case Builtin::BI__builtin_operator_delete:
     if (!getLangOpts().CPlusPlus) {

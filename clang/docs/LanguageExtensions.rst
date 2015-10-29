@@ -1679,17 +1679,20 @@ an example of their usage:
   errorcode_t security_critical_application(...) {
     unsigned x, y, result;
     ...
-    if (__builtin_umul_overflow(x, y, &result))
+    if (__builtin_mul_overflow(x, y, &result))
       return kErrorCodeHackers;
     ...
     use_multiply(result);
     ...
   }
 
-A complete enumeration of the builtins are:
+Clang provides the following checked arithmetic builtins:
 
 .. code-block:: c
 
+  bool __builtin_add_overflow   (type1 x, type2 y, type3 *sum);
+  bool __builtin_sub_overflow   (type1 x, type2 y, type3 *diff);
+  bool __builtin_mul_overflow   (type1 x, type2 y, type3 *prod);
   bool __builtin_uadd_overflow  (unsigned x, unsigned y, unsigned *sum);
   bool __builtin_uaddl_overflow (unsigned long x, unsigned long y, unsigned long *sum);
   bool __builtin_uaddll_overflow(unsigned long long x, unsigned long long y, unsigned long long *sum);
@@ -1709,6 +1712,21 @@ A complete enumeration of the builtins are:
   bool __builtin_smull_overflow (long x, long y, long *prod);
   bool __builtin_smulll_overflow(long long x, long long y, long long *prod);
 
+Each builtin performs the specified mathematical operation on the
+first two arguments and stores the result in the third argument.  If
+possible, the result will be equal to mathematically-correct result
+and the builtin will return 0.  Otherwise, the builtin will return
+1 and the result will be equal to the unique value that is equivalent
+to the mathematically-correct result modulo two raised to the *k*
+power, where *k* is the number of bits in the result type.  The
+behavior of these builtins is well-defined for all argument values.
+
+The first three builtins work generically for operands of any integer type,
+including boolean types.  The operands need not have the same type as each
+other, or as the result.  The other builtins may implicitly promote or
+convert their operands before performing the operation.
+
+Query for this feature with ``__has_builtin(__builtin_add_overflow)``, etc.
 
 .. _langext-__c11_atomic:
 
