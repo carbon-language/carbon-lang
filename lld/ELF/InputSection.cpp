@@ -164,7 +164,7 @@ MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
   // Find the element this offset points to.
   auto I = std::upper_bound(
       this->Offsets.begin(), this->Offsets.end(), Offset,
-      [](const uintX_t &A, const std::pair<uintX_t, uintX_t> &B) {
+      [](const uintX_t &A, const std::pair<uintX_t, size_t> &B) {
         return A < B.first;
       });
   size_t End = I == this->Offsets.end() ? Data.size() : I->first;
@@ -173,8 +173,8 @@ MergeInputSection<ELFT>::getOffset(uintX_t Offset) {
 
   // Compute the Addend and if the Base is cached, return.
   uintX_t Addend = Offset - Start;
-  uintX_t &Base = I->second;
-  if (Base != uintX_t(-1))
+  size_t &Base = I->second;
+  if (Base != size_t(-1))
     return Base + Addend;
 
   // Map the base to the offset in the output section and cashe it.
