@@ -9,7 +9,6 @@
 
 // Check that -fprofile-generate uses the runtime default profile file.
 // RUN: %clang %s -c -S -o - -emit-llvm -fprofile-generate | FileCheck -check-prefix=PROFILE-GEN %s
-// PROFILE-GEN: @__llvm_profile_runtime = external global i32
 // PROFILE-GEN-NOT: call void @__llvm_profile_override_default_filename
 // PROFILE-GEN-NOT: declare void @__llvm_profile_override_default_filename(i8*)
 
