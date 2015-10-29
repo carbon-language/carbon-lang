@@ -234,6 +234,10 @@ public:
 
   virtual ~IndirectStubsManagerBase() {}
 
+  /// @brief Create a single stub with the given name, target address and flags.
+  virtual std::error_code createStub(StringRef StubName, TargetAddress StubAddr,
+                                     JITSymbolFlags StubFlags) = 0;
+
   /// @brief Create StubInits.size() stubs with the given names, target
   ///        addresses, and flags.
   virtual std::error_code createStubs(const StubInitsMap &StubInits) = 0;
@@ -252,25 +256,29 @@ private:
   virtual void anchor();
 };
 
-/// @brief IndirectStubsManager implementation for a concrete target, e.g. OrcX86_64.
-///        (See OrcTargetSupport.h).
+/// @brief IndirectStubsManager implementation for a concrete target, e.g.
+///        OrcX86_64. (See OrcTargetSupport.h).
 template <typename TargetT>
 class IndirectStubsManager : public IndirectStubsManagerBase {
 public:
 
-  std::error_code
-  createStubs(const StubInitsMap &StubInits) override {
-    if (auto EC = TargetT::emitIndirectStubsBlock(IndirectStubsInfo,
-                                                  StubInits.size(),
-                                                  nullptr))
+  std::error_code createStub(StringRef StubName, TargetAddress StubAddr,
+                             JITSymbolFlags StubFlags) override {
+    if (auto EC = reserveStubs(1))
       return EC;
 
-    unsigned I = 0;
-    for (auto &Entry : StubInits) {
-      *IndirectStubsInfo.getPtr(I) =
-        reinterpret_cast<void*>(static_cast<uintptr_t>(Entry.second.first));
-      StubIndexes[Entry.first()] = std::make_pair(I++, Entry.second.second);
-    }
+    createStubInternal(StubName, StubAddr, StubFlags);
+
+    return std::error_code();
+  }
+
+  std::error_code createStubs(const StubInitsMap &StubInits) override {
+    if (auto EC = reserveStubs(StubInits.size()))
+      return EC;
+
+    for (auto &Entry : StubInits)
+      createStubInternal(Entry.first(), Entry.second.first,
+                         Entry.second.second);
 
     return std::error_code();
   }
@@ -279,7 +287,8 @@ public:
     auto I = StubIndexes.find(Name);
     if (I == StubIndexes.end())
       return nullptr;
-    void *StubAddr = IndirectStubsInfo.getStub(I->second.first);
+    auto Key = I->second.first;
+    void *StubAddr = IndirectStubsInfos[Key.first].getStub(Key.second);
     assert(StubAddr && "Missing stub address");
     auto StubTargetAddr =
       static_cast<TargetAddress>(reinterpret_cast<uintptr_t>(StubAddr));
@@ -293,23 +302,54 @@ public:
     auto I = StubIndexes.find(Name);
     if (I == StubIndexes.end())
       return nullptr;
-    void *PtrAddr = IndirectStubsInfo.getPtr(StubIndexes[Name].first);
+    auto Key = I->second.first;
+    void *PtrAddr = IndirectStubsInfos[Key.first].getPtr(Key.second);
     assert(PtrAddr && "Missing pointer address");
     auto PtrTargetAddr =
       static_cast<TargetAddress>(reinterpret_cast<uintptr_t>(PtrAddr));
-    return JITSymbol(PtrTargetAddr, JITSymbolFlags::None);
+    return JITSymbol(PtrTargetAddr, I->second.second);
   }
 
   std::error_code updatePointer(StringRef Name, TargetAddress NewAddr) override {
-    assert(StubIndexes.count(Name) && "No stub pointer for symbol");
-    *IndirectStubsInfo.getPtr(StubIndexes[Name].first) =
+    auto I = StubIndexes.find(Name);
+    assert(I != StubIndexes.end() && "No stub pointer for symbol");
+    auto Key = I->second.first;
+    *IndirectStubsInfos[Key.first].getPtr(Key.second) =
       reinterpret_cast<void*>(static_cast<uintptr_t>(NewAddr));
     return std::error_code();
   }
 
 private:
-  typename TargetT::IndirectStubsInfo IndirectStubsInfo;
-  StringMap<std::pair<unsigned, JITSymbolFlags>> StubIndexes;
+
+  std::error_code reserveStubs(unsigned NumStubs) {
+    if (NumStubs <= FreeStubs.size())
+      return std::error_code();
+
+    unsigned NewStubsRequired = NumStubs - FreeStubs.size();
+    unsigned NewBlockId = IndirectStubsInfos.size();
+    typename TargetT::IndirectStubsInfo ISI;
+    if (auto EC = TargetT::emitIndirectStubsBlock(ISI, NewStubsRequired,
+                                                  nullptr))
+      return EC;
+    for (unsigned I = 0; I < ISI.getNumStubs(); ++I)
+      FreeStubs.push_back(std::make_pair(NewBlockId, I));
+    IndirectStubsInfos.push_back(std::move(ISI));
+    return std::error_code();
+  }
+
+  void createStubInternal(StringRef StubName, TargetAddress InitAddr,
+                          JITSymbolFlags StubFlags) {
+    auto Key = FreeStubs.back();
+    FreeStubs.pop_back();
+    *IndirectStubsInfos[Key.first].getPtr(Key.second) =
+      reinterpret_cast<void*>(static_cast<uintptr_t>(InitAddr));
+    StubIndexes[StubName] = std::make_pair(Key, StubFlags);
+  }
+
+  std::vector<typename TargetT::IndirectStubsInfo> IndirectStubsInfos;
+  typedef std::pair<uint16_t, uint16_t> StubKey;
+  std::vector<StubKey> FreeStubs;
+  StringMap<std::pair<StubKey, JITSymbolFlags>> StubIndexes;
 };
 
 /// @brief Build a function pointer of FunctionType with the given constant

@@ -59,6 +59,8 @@ public:
     const static unsigned PtrSize = 8;
 
     IndirectStubsInfo() : NumStubs(0) {}
+    IndirectStubsInfo(IndirectStubsInfo&&);
+    IndirectStubsInfo& operator=(IndirectStubsInfo&&);
     ~IndirectStubsInfo();
 
     /// @brief Number of stubs in this block.

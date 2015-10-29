@@ -33,6 +33,11 @@ public:
 
 class DummyStubsManager : public orc::IndirectStubsManagerBase {
 public:
+  std::error_code createStub(StringRef StubName, TargetAddress InitAddr,
+                             JITSymbolFlags Flags) override {
+    llvm_unreachable("Not implemented");
+  }
+
   std::error_code createStubs(const StubInitsMap &StubInits) override {
     llvm_unreachable("Not implemented");
   }

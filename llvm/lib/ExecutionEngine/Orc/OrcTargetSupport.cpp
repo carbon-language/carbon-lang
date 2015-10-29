@@ -144,6 +144,22 @@ OrcX86_64::insertCompileCallbackTrampolines(Module &M,
   return GetLabelName;
 }
 
+OrcX86_64::IndirectStubsInfo::IndirectStubsInfo(IndirectStubsInfo &&Other) {
+  StubsBlock = std::move(Other.StubsBlock);
+  PtrsBlock = std::move(Other.PtrsBlock);
+  Other.StubsBlock = sys::MemoryBlock();
+  Other.PtrsBlock = sys::MemoryBlock();
+}
+
+OrcX86_64::IndirectStubsInfo&
+OrcX86_64::IndirectStubsInfo::operator=(IndirectStubsInfo &&Other) {
+  StubsBlock = std::move(Other.StubsBlock);
+  PtrsBlock = std::move(Other.PtrsBlock);
+  Other.StubsBlock = sys::MemoryBlock();
+  Other.PtrsBlock = sys::MemoryBlock();
+  return *this;
+}
+
 OrcX86_64::IndirectStubsInfo::~IndirectStubsInfo() {
   sys::Memory::releaseMappedMemory(StubsBlock);
   sys::Memory::releaseMappedMemory(PtrsBlock);
