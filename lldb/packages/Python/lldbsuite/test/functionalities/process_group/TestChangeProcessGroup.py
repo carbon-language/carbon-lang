@@ -77,11 +77,14 @@ class ChangeProcessGroupTestCase(TestBase):
         thread = process.GetSelectedThread()
 
         # release the child from its loop
-        self.expect("expr release_child_flag = 1", substrs = ["= 1"])
+        value = thread.GetSelectedFrame().EvaluateExpression("release_child_flag = 1")
+        self.assertTrue(value.IsValid() and value.GetValueAsUnsigned(0) == 1);
         process.Continue()
 
         # make sure the child's process group id is different from its pid
-        self.expect("print (int)getpgid(0)", substrs = [pid], matching=False)
+        value = thread.GetSelectedFrame().EvaluateExpression("(int)getpgid(0)")
+        self.assertTrue(value.IsValid())
+        self.assertNotEqual(value.GetValueAsUnsigned(0), int(pid));
 
         # step over the setpgid() call
         thread.StepOver()
@@ -89,7 +92,9 @@ class ChangeProcessGroupTestCase(TestBase):
 
         # verify that the process group has been set correctly
         # this also checks that we are still in full control of the child
-        self.expect("print (pid_t)getpgid(0)", substrs = [pid])
+        value = thread.GetSelectedFrame().EvaluateExpression("(int)getpgid(0)")
+        self.assertTrue(value.IsValid())
+        self.assertEqual(value.GetValueAsUnsigned(0), int(pid));
 
         # run to completion
         process.Continue()
