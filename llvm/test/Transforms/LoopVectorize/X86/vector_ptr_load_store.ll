@@ -17,7 +17,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; widest vector count.
 ;
 ; CHECK: test_consecutive_store
-; CHECK: The Smallest and Widest types: 64 / 64 bits.
+; CHECK: The Widest type: 64 bits
 define void @test_consecutive_store(%0**, %0**, %0** nocapture) nounwind ssp uwtable align 2 {
   %4 = load %0*, %0** %2, align 8
   %5 = icmp eq %0** %0, %1
@@ -51,7 +51,7 @@ define void @test_consecutive_store(%0**, %0**, %0** nocapture) nounwind ssp uwt
 ;       p[i][y] = (int*) (1 + q[i]);
 ;     }
 ; CHECK: test_nonconsecutive_store
-; CHECK: The Smallest and Widest types: 16 / 16 bits.
+; CHECK: The Widest type: 16 bits
 define void @test_nonconsecutive_store() nounwind ssp uwtable {
   br label %1
 
@@ -93,7 +93,7 @@ define void @test_nonconsecutive_store() nounwind ssp uwtable {
 ;; Now we check the same rules for loads. We should take consecutive loads of
 ;; pointer types into account.
 ; CHECK: test_consecutive_ptr_load
-; CHECK: The Smallest and Widest types: 8 / 64 bits.
+; CHECK: The Widest type: 64 bits
 define i8 @test_consecutive_ptr_load() nounwind readonly ssp uwtable {
   br label %1
 
@@ -117,7 +117,7 @@ define i8 @test_consecutive_ptr_load() nounwind readonly ssp uwtable {
 
 ;; However, we should not take unconsecutive loads of pointers into account.
 ; CHECK: test_nonconsecutive_ptr_load
-; CHECK: LV: The Smallest and Widest types: 16 / 16 bits.
+; CHECK: The Widest type: 16 bits
 define void @test_nonconsecutive_ptr_load() nounwind ssp uwtable {
   br label %1
 
