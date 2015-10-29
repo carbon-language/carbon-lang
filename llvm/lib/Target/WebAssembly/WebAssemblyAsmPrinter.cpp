@@ -96,7 +96,8 @@ private:
 // Operand type (if any), followed by the lower-case version of the opcode's
 // name matching the names WebAssembly opcodes are expected to have. The
 // tablegen names are uppercase and suffixed with their type (after an
-// underscore).
+// underscore). Conversions are additionally prefixed with their input type
+// (before a double underscore).
 static std::string OpcodeName(const WebAssemblyInstrInfo *TII,
                               const MachineInstr *MI) {
   std::string N(StringRef(TII->getName(MI->getOpcode())).lower());
@@ -110,7 +111,14 @@ static std::string OpcodeName(const WebAssemblyInstrInfo *TII,
   for (const char *typelessOpcode : { "return", "call", "br_if" })
     if (Name == typelessOpcode)
       return Name;
-  return std::string(&N[NameEnd + 1], &N[Len]) + '.' + Name;
+  std::string Type(&N[NameEnd + 1], &N[Len]);
+  std::string::size_type DoubleUnder = Name.find("__");
+  bool IsConv = std::string::npos != DoubleUnder;
+  if (!IsConv)
+    return Type + '.' + Name;
+  std::string InType(&Name[0], &Name[DoubleUnder]);
+  return Type + '.' + std::string(&Name[DoubleUnder + 2], &Name[NameEnd]) +
+      '/' + InType;
 }
 
 static std::string toSymbol(StringRef S) { return ("$" + S).str(); }

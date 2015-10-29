@@ -11,7 +11,7 @@ target triple = "wasm32-unknown-unknown"
 ; CHECK-NEXT: .local i64, i32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i32_wrap (get_local 1){{$}}
+; CHECK-NEXT: i32.wrap/i64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i32 @i32_wrap_i64(i64 %x) {
@@ -25,7 +25,7 @@ define i32 @i32_wrap_i64(i64 %x) {
 ; CHECK-NEXT: .local i32, i64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i64_extend_s (get_local 1){{$}}
+; CHECK-NEXT: i64.extend_s/i32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @i64_extend_s_i32(i32 %x) {
@@ -39,7 +39,7 @@ define i64 @i64_extend_s_i32(i32 %x) {
 ; CHECK-NEXT: .local i32, i64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i64_extend_u (get_local 1){{$}}
+; CHECK-NEXT: i64.extend_u/i32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @i64_extend_u_i32(i32 %x) {
@@ -53,7 +53,7 @@ define i64 @i64_extend_u_i32(i32 %x) {
 ; CHECK-NEXT: .local f32, i32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i32_trunc_s (get_local 1){{$}}
+; CHECK-NEXT: i32.trunc_s/f32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i32 @i32_trunc_s_f32(float %x) {
@@ -67,7 +67,7 @@ define i32 @i32_trunc_s_f32(float %x) {
 ; CHECK-NEXT: .local f32, i32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i32_trunc_u (get_local 1){{$}}
+; CHECK-NEXT: i32.trunc_u/f32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i32 @i32_trunc_u_f32(float %x) {
@@ -81,7 +81,7 @@ define i32 @i32_trunc_u_f32(float %x) {
 ; CHECK-NEXT: .local f64, i32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i32_trunc_s (get_local 1){{$}}
+; CHECK-NEXT: i32.trunc_s/f64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i32 @i32_trunc_s_f64(double %x) {
@@ -95,7 +95,7 @@ define i32 @i32_trunc_s_f64(double %x) {
 ; CHECK-NEXT: .local f64, i32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i32_trunc_u (get_local 1){{$}}
+; CHECK-NEXT: i32.trunc_u/f64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i32 @i32_trunc_u_f64(double %x) {
@@ -109,7 +109,7 @@ define i32 @i32_trunc_u_f64(double %x) {
 ; CHECK-NEXT: .local f32, i64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i64_trunc_s (get_local 1){{$}}
+; CHECK-NEXT: i64.trunc_s/f32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @i64_trunc_s_f32(float %x) {
@@ -123,7 +123,7 @@ define i64 @i64_trunc_s_f32(float %x) {
 ; CHECK-NEXT: .local f32, i64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i64_trunc_u (get_local 1){{$}}
+; CHECK-NEXT: i64.trunc_u/f32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @i64_trunc_u_f32(float %x) {
@@ -137,7 +137,7 @@ define i64 @i64_trunc_u_f32(float %x) {
 ; CHECK-NEXT: .local f64, i64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i64_trunc_s (get_local 1){{$}}
+; CHECK-NEXT: i64.trunc_s/f64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @i64_trunc_s_f64(double %x) {
@@ -151,7 +151,7 @@ define i64 @i64_trunc_s_f64(double %x) {
 ; CHECK-NEXT: .local f64, i64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: i64_trunc_u (get_local 1){{$}}
+; CHECK-NEXT: i64.trunc_u/f64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define i64 @i64_trunc_u_f64(double %x) {
@@ -165,7 +165,7 @@ define i64 @i64_trunc_u_f64(double %x) {
 ; CHECK-NEXT: .local i32, f32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f32_convert_s (get_local 1){{$}}
+; CHECK-NEXT: f32.convert_s/i32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define float @f32_convert_s_i32(i32 %x) {
@@ -179,7 +179,7 @@ define float @f32_convert_s_i32(i32 %x) {
 ; CHECK-NEXT: .local i32, f32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f32_convert_u (get_local 1){{$}}
+; CHECK-NEXT: f32.convert_u/i32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define float @f32_convert_u_i32(i32 %x) {
@@ -193,7 +193,7 @@ define float @f32_convert_u_i32(i32 %x) {
 ; CHECK-NEXT: .local i32, f64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f64_convert_s (get_local 1){{$}}
+; CHECK-NEXT: f64.convert_s/i32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define double @f64_convert_s_i32(i32 %x) {
@@ -207,7 +207,7 @@ define double @f64_convert_s_i32(i32 %x) {
 ; CHECK-NEXT: .local i32, f64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f64_convert_u (get_local 1){{$}}
+; CHECK-NEXT: f64.convert_u/i32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define double @f64_convert_u_i32(i32 %x) {
@@ -221,7 +221,7 @@ define double @f64_convert_u_i32(i32 %x) {
 ; CHECK-NEXT: .local i64, f32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f32_convert_s (get_local 1){{$}}
+; CHECK-NEXT: f32.convert_s/i64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define float @f32_convert_s_i64(i64 %x) {
@@ -235,7 +235,7 @@ define float @f32_convert_s_i64(i64 %x) {
 ; CHECK-NEXT: .local i64, f32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f32_convert_u (get_local 1){{$}}
+; CHECK-NEXT: f32.convert_u/i64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define float @f32_convert_u_i64(i64 %x) {
@@ -249,7 +249,7 @@ define float @f32_convert_u_i64(i64 %x) {
 ; CHECK-NEXT: .local i64, f64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f64_convert_s (get_local 1){{$}}
+; CHECK-NEXT: f64.convert_s/i64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define double @f64_convert_s_i64(i64 %x) {
@@ -263,7 +263,7 @@ define double @f64_convert_s_i64(i64 %x) {
 ; CHECK-NEXT: .local i64, f64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f64_convert_u (get_local 1){{$}}
+; CHECK-NEXT: f64.convert_u/i64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define double @f64_convert_u_i64(i64 %x) {
@@ -277,7 +277,7 @@ define double @f64_convert_u_i64(i64 %x) {
 ; CHECK-NEXT: .local f32, f64{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f64_promote (get_local 1){{$}}
+; CHECK-NEXT: f64.promote/f32 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define double @f64_promote_f32(float %x) {
@@ -291,7 +291,7 @@ define double @f64_promote_f32(float %x) {
 ; CHECK-NEXT: .local f64, f32{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 1, pop{{$}}
-; CHECK-NEXT: f32_demote (get_local 1){{$}}
+; CHECK-NEXT: f32.demote/f64 (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: return (get_local 2){{$}}
 define float @f32_demote_f64(double %x) {
