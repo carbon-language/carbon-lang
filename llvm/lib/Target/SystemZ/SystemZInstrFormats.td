@@ -2381,6 +2381,7 @@ multiclass StringRRE<string mnemonic, bits<16> opcode,
   def "" : InstRRE<opcode, (outs GR64:$R1, GR64:$R2),
                    (ins GR64:$R1src, GR64:$R2src),
                    mnemonic#"\t$R1, $R2", []> {
+    let Uses = [R0L];
     let Constraints = "$R1 = $R1src, $R2 = $R2src";
     let DisableEncoding = "$R1src, $R2src";
   }

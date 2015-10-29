@@ -397,7 +397,7 @@ let mayLoad = 1, mayStore = 1 in
   defm MVC : MemorySS<"mvc", 0xD2, z_mvc, z_mvc_loop>;
 
 // String moves.
-let mayLoad = 1, mayStore = 1, Defs = [CC], Uses = [R0L] in
+let mayLoad = 1, mayStore = 1, Defs = [CC] in
   defm MVST : StringRRE<"mvst", 0xB255, z_stpcpy>;
 
 //===----------------------------------------------------------------------===//
@@ -1185,7 +1185,7 @@ let mayLoad = 1, Defs = [CC] in
   defm CLC : MemorySS<"clc", 0xD5, z_clc, z_clc_loop>;
 
 // String comparison.
-let mayLoad = 1, Defs = [CC], Uses = [R0L] in
+let mayLoad = 1, Defs = [CC] in
   defm CLST : StringRRE<"clst", 0xB25D, z_strcmp>;
 
 // Test under mask.
@@ -1459,7 +1459,7 @@ let usesCustomInserter = 1 in {
 }
 
 // Search a block of memory for a character.
-let mayLoad = 1, Defs = [CC], Uses = [R0L] in
+let mayLoad = 1, Defs = [CC] in
   defm SRST : StringRRE<"srst", 0xb25e, z_search_string>;
 
 // Other instructions for inline assembly
