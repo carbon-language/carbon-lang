@@ -13,6 +13,8 @@
 
 #include "llvm/DebugInfo/Symbolize/Symbolize.h"
 
+#include "SymbolizableObjectFile.h"
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -20,7 +22,6 @@
 #include "llvm/DebugInfo/PDB/PDBContext.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
-#include "llvm/Object/SymbolSize.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compression.h"
@@ -54,216 +55,12 @@ static bool error(std::error_code ec) {
   return true;
 }
 
-static DILineInfoSpecifier
-getDILineInfoSpecifier(FunctionNameKind FNKind) {
-  return DILineInfoSpecifier(
-      DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath, FNKind);
-}
-
-ModuleInfo::ModuleInfo(ObjectFile *Obj, std::unique_ptr<DIContext> DICtx)
-    : Module(Obj), DebugInfoContext(std::move(DICtx)) {
-  std::unique_ptr<DataExtractor> OpdExtractor;
-  uint64_t OpdAddress = 0;
-  // Find the .opd (function descriptor) section if any, for big-endian
-  // PowerPC64 ELF.
-  if (Module->getArch() == Triple::ppc64) {
-    for (section_iterator Section : Module->sections()) {
-      StringRef Name;
-      if (!error(Section->getName(Name)) && Name == ".opd") {
-        StringRef Data;
-        if (!error(Section->getContents(Data))) {
-          OpdExtractor.reset(new DataExtractor(Data, Module->isLittleEndian(),
-                                               Module->getBytesInAddress()));
-          OpdAddress = Section->getAddress();
-        }
-        break;
-      }
-    }
-  }
-  std::vector<std::pair<SymbolRef, uint64_t>> Symbols =
-      computeSymbolSizes(*Module);
-  for (auto &P : Symbols)
-    addSymbol(P.first, P.second, OpdExtractor.get(), OpdAddress);
-
-  // If this is a COFF object and we didn't find any symbols, try the export
-  // table.
-  if (Symbols.empty()) {
-    if (auto *CoffObj = dyn_cast<COFFObjectFile>(Obj))
-      addCoffExportSymbols(CoffObj);
-  }
-}
-
-namespace {
-struct OffsetNamePair {
-  uint32_t Offset;
-  StringRef Name;
-  bool operator<(const OffsetNamePair &R) const {
-    return Offset < R.Offset;
-  }
-};
-}
-
-void ModuleInfo::addCoffExportSymbols(const COFFObjectFile *CoffObj) {
-  // Get all export names and offsets.
-  std::vector<OffsetNamePair> ExportSyms;
-  for (const ExportDirectoryEntryRef &Ref : CoffObj->export_directories()) {
-    StringRef Name;
-    uint32_t Offset;
-    if (error(Ref.getSymbolName(Name)) || error(Ref.getExportRVA(Offset)))
-      return;
-    ExportSyms.push_back(OffsetNamePair{Offset, Name});
-  }
-  if (ExportSyms.empty())
-    return;
-
-  // Sort by ascending offset.
-  array_pod_sort(ExportSyms.begin(), ExportSyms.end());
-
-  // Approximate the symbol sizes by assuming they run to the next symbol.
-  // FIXME: This assumes all exports are functions.
-  uint64_t ImageBase = CoffObj->getImageBase();
-  for (auto I = ExportSyms.begin(), E = ExportSyms.end(); I != E; ++I) {
-    OffsetNamePair &Export = *I;
-    // FIXME: The last export has a one byte size now.
-    uint32_t NextOffset = I != E ? I->Offset : Export.Offset + 1;
-    uint64_t SymbolStart = ImageBase + Export.Offset;
-    uint64_t SymbolSize = NextOffset - Export.Offset;
-    SymbolDesc SD = {SymbolStart, SymbolSize};
-    Functions.insert(std::make_pair(SD, Export.Name));
-  }
-}
-
-void ModuleInfo::addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
-                           DataExtractor *OpdExtractor, uint64_t OpdAddress) {
-  SymbolRef::Type SymbolType = Symbol.getType();
-  if (SymbolType != SymbolRef::ST_Function && SymbolType != SymbolRef::ST_Data)
-    return;
-  ErrorOr<uint64_t> SymbolAddressOrErr = Symbol.getAddress();
-  if (error(SymbolAddressOrErr.getError()))
-    return;
-  uint64_t SymbolAddress = *SymbolAddressOrErr;
-  if (OpdExtractor) {
-    // For big-endian PowerPC64 ELF, symbols in the .opd section refer to
-    // function descriptors. The first word of the descriptor is a pointer to
-    // the function's code.
-    // For the purposes of symbolization, pretend the symbol's address is that
-    // of the function's code, not the descriptor.
-    uint64_t OpdOffset = SymbolAddress - OpdAddress;
-    uint32_t OpdOffset32 = OpdOffset;
-    if (OpdOffset == OpdOffset32 && 
-        OpdExtractor->isValidOffsetForAddress(OpdOffset32))
-      SymbolAddress = OpdExtractor->getAddress(&OpdOffset32);
-  }
-  ErrorOr<StringRef> SymbolNameOrErr = Symbol.getName();
-  if (error(SymbolNameOrErr.getError()))
-    return;
-  StringRef SymbolName = *SymbolNameOrErr;
-  // Mach-O symbol table names have leading underscore, skip it.
-  if (Module->isMachO() && SymbolName.size() > 0 && SymbolName[0] == '_')
-    SymbolName = SymbolName.drop_front();
-  // FIXME: If a function has alias, there are two entries in symbol table
-  // with same address size. Make sure we choose the correct one.
-  auto &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
-  SymbolDesc SD = { SymbolAddress, SymbolSize };
-  M.insert(std::make_pair(SD, SymbolName));
-}
-
-// Return true if this is a 32-bit x86 PE COFF module.
-bool ModuleInfo::isWin32Module() const {
-  auto *CoffObject = dyn_cast<COFFObjectFile>(Module);
-  return CoffObject && CoffObject->getMachine() == COFF::IMAGE_FILE_MACHINE_I386;
-}
-
-uint64_t ModuleInfo::getModulePreferredBase() const {
-  if (auto *CoffObject = dyn_cast<COFFObjectFile>(Module))
-    return CoffObject->getImageBase();
-  return 0;
-}
-
-bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
-                                        std::string &Name, uint64_t &Addr,
-                                        uint64_t &Size) const {
-  const auto &SymbolMap = Type == SymbolRef::ST_Function ? Functions : Objects;
-  if (SymbolMap.empty())
-    return false;
-  SymbolDesc SD = { Address, Address };
-  auto SymbolIterator = SymbolMap.upper_bound(SD);
-  if (SymbolIterator == SymbolMap.begin())
-    return false;
-  --SymbolIterator;
-  if (SymbolIterator->first.Size != 0 &&
-      SymbolIterator->first.Addr + SymbolIterator->first.Size <= Address)
-    return false;
-  Name = SymbolIterator->second.str();
-  Addr = SymbolIterator->first.Addr;
-  Size = SymbolIterator->first.Size;
-  return true;
-}
-
-DILineInfo ModuleInfo::symbolizeCode(uint64_t ModuleOffset,
-                                     FunctionNameKind FNKind,
-                                     bool UseSymbolTable) const {
-  DILineInfo LineInfo;
-  if (DebugInfoContext) {
-    LineInfo = DebugInfoContext->getLineInfoForAddress(
-        ModuleOffset, getDILineInfoSpecifier(FNKind));
-  }
-  // Override function name from symbol table if necessary.
-  if (FNKind == FunctionNameKind::LinkageName && UseSymbolTable) {
-    std::string FunctionName;
-    uint64_t Start, Size;
-    if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
-                               FunctionName, Start, Size)) {
-      LineInfo.FunctionName = FunctionName;
-    }
-  }
-  return LineInfo;
-}
-
-DIInliningInfo ModuleInfo::symbolizeInlinedCode(uint64_t ModuleOffset,
-                                                FunctionNameKind FNKind,
-                                                bool UseSymbolTable) const {
-  DIInliningInfo InlinedContext;
-
-  if (DebugInfoContext) {
-    InlinedContext = DebugInfoContext->getInliningInfoForAddress(
-        ModuleOffset, getDILineInfoSpecifier(FNKind));
-  }
-  // Make sure there is at least one frame in context.
-  if (InlinedContext.getNumberOfFrames() == 0) {
-    InlinedContext.addFrame(DILineInfo());
-  }
-  // Override the function name in lower frame with name from symbol table.
-  if (FNKind == FunctionNameKind::LinkageName && UseSymbolTable) {
-    DIInliningInfo PatchedInlinedContext;
-    for (uint32_t i = 0, n = InlinedContext.getNumberOfFrames(); i < n; i++) {
-      DILineInfo LineInfo = InlinedContext.getFrame(i);
-      if (i == n - 1) {
-        std::string FunctionName;
-        uint64_t Start, Size;
-        if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
-                                   FunctionName, Start, Size)) {
-          LineInfo.FunctionName = FunctionName;
-        }
-      }
-      PatchedInlinedContext.addFrame(LineInfo);
-    }
-    InlinedContext = PatchedInlinedContext;
-  }
-  return InlinedContext;
-}
-
-bool ModuleInfo::symbolizeData(uint64_t ModuleOffset, std::string &Name,
-                               uint64_t &Start, uint64_t &Size) const {
-  return getNameFromSymbolTable(SymbolRef::ST_Data, ModuleOffset, Name, Start,
-                                Size);
-}
 
 const char LLVMSymbolizer::kBadString[] = "??";
 
 std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
                                           uint64_t ModuleOffset) {
-  ModuleInfo *Info = getOrCreateModuleInfo(ModuleName);
+  SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
     return printDILineInfo(DILineInfo(), Info);
 
@@ -295,9 +92,10 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
   uint64_t Start = 0;
   uint64_t Size = 0;
   if (Opts.UseSymbolTable) {
-    if (ModuleInfo *Info = getOrCreateModuleInfo(ModuleName)) {
-      // If the user is giving us relative addresses, add the preferred base of the
-      // object to the offset before we do the query. It's what DIContext expects.
+    if (SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName)) {
+      // If the user is giving us relative addresses, add the preferred base of
+      // the object to the offset before we do the query. It's what DIContext
+      // expects.
       if (Opts.RelativeAddresses)
         ModuleOffset += Info->getModulePreferredBase();
       if (Info->symbolizeData(ModuleOffset, Name, Start, Size) && Opts.Demangle)
@@ -510,7 +308,7 @@ LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin,
   return Res;
 }
 
-ModuleInfo *
+SymbolizableModule *
 LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   const auto &I = Modules.find(ModuleName);
   if (I != Modules.end())
@@ -530,8 +328,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
 
   if (!Objects.first) {
     // Failed to find valid object file.
-    Modules.insert(
-        std::make_pair(ModuleName, std::unique_ptr<ModuleInfo>(nullptr)));
+    Modules.insert(std::make_pair(ModuleName, nullptr));
     return nullptr;
   }
   std::unique_ptr<DIContext> Context;
@@ -548,14 +345,20 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   if (!Context)
     Context.reset(new DWARFContextInMemory(*Objects.second));
   assert(Context);
-  auto Info = llvm::make_unique<ModuleInfo>(Objects.first, std::move(Context));
-  ModuleInfo *Res = Info.get();
-  Modules.insert(std::make_pair(ModuleName, std::move(Info)));
+  auto ErrOrInfo =
+      SymbolizableObjectFile::create(Objects.first, std::move(Context));
+  if (error(ErrOrInfo.getError())) {
+    Modules.insert(std::make_pair(ModuleName, nullptr));
+    return nullptr;
+  }
+  SymbolizableModule *Res = ErrOrInfo.get().get();
+  Modules.insert(std::make_pair(ModuleName, std::move(ErrOrInfo.get())));
   return Res;
 }
 
-std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
-                                            ModuleInfo *ModInfo) const {
+std::string
+LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
+                                const SymbolizableModule *ModInfo) const {
   // By default, DILineInfo contains "<invalid>" for function/filename it
   // cannot fetch. We replace it to "??" to make our output closer to addr2line.
   static const std::string kDILineInfoBadString = "<invalid>";
@@ -611,7 +414,7 @@ extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
 #endif
 
 std::string LLVMSymbolizer::DemangleName(const std::string &Name,
-                                         ModuleInfo *ModInfo) {
+                                         const SymbolizableModule *ModInfo) {
 #if !defined(_MSC_VER)
   // We can spoil names of symbols with C linkage, so use an heuristic
   // approach to check if the name should be demangled.

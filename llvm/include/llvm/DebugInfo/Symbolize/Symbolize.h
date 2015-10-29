@@ -15,9 +15,9 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/Symbolize/SymbolizableModule.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <map>
 #include <memory>
@@ -28,7 +28,6 @@ namespace symbolize {
 
 using namespace object;
 using FunctionNameKind = DILineInfoSpecifier::FunctionNameKind;
-class ModuleInfo;
 
 class LLVMSymbolizer {
 public:
@@ -61,13 +60,15 @@ public:
   std::string
   symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
   void flush();
-  static std::string DemangleName(const std::string &Name, ModuleInfo *ModInfo);
+  static std::string DemangleName(const std::string &Name,
+                                  const SymbolizableModule *ModInfo);
 
 private:
   typedef std::pair<ObjectFile*, ObjectFile*> ObjectPair;
 
-  ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName);
-  ObjectFile *lookUpDsymFile(const std::string &Path, const MachOObjectFile *ExeObj,
+  SymbolizableModule *getOrCreateModuleInfo(const std::string &ModuleName);
+  ObjectFile *lookUpDsymFile(const std::string &Path,
+                             const MachOObjectFile *ExeObj,
                              const std::string &ArchName);
 
   /// \brief Returns pair of pointers to object and debug object.
@@ -77,7 +78,8 @@ private:
   /// universal binary (or the binary itself if it is an object file).
   ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
 
-  std::string printDILineInfo(DILineInfo LineInfo, ModuleInfo *ModInfo) const;
+  std::string printDILineInfo(DILineInfo LineInfo,
+                              const SymbolizableModule *ModInfo) const;
 
   // Owns all the parsed binaries and object files.
   SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;
@@ -90,7 +92,7 @@ private:
     MemoryBuffers.push_back(std::move(MemBuf));
   }
 
-  std::map<std::string, std::unique_ptr<ModuleInfo>> Modules;
+  std::map<std::string, std::unique_ptr<SymbolizableModule>> Modules;
   std::map<std::pair<MachOUniversalBinary *, std::string>, ObjectFile *>
       ObjectFileForArch;
   std::map<std::pair<std::string, std::string>, ObjectPair>
@@ -98,51 +100,6 @@ private:
 
   Options Opts;
   static const char kBadString[];
-};
-
-class ModuleInfo {
-public:
-  ModuleInfo(ObjectFile *Obj, std::unique_ptr<DIContext> DICtx);
-
-  DILineInfo symbolizeCode(uint64_t ModuleOffset, FunctionNameKind FNKind,
-                           bool UseSymbolTable) const;
-  DIInliningInfo symbolizeInlinedCode(uint64_t ModuleOffset,
-                                      FunctionNameKind FNKind,
-                                      bool UseSymbolTable) const;
-  bool symbolizeData(uint64_t ModuleOffset, std::string &Name, uint64_t &Start,
-                     uint64_t &Size) const;
-
-  // Return true if this is a 32-bit x86 PE COFF module.
-  bool isWin32Module() const;
-
-  // Returns the preferred base of the module, i.e. where the loader would place
-  // it in memory assuming there were no conflicts.
-  uint64_t getModulePreferredBase() const;
-
-private:
-  bool getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
-                              std::string &Name, uint64_t &Addr,
-                              uint64_t &Size) const;
-  // For big-endian PowerPC64 ELF, OpdAddress is the address of the .opd
-  // (function descriptor) section and OpdExtractor refers to its contents.
-  void addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
-                 DataExtractor *OpdExtractor = nullptr,
-                 uint64_t OpdAddress = 0);
-  void addCoffExportSymbols(const COFFObjectFile *CoffObj);
-  ObjectFile *Module;
-  std::unique_ptr<DIContext> DebugInfoContext;
-
-  struct SymbolDesc {
-    uint64_t Addr;
-    // If size is 0, assume that symbol occupies the whole memory range up to
-    // the following symbol.
-    uint64_t Size;
-    friend bool operator<(const SymbolDesc &s1, const SymbolDesc &s2) {
-      return s1.Addr < s2.Addr;
-    }
-  };
-  std::map<SymbolDesc, StringRef> Functions;
-  std::map<SymbolDesc, StringRef> Objects;
 };
 
 } // namespace symbolize
