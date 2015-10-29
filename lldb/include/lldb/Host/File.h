@@ -10,10 +10,14 @@
 #ifndef liblldb_File_h_
 #define liblldb_File_h_
 
+// C Includes
+// C++ Includes
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Host/IOObject.h"
 
@@ -72,13 +76,11 @@ public:
 
     File (const File &rhs);
     
-    File &
-    operator= (const File &rhs);
     //------------------------------------------------------------------
     /// Constructor with path.
     ///
     /// Takes a path to a file which can be just a filename, or a full
-    /// path. If \a path is not NULL or empty, this function will call
+    /// path. If \a path is not nullptr or empty, this function will call
     /// File::Open (const char *path, uint32_t options, uint32_t permissions).
     ///
     /// @param[in] path
@@ -100,7 +102,7 @@ public:
     /// Constructor with FileSpec.
     ///
     /// Takes a FileSpec pointing to a file which can be just a filename, or a full
-    /// path. If \a path is not NULL or empty, this function will call
+    /// path. If \a path is not nullptr or empty, this function will call
     /// File::Open (const char *path, uint32_t options, uint32_t permissions).
     ///
     /// @param[in] filespec
@@ -134,6 +136,9 @@ public:
     //------------------------------------------------------------------
     ~File() override;
 
+    File &
+    operator= (const File &rhs);
+
     bool
     IsValid() const override
     {
@@ -154,7 +159,7 @@ public:
     ///
     /// @return
     ///     A pointer to this object if either the directory or filename
-    ///     is valid, NULL otherwise.
+    ///     is valid, nullptr otherwise.
     //------------------------------------------------------------------
     operator
     bool () const
@@ -292,13 +297,13 @@ public:
     ///
     /// @param[in] error_ptr
     ///     A pointer to a lldb_private::Error object that will be
-    ///     filled in if non-NULL.
+    ///     filled in if non-nullptr.
     ///
     /// @return
     ///     The resulting seek offset, or -1 on error.
     //------------------------------------------------------------------
     off_t
-    SeekFromStart (off_t offset, Error *error_ptr = NULL);
+    SeekFromStart(off_t offset, Error *error_ptr = nullptr);
     
     //------------------------------------------------------------------
     /// Seek to an offset relative to the current file position.
@@ -315,13 +320,13 @@ public:
     ///
     /// @param[in] error_ptr
     ///     A pointer to a lldb_private::Error object that will be
-    ///     filled in if non-NULL.
+    ///     filled in if non-nullptr.
     ///
     /// @return
     ///     The resulting seek offset, or -1 on error.
     //------------------------------------------------------------------
     off_t
-    SeekFromCurrent (off_t offset, Error *error_ptr = NULL);
+    SeekFromCurrent(off_t offset, Error *error_ptr = nullptr);
     
     //------------------------------------------------------------------
     /// Seek to an offset relative to the end of the file.
@@ -339,13 +344,13 @@ public:
     ///
     /// @param[in] error_ptr
     ///     A pointer to a lldb_private::Error object that will be
-    ///     filled in if non-NULL.
+    ///     filled in if non-nullptr.
     ///
     /// @return
     ///     The resulting seek offset, or -1 on error.
     //------------------------------------------------------------------
     off_t
-    SeekFromEnd (off_t offset, Error *error_ptr = NULL);
+    SeekFromEnd(off_t offset, Error *error_ptr = nullptr);
 
     //------------------------------------------------------------------
     /// Read bytes from a file from the specified file offset.
@@ -469,7 +474,6 @@ public:
     static uint32_t
     GetPermissions(const FileSpec &file_spec, Error &error);
 
-    
     //------------------------------------------------------------------
     /// Return true if this file is interactive.
     ///
@@ -516,15 +520,13 @@ public:
     size_t
     PrintfVarArg(const char *format, va_list args);
 
-    
     void
     SetOptions (uint32_t options)
     {
         m_options = options;
     }
+
 protected:
-    
-    
     bool
     DescriptorIsValid () const
     {

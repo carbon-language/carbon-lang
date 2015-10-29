@@ -1,4 +1,4 @@
-//===-- UtilityFunction.h ----------------------------------*- C++ -*-===//
+//===-- UtilityFunction.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,13 +12,11 @@
 
 // C Includes
 // C++ Includes
+#include <memory>
 #include <string>
-#include <map>
-#include <vector>
 
 // Other libraries and framework includes
 // Project includes
-
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Expression/Expression.h"
@@ -71,7 +69,7 @@ public:
     //------------------------------------------------------------------
     /// Check whether the given PC is inside the function
     ///
-    /// Especially useful if the function dereferences NULL to indicate a failed
+    /// Especially useful if the function dereferences nullptr to indicate a failed
     /// assert.
     ///
     /// @param[in] pc
@@ -88,8 +86,7 @@ public:
         // so this always returns false if the function is not JIT compiled yet
         return (address >= m_jit_start_addr && address < m_jit_end_addr);
     }
-    
-    
+
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
     /// translation unit.
@@ -113,12 +110,12 @@ public:
     
     //------------------------------------------------------------------
     /// Return the object that the parser should use when registering
-    /// local variables.  May be NULL if the Expression doesn't care.
+    /// local variables. May be nullptr if the Expression doesn't care.
     //------------------------------------------------------------------
     ExpressionVariableList *
     LocalVariables ()
     {
-        return NULL;
+        return nullptr;
     }
     
     //------------------------------------------------------------------

@@ -7,16 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef lldb_Materializer_h
-#define lldb_Materializer_h
+#ifndef liblldb_Materializer_h
+#define liblldb_Materializer_h
 
+// C Includes
+// C++ Includes
+#include <memory>
+#include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private-types.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/StackFrame.h"
-
-#include <vector>
 
 namespace lldb_private
 {
@@ -31,8 +36,8 @@ public:
     {
     public:
         Dematerializer () :
-            m_materializer(NULL),
-            m_map(NULL),
+            m_materializer(nullptr),
+            m_map(nullptr),
             m_process_address(LLDB_INVALID_ADDRESS)
         {
         }
@@ -52,6 +57,7 @@ public:
         {
             return m_materializer && m_map && (m_process_address != LLDB_INVALID_ADDRESS);
         }
+
     private:
         friend class Materializer;
 
@@ -124,11 +130,9 @@ public:
             m_offset(0)
         {
         }
-        
-        virtual ~Entity ()
-        {
-        }
-        
+
+        virtual ~Entity() = default;
+
         virtual void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err) = 0;
         virtual void Dematerialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address,
                                     lldb::addr_t frame_top, lldb::addr_t frame_bottom, Error &err) = 0;
@@ -154,6 +158,7 @@ public:
         {
             m_offset = offset;
         }
+
     protected:
         void SetSizeAndAlignmentFromType (CompilerType &type);
         
@@ -174,6 +179,6 @@ private:
     uint32_t                        m_struct_alignment;
 };
     
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_Materializer_h

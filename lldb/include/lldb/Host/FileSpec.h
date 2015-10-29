@@ -9,10 +9,14 @@
 
 #ifndef liblldb_FileSpec_h_
 #define liblldb_FileSpec_h_
-#if defined(__cplusplus)
 
+// C Includes
+// C++ Includes
 #include <functional>
+#include <string>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/STLUtils.h"
@@ -66,7 +70,7 @@ public:
     /// Constructor with path.
     ///
     /// Takes a path to a file which can be just a filename, or a full
-    /// path. If \a path is not NULL or empty, this function will call
+    /// path. If \a path is not nullptr or empty, this function will call
     /// FileSpec::SetFile (const char *path, bool resolve).
     ///
     /// @param[in] path
@@ -101,10 +105,10 @@ public:
     /// Copy constructor
     ///
     /// Makes a copy of the uniqued directory and filename strings from
-    /// \a rhs if it is not NULL.
+    /// \a rhs if it is not nullptr.
     ///
     /// @param[in] rhs
-    ///     A const FileSpec object pointer to copy if non-NULL.
+    ///     A const FileSpec object pointer to copy if non-nullptr.
     //------------------------------------------------------------------
     FileSpec (const FileSpec* rhs);
 
@@ -190,7 +194,7 @@ public:
     ///
     /// @return
     ///     A pointer to this object if either the directory or filename
-    ///     is valid, NULL otherwise.
+    ///     is valid, nullptr otherwise.
     //------------------------------------------------------------------
     explicit operator bool() const;
 
@@ -444,7 +448,7 @@ public:
     ///
     /// Returns a ConstString that represents the extension of the filename
     /// for this FileSpec object. If this object does not represent a file,
-    /// or the filename has no extension, ConstString(NULL) is returned.
+    /// or the filename has no extension, ConstString(nullptr) is returned.
     /// The dot ('.') character is not returned as part of the extension
     ///
     /// @return
@@ -552,12 +556,11 @@ public:
     ///
     /// @return
     ///     A shared pointer to the memory mapped data. This shared
-    ///     pointer can contain a NULL DataBuffer pointer, so the contained
+    ///     pointer can contain a nullptr DataBuffer pointer, so the contained
     ///     pointer must be checked prior to using it.
     //------------------------------------------------------------------
     lldb::DataBufferSP
     MemoryMapFileContents (off_t offset = 0, size_t length = SIZE_MAX) const;
-
 
     //------------------------------------------------------------------
     /// Memory map part of, or the entire contents of, a file only if
@@ -591,7 +594,7 @@ public:
     ///
     /// @return
     ///     A shared pointer to the memory mapped data. This shared
-    ///     pointer can contain a NULL DataBuffer pointer, so the contained
+    ///     pointer can contain a nullptr DataBuffer pointer, so the contained
     ///     pointer must be checked prior to using it.
     //------------------------------------------------------------------
     lldb::DataBufferSP
@@ -621,16 +624,15 @@ public:
     ///
     /// @return
     ///     A shared pointer to the memory mapped data. This shared
-    ///     pointer can contain a NULL DataBuffer pointer, so the contained
+    ///     pointer can contain a nullptr DataBuffer pointer, so the contained
     ///     pointer must be checked prior to using it.
     //------------------------------------------------------------------
     lldb::DataBufferSP
-    ReadFileContents (off_t offset = 0, size_t length = SIZE_MAX, Error *error_ptr = NULL) const;
+    ReadFileContents(off_t offset = 0, size_t length = SIZE_MAX, Error *error_ptr = nullptr) const;
 
     size_t
     ReadFileContents (off_t file_offset, void *dst, size_t dst_len, Error *error_ptr) const;
 
-    
     //------------------------------------------------------------------
     /// Read the entire contents of a file as data that can be used
     /// as a C string.
@@ -640,11 +642,11 @@ public:
     ///
     /// @return
     ///     A shared pointer to the data. This shared pointer can
-    ///     contain a NULL DataBuffer pointer, so the contained pointer
+    ///     contain a nullptr DataBuffer pointer, so the contained pointer
     ///     must be checked prior to using it.
     //------------------------------------------------------------------
     lldb::DataBufferSP
-    ReadFileContentsAsCString(Error *error_ptr = NULL);
+    ReadFileContentsAsCString(Error *error_ptr = nullptr);
 
     //------------------------------------------------------------------
     /// Normalize a pathname by collapsing redundant separators and
@@ -716,6 +718,7 @@ public:
     {
         m_is_resolved = is_resolved;
     }
+
     //------------------------------------------------------------------
     /// Read the file into an array of strings, one per line.
     ///
@@ -832,5 +835,4 @@ Stream& operator << (Stream& s, const FileSpec& f);
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_FileSpec_h_
+#endif // liblldb_FileSpec_h_

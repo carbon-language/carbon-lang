@@ -10,7 +10,12 @@
 #ifndef liblldb_Debug_h_
 #define liblldb_Debug_h_
 
+// C Includes
+// C++ Includes
 #include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 
 namespace lldb_private {
@@ -59,9 +64,7 @@ namespace lldb_private {
             }
         }
 
-        ~ResumeActionList()
-        {
-        }
+        ~ResumeActionList() = default;
 
         bool
         IsEmpty() const
@@ -114,7 +117,7 @@ namespace lldb_private {
             }
             if (default_ok && tid != LLDB_INVALID_THREAD_ID)
                 return GetActionForThread (LLDB_INVALID_THREAD_ID, false);
-            return NULL;
+            return nullptr;
         }
 
         size_t
@@ -133,7 +136,7 @@ namespace lldb_private {
         bool
         SetDefaultThreadActionIfNeeded (lldb::StateType action, int signal)
         {
-            if (GetActionForThread (LLDB_INVALID_THREAD_ID, true) == NULL)
+            if (GetActionForThread (LLDB_INVALID_THREAD_ID, true) == nullptr)
             {
                 // There isn't a default action so we do need to set it.
                 ResumeAction default_action = {LLDB_INVALID_THREAD_ID, action, signal };
@@ -203,4 +206,5 @@ namespace lldb_private {
         } details;
     };
 }
-#endif // #ifndef liblldb_Debug_h_
+
+#endif // liblldb_Debug_h_

@@ -1,4 +1,4 @@
-//===-- UserExpression.h -----------------------------------*- C++ -*-===//
+//===-- UserExpression.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,12 +12,12 @@
 
 // C Includes
 // C++ Includes
+#include <memory>
 #include <string>
-#include <map>
 #include <vector>
 
+// Other libraries and framework includes
 // Project includes
-
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
@@ -42,8 +42,8 @@ namespace lldb_private
 class UserExpression : public Expression
 {
 public:
-
     enum { kDefaultTimeout = 500000u };
+
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -51,7 +51,7 @@ public:
     ///     The expression to parse.
     ///
     /// @param[in] expr_prefix
-    ///     If non-NULL, a C string containing translation-unit level
+    ///     If non-nullptr, a C string containing translation-unit level
     ///     definitions to be included when the expression is parsed.
     ///
     /// @param[in] language
@@ -267,7 +267,7 @@ public:
     ///     A C string containing the expression to be evaluated.
     ///
     /// @param[in] expr_prefix
-    ///     If non-NULL, a C string containing translation-unit level
+    ///     If non-nullptr, a C string containing translation-unit level
     ///     definitions to be included when the expression is parsed.
     ///
     /// @param[in,out] result_valobj_sp
@@ -281,22 +281,23 @@ public:
     ///     The offset of the first line of the expression from the "beginning" of a virtual source file used for error reporting and debug info.
     ///
     /// @param[out] jit_module_sp_ptr
-    ///     If non-NULL, used to persist the generated IR module.
+    ///     If non-nullptr, used to persist the generated IR module.
     ///
     /// @result
     ///      A Process::ExpressionResults value.  eExpressionCompleted for success.
     //------------------------------------------------------------------
     static lldb::ExpressionResults
-    Evaluate (ExecutionContext &exe_ctx,
-              const EvaluateExpressionOptions& options,
-              const char *expr_cstr,
-              const char *expr_prefix,
-              lldb::ValueObjectSP &result_valobj_sp,
-              Error &error,
-              uint32_t line_offset = 0,
-              lldb::ModuleSP *jit_module_sp_ptr = NULL);
+    Evaluate(ExecutionContext &exe_ctx,
+             const EvaluateExpressionOptions& options,
+             const char *expr_cstr,
+             const char *expr_prefix,
+             lldb::ValueObjectSP &result_valobj_sp,
+             Error &error,
+             uint32_t line_offset = 0,
+             lldb::ModuleSP *jit_module_sp_ptr = nullptr);
 
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
+
 protected:
     static lldb::addr_t
     GetObjectPointer (lldb::StackFrameSP frame_sp,
@@ -352,7 +353,7 @@ protected:
     bool                                        m_in_cplusplus_method;  ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).
     bool                                        m_in_objectivec_method; ///< True if the expression is compiled as an Objective-C method (true if it was parsed when exe_ctx was in an Objective-C method).
     bool                                        m_in_static_method;     ///< True if the expression is compiled as a static (or class) method (currently true if it was parsed when exe_ctx was in an Objective-C class method).
-    bool                                        m_needs_object_ptr;     ///< True if "this" or "self" must be looked up and passed in.  False if the expression doesn't really use them and they can be NULL.
+    bool                                        m_needs_object_ptr;     ///< True if "this" or "self" must be looked up and passed in.  False if the expression doesn't really use them and they can be nullptr.
     bool                                        m_const_object;         ///< True if "this" is const.
     Target                                     *m_target;               ///< The target for storing persistent data like types and variables.
 

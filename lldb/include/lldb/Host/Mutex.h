@@ -9,14 +9,16 @@
 
 #ifndef liblldb_Mutex_h_
 #define liblldb_Mutex_h_
-#if defined(__cplusplus)
 
-#include "lldb/lldb-types.h"
-#include <assert.h>
-
+// C Includes
+// C++ Includes
 #ifdef LLDB_CONFIGURATION_DEBUG
 #include <string>
 #endif
+
+// Other libraries and framework includes
+// Project includes
+#include "lldb/lldb-types.h"
 
 namespace lldb_private {
 
@@ -97,7 +99,7 @@ public:
         ///
         /// Unlock the current mutex in this object (if it contains a
         /// valid mutex) and lock the new \a mutex object if it is
-        /// non-NULL.
+        /// non-nullptr.
         //--------------------------------------------------------------
         void
         Lock (Mutex &mutex);
@@ -125,10 +127,10 @@ public:
         ///     returns \b false otherwise.
         //--------------------------------------------------------------
         bool
-        TryLock (Mutex &mutex, const char *failure_message = NULL);
+        TryLock(Mutex &mutex, const char *failure_message = nullptr);
         
         bool
-        TryLock (Mutex *mutex, const char *failure_message = NULL)
+        TryLock(Mutex *mutex, const char *failure_message = nullptr)
         {
             if (mutex)
                 return TryLock(*mutex, failure_message);
@@ -149,7 +151,6 @@ public:
         Locker(const Locker&);
         const Locker& operator=(const Locker&);
     };
-
 
     //------------------------------------------------------------------
     /// Default constructor.
@@ -213,7 +214,7 @@ public:
     virtual
 #endif
     int
-    TryLock(const char *failure_message = NULL);
+    TryLock(const char *failure_message = nullptr);
 
     //------------------------------------------------------------------
     /// Unlock the mutex.
@@ -262,16 +263,16 @@ public:
     TrackingMutex(Mutex::Type type) : Mutex (type) {}
     
     virtual
-    ~TrackingMutex() {}
+    ~TrackingMutex() = default;
     
     virtual int
     Unlock ();
 
     virtual int
-    TryLock (const char *failure_message = NULL)
+    TryLock(const char *failure_message = nullptr)
     {
         int return_value = Mutex::TryLock();
-        if (return_value != 0 && failure_message != NULL)
+        if (return_value != 0 && failure_message != nullptr)
         {
             m_failure_message.assign(failure_message);
             m_thread_that_tried = pthread_self();
@@ -291,7 +292,7 @@ public:
     LoggingMutex(Mutex::Type type) : Mutex (type),m_locked(false) {}
     
     virtual
-    ~LoggingMutex() {}
+    ~LoggingMutex() = default;
     
     virtual int
     Lock ();
@@ -300,13 +301,13 @@ public:
     Unlock ();
     
     virtual int
-    TryLock (const char *failure_message = NULL);
+    TryLock(const char *failure_message = nullptr);
+
 protected:
     bool m_locked;
 };
-#endif
+#endif // LLDB_CONFIGURATION_DEBUG
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif
+#endif // liblldb_Mutex_h_

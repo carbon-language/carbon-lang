@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DBCondition_h_
-#define liblldb_DBCondition_h_
-#if defined(__cplusplus)
+#ifndef liblldb_Condition_h_
+#define liblldb_Condition_h_
 
-
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-types.h"
 #include "lldb/Host/Mutex.h"
 
@@ -31,7 +33,6 @@ class TimeValue;
 class Condition
 {
 public:
-
     //------------------------------------------------------------------
     /// Default constructor
     ///
@@ -73,9 +74,9 @@ public:
     /// \a mutex. The waiting thread unblocks only after another thread
     /// signals or broadcasts this object's condition variable.
     ///
-    /// If \a abstime is non-NULL, this function will return when the
+    /// If \a abstime is non-nullptr, this function will return when the
     /// system time reaches the time specified in \a abstime if the
-    /// condition variable doesn't get unblocked. If \a abstime is NULL
+    /// condition variable doesn't get unblocked. If \a abstime is nullptr
     /// this function will wait for an infinite amount of time for the
     /// condition variable to be unblocked.
     ///
@@ -87,19 +88,19 @@ public:
     ///     \c pthread_cond_wait() calls.
     ///
     /// @param[in] abstime
-    ///     An absolute time at which to stop waiting if non-NULL, else
+    ///     An absolute time at which to stop waiting if non-nullptr, else
     ///     wait an infinite amount of time for the condition variable
     ///     toget signaled.
     ///
     /// @param[out] timed_out
-    ///     If not NULL, will be set to true if the wait timed out, and
+    ///     If not nullptr, will be set to true if the wait timed out, and
     //      false otherwise.
     ///
     /// @see Condition::Broadcast()
     /// @see Condition::Signal()
     //------------------------------------------------------------------
     int
-    Wait (Mutex &mutex, const TimeValue *abstime = NULL, bool *timed_out = NULL);
+    Wait(Mutex &mutex, const TimeValue *abstime = nullptr, bool *timed_out = nullptr);
 
 protected:
     //------------------------------------------------------------------
@@ -119,6 +120,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif
-
+#endif // liblldb_Condition_h_

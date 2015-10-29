@@ -11,24 +11,22 @@
 #define liblldb_XML_h_
 
 // C Includes
-
 #if defined( LIBXML2_DEFINED )
 #include <libxml/xmlreader.h>
 #endif
 
 // C++ Includes
-
 #include <functional>
 #include <string>
 #include <vector>
 
 // Other libraries and framework includes
+#include "llvm/ADT/StringRef.h"
+
 // Project includes
 #include "lldb/lldb-private.h"
-#include "llvm/ADT/StringRef.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/StructuredData.h"
-
 
 namespace lldb_private {
 
@@ -94,7 +92,7 @@ namespace lldb_private {
         GetChild () const;
         
         llvm::StringRef
-        GetAttributeValue(const char *name, const char *fail_value = NULL) const;
+        GetAttributeValue(const char *name, const char *fail_value = nullptr) const;
         
         XMLNode
         FindFirstChildElementWithName (const char *name) const;
@@ -140,7 +138,6 @@ namespace lldb_private {
     class XMLDocument
     {
     public:
-        
         XMLDocument ();
         
         ~XMLDocument ();
@@ -163,7 +160,7 @@ namespace lldb_private {
         ParseMemory (const char *xml, size_t xml_length, const char *url = "untitled.xml");
 
         //----------------------------------------------------------------------
-        // If \a name is NULL, just get the root element node, else only return
+        // If \a name is nullptr, just get the root element node, else only return
         // a value XMLNode if the name of the root element matches \a name.
         //----------------------------------------------------------------------
         XMLNode
@@ -216,7 +213,6 @@ namespace lldb_private {
         GetStructuredData();
 
     protected:
-
         // Using a node returned from GetValueNode() extract its value as a
         // string (if possible). Array and dictionary nodes will return false
         // as they have no string value. Boolean nodes will return true and
@@ -229,6 +225,7 @@ namespace lldb_private {
         XMLDocument m_xml_doc;
         XMLNode m_dict_node;
     };
+
 } // namespace lldb_private
 
 #endif  // liblldb_XML_h_

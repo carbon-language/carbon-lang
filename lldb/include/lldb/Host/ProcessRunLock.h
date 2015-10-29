@@ -9,13 +9,17 @@
 
 #ifndef liblldb_ProcessRunLock_h_
 #define liblldb_ProcessRunLock_h_
-#if defined(__cplusplus)
 
+// C Includes
+#include <stdint.h>
+#include <time.h>
+
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-defines.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Condition.h"
-#include <stdint.h>
-#include <time.h>
 
 //----------------------------------------------------------------------
 /// Enumerations for broadcasting.
@@ -34,17 +38,18 @@ class ProcessRunLock
 public:
     ProcessRunLock();
     ~ProcessRunLock();
+
     bool ReadTryLock ();
     bool ReadUnlock ();
     bool SetRunning ();
     bool TrySetRunning ();
     bool SetStopped ();
-public:
+
     class ProcessRunLocker
     {
     public:
         ProcessRunLocker () :
-            m_lock (NULL)
+            m_lock (nullptr)
         {
         }
 
@@ -82,11 +87,12 @@ public:
             if (m_lock)
             {
                 m_lock->ReadUnlock();
-                m_lock = NULL;
+                m_lock = nullptr;
             }
         }
         
         ProcessRunLock *m_lock;
+
     private:
         DISALLOW_COPY_AND_ASSIGN(ProcessRunLocker);
     };
@@ -94,11 +100,11 @@ public:
 protected:
     lldb::rwlock_t m_rwlock;
     bool m_running;
+
 private:
     DISALLOW_COPY_AND_ASSIGN(ProcessRunLock);
 };
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif // #ifndef liblldb_ProcessRunLock_h_
+#endif // liblldb_ProcessRunLock_h_

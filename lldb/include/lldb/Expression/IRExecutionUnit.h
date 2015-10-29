@@ -13,18 +13,18 @@
 // C Includes
 // C++ Includes
 #include <atomic>
+#include <memory>
 #include <string>
 #include <vector>
-#include <map>
 
 // Other libraries and framework includes
 #include "llvm/IR/Module.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 
 // Project includes
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/DataBufferHeap.h"
-#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -34,7 +34,7 @@ namespace llvm {
 class Module;
 class ExecutionEngine;
     
-}
+} // namespace llvm
 
 namespace lldb_private {
 
@@ -87,10 +87,7 @@ public:
     llvm::Function *
     GetFunction()
     {
-        if (m_module)
-            return m_module->getFunction (m_name.AsCString());
-        else
-            return NULL;
+        return ((m_module != nullptr) ? m_module->getFunction(m_name.AsCString()) : nullptr);
     }
     
     void
