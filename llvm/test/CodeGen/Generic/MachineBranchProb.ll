@@ -1,7 +1,8 @@
 ; RUN: llc < %s -print-machineinstrs=expand-isel-pseudos -o /dev/null 2>&1 | FileCheck %s
 
+; ARM & AArch64 run an extra SimplifyCFG which disrupts this test.
 ; Hexagon crashes (PR23377)
-; XFAIL: hexagon
+; XFAIL: arm,aarch64,hexagon
 
 ; Make sure we have the correct weight attached to each successor.
 define i32 @test2(i32 %x) nounwind uwtable readnone ssp {
