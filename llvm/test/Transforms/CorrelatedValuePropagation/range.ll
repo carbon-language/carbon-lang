@@ -165,3 +165,27 @@ sw.default:
  %or2 = or i1 %cmp7, %cmp8
  ret i1 false
 }
+
+define i1 @test8(i64* %p) {
+; CHECK-LABEL: @test8
+; CHECK: ret i1 false
+  %a = load i64, i64* %p, !range !{i64 4, i64 255}
+  %res = icmp eq i64 %a, 0
+  ret i1 %res
+}
+
+define i1 @test9(i64* %p) {
+; CHECK-LABEL: @test9
+; CHECK: ret i1 true
+  %a = load i64, i64* %p, !range !{i64 0, i64 1}
+  %res = icmp eq i64 %a, 0
+  ret i1 %res
+}
+
+define i1 @test10(i64* %p) {
+; CHECK-LABEL: @test10
+; CHECK: ret i1 false
+  %a = load i64, i64* %p, !range !{i64 4, i64 8, i64 15, i64 20}
+  %res = icmp eq i64 %a, 0
+  ret i1 %res
+}

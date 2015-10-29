@@ -26,6 +26,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/Debug.h"
@@ -497,6 +498,25 @@ LVILatticeVal LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
   return lookup(Val)[BB];
 }
 
+static LVILatticeVal getFromRangeMetadata(Instruction *BBI) {
+  switch (BBI->getOpcode()) {
+  default: break;
+  case Instruction::Load:
+  case Instruction::Call:
+  case Instruction::Invoke:
+    if (MDNode *Ranges = BBI->getMetadata(LLVMContext::MD_range)) 
+      if (auto *IType = dyn_cast<IntegerType>(BBI->getType())) {
+        ConstantRange Result = getConstantRangeFromMetadata(*Ranges);
+        return LVILatticeVal::getRange(Result);
+      }
+    break;
+  };
+  // Nothing known - Note that we do not want overdefined here.  We may know
+  // something else about the value and not having range metadata shouldn't
+  // cause us to throw away those facts.
+  return LVILatticeVal();
+}
+
 bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
   if (isa<Constant>(Val))
     return true;
@@ -538,6 +558,10 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     insertResult(Val, BB, Res);
     return true;
   }
+
+  // If this is an instruction which supports range metadata, return the
+  // implied range.  TODO: This should be an intersection, not a union.
+  Res.mergeIn(getFromRangeMetadata(BBI), DL);
 
   // We can only analyze the definitions of certain classes of instructions
   // (integral binops and casts at the moment), so bail if this isn't one.
@@ -1015,6 +1039,8 @@ LVILatticeVal LazyValueInfoCache::getValueAt(Value *V, Instruction *CxtI) {
         << CxtI->getName() << "'\n");
 
   LVILatticeVal Result;
+  if (auto *I = dyn_cast<Instruction>(V))
+    Result = getFromRangeMetadata(I);
   mergeAssumeBlockValueConstantRange(V, Result, CxtI);
 
   DEBUG(dbgs() << "  Result = " << Result << "\n");

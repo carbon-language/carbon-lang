@@ -181,44 +181,24 @@ bool CorrelatedValuePropagation::processMemAccess(Instruction *I) {
   return true;
 }
 
-/// processCmp - If the value of this comparison could be determined locally,
-/// constant propagation would already have figured it out.  Instead, walk
-/// the predecessors and statically evaluate the comparison based on information
-/// available on that edge.  If a given static evaluation is true on ALL
-/// incoming edges, then it's true universally and we can simplify the compare.
+/// processCmp - See if LazyValueInfo's ability to exploit edge conditions,
+/// or range information is sufficient to prove this comparison.  Even for
+/// local conditions, this can sometimes prove conditions instcombine can't by
+/// exploiting range information.
 bool CorrelatedValuePropagation::processCmp(CmpInst *C) {
   Value *Op0 = C->getOperand(0);
-  if (isa<Instruction>(Op0) &&
-      cast<Instruction>(Op0)->getParent() == C->getParent())
-    return false;
-
   Constant *Op1 = dyn_cast<Constant>(C->getOperand(1));
   if (!Op1) return false;
 
-  pred_iterator PI = pred_begin(C->getParent()), PE = pred_end(C->getParent());
-  if (PI == PE) return false;
-
-  LazyValueInfo::Tristate Result = LVI->getPredicateOnEdge(C->getPredicate(),
-                                    C->getOperand(0), Op1, *PI,
-                                    C->getParent(), C);
+  LazyValueInfo::Tristate Result =
+    LVI->getPredicateAt(C->getPredicate(), Op0, Op1, C);
   if (Result == LazyValueInfo::Unknown) return false;
 
-  ++PI;
-  while (PI != PE) {
-    LazyValueInfo::Tristate Res = LVI->getPredicateOnEdge(C->getPredicate(),
-                                    C->getOperand(0), Op1, *PI,
-                                    C->getParent(), C);
-    if (Res != Result) return false;
-    ++PI;
-  }
-
   ++NumCmps;
-
   if (Result == LazyValueInfo::True)
     C->replaceAllUsesWith(ConstantInt::getTrue(C->getContext()));
   else
     C->replaceAllUsesWith(ConstantInt::getFalse(C->getContext()));
-
   C->eraseFromParent();
 
   return true;
