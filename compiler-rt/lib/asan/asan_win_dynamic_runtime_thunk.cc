@@ -24,6 +24,7 @@
 // Using #ifdef rather than relying on Makefiles etc.
 // simplifies the build procedure.
 #ifdef ASAN_DYNAMIC_RUNTIME_THUNK
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 // First, declare CRT sections we'll be using in this file

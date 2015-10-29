@@ -14,6 +14,7 @@
 
 #include "sanitizer_platform.h"
 #if SANITIZER_WINDOWS
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <dbghelp.h>
 #pragma comment(lib, "dbghelp.lib")
