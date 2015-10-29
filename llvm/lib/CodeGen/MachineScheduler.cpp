@@ -988,9 +988,9 @@ void ScheduleDAGMILive::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
     }
     // RegisterPressureTracker guarantees that readsReg is true for LiveUses.
     assert(VNI && "No live value at use.");
-    for (VReg2UseMap::iterator
-           UI = VRegUses.find(Reg); UI != VRegUses.end(); ++UI) {
-      SUnit *SU = UI->SU;
+    for (const VReg2SUnit &V2SU
+         : make_range(VRegUses.find(Reg), VRegUses.end())) {
+      SUnit *SU = V2SU.SU;
       DEBUG(dbgs() << "  UpdateRegP: SU(" << SU->NodeNum << ") "
             << *SU->getInstr());
       // If this use comes before the reaching def, it cannot be a last use, so
@@ -1167,14 +1167,15 @@ unsigned ScheduleDAGMILive::computeCyclicCriticalPath() {
     unsigned LiveOutHeight = DefSU->getHeight();
     unsigned LiveOutDepth = DefSU->getDepth() + DefSU->Latency;
     // Visit all local users of the vreg def.
-    for (VReg2UseMap::iterator
-           UI = VRegUses.find(Reg); UI != VRegUses.end(); ++UI) {
-      if (UI->SU == &ExitSU)
+    for (const VReg2SUnit &V2SU
+         : make_range(VRegUses.find(Reg), VRegUses.end())) {
+      SUnit *SU = V2SU.SU;
+      if (SU == &ExitSU)
         continue;
 
       // Only consider uses of the phi.
       LiveQueryResult LRQ =
-        LI.Query(LIS->getInstructionIndex(UI->SU->getInstr()));
+        LI.Query(LIS->getInstructionIndex(SU->getInstr()));
       if (!LRQ.valueIn()->isPHIDef())
         continue;
 
@@ -1182,10 +1183,10 @@ unsigned ScheduleDAGMILive::computeCyclicCriticalPath() {
       // overestimate in strange cases. This allows cyclic latency to be
       // estimated as the minimum slack of the vreg's depth or height.
       unsigned CyclicLatency = 0;
-      if (LiveOutDepth > UI->SU->getDepth())
-        CyclicLatency = LiveOutDepth - UI->SU->getDepth();
+      if (LiveOutDepth > SU->getDepth())
+        CyclicLatency = LiveOutDepth - SU->getDepth();
 
-      unsigned LiveInHeight = UI->SU->getHeight() + DefSU->Latency;
+      unsigned LiveInHeight = SU->getHeight() + DefSU->Latency;
       if (LiveInHeight > LiveOutHeight) {
         if (LiveInHeight - LiveOutHeight < CyclicLatency)
           CyclicLatency = LiveInHeight - LiveOutHeight;
@@ -1194,7 +1195,7 @@ unsigned ScheduleDAGMILive::computeCyclicCriticalPath() {
         CyclicLatency = 0;
 
       DEBUG(dbgs() << "Cyclic Path: SU(" << DefSU->NodeNum << ") -> SU("
-            << UI->SU->NodeNum << ") = " << CyclicLatency << "c\n");
+            << SU->NodeNum << ") = " << CyclicLatency << "c\n");
       if (CyclicLatency > MaxCyclicLatency)
         MaxCyclicLatency = CyclicLatency;
     }
