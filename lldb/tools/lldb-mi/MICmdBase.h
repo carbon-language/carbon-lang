@@ -65,6 +65,7 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
     virtual CMICmdFactory::CmdCreatorFnPtr GetCmdCreatorFn() const;
 
     virtual MIuint GetGUID();
+    void AddCommonArgs();
 
     // Overrideable:
   public:
@@ -94,6 +95,15 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
     bool m_bHasResultRecordExtra; // True = Yes command produced additional MI output to its 1 line response, false = no extra MI output
                                   // formed.
     CMICmdArgSet m_setCmdArgs;    // The list of arguments *this command needs to parse from the options string to carry out work.
+    const CMIUtilString m_constStrArgThreadGroup;
+    const CMIUtilString m_constStrArgThread;
+    const CMIUtilString m_constStrArgFrame;
+
+    // These 3 members can be used by the derived classes to make any of
+    // "thread", "frame" or "thread-group" mandatory.
+    bool m_ThreadGrpArgMandatory;
+    bool m_ThreadArgMandatory;
+    bool m_FrameArgMandatory;
 };
 
 //++ ------------------------------------------------------------------------------------

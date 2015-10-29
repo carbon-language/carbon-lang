@@ -11,6 +11,7 @@
 #include "MICmdBase.h"
 #include "MICmnMIValueConst.h"
 #include "MICmnLLDBDebugSessionInfo.h"
+#include "MICmdArgValOptionLong.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmdBase constructor.
@@ -23,6 +24,12 @@ CMICmdBase::CMICmdBase()
     : m_pSelfCreatorFn(nullptr)
     , m_rLLDBDebugSessionInfo(CMICmnLLDBDebugSessionInfo::Instance())
     , m_bHasResultRecordExtra(false)
+    , m_constStrArgThreadGroup("thread-group")
+    , m_constStrArgThread("thread")
+    , m_constStrArgFrame("frame")
+    , m_ThreadGrpArgMandatory(false)
+    , m_ThreadArgMandatory(false)
+    , m_FrameArgMandatory(false)
 {
 }
 
@@ -76,6 +83,20 @@ const CMIUtilString &
 CMICmdBase::GetMiCmd() const
 {
     return m_strMiCmd;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Help parse the arguments that are common to all commands.
+// Args:    None.
+// Return:  None
+// Throws:  None.
+//--
+void
+CMICmdBase::AddCommonArgs()
+{
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThreadGroup, m_ThreadGrpArgMandatory, true, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, m_ThreadArgMandatory, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, m_FrameArgMandatory, true, CMICmdArgValListBase::eArgValType_Number, 1));
 }
 
 //++ ------------------------------------------------------------------------------------

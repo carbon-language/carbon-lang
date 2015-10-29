@@ -120,7 +120,6 @@ class CMICmdCmdExecNext : public CMICmdBase
     // Attributes:
   private:
     lldb::SBCommandReturnObject m_lldbResult;
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNumber; // Not specified in MI spec but Eclipse gives this option
 };
 
@@ -151,7 +150,6 @@ class CMICmdCmdExecStep : public CMICmdBase
     // Attributes:
   private:
     lldb::SBCommandReturnObject m_lldbResult;
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNumber; // Not specified in MI spec but Eclipse gives this option
 };
 
@@ -182,7 +180,6 @@ class CMICmdCmdExecNextInstruction : public CMICmdBase
     // Attributes:
   private:
     lldb::SBCommandReturnObject m_lldbResult;
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNumber; // Not specified in MI spec but Eclipse gives this option
 };
 
@@ -213,7 +210,6 @@ class CMICmdCmdExecStepInstruction : public CMICmdBase
     // Attributes:
   private:
     lldb::SBCommandReturnObject m_lldbResult;
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNumber; // Not specified in MI spec but Eclipse gives this option
 };
 
@@ -244,8 +240,6 @@ class CMICmdCmdExecFinish : public CMICmdBase
     // Attributes:
   private:
     lldb::SBCommandReturnObject m_lldbResult;
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option
-    const CMIUtilString m_constStrArgFrame;  // Not specified in MI spec but Eclipse gives this option
 };
 
 // CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM

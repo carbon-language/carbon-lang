@@ -189,16 +189,20 @@ CMICmdInvoker::CmdExecute(CMICmdBase &vCmd)
 {
     bool bOk = CmdAdd(vCmd);
 
-    if (bOk && !vCmd.ParseArgs())
+    if (bOk)
     {
-        // Report command execution failed
-        const SMICmdData cmdData(vCmd.GetCmdData());
-        CmdStdout(cmdData);
-        CmdCauseAppExit(vCmd);
-        CmdDelete(cmdData.id);
+        vCmd.AddCommonArgs();
+        if (!vCmd.ParseArgs())
+        {
+            // Report command execution failed
+            const SMICmdData cmdData(vCmd.GetCmdData());
+            CmdStdout(cmdData);
+            CmdCauseAppExit(vCmd);
+            CmdDelete(cmdData.id);
 
-        // Proceed to wait or execute next command
-        return MIstatus::success;
+            // Proceed to wait or execute next command
+            return MIstatus::success;
+        }
     }
 
     if (bOk && !vCmd.Execute())

@@ -95,7 +95,6 @@ class CMICmdCmdBreakInsert : public CMICmdBase
     const CMIUtilString m_constStrArgNamedInoreCnt;
     const CMIUtilString m_constStrArgNamedRestrictBrkPtToThreadId;
     const CMIUtilString m_constStrArgNamedLocation;
-    const CMIUtilString m_constStrArgNamedThreadGroup; // Not specified in MI spec but Eclipse gives this option sometimes
 };
 
 //++ ============================================================================
@@ -125,7 +124,6 @@ class CMICmdCmdBreakDelete : public CMICmdBase
     // Attributes:
   private:
     const CMIUtilString m_constStrArgNamedBrkPt;
-    const CMIUtilString m_constStrArgNamedThreadGrp; // Not specified in MI spec but Eclipse gives this option
 };
 
 //++ ============================================================================
@@ -154,7 +152,6 @@ class CMICmdCmdBreakDisable : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgNamedThreadGrp; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNamedBrkPt;
     bool m_bBrkPtDisabledOk;
     MIuint m_nBrkPtId;
@@ -186,7 +183,6 @@ class CMICmdCmdBreakEnable : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgNamedThreadGrp; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNamedBrkPt;
     bool m_bBrkPtEnabledOk;
     MIuint m_nBrkPtId;
@@ -218,7 +214,6 @@ class CMICmdCmdBreakAfter : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgNamedThreadGrp; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNamedNumber;
     const CMIUtilString m_constStrArgNamedCount;
     MIuint m_nBrkPtId;
@@ -255,7 +250,6 @@ class CMICmdCmdBreakCondition : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgNamedThreadGrp; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgNamedNumber;
     const CMIUtilString m_constStrArgNamedExpr;
     const CMIUtilString m_constStrArgNamedExprNoQuotes; // Not specified in MI spec, we need to handle expressions not surrounded by quotes

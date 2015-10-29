@@ -56,8 +56,6 @@ class CMICmdCmdFileExecAndSymbols : public CMICmdBase
     // Attributes:
   private:
     const CMIUtilString m_constStrArgNameFile;
-    const CMIUtilString
-        m_constStrArgThreadGrp; // Not handled by *this command. Not specified in MI spec but Eclipse gives this option sometimes
     const CMIUtilString m_constStrArgNamedPlatformName; // Added to support iOS platform selection
     const CMIUtilString m_constStrArgNamedRemotePath; // Added to support iOS device remote file location
 };

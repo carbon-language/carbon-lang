@@ -39,8 +39,7 @@ const CMICmdCmdGdbShow::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbShow::ms_
 // Throws:  None.
 //--
 CMICmdCmdGdbShow::CMICmdCmdGdbShow()
-    : m_constStrArgNamedThreadGrp("thread-group")
-    , m_constStrArgNamedGdbOption("option")
+    : m_constStrArgNamedGdbOption("option")
     , m_bGdbOptionRecognised(true)
     , m_bGdbOptionFnSuccessful(false)
     , m_bGbbOptionFnHasError(false)
@@ -76,8 +75,6 @@ CMICmdCmdGdbShow::~CMICmdCmdGdbShow()
 bool
 CMICmdCmdGdbShow::ParseArgs()
 {
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(
         new CMICmdArgValListOfN(m_constStrArgNamedGdbOption, true, true, CMICmdArgValListBase::eArgValType_StringAnything));
     return ParseValidateCmdOptions();

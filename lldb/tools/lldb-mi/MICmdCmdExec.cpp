@@ -299,8 +299,7 @@ CMICmdCmdExecContinue::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdExecNext::CMICmdCmdExecNext()
-    : m_constStrArgThread("thread")
-    , m_constStrArgNumber("number")
+    : m_constStrArgNumber("number")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "exec-next";
@@ -332,7 +331,6 @@ CMICmdCmdExecNext::~CMICmdCmdExecNext()
 bool
 CMICmdCmdExecNext::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNumber, false, false));
     return ParseValidateCmdOptions();
 }
@@ -425,8 +423,7 @@ CMICmdCmdExecNext::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdExecStep::CMICmdCmdExecStep()
-    : m_constStrArgThread("thread")
-    , m_constStrArgNumber("number")
+    : m_constStrArgNumber("number")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "exec-step";
@@ -458,7 +455,6 @@ CMICmdCmdExecStep::~CMICmdCmdExecStep()
 bool
 CMICmdCmdExecStep::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNumber, false, false));
     return ParseValidateCmdOptions();
 }
@@ -551,8 +547,7 @@ CMICmdCmdExecStep::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdExecNextInstruction::CMICmdCmdExecNextInstruction()
-    : m_constStrArgThread("thread")
-    , m_constStrArgNumber("number")
+    : m_constStrArgNumber("number")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "exec-next-instruction";
@@ -584,7 +579,6 @@ CMICmdCmdExecNextInstruction::~CMICmdCmdExecNextInstruction()
 bool
 CMICmdCmdExecNextInstruction::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNumber, false, false));
     return ParseValidateCmdOptions();
 }
@@ -677,8 +671,7 @@ CMICmdCmdExecNextInstruction::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdExecStepInstruction::CMICmdCmdExecStepInstruction()
-    : m_constStrArgThread("thread")
-    , m_constStrArgNumber("number")
+    : m_constStrArgNumber("number")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "exec-step-instruction";
@@ -710,7 +703,6 @@ CMICmdCmdExecStepInstruction::~CMICmdCmdExecStepInstruction()
 bool
 CMICmdCmdExecStepInstruction::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNumber, false, false));
     return ParseValidateCmdOptions();
 }
@@ -803,8 +795,6 @@ CMICmdCmdExecStepInstruction::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdExecFinish::CMICmdCmdExecFinish()
-    : m_constStrArgThread("thread")
-    , m_constStrArgFrame("frame")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "exec-finish";
@@ -836,8 +826,6 @@ CMICmdCmdExecFinish::~CMICmdCmdExecFinish()
 bool
 CMICmdCmdExecFinish::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
     return ParseValidateCmdOptions();
 }
 

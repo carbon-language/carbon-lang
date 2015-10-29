@@ -57,8 +57,6 @@ CMICmdCmdDataEvaluateExpression::CMICmdCmdDataEvaluateExpression()
     , m_strValue("??")
     , m_bFoundInvalidChar(false)
     , m_cExpressionInvalidChar(0x00)
-    , m_constStrArgThread("thread")
-    , m_constStrArgFrame("frame")
     , m_constStrArgExpr("expr")
 {
     // Command factory matches this name with that received from the stdin stream
@@ -91,8 +89,6 @@ CMICmdCmdDataEvaluateExpression::~CMICmdCmdDataEvaluateExpression()
 bool
 CMICmdCmdDataEvaluateExpression::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgExpr, true, true, true, true));
     return ParseValidateCmdOptions();
 }
@@ -241,8 +237,7 @@ CMICmdCmdDataEvaluateExpression::HaveInvalidCharacterInExpression(const CMIUtilS
 // Throws:  None.
 //--
 CMICmdCmdDataDisassemble::CMICmdCmdDataDisassemble()
-    : m_constStrArgThread("thread")
-    , m_constStrArgAddrStart("s")
+    : m_constStrArgAddrStart("s")
     , m_constStrArgAddrEnd("e")
     , m_constStrArgConsume("--")
     , m_constStrArgMode("mode")
@@ -278,7 +273,6 @@ CMICmdCmdDataDisassemble::~CMICmdCmdDataDisassemble()
 bool
 CMICmdCmdDataDisassemble::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(
         new CMICmdArgValOptionShort(m_constStrArgAddrStart, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1));
     m_setCmdArgs.Add(
@@ -463,9 +457,7 @@ CMICmdCmdDataDisassemble::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdDataReadMemoryBytes::CMICmdCmdDataReadMemoryBytes()
-    : m_constStrArgThread("thread")
-    , m_constStrArgFrame("frame")
-    , m_constStrArgByteOffset("o")
+    : m_constStrArgByteOffset("o")
     , m_constStrArgAddrExpr("address")
     , m_constStrArgNumBytes("count")
     , m_pBufferMemory(nullptr)
@@ -507,8 +499,6 @@ CMICmdCmdDataReadMemoryBytes::~CMICmdCmdDataReadMemoryBytes()
 bool
 CMICmdCmdDataReadMemoryBytes::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValOptionShort(m_constStrArgByteOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgAddrExpr, true, true, true, true));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNumBytes, true, true));
@@ -789,8 +779,7 @@ CMICmdCmdDataReadMemory::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdDataListRegisterNames::CMICmdCmdDataListRegisterNames()
-    : m_constStrArgThreadGroup("thread-group")
-    , m_constStrArgRegNo("regno")
+    : m_constStrArgRegNo("regno")
     , m_miValueList(true)
 {
     // Command factory matches this name with that received from the stdin stream
@@ -823,7 +812,6 @@ CMICmdCmdDataListRegisterNames::~CMICmdCmdDataListRegisterNames()
 bool
 CMICmdCmdDataListRegisterNames::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThreadGroup, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgRegNo, false, false, CMICmdArgValListBase::eArgValType_Number));
     return ParseValidateCmdOptions();
 }
@@ -977,8 +965,7 @@ CMICmdCmdDataListRegisterNames::GetRegister(const MIuint vRegisterIndex) const
 // Throws:  None.
 //--
 CMICmdCmdDataListRegisterValues::CMICmdCmdDataListRegisterValues()
-    : m_constStrArgThread("thread")
-    , m_constStrArgSkip("skip-unavailable")
+    : m_constStrArgSkip("skip-unavailable")
     , m_constStrArgFormat("fmt")
     , m_constStrArgRegNo("regno")
     , m_miValueList(true)
@@ -1288,8 +1275,7 @@ CMICmdCmdDataListRegisterChanged::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdDataWriteMemoryBytes::CMICmdCmdDataWriteMemoryBytes()
-    : m_constStrArgThread("thread")
-    , m_constStrArgAddr("address")
+    : m_constStrArgAddr("address")
     , m_constStrArgContents("contents")
     , m_constStrArgCount("count")
 {
@@ -1323,7 +1309,6 @@ CMICmdCmdDataWriteMemoryBytes::~CMICmdCmdDataWriteMemoryBytes()
 bool
 CMICmdCmdDataWriteMemoryBytes::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgAddr, true, true, false, true));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgContents, true, true, true, true));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgCount, false, true, false, true));
@@ -1400,8 +1385,7 @@ CMICmdCmdDataWriteMemoryBytes::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdDataWriteMemory::CMICmdCmdDataWriteMemory()
-    : m_constStrArgThread("thread")
-    , m_constStrArgOffset("o")
+    : m_constStrArgOffset("o")
     , m_constStrArgAddr("address")
     , m_constStrArgD("d")
     , m_constStrArgNumber("a number")
@@ -1445,7 +1429,6 @@ CMICmdCmdDataWriteMemory::~CMICmdCmdDataWriteMemory()
 bool
 CMICmdCmdDataWriteMemory::ParseArgs()
 {
-    m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValOptionShort(m_constStrArgOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgAddr, true, true));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgD, true, true));

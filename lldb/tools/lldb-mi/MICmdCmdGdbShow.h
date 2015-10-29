@@ -74,8 +74,7 @@ class CMICmdCmdGdbShow : public CMICmdBase
     // Attributes:
   private:
     const static MapGdbOptionNameToFnGdbOptionPtr_t ms_mapGdbOptionNameToFnGdbOptionPtr;
-    //
-    const CMIUtilString m_constStrArgNamedThreadGrp;
+
     const CMIUtilString m_constStrArgNamedGdbOption;
     bool m_bGdbOptionRecognised;   // True = This command has a function with a name that matches the Print argument, false = not found
     bool m_bGdbOptionFnSuccessful; // True = The print function completed its task ok, false = function failed for some reason

@@ -57,7 +57,6 @@ CMICmdCmdBreakInsert::CMICmdCmdBreakInsert()
     , m_constStrArgNamedInoreCnt("i")
     , m_constStrArgNamedRestrictBrkPtToThreadId("p")
     , m_constStrArgNamedLocation("location")
-    , m_constStrArgNamedThreadGroup("thread-group")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "break-insert";
@@ -102,8 +101,6 @@ CMICmdCmdBreakInsert::ParseArgs()
     m_setCmdArgs.Add(new CMICmdArgValOptionShort(m_constStrArgNamedRestrictBrkPtToThreadId, false, true,
                                                    CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgNamedLocation, false, true));
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGroup, false, true, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     return ParseValidateCmdOptions();
 }
 
@@ -139,7 +136,7 @@ bool
 CMICmdCmdBreakInsert::Execute()
 {
     CMICMDBASE_GETOPTION(pArgTempBrkPt, OptionShort, m_constStrArgNamedTempBrkPt);
-    CMICMDBASE_GETOPTION(pArgThreadGroup, OptionLong, m_constStrArgNamedThreadGroup);
+    CMICMDBASE_GETOPTION(pArgThreadGroup, OptionLong, m_constStrArgThreadGroup);
     CMICMDBASE_GETOPTION(pArgLocation, String, m_constStrArgNamedLocation);
     CMICMDBASE_GETOPTION(pArgIgnoreCnt, OptionShort, m_constStrArgNamedInoreCnt);
     CMICMDBASE_GETOPTION(pArgPendingBrkPt, OptionShort, m_constStrArgNamedPendinfBrkPt);
@@ -372,7 +369,6 @@ CMICmdCmdBreakInsert::CreateSelf()
 //--
 CMICmdCmdBreakDelete::CMICmdCmdBreakDelete()
     : m_constStrArgNamedBrkPt("breakpoint")
-    , m_constStrArgNamedThreadGrp("thread-group")
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "break-delete";
@@ -404,8 +400,6 @@ CMICmdCmdBreakDelete::~CMICmdCmdBreakDelete()
 bool
 CMICmdCmdBreakDelete::ParseArgs()
 {
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number));
     return ParseValidateCmdOptions();
 }
@@ -488,8 +482,7 @@ CMICmdCmdBreakDelete::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdBreakDisable::CMICmdCmdBreakDisable()
-    : m_constStrArgNamedThreadGrp("thread-group")
-    , m_constStrArgNamedBrkPt("breakpoint")
+    : m_constStrArgNamedBrkPt("breakpoint")
     , m_bBrkPtDisabledOk(false)
     , m_nBrkPtId(0)
 {
@@ -523,8 +516,6 @@ CMICmdCmdBreakDisable::~CMICmdCmdBreakDisable()
 bool
 CMICmdCmdBreakDisable::ParseArgs()
 {
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number));
     return ParseValidateCmdOptions();
 }
@@ -627,8 +618,7 @@ CMICmdCmdBreakDisable::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdBreakEnable::CMICmdCmdBreakEnable()
-    : m_constStrArgNamedThreadGrp("thread-group")
-    , m_constStrArgNamedBrkPt("breakpoint")
+    : m_constStrArgNamedBrkPt("breakpoint")
     , m_bBrkPtEnabledOk(false)
     , m_nBrkPtId(0)
 {
@@ -662,8 +652,6 @@ CMICmdCmdBreakEnable::~CMICmdCmdBreakEnable()
 bool
 CMICmdCmdBreakEnable::ParseArgs()
 {
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgNamedBrkPt, true, true, CMICmdArgValListBase::eArgValType_Number));
     return ParseValidateCmdOptions();
 }
@@ -766,8 +754,7 @@ CMICmdCmdBreakEnable::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdBreakAfter::CMICmdCmdBreakAfter()
-    : m_constStrArgNamedThreadGrp("thread-group")
-    , m_constStrArgNamedNumber("number")
+    : m_constStrArgNamedNumber("number")
     , m_constStrArgNamedCount("count")
     , m_nBrkPtId(0)
     , m_nBrkPtCount(0)
@@ -802,8 +789,6 @@ CMICmdCmdBreakAfter::~CMICmdCmdBreakAfter()
 bool
 CMICmdCmdBreakAfter::ParseArgs()
 {
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNamedNumber, true, true));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNamedCount, true, true));
     return ParseValidateCmdOptions();
@@ -896,8 +881,7 @@ CMICmdCmdBreakAfter::CreateSelf()
 // Throws:  None.
 //--
 CMICmdCmdBreakCondition::CMICmdCmdBreakCondition()
-    : m_constStrArgNamedThreadGrp("thread-group")
-    , m_constStrArgNamedNumber("number")
+    : m_constStrArgNamedNumber("number")
     , m_constStrArgNamedExpr("expr")
     , m_constStrArgNamedExprNoQuotes(
           "expression not surround by quotes") // Not specified in MI spec, we need to handle expressions not surrounded by quotes
@@ -933,8 +917,6 @@ CMICmdCmdBreakCondition::~CMICmdCmdBreakCondition()
 bool
 CMICmdCmdBreakCondition::ParseArgs()
 {
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgNamedNumber, true, true));
     m_setCmdArgs.Add(new CMICmdArgValString(m_constStrArgNamedExpr, true, true, true, true));
     m_setCmdArgs.Add(new CMICmdArgValListOfN(m_constStrArgNamedExprNoQuotes, false, false,

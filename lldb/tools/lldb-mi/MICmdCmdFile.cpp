@@ -32,7 +32,6 @@
 //--
 CMICmdCmdFileExecAndSymbols::CMICmdCmdFileExecAndSymbols()
     : m_constStrArgNameFile("file")
-    , m_constStrArgThreadGrp("thread-group")
     , m_constStrArgNamedPlatformName("p")
     , m_constStrArgNamedRemotePath("r")
 {
@@ -66,8 +65,6 @@ CMICmdCmdFileExecAndSymbols::~CMICmdCmdFileExecAndSymbols()
 bool
 CMICmdCmdFileExecAndSymbols::ParseArgs()
 {
-    m_setCmdArgs.Add(
-        new CMICmdArgValOptionLong(m_constStrArgThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValFile(m_constStrArgNameFile, true, true));
     m_setCmdArgs.Add(new CMICmdArgValOptionShort(m_constStrArgNamedPlatformName, false, true,
                                                  CMICmdArgValListBase::eArgValType_String, 1));

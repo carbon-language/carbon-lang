@@ -75,8 +75,6 @@ class CMICmdCmdDataEvaluateExpression : public CMICmdBase
     CMICmnMIValueTuple m_miValueTuple;
     bool m_bFoundInvalidChar; // True = yes found unexpected character in the expression, false = all ok
     char m_cExpressionInvalidChar;
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option. Not handled by command.
-    const CMIUtilString m_constStrArgFrame;  // Not specified in MI spec but Eclipse gives this option. Not handled by command.
     const CMIUtilString m_constStrArgExpr;
 };
 
@@ -106,7 +104,6 @@ class CMICmdCmdDataDisassemble : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgThread;    // Not specified in MI spec but Eclipse gives this option. Not handled by command.
     const CMIUtilString m_constStrArgAddrStart; // MI spec non mandatory, *this command mandatory
     const CMIUtilString m_constStrArgAddrEnd;   // MI spec non mandatory, *this command mandatory
     const CMIUtilString m_constStrArgConsume;
@@ -140,8 +137,6 @@ class CMICmdCmdDataReadMemoryBytes : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgThread; // Not in the MI spec but implemented by GDB.
-    const CMIUtilString m_constStrArgFrame; // Not in the MI spec but implemented by GDB.
     const CMIUtilString m_constStrArgByteOffset;
     const CMIUtilString m_constStrArgAddrExpr;
     const CMIUtilString m_constStrArgNumBytes;
@@ -204,7 +199,6 @@ class CMICmdCmdDataListRegisterNames : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgThreadGroup; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgRegNo;       // Not handled by *this command
     CMICmnMIValueList m_miValueList;
 };
@@ -240,7 +234,6 @@ class CMICmdCmdDataListRegisterValues : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgSkip;   // Not handled by *this command
     const CMIUtilString m_constStrArgFormat;
     const CMIUtilString m_constStrArgRegNo;
@@ -297,7 +290,6 @@ class CMICmdCmdDataWriteMemoryBytes : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option. Not handled by command.
     const CMIUtilString m_constStrArgAddr;
     const CMIUtilString m_constStrArgContents;
     const CMIUtilString m_constStrArgCount;
@@ -331,7 +323,6 @@ class CMICmdCmdDataWriteMemory : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgThread;   // Not specified in MI spec but Eclipse gives this option. Not handled by command.
     const CMIUtilString m_constStrArgOffset;   // Not specified in MI spec but Eclipse gives this option.
     const CMIUtilString m_constStrArgAddr;     // Not specified in MI spec but Eclipse gives this option.
     const CMIUtilString m_constStrArgD;        // Not specified in MI spec but Eclipse gives this option.

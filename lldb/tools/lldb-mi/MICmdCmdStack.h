@@ -57,7 +57,6 @@ class CMICmdCmdStackInfoDepth : public CMICmdBase
     // Attributes:
   private:
     MIuint m_nThreadFrames;
-    const CMIUtilString m_constStrArgThread;   // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgMaxDepth; // Not handled by *this command
 };
 
@@ -122,7 +121,6 @@ class CMICmdCmdStackListFrames : public CMICmdBase
   private:
     MIuint m_nThreadFrames;
     VecMIValueResult_t m_vecMIValueResult;
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgFrameLow;
     const CMIUtilString m_constStrArgFrameHigh;
 };
@@ -155,7 +153,6 @@ class CMICmdCmdStackListArguments : public CMICmdBase
   private:
     bool m_bThreadInvalid; // True = yes invalid thread, false = thread object valid
     CMICmnMIValueList m_miValueList;
-    const CMIUtilString m_constStrArgThread;      // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgPrintValues;
     const CMIUtilString m_constStrArgFrameLow;
     const CMIUtilString m_constStrArgFrameHigh;
@@ -189,8 +186,6 @@ class CMICmdCmdStackListLocals : public CMICmdBase
   private:
     bool m_bThreadInvalid; // True = yes invalid thread, false = thread object valid
     CMICmnMIValueList m_miValueList;
-    const CMIUtilString m_constStrArgThread;      // Not specified in MI spec but Eclipse gives this option
-    const CMIUtilString m_constStrArgFrame;       // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgPrintValues;
 };
 
@@ -222,8 +217,6 @@ public:
 private:
     bool m_bThreadInvalid; // True = yes invalid thread, false = thread object valid
     CMICmnMIValueList m_miValueList;
-    const CMIUtilString m_constStrArgThread;
-    const CMIUtilString m_constStrArgFrame;
     const CMIUtilString m_constStrArgPrintValues;
 };
 
@@ -254,5 +247,5 @@ class CMICmdCmdStackSelectFrame : public CMICmdBase
     // Attributes:
   private:
     bool m_bFrameInvalid; // True = yes invalid frame, false = ok
-    const CMIUtilString m_constStrArgFrame;
+    const CMIUtilString m_constStrArgFrameId;
 };
