@@ -54,44 +54,58 @@ const MappingDesc kMemoryLayout[] = {
 
 #elif SANITIZER_LINUX && defined(__aarch64__)
 
-# if SANITIZER_AARCH64_VMA == 39
+// The mapping describes both 39-bits and 42-bits.  AArch64 maps:
+// - 0x00000000000-0x00010000000: 39/42-bits program own segments
+// - 0x05500000000-0x05600000000: 39-bits PIE program segments
+// - 0x07f80000000-0x07fffffffff: 39-bits libraries segments
+// - 0x2aa00000000-0x2ab00000000: 42-bits PIE program segments
+// - 0x3ff00000000-0x3ffffffffff: 42-bits libraries segments
+// It is fragmented in multiples segments to increase the memory available
+// on 42-bits (12.21% of total VMA available for 42-bits and 13.28 for
+// 39 bits).
 const MappingDesc kMemoryLayout[] = {
-  {0x0000000000ULL, 0x4000000000ULL, MappingDesc::INVALID, "invalid"},
-  {0x4000000000ULL, 0x4300000000ULL, MappingDesc::SHADOW,  "shadow"},
-  {0x4300000000ULL, 0x4600000000ULL, MappingDesc::ORIGIN,  "origin"},
-  {0x4600000000ULL, 0x5500000000ULL, MappingDesc::INVALID, "invalid"},
-  {0x5500000000ULL, 0x5600000000ULL, MappingDesc::APP,     "app"},
-  {0x5600000000ULL, 0x7000000000ULL, MappingDesc::INVALID, "invalid"},
-  {0x7000000000ULL, 0x8000000000ULL, MappingDesc::APP,     "app"}
+    {0x00000000000ULL, 0x01000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x01000000000ULL, 0x02000000000ULL, MappingDesc::SHADOW, "shadow-2"},
+    {0x02000000000ULL, 0x03000000000ULL, MappingDesc::ORIGIN, "origin-2"},
+    {0x03000000000ULL, 0x04000000000ULL, MappingDesc::SHADOW, "shadow-1"},
+    {0x04000000000ULL, 0x05000000000ULL, MappingDesc::ORIGIN, "origin-1"},
+    {0x05000000000ULL, 0x06000000000ULL, MappingDesc::APP, "app-1"},
+    {0x06000000000ULL, 0x07000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x07000000000ULL, 0x08000000000ULL, MappingDesc::APP, "app-2"},
+    {0x08000000000ULL, 0x09000000000ULL, MappingDesc::INVALID, "invalid"},
+    // The mappings below are used only for 42-bits VMA.
+    {0x09000000000ULL, 0x0A000000000ULL, MappingDesc::SHADOW, "shadow-3"},
+    {0x0A000000000ULL, 0x0B000000000ULL, MappingDesc::ORIGIN, "origin-3"},
+    {0x0B000000000ULL, 0x0F000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x0F000000000ULL, 0x10000000000ULL, MappingDesc::APP, "app-3"},
+    {0x10000000000ULL, 0x11000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x11000000000ULL, 0x12000000000ULL, MappingDesc::APP, "app-4"},
+    {0x12000000000ULL, 0x17000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x17000000000ULL, 0x18000000000ULL, MappingDesc::SHADOW, "shadow-4"},
+    {0x18000000000ULL, 0x19000000000ULL, MappingDesc::ORIGIN, "origin-4"},
+    {0x19000000000ULL, 0x20000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x20000000000ULL, 0x21000000000ULL, MappingDesc::APP, "app-5"},
+    {0x21000000000ULL, 0x26000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x26000000000ULL, 0x27000000000ULL, MappingDesc::SHADOW, "shadow-5"},
+    {0x27000000000ULL, 0x28000000000ULL, MappingDesc::ORIGIN, "origin-5"},
+    {0x28000000000ULL, 0x29000000000ULL, MappingDesc::SHADOW, "shadow-7"},
+    {0x29000000000ULL, 0x2A000000000ULL, MappingDesc::ORIGIN, "origin-7"},
+    {0x2A000000000ULL, 0x2B000000000ULL, MappingDesc::APP, "app-6"},
+    {0x2B000000000ULL, 0x2C000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x2C000000000ULL, 0x2D000000000ULL, MappingDesc::SHADOW, "shadow-6"},
+    {0x2D000000000ULL, 0x2E000000000ULL, MappingDesc::ORIGIN, "origin-6"},
+    {0x2E000000000ULL, 0x2F000000000ULL, MappingDesc::APP, "app-7"},
+    {0x2F000000000ULL, 0x39000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x39000000000ULL, 0x3A000000000ULL, MappingDesc::SHADOW, "shadow-9"},
+    {0x3A000000000ULL, 0x3B000000000ULL, MappingDesc::ORIGIN, "origin-9"},
+    {0x3B000000000ULL, 0x3C000000000ULL, MappingDesc::APP, "app-8"},
+    {0x3C000000000ULL, 0x3D000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x3D000000000ULL, 0x3E000000000ULL, MappingDesc::SHADOW, "shadow-8"},
+    {0x3E000000000ULL, 0x3F000000000ULL, MappingDesc::ORIGIN, "origin-8"},
+    {0x3F000000000ULL, 0x40000000000ULL, MappingDesc::APP, "app-9"},
 };
-// Maps low and high app ranges to contiguous space with zero base:
-//   Low:  55 0000 0000 - 55 ffff ffff  ->  1 0000 0000 - 1 ffff ffff
-//   High: 70 0000 0000 - 7f ffff ffff  ->  0 0000 0000 - f ffff ffff
-# define LINEARIZE_MEM(mem) \
-  (((uptr)(mem) & ~0x7C00000000ULL) ^ 0x100000000ULL)
-# define MEM_TO_SHADOW(mem) (LINEARIZE_MEM((mem)) + 0x4000000000ULL)
-# define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x300000000ULL)
-
-# elif SANITIZER_AARCH64_VMA == 42
-const MappingDesc kMemoryLayout[] = {
-  {0x00000000000ULL, 0x10000000000ULL, MappingDesc::INVALID, "invalid"},
-  {0x10000000000ULL, 0x11b00000000ULL, MappingDesc::SHADOW,  "shadow"},
-  {0x11b00000000ULL, 0x12000000000ULL, MappingDesc::INVALID, "invalid"},
-  {0x12000000000ULL, 0x13b00000000ULL, MappingDesc::ORIGIN,  "origin"},
-  {0x13b00000000ULL, 0x2aa00000000ULL, MappingDesc::INVALID, "invalid"},
-  {0x2aa00000000ULL, 0x2ab00000000ULL, MappingDesc::APP,     "app"},
-  {0x2ab00000000ULL, 0x3f000000000ULL, MappingDesc::INVALID, "invalid"},
-  {0x3f000000000ULL, 0x40000000000ULL, MappingDesc::APP,     "app"},
-};
-// Maps low and high app ranges to contigous space with zero base:
-// 2 aa00 0000 00 - 2 ab00 0000 00: -> 1a00 0000 00 - 1aff ffff ff
-// 3 f000 0000 00 - 4 0000 0000 00: -> 0000 0000 00 - 0fff ffff ff
-# define LINEARIZE_MEM(mem) \
-  (((uptr)(mem) & ~0x3E000000000ULL) ^ 0x1000000000ULL)
-# define MEM_TO_SHADOW(mem) (LINEARIZE_MEM((mem)) + 0x10000000000ULL)
-# define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x2000000000ULL)
-
-# endif // SANITIZER_AARCH64_VMA
+# define MEM_TO_SHADOW(mem) ((uptr)mem ^ 0x6000000000ULL)
+# define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x1000000000ULL)
 
 #elif SANITIZER_LINUX && defined(__powerpc64__)
 

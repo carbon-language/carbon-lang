@@ -61,10 +61,6 @@
 
 // RUN: MSAN_OPTIONS=origin_history_size=7,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
-//
-// AArch64 fails with -fsanitize-memory-track-origins=2 with and invalid access
-// on 'return buf[50]'.
-// XFAIL: aarch64
 
 #include <stdio.h>
 #include <stdlib.h>

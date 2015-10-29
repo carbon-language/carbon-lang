@@ -119,11 +119,17 @@ bool InitShadow(bool init_origins) {
     return false;
   }
 
+  const uptr maxVirtualAddress = GetMaxVirtualAddress();
+
   for (unsigned i = 0; i < kMemoryLayoutSize; ++i) {
     uptr start = kMemoryLayout[i].start;
     uptr end = kMemoryLayout[i].end;
     uptr size= end - start;
     MappingDesc::Type type = kMemoryLayout[i].type;
+
+    // Check if the segment should be mapped based on platform constraints.
+    if (start >= maxVirtualAddress)
+      continue;
 
     bool map = type == MappingDesc::SHADOW ||
                (init_origins && type == MappingDesc::ORIGIN);

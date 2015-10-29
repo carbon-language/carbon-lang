@@ -20,21 +20,7 @@ const char *mem_to_shadow(const char *p) {
   (((uintptr_t)(mem) & ~0x200000000000ULL) ^ 0x100000000000ULL)
   return (char *)(LINEARIZE_MEM(p) + 0x080000000000ULL);
 #elif defined(__aarch64__)
-  unsigned long vma = SystemVMA();
-
-#define LINEARIZE_MEM_39(mem) \
-  (((uintptr_t)(mem) & ~0x7C00000000ULL) ^ 0x100000000ULL)
-#define LINEARIZE_MEM_42(mem) \
-  (((uintptr_t)(mem) & ~0x3E000000000ULL) ^ 0x1000000000ULL)
-
-  if (vma == 39)
-    return (char *)(LINEARIZE_MEM_39(p) + 0x4000000000ULL);
-  else if (vma == 42)
-    return (char *)(LINEARIZE_MEM_42(p) + 0x10000000000ULL);
-  else {
-    fprintf(stderr, "unsupported vma: %lu\n", vma);
-    exit(1);
-  }
+  return (char *)((uintptr_t)p ^ 0x6000000000ULL);
 #endif
 }
 
