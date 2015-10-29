@@ -114,9 +114,9 @@ class basic_ios
 public:
     // types:
     typedef charT char_type;
-    typedef typename traits::int_type int_type;
-    typedef typename traits::pos_type pos_type;
-    typedef typename traits::off_type off_type;
+    typedef typename traits::int_type int_type;  // removed in C++17
+    typedef typename traits::pos_type pos_type;  // removed in C++17
+    typedef typename traits::off_type off_type;  // removed in C++17
     typedef traits traits_type;
 
     operator unspecified-bool-type() const;
@@ -254,14 +254,12 @@ public:
     static const fmtflags floatfield  = scientific | fixed;
 
     typedef unsigned int iostate;
-    typedef iostate      io_state;
     static const iostate badbit  = 0x1;
     static const iostate eofbit  = 0x2;
     static const iostate failbit = 0x4;
     static const iostate goodbit = 0x0;
 
     typedef unsigned int openmode;
-    typedef openmode     open_mode;
     static const openmode app    = 0x01;
     static const openmode ate    = 0x02;
     static const openmode binary = 0x04;
@@ -270,10 +268,15 @@ public:
     static const openmode trunc  = 0x20;
 
     enum seekdir {beg, cur, end};
-    typedef seekdir seek_dir;
+
+#if _LIBCPP_STD_VER <= 14
+    typedef iostate      io_state;
+    typedef openmode     open_mode;
+    typedef seekdir      seek_dir;
 
     typedef _VSTD::streamoff streamoff;
     typedef _VSTD::streampos streampos;
+#endif
 
     class _LIBCPP_TYPE_VIS Init;
 
