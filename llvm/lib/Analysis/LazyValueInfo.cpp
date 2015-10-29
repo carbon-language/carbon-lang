@@ -505,7 +505,7 @@ static LVILatticeVal getFromRangeMetadata(Instruction *BBI) {
   case Instruction::Call:
   case Instruction::Invoke:
     if (MDNode *Ranges = BBI->getMetadata(LLVMContext::MD_range)) 
-      if (auto *IType = dyn_cast<IntegerType>(BBI->getType())) {
+      if (isa<IntegerType>(BBI->getType())) {
         ConstantRange Result = getConstantRangeFromMetadata(*Ranges);
         return LVILatticeVal::getRange(Result);
       }
