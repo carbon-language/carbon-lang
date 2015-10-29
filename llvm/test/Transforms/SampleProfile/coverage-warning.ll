@@ -3,7 +3,7 @@ define i32 @foo(i32 %i) {
 ; The profile has samples for line locations that are no longer present.
 ; Coverage does not reach 90%, so we should get this warning:
 ;
-; CHECK: warning: {{.*}}:1: 2 of 3 available profile records (66%) were applied
+; CHECK: warning: coverage-warning.c:1: 2 of 3 available profile records (66%) were applied
 entry:
   %retval = alloca i32, align 4
   %i.addr = alloca i32, align 4
