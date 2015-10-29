@@ -52,6 +52,10 @@ STATISTIC(NumNonNullReturn, "Number of function returns marked nonnull");
 STATISTIC(NumAnnotated, "Number of attributes added to library functions");
 
 namespace {
+typedef SmallSetVector<Function *, 8> SCCNodeSet;
+}
+
+namespace {
 struct FunctionAttrs : public CallGraphSCCPass {
   static char ID; // Pass identification, replacement for typeid
   FunctionAttrs() : CallGraphSCCPass(ID) {
@@ -70,10 +74,7 @@ struct FunctionAttrs : public CallGraphSCCPass {
 private:
   TargetLibraryInfo *TLI;
 
-  bool AddReadAttrs(const CallGraphSCC &SCC);
-  bool AddArgumentAttrs(const CallGraphSCC &SCC);
-  bool AddNoAliasAttrs(const CallGraphSCC &SCC);
-  bool AddNonNullAttrs(const CallGraphSCC &SCC);
+  bool AddReadAttrs(const SCCNodeSet &SCCNodes);
   bool annotateLibraryCalls(const CallGraphSCC &SCC);
 };
 }
@@ -99,9 +100,8 @@ enum MemoryAccessKind {
 };
 }
 
-static MemoryAccessKind
-checkFunctionMemoryAccess(Function &F, AAResults &AAR,
-                          const SmallPtrSetImpl<Function *> &SCCNodes) {
+static MemoryAccessKind checkFunctionMemoryAccess(Function &F, AAResults &AAR,
+                                                  const SCCNodeSet &SCCNodes) {
   FunctionModRefBehavior MRB = AAR.getModRefBehavior(&F);
   if (MRB == FMRB_DoesNotAccessMemory)
     // Already perfect!
@@ -205,25 +205,11 @@ checkFunctionMemoryAccess(Function &F, AAResults &AAR,
 }
 
 /// Deduce readonly/readnone attributes for the SCC.
-bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
-  SmallPtrSet<Function *, 8> SCCNodes;
-
-  // Fill SCCNodes with the elements of the SCC.  Used for quickly
-  // looking up whether a given CallGraphNode is in this SCC.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I)
-    SCCNodes.insert((*I)->getFunction());
-
+bool FunctionAttrs::AddReadAttrs(const SCCNodeSet &SCCNodes) {
   // Check if any of the functions in the SCC read or write memory.  If they
   // write memory then they can't be marked readnone or readonly.
   bool ReadsMemory = false;
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
-
-    if (!F || F->hasFnAttribute(Attribute::OptimizeNone))
-      // External node or node we don't want to optimize - assume it may write
-      // memory and give up.
-      return false;
-
+  for (Function *F : SCCNodes) {
     // We need to manually construct BasicAA directly in order to disable its
     // use of other function analyses.
     BasicAAResult BAR(createLegacyPMBasicAAResult(*this, *F));
@@ -247,9 +233,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
   // Success!  Functions in this SCC do not access memory, or only read memory.
   // Give them the appropriate attribute.
   bool MadeChange = false;
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
-
+  for (Function *F : SCCNodes) {
     if (F->doesNotAccessMemory())
       // Already perfect!
       continue;
@@ -325,7 +309,7 @@ public:
 /// consider that a capture, instead adding it to the "Uses" list and
 /// continuing with the analysis.
 struct ArgumentUsesTracker : public CaptureTracker {
-  ArgumentUsesTracker(const SmallPtrSet<Function *, 8> &SCCNodes)
+  ArgumentUsesTracker(const SCCNodeSet &SCCNodes)
       : Captured(false), SCCNodes(SCCNodes) {}
 
   void tooManyUses() override { Captured = true; }
@@ -338,7 +322,8 @@ struct ArgumentUsesTracker : public CaptureTracker {
     }
 
     Function *F = CS.getCalledFunction();
-    if (!F || !SCCNodes.count(F)) {
+    if (!F || F->isDeclaration() || F->mayBeOverridden() ||
+        !SCCNodes.count(F)) {
       Captured = true;
       return true;
     }
@@ -366,7 +351,7 @@ struct ArgumentUsesTracker : public CaptureTracker {
   bool Captured; // True only if certainly captured (used outside our SCC).
   SmallVector<Argument *, 4> Uses; // Uses within our SCC.
 
-  const SmallPtrSet<Function *, 8> &SCCNodes;
+  const SCCNodeSet &SCCNodes;
 };
 }
 
@@ -501,19 +486,8 @@ determinePointerReadAttrs(Argument *A,
 }
 
 /// Deduce nocapture attributes for the SCC.
-bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
+static bool addArgumentAttrs(const SCCNodeSet &SCCNodes) {
   bool Changed = false;
-
-  SmallPtrSet<Function *, 8> SCCNodes;
-
-  // Fill SCCNodes with the elements of the SCC.  Used for quickly
-  // looking up whether a given CallGraphNode is in this SCC.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
-    if (F && !F->isDeclaration() && !F->mayBeOverridden() &&
-        !F->hasFnAttribute(Attribute::OptimizeNone))
-      SCCNodes.insert(F);
-  }
 
   ArgumentGraph AG;
 
@@ -522,14 +496,7 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
 
   // Check each function in turn, determining which pointer arguments are not
   // captured.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
-
-    if (!F || F->hasFnAttribute(Attribute::OptimizeNone))
-      // External node or function we're trying not to optimize - only a problem
-      // for arguments that we pass to it.
-      continue;
-
+  for (Function *F : SCCNodes) {
     // Definitions with weak linkage may be overridden at linktime with
     // something that captures pointers, so treat them like declarations.
     if (F->isDeclaration() || F->mayBeOverridden())
@@ -714,8 +681,7 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
 ///
 /// A function is "malloc-like" if it returns either null or a pointer that
 /// doesn't alias any other pointer visible to the caller.
-static bool isFunctionMallocLike(Function *F,
-                                 SmallPtrSet<Function *, 8> &SCCNodes) {
+static bool isFunctionMallocLike(Function *F, const SCCNodeSet &SCCNodes) {
   SmallSetVector<Value *, 8> FlowsToReturn;
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(I->getTerminator()))
@@ -778,23 +744,10 @@ static bool isFunctionMallocLike(Function *F,
 }
 
 /// Deduce noalias attributes for the SCC.
-bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
-  SmallPtrSet<Function *, 8> SCCNodes;
-
-  // Fill SCCNodes with the elements of the SCC.  Used for quickly
-  // looking up whether a given CallGraphNode is in this SCC.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I)
-    SCCNodes.insert((*I)->getFunction());
-
+static bool addNoAliasAttrs(const SCCNodeSet &SCCNodes) {
   // Check each function in turn, determining which functions return noalias
   // pointers.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
-
-    if (!F || F->hasFnAttribute(Attribute::OptimizeNone))
-      // External node or node we don't want to optimize - skip it;
-      return false;
-
+  for (Function *F : SCCNodes) {
     // Already noalias.
     if (F->doesNotAlias(0))
       continue;
@@ -814,8 +767,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
   }
 
   bool MadeChange = false;
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
+  for (Function *F : SCCNodes) {
     if (F->doesNotAlias(0) || !F->getReturnType()->isPointerTy())
       continue;
 
@@ -834,7 +786,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
 /// Returns true if it believes the function will not return a null, and sets
 /// \p Speculative based on whether the returned conclusion is a speculative
 /// conclusion due to SCC calls.
-static bool isReturnNonNull(Function *F, SmallPtrSet<Function *, 8> &SCCNodes,
+static bool isReturnNonNull(Function *F, const SCCNodeSet &SCCNodes,
                             const TargetLibraryInfo &TLI, bool &Speculative) {
   assert(F->getReturnType()->isPointerTy() &&
          "nonnull only meaningful on pointer types");
@@ -898,14 +850,8 @@ static bool isReturnNonNull(Function *F, SmallPtrSet<Function *, 8> &SCCNodes,
 }
 
 /// Deduce nonnull attributes for the SCC.
-bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
-  SmallPtrSet<Function *, 8> SCCNodes;
-
-  // Fill SCCNodes with the elements of the SCC.  Used for quickly
-  // looking up whether a given CallGraphNode is in this SCC.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I)
-    SCCNodes.insert((*I)->getFunction());
-
+static bool addNonNullAttrs(const SCCNodeSet &SCCNodes,
+                            const TargetLibraryInfo &TLI) {
   // Speculative that all functions in the SCC return only nonnull
   // pointers.  We may refute this as we analyze functions.
   bool SCCReturnsNonNull = true;
@@ -914,13 +860,7 @@ bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
 
   // Check each function in turn, determining which functions return nonnull
   // pointers.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
-
-    if (!F || F->hasFnAttribute(Attribute::OptimizeNone))
-      // External node or node we don't want to optimize - skip it;
-      return false;
-
+  for (Function *F : SCCNodes) {
     // Already nonnull.
     if (F->getAttributes().hasAttribute(AttributeSet::ReturnIndex,
                                         Attribute::NonNull))
@@ -937,7 +877,7 @@ bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
       continue;
 
     bool Speculative = false;
-    if (isReturnNonNull(F, SCCNodes, *TLI, Speculative)) {
+    if (isReturnNonNull(F, SCCNodes, TLI, Speculative)) {
       if (!Speculative) {
         // Mark the function eagerly since we may discover a function
         // which prevents us from speculating about the entire SCC
@@ -954,8 +894,7 @@ bool FunctionAttrs::AddNonNullAttrs(const CallGraphSCC &SCC) {
   }
 
   if (SCCReturnsNonNull) {
-    for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-      Function *F = (*I)->getFunction();
+    for (Function *F : SCCNodes) {
       if (F->getAttributes().hasAttribute(AttributeSet::ReturnIndex,
                                           Attribute::NonNull) ||
           !F->getReturnType()->isPointerTy())
@@ -1835,10 +1774,36 @@ bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
 bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
+  // Annotate declarations for which we have special knowledge.
   bool Changed = annotateLibraryCalls(SCC);
-  Changed |= AddReadAttrs(SCC);
-  Changed |= AddArgumentAttrs(SCC);
-  Changed |= AddNoAliasAttrs(SCC);
-  Changed |= AddNonNullAttrs(SCC);
+
+  // Fill SCCNodes with the elements of the SCC. Used for quickly looking up
+  // whether a given CallGraphNode is in this SCC. Also track whether there are
+  // any external or opt-none nodes that will prevent us from optimizing any
+  // part of the SCC.
+  SCCNodeSet SCCNodes;
+  bool ExternalNode = false;
+  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
+    Function *F = (*I)->getFunction();
+    if (!F || F->hasFnAttribute(Attribute::OptimizeNone)) {
+      // External node or function we're trying not to optimize - we both avoid
+      // transform them and avoid leveraging information they provide.
+      ExternalNode = true;
+      continue;
+    }
+
+    SCCNodes.insert(F);
+  }
+
+  Changed |= AddReadAttrs(SCCNodes);
+  Changed |= addArgumentAttrs(SCCNodes);
+
+  // If we have no external nodes participating in the SCC, we can infer some
+  // more precise attributes as well.
+  if (!ExternalNode) {
+    Changed |= addNoAliasAttrs(SCCNodes);
+    Changed |= addNonNullAttrs(SCCNodes, *TLI);
+  }
+
   return Changed;
 }
