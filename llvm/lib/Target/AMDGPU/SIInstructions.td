@@ -2617,10 +2617,9 @@ def : Pat <
 
 // Prevent expanding both fneg and fabs.
 
-// FIXME: Should use S_OR_B32
 def : Pat <
   (fneg (fabs f32:$src)),
-  (V_OR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Set sign bit */
+  (S_OR_B32 $src, 0x80000000) /* Set sign bit */
 >;
 
 // FIXME: Should use S_OR_B32
