@@ -117,6 +117,23 @@ static bool hasUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
   }
 }
 
+/// \brief Check whether we can use unsafe floating point math for
+/// the function passed as input.
+static bool canUseUnsafeFPMath(Function *F) {
+
+  // FIXME: For finer-grain optimization, we need intrinsics to have the same
+  // fast-math flag decorations that are applied to FP instructions. For now,
+  // we have to rely on the function-level unsafe-fp-math attribute to do this
+  // optimization because there's no other way to express that the sqrt can be
+  // reassociated.
+  if (F->hasFnAttribute("unsafe-fp-math")) {
+    Attribute Attr = F->getFnAttribute("unsafe-fp-math");
+    if (Attr.getValueAsString() == "true")
+      return true;
+  }
+  return false;
+}
+
 /// \brief Returns whether \p F matches the signature expected for the
 /// string/memory copying library function \p Func.
 /// Acceptable functions are st[rp][n]?cpy, memove, memcpy, and memset.
@@ -1224,20 +1241,15 @@ Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
       !FT->getParamType(0)->isFloatingPointTy())
     return nullptr;
 
-  // FIXME: For finer-grain optimization, we need intrinsics to have the same
-  // fast-math flag decorations that are applied to FP instructions. For now,
-  // we have to rely on the function-level attributes to do this optimization
-  // because there's no other way to express that the calls can be relaxed.
   IRBuilder<>::FastMathFlagGuard Guard(B);
   FastMathFlags FMF;
   Function *F = CI->getParent()->getParent();
-  Attribute Attr = F->getFnAttribute("unsafe-fp-math");
-  if (Attr.getValueAsString() == "true") {
+  if (canUseUnsafeFPMath(F)) {
     // Unsafe algebra sets all fast-math-flags to true.
     FMF.setUnsafeAlgebra();
   } else {
     // At a minimum, no-nans-fp-math must be true.
-    Attr = F->getFnAttribute("no-nans-fp-math");
+    Attribute Attr = F->getFnAttribute("no-nans-fp-math");
     if (Attr.getValueAsString() != "true")
       return nullptr;
     // No-signed-zeros is implied by the definitions of fmax/fmin themselves:
@@ -1266,19 +1278,9 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
   if (TLI->has(LibFunc::sqrtf) && (Callee->getName() == "sqrt" ||
                                    Callee->getIntrinsicID() == Intrinsic::sqrt))
     Ret = optimizeUnaryDoubleFP(CI, B, true);
+  if (!canUseUnsafeFPMath(CI->getParent()->getParent()))
+    return Ret;
 
-  // FIXME: For finer-grain optimization, we need intrinsics to have the same
-  // fast-math flag decorations that are applied to FP instructions. For now,
-  // we have to rely on the function-level unsafe-fp-math attribute to do this
-  // optimization because there's no other way to express that the sqrt can be
-  // reassociated.
-  Function *F = CI->getParent()->getParent();
-  if (F->hasFnAttribute("unsafe-fp-math")) {
-    // Check for unsafe-fp-math = true.
-    Attribute Attr = F->getFnAttribute("unsafe-fp-math");
-    if (Attr.getValueAsString() != "true")
-      return Ret;
-  }
   Value *Op = CI->getArgOperand(0);
   if (Instruction *I = dyn_cast<Instruction>(Op)) {
     if (I->getOpcode() == Instruction::FMul && I->hasUnsafeAlgebra()) {
@@ -2039,16 +2041,8 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
   // Command-line parameter overrides function attribute.
   if (EnableUnsafeFPShrink.getNumOccurrences() > 0)
     UnsafeFPShrink = EnableUnsafeFPShrink;
-  else if (Callee->hasFnAttribute("unsafe-fp-math")) {
-    // FIXME: This is the same problem as described in optimizeSqrt().
-    // If calls gain access to IR-level FMF, then use that instead of a
-    // function attribute.
-
-    // Check for unsafe-fp-math = true.
-    Attribute Attr = Callee->getFnAttribute("unsafe-fp-math");
-    if (Attr.getValueAsString() == "true")
-      UnsafeFPShrink = true;
-  }
+  else if (canUseUnsafeFPMath(Callee))
+    UnsafeFPShrink = true;
 
   // First, check for intrinsics.
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI)) {
