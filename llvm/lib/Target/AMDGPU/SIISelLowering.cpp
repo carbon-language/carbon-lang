@@ -1091,6 +1091,10 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                        DAG.getConstant(2, DL, MVT::i32), // P0
                        Op.getOperand(1), Op.getOperand(2), Glue);
   }
+  case AMDGPUIntrinsic::SI_packf16:
+    if (Op.getOperand(1).isUndef() && Op.getOperand(2).isUndef())
+      return DAG.getUNDEF(MVT::i32);
+    return Op;
   case AMDGPUIntrinsic::SI_fs_interp: {
     SDValue IJ = Op.getOperand(4);
     SDValue I = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::i32, IJ,
