@@ -47,6 +47,10 @@ public:
   ClangTidyOptions getModuleOptions() override {
     ClangTidyOptions Options;
     auto &Opts = Options.CheckOptions;
+    // For types whose size in bytes is above this threshold, we prefer taking a
+    // const-reference than making a copy.
+    Opts["modernize-loop-convert.MaxCopySize"] = "16";
+
     Opts["modernize-loop-convert.MinConfidence"] = "reasonable";
     Opts["modernize-loop-convert.NamingStyle"] = "CamelCase";
     Opts["modernize-pass-by-value.IncludeStyle"] = "llvm";    // Also: "google".

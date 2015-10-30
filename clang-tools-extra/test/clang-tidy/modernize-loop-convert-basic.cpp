@@ -113,6 +113,14 @@ const int *constArray() {
   // CHECK-FIXES: for (const auto & Elem : NonCopy)
   // CHECK-FIXES-NEXT: printf("2 * %d = %d\n", Elem.X, Elem.X + Elem.X);
 
+  const TriviallyCopyableButBig Big[N]{};
+  for (int I = 0; I < N; ++I) {
+    printf("2 * %d = %d\n", Big[I].X, Big[I].X + Big[I].X);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (const auto & Elem : Big)
+  // CHECK-FIXES-NEXT: printf("2 * %d = %d\n", Elem.X, Elem.X + Elem.X);
+
   bool Something = false;
   for (int I = 0; I < N; ++I) {
     if (Something)

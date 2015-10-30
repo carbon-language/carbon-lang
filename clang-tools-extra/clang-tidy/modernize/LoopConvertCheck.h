@@ -66,6 +66,7 @@ private:
                      const ForStmt *Loop, LoopFixerKind FixerKind);
 
   std::unique_ptr<TUTrackingInfo> TUInfo;
+  const unsigned long long MaxCopySize;
   const Confidence::Level MinConfidence;
   const VariableNamer::NamingStyle NamingStyle;
 };

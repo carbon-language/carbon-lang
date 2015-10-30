@@ -23,6 +23,11 @@ struct NonTriviallyCopyable {
   int X;
 };
 
+struct TriviallyCopyableButBig {
+  int X;
+  char Array[16];
+};
+
 struct S {
   typedef MutableVal *iterator;
   typedef const MutableVal *const_iterator;

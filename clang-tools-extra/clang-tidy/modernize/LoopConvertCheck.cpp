@@ -230,18 +230,18 @@ StatementMatcher makePseudoArrayLoopMatcher() {
   // FIXME: Also, a record doesn't necessarily need begin() and end(). Free
   // functions called begin() and end() taking the container as an argument
   // are also allowed.
-  TypeMatcher RecordWithBeginEnd = qualType(
-      anyOf(qualType(isConstQualified(),
-                     hasDeclaration(cxxRecordDecl(
-                         hasMethod(cxxMethodDecl(hasName("begin"), isConst())),
-                         hasMethod(cxxMethodDecl(hasName("end"),
-                                                 isConst())))) // hasDeclaration
-                     ),                                        // qualType
-            qualType(unless(isConstQualified()),
-                     hasDeclaration(
-                         cxxRecordDecl(hasMethod(hasName("begin")),
+  TypeMatcher RecordWithBeginEnd = qualType(anyOf(
+      qualType(isConstQualified(),
+               hasDeclaration(cxxRecordDecl(
+                   hasMethod(cxxMethodDecl(hasName("begin"), isConst())),
+                   hasMethod(cxxMethodDecl(hasName("end"),
+                                           isConst())))) // hasDeclaration
+               ),                                        // qualType
+      qualType(
+          unless(isConstQualified()),
+          hasDeclaration(cxxRecordDecl(hasMethod(hasName("begin")),
                                        hasMethod(hasName("end"))))) // qualType
-            ));
+      ));
 
   StatementMatcher SizeCallMatcher = cxxMemberCallExpr(
       argumentCountIs(0),
@@ -409,6 +409,7 @@ LoopConvertCheck::RangeDescriptor::RangeDescriptor()
 
 LoopConvertCheck::LoopConvertCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context), TUInfo(new TUTrackingInfo),
+      MaxCopySize(std::stoull(Options.get("MaxCopySize", "16"))),
       MinConfidence(StringSwitch<Confidence::Level>(
                         Options.get("MinConfidence", "reasonable"))
                         .Case("safe", Confidence::CL_Safe)
@@ -422,6 +423,7 @@ LoopConvertCheck::LoopConvertCheck(StringRef Name, ClangTidyContext *Context)
                       .Default(VariableNamer::NS_CamelCase)) {}
 
 void LoopConvertCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+  Options.store(Opts, "MaxCopySize", std::to_string(MaxCopySize));
   SmallVector<std::string, 3> Confs{"risky", "reasonable", "safe"};
   Options.store(Opts, "MinConfidence", Confs[static_cast<int>(MinConfidence)]);
 
@@ -561,18 +563,20 @@ void LoopConvertCheck::doConversion(
   // If the new variable name is from the aliased variable, then the reference
   // type for the new variable should only be used if the aliased variable was
   // declared as a reference.
-  bool IsTriviallyCopyable =
+  bool IsCheapToCopy =
       !Descriptor.ElemType.isNull() &&
-      Descriptor.ElemType.isTriviallyCopyableType(*Context);
+      Descriptor.ElemType.isTriviallyCopyableType(*Context) &&
+      // TypeInfo::Width is in bits.
+      Context->getTypeInfo(Descriptor.ElemType).Width <= 8 * MaxCopySize;
   bool UseCopy =
       CanCopy && ((VarNameFromAlias && !AliasVarIsRef) ||
-                  (Descriptor.DerefByConstRef && IsTriviallyCopyable));
+                  (Descriptor.DerefByConstRef && IsCheapToCopy));
 
   if (!UseCopy) {
     if (Descriptor.DerefByConstRef) {
       Type = Context->getLValueReferenceType(Context->getConstType(Type));
     } else if (Descriptor.DerefByValue) {
-      if (!IsTriviallyCopyable)
+      if (!IsCheapToCopy)
         Type = Context->getRValueReferenceType(Type);
     } else {
       Type = Context->getLValueReferenceType(Type);
