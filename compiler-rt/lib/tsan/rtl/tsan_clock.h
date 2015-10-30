@@ -33,7 +33,8 @@ struct ClockBlock {
     ClockElem clock[kClockCount];
   };
 
-  ClockBlock() = default;
+  ClockBlock() {
+  }
 };
 
 typedef DenseSlabAlloc<ClockBlock, 1<<16, 1<<10> ClockAlloc;

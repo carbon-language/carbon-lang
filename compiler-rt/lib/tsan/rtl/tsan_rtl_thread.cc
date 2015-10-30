@@ -31,7 +31,8 @@ ThreadContext::ThreadContext(int tid)
 }
 
 #ifndef SANITIZER_GO
-ThreadContext::~ThreadContext() = default;
+ThreadContext::~ThreadContext() {
+}
 #endif
 
 void ThreadContext::OnDead() {
