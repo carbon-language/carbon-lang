@@ -100,6 +100,10 @@ protected:
                         llvm::Constant *beginCatchFn,
                         llvm::Constant *endCatchFn,
                         llvm::Constant *exceptionRethrowFn);
+
+  void EmitInitOfCatchParam(CodeGenFunction &CGF, llvm::Value *exn,
+                            const VarDecl *paramDecl);
+
   /// Emits an \@synchronize() statement, using the \p syncEnterFn and
   /// \p syncExitFn arguments as the functions called to lock and unlock
   /// the object.  This function can be called by subclasses that use
