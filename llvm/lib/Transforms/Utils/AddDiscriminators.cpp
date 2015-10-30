@@ -180,7 +180,7 @@ bool AddDiscriminators::runOnFunction(Function &F) {
       BasicBlock *Succ = Last->getSuccessor(I);
       Instruction *First = Succ->getFirstNonPHIOrDbgOrLifetime();
       const DILocation *FirstDIL = First->getDebugLoc();
-      if (!FirstDIL)
+      if (!FirstDIL || FirstDIL->getDiscriminator())
         continue;
 
       // If the first instruction (First) of Succ is at the same file
@@ -202,21 +202,22 @@ bool AddDiscriminators::runOnFunction(Function &F) {
         unsigned Discriminator = FirstDIL->computeNewDiscriminator();
         auto *NewScope =
             Builder.createLexicalBlockFile(Scope, File, Discriminator);
-        auto *NewDIL =
-            DILocation::get(Ctx, FirstDIL->getLine(), FirstDIL->getColumn(),
-                            NewScope, FirstDIL->getInlinedAt());
-        DebugLoc newDebugLoc = NewDIL;
 
         // Attach this new debug location to First and every
         // instruction following First that shares the same location.
         for (BasicBlock::iterator I1(*First), E1 = Succ->end(); I1 != E1;
              ++I1) {
-          if (I1->getDebugLoc().get() != FirstDIL)
-            break;
-          I1->setDebugLoc(newDebugLoc);
-          DEBUG(dbgs() << NewDIL->getFilename() << ":" << NewDIL->getLine()
-                       << ":" << NewDIL->getColumn() << ":"
-                       << NewDIL->getDiscriminator() << *I1 << "\n");
+          const DILocation *CurrentDIL = I1->getDebugLoc();
+          if (CurrentDIL && CurrentDIL->getLine() == FirstDIL->getLine() &&
+              CurrentDIL->getFilename() == FirstDIL->getFilename()) {
+            I1->setDebugLoc(DILocation::get(Ctx, CurrentDIL->getLine(),
+                                            CurrentDIL->getColumn(), NewScope,
+                                            CurrentDIL->getInlinedAt()));
+            DEBUG(dbgs() << CurrentDIL->getFilename() << ":"
+                         << CurrentDIL->getLine() << ":"
+                         << CurrentDIL->getColumn() << ":"
+                         << CurrentDIL->getDiscriminator() << *I1 << "\n");
+          }
         }
         DEBUG(dbgs() << "\n");
         Changed = true;
