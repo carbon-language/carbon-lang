@@ -83,6 +83,25 @@ RuntimeLibrary.darwin.Configs := \
 
 IOS_SDK := $(shell xcrun --show-sdk-path -sdk iphoneos 2> /dev/null)
 IOSSIM_SDK := $(shell xcrun --show-sdk-path -sdk iphonesimulator 2> /dev/null)
+TVOS_SDK := $(shell xcrun --show-sdk-path -sdk appletvos 2> /dev/null)
+TVOSSIM_SDK := $(shell xcrun --show-sdk-path -sdk appletvsimulator 2> /dev/null)
+WATCHOS_SDK := $(shell xcrun --show-sdk-path -sdk watchos 2> /dev/null)
+WATCHOSSIM_SDK := $(shell xcrun --show-sdk-path -sdk watchsimulator 2> /dev/null)
+
+LinkerSupportedArches = \
+  $(shell \
+    result=""; \
+    for arch in $1; do \
+      if $(LD) -v 2>&1 | grep "configured to support" | tr ' ' '\n' | grep "^$$arch$$" >/dev/null 2>/dev/null; then \
+        result="$$result$$arch "; \
+      fi; \
+    done; \
+    echo $$result)
+
+
+RuntimeLibrary.macho_embedded.Configs := \
+	hard_static.a hard_pic.a
+ifneq (,$(findstring ARM,$(TARGETS_TO_BUILD)))
 
 ifneq ($(IOS_SDK)$(IOSSIM_SDK),)
 RuntimeLibrary.darwin.Configs += ios.a profile_ios.a
@@ -99,9 +118,23 @@ RuntimeLibrary.darwin.Configs += asan_iossim_dynamic.dylib \
                                  ubsan_iossim_dynamic.dylib
 endif
 
-RuntimeLibrary.macho_embedded.Configs := \
-	hard_static.a hard_pic.a
-ifneq (,$(findstring ARM,$(TARGETS_TO_BUILD)))
+
+ifneq ($(TVOS_SDK)$(TVOSSIM_SDK),)
+RuntimeLibrary.darwin.Configs += tvos.a profile_tvos.a
+endif
+
+ifneq ($(TVOS_SDK),)
+RuntimeLibrary.darwin.Configs += cc_kext_tvos.a
+endif
+
+ifneq ($(WATCHOS_SDK)$(WATCHOSSIM_SDK),)
+RuntimeLibrary.darwin.Configs += watchos.a profile_watchos.a
+endif
+
+ifneq ($(WATCHOS_SDK),)
+RuntimeLibrary.darwin.Configs += cc_kext_watchos.a
+endif
+
 RuntimeLibrary.macho_embedded.Configs += \
 	soft_static.a soft_pic.a
 endif
