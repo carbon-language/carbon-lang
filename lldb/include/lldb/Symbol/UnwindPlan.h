@@ -1,13 +1,27 @@
+//===-- UnwindPlan.h --------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef liblldb_UnwindPlan_h
 #define liblldb_UnwindPlan_h
 
+// C Includes
+// C++ Includes
+#include <map>
+#include <memory>
+#include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/ConstString.h"
-
-#include <map>
-#include <vector>
 
 namespace lldb_private {
 
@@ -38,13 +52,11 @@ namespace lldb_private {
 
 class UnwindPlan {
 public:
-
     class Row {
     public:
         class RegisterLocation
         {
         public:
-    
             enum RestoreType
                 {
                     unspecified,        // not specified, we may be able to assume this 
@@ -187,7 +199,7 @@ public:
                 }
                 else
                 {
-                    *opcodes = NULL;
+                    *opcodes = nullptr;
                     len = 0;
                 }
             }
@@ -203,7 +215,7 @@ public:
             {
                 if (m_type == atDWARFExpression || m_type == isDWARFExpression)
                     return m_location.expr.opcodes; 
-                return NULL;
+                return nullptr;
             }
 
             int
@@ -240,7 +252,6 @@ public:
         class CFAValue
         {
         public:
-
             enum ValueType
             {
                 unspecified,                  // not specified
@@ -361,7 +372,7 @@ public:
                 }
                 else
                 {
-                    *opcodes = NULL;
+                    *opcodes = nullptr;
                     len = 0;
                 }
             }
@@ -371,7 +382,7 @@ public:
             {
                 if (m_type == isDWARFExpression)
                     return m_value.expr.opcodes;
-                return NULL;
+                return nullptr;
             }
 
             int
@@ -488,7 +499,6 @@ public:
     }; // class Row
 
 public:
-
     typedef std::shared_ptr<Row> RowSP;
 
     UnwindPlan (lldb::RegisterKind reg_kind) : 
@@ -520,9 +530,7 @@ public:
             m_row_list.emplace_back (new Row (*row_sp));
     }
 
-    ~UnwindPlan ()
-	{
-	}
+    ~UnwindPlan() = default;
 
     void 
     Dump (Stream& s, Thread* thread, lldb::addr_t base_addr) const;
@@ -676,8 +684,6 @@ public:
     }
 
 private:
-
-    
     typedef std::vector<RowSP> collection;
     collection m_row_list;
     AddressRange m_plan_valid_address_range;
@@ -697,4 +703,4 @@ private:
 
 } // namespace lldb_private
 
-#endif //liblldb_UnwindPlan_h
+#endif // liblldb_UnwindPlan_h

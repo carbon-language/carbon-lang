@@ -7,12 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef liblldb_SymbolContext_h_
 #define liblldb_SymbolContext_h_
 
+// C Includes
+// C++ Includes
+#include <memory>
+#include <string>
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Mangled.h"
@@ -22,6 +27,7 @@
 namespace lldb_private {
 
 class SymbolContextScope;
+
 //----------------------------------------------------------------------
 /// @class SymbolContext SymbolContext.h "lldb/Symbol/SymbolContext.h"
 /// @brief Defines a symbol context baton that can be handed other debug
@@ -36,11 +42,10 @@ class SymbolContextScope;
 class SymbolContext
 {
 public:
-
     //------------------------------------------------------------------
     /// Default constructor.
     ///
-    /// Initialize all pointer members to NULL and all struct members
+    /// Initialize all pointer members to nullptr and all struct members
     /// to their default state.
     //------------------------------------------------------------------
     SymbolContext ();
@@ -81,24 +86,23 @@ public:
     ///     A Symbol pointer to the symbol for this context.
     //------------------------------------------------------------------
     explicit
-    SymbolContext (const lldb::TargetSP &target_sp,
-                   const lldb::ModuleSP &module_sp,
-                   CompileUnit *comp_unit = NULL,
-                   Function *function = NULL,
-                   Block *block = NULL,
-                   LineEntry *line_entry = NULL,
-                   Symbol *symbol = NULL);
+    SymbolContext(const lldb::TargetSP &target_sp,
+                  const lldb::ModuleSP &module_sp,
+                  CompileUnit *comp_unit = nullptr,
+                  Function *function = nullptr,
+                  Block *block = nullptr,
+                  LineEntry *line_entry = nullptr,
+                  Symbol *symbol = nullptr);
 
     // This version sets the target to a NULL TargetSP if you don't know it.
     explicit
-    SymbolContext (const lldb::ModuleSP &module_sp,
-                   CompileUnit *comp_unit = NULL,
-                   Function *function = NULL,
-                   Block *block = NULL,
-                   LineEntry *line_entry = NULL,
-                   Symbol *symbol = NULL);
+    SymbolContext(const lldb::ModuleSP &module_sp,
+                  CompileUnit *comp_unit = nullptr,
+                  Function *function = nullptr,
+                  Block *block = nullptr,
+                  LineEntry *line_entry = nullptr,
+                  Symbol *symbol = nullptr);
 
-    ~SymbolContext ();
     //------------------------------------------------------------------
     /// Copy constructor
     ///
@@ -108,6 +112,8 @@ public:
     ///     A const SymbolContext object reference to copy.
     //------------------------------------------------------------------
     SymbolContext (const SymbolContext& rhs);
+
+    ~SymbolContext ();
 
     //------------------------------------------------------------------
     /// Assignment operator.
@@ -127,7 +133,7 @@ public:
     //------------------------------------------------------------------
     /// Clear the object's state.
     ///
-    /// Resets all pointer members to NULL, and clears any class objects
+    /// Resets all pointer members to nullptr, and clears any class objects
     /// to their default state.
     //------------------------------------------------------------------
     void
@@ -203,14 +209,14 @@ public:
     ///
     /// Address range priority is as follows:
     ///     - line_entry address range if line_entry is valid and eSymbolContextLineEntry is set in \a scope
-    ///     - block address range if block is not NULL and eSymbolContextBlock is set in \a scope
-    ///     - function address range if function is not NULL and eSymbolContextFunction is set in \a scope
-    ///     - symbol address range if symbol is not NULL and eSymbolContextSymbol is set in \a scope
+    ///     - block address range if block is not nullptr and eSymbolContextBlock is set in \a scope
+    ///     - function address range if function is not nullptr and eSymbolContextFunction is set in \a scope
+    ///     - symbol address range if symbol is not nullptr and eSymbolContextSymbol is set in \a scope
     ///
     /// @param[in] scope
     ///     A mask of symbol context bits telling this function which
     ///     address ranges it can use when trying to extract one from
-    ///     the valid (non-NULL) symbol context classes.
+    ///     the valid (non-nullptr) symbol context classes.
     ///
     /// @param[in] range_idx
     ///     The address range index to grab. Since many functions and 
@@ -239,7 +245,6 @@ public:
                      bool use_inline_block_range,
                      AddressRange &range) const;
 
-
     void
     GetDescription(Stream *s, 
                    lldb::DescriptionLevel level, 
@@ -248,7 +253,6 @@ public:
     uint32_t
     GetResolvedMask () const;
 
-    
     //------------------------------------------------------------------
     /// Find a block that defines the function represented by this
     /// symbol context.
@@ -268,12 +272,11 @@ public:
     ///
     /// @return
     ///     The block object pointer that defines the function that is
-    ///     represented by this symbol context object, NULL otherwise.
+    ///     represented by this symbol context object, nullptr otherwise.
     //------------------------------------------------------------------
     Block *
     GetFunctionBlock ();
 
-    
     //------------------------------------------------------------------
     /// If this symbol context represents a function that is a method,
     /// return true and provide information about the method.
@@ -304,7 +307,8 @@ public:
     ///
     //------------------------------------------------------------------
     void
-	SortTypeList(TypeMap &type_map, TypeList &type_list) const;
+    SortTypeList(TypeMap &type_map, TypeList &type_list) const;
+
     //------------------------------------------------------------------
     /// Find a name of the innermost function for the symbol context.
     ///
@@ -322,7 +326,6 @@ public:
     ConstString
     GetFunctionName (Mangled::NamePreference preference = Mangled::ePreferDemangled) const;
 
-    
     //------------------------------------------------------------------
     /// Get the line entry that corresponds to the function.
     ///
@@ -384,7 +387,6 @@ public:
     Variable *      variable;   ///< The global variable matching the given query
 };
 
-
 class SymbolContextSpecifier
 {
 public:
@@ -434,7 +436,6 @@ private:
     std::string                    m_class_name;
     std::unique_ptr<AddressRange>   m_address_range_ap;
     uint32_t                       m_type; // Or'ed bits from SpecificationType
-
 };
 
 //----------------------------------------------------------------------
@@ -486,6 +487,7 @@ public:
     uint32_t
     AppendIfUnique (const SymbolContextList& sc_list, 
                     bool merge_symbol_into_function);
+
     //------------------------------------------------------------------
     /// Clear the object's state.
     ///
@@ -565,6 +567,7 @@ public:
 
     bool
     RemoveContextAtIndex (size_t idx);
+
     //------------------------------------------------------------------
     /// Get accessor for a symbol context list size.
     ///
@@ -607,4 +610,4 @@ bool operator!= (const SymbolContextList& lhs, const SymbolContextList& rhs);
 
 } // namespace lldb_private
 
-#endif  // liblldb_SymbolContext_h_
+#endif // liblldb_SymbolContext_h_

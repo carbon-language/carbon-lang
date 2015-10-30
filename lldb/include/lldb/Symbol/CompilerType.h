@@ -10,9 +10,14 @@
 #ifndef liblldb_CompilerType_h_
 #define liblldb_CompilerType_h_
 
+// C Includes
+// C++ Includes
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
 
@@ -44,8 +49,8 @@ public:
     }
     
     CompilerType () :
-        m_type (0),
-        m_type_system  (0)
+        m_type (nullptr),
+        m_type_system (nullptr)
     {
     }
     
@@ -62,7 +67,6 @@ public:
         m_type_system = rhs.m_type_system;
         return *this;
     }
-    
 
     //----------------------------------------------------------------------
     // Tests
@@ -70,7 +74,7 @@ public:
 
     explicit operator bool () const
     {
-        return m_type != NULL && m_type_system != NULL;
+        return m_type != nullptr && m_type_system != nullptr;
     }
     
     bool
@@ -84,7 +88,7 @@ public:
     bool
     IsValid () const
     {
-        return m_type != NULL && m_type_system != NULL;
+        return m_type != nullptr && m_type_system != nullptr;
     }
     
     bool
@@ -124,7 +128,7 @@ public:
     IsFloatingPointType (uint32_t &count, bool &is_complex) const;
 
     bool
-    IsFunctionType (bool *is_variadic_ptr = NULL) const;
+    IsFunctionType(bool *is_variadic_ptr = nullptr) const;
 
     uint32_t
     IsHomogeneousAggregate (CompilerType* base_type_ptr) const;
@@ -148,16 +152,15 @@ public:
     IsPolymorphicClass () const;
 
     bool
-    IsPossibleCPlusPlusDynamicType (CompilerType *target_type = NULL) const
+    IsPossibleCPlusPlusDynamicType(CompilerType *target_type = nullptr) const
     {
         return IsPossibleDynamicType (target_type, true, false);
     }
     
     bool
-    IsPossibleDynamicType (CompilerType *target_type, // Can pass NULL
-                           bool check_cplusplus,
-                           bool check_objc) const;
-
+    IsPossibleDynamicType(CompilerType *target_type, // Can pass nullptr
+                          bool check_cplusplus,
+                          bool check_objc) const;
 
     bool
     IsPointerToScalarType () const;
@@ -166,13 +169,13 @@ public:
     IsRuntimeGeneratedType () const;
     
     bool
-    IsPointerType (CompilerType *pointee_type = NULL) const;
+    IsPointerType(CompilerType *pointee_type = nullptr) const;
     
     bool
-    IsPointerOrReferenceType (CompilerType *pointee_type = NULL) const;
+    IsPointerOrReferenceType(CompilerType *pointee_type = nullptr) const;
     
     bool
-    IsReferenceType (CompilerType *pointee_type = nullptr, bool* is_rvalue = nullptr) const;
+    IsReferenceType(CompilerType *pointee_type = nullptr, bool* is_rvalue = nullptr) const;
     
     bool
     IsScalarType () const;
@@ -220,7 +223,7 @@ public:
     GetDisplayTypeName () const;
 
     uint32_t
-    GetTypeInfo (CompilerType *pointee_or_element_compiler_type = NULL) const;
+    GetTypeInfo(CompilerType *pointee_or_element_compiler_type = nullptr) const;
     
     lldb::LanguageType
     GetMinimumLanguage ();
@@ -236,6 +239,7 @@ public:
     
     void
     SetCompilerType (TypeSystem* type_system, lldb::opaque_compiler_type_t type);
+
     void
     SetCompilerType (clang::ASTContext *ast, clang::QualType qual_type);
 
@@ -247,7 +251,7 @@ public:
     //----------------------------------------------------------------------
     
     CompilerType
-    GetArrayElementType (uint64_t *stride = nullptr) const;
+    GetArrayElementType(uint64_t *stride = nullptr) const;
     
     CompilerType
     GetCanonicalType () const;
@@ -378,6 +382,7 @@ public:
 
     static lldb::BasicType
     GetBasicTypeEnumeration (const ConstString &name);
+
     //----------------------------------------------------------------------
     // If this type is an enumeration, iterate through all of its enumerators
     // using a callback. If the callback returns true, keep iterating, else
@@ -387,6 +392,7 @@ public:
     ForEachEnumerator (std::function <bool (const CompilerType &integer_type,
                                             const ConstString &name,
                                             const llvm::APSInt &value)> const &callback) const;
+
     uint32_t
     GetNumFields () const;
     
@@ -412,11 +418,11 @@ public:
                                 uint32_t *bit_offset_ptr) const;
 
     uint32_t
-    GetIndexOfFieldWithName (const char* name,
-                             CompilerType* field_compiler_type = NULL,
-                             uint64_t *bit_offset_ptr = NULL,
-                             uint32_t *bitfield_bit_size_ptr = NULL,
-                             bool *is_bitfield_ptr = NULL) const;
+    GetIndexOfFieldWithName(const char* name,
+                            CompilerType* field_compiler_type = nullptr,
+                            uint64_t *bit_offset_ptr = nullptr,
+                            uint32_t *bitfield_bit_size_ptr = nullptr,
+                            bool *is_bitfield_ptr = nullptr) const;
     
     CompilerType
     GetChildCompilerTypeAtIndex (ExecutionContext *exe_ctx,
@@ -475,6 +481,7 @@ public:
     ConvertStringToFloatValue (const char *s,
                                uint8_t *dst,
                                size_t dst_size) const;
+
     //----------------------------------------------------------------------
     // Dumping types
     //----------------------------------------------------------------------
@@ -540,19 +547,18 @@ public:
     void
     Clear()
     {
-        m_type = NULL;
-        m_type_system = NULL;
+        m_type = nullptr;
+        m_type_system = nullptr;
     }
+
 private:
     lldb::opaque_compiler_type_t m_type;
     TypeSystem *m_type_system;
-    
 };
     
 bool operator == (const CompilerType &lhs, const CompilerType &rhs);
 bool operator != (const CompilerType &lhs, const CompilerType &rhs);
 
-    
 } // namespace lldb_private
 
-#endif // #ifndef liblldb_CompilerType_h_
+#endif // liblldb_CompilerType_h_

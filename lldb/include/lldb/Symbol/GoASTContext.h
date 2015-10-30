@@ -13,6 +13,10 @@
 // C Includes
 // C++ Includes
 #include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes
@@ -165,7 +169,7 @@ class GoASTContext : public TypeSystem
 
     bool IsFloatingPointType(lldb::opaque_compiler_type_t type, uint32_t &count, bool &is_complex) override;
 
-    bool IsFunctionType(lldb::opaque_compiler_type_t type, bool *is_variadic_ptr = NULL) override;
+    bool IsFunctionType(lldb::opaque_compiler_type_t type, bool *is_variadic_ptr = nullptr) override;
 
     size_t GetNumberOfFunctionArguments(lldb::opaque_compiler_type_t type) override;
 
@@ -176,10 +180,10 @@ class GoASTContext : public TypeSystem
     bool IsIntegerType(lldb::opaque_compiler_type_t type, bool &is_signed) override;
 
     bool IsPossibleDynamicType(lldb::opaque_compiler_type_t type,
-                                       CompilerType *target_type, // Can pass NULL
-                                       bool check_cplusplus, bool check_objc) override;
+                               CompilerType *target_type, // Can pass nullptr
+                               bool check_cplusplus, bool check_objc) override;
 
-    bool IsPointerType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type = NULL) override;
+    bool IsPointerType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type = nullptr) override;
 
     bool IsScalarType(lldb::opaque_compiler_type_t type) override;
 
@@ -205,7 +209,8 @@ class GoASTContext : public TypeSystem
 
     ConstString GetTypeName(lldb::opaque_compiler_type_t type) override;
 
-    uint32_t GetTypeInfo(lldb::opaque_compiler_type_t type, CompilerType *pointee_or_element_compiler_type = NULL) override;
+    uint32_t GetTypeInfo(lldb::opaque_compiler_type_t type,
+                         CompilerType *pointee_or_element_compiler_type = nullptr) override;
 
     lldb::LanguageType GetMinimumLanguage(lldb::opaque_compiler_type_t type) override;
 
@@ -346,7 +351,8 @@ class GoASTContext : public TypeSystem
     // TODO: Determine if these methods should move to ClangASTContext.
     //----------------------------------------------------------------------
 
-    bool IsPointerOrReferenceType(lldb::opaque_compiler_type_t type, CompilerType *pointee_type = NULL) override;
+    bool IsPointerOrReferenceType(lldb::opaque_compiler_type_t type,
+                                  CompilerType *pointee_type = nullptr) override;
 
     unsigned GetTypeQualifiers(lldb::opaque_compiler_type_t type) override;
 

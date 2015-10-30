@@ -10,8 +10,12 @@
 #ifndef liblldb_LineTable_h_
 #define liblldb_LineTable_h_
 
+// C Includes
+// C++ Includes
 #include <vector>
 
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Symbol/LineEntry.h"
 #include "lldb/Core/ModuleChild.h"
@@ -30,7 +34,7 @@ public:
     LineSequence ();
 
     virtual
-    ~LineSequence() {}
+    ~LineSequence() = default;
 
     virtual void
     Clear() = 0;
@@ -143,14 +147,14 @@ public:
     ///
     /// @param[out] index_ptr
     ///     A pointer to a 32 bit integer that will get the actual line
-    ///     entry index if it is not NULL.
+    ///     entry index if it is not nullptr.
     ///
     /// @return
     ///     Returns \b true if \a so_addr is contained in a line entry
     ///     in this line table, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    FindLineEntryByAddress (const Address &so_addr, LineEntry& line_entry, uint32_t *index_ptr = NULL);
+    FindLineEntryByAddress(const Address &so_addr, LineEntry& line_entry, uint32_t *index_ptr = nullptr);
 
     //------------------------------------------------------------------
     /// Find a line entry index that has a matching file index and
@@ -269,7 +273,6 @@ public:
     LinkLineTable (const FileRangeMap &file_range_map);
 
 protected:
-
     struct Entry
     {
         Entry () :
@@ -348,6 +351,7 @@ protected:
         public:
             LessThanBinaryPredicate(LineTable *line_table);
             bool operator() (const LineTable::Entry&, const LineTable::Entry&) const;
+
         protected:
             LineTable *m_line_table;
         };
@@ -395,12 +399,9 @@ protected:
     class LineSequenceImpl : public LineSequence
     {
     public:
-        LineSequenceImpl() :
-            LineSequence()
-        {}
+        LineSequenceImpl() = default;
 
-        ~LineSequenceImpl() override
-        {}
+        ~LineSequenceImpl() override = default;
 
         void
         Clear() override;

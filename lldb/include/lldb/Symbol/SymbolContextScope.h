@@ -72,7 +72,7 @@ class SymbolContextScope
 {
 public:
     virtual
-    ~SymbolContextScope () {}
+    ~SymbolContextScope() = default;
 
     //------------------------------------------------------------------
     /// Reconstruct the object's symbol context into \a sc.
@@ -87,7 +87,6 @@ public:
     virtual void
     CalculateSymbolContext (SymbolContext *sc) = 0;
 
-
     virtual lldb::ModuleSP
     CalculateSymbolContextModule ()
     {
@@ -97,25 +96,25 @@ public:
     virtual CompileUnit *
     CalculateSymbolContextCompileUnit ()
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual Function *
     CalculateSymbolContextFunction ()
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual Block *
     CalculateSymbolContextBlock ()
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual Symbol *
     CalculateSymbolContextSymbol ()
     {
-        return NULL;
+        return nullptr;
     }
 
     //------------------------------------------------------------------
@@ -134,4 +133,4 @@ public:
 
 } // namespace lldb_private
 
-#endif  // liblldb_SymbolContextScope_h_
+#endif // liblldb_SymbolContextScope_h_

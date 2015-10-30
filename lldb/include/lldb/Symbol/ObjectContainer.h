@@ -14,7 +14,6 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-
 #include "lldb/lldb-private.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Host/FileSpec.h"
@@ -71,9 +70,7 @@ public:
     /// The destructor is virtual since this class is designed to be
     /// inherited from by the plug-in instance.
     //------------------------------------------------------------------
-    ~ObjectContainer() override
-    {
-    }
+    ~ObjectContainer() override = default;
 
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
@@ -187,7 +184,7 @@ public:
     ///
     /// @return
     ///     Returns a pointer to the object file of the requested \a
-    ///     arch and optional \a name. Returns NULL of no such object
+    ///     arch and optional \a name. Returns nullptr of no such object
     ///     file exists in the container.
     //------------------------------------------------------------------
     virtual lldb::ObjectFileSP
@@ -202,19 +199,19 @@ public:
     virtual ObjectFile *
     GetObjectFileAtIndex (uint32_t object_idx)
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual ObjectContainer *
     GetObjectContainerAtIndex (uint32_t object_idx)
     {
-        return NULL;
+        return nullptr;
     }
 
     virtual const char *
     GetObjectNameAtIndex (uint32_t object_idx) const
     {
-        return NULL;
+        return nullptr;
     }
 
 protected:

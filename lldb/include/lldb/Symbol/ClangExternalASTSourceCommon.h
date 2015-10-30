@@ -20,14 +20,13 @@
 // file. So we have to define NDEBUG when including clang headers to avoid any
 // mismatches. This is covered by rdar://problem/8691220
 
+// C Includes
 #if !defined(NDEBUG) && !defined(LLVM_NDEBUG_OFF)
 #define LLDB_DEFINED_NDEBUG_FOR_CLANG
 #define NDEBUG
 // Need to include assert.h so it is as clang would expect it to be (disabled)
 #include <assert.h>
 #endif
-
-#include "clang/AST/ExternalASTSource.h"
 
 #ifdef LLDB_DEFINED_NDEBUG_FOR_CLANG
 #undef NDEBUG
@@ -36,6 +35,11 @@
 #include <assert.h>
 #endif
 
+// C++ Includes
+// Other libraries and framework includes
+#include "clang/AST/ExternalASTSource.h"
+
+// Project includes
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/dwarf.h"
@@ -124,7 +128,6 @@ public:
                 return lldb::eLanguageTypeC_plus_plus;
         }
         return lldb::eLanguageTypeUnknown;
-            
     }
 
     const char *
@@ -138,7 +141,7 @@ public:
                 return "this";
         }
         else
-            return NULL;
+            return nullptr;
     }
     
     bool
@@ -156,12 +159,12 @@ private:
         lldb::user_id_t m_user_id;
         uint64_t  m_isa_ptr;
     };
+
     bool m_union_is_user_id : 1,
          m_union_is_isa_ptr : 1,
          m_has_object_ptr : 1,
          m_is_self : 1,
          m_is_dynamic_cxx : 1;
-    
 };
 
 class ClangExternalASTSourceCommon : public clang::ExternalASTSource 
@@ -176,6 +179,7 @@ public:
     
     static ClangExternalASTSourceCommon *
     Lookup(clang::ExternalASTSource *source);
+
 private:    
     typedef llvm::DenseMap<const void *, ClangASTMetadata> MetadataMap;
     

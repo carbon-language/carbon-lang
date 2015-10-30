@@ -14,19 +14,22 @@
 #include <stdint.h>
 
 // C++ Includes
+#include <functional>
 #include <initializer_list>
+#include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include <utility>
 
 // Other libraries and framework includes
-#include "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h"
-
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/TemplateBase.h"
 
 // Project includes
+#include "Plugins/ExpressionParser/Clang/ClangPersistentVariables.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
@@ -54,7 +57,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    ClangASTContext (const char *triple = NULL);
+    ClangASTContext(const char *triple = nullptr);
 
     ~ClangASTContext() override;
 
@@ -301,12 +304,12 @@ public:
                        bool omit_empty_base_classes);
 
     CompilerType
-    CreateRecordType (clang::DeclContext *decl_ctx,
-                      lldb::AccessType access_type,
-                      const char *name,
-                      int kind,
-                      lldb::LanguageType language,
-                      ClangASTMetadata *metadata = NULL);
+    CreateRecordType(clang::DeclContext *decl_ctx,
+                     lldb::AccessType access_type,
+                     const char *name,
+                     int kind,
+                     lldb::LanguageType language,
+                     ClangASTMetadata *metadata = nullptr);
     
     class TemplateParameterInfos
     {
@@ -382,11 +385,11 @@ public:
     RecordHasFields (const clang::RecordDecl *record_decl);
 
     CompilerType
-    CreateObjCClass (const char *name, 
-                     clang::DeclContext *decl_ctx, 
-                     bool isForwardDecl, 
-                     bool isInternal,
-                     ClangASTMetadata *metadata = NULL);
+    CreateObjCClass(const char *name,
+                    clang::DeclContext *decl_ctx,
+                    bool isForwardDecl,
+                    bool isInternal,
+                    ClangASTMetadata *metadata = nullptr);
     
     bool
     SetTagTypeKind (clang::QualType type, int kind) const;
@@ -654,16 +657,16 @@ public:
     IsObjCObjectOrInterfaceType (const CompilerType& type);
     
     static bool
-    IsObjCObjectPointerType (const CompilerType& type, CompilerType *target_type = NULL);
+    IsObjCObjectPointerType(const CompilerType& type, CompilerType *target_type = nullptr);
     
     bool
     IsPolymorphicClass (lldb::opaque_compiler_type_t type) override;
     
     bool
-    IsPossibleDynamicType (lldb::opaque_compiler_type_t type,
-                           CompilerType *target_type, // Can pass NULL
-                           bool check_cplusplus,
-                           bool check_objc) override;
+    IsPossibleDynamicType(lldb::opaque_compiler_type_t type,
+                          CompilerType *target_type, // Can pass nullptr
+                          bool check_cplusplus,
+                          bool check_objc) override;
     
     bool
     IsRuntimeGeneratedType (lldb::opaque_compiler_type_t type) override;

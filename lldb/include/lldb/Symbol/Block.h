@@ -10,6 +10,12 @@
 #ifndef liblldb_Block_h_
 #define liblldb_Block_h_
 
+// C Includes
+// C++ Includes
+#include <vector>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/RangeMap.h"
@@ -209,7 +215,7 @@ public:
     /// Get the parent block.
     ///
     /// @return
-    ///     The parent block pointer, or NULL if this block has no 
+    ///     The parent block pointer, or nullptr if this block has no 
     ///     parent.
     //------------------------------------------------------------------
     Block *
@@ -221,7 +227,7 @@ public:
     /// @return
     ///     If this block contains inlined function info, it will return
     ///     this block, else parent blocks will be searched to see if
-    ///     any contain this block. NULL will be returned if this block
+    ///     any contain this block. nullptr will be returned if this block
     ///     nor any parent blocks are inlined function blocks.
     //------------------------------------------------------------------
     Block *
@@ -231,7 +237,7 @@ public:
     /// Get the inlined parent block for this block.
     ///
     /// @return
-    ///     The parent block pointer, or NULL if this block has no 
+    ///     The parent block pointer, or nullptr if this block has no 
     ///     parent.
     //------------------------------------------------------------------
     Block *
@@ -241,7 +247,7 @@ public:
     /// Get the sibling block for this block.
     ///
     /// @return
-    ///     The sibling block pointer, or NULL if this block has no 
+    ///     The sibling block pointer, or nullptr if this block has no 
     ///     sibling.
     //------------------------------------------------------------------
     Block *
@@ -251,15 +257,13 @@ public:
     /// Get the first child block.
     ///
     /// @return
-    ///     The first child block pointer, or NULL if this block has no 
+    ///     The first child block pointer, or nullptr if this block has no 
     ///     children.
     //------------------------------------------------------------------
     Block *
     GetFirstChild () const
     {
-        if (m_children.empty())
-            return NULL;
-        return m_children.front().get();
+        return (m_children.empty() ? nullptr : m_children.front().get());
     }
 
     //------------------------------------------------------------------
@@ -346,7 +350,7 @@ public:
     /// Get const accessor for any inlined function information.
     ///
     /// @return
-    ///     A const pointer to any inlined function information, or NULL
+    ///     A const pointer to any inlined function information, or nullptr
     ///     if this is a regular block.
     //------------------------------------------------------------------
     const InlineFunctionInfo*
@@ -375,16 +379,16 @@ public:
     ///
     /// @param[in] name
     ///     The method name for the inlined function. This value should
-    ///     not be NULL.
+    ///     not be nullptr.
     ///
     /// @param[in] mangled
     ///     The mangled method name for the inlined function. This can
-    ///     be NULL if there is no mangled name for an inlined function
+    ///     be nullptr if there is no mangled name for an inlined function
     ///     or if the name is the same as \a name.
     ///
     /// @param[in] decl_ptr
     ///     A optional pointer to declaration information for the
-    ///     inlined function information. This value can be NULL to
+    ///     inlined function information. This value can be nullptr to
     ///     indicate that no declaration information is available.
     ///
     /// @param[in] call_decl_ptr
