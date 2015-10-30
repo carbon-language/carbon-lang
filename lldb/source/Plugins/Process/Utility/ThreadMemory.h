@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Target/Thread.h"
@@ -46,7 +48,7 @@ public:
     {
         if (m_backing_thread_sp)
             m_backing_thread_sp->GetInfo();
-        return NULL;
+        return nullptr;
     }
 
     const char *
@@ -56,7 +58,7 @@ public:
             return m_name.c_str();
         if (m_backing_thread_sp)
             m_backing_thread_sp->GetName();
-        return NULL;
+        return nullptr;
     }
     
     const char *
@@ -66,7 +68,7 @@ public:
             return m_queue.c_str();
         if (m_backing_thread_sp)
             m_backing_thread_sp->GetQueueName();
-        return NULL;
+        return nullptr;
     }
 
     void

@@ -1,14 +1,20 @@
-//===-- RegisterInfos_x86_64.h ---------------------------------*- C++ -*-===//
+//===-- RegisterInfos_x86_64.h ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+
+// C Includes
+#include <stddef.h>
+
+// C++ Includes
+// Other libraries and framework includes
 #include "llvm/Support/Compiler.h"
 
-#include <stddef.h>
+// Project includes
 
 // Computes the offset of the given GPR in the user data area.
 #define GPR_OFFSET(regname) \
@@ -101,8 +107,8 @@ static RegisterInfo
 g_register_infos_x86_64[] =
 {
     // General purpose registers.           EH_Frame,                   DWARF,                Generic,                Process Plugin
-    DEFINE_GPR(rax,    NULL,        dwarf_rax_x86_64,        dwarf_rax_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(rbx,    NULL,        dwarf_rbx_x86_64,        dwarf_rbx_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rax,    nullptr,     dwarf_rax_x86_64,        dwarf_rax_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(rbx,    nullptr,     dwarf_rbx_x86_64,        dwarf_rbx_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
     DEFINE_GPR(rcx,    "arg4",      dwarf_rcx_x86_64,        dwarf_rcx_x86_64,    LLDB_REGNUM_GENERIC_ARG4,  LLDB_INVALID_REGNUM),
     DEFINE_GPR(rdx,    "arg3",      dwarf_rdx_x86_64,        dwarf_rdx_x86_64,    LLDB_REGNUM_GENERIC_ARG3,  LLDB_INVALID_REGNUM),
     DEFINE_GPR(rdi,    "arg1",      dwarf_rdi_x86_64,        dwarf_rdi_x86_64,    LLDB_REGNUM_GENERIC_ARG1,  LLDB_INVALID_REGNUM),
@@ -111,20 +117,20 @@ g_register_infos_x86_64[] =
     DEFINE_GPR(rsp,    "sp",        dwarf_rsp_x86_64,        dwarf_rsp_x86_64,    LLDB_REGNUM_GENERIC_SP,    LLDB_INVALID_REGNUM),
     DEFINE_GPR(r8,     "arg5",      dwarf_r8_x86_64,         dwarf_r8_x86_64,     LLDB_REGNUM_GENERIC_ARG5,  LLDB_INVALID_REGNUM),
     DEFINE_GPR(r9,     "arg6",      dwarf_r9_x86_64,         dwarf_r9_x86_64,     LLDB_REGNUM_GENERIC_ARG6,  LLDB_INVALID_REGNUM),
-    DEFINE_GPR(r10,    NULL,        dwarf_r10_x86_64,        dwarf_r10_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(r11,    NULL,        dwarf_r11_x86_64,        dwarf_r11_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(r12,    NULL,        dwarf_r12_x86_64,        dwarf_r12_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(r13,    NULL,        dwarf_r13_x86_64,        dwarf_r13_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(r14,    NULL,        dwarf_r14_x86_64,        dwarf_r14_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(r15,    NULL,        dwarf_r15_x86_64,        dwarf_r15_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r10,    nullptr,     dwarf_r10_x86_64,        dwarf_r10_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r11,    nullptr,     dwarf_r11_x86_64,        dwarf_r11_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r12,    nullptr,     dwarf_r12_x86_64,        dwarf_r12_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r13,    nullptr,     dwarf_r13_x86_64,        dwarf_r13_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r14,    nullptr,     dwarf_r14_x86_64,        dwarf_r14_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(r15,    nullptr,     dwarf_r15_x86_64,        dwarf_r15_x86_64,    LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
     DEFINE_GPR(rip,    "pc",        dwarf_rip_x86_64,        dwarf_rip_x86_64,    LLDB_REGNUM_GENERIC_PC,    LLDB_INVALID_REGNUM),
     DEFINE_GPR(rflags, "flags",     dwarf_rflags_x86_64,     dwarf_rflags_x86_64, LLDB_REGNUM_GENERIC_FLAGS, LLDB_INVALID_REGNUM),
-    DEFINE_GPR(cs,     NULL,        dwarf_cs_x86_64,         dwarf_cs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(fs,     NULL,        dwarf_fs_x86_64,         dwarf_fs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(gs,     NULL,        dwarf_gs_x86_64,         dwarf_gs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(ss,     NULL,        dwarf_ss_x86_64,         dwarf_ss_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(ds,     NULL,        dwarf_ds_x86_64,         dwarf_ds_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
-    DEFINE_GPR(es,     NULL,        dwarf_es_x86_64,         dwarf_es_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(cs,     nullptr,     dwarf_cs_x86_64,         dwarf_cs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(fs,     nullptr,     dwarf_fs_x86_64,         dwarf_fs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(gs,     nullptr,     dwarf_gs_x86_64,         dwarf_gs_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ss,     nullptr,     dwarf_ss_x86_64,         dwarf_ss_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(ds,     nullptr,     dwarf_ds_x86_64,         dwarf_ds_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
+    DEFINE_GPR(es,     nullptr,     dwarf_es_x86_64,         dwarf_es_x86_64,     LLDB_INVALID_REGNUM,       LLDB_INVALID_REGNUM),
 
     DEFINE_GPR_PSEUDO_32(eax, rax),
     DEFINE_GPR_PSEUDO_32(ebx, rbx),
@@ -255,6 +261,7 @@ g_register_infos_x86_64[] =
     DEFINE_DR(dr, 6),
     DEFINE_DR(dr, 7)
 };
+
 static_assert((sizeof(g_register_infos_x86_64) / sizeof(g_register_infos_x86_64[0])) == k_num_registers_x86_64,
     "g_register_infos_x86_64 has wrong number of register infos");
 
@@ -274,7 +281,6 @@ static_assert((sizeof(g_register_infos_x86_64) / sizeof(g_register_infos_x86_64[
 #undef DEFINE_GPR_PSEUDO_8L
 
 #endif // DECLARE_REGISTER_INFOS_X86_64_STRUCT
-
 
 #ifdef UPDATE_REGISTER_INFOS_I386_STRUCT_WITH_X86_64_OFFSETS
 
