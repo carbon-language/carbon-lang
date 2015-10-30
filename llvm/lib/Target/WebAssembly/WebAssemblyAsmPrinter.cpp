@@ -339,24 +339,25 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 }
 
 void WebAssemblyAsmPrinter::EmitEndOfAsmFile(Module &M) {
-    SmallString<128> Str;
-    raw_svector_ostream OS(Str);
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
   for (const Function &F : M)
     if (F.isDeclarationForLinker()) {
       assert(F.hasName() && "imported functions must have a name");
       if (F.getName().startswith("llvm."))
-	continue;
+        continue;
       if (Str.empty())
-	OS << "\t.imports\n";
+        OS << "\t.imports\n";
       Type *Rt = F.getReturnType();
-      OS << "\t.import " <<  toSymbol(F.getName()) << " \"\" \"" << F.getName()
-	 << "\"";
+      OS << "\t.import " << toSymbol(F.getName()) << " \"\" \"" << F.getName()
+         << "\" (param";
       for (const Argument &A : F.args())
-	OS << " (param " << toString(A.getType()) << ')';
+        OS << ' ' << toString(A.getType());
+      OS << ')';
       if (!Rt->isVoidTy())
-	OS << " (result " << toString(Rt) << ')';
+        OS << " (result " << toString(Rt) << ')';
       OS << '\n';
-  }
+    }
   OutStreamer->EmitRawText(OS.str());
 }
 
