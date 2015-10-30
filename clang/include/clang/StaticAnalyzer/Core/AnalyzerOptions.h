@@ -262,9 +262,6 @@ private:
   /// \sa shouldInlineLambdas
   Optional<bool> InlineLambdas;
 
-  /// \sa shouldWidenLoops
-  Optional<bool> WidenLoops;
-
   /// A helper function that retrieves option for a given full-qualified
   /// checker name.
   /// Options for checkers can be specified via 'analyzer-config' command-line
@@ -528,10 +525,6 @@ public:
   /// Returns true if lambdas should be inlined. Otherwise a sink node will be
   /// generated each time a LambdaExpr is visited.
   bool shouldInlineLambdas();
-
-  /// Returns true if the analysis should try to widen loops.
-  /// This is controlled by the 'widen-loops' config option.
-  bool shouldWidenLoops();
 
 public:
   AnalyzerOptions() :

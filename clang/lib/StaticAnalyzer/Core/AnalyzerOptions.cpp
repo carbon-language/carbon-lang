@@ -338,9 +338,3 @@ bool AnalyzerOptions::shouldInlineLambdas() {
     InlineLambdas = getBooleanOption("inline-lambdas", /*Default=*/true);
   return InlineLambdas.getValue();
 }
-
-bool AnalyzerOptions::shouldWidenLoops() {
-  if (!WidenLoops.hasValue())
-    WidenLoops = getBooleanOption("widen-loops", /*Default=*/false);
-  return WidenLoops.getValue();
-}

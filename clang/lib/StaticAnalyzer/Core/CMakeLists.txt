@@ -28,7 +28,6 @@ add_clang_library(clangStaticAnalyzerCore
   ExprEngineObjC.cpp
   FunctionSummary.cpp
   HTMLDiagnostics.cpp
-  LoopWidening.cpp
   MemRegion.cpp
   PathDiagnostic.cpp
   PlistDiagnostics.cpp
