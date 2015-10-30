@@ -217,26 +217,18 @@ DIInliningInfo SymbolizableObjectFile::symbolizeInlinedCode(
   if (InlinedContext.getNumberOfFrames() == 0)
     InlinedContext.addFrame(DILineInfo());
 
-  if (FNKind != FunctionNameKind::LinkageName || !UseSymbolTable)
-    return InlinedContext;
-
   // Override the function name in lower frame with name from symbol table.
-  // We can't directly change the last element of DIInliningInfo, so copy
-  // all frames into new context, replacing function name in the last one.
-  DIInliningInfo PatchedInlinedContext;
-  for (uint32_t i = 0, n = InlinedContext.getNumberOfFrames(); i < n; i++) {
-    DILineInfo LineInfo = InlinedContext.getFrame(i);
-    if (i == n - 1) {
-      std::string FunctionName;
-      uint64_t Start, Size;
-      if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
-                                 FunctionName, Start, Size)) {
-        LineInfo.FunctionName = FunctionName;
-      }
+  if (FNKind == FunctionNameKind::LinkageName && UseSymbolTable) {
+    std::string FunctionName;
+    uint64_t Start, Size;
+    if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
+                               FunctionName, Start, Size)) {
+      InlinedContext.getMutableFrame(InlinedContext.getNumberOfFrames() - 1)
+          ->FunctionName = FunctionName;
     }
-    PatchedInlinedContext.addFrame(LineInfo);
   }
-  return PatchedInlinedContext;
+
+  return InlinedContext;
 }
 
 DIGlobal SymbolizableObjectFile::symbolizeData(uint64_t ModuleOffset) const {

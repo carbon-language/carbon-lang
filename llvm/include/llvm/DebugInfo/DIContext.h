@@ -57,6 +57,10 @@ class DIInliningInfo {
     assert(Index < Frames.size());
     return Frames[Index];
   }
+  DILineInfo *getMutableFrame(unsigned Index) {
+    assert(Index < Frames.size());
+    return &Frames[Index];
+  }
   uint32_t getNumberOfFrames() const {
     return Frames.size();
   }
