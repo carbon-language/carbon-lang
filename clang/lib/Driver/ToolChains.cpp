@@ -1037,10 +1037,18 @@ bool MachO::UseDwarfDebugFlags() const {
   return false;
 }
 
-bool Darwin::UseSjLjExceptions() const {
+bool Darwin::UseSjLjExceptions(const ArgList &Args) const {
   // Darwin uses SjLj exceptions on ARM.
-  return (getTriple().getArch() == llvm::Triple::arm ||
-          getTriple().getArch() == llvm::Triple::thumb);
+  if (getTriple().getArch() != llvm::Triple::arm &&
+      getTriple().getArch() != llvm::Triple::thumb)
+    return false;
+
+  // We can't check directly for watchOS here. ComputeLLVMTriple only
+  // fills in the ArchName correctly.
+  llvm::Triple Triple(ComputeLLVMTriple(Args));
+  return !(Triple.getArchName() == "armv7k" ||
+           Triple.getArchName() == "thumbv7k");
+
 }
 
 bool MachO::isPICDefault() const { return true; }
@@ -2952,7 +2960,7 @@ Tool *FreeBSD::buildAssembler() const {
 
 Tool *FreeBSD::buildLinker() const { return new tools::freebsd::Linker(*this); }
 
-bool FreeBSD::UseSjLjExceptions() const {
+bool FreeBSD::UseSjLjExceptions(const ArgList &Args) const {
   // FreeBSD uses SjLj exceptions on ARM oabi.
   switch (getTriple().getEnvironment()) {
   case llvm::Triple::GNUEABIHF:

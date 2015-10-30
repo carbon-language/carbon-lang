@@ -304,7 +304,9 @@ public:
   virtual bool GetDefaultStandaloneDebug() const { return false; }
 
   /// UseSjLjExceptions - Does this tool chain use SjLj exceptions.
-  virtual bool UseSjLjExceptions() const { return false; }
+  virtual bool UseSjLjExceptions(const llvm::opt::ArgList &Args) const {
+    return false;
+  }
 
   /// getThreadModel() - Which thread model does this target use?
   virtual std::string getThreadModel() const { return "posix"; }

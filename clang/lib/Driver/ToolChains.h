@@ -339,7 +339,9 @@ public:
 
   bool UseDwarfDebugFlags() const override;
 
-  bool UseSjLjExceptions() const override { return false; }
+  bool UseSjLjExceptions(const llvm::opt::ArgList &Args) const override {
+    return false;
+  }
 
   /// }
 };
@@ -528,7 +530,7 @@ public:
 
   void CheckObjCARC() const override;
 
-  bool UseSjLjExceptions() const override;
+  bool UseSjLjExceptions(const llvm::opt::ArgList &Args) const override;
 
   SanitizerMask getSupportedSanitizers() const override;
 };
@@ -714,7 +716,7 @@ public:
       const llvm::opt::ArgList &DriverArgs,
       llvm::opt::ArgStringList &CC1Args) const override;
 
-  bool UseSjLjExceptions() const override;
+  bool UseSjLjExceptions(const llvm::opt::ArgList &Args) const override;
   bool isPIEDefault() const override;
   SanitizerMask getSupportedSanitizers() const override;
   unsigned GetDefaultDwarfVersion() const override { return 2; }
