@@ -40,7 +40,7 @@ void llvm::initializeIPO(PassRegistry &Registry) {
   initializeMergeFunctionsPass(Registry);
   initializePartialInlinerPass(Registry);
   initializePruneEHPass(Registry);
-  initializeStripDeadPrototypesPassPass(Registry);
+  initializeStripDeadPrototypesLegacyPassPass(Registry);
   initializeStripSymbolsPass(Registry);
   initializeStripDebugDeclarePass(Registry);
   initializeStripDeadDebugInfoPass(Registry);

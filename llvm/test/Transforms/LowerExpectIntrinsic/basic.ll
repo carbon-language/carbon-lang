@@ -1,5 +1,5 @@
 ; RUN: opt -lower-expect -strip-dead-prototypes -S -o - < %s | FileCheck %s
-; RUN: opt -S -passes=lower-expect < %s | opt -strip-dead-prototypes -S | FileCheck %s
+; RUN: opt -S -passes='function(lower-expect),strip-dead-prototypes' < %s | FileCheck %s
 
 ; CHECK-LABEL: @test1(
 define i32 @test1(i32 %x) nounwind uwtable ssp {

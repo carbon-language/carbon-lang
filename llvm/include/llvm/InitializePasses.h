@@ -260,7 +260,7 @@ void initializeStackColoringPass(PassRegistry&);
 void initializeStackSlotColoringPass(PassRegistry&);
 void initializeStraightLineStrengthReducePass(PassRegistry &);
 void initializeStripDeadDebugInfoPass(PassRegistry&);
-void initializeStripDeadPrototypesPassPass(PassRegistry&);
+void initializeStripDeadPrototypesLegacyPassPass(PassRegistry&);
 void initializeStripDebugDeclarePass(PassRegistry&);
 void initializeStripNonDebugSymbolsPass(PassRegistry&);
 void initializeStripSymbolsPass(PassRegistry&);

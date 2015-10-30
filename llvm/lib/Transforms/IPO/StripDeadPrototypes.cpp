@@ -14,35 +14,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/StripDeadPrototypes.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Transforms/IPO.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "strip-dead-prototypes"
 
 STATISTIC(NumDeadPrototypes, "Number of dead prototypes removed");
 
-namespace {
-
-/// @brief Pass to remove unused function declarations.
-class StripDeadPrototypesPass : public ModulePass {
-public:
-  static char ID; // Pass identification, replacement for typeid
-  StripDeadPrototypesPass() : ModulePass(ID) {
-    initializeStripDeadPrototypesPassPass(*PassRegistry::getPassRegistry());
-  }
-  bool runOnModule(Module &M) override;
-};
-
-} // end anonymous namespace
-
-char StripDeadPrototypesPass::ID = 0;
-INITIALIZE_PASS(StripDeadPrototypesPass, "strip-dead-prototypes",
-                "Strip Unused Function Prototypes", false, false)
-
-bool StripDeadPrototypesPass::runOnModule(Module &M) {
+static bool stripDeadPrototypes(Module &M) {
   bool MadeChange = false;
 
   // Erase dead function prototypes.
@@ -69,6 +53,32 @@ bool StripDeadPrototypesPass::runOnModule(Module &M) {
   return MadeChange;
 }
 
+PreservedAnalyses StripDeadPrototypesPass::run(Module &M) {
+  if (stripDeadPrototypes(M))
+    return PreservedAnalyses::none();
+  return PreservedAnalyses::all();
+}
+
+namespace {
+
+class StripDeadPrototypesLegacyPass : public ModulePass {
+public:
+  static char ID; // Pass identification, replacement for typeid
+  StripDeadPrototypesLegacyPass() : ModulePass(ID) {
+    initializeStripDeadPrototypesLegacyPassPass(
+        *PassRegistry::getPassRegistry());
+  }
+  bool runOnModule(Module &M) override {
+    return stripDeadPrototypes(M);
+  }
+};
+
+} // end anonymous namespace
+
+char StripDeadPrototypesLegacyPass::ID = 0;
+INITIALIZE_PASS(StripDeadPrototypesLegacyPass, "strip-dead-prototypes",
+                "Strip Unused Function Prototypes", false, false)
+
 ModulePass *llvm::createStripDeadPrototypesPass() {
-  return new StripDeadPrototypesPass();
+  return new StripDeadPrototypesLegacyPass();
 }

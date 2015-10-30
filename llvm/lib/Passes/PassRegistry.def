@@ -31,6 +31,7 @@ MODULE_PASS("invalidate<all>", InvalidateAllAnalysesPass())
 MODULE_PASS("no-op-module", NoOpModulePass())
 MODULE_PASS("print", PrintModulePass(dbgs()))
 MODULE_PASS("print-cg", LazyCallGraphPrinterPass(dbgs()))
+MODULE_PASS("strip-dead-prototypes", StripDeadPrototypesPass())
 MODULE_PASS("verify", VerifierPass())
 #undef MODULE_PASS
 
