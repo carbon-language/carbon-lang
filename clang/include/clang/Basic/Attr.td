@@ -456,8 +456,12 @@ def Availability : InheritableAttr {
              .Case("android", "Android")
              .Case("ios", "iOS")
              .Case("macosx", "OS X")
+             .Case("tvos", "tvOS")
+             .Case("watchos", "watchOS")
              .Case("ios_app_extension", "iOS (App Extension)")
              .Case("macosx_app_extension", "OS X (App Extension)")
+             .Case("tvos_app_extension", "tvOS (App Extension)")
+             .Case("watchos_app_extension", "watchOS (App Extension)")
              .Default(llvm::StringRef());
 } }];
   let HasCustomParsing = 1;

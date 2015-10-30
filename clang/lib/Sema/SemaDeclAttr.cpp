@@ -1863,6 +1863,22 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
         continue;
       }
 
+      // If there is an existing availability attribute for this platform that
+      // is explicit and the new one is implicit use the explicit one and
+      // discard the new implicit attribute.
+      if (OldAA->getRange().isValid() && Range.isInvalid()) {
+        return nullptr;
+      }
+
+      // If there is an existing attribute for this platform that is implicit
+      // and the new attribute is explicit then erase the old one and
+      // continue processing the attributes.
+      if (Range.isValid() && OldAA->getRange().isInvalid()) {
+        Attrs.erase(Attrs.begin() + i);
+        --e;
+        continue;
+      }
+
       FoundAny = true;
       VersionTuple OldIntroduced = OldAA->getIntroduced();
       VersionTuple OldDeprecated = OldAA->getDeprecated();
@@ -2000,6 +2016,74 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
                                                       Index);
   if (NewAttr)
     D->addAttr(NewAttr);
+
+  // Transcribe "ios" to "watchos" (and add a new attribute) if the versioning
+  // matches before the start of the watchOS platform.
+  if (S.Context.getTargetInfo().getTriple().isWatchOS()) {
+    IdentifierInfo *NewII = nullptr;
+    if (II->getName() == "ios")
+      NewII = &S.Context.Idents.get("watchos");
+    else if (II->getName() == "ios_app_extension")
+      NewII = &S.Context.Idents.get("watchos_app_extension");
+
+    if (NewII) {
+        auto adjustWatchOSVersion = [](VersionTuple Version) -> VersionTuple {
+          if (Version.empty())
+            return Version;
+          auto Major = Version.getMajor();
+          auto NewMajor = Major >= 9 ? Major - 7 : 0;
+          if (NewMajor >= 2) {
+            if (Version.getMinor().hasValue()) {
+              if (Version.getSubminor().hasValue())
+                return VersionTuple(NewMajor, Version.getMinor().getValue(),
+                                    Version.getSubminor().getValue());
+              else
+                return VersionTuple(NewMajor, Version.getMinor().getValue());
+            }
+          }
+
+          return VersionTuple(2, 0);
+        };
+
+        auto NewIntroduced = adjustWatchOSVersion(Introduced.Version);
+        auto NewDeprecated = adjustWatchOSVersion(Deprecated.Version);
+        auto NewObsoleted = adjustWatchOSVersion(Obsoleted.Version);
+
+        AvailabilityAttr *NewAttr = S.mergeAvailabilityAttr(ND,
+                                                            SourceRange(),
+                                                            NewII,
+                                                            NewIntroduced,
+                                                            NewDeprecated,
+                                                            NewObsoleted,
+                                                            IsUnavailable, Str,
+                                                            Sema::AMK_None,
+                                                            Index);
+        if (NewAttr)
+          D->addAttr(NewAttr);
+      }
+  } else if (S.Context.getTargetInfo().getTriple().isTvOS()) {
+    // Transcribe "ios" to "tvos" (and add a new attribute) if the versioning
+    // matches before the start of the tvOS platform.
+    IdentifierInfo *NewII = nullptr;
+    if (II->getName() == "ios")
+      NewII = &S.Context.Idents.get("tvos");
+    else if (II->getName() == "ios_app_extension")
+      NewII = &S.Context.Idents.get("tvos_app_extension");
+
+    if (NewII) {
+        AvailabilityAttr *NewAttr = S.mergeAvailabilityAttr(ND,
+                                                            SourceRange(),
+                                                            NewII,
+                                                            Introduced.Version,
+                                                            Deprecated.Version,
+                                                            Obsoleted.Version,
+                                                            IsUnavailable, Str,
+                                                            Sema::AMK_None,
+                                                            Index);
+        if (NewAttr)
+          D->addAttr(NewAttr);
+      }
+  }
 }
 
 template <class T>
