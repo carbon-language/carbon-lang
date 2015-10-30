@@ -638,7 +638,7 @@ SBDebugger::CreateTarget (const char *filename,
     }
     else
     {
-        sb_error.SetErrorString("invalid target");
+        sb_error.SetErrorString("invalid debugger");
     }
 
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
