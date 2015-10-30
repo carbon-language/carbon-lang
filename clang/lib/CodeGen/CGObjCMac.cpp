@@ -4489,7 +4489,7 @@ void CGObjCCommonMac::EmitImageInfo() {
 
   // Indicate whether we're compiling this to run on a simulator.
   const llvm::Triple &Triple = CGM.getTarget().getTriple();
-  if (Triple.isiOS() &&
+  if ((Triple.isiOS() || Triple.isWatchOS()) &&
       (Triple.getArch() == llvm::Triple::x86 ||
        Triple.getArch() == llvm::Triple::x86_64))
     Mod.addModuleFlag(llvm::Module::Error, "Objective-C Is Simulated",
@@ -5902,7 +5902,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     // Make this entry NULL for any iOS device target, any iOS simulator target,
     // OS X with deployment target 10.9 or later.
     const llvm::Triple &Triple = CGM.getTarget().getTriple();
-    if (Triple.isiOS() || (Triple.isMacOSX() && !Triple.isMacOSXVersionLT(10, 9)))
+    if (Triple.isiOS() || Triple.isWatchOS() ||
+        (Triple.isMacOSX() && !Triple.isMacOSXVersionLT(10, 9)))
       // This entry will be null.
       ObjCEmptyVtableVar = nullptr;
     else
@@ -7224,6 +7225,7 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
 
   case ObjCRuntime::MacOSX:
   case ObjCRuntime::iOS:
+  case ObjCRuntime::WatchOS:
     return new CGObjCNonFragileABIMac(CGM);
 
   case ObjCRuntime::GNUstep:

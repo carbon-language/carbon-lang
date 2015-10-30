@@ -611,11 +611,15 @@ arm::FloatABI arm::getARMFloatABI(const ToolChain &TC, const ArgList &Args) {
     switch (Triple.getOS()) {
     case llvm::Triple::Darwin:
     case llvm::Triple::MacOSX:
-    case llvm::Triple::IOS: {
+    case llvm::Triple::IOS:
+    case llvm::Triple::TvOS: {
       // Darwin defaults to "softfp" for v6 and v7.
       ABI = (SubArch == 6 || SubArch == 7) ? FloatABI::SoftFP : FloatABI::Soft;
       break;
     }
+    case llvm::Triple::WatchOS:
+      ABI = FloatABI::Hard;
+      break;
 
     // FIXME: this is invalid for WindowsCE
     case llvm::Triple::Win32:
@@ -803,7 +807,8 @@ static void getARMTargetFeatures(const ToolChain &TC,
                                options::OPT_mno_long_calls)) {
     if (A->getOption().matches(options::OPT_mlong_calls))
       Features.push_back("+long-calls");
-  } else if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6))) {
+  } else if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6)) &&
+             !Triple.isWatchOS()) {
       Features.push_back("+long-calls");
   }
 
@@ -866,6 +871,8 @@ void Clang::AddARMTargetArgs(const llvm::Triple &Triple, const ArgList &Args,
   } else if (Triple.isOSBinFormatMachO()) {
     if (useAAPCSForMachO(Triple)) {
       ABIName = "aapcs";
+    } else if (Triple.isWatchOS()) {
+      ABIName = "aapcs16";
     } else {
       ABIName = "apcs-gnu";
     }

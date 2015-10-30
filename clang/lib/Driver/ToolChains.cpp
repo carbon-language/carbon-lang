@@ -68,9 +68,7 @@ bool MachO::HasNativeLLVMSupport() const { return true; }
 /// Darwin provides an ARC runtime starting in MacOS X 10.7 and iOS 5.0.
 ObjCRuntime Darwin::getDefaultObjCRuntime(bool isNonFragile) const {
   if (isTargetWatchOSBased())
-    // FIXME: not quite iOS because of version mismatch. Choose something for
-    // now.
-    return ObjCRuntime(ObjCRuntime::iOS, TargetVersion);
+    return ObjCRuntime(ObjCRuntime::WatchOS, TargetVersion);
   if (isTargetIOSBased())
     return ObjCRuntime(ObjCRuntime::iOS, TargetVersion);
   if (isNonFragile)

@@ -19,6 +19,7 @@
 #include "clang/Basic/MacroBuilder.h"
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetOptions.h"
+#include "clang/Basic/Version.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -4464,7 +4465,9 @@ public:
     //
     // FIXME: We need support for -meabi... we could just mangle it into the
     // name.
-    if (Name == "apcs-gnu") {
+    // FIXME: aapcs16 isn't really the same as APCS, this allows tests to pass
+    // until the real ABI is committed.
+    if (Name == "apcs-gnu" || Name == "aapcs16") {
       setABIAPCS();
       return true;
     }

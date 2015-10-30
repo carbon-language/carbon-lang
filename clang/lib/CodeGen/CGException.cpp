@@ -129,6 +129,7 @@ static const EHPersonality &getObjCPersonality(const llvm::Triple &T,
     return getCPersonality(T, L);
   case ObjCRuntime::MacOSX:
   case ObjCRuntime::iOS:
+  case ObjCRuntime::WatchOS:
     return EHPersonality::NeXT_ObjC;
   case ObjCRuntime::GNUstep:
     if (L.ObjCRuntime.getVersion() >= VersionTuple(1, 7))
@@ -160,6 +161,7 @@ static const EHPersonality &getObjCXXPersonality(const llvm::Triple &T,
   // function on targets using (backend-driven) SJLJ EH.
   case ObjCRuntime::MacOSX:
   case ObjCRuntime::iOS:
+  case ObjCRuntime::WatchOS:
     return EHPersonality::NeXT_ObjC;
 
   // In the fragile ABI, just use C++ exception handling and hope

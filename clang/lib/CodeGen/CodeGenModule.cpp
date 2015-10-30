@@ -65,6 +65,7 @@ static CGCXXABI *createCXXABI(CodeGenModule &CGM) {
   case TargetCXXABI::GenericARM:
   case TargetCXXABI::iOS:
   case TargetCXXABI::iOS64:
+  case TargetCXXABI::WatchOS:
   case TargetCXXABI::GenericMIPS:
   case TargetCXXABI::GenericItanium:
   case TargetCXXABI::WebAssembly:
@@ -187,6 +188,7 @@ void CodeGenModule::createObjCRuntime() {
   case ObjCRuntime::FragileMacOSX:
   case ObjCRuntime::MacOSX:
   case ObjCRuntime::iOS:
+  case ObjCRuntime::WatchOS:
     ObjCRuntime = CreateMacObjCRuntime(*this);
     return;
   }
