@@ -74,7 +74,6 @@ struct FunctionAttrs : public CallGraphSCCPass {
 private:
   TargetLibraryInfo *TLI;
 
-  bool AddReadAttrs(const SCCNodeSet &SCCNodes);
   bool annotateLibraryCalls(const CallGraphSCC &SCC);
 };
 }
@@ -205,18 +204,14 @@ static MemoryAccessKind checkFunctionMemoryAccess(Function &F, AAResults &AAR,
 }
 
 /// Deduce readonly/readnone attributes for the SCC.
-bool FunctionAttrs::AddReadAttrs(const SCCNodeSet &SCCNodes) {
+template <typename AARGetterT>
+static bool addReadAttrs(const SCCNodeSet &SCCNodes, AARGetterT AARGetter) {
   // Check if any of the functions in the SCC read or write memory.  If they
   // write memory then they can't be marked readnone or readonly.
   bool ReadsMemory = false;
   for (Function *F : SCCNodes) {
-    // We need to manually construct BasicAA directly in order to disable its
-    // use of other function analyses.
-    BasicAAResult BAR(createLegacyPMBasicAAResult(*this, *F));
-
-    // Construct our own AA results for this function. We do this manually to
-    // work around the limitations of the legacy pass manager.
-    AAResults AAR(createLegacyPMAAResults(*this, *F, BAR));
+    // Call the callable parameter to look up AA results for this function.
+    AAResults &AAR = AARGetter(*F);
 
     switch (checkFunctionMemoryAccess(*F, AAR, SCCNodes)) {
     case MAK_MayWrite:
@@ -1777,6 +1772,17 @@ bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
   // Annotate declarations for which we have special knowledge.
   bool Changed = annotateLibraryCalls(SCC);
 
+  // We compute dedicated AA results for each function in the SCC as needed. We
+  // use a lambda referencing external objects so that they live long enough to
+  // be queried, but we re-use them each time.
+  Optional<BasicAAResult> BAR;
+  Optional<AAResults> AAR;
+  auto AARGetter = [&](Function &F) -> AAResults & {
+    BAR.emplace(createLegacyPMBasicAAResult(*this, F));
+    AAR.emplace(createLegacyPMAAResults(*this, F, *BAR));
+    return *AAR;
+  };
+
   // Fill SCCNodes with the elements of the SCC. Used for quickly looking up
   // whether a given CallGraphNode is in this SCC. Also track whether there are
   // any external or opt-none nodes that will prevent us from optimizing any
@@ -1795,7 +1801,7 @@ bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
     SCCNodes.insert(F);
   }
 
-  Changed |= AddReadAttrs(SCCNodes);
+  Changed |= addReadAttrs(SCCNodes, AARGetter);
   Changed |= addArgumentAttrs(SCCNodes);
 
   // If we have no external nodes participating in the SCC, we can infer some
