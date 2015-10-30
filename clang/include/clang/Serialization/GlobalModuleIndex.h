@@ -36,6 +36,7 @@ class FileEntry;
 class FileManager;
 class IdentifierIterator;
 class PCHContainerOperations;
+class PCHContainerReader;
 
 namespace serialization {
   class ModuleFile;
