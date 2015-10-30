@@ -8,10 +8,6 @@ int main() {
 // CHECK: !DILocalVariable(name: "i"
 // CHECK-NEXT: !DILexicalBlock(
 
-// FIXME: Looks like we don't actually need both these lexical blocks (disc 2
-// just refers to disc 1, nothing actually uses disc 2).
-// GMLT-NOT: !DILexicalBlock
-// GMLT: !DILexicalBlockFile({{.*}}, discriminator: 2)
 // GMLT-NOT: !DILexicalBlock
 // GMLT: !DILexicalBlockFile({{.*}}, discriminator: 1)
 // Make sure we don't have any more lexical blocks because we don't need them in
