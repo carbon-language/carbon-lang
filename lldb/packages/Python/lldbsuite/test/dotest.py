@@ -21,6 +21,10 @@ for available options.
 """
 
 from __future__ import print_function
+# this module needs to have global visibility, otherwise test cases
+# will import it anew in their local namespace, essentially losing access
+# to all the configuration data
+globals()['lldbtest_config'] = __import__('lldbtest_config')
 
 import use_lldb_suite
 
@@ -42,7 +46,6 @@ import test_results
 from test_results import EventBuilder
 import inspect
 import unittest2
-import lldbtest_config
 import test_categories
 
 import six
