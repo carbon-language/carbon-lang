@@ -15,5 +15,3 @@ BB4:            ; preds = %BB1
         %X = phi i32 [ %A, %BB1 ]               ; <i32> [#uses=1]
         br label %BB3
 }
-
-

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass loops over all of the functions in the input module, looking for 
+// This pass loops over all of the functions in the input module, looking for
 // dead declarations and removes them. Dead declarations are declarations of
 // functions for which no implementation is available (i.e., declarations for
 // unused library functions).
@@ -44,7 +44,7 @@ INITIALIZE_PASS(StripDeadPrototypesPass, "strip-dead-prototypes",
 
 bool StripDeadPrototypesPass::runOnModule(Module &M) {
   bool MadeChange = false;
-  
+
   // Erase dead function prototypes.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
     Function *F = &*I++;
@@ -64,7 +64,7 @@ bool StripDeadPrototypesPass::runOnModule(Module &M) {
     if (GV->isDeclaration() && GV->use_empty())
       GV->eraseFromParent();
   }
-  
+
   // Return an indication of whether we changed anything or not.
   return MadeChange;
 }

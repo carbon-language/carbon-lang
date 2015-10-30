@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the common infrastructure (including C bindings) for 
-// libLLVMIPO.a, which implements several transformations over the LLVM 
+// This file implements the common infrastructure (including C bindings) for
+// libLLVMIPO.a, which implements several transformations over the LLVM
 // intermediate representation.
 //
 //===----------------------------------------------------------------------===//
