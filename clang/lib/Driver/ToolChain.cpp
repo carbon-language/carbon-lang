@@ -333,6 +333,7 @@ Tool *ToolChain::SelectTool(const JobAction &JA) const {
 
 std::string ToolChain::GetFilePath(const char *Name) const {
   return D.GetFilePath(Name, *this);
+
 }
 
 std::string ToolChain::GetProgramPath(const char *Name) const {
