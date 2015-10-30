@@ -1425,7 +1425,10 @@ lldb::ValueObjectSP
 SBValue::GetSP (ValueLocker &locker) const
 {
     if (!m_opaque_sp || !m_opaque_sp->IsValid())
+    {
+        locker.GetError().SetErrorString("No value");
         return ValueObjectSP();
+    }
     return locker.GetLockedSP(*m_opaque_sp.get());
 }
 
