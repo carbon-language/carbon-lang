@@ -68,10 +68,6 @@ public:
     Register = R;
     Offset = O;
   }
-
-#ifndef NDEBUG
-  void dump();
-#endif
 };
 
 inline bool operator!=(const MachineLocation &LHS, const MachineLocation &RHS) {
