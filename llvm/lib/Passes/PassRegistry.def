@@ -63,6 +63,7 @@ FUNCTION_ANALYSIS("targetir",
 #ifndef FUNCTION_PASS
 #define FUNCTION_PASS(NAME, CREATE_PASS)
 #endif
+FUNCTION_PASS("adce", ADCEPass())
 FUNCTION_PASS("early-cse", EarlyCSEPass())
 FUNCTION_PASS("instcombine", InstCombinePass())
 FUNCTION_PASS("invalidate<all>", InvalidateAllAnalysesPass())

@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/ADCE.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -26,35 +26,14 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
+#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "adce"
 
 STATISTIC(NumRemoved, "Number of instructions removed");
 
-namespace {
-struct ADCE : public FunctionPass {
-  static char ID; // Pass identification, replacement for typeid
-  ADCE() : FunctionPass(ID) {
-    initializeADCEPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool runOnFunction(Function& F) override;
-
-  void getAnalysisUsage(AnalysisUsage& AU) const override {
-    AU.setPreservesCFG();
-    AU.addPreserved<GlobalsAAWrapperPass>();
-  }
-};
-}
-
-char ADCE::ID = 0;
-INITIALIZE_PASS(ADCE, "adce", "Aggressive Dead Code Elimination", false, false)
-
-bool ADCE::runOnFunction(Function& F) {
-  if (skipOptnoneFunction(F))
-    return false;
-
+static bool aggressiveDCE(Function& F) {
   SmallPtrSet<Instruction*, 128> Alive;
   SmallVector<Instruction*, 128> Worklist;
 
@@ -96,6 +75,34 @@ bool ADCE::runOnFunction(Function& F) {
   return !Worklist.empty();
 }
 
-FunctionPass *llvm::createAggressiveDCEPass() {
-  return new ADCE();
+PreservedAnalyses ADCEPass::run(Function &F) {
+  if (aggressiveDCE(F))
+    return PreservedAnalyses::none();
+  return PreservedAnalyses::all();
 }
+
+namespace {
+struct ADCELegacyPass : public FunctionPass {
+  static char ID; // Pass identification, replacement for typeid
+  ADCELegacyPass() : FunctionPass(ID) {
+    initializeADCELegacyPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnFunction(Function& F) override {
+    if (skipOptnoneFunction(F))
+      return false;
+    return aggressiveDCE(F);
+  }
+
+  void getAnalysisUsage(AnalysisUsage& AU) const override {
+    AU.setPreservesCFG();
+    AU.addPreserved<GlobalsAAWrapperPass>();
+  }
+};
+}
+
+char ADCELegacyPass::ID = 0;
+INITIALIZE_PASS(ADCELegacyPass, "adce", "Aggressive Dead Code Elimination",
+                false, false)
+
+FunctionPass *llvm::createAggressiveDCEPass() { return new ADCELegacyPass(); }
