@@ -6975,7 +6975,7 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     // FALLTHROUGH
   case MVT::v16i8:
   case MVT::v32i8: {
-    assert((VT.getSizeInBits() == 128 || Subtarget->hasAVX2()) &&
+    assert((VT.is128BitVector() || Subtarget->hasAVX2()) &&
            "256-bit byte-blends require AVX2 support!");
 
     // Attempt to lower to a bitmask if we can. VPAND is faster than VPBLENDVB.
@@ -7202,7 +7202,7 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
                         DAG.getConstant(Rotation * Scale, DL, MVT::i8)));
   }
 
-  assert(VT.getSizeInBits() == 128 &&
+  assert(VT.is128BitVector() &&
          "Rotate-based lowering only supports 128-bit lowering!");
   assert(Mask.size() <= 16 &&
          "Can shuffle at most 16 bytes in a 128-bit vector!");
@@ -7490,7 +7490,7 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
   if (Subtarget->hasSSE41()) {
     // Not worth offseting 128-bit vectors if scale == 2, a pattern using
     // PUNPCK will catch this in a later shuffle match.
-    if (Offset && Scale == 2 && VT.getSizeInBits() == 128)
+    if (Offset && Scale == 2 && VT.is128BitVector())
       return SDValue();
     MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits * Scale),
                                  NumElements / Scale);
@@ -7498,7 +7498,7 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
     return DAG.getBitcast(VT, InputV);
   }
 
-  assert(VT.getSizeInBits() == 128 && "Only 128-bit vectors can be extended.");
+  assert(VT.is128BitVector() && "Only 128-bit vectors can be extended.");
 
   // For any extends we can cheat for larger element sizes and use shuffle
   // instructions that can fold with a load and/or copy.
@@ -7528,7 +7528,7 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
   // to 64-bits.
   if ((Scale * EltBits) == 64 && EltBits < 32 && Subtarget->hasSSE4A()) {
     assert(NumElements == (int)Mask.size() && "Unexpected shuffle mask size!");
-    assert(VT.getSizeInBits() == 128 && "Unexpected vector width!");
+    assert(VT.is128BitVector() && "Unexpected vector width!");
 
     int LoIdx = Offset * EltBits;
     SDValue Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
@@ -9917,7 +9917,7 @@ static SDValue lowerVectorShuffleAsLanePermuteAndBlend(SDLoc DL, MVT VT,
                                                        ArrayRef<int> Mask,
                                                        SelectionDAG &DAG) {
   // FIXME: This should probably be generalized for 512-bit vectors as well.
-  assert(VT.getSizeInBits() == 256 && "Only for 256-bit vector shuffles!");
+  assert(VT.is256BitVector() && "Only for 256-bit vector shuffles!");
   int LaneSize = Mask.size() / 2;
 
   // If there are only inputs from one 128-bit lane, splitting will in fact be
@@ -11120,13 +11120,13 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
   }
 
   // For each vector width, delegate to a specialized lowering routine.
-  if (VT.getSizeInBits() == 128)
+  if (VT.is128BitVector())
     return lower128BitVectorShuffle(Op, V1, V2, VT, Subtarget, DAG);
 
-  if (VT.getSizeInBits() == 256)
+  if (VT.is256BitVector())
     return lower256BitVectorShuffle(Op, V1, V2, VT, Subtarget, DAG);
 
-  if (VT.getSizeInBits() == 512)
+  if (VT.is512BitVector())
     return lower512BitVectorShuffle(Op, V1, V2, VT, Subtarget, DAG);
 
   if (Is1BitVector)
@@ -18777,10 +18777,10 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget *Subtarget,
   // +ve/-ve Amt = rotate left/right.
 
   // Split 256-bit integers.
-  if (VT.getSizeInBits() == 256)
+  if (VT.is256BitVector())
     return Lower256IntArith(Op, DAG);
 
-  assert(VT.getSizeInBits() == 128 && "Only rotate 128-bit vectors!");
+  assert(VT.is128BitVector() && "Only rotate 128-bit vectors!");
 
   // Attempt to rotate by immediate.
   if (auto *BVAmt = dyn_cast<BuildVectorSDNode>(Amt)) {
@@ -22234,7 +22234,7 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // doesn't preclude something switching to the shorter encoding post-RA.
   //
   // FIXME: Should teach these routines about AVX vector widths.
-  if (FloatDomain && VT.getSizeInBits() == 128) {
+  if (FloatDomain && VT.is128BitVector()) {
     if (Mask.equals({0, 0}) || Mask.equals({1, 1})) {
       bool Lo = Mask.equals({0, 0});
       unsigned Shuffle;
@@ -22298,7 +22298,7 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // We always canonicalize the 8 x i16 and 16 x i8 shuffles into their UNPCK
   // variants as none of these have single-instruction variants that are
   // superior to the UNPCK formulation.
-  if (!FloatDomain && VT.getSizeInBits() == 128 &&
+  if (!FloatDomain && VT.is128BitVector() &&
       (Mask.equals({0, 0, 1, 1, 2, 2, 3, 3}) ||
        Mask.equals({4, 4, 5, 5, 6, 6, 7, 7}) ||
        Mask.equals({0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7}) ||
@@ -23819,11 +23819,10 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     if (VT.getScalarType() == MVT::i16)
       return SDValue();
     // Dynamic blending was only available from SSE4.1 onward.
-    if (VT.getSizeInBits() == 128 && !Subtarget->hasSSE41())
+    if (VT.is128BitVector() && !Subtarget->hasSSE41())
       return SDValue();
     // Byte blends are only available in AVX2
-    if (VT.getSizeInBits() == 256 && VT.getScalarType() == MVT::i8 &&
-        !Subtarget->hasAVX2())
+    if (VT == MVT::v32i8 && !Subtarget->hasAVX2())
       return SDValue();
 
     assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
@@ -26024,7 +26023,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  if (Subtarget->hasAVX() && VT.isVector() && VT.getSizeInBits() == 256)
+  if (Subtarget->hasAVX() && VT.is256BitVector())
     if (SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget))
       return R;
 
