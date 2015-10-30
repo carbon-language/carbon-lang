@@ -1890,6 +1890,21 @@ TEST(Matcher, MatchesPureMethod) {
   EXPECT_TRUE(notMatches("class X { int f(); };", cxxMethodDecl(isPure())));
 }
 
+TEST(Matcher, MatchesCopyAssignmentOperator) {
+  EXPECT_TRUE(matches("class X { X &operator=(X); };",
+                      cxxMethodDecl(isCopyAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(X &); };",
+                      cxxMethodDecl(isCopyAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(const X &); };",
+                      cxxMethodDecl(isCopyAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(volatile X &); };",
+                      cxxMethodDecl(isCopyAssignmentOperator())));
+  EXPECT_TRUE(matches("class X { X &operator=(const volatile X &); };",
+                      cxxMethodDecl(isCopyAssignmentOperator())));
+  EXPECT_TRUE(notMatches("class X { X &operator=(X &&); };",
+                      cxxMethodDecl(isCopyAssignmentOperator())));
+}
+
 TEST(Matcher, MatchesConstMethod) {
   EXPECT_TRUE(
       matches("struct A { void foo() const; };", cxxMethodDecl(isConst())));
@@ -4671,6 +4686,16 @@ public:
                              decl(has(decl(equalsNode(TypedNode)))).bind(""))),
                          *Node, Context)) != nullptr;
   }
+  bool verify(const BoundNodes &Nodes, ASTContext &Context, const Type *Node) {
+    // Use the original typed pointer to verify we can pass pointers to subtypes
+    // to equalsNode.
+    const T *TypedNode = cast<T>(Node);
+    const auto *Dec = Nodes.getNodeAs<FieldDecl>("decl");
+    return selectFirst<T>(
+               "", match(fieldDecl(hasParent(decl(has(fieldDecl(
+                             hasType(type(equalsNode(TypedNode)).bind(""))))))),
+                         *Dec, Context)) != nullptr;
+  }
 };
 
 TEST(IsEqualTo, MatchesNodesByIdentity) {
@@ -4680,6 +4705,10 @@ TEST(IsEqualTo, MatchesNodesByIdentity) {
   EXPECT_TRUE(matchAndVerifyResultTrue(
       "void f() { if (true) if(true) {} }", ifStmt().bind(""),
       new VerifyAncestorHasChildIsEqual<IfStmt>()));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class X { class Y {} y; };",
+      fieldDecl(hasName("y"), hasType(type().bind(""))).bind("decl"),
+      new VerifyAncestorHasChildIsEqual<Type>()));
 }
 
 TEST(MatchFinder, CheckProfiling) {
