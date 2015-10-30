@@ -2192,6 +2192,13 @@ TEST_F(FormatTest, FormatsNamespaces) {
                    "}    // my_namespace\n"
                    "#endif    // HEADER_GUARD"));
 
+  EXPECT_EQ("namespace A::B {\n"
+            "class C {};\n"
+            "}",
+            format("namespace A::B {\n"
+                   "class C {};\n"
+                   "}"));
+
   FormatStyle Style = getLLVMStyle();
   Style.NamespaceIndentation = FormatStyle::NI_All;
   EXPECT_EQ("namespace out {\n"

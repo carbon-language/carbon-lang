@@ -1367,7 +1367,7 @@ void UnwrappedLineParser::parseNamespace() {
 
   const FormatToken &InitialToken = *FormatTok;
   nextToken();
-  if (FormatTok->Tok.is(tok::identifier))
+  while (FormatTok->isOneOf(tok::identifier, tok::coloncolon))
     nextToken();
   if (FormatTok->Tok.is(tok::l_brace)) {
     if (ShouldBreakBeforeBrace(Style, InitialToken))
