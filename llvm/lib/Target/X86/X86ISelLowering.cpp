@@ -10732,16 +10732,15 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
 /// \brief Try to lower a vector shuffle as a 128-bit shuffles.
 static SDValue lowerV4X128VectorShuffle(SDLoc DL, MVT VT,
-                                             ArrayRef<int> Mask,
-                                             SDValue V1, SDValue V2,
-                                             SelectionDAG &DAG) {
+                                        ArrayRef<int> Mask,
+                                        SDValue V1, SDValue V2,
+                                        SelectionDAG &DAG) {
   assert(VT.getScalarSizeInBits() == 64 &&
          "Unexpected element type size for 128bit shuffle.");
 
   // To handle 256 bit vector requires VLX and most probably
   // function lowerV2X128VectorShuffle() is better solution.
-  assert(VT.getSizeInBits() == 512 &&
-         "Unexpected vector size for 128bit shuffle.");
+  assert(VT.is512BitVector() && "Unexpected vector size for 128bit shuffle.");
 
   SmallVector<int, 4> WidenedMask;
   if (!canWidenShuffleElements(Mask, WidenedMask))
@@ -10806,8 +10805,8 @@ static SDValue lowerV8F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
 /// \brief Handle lowering of 16-lane 32-bit floating point shuffles.
 static SDValue lowerV16F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
-                                       const X86Subtarget *Subtarget,
-                                       SelectionDAG &DAG) {
+                                        const X86Subtarget *Subtarget,
+                                        SelectionDAG &DAG) {
   SDLoc DL(Op);
   assert(V1.getSimpleValueType() == MVT::v16f32 && "Bad operand type!");
   assert(V2.getSimpleValueType() == MVT::v16f32 && "Bad operand type!");
@@ -10846,8 +10845,8 @@ static SDValue lowerV8I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
 /// \brief Handle lowering of 16-lane 32-bit integer shuffles.
 static SDValue lowerV16I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
-                                       const X86Subtarget *Subtarget,
-                                       SelectionDAG &DAG) {
+                                        const X86Subtarget *Subtarget,
+                                        SelectionDAG &DAG) {
   SDLoc DL(Op);
   assert(V1.getSimpleValueType() == MVT::v16i32 && "Bad operand type!");
   assert(V2.getSimpleValueType() == MVT::v16i32 && "Bad operand type!");
