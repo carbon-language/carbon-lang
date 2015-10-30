@@ -7,17 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Breakpoint/StoppointCallbackContext.h"
-
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/StoppointCallbackContext.h"
 
 using namespace lldb_private;
 
 StoppointCallbackContext::StoppointCallbackContext() :
-    event (NULL),
+    event (nullptr),
     exe_ctx_ref (),
     is_synchronous (false)
 {
@@ -33,7 +32,7 @@ StoppointCallbackContext::StoppointCallbackContext(Event *e, const ExecutionCont
 void
 StoppointCallbackContext::Clear()
 {
-    event = NULL;
+    event = nullptr;
     exe_ctx_ref.Clear();
     is_synchronous = false;
 }

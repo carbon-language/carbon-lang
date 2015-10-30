@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Breakpoint/BreakpointIDList.h"
 
 #include "lldb/Breakpoint/Breakpoint.h"
@@ -27,9 +31,7 @@ m_invalid_id (LLDB_INVALID_BREAK_ID, LLDB_INVALID_BREAK_ID)
 {
 }
 
-BreakpointIDList::~BreakpointIDList ()
-{
-}
+BreakpointIDList::~BreakpointIDList() = default;
 
 size_t
 BreakpointIDList::GetSize()
@@ -38,12 +40,9 @@ BreakpointIDList::GetSize()
 }
 
 BreakpointID &
-BreakpointIDList::GetBreakpointIDAtIndex (size_t index)
+BreakpointIDList::GetBreakpointIDAtIndex(size_t index)
 {
-    if (index < m_breakpoint_ids.size())
-        return m_breakpoint_ids[index];
-    else
-        return m_invalid_id;
+    return ((index < m_breakpoint_ids.size()) ? m_breakpoint_ids[index] : m_invalid_id);
 }
 
 bool
@@ -124,7 +123,7 @@ BreakpointIDList::FindBreakpointID (const char *bp_id_str, size_t *position)
 void
 BreakpointIDList::InsertStringArray (const char **string_array, size_t array_size, CommandReturnObject &result)
 {
-    if (string_array == NULL)
+    if (string_array == nullptr)
         return;
 
     for (uint32_t i = 0; i < array_size; ++i)
@@ -385,7 +384,6 @@ BreakpointIDList::FindAndReplaceIDRanges (Args &old_args,
     }
 
     result.SetStatus (eReturnStatusSuccessFinishNoResult);
-    return;
 }
 
 bool
@@ -402,7 +400,7 @@ BreakpointIDList::StringContainsIDRangeExpression (const char *in_string,
     *range_end_pos = 0;
 
     int specifiers_size = 0;
-    for (int i = 0; BreakpointID::g_range_specifiers[i] != NULL; ++i)
+    for (int i = 0; BreakpointID::g_range_specifiers[i] != nullptr; ++i)
         ++specifiers_size;
 
     for (int i = 0; i < specifiers_size && !is_range_expression; ++i)

@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Breakpoint/BreakpointOptions.h"
-
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/BreakpointOptions.h"
+
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/Value.h"
@@ -58,7 +58,7 @@ BreakpointOptions::BreakpointOptions(const BreakpointOptions& rhs) :
     m_ignore_count (rhs.m_ignore_count),
     m_thread_spec_ap ()
 {
-    if (rhs.m_thread_spec_ap.get() != NULL)
+    if (rhs.m_thread_spec_ap.get() != nullptr)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
     m_condition_text = rhs.m_condition_text;
     m_condition_text_hash = rhs.m_condition_text_hash;
@@ -76,7 +76,7 @@ BreakpointOptions::operator=(const BreakpointOptions& rhs)
     m_enabled = rhs.m_enabled;
     m_one_shot = rhs.m_one_shot;
     m_ignore_count = rhs.m_ignore_count;
-    if (rhs.m_thread_spec_ap.get() != NULL)
+    if (rhs.m_thread_spec_ap.get() != nullptr)
         m_thread_spec_ap.reset(new ThreadSpec(*rhs.m_thread_spec_ap.get()));
     m_condition_text = rhs.m_condition_text;
     m_condition_text_hash = rhs.m_condition_text_hash;
@@ -101,9 +101,7 @@ BreakpointOptions::CopyOptionsNoCallback (BreakpointOptions &orig)
 //----------------------------------------------------------------------
 // Destructor
 //----------------------------------------------------------------------
-BreakpointOptions::~BreakpointOptions()
-{
-}
+BreakpointOptions::~BreakpointOptions() = default;
 
 //------------------------------------------------------------------
 // Callbacks
@@ -143,10 +141,10 @@ BreakpointOptions::InvokeCallback (StoppointCallbackContext *context,
 {
     if (m_callback && context->is_synchronous == IsCallbackSynchronous())
     {
-        return m_callback (m_callback_baton_sp ? m_callback_baton_sp->m_data : NULL,
-                           context, 
-                           break_id, 
-                           break_loc_id);
+        return m_callback(m_callback_baton_sp ? m_callback_baton_sp->m_data : nullptr,
+                          context,
+                          break_id,
+                          break_loc_id);
     }
     else
         return true;
@@ -181,7 +179,7 @@ BreakpointOptions::GetConditionText (size_t *hash) const
     }
     else
     {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -194,7 +192,7 @@ BreakpointOptions::GetThreadSpecNoCreate () const
 ThreadSpec *
 BreakpointOptions::GetThreadSpec ()
 {
-    if (m_thread_spec_ap.get() == NULL)
+    if (m_thread_spec_ap.get() == nullptr)
         m_thread_spec_ap.reset (new ThreadSpec());
         
     return m_thread_spec_ap.get();
@@ -209,11 +207,10 @@ BreakpointOptions::SetThreadID (lldb::tid_t thread_id)
 void
 BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) const
 {
-
     // Figure out if there are any options not at their default value, and only print 
     // anything if there are:
     
-    if (m_ignore_count != 0 || !m_enabled || m_one_shot || (GetThreadSpecNoCreate() != NULL && GetThreadSpecNoCreate()->HasSpecification ()))
+    if (m_ignore_count != 0 || !m_enabled || m_one_shot || (GetThreadSpecNoCreate() != nullptr && GetThreadSpecNoCreate()->HasSpecification ()))
     {
         if (level == lldb::eDescriptionLevelVerbose)
         {
@@ -293,4 +290,3 @@ BreakpointOptions::CommandBaton::GetDescription (Stream *s, lldb::DescriptionLev
     s->IndentLess ();
     s->IndentLess ();
 }
-

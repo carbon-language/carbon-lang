@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 // C Includes
 #include <stdio.h>
 
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-
 #include "lldb/Breakpoint/BreakpointID.h"
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Core/Stream.h"
@@ -29,11 +27,9 @@ BreakpointID::BreakpointID (break_id_t bp_id, break_id_t loc_id) :
 {
 }
 
-BreakpointID::~BreakpointID ()
-{
-}
+BreakpointID::~BreakpointID() = default;
 
-const char *BreakpointID::g_range_specifiers[] = { "-", "to", "To", "TO", NULL };
+const char *BreakpointID::g_range_specifiers[] = { "-", "to", "To", "TO", nullptr };
 
 // Tells whether or not STR is valid to use between two strings representing breakpoint IDs, to
 // indicate a range of breakpoint IDs.  This is broken out into a separate function so that we can
@@ -43,7 +39,7 @@ bool
 BreakpointID::IsRangeIdentifier (const char *str)
 {
     int specifier_count = 0;
-    for (int i = 0; g_range_specifiers[i] != NULL; ++i)
+    for (int i = 0; g_range_specifiers[i] != nullptr; ++i)
       ++specifier_count;
 
     for (int i = 0; i < specifier_count; ++i)
@@ -62,10 +58,7 @@ BreakpointID::IsValidIDExpression (const char *str)
     break_id_t loc_id;
     BreakpointID::ParseCanonicalReference (str, &bp_id, &loc_id);
 
-    if (bp_id == LLDB_INVALID_BREAK_ID)
-        return false;
-    else
-        return true;
+    return (bp_id != LLDB_INVALID_BREAK_ID);
 }
 
 void
@@ -99,7 +92,7 @@ BreakpointID::ParseCanonicalReference (const char *input, break_id_t *break_id_p
     *break_id_ptr = LLDB_INVALID_BREAK_ID;
     *break_loc_id_ptr = LLDB_INVALID_BREAK_ID;
 
-    if (input == NULL || *input == '\0')
+    if (input == nullptr || *input == '\0')
         return false;
 
     const char *format = "%i%n.%i%n";

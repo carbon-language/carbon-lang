@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
@@ -22,7 +21,6 @@
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 
-
 using namespace lldb;
 using namespace lldb_private;
 
@@ -32,13 +30,11 @@ BreakpointLocationList::BreakpointLocationList(Breakpoint &owner) :
     m_address_to_location (),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_next_id (0),
-    m_new_location_recorder (NULL)
+    m_new_location_recorder (nullptr)
 {
 }
 
-BreakpointLocationList::~BreakpointLocationList()
-{
-}
+BreakpointLocationList::~BreakpointLocationList() = default;
 
 BreakpointLocationSP
 BreakpointLocationList::Create (const Address &addr, bool resolve_indirect_symbols)
@@ -163,7 +159,6 @@ BreakpointLocationList::Dump (Stream *s) const
     s->IndentLess();
 }
 
-
 BreakpointLocationSP
 BreakpointLocationList::GetByIndex (size_t i)
 {
@@ -285,7 +280,6 @@ BreakpointLocationList::SwapLocation (BreakpointLocationSP to_location_sp, Break
     to_location_sp->ResolveBreakpointSite();
 }
 
-
 bool
 BreakpointLocationList::RemoveLocation (const lldb::BreakpointLocationSP &bp_loc_sp)
 {
@@ -304,7 +298,7 @@ BreakpointLocationList::RemoveLocation (const lldb::BreakpointLocationSP &bp_loc
                 return true;
             }
         }
-	}
+    }
     return false;
 }
 
@@ -348,7 +342,7 @@ void
 BreakpointLocationList::StartRecordingNewLocations (BreakpointLocationCollection &new_locations)
 {
     Mutex::Locker locker (m_mutex);
-    assert (m_new_location_recorder == NULL);
+    assert(m_new_location_recorder == nullptr);
     m_new_location_recorder = &new_locations;
 }
 
@@ -356,7 +350,7 @@ void
 BreakpointLocationList::StopRecordingNewLocations ()
 {
     Mutex::Locker locker (m_mutex);
-    m_new_location_recorder = NULL;
+    m_new_location_recorder = nullptr;
 }
 
 void

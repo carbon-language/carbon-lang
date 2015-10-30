@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Breakpoint/Watchpoint.h"
-
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/Watchpoint.h"
+
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Value.h"
@@ -67,9 +67,7 @@ Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, uint32_t size, const 
     m_being_created = false;
 }
 
-Watchpoint::~Watchpoint()
-{
-}
+Watchpoint::~Watchpoint() = default;
 
 // This function is used when "baton" doesn't need to be freed
 void
@@ -102,7 +100,6 @@ void
 Watchpoint::SetDeclInfo (const std::string &str)
 {
     m_decl_str = str;
-    return;
 }
 
 std::string
@@ -115,7 +112,6 @@ void
 Watchpoint::SetWatchSpec (const std::string &str)
 {
     m_watch_spec_str = str;
-    return;
 }
 
 // Override default impl of StoppointLocation::IsHardware() since m_is_hardware
@@ -154,10 +150,7 @@ Watchpoint::CaptureWatchedValue (const ExecutionContext &exe_ctx)
     }
     m_new_value_sp = ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(), watch_name.AsCString(), watch_address, m_type);
     m_new_value_sp = m_new_value_sp->CreateConstantValue(watch_name);
-    if (m_new_value_sp && m_new_value_sp->GetError().Success())
-        return true;
-    else
-        return false;
+    return (m_new_value_sp && m_new_value_sp->GetError().Success());
 }
 
 void
@@ -200,7 +193,6 @@ void
 Watchpoint::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     DumpWithLevel(s, level);
-    return;
 }
 
 void
@@ -209,7 +201,7 @@ Watchpoint::Dump(Stream *s) const
     DumpWithLevel(s, lldb::eDescriptionLevelBrief);
 }
 
-// If prefix is NULL, we display the watch id and ignore the prefix altogether.
+// If prefix is nullptr, we display the watch id and ignore the prefix altogether.
 void
 Watchpoint::DumpSnapshots(Stream *s, const char *prefix) const
 {
@@ -249,7 +241,7 @@ Watchpoint::DumpSnapshots(Stream *s, const char *prefix) const
 void
 Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) const
 {
-    if (s == NULL)
+    if (s == nullptr)
         return;
 
     assert(description_level >= lldb::eDescriptionLevelBrief &&
@@ -351,11 +343,13 @@ Watchpoint::WatchpointRead () const
 {
     return m_watch_read != 0;
 }
+
 bool
 Watchpoint::WatchpointWrite () const
 {
     return m_watch_write != 0;
 }
+
 uint32_t
 Watchpoint::GetIgnoreCount () const
 {
@@ -380,20 +374,20 @@ Watchpoint::InvokeCallback (StoppointCallbackContext *context)
 void 
 Watchpoint::SetCondition (const char *condition)
 {
-    if (condition == NULL || condition[0] == '\0')
+    if (condition == nullptr || condition[0] == '\0')
     {
         if (m_condition_ap.get())
             m_condition_ap.reset();
     }
     else
     {
-        // Pass NULL for expr_prefix (no translation-unit level definitions).
+        // Pass nullptr for expr_prefix (no translation-unit level definitions).
         Error error;
-        m_condition_ap.reset(m_target.GetUserExpressionForLanguage (condition,
-                                                                      NULL,
-                                                                      lldb::eLanguageTypeUnknown,
-                                                                      UserExpression::eResultTypeAny,
-                                                                      error));
+        m_condition_ap.reset(m_target.GetUserExpressionForLanguage(condition,
+                                                                   nullptr,
+                                                                   lldb::eLanguageTypeUnknown,
+                                                                   UserExpression::eResultTypeAny,
+                                                                   error));
         if (error.Fail())
         {
             // FIXME: Log something...
@@ -409,7 +403,7 @@ Watchpoint::GetConditionText () const
     if (m_condition_ap.get())
         return m_condition_ap->GetUserText();
     else
-        return NULL;
+        return nullptr;
 }
 
 void
@@ -426,8 +420,7 @@ Watchpoint::SendWatchpointChangedEvent (lldb::WatchpointEventType eventKind)
 void
 Watchpoint::SendWatchpointChangedEvent (WatchpointEventData *data)
 {
-
-    if (data == NULL)
+    if (data == nullptr)
         return;
         
     if (!m_being_created
@@ -445,9 +438,7 @@ Watchpoint::WatchpointEventData::WatchpointEventData (WatchpointEventType sub_ty
 {
 }
 
-Watchpoint::WatchpointEventData::~WatchpointEventData ()
-{
-}
+Watchpoint::WatchpointEventData::~WatchpointEventData() = default;
 
 const ConstString &
 Watchpoint::WatchpointEventData::GetFlavorString ()
@@ -461,7 +452,6 @@ Watchpoint::WatchpointEventData::GetFlavor () const
 {
     return WatchpointEventData::GetFlavorString ();
 }
-
 
 WatchpointSP &
 Watchpoint::WatchpointEventData::GetWatchpoint ()
@@ -489,7 +479,7 @@ Watchpoint::WatchpointEventData::GetEventDataFromEvent (const Event *event)
         if (event_data && event_data->GetFlavor() == WatchpointEventData::GetFlavorString())
             return static_cast <const WatchpointEventData *> (event->GetData());
     }
-    return NULL;
+    return nullptr;
 }
 
 WatchpointEventType
@@ -497,7 +487,7 @@ Watchpoint::WatchpointEventData::GetWatchpointEventTypeFromEvent (const EventSP 
 {
     const WatchpointEventData *data = GetEventDataFromEvent (event_sp.get());
 
-    if (data == NULL)
+    if (data == nullptr)
         return eWatchpointEventTypeInvalidType;
     else
         return data->GetWatchpointEventType();
