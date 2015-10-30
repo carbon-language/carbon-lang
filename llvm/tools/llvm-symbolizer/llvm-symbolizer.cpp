@@ -133,8 +133,7 @@ int main(int argc, char **argv) {
   llvm::sys::InitializeCOMRAII COM(llvm::sys::COMThreadingMode::MultiThreaded);
 
   cl::ParseCommandLineOptions(argc, argv, "llvm-symbolizer\n");
-  LLVMSymbolizer::Options Opts(ClPrintFunctions, ClUseSymbolTable,
-                               ClPrintInlining, ClDemangle,
+  LLVMSymbolizer::Options Opts(ClPrintFunctions, ClUseSymbolTable, ClDemangle,
                                ClUseRelativeAddress, ClDefaultArch);
   for (const auto &hint : ClDsymHint) {
     if (sys::path::extension(hint) == ".dSYM") {
@@ -152,7 +151,9 @@ int main(int argc, char **argv) {
   while (parseCommand(IsData, ModuleName, ModuleOffset)) {
     std::string Result =
         IsData ? Symbolizer.symbolizeData(ModuleName, ModuleOffset)
-               : Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
+               : ClPrintInlining
+                     ? Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset)
+                     : Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
     if (ClPrintAddress) {
       outs() << "0x";
       outs().write_hex(ModuleOffset);

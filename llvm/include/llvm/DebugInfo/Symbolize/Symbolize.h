@@ -34,18 +34,16 @@ public:
   struct Options {
     FunctionNameKind PrintFunctions;
     bool UseSymbolTable : 1;
-    bool PrintInlining : 1;
     bool Demangle : 1;
     bool RelativeAddresses : 1;
     std::string DefaultArch;
     std::vector<std::string> DsymHints;
     Options(FunctionNameKind PrintFunctions = FunctionNameKind::LinkageName,
-            bool UseSymbolTable = true, bool PrintInlining = true,
-            bool Demangle = true, bool RelativeAddresses = false,
-            std::string DefaultArch = "")
+            bool UseSymbolTable = true, bool Demangle = true,
+            bool RelativeAddresses = false, std::string DefaultArch = "")
         : PrintFunctions(PrintFunctions), UseSymbolTable(UseSymbolTable),
-          PrintInlining(PrintInlining), Demangle(Demangle),
-          RelativeAddresses(RelativeAddresses), DefaultArch(DefaultArch) {}
+          Demangle(Demangle), RelativeAddresses(RelativeAddresses),
+          DefaultArch(DefaultArch) {}
   };
 
   LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) {}
@@ -57,6 +55,8 @@ public:
   // a string (possibly containing newlines).
   std::string
   symbolizeCode(const std::string &ModuleName, uint64_t ModuleOffset);
+  std::string symbolizeInlinedCode(const std::string &ModuleName,
+                                   uint64_t ModuleOffset);
   std::string
   symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
   void flush();
@@ -80,6 +80,8 @@ private:
 
   std::string printDILineInfo(DILineInfo LineInfo,
                               const SymbolizableModule *ModInfo) const;
+  std::string printDIInliningInfo(DIInliningInfo InlinedContext,
+                                  const SymbolizableModule *ModInfo) const;
   std::string printDIGlobal(DIGlobal Global,
                             const SymbolizableModule *ModInfo) const;
 

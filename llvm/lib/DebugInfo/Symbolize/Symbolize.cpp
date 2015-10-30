@@ -73,21 +73,25 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
   if (Opts.RelativeAddresses)
     ModuleOffset += Info->getModulePreferredBase();
 
-  if (Opts.PrintInlining) {
-    DIInliningInfo InlinedContext = Info->symbolizeInlinedCode(
-        ModuleOffset, Opts.PrintFunctions, Opts.UseSymbolTable);
-    uint32_t FramesNum = InlinedContext.getNumberOfFrames();
-    assert(FramesNum > 0);
-    std::string Result;
-    for (uint32_t i = 0; i < FramesNum; i++) {
-      DILineInfo LineInfo = InlinedContext.getFrame(i);
-      Result += printDILineInfo(LineInfo, Info);
-    }
-    return Result;
-  }
   DILineInfo LineInfo = Info->symbolizeCode(ModuleOffset, Opts.PrintFunctions,
                                             Opts.UseSymbolTable);
   return printDILineInfo(LineInfo, Info);
+}
+
+std::string LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
+                                                 uint64_t ModuleOffset) {
+  SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
+  if (!Info)
+    return printDIInliningInfo(DIInliningInfo(), nullptr);
+
+  // If the user is giving us relative addresses, add the preferred base of the
+  // object to the offset before we do the query. It's what DIContext expects.
+  if (Opts.RelativeAddresses)
+    ModuleOffset += Info->getModulePreferredBase();
+
+  DIInliningInfo InlinedContext = Info->symbolizeInlinedCode(
+      ModuleOffset, Opts.PrintFunctions, Opts.UseSymbolTable);
+  return printDIInliningInfo(InlinedContext, Info);
 }
 
 std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
@@ -372,6 +376,20 @@ LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
     Filename = kBadString;
   Result << Filename << ":" << LineInfo.Line << ":" << LineInfo.Column << "\n";
   return Result.str();
+}
+
+std::string
+LLVMSymbolizer::printDIInliningInfo(DIInliningInfo InlinedContext,
+                                   const SymbolizableModule *ModInfo) const {
+  uint32_t FramesNum = InlinedContext.getNumberOfFrames();
+  if (FramesNum == 0)
+    return printDILineInfo(DILineInfo(), ModInfo);
+  std::string Result;
+  for (uint32_t i = 0; i < FramesNum; i++) {
+    DILineInfo LineInfo = InlinedContext.getFrame(i);
+    Result += printDILineInfo(LineInfo, ModInfo);
+  }
+  return Result;
 }
 
 std::string
