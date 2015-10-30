@@ -5,15 +5,14 @@
 //        Ideally, we'd like to have an --llvm-toolchain option similar to
 //        the --gcc-toolchain one.
 
-// XFAIL: i386, i686, x86_64, win32, win64, powerpc64, s390x, r600, xcore, hexagon, sparc, darwin, asan, msan
+// RUN: false
+// XFAIL: *
 
 // = Big-endian, mips32r2, hard float
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=mips-mti-linux -mips32r2 -mhard-float \
-// RUN:     --sysroot=%S/Inputs/mips_mti_linux/sysroot \
-// RUN:   | FileCheck --check-prefix=CHECK-BE-HF-32R2 %s
-//
-// CHECK-BE-HF-32R2: Looked for crt1.o
+// R!N: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// R!N:     --target=mips-mti-linux -mips32r2 -mhard-float \
+// R!N:     --sysroot=%S/Inputs/mips_mti_linux/sysroot \
+// R!N:   | FileCheck --check-prefix=CHECK-BE-HF-32R2 %s
 //
 // CHECK-BE-HF-32R2: "{{[^"]*}}clang{{[^"]*}}" {{.*}} "-triple" "mips-mti-linux"
 // CHECK-BE-HF-32R2-SAME: "-fuse-init-array" "-target-cpu" "mips32r2"

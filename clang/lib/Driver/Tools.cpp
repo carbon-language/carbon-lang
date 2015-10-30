@@ -8469,19 +8469,6 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crt1)));
 
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
-
-      if (ToolChain.getTriple().getVendor() == llvm::Triple::MipsTechnologies &&
-          !ToolChain.getTriple().hasEnvironment()) {
-        // Print look-up paths for crt files.
-        llvm::errs() << "Looked for crti.o in: ";
-        llvm::errs() << "#### PrefixDirs #### - ";
-        for (const std::string &Dir : D.PrefixDirs)
-          llvm::errs() << "Dir: " << Dir << ", ";
-        llvm::errs() << "#### TC.getFilePaths() #### - ";
-        for (const std::string &Dir : ToolChain.getFilePaths())
-          llvm::errs() << "Dir: " << Dir << ",";
-        llvm::errs() << "\n";
-      }
     }
 
     const char *crtbegin;
