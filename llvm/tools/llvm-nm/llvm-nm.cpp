@@ -529,6 +529,9 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
       continue;
     if (Undefined && DefinedOnly)
       continue;
+    bool Global = SymFlags & SymbolRef::SF_Global;
+    if (!Global && ExternalOnly)
+      continue;
     if (SizeSort && !PrintAddress)
       continue;
     if (PrintFileName) {
