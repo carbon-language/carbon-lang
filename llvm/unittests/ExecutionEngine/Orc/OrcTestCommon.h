@@ -38,23 +38,20 @@ public:
       InitializeNativeTargetAsmPrinter();
       NativeTargetInitialized = true;
     }
+
+    // Try to select a TargetMachine for the host.
+    TM.reset(EngineBuilder().selectTarget());
+
+    if (TM) {
+      // If we found a TargetMachine, check that it's one that Orc supports.
+      const Triple& TT = TM->getTargetTriple();
+      if (TT.getArch() != Triple::x86_64 || !TT.isOSDarwin())
+        TM = nullptr;
+    }
   };
 
-  // Get a target machine for the host if it supports JIT execution.
-  std::unique_ptr<TargetMachine> getHostTargetMachineIfSupported() {
-    std::unique_ptr<TargetMachine> TM(EngineBuilder().selectTarget());
-
-    if (!TM)
-      return nullptr;
-
-    const Triple& TT = TM->getTargetTriple();
-
-    if (TT.getArch() != Triple::x86_64 || !TT.isOSDarwin())
-      return nullptr;
-
-    return TM;
-  }
-
+protected:
+  std::unique_ptr<TargetMachine> TM;
 private:
   static bool NativeTargetInitialized;
 };

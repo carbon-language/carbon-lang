@@ -12,9 +12,6 @@
 
 using namespace llvm;
 
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OrcCBindingsStack, LLVMOrcJITStackRef)
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(TargetMachine, LLVMTargetMachineRef)
-
 LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM,
                                          LLVMContextRef Context) {
   TargetMachine *TM2(unwrap(TM));
@@ -43,6 +40,28 @@ void LLVMOrcGetMangledSymbol(LLVMOrcJITStackRef JITStack, char **MangledName,
 
 void LLVMOrcDisposeMangledSymbol(char *MangledName) {
   delete[] MangledName;
+}
+
+LLVMOrcTargetAddress
+LLVMOrcCreateLazyCompileCallback(LLVMOrcJITStackRef JITStack,
+                                 LLVMOrcLazyCompileCallbackFn Callback,
+                                 void *CallbackCtx) {
+  OrcCBindingsStack &J = *unwrap(JITStack);
+  return J.createLazyCompileCallback(Callback, CallbackCtx);
+}
+
+void LLVMOrcCreateIndirectStub(LLVMOrcJITStackRef JITStack,
+                               const char *StubName,
+                               LLVMOrcTargetAddress InitAddr) {
+  OrcCBindingsStack &J = *unwrap(JITStack);
+  J.createIndirectStub(StubName, InitAddr);
+}
+
+void LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack,
+                                   const char *StubName,
+                                   LLVMOrcTargetAddress NewAddr) {
+  OrcCBindingsStack &J = *unwrap(JITStack);
+  J.setIndirectStubPointer(StubName, NewAddr);
 }
 
 LLVMOrcModuleHandle
