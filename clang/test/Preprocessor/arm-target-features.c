@@ -210,10 +210,9 @@
 // A5:#define __ARM_FP 0xE
 
 // Test whether predefines are as expected when targeting cortex-a7.
-// RUN: %clang -target armv7 -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=A7 %s
-// RUN: %clang -target armv7 -mthumb -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=A7 %s
+// RUN: %clang -target armv7k -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=A7 %s
+// RUN: %clang -target armv7k -mthumb -mcpu=cortex-a7 -x c -E -dM %s -o - | FileCheck --check-prefix=A7 %s
 // A7:#define __ARM_ARCH 7
-// A7:#define __ARM_ARCH_7A__ 1
 // A7:#define __ARM_ARCH_EXT_IDIV__ 1
 // A7:#define __ARM_ARCH_PROFILE 'A'
 // A7:#define __ARM_FEATURE_DSP
