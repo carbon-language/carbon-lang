@@ -3054,9 +3054,7 @@ std::error_code BitcodeReader::rememberAndSkipFunctionBodies() {
 
   if (Stream.AtEndOfStream()) return error("Could not find function in stream");
 
-  if (!SeenFirstFunctionBody)
-    return error("Trying to materialize functions before seeing function blocks");
-
+  assert(SeenFirstFunctionBody);
   // An old bitcode file with the symbol table at the end would have
   // finished the parse greedily.
   assert(SeenValueSymbolTable);
