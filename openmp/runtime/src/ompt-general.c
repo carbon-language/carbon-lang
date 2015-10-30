@@ -137,6 +137,7 @@ ompt_initialize_t ompt_tool_windows()
     if( !EnumProcessModules( process, modules, NUM_MODULES * sizeof(HMODULE),
                              &needed ) ) {
         // Regardless of the error reason use the stub initialization function
+        free(modules);
         return NULL;
     }
     // Check if NUM_MODULES is enough to list all modules
@@ -148,6 +149,7 @@ ompt_initialize_t ompt_tool_windows()
         modules = (HMODULE*)realloc( modules, needed );
         // If resizing failed use the stub function.
         if( !EnumProcessModules( process, modules, needed, &needed ) ) {
+            free(modules);
             return NULL;
         }
     }
@@ -160,6 +162,7 @@ ompt_initialize_t ompt_tool_windows()
                 printf("ompt_tool_windows(): ompt_tool found in module %s\n",
                        modName);
 #endif
+            free(modules);
             return ompt_tool_p();
         }
 #if OMPT_DEBUG
@@ -171,6 +174,7 @@ ompt_initialize_t ompt_tool_windows()
         }
 #endif
     }
+    free(modules);
     return NULL;
 }
 #else
