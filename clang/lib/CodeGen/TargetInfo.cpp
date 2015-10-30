@@ -4693,7 +4693,8 @@ public:
   enum ABIKind {
     APCS = 0,
     AAPCS = 1,
-    AAPCS_VFP
+    AAPCS_VFP = 2,
+    AAPCS16_VFP = 3,
   };
 
 private:
@@ -4803,7 +4804,8 @@ public:
 
     Fn->addFnAttr("interrupt", Kind);
 
-    if (cast<ARMABIInfo>(getABIInfo()).getABIKind() == ARMABIInfo::APCS)
+    ARMABIInfo::ABIKind ABI = cast<ARMABIInfo>(getABIInfo()).getABIKind();
+    if (ABI == ARMABIInfo::APCS)
       return;
 
     // AAPCS guarantees that sp will be 8-byte aligned on any public interface,
@@ -4869,7 +4871,7 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
 /// Return the default calling convention that LLVM will use.
 llvm::CallingConv::ID ARMABIInfo::getLLVMDefaultCC() const {
   // The default calling convention that LLVM will infer.
-  if (isEABIHF())
+  if (isEABIHF() || getTarget().getTriple().isWatchOS())
     return llvm::CallingConv::ARM_AAPCS_VFP;
   else if (isEABI())
     return llvm::CallingConv::ARM_AAPCS;
@@ -4884,6 +4886,7 @@ llvm::CallingConv::ID ARMABIInfo::getABIDefaultCC() const {
   case APCS: return llvm::CallingConv::ARM_APCS;
   case AAPCS: return llvm::CallingConv::ARM_AAPCS;
   case AAPCS_VFP: return llvm::CallingConv::ARM_AAPCS_VFP;
+  case AAPCS16_VFP: return llvm::CallingConv::ARM_AAPCS_VFP;
   }
   llvm_unreachable("bad ABI kind");
 }
@@ -4897,8 +4900,20 @@ void ARMABIInfo::setCCs() {
   if (abiCC != getLLVMDefaultCC())
     RuntimeCC = abiCC;
 
-  BuiltinCC = (getABIKind() == APCS ?
-               llvm::CallingConv::ARM_APCS : llvm::CallingConv::ARM_AAPCS);
+  // AAPCS apparently requires runtime support functions to be soft-float, but
+  // that's almost certainly for historic reasons (Thumb1 not supporting VFP
+  // most likely). It's more convenient for AAPCS16_VFP to be hard-float.
+  switch (getABIKind()) {
+  case APCS:
+  case AAPCS16_VFP:
+    if (abiCC != getLLVMDefaultCC())
+      BuiltinCC = abiCC;
+    break;
+  case AAPCS:
+  case AAPCS_VFP:
+    BuiltinCC = llvm::CallingConv::ARM_AAPCS;
+    break;
+  }
 }
 
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
@@ -4973,6 +4988,27 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
       // Base can be a floating-point or a vector.
       return ABIArgInfo::getDirect(nullptr, 0, nullptr, false);
     }
+  } else if (getABIKind() == ARMABIInfo::AAPCS16_VFP) {
+    // WatchOS does have homogeneous aggregates. Note that we intentionally use
+    // this convention even for a variadic function: the backend will use GPRs
+    // if needed.
+    const Type *Base = nullptr;
+    uint64_t Members = 0;
+    if (isHomogeneousAggregate(Ty, Base, Members)) {
+      assert(Base && Members <= 4 && "unexpected homogeneous aggregate");
+      llvm::Type *Ty =
+        llvm::ArrayType::get(CGT.ConvertType(QualType(Base, 0)), Members);
+      return ABIArgInfo::getDirect(Ty, 0, nullptr, false);
+    }
+  }
+
+  if (getABIKind() == ARMABIInfo::AAPCS16_VFP &&
+      getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(16)) {
+    // WatchOS is adopting the 64-bit AAPCS rule on composite types: if they're
+    // bigger than 128-bits, they get placed in space allocated by the caller,
+    // and a pointer is passed.
+    return ABIArgInfo::getIndirect(
+        CharUnits::fromQuantity(getContext().getTypeAlign(Ty) / 8), false);
   }
 
   // Support byval for ARM.
@@ -4986,6 +5022,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
     ABIAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
 
   if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64)) {
+    assert(getABIKind() != ARMABIInfo::AAPCS16_VFP && "unexpected byval");
     return ABIArgInfo::getIndirect(CharUnits::fromQuantity(ABIAlign),
                                    /*ByVal=*/true,
                                    /*Realign=*/TyAlign > ABIAlign);
@@ -5094,7 +5131,8 @@ static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
 
 ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
                                           bool isVariadic) const {
-  bool IsEffectivelyAAPCS_VFP = getABIKind() == AAPCS_VFP && !isVariadic;
+  bool IsEffectivelyAAPCS_VFP =
+      (getABIKind() == AAPCS_VFP || getABIKind() == AAPCS16_VFP) && !isVariadic;
 
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
@@ -5159,7 +5197,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
   // Check for homogeneous aggregates with AAPCS-VFP.
   if (IsEffectivelyAAPCS_VFP) {
     const Type *Base = nullptr;
-    uint64_t Members;
+    uint64_t Members = 0;
     if (isHomogeneousAggregate(RetTy, Base, Members)) {
       assert(Base && "Base class should be set for homogeneous aggregate");
       // Homogeneous Aggregates are returned directly.
@@ -5181,6 +5219,11 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
     if (Size <= 16)
       return ABIArgInfo::getDirect(llvm::Type::getInt16Ty(getVMContext()));
     return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
+  } else if (Size <= 128 && getABIKind() == AAPCS16_VFP) {
+    llvm::Type *Int32Ty = llvm::Type::getInt32Ty(getVMContext());
+    llvm::Type *CoerceTy =
+        llvm::ArrayType::get(Int32Ty, llvm::RoundUpToAlignment(Size, 32) / 32);
+    return ABIArgInfo::getDirect(CoerceTy);
   }
 
   return getNaturalAlignIndirect(RetTy);
@@ -5238,7 +5281,16 @@ Address ARMABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
 
   // Use indirect if size of the illegal vector is bigger than 16 bytes.
   bool IsIndirect = false;
+  const Type *Base = nullptr;
+  uint64_t Members = 0;
   if (TyInfo.first > CharUnits::fromQuantity(16) && isIllegalVectorType(Ty)) {
+    IsIndirect = true;
+
+  // ARMv7k passes structs bigger than 16 bytes indirectly, in space
+  // allocated by the caller.
+  } else if (TyInfo.first > CharUnits::fromQuantity(16) &&
+             getABIKind() == ARMABIInfo::AAPCS16_VFP &&
+             !isHomogeneousAggregate(Ty, Base, Members)) {
     IsIndirect = true;
 
   // Otherwise, bound the type's ABI alignment.
@@ -7362,8 +7414,11 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
       }
 
       ARMABIInfo::ABIKind Kind = ARMABIInfo::AAPCS;
-      if (getTarget().getABI() == "apcs-gnu")
+      StringRef ABIStr = getTarget().getABI();
+      if (ABIStr == "apcs-gnu")
         Kind = ARMABIInfo::APCS;
+      else if (ABIStr == "aapcs16")
+        Kind = ARMABIInfo::AAPCS16_VFP;
       else if (CodeGenOpts.FloatABI == "hard" ||
                (CodeGenOpts.FloatABI != "soft" &&
                 Triple.getEnvironment() == llvm::Triple::GNUEABIHF))

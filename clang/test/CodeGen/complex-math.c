@@ -3,6 +3,7 @@
 // RUN: %clang_cc1 %s -O1 -emit-llvm -triple i686-unknown-unknown -o - | FileCheck %s --check-prefix=X86
 // RUN: %clang_cc1 %s -O1 -emit-llvm -triple powerpc-unknown-unknown -o - | FileCheck %s --check-prefix=PPC
 // RUN: %clang_cc1 %s -O1 -emit-llvm -triple armv7-none-linux-gnueabihf -o - | FileCheck %s --check-prefix=ARM
+// RUN: %clang_cc1 %s -O1 -emit-llvm -triple thumbv7k-apple-watchos2.0 -o - -target-abi aapcs16 | FileCheck %s --check-prefix=ARM7K
 
 float _Complex add_float_rr(float a, float b) {
   // X86-LABEL: @add_float_rr(
@@ -477,5 +478,8 @@ _Bool ne_float_cc(float _Complex a, float _Complex b) {
 _Complex double foo(_Complex double a, _Complex double b) {
   // ARM-LABEL: @foo(
   // ARM: call arm_aapcscc { double, double } @__muldc3
+
+  // ARM7K-LABEL: @foo(
+  // ARM7K: call { double, double } @__muldc3
   return a*b;
 }
