@@ -2958,7 +2958,7 @@ static SDValue EmitTailCallStoreRetAddr(SelectionDAG &DAG, MachineFunction &MF,
 
 /// Returns a vector_shuffle mask for an movs{s|d}, movd
 /// operation of specified width.
-static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
+static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, MVT VT, SDValue V1,
                        SDValue V2) {
   unsigned NumElems = VT.getVectorNumElements();
   SmallVector<int, 8> Mask;
@@ -3844,7 +3844,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   }
 }
 
-static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, EVT VT,
+static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, MVT VT,
                                     SDValue V1, unsigned TargetMask,
                                     SelectionDAG &DAG) {
   switch(Opc) {
@@ -3859,7 +3859,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, EVT VT,
   }
 }
 
-static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, EVT VT,
+static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, MVT VT,
                                     SDValue V1, SDValue V2, SelectionDAG &DAG) {
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
@@ -4277,14 +4277,14 @@ bool X86::isZeroNode(SDValue Elt) {
 // Build a vector of constants
 // Use an UNDEF node if MaskElt == -1.
 // Spilt 64-bit constants in the 32-bit mode.
-static SDValue getConstVector(ArrayRef<int> Values, EVT VT,
+static SDValue getConstVector(ArrayRef<int> Values, MVT VT,
                               SelectionDAG &DAG,
                               SDLoc dl, bool IsMask = false) {
 
   SmallVector<SDValue, 32>  Ops;
   bool Split = false;
 
-  EVT ConstVecVT = VT;
+  MVT ConstVecVT = VT;
   unsigned NumElts = VT.getVectorNumElements();
   bool In64BitMode = DAG.getTargetLoweringInfo().isTypeLegal(MVT::i64);
   if (!In64BitMode && VT.getScalarType() == MVT::i64) {
@@ -4292,7 +4292,7 @@ static SDValue getConstVector(ArrayRef<int> Values, EVT VT,
     Split = true;
   }
 
-  EVT EltVT = ConstVecVT.getScalarType();
+  MVT EltVT = ConstVecVT.getVectorElementType();
   for (unsigned i = 0; i < NumElts; ++i) {
     bool IsUndef = Values[i] < 0 && IsMask;
     SDValue OpNode = IsUndef ? DAG.getUNDEF(EltVT) :
@@ -10952,7 +10952,7 @@ static SDValue lower1BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Subtarget->hasAVX512() &&
          "Cannot lower 512-bit vectors w/o basic ISA!");
-  EVT ExtVT;
+  MVT ExtVT;
   switch (VT.SimpleTy) {
   default:
     llvm_unreachable("Expected a vector of i1 elements");
@@ -16665,7 +16665,7 @@ static SDValue getGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
     llvm_unreachable("Valid scale values are 1, 2, 4, 8");
 
   SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), dl, MVT::i8);
-  EVT MaskVT = MVT::getVectorVT(MVT::i1,
+  MVT MaskVT = MVT::getVectorVT(MVT::i1,
                              Index.getSimpleValueType().getVectorNumElements());
   SDValue MaskInReg;
   ConstantSDNode *MaskC = dyn_cast<ConstantSDNode>(Mask);
@@ -16706,7 +16706,7 @@ static SDValue getScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), dl, MVT::i8);
   SDValue Disp = DAG.getTargetConstant(0, dl, MVT::i32);
   SDValue Segment = DAG.getRegister(0, MVT::i32);
-  EVT MaskVT = MVT::getVectorVT(MVT::i1,
+  MVT MaskVT = MVT::getVectorVT(MVT::i1,
                              Index.getSimpleValueType().getVectorNumElements());
   SDValue MaskInReg;
   ConstantSDNode *MaskC = dyn_cast<ConstantSDNode>(Mask);
@@ -16737,7 +16737,7 @@ static SDValue getPrefetchNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), dl, MVT::i8);
   SDValue Disp = DAG.getTargetConstant(0, dl, MVT::i32);
   SDValue Segment = DAG.getRegister(0, MVT::i32);
-  EVT MaskVT =
+  MVT MaskVT =
     MVT::getVectorVT(MVT::i1, Index.getSimpleValueType().getVectorNumElements());
   SDValue MaskInReg;
   ConstantSDNode *MaskC = dyn_cast<ConstantSDNode>(Mask);
@@ -18463,7 +18463,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     if (CanBeSimplified && isa<ConstantSDNode>(Amt1) &&
         isa<ConstantSDNode>(Amt2)) {
       // Replace this node with two shifts followed by a MOVSS/MOVSD.
-      EVT CastVT = MVT::v4i32;
+      MVT CastVT = MVT::v4i32;
       SDValue Splat1 =
         DAG.getConstant(cast<ConstantSDNode>(Amt1)->getAPIntValue(), dl, VT);
       SDValue Shift1 = DAG.getNode(Op->getOpcode(), dl, VT, R, Splat1);
@@ -18731,7 +18731,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
   if (VT.is256BitVector()) {
     unsigned NumElems = VT.getVectorNumElements();
     MVT EltVT = VT.getVectorElementType();
-    EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
+    MVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
 
     // Extract the two vectors
     SDValue V1 = Extract128BitVector(R, 0, DAG, dl);
