@@ -208,16 +208,11 @@ public:
   child_iterator findSym(StringRef name) const;
 
   bool hasSymbolTable() const;
-  child_iterator getSymbolTableChild() const { return SymbolTable; }
-  StringRef getSymbolTable() const {
-    // We know that the symbol table is not an external file,
-    // so we just assert there is no error.
-    return *SymbolTable->getBuffer();
-  }
+  StringRef getSymbolTable() const { return SymbolTable; }
   uint32_t getNumberOfSymbols() const;
 
 private:
-  child_iterator SymbolTable;
+  StringRef SymbolTable;
   StringRef StringTable;
   child_iterator FirstRegular;
   unsigned Format : 2;

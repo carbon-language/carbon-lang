@@ -233,8 +233,7 @@ ErrorOr<std::unique_ptr<Archive>> Archive::create(MemoryBufferRef Source) {
 }
 
 Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
-    : Binary(Binary::ID_Archive, Source), SymbolTable(child_end()),
-      FirstRegular(child_end()) {
+    : Binary(Binary::ID_Archive, Source), FirstRegular(child_end()) {
   StringRef Buffer = Data.getBuffer();
   // Check for sufficient magic.
   if (Buffer.startswith(ThinMagic)) {
@@ -278,7 +277,9 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
 
   if (Name == "__.SYMDEF") {
     Format = K_BSD;
-    SymbolTable = i;
+    // We know that the symbol table is not an external file, so we just assert
+    // there is no error.
+    SymbolTable = *i->getBuffer();
     ++i;
     FirstRegular = i;
     ec = std::error_code();
@@ -294,7 +295,9 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
       return;
     Name = NameOrErr.get();
     if (Name == "__.SYMDEF SORTED" || Name == "__.SYMDEF") {
-      SymbolTable = i;
+      // We know that the symbol table is not an external file, so we just
+      // assert there is no error.
+      SymbolTable = *i->getBuffer();
       ++i;
     }
     FirstRegular = i;
@@ -308,7 +311,9 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
 
   bool has64SymTable = false;
   if (Name == "/" || Name == "/SYM64/") {
-    SymbolTable = i;
+    // We know that the symbol table is not an external file, so we just assert
+    // there is no error.
+    SymbolTable = *i->getBuffer();
     if (Name == "/SYM64/")
       has64SymTable = true;
 
@@ -344,7 +349,9 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
   }
 
   Format = K_COFF;
-  SymbolTable = i;
+  // We know that the symbol table is not an external file, so we just assert
+  // there is no error.
+  SymbolTable = *i->getBuffer();
 
   ++i;
   if (i == e) {
@@ -551,6 +558,4 @@ Archive::child_iterator Archive::findSym(StringRef name) const {
   return child_end();
 }
 
-bool Archive::hasSymbolTable() const {
-  return SymbolTable != child_end();
-}
+bool Archive::hasSymbolTable() const { return !SymbolTable.empty(); }

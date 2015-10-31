@@ -1452,13 +1452,8 @@ static void printArchiveChild(Archive::Child &C, bool verbose,
 }
 
 static void printArchiveHeaders(Archive *A, bool verbose, bool print_offset) {
-  if (A->hasSymbolTable()) {
-    Archive::child_iterator S = A->getSymbolTableChild();
-    Archive::Child C = *S;
-    printArchiveChild(C, verbose, print_offset);
-  }
-  for (Archive::child_iterator I = A->child_begin(), E = A->child_end(); I != E;
-       ++I) {
+  for (Archive::child_iterator I = A->child_begin(false), E = A->child_end();
+       I != E; ++I) {
     Archive::Child C = *I;
     printArchiveChild(C, verbose, print_offset);
   }
