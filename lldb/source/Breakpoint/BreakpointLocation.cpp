@@ -356,18 +356,20 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
 
         if (result_value_sp)
         {
-            Scalar scalar_value;
-            if (result_value_sp->ResolveValue (scalar_value))
+            ret = result_value_sp->IsLogicalTrue(error);
+            if (log)
             {
-                ret = (scalar_value.ULongLong(1) != 0);
-                if (log)
+                if (error.Success())
+                {
                     log->Printf("Condition successfully evaluated, result is %s.\n",
                                 ret ? "true" : "false");
-            }
-            else
-            {
-                ret = false;
-                error.SetErrorString("Failed to get an integer result from the expression");
+                }
+                else
+                {
+                    error.SetErrorString("Failed to get an integer result from the expression");
+                    ret = false;
+                }
+                
             }
         }
         else

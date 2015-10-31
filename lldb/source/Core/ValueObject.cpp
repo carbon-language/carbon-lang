@@ -513,6 +513,26 @@ ValueObject::ResolveValue (Scalar &scalar)
 }
 
 bool
+ValueObject::IsLogicalTrue (Error& error)
+{
+    Scalar scalar_value;
+    
+    if (!ResolveValue (scalar_value))
+    {
+        error.SetErrorString("failed to get a scalar result");
+        return false;
+    }
+    
+    bool ret;
+    if (scalar_value.ULongLong(1) == 0)
+        ret = false;
+    else
+        ret = true;
+    error.Clear();
+    return ret;
+}
+
+bool
 ValueObject::GetValueIsValid () const
 {
     return m_value_is_valid;

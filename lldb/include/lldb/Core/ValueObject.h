@@ -605,6 +605,12 @@ public:
     virtual bool
     ResolveValue (Scalar &scalar);
     
+    // return 'false' whenever you set the error, otherwise
+    // callers may assume true means everything is OK - this will
+    // break breakpoint conditions among potentially a few others
+    virtual bool
+    IsLogicalTrue (Error& error);
+    
     virtual const char *
     GetLocationAsCString ();
 
