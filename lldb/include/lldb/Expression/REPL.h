@@ -7,10 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef lldb_REPL_h
 #define lldb_REPL_h
 
+// C Includes
+// C++ Includes
+#include <string>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/../../source/Commands/CommandObjectExpression.h"
@@ -35,7 +40,7 @@ public:
     
     REPL(LLVMCastKind kind, Target &target);
     
-    virtual ~REPL();
+    ~REPL() override;
     
     //------------------------------------------------------------------
     /// Get a REPL with an existing target (or, failing that, a debugger to use), and (optional) extra arguments for the compiler.
@@ -47,7 +52,7 @@ public:
     ///     The language to create a REPL for.
     ///
     /// @param[in] debugger
-    ///     If provided, and target is NULL, the debugger to use when setting up a top-level REPL.
+    ///     If provided, and target is nullptr, the debugger to use when setting up a top-level REPL.
     ///
     /// @param[in] target
     ///     If provided, the target to put the REPL inside.
@@ -139,10 +144,6 @@ public:
                        int max_matches,
                        StringList &matches) override;
 
-private:
-    std::string
-    GetSourcePath();
-    
 protected:
     static int
     CalculateActualIndentation (const StringList &lines);
@@ -199,8 +200,12 @@ protected:
     Target &m_target;
     lldb::IOHandlerSP m_io_handler_sp;
     LLVMCastKind m_kind;
+
+private:
+    std::string
+    GetSourcePath();
 };
 
-}
+} // namespace lldb_private
 
-#endif /* REPL_h */
+#endif // lldb_REPL_h

@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-// In-house headers:
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "MICmdArgValBase.h"
 #include "MIUtilString.h"
 #include "MICmdArgContext.h"
@@ -44,17 +47,6 @@ CMICmdArgValBase::CMICmdArgValBase(const CMIUtilString &vrArgName, const bool vb
     , m_strArgName(vrArgName)
     , m_bHandled(vbHandleByCmd)
     , m_bIsMissingOptions(false)
-{
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: CMICmdArgValBase destructor.
-// Type:    Overrideable.
-// Args:    None.
-// Return:  None.
-// Throws:  None.
-//--
-CMICmdArgValBase::~CMICmdArgValBase()
 {
 }
 

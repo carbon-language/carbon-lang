@@ -9,7 +9,10 @@
 
 #pragma once
 
-// In-house headers:
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "MIUtilString.h"
 #include "MICmnBase.h"
 #include "MICmnResources.h"
@@ -47,29 +50,27 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
 {
     // Methods:
   public:
-    /* ctor */ CMICmdBase();
+    CMICmdBase();
 
     // Overridden:
-  public:
     // From CMICmdInvoker::ICmd
-    virtual const SMICmdData &GetCmdData() const;
-    virtual const CMIUtilString &GetErrorDescription() const;
-    virtual void SetCmdData(const SMICmdData &vCmdData);
-    virtual void CmdFinishedTellInvoker() const;
-    virtual const CMIUtilString &GetMIResultRecord() const;
-    virtual const CMIUtilString &GetMIResultRecordExtra() const;
-    virtual bool HasMIResultRecordExtra() const;
-    virtual bool ParseArgs();
+    const SMICmdData &GetCmdData() const override;
+    const CMIUtilString &GetErrorDescription() const override;
+    void SetCmdData(const SMICmdData &vCmdData) override;
+    void CmdFinishedTellInvoker() const override;
+    const CMIUtilString &GetMIResultRecord() const override;
+    const CMIUtilString &GetMIResultRecordExtra() const override;
+    bool HasMIResultRecordExtra() const override;
+    bool ParseArgs() override;
     // From CMICmdFactory::ICmd
-    virtual const CMIUtilString &GetMiCmd() const;
-    virtual CMICmdFactory::CmdCreatorFnPtr GetCmdCreatorFn() const;
+    const CMIUtilString &GetMiCmd() const override;
+    CMICmdFactory::CmdCreatorFnPtr GetCmdCreatorFn() const override;
 
     virtual MIuint GetGUID();
     void AddCommonArgs();
 
     // Overrideable:
-  public:
-    /* dtor */ virtual ~CMICmdBase();
+    ~CMICmdBase() override;
     virtual bool GetExitAppOnCommandFailure() const;
 
     // Methods:
@@ -79,7 +80,6 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
     bool ParseValidateCmdOptions();
 
     // Attributes:
-  protected:
     CMICmdFactory::CmdCreatorFnPtr m_pSelfCreatorFn;
     CMIUtilString m_strCurrentErrDescription; // Reason for Execute or Acknowledge function failure
     SMICmdData m_cmdData; // Holds information/status of *this command. Used by other MI code to report or determine state of a command.
@@ -116,7 +116,7 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
 // Args:    vStrOptionName  - (R)   The text name of the argument or option to search for in
 //                                  the list of the command's possible arguments or options.
 // Return:  T * - CMICmdArgValBase derived object.
-//              - NULL = function has failed, unable to retrieve the option/arg object.
+//              - nullptr = function has failed, unable to retrieve the option/arg object.
 // Throws:  None.
 //--
 template <class T>
@@ -143,7 +143,7 @@ CMICmdBase::GetOption(const CMIUtilString &vStrOptionName)
 //          c   - (R) The text name of the argument or option to search for in the list of
 //                    the command's possible arguments or options.
 // Return:  T * - CMICmdArgValBase derived object.
-//              - NULL = function has failed, unable to retrieve the option/arg object.
+//              - nullptr = function has failed, unable to retrieve the option/arg object.
 // Throws:  None.
 //--
 #define CMICMDBASE_GETOPTION(a, b, c)                                                                                                      \

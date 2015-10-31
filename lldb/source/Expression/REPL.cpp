@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
@@ -21,6 +25,25 @@
 #include "lldb/Utility/AnsiTerminal.h"
 
 using namespace lldb_private;
+
+REPL::REPL(LLVMCastKind kind, Target &target) :
+    m_target(target),
+    m_kind(kind)
+{
+    // Make sure all option values have sane defaults
+    Debugger &debugger = m_target.GetDebugger();
+    CommandInterpreter &ci = debugger.GetCommandInterpreter();
+    m_format_options.OptionParsingStarting(ci);
+    m_varobj_options.OptionParsingStarting(ci);
+    m_command_options.OptionParsingStarting(ci);
+    
+    // Default certain settings for REPL regardless of the global settings.
+    m_command_options.unwind_on_error = false;
+    m_command_options.ignore_breakpoints = false;
+    m_command_options.debug = false;
+}
+
+REPL::~REPL() = default;
 
 lldb::REPLSP
 REPL::Create(Error &err, lldb::LanguageType language, Debugger *debugger, Target *target, const char *repl_options)
@@ -40,23 +63,6 @@ REPL::Create(Error &err, lldb::LanguageType language, Debugger *debugger, Target
     return ret;
 }
 
-REPL::REPL(LLVMCastKind kind, Target &target) :
-    m_target(target),
-    m_kind(kind)
-{
-    // Make sure all option values have sane defaults
-    Debugger &debugger = m_target.GetDebugger();
-    CommandInterpreter &ci = debugger.GetCommandInterpreter();
-    m_format_options.OptionParsingStarting(ci);
-    m_varobj_options.OptionParsingStarting(ci);
-    m_command_options.OptionParsingStarting(ci);
-    
-    // Default certain settings for REPL regardless of the global settings.
-    m_command_options.unwind_on_error = false;
-    m_command_options.ignore_breakpoints = false;
-    m_command_options.debug = false;
-}
-
 std::string
 REPL::GetSourcePath()
 {
@@ -66,7 +72,7 @@ REPL::GetSourcePath()
     if (HostInfo::GetLLDBPath (lldb::ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
     {
         tmpdir_file_spec.GetFilename().SetCString(file_basename.AsCString());
-        m_repl_source_path = std::move(tmpdir_file_spec.GetPath());
+        m_repl_source_path = tmpdir_file_spec.GetPath();
     }
     else
     {
@@ -75,10 +81,6 @@ REPL::GetSourcePath()
     }
     
     return tmpdir_file_spec.GetPath();
-}
-
-REPL::~REPL()
-{
 }
 
 lldb::IOHandlerSP
@@ -139,11 +141,9 @@ REPL::IOHandlerInputInterrupted (IOHandler &io_handler,
 }
 
 const char *
-REPL::IOHandlerGetFixIndentationCharacters ()
+REPL::IOHandlerGetFixIndentationCharacters()
 {
-    if (m_enable_auto_indent)
-        return GetAutoIndentCharacters();
-    return NULL;
+    return (m_enable_auto_indent ? GetAutoIndentCharacters() : nullptr);
 }
 
 ConstString
@@ -352,7 +352,7 @@ REPL::IOHandlerInputComplete (IOHandler &io_handler, std::string &code)
             
             const size_t var_count_before = persistent_state->GetSize();
             
-            const char *expr_prefix = NULL;
+            const char *expr_prefix = nullptr;
             lldb::ValueObjectSP result_valobj_sp;
             Error error;
             lldb::ModuleSP jit_module_sp;
@@ -401,8 +401,7 @@ REPL::IOHandlerInputComplete (IOHandler &io_handler, std::string &code)
                         PrintOneVariable(debugger, output_sp, valobj_sp, persistent_var_sp.get());
                     }
                 }
-                
-                
+
                 if (!handled)
                 {
                     bool useColors = error_sp->GetFile().GetIsTerminalWithColors();

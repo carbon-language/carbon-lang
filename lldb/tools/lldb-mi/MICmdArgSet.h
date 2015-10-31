@@ -9,10 +9,12 @@
 
 #pragma once
 
-// Third party headers:
+// C Includes
+// C++ Includes
 #include <vector>
 
-// In-house headers:
+// Other libraries and framework includes
+// Project includes
 #include "MICmnBase.h"
 #include "MICmdArgContext.h"
 
@@ -49,16 +51,14 @@ class CMICmdArgSet : public CMICmnBase
         virtual bool GetValid() const = 0;
         virtual bool Validate(CMICmdArgContext &vwArgContext) = 0;
 
-        /* dtor */ virtual ~IArg(){}
+        virtual ~IArg() = default;
     };
 
     // Typedefs:
-  public:
     typedef std::vector<CMICmdArgValBase *> SetCmdArgs_t;
 
     // Methods:
-  public:
-    /* ctor */ CMICmdArgSet();
+    CMICmdArgSet();
 
     void Add(CMICmdArgValBase *vArg);
     bool GetArg(const CMIUtilString &vArgName, CMICmdArgValBase *&vpArg) const;
@@ -71,8 +71,7 @@ class CMICmdArgSet : public CMICmnBase
     bool Validate(const CMIUtilString &vStrMiCmd, CMICmdArgContext &vwCmdArgsText);
 
     // Overrideable:
-  public:
-    /* dtor */ virtual ~CMICmdArgSet();
+    ~CMICmdArgSet() override;
 
     // Methods:
   private:
@@ -82,7 +81,6 @@ class CMICmdArgSet : public CMICmnBase
     bool ValidationFormErrorMessages(const CMICmdArgContext &vwCmdArgsText);
 
     // Attributes:
-  private:
     bool m_bIsArgsPresentButNotHandledByCmd; // True = The driver's client presented the command with options recognised but not handled by
                                              // a command, false = all args handled
     SetCmdArgs_t m_setCmdArgs;               // The set of arguments that are that the command is expecting to find in the options string

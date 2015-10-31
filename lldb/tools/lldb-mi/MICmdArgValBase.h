@@ -9,7 +9,10 @@
 
 #pragma once
 
-// In-house headers:
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "MIUtilString.h"
 #include "MICmdArgSet.h"
 
@@ -35,15 +38,13 @@ class CMICmdArgValBase : public CMICmdArgSet::IArg
 {
     // Methods:
   public:
-    /* ctor */ CMICmdArgValBase();
-    /* ctor */ CMICmdArgValBase(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
+    CMICmdArgValBase();
+    CMICmdArgValBase(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
 
     // Overrideable:
-  public:
-    /* dtor */ ~CMICmdArgValBase() override;
+    ~CMICmdArgValBase() override = default;
 
     // Overridden:
-  public:
     // From CMICmdArgSet::IArg
     bool GetFound() const override;
     bool GetIsHandledByCmd() const override;
@@ -70,30 +71,18 @@ template <class T> class CMICmdArgValBaseTemplate : public CMICmdArgValBase
 {
     // Methods:
   public:
-    /* ctor */ CMICmdArgValBaseTemplate();
-    /* ctor */ CMICmdArgValBaseTemplate(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
+    CMICmdArgValBaseTemplate() = default;
+    CMICmdArgValBaseTemplate(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
     //
     const T &GetValue() const;
 
     // Overrideable:
-  public:
-    /* dtor */ virtual ~CMICmdArgValBaseTemplate();
+    ~CMICmdArgValBaseTemplate() override = default;
 
     // Attributes:
   protected:
     T m_argValue;
 };
-
-//++ ------------------------------------------------------------------------------------
-// Details: CMICmdArgValBaseTemplate constructor.
-// Type:    Method.
-// Args:    None.
-// Return:  None.
-// Throws:  None.
-//--
-template <class T> CMICmdArgValBaseTemplate<T>::CMICmdArgValBaseTemplate()
-{
-}
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmdArgValBaseTemplate constructor.
@@ -107,17 +96,6 @@ template <class T> CMICmdArgValBaseTemplate<T>::CMICmdArgValBaseTemplate()
 template <class T>
 CMICmdArgValBaseTemplate<T>::CMICmdArgValBaseTemplate(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd)
     : CMICmdArgValBase(vrArgName, vbMandatory, vbHandleByCmd)
-{
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: CMICmdArgValBaseTemplate destructor.
-// Type:    Overrideable.
-// Args:    None.
-// Return:  None.
-// Throws:  None.
-//--
-template <class T> CMICmdArgValBaseTemplate<T>::~CMICmdArgValBaseTemplate()
 {
 }
 
