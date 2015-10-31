@@ -2207,12 +2207,6 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) {
   Replacer(I, With);
 }
 
-/*static*/ void LibCallSimplifier::replaceAllUsesWithDefault(Instruction *I,
-                                                             Value *With) {
-  I->replaceAllUsesWith(With);
-  I->eraseFromParent();
-}
-
 // TODO:
 //   Additional cases that we need to add to this file:
 //
