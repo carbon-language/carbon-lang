@@ -12,3 +12,12 @@ void (*PR23733_1)() = static_cast<FnPtrTy>((void *)0); // expected-warning {{sta
 void (*PR23733_2)() = FnPtrTy((void *)0);
 void (*PR23733_3)() = (FnPtrTy)((void *)0);
 void (*PR23733_4)() = reinterpret_cast<FnPtrTy>((void *)0);
+
+long function_prototype(int a);
+long (*function_ptr)(int a);
+
+void function_to_voidptr_conv() {
+  void *a1 = function_prototype;  // expected-warning {{implicit conversion between pointer-to-function and pointer-to-object is a Microsoft extension}}
+  void *a2 = &function_prototype; // expected-warning {{implicit conversion between pointer-to-function and pointer-to-object is a Microsoft extension}}
+  void *a3 = function_ptr;        // expected-warning {{implicit conversion between pointer-to-function and pointer-to-object is a Microsoft extension}}
+}

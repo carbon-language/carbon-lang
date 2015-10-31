@@ -2635,6 +2635,10 @@ def warn_impcast_null_pointer_to_integer : Warning<
 def warn_impcast_floating_point_to_bool : Warning<
     "implicit conversion turns floating-point number into bool: %0 to %1">,
     InGroup<ImplicitConversionFloatingPointToBool>;
+def ext_ms_impcast_fn_obj : ExtWarn<
+  "implicit conversion between pointer-to-function and pointer-to-object is a "
+  "Microsoft extension">,
+  InGroup<MicrosoftCast>, DefaultError, SFINAEFailure;
 
 def warn_impcast_pointer_to_bool : Warning<
     "address of%select{| function| array}0 '%1' will always evaluate to "

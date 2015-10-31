@@ -153,16 +153,6 @@ static void static_func() // expected-warning {{redeclaring non-static 'static_f
 extern const int static_var; // expected-note {{previous declaration is here}}
 static const int static_var = 3; // expected-warning {{redeclaring non-static 'static_var' as static is a Microsoft extension}}
 
-long function_prototype(int a);
-long (*function_ptr)(int a);
-
-void function_to_voidptr_conv() {
-   void *a1 = function_prototype;
-   void *a2 = &function_prototype;
-   void *a3 = function_ptr;
-}
-
-
 void pointer_to_integral_type_conv(char* ptr) {
    char ch = (char)ptr;
    short sh = (short)ptr;
