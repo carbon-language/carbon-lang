@@ -1486,15 +1486,16 @@ void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
 // Integer Library Call Optimizations
 //===----------------------------------------------------------------------===//
 
+static bool checkIntUnaryReturnAndParam(Function *Callee) {
+  FunctionType *FT = Callee->getFunctionType();
+  return !(FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy(32) ||
+    !FT->getParamType(0)->isIntegerTy());
+}
+
 Value *LibCallSimplifier::optimizeFFS(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-  // Just make sure this has 2 arguments of the same FP type, which match the
-  // result type.
-  if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy(32) ||
-      !FT->getParamType(0)->isIntegerTy())
+  if (!checkIntUnaryReturnAndParam(Callee))
     return nullptr;
-
   Value *Op = CI->getArgOperand(0);
 
   // Constant fold.
@@ -1534,11 +1535,7 @@ Value *LibCallSimplifier::optimizeAbs(CallInst *CI, IRBuilder<> &B) {
 }
 
 Value *LibCallSimplifier::optimizeIsDigit(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-  // We require integer(i32)
-  if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
-      !FT->getParamType(0)->isIntegerTy(32))
+  if (!checkIntUnaryReturnAndParam(CI->getCalledFunction()))
     return nullptr;
 
   // isdigit(c) -> (c-'0') <u 10
@@ -1549,11 +1546,7 @@ Value *LibCallSimplifier::optimizeIsDigit(CallInst *CI, IRBuilder<> &B) {
 }
 
 Value *LibCallSimplifier::optimizeIsAscii(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-  // We require integer(i32)
-  if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
-      !FT->getParamType(0)->isIntegerTy(32))
+  if (!checkIntUnaryReturnAndParam(CI->getCalledFunction()))
     return nullptr;
 
   // isascii(c) -> c <u 128
@@ -1563,11 +1556,7 @@ Value *LibCallSimplifier::optimizeIsAscii(CallInst *CI, IRBuilder<> &B) {
 }
 
 Value *LibCallSimplifier::optimizeToAscii(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-  // We require i32(i32)
-  if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
-      !FT->getParamType(0)->isIntegerTy(32))
+  if (!checkIntUnaryReturnAndParam(CI->getCalledFunction()))
     return nullptr;
 
   // toascii(c) -> c & 0x7f
