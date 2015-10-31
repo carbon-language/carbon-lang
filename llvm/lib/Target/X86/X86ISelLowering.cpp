@@ -15129,7 +15129,7 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
   // memory. In practice, we ''widen'' MemVT.
   EVT WideVecVT =
       EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
-                       loadRegZize / MemVT.getScalarType().getSizeInBits());
+                       loadRegZize / MemVT.getScalarSizeInBits());
 
   assert(WideVecVT.getSizeInBits() == LoadUnitVecVT.getSizeInBits() &&
          "Invalid vector type");
@@ -22032,7 +22032,7 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
   unsigned Depth) const {
   // SETCC_CARRY sets the dest to ~0 for true or 0 for false.
   if (Op.getOpcode() == X86ISD::SETCC_CARRY)
-    return Op.getValueType().getScalarType().getSizeInBits();
+    return Op.getValueType().getScalarSizeInBits();
 
   // Fallback case.
   return 1;
@@ -23797,7 +23797,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
       !DCI.isBeforeLegalize() &&
       !ISD::isBuildVectorOfConstantSDNodes(Cond.getNode())) {
-    unsigned BitWidth = Cond.getValueType().getScalarType().getSizeInBits();
+    unsigned BitWidth = Cond.getValueType().getScalarSizeInBits();
 
     // Don't optimize vector selects that map to mask-registers.
     if (BitWidth == 1)
@@ -24639,9 +24639,9 @@ static SDValue WidenMaskArithmetic(SDNode *N, SelectionDAG &DAG,
   case ISD::ANY_EXTEND:
     return Op;
   case ISD::ZERO_EXTEND: {
-    unsigned InBits = NarrowVT.getScalarType().getSizeInBits();
+    unsigned InBits = NarrowVT.getScalarSizeInBits();
     APInt Mask = APInt::getAllOnesValue(InBits);
-    Mask = Mask.zext(VT.getScalarType().getSizeInBits());
+    Mask = Mask.zext(VT.getScalarSizeInBits());
     return DAG.getNode(ISD::AND, DL, VT,
                        Op, DAG.getConstant(Mask, DL, VT));
   }
