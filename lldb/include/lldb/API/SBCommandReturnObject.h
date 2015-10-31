@@ -10,8 +10,14 @@
 #ifndef LLDB_SBCommandReturnObject_h_
 #define LLDB_SBCommandReturnObject_h_
 
+// C Includes
 #include <stdio.h>
 
+// C++ Includes
+#include <memory>
+
+// Other libraries and framework includes
+// Project includes
 #include "lldb/API/SBDefines.h"
 
 namespace lldb {
@@ -19,21 +25,19 @@ namespace lldb {
 class LLDB_API SBCommandReturnObject
 {
 public:
-
     SBCommandReturnObject ();
 
     SBCommandReturnObject (const lldb::SBCommandReturnObject &rhs);
 
+    ~SBCommandReturnObject ();
+
     const lldb::SBCommandReturnObject &
     operator = (const lldb::SBCommandReturnObject &rhs);
-    
 
     SBCommandReturnObject (lldb_private::CommandReturnObject *ptr);
     
     lldb_private::CommandReturnObject *
     Release ();
-
-    ~SBCommandReturnObject ();
 
     bool
     IsValid() const;
@@ -99,8 +103,8 @@ public:
     GetError (bool only_if_no_immediate);
     
     void
-    SetError (lldb::SBError &error,
-              const char *fallback_error_cstr = NULL);
+    SetError(lldb::SBError &error,
+             const char *fallback_error_cstr = nullptr);
     
     void
     SetError (const char* error_cstr);
@@ -124,10 +128,10 @@ protected:
     void
     SetLLDBObjectPtr (lldb_private::CommandReturnObject *ptr);
 
- private:
+private:
     std::unique_ptr<lldb_private::CommandReturnObject> m_opaque_ap;
 };
 
 } // namespace lldb
 
-#endif        // LLDB_SBCommandReturnObject_h_
+#endif // LLDB_SBCommandReturnObject_h_

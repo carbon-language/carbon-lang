@@ -7,10 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/API/SBFrame.h"
-
-#include <string>
+// C Includes
+// C++ Includes
 #include <algorithm>
+#include <string>
+
+// Other libraries and framework includes
+// Project includes
+#include "lldb/API/SBFrame.h"
 
 #include "lldb/lldb-types.h"
 
@@ -50,7 +54,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-
 SBFrame::SBFrame () :
     m_opaque_sp (new ExecutionContextRef())
 {
@@ -76,6 +79,8 @@ SBFrame::SBFrame(const SBFrame &rhs) :
 {
 }
 
+SBFrame::~SBFrame() = default;
+
 const SBFrame &
 SBFrame::operator = (const SBFrame &rhs)
 {
@@ -84,16 +89,10 @@ SBFrame::operator = (const SBFrame &rhs)
     return *this;
 }
 
-SBFrame::~SBFrame()
-{
-}
-
 StackFrameSP
 SBFrame::GetFrameSP() const
 {
-    if (m_opaque_sp)
-        return m_opaque_sp->GetFrameSP();
-    return StackFrameSP();
+    return (m_opaque_sp ? m_opaque_sp->GetFrameSP() : StackFrameSP());
 }
 
 void
@@ -105,7 +104,7 @@ SBFrame::SetFrameSP (const StackFrameSP &lldb_object_sp)
 bool
 SBFrame::IsValid() const
 {
-    return GetFrameSP().get() != NULL;
+    return GetFrameSP().get() != nullptr;
 }
 
 SBSymbolContext
@@ -116,7 +115,7 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -159,7 +158,7 @@ SBFrame::GetModule () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -202,7 +201,7 @@ SBFrame::GetCompileUnit () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -243,7 +242,7 @@ SBFrame::GetFunction () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -284,7 +283,7 @@ SBFrame::GetSymbol () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -324,7 +323,7 @@ SBFrame::GetBlock () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -364,7 +363,7 @@ SBFrame::GetFrameBlock () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     Process *process = exe_ctx.GetProcessPtr();
@@ -405,7 +404,7 @@ SBFrame::GetLineEntry () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -464,7 +463,6 @@ SBFrame::GetCFA () const
     return LLDB_INVALID_ADDRESS;
 }
 
-
 addr_t
 SBFrame::GetPC () const
 {
@@ -473,7 +471,7 @@ SBFrame::GetPC () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -514,7 +512,7 @@ SBFrame::SetPC (addr_t new_pc)
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -555,7 +553,7 @@ SBFrame::GetSP () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -587,7 +585,6 @@ SBFrame::GetSP () const
     return addr;
 }
 
-
 addr_t
 SBFrame::GetFP () const
 {
@@ -596,7 +593,7 @@ SBFrame::GetFP () const
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -627,7 +624,6 @@ SBFrame::GetFP () const
                      static_cast<void*>(frame), addr);
     return addr;
 }
-
 
 SBAddress
 SBFrame::GetPCAddress () const
@@ -696,7 +692,7 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
     SBValue sb_value;
     Mutex::Locker api_locker;
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (var_path == NULL || var_path[0] == '\0')
+    if (var_path == nullptr || var_path[0] == '\0')
     {
         if (log)
             log->Printf ("SBFrame::GetValueForVariablePath called with empty variable path.");
@@ -705,7 +701,7 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
     
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -762,7 +758,7 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
     VariableSP var_sp;
     SBValue sb_value;
 
-    if (name == NULL || name[0] == '\0')
+    if (name == nullptr || name[0] == '\0')
     {
         if (log)
             log->Printf ("SBFrame::FindVariable called with empty name");
@@ -773,7 +769,7 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -850,7 +846,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     SBValue sb_value;
 
-    if (name == NULL || name[0] == '\0')
+    if (name == nullptr || name[0] == '\0')
     {
         if (log)
             log->Printf ("SBFrame::FindValue called with empty name.");
@@ -861,7 +857,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -1035,11 +1031,11 @@ const char *
 SBFrame::Disassemble () const
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    const char *disassembly = NULL;
+    const char *disassembly = nullptr;
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -1071,7 +1067,6 @@ SBFrame::Disassemble () const
 
     return disassembly;
 }
-
 
 SBValueList
 SBFrame::GetVariables (bool arguments,
@@ -1130,7 +1125,7 @@ SBFrame::GetVariables (const lldb::SBVariablesOptions& options)
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
 
     const bool statics = options.GetIncludeStatics();
@@ -1156,7 +1151,7 @@ SBFrame::GetVariables (const lldb::SBVariablesOptions& options)
             if (frame)
             {
                 size_t i;
-                VariableList *variable_list = NULL;
+                VariableList *variable_list = nullptr;
                 variable_list = frame->GetVariableList(true);
                 if (variable_list)
                 {
@@ -1194,9 +1189,9 @@ SBFrame::GetVariables (const lldb::SBVariablesOptions& options)
 
                                     ValueObjectSP valobj_sp(frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues));
                                     
-                                    if (false == include_runtime_support_values &&
-                                        valobj_sp &&
-                                        true == valobj_sp->IsRuntimeSupportValue())
+                                    if (!include_runtime_support_values &&
+                                        valobj_sp != nullptr &&
+                                        valobj_sp->IsRuntimeSupportValue())
                                         continue;
                                     
                                     SBValue value_sb;
@@ -1238,7 +1233,7 @@ SBFrame::GetRegisters ()
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -1290,7 +1285,7 @@ SBFrame::FindRegister (const char *name)
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -1427,7 +1422,7 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
     ExpressionResults exe_results = eExpressionSetupError;
     SBValue expr_result;
 
-    if (expr == NULL || expr[0] == '\0')
+    if (expr == nullptr || expr[0] == '\0')
     {
         if (log)
             log->Printf ("SBFrame::EvaluateExpression called with an empty expression");
@@ -1442,7 +1437,7 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
     if (log)
         log->Printf ("SBFrame()::EvaluateExpression (expr=\"%s\")...", expr);
 
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
 
@@ -1469,7 +1464,7 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
                 expr_result.SetSP(expr_value_sp, options.GetFetchDynamicValue());
 
                 if (target->GetDisplayExpressionsInCrashlogs())
-                    Host::SetCrashDescription (NULL);
+                    Host::SetCrashDescription(nullptr);
             }
             else
             {
@@ -1509,7 +1504,7 @@ SBFrame::IsInlined() const
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx(m_opaque_sp.get());
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -1523,7 +1518,7 @@ SBFrame::IsInlined() const
 
                 Block *block = frame->GetSymbolContext(eSymbolContextBlock).block;
                 if (block)
-                    return block->GetContainingInlinedBlock () != NULL;
+                    return block->GetContainingInlinedBlock() != nullptr;
             }
             else
             {
@@ -1551,9 +1546,9 @@ const char *
 SBFrame::GetFunctionName() const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    const char *name = NULL;
+    const char *name = nullptr;
     ExecutionContext exe_ctx(m_opaque_sp.get());
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -1575,13 +1570,13 @@ SBFrame::GetFunctionName() const
                     }
                 }
                 
-                if (name == NULL)
+                if (name == nullptr)
                 {
                     if (sc.function)
                         name = sc.function->GetName().GetCString();
                 }
 
-                if (name == NULL)
+                if (name == nullptr)
                 {
                     if (sc.symbol)
                         name = sc.symbol->GetName().GetCString();
@@ -1607,9 +1602,9 @@ const char *
 SBFrame::GetDisplayFunctionName()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    const char *name = NULL;
+    const char *name = nullptr;
     ExecutionContext exe_ctx(m_opaque_sp.get());
-    StackFrame *frame = NULL;
+    StackFrame *frame = nullptr;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)
@@ -1631,13 +1626,13 @@ SBFrame::GetDisplayFunctionName()
                     }
                 }
                 
-                if (name == NULL)
+                if (name == nullptr)
                 {
                     if (sc.function)
                         name = sc.function->GetDisplayName().GetCString();
                 }
                 
-                if (name == NULL)
+                if (name == nullptr)
                 {
                     if (sc.symbol)
                         name = sc.symbol->GetDisplayName().GetCString();

@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/lldb-types.h"
 
 #include "lldb/Core/Listener.h"
@@ -34,10 +38,7 @@ SBCommandInterpreterRunOptions::SBCommandInterpreterRunOptions()
     m_opaque_up.reset(new CommandInterpreterRunOptions());
 }
 
-SBCommandInterpreterRunOptions::~SBCommandInterpreterRunOptions()
-{
-
-}
+SBCommandInterpreterRunOptions::~SBCommandInterpreterRunOptions() = default;
 
 bool
 SBCommandInterpreterRunOptions::GetStopOnContinue () const
@@ -126,21 +127,24 @@ SBCommandInterpreterRunOptions::ref () const
 class CommandPluginInterfaceImplementation : public CommandObjectParsed
 {
 public:
-    CommandPluginInterfaceImplementation (CommandInterpreter &interpreter,
-                                          const char *name,
-                                          lldb::SBCommandPluginInterface* backend,
-                                          const char *help = NULL,
-                                          const char *syntax = NULL,
-                                          uint32_t flags = 0) :
+    CommandPluginInterfaceImplementation(CommandInterpreter &interpreter,
+                                         const char *name,
+                                         lldb::SBCommandPluginInterface* backend,
+                                         const char *help = nullptr,
+                                         const char *syntax = nullptr,
+                                         uint32_t flags = 0) :
     CommandObjectParsed (interpreter, name, help, syntax, flags),
     m_backend(backend) {}
     
-    virtual bool
-    IsRemovable() const { return true; }
+    bool
+    IsRemovable() const override
+    {
+        return true;
+    }
     
 protected:
-    virtual bool
-    DoExecute (Args& command, CommandReturnObject &result)
+    bool
+    DoExecute(Args& command, CommandReturnObject &result) override
     {
         SBCommandReturnObject sb_return(&result);
         SBCommandInterpreter sb_interpreter(&m_interpreter);
@@ -169,6 +173,8 @@ SBCommandInterpreter::SBCommandInterpreter(const SBCommandInterpreter &rhs) :
 {
 }
 
+SBCommandInterpreter::~SBCommandInterpreter() = default;
+
 const SBCommandInterpreter &
 SBCommandInterpreter::operator = (const SBCommandInterpreter &rhs)
 {
@@ -176,47 +182,34 @@ SBCommandInterpreter::operator = (const SBCommandInterpreter &rhs)
     return *this;
 }
 
-SBCommandInterpreter::~SBCommandInterpreter ()
-{
-}
-
 bool
 SBCommandInterpreter::IsValid() const
 {
-    return m_opaque_ptr != NULL;
+    return m_opaque_ptr != nullptr;
 }
 
-
 bool
-SBCommandInterpreter::CommandExists (const char *cmd)
+SBCommandInterpreter::CommandExists(const char *cmd)
 {
-    if (cmd && m_opaque_ptr)
-        return m_opaque_ptr->CommandExists (cmd);
-    return false;
+    return (((cmd != nullptr) && IsValid()) ? m_opaque_ptr->CommandExists(cmd) : false);
 }
 
 bool
 SBCommandInterpreter::AliasExists (const char *cmd)
 {
-    if (cmd && m_opaque_ptr)
-        return m_opaque_ptr->AliasExists (cmd);
-    return false;
+    return (((cmd != nullptr) && IsValid()) ? m_opaque_ptr->AliasExists(cmd) : false);
 }
 
 bool
-SBCommandInterpreter::IsActive ()
+SBCommandInterpreter::IsActive()
 {
-    if (m_opaque_ptr)
-        return m_opaque_ptr->IsActive ();
-    return false;
+    return (IsValid() ? m_opaque_ptr->IsActive() : false);
 }
 
 const char *
 SBCommandInterpreter::GetIOHandlerControlSequence(char ch)
 {
-    if (m_opaque_ptr)
-        return m_opaque_ptr->GetDebugger().GetTopIOHandlerControlSequence (ch).GetCString();
-    return NULL;
+    return (IsValid() ? m_opaque_ptr->GetDebugger().GetTopIOHandlerControlSequence(ch).GetCString() : nullptr);
 }
 
 lldb::ReturnStatus
@@ -247,7 +240,7 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBExecutionContex
 
 
     result.Clear();
-    if (command_line && m_opaque_ptr)
+    if (command_line && IsValid())
     {
         result.ref().SetInteractive(false);
         m_opaque_ptr->HandleCommand (command_line, add_to_history ? eLazyBoolYes : eLazyBoolNo, result.ref(), ctx_ptr);
@@ -290,7 +283,7 @@ SBCommandInterpreter::HandleCommandsFromFile (lldb::SBFileSpec &file,
                      static_cast<void*>(result.get()));
     }
 
-    if (!m_opaque_ptr)
+    if (!IsValid())
     {
         result->AppendError ("SBCommandInterpreter is not valid.");
         result->SetStatus (eReturnStatusFailed);
@@ -315,11 +308,8 @@ SBCommandInterpreter::HandleCommandsFromFile (lldb::SBFileSpec &file,
     else
        ctx_ptr = nullptr;
 
-
     m_opaque_ptr->HandleCommandsFromFile (tmp_spec, ctx_ptr, options.ref(), result.ref());
-
 }
-
 
 int
 SBCommandInterpreter::HandleCompletion (const char *current_line,
@@ -334,7 +324,7 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
 
     // Sanity check the arguments that are passed in:
     // cursor & last_char have to be within the current_line.
-    if (current_line == NULL || cursor == NULL || last_char == NULL)
+    if (current_line == nullptr || cursor == nullptr || last_char == nullptr)
         return 0;
 
     if (cursor < current_line || last_char < current_line)
@@ -352,11 +342,11 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
                      static_cast<uint64_t>(last_char - current_line),
                      match_start_point, max_return_elements);
 
-    if (m_opaque_ptr)
+    if (IsValid())
     {
         lldb_private::StringList lldb_matches;
-        num_completions =  m_opaque_ptr->HandleCompletion (current_line, cursor, last_char, match_start_point,
-                                                           max_return_elements, lldb_matches);
+        num_completions = m_opaque_ptr->HandleCompletion(current_line, cursor, last_char, match_start_point,
+                                                         max_return_elements, lldb_matches);
 
         SBStringList temp_list (&lldb_matches);
         matches.AppendList (temp_list);
@@ -381,27 +371,21 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
 }
 
 bool
-SBCommandInterpreter::HasCommands ()
+SBCommandInterpreter::HasCommands()
 {
-    if (m_opaque_ptr)
-        return m_opaque_ptr->HasCommands();
-    return false;
+    return (IsValid() ? m_opaque_ptr->HasCommands() : false);
 }
 
 bool
-SBCommandInterpreter::HasAliases ()
+SBCommandInterpreter::HasAliases()
 {
-    if (m_opaque_ptr)
-        return m_opaque_ptr->HasAliases();
-    return false;
+    return (IsValid() ? m_opaque_ptr->HasAliases() : false);
 }
 
 bool
-SBCommandInterpreter::HasAliasOptions ()
+SBCommandInterpreter::HasAliasOptions()
 {
-    if (m_opaque_ptr)
-        return m_opaque_ptr->HasAliasOptions ();
-    return false;
+    return (IsValid() ? m_opaque_ptr->HasAliasOptions() : false);
 }
 
 SBProcess
@@ -409,7 +393,7 @@ SBCommandInterpreter::GetProcess ()
 {
     SBProcess sb_process;
     ProcessSP process_sp;
-    if (m_opaque_ptr)
+    if (IsValid())
     {
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         if (target_sp)
@@ -433,7 +417,7 @@ SBDebugger
 SBCommandInterpreter::GetDebugger ()
 {
     SBDebugger sb_debugger;
-    if (m_opaque_ptr)
+    if (IsValid())
         sb_debugger.reset(m_opaque_ptr->GetDebugger().shared_from_this());
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
@@ -448,15 +432,13 @@ SBCommandInterpreter::GetDebugger ()
 bool
 SBCommandInterpreter::GetPromptOnQuit()
 {
-    if (m_opaque_ptr)
-        return m_opaque_ptr->GetPromptOnQuit();
-    return false;
+    return (IsValid() ? m_opaque_ptr->GetPromptOnQuit() : false);
 }
 
 void
 SBCommandInterpreter::SetPromptOnQuit (bool b)
 {
-    if (m_opaque_ptr)
+    if (IsValid())
         m_opaque_ptr->SetPromptOnQuit(b);
 }
 
@@ -464,7 +446,7 @@ void
 SBCommandInterpreter::ResolveCommand(const char *command_line, SBCommandReturnObject &result)
 {
     result.Clear();
-    if (command_line && m_opaque_ptr)
+    if (command_line && IsValid())
     {
         m_opaque_ptr->ResolveCommand(command_line, result.ref());
     }
@@ -474,7 +456,6 @@ SBCommandInterpreter::ResolveCommand(const char *command_line, SBCommandReturnOb
         result->SetStatus(eReturnStatusFailed);
     }
 }
-
 
 CommandInterpreter *
 SBCommandInterpreter::get ()
@@ -499,7 +480,7 @@ void
 SBCommandInterpreter::SourceInitFileInHomeDirectory (SBCommandReturnObject &result)
 {
     result.Clear();
-    if (m_opaque_ptr)
+    if (IsValid())
     {
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         Mutex::Locker api_locker;
@@ -524,7 +505,7 @@ void
 SBCommandInterpreter::SourceInitFileInCurrentWorkingDirectory (SBCommandReturnObject &result)
 {
     result.Clear();
-    if (m_opaque_ptr)
+    if (IsValid())
     {
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         Mutex::Locker api_locker;
@@ -588,7 +569,7 @@ SBCommandInterpreter::SetCommandOverrideCallback (const char *command_name,
                                                   lldb::CommandOverrideCallback callback,
                                                   void *baton)
 {
-    if (command_name && command_name[0] && m_opaque_ptr)
+    if (command_name && command_name[0] && IsValid())
     {
         std::string command_name_str (command_name);
         CommandObject *cmd_obj = m_opaque_ptr->GetCommandObjectForCommand(command_name_str);
@@ -605,7 +586,7 @@ SBCommandInterpreter::SetCommandOverrideCallback (const char *command_name,
 lldb::SBCommand
 SBCommandInterpreter::AddMultiwordCommand (const char* name, const char* help)
 {
-    CommandObjectMultiword *new_command = new CommandObjectMultiword(*m_opaque_ptr,name,help);
+    CommandObjectMultiword *new_command = new CommandObjectMultiword(*m_opaque_ptr, name, help);
     new_command->SetRemovable (true);
     lldb::CommandObjectSP new_command_sp(new_command);
     if (new_command_sp && m_opaque_ptr->AddUserCommand(name, new_command_sp, true))
@@ -617,47 +598,40 @@ lldb::SBCommand
 SBCommandInterpreter::AddCommand (const char* name, lldb::SBCommandPluginInterface* impl, const char* help)
 {
     lldb::CommandObjectSP new_command_sp;
-    new_command_sp.reset(new CommandPluginInterfaceImplementation(*m_opaque_ptr,name,impl,help));
+    new_command_sp.reset(new CommandPluginInterfaceImplementation(*m_opaque_ptr,name, impl, help));
 
     if (new_command_sp && m_opaque_ptr->AddUserCommand(name, new_command_sp, true))
         return lldb::SBCommand(new_command_sp);
     return lldb::SBCommand();
 }
 
-SBCommand::SBCommand ()
-{}
+SBCommand::SBCommand() = default;
 
 SBCommand::SBCommand (lldb::CommandObjectSP cmd_sp) : m_opaque_sp (cmd_sp)
 {}
 
 bool
-SBCommand::IsValid ()
+SBCommand::IsValid()
 {
-    return (bool)m_opaque_sp;
+    return m_opaque_sp.get() != nullptr;
 }
 
 const char*
-SBCommand::GetName ()
+SBCommand::GetName()
 {
-    if (IsValid ())
-        return m_opaque_sp->GetCommandName ();
-    return NULL;
+    return (IsValid() ? m_opaque_sp->GetCommandName() : nullptr);
 }
 
 const char*
-SBCommand::GetHelp ()
+SBCommand::GetHelp()
 {
-    if (IsValid ())
-        return m_opaque_sp->GetHelp ();
-    return NULL;
+    return (IsValid() ? m_opaque_sp->GetHelp() : nullptr);
 }
 
 const char*
-SBCommand::GetHelpLong ()
+SBCommand::GetHelpLong()
 {
-    if (IsValid ())
-        return m_opaque_sp->GetHelpLong ();
-    return NULL;
+    return (IsValid() ? m_opaque_sp->GetHelpLong() : nullptr);
 }
 
 void
@@ -679,7 +653,7 @@ SBCommand::AddMultiwordCommand (const char* name, const char* help)
 {
     if (!IsValid ())
         return lldb::SBCommand();
-    if (m_opaque_sp->IsMultiwordObject() == false)
+    if (!m_opaque_sp->IsMultiwordObject())
         return lldb::SBCommand();
     CommandObjectMultiword *new_command = new CommandObjectMultiword(m_opaque_sp->GetCommandInterpreter(),name,help);
     new_command->SetRemovable (true);
@@ -694,7 +668,7 @@ SBCommand::AddCommand (const char* name, lldb::SBCommandPluginInterface *impl, c
 {
     if (!IsValid ())
         return lldb::SBCommand();
-    if (m_opaque_sp->IsMultiwordObject() == false)
+    if (!m_opaque_sp->IsMultiwordObject())
         return lldb::SBCommand();
     lldb::CommandObjectSP new_command_sp;
     new_command_sp.reset(new CommandPluginInterfaceImplementation(m_opaque_sp->GetCommandInterpreter(),name,impl,help));
@@ -706,9 +680,7 @@ SBCommand::AddCommand (const char* name, lldb::SBCommandPluginInterface *impl, c
 uint32_t
 SBCommand::GetFlags ()
 {
-    if (!IsValid())
-        return 0;
-    return m_opaque_sp->GetFlags().Get();
+    return (IsValid() ? m_opaque_sp->GetFlags().Get() : 0);
 }
 
 void

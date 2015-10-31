@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBStream.h"
@@ -26,7 +30,7 @@ SBCommandReturnObject::SBCommandReturnObject () :
 SBCommandReturnObject::SBCommandReturnObject (const SBCommandReturnObject &rhs):
     m_opaque_ap ()
 {
-    if (rhs.m_opaque_ap.get())
+    if (rhs.m_opaque_ap)
         m_opaque_ap.reset (new CommandReturnObject (*rhs.m_opaque_ap));
 }
 
@@ -34,6 +38,8 @@ SBCommandReturnObject::SBCommandReturnObject (CommandReturnObject *ptr) :
     m_opaque_ap (ptr)
 {
 }
+
+SBCommandReturnObject::~SBCommandReturnObject() = default;
 
 CommandReturnObject *
 SBCommandReturnObject::Release ()
@@ -46,7 +52,7 @@ SBCommandReturnObject::operator = (const SBCommandReturnObject &rhs)
 {
     if (this != &rhs)
     {
-        if (rhs.m_opaque_ap.get())
+        if (rhs.m_opaque_ap)
             m_opaque_ap.reset (new CommandReturnObject (*rhs.m_opaque_ap));
         else
             m_opaque_ap.reset();
@@ -54,25 +60,18 @@ SBCommandReturnObject::operator = (const SBCommandReturnObject &rhs)
     return *this;
 }
 
-
-SBCommandReturnObject::~SBCommandReturnObject ()
-{
-    // m_opaque_ap will automatically delete any pointer it owns
-}
-
 bool
 SBCommandReturnObject::IsValid() const
 {
-    return m_opaque_ap.get() != NULL;
+    return m_opaque_ap.get() != nullptr;
 }
-
 
 const char *
 SBCommandReturnObject::GetOutput ()
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
     {
         if (log)
             log->Printf ("SBCommandReturnObject(%p)::GetOutput () => \"%s\"",
@@ -83,10 +82,10 @@ SBCommandReturnObject::GetOutput ()
     }
 
     if (log)
-        log->Printf ("SBCommandReturnObject(%p)::GetOutput () => NULL",
+        log->Printf ("SBCommandReturnObject(%p)::GetOutput () => nullptr",
                      static_cast<void*>(m_opaque_ap.get()));
 
-    return NULL;
+    return nullptr;
 }
 
 const char *
@@ -94,7 +93,7 @@ SBCommandReturnObject::GetError ()
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
     {
         if (log)
             log->Printf ("SBCommandReturnObject(%p)::GetError () => \"%s\"",
@@ -105,26 +104,22 @@ SBCommandReturnObject::GetError ()
     }
 
     if (log)
-        log->Printf ("SBCommandReturnObject(%p)::GetError () => NULL",
+        log->Printf ("SBCommandReturnObject(%p)::GetError () => nullptr",
                      static_cast<void*>(m_opaque_ap.get()));
 
-    return NULL;
+    return nullptr;
 }
 
 size_t
-SBCommandReturnObject::GetOutputSize ()
+SBCommandReturnObject::GetOutputSize()
 {
-    if (m_opaque_ap.get())
-        return strlen (m_opaque_ap->GetOutputData());
-    return 0;
+    return (m_opaque_ap ? strlen(m_opaque_ap->GetOutputData()) : 0);
 }
 
 size_t
-SBCommandReturnObject::GetErrorSize ()
+SBCommandReturnObject::GetErrorSize()
 {
-    if (m_opaque_ap.get())
-        return strlen(m_opaque_ap->GetErrorData());
-    return 0;
+    return (m_opaque_ap ? strlen(m_opaque_ap->GetErrorData()) : 0);
 }
 
 size_t
@@ -154,52 +149,46 @@ SBCommandReturnObject::PutError (FILE *fh)
 void
 SBCommandReturnObject::Clear()
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
         m_opaque_ap->Clear();
 }
 
 lldb::ReturnStatus
 SBCommandReturnObject::GetStatus()
 {
-    if (m_opaque_ap.get())
-        return m_opaque_ap->GetStatus();
-    return lldb::eReturnStatusInvalid;
+    return (m_opaque_ap ? m_opaque_ap->GetStatus() : lldb::eReturnStatusInvalid);
 }
 
 void
 SBCommandReturnObject::SetStatus(lldb::ReturnStatus status)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
          m_opaque_ap->SetStatus(status);
 }
 
 bool
-SBCommandReturnObject::Succeeded ()
+SBCommandReturnObject::Succeeded()
 {
-    if (m_opaque_ap.get())
-        return m_opaque_ap->Succeeded();
-    return false;
+    return (m_opaque_ap ? m_opaque_ap->Succeeded() : false);
 }
 
 bool
-SBCommandReturnObject::HasResult ()
+SBCommandReturnObject::HasResult()
 {
-    if (m_opaque_ap.get())
-        return m_opaque_ap->HasResult();
-    return false;
+    return (m_opaque_ap ? m_opaque_ap->HasResult() : false);
 }
 
 void
 SBCommandReturnObject::AppendMessage (const char *message)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
         m_opaque_ap->AppendMessage (message);
 }
 
 void
 SBCommandReturnObject::AppendWarning (const char *message)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
         m_opaque_ap->AppendWarning (message);
 }
 
@@ -222,7 +211,6 @@ SBCommandReturnObject::operator *() const
     return *(m_opaque_ap.get());
 }
 
-
 CommandReturnObject &
 SBCommandReturnObject::ref() const
 {
@@ -230,11 +218,10 @@ SBCommandReturnObject::ref() const
     return *(m_opaque_ap.get());
 }
 
-
 void
 SBCommandReturnObject::SetLLDBObjectPtr (CommandReturnObject *ptr)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
         m_opaque_ap.reset (ptr);
 }
 
@@ -243,7 +230,7 @@ SBCommandReturnObject::GetDescription (SBStream &description)
 {
     Stream &strm = description.ref();
 
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
     {
         description.Printf ("Status:  ");
         lldb::ReturnStatus status = m_opaque_ap->GetStatus();
@@ -269,25 +256,25 @@ SBCommandReturnObject::GetDescription (SBStream &description)
 }
 
 void
-SBCommandReturnObject::SetImmediateOutputFile (FILE *fh)
+SBCommandReturnObject::SetImmediateOutputFile(FILE *fh)
 {
-    if (m_opaque_ap.get())
-        m_opaque_ap->SetImmediateOutputFile (fh);
+    if (m_opaque_ap)
+        m_opaque_ap->SetImmediateOutputFile(fh);
 }
 
 void
-SBCommandReturnObject::SetImmediateErrorFile (FILE *fh)
+SBCommandReturnObject::SetImmediateErrorFile(FILE *fh)
 {
-    if (m_opaque_ap.get())
-        m_opaque_ap->SetImmediateErrorFile (fh);
+    if (m_opaque_ap)
+        m_opaque_ap->SetImmediateErrorFile(fh);
 }
 
 void
 SBCommandReturnObject::PutCString(const char* string, int len)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
     {
-        if (len == 0 || string == NULL || *string == 0)
+        if (len == 0 || string == nullptr || *string == 0)
         {
             return;
         }
@@ -304,27 +291,27 @@ SBCommandReturnObject::PutCString(const char* string, int len)
 const char *
 SBCommandReturnObject::GetOutput (bool only_if_no_immediate)
 {
-    if (!m_opaque_ap.get())
-        return NULL;
-    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateOutputStream().get() == NULL)
+    if (!m_opaque_ap)
+        return nullptr;
+    if (!only_if_no_immediate || m_opaque_ap->GetImmediateOutputStream().get() == nullptr)
         return GetOutput();
-    return NULL;
+    return nullptr;
 }
 
 const char *
 SBCommandReturnObject::GetError (bool only_if_no_immediate)
 {
-    if (!m_opaque_ap.get())
-        return NULL;
-    if (only_if_no_immediate == false || m_opaque_ap->GetImmediateErrorStream().get() == NULL)
+    if (!m_opaque_ap)
+        return nullptr;
+    if (!only_if_no_immediate || m_opaque_ap->GetImmediateErrorStream().get() == nullptr)
         return GetError();
-    return NULL;
+    return nullptr;
 }
 
 size_t
 SBCommandReturnObject::Printf(const char* format, ...)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
     {
         va_list args;
         va_start (args, format);
@@ -338,7 +325,7 @@ SBCommandReturnObject::Printf(const char* format, ...)
 void
 SBCommandReturnObject::SetError (lldb::SBError &error, const char *fallback_error_cstr)
 {
-    if (m_opaque_ap.get())
+    if (m_opaque_ap)
     {
         if (error.IsValid())
             m_opaque_ap->SetError(error.ref(), fallback_error_cstr);
@@ -350,7 +337,6 @@ SBCommandReturnObject::SetError (lldb::SBError &error, const char *fallback_erro
 void
 SBCommandReturnObject::SetError (const char *error_cstr)
 {
-    if (m_opaque_ap.get() && error_cstr)
+    if (m_opaque_ap && error_cstr)
         m_opaque_ap->SetError(error_cstr);
 }
-

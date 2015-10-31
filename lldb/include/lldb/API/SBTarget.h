@@ -10,6 +10,10 @@
 #ifndef LLDB_SBTarget_h_
 #define LLDB_SBTarget_h_
 
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBAttachInfo.h"
@@ -50,13 +54,13 @@ public:
 
     SBTarget (const lldb::TargetSP& target_sp);
     
-    const lldb::SBTarget&
-    operator = (const lldb::SBTarget& rhs);
-
     //------------------------------------------------------------------
     // Destructor
     //------------------------------------------------------------------
     ~SBTarget();
+
+    const lldb::SBTarget&
+    operator = (const lldb::SBTarget& rhs);
 
     bool
     IsValid() const;
@@ -135,17 +139,17 @@ public:
     ///
     /// @param[in] stdin_path
     ///     The path to use when re-directing the STDIN of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
+    ///     process. If all stdXX_path arguments are nullptr, a pseudo
     ///     terminal will be used.
     ///
     /// @param[in] stdout_path
     ///     The path to use when re-directing the STDOUT of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
+    ///     process. If all stdXX_path arguments are nullptr, a pseudo
     ///     terminal will be used.
     ///
     /// @param[in] stderr_path
     ///     The path to use when re-directing the STDERR of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
+    ///     process. If all stdXX_path arguments are nullptr, a pseudo
     ///     terminal will be used.
     ///
     /// @param[in] working_directory
@@ -175,8 +179,7 @@ public:
             uint32_t launch_flags,   // See LaunchFlags
             bool stop_at_entry,
             lldb::SBError& error);
-            
-    
+
     //------------------------------------------------------------------
     /// Launch a new process with sensible defaults.
     ///
@@ -248,6 +251,7 @@ public:
                            ::pid_t pid,           // 32 bit int process ID
                            lldb::SBError& error); // DEPRECATED 
 #endif
+
     //------------------------------------------------------------------
     /// Attach to process with name.
     ///
@@ -288,7 +292,7 @@ public:
     ///     The url to connect to, e.g., 'connect://localhost:12345'.
     ///
     /// @param[in] plugin_name
-    ///     The plugin name to be used; can be NULL.
+    ///     The plugin name to be used; can be nullptr.
     ///
     /// @param[out] error
     ///     An error explaining what went wrong if the connect fails.
@@ -421,7 +425,6 @@ public:
     lldb::SBError
     SetModuleLoadAddress (lldb::SBModule module,
                           int64_t sections_offset);
-    
 
     //------------------------------------------------------------------
     /// Clear the section base load addresses for all sections in a module.
@@ -618,7 +621,7 @@ public:
     BreakpointCreateByLocation (const lldb::SBFileSpec &file_spec, uint32_t line);
 
     lldb::SBBreakpoint
-    BreakpointCreateByName (const char *symbol_name, const char *module_name = NULL);
+    BreakpointCreateByName(const char *symbol_name, const char *module_name = nullptr);
 
     // This version uses name_type_mask = eFunctionNameTypeAuto
     lldb::SBBreakpoint
@@ -640,7 +643,7 @@ public:
                              const SBFileSpecList &comp_unit_list);
 
     lldb::SBBreakpoint
-    BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name = NULL);
+    BreakpointCreateByRegex(const char *symbol_name_regex, const char *module_name = nullptr);
     
     lldb::SBBreakpoint
     BreakpointCreateByRegex (const char *symbol_name_regex, 
@@ -648,9 +651,9 @@ public:
                              const SBFileSpecList &comp_unit_list);
     
     lldb::SBBreakpoint
-    BreakpointCreateBySourceRegex (const char *source_regex, 
-                                   const SBFileSpec &source_file,
-                                   const char *module_name = NULL);
+    BreakpointCreateBySourceRegex(const char *source_regex,
+                                  const SBFileSpec &source_file,
+                                  const char *module_name = nullptr);
 
     lldb::SBBreakpoint
     BreakpointCreateBySourceRegex (const char *source_regex,
@@ -808,15 +811,10 @@ protected:
     void
     SetSP (const lldb::TargetSP& target_sp);
 
-
 private:
-    //------------------------------------------------------------------
-    // For Target only
-    //------------------------------------------------------------------
-
     lldb::TargetSP m_opaque_sp;
 };
 
 } // namespace lldb
 
-#endif  // LLDB_SBTarget_h_
+#endif // LLDB_SBTarget_h_

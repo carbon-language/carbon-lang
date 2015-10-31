@@ -16,13 +16,13 @@
 #include "lldb/API/SBPlatform.h"
 
 namespace lldb {
-
     
 class LLDB_API SBInputReader
 {
 public:
-    SBInputReader();
-    ~SBInputReader();
+    SBInputReader() = default;
+    ~SBInputReader() = default;
+
     SBError Initialize(lldb::SBDebugger&, unsigned long (*)(void*, lldb::SBInputReader*, lldb::InputReaderAction, char const*, unsigned long), void*, lldb::InputReaderGranularity, char const*, char const*, bool);
     void SetIsDone(bool);
     bool IsActive() const;
@@ -31,6 +31,16 @@ public:
 class LLDB_API SBDebugger
 {
 public:
+    SBDebugger();
+
+    SBDebugger(const lldb::SBDebugger &rhs);
+
+    SBDebugger(const lldb::DebuggerSP &debugger_sp);
+
+    ~SBDebugger();
+
+    lldb::SBDebugger &
+    operator = (const lldb::SBDebugger &rhs);
 
     static void
     Initialize();
@@ -53,17 +63,6 @@ public:
 
     static void
     MemoryPressureDetected ();
-
-    SBDebugger();
-
-    SBDebugger(const lldb::SBDebugger &rhs);
-
-    SBDebugger(const lldb::DebuggerSP &debugger_sp);
-    
-    lldb::SBDebugger &
-    operator = (const lldb::SBDebugger &rhs);
-    
-    ~SBDebugger();
 
     bool
     IsValid() const;
@@ -332,8 +331,8 @@ public:
     
     SBError
     RunREPL (lldb::LanguageType language, const char *repl_options);
-private:
 
+private:
     friend class SBCommandInterpreter;
     friend class SBInputReader;
     friend class SBListener;
@@ -359,7 +358,6 @@ private:
     lldb::DebuggerSP m_opaque_sp;
 
 }; // class SBDebugger
-
 
 } // namespace lldb
 
