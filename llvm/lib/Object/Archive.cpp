@@ -82,6 +82,10 @@ unsigned ArchiveMemberHeader::getGID() const {
   return Ret;
 }
 
+Archive::Child::Child(const Archive *Parent, StringRef Data,
+                      uint16_t StartOfFile)
+    : Parent(Parent), Data(Data), StartOfFile(StartOfFile) {}
+
 Archive::Child::Child(const Archive *Parent, const char *Start)
     : Parent(Parent) {
   if (!Start)
@@ -232,8 +236,13 @@ ErrorOr<std::unique_ptr<Archive>> Archive::create(MemoryBufferRef Source) {
   return std::move(Ret);
 }
 
+void Archive::setFirstRegular(const Child &C) {
+  FirstRegularData = C.Data;
+  FirstRegularStartOfFile = C.StartOfFile;
+}
+
 Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
-    : Binary(Binary::ID_Archive, Source), FirstRegular(child_end()) {
+    : Binary(Binary::ID_Archive, Source) {
   StringRef Buffer = Data.getBuffer();
   // Check for sufficient magic.
   if (Buffer.startswith(ThinMagic)) {
@@ -281,7 +290,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
     // there is no error.
     SymbolTable = *i->getBuffer();
     ++i;
-    FirstRegular = i;
+    setFirstRegular(*i);
     ec = std::error_code();
     return;
   }
@@ -300,7 +309,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
       SymbolTable = *i->getBuffer();
       ++i;
     }
-    FirstRegular = i;
+    setFirstRegular(*i);
     return;
   }
 
@@ -331,14 +340,14 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
     // ErrorOr.
     StringTable = *i->getBuffer();
     ++i;
-    FirstRegular = i;
+    setFirstRegular(*i);
     ec = std::error_code();
     return;
   }
 
   if (Name[0] != '/') {
     Format = has64SymTable ? K_MIPS64 : K_GNU;
-    FirstRegular = i;
+    setFirstRegular(*i);
     ec = std::error_code();
     return;
   }
@@ -355,7 +364,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
 
   ++i;
   if (i == e) {
-    FirstRegular = i;
+    setFirstRegular(*i);
     ec = std::error_code();
     return;
   }
@@ -369,7 +378,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
     ++i;
   }
 
-  FirstRegular = i;
+  setFirstRegular(*i);
   ec = std::error_code();
 }
 
@@ -378,7 +387,7 @@ Archive::child_iterator Archive::child_begin(bool SkipInternal) const {
     return child_end();
 
   if (SkipInternal)
-    return FirstRegular;
+    return Child(this, FirstRegularData, FirstRegularStartOfFile);
 
   const char *Loc = Data.getBufferStart() + strlen(Magic);
   Child c(this, Loc);

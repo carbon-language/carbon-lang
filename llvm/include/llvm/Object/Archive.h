@@ -52,6 +52,7 @@ class Archive : public Binary {
   virtual void anchor();
 public:
   class Child {
+    friend Archive;
     const Archive *Parent;
     /// \brief Includes header but not padding byte.
     StringRef Data;
@@ -66,6 +67,7 @@ public:
 
   public:
     Child(const Archive *Parent, const char *Start);
+    Child(const Archive *Parent, StringRef Data, uint16_t StartOfFile);
 
     bool operator ==(const Child &other) const {
       assert(Parent == other.Parent);
@@ -206,7 +208,11 @@ public:
 private:
   StringRef SymbolTable;
   StringRef StringTable;
-  child_iterator FirstRegular;
+
+  StringRef FirstRegularData;
+  uint16_t FirstRegularStartOfFile = -1;
+  void setFirstRegular(const Child &C);
+
   unsigned Format : 2;
   unsigned IsThin : 1;
   mutable std::vector<std::unique_ptr<MemoryBuffer>> ThinBuffers;
