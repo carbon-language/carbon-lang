@@ -18373,7 +18373,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     SmallVector<SDValue, 8> Elts;
     EVT SVT = VT.getScalarType();
     unsigned SVTBits = SVT.getSizeInBits();
-    const APInt &One = APInt(SVTBits, 1);
+    APInt One(SVTBits, 1);
     unsigned NumElems = VT.getVectorNumElements();
 
     for (unsigned i=0; i !=NumElems; ++i) {
@@ -18384,7 +18384,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
       }
 
       ConstantSDNode *ND = cast<ConstantSDNode>(Op);
-      const APInt &C = APInt(SVTBits, ND->getAPIntValue().getZExtValue());
+      APInt C(SVTBits, ND->getAPIntValue().getZExtValue());
       uint64_t ShAmt = C.getZExtValue();
       if (ShAmt >= SVTBits) {
         Elts.push_back(DAG.getUNDEF(SVT));
