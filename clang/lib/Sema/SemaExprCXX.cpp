@@ -6545,6 +6545,8 @@ public:
 
   ExprResult TransformLambdaExpr(LambdaExpr *E) { return Owned(E); }
 
+  ExprResult TransformBlockExpr(BlockExpr *E) { return Owned(E); }
+
   ExprResult Transform(Expr *E) {
     ExprResult Res;
     while (true) {
