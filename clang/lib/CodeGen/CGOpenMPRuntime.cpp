@@ -1104,7 +1104,7 @@ llvm::Function *CGOpenMPRuntime::emitThreadPrivateVarDefinition(
           /*isVariadic=*/false);
       auto FTy = CGM.getTypes().GetFunctionType(FI);
       auto Fn = CGM.CreateGlobalInitOrDestructFunction(
-          FTy, ".__kmpc_global_ctor_.", Loc);
+          FTy, ".__kmpc_global_ctor_.", FI, Loc);
       CtorCGF.StartFunction(GlobalDecl(), CGM.getContext().VoidPtrTy, Fn, FI,
                             Args, SourceLocation());
       auto ArgVal = CtorCGF.EmitLoadOfScalar(
@@ -1136,7 +1136,7 @@ llvm::Function *CGOpenMPRuntime::emitThreadPrivateVarDefinition(
           /*isVariadic=*/false);
       auto FTy = CGM.getTypes().GetFunctionType(FI);
       auto Fn = CGM.CreateGlobalInitOrDestructFunction(
-          FTy, ".__kmpc_global_dtor_.", Loc);
+          FTy, ".__kmpc_global_dtor_.", FI, Loc);
       DtorCGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, Fn, FI, Args,
                             SourceLocation());
       auto ArgVal = DtorCGF.EmitLoadOfScalar(
@@ -1174,7 +1174,8 @@ llvm::Function *CGOpenMPRuntime::emitThreadPrivateVarDefinition(
       auto InitFunctionTy =
           llvm::FunctionType::get(CGM.VoidTy, /*isVarArg*/ false);
       auto InitFunction = CGM.CreateGlobalInitOrDestructFunction(
-          InitFunctionTy, ".__omp_threadprivate_init_.");
+          InitFunctionTy, ".__omp_threadprivate_init_.",
+          CGM.getTypes().arrangeNullaryFunction());
       CodeGenFunction InitCGF(CGM);
       FunctionArgList ArgList;
       InitCGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, InitFunction,

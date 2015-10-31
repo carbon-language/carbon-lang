@@ -193,13 +193,15 @@ llvm::Constant *CodeGenFunction::createAtExitStub(const VarDecl &VD,
     llvm::raw_svector_ostream Out(FnName);
     CGM.getCXXABI().getMangleContext().mangleDynamicAtExitDestructor(&VD, Out);
   }
+
+  const CGFunctionInfo &FI = CGM.getTypes().arrangeNullaryFunction();
   llvm::Function *fn = CGM.CreateGlobalInitOrDestructFunction(ty, FnName.str(),
+                                                              FI,
                                                               VD.getLocation());
 
   CodeGenFunction CGF(CGM);
 
-  CGF.StartFunction(&VD, CGM.getContext().VoidTy, fn,
-                    CGM.getTypes().arrangeNullaryFunction(), FunctionArgList());
+  CGF.StartFunction(&VD, CGM.getContext().VoidTy, fn, FI, FunctionArgList());
 
   llvm::CallInst *call = CGF.Builder.CreateCall(dtor, addr);
  
@@ -247,7 +249,8 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
 }
 
 llvm::Function *CodeGenModule::CreateGlobalInitOrDestructFunction(
-    llvm::FunctionType *FTy, const Twine &Name, SourceLocation Loc, bool TLS) {
+    llvm::FunctionType *FTy, const Twine &Name, const CGFunctionInfo &FI,
+    SourceLocation Loc, bool TLS) {
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            Name, &getModule());
@@ -257,7 +260,7 @@ llvm::Function *CodeGenModule::CreateGlobalInitOrDestructFunction(
       Fn->setSection(Section);
   }
 
-  SetLLVMFunctionAttributes(nullptr, getTypes().arrangeNullaryFunction(), Fn);
+  SetInternalFunctionAttributes(nullptr, Fn, FI);
 
   Fn->setCallingConv(getRuntimeCC());
 
@@ -315,7 +318,9 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
 
   // Create a variable initialization function.
   llvm::Function *Fn =
-      CreateGlobalInitOrDestructFunction(FTy, FnName.str(), D->getLocation());
+      CreateGlobalInitOrDestructFunction(FTy, FnName.str(),
+                                         getTypes().arrangeNullaryFunction(),
+                                         D->getLocation());
 
   auto *ISA = D->getAttr<InitSegAttr>();
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr,
@@ -390,7 +395,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
     return;
 
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
-
+  const CGFunctionInfo &FI = getTypes().arrangeNullaryFunction();
 
   // Create our global initialization function.
   if (!PrioritizedCXXGlobalInits.empty()) {
@@ -414,7 +419,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
       // Priority is always <= 65535 (enforced by sema).
       PrioritySuffix = std::string(6-PrioritySuffix.size(), '0')+PrioritySuffix;
       llvm::Function *Fn = CreateGlobalInitOrDestructFunction(
-          FTy, "_GLOBAL__I_" + PrioritySuffix);
+          FTy, "_GLOBAL__I_" + PrioritySuffix, FI);
 
       for (; I < PrioE; ++I)
         LocalCXXGlobalInits.push_back(I->second);
@@ -444,7 +449,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   }
 
   llvm::Function *Fn = CreateGlobalInitOrDestructFunction(
-      FTy, llvm::Twine("_GLOBAL__sub_I_", FileName));
+      FTy, llvm::Twine("_GLOBAL__sub_I_", FileName), FI);
 
   CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn, CXXGlobalInits);
   AddGlobalCtor(Fn);
@@ -459,7 +464,9 @@ void CodeGenModule::EmitCXXGlobalDtorFunc() {
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   // Create our global destructor function.
-  llvm::Function *Fn = CreateGlobalInitOrDestructFunction(FTy, "_GLOBAL__D_a");
+  const CGFunctionInfo &FI = getTypes().arrangeNullaryFunction();
+  llvm::Function *Fn =
+      CreateGlobalInitOrDestructFunction(FTy, "_GLOBAL__D_a", FI);
 
   CodeGenFunction(*this).GenerateCXXGlobalDtorsFunc(Fn, CXXGlobalDtors);
   AddGlobalDtor(Fn);
@@ -584,7 +591,7 @@ llvm::Function *CodeGenFunction::generateDestroyHelper(
       getContext().VoidTy, args, FunctionType::ExtInfo(), /*variadic=*/false);
   llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI);
   llvm::Function *fn = CGM.CreateGlobalInitOrDestructFunction(
-      FTy, "__cxx_global_array_dtor", VD->getLocation());
+      FTy, "__cxx_global_array_dtor", FI, VD->getLocation());
 
   CurEHLocation = VD->getLocStart();
 
