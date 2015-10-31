@@ -102,3 +102,27 @@ define i32 @f4(i32 %x, i32 %init, i32 %lim) {
 ; CHECK-NEXT:  -->  %v U: full-set S: full-set
   ret i32 %v
 }
+
+define i32 @f5(i32* %val) {
+; CHECK-LABEL: Classifying expressions for: @f5
+entry:
+  br label %for.end
+
+for.condt:
+  br i1 true, label %for.cond.0, label %for.end
+
+for.end:
+  %inc = load i32, i32* %val
+  br i1 false, label %for.condt, label %for.cond.0
+
+for.cond.0:
+  %init = phi i32 [ 0, %for.condt ], [ %inc, %for.end ]
+
+; CHECK:  %init = phi i32 [ 0, %for.condt ], [ %inc, %for.end ]
+; CHECK-NEXT:  -->  %init U: full-set S: full-set
+
+; Matching "through" %init will break LCSSA at the SCEV expression
+; level.
+
+  ret i32 %init
+}
