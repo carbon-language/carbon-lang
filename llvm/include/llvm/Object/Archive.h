@@ -72,10 +72,6 @@ public:
       return Data.begin() == other.Data.begin();
     }
 
-    bool operator <(const Child &other) const {
-      return Data.begin() < other.Data.begin();
-    }
-
     const Archive *getParent() const { return Parent; }
     Child getNext() const;
 
@@ -121,10 +117,6 @@ public:
 
     bool operator!=(const child_iterator &other) const {
       return !(*this == other);
-    }
-
-    bool operator<(const child_iterator &other) const {
-      return child < other.child;
     }
 
     child_iterator &operator++() { // Preincrement
