@@ -73,8 +73,6 @@ struct FunctionAttrs : public CallGraphSCCPass {
 
 private:
   TargetLibraryInfo *TLI;
-
-  bool annotateLibraryCalls(const CallGraphSCC &SCC);
 };
 }
 
@@ -1750,27 +1748,9 @@ static bool inferPrototypeAttributes(Function &F, const TargetLibraryInfo &TLI) 
   return true;
 }
 
-/// Adds attributes to well-known standard library call declarations.
-bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
-  bool MadeChange = false;
-
-  // Check each function in turn annotating well-known library function
-  // declarations with attributes.
-  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
-    Function *F = (*I)->getFunction();
-
-    if (F && F->isDeclaration())
-      MadeChange |= inferPrototypeAttributes(*F, *TLI);
-  }
-
-  return MadeChange;
-}
-
 bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-
-  // Annotate declarations for which we have special knowledge.
-  bool Changed = annotateLibraryCalls(SCC);
+  bool Changed = false;
 
   // We compute dedicated AA results for each function in the SCC as needed. We
   // use a lambda referencing external objects so that they live long enough to
@@ -1797,6 +1777,11 @@ bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
       ExternalNode = true;
       continue;
     }
+
+    // When initially processing functions, also infer their prototype
+    // attributes if they are declarations.
+    if (F->isDeclaration())
+      Changed |= inferPrototypeAttributes(*F, *TLI);
 
     SCCNodes.insert(F);
   }
