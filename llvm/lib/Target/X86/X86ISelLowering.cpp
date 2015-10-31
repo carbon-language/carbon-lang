@@ -15923,22 +15923,22 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
     }
 
     switch (Op.getOpcode()) {
-      default: break;
-      case X86ISD::PCMPEQM:
-      case X86ISD::PCMPGTM:
-      case X86ISD::CMPM:
-      case X86ISD::CMPMU:
-        return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
-      case X86ISD::VFPCLASS:
-        return DAG.getNode(ISD::OR, dl, VT, Op, VMask);
-      case X86ISD::VTRUNC:
-      case X86ISD::VTRUNCS:
-      case X86ISD::VTRUNCUS:
-        // We can't use ISD::VSELECT here because it is not always "Legal"
-        // for the destination type. For example vpmovqb require only AVX512
-        // and vselect that can operate on byte element type require BWI
-        OpcodeSelect = X86ISD::SELECT;
-        break;
+    default: break;
+    case X86ISD::PCMPEQM:
+    case X86ISD::PCMPGTM:
+    case X86ISD::CMPM:
+    case X86ISD::CMPMU:
+      return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
+    case X86ISD::VFPCLASS:
+      return DAG.getNode(ISD::OR, dl, VT, Op, VMask);
+    case X86ISD::VTRUNC:
+    case X86ISD::VTRUNCS:
+    case X86ISD::VTRUNCUS:
+      // We can't use ISD::VSELECT here because it is not always "Legal"
+      // for the destination type. For example vpmovqb require only AVX512
+      // and vselect that can operate on byte element type require BWI
+      OpcodeSelect = X86ISD::SELECT;
+      break;
     }
     if (PreservedSrc.getOpcode() == ISD::UNDEF)
       PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
