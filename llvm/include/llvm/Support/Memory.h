@@ -155,6 +155,31 @@ namespace sys {
     /// as writable.
     static bool setRangeWritable(const void *Addr, size_t Size);
   };
+
+  /// Owning version of MemoryBlock.
+  class OwningMemoryBlock {
+  public:
+    OwningMemoryBlock() = default;
+    explicit OwningMemoryBlock(MemoryBlock M) : M(M) {}
+    OwningMemoryBlock(OwningMemoryBlock &&Other) {
+      M = Other.M;
+      Other.M = MemoryBlock();
+    }
+    OwningMemoryBlock& operator=(OwningMemoryBlock &&Other) {
+      M = Other.M;
+      Other.M = MemoryBlock();
+      return *this;
+    }
+    ~OwningMemoryBlock() {
+      Memory::releaseMappedMemory(M);
+    }
+    void *base() const { return M.base(); }
+    size_t size() const { return M.size(); }
+    MemoryBlock getMemoryBlock() const { return M; }
+  private:
+    MemoryBlock M;
+  };
+
 }
 }
 

@@ -144,27 +144,6 @@ OrcX86_64::insertCompileCallbackTrampolines(Module &M,
   return GetLabelName;
 }
 
-OrcX86_64::IndirectStubsInfo::IndirectStubsInfo(IndirectStubsInfo &&Other) {
-  StubsBlock = std::move(Other.StubsBlock);
-  PtrsBlock = std::move(Other.PtrsBlock);
-  Other.StubsBlock = sys::MemoryBlock();
-  Other.PtrsBlock = sys::MemoryBlock();
-}
-
-OrcX86_64::IndirectStubsInfo&
-OrcX86_64::IndirectStubsInfo::operator=(IndirectStubsInfo &&Other) {
-  StubsBlock = std::move(Other.StubsBlock);
-  PtrsBlock = std::move(Other.PtrsBlock);
-  Other.StubsBlock = sys::MemoryBlock();
-  Other.PtrsBlock = sys::MemoryBlock();
-  return *this;
-}
-
-OrcX86_64::IndirectStubsInfo::~IndirectStubsInfo() {
-  sys::Memory::releaseMappedMemory(StubsBlock);
-  sys::Memory::releaseMappedMemory(PtrsBlock);
-}
-
 std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
                                                   unsigned MinStubs,
                                                   void *InitialPtrVal) {
@@ -197,19 +176,20 @@ std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
 
   // Allocate memory for stubs and pointers in one call.
   std::error_code EC;
-  auto InitialBlock = sys::Memory::allocateMappedMemory(2 * NumPages * PageSize,
-                                                        nullptr,
-                                                        sys::Memory::MF_READ |
-                                                        sys::Memory::MF_WRITE,
-                                                        EC);
+  auto StubsMem =
+    sys::OwningMemoryBlock(
+      sys::Memory::allocateMappedMemory(2 * NumPages * PageSize, nullptr,
+                                        sys::Memory::MF_READ |
+                                        sys::Memory::MF_WRITE,
+                                        EC));
 
   if (EC)
     return EC;
 
   // Create separate MemoryBlocks representing the stubs and pointers.
-  sys::MemoryBlock StubsBlock(InitialBlock.base(), NumPages * PageSize);
-  sys::MemoryBlock PtrsBlock(static_cast<char*>(InitialBlock.base()) +
-                             NumPages * PageSize,
+  sys::MemoryBlock StubsBlock(StubsMem.base(), NumPages * PageSize);
+  sys::MemoryBlock PtrsBlock(static_cast<char*>(StubsMem.base()) +
+                               NumPages * PageSize,
                              NumPages * PageSize);
 
   // Populate the stubs page stubs and mark it executable.
@@ -230,8 +210,7 @@ std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,
     Ptr[I] = InitialPtrVal;
 
   StubsInfo.NumStubs = NumStubs;
-  StubsInfo.StubsBlock = std::move(StubsBlock);
-  StubsInfo.PtrsBlock = std::move(PtrsBlock);
+  StubsInfo.StubsMem = std::move(StubsMem);
 
   return std::error_code();
 }

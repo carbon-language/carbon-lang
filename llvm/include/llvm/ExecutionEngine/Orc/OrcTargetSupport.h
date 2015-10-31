@@ -59,9 +59,16 @@ public:
     const static unsigned PtrSize = 8;
 
     IndirectStubsInfo() : NumStubs(0) {}
-    IndirectStubsInfo(IndirectStubsInfo&&);
-    IndirectStubsInfo& operator=(IndirectStubsInfo&&);
-    ~IndirectStubsInfo();
+    IndirectStubsInfo(IndirectStubsInfo &&Other)
+        : NumStubs(Other.NumStubs), StubsMem(std::move(Other.StubsMem)) {
+      Other.NumStubs = 0;
+    }
+    IndirectStubsInfo& operator=(IndirectStubsInfo &&Other) {
+      NumStubs = Other.NumStubs;
+      Other.NumStubs = 0;
+      StubsMem = std::move(Other.StubsMem);
+      return *this;
+    }
 
     /// @brief Number of stubs in this block.
     unsigned getNumStubs() const { return NumStubs; }
@@ -69,18 +76,19 @@ public:
     /// @brief Get a pointer to the stub at the given index, which must be in
     ///        the range 0 .. getNumStubs() - 1.
     void* getStub(unsigned Idx) const {
-      return static_cast<uint64_t*>(StubsBlock.base()) + Idx;
+      return static_cast<uint64_t*>(StubsMem.base()) + Idx;
     }
 
     /// @brief Get a pointer to the implementation-pointer at the given index,
     ///        which must be in the range 0 .. getNumStubs() - 1.
     void** getPtr(unsigned Idx) const {
-      return static_cast<void**>(PtrsBlock.base()) + Idx;
+      char *PtrsBase =
+        static_cast<char*>(StubsMem.base()) + NumStubs * StubSize;
+      return reinterpret_cast<void**>(PtrsBase) + Idx;
     }
   private:
     unsigned NumStubs;
-    sys::MemoryBlock StubsBlock;
-    sys::MemoryBlock PtrsBlock;
+    sys::OwningMemoryBlock StubsMem;
   };
 
   /// @brief Emit at least MinStubs worth of indirect call stubs, rounded out to
