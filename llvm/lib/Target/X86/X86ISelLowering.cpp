@@ -20324,11 +20324,11 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
     return false;
 
   // Not for i1 vectors
-  if (VT.getScalarType() == MVT::i1)
+  if (VT.getSimpleVT().getScalarType() == MVT::i1)
     return false;
 
   // Very little shuffling can be done for 64-bit vectors right now.
-  if (VT.getSizeInBits() == 64)
+  if (VT.getSimpleVT().getSizeInBits() == 64)
     return false;
 
   // We only care that the types being shuffled are legal. The lowering can
