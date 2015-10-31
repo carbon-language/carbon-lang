@@ -218,7 +218,7 @@ public:
 
 private:
   child_iterator SymbolTable;
-  child_iterator StringTable;
+  StringRef StringTable;
   child_iterator FirstRegular;
   unsigned Format : 2;
   unsigned IsThin : 1;

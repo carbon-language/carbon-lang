@@ -179,17 +179,11 @@ ErrorOr<StringRef> Archive::Child::getName() const {
     std::size_t offset;
     if (name.substr(1).rtrim(" ").getAsInteger(10, offset))
       llvm_unreachable("Long name offset is not an integer");
-    const char *addr = Parent->StringTable->Data.begin()
-                       + sizeof(ArchiveMemberHeader)
-                       + offset;
+
     // Verify it.
-    if (Parent->StringTable == Parent->child_end()
-        || addr < (Parent->StringTable->Data.begin()
-                   + sizeof(ArchiveMemberHeader))
-        || addr > (Parent->StringTable->Data.begin()
-                   + sizeof(ArchiveMemberHeader)
-                   + Parent->StringTable->getSize()))
+    if (offset >= Parent->StringTable.size())
       return object_error::parse_failed;
+    const char *addr = Parent->StringTable.begin() + offset;
 
     // GNU long file names end with a "/\n".
     if (Parent->kind() == K_GNU || Parent->kind() == K_MIPS64) {
@@ -240,7 +234,7 @@ ErrorOr<std::unique_ptr<Archive>> Archive::create(MemoryBufferRef Source) {
 
 Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
     : Binary(Binary::ID_Archive, Source), SymbolTable(child_end()),
-      StringTable(child_end()), FirstRegular(child_end()) {
+      FirstRegular(child_end()) {
   StringRef Buffer = Data.getBuffer();
   // Check for sufficient magic.
   if (Buffer.startswith(ThinMagic)) {
@@ -328,7 +322,9 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
 
   if (Name == "//") {
     Format = has64SymTable ? K_MIPS64 : K_GNU;
-    StringTable = i;
+    // The string table is never an external member, so we just assert on the
+    // ErrorOr.
+    StringTable = *i->getBuffer();
     ++i;
     FirstRegular = i;
     ec = std::error_code();
@@ -360,7 +356,9 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
   Name = i->getRawName();
 
   if (Name == "//") {
-    StringTable = i;
+    // The string table is never an external member, so we just assert on the
+    // ErrorOr.
+    StringTable = *i->getBuffer();
     ++i;
   }
 
