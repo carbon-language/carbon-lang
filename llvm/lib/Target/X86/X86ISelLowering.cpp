@@ -2179,7 +2179,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     else if (VA.getLocInfo() == CCValAssign::ZExt)
       ValToCopy = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), ValToCopy);
     else if (VA.getLocInfo() == CCValAssign::AExt) {
-      if (ValVT.isVector() && ValVT.getScalarType() == MVT::i1)
+      if (ValVT.isVector() && ValVT.getVectorElementType() == MVT::i1)
         ValToCopy = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), ValToCopy);
       else
         ValToCopy = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), ValToCopy);
@@ -3120,7 +3120,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       break;
     case CCValAssign::AExt:
       if (Arg.getValueType().isVector() &&
-          Arg.getValueType().getScalarType() == MVT::i1)
+          Arg.getValueType().getVectorElementType() == MVT::i1)
         Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, RegVT, Arg);
       else if (RegVT.is128BitVector()) {
         // Special case: passing MMX values in XMM registers.
@@ -4287,7 +4287,7 @@ static SDValue getConstVector(ArrayRef<int> Values, MVT VT,
   MVT ConstVecVT = VT;
   unsigned NumElts = VT.getVectorNumElements();
   bool In64BitMode = DAG.getTargetLoweringInfo().isTypeLegal(MVT::i64);
-  if (!In64BitMode && VT.getScalarType() == MVT::i64) {
+  if (!In64BitMode && VT.getVectorElementType() == MVT::i64) {
     ConstVecVT = MVT::getVectorVT(MVT::i32, NumElts * 2);
     Split = true;
   }
@@ -4341,7 +4341,7 @@ static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
       SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst,
                         Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v16i32, Ops);
-  } else if (VT.getScalarType() == MVT::i1) {
+  } else if (VT.getVectorElementType() == MVT::i1) {
 
     assert((Subtarget->hasBWI() || VT.getVectorNumElements() <= 16)
             && "Unexpected vector type");
@@ -4456,7 +4456,7 @@ static SDValue Insert128BitVector(SDValue Result, SDValue Vec, unsigned IdxVal,
                                  Vec, ZeroIndex);
 
     // The blend instruction, and therefore its mask, depend on the data type.
-    MVT ScalarType = ResultVT.getScalarType().getSimpleVT();
+    MVT ScalarType = ResultVT.getVectorElementType().getSimpleVT();
     if (ScalarType.isFloatingPoint()) {
       // Choose either vblendps (float) or vblendpd (double).
       unsigned ScalarSize = ScalarType.getSizeInBits();
@@ -6128,7 +6128,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   unsigned NumElems = Op.getNumOperands();
 
   // Generate vectors for predicate vectors.
-  if (VT.getScalarType() == MVT::i1 && Subtarget->hasAVX512())
+  if (VT.getVectorElementType() == MVT::i1 && Subtarget->hasAVX512())
     return LowerBUILD_VECTORvXi1(Op, DAG);
 
   // Vectors containing all zeros can be matched by pxor and xorps later
@@ -6476,8 +6476,8 @@ static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
     return Concat128BitVectors(V1, V2, ResVT, NumElems, DAG, dl);
 
   if (Op.getNumOperands() == 4) {
-    MVT HalfVT = MVT::getVectorVT(ResVT.getScalarType(),
-                                ResVT.getVectorNumElements()/2);
+    MVT HalfVT = MVT::getVectorVT(ResVT.getVectorElementType(),
+                                  ResVT.getVectorNumElements()/2);
     SDValue V3 = Op.getOperand(2);
     SDValue V4 = Op.getOperand(3);
     return Concat256BitVectors(Concat128BitVectors(V1, V2, HalfVT, NumElems/2, DAG, dl),
@@ -6497,7 +6497,7 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
          "Unexpected number of operands in CONCAT_VECTORS");
 
   if (NumOfOperands > 2) {
-    MVT HalfVT = MVT::getVectorVT(ResVT.getScalarType(),
+    MVT HalfVT = MVT::getVectorVT(ResVT.getVectorElementType(),
                                   ResVT.getVectorNumElements()/2);
     SmallVector<SDValue, 2> Ops;
     for (unsigned i = 0; i < NumOfOperands/2; i++)
@@ -6790,7 +6790,7 @@ static SDValue lowerVectorShuffleWithUNPCK(SDLoc DL, MVT VT, ArrayRef<int> Mask,
 static SDValue lowerVectorShuffleAsBitMask(SDLoc DL, MVT VT, SDValue V1,
                                            SDValue V2, ArrayRef<int> Mask,
                                            SelectionDAG &DAG) {
-  MVT EltVT = VT.getScalarType();
+  MVT EltVT = VT.getVectorElementType();
   int NumEltBits = EltVT.getSizeInBits();
   MVT IntEltVT = MVT::getIntegerVT(NumEltBits);
   SDValue Zero = DAG.getConstant(0, DL, IntEltVT);
@@ -6834,7 +6834,7 @@ static SDValue lowerVectorShuffleAsBitBlend(SDLoc DL, MVT VT, SDValue V1,
                                             SDValue V2, ArrayRef<int> Mask,
                                             SelectionDAG &DAG) {
   assert(VT.isInteger() && "Only supports integer vector types!");
-  MVT EltVT = VT.getScalarType();
+  MVT EltVT = VT.getVectorElementType();
   int NumEltBits = EltVT.getSizeInBits();
   SDValue Zero = DAG.getConstant(0, DL, EltVT);
   SDValue AllOnes = DAG.getConstant(APInt::getAllOnesValue(NumEltBits), DL,
@@ -8660,7 +8660,7 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
     SDLoc DL, MVT VT, SDValue V, MutableArrayRef<int> Mask,
     const X86Subtarget *Subtarget, SelectionDAG &DAG) {
-  assert(VT.getScalarType() == MVT::i16 && "Bad input type!");
+  assert(VT.getVectorElementType() == MVT::i16 && "Bad input type!");
   MVT PSHUFDVT = MVT::getVectorVT(MVT::i32, VT.getVectorNumElements() / 2);
 
   assert(Mask.size() == 8 && "Shuffle mask length doen't match!");
@@ -9734,7 +9734,7 @@ static SDValue splitAndLowerVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
 
   int NumElements = VT.getVectorNumElements();
   int SplitNumElements = NumElements / 2;
-  MVT ScalarVT = VT.getScalarType();
+  MVT ScalarVT = VT.getVectorElementType();
   MVT SplitVT = MVT::getVectorVT(ScalarVT, NumElements / 2);
 
   // Rather than splitting build-vectors, just build two narrower build
@@ -9746,7 +9746,7 @@ static SDValue splitAndLowerVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
     MVT OrigVT = V.getSimpleValueType();
     int OrigNumElements = OrigVT.getVectorNumElements();
     int OrigSplitNumElements = OrigNumElements / 2;
-    MVT OrigScalarVT = OrigVT.getScalarType();
+    MVT OrigScalarVT = OrigVT.getVectorElementType();
     MVT OrigSplitVT = MVT::getVectorVT(OrigScalarVT, OrigNumElements / 2);
 
     SDValue LoV, HiV;
@@ -11010,7 +11010,7 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
   MVT VT = Op.getSimpleValueType();
   int NumElements = VT.getVectorNumElements();
   SDLoc dl(Op);
-  bool Is1BitVector = (VT.getScalarType() == MVT::i1);
+  bool Is1BitVector = (VT.getVectorElementType() == MVT::i1);
 
   assert((VT.getSizeInBits() != 64 || Is1BitVector) &&
          "Can't lower MMX shuffles");
@@ -12957,7 +12957,7 @@ static SDValue LowerAVXExtend(SDValue Op, SelectionDAG &DAG,
   MVT InVT = In.getSimpleValueType();
   SDLoc dl(Op);
 
-  if (VT.is512BitVector() || InVT.getScalarType() == MVT::i1)
+  if (VT.is512BitVector() || InVT.getVectorElementType() == MVT::i1)
     return DAG.getNode(ISD::ZERO_EXTEND, dl, VT, In);
 
   // Optimize vectors in AVX mode:
@@ -14100,7 +14100,7 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG,
   SDLoc dl(Op);
 
   assert(Op0.getValueType().getVectorElementType().getSizeInBits() >= 8 &&
-         Op.getValueType().getScalarType() == MVT::i1 &&
+         Op.getValueType().getVectorElementType() == MVT::i1 &&
          "Cannot set masked compare for this operation");
 
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
@@ -14639,7 +14639,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  if (VT.isVector() && VT.getScalarType() == MVT::i1) {
+  if (VT.isVector() && VT.getVectorElementType() == MVT::i1) {
     SDValue Op1Scalar;
     if (ISD::isBuildVectorOfConstantSDNodes(Op1.getNode()))
       Op1Scalar = ConvertI1VectorToInteger(Op1, DAG);
@@ -14915,8 +14915,8 @@ static SDValue LowerSIGN_EXTEND_VECTOR_INREG(SDValue Op,
   MVT InVT = In.getSimpleValueType();
   assert(VT.getSizeInBits() == InVT.getSizeInBits());
 
-  MVT InSVT = InVT.getScalarType();
-  assert(VT.getScalarType().getScalarSizeInBits() > InSVT.getScalarSizeInBits());
+  MVT InSVT = InVT.getVectorElementType();
+  assert(VT.getVectorElementType().getSizeInBits() > InSVT.getSizeInBits());
 
   if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16)
     return SDValue();
@@ -14935,7 +14935,7 @@ static SDValue LowerSIGN_EXTEND_VECTOR_INREG(SDValue Op,
 
   // As SRAI is only available on i16/i32 types, we expand only up to i32
   // and handle i64 separately.
-  while (CurrVT != VT && CurrVT.getScalarType() != MVT::i32) {
+  while (CurrVT != VT && CurrVT.getVectorElementType() != MVT::i32) {
     Curr = DAG.getNode(X86ISD::UNPCKL, dl, CurrVT, DAG.getUNDEF(CurrVT), Curr);
     MVT CurrSVT = MVT::getIntegerVT(CurrVT.getScalarSizeInBits() * 2);
     CurrVT = MVT::getVectorVT(CurrSVT, CurrVT.getVectorNumElements() / 2);
@@ -14945,7 +14945,7 @@ static SDValue LowerSIGN_EXTEND_VECTOR_INREG(SDValue Op,
   SDValue SignExt = Curr;
   if (CurrVT != InVT) {
     unsigned SignExtShift =
-        CurrVT.getScalarSizeInBits() - InSVT.getScalarSizeInBits();
+        CurrVT.getVectorElementType().getSizeInBits() - InSVT.getSizeInBits();
     SignExt = DAG.getNode(X86ISD::VSRAI, dl, CurrVT, Curr,
                           DAG.getConstant(SignExtShift, dl, MVT::i8));
   }
@@ -15005,7 +15005,7 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
 
   SDValue OpHi = DAG.getVectorShuffle(InVT, dl, In, Undef, &ShufMask2[0]);
 
-  MVT HalfVT = MVT::getVectorVT(VT.getScalarType(),
+  MVT HalfVT = MVT::getVectorVT(VT.getVectorElementType(),
                                 VT.getVectorNumElements()/2);
 
   OpLo = DAG.getNode(X86ISD::VSEXT, dl, HalfVT, OpLo);
@@ -18371,7 +18371,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
        (Subtarget->hasInt256() && VT == MVT::v16i16)) &&
       ISD::isBuildVectorOfConstantSDNodes(Amt.getNode())) {
     SmallVector<SDValue, 8> Elts;
-    EVT SVT = VT.getScalarType();
+    MVT SVT = VT.getVectorElementType();
     unsigned SVTBits = SVT.getSizeInBits();
     APInt One(SVTBits, 1);
     unsigned NumElems = VT.getVectorNumElements();
@@ -22613,8 +22613,8 @@ combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
     case X86ISD::UNPCKH:
       // For either i8 -> i16 or i16 -> i32 unpacks, we can combine a dword
       // shuffle into a preceding word shuffle.
-      if (V.getSimpleValueType().getScalarType() != MVT::i8 &&
-          V.getSimpleValueType().getScalarType() != MVT::i16)
+      if (V.getSimpleValueType().getVectorElementType() != MVT::i8 &&
+          V.getSimpleValueType().getVectorElementType() != MVT::i16)
         return SDValue();
 
       // Search for a half-shuffle which we can combine with.
@@ -22789,7 +22789,7 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
     break;
   case X86ISD::PSHUFLW:
   case X86ISD::PSHUFHW:
-    assert(VT.getScalarType() == MVT::i16 && "Bad word shuffle type!");
+    assert(VT.getVectorElementType() == MVT::i16 && "Bad word shuffle type!");
 
     if (combineRedundantHalfShuffle(N, Mask, DAG, DCI))
       return SDValue(); // We combined away this shuffle, so we're done.
@@ -23818,7 +23818,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     // FIXME: We don't support i16-element blends currently. We could and
     // should support them by making *all* the bits in the condition be set
     // rather than just the high bit and using an i8-element blend.
-    if (VT.getScalarType() == MVT::i16)
+    if (VT.getVectorElementType() == MVT::i16)
       return SDValue();
     // Dynamic blending was only available from SSE4.1 onward.
     if (VT.is128BitVector() && !Subtarget->hasSSE41())
@@ -24624,7 +24624,7 @@ static SDValue WidenMaskArithmetic(SDNode *N, SelectionDAG &DAG,
   // Set N0 and N1 to hold the inputs to the new wide operation.
   N0 = N0->getOperand(0);
   if (RHSConstSplat) {
-    N1 = DAG.getNode(ISD::ZERO_EXTEND, DL, WideVT.getScalarType(),
+    N1 = DAG.getNode(ISD::ZERO_EXTEND, DL, WideVT.getVectorElementType(),
                      SDValue(RHSConstSplat, 0));
     SmallVector<SDValue, 8> C(WideVT.getVectorNumElements(), N1);
     N1 = DAG.getNode(ISD::BUILD_VECTOR, DL, WideVT, C);
