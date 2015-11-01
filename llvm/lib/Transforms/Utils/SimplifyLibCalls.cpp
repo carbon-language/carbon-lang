@@ -1488,8 +1488,8 @@ void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
 
 static bool checkIntUnaryReturnAndParam(Function *Callee) {
   FunctionType *FT = Callee->getFunctionType();
-  return !(FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy(32) ||
-    !FT->getParamType(0)->isIntegerTy());
+  return FT->getNumParams() == 1 && FT->getReturnType()->isIntegerTy(32) &&
+    FT->getParamType(0)->isIntegerTy();
 }
 
 Value *LibCallSimplifier::optimizeFFS(CallInst *CI, IRBuilder<> &B) {
