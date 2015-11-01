@@ -34,20 +34,20 @@
 
 using namespace llvm;
 
-NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
+NewArchiveIterator::NewArchiveIterator(const object::Archive::Child &OldMember,
                                        StringRef Name)
-    : IsNewMember(false), Name(Name), OldI(I) {}
+    : IsNewMember(false), Name(Name), OldMember(OldMember) {}
 
 NewArchiveIterator::NewArchiveIterator(StringRef FileName)
-    : IsNewMember(true), Name(FileName) {}
+    : IsNewMember(true), Name(FileName), OldMember(nullptr, nullptr) {}
 
 StringRef NewArchiveIterator::getName() const { return Name; }
 
 bool NewArchiveIterator::isNewMember() const { return IsNewMember; }
 
-object::Archive::child_iterator NewArchiveIterator::getOld() const {
+const object::Archive::Child &NewArchiveIterator::getOld() const {
   assert(!IsNewMember);
-  return OldI;
+  return OldMember;
 }
 
 StringRef NewArchiveIterator::getNew() const {

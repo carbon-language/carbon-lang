@@ -446,11 +446,10 @@ void addMember(std::vector<NewArchiveIterator> &Members, StringRef FileName,
 }
 
 void addMember(std::vector<NewArchiveIterator> &Members,
-               object::Archive::child_iterator I, StringRef Name,
-               int Pos = -1) {
-  if (Thin && !I->getParent()->isThin())
+               const object::Archive::Child &M, StringRef Name, int Pos = -1) {
+  if (Thin && !M.getParent()->isThin())
     fail("Cannot convert a regular archive to a thin one");
-  NewArchiveIterator NI(I, Name);
+  NewArchiveIterator NI(M, Name);
   if (Pos == -1)
     Members.push_back(NI);
   else
