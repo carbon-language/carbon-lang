@@ -753,8 +753,7 @@ define <8 x i16> @testv8i16(<8 x i16> %in) nounwind {
 ; AVX512CD:       ## BB#0:
 ; AVX512CD-NEXT:    vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
 ; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
-; AVX512CD-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
-; AVX512CD-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
+; AVX512CD-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512CD-NEXT:    vpsubw {{.*}}(%rip), %xmm0, %xmm0
 ; AVX512CD-NEXT:    retq
   %out = call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %in, i1 0)
@@ -976,8 +975,7 @@ define <8 x i16> @testv8i16u(<8 x i16> %in) nounwind {
 ; AVX512CD:       ## BB#0:
 ; AVX512CD-NEXT:    vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
 ; AVX512CD-NEXT:    vplzcntd %zmm0, %zmm0
-; AVX512CD-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
-; AVX512CD-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
+; AVX512CD-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512CD-NEXT:    vpsubw {{.*}}(%rip), %xmm0, %xmm0
 ; AVX512CD-NEXT:    retq
   %out = call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %in, i1 -1)

@@ -6036,6 +6036,23 @@ defm VPMOVWB    : avx512_trunc_wb<0x30, "vpmovwb", X86vtrunc>;
 defm VPMOVSWB   : avx512_trunc_sat_wb<0x20, "s",   X86vtruncs>;
 defm VPMOVUSWB  : avx512_trunc_sat_wb<0x10, "us",  X86vtruncus>;
 
+let Predicates = [HasAVX512, NoVLX] in {
+def: Pat<(v8i16 (X86vtrunc (v8i32 VR256X:$src))),
+         (v8i16 (EXTRACT_SUBREG
+                 (v16i16 (VPMOVDWZrr (v16i32 (SUBREG_TO_REG (i32 0),
+                                          VR256X:$src, sub_ymm)))), sub_xmm))>;
+def: Pat<(v4i32 (X86vtrunc (v4i64 VR256X:$src))),
+         (v4i32 (EXTRACT_SUBREG
+                 (v8i32 (VPMOVQDZrr (v8i64 (SUBREG_TO_REG (i32 0),
+                                           VR256X:$src, sub_ymm)))), sub_xmm))>;
+}
+
+let Predicates = [HasBWI, NoVLX] in {
+def: Pat<(v16i8 (X86vtrunc (v16i16 VR256X:$src))),
+         (v16i8 (EXTRACT_SUBREG  (VPMOVWBZrr (v32i16 (SUBREG_TO_REG (i32 0),
+                                            VR256X:$src, sub_ymm))), sub_xmm))>;
+}
+
 multiclass avx512_extend_common<bits<8> opc, string OpcodeStr,
                   X86VectorVTInfo DestInfo, X86VectorVTInfo SrcInfo,
                   X86MemOperand x86memop, PatFrag LdFrag, SDNode OpNode>{

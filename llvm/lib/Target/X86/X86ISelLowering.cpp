@@ -13102,10 +13102,13 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // vpmovqb/w/d, vpmovdb/w, vpmovwb
-  if (((!InVT.is512BitVector() && Subtarget->hasVLX()) || InVT.is512BitVector()) &&
-      (InVT.getVectorElementType() != MVT::i16 || Subtarget->hasBWI()))
+  if (Subtarget->hasAVX512()) {
+    // word to byte only under BWI
+    if (InVT == MVT::v16i16 && !Subtarget->hasBWI()) // v16i16 -> v16i8
+      return DAG.getNode(X86ISD::VTRUNC, DL, VT,
+                         DAG.getNode(X86ISD::VSEXT, DL, MVT::v16i32, In));
     return DAG.getNode(X86ISD::VTRUNC, DL, VT, In);
-
+  }
   if ((VT == MVT::v4i32) && (InVT == MVT::v4i64)) {
     // On AVX2, v4i64 -> v4i32 becomes VPERMD.
     if (Subtarget->hasInt256()) {
