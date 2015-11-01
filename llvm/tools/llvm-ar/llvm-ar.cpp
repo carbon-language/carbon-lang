@@ -81,7 +81,7 @@ static cl::opt<Format>
                          clEnumValN(GNU, "gnu", "gnu"),
                          clEnumValN(BSD, "bsd", "bsd"), clEnumValEnd));
 
-std::string Options;
+static std::string Options;
 
 // Provide additional help output explaining the operations and modifiers of
 // llvm-ar. This object instructs the CommandLine library to print the text of
@@ -436,8 +436,8 @@ static void performReadOperation(ArchiveOperation Operation,
   std::exit(1);
 }
 
-void addMember(std::vector<NewArchiveIterator> &Members, StringRef FileName,
-               int Pos = -1) {
+static void addMember(std::vector<NewArchiveIterator> &Members,
+                      StringRef FileName, int Pos = -1) {
   NewArchiveIterator NI(FileName);
   if (Pos == -1)
     Members.push_back(NI);
@@ -445,8 +445,9 @@ void addMember(std::vector<NewArchiveIterator> &Members, StringRef FileName,
     Members[Pos] = NI;
 }
 
-void addMember(std::vector<NewArchiveIterator> &Members,
-               const object::Archive::Child &M, StringRef Name, int Pos = -1) {
+static void addMember(std::vector<NewArchiveIterator> &Members,
+                      const object::Archive::Child &M, StringRef Name,
+                      int Pos = -1) {
   if (Thin && !M.getParent()->isThin())
     fail("Cannot convert a regular archive to a thin one");
   NewArchiveIterator NI(M, Name);
