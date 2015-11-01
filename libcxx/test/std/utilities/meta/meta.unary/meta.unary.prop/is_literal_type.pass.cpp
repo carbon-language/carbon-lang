@@ -17,12 +17,26 @@ template <class T>
 void test_is_literal_type()
 {
     static_assert( std::is_literal_type<T>::value, "");
+#if TEST_STD_VER > 14
+    static_assert( std::is_literal_type_v<T>, "");
+//     static_assert( std::is_final_v<T>, "");
+//     static_assert( std::is_final_v<const T>, "");
+//     static_assert( std::is_final_v<volatile T>, "");
+//     static_assert( std::is_final_v<const volatile T>, "");
+#endif
 }
 
 template <class T>
 void test_is_not_literal_type()
 {
     static_assert(!std::is_literal_type<T>::value, "");
+#if TEST_STD_VER > 14
+    static_assert( std::is_literal_type_v<T>, "");
+//     static_assert( std::is_final_v<T>, "");
+//     static_assert( std::is_final_v<const T>, "");
+//     static_assert( std::is_final_v<volatile T>, "");
+//     static_assert( std::is_final_v<const volatile T>, "");
+#endif
 }
 
 struct A
