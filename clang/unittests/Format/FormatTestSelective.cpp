@@ -446,6 +446,27 @@ TEST_F(FormatTestSelective, UnderstandsTabs) {
                    21, 0));
 }
 
+TEST_F(FormatTestSelective, StopFormattingWhenLeavingScope) {
+  EXPECT_EQ(
+      "void f() {\n"
+      "  if (a) {\n"
+      "    g();\n"
+      "    h();\n"
+      "}\n"
+      "\n"
+      "void g() {\n"
+      "}",
+      format("void f() {\n"
+             "  if (a) {\n" // Assume this was added without the closing brace.
+             "  g();\n"
+             "  h();\n"
+             "}\n"
+             "\n"
+             "void g() {\n" // Make sure not to format this.
+             "}",
+             15, 0));
+}
+
 } // end namespace
 } // end namespace format
 } // end namespace clang
