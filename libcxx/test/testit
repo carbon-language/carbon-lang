@@ -42,7 +42,7 @@ then
 fi
 if [ -z "$OPTIONS" ]
 then
-	OPTIONS="-std=${CXX_LANG} -stdlib=libc++"
+	OPTIONS="-std=${CXX_LANG} -stdlib=libc++ -nostdinc++"
 fi
 OPTIONS="$OPTIONS -I$LIBCXX_ROOT/test/support"
 
