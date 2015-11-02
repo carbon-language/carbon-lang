@@ -2372,6 +2372,11 @@ TEST(MatchBinaryOperator, HasLHSAndHasRHS) {
   EXPECT_TRUE(matches("void x() { true || false; }", OperatorTrueFalse));
   EXPECT_TRUE(matches("void x() { true && false; }", OperatorTrueFalse));
   EXPECT_TRUE(notMatches("void x() { false || true; }", OperatorTrueFalse));
+
+  StatementMatcher OperatorIntPointer = arraySubscriptExpr(
+      hasLHS(hasType(isInteger())), hasRHS(hasType(pointsTo(qualType()))));
+  EXPECT_TRUE(matches("void x() { 1[\"abc\"]; }", OperatorIntPointer));
+  EXPECT_TRUE(notMatches("void x() { \"abc\"[1]; }", OperatorIntPointer));
 }
 
 TEST(MatchBinaryOperator, HasEitherOperand) {

@@ -3127,9 +3127,11 @@ AST_POLYMORPHIC_MATCHER_P(hasOperatorName,
 /// \code
 ///   a || b
 /// \endcode
-AST_MATCHER_P(BinaryOperator, hasLHS,
-              internal::Matcher<Expr>, InnerMatcher) {
-  Expr *LeftHandSide = Node.getLHS();
+AST_POLYMORPHIC_MATCHER_P(hasLHS,
+                          AST_POLYMORPHIC_SUPPORTED_TYPES(BinaryOperator,
+                                                          ArraySubscriptExpr),
+                          internal::Matcher<Expr>, InnerMatcher) {
+  const Expr *LeftHandSide = Node.getLHS();
   return (LeftHandSide != nullptr &&
           InnerMatcher.matches(*LeftHandSide, Finder, Builder));
 }
@@ -3140,9 +3142,11 @@ AST_MATCHER_P(BinaryOperator, hasLHS,
 /// \code
 ///   a || b
 /// \endcode
-AST_MATCHER_P(BinaryOperator, hasRHS,
-              internal::Matcher<Expr>, InnerMatcher) {
-  Expr *RightHandSide = Node.getRHS();
+AST_POLYMORPHIC_MATCHER_P(hasRHS,
+                          AST_POLYMORPHIC_SUPPORTED_TYPES(BinaryOperator,
+                                                          ArraySubscriptExpr),
+                          internal::Matcher<Expr>, InnerMatcher) {
+  const Expr *RightHandSide = Node.getRHS();
   return (RightHandSide != nullptr &&
           InnerMatcher.matches(*RightHandSide, Finder, Builder));
 }
@@ -3246,7 +3250,7 @@ AST_MATCHER(RecordDecl, isClass) {
 /// \endcode
 AST_MATCHER_P(ConditionalOperator, hasTrueExpression,
               internal::Matcher<Expr>, InnerMatcher) {
-  Expr *Expression = Node.getTrueExpr();
+  const Expr *Expression = Node.getTrueExpr();
   return (Expression != nullptr &&
           InnerMatcher.matches(*Expression, Finder, Builder));
 }
@@ -3259,7 +3263,7 @@ AST_MATCHER_P(ConditionalOperator, hasTrueExpression,
 /// \endcode
 AST_MATCHER_P(ConditionalOperator, hasFalseExpression,
               internal::Matcher<Expr>, InnerMatcher) {
-  Expr *Expression = Node.getFalseExpr();
+  const Expr *Expression = Node.getFalseExpr();
   return (Expression != nullptr &&
           InnerMatcher.matches(*Expression, Finder, Builder));
 }
@@ -4270,7 +4274,7 @@ AST_MATCHER_P(NestedNameSpecifierLoc, specifiesTypeLoc,
 AST_MATCHER_P_OVERLOAD(NestedNameSpecifier, hasPrefix,
                        internal::Matcher<NestedNameSpecifier>, InnerMatcher,
                        0) {
-  NestedNameSpecifier *NextNode = Node.getPrefix();
+  const NestedNameSpecifier *NextNode = Node.getPrefix();
   if (!NextNode)
     return false;
   return InnerMatcher.matches(*NextNode, Finder, Builder);
