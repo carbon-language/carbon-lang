@@ -285,6 +285,38 @@ SDNode *AMDGPUDAGToDAGISel::glueCopyToM0(SDNode *N) const {
   return N;
 }
 
+static unsigned selectVectorRegClassID(unsigned NumVectorElts, bool UseVGPR) {
+  if (UseVGPR) {
+    switch (NumVectorElts) {
+    case 1:
+      return AMDGPU::VGPR_32RegClassID;
+    case 2:
+      return AMDGPU::VReg_64RegClassID;
+    case 4:
+      return AMDGPU::VReg_128RegClassID;
+    case 8:
+      return AMDGPU::VReg_256RegClassID;
+    case 16:
+      return AMDGPU::VReg_512RegClassID;
+    }
+  }
+
+  switch (NumVectorElts) {
+  case 1:
+    return AMDGPU::SReg_32RegClassID;
+  case 2:
+    return AMDGPU::SReg_64RegClassID;
+  case 4:
+    return AMDGPU::SReg_128RegClassID;
+  case 8:
+    return AMDGPU::SReg_256RegClassID;
+  case 16:
+    return AMDGPU::SReg_512RegClassID;
+  }
+
+  llvm_unreachable("invalid vector size");
+}
+
 SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   unsigned int Opc = N->getOpcode();
   if (N->isMachineOpcode()) {
@@ -318,7 +350,8 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     EVT EltVT = VT.getVectorElementType();
     assert(EltVT.bitsEq(MVT::i32));
     if (Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
-      bool UseVReg = true;
+      bool UseVReg = false;
+
       for (SDNode::use_iterator U = N->use_begin(), E = SDNode::use_end();
                                                     U != E; ++U) {
         if (!U->isMachineOpcode()) {
@@ -332,24 +365,8 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
           UseVReg = false;
         }
       }
-      switch(NumVectorElts) {
-      case 1: RegClassID = UseVReg ? AMDGPU::VGPR_32RegClassID :
-                                     AMDGPU::SReg_32RegClassID;
-        break;
-      case 2: RegClassID = UseVReg ? AMDGPU::VReg_64RegClassID :
-                                     AMDGPU::SReg_64RegClassID;
-        break;
-      case 4: RegClassID = UseVReg ? AMDGPU::VReg_128RegClassID :
-                                     AMDGPU::SReg_128RegClassID;
-        break;
-      case 8: RegClassID = UseVReg ? AMDGPU::VReg_256RegClassID :
-                                     AMDGPU::SReg_256RegClassID;
-        break;
-      case 16: RegClassID = UseVReg ? AMDGPU::VReg_512RegClassID :
-                                      AMDGPU::SReg_512RegClassID;
-        break;
-      default: llvm_unreachable("Do not know how to lower this BUILD_VECTOR");
-      }
+
+      RegClassID = selectVectorRegClassID(NumVectorElts, UseVReg);
     } else {
       // BUILD_VECTOR was lowered into an IMPLICIT_DEF + 4 INSERT_SUBREG
       // that adds a 128 bits reg copy when going through TwoAddressInstructions

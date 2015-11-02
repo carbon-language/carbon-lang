@@ -239,12 +239,15 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
       static_cast<const SIRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
   const SIInstrInfo *TII =
       static_cast<const SIInstrInfo *>(MF.getSubtarget().getInstrInfo());
+
+  SmallVector<MachineInstr *, 16> Worklist;
+
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
                                                   BI != BE; ++BI) {
 
     MachineBasicBlock &MBB = *BI;
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
-                                                      I != E; ++I) {
+         I != E; ++I) {
       MachineInstr &MI = *I;
 
       switch (MI.getOpcode()) {
