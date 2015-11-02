@@ -3991,3 +3991,148 @@
 // CHECK: vfpclassss $123, -516(%rdx), %k4
 // CHECK:  encoding: [0x62,0xf3,0x7d,0x08,0x67,0xa2,0xfc,0xfd,0xff,0xff,0x7b]
           vfpclassss $0x7b,-516(%rdx), %k4
+
+// CHECK: vbroadcasti32x2 %xmm31, %zmm30
+// CHECK:  encoding: [0x62,0x02,0x7d,0x48,0x59,0xf7]
+          vbroadcasti32x2 %xmm31, %zmm30
+
+// CHECK: vbroadcasti32x2 %xmm31, %zmm30 {%k5}
+// CHECK:  encoding: [0x62,0x02,0x7d,0x4d,0x59,0xf7]
+          vbroadcasti32x2 %xmm31, %zmm30 {%k5}
+
+// CHECK: vbroadcasti32x2 %xmm31, %zmm30 {%k5} {z}
+// CHECK:  encoding: [0x62,0x02,0x7d,0xcd,0x59,0xf7]
+          vbroadcasti32x2 %xmm31, %zmm30 {%k5} {z}
+
+// CHECK: vbroadcasti32x2 (%rcx), %zmm30
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x59,0x31]
+          vbroadcasti32x2 (%rcx), %zmm30
+
+// CHECK: vbroadcasti32x2 291(%rax,%r14,8), %zmm30
+// CHECK:  encoding: [0x62,0x22,0x7d,0x48,0x59,0xb4,0xf0,0x23,0x01,0x00,0x00]
+          vbroadcasti32x2 291(%rax,%r14,8), %zmm30
+
+// CHECK: vbroadcasti32x2 1016(%rdx), %zmm30
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x59,0x72,0x7f]
+          vbroadcasti32x2 1016(%rdx), %zmm30
+
+// CHECK: vbroadcasti32x2 1024(%rdx), %zmm30
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x59,0xb2,0x00,0x04,0x00,0x00]
+          vbroadcasti32x2 1024(%rdx), %zmm30
+
+// CHECK: vbroadcasti32x2 -1024(%rdx), %zmm30
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x59,0x72,0x80]
+          vbroadcasti32x2 -1024(%rdx), %zmm30
+
+// CHECK: vbroadcasti32x2 -1032(%rdx), %zmm30
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x59,0xb2,0xf8,0xfb,0xff,0xff]
+          vbroadcasti32x2 -1032(%rdx), %zmm30
+
+// CHECK: vbroadcasti32x2 %xmm17, %zmm20
+// CHECK:  encoding: [0x62,0xa2,0x7d,0x48,0x59,0xe1]
+          vbroadcasti32x2 %xmm17, %zmm20
+
+// CHECK: vbroadcasti32x2 %xmm17, %zmm20 {%k1}
+// CHECK:  encoding: [0x62,0xa2,0x7d,0x49,0x59,0xe1]
+          vbroadcasti32x2 %xmm17, %zmm20 {%k1}
+
+// CHECK: vbroadcasti32x2 %xmm17, %zmm20 {%k1} {z}
+// CHECK:  encoding: [0x62,0xa2,0x7d,0xc9,0x59,0xe1]
+          vbroadcasti32x2 %xmm17, %zmm20 {%k1} {z}
+
+// CHECK: vbroadcasti32x2 (%rcx), %zmm20
+// CHECK:  encoding: [0x62,0xe2,0x7d,0x48,0x59,0x21]
+          vbroadcasti32x2 (%rcx), %zmm20
+
+// CHECK: vbroadcasti32x2 4660(%rax,%r14,8), %zmm20
+// CHECK:  encoding: [0x62,0xa2,0x7d,0x48,0x59,0xa4,0xf0,0x34,0x12,0x00,0x00]
+          vbroadcasti32x2 4660(%rax,%r14,8), %zmm20
+
+// CHECK: vbroadcasti32x2 1016(%rdx), %zmm20
+// CHECK:  encoding: [0x62,0xe2,0x7d,0x48,0x59,0x62,0x7f]
+          vbroadcasti32x2 1016(%rdx), %zmm20
+
+// CHECK: vbroadcasti32x2 1024(%rdx), %zmm20
+// CHECK:  encoding: [0x62,0xe2,0x7d,0x48,0x59,0xa2,0x00,0x04,0x00,0x00]
+          vbroadcasti32x2 1024(%rdx), %zmm20
+
+// CHECK: vbroadcasti32x2 -1024(%rdx), %zmm20
+// CHECK:  encoding: [0x62,0xe2,0x7d,0x48,0x59,0x62,0x80]
+          vbroadcasti32x2 -1024(%rdx), %zmm20
+
+// CHECK: vbroadcasti32x2 -1032(%rdx), %zmm20
+// CHECK:  encoding: [0x62,0xe2,0x7d,0x48,0x59,0xa2,0xf8,0xfb,0xff,0xff]
+          vbroadcasti32x2 -1032(%rdx), %zmm20
+
+// CHECK: vbroadcastf32x2 %xmm23, %zmm27
+// CHECK:  encoding: [0x62,0x22,0x7d,0x48,0x19,0xdf]
+          vbroadcastf32x2 %xmm23, %zmm27
+
+// CHECK: vbroadcastf32x2 %xmm23, %zmm27 {%k6}
+// CHECK:  encoding: [0x62,0x22,0x7d,0x4e,0x19,0xdf]
+          vbroadcastf32x2 %xmm23, %zmm27 {%k6}
+
+// CHECK: vbroadcastf32x2 %xmm23, %zmm27 {%k6} {z}
+// CHECK:  encoding: [0x62,0x22,0x7d,0xce,0x19,0xdf]
+          vbroadcastf32x2 %xmm23, %zmm27 {%k6} {z}
+
+// CHECK: vbroadcastf32x2 (%rcx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x19]
+          vbroadcastf32x2 (%rcx), %zmm27
+
+// CHECK: vbroadcastf32x2 291(%rax,%r14,8), %zmm27
+// CHECK:  encoding: [0x62,0x22,0x7d,0x48,0x19,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vbroadcastf32x2 291(%rax,%r14,8), %zmm27
+
+// CHECK: vbroadcastf32x2 1016(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x5a,0x7f]
+          vbroadcastf32x2 1016(%rdx), %zmm27
+
+// CHECK: vbroadcastf32x2 1024(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x9a,0x00,0x04,0x00,0x00]
+          vbroadcastf32x2 1024(%rdx), %zmm27
+
+// CHECK: vbroadcastf32x2 -1024(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x5a,0x80]
+          vbroadcastf32x2 -1024(%rdx), %zmm27
+
+// CHECK: vbroadcastf32x2 -1032(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x9a,0xf8,0xfb,0xff,0xff]
+          vbroadcastf32x2 -1032(%rdx), %zmm27
+
+// CHECK: vbroadcastf32x2 %xmm21, %zmm27
+// CHECK:  encoding: [0x62,0x22,0x7d,0x48,0x19,0xdd]
+          vbroadcastf32x2 %xmm21, %zmm27
+
+// CHECK: vbroadcastf32x2 %xmm21, %zmm27 {%k5}
+// CHECK:  encoding: [0x62,0x22,0x7d,0x4d,0x19,0xdd]
+          vbroadcastf32x2 %xmm21, %zmm27 {%k5}
+
+// CHECK: vbroadcastf32x2 %xmm21, %zmm27 {%k5} {z}
+// CHECK:  encoding: [0x62,0x22,0x7d,0xcd,0x19,0xdd]
+          vbroadcastf32x2 %xmm21, %zmm27 {%k5} {z}
+
+// CHECK: vbroadcastf32x2 (%rcx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x19]
+          vbroadcastf32x2 (%rcx), %zmm27
+
+// CHECK: vbroadcastf32x2 4660(%rax,%r14,8), %zmm27
+// CHECK:  encoding: [0x62,0x22,0x7d,0x48,0x19,0x9c,0xf0,0x34,0x12,0x00,0x00]
+          vbroadcastf32x2 4660(%rax,%r14,8), %zmm27
+
+// CHECK: vbroadcastf32x2 1016(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x5a,0x7f]
+          vbroadcastf32x2 1016(%rdx), %zmm27
+
+// CHECK: vbroadcastf32x2 1024(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x9a,0x00,0x04,0x00,0x00]
+          vbroadcastf32x2 1024(%rdx), %zmm27
+
+// CHECK: vbroadcastf32x2 -1024(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x5a,0x80]
+          vbroadcastf32x2 -1024(%rdx), %zmm27
+
+// CHECK: vbroadcastf32x2 -1032(%rdx), %zmm27
+// CHECK:  encoding: [0x62,0x62,0x7d,0x48,0x19,0x9a,0xf8,0xfb,0xff,0xff]
+          vbroadcastf32x2 -1032(%rdx), %zmm27
+

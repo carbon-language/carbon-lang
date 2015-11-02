@@ -1047,6 +1047,46 @@ defm VBROADCASTF32X8 : avx512_subvec_broadcast_rm<0x1b, "vbroadcastf32x8",
                        EVEX_V512, EVEX_CD8<32, CD8VT8>;
 }
 
+multiclass avx512_broadcast_32x2<bits<8> opc, string OpcodeStr,
+                                 X86VectorVTInfo _Dst, X86VectorVTInfo _Src,
+                                 SDNode OpNode = X86SubVBroadcast> {
+
+  defm r : AVX512_maskable<opc, MRMSrcReg, _Dst, (outs _Dst.RC:$dst),
+                   (ins _Src.RC:$src), OpcodeStr, "$src", "$src",
+                   (_Dst.VT (OpNode (_Src.VT _Src.RC:$src)))>,
+                   T8PD, EVEX;
+  let mayLoad = 1 in
+    defm m : AVX512_maskable<opc, MRMSrcMem, _Dst, (outs _Dst.RC:$dst),
+                   (ins _Src.ScalarMemOp:$src), OpcodeStr, "$src", "$src",
+                   (_Dst.VT (OpNode
+                              (_Src.VT (scalar_to_vector(loadi64 addr:$src)))))>,
+                   T8PD, EVEX, EVEX_CD8<_Src.EltSize, CD8VT2>;
+}
+
+multiclass avx512_common_broadcast_32x2<bits<8> opc, string OpcodeStr,
+                             AVX512VLVectorVTInfo _> {
+  let Predicates = [HasDQI] in
+    defm Z :    avx512_broadcast_32x2<opc, OpcodeStr, _.info512, _.info128>,
+                                  EVEX_V512;
+  let Predicates = [HasDQI, HasVLX] in
+    defm Z256 : avx512_broadcast_32x2<opc, OpcodeStr, _.info256, _.info128>,
+                                  EVEX_V256;
+}
+
+multiclass avx512_common_broadcast_i32x2<bits<8> opc, string OpcodeStr,
+                                                       AVX512VLVectorVTInfo _> :
+  avx512_common_broadcast_32x2<opc, OpcodeStr, _> {
+
+  let Predicates = [HasDQI, HasVLX] in
+    defm Z128 : avx512_broadcast_32x2<opc, OpcodeStr, _.info128, _.info128,
+                                      X86SubV32x2Broadcast>, EVEX_V128;
+}
+
+defm VPBROADCASTI32X2  : avx512_common_broadcast_i32x2<0x59, "vbroadcasti32x2",
+                                           avx512vl_i32_info>;
+defm VPBROADCASTF32X2  : avx512_common_broadcast_32x2<0x19, "vbroadcastf32x2",
+                                           avx512vl_f32_info>;
+
 def : Pat<(v16f32 (X86VBroadcast (v16f32 VR512:$src))),
           (VBROADCASTSSZr (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm))>;
 def : Pat<(v16f32 (X86VBroadcast (v8f32 VR256X:$src))),
