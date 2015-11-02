@@ -41,6 +41,8 @@
 // RUN: %clang -target i386-apple-darwin -mtvos-simulator-version-min=8.3 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-TVSIM83 %s
 // CHECK-VERSION-TVSIM83: "i386-apple-tvos8.3.0"
+// RUN: %clang -target armv7k-apple-darwin -mwatchos-version-min=2.0 -c %s -### 2>&1 | \
+// RUN:   FileCheck --check-prefix=CHECK-VERSION-WATCHOS20 %s
 // CHECK-VERSION-WATCHOS20: "thumbv7k-apple-watchos2.0.0"
 // RUN: %clang -target i386-apple-darwin -mwatchos-simulator-version-min=2.0 -c %s -### 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-VERSION-WATCHSIM20 %s
