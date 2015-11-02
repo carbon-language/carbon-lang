@@ -3,8 +3,7 @@
 
 ; Use a 64-bit value with lo bits that can be represented as an inline constant
 ; CHECK-LABEL: {{^}}i64_imm_inline_lo:
-; CHECK: s_mov_b32 [[LO:s[0-9]+]], 5
-; CHECK: v_mov_b32_e32 v[[LO_VGPR:[0-9]+]], [[LO]]
+; CHECK: v_mov_b32_e32 v[[LO_VGPR:[0-9]+]], 5
 ; CHECK: buffer_store_dwordx2 v{{\[}}[[LO_VGPR]]:
 define void @i64_imm_inline_lo(i64 addrspace(1) *%out) {
 entry:
@@ -14,8 +13,7 @@ entry:
 
 ; Use a 64-bit value with hi bits that can be represented as an inline constant
 ; CHECK-LABEL: {{^}}i64_imm_inline_hi:
-; CHECK: s_mov_b32 [[HI:s[0-9]+]], 5
-; CHECK: v_mov_b32_e32 v[[HI_VGPR:[0-9]+]], [[HI]]
+; CHECK: v_mov_b32_e32 v[[HI_VGPR:[0-9]+]], 5
 ; CHECK: buffer_store_dwordx2 v{{\[[0-9]+:}}[[HI_VGPR]]
 define void @i64_imm_inline_hi(i64 addrspace(1) *%out) {
 entry:
@@ -24,10 +22,8 @@ entry:
 }
 
 ; CHECK-LABEL: {{^}}store_imm_neg_0.0_i64:
-; CHECK-DAG: s_mov_b32 s[[HI_SREG:[0-9]+]], 0x80000000
-; CHECK-DAG: s_mov_b32 s[[LO_SREG:[0-9]+]], 0{{$}}
-; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SREG]]
-; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], s[[HI_SREG]]
+; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0{{$}}
+; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0x80000000
 ; CHECK: buffer_store_dwordx2 v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
 define void @store_imm_neg_0.0_i64(i64 addrspace(1) *%out) {
   store i64 -9223372036854775808, i64 addrspace(1) *%out
@@ -523,10 +519,8 @@ define void @store_inline_imm_0.0_f64(double addrspace(1)* %out) {
 
 
 ; CHECK-LABEL: {{^}}store_literal_imm_neg_0.0_f64:
-; CHECK-DAG: s_mov_b32 s[[HI_SREG:[0-9]+]], 0x80000000
-; CHECK-DAG: s_mov_b32 s[[LO_SREG:[0-9]+]], 0{{$}}
-; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SREG]]
-; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], s[[HI_SREG]]
+; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0{{$}}
+; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0x80000000
 ; CHECK: buffer_store_dwordx2 v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
 define void @store_literal_imm_neg_0.0_f64(double addrspace(1)* %out) {
   store double -0.0, double addrspace(1)* %out
@@ -606,10 +600,8 @@ define void @store_inline_imm_m_4.0_f64(double addrspace(1)* %out) {
 }
 
 ; CHECK-LABEL: {{^}}store_literal_imm_f64:
-; CHECK-DAG: s_mov_b32 s[[HI_SREG:[0-9]+]], 0x40b00000
-; CHECK-DAG: s_mov_b32 s[[LO_SREG:[0-9]+]], 0{{$}}
-; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SREG]]
-; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], s[[HI_SREG]]
+; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0{{$}}
+; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0x40b00000
 ; CHECK: buffer_store_dwordx2 v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
 define void @store_literal_imm_f64(double addrspace(1)* %out) {
   store double 4096.0, double addrspace(1)* %out

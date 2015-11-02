@@ -190,8 +190,7 @@ define void @lshr_v4i64(<4 x i64> addrspace(1)* %out, <4 x i64> addrspace(1)* %i
 ; Make sure load width gets reduced to i32 load.
 ; GCN-LABEL: {{^}}s_lshr_32_i64:
 ; GCN-DAG: s_load_dword [[HI_A:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc{{$}}
-; GCN-DAG: s_mov_b32 s[[SHI:[0-9]+]], 0{{$}}
-; GCN-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
+; GCN-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], 0{{$}}
 ; GCN-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], [[HI_A]]
 ; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 define void @s_lshr_32_i64(i64 addrspace(1)* %out, i64 %a) {

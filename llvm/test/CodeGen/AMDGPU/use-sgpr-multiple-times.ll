@@ -245,18 +245,16 @@ define void @test_s0_s1_k_f32(float addrspace(1)* %out, float %a, float %b) #0 {
 ; GCN-LABEL: {{^}}test_s0_s1_k_f64:
 ; GCN-DAG: s_load_dwordx2 [[SGPR0:s\[[0-9]+:[0-9]+\]]], s{{\[[0-9]+:[0-9]+\]}}, {{0xb|0x2c}}
 ; GCN-DAG: s_load_dwordx2 s{{\[}}[[SGPR1_SUB0:[0-9]+]]:[[SGPR1_SUB1:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, {{0xd|0x34}}
-; GCN-DAG: s_mov_b32 s[[SK0_SUB1:[0-9]+]], 0x40900000
-; GCN-DAG: s_mov_b32 s[[SZERO:[0-9]+]], 0{{$}}
-; GCN: v_mov_b32_e32 v[[VK0_SUB0:[0-9]+]], s[[SZERO]]
-; GCN: v_mov_b32_e32 v[[VK0_SUB1:[0-9]+]], s[[SK0_SUB1]]
+; GCN-DAG: v_mov_b32_e32 v[[VK0_SUB1:[0-9]+]], 0x40900000
+; GCN-DAG: v_mov_b32_e32 v[[VZERO:[0-9]+]], 0{{$}}
 
-; GCN-DAG: s_mov_b32 s[[SK1_SUB1:[0-9]+]], 0x40b00000{{$}}
 ; GCN-DAG: v_mov_b32_e32 v[[VS1_SUB0:[0-9]+]], s[[SGPR1_SUB0]]
 ; GCN-DAG: v_mov_b32_e32 v[[VS1_SUB1:[0-9]+]], s[[SGPR1_SUB1]]
-; GCN-DAG: v_mov_b32_e32 v[[VK1_SUB0:[0-9]+]], s[[SZERO]]
-; GCN-DAG: v_mov_b32_e32 v[[VK1_SUB1:[0-9]+]], s[[SK1_SUB1]]
-; GCN-DAG: v_fma_f64 [[RESULT0:v\[[0-9]+:[0-9]+\]]], [[SGPR0]], v{{\[}}[[VS1_SUB0]]:[[VS1_SUB1]]{{\]}}, v{{\[}}[[VK0_SUB0]]:[[VK0_SUB1]]{{\]}}
-; GCN-DAG: v_fma_f64 [[RESULT1:v\[[0-9]+:[0-9]+\]]], [[SGPR0]], v{{\[}}[[VS1_SUB0]]:[[VS1_SUB1]]{{\]}}, v{{\[}}[[VK1_SUB0]]:[[VK1_SUB1]]{{\]}}
+; GCN: v_fma_f64 [[RESULT0:v\[[0-9]+:[0-9]+\]]], v{{\[}}[[VS1_SUB0]]:[[VS1_SUB1]]{{\]}}, [[SGPR0]], v{{\[}}[[VZERO]]:[[VK0_SUB1]]{{\]}}
+
+; Same zero component is re-used for half of each immediate.
+; GCN: v_mov_b32_e32 v[[VK1_SUB1:[0-9]+]], 0x40b00000
+; GCN: v_fma_f64 [[RESULT1:v\[[0-9]+:[0-9]+\]]], v{{\[}}[[VS1_SUB0]]:[[VS1_SUB1]]{{\]}}, [[SGPR0]], v{{\[}}[[VZERO]]:[[VK1_SUB1]]{{\]}}
 
 ; GCN: buffer_store_dwordx2 [[RESULT0]]
 ; GCN: buffer_store_dwordx2 [[RESULT1]]

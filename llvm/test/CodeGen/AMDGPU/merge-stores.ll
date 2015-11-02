@@ -68,10 +68,8 @@ define void @merge_global_store_2_constants_i16_natural_align(i16 addrspace(1)* 
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_2_constants_i32:
-; SI-DAG: s_movk_i32 [[SLO:s[0-9]+]], 0x1c8
-; SI-DAG: s_movk_i32 [[SHI:s[0-9]+]], 0x7b
-; SI-DAG: v_mov_b32_e32 v[[LO:[0-9]+]], [[SLO]]
-; SI-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], [[SHI]]
+; SI-DAG: v_mov_b32_e32 v[[LO:[0-9]+]], 0x1c8
+; SI-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], 0x7b
 ; GCN: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @merge_global_store_2_constants_i32(i32 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
@@ -92,10 +90,8 @@ define void @merge_global_store_2_constants_i32_f32(i32 addrspace(1)* %out) #0 {
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_2_constants_f32_i32:
-; SI-DAG: s_mov_b32 [[SLO:s[0-9]+]], 4.0
-; SI-DAG: s_movk_i32 [[SHI:s[0-9]+]], 0x7b{{$}}
-; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], [[SLO]]
-; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], [[SHI]]
+; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], 4.0
+; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], 0x7b
 ; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 define void @merge_global_store_2_constants_f32_i32(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1

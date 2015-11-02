@@ -7,8 +7,7 @@
 ; R600: MEM_RAT_CACHELESS STORE_RAW
 
 ; SI: {{^}}test:
-; SI: s_mov_b32 [[ZERO:s[0-9]]], 0{{$}}
-; SI: v_mov_b32_e32 v[[V_ZERO:[0-9]]], [[ZERO]]
+; SI: v_mov_b32_e32 v[[V_ZERO:[0-9]]], 0{{$}}
 ; SI: buffer_store_dwordx2 v[0:[[V_ZERO]]{{\]}}
 define void @test(i64 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) {
 entry:
