@@ -466,7 +466,7 @@ enum InsertAction {
 };
 
 static InsertAction computeInsertAction(ArchiveOperation Operation,
-                                        object::Archive::child_iterator I,
+                                        const object::Archive::Child &Member,
                                         StringRef Name,
                                         std::vector<StringRef>::iterator &Pos) {
   if (Operation == QuickAppend || Members.empty())
@@ -500,7 +500,7 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
     // operation.
     sys::fs::file_status Status;
     failIfError(sys::fs::status(*MI, Status), *MI);
-    if (Status.getLastModificationTime() < I->getLastModified()) {
+    if (Status.getLastModificationTime() < Member.getLastModified()) {
       if (PosName.empty())
         return IA_AddOldMember;
       return IA_MoveOldMember;
