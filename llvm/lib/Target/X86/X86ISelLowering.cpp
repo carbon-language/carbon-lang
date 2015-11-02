@@ -16652,10 +16652,6 @@ static SDValue getGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
                               const X86Subtarget * Subtarget) {
   SDLoc dl(Op);
   auto *C = cast<ConstantSDNode>(ScaleOp);
-  unsigned ScaleVal = C->getZExtValue();
-  if (ScaleVal > 2 && ScaleVal != 4 && ScaleVal != 8)
-    llvm_unreachable("Valid scale values are 1, 2, 4, 8");
-
   SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), dl, MVT::i8);
   MVT MaskVT = MVT::getVectorVT(MVT::i1,
                              Index.getSimpleValueType().getVectorNumElements());
@@ -16689,10 +16685,6 @@ static SDValue getScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
                                SDValue Index, SDValue ScaleOp, SDValue Chain) {
   SDLoc dl(Op);
   auto *C = cast<ConstantSDNode>(ScaleOp);
-  unsigned ScaleVal = C->getZExtValue();
-  if (ScaleVal > 2 && ScaleVal != 4 && ScaleVal != 8)
-    llvm_unreachable("Valid scale values are 1, 2, 4, 8");
-
   SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), dl, MVT::i8);
   SDValue Disp = DAG.getTargetConstant(0, dl, MVT::i32);
   SDValue Segment = DAG.getRegister(0, MVT::i32);
