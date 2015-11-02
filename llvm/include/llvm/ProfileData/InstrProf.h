@@ -308,7 +308,7 @@ std::unique_ptr<InstrProfValueData[]> InstrProfRecord::getValueForSite(
   }
   assert(I == N);
 
-  return std::move(VD);
+  return VD;
 }
 
 void InstrProfRecord::addValueData(uint32_t ValueKind, uint32_t Site,
