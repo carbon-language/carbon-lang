@@ -171,8 +171,22 @@ public:
         LE.write<typename Info::hash_value_type>(I->Hash);
         const std::pair<offset_type, offset_type> &Len =
             InfoObj.EmitKeyDataLength(Out, I->Key, I->Data);
+#ifdef NDEBUG
         InfoObj.EmitKey(Out, I->Key, Len.first);
         InfoObj.EmitData(Out, I->Key, I->Data, Len.second);
+#else
+        // In asserts mode, check that the users length matches the data they
+        // wrote.
+        uint64_t KeyStart = Out.tell();
+        InfoObj.EmitKey(Out, I->Key, Len.first);
+        uint64_t DataStart = Out.tell();
+        InfoObj.EmitData(Out, I->Key, I->Data, Len.second);
+        uint64_t End = Out.tell();
+        assert(offset_type(DataStart - KeyStart) == Len.first &&
+               "key length does not match bytes written");
+        assert(offset_type(End - DataStart) == Len.second &&
+               "data length does not match bytes written");
+#endif
       }
     }
 
