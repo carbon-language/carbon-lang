@@ -2,8 +2,8 @@
 
 // Test that we produce the correct relocation.
 
-	loope	0                 # R_X86_64_PC8
-	jmp	-256              # R_X86_64_PC32
+        loope   0                 # R_X86_64_PC8
+        jmp     -256              # R_X86_64_PC32
 
 // CHECK:        Section {
 // CHECK:          Index:
