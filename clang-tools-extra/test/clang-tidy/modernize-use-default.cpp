@@ -1,137 +1,159 @@
 // RUN: %check_clang_tidy %s modernize-use-default %t -- -- -std=c++11 -fno-delayed-template-parsing
 
-class A {
+// Out of line definition.
+class OL {
 public:
-  A();
-  ~A();
+  OL();
+  ~OL();
 };
 
-A::A() {}
+OL::OL() {}
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use '= default' to define a trivial default constructor [modernize-use-default]
-// CHECK-FIXES: A::A() = default;
-A::~A() {}
+// CHECK-FIXES: OL::OL() = default;
+OL::~OL() {}
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use '= default' to define a trivial destructor [modernize-use-default]
-// CHECK-FIXES: A::~A() = default;
+// CHECK-FIXES: OL::~OL() = default;
 
 // Inline definitions.
-class B {
+class IL {
 public:
-  B() {}
+  IL() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: B() = default;
-  ~B() {}
+  // CHECK-FIXES: IL() = default;
+  ~IL() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: ~B() = default;
+  // CHECK-FIXES: ~IL() = default;
 };
 
+// Non-empty body.
 void f();
-
-class C {
+class NE {
 public:
-  // Non-empty constructor body.
-  C() { f(); }
-  // Non-empty destructor body.
-  ~C() { f(); }
+  NE() { f(); }
+  ~NE() { f(); }
 };
 
-class D {
+// Initializer or arguments.
+class IA {
 public:
   // Constructor with initializer.
-  D() : Field(5) {}
+  IA() : Field(5) {}
   // Constructor with arguments.
-  D(int Arg1, int Arg2) {}
+  IA(int Arg1, int Arg2) {}
   int Field;
 };
 
 // Private constructor/destructor.
-class E {
-  E() {}
+class Priv {
+  Priv() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: E() = default;
-  ~E() {}
+  // CHECK-FIXES: Priv() = default;
+  ~Priv() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: ~E() = default;
+  // CHECK-FIXES: ~Priv() = default;
 };
 
 // struct.
-struct F {
-  F() {}
+struct ST {
+  ST() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: F() = default;
-  ~F() {}
+  // CHECK-FIXES: ST() = default;
+  ~ST() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: F() = default;
+  // CHECK-FIXES: ST() = default;
 };
 
 // Deleted constructor/destructor.
-class G {
+class Del {
 public:
-  G() = delete;
-  ~G() = delete;
+  Del() = delete;
+  ~Del() = delete;
 };
 
 // Do not remove other keywords.
-class H {
+class KW {
 public:
-  explicit H() {}
+  explicit KW() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: explicit H() = default;
-  virtual ~H() {}
+  // CHECK-FIXES: explicit KW() = default;
+  virtual ~KW() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: virtual ~H() = default;
+  // CHECK-FIXES: virtual ~KW() = default;
 };
 
 // Nested class.
-struct I {
-  struct II {
-    II() {}
+struct N {
+  struct NN {
+    NN() {}
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: use '= default'
-    // CHECK-FIXES: II() = default;
-    ~II() {}
+    // CHECK-FIXES: NN() = default;
+    ~NN() {}
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: use '= default'
-    // CHECK-FIXES: ~II() = default;
+    // CHECK-FIXES: ~NN() = default;
   };
   int Int;
 };
 
 // Class template.
 template <class T>
-class J {
+class Temp {
 public:
-  J() {}
+  Temp() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: J() = default;
-  ~J() {}
+  // CHECK-FIXES: Temp() = default;
+  ~Temp() {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: ~J() = default;
+  // CHECK-FIXES: ~Temp() = default;
 };
 
 // Non user-provided constructor/destructor.
-struct K {
+struct Imp {
   int Int;
 };
 void g() {
-  K *PtrK = new K();
-  PtrK->~K();
-  delete PtrK;
+  Imp *PtrImp = new Imp();
+  PtrImp->~Imp();
+  delete PtrImp;
 }
 
 // Already using default.
-struct L {
-  L() = default;
-  ~L() = default;
+struct IDef {
+  IDef() = default;
+  ~IDef() = default;
 };
-struct M {
-  M();
-  ~M();
+struct ODef {
+  ODef();
+  ~ODef();
 };
-M::M() = default;
-M::~M() = default;
+ODef::ODef() = default;
+ODef::~ODef() = default;
 
 // Delegating constructor and overriden destructor.
-struct N : H {
-  N() : H() {}
-  ~N() override {}
+struct DC : KW {
+  DC() : KW() {}
+  ~DC() override {}
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'
-  // CHECK-FIXES: ~N() override = default;
+  // CHECK-FIXES: ~DC() override = default;
 };
+
+struct Comments {
+  Comments() {
+    // Don't erase comments inside the body.
+  }
+  ~Comments() {
+    // Don't erase comments inside the body.
+  }
+};
+
+// Try-catch.
+struct ITC {
+  ITC() try {} catch(...) {}
+  ~ITC() try {} catch(...) {}
+};
+
+struct OTC {
+  OTC();
+  ~OTC();
+};
+OTC::OTC() try {} catch(...) {}
+OTC::~OTC() try {} catch(...) {}
