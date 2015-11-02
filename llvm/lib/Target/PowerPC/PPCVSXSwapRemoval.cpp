@@ -220,7 +220,7 @@ public:
 void PPCVSXSwapRemoval::initialize(MachineFunction &MFParm) {
   MF = &MFParm;
   MRI = &MF->getRegInfo();
-  TII = static_cast<const PPCInstrInfo*>(MF->getSubtarget().getInstrInfo());
+  TII = MF->getSubtarget<PPCSubtarget>().getInstrInfo();
 
   // An initial vector size of 256 appears to work well in practice.
   // Small/medium functions with vector content tend not to incur a
