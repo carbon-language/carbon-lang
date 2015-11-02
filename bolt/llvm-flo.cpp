@@ -17,6 +17,7 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
+#include "Exceptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
@@ -445,6 +446,22 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
         BinaryFunction(UniqueName, Symbol, *Section, Address,
                        SymbolSize, *BC)
     );
+  }
+
+  // Process special sections.
+  for (const auto &Section : File->sections()) {
+    StringRef SectionName;
+    check_error(Section.getName(SectionName), "cannot get section name");
+    StringRef SectionContents;
+    check_error(Section.getContents(SectionContents),
+                "cannot get section contents");
+    ArrayRef<uint8_t> SectionData(
+        reinterpret_cast<const uint8_t *>(SectionContents.data()),
+        Section.getSize());
+
+    if (SectionName == ".gcc_except_table") {
+      readLSDA(SectionData);
+    }
   }
 
   // Disassemble every function and build it's control flow graph.

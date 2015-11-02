@@ -16,4 +16,5 @@ add_llvm_tool(llvm-flo
   BinaryContext.cpp
   BinaryFunction.cpp
   DataReader.cpp
+  Exceptions.cpp
   )
