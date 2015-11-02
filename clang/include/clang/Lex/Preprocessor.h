@@ -24,7 +24,6 @@
 #include "clang/Lex/ModuleMap.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/PTHLexer.h"
-#include "clang/Lex/PTHManager.h"
 #include "clang/Lex/TokenLexer.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -57,6 +56,7 @@ class CodeCompletionHandler;
 class DirectoryLookup;
 class PreprocessingRecord;
 class ModuleLoader;
+class PTHManager;
 class PreprocessorOptions;
 
 /// \brief Stores token information for comparing actual tokens with
