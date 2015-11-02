@@ -3959,7 +3959,6 @@ static bool isX86CCUnsigned(unsigned X86CC) {
   case X86::COND_BE:    return true;
   case X86::COND_AE:    return true;
   }
-  llvm_unreachable("covered switch fell through?!");
 }
 
 /// Do a one-to-one translation of a ISD::CondCode to the X86-specific
@@ -12657,11 +12656,10 @@ SDValue X86TargetLowering::lowerUINT_TO_FP_vec(SDValue Op,
     return lowerUINT_TO_FP_vXi32(Op, DAG, *Subtarget);
   case MVT::v16i8:
   case MVT::v16i16:
-    if (Subtarget->hasAVX512())
-      return DAG.getNode(ISD::UINT_TO_FP, dl, Op.getValueType(),
-                         DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v16i32, N0));
+    assert(Subtarget->hasAVX512());
+    return DAG.getNode(ISD::UINT_TO_FP, dl, Op.getValueType(),
+                       DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v16i32, N0));
   }
-  llvm_unreachable(nullptr);
 }
 
 SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
