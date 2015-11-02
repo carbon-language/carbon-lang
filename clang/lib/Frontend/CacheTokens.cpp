@@ -106,7 +106,7 @@ public:
   }
 
   unsigned getRepresentationLength() const {
-    return Kind == IsNoExist ? 0 : 4 + 4 + 2 + 8 + 8;
+    return Kind == IsNoExist ? 0 : 4 * 8;
   }
 };
 
