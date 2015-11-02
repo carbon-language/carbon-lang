@@ -288,12 +288,16 @@ block4:                                       ; preds = %4, %.lr.ph
   ret void
 }
 
-;; On x86, even unaligned copies can be merged to vector ops.
+;; On x86, even unaligned copies should be merged to vector ops.
+;; TODO: however, this cannot happen at the moment, due to brokenness
+;; in MergeConsecutiveStores. See UseAA FIXME in DAGCombiner.cpp
+;; visitSTORE.
+
 ; CHECK-LABEL: merge_loads_no_align:
 ;  load:
-; CHECK: vmovups
+; CHECK-NOT: vmovups ;; TODO
 ;  store:
-; CHECK: vmovups
+; CHECK-NOT: vmovups ;; TODO
 ; CHECK: ret
 define void @merge_loads_no_align(i32 %count, %struct.B* noalias nocapture %q, %struct.B* noalias nocapture %p) nounwind uwtable noinline ssp {
   %a1 = icmp sgt i32 %count, 0

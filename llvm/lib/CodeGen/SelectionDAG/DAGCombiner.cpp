@@ -11165,6 +11165,13 @@ void DAGCombiner::getStoreMergeAndAliasCandidates(
     if (Index->getMemoryVT() != MemVT)
       break;
 
+    // We do not allow under-aligned stores in order to prevent
+    // overriding stores. NOTE: this is a bad hack. Alignment SHOULD
+    // be irrelevant here; what MATTERS is that we not move memory
+    // operations that potentially overlap past each-other.
+    if (Index->getAlignment() < MemVT.getStoreSize())
+      break;
+
     // We found a potential memory operand to merge.
     StoreNodes.push_back(MemOpLink(Index, Ptr.Offset, Seq++));
 
@@ -11249,12 +11256,18 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   if (StoreNodes.size() < 2)
     return false;
 
-  // Sort the memory operands according to their distance from the base pointer.
+  // Sort the memory operands according to their distance from the
+  // base pointer.  As a secondary criteria: make sure stores coming
+  // later in the code come first in the list. This is important for
+  // the non-UseAA case, because we're merging stores into the FINAL
+  // store along a chain which potentially contains aliasing stores.
+  // Thus, if there are multiple stores to the same address, the last
+  // one can be considered for merging but not the others.
   std::sort(StoreNodes.begin(), StoreNodes.end(),
             [](MemOpLink LHS, MemOpLink RHS) {
     return LHS.OffsetFromBase < RHS.OffsetFromBase ||
            (LHS.OffsetFromBase == RHS.OffsetFromBase &&
-            LHS.SequenceNum > RHS.SequenceNum);
+            LHS.SequenceNum < RHS.SequenceNum);
   });
 
   // Scan the memory operations on the chain and find the first non-consecutive
