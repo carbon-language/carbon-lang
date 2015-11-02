@@ -23,7 +23,7 @@ void FunctionInfoIndex::mergeFrom(std::unique_ptr<FunctionInfoIndex> Other,
 
   StringRef ModPath;
   for (auto &OtherFuncInfoLists : *Other) {
-    StringRef FuncName = OtherFuncInfoLists.getKey();
+    std::string FuncName = OtherFuncInfoLists.getKey();
     FunctionInfoList &List = OtherFuncInfoLists.second;
 
     // Assert that the func info list only has one entry, since we shouldn't
