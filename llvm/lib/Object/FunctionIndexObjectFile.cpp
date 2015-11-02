@@ -1,5 +1,4 @@
-//===- FunctionIndexObjectFile.cpp - Function index file implementation
-//----===//
+//===- FunctionIndexObjectFile.cpp - Function index file implementation ---===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -86,15 +85,15 @@ bool FunctionIndexObjectFile::hasFunctionSummaryInMemBuffer(
 // function summary/index.
 ErrorOr<std::unique_ptr<FunctionIndexObjectFile>>
 FunctionIndexObjectFile::create(MemoryBufferRef Object, LLVMContext &Context,
-                                bool IsLazy) {
+                                const Module *ExportingModule, bool IsLazy) {
   std::unique_ptr<FunctionInfoIndex> Index;
 
   ErrorOr<MemoryBufferRef> BCOrErr = findBitcodeInMemBuffer(Object);
   if (!BCOrErr)
     return BCOrErr.getError();
 
-  ErrorOr<std::unique_ptr<FunctionInfoIndex>> IOrErr =
-      getFunctionInfoIndex(BCOrErr.get(), Context, nullptr, IsLazy);
+  ErrorOr<std::unique_ptr<FunctionInfoIndex>> IOrErr = getFunctionInfoIndex(
+      BCOrErr.get(), Context, nullptr, ExportingModule, IsLazy);
 
   if (std::error_code EC = IOrErr.getError())
     return EC;

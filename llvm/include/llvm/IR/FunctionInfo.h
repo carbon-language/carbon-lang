@@ -165,8 +165,18 @@ private:
   /// Holds strings for combined index, mapping to the corresponding module ID.
   ModulePathStringTableTy ModulePathStringTable;
 
+  /// The main module being compiled, that we are importing into, if applicable.
+  /// Used to check if any of its functions are in the index and therefore
+  /// potentially exported.
+  const Module *ExportingModule;
+
+  /// Flag indicating whether the exporting module has any functions in the
+  /// index and therefore potentially exported (imported into another module).
+  bool HasExportedFunctions;
+
 public:
-  FunctionInfoIndex() = default;
+  FunctionInfoIndex(const Module *M = nullptr)
+      : ExportingModule(M), HasExportedFunctions(false){};
   ~FunctionInfoIndex() = default;
 
   // Disable the copy constructor and assignment operators, so
@@ -186,6 +196,12 @@ public:
 
   /// Add a function info for a function of the given name.
   void addFunctionInfo(StringRef FuncName, std::unique_ptr<FunctionInfo> Info) {
+    if (ExportingModule) {
+      assert(Info->functionSummary());
+      if (ExportingModule->getModuleIdentifier() ==
+          Info->functionSummary()->modulePath())
+        HasExportedFunctions = true;
+    }
     FunctionMap[FuncName].push_back(std::move(Info));
   }
 
@@ -222,6 +238,14 @@ public:
   StringRef addModulePath(StringRef ModPath, uint64_t ModId) {
     return ModulePathStringTable.insert(std::make_pair(ModPath, ModId))
         .first->first();
+  }
+
+  /// Check if the given Module has any functions available for exporting
+  /// in the index.
+  bool hasExportedFunctions(const Module *M) {
+    assert(M == ExportingModule &&
+           "Checking for exported functions on unexpected module");
+    return HasExportedFunctions;
   }
 };
 
