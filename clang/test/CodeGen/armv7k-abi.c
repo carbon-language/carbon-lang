@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple thumbv7k-apple-watchos2.0 -target-abi aapcs16 %s -o - -emit-llvm | FileCheck %s
+// RUN: %clang_cc1 -triple thumbv7k-apple-watchos2.0 -target-abi aapcs16 -target-cpu cortex-a7 %s -o - -emit-llvm | FileCheck %s
+
+#include <arm_neon.h>
 
 // Make sure 64 and 128 bit types are naturally aligned by the v7k ABI:
 
@@ -80,9 +82,12 @@ typedef struct {
 // CHECK: define [2 x i32] @return_oddly_sized_struct()
 OddlySizedStruct return_oddly_sized_struct() {}
 
-// CHECK: define double @test_va_arg(i8* %l)
-// CHECK:   load double, double*
-double test_va_arg(__builtin_va_list l) {
-  return __builtin_va_arg(l, double);
+// CHECK: define <4 x float> @test_va_arg_vec(i8* %l)
+// CHECK:   [[ALIGN_TMP:%.*]] = add i32 {{%.*}}, 15
+// CHECK:   [[ALIGNED:%.*]] = and i32 [[ALIGN_TMP]], -16
+// CHECK:   [[ALIGNED_I8:%.*]] = inttoptr i32 [[ALIGNED]] to i8*
+// CHECK:   [[ALIGNED_VEC:%.*]] = bitcast i8* [[ALIGNED_I8]] to <4 x float>
+// CHECK:   load <4 x float>, <4 x float>* [[ALIGNED_VEC]], align 16
+float32x4_t test_va_arg_vec(__builtin_va_list l) {
+  return __builtin_va_arg(l, float32x4_t);
 }
-
