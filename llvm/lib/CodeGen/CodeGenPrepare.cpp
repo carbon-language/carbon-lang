@@ -175,6 +175,7 @@ class TypePromotionTransaction;
     bool optimizeExtUses(Instruction *I);
     bool optimizeSelectInst(SelectInst *SI);
     bool optimizeShuffleVectorInst(ShuffleVectorInst *SI);
+    bool optimizeSwitchInst(SwitchInst *CI);
     bool optimizeExtractElementInst(Instruction *Inst);
     bool dupRetToEnableTailCallOpts(BasicBlock *BB);
     bool placeDbgValues(Function &F);
@@ -4399,6 +4400,49 @@ bool CodeGenPrepare::optimizeShuffleVectorInst(ShuffleVectorInst *SVI) {
   return MadeChange;
 }
 
+bool CodeGenPrepare::optimizeSwitchInst(SwitchInst *SI) {
+  if (!TLI || !DL)
+    return false;
+
+  Value *Cond = SI->getCondition();
+  Type *OldType = Cond->getType();
+  LLVMContext &Context = Cond->getContext();
+  MVT RegType = TLI->getRegisterType(Context, TLI->getValueType(*DL, OldType));
+  unsigned RegWidth = RegType.getSizeInBits();
+
+  if (RegWidth <= cast<IntegerType>(OldType)->getBitWidth())
+    return false;
+
+  // If the register width is greater than the type width, expand the condition
+  // of the switch instruction and each case constant to the width of the
+  // register. By widening the type of the switch condition, subsequent
+  // comparisons (for case comparisons) will not need to be extended to the
+  // preferred register width, so we will potentially eliminate N-1 extends,
+  // where N is the number of cases in the switch.
+  auto *NewType = Type::getIntNTy(Context, RegWidth);
+
+  // Zero-extend the switch condition and case constants unless the switch
+  // condition is a function argument that is already being sign-extended.
+  // In that case, we can avoid an unnecessary mask/extension by sign-extending
+  // everything instead.
+  Instruction::CastOps ExtType = Instruction::ZExt;
+  if (auto *Arg = dyn_cast<Argument>(Cond))
+    if (Arg->hasSExtAttr())
+      ExtType = Instruction::SExt;
+
+  auto *ExtInst = CastInst::Create(ExtType, Cond, NewType);
+  ExtInst->insertBefore(SI);
+  SI->setCondition(ExtInst);
+  for (SwitchInst::CaseIt Case : SI->cases()) {
+    APInt NarrowConst = Case.getCaseValue()->getValue();
+    APInt WideConst = (ExtType == Instruction::ZExt) ?
+                      NarrowConst.zext(RegWidth) : NarrowConst.sext(RegWidth);
+    Case.setValue(ConstantInt::get(Context, WideConst));
+  }
+
+  return true;
+}
+
 namespace {
 /// \brief Helper class to promote a scalar operation to a vector one.
 /// This class is used to move downward extractelement transition.
@@ -4870,6 +4914,9 @@ bool CodeGenPrepare::optimizeInst(Instruction *I, bool& ModifiedDT) {
 
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(I))
     return optimizeShuffleVectorInst(SVI);
+
+  if (auto *Switch = dyn_cast<SwitchInst>(I))
+    return optimizeSwitchInst(Switch);
 
   if (isa<ExtractElementInst>(I))
     return optimizeExtractElementInst(I);
