@@ -173,16 +173,16 @@ __isl_give isl_space *ScopArrayInfo::getSpace() const {
   return Space;
 }
 
-void ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes) {
-#ifndef NDEBUG
+bool ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes) {
   int SharedDims = std::min(NewSizes.size(), DimensionSizes.size());
   int ExtraDimsNew = NewSizes.size() - SharedDims;
   int ExtraDimsOld = DimensionSizes.size() - SharedDims;
-  for (int i = 0; i < SharedDims; i++) {
-    assert(NewSizes[i + ExtraDimsNew] == DimensionSizes[i + ExtraDimsOld] &&
-           "Array update with non-matching dimension sizes");
-  }
-#endif
+  for (int i = 0; i < SharedDims; i++)
+    if (NewSizes[i + ExtraDimsNew] != DimensionSizes[i + ExtraDimsOld])
+      return false;
+
+  if (DimensionSizes.size() >= NewSizes.size())
+    return true;
 
   DimensionSizes.clear();
   DimensionSizes.insert(DimensionSizes.begin(), NewSizes.begin(),
@@ -194,6 +194,7 @@ void ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes) {
     isl_pw_aff *Size = S.getPwAff(Expr);
     DimensionSizesPw.push_back(Size);
   }
+  return true;
 }
 
 ScopArrayInfo::~ScopArrayInfo() {
@@ -2377,9 +2378,12 @@ void Scop::init(AliasAnalysis &AA) {
   Loop *L = getLoopSurroundingRegion(R, LI);
   LoopSchedules[L];
   buildSchedule(&R, LoopSchedules);
-  updateAccessDimensionality();
   Schedule = LoopSchedules[L].first;
 
+  if (isl_set_is_empty(AssumedContext))
+    return;
+
+  updateAccessDimensionality();
   realignParams();
   addParameterBounds();
   addUserContext();
@@ -2640,8 +2644,10 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
     SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, IsPHI,
                                 this));
   } else {
-    if (Sizes.size() > SAI->getNumberOfDimensions())
-      SAI->updateSizes(Sizes);
+    // In case of mismatching array sizes, we bail out by setting the run-time
+    // context to false.
+    if (!SAI->updateSizes(Sizes))
+      addAssumption(isl_set_empty(getParamSpace()));
   }
   return SAI.get();
 }

@@ -103,7 +103,8 @@ public:
   ///
   ///  @param A vector of array sizes where the rightmost array sizes need to
   ///         match the innermost array sizes already defined in SAI.
-  void updateSizes(ArrayRef<const SCEV *> Sizes);
+  ///  @returns Returns true if the update was successful, otherwise false.
+  bool updateSizes(ArrayRef<const SCEV *> Sizes);
 
   /// @brief Destructor to free the isl id of the base pointer.
   ~ScopArrayInfo();
