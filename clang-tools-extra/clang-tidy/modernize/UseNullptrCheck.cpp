@@ -435,12 +435,14 @@ private:
         Loc = D->getLocStart();
       else if (const auto *S = Parent.get<Stmt>())
         Loc = S->getLocStart();
-      else
-        llvm_unreachable("Expected to find Decl or Stmt containing ancestor");
 
-      if (!expandsFrom(Loc, MacroLoc)) {
-        Result = Parent;
-        return true;
+      // TypeLoc and NestedNameSpecifierLoc are members of the parent map. Skip
+      // them and keep going up.
+      if (Loc.isValid()) {
+        if (!expandsFrom(Loc, MacroLoc)) {
+          Result = Parent;
+          return true;
+        }
       }
       Start = Parent;
     }

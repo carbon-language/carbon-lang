@@ -184,3 +184,14 @@ void test_macro_args() {
   // CHECK-FIXES: a[2] = {ENTRY(nullptr), {nullptr}};
 #undef ENTRY
 }
+
+// One of the ancestor of the cast is a NestedNameSpecifierLoc.
+class NoDef;
+char function(NoDef *p);
+#define F(x) (sizeof(function(x)) == 1)
+template<class T, T t>
+class C {};
+C<bool, F(0)> c;
+// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: use nullptr
+// CHECK-FIXES: C<bool, F(nullptr)> c;
+#undef F
