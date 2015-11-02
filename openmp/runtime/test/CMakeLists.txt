@@ -34,7 +34,7 @@ if(${LIBOMP_STANDALONE_BUILD})
   # The -j 1 lets the actual tests run with the entire machine.
   # We have one test thread that spawns the tests serially.  This allows
   # Each test to use the entire machine.
-  set(LIBOMP_LIT_ARGS_DEFAULT "-sv --show-unsupported --show-xfail -j 1")
+  set(LIBOMP_LIT_ARGS_DEFAULT "-sv --show-unsupported --show-xfail")
   if(MSVC OR XCODE)
     set(LIBOMP_LIT_ARGS_DEFAULT "${LIBOMP_LIT_ARGS_DEFAULT} --no-progress-bar")
   endif()
@@ -56,11 +56,10 @@ else()
   endif()
   set(LIBOMP_TEST_OPENMP_FLAG -fopenmp=libomp)
   # Use add_lit_testsuite() from LLVM CMake.
-  add_lit_testsuite(check-libomp 
+  add_lit_testsuite(check-libomp
     "Running libomp tests"
     ${CMAKE_CURRENT_BINARY_DIR}
-    ARGS "-j 1"
-    DEPENDS omp
+    DEPENDS clang clang-headers FileCheck omp
   )
 endif()
 
