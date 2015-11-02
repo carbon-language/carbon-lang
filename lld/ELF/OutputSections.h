@@ -57,7 +57,6 @@ bool canBePreempted(const SymbolBody *Body, bool NeedsGot);
 template <class ELFT> bool includeInSymtab(const SymbolBody &B);
 
 bool includeInDynamicSymtab(const SymbolBody &B);
-bool includeInGnuHashTable(SymbolBody *B);
 
 template <class ELFT>
 bool shouldKeepInSymtab(

@@ -408,6 +408,11 @@ void GnuHashTableSection<ELFT>::writeHashTable(uint8_t *Buf) {
     Values[I - 1] |= 1;
 }
 
+static bool includeInGnuHashTable(SymbolBody *B) {
+  // Assume that includeInDynamicSymtab() is already checked.
+  return !B->isUndefined();
+}
+
 template <class ELFT>
 void GnuHashTableSection<ELFT>::addSymbols(std::vector<SymbolBody *> &Symbols) {
   std::vector<SymbolBody *> NotHashed;
@@ -858,11 +863,6 @@ bool lld::elf2::includeInDynamicSymtab(const SymbolBody &B) {
   if (Config->ExportDynamic || Config->Shared)
     return true;
   return B.isUsedInDynamicReloc();
-}
-
-bool lld::elf2::includeInGnuHashTable(SymbolBody *B) {
-  // Assume that includeInDynamicSymtab() is already checked.
-  return !B->isUndefined();
 }
 
 template <class ELFT>
