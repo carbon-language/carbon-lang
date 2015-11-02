@@ -425,6 +425,9 @@ public:
   virtual size_t getSrcArgforCopyCtor(const CXXConstructorDecl *,
                                       FunctionArgList &Args) const = 0;
 
+  /// Gets the offsets of all the virtual base pointers in a given class.
+  virtual std::vector<CharUnits> getVBPtrOffsets(const CXXRecordDecl *RD);
+
   /// Gets the pure virtual member call function.
   virtual StringRef GetPureVirtualCallName() = 0;
 

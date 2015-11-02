@@ -455,3 +455,29 @@ void destroy(E *obj) {
 }
 
 }
+
+namespace test5 {
+// PR25370: Don't zero-initialize vbptrs in virtual bases.
+struct A {
+  virtual void f();
+};
+
+struct B : virtual A {
+  int Field;
+};
+
+struct C : B {
+  C();
+};
+
+C::C() : B() {}
+// CHECK-LABEL: define x86_thiscallcc %"struct.test5::C"* @"\01??0C@test5@@QAE@XZ"(
+// CHECK:   %[[THIS:.*]] = load %"struct.test5::C"*, %"struct.test5::C"**
+// CHECK:   br i1 %{{.*}}, label %[[INIT_VBASES:.*]], label %[[SKIP_VBASES:.*]]
+
+// CHECK: %[[SKIP_VBASES]]
+// CHECK:   %[[B:.*]] = bitcast %"struct.test5::C"* %[[THIS]] to %"struct.test5::B"*
+// CHECK:   %[[B_i8:.*]] = bitcast %"struct.test5::B"* %[[B]] to i8*
+// CHECK:   %[[FIELD:.*]] = getelementptr inbounds i8, i8* %[[B_i8]], i32 4
+// CHECK:   call void @llvm.memset.p0i8.i32(i8* %[[FIELD]], i8 0, i32 4, i32 4, i1 false)
+}

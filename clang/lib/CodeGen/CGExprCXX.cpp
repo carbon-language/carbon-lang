@@ -15,6 +15,7 @@
 #include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
+#include "CGRecordLayout.h"
 #include "CGObjCRuntime.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
@@ -356,7 +357,35 @@ static void EmitNullBaseClassInitialization(CodeGenFunction &CGF,
   DestPtr = CGF.Builder.CreateElementBitCast(DestPtr, CGF.Int8Ty);
 
   const ASTRecordLayout &Layout = CGF.getContext().getASTRecordLayout(Base);
-  llvm::Value *SizeVal = CGF.CGM.getSize(Layout.getNonVirtualSize());
+  CharUnits NVSize = Layout.getNonVirtualSize();
+
+  // We cannot simply zero-initialize the entire base sub-object if vbptrs are
+  // present, they are initialized by the most derived class before calling the
+  // constructor.
+  SmallVector<std::pair<CharUnits, CharUnits>, 1> Stores;
+  Stores.emplace_back(CharUnits::Zero(), NVSize);
+
+  // Each store is split by the existence of a vbptr.
+  CharUnits VBPtrWidth = CGF.getPointerSize();
+  std::vector<CharUnits> VBPtrOffsets =
+      CGF.CGM.getCXXABI().getVBPtrOffsets(Base);
+  for (CharUnits VBPtrOffset : VBPtrOffsets) {
+    std::pair<CharUnits, CharUnits> LastStore = Stores.pop_back_val();
+    CharUnits LastStoreOffset = LastStore.first;
+    CharUnits LastStoreSize = LastStore.second;
+
+    CharUnits SplitBeforeOffset = LastStoreOffset;
+    CharUnits SplitBeforeSize = VBPtrOffset - SplitBeforeOffset;
+    assert(!SplitBeforeSize.isNegative() && "negative store size!");
+    if (!SplitBeforeSize.isZero())
+      Stores.emplace_back(SplitBeforeOffset, SplitBeforeSize);
+
+    CharUnits SplitAfterOffset = VBPtrOffset + VBPtrWidth;
+    CharUnits SplitAfterSize = LastStoreSize - SplitAfterOffset;
+    assert(!SplitAfterSize.isNegative() && "negative store size!");
+    if (!SplitAfterSize.isZero())
+      Stores.emplace_back(SplitAfterOffset, SplitAfterSize);
+  }
 
   // If the type contains a pointer to data member we can't memset it to zero.
   // Instead, create a null constant and copy it to the destination.
@@ -364,14 +393,12 @@ static void EmitNullBaseClassInitialization(CodeGenFunction &CGF,
   // like -1, which happens to be the pattern used by member-pointers.
   // TODO: isZeroInitializable can be over-conservative in the case where a
   // virtual base contains a member pointer.
-  if (!CGF.CGM.getTypes().isZeroInitializable(Base)) {
-    llvm::Constant *NullConstant = CGF.CGM.EmitNullConstantForBase(Base);
-
-    llvm::GlobalVariable *NullVariable = 
-      new llvm::GlobalVariable(CGF.CGM.getModule(), NullConstant->getType(),
-                               /*isConstant=*/true, 
-                               llvm::GlobalVariable::PrivateLinkage,
-                               NullConstant, Twine());
+  llvm::Constant *NullConstantForBase = CGF.CGM.EmitNullConstantForBase(Base);
+  if (!NullConstantForBase->isNullValue()) {
+    llvm::GlobalVariable *NullVariable = new llvm::GlobalVariable(
+        CGF.CGM.getModule(), NullConstantForBase->getType(),
+        /*isConstant=*/true, llvm::GlobalVariable::PrivateLinkage,
+        NullConstantForBase, Twine());
 
     CharUnits Align = std::max(Layout.getNonVirtualAlignment(),
                                DestPtr.getAlignment());
@@ -380,14 +407,29 @@ static void EmitNullBaseClassInitialization(CodeGenFunction &CGF,
     Address SrcPtr = Address(CGF.EmitCastToVoidPtr(NullVariable), Align);
 
     // Get and call the appropriate llvm.memcpy overload.
-    CGF.Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal);
-    return;
-  } 
-  
+    for (std::pair<CharUnits, CharUnits> Store : Stores) {
+      CharUnits StoreOffset = Store.first;
+      CharUnits StoreSize = Store.second;
+      llvm::Value *StoreSizeVal = CGF.CGM.getSize(StoreSize);
+      CGF.Builder.CreateMemCpy(
+          CGF.Builder.CreateConstInBoundsByteGEP(DestPtr, StoreOffset),
+          CGF.Builder.CreateConstInBoundsByteGEP(SrcPtr, StoreOffset),
+          StoreSizeVal);
+    }
+
   // Otherwise, just memset the whole thing to zero.  This is legal
   // because in LLVM, all default initializers (other than the ones we just
   // handled above) are guaranteed to have a bit pattern of all zeros.
-  CGF.Builder.CreateMemSet(DestPtr, CGF.Builder.getInt8(0), SizeVal);
+  } else {
+    for (std::pair<CharUnits, CharUnits> Store : Stores) {
+      CharUnits StoreOffset = Store.first;
+      CharUnits StoreSize = Store.second;
+      llvm::Value *StoreSizeVal = CGF.CGM.getSize(StoreSize);
+      CGF.Builder.CreateMemSet(
+          CGF.Builder.CreateConstInBoundsByteGEP(DestPtr, StoreOffset),
+          CGF.Builder.getInt8(0), StoreSizeVal);
+    }
+  }
 }
 
 void

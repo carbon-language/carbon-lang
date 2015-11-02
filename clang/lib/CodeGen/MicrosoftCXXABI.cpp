@@ -90,6 +90,25 @@ public:
     return 1;
   }
 
+  std::vector<CharUnits> getVBPtrOffsets(const CXXRecordDecl *RD) override {
+    std::vector<CharUnits> VBPtrOffsets;
+    const ASTContext &Context = getContext();
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+    const VBTableGlobals &VBGlobals = enumerateVBTables(RD);
+    for (const VPtrInfo *VBT : *VBGlobals.VBTables) {
+      const ASTRecordLayout &SubobjectLayout =
+          Context.getASTRecordLayout(VBT->BaseWithVPtr);
+      CharUnits Offs = VBT->NonVirtualOffset;
+      Offs += SubobjectLayout.getVBPtrOffset();
+      if (VBT->getVBaseWithVPtr())
+        Offs += Layout.getVBaseClassOffset(VBT->getVBaseWithVPtr());
+      VBPtrOffsets.push_back(Offs);
+    }
+    llvm::array_pod_sort(VBPtrOffsets.begin(), VBPtrOffsets.end());
+    return VBPtrOffsets;
+  }
+
   StringRef GetPureVirtualCallName() override { return "_purecall"; }
   StringRef GetDeletedVirtualCallName() override { return "_purecall"; }
 

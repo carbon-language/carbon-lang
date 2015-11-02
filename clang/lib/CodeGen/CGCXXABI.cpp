@@ -326,3 +326,7 @@ CGCXXABI::emitTerminateForUnexpectedException(CodeGenFunction &CGF,
 CatchTypeInfo CGCXXABI::getCatchAllTypeInfo() {
   return CatchTypeInfo{nullptr, 0};
 }
+
+std::vector<CharUnits> CGCXXABI::getVBPtrOffsets(const CXXRecordDecl *RD) {
+  return std::vector<CharUnits>();
+}
