@@ -254,7 +254,7 @@ namespace llvm {
     bool implies(const SCEVPredicate *N) const override;
     void print(raw_ostream &OS, unsigned Depth = 0) const override;
     bool isAlwaysTrue() const override;
-    const SCEV *getExpr() const;
+    const SCEV *getExpr() const override;
 
     /// \brief Returns the left hand side of the equality.
     const SCEVUnknown *getLHS() const { return LHS; }
@@ -298,7 +298,7 @@ namespace llvm {
     /// Implementation of the SCEVPredicate interface
     bool isAlwaysTrue() const override;
     bool implies(const SCEVPredicate *N) const override;
-    void print(raw_ostream &OS, unsigned Depth) const;
+    void print(raw_ostream &OS, unsigned Depth) const override;
     const SCEV *getExpr() const override;
 
     /// \brief We estimate the complexity of a union predicate as the size
