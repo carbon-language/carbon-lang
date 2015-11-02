@@ -24,6 +24,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Target.h"
 
+#include "Plugins/ExpressionParser/Go/GoUserExpression.h"
 #include "Plugins/SymbolFile/DWARF/DWARFASTParserGo.h"
 
 using namespace lldb;
@@ -200,9 +201,7 @@ class GoStruct : public GoType
     };
 
     GoStruct(int kind, const ConstString &name, int64_t byte_size)
-        : GoType(kind, name)
-        , m_is_complete(false)
-        , m_byte_size(byte_size)
+        : GoType(kind == 0 ? KIND_STRUCT : kind, name), m_is_complete(false), m_byte_size(byte_size)
     {
     }
 
@@ -327,14 +326,20 @@ GoASTContext::CreateInstance (lldb::LanguageType language, Module *module, Targe
     if (language == eLanguageTypeGo)
     {
         ArchSpec arch;
+        std::shared_ptr<GoASTContext> go_ast_sp;
         if (module)
+        {
             arch = module->GetArchitecture();
+            go_ast_sp = std::shared_ptr<GoASTContext>(new GoASTContext);
+        }
         else if (target)
+        {
             arch = target->GetArchitecture();
+            go_ast_sp = std::shared_ptr<GoASTContextForExpr>(new GoASTContextForExpr(target->shared_from_this()));
+        }
 
         if (arch.IsValid())
         {
-            std::shared_ptr<GoASTContext> go_ast_sp(new GoASTContext);
             go_ast_sp->SetAddressByteSize(arch.GetAddressByteSize());
             return go_ast_sp;
         }
@@ -413,6 +418,10 @@ GoASTContext::IsAggregateType(lldb::opaque_compiler_type_t type)
     if (kind < GoType::KIND_ARRAY)
         return false;
     if (kind == GoType::KIND_PTR)
+        return false;
+    if (kind == GoType::KIND_CHAN)
+        return false;
+    if (kind == GoType::KIND_MAP)
         return false;
     if (kind == GoType::KIND_STRING)
         return false;
@@ -583,7 +592,8 @@ GoASTContext::IsPointerType(lldb::opaque_compiler_type_t type, CompilerType *poi
         case GoType::KIND_PTR:
         case GoType::KIND_UNSAFEPOINTER:
         case GoType::KIND_CHAN:
-            // TODO: is map a pointer? string? function?
+        case GoType::KIND_MAP:
+            // TODO: is function a pointer?
             return true;
         default:
             return false;
@@ -1064,6 +1074,11 @@ GoASTContext::GetNumChildren(lldb::opaque_compiler_type_t type, bool omit_empty_
     {
         return array->GetLength();
     }
+    else if (t->IsTypedef())
+    {
+        return t->GetElementType().GetNumChildren(omit_empty_base_classes);
+    }
+
     return GetNumFields(type);
 }
 
@@ -1490,4 +1505,14 @@ GoASTContext::GetDWARFParser()
     if (!m_dwarf_ast_parser_ap)
         m_dwarf_ast_parser_ap.reset(new DWARFASTParserGo(*this));
     return m_dwarf_ast_parser_ap.get();
+}
+
+UserExpression *
+GoASTContextForExpr::GetUserExpression(const char *expr, const char *expr_prefix, lldb::LanguageType language,
+                                       Expression::ResultType desired_type)
+{
+    TargetSP target = m_target_wp.lock();
+    if (target)
+        return new GoUserExpression(*target, expr, expr_prefix, language, desired_type);
+    return nullptr;
 }

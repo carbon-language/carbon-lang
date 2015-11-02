@@ -4,5 +4,5 @@ ColumnLimit:     120
 BreakBeforeBraces: Allman
 AlwaysBreakAfterDefinitionReturnType: true
 AllowShortFunctionsOnASingleLine: Inline
-BreakConstructorInitializersBeforeComma: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IndentCaseLabels: true

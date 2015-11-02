@@ -55,13 +55,10 @@
 
 using namespace lldb_private;
 
-ClangUserExpression::ClangUserExpression (ExecutionContextScope &exe_scope,
-                                          const char *expr,
-                                          const char *expr_prefix,
-                                          lldb::LanguageType language,
-                                          ResultType desired_type) :
-    UserExpression (exe_scope, expr, expr_prefix, language, desired_type),
-    m_type_system_helper(*m_target_wp.lock().get())
+ClangUserExpression::ClangUserExpression(ExecutionContextScope &exe_scope, const char *expr, const char *expr_prefix,
+                                         lldb::LanguageType language, ResultType desired_type)
+    : LLVMUserExpression(exe_scope, expr, expr_prefix, language, desired_type),
+      m_type_system_helper(*m_target_wp.lock().get())
 {
     switch (m_language)
     {

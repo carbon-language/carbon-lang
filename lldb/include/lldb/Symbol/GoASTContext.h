@@ -254,8 +254,7 @@ class GoASTContext : public TypeSystem
 
     lldb::BasicType GetBasicTypeEnumeration(lldb::opaque_compiler_type_t type) override;
 
-    CompilerType GetBuiltinTypeForEncodingAndBitSize(lldb::Encoding encoding,
-                                                     size_t bit_size) override;
+    CompilerType GetBuiltinTypeForEncodingAndBitSize(lldb::Encoding encoding, size_t bit_size) override;
 
     uint32_t GetNumFields(lldb::opaque_compiler_type_t type) override;
 
@@ -394,6 +393,15 @@ class GoASTContext : public TypeSystem
     const GoASTContext &operator=(const GoASTContext &) = delete;
 };
 
-} // namespace lldb_private
+class GoASTContextForExpr : public GoASTContext
+{
+  public:
+    GoASTContextForExpr(lldb::TargetSP target) : m_target_wp(target) {}
+    UserExpression *GetUserExpression(const char *expr, const char *expr_prefix, lldb::LanguageType language,
+                                      Expression::ResultType desired_type) override;
 
+  private:
+    lldb::TargetWP m_target_wp;
+};
+}
 #endif // liblldb_GoASTContext_h_

@@ -1389,6 +1389,10 @@ SBFrame::EvaluateExpression (const char *expr)
         lldb::DynamicValueType fetch_dynamic_value = frame->CalculateTarget()->GetPreferDynamicValue();
         options.SetFetchDynamicValue (fetch_dynamic_value);
         options.SetUnwindOnError (true);
+        if (target->GetLanguage() != eLanguageTypeUnknown)
+            options.SetLanguage(target->GetLanguage());
+        else
+            options.SetLanguage(frame->GetLanguage());
         return EvaluateExpression (expr, options);
     }
     return result;
@@ -1400,6 +1404,13 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     SBExpressionOptions options;
     options.SetFetchDynamicValue (fetch_dynamic_value);
     options.SetUnwindOnError (true);
+    ExecutionContext exe_ctx(m_opaque_sp.get());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target && target->GetLanguage() != eLanguageTypeUnknown)
+        options.SetLanguage(target->GetLanguage());
+    else if (frame)
+        options.SetLanguage(frame->GetLanguage());
     return EvaluateExpression (expr, options);
 }
 
@@ -1407,8 +1418,15 @@ SBValue
 SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value, bool unwind_on_error)
 {
     SBExpressionOptions options;
+    ExecutionContext exe_ctx(m_opaque_sp.get());
     options.SetFetchDynamicValue (fetch_dynamic_value);
     options.SetUnwindOnError (unwind_on_error);
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target && target->GetLanguage() != eLanguageTypeUnknown)
+        options.SetLanguage(target->GetLanguage());
+    else if (frame)
+        options.SetLanguage(frame->GetLanguage());
     return EvaluateExpression (expr, options);
 }
 

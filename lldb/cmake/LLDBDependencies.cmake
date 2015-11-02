@@ -74,6 +74,7 @@ set( LLDB_USED_LIBS
   lldbPluginProcessElfCore
   lldbPluginJITLoaderGDB
   lldbPluginExpressionParserClang
+  lldbPluginExpressionParserGo
   )
 
 # Windows-only libraries
