@@ -16,9 +16,8 @@
 // CHECK-DARWIN-NOT: LC_VERSION_MIN
 
 
-// FIXME: llvm-objdump doesn't know about WATCHOS and TVOS VERSION_MIN LC yet
-// FIXME: llvm-mc -triple x86_64-apple-watchos1.0.0 %s -filetype=obj -o - | llvm-objdump -macho -private-headers - | FileCheck %s --check-prefix=CHECK-WATCHOS
-// FIXME: llvm-mc -triple x86_64-apple-tvos8.0.0 %s -filetype=obj -o - | llvm-objdump -macho -private-headers - | FileCheck %s --check-prefix=CHECK-TVOS
+// RUN: llvm-mc -triple x86_64-apple-watchos1.0.0 %s -filetype=obj -o - | llvm-objdump -macho -private-headers - | FileCheck %s --check-prefix=CHECK-WATCHOS
+// RUN: llvm-mc -triple x86_64-apple-tvos8.0.0 %s -filetype=obj -o - | llvm-objdump -macho -private-headers - | FileCheck %s --check-prefix=CHECK-TVOS
 // CHECK-WATCHOS: Load command
 // CHECK-WATCHOS:           cmd LC_VERSION_MIN_WATCHOS
 // CHECK-WATCHOS-NEXT:   cmdsize 16
