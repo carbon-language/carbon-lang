@@ -433,3 +433,9 @@ M(void inmacro(void) {})
 F(Foo, Bar) {
 
 }
+
+struct DefinitionWithNoBody {
+  DefinitionWithNoBody(void) = delete;
+  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: {{.*}} in function definition
+  // CHECK-FIXES: DefinitionWithNoBody() = delete;
+};
