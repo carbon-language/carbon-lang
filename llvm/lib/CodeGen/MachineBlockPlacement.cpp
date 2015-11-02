@@ -81,6 +81,12 @@ static cl::opt<unsigned> OutlineOptionalThreshold(
              "instruction count below this threshold"),
     cl::init(4), cl::Hidden);
 
+static cl::opt<unsigned> LoopToColdBlockRatio(
+    "loop-to-cold-block-ratio",
+    cl::desc("Outline loop blocks from loop chain if (frequency of loop) / "
+             "(frequency of block) is greater than this ratio"),
+    cl::init(5), cl::Hidden);
+
 static cl::opt<bool>
     PreciseRotationCost("precise-rotation-cost",
                         cl::desc("Model the cost of loop rotation more "
@@ -263,6 +269,7 @@ class MachineBlockPlacement : public MachineFunctionPass {
                                      const BlockFilterSet &LoopBlockSet);
   MachineBasicBlock *findBestLoopExit(MachineFunction &F, MachineLoop &L,
                                       const BlockFilterSet &LoopBlockSet);
+  BlockFilterSet collectLoopBlockSet(MachineFunction &F, MachineLoop &L);
   void buildLoopChains(MachineFunction &F, MachineLoop &L);
   void rotateLoop(BlockChain &LoopChain, MachineBasicBlock *ExitingBB,
                   const BlockFilterSet &LoopBlockSet);
@@ -960,6 +967,42 @@ void MachineBlockPlacement::rotateLoopWithProfile(
   }
 }
 
+/// \brief Collect blocks in the given loop that are to be placed.
+///
+/// When profile data is available, exclude cold blocks from the returned set;
+/// otherwise, collect all blocks in the loop.
+MachineBlockPlacement::BlockFilterSet
+MachineBlockPlacement::collectLoopBlockSet(MachineFunction &F, MachineLoop &L) {
+  BlockFilterSet LoopBlockSet;
+
+  // Filter cold blocks off from LoopBlockSet when profile data is available.
+  // Collect the sum of frequencies of incoming edges to the loop header from
+  // outside. If we treat the loop as a super block, this is the frequency of
+  // the loop. Then for each block in the loop, we calculate the ratio between
+  // its frequency and the frequency of the loop block. When it is too small,
+  // don't add it to the loop chain. If there are outer loops, then this block
+  // will be merged into the first outer loop chain for which this block is not
+  // cold anymore. This needs precise profile data and we only do this when
+  // profile data is available.
+  if (F.getFunction()->getEntryCount()) {
+    BlockFrequency LoopFreq(0);
+    for (auto LoopPred : L.getHeader()->predecessors())
+      if (!L.contains(LoopPred))
+        LoopFreq += MBFI->getBlockFreq(LoopPred) *
+                    MBPI->getEdgeProbability(LoopPred, L.getHeader());
+
+    for (MachineBasicBlock *LoopBB : L.getBlocks()) {
+      auto Freq = MBFI->getBlockFreq(LoopBB).getFrequency();
+      if (Freq == 0 || LoopFreq.getFrequency() / Freq > LoopToColdBlockRatio)
+        continue;
+      LoopBlockSet.insert(LoopBB);
+    }
+  } else
+    LoopBlockSet.insert(L.block_begin(), L.block_end());
+
+  return LoopBlockSet;
+}
+
 /// \brief Forms basic block chains from the natural loop structures.
 ///
 /// These chains are designed to preserve the existing *structure* of the code
@@ -974,7 +1017,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
     buildLoopChains(F, *InnerLoop);
 
   SmallVector<MachineBasicBlock *, 16> BlockWorkList;
-  BlockFilterSet LoopBlockSet(L.block_begin(), L.block_end());
+  BlockFilterSet LoopBlockSet = collectLoopBlockSet(F, L);
 
   // Check if we have profile data for this function. If yes, we will rotate
   // this loop by modeling costs more precisely which requires the profile data
@@ -1005,7 +1048,8 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
   SmallPtrSet<BlockChain *, 4> UpdatedPreds;
   assert(LoopChain.LoopPredecessors == 0);
   UpdatedPreds.insert(&LoopChain);
-  for (MachineBasicBlock *LoopBB : L.getBlocks()) {
+
+  for (MachineBasicBlock *LoopBB : LoopBlockSet) {
     BlockChain &Chain = *BlockToChain[LoopBB];
     if (!UpdatedPreds.insert(&Chain).second)
       continue;
