@@ -190,9 +190,9 @@ std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
     break;
   case Triple::ARMSubArch_v7k:
     if (NoCPU)
-      // v7k: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureHasRAS
+      // v7k: FeatureNEON, FeatureDB, FeatureDSP, FeatureHasRAS
       //      A7
-      ARMArchFeature = "+v7,+a7,+neon,+db,+t2dsp,+ras";
+      ARMArchFeature = "+v7,+a7,+neon,+db,+dsp,+ras";
     else
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
