@@ -1591,10 +1591,7 @@ Value *LibCallSimplifier::optimizeErrorReporting(CallInst *CI, IRBuilder<> &B,
 }
 
 static bool isReportingError(Function *Callee, CallInst *CI, int StreamArg) {
-  if (!ColdErrorCalls)
-    return false;
-
-  if (!Callee || !Callee->isDeclaration())
+  if (!ColdErrorCalls || !Callee || !Callee->isDeclaration())
     return false;
 
   if (StreamArg < 0)
