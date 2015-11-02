@@ -56,3 +56,7 @@ st12_t retLargeStruct(int i1, st12_t r) { return r; }
 // insane.
 // CHECK-LABEL: define i32 @varArgs(i32 inreg %i1, ...)
 int varArgs(int i1, ...) { return i1; }
+
+// CHECK-LABEL: define double @longDoubleArg(double %ld1)
+long double longDoubleArg(long double ld1) { return ld1; }
+
