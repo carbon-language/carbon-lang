@@ -18,7 +18,7 @@ void f() {
     int K;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead [modernize-loop-convert]
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: Sum += Elem;
   // CHECK-FIXES-NEXT: int K;
 
@@ -27,7 +27,7 @@ void f() {
     Sum += Arr[I] + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
   // CHECK-FIXES-NEXT: Sum += Elem + 2;
 
@@ -36,7 +36,7 @@ void f() {
     int Y = Arr[I] + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: int X = Elem;
   // CHECK-FIXES-NEXT: int Y = Elem + 2;
 
@@ -45,7 +45,7 @@ void f() {
     X = Arr[I];
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: int X = N;
   // CHECK-FIXES-NEXT: X = Elem;
 
@@ -76,7 +76,7 @@ void f() {
     Sum += Arr[I];
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: Sum += Elem;
 
   for (int I = 0; I < N; ++I) {
@@ -140,7 +140,7 @@ struct HasArr {
       printf("%d", Arr[I]);
     }
     // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
-    // CHECK-FIXES: for (int & Elem : Arr)
+    // CHECK-FIXES: for (int Elem : Arr)
     // CHECK-FIXES-NEXT: printf("%d", Elem);
 
     for (int I = 0; I < N; ++I) {
@@ -156,7 +156,7 @@ struct HasArr {
       printf("%d", this->Arr[I]);
     }
     // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
-    // CHECK-FIXES: for (int & Elem : this->Arr)
+    // CHECK-FIXES: for (int Elem : this->Arr)
     // CHECK-FIXES-NEXT: printf("%d", Elem);
 
     for (int I = 0; I < N; ++I) {
@@ -504,7 +504,7 @@ void f() {
     Sum += V[I] + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : V)
+  // CHECK-FIXES: for (int Elem : V)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
   // CHECK-FIXES-NEXT: Sum += Elem + 2;
 
@@ -513,7 +513,7 @@ void f() {
     Sum += V.at(I) + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : V)
+  // CHECK-FIXES: for (int Elem : V)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
   // CHECK-FIXES-NEXT: Sum += Elem + 2;
 
@@ -522,7 +522,7 @@ void f() {
     Sum += Pv->at(I) + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : *Pv)
+  // CHECK-FIXES: for (int Elem : *Pv)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
   // CHECK-FIXES-NEXT: Sum += Elem + 2;
 
@@ -535,7 +535,7 @@ void f() {
     Sum += (*Pv)[I] + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : *Pv)
+  // CHECK-FIXES: for (int Elem : *Pv)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
   // CHECK-FIXES-NEXT: Sum += Elem + 2;
 
@@ -544,7 +544,7 @@ void f() {
     Sum += Cv->at(I) + 2;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : *Cv)
+  // CHECK-FIXES: for (int Elem : *Cv)
   // CHECK-FIXES-NEXT: printf("Fibonacci number is %d\n", Elem);
   // CHECK-FIXES-NEXT: Sum += Elem + 2;
 }
@@ -660,7 +660,7 @@ void NoBeginEndTest() {
   for (unsigned I = 0, E = CBE.size(); I < E; ++I)
     printf("%d\n", CBE[I]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (unsigned int & Elem : CBE)
+  // CHECK-FIXES: for (unsigned int Elem : CBE)
   // CHECK-FIXES-NEXT: printf("%d\n", Elem);
 
   const ConstBeginEnd Const_CBE;
@@ -705,50 +705,50 @@ void fundamentalTypesTest() {
   for (int i = 0; i < N; ++i)
     printf("%d", Bools[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (bool & Bool : Bools)
+  // CHECK-FIXES: for (bool Bool : Bools)
 
   int Ints[N];
   unsigned short int Shorts[N];
   for (int i = 0; i < N; ++i)
     printf("%d", Shorts[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (unsigned short & Short : Shorts)
+  // CHECK-FIXES: for (unsigned short Short : Shorts)
 
   signed long Longs[N];
   for (int i = 0; i < N; ++i)
     printf("%d", Longs[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (long & Long : Longs)
+  // CHECK-FIXES: for (long Long : Longs)
 
   long long int LongLongs[N];
   for (int i = 0; i < N; ++i)
     printf("%d", LongLongs[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (long long & LongLong : LongLongs)
+  // CHECK-FIXES: for (long long LongLong : LongLongs)
 
   char Chars[N];
   for (int i = 0; i < N; ++i)
     printf("%d", Chars[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (char & Char : Chars)
+  // CHECK-FIXES: for (char Char : Chars)
 
   wchar_t WChars[N];
   for (int i = 0; i < N; ++i)
     printf("%d", WChars[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (wchar_t & WChar : WChars)
+  // CHECK-FIXES: for (wchar_t WChar : WChars)
 
   float Floats[N];
   for (int i = 0; i < N; ++i)
     printf("%d", Floats[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (float & Float : Floats)
+  // CHECK-FIXES: for (float Float : Floats)
 
   double Doubles[N];
   for (int i = 0; i < N; ++i)
     printf("%d", Doubles[i]);
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (double & Double : Doubles)
+  // CHECK-FIXES: for (double Double : Doubles)
 }
 
 } // namespace PseudoArray

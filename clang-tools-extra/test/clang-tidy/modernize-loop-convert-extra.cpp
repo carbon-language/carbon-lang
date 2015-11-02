@@ -164,7 +164,7 @@ void aliasing() {
     IntRef Int(IntArr[I]);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : IntArr)
+  // CHECK-FIXES: for (int Elem : IntArr)
   // CHECK-FIXES-NEXT: IntRef Int(Elem);
 
   // Ensure that removing the alias doesn't leave empty lines behind.
@@ -716,7 +716,7 @@ void messing_with_macros() {
     printf("Value: %d\n", Arr[I]);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT:  printf("Value: %d\n", Elem);
 
   for (int I = 0; I < N; ++I) {
@@ -770,13 +770,13 @@ void capturesIndex() {
   for (int I = 0; I < N; ++I)
     auto F1 = [Arr, I]() { int R1 = Arr[I] + 1; };
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto F1 = [Arr, &Elem]() { int R1 = Elem + 1; };
 
   for (int I = 0; I < N; ++I)
     auto F2 = [Arr, &I]() { int R2 = Arr[I] + 3; };
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto F2 = [Arr, &Elem]() { int R2 = Elem + 3; };
 
   // FIXME: alias don't work if the index is captured.
@@ -784,14 +784,14 @@ void capturesIndex() {
   for (int I = 0; I < N; ++I)
     auto F3 = [&Arr, I]() { int R3 = Arr[I]; };
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto F3 = [&Arr, &Elem]() { int R3 = Elem; };
 
 
   for (int I = 0; I < N; ++I)
     auto F4 = [&Arr, &I]() { int R4 = Arr[I]; };
   // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto F4 = [&Arr, &Elem]() { int R4 = Elem; };
 
   // Alias declared inside lambda (by reference).
@@ -815,7 +815,7 @@ void capturesIndex() {
     F(Arr[I]);
   }
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto F = [Arr, &Elem](int k)
   // CHECK-FIXES-NEXT: printf("%d\n", Elem + k);
   // CHECK-FIXES: F(Elem);
@@ -847,7 +847,7 @@ void implicitCapture() {
     };
   }
   // CHECK-MESSAGES: :[[@LINE-6]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto G3 = [&]()
   // CHECK-FIXES-NEXT: int R3 = Elem;
   // CHECK-FIXES-NEXT: int J3 = Elem + R3;
@@ -858,7 +858,7 @@ void implicitCapture() {
     };
   }
   // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto G4 = [=]()
   // CHECK-FIXES-NEXT: int R4 = Elem + 5;
 
@@ -929,14 +929,14 @@ void captureByValue() {
     auto C1 = [&Arr, I]() { if (Arr[I] == 1); };
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Arr)
+  // CHECK-FIXES: for (int Elem : Arr)
   // CHECK-FIXES-NEXT: auto C1 = [&Arr, &Elem]() { if (Elem == 1); };
 
   for (unsigned I = 0; I < Dep.size(); ++I) {
     auto C2 = [&Dep, I]() { if (Dep[I] == 2); };
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Dep)
+  // CHECK-FIXES: for (int Elem : Dep)
   // CHECK-FIXES-NEXT: auto C2 = [&Dep, &Elem]() { if (Elem == 2); };
 }
 
@@ -962,7 +962,7 @@ void f() {
     E Ee{ { { g( { Array[I] } ) } } };
   }
   // CHECK-MESSAGES: :[[@LINE-7]]:3: warning: use range-based for loop instead
-  // CHECK-FIXES: for (int & Elem : Array)
+  // CHECK-FIXES: for (int Elem : Array)
   // CHECK-FIXES-NEXT: int A{ Elem };
   // CHECK-FIXES-NEXT: int B{ g(Elem) };
   // CHECK-FIXES-NEXT: int C{ g( { Elem } ) };
