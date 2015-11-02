@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 A simple testing framework for lldb using python's unit testing framework.
 
@@ -2039,4 +2037,5 @@ def run_suite():
     exitTestSuite(failed)
 
 if __name__ == "__main__":
-    run_suite()
+    print(__file__ + " is for use as a module only.  It should not be run as a standalone script.")
+    sys.exit(-1)

@@ -279,11 +279,12 @@ def call_with_timeout(command, timeout, name, inferior_pid_events):
     return process_driver.results
 
 
-def process_dir(root, files, test_root, dotest_argv, inferior_pid_events):
+def process_dir(root, files, dotest_argv, inferior_pid_events):
     """Examine a directory for tests, and invoke any found within it."""
     results = []
     for name in files:
-        script_file = os.path.join(test_root, "dotest.py")
+        import __main__ as main
+        script_file = main.__file__
         command = ([sys.executable, script_file] +
                    dotest_argv +
                    ["--inferior", "-p", name, root])
@@ -966,7 +967,7 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv,
     test_work_items = []
     find_test_files_in_dir_tree(
         test_subdir, lambda testdir, test_files: test_work_items.append([
-            test_subdir, test_files, test_directory, dotest_argv, None]))
+            test_subdir, test_files, dotest_argv, None]))
 
     # Convert test work items into test results using whatever
     # was provided as the test run function.
