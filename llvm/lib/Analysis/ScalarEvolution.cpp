@@ -5928,6 +5928,30 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
                                   TLI);
 }
 
+
+// If every incoming value to PN except the one for BB is a specific Constant,
+// return that, else return nullptr.
+static Constant *getOtherIncomingValue(PHINode *PN, BasicBlock *BB) {
+  Constant *IncomingVal = nullptr;
+
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    if (PN->getIncomingBlock(i) == BB)
+      continue;
+
+    auto *CurrentVal = dyn_cast<Constant>(PN->getIncomingValue(i));
+    if (!CurrentVal)
+      return nullptr;
+
+    if (IncomingVal != CurrentVal) {
+      if (IncomingVal)
+        return nullptr;
+      IncomingVal = CurrentVal;
+    }
+  }
+
+  return IncomingVal;
+}
+
 /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
 /// in the header of its containing loop, we know the loop executes a
 /// constant number of times, and the PHI node is just a recurrence
@@ -5953,25 +5977,10 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
   if (!Latch)
     return nullptr;
 
-  // Since the loop has one latch, the PHI node must have two entries.  One
-  // entry must be a constant (coming in from outside of the loop), and the
-  // second must be derived from the same PHI.
-
-  BasicBlock *NonLatch = Latch == PN->getIncomingBlock(0)
-                             ? PN->getIncomingBlock(1)
-                             : PN->getIncomingBlock(0);
-
-  assert(PN->getNumIncomingValues() == 2 && "Follows from having one latch!");
-
-  // Note: not all PHI nodes in the same block have to have their incoming
-  // values in the same order, so we use the basic block to look up the incoming
-  // value, not an index.
-
   for (auto &I : *Header) {
     PHINode *PHI = dyn_cast<PHINode>(&I);
     if (!PHI) break;
-    auto *StartCST =
-        dyn_cast<Constant>(PHI->getIncomingValueForBlock(NonLatch));
+    auto *StartCST = getOtherIncomingValue(PHI, Latch);
     if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
   }
@@ -6050,21 +6059,11 @@ const SCEV *ScalarEvolution::computeExitCountExhaustively(const Loop *L,
   BasicBlock *Latch = L->getLoopLatch();
   assert(Latch && "Should follow from NumIncomingValues == 2!");
 
-  // NonLatch is the preheader, or something equivalent.
-  BasicBlock *NonLatch = Latch == PN->getIncomingBlock(0)
-                             ? PN->getIncomingBlock(1)
-                             : PN->getIncomingBlock(0);
-
-  // Note: not all PHI nodes in the same block have to have their incoming
-  // values in the same order, so we use the basic block to look up the incoming
-  // value, not an index.
-
   for (auto &I : *Header) {
     PHINode *PHI = dyn_cast<PHINode>(&I);
     if (!PHI)
       break;
-    auto *StartCST =
-      dyn_cast<Constant>(PHI->getIncomingValueForBlock(NonLatch));
+    auto *StartCST = getOtherIncomingValue(PHI, Latch);
     if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
   }
