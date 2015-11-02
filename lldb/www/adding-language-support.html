@@ -37,6 +37,8 @@
                 <li>Add expression evaluation support</li>
               </ul>
             </p>
+            <p>
+              Additionally, you may want to create a Language and LanguageRuntime plugin for your language, which enables support for advanced features like dynamic typing and data formatting.
           </div>
           <div class="postfooter"></div>
         </div>
@@ -163,6 +165,27 @@
           </div>
           <div class="postfooter"></div>
         </div>
+      
+    	<div class="post">
+    	  <h1 class="postheader">Language and LanguageRuntime plugins</h1>
+    	  <div class="postcontent">
+            <p>
+              If you followed the steps outlined above, you already have taught LLDB a great deal about your language. And if your language's runtime model and fundamental data types don't differ much from the C model, you are pretty much done.
+              <br/>
+              However, it is likely that your language offers its own data types for things like strings, arrays, ..., and probably has a notion of dynamic types, where the effective type of a variable can only be known at runtime.
+            </p>
+            <p>
+              These tasks are covered by two plugins:
+              <ul>
+                <li>a LanguageRuntime plugin, which provides LLDB with a dynamic view of your language; this plugin answers questions that require a live process to acquire information (e.g. dynamic type resolution)</li>
+                <li>a Language plugin, which provides LLDB with a static view of your language; questions that are statically knoawble and do not require a process are answered by this plugin (e.g. data formatters)</li>
+              </ul>
+            </p>
+          </div>
+          <div class="postfooter"></div>
+        </div>
+      </div>
+
       </div>
     </div>
   </div>
