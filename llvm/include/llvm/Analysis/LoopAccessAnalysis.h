@@ -32,6 +32,7 @@ class DataLayout;
 class ScalarEvolution;
 class Loop;
 class SCEV;
+class SCEVUnionPredicate;
 
 /// Optimization analysis message produced during vectorization. Messages inform
 /// the user why vectorization did not occur.
@@ -176,10 +177,11 @@ public:
                const SmallVectorImpl<Instruction *> &Instrs) const;
   };
 
-  MemoryDepChecker(ScalarEvolution *Se, const Loop *L)
+  MemoryDepChecker(ScalarEvolution *Se, const Loop *L,
+                   SCEVUnionPredicate &Preds)
       : SE(Se), InnermostLoop(L), AccessIdx(0),
         ShouldRetryWithRuntimeCheck(false), SafeForVectorization(true),
-        RecordInterestingDependences(true) {}
+        RecordInterestingDependences(true), Preds(Preds) {}
 
   /// \brief Register the location (instructions are given increasing numbers)
   /// of a write access.
@@ -289,6 +291,15 @@ private:
   /// \brief Check whether the data dependence could prevent store-load
   /// forwarding.
   bool couldPreventStoreLoadForward(unsigned Distance, unsigned TypeByteSize);
+
+  /// The SCEV predicate containing all the SCEV-related assumptions.
+  /// The dependence checker needs this in order to convert SCEVs of pointers
+  /// to more accurate expressions in the context of existing assumptions.
+  /// We also need this in case assumptions about SCEV expressions need to
+  /// be made in order to avoid unknown dependences. For example we might
+  /// assume a unit stride for a pointer in order to prove that a memory access
+  /// is strided and doesn't wrap.
+  SCEVUnionPredicate &Preds;
 };
 
 /// \brief Holds information about the memory runtime legality checks to verify
@@ -330,8 +341,13 @@ public:
   }
 
   /// Insert a pointer and calculate the start and end SCEVs.
+  /// \p We need Preds in order to compute the SCEV expression of the pointer
+  /// according to the assumptions that we've made during the analysis.
+  /// The method might also version the pointer stride according to \p Strides,
+  /// and change \p Preds.
   void insert(Loop *Lp, Value *Ptr, bool WritePtr, unsigned DepSetId,
-              unsigned ASId, const ValueToValueMap &Strides);
+              unsigned ASId, const ValueToValueMap &Strides,
+              SCEVUnionPredicate &Preds);
 
   /// \brief No run-time memory checking is necessary.
   bool empty() const { return Pointers.empty(); }
@@ -537,6 +553,15 @@ public:
     return StoreToLoopInvariantAddress;
   }
 
+  /// The SCEV predicate contains all the SCEV-related assumptions.
+  /// The is used to keep track of the minimal set of assumptions on SCEV
+  /// expressions that the analysis needs to make in order to return a
+  /// meaningful result. All SCEV expressions during the analysis should be
+  /// re-written (and therefore simplified) according to Preds.
+  /// A user of LoopAccessAnalysis will need to emit the runtime checks
+  /// associated with this predicate.
+  SCEVUnionPredicate Preds;
+
 private:
   /// \brief Analyze the loop.  Substitute symbolic strides using Strides.
   void analyzeLoop(const ValueToValueMap &Strides);
@@ -583,19 +608,26 @@ private:
 Value *stripIntegerCast(Value *V);
 
 ///\brief Return the SCEV corresponding to a pointer with the symbolic stride
-///replaced with constant one.
+/// replaced with constant one, assuming \p Preds is true.
+///
+/// If necessary this method will version the stride of the pointer according
+/// to \p PtrToStride and therefore add a new predicate to \p Preds.
 ///
 /// If \p OrigPtr is not null, use it to look up the stride value instead of \p
 /// Ptr.  \p PtrToStride provides the mapping between the pointer value and its
 /// stride as collected by LoopVectorizationLegality::collectStridedAccess.
 const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
                                       const ValueToValueMap &PtrToStride,
-                                      Value *Ptr, Value *OrigPtr = nullptr);
+                                      SCEVUnionPredicate &Preds, Value *Ptr,
+                                      Value *OrigPtr = nullptr);
 
 /// \brief Check the stride of the pointer and ensure that it does not wrap in
-/// the address space.
+/// the address space, assuming \p Preds is true.
+///
+/// If necessary this method will version the stride of the pointer according
+/// to \p PtrToStride and therefore add a new predicate to \p Preds.
 int isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
-                 const ValueToValueMap &StridesMap);
+                 const ValueToValueMap &StridesMap, SCEVUnionPredicate &Preds);
 
 /// \brief This analysis provides dependence information for the memory accesses
 /// of a loop.

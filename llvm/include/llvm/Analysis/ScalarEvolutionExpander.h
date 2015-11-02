@@ -151,6 +151,22 @@ namespace llvm {
     /// block.
     Value *expandCodeFor(const SCEV *SH, Type *Ty, Instruction *I);
 
+    /// \brief Generates a code sequence that evaluates this predicate.
+    /// The inserted instructions will be at position \p Loc.
+    /// The result will be of type i1 and will have a value of 0 when the
+    /// predicate is false and 1 otherwise.
+    Value *expandCodeForPredicate(const SCEVPredicate *Pred, Instruction *Loc);
+
+    /// \brief A specialized variant of expandCodeForPredicate, handling the
+    /// case when we are expanding code for a SCEVEqualPredicate.
+    Value *expandEqualPredicate(const SCEVEqualPredicate *Pred,
+                                Instruction *Loc);
+
+    /// \brief A specialized variant of expandCodeForPredicate, handling the
+    /// case when we are expanding code for a SCEVUnionPredicate.
+    Value *expandUnionPredicate(const SCEVUnionPredicate *Pred,
+                                Instruction *Loc);
+
     /// \brief Set the current IV increment loop and position.
     void setIVIncInsertPos(const Loop *L, Instruction *Pos) {
       assert(!CanonicalMode &&
