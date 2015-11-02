@@ -47,8 +47,8 @@ namespace modernize {
 
 void RedundantVoidArgCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(functionDecl(isExpansionInMainFile(), parameterCountIs(0),
-                                  unless(isImplicit()),
-                                  unless(isExternC())).bind(FunctionId),
+                                  unless(isImplicit()), unless(isExternC()))
+                         .bind(FunctionId),
                      this);
   Finder->addMatcher(typedefDecl(isExpansionInMainFile()).bind(TypedefId),
                      this);
@@ -77,9 +77,10 @@ void RedundantVoidArgCheck::registerMatchers(MatchFinder *Finder) {
       cxxReinterpretCastExpr(isExpansionInMainFile(), CastDestinationIsFunction)
           .bind(NamedCastId),
       this);
-  Finder->addMatcher(cxxConstCastExpr(isExpansionInMainFile(),
-                                   CastDestinationIsFunction).bind(NamedCastId),
-                     this);
+  Finder->addMatcher(
+      cxxConstCastExpr(isExpansionInMainFile(), CastDestinationIsFunction)
+          .bind(NamedCastId),
+      this);
   Finder->addMatcher(lambdaExpr(isExpansionInMainFile()).bind(LambdaId), this);
 }
 
@@ -128,11 +129,14 @@ void RedundantVoidArgCheck::processFunctionDecl(
 void RedundantVoidArgCheck::removeVoidArgumentTokens(
     const ast_matchers::MatchFinder::MatchResult &Result, SourceRange Range,
     StringRef GrammarLocation) {
-  std::string DeclText =
-      Lexer::getSourceText(CharSourceRange::getTokenRange(Range),
-                           *Result.SourceManager,
-                           Result.Context->getLangOpts()).str();
-  Lexer PrototypeLexer(Range.getBegin(), Result.Context->getLangOpts(),
+  CharSourceRange CharRange = Lexer::makeFileCharRange(
+      CharSourceRange::getTokenRange(Range), *Result.SourceManager,
+      Result.Context->getLangOpts());
+
+  std::string DeclText = Lexer::getSourceText(CharRange, *Result.SourceManager,
+                                              Result.Context->getLangOpts())
+                             .str();
+  Lexer PrototypeLexer(CharRange.getBegin(), Result.Context->getLangOpts(),
                        DeclText.data(), DeclText.data(),
                        DeclText.data() + DeclText.size());
   enum TokenState {

@@ -417,3 +417,19 @@ void test_lambda_functions() {
   // CHECK-MESSAGES: [[@LINE-2]]:45: warning: {{.*}} in lambda expression
   // CHECK-FIXES: {{^  }}auto void_returner = []() -> void (*)() { return f1; };{{$}}
 }
+
+#define M(x) x
+
+M(void inmacro(void) {})
+// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: {{.*}} in function definition
+// CHECK-FIXES: M(void inmacro() {})
+
+#define F(A, B)        \
+  struct F_##A##_##B { \
+    F_##A##_##B(void); \
+  };                   \
+  F_##A##_##B::F_##A##_##B(void)
+
+F(Foo, Bar) {
+
+}
