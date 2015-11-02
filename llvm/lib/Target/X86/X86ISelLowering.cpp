@@ -4206,8 +4206,8 @@ bool X86::isVEXTRACT256Index(SDNode *N) {
 
 static unsigned getExtractVEXTRACTImmediate(SDNode *N, unsigned vecWidth) {
   assert((vecWidth == 128 || vecWidth == 256) && "Unsupported vector width");
-  if (!isa<ConstantSDNode>(N->getOperand(1).getNode()))
-    llvm_unreachable("Illegal extract subvector for VEXTRACT");
+  assert(isa<ConstantSDNode>(N->getOperand(1).getNode()) &&
+         "Illegal extract subvector for VEXTRACT");
 
   uint64_t Index =
     cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
@@ -4221,8 +4221,8 @@ static unsigned getExtractVEXTRACTImmediate(SDNode *N, unsigned vecWidth) {
 
 static unsigned getInsertVINSERTImmediate(SDNode *N, unsigned vecWidth) {
   assert((vecWidth == 128 || vecWidth == 256) && "Unsupported vector width");
-  if (!isa<ConstantSDNode>(N->getOperand(2).getNode()))
-    llvm_unreachable("Illegal insert subvector for VINSERT");
+  assert(isa<ConstantSDNode>(N->getOperand(2).getNode()) &&
+         "Illegal insert subvector for VINSERT");
 
   uint64_t Index =
     cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
@@ -13773,8 +13773,8 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
     if (C->getAPIntValue() == 0)
       return EmitTest(Op0, X86CC, dl, DAG);
 
-     if (Op0.getValueType() == MVT::i1)
-       llvm_unreachable("Unexpected comparison operation for MVT::i1 operands");
+     assert(Op0.getValueType() != MVT::i1 &&
+            "Unexpected comparison operation for MVT::i1 operands");
   }
 
   if ((Op0.getValueType() == MVT::i8 || Op0.getValueType() == MVT::i16 ||
@@ -19688,8 +19688,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case X86ISD::FMAXC:
   case X86ISD::FMAX: {
     EVT VT = N->getValueType(0);
-    if (VT != MVT::v2f32)
-      llvm_unreachable("Unexpected type (!= v2f32) on FMIN/FMAX.");
+    assert(VT == MVT::v2f32 && "Unexpected type (!= v2f32) on FMIN/FMAX.");
     SDValue UNDEF = DAG.getUNDEF(VT);
     SDValue LHS = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32,
                               N->getOperand(0), UNDEF);
