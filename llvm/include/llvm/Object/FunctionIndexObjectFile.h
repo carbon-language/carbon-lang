@@ -18,7 +18,6 @@
 
 namespace llvm {
 class FunctionInfoIndex;
-class Module;
 
 namespace object {
 class ObjectFile;
@@ -85,8 +84,7 @@ public:
   /// Return new FunctionIndexObjectFile instance containing parsed function
   /// summary/index.
   static ErrorOr<std::unique_ptr<FunctionIndexObjectFile>>
-  create(MemoryBufferRef Object, LLVMContext &Context,
-         const Module *ExportingModule = nullptr, bool IsLazy = false);
+  create(MemoryBufferRef Object, LLVMContext &Context, bool IsLazy = false);
 
   /// \brief Parse the function summary information for function with the
   /// given name out of the given buffer. Parsed information is

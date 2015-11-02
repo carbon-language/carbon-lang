@@ -14,7 +14,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/IR/DiagnosticInfo.h"
-#include "llvm/IR/FunctionInfo.h"
 
 namespace llvm {
 class Module;
@@ -77,13 +76,8 @@ public:
   /// \brief Link \p Src into the composite. The source is destroyed.
   /// Passing OverrideSymbols as true will have symbols from Src
   /// shadow those in the Dest.
-  /// For ThinLTO function importing/exporting the \p FunctionInfoIndex
-  /// is passed. If a \p FuncToImport is provided, only that single
-  /// function is imported from the source module.
   /// Returns true on error.
-  bool linkInModule(Module *Src, unsigned Flags = Flags::None,
-                    FunctionInfoIndex *Index = nullptr,
-                    Function *FuncToImport = nullptr);
+  bool linkInModule(Module *Src, unsigned Flags = Flags::None);
 
   /// \brief Set the composite to the passed-in module.
   void setModule(Module *Dst);
