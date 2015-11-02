@@ -351,6 +351,13 @@ Language::GetDeclPrintingHelper ()
     return nullptr;
 }
 
+LazyBool
+Language::IsLogicalTrue (ValueObject& valobj,
+                         Error& error)
+{
+    return eLazyBoolCalculate;
+}
+
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------

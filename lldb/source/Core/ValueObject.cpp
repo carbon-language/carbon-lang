@@ -47,6 +47,7 @@
 #include "lldb/Symbol/Type.h"
 
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Language.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -515,6 +516,20 @@ ValueObject::ResolveValue (Scalar &scalar)
 bool
 ValueObject::IsLogicalTrue (Error& error)
 {
+    if (Language *language = Language::FindPlugin(GetObjectRuntimeLanguage()))
+    {
+        LazyBool is_logical_true = language->IsLogicalTrue(*this, error);
+        switch (is_logical_true)
+        {
+            case eLazyBoolYes:
+            case eLazyBoolNo:
+                return (is_logical_true == true);
+            case eLazyBoolCalculate:
+            default:
+                break;
+        }
+    }
+    
     Scalar scalar_value;
     
     if (!ResolveValue (scalar_value))

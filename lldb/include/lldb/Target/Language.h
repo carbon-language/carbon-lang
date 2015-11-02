@@ -119,6 +119,10 @@ public:
     virtual DumpValueObjectOptions::DeclPrintingHelper
     GetDeclPrintingHelper ();
     
+    virtual LazyBool
+    IsLogicalTrue (ValueObject& valobj,
+                   Error& error);
+    
     // These are accessors for general information about the Languages lldb knows about:
     
     static lldb::LanguageType
