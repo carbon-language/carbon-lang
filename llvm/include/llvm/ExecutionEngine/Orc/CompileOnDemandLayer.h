@@ -338,7 +338,10 @@ private:
 
   static std::string mangle(StringRef Name, const DataLayout &DL) {
     std::string MangledName;
-    Mangler::getNameWithPrefix(raw_string_ostream(MangledName), Name, DL);
+    {
+      raw_string_ostream MangledNameStream(MangledName);
+      Mangler::getNameWithPrefix(MangledNameStream, Name, DL);
+    }
     return MangledName;
   }
 
