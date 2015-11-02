@@ -585,11 +585,6 @@ EvaluateSymbolicAdd(const MCAssembler *Asm, const MCAsmLayout *Layout,
   const MCSymbolRefExpr *A = LHS_A ? LHS_A : RHS_A;
   const MCSymbolRefExpr *B = LHS_B ? LHS_B : RHS_B;
 
-  // If we have a negated symbol, then we must have also have a non-negated
-  // symbol in order to encode the expression.
-  if (B && !A)
-    return false;
-
   Res = MCValue::get(A, B, Result_Cst);
   return true;
 }
