@@ -581,9 +581,13 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (OutputSectionBase<ELFT> *Sec : OutputSections)
     Out<ELFT>::ShStrTab->add(Sec->getName());
 
-  // Fill the DynStrTab early because Dynamic adds strings to
-  // DynStrTab but .dynstr may appear before .dynamic.
+  // Finalizers fix each section's size.
+  // .dynamic section's finalizer may add strings to .dynstr,
+  // so finalize that early.
+  // Likewise, .dynsym is finalized early since that may fill up .gnu.hash.
   Out<ELFT>::Dynamic->finalize();
+  if (isOutputDynamic())
+    Out<ELFT>::DynSymTab->finalize();
 
   // Fill other section headers.
   for (OutputSectionBase<ELFT> *Sec : OutputSections)

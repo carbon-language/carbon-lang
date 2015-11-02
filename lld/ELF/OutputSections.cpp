@@ -340,8 +340,7 @@ unsigned GnuHashTableSection<ELFT>::calcMaskWords(unsigned NumHashed) {
 }
 
 template <class ELFT> void GnuHashTableSection<ELFT>::finalize() {
-  ArrayRef<SymbolBody *> A = Out<ELFT>::DynSymTab->getSymbols();
-  unsigned NumHashed = std::count_if(A.begin(), A.end(), includeInGnuHashTable);
+  unsigned NumHashed = HashedSymbols.size();
   NBuckets = calcNBuckets(NumHashed);
   MaskWords = calcMaskWords(NumHashed);
   // Second hash shift estimation: just predefined values.
@@ -900,6 +899,9 @@ SymbolTableSection<ELFT>::SymbolTableSection(
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
+  if (this->Header.sh_size)
+    return; // Already finalized.
+
   this->Header.sh_size = getNumSymbols() * sizeof(Elf_Sym);
   this->Header.sh_link = StrTabSec.SectionIndex;
   this->Header.sh_info = NumLocals + 1;
