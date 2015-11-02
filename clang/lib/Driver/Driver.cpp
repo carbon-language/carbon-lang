@@ -378,7 +378,8 @@ void Driver::setLTOMode(const llvm::opt::ArgList &Args) {
   StringRef LTOName("full");
 
   const Arg *A = Args.getLastArg(options::OPT_flto_EQ);
-  if (A) LTOName = A->getValue();
+  if (A)
+    LTOName = A->getValue();
 
   LTOMode = llvm::StringSwitch<LTOKind>(LTOName)
                 .Case("full", LTOK_Full)

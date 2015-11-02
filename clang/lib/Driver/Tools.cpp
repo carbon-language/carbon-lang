@@ -1672,7 +1672,8 @@ static void AddGoldPlugin(const ToolChain &ToolChain, const ArgList &Args,
   if (!CPU.empty())
     CmdArgs.push_back(Args.MakeArgString(Twine("-plugin-opt=mcpu=") + CPU));
 
-  if (IsThinLTO) CmdArgs.push_back("-plugin-opt=thinlto");
+  if (IsThinLTO)
+    CmdArgs.push_back("-plugin-opt=thinlto");
 }
 
 /// This is a helper function for validating the optional refinement step
