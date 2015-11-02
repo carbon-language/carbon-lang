@@ -346,11 +346,11 @@ llvm::writeArchive(StringRef ArcName,
       Buffers.push_back(std::move(MemberBufferOrErr.get()));
       MemberRef = Buffers.back()->getMemBufferRef();
     } else {
-      object::Archive::child_iterator OldMember = Member.getOld();
-      assert((!Thin || OldMember->getParent()->isThin()) &&
+      const object::Archive::Child &OldMember = Member.getOld();
+      assert((!Thin || OldMember.getParent()->isThin()) &&
              "Thin archives cannot refers to member of other archives");
       ErrorOr<MemoryBufferRef> MemberBufferOrErr =
-          OldMember->getMemoryBufferRef();
+          OldMember.getMemoryBufferRef();
       if (auto EC = MemberBufferOrErr.getError())
         return std::make_pair("", EC);
       MemberRef = MemberBufferOrErr.get();
@@ -397,11 +397,11 @@ llvm::writeArchive(StringRef ArcName,
       GID = Status.getGroup();
       Perms = Status.permissions();
     } else {
-      object::Archive::child_iterator OldMember = I.getOld();
-      ModTime = OldMember->getLastModified();
-      UID = OldMember->getUID();
-      GID = OldMember->getGID();
-      Perms = OldMember->getAccessMode();
+      const object::Archive::Child &OldMember = I.getOld();
+      ModTime = OldMember.getLastModified();
+      UID = OldMember.getUID();
+      GID = OldMember.getGID();
+      Perms = OldMember.getAccessMode();
     }
 
     if (I.isNewMember()) {
@@ -411,9 +411,9 @@ llvm::writeArchive(StringRef ArcName,
                         StringMapIndexIter, ModTime, UID, GID, Perms,
                         Status.getSize());
     } else {
-      object::Archive::child_iterator OldMember = I.getOld();
+      const object::Archive::Child &OldMember = I.getOld();
       printMemberHeader(Out, Kind, Thin, I.getName(), StringMapIndexIter,
-                        ModTime, UID, GID, Perms, OldMember->getSize());
+                        ModTime, UID, GID, Perms, OldMember.getSize());
     }
 
     if (!Thin)
