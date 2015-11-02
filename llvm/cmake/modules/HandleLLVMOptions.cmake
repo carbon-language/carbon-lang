@@ -18,7 +18,7 @@ if(NOT LLVM_FORCE_USE_OLD_TOOLCHAIN)
     endif()
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.1)
-	    #    message(FATAL_ERROR "Host Clang version must be at least 3.1!")
+      message(FATAL_ERROR "Host Clang version must be at least 3.1!")
     endif()
 
     if (CMAKE_CXX_SIMULATE_ID MATCHES "MSVC")
