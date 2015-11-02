@@ -2330,7 +2330,7 @@ __reverse(_BidirectionalIterator __first, _BidirectionalIterator __last, bidirec
     {
         if (__first == --__last)
             break;
-        swap(*__first, *__last);
+        _VSTD::iter_swap(__first, __last);
         ++__first;
     }
 }
@@ -2342,7 +2342,7 @@ __reverse(_RandomAccessIterator __first, _RandomAccessIterator __last, random_ac
 {
     if (__first != __last)
         for (; __first < --__last; ++__first)
-            swap(*__first, *__last);
+            _VSTD::iter_swap(__first, __last);
 }
 
 template <class _BidirectionalIterator>
