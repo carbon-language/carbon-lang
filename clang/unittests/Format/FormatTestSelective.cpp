@@ -273,6 +273,27 @@ TEST_F(FormatTestSelective, IndividualStatementsOfNestedBlocks) {
                    0, 0));
 }
 
+TEST_F(FormatTestSelective, WrongIndent) {
+  EXPECT_EQ("namespace {\n"
+            "int i;\n"
+            "int j;\n"
+            "}",
+            format("namespace {\n"
+                   "  int i;\n" // Format here.
+                   "  int j;\n"
+                   "}",
+                   15, 0));
+  EXPECT_EQ("namespace {\n"
+            "  int i;\n"
+            "  int j;\n"
+            "}",
+            format("namespace {\n"
+                   "  int i;\n"
+                   "  int j;\n" // Format here.
+                   "}",
+                   24, 0));
+}
+
 TEST_F(FormatTestSelective, AlwaysFormatsEntireMacroDefinitions) {
   Style.AlignEscapedNewlinesLeft = true;
   EXPECT_EQ("int  i;\n"

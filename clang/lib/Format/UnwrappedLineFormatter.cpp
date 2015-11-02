@@ -815,8 +815,6 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
 
   // The minimum level of consecutive lines that have been formatted.
   unsigned RangeMinLevel = UINT_MAX;
-  // The level of the previous line.
-  unsigned PreviousLineLevel = Lines.front()->Level;
 
   for (const AnnotatedLine *Line =
            Joiner.getNextMergedLine(DryRun, IndentTracker);
@@ -830,8 +828,7 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
     // remaining file if it currently missing a closing brace.
     bool ContinueFormatting =
         TheLine.Level > RangeMinLevel ||
-        (TheLine.Level == RangeMinLevel && PreviousLineLevel <= TheLine.Level);
-    PreviousLineLevel = TheLine.Level;
+        (TheLine.Level == RangeMinLevel && !TheLine.startsWith(tok::r_brace));
 
     bool FixIndentation = (FixBadIndentation || ContinueFormatting) &&
                           Indent != TheLine.First->OriginalColumn;
