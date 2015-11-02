@@ -55,7 +55,7 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
   return nullptr;
 }
 
-/// CanEvaluateShifted - See if we can compute the specified value, but shifted
+/// See if we can compute the specified value, but shifted
 /// logically to the left or right by some number of bits.  This should return
 /// true if the expression can be computed for the same cost as the current
 /// expression tree.  This is used to eliminate extraneous shifting from things
@@ -184,7 +184,7 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
   }
 }
 
-/// GetShiftedValue - When CanEvaluateShifted returned true for an expression,
+/// When CanEvaluateShifted returned true for an expression,
 /// this value inserts the new computation that produces the shifted value.
 static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
                               InstCombiner &IC, const DataLayout &DL) {
