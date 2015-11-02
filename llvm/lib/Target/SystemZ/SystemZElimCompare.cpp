@@ -150,9 +150,9 @@ static bool isLoadAndTestAsCmp(MachineInstr *MI) {
   // If we during isel used a load-and-test as a compare with 0, the
   // def operand is dead.
   return ((MI->getOpcode() == SystemZ::LTEBR ||
-	   MI->getOpcode() == SystemZ::LTDBR ||
-	   MI->getOpcode() == SystemZ::LTXBR) &&
-	  MI->getOperand(0).isDead());
+           MI->getOpcode() == SystemZ::LTDBR ||
+           MI->getOpcode() == SystemZ::LTXBR) &&
+          MI->getOperand(0).isDead());
 }
 
 // Return the source register of Compare, which is the unknown value

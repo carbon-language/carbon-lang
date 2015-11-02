@@ -531,8 +531,8 @@ private:
                                           unsigned Opcode,
                                           bool NoFloat) const;
   MachineBasicBlock *emitLoadAndTestCmp0(MachineInstr *MI,
-					 MachineBasicBlock *MBB,
-					 unsigned Opcode) const;
+                                         MachineBasicBlock *MBB,
+                                         unsigned Opcode) const;
 
 };
 } // end namespace llvm

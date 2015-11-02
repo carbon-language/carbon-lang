@@ -5620,8 +5620,8 @@ SystemZTargetLowering::emitTransactionBegin(MachineInstr *MI,
 
 MachineBasicBlock *
 SystemZTargetLowering::emitLoadAndTestCmp0(MachineInstr *MI,
-					  MachineBasicBlock *MBB,
-					  unsigned Opcode) const {
+                                          MachineBasicBlock *MBB,
+                                          unsigned Opcode) const {
   MachineFunction &MF = *MBB->getParent();
   MachineRegisterInfo *MRI = &MF.getRegInfo();
   const SystemZInstrInfo *TII =
