@@ -337,7 +337,7 @@ def process_dir_worker_multiprocessing(
     while not job_queue.empty():
         try:
             job = job_queue.get(block=False)
-            result = process_dir(job[0], job[1], job[2], job[3],
+            result = process_dir(job[0], job[1], job[2],
                                  inferior_pid_events)
             result_queue.put(result)
         except queue.Empty:
@@ -360,7 +360,7 @@ def process_dir_worker_threading(job_queue, result_queue, inferior_pid_events):
     while not job_queue.empty():
         try:
             job = job_queue.get(block=False)
-            result = process_dir(job[0], job[1], job[2], job[3],
+            result = process_dir(job[0], job[1], job[2],
                                  inferior_pid_events)
             result_queue.put(result)
         except queue.Empty:
