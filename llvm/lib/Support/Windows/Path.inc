@@ -754,9 +754,8 @@ std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
 } // end namespace fs
 
 namespace path {
-
-namespace {
-bool getKnownFolderPath(KNOWNFOLDERID folderId, SmallVectorImpl<char> &result) {
+static bool getKnownFolderPath(KNOWNFOLDERID folderId,
+                               SmallVectorImpl<char> &result) {
   wchar_t *path = nullptr;
   if (::SHGetKnownFolderPath(folderId, KF_FLAG_CREATE, nullptr, &path) != S_OK)
     return false;
@@ -768,7 +767,6 @@ bool getKnownFolderPath(KNOWNFOLDERID folderId, SmallVectorImpl<char> &result) {
 
 bool getUserCacheDir(SmallVectorImpl<char> &Result) {
   return getKnownFolderPath(FOLDERID_LocalAppData, Result);
-}
 }
 
 bool home_directory(SmallVectorImpl<char> &result) {
