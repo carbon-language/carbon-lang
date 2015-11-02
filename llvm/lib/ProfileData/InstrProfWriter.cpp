@@ -45,22 +45,23 @@ public:
 
     offset_type M = 0;
     for (const auto &ProfileData : *V) {
+      const InstrProfRecord &ProfRecord = ProfileData.second;
       M += sizeof(uint64_t); // The function hash
       M += sizeof(uint64_t); // The size of the Counts vector
-      M += ProfileData.second.Counts.size() * sizeof(uint64_t);
+      M += ProfRecord.Counts.size() * sizeof(uint64_t);
 
       // Value data
       M += sizeof(uint64_t); // Number of value kinds with value sites.
       for (uint32_t Kind = IPVK_First; Kind <= IPVK_Last; ++Kind) {
-        const std::vector<InstrProfValueSiteRecord> &ValueSites =
-            ProfileData.second.getValueSitesForKind(Kind);
-        if (ValueSites.empty())
-          continue;
+        uint32_t NumValueSites = ProfRecord.getNumValueSites(Kind);
+        if (NumValueSites == 0) continue;
         M += sizeof(uint64_t); // Value kind
         M += sizeof(uint64_t); // The number of value sites for given value kind
-        for (InstrProfValueSiteRecord I : ValueSites) {
+        for (uint32_t I = 0; I < NumValueSites; I++) {
           M += sizeof(uint64_t); // Number of value data pairs at a value site
-          M += 2 * sizeof(uint64_t) * I.ValueData.size(); // Value data pairs
+          uint64_t NumValueDataForSite =
+              ProfRecord.getNumValueDataForSite(Kind, I);
+          M += 2 * sizeof(uint64_t) * NumValueDataForSite;  // Value data pairs
         }
       }
     }
@@ -78,36 +79,38 @@ public:
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
     for (const auto &ProfileData : *V) {
+      const InstrProfRecord &ProfRecord = ProfileData.second;
+
       LE.write<uint64_t>(ProfileData.first); // Function hash
-      LE.write<uint64_t>(ProfileData.second.Counts.size());
-      for (uint64_t I : ProfileData.second.Counts)
-        LE.write<uint64_t>(I);
+      LE.write<uint64_t>(ProfRecord.Counts.size());
+      for (uint64_t I : ProfRecord.Counts) LE.write<uint64_t>(I);
 
       // Compute the number of value kinds with value sites.
-      uint64_t NumValueKinds = 0;
-      for (uint32_t Kind = IPVK_First; Kind <= IPVK_Last; ++Kind)
-        NumValueKinds +=
-            !(ProfileData.second.getValueSitesForKind(Kind).empty());
+      uint64_t NumValueKinds = ProfRecord.getNumValueKinds();
       LE.write<uint64_t>(NumValueKinds);
 
       // Write value data
       for (uint32_t Kind = IPVK_First; Kind <= IPVK_Last; ++Kind) {
-        const std::vector<InstrProfValueSiteRecord> &ValueSites =
-            ProfileData.second.getValueSitesForKind(Kind);
-        if (ValueSites.empty())
-          continue;
+        uint32_t NumValueSites = ProfRecord.getNumValueSites(Kind);
+        if (NumValueSites == 0) continue;
         LE.write<uint64_t>(Kind); // Write value kind
         // Write number of value sites for current value kind
-        LE.write<uint64_t>(ValueSites.size());
-        for (InstrProfValueSiteRecord I : ValueSites) {
+        LE.write<uint64_t>(NumValueSites);
+
+        for (uint32_t I = 0; I < NumValueSites; I++) {
           // Write number of value data pairs at this value site
-          LE.write<uint64_t>(I.ValueData.size());
-          for (auto V : I.ValueData) {
+          uint64_t NumValueDataForSite =
+              ProfRecord.getNumValueDataForSite(Kind, I);
+          LE.write<uint64_t>(NumValueDataForSite);
+          std::unique_ptr<InstrProfValueData[]> VD =
+              ProfRecord.getValueForSite(Kind, I);
+
+          for (uint32_t V = 0; V < NumValueDataForSite; V++) {
             if (Kind == IPVK_IndirectCallTarget)
-              LE.write<uint64_t>(ComputeHash((const char *)V.first));
+              LE.write<uint64_t>(ComputeHash((const char *)VD[V].Value));
             else
-              LE.write<uint64_t>(V.first);
-            LE.write<uint64_t>(V.second);
+              LE.write<uint64_t>(VD[V].Value);
+            LE.write<uint64_t>(VD[V].Count);
           }
         }
       }
@@ -131,24 +134,7 @@ static std::error_code combineInstrProfRecords(InstrProfRecord &Dest,
   }
 
   for (uint32_t Kind = IPVK_First; Kind <= IPVK_Last; ++Kind) {
-
-    std::vector<InstrProfValueSiteRecord> &SourceValueSites =
-        Source.getValueSitesForKind(Kind);
-    if (SourceValueSites.empty())
-      continue;
-
-    std::vector<InstrProfValueSiteRecord> &DestValueSites =
-        Dest.getValueSitesForKind(Kind);
-
-    if (DestValueSites.empty()) {
-      DestValueSites.swap(SourceValueSites);
-      continue;
-    }
-
-    if (DestValueSites.size() != SourceValueSites.size())
-      return instrprof_error::value_site_count_mismatch;
-    for (size_t I = 0, E = SourceValueSites.size(); I < E; ++I)
-      DestValueSites[I].mergeValueData(SourceValueSites[I]);
+    if (std::error_code EC = Dest.mergeValueProfData(Kind, Source)) return EC;
   }
 
   // We keep track of the max function count as we go for simplicity.
@@ -159,11 +145,7 @@ static std::error_code combineInstrProfRecords(InstrProfRecord &Dest,
 }
 
 void InstrProfWriter::updateStringTableReferences(InstrProfRecord &I) {
-  I.Name = StringTable.insertString(I.Name);
-  for (auto &VSite : I.IndirectCallSites)
-    for (auto &VData : VSite.ValueData)
-      VData.first =
-          (uint64_t)StringTable.insertString((const char *)VData.first);
+  I.updateStrings(&StringTable);
 }
 
 std::error_code InstrProfWriter::addRecord(InstrProfRecord &&I) {

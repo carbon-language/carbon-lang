@@ -278,6 +278,11 @@ private:
   /// Read a single record.
   std::error_code readNextRecord(InstrProfRecord &Record) override;
 
+  /// Return the pointer to InstrProfRecord associated with FuncName
+  /// and FuncHash
+  ErrorOr<InstrProfRecord> getInstrProfRecord(StringRef FuncName,
+                                              uint64_t FuncHash);
+
   /// Fill Counts with the profile data for the given function name.
   std::error_code getFunctionCounts(StringRef FuncName, uint64_t FuncHash,
                                     std::vector<uint64_t> &Counts);

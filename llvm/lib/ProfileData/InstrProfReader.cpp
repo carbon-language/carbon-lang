@@ -305,21 +305,23 @@ bool InstrProfLookupTrait::ReadValueProfilingData(
     return false;
   uint64_t ValueKindCount = endian::readNext<uint64_t, little, unaligned>(D);
 
+  InstrProfRecord &ProfRecord = DataBuffer.back();
   for (uint32_t Kind = 0; Kind < ValueKindCount; ++Kind) {
 
     // Read value kind and number of value sites for kind.
     if (D + 2 * sizeof(uint64_t) > End)
       return false;
+
     uint64_t ValueKind = endian::readNext<uint64_t, little, unaligned>(D);
     uint64_t ValueSiteCount = endian::readNext<uint64_t, little, unaligned>(D);
 
-    std::vector<InstrProfValueSiteRecord> &ValueSites =
-        DataBuffer.back().getValueSitesForKind(ValueKind);
-    ValueSites.reserve(ValueSiteCount);
+    ProfRecord.reserveSites(ValueKind, ValueSiteCount);
+
     for (uint64_t VSite = 0; VSite < ValueSiteCount; ++VSite) {
       // Read number of value data pairs at value site.
       if (D + sizeof(uint64_t) > End)
         return false;
+
       uint64_t ValueDataCount =
           endian::readNext<uint64_t, little, unaligned>(D);
 
@@ -327,25 +329,18 @@ bool InstrProfLookupTrait::ReadValueProfilingData(
       if (D + (ValueDataCount << 1) * sizeof(uint64_t) > End)
         return false;
 
-      InstrProfValueSiteRecord VSiteRecord;
+      std::unique_ptr<InstrProfValueData[]> VDataPtr(
+          ValueDataCount == 0 ? nullptr
+                              : new InstrProfValueData[ValueDataCount]);
+
       for (uint64_t VCount = 0; VCount < ValueDataCount; ++VCount) {
-        uint64_t Value = endian::readNext<uint64_t, little, unaligned>(D);
-        uint64_t NumTaken = endian::readNext<uint64_t, little, unaligned>(D);
-        switch (ValueKind) {
-        case IPVK_IndirectCallTarget: {
-          auto Result =
-              std::lower_bound(HashKeys.begin(), HashKeys.end(), Value,
-                               [](const std::pair<uint64_t, const char *> &LHS,
-                                  uint64_t RHS) { return LHS.first < RHS; });
-          assert(Result != HashKeys.end() &&
-                 "Hash does not match any known keys\n");
-          Value = (uint64_t)Result->second;
-          break;
-        }
-        }
-        VSiteRecord.ValueData.push_back(std::make_pair(Value, NumTaken));
+        VDataPtr[VCount].Value =
+            endian::readNext<uint64_t, little, unaligned>(D);
+        VDataPtr[VCount].Count =
+            endian::readNext<uint64_t, little, unaligned>(D);
       }
-      ValueSites.push_back(std::move(VSiteRecord));
+      ProfRecord.addValueData(ValueKind, VSite, VDataPtr.get(), ValueDataCount,
+                              &HashKeys);
     }
   }
   return true;
@@ -385,7 +380,7 @@ data_type InstrProfLookupTrait::ReadData(StringRef K, const unsigned char *D,
     for (uint64_t J = 0; J < CountsSize; ++J)
       CounterBuffer.push_back(endian::readNext<uint64_t, little, unaligned>(D));
 
-    DataBuffer.push_back(InstrProfRecord(K, Hash, std::move(CounterBuffer)));
+    DataBuffer.emplace_back(K, Hash, std::move(CounterBuffer));
 
     // Read value profiling data.
     if (FormatVersion > 2 && !ReadValueProfilingData(D, End)) {
@@ -488,22 +483,28 @@ std::error_code IndexedInstrProfReader::readHeader() {
   return success();
 }
 
-std::error_code IndexedInstrProfReader::getFunctionCounts(
-    StringRef FuncName, uint64_t FuncHash, std::vector<uint64_t> &Counts) {
+ErrorOr<InstrProfRecord> IndexedInstrProfReader::getInstrProfRecord(
+    StringRef FuncName, uint64_t FuncHash) {
   ArrayRef<InstrProfRecord> Data;
-
   std::error_code EC = Index.getRecords(FuncName, Data);
   if (EC != instrprof_error::success) return EC;
-
   // Found it. Look for counters with the right hash.
   for (unsigned I = 0, E = Data.size(); I < E; ++I) {
     // Check for a match and fill the vector if there is one.
     if (Data[I].Hash == FuncHash) {
-      Counts = Data[I].Counts;
-      return success();
+      return std::move(Data[I]);
     }
   }
   return error(instrprof_error::hash_mismatch);
+}
+
+std::error_code IndexedInstrProfReader::getFunctionCounts(
+    StringRef FuncName, uint64_t FuncHash, std::vector<uint64_t> &Counts) {
+  ErrorOr<InstrProfRecord> Record = getInstrProfRecord(FuncName, FuncHash);
+  if (std::error_code EC = Record.getError()) return EC;
+
+  Counts = Record.get().Counts;
+  return success();
 }
 
 std::error_code IndexedInstrProfReader::readNextRecord(

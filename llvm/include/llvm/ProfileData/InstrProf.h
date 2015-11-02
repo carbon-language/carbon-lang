@@ -159,19 +159,28 @@ struct InstrProfStringTable {
   }
 };
 
+struct InstrProfValueData {
+  // Profiled value.
+  uint64_t Value;
+  // Number of times the value appears in the training run.
+  uint64_t Count;
+};
+
 struct InstrProfValueSiteRecord {
-  /// Typedef for a single TargetValue-NumTaken pair.
-  typedef std::pair<uint64_t, uint64_t> ValueDataPair;
   /// Value profiling data pairs at a given value site.
-  std::list<ValueDataPair> ValueData;
+  std::list<InstrProfValueData> ValueData;
 
   InstrProfValueSiteRecord() { ValueData.clear(); }
+  template <class InputIterator>
+  InstrProfValueSiteRecord(InputIterator F, InputIterator L)
+      : ValueData(F, L) {}
 
-  /// Sort ValueData ascending by TargetValue
+  /// Sort ValueData ascending by Value
   void sortByTargetValues() {
-    ValueData.sort([](const ValueDataPair &left, const ValueDataPair &right) {
-      return left.first < right.first;
-    });
+    ValueData.sort(
+        [](const InstrProfValueData &left, const InstrProfValueData &right) {
+          return left.Value < right.Value;
+        });
   }
 
   /// Merge data from another InstrProfValueSiteRecord
@@ -182,10 +191,9 @@ struct InstrProfValueSiteRecord {
     auto IE = ValueData.end();
     for (auto J = Input.ValueData.begin(), JE = Input.ValueData.end(); J != JE;
          ++J) {
-      while (I != IE && I->first < J->first)
-        ++I;
-      if (I != IE && I->first == J->first) {
-        I->second += J->second;
+      while (I != IE && I->Value < J->Value) ++I;
+      if (I != IE && I->Value == J->Value) {
+        I->Count += J->Count;
         ++I;
         continue;
       }
@@ -202,15 +210,47 @@ struct InstrProfRecord {
   StringRef Name;
   uint64_t Hash;
   std::vector<uint64_t> Counts;
-  std::vector<InstrProfValueSiteRecord> IndirectCallSites;
 
+  typedef std::vector<std::pair<uint64_t, const char *>> ValueMapType;
+
+  /// Return the number of value profile kinds with non-zero number
+  /// of profile sites.
+  inline uint32_t getNumValueKinds() const;
+  /// Return the number of instrumented sites for ValueKind.
+  inline uint32_t getNumValueSites(uint32_t ValueKind) const;
+  /// Return the total number of ValueData for ValueKind.
+  inline uint32_t getNumValueData(uint32_t ValueKind) const;
+  /// Return the number of value data collected for ValueKind at profiling
+  /// site: Site.
+  inline uint32_t getNumValueDataForSite(uint32_t ValueKind,
+                                         uint32_t Site) const;
+  inline std::unique_ptr<InstrProfValueData[]> getValueForSite(
+      uint32_t ValueKind, uint32_t Site) const;
+  /// Reserve space for NumValueSites sites.
+  inline void reserveSites(uint32_t ValueKind, uint32_t NumValueSites);
+  /// Add ValueData for ValueKind at value Site.
+  inline void addValueData(uint32_t ValueKind, uint32_t Site,
+                           InstrProfValueData *VData, uint32_t N,
+                           ValueMapType *HashKeys);
+  /// Merge Value Profile ddata from Src record to this record for ValueKind.
+  inline instrprof_error mergeValueProfData(uint32_t ValueKind,
+                                            InstrProfRecord &Src);
+
+  /// Used by InstrProfWriter: update the value strings to commoned strings in
+  /// the writer instance.
+  inline void updateStrings(InstrProfStringTable *StrTab);
+
+ private:
+  std::vector<InstrProfValueSiteRecord> IndirectCallSites;
   const std::vector<InstrProfValueSiteRecord> &
   getValueSitesForKind(uint32_t ValueKind) const {
     switch (ValueKind) {
     case IPVK_IndirectCallTarget:
       return IndirectCallSites;
+    default:
+      llvm_unreachable("Unknown value kind!");
     }
-    llvm_unreachable("Unknown value kind!");
+    return IndirectCallSites;
   }
 
   std::vector<InstrProfValueSiteRecord> &
@@ -219,7 +259,101 @@ struct InstrProfRecord {
         const_cast<const InstrProfRecord *>(this)
             ->getValueSitesForKind(ValueKind));
   }
+  // Map indirect call target name hash to name string.
+  uint64_t remapValue(uint64_t Value, uint32_t ValueKind,
+                      ValueMapType *HashKeys) {
+    if (!HashKeys) return Value;
+    switch (ValueKind) {
+      case IPVK_IndirectCallTarget: {
+        auto Result =
+            std::lower_bound(HashKeys->begin(), HashKeys->end(), Value,
+                             [](const std::pair<uint64_t, const char *> &LHS,
+                                uint64_t RHS) { return LHS.first < RHS; });
+        assert(Result != HashKeys->end() &&
+               "Hash does not match any known keys\n");
+        Value = (uint64_t)Result->second;
+        break;
+      }
+    }
+    return Value;
+  }
 };
+
+uint32_t InstrProfRecord::getNumValueKinds() const {
+  uint32_t NumValueKinds = 0;
+  for (uint32_t Kind = IPVK_First; Kind <= IPVK_Last; ++Kind)
+    NumValueKinds += !(getValueSitesForKind(Kind).empty());
+  return NumValueKinds;
+}
+
+uint32_t InstrProfRecord::getNumValueSites(uint32_t ValueKind) const {
+  return getValueSitesForKind(ValueKind).size();
+}
+
+uint32_t InstrProfRecord::getNumValueDataForSite(uint32_t ValueKind,
+                                                 uint32_t Site) const {
+  return getValueSitesForKind(ValueKind)[Site].ValueData.size();
+}
+
+std::unique_ptr<InstrProfValueData[]> InstrProfRecord::getValueForSite(
+    uint32_t ValueKind, uint32_t Site) const {
+  uint32_t N = getNumValueDataForSite(ValueKind, Site);
+  if (N == 0) return std::unique_ptr<InstrProfValueData[]>(nullptr);
+
+  std::unique_ptr<InstrProfValueData[]> VD(new InstrProfValueData[N]);
+  uint32_t I = 0;
+  for (auto V : getValueSitesForKind(ValueKind)[Site].ValueData) {
+    VD[I] = V;
+    I++;
+  }
+  assert(I == N);
+
+  return std::move(VD);
+}
+
+void InstrProfRecord::addValueData(uint32_t ValueKind, uint32_t Site,
+                                   InstrProfValueData *VData, uint32_t N,
+                                   ValueMapType *HashKeys) {
+  for (uint32_t I = 0; I < N; I++) {
+    VData[I].Value = remapValue(VData[I].Value, ValueKind, HashKeys);
+  }
+  std::vector<InstrProfValueSiteRecord> &ValueSites =
+      getValueSitesForKind(ValueKind);
+  if (N == 0)
+    ValueSites.push_back(InstrProfValueSiteRecord());
+  else
+    ValueSites.emplace_back(VData, VData + N);
+}
+
+void InstrProfRecord::reserveSites(uint32_t ValueKind, uint32_t NumValueSites) {
+  std::vector<InstrProfValueSiteRecord> &ValueSites =
+      getValueSitesForKind(ValueKind);
+  ValueSites.reserve(NumValueSites);
+}
+
+instrprof_error InstrProfRecord::mergeValueProfData(uint32_t ValueKind,
+                                                    InstrProfRecord &Src) {
+  uint32_t ThisNumValueSites = getNumValueSites(ValueKind);
+  uint32_t OtherNumValueSites = Src.getNumValueSites(ValueKind);
+  if (ThisNumValueSites != OtherNumValueSites)
+    return instrprof_error::value_site_count_mismatch;
+  std::vector<InstrProfValueSiteRecord> &ThisSiteRecords =
+      getValueSitesForKind(ValueKind);
+  std::vector<InstrProfValueSiteRecord> &OtherSiteRecords =
+      Src.getValueSitesForKind(ValueKind);
+  for (uint32_t I = 0; I < ThisNumValueSites; I++)
+    ThisSiteRecords[I].mergeValueData(OtherSiteRecords[I]);
+  return instrprof_error::success;
+}
+
+void InstrProfRecord::updateStrings(InstrProfStringTable *StrTab) {
+  if (!StrTab) return;
+
+  Name = StrTab->insertString(Name);
+  for (auto &VSite : IndirectCallSites)
+    for (auto &VData : VSite.ValueData)
+      VData.Value = (uint64_t)StrTab->insertString((const char *)VData.Value);
+}
 
 namespace IndexedInstrProf {
 enum class HashT : uint32_t {
