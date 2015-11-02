@@ -141,15 +141,16 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     if (BC.MIA->isCall(Instruction)) {
       if (BC.MIA->isTailCall(Instruction))
         OS << " # TAILCALL ";
-      if (Instruction.getNumOperands() > 1) {
-        OS << " # handler: ";
-        if (Instruction.getOperand(1).isExpr())
-          OS << cast<MCSymbolRefExpr>(Instruction.getOperand(1).getExpr())->
-                                                                      getSymbol();
-        else
-          OS << '0';
-        OS << "; action: " << Instruction.getOperand(2).getImm();
-      }
+      // FIXME: Print EH handlers correctly in presence of indirect calls
+//      if (Instruction.getNumOperands() > 1) {
+//        OS << " # handler: ";
+//        if (Instruction.getOperand(1).isExpr())
+//          OS << cast<MCSymbolRefExpr>(Instruction.getOperand(1).getExpr())->
+//                                                                      getSymbol();
+//        else
+//          OS << '0';
+//        OS << "; action: " << Instruction.getOperand(2).getImm();
+//      }
     }
     OS << "\n";
     // In case we need MCInst printer:
@@ -280,6 +281,27 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // basic block.
   Labels[0] = Ctx->createTempSymbol("BB0", false);
 
+  auto handleRIPOperand =
+      [this](MCInst &Instruction, uint64_t Address, uint64_t Size) -> bool {
+        uint64_t TargetAddress{0};
+        MCSymbol *TargetSymbol{nullptr};
+        if (!BC.MIA->evaluateRIPOperand(Instruction, Address, Size,
+                                        TargetAddress)) {
+          DEBUG(dbgs() << "FLO: rip-relative operand could not be evaluated:\n";
+                BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
+                dbgs() << '\n';
+                Instruction.dump_pretty(dbgs(), BC.InstPrinter.get());
+                dbgs() << '\n';);
+          return false;
+        }
+        // FIXME: check that the address is in data, not in code.
+        TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
+        BC.MIA->replaceRIPOperandDisp(
+            Instruction, MCOperand::createExpr(MCSymbolRefExpr::create(
+                             TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx)));
+        return true;
+      };
+
   bool IsSimple = true;
   for (uint64_t Offset = 0; IsSimple && (Offset < getSize()); ) {
     MCInst Instruction;
@@ -297,13 +319,6 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
     if (MIA->isUnsupported(Instruction)) {
       DEBUG(dbgs() << "FLO: unsupported instruction seen. Skipping function "
-                   << getName() << ".\n");
-      IsSimple = false;
-      break;
-    }
-
-    if (MIA->isIndirectBranch(Instruction)) {
-      DEBUG(dbgs() << "FLO: indirect branch seen. Skipping function "
                    << getName() << ".\n");
       IsSimple = false;
       break;
@@ -369,6 +384,12 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
             TargetSymbol = BC.getOrCreateGlobalSymbol(InstructionTarget,
                                                       "FUNCat");
+            if (InstructionTarget == 0) {
+              errs() << "FLO-WARNING: Function \":" << getName()
+                     << "\" has call to address zero. Ignoring it.\n";
+              IsSimple = false;
+              break;
+            }
           }
         }
 
@@ -388,35 +409,26 @@ bool BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         }
 
       } else {
-        // Indirect call
-        DEBUG(dbgs() << "FLO: indirect call detected (not yet supported)\n");
-        IsSimple = false;
-        break;
-      }
-    } else {
-      if (MIA->hasRIPOperand(Instruction)) {
-        uint64_t TargetAddress{0};
-        MCSymbol *TargetSymbol{nullptr};
-        if (!MIA->evaluateRIPOperand(Instruction, AbsoluteInstrAddr,
-                                     Size, TargetAddress)) {
-          DEBUG(
-            dbgs() << "FLO: rip-relative operand could not be evaluated:\n";
-            BC.InstPrinter->printInst(&Instruction, dbgs(), "", *BC.STI);
-            dbgs() << '\n';
-            Instruction.dump_pretty(dbgs(), BC.InstPrinter.get());
-            dbgs() << '\n';
-          );
+        // Should be an indirect call or an indirect branch. Bail out on the
+        // latter case.
+        if (MIA->isIndirectBranch(Instruction)) {
           IsSimple = false;
           break;
         }
-        // FIXME: check that the address is in data, not in code.
-        TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
-        MIA->replaceRIPOperandDisp(
-            Instruction,
-            MCOperand::createExpr(
-              MCSymbolRefExpr::create(TargetSymbol,
-                                      MCSymbolRefExpr::VK_None,
-                                      *Ctx)));
+        // Indirect call. We only need to fix it if the operand is RIP-relative
+        if (MIA->hasRIPOperand(Instruction)) {
+          if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
+            IsSimple = false;
+            break;
+          }
+        }
+      }
+    } else {
+      if (MIA->hasRIPOperand(Instruction)) {
+        if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
+          IsSimple = false;
+          break;
+        }
       }
     }
 

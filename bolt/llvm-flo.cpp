@@ -703,10 +703,11 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     }
 
     // Post-processing passes.
-    Function.updateEHRanges();
-    if (opts::PrintAll || opts::PrintEHRanges) {
-      Function.print(errs(), "after updating EH ranges");
-    }
+    // FIXME: Check EH handlers correctly in presence of indirect calls
+    //    Function.updateEHRanges();
+    //    if (opts::PrintAll || opts::PrintEHRanges) {
+    //      Function.print(errs(), "after updating EH ranges");
+    //    }
 
     // After optimizations, fix the CFI state
     if (!Function.fixCFIState())
