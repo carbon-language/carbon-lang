@@ -358,7 +358,10 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
     LLVMContext::MD_invariant_load,
     LLVMContext::MD_alias_scope,
     LLVMContext::MD_noalias,
-    LLVMContext::MD_nonnull
+    LLVMContext::MD_nonnull,
+    LLVMContext::MD_align,
+    LLVMContext::MD_dereferenceable,
+    LLVMContext::MD_dereferenceable_or_null,
   };
 
   for (unsigned ID : KnownIDs)

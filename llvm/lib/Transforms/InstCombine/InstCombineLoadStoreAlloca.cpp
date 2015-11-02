@@ -367,7 +367,13 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
                              MDB.createRange(NonNullInt, NullInt));
       }
       break;
-
+    case LLVMContext::MD_align:
+    case LLVMContext::MD_dereferenceable:
+    case LLVMContext::MD_dereferenceable_or_null:
+      // These only directly apply if the new type is also a pointer.
+      if (NewTy->isPointerTy())
+        NewLoad->setMetadata(ID, N);
+      break;
     case LLVMContext::MD_range:
       // FIXME: It would be nice to propagate this in some way, but the type
       // conversions make it hard. If the new type is a pointer, we could
@@ -418,6 +424,9 @@ static StoreInst *combineStoreToNewValue(InstCombiner &IC, StoreInst &SI, Value 
     case LLVMContext::MD_invariant_load:
     case LLVMContext::MD_nonnull:
     case LLVMContext::MD_range:
+    case LLVMContext::MD_align:
+    case LLVMContext::MD_dereferenceable:
+    case LLVMContext::MD_dereferenceable_or_null:
       // These don't apply for stores.
       break;
     }
@@ -755,10 +764,12 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                                DefMaxInstsToScan, AA, &AATags)) {
     if (LoadInst *NLI = dyn_cast<LoadInst>(AvailableVal)) {
       unsigned KnownIDs[] = {
-          LLVMContext::MD_tbaa,           LLVMContext::MD_alias_scope,
-          LLVMContext::MD_noalias,        LLVMContext::MD_range,
-          LLVMContext::MD_invariant_load, LLVMContext::MD_nonnull,
-          LLVMContext::MD_invariant_group};
+          LLVMContext::MD_tbaa,            LLVMContext::MD_alias_scope,
+          LLVMContext::MD_noalias,         LLVMContext::MD_range,
+          LLVMContext::MD_invariant_load,  LLVMContext::MD_nonnull,
+          LLVMContext::MD_invariant_group, LLVMContext::MD_align,
+          LLVMContext::MD_dereferenceable,
+          LLVMContext::MD_dereferenceable_or_null};
       combineMetadata(NLI, &LI, KnownIDs);
     };
 

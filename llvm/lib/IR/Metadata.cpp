@@ -953,6 +953,17 @@ MDNode *MDNode::getMostGenericRange(MDNode *A, MDNode *B) {
   return MDNode::get(A->getContext(), MDs);
 }
 
+MDNode *MDNode::getMostGenericAlignmentOrDereferenceable(MDNode *A, MDNode *B) {
+  if (!A || !B)
+    return nullptr;
+
+  ConstantInt *AVal = mdconst::extract<ConstantInt>(A->getOperand(0));
+  ConstantInt *BVal = mdconst::extract<ConstantInt>(B->getOperand(0));
+  if (AVal->getZExtValue() < BVal->getZExtValue())
+    return A;
+  return B;
+}
+
 //===----------------------------------------------------------------------===//
 // NamedMDNode implementation.
 //

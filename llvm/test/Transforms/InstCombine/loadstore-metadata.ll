@@ -31,7 +31,7 @@ define float @test_load_cast_combine_range(i32* %ptr) {
 ; CHECK-NOT: !range
 ; CHECK: ret float
 entry:
-  %l = load i32, i32* %ptr, !range !5
+  %l = load i32, i32* %ptr, !range !6
   %c = bitcast i32 %l to float
   ret float %c
 }
@@ -55,6 +55,39 @@ entry:
   %l = load float, float* %ptr, !nontemporal !4
   %c = bitcast float %l to i32
   ret i32 %c
+}
+
+define i8* @test_load_cast_combine_align(i32** %ptr) {
+; Ensure (cast (load (...))) -> (load (cast (...))) preserves align
+; metadata.
+; CHECK-LABEL: @test_load_cast_combine_align(
+; CHECK: load i8*, i8** %{{.*}}, !align !5
+entry:
+  %l = load i32*, i32** %ptr, !align !5
+  %c = bitcast i32* %l to i8*
+  ret i8* %c
+}
+
+define i8* @test_load_cast_combine_deref(i32** %ptr) {
+; Ensure (cast (load (...))) -> (load (cast (...))) preserves dereferenceable
+; metadata.
+; CHECK-LABEL: @test_load_cast_combine_deref(
+; CHECK: load i8*, i8** %{{.*}}, !dereferenceable !5
+entry:
+  %l = load i32*, i32** %ptr, !dereferenceable !5
+  %c = bitcast i32* %l to i8*
+  ret i8* %c
+}
+
+define i8* @test_load_cast_combine_deref_or_null(i32** %ptr) {
+; Ensure (cast (load (...))) -> (load (cast (...))) preserves
+; dereferenceable_or_null metadata.
+; CHECK-LABEL: @test_load_cast_combine_deref_or_null(
+; CHECK: load i8*, i8** %{{.*}}, !dereferenceable_or_null !5
+entry:
+  %l = load i32*, i32** %ptr, !dereferenceable_or_null !5
+  %c = bitcast i32* %l to i8*
+  ret i8* %c
 }
 
 define void @test_load_cast_combine_loop(float* %src, i32* %dst, i32 %n) {
@@ -110,4 +143,5 @@ entry:
 !2 = !{ !2, !1 }
 !3 = !{ }
 !4 = !{ i32 1 }
-!5 = !{ i32 0, i32 42 }
+!5 = !{ i64 8 }
+!6 = !{ i32 0, i32 42 }

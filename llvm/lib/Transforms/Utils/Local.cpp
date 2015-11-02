@@ -1430,6 +1430,15 @@ void llvm::combineMetadata(Instruction *K, const Instruction *J,
       case LLVMContext::MD_invariant_group:
         // Preserve !invariant.group in K.
         break;
+      case LLVMContext::MD_align:
+        K->setMetadata(Kind, 
+          MDNode::getMostGenericAlignmentOrDereferenceable(JMD, KMD));
+        break;
+      case LLVMContext::MD_dereferenceable:
+      case LLVMContext::MD_dereferenceable_or_null:
+        K->setMetadata(Kind, 
+          MDNode::getMostGenericAlignmentOrDereferenceable(JMD, KMD));
+        break;
     }
   }
   // Set !invariant.group from J if J has it. If both instructions have it
