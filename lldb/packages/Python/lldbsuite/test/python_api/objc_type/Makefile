@@ -6,4 +6,4 @@ CFLAGS_EXTRAS += -w
 
 include $(LEVEL)/Makefile.rules
 
-LDFLAGS += -framework Cocoa
+LDFLAGS += -framework Foundation
