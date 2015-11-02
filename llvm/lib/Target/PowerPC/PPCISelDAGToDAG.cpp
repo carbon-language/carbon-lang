@@ -2798,7 +2798,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
         LoadSDNode *LD = cast<LoadSDNode>(Op1.getOperand(0));
         SDValue Base, Offset;
 
-        if (LD->isUnindexed() &&
+        if (LD->isUnindexed() && LD->hasOneUse() && Op1.hasOneUse() &&
             (LD->getMemoryVT() == MVT::f64 ||
              LD->getMemoryVT() == MVT::i64) &&
             SelectAddrIdxOnly(LD->getBasePtr(), Base, Offset)) {

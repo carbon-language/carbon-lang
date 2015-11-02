@@ -5,6 +5,8 @@
 ; direct moves. This corresponds to the "insertelement" instruction. Subsequent
 ; to this, there will be a splat corresponding to the shufflevector.
 
+@d = common global double 0.000000e+00, align 8
+
 ; Function Attrs: nounwind
 define <16 x i8> @buildc(i8 zeroext %a) {
 entry:
@@ -59,9 +61,9 @@ entry:
   %splat.splatinsert = insertelement <2 x i64> undef, i64 %0, i32 0
   %splat.splat = shufflevector <2 x i64> %splat.splatinsert, <2 x i64> undef, <2 x i32> zeroinitializer
   ret <2 x i64> %splat.splat
-; FIXME-CHECK: mtvsrd {{[0-9]+}}, 3
-; FIXME-CHECK-LE: mtvsrd [[REG1:[0-9]+]], 3
-; FIXME-CHECK-LE: xxswapd {{[0-9]+}}, [[REG1]]
+; CHECK: mtvsrd {{[0-9]+}}, 3
+; CHECK-LE: mtvsrd [[REG1:[0-9]+]], 3
+; CHECK-LE: xxswapd {{[0-9]+}}, [[REG1]]
 }
 
 ; Function Attrs: nounwind
@@ -76,6 +78,21 @@ entry:
 ; CHECK: xscvdpspn {{[0-9]+}}, 1
 ; CHECK-LE: xscvdpspn [[REG1:[0-9]+]], 1
 ; CHECK-LE: xxsldwi {{[0-9]+}}, [[REG1]], [[REG1]], 1
+}
+
+; The optimization to remove stack operations from PPCDAGToDAGISel::Select
+; should still trigger for v2f64, producing an lxvdsx.
+; Function Attrs: nounwind
+define <2 x double> @buildd() #0 {
+entry:
+  %0 = load double, double* @d, align 8
+  %splat.splatinsert = insertelement <2 x double> undef, double %0, i32 0
+  %splat.splat = shufflevector <2 x double> %splat.splatinsert, <2 x double> undef, <2 x i32> zeroinitializer
+  ret <2 x double> %splat.splat
+; CHECK: ld [[REG1:[0-9]+]], .LC0@toc@l
+; CHECK: lxvdsx 34, 0, [[REG1]]
+; CHECK-LE: ld [[REG1:[0-9]+]], .LC0@toc@l
+; CHECK-LE: lxvdsx 34, 0, [[REG1]]
 }
 
 ; Function Attrs: nounwind

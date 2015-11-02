@@ -1226,14 +1226,14 @@ define <2 x i32> @test80(i32 %v) {
 ; CHECK-FISL: blr
 
 ; CHECK-LE-LABEL: @test80
-; FIXME-CHECK-LE-DAG: mtvsrd [[R1:[0-9]+]], 3
-; FIXME-CHECK-LE-DAG: addi [[R2:[0-9]+]], {{[0-9]+}}, .LCPI
-; FIXME-CHECK-LE-DAG: xxswapd [[V1:[0-9]+]], [[R1]]
-; FIXME-CHECK-LE-DAG: lxvd2x [[V2:[0-9]+]], 0, [[R2]]
-; FIXME-CHECK-LE-DAG: xxspltd 34, [[V1]]
-; FIXME-CHECK-LE-DAG: xxswapd 35, [[V2]]
-; FIXME-CHECK-LE: vaddudm 2, 2, 3
-; FIXME-CHECK-LE: blr
+; CHECK-LE-DAG: mtvsrd [[R1:[0-9]+]], 3
+; CHECK-LE-DAG: addi [[R2:[0-9]+]], {{[0-9]+}}, .LCPI
+; CHECK-LE-DAG: xxswapd [[V1:[0-9]+]], [[R1]]
+; CHECK-LE-DAG: lxvd2x [[V2:[0-9]+]], 0, [[R2]]
+; CHECK-LE-DAG: xxspltd 34, [[V1]]
+; CHECK-LE-DAG: xxswapd 35, [[V2]]
+; CHECK-LE: vaddudm 2, 2, 3
+; CHECK-LE: blr
 }
 
 define <2 x double> @test81(<4 x float> %b) {
