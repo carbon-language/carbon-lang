@@ -126,6 +126,11 @@ TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16),
                                       "trip count that is smaller than this "
                                       "value."));
 
+static cl::opt<bool> MaximizeBandwidth(
+    "vectorizer-maximize-bandwidth", cl::init(false), cl::Hidden,
+    cl::desc("Maximize bandwidth when selecting vectorization factor which "
+             "will be determined by the smallest type in loop."));
+
 /// This enables versioning on the strides of symbolically striding memory
 /// accesses in code like the following.
 ///   for (i = 0; i < N; ++i)
@@ -1408,10 +1413,10 @@ public:
   /// possible.
   VectorizationFactor selectVectorizationFactor(bool OptForSize);
 
-  /// \return The size (in bits) of the widest type in the code that
-  /// needs to be vectorized. We ignore values that remain scalar such as
+  /// \return The size (in bits) of the smallest and widest types in the code
+  /// that needs to be vectorized. We ignore values that remain scalar such as
   /// 64 bit loop indices.
-  unsigned getWidestType();
+  std::pair<unsigned, unsigned> getSmallestAndWidestTypes();
 
   /// \return The desired interleave count.
   /// If interleave count has been specified by metadata it will be returned.
@@ -1438,8 +1443,10 @@ public:
     unsigned NumInstructions;
   };
 
-  /// \return  information about the register usage of the loop.
-  RegisterUsage calculateRegisterUsage();
+  /// \return Returns information about the register usages of the loop for the
+  /// given vectorization factors.
+  SmallVector<RegisterUsage, 8>
+  calculateRegisterUsage(const SmallVector<unsigned, 8> &VFs);
 
 private:
   /// Returns the expected execution cost. The unit of the cost does
@@ -4705,7 +4712,8 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
   DEBUG(dbgs() << "LV: Found trip count: " << TC << '\n');
 
   MinBWs = computeMinimumValueSizes(TheLoop->getBlocks(), *DB, &TTI);
-  unsigned WidestType = getWidestType();
+  unsigned SmallestType, WidestType;
+  std::tie(SmallestType, WidestType) = getSmallestAndWidestTypes();
   unsigned WidestRegister = TTI.getRegisterBitWidth(true);
   unsigned MaxSafeDepDist = -1U;
   if (Legal->getMaxSafeDepDistBytes() != -1U)
@@ -4713,7 +4721,9 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
   WidestRegister = ((WidestRegister < MaxSafeDepDist) ?
                     WidestRegister : MaxSafeDepDist);
   unsigned MaxVectorSize = WidestRegister / WidestType;
-  DEBUG(dbgs() << "LV: The Widest type: " << WidestType << " bits.\n");
+
+  DEBUG(dbgs() << "LV: The Smallest and Widest types: " << SmallestType << " / "
+               << WidestType << " bits.\n");
   DEBUG(dbgs() << "LV: The Widest register is: "
           << WidestRegister << " bits.\n");
 
@@ -4726,6 +4736,26 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
          " into one vector!");
 
   unsigned VF = MaxVectorSize;
+  if (MaximizeBandwidth && !OptForSize) {
+    // Collect all viable vectorization factors.
+    SmallVector<unsigned, 8> VFs;
+    unsigned NewMaxVectorSize = WidestRegister / SmallestType;
+    for (unsigned VS = MaxVectorSize; VS <= NewMaxVectorSize; VS *= 2)
+      VFs.push_back(VS);
+
+    // For each VF calculate its register usage.
+    auto RUs = calculateRegisterUsage(VFs);
+
+    // Select the largest VF which doesn't require more registers than existing
+    // ones.
+    unsigned TargetNumRegisters = TTI.getNumberOfRegisters(true);
+    for (int i = RUs.size() - 1; i >= 0; --i) {
+      if (RUs[i].MaxLocalUsers <= TargetNumRegisters) {
+        VF = VFs[i];
+        break;
+      }
+    }
+  }
 
   // If we optimize the program for size, avoid creating the tail loop.
   if (OptForSize) {
@@ -4801,7 +4831,9 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
   return Factor;
 }
 
-unsigned LoopVectorizationCostModel::getWidestType() {
+std::pair<unsigned, unsigned>
+LoopVectorizationCostModel::getSmallestAndWidestTypes() {
+  unsigned MinWidth = -1U;
   unsigned MaxWidth = 8;
   const DataLayout &DL = TheFunction->getParent()->getDataLayout();
 
@@ -4841,12 +4873,14 @@ unsigned LoopVectorizationCostModel::getWidestType() {
       if (T->isPointerTy() && !isConsecutiveLoadOrStore(&*it))
         continue;
 
+      MinWidth = std::min(MinWidth,
+                          (unsigned)DL.getTypeSizeInBits(T->getScalarType()));
       MaxWidth = std::max(MaxWidth,
                           (unsigned)DL.getTypeSizeInBits(T->getScalarType()));
     }
   }
 
-  return MaxWidth;
+  return {MinWidth, MaxWidth};
 }
 
 unsigned LoopVectorizationCostModel::selectInterleaveCount(bool OptForSize,
@@ -4892,7 +4926,7 @@ unsigned LoopVectorizationCostModel::selectInterleaveCount(bool OptForSize,
       TargetNumRegisters = ForceTargetNumVectorRegs;
   }
 
-  LoopVectorizationCostModel::RegisterUsage R = calculateRegisterUsage();
+  RegisterUsage R = calculateRegisterUsage({VF})[0];
   // We divide by these constants so assume that we have at least one
   // instruction that uses at least one register.
   R.MaxLocalUsers = std::max(R.MaxLocalUsers, 1U);
@@ -5002,8 +5036,9 @@ unsigned LoopVectorizationCostModel::selectInterleaveCount(bool OptForSize,
   return 1;
 }
 
-LoopVectorizationCostModel::RegisterUsage
-LoopVectorizationCostModel::calculateRegisterUsage() {
+SmallVector<LoopVectorizationCostModel::RegisterUsage, 8>
+LoopVectorizationCostModel::calculateRegisterUsage(
+    const SmallVector<unsigned, 8> &VFs) {
   // This function calculates the register usage by measuring the highest number
   // of values that are alive at a single location. Obviously, this is a very
   // rough estimation. We scan the loop in a topological order in order and
@@ -5024,8 +5059,8 @@ LoopVectorizationCostModel::calculateRegisterUsage() {
   LoopBlocksDFS DFS(TheLoop);
   DFS.perform(LI);
 
-  RegisterUsage R;
-  R.NumInstructions = 0;
+  RegisterUsage RU;
+  RU.NumInstructions = 0;
 
   // Each 'key' in the map opens a new interval. The values
   // of the map are the index of the 'last seen' usage of the
@@ -5044,7 +5079,7 @@ LoopVectorizationCostModel::calculateRegisterUsage() {
   unsigned Index = 0;
   for (LoopBlocksDFS::RPOIterator bb = DFS.beginRPO(),
        be = DFS.endRPO(); bb != be; ++bb) {
-    R.NumInstructions += (*bb)->size();
+    RU.NumInstructions += (*bb)->size();
     for (Instruction &I : **bb) {
       IdxToInstr[Index++] = &I;
 
@@ -5079,10 +5114,26 @@ LoopVectorizationCostModel::calculateRegisterUsage() {
     TransposeEnds[it->second].push_back(it->first);
 
   SmallSet<Instruction*, 8> OpenIntervals;
-  unsigned MaxUsage = 0;
 
+  // Get the size of the widest register.
+  unsigned MaxSafeDepDist = -1U;
+  if (Legal->getMaxSafeDepDistBytes() != -1U)
+    MaxSafeDepDist = Legal->getMaxSafeDepDistBytes() * 8;
+  unsigned WidestRegister =
+      std::min(TTI.getRegisterBitWidth(true), MaxSafeDepDist);
+  const DataLayout &DL = TheFunction->getParent()->getDataLayout();
+
+  SmallVector<RegisterUsage, 8> RUs(VFs.size());
+  SmallVector<unsigned, 8> MaxUsages(VFs.size(), 0);
 
   DEBUG(dbgs() << "LV(REG): Calculating max register usage:\n");
+
+  // A lambda that gets the register usage for the given type and VF.
+  auto GetRegUsage = [&DL, WidestRegister](Type *Ty, unsigned VF) {
+    unsigned TypeSize = DL.getTypeSizeInBits(Ty->getScalarType());
+    return std::max<unsigned>(1, VF * TypeSize / WidestRegister);
+  };
+
   for (unsigned int i = 0; i < Index; ++i) {
     Instruction *I = IdxToInstr[i];
     // Ignore instructions that are never used within the loop.
@@ -5094,27 +5145,50 @@ LoopVectorizationCostModel::calculateRegisterUsage() {
 
     // Remove all of the instructions that end at this location.
     InstrList &List = TransposeEnds[i];
-    for (unsigned int j=0, e = List.size(); j < e; ++j)
+    for (unsigned int j = 0, e = List.size(); j < e; ++j)
       OpenIntervals.erase(List[j]);
 
-    // Count the number of live interals.
-    MaxUsage = std::max(MaxUsage, OpenIntervals.size());
+    // For each VF find the maximum usage of registers.
+    for (unsigned j = 0, e = VFs.size(); j < e; ++j) {
+      if (VFs[j] == 1) {
+        MaxUsages[j] = std::max(MaxUsages[j], OpenIntervals.size());
+        continue;
+      }
 
-    DEBUG(dbgs() << "LV(REG): At #" << i << " Interval # " <<
-          OpenIntervals.size() << '\n');
+      // Count the number of live interals.
+      unsigned RegUsage = 0;
+      for (auto Inst : OpenIntervals)
+        RegUsage += GetRegUsage(Inst->getType(), VFs[j]);
+      MaxUsages[j] = std::max(MaxUsages[j], RegUsage);
+    }
+
+    DEBUG(dbgs() << "LV(REG): At #" << i << " Interval # "
+                 << OpenIntervals.size() << '\n');
 
     // Add the current instruction to the list of open intervals.
     OpenIntervals.insert(I);
   }
 
-  unsigned Invariant = LoopInvariants.size();
-  DEBUG(dbgs() << "LV(REG): Found max usage: " << MaxUsage << '\n');
-  DEBUG(dbgs() << "LV(REG): Found invariant usage: " << Invariant << '\n');
-  DEBUG(dbgs() << "LV(REG): LoopSize: " << R.NumInstructions << '\n');
+  for (unsigned i = 0, e = VFs.size(); i < e; ++i) {
+    unsigned Invariant = 0;
+    if (VFs[i] == 1)
+      Invariant = LoopInvariants.size();
+    else {
+      for (auto Inst : LoopInvariants)
+        Invariant += GetRegUsage(Inst->getType(), VFs[i]);
+    }
 
-  R.LoopInvariantRegs = Invariant;
-  R.MaxLocalUsers = MaxUsage;
-  return R;
+    DEBUG(dbgs() << "LV(REG): VF = " << VFs[i] <<  '\n');
+    DEBUG(dbgs() << "LV(REG): Found max usage: " << MaxUsages[i] << '\n');
+    DEBUG(dbgs() << "LV(REG): Found invariant usage: " << Invariant << '\n');
+    DEBUG(dbgs() << "LV(REG): LoopSize: " << RU.NumInstructions << '\n');
+
+    RU.LoopInvariantRegs = Invariant;
+    RU.MaxLocalUsers = MaxUsages[i];
+    RUs[i] = RU;
+  }
+
+  return RUs;
 }
 
 unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
