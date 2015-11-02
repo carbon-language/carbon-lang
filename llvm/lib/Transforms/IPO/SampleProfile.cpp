@@ -1009,9 +1009,8 @@ bool SampleProfileLoader::emitAnnotations(Function &F) {
     unsigned Total = CoverageTracker.countBodySamples(Samples);
     unsigned Coverage = CoverageTracker.computeCoverage(Used, Total);
     if (Coverage < SampleProfileCoverage) {
-      StringRef Filename = getDISubprogram(&F)->getFilename();
       F.getContext().diagnose(DiagnosticInfoSampleProfile(
-          Filename.str().c_str(), getFunctionLoc(F),
+          getDISubprogram(&F)->getFilename(), getFunctionLoc(F),
           Twine(Used) + " of " + Twine(Total) + " available profile records (" +
               Twine(Coverage) + "%) were applied",
           DS_Warning));
@@ -1033,7 +1032,7 @@ bool SampleProfileLoader::doInitialization(Module &M) {
   auto ReaderOrErr = SampleProfileReader::create(Filename, Ctx);
   if (std::error_code EC = ReaderOrErr.getError()) {
     std::string Msg = "Could not open profile: " + EC.message();
-    Ctx.diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
+    Ctx.diagnose(DiagnosticInfoSampleProfile(Filename, Msg));
     return false;
   }
   Reader = std::move(ReaderOrErr.get());

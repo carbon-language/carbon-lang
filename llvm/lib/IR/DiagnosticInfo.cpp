@@ -123,10 +123,12 @@ void DiagnosticInfoDebugMetadataVersion::print(DiagnosticPrinter &DP) const {
 }
 
 void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
-  if (getFileName() && getLineNum() > 0)
-    DP << getFileName() << ":" << getLineNum() << ": ";
-  else if (getFileName())
-    DP << getFileName() << ": ";
+  if (!FileName.empty()) {
+    DP << getFileName();
+    if (LineNum > 0)
+      DP << ":" << getLineNum();
+    DP << ": ";
+  }
   DP << getMsg();
 }
 
