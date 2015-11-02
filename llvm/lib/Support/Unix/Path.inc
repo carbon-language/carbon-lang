@@ -560,6 +560,57 @@ bool home_directory(SmallVectorImpl<char> &result) {
   return false;
 }
 
+namespace {
+bool getDarwinConfDir(bool TempDir, SmallVectorImpl<char> &Result) {
+  #if defined(_CS_DARWIN_USER_TEMP_DIR) && defined(_CS_DARWIN_USER_CACHE_DIR)
+  // On Darwin, use DARWIN_USER_TEMP_DIR or DARWIN_USER_CACHE_DIR.
+  // macros defined in <unistd.h> on darwin >= 9
+  int ConfName = TempDir ? _CS_DARWIN_USER_TEMP_DIR
+                         : _CS_DARWIN_USER_CACHE_DIR;
+  size_t ConfLen = confstr(ConfName, nullptr, 0);
+  if (ConfLen > 0) {
+    do {
+      Result.resize(ConfLen);
+      ConfLen = confstr(ConfName, Result.data(), Result.size());
+    } while (ConfLen > 0 && ConfLen != Result.size());
+
+    if (ConfLen > 0) {
+      assert(Result.back() == 0);
+      Result.pop_back();
+      return true;
+    }
+
+    Result.clear();
+  }
+  #endif
+  return false;
+}
+
+bool getUserCacheDir(SmallVectorImpl<char> &Result) {
+  // First try using XDS_CACHE_HOME env variable,
+  // as specified in XDG Base Directory Specification at
+  // http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  if (const char *XdsCacheDir = std::getenv("XDS_CACHE_HOME")) {
+    Result.clear();
+    Result.append(XdsCacheDir, XdsCacheDir + strlen(XdsCacheDir));
+    return true;
+  }
+
+  // Try Darwin configuration query
+  if (getDarwinConfDir(false, Result))
+    return true;
+
+  // Use "$HOME/.cache" if $HOME is available
+  if (home_directory(Result)) {
+    append(Result, ".cache");
+    return true;
+  }
+
+  return false;
+}
+}
+
+
 static const char *getEnvTempDir() {
   // Check whether the temporary directory is specified by an environment
   // variable.
@@ -594,27 +645,8 @@ void system_temp_directory(bool ErasedOnReboot, SmallVectorImpl<char> &Result) {
     }
   }
 
-#if defined(_CS_DARWIN_USER_TEMP_DIR) && defined(_CS_DARWIN_USER_CACHE_DIR)
-  // On Darwin, use DARWIN_USER_TEMP_DIR or DARWIN_USER_CACHE_DIR.
-  // macros defined in <unistd.h> on darwin >= 9
-  int ConfName = ErasedOnReboot? _CS_DARWIN_USER_TEMP_DIR
-                               : _CS_DARWIN_USER_CACHE_DIR;
-  size_t ConfLen = confstr(ConfName, nullptr, 0);
-  if (ConfLen > 0) {
-    do {
-      Result.resize(ConfLen);
-      ConfLen = confstr(ConfName, Result.data(), Result.size());
-    } while (ConfLen > 0 && ConfLen != Result.size());
-
-    if (ConfLen > 0) {
-      assert(Result.back() == 0);
-      Result.pop_back();
-      return;
-    }
-
-    Result.clear();
-  }
-#endif
+  if (getDarwinConfDir(ErasedOnReboot, Result))
+    return;
 
   const char *RequestedDir = getDefaultTempDir(ErasedOnReboot);
   Result.append(RequestedDir, RequestedDir + strlen(RequestedDir));

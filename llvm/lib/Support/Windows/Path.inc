@@ -765,6 +765,10 @@ bool getKnownFolderPath(KNOWNFOLDERID folderId, SmallVectorImpl<char> &result) {
   ::CoTaskMemFree(path);
   return ok;
 }
+
+bool getUserCacheDir(SmallVectorImpl<char> &Result) {
+  return getKnownFolderPath(FOLDERID_LocalAppData, Result);
+}
 }
 
 bool home_directory(SmallVectorImpl<char> &result) {
