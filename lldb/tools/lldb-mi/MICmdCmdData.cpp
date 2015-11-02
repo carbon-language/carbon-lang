@@ -239,7 +239,6 @@ CMICmdCmdDataEvaluateExpression::HaveInvalidCharacterInExpression(const CMIUtilS
 CMICmdCmdDataDisassemble::CMICmdCmdDataDisassemble()
     : m_constStrArgAddrStart("s")
     , m_constStrArgAddrEnd("e")
-    , m_constStrArgConsume("--")
     , m_constStrArgMode("mode")
     , m_miValueList(true)
 {
@@ -277,7 +276,6 @@ CMICmdCmdDataDisassemble::ParseArgs()
         new CMICmdArgValOptionShort(m_constStrArgAddrStart, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1));
     m_setCmdArgs.Add(
         new CMICmdArgValOptionShort(m_constStrArgAddrEnd, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1));
-    m_setCmdArgs.Add(new CMICmdArgValConsume(m_constStrArgConsume, true));
     m_setCmdArgs.Add(new CMICmdArgValNumber(m_constStrArgMode, true, true));
     return ParseValidateCmdOptions();
 }

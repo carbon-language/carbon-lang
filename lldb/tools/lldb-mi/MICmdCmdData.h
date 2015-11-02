@@ -106,7 +106,6 @@ class CMICmdCmdDataDisassemble : public CMICmdBase
   private:
     const CMIUtilString m_constStrArgAddrStart; // MI spec non mandatory, *this command mandatory
     const CMIUtilString m_constStrArgAddrEnd;   // MI spec non mandatory, *this command mandatory
-    const CMIUtilString m_constStrArgConsume;
     const CMIUtilString m_constStrArgMode;
     CMICmnMIValueList m_miValueList;
 };

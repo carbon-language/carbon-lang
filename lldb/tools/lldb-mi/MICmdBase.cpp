@@ -12,6 +12,7 @@
 #include "MICmnMIValueConst.h"
 #include "MICmnLLDBDebugSessionInfo.h"
 #include "MICmdArgValOptionLong.h"
+#include "MICmdArgValConsume.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmdBase constructor.
@@ -27,6 +28,7 @@ CMICmdBase::CMICmdBase()
     , m_constStrArgThreadGroup("thread-group")
     , m_constStrArgThread("thread")
     , m_constStrArgFrame("frame")
+    , m_constStrArgConsume("--")
     , m_ThreadGrpArgMandatory(false)
     , m_ThreadArgMandatory(false)
     , m_FrameArgMandatory(false)
@@ -97,6 +99,7 @@ CMICmdBase::AddCommonArgs()
     m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThreadGroup, m_ThreadGrpArgMandatory, true, CMICmdArgValListBase::eArgValType_ThreadGrp, 1));
     m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgThread, m_ThreadArgMandatory, true, CMICmdArgValListBase::eArgValType_Number, 1));
     m_setCmdArgs.Add(new CMICmdArgValOptionLong(m_constStrArgFrame, m_FrameArgMandatory, true, CMICmdArgValListBase::eArgValType_Number, 1));
+    m_setCmdArgs.Add(new CMICmdArgValConsume(m_constStrArgConsume, false));
 }
 
 //++ ------------------------------------------------------------------------------------

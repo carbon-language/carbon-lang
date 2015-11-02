@@ -40,6 +40,10 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test -data-disassemble: try to disassemble some address
         self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
         self.expect("\^done,asm_insns=\[{address=\"0x0*%x\",func-name=\"main\",offset=\"0\",size=\"[1-9]+\",inst=\".+?\"}," % addr)
+        
+        # Test -data-disassemble without "--"
+        self.runCmd("-data-disassemble -s %#x -e %#x 0" % (addr, addr + 0x10))
+        self.expect("\^done,asm_insns=\[{address=\"0x0*%x\",func-name=\"main\",offset=\"0\",size=\"[1-9]+\",inst=\".+?\"}," % addr)
 
         # Run to hello_world
         self.runCmd("-break-insert -f hello_world")

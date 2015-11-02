@@ -98,6 +98,7 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
     const CMIUtilString m_constStrArgThreadGroup;
     const CMIUtilString m_constStrArgThread;
     const CMIUtilString m_constStrArgFrame;
+    const CMIUtilString m_constStrArgConsume;
 
     // These 3 members can be used by the derived classes to make any of
     // "thread", "frame" or "thread-group" mandatory.
