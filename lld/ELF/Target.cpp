@@ -228,10 +228,6 @@ void X86_64TargetInfo::writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
       0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
       0x0f, 0x1f, 0x40, 0x00              // nopl 0x0(rax)
   };
-  // 1. NextPC = PltEntryAddr + 6,
-  // GotEntryAddr - NextPC + 8 = GotEntryAddr - PltEntryAddr + 2.
-  // 2. NextPC = PltEntryAddr + 6 + 6,
-  // GotEntryAddr - NextPC + 16 = GotEntryAddr - PltEntryAddr + 4.
   memcpy(Buf, PltData, sizeof(PltData));
   write32le(Buf + 2, GotEntryAddr - PltEntryAddr + 2); // GOT+8
   write32le(Buf + 8, GotEntryAddr - PltEntryAddr + 4); // GOT+16
@@ -247,12 +243,6 @@ void X86_64TargetInfo::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
   };
   memcpy(Buf, Inst, sizeof(Inst));
 
-  // 1. NextPC = PltEntryAddr + 6,
-  // GotEntryAddr - NextPC = GotEntryAddr - PltEntryAddr - 6.
-  // 2. Index is just and index of PLT record.
-  // 3. NextPC = PltEntryAddr + 6 + 5 + 5 = PltEntryAddr + 16,
-  // PltEntryAddr - Index * PltEntrySize - PltZeroEntrySize - NextPC =
-  // -Index * PltEntrySize - PltZeroEntrySize - 16.
   write32le(Buf + 2, GotEntryAddr - PltEntryAddr - 6);
   write32le(Buf + 7, Index);
   write32le(Buf + 12, -Index * PltEntrySize - PltZeroEntrySize - 16);
