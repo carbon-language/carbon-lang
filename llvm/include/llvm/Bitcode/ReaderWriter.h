@@ -68,9 +68,10 @@ namespace llvm {
   /// the index. Otherwise skip the function summary section, and only create
   /// an index object with a map from function name to function summary offset.
   /// The index is used to perform lazy function summary reading later.
-  ErrorOr<std::unique_ptr<FunctionInfoIndex>> getFunctionInfoIndex(
-      MemoryBufferRef Buffer, LLVMContext &Context,
-      DiagnosticHandlerFunction DiagnosticHandler, bool IsLazy = false);
+  ErrorOr<std::unique_ptr<FunctionInfoIndex>>
+  getFunctionInfoIndex(MemoryBufferRef Buffer, LLVMContext &Context,
+                       DiagnosticHandlerFunction DiagnosticHandler,
+                       bool IsLazy = false);
 
   /// This method supports lazy reading of function summary data from the
   /// combined index during function importing. When reading the combined index
@@ -78,10 +79,11 @@ namespace llvm {
   /// Then this method is called for each function considered for importing,
   /// to parse the summary information for the given function name into
   /// the index.
-  std::error_code readFunctionSummary(
-      MemoryBufferRef Buffer, LLVMContext &Context,
-      DiagnosticHandlerFunction DiagnosticHandler, StringRef FunctionName,
-      std::unique_ptr<FunctionInfoIndex> Index);
+  std::error_code
+  readFunctionSummary(MemoryBufferRef Buffer, LLVMContext &Context,
+                      DiagnosticHandlerFunction DiagnosticHandler,
+                      StringRef FunctionName,
+                      std::unique_ptr<FunctionInfoIndex> Index);
 
   /// \brief Write the specified module to the specified raw output stream.
   ///

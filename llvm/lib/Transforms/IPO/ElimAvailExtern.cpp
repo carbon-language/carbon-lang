@@ -1,4 +1,5 @@
-//===-- ElimAvailExtern.cpp - DCE unreachable internal functions ----------------===//
+//===-- ElimAvailExtern.cpp - DCE unreachable internal functions
+//----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,18 +27,18 @@ STATISTIC(NumFunctions, "Number of functions removed");
 STATISTIC(NumVariables, "Number of global variables removed");
 
 namespace {
-  struct EliminateAvailableExternally : public ModulePass {
-    static char ID; // Pass identification, replacement for typeid
-    EliminateAvailableExternally() : ModulePass(ID) {
-      initializeEliminateAvailableExternallyPass(
-          *PassRegistry::getPassRegistry());
-    }
+struct EliminateAvailableExternally : public ModulePass {
+  static char ID; // Pass identification, replacement for typeid
+  EliminateAvailableExternally() : ModulePass(ID) {
+    initializeEliminateAvailableExternallyPass(
+        *PassRegistry::getPassRegistry());
+  }
 
-    // run - Do the EliminateAvailableExternally pass on the specified module,
-    // optionally updating the specified callgraph to reflect the changes.
-    //
-    bool runOnModule(Module &M) override;
-  };
+  // run - Do the EliminateAvailableExternally pass on the specified module,
+  // optionally updating the specified callgraph to reflect the changes.
+  //
+  bool runOnModule(Module &M) override;
+};
 }
 
 char EliminateAvailableExternally::ID = 0;
@@ -52,7 +53,7 @@ bool EliminateAvailableExternally::runOnModule(Module &M) {
   bool Changed = false;
 
   // Drop initializers of available externally global variables.
-  for (GlobalVariable &GV :M.globals()) {
+  for (GlobalVariable &GV : M.globals()) {
     if (!GV.hasAvailableExternallyLinkage())
       continue;
     if (GV.hasInitializer()) {

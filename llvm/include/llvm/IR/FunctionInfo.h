@@ -30,7 +30,7 @@ namespace llvm {
 /// This is a separate class from FunctionInfo to enable lazy reading of this
 /// function summary information from the combined index file during imporing.
 class FunctionSummary {
- private:
+private:
   /// \brief Path of module containing function IR, used to locate module when
   /// importing this function.
   ///
@@ -57,7 +57,7 @@ class FunctionSummary {
   /// during the initial compile step when the function index is first built.
   unsigned InstCount;
 
- public:
+public:
   /// Construct a summary object from summary data expected for all
   /// summary records.
   FunctionSummary(unsigned NumInsts) : InstCount(NumInsts) {}
@@ -90,7 +90,7 @@ class FunctionSummary {
 /// record. After parsing the associated summary information from the summary
 /// block the \a FunctionSummary is populated and stored here.
 class FunctionInfo {
- private:
+private:
   /// Function summary information used to help make ThinLTO importing
   /// decisions.
   std::unique_ptr<FunctionSummary> Summary;
@@ -109,7 +109,7 @@ class FunctionInfo {
   /// VST records with the summary records.
   uint64_t BitcodeIndex;
 
- public:
+public:
   /// Constructor used during parsing of VST entries.
   FunctionInfo(uint64_t FuncOffset)
       : Summary(nullptr), BitcodeIndex(FuncOffset) {}
@@ -157,7 +157,7 @@ typedef StringMap<uint64_t> ModulePathStringTableTy;
 /// Class to hold module path string table and function map,
 /// and encapsulate methods for operating on them.
 class FunctionInfoIndex {
- private:
+private:
   /// Map from function name to list of function information instances
   /// for functions of that name (may be duplicates in the COMDAT case, e.g.).
   FunctionInfoMapTy FunctionMap;
@@ -165,7 +165,7 @@ class FunctionInfoIndex {
   /// Holds strings for combined index, mapping to the corresponding module ID.
   ModulePathStringTableTy ModulePathStringTable;
 
- public:
+public:
   FunctionInfoIndex() = default;
   ~FunctionInfoIndex() = default;
 
@@ -190,8 +190,8 @@ class FunctionInfoIndex {
   }
 
   /// Iterator to allow writer to walk through table during emission.
-  iterator_range<StringMap<uint64_t>::const_iterator> modPathStringEntries()
-      const {
+  iterator_range<StringMap<uint64_t>::const_iterator>
+  modPathStringEntries() const {
     return llvm::make_range(ModulePathStringTable.begin(),
                             ModulePathStringTable.end());
   }
@@ -225,6 +225,6 @@ class FunctionInfoIndex {
   }
 };
 
-}  // End llvm namespace
+} // End llvm namespace
 
 #endif

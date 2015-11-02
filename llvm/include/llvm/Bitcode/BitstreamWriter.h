@@ -73,9 +73,7 @@ class BitstreamWriter {
                reinterpret_cast<const char *>(&Value + 1));
   }
 
-  size_t GetBufferOffset() const {
-    return Out.size();
-  }
+  size_t GetBufferOffset() const { return Out.size(); }
 
   size_t GetWordIndex() const {
     size_t Offset = GetBufferOffset();

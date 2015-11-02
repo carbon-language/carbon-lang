@@ -385,7 +385,8 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 
   // If we are doing ThinLTO compilation, don't need to process the symbols.
   // Later we simply build a combined index file after all files are claimed.
-  if (options::thinlto) return LDPS_OK;
+  if (options::thinlto)
+    return LDPS_OK;
 
   for (auto &Sym : Obj->symbols()) {
     uint32_t Symflags = Sym.getFlags();
@@ -602,8 +603,9 @@ static void freeSymName(ld_plugin_symbol &Sym) {
   Sym.comdat_key = nullptr;
 }
 
-static std::unique_ptr<FunctionInfoIndex> getFunctionIndexForFile(
-    LLVMContext &Context, claimed_file &F, ld_plugin_input_file &Info) {
+static std::unique_ptr<FunctionInfoIndex>
+getFunctionIndexForFile(LLVMContext &Context, claimed_file &F,
+                        ld_plugin_input_file &Info) {
 
   if (get_symbols(F.handle, F.syms.size(), &F.syms[0]) != LDPS_OK)
     message(LDPL_FATAL, "Failed to get symbol information");

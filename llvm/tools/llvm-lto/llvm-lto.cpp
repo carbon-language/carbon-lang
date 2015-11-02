@@ -59,9 +59,9 @@ static cl::opt<bool>
 UseDiagnosticHandler("use-diagnostic-handler", cl::init(false),
   cl::desc("Use a diagnostic handler to test the handler interface"));
 
-static cl::opt<bool> ThinLTO(
-    "thinlto", cl::init(false),
-    cl::desc("Only write combined global index for ThinLTO backends"));
+static cl::opt<bool>
+    ThinLTO("thinlto", cl::init(false),
+            cl::desc("Only write combined global index for ThinLTO backends"));
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
@@ -160,8 +160,9 @@ static int listSymbols(StringRef Command, const TargetOptions &Options) {
 
 /// Parse the function index out of an IR file and return the function
 /// index object if found, or nullptr if not.
-static std::unique_ptr<FunctionInfoIndex> getFunctionIndexForFile(
-    StringRef Path, std::string &Error, LLVMContext &Context) {
+static std::unique_ptr<FunctionInfoIndex>
+getFunctionIndexForFile(StringRef Path, std::string &Error,
+                        LLVMContext &Context) {
   std::unique_ptr<MemoryBuffer> Buffer;
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
       MemoryBuffer::getFile(Path);
@@ -238,7 +239,8 @@ int main(int argc, char **argv) {
   if (ListSymbolsOnly)
     return listSymbols(argv[0], Options);
 
-  if (ThinLTO) return createCombinedFunctionIndex(argv[0]);
+  if (ThinLTO)
+    return createCombinedFunctionIndex(argv[0]);
 
   unsigned BaseArg = 0;
 

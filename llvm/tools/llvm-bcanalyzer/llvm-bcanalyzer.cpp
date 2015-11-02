@@ -284,14 +284,16 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     }
   case bitc::MODULE_STRTAB_BLOCK_ID:
     switch (CodeID) {
-    default: return nullptr;
-    STRINGIFY_CODE(MST_CODE, ENTRY)
+    default:
+      return nullptr;
+      STRINGIFY_CODE(MST_CODE, ENTRY)
     }
   case bitc::FUNCTION_SUMMARY_BLOCK_ID:
     switch (CodeID) {
-    default: return nullptr;
-    STRINGIFY_CODE(FS_CODE, PERMODULE_ENTRY)
-    STRINGIFY_CODE(FS_CODE, COMBINED_ENTRY)
+    default:
+      return nullptr;
+      STRINGIFY_CODE(FS_CODE, PERMODULE_ENTRY)
+      STRINGIFY_CODE(FS_CODE, COMBINED_ENTRY)
     }
   case bitc::METADATA_ATTACHMENT_ID:
     switch(CodeID) {
@@ -534,7 +536,8 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned BlockID,
             }
             Str += (char)Record[j];
           }
-          if (ArrayIsPrintable) outs() << " record string = '" << Str << "'";
+          if (ArrayIsPrintable)
+            outs() << " record string = '" << Str << "'";
           break;
         }
       }

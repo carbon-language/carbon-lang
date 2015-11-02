@@ -29,7 +29,7 @@ class ObjectFile;
 class FunctionIndexObjectFile : public SymbolicFile {
   std::unique_ptr<FunctionInfoIndex> Index;
 
- public:
+public:
   FunctionIndexObjectFile(MemoryBufferRef Object,
                           std::unique_ptr<FunctionInfoIndex> I);
   ~FunctionIndexObjectFile() override;
@@ -72,8 +72,8 @@ class FunctionIndexObjectFile : public SymbolicFile {
   /// \brief Finds and returns bitcode in the given memory buffer (which may
   /// be either a bitcode file or a native object file with embedded bitcode),
   /// or an error code if not found.
-  static ErrorOr<MemoryBufferRef> findBitcodeInMemBuffer(
-      MemoryBufferRef Object);
+  static ErrorOr<MemoryBufferRef>
+  findBitcodeInMemBuffer(MemoryBufferRef Object);
 
   /// \brief Looks for function summary in the given memory buffer,
   /// returns true if found, else false.
@@ -83,8 +83,8 @@ class FunctionIndexObjectFile : public SymbolicFile {
   /// \brief Parse function index in the given memory buffer.
   /// Return new FunctionIndexObjectFile instance containing parsed function
   /// summary/index.
-  static ErrorOr<std::unique_ptr<FunctionIndexObjectFile>> create(
-      MemoryBufferRef Object, LLVMContext &Context, bool IsLazy = false);
+  static ErrorOr<std::unique_ptr<FunctionIndexObjectFile>>
+  create(MemoryBufferRef Object, LLVMContext &Context, bool IsLazy = false);
 
   /// \brief Parse the function summary information for function with the
   /// given name out of the given buffer. Parsed information is
