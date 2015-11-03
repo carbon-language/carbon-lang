@@ -545,11 +545,12 @@ bool AMDGPUAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &End
     }
   }
 
-  const MCRegisterInfo *TRC = getContext().getRegisterInfo();
-  unsigned RC = getRegClass(IsVgpr, RegWidth);
-  if (RegIndexInClass > TRC->getRegClass(RC).getNumRegs())
+  const MCRegisterInfo *TRI = getContext().getRegisterInfo();
+  const MCRegisterClass RC = TRI->getRegClass(getRegClass(IsVgpr, RegWidth));
+  if (RegIndexInClass >= RC.getNumRegs())
     return true;
-  RegNo = TRC->getRegClass(RC).getRegister(RegIndexInClass);
+
+  RegNo = RC.getRegister(RegIndexInClass);
   return false;
 }
 
