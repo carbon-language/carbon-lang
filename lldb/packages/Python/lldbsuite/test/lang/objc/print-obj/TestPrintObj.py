@@ -8,7 +8,7 @@ import use_lldb_suite
 
 import os, time
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 @skipUnlessDarwin
 class PrintObjTestCase(TestBase):
@@ -51,7 +51,7 @@ class PrintObjTestCase(TestBase):
 
         # Let's get the current stopped thread.  We'd like to switch to the
         # other thread to issue our 'po lock_me' command.
-        import lldbutil
+        import lldbsuite.test.lldbutil as lldbutil
         this_thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(this_thread)
 

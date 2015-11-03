@@ -14,7 +14,7 @@ variable.
 
 import os, sys
 import platform
-import lldbtest
+import lldbsuite.test.lldbtest as lldbtest
 
 def getArchitecture():
     """Returns the architecture in effect the test suite is running with."""

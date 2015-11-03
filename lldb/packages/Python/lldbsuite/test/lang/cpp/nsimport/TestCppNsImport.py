@@ -2,8 +2,8 @@
 Tests imported namespaces in C++.
 """
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class TestCppNsImport(TestBase):
 

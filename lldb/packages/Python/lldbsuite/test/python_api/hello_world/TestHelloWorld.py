@@ -7,7 +7,7 @@ import use_lldb_suite
 import os, sys, time
 import lldb
 import time
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class HelloWorldTestCase(TestBase):
 
@@ -65,7 +65,7 @@ class HelloWorldTestCase(TestBase):
 
         thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import stop_reason_to_str
+            from lldbsuite.test.lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
                       stop_reason_to_str(thread.GetStopReason()))
 
@@ -95,7 +95,7 @@ class HelloWorldTestCase(TestBase):
         self.assertTrue(error.Success() and process, PROCESS_IS_VALID)
 
         # Let's check the stack traces of the attached process.
-        import lldbutil
+        import lldbsuite.test.lldbutil as lldbutil
         stacktraces = lldbutil.print_stacktraces(process, string_buffer=True)
         self.expect(stacktraces, exe=False,
             substrs = ['main.c:%d' % self.line2,
@@ -137,7 +137,7 @@ class HelloWorldTestCase(TestBase):
             startstr = name)
 
         # Let's check the stack traces of the attached process.
-        import lldbutil
+        import lldbsuite.test.lldbutil as lldbutil
         stacktraces = lldbutil.print_stacktraces(process, string_buffer=True)
         self.expect(stacktraces, exe=False,
             substrs = ['main.c:%d' % self.line2,

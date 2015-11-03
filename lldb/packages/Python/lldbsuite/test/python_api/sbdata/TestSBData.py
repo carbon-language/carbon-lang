@@ -6,9 +6,9 @@ import use_lldb_suite
 
 import os
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 from math import fabs
-import lldbutil
+import lldbsuite.test.lldbutil as lldbutil
 
 class SBDataAPICase(TestBase):
 

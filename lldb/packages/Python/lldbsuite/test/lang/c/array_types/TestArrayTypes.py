@@ -6,8 +6,8 @@ import use_lldb_suite
 
 import os, time
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class ArrayTypesTestCase(TestBase):
 
@@ -102,7 +102,7 @@ class ArrayTypesTestCase(TestBase):
         # The stop reason of the thread should be breakpoint.
         thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import stop_reason_to_str
+            from lldbsuite.test.lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
                       stop_reason_to_str(thread.GetStopReason()))
 
@@ -187,7 +187,7 @@ class ArrayTypesTestCase(TestBase):
 
         # Last, check that "long_6" has a value type of eValueTypeVariableLocal
         # and "argc" has eValueTypeVariableArgument.
-        from lldbutil import value_type_to_str
+        from lldbsuite.test.lldbutil import value_type_to_str
         self.assertTrue(variable.GetValueType() == lldb.eValueTypeVariableLocal,
                         "Variable 'long_6' should have '%s' value type." %
                         value_type_to_str(lldb.eValueTypeVariableLocal))

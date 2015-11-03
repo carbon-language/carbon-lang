@@ -10,8 +10,8 @@ import use_lldb_suite
 import os, os.path, time
 import lldb
 import string
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 file_index = 0
 @skipUnlessDarwin
@@ -195,7 +195,7 @@ class FoundationTestCase(TestBase):
         # The stop reason of the thread should be breakpoint.
         thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import stop_reason_to_str
+            from lldbsuite.test.lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
                       stop_reason_to_str(thread.GetStopReason()))
 

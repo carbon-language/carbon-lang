@@ -3,8 +3,8 @@ Tests that rvalue references are supported in C++
 """
 
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class RvalueReferencesTestCase(TestBase):
     

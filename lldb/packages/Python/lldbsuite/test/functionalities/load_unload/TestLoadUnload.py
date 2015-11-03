@@ -9,8 +9,8 @@ import use_lldb_suite
 import os, time
 import re
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 @skipIfWindows # Windows doesn't have dlopen and friends, dynamic libraries work differently
 class LoadUnloadTestCase(TestBase):

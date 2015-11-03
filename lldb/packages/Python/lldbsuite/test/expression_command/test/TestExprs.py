@@ -19,8 +19,8 @@ import unittest2
 
 import os, time
 import lldb
-import lldbutil
-from lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
+from lldbsuite.test.lldbtest import *
 
 class BasicExprCommandsTestCase(TestBase):
 
@@ -135,7 +135,7 @@ class BasicExprCommandsTestCase(TestBase):
         # The stop reason of the thread should be breakpoint.
         thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import stop_reason_to_str
+            from lldbsuite.test.lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
                       stop_reason_to_str(thread.GetStopReason()))
 

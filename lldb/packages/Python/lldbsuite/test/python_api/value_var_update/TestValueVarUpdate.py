@@ -7,7 +7,7 @@ import use_lldb_suite
 import os, sys, time
 import lldb
 import time
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class HelloWorldTestCase(TestBase):
 

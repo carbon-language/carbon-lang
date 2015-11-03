@@ -8,7 +8,7 @@ import use_lldb_suite
 
 import unittest2
 import lldbmi_testcase
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 

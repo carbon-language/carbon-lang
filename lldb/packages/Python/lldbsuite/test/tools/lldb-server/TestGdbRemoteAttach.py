@@ -5,7 +5,7 @@ import use_lldb_suite
 import gdbremote_testcase
 import lldbgdbserverutils
 
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class TestGdbRemoteAttach(gdbremote_testcase.GdbRemoteTestCaseBase):
 

@@ -8,8 +8,8 @@ import use_lldb_suite
 
 import os, time
 import lldb
-from lldbutil import get_stopped_thread, get_caller_symbol
-from lldbtest import *
+from lldbsuite.test.lldbutil import get_stopped_thread, get_caller_symbol
+from lldbsuite.test.lldbtest import *
 
 class ThreadAPITestCase(TestBase):
 

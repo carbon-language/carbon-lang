@@ -4,7 +4,7 @@ import use_lldb_suite
 
 import gdbremote_testcase
 import signal
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class TestGdbRemoteAbort(gdbremote_testcase.GdbRemoteTestCaseBase):
     mydir = TestBase.compute_mydir(__file__)

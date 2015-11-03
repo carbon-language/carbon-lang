@@ -7,8 +7,8 @@ from __future__ import print_function
 import os, time
 import re
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 def Msg(var, val, using_frame_variable):
     return "'%s %s' matches the output (from compiled code): %s" % (

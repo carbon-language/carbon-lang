@@ -8,7 +8,7 @@ import use_lldb_suite
 
 import os
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class FrameUtilsTestCase(TestBase):
 
@@ -41,7 +41,7 @@ class FrameUtilsTestCase(TestBase):
         self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
-        import lldbutil
+        import lldbsuite.test.lldbutil as lldbutil
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue (thread)
         frame0 = thread.GetFrameAtIndex(0)

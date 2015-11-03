@@ -6,7 +6,7 @@ import use_lldb_suite
 
 import os
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class CommandInterpreterAPICase(TestBase):
 
@@ -63,7 +63,7 @@ class CommandInterpreterAPICase(TestBase):
         process = ci.GetProcess()
         self.assertTrue(process)
 
-        import lldbutil
+        import lldbsuite.test.lldbutil as lldbutil
         if process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %

@@ -9,7 +9,7 @@ import use_lldb_suite
 import os, time
 import re
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class ThreadsStackTracesTestCase(TestBase):
 
@@ -41,7 +41,7 @@ class ThreadsStackTracesTestCase(TestBase):
         if not process:
             self.fail("SBTarget.LaunchProcess() failed")
 
-        import lldbutil
+        import lldbsuite.test.lldbutil as lldbutil
         if process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %

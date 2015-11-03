@@ -2,8 +2,8 @@
 Tests that C++ member and static variables are available where they should be.
 """
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class CPPThisTestCase(TestBase):
     

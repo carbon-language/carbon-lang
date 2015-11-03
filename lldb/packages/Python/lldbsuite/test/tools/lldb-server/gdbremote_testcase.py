@@ -20,7 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 from lldbgdbserverutils import *
 import logging
 

@@ -19,14 +19,10 @@ for available options.
 """
 
 from __future__ import print_function
-# this module needs to have global visibility, otherwise test cases
-# will import it anew in their local namespace, essentially losing access
-# to all the configuration data
-globals()['lldbtest_config'] = __import__('lldbtest_config')
-
 import use_lldb_suite
 
 import lldbsuite
+import lldbtest_config
 
 import atexit
 import commands
@@ -1058,7 +1054,6 @@ def setupSysPath():
     toolsLLDBServerPath = os.path.join(scriptPath, 'tools', 'lldb-server')
 
     # Insert script dir, plugin dir, lldb-mi dir and lldb-server dir to the sys.path.
-    sys.path.insert(0, scriptPath)
     sys.path.insert(0, pluginPath)
     sys.path.insert(0, toolsLLDBMIPath)      # Adding test/tools/lldb-mi to the path makes it easy
                                              # to "import lldbmi_testcase" from the MI tests

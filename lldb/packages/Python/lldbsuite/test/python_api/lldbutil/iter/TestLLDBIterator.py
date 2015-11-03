@@ -9,7 +9,7 @@ import use_lldb_suite
 import os, time
 import re
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class LLDBIteratorTestCase(TestBase):
 
@@ -40,7 +40,7 @@ class LLDBIteratorTestCase(TestBase):
         if not process:
             self.fail("SBTarget.LaunchProcess() failed")
 
-        from lldbutil import get_description
+        from lldbsuite.test.lldbutil import get_description
         yours = []
         for i in range(target.GetNumModules()):
             yours.append(target.GetModuleAtIndex(i))
@@ -72,7 +72,7 @@ class LLDBIteratorTestCase(TestBase):
 
         self.assertTrue(target.GetNumBreakpoints() == 2)
 
-        from lldbutil import get_description
+        from lldbsuite.test.lldbutil import get_description
         yours = []
         for i in range(target.GetNumBreakpoints()):
             yours.append(target.GetBreakpointAtIndex(i))
@@ -106,7 +106,7 @@ class LLDBIteratorTestCase(TestBase):
         if not process:
             self.fail("SBTarget.LaunchProcess() failed")
 
-        from lldbutil import print_stacktrace
+        from lldbsuite.test.lldbutil import print_stacktrace
         stopped_due_to_breakpoint = False
         for thread in process:
             if self.TraceOn():

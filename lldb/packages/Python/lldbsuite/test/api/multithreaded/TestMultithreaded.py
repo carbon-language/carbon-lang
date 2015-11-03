@@ -2,11 +2,12 @@
 
 from __future__ import print_function
 
+# __package__ = "lldbsuite.test"
 import use_lldb_suite
 
 import os, re
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 import subprocess
 
 class SBBreakpointCallbackCase(TestBase):

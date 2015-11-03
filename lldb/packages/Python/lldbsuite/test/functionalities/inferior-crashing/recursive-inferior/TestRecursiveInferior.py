@@ -5,9 +5,10 @@ from __future__ import print_function
 import use_lldb_suite
 
 import os, time
-import lldb, lldbutil, lldbplatformutil
-import sys
-from lldbtest import *
+import lldb
+import lldbsuite.test.lldbutil as lldbutil
+import lldbsuite.test.lldbplatformutil as lldbplatformutil
+from lldbsuite.test.lldbtest import *
 
 class CrashingRecursiveInferiorTestCase(TestBase):
 

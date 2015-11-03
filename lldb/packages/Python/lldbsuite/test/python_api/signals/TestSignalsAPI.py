@@ -8,8 +8,8 @@ import use_lldb_suite
 
 import os, time
 import lldb
-from lldbutil import get_stopped_thread, state_type_to_str
-from lldbtest import *
+from lldbsuite.test.lldbutil import get_stopped_thread, state_type_to_str
+from lldbsuite.test.lldbtest import *
 
 class SignalsAPITestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)

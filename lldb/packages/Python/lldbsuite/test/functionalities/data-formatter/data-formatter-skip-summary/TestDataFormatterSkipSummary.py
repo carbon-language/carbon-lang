@@ -8,8 +8,8 @@ import use_lldb_suite
 
 import os, time
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class SkipSummaryDataFormatterTestCase(TestBase):
 
@@ -32,7 +32,7 @@ class SkipSummaryDataFormatterTestCase(TestBase):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        #import lldbutil
+        #import lldbsuite.test.lldbutil as lldbutil
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
 

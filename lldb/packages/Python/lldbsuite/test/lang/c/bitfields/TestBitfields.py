@@ -6,8 +6,8 @@ import use_lldb_suite
 
 import os, time
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class BitfieldsTestCase(TestBase):
 
@@ -114,7 +114,7 @@ class BitfieldsTestCase(TestBase):
         # The stop reason of the thread should be breakpoint.
         thread = target.GetProcess().GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import stop_reason_to_str
+            from lldbsuite.test.lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
                       stop_reason_to_str(thread.GetStopReason()))
 

@@ -2,8 +2,8 @@
 Tests that bool types work
 """
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class CPPBoolTestCase(TestBase):
     

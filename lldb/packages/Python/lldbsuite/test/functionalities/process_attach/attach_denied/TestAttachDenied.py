@@ -9,7 +9,7 @@ import use_lldb_suite
 import os
 import time
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 exe_name = 'AttachDenied'  # Must match Makefile
 

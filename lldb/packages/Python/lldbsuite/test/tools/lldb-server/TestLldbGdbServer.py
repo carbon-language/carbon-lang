@@ -19,7 +19,7 @@ import gdbremote_testcase
 import lldbgdbserverutils
 import platform
 import signal
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 

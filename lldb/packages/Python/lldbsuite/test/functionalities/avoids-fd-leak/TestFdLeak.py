@@ -8,8 +8,8 @@ import use_lldb_suite
 
 import os
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 
 def python_leaky_fd_version(test):

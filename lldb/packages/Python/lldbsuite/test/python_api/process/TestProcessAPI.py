@@ -8,8 +8,8 @@ import use_lldb_suite
 
 import os, time
 import lldb
-from lldbutil import get_stopped_thread, state_type_to_str
-from lldbtest import *
+from lldbsuite.test.lldbutil import get_stopped_thread, state_type_to_str
+from lldbsuite.test.lldbtest import *
 
 class ProcessAPITestCase(TestBase):
 
@@ -187,7 +187,7 @@ class ProcessAPITestCase(TestBase):
         location = int(val.GetLocation(), 16)
 
         # Note that the canonical from of the bytearray is little endian.
-        from lldbutil import int_to_bytearray, bytearray_to_int
+        from lldbsuite.test.lldbutil import int_to_bytearray, bytearray_to_int
 
         byteSize = val.GetByteSize()
         bytes = int_to_bytearray(256, byteSize)

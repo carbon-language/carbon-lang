@@ -13,7 +13,7 @@ import six
 import socket_packet_pump
 import subprocess
 import time
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 from six.moves import queue
 

@@ -8,8 +8,9 @@ import use_lldb_suite
 
 import os, time
 import re
-import lldb, lldbutil
-from lldbtest import *
+import lldb
+import lldbsuite.test.lldbutil as lldbutil
+from lldbsuite.test.lldbtest import *
 
 class BreakpointIgnoreCountTestCase(TestBase):
 
@@ -118,7 +119,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
         # Frame#0 should be on main.c:37, frame#1 should be on main.c:25, and
         # frame#2 should be on main.c:48.
         #lldbutil.print_stacktraces(process)
-        from lldbutil import get_stopped_thread
+        from lldbsuite.test.lldbutil import get_stopped_thread
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint")
         frame0 = thread.GetFrameAtIndex(0)

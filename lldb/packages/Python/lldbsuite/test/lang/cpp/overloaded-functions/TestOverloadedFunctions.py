@@ -3,8 +3,8 @@ Tests that functions with the same name are resolved correctly.
 """
 
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class CPPStaticMethodsTestCase(TestBase):
     

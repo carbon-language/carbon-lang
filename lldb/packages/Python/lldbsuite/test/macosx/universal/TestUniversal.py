@@ -7,8 +7,8 @@ import use_lldb_suite
 import unittest2
 import os, time
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class UniversalTestCase(TestBase):
 
@@ -45,7 +45,7 @@ class UniversalTestCase(TestBase):
             "requires i386 or x86_64")
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
-        from lldbutil import print_registers
+        from lldbsuite.test.lldbutil import print_registers
 
         # Invoke the default build rule.
         self.build()

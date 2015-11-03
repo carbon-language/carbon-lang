@@ -2,8 +2,8 @@
 Test that global operators are found and evaluated.
 """
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class TestCppGlobalOperators(TestBase):
     

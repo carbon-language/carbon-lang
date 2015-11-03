@@ -8,8 +8,9 @@ import use_lldb_suite
 
 import os, time
 import re
-import lldb, lldbutil
-from lldbtest import *
+import lldb
+import lldbsuite.test.lldbutil as lldbutil
+from lldbsuite.test.lldbtest import *
 
 class ExprDoesntDeadlockTestCase(TestBase):
 
@@ -45,7 +46,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
         self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1 and the break condition should hold.
-        from lldbutil import get_stopped_thread
+        from lldbsuite.test.lldbutil import get_stopped_thread
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread.IsValid(), "There should be a thread stopped due to breakpoint condition")
 

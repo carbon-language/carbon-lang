@@ -8,8 +8,9 @@ import use_lldb_suite
 
 import os, time
 import re
-import lldb, lldbutil
-from lldbtest import *
+import lldb
+import lldbsuite.test.lldbutil as lldbutil
+from lldbsuite.test.lldbtest import *
 
 class InlinedFrameAPITestCase(TestBase):
 
@@ -47,7 +48,7 @@ class InlinedFrameAPITestCase(TestBase):
         self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
-        import lldbutil
+        import lldbsuite.test.lldbutil as lldbutil
         stack_traces1 = lldbutil.print_stacktraces(process, string_buffer=True)
         if self.TraceOn():
             print("Full stack traces when first stopped on the breakpoint 'inner_inline':")

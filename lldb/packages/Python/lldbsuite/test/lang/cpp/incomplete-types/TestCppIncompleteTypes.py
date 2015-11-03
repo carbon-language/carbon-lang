@@ -1,6 +1,6 @@
 import lldb
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 class TestCppIncompleteTypes(TestBase):
 

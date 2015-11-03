@@ -5,16 +5,16 @@ from __future__ import print_function
 
 import use_lldb_suite
 
-import commands
 import lldb
+import commands
 import os
 import time
-from lldbtest import *
-import lldbutil
+from lldbsuite.test.lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
 
 def execute_command (command):
     # print('%% %s' % (command))
-    (exit_status, output) = commands.getstatusoutput (command)
+    (exit_status, output) = commands.getstatusoutput(command)
     # if output:
     #     print(output)
     # print('status = %u' % (exit_status))

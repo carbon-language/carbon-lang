@@ -6,7 +6,7 @@ import use_lldb_suite
 
 import os, sys, time
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class Rdar12586188TestCase(TestBase):
 

@@ -8,7 +8,7 @@ import os
 import select
 import tempfile
 import time
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class TestStubSetSIDTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 

@@ -6,7 +6,7 @@ import re
 import select
 import socket
 import time
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class TestStubReverseConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
 

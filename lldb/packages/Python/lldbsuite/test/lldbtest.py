@@ -48,7 +48,7 @@ import types
 import unittest2
 import lldb
 import lldbtest_config
-import lldbutil
+import  lldbutil
 import test_categories
 
 from six import add_metaclass

@@ -6,7 +6,7 @@ import use_lldb_suite
 
 import os
 import lldb
-from lldbtest import *
+from lldbsuite.test.lldbtest import *
 
 class ConvenienceVariablesCase(TestBase):
 

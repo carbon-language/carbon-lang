@@ -9,8 +9,9 @@ import use_lldb_suite
 import unittest2
 import os, time
 import re
-import lldb, lldbutil
-from lldbtest import *
+import lldb
+import lldbsuite.test.lldbutil as lldbutil
+from lldbsuite.test.lldbtest import *
 
 class TargetAPITestCase(TestBase):
 
@@ -233,7 +234,7 @@ class TargetAPITestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        from lldbutil import get_description
+        from lldbsuite.test.lldbutil import get_description
 
         # get_description() allows no option to mean lldb.eDescriptionLevelBrief.
         desc = get_description(target)
@@ -364,7 +365,7 @@ class TargetAPITestCase(TestBase):
         #print("symbol1:", symbol1)
         #print("symbol2:", symbol2)
 
-        from lldbutil import get_description
+        from lldbsuite.test.lldbutil import get_description
         desc1 = get_description(symbol1)
         desc2 = get_description(symbol2)
         self.assertTrue(desc1 and desc2 and desc1 == desc2,
