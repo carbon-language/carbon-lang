@@ -304,13 +304,13 @@ ModuleCache::GetAndPut (const FileSpec &root_dir_spec,
         // contain the neccessary symbols and the debugging is also possible without a symfile.
         return Error ();
 
-    FileSpec symfile_spec = GetSymbolFileSpec (cached_module_sp->GetFileSpec ());
-    error = Put (root_dir_spec, hostname, module_spec, tmp_download_sym_file_spec, symfile_spec);
+    error = Put (root_dir_spec, hostname, module_spec, tmp_download_sym_file_spec, GetSymbolFileSpec(module_spec.GetFileSpec ()));
     if (error.Fail ())
         return Error ("Failed to put symbol file into cache: %s", error.AsCString ());
     
     tmp_symfile_remover.releaseFile();
 
+    FileSpec symfile_spec = GetSymbolFileSpec (cached_module_sp->GetFileSpec ());
     cached_module_sp->SetSymbolFileFileSpec (symfile_spec);
     return Error ();
 }
