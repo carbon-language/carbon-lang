@@ -82,12 +82,10 @@ using namespace llvm;
 namespace {
 
 class SIFixSGPRCopies : public MachineFunctionPass {
-
-private:
+public:
   static char ID;
 
-public:
-  SIFixSGPRCopies(TargetMachine &tm) : MachineFunctionPass(ID) { }
+  SIFixSGPRCopies() : MachineFunctionPass(ID) { }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 
@@ -103,10 +101,15 @@ public:
 
 } // End anonymous namespace
 
+INITIALIZE_PASS(SIFixSGPRCopies, DEBUG_TYPE,
+                "SI Fix SGPR copies", false, false)
+
 char SIFixSGPRCopies::ID = 0;
 
-FunctionPass *llvm::createSIFixSGPRCopiesPass(TargetMachine &tm) {
-  return new SIFixSGPRCopies(tm);
+char &llvm::SIFixSGPRCopiesID = SIFixSGPRCopies::ID;
+
+FunctionPass *llvm::createSIFixSGPRCopiesPass() {
+  return new SIFixSGPRCopies();
 }
 
 static bool hasVGPROperands(const MachineInstr &MI, const SIRegisterInfo *TRI) {

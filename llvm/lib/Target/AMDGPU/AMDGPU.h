@@ -44,7 +44,7 @@ FunctionPass *createSIShrinkInstructionsPass();
 FunctionPass *createSILoadStoreOptimizerPass(TargetMachine &tm);
 FunctionPass *createSILowerControlFlowPass(TargetMachine &tm);
 FunctionPass *createSIFixControlFlowLiveIntervalsPass();
-FunctionPass *createSIFixSGPRCopiesPass(TargetMachine &tm);
+FunctionPass *createSIFixSGPRCopiesPass();
 FunctionPass *createSIFixSGPRLiveRangesPass();
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 FunctionPass *createSIInsertWaits(TargetMachine &tm);
@@ -52,6 +52,9 @@ FunctionPass *createSIPrepareScratchRegs();
 
 void initializeSIFoldOperandsPass(PassRegistry &);
 extern char &SIFoldOperandsID;
+
+void initializeSIFixSGPRCopiesPass(PassRegistry &);
+extern char &SIFixSGPRCopiesID;
 
 void initializeSILowerI1CopiesPass(PassRegistry &);
 extern char &SILowerI1CopiesID;

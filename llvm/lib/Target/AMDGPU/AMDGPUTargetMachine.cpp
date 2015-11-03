@@ -45,6 +45,7 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
 
   PassRegistry *PR = PassRegistry::getPassRegistry();
   initializeSILowerI1CopiesPass(*PR);
+  initializeSIFixSGPRCopiesPass(*PR);
   initializeSIFoldOperandsPass(*PR);
   initializeSIFixSGPRLiveRangesPass(*PR);
   initializeSIFixControlFlowLiveIntervalsPass(*PR);
@@ -276,7 +277,7 @@ bool GCNPassConfig::addPreISel() {
 bool GCNPassConfig::addInstSelector() {
   AMDGPUPassConfig::addInstSelector();
   addPass(createSILowerI1CopiesPass());
-  addPass(createSIFixSGPRCopiesPass(*TM));
+  addPass(&SIFixSGPRCopiesID);
   addPass(createSIFoldOperandsPass());
   return false;
 }
