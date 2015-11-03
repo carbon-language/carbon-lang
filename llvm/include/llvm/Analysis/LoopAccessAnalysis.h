@@ -179,7 +179,12 @@ public:
     /// \brief Dependence types that don't prevent vectorization.
     static bool isSafeForVectorization(DepType Type);
 
-    /// \brief Lexically backward dependence types.
+    /// \brief Lexically forward dependence.
+    bool isForward() const;
+    /// \brief Lexically backward dependence.
+    bool isBackward() const;
+
+    /// \brief May be a lexically backward dependence type (includes Unknown).
     bool isPossiblyBackward() const;
 
     /// \brief Print the dependence.  \p Instr is used to map the instruction
