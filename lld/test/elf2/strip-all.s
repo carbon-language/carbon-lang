@@ -3,14 +3,14 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t.o
 # RUN: ld.lld2 %t.o -o %t1
 #RUN: llvm-objdump -section-headers %t1 | FileCheck %s -check-prefix BEFORE
-#BEFORE:       4 .symtab 00000030
-#BEFORE-NEXT:  5 .shstrtab 0000002c
-#BEFORE-NEXT:  6 .strtab 00000008
+#BEFORE:       .symtab
+#BEFORE-NEXT:  .shstrtab
+#BEFORE-NEXT:  .strtab
 
 #RUN: ld.lld2 %t.o --strip-all -o %t1
 #RUN: llvm-objdump -section-headers %t1 | FileCheck %s -check-prefix AFTER
 #AFTER-NOT: .symtab
-#AFTER: 4 .shstrtab 0000001c
+#AFTER:     .shstrtab
 #AFTER-NOT: .strtab
 
 # Test alias -s

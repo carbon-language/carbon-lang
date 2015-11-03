@@ -18,15 +18,15 @@
 # X86-64-NEXT:   Version: 1
 # X86-64-NEXT:   Entry: 0x100B0
 # X86-64-NEXT:   ProgramHeaderOffset: 0x40
-# X86-64-NEXT:   SectionHeaderOffset: 0x118
+# X86-64-NEXT:   SectionHeaderOffset:
 # X86-64-NEXT:   Flags [ (0x0)
 # X86-64-NEXT:   ]
 # X86-64-NEXT:   HeaderSize: 64
 # X86-64-NEXT:   ProgramHeaderEntrySize: 56
 # X86-64-NEXT:   ProgramHeaderCount: 2
 # X86-64-NEXT:   SectionHeaderEntrySize: 64
-# X86-64-NEXT:   SectionHeaderCount: 7
-# X86-64-NEXT:    StringTableSectionIndex: 5
+# X86-64-NEXT:   SectionHeaderCount:
+# X86-64-NEXT:   StringTableSectionIndex:
 # X86-64-NEXT: }
 
 # RUN: llvm-mc -filetype=obj -triple=i686-unknown-linux %s -o %tx86
@@ -49,15 +49,15 @@
 # X86-NEXT:   Version: 1
 # X86-NEXT:   Entry: 0x10074
 # X86-NEXT:   ProgramHeaderOffset: 0x34
-# X86-NEXT:   SectionHeaderOffset: 0xC8
+# X86-NEXT:   SectionHeaderOffset:
 # X86-NEXT:   Flags [ (0x0)
 # X86-NEXT:   ]
 # X86-NEXT:   HeaderSize: 52
 # X86-NEXT:   ProgramHeaderEntrySize: 32
 # X86-NEXT:   ProgramHeaderCount: 2
 # X86-NEXT:   SectionHeaderEntrySize: 40
-# X86-NEXT:   SectionHeaderCount: 7
-# X86-NEXT:    StringTableSectionIndex: 5
+# X86-NEXT:   SectionHeaderCount:
+# X86-NEXT:   StringTableSectionIndex:
 # X86-NEXT: }
 
 # RUN: llvm-mc -filetype=obj -triple=powerpc64-unknown-linux %s -o %tppc64
@@ -80,15 +80,15 @@
 # PPC64-NEXT:   Version: 1
 # PPC64-NEXT:   Entry: 0x100000B0
 # PPC64-NEXT:   ProgramHeaderOffset: 0x40
-# PPC64-NEXT:   SectionHeaderOffset: 0x118
+# PPC64-NEXT:   SectionHeaderOffset:
 # PPC64-NEXT:   Flags [ (0x0)
 # PPC64-NEXT:   ]
 # PPC64-NEXT:   HeaderSize: 64
 # PPC64-NEXT:   ProgramHeaderEntrySize: 56
 # PPC64-NEXT:   ProgramHeaderCount: 2
 # PPC64-NEXT:   SectionHeaderEntrySize: 64
-# PPC64-NEXT:   SectionHeaderCount: 7
-# PPC64-NEXT:    StringTableSectionIndex: 5
+# PPC64-NEXT:   SectionHeaderCount:
+# PPC64-NEXT:   StringTableSectionIndex:
 # PPC64-NEXT: }
 
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %tmips

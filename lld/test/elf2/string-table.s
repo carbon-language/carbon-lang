@@ -52,7 +52,7 @@ _start:
 // CHECK-NEXT:  ]
 // CHECK-NEXT:  Address: 0x0
 // CHECK-NEXT:  Offset:
-// CHECK-NEXT:  Size: 51
+// CHECK-NEXT:  Size:
 // CHECK-NEXT:  Link: 0
 // CHECK-NEXT:  Info: 0
 // CHECK-NEXT:  AddressAlignment: 1
