@@ -25,7 +25,6 @@ import lldbsuite
 import lldbtest_config
 
 import atexit
-import commands
 import importlib
 import os
 import dotest_args
@@ -43,6 +42,7 @@ import unittest2
 import test_categories
 
 import six
+import lldbsuite.support.seven as seven
 
 def is_exe(fpath):
     """Returns true if fpath is an executable."""
@@ -512,7 +512,7 @@ def parseOptionsAndInitTestdirs():
     else:
         # Use a compiler appropriate appropriate for the Apple SDK if one was specified
         if platform_system == 'Darwin' and args.apple_sdk:
-            compilers = [commands.getoutput('xcrun -sdk "%s" -find clang 2> /dev/null' % (args.apple_sdk))]
+            compilers = [seven.get_command_output('xcrun -sdk "%s" -find clang 2> /dev/null' % (args.apple_sdk))]
         else:
             # 'clang' on ubuntu 14.04 is 3.4 so we try clang-3.5 first
             candidateCompilers = ['clang-3.5', 'clang', 'gcc']
@@ -529,15 +529,15 @@ def parseOptionsAndInitTestdirs():
 
     # Set SDKROOT if we are using an Apple SDK
     if platform_system == 'Darwin' and args.apple_sdk:
-        os.environ['SDKROOT'] = commands.getoutput('xcrun --sdk "%s" --show-sdk-path 2> /dev/null' % (args.apple_sdk))
+        os.environ['SDKROOT'] = seven.get_command_output('xcrun --sdk "%s" --show-sdk-path 2> /dev/null' % (args.apple_sdk))
 
     if args.archs:
         archs = args.archs
         for arch in archs:
             if arch.startswith('arm') and platform_system == 'Darwin' and not args.apple_sdk:
-                os.environ['SDKROOT'] = commands.getoutput('xcrun --sdk iphoneos.internal --show-sdk-path 2> /dev/null')
+                os.environ['SDKROOT'] = seven.get_command_output('xcrun --sdk iphoneos.internal --show-sdk-path 2> /dev/null')
                 if not os.path.exists(os.environ['SDKROOT']):
-                    os.environ['SDKROOT'] = commands.getoutput('xcrun --sdk iphoneos --show-sdk-path 2> /dev/null')
+                    os.environ['SDKROOT'] = seven.get_command_output('xcrun --sdk iphoneos --show-sdk-path 2> /dev/null')
     else:
         archs = [platform_machine]
 

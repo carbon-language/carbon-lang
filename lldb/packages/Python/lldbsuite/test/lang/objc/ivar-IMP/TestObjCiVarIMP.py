@@ -7,15 +7,15 @@ from __future__ import print_function
 import use_lldb_suite
 
 import os, time
-import commands
 import re
 import lldb
 import lldbsuite.test.lldbutil as lldbutil
 from lldbsuite.test.lldbtest import *
+import lldbsuite.support.seven as seven
 
 def execute_command (command):
     # print('%% %s' % (command))
-    (exit_status, output) = commands.getstatusoutput(command)
+    (exit_status, output) = seven.get_command_status_output(command)
     # if output:
     #     print(output)
     # print('status = %u' % (exit_status))
