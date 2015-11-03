@@ -2694,6 +2694,12 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
         &DestBlock->getParent()->getEntryBlock())
     return false;
 
+  // Do not sink convergent call instructions.
+  if (auto *CI = dyn_cast<CallInst>(I)) {
+    if (CI->isConvergent())
+      return false;
+  }
+
   // We can only sink load instructions if there is nothing between the load and
   // the end of block that could change the value.
   if (I->mayReadFromMemory()) {
