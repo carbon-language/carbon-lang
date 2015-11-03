@@ -250,6 +250,17 @@ public:
     return InstMap;
   }
 
+  /// \brief Generate a mapping between the memory instructions and their
+  /// indices according to program order.
+  DenseMap<Instruction *, unsigned> generateInstructionOrderMap() const {
+    DenseMap<Instruction *, unsigned> OrderMap;
+
+    for (unsigned I = 0; I < InstMap.size(); ++I)
+      OrderMap[InstMap[I]] = I;
+
+    return OrderMap;
+  }
+
   /// \brief Find the set of instructions that read or write via \p Ptr.
   SmallVector<Instruction *, 4> getInstructionsForAccess(Value *Ptr,
                                                          bool isWrite) const;
@@ -452,6 +463,11 @@ public:
   /// \brief Decide whether we need to issue a run-time check for pointer at
   /// index \p I and \p J to prove their independence.
   bool needsChecking(unsigned I, unsigned J) const;
+
+  /// \brief Return PointerInfo for pointer at index \p PtrIdx.
+  const PointerInfo &getPointerInfo(unsigned PtrIdx) const {
+    return Pointers[PtrIdx];
+  }
 
 private:
   /// \brief Groups pointers such that a single memcheck is required

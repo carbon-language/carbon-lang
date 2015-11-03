@@ -480,6 +480,12 @@ FunctionPass *createNaryReassociatePass();
 //
 FunctionPass *createLoopDistributePass();
 
+//===----------------------------------------------------------------------===//
+//
+// LoopLoadElimination - Perform loop-aware load elimination.
+//
+FunctionPass *createLoopLoadEliminationPass();
+
 } // End llvm namespace
 
 #endif

@@ -99,6 +99,10 @@ static cl::opt<bool> EnableNonLTOGlobalsModRef(
     cl::desc(
         "Enable the GlobalsModRef AliasAnalysis outside of the LTO pipeline."));
 
+static cl::opt<bool> EnableLoopLoadElim(
+    "enable-loop-load-elim", cl::init(false), cl::Hidden,
+    cl::desc("Enable the new, experimental LoopLoadElimination Pass"));
+
 PassManagerBuilder::PassManagerBuilder() {
     OptLevel = 2;
     SizeLevel = 0;
@@ -378,6 +382,12 @@ void PassManagerBuilder::populateModulePassManager(
     MPM.add(createLoopDistributePass());
 
   MPM.add(createLoopVectorizePass(DisableUnrollLoops, LoopVectorize));
+
+  // Eliminate loads by forwarding stores from the previous iteration to loads
+  // of the current iteration.
+  if (EnableLoopLoadElim)
+    MPM.add(createLoopLoadEliminationPass());
+
   // FIXME: Because of #pragma vectorize enable, the passes below are always
   // inserted in the pipeline, even when the vectorizer doesn't run (ex. when
   // on -O1 and no #pragma is found). Would be good to have these two passes
