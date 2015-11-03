@@ -3125,7 +3125,16 @@ void Scop::buildSchedule(
             isl_schedule_insert_partial_schedule(LSchedulePair.first, MUPA);
 
       auto *PL = L->getParentLoop();
-      assert(LoopSchedules.count(PL));
+
+      // Either we have a proper loop and we also build a schedule for the
+      // parent loop or we have a infinite loop that does not have a proper
+      // parent loop. In the former case this conditional will be skipped, in
+      // the latter case however we will break here as we do not build a domain
+      // nor a schedule for a infinite loop.
+      assert(LoopSchedules.count(PL) || LSchedulePair.first == nullptr);
+      if (!LoopSchedules.count(PL))
+        break;
+
       auto &PSchedulePair = LoopSchedules[PL];
       PSchedulePair.first =
           combineInSequence(PSchedulePair.first, LSchedulePair.first);
