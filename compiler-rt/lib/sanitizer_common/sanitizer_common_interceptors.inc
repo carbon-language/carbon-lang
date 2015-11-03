@@ -441,6 +441,8 @@ INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
 
 #if SANITIZER_INTERCEPT_MEMCHR
 INTERCEPTOR(void*, memchr, const void *s, int c, SIZE_T n) {
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_memchr(s, c, n);
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, memchr, s, c, n);
   void *res = REAL(memchr)(s, c, n);
