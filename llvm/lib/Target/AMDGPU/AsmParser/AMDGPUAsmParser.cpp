@@ -447,10 +447,10 @@ struct OptionalOperand {
 
 }
 
-static unsigned getRegClass(bool IsVgpr, unsigned RegWidth) {
+static int getRegClass(bool IsVgpr, unsigned RegWidth) {
   if (IsVgpr) {
     switch (RegWidth) {
-      default: llvm_unreachable("Unknown register width");
+      default: return -1;
       case 1: return AMDGPU::VGPR_32RegClassID;
       case 2: return AMDGPU::VReg_64RegClassID;
       case 3: return AMDGPU::VReg_96RegClassID;
@@ -461,7 +461,7 @@ static unsigned getRegClass(bool IsVgpr, unsigned RegWidth) {
   }
 
   switch (RegWidth) {
-    default: llvm_unreachable("Unknown register width");
+    default: return -1;
     case 1: return AMDGPU::SGPR_32RegClassID;
     case 2: return AMDGPU::SGPR_64RegClassID;
     case 4: return AMDGPU::SReg_128RegClassID;
@@ -541,12 +541,20 @@ bool AMDGPUAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &End
       RegIndexInClass = RegLo;
     } else {
       // SGPR registers are aligned.  Max alignment is 4 dwords.
-      RegIndexInClass = RegLo / std::min(RegWidth, 4u);
+      unsigned Size = std::min(RegWidth, 4u);
+      if (RegLo % Size != 0)
+        return true;
+
+      RegIndexInClass = RegLo / Size;
     }
   }
 
   const MCRegisterInfo *TRI = getContext().getRegisterInfo();
-  const MCRegisterClass RC = TRI->getRegClass(getRegClass(IsVgpr, RegWidth));
+  int RCID = getRegClass(IsVgpr, RegWidth);
+  if (RCID == -1)
+    return true;
+
+  const MCRegisterClass RC = TRI->getRegClass(RCID);
   if (RegIndexInClass >= RC.getNumRegs())
     return true;
 
