@@ -215,7 +215,7 @@ static bool importFunctions(const char *argv0, LLVMContext &Context,
     }
 
     // Link in the specified function.
-    if (L.linkInModule(M.get(), false, Index.get(), F))
+    if (L.linkInModule(M.get(), Linker::Flags::None, Index.get(), F))
       return false;
   }
   return true;
