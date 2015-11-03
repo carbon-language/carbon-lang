@@ -78,12 +78,9 @@ private:
   /// universal binary (or the binary itself if it is an object file).
   ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
 
-  std::string printDILineInfo(DILineInfo LineInfo,
-                              const SymbolizableModule *ModInfo) const;
-  std::string printDIInliningInfo(DIInliningInfo InlinedContext,
-                                  const SymbolizableModule *ModInfo) const;
-  std::string printDIGlobal(DIGlobal Global,
-                            const SymbolizableModule *ModInfo) const;
+  std::string printDILineInfo(DILineInfo LineInfo) const;
+  std::string printDIInliningInfo(DIInliningInfo InlinedContext) const;
+  std::string printDIGlobal(DIGlobal Global) const;
 
   // Owns all the parsed binaries and object files.
   SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;

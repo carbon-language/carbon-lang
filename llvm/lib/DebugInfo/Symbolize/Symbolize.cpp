@@ -66,7 +66,7 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
                                           uint64_t ModuleOffset) {
   SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
-    return printDILineInfo(DILineInfo(), Info);
+    return printDILineInfo(DILineInfo());
 
   // If the user is giving us relative addresses, add the preferred base of the
   // object to the offset before we do the query. It's what DIContext expects.
@@ -75,14 +75,16 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
 
   DILineInfo LineInfo = Info->symbolizeCode(ModuleOffset, Opts.PrintFunctions,
                                             Opts.UseSymbolTable);
-  return printDILineInfo(LineInfo, Info);
+  if (Opts.Demangle)
+    LineInfo.FunctionName = DemangleName(LineInfo.FunctionName, Info);
+  return printDILineInfo(LineInfo);
 }
 
 std::string LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
                                                  uint64_t ModuleOffset) {
   SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
-    return printDIInliningInfo(DIInliningInfo(), nullptr);
+    return printDIInliningInfo(DIInliningInfo());
 
   // If the user is giving us relative addresses, add the preferred base of the
   // object to the offset before we do the query. It's what DIContext expects.
@@ -91,23 +93,33 @@ std::string LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
 
   DIInliningInfo InlinedContext = Info->symbolizeInlinedCode(
       ModuleOffset, Opts.PrintFunctions, Opts.UseSymbolTable);
-  return printDIInliningInfo(InlinedContext, Info);
+  if (Opts.Demangle) {
+    for (int i = 0, n = InlinedContext.getNumberOfFrames(); i < n; i++) {
+      auto *Frame = InlinedContext.getMutableFrame(i);
+      Frame->FunctionName = DemangleName(Frame->FunctionName, Info);
+    }
+  }
+  return printDIInliningInfo(InlinedContext);
 }
 
 std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
                                           uint64_t ModuleOffset) {
-  if (Opts.UseSymbolTable) {
-    if (SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName)) {
-      // If the user is giving us relative addresses, add the preferred base of
-      // the object to the offset before we do the query. It's what DIContext
-      // expects.
-      if (Opts.RelativeAddresses)
-        ModuleOffset += Info->getModulePreferredBase();
-      DIGlobal Global = Info->symbolizeData(ModuleOffset);
-      return printDIGlobal(Global, Info);
-    }
-  }
-  return printDIGlobal(DIGlobal(), nullptr);
+  if (!Opts.UseSymbolTable)
+    return printDIGlobal(DIGlobal());
+  SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
+  if (!Info)
+    return printDIGlobal(DIGlobal());
+
+  // If the user is giving us relative addresses, add the preferred base of
+  // the object to the offset before we do the query. It's what DIContext
+  // expects.
+  if (Opts.RelativeAddresses)
+    ModuleOffset += Info->getModulePreferredBase();
+
+  DIGlobal Global = Info->symbolizeData(ModuleOffset);
+  if (Opts.Demangle)
+    Global.Name = DemangleName(Global.Name, Info);
+  return printDIGlobal(Global);
 }
 
 void LLVMSymbolizer::flush() {
@@ -360,15 +372,12 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
 }
 
 std::string
-LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
-                                const SymbolizableModule *ModInfo) const {
+LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo) const {
   std::stringstream Result;
   if (Opts.PrintFunctions != FunctionNameKind::None) {
     std::string FunctionName = LineInfo.FunctionName;
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kBadString;
-    else if (Opts.Demangle)
-      FunctionName = DemangleName(FunctionName, ModInfo);
     Result << FunctionName << "\n";
   }
   std::string Filename = LineInfo.FileName;
@@ -379,28 +388,24 @@ LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
 }
 
 std::string
-LLVMSymbolizer::printDIInliningInfo(DIInliningInfo InlinedContext,
-                                   const SymbolizableModule *ModInfo) const {
+LLVMSymbolizer::printDIInliningInfo(DIInliningInfo InlinedContext) const {
   uint32_t FramesNum = InlinedContext.getNumberOfFrames();
   if (FramesNum == 0)
-    return printDILineInfo(DILineInfo(), ModInfo);
+    return printDILineInfo(DILineInfo());
   std::string Result;
   for (uint32_t i = 0; i < FramesNum; i++) {
     DILineInfo LineInfo = InlinedContext.getFrame(i);
-    Result += printDILineInfo(LineInfo, ModInfo);
+    Result += printDILineInfo(LineInfo);
   }
   return Result;
 }
 
 std::string
-LLVMSymbolizer::printDIGlobal(DIGlobal Global,
-                              const SymbolizableModule *ModInfo) const {
+LLVMSymbolizer::printDIGlobal(DIGlobal Global) const {
   std::stringstream Result;
   std::string Name = Global.Name;
   if (Name == kDILineInfoBadString)
     Name = kBadString;
-  else if (Opts.Demangle)
-    Name = DemangleName(Name, ModInfo);
   Result << Name << "\n";
   Result << Global.Start << " " << Global.Size << "\n";
   return Result.str();
