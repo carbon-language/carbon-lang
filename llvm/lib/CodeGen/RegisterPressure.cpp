@@ -862,7 +862,8 @@ getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff,
     unsigned MNew = MOld;
     // Ignore DeadDefs here because they aren't captured by PressureChange.
     unsigned PNew = POld + PDiffI->getUnitInc();
-    assert((PDiffI->getUnitInc() >= 0) == (PNew >= POld) && "PSet overflow");
+    assert((PDiffI->getUnitInc() >= 0) == (PNew >= POld)
+           && "PSet overflow/underflow");
     if (PNew > MOld)
       MNew = PNew;
     // Check if current pressure has exceeded the limit.
