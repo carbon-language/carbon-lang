@@ -16,6 +16,7 @@ if.end:                                           ; preds = %entry
   %tmp = load i16*, i16** %call, align 8
   %arrayidx = getelementptr inbounds i16, i16* %tmp, i64 0
   %tmp1 = load i16, i16* %arrayidx, align 2
+  store i16 3, i16 *%arrayidx, align 2
   br i1 false, label %if.then.2, label %if.end.3
 
 if.then.2:                                        ; preds = %if.end

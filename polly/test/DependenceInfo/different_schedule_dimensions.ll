@@ -4,9 +4,9 @@
 ; CHECK: RAW dependences:
 ; CHECK:   { Stmt_bb9[0] -> Stmt_bb10[0] }
 ; CHECK: WAR dependences:
-; CHECK:   { Stmt_bb3[0] -> Stmt_bb10[0] }
-; CHECK: WAW dependences:
 ; CHECK:   {  }
+; CHECK: WAW dependences:
+; CHECK:   { Stmt_bb3[0] -> Stmt_bb10[0] }
 ; CHECK: Reduction dependences:
 ; CHECK:   {  }
 
@@ -25,6 +25,7 @@ bb3:                                              ; preds = %bb10, %bb2
   %tmp5 = getelementptr inbounds [1024 x double], [1024 x double]* %arg1, i64 0, i64 0
   %tmp6 = load double, double* %tmp5, align 8
   %tmp7 = fadd double undef, %tmp6
+  store double %tmp7, double* %tmp5, align 8
   br i1 false, label %bb8, label %bb9
 
 bb8:                                              ; preds = %bb3

@@ -2518,10 +2518,27 @@ void Scop::simplifySCoP(bool RemoveIgnoredStmts) {
                          ? Stmt.getRegion()->getNode()
                          : getRegion().getBBNode(Stmt.getBasicBlock());
 
-    if (StmtIt->isEmpty() ||
-        isl_set_is_empty(DomainMap[getRegionNodeBasicBlock(RN)]) ||
-        (RemoveIgnoredStmts && isIgnored(RN))) {
+    bool RemoveStmt = StmtIt->isEmpty();
+    if (!RemoveStmt)
+      RemoveStmt = isl_set_is_empty(DomainMap[getRegionNodeBasicBlock(RN)]);
+    if (!RemoveStmt)
+      RemoveStmt = (RemoveIgnoredStmts && isIgnored(RN));
 
+    // Remove read only statements only after invariant loop hoisting.
+    if (!RemoveStmt && !RemoveIgnoredStmts) {
+      bool OnlyRead = true;
+      for (MemoryAccess *MA : Stmt) {
+        if (MA->isRead())
+          continue;
+
+        OnlyRead = false;
+        break;
+      }
+
+      RemoveStmt = OnlyRead;
+    }
+
+    if (RemoveStmt) {
       // Remove the statement because it is unnecessary.
       if (Stmt.isRegionStmt())
         for (BasicBlock *BB : Stmt.getRegion()->blocks())
