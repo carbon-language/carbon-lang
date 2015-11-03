@@ -60,8 +60,7 @@ _start:
 // CHECK-NEXT:  SectionData (
 // CHECK-NEXT:    0000: 002E7465 7874002E 62737300 666F6F62  |..text..bss.foob|
 // CHECK-NEXT:    0010: 6172002E 73687374 72746162 002E7374  |ar..shstrtab..st|
-// CHECK-NEXT:    0020: 72746162 002E7379 6D746162 002E6461  |rtab..symtab..da|
-// CHECK-NEXT:    0030: 746100                               |ta.|
+// CHECK-NEXT:    0020: 72746162 002E7379 6D746162 00        |rtab..symtab.|
 // CHECK-NEXT:  )
 // CHECK-NEXT:}
 // CHECK:        Name: .strtab
