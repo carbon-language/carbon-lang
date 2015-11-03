@@ -84,9 +84,6 @@ namespace llvm {
     /// TargetSchedModel provides an interface to the machine model.
     TargetSchedModel SchedModel;
 
-    /// isPostRA flag indicates vregs cannot be present.
-    bool IsPostRA;
-
     /// True if the DAG builder should remove kill flags (in preparation for
     /// rescheduling).
     bool RemoveKillFlags;
@@ -154,13 +151,10 @@ namespace llvm {
   public:
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo *mli,
-                               bool IsPostRAFlag,
-                               bool RemoveKillFlags = false,
-                               LiveIntervals *LIS = nullptr);
+                               LiveIntervals *LIS = nullptr,
+                               bool RemoveKillFlags = false);
 
     ~ScheduleDAGInstrs() override {}
-
-    bool isPostRA() const { return IsPostRA; }
 
     /// \brief Expose LiveIntervals for use in DAG mutators and such.
     LiveIntervals *getLIS() const { return LIS; }

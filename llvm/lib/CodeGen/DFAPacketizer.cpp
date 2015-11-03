@@ -105,16 +105,15 @@ namespace llvm {
 // Schedule method to build the dependence graph.
 class DefaultVLIWScheduler : public ScheduleDAGInstrs {
 public:
-  DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI,
-                       bool IsPostRA);
+  DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI);
   // Schedule - Actual scheduling work.
   void schedule() override;
 };
 }
 
 DefaultVLIWScheduler::DefaultVLIWScheduler(MachineFunction &MF,
-                                           MachineLoopInfo &MLI, bool IsPostRA)
-    : ScheduleDAGInstrs(MF, &MLI, IsPostRA) {
+                                           MachineLoopInfo &MLI)
+    : ScheduleDAGInstrs(MF, &MLI) {
   CanHandleTerminators = true;
 }
 
@@ -125,11 +124,11 @@ void DefaultVLIWScheduler::schedule() {
 
 // VLIWPacketizerList Ctor
 VLIWPacketizerList::VLIWPacketizerList(MachineFunction &MF,
-                                       MachineLoopInfo &MLI, bool IsPostRA)
+                                       MachineLoopInfo &MLI)
     : MF(MF) {
   TII = MF.getSubtarget().getInstrInfo();
   ResourceTracker = TII->CreateTargetScheduleState(MF.getSubtarget());
-  VLIWScheduler = new DefaultVLIWScheduler(MF, MLI, IsPostRA);
+  VLIWScheduler = new DefaultVLIWScheduler(MF, MLI);
 }
 
 // VLIWPacketizerList Dtor

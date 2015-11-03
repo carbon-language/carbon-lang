@@ -149,8 +149,7 @@ private:
 public:
   // Ctor.
   R600PacketizerList(MachineFunction &MF, MachineLoopInfo &MLI)
-      : VLIWPacketizerList(MF, MLI, true),
-        TII(static_cast<const R600InstrInfo *>(
+      : VLIWPacketizerList(MF, MLI), TII(static_cast<const R600InstrInfo *>(
             MF.getSubtarget().getInstrInfo())),
         TRI(TII->getRegisterInfo()) {
     VLIW5 = !MF.getSubtarget<AMDGPUSubtarget>().hasCaymanISA();

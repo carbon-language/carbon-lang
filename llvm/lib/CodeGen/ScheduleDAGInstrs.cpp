@@ -51,15 +51,12 @@ static cl::opt<bool> UseTBAA("use-tbaa-in-sched-mi", cl::Hidden,
 
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo *mli,
-                                     bool IsPostRAFlag, bool RemoveKillFlags,
-                                     LiveIntervals *lis)
-    : ScheduleDAG(mf), MLI(mli), MFI(mf.getFrameInfo()), LIS(lis),
-      IsPostRA(IsPostRAFlag), RemoveKillFlags(RemoveKillFlags),
-      CanHandleTerminators(false), FirstDbgValue(nullptr) {
-  assert((IsPostRA || LIS) && "PreRA scheduling requires LiveIntervals");
+                                     LiveIntervals *LIS,
+                                     bool RemoveKillFlags)
+    : ScheduleDAG(mf), MLI(mli), MFI(mf.getFrameInfo()), LIS(LIS),
+      RemoveKillFlags(RemoveKillFlags), CanHandleTerminators(false),
+      FirstDbgValue(nullptr) {
   DbgValues.clear();
-  assert(!(IsPostRA && MRI.getNumVirtRegs()) &&
-         "Virtual registers must be removed prior to PostRA scheduling");
 
   const TargetSubtargetInfo &ST = mf.getSubtarget();
   SchedModel.init(ST.getSchedModel(), &ST, TII);
@@ -230,11 +227,8 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
 
       if (TRI->isPhysicalRegister(Reg))
         Uses.insert(PhysRegSUOper(&ExitSU, -1, Reg));
-      else {
-        assert(!IsPostRA && "Virtual register encountered after regalloc.");
-        if (MO.readsReg()) // ignore undef operands
-          addVRegUseDeps(&ExitSU, i);
-      }
+      else if (MO.readsReg()) // ignore undef operands
+        addVRegUseDeps(&ExitSU, i);
     }
   } else {
     // For others, e.g. fallthrough, conditional branch, assume the exit
@@ -831,7 +825,6 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       if (TRI->isPhysicalRegister(Reg))
         addPhysRegDeps(SU, j);
       else {
-        assert(!IsPostRA && "Virtual register encountered!");
         if (MO.isDef()) {
           HasVRegDef = true;
           addVRegDefDeps(SU, j);
