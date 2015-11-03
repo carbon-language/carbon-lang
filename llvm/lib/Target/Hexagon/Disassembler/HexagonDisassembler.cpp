@@ -1054,6 +1054,7 @@ static void AddSubinstOperands(MCInst *MI, unsigned opcode, unsigned inst) {
     operand = getDRegFromSubinstEncoding(inst & 0x7);
     Op = MCOperand::createReg(operand);
     MI->addOperand(Op);
+    break;
   case Hexagon::V4_SS2_storeh_io:
     // Rs 7-4, u 10-8{3_1}, Rt 3-0
     operand = getRegFromSubinstEncoding((inst & 0xf0) >> 4);
