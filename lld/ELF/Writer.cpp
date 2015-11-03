@@ -700,19 +700,17 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       }
     }
 
-    if (Sec->getSize() && (Sec->getFlags() & SHF_ALLOC) &&
-        (Sec->getFlags() & SHF_TLS)) {
-      if (!TlsPhdr.p_vaddr) {
+    if (Sec->getSize() && (Sec->getFlags() & (SHF_ALLOC | SHF_TLS))) {
+      if (!TlsPhdr.p_vaddr)
         setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
-      }
       if (Sec->getType() != SHT_NOBITS)
         VA = RoundUpToAlignment(VA, Sec->getAlign());
       uintX_t TVA = RoundUpToAlignment(VA + ThreadBSSOffset, Sec->getAlign());
       Sec->setVA(TVA);
       TlsPhdr.p_memsz += Sec->getSize();
-      if (Sec->getType() == SHT_NOBITS)
+      if (Sec->getType() == SHT_NOBITS) {
         ThreadBSSOffset = TVA - VA + Sec->getSize();
-      else {
+      } else {
         TlsPhdr.p_filesz += Sec->getSize();
         VA += Sec->getSize();
       }
