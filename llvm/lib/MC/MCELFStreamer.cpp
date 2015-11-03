@@ -619,16 +619,14 @@ void MCELFStreamer::EmitBundleUnlock() {
 }
 
 void MCELFStreamer::Flush() {
-  for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),
-                                                e = LocalCommons.end();
-       i != e; ++i) {
-    const MCSymbol &Symbol = *i->Symbol;
-    uint64_t Size = i->Size;
-    unsigned ByteAlignment = i->ByteAlignment;
-    MCSection &Section = *getAssembler().getContext().getELFSection(
-        ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
+  MCSection &Section = *getAssembler().getContext().getELFSection(
+      ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
+  getAssembler().registerSection(Section);
 
-    getAssembler().registerSection(Section);
+  for (const LocalCommon &L : LocalCommons) {
+    const MCSymbol &Symbol = *L.Symbol;
+    uint64_t Size = L.Size;
+    unsigned ByteAlignment = L.ByteAlignment;
     new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &Section);
 
     MCFragment *F = new MCFillFragment(0, 0, Size, &Section);
