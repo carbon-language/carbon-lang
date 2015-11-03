@@ -1,4 +1,4 @@
-/*===---- avx512fintrin.h - AVX2 intrinsics --------------------------------===
+/*===---- avx512fintrin.h - AVX512F intrinsics -----------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
