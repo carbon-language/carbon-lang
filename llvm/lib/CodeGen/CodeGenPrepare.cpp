@@ -589,6 +589,14 @@ simplifyRelocatesOffABase(IntrinsicInst *RelocatedBase,
       continue;
     }
 
+    if (RelocatedBase->getParent() != ToReplace->getParent()) {
+      // Base and derived relocates are in different basic blocks.
+      // In this case transform is only valid when base dominates derived
+      // relocate. However it would be too expensive to check dominance
+      // for each such relocate, so we skip the whole transformation.
+      continue;
+    }
+
     Value *Base = ThisRelocate.getBasePtr();
     auto Derived = dyn_cast<GetElementPtrInst>(ThisRelocate.getDerivedPtr());
     if (!Derived || Derived->getPointerOperand() != Base)
