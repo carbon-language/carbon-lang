@@ -268,6 +268,32 @@ static Type* ToVectorTy(Type *Scalar, unsigned VF) {
   return VectorType::get(Scalar, VF);
 }
 
+/// A helper function that returns GEP instruction and knows to skip a
+/// 'bitcast'. The 'bitcast' may be skipped if the source and the destination
+/// pointee types of the 'bitcast' have the same size.
+/// For example:
+///   bitcast double** %var to i64* - can be skipped
+///   bitcast double** %var to i8*  - can not
+static GetElementPtrInst *getGEPInstruction(Value *Ptr) {
+
+  if (isa<GetElementPtrInst>(Ptr))
+    return cast<GetElementPtrInst>(Ptr);
+
+  if (isa<BitCastInst>(Ptr) &&
+      isa<GetElementPtrInst>(cast<BitCastInst>(Ptr)->getOperand(0))) {
+    Type *BitcastTy = Ptr->getType();
+    Type *GEPTy = cast<BitCastInst>(Ptr)->getSrcTy();
+    if (!isa<PointerType>(BitcastTy) || !isa<PointerType>(GEPTy))
+      return nullptr;
+    Type *Pointee1Ty = cast<PointerType>(BitcastTy)->getPointerElementType();
+    Type *Pointee2Ty = cast<PointerType>(GEPTy)->getPointerElementType();
+    const DataLayout &DL = cast<BitCastInst>(Ptr)->getModule()->getDataLayout();
+    if (DL.getTypeSizeInBits(Pointee1Ty) == DL.getTypeSizeInBits(Pointee2Ty))
+      return cast<GetElementPtrInst>(cast<BitCastInst>(Ptr)->getOperand(0));
+  }
+  return nullptr;
+}
+
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
 /// This class performs the widening of scalars into vectors, or multiple
@@ -1983,7 +2009,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
     return II.getConsecutiveDirection();
   }
 
-  GetElementPtrInst *Gep = dyn_cast_or_null<GetElementPtrInst>(Ptr);
+  GetElementPtrInst *Gep = getGEPInstruction(Ptr);
   if (!Gep)
     return 0;
 
@@ -2377,7 +2403,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   VectorParts &Entry = WidenMap.get(Instr);
 
   // Handle consecutive loads/stores.
-  GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
+  GetElementPtrInst *Gep = getGEPInstruction(Ptr);
   if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
     setDebugLocFromInst(Builder, Gep);
     Value *PtrOperand = Gep->getPointerOperand();
