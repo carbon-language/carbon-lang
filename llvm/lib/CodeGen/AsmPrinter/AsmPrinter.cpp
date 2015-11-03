@@ -1143,9 +1143,6 @@ bool AsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  // Make sure we wrote out everything we need.
-  OutStreamer->Flush();
-
   // Finalize debug and EH information.
   for (const HandlerInfo &HI : Handlers) {
     NamedRegionTimer T(HI.TimerName, HI.TimerGroupName,

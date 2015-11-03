@@ -706,9 +706,6 @@ public:
   /// the hasRawTextSupport() predicate.  By default this aborts.
   void EmitRawText(const Twine &String);
 
-  /// \brief Causes any cached state to be written out.
-  virtual void Flush() {}
-
   /// \brief Streamer specific finalization.
   virtual void FinishImpl();
   /// \brief Finish emission of machine code.

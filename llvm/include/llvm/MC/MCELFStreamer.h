@@ -76,8 +76,6 @@ public:
 
   void EmitValueToAlignment(unsigned, int64_t, unsigned, unsigned) override;
 
-  void Flush() override;
-
   void FinishImpl() override;
 
   void EmitBundleAlignMode(unsigned AlignPow2) override;
