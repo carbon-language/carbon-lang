@@ -153,8 +153,7 @@ TaskRunner<T>::AddTask(F&& f, Args&&... args)
             T&& r = f(std::forward<Args>(args)...);
 
             std::unique_lock<std::mutex> lock(this->m_mutex);
-            this->m_ready.emplace_back(std::move(*it));
-            this->m_pending.erase(it);
+            this->m_ready.splice(this->m_ready.end(), this->m_pending, it);
             lock.unlock();
 
             this->m_cv.notify_one();
