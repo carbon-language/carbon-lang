@@ -13,7 +13,6 @@
 #include "SymbolTable.h"
 #include "Target.h"
 
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/StringSaver.h"
@@ -695,52 +694,50 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   Elf_Phdr TlsPhdr{};
   uintX_t ThreadBSSOffset = 0;
   // Create phdrs as we assign VAs and file offsets to all output sections.
-  SmallPtrSet<Elf_Phdr *, 8> Closed;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    uintX_t Flags = toPhdrFlags(Sec->getFlags());
-    Elf_Phdr *Last = &Phdrs[PhdrIdx];
-    if (Last->p_flags != Flags || !needsPhdr<ELFT>(Sec)) {
-      // Flags changed. End current Phdr and potentially create a new one.
-      if (Closed.insert(Last).second) {
-        Last->p_filesz = FileOff - Last->p_offset;
-        Last->p_memsz = VA - Last->p_vaddr;
-      }
-
-      if (needsPhdr<ELFT>(Sec)) {
+    if (needsPhdr<ELFT>(Sec)) {
+      uintX_t Flags = toPhdrFlags(Sec->getFlags());
+      if (Phdrs[PhdrIdx].p_flags != Flags) {
+        // Flags changed. Create a new PT_LOAD.
         VA = RoundUpToAlignment(VA, Target->getPageSize());
         FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
         Elf_Phdr *PH = &Phdrs[++PhdrIdx];
         setPhdr(PH, PT_LOAD, Flags, FileOff, VA, 0, Target->getPageSize());
       }
-    }
 
-    if ((Sec->getFlags() & SHF_ALLOC) && (Sec->getFlags() & SHF_TLS)) {
-      if (!TlsPhdr.p_vaddr) {
-        setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
-        Out<ELFT>::TlsInitImageVA = VA;
-      }
-      if (Sec->getType() != SHT_NOBITS)
-        VA = RoundUpToAlignment(VA, Sec->getAlign());
-      uintX_t TVA = RoundUpToAlignment(VA + ThreadBSSOffset, Sec->getAlign());
-      Sec->setVA(TVA);
-      TlsPhdr.p_memsz += Sec->getSize();
-      if (Sec->getType() == SHT_NOBITS) {
-        ThreadBSSOffset = TVA - VA + Sec->getSize();
+      if (Sec->getFlags() & SHF_TLS) {
+        if (!TlsPhdr.p_vaddr) {
+          setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
+          Out<ELFT>::TlsInitImageVA = VA;
+        }
+        if (Sec->getType() != SHT_NOBITS)
+          VA = RoundUpToAlignment(VA, Sec->getAlign());
+        uintX_t TVA = RoundUpToAlignment(VA + ThreadBSSOffset, Sec->getAlign());
+        Sec->setVA(TVA);
+        TlsPhdr.p_memsz += Sec->getSize();
+        if (Sec->getType() == SHT_NOBITS) {
+          ThreadBSSOffset = TVA - VA + Sec->getSize();
+        } else {
+          TlsPhdr.p_filesz += Sec->getSize();
+          VA += Sec->getSize();
+        }
+        TlsPhdr.p_align = std::max<uintX_t>(TlsPhdr.p_align, Sec->getAlign());
       } else {
-        TlsPhdr.p_filesz += Sec->getSize();
+        VA = RoundUpToAlignment(VA, Sec->getAlign());
+        Sec->setVA(VA);
         VA += Sec->getSize();
       }
-      TlsPhdr.p_align = std::max<uintX_t>(TlsPhdr.p_align, Sec->getAlign());
-    } else if (Sec->getFlags() & SHF_ALLOC) {
-      VA = RoundUpToAlignment(VA, Sec->getAlign());
-      Sec->setVA(VA);
-      VA += Sec->getSize();
     }
 
     FileOff = RoundUpToAlignment(FileOff, Sec->getAlign());
     Sec->setFileOffset(FileOff);
     if (Sec->getType() != SHT_NOBITS)
       FileOff += Sec->getSize();
+    if (needsPhdr<ELFT>(Sec)) {
+      Elf_Phdr *Cur = &Phdrs[PhdrIdx];
+      Cur->p_filesz = FileOff - Cur->p_offset;
+      Cur->p_memsz = VA - Cur->p_vaddr;
+    }
   }
 
   if (TlsPhdr.p_vaddr)
