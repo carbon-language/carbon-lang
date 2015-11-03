@@ -52,7 +52,7 @@ class libcxx_hash_table_SynthProvider:
 				self.next_element = self.begin_ptr
 			else:
 				self.next_element = None
-		except Exception, e:
+		except Exception as e:
 			logger >> "Caught exception: %r" % e
 			pass
 

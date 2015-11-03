@@ -62,7 +62,7 @@ class Test_Assertions(unittest2.TestCase):
         self.assertNotRegexpMatches('Ala ma kota', r'r+')
         try:
             self.assertNotRegexpMatches('Ala ma kota', r'k.t', 'Message')
-        except self.failureException, e:
+        except self.failureException as e:
             self.assertIn("'kot'", e.args[0])
             self.assertIn('Message', e.args[0])
         else:
