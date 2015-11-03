@@ -80,8 +80,10 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
             endstr = ' = 99')
 
         # Use the '-v' option to do verbose listing of the watchpoint.
-        # The hit count should now be 1.
+        # The hit count should now be the same as the number of threads that
+        # stopped on a watchpoint.
+        threads = lldbutil.get_stopped_threads(self.process(), lldb.eStopReasonWatchpoint)
         self.expect("watchpoint list -v",
-            substrs = ['hit_count = 1'])
+            substrs = ['hit_count = %d' % len(threads)])
 
         self.runCmd("thread backtrace all")
