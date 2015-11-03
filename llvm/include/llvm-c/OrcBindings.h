@@ -47,7 +47,8 @@ typedef uint64_t (*LLVMOrcLazyCompileCallbackFn)(LLVMOrcJITStackRef JITStack,
  * client should not attempt to dispose of the Target Machine, or it will result
  * in a double-free.
  */
-LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM);
+LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM,
+                                         LLVMContextRef Context);
 
 /**
  * Mangle the given symbol.

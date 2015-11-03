@@ -12,88 +12,136 @@
 #include "llvm/Support/Process.h"
 #include <array>
 
+using namespace llvm::orc;
+
+namespace {
+
+uint64_t executeCompileCallback(JITCompileCallbackManagerBase *JCBM,
+                                TargetAddress CallbackID) {
+  return JCBM->executeCompileCallback(CallbackID);
+}
+
+}
+
 namespace llvm {
 namespace orc {
 
-void OrcX86_64::writeResolverCode(uint8_t *ResolverMem, JITReentryFn ReentryFn,
-                                  void *CallbackMgr) {
+const char* OrcX86_64::ResolverBlockName = "orc_resolver_block";
 
-  const uint8_t ResolverCode[] = {
-                                               // resolver_entry:
-    0x55,                                      // 0x00: pushq     %rbp
-    0x48, 0x89, 0xe5,                          // 0x01: movq      %rsp, %rbp
-    0x50,                                      // 0x04: pushq     %rax
-    0x53,                                      // 0x05: pushq     %rbx
-    0x51,                                      // 0x06: pushq     %rcx
-    0x52,                                      // 0x07: pushq     %rdx
-    0x56,                                      // 0x08: pushq     %rsi
-    0x57,                                      // 0x09: pushq     %rdi
-    0x41, 0x50,                                // 0x0a: pushq     %r8
-    0x41, 0x51,                                // 0x0c: pushq     %r9
-    0x41, 0x52,                                // 0x0e: pushq     %r10
-    0x41, 0x53,                                // 0x10: pushq     %r11
-    0x41, 0x54,                                // 0x12: pushq     %r12
-    0x41, 0x55,                                // 0x14: pushq     %r13
-    0x41, 0x56,                                // 0x16: pushq     %r14
-    0x41, 0x57,                                // 0x18: pushq     %r15
-    0x48, 0x81, 0xec, 0x08, 0x02, 0x00, 0x00,  // 0x1a: subq      20, %rsp
-    0x48, 0x0f, 0xae, 0x04, 0x24,              // 0x21: fxsave64  (%rsp)
-    0x48, 0x8d, 0x3d, 0x43, 0x00, 0x00, 0x00,  // 0x26: leaq      67(%rip), %rdi
-    0x48, 0x8b, 0x3f,                          // 0x2d: movq      (%rdi), %rdi
-    0x48, 0x8b, 0x75, 0x08,                    // 0x30: movq      8(%rbp), %rsi
-    0x48, 0x83, 0xee, 0x06,                    // 0x34: subq      $6, %rsi
-    0x48, 0xb8,                                // 0x38: movabsq   $0, %rax
+void OrcX86_64::insertResolverBlock(
+    Module &M, JITCompileCallbackManagerBase &JCBM) {
 
-    // 0x3a: JIT re-entry fn addr:
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  // Trampoline code-sequence length, used to get trampoline address from return
+  // address.
+  const unsigned X86_64_TrampolineLength = 6;
 
-    0xff, 0xd0,                                // 0x42: callq     *%rax
-    0x48, 0x89, 0x45, 0x08,                    // 0x44: movq      %rax, 8(%rbp)
-    0x48, 0x0f, 0xae, 0x0c, 0x24,              // 0x48: fxrstor64 (%rsp)
-    0x48, 0x81, 0xc4, 0x08, 0x02, 0x00, 0x00,  // 0x4d: addq      20, %rsp
-    0x41, 0x5f,                                // 0x54: popq      %r15
-    0x41, 0x5e,                                // 0x56: popq      %r14
-    0x41, 0x5d,                                // 0x58: popq      %r13
-    0x41, 0x5c,                                // 0x5a: popq      %r12
-    0x41, 0x5b,                                // 0x5c: popq      %r11
-    0x41, 0x5a,                                // 0x5e: popq      %r10
-    0x41, 0x59,                                // 0x60: popq      %r9
-    0x41, 0x58,                                // 0x62: popq      %r8
-    0x5f,                                      // 0x64: popq      %rdi
-    0x5e,                                      // 0x65: popq      %rsi
-    0x5a,                                      // 0x66: popq      %rdx
-    0x59,                                      // 0x67: popq      %rcx
-    0x5b,                                      // 0x68: popq      %rbx
-    0x58,                                      // 0x69: popq      %rax
-    0x5d,                                      // 0x6a: popq      %rbp
-    0xc3,                                      // 0x6b: retq
-    0x00, 0x00, 0x00, 0x00,                    // 0x6c: <padding>
+  // List of x86-64 GPRs to save. Note - RBP saved separately below.
+  std::array<const char *, 14> GPRs = {{
+      "rax", "rbx", "rcx", "rdx",
+      "rsi", "rdi", "r8", "r9",
+      "r10", "r11", "r12", "r13",
+      "r14", "r15"
+    }};
 
-    // 0x70: Callback mgr address.
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  };
+  // Address of the executeCompileCallback function.
+  uint64_t CallbackAddr =
+      static_cast<uint64_t>(
+        reinterpret_cast<uintptr_t>(executeCompileCallback));
 
-  const unsigned ReentryFnAddrOffset = 0x3a;
-  const unsigned CallbackMgrAddrOffset = 0x70;
-  
-  memcpy(ResolverMem, ResolverCode, sizeof(ResolverCode));
-  memcpy(ResolverMem + ReentryFnAddrOffset, &ReentryFn, sizeof(ReentryFn));
-  memcpy(ResolverMem + CallbackMgrAddrOffset, &CallbackMgr,
-         sizeof(CallbackMgr));
+  std::ostringstream AsmStream;
+  Triple TT(M.getTargetTriple());
+
+  // Switch to text section.
+  if (TT.getOS() == Triple::Darwin)
+    AsmStream << ".section __TEXT,__text,regular,pure_instructions\n"
+              << ".align 4, 0x90\n";
+  else
+    AsmStream << ".text\n"
+              << ".align 16, 0x90\n";
+
+  // Bake in a pointer to the callback manager immediately before the
+  // start of the resolver function.
+  AsmStream << "jit_callback_manager_addr:\n"
+            << "  .quad " << &JCBM << "\n";
+
+  // Start the resolver function.
+  AsmStream << ResolverBlockName << ":\n"
+            << "  pushq     %rbp\n"
+            << "  movq      %rsp, %rbp\n";
+
+  // Store the GPRs.
+  for (const auto &GPR : GPRs)
+    AsmStream << "  pushq     %" << GPR << "\n";
+
+  // Store floating-point state with FXSAVE.
+  // Note: We need to keep the stack 16-byte aligned, so if we've emitted an odd
+  //       number of 64-bit pushes so far (GPRs.size() plus 1 for RBP) then add
+  //       an extra 64 bits of padding to the FXSave area.
+  unsigned Padding = (GPRs.size() + 1) % 2 ? 8 : 0;
+  unsigned FXSaveSize = 512 + Padding;
+  AsmStream << "  subq      $" << FXSaveSize << ", %rsp\n"
+            << "  fxsave64  (%rsp)\n"
+
+  // Load callback manager address, compute trampoline address, call JIT.
+            << "  lea       jit_callback_manager_addr(%rip), %rdi\n"
+            << "  movq      (%rdi), %rdi\n"
+            << "  movq      0x8(%rbp), %rsi\n"
+            << "  subq      $" << X86_64_TrampolineLength << ", %rsi\n"
+            << "  movabsq   $" << CallbackAddr << ", %rax\n"
+            << "  callq     *%rax\n"
+
+  // Replace the return to the trampoline with the return address of the
+  // compiled function body.
+            << "  movq      %rax, 0x8(%rbp)\n"
+
+  // Restore the floating point state.
+            << "  fxrstor64 (%rsp)\n"
+            << "  addq      $" << FXSaveSize << ", %rsp\n";
+
+  for (const auto &GPR : make_range(GPRs.rbegin(), GPRs.rend()))
+    AsmStream << "  popq      %" << GPR << "\n";
+
+  // Restore original RBP and return to compiled function body.
+  AsmStream << "  popq      %rbp\n"
+            << "  retq\n";
+
+  M.appendModuleInlineAsm(AsmStream.str());
 }
 
-void OrcX86_64::writeTrampolines(uint8_t *TrampolineMem, void *ResolverAddr,
-				 unsigned NumTrampolines) {
+OrcX86_64::LabelNameFtor
+OrcX86_64::insertCompileCallbackTrampolines(Module &M,
+                                            TargetAddress ResolverBlockAddr,
+                                            unsigned NumCalls,
+                                            unsigned StartIndex) {
+  const char *ResolverBlockPtrName = "Lorc_resolve_block_addr";
 
-  unsigned OffsetToPtr = NumTrampolines * TrampolineSize;
+  std::ostringstream AsmStream;
+  Triple TT(M.getTargetTriple());
 
-  memcpy(TrampolineMem + OffsetToPtr, &ResolverAddr, sizeof(void*));
+  if (TT.getOS() == Triple::Darwin)
+    AsmStream << ".section __TEXT,__text,regular,pure_instructions\n"
+              << ".align 4, 0x90\n";
+  else
+    AsmStream << ".text\n"
+              << ".align 16, 0x90\n";
 
-  uint64_t *Trampolines = reinterpret_cast<uint64_t*>(TrampolineMem);
-  uint64_t CallIndirPCRel = 0xf1c40000000015ff;
+  AsmStream << ResolverBlockPtrName << ":\n"
+            << "  .quad " << ResolverBlockAddr << "\n";
 
-  for (unsigned I = 0; I < NumTrampolines; ++I, OffsetToPtr -= TrampolineSize)
-    Trampolines[I] = CallIndirPCRel | ((OffsetToPtr - 6) << 16);
+  auto GetLabelName =
+    [=](unsigned I) {
+      std::ostringstream LabelStream;
+      LabelStream << "orc_jcc_" << (StartIndex + I);
+      return LabelStream.str();
+  };
+
+  for (unsigned I = 0; I < NumCalls; ++I)
+    AsmStream << GetLabelName(I) << ":\n"
+              << "  callq *" << ResolverBlockPtrName << "(%rip)\n";
+
+  M.appendModuleInlineAsm(AsmStream.str());
+
+  return GetLabelName;
 }
 
 std::error_code OrcX86_64::emitIndirectStubsBlock(IndirectStubsInfo &StubsInfo,

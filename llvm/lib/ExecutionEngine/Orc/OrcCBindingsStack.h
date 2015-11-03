@@ -34,7 +34,10 @@ public:
   typedef orc::IRCompileLayer<ObjLayerT> CompileLayerT;
   typedef orc::CompileOnDemandLayer<CompileLayerT, CompileCallbackMgr> CODLayerT;
 
-  typedef std::function<std::unique_ptr<CompileCallbackMgr>()>
+  typedef std::function<
+            std::unique_ptr<CompileCallbackMgr>(CompileLayerT&,
+                                                RuntimeDyld::MemoryManager&,
+                                                LLVMContext&)>
     CallbackManagerBuilder;
 
   typedef CODLayerT::IndirectStubsManagerBuilderT IndirectStubsManagerBuilder;
@@ -83,18 +86,19 @@ public:
 
   typedef unsigned ModuleHandleT;
 
-  static std::unique_ptr<CompileCallbackMgr> createCompileCallbackMgr(Triple T);
+  static CallbackManagerBuilder createCallbackManagerBuilder(Triple T);
   static IndirectStubsManagerBuilder createIndirectStubsMgrBuilder(Triple T);
 
-  OrcCBindingsStack(TargetMachine &TM,
-		    std::unique_ptr<CompileCallbackMgr> CCMgr, 
+  OrcCBindingsStack(TargetMachine &TM, LLVMContext &Context,
+                    CallbackManagerBuilder &BuildCallbackMgr,
                     IndirectStubsManagerBuilder IndirectStubsMgrBuilder)
-    : DL(TM.createDataLayout()), CCMgr(std::move(CCMgr)),
+    : Context(Context), DL(TM.createDataLayout()),
       ObjectLayer(),
       CompileLayer(ObjectLayer, orc::SimpleCompiler(TM)),
+      CCMgr(BuildCallbackMgr(CompileLayer, CCMgrMemMgr, Context)),
       CODLayer(CompileLayer,
                [](Function &F) { std::set<Function*> S; S.insert(&F); return S; },
-               *this->CCMgr, std::move(IndirectStubsMgrBuilder), false),
+               *CCMgr, std::move(IndirectStubsMgrBuilder), false),
       IndirectStubsMgr(IndirectStubsMgrBuilder()),
       CXXRuntimeOverrides([this](const std::string &S) { return mangle(S); }) {}
 
@@ -123,7 +127,7 @@ public:
   orc::TargetAddress
   createLazyCompileCallback(LLVMOrcLazyCompileCallbackFn Callback,
                             void *CallbackCtx) {
-    auto CCInfo = CCMgr->getCompileCallback();
+    auto CCInfo = CCMgr->getCompileCallback(Context);
     CCInfo.setCompileAction(
       [=]() -> orc::TargetAddress {
         return Callback(wrap(this), CallbackCtx);
@@ -260,12 +264,13 @@ private:
     return NewHandle;
   }
 
+  LLVMContext &Context;
   DataLayout DL;
   SectionMemoryManager CCMgrMemMgr;
 
-  std::unique_ptr<CompileCallbackMgr> CCMgr;
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
+  std::unique_ptr<CompileCallbackMgr> CCMgr;
   CODLayerT CODLayer;
 
   std::unique_ptr<orc::IndirectStubsManagerBase> IndirectStubsMgr;
