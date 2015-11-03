@@ -17,7 +17,10 @@ class BreakpointAfterJoinTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number for our breakpoint.
         self.breakpoint = line_number('ParallelTask.cpp', '// Set breakpoint here')
-
+    
+    @skipIfTargetAndroid(archs=["arm"]) # The android-arm compiler can't compile the inferior
+                                        # because of an issue around std::future.
+                                        # TODO: Change the test to don't depend on std::future<T>
     def test(self):
         """Test breakpoint handling after a thread join."""
         self.build(dictionary=self.getBuildFlags())
