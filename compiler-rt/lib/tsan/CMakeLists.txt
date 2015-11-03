@@ -83,52 +83,66 @@ set(TSAN_HEADERS
 set(TSAN_RUNTIME_LIBRARIES)
 add_custom_target(tsan)
 
-foreach(arch ${TSAN_SUPPORTED_ARCH})
-  if(arch STREQUAL "x86_64")
-    set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
-    # Pass ASM file directly to the C++ compiler.
-    set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
-      LANGUAGE C)
-    # Sanity check for Go runtime.
-    set(BUILDGO_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh)
-    add_custom_target(GotsanRuntimeCheck
-      COMMAND env "CC=${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}"
-              IN_TMPDIR=1 SILENT=1 ${BUILDGO_SCRIPT}
-      DEPENDS clang_rt.tsan-${arch} ${BUILDGO_SCRIPT}
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
-      COMMENT "Checking TSan Go runtime..."
-      VERBATIM)
-  else()
-    set(TSAN_ASM_SOURCES)
-  endif()
+if(APPLE)
   add_compiler_rt_runtime(clang_rt.tsan
-    STATIC
-    ARCHS ${arch}
-    SOURCES ${TSAN_SOURCES} ${TSAN_ASM_SOURCES}
-            $<TARGET_OBJECTS:RTInterception.${arch}>
-            $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-            $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-            $<TARGET_OBJECTS:RTUbsan.${arch}>
-    CFLAGS ${TSAN_RTL_CFLAGS})
-  add_compiler_rt_runtime(clang_rt.tsan_cxx
-    STATIC
-    ARCHS ${arch}
-    SOURCES ${TSAN_CXX_SOURCES}
-            $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
-    CFLAGS ${TSAN_RTL_CFLAGS})
-  list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch}
-                                     clang_rt.tsan_cxx-${arch})
-  add_sanitizer_rt_symbols(clang_rt.tsan
-    ARCHS ${arch}
-    EXTRA rtl/tsan.syms.extra)
-  add_sanitizer_rt_symbols(clang_rt.tsan_cxx
-    ARCHS ${arch}
-    EXTRA rtl/tsan.syms.extra)
-  add_dependencies(tsan clang_rt.tsan-${arch}
-                        clang_rt.tsan_cxx-${arch}
-                        clang_rt.tsan-${arch}-symbols
-                        clang_rt.tsan_cxx-${arch}-symbols)
-endforeach()
+    SHARED
+    OS ${TSAN_SUPPORTED_OS}
+    ARCHS ${TSAN_SUPPORTED_ARCH}
+    SOURCES ${TSAN_SOURCES}
+    OBJECT_LIBS RTInterception
+                RTSanitizerCommon
+                RTSanitizerCommonLibc
+                RTUbsan
+    CFLAGS ${TSAN_RTL_CFLAGS}
+    PARENT_TARGET tsan)
+else()
+  foreach(arch ${TSAN_SUPPORTED_ARCH})
+    if(arch STREQUAL "x86_64")
+      set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
+      # Pass ASM file directly to the C++ compiler.
+      set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+        LANGUAGE C)
+      # Sanity check for Go runtime.
+      set(BUILDGO_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh)
+      add_custom_target(GotsanRuntimeCheck
+        COMMAND env "CC=${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}"
+                IN_TMPDIR=1 SILENT=1 ${BUILDGO_SCRIPT}
+        DEPENDS clang_rt.tsan-${arch} ${BUILDGO_SCRIPT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
+        COMMENT "Checking TSan Go runtime..."
+        VERBATIM)
+    else()
+      set(TSAN_ASM_SOURCES)
+    endif()
+    add_compiler_rt_runtime(clang_rt.tsan
+      STATIC
+      ARCHS ${arch}
+      SOURCES ${TSAN_SOURCES} ${TSAN_ASM_SOURCES}
+              $<TARGET_OBJECTS:RTInterception.${arch}>
+              $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+              $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+              $<TARGET_OBJECTS:RTUbsan.${arch}>
+      CFLAGS ${TSAN_RTL_CFLAGS})
+    add_compiler_rt_runtime(clang_rt.tsan_cxx
+      STATIC
+      ARCHS ${arch}
+      SOURCES ${TSAN_CXX_SOURCES}
+              $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
+      CFLAGS ${TSAN_RTL_CFLAGS})
+    list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch}
+                                       clang_rt.tsan_cxx-${arch})
+    add_sanitizer_rt_symbols(clang_rt.tsan
+      ARCHS ${arch}
+      EXTRA rtl/tsan.syms.extra)
+    add_sanitizer_rt_symbols(clang_rt.tsan_cxx
+      ARCHS ${arch}
+      EXTRA rtl/tsan.syms.extra)
+    add_dependencies(tsan clang_rt.tsan-${arch}
+                          clang_rt.tsan_cxx-${arch}
+                          clang_rt.tsan-${arch}-symbols
+                          clang_rt.tsan_cxx-${arch}-symbols)
+  endforeach()
+endif()
 
 add_dependencies(compiler-rt tsan)
 
