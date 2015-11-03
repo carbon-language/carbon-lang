@@ -78,11 +78,13 @@ void RegPressureTracker::dump() const {
 }
 
 void PressureDiff::dump(const TargetRegisterInfo &TRI) const {
+  const char *sep = "";
   for (const PressureChange &Change : *this) {
     if (!Change.isValid())
       break;
-    dbgs() << "    " << TRI.getRegPressureSetName(Change.getPSet())
+    dbgs() << sep << TRI.getRegPressureSetName(Change.getPSet())
            << " " << Change.getUnitInc();
+    sep = "    ";
   }
   dbgs() << '\n';
 }
