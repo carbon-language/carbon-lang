@@ -402,7 +402,7 @@ StringRef Archive::Symbol::getName() const {
   return Parent->getSymbolTable().begin() + StringIndex;
 }
 
-ErrorOr<Archive::child_iterator> Archive::Symbol::getMember() const {
+ErrorOr<Archive::Child> Archive::Symbol::getMember() const {
   const char *Buf = Parent->getSymbolTable().begin();
   const char *Offsets = Buf;
   if (Parent->kind() == K_MIPS64)
@@ -447,8 +447,7 @@ ErrorOr<Archive::child_iterator> Archive::Symbol::getMember() const {
   }
 
   const char *Loc = Parent->getData().begin() + Offset;
-  child_iterator Iter(Child(Parent, Loc));
-  return Iter;
+  return Child(Parent, Loc);
 }
 
 Archive::Symbol Archive::Symbol::getNext() const {

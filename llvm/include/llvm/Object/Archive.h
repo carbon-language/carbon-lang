@@ -142,7 +142,7 @@ public:
       , SymbolIndex(symi)
       , StringIndex(stri) {}
     StringRef getName() const;
-    ErrorOr<child_iterator> getMember() const;
+    ErrorOr<Child> getMember() const;
     Symbol getNext() const;
   };
 
