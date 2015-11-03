@@ -123,7 +123,7 @@ bar:
 .section .excluded,"e",@progbits
 
 // CHECK:      Section {
-// CHECK:        Name: .excluded (92)
+// CHECK:        Name: .excluded
 // CHECK-NEXT:   Type: SHT_PROGBITS (0x1)
 // CHECK-NEXT:   Flags [ (0x80000000)
 // CHECK-NEXT:     SHF_EXCLUDE (0x80000000)

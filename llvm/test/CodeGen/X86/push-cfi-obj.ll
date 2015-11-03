@@ -5,8 +5,7 @@
 ; DARWIN: Name: __compact_unwind
 ; DARWIN: Segment: __LD
 
-; LINUX:         Index: 8
-; LINUX-NEXT:    Name: .eh_frame (41)
+; LINUX:         Name: .eh_frame
 ; LINUX-NEXT:    Type: SHT_PROGBITS (0x1)
 ; LINUX-NEXT:    Flags [ (0x2)
 ; LINUX-NEXT:      SHF_ALLOC (0x2)

@@ -6,8 +6,8 @@
         .popsection
 
 // CHECK:       Section {
-// CHECK:         Index: 5
-// CHECK-NEXT:    Name: foo
+// CHECK:         Index:
+// CHECK:         Name: foo
 // CHECK-NEXT:    Type: SHT_PROGBITS
 // CHECK-NEXT:    Flags [ (0x0)
 // CHECK-NEXT:    ]
