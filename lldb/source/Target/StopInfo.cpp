@@ -759,6 +759,16 @@ protected:
                     }
                 }
 
+                // TODO: This condition should be checked in the synchronous part of the watchpoint code
+                // (Watchpoint::ShouldStop), so that we avoid pulling an event even if the watchpoint fails
+                // the ignore count condition. It is moved here temporarily, because for archs with 
+                // watchpoint_exceptions_received=before, the code in the previous lines takes care of moving
+                // the inferior to next PC. We have to check the ignore count condition after this is done,
+                // otherwise we will hit same watchpoint multiple times until we pass ignore condition, but we
+                // won't actually be ignoring them.
+                if (wp_sp->GetHitCount() <= wp_sp->GetIgnoreCount())
+                    m_should_stop = false;
+
                 if (m_should_stop && wp_sp->GetConditionText() != NULL)
                 {
                     // We need to make sure the user sees any parse errors in their condition, so we'll hook the

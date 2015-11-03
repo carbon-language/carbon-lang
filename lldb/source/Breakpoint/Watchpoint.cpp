@@ -183,9 +183,6 @@ Watchpoint::ShouldStop (StoppointCallbackContext *context)
     if (!IsEnabled())
         return false;
 
-    if (GetHitCount() <= GetIgnoreCount())
-        return false;
-
     return true;
 }
 
