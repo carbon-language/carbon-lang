@@ -265,7 +265,6 @@ Symtab::InitNameIndexes()
     // Protected function, no need to lock mutex...
     if (!m_name_indexes_computed)
     {
-        auto start = std::chrono::system_clock::now();
         m_name_indexes_computed = true;
         Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
         // Create the name index vector to be able to quickly search by name
@@ -463,8 +462,6 @@ Symtab::InitNameIndexes()
 //                    a.Printf ("%s METHOD\n", m_symbols[entry.value].GetMangled().GetName().GetCString());
 //            }
 //        }
-        auto end = std::chrono::system_clock::now();
-        fprintf(stderr, "Time: %lu\n", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
     }
 }
 
