@@ -17,19 +17,14 @@
 
 using namespace llvm;
 
-OrcCBindingsStack::CallbackManagerBuilder
-OrcCBindingsStack::createCallbackManagerBuilder(Triple T) {
+std::unique_ptr<OrcCBindingsStack::CompileCallbackMgr>
+OrcCBindingsStack::createCompileCallbackMgr(Triple T) {
   switch (T.getArch()) {
     default: return nullptr;
 
     case Triple::x86_64: {
-      typedef orc::JITCompileCallbackManager<CompileLayerT,
-                                             orc::OrcX86_64> CCMgrT;
-      return [](CompileLayerT &CompileLayer, RuntimeDyld::MemoryManager &MemMgr,
-                LLVMContext &Context) {
-               return llvm::make_unique<CCMgrT>(CompileLayer, MemMgr, Context, 0,
-                                                64);
-             };
+      typedef orc::JITCompileCallbackManager<orc::OrcX86_64> CCMgrT;
+      return llvm::make_unique<CCMgrT>(0);
     }
   }
 }

@@ -242,7 +242,7 @@ private:
         // Create a callback, associate it with the stub for the function,
         // and set the compile action to compile the partition containing the
         // function.
-        auto CCInfo = CompileCallbackMgr.getCompileCallback(SrcM.getContext());
+        auto CCInfo = CompileCallbackMgr.getCompileCallback();
         StubInits[mangle(F.getName(), DL)] =
           std::make_pair(CCInfo.getAddress(),
                          JITSymbolBase::flagsFromGlobalValue(F));

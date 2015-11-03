@@ -23,7 +23,6 @@
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
-#include "llvm/IR/LLVMContext.h"
 
 namespace llvm {
 
@@ -41,21 +40,16 @@ public:
     IndirectStubsManagerBuilder;
   typedef CODLayerT::ModuleSetHandleT ModuleHandleT;
 
-  typedef std::function<
-            std::unique_ptr<CompileCallbackMgr>(IRDumpLayerT&,
-                                                RuntimeDyld::MemoryManager&,
-                                                LLVMContext&)>
-    CallbackManagerBuilder;
-
-  OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context,
-             CallbackManagerBuilder &BuildCallbackMgr,
+  OrcLazyJIT(std::unique_ptr<TargetMachine> TM,
+             std::unique_ptr<CompileCallbackMgr> CCMgr,
              IndirectStubsManagerBuilder IndirectStubsMgrBuilder,
              bool InlineStubs)
-      : TM(std::move(TM)), DL(this->TM->createDataLayout()), ObjectLayer(),
+      : TM(std::move(TM)), DL(this->TM->createDataLayout()),
+	CCMgr(std::move(CCMgr)),
+	ObjectLayer(),
         CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
         IRDumpLayer(CompileLayer, createDebugDumper()),
-        CCMgr(BuildCallbackMgr(IRDumpLayer, CCMgrMemMgr, Context)),
-        CODLayer(IRDumpLayer, extractSingleFunction, *CCMgr,
+        CODLayer(IRDumpLayer, extractSingleFunction, *this->CCMgr,
                  std::move(IndirectStubsMgrBuilder), InlineStubs),
         CXXRuntimeOverrides(
             [this](const std::string &S) { return mangle(S); }) {}
@@ -68,8 +62,7 @@ public:
       DtorRunner.runViaLayer(CODLayer);
   }
 
-  static CallbackManagerBuilder createCallbackMgrBuilder(Triple T);
-
+  static std::unique_ptr<CompileCallbackMgr> createCompileCallbackMgr(Triple T);
   static IndirectStubsManagerBuilder createIndirectStubsMgrBuilder(Triple T);
 
   ModuleHandleT addModule(std::unique_ptr<Module> M) {
@@ -155,10 +148,10 @@ private:
   DataLayout DL;
   SectionMemoryManager CCMgrMemMgr;
 
+  std::unique_ptr<CompileCallbackMgr> CCMgr;
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
   IRDumpLayerT IRDumpLayer;
-  std::unique_ptr<CompileCallbackMgr> CCMgr;
   CODLayerT CODLayer;
 
   orc::LocalCXXRuntimeOverrides CXXRuntimeOverrides;
