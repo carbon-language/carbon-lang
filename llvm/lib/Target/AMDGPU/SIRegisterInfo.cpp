@@ -41,6 +41,10 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   reserveRegisterTuples(Reserved, AMDGPU::EXEC);
   reserveRegisterTuples(Reserved, AMDGPU::FLAT_SCR);
 
+  // Reserve the last 2 registers so we will always have at least 2 more that
+  // will physically contain VCC.
+  reserveRegisterTuples(Reserved, AMDGPU::SGPR102_SGPR103);
+
   // Tonga and Iceland can only allocate a fixed number of SGPRs due
   // to a hw bug.
   if (MF.getSubtarget<AMDGPUSubtarget>().hasSGPRInitBug()) {

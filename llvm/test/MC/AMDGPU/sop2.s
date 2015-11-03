@@ -129,3 +129,6 @@ s_cbranch_g_fork s[4:5], s[6:7]
 
 // CHECK: s_absdiff_i32 s2, s4, s6 ; encoding: [0x04,0x06,0x02,0x96]
 s_absdiff_i32 s2, s4, s6
+
+// CHECK: s_add_u32 s101, s102, s103 ; encoding: [0x66,0x67,0x65,0x80]
+s_add_u32 s101, s102, s103

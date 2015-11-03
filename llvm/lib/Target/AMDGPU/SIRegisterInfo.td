@@ -56,7 +56,7 @@ def FLAT_SCR : RegisterWithSubRegs <"flat_scr", [FLAT_SCR_LO, FLAT_SCR_HI]>,
 }
 
 // SGPR registers
-foreach Index = 0-101 in {
+foreach Index = 0-103 in {
   def SGPR#Index : SIReg <"SGPR"#Index, Index>;
 }
 
@@ -75,23 +75,23 @@ foreach Index = 0-255 in {
 
 // SGPR 32-bit registers
 def SGPR_32 : RegisterClass<"AMDGPU", [i32, f32], 32,
-                            (add (sequence "SGPR%u", 0, 101))>;
+                            (add (sequence "SGPR%u", 0, 103))>;
 
 // SGPR 64-bit registers
 def SGPR_64Regs : RegisterTuples<[sub0, sub1],
-                             [(add (decimate (trunc SGPR_32, 101), 2)),
+                             [(add (decimate SGPR_32, 2)),
                               (add (decimate (shl SGPR_32, 1), 2))]>;
 
 // SGPR 128-bit registers
 def SGPR_128 : RegisterTuples<[sub0, sub1, sub2, sub3],
-                              [(add (decimate (trunc SGPR_32, 99), 4)),
+                              [(add (decimate SGPR_32, 4)),
                                (add (decimate (shl SGPR_32, 1), 4)),
                                (add (decimate (shl SGPR_32, 2), 4)),
                                (add (decimate (shl SGPR_32, 3), 4))]>;
 
 // SGPR 256-bit registers
 def SGPR_256 : RegisterTuples<[sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7],
-                              [(add (decimate (trunc SGPR_32, 95), 4)),
+                              [(add (decimate SGPR_32, 4)),
                                (add (decimate (shl SGPR_32, 1), 4)),
                                (add (decimate (shl SGPR_32, 2), 4)),
                                (add (decimate (shl SGPR_32, 3), 4)),
@@ -103,7 +103,7 @@ def SGPR_256 : RegisterTuples<[sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7],
 // SGPR 512-bit registers
 def SGPR_512 : RegisterTuples<[sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7,
                                sub8, sub9, sub10, sub11, sub12, sub13, sub14, sub15],
-                              [(add (decimate (trunc SGPR_32, 87), 4)),
+                              [(add (decimate SGPR_32, 4)),
                                (add (decimate (shl SGPR_32, 1), 4)),
                                (add (decimate (shl SGPR_32, 2), 4)),
                                (add (decimate (shl SGPR_32, 3), 4)),
