@@ -12,20 +12,18 @@
 
 using namespace llvm;
 
-LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM,
-                                         LLVMContextRef Context) {
+LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM) {
   TargetMachine *TM2(unwrap(TM));
-  LLVMContext &Ctx = *unwrap(Context);
 
   Triple T(TM2->getTargetTriple());
 
-  auto CallbackMgrBuilder = OrcCBindingsStack::createCallbackManagerBuilder(T);
+  auto CompileCallbackMgr = OrcCBindingsStack::createCompileCallbackMgr(T);
   auto IndirectStubsMgrBuilder =
     OrcCBindingsStack::createIndirectStubsMgrBuilder(T);
 
   OrcCBindingsStack *JITStack =
-    new OrcCBindingsStack(*TM2, Ctx, CallbackMgrBuilder,
-                          IndirectStubsMgrBuilder);
+    new OrcCBindingsStack(*TM2, std::move(CompileCallbackMgr),
+			  IndirectStubsMgrBuilder);
 
   return wrap(JITStack);
 }

@@ -46,19 +46,14 @@ namespace {
                                cl::init(true), cl::Hidden);
 }
 
-OrcLazyJIT::CallbackManagerBuilder
-OrcLazyJIT::createCallbackMgrBuilder(Triple T) {
+std::unique_ptr<OrcLazyJIT::CompileCallbackMgr>
+OrcLazyJIT::createCompileCallbackMgr(Triple T) {
   switch (T.getArch()) {
     default: return nullptr;
 
     case Triple::x86_64: {
-      typedef orc::JITCompileCallbackManager<IRDumpLayerT,
-                                             orc::OrcX86_64> CCMgrT;
-      return [](IRDumpLayerT &IRDumpLayer, RuntimeDyld::MemoryManager &MemMgr,
-                LLVMContext &Context) {
-               return llvm::make_unique<CCMgrT>(IRDumpLayer, MemMgr, Context, 0,
-                                                64);
-             };
+      typedef orc::JITCompileCallbackManager<orc::OrcX86_64> CCMgrT;
+      return llvm::make_unique<CCMgrT>(0);
     }
   }
 }
@@ -146,13 +141,12 @@ int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
   EngineBuilder EB;
   EB.setOptLevel(getOptLevel());
   auto TM = std::unique_ptr<TargetMachine>(EB.selectTarget());
-  auto &Context = getGlobalContext();
-  auto CallbackMgrBuilder =
-    OrcLazyJIT::createCallbackMgrBuilder(Triple(TM->getTargetTriple()));
+  auto CompileCallbackMgr =
+    OrcLazyJIT::createCompileCallbackMgr(Triple(TM->getTargetTriple()));
 
   // If we couldn't build the factory function then there must not be a callback
   // manager for this target. Bail out.
-  if (!CallbackMgrBuilder) {
+  if (!CompileCallbackMgr) {
     errs() << "No callback manager available for target '"
            << TM->getTargetTriple().str() << "'.\n";
     return 1;
@@ -169,7 +163,7 @@ int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
   }
 
   // Everything looks good. Build the JIT.
-  OrcLazyJIT J(std::move(TM), Context, CallbackMgrBuilder,
+  OrcLazyJIT J(std::move(TM), std::move(CompileCallbackMgr),
                std::move(IndirectStubsMgrBuilder),
                OrcInlineStubs);
 

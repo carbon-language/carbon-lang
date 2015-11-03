@@ -82,7 +82,7 @@ TEST_F(OrcCAPIExecutionTest, TestEagerIRCompilation) {
     return;
 
   LLVMOrcJITStackRef JIT =
-    LLVMOrcCreateInstance(wrap(TM.get()), LLVMGetGlobalContext());
+    LLVMOrcCreateInstance(wrap(TM.get()));
 
   std::unique_ptr<Module> M = createTestModule(TM->getTargetTriple());
 
@@ -106,7 +106,7 @@ TEST_F(OrcCAPIExecutionTest, TestLazyIRCompilation) {
     return;
 
   LLVMOrcJITStackRef JIT =
-    LLVMOrcCreateInstance(wrap(TM.get()), LLVMGetGlobalContext());
+    LLVMOrcCreateInstance(wrap(TM.get()));
 
   std::unique_ptr<Module> M = createTestModule(TM->getTargetTriple());
 
@@ -130,7 +130,7 @@ TEST_F(OrcCAPIExecutionTest, TestDirectCallbacksAPI) {
     return;
 
   LLVMOrcJITStackRef JIT =
-    LLVMOrcCreateInstance(wrap(TM.get()), LLVMGetGlobalContext());
+    LLVMOrcCreateInstance(wrap(TM.get()));
 
   LLVMOrcGetMangledSymbol(JIT, &testFuncName, "testFunc");
 

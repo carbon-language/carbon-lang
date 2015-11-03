@@ -19,11 +19,11 @@ namespace {
 class DummyCallbackManager : public orc::JITCompileCallbackManagerBase {
 public:
   DummyCallbackManager()
-      : JITCompileCallbackManagerBase(0, 0), NextStubAddress(0),
+      : JITCompileCallbackManagerBase(0), NextStubAddress(0),
         UniversalCompile([]() { return 0; }) {
   }
 
-  CompileCallbackInfo getCompileCallback(LLVMContext &Context) override {
+  CompileCallbackInfo getCompileCallback() override {
     return CompileCallbackInfo(++NextStubAddress, UniversalCompile);
   }
 public:
