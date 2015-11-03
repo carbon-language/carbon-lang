@@ -644,6 +644,9 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
   case SymbolBody::DefinedRegularKind: {
     const auto &DR = cast<DefinedRegular<ELFT>>(S);
     InputSectionBase<ELFT> &SC = DR.Section;
+    if (DR.Sym.getType() == STT_TLS)
+      return SC.OutSec->getVA() + SC.getOffset(DR.Sym) -
+             Out<ELFT>::TlsInitImageVA;
     return SC.OutSec->getVA() + SC.getOffset(DR.Sym);
   }
   case SymbolBody::DefinedCommonKind:

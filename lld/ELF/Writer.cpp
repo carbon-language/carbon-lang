@@ -716,8 +716,10 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     }
 
     if ((Sec->getFlags() & SHF_ALLOC) && (Sec->getFlags() & SHF_TLS)) {
-      if (!TlsPhdr.p_vaddr)
+      if (!TlsPhdr.p_vaddr) {
         setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
+        Out<ELFT>::TlsInitImageVA = VA;
+      }
       if (Sec->getType() != SHT_NOBITS)
         VA = RoundUpToAlignment(VA, Sec->getAlign());
       uintX_t TVA = RoundUpToAlignment(VA + ThreadBSSOffset, Sec->getAlign());

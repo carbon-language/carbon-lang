@@ -1,21 +1,34 @@
 // REQUIRES: x86
 // RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 // RUN: ld.lld2 %t -o %tout
-// RUN: llvm-readobj -sections -program-headers %tout | FileCheck %s
+// RUN: llvm-readobj -symbols -sections -program-headers %tout | FileCheck %s
+// RUN: llvm-objdump -d %tout | FileCheck %s --check-prefix=DIS
 
 .global _start
 _start:
+  movl %fs:a@tpoff, %eax
+  movl %fs:b@tpoff, %eax
+  movl %fs:c@tpoff, %eax
+  movl %fs:d@tpoff, %eax
 
+  .global a
 	.section	.tbss,"awT",@nobits
+a:
 	.long	0
 
+  .global b
 	.section	.tdata,"awT",@progbits
+b:
 	.long	1
 
+  .global c
 	.section	.thread_bss,"awT",@nobits
+c:
 	.long	0
 
+  .global d
 	.section	.thread_data,"awT",@progbits
+d:
 	.long	2
 
 // CHECK:          Name: .tdata
@@ -77,9 +90,9 @@ _start:
 // CHECK-NEXT:       SHF_WRITE
 // CHECK-NEXT:     ]
 
-// 0x1100C = TBSS_ADDR + 4
+// 0x1200C = TBSS_ADDR + 4
 
-// CHECK-NEXT:     Address: 0x1100C
+// CHECK-NEXT:     Address: 0x1200C
 // CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Link:
@@ -88,9 +101,47 @@ _start:
 // CHECK-NEXT:     EntrySize:
 // CHECK-NEXT:   }
 
+// CHECK:      Symbols [
+// CHECK:          Name: a
+// CHECK-NEXT:     Value: 0x8
+// CHECK-NEXT:     Size:
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: TLS
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .tbss
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: b
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size:
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: TLS
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .tdata
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: c
+// CHECK-NEXT:     Value: 0xC
+// CHECK-NEXT:     Size:
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: TLS
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .thread_bss
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: d
+// CHECK-NEXT:     Value: 0x4
+// CHECK-NEXT:     Size:
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: TLS
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .thread_data
+// CHECK-NEXT:   }
+
 // Check that the TLS NOBITS sections weren't added to the R/W PT_LOAD's size.
 
 // CHECK:      ProgramHeaders [
+// CHECK:          Type: PT_LOAD
 // CHECK:          Type: PT_LOAD
 // CHECK:          Type: PT_LOAD
 // CHECK:          FileSize: 8
@@ -110,3 +161,10 @@ _start:
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Alignment:
 // CHECK-NEXT:   }
+
+// DIS:      Disassembly of section .text:
+// DIS-NEXT: _start:
+// DIS-NEXT:    11000: {{.+}} movl    %fs:8, %eax
+// DIS-NEXT:    11008: {{.+}} movl    %fs:0, %eax
+// DIS-NEXT:    11010: {{.+}} movl    %fs:12, %eax
+// DIS-NEXT:    11018: {{.+}} movl    %fs:4, %eax

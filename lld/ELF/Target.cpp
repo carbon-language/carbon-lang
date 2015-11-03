@@ -339,6 +339,9 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
       error("R_X86_64_32S out of range");
     write32le(Loc, SA);
     break;
+  case R_X86_64_TPOFF32:
+    write32le(Loc, SA);
+    break;
   default:
     error("unrecognized reloc " + Twine(Type));
   }
