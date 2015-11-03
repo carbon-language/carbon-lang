@@ -1103,6 +1103,32 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
                                   Callee->getAttributes());
   }
 
+  // pow(exp(x), y) -> exp(x*y)
+  // pow(exp2(x), y) -> exp2(x * y)
+  // We enable these only under fast-math. Besides rounding
+  // differences the transformation changes overflow and
+  // underflow behavior quite dramatically.
+  // Example: x = 1000, y = 0.001.
+  // pow(exp(x), y) = pow(inf, 0.001) = inf, whereas exp(x*y) = exp(1).
+  if (canUseUnsafeFPMath(CI->getParent()->getParent())) {
+    if (auto *OpC = dyn_cast<CallInst>(Op1)) {
+      IRBuilder<>::FastMathFlagGuard Guard(B);
+      FastMathFlags FMF;
+      FMF.setUnsafeAlgebra();
+      B.SetFastMathFlags(FMF);
+
+      LibFunc::Func Func;
+      Function *Callee = OpC->getCalledFunction();
+      StringRef FuncName = Callee->getName();
+
+      if (TLI->getLibFunc(FuncName, Func) && TLI->has(Func) &&
+          (Func == LibFunc::exp || Func == LibFunc::exp2))
+        return EmitUnaryFloatFnCall(
+            B.CreateFMul(OpC->getArgOperand(0), Op2, "mul"), FuncName, B,
+            Callee->getAttributes());
+    }
+  }
+
   ConstantFP *Op2C = dyn_cast<ConstantFP>(Op2);
   if (!Op2C)
     return Ret;
