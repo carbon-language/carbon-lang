@@ -639,7 +639,13 @@ Value *IslExprBuilder::createInt(__isl_take isl_ast_expr *Expr) {
 
   Val = isl_ast_expr_get_val(Expr);
   APValue = APIntFromVal(Val);
-  T = getType(Expr);
+
+  auto BitWidth = APValue.getBitWidth();
+  if (BitWidth <= 64)
+    T = getType(Expr);
+  else
+    T = Builder.getIntNTy(BitWidth);
+
   APValue = APValue.sextOrSelf(T->getBitWidth());
   V = ConstantInt::get(T, APValue);
 
