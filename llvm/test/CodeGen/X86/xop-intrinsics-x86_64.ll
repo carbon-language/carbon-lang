@@ -61,15 +61,14 @@ define <8 x float> @test_int_x86_xop_vpermil2ps_256(<8 x float> %a0, <8 x float>
 declare <8 x float> @llvm.x86.xop.vpermil2ps.256(<8 x float>, <8 x float>, <8 x float>, i8) nounwind readnone
 
 define <2 x i64> @test_int_x86_xop_vpcmov(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> %a2) {
-  ; CHECK: vpcmov
+  ; CHECK: vpcmov %xmm2, %xmm1, %xmm0, %xmm0
   %res = call <2 x i64> @llvm.x86.xop.vpcmov(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> %a2) ;
   ret <2 x i64> %res
 }
 declare <2 x i64> @llvm.x86.xop.vpcmov(<2 x i64>, <2 x i64>, <2 x i64>) nounwind readnone
 
 define <4 x i64> @test_int_x86_xop_vpcmov_256(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> %a2) {
-  ; CHECK: vpcmov
-  ; CHECK: ymm
+  ; CHECK: vpcmov %ymm2, %ymm1, %ymm0, %ymm0
   %res = call <4 x i64> @llvm.x86.xop.vpcmov.256(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> %a2) ;
   ret <4 x i64> %res
 }

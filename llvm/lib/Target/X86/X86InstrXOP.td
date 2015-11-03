@@ -281,6 +281,16 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
 let ExeDomain = SSEPackedInt in
   defm VPCMOV : xop4op256<0xA2, "vpcmov", int_x86_xop_vpcmov_256>;
 
+let Predicates = [HasXOP] in {
+  def : Pat<(v2i64 (or (and VR128:$src3, VR128:$src1),
+                       (X86andnp VR128:$src3, VR128:$src2))),
+            (VPCMOVrr VR128:$src1, VR128:$src2, VR128:$src3)>;
+
+  def : Pat<(v4i64 (or (and VR256:$src3, VR256:$src1),
+                       (X86andnp VR256:$src3, VR256:$src2))),
+            (VPCMOVrrY VR256:$src1, VR256:$src2, VR256:$src3)>;
+}
+
 multiclass xop5op<bits<8> opc, string OpcodeStr, Intrinsic Int128,
                   Intrinsic Int256, PatFrag ld_128, PatFrag ld_256> {
   def rr : IXOP5<opc, MRMSrcReg, (outs VR128:$dst),

@@ -200,6 +200,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx2.pblendd.128" ||
         Name == "x86.avx2.pblendd.256" ||
         Name == "x86.avx2.vbroadcasti128" ||
+        Name == "x86.xop.vpcmov" ||
         (Name.startswith("x86.xop.vpcom") && F->arg_size() == 2)) {
       NewFn = nullptr;
       return true;
@@ -457,6 +458,16 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep =
           Builder.CreateCall(VPCOM, {CI->getArgOperand(0), CI->getArgOperand(1),
                                      Builder.getInt8(Imm)});
+    } else if (Name == "llvm.x86.xop.vpcmov") {
+      Value *Arg0 = CI->getArgOperand(0);
+      Value *Arg1 = CI->getArgOperand(1);
+      Value *Sel = CI->getArgOperand(2);
+      unsigned NumElts = CI->getType()->getVectorNumElements();
+      Constant *MinusOne = ConstantVector::getSplat(NumElts, Builder.getInt64(-1));
+      Value *NotSel = Builder.CreateXor(Sel, MinusOne);
+      Value *Sel0 = Builder.CreateAnd(Arg0, Sel);
+      Value *Sel1 = Builder.CreateAnd(Arg1, NotSel);
+      Rep = Builder.CreateOr(Sel0, Sel1);
     } else if (Name == "llvm.x86.sse42.crc32.64.8") {
       Function *CRC32 = Intrinsic::getDeclaration(F->getParent(),
                                                Intrinsic::x86_sse42_crc32_32_8);
