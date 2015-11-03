@@ -97,8 +97,8 @@ extern "C" int pthread_sigmask(int how, const __sanitizer_sigset_t *set,
 // REAL(sigfillset) defined in common interceptors.
 DECLARE_REAL(int, sigfillset, __sanitizer_sigset_t *set)
 DECLARE_REAL(int, fflush, __sanitizer_FILE *fp)
-DECLARE_REAL(void *, malloc, uptr size);
-DECLARE_REAL(void, free, void *ptr);
+DECLARE_REAL(void *, malloc, uptr size)
+DECLARE_REAL(void, free, void *ptr)
 extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int *__errno_location();
