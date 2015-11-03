@@ -847,6 +847,7 @@
 		AE7F56291B8FE418001377A8 /* GoASTContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFFBA7C1AC4835D0087B932 /* GoASTContext.cpp */; };
 		AE8F624919EF3E1E00326B21 /* OperatingSystemGo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8F624719EF3E1E00326B21 /* OperatingSystemGo.cpp */; };
 		AEB0E4591BD6E9F800B24093 /* LLVMUserExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEB0E4581BD6E9F800B24093 /* LLVMUserExpression.cpp */; };
+		AEC6FFA01BE970A2007882C1 /* GoParserTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEC6FF9F1BE970A2007882C1 /* GoParserTest.cpp */; };
 		AEEA34051AC88A7400AB639D /* TypeSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEEA34041AC88A7400AB639D /* TypeSystem.cpp */; };
 		AF061F87182C97ED00B6A19C /* RegisterContextHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF061F85182C97ED00B6A19C /* RegisterContextHistory.cpp */; };
 		AF0C112818580CD800C4C45B /* QueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0C112718580CD800C4C45B /* QueueItem.cpp */; };
@@ -2702,6 +2703,7 @@
 		AE8F624819EF3E1E00326B21 /* OperatingSystemGo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OperatingSystemGo.h; path = Go/OperatingSystemGo.h; sourceTree = "<group>"; };
 		AEB0E4581BD6E9F800B24093 /* LLVMUserExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LLVMUserExpression.cpp; path = source/Expression/LLVMUserExpression.cpp; sourceTree = "<group>"; };
 		AEB0E45A1BD6EA1400B24093 /* LLVMUserExpression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LLVMUserExpression.h; path = include/lldb/Expression/LLVMUserExpression.h; sourceTree = "<group>"; };
+		AEC6FF9F1BE970A2007882C1 /* GoParserTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GoParserTest.cpp; sourceTree = "<group>"; };
 		AEEA33F61AC74FE700AB639D /* TypeSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TypeSystem.h; path = include/lldb/Symbol/TypeSystem.h; sourceTree = "<group>"; };
 		AEEA34041AC88A7400AB639D /* TypeSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSystem.cpp; path = source/Symbol/TypeSystem.cpp; sourceTree = "<group>"; };
 		AEEA340F1ACA08A000AB639D /* GoASTContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GoASTContext.h; path = include/lldb/Symbol/GoASTContext.h; sourceTree = "<group>"; };
@@ -3005,6 +3007,7 @@
 				2321F9371BDD32ED00BA9A93 /* Host */,
 				2321F93C1BDD339A00BA9A93 /* Interpreter */,
 				2326CF501BDD68CA00A5CEAC /* Editline */,
+				AEC6FF9D1BE97035007882C1 /* Expression */,
 				2321F93F1BDD33D800BA9A93 /* ScriptInterpreter */,
 				2321F9421BDD343A00BA9A93 /* Utility */,
 			);
@@ -5628,6 +5631,14 @@
 			name = Go;
 			sourceTree = "<group>";
 		};
+		AEC6FF9D1BE97035007882C1 /* Expression */ = {
+			isa = PBXGroup;
+			children = (
+				AEC6FF9F1BE970A2007882C1 /* GoParserTest.cpp */,
+			);
+			path = Expression;
+			sourceTree = "<group>";
+		};
 		AF11CB34182CA85A00D9B618 /* SystemRuntime */ = {
 			isa = PBXGroup;
 			children = (
@@ -6215,6 +6226,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AEC6FFA01BE970A2007882C1 /* GoParserTest.cpp in Sources */,
 				239504E51BDD454B00963CEA /* UriParserTest.cpp in Sources */,
 				239504DF1BDD453200963CEA /* SocketTest.cpp in Sources */,
 				239504E11BDD453E00963CEA /* TestArgs.cpp in Sources */,

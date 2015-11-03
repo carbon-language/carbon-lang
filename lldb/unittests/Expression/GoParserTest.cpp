@@ -18,7 +18,7 @@
 #include "gtest/gtest.h"
 
 #include "lldb/Core/Error.h"
-#include "lldb/Expression/GoParser.h"
+#include "Plugins/ExpressionParser/Go/GoParser.h"
 
 using namespace lldb_private;
 
