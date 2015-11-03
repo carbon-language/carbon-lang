@@ -474,7 +474,7 @@ void LookupResult::resolveKind() {
     D = cast<NamedDecl>(D->getCanonicalDecl());
 
     // Ignore an invalid declaration unless it's the only one left.
-    if (D->isInvalidDecl() && I < N-1) {
+    if (D->isInvalidDecl() && !(I == 0 && N == 1)) {
       Decls[I] = Decls[--N];
       continue;
     }

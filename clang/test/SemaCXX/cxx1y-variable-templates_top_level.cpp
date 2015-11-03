@@ -90,8 +90,8 @@ namespace odr_tmpl {
   }
 
   namespace pvt_diff_params {
-    template<typename T, typename> T v;   // expected-note {{previous template declaration is here}}
-    template<typename T> T v;   // expected-error {{too few template parameters in template redeclaration}} expected-note {{previous template declaration is here}}
+    template<typename T, typename> T v;   // expected-note 2{{previous template declaration is here}}
+    template<typename T> T v;   // expected-error {{too few template parameters in template redeclaration}}
     template<typename T, typename, typename> T v; // expected-error {{too many template parameters in template redeclaration}}
   }
 

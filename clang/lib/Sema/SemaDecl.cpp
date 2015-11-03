@@ -3352,7 +3352,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
       !TemplateParameterListsAreEqual(NewTemplate->getTemplateParameters(),
                                       OldTemplate->getTemplateParameters(),
                                       /*Complain=*/true, TPL_TemplateMatch))
-    return;
+    return New->setInvalidDecl();
 
   // C++ [class.mem]p1:
   //   A member shall not be declared twice in the member-specification [...]
@@ -8220,7 +8220,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // there's no more work to do here; we'll just add the new
     // function to the scope.
     if (!AllowOverloadingOfFunction(Previous, Context)) {
-      NamedDecl *Candidate = Previous.getFoundDecl();
+      NamedDecl *Candidate = Previous.getRepresentativeDecl();
       if (shouldLinkPossiblyHiddenDecl(Candidate, NewFD)) {
         Redeclaration = true;
         OldDecl = Candidate;
