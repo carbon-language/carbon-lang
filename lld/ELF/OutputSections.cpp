@@ -650,7 +650,7 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     return Out<ELFT>::Bss->getVA() + cast<DefinedCommon<ELFT>>(S).OffsetInBSS;
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(S);
-    if (SS.NeedsCopy)
+    if (SS.needsCopy())
       return Out<ELFT>::Bss->getVA() + SS.OffsetInBSS;
     return 0;
   }
@@ -1005,7 +1005,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
       OutSec = Out<ELFT>::Bss;
       break;
     case SymbolBody::SharedKind: {
-      if (cast<SharedSymbol<ELFT>>(Body)->NeedsCopy)
+      if (cast<SharedSymbol<ELFT>>(Body)->needsCopy())
         OutSec = Out<ELFT>::Bss;
       break;
     }

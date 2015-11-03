@@ -284,8 +284,8 @@ public:
   SharedFile<ELFT> *File;
 
   // Can have offset if requires copy relocation.
-  uintX_t OffsetInBSS = 0;
-  bool NeedsCopy = false;
+  uintX_t OffsetInBSS = -1;
+  bool needsCopy() const { return OffsetInBSS != (uintX_t)-1; }
 };
 
 // This class represents a symbol defined in an archive file. It is
