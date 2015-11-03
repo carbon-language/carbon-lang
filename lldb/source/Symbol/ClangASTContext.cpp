@@ -785,6 +785,8 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (ASTContext *ast, Encoding 
             return CompilerType (ast, ast->DoubleTy);
         if (QualTypeMatchesBitSize (bit_size, ast, ast->LongDoubleTy))
             return CompilerType (ast, ast->LongDoubleTy);
+        if (QualTypeMatchesBitSize (bit_size, ast, ast->HalfTy))
+            return CompilerType (ast, ast->HalfTy);
         break;
         
     case eEncodingVector:
@@ -1071,6 +1073,8 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
                     return CompilerType (ast, ast->DoubleTy);
                 if (QualTypeMatchesBitSize (bit_size, ast, ast->LongDoubleTy))
                     return CompilerType (ast, ast->LongDoubleTy);
+                if (QualTypeMatchesBitSize (bit_size, ast, ast->HalfTy))
+                    return CompilerType (ast, ast->HalfTy);
                 break;
                 
             case DW_ATE_signed:
@@ -4525,6 +4529,7 @@ ClangASTContext::GetEncoding (lldb::opaque_compiler_type_t type, uint64_t &count
             case clang::BuiltinType::ULongLong:
             case clang::BuiltinType::UInt128:       return lldb::eEncodingUint;
                 
+            case clang::BuiltinType::Half:
             case clang::BuiltinType::Float:
             case clang::BuiltinType::Double:
             case clang::BuiltinType::LongDouble:    return lldb::eEncodingIEEE754;
@@ -4539,7 +4544,6 @@ ClangASTContext::GetEncoding (lldb::opaque_compiler_type_t type, uint64_t &count
             case clang::BuiltinType::Kind::BoundMember:
             case clang::BuiltinType::Kind::BuiltinFn:
             case clang::BuiltinType::Kind::Dependent:
-            case clang::BuiltinType::Kind::Half:
             case clang::BuiltinType::Kind::OCLClkEvent:
             case clang::BuiltinType::Kind::OCLEvent:
             case clang::BuiltinType::Kind::OCLImage1d:
@@ -4689,8 +4693,9 @@ ClangASTContext::GetFormat (lldb::opaque_compiler_type_t type)
             case clang::BuiltinType::LongLong:      return lldb::eFormatDecimal;
             case clang::BuiltinType::UInt128:       return lldb::eFormatUnsigned;
             case clang::BuiltinType::Int128:        return lldb::eFormatDecimal;
-            case clang::BuiltinType::Float:         return lldb::eFormatFloat;
-            case clang::BuiltinType::Double:        return lldb::eFormatFloat;
+            case clang::BuiltinType::Half:
+            case clang::BuiltinType::Float:
+            case clang::BuiltinType::Double:
             case clang::BuiltinType::LongDouble:    return lldb::eFormatFloat;
             default:
                 return lldb::eFormatHex;
