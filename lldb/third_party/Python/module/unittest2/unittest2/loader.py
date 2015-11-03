@@ -9,7 +9,7 @@ import unittest
 
 from fnmatch import fnmatch
 
-from unittest2 import case, suite
+from unittest2 import case, suite, cmp_
 
 try:
     from os.path import relpath
@@ -61,7 +61,7 @@ class TestLoader(unittest.TestLoader):
     and returning them wrapped in a TestSuite
     """
     testMethodPrefix = 'test'
-    sortTestMethodsUsing = cmp
+    sortTestMethodsUsing = cmp_
     suiteClass = suite.TestSuite
     _top_level_dir = None
 
@@ -310,13 +310,13 @@ def _makeLoader(prefix, sortUsing, suiteClass=None):
         loader.suiteClass = suiteClass
     return loader
 
-def getTestCaseNames(testCaseClass, prefix, sortUsing=cmp):
+def getTestCaseNames(testCaseClass, prefix, sortUsing=cmp_):
     return _makeLoader(prefix, sortUsing).getTestCaseNames(testCaseClass)
 
-def makeSuite(testCaseClass, prefix='test', sortUsing=cmp,
+def makeSuite(testCaseClass, prefix='test', sortUsing=cmp_,
               suiteClass=suite.TestSuite):
     return _makeLoader(prefix, sortUsing, suiteClass).loadTestsFromTestCase(testCaseClass)
 
-def findTestCases(module, prefix='test', sortUsing=cmp,
+def findTestCases(module, prefix='test', sortUsing=cmp_,
                   suiteClass=suite.TestSuite):
     return _makeLoader(prefix, sortUsing, suiteClass).loadTestsFromModule(module)

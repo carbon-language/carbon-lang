@@ -26,6 +26,14 @@ AND THERE IS NO OBLIGATION WHATSOEVER TO PROVIDE MAINTENANCE,
 SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 """
 
+import sys
+
+if sys.version_info[0] >= 3:
+    # Python 3 doesn't have the builtin `cmp` function anymore
+    cmp_ = lambda x, y: (x > y) - (x < y)
+else:
+    cmp_ = cmp
+
 __all__ = ['TestResult', 'TestCase', 'TestSuite',
            'TextTestRunner', 'TestLoader', 'FunctionTestCase', 'main',
            'defaultTestLoader', 'SkipTest', 'skip', 'skipIf', 'skipUnless',

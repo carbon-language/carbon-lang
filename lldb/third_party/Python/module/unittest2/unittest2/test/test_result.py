@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 import textwrap
 from StringIO import StringIO
@@ -342,8 +344,8 @@ class TestOutputBuffering(unittest2.TestCase):
         result._original_stdout = StringIO()
         result._original_stderr = StringIO()
         
-        print 'foo'
-        print >> sys.stderr, 'bar'
+        print('foo')
+        print('bar', file=sys.stderr)
         
         self.assertEqual(out_stream.getvalue(), 'foo\n')
         self.assertEqual(err_stream.getvalue(), 'bar\n')
@@ -381,9 +383,9 @@ class TestOutputBuffering(unittest2.TestCase):
             result._original_stderr = StringIO()
             result._original_stdout = StringIO()
             
-            print >> sys.stdout, 'foo'
+            print('foo')
             if include_error:
-                print >> sys.stderr, 'bar'
+                print('bar', file=sys.stderr)
             
             addFunction = getattr(result, add_attr)
             addFunction(self, (None, None, None))
