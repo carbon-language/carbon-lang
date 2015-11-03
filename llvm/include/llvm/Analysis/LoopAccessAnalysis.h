@@ -136,6 +136,14 @@ public:
       // We couldn't determine the direction or the distance.
       Unknown,
       // Lexically forward.
+      //
+      // FIXME: If we only have loop-independent forward dependences (e.g. a
+      // read and write of A[i]), LAA will locally deem the dependence "safe"
+      // without querying the MemoryDepChecker.  Therefore we can miss
+      // enumerating loop-independent forward dependences in
+      // getInterestingDependences.  Note that as soon as there are different
+      // indices used to access the same array, the MemoryDepChecker *is*
+      // queried and the dependence list is complete.
       Forward,
       // Forward, but if vectorized, is likely to prevent store-to-load
       // forwarding.

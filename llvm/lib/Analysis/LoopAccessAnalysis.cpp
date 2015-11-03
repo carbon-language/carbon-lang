@@ -1090,7 +1090,7 @@ MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   // Could be improved to assert type sizes are the same (i32 == float, etc).
   if (Val == 0) {
     if (ATy == BTy)
-      return Dependence::NoDep;
+      return Dependence::Forward;
     DEBUG(dbgs() << "LAA: Zero dependence difference but different types\n");
     return Dependence::Unknown;
   }
