@@ -376,10 +376,6 @@ private:
   /// coming from another AST file.
   SmallVector<const Decl *, 16> UpdatingVisibleDecls;
 
-  typedef llvm::SmallSetVector<const Decl *, 16> DeclsToRewriteTy;
-  /// \brief Decls that will be replaced in the current dependent AST file.
-  DeclsToRewriteTy DeclsToRewrite;
-
   /// \brief The set of Objective-C class that have categories we
   /// should serialize.
   llvm::SetVector<ObjCInterfaceDecl *> ObjCClassesWithCategories;
@@ -763,14 +759,6 @@ public:
 
   /// \brief Add a version tuple to the given record
   void AddVersionTuple(const VersionTuple &Version, RecordDataImpl &Record);
-
-  void RewriteDecl(const Decl *D) {
-    DeclsToRewrite.insert(D);
-  }
-
-  bool isRewritten(const Decl *D) const {
-    return DeclsToRewrite.count(D);
-  }
 
   /// \brief Infer the submodule ID that contains an entity at the given
   /// source location.
