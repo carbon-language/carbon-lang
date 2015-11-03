@@ -241,6 +241,9 @@ namespace clang {
       ///
       /// This block is part of the control block.
       OPTIONS_BLOCK_ID,
+
+      /// \brief A block containing a module file extension.
+      EXTENSION_BLOCK_ID,
     };
 
     /// \brief Record types that occur within the control block.
@@ -308,6 +311,15 @@ namespace clang {
 
       /// \brief Record code for the preprocessor options table.
       PREPROCESSOR_OPTIONS,
+    };
+
+    /// \brief Record code for extension blocks.
+    enum ExtensionBlockRecordTypes {
+      /// Metadata describing this particular extension.
+      EXTENSION_METADATA = 1,
+
+      /// The first record ID allocated to the extensions themselves.
+      FIRST_EXTENSION_RECORD_ID = 4
     };
 
     /// \brief Record types that occur within the input-files block

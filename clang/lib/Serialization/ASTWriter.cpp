@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Serialization/ASTWriter.h"
+#include "clang/Serialization/ModuleFileExtension.h"
 #include "ASTCommon.h"
 #include "ASTReaderInternals.h"
 #include "MultiOnDiskHashTable.h"
@@ -1094,7 +1095,11 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(PPD_MACRO_EXPANSION);
   RECORD(PPD_MACRO_DEFINITION);
   RECORD(PPD_INCLUSION_DIRECTIVE);
-  
+
+  // Decls and Types block.
+  BLOCK(EXTENSION_BLOCK);
+  RECORD(EXTENSION_METADATA);
+
 #undef RECORD
 #undef BLOCK
   Stream.ExitBlock();
@@ -3876,6 +3881,40 @@ void ASTWriter::WriteOptimizePragmaOptions(Sema &SemaRef) {
   Stream.EmitRecord(OPTIMIZE_PRAGMA_OPTIONS, Record);
 }
 
+void ASTWriter::WriteModuleFileExtension(ModuleFileExtensionWriter &Writer) {
+  // Enter the extension block.
+  Stream.EnterSubblock(EXTENSION_BLOCK_ID, 4);
+
+  // Emit the metadata record abbreviation.
+  llvm::BitCodeAbbrev *Abv = new llvm::BitCodeAbbrev();
+  Abv->Add(llvm::BitCodeAbbrevOp(EXTENSION_METADATA));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::VBR, 6));
+  Abv->Add(llvm::BitCodeAbbrevOp(llvm::BitCodeAbbrevOp::Blob));
+  unsigned Abbrev = Stream.EmitAbbrev(Abv);
+
+  // Emit the metadata record.
+  RecordData Record;
+  auto Metadata = Writer.getExtension()->getExtensionMetadata();
+  Record.push_back(EXTENSION_METADATA);
+  Record.push_back(Metadata.MajorVersion);
+  Record.push_back(Metadata.MinorVersion);
+  Record.push_back(Metadata.BlockName.size());
+  Record.push_back(Metadata.UserInfo.size());
+  SmallString<64> Buffer;
+  Buffer += Metadata.BlockName;
+  Buffer += Metadata.UserInfo;
+  Stream.EmitRecordWithBlob(Abbrev, Record, Buffer);
+
+  // Emit the contents of the extension block.
+  Writer.writeExtensionContents(Stream);
+
+  // Exit the extension block.
+  Stream.ExitBlock();
+}
+
 //===----------------------------------------------------------------------===//
 // General Serialization Routines
 //===----------------------------------------------------------------------===//
@@ -3979,7 +4018,10 @@ void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
   SelectorOffsets[ID - FirstSelectorID] = Offset;
 }
 
-ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream, bool IncludeTimestamps)
+ASTWriter::ASTWriter(
+  llvm::BitstreamWriter &Stream,
+  ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>> Extensions,
+  bool IncludeTimestamps)
     : Stream(Stream), Context(nullptr), PP(nullptr), Chain(nullptr),
       WritingModule(nullptr), IncludeTimestamps(IncludeTimestamps),
       WritingAST(false), DoneWritingDeclsAndTypes(false),
@@ -3999,7 +4041,12 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream, bool IncludeTimestamps)
       DeclVarAbbrev(0), DeclFieldAbbrev(0), DeclEnumAbbrev(0),
       DeclObjCIvarAbbrev(0), DeclCXXMethodAbbrev(0), DeclRefExprAbbrev(0),
       CharacterLiteralAbbrev(0), IntegerLiteralAbbrev(0),
-      ExprImplicitCastAbbrev(0) {}
+      ExprImplicitCastAbbrev(0) {
+  for (const auto &Ext : Extensions) {
+    if (auto Writer = Ext->createExtensionWriter(*this))
+      ModuleFileExtensionWriters.push_back(std::move(Writer));
+  }
+}
 
 ASTWriter::~ASTWriter() {
   llvm::DeleteContainerSeconds(FileDeclIDs);
@@ -4396,7 +4443,6 @@ uint64_t ASTWriter::WriteASTCore(Sema &SemaRef, StringRef isysroot,
   WriteCXXCtorInitializersOffsets();
   WriteFileDeclIDsMap();
   WriteSourceManagerBlock(Context.getSourceManager(), PP);
-
   WriteComments();
   WritePreprocessor(PP, isModule);
   WriteHeaderSearch(PP.getHeaderSearchInfo());
@@ -4525,6 +4571,10 @@ uint64_t ASTWriter::WriteASTCore(Sema &SemaRef, StringRef isysroot,
       NumStatements, NumMacros, NumLexicalDeclContexts, NumVisibleDeclContexts};
   Stream.EmitRecord(STATISTICS, Record);
   Stream.ExitBlock();
+
+  // Write the module file extension blocks.
+  for (const auto &ExtWriter : ModuleFileExtensionWriters)
+    WriteModuleFileExtension(*ExtWriter);
 
   return Signature;
 }

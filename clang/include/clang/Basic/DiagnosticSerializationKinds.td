@@ -115,6 +115,10 @@ def warn_module_uses_date_time : Warning<
   "%select{precompiled header|module}0 uses __DATE__ or __TIME__">,
   InGroup<DiagGroup<"pch-date-time">>;
 
+def warn_duplicate_module_file_extension : Warning<
+  "duplicate module file extension block name '%0'">,
+  InGroup<ModuleFileExtension>;
+
 } // let CategoryName
 } // let Component
 

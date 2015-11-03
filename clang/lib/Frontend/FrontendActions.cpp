@@ -91,7 +91,8 @@ GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   auto Buffer = std::make_shared<PCHBuffer>();
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
   Consumers.push_back(llvm::make_unique<PCHGenerator>(
-      CI.getPreprocessor(), OutputFile, nullptr, Sysroot, Buffer));
+                        CI.getPreprocessor(), OutputFile, nullptr, Sysroot,
+                        Buffer, CI.getFrontendOpts().ModuleFileExtensions));
   Consumers.push_back(CI.getPCHContainerWriter().CreatePCHContainerGenerator(
       CI, InFile, OutputFile, OS, Buffer));
 
@@ -133,10 +134,13 @@ GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
 
   auto Buffer = std::make_shared<PCHBuffer>();
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
+
   Consumers.push_back(llvm::make_unique<PCHGenerator>(
-      CI.getPreprocessor(), OutputFile, Module, Sysroot, Buffer,
-      /*AllowASTWithErrors*/false,
-      /*IncludeTimestamps*/+CI.getFrontendOpts().BuildingImplicitModule));
+                        CI.getPreprocessor(), OutputFile, Module, Sysroot,
+                        Buffer, CI.getFrontendOpts().ModuleFileExtensions,
+                        /*AllowASTWithErrors=*/false,
+                        /*IncludeTimestamps=*/
+                          +CI.getFrontendOpts().BuildingImplicitModule));
   Consumers.push_back(CI.getPCHContainerWriter().CreatePCHContainerGenerator(
       CI, InFile, OutputFile, OS, Buffer));
   return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
@@ -421,6 +425,7 @@ void VerifyPCHAction::ExecuteAction() {
   const std::string &Sysroot = CI.getHeaderSearchOpts().Sysroot;
   std::unique_ptr<ASTReader> Reader(new ASTReader(
       CI.getPreprocessor(), CI.getASTContext(), CI.getPCHContainerReader(),
+      CI.getFrontendOpts().ModuleFileExtensions,
       Sysroot.empty() ? "" : Sysroot.c_str(),
       /*DisableValidation*/ false,
       /*AllowPCHWithCompilerErrors*/ false,
@@ -564,6 +569,20 @@ namespace {
       }
       return false;
     }
+
+    /// Indicates that a particular module file extension has been read.
+    void readModuleFileExtension(
+           const ModuleFileExtensionMetadata &Metadata) override {
+      Out.indent(2) << "Module file extension '"
+                    << Metadata.BlockName << "' " << Metadata.MajorVersion
+                    << "." << Metadata.MinorVersion;
+      if (!Metadata.UserInfo.empty()) {
+        Out << ": ";
+        Out.write_escaped(Metadata.UserInfo);
+      }
+
+      Out << "\n";
+    }
 #undef DUMP_BOOLEAN
   };
 }
@@ -583,7 +602,8 @@ void DumpModuleInfoAction::ExecuteAction() {
   DumpModuleInfoListener Listener(Out);
   ASTReader::readASTFileControlBlock(
       getCurrentFile(), getCompilerInstance().getFileManager(),
-      getCompilerInstance().getPCHContainerReader(), Listener);
+      getCompilerInstance().getPCHContainerReader(),
+      /*FindModuleFileExtensions=*/true, Listener);
 }
 
 //===----------------------------------------------------------------------===//

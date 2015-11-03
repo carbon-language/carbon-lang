@@ -18,6 +18,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ContinuousRangeMap.h"
+#include "clang/Serialization/ModuleFileExtension.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/Endian.h"
@@ -193,6 +194,10 @@ public:
 
   /// \brief The first source location in this module.
   SourceLocation FirstLoc;
+
+  /// The list of extension readers that are attached to this module
+  /// file.
+  std::vector<std::unique_ptr<ModuleFileExtensionReader>> ExtensionReaders;
 
   // === Input Files ===
   /// \brief The cursor to the start of the input-files block.

@@ -58,6 +58,8 @@ class OpaqueValueExpr;
 class OpenCLOptions;
 class ASTReader;
 class Module;
+class ModuleFileExtension;
+class ModuleFileExtensionWriter;
 class PreprocessedEntity;
 class PreprocessingRecord;
 class Preprocessor;
@@ -491,7 +493,11 @@ private:
   /// \brief A mapping from each known submodule to its ID number, which will
   /// be a positive integer.
   llvm::DenseMap<Module *, unsigned> SubmoduleIDs;
-                    
+
+  /// \brief A list of the module file extension writers.
+  std::vector<std::unique_ptr<ModuleFileExtensionWriter>>
+    ModuleFileExtensionWriters;
+
   /// \brief Retrieve or create a submodule ID for this module.
   unsigned getSubmoduleID(Module *Mod);
 
@@ -545,6 +551,7 @@ private:
   void WriteObjCCategories();
   void WriteLateParsedTemplates(Sema &SemaRef);
   void WriteOptimizePragmaOptions(Sema &SemaRef);
+  void WriteModuleFileExtension(ModuleFileExtensionWriter &Writer);
 
   unsigned DeclParmVarAbbrev;
   unsigned DeclContextLexicalAbbrev;
@@ -574,7 +581,9 @@ private:
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
-  ASTWriter(llvm::BitstreamWriter &Stream, bool IncludeTimestamps = true);
+  ASTWriter(llvm::BitstreamWriter &Stream,
+            ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>> Extensions,
+            bool IncludeTimestamps = true);
   ~ASTWriter() override;
 
   const LangOptions &getLangOpts() const;
@@ -890,11 +899,13 @@ protected:
   SmallVectorImpl<char> &getPCH() const { return Buffer->Data; }
 
 public:
-  PCHGenerator(const Preprocessor &PP, StringRef OutputFile,
-               clang::Module *Module, StringRef isysroot,
-               std::shared_ptr<PCHBuffer> Buffer,
-               bool AllowASTWithErrors = false,
-               bool IncludeTimestamps = true);
+  PCHGenerator(
+    const Preprocessor &PP, StringRef OutputFile,
+    clang::Module *Module, StringRef isysroot,
+    std::shared_ptr<PCHBuffer> Buffer,
+    ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>> Extensions,
+    bool AllowASTWithErrors = false,
+    bool IncludeTimestamps = true);
   ~PCHGenerator() override;
   void InitializeSema(Sema &S) override { SemaPtr = &S; }
   void HandleTranslationUnit(ASTContext &Ctx) override;

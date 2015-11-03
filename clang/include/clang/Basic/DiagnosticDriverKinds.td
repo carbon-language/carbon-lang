@@ -193,6 +193,10 @@ def err_drv_modules_validate_once_requires_timestamp : Error<
   "option '-fmodules-validate-once-per-build-session' requires "
   "'-fbuild-session-timestamp=<seconds since Epoch>' or '-fbuild-session-file=<file>'">;
 
+def err_test_module_file_extension_format : Error<
+  "-ftest-module-file-extension argument '%0' is not of the required form "
+  "'blockname:major:minor:hashed:user info'">;
+
 def warn_drv_invoking_fallback : Warning<"falling back to %0">,
   InGroup<Fallback>;
 

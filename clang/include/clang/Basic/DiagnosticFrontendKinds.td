@@ -204,6 +204,10 @@ def err_modules_embed_file_not_found :
   Error<"file '%0' specified by '-fmodules-embed-file=' not found">,
   DefaultFatal;
 
+def err_test_module_file_extension_version : Error<
+  "test module file extension '%0' has different version (%1.%2) than expected "
+  "(%3.%4)">;
+
 def err_conflicting_module_names : Error<
   "conflicting module names specified: '-fmodule-name=%0' and "
   "'-fmodule-implementation-of %1'">;

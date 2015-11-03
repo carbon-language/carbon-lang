@@ -375,3 +375,7 @@ module DebugSubmodules {
     export *
   }
 }
+
+module ExtensionTestA {
+  header "ExtensionTestA.h"
+}
