@@ -460,7 +460,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
         Section.getSize());
 
     if (SectionName == ".gcc_except_table") {
-      readLSDA(SectionData);
+      readLSDA(SectionData, *BC);
     }
   }
 

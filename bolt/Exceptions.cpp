@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Exceptions.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -128,7 +129,7 @@ uintptr_t readEncodedPointer(const uint8_t *&Data, uint8_t Encoding) {
     Result = readValue<int64_t>(Data);
     break;
   default:
-    assert(0 && "not implemented");
+    llvm_unreachable("not implemented");
   }
 
   // then add relative offset
@@ -144,7 +145,7 @@ uintptr_t readEncodedPointer(const uint8_t *&Data, uint8_t Encoding) {
   case DW_EH_PE_funcrel:
   case DW_EH_PE_aligned:
   default:
-    assert(0 && "not implemented");
+    llvm_unreachable("not implemented");
   }
 
   // then apply indirection
@@ -157,7 +158,48 @@ uintptr_t readEncodedPointer(const uint8_t *&Data, uint8_t Encoding) {
 
 } // namespace
 
-void readLSDA(ArrayRef<uint8_t> LSDAData) {
+// readLSDA is reading and dumping the whole .gcc_exception_table section
+// at once.
+//
+// .gcc_except_table section contains a set of Language-Specific Data Areas
+// which are basically exception handling tables. One LSDA per function.
+// One important observation - you can't actually tell which function LSDA
+// refers to, and most addresses are relative to the function start. So you
+// have to start with parsing .eh_frame entries that refers to LSDA to obtain
+// a function context.
+//
+// The best visual representation of the tables comprising LSDA and relationship
+// between them is illustrated at:
+//   http://mentorembedded.github.io/cxx-abi/exceptions.pdf
+// Keep in mind that GCC implementation deviates slightly from that document.
+//
+// To summarize, there are 4 tables in LSDA: call site table, actions table,
+// types table, and types index table (indirection). The main table contains
+// call site entries. Each call site includes a range that can throw an exception,
+// a handler (landing pad), and a reference to an entry in the action table.
+// A handler and/or action could be 0. An action entry is in fact a head
+// of a list of actions associated with a call site and an action table contains
+// all such lists (it could be optimize to share list tails). Each action could be
+// either to catch an exception of a given type, to perform a cleanup, or to
+// propagate an exception after filtering it out (e.g. to make sure function
+// exception specification is not violated). Catch action contains a reference
+// to an entry in the type table, and filter action refers to an entry in the
+// type index table to encode a set of types to filter.
+//
+// Call site table follows LSDA header. Action table immediately follows the
+// call site table.
+//
+// Both types table and type index table start at the same location, but they
+// grow in opposite directions (types go up, indices go down). The beginning of
+// these tables is encoded in LSDA header. Sizes for both of the tables are not
+// included anywhere.
+//
+// For the purpose of rewriting exception handling tables, we can reuse action
+// table, types table, and type index table in a binary format when type
+// references are hard-coded absolute addresses. We still have to parse all the
+// table to determine their size. We have to parse call site table and associate
+// discovered information with actual call instructions and landing pad blocks.
+void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC) {
   const uint8_t *Ptr = LSDAData.data();
 
   while (Ptr < LSDAData.data() + LSDAData.size()) {
@@ -188,7 +230,6 @@ void readLSDA(ArrayRef<uint8_t> LSDAData) {
     if (TTypeEncoding != DW_EH_PE_omit) {
       TTypeEnd = readULEB128(Ptr);
     }
-    const uint8_t *NextLSDA = Ptr + TTypeEnd;
 
     if (opts::PrintExceptions) {
       errs() << "LPStart Encoding = " << (unsigned)LPStartEncoding << '\n';
@@ -197,11 +238,22 @@ void readLSDA(ArrayRef<uint8_t> LSDAData) {
       errs() << "TType End = " << TTypeEnd << '\n';
     }
 
+    // Table to store list of indices in type table. Entries are uleb128s values.
+    auto TypeIndexTableStart = Ptr + TTypeEnd;
+
+    // Offset past the last decoded index.
+    intptr_t MaxTypeIndexTableOffset = 0;
+
+    // The actual type info table starts at the same location, but grows in
+    // different direction. Encoding is different too (TTypeEncoding).
+    auto TypeTableStart = reinterpret_cast<const uint32_t *>(Ptr + TTypeEnd);
+
     uint8_t       CallSiteEncoding = *Ptr++;
     uint32_t      CallSiteTableLength = readULEB128(Ptr);
     const uint8_t *CallSiteTableStart = Ptr;
     const uint8_t *CallSiteTableEnd = CallSiteTableStart + CallSiteTableLength;
     const uint8_t *CallSitePtr = CallSiteTableStart;
+    const uint8_t *ActionTableStart = CallSiteTableEnd;
 
     if (opts::PrintExceptions) {
       errs() << "CallSite Encoding = " << (unsigned)CallSiteEncoding << '\n';
@@ -219,10 +271,67 @@ void readLSDA(ArrayRef<uint8_t> LSDAData) {
       uintptr_t ActionEntry = readULEB128(CallSitePtr);
       uint64_t RangeBase = 0;
       if (opts::PrintExceptions) {
+        auto printType = [&] (int Index, raw_ostream &OS) {
+          assert(Index > 0 && "only positive indices are valid");
+          assert(TTypeEncoding == DW_EH_PE_udata4 &&
+                 "only udata4 supported for TTypeEncoding");
+          auto TypeAddress = *(TypeTableStart - Index);
+          if (TypeAddress == 0) {
+            OS << "<all>";
+            return;
+          }
+          auto NI = BC.GlobalAddresses.find(TypeAddress);
+          if (NI != BC.GlobalAddresses.end()) {
+            OS << NI->second;
+          } else {
+            OS << "0x" << Twine::utohexstr(TypeAddress);
+          }
+        };
         errs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
                << ", 0x" << Twine::utohexstr(RangeBase + Start + Length)
                << "); landing pad: 0x" << Twine::utohexstr(LPStart + LandingPad)
                << "; action entry: 0x" << Twine::utohexstr(ActionEntry) << "\n";
+        if (ActionEntry != 0) {
+          errs() << "    actions: ";
+          const uint8_t *ActionPtr = ActionTableStart + ActionEntry - 1;
+          long long ActionType;
+          long long ActionNext;
+          auto Sep = "";
+          do {
+            ActionType = readSLEB128(ActionPtr);
+            auto Self = ActionPtr;
+            ActionNext = readSLEB128(ActionPtr);
+            errs() << Sep << "(" << ActionType << ", " << ActionNext << ") ";
+            if (ActionType == 0) {
+              errs() << "cleanup";
+            } else if (ActionType > 0) {
+              // It's an index into a type table.
+              errs() << "catch type ";
+              printType(ActionType, errs());
+            } else { // ActionType < 0
+              errs() << "filter exception types ";
+              auto TSep = "";
+              // ActionType is a negative byte offset into uleb128-encoded table
+              // of indices with base 1.
+              // E.g. -1 means offset 0, -2 is offset 1, etc. The indices are
+              // encoded using uleb128 so we cannot directly dereference them.
+              auto TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
+              while (auto Index = readULEB128(TypeIndexTablePtr)) {
+                errs() << TSep;
+                printType(Index, errs());
+                TSep = ", ";
+              }
+              MaxTypeIndexTableOffset =
+                  std::max(MaxTypeIndexTableOffset,
+                           TypeIndexTablePtr - TypeIndexTableStart);
+            }
+
+            Sep = "; ";
+
+            ActionPtr = Self + ActionNext;
+          } while (ActionNext);
+          errs() << '\n';
+        }
       }
 
       if (LandingPad != 0 || ActionEntry != 0)
@@ -233,30 +342,16 @@ void readLSDA(ArrayRef<uint8_t> LSDAData) {
     if (NumCallSites > 1)
       IsTrivial = false;
 
-    if (opts::PrintExceptions)
-      errs() << '\n';
-
     if (IsTrivial)
       ++NumTrivialLSDAs;
+
+    if (opts::PrintExceptions)
+      errs() << '\n';
 
     if (CallSiteTableLength == 0 || TTypeEnd == 0)
       continue;
 
-    const uint8_t *ActionPtr = Ptr;
-    uintptr_t ActionOffset = 0;
-    do {
-      uintptr_t ActionType = readULEB128(ActionPtr);
-      ActionOffset = readULEB128(ActionPtr);
-      if (opts::PrintExceptions) {
-        errs() << "ActionType: " << ActionType
-               << "; ActionOffset: " << ActionOffset << "\n";
-      }
-    } while (ActionOffset != 0);
-
-    if (opts::PrintExceptions)
-      errs() << '\n';
-
-    Ptr = NextLSDA;
+    Ptr = TypeIndexTableStart + MaxTypeIndexTableOffset;
   }
 }
 
