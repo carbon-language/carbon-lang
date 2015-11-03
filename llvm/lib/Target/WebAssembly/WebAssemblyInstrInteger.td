@@ -46,3 +46,8 @@ def : Pat<(ctlz_zero_undef I32:$src), (CLZ_I32 I32:$src)>;
 def : Pat<(ctlz_zero_undef I64:$src), (CLZ_I64 I64:$src)>;
 def : Pat<(cttz_zero_undef I32:$src), (CTZ_I32 I32:$src)>;
 def : Pat<(cttz_zero_undef I64:$src), (CTZ_I64 I64:$src)>;
+
+def SELECT_I32 : I<(outs I32:$dst), (ins I32:$cond, I32:$lhs, I32:$rhs),
+               [(set I32:$dst, (select I32:$cond, I32:$lhs, I32:$rhs))]>;
+def SELECT_I64 : I<(outs I64:$dst), (ins I32:$cond, I64:$lhs, I64:$rhs),
+               [(set I64:$dst, (select I32:$cond, I64:$lhs, I64:$rhs))]>;
