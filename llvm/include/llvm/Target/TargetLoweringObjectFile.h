@@ -93,8 +93,7 @@ public:
   }
 
   virtual void getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                 const GlobalValue *GV,
-                                 bool CannotUsePrivateLabel, Mangler &Mang,
+                                 const GlobalValue *GV, Mangler &Mang,
                                  const TargetMachine &TM) const;
 
   virtual MCSection *getSectionForJumpTable(const Function &F, Mangler &Mang,

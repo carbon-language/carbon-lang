@@ -344,7 +344,7 @@ const MCExpr *TargetLoweringObjectFile::getDebugThreadLocalSymbol(const MCSymbol
 }
 
 void TargetLoweringObjectFile::getNameWithPrefix(
-    SmallVectorImpl<char> &OutName, const GlobalValue *GV,
-    bool CannotUsePrivateLabel, Mangler &Mang, const TargetMachine &TM) const {
-  Mang.getNameWithPrefix(OutName, GV, CannotUsePrivateLabel);
+    SmallVectorImpl<char> &OutName, const GlobalValue *GV, Mangler &Mang,
+    const TargetMachine &TM) const {
+  Mang.getNameWithPrefix(OutName, GV, /*CannotUsePrivateLabel=*/false);
 }
