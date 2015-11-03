@@ -960,8 +960,16 @@ void IslNodeBuilder::preloadInvariantEquivClass(
   auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
   for (auto *DerivedSAI : SAI->getDerivedSAIs()) {
     Value *BasePtr = DerivedSAI->getBasePtr();
-    BasePtr = Builder.CreateBitOrPointerCast(PreloadVal, BasePtr->getType());
-    DerivedSAI->setBasePtr(BasePtr);
+
+    // As the derived SAI information is quite coarse, any load from the current
+    // SAI could be the base pointer of the derived SAI, however we should only
+    // change the base pointer of the derived SAI if we actually preloaded it.
+    for (const MemoryAccess *MA : MAs) {
+      if (BasePtr != MA->getBaseAddr())
+        continue;
+      BasePtr = Builder.CreateBitOrPointerCast(PreloadVal, BasePtr->getType());
+      DerivedSAI->setBasePtr(BasePtr);
+    }
   }
 
   BasicBlock *EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();

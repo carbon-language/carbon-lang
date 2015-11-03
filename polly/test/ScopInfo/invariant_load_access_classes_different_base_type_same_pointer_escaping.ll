@@ -42,12 +42,12 @@
 ;
 ; CODEGEN:     polly.merge_new_and_old:
 ; CODEGEN-DAG:   %U.f.merge = phi float [ %U.f.final_reload, %polly.loop_exit ], [ %U.f, %do.cond ]
-; CODEGEN-DAG:   %U.i.merge = phi i32 [ %7, %polly.loop_exit ], [ %U.i, %do.cond ]
+; CODEGEN-DAG:   %U.i.merge = phi i32 [ %6, %polly.loop_exit ], [ %U.i, %do.cond ]
 ;
 ; CODEGEN: polly.loop_exit:
 ; CODEGEN-DAG:   %U.f.final_reload = load float, float* %U.f.preload.s2a
 ; CODEGEN-DAG:   %U.i.final_reload = load float, float* %U.f.preload.s2a
-; CODEGEN-DAG:   %7 = bitcast float %U.i.final_reload to i32
+; CODEGEN-DAG:   %6 = bitcast float %U.i.final_reload to i32
 ;
 ; CODEGEN: polly.stmt.do.body:
 ; CODEGEN:   %p_conv = fptosi float %0 to i32
