@@ -3553,7 +3553,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
     assert(VT.isFloatingPoint() &&
            N1.getValueType().isFloatingPoint() &&
            VT.bitsLE(N1.getValueType()) &&
-           isa<ConstantSDNode>(N2) && "Invalid FP_ROUND!");
+           N2C && "Invalid FP_ROUND!");
     if (N1.getValueType() == VT) return N1;  // noop conversion.
     break;
   case ISD::AssertSext:
@@ -3686,15 +3686,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
       return N1.getOperand(N2C->getZExtValue());
 
     // EXTRACT_ELEMENT of a constant int is also very common.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
+    if (N1C) {
       unsigned ElementSize = VT.getSizeInBits();
       unsigned Shift = ElementSize * N2C->getZExtValue();
-      APInt ShiftedVal = C->getAPIntValue().lshr(Shift);
+      APInt ShiftedVal = N1C->getAPIntValue().lshr(Shift);
       return getConstant(ShiftedVal.trunc(ElementSize), DL, VT);
     }
     break;
-  case ISD::EXTRACT_SUBVECTOR: {
-    SDValue Index = N2;
+  case ISD::EXTRACT_SUBVECTOR:
     if (VT.isSimple() && N1.getValueType().isSimple()) {
       assert(VT.isVector() && N1.getValueType().isVector() &&
              "Extract subvector VTs must be a vectors!");
@@ -3704,9 +3703,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
       assert(VT.getSimpleVT() <= N1.getSimpleValueType() &&
              "Extract subvector must be from larger vector to smaller vector!");
 
-      if (isa<ConstantSDNode>(Index)) {
-        assert((VT.getVectorNumElements() +
-                cast<ConstantSDNode>(Index)->getZExtValue()
+      if (N2C) {
+        assert((VT.getVectorNumElements() + N2C->getZExtValue()
                 <= N1.getValueType().getVectorNumElements())
                && "Extract subvector overflow!");
       }
@@ -3716,7 +3714,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
         return N1;
     }
     break;
-  }
   }
 
   // Perform trivial constant folding.
