@@ -53,8 +53,8 @@ func1:
 @ These are the section indexes of .TEST1, .ARM.extab.TEST1, .ARM.exidx.TEST1,
 @ .rel.ARM.extab.TEST1, and .rel.ARM.exidx.TEST1.
 @-------------------------------------------------------------------------------
-@ CHECK-NEXT:     0000: 01000000 06000000 07000000 08000000
-@ CHECK-NEXT:     0010: 09000000 0A000000
+@ CHECK-NEXT:     0000: 01000000 04000000 05000000 06000000
+@ CHECK-NEXT:     0010: 07000000 08000000
 @ CHECK-NEXT:     )
 @ CHECK:   }
 
@@ -63,7 +63,7 @@ func1:
 @ Check the .TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 6
+@ CHECK:     Index: 4
 @ CHECK-NEXT:     Name: .TEST1
 @ CHECK:     Type: SHT_PROGBITS (0x1)
 @-------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ func1:
 @ Check the .ARM.extab.TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 7
+@ CHECK:     Index: 5
 @ CHECK-NEXT:     Name: .ARM.extab.TEST1
 @ CHECK:     Type: SHT_PROGBITS (0x1)
 @-------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ func1:
 @ CHECK:   }
 
 @ CHECK:   Section {
-@ CHECK:     Index: 8
+@ CHECK:     Index: 6
 @ CHECK-NEXT:     Name: .rel.ARM.extab.TEST1
 @ CHECK: }
 
@@ -102,7 +102,7 @@ func1:
 @ Check the .ARM.exidx.TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 9
+@ CHECK:     Index: 7
 @ CHECK-NEXT:     Name: .ARM.exidx.TEST1
 @ CHECK:     Type: SHT_ARM_EXIDX (0x70000001)
 @-------------------------------------------------------------------------------
@@ -113,12 +113,12 @@ func1:
 @ CHECK:       SHF_GROUP (0x200)
 @ CHECK:       SHF_LINK_ORDER (0x80)
 @ CHECK:     ]
-@ CHECK:     Link: 6
+@ CHECK:     Link: 4
 @ CHECK:   }
 
 
 @ CHECK:   Section {
-@ CHECK:     Index: 10
+@ CHECK:     Index: 8
 @ CHECK-NEXT:     Name: .rel.ARM.exidx.TEST1
 @ CHECK: }
 

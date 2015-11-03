@@ -10,8 +10,8 @@
 // DARWIN-NEXT:  Arch: x86_64
 // WINDOWS-NEXT: Arch: x86_64
 
-// Test that like gnu as we create text, data and bss by default. Also test
-// that symtab and strtab are listed.
+// Test that we create text by default. Also test that symtab and strtab are
+// listed.
 
 // CHECK:        Section {
 // CHECK:          Name: .strtab
@@ -20,7 +20,7 @@
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset:
-// CHECK-NEXT:     Size: 34
+// CHECK-NEXT:     Size: 23
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 1
@@ -32,36 +32,6 @@
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:       SHF_ALLOC
 // CHECK-NEXT:       SHF_EXECINSTR
-// CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x40
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Link: 0
-// CHECK-NEXT:     Info: 0
-// CHECK-NEXT:     AddressAlignment: 4
-// CHECK-NEXT:     EntrySize: 0
-// CHECK-NEXT:   }
-// CHECK:        Section {
-// CHECK:          Name: .data
-// CHECK-NEXT:     Type: SHT_PROGBITS
-// CHECK-NEXT:     Flags [
-// CHECK-NEXT:       SHF_ALLOC
-// CHECK-NEXT:       SHF_WRITE
-// CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x40
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Link: 0
-// CHECK-NEXT:     Info: 0
-// CHECK-NEXT:     AddressAlignment: 4
-// CHECK-NEXT:     EntrySize: 0
-// CHECK-NEXT:   }
-// CHECK:        Section {
-// CHECK:          Name: .bss
-// CHECK-NEXT:     Type: SHT_NOBITS
-// CHECK-NEXT:     Flags [
-// CHECK-NEXT:       SHF_ALLOC
-// CHECK-NEXT:       SHF_WRITE
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset: 0x40

@@ -50,7 +50,7 @@ func2:
 @-------------------------------------------------------------------------------
 @ CHECK: Sections [
 @ CHECK:   Section {
-@ CHECK:     Index: 5
+@ CHECK:     Index: 3
 @ CHECK-NEXT:     Name: .TEST1
 @ CHECK:     SectionData (
 @ CHECK:       0000: 1EFF2FE1                             |../.|
@@ -84,7 +84,7 @@ func2:
 @-------------------------------------------------------------------------------
 @ This section should linked with .TEST1 section.
 @-------------------------------------------------------------------------------
-@ CHECK:     Link: 5
+@ CHECK:     Link: 3
 
 @-------------------------------------------------------------------------------
 @ The first word should be relocated to the code address in .TEST1 section.
@@ -109,7 +109,7 @@ func2:
 @ Check the TEST2 section (without the dot in the beginning)
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 10
+@ CHECK:     Index: 8
 @ CHECK-NEXT:     Name: TEST2
 @ CHECK:     SectionData (
 @ CHECK:       0000: 1EFF2FE1                             |../.|
@@ -143,7 +143,7 @@ func2:
 @-------------------------------------------------------------------------------
 @ This section should linked with TEST2 section.
 @-------------------------------------------------------------------------------
-@ CHECK:     Link: 10
+@ CHECK:     Link: 8
 
 @-------------------------------------------------------------------------------
 @ The first word should be relocated to the code address in TEST2 section.

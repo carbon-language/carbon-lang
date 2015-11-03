@@ -3,7 +3,7 @@
 // Test that we produce the group sections and that they are before the members
 
 // CHECK:        Section {
-// CHECK:          Index: 5
+// CHECK:          Index: 3
 // CHECK-NEXT:     Name: .group
 // CHECK-NEXT:     Type: SHT_GROUP
 // CHECK-NEXT:     Flags [
@@ -16,11 +16,11 @@
 // CHECK-NEXT:     AddressAlignment: 4
 // CHECK-NEXT:     EntrySize: 4
 // CHECK-NEXT:     SectionData (
-// CHECK-NEXT:       0000:    01000000 06000000 07000000
+// CHECK-NEXT:       0000:    01000000 04000000 05000000
 // CHECK-NEXT:     )
 // CHECK-NEXT:   }
 // CHECK:        Section {
-// CHECK:          Index: 8
+// CHECK:          Index: 6
 // CHECK-NEXT:     Name: .group
 // CHECK-NEXT:     Type: SHT_GROUP
 // CHECK-NEXT:     Flags [
@@ -33,11 +33,11 @@
 // CHECK-NEXT:     AddressAlignment: 4
 // CHECK-NEXT:     EntrySize: 4
 // CHECK-NEXT:     SectionData (
-// CHECK-NEXT:       0000:    01000000 09000000
+// CHECK-NEXT:       0000:    01000000 07000000
 // CHECK-NEXT:     )
 // CHECK-NEXT:   }
 // CHECK:        Section {
-// CHECK:          Index: 10
+// CHECK:          Index: 8
 // CHECK-NEXT:     Name: .group
 // CHECK-NEXT:     Type: SHT_GROUP
 // CHECK-NEXT:     Flags [
@@ -50,7 +50,7 @@
 // CHECK-NEXT:     AddressAlignment: 4
 // CHECK-NEXT:     EntrySize: 4
 // CHECK-NEXT:     SectionData (
-// CHECK-NEXT:       0000:    01000000 0B000000 0C000000
+// CHECK-NEXT:       0000:    01000000 09000000 0A000000
 // CHECK-NEXT:     )
 // CHECK-NEXT:   }
 
@@ -72,7 +72,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .group (0x8)
+// CHECK-NEXT:     Section: .group
 // CHECK-NEXT:   }
 
 // CHECK:        Symbol {

@@ -2,27 +2,27 @@
 
 // Test that we produce two foo sections, each in separate groups
 
+// CHECK: Index: 3
+// CHECK-NEXT: Name: .group
+
+// CHECK: Index: 4
+// CHECK-NEXT: Name: .foo
+
 // CHECK: Index: 5
 // CHECK-NEXT: Name: .group
 
 // CHECK: Index: 6
 // CHECK-NEXT: Name: .foo
 
-// CHECK: Index: 7
-// CHECK-NEXT: Name: .group
-
-// CHECK: Index: 8
-// CHECK-NEXT: Name: .foo
-
 // CHECK: Symbols [
 
 // CHECK: Name: f1
 // CHECK-NOT: }
-// CHECK: Section: .group (0x5)
+// CHECK: Section: .group (0x3)
 
 // CHECK: Name: f2
 // CHECK-NOT: }
-// CHECK: Section: .group (0x7)
+// CHECK: Section: .group (0x5)
 
 	.section	.foo,"axG",@progbits,f1,comdat
         nop

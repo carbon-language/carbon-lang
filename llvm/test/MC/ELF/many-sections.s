@@ -103,7 +103,6 @@ gen_sections64 i
 gen_sections32 j
 gen_sections16 k
 gen_sections8 l
-        .section foo
-        .section bar
+gen_sections4 m
         .section zed
 .long zed

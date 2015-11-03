@@ -86,19 +86,9 @@ void MCELFStreamer::mergeFragment(MCDataFragment *DF,
 }
 
 void MCELFStreamer::InitSections(bool NoExecStack) {
-  // This emulates the same behavior of GNU as. This makes it easier
-  // to compare the output as the major sections are in the same order.
   MCContext &Ctx = getContext();
   SwitchSection(Ctx.getObjectFileInfo()->getTextSection());
   EmitCodeAlignment(4);
-
-  SwitchSection(Ctx.getObjectFileInfo()->getDataSection());
-  EmitCodeAlignment(4);
-
-  SwitchSection(Ctx.getObjectFileInfo()->getBSSSection());
-  EmitCodeAlignment(4);
-
-  SwitchSection(Ctx.getObjectFileInfo()->getTextSection());
 
   if (NoExecStack)
     SwitchSection(Ctx.getAsmInfo()->getNonexecutableStackSection(Ctx));

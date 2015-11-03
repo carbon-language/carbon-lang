@@ -102,6 +102,8 @@ gen_sections8 l
 gen_sections4 m
 
         .section foo
+        .section foo2
+        .section foo3
         .section bar, "a"
 
 a:
