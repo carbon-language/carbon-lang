@@ -186,7 +186,7 @@ INITIALIZE_PASS_END(HexagonPacketizer, "packets", "Hexagon Packetizer",
 HexagonPacketizerList::HexagonPacketizerList(
     MachineFunction &MF, MachineLoopInfo &MLI,
     const MachineBranchProbabilityInfo *MBPI)
-    : VLIWPacketizerList(MF, MLI, true) {
+    : VLIWPacketizerList(MF, MLI) {
   this->MBPI = MBPI;
 }
 
