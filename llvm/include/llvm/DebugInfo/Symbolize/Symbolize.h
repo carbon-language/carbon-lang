@@ -51,14 +51,11 @@ public:
     flush();
   }
 
-  // Returns the result of symbolization for module name/offset as
-  // a string (possibly containing newlines).
-  std::string
-  symbolizeCode(const std::string &ModuleName, uint64_t ModuleOffset);
-  std::string symbolizeInlinedCode(const std::string &ModuleName,
-                                   uint64_t ModuleOffset);
-  std::string
-  symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
+  DILineInfo symbolizeCode(const std::string &ModuleName,
+                           uint64_t ModuleOffset);
+  DIInliningInfo symbolizeInlinedCode(const std::string &ModuleName,
+                                      uint64_t ModuleOffset);
+  DIGlobal symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
   void flush();
   static std::string DemangleName(const std::string &Name,
                                   const SymbolizableModule *ModInfo);
@@ -78,10 +75,6 @@ private:
   /// universal binary (or the binary itself if it is an object file).
   ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
 
-  std::string printDILineInfo(DILineInfo LineInfo) const;
-  std::string printDIInliningInfo(DIInliningInfo InlinedContext) const;
-  std::string printDIGlobal(DIGlobal Global) const;
-
   // Owns all the parsed binaries and object files.
   SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;
   SmallVector<std::unique_ptr<MemoryBuffer>, 4> MemoryBuffers;
@@ -100,7 +93,6 @@ private:
       ObjectPairForPathArch;
 
   Options Opts;
-  static const char kBadString[];
 };
 
 } // namespace symbolize

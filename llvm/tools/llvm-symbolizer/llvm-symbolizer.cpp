@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/DebugInfo/Symbolize/DIPrinter.h"
 #include "llvm/DebugInfo/Symbolize/Symbolize.h"
 #include "llvm/Support/COM.h"
 #include "llvm/Support/CommandLine.h"
@@ -148,18 +149,22 @@ int main(int argc, char **argv) {
   bool IsData = false;
   std::string ModuleName;
   uint64_t ModuleOffset;
+  DIPrinter Printer(outs(), ClPrintFunctions != FunctionNameKind::None);
+
   while (parseCommand(IsData, ModuleName, ModuleOffset)) {
-    std::string Result =
-        IsData ? Symbolizer.symbolizeData(ModuleName, ModuleOffset)
-               : ClPrintInlining
-                     ? Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset)
-                     : Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
     if (ClPrintAddress) {
       outs() << "0x";
       outs().write_hex(ModuleOffset);
       outs() << "\n";
     }
-    outs() << Result << "\n";
+    if (IsData) {
+      Printer << Symbolizer.symbolizeData(ModuleName, ModuleOffset);
+    } else if (ClPrintInlining) {
+      Printer << Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset);
+    } else {
+      Printer << Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
+    }
+    outs() << "\n";
     outs().flush();
   }
 

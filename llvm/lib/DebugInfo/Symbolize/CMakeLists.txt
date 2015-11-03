@@ -1,4 +1,5 @@
 add_llvm_library(LLVMSymbolize
+  DIPrinter.cpp
   SymbolizableObjectFile.cpp
   Symbolize.cpp
 

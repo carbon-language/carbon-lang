@@ -30,7 +30,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include <sstream>
 #include <stdlib.h>
 
 #if defined(_MSC_VER)
@@ -55,18 +54,11 @@ static bool error(std::error_code ec) {
   return true;
 }
 
-
-// By default, DILineInfo contains "<invalid>" for function/filename it
-// cannot fetch. We replace it to "??" to make our output closer to addr2line.
-static const char kDILineInfoBadString[] = "<invalid>";
-
-const char LLVMSymbolizer::kBadString[] = "??";
-
-std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
-                                          uint64_t ModuleOffset) {
+DILineInfo LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
+                                         uint64_t ModuleOffset) {
   SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
-    return printDILineInfo(DILineInfo());
+    return DILineInfo();
 
   // If the user is giving us relative addresses, add the preferred base of the
   // object to the offset before we do the query. It's what DIContext expects.
@@ -77,14 +69,15 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
                                             Opts.UseSymbolTable);
   if (Opts.Demangle)
     LineInfo.FunctionName = DemangleName(LineInfo.FunctionName, Info);
-  return printDILineInfo(LineInfo);
+  return LineInfo;
 }
 
-std::string LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
-                                                 uint64_t ModuleOffset) {
+DIInliningInfo
+LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
+                                     uint64_t ModuleOffset) {
   SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
-    return printDIInliningInfo(DIInliningInfo());
+    return DIInliningInfo();
 
   // If the user is giving us relative addresses, add the preferred base of the
   // object to the offset before we do the query. It's what DIContext expects.
@@ -99,16 +92,16 @@ std::string LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
       Frame->FunctionName = DemangleName(Frame->FunctionName, Info);
     }
   }
-  return printDIInliningInfo(InlinedContext);
+  return InlinedContext;
 }
 
-std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
-                                          uint64_t ModuleOffset) {
+DIGlobal LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
+                                       uint64_t ModuleOffset) {
   if (!Opts.UseSymbolTable)
-    return printDIGlobal(DIGlobal());
+    return DIGlobal();
   SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
-    return printDIGlobal(DIGlobal());
+    return DIGlobal();
 
   // If the user is giving us relative addresses, add the preferred base of
   // the object to the offset before we do the query. It's what DIContext
@@ -119,7 +112,7 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
   DIGlobal Global = Info->symbolizeData(ModuleOffset);
   if (Opts.Demangle)
     Global.Name = DemangleName(Global.Name, Info);
-  return printDIGlobal(Global);
+  return Global;
 }
 
 void LLVMSymbolizer::flush() {
@@ -369,46 +362,6 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   SymbolizableModule *Res = ErrOrInfo.get().get();
   Modules.insert(std::make_pair(ModuleName, std::move(ErrOrInfo.get())));
   return Res;
-}
-
-std::string
-LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo) const {
-  std::stringstream Result;
-  if (Opts.PrintFunctions != FunctionNameKind::None) {
-    std::string FunctionName = LineInfo.FunctionName;
-    if (FunctionName == kDILineInfoBadString)
-      FunctionName = kBadString;
-    Result << FunctionName << "\n";
-  }
-  std::string Filename = LineInfo.FileName;
-  if (Filename == kDILineInfoBadString)
-    Filename = kBadString;
-  Result << Filename << ":" << LineInfo.Line << ":" << LineInfo.Column << "\n";
-  return Result.str();
-}
-
-std::string
-LLVMSymbolizer::printDIInliningInfo(DIInliningInfo InlinedContext) const {
-  uint32_t FramesNum = InlinedContext.getNumberOfFrames();
-  if (FramesNum == 0)
-    return printDILineInfo(DILineInfo());
-  std::string Result;
-  for (uint32_t i = 0; i < FramesNum; i++) {
-    DILineInfo LineInfo = InlinedContext.getFrame(i);
-    Result += printDILineInfo(LineInfo);
-  }
-  return Result;
-}
-
-std::string
-LLVMSymbolizer::printDIGlobal(DIGlobal Global) const {
-  std::stringstream Result;
-  std::string Name = Global.Name;
-  if (Name == kDILineInfoBadString)
-    Name = kBadString;
-  Result << Name << "\n";
-  Result << Global.Start << " " << Global.Size << "\n";
-  return Result.str();
 }
 
 // Undo these various manglings for Win32 extern "C" functions:
