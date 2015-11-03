@@ -53,6 +53,31 @@
 using namespace lldb;
 using namespace lldb_private;
 
+const char* ConnectionFileDescriptor::LISTEN_SCHEME = "listen";
+const char* ConnectionFileDescriptor::ACCEPT_SCHEME = "accept";
+const char* ConnectionFileDescriptor::UNIX_ACCEPT_SCHEME = "unix-accept";
+const char* ConnectionFileDescriptor::CONNECT_SCHEME = "connect";
+const char* ConnectionFileDescriptor::TCP_CONNECT_SCHEME = "tcp-connect";
+const char* ConnectionFileDescriptor::UDP_SCHEME = "udp";
+const char* ConnectionFileDescriptor::UNIX_CONNECT_SCHEME = "unix-connect";
+const char* ConnectionFileDescriptor::UNIX_ABSTRACT_CONNECT_SCHEME = "unix-abstract-connect";
+const char* ConnectionFileDescriptor::FD_SCHEME = "fd";
+const char* ConnectionFileDescriptor::FILE_SCHEME = "file";
+
+namespace {
+
+const char*
+GetURLAddress(const char *url, const char *scheme)
+{
+    const auto prefix = std::string(scheme) + "://";
+    if (strstr(url, prefix.c_str()) != url)
+        return nullptr;
+
+    return url + prefix.size();
+}
+
+}
+
 ConnectionFileDescriptor::ConnectionFileDescriptor(bool child_processes_inherit)
     : Connection()
     , m_pipe()
@@ -154,51 +179,51 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
 
     if (s && s[0])
     {
-        if (strstr(s, "listen://") == s)
+        const char *addr = nullptr;
+        if ((addr = GetURLAddress(s, LISTEN_SCHEME)))
         {
             // listen://HOST:PORT
-            return SocketListenAndAccept(s + strlen("listen://"), error_ptr);
+            return SocketListenAndAccept(addr, error_ptr);
         }
-        else if (strstr(s, "accept://") == s)
+        else if ((addr = GetURLAddress(s, ACCEPT_SCHEME)))
         {
             // unix://SOCKNAME
-            return NamedSocketAccept(s + strlen("accept://"), error_ptr);
+            return NamedSocketAccept(addr, error_ptr);
         }
-        else if (strstr(s, "unix-accept://") == s)
+        else if ((addr = GetURLAddress(s, UNIX_ACCEPT_SCHEME)))
         {
             // unix://SOCKNAME
-            return NamedSocketAccept(s + strlen("unix-accept://"), error_ptr);
+            return NamedSocketAccept(addr, error_ptr);
         }
-        else if (strstr(s, "connect://") == s)
+        else if ((addr = GetURLAddress(s, CONNECT_SCHEME)))
         {
-            return ConnectTCP(s + strlen("connect://"), error_ptr);
+            return ConnectTCP(addr, error_ptr);
         }
-        else if (strstr(s, "tcp-connect://") == s)
+        else if ((addr = GetURLAddress(s, TCP_CONNECT_SCHEME)))
         {
-            return ConnectTCP(s + strlen("tcp-connect://"), error_ptr);
+            return ConnectTCP(addr, error_ptr);
         }
-        else if (strstr(s, "udp://") == s)
+        else if ((addr = GetURLAddress(s, UDP_SCHEME)))
         {
-            return ConnectUDP(s + strlen("udp://"), error_ptr);
+            return ConnectUDP(addr, error_ptr);
         }
-        else if (strstr(s, "unix-connect://") == s)
+        else if ((addr = GetURLAddress(s, UNIX_CONNECT_SCHEME)))
         {
             // unix-connect://SOCKNAME
-            return NamedSocketConnect(s + strlen("unix-connect://"), error_ptr);
+            return NamedSocketConnect(addr, error_ptr);
         }
-        else if (strstr(s, "unix-abstract-connect://") == s)
+        else if ((addr = GetURLAddress(s, UNIX_ABSTRACT_CONNECT_SCHEME)))
         {
             // unix-abstract-connect://SOCKNAME
-            return UnixAbstractSocketConnect(s + strlen("unix-abstract-connect://"), error_ptr);
+            return UnixAbstractSocketConnect(addr, error_ptr);
         }
 #ifndef LLDB_DISABLE_POSIX
-        else if (strstr(s, "fd://") == s)
+        else if ((addr = GetURLAddress(s, FD_SCHEME)))
         {
             // Just passing a native file descriptor within this current process
             // that is already opened (possibly from a service or other source).
-            s += strlen("fd://");
             bool success = false;
-            int fd = StringConvert::ToSInt32(s, -1, 0, &success);
+            int fd = StringConvert::ToSInt32(addr, -1, 0, &success);
 
             if (success)
             {
@@ -244,21 +269,21 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
                         m_read_sp.reset(new File(fd, false));
                         m_write_sp.reset(new File(fd, false));
                     }
-                    m_uri.assign(s);
+                    m_uri.assign(addr);
                     return eConnectionStatusSuccess;
                 }
             }
 
             if (error_ptr)
-                error_ptr->SetErrorStringWithFormat("invalid file descriptor: \"fd://%s\"", s);
+                error_ptr->SetErrorStringWithFormat("invalid file descriptor: \"%s\"", s);
             m_read_sp.reset();
             m_write_sp.reset();
             return eConnectionStatusError;
         }
-        else if (strstr(s, "file://") == s)
+        else if ((addr = GetURLAddress(s, FILE_SCHEME)))
         {
             // file:///PATH
-            const char *path = s + strlen("file://");
+            const char *path = addr;
             int fd = -1;
             do
             {

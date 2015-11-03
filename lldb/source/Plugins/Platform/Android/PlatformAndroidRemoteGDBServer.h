@@ -19,6 +19,10 @@
 // Project includes
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
 
+#include "llvm/ADT/Optional.h"
+
+#include "AdbClient.h"
+
 namespace lldb_private {
 namespace platform_android {
 
@@ -38,6 +42,7 @@ public:
 protected:
     std::string m_device_id;
     std::map<lldb::pid_t, uint16_t> m_port_forwards;
+    llvm::Optional<AdbClient::UnixSocketNamespace> m_socket_namespace;
 
     bool
     LaunchGDBServer (lldb::pid_t &pid, std::string &connect_url) override;

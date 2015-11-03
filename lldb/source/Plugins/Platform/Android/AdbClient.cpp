@@ -50,6 +50,9 @@ const size_t kMaxPushData = 2*1024;
 // Default mode for pushed files.
 const uint32_t kDefaultMode = 0100770; // S_IFREG | S_IRWXU | S_IRWXG
 
+const char * kSocketNamespaceAbstract = "localabstract";
+const char * kSocketNamespaceFileSystem = "localfilesystem";
+
 }  // namespace
 
 Error
@@ -145,10 +148,17 @@ AdbClient::SetPortForwarding (const uint16_t local_port, const uint16_t remote_p
 }
 
 Error
-AdbClient::SetPortForwarding (const uint16_t local_port, const char* remote_socket_name)
+AdbClient::SetPortForwarding (const uint16_t local_port,
+                              const char* remote_socket_name,
+                              const UnixSocketNamespace socket_namespace)
 {
     char message[PATH_MAX];
-    snprintf (message, sizeof (message), "forward:tcp:%d;localfilesystem:%s", local_port, remote_socket_name);
+    const char * sock_namespace_str = (socket_namespace == UnixSocketNamespaceAbstract) ?
+        kSocketNamespaceAbstract : kSocketNamespaceFileSystem;
+    snprintf (message, sizeof (message), "forward:tcp:%d;%s:%s",
+              local_port,
+              sock_namespace_str,
+              remote_socket_name);
 
     const auto error = SendDeviceMessage (message);
     if (error.Fail ())
