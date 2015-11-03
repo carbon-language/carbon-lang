@@ -1735,9 +1735,22 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
          PEnd = Phis.end(); PIter != PEnd; ++PIter) {
     PHINode *Phi = *PIter;
 
+    auto SimplifyPHINode = [&](PHINode *PN) -> Value * {
+      if (Value *V = SimplifyInstruction(PN, DL, &SE.TLI, &SE.DT, &SE.AC))
+        return V;
+      if (!SE.isSCEVable(PN->getType()))
+        return nullptr;
+      auto *Const = dyn_cast<SCEVConstant>(SE.getSCEV(PN));
+      if (!Const)
+        return nullptr;
+      return Const->getValue();
+    };
+
     // Fold constant phis. They may be congruent to other constant phis and
     // would confuse the logic below that expects proper IVs.
-    if (Value *V = SimplifyInstruction(Phi, DL, &SE.TLI, &SE.DT, &SE.AC)) {
+    if (Value *V = SimplifyPHINode(Phi)) {
+      if (V->getType() != Phi->getType())
+        continue;
       Phi->replaceAllUsesWith(V);
       DeadInsts.emplace_back(Phi);
       ++NumElim;
