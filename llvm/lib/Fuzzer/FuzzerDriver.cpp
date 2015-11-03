@@ -184,7 +184,9 @@ static int RunInMultipleProcesses(const std::vector<std::string> &Args,
 
 int RunOneTest(Fuzzer *F, const char *InputFilePath) {
   Unit U = FileToVector(InputFilePath);
-  F->ExecuteCallback(U);
+  Unit PreciseSizedU(U);
+  assert(PreciseSizedU.size() == PreciseSizedU.capacity());
+  F->ExecuteCallback(PreciseSizedU);
   return 0;
 }
 
