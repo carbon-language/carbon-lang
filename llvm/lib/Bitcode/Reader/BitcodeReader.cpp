@@ -526,19 +526,19 @@ static std::error_code error(DiagnosticHandlerFunction DiagnosticHandler,
 
 std::error_code BitcodeReader::error(BitcodeError E, const Twine &Message) {
   if (!ProducerIdentification.empty()) {
-    Twine MsgWithID = Message + " (Producer: '" + ProducerIdentification +
-                      "' Reader: 'LLVM " + LLVM_VERSION_STRING "')";
-    return ::error(DiagnosticHandler, make_error_code(E), MsgWithID);
+    return ::error(DiagnosticHandler, make_error_code(E),
+                   Message + " (Producer: '" + ProducerIdentification +
+                       "' Reader: 'LLVM " + LLVM_VERSION_STRING "')");
   }
   return ::error(DiagnosticHandler, make_error_code(E), Message);
 }
 
 std::error_code BitcodeReader::error(const Twine &Message) {
   if (!ProducerIdentification.empty()) {
-    Twine MsgWithID = Message + " (Producer: '" + ProducerIdentification +
-                      "' Reader: 'LLVM " + LLVM_VERSION_STRING "')";
     return ::error(DiagnosticHandler,
-                   make_error_code(BitcodeError::CorruptedBitcode), MsgWithID);
+                   make_error_code(BitcodeError::CorruptedBitcode),
+                   Message + " (Producer: '" + ProducerIdentification +
+                       "' Reader: 'LLVM " + LLVM_VERSION_STRING "')");
   }
   return ::error(DiagnosticHandler,
                  make_error_code(BitcodeError::CorruptedBitcode), Message);
