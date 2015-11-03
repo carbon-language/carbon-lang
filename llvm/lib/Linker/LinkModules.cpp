@@ -1940,6 +1940,15 @@ bool ModuleLinker::run() {
     linkGlobalValueBody(Src);
   }
 
+  // Remap all of the named MDNodes in Src into the DstM module. We do this
+  // after linking GlobalValues so that MDNodes that reference GlobalValues
+  // are properly remapped.
+  linkNamedMDNodes();
+
+  // Merge the module flags into the DstM module.
+  if (linkModuleFlagsMetadata())
+    return true;
+
   // Update the initializers in the DstM module now that all globals that may
   // be referenced are in DstM.
   for (GlobalVariable &Src : SrcM->globals()) {
@@ -1965,15 +1974,6 @@ bool ModuleLinker::run() {
     if (linkGlobalValueBody(*SGV))
       return true;
   }
-
-  // Remap all of the named MDNodes in Src into the DstM module. We do this
-  // after linking GlobalValues so that MDNodes that reference GlobalValues
-  // are properly remapped.
-  linkNamedMDNodes();
-
-  // Merge the module flags into the DstM module.
-  if (linkModuleFlagsMetadata())
-    return true;
 
   return false;
 }
