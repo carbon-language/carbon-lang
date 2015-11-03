@@ -3,8 +3,8 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %p/Inputs/relocation-copy.s -o %t2.o
 // RUN: ld.lld2 -shared %t2.o -o %t.so
 // RUN: ld.lld2 -e main %t.o %t.so -o %t3
-// RUN: llvm-readobj --program-headers --dynamic-table -t -s -dyn-symbols -section-data -r --expand-relocs %t3 | FileCheck %s
-// RUN: llvm-objdump -r -d %t3 | FileCheck -check-prefix=CODE %s
+// RUN: llvm-readobj -s -r --expand-relocs %t3 | FileCheck %s
+// RUN: llvm-objdump -d %t3 | FileCheck -check-prefix=CODE %s
 
 .text
 .globl main
