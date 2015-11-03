@@ -7,7 +7,15 @@
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
 
+; Check the loop-carried forward anti-dep between the load of A[i+1] and the
+; store of A[i];
+
 ; CHECK: Memory dependences are safe{{$}}
+; CHECK-NEXT: Interesting Dependences:
+; CHECK-NEXT:   Forward:
+; CHECK-NEXT:     %loadA_plus_2 = load i16, i16* %arrayidxA_plus_2, align 2 ->
+; CHECK-NEXT:     store i16 %mul1, i16* %arrayidxA, align 2
+
 
 define void @f(i16* noalias %a,
                i16* noalias %b,

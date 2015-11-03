@@ -911,19 +911,7 @@ bool MemoryDepChecker::Dependence::isSafeForVectorization(DepType Type) {
 }
 
 bool MemoryDepChecker::Dependence::isInterestingDependence(DepType Type) {
-  switch (Type) {
-  case NoDep:
-  case Forward:
-    return false;
-
-  case BackwardVectorizable:
-  case Unknown:
-  case ForwardButPreventsForwarding:
-  case Backward:
-  case BackwardVectorizableButPreventsForwarding:
-    return true;
-  }
-  llvm_unreachable("unexpected DepType!");
+  return Type != NoDep;
 }
 
 bool MemoryDepChecker::Dependence::isPossiblyBackward() const {
