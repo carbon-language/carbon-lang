@@ -1371,13 +1371,7 @@ Host::ShellExpandArguments (ProcessLaunchInfo &launch_info)
         
         int status;
         std::string output;
-        FileSpec cwd(launch_info.GetWorkingDirectory());
-        if (!cwd.Exists())
-        {
-            error.SetErrorStringWithFormat("cwd does not exist; cannot launch with shell argument expansion");
-            return error;
-        }
-        RunShellCommand(expand_command, cwd, &status, nullptr, &output, 10);
+        RunShellCommand(expand_command, launch_info.GetWorkingDirectory(), &status, nullptr, &output, 10);
         
         if (status != 0)
         {
