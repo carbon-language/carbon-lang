@@ -3637,7 +3637,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
       // user-defined setter/getter. It also synthesizes setter/getter methods
       // and adds them to the DeclContext and global method pools.
       for (auto *I : CDecl->properties())
-        ProcessPropertyDecl(I, CDecl);
+        ProcessPropertyDecl(I);
     CDecl->setAtEndRange(AtEnd);
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {

@@ -390,9 +390,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   // If there was no declaration of a property with the same name in
   // the primary class, we're done.
   if (!PIDecl) {
-    ProcessPropertyDecl(PDecl, CDecl,
-                        /* redeclaredProperty = */ nullptr,
-                        /* lexicalDC = */ CDecl);
+    ProcessPropertyDecl(PDecl);
     return PDecl;
   }
 
@@ -483,8 +481,8 @@ Sema::HandlePropertyInClassExtension(Scope *S,
 
   *isOverridingProperty = true;
 
-  // Make sure setter decl is synthesized, and added to continuation class's list.
-  ProcessPropertyDecl(PDecl, CDecl, PIDecl, CDecl);
+  // Make sure getter/setter are appropriately synthesized.
+  ProcessPropertyDecl(PDecl);
   return PDecl;
 }
 
@@ -1973,15 +1971,10 @@ static void AddPropertyAttrs(Sema &S, ObjCMethodDecl *PropertyMethod,
 /// ProcessPropertyDecl - Make sure that any user-defined setter/getter methods
 /// have the property type and issue diagnostics if they don't.
 /// Also synthesize a getter/setter method if none exist (and update the
-/// appropriate lookup tables. FIXME: Should reconsider if adding synthesized
-/// methods is the "right" thing to do.
-void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
-                               ObjCContainerDecl *CD,
-                               ObjCPropertyDecl *redeclaredProperty,
-                               ObjCContainerDecl *lexicalDC) {
-
+/// appropriate lookup tables.
+void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property) {
   ObjCMethodDecl *GetterMethod, *SetterMethod;
-
+  ObjCContainerDecl *CD = cast<ObjCContainerDecl>(property->getDeclContext());
   if (CD->isInvalidDecl())
     return;
 
@@ -2060,10 +2053,6 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 
     AddPropertyAttrs(*this, GetterMethod, property);
 
-    // FIXME: Eventually this shouldn't be needed, as the lexical context
-    // and the real context should be the same.
-    if (lexicalDC)
-      GetterMethod->setLexicalDeclContext(lexicalDC);
     if (property->hasAttr<NSReturnsNotRetainedAttr>())
       GetterMethod->addAttr(NSReturnsNotRetainedAttr::CreateImplicit(Context,
                                                                      Loc));
@@ -2134,10 +2123,6 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       AddPropertyAttrs(*this, SetterMethod, property);
 
       CD->addDecl(SetterMethod);
-      // FIXME: Eventually this shouldn't be needed, as the lexical context
-      // and the real context should be the same.
-      if (lexicalDC)
-        SetterMethod->setLexicalDeclContext(lexicalDC);
       if (const SectionAttr *SA = property->getAttr<SectionAttr>())
         SetterMethod->addAttr(
             SectionAttr::CreateImplicit(Context, SectionAttr::GNU_section,
