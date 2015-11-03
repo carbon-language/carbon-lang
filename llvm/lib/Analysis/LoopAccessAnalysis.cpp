@@ -58,12 +58,12 @@ static cl::opt<unsigned> MemoryCheckMergeThreshold(
 /// Maximum SIMD width.
 const unsigned VectorizerParams::MaxVectorWidth = 64;
 
-/// \brief We collect interesting dependences up to this threshold.
-static cl::opt<unsigned> MaxInterestingDependence(
-    "max-interesting-dependences", cl::Hidden,
-    cl::desc("Maximum number of interesting dependences collected by "
-             "loop-access analysis (default = 100)"),
-    cl::init(100));
+/// \brief We collect dependences up to this threshold.
+static cl::opt<unsigned>
+    MaxDependences("max-dependences", cl::Hidden,
+                   cl::desc("Maximum number of dependences collected by "
+                            "loop-access analysis (default = 100)"),
+                   cl::init(100));
 
 bool VectorizerParams::isInterleaveForced() {
   return ::VectorizationInterleave.getNumOccurrences() > 0;
@@ -468,7 +468,7 @@ public:
   /// We decided that no dependence analysis would be used.  Reset the state.
   void resetDepChecks(MemoryDepChecker &DepChecker) {
     CheckDeps.clear();
-    DepChecker.clearInterestingDependences();
+    DepChecker.clearDependences();
   }
 
   MemAccessInfoSet &getDependenciesToCheck() { return CheckDeps; }
@@ -910,10 +910,6 @@ bool MemoryDepChecker::Dependence::isSafeForVectorization(DepType Type) {
   llvm_unreachable("unexpected DepType!");
 }
 
-bool MemoryDepChecker::Dependence::isInterestingDependence(DepType Type) {
-  return Type != NoDep;
-}
-
 bool MemoryDepChecker::Dependence::isPossiblyBackward() const {
   switch (Type) {
   case NoDep:
@@ -1229,22 +1225,21 @@ bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
                 isDependent(*A.first, A.second, *B.first, B.second, Strides);
             SafeForVectorization &= Dependence::isSafeForVectorization(Type);
 
-            // Gather dependences unless we accumulated MaxInterestingDependence
+            // Gather dependences unless we accumulated MaxDependences
             // dependences.  In that case return as soon as we find the first
             // unsafe dependence.  This puts a limit on this quadratic
             // algorithm.
-            if (RecordInterestingDependences) {
-              if (Dependence::isInterestingDependence(Type))
-                InterestingDependences.push_back(
-                    Dependence(A.second, B.second, Type));
+            if (RecordDependences) {
+              if (Type != Dependence::NoDep)
+                Dependences.push_back(Dependence(A.second, B.second, Type));
 
-              if (InterestingDependences.size() >= MaxInterestingDependence) {
-                RecordInterestingDependences = false;
-                InterestingDependences.clear();
+              if (Dependences.size() >= MaxDependences) {
+                RecordDependences = false;
+                Dependences.clear();
                 DEBUG(dbgs() << "Too many dependences, stopped recording\n");
               }
             }
-            if (!RecordInterestingDependences && !SafeForVectorization)
+            if (!RecordDependences && !SafeForVectorization)
               return false;
           }
         ++OI;
@@ -1253,8 +1248,7 @@ bool MemoryDepChecker::areDepsSafe(DepCandidates &AccessSets,
     }
   }
 
-  DEBUG(dbgs() << "Total Interesting Dependences: "
-               << InterestingDependences.size() << "\n");
+  DEBUG(dbgs() << "Total Dependences: " << Dependences.size() << "\n");
   return SafeForVectorization;
 }
 
@@ -1749,14 +1743,14 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
   if (Report)
     OS.indent(Depth) << "Report: " << Report->str() << "\n";
 
-  if (auto *InterestingDependences = DepChecker.getInterestingDependences()) {
-    OS.indent(Depth) << "Interesting Dependences:\n";
-    for (auto &Dep : *InterestingDependences) {
+  if (auto *Dependences = DepChecker.getDependences()) {
+    OS.indent(Depth) << "Dependences:\n";
+    for (auto &Dep : *Dependences) {
       Dep.print(OS, Depth + 2, DepChecker.getMemoryInstructions());
       OS << "\n";
     }
   } else
-    OS.indent(Depth) << "Too many interesting dependences, not recorded\n";
+    OS.indent(Depth) << "Too many dependences, not recorded\n";
 
   // List the pair of accesses need run-time checks to prove independence.
   PtrRtChecking.print(OS, Depth);

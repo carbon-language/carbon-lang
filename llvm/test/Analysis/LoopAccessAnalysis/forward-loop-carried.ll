@@ -9,7 +9,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 define void @f(i32* %A, i32* %B, i32* %C, i64 %N) {
 
-; CHECK: Interesting Dependences:
+; CHECK: Dependences:
 ; CHECK-NEXT: Forward:
 ; CHECK-NEXT:   store i32 %a_p1, i32* %Aidx_ahead, align 4 ->
 ; CHECK-NEXT:   %a = load i32, i32* %Aidx, align 4

@@ -38,7 +38,7 @@ target triple = "x86_64-apple-macosx10.10.0"
 
 ; CHECK: for_j.body:
 ; CHECK-NEXT: Report: unsafe dependent memory operations in loop
-; CHECK-NEXT: Interesting Dependences:
+; CHECK-NEXT: Dependences:
 ; CHECK-NEXT: Backward:
 ; CHECK-NEXT: %loadB = load i8, i8* %gepB, align 1 ->
 ; CHECK-NEXT: store i8 2, i8* %gepB_plus_one, align 1

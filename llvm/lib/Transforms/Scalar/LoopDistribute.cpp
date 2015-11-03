@@ -546,11 +546,11 @@ public:
 
   MemoryInstructionDependences(
       const SmallVectorImpl<Instruction *> &Instructions,
-      const SmallVectorImpl<Dependence> &InterestingDependences) {
+      const SmallVectorImpl<Dependence> &Dependences) {
     Accesses.append(Instructions.begin(), Instructions.end());
 
     DEBUG(dbgs() << "Backward dependences:\n");
-    for (auto &Dep : InterestingDependences)
+    for (auto &Dep : Dependences)
       if (Dep.isPossiblyBackward()) {
         // Note that the designations source and destination follow the program
         // order, i.e. source is always first.  (The direction is given by the
@@ -674,9 +674,8 @@ private:
       DEBUG(dbgs() << "Skipping; memory operations are safe for vectorization");
       return false;
     }
-    auto *InterestingDependences =
-        LAI.getDepChecker().getInterestingDependences();
-    if (!InterestingDependences || InterestingDependences->empty()) {
+    auto *Dependences = LAI.getDepChecker().getDependences();
+    if (!Dependences || Dependences->empty()) {
       DEBUG(dbgs() << "Skipping; No unsafe dependences to isolate");
       return false;
     }
@@ -704,7 +703,7 @@ private:
     // NumUnsafeDependencesActive reaches 0.
     const MemoryDepChecker &DepChecker = LAI.getDepChecker();
     MemoryInstructionDependences MID(DepChecker.getMemoryInstructions(),
-                                     *InterestingDependences);
+                                     *Dependences);
 
     int NumUnsafeDependencesActive = 0;
     for (auto &InstDep : MID) {

@@ -141,7 +141,7 @@ public:
       // read and write of A[i]), LAA will locally deem the dependence "safe"
       // without querying the MemoryDepChecker.  Therefore we can miss
       // enumerating loop-independent forward dependences in
-      // getInterestingDependences.  Note that as soon as there are different
+      // getDependences.  Note that as soon as there are different
       // indices used to access the same array, the MemoryDepChecker *is*
       // queried and the dependence list is complete.
       Forward,
@@ -173,9 +173,6 @@ public:
     /// \brief Dependence types that don't prevent vectorization.
     static bool isSafeForVectorization(DepType Type);
 
-    /// \brief Dependence types that can be queried from the analysis.
-    static bool isInterestingDependence(DepType Type);
-
     /// \brief Lexically backward dependence types.
     bool isPossiblyBackward() const;
 
@@ -189,7 +186,7 @@ public:
                    SCEVUnionPredicate &Preds)
       : SE(Se), InnermostLoop(L), AccessIdx(0),
         ShouldRetryWithRuntimeCheck(false), SafeForVectorization(true),
-        RecordInterestingDependences(true), Preds(Preds) {}
+        RecordDependences(true), Preds(Preds) {}
 
   /// \brief Register the location (instructions are given increasing numbers)
   /// of a write access.
@@ -227,14 +224,14 @@ public:
   /// vectorize the loop with a dynamic array access check.
   bool shouldRetryWithRuntimeCheck() { return ShouldRetryWithRuntimeCheck; }
 
-  /// \brief Returns the interesting dependences.  If null is returned we
-  /// exceeded the MaxInterestingDependence threshold and this information is
-  /// not available.
-  const SmallVectorImpl<Dependence> *getInterestingDependences() const {
-    return RecordInterestingDependences ? &InterestingDependences : nullptr;
+  /// \brief Returns the memory dependences.  If null is returned we exceeded
+  /// the MaxDependences threshold and this information is not
+  /// available.
+  const SmallVectorImpl<Dependence> *getDependences() const {
+    return RecordDependences ? &Dependences : nullptr;
   }
 
-  void clearInterestingDependences() { InterestingDependences.clear(); }
+  void clearDependences() { Dependences.clear(); }
 
   /// \brief The vector of memory access instructions.  The indices are used as
   /// instruction identifiers in the Dependence class.
@@ -270,15 +267,14 @@ private:
   /// vectorization.
   bool SafeForVectorization;
 
-  //// \brief True if InterestingDependences reflects the dependences in the
-  //// loop.  If false we exceeded MaxInterestingDependence and
-  //// InterestingDependences is invalid.
-  bool RecordInterestingDependences;
+  //// \brief True if Dependences reflects the dependences in the
+  //// loop.  If false we exceeded MaxDependences and
+  //// Dependences is invalid.
+  bool RecordDependences;
 
-  /// \brief Interesting memory dependences collected during the analysis as
-  /// defined by isInterestingDependence.  Only valid if
-  /// RecordInterestingDependences is true.
-  SmallVector<Dependence, 8> InterestingDependences;
+  /// \brief Memory dependences collected during the analysis.  Only valid if
+  /// RecordDependences is true.
+  SmallVector<Dependence, 8> Dependences;
 
   /// \brief Check whether there is a plausible dependence between the two
   /// accesses.

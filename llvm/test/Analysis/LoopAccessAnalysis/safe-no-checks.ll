@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.10.0"
 ; store of A[i];
 
 ; CHECK: Memory dependences are safe{{$}}
-; CHECK-NEXT: Interesting Dependences:
+; CHECK-NEXT: Dependences:
 ; CHECK-NEXT:   Forward:
 ; CHECK-NEXT:     %loadA_plus_2 = load i16, i16* %arrayidxA_plus_2, align 2 ->
 ; CHECK-NEXT:     store i16 %mul1, i16* %arrayidxA, align 2
