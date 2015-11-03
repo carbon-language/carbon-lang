@@ -45,9 +45,18 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // will physically contain VCC.
   reserveRegisterTuples(Reserved, AMDGPU::SGPR102_SGPR103);
 
+  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
+
+  if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
+    // SI/CI have 104 SGPRs. VI has 102. We need to shift down the reservation
+    // for VCC/FLAT_SCR.
+    reserveRegisterTuples(Reserved, AMDGPU::SGPR98_SGPR99);
+    reserveRegisterTuples(Reserved, AMDGPU::SGPR100_SGPR101);
+  }
+
   // Tonga and Iceland can only allocate a fixed number of SGPRs due
   // to a hw bug.
-  if (MF.getSubtarget<AMDGPUSubtarget>().hasSGPRInitBug()) {
+  if (ST.hasSGPRInitBug()) {
     unsigned NumSGPRs = AMDGPU::SGPR_32RegClass.getNumRegs();
     // Reserve some SGPRs for FLAT_SCRATCH and VCC (4 SGPRs).
     // Assume XNACK_MASK is unused.
