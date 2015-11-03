@@ -15,7 +15,6 @@
 #include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
-#include "CGRecordLayout.h"
 #include "CGObjCRuntime.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
