@@ -148,7 +148,8 @@ public:
 
     lldb_private::Type *
     ResolveType (const DWARFDIE &die,
-                 bool assert_not_being_parsed = true);
+                 bool assert_not_being_parsed = true,
+                 bool resolve_function_context = false);
 
     lldb_private::CompilerDecl
     GetDeclForUID (lldb::user_id_t uid) override;
@@ -434,7 +435,7 @@ protected:
                     lldb_private::SymbolContextList& sc_list);
 
     lldb::TypeSP
-    GetTypeForDIE (const DWARFDIE &die);
+    GetTypeForDIE (const DWARFDIE &die, bool resolve_function_context = false);
 
     void
     Index();

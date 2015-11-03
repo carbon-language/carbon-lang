@@ -1559,14 +1559,14 @@ SymbolFileDWARF::CompleteType (CompilerType &compiler_type)
 }
 
 Type*
-SymbolFileDWARF::ResolveType (const DWARFDIE &die, bool assert_not_being_parsed)
+SymbolFileDWARF::ResolveType (const DWARFDIE &die, bool assert_not_being_parsed, bool resolve_function_context)
 {
     if (die)
     {
         Type *type = GetDIEToType().lookup (die.GetDIE());
 
         if (type == NULL)
-            type = GetTypeForDIE (die).get();
+            type = GetTypeForDIE (die, resolve_function_context).get();
 
         if (assert_not_being_parsed)
         { 
@@ -2927,7 +2927,7 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
                 if (!DIEInDeclContext(parent_decl_ctx, die))
                     continue; // The containing decl contexts don't match
 
-                Type *matching_type = ResolveType (die);
+                Type *matching_type = ResolveType (die, true, true);
                 if (matching_type)
                 {
                     // We found a type pointer, now find the shared pointer form our type list
@@ -3065,7 +3065,7 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
 }
 
 TypeSP
-SymbolFileDWARF::GetTypeForDIE (const DWARFDIE &die)
+SymbolFileDWARF::GetTypeForDIE (const DWARFDIE &die, bool resolve_function_context)
 {
     TypeSP type_sp;
     if (die)
@@ -3084,7 +3084,7 @@ SymbolFileDWARF::GetTypeForDIE (const DWARFDIE &die)
                     parent_die = parent_die->GetParent();
                 }
             SymbolContext sc_backup = sc;
-            if (parent_die != nullptr && !GetFunction(DWARFDIE(die.GetCU(),parent_die), sc))
+            if (resolve_function_context && parent_die != nullptr && !GetFunction(DWARFDIE(die.GetCU(),parent_die), sc))
                 sc = sc_backup;
 
             type_sp = ParseType(sc, die, NULL);
@@ -3270,7 +3270,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDIE &die,
                     
                     if (try_resolving_type)
                     {
-                        Type *resolved_type = ResolveType (type_die, false);
+                        Type *resolved_type = ResolveType (type_die, false, true);
                         if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
                         {
                             DEBUG_PRINTF ("resolved 0x%8.8" PRIx64 " from %s to 0x%8.8" PRIx64 " (cu 0x%8.8" PRIx64 ")\n",
