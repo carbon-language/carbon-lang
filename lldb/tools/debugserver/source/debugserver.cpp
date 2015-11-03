@@ -319,7 +319,6 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
 
                 switch (pid_state)
                 {
-                    default:
                     case eStateInvalid:
                     case eStateUnloaded:
                     case eStateAttaching:
@@ -637,13 +636,13 @@ RNBRunLoopPlatform (RNBRemote *remote)
     while (mode == eRNBRunLoopModePlatformMode)
     {
         std::string set_events_str;
-        const uint32_t event_mask = RNBContext::event_read_packet_available | 
+        const uint32_t event_mask = RNBContext::event_read_packet_available |
                                     RNBContext::event_read_thread_exiting;
-                
+
         DNBLogThreadedIf (LOG_RNB_EVENTS, "%s ctx.Events().WaitForSetEvents(0x%08x) ...",__FUNCTION__, event_mask);
         nub_event_t set_events = ctx.Events().WaitForSetEvents(event_mask);
         DNBLogThreadedIf (LOG_RNB_EVENTS, "%s ctx.Events().WaitForSetEvents(0x%08x) => 0x%08x (%s)",__FUNCTION__, event_mask, set_events, ctx.EventsAsString(set_events, set_events_str));
-        
+
         if (set_events)
         {
             if (set_events & RNBContext::event_read_packet_available)
@@ -651,14 +650,14 @@ RNBRunLoopPlatform (RNBRemote *remote)
                 if (remote->HandleReceivedPacket() == rnb_not_connected)
                     mode = eRNBRunLoopModeExit;
             }
-            
+
             if (set_events & RNBContext::event_read_thread_exiting)
             {
                 mode = eRNBRunLoopModeExit;
             }
             ctx.Events().ResetEvents(set_events);
         }
-    }    
+    }
     return eRNBRunLoopModeExit;
 }
 
@@ -671,9 +670,9 @@ static void
 PortWasBoundCallbackUnixSocket (const void *baton, in_port_t port)
 {
     //::printf ("PortWasBoundCallbackUnixSocket (baton = %p, port = %u)\n", baton, port);
-    
+
     const char *unix_socket_name = (const char *)baton;
-    
+
     if (unix_socket_name && unix_socket_name[0])
     {
         // We were given a unix socket name to use to communicate the port
@@ -685,37 +684,37 @@ PortWasBoundCallbackUnixSocket (const void *baton, in_port_t port)
             perror("error: socket (AF_UNIX, SOCK_STREAM, 0)");
             exit(1);
         }
-        
+
         saddr_un.sun_family = AF_UNIX;
         ::strncpy(saddr_un.sun_path, unix_socket_name, sizeof(saddr_un.sun_path) - 1);
         saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
         saddr_un.sun_len = SUN_LEN (&saddr_un);
-        
+
         if (::connect (s, (struct sockaddr *)&saddr_un, static_cast<socklen_t>(SUN_LEN (&saddr_un))) < 0)
         {
             perror("error: connect (socket, &saddr_un, saddr_un_len)");
             exit(1);
         }
-        
+
         //::printf ("connect () sucess!!\n");
-        
-        
+
+
         // We were able to connect to the socket, now write our PID so whomever
         // launched us will know this process's ID
         RNBLogSTDOUT ("Listening to port %i...\n", port);
-        
+
         char pid_str[64];
         const int pid_str_len = ::snprintf (pid_str, sizeof(pid_str), "%u", port);
         const ssize_t bytes_sent = ::send (s, pid_str, pid_str_len, 0);
-        
+
         if (pid_str_len != bytes_sent)
         {
             perror("error: send (s, pid_str, pid_str_len, 0)");
             exit (1);
         }
-        
+
         //::printf ("send () sucess!!\n");
-        
+
         // We are done with the socket
         close (s);
     }
@@ -893,7 +892,7 @@ main (int argc, char *argv[])
 #if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
     struct sched_param thread_param;
     int thread_sched_policy;
-    if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0) 
+    if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0)
     {
         thread_param.sched_priority = 47;
         pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
@@ -915,25 +914,25 @@ main (int argc, char *argv[])
     //    signal (SIGINT, signal_handler);
     signal (SIGPIPE, signal_handler);
     signal (SIGHUP, signal_handler);
-    
+
     // We're always sitting in waitpid or kevent waiting on our target process' death,
     // we don't need no stinking SIGCHLD's...
-    
+
     sigset_t sigset;
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGCHLD);
     sigprocmask(SIG_BLOCK, &sigset, NULL);
 
     g_remoteSP.reset (new RNBRemote ());
-    
-    
+
+
     RNBRemote *remote = g_remoteSP.get();
     if (remote == NULL)
     {
         RNBLogSTDERR ("error: failed to create a remote connection class\n");
         return -1;
     }
-    
+
     RNBContext& ctx = remote->Context();
 
     int i;
@@ -965,11 +964,11 @@ main (int argc, char *argv[])
 
     char short_options[512];
     uint32_t short_options_idx = 0;
-    
+
      // Handle the two case that don't have short options in g_long_options
     short_options[short_options_idx++] = 'k';
     short_options[short_options_idx++] = 't';
-    
+
     for (i=0; g_long_options[i].name != NULL; ++i)
     {
         if (isalpha(g_long_options[i].val))
@@ -978,7 +977,7 @@ main (int argc, char *argv[])
             switch (g_long_options[i].has_arg)
             {
                 default:
-                case no_argument: 
+                case no_argument:
                     break;
 
                 case optional_argument:
@@ -992,7 +991,7 @@ main (int argc, char *argv[])
     }
     // NULL terminate the short option string.
     short_options[short_options_idx++] = '\0';
-    
+
 #if __GLIBC__
     optind = 0;
 #else
@@ -1074,7 +1073,7 @@ main (int argc, char *argv[])
                     }
                 }
                 break;
-                
+
             case 'K':
                 g_detach_on_error = false;
 
@@ -1139,7 +1138,7 @@ main (int argc, char *argv[])
                         if (log_file != NULL)
                             setlinebuf(log_file);
                     }
-                    
+
                     if (log_file == NULL)
                     {
                         const char *errno_str = strerror(errno);
@@ -1190,7 +1189,7 @@ main (int argc, char *argv[])
             case 'O':
                 ctx.GetSTDOUT().assign(optarg);
                 break;
-            
+
             case 'E':
                 ctx.GetSTDERR().assign(optarg);
                 break;
@@ -1198,7 +1197,7 @@ main (int argc, char *argv[])
             case 'n':
                 no_stdio = true;
                 break;
-                
+
             case 'S':
                 // Put debugserver into a new session. Terminals group processes
                 // into sessions and when a special terminal key sequences
@@ -1216,7 +1215,7 @@ main (int argc, char *argv[])
             case 'D':
                 g_disable_aslr = 1;
                 break;
-            
+
             case 'p':
                 start_mode = eRNBRunLoopModePlatformMode;
                 break;
@@ -1228,12 +1227,12 @@ main (int argc, char *argv[])
             case 'P':
                 named_pipe_path.assign (optarg);
                 break;
-                
+
             case 'e':
                 // Pass a single specified environment variable down to the process that gets launched
                 remote->Context().PushEnvironment(optarg);
                 break;
-            
+
             case 'F':
                 // Pass the current environment down to the process that gets launched
                 {
@@ -1246,10 +1245,10 @@ main (int argc, char *argv[])
                 break;
         }
     }
-    
+
     if (arch_name.empty())
     {
-#if defined (__arm__) 
+#if defined (__arm__)
         arch_name.assign ("arm");
 #endif
     }
@@ -1278,7 +1277,7 @@ main (int argc, char *argv[])
     }
 
     remote->Context().SetDetachOnError(g_detach_on_error);
-    
+
     remote->Initialize();
 
     // It is ok for us to set NULL as the logfile (this will disable any logging)
@@ -1603,7 +1602,7 @@ main (int argc, char *argv[])
 
             case eRNBRunLoopModeInferiorLaunching:
                 {
-                    mode = RNBRunLoopLaunchInferior (remote, 
+                    mode = RNBRunLoopLaunchInferior (remote,
                                                      ctx.GetSTDINPath(),
                                                      ctx.GetSTDOUTPath(),
                                                      ctx.GetSTDERRPath(),
@@ -1653,7 +1652,7 @@ main (int argc, char *argv[])
                     if (remote->Comm().OpenFile (str))
                         mode = eRNBRunLoopModeExit;
                 }
-                
+
                 if (mode != eRNBRunLoopModeExit)
                     mode = RNBRunLoopPlatform (remote);
                 break;
