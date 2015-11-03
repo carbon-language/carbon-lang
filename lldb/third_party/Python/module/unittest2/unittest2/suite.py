@@ -3,6 +3,7 @@
 import sys
 import unittest
 from unittest2 import case, util
+import six
 
 __unittest = True
 
@@ -48,7 +49,7 @@ class BaseTestSuite(unittest.TestSuite):
         self._tests.append(test)
 
     def addTests(self, tests):
-        if isinstance(tests, basestring):
+        if isinstance(tests, six.string_types):
             raise TypeError("tests must be an iterable of tests, not a string")
         for test in tests:
             self.addTest(test)
