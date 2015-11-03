@@ -62,6 +62,20 @@
 
 namespace __sanitizer {
 
+// This function is defined elsewhere if we intercepted pthread_attr_getstack.
+extern "C" {
+SANITIZER_WEAK_ATTRIBUTE int
+real_pthread_attr_getstack(void *attr, void **addr, size_t *size);
+} // extern "C"
+
+static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
+#if !SANITIZER_GO
+  if (&real_pthread_attr_getstack)
+    return real_pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
+#endif
+  return pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
+}
+
 SANITIZER_WEAK_ATTRIBUTE int
 real_sigaction(int signum, const void *act, void *oldact);
 
@@ -385,6 +399,33 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
   }
 #endif
 }
+
+#if !SANITIZER_GO
+void AdjustStackSize(void *attr_) {
+  pthread_attr_t *attr = (pthread_attr_t *)attr_;
+  uptr stackaddr = 0;
+  size_t stacksize = 0;
+  my_pthread_attr_getstack(attr, (void**)&stackaddr, &stacksize);
+  // GLibC will return (0 - stacksize) as the stack address in the case when
+  // stacksize is set, but stackaddr is not.
+  bool stack_set = (stackaddr != 0) && (stackaddr + stacksize != 0);
+  // We place a lot of tool data into TLS, account for that.
+  const uptr minstacksize = GetTlsSize() + 128*1024;
+  if (stacksize < minstacksize) {
+    if (!stack_set) {
+      if (stacksize != 0) {
+        VPrintf(1, "Sanitizer: increasing stacksize %zu->%zu\n", stacksize,
+                minstacksize);
+        pthread_attr_setstacksize(attr, minstacksize);
+      }
+    } else {
+      Printf("Sanitizer: pre-allocated stack size is insufficient: "
+             "%zu < %zu\n", stacksize, minstacksize);
+      Printf("Sanitizer: pthread_create is likely to fail.\n");
+    }
+  }
+}
+#endif // !SANITIZER_GO
 
 # if !SANITIZER_FREEBSD
 typedef ElfW(Phdr) Elf_Phdr;
