@@ -74,6 +74,8 @@ int real_pthread_join(void *th, void **ret);
   }                                                                            \
   }  // namespace __sanitizer
 
+int my_pthread_attr_getstack(void *attr, void **addr, uptr *size);
+
 int internal_sigaction(int signum, const void *act, void *oldact);
 
 }  // namespace __sanitizer
