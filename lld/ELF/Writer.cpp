@@ -700,7 +700,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       }
     }
 
-    if (Sec->getSize() && (Sec->getFlags() & (SHF_ALLOC | SHF_TLS))) {
+    if (Sec->getSize() && (Sec->getFlags() & SHF_ALLOC) &&
+        (Sec->getFlags() & SHF_TLS)) {
       if (!TlsPhdr.p_vaddr)
         setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
       if (Sec->getType() != SHT_NOBITS)
