@@ -3084,7 +3084,7 @@ def VMOVZPQILo2PQIZrr : AVX512XSI<0x7E, MRMSrcReg, (outs VR128X:$dst),
                                                    (v2i64 VR128X:$src))))],
                                 IIC_SSE_MOVQ_RR>, EVEX, VEX_W;
 
-let AddedComplexity = 20 in
+let AddedComplexity = 20 , isCodeGenOnly = 1 in
 def VMOVZPQILo2PQIZrm : AVX512XSI<0x7E, MRMSrcMem, (outs VR128X:$dst),
                                  (ins i128mem:$src),
                                  "vmovq\t{$src, $dst|$dst, $src}",
