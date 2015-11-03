@@ -4,7 +4,7 @@ Test that CoreFoundation classes CFGregorianDate and CFRange are not improperly 
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

@@ -4,7 +4,7 @@ Test that step-inst over a crash behaves correctly.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os
 import lldb

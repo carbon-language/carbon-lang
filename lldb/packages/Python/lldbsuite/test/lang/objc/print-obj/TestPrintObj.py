@@ -4,7 +4,7 @@ Test "print object" where another thread blocks the print object from making pro
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

@@ -4,7 +4,7 @@ Test utility functions for the frame object.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os
 import lldb

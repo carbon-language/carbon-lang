@@ -4,7 +4,7 @@ Test lldb-mi -stack-xxx commands.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldbmi_testcase
 from lldbsuite.test.lldbtest import *

@@ -4,7 +4,7 @@ Test that template instaniations of std::vector<long> and <short> in the same mo
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 import lldbsuite.test.lldbutil as lldbutil

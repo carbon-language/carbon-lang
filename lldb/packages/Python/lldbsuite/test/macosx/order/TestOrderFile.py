@@ -4,7 +4,7 @@ Test that debug symbols have the correct order as specified by the order file.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import re

@@ -5,7 +5,7 @@ Also lookup objective-c data types and evaluate expressions.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, os.path, time
 import lldb

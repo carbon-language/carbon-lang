@@ -4,7 +4,7 @@ Use lldb Python SBValue.WatchPointee() API to create a watchpoint for write of '
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import re

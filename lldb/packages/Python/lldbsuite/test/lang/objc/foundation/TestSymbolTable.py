@@ -4,7 +4,7 @@ Test symbol table access for main.m.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

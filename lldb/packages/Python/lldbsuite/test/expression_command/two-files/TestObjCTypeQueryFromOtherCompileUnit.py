@@ -6,7 +6,7 @@ The expression parser's type search only looks in the current compilation unit f
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 from lldbsuite.test.lldbtest import *

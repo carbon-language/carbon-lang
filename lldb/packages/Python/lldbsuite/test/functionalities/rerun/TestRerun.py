@@ -3,7 +3,7 @@ Test that argdumper is a viable launching strategy.
 """
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 import os

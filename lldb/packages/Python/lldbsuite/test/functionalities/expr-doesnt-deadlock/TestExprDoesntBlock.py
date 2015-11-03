@@ -4,7 +4,7 @@ Test that expr will time out and allow other threads to run if it blocks.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import re

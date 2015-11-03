@@ -1,4 +1,4 @@
-import use_lldb_suite
+
 import six
 
 def command(debugger, command, result, internal_dict):

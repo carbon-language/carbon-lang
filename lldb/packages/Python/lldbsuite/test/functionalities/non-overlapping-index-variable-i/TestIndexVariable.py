@@ -3,7 +3,7 @@ from out of scope to in scope when stopped at the breakpoint."""
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 from lldbsuite.test.lldbtest import *

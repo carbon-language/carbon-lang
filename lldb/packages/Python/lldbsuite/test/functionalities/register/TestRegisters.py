@@ -4,7 +4,7 @@ Test the 'register' command.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, sys, time
 import re

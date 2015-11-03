@@ -4,7 +4,7 @@ Test that we are able to properly report a usable dynamic type
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

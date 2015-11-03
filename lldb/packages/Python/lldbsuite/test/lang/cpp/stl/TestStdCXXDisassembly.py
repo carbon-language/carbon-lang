@@ -4,7 +4,7 @@ Test the lldb disassemble command on lib stdc++.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import unittest2
 import os, time

@@ -4,7 +4,7 @@ Test that you can set breakpoint commands successfully with the Python API's:
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os
 import re

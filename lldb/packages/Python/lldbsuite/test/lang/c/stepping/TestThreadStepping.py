@@ -4,7 +4,7 @@ Test thread stepping features in combination with frame select.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import re

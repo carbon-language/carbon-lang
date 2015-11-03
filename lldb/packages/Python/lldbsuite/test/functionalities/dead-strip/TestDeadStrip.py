@@ -4,7 +4,7 @@ Test that breakpoint works correctly in the presence of dead-code stripping.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

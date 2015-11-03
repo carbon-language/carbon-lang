@@ -4,7 +4,7 @@ Test lldb Python event APIs.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import re

@@ -4,7 +4,7 @@ Test that recursive types are handled correctly.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 import lldbsuite.test.lldbutil as lldbutil

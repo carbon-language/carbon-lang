@@ -34,7 +34,7 @@ echo core.%p | sudo tee /proc/sys/kernel/core_pattern
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 # system packages and modules
 import asyncore

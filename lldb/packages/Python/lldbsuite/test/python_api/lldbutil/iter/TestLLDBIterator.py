@@ -4,7 +4,7 @@ Test the iteration protocol for some lldb container objects.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import re

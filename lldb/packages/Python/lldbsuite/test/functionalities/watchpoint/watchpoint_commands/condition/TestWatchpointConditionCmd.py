@@ -4,7 +4,7 @@ Test watchpoint modify command to set condition on a watchpoint.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

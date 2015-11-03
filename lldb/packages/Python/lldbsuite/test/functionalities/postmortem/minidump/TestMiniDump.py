@@ -4,7 +4,7 @@ Test basics of mini dump debugging.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 from lldbsuite.test.lldbtest import *

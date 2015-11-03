@@ -4,7 +4,7 @@ Test that we can backtrace correctly with 'sigtramp' functions on the stack
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

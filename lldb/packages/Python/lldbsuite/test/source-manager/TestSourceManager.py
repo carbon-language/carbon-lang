@@ -11,7 +11,7 @@ o test_modify_source_file_while_debugging:
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 from lldbsuite.test.lldbtest import *

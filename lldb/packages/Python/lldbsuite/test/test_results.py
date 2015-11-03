@@ -10,7 +10,7 @@ within the LLDB test suite.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import argparse
 import inspect

@@ -4,7 +4,7 @@ Test that ValueObjectPrinter does not cause an infinite loop when a reference to
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

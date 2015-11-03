@@ -4,7 +4,7 @@ inferior and traverses the stack for thread0 to arrive at frame with function
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, sys
 import lldb

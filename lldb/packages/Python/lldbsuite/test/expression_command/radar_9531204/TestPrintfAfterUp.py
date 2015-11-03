@@ -4,7 +4,7 @@ The evaluating printf(...) after break stop and then up a stack frame.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import os, time
 import lldb

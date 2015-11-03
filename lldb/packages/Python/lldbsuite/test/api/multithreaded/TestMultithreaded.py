@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 # __package__ = "lldbsuite.test"
-import use_lldb_suite
+
 
 import os, re
 from lldbsuite.test.lldbtest import *

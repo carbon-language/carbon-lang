@@ -4,7 +4,7 @@ Test lldb-mi -break-xxx commands.
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import unittest2
 import lldbmi_testcase

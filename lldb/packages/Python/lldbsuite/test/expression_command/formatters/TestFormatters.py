@@ -4,7 +4,7 @@ Test using LLDB data formatters with frozen objects coming from the expression p
 
 from __future__ import print_function
 
-import use_lldb_suite
+
 
 import lldb
 import lldbsuite.test.lldbutil as lldbutil
