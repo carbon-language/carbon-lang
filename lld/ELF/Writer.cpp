@@ -644,15 +644,6 @@ static uint32_t toPhdrFlags(uint64_t Flags) {
   return Ret;
 }
 
-template <class ELFT>
-static bool consumesVirtualAddressSpace(OutputSectionBase<ELFT> *Sec) {
-  return (Sec->getFlags() & SHF_ALLOC) &&
-         // Don't allocate VA space for TLS NOBITS sections. The PT_TLS PHDR is
-         // responsible for allocating space for them, not the PT_LOAD that
-         // contains the TLS initialization image.
-         !((Sec->getFlags() & SHF_TLS) && Sec->getType() == SHT_NOBITS);
-}
-
 // Visits all sections to create PHDRs and to assign incremental,
 // non-overlapping addresses to output sections.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
@@ -679,6 +670,9 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   setPhdr(&Phdrs[++PhdrIdx], PT_LOAD, PF_R, 0, getVAStart(), FileOff,
           Target->getPageSize());
 
+  Elf_Phdr TlsPhdr;
+  std::memset(&TlsPhdr, 0, sizeof(Elf_Phdr));
+  uintX_t ThreadBSSOffset = 0;
   // Create phdrs as we assign VAs and file offsets to all output sections.
   SmallPtrSet<Elf_Phdr *, 8> Closed;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
@@ -701,16 +695,37 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       }
     }
 
-    if (consumesVirtualAddressSpace<ELFT>(Sec)) {
+    if (Sec->getSize() && (Sec->getFlags() & SHF_ALLOC) &&
+        (Sec->getFlags() & SHF_TLS)) {
+      if (!TlsPhdr.p_vaddr) {
+        setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
+      }
+      if (Sec->getType() != SHT_NOBITS)
+        VA = RoundUpToAlignment(VA, Sec->getAlign());
+      uintX_t TVA = RoundUpToAlignment(VA + ThreadBSSOffset, Sec->getAlign());
+      Sec->setVA(TVA);
+      TlsPhdr.p_memsz += Sec->getSize();
+      if (Sec->getType() == SHT_NOBITS)
+        ThreadBSSOffset = TVA - VA + Sec->getSize();
+      else {
+        TlsPhdr.p_filesz += Sec->getSize();
+        VA += Sec->getSize();
+      }
+      TlsPhdr.p_align = std::max<uintX_t>(TlsPhdr.p_align, Sec->getAlign());
+    } else if (Sec->getFlags() & SHF_ALLOC) {
       VA = RoundUpToAlignment(VA, Sec->getAlign());
       Sec->setVA(VA);
       VA += Sec->getSize();
     }
+
     FileOff = RoundUpToAlignment(FileOff, Sec->getAlign());
     Sec->setFileOffset(FileOff);
     if (Sec->getType() != SHT_NOBITS)
       FileOff += Sec->getSize();
   }
+
+  if (TlsPhdr.p_vaddr)
+    Phdrs[++PhdrIdx] = TlsPhdr;
 
   // Add an entry for .dynamic.
   if (isOutputDynamic()) {
@@ -732,6 +747,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
 
 // Returns the number of PHDR entries.
 template <class ELFT> int Writer<ELFT>::getPhdrsNum() const {
+  bool Tls = false;
   int I = 2; // 2 for PT_PHDR and the first PT_LOAD
   if (needsInterpSection())
     ++I;
@@ -741,12 +757,16 @@ template <class ELFT> int Writer<ELFT>::getPhdrsNum() const {
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
     if (!Sec->getSize() || !needsPhdr<ELFT>(Sec))
       continue;
+    if (Sec->getFlags() & SHF_TLS)
+      Tls = true;
     uintX_t Flags = toPhdrFlags(Sec->getFlags());
     if (Last != Flags) {
       Last = Flags;
       ++I;
     }
   }
+  if (Tls)
+    ++I;
   return I;
 }
 

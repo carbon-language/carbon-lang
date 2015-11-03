@@ -25,7 +25,7 @@ _start:
 // CHECK-NEXT:       SHF_TLS
 // CHECK-NEXT:       SHF_WRITE
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address:
+// CHECK-NEXT:     Address: [[TDATA_ADDR:0x.*]]
 // CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Link:
@@ -59,7 +59,7 @@ _start:
 // CHECK-NEXT:       SHF_TLS
 // CHECK-NEXT:       SHF_WRITE
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address:
+// CHECK-NEXT:     Address: [[TBSS_ADDR:0x.*]]
 // CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Link:
@@ -76,9 +76,26 @@ _start:
 // CHECK-NEXT:       SHF_TLS
 // CHECK-NEXT:       SHF_WRITE
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address:
+
+// 0x1100C = TBSS_ADDR + 4
+
+// CHECK-NEXT:     Address: 0x1100C
 // CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 4
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info:
+// CHECK-NEXT:     AddressAlignment:
+// CHECK-NEXT:     EntrySize:
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index:
+// CHECK-NEXT:     Name:
+// CHECK-NEXT:     Type:
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_WRITE
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: [[TBSS_ADDR]]
 
 // Check that the TLS NOBITS sections weren't added to the R/W PT_LOAD's size.
 
@@ -91,3 +108,14 @@ _start:
 // CHECK-NEXT:       PF_R
 // CHECK-NEXT:       PF_W
 // CHECK-NEXT:     ]
+// CHECK:          Type: PT_TLS
+// CHECK-NEXT:     Offset:
+// CHECK-NEXT:     VirtualAddress: [[TDATA_ADDR]]
+// CHECK-NEXT:     PhysicalAddress: [[TDATA_ADDR]]
+// CHECK-NEXT:     FileSize: 8
+// CHECK-NEXT:     MemSize: 16
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       PF_R
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Alignment:
+// CHECK-NEXT:   }
