@@ -87,15 +87,6 @@ _start:
 // CHECK-NEXT:     AddressAlignment:
 // CHECK-NEXT:     EntrySize:
 // CHECK-NEXT:   }
-// CHECK-NEXT:   Section {
-// CHECK-NEXT:     Index:
-// CHECK-NEXT:     Name:
-// CHECK-NEXT:     Type:
-// CHECK-NEXT:     Flags [
-// CHECK-NEXT:       SHF_ALLOC
-// CHECK-NEXT:       SHF_WRITE
-// CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: [[TBSS_ADDR]]
 
 // Check that the TLS NOBITS sections weren't added to the R/W PT_LOAD's size.
 

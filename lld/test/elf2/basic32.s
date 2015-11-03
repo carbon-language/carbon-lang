@@ -25,15 +25,15 @@ _start:
 # CHECK-NEXT:   Version: 1
 # CHECK-NEXT:   Entry: 0x11000
 # CHECK-NEXT:   ProgramHeaderOffset: 0x34
-# CHECK-NEXT:   SectionHeaderOffset: 0x105C
+# CHECK-NEXT:   SectionHeaderOffset: 0x1058
 # CHECK-NEXT:   Flags [ (0x0)
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 52
 # CHECK-NEXT:   ProgramHeaderEntrySize: 32
 # CHECK-NEXT:   ProgramHeaderCount: 3
 # CHECK-NEXT:   SectionHeaderEntrySize: 40
-# CHECK-NEXT:   SectionHeaderCount: 6
-# CHECK-NEXT:   StringTableSectionIndex: 4
+# CHECK-NEXT:   SectionHeaderCount: 5
+# CHECK-NEXT:   StringTableSectionIndex: 3
 # CHECK-NEXT: }
 # CHECK-NEXT: Sections [
 # CHECK-NEXT:   Section {
@@ -68,22 +68,6 @@ _start:
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 2
-# CHECK-NEXT:     Name: .bss
-# CHECK-NEXT:     Type: SHT_NOBITS (0x8)
-# CHECK-NEXT:     Flags [ (0x3)
-# CHECK-NEXT:       SHF_ALLOC (0x2)
-# CHECK-NEXT:       SHF_WRITE (0x1)
-# CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x1100C
-# CHECK-NEXT:     Offset: 0x100C
-# CHECK-NEXT:     Size: 0
-# CHECK-NEXT:     Link: 0
-# CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
-# CHECK-NEXT:     EntrySize: 0
-# CHECK-NEXT:   }
-# CHECK-NEXT:   Section {
-# CHECK-NEXT:     Index: 3
 # CHECK-NEXT:     Name: .symtab
 # CHECK-NEXT:     Type: SHT_SYMTAB
 # CHECK-NEXT:     Flags [
@@ -91,33 +75,33 @@ _start:
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x100C
 # CHECK-NEXT:     Size: 32
-# CHECK-NEXT:     Link: 5
+# CHECK-NEXT:     Link: 4
 # CHECK-NEXT:     Info: 1
 # CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 16
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
-# CHECK-NEXT:     Index: 4
+# CHECK-NEXT:     Index: 3
 # CHECK-NEXT:     Name: .shstrtab
 # CHECK-NEXT:     Type: SHT_STRTAB (0x3)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x102C
-# CHECK-NEXT:     Size: 38
+# CHECK-NEXT:     Size: 33
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
-# CHECK-NEXT:     Index: 5
-# CHECK-NEXT:     Name: .strtab (22)
+# CHECK-NEXT:     Index: 4
+# CHECK-NEXT:     Name: .strtab (17)
 # CHECK-NEXT:     Type: SHT_STRTAB (0x3)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x1052
+# CHECK-NEXT:     Offset: 0x104D
 # CHECK-NEXT:     Size: 8
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0

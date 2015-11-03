@@ -60,6 +60,10 @@ private:
   uintX_t getEntryAddr() const;
   int getPhdrsNum() const;
 
+  OutputSection<ELFT> *getBSS();
+  void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms);
+  void addSharedCopySymbols(std::vector<SharedSymbol<ELFT> *> &Syms);
+
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
 
   SpecificBumpPtrAllocator<OutputSection<ELFT>> SecAlloc;
@@ -93,8 +97,6 @@ template <class ELFT> void lld::elf2::writeResult(SymbolTable<ELFT> *Symtab) {
     Out<ELFT>::StrTab = &StrTab;
   StringTableSection<ELFT> DynStrTab(".dynstr", true);
   Out<ELFT>::DynStrTab = &DynStrTab;
-  OutputSection<ELFT> Bss(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
-  Out<ELFT>::Bss = &Bss;
   GotSection<ELFT> Got;
   Out<ELFT>::Got = &Got;
   GotPltSection<ELFT> GotPlt;
@@ -375,12 +377,24 @@ static bool compareOutputSections(OutputSectionBase<ELFT> *A,
   return false;
 }
 
+template <class ELFT> OutputSection<ELFT> *Writer<ELFT>::getBSS() {
+  if (!Out<ELFT>::Bss) {
+    Out<ELFT>::Bss = new (SecAlloc.Allocate())
+        OutputSection<ELFT>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+    OutputSections.push_back(Out<ELFT>::Bss);
+  }
+  return Out<ELFT>::Bss;
+}
+
 // Until this function is called, common symbols do not belong to any section.
 // This function adds them to end of BSS section.
 template <class ELFT>
-static void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
+void Writer<ELFT>::addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+
+  if (Syms.empty())
+    return;
 
   // Sort the common symbols by alignment as an heuristic to pack them better.
   std::stable_sort(
@@ -389,7 +403,7 @@ static void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
       return A->MaxAlignment > B->MaxAlignment;
     });
 
-  uintX_t Off = Out<ELFT>::Bss->getSize();
+  uintX_t Off = getBSS()->getSize();
   for (DefinedCommon<ELFT> *C : Syms) {
     const Elf_Sym &Sym = C->Sym;
     uintX_t Align = C->MaxAlignment;
@@ -402,12 +416,16 @@ static void addCommonSymbols(std::vector<DefinedCommon<ELFT> *> &Syms) {
 }
 
 template <class ELFT>
-static void addSharedCopySymbols(std::vector<SharedSymbol<ELFT> *> &Syms) {
+void Writer<ELFT>::addSharedCopySymbols(
+    std::vector<SharedSymbol<ELFT> *> &Syms) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
 
-  uintX_t Off = Out<ELFT>::Bss->getSize();
+  if (Syms.empty())
+    return;
+
+  uintX_t Off = getBSS()->getSize();
   for (SharedSymbol<ELFT> *C : Syms) {
     const Elf_Sym &Sym = C->Sym;
     const Elf_Shdr *Sec = C->File->getSection(Sym);
@@ -443,10 +461,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSectionBase<ELFT> *> Map;
 
-  OutputSections.push_back(Out<ELFT>::Bss);
-  Map[{Out<ELFT>::Bss->getName(), Out<ELFT>::Bss->getType(),
-       Out<ELFT>::Bss->getFlags(), 0}] = Out<ELFT>::Bss;
-
   std::vector<OutputSectionBase<ELFT> *> RegularSections;
 
   for (const std::unique_ptr<ObjectFile<ELFT>> &F : Symtab.getObjectFiles()) {
@@ -480,6 +494,9 @@ template <class ELFT> void Writer<ELFT>::createSections() {
             ->addSection(cast<MergeInputSection<ELFT>>(C));
     }
   }
+
+  Out<ELFT>::Bss = static_cast<OutputSection<ELFT> *>(
+      Map[{".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE, 0}]);
 
   Out<ELFT>::Dynamic->PreInitArraySec = Map.lookup(
       {".preinit_array", SHT_PREINIT_ARRAY, SHF_WRITE | SHF_ALLOC, 0});

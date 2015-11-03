@@ -58,9 +58,9 @@ _start:
 // CHECK-NEXT:  AddressAlignment: 1
 // CHECK-NEXT:  EntrySize: 0
 // CHECK-NEXT:  SectionData (
-// CHECK-NEXT:    0000: 002E7465 7874002E 62737300 666F6F62  |..text..bss.foob|
-// CHECK-NEXT:    0010: 6172002E 73687374 72746162 002E7374  |ar..shstrtab..st|
-// CHECK-NEXT:    0020: 72746162 002E7379 6D746162 00        |rtab..symtab.|
+// CHECK-NEXT:    0000: 002E7465 78740066 6F6F6261 72002E73  |..text.foobar..s|
+// CHECK-NEXT:    0010: 68737472 74616200 2E737472 74616200  |hstrtab..strtab.|
+// CHECK-NEXT:    0020: 2E73796D 74616200                    |.symtab.|
 // CHECK-NEXT:  )
 // CHECK-NEXT:}
 // CHECK:        Name: .strtab

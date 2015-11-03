@@ -11,7 +11,7 @@
         .quad foo + 6
 
 
-// CHECK:      Name: foo (20)
+// CHECK:      Name: foo
 // CHECK-NEXT: Type: SHT_PROGBITS
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   SHF_ALLOC
