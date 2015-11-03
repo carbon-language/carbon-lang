@@ -1105,7 +1105,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
                     {
                         size_t bytes_read = std::min<uint64_t>(max_bytes - offset, bytes);
                         addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                        if (addr == LLDB_INVALID_ADDRESS)
+                        if (addr == 0 || addr == LLDB_INVALID_ADDRESS)
                             break;
                         heap_buf_ptr->CopyData((uint8_t*)(addr + offset), bytes_read);
                         data.SetData(data_sp);
