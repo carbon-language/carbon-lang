@@ -17,8 +17,8 @@
 // CHECK-NEXT:   SHF_MERGE
 // CHECK-NEXT:   SHF_STRINGS
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x120
-// CHECK-NEXT: Offset: 0x120
+// CHECK-NEXT: Address:
+// CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: 4
 // CHECK-NEXT: Link: 0
 // CHECK-NEXT: Info: 0
@@ -31,8 +31,8 @@
 // CHECK-NEXT:   SHF_MERGE
 // CHECK-NEXT:   SHF_STRINGS
 // CHECK-NEXT: ]
-// CHECK-NEXT: Address: 0x124
-// CHECK-NEXT: Offset: 0x124
+// CHECK-NEXT: Address:
+// CHECK-NEXT: Offset:
 // CHECK-NEXT: Size: 4
 // CHECK-NEXT: Link: 0
 // CHECK-NEXT: Info: 0

@@ -698,27 +698,24 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   // Create phdrs as we assign VAs and file offsets to all output sections.
   SmallPtrSet<Elf_Phdr *, 8> Closed;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    if (Sec->getSize()) {
-      uintX_t Flags = toPhdrFlags(Sec->getFlags());
-      Elf_Phdr *Last = &Phdrs[PhdrIdx];
-      if (Last->p_flags != Flags || !needsPhdr<ELFT>(Sec)) {
-        // Flags changed. End current Phdr and potentially create a new one.
-        if (Closed.insert(Last).second) {
-          Last->p_filesz = FileOff - Last->p_offset;
-          Last->p_memsz = VA - Last->p_vaddr;
-        }
+    uintX_t Flags = toPhdrFlags(Sec->getFlags());
+    Elf_Phdr *Last = &Phdrs[PhdrIdx];
+    if (Last->p_flags != Flags || !needsPhdr<ELFT>(Sec)) {
+      // Flags changed. End current Phdr and potentially create a new one.
+      if (Closed.insert(Last).second) {
+        Last->p_filesz = FileOff - Last->p_offset;
+        Last->p_memsz = VA - Last->p_vaddr;
+      }
 
-        if (needsPhdr<ELFT>(Sec)) {
-          VA = RoundUpToAlignment(VA, Target->getPageSize());
-          FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
-          Elf_Phdr *PH = &Phdrs[++PhdrIdx];
-          setPhdr(PH, PT_LOAD, Flags, FileOff, VA, 0, Target->getPageSize());
-        }
+      if (needsPhdr<ELFT>(Sec)) {
+        VA = RoundUpToAlignment(VA, Target->getPageSize());
+        FileOff = RoundUpToAlignment(FileOff, Target->getPageSize());
+        Elf_Phdr *PH = &Phdrs[++PhdrIdx];
+        setPhdr(PH, PT_LOAD, Flags, FileOff, VA, 0, Target->getPageSize());
       }
     }
 
-    if (Sec->getSize() && (Sec->getFlags() & SHF_ALLOC) &&
-        (Sec->getFlags() & SHF_TLS)) {
+    if ((Sec->getFlags() & SHF_ALLOC) && (Sec->getFlags() & SHF_TLS)) {
       if (!TlsPhdr.p_vaddr)
         setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
       if (Sec->getType() != SHT_NOBITS)
@@ -776,7 +773,7 @@ template <class ELFT> int Writer<ELFT>::getPhdrsNum() const {
     ++I;
   uintX_t Last = PF_R;
   for (OutputSectionBase<ELFT> *Sec : OutputSections) {
-    if (!Sec->getSize() || !needsPhdr<ELFT>(Sec))
+    if (!needsPhdr<ELFT>(Sec))
       continue;
     if (Sec->getFlags() & SHF_TLS)
       Tls = true;

@@ -27,12 +27,12 @@ __start:
 # CHECK-NEXT:   Version: 1
 # CHECK-NEXT:   Entry: 0x20000
 # CHECK-NEXT:   ProgramHeaderOffset: 0x34
-# CHECK-NEXT:   SectionHeaderOffset: 0x10080
+# CHECK-NEXT:   SectionHeaderOffset: 0x20070
 # CHECK-NEXT:   Flags [ (0x0)
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 52
 # CHECK-NEXT:   ProgramHeaderEntrySize: 32
-# CHECK-NEXT:   ProgramHeaderCount: 3
+# CHECK-NEXT:   ProgramHeaderCount: 4
 # CHECK-NEXT:   SectionHeaderEntrySize: 40
 # CHECK-NEXT:   SectionHeaderCount: 9
 # CHECK-NEXT:   StringTableSectionIndex: 7
@@ -59,8 +59,8 @@ __start:
 # CHECK-NEXT:     Flags [ (0x2)
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x10094
-# CHECK-NEXT:     Offset: 0x94
+# CHECK-NEXT:     Address: 0x100B4
+# CHECK-NEXT:     Offset: 0xB4
 # CHECK-NEXT:     Size: 24
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
@@ -74,8 +74,8 @@ __start:
 # CHECK-NEXT:     Flags [ (0x2)
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x100B0
-# CHECK-NEXT:     Offset: 0xB0
+# CHECK-NEXT:     Address: 0x100D0
+# CHECK-NEXT:     Offset: 0xD0
 # CHECK-NEXT:     Size: 24
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
@@ -106,8 +106,8 @@ __start:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_WRITE (0x1)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x20010
-# CHECK-NEXT:     Offset: 0x10010
+# CHECK-NEXT:     Address: 0x30000
+# CHECK-NEXT:     Offset: 0x20000
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
@@ -122,8 +122,8 @@ __start:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_WRITE (0x1)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0x20010
-# CHECK-NEXT:     Offset: 0x10010
+# CHECK-NEXT:     Address: 0x30000
+# CHECK-NEXT:     Offset: 0x20000
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
@@ -137,7 +137,7 @@ __start:
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x10010
+# CHECK-NEXT:     Offset: 0x20000
 # CHECK-NEXT:     Size: 32
 # CHECK-NEXT:     Link: 8
 # CHECK-NEXT:     Info: 1
@@ -151,7 +151,7 @@ __start:
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x10030
+# CHECK-NEXT:     Offset: 0x20020
 # CHECK-NEXT:     Size: 68
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
@@ -165,7 +165,7 @@ __start:
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x10074
+# CHECK-NEXT:     Offset: 0x20064
 # CHECK-NEXT:     Size: 9
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
@@ -199,8 +199,8 @@ __start:
 # CHECK-NEXT:     Offset: 0x34
 # CHECK-NEXT:     VirtualAddress: 0x10034
 # CHECK-NEXT:     PhysicalAddress: 0x10034
-# CHECK-NEXT:     FileSize: 96
-# CHECK-NEXT:     MemSize: 96
+# CHECK-NEXT:     FileSize: 128
+# CHECK-NEXT:     MemSize: 128
 # CHECK-NEXT:     Flags [ (0x4)
 # CHECK-NEXT:       PF_R (0x4)
 # CHECK-NEXT:     ]
@@ -211,8 +211,8 @@ __start:
 # CHECK-NEXT:     Offset: 0x0
 # CHECK-NEXT:     VirtualAddress: 0x10000
 # CHECK-NEXT:     PhysicalAddress: 0x10000
-# CHECK-NEXT:     FileSize: 200
-# CHECK-NEXT:     MemSize: 200
+# CHECK-NEXT:     FileSize: 232
+# CHECK-NEXT:     MemSize: 232
 # CHECK-NEXT:     Flags [ (0x4)
 # CHECK-NEXT:       PF_R (0x4)
 # CHECK-NEXT:     ]
@@ -223,11 +223,24 @@ __start:
 # CHECK-NEXT:     Offset: 0x10000
 # CHECK-NEXT:     VirtualAddress: 0x20000
 # CHECK-NEXT:     PhysicalAddress: 0x20000
-# CHECK-NEXT:     FileSize: 16
-# CHECK-NEXT:     MemSize: 16
+# CHECK-NEXT:     FileSize: 12
+# CHECK-NEXT:     MemSize: 12
 # CHECK-NEXT:     Flags [ (0x5)
 # CHECK-NEXT:       PF_R (0x4)
 # CHECK-NEXT:       PF_X (0x1)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Alignment: 65536
+# CHECK-NEXT:   }
+# CHECK-NEXT:   ProgramHeader {
+# CHECK-NEXT:     Type: PT_LOAD (0x1)
+# CHECK-NEXT:     Offset: 0x20000
+# CHECK-NEXT:     VirtualAddress: 0x30000
+# CHECK-NEXT:     PhysicalAddress: 0x30000
+# CHECK-NEXT:     FileSize: 0
+# CHECK-NEXT:     MemSize: 0
+# CHECK-NEXT:     Flags [
+# CHECK-NEXT:       PF_R
+# CHECK-NEXT:       PF_W
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Alignment: 65536
 # CHECK-NEXT:   }
