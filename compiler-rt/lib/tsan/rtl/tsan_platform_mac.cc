@@ -91,6 +91,10 @@ int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
 }
 #endif
 
+bool IsGlobalVar(uptr addr) {
+  return false;
+}
+
 }  // namespace __tsan
 
 #endif  // SANITIZER_MAC
