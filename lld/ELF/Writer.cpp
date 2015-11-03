@@ -692,8 +692,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   setPhdr(&Phdrs[++PhdrIdx], PT_LOAD, PF_R, 0, getVAStart(), FileOff,
           Target->getPageSize());
 
-  Elf_Phdr TlsPhdr;
-  std::memset(&TlsPhdr, 0, sizeof(Elf_Phdr));
+  Elf_Phdr TlsPhdr{};
   uintX_t ThreadBSSOffset = 0;
   // Create phdrs as we assign VAs and file offsets to all output sections.
   SmallPtrSet<Elf_Phdr *, 8> Closed;
