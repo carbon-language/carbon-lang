@@ -1537,6 +1537,10 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) {
   if (const SCEVUnknown *ValueParameter = dyn_cast<SCEVUnknown>(Parameter)) {
     Value *Val = ValueParameter->getValue();
     ParameterName = Val->getName();
+    if (!Val->hasName())
+      if (LoadInst *LI = dyn_cast<LoadInst>(Val))
+        ParameterName =
+            LI->getPointerOperand()->stripInBoundsOffsets()->getName();
   }
 
   if (ParameterName == "" || ParameterName.substr(0, 2) == "p_")
