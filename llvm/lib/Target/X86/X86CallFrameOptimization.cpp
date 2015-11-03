@@ -103,7 +103,8 @@ private:
   const char *getPassName() const override { return "X86 Optimize Call Frame"; }
 
   const TargetInstrInfo *TII;
-  const TargetFrameLowering *TFL;
+  const X86FrameLowering *TFL;
+  const X86Subtarget *STI;
   const MachineRegisterInfo *MRI;
   static char ID;
 };
@@ -127,13 +128,15 @@ bool X86CallFrameOptimization::isLegal(MachineFunction &MF) {
   // No point in running this in 64-bit mode, since some arguments are
   // passed in-register in all common calling conventions, so the pattern
   // we're looking for will never match.
-  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
-  if (STI.is64Bit())
+  if (STI->is64Bit())
     return false;
 
-  // We can't encode multiple DW_CFA_GNU_args_size in the compact
-  // unwind encoding that Darwin uses.
-  if (STI.isTargetDarwin() && !MF.getMMI().getLandingPads().empty())
+  // We can't encode multiple DW_CFA_GNU_args_size or DW_CFA_def_cfa_offset
+  // in the compact unwind encoding that Darwin uses. So, bail if there
+  // is a danger of that being generated.
+  if (STI->isTargetDarwin() && 
+     (!MF.getMMI().getLandingPads().empty() || 
+       (MF.getFunction()->needsUnwindTableEntry() && !TFL->hasFP(MF))))
     return false;
 
   // You would expect straight-line code between call-frame setup and
@@ -216,8 +219,9 @@ bool X86CallFrameOptimization::isProfitable(MachineFunction &MF,
 }
 
 bool X86CallFrameOptimization::runOnMachineFunction(MachineFunction &MF) {
-  TII = MF.getSubtarget().getInstrInfo();
-  TFL = MF.getSubtarget().getFrameLowering();
+  STI = &MF.getSubtarget<X86Subtarget>();
+  TII = STI->getInstrInfo();
+  TFL = STI->getFrameLowering();
   MRI = &MF.getRegInfo();
 
   if (!isLegal(MF))
@@ -312,7 +316,7 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   // Check that this particular call sequence is amenable to the
   // transformation.
   const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
-                                       MF.getSubtarget().getRegisterInfo());
+                                       STI->getRegisterInfo());
   unsigned FrameDestroyOpcode = TII->getCallFrameDestroyOpcode();
 
   // We expect to enter this at the beginning of a call sequence
@@ -455,6 +459,7 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
   for (int Idx = (Context.ExpectedDist / 4) - 1; Idx >= 0; --Idx) {
     MachineBasicBlock::iterator MOV = *Context.MovVector[Idx];
     MachineOperand PushOp = MOV->getOperand(X86::AddrNumOperands);
+    MachineBasicBlock::iterator Push = nullptr;
     if (MOV->getOpcode() == X86::MOV32mi) {
       unsigned PushOpcode = X86::PUSHi32;
       // If the operand is a small (8-bit) immediate, we can use a
@@ -466,21 +471,20 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
         if (isInt<8>(Val))
           PushOpcode = X86::PUSH32i8;
       }
-      BuildMI(MBB, Context.Call, DL, TII->get(PushOpcode)).addOperand(PushOp);
+      Push = BuildMI(MBB, Context.Call, DL, TII->get(PushOpcode))
+          .addOperand(PushOp);
     } else {
       unsigned int Reg = PushOp.getReg();
 
       // If PUSHrmm is not slow on this target, try to fold the source of the
       // push into the instruction.
-      const X86Subtarget &ST = MF.getSubtarget<X86Subtarget>();
-      bool SlowPUSHrmm = ST.isAtom() || ST.isSLM();
+      bool SlowPUSHrmm = STI->isAtom() || STI->isSLM();
 
       // Check that this is legal to fold. Right now, we're extremely
       // conservative about that.
       MachineInstr *DefMov = nullptr;
       if (!SlowPUSHrmm && (DefMov = canFoldIntoRegPush(FrameSetup, Reg))) {
-        MachineInstr *Push =
-            BuildMI(MBB, Context.Call, DL, TII->get(X86::PUSH32rmm));
+        Push = BuildMI(MBB, Context.Call, DL, TII->get(X86::PUSH32rmm));
 
         unsigned NumOps = DefMov->getDesc().getNumOperands();
         for (unsigned i = NumOps - X86::AddrNumOperands; i != NumOps; ++i)
@@ -488,11 +492,17 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
 
         DefMov->eraseFromParent();
       } else {
-        BuildMI(MBB, Context.Call, DL, TII->get(X86::PUSH32r))
+        Push = BuildMI(MBB, Context.Call, DL, TII->get(X86::PUSH32r))
             .addReg(Reg)
             .getInstr();
       }
     }
+
+    // For debugging, when using SP-based CFA, we need to adjust the CFA
+    // offset after each push.
+    if (!TFL->hasFP(MF) && MF.getMMI().usePreciseUnwindInfo())
+      TFL->BuildCFI(MBB, std::next(Push), DL, 
+                    MCCFIInstruction::createAdjustCfaOffset(nullptr, 4));
 
     MBB.erase(MOV);
   }

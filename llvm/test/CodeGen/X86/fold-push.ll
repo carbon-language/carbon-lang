@@ -3,7 +3,7 @@
 
 declare void @foo(i32 %r)
 
-define void @test(i32 %a, i32 %b) optsize {
+define void @test(i32 %a, i32 %b) optsize nounwind {
 ; CHECK-LABEL: test:
 ; CHECK: movl [[EAX:%e..]], (%esp)
 ; CHECK-NEXT: pushl [[EAX]]
@@ -22,7 +22,7 @@ define void @test(i32 %a, i32 %b) optsize {
   ret void
 }
 
-define void @test_min(i32 %a, i32 %b) minsize {
+define void @test_min(i32 %a, i32 %b) minsize nounwind {
 ; CHECK-LABEL: test_min:
 ; CHECK: movl [[EAX:%e..]], (%esp)
 ; CHECK-NEXT: pushl [[EAX]]

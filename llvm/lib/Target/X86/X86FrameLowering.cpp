@@ -2105,18 +2105,23 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     unsigned StackAlign = getStackAlignment();
     Amount = RoundUpToAlignment(Amount, StackAlign);
 
+    MachineModuleInfo &MMI = MF.getMMI();
+    const Function *Fn = MF.getFunction();
+    bool WindowsCFI = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
+    bool DwarfCFI = !WindowsCFI && 
+                    (MMI.hasDebugInfo() || Fn->needsUnwindTableEntry());
+
     // If we have any exception handlers in this function, and we adjust
-    // the SP before calls, we may need to indicate this to the unwinder,
-    // using GNU_ARGS_SIZE. Note that this may be necessary
-    // even when Amount == 0, because the preceding function may have
-    // set a non-0 GNU_ARGS_SIZE.
+    // the SP before calls, we may need to indicate this to the unwinder
+    // using GNU_ARGS_SIZE. Note that this may be necessary even when
+    // Amount == 0, because the preceding function may have set a non-0
+    // GNU_ARGS_SIZE.
     // TODO: We don't need to reset this between subsequent functions,
     // if it didn't change.
-    bool HasDwarfEHHandlers =
-      !MF.getTarget().getMCAsmInfo()->usesWindowsCFI() &&
-      !MF.getMMI().getLandingPads().empty();
+    bool HasDwarfEHHandlers = !WindowsCFI &&
+                              !MF.getMMI().getLandingPads().empty();
 
-    if (HasDwarfEHHandlers && !isDestroy && 
+    if (HasDwarfEHHandlers && !isDestroy &&
         MF.getInfo<X86MachineFunctionInfo>()->getHasPushSequences())
       BuildCFI(MBB, I, DL,
                MCCFIInstruction::createGnuArgsSize(nullptr, Amount));
@@ -2128,13 +2133,35 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // (Pushes of argument for frame setup, callee pops for frame destroy)
     Amount -= InternalAmt;
 
+    // If this is a callee-pop calling convention, and we're emitting precise
+    // SP-based CFI, emit a CFA adjust for the amount the callee popped.
+    if (isDestroy && InternalAmt && DwarfCFI && !hasFP(MF) && 
+        MMI.usePreciseUnwindInfo())
+      BuildCFI(MBB, I, DL, 
+               MCCFIInstruction::createAdjustCfaOffset(nullptr, -InternalAmt));
+
     if (Amount) {
       // Add Amount to SP to destroy a frame, and subtract to setup.
       int Offset = isDestroy ? Amount : -Amount;
 
-      if (!(MF.getFunction()->optForMinSize() && 
+      if (!(Fn->optForMinSize() && 
             adjustStackWithPops(MBB, I, DL, Offset)))
         BuildStackAdjustment(MBB, I, DL, Offset, /*InEpilogue=*/false);
+    }
+
+    if (DwarfCFI && !hasFP(MF)) {
+      // If we don't have FP, but need to generate unwind information,
+      // we need to set the correct CFA offset after the stack adjustment.
+      // How much we adjust the CFA offset depends on whether we're emitting
+      // CFI only for EH purposes or for debugging. EH only requires the CFA
+      // offset to be correct at each call site, while for debugging we want
+      // it to be more precise.
+      int CFAOffset = Amount;
+      if (!MMI.usePreciseUnwindInfo())
+        CFAOffset += InternalAmt;
+      CFAOffset = isDestroy ? -CFAOffset : CFAOffset;
+      BuildCFI(MBB, I, DL, 
+               MCCFIInstruction::createAdjustCfaOffset(nullptr, CFAOffset));
     }
 
     return;

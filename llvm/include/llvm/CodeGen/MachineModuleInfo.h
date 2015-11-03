@@ -245,6 +245,11 @@ public:
   bool hasDebugInfo() const { return DbgInfoAvailable; }
   void setDebugInfoAvailability(bool avail) { DbgInfoAvailable = avail; }
 
+  // Returns true if we need to generate precise CFI. Currently
+  // this is equivalent to hasDebugInfo(), but if we ever implement
+  // async EH, it will require precise CFI as well.
+  bool usePreciseUnwindInfo() const { return hasDebugInfo(); }
+
   bool callsEHReturn() const { return CallsEHReturn; }
   void setCallsEHReturn(bool b) { CallsEHReturn = b; }
 

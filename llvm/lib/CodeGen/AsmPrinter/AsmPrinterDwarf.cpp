@@ -216,6 +216,9 @@ void AsmPrinter::emitCFIInstruction(const MCCFIInstruction &Inst) const {
   case MCCFIInstruction::OpDefCfaOffset:
     OutStreamer->EmitCFIDefCfaOffset(Inst.getOffset());
     break;
+  case MCCFIInstruction::OpAdjustCfaOffset:
+    OutStreamer->EmitCFIAdjustCfaOffset(Inst.getOffset());
+    break;
   case MCCFIInstruction::OpDefCfa:
     OutStreamer->EmitCFIDefCfa(Inst.getRegister(), Inst.getOffset());
     break;

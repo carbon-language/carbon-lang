@@ -9,7 +9,7 @@ declare void @param3(i32 %a, i32 %b, i32 %c)
 declare void @param8(i64, i64, i64, i64, i64, i64, i64, i64)
 
 
-define void @test() minsize {
+define void @test() minsize nounwind {
 ; CHECK-LABEL: test:
 ; CHECK: calll _param1
 ; CHECK-NEXT: popl %eax
@@ -48,7 +48,7 @@ define void @negative(i32 %k) {
   ret void
 }
 
-define void @spill(i32 inreg %a, i32 inreg %b, i32 inreg %c) minsize {
+define void @spill(i32 inreg %a, i32 inreg %b, i32 inreg %c) minsize nounwind {
 ; CHECK-LABEL: spill:
 ; CHECK-DAG: movl %ecx,
 ; CHECK-DAG: movl %edx,
@@ -63,7 +63,7 @@ define void @spill(i32 inreg %a, i32 inreg %b, i32 inreg %c) minsize {
   ret void
 }
 
-define void @test_linux64(i32 %size) minsize {
+define void @test_linux64(i32 %size) minsize nounwind {
 ; LINUX64-LABEL: test_linux64:
 ; LINUX64: pushq %rbp
 ; LINUX64: callq param8
