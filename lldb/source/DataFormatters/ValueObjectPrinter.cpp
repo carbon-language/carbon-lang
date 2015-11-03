@@ -29,12 +29,12 @@ ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
     if (valobj)
     {
         DumpValueObjectOptions options(*valobj);
-        Init (valobj,s,options,options.m_max_ptr_depth,0);
+        Init (valobj,s,options,m_options.m_max_ptr_depth,0);
     }
     else
     {
         DumpValueObjectOptions options;
-        Init (valobj,s,options,options.m_max_ptr_depth,0);
+        Init (valobj,s,options,m_options.m_max_ptr_depth,0);
     }
 }
 
@@ -42,7 +42,7 @@ ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
                                         Stream* s,
                                         const DumpValueObjectOptions& options)
 {
-    Init(valobj,s,options,options.m_max_ptr_depth,0);
+    Init(valobj,s,options,m_options.m_max_ptr_depth,0);
 }
 
 ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
@@ -64,7 +64,7 @@ ValueObjectPrinter::Init (ValueObject* valobj,
     m_orig_valobj = valobj;
     m_valobj = nullptr;
     m_stream = s;
-    this->options = options;
+    m_options = options;
     m_ptr_depth = ptr_depth;
     m_curr_depth = curr_depth;
     assert (m_orig_valobj && "cannot print a NULL ValueObject");
@@ -125,7 +125,7 @@ ValueObjectPrinter::GetMostSpecializedValue ()
     {
         if (m_orig_valobj->IsDynamic())
         {
-            if (options.m_use_dynamic == eNoDynamicValues)
+            if (m_options.m_use_dynamic == eNoDynamicValues)
             {
                 ValueObject *static_value = m_orig_valobj->GetStaticValue().get();
                 if (static_value)
@@ -138,9 +138,9 @@ ValueObjectPrinter::GetMostSpecializedValue ()
         }
         else
         {
-            if (options.m_use_dynamic != eNoDynamicValues)
+            if (m_options.m_use_dynamic != eNoDynamicValues)
             {
-                ValueObject *dynamic_value = m_orig_valobj->GetDynamicValue(options.m_use_dynamic).get();
+                ValueObject *dynamic_value = m_orig_valobj->GetDynamicValue(m_options.m_use_dynamic).get();
                 if (dynamic_value)
                     m_valobj = dynamic_value;
                 else
@@ -152,7 +152,7 @@ ValueObjectPrinter::GetMostSpecializedValue ()
         
         if (m_valobj->IsSynthetic())
         {
-            if (options.m_use_synthetic == false)
+            if (m_options.m_use_synthetic == false)
             {
                 ValueObject *non_synthetic = m_valobj->GetNonSyntheticValue().get();
                 if (non_synthetic)
@@ -161,7 +161,7 @@ ValueObjectPrinter::GetMostSpecializedValue ()
         }
         else
         {
-            if (options.m_use_synthetic == true)
+            if (m_options.m_use_synthetic == true)
             {
                 ValueObject *synthetic = m_valobj->GetSyntheticValue().get();
                 if (synthetic)
@@ -188,9 +188,9 @@ ValueObjectPrinter::GetDescriptionForDisplay ()
 const char*
 ValueObjectPrinter::GetRootNameForDisplay (const char* if_fail)
 {
-    const char *root_valobj_name = options.m_root_valobj_name.empty() ?
+    const char *root_valobj_name = m_options.m_root_valobj_name.empty() ?
         m_valobj->GetName().AsCString() :
-        options.m_root_valobj_name.c_str();
+        m_options.m_root_valobj_name.c_str();
     return root_valobj_name ? root_valobj_name : if_fail;
 }
 
@@ -198,7 +198,7 @@ bool
 ValueObjectPrinter::ShouldPrintValueObject ()
 {
     if (m_should_print == eLazyBoolCalculate)
-        m_should_print = (options.m_flat_output == false || m_type_flags.Test (eTypeHasValue)) ? eLazyBoolYes : eLazyBoolNo;
+        m_should_print = (m_options.m_flat_output == false || m_type_flags.Test (eTypeHasValue)) ? eLazyBoolYes : eLazyBoolNo;
     return m_should_print == eLazyBoolYes;
 }
 
@@ -237,7 +237,7 @@ ValueObjectPrinter::IsAggregate ()
 bool
 ValueObjectPrinter::PrintLocationIfNeeded ()
 {
-    if (options.m_show_location)
+    if (m_options.m_show_location)
     {
         m_stream->Printf("%s: ", m_valobj->GetLocationAsCString());
         return true;
@@ -250,11 +250,11 @@ ValueObjectPrinter::PrintDecl ()
 {
     bool show_type = true;
     // if we are at the root-level and been asked to hide the root's type, then hide it
-    if (m_curr_depth == 0 && options.m_hide_root_type)
+    if (m_curr_depth == 0 && m_options.m_hide_root_type)
         show_type = false;
     else
         // otherwise decide according to the usual rules (asked to show types - always at the root level)
-        show_type = options.m_show_types || (m_curr_depth == 0 && !options.m_flat_output);
+        show_type = m_options.m_show_types || (m_curr_depth == 0 && !m_options.m_flat_output);
     
     StreamString typeName;
     
@@ -266,7 +266,7 @@ ValueObjectPrinter::PrintDecl ()
         ConstString type_name;
         if (m_compiler_type.IsValid())
         {
-            if (options.m_use_type_display_name)
+            if (m_options.m_use_type_display_name)
                 type_name = m_valobj->GetDisplayTypeName();
             else
                 type_name = m_valobj->GetQualifiedTypeName();
@@ -274,7 +274,7 @@ ValueObjectPrinter::PrintDecl ()
         else
         {
             // only show an invalid type name if the user explicitly triggered show_type
-            if (options.m_show_types)
+            if (m_options.m_show_types)
                 type_name = ConstString("<invalid type>");
             else
                 type_name.Clear();
@@ -283,7 +283,7 @@ ValueObjectPrinter::PrintDecl ()
         if (type_name)
         {
             std::string type_name_str(type_name.GetCString());
-            if (options.m_hide_pointer_value)
+            if (m_options.m_hide_pointer_value)
             {
                 for(auto iter = type_name_str.find(" *");
                     iter != std::string::npos;
@@ -298,42 +298,42 @@ ValueObjectPrinter::PrintDecl ()
     
     StreamString varName;
     
-    if (options.m_flat_output)
+    if (m_options.m_flat_output)
     {
         // If we are showing types, also qualify the C++ base classes
         const bool qualify_cxx_base_classes = show_type;
-        if (!options.m_hide_name)
+        if (!m_options.m_hide_name)
         {
             m_valobj->GetExpressionPath(varName, qualify_cxx_base_classes);
         }
     }
-    else if (!options.m_hide_name)
+    else if (!m_options.m_hide_name)
     {
         const char *name_cstr = GetRootNameForDisplay("");
         varName.Printf ("%s", name_cstr);
     }
     
     bool decl_printed = false;
-    if (!options.m_decl_printing_helper)
+    if (!m_options.m_decl_printing_helper)
     {
         // if the user didn't give us a custom helper, pick one based upon the language, either the one that this printer is bound to, or the preferred one for the ValueObject
-        lldb::LanguageType lang_type = (options.m_varformat_language == lldb::eLanguageTypeUnknown) ? m_valobj->GetPreferredDisplayLanguage() : options.m_varformat_language;
+        lldb::LanguageType lang_type = (m_options.m_varformat_language == lldb::eLanguageTypeUnknown) ? m_valobj->GetPreferredDisplayLanguage() : m_options.m_varformat_language;
         if (Language *lang_plugin = Language::FindPlugin(lang_type))
         {
-            options.m_decl_printing_helper = lang_plugin->GetDeclPrintingHelper();
+            m_options.m_decl_printing_helper = lang_plugin->GetDeclPrintingHelper();
         }
     }
     
-    if (options.m_decl_printing_helper)
+    if (m_options.m_decl_printing_helper)
     {
         ConstString type_name_cstr(typeName.GetData());
         ConstString var_name_cstr(varName.GetData());
         
         StreamString dest_stream;
-        if (options.m_decl_printing_helper(type_name_cstr,
-                                           var_name_cstr,
-                                           options,
-                                           dest_stream))
+        if (m_options.m_decl_printing_helper (type_name_cstr,
+                                              var_name_cstr,
+                                              m_options,
+                                              dest_stream))
         {
             decl_printed = true;
             m_stream->Printf("%s", dest_stream.GetData());
@@ -347,7 +347,7 @@ ValueObjectPrinter::PrintDecl ()
             m_stream->Printf("(%s) ", typeName.GetData());
         if (varName.GetSize())
             m_stream->Printf("%s =", varName.GetData());
-        else if (!options.m_hide_name)
+        else if (!m_options.m_hide_name)
             m_stream->Printf(" =");
     }
 }
@@ -355,7 +355,7 @@ ValueObjectPrinter::PrintDecl ()
 bool
 ValueObjectPrinter::CheckScopeIfNeeded ()
 {
-    if (options.m_scope_already_checked)
+    if (m_options.m_scope_already_checked)
         return true;
     return m_valobj->IsInScope();
 }
@@ -365,9 +365,9 @@ ValueObjectPrinter::GetSummaryFormatter ()
 {
     if (m_summary_formatter.second == false)
     {
-        TypeSummaryImpl* entry = options.m_summary_sp ? options.m_summary_sp.get() : m_valobj->GetSummaryFormat().get();
+        TypeSummaryImpl* entry = m_options.m_summary_sp ? m_options.m_summary_sp.get() : m_valobj->GetSummaryFormat().get();
         
-        if (options.m_omit_summary_depth > 0)
+        if (m_options.m_omit_summary_depth > 0)
             entry = NULL;
         m_summary_formatter.first = entry;
         m_summary_formatter.second = true;
@@ -389,9 +389,9 @@ ValueObjectPrinter::GetValueSummaryError (std::string& value,
                                           std::string& summary,
                                           std::string& error)
 {
-    if (options.m_format != eFormatDefault && options.m_format != m_valobj->GetFormat())
+    if (m_options.m_format != eFormatDefault && m_options.m_format != m_valobj->GetFormat())
     {
-        m_valobj->GetValueAsCString(options.m_format,
+        m_valobj->GetValueAsCString(m_options.m_format,
                                     value);
     }
     else
@@ -408,14 +408,14 @@ ValueObjectPrinter::GetValueSummaryError (std::string& value,
     {
         if (IsNil())
             summary.assign("nil");
-        else if (options.m_omit_summary_depth == 0)
+        else if (m_options.m_omit_summary_depth == 0)
         {
             TypeSummaryImpl* entry = GetSummaryFormatter();
             if (entry)
-                m_valobj->GetSummaryAsCString(entry, summary, options.m_varformat_language);
+                m_valobj->GetSummaryAsCString(entry, summary, m_options.m_varformat_language);
             else
             {
-                const char* sum_cstr = m_valobj->GetSummaryAsCString(options.m_varformat_language);
+                const char* sum_cstr = m_valobj->GetSummaryAsCString(m_options.m_varformat_language);
                 if (sum_cstr)
                     summary.assign(sum_cstr);
             }
@@ -448,9 +448,9 @@ ValueObjectPrinter::PrintValueAndSummaryIfNeeded (bool& value_printed,
             // the value if this thing is nil
             // (but show the value if the user passes a format explicitly)
             TypeSummaryImpl* entry = GetSummaryFormatter();
-            if (!IsNil() && !m_value.empty() && (entry == NULL || (entry->DoesPrintValue(m_valobj) || options.m_format != eFormatDefault) || m_summary.empty()) && !options.m_hide_value)
+            if (!IsNil() && !m_value.empty() && (entry == NULL || (entry->DoesPrintValue(m_valobj) || m_options.m_format != eFormatDefault) || m_summary.empty()) && !m_options.m_hide_value)
             {
-                if (options.m_hide_pointer_value && IsPointerValue(m_valobj->GetCompilerType())) {}
+                if (m_options.m_hide_pointer_value && IsPointerValue(m_valobj->GetCompilerType())) {}
                 else
                 {
                     m_stream->Printf(" %s", m_value.c_str());
@@ -475,9 +475,9 @@ ValueObjectPrinter::PrintObjectDescriptionIfNeeded (bool value_printed,
     if (ShouldPrintValueObject())
     {
         // let's avoid the overly verbose no description error for a nil thing
-        if (options.m_use_objc && !IsNil())
+        if (m_options.m_use_objc && !IsNil())
         {
-            if (!options.m_hide_value || !options.m_hide_name)
+            if (!m_options.m_hide_value || !m_options.m_hide_name)
                 m_stream->Printf(" ");
             const char *object_desc = nullptr;
             if (value_printed || summary_printed)
@@ -546,7 +546,7 @@ ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
 
     TypeSummaryImpl* entry = GetSummaryFormatter();
 
-    if (is_failed_description || m_curr_depth < options.m_max_depth)
+    if (is_failed_description || m_curr_depth < m_options.m_max_depth)
     {
         // We will show children for all concrete types. We won't show
         // pointer contents unless a pointer depth has been specified.
@@ -604,7 +604,7 @@ ValueObjectPrinter::GetValueObjectForChildrenGeneration ()
 void
 ValueObjectPrinter::PrintChildrenPreamble ()
 {
-    if (options.m_flat_output)
+    if (m_options.m_flat_output)
     {
         if (ShouldPrintValueObject())
             m_stream->EOL();
@@ -621,9 +621,9 @@ void
 ValueObjectPrinter::PrintChild (ValueObjectSP child_sp,
                                 const DumpValueObjectOptions::PointerDepth& curr_ptr_depth)
 {
-    DumpValueObjectOptions child_options(options);
-    child_options.SetFormat(options.m_format).SetSummary().SetRootValueObjectName();
-    child_options.SetScopeChecked(true).SetHideName(options.m_hide_name).SetHideValue(options.m_hide_value)
+    DumpValueObjectOptions child_options(m_options);
+    child_options.SetFormat(m_options.m_format).SetSummary().SetRootValueObjectName();
+    child_options.SetScopeChecked(true).SetHideName(m_options.m_hide_name).SetHideValue(m_options.m_hide_value)
     .SetOmitSummaryDepth(child_options.m_omit_summary_depth > 1 ? child_options.m_omit_summary_depth - 1 : 0);
     if (child_sp.get())
     {
@@ -647,7 +647,7 @@ ValueObjectPrinter::GetMaxNumChildrenToPrint (bool& print_dotdotdot)
     {
         const size_t max_num_children = m_valobj->GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
         
-        if (num_children > max_num_children && !options.m_ignore_cap)
+        if (num_children > max_num_children && !m_options.m_ignore_cap)
         {
             print_dotdotdot = true;
             return max_num_children;
@@ -659,7 +659,7 @@ ValueObjectPrinter::GetMaxNumChildrenToPrint (bool& print_dotdotdot)
 void
 ValueObjectPrinter::PrintChildrenPostamble (bool print_dotdotdot)
 {
-    if (!options.m_flat_output)
+    if (!m_options.m_flat_output)
     {
         if (print_dotdotdot)
         {
@@ -730,7 +730,7 @@ ValueObjectPrinter::PrintChildrenOneLiner (bool hide_names)
         {
             lldb::ValueObjectSP child_sp(synth_m_valobj->GetChildAtIndex(idx, true));
             if (child_sp)
-                child_sp = child_sp->GetQualifiedRepresentationIfAvailable(options.m_use_dynamic, options.m_use_synthetic);
+                child_sp = child_sp->GetQualifiedRepresentationIfAvailable(m_options.m_use_dynamic, m_options.m_use_synthetic);
             if (child_sp)
             {
                 if (idx)
@@ -770,10 +770,10 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
     auto curr_ptr_depth = m_ptr_depth;
     bool print_children = ShouldPrintChildren (is_failed_description,curr_ptr_depth);
     bool print_oneline = (curr_ptr_depth.CanAllowExpansion() ||
-                          options.m_show_types ||
-                          !options.m_allow_oneliner_mode ||
-                          options.m_flat_output ||
-                          options.m_show_location) ? false : DataVisualization::ShouldPrintAsOneLiner(*m_valobj);
+                          m_options.m_show_types ||
+                          !m_options.m_allow_oneliner_mode ||
+                          m_options.m_flat_output ||
+                          m_options.m_show_location) ? false : DataVisualization::ShouldPrintAsOneLiner(*m_valobj);
     
     if (print_children)
     {
@@ -786,7 +786,7 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
         else
             PrintChildren (value_printed, summary_printed, curr_ptr_depth);
     }
-    else if (m_curr_depth >= options.m_max_depth && IsAggregate() && ShouldPrintValueObject())
+    else if (m_curr_depth >= m_options.m_max_depth && IsAggregate() && ShouldPrintValueObject())
     {
             m_stream->PutCString("{...}\n");
     }
@@ -797,7 +797,7 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
 bool
 ValueObjectPrinter::ShouldPrintValidation ()
 {
-    return options.m_run_validator;
+    return m_options.m_run_validator;
 }
 
 bool

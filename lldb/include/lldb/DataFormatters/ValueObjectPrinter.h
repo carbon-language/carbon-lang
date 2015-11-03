@@ -157,7 +157,7 @@ private:
     ValueObject *m_orig_valobj;
     ValueObject *m_valobj;
     Stream *m_stream;
-    DumpValueObjectOptions options;
+    DumpValueObjectOptions m_options;
     Flags m_type_flags;
     CompilerType m_compiler_type;
     DumpValueObjectOptions::PointerDepth m_ptr_depth;
