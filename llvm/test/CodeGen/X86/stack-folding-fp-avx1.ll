@@ -1494,7 +1494,7 @@ define <8 x float> @stack_fold_shufps_ymm(<8 x float> %a0, <8 x float> %a1) {
   ;CHECK-LABEL: stack_fold_shufps_ymm
   ;CHECK:       vshufps $148, {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
-  %2 = shufflevector <8 x float> %a0, <8 x float> %a1, <8 x i32> <i32 0, i32 1, i32 9, i32 10, i32 undef, i32 undef, i32 undef, i32 undef>
+  %2 = shufflevector <8 x float> %a0, <8 x float> %a1, <8 x i32> <i32 0, i32 1, i32 9, i32 10, i32 4, i32 5, i32 13, i32 14>
   ret <8 x float> %2
 }
 
