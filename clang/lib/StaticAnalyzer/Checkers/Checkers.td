@@ -457,6 +457,10 @@ def RetainCountChecker : Checker<"RetainCount">,
   HelpText<"Check for leaks and improper reference count management">,
   DescFile<"RetainCountChecker.cpp">;
 
+def ObjCGenericsChecker : Checker<"ObjCGenerics">,
+  HelpText<"Check for type errors when using Objective-C generics">,
+  DescFile<"DynamicTypePropagation.cpp">;
+
 } // end "osx.cocoa"
 
 let ParentPackage = CocoaAlpha in {
@@ -480,10 +484,6 @@ def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
 def DirectIvarAssignmentForAnnotatedFunctions : Checker<"DirectIvarAssignmentForAnnotatedFunctions">,
   HelpText<"Check for direct assignments to instance variables in the methods annotated with objc_no_direct_instance_variable_assignment">,
   DescFile<"DirectIvarAssignment.cpp">;
-
-def ObjCGenericsChecker : Checker<"ObjCGenerics">,
-  HelpText<"Check for type errors when using Objective-C generics">,
-  DescFile<"DynamicTypePropagation.cpp">;
 
 def NonLocalizedStringChecker : Checker<"NonLocalizedStringChecker">,
   HelpText<"Warns about uses of non-localized NSStrings passed to UI methods expecting localized NSStrings">,
