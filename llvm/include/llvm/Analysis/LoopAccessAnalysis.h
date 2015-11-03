@@ -33,6 +33,7 @@ class ScalarEvolution;
 class Loop;
 class SCEV;
 class SCEVUnionPredicate;
+class LoopAccessInfo;
 
 /// Optimization analysis message produced during vectorization. Messages inform
 /// the user why vectorization did not occur.
@@ -169,6 +170,11 @@ public:
 
     Dependence(unsigned Source, unsigned Destination, DepType Type)
         : Source(Source), Destination(Destination), Type(Type) {}
+
+    /// \brief Return the source instruction of the dependence.
+    Instruction *getSource(const LoopAccessInfo &LAI) const;
+    /// \brief Return the destination instruction of the dependence.
+    Instruction *getDestination(const LoopAccessInfo &LAI) const;
 
     /// \brief Dependence types that don't prevent vectorization.
     static bool isSafeForVectorization(DepType Type);
@@ -679,6 +685,17 @@ private:
   DominatorTree *DT;
   LoopInfo *LI;
 };
+
+inline Instruction *MemoryDepChecker::Dependence::getSource(
+    const LoopAccessInfo &LAI) const {
+  return LAI.getDepChecker().getMemoryInstructions()[Source];
+}
+
+inline Instruction *MemoryDepChecker::Dependence::getDestination(
+    const LoopAccessInfo &LAI) const {
+  return LAI.getDepChecker().getMemoryInstructions()[Destination];
+}
+
 } // End llvm namespace
 
 #endif
