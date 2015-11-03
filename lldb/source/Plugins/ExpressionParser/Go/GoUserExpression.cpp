@@ -218,8 +218,9 @@ LookupType(TargetSP target, ConstString name)
     return CompilerType();
 }
 GoUserExpression::GoUserExpression(ExecutionContextScope &exe_scope, const char *expr, const char *expr_prefix,
-                                   lldb::LanguageType language, ResultType desired_type)
-    : UserExpression(exe_scope, expr, expr_prefix, language, desired_type)
+                                   lldb::LanguageType language, ResultType desired_type,
+                                   const EvaluateExpressionOptions &options)
+    : UserExpression(exe_scope, expr, expr_prefix, language, desired_type, options)
 {
 }
 

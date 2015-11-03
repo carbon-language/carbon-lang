@@ -24,6 +24,7 @@
 #include "lldb/Expression/Expression.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Target.h"
 
 namespace lldb_private
 {
@@ -67,7 +68,8 @@ public:
                     const char *expr,
                     const char *expr_prefix,
                     lldb::LanguageType language,
-                    ResultType desired_type);
+                    ResultType desired_type,
+                    const EvaluateExpressionOptions &options);
 
     //------------------------------------------------------------------
     /// Destructor
@@ -236,6 +238,12 @@ public:
         return true;
     }
     
+    EvaluateExpressionOptions *
+    GetOptions() override
+    {
+        return &m_options;
+    }
+    
     virtual lldb::ExpressionVariableSP
     GetResultAfterDematerialization(ExecutionContextScope *exe_scope)
     {
@@ -319,7 +327,7 @@ protected:
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user
     lldb::LanguageType                          m_language;             ///< The language to use when parsing (eLanguageTypeUnknown means use defaults)
     ResultType                                  m_desired_type;         ///< The type to coerce the expression's result to.  If eResultTypeAny, inferred from the expression.
-
+    EvaluateExpressionOptions                   m_options;              ///< Additional options provided by the user.
 };
 
 } // namespace lldb_private

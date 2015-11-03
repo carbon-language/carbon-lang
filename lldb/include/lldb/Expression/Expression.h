@@ -109,6 +109,8 @@ public:
     virtual bool
     NeedsVariableResolution () = 0;
 
+    virtual EvaluateExpressionOptions *GetOptions() { return nullptr; };
+
     //------------------------------------------------------------------
     /// Return the address of the function's JIT-compiled code, or
     /// LLDB_INVALID_ADDRESS if the function is not JIT compiled

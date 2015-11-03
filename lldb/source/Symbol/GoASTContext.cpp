@@ -1509,10 +1509,10 @@ GoASTContext::GetDWARFParser()
 
 UserExpression *
 GoASTContextForExpr::GetUserExpression(const char *expr, const char *expr_prefix, lldb::LanguageType language,
-                                       Expression::ResultType desired_type)
+                                       Expression::ResultType desired_type, const EvaluateExpressionOptions &options)
 {
     TargetSP target = m_target_wp.lock();
     if (target)
-        return new GoUserExpression(*target, expr, expr_prefix, language, desired_type);
+        return new GoUserExpression(*target, expr, expr_prefix, language, desired_type, options);
     return nullptr;
 }

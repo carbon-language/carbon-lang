@@ -1184,7 +1184,8 @@ public:
     GetUserExpression (const char *expr,
                        const char *expr_prefix,
                        lldb::LanguageType language,
-                       Expression::ResultType desired_type) override;
+                       Expression::ResultType desired_type,
+                       const EvaluateExpressionOptions &options) override;
     
     FunctionCaller *
     GetFunctionCaller (const CompilerType &return_type,

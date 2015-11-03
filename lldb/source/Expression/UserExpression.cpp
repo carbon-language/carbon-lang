@@ -45,13 +45,18 @@
 
 using namespace lldb_private;
 
-UserExpression::UserExpression(ExecutionContextScope &exe_scope, const char *expr, const char *expr_prefix,
-                               lldb::LanguageType language, ResultType desired_type)
-    : Expression(exe_scope),
+UserExpression::UserExpression (ExecutionContextScope &exe_scope,
+                                const char *expr,
+                                const char *expr_prefix,
+                                lldb::LanguageType language,
+                                ResultType desired_type,
+                                const EvaluateExpressionOptions &options) :
+      Expression(exe_scope),
       m_expr_text(expr),
       m_expr_prefix(expr_prefix ? expr_prefix : ""),
       m_language(language),
-      m_desired_type(desired_type)
+      m_desired_type(desired_type),
+      m_options (options)
 {
 }
 
@@ -219,6 +224,7 @@ UserExpression::Evaluate (ExecutionContext &exe_ctx,
                                                                                     full_prefix,
                                                                                     language,
                                                                                     desired_type,
+                                                                                    options,
                                                                                     error));
     if (error.Fail())
     {

@@ -66,7 +66,7 @@ class GoUserExpression : public UserExpression
 {
   public:
     GoUserExpression(ExecutionContextScope &exe_scope, const char *expr, const char *expr_prefix,
-                     lldb::LanguageType language, ResultType desired_type);
+                     lldb::LanguageType language, ResultType desired_type, const EvaluateExpressionOptions &options);
 
     virtual bool Parse(Stream &error_stream, ExecutionContext &exe_ctx, lldb_private::ExecutionPolicy execution_policy,
                        bool keep_result_in_memory, bool generate_debug_info) override;

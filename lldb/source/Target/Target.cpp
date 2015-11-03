@@ -1993,6 +1993,7 @@ Target::GetUserExpressionForLanguage(const char *expr,
                                      const char *expr_prefix,
                                      lldb::LanguageType language,
                                      Expression::ResultType desired_type,
+                                     const EvaluateExpressionOptions &options,
                                      Error &error)
 {
     Error type_system_error;
@@ -2006,7 +2007,7 @@ Target::GetUserExpressionForLanguage(const char *expr,
         return nullptr;
     }
     
-    user_expr = type_system->GetUserExpression(expr, expr_prefix, language, desired_type);
+    user_expr = type_system->GetUserExpression(expr, expr_prefix, language, desired_type, options);
     if (!user_expr)
         error.SetErrorStringWithFormat("Could not create an expression for language %s", Language::GetNameForLanguageType(language));
     

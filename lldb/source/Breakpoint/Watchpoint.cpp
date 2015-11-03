@@ -387,6 +387,7 @@ Watchpoint::SetCondition (const char *condition)
                                                                    nullptr,
                                                                    lldb::eLanguageTypeUnknown,
                                                                    UserExpression::eResultTypeAny,
+                                                                   EvaluateExpressionOptions(),
                                                                    error));
         if (error.Fail())
         {

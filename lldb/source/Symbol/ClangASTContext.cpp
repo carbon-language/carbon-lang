@@ -9227,13 +9227,14 @@ UserExpression *
 ClangASTContextForExpressions::GetUserExpression (const char *expr,
                    const char *expr_prefix,
                    lldb::LanguageType language,
-                   Expression::ResultType desired_type)
+                   Expression::ResultType desired_type,
+                   const EvaluateExpressionOptions &options)
 {
     TargetSP target_sp = m_target_wp.lock();
     if (!target_sp)
         return nullptr;
     
-    return new ClangUserExpression(*target_sp.get(), expr, expr_prefix, language, desired_type);
+    return new ClangUserExpression(*target_sp.get(), expr, expr_prefix, language, desired_type, options);
 }
 
 FunctionCaller *

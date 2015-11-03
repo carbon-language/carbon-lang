@@ -40,9 +40,13 @@
 
 using namespace lldb_private;
 
-LLVMUserExpression::LLVMUserExpression(ExecutionContextScope &exe_scope, const char *expr, const char *expr_prefix,
-                                       lldb::LanguageType language, ResultType desired_type)
-    : UserExpression(exe_scope, expr, expr_prefix, language, desired_type),
+LLVMUserExpression::LLVMUserExpression(ExecutionContextScope &exe_scope, 
+                                       const char *expr, 
+                                       const char *expr_prefix,
+                                       lldb::LanguageType language, 
+                                       ResultType desired_type, 
+                                       const EvaluateExpressionOptions &options)
+    : UserExpression(exe_scope, expr, expr_prefix, language, desired_type, options),
       m_stack_frame_bottom(LLDB_INVALID_ADDRESS),
       m_stack_frame_top(LLDB_INVALID_ADDRESS),
       m_transformed_text(),

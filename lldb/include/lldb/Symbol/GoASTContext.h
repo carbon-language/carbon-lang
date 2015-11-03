@@ -398,7 +398,8 @@ class GoASTContextForExpr : public GoASTContext
   public:
     GoASTContextForExpr(lldb::TargetSP target) : m_target_wp(target) {}
     UserExpression *GetUserExpression(const char *expr, const char *expr_prefix, lldb::LanguageType language,
-                                      Expression::ResultType desired_type) override;
+                                      Expression::ResultType desired_type,
+                                      const EvaluateExpressionOptions &options) override;
 
   private:
     lldb::TargetWP m_target_wp;

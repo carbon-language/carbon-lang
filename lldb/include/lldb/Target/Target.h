@@ -1256,6 +1256,7 @@ public:
                                  const char *expr_prefix,
                                  lldb::LanguageType language,
                                  Expression::ResultType desired_type,
+                                 const EvaluateExpressionOptions &options,
                                  Error &error);
     
     // Creates a FunctionCaller for the given language, the rest of the parameters have the

@@ -293,6 +293,7 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
                                                                             nullptr,
                                                                             language,
                                                                             Expression::eResultTypeAny,
+                                                                            EvaluateExpressionOptions(),
                                                                             error));
         if (error.Fail())
         {

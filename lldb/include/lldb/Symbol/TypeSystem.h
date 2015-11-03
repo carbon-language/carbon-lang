@@ -496,7 +496,8 @@ public:
     GetUserExpression (const char *expr,
                        const char *expr_prefix,
                        lldb::LanguageType language,
-                       Expression::ResultType desired_type)
+                       Expression::ResultType desired_type,
+                       const EvaluateExpressionOptions &options)
     {
         return nullptr;
     }

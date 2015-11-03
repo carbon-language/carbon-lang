@@ -118,7 +118,8 @@ public:
                          const char *expr,
                          const char *expr_prefix,
                          lldb::LanguageType language,
-                         ResultType desired_type);
+                         ResultType desired_type,
+                         const EvaluateExpressionOptions &options);
 
     ~ClangUserExpression() override;
 
