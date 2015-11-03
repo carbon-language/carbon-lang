@@ -18,10 +18,12 @@
 #include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/FunctionInfo.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
+#include "llvm/Object/FunctionIndexObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -42,6 +44,23 @@ static cl::list<std::string> OverridingInputs(
     "override", cl::ZeroOrMore, cl::value_desc("filename"),
     cl::desc(
         "input bitcode file which can override previously defined symbol(s)"));
+
+// Option to simulate function importing for testing. This enables using
+// llvm-link to simulate ThinLTO backend processes.
+static cl::list<std::string> Imports(
+    "import", cl::ZeroOrMore, cl::value_desc("function:filename"),
+    cl::desc("Pair of function name and filename, where function should be "
+             "imported from bitcode in filename"));
+
+// Option to support testing of function importing. The function index
+// must be specified in the case were we request imports via the -import
+// option, as well as when compiling any module with functions that may be
+// exported (imported by a different llvm-link -import invocation), to ensure
+// consistent promotion and renaming of locals.
+static cl::opt<std::string> FunctionIndex("functionindex",
+                                          cl::desc("Function index filename"),
+                                          cl::init(""),
+                                          cl::value_desc("filename"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"), cl::init("-"),
@@ -118,6 +137,90 @@ static void diagnosticHandler(const DiagnosticInfo &DI) {
   errs() << '\n';
 }
 
+/// Load a function index if requested by the -functionindex option.
+static ErrorOr<std::unique_ptr<FunctionInfoIndex>>
+loadIndex(LLVMContext &Context, const Module *ExportingModule = nullptr) {
+  assert(!FunctionIndex.empty());
+  ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
+      MemoryBuffer::getFileOrSTDIN(FunctionIndex);
+  std::error_code EC = FileOrErr.getError();
+  if (EC)
+    return EC;
+  MemoryBufferRef BufferRef = (FileOrErr.get())->getMemBufferRef();
+  ErrorOr<std::unique_ptr<object::FunctionIndexObjectFile>> ObjOrErr =
+      object::FunctionIndexObjectFile::create(BufferRef, Context,
+                                              ExportingModule);
+  EC = ObjOrErr.getError();
+  if (EC)
+    return EC;
+
+  object::FunctionIndexObjectFile &Obj = **ObjOrErr;
+  return Obj.takeIndex();
+}
+
+/// Import any functions requested via the -import option.
+static bool importFunctions(const char *argv0, LLVMContext &Context,
+                            Linker &L) {
+  for (const auto &Import : Imports) {
+    // Identify the requested function and its bitcode source file.
+    size_t Idx = Import.find(':');
+    if (Idx == std::string::npos) {
+      errs() << "Import parameter bad format: " << Import << "\n";
+      return false;
+    }
+    std::string FunctionName = Import.substr(0, Idx);
+    std::string FileName = Import.substr(Idx + 1, std::string::npos);
+
+    // Load the specified source module.
+    std::unique_ptr<Module> M = loadFile(argv0, FileName, Context);
+    if (!M.get()) {
+      errs() << argv0 << ": error loading file '" << FileName << "'\n";
+      return false;
+    }
+
+    if (verifyModule(*M, &errs())) {
+      errs() << argv0 << ": " << FileName
+             << ": error: input module is broken!\n";
+      return false;
+    }
+
+    Function *F = M->getFunction(FunctionName);
+    if (!F) {
+      errs() << "Ignoring import request for non-existent function "
+             << FunctionName << " from " << FileName << "\n";
+      continue;
+    }
+    // We cannot import weak_any functions without possibly affecting the
+    // order they are seen and selected by the linker, changing program
+    // semantics.
+    if (F->hasWeakAnyLinkage()) {
+      errs() << "Ignoring import request for weak-any function " << FunctionName
+             << " from " << FileName << "\n";
+      continue;
+    }
+
+    if (Verbose)
+      errs() << "Importing " << FunctionName << " from " << FileName << "\n";
+
+    std::unique_ptr<FunctionInfoIndex> Index;
+    if (!FunctionIndex.empty()) {
+      ErrorOr<std::unique_ptr<FunctionInfoIndex>> IndexOrErr =
+          loadIndex(Context);
+      std::error_code EC = IndexOrErr.getError();
+      if (EC) {
+        errs() << EC.message() << '\n';
+        return false;
+      }
+      Index = std::move(IndexOrErr.get());
+    }
+
+    // Link in the specified function.
+    if (L.linkInModule(M.get(), false, Index.get(), F))
+      return false;
+  }
+  return true;
+}
+
 static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
                       const cl::list<std::string> &Files,
                       unsigned Flags) {
@@ -135,10 +238,24 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
       return false;
     }
 
+    // If a function index is supplied, load it so linkInModule can treat
+    // local functions/variables as exported and promote if necessary.
+    std::unique_ptr<FunctionInfoIndex> Index;
+    if (!FunctionIndex.empty()) {
+      ErrorOr<std::unique_ptr<FunctionInfoIndex>> IndexOrErr =
+          loadIndex(Context, &*M);
+      std::error_code EC = IndexOrErr.getError();
+      if (EC) {
+        errs() << EC.message() << '\n';
+        return false;
+      }
+      Index = std::move(IndexOrErr.get());
+    }
+
     if (Verbose)
       errs() << "Linking in '" << File << "'\n";
 
-    if (L.linkInModule(M.get(), ApplicableFlags))
+    if (L.linkInModule(M.get(), ApplicableFlags, Index.get()))
       return false;
     // All linker flags apply to linking of subsequent files.
     ApplicableFlags = Flags;
@@ -172,6 +289,10 @@ int main(int argc, char **argv) {
   // Next the -override ones.
   if (!linkFiles(argv[0], Context, L, OverridingInputs,
                  Flags | Linker::Flags::OverrideFromSrc))
+    return 1;
+
+  // Import any functions requested via -import
+  if (!importFunctions(argv[0], Context, L))
     return 1;
 
   if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;

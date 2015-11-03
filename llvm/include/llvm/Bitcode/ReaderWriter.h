@@ -64,6 +64,8 @@ namespace llvm {
                           DiagnosticHandlerFunction DiagnosticHandler);
 
   /// Parse the specified bitcode buffer, returning the function info index.
+  /// If ExportingModule is true, check for functions in the index from this
+  /// module when the combined index is built during parsing and set flag.
   /// If IsLazy is true, parse the entire function summary into
   /// the index. Otherwise skip the function summary section, and only create
   /// an index object with a map from function name to function summary offset.
@@ -71,6 +73,7 @@ namespace llvm {
   ErrorOr<std::unique_ptr<FunctionInfoIndex>>
   getFunctionInfoIndex(MemoryBufferRef Buffer, LLVMContext &Context,
                        DiagnosticHandlerFunction DiagnosticHandler,
+                       const Module *ExportingModule = nullptr,
                        bool IsLazy = false);
 
   /// This method supports lazy reading of function summary data from the
