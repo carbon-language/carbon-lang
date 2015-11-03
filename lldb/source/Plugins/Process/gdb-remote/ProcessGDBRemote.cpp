@@ -1832,25 +1832,29 @@ ProcessGDBRemote::UpdateThreadIDList ()
         // that might contain a "threads" key/value pair
 
         // Lock the thread stack while we access it
-        Mutex::Locker stop_stack_lock(m_last_stop_packet_mutex);
-        // Get the number of stop packets on the stack
-        int nItems = m_stop_packet_stack.size();
-        // Iterate over them
-        for (int i = 0; i < nItems; i++)
+        //Mutex::Locker stop_stack_lock(m_last_stop_packet_mutex);
+        Mutex::Locker stop_stack_lock;
+        if (stop_stack_lock.TryLock(m_last_stop_packet_mutex))
         {
-            // Get the thread stop info
-            StringExtractorGDBRemote &stop_info = m_stop_packet_stack[i];
-            const std::string &stop_info_str = stop_info.GetStringRef();
-            const size_t threads_pos = stop_info_str.find(";threads:");
-            if (threads_pos != std::string::npos)
+            // Get the number of stop packets on the stack
+            int nItems = m_stop_packet_stack.size();
+            // Iterate over them
+            for (int i = 0; i < nItems; i++)
             {
-                const size_t start = threads_pos + strlen(";threads:");
-                const size_t end = stop_info_str.find(';', start);
-                if (end != std::string::npos)
+                // Get the thread stop info
+                StringExtractorGDBRemote &stop_info = m_stop_packet_stack[i];
+                const std::string &stop_info_str = stop_info.GetStringRef();
+                const size_t threads_pos = stop_info_str.find(";threads:");
+                if (threads_pos != std::string::npos)
                 {
-                    std::string value = stop_info_str.substr(start, end - start);
-                    if (UpdateThreadIDsFromStopReplyThreadsValue(value))
-                        return true;
+                    const size_t start = threads_pos + strlen(";threads:");
+                    const size_t end = stop_info_str.find(';', start);
+                    if (end != std::string::npos)
+                    {
+                        std::string value = stop_info_str.substr(start, end - start);
+                        if (UpdateThreadIDsFromStopReplyThreadsValue(value))
+                            return true;
+                    }
                 }
             }
         }
