@@ -372,6 +372,8 @@ static bool isDirectMemberExpr(const Expr *E) {
 /// containter that we are iterating over, returns false when it can be
 /// guaranteed this element cannot be modified as a result of this usage.
 static bool canBeModified(ASTContext *Context, const Expr *E) {
+  if (E->getType().isConstQualified())
+    return false;
   auto Parents = Context->getParents(*E);
   if (Parents.size() != 1)
     return true;

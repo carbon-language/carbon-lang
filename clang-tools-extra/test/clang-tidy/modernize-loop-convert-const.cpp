@@ -271,28 +271,91 @@ void takingReferences() {
   // Aliases.
   for (int I = 0; I < N; ++I) {
     const Str &J = Array[I];
-    (void) J;
+    (void)J;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop
   // CHECK-FIXES: for (auto J : Array)
   for (int I = 0; I < N; ++I) {
     Str &J = Array[I];
-    (void) J;
+    (void)J;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop
   // CHECK-FIXES: for (auto & J : Array)
 
   for (int I = 0; I < N; ++I) {
     const int &J = Ints[I];
-    (void) J;
+    (void)J;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop
   // CHECK-FIXES: for (int J : Ints)
 
   for (int I = 0; I < N; ++I) {
     int &J = Ints[I];
-    (void) J;
+    (void)J;
   }
   // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop
   // CHECK-FIXES: for (int & J : Ints)
 }
+
+template <class T>
+struct vector {
+  unsigned size() const;
+  const T &operator[](int) const;
+  T &operator[](int);
+  T *begin();
+  T *end();
+  const T *begin() const;
+  const T *end() const;
+};
+
+// If the elements are already constant, we won't do any ImplicitCast to const.
+void testContainerOfConstElements() {
+  const int Ints[N]{};
+  for (int I = 0; I < N; ++I) {
+    OtherInt -= Ints[I];
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop
+  // CHECK-FIXES: for (int Int : Ints)
+
+  vector<const Str> Strs;
+  for (int I = 0; I < Strs.size(); ++I) {
+    Strs[I].constMember(0);
+    constRefArg(Strs[I]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop
+  // CHECK-FIXES: for (auto Str : Strs)
+}
+
+// When we are inside a const-qualified member functions, all the data members
+// are implicitly set as const. As before, there won't be any ImplicitCast to
+// const in their usages.
+class TestInsideConstFunction {
+  const static int N = 10;
+  int Ints[N];
+  Str Array[N];
+  vector<int> V;
+
+  void foo() const {
+    for (int I = 0; I < N; ++I) {
+      if (Ints[I])
+        copyArg(Ints[I]);
+    }
+    // CHECK-MESSAGES: :[[@LINE-4]]:5: warning: use range-based for loop
+    // CHECK-FIXES: for (int Elem : Ints)
+
+    for (int I = 0; I < N; ++I) {
+      Array[I].constMember(0);
+      constRefArg(Array[I]);
+    }
+    // CHECK-MESSAGES: :[[@LINE-4]]:5: warning: use range-based for loop
+    // CHECK-FIXES: for (auto Elem : Array)
+
+    for (int I = 0; I < V.size(); ++I) {
+      if (V[I])
+        copyArg(V[I]);
+    }
+    // CHECK-MESSAGES: :[[@LINE-4]]:5: warning: use range-based for loop
+    // CHECK-FIXES: for (int Elem : V)
+
+  }
+};
