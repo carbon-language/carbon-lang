@@ -174,6 +174,8 @@ __attribute__((objc_root_class))
 @implementation PC1<T : id> (Cat2) // expected-error{{@implementation cannot have type parameters}}
 @end
 
+typedef T undeclaredT; // expected-error{{unknown type name 'T'}}
+
 // --------------------------------------------------------------------------
 // Interfaces involving type parameters
 // --------------------------------------------------------------------------

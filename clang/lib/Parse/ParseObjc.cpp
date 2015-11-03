@@ -94,6 +94,28 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
   return Actions.ConvertDeclToDeclGroup(SingleDecl);
 }
 
+/// Class to handle popping type parameters when leaving the scope.
+class Parser::ObjCTypeParamListScope {
+  Sema &Actions;
+  Scope *S;
+  ObjCTypeParamList *Params;
+public:
+  ObjCTypeParamListScope(Sema &Actions, Scope *S)
+      : Actions(Actions), S(S), Params(nullptr) {}
+  ~ObjCTypeParamListScope() {
+    leave();
+  }
+  void enter(ObjCTypeParamList *P) {
+    assert(!Params);
+    Params = P;
+  }
+  void leave() {
+    if (Params)
+      Actions.popObjCTypeParamList(S, Params);
+    Params = nullptr;
+  }
+};
+
 ///
 /// objc-class-declaration:
 ///    '@' 'class' objc-class-forward-decl (',' objc-class-forward-decl)* ';'
@@ -121,11 +143,8 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
 
     // Parse the optional objc-type-parameter-list.
     ObjCTypeParamList *TypeParams = nullptr;
-    if (Tok.is(tok::less)) {
+    if (Tok.is(tok::less))
       TypeParams = parseObjCTypeParamList();
-      if (TypeParams)
-        Actions.popObjCTypeParamList(getCurScope(), TypeParams);
-    }
     ClassTypeParams.push_back(TypeParams);
     if (!TryConsumeToken(tok::comma))
       break;
@@ -221,11 +240,10 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
   SourceLocation LAngleLoc, EndProtoLoc;
   SmallVector<IdentifierLocPair, 8> ProtocolIdents;
   ObjCTypeParamList *typeParameterList = nullptr;
-  if (Tok.is(tok::less)) {
-    typeParameterList = parseObjCTypeParamListOrProtocolRefs(LAngleLoc, 
-                                                             ProtocolIdents,
-                                                             EndProtoLoc);
-  }
+  ObjCTypeParamListScope typeParamScope(Actions, getCurScope());
+  if (Tok.is(tok::less))
+    typeParameterList = parseObjCTypeParamListOrProtocolRefs(
+        typeParamScope, LAngleLoc, ProtocolIdents, EndProtoLoc);
 
   if (Tok.is(tok::l_paren) &&
       !isKnownToBeTypeSpecifier(GetLookAheadToken(1))) { // we have a category.
@@ -285,9 +303,6 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
       ParseObjCClassInstanceVariables(CategoryType, tok::objc_private, AtLoc);
       
     ParseObjCInterfaceDeclList(tok::objc_not_keyword, CategoryType);
-
-    if (typeParameterList)
-      Actions.popObjCTypeParamList(getCurScope(), typeParameterList);
 
     return CategoryType;
   }
@@ -370,9 +385,6 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
 
   ParseObjCInterfaceDeclList(tok::objc_interface, ClsType);
 
-  if (typeParameterList)
-    Actions.popObjCTypeParamList(getCurScope(), typeParameterList);
-
   return ClsType;
 }
 
@@ -432,10 +444,9 @@ static void addContextSensitiveTypeNullability(Parser &P,
 ///
 /// \param rAngleLoc The location of the ending '>'.
 ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
-                         SourceLocation &lAngleLoc,
-                         SmallVectorImpl<IdentifierLocPair> &protocolIdents,
-                         SourceLocation &rAngleLoc,
-                         bool mayBeProtocolList) {
+    ObjCTypeParamListScope &Scope, SourceLocation &lAngleLoc,
+    SmallVectorImpl<IdentifierLocPair> &protocolIdents,
+    SourceLocation &rAngleLoc, bool mayBeProtocolList) {
   assert(Tok.is(tok::less) && "Not at the beginning of a type parameter list");
 
   // Within the type parameter list, don't treat '>' as an operator.
@@ -580,12 +591,13 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
     makeProtocolIdentsIntoTypeParameters();
   }
 
-  // Form the type parameter list.
+  // Form the type parameter list and enter its scope.
   ObjCTypeParamList *list = Actions.actOnObjCTypeParamList(
                               getCurScope(),
                               lAngleLoc,
                               typeParams,
                               rAngleLoc);
+  Scope.enter(list);
 
   // Clear out the angle locations; they're used by the caller to indicate
   // whether there are any protocol references.
@@ -599,8 +611,10 @@ ObjCTypeParamList *Parser::parseObjCTypeParamList() {
   SourceLocation lAngleLoc;
   SmallVector<IdentifierLocPair, 1> protocolIdents;
   SourceLocation rAngleLoc;
-  return parseObjCTypeParamListOrProtocolRefs(lAngleLoc, protocolIdents, 
-                                              rAngleLoc, 
+
+  ObjCTypeParamListScope Scope(Actions, getCurScope());
+  return parseObjCTypeParamListOrProtocolRefs(Scope, lAngleLoc, protocolIdents,
+                                              rAngleLoc,
                                               /*mayBeProtocolList=*/false);
 }
 
@@ -2110,8 +2124,9 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
     SourceLocation lAngleLoc, rAngleLoc;
     SmallVector<IdentifierLocPair, 8> protocolIdents;
     SourceLocation diagLoc = Tok.getLocation();
-    if (parseObjCTypeParamListOrProtocolRefs(lAngleLoc, protocolIdents, 
-                                             rAngleLoc)) {
+    ObjCTypeParamListScope typeParamScope(Actions, getCurScope());
+    if (parseObjCTypeParamListOrProtocolRefs(typeParamScope, lAngleLoc,
+                                             protocolIdents, rAngleLoc)) {
       Diag(diagLoc, diag::err_objc_parameterized_implementation)
         << SourceRange(diagLoc, PrevTokLocation);
     } else if (lAngleLoc.isValid()) {
