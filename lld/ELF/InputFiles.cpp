@@ -51,6 +51,20 @@ ELFFileBase<ELFT>::getSymbolsHelper(bool Local) {
   return make_range(Syms.begin() + 1, Syms.begin() + FirstNonLocal);
 }
 
+template <class ELFT>
+uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
+  uint32_t Index = Sym.st_shndx;
+  if (Index == ELF::SHN_XINDEX)
+    Index = this->ELFObj.getExtendedSymbolTableIndex(&Sym, this->Symtab,
+                                                     SymtabSHNDX);
+  else if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
+    return 0;
+
+  if (!Index)
+    error("Invalid section index");
+  return Index;
+}
+
 template <class ELFT> void ELFFileBase<ELFT>::initStringTable() {
   if (!Symtab)
     return;
@@ -176,7 +190,7 @@ void elf2::ObjectFile<ELFT>::initializeSections(DenseSet<StringRef> &Comdats) {
     case SHT_SYMTAB_SHNDX: {
       ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable = Obj.getSHNDXTable(Sec);
       error(ErrorOrTable);
-      SymtabSHNDX = *ErrorOrTable;
+      this->SymtabSHNDX = *ErrorOrTable;
       break;
     }
     case SHT_STRTAB:
@@ -219,14 +233,10 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
 template <class ELFT>
 InputSectionBase<ELFT> *
 elf2::ObjectFile<ELFT>::getSection(const Elf_Sym &Sym) const {
-  uint32_t Index = Sym.st_shndx;
-  if (Index == ELF::SHN_XINDEX)
-    Index = this->ELFObj.getExtendedSymbolTableIndex(&Sym, this->Symtab,
-                                                     SymtabSHNDX);
-  else if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
+  uint32_t Index = this->getSectionIndex(Sym);
+  if (Index == 0)
     return nullptr;
-
-  if (Index >= Sections.size() || !Index || !Sections[Index])
+  if (Index >= Sections.size() || !Sections[Index])
     error("Invalid section index");
   return Sections[Index];
 }
@@ -313,6 +323,17 @@ SharedFile<ELFT>::SharedFile(MemoryBufferRef M)
   AsNeeded = Config->AsNeeded;
 }
 
+template <class ELFT>
+const typename ELFFile<ELFT>::Elf_Shdr *
+SharedFile<ELFT>::getSection(const Elf_Sym &Sym) const {
+  uint32_t Index = this->getSectionIndex(Sym);
+  if (Index == 0)
+    return nullptr;
+  ErrorOr<const Elf_Shdr *> Ret = this->ELFObj.getSection(Index);
+  error(Ret);
+  return *Ret;
+}
+
 template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
@@ -320,11 +341,22 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
 
   const ELFFile<ELFT> Obj = this->ELFObj;
   for (const Elf_Shdr &Sec : Obj.sections()) {
-    uint32_t Type = Sec.sh_type;
-    if (Type == SHT_DYNSYM)
+    switch (Sec.sh_type) {
+    default:
+      continue;
+    case SHT_DYNSYM:
       this->Symtab = &Sec;
-    else if (Type == SHT_DYNAMIC)
+      break;
+    case SHT_DYNAMIC:
       DynamicSec = &Sec;
+      break;
+    case SHT_SYMTAB_SHNDX: {
+      ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable = Obj.getSHNDXTable(Sec);
+      error(ErrorOrTable);
+      this->SymtabSHNDX = *ErrorOrTable;
+      break;
+    }
+    }
   }
 
   this->initStringTable();

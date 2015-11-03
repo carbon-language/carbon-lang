@@ -404,14 +404,18 @@ template <class ELFT>
 static void addSharedCopySymbols(std::vector<SharedSymbol<ELFT> *> &Syms) {
   typedef typename ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
 
   uintX_t Off = Out<ELFT>::Bss->getSize();
   for (SharedSymbol<ELFT> *C : Syms) {
     const Elf_Sym &Sym = C->Sym;
-    // We don't know the exact alignment requirement for the data copied by a
-    // copy relocation, so align that to 16 byte boundaries that should be large
-    // enough unconditionally.
-    Off = RoundUpToAlignment(Off, 16);
+    const Elf_Shdr *Sec = C->File->getSection(Sym);
+    uintX_t SecAlign = Sec->sh_addralign;
+    uintX_t Align = Sym.st_value % SecAlign;
+    if (Align == 0)
+      Align = SecAlign;
+    Out<ELFT>::Bss->updateAlign(Align);
+    Off = RoundUpToAlignment(Off, Align);
     C->OffsetInBSS = Off;
     Off += Sym.st_size;
   }

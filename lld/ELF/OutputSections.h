@@ -93,6 +93,10 @@ public:
     return std::max<uintX_t>(Header.sh_addralign, 1);
   }
   uint32_t getType() { return Header.sh_type; }
+  void updateAlign(uintX_t Align) {
+    if (Align > Header.sh_addralign)
+      Header.sh_addralign = Align;
+  }
 
   virtual void finalize() {}
   virtual void writeTo(uint8_t *Buf) = 0;
