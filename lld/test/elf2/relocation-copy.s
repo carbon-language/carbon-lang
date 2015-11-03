@@ -42,10 +42,12 @@ movl $7, y
 // CHECK-NEXT:       Symbol: y
 // CHECK-NEXT:       Addend: 0x0
 // CHECK-NEXT:     }
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]
 
 // 73888 = 0x120A0
 // 16 is alignment here
-// 73892 = 0x120A0 + 16
+// 73904 = 0x120A0 + 16
 // CODE: Disassembly of section .text:
 // CODE-NEXT: main:
 // CODE-NEXT: 11000: c7 04 25 a0 20 01 00 05 00 00 00 movl $5, 73888
