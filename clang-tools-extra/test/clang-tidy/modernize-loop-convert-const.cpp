@@ -341,7 +341,7 @@ class TestInsideConstFunction {
         copyArg(Ints[I]);
     }
     // CHECK-MESSAGES: :[[@LINE-4]]:5: warning: use range-based for loop
-    // CHECK-FIXES: for (int Elem : Ints)
+    // CHECK-FIXES: for (int Int : Ints)
 
     for (int I = 0; I < N; ++I) {
       Array[I].constMember(0);

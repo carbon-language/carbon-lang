@@ -425,7 +425,7 @@ public:
   VariableNamer(StmtGeneratedVarNameMap *GeneratedDecls,
                 const StmtParentMap *ReverseAST, const clang::Stmt *SourceStmt,
                 const clang::VarDecl *OldIndex,
-                const clang::VarDecl *TheContainer,
+                const clang::ValueDecl *TheContainer,
                 const clang::ASTContext *Context, NamingStyle Style)
       : GeneratedDecls(GeneratedDecls), ReverseAST(ReverseAST),
         SourceStmt(SourceStmt), OldIndex(OldIndex), TheContainer(TheContainer),
@@ -443,7 +443,7 @@ private:
   const StmtParentMap *ReverseAST;
   const clang::Stmt *SourceStmt;
   const clang::VarDecl *OldIndex;
-  const clang::VarDecl *TheContainer;
+  const clang::ValueDecl *TheContainer;
   const clang::ASTContext *Context;
   const NamingStyle Style;
 

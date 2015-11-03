@@ -168,6 +168,41 @@ struct HasArr {
   }
 };
 
+struct HasIndirectArr {
+  HasArr HA;
+  void implicitThis() {
+    for (int I = 0; I < N; ++I) {
+      printf("%d", HA.Arr[I]);
+    }
+    // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
+    // CHECK-FIXES: for (int Elem : HA.Arr)
+    // CHECK-FIXES-NEXT: printf("%d", Elem);
+
+    for (int I = 0; I < N; ++I) {
+      printf("%d", HA.ValArr[I].X);
+    }
+    // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
+    // CHECK-FIXES: for (auto & Elem : HA.ValArr)
+    // CHECK-FIXES-NEXT: printf("%d", Elem.X);
+  }
+
+  void explicitThis() {
+    for (int I = 0; I < N; ++I) {
+      printf("%d", this->HA.Arr[I]);
+    }
+    // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
+    // CHECK-FIXES: for (int Elem : this->HA.Arr)
+    // CHECK-FIXES-NEXT: printf("%d", Elem);
+
+    for (int I = 0; I < N; ++I) {
+      printf("%d", this->HA.ValArr[I].X);
+    }
+    // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
+    // CHECK-FIXES: for (auto & Elem : this->HA.ValArr)
+    // CHECK-FIXES-NEXT: printf("%d", Elem.X);
+  }
+};
+
 // Loops whose bounds are value-dependent should not be converted.
 template <int N>
 void dependentExprBound() {

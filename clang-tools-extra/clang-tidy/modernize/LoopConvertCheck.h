@@ -37,7 +37,7 @@ private:
   void getAliasRange(SourceManager &SM, SourceRange &DeclRange);
 
   void doConversion(ASTContext *Context, const VarDecl *IndexVar,
-                    const VarDecl *MaybeContainer, const UsageResult &Usages,
+                    const ValueDecl *MaybeContainer, const UsageResult &Usages,
                     const DeclStmt *AliasDecl, bool AliasUseRequired,
                     bool AliasFromForInit, const ForStmt *Loop,
                     RangeDescriptor Descriptor);

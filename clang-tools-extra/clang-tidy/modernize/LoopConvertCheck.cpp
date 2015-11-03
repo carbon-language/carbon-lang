@@ -353,10 +353,12 @@ static StringRef getStringFromRange(SourceManager &SourceMgr,
 }
 
 /// \brief If the given expression is actually a DeclRefExpr, find and return
-/// the underlying VarDecl; otherwise, return NULL.
-static const VarDecl *getReferencedVariable(const Expr *E) {
+/// the underlying ValueDecl; otherwise, return NULL.
+static const ValueDecl *getReferencedVariable(const Expr *E) {
   if (const DeclRefExpr *DRE = getDeclRef(E))
     return dyn_cast<VarDecl>(DRE->getDecl());
+  if (const auto *Mem = dyn_cast<MemberExpr>(E))
+    return dyn_cast<FieldDecl>(Mem->getMemberDecl());
   return nullptr;
 }
 
@@ -500,9 +502,10 @@ void LoopConvertCheck::getAliasRange(SourceManager &SM, SourceRange &Range) {
 /// \brief Computes the changes needed to convert a given for loop, and
 /// applies them.
 void LoopConvertCheck::doConversion(
-    ASTContext *Context, const VarDecl *IndexVar, const VarDecl *MaybeContainer,
-    const UsageResult &Usages, const DeclStmt *AliasDecl, bool AliasUseRequired,
-    bool AliasFromForInit, const ForStmt *Loop, RangeDescriptor Descriptor) {
+    ASTContext *Context, const VarDecl *IndexVar,
+    const ValueDecl *MaybeContainer, const UsageResult &Usages,
+    const DeclStmt *AliasDecl, bool AliasUseRequired, bool AliasFromForInit,
+    const ForStmt *Loop, RangeDescriptor Descriptor) {
   auto Diag = diag(Loop->getForLoc(), "use range-based for loop instead");
 
   std::string VarName;
