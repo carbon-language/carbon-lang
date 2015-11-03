@@ -33,7 +33,7 @@
 // CHECK: !DIDerivedType(tag: DW_TAG_typedef, name: "InnerEnum"
 // CHECK: !DISubprogram(name: "+[ObjCClass classMethod]"
 // CHECK: !DISubprogram(name: "-[ObjCClass instanceMethodWithInt:]"
-// CHECK: !DISubprogram(name: "-[ categoryMethod]"
+// CHECK: !DISubprogram(name: "-[Category(Category) categoryMethod]"
 
 // MODULE-CHECK: !DICompositeType(tag: DW_TAG_enumeration_type,
 // MODULE-CHECK-SAME:             scope: ![[MODULE:[0-9]+]],

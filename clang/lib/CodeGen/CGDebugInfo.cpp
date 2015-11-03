@@ -216,6 +216,13 @@ StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   } else if (const ObjCInterfaceDecl *OID =
                  dyn_cast<const ObjCInterfaceDecl>(DC)) {
     OS << OID->getName();
+  } else if (const ObjCCategoryDecl *OC = dyn_cast<ObjCCategoryDecl>(DC)) {
+    if (OC->IsClassExtension()) {
+      OS << OC->getClassInterface()->getName();
+    } else {
+      OS << ((const NamedDecl *)OC)->getIdentifier()->getNameStart() << '('
+         << OC->getIdentifier()->getNameStart() << ')';
+    }
   } else if (const ObjCCategoryImplDecl *OCD =
                  dyn_cast<const ObjCCategoryImplDecl>(DC)) {
     OS << ((const NamedDecl *)OCD)->getIdentifier()->getNameStart() << '('

@@ -2844,6 +2844,20 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   for (const auto *I : IMPDecl->instance_methods())
     InsMap.insert(I->getSelector());
 
+  // Add the selectors for getters/setters of @dynamic properties.
+  for (const auto *PImpl : IMPDecl->property_impls()) {
+    // We only care about @dynamic implementations.
+    if (PImpl->getPropertyImplementation() != ObjCPropertyImplDecl::Dynamic)
+      continue;
+
+    const auto *P = PImpl->getPropertyDecl();
+    if (!P) continue;
+
+    InsMap.insert(P->getGetterName());
+    if (!P->getSetterName().isNull())
+      InsMap.insert(P->getSetterName());
+  }
+
   // Check and see if properties declared in the interface have either 1)
   // an implementation or 2) there is a @synthesize/@dynamic implementation
   // of the property in the @implementation.

@@ -876,9 +876,6 @@ public:
   void FunctionDefinitionInstantiated(const FunctionDecl *D) override;
   void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                     const ObjCInterfaceDecl *IFD) override;
-  void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
-                                    const ObjCPropertyDecl *OrigProp,
-                                    const ObjCCategoryDecl *ClassExt) override;
   void DeclarationMarkedUsed(const Decl *D) override;
   void DeclarationMarkedOpenMPThreadPrivate(const Decl *D) override;
   void RedefinedHiddenDefinition(const NamedDecl *D, Module *M) override;

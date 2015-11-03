@@ -129,10 +129,8 @@
 
 // read-only in class, read-write in class extension - might warn
 @property(readonly) int GetSet_ReadWriteInExt;
-@property(readonly) int Get_ReadWriteInExt;	// expected-note {{property declared here}} \
-                                                // expected-note {{setter and getter must both be synthesized}}
-@property(readonly) int Set_ReadWriteInExt;	// expected-note {{property declared here}} \
-                                                // expected-note {{setter and getter must both be synthesized}}
+@property(readonly) int Get_ReadWriteInExt;
+@property(readonly) int Set_ReadWriteInExt;
 @property(readonly) int None_ReadWriteInExt;
 @property(nonatomic,readonly) int GetSet_Nonatomic_ReadWriteInExt;
 @property(nonatomic,readonly) int Get_Nonatomic_ReadWriteInExt;
@@ -162,10 +160,8 @@
 @property(nonatomic,readonly) int None_Nonatomic_ReadOnly_LateSynthesize;
 
 @property(readonly) int GetSet_ReadWriteInExt_LateSynthesize;
-@property(readonly) int Get_ReadWriteInExt_LateSynthesize;	// expected-note {{property declared here}} \
-                                                                // expected-note {{setter and getter must both be synthesized}}
-@property(readonly) int Set_ReadWriteInExt_LateSynthesize;	// expected-note {{property declared here}} \
-                                                                // expected-note {{setter and getter must both be synthesized}}
+@property(readonly) int Get_ReadWriteInExt_LateSynthesize;
+@property(readonly) int Set_ReadWriteInExt_LateSynthesize;
 @property(readonly) int None_ReadWriteInExt_LateSynthesize;
 @property(nonatomic,readonly) int GetSet_Nonatomic_ReadWriteInExt_LateSynthesize;
 @property(nonatomic,readonly) int Get_Nonatomic_ReadWriteInExt_LateSynthesize;
@@ -207,8 +203,10 @@
 @interface Foo ()
 
 @property(readwrite) int GetSet_ReadWriteInExt;
-@property(readwrite) int Get_ReadWriteInExt;
-@property(readwrite) int Set_ReadWriteInExt;
+@property(readwrite) int Get_ReadWriteInExt; // expected-note {{property declared here}} \
+                                             // expected-note {{setter and getter must both be synthesized}}
+@property(readwrite) int Set_ReadWriteInExt; // expected-note {{property declared here}} \
+                                             // expected-note {{setter and getter must both be synthesized}}
 @property(readwrite) int None_ReadWriteInExt;
 @property(nonatomic,readwrite) int GetSet_Nonatomic_ReadWriteInExt;
 @property(nonatomic,readwrite) int Get_Nonatomic_ReadWriteInExt;
@@ -216,8 +214,10 @@
 @property(nonatomic,readwrite) int None_Nonatomic_ReadWriteInExt;
 
 @property(readwrite) int GetSet_ReadWriteInExt_LateSynthesize;
-@property(readwrite) int Get_ReadWriteInExt_LateSynthesize;
-@property(readwrite) int Set_ReadWriteInExt_LateSynthesize;
+@property(readwrite) int Get_ReadWriteInExt_LateSynthesize;  // expected-note {{property declared here}} \
+                                                             // expected-note {{setter and getter must both be synthesized}}
+@property(readwrite) int Set_ReadWriteInExt_LateSynthesize; // expected-note {{property declared here}} \
+                                                            // expected-note {{setter and getter must both be synthesized}}
 @property(readwrite) int None_ReadWriteInExt_LateSynthesize;
 @property(nonatomic,readwrite) int GetSet_Nonatomic_ReadWriteInExt_LateSynthesize;
 @property(nonatomic,readwrite) int Get_Nonatomic_ReadWriteInExt_LateSynthesize;

@@ -1779,8 +1779,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
                           diag::err_property_not_found_forward_class,
                           MemberName, BaseRange))
     return ExprError();
-  
-  // Search for a declared property first.
+ 
   if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Member)) {
     // Check whether we can reference this property.
     if (DiagnoseUseOfDecl(PD, MemberLoc))

@@ -161,6 +161,15 @@ ObjCPropertyDecl::findPropertyDecl(const DeclContext *DC,
         return nullptr;
   }
 
+  // If context is class, then lookup property in its extensions.
+  // This comes before property is looked up in primary class.
+  if (auto *IDecl = dyn_cast<ObjCInterfaceDecl>(DC)) {
+    for (const auto *Ext : IDecl->known_extensions())
+      if (ObjCPropertyDecl *PD = ObjCPropertyDecl::findPropertyDecl(Ext,
+                                                                    propertyID))
+        return PD;
+  }
+
   DeclContext::lookup_result R = DC->lookup(propertyID);
   for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
        ++I)
@@ -190,6 +199,15 @@ ObjCPropertyDecl *ObjCContainerDecl::FindPropertyDeclaration(
       if (Def->isHidden())
         return nullptr;
   }
+ 
+  // Search the extensions of a class first; they override what's in
+  // the class itself.
+  if (const auto *ClassDecl = dyn_cast<ObjCInterfaceDecl>(this)) {
+    for (const auto *Ext : ClassDecl->visible_extensions()) {
+      if (auto *P = Ext->FindPropertyDeclaration(PropertyId))
+        return P;
+    }
+  }
 
   if (ObjCPropertyDecl *PD =
         ObjCPropertyDecl::findPropertyDecl(cast<DeclContext>(this), PropertyId))
@@ -207,7 +225,7 @@ ObjCPropertyDecl *ObjCContainerDecl::FindPropertyDeclaration(
     }
     case Decl::ObjCInterface: {
       const ObjCInterfaceDecl *OID = cast<ObjCInterfaceDecl>(this);
-      // Look through categories (but not extensions).
+      // Look through categories (but not extensions; they were handled above).
       for (const auto *Cat : OID->visible_categories()) {
         if (!Cat->IsClassExtension())
           if (ObjCPropertyDecl *P = Cat->FindPropertyDeclaration(PropertyId))
@@ -326,6 +344,13 @@ void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap &PM,
   for (auto *Prop : properties()) {
     PM[Prop->getIdentifier()] = Prop;
     PO.push_back(Prop);
+  }
+  for (const auto *Ext : known_extensions()) {
+    const ObjCCategoryDecl *ClassExt = Ext;
+    for (auto *Prop : ClassExt->properties()) {
+      PM[Prop->getIdentifier()] = Prop;
+      PO.push_back(Prop);
+    }
   }
   for (const auto *PI : all_referenced_protocols())
     PI->collectPropertiesToImplement(PM, PO);
@@ -1182,18 +1207,47 @@ ObjCMethodDecl::findPropertyDecl(bool CheckOverrides) const {
 
   if (isPropertyAccessor()) {
     const ObjCContainerDecl *Container = cast<ObjCContainerDecl>(getParent());
-    // If container is class extension, find its primary class.
-    if (const ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(Container))
-      if (CatDecl->IsClassExtension())
-        Container = CatDecl->getClassInterface();
-    
     bool IsGetter = (NumArgs == 0);
 
-    for (const auto *I : Container->properties()) {
-      Selector NextSel = IsGetter ? I->getGetterName()
-                                  : I->getSetterName();
-      if (NextSel == Sel)
-        return I;
+    /// Local function that attempts to find a matching property within the
+    /// given Objective-C container.
+    auto findMatchingProperty =
+      [&](const ObjCContainerDecl *Container) -> const ObjCPropertyDecl * {
+
+      for (const auto *I : Container->properties()) {
+        Selector NextSel = IsGetter ? I->getGetterName()
+                                    : I->getSetterName();
+        if (NextSel == Sel)
+          return I;
+      }
+
+      return nullptr;
+    };
+
+    // Look in the container we were given.
+    if (const auto *Found = findMatchingProperty(Container))
+      return Found;
+
+    // If we're in a category or extension, look in the main class.
+    const ObjCInterfaceDecl *ClassDecl = nullptr;
+    if (const auto *Category = dyn_cast<ObjCCategoryDecl>(Container)) {
+      ClassDecl = Category->getClassInterface();
+      if (const auto *Found = findMatchingProperty(ClassDecl))
+        return Found;
+    } else {
+      // Determine whether the container is a class.
+      ClassDecl = dyn_cast<ObjCInterfaceDecl>(Container);
+    }
+
+    // If we have a class, check its visible extensions.
+    if (ClassDecl) {
+      for (const auto *Ext : ClassDecl->visible_extensions()) {
+        if (Ext == Container)
+          continue;
+
+        if (const auto *Found = findMatchingProperty(Ext))
+          return Found;
+      }
     }
 
     llvm_unreachable("Marked as a property accessor but no property found!");

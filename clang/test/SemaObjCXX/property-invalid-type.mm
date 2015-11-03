@@ -13,11 +13,11 @@
 @synthesize response;
 - (void) foo :(A*) a   // expected-error {{expected a type}}
 {
-  self.response = a;
+  self.response = a; // expected-error{{assigning to 'int *' from incompatible type 'id'}}
 }
 @end
 
 void foo(I *i)
 {
-  i.helper;
+  i.helper; // expected-warning{{property access result unused - getters should not be used for side effects}}
 }

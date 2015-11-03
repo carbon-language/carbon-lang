@@ -122,9 +122,6 @@ public:
   void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                     const ObjCInterfaceDecl *IFD) override;
   void FunctionDefinitionInstantiated(const FunctionDecl *D) override;
-  void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
-                                    const ObjCPropertyDecl *OrigProp,
-                                    const ObjCCategoryDecl *ClassExt) override;
   void DeclarationMarkedUsed(const Decl *D) override;
   void DeclarationMarkedOpenMPThreadPrivate(const Decl *D) override;
   void RedefinedHiddenDefinition(const NamedDecl *D, Module *M) override;
@@ -206,13 +203,6 @@ void MultiplexASTMutationListener::FunctionDefinitionInstantiated(
     const FunctionDecl *D) {
   for (auto &Listener : Listeners)
     Listener->FunctionDefinitionInstantiated(D);
-}
-void MultiplexASTMutationListener::AddedObjCPropertyInClassExtension(
-                                             const ObjCPropertyDecl *Prop,
-                                             const ObjCPropertyDecl *OrigProp,
-                                             const ObjCCategoryDecl *ClassExt) {
-  for (size_t i = 0, e = Listeners.size(); i != e; ++i)
-    Listeners[i]->AddedObjCPropertyInClassExtension(Prop, OrigProp, ClassExt);
 }
 void MultiplexASTMutationListener::DeclarationMarkedUsed(const Decl *D) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)

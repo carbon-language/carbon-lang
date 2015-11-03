@@ -101,5 +101,5 @@ typedef signed char BOOL;
 
 // RUN: c-index-test -code-completion-at=%s:52:8 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: ObjCInstanceMethodDecl:{TypedText countOfIntProperty} (55)
-// CHECK-CC3-NEXT: ObjCInstanceMethodDecl:{TypedText intProperty} (40)
+// CHECK-CC3-NEXT: ObjCInstanceMethodDecl:{TypedText intProperty} (42)
 // CHECK-CC3-NEXT: ObjCInstanceMethodDecl:{TypedText isIntProperty} (40)

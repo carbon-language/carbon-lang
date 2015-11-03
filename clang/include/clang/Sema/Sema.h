@@ -3047,7 +3047,7 @@ public:
   /// warning) when atomic property has one but not the other user-declared
   /// setter or getter.
   void AtomicPropertySetterGetterRules(ObjCImplDecl* IMPDecl,
-                                       ObjCContainerDecl* IDecl);
+                                       ObjCInterfaceDecl* IDecl);
 
   void DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D);
 

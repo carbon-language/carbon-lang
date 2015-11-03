@@ -884,7 +884,8 @@ def err_property_type : Error<"property cannot have array or function type %0">;
 def error_missing_property_context : Error<
   "missing context for property implementation declaration">;
 def error_bad_property_decl : Error<
-  "property implementation must have its declaration in interface %0">;
+  "property implementation must have its declaration in interface %0 or one of "
+  "its extensions">;
 def error_category_property : Error<
   "property declared in category %0 cannot be implemented in "
   "class implementation">;

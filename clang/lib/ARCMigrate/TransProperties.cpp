@@ -96,6 +96,10 @@ public:
 
     collectProperties(iface, AtProps);
 
+    // Look through extensions.
+    for (auto *Ext : iface->visible_extensions())
+      collectProperties(Ext, AtProps);
+
     typedef DeclContext::specific_decl_iterator<ObjCPropertyImplDecl>
         prop_impl_iterator;
     for (prop_impl_iterator
@@ -137,19 +141,6 @@ public:
       Transaction Trans(Pass.TA);
       rewriteProperty(props, atLoc);
     }
-
-    AtPropDeclsTy AtExtProps;
-    // Look through extensions.
-    for (auto *Ext : iface->visible_extensions())
-      collectProperties(Ext, AtExtProps, &AtProps);
-
-    for (AtPropDeclsTy::iterator
-           I = AtExtProps.begin(), E = AtExtProps.end(); I != E; ++I) {
-      SourceLocation atLoc = SourceLocation::getFromRawEncoding(I->first);
-      PropsTy &props = I->second;
-      Transaction Trans(Pass.TA);
-      doActionForExtensionProp(props, atLoc);
-    }
   }
 
 private:
@@ -175,15 +166,6 @@ private:
     case PropAction_MaybeAddWeakOrUnsafe:
       return maybeAddWeakOrUnsafeUnretainedAttr(props, atLoc);
     }
-  }
-
-  void doActionForExtensionProp(PropsTy &props, SourceLocation atLoc) {
-    llvm::DenseMap<IdentifierInfo *, PropActionKind>::iterator I;
-    I = ActionOnProp.find(props[0].PropD->getIdentifier());
-    if (I == ActionOnProp.end())
-      return;
-
-    doPropAction(I->second, props, atLoc, false);
   }
 
   void rewriteProperty(PropsTy &props, SourceLocation atLoc) {

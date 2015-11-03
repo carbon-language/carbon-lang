@@ -23,7 +23,7 @@
 - (id) atomic_prop1 { return 0; }
 @end
 
-// CHECK: {4:1-4:10}:"@property (nonatomic) "
-// CHECK: {9:1-9:12}:"@property (nonatomic"
-// CHECK: {13:1-13:12}:"@property (nonatomic, "
+// CHECK-DAG: {4:11-4:11}:"(nonatomic) "
+// CHECK-DAG: {9:12-9:12}:"nonatomic"
+// CHECK-DAG: {13:12-13:12}:"nonatomic, "
 

@@ -5756,21 +5756,6 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
     const_cast<ObjCInterfaceDecl *>(IFD->getDefinition()));
 }
 
-
-void ASTWriter::AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
-                                          const ObjCPropertyDecl *OrigProp,
-                                          const ObjCCategoryDecl *ClassExt) {
-  const ObjCInterfaceDecl *D = ClassExt->getClassInterface();
-  if (!D)
-    return;
-
-  assert(!WritingAST && "Already writing the AST!");
-  if (!D->isFromASTFile())
-    return; // Declaration not imported from PCH.
-
-  RewriteDecl(D);
-}
-
 void ASTWriter::DeclarationMarkedUsed(const Decl *D) {
   assert(!WritingAST && "Already writing the AST!");
   if (!D->isFromASTFile())

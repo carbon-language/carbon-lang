@@ -92,18 +92,6 @@ public:
   virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                             const ObjCInterfaceDecl *IFD) {}
 
-  /// \brief A objc class extension redeclared or introduced a property.
-  ///
-  /// \param Prop the property in the class extension
-  ///
-  /// \param OrigProp the property from the original interface that was declared
-  /// or null if the property was introduced.
-  ///
-  /// \param ClassExt the class extension.
-  virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
-                                            const ObjCPropertyDecl *OrigProp,
-                                            const ObjCCategoryDecl *ClassExt) {}
-
   /// \brief A declaration is marked used which was not previously marked used.
   ///
   /// \param D the declaration marked used

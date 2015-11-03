@@ -16,6 +16,10 @@
 - (void)finalize;
 @end
 
+@interface NSObject (Properties)
+@property (readonly,nonatomic) int intProp;
+@end
+
 //===----------------------------------------------------------------------===//
 #elif !defined(HEADER2)
 #define HEADER2
@@ -34,6 +38,12 @@
 -(void)extMeth;
 @end
 
+@interface NSObject ()
+@property (readwrite,nonatomic) int intProp;
+@end
+
+@class NSObject;
+
 //===----------------------------------------------------------------------===//
 #else
 //===----------------------------------------------------------------------===//
@@ -47,6 +57,9 @@
 
 void test(NSObject *o) {
   [o extMeth];
+
+  // Make sure the property is treated as read-write.
+  o.intProp = 17;
 }
 
 //===----------------------------------------------------------------------===//

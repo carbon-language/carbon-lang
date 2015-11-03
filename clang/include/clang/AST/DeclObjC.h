@@ -2524,11 +2524,6 @@ public:
     PropertyAttributesAsWritten = PRVal;
   }
 
- void makeitReadWriteAttribute() {
-    PropertyAttributes &= ~OBJC_PR_readonly;
-    PropertyAttributes |= OBJC_PR_readwrite;
- }
-
   // Helper methods for accessing attributes.
 
   /// isReadOnly - Return true iff the property has a setter.
