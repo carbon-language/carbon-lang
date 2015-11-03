@@ -59,6 +59,7 @@ import dotest_channels
 import dotest_args
 import lldb_utils
 import process_control
+import lldbsuite.support.seven as seven
 
 # Status codes for running command with timeout.
 eTimedOut, ePassed, eFailed = 124, 0, 1
@@ -1244,7 +1245,7 @@ def is_darwin_version_lower_than(target_version):
         return False
 
     system_version = distutils.version.StrictVersion(platform.mac_ver()[0])
-    return cmp(system_version, target_version) < 0
+    return seven.cmp_(system_version, target_version) < 0
 
 
 def default_test_runner_name(num_threads):

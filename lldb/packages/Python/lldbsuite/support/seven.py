@@ -5,6 +5,7 @@ if six.PY2:
     get_command_output = commands.getoutput
     get_command_status_output = commands.getstatusoutput
 
+    cmp_ = cmp
 else:
     def get_command_status_output(command):
         try:
@@ -15,3 +16,5 @@ else:
 
     def get_command_output(command):
         return get_command_status_output(command)[1]
+
+    cmp_ = lambda x, y: (x > y) - (x < y)
