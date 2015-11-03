@@ -75,27 +75,31 @@ GetRegisterInfoCount (const ArchSpec &target_arch)
 }
 
 uint32_t
-GetUserRegisterInfoCount (const ArchSpec &target_arch)
+GetUserRegisterInfoCount (const ArchSpec &target_arch, bool msa_present)
 {
     switch (target_arch.GetMachine())
     {
         case llvm::Triple::mips:
         case llvm::Triple::mipsel:
-            return static_cast<uint32_t> (k_num_user_registers_mips);
+            if (msa_present)
+                return static_cast<uint32_t> (k_num_user_registers_mips);
+            return static_cast<uint32_t> (k_num_user_registers_mips - k_num_msa_registers_mips); 
         case llvm::Triple::mips64el:
         case llvm::Triple::mips64:
-            return static_cast<uint32_t> (k_num_user_registers_mips64);
+            if (msa_present)
+                return static_cast<uint32_t> (k_num_user_registers_mips64);
+            return static_cast<uint32_t> (k_num_user_registers_mips64 - k_num_msa_registers_mips64);
         default:
             assert(false && "Unhandled target architecture.");
             return 0;
     }
 }
 
-RegisterContextLinux_mips64::RegisterContextLinux_mips64(const ArchSpec &target_arch) :
+RegisterContextLinux_mips64::RegisterContextLinux_mips64(const ArchSpec &target_arch, bool msa_present) :
     lldb_private::RegisterInfoInterface(target_arch),
     m_register_info_p (GetRegisterInfoPtr (target_arch)),
     m_register_info_count (GetRegisterInfoCount (target_arch)),
-    m_user_register_count (GetUserRegisterInfoCount (target_arch))
+    m_user_register_count (GetUserRegisterInfoCount (target_arch, msa_present))
 {
 }
 

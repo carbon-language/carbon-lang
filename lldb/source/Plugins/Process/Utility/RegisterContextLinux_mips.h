@@ -17,7 +17,7 @@ class RegisterContextLinux_mips
     : public lldb_private::RegisterInfoInterface
 {
 public:
-    RegisterContextLinux_mips(const lldb_private::ArchSpec &target_arch);
+    RegisterContextLinux_mips(const lldb_private::ArchSpec &target_arch, bool msa_present = true);
 
     size_t
     GetGPRSize() const override;
@@ -30,6 +30,9 @@ public:
 
     uint32_t
     GetUserRegisterCount () const override;
+
+private:
+    uint32_t m_user_register_count;
 };
 
 #endif

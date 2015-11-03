@@ -19,7 +19,7 @@ class RegisterContextLinux_mips64
     : public lldb_private::RegisterInfoInterface
 {
 public:
-    RegisterContextLinux_mips64(const lldb_private::ArchSpec &target_arch);
+    RegisterContextLinux_mips64(const lldb_private::ArchSpec &target_arch, bool msa_present = true);
 
     size_t
     GetGPRSize() const override;

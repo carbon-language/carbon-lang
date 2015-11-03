@@ -29,8 +29,17 @@ using namespace lldb;
 #include "RegisterInfos_mips.h"
 #undef DECLARE_REGISTER_INFOS_MIPS_STRUCT
 
-RegisterContextLinux_mips::RegisterContextLinux_mips(const ArchSpec &target_arch) :
-    RegisterInfoInterface(target_arch)
+uint32_t
+GetUserRegisterInfoCount (bool msa_present)
+{
+    if (msa_present)
+        return static_cast<uint32_t> (k_num_user_registers_mips);
+    return static_cast<uint32_t> (k_num_user_registers_mips - k_num_msa_registers_mips);
+}
+
+RegisterContextLinux_mips::RegisterContextLinux_mips(const ArchSpec &target_arch, bool msa_present) :
+    RegisterInfoInterface(target_arch),
+    m_user_register_count (GetUserRegisterInfoCount (msa_present))
 {
 }
 
@@ -63,5 +72,5 @@ RegisterContextLinux_mips::GetRegisterCount () const
 uint32_t
 RegisterContextLinux_mips::GetUserRegisterCount () const
 {
-    return static_cast<uint32_t> (k_num_user_registers_mips);
+    return static_cast<uint32_t> (m_user_register_count);
 }
