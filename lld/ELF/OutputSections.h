@@ -378,7 +378,7 @@ template <class ELFT> GotPltSection<ELFT> *Out<ELFT>::GotPlt;
 template <class ELFT> GotSection<ELFT> *Out<ELFT>::Got;
 template <class ELFT> HashTableSection<ELFT> *Out<ELFT>::HashTab;
 template <class ELFT> InterpSection<ELFT> *Out<ELFT>::Interp;
-template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Bss = nullptr;
+template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Bss;
 template <class ELFT> OutputSectionBase<ELFT> *Out<ELFT>::Opd;
 template <class ELFT> uint8_t *Out<ELFT>::OpdBuf;
 template <class ELFT> PltSection<ELFT> *Out<ELFT>::Plt;
