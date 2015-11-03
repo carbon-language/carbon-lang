@@ -10,7 +10,7 @@
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: None (0x0)
 // CHECK-NEXT:    Other: 64
-// CHECK-NEXT:    Section: .group (0x5)
+// CHECK-NEXT:    Section: .group
 // CHECK-NEXT:  }
 
 

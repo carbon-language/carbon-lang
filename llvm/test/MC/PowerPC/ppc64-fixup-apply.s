@@ -101,7 +101,7 @@ addis 1, 1, target7@highesta
 # CHECK-NEXT:     Size: 15
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 4
+# CHECK-NEXT:     AddressAlignment:
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:     SectionData (
 # CHECK-BE-NEXT:    0000: 12345678 9ABCDEF0 87654321 BEEF42
