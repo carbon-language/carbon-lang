@@ -952,10 +952,10 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       if (I != E) {
         outs() << "Archive map\n";
         for (; I != E; ++I) {
-          ErrorOr<Archive::child_iterator> C = I->getMember();
+          ErrorOr<Archive::Child> C = I->getMember();
           if (error(C.getError()))
             return;
-          ErrorOr<StringRef> FileNameOrErr = C.get()->getName();
+          ErrorOr<StringRef> FileNameOrErr = C->getName();
           if (error(FileNameOrErr.getError()))
             return;
           StringRef SymName = I->getName();
