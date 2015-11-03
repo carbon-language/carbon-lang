@@ -2665,6 +2665,7 @@ const TargetRegisterClass *SIInstrInfo::getDestEquivalentVGPRClass(
   }
 }
 
+// Find the one SGPR operand we are allowed to use.
 unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,
                                    int OpIndices[3]) const {
   const MCInstrDesc &Desc = MI->getDesc();
@@ -2691,15 +2692,22 @@ unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,
       break;
 
     const MachineOperand &MO = MI->getOperand(Idx);
-    if (RI.isSGPRClassID(Desc.OpInfo[Idx].RegClass))
-      SGPRReg = MO.getReg();
+    if (!MO.isReg())
+      continue;
 
-    if (MO.isReg() && RI.isSGPRClass(MRI.getRegClass(MO.getReg())))
-      UsedSGPRs[i] = MO.getReg();
+    // Is this operand statically required to be an SGPR based on the operand
+    // constraints?
+    const TargetRegisterClass *OpRC = RI.getRegClass(Desc.OpInfo[Idx].RegClass);
+    bool IsRequiredSGPR = RI.isSGPRClass(OpRC);
+    if (IsRequiredSGPR)
+      return MO.getReg();
+
+    // If this could be a VGPR or an SGPR, Check the dynamic register class.
+    unsigned Reg = MO.getReg();
+    const TargetRegisterClass *RegRC = MRI.getRegClass(Reg);
+    if (RI.isSGPRClass(RegRC))
+      UsedSGPRs[i] = Reg;
   }
-
-  if (SGPRReg != AMDGPU::NoRegister)
-    return SGPRReg;
 
   // We don't have a required SGPR operand, so we have a bit more freedom in
   // selecting operands to move.
@@ -2710,6 +2718,9 @@ unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,
   // e.g.
   // V_FMA_F32 v0, s0, s0, s0 -> No moves
   // V_FMA_F32 v0, s0, s1, s0 -> Move s1
+
+  // TODO: If some of the operands are 64-bit SGPRs and some 32, we should
+  // prefer those.
 
   if (UsedSGPRs[0] != AMDGPU::NoRegister) {
     if (UsedSGPRs[0] == UsedSGPRs[1] || UsedSGPRs[0] == UsedSGPRs[2])
