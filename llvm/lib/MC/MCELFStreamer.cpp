@@ -311,8 +311,20 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *S, uint64_t Size,
   Symbol->setType(ELF::STT_OBJECT);
 
   if (Symbol->getBinding() == ELF::STB_LOCAL) {
-    struct LocalCommon L = {Symbol, Size, ByteAlignment};
-    LocalCommons.push_back(L);
+    MCSection &Section = *getAssembler().getContext().getELFSection(
+        ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
+    MCSectionSubPair P = getCurrentSection();
+    SwitchSection(&Section);
+
+    EmitValueToAlignment(ByteAlignment, 0, 1, 0);
+    EmitLabel(Symbol);
+    EmitZeros(Size);
+
+    // Update the maximum alignment of the section if necessary.
+    if (ByteAlignment > Section.getAlignment())
+      Section.setAlignment(ByteAlignment);
+
+    SwitchSection(P.first, P.second);
   } else {
     if(Symbol->declareCommon(Size, ByteAlignment))
       report_fatal_error("Symbol: " + Symbol->getName() +
@@ -619,25 +631,7 @@ void MCELFStreamer::EmitBundleUnlock() {
 }
 
 void MCELFStreamer::Flush() {
-  MCSection &Section = *getAssembler().getContext().getELFSection(
-      ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
-  getAssembler().registerSection(Section);
 
-  for (const LocalCommon &L : LocalCommons) {
-    const MCSymbol &Symbol = *L.Symbol;
-    uint64_t Size = L.Size;
-    unsigned ByteAlignment = L.ByteAlignment;
-    new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &Section);
-
-    MCFragment *F = new MCFillFragment(0, 0, Size, &Section);
-    Symbol.setFragment(F);
-
-    // Update the maximum alignment of the section if necessary.
-    if (ByteAlignment > Section.getAlignment())
-      Section.setAlignment(ByteAlignment);
-  }
-
-  LocalCommons.clear();
 }
 
 void MCELFStreamer::FinishImpl() {
