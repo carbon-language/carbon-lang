@@ -941,15 +941,8 @@ void IslNodeBuilder::preloadInvariantEquivClass(
   // If the base pointer of this class is dependent on another one we have to
   // make sure it was preloaded already.
   auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
-  if (auto *BasePtrOriginSAI = SAI->getBasePtrOriginSAI()) {
-    auto *BasePtrOriginBasePtr = BasePtrOriginSAI->getBasePtr();
-    auto *BasePtrOriginBasePtrSCEV = SE.getSCEV(BasePtrOriginBasePtr);
-
-    const auto &InvariantEquivClasses = S.getInvariantAccesses();
-    for (const auto &OtherIAClass : InvariantEquivClasses)
-      if (std::get<0>(OtherIAClass) == BasePtrOriginBasePtrSCEV)
-        preloadInvariantEquivClass(OtherIAClass);
-  }
+  if (const auto *BaseIAClass = S.lookupInvariantEquivClass(SAI->getBasePtr()))
+    preloadInvariantEquivClass(*BaseIAClass);
 
   Instruction *AccInst = MA->getAccessInstruction();
   Type *AccInstTy = AccInst->getType();
