@@ -425,6 +425,7 @@ static FormatStyle expandPresets(const FormatStyle &Style) {
     break;
   case FormatStyle::BS_WebKit:
     Expanded.BraceWrapping.AfterFunction = true;
+    Expanded.BraceWrapping.BeforeElse = true;
     break;
   default:
     break;
