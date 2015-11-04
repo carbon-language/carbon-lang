@@ -42,9 +42,10 @@ void MakeUniqueCheck::registerMatchers(MatchFinder *Finder) {
                                               qualType(equalsBoundNode(
                                                   PointerType))))))))))))))),
                 argumentCountIs(1),
-                hasArgument(0, cxxNewExpr(hasType(pointsTo(qualType(
-                                              equalsBoundNode(PointerType)))))
-                                   .bind(NewExpression)))
+                hasArgument(
+                    0, cxxNewExpr(hasType(pointsTo(qualType(hasCanonicalType(
+                                      equalsBoundNode(PointerType))))))
+                           .bind(NewExpression)))
                 .bind(ConstructorCall))),
         this);
   }

@@ -195,3 +195,9 @@ void whitespaces() {
   // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: use std::make_unique instead
   // CHECK-FIXES: auto Spaces = std::make_unique<int>();
 }
+
+void nesting() {
+  auto Nest = std::unique_ptr<std::unique_ptr<int>>(new std::unique_ptr<int>(new int));
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: use std::make_unique instead
+  // CHECK-FIXES: auto Nest = std::make_unique<std::unique_ptr<int>>(new int);
+}
