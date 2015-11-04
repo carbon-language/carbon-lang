@@ -620,6 +620,7 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
                                       const MCValue &Target, uint64_t &Value,
                                       bool &IsResolved) {
   const MCSymbolRefExpr *A = Target.getSymA();
+  const MCSymbol *Sym = A ? &A->getSymbol() : nullptr;
   // Some fixups to thumb function symbols need the low bit (thumb bit)
   // twiddled.
   if ((unsigned)Fixup.getKind() != ARM::fixup_arm_ldst_pcrel_12 &&
@@ -628,18 +629,23 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
       (unsigned)Fixup.getKind() != ARM::fixup_thumb_adr_pcrel_10 &&
       (unsigned)Fixup.getKind() != ARM::fixup_t2_adr_pcrel_12 &&
       (unsigned)Fixup.getKind() != ARM::fixup_arm_thumb_cp) {
-    if (A) {
-      const MCSymbol &Sym = A->getSymbol();
-      if (Asm.isThumbFunc(&Sym))
+    if (Sym) {
+      if (Asm.isThumbFunc(Sym))
         Value |= 1;
     }
   }
-  // For Thumb1 BL instruction, it is possible to be a long jump between
-  // the basic blocks of the same function.  Thus, we would like to resolve
-  // the offset when the destination has the same MCFragment.
-  if (A && (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl) {
-    const MCSymbol &Sym = A->getSymbol();
-    IsResolved = (Sym.getFragment() == DF);
+  if (IsResolved && (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl) {
+    assert(Sym && "How did we resolve this?");
+
+    // If the symbol is external the linker will handle it.
+    // FIXME: Should we handle it as an optimization?
+    if (Sym->isExternal()) {
+      IsResolved = false;
+    } else {
+      if (Value >= 0x400004)
+        Asm.getContext().reportFatalError(Fixup.getLoc(),
+                                          "out of range for branch");
+    }
   }
   // We must always generate a relocation for BL/BLX instructions if we have
   // a symbol to reference, as the linker relies on knowing the destination
