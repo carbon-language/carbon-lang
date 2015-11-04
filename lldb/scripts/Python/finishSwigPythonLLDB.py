@@ -350,10 +350,8 @@ def make_symlink_liblldb( vDictArgs, vstrFrameworkPythonDir, vstrLiblldbFileName
     if eOSType == utilsOsType.EnumOsType.Windows:
         # When importing an extension module using a debug version of python, you
         # write, for example, "import foo", but the interpreter searches for
-        # "foo_d.pyd".  This only applies for Python 2, however.  Python 3 does
-        # not use the _d suffix for extension modules.
-        import six
-        if is_debug_interpreter() and six.PY2:
+        # "foo_d.pyd"
+        if is_debug_interpreter():
             strTarget += "_d";
         strTarget += ".pyd";
     else:
