@@ -34,6 +34,7 @@ class BranchProbability {
 
   // Denominator, which is a constant value.
   static const uint32_t D = 1u << 31;
+  static const uint32_t UnknownN = UINT32_MAX;
 
   // Construct a BranchProbability with only numerator assuming the denominator
   // is 1<<31. For internal use only.
@@ -44,9 +45,11 @@ public:
   BranchProbability(uint32_t Numerator, uint32_t Denominator);
 
   bool isZero() const { return N == 0; }
+  bool isUnknown() const { return N == UnknownN; }
 
   static BranchProbability getZero() { return BranchProbability(0); }
   static BranchProbability getOne() { return BranchProbability(D); }
+  static BranchProbability getUnknown() { return BranchProbability(UnknownN); }
   // Create a BranchProbability object with the given numerator and 1<<31
   // as denominator.
   static BranchProbability getRaw(uint32_t N) { return BranchProbability(N); }
@@ -131,6 +134,10 @@ public:
 
 inline raw_ostream &operator<<(raw_ostream &OS, BranchProbability Prob) {
   return Prob.print(OS);
+}
+
+inline BranchProbability operator/(BranchProbability LHS, uint32_t RHS) {
+  return BranchProbability::getRaw(LHS.getNumerator() / RHS);
 }
 
 template <class ProbabilityList>

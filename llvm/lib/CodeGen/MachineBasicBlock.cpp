@@ -523,6 +523,25 @@ void MachineBasicBlock::addSuccessorWithoutWeight(MachineBasicBlock *Succ) {
   Succ->addPredecessor(this);
 }
 
+void MachineBasicBlock::addSuccessor(MachineBasicBlock *Succ,
+                                     BranchProbability Prob) {
+  // Probability list is either empty (if successor list isn't empty, this means
+  // disabled optimization) or has the same size as successor list.
+  if (!(Probs.empty() && !Successors.empty()))
+    Probs.push_back(Prob);
+  Successors.push_back(Succ);
+  Succ->addPredecessor(this);
+}
+
+void MachineBasicBlock::addSuccessorWithoutProb(MachineBasicBlock *Succ) {
+  // We need to make sure probability list is either empty or has the same size
+  // of successor list. When this function is called, we can safely delete all
+  // probability in the list.
+  Probs.clear();
+  Successors.push_back(Succ);
+  Succ->addPredecessor(this);
+}
+
 void MachineBasicBlock::removeSuccessor(MachineBasicBlock *Succ) {
   Succ->removePredecessor(this);
   succ_iterator I = std::find(Successors.begin(), Successors.end(), Succ);
@@ -532,6 +551,13 @@ void MachineBasicBlock::removeSuccessor(MachineBasicBlock *Succ) {
   if (!Weights.empty()) {
     weight_iterator WI = getWeightIterator(I);
     Weights.erase(WI);
+  }
+
+  // If probability list is empty it means we don't use it (disabled
+  // optimization).
+  if (!Probs.empty()) {
+    probability_iterator WI = getProbabilityIterator(I);
+    Probs.erase(WI);
   }
 
   Successors.erase(I);
@@ -545,6 +571,13 @@ MachineBasicBlock::removeSuccessor(succ_iterator I) {
   if (!Weights.empty()) {
     weight_iterator WI = getWeightIterator(I);
     Weights.erase(WI);
+  }
+
+  // If probability list is empty it means we don't use it (disabled
+  // optimization).
+  if (!Probs.empty()) {
+    probability_iterator WI = getProbabilityIterator(I);
+    Probs.erase(WI);
   }
 
   (*I)->removePredecessor(this);
@@ -587,6 +620,12 @@ void MachineBasicBlock::replaceSuccessor(MachineBasicBlock *Old,
     weight_iterator OldWI = getWeightIterator(OldI);
     *getWeightIterator(NewI) += *OldWI;
     Weights.erase(OldWI);
+  }
+  // Update its probability instead of adding a duplicate edge.
+  if (!Probs.empty()) {
+    probability_iterator OldPI = getProbabilityIterator(OldI);
+    *getProbabilityIterator(NewI) += *OldPI;
+    Probs.erase(OldPI);
   }
   Successors.erase(OldI);
 }
@@ -1120,11 +1159,35 @@ uint32_t MachineBasicBlock::getSuccWeight(const_succ_iterator Succ) const {
   return *getWeightIterator(Succ);
 }
 
+/// Return probability of the edge from this block to MBB. If probability list
+/// is empty, return a default probability which is 1/N, where N is the number
+/// of successors. If the probability of the given successor is unknown, then
+/// sum up all known probabilities and return the complement of the sum divided
+/// by the number of unknown probabilities.
+BranchProbability
+MachineBasicBlock::getSuccProbability(const_succ_iterator Succ) const {
+  if (Probs.empty())
+    return BranchProbability(1, succ_size());
+
+  auto Prob = *getProbabilityIterator(Succ);
+  assert(!Prob.isUnknown());
+  return Prob;
+}
+
 /// Set successor weight of a given iterator.
 void MachineBasicBlock::setSuccWeight(succ_iterator I, uint32_t Weight) {
   if (Weights.empty())
     return;
   *getWeightIterator(I) = Weight;
+}
+
+/// Set successor probability of a given iterator.
+void MachineBasicBlock::setSuccProbability(succ_iterator I,
+                                           BranchProbability Prob) {
+  assert(!Prob.isUnknown());
+  if (Probs.empty())
+    return;
+  *getProbabilityIterator(I) = Prob;
 }
 
 /// Return wight iterator corresonding to the I successor iterator.
@@ -1143,6 +1206,25 @@ getWeightIterator(MachineBasicBlock::const_succ_iterator I) const {
   const size_t index = std::distance(Successors.begin(), I);
   assert(index < Weights.size() && "Not a current successor!");
   return Weights.begin() + index;
+}
+
+/// Return probability iterator corresonding to the I successor iterator.
+MachineBasicBlock::probability_iterator
+MachineBasicBlock::getProbabilityIterator(MachineBasicBlock::succ_iterator I) {
+  assert(Probs.size() == Successors.size() && "Async probability list!");
+  const size_t index = std::distance(Successors.begin(), I);
+  assert(index < Probs.size() && "Not a current successor!");
+  return Probs.begin() + index;
+}
+
+/// Return probability iterator corresonding to the I successor iterator
+MachineBasicBlock::const_probability_iterator
+MachineBasicBlock::getProbabilityIterator(
+    MachineBasicBlock::const_succ_iterator I) const {
+  assert(Probs.size() == Successors.size() && "Async probability list!");
+  const size_t index = std::distance(Successors.begin(), I);
+  assert(index < Probs.size() && "Not a current successor!");
+  return Probs.begin() + index;
 }
 
 /// Return whether (physical) register "Reg" has been <def>ined and not <kill>ed
