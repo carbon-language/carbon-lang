@@ -29,7 +29,6 @@
 #ifndef LLVM_IR_PATTERNMATCH_H
 #define LLVM_IR_PATTERNMATCH_H
 
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
@@ -956,69 +955,85 @@ struct MaxMin_match {
   MaxMin_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
 
   template <typename OpTy> bool match(OpTy *V) {
-    Value *LHS, *RHS;
-    auto SPR = matchSelectPattern(V, LHS, RHS);
-    return Pred_t::match(SPR) && L.match(LHS) && R.match(RHS);
+    // Look for "(x pred y) ? x : y" or "(x pred y) ? y : x".
+    auto *SI = dyn_cast<SelectInst>(V);
+    if (!SI)
+      return false;
+    auto *Cmp = dyn_cast<CmpInst_t>(SI->getCondition());
+    if (!Cmp)
+      return false;
+    // At this point we have a select conditioned on a comparison.  Check that
+    // it is the values returned by the select that are being compared.
+    Value *TrueVal = SI->getTrueValue();
+    Value *FalseVal = SI->getFalseValue();
+    Value *LHS = Cmp->getOperand(0);
+    Value *RHS = Cmp->getOperand(1);
+    if ((TrueVal != LHS || FalseVal != RHS) &&
+        (TrueVal != RHS || FalseVal != LHS))
+      return false;
+    typename CmpInst_t::Predicate Pred =
+        LHS == TrueVal ? Cmp->getPredicate() : Cmp->getSwappedPredicate();
+    // Does "(x pred y) ? x : y" represent the desired max/min operation?
+    if (!Pred_t::match(Pred))
+      return false;
+    // It does!  Bind the operands.
+    return L.match(LHS) && R.match(RHS);
   }
 };
 
 /// \brief Helper class for identifying signed max predicates.
 struct smax_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_SMAX;
+  static bool match(ICmpInst::Predicate Pred) {
+    return Pred == CmpInst::ICMP_SGT || Pred == CmpInst::ICMP_SGE;
   }
 };
 
 /// \brief Helper class for identifying signed min predicates.
 struct smin_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_SMIN;
+  static bool match(ICmpInst::Predicate Pred) {
+    return Pred == CmpInst::ICMP_SLT || Pred == CmpInst::ICMP_SLE;
   }
 };
 
 /// \brief Helper class for identifying unsigned max predicates.
 struct umax_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_UMAX;
+  static bool match(ICmpInst::Predicate Pred) {
+    return Pred == CmpInst::ICMP_UGT || Pred == CmpInst::ICMP_UGE;
   }
 };
 
 /// \brief Helper class for identifying unsigned min predicates.
 struct umin_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_UMIN;
+  static bool match(ICmpInst::Predicate Pred) {
+    return Pred == CmpInst::ICMP_ULT || Pred == CmpInst::ICMP_ULE;
   }
 };
 
 /// \brief Helper class for identifying ordered max predicates.
 struct ofmax_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_FMAXNUM &&
-      (SPR.Ordered || SPR.NaNBehavior == SPNB_RETURNS_ANY);
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_OGT || Pred == CmpInst::FCMP_OGE;
   }
 };
 
 /// \brief Helper class for identifying ordered min predicates.
 struct ofmin_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_FMINNUM &&
-      (SPR.Ordered || SPR.NaNBehavior == SPNB_RETURNS_ANY);
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_OLT || Pred == CmpInst::FCMP_OLE;
   }
 };
 
 /// \brief Helper class for identifying unordered max predicates.
 struct ufmax_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_FMAXNUM &&
-      (!SPR.Ordered || SPR.NaNBehavior == SPNB_RETURNS_ANY);
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_UGT || Pred == CmpInst::FCMP_UGE;
   }
 };
 
 /// \brief Helper class for identifying unordered min predicates.
 struct ufmin_pred_ty {
-  static bool match(SelectPatternResult SPR) {
-    return SPR.Flavor == SPF_FMINNUM &&
-      (!SPR.Ordered || SPR.NaNBehavior == SPNB_RETURNS_ANY);
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_ULT || Pred == CmpInst::FCMP_ULE;
   }
 };
 
