@@ -31,7 +31,6 @@ static void (*error_report_callback)(const char*);
 static char *error_message_buffer = nullptr;
 static uptr error_message_buffer_pos = 0;
 static uptr error_message_buffer_size = 0;
-static BlockingMutex error_message_buf_mutex(LINKER_INITIALIZED);
 
 struct ReportData {
   uptr pc;
@@ -47,21 +46,16 @@ static bool report_happened = false;
 static ReportData report_data = {};
 
 void AppendToErrorMessageBuffer(const char *buffer) {
-  BlockingMutexLock l(&error_message_buf_mutex);
-  if (!error_message_buffer) {
-    error_message_buffer_size = 1 << 16;
-    error_message_buffer =
-      (char*)MmapOrDie(error_message_buffer_size, __func__);
-    error_message_buffer_pos = 0;
+  if (error_message_buffer) {
+    uptr length = internal_strlen(buffer);
+    CHECK_GE(error_message_buffer_size, error_message_buffer_pos);
+    uptr remaining = error_message_buffer_size - error_message_buffer_pos;
+    internal_strncpy(error_message_buffer + error_message_buffer_pos,
+                     buffer, remaining);
+    error_message_buffer[error_message_buffer_size - 1] = '\0';
+    // FIXME: reallocate the buffer instead of truncating the message.
+    error_message_buffer_pos += Min(remaining, length);
   }
-  uptr length = internal_strlen(buffer);
-  CHECK_GE(error_message_buffer_size, error_message_buffer_pos);
-  uptr remaining = error_message_buffer_size - error_message_buffer_pos;
-  internal_strncpy(error_message_buffer + error_message_buffer_pos,
-                   buffer, remaining);
-  error_message_buffer[error_message_buffer_size - 1] = '\0';
-  // FIXME: reallocate the buffer instead of truncating the message.
-  error_message_buffer_pos += Min(remaining, length);
 }
 
 // ---------------------- Decorator ------------------------------ {{{1
@@ -670,13 +664,8 @@ class ScopedInErrorReport {
     // Print memory stats.
     if (flags()->print_stats)
       __asan_print_accumulated_stats();
-    {
-      BlockingMutexLock l(&error_message_buf_mutex);
-      LogFullErrorReport(error_message_buffer);
-
-      if (error_report_callback) {
-        error_report_callback(error_message_buffer);
-      }
+    if (error_report_callback) {
+      error_report_callback(error_message_buffer);
     }
     Report("ABORTING\n");
     Die();
@@ -1072,8 +1061,13 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
 }
 
 void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
-  BlockingMutexLock l(&error_message_buf_mutex);
   error_report_callback = callback;
+  if (callback) {
+    error_message_buffer_size = 1 << 16;
+    error_message_buffer =
+        (char*)MmapOrDie(error_message_buffer_size, __func__);
+    error_message_buffer_pos = 0;
+  }
 }
 
 void __asan_describe_address(uptr addr) {
