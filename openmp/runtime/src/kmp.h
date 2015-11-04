@@ -2418,7 +2418,6 @@ typedef struct kmp_base_global {
 
     int                 g_dynamic;
     enum dynamic_mode   g_dynamic_mode;
-
 } kmp_base_global_t;
 
 typedef union KMP_ALIGN_CACHE kmp_global {
@@ -2592,7 +2591,6 @@ extern kmp_uint32 __kmp_yielding_on;
 extern kmp_uint32 __kmp_yield_cycle;
 extern kmp_int32  __kmp_yield_on_count;
 extern kmp_int32  __kmp_yield_off_count;
-
 
 /* ------------------------------------------------------------------------- */
 extern int        __kmp_allThreadsSpecified;
@@ -2773,7 +2771,6 @@ extern void __kmp_exit_single( int gtid );
 
 extern void __kmp_parallel_deo( int *gtid_ref, int *cid_ref, ident_t *loc_ref );
 extern void __kmp_parallel_dxo( int *gtid_ref, int *cid_ref, ident_t *loc_ref );
-
 
 #ifdef USE_LOAD_BALANCE
 extern int  __kmp_get_load_balance( int );

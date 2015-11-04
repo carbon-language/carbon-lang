@@ -317,7 +317,6 @@ int     __kmp_storage_map_verbose_specified = FALSE;
 int     __kmp_need_register_atfork = TRUE; /* At initialization, call pthread_atfork to install fork handler */
 int     __kmp_need_register_atfork_specified = TRUE;
 
-
 int        __kmp_env_chunk       = FALSE;  /* KMP_CHUNK specified?     */
 int        __kmp_env_stksize     = FALSE;  /* KMP_STACKSIZE specified? */
 int        __kmp_env_omp_stksize = FALSE;  /* OMP_STACKSIZE specified? */

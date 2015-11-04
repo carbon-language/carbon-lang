@@ -2003,7 +2003,6 @@ __kmp_read_system_info( struct kmp_sys_info *info )
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
-
 void
 __kmp_read_system_time( double *delta )
 {
@@ -2154,7 +2153,6 @@ __kmp_runtime_initialize( void )
 
     /* Set up minimum number of threads to switch to TLS gtid */
     __kmp_tls_gtid_min = KMP_TLS_GTID_MIN;
-
 
     #ifdef BUILD_TV
         {

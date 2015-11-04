@@ -3374,8 +3374,6 @@ __kmp_stg_print_ld_balance_interval( kmp_str_buf_t * buffer, char const * name, 
 
 #endif /* USE_LOAD_BALANCE */
 
-
-
 // -------------------------------------------------------------------------------------------------
 // KMP_INIT_AT_FORK
 // -------------------------------------------------------------------------------------------------
@@ -4598,8 +4596,6 @@ static kmp_setting_t __kmp_stg_table[] = {
     { "KMP_LOAD_BALANCE_INTERVAL",         __kmp_stg_parse_ld_balance_interval,__kmp_stg_print_ld_balance_interval,NULL, 0, 0 },
 #endif
 
-
-
     { "KMP_NUM_LOCKS_IN_BLOCK",            __kmp_stg_parse_lock_block,         __kmp_stg_print_lock_block,         NULL, 0, 0 },
     { "KMP_LOCK_KIND",                     __kmp_stg_parse_lock_kind,          __kmp_stg_print_lock_kind,          NULL, 0, 0 },
 #if KMP_USE_ADAPTIVE_LOCKS
@@ -5408,8 +5404,6 @@ __kmp_env_print_2() {
 
 } // __kmp_env_print_2
 #endif // OMP_40_ENABLED
-
-
 
 // end of file
 

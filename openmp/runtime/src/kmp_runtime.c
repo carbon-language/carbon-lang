@@ -79,7 +79,6 @@ void __kmp_fork_barrier( int gtid, int tid );
 void __kmp_join_barrier( int gtid );
 void __kmp_setup_icv_copy( kmp_team_t *team, int new_nproc, kmp_internal_control_t * new_icvs, ident_t *loc );
 
-
 #ifdef USE_LOAD_BALANCE
 static int __kmp_load_balance_nproc( kmp_root_t * root, int set_nproc );
 #endif
@@ -1746,7 +1745,6 @@ __kmp_fork_call(
     /* If we temporarily changed the set number of threads then restore it now */
     master_th->th.th_set_nproc = 0;
 
-
     /* create a serialized parallel region? */
     if ( nthreads == 1 ) {
         /* josh todo: hypothetical question: what do we do for OS X*? */
@@ -2649,7 +2647,6 @@ __kmp_set_num_threads( int new_nth, int gtid )
         // Special flag in case omp_set_num_threads() call
         hot_team->t.t_size_changed = -1;
     }
-
 }
 
 /* Changes max_active_levels */
@@ -3224,7 +3221,6 @@ __kmp_initialize_root( kmp_root_t *root )
     hot_team->t.t_sched.r_sched_type = r_sched.r_sched_type;
     hot_team->t.t_sched.chunk        = r_sched.chunk;
     hot_team->t.t_size_changed = 0;
-
 }
 
 #ifdef KMP_DEBUG
@@ -3827,7 +3823,6 @@ __kmp_register_root( int initial_thread )
         }; // for
     }
     KMP_DEBUG_ASSERT( root->r.r_hot_team->t.t_bar[ bs_forkjoin_barrier ].b_arrived == KMP_INIT_BARRIER_STATE );
-
 
 #if KMP_AFFINITY_SUPPORTED
     if ( TCR_4(__kmp_init_middle) ) {
@@ -6469,7 +6464,6 @@ __kmp_do_serial_initialize( void )
     // Moved here from __kmp_env_initialize() "KMP_ALL_THREADPRIVATE" part
     __kmp_tp_capacity = __kmp_default_tp_capacity(__kmp_dflt_team_nth_ub, __kmp_max_nth, __kmp_allThreadsSpecified);
 
-
     // If the library is shut down properly, both pools must be NULL. Just in case, set them
     // to NULL -- some memory may leak, but subsequent code will work even if pools are not freed.
     KMP_DEBUG_ASSERT( __kmp_thread_pool == NULL );
@@ -7189,7 +7183,6 @@ __kmp_load_balance_nproc( kmp_root_t *root, int set_nproc )
 
 #endif /* USE_LOAD_BALANCE */
 
-
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
@@ -7219,9 +7212,7 @@ __kmp_cleanup( void )
     KA_TRACE( 10, ("__kmp_cleanup: go serial cleanup\n" ) );
 
     if (__kmp_init_serial) {
-
         __kmp_runtime_destroy();
-
         __kmp_init_serial = FALSE;
     }
 
