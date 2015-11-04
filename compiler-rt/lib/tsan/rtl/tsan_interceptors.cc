@@ -812,6 +812,18 @@ extern "C" void INTERFACE_ATTRIBUTE __cxa_guard_abort(atomic_uint32_t *g) {
   atomic_store(g, 0, memory_order_relaxed);
 }
 
+namespace __tsan {
+void DestroyThreadState() {
+  ThreadState *thr = cur_thread();
+  ThreadFinish(thr);
+  ThreadSignalContext *sctx = thr->signal_ctx;
+  if (sctx) {
+    thr->signal_ctx = 0;
+    UnmapOrDie(sctx, sizeof(*sctx));
+  }
+}
+}  // namespace __tsan
+
 static void thread_finalize(void *v) {
   uptr iter = (uptr)v;
   if (iter > 1) {
@@ -821,15 +833,7 @@ static void thread_finalize(void *v) {
     }
     return;
   }
-  {
-    ThreadState *thr = cur_thread();
-    ThreadFinish(thr);
-    ThreadSignalContext *sctx = thr->signal_ctx;
-    if (sctx) {
-      thr->signal_ctx = 0;
-      UnmapOrDie(sctx, sizeof(*sctx));
-    }
-  }
+  DestroyThreadState();
 }
 
 

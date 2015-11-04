@@ -54,11 +54,51 @@ void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive) {
 void InitializeShadowMemoryPlatform() { }
 #endif
 
+// On OS X, GCD worker threads are created without a call to pthread_create. We
+// need to properly register these threads with ThreadCreate and ThreadStart.
+// These threads don't have a parent thread, as they are created "spuriously".
+// We're using a libpthread API that notifies us about a newly created thread.
+// The `thread == pthread_self()` check indicates this is actually a worker
+// thread. If it's just a regular thread, this hook is called on the parent
+// thread.
+typedef void (*pthread_introspection_hook_t)(unsigned int event,
+                                             pthread_t thread, void *addr,
+                                             size_t size);
+extern "C" pthread_introspection_hook_t pthread_introspection_hook_install(
+    pthread_introspection_hook_t hook);
+static const uptr PTHREAD_INTROSPECTION_THREAD_CREATE = 1;
+static const uptr PTHREAD_INTROSPECTION_THREAD_DESTROY = 4;
+static pthread_introspection_hook_t prev_pthread_introspection_hook;
+static void my_pthread_introspection_hook(unsigned int event, pthread_t thread,
+                                          void *addr, size_t size) {
+  if (event == PTHREAD_INTROSPECTION_THREAD_CREATE) {
+    if (thread == pthread_self()) {
+      // The current thread is a newly created GCD worker thread.
+      ThreadState *parent_thread_state = nullptr;  // No parent.
+      int tid = ThreadCreate(parent_thread_state, 0, (uptr)thread, true);
+      CHECK_NE(tid, 0);
+      ThreadState *thr = cur_thread();
+      ThreadStart(thr, tid, GetTid());
+    }
+  } else if (event == PTHREAD_INTROSPECTION_THREAD_DESTROY) {
+    ThreadState *thr = cur_thread();
+    if (thr->tctx->parent_tid == kInvalidTid) {
+      DestroyThreadState();
+    }
+  }
+
+  if (prev_pthread_introspection_hook != nullptr)
+    prev_pthread_introspection_hook(event, thread, addr, size);
+}
+
 void InitializePlatform() {
   DisableCoreDumperIfNecessary();
 #ifndef SANITIZER_GO
   CheckAndProtect();
 #endif
+
+  prev_pthread_introspection_hook =
+      pthread_introspection_hook_install(&my_pthread_introspection_hook);
 }
 
 #ifndef SANITIZER_GO

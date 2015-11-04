@@ -355,6 +355,8 @@ int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
     void *abstime), void *c, void *m, void *abstime,
     void(*cleanup)(void *arg), void *arg);
 
+void DestroyThreadState();
+
 }  // namespace __tsan
 
 #endif  // TSAN_PLATFORM_H

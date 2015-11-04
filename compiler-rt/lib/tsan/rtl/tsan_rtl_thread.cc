@@ -55,6 +55,8 @@ void ThreadContext::OnCreated(void *arg) {
   if (tid == 0)
     return;
   OnCreatedArgs *args = static_cast<OnCreatedArgs *>(arg);
+  if (!args->thr)  // GCD workers don't have a parent thread.
+    return;
   args->thr->fast_state.IncrementEpoch();
   // Can't increment epoch w/o writing to the trace as well.
   TraceAddEvent(args->thr, args->thr->fast_state, EventTypeMop, 0);
@@ -231,8 +233,10 @@ int ThreadCount(ThreadState *thr) {
 int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
   StatInc(thr, StatThreadCreate);
   OnCreatedArgs args = { thr, pc };
-  int tid = ctx->thread_registry->CreateThread(uid, detached, thr->tid, &args);
-  DPrintf("#%d: ThreadCreate tid=%d uid=%zu\n", thr->tid, tid, uid);
+  u32 parent_tid = thr ? thr->tid : kInvalidTid;  // No parent for GCD workers.
+  int tid =
+      ctx->thread_registry->CreateThread(uid, detached, parent_tid, &args);
+  DPrintf("#%d: ThreadCreate tid=%d uid=%zu\n", parent_tid, tid, uid);
   StatSet(thr, StatThreadMaxAlive, ctx->thread_registry->GetMaxAliveThreads());
   return tid;
 }

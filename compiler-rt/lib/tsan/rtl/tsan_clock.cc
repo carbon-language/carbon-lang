@@ -90,8 +90,6 @@
 
 namespace __tsan {
 
-const unsigned kInvalidTid = (unsigned)-1;
-
 ThreadClock::ThreadClock(unsigned tid, unsigned reused)
     : tid_(tid)
     , reused_(reused + 1) {  // 0 has special meaning
