@@ -105,7 +105,7 @@ provide its own user-focused documentation.
 ``clang-tidy``
 --------------
 
-`clang-tidy <http://clang.llvm.org/extra/clang-tidy/>` is a clang-based C++
+`clang-tidy <http://clang.llvm.org/extra/clang-tidy/>`_ is a clang-based C++
 linter tool. It provides an extensible framework for building compiler-based
 static analyses detecting and fixing bug-prone patterns, performance,
 portability and maintainability issues.
