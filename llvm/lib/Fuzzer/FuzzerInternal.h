@@ -99,6 +99,7 @@ class Fuzzer {
   };
   Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
+  size_t ChooseUnitToMutate();
   void Loop();
   void ShuffleAndMinimize();
   void InitializeTraceState();

@@ -346,39 +346,58 @@ void Fuzzer::MutateAndTestOne(Unit *U) {
   }
 }
 
+// Returns an index of random unit from the corpus to mutate.
+// Hypothesis: units added to the corpus last are more likely to be interesting.
+// This function gives more wieght to the more recent units.
+size_t Fuzzer::ChooseUnitToMutate() {
+    size_t N = Corpus.size();
+    size_t Total = (N + 1) * N / 2;
+    size_t R = USF.GetRand()(Total);
+    size_t IdxBeg = 0, IdxEnd = N;
+    // Binary search.
+    while (IdxEnd - IdxBeg >= 2) {
+      size_t Idx = IdxBeg + (IdxEnd - IdxBeg) / 2;
+      if (R > (Idx + 1) * Idx / 2)
+        IdxBeg = Idx;
+      else
+        IdxEnd = Idx;
+    }
+    assert(IdxBeg < N);
+    return IdxBeg;
+}
+
 void Fuzzer::Loop() {
   for (auto &U: Options.Dictionary)
     USF.GetMD().AddWordToDictionary(U.data(), U.size());
 
   while (true) {
-    for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
-      SyncCorpus();
-      RereadOutputCorpus();
-      if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
-        return;
-      if (Options.MaxTotalTimeSec > 0 &&
-          secondsSinceProcessStartUp() >
-              static_cast<size_t>(Options.MaxTotalTimeSec))
-        return;
-      CurrentUnit = Corpus[J1];
-      // Optionally, cross with another unit.
-      if (Options.DoCrossOver && USF.GetRand().RandBool()) {
-        size_t J2 = USF.GetRand()(Corpus.size());
-        if (!Corpus[J1].empty() && !Corpus[J2].empty()) {
-          assert(!Corpus[J2].empty());
-          CurrentUnit.resize(Options.MaxLen);
-          size_t NewSize = USF.CrossOver(
-              Corpus[J1].data(), Corpus[J1].size(), Corpus[J2].data(),
-              Corpus[J2].size(), CurrentUnit.data(), CurrentUnit.size());
-          assert(NewSize > 0 && "CrossOver returned empty unit");
-          assert(NewSize <= (size_t)Options.MaxLen &&
-                 "CrossOver returned overisized unit");
-          CurrentUnit.resize(NewSize);
-        }
+    size_t J1 = ChooseUnitToMutate();;
+    SyncCorpus();
+    RereadOutputCorpus();
+    if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
+      return;
+    if (Options.MaxTotalTimeSec > 0 &&
+        secondsSinceProcessStartUp() >
+        static_cast<size_t>(Options.MaxTotalTimeSec))
+      return;
+    CurrentUnit = Corpus[J1];
+    // Optionally, cross with another unit.
+    if (Options.DoCrossOver && USF.GetRand().RandBool()) {
+      size_t J2 = ChooseUnitToMutate();
+      if (!Corpus[J1].empty() && !Corpus[J2].empty()) {
+        assert(!Corpus[J2].empty());
+        CurrentUnit.resize(Options.MaxLen);
+        size_t NewSize = USF.CrossOver(
+            Corpus[J1].data(), Corpus[J1].size(), Corpus[J2].data(),
+            Corpus[J2].size(), CurrentUnit.data(), CurrentUnit.size());
+        assert(NewSize > 0 && "CrossOver returned empty unit");
+        assert(NewSize <= (size_t)Options.MaxLen &&
+               "CrossOver returned overisized unit");
+        CurrentUnit.resize(NewSize);
       }
-      // Perform several mutations and runs.
-      MutateAndTestOne(&CurrentUnit);
     }
+    // Perform several mutations and runs.
+    MutateAndTestOne(&CurrentUnit);
   }
 }
 
