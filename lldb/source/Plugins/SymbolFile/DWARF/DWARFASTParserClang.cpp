@@ -2777,23 +2777,6 @@ DWARFASTParserClang::ParseChildMembers (const SymbolContext& sc,
                                     }
                                 }
 
-                                if (ClangASTContext::IsCXXClassType(member_clang_type) && member_clang_type.GetCompleteType() == false)
-                                {
-                                    module_sp->ReportError ("DWARF DIE at 0x%8.8x (class %s) has a member variable 0x%8.8x (%s) whose type is a forward declaration, not a complete definition.\nPlease file a bug against the compiler and include the preprocessed output for %s",
-                                                            parent_die.GetOffset(),
-                                                            parent_die.GetName(),
-                                                            die.GetOffset(),
-                                                            name,
-                                                            sc.comp_unit ? sc.comp_unit->GetPath().c_str() : "the source file");
-                                    // We have no choice other than to pretend that the member class
-                                    // is complete. If we don't do this, clang will crash when trying
-                                    // to layout the class. Since we provide layout assistance, all
-                                    // ivars in this class and other classes will be fine, this is
-                                    // the best we can do short of crashing.
-                                    ClangASTContext::StartTagDeclarationDefinition(member_clang_type);
-                                    ClangASTContext::CompleteTagDeclarationDefinition(member_clang_type);
-                                }
-
                                 field_decl = ClangASTContext::AddFieldToRecordType (class_clang_type,
                                                                                     name,
                                                                                     member_clang_type,
