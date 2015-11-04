@@ -794,12 +794,12 @@ define <4 x float> @insertps_from_vector_load(<4 x float> %a, <4 x float>* nocap
 ; X32-LABEL: insertps_from_vector_load:
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
+; X32-NEXT:    insertps    $48, (%{{...}}), {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_from_vector_load:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
+; X64-NEXT:    insertps    $48, (%{{...}}), {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
 ; X64-NEXT:    retq
   %1 = load <4 x float>, <4 x float>* %pb, align 16
   %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 48)
@@ -812,12 +812,12 @@ define <4 x float> @insertps_from_vector_load_offset(<4 x float> %a, <4 x float>
 ; X32-LABEL: insertps_from_vector_load_offset:
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],mem[1],xmm0[3]
+; X32-NEXT:    insertps    $32, 4(%{{...}}), {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_from_vector_load_offset:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],mem[1],xmm0[3]
+; X64-NEXT:    insertps    $32, 4(%{{...}}), {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
 ; X64-NEXT:    retq
   %1 = load <4 x float>, <4 x float>* %pb, align 16
   %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 96)
@@ -831,13 +831,13 @@ define <4 x float> @insertps_from_vector_load_offset_2(<4 x float> %a, <4 x floa
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    shll $4, %ecx
-; X32-NEXT:    insertps {{.*#+}} xmm0 = mem[3],xmm0[1,2,3]
+; X32-NEXT:    insertps    $0, 12(%{{...}},%{{...}}), {{.*#+}} xmm0 = mem[0],xmm0[1,2,3]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_from_vector_load_offset_2:
 ; X64:       ## BB#0:
 ; X64-NEXT:    shlq $4, %rsi
-; X64-NEXT:    insertps {{.*#+}} xmm0 = mem[3],xmm0[1,2,3]
+; X64-NEXT:    insertps    $0, 12(%{{...}},%{{...}}), {{.*#+}} xmm0 = mem[0],xmm0[1,2,3]
 ; X64-NEXT:    retq
   %1 = getelementptr inbounds <4 x float>, <4 x float>* %pb, i64 %index
   %2 = load <4 x float>, <4 x float>* %1, align 16
@@ -968,12 +968,12 @@ define <4 x float> @pr20087(<4 x float> %a, <4 x float> *%ptr) {
 ; X32-LABEL: pr20087:
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm0[2],mem[2]
+; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm0[2],mem[0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pr20087:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm0[2],mem[2]
+; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],zero,xmm0[2],mem[0]
 ; X64-NEXT:    retq
   %load = load <4 x float> , <4 x float> *%ptr
   %ret = shufflevector <4 x float> %load, <4 x float> %a, <4 x i32> <i32 4, i32 undef, i32 6, i32 2>

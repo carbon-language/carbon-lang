@@ -512,6 +512,14 @@ private:
                                               MachineBasicBlock::iterator &MBBI,
                                               LiveVariables *LV) const;
 
+  /// Handles memory folding for special case instructions, for instance those
+  /// requiring custom manipulation of the address.
+  MachineInstr *foldMemoryOperandCustom(MachineFunction &MF, MachineInstr *MI,
+                                        unsigned OpNum,
+                                        ArrayRef<MachineOperand> MOs,
+                                        MachineBasicBlock::iterator InsertPt,
+                                        unsigned Size, unsigned Align) const;
+
   /// isFrameOperand - Return true and the FrameIndex if the specified
   /// operand and follow operands form a reference to the stack frame.
   bool isFrameOperand(const MachineInstr *MI, unsigned int Op,

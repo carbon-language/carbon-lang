@@ -4876,12 +4876,35 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   return false;
 }
 
-static void addOperands(MachineInstrBuilder &MIB, ArrayRef<MachineOperand> MOs) {
+static void addOperands(MachineInstrBuilder &MIB, ArrayRef<MachineOperand> MOs,
+                        int PtrOffset = 0) {
   unsigned NumAddrOps = MOs.size();
-  for (unsigned i = 0; i != NumAddrOps; ++i)
-    MIB.addOperand(MOs[i]);
-  if (NumAddrOps < 4) // FrameIndex only
-    addOffset(MIB, 0);
+
+  if (NumAddrOps < 4) {
+    // FrameIndex only - add an immediate offset (whether its zero or not).
+    for (unsigned i = 0; i != NumAddrOps; ++i)
+      MIB.addOperand(MOs[i]);
+    addOffset(MIB, PtrOffset);
+  } else {
+    // General Memory Addressing - we need to add any offset to an existing
+    // offset.
+    assert(MOs.size() == 5 && "Unexpected memory operand list length");
+    for (unsigned i = 0; i != NumAddrOps; ++i) {
+      const MachineOperand &MO = MOs[i];
+      if (i == 3 && PtrOffset != 0) {
+        assert((MO.isImm() || MO.isGlobal()) &&
+               "Unexpected memory operand type");
+        if (MO.isImm()) {
+          MIB.addImm(MO.getImm() + PtrOffset);
+        } else {
+          MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset() + PtrOffset,
+                               MO.getTargetFlags());
+        }
+      } else {
+        MIB.addOperand(MO);
+      }
+    }
+  }
 }
 
 static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
@@ -4916,7 +4939,8 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
 static MachineInstr *FuseInst(MachineFunction &MF, unsigned Opcode,
                               unsigned OpNo, ArrayRef<MachineOperand> MOs,
                               MachineBasicBlock::iterator InsertPt,
-                              MachineInstr *MI, const TargetInstrInfo &TII) {
+                              MachineInstr *MI, const TargetInstrInfo &TII,
+                              int PtrOffset = 0) {
   // Omit the implicit operands, something BuildMI can't do.
   MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode),
                                               MI->getDebugLoc(), true);
@@ -4926,7 +4950,7 @@ static MachineInstr *FuseInst(MachineFunction &MF, unsigned Opcode,
     MachineOperand &MO = MI->getOperand(i);
     if (i == OpNo) {
       assert(MO.isReg() && "Expected to fold into reg operand!");
-      addOperands(MIB, MOs);
+      addOperands(MIB, MOs, PtrOffset);
     } else {
       MIB.addOperand(MO);
     }
@@ -4946,6 +4970,40 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
                                     MI->getDebugLoc(), TII.get(Opcode));
   addOperands(MIB, MOs);
   return MIB.addImm(0);
+}
+
+MachineInstr *X86InstrInfo::foldMemoryOperandCustom(
+    MachineFunction &MF, MachineInstr *MI, unsigned OpNum,
+    ArrayRef<MachineOperand> MOs, MachineBasicBlock::iterator InsertPt,
+    unsigned Size, unsigned Align) const {
+  switch (MI->getOpcode()) {
+  case X86::INSERTPSrr:
+  case X86::VINSERTPSrr:
+    // Attempt to convert the load of inserted vector into a fold load
+    // of a single float.
+    if (OpNum == 2) {
+      unsigned Imm = MI->getOperand(MI->getNumOperands() - 1).getImm();
+      unsigned ZMask = Imm & 15;
+      unsigned DstIdx = (Imm >> 4) & 3;
+      unsigned SrcIdx = (Imm >> 6) & 3;
+
+      unsigned RCSize = getRegClass(MI->getDesc(), OpNum, &RI, MF)->getSize();
+      if (Size <= RCSize && 4 <= Align) {
+        int PtrOffset = SrcIdx * 4;
+        unsigned NewImm = (DstIdx << 4) | ZMask;
+        unsigned NewOpCode =
+            (MI->getOpcode() == X86::VINSERTPSrr ? X86::VINSERTPSrm
+                                                 : X86::INSERTPSrm);
+        MachineInstr *NewMI =
+            FuseInst(MF, NewOpCode, OpNum, MOs, InsertPt, MI, *this, PtrOffset);
+        NewMI->getOperand(NewMI->getNumOperands() - 1).setImm(NewImm);
+        return NewMI;
+      }
+    }
+    break;
+  };
+
+  return nullptr;
 }
 
 MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
@@ -4977,6 +5035,12 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
     return nullptr;
 
   MachineInstr *NewMI = nullptr;
+
+  // Attempt to fold any custom cases we have.
+  if (NewMI =
+          foldMemoryOperandCustom(MF, MI, OpNum, MOs, InsertPt, Size, Align))
+    return NewMI;
+
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.

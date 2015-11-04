@@ -32,7 +32,7 @@ define <4 x float> @insertps_from_vector_load(<4 x float> %a, <4 x float>* nocap
 ; On X32, account for the argument's move to registers
 ; X32: movl    4(%esp), %eax
 ; CHECK-NOT: mov
-; CHECK: insertps    $48
+; CHECK: vinsertps    $48, (%{{...}}), {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
 ; CHECK-NEXT: ret
   %1 = load <4 x float>, <4 x float>* %pb, align 16
   %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 48)
@@ -46,7 +46,7 @@ define <4 x float> @insertps_from_vector_load_offset(<4 x float> %a, <4 x float>
 ; X32: movl    4(%esp), %eax
 ; CHECK-NOT: mov
 ;; Try to match a bit more of the instr, since we need the load's offset.
-; CHECK: insertps    $96, 4(%{{...}}), %
+; CHECK: vinsertps    $32, 4(%{{...}}), {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
 ; CHECK-NEXT: ret
   %1 = load <4 x float>, <4 x float>* %pb, align 16
   %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 96)
@@ -60,7 +60,7 @@ define <4 x float> @insertps_from_vector_load_offset_2(<4 x float> %a, <4 x floa
 ; X32: movl    8(%esp), %ecx
 ; CHECK-NOT: mov
 ;; Try to match a bit more of the instr, since we need the load's offset.
-; CHECK: vinsertps    $192, 12(%{{...}},%{{...}}), %
+; CHECK: vinsertps    $0, 12(%{{...}},%{{...}}), {{.*#+}} xmm0 = mem[0],xmm0[1,2,3]
 ; CHECK-NEXT: ret
   %1 = getelementptr inbounds <4 x float>, <4 x float>* %pb, i64 %index
   %2 = load <4 x float>, <4 x float>* %1, align 16

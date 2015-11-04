@@ -946,7 +946,15 @@ define <8 x float> @stack_fold_insertf128(<4 x float> %a0, <4 x float> %a1) {
   ret <8 x float> %2
 }
 
-; TODO stack_fold_insertps
+define <4 x float> @stack_fold_insertps(<4 x float> %a0, <4 x float> %a1) {
+  ;CHECK-LABEL: stack_fold_insertps
+  ;CHECK:       vinsertps $17, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  ;CHECK-NEXT:                                                                              {{.*#+}} xmm0 = zero,mem[0],xmm0[2,3]
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a0, <4 x float> %a1, i8 209)
+  ret <4 x float> %2
+}
+declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i8) nounwind readnone
 
 define <2 x double> @stack_fold_maxpd(<2 x double> %a0, <2 x double> %a1) {
   ;CHECK-LABEL: stack_fold_maxpd
