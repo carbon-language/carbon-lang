@@ -49,7 +49,7 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "num-per-line" ,'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeNumberPerLine ,"The number of items per line to display."},
     { LLDB_OPT_SET_2, false, "binary"       ,'b', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone          ,"If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
     { LLDB_OPT_SET_3, true , "type"         ,'t', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."},
-    { LLDB_OPT_SET_3, false , "offset"      ,'o', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeCount         ,"How many elements of the specified type to skip before starting to display data."},
+    { LLDB_OPT_SET_3, false , "offset"      ,'E', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeCount         ,"How many elements of the specified type to skip before starting to display data."},
     { LLDB_OPT_SET_1|
       LLDB_OPT_SET_2|
       LLDB_OPT_SET_3, false, "force"        ,'r', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone          ,"Necessary if reading over target.max-memory-read-size bytes."},
