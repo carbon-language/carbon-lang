@@ -64,9 +64,6 @@ public:
     lldb::SectionSP
     FindSectionContainingFileAddress (lldb::addr_t addr, uint32_t depth = UINT32_MAX) const;
 
-    bool
-    GetSectionData (const DataExtractor& module_data, DataExtractor& section_data) const;
-
     // Get the number of sections in this list only
     size_t
     GetSize () const
@@ -287,6 +284,46 @@ public:
     {
         return m_obj_file;
     }
+
+    //------------------------------------------------------------------
+    /// Read the section data from the object file that the section
+    /// resides in.
+    ///
+    /// @param[in] dst
+    ///     Where to place the data
+    ///
+    /// @param[in] dst_len
+    ///     How many bytes of section data to read
+    ///
+    /// @param[in] offset
+    ///     The offset in bytes within this section's data at which to
+    ///     start copying data from.
+    ///
+    /// @return
+    ///     The number of bytes read from the section, or zero if the
+    ///     section has no data or \a offset is not a valid offset
+    ///     in this section.
+    //------------------------------------------------------------------
+    lldb::offset_t
+    GetSectionData (void *dst, lldb::offset_t dst_len, lldb::offset_t offset = 0);
+    
+    //------------------------------------------------------------------
+    /// Get the shared reference to the section data from the object
+    /// file that the section resides in. No copies of the data will be
+    /// make unless the object file has been read from memory. If the
+    /// object file is on disk, it will shared the mmap data for the
+    /// entire object file.
+    ///
+    /// @param[in] data
+    ///     Where to place the data, address byte size, and byte order
+    ///
+    /// @return
+    ///     The number of bytes read from the section, or zero if the
+    ///     section has no data or \a offset is not a valid offset
+    ///     in this section.
+    //------------------------------------------------------------------
+    lldb::offset_t
+    GetSectionData (DataExtractor& data) const;
 
     uint32_t GetLog2Align()
     {

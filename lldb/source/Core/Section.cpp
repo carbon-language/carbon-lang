@@ -319,6 +319,25 @@ Section::Slide (addr_t slide_amount, bool slide_children)
     return false;
 }
 
+lldb::offset_t
+Section::GetSectionData (void *dst, lldb::offset_t dst_len, lldb::offset_t offset)
+{
+    if (m_obj_file)
+        return m_obj_file->ReadSectionData (this,
+                                            offset,
+                                            dst,
+                                            dst_len);
+    return 0;
+}
+
+lldb::offset_t
+Section::GetSectionData (DataExtractor& section_data) const
+{
+    if (m_obj_file)
+        return m_obj_file->ReadSectionData (this, section_data);
+    return 0;
+}
+
 #pragma mark SectionList
 
 SectionList::SectionList () :
