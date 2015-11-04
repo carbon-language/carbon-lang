@@ -76,10 +76,6 @@ class CDebugFnVerbose:
 	def __init__( self, vstrFnName ):
 		self.__indent_out( vstrFnName );
 		
-	# Class destructor 
-	def __del__( self ):
-		self.__indent_back();
-		
 	#++------------------------------------------------------------------------
 	# Details:	Build an indentation string of dots based on the __nLevel.
 	# Type:		Method.
