@@ -1255,13 +1255,14 @@ CopyStringDataToBufferSP(const StreamString& source,
     return true;
 }
 
-size_t
+std::pair<size_t,bool>
 ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
                                 Error& error,
                                 uint32_t max_length,
                                 bool honor_array,
                                 Format item_format)
 {
+    bool was_capped = false;
     StreamString s;
     ExecutionContext exe_ctx (GetExecutionContextRef());
     Target* target = exe_ctx.GetTargetPtr();
@@ -1271,7 +1272,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
         s << "<no target to read from>";
         error.SetErrorString("no target to read from");
         CopyStringDataToBufferSP(s, buffer_sp);
-        return 0;
+        return {0,was_capped};
     }
     
     if (max_length == 0)
@@ -1317,7 +1318,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
             s << "<invalid address>";
             error.SetErrorString("invalid address");
             CopyStringDataToBufferSP(s, buffer_sp);
-            return 0;
+            return {0,was_capped};
         }
         
         Address cstr_so_addr (cstr_address);
@@ -1334,7 +1335,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
                 for (size_t offset = 0; offset < bytes_read; offset++)
                     s.Printf("%c", *data.PeekData(offset, 1));
                 if (capped_data)
-                    s << "...";
+                    was_capped = true;
             }
         }
         else
@@ -1386,7 +1387,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
             if (cstr_len_displayed >= 0)
             {
                 if (capped_cstr)
-                    s << "...";
+                    was_capped = true;
             }
         }
     }
@@ -1396,7 +1397,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
         s << "<not a string object>";
     }
     CopyStringDataToBufferSP(s, buffer_sp);
-    return total_bytes_read;
+    return {total_bytes_read,was_capped};
 }
 
 std::pair<TypeValidatorResult, std::string>
@@ -1644,17 +1645,18 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
             {
                 Error error;
                 lldb::DataBufferSP buffer_sp;
-                ReadPointedString(buffer_sp,
-                                  error,
-                                  0,
-                                  (custom_format == eFormatVectorOfChar) ||
-                                  (custom_format == eFormatCharArray));
+                std::pair<size_t, bool> read_string = ReadPointedString(buffer_sp,
+                                                                        error,
+                                                                        0,
+                                                                        (custom_format == eFormatVectorOfChar) ||
+                                                                        (custom_format == eFormatCharArray));
                 lldb_private::formatters::StringPrinter::ReadBufferAndDumpToStreamOptions options(*this);
                 options.SetData(DataExtractor(buffer_sp, lldb::eByteOrderInvalid, 8)); // none of this matters for a string - pass some defaults
                 options.SetStream(&s);
                 options.SetPrefixToken(0);
                 options.SetQuote('"');
                 options.SetSourceSize(buffer_sp->GetByteSize());
+                options.SetIsTruncated(read_string.second);
                 formatters::StringPrinter::ReadBufferAndDumpToStream<lldb_private::formatters::StringPrinter::StringElementType::ASCII>(options);
                 return !error.Fail();
             }

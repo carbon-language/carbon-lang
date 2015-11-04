@@ -840,7 +840,7 @@ public:
     bool
     IsCStringContainer (bool check_pointer = false);
     
-    size_t
+    std::pair<size_t,bool>
     ReadPointedString (lldb::DataBufferSP& buffer_sp,
                        Error& error,
                        uint32_t max_length = 0,

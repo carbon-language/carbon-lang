@@ -374,6 +374,8 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
         stream.Printf("%c",dump_options.GetQuote());
     if (dump_options.GetSuffixToken() != 0)
         stream.Printf("%s",dump_options.GetSuffixToken());
+    if (dump_options.GetIsTruncated())
+        stream.Printf("...");
     return true;
 }
 
@@ -421,11 +423,20 @@ StringPrinter::ReadStringAndDumpToStream<StringPrinter::StringElementType::ASCII
         return false;
 
     size_t size;
+    const auto max_size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+    bool is_truncated = false;
 
     if (options.GetSourceSize() == 0)
-        size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+        size = max_size;
     else if (!options.GetIgnoreMaxLength())
-        size = std::min(options.GetSourceSize(),process_sp->GetTarget().GetMaximumSizeOfStringSummary());
+    {
+        size = options.GetSourceSize();
+        if (size > max_size)
+        {
+            size = max_size;
+            is_truncated = true;
+        }
+    }
     else
         size = options.GetSourceSize();
 
@@ -492,6 +503,9 @@ StringPrinter::ReadStringAndDumpToStream<StringPrinter::StringElementType::ASCII
     else if (quote != 0)
         options.GetStream()->Printf("%c",quote);
 
+    if (is_truncated)
+        options.GetStream()->Printf("...");
+    
     return true;
 }
 
@@ -527,14 +541,23 @@ ReadUTFBufferAndDumpToStream (const StringPrinter::ReadStringAndDumpToStreamOpti
 
     uint32_t sourceSize = options.GetSourceSize();
     bool needs_zero_terminator = options.GetNeedsZeroTermination();
+    
+    bool is_truncated = false;
+    const auto max_size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
 
     if (!sourceSize)
     {
-        sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+        sourceSize = max_size;
         needs_zero_terminator = true;
     }
     else if (!options.GetIgnoreMaxLength())
-        sourceSize = std::min(sourceSize,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
+    {
+        if (sourceSize > max_size)
+        {
+            sourceSize = max_size;
+            is_truncated = true;
+        }
+    }
 
     const int bufferSPSize = sourceSize * type_width;
 
@@ -562,6 +585,7 @@ ReadUTFBufferAndDumpToStream (const StringPrinter::ReadStringAndDumpToStreamOpti
     StringPrinter::ReadBufferAndDumpToStreamOptions dump_options(options);
     dump_options.SetData(data);
     dump_options.SetSourceSize(sourceSize);
+    dump_options.SetIsTruncated(is_truncated);
 
     return DumpUTFBufferToStream(ConvertFunction, dump_options);
 }

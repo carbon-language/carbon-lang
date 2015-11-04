@@ -1960,7 +1960,7 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                                     if (error_str_sp->IsCStringContainer(true))
                                     {
                                         DataBufferSP buffer_sp(new DataBufferHeap(10240,0));
-                                        size_t num_chars = error_str_sp->ReadPointedString (buffer_sp, error, 10240);
+                                        size_t num_chars = error_str_sp->ReadPointedString (buffer_sp, error, 10240).first;
                                         if (error.Success() && num_chars > 0)
                                         {
                                             error.Clear();

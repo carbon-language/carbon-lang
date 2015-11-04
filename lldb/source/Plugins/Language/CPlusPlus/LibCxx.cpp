@@ -563,14 +563,23 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
         return false;
     
     DataExtractor extractor;
+    
+    StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
+    
     if (summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryCapped)
-        size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
+    {
+        const auto max_size = valobj.GetTargetSP()->GetMaximumSizeOfStringSummary();
+        if (size > max_size)
+        {
+            size = max_size;
+            options.SetIsTruncated(true);
+        }
+    }
     location_sp->GetPointeeData(extractor, 0, size);
     
     // std::wstring::size() is measured in 'characters', not bytes
     auto wchar_t_size = valobj.GetTargetSP()->GetScratchClangASTContext()->GetBasicType(lldb::eBasicTypeWChar).GetByteSize(nullptr);
     
-    StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(extractor);
     options.SetStream(&stream);
     options.SetPrefixToken("L");
@@ -618,12 +627,20 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
     if (!location_sp)
         return false;
     
+    StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
+    
     DataExtractor extractor;
     if (summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryCapped)
-        size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
+    {
+        const auto max_size = valobj.GetTargetSP()->GetMaximumSizeOfStringSummary();
+        if (size > max_size)
+        {
+            size = max_size;
+            options.SetIsTruncated(true);
+        }
+    }
     location_sp->GetPointeeData(extractor, 0, size);
     
-    StringPrinter::ReadBufferAndDumpToStreamOptions options(valobj);
     options.SetData(extractor);
     options.SetStream(&stream);
     options.SetPrefixToken(0);

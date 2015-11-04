@@ -260,6 +260,7 @@ namespace lldb_private {
                 m_source_size(0),
                 m_escape_non_printables(true),
                 m_zero_is_terminator(true),
+                m_is_truncated(false),
                 m_language_type(lldb::eLanguageTypeUnknown)
                 {
                 }
@@ -387,6 +388,19 @@ namespace lldb_private {
                 }
                 
                 ReadBufferAndDumpToStreamOptions&
+                SetIsTruncated (bool t)
+                {
+                    m_is_truncated = t;
+                    return *this;
+                }
+                
+                bool
+                GetIsTruncated () const
+                {
+                    return m_is_truncated;
+                }
+                
+                ReadBufferAndDumpToStreamOptions&
                 SetLanguage (lldb::LanguageType l)
                 {
                     m_language_type = l;
@@ -409,6 +423,7 @@ namespace lldb_private {
                 uint32_t m_source_size;
                 bool m_escape_non_printables;
                 bool m_zero_is_terminator;
+                bool m_is_truncated;
                 lldb::LanguageType m_language_type;
             };
 
