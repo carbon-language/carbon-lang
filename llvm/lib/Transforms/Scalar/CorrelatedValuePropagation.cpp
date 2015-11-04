@@ -33,6 +33,7 @@ STATISTIC(NumPhis,      "Number of phis propagated");
 STATISTIC(NumSelects,   "Number of selects propagated");
 STATISTIC(NumMemAccess, "Number of memory access targets propagated");
 STATISTIC(NumCmps,      "Number of comparisons propagated");
+STATISTIC(NumReturns,   "Number of return values propagated");
 STATISTIC(NumDeadCases, "Number of switch cases removed");
 
 namespace {
@@ -45,6 +46,10 @@ namespace {
     bool processCmp(CmpInst *C);
     bool processSwitch(SwitchInst *SI);
     bool processCallSite(CallSite CS);
+
+    /// Return a constant value for V usable at At and everything it
+    /// dominates.  If no such Constant can be found, return nullptr.
+    Constant *getConstantAt(Value *V, Instruction *At);
 
   public:
     static char ID;
@@ -190,6 +195,15 @@ bool CorrelatedValuePropagation::processCmp(CmpInst *C) {
   Constant *Op1 = dyn_cast<Constant>(C->getOperand(1));
   if (!Op1) return false;
 
+  // As a policy choice, we choose not to waste compile time on anything where
+  // the comparison is testing local values.  While LVI can sometimes reason
+  // about such cases, it's not its primary purpose.  We do make sure to do
+  // the block local query for uses from terminator instructions, but that's
+  // handled in the code for each terminator.
+  auto *I = dyn_cast<Instruction>(Op0);
+  if (I && I->getParent() == C->getParent())
+    return false;
+
   LazyValueInfo::Tristate Result =
     LVI->getPredicateAt(C->getPredicate(), Op0, Op1, C);
   if (Result == LazyValueInfo::Unknown) return false;
@@ -316,6 +330,29 @@ bool CorrelatedValuePropagation::processCallSite(CallSite CS) {
   return Changed;
 }
 
+Constant *CorrelatedValuePropagation::getConstantAt(Value *V, Instruction *At) {
+  if (Constant *C = LVI->getConstant(V, At->getParent(), At))
+    return C;
+
+  // TODO: The following really should be sunk inside LVI's core algorithm, or
+  // at least the outer shims around such.
+  auto *C = dyn_cast<CmpInst>(V);
+  if (!C) return nullptr;
+
+  Value *Op0 = C->getOperand(0);
+  Constant *Op1 = dyn_cast<Constant>(C->getOperand(1));
+  if (!Op1) return nullptr;
+  
+  LazyValueInfo::Tristate Result =
+    LVI->getPredicateAt(C->getPredicate(), Op0, Op1, At);
+  if (Result == LazyValueInfo::Unknown)
+    return nullptr;
+  
+  return (Result == LazyValueInfo::True) ?
+    ConstantInt::getTrue(C->getContext()) :
+    ConstantInt::getFalse(C->getContext());
+}
+
 bool CorrelatedValuePropagation::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
@@ -355,7 +392,21 @@ bool CorrelatedValuePropagation::runOnFunction(Function &F) {
     case Instruction::Switch:
       BBChanged |= processSwitch(cast<SwitchInst>(Term));
       break;
+    case Instruction::Ret: {
+      auto *RI = cast<ReturnInst>(Term);
+      // Try to determine the return value if we can.  This is mainly here to
+      // simplify the writing of unit tests, but also helps to enable IPO by
+      // constant folding the return values of callees.
+      auto *RetVal = RI->getReturnValue();
+      if (!RetVal) break; // handle "ret void"
+      if (isa<Constant>(RetVal)) break; // nothing to do
+      if (auto *C = getConstantAt(RetVal, RI)) {
+        ++NumReturns;
+        RI->replaceUsesOfWith(RetVal, C);
+        BBChanged = true;        
+      }
     }
+    };
 
     FnChanged |= BBChanged;
   }

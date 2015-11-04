@@ -71,5 +71,5 @@ for.body:
 
 if.end:
   ret i32 %sel
-; CHECK: ret i32 %[[sel]]
+; CHECK: ret i32 1
 }
