@@ -1359,6 +1359,40 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
   return Ret;
 }
 
+Value *LibCallSimplifier::optimizeTan(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+  Value *Ret = nullptr;
+  if (UnsafeFPShrink && Callee->getName() == "tan" && TLI->has(LibFunc::tanf))
+    Ret = optimizeUnaryDoubleFP(CI, B, true);
+  FunctionType *FT = Callee->getFunctionType();
+
+  // Just make sure this has 1 argument of FP type, which matches the
+  // result type.
+  if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
+      !FT->getParamType(0)->isFloatingPointTy())
+    return Ret;
+
+  if (!canUseUnsafeFPMath(CI->getParent()->getParent()))
+    return Ret;
+  Value *Op1 = CI->getArgOperand(0);
+  auto *OpC = dyn_cast<CallInst>(Op1);
+  if (!OpC)
+    return Ret;
+
+  // tan(atan(x)) -> x
+  // tanf(atanf(x)) -> x
+  // tanl(atanl(x)) -> x
+  LibFunc::Func Func;
+  Function *F = OpC->getCalledFunction();
+  StringRef FuncName = F->getName();
+  if (TLI->getLibFunc(FuncName, Func) && TLI->has(Func) &&
+      ((Func == LibFunc::atan && Callee->getName() == "tan") ||
+       (Func == LibFunc::atanf && Callee->getName() == "tanf") ||
+       (Func == LibFunc::atanl && Callee->getName() == "tanl")))
+    Ret = OpC->getArgOperand(0);
+  return Ret;
+}
+
 static bool isTrigLibCall(CallInst *CI);
 static void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
                              bool UseFloat, Value *&Sin, Value *&Cos,
@@ -2146,6 +2180,10 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
       return optimizeFPuts(CI, Builder);
     case LibFunc::puts:
       return optimizePuts(CI, Builder);
+    case LibFunc::tan:
+    case LibFunc::tanf:
+    case LibFunc::tanl:
+      return optimizeTan(CI, Builder);
     case LibFunc::perror:
       return optimizeErrorReporting(CI, Builder);
     case LibFunc::vfprintf:
@@ -2180,7 +2218,6 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     case LibFunc::logb:
     case LibFunc::sin:
     case LibFunc::sinh:
-    case LibFunc::tan:
     case LibFunc::tanh:
       if (UnsafeFPShrink && hasFloatVersion(FuncName))
         return optimizeUnaryDoubleFP(CI, Builder, true);
