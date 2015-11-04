@@ -114,7 +114,7 @@ public:
                 m_force = true;
                 break;
                 
-            case 'o':
+            case 'E':
                 error = m_offset.SetValueFromString(option_arg);
                 break;
                 
