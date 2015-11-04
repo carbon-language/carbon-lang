@@ -89,7 +89,7 @@ TEST_F(MCJITTest, run_main) {
   EXPECT_TRUE(0 != ptr)
     << "Unable to get pointer to main() from JIT";
 
-  int (*FuncPtr)(void) = (int(*)(void))ptr;
+  int (*FuncPtr)() = (int(*)())ptr;
   int returnCode = FuncPtr();
   EXPECT_EQ(returnCode, rc);
 }
@@ -109,7 +109,7 @@ TEST_F(MCJITTest, return_global) {
   uint64_t rgvPtr = TheJIT->getFunctionAddress(ReturnGlobal->getName().str());
   EXPECT_TRUE(0 != rgvPtr);
 
-  int32_t(*FuncPtr)(void) = (int32_t(*)(void))rgvPtr;
+  int32_t(*FuncPtr)() = (int32_t(*)())rgvPtr;
   EXPECT_EQ(initialNum, FuncPtr())
     << "Invalid value for global returned from JITted function";
 }
@@ -181,7 +181,7 @@ TEST_F(MCJITTest, multiple_functions) {
   EXPECT_TRUE(0 != ptr)
     << "Unable to get pointer to outer function from JIT";
 
-  int32_t(*FuncPtr)(void) = (int32_t(*)(void))ptr;
+  int32_t(*FuncPtr)() = (int32_t(*)())ptr;
   EXPECT_EQ(innerRetVal, FuncPtr())
     << "Incorrect result returned from function";
 }

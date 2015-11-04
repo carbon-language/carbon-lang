@@ -1,4 +1,4 @@
-//===- MCJITMultipeModuleTest.cpp - Unit tests for the MCJIT-----*- C++ -*-===//
+//===- MCJITMultipeModuleTest.cpp - Unit tests for the MCJIT ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -228,13 +228,13 @@ TEST_F(MCJITMultipleModuleTest, two_module_global_variables_case) {
   uint64_t FBPtr = TheJIT->getFunctionAddress(FB->getName().str());
   TheJIT->finalizeObject();
   EXPECT_TRUE(0 != FBPtr);
-  int32_t(*FuncPtr)(void) = (int32_t(*)(void))FBPtr;
+  int32_t(*FuncPtr)() = (int32_t(*)())FBPtr;
   EXPECT_EQ(initialNum, FuncPtr())
     << "Invalid value for global returned from JITted function in module B";
 
   uint64_t FAPtr = TheJIT->getFunctionAddress(FA->getName().str());
   EXPECT_TRUE(0 != FAPtr);
-  FuncPtr = (int32_t(*)(void))FAPtr;
+  FuncPtr = (int32_t(*)())FAPtr;
   EXPECT_EQ(initialNum, FuncPtr())
     << "Invalid value for global returned from JITted function in module A";
 }

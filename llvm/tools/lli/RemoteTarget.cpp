@@ -1,4 +1,4 @@
-//===- RemoteTarget.cpp - LLVM Remote process JIT execution --------------===//
+//===- RemoteTarget.cpp - LLVM Remote process JIT execution -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -56,7 +56,7 @@ bool RemoteTarget::loadCode(uint64_t Address, const void *Data, size_t Size) {
 }
 
 bool RemoteTarget::executeCode(uint64_t Address, int &RetVal) {
-  int (*fn)(void) = (int(*)(void))Address;
+  int (*fn)() = (int(*)())Address;
   RetVal = fn();
   return true;
 }

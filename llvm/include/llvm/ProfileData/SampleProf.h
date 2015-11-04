@@ -11,6 +11,7 @@
 // sample profile data.
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef LLVM_PROFILEDATA_SAMPLEPROF_H_
 #define LLVM_PROFILEDATA_SAMPLEPROF_H_
 
@@ -245,7 +246,7 @@ public:
   findFunctionSamplesAt(const CallsiteLocation &Loc) const {
     auto iter = CallsiteSamples.find(Loc);
     if (iter == CallsiteSamples.end()) {
-      return NULL;
+      return nullptr;
     } else {
       return &iter->second;
     }
@@ -322,8 +323,8 @@ private:
   CallsiteSampleMap CallsiteSamples;
 };
 
-} // End namespace sampleprof
+} // end namespace sampleprof
 
-} // End namespace llvm
+} // end namespace llvm
 
 #endif // LLVM_PROFILEDATA_SAMPLEPROF_H_

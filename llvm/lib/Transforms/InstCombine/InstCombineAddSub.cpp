@@ -1,4 +1,4 @@
-//===- InstCombineAddSub.cpp ----------------------------------------------===//
+//===- InstCombineAddSub.cpp ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,6 +17,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/PatternMatch.h"
+
 using namespace llvm;
 using namespace PatternMatch;
 
@@ -67,17 +68,17 @@ namespace {
 
   private:
     bool insaneIntVal(int V) { return V > 4 || V < -4; }
-    APFloat *getFpValPtr(void)
+    APFloat *getFpValPtr()
       { return reinterpret_cast<APFloat*>(&FpValBuf.buffer[0]); }
-    const APFloat *getFpValPtr(void) const
+    const APFloat *getFpValPtr() const
       { return reinterpret_cast<const APFloat*>(&FpValBuf.buffer[0]); }
 
-    const APFloat &getFpVal(void) const {
+    const APFloat &getFpVal() const {
       assert(IsFp && BufHasFpVal && "Incorret state");
       return *getFpValPtr();
     }
 
-    APFloat &getFpVal(void) {
+    APFloat &getFpVal() {
       assert(IsFp && BufHasFpVal && "Incorret state");
       return *getFpValPtr();
     }
@@ -92,8 +93,8 @@ namespace {
     // TODO: We should get rid of this function when APFloat can be constructed
     //       from an *SIGNED* integer.
     APFloat createAPFloatFromInt(const fltSemantics &Sem, int Val);
-  private:
 
+  private:
     bool IsFp;
 
     // True iff FpValBuf contains an instance of APFloat.
@@ -114,10 +115,10 @@ namespace {
   ///
   class FAddend {
   public:
-    FAddend() { Val = nullptr; }
+    FAddend() : Val(nullptr) {}
 
-    Value *getSymVal (void) const { return Val; }
-    const FAddendCoef &getCoef(void) const { return Coeff; }
+    Value *getSymVal() const { return Val; }
+    const FAddendCoef &getCoef() const { return Coeff; }
 
     bool isConstant() const { return Val == nullptr; }
     bool isZero() const { return Coeff.isZero(); }
@@ -182,7 +183,6 @@ namespace {
     InstCombiner::BuilderTy *Builder;
     Instruction *Instr;
 
-  private:
      // Debugging stuff are clustered here.
     #ifndef NDEBUG
       unsigned CreateInstrNum;
@@ -193,7 +193,8 @@ namespace {
       void incCreateInstNum() {}
     #endif
   };
-}
+
+} // anonymous namespace
 
 //===----------------------------------------------------------------------===//
 //
@@ -602,7 +603,6 @@ Value *FAddCombine::simplify(Instruction *I) {
 }
 
 Value *FAddCombine::simplifyFAdd(AddendVect& Addends, unsigned InstrQuota) {
-
   unsigned AddendNum = Addends.size();
   assert(AddendNum <= 4 && "Too many addends");
 
@@ -1421,7 +1421,6 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   return Changed ? &I : nullptr;
 }
 
-
 /// Optimize pointer differences into the same array into a size.  Consider:
 ///  &A[10] - &A[0]: we should compile this to "10".  LHS/RHS are the pointer
 /// operands to the ptrtoint instructions for the LHS/RHS of the subtract.
@@ -1588,7 +1587,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       }
     }
   }
-
 
   {
     Value *Y;

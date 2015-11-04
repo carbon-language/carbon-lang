@@ -41,7 +41,7 @@ void DwarfAccelTable::AddName(DwarfStringPoolEntryRef Name, const DIE *die,
   DIEs.Values.push_back(new (Allocator) HashDataContents(die, Flags));
 }
 
-void DwarfAccelTable::ComputeBucketCount(void) {
+void DwarfAccelTable::ComputeBucketCount() {
   // First get the number of unique hashes.
   std::vector<uint32_t> uniques(Data.size());
   for (size_t i = 0, e = Data.size(); i < e; ++i)

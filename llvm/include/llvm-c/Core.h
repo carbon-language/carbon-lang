@@ -256,7 +256,6 @@ typedef enum {
   LLVMCleanupPad     = 65,
   LLVMCatchEndPad    = 66,
   LLVMCleanupEndPad  = 67
-
 } LLVMOpcode;
 
 typedef enum {
@@ -435,7 +434,6 @@ void LLVMInitializeCore(LLVMPassRegistryRef R);
     @see llvm::llvm_shutdown
     @see ManagedStatic */
 void LLVMShutdown(void);
-
 
 /*===-- Error handling ----------------------------------------------------===*/
 
@@ -816,6 +814,7 @@ LLVMTypeRef LLVMInt8TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMInt16TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMInt32TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMInt64TypeInContext(LLVMContextRef C);
+LLVMTypeRef LLVMInt128TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMIntTypeInContext(LLVMContextRef C, unsigned NumBits);
 
 /**
@@ -827,6 +826,7 @@ LLVMTypeRef LLVMInt8Type(void);
 LLVMTypeRef LLVMInt16Type(void);
 LLVMTypeRef LLVMInt32Type(void);
 LLVMTypeRef LLVMInt64Type(void);
+LLVMTypeRef LLVMInt128Type(void);
 LLVMTypeRef LLVMIntType(unsigned NumBits);
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
 
@@ -1030,7 +1030,6 @@ LLVMBool LLVMIsOpaqueStruct(LLVMTypeRef StructTy);
  * @}
  */
 
-
 /**
  * @defgroup LLVMCCoreTypeSequential Sequential Types
  *
@@ -1211,7 +1210,7 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(InsertElementInst)              \
       macro(InsertValueInst)                \
       macro(LandingPadInst)                 \
-      macro(CleanupPadInst)               \
+      macro(CleanupPadInst)                 \
       macro(PHINode)                        \
       macro(SelectInst)                     \
       macro(ShuffleVectorInst)              \
@@ -1226,9 +1225,9 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(ResumeInst)                   \
         macro(CleanupReturnInst)            \
         macro(CatchReturnInst)              \
-        macro(CatchPadInst)               \
-        macro(TerminatePadInst)           \
-        macro(CatchEndPadInst)            \
+        macro(CatchPadInst)                 \
+        macro(TerminatePadInst)             \
+        macro(CatchEndPadInst)              \
         macro(CleanupEndPadInst)            \
       macro(UnaryInstruction)               \
         macro(AllocaInst)                   \
@@ -3037,6 +3036,6 @@ LLVMBool LLVMIsMultithreaded(void);
 
 #ifdef __cplusplus
 }
-#endif /* !defined(__cplusplus) */
+#endif
 
-#endif /* !defined(LLVM_C_CORE_H) */
+#endif /* LLVM_C_CORE_H */

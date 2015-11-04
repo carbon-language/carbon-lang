@@ -1,4 +1,4 @@
-//===- lib/MC/MCAsmStreamer.cpp - Text Assembly Output --------------------===//
+//===- lib/MC/MCAsmStreamer.cpp - Text Assembly Output ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -33,6 +33,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Path.h"
 #include <cctype>
+
 using namespace llvm;
 
 namespace {
@@ -655,7 +656,6 @@ static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
   OS << '"';
 }
 
-
 void MCAsmStreamer::EmitBytes(StringRef Data) {
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
@@ -777,7 +777,6 @@ void MCAsmStreamer::EmitGPRel32Value(const MCExpr *Value) {
   EmitEOL();
 }
 
-
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
 void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
@@ -866,7 +865,6 @@ bool MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
   EmitEOL();
   return false;
 }
-
 
 void MCAsmStreamer::EmitFileDirective(StringRef Filename) {
   assert(MAI->hasSingleParameterDotFile());
@@ -1230,7 +1228,7 @@ void MCAsmStreamer::EmitWinCFIPushFrame(bool Code) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWinCFIEndProlog(void) {
+void MCAsmStreamer::EmitWinCFIEndProlog() {
   MCStreamer::EmitWinCFIEndProlog();
 
   OS << "\t.seh_endprologue";

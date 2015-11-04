@@ -1,4 +1,4 @@
-//===-- llvm-size.cpp - Print the size of each object section -------------===//
+//===-- llvm-size.cpp - Print the size of each object section ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <string>
 #include <system_error>
+
 using namespace llvm;
 using namespace object;
 
@@ -98,7 +99,7 @@ static size_t getNumLengthAsString(uint64_t num) {
 }
 
 /// @brief Return the printing format for the Radix.
-static const char *getRadixFmt(void) {
+static const char *getRadixFmt() {
   switch (Radix) {
   case octal:
     return PRIo64;

@@ -23,7 +23,6 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(TargetMachine, LLVMTargetMachineRef)
 
 class OrcCAPIExecutionTest : public testing::Test, public OrcExecutionTest {
 protected:
-
   std::unique_ptr<Module> createTestModule(const Triple &TT) {
     ModuleBuilder MB(getGlobalContext(), TT.str(), "");
     Function *TestFunc = MB.createFunctionDecl<int()>("testFunc");
@@ -37,9 +36,9 @@ protected:
     return MB.takeModule();
   }
 
-  typedef int (*MainFnTy)(void);
+  typedef int (*MainFnTy)();
 
-  static int myTestFuncImpl(void) {
+  static int myTestFuncImpl() {
     return 42;
   }
 
@@ -66,16 +65,15 @@ protected:
     auto *ET = CCtx->APIExecTest;
     CCtx->M = ET->createTestModule(ET->TM->getTargetTriple());
     CCtx->H = LLVMOrcAddEagerlyCompiledIR(JITStack, wrap(CCtx->M.get()),
-                                          myResolver, 0);
+                                          myResolver, nullptr);
     CCtx->Compiled = true;
     LLVMOrcTargetAddress MainAddr = LLVMOrcGetSymbolAddress(JITStack, "main");
     LLVMOrcSetIndirectStubPointer(JITStack, "foo", MainAddr);
     return MainAddr;
   }
-
 };
 
-char *OrcCAPIExecutionTest::testFuncName = 0;
+char *OrcCAPIExecutionTest::testFuncName = nullptr;
 
 TEST_F(OrcCAPIExecutionTest, TestEagerIRCompilation) {
   if (!TM)
@@ -89,7 +87,7 @@ TEST_F(OrcCAPIExecutionTest, TestEagerIRCompilation) {
   LLVMOrcGetMangledSymbol(JIT, &testFuncName, "testFunc");
 
   LLVMOrcModuleHandle H =
-    LLVMOrcAddEagerlyCompiledIR(JIT, wrap(M.get()), myResolver, 0);
+    LLVMOrcAddEagerlyCompiledIR(JIT, wrap(M.get()), myResolver, nullptr);
   MainFnTy MainFn = (MainFnTy)LLVMOrcGetSymbolAddress(JIT, "main");
   int Result = MainFn();
   EXPECT_EQ(Result, 42)
@@ -113,7 +111,7 @@ TEST_F(OrcCAPIExecutionTest, TestLazyIRCompilation) {
   LLVMOrcGetMangledSymbol(JIT, &testFuncName, "testFunc");
 
   LLVMOrcModuleHandle H =
-    LLVMOrcAddLazilyCompiledIR(JIT, wrap(M.get()), myResolver, 0);
+    LLVMOrcAddLazilyCompiledIR(JIT, wrap(M.get()), myResolver, nullptr);
   MainFnTy MainFn = (MainFnTy)LLVMOrcGetSymbolAddress(JIT, "main");
   int Result = MainFn();
   EXPECT_EQ(Result, 42)
@@ -158,4 +156,4 @@ TEST_F(OrcCAPIExecutionTest, TestDirectCallbacksAPI) {
   LLVMOrcDisposeInstance(JIT);
 }
 
-}
+} // namespace llvm

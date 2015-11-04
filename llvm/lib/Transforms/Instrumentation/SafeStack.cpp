@@ -261,7 +261,7 @@ Value *SafeStack::getOrCreateUnsafeStackPtr(IRBuilder<> &IRB, Function &F) {
     // We use the initial-exec TLS model because we do not support the
     // variable living anywhere other than in the main executable.
     UnsafeStackPtr = new GlobalVariable(
-        M, StackPtrTy, false, GlobalValue::ExternalLinkage, 0,
+        M, StackPtrTy, false, GlobalValue::ExternalLinkage, nullptr,
         UnsafeStackPtrVar, nullptr, GlobalValue::InitialExecTLSModel);
   } else {
     // The variable exists, check its type and attributes.

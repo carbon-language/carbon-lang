@@ -1,4 +1,4 @@
-//===- unittest/ProfileData/InstrProfTest.cpp -------------------------------=//
+//===- unittest/ProfileData/InstrProfTest.cpp -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -132,14 +132,14 @@ TEST_F(InstrProfTest, get_icall_data_read_write) {
   InstrProfValueData VD0[] = {{(uint64_t) "callee1", 1},
                               {(uint64_t) "callee2", 2},
                               {(uint64_t) "callee3", 3}};
-  Record1.addValueData(IPVK_IndirectCallTarget, 0, VD0, 3, 0);
+  Record1.addValueData(IPVK_IndirectCallTarget, 0, VD0, 3, nullptr);
   // No valeu profile data at the second site.
-  Record1.addValueData(IPVK_IndirectCallTarget, 1, 0, 0, 0);
+  Record1.addValueData(IPVK_IndirectCallTarget, 1, nullptr, 0, nullptr);
   InstrProfValueData VD2[] = {{(uint64_t) "callee1", 1},
                               {(uint64_t) "callee2", 2}};
-  Record1.addValueData(IPVK_IndirectCallTarget, 2, VD2, 2, 0);
+  Record1.addValueData(IPVK_IndirectCallTarget, 2, VD2, 2, nullptr);
   InstrProfValueData VD3[] = {{(uint64_t) "callee1", 1}};
-  Record1.addValueData(IPVK_IndirectCallTarget, 3, VD3, 1, 0);
+  Record1.addValueData(IPVK_IndirectCallTarget, 3, VD3, 1, nullptr);
 
   Writer.addRecord(std::move(Record1));
   Writer.addRecord(std::move(Record2));
@@ -183,44 +183,44 @@ TEST_F(InstrProfTest, get_icall_data_merge1) {
                               {(uint64_t) "callee2", 2},
                               {(uint64_t) "callee3", 3},
                               {(uint64_t) "callee4", 4}};
-  Record11.addValueData(IPVK_IndirectCallTarget, 0, VD0, 4, 0);
+  Record11.addValueData(IPVK_IndirectCallTarget, 0, VD0, 4, nullptr);
 
   // No valeu profile data at the second site.
-  Record11.addValueData(IPVK_IndirectCallTarget, 1, 0, 0, 0);
+  Record11.addValueData(IPVK_IndirectCallTarget, 1, nullptr, 0, nullptr);
 
   InstrProfValueData VD2[] = {{(uint64_t) "callee1", 1},
                               {(uint64_t) "callee2", 2},
                               {(uint64_t) "callee3", 3}};
-  Record11.addValueData(IPVK_IndirectCallTarget, 2, VD2, 3, 0);
+  Record11.addValueData(IPVK_IndirectCallTarget, 2, VD2, 3, nullptr);
 
   InstrProfValueData VD3[] = {{(uint64_t) "callee1", 1}};
-  Record11.addValueData(IPVK_IndirectCallTarget, 3, VD3, 1, 0);
+  Record11.addValueData(IPVK_IndirectCallTarget, 3, VD3, 1, nullptr);
 
   InstrProfValueData VD4[] = {{(uint64_t) "callee1", 1},
                               {(uint64_t) "callee2", 2},
                               {(uint64_t) "callee3", 3}};
-  Record11.addValueData(IPVK_IndirectCallTarget, 4, VD4, 3, 0);
+  Record11.addValueData(IPVK_IndirectCallTarget, 4, VD4, 3, nullptr);
 
   // A differnt record for the same caller.
   Record12.reserveSites(IPVK_IndirectCallTarget, 5);
   InstrProfValueData VD02[] = {{(uint64_t) "callee2", 5},
                                {(uint64_t) "callee3", 3}};
-  Record12.addValueData(IPVK_IndirectCallTarget, 0, VD02, 2, 0);
+  Record12.addValueData(IPVK_IndirectCallTarget, 0, VD02, 2, nullptr);
 
   // No valeu profile data at the second site.
-  Record12.addValueData(IPVK_IndirectCallTarget, 1, 0, 0, 0);
+  Record12.addValueData(IPVK_IndirectCallTarget, 1, nullptr, 0, nullptr);
 
   InstrProfValueData VD22[] = {{(uint64_t) "callee2", 1},
                                {(uint64_t) "callee3", 3},
                                {(uint64_t) "callee4", 4}};
-  Record12.addValueData(IPVK_IndirectCallTarget, 2, VD22, 3, 0);
+  Record12.addValueData(IPVK_IndirectCallTarget, 2, VD22, 3, nullptr);
 
-  Record12.addValueData(IPVK_IndirectCallTarget, 3, 0, 0, 0);
+  Record12.addValueData(IPVK_IndirectCallTarget, 3, nullptr, 0, nullptr);
 
   InstrProfValueData VD42[] = {{(uint64_t) "callee1", 1},
                                {(uint64_t) "callee2", 2},
                                {(uint64_t) "callee3", 3}};
-  Record12.addValueData(IPVK_IndirectCallTarget, 4, VD42, 3, 0);
+  Record12.addValueData(IPVK_IndirectCallTarget, 4, VD42, 3, nullptr);
 
   Writer.addRecord(std::move(Record11));
   // Merge profile data.
