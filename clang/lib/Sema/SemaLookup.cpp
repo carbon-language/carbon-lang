@@ -463,8 +463,11 @@ void LookupResult::resolveKind() {
   llvm::SmallDenseMap<QualType, unsigned, 16> UniqueTypes;
 
   bool Ambiguous = false;
-  bool HasTag = false, HasFunction = false, HasNonFunction = false;
+  bool HasTag = false, HasFunction = false;
   bool HasFunctionTemplate = false, HasUnresolved = false;
+  NamedDecl *HasNonFunction = nullptr;
+
+  llvm::SmallVector<NamedDecl*, 4> EquivalentNonFunctions;
 
   unsigned UniqueTagIndex = 0;
 
@@ -533,9 +536,21 @@ void LookupResult::resolveKind() {
     } else if (isa<FunctionDecl>(D)) {
       HasFunction = true;
     } else {
-      if (HasNonFunction)
+      if (HasNonFunction) {
+        // If we're about to create an ambiguity between two declarations that
+        // are equivalent, but one is an internal linkage declaration from one
+        // module and the other is an internal linkage declaration from another
+        // module, just skip it.
+        if (getSema().isEquivalentInternalLinkageDeclaration(HasNonFunction,
+                                                             D)) {
+          EquivalentNonFunctions.push_back(D);
+          Decls[I] = Decls[--N];
+          continue;
+        }
+
         Ambiguous = true;
-      HasNonFunction = true;
+      }
+      HasNonFunction = D;
     }
     I++;
   }
@@ -557,6 +572,12 @@ void LookupResult::resolveKind() {
     else
       Ambiguous = true;
   }
+
+  // FIXME: This diagnostic should really be delayed until we're done with
+  // the lookup result, in case the ambiguity is resolved by the caller.
+  if (!EquivalentNonFunctions.empty() && !Ambiguous)
+    getSema().diagnoseEquivalentInternalLinkageDeclarations(
+        getNameLoc(), HasNonFunction, EquivalentNonFunctions);
 
   Decls.set_size(N);
 

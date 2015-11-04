@@ -8575,22 +8575,38 @@ bool clang::isBetterOverloadCandidate(Sema &S, const OverloadCandidate &Cand1,
   return false;
 }
 
-/// Determine whether two function declarations are "equivalent" for overload
-/// resolution purposes. This applies when the same internal linkage function
-/// is defined by two modules (textually including the same header). In such
-/// a case, we don't consider the declarations to declare the same entity, but
-/// we also don't want lookups with both declarations visible to be ambiguous
-/// in some cases (this happens when using a modularized libstdc++).
-static bool isEquivalentCompatibleOverload(Sema &S,
-                                           const OverloadCandidate &Best,
-                                           const OverloadCandidate &Cand) {
-  return Best.Function && Cand.Function &&
-         Best.Function->getDeclContext()->getRedeclContext()->Equals(
-             Cand.Function->getDeclContext()->getRedeclContext()) &&
-         S.getOwningModule(Best.Function) != S.getOwningModule(Cand.Function) &&
-         !Best.Function->isExternallyVisible() &&
-         !Cand.Function->isExternallyVisible() &&
-         !S.IsOverload(Best.Function, Cand.Function, /*UsingDecl*/false);
+/// Determine whether two declarations are "equivalent" for the purposes of
+/// name lookup and overload resolution. This applies when the same internal
+/// linkage variable or function is defined by two modules (textually including
+/// the same header). In such a case, we don't consider the declarations to
+/// declare the same entity, but we also don't want lookups with both
+/// declarations visible to be ambiguous in some cases (this happens when using
+/// a modularized libstdc++).
+bool Sema::isEquivalentInternalLinkageDeclaration(const NamedDecl *A,
+                                                  const NamedDecl *B) {
+  return A && B && isa<ValueDecl>(A) && isa<ValueDecl>(B) &&
+         A->getDeclContext()->getRedeclContext()->Equals(
+             B->getDeclContext()->getRedeclContext()) &&
+         getOwningModule(const_cast<NamedDecl *>(A)) !=
+             getOwningModule(const_cast<NamedDecl *>(B)) &&
+         !A->isExternallyVisible() && !B->isExternallyVisible() &&
+         Context.hasSameType(cast<ValueDecl>(A)->getType(),
+                             cast<ValueDecl>(B)->getType());
+}
+
+void Sema::diagnoseEquivalentInternalLinkageDeclarations(
+    SourceLocation Loc, const NamedDecl *D, ArrayRef<const NamedDecl *> Equiv) {
+  Diag(Loc, diag::ext_equivalent_internal_linkage_decl_in_modules) << D;
+
+  Module *M = getOwningModule(const_cast<NamedDecl*>(D));
+  Diag(D->getLocation(), diag::note_equivalent_internal_linkage_decl)
+      << !M << (M ? M->getFullModuleName() : "");
+
+  for (auto *E : Equiv) {
+    Module *M = getOwningModule(const_cast<NamedDecl*>(E));
+    Diag(E->getLocation(), diag::note_equivalent_internal_linkage_decl)
+        << !M << (M ? M->getFullModuleName() : "");
+  }
 }
 
 static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
@@ -8623,7 +8639,7 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
   if (Best == end())
     return OR_No_Viable_Function;
 
-  llvm::SmallVector<const OverloadCandidate *, 4> EquivalentCands;
+  llvm::SmallVector<const NamedDecl *, 4> EquivalentCands;
 
   // Make sure that this function is better than every other viable
   // function. If not, we have an ambiguity.
@@ -8632,8 +8648,9 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
         Cand != Best &&
         !isBetterOverloadCandidate(S, *Best, *Cand, Loc,
                                    UserDefinedConversion)) {
-      if (isEquivalentCompatibleOverload(S, *Best, *Cand)) {
-        EquivalentCands.push_back(Cand);
+      if (S.isEquivalentInternalLinkageDeclaration(Best->Function,
+                                                   Cand->Function)) {
+        EquivalentCands.push_back(Cand->Function);
         continue;
       }
 
@@ -8648,13 +8665,9 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
        S.isFunctionConsideredUnavailable(Best->Function)))
     return OR_Deleted;
 
-  if (!EquivalentCands.empty()) {
-    S.Diag(Loc, diag::ext_ovl_equivalent_internal_linkage_functions_in_modules)
-      << Best->Function;
-    S.NoteOverloadCandidate(Best->Function);
-    for (auto *Cand : EquivalentCands)
-      S.NoteOverloadCandidate(Cand->Function);
-  }
+  if (!EquivalentCands.empty())
+    S.diagnoseEquivalentInternalLinkageDeclarations(Loc, Best->Function,
+                                                    EquivalentCands);
 
   return OR_Success;
 }

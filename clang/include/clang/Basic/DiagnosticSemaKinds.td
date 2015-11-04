@@ -2986,9 +2986,6 @@ def note_ovl_candidate : Note<"candidate "
     "%select{none|const|restrict|const and restrict|volatile|const and volatile"
     "|volatile and restrict|const, volatile, and restrict}4)"
     "| made ineligible by enable_if}2">;
-def ext_ovl_equivalent_internal_linkage_functions_in_modules : ExtWarn<
-  "ambiguous use of internal linkage function %0 defined in multiple modules">,
-  InGroup<DiagGroup<"modules-ambiguous-internal-linkage-function">>;
 
 def note_ovl_candidate_inherited_constructor : Note<"inherited from here">;
 def note_ovl_candidate_illegal_constructor : Note<
@@ -7869,6 +7866,12 @@ def err_module_self_import : Error<
   "import of module '%0' appears within same top-level module '%1'">;
 def err_module_import_in_implementation : Error<
   "@import of module '%0' in implementation of '%1'; use #import">;
+
+def ext_equivalent_internal_linkage_decl_in_modules : ExtWarn<
+  "ambiguous use of internal linkage declaration %0 defined in multiple modules">,
+  InGroup<DiagGroup<"modules-ambiguous-internal-linkage">>;
+def note_equivalent_internal_linkage_decl : Note<
+  "declared here%select{ in module '%1'|}0">;
 }
 
 let CategoryName = "Coroutines Issue" in {
