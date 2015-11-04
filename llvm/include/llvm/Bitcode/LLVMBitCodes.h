@@ -53,7 +53,7 @@ enum BlockIDs {
   OPERAND_BUNDLE_TAGS_BLOCK_ID
 };
 
-/// Idenfitication block contains a string that describes the producer details,
+/// Identification block contains a string that describes the producer details,
 /// and an epoch that defines the auto-upgrade capability.
 enum IdentificationCodes {
   IDENTIFICATION_CODE_STRING = 1, // IDENTIFICATION:      [strchr x N]
