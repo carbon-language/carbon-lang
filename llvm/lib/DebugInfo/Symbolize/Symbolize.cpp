@@ -244,6 +244,28 @@ ObjectFile *LLVMSymbolizer::lookUpDsymFile(const std::string &ExePath,
   return nullptr;
 }
 
+ObjectFile *LLVMSymbolizer::lookUpDebuglinkObject(const std::string &Path,
+                                                  const ObjectFile *Obj,
+                                                  const std::string &ArchName) {
+  std::string DebuglinkName;
+  uint32_t CRCHash;
+  std::string DebugBinaryPath;
+  if (!getGNUDebuglinkContents(Obj, DebuglinkName, CRCHash))
+    return nullptr;
+  if (!findDebugBinary(Path, DebuglinkName, CRCHash, DebugBinaryPath))
+    return nullptr;
+  ErrorOr<OwningBinary<Binary>> DebugBinaryOrErr =
+      createBinary(DebugBinaryPath);
+  if (!DebugBinaryOrErr)
+    return nullptr;
+  OwningBinary<Binary> &DB = DebugBinaryOrErr.get();
+  auto DbgObjOrErr = getObjectFileFromBinary(DB.getBinary(), ArchName);
+  if (!DbgObjOrErr)
+    return nullptr;
+  addOwningBinary(std::move(DB));
+  return DbgObjOrErr.get();
+}
+
 ErrorOr<LLVMSymbolizer::ObjectPair>
 LLVMSymbolizer::getOrCreateObjects(const std::string &Path,
                                    const std::string &ArchName) {
@@ -273,27 +295,8 @@ LLVMSymbolizer::getOrCreateObjects(const std::string &Path,
 
   if (auto MachObj = dyn_cast<const MachOObjectFile>(Obj))
     DbgObj = lookUpDsymFile(Path, MachObj, ArchName);
-  // Try to locate the debug binary using .gnu_debuglink section.
-  if (!DbgObj) {
-    std::string DebuglinkName;
-    uint32_t CRCHash;
-    std::string DebugBinaryPath;
-    if (getGNUDebuglinkContents(Obj, DebuglinkName, CRCHash) &&
-        findDebugBinary(Path, DebuglinkName, CRCHash, DebugBinaryPath)) {
-      ErrorOr<OwningBinary<Binary>> DebugBinaryOrErr =
-          createBinary(DebugBinaryPath);
-      if (DebugBinaryOrErr) {
-        OwningBinary<Binary> &DB = DebugBinaryOrErr.get();
-        auto DbgObjOrErr = getObjectFileFromBinary(DB.getBinary(), ArchName);
-        if (DbgObjOrErr) {
-          DbgObj = DbgObjOrErr.get();
-          assert(DbgObj != nullptr);
-          addOwningBinary(std::move(DB));
-        }
-      }
-    }
-  }
-
+  if (!DbgObj)
+    DbgObj = lookUpDebuglinkObject(Path, Obj, ArchName);
   if (!DbgObj)
     DbgObj = Obj;
   ObjectPair Res = std::make_pair(Obj, DbgObj);

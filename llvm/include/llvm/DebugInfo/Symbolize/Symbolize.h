@@ -70,6 +70,9 @@ private:
   ObjectFile *lookUpDsymFile(const std::string &Path,
                              const MachOObjectFile *ExeObj,
                              const std::string &ArchName);
+  ObjectFile *lookUpDebuglinkObject(const std::string &Path,
+                                    const ObjectFile *Obj,
+                                    const std::string &ArchName);
 
   /// \brief Returns pair of pointers to object and debug object.
   ErrorOr<ObjectPair> getOrCreateObjects(const std::string &Path,
