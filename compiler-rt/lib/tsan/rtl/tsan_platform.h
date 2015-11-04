@@ -340,6 +340,8 @@ uptr ALWAYS_INLINE GetThreadTraceHeader(int tid) {
 }
 
 void InitializePlatform();
+void CheckAndProtect();
+void InitializeShadowMemoryPlatform();
 void FlushShadowMemory();
 void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive);
 

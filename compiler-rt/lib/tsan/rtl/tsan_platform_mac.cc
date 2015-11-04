@@ -51,28 +51,14 @@ void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive) {
 }
 
 #ifndef SANITIZER_GO
-void InitializeShadowMemory() {
-  uptr shadow = (uptr)MmapFixedNoReserve(kShadowBeg,
-    kShadowEnd - kShadowBeg);
-  if (shadow != kShadowBeg) {
-    Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
-    Printf("FATAL: Make sure to compile with -fPIE and "
-           "to link with -pie.\n");
-    Die();
-  }
-  if (common_flags()->use_madv_dontdump)
-    DontDumpShadowMemory(kShadowBeg, kShadowEnd - kShadowBeg);
-  DPrintf("kShadow %zx-%zx (%zuGB)\n",
-      kShadowBeg, kShadowEnd,
-      (kShadowEnd - kShadowBeg) >> 30);
-  DPrintf("kAppMem %zx-%zx (%zuGB)\n",
-      kAppMemBeg, kAppMemEnd,
-      (kAppMemEnd - kAppMemBeg) >> 30);
-}
+void InitializeShadowMemoryPlatform() { }
 #endif
 
 void InitializePlatform() {
   DisableCoreDumperIfNecessary();
+#ifndef SANITIZER_GO
+  CheckAndProtect();
+#endif
 }
 
 #ifndef SANITIZER_GO

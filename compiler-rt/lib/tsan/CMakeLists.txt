@@ -45,11 +45,14 @@ set(TSAN_CXX_SOURCES
   rtl/tsan_new_delete.cc)
 
 if(APPLE)
-  list(APPEND TSAN_SOURCES rtl/tsan_platform_mac.cc)
+  list(APPEND TSAN_SOURCES
+    rtl/tsan_platform_mac.cc
+    rtl/tsan_platform_posix.cc)
 elseif(UNIX)
   # Assume Linux
   list(APPEND TSAN_SOURCES
-    rtl/tsan_platform_linux.cc)
+    rtl/tsan_platform_linux.cc
+    rtl/tsan_platform_posix.cc)
 endif()
 
 set(TSAN_HEADERS
