@@ -29,6 +29,8 @@ import os       # Provide directory and file handling
 # Third party modules:
 
 # In-house modules:
+import use_lldb_suite   # Modify sys.path so we can use shared / third-party libraries
+
 import utilsArgsParse   # Parse and validate this script's input arguments
 import utilsOsType      # Determine the OS type this script is running on
 import utilsDebug       # Debug Python scripts
