@@ -100,6 +100,31 @@ entry:
   ret i1 %call1
 }
 
+declare void @consume(i32 addrspace(1)* %obj)
+
+define i1 @test_cross_bb(i32 addrspace(1)* %a, i1 %external_cond) gc "statepoint-example" {
+; CHECK-LABEL: test_cross_bb
+; CHECK: movq
+; CHECK: callq return_i1
+; CHECK: %left
+; CHECK: movq
+; CHECK-NEXT: callq consume
+; CHECK: retq
+entry:
+  %safepoint_token = tail call i32 (i64, i32, i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i64 0, i32 0, i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 0, i32 addrspace(1)* %a)
+  br i1 %external_cond, label %left, label %right
+
+left:
+  %call1 = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token,  i32 7, i32 7)
+  %call2 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
+  call void @consume(i32 addrspace(1)* %call1)
+  ret i1 %call2
+
+right:
+  ret i1 true
+}
+
+
 declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i64, i32, i1 ()*, i32, i32, ...)
 declare i1 @llvm.experimental.gc.result.i1(i32)
 

@@ -899,7 +899,8 @@ void SelectionDAGBuilder::visit(const Instruction &I) {
 
   visit(I.getOpcode(), I);
 
-  if (!isa<TerminatorInst>(&I) && !HasTailCall)
+  if (!isa<TerminatorInst>(&I) && !HasTailCall &&
+      !isStatepoint(&I)) // statepoints handle their exports internally
     CopyToExportRegsIfNeeded(&I);
 
   CurInst = nullptr;
