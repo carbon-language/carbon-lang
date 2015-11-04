@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(TargetMachine, LLVMTargetMachineRef);
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(TargetMachine, LLVMTargetMachineRef)
 
 class OrcCAPIExecutionTest : public testing::Test, public OrcExecutionTest {
 protected:
