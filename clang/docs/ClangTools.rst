@@ -93,18 +93,6 @@ as a user tool (ideally with powerful IDE integrations) and as part of other
 refactoring tools, e.g. to do a reformatting of all the lines changed during a
 renaming.
 
-``clang-modernize``
-~~~~~~~~~~~~~~~~~~~
-``clang-modernize`` migrates C++ code to use C++11 features where appropriate.
-Currently it can:
-
-* convert loops to range-based for loops;
-
-* convert null pointer constants (like ``NULL`` or ``0``) to C++11 ``nullptr``;
-
-* replace the type specifier in variable declarations with the ``auto`` type specifier;
-
-* add the ``override`` specifier to applicable member functions.
 
 Extra Clang Tools
 =================
@@ -113,6 +101,15 @@ As various categories of Clang Tools are added to the extra repository,
 they'll be tracked here. The focus of this documentation is on the scope
 and features of the tools for other tool developers; each tool should
 provide its own user-focused documentation.
+
+``clang-tidy``
+~~~~~~~~~~~~~~
+
+`clang-tidy <http://clang.llvm.org/extra/clang-tidy/>` is a clang-based C++
+linter tool. It provides an extensible framework for building compiler-based
+static analyses detecting and fixing bug-prone patterns, performance,
+portability and maintainability issues.
+
 
 Ideas for new Tools
 ===================
@@ -124,27 +121,6 @@ Ideas for new Tools
   ``foo.begin()`` into ``begin(foo)`` and similarly for ``end()``, where
   ``foo`` is a standard container.  We could also detect similar patterns for
   arrays.
-* ``make_shared`` / ``make_unique`` conversion.  Part of this transformation
-  can be incorporated into the ``auto`` transformation.  Will convert
-
-  .. code-block:: c++
-
-    std::shared_ptr<Foo> sp(new Foo);
-    std::unique_ptr<Foo> up(new Foo);
-
-    func(std::shared_ptr<Foo>(new Foo), bar());
-
-  into:
-
-  .. code-block:: c++
-
-    auto sp = std::make_shared<Foo>();
-    auto up = std::make_unique<Foo>(); // In C++14 mode.
-
-    // This also affects correctness.  For the cases where bar() throws,
-    // make_shared() is safe and the original code may leak.
-    func(std::make_shared<Foo>(), bar());
-
 * ``tr1`` removal tool.  Will migrate source code from using TR1 library
   features to C++11 library.  For example:
 
