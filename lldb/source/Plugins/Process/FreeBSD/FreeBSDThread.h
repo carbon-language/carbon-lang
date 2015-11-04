@@ -136,7 +136,7 @@ protected:
 
     // POSIXThread override
     virtual void
-    WillResume(lldb::StateType resume_state);
+    WillResume(lldb::StateType resume_state) override;
 };
 
 #endif // #ifndef liblldb_FreeBSDThread_H_

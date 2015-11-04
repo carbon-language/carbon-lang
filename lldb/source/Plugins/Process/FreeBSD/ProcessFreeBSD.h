@@ -60,16 +60,16 @@ public:
     ~ProcessFreeBSD();
 
     virtual lldb_private::Error
-    WillResume();
+    WillResume() override;
 
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
     virtual lldb_private::ConstString
-    GetPluginName();
+    GetPluginName() override;
 
     virtual uint32_t
-    GetPluginVersion();
+    GetPluginVersion() override;
 
 public:
     //------------------------------------------------------------------
