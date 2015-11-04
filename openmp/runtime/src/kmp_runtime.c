@@ -5280,7 +5280,6 @@ __kmp_free_team( kmp_root_t *root, kmp_team_t *team  USE_NESTED_HOT_ARG(kmp_info
                         team->t.t_threads[f]->th.th_task_team = NULL;
                     }
                     KA_TRACE( 20, ( "__kmp_free_team: T#%d deactivating task_team %p on team %d\n", __kmp_get_gtid(), task_team, team->t.t_id ) );
-                    KMP_DEBUG_ASSERT( team->t.t_nproc > 1 );
                     __kmp_free_task_team( master, task_team );
                     team->t.t_task_team[tt_idx] = NULL;
                 }
