@@ -691,6 +691,20 @@ PreservedAnalyses LoopPrinterPass::run(Function &F,
   return PreservedAnalyses::all();
 }
 
+PrintLoopPass::PrintLoopPass() : OS(dbgs()) {}
+PrintLoopPass::PrintLoopPass(raw_ostream &OS, const std::string &Banner)
+    : OS(OS), Banner(Banner) {}
+
+PreservedAnalyses PrintLoopPass::run(Loop &L) {
+  OS << Banner;
+  for (auto *Block : L.blocks())
+    if (Block)
+      Block->print(OS);
+    else
+      OS << "Printing <null> block";
+  return PreservedAnalyses::all();
+}
+
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //

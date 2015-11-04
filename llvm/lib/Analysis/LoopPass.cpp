@@ -16,6 +16,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -27,35 +28,26 @@ namespace {
 
 /// PrintLoopPass - Print a Function corresponding to a Loop.
 ///
-class PrintLoopPass : public LoopPass {
-private:
-  std::string Banner;
-  raw_ostream &Out;       // raw_ostream to print on.
+class PrintLoopPassWrapper : public LoopPass {
+  PrintLoopPass P;
 
 public:
   static char ID;
-  PrintLoopPass(const std::string &B, raw_ostream &o)
-      : LoopPass(ID), Banner(B), Out(o) {}
+  PrintLoopPassWrapper() : LoopPass(ID) {}
+  PrintLoopPassWrapper(raw_ostream &OS, const std::string &Banner)
+      : LoopPass(ID), P(OS, Banner) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 
   bool runOnLoop(Loop *L, LPPassManager &) override {
-    Out << Banner;
-    for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
-         b != be;
-         ++b) {
-      if (*b)
-        (*b)->print(Out);
-      else
-        Out << "Printing <null> block";
-    }
+    P.run(*L);
     return false;
   }
 };
 
-char PrintLoopPass::ID = 0;
+char PrintLoopPassWrapper::ID = 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -305,7 +297,7 @@ void LPPassManager::dumpPassStructure(unsigned Offset) {
 
 Pass *LoopPass::createPrinterPass(raw_ostream &O,
                                   const std::string &Banner) const {
-  return new PrintLoopPass(Banner, O);
+  return new PrintLoopPassWrapper(O, Banner);
 }
 
 // Check if this pass is suitable for the current LPPassManager, if
