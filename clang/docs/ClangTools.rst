@@ -82,7 +82,7 @@ fixit-hints offered by clang. See :doc:`HowToSetupToolingForLLVM` for
 instructions on how to setup and used `clang-check`.
 
 ``clang-format``
-~~~~~~~~~~~~~~~~
+----------------
 
 Clang-format is both a :doc:`library <LibFormat>` and a :doc:`stand-alone tool
 <ClangFormat>` with the goal of automatically reformatting C++ sources files
@@ -103,7 +103,7 @@ and features of the tools for other tool developers; each tool should
 provide its own user-focused documentation.
 
 ``clang-tidy``
-~~~~~~~~~~~~~~
+--------------
 
 `clang-tidy <http://clang.llvm.org/extra/clang-tidy/>` is a clang-based C++
 linter tool. It provides an extensible framework for building compiler-based
