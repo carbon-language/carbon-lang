@@ -525,7 +525,6 @@ ValueObject::IsLogicalTrue (Error& error)
             case eLazyBoolNo:
                 return (is_logical_true == true);
             case eLazyBoolCalculate:
-            default:
                 break;
         }
     }
