@@ -253,8 +253,9 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
       // that loading a value from a pointer does not cause the pointer to be
       // captured, even though the loaded value might be the pointer itself
       // (think of self-referential objects).
-      CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
-      for (CallSite::arg_iterator A = B; A != E; ++A)
+      CallSite::data_operand_iterator B =
+        CS.data_operands_begin(), E = CS.data_operands_end();
+      for (CallSite::data_operand_iterator A = B; A != E; ++A)
         if (A->get() == V && !CS.doesNotCapture(A - B))
           // The parameter is not marked 'nocapture' - captured.
           if (Tracker->captured(U))
