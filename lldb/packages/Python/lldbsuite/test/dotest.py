@@ -922,12 +922,12 @@ def setupTestResults():
         else:
             results_file_object = open(results_filename, "w")
             cleanup_func = results_file_object.close
-        default_formatter_name = "test_results.XunitFormatter"
+        default_formatter_name = "lldbsuite.test.test_results.XunitFormatter"
     elif results_port:
         # Connect to the specified localhost port.
         results_file_object, cleanup_func = createSocketToLocalPort(
             results_port)
-        default_formatter_name = "test_results.RawPickledFormatter"
+        default_formatter_name = "lldbsuite.test.test_results.RawPickledFormatter"
 
     if results_file_object:
         # We care about the formatter.  Choose user-specified or, if
