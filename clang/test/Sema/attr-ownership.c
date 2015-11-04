@@ -9,7 +9,7 @@ void f6(void) __attribute__((ownership_holds(foo, 1, 2, 3)));  // expected-error
 void f7(void) __attribute__((ownership_takes(foo)));  // expected-error {{'ownership_takes' attribute takes at least 2 arguments}}
 void f8(int *i, int *j, int k) __attribute__((ownership_holds(foo, 1, 2, 4)));  // expected-error {{'ownership_holds' attribute parameter 3 is out of bounds}}
 
-int f9 __attribute__((ownership_takes(foo, 1)));  // expected-warning {{'ownership_takes' attribute only applies to functions}}
+int f9 __attribute__((ownership_takes(foo, 1)));  // expected-warning {{'ownership_takes' attribute only applies to non-K&R-style functions}}
 
 void f10(int i) __attribute__((ownership_holds(foo, 1)));  // expected-error {{'ownership_holds' attribute only applies to pointer arguments}}
 void *f11(float i) __attribute__((ownership_returns(foo, 1)));  // expected-error {{'ownership_returns' attribute only applies to integer arguments}}
@@ -23,3 +23,4 @@ void f15(int, int)
   __attribute__((ownership_returns(foo, 2))); // expected-error {{'ownership_returns' attribute index does not match; here it is 2}}
 void f16(int *i, int *j) __attribute__((ownership_holds(foo, 1))) __attribute__((ownership_holds(foo, 1))); // OK, same index
 void f17(void*) __attribute__((ownership_takes(__, 1)));
+void f18() __attribute__((ownership_takes(foo, 1)));  // expected-warning {{'ownership_takes' attribute only applies to non-K&R-style functions}}
