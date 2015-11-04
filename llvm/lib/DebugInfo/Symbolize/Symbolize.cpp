@@ -46,19 +46,12 @@
 namespace llvm {
 namespace symbolize {
 
-// FIXME: Move this to llvm-symbolizer tool.
-static bool error(std::error_code ec) {
-  if (!ec)
-    return false;
-  errs() << "LLVMSymbolizer: error reading file: " << ec.message() << ".\n";
-  return true;
-}
-
-DILineInfo LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
-                                         uint64_t ModuleOffset) {
-  SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
-  if (!Info)
-    return DILineInfo();
+ErrorOr<DILineInfo> LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
+                                                  uint64_t ModuleOffset) {
+  auto InfoOrErr = getOrCreateModuleInfo(ModuleName);
+  if (auto EC = InfoOrErr.getError())
+    return EC;
+  SymbolizableModule *Info = InfoOrErr.get();
 
   // If the user is giving us relative addresses, add the preferred base of the
   // object to the offset before we do the query. It's what DIContext expects.
@@ -72,12 +65,13 @@ DILineInfo LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
   return LineInfo;
 }
 
-DIInliningInfo
+ErrorOr<DIInliningInfo>
 LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
                                      uint64_t ModuleOffset) {
-  SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
-  if (!Info)
-    return DIInliningInfo();
+  auto InfoOrErr = getOrCreateModuleInfo(ModuleName);
+  if (auto EC = InfoOrErr.getError())
+    return EC;
+  SymbolizableModule *Info = InfoOrErr.get();
 
   // If the user is giving us relative addresses, add the preferred base of the
   // object to the offset before we do the query. It's what DIContext expects.
@@ -95,13 +89,12 @@ LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
   return InlinedContext;
 }
 
-DIGlobal LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
-                                       uint64_t ModuleOffset) {
-  if (!Opts.UseSymbolTable)
-    return DIGlobal();
-  SymbolizableModule *Info = getOrCreateModuleInfo(ModuleName);
-  if (!Info)
-    return DIGlobal();
+ErrorOr<DIGlobal> LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
+                                                uint64_t ModuleOffset) {
+  auto InfoOrErr = getOrCreateModuleInfo(ModuleName);
+  if (auto EC = InfoOrErr.getError())
+    return EC;
+  SymbolizableModule *Info = InfoOrErr.get();
 
   // If the user is giving us relative addresses, add the preferred base of
   // the object to the offset before we do the query. It's what DIContext
@@ -232,72 +225,87 @@ ObjectFile *LLVMSymbolizer::lookUpDsymFile(const std::string &ExePath,
   }
   for (const auto &path : DsymPaths) {
     ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(path);
-    std::error_code EC = BinaryOrErr.getError();
-    if (EC != errc::no_such_file_or_directory && !error(EC)) {
-      OwningBinary<Binary> B = std::move(BinaryOrErr.get());
-      ObjectFile *DbgObj =
-          getObjectFileFromBinary(B.getBinary(), ArchName);
-      const MachOObjectFile *MachDbgObj =
-          dyn_cast<const MachOObjectFile>(DbgObj);
-      if (!MachDbgObj) continue;
-      if (darwinDsymMatchesBinary(MachDbgObj, MachExeObj)) {
-        addOwningBinary(std::move(B));
-        return DbgObj; 
-      }
+    if (!BinaryOrErr)
+      continue;
+    OwningBinary<Binary> &B = BinaryOrErr.get();
+    auto DbgObjOrErr = getObjectFileFromBinary(B.getBinary(), ArchName);
+    if (!DbgObjOrErr)
+      continue;
+    ObjectFile *DbgObj = DbgObjOrErr.get();
+    const MachOObjectFile *MachDbgObj =
+        dyn_cast<const MachOObjectFile>(DbgObj);
+    if (!MachDbgObj)
+      continue;
+    if (darwinDsymMatchesBinary(MachDbgObj, MachExeObj)) {
+      addOwningBinary(std::move(B));
+      return DbgObj;
     }
   }
   return nullptr;
 }
 
-LLVMSymbolizer::ObjectPair
+ErrorOr<LLVMSymbolizer::ObjectPair>
 LLVMSymbolizer::getOrCreateObjects(const std::string &Path,
                                    const std::string &ArchName) {
   const auto &I = ObjectPairForPathArch.find(std::make_pair(Path, ArchName));
   if (I != ObjectPairForPathArch.end())
     return I->second;
-  ObjectFile *Obj = nullptr;
-  ObjectFile *DbgObj = nullptr;
+
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(Path);
-  if (!error(BinaryOrErr.getError())) {
-    OwningBinary<Binary> &B = BinaryOrErr.get();
-    Obj = getObjectFileFromBinary(B.getBinary(), ArchName);
-    if (!Obj) {
-      ObjectPair Res = std::make_pair(nullptr, nullptr);
-      ObjectPairForPathArch[std::make_pair(Path, ArchName)] = Res;
-      return Res;
-    }
-    addOwningBinary(std::move(B));
-    if (auto MachObj = dyn_cast<const MachOObjectFile>(Obj))
-      DbgObj = lookUpDsymFile(Path, MachObj, ArchName);
-    // Try to locate the debug binary using .gnu_debuglink section.
-    if (!DbgObj) {
-      std::string DebuglinkName;
-      uint32_t CRCHash;
-      std::string DebugBinaryPath;
-      if (getGNUDebuglinkContents(Obj, DebuglinkName, CRCHash) &&
-          findDebugBinary(Path, DebuglinkName, CRCHash, DebugBinaryPath)) {
-        BinaryOrErr = createBinary(DebugBinaryPath);
-        if (!error(BinaryOrErr.getError())) {
-          OwningBinary<Binary> B = std::move(BinaryOrErr.get());
-          DbgObj = getObjectFileFromBinary(B.getBinary(), ArchName);
-          addOwningBinary(std::move(B));
+  if (auto EC = BinaryOrErr.getError()) {
+    ObjectPairForPathArch.insert(
+        std::make_pair(std::make_pair(Path, ArchName), EC));
+    return EC;
+  }
+  OwningBinary<Binary> &B = BinaryOrErr.get();
+
+  auto ObjOrErr = getObjectFileFromBinary(B.getBinary(), ArchName);
+  if (auto EC = ObjOrErr.getError()) {
+    ObjectPairForPathArch.insert(
+        std::make_pair(std::make_pair(Path, ArchName), EC));
+    return EC;
+  }
+  addOwningBinary(std::move(B));
+
+  ObjectFile *Obj = ObjOrErr.get();
+  assert(Obj != nullptr);
+  ObjectFile *DbgObj = nullptr;
+
+  if (auto MachObj = dyn_cast<const MachOObjectFile>(Obj))
+    DbgObj = lookUpDsymFile(Path, MachObj, ArchName);
+  // Try to locate the debug binary using .gnu_debuglink section.
+  if (!DbgObj) {
+    std::string DebuglinkName;
+    uint32_t CRCHash;
+    std::string DebugBinaryPath;
+    if (getGNUDebuglinkContents(Obj, DebuglinkName, CRCHash) &&
+        findDebugBinary(Path, DebuglinkName, CRCHash, DebugBinaryPath)) {
+      ErrorOr<OwningBinary<Binary>> DebugBinaryOrErr =
+          createBinary(DebugBinaryPath);
+      if (DebugBinaryOrErr) {
+        OwningBinary<Binary> &DB = DebugBinaryOrErr.get();
+        auto DbgObjOrErr = getObjectFileFromBinary(DB.getBinary(), ArchName);
+        if (DbgObjOrErr) {
+          DbgObj = DbgObjOrErr.get();
+          assert(DbgObj != nullptr);
+          addOwningBinary(std::move(DB));
         }
       }
     }
   }
+
   if (!DbgObj)
     DbgObj = Obj;
   ObjectPair Res = std::make_pair(Obj, DbgObj);
-  ObjectPairForPathArch[std::make_pair(Path, ArchName)] = Res;
+  ObjectPairForPathArch.insert(
+      std::make_pair(std::make_pair(Path, ArchName), Res));
   return Res;
 }
 
-ObjectFile *
+ErrorOr<ObjectFile *>
 LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin,
                                         const std::string &ArchName) {
-  if (!Bin)
-    return nullptr;
-  ObjectFile *Res = nullptr;
+  assert(Bin != nullptr);
   if (MachOUniversalBinary *UB = dyn_cast<MachOUniversalBinary>(Bin)) {
     const auto &I = ObjectFileForArch.find(
         std::make_pair(UB, ArchName));
@@ -305,22 +313,31 @@ LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin,
       return I->second;
     ErrorOr<std::unique_ptr<ObjectFile>> ParsedObj =
         UB->getObjectForArch(ArchName);
-    if (ParsedObj) {
-      Res = ParsedObj.get().get();
-      ParsedBinariesAndObjects.push_back(std::move(ParsedObj.get()));
+    if (auto EC = ParsedObj.getError()) {
+      ObjectFileForArch.insert(
+          std::make_pair(std::make_pair(UB, ArchName), EC));
+      return EC;
     }
-    ObjectFileForArch[std::make_pair(UB, ArchName)] = Res;
-  } else if (Bin->isObject()) {
-    Res = cast<ObjectFile>(Bin);
+    ObjectFile *Res = ParsedObj.get().get();
+    ParsedBinariesAndObjects.push_back(std::move(ParsedObj.get()));
+    ObjectFileForArch.insert(std::make_pair(std::make_pair(UB, ArchName), Res));
+    return Res;
   }
-  return Res;
+  if (Bin->isObject()) {
+    return cast<ObjectFile>(Bin);
+  }
+  return object_error::arch_not_found;
 }
 
-SymbolizableModule *
+ErrorOr<SymbolizableModule *>
 LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   const auto &I = Modules.find(ModuleName);
-  if (I != Modules.end())
-    return I->second.get();
+  if (I != Modules.end()) {
+    auto &InfoOrErr = I->second;
+    if (auto EC = InfoOrErr.getError())
+      return EC;
+    return InfoOrErr->get();
+  }
   std::string BinaryName = ModuleName;
   std::string ArchName = Opts.DefaultArch;
   size_t ColonPos = ModuleName.find_last_of(':');
@@ -332,13 +349,14 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
       ArchName = ArchStr;
     }
   }
-  ObjectPair Objects = getOrCreateObjects(BinaryName, ArchName);
-
-  if (!Objects.first) {
+  auto ObjectsOrErr = getOrCreateObjects(BinaryName, ArchName);
+  if (auto EC = ObjectsOrErr.getError()) {
     // Failed to find valid object file.
-    Modules.insert(std::make_pair(ModuleName, nullptr));
-    return nullptr;
+    Modules.insert(std::make_pair(ModuleName, EC));
+    return EC;
   }
+  ObjectPair Objects = ObjectsOrErr.get();
+
   std::unique_ptr<DIContext> Context;
   if (auto CoffObject = dyn_cast<COFFObjectFile>(Objects.first)) {
     // If this is a COFF object, assume it contains PDB debug information.  If
@@ -353,15 +371,14 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   if (!Context)
     Context.reset(new DWARFContextInMemory(*Objects.second));
   assert(Context);
-  auto ErrOrInfo =
+  auto InfoOrErr =
       SymbolizableObjectFile::create(Objects.first, std::move(Context));
-  if (error(ErrOrInfo.getError())) {
-    Modules.insert(std::make_pair(ModuleName, nullptr));
-    return nullptr;
-  }
-  SymbolizableModule *Res = ErrOrInfo.get().get();
-  Modules.insert(std::make_pair(ModuleName, std::move(ErrOrInfo.get())));
-  return Res;
+  auto InsertResult =
+      Modules.insert(std::make_pair(ModuleName, std::move(InfoOrErr)));
+  assert(InsertResult.second);
+  if (auto EC = InsertResult.first->second.getError())
+    return EC;
+  return InsertResult.first->second->get();
 }
 
 // Undo these various manglings for Win32 extern "C" functions:

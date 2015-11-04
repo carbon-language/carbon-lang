@@ -78,6 +78,13 @@ static cl::opt<bool>
     ClPrintAddress("print-address", cl::init(false),
                    cl::desc("Show address before line information"));
 
+static bool error(std::error_code ec) {
+  if (!ec)
+    return false;
+  errs() << "LLVMSymbolizer: error reading file: " << ec.message() << ".\n";
+  return true;
+}
+
 static bool parseCommand(bool &IsData, std::string &ModuleName,
                          uint64_t &ModuleOffset) {
   const char *kDataCmd = "DATA ";
@@ -158,11 +165,15 @@ int main(int argc, char **argv) {
       outs() << "\n";
     }
     if (IsData) {
-      Printer << Symbolizer.symbolizeData(ModuleName, ModuleOffset);
+      auto ResOrErr = Symbolizer.symbolizeData(ModuleName, ModuleOffset);
+      Printer << (error(ResOrErr.getError()) ? DIGlobal() : ResOrErr.get());
     } else if (ClPrintInlining) {
-      Printer << Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset);
+      auto ResOrErr = Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset);
+      Printer << (error(ResOrErr.getError()) ? DIInliningInfo()
+                                             : ResOrErr.get());
     } else {
-      Printer << Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
+      auto ResOrErr = Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
+      Printer << (error(ResOrErr.getError()) ? DILineInfo() : ResOrErr.get());
     }
     outs() << "\n";
     outs().flush();

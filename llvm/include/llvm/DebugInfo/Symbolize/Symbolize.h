@@ -18,6 +18,7 @@
 #include "llvm/DebugInfo/Symbolize/SymbolizableModule.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <map>
 #include <memory>
@@ -51,11 +52,12 @@ public:
     flush();
   }
 
-  DILineInfo symbolizeCode(const std::string &ModuleName,
-                           uint64_t ModuleOffset);
-  DIInliningInfo symbolizeInlinedCode(const std::string &ModuleName,
-                                      uint64_t ModuleOffset);
-  DIGlobal symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
+  ErrorOr<DILineInfo> symbolizeCode(const std::string &ModuleName,
+                                    uint64_t ModuleOffset);
+  ErrorOr<DIInliningInfo> symbolizeInlinedCode(const std::string &ModuleName,
+                                               uint64_t ModuleOffset);
+  ErrorOr<DIGlobal> symbolizeData(const std::string &ModuleName,
+                                  uint64_t ModuleOffset);
   void flush();
   static std::string DemangleName(const std::string &Name,
                                   const SymbolizableModule *ModInfo);
@@ -63,17 +65,19 @@ public:
 private:
   typedef std::pair<ObjectFile*, ObjectFile*> ObjectPair;
 
-  SymbolizableModule *getOrCreateModuleInfo(const std::string &ModuleName);
+  ErrorOr<SymbolizableModule *>
+  getOrCreateModuleInfo(const std::string &ModuleName);
   ObjectFile *lookUpDsymFile(const std::string &Path,
                              const MachOObjectFile *ExeObj,
                              const std::string &ArchName);
 
   /// \brief Returns pair of pointers to object and debug object.
-  ObjectPair getOrCreateObjects(const std::string &Path,
-                                const std::string &ArchName);
+  ErrorOr<ObjectPair> getOrCreateObjects(const std::string &Path,
+                                         const std::string &ArchName);
   /// \brief Returns a parsed object file for a given architecture in a
   /// universal binary (or the binary itself if it is an object file).
-  ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
+  ErrorOr<ObjectFile *> getObjectFileFromBinary(Binary *Bin,
+                                                const std::string &ArchName);
 
   // Owns all the parsed binaries and object files.
   SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;
@@ -86,10 +90,10 @@ private:
     MemoryBuffers.push_back(std::move(MemBuf));
   }
 
-  std::map<std::string, std::unique_ptr<SymbolizableModule>> Modules;
-  std::map<std::pair<MachOUniversalBinary *, std::string>, ObjectFile *>
-      ObjectFileForArch;
-  std::map<std::pair<std::string, std::string>, ObjectPair>
+  std::map<std::string, ErrorOr<std::unique_ptr<SymbolizableModule>>> Modules;
+  std::map<std::pair<MachOUniversalBinary *, std::string>,
+           ErrorOr<ObjectFile *>> ObjectFileForArch;
+  std::map<std::pair<std::string, std::string>, ErrorOr<ObjectPair>>
       ObjectPairForPathArch;
 
   Options Opts;
