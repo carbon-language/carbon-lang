@@ -1,4 +1,4 @@
-//===--- Tools.cpp - Tools Implementations --------------------------------===//
+//===--- Tools.cpp - Tools Implementations ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10107,7 +10107,7 @@ static void ConstructGoldLinkJob(const Tool &T, Compilation &C,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
-    const char *crt1 = NULL;
+    const char *crt1 = nullptr;
     if (!Args.hasArg(options::OPT_shared)) {
       if (Args.hasArg(options::OPT_pg))
         crt1 = "gcrt1.o";
@@ -10121,7 +10121,7 @@ static void ConstructGoldLinkJob(const Tool &T, Compilation &C,
 
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
 
-    const char *crtbegin = NULL;
+    const char *crtbegin = nullptr;
     if (Args.hasArg(options::OPT_static))
       crtbegin = "crtbeginT.o";
     else if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))

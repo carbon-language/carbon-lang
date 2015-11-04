@@ -327,7 +327,7 @@ const Decl *adjustDeclToTemplate(const Decl *D) {
   // FIXME: Adjust alias templates?
   return D;
 }
-} // unnamed namespace
+} // anonymous namespace
 
 const RawComment *ASTContext::getRawCommentForAnyRedecl(
                                                 const Decl *D,
@@ -430,7 +430,6 @@ comments::FullComment *ASTContext::cloneFullComment(comments::FullComment *FC,
     new (*this) comments::FullComment(FC->getBlocks(),
                                       ThisDeclInfo);
   return CFC;
-  
 }
 
 comments::FullComment *ASTContext::getLocalCommentForDeclUncached(const Decl *D) const {
@@ -1921,7 +1920,7 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
 /// getTargetDefaultAlignForAttributeAligned - Return the default alignment
 /// for __attribute__((aligned)) on this target, to be used if no alignment
 /// value is specified.
-unsigned ASTContext::getTargetDefaultAlignForAttributeAligned(void) const {
+unsigned ASTContext::getTargetDefaultAlignForAttributeAligned() const {
   return getTargetInfo().getDefaultAlignForAttributeAligned();
 }
 
@@ -3234,7 +3233,6 @@ QualType ASTContext::getAttributedType(AttributedType::Kind attrKind,
   return QualType(type, 0);
 }
 
-
 /// \brief Retrieve a substitution-result type.
 QualType
 ASTContext::getSubstTemplateTypeParmType(const TemplateTypeParmType *Parm,
@@ -3934,7 +3932,6 @@ QualType ASTContext::getTypeOfType(QualType tofType) const {
   return QualType(tot, 0);
 }
 
-
 /// \brief Unlike many "get<Type>" functions, we don't unique DecltypeType
 /// nodes. This would never be helpful, since each such type has its own
 /// expression, and would not give a significant memory saving, since there
@@ -4438,7 +4435,6 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
 
   llvm_unreachable("Invalid NestedNameSpecifier::Kind!");
 }
-
 
 const ArrayType *ASTContext::getAsArrayType(QualType T) const {
   // Handle the non-qualified case efficiently.
@@ -5853,7 +5849,6 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   // Just ignore it.
   case Type::Auto:
     return;
-  
 
 #define ABSTRACT_TYPE(KIND, BASE)
 #define TYPE(KIND, BASE)
@@ -8851,7 +8846,7 @@ createDynTypedNode(const NestedNameSpecifierLoc &Node) {
     friend class RecursiveASTVisitor<ParentMapASTVisitor>;
   };
 
-} // end namespace
+} // anonymous namespace
 
 template <typename NodeTy, typename MapTy>
 static ASTContext::DynTypedNodeList getDynNodeFromMap(const NodeTy &Node,
