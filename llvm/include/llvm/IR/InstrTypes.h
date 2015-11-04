@@ -1196,18 +1196,29 @@ public:
   /// \brief Return true if this User has any operand bundles.
   bool hasOperandBundles() const { return getNumOperandBundles() != 0; }
 
+  /// \brief Return the index of the first bundle operand in the Use array.
+  unsigned getBundleOperandsStartIndex() const {
+    assert(hasOperandBundles() && "Don't call otherwise!");
+    return bundle_op_info_begin()->Begin;
+  }
+
+  /// \brief Return the index of the last bundle operand in the Use array.
+  unsigned getBundleOperandsEndIndex() const {
+    assert(hasOperandBundles() && "Don't call otherwise!");
+    return bundle_op_info_end()[-1].End;
+  }
+
   /// \brief Return the total number operands (not operand bundles) used by
   /// every operand bundle in this OperandBundleUser.
   unsigned getNumTotalBundleOperands() const {
     if (!hasOperandBundles())
       return 0;
 
-    auto *Begin = bundle_op_info_begin();
-    auto *Back = bundle_op_info_end() - 1;
+    unsigned Begin = getBundleOperandsStartIndex();
+    unsigned End = getBundleOperandsEndIndex();
 
-    assert(Begin <= Back && "hasOperandBundles() returned true!");
-
-    return Back->End - Begin->Begin;
+    assert(Begin <= End && "Should be!");
+    return End - Begin;
   }
 
   /// \brief Return the operand bundle at a specific index.
