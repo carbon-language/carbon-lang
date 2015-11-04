@@ -10,7 +10,10 @@
 #include "PlatformDarwin.h"
 
 // C Includes
+#include <string.h>
+
 // C++ Includes
+#include <algorithm>
 #include <mutex>
 
 // Other libraries and framework includes
@@ -1245,7 +1248,13 @@ GetXcodeContentsPath ()
 
         if (fspec)
         {
-            g_xcode_filespec = CheckPathForXcode(fspec);
+            // Ignore the current binary if it is python.
+            std::string basename_lower = fspec.GetFilename ().GetCString ();
+            std::transform(basename_lower.begin (), basename_lower.end (), basename_lower.begin (), tolower);
+            if (basename_lower != "python")
+            {
+                g_xcode_filespec = CheckPathForXcode(fspec);
+            }
         }
 
         // Next check DEVELOPER_DIR environment variable
@@ -1263,7 +1272,7 @@ GetXcodeContentsPath ()
                 int status = 0;
                 int signo = 0;
                 std::string output;
-                const char *command = "xcrun -sdk macosx --show-sdk-path";
+                const char *command = "/usr/bin/xcode-select -p";
                 lldb_private::Error error = Host::RunShellCommand (command,   // shell command to run
                                                                    NULL,      // current working directory
                                                                    &status,   // Put the exit status of the process in here
@@ -1277,6 +1286,7 @@ GetXcodeContentsPath ()
                     {
                         output.erase(first_non_newline+1);
                     }
+                    output.append("/..");
 
                     g_xcode_filespec = CheckPathForXcode(FileSpec(output.c_str(), false));
                 }
