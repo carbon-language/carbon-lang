@@ -54,7 +54,27 @@ public:
         Mutex::Locker locker(m_mutex);
         return m_map.lookup(k);
     }
-    
+
+    bool
+    Lookup (_KeyType k,
+            _ValueType& v)
+    {
+        Mutex::Locker locker(m_mutex);
+        auto iter = m_map.find(k),
+             end = m_map.end();
+        if (iter == end)
+            return false;
+        v = iter->second;
+        return true;
+    }
+
+    void
+    Clear ()
+    {
+        Mutex::Locker locker(m_mutex);
+        m_map.clear();
+    }
+
 protected:
     LLVMMapType m_map;
     Mutex m_mutex;

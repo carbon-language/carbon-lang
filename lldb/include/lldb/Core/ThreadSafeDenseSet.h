@@ -55,6 +55,13 @@ namespace lldb_private {
             return (m_set.count(e) > 0);
         }
         
+        void
+        Clear ()
+        {
+            Mutex::Locker locker(m_mutex);
+            m_set.clear();
+        }
+        
     protected:
         LLVMSetType m_set;
         Mutex m_mutex;
