@@ -2696,7 +2696,6 @@ bool AsmParser::parseDirectiveOrg() {
   checkForValidSection();
 
   const MCExpr *Offset;
-  SMLoc Loc = getTok().getLoc();
   if (parseExpression(Offset))
     return true;
 
@@ -2715,13 +2714,7 @@ bool AsmParser::parseDirectiveOrg() {
   }
 
   Lex();
-
-  // Only limited forms of relocatable expressions are accepted here, it
-  // has to be relative to the current section. The streamer will return
-  // 'true' if the expression wasn't evaluatable.
-  if (getStreamer().EmitValueToOffset(Offset, FillExpr))
-    return Error(Loc, "expected assembly-time absolute expression");
-
+  getStreamer().emitValueToOffset(Offset, FillExpr);
   return false;
 }
 
@@ -4905,11 +4898,7 @@ bool parseAssignmentExpression(StringRef Name, bool allow_redef,
                           "invalid reassignment of non-absolute variable '" +
                               Name + "'");
   } else if (Name == ".") {
-    if (Parser.getStreamer().EmitValueToOffset(Value, 0)) {
-      Parser.Error(EqualLoc, "expected absolute expression");
-      Parser.eatToEndOfStatement();
-      return true;
-    }
+    Parser.getStreamer().emitValueToOffset(Value, 0);
     return false;
   } else
     Sym = Parser.getContext().getOrCreateSymbol(Name);

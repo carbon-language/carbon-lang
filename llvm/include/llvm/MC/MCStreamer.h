@@ -612,8 +612,7 @@ public:
   /// expression must be associated with the current section.
   /// \param Value - The value to use when filling bytes.
   /// \return false on success, true if the offset was invalid.
-  virtual bool EmitValueToOffset(const MCExpr *Offset,
-                                 unsigned char Value = 0);
+  virtual void emitValueToOffset(const MCExpr *Offset, unsigned char Value = 0);
 
   /// @}
 

@@ -186,7 +186,7 @@ public:
   void EmitCodeAlignment(unsigned ByteAlignment,
                          unsigned MaxBytesToEmit = 0) override;
 
-  bool EmitValueToOffset(const MCExpr *Offset,
+  void emitValueToOffset(const MCExpr *Offset,
                          unsigned char Value = 0) override;
 
   void EmitFileDirective(StringRef Filename) override;
@@ -856,14 +856,13 @@ void MCAsmStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                        1, MaxBytesToEmit);
 }
 
-bool MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
+void MCAsmStreamer::emitValueToOffset(const MCExpr *Offset,
                                       unsigned char Value) {
   // FIXME: Verify that Offset is associated with the current section.
   OS << ".org ";
   Offset->print(OS, MAI);
   OS << ", " << (unsigned)Value;
   EmitEOL();
-  return false;
 }
 
 void MCAsmStreamer::EmitFileDirective(StringRef Filename) {

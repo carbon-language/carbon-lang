@@ -391,10 +391,9 @@ void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,
   cast<MCAlignFragment>(getCurrentFragment())->setEmitNops(true);
 }
 
-bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
+void MCObjectStreamer::emitValueToOffset(const MCExpr *Offset,
                                          unsigned char Value) {
   insert(new MCOrgFragment(*Offset, Value));
-  return false;
 }
 
 // Associate GPRel32 fixup with data and resize data area
