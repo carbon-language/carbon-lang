@@ -393,23 +393,7 @@ void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,
 
 bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
                                          unsigned char Value) {
-  int64_t Res;
-  if (Offset->evaluateAsAbsolute(Res, getAssembler())) {
-    insert(new MCOrgFragment(*Offset, Value));
-    return false;
-  }
-
-  MCSymbol *CurrentPos = getContext().createTempSymbol();
-  EmitLabel(CurrentPos);
-  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
-  const MCExpr *Ref =
-    MCSymbolRefExpr::create(CurrentPos, Variant, getContext());
-  const MCExpr *Delta =
-    MCBinaryExpr::create(MCBinaryExpr::Sub, Offset, Ref, getContext());
-
-  if (!Delta->evaluateAsAbsolute(Res, getAssembler()))
-    return true;
-  EmitFill(Res, Value);
+  insert(new MCOrgFragment(*Offset, Value));
   return false;
 }
 

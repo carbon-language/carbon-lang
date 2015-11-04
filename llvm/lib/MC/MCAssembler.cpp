@@ -533,12 +533,19 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
 
   case MCFragment::FT_Org: {
     const MCOrgFragment &OF = cast<MCOrgFragment>(F);
-    int64_t TargetLocation;
-    if (!OF.getOffset().evaluateAsAbsolute(TargetLocation, Layout))
+    MCValue Value;
+    if (!OF.getOffset().evaluateAsValue(Value, Layout))
       report_fatal_error("expected assembly-time absolute expression");
 
     // FIXME: We need a way to communicate this error.
     uint64_t FragmentOffset = Layout.getFragmentOffset(&OF);
+    int64_t TargetLocation = Value.getConstant();
+    if (const MCSymbolRefExpr *A = Value.getSymA()) {
+      uint64_t Val;
+      if (!Layout.getSymbolOffset(A->getSymbol(), Val))
+        report_fatal_error("expected absolute expression");
+      TargetLocation += Val;
+    }
     int64_t Size = TargetLocation - FragmentOffset;
     if (Size < 0 || Size >= 0x40000000)
       report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
