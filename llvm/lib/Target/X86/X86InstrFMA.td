@@ -126,9 +126,22 @@ let ExeDomain = SSEPackedDouble in {
                                v4f64>, VEX_W;
 }
 
-let Constraints = "$src1 = $dst" in {
-multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
-                    RegisterClass RC, ValueType OpVT, PatFrag mem_frag,
+// All source register operands of FMA instructions can be commuted.
+// In many cases such commute transformation requres an opcode adjustment,
+// for example, commuting the operands 1 and 2 in FMA*132 form would require
+// an opcode change to FMA*231:
+//     FMA*132* reg1, reg2, reg3; // reg1 * reg3 + reg2;
+//     -->
+//     FMA*231* reg2, reg1, reg3; // reg1 * reg3 + reg2;
+// Currently, the commute transformation is supported for only few FMA forms.
+// That is the reason why \p IsRVariantCommutable and \p IsMVariantCommutable
+// parameters are used here.
+// The general commute operands optimization working for all forms is going
+// to be implemented soon. (Please, see http://reviews.llvm.org/D13269
+// for details).
+let Constraints = "$src1 = $dst", hasSideEffects = 0 in {
+multiclass fma3s_rm<bits<8> opc, string OpcodeStr,
+                    X86MemOperand x86memop, RegisterClass RC,
                     bit IsRVariantCommutable = 0, bit IsMVariantCommutable = 0,
                     SDPatternOperator OpNode = null_frag> {
   let usesCustomInserter = 1, isCommutable = IsRVariantCommutable in
@@ -136,8 +149,7 @@ multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
                    (ins RC:$src1, RC:$src2, RC:$src3),
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-                   [(set RC:$dst,
-                     (OpVT (OpNode RC:$src2, RC:$src1, RC:$src3)))]>;
+                   [(set RC:$dst, (OpNode RC:$src2, RC:$src1, RC:$src3))]>;
 
   let mayLoad = 1, isCommutable = IsMVariantCommutable in
   def m     : FMA3<opc, MRMSrcMem, (outs RC:$dst),
@@ -145,52 +157,96 @@ multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
                    !strconcat(OpcodeStr,
                               "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set RC:$dst,
-                     (OpVT (OpNode RC:$src2, RC:$src1,
-                            (mem_frag addr:$src3))))]>;
+                     (OpNode RC:$src2, RC:$src1, (load addr:$src3)))]>;
 }
-} // Constraints = "$src1 = $dst"
+} // Constraints = "$src1 = $dst", hasSideEffects = 0
+
+// These FMA*_Int instructions are defined specially for being used when
+// the scalar FMA intrinsics are lowered to machine instructions, and in that
+// sence they are similar to existing ADD*_Int, SUB*_Int, MUL*_Int, etc.
+// instructions.
+//
+// The FMA*_Int instructions are _TEMPORARILY_ defined as NOT commutable.
+// The upper bits of the result of scalar FMA intrinsics must be copied from
+// the upper bits of the 1st operand. So, commuting the 1st operand would
+// invalidate the upper bits of the intrinsic result.
+// The corresponding optimization which allows commuting 2nd and 3rd operands
+// of FMA*_Int instructions has been developed and is waiting for
+// code-review approval and checkin (Please see http://reviews.llvm.org/D13269).
+let Constraints = "$src1 = $dst", isCommutable = 0, isCodeGenOnly =1,
+    hasSideEffects = 0 in {
+multiclass fma3s_rm_int<bits<8> opc, string OpcodeStr,
+                        Operand memopr, RegisterClass RC> {
+  def r_Int : FMA3<opc, MRMSrcReg, (outs RC:$dst),
+                   (ins RC:$src1, RC:$src2, RC:$src3),
+                   !strconcat(OpcodeStr,
+                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   []>;
+
+  let mayLoad = 1 in
+  def m_Int : FMA3<opc, MRMSrcMem, (outs RC:$dst),
+                   (ins RC:$src1, RC:$src2, memopr:$src3),
+                   !strconcat(OpcodeStr,
+                              "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+                   []>;
+}
+} // Constraints = "$src1 = $dst", isCommutable = 0, isCodeGenOnly =1,
+  // hasSideEffects = 0
 
 multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
-                       string OpStr, string PackTy, string PT2, Intrinsic Int,
-                       SDNode OpNode, RegisterClass RC, ValueType OpVT,
-                       X86MemOperand x86memop, Operand memop, PatFrag mem_frag,
-                       ComplexPattern mem_cpat> {
-let hasSideEffects = 0 in {
-  defm r132 : fma3s_rm<opc132, !strconcat(OpStr, "132", PackTy),
-                       x86memop, RC, OpVT, mem_frag>;
-  // See the other defm of r231 for the explanation regarding the
-  // commutable flags.
-  defm r231 : fma3s_rm<opc231, !strconcat(OpStr, "231", PackTy),
-                       x86memop, RC, OpVT, mem_frag,
+                       string OpStr, string PackTy,
+                       SDNode OpNode, RegisterClass RC,
+                       X86MemOperand x86memop> {
+  defm r132 : fma3s_rm<opc132, !strconcat(OpStr, "132", PackTy), x86memop, RC>;
+  defm r213 : fma3s_rm<opc213, !strconcat(OpStr, "213", PackTy), x86memop, RC,
                        /* IsRVariantCommutable */ 1,
-                       /* IsMVariantCommutable */ 0>;
+                       /* IsMVariantCommutable */ 1,
+                       OpNode>;
+  defm r231 : fma3s_rm<opc231, !strconcat(OpStr, "231", PackTy), x86memop, RC,
+                       /* IsRVariantCommutable */ 1,
+                       /* IsMVariantCommutable */ 0,
+                       null_frag>;
 }
 
-// See the other defm of r213 for the explanation regarding the
-// commutable flags.
-defm r213 : fma3s_rm<opc213, !strconcat(OpStr, "213", PackTy),
-                     x86memop, RC, OpVT, mem_frag,
-                     /* IsRVariantCommutable */ 1,
-                     /* IsMVariantCommutable */ 1,
-                     OpNode>;
+// The FMA 213 form is created for lowering of scalar FMA intrinscis
+// to machine instructions.
+// The FMA 132 form can trivially be get by commuting the 2nd and 3rd operands
+// of FMA 213 form.
+// The FMA 231 form can be get only by commuting the 1st operand of 213 or 132
+// forms and is possible only after special analysis of all uses of the initial
+// instruction. Such analysis do not exist yet and thus introducing the 231
+// form of FMA*_Int instructions is done using an optimistic assumption that
+// such analysis will be implemented eventually.
+multiclass fma3s_int_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
+                           string OpStr, string PackTy,
+                           RegisterClass RC, Operand memop> {
+  defm r132 : fma3s_rm_int<opc132, !strconcat(OpStr, "132", PackTy),
+                           memop, RC>;
+  defm r213 : fma3s_rm_int<opc213, !strconcat(OpStr, "213", PackTy),
+                           memop, RC>;
+  defm r231 : fma3s_rm_int<opc231, !strconcat(OpStr, "231", PackTy),
+                           memop, RC>;
 }
 
 multiclass fma3s<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                  string OpStr, Intrinsic IntF32, Intrinsic IntF64,
                  SDNode OpNode> {
-  defm SS : fma3s_forms<opc132, opc213, opc231, OpStr, "ss", "SS", IntF32, OpNode,
-                        FR32, f32, f32mem, ssmem, loadf32, sse_load_f32>;
-  defm SD : fma3s_forms<opc132, opc213, opc231, OpStr, "sd", "PD", IntF64, OpNode,
-                        FR64, f64, f64mem, sdmem, loadf64, sse_load_f64>, VEX_W;
+  defm SS : fma3s_forms<opc132, opc213, opc231, OpStr, "ss", OpNode,
+                        FR32, f32mem>,
+            fma3s_int_forms<opc132, opc213, opc231, OpStr, "ss", VR128, ssmem>;
+  defm SD : fma3s_forms<opc132, opc213, opc231, OpStr, "sd", OpNode,
+                        FR64, f64mem>,
+            fma3s_int_forms<opc132, opc213, opc231, OpStr, "sd", VR128, sdmem>,
+            VEX_W;
 
-// These patterns use the 123 ordering, instead of 213, even though
-// they match the intrinsic to the 213 version of the instruction.
-// This is because src1 is tied to dest, and the scalar intrinsics
-// require the pass-through values to come from the first source
-// operand, not the second.
+  // These patterns use the 123 ordering, instead of 213, even though
+  // they match the intrinsic to the 213 version of the instruction.
+  // This is because src1 is tied to dest, and the scalar intrinsics
+  // require the pass-through values to come from the first source
+  // operand, not the second.
   def : Pat<(IntF32 VR128:$src1, VR128:$src2, VR128:$src3),
             (COPY_TO_REGCLASS
-              (!cast<Instruction>(NAME#"SSr213r")
+              (!cast<Instruction>(NAME#"SSr213r_Int")
                 (COPY_TO_REGCLASS $src1, FR32),
                 (COPY_TO_REGCLASS $src2, FR32),
                 (COPY_TO_REGCLASS $src3, FR32)),
@@ -198,7 +254,7 @@ multiclass fma3s<bits<8> opc132, bits<8> opc213, bits<8> opc231,
 
   def : Pat<(IntF64 VR128:$src1, VR128:$src2, VR128:$src3),
             (COPY_TO_REGCLASS
-              (!cast<Instruction>(NAME#"SDr213r")
+              (!cast<Instruction>(NAME#"SDr213r_Int")
                 (COPY_TO_REGCLASS $src1, FR64),
                 (COPY_TO_REGCLASS $src2, FR64),
                 (COPY_TO_REGCLASS $src3, FR64)),
