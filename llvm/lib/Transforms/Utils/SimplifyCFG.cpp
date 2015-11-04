@@ -14,6 +14,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -72,6 +73,17 @@ SinkCommon("simplifycfg-sink-common", cl::Hidden, cl::init(true),
 static cl::opt<bool> HoistCondStores(
     "simplifycfg-hoist-cond-stores", cl::Hidden, cl::init(true),
     cl::desc("Hoist conditional stores if an unconditional store precedes"));
+
+static cl::opt<bool> MergeCondStores(
+    "simplifycfg-merge-cond-stores", cl::Hidden, cl::init(true),
+    cl::desc("Hoist conditional stores even if an unconditional store does not "
+             "precede - hoist multiple conditional stores into a single "
+             "predicated store"));
+
+static cl::opt<bool> MergeCondStoresAggressively(
+    "simplifycfg-merge-cond-stores-aggressively", cl::Hidden, cl::init(false),
+    cl::desc("When merging conditional stores, do so even if the resultant "
+             "basic blocks are unlikely to be if-converted as a result"));
 
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
 STATISTIC(NumLinearMaps, "Number of switch instructions turned into linear mapping");
@@ -2334,6 +2346,279 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, unsigned BonusInstThreshold) {
   return false;
 }
 
+// If there is only one store in BB1 and BB2, return it, otherwise return
+// nullptr.
+static StoreInst *findUniqueStoreInBlocks(BasicBlock *BB1, BasicBlock *BB2) {
+  StoreInst *S = nullptr;
+  for (auto *BB : {BB1, BB2}) {
+    if (!BB)
+      continue;
+    for (auto &I : *BB)
+      if (auto *SI = dyn_cast<StoreInst>(&I)) {
+        if (S)
+          // Multiple stores seen.
+          return nullptr;
+        else
+          S = SI;
+      }
+  }
+  return S;
+}
+
+static Value *ensureValueAvailableInSuccessor(Value *V, BasicBlock *BB,
+                                              Value *AlternativeV = nullptr) {
+  // PHI is going to be a PHI node that allows the value V that is defined in
+  // BB to be referenced in BB's only successor.
+  //
+  // If AlternativeV is nullptr, the only value we care about in PHI is V. It
+  // doesn't matter to us what the other operand is (it'll never get used). We
+  // could just create a new PHI with an undef incoming value, but that could
+  // increase register pressure if EarlyCSE/InstCombine can't fold it with some
+  // other PHI. So here we directly look for some PHI in BB's successor with V
+  // as an incoming operand. If we find one, we use it, else we create a new
+  // one.
+  //
+  // If AlternativeV is not nullptr, we care about both incoming values in PHI.
+  // PHI must be exactly: phi <ty> [ %BB, %V ], [ %OtherBB, %AlternativeV]
+  // where OtherBB is the single other predecessor of BB's only successor.
+  PHINode *PHI = nullptr;
+  BasicBlock *Succ = BB->getSingleSuccessor();
+  
+  for (auto I = Succ->begin(); isa<PHINode>(I); ++I)
+    if (cast<PHINode>(I)->getIncomingValueForBlock(BB) == V) {
+      PHI = cast<PHINode>(I);
+      if (!AlternativeV)
+        break;
+
+      assert(std::distance(pred_begin(Succ), pred_end(Succ)) == 2);
+      auto PredI = pred_begin(Succ);
+      BasicBlock *OtherPredBB = *PredI == BB ? *++PredI : *PredI;
+      if (PHI->getIncomingValueForBlock(OtherPredBB) == AlternativeV)
+        break;
+      PHI = nullptr;
+    }
+  if (PHI)
+    return PHI;
+
+  PHI = PHINode::Create(V->getType(), 2, "simplifycfg.merge", Succ->begin());
+  PHI->addIncoming(V, BB);
+  for (BasicBlock *PredBB : predecessors(Succ))
+    if (PredBB != BB)
+      PHI->addIncoming(AlternativeV ? AlternativeV : UndefValue::get(V->getType()),
+                       PredBB);
+  return PHI;
+}
+
+static bool mergeConditionalStoreToAddress(BasicBlock *PTB, BasicBlock *PFB,
+                                           BasicBlock *QTB, BasicBlock *QFB,
+                                           BasicBlock *PostBB, Value *Address,
+                                           bool InvertPCond, bool InvertQCond) {
+  auto IsaBitcastOfPointerType = [](const Instruction &I) {
+    return Operator::getOpcode(&I) == Instruction::BitCast &&
+           I.getType()->isPointerTy();
+  };
+
+  // If we're not in aggressive mode, we only optimize if we have some
+  // confidence that by optimizing we'll allow P and/or Q to be if-converted.
+  auto IsWorthwhile = [&](BasicBlock *BB) {
+    if (!BB)
+      return true;
+    // Heuristic: if the block can be if-converted/phi-folded and the
+    // instructions inside are all cheap (arithmetic/GEPs), it's worthwhile to
+    // thread this store.
+    if (BB->size() > PHINodeFoldingThreshold)
+      return false;
+    for (auto &I : *BB)
+      if (!isa<BinaryOperator>(I) && !isa<GetElementPtrInst>(I) &&
+          !isa<StoreInst>(I) && !isa<TerminatorInst>(I) &&
+          !isa<DbgInfoIntrinsic>(I) && !IsaBitcastOfPointerType(I))
+        return false;
+    return true;
+  };
+
+  if (!MergeCondStoresAggressively && (!IsWorthwhile(PTB) ||
+                                       !IsWorthwhile(PFB) ||
+                                       !IsWorthwhile(QTB) ||
+                                       !IsWorthwhile(QFB)))
+    return false;
+
+  // For every pointer, there must be exactly two stores, one coming from
+  // PTB or PFB, and the other from QTB or QFB. We don't support more than one
+  // store (to any address) in PTB,PFB or QTB,QFB.
+  // FIXME: We could relax this restriction with a bit more work and performance
+  // testing.
+  StoreInst *PStore = findUniqueStoreInBlocks(PTB, PFB);
+  StoreInst *QStore = findUniqueStoreInBlocks(QTB, QFB);
+  if (!PStore || !QStore)
+    return false;
+
+  // Now check the stores are compatible.
+  if (!QStore->isUnordered() || !PStore->isUnordered())
+    return false;
+
+  // Check that sinking the store won't cause program behavior changes. Sinking
+  // the store out of the Q blocks won't change any behavior as we're sinking
+  // from a block to its unconditional successor. But we're moving a store from
+  // the P blocks down through the middle block (QBI) and past both QFB and QTB.
+  // So we need to check that there are no aliasing loads or stores in
+  // QBI, QTB and QFB. We also need to check there are no conflicting memory
+  // operations between PStore and the end of its parent block.
+  //
+  // The ideal way to do this is to query AliasAnalysis, but we don't
+  // preserve AA currently so that is dangerous. Be super safe and just
+  // check there are no other memory operations at all.
+  for (auto &I : *QFB->getSinglePredecessor())
+    if (I.mayReadOrWriteMemory())
+      return false;
+  for (auto &I : *QFB)
+    if (&I != QStore && I.mayReadOrWriteMemory())
+      return false;
+  if (QTB)
+    for (auto &I : *QTB)
+      if (&I != QStore && I.mayReadOrWriteMemory())
+        return false;
+  for (auto I = BasicBlock::iterator(PStore), E = PStore->getParent()->end();
+       I != E; ++I)
+    if (&*I != PStore && I->mayReadOrWriteMemory())
+      return false;
+
+  // OK, we're going to sink the stores to PostBB. The store has to be
+  // conditional though, so first create the predicate.
+  Value *PCond = cast<BranchInst>(PFB->getSinglePredecessor()->getTerminator())
+                     ->getCondition();
+  Value *QCond = cast<BranchInst>(QFB->getSinglePredecessor()->getTerminator())
+                     ->getCondition();
+
+  Value *PPHI = ensureValueAvailableInSuccessor(PStore->getValueOperand(),
+                                                PStore->getParent());
+  Value *QPHI = ensureValueAvailableInSuccessor(QStore->getValueOperand(),
+                                                QStore->getParent(), PPHI);
+
+  IRBuilder<> QB(PostBB->getFirstInsertionPt());
+  
+  Value *PPred = PStore->getParent() == PTB ? PCond : QB.CreateNot(PCond);
+  Value *QPred = QStore->getParent() == QTB ? QCond : QB.CreateNot(QCond);
+
+  if (InvertPCond)
+    PPred = QB.CreateNot(PPred);
+  if (InvertQCond)
+    QPred = QB.CreateNot(QPred);
+  Value *CombinedPred = QB.CreateOr(PPred, QPred);
+
+  auto *T = SplitBlockAndInsertIfThen(CombinedPred, QB.GetInsertPoint(), false);
+  QB.SetInsertPoint(T);
+  StoreInst *SI = cast<StoreInst>(QB.CreateStore(QPHI, Address));
+  AAMDNodes AAMD;
+  PStore->getAAMetadata(AAMD, /*Merge=*/false);
+  PStore->getAAMetadata(AAMD, /*Merge=*/true);
+  SI->setAAMetadata(AAMD);
+
+  QStore->eraseFromParent();
+  PStore->eraseFromParent();
+  
+  return true;
+}
+
+static bool mergeConditionalStores(BranchInst *PBI, BranchInst *QBI) {
+  // The intention here is to find diamonds or triangles (see below) where each
+  // conditional block contains a store to the same address. Both of these
+  // stores are conditional, so they can't be unconditionally sunk. But it may
+  // be profitable to speculatively sink the stores into one merged store at the
+  // end, and predicate the merged store on the union of the two conditions of
+  // PBI and QBI.
+  //
+  // This can reduce the number of stores executed if both of the conditions are
+  // true, and can allow the blocks to become small enough to be if-converted.
+  // This optimization will also chain, so that ladders of test-and-set
+  // sequences can be if-converted away.
+  //
+  // We only deal with simple diamonds or triangles:
+  //
+  //     PBI       or      PBI        or a combination of the two
+  //    /   \               | \
+  //   PTB  PFB             |  PFB
+  //    \   /               | /
+  //     QBI                QBI
+  //    /  \                | \
+  //   QTB  QFB             |  QFB
+  //    \  /                | /
+  //    PostBB            PostBB
+  //
+  // We model triangles as a type of diamond with a nullptr "true" block.
+  // Triangles are canonicalized so that the fallthrough edge is represented by
+  // a true condition, as in the diagram above.
+  //  
+  BasicBlock *PTB = PBI->getSuccessor(0);
+  BasicBlock *PFB = PBI->getSuccessor(1);
+  BasicBlock *QTB = QBI->getSuccessor(0);
+  BasicBlock *QFB = QBI->getSuccessor(1);
+  BasicBlock *PostBB = QFB->getSingleSuccessor();
+
+  bool InvertPCond = false, InvertQCond = false;
+  // Canonicalize fallthroughs to the true branches.
+  if (PFB == QBI->getParent()) {
+    std::swap(PFB, PTB);
+    InvertPCond = true;
+  }
+  if (QFB == PostBB) {
+    std::swap(QFB, QTB);
+    InvertQCond = true;
+  }
+
+  // From this point on we can assume PTB or QTB may be fallthroughs but PFB
+  // and QFB may not. Model fallthroughs as a nullptr block.
+  if (PTB == QBI->getParent())
+    PTB = nullptr;
+  if (QTB == PostBB)
+    QTB = nullptr;
+
+  // Legality bailouts. We must have at least the non-fallthrough blocks and
+  // the post-dominating block, and the non-fallthroughs must only have one
+  // predecessor.
+  auto HasOnePredAndOneSucc = [](BasicBlock *BB, BasicBlock *P, BasicBlock *S) {
+    return BB->getSinglePredecessor() == P &&
+           BB->getSingleSuccessor() == S;
+  };
+  if (!PostBB ||
+      !HasOnePredAndOneSucc(PFB, PBI->getParent(), QBI->getParent()) ||
+      !HasOnePredAndOneSucc(QFB, QBI->getParent(), PostBB))
+    return false;
+  if ((PTB && !HasOnePredAndOneSucc(PTB, PBI->getParent(), QBI->getParent())) ||
+      (QTB && !HasOnePredAndOneSucc(QTB, QBI->getParent(), PostBB)))
+    return false;
+  if (PostBB->getNumUses() != 2 || QBI->getParent()->getNumUses() != 2)
+    return false;
+
+  // OK, this is a sequence of two diamonds or triangles.
+  // Check if there are stores in PTB or PFB that are repeated in QTB or QFB.
+  SmallPtrSet<Value *,4> PStoreAddresses, QStoreAddresses;
+  for (auto *BB : {PTB, PFB}) {
+    if (!BB)
+      continue;
+    for (auto &I : *BB)
+      if (StoreInst *SI = dyn_cast<StoreInst>(&I))
+        PStoreAddresses.insert(SI->getPointerOperand());
+  }
+  for (auto *BB : {QTB, QFB}) {
+    if (!BB)
+      continue;
+    for (auto &I : *BB)
+      if (StoreInst *SI = dyn_cast<StoreInst>(&I))
+        QStoreAddresses.insert(SI->getPointerOperand());
+  }
+  
+  set_intersect(PStoreAddresses, QStoreAddresses);
+  // set_intersect mutates PStoreAddresses in place. Rename it here to make it
+  // clear what it contains.
+  auto &CommonAddresses = PStoreAddresses;
+
+  bool Changed = false;
+  for (auto *Address : CommonAddresses)
+    Changed |= mergeConditionalStoreToAddress(
+        PTB, PFB, QTB, QFB, PostBB, Address, InvertPCond, InvertQCond);
+  return Changed;
+}
+
 /// If we have a conditional branch as a predecessor of another block,
 /// this function tries to simplify it.  We know
 /// that PBI and BI are both conditional branches, and BI is in one of the
@@ -2404,6 +2689,12 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     RecursivelyDeleteTriviallyDeadInstructions(OldCond);
     return true;  // Nuke the branch on constant.
   }
+
+  // If both branches are conditional and both contain stores to the same
+  // address, remove the stores from the conditionals and create a conditional
+  // merged store at the end.
+  if (MergeCondStores && mergeConditionalStores(PBI, BI))
+    return true;
 
   // If this is a conditional branch in an empty block, and if any
   // predecessors are a conditional branch to one of our destinations,
@@ -2979,7 +3270,7 @@ bool SimplifyCFGOpt::SimplifyCleanupReturn(CleanupReturnInst *RI) {
                               IE = UnwindDest->getFirstNonPHI()->getIterator();
          I != IE; ++I) {
       PHINode *DestPN = cast<PHINode>(I);
- 
+
       int Idx = DestPN->getBasicBlockIndex(BB);
       // Since BB unwinds to UnwindDest, it has to be in the PHI node.
       assert(Idx != -1);
@@ -3004,7 +3295,7 @@ bool SimplifyCFGOpt::SimplifyCleanupReturn(CleanupReturnInst *RI) {
         // If the incoming value was a PHI node in the cleanup pad we are
         // removing, we need to merge that PHI node's incoming values into
         // DestPN.
-        for (unsigned SrcIdx = 0, SrcE = SrcPN->getNumIncomingValues(); 
+        for (unsigned SrcIdx = 0, SrcE = SrcPN->getNumIncomingValues();
               SrcIdx != SrcE; ++SrcIdx) {
           DestPN->addIncoming(SrcPN->getIncomingValue(SrcIdx),
                               SrcPN->getIncomingBlock(SrcIdx));
@@ -4122,7 +4413,7 @@ static void reuseTableCompare(User *PhiUser, BasicBlock *PhiBlock,
     assert((CaseConst == TrueConst || CaseConst == FalseConst) &&
            "Expect true or false as compare result.");
   }
- 
+  
   // Check if the branch instruction dominates the phi node. It's a simple
   // dominance check, but sufficient for our needs.
   // Although this check is invariant in the calling loops, it's better to do it
@@ -4587,6 +4878,16 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
   return false;
 }
 
+static BasicBlock *allPredecessorsComeFromSameSource(BasicBlock *BB) {
+  BasicBlock *PredPred = nullptr;
+  for (auto *P : predecessors(BB)) {
+    BasicBlock *PPred = P->getSinglePredecessor();
+    if (!PPred || (PredPred && PredPred != PPred))
+      return nullptr;
+    PredPred = PPred;
+  }
+  return PredPred;
+}
 
 bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   BasicBlock *BB = BI->getParent();
@@ -4670,6 +4971,14 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
         if (SimplifyCondBranchToCondBranch(PBI, BI, DL))
           return SimplifyCFG(BB, TTI, BonusInstThreshold, AC) | true;
 
+  // Look for diamond patterns.
+  if (MergeCondStores)
+    if (BasicBlock *PrevBB = allPredecessorsComeFromSameSource(BB))
+      if (BranchInst *PBI = dyn_cast<BranchInst>(PrevBB->getTerminator()))
+        if (PBI != BI && PBI->isConditional())
+          if (mergeConditionalStores(PBI, BI))
+            return SimplifyCFG(BB, TTI, BonusInstThreshold, AC) | true;
+  
   return false;
 }
 
