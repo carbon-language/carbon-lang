@@ -26,7 +26,9 @@ function(llvm_update_compile_flags name)
 
   # LLVM_REQUIRES_RTTI is an internal flag that individual
   # targets can use to force RTTI
+  set(LLVM_CONFIG_HAS_RTTI YES CACHE INTERNAL "")
   if(NOT (LLVM_REQUIRES_RTTI OR LLVM_ENABLE_RTTI))
+    set(LLVM_CONFIG_HAS_RTTI NO CACHE INTERNAL "")
     list(APPEND LLVM_COMPILE_DEFINITIONS GTEST_HAS_RTTI=0)
     if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
       list(APPEND LLVM_COMPILE_FLAGS "-fno-rtti")

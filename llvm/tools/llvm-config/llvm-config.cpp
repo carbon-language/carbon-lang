@@ -158,6 +158,7 @@ Options:\n\
   --build-mode      Print build mode of LLVM tree (e.g. Debug or Release).\n\
   --assertion-mode  Print assertion mode of LLVM tree (ON or OFF).\n\
   --build-system    Print the build system used to build LLVM (autoconf or cmake).\n\
+  --has-rtti        Print whether or not LLVM was built with rtti (YES or NO).\n\
 Typical components:\n\
   all               All LLVM libraries (default).\n\
   engine            Either a native JIT or a bitcode interpreter.\n";
@@ -326,6 +327,8 @@ int main(int argc, char **argv) {
 #endif
       } else if (Arg == "--build-system") {
         OS << LLVM_BUILD_SYSTEM << '\n';
+      } else if (Arg == "--has-rtti") {
+        OS << LLVM_HAS_RTTI << '\n';
       } else if (Arg == "--obj-root") {
         OS << ActivePrefix << '\n';
       } else if (Arg == "--src-root") {
