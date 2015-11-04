@@ -59,12 +59,11 @@ struct StoreToLoadForwardingCandidate {
     Value *LoadPtr = Load->getPointerOperand();
     Value *StorePtr = Store->getPointerOperand();
     Type *LoadPtrType = LoadPtr->getType();
-    Type *StorePtrType = StorePtr->getType();
     Type *LoadType = LoadPtrType->getPointerElementType();
 
     assert(LoadPtrType->getPointerAddressSpace() ==
-               StorePtrType->getPointerAddressSpace() &&
-           LoadType == StorePtrType->getPointerElementType() &&
+               StorePtr->getType()->getPointerAddressSpace() &&
+           LoadType == StorePtr->getType()->getPointerElementType() &&
            "Should be a known dependence");
 
     auto &DL = Load->getParent()->getModule()->getDataLayout();
