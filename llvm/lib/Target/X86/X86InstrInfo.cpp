@@ -5037,9 +5037,9 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
   MachineInstr *NewMI = nullptr;
 
   // Attempt to fold any custom cases we have.
-  if (NewMI =
+  if (MachineInstr *CustomMI =
           foldMemoryOperandCustom(MF, MI, OpNum, MOs, InsertPt, Size, Align))
-    return NewMI;
+    return CustomMI;
 
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
