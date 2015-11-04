@@ -69,15 +69,11 @@ TEST(CompileOnDemandLayerTest, FindSymbol) {
 
   typedef decltype(MockBaseLayer) MockBaseLayerT;
   DummyCallbackManager CallbackMgr;
-  auto StubsMgrBuilder =
-    []() {
-      return llvm::make_unique<DummyStubsManager>();
-    };
 
-  llvm::orc::CompileOnDemandLayer<MockBaseLayerT>
-    COD(MockBaseLayer,
-        [](Function &F) { std::set<Function*> S; S.insert(&F); return S; },
-        CallbackMgr, StubsMgrBuilder, true);
+  llvm::orc::CompileOnDemandLayer<MockBaseLayerT> COD(
+      MockBaseLayer, [](Function &F) { return std::set<Function *>{&F}; },
+      CallbackMgr, [] { return llvm::make_unique<DummyStubsManager>(); }, true);
+
   auto Sym = COD.findSymbol("foo", true);
 
   EXPECT_TRUE(!!Sym)
