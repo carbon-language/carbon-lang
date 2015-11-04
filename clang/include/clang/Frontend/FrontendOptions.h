@@ -92,7 +92,7 @@ class FrontendInputFile {
   bool IsSystem;
 
 public:
-  FrontendInputFile() : Buffer(nullptr), Kind(IK_None) { }
+  FrontendInputFile() : Buffer(nullptr), Kind(IK_None), IsSystem(false) { }
   FrontendInputFile(StringRef File, InputKind Kind, bool IsSystem = false)
     : File(File.str()), Buffer(nullptr), Kind(Kind), IsSystem(IsSystem) { }
   FrontendInputFile(llvm::MemoryBuffer *buffer, InputKind Kind,
