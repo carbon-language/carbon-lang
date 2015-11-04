@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -fblocks -analyzer-store=region  -analyzer-checker=alpha.osx.cocoa.NonLocalizedStringChecker -analyzer-checker=alpha.osx.cocoa.EmptyLocalizationContextChecker -verify  -analyzer-config AggressiveReport=true %s
+// RUN: %clang_cc1 -analyze -fblocks -analyzer-store=region  -analyzer-checker=optin.osx.cocoa.localizability.NonLocalizedStringChecker -analyzer-checker=optin.osx.cocoa.localizability.EmptyLocalizationContextChecker -verify  -analyzer-config AggressiveReport=true %s
 
 // These declarations were reduced using Delta-Debugging from Foundation.h
 // on Mac OS X.

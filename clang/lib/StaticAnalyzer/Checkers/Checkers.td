@@ -13,12 +13,31 @@ include "clang/StaticAnalyzer/Checkers/CheckerBase.td"
 // Packages.
 //===----------------------------------------------------------------------===//
 
+// The Alpha package is for checkers that have too many false positives to be
+// turned on by default. The hierarchy under Alpha should be organized in the
+// hierarchy checkers would have had if they were truly at the top level.
+// (For example, a Cocoa-specific checker that is alpha should be in
+// alpha.osx.cocoa).
 def Alpha : Package<"alpha">;
 
 def Core : Package<"core">;
 def CoreBuiltin : Package<"builtin">, InPackage<Core>;
 def CoreUninitialized  : Package<"uninitialized">, InPackage<Core>;
 def CoreAlpha : Package<"core">, InPackage<Alpha>, Hidden;
+
+// The OptIn package is for checkers that are not alpha and that would normally
+// be on by default but where the driver does not have enough information to
+// determine when they are applicable. For example, localizability checkers fit
+// this criterion because the driver cannot determine whether a project is
+// localized or not -- this is best determined at the IDE or build-system level.
+//
+// The checker hierarchy under OptIn should mirror that in Alpha: checkers
+// should be organized as if they were at the top level.
+//
+// Note: OptIn is *not* intended for checkers that are too noisy to be on by
+// default. Such checkers belong in the alpha package.
+def OptIn : Package<"optin">;
+
 def Nullability : Package<"nullability">;
 
 def Cplusplus : Package<"cplusplus">;
@@ -39,10 +58,17 @@ def CStringAlpha : Package<"cstring">, InPackage<UnixAlpha>, Hidden;
 
 def OSX : Package<"osx">;
 def OSXAlpha : Package<"osx">, InPackage<Alpha>, Hidden;
+def OSXOptIn : Package<"osx">, InPackage<OptIn>;
+
 def Cocoa : Package<"cocoa">, InPackage<OSX>;
 def CocoaAlpha : Package<"cocoa">, InPackage<OSXAlpha>, Hidden;
+def CocoaOptIn : Package<"cocoa">, InPackage<OSXOptIn>;
+
 def CoreFoundation : Package<"coreFoundation">, InPackage<OSX>;
 def Containers : Package<"containers">, InPackage<CoreFoundation>;
+
+def LocalizabilityAlpha : Package<"localizability">, InPackage<CocoaAlpha>;
+def LocalizabilityOptIn : Package<"localizability">, InPackage<CocoaOptIn>;
 
 def LLVM : Package<"llvm">;
 def Debug : Package<"debug">;
@@ -485,18 +511,6 @@ def DirectIvarAssignmentForAnnotatedFunctions : Checker<"DirectIvarAssignmentFor
   HelpText<"Check for direct assignments to instance variables in the methods annotated with objc_no_direct_instance_variable_assignment">,
   DescFile<"DirectIvarAssignment.cpp">;
 
-def NonLocalizedStringChecker : Checker<"NonLocalizedStringChecker">,
-  HelpText<"Warns about uses of non-localized NSStrings passed to UI methods expecting localized NSStrings">,
-  DescFile<"LocalizationChecker.cpp">;
-
-def EmptyLocalizationContextChecker : Checker<"EmptyLocalizationContextChecker">,
-  HelpText<"Check that NSLocalizedString macros include a comment for context">,
-  DescFile<"LocalizationChecker.cpp">;
-
-def PluralMisuseChecker : Checker<"PluralMisuseChecker">,
-  HelpText<"Warns against using one vs. many plural pattern in code when generating localized strings.">,
-  DescFile<"LocalizationChecker.cpp">;
-
 } // end "alpha.osx.cocoa"
 
 let ParentPackage = CoreFoundation in {
@@ -524,6 +538,23 @@ def ObjCContainersChecker : Checker<"OutOfBounds">,
   DescFile<"ObjCContainersChecker.cpp">;
 
 }
+
+let ParentPackage = LocalizabilityOptIn in {
+def NonLocalizedStringChecker : Checker<"NonLocalizedStringChecker">,
+  HelpText<"Warns about uses of non-localized NSStrings passed to UI methods expecting localized NSStrings">,
+  DescFile<"LocalizationChecker.cpp">;
+
+def EmptyLocalizationContextChecker : Checker<"EmptyLocalizationContextChecker">,
+  HelpText<"Check that NSLocalizedString macros include a comment for context">,
+  DescFile<"LocalizationChecker.cpp">;
+}
+
+let ParentPackage = LocalizabilityAlpha in {
+def PluralMisuseChecker : Checker<"PluralMisuseChecker">,
+  HelpText<"Warns against using one vs. many plural pattern in code when generating localized strings.">,
+  DescFile<"LocalizationChecker.cpp">;
+}
+
 //===----------------------------------------------------------------------===//
 // Checkers for LLVM development.
 //===----------------------------------------------------------------------===//

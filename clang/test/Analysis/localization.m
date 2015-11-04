@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -fblocks -analyzer-store=region -analyzer-checker=alpha.osx.cocoa.NonLocalizedStringChecker -analyzer-checker=alpha.osx.cocoa.PluralMisuseChecker -verify  %s
+// RUN: %clang_cc1 -analyze -fblocks -analyzer-store=region -analyzer-checker=optin.osx.cocoa.localizability.NonLocalizedStringChecker -analyzer-checker=alpha.osx.cocoa.localizability.PluralMisuseChecker -verify  %s
 
 // The larger set of tests in located in localization.m. These are tests
 // specific for non-aggressive reporting.
