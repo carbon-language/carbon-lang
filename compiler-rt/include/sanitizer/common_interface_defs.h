@@ -105,6 +105,12 @@ extern "C" {
   int __sanitizer_verify_contiguous_container(const void *beg, const void *mid,
                                               const void *end);
 
+  // Similar to __sanitizer_verify_contiguous_container but returns the address
+  // of the first improperly poisoned byte otherwise. Returns null if the area
+  // is poisoned properly.
+  const void *__sanitizer_contiguous_container_find_bad_address(
+      const void *beg, const void *mid, const void *end);
+
   // Print the stack trace leading to this call. Useful for debugging user code.
   void __sanitizer_print_stack_trace();
 

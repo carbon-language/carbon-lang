@@ -53,6 +53,9 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE
   int __sanitizer_verify_contiguous_container(const void *beg, const void *mid,
                                               const void *end);
-}  // extern "C"
+  SANITIZER_INTERFACE_ATTRIBUTE
+  const void *__sanitizer_contiguous_container_find_bad_address(
+      const void *beg, const void *mid, const void *end);
+  } // extern "C"
 
 #endif  // SANITIZER_INTERFACE_INTERNAL_H

@@ -375,10 +375,10 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
   }
 }
 
-int __sanitizer_verify_contiguous_container(const void *beg_p,
-                                            const void *mid_p,
-                                            const void *end_p) {
-  if (!flags()->detect_container_overflow) return 1;
+const void *__sanitizer_contiguous_container_find_bad_address(
+    const void *beg_p, const void *mid_p, const void *end_p) {
+  if (!flags()->detect_container_overflow)
+    return nullptr;
   uptr beg = reinterpret_cast<uptr>(beg_p);
   uptr end = reinterpret_cast<uptr>(end_p);
   uptr mid = reinterpret_cast<uptr>(mid_p);
@@ -395,17 +395,24 @@ int __sanitizer_verify_contiguous_container(const void *beg_p,
   uptr r3_end = end;
   for (uptr i = r1_beg; i < r1_end; i++)
     if (AddressIsPoisoned(i))
-      return 0;
+      return reinterpret_cast<const void *>(i);
   for (uptr i = r2_beg; i < mid; i++)
     if (AddressIsPoisoned(i))
-      return 0;
+      return reinterpret_cast<const void *>(i);
   for (uptr i = mid; i < r2_end; i++)
     if (!AddressIsPoisoned(i))
-      return 0;
+      return reinterpret_cast<const void *>(i);
   for (uptr i = r3_beg; i < r3_end; i++)
     if (!AddressIsPoisoned(i))
-      return 0;
-  return 1;
+      return reinterpret_cast<const void *>(i);
+  return nullptr;
+}
+
+int __sanitizer_verify_contiguous_container(const void *beg_p,
+                                            const void *mid_p,
+                                            const void *end_p) {
+  return __sanitizer_contiguous_container_find_bad_address(beg_p, mid_p,
+                                                           end_p) == nullptr;
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
