@@ -5119,6 +5119,9 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getDeclSpec().isConstexprSpecified())
     Diag(D.getDeclSpec().getConstexprSpecLoc(), diag::err_invalid_constexpr)
       << 1;
+  if (D.getDeclSpec().isConceptSpecified())
+    Diag(D.getDeclSpec().getConceptSpecLoc(),
+         diag::err_concept_wrong_decl_kind);
 
   if (D.getName().Kind != UnqualifiedId::IK_Identifier) {
     Diag(D.getName().StartLocation, diag::err_typedef_not_identifier)
@@ -10277,6 +10280,8 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (DS.isConstexprSpecified())
     Diag(DS.getConstexprSpecLoc(), diag::err_invalid_constexpr)
       << 0;
+  if (DS.isConceptSpecified())
+    Diag(DS.getConceptSpecLoc(), diag::err_concept_wrong_decl_kind);
 
   DiagnoseFunctionSpecifiers(DS);
 

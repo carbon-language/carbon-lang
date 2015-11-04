@@ -37,5 +37,7 @@ concept enum CE1 {}; // expected-error {{'concept' can only appear on the defini
 template <typename T> concept class TCC1 {}; // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
 template <typename T> concept struct TCS1 {}; // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
 template <typename T> concept union TCU1 {}; // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
+typedef concept int CI; // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
+void fpc(concept int i) {} // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
 
 concept bool; // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
