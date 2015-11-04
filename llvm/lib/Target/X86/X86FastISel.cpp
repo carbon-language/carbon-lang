@@ -2817,10 +2817,12 @@ static unsigned computeBytesPoppedByCallee(const X86Subtarget *Subtarget,
   if (CC == CallingConv::Fast || CC == CallingConv::GHC ||
       CC == CallingConv::HiPE)
     return 0;
-  if (CS && !CS->paramHasAttr(1, Attribute::StructRet))
-    return 0;
-  if (CS && CS->paramHasAttr(1, Attribute::InReg))
-    return 0;
+
+  if (CS)
+    if (CS->arg_empty() || !CS->paramHasAttr(1, Attribute::StructRet) ||
+        CS->paramHasAttr(1, Attribute::InReg))
+      return 0;
+
   return 4;
 }
 

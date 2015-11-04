@@ -331,6 +331,8 @@ void CallInst::addDereferenceableOrNullAttr(unsigned i, uint64_t Bytes) {
 }
 
 bool CallInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
+  assert(i < (getNumArgOperands() + 1) && "Param index out of bounds!");
+
   if (AttributeList.hasAttribute(i, A))
     return true;
   if (const Function *F = getCalledFunction())
@@ -575,6 +577,8 @@ bool InvokeInst::hasFnAttrImpl(Attribute::AttrKind A) const {
 }
 
 bool InvokeInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
+  assert(i < (getNumArgOperands() + 1) && "Param index out of bounds!");
+
   if (AttributeList.hasAttribute(i, A))
     return true;
   if (const Function *F = getCalledFunction())
