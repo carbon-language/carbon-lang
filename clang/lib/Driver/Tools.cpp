@@ -6244,7 +6244,7 @@ StringRef arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch,
     // FIXME: horrible hack to get around the fact that Cortex-A7 is only an
     // armv7k triple if it's actually been specified via "-arch armv7k".
     ArchKind = (Arch == "armv7k" || Arch == "thumbv7k")
-                          ? llvm::ARM::AK_ARMV7K
+                          ? (unsigned)llvm::ARM::AK_ARMV7K
                           : llvm::ARM::parseCPUArch(CPU);
   }
   if (ArchKind == llvm::ARM::AK_INVALID)
