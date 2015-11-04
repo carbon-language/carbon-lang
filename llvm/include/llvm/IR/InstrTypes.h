@@ -1120,6 +1120,16 @@ struct OperandBundleUse {
   OperandBundleUse() {}
   explicit OperandBundleUse(StringRef Tag, ArrayRef<Use> Inputs)
       : Tag(Tag), Inputs(Inputs) {}
+
+  /// \brief Return true if all the operands in this operand bundle have the
+  /// attribute A.
+  ///
+  /// Currently there is no way to have attributes on operand bundles differ on
+  /// a per operand granularity.
+  bool operandsHaveAttr(Attribute::AttrKind A) const {
+    // Conservative answer:  no operands have any attributes.
+    return false;
+  };
 };
 
 /// \brief A container for an operand bundle being viewed as a set of values
@@ -1252,6 +1262,18 @@ public:
     }
 
     return None;
+  }
+
+  /// \brief Return the operand bundle for the operand at index OpIdx.
+  ///
+  /// It is an error to call this with an OpIdx that does not correspond to an
+  /// bundle operand.
+  OperandBundleUse getOperandBundleForOperand(unsigned OpIdx) const {
+    for (auto &BOI : bundle_op_infos())
+      if (BOI.Begin <= OpIdx && OpIdx < BOI.End)
+        return operandBundleFromBundleOpInfo(BOI);
+
+    llvm_unreachable("Did not find operand bundle for operand!");
   }
 
   /// \brief Return true if this operand bundle user has operand bundles that
