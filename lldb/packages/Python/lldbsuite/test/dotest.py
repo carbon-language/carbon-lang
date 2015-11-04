@@ -1147,7 +1147,7 @@ def setupSysPath():
         # If our lldb supports the -P option, use it to find the python path:
         init_in_python_dir = os.path.join('lldb', '__init__.py')
 
-        lldb_dash_p_result = subprocess.check_output([lldbtest_config.lldbExec, "-P"], stderr=subprocess.STDOUT)
+        lldb_dash_p_result = subprocess.check_output([lldbtest_config.lldbExec, "-P"], stderr=subprocess.STDOUT, universal_newlines=True)
 
         if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")) \
 							  and not lldb_dash_p_result.startswith("Traceback"):
