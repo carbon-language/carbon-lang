@@ -406,7 +406,7 @@ protected:
     lldb::SearchFilterSP
     DoCopyForBreakpoint (Breakpoint &breakpoint) override;
 
-private:
+protected:
     FileSpecList m_module_spec_list;
 };
 
@@ -462,7 +462,6 @@ protected:
     DoCopyForBreakpoint (Breakpoint &breakpoint) override;
 
 private:
-    FileSpecList m_module_spec_list;
     FileSpecList m_cu_spec_list;
 };
 
