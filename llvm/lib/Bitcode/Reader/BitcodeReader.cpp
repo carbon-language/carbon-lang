@@ -1749,7 +1749,10 @@ ErrorOr<Value *> BitcodeReader::recordValue(SmallVectorImpl<uint64_t> &Record,
     return error("Invalid record");
   Value *V = ValueList[ValueID];
 
-  V->setName(StringRef(ValueName.data(), ValueName.size()));
+  StringRef NameStr(ValueName.data(), ValueName.size());
+  if (NameStr.find_first_of(0) != StringRef::npos)
+    return error("Invalid value name");
+  V->setName(NameStr);
   auto *GO = dyn_cast<GlobalObject>(V);
   if (GO) {
     if (GO->getComdat() == reinterpret_cast<Comdat *>(1)) {

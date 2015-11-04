@@ -212,3 +212,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-no-function-block.bc 2>&1 | 
 RUN:   FileCheck --check-prefix=NO-FUNCTION-BLOCK %s
 
 NO-FUNCTION-BLOCK: Trying to materialize functions before seeing function blocks
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-name-with-0-byte.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=NAME-WITH-0 %s
+
+NAME-WITH-0: Invalid value name
