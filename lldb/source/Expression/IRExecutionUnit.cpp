@@ -50,10 +50,12 @@ IRExecutionUnit::WriteNow (const uint8_t *bytes,
                            size_t size,
                            Error &error)
 {
+    const bool zero_memory = false;
     lldb::addr_t allocation_process_addr = Malloc (size,
                                                    8,
                                                    lldb::ePermissionsWritable | lldb::ePermissionsReadable,
                                                    eAllocationPolicyMirror,
+                                                   zero_memory,
                                                    error);
 
     if (!error.Success())
@@ -819,10 +821,12 @@ IRExecutionUnit::CommitAllocations (lldb::ProcessSP &process_sp)
             err.Clear();
             break;
         default:
+            const bool zero_memory = false;
             record.m_process_address = Malloc (record.m_size,
                                                record.m_alignment,
                                                record.m_permissions,
                                                eAllocationPolicyProcessOnly,
+                                               zero_memory,
                                                err);
             break;
         }

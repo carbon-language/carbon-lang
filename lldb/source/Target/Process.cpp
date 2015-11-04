@@ -2967,6 +2967,18 @@ Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
 #endif
 }
 
+addr_t
+Process::CallocateMemory(size_t size, uint32_t permissions, Error &error)
+{
+    addr_t return_addr = AllocateMemory(size, permissions, error);
+    if (error.Success())
+    {
+        std::string buffer(size, 0);
+        WriteMemory(return_addr, buffer.c_str(), size, error);
+    }
+    return return_addr;
+}
+
 bool
 Process::CanJIT ()
 {

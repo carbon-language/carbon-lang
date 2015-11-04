@@ -302,9 +302,14 @@ LLVMUserExpression::PrepareToExecuteJITExpression(Stream &error_stream, Executio
             IRMemoryMap::AllocationPolicy policy =
                 m_can_interpret ? IRMemoryMap::eAllocationPolicyHostOnly : IRMemoryMap::eAllocationPolicyMirror;
 
-            m_materialized_address = m_execution_unit_sp->Malloc(
-                m_materializer_ap->GetStructByteSize(), m_materializer_ap->GetStructAlignment(),
-                lldb::ePermissionsReadable | lldb::ePermissionsWritable, policy, alloc_error);
+            const bool zero_memory = false;
+
+            m_materialized_address = m_execution_unit_sp->Malloc(m_materializer_ap->GetStructByteSize(), 
+                                                                 m_materializer_ap->GetStructAlignment(),
+                                                                 lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
+                                                                 policy,
+                                                                 zero_memory, 
+                                                                 alloc_error);
 
             if (!alloc_error.Success())
             {
@@ -321,9 +326,14 @@ LLVMUserExpression::PrepareToExecuteJITExpression(Stream &error_stream, Executio
 
             const size_t stack_frame_size = 512 * 1024;
 
-            m_stack_frame_bottom = m_execution_unit_sp->Malloc(stack_frame_size, 8,
+            const bool zero_memory = false;
+
+            m_stack_frame_bottom = m_execution_unit_sp->Malloc(stack_frame_size, 
+                                                               8,
                                                                lldb::ePermissionsReadable | lldb::ePermissionsWritable,
-                                                               IRMemoryMap::eAllocationPolicyHostOnly, alloc_error);
+                                                               IRMemoryMap::eAllocationPolicyHostOnly, 
+                                                               zero_memory,
+                                                               alloc_error);
 
             m_stack_frame_top = m_stack_frame_bottom + stack_frame_size;
 

@@ -87,11 +87,13 @@ public:
         // Allocate a spare memory area to store the persistent variable's contents.
         
         Error allocate_error;
+        const bool zero_memory = false;
         
         lldb::addr_t mem = map.Malloc(m_persistent_variable_sp->GetByteSize(),
                                       8,
                                       lldb::ePermissionsReadable | lldb::ePermissionsWritable,
                                       IRMemoryMap::eAllocationPolicyMirror,
+                                      zero_memory,
                                       allocate_error);
         
         if (!allocate_error.Success())
@@ -552,8 +554,15 @@ public:
                     byte_align = 1;
                 
                 Error alloc_error;
+                const bool zero_memory = false;
+
+                m_temporary_allocation = map.Malloc(data.GetByteSize(),
+                                                    byte_align,
+                                                    lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                    IRMemoryMap::eAllocationPolicyMirror,
+                                                    zero_memory,
+                                                    alloc_error);
                 
-                m_temporary_allocation = map.Malloc(data.GetByteSize(), byte_align, lldb::ePermissionsReadable | lldb::ePermissionsWritable, IRMemoryMap::eAllocationPolicyMirror, alloc_error);
                 m_temporary_allocation_size = data.GetByteSize();
                 
                 m_original_data.reset(new DataBufferHeap(data.GetDataStart(), data.GetByteSize()));
@@ -817,8 +826,14 @@ public:
                 byte_align = 1;
             
             Error alloc_error;
-            
-            m_temporary_allocation = map.Malloc(byte_size, byte_align, lldb::ePermissionsReadable | lldb::ePermissionsWritable, IRMemoryMap::eAllocationPolicyMirror, alloc_error);
+            const bool zero_memory = true;
+
+            m_temporary_allocation = map.Malloc(byte_size,
+                                                byte_align,
+                                                lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                IRMemoryMap::eAllocationPolicyMirror,
+                                                zero_memory,
+                                                alloc_error);
             m_temporary_allocation_size = byte_size;
             
             if (!alloc_error.Success())

@@ -50,7 +50,12 @@ public:
         eAllocationPolicyProcessOnly            ///< The intent is that this allocation exist only in the process.
     };
 
-    lldb::addr_t Malloc (size_t size, uint8_t alignment, uint32_t permissions, AllocationPolicy policy, Error &error);
+    lldb::addr_t Malloc (size_t size,
+                         uint8_t alignment,
+                         uint32_t permissions,
+                         AllocationPolicy policy,
+                         bool zero_memory,
+                         Error &error);
     void Leak (lldb::addr_t process_address, Error &error);
     void Free (lldb::addr_t process_address, Error &error);
     
@@ -124,7 +129,7 @@ private:
     typedef std::map<lldb::addr_t, Allocation>  AllocationMap;
     AllocationMap                               m_allocations;
         
-    lldb::addr_t FindSpace (size_t size);
+    lldb::addr_t FindSpace (size_t size, bool zero_memory = false);
     bool ContainsHostOnlyAllocations ();
     AllocationMap::iterator FindAllocation (lldb::addr_t addr, size_t size);
 
