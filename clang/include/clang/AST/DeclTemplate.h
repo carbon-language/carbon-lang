@@ -25,6 +25,7 @@
 
 namespace clang {
 
+enum BuiltinTemplateKind : int;
 class TemplateParameterList;
 class TemplateDecl;
 class RedeclarableTemplateDecl;
@@ -1488,6 +1489,35 @@ public:
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
   friend TrailingObjects;
+};
+
+/// \brief Represents the builtin template declaration which is used to
+/// implement __make_integer_seq.  It serves no real purpose beyond existing as
+/// a place to hold template parameters.
+class BuiltinTemplateDecl : public TemplateDecl {
+  void anchor() override;
+
+  BuiltinTemplateDecl(const ASTContext &C, DeclContext *DC,
+                      DeclarationName Name, BuiltinTemplateKind BTK);
+
+  BuiltinTemplateKind BTK;
+
+public:
+  // Implement isa/cast/dyncast support
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == BuiltinTemplate; }
+
+  static BuiltinTemplateDecl *Create(const ASTContext &C, DeclContext *DC,
+                                     DeclarationName Name,
+                                     BuiltinTemplateKind BTK) {
+    return new (C, DC) BuiltinTemplateDecl(C, DC, Name, BTK);
+  }
+
+  SourceRange getSourceRange() const override LLVM_READONLY {
+    return SourceRange();
+  }
+
+  BuiltinTemplateKind getBuiltinTemplateKind() const { return BTK; }
 };
 
 /// \brief Represents a class template specialization, which refers to

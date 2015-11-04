@@ -59,6 +59,7 @@ def Named : Decl<1>;
       def VarTemplate : DDecl<RedeclarableTemplate>;
       def TypeAliasTemplate : DDecl<RedeclarableTemplate>;
     def TemplateTemplateParm : DDecl<Template>;
+    def BuiltinTemplate : DDecl<Template>;
   def Using : DDecl<Named>;
   def UsingShadow : DDecl<Named>;
   def ObjCMethod : DDecl<Named>, DeclContext;

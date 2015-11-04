@@ -982,13 +982,16 @@ namespace clang {
 
       /// \brief The extern "C" context.
       PREDEF_DECL_EXTERN_C_CONTEXT_ID = 12,
+
+      /// \brief The internal '__make_integer_seq' template.
+      PREDEF_DECL_MAKE_INTEGER_SEQ_ID = 13,
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 13;
+    const unsigned int NUM_PREDEF_DECL_IDS = 14;
 
     /// \brief Record code for a list of local redeclarations of a declaration.
     const unsigned int LOCAL_REDECLARATIONS = 50;

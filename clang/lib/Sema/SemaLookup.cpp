@@ -627,6 +627,11 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
         R.addDecl(S.getASTContext().getFloat128StubType());
         return true;
       }
+      if (S.getLangOpts().CPlusPlus && NameKind == Sema::LookupOrdinaryName &&
+          II == S.getASTContext().getMakeIntegerSeqName()) {
+        R.addDecl(S.getASTContext().getMakeIntegerSeqDecl());
+        return true;
+      }
 
       // If this is a builtin on this (or all) targets, create the decl.
       if (unsigned BuiltinID = II->getBuiltinID()) {

@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
 #include <memory>
@@ -1191,3 +1192,69 @@ VarTemplatePartialSpecializationDecl::CreateDeserialized(ASTContext &C,
                                                          unsigned ID) {
   return new (C, ID) VarTemplatePartialSpecializationDecl(C);
 }
+
+static TemplateParameterList *
+createMakeIntegerSeqParameterList(const ASTContext &C, DeclContext *DC) {
+  // typename T
+  auto *T = TemplateTypeParmDecl::Create(
+      C, DC, SourceLocation(), SourceLocation(), /*Depth=*/1, /*Position=*/0,
+      /*Id=*/nullptr, /*Typename=*/true, /*ParameterPack=*/false);
+  T->setImplicit(true);
+
+  // T ...Ints
+  TypeSourceInfo *TI =
+      C.getTrivialTypeSourceInfo(QualType(T->getTypeForDecl(), 0));
+  auto *N = NonTypeTemplateParmDecl::Create(
+      C, DC, SourceLocation(), SourceLocation(), /*Depth=*/0, /*Position=*/1,
+      /*Id=*/nullptr, TI->getType(), /*ParameterPack=*/true, TI);
+  N->setImplicit(true);
+
+  // <typename T, T ...Ints>
+  NamedDecl *P[2] = {T, N};
+  auto *TPL = TemplateParameterList::Create(
+      C, SourceLocation(), SourceLocation(), P, 2, SourceLocation());
+
+  // template <typename T, ...Ints> class IntSeq
+  auto *TemplateTemplateParm = TemplateTemplateParmDecl::Create(
+      C, DC, SourceLocation(), /*Depth=*/0, /*Position=*/0,
+      /*ParameterPack=*/false, /*Id=*/nullptr, TPL);
+  TemplateTemplateParm->setImplicit(true);
+
+  // typename T
+  auto *TemplateTypeParm = TemplateTypeParmDecl::Create(
+      C, DC, SourceLocation(), SourceLocation(), /*Depth=*/0, /*Position=*/1,
+      /*Id=*/nullptr, /*Typename=*/true, /*ParameterPack=*/false);
+  TemplateTypeParm->setImplicit(true);
+
+  // T N
+  TypeSourceInfo *TInfo = C.getTrivialTypeSourceInfo(
+      QualType(TemplateTypeParm->getTypeForDecl(), 0));
+  auto *NonTypeTemplateParm = NonTypeTemplateParmDecl::Create(
+      C, DC, SourceLocation(), SourceLocation(), /*Depth=*/0, /*Position=*/2,
+      /*Id=*/nullptr, TInfo->getType(), /*ParameterPack=*/false, TInfo);
+  NamedDecl *Params[] = {TemplateTemplateParm, TemplateTypeParm,
+                         NonTypeTemplateParm};
+
+  // template <template <typename T, T ...Ints> class IntSeq, typename T, T N>
+  return TemplateParameterList::Create(C, SourceLocation(), SourceLocation(),
+                                       Params, 3, SourceLocation());
+}
+
+static TemplateParameterList *createBuiltinTemplateParameterList(
+    const ASTContext &C, DeclContext *DC, BuiltinTemplateKind BTK) {
+  switch (BTK) {
+  case BTK__make_integer_seq:
+    return createMakeIntegerSeqParameterList(C, DC);
+  }
+
+  llvm_unreachable("unhandled BuiltinTemplateKind!");
+}
+
+void BuiltinTemplateDecl::anchor() {}
+
+BuiltinTemplateDecl::BuiltinTemplateDecl(const ASTContext &C, DeclContext *DC,
+                                         DeclarationName Name,
+                                         BuiltinTemplateKind BTK)
+    : TemplateDecl(BuiltinTemplate, DC, SourceLocation(), Name,
+                   createBuiltinTemplateParameterList(C, DC, BTK)),
+      BTK(BTK) {}

@@ -70,6 +70,7 @@ namespace clang {
   class VTableContextBase;
 
   namespace Builtin { class Context; }
+  enum BuiltinTemplateKind : int;
 
   namespace comments {
     class FullComment;
@@ -246,6 +247,9 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// The identifier 'NSCopying'.
   IdentifierInfo *NSCopyingName = nullptr;
 
+  /// The identifier '__make_integer_seq'.
+  mutable IdentifierInfo *MakeIntegerSeqName = nullptr;
+
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
   
@@ -399,6 +403,7 @@ private:
   
   TranslationUnitDecl *TUDecl;
   mutable ExternCContextDecl *ExternCContext;
+  mutable BuiltinTemplateDecl *MakeIntegerSeqDecl;
 
   /// \brief The associated SourceManager object.a
   SourceManager &SourceMgr;
@@ -868,6 +873,7 @@ public:
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
   ExternCContextDecl *getExternCContextDecl() const;
+  BuiltinTemplateDecl *getMakeIntegerSeqDecl() const;
 
   // Builtin Types.
   CanQualType VoidTy;
@@ -940,6 +946,9 @@ public:
 
   void PrintStats() const;
   const SmallVectorImpl<Type *>& getTypes() const { return Types; }
+
+  BuiltinTemplateDecl *buildBuiltinTemplateDecl(BuiltinTemplateKind BTK,
+                                                const IdentifierInfo *II) const;
 
   /// \brief Create a new implicit TU-level CXXRecordDecl or RecordDecl
   /// declaration.
@@ -1442,6 +1451,12 @@ public:
     }
 
     return NSCopyingName;
+  }
+
+  IdentifierInfo *getMakeIntegerSeqName() const {
+    if (!MakeIntegerSeqName)
+      MakeIntegerSeqName = &Idents.get("__make_integer_seq");
+    return MakeIntegerSeqName;
   }
 
   /// \brief Retrieve the Objective-C "instancetype" type, if already known;

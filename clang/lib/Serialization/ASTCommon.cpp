@@ -329,6 +329,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::ClassScopeFunctionSpecialization:
   case Decl::Import:
   case Decl::OMPThreadPrivate:
+  case Decl::BuiltinTemplate:
     return false;
 
   // These indirectly derive from Redeclarable<T> but are not actually

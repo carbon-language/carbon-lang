@@ -205,5 +205,12 @@ private:
 };
 
 }
+
+/// \brief Kinds of BuiltinTemplateDecl.
+enum BuiltinTemplateKind : int {
+  /// \brief This names the __make_integer_seq BuiltinTemplateDecl.
+  BTK__make_integer_seq
+};
+
 } // end namespace clang
 #endif
