@@ -14,11 +14,16 @@
 
 ; Ensure that both weak alias to an imported function and strong alias to a
 ; non-imported function are correctly turned into declarations.
+; Also ensures that alias to a linkonce function is turned into a declaration
+; and that the associated linkonce function is not in the output, as it is
+; lazily linked and never referenced/materialized.
 ; RUN: llvm-link %t2.bc -functionindex=%t3.thinlto.bc -import=globalfunc1:%t.bc -S | FileCheck %s --check-prefix=IMPORTGLOB1
 ; IMPORTGLOB1: define available_externally void @globalfunc1
 ; IMPORTGLOB1: declare void @globalfunc2
 ; IMPORTGLOB1: declare extern_weak void @weakalias
 ; IMPORTGLOB1: declare void @analias
+; IMPORTGLOB1: declare void @linkoncealias
+; IMPORTGLOB1-NOT: @linkoncefunc
 
 ; Ensure that weak alias to a non-imported function is correctly
 ; turned into a declaration, but that strong alias to an imported function
@@ -91,6 +96,7 @@
 
 @weakalias = weak alias void (...), bitcast (void ()* @globalfunc1 to void (...)*)
 @analias = alias void (...), bitcast (void ()* @globalfunc2 to void (...)*)
+@linkoncealias = alias void (...), bitcast (void ()* @linkoncefunc to void (...)*)
 
 define void @globalfunc1() #0 {
 entry:
@@ -98,6 +104,11 @@ entry:
 }
 
 define void @globalfunc2() #0 {
+entry:
+  ret void
+}
+
+define linkonce_odr void @linkoncefunc() #0 {
 entry:
   ret void
 }

@@ -841,10 +841,12 @@ GlobalValue *ModuleLinker::copyGlobalAliasProto(TypeMapTy &TypeMap,
       assert(F);
       NewGV = copyFunctionProto(TypeMap, F);
     }
-    // Set the linkage to ExternalWeak, see also comments in
-    // ModuleLinker::getLinkage.
+    // Set the linkage to External or ExternalWeak (see comments in
+    // ModuleLinker::getLinkage for why WeakAny is converted to ExternalWeak).
     if (SGA->hasWeakAnyLinkage())
       NewGV->setLinkage(GlobalValue::ExternalWeakLinkage);
+    else
+      NewGV->setLinkage(GlobalValue::ExternalLinkage);
     // Don't attempt to link body, needs to be a declaration.
     DoNotLinkFromSource.insert(SGA);
     return NewGV;
