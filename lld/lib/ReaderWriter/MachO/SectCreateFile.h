@@ -23,7 +23,6 @@ namespace mach_o {
 //
 class SectCreateFile : public File {
 public:
-
   class SectCreateAtom : public SimpleDefinedAtom {
   public:
     SectCreateAtom(const File &file, StringRef segName, StringRef sectName,
@@ -68,19 +67,19 @@ public:
       new (allocator()) SectCreateAtom(*this, seg, sect, std::move(content)));
   }
 
-  const AtomVector<DefinedAtom> &defined() const {
+  const AtomVector<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  const AtomVector<UndefinedAtom> &undefined() const {
+  const AtomVector<UndefinedAtom> &undefined() const override {
     return _noUndefinedAtoms;
   }
 
-  const AtomVector<SharedLibraryAtom> &sharedLibrary() const {
+  const AtomVector<SharedLibraryAtom> &sharedLibrary() const override {
     return _noSharedLibraryAtoms;
   }
 
-  const AtomVector<AbsoluteAtom> &absolute() const {
+  const AtomVector<AbsoluteAtom> &absolute() const override {
     return _noAbsoluteAtoms;
   }
 

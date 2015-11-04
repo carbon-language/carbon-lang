@@ -251,7 +251,7 @@ template <class ELFT>
 class InterpSection final : public OutputSectionBase<ELFT> {
 public:
   InterpSection();
-  void writeTo(uint8_t *Buf);
+  void writeTo(uint8_t *Buf) override;
 };
 
 template <class ELFT>
@@ -392,6 +392,8 @@ template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::StrTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::DynSymTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::SymTab;
 template <class ELFT> typename Out<ELFT>::uintX_t Out<ELFT>::TlsInitImageVA;
-}
-}
-#endif
+
+} // namespace elf2
+} // namespace lld
+
+#endif // LLD_ELF_OUTPUT_SECTIONS_H
