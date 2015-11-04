@@ -1298,9 +1298,28 @@ LazyValueInfo::getPredicateAt(unsigned Pred, Value *V, Constant *C,
   if (Ret != Unknown)
     return Ret;
 
-  // TODO: Move this logic inside getValueAt so that it can be cached rather
-  // than re-queried on each call. This would also allow us to merge the
-  // underlying lattice values to get more information.
+  // Note: The following bit of code is somewhat distinct from the rest of LVI;
+  // LVI as a whole tries to compute a lattice value which is conservatively
+  // correct at a given location.  In this case, we have a predicate which we
+  // weren't able to prove about the merged result, and we're pushing that
+  // predicate back along each incoming edge to see if we can prove it
+  // separately for each input.  As a motivating example, consider:
+  // bb1:
+  //   %v1 = ... ; constantrange<1, 5>
+  //   br label %merge
+  // bb2:
+  //   %v2 = ... ; constantrange<10, 20>
+  //   br label %merge
+  // merge:
+  //   %phi = phi [%v1, %v2] ; constantrange<1,20>
+  //   %pred = icmp eq i32 %phi, 8
+  // We can't tell from the lattice value for '%phi' that '%pred' is false
+  // along each path, but by checking the predicate over each input separately,
+  // we can.
+  // We limit the search to one step backwards from the current BB and value.
+  // We could consider extending this to search further backwards through the
+  // CFG and/or value graph, but there are non-obvious compile time vs quality
+  // tradeoffs.  
   if (CxtI) {
     BasicBlock *BB = CxtI->getParent();
 
