@@ -1224,10 +1224,7 @@ public:
   /// \brief Return the operand bundle at a specific index.
   OperandBundleUse getOperandBundle(unsigned Index) const {
     assert(Index < getNumOperandBundles() && "Index out of bounds!");
-    auto *BOI = bundle_op_info_begin() + Index;
-    auto op_begin = static_cast<const InstrTy *>(this)->op_begin();
-    ArrayRef<Use> Inputs(op_begin + BOI->Begin, op_begin + BOI->End);
-    return OperandBundleUse(BOI->Tag->getKey(), Inputs);
+    return operandBundleFromBundleOpInfo(*(bundle_op_info_begin() + Index));
   }
 
   /// \brief Return the number of operand bundles with the tag Name attached to
@@ -1319,6 +1316,15 @@ protected:
     /// bundle ends.
     uint32_t End;
   };
+
+  /// \brief Simple helper function to map a BundleOpInfo to an
+  /// OperandBundleUse.
+  OperandBundleUse
+  operandBundleFromBundleOpInfo(const BundleOpInfo &BOI) const {
+    auto op_begin = static_cast<const InstrTy *>(this)->op_begin();
+    ArrayRef<Use> Inputs(op_begin + BOI.Begin, op_begin + BOI.End);
+    return OperandBundleUse(BOI.Tag->getKey(), Inputs);
+  }
 
   typedef BundleOpInfo *bundle_op_iterator;
   typedef const BundleOpInfo *const_bundle_op_iterator;
