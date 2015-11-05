@@ -995,38 +995,35 @@ static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
 }
 
 namespace {
-  class FrameEmitterImpl {
-    int CFAOffset;
-    int InitialCFAOffset;
-    bool IsEH;
-    const MCSymbol *SectionStart;
-  public:
-    FrameEmitterImpl(bool isEH)
-        : CFAOffset(0), InitialCFAOffset(0), IsEH(isEH), SectionStart(nullptr) {
-    }
+class FrameEmitterImpl {
+  int CFAOffset;
+  int InitialCFAOffset;
+  bool IsEH;
+  const MCSymbol *SectionStart;
 
-    void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
+public:
+  FrameEmitterImpl(bool isEH)
+      : CFAOffset(0), InitialCFAOffset(0), IsEH(isEH), SectionStart(nullptr) {}
 
-    /// Emit the unwind information in a compact way.
-    void EmitCompactUnwind(MCObjectStreamer &streamer,
-                           const MCDwarfFrameInfo &frame);
+  void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
-    const MCSymbol &EmitCIE(MCObjectStreamer &streamer,
-                            const MCSymbol *personality,
-                            unsigned personalityEncoding,
-                            const MCSymbol *lsda,
-                            bool IsSignalFrame,
-                            unsigned lsdaEncoding,
-                            bool IsSimple);
-    MCSymbol *EmitFDE(MCObjectStreamer &streamer,
-                      const MCSymbol &cieStart,
-                      const MCDwarfFrameInfo &frame);
-    void EmitCFIInstructions(MCObjectStreamer &streamer,
-                             ArrayRef<MCCFIInstruction> Instrs,
-                             MCSymbol *BaseLabel);
-    void EmitCFIInstruction(MCObjectStreamer &Streamer,
-                            const MCCFIInstruction &Instr);
-  };
+  /// Emit the unwind information in a compact way.
+  void EmitCompactUnwind(MCObjectStreamer &streamer,
+                         const MCDwarfFrameInfo &frame);
+
+  const MCSymbol &EmitCIE(MCObjectStreamer &streamer,
+                          const MCSymbol *personality,
+                          unsigned personalityEncoding, const MCSymbol *lsda,
+                          bool IsSignalFrame, unsigned lsdaEncoding,
+                          bool IsSimple);
+  MCSymbol *EmitFDE(MCObjectStreamer &streamer, const MCSymbol &cieStart,
+                    const MCDwarfFrameInfo &frame);
+  void EmitCFIInstructions(MCObjectStreamer &streamer,
+                           ArrayRef<MCCFIInstruction> Instrs,
+                           MCSymbol *BaseLabel);
+  void EmitCFIInstruction(MCObjectStreamer &Streamer,
+                          const MCCFIInstruction &Instr);
+};
 
 } // end anonymous namespace
 
