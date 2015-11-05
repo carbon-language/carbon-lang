@@ -484,6 +484,8 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   int Opcode = -1;
 
   if (RI.isSGPRClass(RC)) {
+    MFI->setHasSpilledSGPRs();
+
     // We are only allowed to create one new instruction when spilling
     // registers, so we need to use pseudo instruction for spilling
     // SGPRs.

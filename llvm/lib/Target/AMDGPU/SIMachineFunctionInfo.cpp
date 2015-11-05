@@ -29,6 +29,7 @@ void SIMachineFunctionInfo::anchor() {}
 SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   : AMDGPUMachineFunction(MF),
     TIDReg(AMDGPU::NoRegister),
+    HasSpilledSGPRs(false),
     HasSpilledVGPRs(false),
     PSInputAddr(0),
     NumUserSGPRs(0),
