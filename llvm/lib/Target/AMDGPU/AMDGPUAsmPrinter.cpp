@@ -165,6 +165,12 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                                   false);
       OutStreamer->emitRawComment(" ScratchSize: " + Twine(KernelInfo.ScratchSize),
                                   false);
+
+      const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+
+      OutStreamer->emitRawComment(" COMPUTE_PGM_RSRC2:USER_SGPR: " +
+                                  Twine(MFI->NumUserSGPRs),
+                                  false);
     } else {
       R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
       OutStreamer->emitRawComment(
