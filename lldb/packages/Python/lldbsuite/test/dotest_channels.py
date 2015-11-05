@@ -15,13 +15,17 @@ framework.
 """
 
 from __future__ import print_function
+from __future__ import absolute_import
 
 
-
+# System modules
 import asyncore
 import socket
 
+# Third-party modules
 from six.moves import cPickle
+
+# LLDB modules
 
 class UnpicklingForwardingReaderChannel(asyncore.dispatcher):
     """Provides an unpickling, forwarding asyncore dispatch channel reader.

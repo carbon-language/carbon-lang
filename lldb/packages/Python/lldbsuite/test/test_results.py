@@ -9,9 +9,9 @@ within the LLDB test suite.
 """
 
 from __future__ import print_function
+from __future__ import absolute_import
 
-
-
+# System modules
 import argparse
 import inspect
 import os
@@ -23,9 +23,11 @@ import time
 import traceback
 import xml.sax.saxutils
 
+# Third-party modules
 import six
 from six.moves import cPickle
 
+# LLDB modules
 
 class EventBuilder(object):
     """Helper class to build test result event dictionaries."""

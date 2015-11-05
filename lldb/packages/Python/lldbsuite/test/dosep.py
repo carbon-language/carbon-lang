@@ -33,8 +33,7 @@ echo core.%p | sudo tee /proc/sys/kernel/core_pattern
 """
 
 from __future__ import print_function
-
-
+from __future__ import absolute_import
 
 # system packages and modules
 import asyncore
@@ -51,15 +50,17 @@ import threading
 
 from six.moves import queue
 
-# Add our local test_runner/lib dir to the python path.
-sys.path.append(os.path.join(os.path.dirname(__file__), "test_runner", "lib"))
-
 # Our packages and modules
-import dotest_channels
-import dotest_args
+import lldbsuite.support.seven as seven
+
+from . import dotest_channels
+from . import dotest_args
+
+# Todo: Convert this folder layout to be relative-import friendly and don't hack up
+# sys.path like this
+sys.path.append(os.path.join(os.path.dirname(__file__), "test_runner", "lib"))
 import lldb_utils
 import process_control
-import lldbsuite.support.seven as seven
 
 # Status codes for running command with timeout.
 eTimedOut, ePassed, eFailed = 124, 0, 1

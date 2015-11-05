@@ -32,10 +32,11 @@ $
 """
 
 from __future__ import print_function
+from __future__ import absolute_import
 
-
-
+# System modules
 import abc
+import collections
 import gc
 import glob
 import os, sys, traceback
@@ -45,17 +46,19 @@ import signal
 from subprocess import *
 import time
 import types
-import unittest2
-import lldb
-import lldbtest_config
-import  lldbutil
-import test_categories
 
+# Third-party modules
+import unittest2
 from six import add_metaclass
 from six import StringIO as SixStringIO
 from six.moves.urllib import parse as urlparse
 import six
-import collections
+
+# LLDB modules
+import lldb
+from . import lldbtest_config
+from . import lldbutil
+from . import test_categories
 
 # dosep.py starts lots and lots of dotest instances
 # This option helps you find if two (or more) dotest instances are using the same
@@ -1890,7 +1893,7 @@ class Base(unittest2.TestCase):
         """ Returns a string that represents the compiler version.
             Supports: llvm, clang.
         """
-        from lldbutil import which
+        from .lldbutil import which
         version = 'unknown'
 
         compiler = self.getCompilerBinary()
@@ -2546,7 +2549,7 @@ class TestBase(Base):
         Run the 'thread list' command, and select the thread with stop reason as
         'stop_reason'.  If no such thread exists, no select action is done.
         """
-        from lldbutil import stop_reason_to_str
+        from .lldbutil import stop_reason_to_str
         self.runCmd('thread list')
         output = self.res.GetOutput()
         thread_line_pattern = re.compile("^[ *] thread #([0-9]+):.*stop reason = %s" %
@@ -2801,7 +2804,7 @@ class TestBase(Base):
 
     def DebugSBValue(self, val):
         """Debug print a SBValue object, if traceAlways is True."""
-        from lldbutil import value_type_to_str
+        from .lldbutil import value_type_to_str
 
         if not traceAlways:
             return

@@ -1,10 +1,16 @@
 from __future__ import print_function
+from __future__ import absolute_import
 
-import lldb
-from lldbtest import *
-import lldbutil
+# System modules
 import os
 import sys
+
+# Third-party modules
+
+# LLDB modules
+import lldb
+from .lldbtest import *
+from . import lldbutil
 
 def source_type(filename):
     _, extension = os.path.splitext(filename)

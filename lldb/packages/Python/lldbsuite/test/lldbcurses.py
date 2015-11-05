@@ -1,9 +1,15 @@
+from __future__ import absolute_import
 
-
-import curses, curses.panel
+# System modules
+import curses
+import curses.panel
 import sys
-import six
 import time 
+
+# Third-party modules
+import six
+
+# LLDB modules
 
 class Point(object):
     def __init__(self, x, y):

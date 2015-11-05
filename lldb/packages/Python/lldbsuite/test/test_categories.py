@@ -2,7 +2,14 @@
 Provides definitions for various lldb test categories
 """
 
+from __future__ import absolute_import
+
+# System modules
 import sys
+
+# Third-party modules
+
+# LLDB modules
 
 all_categories = {
     'dataformatters': 'Tests related to the type command and the data formatters subsystem',

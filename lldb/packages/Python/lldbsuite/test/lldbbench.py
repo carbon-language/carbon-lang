@@ -1,6 +1,12 @@
+from __future__ import absolute_import
+
+# System modules
 import time
-#import numpy
-from lldbtest import *
+
+# Third-party modules
+
+# LLDB modules
+from .lldbtest import *
 
 class Stopwatch(object):
     """Stopwatch provides a simple utility to start/stop your stopwatch multiple

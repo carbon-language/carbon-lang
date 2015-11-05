@@ -5,16 +5,21 @@ They can also be useful for general purpose lldb scripting.
 """
 
 from __future__ import print_function
+from __future__ import absolute_import
 
-
-
-import lldb
-import os, sys
+# System modules
+import collections
+import os
 import re
+import sys
 
+# Third-party modules
 from six import StringIO as SixStringIO
 import six
-import collections
+
+# LLDB modules
+import lldb
+
 
 # ===================================================
 # Utilities for locating/checking executable programs

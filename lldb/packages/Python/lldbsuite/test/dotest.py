@@ -18,16 +18,14 @@ Type:
 for available options.
 """
 
+from __future__ import absolute_import
 from __future__ import print_function
+
+# System modules
 import sys
-
-import lldbsuite
-import lldbtest_config
-
 import atexit
 import importlib
 import os
-import dotest_args
 import errno
 import platform
 import progress
@@ -35,14 +33,20 @@ import signal
 import socket
 import subprocess
 import sys
-import test_results
-from test_results import EventBuilder
 import inspect
-import unittest2
-import test_categories
 
+# Third-party modules
 import six
-import lldbsuite.support.seven as seven
+import unittest2
+
+# LLDB Modules
+import lldbsuite
+from . import dotest_args
+from . import lldbtest_config
+from . import test_categories
+from . import test_results
+from .test_results import EventBuilder
+from ..support import seven
 
 def is_exe(fpath):
     """Returns true if fpath is an executable."""
@@ -1470,7 +1474,7 @@ def run_suite():
     # If we are running as the multiprocess test runner, kick off the
     # multiprocess test runner here.
     if isMultiprocessTestRunner():
-        import dosep
+        from . import dosep
         dosep.main(output_on_success, num_threads, multiprocess_test_subdir,
                    test_runner_name, results_formatter_object)
         raise Exception("should never get here")

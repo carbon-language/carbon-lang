@@ -1,6 +1,14 @@
 """ This module contains functions used by the test cases to hide the
 architecture and/or the platform dependent nature of the tests. """
 
+from __future__ import absolute_import
+
+# System modules
+
+# Third-party modules
+
+# LLDB modules
+
 def check_first_register_readable(test_case):
     if test_case.getArchitecture() in ['x86_64', 'i386']:
         test_case.expect("register read eax", substrs = ['eax = 0x'])

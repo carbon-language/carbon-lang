@@ -1,13 +1,17 @@
 from __future__ import print_function
+from __future__ import absolute_import
 
-
-
-import lldb
-from lldbtest import *
-import lldbutil
+# System modules
 import os
 import sys
+
+# Third-party modules
 import pexpect
+
+# LLDB Modules
+import lldb
+from .lldbtest import *
+from . import lldbutil
 
 class PExpectTest(TestBase):
     
