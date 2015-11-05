@@ -627,10 +627,7 @@ ModRefInfo BasicAAResult::getArgModRefInfo(ImmutableCallSite CS,
 
 static bool isAssumeIntrinsic(ImmutableCallSite CS) {
   const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
-  if (II && II->getIntrinsicID() == Intrinsic::assume)
-    return true;
-
-  return false;
+  return II && II->getIntrinsicID() == Intrinsic::assume;
 }
 
 #ifndef NDEBUG

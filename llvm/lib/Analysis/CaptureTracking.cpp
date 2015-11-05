@@ -102,10 +102,7 @@ namespace {
 
         SmallVector<BasicBlock*, 32> Worklist;
         Worklist.append(succ_begin(BB), succ_end(BB));
-        if (!isPotentiallyReachableFromMany(Worklist, BB, DT))
-          return true;
-
-        return false;
+        return !isPotentiallyReachableFromMany(Worklist, BB, DT);
       }
 
       // If the value is defined in the same basic block as use and BeforeHere,

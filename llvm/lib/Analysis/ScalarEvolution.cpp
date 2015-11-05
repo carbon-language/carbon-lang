@@ -7419,12 +7419,9 @@ bool ScalarEvolution::isKnownPredicateViaSplitting(ICmpInst::Predicate Pred,
   // expensive; and using isKnownNonNegative(RHS) is sufficient for most of the
   // interesting cases seen in practice.  We can consider "upgrading" L >= 0 to
   // use isKnownPredicate later if needed.
-  if (isKnownNonNegative(RHS) &&
-      isKnownPredicate(CmpInst::ICMP_SGE, LHS, getZero(LHS->getType())) &&
-      isKnownPredicate(CmpInst::ICMP_SLT, LHS, RHS))
-    return true;
-
-  return false;
+  return isKnownNonNegative(RHS) &&
+         isKnownPredicate(CmpInst::ICMP_SGE, LHS, getZero(LHS->getType())) &&
+         isKnownPredicate(CmpInst::ICMP_SLT, LHS, RHS);
 }
 
 /// isLoopBackedgeGuardedByCond - Test whether the backedge of the loop is

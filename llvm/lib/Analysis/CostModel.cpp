@@ -152,10 +152,7 @@ static bool matchPairwiseShuffleMask(ShuffleVectorInst *SI, bool IsLeft,
     Mask[i] = val;
 
   SmallVector<int, 16> ActualMask = SI->getShuffleMask();
-  if (Mask != ActualMask)
-    return false;
-
-  return true;
+  return Mask == ActualMask;
 }
 
 static bool matchPairwiseReductionAtLevel(const BinaryOperator *BinOp,
