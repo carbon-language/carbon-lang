@@ -271,6 +271,7 @@ class UnixProcessHelper(ProcessHelper):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            universal_newlines=True, # Elicits automatic byte -> string decoding in Py3
             close_fds=True,
             preexec_fn=preexec_func)
 
@@ -383,6 +384,7 @@ class WindowsProcessHelper(ProcessHelper):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            universal_newlines=True, # Elicits automatic byte -> string decoding in Py3
             creationflags=creation_flags)
 
     def was_hard_terminate(self, returncode):
