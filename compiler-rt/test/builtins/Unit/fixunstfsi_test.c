@@ -56,6 +56,9 @@ int main()
     if (test__fixunstfsi(-0x1.23456789abcdefp+3, UINT32_C(0x0)))
         return 1;
 
+    if (test__fixunstfsi(0x1.p+32, 0xFFFFFFFFLL))
+        return 1;
+
 #else
     printf("skipped\n");
 

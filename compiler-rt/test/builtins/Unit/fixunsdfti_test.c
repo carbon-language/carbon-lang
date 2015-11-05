@@ -115,6 +115,9 @@ int main()
         return 1;
     if (test__fixunsdfti(0x1.FFFFFFFFFFFFEp+126, make_ti(0x7FFFFFFFFFFFF800LL, 0)))
         return 1;
+    if (test__fixunsdfti(0x1.0000000000000p+128, make_ti(0xFFFFFFFFFFFFFFFFLL,
+                                                         0xFFFFFFFFFFFFFFFFLL)))
+        return 1;
 
 #if !TARGET_LIBGCC
     if (test__fixunsdfti(-0x1.FFFFFFFFFFFFFp+62, 0))

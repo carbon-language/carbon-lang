@@ -95,6 +95,9 @@ int main()
     if (test__fixunsdfdi(0x1.FFFFFFFFFFFFEp+62, 0x7FFFFFFFFFFFF800LL))
         return 1;
 
+    if (test__fixunsdfdi(0x1.p+64, 0xFFFFFFFFFFFFFFFFLL))
+        return 1;
+
 #if !TARGET_LIBGCC
     if (test__fixunsdfdi(-0x1.FFFFFFFFFFFFFp+62, 0))
         return 1;

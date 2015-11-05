@@ -75,6 +75,8 @@ int main()
 
     if (test__fixunsdfsi(0x1.000000p+31, 0x80000000))
         return 1;
+    if (test__fixunsdfsi(0x1.000000p+32, 0xFFFFFFFF))
+        return 1;
     if (test__fixunsdfsi(0x1.FFFFFEp+31, 0xFFFFFF00))
         return 1;
     if (test__fixunsdfsi(0x1.FFFFFEp+30, 0x7FFFFF80))

@@ -13,14 +13,14 @@
 
 #include <stdio.h>
 
-#if _ARCH_PPC
+#if _ARCH_PPC || __aarch64__
 
 #include "int_lib.h"
 
 // Returns: convert a to a unsigned long long, rounding toward zero.
 //          Negative values all become zero.
 
-// Assumption: long double is a ppc 128 bit floating point type
+// Assumption: long double is a 128 bit floating point type
 //             du_int is a 64 bit integral type
 //             value in long double is representable in du_int or is negative 
 //                 (no range checking performed)
@@ -44,7 +44,7 @@ char assumption_3[sizeof(long double)*CHAR_BIT == 128] = {0};
 
 int main()
 {
-#if _ARCH_PPC
+#if _ARCH_PPC || __aarch64__
     if (test__fixunstfdi(0.0, 0))
         return 1;
 
@@ -106,6 +106,8 @@ int main()
     if (test__fixunstfdi(0x1.FFFFFFFFFFFFFFFCp+62L, 0x7FFFFFFFFFFFFFFFLL))
         return 1;
     if (test__fixunstfdi(0x1.FFFFFFFFFFFFFFF8p+62L, 0x7FFFFFFFFFFFFFFELL))
+        return 1;
+    if (test__fixunstfdi(0x1.p+64L, 0xFFFFFFFFFFFFFFFFLL))
         return 1;
 
     if (test__fixunstfdi(-0x1.0000000000000000p+63L, 0))
