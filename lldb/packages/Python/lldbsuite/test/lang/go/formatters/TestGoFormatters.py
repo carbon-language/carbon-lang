@@ -3,14 +3,13 @@
 import os, time
 import unittest2
 import lldb
-import lldbutil
-from lldbtest import *
+import lldbsuite.test.lldbutil as lldbutil
+from lldbsuite.test.lldbtest import *
 
 class TestGoLanguage(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @python_api_test
     @skipIfFreeBSD # llvm.org/pr24895 triggers assertion failure
     @skipIfRemote # Not remote test suite ready
     @no_debug_info_test
