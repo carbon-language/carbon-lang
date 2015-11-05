@@ -66,7 +66,7 @@ public:
     bool isThinMember() const;
 
   public:
-    Child(const Archive *Parent, const char *Start);
+    Child(const Archive *Parent, const char *Start, std::error_code *EC);
     Child(const Archive *Parent, StringRef Data, uint16_t StartOfFile);
 
     bool operator ==(const Child &other) const {
@@ -75,7 +75,7 @@ public:
     }
 
     const Archive *getParent() const { return Parent; }
-    Child getNext() const;
+    ErrorOr<Child> getNext() const;
 
     ErrorOr<StringRef> getName() const;
     StringRef getRawName() const { return getHeader()->getName(); }
@@ -91,9 +91,9 @@ public:
       return getHeader()->getAccessMode();
     }
     /// \return the size of the archive member without the header or padding.
-    uint64_t getSize() const;
+    ErrorOr<uint64_t> getSize() const;
     /// \return the size in the archive header for this member.
-    uint64_t getRawSize() const;
+    ErrorOr<uint64_t> getRawSize() const;
 
     ErrorOr<StringRef> getBuffer() const;
     uint64_t getChildOffset() const;
@@ -105,24 +105,32 @@ public:
   };
 
   class child_iterator {
-    Child child;
+    ErrorOr<Child> child;
 
   public:
-    child_iterator() : child(Child(nullptr, nullptr)) {}
+    child_iterator() : child(Child(nullptr, nullptr, nullptr)) {}
     child_iterator(const Child &c) : child(c) {}
-    const Child *operator->() const { return &child; }
-    const Child &operator*() const { return child; }
+    child_iterator(std::error_code EC) : child(EC) {}
+    const ErrorOr<Child> *operator->() const { return &child; }
+    const ErrorOr<Child> &operator*() const { return child; }
 
     bool operator==(const child_iterator &other) const {
-      return child == other.child;
+      // We ignore error states so that comparisions with end() work, which
+      // allows range loops.
+      if (child.getError() || other.child.getError())
+        return false;
+      return *child == *other.child;
     }
 
     bool operator!=(const child_iterator &other) const {
       return !(*this == other);
     }
 
+    // Code in loops with child_iterators must check for errors on each loop
+    // iteration.  And if there is an error break out of the loop.
     child_iterator &operator++() { // Preincrement
-      child = child.getNext();
+      assert(child && "Can't increment iterator with error");
+      child = child->getNext();
       return *this;
     }
   };

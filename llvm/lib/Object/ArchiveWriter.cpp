@@ -39,7 +39,7 @@ NewArchiveIterator::NewArchiveIterator(const object::Archive::Child &OldMember,
     : IsNewMember(false), Name(Name), OldMember(OldMember) {}
 
 NewArchiveIterator::NewArchiveIterator(StringRef FileName)
-    : IsNewMember(true), Name(FileName), OldMember(nullptr, nullptr) {}
+    : IsNewMember(true), Name(FileName), OldMember(nullptr, nullptr, nullptr) {}
 
 StringRef NewArchiveIterator::getName() const { return Name; }
 
@@ -412,8 +412,11 @@ llvm::writeArchive(StringRef ArcName,
                         Status.getSize());
     } else {
       const object::Archive::Child &OldMember = I.getOld();
+      ErrorOr<uint32_t> Size = OldMember.getSize();
+      if (std::error_code EC = Size.getError())
+        return std::make_pair("", EC);
       printMemberHeader(Out, Kind, Thin, I.getName(), StringMapIndexIter,
-                        ModTime, UID, GID, Perms, OldMember.getSize());
+                        ModTime, UID, GID, Perms, Size.get());
     }
 
     if (!Thin)

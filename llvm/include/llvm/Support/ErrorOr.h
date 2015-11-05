@@ -91,6 +91,7 @@ private:
   typedef typename std::remove_reference<T>::type &reference;
   typedef const typename std::remove_reference<T>::type &const_reference;
   typedef typename std::remove_reference<T>::type *pointer;
+  typedef const typename std::remove_reference<T>::type *const_pointer;
 
 public:
   template <class E>
@@ -183,9 +184,13 @@ public:
     return toPointer(getStorage());
   }
 
+  const_pointer operator->() const { return toPointer(getStorage()); }
+
   reference operator *() {
     return *getStorage();
   }
+
+  const_reference operator*() const { return *getStorage(); }
 
 private:
   template <class OtherT>
@@ -246,9 +251,13 @@ private:
     return Val;
   }
 
+  const_pointer toPointer(const_pointer Val) const { return Val; }
+
   pointer toPointer(wrap *Val) {
     return &Val->get();
   }
+
+  const_pointer toPointer(const wrap *Val) const { return &Val->get(); }
 
   storage_type *getStorage() {
     assert(!HasError && "Cannot get value when an error exists!");

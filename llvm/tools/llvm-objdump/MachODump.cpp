@@ -1417,8 +1417,10 @@ static void printArchiveChild(const Archive::Child &C, bool verbose,
   outs() << format("%3d/", UID);
   unsigned GID = C.getGID();
   outs() << format("%-3d ", GID);
-  uint64_t Size = C.getRawSize();
-  outs() << format("%5" PRId64, Size) << " ";
+  ErrorOr<uint64_t> Size = C.getRawSize();
+  if (std::error_code EC = Size.getError())
+    report_fatal_error(EC.message());
+  outs() << format("%5" PRId64, Size.get()) << " ";
 
   StringRef RawLastModified = C.getRawLastModified();
   if (verbose) {
@@ -1454,7 +1456,9 @@ static void printArchiveChild(const Archive::Child &C, bool verbose,
 static void printArchiveHeaders(Archive *A, bool verbose, bool print_offset) {
   for (Archive::child_iterator I = A->child_begin(false), E = A->child_end();
        I != E; ++I) {
-    Archive::Child C = *I;
+    if (std::error_code EC = I->getError())
+      report_fatal_error(EC.message());
+    const Archive::Child &C = **I;
     printArchiveChild(C, verbose, print_offset);
   }
 }
@@ -1491,7 +1495,13 @@ void llvm::ParseInputMachO(StringRef Filename) {
       printArchiveHeaders(A, !NonVerbose, ArchiveMemberOffsets);
     for (Archive::child_iterator I = A->child_begin(), E = A->child_end();
          I != E; ++I) {
-      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = I->getAsBinary();
+      if (std::error_code EC = I->getError()) {
+        errs() << "llvm-objdump: '" << Filename << "': " << EC.message()
+               << ".\n";
+        exit(1);
+      }
+      auto &C = I->get();
+      ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
       if (ChildOrErr.getError())
         continue;
       if (MachOObjectFile *O = dyn_cast<MachOObjectFile>(&*ChildOrErr.get())) {
@@ -1539,7 +1549,13 @@ void llvm::ParseInputMachO(StringRef Filename) {
               for (Archive::child_iterator AI = A->child_begin(),
                                            AE = A->child_end();
                    AI != AE; ++AI) {
-                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = AI->getAsBinary();
+                if (std::error_code EC = AI->getError()) {
+                  errs() << "llvm-objdump: '" << Filename
+                         << "': " << EC.message() << ".\n";
+                  exit(1);
+                }
+                auto &C = AI->get();
+                ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
                 if (ChildOrErr.getError())
                   continue;
                 if (MachOObjectFile *O =
@@ -1581,7 +1597,13 @@ void llvm::ParseInputMachO(StringRef Filename) {
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
                  AI != AE; ++AI) {
-              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = AI->getAsBinary();
+              if (std::error_code EC = AI->getError()) {
+                errs() << "llvm-objdump: '" << Filename << "': " << EC.message()
+                       << ".\n";
+                exit(1);
+              }
+              auto &C = AI->get();
+              ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
               if (ChildOrErr.getError())
                 continue;
               if (MachOObjectFile *O =
@@ -1617,7 +1639,13 @@ void llvm::ParseInputMachO(StringRef Filename) {
           printArchiveHeaders(A.get(), !NonVerbose, ArchiveMemberOffsets);
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
-          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = AI->getAsBinary();
+          if (std::error_code EC = AI->getError()) {
+            errs() << "llvm-objdump: '" << Filename << "': " << EC.message()
+                   << ".\n";
+            exit(1);
+          }
+          auto &C = AI->get();
+          ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
           if (ChildOrErr.getError())
             continue;
           if (MachOObjectFile *O =

@@ -338,7 +338,9 @@ static void doDisplayTable(StringRef Name, const object::Archive::Child &C) {
     printMode(Mode & 007);
     outs() << ' ' << C.getUID();
     outs() << '/' << C.getGID();
-    outs() << ' ' << format("%6llu", C.getSize());
+    ErrorOr<uint64_t> Size = C.getSize();
+    failIfError(Size.getError());
+    outs() << ' ' << format("%6llu", Size.get());
     outs() << ' ' << C.getLastModified().str();
     outs() << ' ';
   }
@@ -403,7 +405,10 @@ static void performReadOperation(ArchiveOperation Operation,
   }
 
   bool Filter = !Members.empty();
-  for (const object::Archive::Child &C : OldArchive->children()) {
+  for (auto &ChildOrErr : OldArchive->children()) {
+    failIfError(ChildOrErr.getError());
+    const object::Archive::Child &C = *ChildOrErr;
+
     ErrorOr<StringRef> NameOrErr = C.getName();
     failIfError(NameOrErr.getError());
     StringRef Name = NameOrErr.get();
@@ -523,7 +528,9 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   int InsertPos = -1;
   StringRef PosName = sys::path::filename(RelPos);
   if (OldArchive) {
-    for (auto &Child : OldArchive->children()) {
+    for (auto &ChildOrErr : OldArchive->children()) {
+      failIfError(ChildOrErr.getError());
+      auto &Child = ChildOrErr.get();
       int Pos = Ret.size();
       ErrorOr<StringRef> NameOrErr = Child.getName();
       failIfError(NameOrErr.getError());
@@ -726,7 +733,9 @@ static void runMRIScript() {
       failIfError(LibOrErr.getError(), "Could not parse library");
       Archives.push_back(std::move(*LibOrErr));
       object::Archive &Lib = *Archives.back();
-      for (auto &Member : Lib.children()) {
+      for (auto &MemberOrErr : Lib.children()) {
+        failIfError(MemberOrErr.getError());
+        auto &Member = MemberOrErr.get();
         ErrorOr<StringRef> NameOrErr = Member.getName();
         failIfError(NameOrErr.getError());
         addMember(NewMembers, Member, *NameOrErr);
