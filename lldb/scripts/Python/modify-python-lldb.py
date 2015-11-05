@@ -27,7 +27,7 @@ if sys.version_info.major >= 3:
 else:
     import StringIO
 
-if len (sys.argv) != 2:
+if len(sys.argv) != 2:
     output_name = "./lldb.py"
 else:
     output_name = sys.argv[1] + "/lldb.py"
