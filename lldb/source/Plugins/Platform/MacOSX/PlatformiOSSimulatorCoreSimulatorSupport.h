@@ -36,7 +36,7 @@ namespace CoreSimulatorSupport
     class Process
     {
     public:
-        pid_t
+        lldb::pid_t
         GetPID ()
         {
             return m_pid;
@@ -54,13 +54,13 @@ namespace CoreSimulatorSupport
         }
         
     private:
-        Process (pid_t p);
+        Process (lldb::pid_t p);
         
         Process(lldb_private::Error error);
 
-        Process (pid_t p, lldb_private::Error error);
+        Process (lldb::pid_t p, lldb_private::Error error);
         
-        pid_t m_pid;
+        lldb::pid_t m_pid;
         lldb_private::Error m_error;
         
         friend class Device;

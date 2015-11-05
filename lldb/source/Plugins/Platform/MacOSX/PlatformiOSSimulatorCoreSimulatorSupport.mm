@@ -47,10 +47,10 @@ using namespace lldb_utility;
 - (NSUInteger) state;
 - (BOOL) shutdownWithError:(NSError **)error;
 - (NSUUID *) UDID;
-- (pid_t) spawnWithPath:(NSString *)path options:(NSDictionary *)options terminationHandler:(void (^)(int status)) terminationHandler error:(NSError **)error;
+- (lldb::pid_t) spawnWithPath:(NSString *)path options:(NSDictionary *)options terminationHandler:(void (^)(int status)) terminationHandler error:(NSError **)error;
 @end
 
-CoreSimulatorSupport::Process::Process (pid_t p) :
+CoreSimulatorSupport::Process::Process (lldb::pid_t p) :
     m_pid (p),
     m_error ()
 {
@@ -62,7 +62,7 @@ CoreSimulatorSupport::Process::Process(Error error) :
 {
 }
 
-CoreSimulatorSupport::Process::Process (pid_t p, Error error) :
+CoreSimulatorSupport::Process::Process (lldb::pid_t p, Error error) :
     m_pid (p),
     m_error (error)
 {
@@ -661,7 +661,7 @@ CoreSimulatorSupport::Device::Spawn (ProcessLaunchInfo& launch_info)
     
     NSError* nserror;
     
-    pid_t pid = [m_dev spawnWithPath: [NSString stringWithUTF8String: launch_info.GetExecutableFile().GetPath().c_str()]
+    lldb::pid_t pid = [m_dev spawnWithPath: [NSString stringWithUTF8String: launch_info.GetExecutableFile().GetPath().c_str()]
                              options: options
                   terminationHandler: nil
                                error: &nserror];
