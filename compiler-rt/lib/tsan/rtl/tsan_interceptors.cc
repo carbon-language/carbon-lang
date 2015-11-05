@@ -630,9 +630,11 @@ TSAN_INTERCEPTOR(void*, memcpy, void *dst, const void *src, uptr size) {
 }
 
 TSAN_INTERCEPTOR(void*, memmove, void *dst, void *src, uptr n) {
-  SCOPED_TSAN_INTERCEPTOR(memmove, dst, src, n);
-  MemoryAccessRange(thr, pc, (uptr)dst, n, true);
-  MemoryAccessRange(thr, pc, (uptr)src, n, false);
+  if (!COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED) {
+    SCOPED_TSAN_INTERCEPTOR(memmove, dst, src, n);
+    MemoryAccessRange(thr, pc, (uptr)dst, n, true);
+    MemoryAccessRange(thr, pc, (uptr)src, n, false);
+  }
   return REAL(memmove)(dst, src, n);
 }
 
