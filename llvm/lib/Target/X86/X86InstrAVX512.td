@@ -1122,10 +1122,10 @@ def Zrr : AVX512XS8I<opc, MRMSrcReg, (outs VR512:$dst), (ins KRC:$src),
                   []>, EVEX, EVEX_V512;
 
 let Predicates = [HasCDI, HasVLX] in {
-def Z128rr : AVX512XS8I<opc, MRMSrcReg, (outs VR128:$dst), (ins KRC:$src),
+def Z128rr : AVX512XS8I<opc, MRMSrcReg, (outs VR128X:$dst), (ins KRC:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                   []>, EVEX, EVEX_V128;
-def Z256rr : AVX512XS8I<opc, MRMSrcReg, (outs VR256:$dst), (ins KRC:$src),
+def Z256rr : AVX512XS8I<opc, MRMSrcReg, (outs VR256X:$dst), (ins KRC:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                   []>, EVEX, EVEX_V256;
 }
