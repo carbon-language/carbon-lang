@@ -409,7 +409,7 @@ int ClangTool::run(ToolAction *Action) {
 
       std::vector<std::string> CommandLine = CompileCommand.CommandLine;
       if (ArgsAdjuster)
-        CommandLine = ArgsAdjuster(CommandLine);
+        CommandLine = ArgsAdjuster(CommandLine, CompileCommand.Filename);
       assert(!CommandLine.empty());
       CommandLine[0] = MainExecutable;
       // FIXME: We need a callback mechanism for the tool writer to output a

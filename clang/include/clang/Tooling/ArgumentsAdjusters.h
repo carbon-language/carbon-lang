@@ -17,6 +17,8 @@
 #ifndef LLVM_CLANG_TOOLING_ARGUMENTSADJUSTERS_H
 #define LLVM_CLANG_TOOLING_ARGUMENTSADJUSTERS_H
 
+#include "clang/Basic/LLVM.h"
+#include "llvm/ADT/StringRef.h"
 #include <functional>
 #include <string>
 #include <vector>
@@ -31,8 +33,8 @@ typedef std::vector<std::string> CommandLineArguments;
 ///
 /// Command line argument adjuster is responsible for command line arguments
 /// modification before the arguments are used to run a frontend action.
-typedef std::function<CommandLineArguments(const CommandLineArguments &)>
-    ArgumentsAdjuster;
+typedef std::function<CommandLineArguments(
+    const CommandLineArguments &, StringRef Filename)> ArgumentsAdjuster;
 
 /// \brief Gets an argument adjuster that converts input command line arguments
 /// to the "syntax check only" variant.

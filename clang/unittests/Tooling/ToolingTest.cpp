@@ -288,7 +288,7 @@ TEST(ClangToolTest, ArgumentAdjusters) {
   bool Found = false;
   bool Ran = false;
   ArgumentsAdjuster CheckSyntaxOnlyAdjuster =
-      [&Found, &Ran](const CommandLineArguments &Args) {
+      [&Found, &Ran](const CommandLineArguments &Args, StringRef /*unused*/) {
     Ran = true;
     if (std::find(Args.begin(), Args.end(), "-fsyntax-only") != Args.end())
       Found = true;

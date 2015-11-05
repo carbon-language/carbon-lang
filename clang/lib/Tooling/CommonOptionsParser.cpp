@@ -86,7 +86,7 @@ private:
   adjustCommands(std::vector<CompileCommand> Commands) const {
     for (CompileCommand &Command : Commands)
       for (const auto &Adjuster : Adjusters)
-        Command.CommandLine = Adjuster(Command.CommandLine);
+        Command.CommandLine = Adjuster(Command.CommandLine, Command.Filename);
     return Commands;
   }
 };
