@@ -60,7 +60,9 @@
 #include "AppleObjCDeclVendor.h"
 #include "AppleObjCTrampolineHandler.h"
 
+#if defined(__APPLE__)
 #include "Plugins/Platform/MacOSX/PlatformiOSSimulator.h"
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1765,7 +1767,8 @@ AppleObjCRuntimeV2::WarnIfNoClassesCached ()
 {
     if (m_noclasses_warning_emitted)
         return;
-    
+
+#if defined(__APPLE__)
     if (m_process &&
         m_process->GetTarget().GetPlatform() &&
         m_process->GetTarget().GetPlatform()->GetPluginName() == PlatformiOSSimulator::GetPluginNameStatic())
@@ -1775,7 +1778,8 @@ AppleObjCRuntimeV2::WarnIfNoClassesCached ()
         m_noclasses_warning_emitted = true;
         return;
     }
-    
+#endif
+
     Debugger &debugger(GetProcess()->GetTarget().GetDebugger());
     
     if (debugger.GetAsyncOutputStream())
