@@ -125,7 +125,6 @@ public:
   void EmitGPRel32Value(const MCExpr *Value) override;
   void EmitGPRel64Value(const MCExpr *Value) override;
   void EmitFill(uint64_t NumBytes, uint8_t FillValue) override;
-  void EmitZeros(uint64_t NumBytes) override;
   void FinishImpl() override;
 
   /// Emit the absolute difference between two symbols if possible.

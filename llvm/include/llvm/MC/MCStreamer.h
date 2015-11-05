@@ -567,7 +567,7 @@ public:
 
   /// \brief Emit NumBytes worth of zeros.
   /// This function properly handles data in virtual sections.
-  virtual void EmitZeros(uint64_t NumBytes);
+  void EmitZeros(uint64_t NumBytes);
 
   /// \brief Emit some number of copies of \p Value until the byte alignment \p
   /// ByteAlignment is reached.

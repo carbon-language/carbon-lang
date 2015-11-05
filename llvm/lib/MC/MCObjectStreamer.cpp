@@ -417,18 +417,10 @@ void MCObjectStreamer::EmitGPRel64Value(const MCExpr *Value) {
 }
 
 void MCObjectStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
-  // FIXME: A MCFillFragment would be more memory efficient but MCExpr has
-  //        problems evaluating expressions across multiple fragments.
-  MCDataFragment *DF = getOrCreateDataFragment();
-  flushPendingLabels(DF, DF->getContents().size());
-  DF->getContents().append(NumBytes, FillValue);
-}
-
-void MCObjectStreamer::EmitZeros(uint64_t NumBytes) {
   const MCSection *Sec = getCurrentSection().first;
   assert(Sec && "need a section");
   unsigned ItemSize = Sec->isVirtualSection() ? 0 : 1;
-  insert(new MCFillFragment(0, ItemSize, NumBytes));
+  insert(new MCFillFragment(FillValue, ItemSize, NumBytes));
 }
 
 void MCObjectStreamer::FinishImpl() {
