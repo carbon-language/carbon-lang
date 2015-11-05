@@ -125,7 +125,9 @@ public:
         m_descriptor (fd),
         m_stream (kInvalidStream),
         m_options (0),
-        m_own_stream (false)
+        m_own_stream (false),
+        m_is_interactive (eLazyBoolCalculate),
+        m_is_real_terminal (eLazyBoolCalculate)
     {
     }
 
