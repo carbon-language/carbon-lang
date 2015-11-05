@@ -16404,23 +16404,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                   DAG.getConstant(X86CC, dl, MVT::i8), Cond);
       return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
     }
-    case COMI_RM: { // Comparison intrinsics with Sae
-      SDValue LHS = Op.getOperand(1);
-      SDValue RHS = Op.getOperand(2);
-      SDValue CC = Op.getOperand(3);
-      SDValue Sae = Op.getOperand(4);
-      auto X86CC = TranslateX86ConstCondToX86CC(CC);
-      unsigned comiOp = std::get<0>(X86CC) ? IntrData->Opc0 : IntrData->Opc1;
-      SDValue Cond;
-      if (cast<ConstantSDNode>(Sae)->getZExtValue() !=
-                          X86::STATIC_ROUNDING::CUR_DIRECTION)
-        Cond = DAG.getNode(comiOp, dl, MVT::i32, LHS, RHS, Sae);
-      else
-        Cond = DAG.getNode(comiOp, dl, MVT::i32, LHS, RHS);
-      SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-        DAG.getConstant(std::get<1>(X86CC), dl, MVT::i8), Cond);
-      return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
-    }
     case VSHIFT:
       return getTargetVShiftNode(IntrData->Opc0, dl, Op.getSimpleValueType(),
                                  Op.getOperand(1), Op.getOperand(2), DAG);
