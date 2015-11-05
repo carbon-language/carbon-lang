@@ -5182,3 +5182,10 @@ void test() {
 
 }  // end namespace LockableUnions
 
+// This used to crash.
+class acquired_before_empty_str {
+  void WaitUntilSpaceAvailable() {
+    lock_.ReaderLock(); // expected-note {{acquired here}}
+  } // expected-warning {{mutex 'lock_' is still held at the end of function}}
+  Mutex lock_ ACQUIRED_BEFORE("");
+};
