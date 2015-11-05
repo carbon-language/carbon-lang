@@ -1225,7 +1225,16 @@ CheckPathForXcode(const FileSpec &fspec)
         if (pos != std::string::npos)
         {
             path_to_shlib.erase(pos + strlen(substr));
-            return FileSpec(path_to_shlib.c_str(), false);
+            FileSpec ret (path_to_shlib.c_str(), false);
+            
+            FileSpec xcode_binary_path = ret;
+            xcode_binary_path.AppendPathComponent("MacOS");
+            xcode_binary_path.AppendPathComponent("Xcode");
+            
+            if (xcode_binary_path.Exists())
+            {
+                return ret;
+            }
         }
     }
     return FileSpec();
