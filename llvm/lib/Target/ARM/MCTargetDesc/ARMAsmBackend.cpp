@@ -639,13 +639,11 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
 
     // If the symbol is external the linker will handle it.
     // FIXME: Should we handle it as an optimization?
-    if (Sym->isExternal()) {
+
+    // If the symbol is out of range, produce a relocation and hope the
+    // linker can handle it. GNU AS produces an error in this case.
+    if (Sym->isExternal() || Value >= 0x400004)
       IsResolved = false;
-    } else {
-      if (Value >= 0x400004)
-        Asm.getContext().reportFatalError(Fixup.getLoc(),
-                                          "out of range for branch");
-    }
   }
   // We must always generate a relocation for BL/BLX instructions if we have
   // a symbol to reference, as the linker relies on knowing the destination
