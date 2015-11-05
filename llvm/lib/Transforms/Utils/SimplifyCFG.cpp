@@ -2426,14 +2426,20 @@ static bool mergeConditionalStoreToAddress(BasicBlock *PTB, BasicBlock *PFB,
     // Heuristic: if the block can be if-converted/phi-folded and the
     // instructions inside are all cheap (arithmetic/GEPs), it's worthwhile to
     // thread this store.
-    if (BB->size() > PHINodeFoldingThreshold)
-      return false;
-    for (auto &I : *BB)
-      if (!isa<BinaryOperator>(I) && !isa<GetElementPtrInst>(I) &&
-          !isa<StoreInst>(I) && !isa<TerminatorInst>(I) &&
-          !isa<DbgInfoIntrinsic>(I) && !IsaBitcastOfPointerType(I))
+    unsigned N = 0;
+    for (auto &I : *BB) {
+      // Cheap instructions viable for folding.
+      if (isa<BinaryOperator>(I) || isa<GetElementPtrInst>(I) ||
+          isa<StoreInst>(I))
+        ++N;
+      // Free instructions.
+      else if (isa<TerminatorInst>(I) || isa<DbgInfoIntrinsic>(I) ||
+               IsaBitcastOfPointerType(I))
+        continue;
+      else
         return false;
-    return true;
+    }
+    return N <= PHINodeFoldingThreshold;
   };
 
   if (!MergeCondStoresAggressively && (!IsWorthwhile(PTB) ||
