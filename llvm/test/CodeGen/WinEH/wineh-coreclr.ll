@@ -50,6 +50,8 @@ catch1.pad:
   %catch1 = catchpad [i32 1]
     to label %catch1.body unwind label %catch2.pad
 catch1.body:
+; CHECK: leaq {{[0-9]+}}(%rcx), %rbp
+;                     ^ establisher frame pointer passed in rcx
 ; CHECK: .seh_endprologue
 ; CHECK: [[L_before_f3:.+]]:
 ; CHECK-NEXT: movl $3, %ecx
@@ -64,6 +66,8 @@ catch2.pad:
   %catch2 = catchpad [i32 2]
     to label %catch2.body unwind label %catch.end
 catch2.body:
+; CHECK: leaq {{[0-9]+}}(%rcx), %rbp
+;                     ^ establisher frame pointer passed in rcx
 ; CHECK: .seh_endprologue
 ; CHECK: [[L_before_f4:.+]]:
 ; CHECK-NEXT: movl $4, %ecx
@@ -82,6 +86,8 @@ try_in_catch:
 fault.pad:
 ; CHECK: .seh_proc [[L_fault:[^ ]+]]
   %fault = cleanuppad [i32 undef]
+; CHECK: leaq {{[0-9]+}}(%rcx), %rbp
+;                     ^ establisher frame pointer passed in rcx
 ; CHECK: .seh_endprologue
 ; CHECK: [[L_before_f6:.+]]:
 ; CHECK-NEXT: movl $6, %ecx
@@ -103,6 +109,8 @@ finally.clone:
 finally.pad:
 ; CHECK: .seh_proc [[L_finally:[^ ]+]]
   %finally = cleanuppad []
+; CHECK: leaq {{[0-9]+}}(%rcx), %rbp
+;                     ^ establisher frame pointer passed in rcx
 ; CHECK: .seh_endprologue
 ; CHECK: [[L_before_f7:.+]]:
 ; CHECK-NEXT: movl $7, %ecx

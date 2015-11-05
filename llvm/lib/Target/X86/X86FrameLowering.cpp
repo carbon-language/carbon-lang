@@ -18,6 +18,7 @@
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -624,6 +625,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   uint64_t MaxAlign = calculateMaxStackAlign(MF); // Desired stack alignment.
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
   bool IsFunclet = MBB.isEHFuncletEntry();
+  bool IsClrFunclet =
+      IsFunclet &&
+      classifyEHPersonality(Fn->getPersonalityFn()) == EHPersonality::CoreCLR;
   bool HasFP = hasFP(MF);
   bool IsWin64CC = STI.isCallingConvWin64(Fn->getCallingConv());
   bool IsWin64Prologue = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
@@ -701,13 +705,20 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   uint64_t NumBytes = 0;
   int stackGrowth = -SlotSize;
 
-  unsigned RDX = Uses64BitFramePtr ? X86::RDX : X86::EDX;
-  if (IsWin64Prologue && IsFunclet) {
-    // Immediately spill RDX into the home slot. The runtime cares about this.
+  // Find the funclet establisher parameter
+  unsigned Establisher = X86::NoRegister;
+  if (IsClrFunclet)
+    Establisher = Uses64BitFramePtr ? X86::RCX : X86::ECX;
+  else if (IsFunclet)
+    Establisher = Uses64BitFramePtr ? X86::RDX : X86::EDX;
+
+  if (IsWin64Prologue && IsFunclet & !IsClrFunclet) {
+    // Immediately spill establisher into the home slot.
+    // The runtime cares about this.
     // MOV64mr %rdx, 16(%rsp)
     unsigned MOVmr = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
     addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(MOVmr)), StackPtr, true, 16)
-        .addReg(RDX)
+        .addReg(Establisher)
         .setMIFlag(MachineInstr::FrameSetup);
   }
 
@@ -911,16 +922,16 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   int SEHFrameOffset = 0;
   if (IsWin64Prologue && HasFP) {
     // Set RBP to a small fixed offset from RSP. In the funclet case, we base
-    // this calculation on the incoming RDX, which holds the value of RSP from
-    // the parent frame at the end of the prologue.
-    unsigned SPOrRDX = !IsFunclet ? StackPtr : RDX;
+    // this calculation on the incoming establisher, which holds the value of
+    // RSP from the parent frame at the end of the prologue.
+    unsigned SPOrEstablisher = IsFunclet ? Establisher : StackPtr;
     SEHFrameOffset = calculateSetFPREG(ParentFrameNumBytes);
     if (SEHFrameOffset)
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), FramePtr),
-                   SPOrRDX, false, SEHFrameOffset);
+                   SPOrEstablisher, false, SEHFrameOffset);
     else
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64rr), FramePtr)
-          .addReg(SPOrRDX);
+          .addReg(SPOrEstablisher);
 
     // If this is not a funclet, emit the CFI describing our frame pointer.
     if (NeedsWinCFI && !IsFunclet)
