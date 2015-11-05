@@ -10,7 +10,10 @@
 #include "PlatformAppleSimulator.h"
 
 // C Includes
+#if defined(__APPLE__)
 #include <dlfcn.h>
+#endif
+
 // C++ Includes
 #include <mutex>
 #include <thread>
