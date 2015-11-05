@@ -20,7 +20,7 @@ defm DIV_U : BinaryInt<udiv>;
 defm REM_S : BinaryInt<srem>;
 defm REM_U : BinaryInt<urem>;
 defm AND : BinaryInt<and>;
-defm IOR : BinaryInt<or>;
+defm OR : BinaryInt<or>;
 defm XOR : BinaryInt<xor>;
 defm SHL : BinaryInt<shl>;
 defm SHR_U : BinaryInt<srl>;

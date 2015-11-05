@@ -145,7 +145,7 @@ define i32 @and32(i32 %x, i32 %y) {
   ret i32 %a
 }
 
-; CHECK-LABEL: ior32:
+; CHECK-LABEL: or32:
 ; CHECK-NEXT: .param i32{{$}}
 ; CHECK-NEXT: .param i32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
@@ -154,10 +154,10 @@ define i32 @and32(i32 %x, i32 %y) {
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
-; CHECK-NEXT: ior (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: or (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: return (get_local 4){{$}}
-define i32 @ior32(i32 %x, i32 %y) {
+define i32 @or32(i32 %x, i32 %y) {
   %a = or i32 %x, %y
   ret i32 %a
 }

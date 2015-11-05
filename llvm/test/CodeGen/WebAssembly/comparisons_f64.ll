@@ -41,7 +41,7 @@ define i32 @ord_f64(double %x, double %y) {
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: ne (get_local 2), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 5, pop{{$}}
-; CHECK-NEXT: ior (get_local 5), (get_local 4){{$}}
+; CHECK-NEXT: or (get_local 5), (get_local 4){{$}}
 ; CHECK-NEXT: set_local 6, pop{{$}}
 ; CHECK-NEXT: return (get_local 6){{$}}
 define i32 @uno_f64(double %x, double %y) {
@@ -130,9 +130,9 @@ define i32 @oge_f64(double %x, double %y) {
 ; CHECK-NEXT: set_local 5, pop{{$}}
 ; CHECK-NEXT: ne (get_local 3), (get_local 3){{$}}
 ; CHECK-NEXT: set_local 6, pop{{$}}
-; CHECK-NEXT: ior (get_local 6), (get_local 5){{$}}
+; CHECK-NEXT: or (get_local 6), (get_local 5){{$}}
 ; CHECK-NEXT: set_local 7, pop{{$}}
-; CHECK-NEXT: ior (get_local 4), (get_local 7){{$}}
+; CHECK-NEXT: or (get_local 4), (get_local 7){{$}}
 ; CHECK-NEXT: set_local 8, pop{{$}}
 ; CHECK-NEXT: return (get_local 8){{$}}
 define i32 @ueq_f64(double %x, double %y) {

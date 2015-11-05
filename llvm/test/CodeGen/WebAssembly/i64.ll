@@ -145,7 +145,7 @@ define i64 @and64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: ior64:
+; CHECK-LABEL: or64:
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .param i64{{$}}
 ; CHECK-NEXT: .result i64{{$}}
@@ -154,10 +154,10 @@ define i64 @and64(i64 %x, i64 %y) {
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: get_local 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
-; CHECK-NEXT: ior (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: or (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: return (get_local 4){{$}}
-define i64 @ior64(i64 %x, i64 %y) {
+define i64 @or64(i64 %x, i64 %y) {
   %a = or i64 %x, %y
   ret i64 %a
 }
