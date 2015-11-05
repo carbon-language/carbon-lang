@@ -492,6 +492,9 @@ protected:
     lldb::TypeSP type_sp;
 };
     
+// the two classes here are used by the public API as a backend to
+// the SBType and SBTypeList classes
+    
 class TypeImpl
 {
 public:
