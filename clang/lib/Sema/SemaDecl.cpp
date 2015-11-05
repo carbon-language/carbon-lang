@@ -13900,10 +13900,12 @@ Sema::SkipBodyInfo Sema::shouldSkipAnonEnumBody(Scope *S, IdentifierInfo *II,
   NamedDecl *PrevDecl = LookupSingleName(S, II, IILoc, LookupOrdinaryName,
                                          ForRedeclaration);
   auto *PrevECD = dyn_cast_or_null<EnumConstantDecl>(PrevDecl);
+  if (!PrevECD)
+    return SkipBodyInfo();
+
+  EnumDecl *PrevED = cast<EnumDecl>(PrevECD->getDeclContext());
   NamedDecl *Hidden;
-  if (PrevECD &&
-      !hasVisibleDefinition(cast<NamedDecl>(PrevECD->getDeclContext()),
-                            &Hidden)) {
+  if (!PrevED->getDeclName() && !hasVisibleDefinition(PrevED, &Hidden)) {
     SkipBodyInfo Skip;
     Skip.Previous = Hidden;
     return Skip;
