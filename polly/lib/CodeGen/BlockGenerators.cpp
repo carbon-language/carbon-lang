@@ -1168,17 +1168,22 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
     // In case we add the store into an exiting block, we need to restore the
     // position for stores in the exit node.
     auto SavedInsertionPoint = Builder.GetInsertPoint();
+    ValueMapT *LocalBBMap = &BBMap;
 
     // Implicit writes induced by PHIs must be written in the incoming blocks.
     if (isa<TerminatorInst>(ScalarInst)) {
       BasicBlock *ExitingBB = ScalarInst->getParent();
       BasicBlock *ExitingBBCopy = BlockMap[ExitingBB];
       Builder.SetInsertPoint(ExitingBBCopy->getTerminator());
+
+      // For the incoming blocks, use the block's BBMap instead of the one for
+      // the entire region.
+      LocalBBMap = &RegionMaps[ExitingBBCopy];
     }
 
     auto Address = getOrCreateAlloca(*MA);
 
-    Val = getNewScalarValue(Val, R, Stmt, LTS, BBMap);
+    Val = getNewScalarValue(Val, R, Stmt, LTS, *LocalBBMap);
     Builder.CreateStore(Val, Address);
 
     // Restore the insertion point if necessary.
