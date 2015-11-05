@@ -19,6 +19,7 @@
 #include "DataReader.h"
 #include "Exceptions.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
@@ -103,6 +104,10 @@ static cl::opt<std::string> ReorderBlocks(
 
 static cl::opt<bool>
 DumpData("dump-data", cl::desc("dump parsed flo data and exit (debugging)"),
+         cl::Hidden);
+
+static cl::opt<bool>
+DumpEHFrame("dump-eh-frame", cl::desc("dump parsed .eh_frame (debugging)"),
          cl::Hidden);
 
 static cl::opt<bool>
@@ -462,6 +467,13 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (SectionName == ".gcc_except_table") {
       readLSDA(SectionData, *BC);
     }
+  }
+
+  // Process debug sections.
+  std::unique_ptr<DWARFContext> DwCtx(new DWARFContextInMemory(*File));
+  if (opts::DumpEHFrame) {
+    const auto *Frames = DwCtx->getEHFrame();
+    Frames->dump(outs());
   }
 
   // Disassemble every function and build it's control flow graph.
