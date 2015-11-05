@@ -217,7 +217,7 @@ static bool printStackTraceWithLLVMSymbolizer(llvm::raw_ostream &OS,
   Context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
 
   static void *StackTrace[256];
-  int Depth = 0;
+  size_t Depth = 0;
   while (fStackWalk64(NativeMachineType, hProcess, hThread, &StackFrame,
                       &Context, 0, fSymFunctionTableAccess64,
                       fSymGetModuleBase64, 0)) {
