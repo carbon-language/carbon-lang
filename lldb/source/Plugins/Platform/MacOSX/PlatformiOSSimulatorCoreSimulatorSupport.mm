@@ -9,6 +9,8 @@
 
 #include "PlatformiOSSimulatorCoreSimulatorSupport.h"
 
+#if defined (__APPLE__)  // This Plugin uses the Mac-specific source/Host/macosx/cfcpp utilities
+
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
@@ -771,3 +773,5 @@ CoreSimulatorSupport::DeviceSet::GetFanciest (CoreSimulatorSupport::DeviceType::
     
     return dev;
 }
+
+#endif // __APPLE__
