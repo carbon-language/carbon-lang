@@ -2855,8 +2855,9 @@ static void WriteIdentificationBlock(const Module *M, BitstreamWriter &Stream) {
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::IDENTIFICATION_CODE_EPOCH));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
+  auto EpochAbbrev = Stream.EmitAbbrev(Abbv);
   SmallVector<unsigned, 1> Vals = {bitc::BITCODE_CURRENT_EPOCH};
-  Stream.EmitRecord(bitc::IDENTIFICATION_CODE_EPOCH, Vals);
+  Stream.EmitRecord(bitc::IDENTIFICATION_CODE_EPOCH, Vals, EpochAbbrev);
   Stream.ExitBlock();
 }
 
