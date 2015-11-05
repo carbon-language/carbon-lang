@@ -79,6 +79,9 @@ public:
     const lldb_private::RegisterInfo *
     GetRegisterInfoArray(uint32_t &count) override;
 
+    bool
+    IsArmv7kProcess (lldb_private::Thread *thread) const;
+
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------

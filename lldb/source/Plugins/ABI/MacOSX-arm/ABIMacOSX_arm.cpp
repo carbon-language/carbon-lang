@@ -238,8 +238,8 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
         size_t num_stack_regs = ae - ai;
         
         sp -= (num_stack_regs * 4);
-        // Keep the stack 8 byte aligned, not that we need to
-        sp &= ~(8ull-1ull);
+        // Keep the stack 16 byte aligned
+        sp &= ~(16ull-1ull);
         
         // just using arg1 to get the right size
         const RegisterInfo *reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
@@ -413,6 +413,26 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
     return true;
 }
 
+bool
+ABIMacOSX_arm::IsArmv7kProcess (Thread *thread) const
+{
+    bool is_armv7k = false;
+    if (thread)
+    {
+        ProcessSP process_sp (thread->GetProcess());
+        if (process_sp)
+        {
+            const ArchSpec &arch (process_sp->GetTarget().GetArchitecture());
+            const ArchSpec::Core system_core = arch.GetCore();
+            if (system_core == ArchSpec::eCore_arm_armv7k)
+            {
+                is_armv7k = true;
+            }
+        }
+    }
+    return is_armv7k;
+}
+
 ValueObjectSP
 ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
                                          lldb_private::CompilerType &compiler_type) const
@@ -443,6 +463,60 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
         {
             default:
                 return return_valobj_sp;
+            case 128:
+                if (IsArmv7kProcess (&thread))
+                {
+                    // "A composite type not larger than 16 bytes is returned in r0-r3. The format is
+                    // as if the result had been stored in memory at a word-aligned address and then
+                    // loaded into r0-r3 with an ldm instruction"
+                    {
+                        const RegisterInfo *r1_reg_info = reg_ctx->GetRegisterInfoByName("r1", 0);
+                        const RegisterInfo *r2_reg_info = reg_ctx->GetRegisterInfoByName("r2", 0);
+                        const RegisterInfo *r3_reg_info = reg_ctx->GetRegisterInfoByName("r3", 0);
+                        if (r1_reg_info && r2_reg_info && r3_reg_info)
+                        {
+                            const size_t byte_size = compiler_type.GetByteSize(&thread);
+                            ProcessSP process_sp (thread.GetProcess());
+                            if (byte_size <= r0_reg_info->byte_size + r1_reg_info->byte_size + r2_reg_info->byte_size + r3_reg_info->byte_size
+                                && process_sp)
+                            {
+                                std::unique_ptr<DataBufferHeap> heap_data_ap (new DataBufferHeap(byte_size, 0));
+                                const ByteOrder byte_order = process_sp->GetByteOrder();
+                                RegisterValue r0_reg_value;
+                                RegisterValue r1_reg_value;
+                                RegisterValue r2_reg_value;
+                                RegisterValue r3_reg_value;
+                                if (reg_ctx->ReadRegister(r0_reg_info, r0_reg_value)
+                                    && reg_ctx->ReadRegister(r1_reg_info, r1_reg_value)
+                                    && reg_ctx->ReadRegister(r2_reg_info, r2_reg_value)
+                                    && reg_ctx->ReadRegister(r3_reg_info, r3_reg_value))
+                                {
+                                    Error error;
+                                    if (r0_reg_value.GetAsMemoryData (r0_reg_info, heap_data_ap->GetBytes()+0, 4, byte_order, error)
+                                        && r1_reg_value.GetAsMemoryData (r1_reg_info, heap_data_ap->GetBytes()+4, 4, byte_order, error)
+                                        && r2_reg_value.GetAsMemoryData (r2_reg_info, heap_data_ap->GetBytes()+8, 4, byte_order, error)
+                                        && r3_reg_value.GetAsMemoryData (r3_reg_info, heap_data_ap->GetBytes()+12, 4, byte_order, error))
+                                    {
+                                        DataExtractor data (DataBufferSP (heap_data_ap.release()),
+                                                            byte_order,
+                                                            process_sp->GetAddressByteSize());
+                                        
+                                        return_valobj_sp = ValueObjectConstResult::Create (&thread,
+                                                                                        compiler_type,
+                                                                                        ConstString(""),
+                                                                                        data);
+                                        return return_valobj_sp;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    return return_valobj_sp;
+                }
+                break;
             case 64:
             {
                 const RegisterInfo *r1_reg_info = reg_ctx->GetRegisterInfoByName("r1", 0);
@@ -552,6 +626,39 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
                 
                     if (reg_ctx->WriteRegisterFromUnsigned (r1_info, raw_value))
                         set_it_simple = true;
+                }
+            }
+        }
+        else if (num_bytes <= 16 && IsArmv7kProcess (frame_sp->GetThread().get()))
+        {
+            // "A composite type not larger than 16 bytes is returned in r0-r3. The format is
+            // as if the result had been stored in memory at a word-aligned address and then
+            // loaded into r0-r3 with an ldm instruction"
+
+            const RegisterInfo *r0_info = reg_ctx->GetRegisterInfoByName("r0", 0);
+            const RegisterInfo *r1_info = reg_ctx->GetRegisterInfoByName("r1", 0);
+            const RegisterInfo *r2_info = reg_ctx->GetRegisterInfoByName("r2", 0);
+            const RegisterInfo *r3_info = reg_ctx->GetRegisterInfoByName("r3", 0);
+            lldb::offset_t offset = 0;
+            uint32_t bytes_written = 4;
+            uint32_t raw_value = data.GetMaxU64(&offset, 4);
+            if (reg_ctx->WriteRegisterFromUnsigned (r0_info, raw_value) && bytes_written <= num_bytes)
+            {
+                bytes_written += 4;
+                raw_value = data.GetMaxU64(&offset, 4);
+                if (bytes_written <= num_bytes && reg_ctx->WriteRegisterFromUnsigned (r1_info, raw_value))
+                {
+                    bytes_written += 4;
+                    raw_value = data.GetMaxU64(&offset, 4);
+                    if (bytes_written <= num_bytes && reg_ctx->WriteRegisterFromUnsigned (r2_info, raw_value))
+                    {
+                        bytes_written += 4;
+                        raw_value = data.GetMaxU64(&offset, 4);
+                        if (bytes_written <= num_bytes && reg_ctx->WriteRegisterFromUnsigned (r3_info, raw_value))
+                        {
+                            set_it_simple = true;
+                        }
+                    }
                 }
             }
         }
