@@ -21,6 +21,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <cctype>
 using namespace llvm;
 
@@ -35,7 +36,10 @@ WebAssemblyInstPrinter::WebAssemblyInstPrinter(const MCAsmInfo &MAI,
 
 void WebAssemblyInstPrinter::printRegName(raw_ostream &OS,
                                           unsigned RegNo) const {
-  OS << getRegisterName(RegNo);
+  if (TargetRegisterInfo::isPhysicalRegister(RegNo))
+    OS << getRegisterName(RegNo);
+  else
+    OS << TargetRegisterInfo::virtReg2Index(RegNo);
 }
 
 void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
@@ -43,15 +47,31 @@ void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
                                        const MCSubtargetInfo &STI) {
   printInstruction(MI, OS);
   printAnnotation(OS, Annot);
+
+  unsigned NumDefs = MII.get(MI->getOpcode()).getNumDefs();
+  assert(NumDefs <= 1 &&
+         "Instructions with multiple result values not implemented");
+
+  if (NumDefs != 0) {
+    OS << "\n"
+          "\t" "set_local ";
+    printRegName(OS, MI->getOperand(0).getReg());
+    OS << ", pop";
+  }
 }
 
 void WebAssemblyInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                           raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
-  if (Op.isReg())
-    O << getRegisterName(Op.getReg());
-  else if (Op.isImm())
+  if (Op.isReg()) {
+    if (OpNo < MII.get(MI->getOpcode()).getNumDefs())
+      O << "push";
+    else
+      printRegName(O, Op.getReg());
+  } else if (Op.isImm())
     O << '#' << Op.getImm();
+  else if (Op.isFPImm())
+    O << '#' << Op.getFPImm();
   else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     Op.getExpr()->print(O, &MAI);

@@ -40,6 +40,12 @@ static MCAsmInfo *createWebAssemblyMCAsmInfo(const MCRegisterInfo &MRI,
   return new WebAssemblyMCAsmInfo(TT);
 }
 
+static MCInstrInfo *createWebAssemblyMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitWebAssemblyMCInstrInfo(X);
+  return X;
+}
+
 static MCInstPrinter *
 createWebAssemblyMCInstPrinter(const Triple &T, unsigned SyntaxVariant,
                                const MCAsmInfo &MAI, const MCInstrInfo &MII,
@@ -53,6 +59,9 @@ extern "C" void LLVMInitializeWebAssemblyTargetMC() {
   for (Target *T : {&TheWebAssemblyTarget32, &TheWebAssemblyTarget64}) {
     // Register the MC asm info.
     RegisterMCAsmInfoFn X(*T, createWebAssemblyMCAsmInfo);
+
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createWebAssemblyMCInstrInfo);
 
     // Register the MCInstPrinter.
     TargetRegistry::RegisterMCInstPrinter(*T, createWebAssemblyMCInstPrinter);
