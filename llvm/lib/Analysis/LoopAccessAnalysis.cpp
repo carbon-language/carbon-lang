@@ -268,7 +268,7 @@ void RuntimePointerChecking::groupChecks(
   // ShouldRetryWithRuntimeCheck is set, and therefore UseDependencies
   // is also false. In this case we will use the fallback path and create
   // separate checking groups for all pointers.
- 
+
   // If we don't have the dependency partitions, construct a new
   // checking pointer group for each pointer. This is also required
   // for correctness, because in this case we can have checking between
@@ -743,6 +743,11 @@ void AccessAnalysis::processMemAccesses() {
           GetUnderlyingObjects(Ptr, TempObjects, DL, LI);
           DEBUG(dbgs() << "Underlying objects for pointer " << *Ptr << "\n");
           for (Value *UnderlyingObj : TempObjects) {
+            // nullptr never alias, don't join sets for pointer that have "null"
+            // in their UnderlyingObjects list.
+            if (isa<ConstantPointerNull>(UnderlyingObj))
+              continue;
+
             UnderlyingObjToAccessMap::iterator Prev =
                 ObjToLastAccess.find(UnderlyingObj);
             if (Prev != ObjToLastAccess.end())
