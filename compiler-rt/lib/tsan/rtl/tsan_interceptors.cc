@@ -1293,7 +1293,11 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
   SCOPED_INTERCEPTOR_RAW(pthread_once, o, f);
   if (o == 0 || f == 0)
     return EINVAL;
-  atomic_uint32_t *a = static_cast<atomic_uint32_t*>(o);
+  atomic_uint32_t *a;
+  if (!SANITIZER_MAC)
+    a = static_cast<atomic_uint32_t*>(o);
+  else  // On OS X, pthread_once_t has a header with a long-sized signature.
+    a = static_cast<atomic_uint32_t*>((void *)((char *)o + sizeof(long)));
   u32 v = atomic_load(a, memory_order_acquire);
   if (v == 0 && atomic_compare_exchange_strong(a, &v, 1,
                                                memory_order_relaxed)) {
