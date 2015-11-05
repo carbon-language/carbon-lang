@@ -134,31 +134,31 @@ ompt_initialize_t ompt_tool_windows()
 #if OMPT_DEBUG
     printf("ompt_tool_windows(): looking for ompt_tool\n");
 #endif
-    if( !EnumProcessModules( process, modules, NUM_MODULES * sizeof(HMODULE),
-                             &needed ) ) {
+    if (!EnumProcessModules( process, modules, NUM_MODULES * sizeof(HMODULE),
+                              &needed)) {
         // Regardless of the error reason use the stub initialization function
         free(modules);
         return NULL;
     }
     // Check if NUM_MODULES is enough to list all modules
     new_size = needed / sizeof(HMODULE);
-    if( new_size > NUM_MODULES ) {
+    if (new_size > NUM_MODULES) {
 #if OMPT_DEBUG
     printf("ompt_tool_windows(): resize buffer to %d bytes\n", needed);
 #endif
         modules = (HMODULE*)realloc( modules, needed );
         // If resizing failed use the stub function.
-        if( !EnumProcessModules( process, modules, needed, &needed ) ) {
+        if (!EnumProcessModules(process, modules, needed, &needed)) {
             free(modules);
             return NULL;
         }
     }
-    for( i = 0; i < new_size; ++i ) {
+    for (i = 0; i < new_size; ++i) {
         (FARPROC &)ompt_tool_p = GetProcAddress(modules[i], "ompt_tool");
-        if( ompt_tool_p ) {
+        if (ompt_tool_p) {
 #if OMPT_DEBUG
             TCHAR modName[MAX_PATH];
-            if( GetModuleFileName(modules[i], modName, MAX_PATH))
+            if (GetModuleFileName(modules[i], modName, MAX_PATH))
                 printf("ompt_tool_windows(): ompt_tool found in module %s\n",
                        modName);
 #endif
@@ -168,7 +168,7 @@ ompt_initialize_t ompt_tool_windows()
 #if OMPT_DEBUG
         else {
             TCHAR modName[MAX_PATH];
-            if( GetModuleFileName(modules[i], modName, MAX_PATH) )
+            if (GetModuleFileName(modules[i], modName, MAX_PATH))
                 printf("ompt_tool_windows(): ompt_tool not found in module %s\n",
                        modName);
         }
@@ -228,7 +228,7 @@ void ompt_pre_init()
         break;
     }
 #if OMPT_DEBUG
-    printf("ompt_pre_init():ompt_enabled = %d\n", ompt_enabled);
+    printf("ompt_pre_init(): ompt_enabled = %d\n", ompt_enabled);
 #endif
 }
 
