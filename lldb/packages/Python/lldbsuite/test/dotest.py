@@ -387,7 +387,7 @@ def setupCrashInfoHook():
     global setCrashInfoHook
     setCrashInfoHook = setCrashInfoHook_NonMac # safe default
     if platform.system() == "Darwin":
-        import lock
+        from . import lock
         test_dir = os.environ['LLDB_TEST']
         if not test_dir or not os.path.exists(test_dir):
             return
