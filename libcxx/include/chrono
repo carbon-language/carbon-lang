@@ -194,6 +194,13 @@ template <class Rep1, class Period1, class Rep2, class Period2>
 template <class ToDuration, class Rep, class Period>
   ToDuration duration_cast(const duration<Rep, Period>& d);
 
+template <class ToDuration, class Rep, class Period>
+    constexpr ToDuration floor(const duration<Rep, Period>& d);    // C++17
+template <class ToDuration, class Rep, class Period>
+    constexpr ToDuration ceil(const duration<Rep, Period>& d);     // C++17
+template <class ToDuration, class Rep, class Period>
+    constexpr ToDuration round(const duration<Rep, Period>& d);    // C++17
+
 // time_point arithmetic (all constexpr in C++14)
 template <class Clock, class Duration1, class Rep2, class Period2>
   time_point<Clock, typename common_type<Duration1, duration<Rep2, Period2>>::type>
@@ -227,6 +234,20 @@ template <class Clock, class Duration1, class Duration2>
 template <class ToDuration, class Clock, class Duration>
   time_point<Clock, ToDuration> time_point_cast(const time_point<Clock, Duration>& t);
 
+template <class ToDuration, class Clock, class Duration>
+    constexpr time_point<Clock, ToDuration>
+    floor(const time_point<Clock, Duration>& tp);                  // C++17
+
+template <class ToDuration, class Clock, class Duration>
+    constexpr time_point<Clock, ToDuration>
+    ceil(const time_point<Clock, Duration>& tp);                   // C++17
+
+template <class ToDuration, class Clock, class Duration>
+    constexpr time_point<Clock, ToDuration>
+    round(const time_point<Clock, Duration>& tp);                  // C++17
+
+template <class Rep, class Period>
+    constexpr duration<Rep, Period> abs(duration<Rep, Period> d);  // C++17
 // Clocks
 
 class system_clock
@@ -400,6 +421,58 @@ public:
     _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR _Rep max()  {return numeric_limits<_Rep>::max();}
     _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR _Rep min()  {return numeric_limits<_Rep>::lowest();}
 };
+
+#if _LIBCPP_STD_VER > 14
+template <class _ToDuration, class _Rep, class _Period>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+typename enable_if
+<
+    __is_duration<_ToDuration>::value,
+    _ToDuration
+>::type
+floor(const duration<_Rep, _Period>& __d)
+{
+    _ToDuration __t = duration_cast<_ToDuration>(__d);
+    if (__t > __d)
+        __t = __t - _ToDuration{1};
+    return __t;
+}
+
+template <class _ToDuration, class _Rep, class _Period>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+typename enable_if
+<
+    __is_duration<_ToDuration>::value,
+    _ToDuration
+>::type
+ceil(const duration<_Rep, _Period>& __d)
+{
+    _ToDuration __t = duration_cast<_ToDuration>(__d);
+    if (__t < __d)
+        __t = __t + _ToDuration{1};
+    return __t;
+}
+
+template <class _ToDuration, class _Rep, class _Period>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+typename enable_if
+<
+    __is_duration<_ToDuration>::value,
+    _ToDuration
+>::type
+round(const duration<_Rep, _Period>& __d)
+{
+    _ToDuration __lower = floor<_ToDuration>(__d);
+    _ToDuration __upper = __lower + _ToDuration{1};
+    auto __lowerDiff = __d - __lower;
+    auto __upperDiff = __upper - __d;
+    if (__lowerDiff < __upperDiff)
+        return __lower;
+    if (__lowerDiff > __upperDiff)
+        return __upper;
+    return __lower.count() & 1 ? __upper : __lower;
+}
+#endif
 
 // duration
 
@@ -806,6 +879,56 @@ time_point_cast(const time_point<_Clock, _Duration>& __t)
 {
     return time_point<_Clock, _ToDuration>(_VSTD::chrono::duration_cast<_ToDuration>(__t.time_since_epoch()));
 }
+
+#if _LIBCPP_STD_VER > 14
+template <class _ToDuration, class _Clock, class _Duration>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+typename enable_if
+<
+    __is_duration<_ToDuration>::value,
+    time_point<_Clock, _ToDuration>
+>::type
+floor(const time_point<_Clock, _Duration>& __t)
+{
+    return time_point<_Clock, _ToDuration>{floor<_ToDuration>(__t.time_since_epoch())};
+}
+
+template <class _ToDuration, class _Clock, class _Duration>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+typename enable_if
+<
+    __is_duration<_ToDuration>::value,
+    time_point<_Clock, _ToDuration>
+>::type
+ceil(const time_point<_Clock, _Duration>& __t)
+{
+    return time_point<_Clock, _ToDuration>{ceil<_ToDuration>(__t.time_since_epoch())};
+}
+
+template <class _ToDuration, class _Clock, class _Duration>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+typename enable_if
+<
+    __is_duration<_ToDuration>::value,
+    time_point<_Clock, _ToDuration>
+>::type
+round(const time_point<_Clock, _Duration>& __t)
+{
+    return time_point<_Clock, _ToDuration>{round<_ToDuration>(__t.time_since_epoch())};
+}
+
+template <class _Rep, class _Period>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+typename enable_if
+<
+    numeric_limits<_Rep>::is_signed,
+    duration<_Rep, _Period>
+>::type
+abs(duration<_Rep, _Period> __d)
+{
+    return __d >= __d.zero() ? __d : -__d;
+}
+#endif
 
 // time_point ==
 
