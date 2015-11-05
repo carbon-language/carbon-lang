@@ -301,7 +301,8 @@ static bool findModulesAndOffsets(void **StackTrace, int Depth,
 #else
 static bool findModulesAndOffsets(void **StackTrace, int Depth,
                                   const char **Modules, intptr_t *Offsets,
-                                  const char *MainExecutableName) {
+                                  const char *MainExecutableName,
+                                  StringSaver &StrPool) {
   return false;
 }
 #endif
