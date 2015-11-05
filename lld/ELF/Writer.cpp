@@ -740,8 +740,11 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     }
   }
 
-  if (TlsPhdr.p_vaddr)
+  if (TlsPhdr.p_vaddr) {
     Phdrs[++PhdrIdx] = TlsPhdr;
+    Out<ELFT>::TlsInitImageAlignedSize =
+        RoundUpToAlignment(TlsPhdr.p_memsz, TlsPhdr.p_align);
+  }
 
   // Add an entry for .dynamic.
   if (isOutputDynamic()) {

@@ -372,6 +372,7 @@ template <class ELFT> struct Out {
   static SymbolTableSection<ELFT> *DynSymTab;
   static SymbolTableSection<ELFT> *SymTab;
   static uintX_t TlsInitImageVA;
+  static size_t TlsInitImageAlignedSize;
 };
 
 template <class ELFT> DynamicSection<ELFT> *Out<ELFT>::Dynamic;
@@ -392,6 +393,7 @@ template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::StrTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::DynSymTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::SymTab;
 template <class ELFT> typename Out<ELFT>::uintX_t Out<ELFT>::TlsInitImageVA;
+template <class ELFT> size_t Out<ELFT>::TlsInitImageAlignedSize;
 
 } // namespace elf2
 } // namespace lld

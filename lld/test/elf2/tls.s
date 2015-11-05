@@ -164,7 +164,7 @@ d:
 
 // DIS:      Disassembly of section .text:
 // DIS-NEXT: _start:
-// DIS-NEXT:    11000: {{.+}} movl    %fs:8, %eax
-// DIS-NEXT:    11008: {{.+}} movl    %fs:0, %eax
-// DIS-NEXT:    11010: {{.+}} movl    %fs:12, %eax
-// DIS-NEXT:    11018: {{.+}} movl    %fs:4, %eax
+// DIS-NEXT:    11000: {{.+}} movl    %fs:-8, %eax
+// DIS-NEXT:    11008: {{.+}} movl    %fs:-16, %eax
+// DIS-NEXT:    11010: {{.+}} movl    %fs:-4, %eax
+// DIS-NEXT:    11018: {{.+}} movl    %fs:-12, %eax
