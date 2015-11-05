@@ -1152,6 +1152,9 @@ public:
     void
     SetAddressByteSize (uint32_t addr_size)
     {
+#ifdef LLDB_CONFIGURATION_DEBUG
+        assert (addr_size == 4 || addr_size == 8);
+#endif
         m_addr_size = addr_size;
     }
 
