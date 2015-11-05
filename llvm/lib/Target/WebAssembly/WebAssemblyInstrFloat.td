@@ -12,31 +12,31 @@
 ///
 //===----------------------------------------------------------------------===//
 
-defm ADD : BinaryFP<fadd>;
-defm SUB : BinaryFP<fsub>;
-defm MUL : BinaryFP<fmul>;
-defm DIV : BinaryFP<fdiv>;
-defm SQRT : UnaryFP<fsqrt>;
+defm ADD : BinaryFP<fadd, "add">;
+defm SUB : BinaryFP<fsub, "sub">;
+defm MUL : BinaryFP<fmul, "mul">;
+defm DIV : BinaryFP<fdiv, "div">;
+defm SQRT : UnaryFP<fsqrt, "sqrt">;
 
-defm ABS : UnaryFP<fabs>;
-defm NEG : UnaryFP<fneg>;
-defm COPYSIGN : BinaryFP<fcopysign>;
+defm ABS : UnaryFP<fabs, "abs">;
+defm NEG : UnaryFP<fneg, "neg">;
+defm COPYSIGN : BinaryFP<fcopysign, "copysign">;
 
-defm CEIL : UnaryFP<fceil>;
-defm FLOOR : UnaryFP<ffloor>;
-defm TRUNC : UnaryFP<ftrunc>;
-defm NEAREST : UnaryFP<fnearbyint>;
+defm CEIL : UnaryFP<fceil, "ceil">;
+defm FLOOR : UnaryFP<ffloor, "floor">;
+defm TRUNC : UnaryFP<ftrunc, "trunc">;
+defm NEAREST : UnaryFP<fnearbyint, "nearest">;
 
 // WebAssembly doesn't expose inexact exceptions, so map frint to fnearbyint.
 def : Pat<(frint f32:$src), (NEAREST_F32 f32:$src)>;
 def : Pat<(frint f64:$src), (NEAREST_F64 f64:$src)>;
 
-defm EQ : ComparisonFP<SETOEQ>;
-defm NE : ComparisonFP<SETUNE>;
-defm LT : ComparisonFP<SETOLT>;
-defm LE : ComparisonFP<SETOLE>;
-defm GT : ComparisonFP<SETOGT>;
-defm GE : ComparisonFP<SETOGE>;
+defm EQ : ComparisonFP<SETOEQ, "eq">;
+defm NE : ComparisonFP<SETUNE, "ne">;
+defm LT : ComparisonFP<SETOLT, "lt">;
+defm LE : ComparisonFP<SETOLE, "le">;
+defm GT : ComparisonFP<SETOGT, "gt">;
+defm GE : ComparisonFP<SETOGE, "ge">;
 
 // Don't care floating-point comparisons, supported via other comparisons.
 def : Pat<(seteq f32:$lhs, f32:$rhs), (EQ_F32 f32:$lhs, f32:$rhs)>;
@@ -60,6 +60,8 @@ def : Pat<(setge f64:$lhs, f64:$rhs), (GE_F64 f64:$lhs, f64:$rhs)>;
  */
 
 def SELECT_F32 : I<(outs F32:$dst), (ins I32:$cond, F32:$lhs, F32:$rhs),
-                   [(set F32:$dst, (select I32:$cond, F32:$lhs, F32:$rhs))]>;
+                   [(set F32:$dst, (select I32:$cond, F32:$lhs, F32:$rhs))],
+                   "f32.select $dst, $cond, $lhs, $rhs">;
 def SELECT_F64 : I<(outs F64:$dst), (ins I32:$cond, F64:$lhs, F64:$rhs),
-                   [(set F64:$dst, (select I32:$cond, F64:$lhs, F64:$rhs))]>;
+                   [(set F64:$dst, (select I32:$cond, F64:$lhs, F64:$rhs))],
+                   "f64.select $dst, $cond, $lhs, $rhs">;

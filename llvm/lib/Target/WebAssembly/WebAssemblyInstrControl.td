@@ -27,10 +27,12 @@
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
 def BR_IF_ : I<(outs), (ins bb_op:$dst, I32:$a),
-               [(brcond I32:$a, bb:$dst)]>;
+               [(brcond I32:$a, bb:$dst)],
+               "br_if $dst, $a">;
 let isBarrier = 1 in {
 def BR   : I<(outs), (ins bb_op:$dst),
-             [(br bb:$dst)]>;
+             [(br bb:$dst)],
+             "br $dst">;
 } // isBarrier = 1
 } // isBranch = 1, isTerminator = 1, hasCtrlDep = 1
 
@@ -45,16 +47,17 @@ def SWITCH_I64 : I<(outs), (ins I64:$index, variable_ops),
 } // isTerminator = 1, hasCtrlDep = 1, isBarrier = 1
 
 // Placemarkers to indicate the start of a block or loop scope.
-def BLOCK     : I<(outs), (ins bb_op:$dst), []>;
-def LOOP      : I<(outs), (ins bb_op:$dst), []>;
+def BLOCK     : I<(outs), (ins bb_op:$dst), [], "block $dst">;
+def LOOP      : I<(outs), (ins bb_op:$dst), [], "loop $dst">;
 
 multiclass RETURN<WebAssemblyRegClass vt> {
-  def RETURN_#vt : I<(outs), (ins vt:$val), [(WebAssemblyreturn vt:$val)]>;
+  def RETURN_#vt : I<(outs), (ins vt:$val), [(WebAssemblyreturn vt:$val)],
+                     "return $val">;
 }
 let isReturn = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
   defm : RETURN<I32>;
   defm : RETURN<I64>;
   defm : RETURN<F32>;
   defm : RETURN<F64>;
-  def RETURN_VOID : I<(outs), (ins), [(WebAssemblyreturn)]>;
+  def RETURN_VOID : I<(outs), (ins), [(WebAssemblyreturn)], "return">;
 } // isReturn = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1
