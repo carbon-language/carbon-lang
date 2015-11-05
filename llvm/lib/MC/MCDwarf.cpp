@@ -996,14 +996,13 @@ static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
 
 namespace {
 class FrameEmitterImpl {
-  int CFAOffset;
-  int InitialCFAOffset;
+  int CFAOffset = 0;
+  int InitialCFAOffset = 0;
   bool IsEH;
-  const MCSymbol *SectionStart;
+  const MCSymbol *SectionStart = nullptr;
 
 public:
-  FrameEmitterImpl(bool isEH)
-      : CFAOffset(0), InitialCFAOffset(0), IsEH(isEH), SectionStart(nullptr) {}
+  FrameEmitterImpl(bool IsEH) : IsEH(IsEH) {}
 
   void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
