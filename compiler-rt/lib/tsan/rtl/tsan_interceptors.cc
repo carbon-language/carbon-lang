@@ -115,7 +115,9 @@ const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int EINVAL = 22;
 const int EBUSY = 16;
 const int EOWNERDEAD = 130;
+#if !SANITIZER_MAC
 const int EPOLL_CTL_ADD = 1;
+#endif
 const int SIGILL = 4;
 const int SIGABRT = 6;
 const int SIGFPE = 8;
@@ -130,7 +132,9 @@ const int SIGBUS = 7;
 const int SIGSYS = 31;
 #endif
 void *const MAP_FAILED = (void*)-1;
+#if !SANITIZER_MAC
 const int PTHREAD_BARRIER_SERIAL_THREAD = -1;
+#endif
 const int MAP_FIXED = 0x10;
 typedef long long_t;  // NOLINT
 
@@ -385,6 +389,7 @@ static int setup_at_exit_wrapper(ThreadState *thr, uptr pc, void(*f)(),
   return res;
 }
 
+#if !SANITIZER_MAC
 static void on_exit_wrapper(int status, void *arg) {
   ThreadState *thr = cur_thread();
   uptr pc = 0;
@@ -394,7 +399,6 @@ static void on_exit_wrapper(int status, void *arg) {
   __libc_free(ctx);
 }
 
-#if !SANITIZER_MAC
 TSAN_INTERCEPTOR(int, on_exit, void(*f)(int, void*), void *arg) {
   if (cur_thread()->in_symbolizer)
     return 0;
@@ -2198,6 +2202,7 @@ struct TsanInterceptorContext {
   const uptr pc;
 };
 
+#if !SANITIZER_MAC
 static void HandleRecvmsg(ThreadState *thr, uptr pc,
     __sanitizer_msghdr *msg) {
   int fds[64];
@@ -2205,6 +2210,7 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
   for (int i = 0; i < cnt; i++)
     FdEventCreate(thr, pc, fds[i]);
 }
+#endif
 
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 // Causes interceptor recursion (getaddrinfo() and fopen())
@@ -2355,6 +2361,7 @@ struct ScopedSyscall {
   }
 };
 
+#if !SANITIZER_MAC
 static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
   TSAN_SYSCALL();
   MemoryAccessRange(thr, pc, p, s, write);
@@ -2408,6 +2415,7 @@ static void syscall_post_fork(uptr pc, int pid) {
     ForkParentAfter(thr, pc);
   }
 }
+#endif
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) \
   syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), false)
@@ -2458,10 +2466,12 @@ static void finalize(void *arg) {
     Die();
 }
 
+#if !SANITIZER_MAC
 static void unreachable() {
   Report("FATAL: ThreadSanitizer: unreachable called\n");
   Die();
 }
+#endif
 
 void InitializeInterceptors() {
 #if !SANITIZER_MAC
