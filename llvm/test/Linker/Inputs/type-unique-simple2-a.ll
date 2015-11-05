@@ -44,7 +44,7 @@
 %struct.Base = type { i32, %struct.Base* }
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_Z1fi(i32 %a) #0 {
+define void @_Z1fi(i32 %a) #0 !dbg !12 {
 entry:
   %a.addr = alloca i32, align 4
   %t = alloca %struct.Base, align 8
@@ -75,7 +75,7 @@ attributes #1 = { nounwind readnone }
 !9 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 3, size: 64, align: 64, offset: 64, file: !5, scope: !"_ZTS4Base", baseType: !10)
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS4Base")
 !11 = !{!12}
-!12 = distinct !DISubprogram(name: "f", linkageName: "_Z1fi", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !13, type: !14, function: void (i32)* @_Z1fi, variables: !2)
+!12 = distinct !DISubprogram(name: "f", linkageName: "_Z1fi", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !13, type: !14, variables: !2)
 !13 = !DIFile(filename: "foo.cpp", directory: ".")
 !14 = !DISubroutineType(types: !15)
 !15 = !{null, !8}

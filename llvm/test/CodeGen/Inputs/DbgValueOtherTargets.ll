@@ -1,6 +1,6 @@
 ; Check that DEBUG_VALUE comments come through on a variety of targets.
 
-define i32 @main() nounwind ssp {
+define i32 @main() nounwind ssp !dbg !0 {
 entry:
 ; CHECK: DEBUG_VALUE
   call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !7, metadata !DIExpression()), !dbg !9
@@ -14,7 +14,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!13}
 
-!0 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: !1, type: !3, function: i32 ()* @main)
+!0 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: !1, type: !3)
 !1 = !DIFile(filename: "/tmp/x.c", directory: "/Users/manav")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 120996)", isOptimized: false, emissionKind: 0, file: !12, enums: !6, retainedTypes: !6, subprograms: !11)
 !3 = !DISubroutineType(types: !4)

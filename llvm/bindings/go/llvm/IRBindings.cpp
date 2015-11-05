@@ -98,3 +98,7 @@ void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
       DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
                     InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
 }
+
+void LLVMSetSubprogram(LLVMValueRef Func, LLVMMetadataRef SP) {
+  unwrap<Function>(Func)->setSubprogram(unwrap<DISubprogram>(SP));
+}

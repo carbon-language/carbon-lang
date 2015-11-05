@@ -25,7 +25,7 @@ declare x86_stdcallcc void @stdfoo(i32, i32) #0
 ; CHECK: .cfi_adjust_cfa_offset -8
 ; CHECK: addl $8, %esp
 ; CHECK: .cfi_adjust_cfa_offset -8
-define void @test1() #0 {
+define void @test1() #0 !dbg !4 {
 entry:
   tail call void @foo(i32 1, i32 2) #1, !dbg !10
   tail call x86_stdcallcc void @stdfoo(i32 3, i32 4) #1, !dbg !11
@@ -42,7 +42,7 @@ attributes #0 = { nounwind optsize }
 !1 = !DIFile(filename: "foo.c", directory: "foo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "test1", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: true, function: void ()* @test1, variables: !2)
+!4 = distinct !DISubprogram(name: "test1", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: true, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{i32 2, !"Dwarf Version", i32 4}

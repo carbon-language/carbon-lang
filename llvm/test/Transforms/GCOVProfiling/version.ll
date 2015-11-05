@@ -8,7 +8,7 @@
 ; RUN: head -c8 %T/version.gcno | grep '^oncg.704'
 ; RUN: rm %T/version.gcno
 
-define void @test() {
+define void @test() !dbg !5 {
   ret void, !dbg !8
 }
 
@@ -20,7 +20,7 @@ define void @test() {
 !2 = !DIFile(filename: "version", directory: "/usr/local/google/home/nlewycky")
 !3 = !{}
 !4 = !{!5}
-!5 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !10, scope: !6, type: !7, function: void ()* @test, variables: !3)
+!5 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !10, scope: !6, type: !7, variables: !3)
 !6 = !DIFile(filename: "<stdin>", directory: ".")
 !7 = !DISubroutineType(types: !{null})
 !8 = !DILocation(line: 1, scope: !5)

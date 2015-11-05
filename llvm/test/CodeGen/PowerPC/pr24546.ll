@@ -6,7 +6,7 @@
 @php_intpow10.powers = external unnamed_addr constant [23 x double], align 8
 
 ; Function Attrs: nounwind
-define double @_php_math_round(double %value, i32 signext %places, i32 signext %mode) #0 {
+define double @_php_math_round(double %value, i32 signext %places, i32 signext %mode) #0 !dbg !6 {
 entry:
   br i1 undef, label %if.then, label %if.else, !dbg !32
 
@@ -62,7 +62,7 @@ attributes #3 = { nounwind }
 !3 = !{!4}
 !4 = !DIBasicType(name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !5 = !{!6, !18}
-!6 = distinct !DISubprogram(name: "_php_math_round", scope: !1, file: !1, line: 15, type: !7, isLocal: false, isDefinition: true, scopeLine: 16, flags: DIFlagPrototyped, isOptimized: true, function: double (double, i32, i32)* @_php_math_round, variables: !10)
+!6 = distinct !DISubprogram(name: "_php_math_round", scope: !1, file: !1, line: 15, type: !7, isLocal: false, isDefinition: true, scopeLine: 16, flags: DIFlagPrototyped, isOptimized: true, variables: !10)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!4, !4, !9, !9}
 !9 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

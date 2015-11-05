@@ -4,7 +4,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare void @foo(i32, i64, i8*)
 
-define void @baz(i32 %a) nounwind ssp {
+define void @baz(i32 %a) nounwind ssp !dbg !1 {
 ; CHECK-LABEL:  entry:
 ; CHECK-NEXT:     %"alloca point" = bitcast i32 0 to i32{{$}}
 ; CHECK-NEXT:     call void @llvm.dbg.value(metadata i32 %a,{{.*}}, !dbg
@@ -43,7 +43,7 @@ return:                                           ; preds = %entry
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!22}
 !0 = !DILocalVariable(name: "a", line: 8, arg: 1, scope: !1, file: !2, type: !6)
-!1 = distinct !DISubprogram(name: "baz", linkageName: "baz", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 8, file: !20, scope: !2, type: !4, function: void (i32)* @baz)
+!1 = distinct !DISubprogram(name: "baz", linkageName: "baz", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 8, file: !20, scope: !2, type: !4)
 !2 = !DIFile(filename: "bar.c", directory: "/tmp/")
 !3 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !20, enums: !21, retainedTypes: !21, subprograms: !{!1})
 !4 = !DISubroutineType(types: !5)

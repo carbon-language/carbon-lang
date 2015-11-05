@@ -27,7 +27,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %struct.prog_src_register = type { i32, i24 }
 
 ; Function Attrs: nounwind
-define i64 @src_reg_for_float() #0 {
+define i64 @src_reg_for_float() #0 !dbg !4 {
 entry:
   %retval = alloca %struct.prog_src_register, align 4
   %a = alloca %struct.prog_src_register, align 4
@@ -70,7 +70,7 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: "<stdin>", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "src_reg_for_float", line: 7, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, function: i64 ()* @src_reg_for_float, variables: !2)
+!4 = distinct !DISubprogram(name: "src_reg_for_float", line: 7, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, variables: !2)
 !5 = !DIFile(filename: "pr22495.c", directory: "")
 !6 = !DIFile(filename: "pr22495.c", directory: "")
 !7 = !DISubroutineType(types: !8)

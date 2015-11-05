@@ -1,6 +1,6 @@
 ; RUN: opt < %s -mem2reg -S | FileCheck %s
 
-define double @testfunc(i32 %i, double %j) nounwind ssp {
+define double @testfunc(i32 %i, double %j) nounwind ssp !dbg !1 {
 entry:
   %i_addr = alloca i32                            ; <i32*> [#uses=2]
   %j_addr = alloca double                         ; <double*> [#uses=2]
@@ -36,7 +36,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.module.flags = !{!14}
 
 !0 = !DILocalVariable(name: "i", line: 2, arg: 1, scope: !1, file: !2, type: !7)
-!1 = distinct !DISubprogram(name: "testfunc", linkageName: "testfunc", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !12, scope: !2, type: !4, function: double (i32, double)* @testfunc)
+!1 = distinct !DISubprogram(name: "testfunc", linkageName: "testfunc", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !12, scope: !2, type: !4)
 !2 = !DIFile(filename: "testfunc.c", directory: "/tmp")
 !3 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12, enums: !13, retainedTypes: !13, subprograms: !{!1})
 !4 = !DISubroutineType(types: !5)

@@ -2,7 +2,7 @@
 ; RUN: %llc_dwarf -O0 < %s | FileCheck %s -check-prefix VARIABLE
 ; PR 13202
 
-define i32 @main() uwtable {
+define i32 @main() uwtable !dbg !5 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18, metadata !DIExpression()), !dbg !21
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !22, metadata !DIExpression()), !dbg !23
@@ -22,7 +22,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !1 = !{i32 0}
 !2 = !{}
 !3 = !{!5, !10}
-!5 = distinct !DISubprogram(name: "main", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !26, scope: !6, type: !7, function: i32 ()* @main, variables: !2)
+!5 = distinct !DISubprogram(name: "main", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !26, scope: !6, type: !7, variables: !2)
 !6 = !DIFile(filename: "inline-bug.cc", directory: "/tmp/dbginfo/pr13202")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

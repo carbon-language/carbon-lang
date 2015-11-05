@@ -14,7 +14,7 @@
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-define i32 @AttachGalley(%union.rec** nocapture %suspend_pt) nounwind uwtable ssp {
+define i32 @AttachGalley(%union.rec** nocapture %suspend_pt) nounwind uwtable ssp !dbg !21 {
 entry:
   %num14075 = alloca [20 x i8], align 16
   br label %if.end33
@@ -86,7 +86,7 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 !19 = !DIFile(filename: "MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", directory: "MultiSource/Benchmarks/MiBench/consumer-typeset")
 
 !20 = !{!21}
-!21 = distinct !DISubprogram(name: "AttachGalley", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: i32 (%union.rec**)* @AttachGalley)
+!21 = distinct !DISubprogram(name: "AttachGalley", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22)
 !22 = !DISubroutineType(types: !23)
 !23 = !{null}
 
@@ -99,7 +99,7 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 %"class.__gnu_cxx::hash_map" = type { %"class.__gnu_cxx::hashtable" }
 %"class.__gnu_cxx::hashtable" = type { i64, i64, i64, i64, i64, i64 }
 
-define void @main() uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+define void @main() uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) !dbg !37 {
 entry:
   %X = alloca %"class.__gnu_cxx::hash_map", align 8
   br i1 undef, label %cond.true, label %cond.end
@@ -141,4 +141,4 @@ declare void @_Znwm()
 !34 = !DIFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")
 !35 = !{i32 1, !"Debug Info Version", i32 3}
 !36 = !{!37}
-!37 = distinct !DISubprogram(name: "main", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: void ()* @main)
+!37 = distinct !DISubprogram(name: "main", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22)

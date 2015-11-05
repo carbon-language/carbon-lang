@@ -46,7 +46,7 @@
 @PtrGlb = common global %struct.Record* null, align 8
 @PtrGlbNext = common global %struct.Record* null, align 8
 
-define void @Proc8(i32* nocapture %Array1Par, [51 x i32]* nocapture %Array2Par, i32 %IntParI1, i32 %IntParI2) nounwind optsize {
+define void @Proc8(i32* nocapture %Array1Par, [51 x i32]* nocapture %Array2Par, i32 %IntParI1, i32 %IntParI2) nounwind optsize !dbg !12 {
 entry:
   tail call void @llvm.dbg.value(metadata i32* %Array1Par, i64 0, metadata !23, metadata !DIExpression()), !dbg !64
   tail call void @llvm.dbg.value(metadata [51 x i32]* %Array2Par, i64 0, metadata !24, metadata !DIExpression()), !dbg !65
@@ -115,7 +115,7 @@ attributes #1 = { nounwind readnone }
 !9 = !DIEnumerator(name: "Ident5", value: 10003) ; [ DW_TAG_enumerator ] [Ident5 :: 10003]
 !10 = !{}
 !11 = !{!12}
-!12 = distinct !DISubprogram(name: "Proc8", line: 180, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 185, file: !82, scope: !3, type: !13, function: void (i32*, [51 x i32]*, i32, i32)* @Proc8, variables: !22)
+!12 = distinct !DISubprogram(name: "Proc8", line: 180, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 185, file: !82, scope: !3, type: !13, variables: !22)
 !13 = !DISubroutineType(types: !14)
 !14 = !{null, !15, !17, !21, !21}
 !15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)

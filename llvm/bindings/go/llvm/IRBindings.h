@@ -55,6 +55,8 @@ void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
                                   unsigned Col, LLVMMetadataRef Scope,
                                   LLVMMetadataRef InlinedAt);
 
+void LLVMSetSubprogram(LLVMValueRef Fn, LLVMMetadataRef SP);
+
 #ifdef __cplusplus
 }
 

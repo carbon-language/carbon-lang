@@ -180,7 +180,7 @@
 @llvm.global_ctors = appending global [1 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_a }]
 
 ; Function Attrs: nounwind uwtable
-define void @_Z3foov() #0 {
+define void @_Z3foov() #0 !dbg !22 {
 entry:
   %b = alloca %struct.baz, align 1
   call void @llvm.dbg.declare(metadata %struct.baz* %b, metadata !46, metadata !DIExpression()), !dbg !48
@@ -190,14 +190,14 @@ entry:
 ; Function Attrs: nounwind readnone
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
-define internal void @__cxx_global_var_init() section ".text.startup" {
+define internal void @__cxx_global_var_init() section ".text.startup" !dbg !26 {
 entry:
   call void @_ZN12_GLOBAL__N_16walrusC2Ev(%"struct.<anonymous namespace>::walrus"* @w), !dbg !50
   ret void, !dbg !50
 }
 
 ; Function Attrs: nounwind uwtable
-define internal void @_ZN12_GLOBAL__N_16walrusC2Ev(%"struct.<anonymous namespace>::walrus"* %this) unnamed_addr #0 align 2 {
+define internal void @_ZN12_GLOBAL__N_16walrusC2Ev(%"struct.<anonymous namespace>::walrus"* %this) unnamed_addr #0 align 2 !dbg !27 {
 entry:
   %this.addr = alloca %"struct.<anonymous namespace>::walrus"*, align 8
   store %"struct.<anonymous namespace>::walrus"* %this, %"struct.<anonymous namespace>::walrus"** %this.addr, align 8
@@ -206,7 +206,7 @@ entry:
   ret void, !dbg !54
 }
 
-define internal void @_GLOBAL__I_a() section ".text.startup" {
+define internal void @_GLOBAL__I_a() section ".text.startup" !dbg !36 {
 entry:
   call void @__cxx_global_var_init(), !dbg !55
   ret void, !dbg !55
@@ -241,12 +241,12 @@ attributes #1 = { nounwind readnone }
 !19 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 33, size: 32, align: 32, file: !1, scope: !"_ZTSN6wombatUt_E", baseType: !12)
 !20 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 34, size: 32, align: 32, offset: 32, file: !1, scope: !"_ZTSN6wombatUt_E", baseType: !12)
 !21 = !{!22, !26, !27, !36}
-!22 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !23, type: !24, function: void ()* @_Z3foov, variables: !2)
+!22 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !23, type: !24, variables: !2)
 !23 = !DIFile(filename: "bar.cpp", directory: "/tmp/dbginfo")
 !24 = !DISubroutineType(types: !25)
 !25 = !{null}
-!26 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 29, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 29, file: !1, scope: !23, type: !24, function: void ()* @__cxx_global_var_init, variables: !2)
-!27 = distinct !DISubprogram(name: "walrus", linkageName: "_ZN12_GLOBAL__N_16walrusC2Ev", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !28, type: !32, function: void (%"struct.<anonymous namespace>::walrus"*)* @_ZN12_GLOBAL__N_16walrusC2Ev, declaration: !31, variables: !2)
+!26 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 29, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 29, file: !1, scope: !23, type: !24, variables: !2)
+!27 = distinct !DISubprogram(name: "walrus", linkageName: "_ZN12_GLOBAL__N_16walrusC2Ev", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !28, type: !32, declaration: !31, variables: !2)
 !28 = !DICompositeType(tag: DW_TAG_structure_type, name: "walrus", line: 24, size: 8, align: 8, file: !1, scope: !29, elements: !30)
 !29 = !DINamespace(line: 23, file: !1, scope: null)
 !30 = !{!31}
@@ -254,7 +254,7 @@ attributes #1 = { nounwind readnone }
 !32 = !DISubroutineType(types: !33)
 !33 = !{null, !34}
 !34 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !28)
-!36 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__I_a", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, scopeLine: 25, file: !1, scope: !23, type: !37, function: void ()* @_GLOBAL__I_a, variables: !2)
+!36 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__I_a", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, scopeLine: 25, file: !1, scope: !23, type: !37, variables: !2)
 !37 = !DISubroutineType(types: !2)
 !38 = !{!39, !40, !41, !42}
 !39 = !DIGlobalVariable(name: "b", line: 3, isLocal: false, isDefinition: true, scope: null, file: !23, type: !4, variable: %struct.bar* @b)

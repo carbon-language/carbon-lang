@@ -3807,8 +3807,8 @@ bool LLParser::ParseDICompileUnit(MDNode *&Result, bool IsDistinct) {
 ///                     isDefinition: true, scopeLine: 8, containingType: !3,
 ///                     virtuality: DW_VIRTUALTIY_pure_virtual,
 ///                     virtualIndex: 10, flags: 11,
-///                     isOptimized: false, function: void ()* @_Z3foov,
-///                     templateParams: !4, declaration: !5, variables: !6)
+///                     isOptimized: false, templateParams: !4, declaration: !5,
+///                     variables: !6)
 bool LLParser::ParseDISubprogram(MDNode *&Result, bool IsDistinct) {
   auto Loc = Lex.getLoc();
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
@@ -3826,7 +3826,6 @@ bool LLParser::ParseDISubprogram(MDNode *&Result, bool IsDistinct) {
   OPTIONAL(virtualIndex, MDUnsignedField, (0, UINT32_MAX));                    \
   OPTIONAL(flags, DIFlagField, );                                              \
   OPTIONAL(isOptimized, MDBoolField, );                                        \
-  OPTIONAL(function, MDConstant, );                                            \
   OPTIONAL(templateParams, MDField, );                                         \
   OPTIONAL(declaration, MDField, );                                            \
   OPTIONAL(variables, MDField, );
@@ -3839,11 +3838,11 @@ bool LLParser::ParseDISubprogram(MDNode *&Result, bool IsDistinct) {
         "missing 'distinct', required for !DISubprogram when 'isDefinition'");
 
   Result = GET_OR_DISTINCT(
-      DISubprogram, (Context, scope.Val, name.Val, linkageName.Val, file.Val,
-                     line.Val, type.Val, isLocal.Val, isDefinition.Val,
-                     scopeLine.Val, containingType.Val, virtuality.Val,
-                     virtualIndex.Val, flags.Val, isOptimized.Val, function.Val,
-                     templateParams.Val, declaration.Val, variables.Val));
+      DISubprogram,
+      (Context, scope.Val, name.Val, linkageName.Val, file.Val, line.Val,
+       type.Val, isLocal.Val, isDefinition.Val, scopeLine.Val,
+       containingType.Val, virtuality.Val, virtualIndex.Val, flags.Val,
+       isOptimized.Val, templateParams.Val, declaration.Val, variables.Val));
   return false;
 }
 

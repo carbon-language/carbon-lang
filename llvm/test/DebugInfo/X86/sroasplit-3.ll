@@ -20,7 +20,7 @@ target triple = "x86_64-apple-macosx10.10.0"
 %struct.S = type { float }
 
 ; Function Attrs: nounwind ssp uwtable
-define float @foo(float %s.coerce) #0 {
+define float @foo(float %s.coerce) #0 !dbg !4 {
 entry:
   %s = alloca %struct.S, align 4
   %coerce.dive = getelementptr %struct.S, %struct.S* %s, i32 0, i32 0
@@ -45,7 +45,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: float (float)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}

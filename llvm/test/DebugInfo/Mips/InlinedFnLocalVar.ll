@@ -12,7 +12,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
-define i32 @bar() nounwind ssp {
+define i32 @bar() nounwind ssp !dbg !6 {
 entry:
   %0 = load i32, i32* @i, align 4, !dbg !17            ; <i32> [#uses=2]
   tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !59, metadata !DIExpression()), !dbg !19
@@ -31,7 +31,7 @@ entry:
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5, !5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = distinct !DISubprogram(name: "bar", linkageName: "bar", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !27, scope: !1, type: !7, function: i32 ()* @bar)
+!6 = distinct !DISubprogram(name: "bar", linkageName: "bar", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !27, scope: !1, type: !7)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!5}
 !9 = !DILocalVariable(name: "j", line: 9, arg: 1, scope: !0, file: !1, type: !5)

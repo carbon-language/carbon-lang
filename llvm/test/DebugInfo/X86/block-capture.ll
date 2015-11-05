@@ -27,7 +27,7 @@ target triple = "x86_64-apple-darwin"
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: ssp uwtable
-define internal void @__foo_block_invoke(i8* %.block_descriptor) #2 {
+define internal void @__foo_block_invoke(i8* %.block_descriptor) #2 !dbg !8 {
 entry:
   %.block_descriptor.addr = alloca i8*, align 8
   %block.addr = alloca <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>*, align 8
@@ -69,7 +69,7 @@ attributes #3 = { nounwind }
 !5 = !DIFile(filename: "foo.m", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
-!8 = distinct !DISubprogram(name: "__foo_block_invoke", line: 2, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !9, function: void (i8*)* @__foo_block_invoke, variables: !2)
+!8 = distinct !DISubprogram(name: "__foo_block_invoke", line: 2, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !9, variables: !2)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11}
 !11 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)

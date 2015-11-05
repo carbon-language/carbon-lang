@@ -1692,7 +1692,6 @@ static void writeDISubprogram(raw_ostream &Out, const DISubprogram *N,
   Printer.printInt("virtualIndex", N->getVirtualIndex());
   Printer.printDIFlags("flags", N->getFlags());
   Printer.printBool("isOptimized", N->isOptimized());
-  Printer.printMetadata("function", N->getRawFunction());
   Printer.printMetadata("templateParams", N->getRawTemplateParams());
   Printer.printMetadata("declaration", N->getRawDeclaration());
   Printer.printMetadata("variables", N->getRawVariables());

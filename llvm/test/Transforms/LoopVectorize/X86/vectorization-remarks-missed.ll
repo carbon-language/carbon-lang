@@ -45,7 +45,7 @@
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 ; Function Attrs: nounwind optsize ssp uwtable
-define void @_Z4testPii(i32* nocapture %A, i32 %Length) #0 {
+define void @_Z4testPii(i32* nocapture %A, i32 %Length) #0 !dbg !4 {
 entry:
   %cmp10 = icmp sgt i32 %Length, 0, !dbg !12
   br i1 %cmp10, label %for.body, label %for.end, !dbg !12, !llvm.loop !14
@@ -67,7 +67,7 @@ for.end:                                          ; preds = %for.body, %entry
 }
 
 ; Function Attrs: nounwind optsize ssp uwtable
-define void @_Z13test_disabledPii(i32* nocapture %A, i32 %Length) #0 {
+define void @_Z13test_disabledPii(i32* nocapture %A, i32 %Length) #0 !dbg !7 {
 entry:
   %cmp4 = icmp sgt i32 %Length, 0, !dbg !25
   br i1 %cmp4, label %for.body, label %for.end, !dbg !25, !llvm.loop !27
@@ -87,7 +87,7 @@ for.end:                                          ; preds = %for.body, %entry
 }
 
 ; Function Attrs: nounwind optsize ssp uwtable
-define void @_Z17test_array_boundsPiS_i(i32* nocapture %A, i32* nocapture readonly %B, i32 %Length) #0 {
+define void @_Z17test_array_boundsPiS_i(i32* nocapture %A, i32* nocapture readonly %B, i32 %Length) #0 !dbg !8 {
 entry:
   %cmp9 = icmp sgt i32 %Length, 0, !dbg !32
   br i1 %cmp9, label %for.body.preheader, label %for.end, !dbg !32, !llvm.loop !34
@@ -126,11 +126,11 @@ attributes #0 = { nounwind }
 !1 = !DIFile(filename: "source.cpp", directory: ".")
 !2 = !{}
 !3 = !{!4, !7, !8}
-!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*, i32)* @_Z4testPii, variables: !2)
+!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "source.cpp", directory: ".")
 !6 = !DISubroutineType(types: !2)
-!7 = distinct !DISubprogram(name: "test_disabled", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !1, scope: !5, type: !6, function: void (i32*, i32)* @_Z13test_disabledPii, variables: !2)
-!8 = distinct !DISubprogram(name: "test_array_bounds", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !1, scope: !5, type: !6, function: void (i32*, i32*, i32)* @_Z17test_array_boundsPiS_i, variables: !2)
+!7 = distinct !DISubprogram(name: "test_disabled", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !1, scope: !5, type: !6, variables: !2)
+!8 = distinct !DISubprogram(name: "test_array_bounds", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !1, scope: !5, type: !6, variables: !2)
 !9 = !{i32 2, !"Dwarf Version", i32 2}
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{!"clang version 3.5.0"}

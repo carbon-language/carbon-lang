@@ -35,7 +35,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 {
+define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 !dbg !4 {
   call void @llvm.dbg.value(metadata i64 %outer.coerce0, i64 0, metadata !24, metadata !25), !dbg !26
   call void @llvm.dbg.declare(metadata !{null}, metadata !27, metadata !28), !dbg !26
   call void @llvm.dbg.value(metadata i64 %outer.coerce1, i64 0, metadata !29, metadata !30), !dbg !26
@@ -71,7 +71,7 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: "sroasplit-2.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (i64, i64)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "sroasplit-2.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}

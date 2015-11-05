@@ -9,7 +9,7 @@
 ; CHECK: ##DEBUG_VALUE: foo:i
 %a = type { i32, i32 }
 
-define hidden fastcc %a* @test() #1 {
+define hidden fastcc %a* @test() #1 !dbg !1 {
 entry:
   %0 = icmp eq %a* undef, null, !dbg !12
   br i1 %0, label %"14", label %return, !dbg !12
@@ -114,7 +114,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.module.flags = !{!22}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "Apple clang version", isOptimized: true, emissionKind: 1, file: !20, enums: !21, retainedTypes: !21, subprograms: !18, imports:  null)
-!1 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !20, scope: !2, type: !3, function: %a* ()* @test, variables: !19)
+!1 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !20, scope: !2, type: !3, variables: !19)
 !2 = !DIFile(filename: "a.c", directory: "/private/tmp")
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}

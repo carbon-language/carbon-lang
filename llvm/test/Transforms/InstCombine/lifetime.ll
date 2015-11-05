@@ -5,7 +5,7 @@ declare void @llvm.lifetime.start(i64, i8* nocapture)
 declare void @llvm.lifetime.end(i64, i8* nocapture)
 declare void @foo(i8* nocapture, i8* nocapture)
 
-define void @bar(i1 %flag) {
+define void @bar(i1 %flag) !dbg !4 {
 entry:
 ; CHECK-LABEL: @bar(
 ; CHECK: %[[T:[^ ]+]] = getelementptr inbounds [1 x i8], [1 x i8]* %text
@@ -68,7 +68,7 @@ fin:
 !1 = !DIFile(filename: "test.cpp", directory: "/home/user")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "bar", linkageName: "bar", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, function: void (i1)* @bar, variables: !8)
+!4 = distinct !DISubprogram(name: "bar", linkageName: "bar", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, variables: !8)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null, !7}
 !7 = !DIBasicType(name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)

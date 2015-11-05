@@ -5,7 +5,7 @@
 
 @.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
-define void @_Z3fooOi(i32* %i) uwtable ssp {
+define void @_Z3fooOi(i32* %i) uwtable ssp !dbg !5 {
 entry:
   %i.addr = alloca i32*, align 8
   store i32* %i, i32** %i.addr, align 8
@@ -26,7 +26,7 @@ declare i32 @printf(i8*, ...)
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.2 (trunk 157054) (llvm/trunk 157060)", isOptimized: false, emissionKind: 0, file: !16, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooOi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !16, scope: !6, type: !7, function: void (i32*)* @_Z3fooOi, variables: !1)
+!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooOi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !16, scope: !6, type: !7, variables: !1)
 !6 = !DIFile(filename: "foo.cpp", directory: "/Users/echristo/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}

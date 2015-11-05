@@ -21,7 +21,7 @@
 %class.A = type { i8 }
 %class.B = type { i8 }
 
-define i32 @main() ssp {
+define i32 @main() ssp !dbg !2 {
 entry:
   %retval = alloca i32, align 4                   ; <i32*> [#uses=3]
   %b = alloca %class.A, align 1                   ; <%class.A*> [#uses=1]
@@ -35,7 +35,7 @@ entry:
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-define linkonce_odr i32 @_ZN1B2fnEv(%class.A* %this) ssp align 2 {
+define linkonce_odr i32 @_ZN1B2fnEv(%class.A* %this) ssp align 2 !dbg !10 {
 entry:
   %retval = alloca i32, align 4                   ; <i32*> [#uses=2]
   %this.addr = alloca %class.A*, align 8          ; <%class.A**> [#uses=2]
@@ -54,7 +54,7 @@ entry:
   ret i32 %0, !dbg !32
 }
 
-define internal i32 @_ZZN1B2fnEvEN1A3fooEv(%class.A* %this) ssp align 2 {
+define internal i32 @_ZZN1B2fnEvEN1A3fooEv(%class.A* %this) ssp align 2 !dbg !23 {
 entry:
   %retval = alloca i32, align 4                   ; <i32*> [#uses=2]
   %this.addr = alloca %class.A*, align 8          ; <%class.A**> [#uses=2]
@@ -72,7 +72,7 @@ entry:
 
 !0 = !DILocalVariable(name: "b", line: 16, scope: !1, file: !3, type: !8)
 !1 = distinct !DILexicalBlock(line: 15, column: 12, file: !38, scope: !2)
-!2 = distinct !DISubprogram(name: "main", linkageName: "main", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 15, file: !38, scope: !3, type: !5, function: i32 ()* @main)
+!2 = distinct !DISubprogram(name: "main", linkageName: "main", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 15, file: !38, scope: !3, type: !5)
 !3 = !DIFile(filename: "one.cc", directory: "/tmp")
 !4 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang 1.5", isOptimized: false, emissionKind: 0, file: !38, enums: !39, retainedTypes: !39, subprograms: !37, imports:  null)
 !5 = !DISubroutineType(types: !6)
@@ -80,7 +80,7 @@ entry:
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !8 = !DICompositeType(tag: DW_TAG_class_type, name: "B", line: 2, size: 8, align: 8, file: !38, scope: !3, elements: !9)
 !9 = !{!10}
-!10 = distinct !DISubprogram(name: "fn", linkageName: "_ZN1B2fnEv", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 4, file: !38, scope: !8, type: !11, function: i32 (%class.A*)* @_ZN1B2fnEv)
+!10 = distinct !DISubprogram(name: "fn", linkageName: "_ZN1B2fnEv", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 4, file: !38, scope: !8, type: !11)
 !11 = !DISubroutineType(types: !12)
 !12 = !{!7, !13}
 !13 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !38, scope: !3, baseType: !8)
@@ -93,7 +93,7 @@ entry:
 !20 = distinct !DILexicalBlock(line: 4, column: 12, file: !38, scope: !10)
 !21 = !DICompositeType(tag: DW_TAG_class_type, name: "A", line: 5, size: 8, align: 8, file: !38, scope: !10, elements: !22)
 !22 = !{!23}
-!23 = distinct !DISubprogram(name: "foo", linkageName: "_ZZN1B2fnEvEN1A3fooEv", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !38, scope: !21, type: !24, function: i32 (%class.A*)* @_ZZN1B2fnEvEN1A3fooEv)
+!23 = distinct !DISubprogram(name: "foo", linkageName: "_ZZN1B2fnEvEN1A3fooEv", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !38, scope: !21, type: !24)
 !24 = !DISubroutineType(types: !25)
 !25 = !{!7, !26}
 !26 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !38, scope: !3, baseType: !21)

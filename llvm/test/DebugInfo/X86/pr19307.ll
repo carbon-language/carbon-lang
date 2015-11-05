@@ -35,7 +35,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @.str = private unnamed_addr constant [7 x i8] c"items=\00", align 1
 
 ; Function Attrs: uwtable
-define void @_Z11parse_rangeRyS_Ss(i64* %offset, i64* %limit, %"class.std::basic_string"* %range) #0 {
+define void @_Z11parse_rangeRyS_Ss(i64* %offset, i64* %limit, %"class.std::basic_string"* %range) #0 !dbg !13 {
 entry:
   %offset.addr = alloca i64*, align 8
   %limit.addr = alloca i64*, align 8
@@ -97,7 +97,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !10 = !DINamespace(name: "std", line: 153, file: !11, scope: null)
 !11 = !DIFile(filename: "/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/x86_64-linux-gnu/bits/c++config.h", directory: "/llvm_cmake_gcc")
 !12 = !{!13}
-!13 = distinct !DISubprogram(name: "parse_range", linkageName: "_Z11parse_rangeRyS_Ss", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !14, type: !15, function: void (i64*, i64*, %"class.std::basic_string"*)* @_Z11parse_rangeRyS_Ss, variables: !2)
+!13 = distinct !DISubprogram(name: "parse_range", linkageName: "_Z11parse_rangeRyS_Ss", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !14, type: !15, variables: !2)
 !14 = !DIFile(filename: "pr19307.cc", directory: "/llvm_cmake_gcc")
 !15 = !DISubroutineType(types: !16)
 !16 = !{null, !17, !17, !19}

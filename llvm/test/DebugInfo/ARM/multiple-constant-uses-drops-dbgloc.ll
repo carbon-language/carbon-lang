@@ -19,7 +19,7 @@ target triple = "armv7--linux-gnueabihf"
 @b = common global i32 0, align 4
 
 ; Function Attrs: nounwind
-define void @proc() #0 {
+define void @proc() #0 !dbg !4 {
 entry:
   store i8 65, i8* @ch, align 1, !dbg !17
   store i32 0, i32* @b, align 4, !dbg !18
@@ -36,7 +36,7 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !1 = !DIFile(filename: "test.c", directory: "/home/user/clang/build")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "proc", scope: !1, file: !1, line: 4, type: !5, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: false, function: void ()* @proc, variables: !2)
+!4 = distinct !DISubprogram(name: "proc", scope: !1, file: !1, line: 4, type: !5, isLocal: false, isDefinition: true, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{!8, !10}

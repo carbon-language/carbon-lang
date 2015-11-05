@@ -22,7 +22,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @x = common global i32 0, align 4
 @y = common global i32 0, align 4
 
-define i32 @main() {
+define i32 @main() !dbg !4 {
 ; CHECK: .loc 1 {{[89]}}
 ; CHECK-NOT: .loc
 ; CHECK: movl $1
@@ -53,7 +53,7 @@ select.end:                                       ; preds = %entry, %select.mid
 !1 = !DIFile(filename: "inline-break.c", directory: "/build/dir")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 7, type: !5, isLocal: false, isDefinition: true, scopeLine: 7, isOptimized: true, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 7, type: !5, isLocal: false, isDefinition: true, scopeLine: 7, isOptimized: true, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7}
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

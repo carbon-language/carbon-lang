@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 @C = global [1024 x i32] zeroinitializer, align 16
 
 ; CHECK-LABEL: @test(
-define i32 @test() #0 {
+define i32 @test() #0 !dbg !3 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !9, metadata !DIExpression()), !dbg !18
   br label %for.body, !dbg !18
@@ -47,7 +47,7 @@ attributes #1 = { nounwind readnone }
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang", isOptimized: true, emissionKind: 0, file: !25, enums: !1, retainedTypes: !1, subprograms: !2, globals: !11)
 !1 = !{}
 !2 = !{!3}
-!3 = distinct !DISubprogram(name: "test", linkageName: "test", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !25, scope: !4, type: !5, function: i32 ()* @test, variables: !8)
+!3 = distinct !DISubprogram(name: "test", linkageName: "test", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !25, scope: !4, type: !5, variables: !8)
 !4 = !DIFile(filename: "test", directory: "/path/to/somewhere")
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7}

@@ -761,7 +761,7 @@ static void removeDebugValues(MachineFunction &mf) {
 bool LiveDebugVariables::runOnMachineFunction(MachineFunction &mf) {
   if (!EnableLDV)
     return false;
-  if (!FunctionDIs.count(mf.getFunction())) {
+  if (!mf.getFunction()->getSubprogram()) {
     removeDebugValues(mf);
     return false;
   }
@@ -1045,7 +1045,6 @@ void LiveDebugVariables::emitDebugValues(VirtRegMap *VRM) {
 }
 
 bool LiveDebugVariables::doInitialization(Module &M) {
-  FunctionDIs = makeSubprogramMap(M);
   return Pass::doInitialization(M);
 }
 

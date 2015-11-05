@@ -7,7 +7,7 @@ target triple = "x86_64-apple-darwin10"
 
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i8* (%struct.a*)* @bar to i8*)], section "llvm.metadata" ; <[1 x i8*]*> [#uses=0]
 
-define i8* @bar(%struct.a* %myvar) nounwind optsize noinline ssp {
+define i8* @bar(%struct.a* %myvar) nounwind optsize noinline ssp !dbg !9 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.a* %myvar, i64 0, metadata !8, metadata !DIExpression()), !dbg !DILocation(scope: !9)
   %0 = getelementptr inbounds %struct.a, %struct.a* %myvar, i64 0, i32 0, !dbg !28 ; <i32*> [#uses=1]
@@ -29,11 +29,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 1, file: !36, enums: !37, retainedTypes: !37, subprograms: !32, globals: !31, imports:  !37)
 !3 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !4 = !DILocalVariable(name: "x", line: 12, arg: 1, scope: !5, file: !1, type: !3)
-!5 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 13, file: !36, scope: !1, type: !6, function: void (i32)* @foo, variables: !33)
+!5 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 13, file: !36, scope: !1, type: !6, variables: !33)
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !3}
 !8 = !DILocalVariable(name: "myvar", line: 17, arg: 1, scope: !9, file: !1, type: !13)
-!9 = distinct !DISubprogram(name: "bar", linkageName: "bar", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 17, file: !36, scope: !1, type: !10, function: i8* (%struct.a*)* @bar, variables: !34)
+!9 = distinct !DISubprogram(name: "bar", linkageName: "bar", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 17, file: !36, scope: !1, type: !10, variables: !34)
 !10 = !DISubroutineType(types: !11)
 !11 = !{!12, !13}
 !12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: null)

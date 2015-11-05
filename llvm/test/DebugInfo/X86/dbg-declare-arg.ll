@@ -7,7 +7,7 @@ target triple = "x86_64-apple-macosx10.6.7"
 
 %class.A = type { i32, i32, i32, i32 }
 
-define void @_Z3fooi(%class.A* sret %agg.result, i32 %i) ssp {
+define void @_Z3fooi(%class.A* sret %agg.result, i32 %i) ssp !dbg !19 {
 entry:
   %i.addr = alloca i32, align 4
   %j = alloca i32, align 4
@@ -48,7 +48,7 @@ nrvo.skipdtor:                                    ; preds = %nrvo.unused, %if.en
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-define linkonce_odr void @_ZN1AD1Ev(%class.A* %this) unnamed_addr ssp align 2 {
+define linkonce_odr void @_ZN1AD1Ev(%class.A* %this) unnamed_addr ssp align 2 !dbg !22 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
@@ -58,7 +58,7 @@ entry:
   ret void, !dbg !45
 }
 
-define linkonce_odr void @_ZN1AD2Ev(%class.A* %this) unnamed_addr nounwind ssp align 2 {
+define linkonce_odr void @_ZN1AD2Ev(%class.A* %this) unnamed_addr nounwind ssp align 2 !dbg !25 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
@@ -91,13 +91,13 @@ entry:
 !16 = !{null, !13, !17}
 !17 = !DIDerivedType(tag: DW_TAG_reference_type, scope: !2, baseType: !18)
 !18 = !DIDerivedType(tag: DW_TAG_const_type, file: !3, baseType: !1)
-!19 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !20, function: void (%class.A*, i32)* @_Z3fooi)
+!19 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !20)
 !20 = !DISubroutineType(types: !21)
 !21 = !{!1}
-!22 = distinct !DISubprogram(name: "~A", linkageName: "_ZN1AD1Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23, function: void (%class.A*)* @_ZN1AD1Ev)
+!22 = distinct !DISubprogram(name: "~A", linkageName: "_ZN1AD1Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23)
 !23 = !DISubroutineType(types: !24)
 !24 = !{null}
-!25 = distinct !DISubprogram(name: "~A", linkageName: "_ZN1AD2Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23, function: void (%class.A*)* @_ZN1AD2Ev)
+!25 = distinct !DISubprogram(name: "~A", linkageName: "_ZN1AD2Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !51, scope: !3, type: !23)
 !26 = !DILocalVariable(name: "i", line: 4, arg: 1, scope: !19, file: !3, type: !6)
 !27 = !DILocation(line: 4, column: 11, scope: !19)
 !28 = !DILocalVariable(name: "j", line: 5, scope: !29, file: !3, type: !6)

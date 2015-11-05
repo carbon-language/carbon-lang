@@ -25,7 +25,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-darwin"
 
 ; Function Attrs: nounwind ssp uwtable
-define void @foo() #0 {
+define void @foo() #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !12, metadata !17) #3, !dbg !18
   tail call void @sink() #3, !dbg !20
@@ -52,7 +52,7 @@ attributes #3 = { nounwind }
 !1 = !DIFile(filename: "t.c", directory: "/path/to/dir")
 !2 = !{}
 !3 = !{!4, !7}
-!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 2, type: !8, isLocal: true, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, variables: !11)

@@ -9,7 +9,7 @@
 ; CHECK: .loc 1 2 0 prologue_end      # test.c:2:0
 ; CHECK: add r0, r0, 1
 ; CHECK: retsp 2
-define i32 @f(i32 %a) {
+define i32 @f(i32 %a) !dbg !4 {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
@@ -27,7 +27,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata)
 !1 = !DIFile(filename: "test.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !1, type: !6, function: i32 (i32)* @f, variables: !2)
+!4 = distinct !DISubprogram(name: "f", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !1, type: !6, variables: !2)
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

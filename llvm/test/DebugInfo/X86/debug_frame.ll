@@ -4,7 +4,7 @@
 
 ; CHECK: .cfi_sections .debug_frame
 
-define void @f() nounwind {
+define void @f() nounwind !dbg !0 {
 entry:
   ret void
 }
@@ -13,7 +13,7 @@ entry:
 !llvm.module.flags = !{!7}
 !5 = !{!0}
 
-!0 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !6, scope: !1, type: !3, function: void ()* @f)
+!0 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !6, scope: !1, type: !3)
 !1 = !DIFile(filename: "/home/espindola/llvm/test.c", directory: "/home/espindola/llvm/build")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 ()", isOptimized: true, emissionKind: 0, file: !6, enums: !{}, retainedTypes: !{}, subprograms: !5)
 !3 = !DISubroutineType(types: !4)

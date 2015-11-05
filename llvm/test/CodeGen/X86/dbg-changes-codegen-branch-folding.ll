@@ -48,7 +48,7 @@
 @.str2 = private unnamed_addr constant [2 x i8] c"-\00", align 1
 
 ; Function Attrs: uwtable
-define void @_Z3barii(i32 %param1, i32 %param2) #0 {
+define void @_Z3barii(i32 %param1, i32 %param2) #0 !dbg !24 {
 entry:
   %var1 = alloca %struct.AAA3, align 1
   %var2 = alloca %struct.AAA3, align 1
@@ -137,7 +137,7 @@ attributes #2 = { nounwind readnone }
 !21 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !22)
 !22 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !"_ZTS4AAA3")
 !23 = !{!24, !35, !40}
-!24 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barii", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !1, scope: !25, type: !26, function: void (i32, i32)* @_Z3barii, variables: !29)
+!24 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barii", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !1, scope: !25, type: !26, variables: !29)
 !25 = !DIFile(filename: "dbg-changes-codegen-branch-folding.cpp", directory: "/tmp/dbginfo")
 !26 = !DISubroutineType(types: !27)
 !27 = !{null, !28, !28}

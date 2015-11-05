@@ -6,7 +6,7 @@ target triple = "i386-apple-darwin11.0.0"
 
 %struct.bar = type { i32, i32 }
 
-define i32 @foo(%struct.bar* nocapture %i) nounwind readnone optsize noinline ssp {
+define i32 @foo(%struct.bar* nocapture %i) nounwind readnone optsize noinline ssp !dbg !0 {
 ; CHECK: TAG_formal_parameter
 entry:
   tail call void @llvm.dbg.value(metadata %struct.bar* %i, i64 0, metadata !6, metadata !DIExpression()), !dbg !12
@@ -18,7 +18,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!19}
 
-!0 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !17, scope: !1, type: !3, function: i32 (%struct.bar*)* @foo, variables: !16)
+!0 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !17, scope: !1, type: !3, variables: !16)
 !1 = !DIFile(filename: "one.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 117922)", isOptimized: true, emissionKind: 0, file: !17, enums: !18, retainedTypes: !18, subprograms: !15, imports:  null)
 !3 = !DISubroutineType(types: !4)

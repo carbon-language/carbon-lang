@@ -49,7 +49,7 @@
 @y = global i32 (i32)* @_Z4funci, align 8
 
 ; Function Attrs: inlinehint nounwind uwtable
-define linkonce_odr i32 @_Z4funci(i32 %i) #0 {
+define linkonce_odr i32 @_Z4funci(i32 %i) #0 !dbg !4 {
   %1 = alloca i32, align 4
   store i32 %i, i32* %1, align 4
   call void @llvm.dbg.declare(metadata i32* %1, metadata !22, metadata !DIExpression()), !dbg !23
@@ -72,7 +72,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @_Z4funci, variables: !2)
+!4 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
@@ -83,7 +83,7 @@ attributes #1 = { nounwind readnone }
 !12 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !13, enums: !2, retainedTypes: !2, subprograms: !14, globals: !17, imports: !2)
 !13 = !DIFile(filename: "b.cpp", directory: "/tmp/dbginfo")
 !14 = !{!15}
-!15 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !13, scope: !16, type: !6, function: i32 (i32)* @_Z4funci, variables: !2)
+!15 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !13, scope: !16, type: !6, variables: !2)
 !16 = !DIFile(filename: "b.cpp", directory: "/tmp/dbginfo")
 !17 = !{!18}
 !18 = !DIGlobalVariable(name: "y", line: 4, isLocal: false, isDefinition: true, scope: null, file: !16, type: !11, variable: i32 (i32)** @y)

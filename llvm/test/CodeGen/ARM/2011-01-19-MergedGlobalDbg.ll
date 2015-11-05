@@ -28,7 +28,7 @@ target triple = "thumbv7-apple-darwin10"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:    DW_AT_location [DW_FORM_exprloc]        (<0x8> 03 [[ADDR]] 10 01 22  )
 
-define zeroext i8 @get1(i8 zeroext %a) nounwind optsize {
+define zeroext i8 @get1(i8 zeroext %a) nounwind optsize !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !10, metadata !DIExpression()), !dbg !30
   %0 = load i8, i8* @x1, align 4, !dbg !30
@@ -39,7 +39,7 @@ entry:
 
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
-define zeroext i8 @get2(i8 zeroext %a) nounwind optsize {
+define zeroext i8 @get2(i8 zeroext %a) nounwind optsize !dbg !6 {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !18, metadata !DIExpression()), !dbg !32
   %0 = load i8, i8* @x2, align 4, !dbg !32
@@ -48,7 +48,7 @@ entry:
   ret i8 %0, !dbg !33
 }
 
-define zeroext i8 @get3(i8 zeroext %a) nounwind optsize {
+define zeroext i8 @get3(i8 zeroext %a) nounwind optsize !dbg !7 {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !21, metadata !DIExpression()), !dbg !34
   %0 = load i8, i8* @x3, align 4, !dbg !34
@@ -57,7 +57,7 @@ entry:
   ret i8 %0, !dbg !35
 }
 
-define zeroext i8 @get4(i8 zeroext %a) nounwind optsize {
+define zeroext i8 @get4(i8 zeroext %a) nounwind optsize !dbg !8 {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !24, metadata !DIExpression()), !dbg !36
   %0 = load i8, i8* @x4, align 4, !dbg !36
@@ -66,7 +66,7 @@ entry:
   ret i8 %0, !dbg !37
 }
 
-define zeroext i8 @get5(i8 zeroext %a) nounwind optsize {
+define zeroext i8 @get5(i8 zeroext %a) nounwind optsize !dbg !9 {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !27, metadata !DIExpression()), !dbg !38
   %0 = load i8, i8* @x5, align 4, !dbg !38
@@ -78,16 +78,16 @@ entry:
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!49}
 
-!0 = distinct !DISubprogram(name: "get1", linkageName: "get1", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !47, scope: !1, type: !3, function: i8 (i8)* @get1, variables: !42)
+!0 = distinct !DISubprogram(name: "get1", linkageName: "get1", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !47, scope: !1, type: !3, variables: !42)
 !1 = !DIFile(filename: "foo.c", directory: "/tmp/")
 !2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2369.8)", isOptimized: true, emissionKind: 0, file: !47, enums: !48, retainedTypes: !48, subprograms: !40, globals: !41, imports:  !48)
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5, !5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "_Bool", size: 8, align: 8, encoding: DW_ATE_boolean)
-!6 = distinct !DISubprogram(name: "get2", linkageName: "get2", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 7, file: !47, scope: !1, type: !3, function: i8 (i8)* @get2, variables: !43)
-!7 = distinct !DISubprogram(name: "get3", linkageName: "get3", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !47, scope: !1, type: !3, function: i8 (i8)* @get3, variables: !44)
-!8 = distinct !DISubprogram(name: "get4", linkageName: "get4", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 13, file: !47, scope: !1, type: !3, function: i8 (i8)* @get4, variables: !45)
-!9 = distinct !DISubprogram(name: "get5", linkageName: "get5", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !47, scope: !1, type: !3, function: i8 (i8)* @get5, variables: !46)
+!6 = distinct !DISubprogram(name: "get2", linkageName: "get2", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 7, file: !47, scope: !1, type: !3, variables: !43)
+!7 = distinct !DISubprogram(name: "get3", linkageName: "get3", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !47, scope: !1, type: !3, variables: !44)
+!8 = distinct !DISubprogram(name: "get4", linkageName: "get4", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 13, file: !47, scope: !1, type: !3, variables: !45)
+!9 = distinct !DISubprogram(name: "get5", linkageName: "get5", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !47, scope: !1, type: !3, variables: !46)
 !10 = !DILocalVariable(name: "a", line: 4, arg: 1, scope: !0, file: !1, type: !5)
 !11 = !DILocalVariable(name: "b", line: 4, scope: !12, file: !1, type: !5)
 !12 = distinct !DILexicalBlock(line: 4, column: 0, file: !47, scope: !0)

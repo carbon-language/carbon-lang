@@ -17,7 +17,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 target triple = "thumbv7-apple-ios8.0.0"
 
 ; Function Attrs: nounwind optsize readnone
-define void @run(float %r) #0 {
+define void @run(float %r) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.declare(metadata float %r, metadata !11, metadata !DIExpression()), !dbg !22
   %conv = fptosi float %r to i32, !dbg !23
@@ -71,7 +71,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "<unknown>", directory: "/Volumes/Data/radar/15464571")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "run", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !5, scope: !6, type: !7, function: void (float)* @run, variables: !10)
+!4 = distinct !DISubprogram(name: "run", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !5, scope: !6, type: !7, variables: !10)
 !5 = !DIFile(filename: "test.c", directory: "/Volumes/Data/radar/15464571")
 !6 = !DIFile(filename: "test.c", directory: "/Volumes/Data/radar/15464571")
 !7 = !DISubroutineType(types: !8)

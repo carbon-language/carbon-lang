@@ -7,7 +7,7 @@ target triple = "thumbv7"
 %struct.s = type opaque
 
 ; Function Attrs: nounwind
-define arm_aapcscc i32 @f(%struct.s* %s, i32 %u, i8* %b, i32 %n) #0 {
+define arm_aapcscc i32 @f(%struct.s* %s, i32 %u, i8* %b, i32 %n) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.s* %s, i64 0, metadata !19, metadata !28), !dbg !29
   tail call void @llvm.dbg.value(metadata i32 %u, i64 0, metadata !20, metadata !28), !dbg !29
@@ -54,7 +54,7 @@ attributes #3 = { nounwind }
 !1 = !DIFile(filename: "<stdin>", directory: "/Users/compnerd/Source/llvm")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", scope: !5, file: !5, line: 9, type: !6, isLocal: false, isDefinition: true, scopeLine: 9, flags: DIFlagPrototyped, isOptimized: true, function: i32 (%struct.s*, i32, i8*, i32)* @f, variables: !18)
+!4 = distinct !DISubprogram(name: "f", scope: !5, file: !5, line: 9, type: !6, isLocal: false, isDefinition: true, scopeLine: 9, flags: DIFlagPrototyped, isOptimized: true, variables: !18)
 !5 = !DIFile(filename: "<stdin>", directory: "/Users/compnerd/Source/llvm")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9, !12, !13, !17}

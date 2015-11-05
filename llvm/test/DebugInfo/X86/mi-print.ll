@@ -14,7 +14,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
 
 ; Function Attrs: nounwind readnone ssp uwtable
-define i32 @bar(i32 %x) #0 {
+define i32 @bar(i32 %x) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !9, metadata !17), !dbg !18
   tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !19, metadata !17), !dbg !21
@@ -35,7 +35,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "t.c", directory: "/Users/dexonsmith/data/llvm/debug-info/test/DebugInfo/X86")
 !2 = !{}
 !3 = !{!4, !10}
-!4 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, function: i32 (i32)* @bar, variables: !8)
+!4 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, variables: !8)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7, !7}
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

@@ -60,7 +60,7 @@
 %struct.A = type { i32 (...)**, i32 }
 
 ; Function Attrs: nounwind
-define i32 @_Z3bari(i32 %b) #0 {
+define i32 @_Z3bari(i32 %b) #0 !dbg !4 {
 entry:
   %b.addr = alloca i32, align 4
   store i32 %b, i32* %b.addr, align 4
@@ -73,7 +73,7 @@ entry:
 ; Function Attrs: nounwind readnone
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
-define void @_Z3baz1A(%struct.A* %a) #2 {
+define void @_Z3baz1A(%struct.A* %a) #2 !dbg !14 {
 entry:
   %z = alloca i32, align 4
   call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !24, metadata !DIExpression(DW_OP_deref)), !dbg !25
@@ -120,7 +120,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "debug-loc-offset1.cc", directory: "/llvm_cmake_gcc")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "bar", linkageName: "_Z3bari", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @_Z3bari, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", linkageName: "_Z3bari", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "debug-loc-offset1.cc", directory: "/llvm_cmake_gcc")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
@@ -130,7 +130,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !11 = !{!12}
 !12 = !DICompositeType(tag: DW_TAG_structure_type, name: "A", line: 1, flags: DIFlagFwdDecl, file: !10, identifier: "_ZTS1A")
 !13 = !{!14}
-!14 = distinct !DISubprogram(name: "baz", linkageName: "_Z3baz1A", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !10, scope: !15, type: !16, function: void (%struct.A*)* @_Z3baz1A, variables: !2)
+!14 = distinct !DISubprogram(name: "baz", linkageName: "_Z3baz1A", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !10, scope: !15, type: !16, variables: !2)
 !15 = !DIFile(filename: "debug-loc-offset2.cc", directory: "/llvm_cmake_gcc")
 !16 = !DISubroutineType(types: !17)
 !17 = !{null, !12}

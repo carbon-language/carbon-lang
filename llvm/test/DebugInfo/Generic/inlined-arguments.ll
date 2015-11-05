@@ -23,7 +23,7 @@
 ; CHECK: DW_AT_name{{.*}}"y"
 
 ; Function Attrs: uwtable
-define void @_Z2f2v() #0 {
+define void @_Z2f2v() #0 !dbg !4 {
   tail call void @llvm.dbg.value(metadata i32 undef, i64 0, metadata !16, metadata !DIExpression()), !dbg !18
   tail call void @llvm.dbg.value(metadata i32 2, i64 0, metadata !20, metadata !DIExpression()), !dbg !18
   tail call void @_Z2f3i(i32 2), !dbg !21
@@ -31,7 +31,7 @@ define void @_Z2f2v() #0 {
 }
 
 ; Function Attrs: uwtable
-define void @_Z2f1ii(i32 %x, i32 %y) #0 {
+define void @_Z2f1ii(i32 %x, i32 %y) #0 !dbg !8 {
   tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !13, metadata !DIExpression()), !dbg !23
   tail call void @llvm.dbg.value(metadata i32 %y, i64 0, metadata !14, metadata !DIExpression()), !dbg !23
   tail call void @_Z2f3i(i32 %y), !dbg !24
@@ -54,11 +54,11 @@ attributes #2 = { nounwind readnone }
 !1 = !DIFile(filename: "exp.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = distinct !DISubprogram(name: "f2", linkageName: "_Z2f2v", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @_Z2f2v, variables: !2)
+!4 = distinct !DISubprogram(name: "f2", linkageName: "_Z2f2v", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "exp.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
-!8 = distinct !DISubprogram(name: "f1", linkageName: "_Z2f1ii", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !5, type: !9, function: void (i32, i32)* @_Z2f1ii, variables: !12)
+!8 = distinct !DISubprogram(name: "f1", linkageName: "_Z2f1ii", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !5, type: !9, variables: !12)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11, !11}
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

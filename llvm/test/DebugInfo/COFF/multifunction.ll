@@ -630,7 +630,7 @@
 ; OBJ64:    }
 
 ; Function Attrs: nounwind
-define void @x() #0 {
+define void @x() #0 !dbg !4 {
 entry:
   call void @z(), !dbg !14
   ret void, !dbg !15
@@ -639,14 +639,14 @@ entry:
 declare void @z() #1
 
 ; Function Attrs: nounwind
-define void @y() #0 {
+define void @y() #0 !dbg !9 {
 entry:
   call void @z(), !dbg !16
   ret void, !dbg !17
 }
 
 ; Function Attrs: nounwind
-define void @f() #0 {
+define void @f() #0 !dbg !10 {
 entry:
   call void @x(), !dbg !18
   call void @y(), !dbg !19
@@ -665,13 +665,13 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "
 !1 = !DIFile(filename: "<unknown>", directory: "D:\5C")
 !2 = !{}
 !3 = !{!4, !9, !10}
-!4 = distinct !DISubprogram(name: "x", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !5, scope: !6, type: !7, function: void ()* @x, variables: !2)
+!4 = distinct !DISubprogram(name: "x", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !5, scope: !6, type: !7, variables: !2)
 !5 = !DIFile(filename: "source.c", directory: "D:\5C")
 !6 = !DIFile(filename: "source.c", directory: "D:C")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
-!9 = distinct !DISubprogram(name: "y", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, function: void ()* @y, variables: !2)
-!10 = distinct !DISubprogram(name: "f", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !5, scope: !6, type: !7, function: void ()* @f, variables: !2)
+!9 = distinct !DISubprogram(name: "y", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, variables: !2)
+!10 = distinct !DISubprogram(name: "f", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !5, scope: !6, type: !7, variables: !2)
 !11 = !{i32 2, !"CodeView", i32 1}
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !{!"clang version 3.5 "}

@@ -7,7 +7,7 @@
 ; CHECK: [[SUBTYPE]]: DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name
 
-define i32 @main() nounwind uwtable {
+define i32 @main() nounwind uwtable !dbg !5 {
 entry:
   %retval = alloca i32, align 4
   %i = alloca [2 x i32], align 4
@@ -24,7 +24,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 171472) (llvm/trunk 171487)", isOptimized: false, emissionKind: 0, file: !17, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !6, type: !7, function: i32 ()* @main, variables: !1)
+!5 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !6, type: !7, variables: !1)
 !6 = !DIFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

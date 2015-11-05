@@ -98,26 +98,26 @@
 ; CHECK: .apple{{.*}} contents:
 
 ; Function Attrs: nounwind uwtable
-define void @_Z2f1v() #0 {
+define void @_Z2f1v() #0 !dbg !4 {
 entry:
   ret void, !dbg !13
 }
 
 ; Function Attrs: nounwind uwtable
-define void @_Z2f2v() #0 section "__TEXT,__bar" {
+define void @_Z2f2v() #0 section "__TEXT,__bar" !dbg !7 {
 entry:
   ret void, !dbg !14
 }
 
 ; Function Attrs: alwaysinline nounwind uwtable
-define void @_Z2f3v() #1 {
+define void @_Z2f3v() #1 !dbg !8 {
 entry:
   call void @_Z2f1v(), !dbg !15
   ret void, !dbg !16
 }
 
 ; Function Attrs: nounwind uwtable
-define void @_Z2f4v() #0 {
+define void @_Z2f4v() #0 !dbg !9 {
 entry:
   call void @_Z2f1v() #2, !dbg !17
   ret void, !dbg !19
@@ -135,12 +135,12 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: "gmlt.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !7, !8, !9}
-!4 = distinct !DISubprogram(name: "f1", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void ()* @_Z2f1v, variables: !2)
+!4 = distinct !DISubprogram(name: "f1", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "gmlt.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !2)
-!7 = distinct !DISubprogram(name: "f2", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: void ()* @_Z2f2v, variables: !2)
-!8 = distinct !DISubprogram(name: "f3", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @_Z2f3v, variables: !2)
-!9 = distinct !DISubprogram(name: "f4", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @_Z2f4v, variables: !2)
+!7 = distinct !DISubprogram(name: "f2", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
+!8 = distinct !DISubprogram(name: "f3", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
+!9 = distinct !DISubprogram(name: "f4", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !2)
 !10 = !{i32 2, !"Dwarf Version", i32 4}
 !11 = !{i32 2, !"Debug Info Version", i32 3}
 !12 = !{!"clang version 3.6.0 "}

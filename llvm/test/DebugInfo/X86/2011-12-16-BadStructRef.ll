@@ -7,7 +7,7 @@
 %struct.bar = type { %struct.baz, %struct.baz* }
 %struct.baz = type { i32 }
 
-define i32 @main(i32 %argc, i8** %argv) uwtable ssp {
+define i32 @main(i32 %argc, i8** %argv) uwtable ssp !dbg !29 {
 entry:
   %retval = alloca i32, align 4
   %argc.addr = alloca i32, align 4
@@ -25,7 +25,7 @@ entry:
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-define linkonce_odr void @_ZN3barC1Ei(%struct.bar* %this, i32 %x) unnamed_addr uwtable ssp align 2 {
+define linkonce_odr void @_ZN3barC1Ei(%struct.bar* %this, i32 %x) unnamed_addr uwtable ssp align 2 !dbg !37 {
 entry:
   %this.addr = alloca %struct.bar*, align 8
   %x.addr = alloca i32, align 4
@@ -39,7 +39,7 @@ entry:
   ret void, !dbg !62
 }
 
-define linkonce_odr void @_ZN3barC2Ei(%struct.bar* %this, i32 %x) unnamed_addr uwtable ssp align 2 {
+define linkonce_odr void @_ZN3barC2Ei(%struct.bar* %this, i32 %x) unnamed_addr uwtable ssp align 2 !dbg !40 {
 entry:
   %this.addr = alloca %struct.bar*, align 8
   %x.addr = alloca i32, align 4
@@ -57,7 +57,7 @@ entry:
   ret void, !dbg !68
 }
 
-define linkonce_odr void @_ZN3bazC1Ei(%struct.baz* %this, i32 %a) unnamed_addr uwtable ssp align 2 {
+define linkonce_odr void @_ZN3bazC1Ei(%struct.baz* %this, i32 %a) unnamed_addr uwtable ssp align 2 !dbg !43 {
 entry:
   %this.addr = alloca %struct.baz*, align 8
   %a.addr = alloca i32, align 4
@@ -71,7 +71,7 @@ entry:
   ret void, !dbg !74
 }
 
-define linkonce_odr void @_ZN3bazC2Ei(%struct.baz* %this, i32 %a) unnamed_addr nounwind uwtable ssp align 2 {
+define linkonce_odr void @_ZN3bazC2Ei(%struct.baz* %this, i32 %a) unnamed_addr nounwind uwtable ssp align 2 !dbg !46 {
 entry:
   %this.addr = alloca %struct.baz*, align 8
   %a.addr = alloca i32, align 4
@@ -111,7 +111,7 @@ entry:
 !23 = !{null, !24, !12}
 !24 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, baseType: !5)
 !27 = !{!29, !37, !40, !43, !46}
-!29 = distinct !DISubprogram(name: "main", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: !6, type: !30, function: i32 (i32, i8**)* @main)
+!29 = distinct !DISubprogram(name: "main", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: !6, type: !30)
 !30 = !DISubroutineType(types: !31)
 !31 = !{!12, !12, !32}
 !32 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !33)
@@ -119,16 +119,16 @@ entry:
 !34 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !35 = !{!36}
 !36 = !{} ; previously: invalid DW_TAG_base_type
-!37 = distinct !DISubprogram(name: "bar", linkageName: "_ZN3barC1Ei", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !22, function: void (%struct.bar*, i32)* @_ZN3barC1Ei, declaration: !21)
+!37 = distinct !DISubprogram(name: "bar", linkageName: "_ZN3barC1Ei", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !22, declaration: !21)
 !38 = !{!39}
 !39 = !{} ; previously: invalid DW_TAG_base_type
-!40 = distinct !DISubprogram(name: "bar", linkageName: "_ZN3barC2Ei", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !22, function: void (%struct.bar*, i32)* @_ZN3barC2Ei, declaration: !21)
+!40 = distinct !DISubprogram(name: "bar", linkageName: "_ZN3barC2Ei", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !22, declaration: !21)
 !41 = !{!42}
 !42 = !{} ; previously: invalid DW_TAG_base_type
-!43 = distinct !DISubprogram(name: "baz", linkageName: "_ZN3bazC1Ei", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !14, function: void (%struct.baz*, i32)* @_ZN3bazC1Ei, declaration: !13)
+!43 = distinct !DISubprogram(name: "baz", linkageName: "_ZN3bazC1Ei", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !14, declaration: !13)
 !44 = !{!45}
 !45 = !{} ; previously: invalid DW_TAG_base_type
-!46 = distinct !DISubprogram(name: "baz", linkageName: "_ZN3bazC2Ei", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !14, function: void (%struct.baz*, i32)* @_ZN3bazC2Ei, declaration: !13)
+!46 = distinct !DISubprogram(name: "baz", linkageName: "_ZN3bazC2Ei", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !82, scope: null, type: !14, declaration: !13)
 !49 = !DILocalVariable(name: "argc", line: 16, arg: 1, scope: !29, file: !6, type: !12)
 !50 = !DILocation(line: 16, column: 14, scope: !29)
 !51 = !DILocalVariable(name: "argv", line: 16, arg: 2, scope: !29, file: !6, type: !32)

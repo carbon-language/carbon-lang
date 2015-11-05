@@ -3,7 +3,7 @@
 ; CHECK-LABEL: _Z3foov:
 ; CHECK: .loc    1 4 3 prologue_end
 ; CHECK: .cfi_escape 0x2e, 0x10
-define void @_Z3foov() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
+define void @_Z3foov() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) !dbg !4 {
 entry:
   tail call void @_Z3bariii(i32 0, i32 1, i32 2) #1, !dbg !10
   invoke void @_Z3bariii(i32 4, i32 5, i32 6) #1
@@ -42,7 +42,7 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: "foo.cpp", directory: "foo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3foov, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{i32 2, !"Dwarf Version", i32 4}

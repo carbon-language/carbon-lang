@@ -29,7 +29,7 @@
 ; when run with r221709 reverted, then it really doesn't test anything anymore.
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @foo(i32 %a) #0 {
+define i32 @foo(i32 %a) #0 !dbg !8 {
 entry:
   call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !16, metadata !17), !dbg !18
   %conv = trunc i32 %a to i16, !dbg !19
@@ -76,7 +76,7 @@ attributes #1 = { nounwind readnone }
 !5 = !DIFile(filename: "/usr/include/sys/_types/_int16_t.h", directory: "/tmp")
 !6 = !DIBasicType(tag: DW_TAG_base_type, name: "short", size: 16, align: 16, encoding: DW_ATE_signed)
 !7 = !{!8}
-!8 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !9, type: !10, function: i32 (i32)* @foo, variables: !2)
+!8 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !9, type: !10, variables: !2)
 !9 = !DIFile(filename: "ghost-sdnode-dbgvalues.c", directory: "/tmp")
 !10 = !DISubroutineType(types: !11)
 !11 = !{!12, !12}

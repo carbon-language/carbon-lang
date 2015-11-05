@@ -3,7 +3,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @foo(i64 %s.coerce0, i32 %s.coerce1) #0 {
+define i32 @foo(i64 %s.coerce0, i32 %s.coerce1) #0 !dbg !4 {
 entry:
   call void @llvm.dbg.value(metadata i64 %s.coerce0, i64 0, metadata !20, metadata !24), !dbg !21
   call void @llvm.dbg.value(metadata i32 %s.coerce1, i64 0, metadata !22, metadata !27), !dbg !21
@@ -27,7 +27,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "pieces.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: i32 (i64, i32)* @foo, variables: !15)
+!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !15)
 !5 = !DIFile(filename: "pieces.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}

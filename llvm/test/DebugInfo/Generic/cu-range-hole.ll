@@ -14,7 +14,7 @@
 ; CHECK: DW_TAG_subprogram
 
 ; Function Attrs: nounwind uwtable
-define i32 @b(i32 %c) #0 {
+define i32 @b(i32 %c) #0 !dbg !5 {
 entry:
   %c.addr = alloca i32, align 4
   store i32 %c, i32* %c.addr, align 4
@@ -38,7 +38,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind uwtable
-define i32 @d(i32 %e) #0 {
+define i32 @d(i32 %e) #0 !dbg !10 {
 entry:
   %e.addr = alloca i32, align 4
   store i32 %e, i32* %e.addr, align 4
@@ -60,12 +60,12 @@ attributes #1 = { nounwind readnone }
 !2 = !DIFile(filename: "b.c", directory: "/usr/local/google/home/echristo")
 !3 = !{}
 !4 = !{!5, !10}
-!5 = distinct !DISubprogram(name: "b", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !2, scope: !6, type: !7, function: i32 (i32)* @b, variables: !3)
+!5 = distinct !DISubprogram(name: "b", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !2, scope: !6, type: !7, variables: !3)
 !6 = !DIFile(filename: "b.c", directory: "/usr/local/google/home/echristo")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = distinct !DISubprogram(name: "d", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !2, scope: !6, type: !7, function: i32 (i32)* @d, variables: !3)
+!10 = distinct !DISubprogram(name: "d", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !2, scope: !6, type: !7, variables: !3)
 !11 = !{i32 2, !"Dwarf Version", i32 4}
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !DILocalVariable(name: "c", line: 1, arg: 1, scope: !5, file: !6, type: !9)

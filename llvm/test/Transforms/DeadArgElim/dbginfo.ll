@@ -14,20 +14,21 @@
 ; the function->debug info mapping on update to ensure it's accurate when used
 ; again for the next removal.
 
-; CHECK: !DISubprogram(name: "f1",{{.*}} function: void ()* @_ZL2f1iz
+; CHECK: define internal void @_ZL2f1iz({{.*}} !dbg [[SP:![0-9]+]]
+; CHECK: [[SP]] = distinct !DISubprogram(name: "f1"
 
 ; Check that debug info metadata for subprograms stores pointers to
 ; updated LLVM functions.
 
 ; Function Attrs: uwtable
-define void @_Z2f2v() #0 {
+define void @_Z2f2v() #0 !dbg !4 {
 entry:
   call void (i32, ...) @_ZL2f1iz(i32 1), !dbg !15
   ret void, !dbg !16
 }
 
 ; Function Attrs: nounwind uwtable
-define internal void @_ZL2f1iz(i32, ...) #1 {
+define internal void @_ZL2f1iz(i32, ...) #1 !dbg !8 {
 entry:
   call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !17, metadata !18), !dbg !19
   ret void, !dbg !20
@@ -51,11 +52,11 @@ attributes #2 = { nounwind readnone }
 !1 = !DIFile(filename: "dbg.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = distinct !DISubprogram(name: "f2", linkageName: "_Z2f2v", line: 4, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @_Z2f2v, variables: !2)
+!4 = distinct !DISubprogram(name: "f2", linkageName: "_Z2f2v", line: 4, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "dbg.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
-!8 = distinct !DISubprogram(name: "f1", linkageName: "_ZL2f1iz", line: 1, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !9, function: void (i32, ...)* @_ZL2f1iz, variables: !2)
+!8 = distinct !DISubprogram(name: "f1", linkageName: "_ZL2f1iz", line: 1, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !9, variables: !2)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11, null}
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

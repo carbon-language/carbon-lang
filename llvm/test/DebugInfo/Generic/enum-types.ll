@@ -21,7 +21,7 @@
 ; CHECK: DW_AT_type [DW_FORM_ref_addr] {{.*}}[[ENUM]]
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_Z4topA2EA(i32 %sa) #0 {
+define void @_Z4topA2EA(i32 %sa) #0 !dbg !7 {
 entry:
   %sa.addr = alloca i32, align 4
   store i32 %sa, i32* %sa.addr, align 4
@@ -33,7 +33,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_Z4topB2EA(i32 %sa) #0 {
+define void @_Z4topB2EA(i32 %sa) #0 !dbg !17 {
 entry:
   %sa.addr = alloca i32, align 4
   store i32 %sa, i32* %sa.addr, align 4
@@ -55,7 +55,7 @@ attributes #1 = { nounwind readnone }
 !4 = !{!5}
 !5 = !DIEnumerator(name: "EA_0", value: 0) ; [ DW_TAG_enumerator ] [EA_0 :: 0]
 !6 = !{!7}
-!7 = distinct !DISubprogram(name: "topA", linkageName: "_Z4topA2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !8, type: !9, function: void (i32)* @_Z4topA2EA, variables: !11)
+!7 = distinct !DISubprogram(name: "topA", linkageName: "_Z4topA2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !8, type: !9, variables: !11)
 !8 = !DIFile(filename: "a.cpp", directory: "")
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !"_ZTS2EA"}
@@ -65,7 +65,7 @@ attributes #1 = { nounwind readnone }
 !14 = !{!15}
 !15 = !DICompositeType(tag: DW_TAG_enumeration_type, name: "EA", line: 1, size: 32, align: 32, file: !13, elements: !4, identifier: "_ZTS2EA")
 !16 = !{!17}
-!17 = distinct !DISubprogram(name: "topB", linkageName: "_Z4topB2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !13, scope: !18, type: !9, function: void (i32)* @_Z4topB2EA, variables: !11)
+!17 = distinct !DISubprogram(name: "topB", linkageName: "_Z4topB2EA", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !13, scope: !18, type: !9, variables: !11)
 !18 = !DIFile(filename: "b.cpp", directory: "")
 !19 = !{i32 2, !"Dwarf Version", i32 2}
 !20 = !{i32 2, !"Debug Info Version", i32 3}

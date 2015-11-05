@@ -40,7 +40,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
 
 ; Function Attrs: nounwind readnone ssp uwtable
-define i32 @_Z3foo1S(i32 %s.coerce) #0 {
+define i32 @_Z3foo1S(i32 %s.coerce) #0 !dbg !12 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 %s.coerce, i64 0, metadata !18, metadata !37), !dbg !38
   tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !18, metadata !37), !dbg !38
@@ -48,7 +48,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone ssp uwtable
-define i32 @_Z3foo1C(i32 %c.coerce) #0 {
+define i32 @_Z3foo1C(i32 %c.coerce) #0 !dbg !19 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 %c.coerce, i64 0, metadata !23, metadata !37), !dbg !40
   tail call void @llvm.dbg.value(metadata i32 2, i64 0, metadata !23, metadata !37), !dbg !40
@@ -56,7 +56,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone ssp uwtable
-define i32 @_Z3barv() #0 {
+define i32 @_Z3barv() #0 !dbg !24 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 3, i64 0, metadata !28, metadata !37), !dbg !42
   ret i32 3, !dbg !43
@@ -84,19 +84,19 @@ attributes #1 = { nounwind readnone }
 !9 = !{!10}
 !10 = !DIDerivedType(tag: DW_TAG_member, name: "i", line: 8, size: 32, align: 32, flags: DIFlagPublic, file: !1, scope: !"_ZTS1C", baseType: !7)
 !11 = !{!12, !19, !24}
-!12 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foo1S", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !13, type: !14, function: i32 (i32)* @_Z3foo1S, variables: !17)
+!12 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foo1S", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !13, type: !14, variables: !17)
 !13 = !DIFile(filename: "sroasplit-4.cpp", directory: "")
 !14 = !DISubroutineType(types: !15)
 !15 = !{!7, !16}
 !16 = !DIDerivedType(tag: DW_TAG_typedef, name: "S", line: 1, file: !1, baseType: !"_ZTS1S")
 !17 = !{!18}
 !18 = !DILocalVariable(name: "s", line: 3, arg: 1, scope: !12, file: !13, type: !16)
-!19 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foo1C", line: 10, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !1, scope: !13, type: !20, function: i32 (i32)* @_Z3foo1C, variables: !22)
+!19 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foo1C", line: 10, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 10, file: !1, scope: !13, type: !20, variables: !22)
 !20 = !DISubroutineType(types: !21)
 !21 = !{!7, !"_ZTS1C"}
 !22 = !{!23}
 !23 = !DILocalVariable(name: "c", line: 10, arg: 1, scope: !19, file: !13, type: !"_ZTS1C")
-!24 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barv", line: 15, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 15, file: !1, scope: !13, type: !25, function: i32 ()* @_Z3barv, variables: !27)
+!24 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barv", line: 15, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 15, file: !1, scope: !13, type: !25, variables: !27)
 !25 = !DISubroutineType(types: !26)
 !26 = !{!7}
 !27 = !{!28}

@@ -9,7 +9,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %struct.vector = type { i8 }
 
 ; Function Attrs: nounwind
-define i32 @_Z4testv() #0 {
+define i32 @_Z4testv() #0 !dbg !15 {
 entry:
   %retval = alloca i32, align 4
   %__range = alloca %struct.vector*, align 8
@@ -75,7 +75,7 @@ declare i8* @_ZN6vector3endEv(%struct.vector*) #2
 declare void @llvm.trap() #3
 
 ; Function Attrs: nounwind
-define void @_Z2f1v() #0 {
+define void @_Z2f1v() #0 !dbg !20 {
 entry:
   br label %0
 
@@ -108,12 +108,12 @@ attributes #3 = { noreturn nounwind }
 !12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS6vector")
 !13 = !DISubprogram(name: "end", linkageName: "_ZN6vector3endEv", line: 26, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 26, file: !5, scope: !"_ZTS6vector", type: !8)
 !14 = !{!15, !20}
-!15 = distinct !DISubprogram(name: "test", linkageName: "_Z4testv", line: 50, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 50, file: !5, scope: !16, type: !17, function: i32 ()* @_Z4testv, variables: !2)
+!15 = distinct !DISubprogram(name: "test", linkageName: "_Z4testv", line: 50, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 50, file: !5, scope: !16, type: !17, variables: !2)
 !16 = !DIFile(filename: "linezero.cc", directory: "PATTERN")
 !17 = !DISubroutineType(types: !18)
 !18 = !{!19}
 !19 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!20 = distinct !DISubprogram(name: "f1", linkageName: "_Z2f1v", line: 54, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 54, file: !5, scope: !16, type: !21, function: void ()* @_Z2f1v, variables: !2)
+!20 = distinct !DISubprogram(name: "f1", linkageName: "_Z2f1v", line: 54, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 54, file: !5, scope: !16, type: !21, variables: !2)
 !21 = !DISubroutineType(types: !22)
 !22 = !{null}
 !23 = !{i32 2, !"Dwarf Version", i32 4}

@@ -26,7 +26,7 @@
 ; RUN: llvm-as %s -o - | llvm-dis - | FileCheck %s --check-prefix=PRETTY-PRINT
 ; PRETTY-PRINT: DIExpression(DW_OP_deref, DW_OP_deref)
 
-define void @testVLAwithSize(i32 %s) nounwind uwtable ssp {
+define void @testVLAwithSize(i32 %s) nounwind uwtable ssp !dbg !5 {
 entry:
   %s.addr = alloca i32, align 4
   %saved_stack = alloca i8*
@@ -83,7 +83,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 156005) (llvm/trunk 156000)", isOptimized: false, emissionKind: 1, file: !28, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "testVLAwithSize", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !28, scope: !6, type: !7, function: void (i32)* @testVLAwithSize, variables: !1)
+!5 = distinct !DISubprogram(name: "testVLAwithSize", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !28, scope: !6, type: !7, variables: !1)
 !6 = !DIFile(filename: "bar.c", directory: "/Users/echristo/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}

@@ -24,7 +24,7 @@
 ;;   }
 
 ; Function Attrs: noreturn nounwind readnone
-define void @_Z3fn1v() #0 {
+define void @_Z3fn1v() #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata float 1.000000e+00, i64 0, metadata !9, metadata !14), !dbg !15
   br label %for.cond, !dbg !16
@@ -48,7 +48,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "<stdin>", directory: "/Users/dexonsmith/data/llvm/bootstrap/play/delta2/testcase")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "fn1", linkageName: "_Z3fn1v", scope: !5, file: !5, line: 1, type: !6, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @_Z3fn1v, variables: !8)
+!4 = distinct !DISubprogram(name: "fn1", linkageName: "_Z3fn1v", scope: !5, file: !5, line: 1, type: !6, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, variables: !8)
 !5 = !DIFile(filename: "t.cpp", directory: "/Users/dexonsmith/data/llvm/bootstrap/play/delta2/testcase")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

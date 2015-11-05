@@ -305,6 +305,12 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
   SmallVector<Metadata *, 64> LiveSubprograms;
   DenseSet<const MDNode *> VisitedSet;
 
+  std::set<DISubprogram *> LiveSPs;
+  for (Function &F : M) {
+    if (DISubprogram *SP = F.getSubprogram())
+      LiveSPs.insert(SP);
+  }
+
   for (DICompileUnit *DIC : F.compile_units()) {
     // Create our live subprogram list.
     bool SubprogramChange = false;
@@ -314,7 +320,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
         continue;
 
       // If the function referenced by DISP is not null, the function is live.
-      if (DISP->getFunction())
+      if (LiveSPs.count(DISP))
         LiveSubprograms.push_back(DISP);
       else
         SubprogramChange = true;

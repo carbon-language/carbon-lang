@@ -28,7 +28,7 @@
 @.str = private unnamed_addr constant [15 x i8] c"result is %lf\0A\00", align 1
 
 ; Function Attrs: uwtable
-define i32 @main(i32 %argc, i8** %argv) #0 {
+define i32 @main(i32 %argc, i8** %argv) #0 !dbg !6 {
 ; CHECK: Printing analysis 'Branch Probability Analysis' for function 'main':
 
 entry:
@@ -163,7 +163,7 @@ attributes #4 = { nounwind readonly }
 !3 = !{!4}
 !4 = !DIBasicType(name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !5 = !{!6}
-!6 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 4, type: !7, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: false, function: i32 (i32, i8**)* @main, variables: !2)
+!6 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 4, type: !7, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9, !10}
 !9 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

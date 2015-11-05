@@ -1,6 +1,6 @@
 %struct.Class = type { i8 }
 
-define weak_odr i32 @_ZN5ClassIiE3fooEv(%struct.Class* %this) align 2 {
+define weak_odr i32 @_ZN5ClassIiE3fooEv(%struct.Class* %this) align 2 !dbg !4 {
 entry:
   %this.addr = alloca %struct.Class*, align 8
   store %struct.Class* %this, %struct.Class** %this.addr, align 8
@@ -16,7 +16,7 @@ entry:
 !1 = !DIFile(filename: "t2.cpp", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !6, type: !7, function: i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !6, type: !7, variables: !2)
 !5 = !DIFile(filename: "../t.h", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2")
 !6 = !DIFile(filename: "../t.h", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2")
 !7 = !DISubroutineType(types: !2)

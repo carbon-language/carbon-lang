@@ -47,7 +47,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @foo() #0 {
+define i32 @foo() #0 !dbg !4 {
 entry:
   %i = alloca i32, align 4
   call void @llvm.dbg.value(metadata i32 3, i64 0, metadata !10, metadata !DIExpression()), !dbg !15
@@ -82,7 +82,7 @@ attributes #3 = { nounwind }
 !1 = !DIFile(filename: "dbg-value-const-byref.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, function: i32 ()* @foo, variables: !9)
+!4 = distinct !DISubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, variables: !9)
 !5 = !DIFile(filename: "dbg-value-const-byref.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

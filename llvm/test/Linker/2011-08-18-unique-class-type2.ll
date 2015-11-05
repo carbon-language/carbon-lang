@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 %"class.N1::A" = type { i8 }
 
-define void @_Z3barN2N11AE() nounwind uwtable ssp {
+define void @_Z3barN2N11AE() nounwind uwtable ssp !dbg !5 {
 entry:
   %youra = alloca %"class.N1::A", align 1
   call void @llvm.dbg.declare(metadata %"class.N1::A"* %youra, metadata !9, metadata !DIExpression()), !dbg !13
@@ -22,7 +22,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !1 = !{!2}
 !2 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scope: !6, type: !7, function: void ()* @_Z3barN2N11AE)
+!5 = distinct !DISubprogram(name: "bar", linkageName: "_Z3barN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scope: !6, type: !7)
 !6 = !DIFile(filename: "n2.c", directory: "/private/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}

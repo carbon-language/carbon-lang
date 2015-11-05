@@ -29,7 +29,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 %struct.Inner = type { i32, i64 }
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @foo(%struct.Outer* byval align 8 %outer) #0 {
+define i32 @foo(%struct.Outer* byval align 8 %outer) #0 !dbg !4 {
 entry:
   call void @llvm.dbg.declare(metadata %struct.Outer* %outer, metadata !25, metadata !DIExpression()), !dbg !26
   %i1.sroa.0.0..sroa_idx = getelementptr inbounds %struct.Outer, %struct.Outer* %outer, i64 0, i32 0, i64 1, i32 0, !dbg !27
@@ -61,7 +61,7 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: "sroasplit-1.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (%struct.Outer*)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "sroasplit-1.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}

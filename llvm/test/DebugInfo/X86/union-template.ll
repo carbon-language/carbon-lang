@@ -11,7 +11,7 @@
 
 @_ZN7PR156371fE = global %"union.PR15637::Value" zeroinitializer, align 4
 
-define void @_ZN7PR156371gEf(float %value) #0 {
+define void @_ZN7PR156371gEf(float %value) #0 !dbg !4 {
 entry:
   %value.addr = alloca float, align 4
   %tempValue = alloca %"union.PR15637::Value", align 4
@@ -33,7 +33,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "foo.cc", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "g", linkageName: "_ZN7PR156371gEf", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: void (float)* @_ZN7PR156371gEf, variables: !2)
+!4 = distinct !DISubprogram(name: "g", linkageName: "_ZN7PR156371gEf", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DINamespace(name: "PR15637", line: 1, file: !1, scope: null)
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}

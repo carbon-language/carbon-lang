@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin10.0.0"
 
 
-define void @foo(double* nocapture %a) nounwind ssp {
+define void @foo(double* nocapture %a) nounwind ssp !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata double* %a, i64 0, metadata !5, metadata !DIExpression()), !dbg !8
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !10, metadata !DIExpression()), !dbg !14
@@ -30,7 +30,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.module.flags = !{!19}
 !llvm.dbg.sp = !{!0}
 
-!0 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !18, scope: !1, type: !3, function: void (double*)* @foo)
+!0 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !18, scope: !1, type: !3)
 !1 = !DIFile(filename: "li.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 127165:127174)", isOptimized: true, emissionKind: 0, file: !18, enums: !9, retainedTypes: !9)
 !3 = !DISubroutineType(types: !4)

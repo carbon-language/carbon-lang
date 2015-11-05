@@ -3,7 +3,7 @@
 target datalayout = "e-p:32:32:32-i64:64:64-i32:32:32-i16:16:16-i1:32:32-f64:64:64-f32:32:32-v64:64:64-v32:32:32-a0:0-n16:32"
 target triple = "hexagon"
 
-define void @foo(i32* nocapture %a, i32* nocapture %b) nounwind {
+define void @foo(i32* nocapture %a, i32* nocapture %b) nounwind !dbg !5 {
 entry:
   tail call void @llvm.dbg.value(metadata i32* %a, i64 0, metadata !13, metadata !DIExpression()), !dbg !17
   tail call void @llvm.dbg.value(metadata i32* %b, i64 0, metadata !14, metadata !DIExpression()), !dbg !18
@@ -40,7 +40,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "QuIC LLVM Hexagon Clang version 6.1-pre-unknown, (git://git-hexagon-aus.quicinc.com/llvm/clang-mainline.git e9382867661454cdf44addb39430741578e9765c) (llvm/llvm-mainline.git 36412bb1fcf03ed426d4437b41198bae066675ac)", isOptimized: true, emissionKind: 1, file: !28, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
 !2 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !28, scope: null, type: !7, function: void (i32*, i32*)* @foo, variables: !11)
+!5 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !28, scope: null, type: !7, variables: !11)
 !6 = !DIFile(filename: "hwloop-dbg.c", directory: "/usr2/kparzysz/s.hex/t")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9, !9}

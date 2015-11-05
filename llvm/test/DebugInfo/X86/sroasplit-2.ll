@@ -37,7 +37,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 %struct.Inner = type { i32, i32 }
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 {
+define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 !dbg !4 {
   %outer = alloca %struct.Outer, align 8
   %i1 = alloca %struct.Inner, align 4
   %1 = bitcast %struct.Outer* %outer to { i64, i64 }*
@@ -75,7 +75,7 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: "sroasplit-2.c", directory: "")
 !2 = !DIExpression()
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (i64, i64)* @foo, variables: !{})
+!4 = distinct !DISubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, variables: !{})
 !5 = !DIFile(filename: "sroasplit-2.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}

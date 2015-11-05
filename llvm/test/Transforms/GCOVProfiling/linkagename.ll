@@ -4,7 +4,7 @@
 ; RUN: grep _Z3foov %T/linkagename.gcno
 ; RUN: rm %T/linkagename.gcno
 
-define void @_Z3foov() {
+define void @_Z3foov() !dbg !5 {
 entry:
   ret void, !dbg !8
 }
@@ -18,7 +18,7 @@ entry:
 !2 = !DIFile(filename: "hello.cc", directory: "/home/nlewycky")
 !3 = !{}
 !4 = !{!5}
-!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !1, type: !6, function: void ()* @_Z3foov, variables: !3)
+!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !1, type: !6, variables: !3)
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
 !8 = !DILocation(line: 1, scope: !5)

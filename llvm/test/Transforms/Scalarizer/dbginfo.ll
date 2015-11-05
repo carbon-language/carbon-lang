@@ -2,7 +2,7 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 
 ; Function Attrs: nounwind uwtable
-define void @f1(<4 x i32>* nocapture %a, <4 x i32>* nocapture readonly %b, <4 x i32>* nocapture readonly %c) #0 {
+define void @f1(<4 x i32>* nocapture %a, <4 x i32>* nocapture readonly %b, <4 x i32>* nocapture readonly %c) #0 !dbg !4 {
 ; CHECK: @f1(
 ; CHECK: %a.i0 = bitcast <4 x i32>* %a to i32*
 ; CHECK: %a.i1 = getelementptr i32, i32* %a.i0, i32 1
@@ -61,7 +61,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f1", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: void (<4 x i32>*, <4 x i32>*, <4 x i32>*)* @f1, variables: !14)
+!4 = distinct !DISubprogram(name: "f1", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !14)
 !5 = !DIFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8, !8, !8}

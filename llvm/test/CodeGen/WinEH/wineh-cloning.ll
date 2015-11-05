@@ -453,7 +453,7 @@ exit:
 ; CHECK-NEXT: call void @f()
 ; CHECK-NEXT: unreachable
 
-define void @test12() personality i32 (...)* @__CxxFrameHandler3 {
+define void @test12() personality i32 (...)* @__CxxFrameHandler3 !dbg !5 {
 entry:
   invoke void @f()
     to label %cont unwind label %left, !dbg !8
@@ -559,7 +559,7 @@ exit:
 !2 = !DIFile(filename: "test.cpp", directory: ".")
 !3 = !{}
 !4 = !{!5}
-!5 = distinct !DISubprogram(name: "test12", scope: !2, file: !2, type: !6, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @test12, variables: !3)
+!5 = distinct !DISubprogram(name: "test12", scope: !2, file: !2, type: !6, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, variables: !3)
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
 !8 = !DILocation(line: 1, scope: !5)

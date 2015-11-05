@@ -4,7 +4,7 @@ target datalayout = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128"
 target triple = "i386-apple-macosx10.11.0"
 
 ; Function Attrs: nounwind ssp
-define i32 @bar(i32 %b) #0 {
+define i32 @bar(i32 %b) #0 !dbg !4 {
 entry:
   %b.addr = alloca i32, align 4
   %var = alloca i32, align 4
@@ -24,7 +24,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 declare i32 @foo(i32*) #2
 
 ; Function Attrs: nounwind ssp
-define i32 @baz(i32 %b) #0 {
+define i32 @baz(i32 %b) #0 !dbg !8 {
 entry:
   %b.addr = alloca i32, align 4
   store i32 %b, i32* %b.addr, align 4
@@ -46,11 +46,11 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "frame.c", directory: "/tmp")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, function: i32 (i32)* @bar, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7, !7}
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!8 = distinct !DISubprogram(name: "baz", scope: !1, file: !1, line: 8, type: !5, isLocal: false, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: false, function: i32 (i32)* @baz, variables: !2)
+!8 = distinct !DISubprogram(name: "baz", scope: !1, file: !1, line: 8, type: !5, isLocal: false, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !9 = !{i32 2, !"Dwarf Version", i32 4}
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{i32 1, !"PIC Level", i32 2}

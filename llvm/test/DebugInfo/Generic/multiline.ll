@@ -42,7 +42,7 @@
 
 
 ; Function Attrs: nounwind uwtable
-define void @f2() #0 {
+define void @f2() #0 !dbg !4 {
 entry:
   call void (...) @f1(), !dbg !11
   call void (...) @f1(), !dbg !12
@@ -66,7 +66,7 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "multiline.c", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f2", line: 2, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: void ()* @f2, variables: !2)
+!4 = distinct !DISubprogram(name: "f2", line: 2, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "multiline.c", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

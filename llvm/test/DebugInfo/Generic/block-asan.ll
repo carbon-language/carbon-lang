@@ -20,7 +20,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 %struct.__block_byref_x = type { i8*, %struct.__block_byref_x*, i32, i32, i32 }
 
 ; Function Attrs: nounwind ssp uwtable
-define void @foo() #0 {
+define void @foo() #0 !dbg !4 {
 entry:
   %x = alloca %struct.__block_byref_x, align 8
   call void @llvm.dbg.declare(metadata %struct.__block_byref_x* %x, metadata !12, metadata !22), !dbg !23
@@ -62,7 +62,7 @@ attributes #3 = { nounwind }
 !1 = !DIFile(filename: "block.c", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "block.c", directory: "/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

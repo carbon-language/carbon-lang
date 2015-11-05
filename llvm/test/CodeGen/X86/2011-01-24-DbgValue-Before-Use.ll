@@ -20,7 +20,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 @.str1 = private unnamed_addr constant [14 x i8] c"m=%u, z_s=%d\0A\00"
 @str = internal constant [21 x i8] c"Failing test vector:\00"
 
-define i64 @gcd(i64 %a, i64 %b) nounwind readnone optsize noinline ssp {
+define i64 @gcd(i64 %a, i64 %b) nounwind readnone optsize noinline ssp !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata i64 %a, i64 0, metadata !10, metadata !DIExpression()), !dbg !18
   tail call void @llvm.dbg.value(metadata i64 %b, i64 0, metadata !11, metadata !DIExpression()), !dbg !19
@@ -38,7 +38,7 @@ if.then:                                          ; preds = %while.body
   ret i64 %b.addr.0, !dbg !23
 }
 
-define i32 @main() nounwind optsize ssp {
+define i32 @main() nounwind optsize ssp !dbg !6 {
 entry:
   %call = tail call i32 @rand() nounwind optsize, !dbg !24
   tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !14, metadata !DIExpression()), !dbg !24
@@ -78,13 +78,13 @@ declare i32 @puts(i8* nocapture) nounwind
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!33}
 
-!0 = distinct !DISubprogram(name: "gcd", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !31, scope: !1, type: !3, function: i64 (i64, i64)* @gcd, variables: !29)
+!0 = distinct !DISubprogram(name: "gcd", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !31, scope: !1, type: !3, variables: !29)
 !1 = !DIFile(filename: "rem_small.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 124117)", isOptimized: true, emissionKind: 1, file: !31, enums: !32, retainedTypes: !32, subprograms: !28, imports:  null)
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
-!6 = distinct !DISubprogram(name: "main", line: 25, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !31, scope: !1, type: !7, function: i32 ()* @main, variables: !30)
+!6 = distinct !DISubprogram(name: "main", line: 25, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !31, scope: !1, type: !7, variables: !30)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

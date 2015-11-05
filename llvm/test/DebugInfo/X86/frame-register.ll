@@ -14,7 +14,7 @@ declare i32 @foo(i32 %i) #0
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind uwtable
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !9 {
 entry:
   %retval = alloca i32, align 4
   %i = alloca i32, align 4
@@ -37,12 +37,12 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "x.c", directory: "")
 !2 = !{}
 !3 = !{!4, !9}
-!4 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: i32 (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "x.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = distinct !DISubprogram(name: "main", line: 8, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 9, file: !1, scope: !5, type: !10, function: i32 ()* @main, variables: !2)
+!9 = distinct !DISubprogram(name: "main", line: 8, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 9, file: !1, scope: !5, type: !10, variables: !2)
 !10 = !DISubroutineType(types: !11)
 !11 = !{!8}
 !12 = !{i32 2, !"Dwarf Version", i32 4}

@@ -27,7 +27,7 @@ target triple = "thumbv7-apple-ios"
 @_ZTV1B = external unnamed_addr constant [4 x i8*]
 
 ; Function Attrs: nounwind
-define %struct.B* @_ZN1BC2Ev(%struct.B* %this) unnamed_addr #0 align 2 {
+define %struct.B* @_ZN1BC2Ev(%struct.B* %this) unnamed_addr #0 align 2 !dbg !28 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !30, metadata !40), !dbg !41
   %0 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, !dbg !42
@@ -40,7 +40,7 @@ entry:
 declare %struct.A* @_ZN1AC2Ev(%struct.A*)
 
 ; Function Attrs: nounwind
-define %struct.B* @_ZN1BC1Ev(%struct.B* %this) unnamed_addr #0 align 2 {
+define %struct.B* @_ZN1BC1Ev(%struct.B* %this) unnamed_addr #0 align 2 !dbg !32 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !34, metadata !40), !dbg !46
   tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !47, metadata !40) #3, !dbg !49
@@ -90,11 +90,11 @@ attributes #3 = { nounwind }
 !25 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
 !26 = !DISubprogram(name: "~A", line: 3, isLocal: false, isDefinition: false, virtuality: DW_VIRTUALITY_virtual, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !"_ZTS1A", type: !23, containingType: !"_ZTS1A")
 !27 = !{!28, !32}
-!28 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC2Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !5, scope: !"_ZTS1B", type: !9, function: %struct.B* (%struct.B*)* @_ZN1BC2Ev, declaration: !8, variables: !29)
+!28 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC2Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !5, scope: !"_ZTS1B", type: !9, declaration: !8, variables: !29)
 !29 = !{!30}
 !30 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !28, type: !31)
 !31 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !"_ZTS1B")
-!32 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC1Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !5, scope: !"_ZTS1B", type: !9, function: %struct.B* (%struct.B*)* @_ZN1BC1Ev, declaration: !8, variables: !33)
+!32 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC1Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !5, scope: !"_ZTS1B", type: !9, declaration: !8, variables: !33)
 !33 = !{!34}
 !34 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !32, type: !31)
 !35 = !{i32 2, !"Dwarf Version", i32 4}

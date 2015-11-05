@@ -32,7 +32,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: alwaysinline nounwind uwtable
-define void @f() #0 {
+define void @f() #0 !dbg !4 {
 entry:
   %aaa = alloca [100 x i8], align 16
   call void @llvm.dbg.declare(metadata [100 x i8]* %aaa, metadata !12, metadata !17), !dbg !18
@@ -45,7 +45,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: alwaysinline nounwind uwtable
-define void @g() #0 {
+define void @g() #0 !dbg !7 {
 entry:
   %bbb = alloca [100 x i8], align 16
   call void @llvm.dbg.declare(metadata [100 x i8]* %bbb, metadata !22, metadata !17), !dbg !23
@@ -55,7 +55,7 @@ entry:
 }
 
 ; Function Attrs: nounwind uwtable
-define void @h() #2 {
+define void @h() #2 !dbg !8 {
 entry:
   call void @f(), !dbg !27
   call void @g(), !dbg !28
@@ -74,11 +74,11 @@ attributes #2 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !1 = !DIFile(filename: "../1.c", directory: "/code/llvm-git/build")
 !2 = !{}
 !3 = !{!4, !7, !8}
-!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: false, function: void ()* @f, variables: !2)
+!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
-!7 = distinct !DISubprogram(name: "g", scope: !1, file: !1, line: 6, type: !5, isLocal: false, isDefinition: true, scopeLine: 6, isOptimized: false, function: void ()* @g, variables: !2)
-!8 = distinct !DISubprogram(name: "h", scope: !1, file: !1, line: 11, type: !5, isLocal: false, isDefinition: true, scopeLine: 11, isOptimized: false, function: void ()* @h, variables: !2)
+!7 = distinct !DISubprogram(name: "g", scope: !1, file: !1, line: 6, type: !5, isLocal: false, isDefinition: true, scopeLine: 6, isOptimized: false, variables: !2)
+!8 = distinct !DISubprogram(name: "h", scope: !1, file: !1, line: 11, type: !5, isLocal: false, isDefinition: true, scopeLine: 11, isOptimized: false, variables: !2)
 !9 = !{i32 2, !"Dwarf Version", i32 4}
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{!"clang version 3.8.0 (trunk 248518) (llvm/trunk 248512)"}

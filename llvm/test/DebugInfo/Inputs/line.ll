@@ -12,7 +12,7 @@
 ; CHECK: cmp
 
 ; Function Attrs: nounwind uwtable
-define i32 @_Z1fii(i32 %a, i32 %b) #0 {
+define i32 @_Z1fii(i32 %a, i32 %b) #0 !dbg !4 {
 entry:
   %a.addr = alloca i32, align 4
   %b.addr = alloca i32, align 4
@@ -43,7 +43,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !1 = !DIFile(filename: "line.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32, i32)* @_Z1fii, variables: !2)
+!4 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "line.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}

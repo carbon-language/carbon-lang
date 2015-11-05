@@ -16,7 +16,7 @@
 ; CHECK: DW_TAG_structure_type
 
 ; Function Attrs: nounwind readnone uwtable
-define i32 @bar() #0 {
+define i32 @bar() #0 !dbg !4 {
 entry:
   ret i32 1, !dbg !21
 }
@@ -31,7 +31,7 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !1 = !DIFile(filename: "debug-dead-local-var.c", directory: "/usr/local/google/home/echristo")
 !2 = !{}
 !3 = !{!4, !9}
-!4 = distinct !DISubprogram(name: "bar", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 11, file: !1, scope: !5, type: !6, function: i32 ()* @bar, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 11, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "debug-dead-local-var.c", directory: "/usr/local/google/home/echristo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

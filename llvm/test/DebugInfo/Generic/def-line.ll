@@ -43,20 +43,20 @@
 ; CHECK:   DW_AT_specification {{.*}}f3
 
 ; Function Attrs: uwtable
-define void @_ZN3foo2f2Ev() #0 align 2 {
+define void @_ZN3foo2f2Ev() #0 align 2 !dbg !12 {
 entry:
   call void @_ZN3foo2f1Ev(), !dbg !19
   ret void, !dbg !20
 }
 
 ; Function Attrs: nounwind uwtable
-define linkonce_odr void @_ZN3foo2f1Ev() #1 align 2 {
+define linkonce_odr void @_ZN3foo2f1Ev() #1 align 2 !dbg !15 {
 entry:
   ret void, !dbg !21
 }
 
 ; Function Attrs: nounwind uwtable
-define void @_ZN3foo2f3Ev() #1 align 2 {
+define void @_ZN3foo2f3Ev() #1 align 2 !dbg !13 {
 entry:
   ret void, !dbg !22
 }
@@ -80,10 +80,10 @@ attributes #1 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !9 = !DISubprogram(name: "f2", linkageName: "_ZN3foo2f2Ev", scope: !"_ZTS3foo", file: !1, line: 4, type: !7, isLocal: false, isDefinition: false, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: false)
 !10 = !DISubprogram(name: "f3", linkageName: "_ZN3foo2f3Ev", scope: !"_ZTS3foo", file: !1, line: 5, type: !7, isLocal: false, isDefinition: false, scopeLine: 5, flags: DIFlagPrototyped, isOptimized: false)
 !11 = !{!12, !13, !15}
-!12 = distinct !DISubprogram(name: "f2", linkageName: "_ZN3foo2f2Ev", scope: !"_ZTS3foo", file: !1, line: 7, type: !7, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: false, function: void ()* @_ZN3foo2f2Ev, declaration: !9, variables: !2)
-!13 = distinct !DISubprogram(name: "f3", linkageName: "_ZN3foo2f3Ev", scope: !"_ZTS3foo", file: !14, line: 1, type: !7, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, function: void ()* @_ZN3foo2f3Ev, declaration: !10, variables: !2)
+!12 = distinct !DISubprogram(name: "f2", linkageName: "_ZN3foo2f2Ev", scope: !"_ZTS3foo", file: !1, line: 7, type: !7, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: false, declaration: !9, variables: !2)
+!13 = distinct !DISubprogram(name: "f3", linkageName: "_ZN3foo2f3Ev", scope: !"_ZTS3foo", file: !14, line: 1, type: !7, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, declaration: !10, variables: !2)
 !14 = !DIFile(filename: "bar.cpp", directory: "/tmp/dbginfo")
-!15 = distinct !DISubprogram(name: "f1", linkageName: "_ZN3foo2f1Ev", scope: !"_ZTS3foo", file: !1, line: 2, type: !7, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, function: void ()* @_ZN3foo2f1Ev, declaration: !6, variables: !2)
+!15 = distinct !DISubprogram(name: "f1", linkageName: "_ZN3foo2f1Ev", scope: !"_ZTS3foo", file: !1, line: 2, type: !7, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, declaration: !6, variables: !2)
 !16 = !{i32 2, !"Dwarf Version", i32 4}
 !17 = !{i32 2, !"Debug Info Version", i32 3}
 !18 = !{!"clang version 3.8.0 (trunk 249440) (llvm/trunk 249465)"}

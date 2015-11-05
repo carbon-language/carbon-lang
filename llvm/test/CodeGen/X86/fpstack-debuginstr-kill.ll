@@ -3,7 +3,7 @@
 @g1 = global double 0.000000e+00, align 8
 @g2 = global i32 0, align 4
 
-define void @_Z16fpuop_arithmeticjj(i32, i32) {
+define void @_Z16fpuop_arithmeticjj(i32, i32) !dbg !4 {
 entry:
   switch i32 undef, label %sw.bb.i1921 [
   ]
@@ -47,7 +47,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !1 = !DIFile(filename: "fpu_ieee.cpp", directory: "x87stackifier")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "fpuop_arithmetic", linkageName: "_Z16fpuop_arithmeticjj", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 13, file: !5, scope: !6, type: !7, function: void (i32, i32)* @_Z16fpuop_arithmeticjj, variables: !10)
+!4 = distinct !DISubprogram(name: "fpuop_arithmetic", linkageName: "_Z16fpuop_arithmeticjj", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 13, file: !5, scope: !6, type: !7, variables: !10)
 !5 = !DIFile(filename: "f1.cpp", directory: "x87stackifier")
 !6 = !DIFile(filename: "f1.cpp", directory: "x87stackifier")
 !7 = !DISubroutineType(types: !8)

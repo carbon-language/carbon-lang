@@ -41,7 +41,7 @@
 @_ZN4test10global_varE = global i32 0, align 4
 
 ; Function Attrs: nounwind uwtable
-define i32 @_ZN4test3barEv() #0 {
+define i32 @_ZN4test3barEv() #0 !dbg !4 {
 entry:
   %0 = load i32, i32* @_ZN4test10global_varE, align 4, !dbg !14
   ret i32 %0, !dbg !15
@@ -57,7 +57,7 @@ attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !1 = !DIFile(filename: "dwarf-linkage-names.cpp", directory: "/home/probinson/projects/scratch")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "bar", linkageName: "_ZN4test3barEv", scope: !5, file: !1, line: 3, type: !6, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, function: i32 ()* @_ZN4test3barEv, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", linkageName: "_ZN4test3barEv", scope: !5, file: !1, line: 3, type: !6, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !5 = !DINamespace(name: "test", scope: null, file: !1, line: 1)
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

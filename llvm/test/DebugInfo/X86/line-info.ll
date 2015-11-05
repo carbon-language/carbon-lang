@@ -14,7 +14,7 @@
 ; int main() {
 ; }
 
-define i32 @foo(i32 %x) #0 {
+define i32 @foo(i32 %x) #0 !dbg !4 {
 entry:
   %x.addr = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
@@ -27,7 +27,7 @@ entry:
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !10 {
 entry:
   ret i32 0, !dbg !17
 }
@@ -42,13 +42,13 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "list0.c", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !2 = !{}
 !3 = !{!4, !10}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !5, scope: !6, type: !7, function: i32 (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !5, scope: !6, type: !7, variables: !2)
 !5 = !DIFile(filename: "./list0.h", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !6 = !DIFile(filename: "./list0.h", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !1, scope: !11, type: !12, function: i32 ()* @main, variables: !2)
+!10 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !1, scope: !11, type: !12, variables: !2)
 !11 = !DIFile(filename: "list0.c", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !12 = !DISubroutineType(types: !13)
 !13 = !{!9}

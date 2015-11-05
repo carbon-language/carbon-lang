@@ -5,7 +5,7 @@
 ; CHECK: DEBUG_VALUE: test_debug_value:globalptr_arg <- SGPR0_SGPR1
 ; CHECK: buffer_store_dword
 ; CHECK: s_endpgm
-define void @test_debug_value(i32 addrspace(1)* nocapture %globalptr_arg) #0 {
+define void @test_debug_value(i32 addrspace(1)* nocapture %globalptr_arg) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 addrspace(1)* %globalptr_arg, i64 0, metadata !10, metadata !13), !dbg !14
   store i32 123, i32 addrspace(1)* %globalptr_arg, align 4
@@ -24,7 +24,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "/tmp/test_debug_value.cl", directory: "/Users/matt/src/llvm/build_debug")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "test_debug_value", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, function: void (i32 addrspace(1)*)* @test_debug_value, variables: !9)
+!4 = distinct !DISubprogram(name: "test_debug_value", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, variables: !9)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null, !7}
 !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !8, size: 64, align: 32)

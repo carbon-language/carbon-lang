@@ -23,7 +23,7 @@ target datalayout = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32"
 target triple = "i686-pc-windows-msvc"
 
 ; Function Attrs: nounwind
-define float @foo(float %x) #0 {
+define float @foo(float %x) #0 !dbg !4 {
 entry:
   %x.addr = alloca float, align 4
   store float %x, float* %x.addr, align 4
@@ -38,7 +38,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 ; CHECK: define void @bar
 
 ; Function Attrs: nounwind
-define void @bar(float* %dst) #0 {
+define void @bar(float* %dst) #0 !dbg !9 {
 entry:
 
 ; CHECK: [[x_addr_i:%[a-zA-Z0-9.]+]] = alloca float, align 4
@@ -71,12 +71,12 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "foo.c", directory: "")
 !2 = !{}
 !3 = !{!4, !9}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: float (float)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "foo.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
-!9 = distinct !DISubprogram(name: "bar", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !10, function: void (float*)* @bar, variables: !2)
+!9 = distinct !DISubprogram(name: "bar", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !10, variables: !2)
 !10 = !DISubroutineType(types: !11)
 !11 = !{null, !12}
 !12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !8)

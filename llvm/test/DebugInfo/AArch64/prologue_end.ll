@@ -6,7 +6,7 @@
 ;   func();
 ; }
 
-define void @prologue_end_test() nounwind uwtable {
+define void @prologue_end_test() nounwind uwtable !dbg !4 {
   ; CHECK: prologue_end_test:
   ; CHECK: .cfi_startproc
   ; CHECK: stp x29, x30
@@ -31,7 +31,7 @@ declare i32 @func()
 !1 = !DIFile(filename: "foo.c", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "prologue_end_test", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, isOptimized: false, function: void ()* @prologue_end_test, variables: !2)
+!4 = distinct !DISubprogram(name: "prologue_end_test", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{i32 2, !"Dwarf Version", i32 2}

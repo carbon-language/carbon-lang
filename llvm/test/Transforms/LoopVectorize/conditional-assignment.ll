@@ -6,7 +6,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
 ; Function Attrs: nounwind ssp uwtable
-define void @conditional_store(i32* noalias nocapture %indices) #0 {
+define void @conditional_store(i32* noalias nocapture %indices) #0 !dbg !4 {
 entry:
   br label %for.body, !dbg !10
 
@@ -40,7 +40,7 @@ attributes #0 = { nounwind }
 !1 = !DIFile(filename: "source.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "conditional_store", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*)* @conditional_store, variables: !2)
+!4 = distinct !DISubprogram(name: "conditional_store", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "source.c", directory: ".")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 2}

@@ -9,7 +9,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 @grid_points = external global [3 x i32], align 4
 
 ; Function Attrs: nounwind
-define fastcc void @compute_rhs() #0 {
+define fastcc void @compute_rhs() #0 !dbg !114 {
 entry:
   br i1 undef, label %for.cond871.preheader.for.inc960_crit_edge, label %for.end1042, !dbg !439
 
@@ -168,7 +168,7 @@ attributes #1 = { nounwind readnone }
 !111 = !DILocalVariable(name: "d", line: 271, scope: !102, file: !5, type: !8)
 !112 = !DILocalVariable(name: "m", line: 271, scope: !102, file: !5, type: !8)
 !113 = !DILocalVariable(name: "add", line: 272, scope: !102, file: !5, type: !20)
-!114 = distinct !DISubprogram(name: "compute_rhs", line: 1767, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1767, file: !1, scope: !5, type: !115, function: void ()* @compute_rhs, variables: !117)
+!114 = distinct !DISubprogram(name: "compute_rhs", line: 1767, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1767, file: !1, scope: !5, type: !115, variables: !117)
 !115 = !DISubroutineType(types: !116)
 !116 = !{null}
 !117 = !{!118, !119, !120, !121, !122, !123, !124, !125, !126, !127, !128, !129, !130, !131}

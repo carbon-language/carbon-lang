@@ -19,7 +19,7 @@
 @_ZSt4cout = external global %"class.std::basic_ostream"
 @.str = private unnamed_addr constant [6 x i8] c"c is \00", align 1
 
-define i32 @main() {
+define i32 @main() !dbg !960 {
 entry:
   %call1.i = tail call %"class.std::basic_ostream"* @test(%"class.std::basic_ostream"* @_ZSt4cout, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str, i64 0, i64 0), i64 5)
   ret i32 0
@@ -54,7 +54,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !79 = !DIDerivedType(tag: DW_TAG_typedef, name: "ostate", line: 327, file: !1801, scope: !49, baseType: !26)
 !955 = !{}
 !956 = !{!960}
-!960 = distinct !DISubprogram(name: "main", line: 73, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 73, file: !1802, scope: null, type: !54, function: i32 ()* @main, variables: !955)
+!960 = distinct !DISubprogram(name: "main", line: 73, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 73, file: !1802, scope: null, type: !54, variables: !955)
 !961 = !DIFile(filename: "student2.cpp", directory: "/privite/tmp")
 !1786 = !{!1800}
 !1800 = !DIGlobalVariable(name: "badbit", linkageName: "badbit", line: 331, isLocal: true, isDefinition: true, scope: !5, file: !5, type: !78, variable: i32 1, declaration: !77)

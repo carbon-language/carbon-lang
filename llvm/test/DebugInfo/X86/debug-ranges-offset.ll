@@ -19,7 +19,7 @@
 @_end = external hidden global i32
 
 ; Function Attrs: sanitize_memory uwtable
-define void @_Z1fv() #0 {
+define void @_Z1fv() #0 !dbg !4 {
 entry:
   %p = alloca i32*, align 8
   %0 = ptrtoint i32** %p to i64, !dbg !19
@@ -82,7 +82,7 @@ if.end:                                           ; preds = %16, %if.then
 declare i8* @_Znwm(i64) #1
 
 ; Function Attrs: sanitize_memory uwtable
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !13 {
 entry:
   %p.i = alloca i32*, align 8
   %0 = ptrtoint i32** %p.i to i64, !dbg !30
@@ -206,7 +206,7 @@ attributes #4 = { builtin }
 !1 = !DIFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4, !13}
-!4 = distinct !DISubprogram(name: "f", linkageName: "_Z1fv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @_Z1fv, variables: !8)
+!4 = distinct !DISubprogram(name: "f", linkageName: "_Z1fv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !8)
 !5 = !DIFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
@@ -215,7 +215,7 @@ attributes #4 = { builtin }
 !10 = !DIDerivedType(tag: DW_TAG_volatile_type, baseType: !11)
 !11 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !12)
 !12 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!13 = distinct !DISubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !1, scope: !5, type: !14, function: i32 ()* @main, variables: !2)
+!13 = distinct !DISubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !1, scope: !5, type: !14, variables: !2)
 !14 = !DISubroutineType(types: !15)
 !15 = !{!12}
 !16 = !{i32 2, !"Dwarf Version", i32 4}

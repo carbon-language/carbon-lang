@@ -36,7 +36,7 @@
 %struct.S = type { i32 }
 
 ; Function Attrs: nounwind readnone uwtable
-define i32 @_Z8function1Si(i32 %s.coerce, i32 %i) #0 {
+define i32 @_Z8function1Si(i32 %s.coerce, i32 %i) #0 !dbg !9 {
 entry:
   tail call void @llvm.dbg.declare(metadata %struct.S* undef, metadata !14, metadata !DIExpression()), !dbg !20
   tail call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !15, metadata !DIExpression()), !dbg !20
@@ -66,7 +66,7 @@ attributes #1 = { nounwind readnone }
 !6 = !DIDerivedType(tag: DW_TAG_member, name: "i", line: 1, size: 32, align: 32, file: !1, scope: !"_ZTS1S", baseType: !7)
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !8 = !{!9}
-!9 = distinct !DISubprogram(name: "function", linkageName: "_Z8function1Si", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !10, type: !11, function: i32 (i32, i32)* @_Z8function1Si, variables: !13)
+!9 = distinct !DISubprogram(name: "function", linkageName: "_Z8function1Si", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !10, type: !11, variables: !13)
 !10 = !DIFile(filename: "dead-argument-order.cpp", directory: "/tmp/dbginfo")
 !11 = !DISubroutineType(types: !12)
 !12 = !{!7, !4, !7}

@@ -4,7 +4,7 @@
 
 @x = common global i32 0                          ; <i32*> [#uses=0]
 
-define void @foo() nounwind readnone optsize ssp {
+define void @foo() nounwind readnone optsize ssp !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !5, metadata !{}), !dbg !10
   ret void, !dbg !11
@@ -18,7 +18,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.lv.foo = !{!5}
 !llvm.dbg.gv = !{!8}
 
-!0 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3, function: void ()* @foo)
+!0 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3)
 !1 = !DIFile(filename: "b.c", directory: "/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12)
 !3 = !DISubroutineType(types: !4)

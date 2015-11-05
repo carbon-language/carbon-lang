@@ -9,7 +9,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Check that debug info for origin propagation code is set correctly.
 
 ; Function Attrs: nounwind
-define void @Store(i32* nocapture %p, i32 %x) #0 {
+define void @Store(i32* nocapture %p, i32 %x) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !11, metadata !DIExpression()), !dbg !16
   tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !12, metadata !DIExpression()), !dbg !16
@@ -31,7 +31,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "../2.cc", directory: "/tmp/build0")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "Store", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*, i32)* @Store, variables: !10)
+!4 = distinct !DISubprogram(name: "Store", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !10)
 !5 = !DIFile(filename: "../2.cc", directory: "/tmp/build0")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8, !9}

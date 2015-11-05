@@ -17,7 +17,7 @@
 
 
 ; Function Attrs: nounwind uwtable
-define void @_Z3fooPv(i8* noalias %dst) #0 {
+define void @_Z3fooPv(i8* noalias %dst) #0 !dbg !4 {
 entry:
   %dst.addr = alloca i8*, align 8
   store i8* %dst, i8** %dst.addr, align 8
@@ -39,7 +39,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "restrict.c", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooPv", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i8*)* @_Z3fooPv, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooPv", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "restrict.c", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}

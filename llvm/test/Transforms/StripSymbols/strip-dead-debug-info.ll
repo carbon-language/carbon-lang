@@ -10,13 +10,13 @@
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #0
 
 ; Function Attrs: nounwind readnone ssp
-define i32 @fn() #1 {
+define i32 @fn() #1 !dbg !6 {
 entry:
   ret i32 0, !dbg !18
 }
 
 ; Function Attrs: nounwind readonly ssp
-define i32 @foo(i32 %i) #2 {
+define i32 @foo(i32 %i) #2 !dbg !10 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !15, metadata !DIExpression()), !dbg !20
   %.0 = load i32, i32* @xyz, align 4
@@ -36,11 +36,11 @@ attributes #2 = { nounwind readonly ssp }
 !3 = distinct !DISubprogram(name: "bar", line: 5, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: null, type: !4)
 !4 = !DISubroutineType(types: !2)
 !5 = !DIFile(filename: "g.c", directory: "/tmp/")
-!6 = distinct !DISubprogram(name: "fn", linkageName: "fn", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: null, type: !7, function: i32 ()* @fn)
+!6 = distinct !DISubprogram(name: "fn", linkageName: "fn", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: null, type: !7)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: null, type: !11, function: i32 (i32)* @foo)
+!10 = distinct !DISubprogram(name: "foo", linkageName: "foo", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: null, type: !11)
 !11 = !DISubroutineType(types: !12)
 !12 = !{!9, !9}
 !13 = !DILocalVariable(name: "bb", line: 5, scope: !14, file: !5, type: !9)

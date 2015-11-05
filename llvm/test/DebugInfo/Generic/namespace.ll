@@ -205,13 +205,13 @@
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_debug_info_namespace.cpp, i8* null }]
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @_ZN1A1B2f1Ev() #0 {
+define i32 @_ZN1A1B2f1Ev() #0 !dbg !10 {
 entry:
   ret i32 0, !dbg !60
 }
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_ZN1A1B2f1Ei(i32) #0 {
+define void @_ZN1A1B2f1Ei(i32) #0 !dbg !14 {
 entry:
   %.addr = alloca i32, align 4
   store i32 %0, i32* %.addr, align 4
@@ -222,7 +222,7 @@ entry:
 ; Function Attrs: nounwind readnone
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
-define internal void @__cxx_global_var_init() section "__TEXT,__StaticInit,regular,pure_instructions" {
+define internal void @__cxx_global_var_init() section "__TEXT,__StaticInit,regular,pure_instructions" !dbg !17 {
 entry:
   %call = call i32 @_ZN1A1B2f1Ev(), !dbg !65
   store i32 %call, i32* @_ZN1A1B1iE, align 4, !dbg !65
@@ -230,7 +230,7 @@ entry:
 }
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @_Z4funcb(i1 zeroext %b) #0 {
+define i32 @_Z4funcb(i1 zeroext %b) #0 !dbg !21 {
 entry:
   %retval = alloca i32, align 4
   %b.addr = alloca i8, align 1
@@ -260,7 +260,7 @@ return:                                           ; preds = %if.end, %if.then
   ret i32 %5, !dbg !71
 }
 
-define internal void @__cxx_global_var_init1() section "__TEXT,__StaticInit,regular,pure_instructions" {
+define internal void @__cxx_global_var_init1() section "__TEXT,__StaticInit,regular,pure_instructions" !dbg !25 {
 entry:
   %0 = load i32, i32* @_ZN1A1B1iE, align 4, !dbg !72
   store i32 %0, i32* @_ZN1A1B7var_fwdE, align 4, !dbg !72
@@ -268,7 +268,7 @@ entry:
 }
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_ZN1A1B8func_fwdEv() #0 {
+define void @_ZN1A1B8func_fwdEv() #0 !dbg !26 {
 entry:
   ret void, !dbg !73
 }
@@ -297,24 +297,24 @@ attributes #1 = { nounwind readnone }
 !7 = !DINamespace(name: "A", line: 5, file: !1, scope: null)
 !8 = !DICompositeType(tag: DW_TAG_structure_type, name: "bar", line: 6, size: 8, align: 8, file: !5, scope: !6, elements: !2, identifier: "_ZTSN1A1B3barE")
 !9 = !{!10, !14, !17, !21, !25, !26, !27}
-!10 = distinct !DISubprogram(name: "f1", linkageName: "_ZN1A1B2f1Ev", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !5, scope: !6, type: !11, function: i32 ()* @_ZN1A1B2f1Ev, variables: !2)
+!10 = distinct !DISubprogram(name: "f1", linkageName: "_ZN1A1B2f1Ev", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !5, scope: !6, type: !11, variables: !2)
 !11 = !DISubroutineType(types: !12)
 !12 = !{!13}
 !13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!14 = distinct !DISubprogram(name: "f1", linkageName: "_ZN1A1B2f1Ei", line: 4, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !5, scope: !6, type: !15, function: void (i32)* @_ZN1A1B2f1Ei, variables: !2)
+!14 = distinct !DISubprogram(name: "f1", linkageName: "_ZN1A1B2f1Ei", line: 4, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !5, scope: !6, type: !15, variables: !2)
 !15 = !DISubroutineType(types: !16)
 !16 = !{null, !13}
-!17 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 20, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 20, file: !5, scope: !18, type: !19, function: void ()* @__cxx_global_var_init, variables: !2)
+!17 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 20, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 20, file: !5, scope: !18, type: !19, variables: !2)
 !18 = !DIFile(filename: "foo.cpp", directory: "/tmp")
 !19 = !DISubroutineType(types: !20)
 !20 = !{null}
-!21 = distinct !DISubprogram(name: "func", linkageName: "_Z4funcb", line: 21, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 21, file: !5, scope: !18, type: !22, function: i32 (i1)* @_Z4funcb, variables: !2)
+!21 = distinct !DISubprogram(name: "func", linkageName: "_Z4funcb", line: 21, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 21, file: !5, scope: !18, type: !22, variables: !2)
 !22 = !DISubroutineType(types: !23)
 !23 = !{!13, !24}
 !24 = !DIBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)
-!25 = distinct !DISubprogram(name: "__cxx_global_var_init1", line: 44, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 44, file: !5, scope: !18, type: !19, function: void ()* @__cxx_global_var_init1, variables: !2)
-!26 = distinct !DISubprogram(name: "func_fwd", linkageName: "_ZN1A1B8func_fwdEv", line: 47, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 47, file: !5, scope: !6, type: !19, function: void ()* @_ZN1A1B8func_fwdEv, variables: !2)
-!27 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__sub_I_debug_info_namespace.cpp", isLocal: true, isDefinition: true, flags: DIFlagArtificial, isOptimized: false, file: !1, scope: !28, type: !29, function: void ()* @_GLOBAL__sub_I_debug_info_namespace.cpp, variables: !2)
+!25 = distinct !DISubprogram(name: "__cxx_global_var_init1", line: 44, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 44, file: !5, scope: !18, type: !19, variables: !2)
+!26 = distinct !DISubprogram(name: "func_fwd", linkageName: "_ZN1A1B8func_fwdEv", line: 47, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 47, file: !5, scope: !6, type: !19, variables: !2)
+!27 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__sub_I_debug_info_namespace.cpp", isLocal: true, isDefinition: true, flags: DIFlagArtificial, isOptimized: false, file: !1, scope: !28, type: !29, variables: !2)
 !28 = !DIFile(filename: "debug-info-namespace.cpp", directory: "/tmp")
 !29 = !DISubroutineType(types: !2)
 !30 = !{!31, !32}

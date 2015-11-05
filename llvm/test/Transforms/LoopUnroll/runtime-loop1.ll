@@ -15,7 +15,7 @@
 ; CHECK-DAG: [[PH_LOC]] = !DILocation(line: 101, column: 1, scope: !{{.*}})
 ; CHECK-DAG: [[BODY_LOC]] = !DILocation(line: 102, column: 1, scope: !{{.*}})
 
-define i32 @test(i32* nocapture %a, i32 %n) nounwind uwtable readonly {
+define i32 @test(i32* nocapture %a, i32 %n) nounwind uwtable readonly !dbg !6 {
 entry:
   %cmp1 = icmp eq i32 %n, 0, !dbg !7
   br i1 %cmp1, label %for.end, label %for.body, !dbg !7
@@ -44,7 +44,7 @@ for.end:                                          ; preds = %for.body, %entry
 !3 = !{}
 !4 = !DISubroutineType(types: !3)
 !5 = !DIFile(filename: "test.cpp", directory: "/tmp")
-!6 = distinct !DISubprogram(name: "test", scope: !5, file: !5, line: 99, type: !4, isLocal: false, isDefinition: true, scopeLine: 100, flags: DIFlagPrototyped, isOptimized: false, function: i32 (i32*, i32)* @test, variables: !3)
+!6 = distinct !DISubprogram(name: "test", scope: !5, file: !5, line: 99, type: !4, isLocal: false, isDefinition: true, scopeLine: 100, flags: DIFlagPrototyped, isOptimized: false, variables: !3)
 !7 = !DILocation(line: 100, column: 1, scope: !6)
 !8 = !DILocation(line: 101, column: 1, scope: !6)
 !9 = !DILocation(line: 102, column: 1, scope: !6)

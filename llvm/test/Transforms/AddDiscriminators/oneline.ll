@@ -10,7 +10,7 @@
 ; return 100: discriminator 1
 ; return 99:  discriminator 3
 
-define i32 @_Z3fooi(i32 %i) #0 {
+define i32 @_Z3fooi(i32 %i) #0 !dbg !4 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
   store i32 %i, i32* %2, align 4, !tbaa !13
@@ -62,7 +62,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "a.cc", directory: "/usr/local/google/home/dehao/discr")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, function: i32 (i32)* @_Z3fooi, variables: !8)
+!4 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, variables: !8)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7, !7}
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

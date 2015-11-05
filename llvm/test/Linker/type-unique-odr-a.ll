@@ -49,14 +49,14 @@
 %class.A = type { i32 }
 
 ; Function Attrs: nounwind
-define void @_Z3bazv() #0 {
+define void @_Z3bazv() #0 !dbg !15 {
 entry:
   call void @_ZL3barv(), !dbg !23
   ret void, !dbg !23
 }
 
 ; Function Attrs: nounwind
-define internal void @_ZL3barv() #0 {
+define internal void @_ZL3barv() #0 !dbg !19 {
 entry:
   %a = alloca %class.A, align 4
   call void @llvm.dbg.declare(metadata %class.A* %a, metadata !24, metadata !DIExpression()), !dbg !25
@@ -87,11 +87,11 @@ attributes #1 = { nounwind readnone }
 !11 = !{null, !12}
 !12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
 !14 = !{!15, !19}
-!15 = distinct !DISubprogram(name: "baz", linkageName: "_Z3bazv", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !5, scope: !16, type: !17, function: void ()* @_Z3bazv, variables: !2)
+!15 = distinct !DISubprogram(name: "baz", linkageName: "_Z3bazv", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !5, scope: !16, type: !17, variables: !2)
 !16 = !DIFile(filename: "type-unique-odr-a.cpp", directory: "")
 !17 = !DISubroutineType(types: !18)
 !18 = !{null}
-!19 = distinct !DISubprogram(name: "bar", linkageName: "_ZL3barv", line: 7, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !5, scope: !16, type: !17, function: void ()* @_ZL3barv, variables: !2)
+!19 = distinct !DISubprogram(name: "bar", linkageName: "_ZL3barv", line: 7, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !5, scope: !16, type: !17, variables: !2)
 !20 = !{i32 2, !"Dwarf Version", i32 4}
 !21 = !{i32 1, !"Debug Info Version", i32 3}
 !22 = !{!"clang version 3.5.0 "}

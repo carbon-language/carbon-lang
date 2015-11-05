@@ -19,7 +19,7 @@
 @.str = private unnamed_addr constant [11 x i8] c"sum is %d\0A\00", align 1
 
 ; Function Attrs: nounwind uwtable
-define i32 @_Z3sumii(i32 %x, i32 %y) {
+define i32 @_Z3sumii(i32 %x, i32 %y) !dbg !4 {
 entry:
   %x.addr = alloca i32, align 4
   %y.addr = alloca i32, align 4
@@ -32,7 +32,7 @@ entry:
 }
 
 ; Function Attrs: uwtable
-define i32 @main() {
+define i32 @main() !dbg !7 {
 entry:
   %retval = alloca i32, align 4
   %s = alloca i32, align 4
@@ -84,10 +84,10 @@ declare i32 @printf(i8*, ...) #2
 !1 = !DIFile(filename: "calls.cc", directory: ".")
 !2 = !{}
 !3 = !{!4, !7}
-!4 = distinct !DISubprogram(name: "sum", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: i32 (i32, i32)* @_Z3sumii, variables: !2)
+!4 = distinct !DISubprogram(name: "sum", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "calls.cc", directory: ".")
 !6 = !DISubroutineType(types: !2)
-!7 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!7 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !6, variables: !2)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 1, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5 "}

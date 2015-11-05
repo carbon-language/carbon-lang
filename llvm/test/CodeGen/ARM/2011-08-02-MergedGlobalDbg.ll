@@ -28,7 +28,7 @@ target triple = "thumbv7-apple-macosx10.7.0"
 @x4 = internal unnamed_addr global i32 4, align 4
 @x5 = global i32 0, align 4
 
-define i32 @get1(i32 %a) nounwind optsize ssp {
+define i32 @get1(i32 %a) nounwind optsize ssp !dbg !1 {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !10, metadata !DIExpression()), !dbg !30
   %1 = load i32, i32* @x1, align 4, !dbg !31
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !11, metadata !DIExpression()), !dbg !31
@@ -36,7 +36,7 @@ define i32 @get1(i32 %a) nounwind optsize ssp {
   ret i32 %1, !dbg !31
 }
 
-define i32 @get2(i32 %a) nounwind optsize ssp {
+define i32 @get2(i32 %a) nounwind optsize ssp !dbg !6 {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !13, metadata !DIExpression()), !dbg !32
   %1 = load i32, i32* @x2, align 4, !dbg !33
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !14, metadata !DIExpression()), !dbg !33
@@ -44,7 +44,7 @@ define i32 @get2(i32 %a) nounwind optsize ssp {
   ret i32 %1, !dbg !33
 }
 
-define i32 @get3(i32 %a) nounwind optsize ssp {
+define i32 @get3(i32 %a) nounwind optsize ssp !dbg !7 {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !16, metadata !DIExpression()), !dbg !34
   %1 = load i32, i32* @x3, align 4, !dbg !35
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !17, metadata !DIExpression()), !dbg !35
@@ -52,7 +52,7 @@ define i32 @get3(i32 %a) nounwind optsize ssp {
   ret i32 %1, !dbg !35
 }
 
-define i32 @get4(i32 %a) nounwind optsize ssp {
+define i32 @get4(i32 %a) nounwind optsize ssp !dbg !8 {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !19, metadata !DIExpression()), !dbg !36
   %1 = load i32, i32* @x4, align 4, !dbg !37
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !20, metadata !DIExpression()), !dbg !37
@@ -60,7 +60,7 @@ define i32 @get4(i32 %a) nounwind optsize ssp {
   ret i32 %1, !dbg !37
 }
 
-define i32 @get5(i32 %a) nounwind optsize ssp {
+define i32 @get5(i32 %a) nounwind optsize ssp !dbg !9 {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !27, metadata !DIExpression()), !dbg !38
   %1 = load i32, i32* @x5, align 4, !dbg !39
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !28, metadata !DIExpression()), !dbg !39
@@ -74,15 +74,15 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.module.flags = !{!49}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang", isOptimized: true, emissionKind: 1, file: !47, enums: !48, retainedTypes: !48, subprograms: !40, globals: !41, imports:  !48)
-!1 = distinct !DISubprogram(name: "get1", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !47, scope: !2, type: !3, function: i32 (i32)* @get1, variables: !42)
+!1 = distinct !DISubprogram(name: "get1", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !47, scope: !2, type: !3, variables: !42)
 !2 = !DIFile(filename: "ss3.c", directory: "/private/tmp")
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = distinct !DISubprogram(name: "get2", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 8, file: !47, scope: !2, type: !3, function: i32 (i32)* @get2, variables: !43)
-!7 = distinct !DISubprogram(name: "get3", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !47, scope: !2, type: !3, function: i32 (i32)* @get3, variables: !44)
-!8 = distinct !DISubprogram(name: "get4", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 14, file: !47, scope: !2, type: !3, function: i32 (i32)* @get4, variables: !45)
-!9 = distinct !DISubprogram(name: "get5", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 17, file: !47, scope: !2, type: !3, function: i32 (i32)* @get5, variables: !46)
+!6 = distinct !DISubprogram(name: "get2", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 8, file: !47, scope: !2, type: !3, variables: !43)
+!7 = distinct !DISubprogram(name: "get3", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !47, scope: !2, type: !3, variables: !44)
+!8 = distinct !DISubprogram(name: "get4", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 14, file: !47, scope: !2, type: !3, variables: !45)
+!9 = distinct !DISubprogram(name: "get5", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 17, file: !47, scope: !2, type: !3, variables: !46)
 !10 = !DILocalVariable(name: "a", line: 5, arg: 1, scope: !1, file: !2, type: !5)
 !11 = !DILocalVariable(name: "b", line: 5, scope: !12, file: !2, type: !5)
 !12 = distinct !DILexicalBlock(line: 5, column: 19, file: !47, scope: !1)

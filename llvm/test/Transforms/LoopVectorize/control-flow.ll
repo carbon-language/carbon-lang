@@ -20,7 +20,7 @@
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 ; Function Attrs: nounwind optsize ssp uwtable
-define i32 @_Z4testPii(i32* nocapture %A, i32 %Length) #0 {
+define i32 @_Z4testPii(i32* nocapture %A, i32 %Length) #0 !dbg !4 {
 entry:
   %cmp8 = icmp sgt i32 %Length, 0, !dbg !10
   br i1 %cmp8, label %for.body.preheader, label %end, !dbg !10
@@ -59,7 +59,7 @@ attributes #0 = { nounwind }
 !1 = !DIFile(filename: "source.cpp", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, function: i32 (i32*, i32)* @_Z4testPii, variables: !2)
+!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "source.cpp", directory: ".")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 2}

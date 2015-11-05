@@ -10,7 +10,7 @@ target triple = "thumbv7-apple-darwin10"
 @.str = private unnamed_addr constant [11 x i8] c"%p %lf %c\0A\00", align 4
 @.str1 = private unnamed_addr constant [6 x i8] c"point\00", align 4
 
-define i32 @inlineprinter(i8* %ptr, double %val, i8 zeroext %c) nounwind optsize {
+define i32 @inlineprinter(i8* %ptr, double %val, i8 zeroext %c) nounwind optsize !dbg !9 {
 entry:
   tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !19, metadata !DIExpression()), !dbg !26
   tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !20, metadata !DIExpression()), !dbg !26
@@ -20,7 +20,7 @@ entry:
   ret i32 0, !dbg !29
 }
 
-define i32 @printer(i8* %ptr, double %val, i8 zeroext %c) nounwind optsize noinline {
+define i32 @printer(i8* %ptr, double %val, i8 zeroext %c) nounwind optsize noinline !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !16, metadata !DIExpression()), !dbg !30
   tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !17, metadata !DIExpression()), !dbg !30
@@ -34,7 +34,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
-define i32 @main(i32 %argc, i8** nocapture %argv) nounwind optsize {
+define i32 @main(i32 %argc, i8** nocapture %argv) nounwind optsize !dbg !10 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !22, metadata !DIExpression()), !dbg !34
   tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !23, metadata !DIExpression()), !dbg !34
@@ -59,7 +59,7 @@ declare i32 @puts(i8* nocapture) nounwind
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!48}
 
-!0 = distinct !DISubprogram(name: "printer", linkageName: "printer", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !46, scope: !1, type: !3, function: i32 (i8*, double, i8)* @printer, variables: !43)
+!0 = distinct !DISubprogram(name: "printer", linkageName: "printer", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !46, scope: !1, type: !3, variables: !43)
 !1 = !DIFile(filename: "a.c", directory: "/tmp/")
 !2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "(LLVM build 00)", isOptimized: true, emissionKind: 1, file: !46, enums: !47, retainedTypes: !47, subprograms: !42, imports:  null)
 !3 = !DISubroutineType(types: !4)
@@ -68,8 +68,8 @@ declare i32 @puts(i8* nocapture) nounwind
 !6 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !46, scope: !1, baseType: null)
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 32, encoding: DW_ATE_float)
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned char", size: 8, align: 8, encoding: DW_ATE_unsigned_char)
-!9 = distinct !DISubprogram(name: "inlineprinter", linkageName: "inlineprinter", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !46, scope: !1, type: !3, function: i32 (i8*, double, i8)* @inlineprinter, variables: !44)
-!10 = distinct !DISubprogram(name: "main", linkageName: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !46, scope: !1, type: !11, function: i32 (i32, i8**)* @main, variables: !45)
+!9 = distinct !DISubprogram(name: "inlineprinter", linkageName: "inlineprinter", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !46, scope: !1, type: !3, variables: !44)
+!10 = distinct !DISubprogram(name: "main", linkageName: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !46, scope: !1, type: !11, variables: !45)
 !11 = !DISubroutineType(types: !12)
 !12 = !{!5, !5, !13}
 !13 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !46, scope: !1, baseType: !14)

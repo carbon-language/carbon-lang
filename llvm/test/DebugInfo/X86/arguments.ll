@@ -29,7 +29,7 @@
 %struct.foo = type { i32 }
 
 ; Function Attrs: nounwind uwtable
-define void @_Z4func3fooS_(%struct.foo* %f, %struct.foo* %g) #0 {
+define void @_Z4func3fooS_(%struct.foo* %f, %struct.foo* %g) #0 !dbg !4 {
 entry:
   call void @llvm.dbg.declare(metadata %struct.foo* %f, metadata !19, metadata !DIExpression()), !dbg !20
   call void @llvm.dbg.declare(metadata %struct.foo* %g, metadata !21, metadata !DIExpression()), !dbg !20
@@ -53,7 +53,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "scratch.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "func", linkageName: "_Z4func3fooS_", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (%struct.foo*, %struct.foo*)* @_Z4func3fooS_, variables: !2)
+!4 = distinct !DISubprogram(name: "func", linkageName: "_Z4func3fooS_", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "scratch.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8, !8}

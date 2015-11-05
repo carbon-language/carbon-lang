@@ -21,7 +21,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-macosx10.8.0"
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @vla(i32 %n) nounwind ssp uwtable {
+define i32 @vla(i32 %n) nounwind ssp uwtable !dbg !4 {
 entry:
   %n.addr = alloca i32, align 4
   %saved_stack = alloca i8*
@@ -57,7 +57,7 @@ declare i8* @llvm.stacksave() nounwind
 declare void @llvm.stackrestore(i8*) nounwind
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @main(i32 %argc, i8** %argv) nounwind ssp uwtable {
+define i32 @main(i32 %argc, i8** %argv) nounwind ssp uwtable !dbg !9 {
 entry:
   %retval = alloca i32, align 4
   %argc.addr = alloca i32, align 4
@@ -79,12 +79,12 @@ entry:
 !1 = !DIFile(filename: "vla.c", directory: "")
 !2 = !{}
 !3 = !{!4, !9}
-!4 = distinct !DISubprogram(name: "vla", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @vla, variables: !2)
+!4 = distinct !DISubprogram(name: "vla", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "vla.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !10, function: i32 (i32, i8**)* @main, variables: !2)
+!9 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !10, variables: !2)
 !10 = !DISubroutineType(types: !11)
 !11 = !{!8, !8, !12}
 !12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)

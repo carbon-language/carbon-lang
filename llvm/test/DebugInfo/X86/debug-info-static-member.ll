@@ -42,7 +42,7 @@
 @_ZN1C1bE = global i32 2, align 4
 @_ZN1C1cE = global i32 1, align 4
 
-define i32 @main() nounwind uwtable {
+define i32 @main() nounwind uwtable !dbg !5 {
 entry:
   %retval = alloca i32, align 4
   %instance_C = alloca %class.C, align 4
@@ -62,7 +62,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 171914)", isOptimized: false, emissionKind: 0, file: !33, enums: !1, retainedTypes: !1, subprograms: !3, globals: !10, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 23, file: !33, scope: !6, type: !7, function: i32 ()* @main, variables: !1)
+!5 = distinct !DISubprogram(name: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 23, file: !33, scope: !6, type: !7, variables: !1)
 !6 = !DIFile(filename: "/usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp", directory: "/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

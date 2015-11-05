@@ -13,7 +13,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:64:64-
 target triple = "thumbv7-apple-ios"
 
 ; Function Attrs: nounwind
-define arm_aapcscc void @_Z1hiiiif(i32, i32, i32, i32, float %x) #0 {
+define arm_aapcscc void @_Z1hiiiif(i32, i32, i32, i32, float %x) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !12, metadata !DIExpression()), !dbg !18
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !13, metadata !DIExpression()), !dbg !18
@@ -45,7 +45,7 @@ attributes #3 = { nounwind }
 !1 = !DIFile(filename: "/<unknown>", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "h", linkageName: "_Z1hiiiif", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, function: void (i32, i32, i32, i32, float)* @_Z1hiiiif, variables: !11)
+!4 = distinct !DISubprogram(name: "h", linkageName: "_Z1hiiiif", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, variables: !11)
 !5 = !DIFile(filename: "/arm.cpp", directory: "")
 !6 = !DIFile(filename: "/arm.cpp", directory: "")
 !7 = !DISubroutineType(types: !8)

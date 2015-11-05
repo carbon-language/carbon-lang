@@ -37,7 +37,7 @@
 @i = global i32 0, align 4
 
 ; Function Attrs: uwtable
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !13 {
 entry:
   %this.addr.i = alloca %struct.foo*, align 8
   %x.addr.i = alloca i32, align 4
@@ -77,7 +77,7 @@ attributes #1 = { nounwind readnone }
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS3foo")
 !12 = !{!13, !17}
-!13 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !14, type: !15, function: i32 ()* @main, variables: !2)
+!13 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !14, type: !15, variables: !2)
 !14 = !DIFile(filename: "inline.cpp", directory: "/tmp/dbginfo")
 !15 = !DISubroutineType(types: !16)
 !16 = !{!9}

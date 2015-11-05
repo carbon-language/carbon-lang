@@ -188,11 +188,9 @@ static void CloneDebugInfoMetadata(Function *NewFunc, const Function *OldFunc,
   const DISubprogram *OldSubprogramMDNode = FindSubprogram(OldFunc, Finder);
   if (!OldSubprogramMDNode) return;
 
-  // Ensure that OldFunc appears in the map.
-  // (if it's already there it must point to NewFunc anyway)
-  VMap[OldFunc] = NewFunc;
   auto *NewSubprogram =
       cast<DISubprogram>(MapMetadata(OldSubprogramMDNode, VMap));
+  NewFunc->setSubprogram(NewSubprogram);
 
   for (auto *CU : Finder.compile_units()) {
     auto Subprograms = CU->getSubprograms();

@@ -4,7 +4,7 @@
 
 @0 = external hidden constant [5 x %0], align 4
 
-define void @foo(i32) nounwind ssp {
+define void @foo(i32) nounwind ssp !dbg !0 {
 Entry:
   %1 = icmp slt i32 %0, 0, !dbg !5
   br i1 %1, label %BB5, label %BB1, !dbg !5
@@ -41,7 +41,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !llvm.dbg.sp = !{!0}
 
-!0 = distinct !DISubprogram(name: "foo", line: 231, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !15, scope: !1, type: !3, function: void (i32)* @foo)
+!0 = distinct !DISubprogram(name: "foo", line: 231, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !15, scope: !1, type: !3)
 !1 = !DIFile(filename: "a.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang (trunk 129006)", isOptimized: true, emissionKind: 0, file: !15, enums: !4, retainedTypes: !4)
 !3 = !DISubroutineType(types: !4)

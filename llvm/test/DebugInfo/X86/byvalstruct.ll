@@ -58,7 +58,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 @llvm.used = appending global [5 x i8*] [i8* getelementptr inbounds ([7 x i8], [7 x i8]* @"\01L_OBJC_CLASS_NAME_", i32 0, i32 0), i8* getelementptr inbounds ([32 x i8], [32 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i32 0, i32 0), i8* getelementptr inbounds ([23 x i8], [23 x i8]* @"\01L_OBJC_METH_VAR_TYPE_", i32 0, i32 0), i8* bitcast ({ i32, i32, [1 x %struct._objc_method] }* @"\01l_OBJC_$_INSTANCE_METHODS_Bitmap" to i8*), i8* bitcast ([1 x i8*]* @"\01L_OBJC_LABEL_CLASS_$" to i8*)], section "llvm.metadata"
 
 ; Function Attrs: ssp uwtable
-define internal i8* @"\01-[Bitmap initWithCopy:andInfo:andLength:]"(%0* %self, i8* %_cmd, %0* %otherBitmap, %struct.ImageInfo* byval align 8 %info, i64 %length) #0 {
+define internal i8* @"\01-[Bitmap initWithCopy:andInfo:andLength:]"(%0* %self, i8* %_cmd, %0* %otherBitmap, %struct.ImageInfo* byval align 8 %info, i64 %length) #0 !dbg !7 {
 entry:
   %retval = alloca i8*, align 8
   %self.addr = alloca %0*, align 8
@@ -94,7 +94,7 @@ attributes #1 = { nounwind readnone }
 !4 = !DICompositeType(tag: DW_TAG_structure_type, name: "Bitmap", line: 8, size: 8, align: 8, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC_plus_plus, file: !1, scope: !5, elements: !2)
 !5 = !DIFile(filename: "t.mm", directory: "")
 !6 = !{!7}
-!7 = distinct !DISubprogram(name: "-[Bitmap initWithCopy:andInfo:andLength:]", line: 9, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !5, type: !8, function: i8* (%0*, i8*, %0*, %struct.ImageInfo*, i64)* @"\01-[Bitmap initWithCopy:andInfo:andLength:]", variables: !2)
+!7 = distinct !DISubprogram(name: "-[Bitmap initWithCopy:andInfo:andLength:]", line: 9, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !5, type: !8, variables: !2)
 !8 = !DISubroutineType(types: !9)
 !9 = !{!4, !10, !11, !14, !15, !19}
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)

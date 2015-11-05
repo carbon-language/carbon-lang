@@ -2,7 +2,7 @@
 
 %struct.a = type { i32 }
 
-define i32 @bar(%struct.a* nocapture %b) nounwind ssp {
+define i32 @bar(%struct.a* nocapture %b) nounwind ssp !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.a* %b, i64 0, metadata !6, metadata !DIExpression()), !dbg !13
   %tmp1 = getelementptr inbounds %struct.a, %struct.a* %b, i64 0, i32 0, !dbg !14
@@ -20,7 +20,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!24}
 
-!0 = distinct !DISubprogram(name: "bar", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !22, scope: !1, type: !3, function: i32 (%struct.a*)* @bar, variables: !21)
+!0 = distinct !DISubprogram(name: "bar", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !22, scope: !1, type: !3, variables: !21)
 !1 = !DIFile(filename: "bar.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 122997)", isOptimized: true, emissionKind: 1, file: !22, enums: !23, retainedTypes: !23, subprograms: !20, imports:  null)
 !3 = !DISubroutineType(types: !4)

@@ -13,7 +13,7 @@ target triple = "aarch64--linux-gnueabihf"
 ; CHECK: movn
 
 ; Function Attrs: nounwind
-define i32 @main() {
+define i32 @main() !dbg !4 {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
@@ -27,7 +27,7 @@ entry:
 !1 = !DIFile(filename: "test.c", directory: "/home/user/clang/build")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7}
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

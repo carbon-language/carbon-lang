@@ -29,7 +29,7 @@
 @y = global i32 (i32)* @_Z4funci, align 8
 
 ; Function Attrs: inlinehint nounwind uwtable
-define linkonce_odr i32 @_Z4funci(i32 %i) #0 {
+define linkonce_odr i32 @_Z4funci(i32 %i) #0 !dbg !4 {
   %1 = alloca i32, align 4
   store i32 %i, i32* %1, align 4
   call void @llvm.dbg.declare(metadata i32* %1, metadata !20, metadata !DIExpression()), !dbg !21
@@ -52,7 +52,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !5, scope: !6, type: !7, function: i32 (i32)* @_Z4funci, variables: !2)
+!4 = distinct !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !5, scope: !6, type: !7, variables: !2)
 !5 = !DIFile(filename: "func.h", directory: "/tmp/dbginfo")
 !6 = !DIFile(filename: "func.h", directory: "/tmp/dbginfo")
 !7 = !DISubroutineType(types: !8)

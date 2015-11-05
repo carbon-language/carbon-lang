@@ -97,7 +97,7 @@
 @t = external global i32
 
 ; Function Attrs: uwtable
-define void @_Z1bv() #0 {
+define void @_Z1bv() #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i1 false, i64 0, metadata !25, metadata !DIExpression()), !dbg !27
   tail call void @_Z1fi(i32 0), !dbg !28
@@ -105,7 +105,7 @@ entry:
 }
 
 ; Function Attrs: uwtable
-define void @_Z1ab(i1 zeroext %u) #0 {
+define void @_Z1ab(i1 zeroext %u) #0 !dbg !8 {
 entry:
   tail call void @llvm.dbg.value(metadata i1 %u, i64 0, metadata !13, metadata !DIExpression()), !dbg !30
   tail call void @llvm.dbg.value(metadata i1 %u, i64 0, metadata !31, metadata !DIExpression()), !dbg !33
@@ -139,11 +139,11 @@ attributes #2 = { nounwind readnone }
 !1 = !DIFile(filename: "missing-abstract-variables.cc", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !8, !14}
-!4 = distinct !DISubprogram(name: "b", linkageName: "_Z1bv", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 13, file: !1, scope: !5, type: !6, function: void ()* @_Z1bv, variables: !2)
+!4 = distinct !DISubprogram(name: "b", linkageName: "_Z1bv", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 13, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "missing-abstract-variables.cc", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
-!8 = distinct !DISubprogram(name: "a", linkageName: "_Z1ab", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 17, file: !1, scope: !5, type: !9, function: void (i1)* @_Z1ab, variables: !12)
+!8 = distinct !DISubprogram(name: "a", linkageName: "_Z1ab", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 17, file: !1, scope: !5, type: !9, variables: !12)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11}
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)

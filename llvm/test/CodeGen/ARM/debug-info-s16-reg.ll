@@ -12,7 +12,7 @@ target triple = "thumbv7-apple-macosx10.6.7"
 @.str = private unnamed_addr constant [11 x i8] c"%p %lf %c\0A\00"
 @.str1 = private unnamed_addr constant [6 x i8] c"point\00"
 
-define i32 @inlineprinter(i8* %ptr, float %val, i8 zeroext %c) nounwind optsize ssp {
+define i32 @inlineprinter(i8* %ptr, float %val, i8 zeroext %c) nounwind optsize ssp !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !8, metadata !DIExpression()), !dbg !24
   tail call void @llvm.dbg.value(metadata float %val, i64 0, metadata !10, metadata !DIExpression()), !dbg !25
@@ -25,7 +25,7 @@ entry:
 
 declare i32 @printf(i8* nocapture, ...) nounwind optsize
 
-define i32 @printer(i8* %ptr, float %val, i8 zeroext %c) nounwind optsize noinline ssp {
+define i32 @printer(i8* %ptr, float %val, i8 zeroext %c) nounwind optsize noinline ssp !dbg !6 {
 entry:
   tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !14, metadata !DIExpression()), !dbg !30
   tail call void @llvm.dbg.value(metadata float %val, i64 0, metadata !15, metadata !DIExpression()), !dbg !31
@@ -36,7 +36,7 @@ entry:
   ret i32 0, !dbg !35
 }
 
-define i32 @main(i32 %argc, i8** nocapture %argv) nounwind optsize ssp {
+define i32 @main(i32 %argc, i8** nocapture %argv) nounwind optsize ssp !dbg !7 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !17, metadata !DIExpression()), !dbg !36
   tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !18, metadata !DIExpression()), !dbg !37
@@ -65,14 +65,14 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!53}
 
-!0 = distinct !DISubprogram(name: "inlineprinter", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !51, scope: !1, type: !3, function: i32 (i8*, float, i8)* @inlineprinter, variables: !48)
+!0 = distinct !DISubprogram(name: "inlineprinter", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !51, scope: !1, type: !3, variables: !48)
 !1 = !DIFile(filename: "a.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 129915)", isOptimized: true, emissionKind: 1, file: !51, enums: !52, retainedTypes: !52, subprograms: !47, imports:  null)
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = distinct !DISubprogram(name: "printer", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !51, scope: !1, type: !3, function: i32 (i8*, float, i8)* @printer, variables: !49)
-!7 = distinct !DISubprogram(name: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !51, scope: !1, type: !3, function: i32 (i32, i8**)* @main, variables: !50)
+!6 = distinct !DISubprogram(name: "printer", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !51, scope: !1, type: !3, variables: !49)
+!7 = distinct !DISubprogram(name: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !51, scope: !1, type: !3, variables: !50)
 !8 = !DILocalVariable(name: "ptr", line: 4, arg: 1, scope: !0, file: !1, type: !9)
 !9 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, scope: !2, baseType: null)
 !10 = !DILocalVariable(name: "val", line: 4, arg: 2, scope: !0, file: !1, type: !11)

@@ -18,7 +18,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "i686-pc-win32"
 
 ; Function Attrs: nounwind
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !4 {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
@@ -34,7 +34,7 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !1 = !DIFile(filename: "test.c", directory: "C:\5CProjects")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "test.c", directory: "C:CProjects")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

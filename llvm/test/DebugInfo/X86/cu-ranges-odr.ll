@@ -23,14 +23,14 @@
 @a = global %class.A zeroinitializer, align 4
 @llvm.global_ctors = appending global [1 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_a }]
 
-define internal void @__cxx_global_var_init() section ".text.startup" {
+define internal void @__cxx_global_var_init() section ".text.startup" !dbg !14 {
 entry:
   call void @_ZN1AC2Ei(%class.A* @a, i32 0), !dbg !26
   ret void, !dbg !26
 }
 
 ; Function Attrs: nounwind uwtable
-define linkonce_odr void @_ZN1AC2Ei(%class.A* %this, i32 %i) unnamed_addr #0 align 2 {
+define linkonce_odr void @_ZN1AC2Ei(%class.A* %this, i32 %i) unnamed_addr #0 align 2 !dbg !18 {
 entry:
   %this.addr = alloca %class.A*, align 8
   %i.addr = alloca i32, align 4
@@ -48,7 +48,7 @@ entry:
 ; Function Attrs: nounwind readnone
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
-define internal void @_GLOBAL__I_a() section ".text.startup" {
+define internal void @_GLOBAL__I_a() section ".text.startup" !dbg !19 {
 entry:
   call void @__cxx_global_var_init(), !dbg !32
   ret void, !dbg !32
@@ -74,12 +74,12 @@ attributes #1 = { nounwind readnone }
 !10 = !{null, !11, !7}
 !11 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
 !13 = !{!14, !18, !19}
-!14 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 8, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 8, file: !1, scope: !15, type: !16, function: void ()* @__cxx_global_var_init, variables: !2)
+!14 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 8, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 8, file: !1, scope: !15, type: !16, variables: !2)
 !15 = !DIFile(filename: "baz.cpp", directory: "/usr/local/google/home/echristo/tmp")
 !16 = !DISubroutineType(types: !17)
 !17 = !{null}
-!18 = distinct !DISubprogram(name: "A", linkageName: "_ZN1AC2Ei", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !"_ZTS1A", type: !9, function: void (%class.A*, i32)* @_ZN1AC2Ei, declaration: !8, variables: !2)
-!19 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__I_a", line: 3, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, scopeLine: 3, file: !1, scope: !15, type: !20, function: void ()* @_GLOBAL__I_a, variables: !2)
+!18 = distinct !DISubprogram(name: "A", linkageName: "_ZN1AC2Ei", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !"_ZTS1A", type: !9, declaration: !8, variables: !2)
+!19 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__I_a", line: 3, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, scopeLine: 3, file: !1, scope: !15, type: !20, variables: !2)
 !20 = !DISubroutineType(types: !2)
 !21 = !{!22}
 !22 = !DIGlobalVariable(name: "a", line: 8, isLocal: false, isDefinition: true, scope: null, file: !15, type: !4, variable: %class.A* @a)

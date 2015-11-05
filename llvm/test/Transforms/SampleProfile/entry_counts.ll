@@ -3,7 +3,7 @@
 ; According to the profile, function empty() was called 13,293 times.
 ; CHECK: {{.*}} = !{!"function_entry_count", i64 13293}
 
-define void @empty() {
+define void @empty() !dbg !4 {
 entry:
   ret void, !dbg !9
 }
@@ -16,7 +16,7 @@ entry:
 !1 = !DIFile(filename: "entry_counts.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "empty", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: false, function: void ()* @empty, variables: !2)
+!4 = distinct !DISubprogram(name: "empty", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !2)
 !6 = !{i32 2, !"Dwarf Version", i32 4}
 !7 = !{i32 2, !"Debug Info Version", i32 3}

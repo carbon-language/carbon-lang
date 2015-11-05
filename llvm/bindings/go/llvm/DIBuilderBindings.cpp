@@ -74,13 +74,13 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
     LLVMDIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     const char *LinkageName, LLVMMetadataRef File, unsigned Line,
     LLVMMetadataRef CompositeType, int IsLocalToUnit, int IsDefinition,
-    unsigned ScopeLine, unsigned Flags, int IsOptimized, LLVMValueRef Func) {
+    unsigned ScopeLine, unsigned Flags, int IsOptimized) {
   DIBuilder *D = unwrap(Dref);
   return wrap(D->createFunction(unwrap<DIScope>(Scope), Name, LinkageName,
                                 File ? unwrap<DIFile>(File) : nullptr, Line,
                                 unwrap<DISubroutineType>(CompositeType),
                                 IsLocalToUnit, IsDefinition, ScopeLine, Flags,
-                                IsOptimized, unwrap<Function>(Func)));
+                                IsOptimized));
 }
 
 LLVMMetadataRef

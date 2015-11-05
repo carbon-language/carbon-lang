@@ -4,7 +4,7 @@ target datalayout = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128"
 target triple = "i686-pc-linux"
 
 ; Function Attrs: nounwind
-define void @test() #0 {
+define void @test() #0 !dbg !4 {
 entry:
   call void bitcast (void (...)* @bar to void ()*)(), !dbg !11
   ret void, !dbg !12
@@ -23,7 +23,7 @@ attributes #1 = { "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-
 !1 = !DIFile(filename: "test.c", directory: "movpc-test")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "test", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: false, function: void ()* @test, variables: !2)
+!4 = distinct !DISubprogram(name: "test", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{i32 2, !"Dwarf Version", i32 4}

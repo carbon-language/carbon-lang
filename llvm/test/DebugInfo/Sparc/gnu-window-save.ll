@@ -38,7 +38,7 @@
 @.str = private unnamed_addr constant [14 x i8] c"hello, world\0A\00", align 1
 
 ; Function Attrs: nounwind
-define signext i32 @main() #0 {
+define signext i32 @main() #0 !dbg !4 {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
@@ -59,7 +59,7 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "hello.c", directory: "/home/venkatra/work/benchmarks/test/hello")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "hello.c", directory: "/home/venkatra/work/benchmarks/test/hello")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

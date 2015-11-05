@@ -17,7 +17,7 @@
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_Z4testPiS_i(i32* nocapture %A, i32* nocapture %B, i32 %number) #0 {
+define void @_Z4testPiS_i(i32* nocapture %A, i32* nocapture %B, i32 %number) #0 !dbg !4 {
 entry:
   %cmp25 = icmp sgt i32 %number, 0, !dbg !10
   br i1 %cmp25, label %for.body.preheader, label %for.end15, !dbg !10, !llvm.loop !12
@@ -76,7 +76,7 @@ attributes #0 = { nounwind }
 !1 = !DIFile(filename: "no_array_bounds.cpp", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, function: void (i32*, i32*, i32)* @_Z4testPiS_i, variables: !2)
+!4 = distinct !DISubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "no_array_bounds.cpp", directory: ".")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 2}

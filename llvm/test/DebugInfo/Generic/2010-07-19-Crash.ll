@@ -2,7 +2,7 @@
 ; PR7662
 ; Do not add variables to !11 because it is a declaration entry.
 
-define i32 @bar() nounwind readnone ssp {
+define i32 @bar() nounwind readnone ssp !dbg !0 {
 entry:
   ret i32 42, !dbg !9
 }
@@ -12,7 +12,7 @@ entry:
 !llvm.dbg.sp = !{!0, !6, !11}
 !llvm.dbg.lv.foo = !{!7}
 
-!0 = distinct !DISubprogram(name: "bar", linkageName: "bar", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3, function: i32 ()* @bar)
+!0 = distinct !DISubprogram(name: "bar", linkageName: "bar", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3)
 !1 = !DIFile(filename: "one.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang 2.8", isOptimized: true, emissionKind: 0, file: !12, enums: !14, retainedTypes: !14, subprograms: !13)
 !3 = !DISubroutineType(types: !4)

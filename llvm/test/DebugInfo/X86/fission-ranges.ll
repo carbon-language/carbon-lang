@@ -82,14 +82,14 @@
 @c = external global i32
 
 ; Function Attrs: nounwind uwtable
-define void @bar() #0 {
+define void @bar() #0 !dbg !4 {
 entry:
   tail call fastcc void @foo(), !dbg !27
   ret void, !dbg !28
 }
 
 ; Function Attrs: nounwind uwtable
-define internal fastcc void @foo() #0 {
+define internal fastcc void @foo() #0 !dbg !8 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !13, metadata !DIExpression()), !dbg !30
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !14, metadata !DIExpression()), !dbg !31
@@ -157,11 +157,11 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "small.c", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = distinct !DISubprogram(name: "bar", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 19, file: !1, scope: !5, type: !6, function: void ()* @bar, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 19, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "small.c", directory: "/usr/local/google/home/echristo/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}
-!8 = distinct !DISubprogram(name: "foo", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !9, function: void ()* @foo, variables: !12)
+!8 = distinct !DISubprogram(name: "foo", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !9, variables: !12)
 !9 = !DISubroutineType(types: !10)
 !10 = !{null, !11}
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

@@ -3,7 +3,7 @@ target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "powerpc64-unknown-linux-gnu"
 
 ; Function Attrs: nounwind
-define void @foo() #0 {
+define void @foo() #0 !dbg !4 {
 entry:
   call void @llvm.eh.unwind.init(), !dbg !9
   ret void, !dbg !10
@@ -25,7 +25,7 @@ attributes #0 = { nounwind }
 !1 = !DIFile(filename: "/tmp/unwind-dw2.c", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void ()* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "/tmp/unwind-dw2.c", directory: "/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

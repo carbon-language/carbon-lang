@@ -14,7 +14,7 @@
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-define signext i16 @subdivp(%struct.node.0.27* nocapture %p, double %dsq, double %tolsq, %struct.hgstruct.2.29* nocapture byval align 8 %hg) nounwind uwtable readonly ssp {
+define signext i16 @subdivp(%struct.node.0.27* nocapture %p, double %dsq, double %tolsq, %struct.hgstruct.2.29* nocapture byval align 8 %hg) nounwind uwtable readonly ssp !dbg !14 {
 entry:
   call void @llvm.dbg.declare(metadata %struct.hgstruct.2.29* %hg, metadata !4, metadata !DIExpression()), !dbg !DILocation(scope: !14)
   %type = getelementptr inbounds %struct.node.0.27, %struct.node.0.27* %p, i64 0, i32 0
@@ -47,6 +47,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !11 = !DIFile(filename: "MultiSource/Benchmarks/Olden/bh/newbh.c", directory: "MultiSource/Benchmarks/Olden/bh")
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !{!14}
-!14 = distinct !DISubprogram(name: "subdivp", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !11, scope: !5, type: !15, function: i16 (%struct.node.0.27*, double, double, %struct.hgstruct.2.29* )* @subdivp)
+!14 = distinct !DISubprogram(name: "subdivp", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !11, scope: !5, type: !15)
 !15 = !DISubroutineType(types: !16)
 !16 = !{null}

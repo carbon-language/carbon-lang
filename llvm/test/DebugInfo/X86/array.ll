@@ -24,14 +24,14 @@ target triple = "x86_64-apple-macosx10.9.0"
 @main.array = private unnamed_addr constant [4 x i32] [i32 0, i32 1, i32 2, i32 3], align 16
 
 ; Function Attrs: nounwind ssp uwtable
-define void @f(i32* nocapture %p) #0 {
+define void @f(i32* nocapture %p) #0 !dbg !4 {
   tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !11, metadata !DIExpression()), !dbg !28
   store i32 42, i32* %p, align 4, !dbg !29, !tbaa !30
   ret void, !dbg !34
 }
 
 ; Function Attrs: nounwind ssp uwtable
-define i32 @main(i32 %argc, i8** nocapture readnone %argv) #0 {
+define i32 @main(i32 %argc, i8** nocapture readnone %argv) #0 !dbg !12 {
   %array = alloca [4 x i32], align 16
   tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !19, metadata !DIExpression()), !dbg !35
   tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !20, metadata !DIExpression()), !dbg !35
@@ -64,7 +64,7 @@ attributes #2 = { nounwind readnone }
 !1 = !DIFile(filename: "array.c", directory: "")
 !2 = !{}
 !3 = !{!4, !12}
-!4 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*)* @f, variables: !10)
+!4 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !10)
 !5 = !DIFile(filename: "array.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
@@ -72,7 +72,7 @@ attributes #2 = { nounwind readnone }
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{!11}
 !11 = !DILocalVariable(name: "p", line: 1, arg: 1, scope: !4, file: !5, type: !8)
-!12 = distinct !DISubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !13, function: i32 (i32, i8**)* @main, variables: !18)
+!12 = distinct !DISubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !13, variables: !18)
 !13 = !DISubroutineType(types: !14)
 !14 = !{!9, !9, !15}
 !15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)

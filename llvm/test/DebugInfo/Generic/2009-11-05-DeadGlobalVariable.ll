@@ -2,7 +2,7 @@
 ; Here variable bar is optimized away. Do not trip over while trying to generate debug info.
 
 
-define i32 @foo() nounwind uwtable readnone ssp {
+define i32 @foo() nounwind uwtable readnone ssp !dbg !5 {
 entry:
   ret i32 42, !dbg !15
 }
@@ -13,7 +13,7 @@ entry:
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 139632)", isOptimized: true, emissionKind: 0, file: !17, enums: !1, retainedTypes: !1, subprograms: !3, globals: !12)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !17, scope: !6, type: !7, function: i32 ()* @foo)
+!5 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !17, scope: !6, type: !7)
 !6 = !DIFile(filename: "fb.c", directory: "/private/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

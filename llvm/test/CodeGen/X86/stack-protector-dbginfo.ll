@@ -8,7 +8,7 @@
 @a = external global { i64, [56 x i8] }, align 32
 
 ; Function Attrs: nounwind sspreq
-define i32 @_Z18read_response_sizev() #0 {
+define i32 @_Z18read_response_sizev() #0 !dbg !9 {
 entry:
   tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !23, metadata !DIExpression()), !dbg !39
   %0 = load i64, i64* getelementptr inbounds ({ i64, [56 x i8] }, { i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40
@@ -34,7 +34,7 @@ attributes #0 = { sspreq }
 !6 = !{!7}
 !7 = !DIEnumerator(name: "max_frame_size", value: 0) ; [ DW_TAG_enumerator ] [max_frame_size :: 0]
 !8 = !{!9, !24, !41, !65}
-!9 = distinct !DISubprogram(name: "read_response_size", linkageName: "_Z18read_response_sizev", line: 27, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 27, file: !1, scope: !10, type: !11, function: i32 ()* @_Z18read_response_sizev, variables: !14)
+!9 = distinct !DISubprogram(name: "read_response_size", linkageName: "_Z18read_response_sizev", line: 27, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 27, file: !1, scope: !10, type: !11, variables: !14)
 !10 = !DIFile(filename: "<unknown>", directory: "/Users/matt/ryan_bug")
 !11 = !DISubroutineType(types: !12)
 !12 = !{!13}

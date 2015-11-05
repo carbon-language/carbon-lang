@@ -11,7 +11,7 @@
 ; Manually generated debug nodes !14 and !15 to incorporate an
 ; arbitrary discriminator with value 42.
 
-define i32 @foo(i32 %i) #0 {
+define i32 @foo(i32 %i) #0 !dbg !4 {
 entry:
   %retval = alloca i32, align 4
   %i.addr = alloca i32, align 4
@@ -45,7 +45,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !1 = !DIFile(filename: "discriminator.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "discriminator.c", directory: ".")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}

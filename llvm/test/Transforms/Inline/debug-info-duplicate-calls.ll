@@ -59,7 +59,7 @@ $_Z2f3v = comdat any
 $_Z2f2v = comdat any
 
 ; Function Attrs: uwtable
-define void @_Z1fv() #0 {
+define void @_Z1fv() #0 !dbg !4 {
 entry:
   call void @_Z2f4v(), !dbg !13
   call void @_Z2f4v(), !dbg !13
@@ -67,14 +67,14 @@ entry:
 }
 
 ; Function Attrs: alwaysinline inlinehint uwtable
-define linkonce_odr void @_Z2f4v() #1 comdat {
+define linkonce_odr void @_Z2f4v() #1 comdat !dbg !7 {
 entry:
   call void @_Z2f3v(), !dbg !15
   ret void, !dbg !16
 }
 
 ; Function Attrs: alwaysinline inlinehint uwtable
-define linkonce_odr void @_Z2f3v() #1 comdat {
+define linkonce_odr void @_Z2f3v() #1 comdat !dbg !8 {
 entry:
   call void @_Z2f2v(), !dbg !17
   call void @_Z2f2v(), !dbg !17
@@ -82,7 +82,7 @@ entry:
 }
 
 ; Function Attrs: alwaysinline inlinehint uwtable
-define linkonce_odr void @_Z2f2v() #1 comdat {
+define linkonce_odr void @_Z2f2v() #1 comdat !dbg !9 {
 entry:
   call void @_Z2f1v(), !dbg !19
   ret void, !dbg !20
@@ -102,12 +102,12 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "debug-info-duplicate-calls.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !7, !8, !9}
-!4 = distinct !DISubprogram(name: "f", line: 13, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 13, file: !1, scope: !5, type: !6, function: void ()* @_Z1fv, variables: !2)
+!4 = distinct !DISubprogram(name: "f", line: 13, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 13, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "debug-info-duplicate-calls.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !2)
-!7 = distinct !DISubprogram(name: "f4", line: 10, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: void ()* @_Z2f4v, variables: !2)
-!8 = distinct !DISubprogram(name: "f3", line: 7, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !6, function: void ()* @_Z2f3v, variables: !2)
-!9 = distinct !DISubprogram(name: "f2", line: 4, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @_Z2f2v, variables: !2)
+!7 = distinct !DISubprogram(name: "f4", line: 10, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, variables: !2)
+!8 = distinct !DISubprogram(name: "f3", line: 7, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !6, variables: !2)
+!9 = distinct !DISubprogram(name: "f2", line: 4, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !2)
 !10 = !{i32 2, !"Dwarf Version", i32 4}
 !11 = !{i32 2, !"Debug Info Version", i32 3}
 !12 = !{!"clang version 3.7.0 (trunk 226474) (llvm/trunk 226478)"}

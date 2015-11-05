@@ -95,7 +95,7 @@ target triple = "x86_64-apple-darwin"
 @"\01L_OBJC_LABEL_CLASS_$" = internal global [1 x i8*] [i8* bitcast (%struct._class_t* @"OBJC_CLASS_$_A" to i8*)], section "__DATA, __objc_classlist, regular, no_dead_strip", align 8
 @llvm.used = appending global [14 x i8*] [i8* bitcast (%struct._class_t** @"\01L_OBJC_CLASSLIST_SUP_REFS_$_" to i8*), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i32 0, i32 0), i8* bitcast (i8** @"\01L_OBJC_SELECTOR_REFERENCES_" to i8*), i8* bitcast (%struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_" to i8*), i8* getelementptr inbounds ([6 x i8], [6 x i8]* @"\01L_OBJC_METH_VAR_NAME_1", i32 0, i32 0), i8* getelementptr inbounds ([6 x i8], [6 x i8]* @"\01L_OBJC_METH_VAR_NAME_2", i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @"\01L_OBJC_CLASS_NAME_", i32 0, i32 0), i8* getelementptr inbounds ([8 x i8], [8 x i8]* @"\01L_OBJC_METH_VAR_TYPE_", i32 0, i32 0), i8* bitcast ({ i32, i32, [1 x %struct._objc_method] }* @"\01l_OBJC_$_INSTANCE_METHODS_A" to i8*), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01L_OBJC_METH_VAR_NAME_3", i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @"\01L_OBJC_METH_VAR_TYPE_4", i32 0, i32 0), i8* bitcast ({ i32, i32, [1 x %struct._ivar_t] }* @"\01l_OBJC_$_INSTANCE_VARIABLES_A" to i8*), i8* bitcast (%struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_5" to i8*), i8* bitcast ([1 x i8*]* @"\01L_OBJC_LABEL_CLASS_$" to i8*)], section "llvm.metadata"
 
-define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 {
+define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 !dbg !13 {
   %1 = alloca %0*, align 8
   %2 = alloca i8*, align 8
   %3 = alloca %struct._objc_super
@@ -147,7 +147,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 declare i8* @objc_msgSendSuper2(%struct._objc_super*, i8*, ...)
 
-define internal void @run(void ()* %block) #0 {
+define internal void @run(void ()* %block) #0 !dbg !39 {
   %1 = alloca void ()*, align 8
   store void ()* %block, void ()** %1, align 8
   call void @llvm.dbg.declare(metadata void ()** %1, metadata !72, metadata !DIExpression()), !dbg !73
@@ -161,7 +161,7 @@ define internal void @run(void ()* %block) #0 {
   ret void, !dbg !75
 }
 
-define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 {
+define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 !dbg !27 {
   %1 = alloca i8*, align 8
   %2 = alloca <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, align 8
   %d = alloca %1*, align 8
@@ -206,7 +206,7 @@ declare i8* @objc_msgSend_fixup(i8*, %struct._message_ref_t*, ...)
 
 declare i8* @objc_msgSend(i8*, i8*, ...) #2
 
-define internal void @__copy_helper_block_(i8*, i8*) {
+define internal void @__copy_helper_block_(i8*, i8*) !dbg !31 {
   %3 = alloca i8*, align 8
   %4 = alloca i8*, align 8
   store i8* %0, i8** %3, align 8
@@ -228,7 +228,7 @@ define internal void @__copy_helper_block_(i8*, i8*) {
 
 declare void @_Block_object_assign(i8*, i8*, i32)
 
-define internal void @__destroy_helper_block_(i8*) {
+define internal void @__destroy_helper_block_(i8*) !dbg !35 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
   call void @llvm.dbg.declare(metadata i8** %2, metadata !105, metadata !DIExpression()), !dbg !106
@@ -243,7 +243,7 @@ define internal void @__destroy_helper_block_(i8*) {
 
 declare void @_Block_object_dispose(i8*, i32)
 
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !36 {
   %1 = alloca i32, align 4
   %a = alloca %0*, align 8
   store i32 0, i32* %1
@@ -283,7 +283,7 @@ attributes #3 = { nounwind }
 !10 = !DIDerivedType(tag: DW_TAG_member, name: "ivar", line: 35, size: 32, align: 32, file: !5, scope: !6, baseType: !11)
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{!13, !27, !31, !35, !36, !39}
-!13 = distinct !DISubprogram(name: "-[A init]", line: 46, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 46, file: !5, scope: !6, type: !14, function: i8* (%0*, i8*)* @"\01-[A init]", variables: !2)
+!13 = distinct !DISubprogram(name: "-[A init]", line: 46, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 46, file: !5, scope: !6, type: !14, variables: !2)
 !14 = !DISubroutineType(types: !15)
 !15 = !{!16, !23, !24}
 !16 = !DIDerivedType(tag: DW_TAG_typedef, name: "id", line: 46, file: !5, baseType: !17)
@@ -297,19 +297,19 @@ attributes #3 = { nounwind }
 !24 = !DIDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 46, flags: DIFlagArtificial, file: !5, baseType: !25)
 !25 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !26)
 !26 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
-!27 = distinct !DISubprogram(name: "__9-[A init]_block_invoke", line: 49, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 49, file: !5, scope: !6, type: !28, function: void (i8*)* @"__9-[A init]_block_invoke", variables: !2)
+!27 = distinct !DISubprogram(name: "__9-[A init]_block_invoke", line: 49, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 49, file: !5, scope: !6, type: !28, variables: !2)
 !28 = !DISubroutineType(types: !29)
 !29 = !{null, !30}
 !30 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)
-!31 = distinct !DISubprogram(name: "__copy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !33, function: void (i8*, i8*)* @__copy_helper_block_, variables: !2)
+!31 = distinct !DISubprogram(name: "__copy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !33, variables: !2)
 !32 = !DIFile(filename: "llvm/tools/clang/test/CodeGenObjC/<unknown>", directory: "llvm/_build.ninja.Debug")
 !33 = !DISubroutineType(types: !34)
 !34 = !{null, !30, !30}
-!35 = distinct !DISubprogram(name: "__destroy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !28, function: void (i8*)* @__destroy_helper_block_, variables: !2)
-!36 = distinct !DISubprogram(name: "main", line: 59, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 60, file: !5, scope: !6, type: !37, function: i32 ()* @main, variables: !2)
+!35 = distinct !DISubprogram(name: "__destroy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !28, variables: !2)
+!36 = distinct !DISubprogram(name: "main", line: 59, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 60, file: !5, scope: !6, type: !37, variables: !2)
 !37 = !DISubroutineType(types: !38)
 !38 = !{!11}
-!39 = distinct !DISubprogram(name: "run", line: 39, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 40, file: !5, scope: !6, type: !40, function: void (void ()*)* @run, variables: !2)
+!39 = distinct !DISubprogram(name: "run", line: 39, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 40, file: !5, scope: !6, type: !40, variables: !2)
 !40 = !DISubroutineType(types: !41)
 !41 = !{null, !42}
 !42 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !43)

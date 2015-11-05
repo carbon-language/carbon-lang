@@ -11,7 +11,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 %struct.S = type { %struct.S* }
 
-define void @f() {
+define void @f() !dbg !4 {
   %x = alloca %struct.S, align 8
   ; CHECK: DW_TAG_typedef
   ; CHECK-NOT: DW_AT_decl_file
@@ -40,7 +40,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 !1 = !DIFile(filename: "file.c", directory: "/dir")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 7, type: !5, isLocal: false, isDefinition: true, scopeLine: 7, isOptimized: false, function: void ()* @f, variables: !2)
+!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 7, type: !5, isLocal: false, isDefinition: true, scopeLine: 7, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{i32 2, !"Dwarf Version", i32 4}

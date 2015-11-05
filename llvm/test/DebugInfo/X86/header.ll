@@ -11,7 +11,7 @@
 
 ; CHECK: .section .debug_str
 
-define void @f() {
+define void @f() !dbg !4 {
   ret void, !dbg !9
 }
 !llvm.dbg.cu = !{!0}
@@ -21,7 +21,7 @@ define void @f() {
 !1 = !DIFile(filename: "/foo/test.c", directory: "/foo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @f, variables: !2)
+!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, variables: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{i32 2, !"Dwarf Version", i32 4}

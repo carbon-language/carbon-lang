@@ -23,7 +23,7 @@
 ; ASM: testl
 
 ; Function Attrs: nounwind uwtable
-define void @func() #0 {
+define void @func() #0 !dbg !4 {
 entry:
   %y.addr.i = alloca i32, align 4
   %x = alloca i32, align 4
@@ -52,7 +52,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "inline-seldag-test.c", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = distinct !DISubprogram(name: "func", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @func, variables: !2)
+!4 = distinct !DISubprogram(name: "func", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "inline-seldag-test.c", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

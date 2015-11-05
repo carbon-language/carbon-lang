@@ -6,7 +6,7 @@ target triple = "thumbv7-apple-ios"
 
 %struct.tag_s = type { i32, i32, i32 }
 
-define void @foo(%struct.tag_s* nocapture %this, %struct.tag_s* %c, i64 %x, i64 %y, %struct.tag_s* nocapture %ptr1, %struct.tag_s* nocapture %ptr2) nounwind ssp {
+define void @foo(%struct.tag_s* nocapture %this, %struct.tag_s* %c, i64 %x, i64 %y, %struct.tag_s* nocapture %ptr1, %struct.tag_s* nocapture %ptr2) nounwind ssp !dbg !1 {
   tail call void @llvm.dbg.value(metadata %struct.tag_s* %this, i64 0, metadata !5, metadata !DIExpression()), !dbg !20
   tail call void @llvm.dbg.value(metadata %struct.tag_s* %c, i64 0, metadata !13, metadata !DIExpression()), !dbg !21
   tail call void @llvm.dbg.value(metadata i64 %x, i64 0, metadata !14, metadata !DIExpression()), !dbg !22
@@ -33,7 +33,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.module.flags = !{!33}
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "Apple clang version 3.0 (tags/Apple/clang-211.10.1) (based on LLVM 3.0svn)", isOptimized: true, emissionKind: 1, file: !32, enums: !{}, retainedTypes: !{}, subprograms: !30, imports:  null)
-!1 = distinct !DISubprogram(name: "foo", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !2, scope: !2, type: !3, function: void (%struct.tag_s*, %struct.tag_s*, i64, i64, %struct.tag_s*, %struct.tag_s*)* @foo, variables: !31)
+!1 = distinct !DISubprogram(name: "foo", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !2, scope: !2, type: !3, variables: !31)
 !2 = !DIFile(filename: "one.c", directory: "/Volumes/Athwagate/R10048772")
 !3 = !DISubroutineType(types: !4)
 !4 = !{null}

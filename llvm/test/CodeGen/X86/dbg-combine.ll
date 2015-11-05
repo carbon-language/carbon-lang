@@ -24,7 +24,7 @@
 
 ; ModuleID = 'dbg-combine.c'
 ; Function Attrs: nounwind uwtable
-define i32 @foo() #0 {
+define i32 @foo() #0 !dbg !4 {
 entry:
   %elems = alloca i32, align 4
   %saved_stack = alloca i8*
@@ -78,7 +78,7 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: "dbg-combine.c", directory: "/home/probinson/projects/scratch")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: i32 ()* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "dbg-combine.c", directory: "/home/probinson/projects/scratch")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

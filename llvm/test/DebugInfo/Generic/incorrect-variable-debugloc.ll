@@ -58,7 +58,7 @@
 @__asan_gen_1 = private unnamed_addr constant [13 x i8] c"1 32 1 3 tmp\00", align 1
 
 ; Function Attrs: noreturn sanitize_address
-define i32 @_Z3fn1v() #0 {
+define i32 @_Z3fn1v() #0 !dbg !22 {
 entry:
   %MyAlloca = alloca [64 x i8], align 32, !dbg !39
   %0 = ptrtoint [64 x i8]* %MyAlloca to i64, !dbg !39
@@ -116,7 +116,7 @@ entry:
 }
 
 ; Function Attrs: sanitize_address
-define void @_ZN1C5m_fn3Ev(%struct.C* nocapture %this) #1 align 2 {
+define void @_ZN1C5m_fn3Ev(%struct.C* nocapture %this) #1 align 2 !dbg !28 {
 entry:
   %MyAlloca = alloca [64 x i8], align 32, !dbg !48
   %0 = ptrtoint [64 x i8]* %MyAlloca to i64, !dbg !48
@@ -358,13 +358,13 @@ attributes #3 = { nounwind readnone }
 !19 = !{null, !20}
 !20 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1B")
 !21 = !{!22, !28, !32}
-!22 = distinct !DISubprogram(name: "fn1", linkageName: "_Z3fn1v", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !5, scope: !23, type: !24, function: i32 ()* @_Z3fn1v, variables: !26)
+!22 = distinct !DISubprogram(name: "fn1", linkageName: "_Z3fn1v", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !5, scope: !23, type: !24, variables: !26)
 !23 = !DIFile(filename: "incorrect-variable-debug-loc.cpp", directory: "/tmp/dbginfo")
 !24 = !DISubroutineType(types: !25)
 !25 = !{!8}
 !26 = !{!27}
 !27 = !DILocalVariable(name: "A", line: 17, scope: !22, file: !23, type: !"_ZTS1C")
-!28 = distinct !DISubprogram(name: "m_fn3", linkageName: "_ZN1C5m_fn3Ev", line: 21, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 21, file: !5, scope: !"_ZTS1C", type: !11, function: void (%struct.C*)* @_ZN1C5m_fn3Ev, declaration: !10, variables: !29)
+!28 = distinct !DISubprogram(name: "m_fn3", linkageName: "_ZN1C5m_fn3Ev", line: 21, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 21, file: !5, scope: !"_ZTS1C", type: !11, declaration: !10, variables: !29)
 !29 = !{!30}
 !30 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !28, type: !31)
 !31 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1C")

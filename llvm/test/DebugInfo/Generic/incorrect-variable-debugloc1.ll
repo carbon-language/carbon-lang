@@ -27,7 +27,7 @@
 ; DWARF4: Location description: 10 0d 9f
 
 ; Function Attrs: uwtable
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !4 {
 entry:
   %c = alloca i32, align 4
   tail call void @llvm.dbg.value(metadata i32 13, i64 0, metadata !10, metadata !16), !dbg !17
@@ -57,7 +57,7 @@ attributes #2 = { nounwind readnone }
 !1 = !DIFile(filename: "test.cpp", directory: "/home/kromanova/ngh/ToT_latest/llvm/test/DebugInfo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !9)
+!4 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !9)
 !5 = !DIFile(filename: "test.cpp", directory: "/home/kromanova/ngh/ToT_latest/llvm/test/DebugInfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

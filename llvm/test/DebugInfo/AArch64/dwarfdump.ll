@@ -18,7 +18,7 @@
 ; CHECK-4: DW_AT_high_pc [DW_FORM_data4] (0x00000008)
 ; CHECK-3: DW_AT_high_pc [DW_FORM_addr] (0x0000000000000008)
 
-define i32 @main() nounwind {
+define i32 @main() nounwind !dbg !3 {
   ret i32 0, !dbg !8
 }
 
@@ -30,7 +30,7 @@ attributes #0 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 ", isOptimized: false, emissionKind: 0, file: !9, enums: !1, retainedTypes: !1, subprograms: !2, globals: !1, imports:  !1)
 !1 = !{}
 !2 = !{!3}
-!3 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !9, scope: !4, type: !5, function: i32 ()* @main, variables: !1)
+!3 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !9, scope: !4, type: !5, variables: !1)
 !4 = !DIFile(filename: "tmp.c", directory: "/home/tim/llvm/build")
 !5 = !DISubroutineType(types: !6)
 !6 = !{!7}

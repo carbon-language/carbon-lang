@@ -9,7 +9,7 @@
 
 @a = global %class.A zeroinitializer, align 1
 
-define i32 @_ZN1A1aEi(%class.A* %this, i32 %b) nounwind uwtable ssp align 2 {
+define i32 @_ZN1A1aEi(%class.A* %this, i32 %b) nounwind uwtable ssp align 2 !dbg !5 {
 entry:
   %this.addr = alloca %class.A*, align 8
   %b.addr = alloca i32, align 4
@@ -30,7 +30,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.1 (trunk 152691) (llvm/trunk 152692)", isOptimized: false, emissionKind: 0, file: !28, enums: !1, retainedTypes: !1, subprograms: !3, globals: !18, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "a", linkageName: "_ZN1A1aEi", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !6, scope: null, type: !7, function: i32 (%class.A*, i32)* @_ZN1A1aEi, declaration: !13)
+!5 = distinct !DISubprogram(name: "a", linkageName: "_ZN1A1aEi", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !6, scope: null, type: !7, declaration: !13)
 !6 = !DIFile(filename: "foo.cpp", directory: "/Users/echristo")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !10, !9}

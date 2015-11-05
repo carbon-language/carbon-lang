@@ -21,7 +21,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: ![[LOC]] = !DILocation(line: 4, scope:
 ;CHECK: ![[LOC2]] = !DILocation(line: 7, scope:
 
-define i32 @depth(double* nocapture %A, i32 %m) #0 {
+define i32 @depth(double* nocapture %A, i32 %m) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata double* %A, i64 0, metadata !12, metadata !DIExpression()), !dbg !19
   tail call void @llvm.dbg.value(metadata i32 %m, i64 0, metadata !13, metadata !DIExpression()), !dbg !19
@@ -61,7 +61,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "file.c", directory: "/Users/nadav")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "depth", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (double*, i32)* @depth, variables: !11)
+!4 = distinct !DISubprogram(name: "depth", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !11)
 !5 = !DIFile(filename: "file.c", directory: "/Users/nadav")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9, !8}

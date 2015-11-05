@@ -5,7 +5,7 @@
 ; Check that the prologue ends with is_stmt here.
 ; CHECK: 0x0000000000000000 {{.*}} is_stmt
 
-define i32 @main() nounwind uwtable {
+define i32 @main() nounwind uwtable !dbg !5 {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
@@ -18,7 +18,7 @@ entry:
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 160143)", isOptimized: false, emissionKind: 0, file: !12, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !12, scope: !6, type: !7, function: i32 ()* @main, variables: !1)
+!5 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !12, scope: !6, type: !7, variables: !1)
 !6 = !DIFile(filename: "PR13303.c", directory: "/home/probinson")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

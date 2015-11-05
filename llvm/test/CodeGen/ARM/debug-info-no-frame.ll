@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=armv7-none-linux-gnueabihf < %s -o - | FileCheck %s
 
 ; Function Attrs: nounwind
-define void @need_cfi_def_cfa_offset() #0 {
+define void @need_cfi_def_cfa_offset() #0 !dbg !3 {
 ; CHECK-LABEL: need_cfi_def_cfa_offset:
 ; CHECK: sub	sp, sp, #4
 ; CHECK: .cfi_def_cfa_offset 4
@@ -24,7 +24,7 @@ attributes #1 = { nounwind readnone }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "", isOptimized: false, subprograms: !{!3})
 !1 = !DIFile(filename: "file.c", directory: "/dir")
 !2 = !{}
-!3 = distinct !DISubprogram(name: "need_cfi_def_cfa_offset", scope: !1, file: !1, line: 1, type: !4, isLocal: false, isDefinition: true, scopeLine: 2, isOptimized: false, function: void ()* @need_cfi_def_cfa_offset, variables: !2)
+!3 = distinct !DISubprogram(name: "need_cfi_def_cfa_offset", scope: !1, file: !1, line: 1, type: !4, isLocal: false, isDefinition: true, scopeLine: 2, isOptimized: false, variables: !2)
 !4 = !DISubroutineType(types: !5)
 !5 = !{null}
 !6 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

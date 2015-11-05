@@ -16,7 +16,7 @@
 ; CHECK: DW_TAG_variable
 
 ; Function Attrs: nounwind readnone uwtable
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !4 {
 entry:
   ret i32 0, !dbg !12
 }
@@ -30,7 +30,7 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !1 = !DIFile(filename: "global.cpp", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "global.cpp", directory: "/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

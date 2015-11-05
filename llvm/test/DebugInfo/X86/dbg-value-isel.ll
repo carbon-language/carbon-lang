@@ -11,7 +11,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 @lvgv = internal constant [0 x i8*] zeroinitializer
 @llvm.global.annotations = appending global [1 x %0] [%0 { i8* bitcast (void (i32 addrspace(1)*)* @__OpenCL_nbt02_kernel to i8*), i8* addrspacecast ([1 x i8] addrspace(2)* @sgv to i8*), i8* addrspacecast ([1 x i8] addrspace(2)* @fgv to i8*), i8* bitcast ([0 x i8*]* @lvgv to i8*), i32 0 }], section "llvm.metadata"
 
-define void @__OpenCL_nbt02_kernel(i32 addrspace(1)* %ip) nounwind {
+define void @__OpenCL_nbt02_kernel(i32 addrspace(1)* %ip) nounwind !dbg !0 {
 entry:
   call void @llvm.dbg.value(metadata i32 addrspace(1)* %ip, i64 0, metadata !8, metadata !DIExpression()), !dbg !9
   %0 = call <4 x i32> @__amdil_get_local_id_int() nounwind
@@ -81,7 +81,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!22}
 
-!0 = distinct !DISubprogram(name: "__OpenCL_nbt02_kernel", linkageName: "__OpenCL_nbt02_kernel", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !20, scope: !1, type: !3, function: void (i32 addrspace(1)*)* @__OpenCL_nbt02_kernel)
+!0 = distinct !DISubprogram(name: "__OpenCL_nbt02_kernel", linkageName: "__OpenCL_nbt02_kernel", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !20, scope: !1, type: !3)
 !1 = !DIFile(filename: "OCLlLwTXZ.cl", directory: "/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "clc", isOptimized: false, emissionKind: 1, file: !20, enums: !21, retainedTypes: !21, subprograms: !19, imports:  null)
 !3 = !DISubroutineType(types: !4)

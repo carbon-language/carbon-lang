@@ -22,7 +22,7 @@
 ; CHECK: DW_AT_const_value [DW_FORM_udata] (7)
 
 ; Function Attrs: uwtable
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 42, i64 0, metadata !10, metadata !DIExpression()), !dbg !21
   tail call void @_Z4funci(i32 42), !dbg !22
@@ -54,7 +54,7 @@ attributes #2 = { nounwind readnone }
 !1 = !DIFile(filename: "const.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "main", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !9)
+!4 = distinct !DISubprogram(name: "main", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !9)
 !5 = !DIFile(filename: "const.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

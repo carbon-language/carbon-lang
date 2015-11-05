@@ -476,8 +476,6 @@ void DwarfDebug::beginModule() {
 
   const Module *M = MMI->getModule();
 
-  FunctionDIs = makeSubprogramMap(*M);
-
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (!CU_Nodes)
     return;
@@ -1113,8 +1111,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo())
     return;
 
-  auto DI = FunctionDIs.find(MF->getFunction());
-  if (DI == FunctionDIs.end())
+  auto DI = MF->getFunction()->getSubprogram();
+  if (!DI)
     return;
 
   // Grab the lexical scopes for the function, if we don't have any of those
@@ -1205,7 +1203,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       "endFunction should be called with the same function as beginFunction");
 
   if (!MMI->hasDebugInfo() || LScopes.empty() ||
-      !FunctionDIs.count(MF->getFunction())) {
+      !MF->getFunction()->getSubprogram()) {
     // If we don't have a lexical scope for this function then there will
     // be a hole in the range information. Keep note of this by setting the
     // previously used section to nullptr.

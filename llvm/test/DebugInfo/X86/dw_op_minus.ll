@@ -17,7 +17,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @__safestack_unsafe_stack_ptr = external thread_local(initialexec) global i8*
 
-define void @f() {
+define void @f() !dbg !4 {
 entry:
   %unsafe_stack_ptr = load i8*, i8** @__safestack_unsafe_stack_ptr
   %unsafe_stack_static_top = getelementptr i8, i8* %unsafe_stack_ptr, i32 -400
@@ -44,7 +44,7 @@ declare void @Capture(i32*)
 !1 = !DIFile(filename: "1.cc", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 4, type: !5, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @f, variables: !7)
+!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 4, type: !5, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: true, variables: !7)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{!8}

@@ -95,7 +95,6 @@ namespace {
     bool doInitialization(CallGraph &CG) override;
     /// The maximum number of elements to expand, or 0 for unlimited.
     unsigned maxElements;
-    DenseMap<const Function *, DISubprogram *> FunctionDIs;
   };
 }
 
@@ -732,15 +731,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   NF->copyAttributesFrom(F);
 
   // Patch the pointer to LLVM function in debug info descriptor.
-  auto DI = FunctionDIs.find(F);
-  if (DI != FunctionDIs.end()) {
-    DISubprogram *SP = DI->second;
-    SP->replaceFunction(NF);
-    // Ensure the map is updated so it can be reused on subsequent argument
-    // promotions of the same function.
-    FunctionDIs.erase(DI);
-    FunctionDIs[NF] = SP;
-  }
+  NF->setSubprogram(F->getSubprogram());
+  F->setSubprogram(nullptr);
 
   DEBUG(dbgs() << "ARG PROMOTION:  Promoting to:" << *NF << "\n"
         << "From: " << *F);
@@ -1023,6 +1015,5 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 }
 
 bool ArgPromotion::doInitialization(CallGraph &CG) {
-  FunctionDIs = makeSubprogramMap(CG.getModule());
   return CallGraphSCCPass::doInitialization(CG);
 }

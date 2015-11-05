@@ -40,7 +40,7 @@
 %"struct.pr14763::foo" = type { i8 }
 
 ; Function Attrs: uwtable
-define void @_ZN7pr147634funcENS_3fooE(%"struct.pr14763::foo"* noalias sret %agg.result, %"struct.pr14763::foo"* %f) #0 {
+define void @_ZN7pr147634funcENS_3fooE(%"struct.pr14763::foo"* noalias sret %agg.result, %"struct.pr14763::foo"* %f) #0 !dbg !4 {
 entry:
   call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %f, metadata !22, metadata !DIExpression(DW_OP_deref)), !dbg !24
   call void @_ZN7pr147633fooC1ERKS0_(%"struct.pr14763::foo"* %agg.result, %"struct.pr14763::foo"* %f), !dbg !25
@@ -53,7 +53,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 declare void @_ZN7pr147633fooC1ERKS0_(%"struct.pr14763::foo"*, %"struct.pr14763::foo"*) #2
 
 ; Function Attrs: uwtable
-define void @_ZN7pr147635func2EbNS_3fooE(i1 zeroext %b, %"struct.pr14763::foo"* %g) #0 {
+define void @_ZN7pr147635func2EbNS_3fooE(i1 zeroext %b, %"struct.pr14763::foo"* %g) #0 !dbg !17 {
 entry:
   %b.addr = alloca i8, align 1
   %frombool = zext i1 %b to i8
@@ -86,7 +86,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !1 = !DIFile(filename: "pass.cpp", directory: "/tmp")
 !2 = !{}
 !3 = !{!4, !17}
-!4 = distinct !DISubprogram(name: "func", linkageName: "_ZN7pr147634funcENS_3fooE", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (%"struct.pr14763::foo"*, %"struct.pr14763::foo"*)* @_ZN7pr147634funcENS_3fooE, variables: !2)
+!4 = distinct !DISubprogram(name: "func", linkageName: "_ZN7pr147634funcENS_3fooE", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DINamespace(name: "pr14763", line: 1, file: !1, scope: null)
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
@@ -98,7 +98,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !13 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !8)
 !14 = !DIDerivedType(tag: DW_TAG_reference_type, baseType: !15)
 !15 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !8)
-!17 = distinct !DISubprogram(name: "func2", linkageName: "_ZN7pr147635func2EbNS_3fooE", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 12, file: !1, scope: !5, type: !18, function: void (i1, %"struct.pr14763::foo"*)* @_ZN7pr147635func2EbNS_3fooE, variables: !2)
+!17 = distinct !DISubprogram(name: "func2", linkageName: "_ZN7pr147635func2EbNS_3fooE", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 12, file: !1, scope: !5, type: !18, variables: !2)
 !18 = !DISubroutineType(types: !19)
 !19 = !{null, !20, !8}
 !20 = !DIBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)

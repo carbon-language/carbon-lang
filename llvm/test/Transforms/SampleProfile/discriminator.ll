@@ -21,7 +21,7 @@
 ; This means that the predicate 'i < 5' (line 3) is executed 100 times,
 ; but the then branch (line 3.1) is only executed 5 times.
 
-define i32 @foo(i32 %i) #0 {
+define i32 @foo(i32 %i) #0 !dbg !4 {
 ; CHECK: Printing analysis 'Branch Probability Analysis' for function 'foo':
 entry:
   %i.addr = alloca i32, align 4
@@ -70,7 +70,7 @@ while.end:                                        ; preds = %while.cond
 !1 = !DIFile(filename: "discriminator.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "discriminator.c", directory: ".")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}

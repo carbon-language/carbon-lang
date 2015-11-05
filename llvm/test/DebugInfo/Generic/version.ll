@@ -6,7 +6,7 @@
 ; Make sure we are generating DWARF version 3 when module flag says so.
 ; CHECK: Compile Unit: length = {{.*}} version = 0x0003
 
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !4 {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
@@ -22,7 +22,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !1 = !DIFile(filename: "CodeGen/dwarf-version.c", directory: "test")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "main", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "CodeGen/dwarf-version.c", directory: "test")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

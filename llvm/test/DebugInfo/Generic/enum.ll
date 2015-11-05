@@ -36,7 +36,7 @@
 @a = global i64 0, align 8
 
 ; Function Attrs: nounwind uwtable
-define void @_Z4funcv() #0 {
+define void @_Z4funcv() #0 !dbg !13 {
 entry:
   %b = alloca i32, align 4
   call void @llvm.dbg.declare(metadata i32* %b, metadata !20, metadata !DIExpression()), !dbg !22
@@ -66,7 +66,7 @@ attributes #1 = { nounwind readnone }
 !10 = !DIEnumerator(name: "X", value: 0) ; [ DW_TAG_enumerator ] [X :: 0]
 !11 = !{}
 !12 = !{!13}
-!13 = distinct !DISubprogram(name: "func", linkageName: "_Z4funcv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !14, type: !15, function: void ()* @_Z4funcv, variables: !11)
+!13 = distinct !DISubprogram(name: "func", linkageName: "_Z4funcv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !14, type: !15, variables: !11)
 !14 = !DIFile(filename: "enum.cpp", directory: "/tmp")
 !15 = !DISubroutineType(types: !16)
 !16 = !{null}

@@ -14,7 +14,7 @@ target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
 target triple = "arm64-apple-ios"
 
 ; Function Attrs: nounwind optsize
-define void @_Z5startv() #0 {
+define void @_Z5startv() #0 !dbg !4 {
 entry:
   %size = alloca i32, align 4
   %0 = bitcast i32* %size to i8*, !dbg !15
@@ -48,7 +48,7 @@ attributes #3 = { nounwind optsize }
 !1 = !DIFile(filename: "<stdin>", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "start", linkageName: "_Z5startv", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, function: void ()* @_Z5startv, variables: !9)
+!4 = distinct !DISubprogram(name: "start", linkageName: "_Z5startv", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, variables: !9)
 !5 = !DIFile(filename: "test1.c", directory: "")
 !6 = !DIFile(filename: "test1.c", directory: "")
 !7 = !DISubroutineType(types: !8)

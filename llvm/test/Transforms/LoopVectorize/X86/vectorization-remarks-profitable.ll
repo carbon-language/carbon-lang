@@ -23,7 +23,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
 
 ; Function Attrs: nounwind uwtable
-define void @do_not_interleave(float** noalias nocapture readonly %in, float* noalias nocapture %out, i32 %size) #0 {
+define void @do_not_interleave(float** noalias nocapture readonly %in, float* noalias nocapture %out, i32 %size) #0 !dbg !4 {
 entry:
   %cmp.4 = icmp eq i32 %size, 0, !dbg !10
   br i1 %cmp.4, label %for.end, label %for.body.preheader, !dbg !11
@@ -53,7 +53,7 @@ for.end:                                          ; preds = %for.end.loopexit, %
 }
 
 ; Function Attrs: nounwind uwtable
-define void @interleave_not_profitable(float** noalias nocapture readonly %in, float* noalias nocapture %out, i32 %size) #0 {
+define void @interleave_not_profitable(float** noalias nocapture readonly %in, float* noalias nocapture %out, i32 %size) #0 !dbg !6 {
 entry:
   %cmp.4 = icmp eq i32 %size, 0, !dbg !20
   br i1 %cmp.4, label %for.end, label %for.body, !dbg !21
@@ -86,9 +86,9 @@ attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 !1 = !DIFile(filename: "vectorization-remarks-profitable.c", directory: "")
 !2 = !{}
 !3 = !{!4, !6}
-!4 = distinct !DISubprogram(name: "do_not_interleave", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, function: void (float**, float*, i32)* @do_not_interleave, variables: !2)
+!4 = distinct !DISubprogram(name: "do_not_interleave", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !2)
-!6 = distinct !DISubprogram(name: "interleave_not_profitable", scope: !1, file: !1, line: 8, type: !5, isLocal: false, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: false, function: void (float**, float*, i32)* @interleave_not_profitable, variables: !2)
+!6 = distinct !DISubprogram(name: "interleave_not_profitable", scope: !1, file: !1, line: 8, type: !5, isLocal: false, isDefinition: true, scopeLine: 8, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
 !8 = !{i32 2, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.8.0 (trunk 250016)"}

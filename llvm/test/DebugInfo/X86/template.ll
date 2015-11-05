@@ -64,7 +64,7 @@
 @n = global %"struct.y_impl<int>::nested" zeroinitializer, align 1
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_template.cpp, i8* null }]
 
-define internal void @__cxx_global_var_init() section ".text.startup" {
+define internal void @__cxx_global_var_init() section ".text.startup" !dbg !10 {
 entry:
   %call = call i32 @_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv(), !dbg !36
   store i32 %call, i32* @glbl, align 4, !dbg !36
@@ -72,7 +72,7 @@ entry:
 }
 
 ; Function Attrs: nounwind uwtable
-define linkonce_odr i32 @_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv() #0 {
+define linkonce_odr i32 @_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv() #0 !dbg !14 {
 entry:
   ret i32 3, !dbg !37
 }
@@ -99,11 +99,11 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !8 = !DICompositeType(tag: DW_TAG_structure_type, name: "nested", line: 2, size: 8, align: 8, file: !1, scope: !"_ZTS6y_implIiE", elements: !2, identifier: "_ZTSN6y_implIiE6nestedE")
 !9 = !{!10, !14, !28}
-!10 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 3, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !11, type: !12, function: void ()* @__cxx_global_var_init, variables: !2)
+!10 = distinct !DISubprogram(name: "__cxx_global_var_init", line: 3, isLocal: true, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !11, type: !12, variables: !2)
 !11 = !DIFile(filename: "template.cpp", directory: "/tmp/dbginfo")
 !12 = !DISubroutineType(types: !13)
 !13 = !{null}
-!14 = distinct !DISubprogram(name: "func<3, &glbl, y_impl, nullptr, 1, 2>", linkageName: "_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !11, type: !15, function: i32 ()* @_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv, templateParams: !17, variables: !2)
+!14 = distinct !DISubprogram(name: "func<3, &glbl, y_impl, nullptr, 1, 2>", linkageName: "_Z4funcILi3EXadL_Z4glblEE6y_implLDn0EJLi1ELi2EEEiv", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !11, type: !15, templateParams: !17, variables: !2)
 !15 = !DISubroutineType(types: !16)
 !16 = !{!7}
 !17 = !{!18, !19, !21, !22, !24}
@@ -117,7 +117,7 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !25 = !{!26, !27}
 !26 = !DITemplateValueParameter(tag: DW_TAG_template_value_parameter, type: !7, value: i32 1)
 !27 = !DITemplateValueParameter(tag: DW_TAG_template_value_parameter, type: !7, value: i32 2)
-!28 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__sub_I_template.cpp", isLocal: true, isDefinition: true, flags: DIFlagArtificial, isOptimized: false, file: !1, scope: !11, type: !29, function: void ()* @_GLOBAL__sub_I_template.cpp, variables: !2)
+!28 = distinct !DISubprogram(name: "", linkageName: "_GLOBAL__sub_I_template.cpp", isLocal: true, isDefinition: true, flags: DIFlagArtificial, isOptimized: false, file: !1, scope: !11, type: !29, variables: !2)
 !29 = !DISubroutineType(types: !2)
 !30 = !{!31, !32}
 !31 = !DIGlobalVariable(name: "glbl", line: 3, isLocal: false, isDefinition: true, scope: null, file: !11, type: !7, variable: i32* @glbl)

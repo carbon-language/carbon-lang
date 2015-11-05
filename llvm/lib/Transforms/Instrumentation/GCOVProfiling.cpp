@@ -138,6 +138,7 @@ namespace {
     Module *M;
     LLVMContext *Ctx;
     SmallVector<std::unique_ptr<GCOVFunction>, 16> Funcs;
+    DenseMap<DISubprogram *, Function *> FnMap;
   };
 }
 
@@ -309,13 +310,12 @@ namespace {
   // object users can construct, the blocks and lines will be rooted here.
   class GCOVFunction : public GCOVRecord {
    public:
-     GCOVFunction(const DISubprogram *SP, raw_ostream *os, uint32_t Ident,
-                  bool UseCfgChecksum, bool ExitBlockBeforeBody)
+     GCOVFunction(const DISubprogram *SP, Function *F, raw_ostream *os,
+                  uint32_t Ident, bool UseCfgChecksum, bool ExitBlockBeforeBody)
          : SP(SP), Ident(Ident), UseCfgChecksum(UseCfgChecksum), CfgChecksum(0),
            ReturnBlock(1, os) {
       this->os = os;
 
-      Function *F = SP->getFunction();
       DEBUG(dbgs() << "Function: " << getFunctionName(SP) << "\n");
 
       uint32_t i = 0;
@@ -450,6 +450,12 @@ bool GCOVProfiler::runOnModule(Module &M) {
   this->M = &M;
   Ctx = &M.getContext();
 
+  FnMap.clear();
+  for (Function &F : M) {
+    if (DISubprogram *SP = F.getSubprogram())
+      FnMap[SP] = &F;
+  }
+
   if (Options.EmitNotes) emitProfileNotes();
   if (Options.EmitData) return emitProfileArcs();
   return false;
@@ -494,7 +500,7 @@ void GCOVProfiler::emitProfileNotes() {
 
     unsigned FunctionIdent = 0;
     for (auto *SP : CU->getSubprograms()) {
-      Function *F = SP->getFunction();
+      Function *F = FnMap[SP];
       if (!F) continue;
       if (!functionHasLines(F)) continue;
 
@@ -506,7 +512,7 @@ void GCOVProfiler::emitProfileNotes() {
         ++It;
       EntryBlock.splitBasicBlock(It);
 
-      Funcs.push_back(make_unique<GCOVFunction>(SP, &out, FunctionIdent++,
+      Funcs.push_back(make_unique<GCOVFunction>(SP, F, &out, FunctionIdent++,
                                                 Options.UseCfgChecksum,
                                                 Options.ExitBlockBeforeBody));
       GCOVFunction &Func = *Funcs.back();
@@ -573,7 +579,7 @@ bool GCOVProfiler::emitProfileArcs() {
     auto *CU = cast<DICompileUnit>(CU_Nodes->getOperand(i));
     SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> CountersBySP;
     for (auto *SP : CU->getSubprograms()) {
-      Function *F = SP->getFunction();
+      Function *F = FnMap[SP];
       if (!F) continue;
       if (!functionHasLines(F)) continue;
       if (!Result) Result = true;

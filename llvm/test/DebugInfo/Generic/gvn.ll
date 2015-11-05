@@ -20,7 +20,7 @@ target triple = "arm64-apple-ios"
 @b = common global i32 0, align 4
 
 ; Function Attrs: nounwind
-define void @f3() #0 {
+define void @f3() #0 !dbg !12 {
 entry:
   ; Verify that the call still has a debug location after GVN.
   ; CHECK: %call = tail call i32 @f2(i32 1) #{{[0-9]}}, !dbg
@@ -78,7 +78,7 @@ attributes #3 = { nounwind }
 !9 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{!11}
 !11 = !DILocalVariable(name: "p1", arg: 1, scope: !4, file: !1, line: 2, type: !8)
-!12 = distinct !DISubprogram(name: "f3", scope: !1, file: !1, line: 9, type: !13, isLocal: false, isDefinition: true, scopeLine: 9, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @f3, variables: !2)
+!12 = distinct !DISubprogram(name: "f3", scope: !1, file: !1, line: 9, type: !13, isLocal: false, isDefinition: true, scopeLine: 9, flags: DIFlagPrototyped, isOptimized: true, variables: !2)
 !13 = !DISubroutineType(types: !14)
 !14 = !{null}
 !15 = !{!16, !17}

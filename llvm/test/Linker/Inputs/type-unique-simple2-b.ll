@@ -3,7 +3,7 @@
 %struct.Base = type { i32, %struct.Base* }
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_Z1gi(i32 %a) #0 {
+define void @_Z1gi(i32 %a) #0 !dbg !12 {
 entry:
   %a.addr = alloca i32, align 4
   %t = alloca %struct.Base, align 8
@@ -17,7 +17,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: ssp uwtable
-define i32 @main() #2 {
+define i32 @main() #2 !dbg !16 {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
@@ -48,11 +48,11 @@ attributes #3 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !9 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 3, size: 64, align: 64, offset: 64, file: !5, scope: !"_ZTS4Base", baseType: !10)
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS4Base")
 !11 = !{!12, !16}
-!12 = distinct !DISubprogram(name: "g", linkageName: "_Z1gi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !13, type: !14, function: void (i32)* @_Z1gi, variables: !2)
+!12 = distinct !DISubprogram(name: "g", linkageName: "_Z1gi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !13, type: !14, variables: !2)
 !13 = !DIFile(filename: "bar.cpp", directory: ".")
 !14 = !DISubroutineType(types: !15)
 !15 = !{null, !8}
-!16 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !13, type: !17, function: i32 ()* @main, variables: !2)
+!16 = distinct !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !13, type: !17, variables: !2)
 !17 = !DISubroutineType(types: !18)
 !18 = !{!8}
 !19 = !{i32 2, !"Dwarf Version", i32 2}

@@ -42,7 +42,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @__asan_gen_ = private unnamed_addr constant [16 x i8] c"1 32 4 6 y.addr\00", align 1
 
 ; Function Attrs: nounwind sanitize_address uwtable
-define i32 @_Z3bari(i32 %y) #0 {
+define i32 @_Z3bari(i32 %y) #0 !dbg !4 {
 entry:
   %MyAlloca = alloca [64 x i8], align 32
   %0 = ptrtoint [64 x i8]* %MyAlloca to i64
@@ -169,7 +169,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "test.cc", directory: "/llvm_cmake_gcc")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "bar", linkageName: "_Z3bari", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @_Z3bari, variables: !2)
+!4 = distinct !DISubprogram(name: "bar", linkageName: "_Z3bari", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "test.cc", directory: "/llvm_cmake_gcc")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}

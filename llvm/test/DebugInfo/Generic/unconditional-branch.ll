@@ -18,7 +18,7 @@
 ;}
 
 ; Function Attrs: nounwind
-define void @foo(i32 %i) #0 {
+define void @foo(i32 %i) #0 !dbg !4 {
 entry:
   %i.addr = alloca i32, align 4
   store i32 %i, i32* %i.addr, align 4
@@ -49,7 +49,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "test.c", directory: "D:\5Cwork\5CEPRs\5C396363")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "test.c", directory: "D:CworkCEPRsC396363")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}

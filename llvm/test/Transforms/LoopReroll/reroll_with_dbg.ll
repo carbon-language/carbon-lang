@@ -11,7 +11,7 @@ target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
 target triple = "armv4t--linux-gnueabi"
 
 ; Function Attrs: nounwind
-define void @foo(float* noalias nocapture %a, float* noalias nocapture readonly %b, i32 %n) #0 {
+define void @foo(float* noalias nocapture %a, float* noalias nocapture readonly %b, i32 %n) #0 !dbg !4 {
 entry:
 ;CHECK-LABEL: @foo
 
@@ -89,7 +89,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "test.c", directory: "/home/weimingz/llvm-build/release/community-tip")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, function: void (float*, float*, i32)* @foo, variables: !11)
+!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, variables: !11)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null, !7, !7, !10}
 !7 = !DIDerivedType(tag: DW_TAG_restrict_type, baseType: !8)

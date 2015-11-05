@@ -29,7 +29,7 @@
 !1 = !DIFile(filename: "var.c", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "sum", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, function: i32 (i32, ...)* @sum, variables: !2)
+!4 = distinct !DISubprogram(name: "sum", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "var.c", directory: "/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
@@ -108,7 +108,7 @@
 ; CHECK-THUMB-FP-ELIM: add    r7, sp, #8
 ; CHECK-THUMB-FP-ELIM: .cfi_def_cfa r7, 20
 
-define i32 @sum(i32 %count, ...) {
+define i32 @sum(i32 %count, ...) !dbg !4 {
 entry:
   %vl = alloca i8*, align 4
   %vl1 = bitcast i8** %vl to i8*

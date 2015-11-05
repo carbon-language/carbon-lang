@@ -16,7 +16,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @A = common global i32 0, align 4
 
 ; Function Attrs: nounwind uwtable
-define void @test() #0 {
+define void @test() #0 !dbg !4 {
 entry:
   tail call void (...) @f() #2, !dbg !14
   %0 = load i32, i32* @A, align 4, !dbg !15
@@ -48,7 +48,7 @@ attributes #2 = { nounwind }
 !1 = !DIFile(filename: ".../llvm/test/Transforms/GCOVProfiling/return-block.ll", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "test", line: 5, isLocal: false, isDefinition: true, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, function: void ()* @test, variables: !2)
+!4 = distinct !DISubprogram(name: "test", line: 5, isLocal: false, isDefinition: true, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: ".../llvm/test/Transforms/GCOVProfiling/return-block.ll", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

@@ -46,7 +46,7 @@
 
 @.str = private unnamed_addr constant [9 x i8] c"S = %lf\0A\00", align 1
 
-define double @_Z3fooi(i32 %x) #0 {
+define double @_Z3fooi(i32 %x) #0 !dbg !3 {
 entry:
   %conv = sitofp i32 %x to double, !dbg !2
   %call = tail call double @sin(double %conv) #3, !dbg !8
@@ -56,7 +56,7 @@ entry:
 
 declare double @sin(double) #1
 
-define double @_Z3bari(i32 %x) #0 {
+define double @_Z3bari(i32 %x) #0 !dbg !10 {
 entry:
   %conv = sitofp i32 %x to double, !dbg !9
   %call = tail call double @cos(double %conv) #3, !dbg !11
@@ -66,7 +66,7 @@ entry:
 
 declare double @cos(double) #1
 
-define i32 @main() #2 {
+define i32 @main() #2 !dbg !13 {
 entry:
   br label %for.cond1.preheader, !dbg !12
 
@@ -130,17 +130,17 @@ declare i32 @printf(i8* nocapture readonly, ...) #1
 !0 = !{i32 2, !"Debug Info Version", i32 3}
 !1 = !{!"clang version 3.6.0 "}
 !2 = !DILocation(line: 9, column: 3, scope: !3)
-!3 = distinct !DISubprogram(name: "foo", line: 8, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 8, file: !4, scope: !5, type: !6, function: double (i32)* @_Z3fooi, variables: !7)
+!3 = distinct !DISubprogram(name: "foo", line: 8, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 8, file: !4, scope: !5, type: !6, variables: !7)
 !4 = !DIFile(filename: "fnptr.cc", directory: ".")
 !5 = !DIFile(filename: "fnptr.cc", directory: ".")
 !6 = !DISubroutineType(types: !7)
 !7 = !{}
 !8 = !DILocation(line: 9, column: 14, scope: !3)
 !9 = !DILocation(line: 13, column: 3, scope: !10)
-!10 = distinct !DISubprogram(name: "bar", line: 12, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !4, scope: !5, type: !6, function: double (i32)* @_Z3bari, variables: !7)
+!10 = distinct !DISubprogram(name: "bar", line: 12, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !4, scope: !5, type: !6, variables: !7)
 !11 = !DILocation(line: 13, column: 14, scope: !10)
 !12 = !DILocation(line: 19, column: 3, scope: !13)
-!13 = distinct !DISubprogram(name: "main", line: 16, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !4, scope: !5, type: !6, function: i32 ()* @main, variables: !7)
+!13 = distinct !DISubprogram(name: "main", line: 16, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !4, scope: !5, type: !6, variables: !7)
 !14 = !DILocation(line: 20, column: 5, scope: !13)
 !15 = !DILocation(line: 21, column: 15, scope: !13)
 !16 = !DILocation(line: 22, column: 11, scope: !13)

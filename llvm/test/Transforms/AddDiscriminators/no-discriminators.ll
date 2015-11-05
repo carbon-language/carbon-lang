@@ -12,7 +12,7 @@
 ; altered. If they are, it means that the discriminators pass added a
 ; new lexical scope.
 
-define i32 @foo(i64 %i) #0 {
+define i32 @foo(i64 %i) #0 !dbg !4 {
 entry:
   %retval = alloca i32, align 4
   %i.addr = alloca i64, align 8
@@ -52,7 +52,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "no-discriminators", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i64)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 ; CHECK: ![[FOO:[0-9]+]] = distinct !DISubprogram(name: "foo"
 !5 = !DIFile(filename: "no-discriminators", directory: ".")
 !6 = !DISubroutineType(types: !7)

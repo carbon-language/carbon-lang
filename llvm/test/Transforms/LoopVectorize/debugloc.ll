@@ -17,7 +17,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK:   add <2 x i32> %{{.*}}, %rdx.shuf, !dbg ![[LOC2]]
 ; CHECK:   extractelement <2 x i32> %bin.rdx, i32 0, !dbg ![[LOC2]]
 
-define i32 @f(i32* nocapture %a, i32 %size) #0 {
+define i32 @f(i32* nocapture %a, i32 %size) #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.value(metadata i32* %a, i64 0, metadata !13, metadata !DIExpression()), !dbg !19
   tail call void @llvm.dbg.value(metadata i32 %size, i64 0, metadata !14, metadata !DIExpression()), !dbg !19
@@ -67,7 +67,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "-", directory: "/Volumes/Data/backedup/dev/os/llvm/debug")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, function: i32 (i32*, i32)* @f, variables: !12)
+!4 = distinct !DISubprogram(name: "f", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, variables: !12)
 !5 = !DIFile(filename: "<stdin>", directory: "/Volumes/Data/backedup/dev/os/llvm/debug")
 !6 = !DIFile(filename: "<stdin>", directory: "/Volumes/Data/backedup/dev/os/llvm/debug")
 !7 = !DISubroutineType(types: !8)

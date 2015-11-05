@@ -189,7 +189,6 @@ type DIFunction struct {
 	ScopeLine    int
 	Flags        int
 	Optimized    bool
-	Function     Value
 }
 
 // CreateCompileUnit creates function debug metadata.
@@ -211,7 +210,6 @@ func (d *DIBuilder) CreateFunction(diScope Metadata, f DIFunction) Metadata {
 		C.unsigned(f.ScopeLine),
 		C.unsigned(f.Flags),
 		boolToCInt(f.Optimized),
-		f.Function.C,
 	)
 	return Metadata{C: result}
 }

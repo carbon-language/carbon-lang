@@ -18,7 +18,7 @@ target datalayout = "e-p:64:64:64"
 ; CHECK-DAG: [[N_LOC]] = !DILocation(line: 47, column: 1, scope: !{{.*}})
 
 @G = external global [100 x i32]
-define i32 @foo(i32 %x, i32 %z) {
+define i32 @foo(i32 %x, i32 %z) !dbg !6 {
 entry:
   %tobool = icmp eq i32 %z, 0, !dbg !7
   br i1 %tobool, label %end, label %then, !dbg !7
@@ -44,7 +44,7 @@ end:
 !3 = !{}
 !4 = !DISubroutineType(types: !3)
 !5 = !DIFile(filename: "a.cc", directory: "/tmp")
-!6 = distinct !DISubprogram(name: "foo", scope: !5, file: !5, line: 42, type: !4, isLocal: false, isDefinition: true, scopeLine: 43, flags: DIFlagPrototyped, isOptimized: false, function: i32 (i32, i32)* @foo, variables: !3)
+!6 = distinct !DISubprogram(name: "foo", scope: !5, file: !5, line: 42, type: !4, isLocal: false, isDefinition: true, scopeLine: 43, flags: DIFlagPrototyped, isOptimized: false, variables: !3)
 !7 = !DILocation(line: 43, column: 1, scope: !6)
 !8 = !DILocation(line: 44, column: 1, scope: !6)
 !9 = !DILocation(line: 45, column: 1, scope: !6)

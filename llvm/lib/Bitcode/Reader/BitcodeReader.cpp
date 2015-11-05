@@ -232,6 +232,10 @@ class BitcodeReader : public GVMaterializer {
 
   bool StripDebugInfo = false;
 
+  /// Functions that need to be matched with subprograms when upgrading old
+  /// metadata.
+  SmallDenseMap<Function *, DISubprogram *, 16> FunctionsWithSPs;
+
   std::vector<std::string> BundleTags;
 
 public:
@@ -2182,20 +2186,33 @@ std::error_code BitcodeReader::parseMetadata() {
       break;
     }
     case bitc::METADATA_SUBPROGRAM: {
-      if (Record.size() != 19)
+      if (Record.size() != 18 && Record.size() != 19)
         return error("Invalid record");
 
-      MDValueList.assignValue(
-          GET_OR_DISTINCT(
-              DISubprogram,
-              Record[0] || Record[8], // All definitions should be distinct.
-              (Context, getMDOrNull(Record[1]), getMDString(Record[2]),
-               getMDString(Record[3]), getMDOrNull(Record[4]), Record[5],
-               getMDOrNull(Record[6]), Record[7], Record[8], Record[9],
-               getMDOrNull(Record[10]), Record[11], Record[12], Record[13],
-               Record[14], getMDOrNull(Record[15]), getMDOrNull(Record[16]),
-               getMDOrNull(Record[17]), getMDOrNull(Record[18]))),
-          NextMDValueNo++);
+      bool HasFn = Record.size() == 19;
+      DISubprogram *SP = GET_OR_DISTINCT(
+          DISubprogram,
+          Record[0] || Record[8], // All definitions should be distinct.
+          (Context, getMDOrNull(Record[1]), getMDString(Record[2]),
+           getMDString(Record[3]), getMDOrNull(Record[4]), Record[5],
+           getMDOrNull(Record[6]), Record[7], Record[8], Record[9],
+           getMDOrNull(Record[10]), Record[11], Record[12], Record[13],
+           Record[14], getMDOrNull(Record[15 + HasFn]),
+           getMDOrNull(Record[16 + HasFn]), getMDOrNull(Record[17 + HasFn])));
+      MDValueList.assignValue(SP, NextMDValueNo++);
+
+      // Upgrade sp->function mapping to function->sp mapping.
+      if (HasFn && Record[15]) {
+        if (auto *CMD = dyn_cast<ConstantAsMetadata>(getMDOrNull(Record[15])))
+          if (auto *F = dyn_cast<Function>(CMD->getValue())) {
+            if (F->isMaterializable())
+              // Defer until materialized; unmaterialized functions may not have
+              // metadata.
+              FunctionsWithSPs[F] = SP;
+            else if (!F->empty())
+              F->setSubprogram(SP);
+          }
+      }
       break;
     }
     case bitc::METADATA_LEXICAL_BLOCK: {
@@ -5138,6 +5155,10 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
         UpgradeIntrinsicCall(CI, I.second);
     }
   }
+
+  // Finish fn->subprogram upgrade for materialized functions.
+  if (DISubprogram *SP = FunctionsWithSPs.lookup(F))
+    F->setSubprogram(SP);
 
   // Bring in any functions that this function forward-referenced via
   // blockaddresses.

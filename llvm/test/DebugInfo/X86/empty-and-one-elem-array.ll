@@ -5,7 +5,7 @@
 %struct.foo = type { i32, [1 x i32] }
 %struct.bar = type { i32, [0 x i32] }
 
-define i32 @func() nounwind uwtable ssp {
+define i32 @func() nounwind uwtable ssp !dbg !5 {
 entry:
   %my_foo = alloca %struct.foo, align 4
   %my_bar = alloca %struct.bar, align 4
@@ -66,7 +66,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 169136)", isOptimized: false, emissionKind: 0, file: !32, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "func", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 11, file: !6, scope: !6, type: !7, function: i32 ()* @func, variables: !1)
+!5 = distinct !DISubprogram(name: "func", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 11, file: !6, scope: !6, type: !7, variables: !1)
 !6 = !DIFile(filename: "test.c", directory: "/Volumes/Sandbox/llvm")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}

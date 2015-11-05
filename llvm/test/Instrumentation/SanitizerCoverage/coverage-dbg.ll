@@ -25,7 +25,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %struct.A = type { i32 }
 
 ; Function Attrs: nounwind readonly uwtable
-define i32 @_ZN1A1fEv(%struct.A* nocapture readonly %this) #0 align 2 {
+define i32 @_ZN1A1fEv(%struct.A* nocapture readonly %this) #0 align 2 !dbg !13 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.A* %this, i64 0, metadata !15, metadata !DIExpression()), !dbg !20
   %x = getelementptr inbounds %struct.A, %struct.A* %this, i64 0, i32 0, !dbg !21
@@ -56,7 +56,7 @@ attributes #1 = { nounwind readnone }
 !10 = !{!7, !11}
 !11 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
 !12 = !{!13}
-!13 = distinct !DISubprogram(name: "f", linkageName: "_ZN1A1fEv", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !"_ZTS1A", type: !9, function: i32 (%struct.A*)* @_ZN1A1fEv, declaration: !8, variables: !14)
+!13 = distinct !DISubprogram(name: "f", linkageName: "_ZN1A1fEv", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !"_ZTS1A", type: !9, declaration: !8, variables: !14)
 !14 = !{!15}
 !15 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !13, type: !16)
 !16 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1A")

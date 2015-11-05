@@ -10,7 +10,7 @@
 
 %struct.A = type { i32 }
 
-define i32 @_Z3fooP1A(%struct.A* %a) nounwind uwtable ssp {
+define i32 @_Z3fooP1A(%struct.A* %a) nounwind uwtable ssp !dbg !5 {
 entry:
   %a.addr = alloca %struct.A*, align 8
   store %struct.A* %a, %struct.A** %a.addr, align 8
@@ -29,7 +29,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.1 (trunk 150996)", isOptimized: false, emissionKind: 0, file: !20, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooP1A", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !20, scope: !6, type: !7, function: i32 (%struct.A*)* @_Z3fooP1A)
+!5 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooP1A", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !20, scope: !6, type: !7)
 !6 = !DIFile(filename: "foo.cpp", directory: "/Users/echristo")
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !10}

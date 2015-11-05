@@ -87,7 +87,7 @@
 @_ZTI1C = unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i64 2) to i8*), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @_ZTS1C, i32 0, i32 0) }
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_ZN1C3fooEv(%struct.C* %this) unnamed_addr #0 align 2 {
+define void @_ZN1C3fooEv(%struct.C* %this) unnamed_addr #0 align 2 !dbg !31 {
 entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
@@ -100,7 +100,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
-define void @_Z4testv() #0 {
+define void @_Z4testv() #0 !dbg !32 {
 entry:
   %B = alloca %struct.bar, align 1
   %A = alloca [3 x %struct.bar], align 1
@@ -153,8 +153,8 @@ attributes #1 = { nounwind readnone }
 !28 = !{!29}
 !29 = !DITemplateTypeParameter(name: "T", type: !"_ZTS3bar")
 !30 = !{!31, !32}
-!31 = distinct !DISubprogram(name: "foo", linkageName: "_ZN1C3fooEv", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: null, type: !14, function: void (%struct.C*)* @_ZN1C3fooEv, declaration: !13, variables: !2)
-!32 = distinct !DISubprogram(name: "test", linkageName: "_Z4testv", line: 20, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 20, file: !1, scope: !7, type: !33, function: void ()* @_Z4testv, variables: !2)
+!31 = distinct !DISubprogram(name: "foo", linkageName: "_ZN1C3fooEv", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: null, type: !14, declaration: !13, variables: !2)
+!32 = distinct !DISubprogram(name: "test", linkageName: "_Z4testv", line: 20, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 20, file: !1, scope: !7, type: !33, variables: !2)
 !33 = !DISubroutineType(types: !34)
 !34 = !{null}
 !35 = !{i32 2, !"Dwarf Version", i32 2}

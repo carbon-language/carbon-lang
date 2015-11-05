@@ -24,7 +24,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: safestack uwtable
-define void @f() #0 {
+define void @f() #0 !dbg !4 {
 entry:
   %buf = alloca [100 x i32], align 16
   %0 = bitcast [100 x i32]* %buf to i8*, !dbg !16
@@ -63,7 +63,7 @@ attributes #4 = { nounwind }
 !1 = !DIFile(filename: "1.cc", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 4, type: !5, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: true, function: void ()* @f, variables: !7)
+!4 = distinct !DISubprogram(name: "f", scope: !1, file: !1, line: 4, type: !5, isLocal: false, isDefinition: true, scopeLine: 4, flags: DIFlagPrototyped, isOptimized: true, variables: !7)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
 !7 = !{!8}

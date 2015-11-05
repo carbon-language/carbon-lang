@@ -9,7 +9,7 @@
 target datalayout = "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-v128:64:128-a:0:32-n32-S64"
 target triple = "thumbv7--windows-itanium"
 
-define arm_aapcs_vfpcc void @function() {
+define arm_aapcs_vfpcc void @function() !dbg !1 {
 entry:
   ret void, !dbg !0
 }
@@ -18,7 +18,7 @@ entry:
 !llvm.module.flags = !{!9, !10}
 
 !0 = !DILocation(line: 1, scope: !1)
-!1 = distinct !DISubprogram(name: "function", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !2, scope: !3, type: !4, function: void ()* @function, variables: !6)
+!1 = distinct !DISubprogram(name: "function", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !2, scope: !3, type: !4, variables: !6)
 !2 = !DIFile(filename: "/Users/compnerd/work/llvm/test/MC/ARM/reduced.c", directory: "/Users/compnerd/work/llvm")
 !3 = !DIFile(filename: "/Users/compnerd/work/llvm/test/MC/ARM/reduced.c", directory: "/Users/compnerd/work/llvm")
 !4 = !DISubroutineType(types: !5)

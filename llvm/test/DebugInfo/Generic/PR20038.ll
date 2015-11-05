@@ -55,7 +55,7 @@
 @b = external global i8
 
 ; Function Attrs: nounwind
-define void @_Z4fun4v() #0 {
+define void @_Z4fun4v() #0 !dbg !12 {
 entry:
   %this.addr.i.i = alloca %struct.C*, align 8, !dbg !21
   %this.addr.i = alloca %struct.C*, align 8, !dbg !22
@@ -89,7 +89,7 @@ cleanup.done:                                     ; preds = %cleanup.action, %la
 }
 
 ; Function Attrs: alwaysinline nounwind
-define void @_ZN1CD1Ev(%struct.C* %this) unnamed_addr #1 align 2 {
+define void @_ZN1CD1Ev(%struct.C* %this) unnamed_addr #1 align 2 !dbg !17 {
 entry:
   %this.addr.i = alloca %struct.C*, align 8, !dbg !37
   %this.addr = alloca %struct.C*, align 8
@@ -103,7 +103,7 @@ entry:
 }
 
 ; Function Attrs: alwaysinline nounwind
-define void @_ZN1CD2Ev(%struct.C* %this) unnamed_addr #1 align 2 {
+define void @_ZN1CD2Ev(%struct.C* %this) unnamed_addr #1 align 2 !dbg !16 {
 entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
@@ -135,12 +135,12 @@ attributes #2 = { nounwind readnone }
 !9 = !{null, !10}
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1C")
 !11 = !{!12, !16, !17}
-!12 = distinct !DISubprogram(name: "fun4", linkageName: "_Z4fun4v", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !5, scope: !13, type: !14, function: void ()* @_Z4fun4v, variables: !2)
+!12 = distinct !DISubprogram(name: "fun4", linkageName: "_Z4fun4v", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !5, scope: !13, type: !14, variables: !2)
 !13 = !DIFile(filename: "PR20038.cpp", directory: "/tmp/dbginfo")
 !14 = !DISubroutineType(types: !15)
 !15 = !{null}
-!16 = distinct !DISubprogram(name: "~C", linkageName: "_ZN1CD2Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !5, scope: !"_ZTS1C", type: !8, function: void (%struct.C*)* @_ZN1CD2Ev, declaration: !7, variables: !2)
-!17 = distinct !DISubprogram(name: "~C", linkageName: "_ZN1CD1Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !5, scope: !"_ZTS1C", type: !8, function: void (%struct.C*)* @_ZN1CD1Ev, declaration: !7, variables: !2)
+!16 = distinct !DISubprogram(name: "~C", linkageName: "_ZN1CD2Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !5, scope: !"_ZTS1C", type: !8, declaration: !7, variables: !2)
+!17 = distinct !DISubprogram(name: "~C", linkageName: "_ZN1CD1Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !5, scope: !"_ZTS1C", type: !8, declaration: !7, variables: !2)
 !18 = !{i32 2, !"Dwarf Version", i32 4}
 !19 = !{i32 2, !"Debug Info Version", i32 3}
 !20 = !{!"clang version 3.5.0 "}

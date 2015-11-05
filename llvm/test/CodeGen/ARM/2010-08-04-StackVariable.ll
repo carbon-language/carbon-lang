@@ -3,7 +3,7 @@
 
 %struct.SVal = type { i8*, i32 }
 
-define i32 @_Z3fooi4SVal(i32 %i, %struct.SVal* noalias %location) nounwind ssp {
+define i32 @_Z3fooi4SVal(i32 %i, %struct.SVal* noalias %location) nounwind ssp !dbg !17 {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !23, metadata !DIExpression()), !dbg !24
@@ -31,7 +31,7 @@ return:                                           ; preds = %bb2
   ret i32 %.0, !dbg !29
 }
 
-define linkonce_odr void @_ZN4SValC1Ev(%struct.SVal* %this) nounwind ssp align 2  {
+define linkonce_odr void @_ZN4SValC1Ev(%struct.SVal* %this) nounwind ssp align 2  !dbg !16 {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   call void @llvm.dbg.value(metadata %struct.SVal* %this, i64 0, metadata !31, metadata !DIExpression()), !dbg !34
@@ -47,7 +47,7 @@ return:                                           ; preds = %entry
 
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-define i32 @main() nounwind ssp {
+define i32 @main() nounwind ssp !dbg !20 {
 entry:
   %0 = alloca %struct.SVal                        ; <%struct.SVal*> [#uses=3]
   %v = alloca %struct.SVal                        ; <%struct.SVal*> [#uses=4]
@@ -93,11 +93,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !14 = !DISubroutineType(types: !15)
 !15 = !{null, !12}
-!16 = distinct !DISubprogram(name: "SVal", linkageName: "_ZN4SValC1Ev", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !1, type: !14, function: void (%struct.SVal*)* @_ZN4SValC1Ev)
-!17 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi4SVal", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !18, function: i32 (i32, %struct.SVal*)* @_Z3fooi4SVal)
+!16 = distinct !DISubprogram(name: "SVal", linkageName: "_ZN4SValC1Ev", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !1, type: !14)
+!17 = distinct !DISubprogram(name: "foo", linkageName: "_Z3fooi4SVal", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !18)
 !18 = !DISubroutineType(types: !19)
 !19 = !{!13, !13, !1}
-!20 = distinct !DISubprogram(name: "main", linkageName: "main", line: 23, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !21, function: i32 ()* @main)
+!20 = distinct !DISubprogram(name: "main", linkageName: "main", line: 23, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !48, scope: !2, type: !21)
 !21 = !DISubroutineType(types: !22)
 !22 = !{!13}
 !23 = !DILocalVariable(name: "i", line: 16, arg: 1, scope: !17, file: !2, type: !13)

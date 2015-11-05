@@ -1,7 +1,7 @@
 ; RUN: %llc_dwarf -O0 < %s | FileCheck %s
 ; Do not emit AT_upper_bound for an unbounded array.
 ; radar 9241695
-define i32 @main() nounwind ssp {
+define i32 @main() nounwind ssp !dbg !0 {
 entry:
   %retval = alloca i32, align 4
   %a = alloca [0 x i32], align 4
@@ -15,7 +15,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!16}
 
-!0 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 3, file: !14, scope: !1, type: !3, function: i32 ()* @main)
+!0 = distinct !DISubprogram(name: "main", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 3, file: !14, scope: !1, type: !3)
 !1 = !DIFile(filename: "array.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 129138)", isOptimized: false, emissionKind: 0, file: !14, enums: !15, retainedTypes: !15, subprograms: !13, imports:  null)
 !3 = !DISubroutineType(types: !4)

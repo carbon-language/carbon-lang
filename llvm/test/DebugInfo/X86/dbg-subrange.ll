@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx10.7.2"
 @s = common global [4294967296 x i8] zeroinitializer, align 16
 ; CHECK: .quad 4294967296 ## DW_AT_count
 
-define void @bar() nounwind uwtable ssp {
+define void @bar() nounwind uwtable ssp !dbg !5 {
 entry:
   store i8 97, i8* getelementptr inbounds ([4294967296 x i8], [4294967296 x i8]* @s, i32 0, i64 0), align 1, !dbg !18
   ret void, !dbg !20
@@ -18,7 +18,7 @@ entry:
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 144833)", isOptimized: false, emissionKind: 0, file: !21, enums: !1, retainedTypes: !1, subprograms: !3, globals: !11, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = distinct !DISubprogram(name: "bar", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !21, scope: !6, type: !7, function: void ()* @bar)
+!5 = distinct !DISubprogram(name: "bar", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !21, scope: !6, type: !7)
 !6 = !DIFile(filename: "small.c", directory: "/private/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}

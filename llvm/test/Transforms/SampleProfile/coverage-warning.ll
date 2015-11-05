@@ -1,5 +1,5 @@
 ; RUN: opt < %s -sample-profile -sample-profile-file=%S/Inputs/coverage-warning.prof -sample-profile-check-coverage=90 2>& 1 | FileCheck %s
-define i32 @foo(i32 %i) {
+define i32 @foo(i32 %i) !dbg !4 {
 ; The profile has samples for line locations that are no longer present.
 ; Coverage does not reach 90%, so we should get this warning:
 ;
@@ -33,7 +33,7 @@ return:                                           ; preds = %if.end, %if.then
 !1 = !DIFile(filename: "coverage-warning.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, function: i32 (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
 !5 = !DISubroutineType(types: !2)
 !6 = !{i32 2, !"Dwarf Version", i32 4}
 !7 = !{i32 2, !"Debug Info Version", i32 3}

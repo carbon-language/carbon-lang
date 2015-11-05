@@ -9,7 +9,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 @x = global i32 0, align 4
 
 ; Function Attrs: nounwind
-define i32 @test_within_limit() {
+define i32 @test_within_limit() !dbg !4 {
 entry:
   ; The first store; later there is a second store to the same location,
   ; so this store should be optimized away by DSE.
@@ -249,7 +249,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !1 = !DIFile(filename: "test.c", directory: "/home/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "test_within_limit", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 ()* @test_within_limit, variables: !2)
+!4 = distinct !DISubprogram(name: "test_within_limit", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "test.c", directory: "/home/tmp")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

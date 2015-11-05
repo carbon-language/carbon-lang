@@ -22,7 +22,7 @@
 %struct.SA = type { i32 }
 
 ; Function Attrs: ssp uwtable
-define void @_Z4topBP1B2SA(%class.B* %b, i32 %sa.coerce) #0 {
+define void @_Z4topBP1B2SA(%class.B* %b, i32 %sa.coerce) #0 !dbg !15 {
 entry:
   %sa = alloca %struct.SA, align 4
   %b.addr = alloca %class.B*, align 8
@@ -46,7 +46,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
-define linkonce_odr void @_ZN1B5testBE2SA(%class.B* %this, i32 %sa.coerce) #2 align 2 {
+define linkonce_odr void @_ZN1B5testBE2SA(%class.B* %this, i32 %sa.coerce) #2 align 2 !dbg !20 {
 entry:
   %sa = alloca %struct.SA, align 4
   %this.addr = alloca %class.B*, align 8
@@ -86,12 +86,12 @@ attributes #3 = { nounwind }
 !12 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 2, size: 32, align: 32, file: !1, scope: !"_ZTS2SA", baseType: !13)
 !13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !14 = !{!15, !20}
-!15 = distinct !DISubprogram(name: "topB", linkageName: "_Z4topBP1B2SA", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !1, scope: !16, type: !17, function: void (%class.B*, i32)* @_Z4topBP1B2SA, variables: !2)
+!15 = distinct !DISubprogram(name: "topB", linkageName: "_Z4topBP1B2SA", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !1, scope: !16, type: !17, variables: !2)
 !16 = !DIFile(filename: "b.cpp", directory: "/Users/manmanren/test-Nov/type_unique/rdar_di_array")
 !17 = !DISubroutineType(types: !18)
 !18 = !{null, !19, !"_ZTS2SA"}
 !19 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1B")
-!20 = distinct !DISubprogram(name: "testB", linkageName: "_ZN1B5testBE2SA", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !"_ZTS1B", type: !7, function: void (%class.B*, i32)* @_ZN1B5testBE2SA, declaration: !6, variables: !2)
+!20 = distinct !DISubprogram(name: "testB", linkageName: "_ZN1B5testBE2SA", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !"_ZTS1B", type: !7, declaration: !6, variables: !2)
 !21 = !{i32 2, !"Dwarf Version", i32 2}
 !22 = !{i32 2, !"Debug Info Version", i32 3}
 !23 = !{!"clang version 3.5.0 (trunk 214102:214113M) (llvm/trunk 214102:214115M)"}

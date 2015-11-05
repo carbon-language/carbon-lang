@@ -48,7 +48,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @some_other = global i32 5, section "strange+section", align 4
 @some_bss = common global i32 0, align 4
 
-define void @some_code() {
+define void @some_code() !dbg !4 {
 entry:
   %0 = load i32, i32* @some_data, align 4, !dbg !14
   %1 = load i32, i32* @some_other, align 4, !dbg !14
@@ -66,7 +66,7 @@ entry:
 !1 = !DIFile(filename: "test.c", directory: "/home/kayamon")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "some_code", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void ()* @some_code, variables: !2)
+!4 = distinct !DISubprogram(name: "some_code", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "test.c", directory: "/home/kayamon")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null}

@@ -20,7 +20,7 @@ target triple = "x86_64-apple-macosx10.10.0"
 %struct.anon = type { i32 }
 
 ; Function Attrs: nounwind readnone ssp uwtable
-define i32 @mfi_aen_setup() #0 {
+define i32 @mfi_aen_setup() #0 !dbg !4 {
 entry:
   tail call void @llvm.dbg.declare(metadata %union.mfi_evt* undef, metadata !16, metadata !21), !dbg !22
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !21), !dbg !22
@@ -44,7 +44,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "union.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "mfi_aen_setup", line: 5, isLocal: false, isDefinition: true, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, function: i32 ()* @mfi_aen_setup, variables: !15)
+!4 = distinct !DISubprogram(name: "mfi_aen_setup", line: 5, isLocal: false, isDefinition: true, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, variables: !15)
 !5 = !DIFile(filename: "union.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

@@ -43,7 +43,7 @@
 
 @p = common global %struct.S1 zeroinitializer, align 8
 
-define i32 @foo(%struct.S1* nocapture %sp, i32 %nums) nounwind optsize ssp {
+define i32 @foo(%struct.S1* nocapture %sp, i32 %nums) nounwind optsize ssp !dbg !0 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.S1* %sp, i64 0, metadata !9, metadata !DIExpression()), !dbg !20
   tail call void @llvm.dbg.value(metadata i32 %nums, i64 0, metadata !18, metadata !DIExpression()), !dbg !21
@@ -59,7 +59,7 @@ entry:
 
 declare float* @bar(i32) optsize
 
-define void @foobar() nounwind optsize ssp {
+define void @foobar() nounwind optsize ssp !dbg !6 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.S1* @p, i64 0, metadata !9, metadata !DIExpression()) nounwind, !dbg !31
   tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !18, metadata !DIExpression()) nounwind, !dbg !35
@@ -74,13 +74,13 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!43}
 
-!0 = distinct !DISubprogram(name: "foo", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 8, file: !1, scope: !1, type: !3, function: i32 (%struct.S1*, i32)* @foo, variables: !41)
+!0 = distinct !DISubprogram(name: "foo", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 8, file: !1, scope: !1, type: !3, variables: !41)
 !1 = !DIFile(filename: "nm2.c", directory: "/private/tmp")
 !2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 125693)", isOptimized: true, emissionKind: 1, file: !42, enums: !{}, retainedTypes: !{}, subprograms: !39, globals: !40, imports:  !44)
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = distinct !DISubprogram(name: "foobar", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: !1, type: !7, function: void ()* @foobar)
+!6 = distinct !DISubprogram(name: "foobar", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: !1, type: !7)
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
 !9 = !DILocalVariable(name: "sp", line: 7, arg: 1, scope: !0, file: !1, type: !10)

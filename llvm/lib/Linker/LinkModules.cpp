@@ -421,9 +421,6 @@ class ModuleLinker {
   // Vector of GlobalValues to lazily link in.
   std::vector<GlobalValue *> LazilyLinkGlobalValues;
 
-  /// Functions that have replaced other functions.
-  SmallPtrSet<const Function *, 16> OverridingFunctions;
-
   DiagnosticHandlerFunction DiagnosticHandler;
 
   /// For symbol clashes, prefer those from Src.
@@ -581,7 +578,6 @@ private:
                      const GlobalValue *DGV = nullptr);
 
   void linkNamedMDNodes();
-  void stripReplacedSubprograms();
 };
 }
 
@@ -1416,10 +1412,6 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     }
 
     NewGV = copyGlobalValueProto(TypeMap, SGV, DGV);
-
-    if (DGV && isa<Function>(DGV))
-      if (auto *NewF = dyn_cast<Function>(NewGV))
-        OverridingFunctions.insert(NewF);
   }
 
   NewGV->setUnnamedAddr(HasUnnamedAddr);
@@ -1600,41 +1592,6 @@ void ModuleLinker::linkNamedMDNodes() {
     for (const MDNode *op : NMD.operands())
       DestNMD->addOperand(MapMetadata(op, ValueMap, RF_MoveDistinctMDs,
                                       &TypeMap, &ValMaterializer));
-  }
-}
-
-/// Drop DISubprograms that have been superseded.
-///
-/// FIXME: this creates an asymmetric result: we strip functions from losing
-/// subprograms in DstM, but leave losing subprograms in SrcM.
-/// TODO: Remove this logic once the backend can correctly determine canonical
-/// subprograms.
-void ModuleLinker::stripReplacedSubprograms() {
-  // Avoid quadratic runtime by returning early when there's nothing to do.
-  if (OverridingFunctions.empty())
-    return;
-
-  // Move the functions now, so the set gets cleared even on early returns.
-  auto Functions = std::move(OverridingFunctions);
-  OverridingFunctions.clear();
-
-  // Drop functions from subprograms if they've been overridden by the new
-  // compile unit.
-  NamedMDNode *CompileUnits = DstM->getNamedMetadata("llvm.dbg.cu");
-  if (!CompileUnits)
-    return;
-  for (unsigned I = 0, E = CompileUnits->getNumOperands(); I != E; ++I) {
-    auto *CU = cast<DICompileUnit>(CompileUnits->getOperand(I));
-    assert(CU && "Expected valid compile unit");
-
-    for (DISubprogram *SP : CU->getSubprograms()) {
-      if (!SP || !SP->getFunction() || !Functions.count(SP->getFunction()))
-        continue;
-
-      // Prevent DebugInfoFinder from tagging this as the canonical subprogram,
-      // since the canonical one is in the incoming module.
-      SP->replaceFunction(nullptr);
-    }
   }
 }
 
@@ -1908,13 +1865,6 @@ bool ModuleLinker::run() {
     if (GV)
       MapValue(GV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
   }
-
-  // Strip replaced subprograms before mapping any metadata -- so that we're
-  // not changing metadata from the source module (note that
-  // linkGlobalValueBody() eventually calls RemapInstruction() and therefore
-  // MapMetadata()) -- but after linking global value protocols -- so that
-  // OverridingFunctions has been built.
-  stripReplacedSubprograms();
 
   // Link in the function bodies that are defined in the source module into
   // DstM.

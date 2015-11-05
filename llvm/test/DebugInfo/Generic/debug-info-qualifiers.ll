@@ -35,7 +35,7 @@
 %class.A = type { i8 }
 
 ; Function Attrs: nounwind
-define void @_Z1gv() #0 {
+define void @_Z1gv() #0 !dbg !17 {
   %a = alloca %class.A, align 1
   %pl = alloca { i64, i64 }, align 8
   %pr = alloca { i64, i64 }, align 8
@@ -76,7 +76,7 @@ attributes #1 = { nounwind readnone }
 !13 = !DISubprogram(name: "r", linkageName: "_ZNKO1A1rEv", line: 7, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagObjectPointer | DIFlagRValueReference, isOptimized: false, scopeLine: 7, file: !5, scope: !"_ZTS1A", type: !14)
 !14 = !DISubroutineType(flags: DIFlagRValueReference, types: !9)
 !16 = !{!17}
-!17 = distinct !DISubprogram(name: "g", linkageName: "_Z1gv", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !5, scope: !18, type: !19, function: void ()* @_Z1gv, variables: !2)
+!17 = distinct !DISubprogram(name: "g", linkageName: "_Z1gv", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !5, scope: !18, type: !19, variables: !2)
 !18 = !DIFile(filename: "debug-info-qualifiers.cpp", directory: "")
 !19 = !DISubroutineType(types: !20)
 !20 = !{null}

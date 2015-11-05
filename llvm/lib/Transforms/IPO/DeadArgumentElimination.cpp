@@ -122,14 +122,6 @@ namespace {
 
     typedef SmallVector<RetOrArg, 5> UseVector;
 
-    // Map each LLVM function to corresponding metadata with debug info. If
-    // the function is replaced with another one, we should patch the pointer
-    // to LLVM function in metadata.
-    // As the code generation for module is finished (and DIBuilder is
-    // finalized) we assume that subprogram descriptors won't be changed, and
-    // they are stored in map for short duration anyway.
-    DenseMap<const Function *, DISubprogram *> FunctionDIs;
-
   protected:
     // DAH uses this to specify a different ID.
     explicit DAE(char &ID) : ModulePass(ID) {}
@@ -309,15 +301,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   }
 
   // Patch the pointer to LLVM function in debug info descriptor.
-  auto DI = FunctionDIs.find(&Fn);
-  if (DI != FunctionDIs.end()) {
-    DISubprogram *SP = DI->second;
-    SP->replaceFunction(NF);
-    // Ensure the map is updated so it can be reused on non-varargs argument
-    // eliminations of the same function.
-    FunctionDIs.erase(DI);
-    FunctionDIs[NF] = SP;
-  }
+  NF->setSubprogram(Fn.getSubprogram());
 
   // Fix up any BlockAddresses that refer to the function.
   Fn.replaceAllUsesWith(ConstantExpr::getBitCast(NF, Fn.getType()));
@@ -1097,9 +1081,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       }
 
   // Patch the pointer to LLVM function in debug info descriptor.
-  auto DI = FunctionDIs.find(F);
-  if (DI != FunctionDIs.end())
-    DI->second->replaceFunction(NF);
+  NF->setSubprogram(F->getSubprogram());
 
   // Now that the old function is dead, delete it.
   F->eraseFromParent();
@@ -1109,9 +1091,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
 bool DAE::runOnModule(Module &M) {
   bool Changed = false;
-
-  // Collect debug info descriptors for functions.
-  FunctionDIs = makeSubprogramMap(M);
 
   // First pass: Do a simple check to see if any functions can have their "..."
   // removed.  We can do this if they never call va_start.  This loop cannot be

@@ -50,7 +50,7 @@
 ; ModuleID = 'multiple.c'
 
 ; Function Attrs: nounwind uwtable
-define i32 @foo(i32 %a) #0 {
+define i32 @foo(i32 %a) #0 !dbg !4 {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
@@ -63,7 +63,7 @@ entry:
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind uwtable
-define i32 @bar(i32 %a) #0 {
+define i32 @bar(i32 %a) #0 !dbg !9 {
 entry:
   %retval = alloca i32, align 4
   %a.addr = alloca i32, align 4
@@ -89,7 +89,7 @@ return:                                           ; preds = %if.end, %if.then
 }
 
 ; Function Attrs: nounwind uwtable
-define i32 @fubar(i32 %a) #0 {
+define i32 @fubar(i32 %a) #0 !dbg !10 {
 entry:
   %retval = alloca i32, align 4
   %a.addr = alloca i32, align 4
@@ -129,13 +129,13 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "multiple.c", directory: "F:\5Cusers\5Cakaylor\5Cllvm-s\5Cllvm\5Ctest\5CJitListener")
 !2 = !{}
 !3 = !{!4, !9, !10}
-!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @foo, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "multiple.c", directory: "F:CusersCakaylorCllvm-sCllvmCtestCJitListener")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = distinct !DISubprogram(name: "bar", line: 5, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, function: i32 (i32)* @bar, variables: !2)
-!10 = distinct !DISubprogram(name: "fubar", line: 12, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 12, file: !1, scope: !5, type: !6, function: i32 (i32)* @fubar, variables: !2)
+!9 = distinct !DISubprogram(name: "bar", line: 5, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, variables: !2)
+!10 = distinct !DISubprogram(name: "fubar", line: 12, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 12, file: !1, scope: !5, type: !6, variables: !2)
 !11 = !{i32 2, !"Dwarf Version", i32 4}
 !12 = !{i32 2, !"Debug Info Version", i32 3}
 !13 = !{i32 1, !"PIC Level", i32 2}

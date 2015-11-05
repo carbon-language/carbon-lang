@@ -35,7 +35,7 @@
 @x = external global i32
 
 ; Function Attrs: uwtable
-define i32 @main() #0 {
+define i32 @main() #0 !dbg !4 {
 entry:
   %i.addr.i = alloca i32, align 4
   %retval = alloca i32, align 4
@@ -49,7 +49,7 @@ entry:
 }
 
 ; Function Attrs: alwaysinline nounwind uwtable
-define i32 @_ZN2ns4funcEi(i32 %i) #1 {
+define i32 @_ZN2ns4funcEi(i32 %i) #1 !dbg !9 {
 entry:
   %i.addr = alloca i32, align 4
   store i32 %i, i32* %i.addr, align 4
@@ -74,12 +74,12 @@ attributes #2 = { nounwind readnone }
 !1 = !DIFile(filename: "namespace_inline_function_definition.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !9}
-!4 = distinct !DISubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "namespace_inline_function_definition.cpp", directory: "/tmp/dbginfo")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = distinct !DISubprogram(name: "func", linkageName: "_ZN2ns4funcEi", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !10, type: !11, function: i32 (i32)* @_ZN2ns4funcEi, variables: !2)
+!9 = distinct !DISubprogram(name: "func", linkageName: "_ZN2ns4funcEi", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !10, type: !11, variables: !2)
 !10 = !DINamespace(name: "ns", line: 1, file: !1, scope: null)
 !11 = !DISubroutineType(types: !12)
 !12 = !{!8, !8}

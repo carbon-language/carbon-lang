@@ -8,7 +8,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
 
 ; Function Attrs: nounwind readonly ssp uwtable
-define double @cond_sum(i32* nocapture readonly %v, i32 %n) #0 {
+define double @cond_sum(i32* nocapture readonly %v, i32 %n) #0 !dbg !4 {
 entry:
   %cmp.7 = icmp sgt i32 %n, 0, !dbg !3
   br i1 %cmp.7, label %for.body.preheader, label %for.cond.cleanup, !dbg !8
@@ -39,7 +39,7 @@ for.body:                                         ; preds = %for.body.preheader,
 }
 
 ; Function Attrs: nounwind readonly ssp uwtable
-define double @cond_sum_loop_hint(i32* nocapture readonly %v, i32 %n) #0 {
+define double @cond_sum_loop_hint(i32* nocapture readonly %v, i32 %n) #0 !dbg !20 {
 entry:
   %cmp.7 = icmp sgt i32 %n, 0, !dbg !19
   br i1 %cmp.7, label %for.body.preheader, label %for.cond.cleanup, !dbg !21
@@ -78,7 +78,7 @@ attributes #0 = { nounwind }
 !1 = !{i32 1, !"PIC Level", i32 2}
 !2 = !{!"clang version 3.7.0"}
 !3 = !DILocation(line: 5, column: 20, scope: !4)
-!4 = distinct !DISubprogram(name: "cond_sum", scope: !5, file: !5, line: 1, type: !6, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, function: double (i32*, i32)* @cond_sum, variables: !7)
+!4 = distinct !DISubprogram(name: "cond_sum", scope: !5, file: !5, line: 1, type: !6, isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: true, variables: !7)
 !5 = !DIFile(filename: "no_fpmath.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{}
@@ -94,7 +94,7 @@ attributes #0 = { nounwind }
 !17 = distinct !{!17, !18}
 !18 = !{!"llvm.loop.unroll.disable"}
 !19 = !DILocation(line: 16, column: 20, scope: !20)
-!20 = distinct !DISubprogram(name: "cond_sum_loop_hint", scope: !5, file: !5, line: 12, type: !6, isLocal: false, isDefinition: true, scopeLine: 12, flags: DIFlagPrototyped, isOptimized: true, function: double (i32*, i32)* @cond_sum_loop_hint, variables: !7)
+!20 = distinct !DISubprogram(name: "cond_sum_loop_hint", scope: !5, file: !5, line: 12, type: !6, isLocal: false, isDefinition: true, scopeLine: 12, flags: DIFlagPrototyped, isOptimized: true, variables: !7)
 !21 = !DILocation(line: 16, column: 3, scope: !20)
 !22 = !DILocation(line: 17, column: 14, scope: !20)
 !23 = !DILocation(line: 20, column: 3, scope: !20)
