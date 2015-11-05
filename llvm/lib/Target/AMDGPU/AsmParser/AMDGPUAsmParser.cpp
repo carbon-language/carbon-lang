@@ -330,6 +330,15 @@ class AMDGPUAsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
 
   unsigned ForcedEncodingSize;
+
+  bool isVI() const {
+    return STI.getFeatureBits()[AMDGPU::FeatureVolcanicIslands];
+  }
+
+  bool hasSGPR102_SGPR103() const {
+    return !isVI();
+  }
+
   /// @name Auto-generated Match Functions
   /// {
 
@@ -345,6 +354,7 @@ private:
   bool ParseAMDKernelCodeTValue(StringRef ID, amd_kernel_code_t &Header);
   bool ParseDirectiveAMDKernelCodeT();
   bool ParseSectionDirectiveHSAText();
+  bool subtargetHasRegister(const MCRegisterInfo &MRI, unsigned RegNo) const;
 
 public:
 public:
@@ -356,7 +366,7 @@ public:
                const MCInstrInfo &MII,
                const MCTargetOptions &Options)
       : MCTargetAsmParser(Options), STI(STI), MII(MII), Parser(_Parser),
-        ForcedEncodingSize(0){
+        ForcedEncodingSize(0) {
 
     if (STI.getFeatureBits().none()) {
       // Set default features.
@@ -559,7 +569,7 @@ bool AMDGPUAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &End
     return true;
 
   RegNo = RC.getRegister(RegIndexInClass);
-  return false;
+  return !subtargetHasRegister(*TRI, RegNo);
 }
 
 unsigned AMDGPUAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
@@ -946,6 +956,22 @@ bool AMDGPUAsmParser::ParseDirective(AsmToken DirectiveID) {
 
   if (IDVal == ".hsatext" || IDVal == ".text")
     return ParseSectionDirectiveHSAText();
+
+  return true;
+}
+
+bool AMDGPUAsmParser::subtargetHasRegister(const MCRegisterInfo &MRI,
+                                           unsigned RegNo) const {
+  if (!isVI())
+    return true;
+
+  // VI only has 102 SGPRs, so make sure we aren't trying to use the 2 more that
+  // SI/CI have.
+  for (MCRegAliasIterator R(AMDGPU::SGPR102_SGPR103, &MRI, true);
+       R.isValid(); ++R) {
+    if (*R == RegNo)
+      return false;
+  }
 
   return true;
 }
