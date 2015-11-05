@@ -184,10 +184,7 @@ bool mergeAndDeduplicate(const TUReplacements &TUs,
   }
 
   // Ask clang to deduplicate and report conflicts.
-  if (deduplicateAndDetectConflicts(GroupedReplacements, SM))
-    return false;
-
-  return true;
+  return !deduplicateAndDetectConflicts(GroupedReplacements, SM);
 }
 
 bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
