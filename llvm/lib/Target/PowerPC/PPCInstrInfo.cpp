@@ -230,7 +230,7 @@ bool PPCInstrInfo::isAssociativeAndCommutative(const MachineInstr &Inst) const {
 
 bool PPCInstrInfo::getMachineCombinerPatterns(
     MachineInstr &Root,
-    SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Patterns) const {
+    SmallVectorImpl<MachineCombinerPattern> &Patterns) const {
   // Using the machine combiner in this way is potentially expensive, so
   // restrict to when aggressive optimizations are desired.
   if (Subtarget.getTargetMachine().getOptLevel() != CodeGenOpt::Aggressive)

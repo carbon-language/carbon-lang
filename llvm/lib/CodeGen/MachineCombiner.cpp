@@ -336,7 +336,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
     auto &MI = *BlockIter++;
 
     DEBUG(dbgs() << "INSTR "; MI.dump(); dbgs() << "\n";);
-    SmallVector<MachineCombinerPattern::MC_PATTERN, 16> Patterns;
+    SmallVector<MachineCombinerPattern, 16> Patterns;
     // The motivating example is:
     //
     //     MUL  Other        MUL_op1 MUL_op2  Other

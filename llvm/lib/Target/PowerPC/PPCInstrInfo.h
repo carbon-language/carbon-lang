@@ -145,7 +145,7 @@ public:
   /// output in the <Pattern> array.
   bool getMachineCombinerPatterns(
       MachineInstr &Root,
-      SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &P) const override;
+      SmallVectorImpl<MachineCombinerPattern> &P) const override;
 
   bool isAssociativeAndCommutative(const MachineInstr &Inst) const override;
 

@@ -800,7 +800,7 @@ public:
   /// \param Patterns - Vector of possible combination patterns
   virtual bool getMachineCombinerPatterns(
       MachineInstr &Root,
-      SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Patterns) const;
+      SmallVectorImpl<MachineCombinerPattern> &Patterns) const;
 
   /// Return true if the input \P Inst is part of a chain of dependent ops
   /// that are suitable for reassociation, otherwise return false.
@@ -832,7 +832,7 @@ public:
   /// \param InstrIdxForVirtReg - map of virtual register to instruction in
   /// InsInstr that defines it
   virtual void genAlternativeCodeSequence(
-      MachineInstr &Root, MachineCombinerPattern::MC_PATTERN Pattern,
+      MachineInstr &Root, MachineCombinerPattern Pattern,
       SmallVectorImpl<MachineInstr *> &InsInstrs,
       SmallVectorImpl<MachineInstr *> &DelInstrs,
       DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const;
@@ -840,7 +840,7 @@ public:
   /// Attempt to reassociate \P Root and \P Prev according to \P Pattern to
   /// reduce critical path length.
   void reassociateOps(MachineInstr &Root, MachineInstr &Prev,
-                      MachineCombinerPattern::MC_PATTERN Pattern,
+                      MachineCombinerPattern Pattern,
                       SmallVectorImpl<MachineInstr *> &InsInstrs,
                       SmallVectorImpl<MachineInstr *> &DelInstrs,
                       DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const;

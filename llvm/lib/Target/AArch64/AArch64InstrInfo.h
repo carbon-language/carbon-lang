@@ -167,13 +167,13 @@ public:
   /// for an instruction chain ending in <Root>. All potential patterns are
   /// listed in the <Patterns> array.
   bool getMachineCombinerPatterns(MachineInstr &Root,
-                  SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Patterns)
+                  SmallVectorImpl<MachineCombinerPattern> &Patterns)
       const override;
 
   /// When getMachineCombinerPatterns() finds patterns, this function generates
   /// the instructions that could replace the original code sequence
   void genAlternativeCodeSequence(
-      MachineInstr &Root, MachineCombinerPattern::MC_PATTERN Pattern,
+      MachineInstr &Root, MachineCombinerPattern Pattern,
       SmallVectorImpl<MachineInstr *> &InsInstrs,
       SmallVectorImpl<MachineInstr *> &DelInstrs,
       DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const override;
