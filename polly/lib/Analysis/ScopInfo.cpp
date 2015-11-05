@@ -641,17 +641,21 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
 }
 
 MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
-                           __isl_take isl_id *Id, AccessType Type,
-                           Value *BaseAddress, unsigned ElemBytes, bool Affine,
+                           AccessType Type, Value *BaseAddress,
+                           unsigned ElemBytes, bool Affine,
                            ArrayRef<const SCEV *> Subscripts,
                            ArrayRef<const SCEV *> Sizes, Value *AccessValue,
                            AccessOrigin Origin, StringRef BaseName)
-    : Id(Id), Origin(Origin), AccType(Type), RedType(RT_NONE), Statement(Stmt),
+    : Origin(Origin), AccType(Type), RedType(RT_NONE), Statement(Stmt),
       BaseAddr(BaseAddress), BaseName(BaseName), ElemBytes(ElemBytes),
       Sizes(Sizes.begin(), Sizes.end()), AccessInstruction(AccessInst),
       AccessValue(AccessValue), IsAffine(Affine),
       Subscripts(Subscripts.begin(), Subscripts.end()), AccessRelation(nullptr),
-      NewAccessRelation(nullptr) {}
+      NewAccessRelation(nullptr) {
+
+  std::string IdName = "__polly_array_ref";
+  Id = isl_id_alloc(Stmt->getParent()->getIslCtx(), IdName.c_str(), this);
+}
 
 void MemoryAccess::realignParams() {
   isl_space *ParamSpace = Statement->getParent()->getParamSpace();
@@ -3636,20 +3640,15 @@ void ScopInfo::addMemoryAccess(BasicBlock *BB, Instruction *Inst,
     return;
 
   AccFuncSetType &AccList = AccFuncMap[BB];
-  size_t Identifier = AccList.size();
-
   Value *BaseAddr = BaseAddress;
   std::string BaseName = getIslCompatibleName("MemRef_", BaseAddr, "");
-
-  std::string IdName = "__polly_array_ref_" + std::to_string(Identifier);
-  isl_id *Id = isl_id_alloc(ctx, IdName.c_str(), nullptr);
 
   bool isApproximated =
       Stmt->isRegionStmt() && (Stmt->getRegion()->getEntry() != BB);
   if (isApproximated && Type == MemoryAccess::MUST_WRITE)
     Type = MemoryAccess::MAY_WRITE;
 
-  AccList.emplace_back(Stmt, Inst, Id, Type, BaseAddress, ElemBytes, Affine,
+  AccList.emplace_back(Stmt, Inst, Type, BaseAddress, ElemBytes, Affine,
                        Subscripts, Sizes, AccessValue, Origin, BaseName);
   Stmt->addAccess(&AccList.back());
 }
