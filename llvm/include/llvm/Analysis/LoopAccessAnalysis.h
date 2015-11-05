@@ -503,6 +503,13 @@ private:
 /// generates run-time checks to prove independence.  This is done by
 /// AccessAnalysis::canCheckPtrAtRT and the checks are maintained by the
 /// RuntimePointerCheck class.
+///
+/// If pointers can wrap or can't be expressed as affine AddRec expressions by
+/// ScalarEvolution, we will generate run-time checks by emitting a
+/// SCEVUnionPredicate.
+///
+/// Checks for both memory dependences and SCEV predicates must be emitted in
+/// order for the results of this analysis to be valid.
 class LoopAccessInfo {
 public:
   LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout &DL,
