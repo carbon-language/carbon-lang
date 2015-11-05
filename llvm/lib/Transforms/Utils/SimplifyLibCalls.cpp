@@ -1049,9 +1049,9 @@ Value *LibCallSimplifier::optimizeBinaryDoubleFP(CallInst *CI, IRBuilder<> &B) {
 Value *LibCallSimplifier::optimizeCos(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
   Value *Ret = nullptr;
-  if (UnsafeFPShrink && Callee->getName() == "cos" && TLI->has(LibFunc::cosf)) {
+  StringRef Name = Callee->getName();
+  if (UnsafeFPShrink && Name == "cos" && hasFloatVersion(Name))
     Ret = optimizeUnaryDoubleFP(CI, B, true);
-  }
 
   FunctionType *FT = Callee->getFunctionType();
   // Just make sure this has 1 argument of FP type, which matches the
@@ -1071,11 +1071,10 @@ Value *LibCallSimplifier::optimizeCos(CallInst *CI, IRBuilder<> &B) {
 
 Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
-
   Value *Ret = nullptr;
-  if (UnsafeFPShrink && Callee->getName() == "pow" && TLI->has(LibFunc::powf)) {
+  StringRef Name = Callee->getName();
+  if (UnsafeFPShrink && Name == "pow" && hasFloatVersion(Name))
     Ret = optimizeUnaryDoubleFP(CI, B, true);
-  }
 
   FunctionType *FT = Callee->getFunctionType();
   // Just make sure this has 2 arguments of the same FP type, which match the
@@ -1168,12 +1167,10 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
 Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
   Function *Caller = CI->getParent()->getParent();
-
   Value *Ret = nullptr;
-  if (UnsafeFPShrink && Callee->getName() == "exp2" &&
-      TLI->has(LibFunc::exp2f)) {
+  StringRef Name = Callee->getName();
+  if (UnsafeFPShrink && Name == "exp2" && hasFloatVersion(Name))
     Ret = optimizeUnaryDoubleFP(CI, B, true);
-  }
 
   FunctionType *FT = Callee->getFunctionType();
   // Just make sure this has 1 argument of FP type, which matches the
@@ -1222,11 +1219,10 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
 
 Value *LibCallSimplifier::optimizeFabs(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
-
   Value *Ret = nullptr;
-  if (Callee->getName() == "fabs" && TLI->has(LibFunc::fabsf)) {
+  StringRef Name = Callee->getName();
+  if (Name == "fabs" && hasFloatVersion(Name))
     Ret = optimizeUnaryDoubleFP(CI, B, false);
-  }
 
   FunctionType *FT = Callee->getFunctionType();
   // Make sure this has 1 argument of FP type which matches the result type.
@@ -1248,8 +1244,9 @@ Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
   // If we can shrink the call to a float function rather than a double
   // function, do that first.
   Function *Callee = CI->getCalledFunction();
-  if ((Callee->getName() == "fmin" && TLI->has(LibFunc::fminf)) ||
-      (Callee->getName() == "fmax" && TLI->has(LibFunc::fmaxf))) {
+  StringRef Name = Callee->getName();
+  if ((Name == "fmin" && hasFloatVersion(Name)) ||
+      (Name == "fmax" && hasFloatVersion(Name))) {
     Value *Ret = optimizeBinaryDoubleFP(CI, B);
     if (Ret)
       return Ret;
@@ -1362,7 +1359,8 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
 Value *LibCallSimplifier::optimizeTan(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
   Value *Ret = nullptr;
-  if (UnsafeFPShrink && Callee->getName() == "tan" && TLI->has(LibFunc::tanf))
+  StringRef Name = Callee->getName();
+  if (UnsafeFPShrink && Name == "tan" && hasFloatVersion(Name))
     Ret = optimizeUnaryDoubleFP(CI, B, true);
   FunctionType *FT = Callee->getFunctionType();
 
