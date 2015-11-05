@@ -2433,6 +2433,8 @@ multiclass MUBUF_Atomic <mubuf op, string name, RegisterClass rc,
   } // mayStore = 1, mayLoad = 1, hasPostISelHook = 1
 }
 
+// FIXME: tfe can't be an operand because it requires a separate
+// opcode because it needs an N+1 register class dest register.
 multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
                               ValueType load_vt = i32,
                               SDPatternOperator ld = null_frag> {

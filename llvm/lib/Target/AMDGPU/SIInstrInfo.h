@@ -434,6 +434,12 @@ public:
     return getNamedOperand(const_cast<MachineInstr &>(MI), OpName);
   }
 
+  /// Get required immediate operand
+  int64_t getNamedImmOperand(const MachineInstr &MI, unsigned OpName) const {
+    int Idx = AMDGPU::getNamedOperandIdx(MI.getOpcode(), OpName);
+    return MI.getOperand(Idx).getImm();
+  }
+
   uint64_t getDefaultRsrcDataFormat() const;
   uint64_t getScratchRsrcWords23() const;
 };
