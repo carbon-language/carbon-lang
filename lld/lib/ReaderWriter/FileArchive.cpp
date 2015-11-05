@@ -49,9 +49,11 @@ public:
     if (member == _symbolMemberMap.end())
       return nullptr;
     Archive::child_iterator ci = member->second;
+    if (ci->getError())
+      return nullptr;
 
     // Don't return a member already returned
-    ErrorOr<StringRef> buf = ci->getBuffer();
+    ErrorOr<StringRef> buf = (*ci)->getBuffer();
     if (!buf)
       return nullptr;
     const char *memberStart = buf->data();
@@ -90,9 +92,11 @@ public:
     if (member == _symbolMemberMap.end())
       return;
     Archive::child_iterator ci = member->second;
+    if (ci->getError())
+      return;
 
     // Do nothing if a member is already instantiated.
-    ErrorOr<StringRef> buf = ci->getBuffer();
+    ErrorOr<StringRef> buf = (*ci)->getBuffer();
     if (!buf)
       return;
     const char *memberStart = buf->data();
@@ -167,10 +171,12 @@ protected:
   }
 
 private:
-  std::error_code
-  instantiateMember(Archive::child_iterator member,
-                    std::unique_ptr<File> &result) const {
-    ErrorOr<llvm::MemoryBufferRef> mbOrErr = member->getMemoryBufferRef();
+  std::error_code instantiateMember(Archive::child_iterator cOrErr,
+                                    std::unique_ptr<File> &result) const {
+    if (std::error_code ec = cOrErr->getError())
+      return ec;
+    Archive::child_iterator member = cOrErr->get();
+    ErrorOr<llvm::MemoryBufferRef> mbOrErr = (*member)->getMemoryBufferRef();
     if (std::error_code ec = mbOrErr.getError())
       return ec;
     llvm::MemoryBufferRef mb = mbOrErr.get();
@@ -201,8 +207,11 @@ private:
   // Parses the given memory buffer as an object file, and returns true
   // code if the given symbol is a data symbol. If the symbol is not a data
   // symbol or does not exist, returns false.
-  bool isDataSymbol(Archive::child_iterator member, StringRef symbol) const {
-    ErrorOr<llvm::MemoryBufferRef> buf = member->getMemoryBufferRef();
+  bool isDataSymbol(Archive::child_iterator cOrErr, StringRef symbol) const {
+    if (cOrErr->getError())
+      return false;
+    Archive::child_iterator member = cOrErr->get();
+    ErrorOr<llvm::MemoryBufferRef> buf = (*member)->getMemoryBufferRef();
     if (buf.getError())
       return false;
     std::unique_ptr<MemoryBuffer> mb(MemoryBuffer::getMemBuffer(
@@ -242,10 +251,11 @@ private:
       if (std::error_code ec = memberOrErr.getError())
         return ec;
       Archive::child_iterator member = memberOrErr.get();
-      DEBUG_WITH_TYPE(
-          "FileArchive",
-          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer()->data())
-                       << "'" << name << "'\n");
+      DEBUG_WITH_TYPE("FileArchive",
+                      llvm::dbgs()
+                          << llvm::format("0x%08llX ",
+                                          (*member)->getBuffer()->data())
+                          << "'" << name << "'\n");
       _symbolMemberMap.insert(std::make_pair(name, member));
     }
     return std::error_code();

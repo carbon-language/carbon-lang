@@ -308,7 +308,10 @@ std::vector<MemoryBufferRef> ArchiveFile::getMembers() {
   File = openArchive(MB);
 
   std::vector<MemoryBufferRef> Result;
-  for (const Archive::Child &Child : File->children()) {
+  for (auto &ChildOrErr : File->children()) {
+    error(ChildOrErr,
+          "Could not get the child of the archive " + File->getFileName());
+    const Archive::Child Child(*ChildOrErr);
     ErrorOr<MemoryBufferRef> MbOrErr = Child.getMemoryBufferRef();
     error(MbOrErr, "Could not get the buffer for a child of the archive " +
                        File->getFileName());

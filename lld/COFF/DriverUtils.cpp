@@ -521,7 +521,9 @@ static std::unique_ptr<MemoryBuffer> createEmptyImportLibrary() {
 static std::vector<NewArchiveIterator>
 readMembers(const object::Archive &Archive) {
   std::vector<NewArchiveIterator> V;
-  for (const object::Archive::Child &C : Archive.children()) {
+  for (const auto &ChildOrErr : Archive.children()) {
+    error(ChildOrErr, "Archive::Child::getName failed");
+    const object::Archive::Child C(*ChildOrErr);
     ErrorOr<StringRef> NameOrErr = C.getName();
     error(NameOrErr, "Archive::Child::getName failed");
     V.emplace_back(C, *NameOrErr);
@@ -570,7 +572,7 @@ public:
     P += Sym.size() + 1;
     memcpy(P, DLLName.data(), DLLName.size());
 
-    object::Archive::Child C(Parent, Buf);
+    object::Archive::Child C(Parent, Buf, nullptr);
     return NewArchiveIterator(C, DLLName);
   }
 
