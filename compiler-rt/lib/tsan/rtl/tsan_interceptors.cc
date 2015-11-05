@@ -626,7 +626,10 @@ TSAN_INTERCEPTOR(void*, memcpy, void *dst, const void *src, uptr size) {
     MemoryAccessRange(thr, pc, (uptr)dst, size, true);
     MemoryAccessRange(thr, pc, (uptr)src, size, false);
   }
-  return internal_memcpy(dst, src, size);
+  // On OS X, calling internal_memcpy here will cause memory corruptions,
+  // because memcpy and memmove are actually aliases of the same implementation.
+  // We need to use internal_memmove here.
+  return internal_memmove(dst, src, size);
 }
 
 TSAN_INTERCEPTOR(void*, memmove, void *dst, void *src, uptr n) {
