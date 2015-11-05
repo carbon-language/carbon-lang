@@ -7,8 +7,10 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @foo(i32 %len) sanitize_address {
 entry:
+; CHECK-ALLOCA-LABEL: define void @foo
 ; CHECK-ALLOCA: __asan_alloca_poison
 ; CHECK-ALLOCA: __asan_allocas_unpoison
+; CHECK-ALLOCA: ret void
   %0 = alloca i32, align 4
   %1 = alloca i8*
   store volatile i32 %len, i32* %0, align 4
@@ -19,3 +21,17 @@ entry:
   ret void
 }
 
+; Test that dynamic alloca is not used for inalloca variables.
+define void @has_inalloca() uwtable sanitize_address {
+; CHECK-ALLOCA-LABEL: define void @has_inalloca
+; CHECK-ALLOCA-NOT: __asan_alloca_poison
+; CHECK-ALLOCA-NOT: __asan_alloca_unpoison
+; CHECK-ALLOCA: ret void
+entry:
+  %t = alloca inalloca i32
+  store i32 42, i32* %t
+  call void @pass_inalloca(i32* inalloca %t)
+  ret void
+}
+
+declare void @pass_inalloca(i32* inalloca)
