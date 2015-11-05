@@ -261,7 +261,8 @@ information) and construct our function definition:
   DISubprogram *SP = DBuilder->createFunction(
       FContext, Name, StringRef(), Unit, LineNo,
       CreateFunctionType(Args.size(), Unit), false /* internal linkage */,
-      true /* definition */, ScopeLine, DINode::FlagPrototyped, false, F);
+      true /* definition */, ScopeLine, DINode::FlagPrototyped, false);
+  F->setSubprogram(SP);
 
 and we now have an DISubprogram that contains a reference to all of our
 metadata for the function.
