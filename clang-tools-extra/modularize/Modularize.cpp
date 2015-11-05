@@ -356,7 +356,8 @@ static std::string findInputFile(const CommandLineArguments &CLArgs) {
 // if no other "-x" option is present.
 static ArgumentsAdjuster
 getModularizeArgumentsAdjuster(DependencyMap &Dependencies) {
-  return [&Dependencies](const CommandLineArguments &Args) {
+  return [&Dependencies](const CommandLineArguments &Args,
+                         StringRef /*unused*/) {
     std::string InputFile = findInputFile(Args);
     DependentsVector &FileDependents = Dependencies[InputFile];
     CommandLineArguments NewArgs(Args);
