@@ -26,6 +26,7 @@ set(TSAN_SOURCES
   rtl/tsan_interface_atomic.cc
   rtl/tsan_interface.cc
   rtl/tsan_interface_java.cc
+  rtl/tsan_malloc_mac.cc
   rtl/tsan_md5.cc
   rtl/tsan_mman.cc
   rtl/tsan_mutex.cc

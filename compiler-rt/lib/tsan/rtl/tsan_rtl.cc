@@ -325,6 +325,7 @@ void Initialize(ThreadState *thr) {
   CheckVMASize();
 #ifndef SANITIZER_GO
   InitializeAllocator();
+  ReplaceSystemMalloc();
 #endif
   InitializeInterceptors();
   CheckShadowMapping();

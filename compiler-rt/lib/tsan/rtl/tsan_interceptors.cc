@@ -97,8 +97,8 @@ extern "C" int pthread_sigmask(int how, const __sanitizer_sigset_t *set,
 // REAL(sigfillset) defined in common interceptors.
 DECLARE_REAL(int, sigfillset, __sanitizer_sigset_t *set)
 DECLARE_REAL(int, fflush, __sanitizer_FILE *fp)
-DECLARE_REAL(void *, malloc, uptr size)
-DECLARE_REAL(void, free, void *ptr)
+DECLARE_REAL_AND_INTERCEPTOR(void *, malloc, uptr size)
+DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
 extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int *__errno_location();
@@ -534,6 +534,7 @@ TSAN_INTERCEPTOR(void, siglongjmp, uptr *env, int val) {
   REAL(siglongjmp)(env, val);
 }
 
+#if !SANITIZER_MAC
 TSAN_INTERCEPTOR(void*, malloc, uptr size) {
   if (cur_thread()->in_symbolizer)
     return __libc_malloc(size);
@@ -546,12 +547,10 @@ TSAN_INTERCEPTOR(void*, malloc, uptr size) {
   return p;
 }
 
-#if !SANITIZER_MAC
 TSAN_INTERCEPTOR(void*, __libc_memalign, uptr align, uptr sz) {
   SCOPED_TSAN_INTERCEPTOR(__libc_memalign, align, sz);
   return user_alloc(thr, pc, sz, align);
 }
-#endif
 
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
   if (cur_thread()->in_symbolizer)
@@ -588,7 +587,6 @@ TSAN_INTERCEPTOR(void, free, void *p) {
   user_free(thr, pc, p);
 }
 
-#if !SANITIZER_MAC
 TSAN_INTERCEPTOR(void, cfree, void *p) {
   if (p == 0)
     return;
@@ -598,9 +596,7 @@ TSAN_INTERCEPTOR(void, cfree, void *p) {
   SCOPED_INTERCEPTOR_RAW(cfree, p);
   user_free(thr, pc, p);
 }
-#endif
 
-#if !SANITIZER_MAC
 TSAN_INTERCEPTOR(uptr, malloc_usable_size, void *p) {
   SCOPED_INTERCEPTOR_RAW(malloc_usable_size, p);
   return user_alloc_usable_size(p);
@@ -760,12 +756,12 @@ TSAN_INTERCEPTOR(void*, aligned_alloc, uptr align, uptr sz) {
   SCOPED_INTERCEPTOR_RAW(memalign, align, sz);
   return user_alloc(thr, pc, sz, align);
 }
-#endif
 
 TSAN_INTERCEPTOR(void*, valloc, uptr sz) {
   SCOPED_INTERCEPTOR_RAW(valloc, sz);
   return user_alloc(thr, pc, sz, GetPageSizeCached());
 }
+#endif
 
 #if SANITIZER_LINUX
 TSAN_INTERCEPTOR(void*, pvalloc, uptr sz) {
@@ -778,11 +774,13 @@ TSAN_INTERCEPTOR(void*, pvalloc, uptr sz) {
 #define TSAN_MAYBE_INTERCEPT_PVALLOC
 #endif
 
+#if !SANITIZER_MAC
 TSAN_INTERCEPTOR(int, posix_memalign, void **memptr, uptr align, uptr sz) {
   SCOPED_INTERCEPTOR_RAW(posix_memalign, memptr, align, sz);
   *memptr = user_alloc(thr, pc, sz, align);
   return 0;
 }
+#endif
 
 // Used in thread-safe function static initialization.
 extern "C" int INTERFACE_ATTRIBUTE __cxa_guard_acquire(atomic_uint32_t *g) {

@@ -20,6 +20,7 @@ namespace __tsan {
 const uptr kDefaultAlignment = 16;
 
 void InitializeAllocator();
+void ReplaceSystemMalloc();
 void AllocatorThreadStart(ThreadState *thr);
 void AllocatorThreadFinish(ThreadState *thr);
 void AllocatorPrintStats();

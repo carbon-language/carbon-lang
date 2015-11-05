@@ -331,6 +331,10 @@ int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
 }
 #endif
 
+#ifndef SANITIZER_GO
+void ReplaceSystemMalloc() { }
+#endif
+
 }  // namespace __tsan
 
 #endif  // SANITIZER_LINUX || SANITIZER_FREEBSD
