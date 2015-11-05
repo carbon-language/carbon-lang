@@ -1540,17 +1540,15 @@ void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
   for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = FrameArray[i];
 
-    // Emit the label from the previous iteration
-    if (FDEEnd) {
-      Streamer.EmitLabel(FDEEnd);
-      FDEEnd = nullptr;
-    }
-
     if (CanOmitDwarf && Frame.CompactUnwindEncoding !=
           MOFI->getCompactUnwindDwarfEHFrameOnly())
       // Don't generate an EH frame if we don't need one. I.e., it's taken care
       // of by the compact unwind encoding.
       continue;
+
+    // Close the previous FDE.
+    if (FDEEnd)
+      Streamer.EmitLabel(FDEEnd);
 
     CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
                Frame.LsdaEncoding, Frame.IsSignalFrame, Frame.IsSimple);
