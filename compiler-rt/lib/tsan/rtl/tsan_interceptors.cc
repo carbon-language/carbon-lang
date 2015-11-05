@@ -1302,7 +1302,7 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
   if (!SANITIZER_MAC)
     a = static_cast<atomic_uint32_t*>(o);
   else  // On OS X, pthread_once_t has a header with a long-sized signature.
-    a = static_cast<atomic_uint32_t*>((void *)((char *)o + sizeof(long)));
+    a = static_cast<atomic_uint32_t*>((void *)((char *)o + sizeof(long_t)));
   u32 v = atomic_load(a, memory_order_acquire);
   if (v == 0 && atomic_compare_exchange_strong(a, &v, 1,
                                                memory_order_relaxed)) {
