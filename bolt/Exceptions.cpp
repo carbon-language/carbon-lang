@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Exceptions.h"
+#include "BinaryFunction.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -248,6 +249,136 @@ void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC) {
       continue;
 
     Ptr = TypeIndexTableStart + MaxTypeIndexTableOffset;
+  }
+}
+
+const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
+const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
+
+void CFIReader::fillCFIInfoFor(BinaryFunction &Function) const {
+  uint64_t Address = Function.getAddress();
+  auto I = FDEs.find(Address);
+  if (I == FDEs.end())
+    return;
+
+  const FDE &CurFDE = *I->second;
+  if (Function.getSize() != CurFDE.getAddressRange()) {
+    errs() << "FLO-WARNING: CFI information size mismatch for function \""
+           << Function.getName() << "\""
+           << format(": Function size is %dB, CFI covers "
+                     "%dB\n",
+                     Function.getSize(), CurFDE.getAddressRange());
+  }
+
+  uint64_t Offset = 0;
+  uint64_t CodeAlignment = CurFDE.getLinkedCIE()->getCodeAlignmentFactor();
+  uint64_t DataAlignment = CurFDE.getLinkedCIE()->getDataAlignmentFactor();
+  for (const FrameEntry::Instruction &Instr : CurFDE) {
+    uint8_t Opcode = Instr.Opcode;
+    if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
+      Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
+    switch (Instr.Opcode) {
+    case DW_CFA_nop:
+      break;
+    case DW_CFA_advance_loc4:
+    case DW_CFA_advance_loc2:
+    case DW_CFA_advance_loc1:
+    case DW_CFA_advance_loc:
+      // Advance our current address
+      Offset += CodeAlignment * int64_t(Instr.Ops[0]);
+      break;
+    case DW_CFA_offset_extended_sf:
+      Function.addCFIInstruction(
+          Offset,
+          MCCFIInstruction::createOffset(
+              nullptr, Instr.Ops[0], DataAlignment * int64_t(Instr.Ops[1])));
+      break;
+    case DW_CFA_offset_extended:
+    case DW_CFA_offset:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createOffset(nullptr, Instr.Ops[0],
+                                                 DataAlignment * Instr.Ops[1]));
+      break;
+    case DW_CFA_restore_extended:
+    case DW_CFA_restore:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_set_loc:
+      assert(Instr.Ops[0] < Address && "set_loc out of function bounds");
+      assert(Instr.Ops[0] > Address + Function.getSize() &&
+             "set_loc out of function bounds");
+      Offset = Instr.Ops[0] - Address;
+      break;
+
+    case DW_CFA_undefined:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createUndefined(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_same_value:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createSameValue(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_register:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createRegister(nullptr, Instr.Ops[0],
+                                                   Instr.Ops[1]));
+      break;
+    case DW_CFA_remember_state:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createRememberState(nullptr));
+      break;
+    case DW_CFA_restore_state:
+      Function.addCFIInstruction(Offset,
+                                 MCCFIInstruction::createRestoreState(nullptr));
+      break;
+    case DW_CFA_def_cfa:
+      Function.addCFIInstruction(
+          Offset,
+          MCCFIInstruction::createDefCfa(nullptr, Instr.Ops[0], Instr.Ops[1]));
+      break;
+    case DW_CFA_def_cfa_sf:
+      Function.addCFIInstruction(
+          Offset,
+          MCCFIInstruction::createDefCfa(
+              nullptr, Instr.Ops[0], DataAlignment * int64_t(Instr.Ops[1])));
+      break;
+    case DW_CFA_def_cfa_register:
+      Function.addCFIInstruction(Offset, MCCFIInstruction::createDefCfaRegister(
+                                             nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_def_cfa_offset:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createDefCfaOffset(nullptr, Instr.Ops[0]));
+      break;
+    case DW_CFA_def_cfa_offset_sf:
+      Function.addCFIInstruction(
+          Offset, MCCFIInstruction::createDefCfaOffset(
+                      nullptr, DataAlignment * int64_t(Instr.Ops[0])));
+      break;
+    case DW_CFA_val_offset_sf:
+    case DW_CFA_val_offset:
+      llvm_unreachable("DWARF val_offset() unimplemented");
+      break;
+    case DW_CFA_expression:
+    case DW_CFA_def_cfa_expression:
+    case DW_CFA_val_expression:
+      llvm_unreachable("DWARF CFA expressions unimplemented");
+      break;
+      dbgs() << "DW_CFA_val_expression";
+      break;
+    case DW_CFA_MIPS_advance_loc8:
+      llvm_unreachable("DW_CFA_MIPS_advance_loc unimplemented");
+      break;
+    case DW_CFA_GNU_args_size:
+    case DW_CFA_GNU_window_save:
+    case DW_CFA_lo_user:
+    case DW_CFA_hi_user:
+      llvm_unreachable("DW_CFA_GNU_* and DW_CFA_*_use unimplemented");
+      break;
+    default:
+      llvm_unreachable("Unrecognized CFI instruction");
+    }
   }
 }
 

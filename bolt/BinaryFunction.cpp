@@ -76,7 +76,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  Section     : "   << SectionName
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  IsSimple    : "   << IsSimple
-     << "\n  BB Count    : "   << BasicBlocksLayout.size();
+     << "\n  BB Count    : "   << BasicBlocksLayout.size()
+     << "\n  CFI Instrs  : "   << FrameInstructions.size();
   if (BasicBlocksLayout.size()) {
     OS << "\n  BB Layout   : ";
     auto Sep = "";
@@ -175,6 +176,33 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     }
 
     OS << '\n';
+  }
+
+  if (FrameInstructions.empty()) {
+    OS << "End of Function \"" << getName() << "\"\n";
+    return;
+  }
+
+  OS << "DWARF CFI Instructions:\n";
+  for (auto &CFIInstr : FrameInstructions) {
+    OS << format("    %08x:   ", CFIInstr.first);
+    switch(CFIInstr.second.getOperation()) {
+    case MCCFIInstruction::OpSameValue:        OS << "OpSameValue";       break;
+    case MCCFIInstruction::OpRememberState:    OS << "OpRememberState";   break;
+    case MCCFIInstruction::OpRestoreState:     OS << "OpRestoreState";    break;
+    case MCCFIInstruction::OpOffset:           OS << "OpOffset";          break;
+    case MCCFIInstruction::OpDefCfaRegister:   OS << "OpDefCfaRegister";  break;
+    case MCCFIInstruction::OpDefCfaOffset:     OS << "OpDefCfaOffset";    break;
+    case MCCFIInstruction::OpDefCfa:           OS << "OpDefCfa";          break;
+    case MCCFIInstruction::OpRelOffset:        OS << "OpRelOffset";       break;
+    case MCCFIInstruction::OpAdjustCfaOffset:  OS << "OfAdjustCfaOffset"; break;
+    case MCCFIInstruction::OpEscape:           OS << "OpEscape";          break;
+    case MCCFIInstruction::OpRestore:          OS << "OpRestore";         break;
+    case MCCFIInstruction::OpUndefined:        OS << "OpUndefined";       break;
+    case MCCFIInstruction::OpRegister:         OS << "OpRegister";        break;
+    case MCCFIInstruction::OpWindowSave:       OS << "OpWindowSave";      break;
+    }
+    OS << "\n";
   }
 
   OS << "End of Function \"" << getName() << "\"\n";

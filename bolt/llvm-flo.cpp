@@ -471,9 +471,14 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
   // Process debug sections.
   std::unique_ptr<DWARFContext> DwCtx(new DWARFContextInMemory(*File));
+  const DWARFFrame &EHFrame = *DwCtx->getEHFrame();
   if (opts::DumpEHFrame) {
-    const auto *Frames = DwCtx->getEHFrame();
-    Frames->dump(outs());
+    EHFrame.dump(outs());
+  }
+  CFIReader DwCFIReader(EHFrame);
+  if (!EHFrame.ParseError.empty()) {
+    errs() << "FLO-WARNING: EHFrame reader failed with message \""
+           << EHFrame.ParseError << "\"\n";
   }
 
   // Disassemble every function and build it's control flow graph.
@@ -532,6 +537,10 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     if (!Function.disassemble(FunctionData))
       continue;
+
+    // Fill in CFI information for this function
+    if (EHFrame.ParseError.empty())
+      DwCFIReader.fillCFIInfoFor(Function);
 
     if (opts::PrintAll || opts::PrintDisasm)
       Function.print(errs(), "after disassembly");

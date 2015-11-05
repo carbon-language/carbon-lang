@@ -24,6 +24,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -166,6 +167,10 @@ private:
   /// Map offset in the function to MCInst.
   using InstrMapType = std::map<uint32_t, MCInst>;
   InstrMapType Instructions;
+
+  /// List of DWARF CFI instructions
+  using CFIInstrMapType = std::multimap<uint32_t, MCCFIInstruction>;
+  CFIInstrMapType FrameInstructions;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
@@ -340,6 +345,10 @@ public:
 
   void addInstruction(uint64_t Offset, MCInst &&Instruction) {
     Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
+  }
+
+  void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
+    FrameInstructions.emplace(Offset, std::forward<MCCFIInstruction>(Inst));
   }
 
   BinaryFunction &setFileOffset(uint64_t Offset) {
