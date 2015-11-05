@@ -343,7 +343,7 @@ std::error_code readCoverageMappingData(
 
     // Skip past the function records, saving the start and end for later.
     const char *FunBuf = Buf;
-    Buf += NRecords * (sizeof(T) + 2 * sizeof(uint32_t) + sizeof(uint64_t));
+    Buf += NRecords * sizeof(coverage::CovMapFunctionRecord<T>);
     const char *FunEnd = Buf;
 
     // Get the filenames.
@@ -366,12 +366,15 @@ std::error_code readCoverageMappingData(
     // before reading the next map.
     Buf += alignmentAdjustment(Buf, 8);
 
-    while (FunBuf < FunEnd) {
+    auto CFR =
+        reinterpret_cast<const coverage::CovMapFunctionRecord<T> *>(FunBuf);
+    while ((const char *)CFR < FunEnd) {
       // Read the function information
-      T NamePtr = endian::readNext<T, Endian, unaligned>(FunBuf);
-      uint32_t NameSize = endian::readNext<uint32_t, Endian, unaligned>(FunBuf);
-      uint32_t DataSize = endian::readNext<uint32_t, Endian, unaligned>(FunBuf);
-      uint64_t FuncHash = endian::readNext<uint64_t, Endian, unaligned>(FunBuf);
+      T NamePtr = endian::byte_swap<T, Endian>(CFR->NamePtr);
+      uint32_t NameSize = endian::byte_swap<uint32_t, Endian>(CFR->NameSize);
+      uint32_t DataSize = endian::byte_swap<uint32_t, Endian>(CFR->DataSize);
+      uint64_t FuncHash = endian::byte_swap<uint64_t, Endian>(CFR->FuncHash);
+      CFR++;
 
       // Now use that to read the coverage data.
       if (CovBuf + DataSize > CovEnd)

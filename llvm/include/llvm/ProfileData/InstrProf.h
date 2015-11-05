@@ -431,11 +431,8 @@ inline uint64_t getMagic<uint32_t>() {
 
 template <class IntPtrT>
 struct ProfileData {
-  const uint32_t NameSize;
-  const uint32_t NumCounters;
-  const uint64_t FuncHash;
-  const IntPtrT NamePtr;
-  const IntPtrT CounterPtr;
+  #define INSTR_PROF_DATA(Type, LLVMType, Name, Init) Type Name;
+  #include "llvm/ProfileData/InstrProfData.inc"
 };
 
 // The definition should match the header referenced in
@@ -453,6 +450,18 @@ struct Header {
 };
 
 }  // end namespace RawInstrProf
+
+namespace coverage {
+
+LLVM_PACKED_START
+template <class IntPtrT>
+struct CovMapFunctionRecord {
+  #define COVMAP_FUNC_RECORD(Type, LLVMType, Name, Init) Type Name;
+  #include "llvm/ProfileData/InstrProfData.inc"
+};
+LLVM_PACKED_END
+
+}
 
 } // end namespace llvm
 

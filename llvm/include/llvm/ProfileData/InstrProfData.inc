@@ -17,48 +17,45 @@
 // 1. To declare a structure:
 // 
 // struct ProfData {
-// #define INSTR_PROF_DATA(Type, LLVMTypeVar, LLVMType, Name, Initializer) \
+// #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
 //    Type Name;
-// #include "ProfileData/InstrProfData.inc"
+// #include "llvm/ProfileData/InstrProfData.inc"
 // };
 //
-// 2. To define local variables for struct member's LLVM types"
-//
-// #define INSTR_PROF_DATA(Type, LLVMTypeVar, LLVMType, Name, Initializer) \
-//   LLVMTypeVar = LLVMType;
-// #include "ProfileData/InstrProfData.inc"
-//
-// 3. To construct LLVM type arrays for the struct type:
+// 2. To construct LLVM type arrays for the struct type:
 //
 // Type *DataTypes[] = {
-// #define INSTR_PROF_DATA(Type, LLVMTypeVar, LLVMType, Name, Initializer) \
-//   LLVMTypeVar,
-// #include "ProfileData/InstrProfData.inc"
+// #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
+//   LLVMType,
+// #include "llvm/ProfileData/InstrProfData.inc"
 // };
 //
 // 4. To construct constant array for the initializers:
-// #define INSTR_PROF_DATA(Type, LLVMTypeVar, LLVMType, Name, Initializer) \
+// #define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer) \
 //   Initializer,
 // Constant *ConstantVals[] = {
-// #include "ProfileData/InstrProfData.inc"
+// #include "llvm/ProfileData/InstrProfData.inc"
 // };
 //===----------------------------------------------------------------------===//
 
 #ifndef INSTR_PROF_DATA
-#define INSTR_PROF_DATA(Type, LLVMTypeVar, LLVMType, Name, Initializer)
+#define INSTR_PROF_DATA(Type, LLVMType, Name, Initializer)
 #endif
 
 // INSTR_PROF_DATA_START
-INSTR_PROF_DATA(const uint32_t, Int32Ty, llvm::Type::getInt32Ty(Ctx), NameSize, \
-                ConstantInt::get(Int32Ty, NameSize))
-INSTR_PROF_DATA(const uint32_t, Int32Ty, llvm::Type::getInt32Ty(Ctx), NumCounters, \
-                ConstantInt::get(Int32Ty, NumCounters))
-INSTR_PROF_DATA(const uint64_t, Int64Ty, llvm::Type::getInt64Ty(Ctx), FuncHash, \
-                ConstantInt::get(Int64Ty, FuncHash))
-INSTR_PROF_DATA(const IntPtrT, Int8PtrTy,llvm::Type::getInt8PtrTy(Ctx), NamePtr, \
-                ConstantExpr::getBitCast(Name, Int8PtrTy))
-INSTR_PROF_DATA(const IntPtrT, Int64PtrTy, llvm::Type::getInt64PtrTy(Ctx), CounterPtr, \
-                ConstantExpr::getBitCast(CounterPtr, Int8PtrTy))
+INSTR_PROF_DATA(const uint32_t, llvm::Type::getInt32Ty(Ctx), NameSize, \
+                ConstantInt::get(llvm::Type::getInt32Ty(Ctx), \
+                NamePtr->getType()->getPointerElementType()->getArrayNumElements()))
+INSTR_PROF_DATA(const uint32_t, llvm::Type::getInt32Ty(Ctx), NumCounters, \
+                ConstantInt::get(llvm::Type::getInt32Ty(Ctx), NumCounters))
+INSTR_PROF_DATA(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
+                ConstantInt::get(llvm::Type::getInt64Ty(Ctx), \
+                Inc->getHash()->getZExtValue()))
+INSTR_PROF_DATA(const IntPtrT, llvm::Type::getInt8PtrTy(Ctx), NamePtr, \
+                ConstantExpr::getBitCast(NamePtr, llvm::Type::getInt8PtrTy(Ctx)))
+INSTR_PROF_DATA(const IntPtrT, llvm::Type::getInt64PtrTy(Ctx), CounterPtr, \
+                ConstantExpr::getBitCast(CounterPtr, \
+                llvm::Type::getInt64PtrTy(Ctx)))
 // INSTR_PROF_DATA_END
 
 #ifdef INSTR_PROF_DATA
@@ -67,18 +64,19 @@ INSTR_PROF_DATA(const IntPtrT, Int64PtrTy, llvm::Type::getInt64PtrTy(Ctx), Count
 
 
 #ifndef COVMAP_FUNC_RECORD
-#define COVMAP_FUNC_RECORD(Type, LLVMTypeVar, LLVMType, Name, Initializer)
+#define COVMAP_FUNC_RECORD(Type, LLVMType, Name, Initializer)
 #endif
 
 // COVMAP_FUNC_RECORD_START
-COVMAP_FUNC_RECORD(const IntPtrT, Int8PtrTy, llvm::Type::getInt8PtrTy(Ctx), \
-                   NamePtr, llvm::ConstantExpr::getBitCast(NamePtr, Int8PtrTy))
-COVMAP_FUNC_RECORD(const uint32_t, Int32Ty, llvm::Type::getInt32Ty(Ctx), \
-                   NameSize, llvm::ConstantInt::get(Int32Ty, NameSize))
-COVMAP_FUNC_RECORD(const uint32_t, Int32Ty, llvm::Type::getInt32Ty(Ctx), \
-                   DataSize, llvm::ConstantInt::get(Int32Ty, DataSize))
-COVMAP_FUNC_RECORD(const uint64_t, Int64Ty, llvm::Type::getInt64Ty(Ctx), \
-                   FuncHash, llvm::ConstantInt::get(Int64Ty, FuncSize))
+COVMAP_FUNC_RECORD(const IntPtrT, llvm::Type::getInt8PtrTy(Ctx), \
+                   NamePtr, llvm::ConstantExpr::getBitCast(NamePtr, \
+                   llvm::Type::getInt8PtrTy(Ctx))) 
+COVMAP_FUNC_RECORD(const uint32_t, llvm::Type::getInt32Ty(Ctx), NameSize, \
+                   llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), NameSize))
+COVMAP_FUNC_RECORD(const uint32_t, llvm::Type::getInt32Ty(Ctx), DataSize, \
+                   llvm::ConstantInt::get(llvm::getInt32Ty(Ctx), DataSize))
+COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
+                   llvm::ConstantInt::get(llvm::Type::getInt64Ty(Ctx), FuncHash))
 // COVMAP_FUNC_RECORD_END
 
 #ifdef COVMAP_FUNC_RECORD

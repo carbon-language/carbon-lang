@@ -193,8 +193,8 @@ static std::string getVarName(InstrProfIncrementInst *Inc, StringRef Prefix) {
 
 GlobalVariable *
 InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
-  GlobalVariable *Name = Inc->getName();
-  auto It = RegionCounters.find(Name);
+  GlobalVariable *NamePtr = Inc->getName();
+  auto It = RegionCounters.find(NamePtr);
   if (It != RegionCounters.end())
     return It->second;
 
@@ -207,45 +207,43 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   if (Fn->hasComdat())
     ProfileVarsComdat = M->getOrInsertComdat(
         StringRef(getVarName(Inc, getInstrProfComdatPrefix())));
-  Name->setSection(getNameSection());
-  Name->setAlignment(1);
-  Name->setComdat(ProfileVarsComdat);
+  NamePtr->setSection(getNameSection());
+  NamePtr->setAlignment(1);
+  NamePtr->setComdat(ProfileVarsComdat);
 
   uint64_t NumCounters = Inc->getNumCounters()->getZExtValue();
   LLVMContext &Ctx = M->getContext();
   ArrayType *CounterTy = ArrayType::get(Type::getInt64Ty(Ctx), NumCounters);
 
   // Create the counters variable.
-  auto *Counters =
-      new GlobalVariable(*M, CounterTy, false, Name->getLinkage(),
+  auto *CounterPtr =
+      new GlobalVariable(*M, CounterTy, false, NamePtr->getLinkage(),
                          Constant::getNullValue(CounterTy),
                          getVarName(Inc, getInstrProfCountersVarPrefix()));
-  Counters->setVisibility(Name->getVisibility());
-  Counters->setSection(getCountersSection());
-  Counters->setAlignment(8);
-  Counters->setComdat(ProfileVarsComdat);
+  CounterPtr->setVisibility(NamePtr->getVisibility());
+  CounterPtr->setSection(getCountersSection());
+  CounterPtr->setAlignment(8);
+  CounterPtr->setComdat(ProfileVarsComdat);
 
-  RegionCounters[Inc->getName()] = Counters;
+  RegionCounters[Inc->getName()] = CounterPtr;
 
   // Create data variable.
-  auto *NameArrayTy = Name->getType()->getPointerElementType();
-  auto *Int32Ty = Type::getInt32Ty(Ctx);
-  auto *Int64Ty = Type::getInt64Ty(Ctx);
-  auto *Int8PtrTy = Type::getInt8PtrTy(Ctx);
-  auto *Int64PtrTy = Type::getInt64PtrTy(Ctx);
 
-  Type *DataTypes[] = {Int32Ty, Int32Ty, Int64Ty, Int8PtrTy, Int64PtrTy};
+  Type *DataTypes[] = {
+    #define INSTR_PROF_DATA(Type, LLVMType, Name, Init) LLVMType,
+    #include "llvm/ProfileData/InstrProfData.inc"
+  };
   auto *DataTy = StructType::get(Ctx, makeArrayRef(DataTypes));
+
   Constant *DataVals[] = {
-      ConstantInt::get(Int32Ty, NameArrayTy->getArrayNumElements()),
-      ConstantInt::get(Int32Ty, NumCounters),
-      ConstantInt::get(Int64Ty, Inc->getHash()->getZExtValue()),
-      ConstantExpr::getBitCast(Name, Int8PtrTy),
-      ConstantExpr::getBitCast(Counters, Int64PtrTy)};
-  auto *Data = new GlobalVariable(*M, DataTy, true, Name->getLinkage(),
+    #define INSTR_PROF_DATA(Type, LLVMType, Name, Init) Init,
+    #include "llvm/ProfileData/InstrProfData.inc"
+  };
+
+  auto *Data = new GlobalVariable(*M, DataTy, true, NamePtr->getLinkage(),
                                   ConstantStruct::get(DataTy, DataVals),
                                   getVarName(Inc, getInstrProfDataVarPrefix()));
-  Data->setVisibility(Name->getVisibility());
+  Data->setVisibility(NamePtr->getVisibility());
   Data->setSection(getDataSection());
   Data->setAlignment(8);
   Data->setComdat(ProfileVarsComdat);
@@ -253,7 +251,7 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   // Mark the data variable as used so that it isn't stripped out.
   UsedVars.push_back(Data);
 
-  return Counters;
+  return CounterPtr;
 }
 
 void InstrProfiling::emitRegistration() {
