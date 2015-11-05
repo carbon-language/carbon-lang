@@ -175,7 +175,9 @@ bool Fuzzer::RunOne(const Unit &U) {
   auto UnitStopTime = system_clock::now();
   auto TimeOfUnit =
       duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
-  if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity)
+  if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1))
+      && secondsSinceProcessStartUp() >= 2
+      && Options.Verbosity)
     PrintStats("pulse ");
   if (TimeOfUnit > TimeOfLongestUnitInSeconds &&
       TimeOfUnit >= Options.ReportSlowUnits) {

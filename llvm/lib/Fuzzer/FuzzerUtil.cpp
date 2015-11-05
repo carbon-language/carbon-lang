@@ -52,7 +52,6 @@ static void AlarmHandler(int, siginfo_t *, void *) {
 
 void SetTimer(int Seconds) {
   struct itimerval T {{Seconds, 0}, {Seconds, 0}};
-  Printf("SetTimer %d\n", Seconds);
   int Res = setitimer(ITIMER_REAL, &T, nullptr);
   assert(Res == 0);
   struct sigaction sigact;
