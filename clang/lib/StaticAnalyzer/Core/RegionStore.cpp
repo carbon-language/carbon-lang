@@ -1365,6 +1365,10 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
 
   const MemRegion *MR = L.castAs<loc::MemRegionVal>().getRegion();
 
+  if (isa<BlockDataRegion>(MR)) {
+    return UnknownVal();
+  }
+
   if (isa<AllocaRegion>(MR) ||
       isa<SymbolicRegion>(MR) ||
       isa<CodeTextRegion>(MR)) {
