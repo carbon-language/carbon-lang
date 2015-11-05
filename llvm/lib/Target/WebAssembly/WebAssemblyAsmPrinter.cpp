@@ -281,16 +281,16 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case WebAssembly::ARGUMENT_F64:
     OS << "get_local " << argToString(MI->getOperand(1));
     break;
-  case WebAssembly::Immediate_I32:
+  case WebAssembly::Const_I32:
     OS << "i32.const " << MI->getOperand(1).getImm();
     break;
-  case WebAssembly::Immediate_I64:
+  case WebAssembly::Const_I64:
     OS << "i64.const " << MI->getOperand(1).getImm();
     break;
-  case WebAssembly::Immediate_F32:
+  case WebAssembly::Const_F32:
     OS << "f32.const " << toString(MI->getOperand(1).getFPImm()->getValueAPF());
     break;
-  case WebAssembly::Immediate_F64:
+  case WebAssembly::Const_F64:
     OS << "f64.const " << toString(MI->getOperand(1).getFPImm()->getValueAPF());
     break;
   default: {

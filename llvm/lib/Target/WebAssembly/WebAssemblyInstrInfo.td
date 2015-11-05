@@ -93,18 +93,18 @@ defm : ARGUMENT<F32>;
 defm : ARGUMENT<F64>;
 
 
-def Immediate_I32 : I<(outs I32:$res), (ins i32imm:$imm),
-                      [(set I32:$res, imm:$imm)],
-                      "i32.const $res, $imm">;
-def Immediate_I64 : I<(outs I64:$res), (ins i64imm:$imm),
-                      [(set I64:$res, imm:$imm)],
-                      "i64.const $res, $imm">;
-def Immediate_F32 : I<(outs F32:$res), (ins f32imm:$imm),
-                      [(set F32:$res, fpimm:$imm)],
-                      "f32.const $res, $imm">;
-def Immediate_F64 : I<(outs F64:$res), (ins f64imm:$imm),
-                      [(set F64:$res, fpimm:$imm)],
-                      "f64.const $res, $imm">;
+def Const_I32 : I<(outs I32:$res), (ins i32imm:$imm),
+                  [(set I32:$res, imm:$imm)],
+                  "i32.const $res, $imm">;
+def Const_I64 : I<(outs I64:$res), (ins i64imm:$imm),
+                  [(set I64:$res, imm:$imm)],
+                  "i64.const $res, $imm">;
+def Const_F32 : I<(outs F32:$res), (ins f32imm:$imm),
+                  [(set F32:$res, fpimm:$imm)],
+                  "f32.const $res, $imm">;
+def Const_F64 : I<(outs F64:$res), (ins f64imm:$imm),
+                  [(set F64:$res, fpimm:$imm)],
+                  "f64.const $res, $imm">;
 
 // Special types of immediates. FIXME: Hard-coded as 32-bit for now.
 def GLOBAL : I<(outs I32:$dst), (ins global:$addr),
