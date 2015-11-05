@@ -555,9 +555,10 @@ ClangUserExpression::Parse (Stream &error_stream,
 }
 
 bool
-ClangUserExpression::AddInitialArguments (ExecutionContext &exe_ctx,
-                                          std::vector<lldb::addr_t> &args,
-                                          Stream &error_stream)
+ClangUserExpression::AddArguments (ExecutionContext &exe_ctx,
+                                   std::vector<lldb::addr_t> &args,
+                                   lldb::addr_t struct_address,
+                                   Stream &error_stream)
 {
     lldb::addr_t object_ptr = LLDB_INVALID_ADDRESS;
     lldb::addr_t cmd_ptr    = LLDB_INVALID_ADDRESS;
@@ -612,7 +613,11 @@ ClangUserExpression::AddInitialArguments (ExecutionContext &exe_ctx,
         if (m_in_objectivec_method)
             args.push_back(cmd_ptr);
 
-
+        args.push_back(struct_address);
+    }
+    else
+    {
+        args.push_back(struct_address);
     }
     return true;
 }

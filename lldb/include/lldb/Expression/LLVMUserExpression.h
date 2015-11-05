@@ -77,11 +77,13 @@ class LLVMUserExpression : public UserExpression
     virtual void ScanContext(ExecutionContext &exe_ctx, lldb_private::Error &err) = 0;
 
     bool PrepareToExecuteJITExpression(Stream &error_stream, ExecutionContext &exe_ctx, lldb::addr_t &struct_address);
+
     virtual bool
-    AddInitialArguments(ExecutionContext &exe_ctx, std::vector<lldb::addr_t> &args, Stream &error_stream)
-    {
-        return true;
-    }
+    AddArguments (ExecutionContext &exe_ctx,
+                  std::vector<lldb::addr_t> &args,
+                  lldb::addr_t struct_address,
+                  Stream &error_stream) = 0;
+
 
     lldb::addr_t m_stack_frame_bottom; ///< The bottom of the allocated stack frame.
     lldb::addr_t m_stack_frame_top;    ///< The top of the allocated stack frame.

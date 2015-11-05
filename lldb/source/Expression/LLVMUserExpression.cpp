@@ -111,13 +111,11 @@ LLVMUserExpression::Execute(Stream &error_stream, ExecutionContext &exe_ctx, con
 
             std::vector<lldb::addr_t> args;
 
-            if (!AddInitialArguments(exe_ctx, args, error_stream))
+            if (!AddArguments(exe_ctx, args, struct_address, error_stream))
             {
-                error_stream.Printf("Errored out in %s, couldn't AddInitialArguments", __FUNCTION__);
+                error_stream.Printf("Errored out in %s, couldn't AddArguments", __FUNCTION__);
                 return lldb::eExpressionSetupError;
             }
-
-            args.push_back(struct_address);
 
             function_stack_bottom = m_stack_frame_bottom;
             function_stack_top = m_stack_frame_top;
@@ -143,13 +141,11 @@ LLVMUserExpression::Execute(Stream &error_stream, ExecutionContext &exe_ctx, con
 
             std::vector<lldb::addr_t> args;
 
-            if (!AddInitialArguments(exe_ctx, args, error_stream))
+            if (!AddArguments(exe_ctx, args, struct_address, error_stream))
             {
-                error_stream.Printf("Errored out in %s, couldn't AddInitialArguments", __FUNCTION__);
+                error_stream.Printf("Errored out in %s, couldn't AddArguments", __FUNCTION__);
                 return lldb::eExpressionSetupError;
             }
-
-            args.push_back(struct_address);
 
             lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression(exe_ctx.GetThreadRef(), wrapper_address,
                                                                              args, options, shared_ptr_to_me));

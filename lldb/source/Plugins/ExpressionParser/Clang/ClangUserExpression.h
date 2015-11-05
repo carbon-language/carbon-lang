@@ -188,9 +188,10 @@ private:
                  lldb_private::Error &err) override;
 
     bool
-    AddInitialArguments (ExecutionContext &exe_ctx,
-                         std::vector<lldb::addr_t> &args,
-                         Stream &error_stream) override;
+    AddArguments (ExecutionContext &exe_ctx,
+                  std::vector<lldb::addr_t> &args,
+                  lldb::addr_t struct_address,
+                  Stream &error_stream) override;
     
     ClangUserExpressionHelper   m_type_system_helper;
     
