@@ -52,4 +52,4 @@ def SELECT_I32 : I<(outs I32:$dst), (ins I32:$cond, I32:$lhs, I32:$rhs),
                    "i32.select $dst, $cond, $lhs, $rhs">;
 def SELECT_I64 : I<(outs I64:$dst), (ins I32:$cond, I64:$lhs, I64:$rhs),
                    [(set I64:$dst, (select I32:$cond, I64:$lhs, I64:$rhs))],
-                   "i32.select $dst, $cond, $lhs, $rhs">;
+                   "i64.select $dst, $cond, $lhs, $rhs">;

@@ -85,10 +85,10 @@ def STORE_I64  : I<(outs), (ins I32:$addr, I64:$val),
                    "i64.store $addr, $val">;
 def STORE_F32  : I<(outs), (ins I32:$addr, F32:$val),
                    [(store f32:$val, I32:$addr)],
-                   "i64.store $addr, $val">;
+                   "f32.store $addr, $val">;
 def STORE_F64  : I<(outs), (ins I32:$addr, F64:$val),
                    [(store f64:$val, I32:$addr)],
-                   "i64.store $addr, $val">;
+                   "f64.store $addr, $val">;
 
 // Truncating store.
 def STORE8_I32  : I<(outs), (ins I32:$addr, I32:$val),
