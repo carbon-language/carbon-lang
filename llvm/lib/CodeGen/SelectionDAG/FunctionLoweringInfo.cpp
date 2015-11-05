@@ -215,10 +215,14 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     // are really data, and no instructions can live here.
     if (BB->isEHPad()) {
       const Instruction *I = BB->getFirstNonPHI();
-      // FIXME: Don't mark SEH functions without __finally blocks as having
+      // If this is a non-landingpad EH pad, mark this function as using
       // funclets.
-      if (!isa<LandingPadInst>(I))
+      // FIXME: SEH catchpads do not create funclets, so we could avoid setting
+      // this in such cases in order to improve frame layout.
+      if (!isa<LandingPadInst>(I)) {
         MMI.setHasEHFunclets(true);
+        MF->getFrameInfo()->setHasOpaqueSPAdjustment(true);
+      }
       if (isa<CatchEndPadInst>(I) || isa<CleanupEndPadInst>(I)) {
         assert(&*BB->begin() == I &&
                "WinEHPrepare failed to remove PHIs from imaginary BBs");

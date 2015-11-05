@@ -135,7 +135,7 @@ private:
   /// Aligns the stack pointer by ANDing it with -MaxAlign.
   void BuildStackAlignAND(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MBBI, DebugLoc DL,
-                          uint64_t MaxAlign) const;
+                          unsigned Reg, uint64_t MaxAlign) const;
 
   /// Make small positive stack adjustments using POPs.
   bool adjustStackWithPops(MachineBasicBlock &MBB,

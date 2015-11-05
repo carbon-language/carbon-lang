@@ -515,15 +515,14 @@ uint64_t X86FrameLowering::calculateMaxStackAlign(const MachineFunction &MF) con
 
 void X86FrameLowering::BuildStackAlignAND(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MBBI,
-                                          DebugLoc DL,
+                                          DebugLoc DL, unsigned Reg,
                                           uint64_t MaxAlign) const {
   uint64_t Val = -MaxAlign;
-  MachineInstr *MI =
-      BuildMI(MBB, MBBI, DL, TII.get(getANDriOpcode(Uses64BitFramePtr, Val)),
-              StackPtr)
-          .addReg(StackPtr)
-          .addImm(Val)
-          .setMIFlag(MachineInstr::FrameSetup);
+  unsigned AndOp = getANDriOpcode(Uses64BitFramePtr, Val);
+  MachineInstr *MI = BuildMI(MBB, MBBI, DL, TII.get(AndOp), Reg)
+                         .addReg(Reg)
+                         .addImm(Val)
+                         .setMIFlag(MachineInstr::FrameSetup);
 
   // The EFLAGS implicit def is dead.
   MI->getOperand(3).setIsDead();
@@ -834,7 +833,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   // Don't do this for Win64, it needs to realign the stack after the prologue.
   if (!IsWin64Prologue && !IsFunclet && TRI->needsStackRealignment(MF)) {
     assert(HasFP && "There should be a frame pointer if stack is realigned.");
-    BuildStackAlignAND(MBB, MBBI, DL, MaxAlign);
+    BuildStackAlignAND(MBB, MBBI, DL, StackPtr, MaxAlign);
   }
 
   // If there is an SUB32ri of ESP immediately before this instruction, merge
@@ -923,11 +922,11 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
         .setMIFlag(MachineInstr::FrameSetup);
 
   int SEHFrameOffset = 0;
+  unsigned SPOrEstablisher = IsFunclet ? Establisher : StackPtr;
   if (IsWin64Prologue && HasFP) {
     // Set RBP to a small fixed offset from RSP. In the funclet case, we base
     // this calculation on the incoming establisher, which holds the value of
     // RSP from the parent frame at the end of the prologue.
-    unsigned SPOrEstablisher = IsFunclet ? Establisher : StackPtr;
     SEHFrameOffset = calculateSetFPREG(ParentFrameNumBytes);
     if (SEHFrameOffset)
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), FramePtr),
@@ -977,8 +976,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   // Win64 requires aligning the stack after the prologue.
   if (IsWin64Prologue && TRI->needsStackRealignment(MF)) {
     assert(HasFP && "There should be a frame pointer if stack is realigned.");
-    BuildStackAlignAND(MBB, MBBI, DL, MaxAlign);
+    BuildStackAlignAND(MBB, MBBI, DL, SPOrEstablisher, MaxAlign);
   }
+
+  // We already dealt with stack realignment and funclets above.
+  if (IsFunclet && STI.is32Bit())
+    return;
 
   // If we need a base pointer, set it up here. It's whatever the value
   // of the stack pointer is at this point. Any variable size objects
@@ -988,7 +991,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
     // Update the base pointer with the current stack pointer.
     unsigned Opc = Uses64BitFramePtr ? X86::MOV64rr : X86::MOV32rr;
     BuildMI(MBB, MBBI, DL, TII.get(Opc), BasePtr)
-      .addReg(StackPtr)
+      .addReg(SPOrEstablisher)
       .setMIFlag(MachineInstr::FrameSetup);
     if (X86FI->getRestoreBasePointer()) {
       // Stash value of base pointer.  Saving RSP instead of EBP shortens
@@ -996,11 +999,11 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       unsigned Opm = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opm)),
                    FramePtr, true, X86FI->getRestoreBasePointerOffset())
-        .addReg(StackPtr)
+        .addReg(SPOrEstablisher)
         .setMIFlag(MachineInstr::FrameSetup);
     }
 
-    if (X86FI->getHasSEHFramePtrSave()) {
+    if (X86FI->getHasSEHFramePtrSave() && !IsFunclet) {
       // Stash the value of the frame pointer relative to the base pointer for
       // Win32 EH. This supports Win32 EH, which does the inverse of the above:
       // it recovers the frame pointer from the base pointer rather than the
@@ -1359,21 +1362,42 @@ int X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
   const uint64_t StackSize = MFI->getStackSize();
   {
 #ifndef NDEBUG
-    // Note: LLVM arranges the stack as:
-    // Args > Saved RetPC (<--FP) > CSRs > dynamic alignment (<--BP)
-    //      > "Stack Slots" (<--SP)
-    // We can always address StackSlots from RSP.  We can usually (unless
-    // needsStackRealignment) address CSRs from RSP, but sometimes need to
-    // address them from RBP.  FixedObjects can be placed anywhere in the stack
-    // frame depending on their specific requirements (i.e. we can actually
-    // refer to arguments to the function which are stored in the *callers*
-    // frame).  As a result, THE RESULT OF THIS CALL IS MEANINGLESS FOR CSRs
-    // AND FixedObjects IFF needsStackRealignment or hasVarSizedObject.
+    // LLVM arranges the stack as follows:
+    //   ...
+    //   ARG2
+    //   ARG1
+    //   RETADDR
+    //   PUSH RBP   <-- RBP points here
+    //   PUSH CSRs
+    //   ~~~~~~~    <-- optional stack realignment dynamic adjustment
+    //   ...
+    //   STACK OBJECTS
+    //   ...        <-- RSP after prologue points here
+    //
+    // if (hasVarSizedObjects()):
+    //   ...        <-- "base pointer" (ESI/RBX) points here
+    //   DYNAMIC ALLOCAS
+    //   ...        <-- RSP points here
+    //
+    // Case 1: In the simple case of no stack realignment and no dynamic
+    // allocas, both "fixed" stack objects (arguments and CSRs) are addressable
+    // with fixed offsets from RSP.
+    //
+    // Case 2: In the case of stack realignment with no dynamic allocas, fixed
+    // stack objects are addressed with RBP and regular stack objects with RSP.
+    //
+    // Case 3: In the case of dynamic allocas and stack realignment, RSP is used
+    // to address stack arguments for outgoing calls and nothing else. The "base
+    // pointer" points to local variables, and RBP points to fixed objects.
+    //
+    // In cases 2 and 3, we can only answer for non-fixed stack objects, and the
+    // answer we give is relative to the SP after the prologue, and not the
+    // SP in the middle of the function.
 
-    assert(!TRI->hasBasePointer(MF) && "we don't handle this case");
+    assert((!TRI->needsStackRealignment(MF) || !MFI->isFixedObjectIndex(FI)) &&
+           "offset from fixed object to SP is not static");
 
-    // We don't handle tail calls, and shouldn't be seeing them
-    // either.
+    // We don't handle tail calls, and shouldn't be seeing them either.
     int TailCallReturnAddrDelta =
         MF.getInfo<X86MachineFunctionInfo>()->getTCReturnAddrDelta();
     assert(!(TailCallReturnAddrDelta < 0) && "we don't handle this case!");

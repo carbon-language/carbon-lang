@@ -2889,11 +2889,6 @@ SDValue X86TargetLowering::LowerFormalArguments(
                                DAG.getMachineFunction(), UnwindHelpFI),
                            /*isVolatile=*/true,
                            /*isNonTemporal=*/false, /*Alignment=*/0);
-    } else {
-      // Functions using Win32 EH are considered to have opaque SP adjustments
-      // to force local variables to be addressed from the frame or base
-      // pointers.
-      MFI->setHasOpaqueSPAdjustment(true);
     }
   }
 
