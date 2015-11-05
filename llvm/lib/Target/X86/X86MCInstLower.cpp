@@ -1140,12 +1140,27 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitAndCountInstruction(MCInstBuilder(X86::CALLpcrel32)
       .addExpr(MCSymbolRefExpr::create(PICBase, OutContext)));
 
+    const X86FrameLowering* FrameLowering =
+        MF->getSubtarget<X86Subtarget>().getFrameLowering();
+    bool hasFP = FrameLowering->hasFP(*MF);
+
+    bool NeedsDwarfCFI = MMI->usePreciseUnwindInfo();
+    int stackGrowth = -RI->getSlotSize();
+
+    if (NeedsDwarfCFI && !hasFP) {
+      OutStreamer->EmitCFIAdjustCfaOffset(-stackGrowth);
+    }
+
     // Emit the label.
     OutStreamer->EmitLabel(PICBase);
 
     // popl $reg
     EmitAndCountInstruction(MCInstBuilder(X86::POP32r)
                             .addReg(MI->getOperand(0).getReg()));
+
+    if (NeedsDwarfCFI && !hasFP) {
+      OutStreamer->EmitCFIAdjustCfaOffset(stackGrowth);
+    }
     return;
   }
 
