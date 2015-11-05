@@ -481,9 +481,8 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
       ArchName = "arm";
 
     // Assembly files should start in ARM mode, unless arch is M-profile.
-    if (IsMProfile || (InputType != types::TY_PP_Asm &&
-         Args.hasFlag(options::OPT_mthumb, options::OPT_mno_thumb, ThumbDefault)))
-    {
+    if ((InputType != types::TY_PP_Asm && Args.hasFlag(options::OPT_mthumb,
+         options::OPT_mno_thumb, ThumbDefault)) || IsMProfile) {
       if (IsBigEndian)
         ArchName = "thumbeb";
       else
