@@ -28,11 +28,12 @@ Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
                bool IsFramework, bool IsExplicit, unsigned VisibilityID)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), Directory(),
       Umbrella(), Signature(0), ASTFile(nullptr), VisibilityID(VisibilityID),
-      IsMissingRequirement(false), IsAvailable(true), IsFromModuleFile(false),
-      IsFramework(IsFramework), IsExplicit(IsExplicit), IsSystem(false),
-      IsExternC(false), IsInferred(false), InferSubmodules(false),
-      InferExplicitSubmodules(false), InferExportWildcard(false),
-      ConfigMacrosExhaustive(false), NameVisibility(Hidden) {
+      IsMissingRequirement(false), HasIncompatibleModuleFile(false),
+      IsAvailable(true), IsFromModuleFile(false), IsFramework(IsFramework),
+      IsExplicit(IsExplicit), IsSystem(false), IsExternC(false),
+      IsInferred(false), InferSubmodules(false), InferExplicitSubmodules(false),
+      InferExportWildcard(false), ConfigMacrosExhaustive(false),
+      NameVisibility(Hidden) {
   if (Parent) {
     if (!Parent->isAvailable())
       IsAvailable = false;

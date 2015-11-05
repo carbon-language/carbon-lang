@@ -152,6 +152,9 @@ public:
   /// \brief Whether this module is missing a feature from \c Requirements.
   unsigned IsMissingRequirement : 1;
 
+  /// \brief Whether we tried and failed to load a module file for this module.
+  unsigned HasIncompatibleModuleFile : 1;
+
   /// \brief Whether this module is available in the current translation unit.
   ///
   /// If the module is missing headers or does not meet all requirements then

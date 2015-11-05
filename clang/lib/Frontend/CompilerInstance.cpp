@@ -1327,6 +1327,17 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
       }
       LoadedModules.clear();
     }
+
+    void markAllUnavailable() {
+      for (auto *II : LoadedModules) {
+        if (Module *M = CI.getPreprocessor()
+                            .getHeaderSearchInfo()
+                            .getModuleMap()
+                            .findModule(II->getName()))
+          M->HasIncompatibleModuleFile = true;
+      }
+      LoadedModules.clear();
+    }
   };
 
   // If we don't already have an ASTReader, create one now.
@@ -1343,15 +1354,18 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
                                  SourceLocation(),
                                  ASTReader::ARR_ConfigurationMismatch)) {
   case ASTReader::Success:
-  // We successfully loaded the module file; remember the set of provided
-  // modules so that we don't try to load implicit modules for them.
-  ListenerRef.registerAll();
-  return true;
+    // We successfully loaded the module file; remember the set of provided
+    // modules so that we don't try to load implicit modules for them.
+    ListenerRef.registerAll();
+    return true;
 
   case ASTReader::ConfigurationMismatch:
     // Ignore unusable module files.
     getDiagnostics().Report(SourceLocation(), diag::warn_module_config_mismatch)
         << FileName;
+    // All modules provided by any files we tried and failed to load are now
+    // unavailable; includes of those modules should now be handled textually.
+    ListenerRef.markAllUnavailable();
     return true;
 
   default:
@@ -1407,6 +1421,12 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     std::string ModuleFileName =
         PP->getHeaderSearchInfo().getModuleFileName(Module);
     if (ModuleFileName.empty()) {
+      if (Module->HasIncompatibleModuleFile) {
+        // We tried and failed to load a module file for this module. Fall
+        // back to textual inclusion for its headers.
+        return ModuleLoadResult(nullptr, /*missingExpected*/true);
+      }
+
       getDiagnostics().Report(ModuleNameLoc, diag::err_module_build_disabled)
           << ModuleName;
       ModuleBuildFailed = true;
