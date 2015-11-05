@@ -1251,7 +1251,8 @@ Function *FunctionAST::codegen() {
       FContext, P.getName(), StringRef(), Unit, LineNo,
       CreateFunctionType(TheFunction->arg_size(), Unit),
       false /* internal linkage */, true /* definition */, ScopeLine,
-      DINode::FlagPrototyped, false, TheFunction);
+      DINode::FlagPrototyped, false);
+  TheFunction->setSubprogram(SP);
 
   // Push the current scope.
   KSDbgInfo.LexicalBlocks.push_back(SP);
