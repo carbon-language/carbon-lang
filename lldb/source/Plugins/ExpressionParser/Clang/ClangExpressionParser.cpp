@@ -524,7 +524,7 @@ static bool FindFunctionInModule (ConstString &mangled_name,
 Error
 ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
                                             lldb::addr_t &func_end,
-                                            std::shared_ptr<IRExecutionUnit> &execution_unit_sp,
+                                            lldb::IRExecutionUnitSP &execution_unit_sp,
                                             ExecutionContext &exe_ctx,
                                             bool &can_interpret,
                                             ExecutionPolicy execution_policy)

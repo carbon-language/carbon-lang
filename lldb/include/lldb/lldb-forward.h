@@ -134,6 +134,7 @@ class   ModuleSpecList;
 class   Mutex;
 struct  NameSearchContext;
 class   ObjCLanguageRuntime;
+class   ObjCRuntimeSyntheticProvider;
 class   ObjectContainer;
 class   OptionGroup;
 class   OptionGroupOptions;
@@ -338,6 +339,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::InstrumentationRuntime> InstrumentationRuntimeSP;
     typedef std::shared_ptr<lldb_private::IOHandler> IOHandlerSP;
     typedef std::shared_ptr<lldb_private::IOObject> IOObjectSP;
+    typedef std::shared_ptr<lldb_private::IRExecutionUnit> IRExecutionUnitSP;
     typedef std::shared_ptr<lldb_private::JITLoader> JITLoaderSP;
     typedef std::unique_ptr<lldb_private::JITLoaderList> JITLoaderListUP;
     typedef std::shared_ptr<lldb_private::LanguageRuntime> LanguageRuntimeSP;
