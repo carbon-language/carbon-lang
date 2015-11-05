@@ -29,6 +29,12 @@ if not os.path.isdir(llvm_build_dir):
     llvm_build_dir = re.sub ("-macosx-", "-iphoneos-", llvm_build_dir)
 
 if not os.path.isdir(llvm_build_dir):
+    llvm_build_dir = re.sub ("-iphoneos-", "-appletvos-", llvm_build_dir)
+
+if not os.path.isdir(llvm_build_dir):
+    llvm_build_dir = re.sub ("-appletvos-", "-watchos-", llvm_build_dir)
+
+if not os.path.isdir(llvm_build_dir):
     print llvm_build_dir + " doesn't exist"
     sys.exit(1)
 
