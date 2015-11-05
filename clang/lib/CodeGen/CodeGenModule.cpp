@@ -3707,10 +3707,12 @@ bool CodeGenModule::lookupRepresentativeDecl(StringRef MangledName,
 void CodeGenModule::EmitDeclMetadata() {
   llvm::NamedMDNode *GlobalMetadata = nullptr;
 
-  // StaticLocalDeclMap
   for (auto &I : MangledDeclNames) {
     llvm::GlobalValue *Addr = getModule().getNamedValue(I.second);
-    EmitGlobalDeclMetadata(*this, GlobalMetadata, I.first, Addr);
+    // Some mangled names don't necessarily have an associated GlobalValue
+    // in this module, e.g. if we mangled it for DebugInfo.
+    if (Addr)
+      EmitGlobalDeclMetadata(*this, GlobalMetadata, I.first, Addr);
   }
 }
 
