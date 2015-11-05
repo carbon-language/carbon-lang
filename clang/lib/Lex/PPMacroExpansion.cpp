@@ -1636,7 +1636,15 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Value = FeatureII->getTokenID() == tok::identifier;
     else if (II == Ident__has_builtin) {
       // Check for a builtin is trivial.
-      Value = FeatureII->getBuiltinID() != 0;
+      if (FeatureII->getBuiltinID() != 0) {
+        Value = true;
+      } else {
+        const LangOptions &LangOpts = PP.getLangOpts();
+        StringRef Feature = FeatureII->getName();
+        Value = llvm::StringSwitch<bool>(Feature)
+                    .Case("__make_integer_seq", LangOpts.CPlusPlus)
+                    .Default(false);
+      }
     } else if (II == Ident__has_attribute)
       Value = hasAttribute(AttrSyntax::GNU, nullptr, FeatureII,
                            getTargetInfo(), getLangOpts());

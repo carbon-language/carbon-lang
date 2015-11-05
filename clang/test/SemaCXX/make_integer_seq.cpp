@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
+static_assert(__has_builtin(__make_integer_seq), "");
+
 template <class T, T... I>
 struct Seq {
   static constexpr T PackSize = sizeof...(I);
