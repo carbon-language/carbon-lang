@@ -131,7 +131,7 @@ DataExtractor::DataExtractor () :
     m_start     (NULL),
     m_end       (NULL),
     m_byte_order(lldb::endian::InlHostByteOrder()),
-    m_addr_size (4),
+    m_addr_size (sizeof(void *)),
     m_data_sp   (),
     m_target_byte_size(1)
 {
@@ -149,6 +149,9 @@ DataExtractor::DataExtractor (const void* data, offset_t length, ByteOrder endia
     m_data_sp   (),
     m_target_byte_size(target_byte_size)
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (addr_size == 4 || addr_size == 8);
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -166,6 +169,9 @@ DataExtractor::DataExtractor (const DataBufferSP& data_sp, ByteOrder endian, uin
     m_data_sp   (),
     m_target_byte_size(target_byte_size)
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (addr_size == 4 || addr_size == 8);
+#endif
     SetData (data_sp);
 }
 
@@ -184,6 +190,9 @@ DataExtractor::DataExtractor (const DataExtractor& data, offset_t offset, offset
     m_data_sp(),
     m_target_byte_size(target_byte_size)
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (m_addr_size == 4 || m_addr_size == 8);
+#endif
     if (data.ValidOffset(offset))
     {
         offset_t bytes_available = data.GetByteSize() - offset;
@@ -201,6 +210,9 @@ DataExtractor::DataExtractor (const DataExtractor& rhs) :
     m_data_sp (rhs.m_data_sp),
     m_target_byte_size(rhs.m_target_byte_size)
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (m_addr_size == 4 || m_addr_size == 8);
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -238,7 +250,7 @@ DataExtractor::Clear ()
     m_start = NULL;
     m_end = NULL;
     m_byte_order = lldb::endian::InlHostByteOrder();
-    m_addr_size = 4;
+    m_addr_size = sizeof(void *);
     m_data_sp.reset();
 }
 
@@ -311,6 +323,9 @@ lldb::offset_t
 DataExtractor::SetData (const DataExtractor& data, offset_t data_offset, offset_t data_length)
 {
     m_addr_size = data.m_addr_size;
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (m_addr_size == 4 || m_addr_size == 8);
+#endif
     // If "data" contains shared pointer to data, then we can use that
     if (data.m_data_sp.get())
     {
@@ -824,12 +839,18 @@ DataExtractor::GetLongDouble (offset_t *offset_ptr) const
 uint64_t
 DataExtractor::GetAddress (offset_t *offset_ptr) const
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (m_addr_size == 4 || m_addr_size == 8);
+#endif
     return GetMaxU64 (offset_ptr, m_addr_size);
 }
 
 uint64_t
 DataExtractor::GetAddress_unchecked (offset_t *offset_ptr) const
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (m_addr_size == 4 || m_addr_size == 8);
+#endif
     return GetMaxU64_unchecked (offset_ptr, m_addr_size);
 }
 
@@ -844,6 +865,9 @@ DataExtractor::GetAddress_unchecked (offset_t *offset_ptr) const
 uint64_t
 DataExtractor::GetPointer (offset_t *offset_ptr) const
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (m_addr_size == 4 || m_addr_size == 8);
+#endif
     return GetMaxU64 (offset_ptr, m_addr_size);
 }
 
@@ -863,6 +887,9 @@ DataExtractor::GetGNUEHPointer (offset_t *offset_ptr, uint32_t eh_ptr_enc, lldb:
     uint64_t baseAddress = 0;
     uint64_t addressValue = 0;
     const uint32_t addr_size = GetAddressByteSize();
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert (addr_size == 4 || addr_size == 8);
+#endif
 
     bool signExtendValue = false;
     // Decode the base part or adjust our offset
