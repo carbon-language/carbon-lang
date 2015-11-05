@@ -10243,6 +10243,16 @@ static void computeKnownBits(SelectionDAG &DAG, SDValue Op, APInt &KnownZero,
     KnownOne &= Mask;
     return;
   }
+  if (Op.getOpcode() == ARMISD::CMOV) {
+    APInt KZ2(KnownZero.getBitWidth(), 0);
+    APInt KO2(KnownOne.getBitWidth(), 0);
+    computeKnownBits(DAG, Op.getOperand(1), KnownZero, KnownOne);
+    computeKnownBits(DAG, Op.getOperand(2), KZ2, KO2);
+
+    KnownZero &= KZ2;
+    KnownOne &= KO2;
+    return;
+  }
   return DAG.computeKnownBits(Op, KnownZero, KnownOne);
 }
 
