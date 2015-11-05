@@ -10,6 +10,11 @@
 #include <errno.h>
 #include <dispatch/dispatch.h>
 
+// from System.framework/Versions/B/PrivateHeaders/sys/codesign.h
+#define CS_OPS_STATUS           0       /* return status */
+#define CS_RESTRICT             0x0000800       /* tell dyld to treat restricted */
+int csops(pid_t pid, unsigned int  ops, void * useraddr, size_t usersize);
+
 /* Step through the process table, find a matching process name, return
    the pid of that matched process.
    If there are multiple processes with that name, issue a warning on stdout
@@ -366,6 +371,13 @@ main (int argc, char **argv)
   free ((void *) kinfo);
 
   printf ("\n");
+
+  int csops_flags = 0;
+  if (csops (pid, CS_OPS_STATUS, &csops_flags, sizeof (csops_flags)) != -1
+      && (csops_flags & CS_RESTRICT))
+  {
+      printf ("pid %d (%s) is restricted so nothing can attach to it.\n", pid, process_name);
+  }
 
   kr = task_for_pid (mach_task_self (), pid, &task);
   if (kr != KERN_SUCCESS)
