@@ -1038,7 +1038,7 @@ public:
       unsigned Type = cast<PredefinedExpr>(E)->getIdentType();
       if (CGF) {
         LValue Res = CGF->EmitPredefinedLValue(cast<PredefinedExpr>(E));
-        return llvm::cast<ConstantAddress>(Res.getAddress());
+        return cast<ConstantAddress>(Res.getAddress());
       } else if (Type == PredefinedExpr::PrettyFunction) {
         return CGM.GetAddrOfConstantCString("top level", ".tmp");
       }
