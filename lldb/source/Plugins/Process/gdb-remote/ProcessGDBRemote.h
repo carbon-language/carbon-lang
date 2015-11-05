@@ -239,6 +239,11 @@ public:
                   const ArchSpec& arch,
                   ModuleSpec &module_spec) override;
 
+    bool
+    GetHostOSVersion(uint32_t &major,
+                     uint32_t &minor,
+                     uint32_t &update) override;
+
     size_t
     LoadModules() override;
 

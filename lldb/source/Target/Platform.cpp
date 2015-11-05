@@ -528,7 +528,8 @@ Platform::GetStatus (Stream &strm)
 bool
 Platform::GetOSVersion (uint32_t &major, 
                         uint32_t &minor, 
-                        uint32_t &update)
+                        uint32_t &update,
+                        Process *process)
 {
     Mutex::Locker locker (m_mutex);
 
@@ -578,6 +579,12 @@ Platform::GetOSVersion (uint32_t &major,
         major = m_major_os_version;
         minor = m_minor_os_version;
         update = m_update_os_version;
+    }
+    else if (process)
+    {
+        // Check with the process in case it can answer the question if
+        // a process was provided
+        return process->GetHostOSVersion(major, minor, update);
     }
     return success;
 }

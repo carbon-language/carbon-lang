@@ -84,6 +84,12 @@ public:
     CalculateTrapHandlerSymbolNames () override;
     
     bool
+    GetOSVersion (uint32_t &major,
+                  uint32_t &minor,
+                  uint32_t &update,
+                  lldb_private::Process *process = nullptr) override;
+
+    bool
     SupportsModules () override { return true; }
     
     lldb_private::ConstString

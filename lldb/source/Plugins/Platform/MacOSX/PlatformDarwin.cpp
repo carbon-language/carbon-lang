@@ -31,10 +31,13 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Symbols.h"
+#include "lldb/Host/StringConvert.h"
+#include "lldb/Host/XML.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "llvm/ADT/STLExtras.h"
 
@@ -1586,6 +1589,64 @@ PlatformDarwin::GetFullNameForDylib (ConstString basename)
     return ConstString(stream.GetData());
 }
 
+bool
+PlatformDarwin::GetOSVersion (uint32_t &major,
+                              uint32_t &minor,
+                              uint32_t &update,
+                              Process *process)
+{
+    if (process && strstr(GetPluginName().GetCString(), "-simulator"))
+    {
+        lldb_private::ProcessInstanceInfo proc_info;
+        if (Host::GetProcessInfo(process->GetID(), proc_info))
+        {
+            Args &env = proc_info.GetEnvironmentEntries();
+            const size_t n = env.GetArgumentCount();
+            const llvm::StringRef k_runtime_version("SIMULATOR_RUNTIME_VERSION=");
+            const llvm::StringRef k_dyld_root_path("DYLD_ROOT_PATH=");
+            std::string dyld_root_path;
+
+            for (size_t i=0; i<n; ++i)
+            {
+                const char *env_cstr = env.GetArgumentAtIndex(i);
+                if (env_cstr)
+                {
+                    llvm::StringRef env_str(env_cstr);
+                    if (env_str.startswith(k_runtime_version))
+                    {
+                        llvm::StringRef version_str(env_str.substr(k_runtime_version.size()));
+                        Args::StringToVersion (version_str.data(), major, minor, update);
+                        if (major != UINT32_MAX)
+                            return true;
+                    }
+                    else if (env_str.startswith(k_dyld_root_path))
+                    {
+                        dyld_root_path = std::move(env_str.substr(k_dyld_root_path.size()).str());
+                    }
+                }
+            }
+
+            if (!dyld_root_path.empty())
+            {
+                dyld_root_path += "/System/Library/CoreServices/SystemVersion.plist";
+                ApplePropertyList system_version_plist(dyld_root_path.c_str());
+                std::string product_version;
+                if (system_version_plist.GetValueAsString("ProductVersion", product_version))
+                {
+                    Args::StringToVersion (product_version.c_str(), major, minor, update);
+                    return major != UINT32_MAX;
+                }
+            }
+
+        }
+        // For simulator platforms, do NOT call back through Platform::GetOSVersion()
+        // as it might call Process::GetHostOSVersion() which we don't want as it will be
+        // incorrect
+        return false;
+    }
+
+    return Platform::GetOSVersion(major, minor, update, process);
+}
 
 lldb_private::FileSpec
 PlatformDarwin::LocateExecutable (const char *basename)

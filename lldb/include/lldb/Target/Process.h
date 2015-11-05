@@ -1820,6 +1820,41 @@ public:
     RefreshStateAfterStop () = 0;
 
     //------------------------------------------------------------------
+    /// Sometimes the connection to a process can detect the host OS
+    /// version that the process is running on. The current platform
+    /// should be checked first in case the platform is connected, but
+    /// clients can fall back onto this function if the platform fails
+    /// to identify the host OS version. The platform should be checked
+    /// first in case you are running a simulator platform that might
+    /// itself be running natively, but have different heuristics for
+    /// figuring out which OS is is emulating.
+    ///
+    /// @param[out] major
+    ///    The major OS version, or UINT32_MAX if it can't be determined
+    ///
+    /// @param[out] minor
+    ///    The minor OS version, or UINT32_MAX if it can't be determined
+    ///
+    /// @param[out] update
+    ///    The update OS version, or UINT32_MAX if it can't be determined
+    ///
+    /// @return
+    ///     Returns \b true if the host OS version info was filled in
+    ///     and \b false otherwise.
+    //------------------------------------------------------------------
+    virtual bool
+    GetHostOSVersion(uint32_t &major,
+                     uint32_t &minor,
+                     uint32_t &update)
+    {
+        major = UINT32_MAX;
+        minor = UINT32_MAX;
+        update = UINT32_MAX;
+        return false;
+    }
+
+
+    //------------------------------------------------------------------
     /// Get the target object pointer for this module.
     ///
     /// @return

@@ -244,10 +244,21 @@ class ModuleCache;
         ResolveRemotePath (const FileSpec &platform_path,
                            FileSpec &resolved_platform_path);
 
-        bool
+        //------------------------------------------------------------------
+        /// Get the OS version from a connected platform.
+        ///
+        /// Some platforms might not be connected to a remote platform, but
+        /// can figure out the OS version for a process. This is common for
+        /// simulator platforms that will run native programs on the current
+        /// host, but the simulator might be simulating a different OS. The
+        /// \a process parameter might be specified to help to determine
+        /// the OS version.
+        //------------------------------------------------------------------
+        virtual bool
         GetOSVersion (uint32_t &major, 
                       uint32_t &minor, 
-                      uint32_t &update);
+                      uint32_t &update,
+                      Process *process = nullptr);
            
         bool
         SetOSVersion (uint32_t major, 

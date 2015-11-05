@@ -4296,6 +4296,18 @@ ProcessGDBRemote::GetModuleSpec(const FileSpec& module_file_spec,
     return true;
 }
 
+bool
+ProcessGDBRemote::GetHostOSVersion(uint32_t &major,
+                                   uint32_t &minor,
+                                   uint32_t &update)
+{
+    if (m_gdb_comm.GetOSVersion(major, minor, update))
+        return true;
+    // We failed to get the host OS version, defer to the base
+    // implementation to correctly invalidate the arguments.
+    return Process::GetHostOSVersion(major, minor, update);
+}
+
 namespace {
 
 typedef std::vector<std::string> stringVec;
