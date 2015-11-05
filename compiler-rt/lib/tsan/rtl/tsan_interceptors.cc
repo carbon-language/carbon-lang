@@ -819,6 +819,7 @@ void DestroyThreadState() {
     thr->signal_ctx = 0;
     UnmapOrDie(sctx, sizeof(*sctx));
   }
+  cur_thread_finalize();
 }
 }  // namespace __tsan
 

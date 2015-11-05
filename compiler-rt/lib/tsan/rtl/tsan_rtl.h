@@ -410,12 +410,18 @@ struct ThreadState {
 };
 
 #ifndef SANITIZER_GO
+#if SANITIZER_MAC
+ThreadState *cur_thread();
+void cur_thread_finalize();
+#else
 __attribute__((tls_model("initial-exec")))
 extern THREADLOCAL char cur_thread_placeholder[];
 INLINE ThreadState *cur_thread() {
   return reinterpret_cast<ThreadState *>(&cur_thread_placeholder);
 }
-#endif
+INLINE void cur_thread_finalize() { }
+#endif  // SANITIZER_MAC
+#endif  // SANITIZER_GO
 
 class ThreadContext : public ThreadContextBase {
  public:

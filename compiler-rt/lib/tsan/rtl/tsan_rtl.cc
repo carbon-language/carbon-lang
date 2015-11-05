@@ -44,7 +44,7 @@ extern "C" void __tsan_resume() {
 
 namespace __tsan {
 
-#ifndef SANITIZER_GO
+#if !defined(SANITIZER_GO) && !SANITIZER_MAC
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
 #endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
