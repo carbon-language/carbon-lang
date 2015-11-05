@@ -701,8 +701,8 @@ static bool fix_mmap_addr(void **addr, long_t sz, int flags) {
   return true;
 }
 
-TSAN_INTERCEPTOR(void*, mmap, void *addr, long_t sz, int prot,
-                         int flags, int fd, unsigned off) {
+TSAN_INTERCEPTOR(void *, mmap, void *addr, SIZE_T sz, int prot, int flags,
+                 int fd, OFF_T off) {
   SCOPED_TSAN_INTERCEPTOR(mmap, addr, sz, prot, flags, fd, off);
   if (!fix_mmap_addr(&addr, sz, flags))
     return MAP_FAILED;
@@ -716,8 +716,8 @@ TSAN_INTERCEPTOR(void*, mmap, void *addr, long_t sz, int prot,
 }
 
 #if SANITIZER_LINUX
-TSAN_INTERCEPTOR(void*, mmap64, void *addr, long_t sz, int prot,
-                           int flags, int fd, u64 off) {
+TSAN_INTERCEPTOR(void *, mmap64, void *addr, SIZE_T sz, int prot, int flags,
+                 int fd, OFF64_T off) {
   SCOPED_TSAN_INTERCEPTOR(mmap64, addr, sz, prot, flags, fd, off);
   if (!fix_mmap_addr(&addr, sz, flags))
     return MAP_FAILED;
