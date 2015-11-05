@@ -1639,10 +1639,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       if (FeatureII->getBuiltinID() != 0) {
         Value = true;
       } else {
-        const LangOptions &LangOpts = PP.getLangOpts();
         StringRef Feature = FeatureII->getName();
         Value = llvm::StringSwitch<bool>(Feature)
-                    .Case("__make_integer_seq", LangOpts.CPlusPlus)
+                    .Case("__make_integer_seq", getLangOpts().CPlusPlus)
                     .Default(false);
       }
     } else if (II == Ident__has_attribute)
