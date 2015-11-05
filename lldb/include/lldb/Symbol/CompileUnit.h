@@ -447,7 +447,7 @@ private:
         flagsParsedVariables        = (1u << 1), ///< Have we already parsed globals and statics?
         flagsParsedSupportFiles     = (1u << 2), ///< Have we already parsed the support files for this compile unit?
         flagsParsedLineTable        = (1u << 3), ///< Have we parsed the line table already?
-        flagsParsedLanguage         = (1u << 4), ///< Have we parsed the line table already?
+        flagsParsedLanguage         = (1u << 4), ///< Have we parsed the language already?
         flagsParsedImportedModules  = (1u << 5)  ///< Have we parsed the imported modules already?
     };
 
