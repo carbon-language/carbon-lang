@@ -161,9 +161,9 @@ public:
     }
     case COFF::IMAGE_REL_I386_SECTION:
       // 16-bit section index of the section that contains the target.
-      assert(static_cast<int16_t>(RE.SectionID) <= INT16_MAX &&
+      assert(static_cast<int32_t>(RE.SectionID) <= INT16_MAX &&
              "relocation overflow");
-      assert(static_cast<int16_t>(RE.SectionID) >= INT16_MIN &&
+      assert(static_cast<int32_t>(RE.SectionID) >= INT16_MIN &&
              "relocation underflow");
       DEBUG(dbgs() << "\t\tOffset: " << RE.Offset
                    << " RelType: IMAGE_REL_I386_SECTION Value: " << RE.SectionID
