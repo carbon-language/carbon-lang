@@ -74,15 +74,14 @@ void ArchiveFile::parse() {
 // Returns a buffer pointing to a member file containing a given symbol.
 // This function is thread-safe.
 MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
-  auto ItOrErr = Sym->getMember();
-  error(ItOrErr,
-        Twine("Could not get the member for symbol ") + Sym->getName());
-  Archive::child_iterator It = *ItOrErr;
+  auto COrErr = Sym->getMember();
+  error(COrErr, Twine("Could not get the member for symbol ") + Sym->getName());
+  const Archive::Child &C = *COrErr;
 
   // Return an empty buffer if we have already returned the same buffer.
-  if (Seen[It->getChildOffset()].test_and_set())
+  if (Seen[C.getChildOffset()].test_and_set())
     return MemoryBufferRef();
-  ErrorOr<MemoryBufferRef> Ret = It->getMemoryBufferRef();
+  ErrorOr<MemoryBufferRef> Ret = C.getMemoryBufferRef();
   error(Ret, Twine("Could not get the buffer for the member defining symbol ") +
                  Sym->getName());
   return *Ret;
