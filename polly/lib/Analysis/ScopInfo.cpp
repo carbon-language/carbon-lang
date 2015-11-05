@@ -3342,6 +3342,27 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     if (UseParent == ParentBB && !isa<PHINode>(UI))
       continue;
 
+    // Uses by PHI nodes in the entry node count as external uses in case the
+    // use is through an incoming block that is itself not contained in the
+    // region.
+    if (R->getEntry() == UseParent) {
+      if (auto *PHI = dyn_cast<PHINode>(UI)) {
+        bool ExternalUse = false;
+        for (unsigned i = 0; i < PHI->getNumIncomingValues(); i++) {
+          if (PHI->getIncomingValue(i) == Inst &&
+              !R->contains(PHI->getIncomingBlock(i))) {
+            ExternalUse = true;
+            break;
+          }
+        }
+
+        if (ExternalUse) {
+          AnyCrossStmtUse = true;
+          continue;
+        }
+      }
+    }
+
     // Do not build scalar dependences inside a non-affine subregion.
     if (NonAffineSubRegion && NonAffineSubRegion->contains(UseParent))
       continue;
@@ -3363,27 +3384,6 @@ bool ScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     if (!R->contains(UseParent)) {
       AnyCrossStmtUse = true;
       continue;
-    }
-
-    // Uses by PHI nodes in the entry node count as external uses in case the
-    // use is through an incoming block that is itself not contained in the
-    // region.
-    if (R->getEntry() == UseParent) {
-      if (auto *PHI = dyn_cast<PHINode>(UI)) {
-        bool ExternalUse = false;
-        for (unsigned i = 0; i < PHI->getNumIncomingValues(); i++) {
-          if (PHI->getIncomingValue(i) == Inst &&
-              !R->contains(PHI->getIncomingBlock(i))) {
-            ExternalUse = true;
-            break;
-          }
-        }
-
-        if (ExternalUse) {
-          AnyCrossStmtUse = true;
-          continue;
-        }
-      }
     }
 
     // If the instruction can be synthesized and the user is in the region
