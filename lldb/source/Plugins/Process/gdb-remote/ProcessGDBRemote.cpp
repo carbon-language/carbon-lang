@@ -2981,7 +2981,7 @@ ProcessGDBRemote::SetUnixSignals(const UnixSignalsSP &signals_sp)
 bool
 ProcessGDBRemote::IsAlive ()
 {
-    return m_gdb_comm.IsConnected() && m_private_state.GetValue() != eStateExited;
+    return m_gdb_comm.IsConnected() && Process::IsAlive();
 }
 
 addr_t
@@ -4169,6 +4169,9 @@ ProcessGDBRemote::GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_addres
 
     if (m_gdb_comm.GetLoadedDynamicLibrariesInfosSupported())
     {
+        // Scope for the scoped timeout object
+        GDBRemoteCommunication::ScopedTimeout timeout (m_gdb_comm, 10);
+
         StructuredData::ObjectSP args_dict(new StructuredData::Dictionary());
         args_dict->GetAsDictionary()->AddIntegerItem ("image_list_address", image_list_address);
         args_dict->GetAsDictionary()->AddIntegerItem ("image_count", image_count);
@@ -4192,8 +4195,6 @@ ProcessGDBRemote::GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_addres
             {
                 if (!response.Empty())
                 {
-                    // The packet has already had the 0x7d xor quoting stripped out at the
-                    // GDBRemoteCommunication packet receive level.
                     object_sp = StructuredData::ParseJSON (response.GetStringRef());
                 }
             }
@@ -4201,7 +4202,6 @@ ProcessGDBRemote::GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_addres
     }
     return object_sp;
 }
-
 
 // Establish the largest memory read/write payloads we should use.
 // If the remote stub has a max packet size, stay under that size.
