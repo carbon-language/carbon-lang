@@ -343,6 +343,10 @@ bool CallInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
 bool CallInst::dataOperandHasImpliedAttr(unsigned i,
                                          Attribute::AttrKind A) const {
 
+  // There are getNumOperands() - 1 data operands.  The last operand is the
+  // callee.
+  assert(i < getNumOperands() && "Data operand index out of bounds!");
+
   // The attribute A can either be directly specified, if the operand in
   // question is a call argument; or be indirectly implied by the kind of its
   // containing operand bundle, if the operand is a bundle operand.
@@ -603,6 +607,10 @@ bool InvokeInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
 
 bool InvokeInst::dataOperandHasImpliedAttr(unsigned i,
                                            Attribute::AttrKind A) const {
+  // There are getNumOperands() - 3 data operands.  The last three operands are
+  // the callee and the two successor basic blocks.
+  assert(i < (getNumOperands() - 2) && "Data operand index out of bounds!");
+
   // The attribute A can either be directly specified, if the operand in
   // question is an invoke argument; or be indirectly implied by the kind of its
   // containing operand bundle, if the operand is a bundle operand.
