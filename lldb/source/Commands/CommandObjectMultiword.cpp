@@ -382,6 +382,14 @@ CommandObjectProxy::IsMultiwordObject ()
     return false;
 }
 
+void
+CommandObjectProxy::GenerateHelpText (Stream &result)
+{
+    CommandObject *proxy_command = GetProxyCommandObject();
+    if (proxy_command)
+        return proxy_command->GenerateHelpText(result);
+}
+
 lldb::CommandObjectSP
 CommandObjectProxy::GetSubcommandSP (const char *sub_cmd, StringList *matches)
 {

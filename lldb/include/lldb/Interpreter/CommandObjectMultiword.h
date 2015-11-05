@@ -126,6 +126,9 @@ public:
     bool
     IsMultiwordObject() override;
     
+    void
+    GenerateHelpText (Stream &result) override;
+    
     lldb::CommandObjectSP
     GetSubcommandSP(const char *sub_cmd, StringList *matches = nullptr) override;
     
