@@ -1230,9 +1230,6 @@ def visit(prefix, dir, names):
         return
 
     for name in names:
-        if os.path.isdir(os.path.join(dir, name)):
-            continue
-
         if '.py' == os.path.splitext(name)[1] and name.startswith(prefix):
 
             if name in all_tests:
@@ -1555,7 +1552,8 @@ def run_suite():
     # Walk through the testdirs while collecting tests.
     #
     for testdir in testdirs:
-        os.path.walk(testdir, visit, 'Test')
+        for (dirpath, dirnames, filenames) in os.walk(testdir):
+            visit('Test', dirpath, filenames)
 
     #
     # Now that we have loaded all the test cases, run the whole test suite.
