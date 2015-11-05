@@ -73,8 +73,8 @@ defm V_MIN_I16 : VOP2Inst <vop2<0,0x32>, "v_min_i16", VOP_I16_I16_I16>;
 } // End isCommutable = 1
 defm V_LDEXP_F16 : VOP2Inst <vop2<0,0x33>, "v_ldexp_f16", VOP_F16_F16_I16>;
 
-// Aliases to simplify matching of floating-pint instructions that are VOP2 on
-// SI and VOP3 on VI.
+// Aliases to simplify matching of floating-point instructions that
+// are VOP2 on SI and VOP3 on VI.
 
 class SI2_VI3Alias <string name, Instruction inst> : InstAlias <
   name#" $dst, $src0, $src1",
