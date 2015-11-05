@@ -321,23 +321,21 @@ struct ArgumentUsesTracker : public CaptureTracker {
       return true;
     }
 
-    bool Found = false;
-    Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-    for (CallSite::arg_iterator PI = CS.arg_begin(), PE = CS.arg_end();
-         PI != PE; ++PI, ++AI) {
-      if (AI == AE) {
-        assert(F->isVarArg() && "More params than args in non-varargs call");
-        Captured = true;
-        return true;
-      }
-      if (PI == U) {
-        Uses.push_back(&*AI);
-        Found = true;
-        break;
-      }
+    // Note: the callee and the two successor blocks *follow* the argument
+    // operands.  This means there is no need to adjust UseIndex to account for
+    // these.
+
+    unsigned UseIndex =
+        std::distance(const_cast<const Use *>(CS.arg_begin()), U);
+
+    assert(UseIndex < CS.arg_size() && "Non-argument use?");
+    if (UseIndex >= F->arg_size()) {
+      assert(F->isVarArg() && "More params than args in non-varargs call");
+      Captured = true;
+      return true;
     }
-    assert(Found && "Capturing call-site captured nothing?");
-    (void)Found;
+
+    Uses.push_back(std::next(F->arg_begin(), UseIndex));
     return false;
   }
 
