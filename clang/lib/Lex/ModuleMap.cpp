@@ -231,11 +231,9 @@ static bool violatesPrivateInclude(Module *RequestingModule,
     assert((!IsPrivateRole || IsPrivate) && "inconsistent headers and roles");
   }
 #endif
-  return IsPrivateRole &&
-         // FIXME: Should we map RequestingModule to its top-level module here
-         //        too? This check is redundant with the isSubModuleOf check in
-         //        diagnoseHeaderInclusion.
-         RequestedModule->getTopLevelModule() != RequestingModule;
+  return IsPrivateRole && (!RequestingModule ||
+                           RequestedModule->getTopLevelModule() !=
+                               RequestingModule->getTopLevelModule());
 }
 
 static Module *getTopLevelOrNull(Module *M) {
@@ -261,11 +259,6 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
   HeadersMap::iterator Known = findKnownHeader(File);
   if (Known != Headers.end()) {
     for (const KnownHeader &Header : Known->second) {
-      // If 'File' is part of 'RequestingModule' we can definitely include it.
-      if (Header.getModule() &&
-          Header.getModule()->isSubModuleOf(RequestingModule))
-        return;
-
       // Remember private headers for later printing of a diagnostic.
       if (violatesPrivateInclude(RequestingModule, File, Header.getRole(),
                                  Header.getModule())) {
