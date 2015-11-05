@@ -309,7 +309,7 @@ void NORETURN Die();
 void NORETURN
 CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);
 void NORETURN ReportMmapFailureAndDie(uptr size, const char *mem_type,
-                                      error_t err);
+                                      const char *mmap_type, error_t err);
 
 // Set the name of the current thread to 'name', return true on succees.
 // The name may be truncated to a system-dependent limit.

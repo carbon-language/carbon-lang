@@ -119,7 +119,7 @@ void *MmapOrDie(uptr size, const char *mem_type) {
                            MAP_PRIVATE | MAP_ANON, -1, 0);
   int reserrno;
   if (internal_iserror(res, &reserrno))
-    ReportMmapFailureAndDie(size, mem_type, reserrno);
+    ReportMmapFailureAndDie(size, mem_type, "allocate", reserrno);
   IncreaseTotalMmap(size);
   return (void *)res;
 }
@@ -143,12 +143,8 @@ void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
                          MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
                          -1, 0);
   int reserrno;
-  if (internal_iserror(p, &reserrno)) {
-    Report("ERROR: %s failed to "
-           "allocate noreserve 0x%zx (%zd) bytes for '%s' (errno: %d)\n",
-           SanitizerToolName, size, size, mem_type, reserrno);
-    CHECK("unable to mmap" && 0);
-  }
+  if (internal_iserror(p, &reserrno))
+    ReportMmapFailureAndDie(size, mem_type, "allocate noreserve", reserrno);
   IncreaseTotalMmap(size);
   return (void *)p;
 }
@@ -162,10 +158,10 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
       -1, 0);
   int reserrno;
   if (internal_iserror(p, &reserrno)) {
-    Report("ERROR: %s failed to "
-           "allocate 0x%zx (%zd) bytes at address %zx (errno: %d)\n",
-           SanitizerToolName, size, size, fixed_addr, reserrno);
-    CHECK("unable to mmap" && 0);
+    char mem_type[30];
+    internal_snprintf(mem_type, sizeof(mem_type), "memory at address 0x%zx",
+                      fixed_addr);
+    ReportMmapFailureAndDie(size, mem_type, "allocate", reserrno);
   }
   IncreaseTotalMmap(size);
   return (void *)p;
