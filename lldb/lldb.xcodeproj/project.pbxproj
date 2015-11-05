@@ -842,6 +842,8 @@
 		AE44FB301BB07EB20033EB62 /* GoUserExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE44FB2C1BB07DD80033EB62 /* GoUserExpression.cpp */; };
 		AE44FB311BB07EB80033EB62 /* GoLexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE44FB2A1BB07DD80033EB62 /* GoLexer.cpp */; };
 		AE44FB321BB07EBC0033EB62 /* GoParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE44FB2B1BB07DD80033EB62 /* GoParser.cpp */; };
+		AE44FB471BB4BB090033EB62 /* GoLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE44FB451BB4BB090033EB62 /* GoLanguage.cpp */; };
+		AE44FB4C1BB4BB540033EB62 /* GoFormatterFunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE44FB4A1BB4BB540033EB62 /* GoFormatterFunctions.cpp */; };
 		AE44FB3E1BB485960033EB62 /* GoLanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE44FB3D1BB485960033EB62 /* GoLanguageRuntime.cpp */; };
 		AE6897281B94F6DE0018845D /* DWARFASTParserGo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE6897261B94F6DE0018845D /* DWARFASTParserGo.cpp */; };
 		AE7F56291B8FE418001377A8 /* GoASTContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFFBA7C1AC4835D0087B932 /* GoASTContext.cpp */; };
@@ -2695,6 +2697,10 @@
 		AE44FB2A1BB07DD80033EB62 /* GoLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GoLexer.cpp; path = ExpressionParser/Go/GoLexer.cpp; sourceTree = "<group>"; };
 		AE44FB2B1BB07DD80033EB62 /* GoParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GoParser.cpp; path = ExpressionParser/Go/GoParser.cpp; sourceTree = "<group>"; };
 		AE44FB2C1BB07DD80033EB62 /* GoUserExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GoUserExpression.cpp; path = ExpressionParser/Go/GoUserExpression.cpp; sourceTree = "<group>"; };
+		AE44FB451BB4BB090033EB62 /* GoLanguage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GoLanguage.cpp; path = Language/Go/GoLanguage.cpp; sourceTree = "<group>"; };
+		AE44FB461BB4BB090033EB62 /* GoLanguage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GoLanguage.h; path = Language/Go/GoLanguage.h; sourceTree = "<group>"; };
+		AE44FB4A1BB4BB540033EB62 /* GoFormatterFunctions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GoFormatterFunctions.cpp; path = Language/Go/GoFormatterFunctions.cpp; sourceTree = "<group>"; };
+		AE44FB4B1BB4BB540033EB62 /* GoFormatterFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GoFormatterFunctions.h; path = Language/Go/GoFormatterFunctions.h; sourceTree = "<group>"; };
 		AE44FB3C1BB4858A0033EB62 /* GoLanguageRuntime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GoLanguageRuntime.h; path = Go/GoLanguageRuntime.h; sourceTree = "<group>"; };
 		AE44FB3D1BB485960033EB62 /* GoLanguageRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GoLanguageRuntime.cpp; path = Go/GoLanguageRuntime.cpp; sourceTree = "<group>"; };
 		AE6897261B94F6DE0018845D /* DWARFASTParserGo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFASTParserGo.cpp; sourceTree = "<group>"; };
@@ -5512,6 +5518,7 @@
 			isa = PBXGroup;
 			children = (
 				94B6385A1B8FB109004FE1E4 /* CPlusPlus */,
+				AE44FB431BB4BAC20033EB62 /* Go */,
 				94B638551B8FAC87004FE1E4 /* ObjC */,
 				94B638601B8FB7BE004FE1E4 /* ObjCPlusPlus */,
 			);
@@ -5611,6 +5618,25 @@
 				AE44FB2C1BB07DD80033EB62 /* GoUserExpression.cpp */,
 			);
 			name = Go;
+			sourceTree = "<group>";
+		};
+		AE44FB431BB4BAC20033EB62 /* Go */ = {
+			isa = PBXGroup;
+			children = (
+				AE44FB491BB4BB1B0033EB62 /* Formatters */,
+				AE44FB461BB4BB090033EB62 /* GoLanguage.h */,
+				AE44FB451BB4BB090033EB62 /* GoLanguage.cpp */,
+			);
+			name = Go;
+			sourceTree = "<group>";
+		};
+		AE44FB491BB4BB1B0033EB62 /* Formatters */ = {
+			isa = PBXGroup;
+			children = (
+				AE44FB4B1BB4BB540033EB62 /* GoFormatterFunctions.h */,
+				AE44FB4A1BB4BB540033EB62 /* GoFormatterFunctions.cpp */,
+			);
+			name = Formatters;
 			sourceTree = "<group>";
 		};
 		AE44FB3B1BB485730033EB62 /* Go */ = {
@@ -6359,6 +6385,7 @@
 				2689001113353DB600698AC0 /* Watchpoint.cpp in Sources */,
 				2689001213353DDE00698AC0 /* CommandObjectApropos.cpp in Sources */,
 				4C88BC2A1BA3722B00AA0964 /* Expression.cpp in Sources */,
+				AE44FB4C1BB4BB540033EB62 /* GoFormatterFunctions.cpp in Sources */,
 				23042D121976CA1D00621B2C /* PlatformKalimba.cpp in Sources */,
 				2689001313353DDE00698AC0 /* CommandObjectArgs.cpp in Sources */,
 				2689001413353DDE00698AC0 /* CommandObjectBreakpoint.cpp in Sources */,
@@ -6879,6 +6906,7 @@
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,
 				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
 				2666ADC81B3CB675001FAFD3 /* HexagonDYLDRendezvous.cpp in Sources */,
+				AE44FB471BB4BB090033EB62 /* GoLanguage.cpp in Sources */,
 				262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */,
 				94F48F251A01C687005C0EC6 /* StringPrinter.cpp in Sources */,
 				94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */,

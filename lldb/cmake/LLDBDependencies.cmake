@@ -22,6 +22,7 @@ set( LLDB_USED_LIBS
   lldbPluginDynamicLoaderWindowsDYLD
   
   lldbPluginCPlusPlusLanguage
+  lldbPluginGoLanguage
   lldbPluginObjCLanguage
   lldbPluginObjCPlusPlusLanguage
 
