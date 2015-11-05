@@ -37,7 +37,7 @@ struct CGRect {
 
 // Don't attach debug locations to the prologue instructions. These were
 // leaking over from the previous function emission by accident.
-// CHECK: define internal void @"\01-[I setBounds:]"
+// CHECK: define internal void @"\01-[I setBounds:]"({{.*}} {
 // CHECK-NOT: !dbg
 // CHECK: call void @llvm.dbg.declare
 - (void)setFrame:(CGRect)frameRect {}

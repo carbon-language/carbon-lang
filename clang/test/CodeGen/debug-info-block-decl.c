@@ -5,7 +5,7 @@
 // CHECK: define{{.*}}@main()
 // CHECK: store{{.*}}bitcast{{.*}}, !dbg ![[ASSIGNMENT:[0-9]+]]
 // CHECK: define {{.*}} @__main_block_invoke
-// CHECK: dbg ![[BLOCK_ENTRY:[0-9]+]]
+// CHECK: , !dbg ![[BLOCK_ENTRY:[0-9]+]]
 
 int main()
 {

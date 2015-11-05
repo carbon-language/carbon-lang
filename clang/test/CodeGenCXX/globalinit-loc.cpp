@@ -4,7 +4,7 @@
 // Verify that the global init helper function does not get associated
 // with any source location.
 //
-// CHECK: define internal {{.*}}void @_GLOBAL__sub_I_globalinit_loc.cpp
+// CHECK: define internal {{.*}}void @_GLOBAL__sub_I_globalinit_loc.cpp({{.*}} {
 // CHECK: !dbg ![[DBG:.*]]
 // CHECK: !DISubprogram(linkageName: "_GLOBAL__sub_I_globalinit_loc.cpp"
 // CHECK-NOT:           line:
