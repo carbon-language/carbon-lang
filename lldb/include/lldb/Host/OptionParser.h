@@ -11,6 +11,7 @@
 #define liblldb_OptionParser_h_
 
 #include <string>
+#include "lldb/Host/Mutex.h"
 
 struct option;
 
@@ -38,7 +39,7 @@ public:
         eOptionalArgument
     };
 
-    static void Prepare();
+    static void Prepare(Mutex::Locker &locker);
 
     static void EnableError(bool error);
 

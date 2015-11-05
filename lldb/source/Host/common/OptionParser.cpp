@@ -16,8 +16,10 @@
 using namespace lldb_private;
 
 void
-OptionParser::Prepare()
+OptionParser::Prepare(Mutex::Locker &locker)
 {
+    static Mutex g_mutex(Mutex::eMutexTypeNormal);
+    locker.Lock(g_mutex);
 #ifdef __GLIBC__
     optind = 0;
 #else
