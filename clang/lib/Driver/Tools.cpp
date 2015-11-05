@@ -4816,6 +4816,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  // Pass down -fobjc-weak or -fno-objc-weak if present.
+  if (types::isObjC(InputType)) {
+    auto WeakArg = Args.getLastArg(options::OPT_fobjc_weak,
+                                   options::OPT_fno_objc_weak);
+    if (!WeakArg) {
+      // nothing to do
+    } else if (GCArg) {
+      if (WeakArg->getOption().matches(options::OPT_fobjc_weak))
+        D.Diag(diag::err_objc_weak_with_gc);
+    } else if (!objcRuntime.allowsWeak()) {
+      if (WeakArg->getOption().matches(options::OPT_fobjc_weak))
+        D.Diag(diag::err_objc_weak_unsupported);
+    } else {
+      WeakArg->render(Args, CmdArgs);
+    }
+  }
+
   if (Args.hasFlag(options::OPT_fapplication_extension,
                    options::OPT_fno_application_extension, false))
     CmdArgs.push_back("-fapplication-extension");

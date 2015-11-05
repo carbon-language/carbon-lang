@@ -852,6 +852,7 @@ def fno_ms_compatibility : Flag<["-"], "fno-ms-compatibility">, Group<f_Group>,
 def fno_delayed_template_parsing : Flag<["-"], "fno-delayed-template-parsing">, Group<f_Group>;
 def fno_objc_exceptions: Flag<["-"], "fno-objc-exceptions">, Group<f_Group>;
 def fno_objc_legacy_dispatch : Flag<["-"], "fno-objc-legacy-dispatch">, Group<f_Group>;
+def fno_objc_weak : Flag<["-"], "fno-objc-weak">, Group<f_Group>, Flags<[CC1Option]>;
 def fno_omit_frame_pointer : Flag<["-"], "fno-omit-frame-pointer">, Group<f_Group>;
 def fno_operator_names : Flag<["-"], "fno-operator-names">, Group<f_Group>,
   HelpText<"Do not treat C++ operator name keywords as synonyms for operators">,
@@ -921,6 +922,8 @@ def fno_objc_infer_related_result_type : Flag<["-"],
     "do not infer Objective-C related result type based on method family">,
   Flags<[CC1Option]>;
 def fobjc_link_runtime: Flag<["-"], "fobjc-link-runtime">, Group<f_Group>;
+def fobjc_weak : Flag<["-"], "fobjc-weak">, Group<f_Group>, Flags<[CC1Option]>,
+  HelpText<"Enable ARC-style weak references in Objective-C">;
 
 // Objective-C ABI options.
 def fobjc_runtime_EQ : Joined<["-"], "fobjc-runtime=">, Group<f_Group>, Flags<[CC1Option]>,

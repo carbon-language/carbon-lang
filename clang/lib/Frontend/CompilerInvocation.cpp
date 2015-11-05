@@ -1483,16 +1483,19 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
       Opts.ObjCWeakRuntime = Opts.ObjCRuntime.allowsWeak();
 
     // ObjCWeak determines whether __weak is actually enabled.
-    if (Opts.ObjCAutoRefCount) {
-      Opts.ObjCWeak = Opts.ObjCWeakRuntime;
-    } else if (Args.hasArg(OPT_fobjc_weak)) {
-      if (Opts.getGC() != LangOptions::NonGC) {
+    // Note that we allow -fno-objc-weak to disable this even in ARC mode.
+    if (auto weakArg = Args.getLastArg(OPT_fobjc_weak, OPT_fno_objc_weak)) {
+      if (!weakArg->getOption().matches(OPT_fobjc_weak)) {
+        assert(!Opts.ObjCWeak);
+      } else if (Opts.getGC() != LangOptions::NonGC) {
         Diags.Report(diag::err_objc_weak_with_gc);
-      } else if (Opts.ObjCWeakRuntime) {
-        Opts.ObjCWeak = true;
-      } else {
+      } else if (!Opts.ObjCWeakRuntime) {
         Diags.Report(diag::err_objc_weak_unsupported);
+      } else {
+        Opts.ObjCWeak = 1;
       }
+    } else if (Opts.ObjCAutoRefCount) {
+      Opts.ObjCWeak = Opts.ObjCWeakRuntime;
     }
 
     if (Args.hasArg(OPT_fno_objc_infer_related_result_type))
