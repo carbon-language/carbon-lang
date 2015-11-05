@@ -136,8 +136,8 @@ func (d *DIBuilder) PushFunction(fnptr llvm.Value, sig *types.Signature, pos tok
 		Line:         line,
 		Type:         d.DIType(sig),
 		IsDefinition: true,
-		Function:     fnptr,
 	})
+	fnptr.SetSubprogram(d.fn)
 }
 
 // PopFunction pops the previously pushed function off the scope stack.
