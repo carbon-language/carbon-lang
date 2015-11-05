@@ -611,7 +611,6 @@ public:
   /// \param Offset - The offset to reach. This may be an expression, but the
   /// expression must be associated with the current section.
   /// \param Value - The value to use when filling bytes.
-  /// \return false on success, true if the offset was invalid.
   virtual void emitValueToOffset(const MCExpr *Offset, unsigned char Value = 0);
 
   /// @}
