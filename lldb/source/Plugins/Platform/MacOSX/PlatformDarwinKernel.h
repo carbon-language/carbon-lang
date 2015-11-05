@@ -133,6 +133,14 @@ protected:
     void
     GetiOSSDKDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories);
 
+    // Directories where we may find AppleTVOS SDKs with kext bundles in them
+    void
+    GetAppleTVOSSDKDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories);
+    
+    // Directories where we may find WatchOS SDKs with kext bundles in them
+    void
+    GetWatchOSSDKDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories);
+
     // Directories where we may find Mac OS X SDKs with kext bundles in them
     void
     GetMacSDKDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories);

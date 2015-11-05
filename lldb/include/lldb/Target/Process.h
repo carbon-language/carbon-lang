@@ -2080,7 +2080,7 @@ public:
     ///     otherwise.
     //------------------------------------------------------------------
     virtual bool
-    IsAlive () = 0;
+    IsAlive ();
 
     //------------------------------------------------------------------
     /// Before lldb detaches from a process, it warns the user that they are about to lose their debug session.

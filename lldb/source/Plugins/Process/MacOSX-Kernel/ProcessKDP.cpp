@@ -157,6 +157,8 @@ ProcessKDP::CanDebug(TargetSP target_sp, bool plugin_specified_by_name)
             case llvm::Triple::Darwin:  // Should use "macosx" for desktop and "ios" for iOS, but accept darwin just in case
             case llvm::Triple::MacOSX:  // For desktop targets
             case llvm::Triple::IOS:     // For arm targets
+            case llvm::Triple::TvOS:
+            case llvm::Triple::WatchOS:
                 if (triple_ref.getVendor() == llvm::Triple::Apple)
                 {
                     ObjectFile *exe_objfile = exe_module->GetObjectFile();
@@ -698,7 +700,7 @@ ProcessKDP::DoDestroy ()
 bool
 ProcessKDP::IsAlive ()
 {
-    return m_comm.IsConnected() && m_private_state.GetValue() != eStateExited;
+    return m_comm.IsConnected() && Process::IsAlive();
 }
 
 //------------------------------------------------------------------

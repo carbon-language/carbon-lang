@@ -111,8 +111,11 @@ PlatformDarwinKernel::CreateInstance (bool force, const ArchSpec *arch)
         {
             switch (triple.getOS())
             {
-                case llvm::Triple::Darwin:  // Deprecated, but still support Darwin for historical reasons
+                case llvm::Triple::Darwin:
                 case llvm::Triple::MacOSX:
+                case llvm::Triple::IOS:
+                case llvm::Triple::WatchOS:
+                case llvm::Triple::TvOS:
                     break;
                 // Only accept "vendor" for vendor if the host is Apple and
                 // it "unknown" wasn't specified (it was just returned because it
@@ -312,7 +315,11 @@ PlatformDarwinKernel::CollectKextAndKernelDirectories ()
     // e.g. /Applications/Xcode.app//Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.Internal.sdk
     std::vector<FileSpec> sdk_dirs;
     if (m_ios_debug_session != eLazyBoolNo)
+    {
         GetiOSSDKDirectoriesToSearch (sdk_dirs);
+        GetAppleTVOSSDKDirectoriesToSearch (sdk_dirs);
+        GetWatchOSSDKDirectoriesToSearch (sdk_dirs);
+    }
     if (m_ios_debug_session != eLazyBoolYes)
         GetMacSDKDirectoriesToSearch (sdk_dirs);
 
@@ -362,6 +369,50 @@ PlatformDarwinKernel::GetiOSSDKDirectoriesToSearch (std::vector<lldb_private::Fi
         directories.push_back (ios_sdk);
     }
 }
+
+void
+PlatformDarwinKernel::GetAppleTVOSSDKDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories)
+{
+    // DeveloperDirectory is something like "/Applications/Xcode.app/Contents/Developer"
+    const char *developer_dir = GetDeveloperDirectory();
+    if (developer_dir == NULL)
+        developer_dir = "/Applications/Xcode.app/Contents/Developer";
+
+    char pathbuf[PATH_MAX];
+    ::snprintf (pathbuf, sizeof (pathbuf), "%s/Platforms/AppleTVOS.platform/Developer/SDKs", developer_dir);
+    FileSpec ios_sdk(pathbuf, true);
+    if (ios_sdk.Exists() && ios_sdk.IsDirectory())
+    {
+        directories.push_back (ios_sdk);
+    }
+}
+
+void
+PlatformDarwinKernel::GetWatchOSSDKDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories)
+{
+    // DeveloperDirectory is something like "/Applications/Xcode.app/Contents/Developer"
+    const char *developer_dir = GetDeveloperDirectory();
+    if (developer_dir == NULL)
+        developer_dir = "/Applications/Xcode.app/Contents/Developer";
+
+    char pathbuf[PATH_MAX];
+    ::snprintf (pathbuf, sizeof (pathbuf), "%s/Platforms/watchOS.platform/Developer/SDKs", developer_dir);
+    FileSpec ios_sdk(pathbuf, true);
+    if (ios_sdk.Exists() && ios_sdk.IsDirectory())
+    {
+        directories.push_back (ios_sdk);
+    }
+    else
+    {
+        ::snprintf (pathbuf, sizeof (pathbuf), "%s/Platforms/WatchOS.platform/Developer/SDKs", developer_dir);
+        FileSpec alt_watch_sdk(pathbuf, true);
+        if (ios_sdk.Exists() && ios_sdk.IsDirectory())
+        {
+            directories.push_back (ios_sdk);
+        }
+    }
+}
+
 
 void
 PlatformDarwinKernel::GetMacSDKDirectoriesToSearch (std::vector<lldb_private::FileSpec> &directories)

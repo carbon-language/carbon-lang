@@ -64,6 +64,8 @@ SystemRuntimeMacOSX::CreateInstance (Process* process)
                 case llvm::Triple::Darwin:
                 case llvm::Triple::MacOSX:
                 case llvm::Triple::IOS:
+                case llvm::Triple::TvOS:
+                case llvm::Triple::WatchOS:
                     create = triple_ref.getVendor() == llvm::Triple::Apple;
                     break;
                 default:

@@ -162,6 +162,8 @@ DynamicLoaderDarwinKernel::CreateInstance (Process* process, bool force)
             case llvm::Triple::Darwin:
             case llvm::Triple::MacOSX:
             case llvm::Triple::IOS:
+            case llvm::Triple::TvOS:
+            case llvm::Triple::WatchOS:
                 if (triple_ref.getVendor() != llvm::Triple::Apple)
                 {
                    return NULL;

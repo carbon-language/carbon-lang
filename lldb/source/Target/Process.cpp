@@ -1501,6 +1501,29 @@ Process::SetExitStatus (int status, const char *cstr)
     return true;
 }
 
+bool
+Process::IsAlive ()
+{
+    switch (m_private_state.GetValue())
+    {
+        case eStateInvalid:
+        case eStateUnloaded:
+        case eStateDetached:
+        case eStateExited:
+            return false;
+
+        case eStateConnected:
+        case eStateAttaching:
+        case eStateLaunching:
+        case eStateStopped:
+        case eStateRunning:
+        case eStateStepping:
+        case eStateCrashed:
+        case eStateSuspended:
+            return true;
+    }
+}
+
 // This static callback can be used to watch for local child processes on
 // the current host. The child process exits, the process will be
 // found in the global target list (we want to be completely sure that the
