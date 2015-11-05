@@ -364,7 +364,7 @@ o GDB_REMOTE_LOG: if defined, specifies the log file pathname for the
 
 
 def setCrashInfoHook_Mac(text):
-    import crashinfo
+    from . import crashinfo
     crashinfo.setCrashReporterDescription(text)
 
 # implement this in some suitable way for your platform, and then bind it
