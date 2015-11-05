@@ -17,6 +17,7 @@ class ProcessAttachTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @skipIfiOSSimulator
     def test_attach_to_process_by_id(self):
         """Test attach by process id"""
         self.build()

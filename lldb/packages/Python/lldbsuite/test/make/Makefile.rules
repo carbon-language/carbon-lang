@@ -40,7 +40,7 @@ ifneq "$(TRIPLE)" ""
 	triple_space = $(subst -, ,$(TRIPLE))
 	ARCH =$(word 1, $(triple_space))
 	TRIPLE_VENDOR =$(word 2, $(triple_space))
-	triple_os_and_version =$(shell echo $(word 3, $(triple_space)) | sed -e 's/\(.*\)\([0-9]\.[0-9]\).*/\1 \2/')
+	triple_os_and_version =$(shell echo $(word 3, $(triple_space)) | sed 's/\([a-z]*\)\(.*\)/\1 \2/')
 	TRIPLE_OS =$(word 1, $(triple_os_and_version))
 	TRIPLE_VERSION =$(word 2, $(triple_os_and_version))
 	ifeq "$(TRIPLE_VENDOR)" "apple"
@@ -181,6 +181,7 @@ ifeq "$(OS)" "Darwin"
 else
 	CFLAGS += $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS) -I$(LLDB_BASE_DIR)include
 endif
+
 CFLAGS += -include $(THIS_FILE_DIR)test_common.h $(TRIPLE_CFLAGS)
 
 # Use this one if you want to build one part of the result without debug information:

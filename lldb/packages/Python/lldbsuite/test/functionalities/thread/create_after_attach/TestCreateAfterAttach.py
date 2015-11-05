@@ -19,6 +19,7 @@ class CreateAfterAttachTestCase(TestBase):
                    # not yet investigated.  Revisit once required functionality
                    # is implemented for FreeBSD.
     @skipIfWindows # Occasionally hangs on Windows, may be same as other issues.
+    @skipIfiOSSimulator
     def test_create_after_attach_with_popen(self):
         """Test thread creation after process attach."""
         self.build(dictionary=self.getBuildFlags(use_cpp11=False))
@@ -29,6 +30,7 @@ class CreateAfterAttachTestCase(TestBase):
     @skipIfRemote
     @skipIfWindows # Windows doesn't have fork.
     @expectedFlakeyLinux("llvm.org/pr16229") # 1/100 dosep, build 3546, clang-3.5 x84_64
+    @skipIfiOSSimulator
     def test_create_after_attach_with_fork(self):
         """Test thread creation after process attach."""
         self.build(dictionary=self.getBuildFlags(use_cpp11=False))

@@ -1381,6 +1381,28 @@ def isMultiprocessTestRunner():
     # test runner
     return not (is_inferior_test_runner or no_multiprocess_test_runner)
 
+def getVersionForSDK(sdk):
+    sdk = str.lower(sdk)
+    full_path = seven.get_command_output('xcrun -sdk %s --show-sdk-path' % sdk)
+    basename = os.path.basename(full_path)
+    basename = os.path.splitext(basename)[0]
+    basename = str.lower(basename)
+    ver = basename.replace(sdk, '')
+    return ver
+
+def getPathForSDK(sdk):
+    sdk = str.lower(sdk)
+    full_path = seven.get_command_output('xcrun -sdk %s --show-sdk-path' % sdk)
+    if os.path.exists(full_path): return full_path
+    return None
+
+def setDefaultTripleForPlatform():
+    if lldb_platform_name == 'ios-simulator':
+        triple_str = 'x86_64-apple-ios%s' % (getVersionForSDK('iphonesimulator'))
+        os.environ['TRIPLE'] = triple_str
+        return {'TRIPLE':triple_str}
+    return {}
+
 def run_suite():
     global just_do_benchmarks_test
     global dont_do_dsym_test
@@ -1478,6 +1500,7 @@ def run_suite():
     if lldb_platform_name:
         print("Setting up remote platform '%s'" % (lldb_platform_name))
         lldb.remote_platform = lldb.SBPlatform(lldb_platform_name)
+        lldb.remote_platform_name = lldb_platform_name
         if not lldb.remote_platform.IsValid():
             print("error: unable to create the LLDB platform named '%s'." % (lldb_platform_name))
             exitTestSuite(1)
@@ -1495,10 +1518,17 @@ def run_suite():
         else:
             lldb.platform_url = None
 
-        if lldb_platform_working_dir:
-            print("Setting remote platform working directory to '%s'..." % (lldb_platform_working_dir))
-            lldb.remote_platform.SetWorkingDirectory(lldb_platform_working_dir)
-    
+    platform_changes = setDefaultTripleForPlatform()
+    first = True
+    for key in platform_changes:
+        if first:
+            print("Environment variables setup for platform support:")
+            first = False
+        print("%s = %s" % (key,platform_changes[key]))
+
+    if lldb_platform_working_dir:
+        print("Setting remote platform working directory to '%s'..." % (lldb_platform_working_dir))
+        lldb.remote_platform.SetWorkingDirectory(lldb_platform_working_dir)
         lldb.remote_platform_working_dir = lldb_platform_working_dir
         lldb.DBG.SetSelectedPlatform(lldb.remote_platform)
     else:

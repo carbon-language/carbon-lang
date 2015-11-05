@@ -868,6 +868,10 @@ def skipIfNoSBHeaders(func):
             func(*args, **kwargs)
     return wrapper
 
+def skipIfiOSSimulator(func):
+    """Decorate the item to skip tests that should be skipped on the iOS Simulator."""
+    return unittest2.skipIf(hasattr(lldb, 'remote_platform_name') and lldb.remote_platform_name == 'ios-simulator', 'skip on the iOS Simulator')(func)
+
 def skipIfFreeBSD(func):
     """Decorate the item to skip tests that should be skipped on FreeBSD."""
     return skipIfPlatform(["freebsd"])(func)

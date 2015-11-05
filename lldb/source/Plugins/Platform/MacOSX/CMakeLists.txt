@@ -1,7 +1,9 @@
 add_lldb_library(lldbPluginPlatformMacOSX
+  PlatformAppleSimulator.cpp
   PlatformDarwin.cpp
   PlatformDarwinKernel.cpp
   PlatformiOSSimulator.cpp
+  PlatformiOSSimulatorCoreSimulatorSupport.mm
   PlatformMacOSX.cpp
   PlatformRemoteiOS.cpp
   )

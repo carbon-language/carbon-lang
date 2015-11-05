@@ -24,6 +24,7 @@ class AttachDeniedTestCase(TestBase):
         return (err, shell_command.GetStatus(), shell_command.GetOutput())
 
     @skipIfWindows
+    @skipIfiOSSimulator
     def test_attach_to_process_by_id_denied(self):
         """Test attach by process id denied"""
         self.build()

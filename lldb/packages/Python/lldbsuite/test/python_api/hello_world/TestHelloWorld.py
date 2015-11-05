@@ -30,6 +30,7 @@ class HelloWorldTestCase(TestBase):
         TestBase.tearDown(self)
 
     @add_test_categories(['pyapi'])
+    @skipIfiOSSimulator
     def test_with_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it."""
         self.build(dictionary=self.d)
@@ -75,6 +76,7 @@ class HelloWorldTestCase(TestBase):
     @add_test_categories(['pyapi'])
     @expectedFailureWindows("llvm.org/pr24600")
     @expectedFailurei386("llvm.org/pr25338")
+    @skipIfiOSSimulator
     def test_with_attach_to_process_with_id_api(self):
         """Create target, spawn a process, and attach to it with process id."""
         self.build(dictionary=self.d)
@@ -104,6 +106,7 @@ class HelloWorldTestCase(TestBase):
     @add_test_categories(['pyapi'])
     @expectedFailureWindows("llvm.org/pr24600")
     @expectedFailurei386("llvm.org/pr25338")
+    @skipIfiOSSimulator
     def test_with_attach_to_process_with_name_api(self):
         """Create target, spawn a process, and attach to it with process name."""
         self.build(dictionary=self.d)

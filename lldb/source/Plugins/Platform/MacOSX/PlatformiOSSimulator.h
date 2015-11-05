@@ -16,30 +16,30 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "PlatformDarwin.h"
+#include "PlatformAppleSimulator.h"
 
-class PlatformiOSSimulator : public PlatformDarwin
+class PlatformiOSSimulator : public PlatformAppleSimulator
 {
 public:
     PlatformiOSSimulator ();
-
+    
     ~PlatformiOSSimulator() override;
-
+    
     //------------------------------------------------------------
     // Class Functions
     //------------------------------------------------------------
     static lldb::PlatformSP
     CreateInstance (bool force, const lldb_private::ArchSpec *arch);
-
+    
     static void
     Initialize ();
-
+    
     static void
     Terminate ();
     
     static lldb_private::ConstString
     GetPluginNameStatic ();
-
+    
     static const char *
     GetDescriptionStatic();
     
@@ -57,7 +57,7 @@ public:
     {
         return 1;
     }
-
+    
     //------------------------------------------------------------
     // lldb_private::Platform functions
     //------------------------------------------------------------
@@ -65,21 +65,21 @@ public:
     ResolveExecutable (const lldb_private::ModuleSpec &module_spec,
                        lldb::ModuleSP &module_sp,
                        const lldb_private::FileSpecList *module_search_paths_ptr) override;
-
+    
     const char *
     GetDescription () override
     {
         return GetDescriptionStatic();
     }
-
+    
     void
     GetStatus (lldb_private::Stream &strm) override;
-
+    
     virtual lldb_private::Error
-    GetSymbolFile (const lldb_private::FileSpec &platform_file, 
+    GetSymbolFile (const lldb_private::FileSpec &platform_file,
                    const lldb_private::UUID *uuid_ptr,
                    lldb_private::FileSpec &local_file);
-
+    
     lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,
                      lldb_private::Process* process,
@@ -87,13 +87,13 @@ public:
                      const lldb_private::FileSpecList *module_search_paths_ptr,
                      lldb::ModuleSP *old_module_sp_ptr,
                      bool *did_create_ptr) override;
-
+    
     uint32_t
     FindProcesses (const lldb_private::ProcessInstanceInfoMatch &match_info,
                    lldb_private::ProcessInstanceInfoList &process_infos) override;
-
+    
     bool
-    GetSupportedArchitectureAtIndex (uint32_t idx, 
+    GetSupportedArchitectureAtIndex (uint32_t idx,
                                      lldb_private::ArchSpec &arch) override;
     
     void
@@ -101,15 +101,14 @@ public:
     {
         return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(target, options, PlatformDarwin::SDKType::iPhoneSimulator);
     }
-
+    
 protected:
     std::string m_sdk_directory;
     std::string m_build_update;
-    //std::vector<FileSpec> m_device_support_os_dirs;
     
     const char *
-    GetSDKsDirectory();
-
+    GetSDKDirectoryAsCString();
+    
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformiOSSimulator);
 };
