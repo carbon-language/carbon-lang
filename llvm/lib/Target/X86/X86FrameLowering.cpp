@@ -640,6 +640,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
           ? getX86SubSuperRegister(FramePtr, MVT::i64, false)
           : FramePtr;
   unsigned BasePtr = TRI->getBaseRegister();
+  
+  // Debug location must be unknown since the first debug location is used
+  // to determine the end of the prologue.
   DebugLoc DL;
 
   // Add RETADDR move area to callee saved frame size.

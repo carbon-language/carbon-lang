@@ -44,7 +44,7 @@ void SparcFrameLowering::emitSPAdjustment(MachineFunction &MF,
                                           unsigned ADDrr,
                                           unsigned ADDri) const {
 
-  DebugLoc dl = (MBBI != MBB.end()) ? MBBI->getDebugLoc() : DebugLoc();
+  DebugLoc dl;
   const SparcInstrInfo &TII =
       *static_cast<const SparcInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
@@ -93,7 +93,9 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF,
   const SparcRegisterInfo &RegInfo =
       *static_cast<const SparcRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  // Debug location must be unknown since the first debug location is used
+  // to determine the end of the prologue.
+  DebugLoc dl;
   bool NeedsStackRealignment = RegInfo.needsStackRealignment(MF);
 
   // FIXME: unfortunately, returning false from canRealignStack

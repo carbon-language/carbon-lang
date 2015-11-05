@@ -100,7 +100,11 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF,
   assert(NumBytes >= ArgRegsSaveSize &&
          "ArgRegsSaveSize is included in NumBytes");
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+
+  // Debug location must be unknown since the first debug location is used
+  // to determine the end of the prologue.
+  DebugLoc dl;
+  
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned BasePtr = RegInfo->getBaseRegister();
   int CFAOffset = 0;
@@ -168,8 +172,6 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF,
 
   if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH) {
     ++MBBI;
-    if (MBBI != MBB.end())
-      dl = MBBI->getDebugLoc();
   }
 
   // Determine starting offsets of spill areas.
@@ -545,8 +547,6 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   DebugLoc DL;
   const TargetInstrInfo &TII = *STI.getInstrInfo();
-
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(ARM::tPUSH));
   AddDefaultPred(MIB);

@@ -305,7 +305,11 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF,
   unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+
+  // Debug location must be unknown since the first debug location is used
+  // to determine the end of the prologue.
+  DebugLoc dl;
+  
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
 
   // Determine the sizes of each callee-save spill areas and record which frame
@@ -893,7 +897,6 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
 
   DebugLoc DL;
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   SmallVector<std::pair<unsigned,bool>, 4> Regs;
   unsigned i = CSI.size();
