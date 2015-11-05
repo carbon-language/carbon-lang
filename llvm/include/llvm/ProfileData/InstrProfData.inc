@@ -72,9 +72,11 @@ COVMAP_FUNC_RECORD(const IntPtrT, llvm::Type::getInt8PtrTy(Ctx), \
                    NamePtr, llvm::ConstantExpr::getBitCast(NamePtr, \
                    llvm::Type::getInt8PtrTy(Ctx))) 
 COVMAP_FUNC_RECORD(const uint32_t, llvm::Type::getInt32Ty(Ctx), NameSize, \
-                   llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), NameSize))
+                   llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx),\
+                   NameValue.size()))
 COVMAP_FUNC_RECORD(const uint32_t, llvm::Type::getInt32Ty(Ctx), DataSize, \
-                   llvm::ConstantInt::get(llvm::getInt32Ty(Ctx), DataSize))
+                   llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx),\
+                   CoverageMapping.size()))
 COVMAP_FUNC_RECORD(const uint64_t, llvm::Type::getInt64Ty(Ctx), FuncHash, \
                    llvm::ConstantInt::get(llvm::Type::getInt64Ty(Ctx), FuncHash))
 // COVMAP_FUNC_RECORD_END
