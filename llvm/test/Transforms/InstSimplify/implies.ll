@@ -92,6 +92,30 @@ define <4 x i1> @test6(<4 x i1> %a, <4 x i1> %b) {
   ret <4 x i1> %res
 }
 
+; i +_{nsw} 1 <s L  ==> i < L +_{nsw} 1
+define i1 @test7(i32 %length.i, i32 %i) {
+; CHECK-LABEL: @test7(
+; CHECK: ret i1 true
+  %iplus1 = add nsw i32 %i, 1
+  %len.plus.one = add nsw i32 %length.i, 1
+  %var29 = icmp slt i32 %i, %len.plus.one
+  %var30 = icmp slt i32 %iplus1, %length.i
+  %res = icmp ule i1 %var30, %var29
+  ret i1 %res
+}
+
+; i +_{nuw} 1 <s L  ==> i < L +_{nuw} 1
+define i1 @test8(i32 %length.i, i32 %i) {
+; CHECK-LABEL: @test8(
+; CHECK: ret i1 true
+  %iplus1 = add nuw i32 %i, 1
+  %len.plus.one = add nuw i32 %length.i, 1
+  %var29 = icmp ult i32 %i, %len.plus.one
+  %var30 = icmp ult i32 %iplus1, %length.i
+  %res = icmp ule i1 %var30, %var29
+  ret i1 %res
+}
+
 ; X >=(s) Y == X ==> Y (i1 1 becomes -1 for reasoning)
 define i1 @test_sge(i32 %length.i, i32 %i) {
 ; CHECK-LABEL: @test_sge

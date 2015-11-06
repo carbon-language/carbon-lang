@@ -4082,6 +4082,65 @@ ConstantRange llvm::getConstantRangeFromMetadata(MDNode &Ranges) {
   return CR;
 }
 
+/// Return true if "icmp Pred LHS RHS" is always true.
+static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS) {
+  if (ICmpInst::isTrueWhenEqual(Pred) && LHS == RHS)
+    return true;
+
+  switch (Pred) {
+  default:
+    return false;
+
+  case CmpInst::ICMP_SLT:
+  case CmpInst::ICMP_SLE: {
+    ConstantInt *CI;
+
+    // LHS s<  LHS +_{nsw} C   if C > 0
+    // LHS s<= LHS +_{nsw} C   if C >= 0
+    if (match(RHS, m_NSWAdd(m_Specific(LHS), m_ConstantInt(CI)))) {
+      if (Pred == CmpInst::ICMP_SLT)
+        return CI->getValue().isStrictlyPositive();
+      return !CI->isNegative();
+    }
+    return false;
+  }
+
+  case CmpInst::ICMP_ULT:
+  case CmpInst::ICMP_ULE: {
+    ConstantInt *CI;
+
+    // LHS u<  LHS +_{nuw} C   if C > 0
+    // LHS u<= LHS +_{nuw} C   if C >= 0
+    if (match(RHS, m_NUWAdd(m_Specific(LHS), m_ConstantInt(CI)))) {
+      if (Pred == CmpInst::ICMP_ULT)
+        return CI->getValue().isStrictlyPositive();
+      return !CI->isNegative();
+    }
+    return false;
+  }
+  }
+}
+
+/// Return true if "icmp Pred BLHS BRHS" is true whenever "icmp Pred
+/// ALHS ARHS" is true.
+static bool isImpliedCondOperands(CmpInst::Predicate Pred, Value *ALHS,
+                                  Value *ARHS, Value *BLHS, Value *BRHS) {
+  switch (Pred) {
+  default:
+    return false;
+
+  case CmpInst::ICMP_SLT:
+  case CmpInst::ICMP_SLE:
+    return isTruePredicate(CmpInst::ICMP_SLE, BLHS, ALHS) &&
+           isTruePredicate(CmpInst::ICMP_SLE, ARHS, BRHS);
+
+  case CmpInst::ICMP_ULT:
+  case CmpInst::ICMP_ULE:
+    return isTruePredicate(CmpInst::ICMP_ULE, BLHS, ALHS) &&
+           isTruePredicate(CmpInst::ICMP_ULE, ARHS, BRHS);
+  }
+}
+
 bool llvm::isImpliedCondition(Value *LHS, Value *RHS) {
   assert(LHS->getType() == RHS->getType() && "mismatched type");
   Type *OpTy = LHS->getType();
@@ -4096,28 +4155,15 @@ bool llvm::isImpliedCondition(Value *LHS, Value *RHS) {
   assert(OpTy->isIntegerTy(1) && "implied by above");
 
   ICmpInst::Predicate APred, BPred;
-  Value *I;
-  Value *L;
-  ConstantInt *CI;
-  // i +_{nsw} C_{>0} <s L ==> i <s L
-  if (match(LHS, m_ICmp(APred,
-                        m_NSWAdd(m_Value(I), m_ConstantInt(CI)),
-                        m_Value(L))) &&
-      APred == ICmpInst::ICMP_SLT &&
-      !CI->isNegative() &&
-      match(RHS, m_ICmp(BPred, m_Specific(I), m_Specific(L))) &&
-      BPred == ICmpInst::ICMP_SLT)
-    return true;
+  Value *ALHS, *ARHS;
+  Value *BLHS, *BRHS;
 
-  // i +_{nuw} C_{>0} <u L ==> i <u L
-  if (match(LHS, m_ICmp(APred,
-                        m_NUWAdd(m_Value(I), m_ConstantInt(CI)),
-                        m_Value(L))) &&
-      APred == ICmpInst::ICMP_ULT &&
-      !CI->isNegative() &&
-      match(RHS, m_ICmp(BPred, m_Specific(I), m_Specific(L))) &&
-      BPred == ICmpInst::ICMP_ULT)
-    return true;
+  if (!match(LHS, m_ICmp(APred, m_Value(ALHS), m_Value(ARHS))) ||
+      !match(RHS, m_ICmp(BPred, m_Value(BLHS), m_Value(BRHS))))
+    return false;
+
+  if (APred == BPred)
+    return isImpliedCondOperands(APred, ALHS, ARHS, BLHS, BRHS);
 
   return false;
 }
