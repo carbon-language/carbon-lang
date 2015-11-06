@@ -773,22 +773,49 @@ bool home_directory(SmallVectorImpl<char> &result) {
   return getKnownFolderPath(FOLDERID_Profile, result);
 }
 
+static bool getTempDirEnvVar(const char *Var, SmallVectorImpl<char> &Res) {
+  SmallVector<wchar_t, 128> NameUTF16;
+  if (windows::UTF8ToUTF16(Var, NameUTF16))
+    return false;
+
+  SmallVector<wchar_t, 1024> Buf;
+  size_t Size = 1024;
+  do {
+    Buf.reserve(Size);
+    Size =
+        GetEnvironmentVariableW(NameUTF16.data(), Buf.data(), Buf.capacity());
+    if (Size == 0)
+      return false;
+
+    // Try again with larger buffer.
+  } while (Size > Buf.capacity());
+  Buf.set_size(Size);
+
+  if (windows::UTF16ToUTF8(Buf.data(), Size, Res))
+    return false;
+  return true;
+}
+
+static bool getTempDirEnvVar(SmallVectorImpl<char> &Res) {
+  const char *EnvironmentVariables[] = {"TMP", "TEMP", "USERPROFILE"};
+  for (const char *Env : EnvironmentVariables) {
+    if (getTempDirEnvVar(Env, Res))
+      return true;
+  }
+  return false;
+}
+
 void system_temp_directory(bool ErasedOnReboot, SmallVectorImpl<char> &Result) {
   (void)ErasedOnReboot;
+  Result.clear();
 
-  wchar_t Path[MAX_PATH + 2]; // GetTempPath can return MAX_PATH + 1 + null
-  if (auto PathLength = ::GetTempPathW(sizeof(Path) / sizeof(wchar_t), Path)) {
-    assert(PathLength > 0 && PathLength <= (MAX_PATH + 1) &&
-           "GetTempPath returned undocumented result");
-    if (Path[PathLength - 1] == L'\\')
-      --PathLength; // skip trailing "\" added by GetTempPath
-    if (!UTF16ToUTF8(Path, PathLength, Result))
-      return;
-  }
+  // Check whether the temporary directory is specified by an environment
+  // variable.
+  if (getTempDirEnvVar(Result))
+    return;
 
   // Fall back to a system default.
   const char *DefaultResult = "C:\\TEMP";
-  Result.clear();
   Result.append(DefaultResult, DefaultResult + strlen(DefaultResult));
 }
 } // end namespace path
