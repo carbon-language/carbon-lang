@@ -23,7 +23,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 
 ; Function Attrs: nounwind uwtable
-define void @onlyWrite(float* %A) #0 {
+define void @onlyWrite(float* %A) #0 !dbg !4 {
 entry:
   call void @llvm.dbg.value(metadata float* %A, i64 0, metadata !14, metadata !15), !dbg !16
   call void @llvm.dbg.value(metadata i64 0, i64 0, metadata !17, metadata !15), !dbg !20
@@ -52,7 +52,7 @@ for.end:                                          ; preds = %for.cond
 declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind uwtable
-define void @onlyRead(float* %A) #0 {
+define void @onlyRead(float* %A) #0 !dbg !10 {
 entry:
   call void @llvm.dbg.value(metadata float* %A, i64 0, metadata !29, metadata !15), !dbg !30
   call void @llvm.dbg.value(metadata i64 0, i64 0, metadata !31, metadata !15), !dbg !33
@@ -91,13 +91,13 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "/tmp/test.c", directory: "/home/grosser/Projects/polly/git/tools/polly")
 !2 = !{}
 !3 = !{!4, !10}
-!4 = distinct !DISubprogram(name: "onlyWrite", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (float*)* @onlyWrite, variables: !2)
+!4 = distinct !DISubprogram(name: "onlyWrite", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "/tmp/test.c", directory: "/home/grosser/Projects/polly/git/tools/polly")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
 !8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
-!10 = distinct !DISubprogram(name: "onlyRead", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (float*)* @onlyRead, variables: !2)
+!10 = distinct !DISubprogram(name: "onlyRead", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, variables: !2)
 !11 = !{i32 2, !"Dwarf Version", i32 4}
 !12 = !{i32 2, !"Debug Info Version", i32 3}
 !13 = !{!"clang version 3.7.0  (llvm/trunk 229257)"}

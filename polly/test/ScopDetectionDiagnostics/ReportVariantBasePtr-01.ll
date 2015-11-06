@@ -16,7 +16,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 %struct.b = type { double** }
 
-define void @a(%struct.b* nocapture readonly %A) #0 {
+define void @a(%struct.b* nocapture readonly %A) #0 !dbg !4 {
 entry:
   br label %entry.split
 
@@ -65,7 +65,7 @@ attributes #1 = { nounwind readnone }
 !1 = !DIFile(filename: "ReportVariantBasePtr01.c", directory: "test/ScopDetectionDiagnostics")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "a", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, function: void (%struct.b*)* @a, variables: !15)
+!4 = distinct !DISubprogram(name: "a", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, variables: !15)
 !5 = !DIFile(filename: "ReportVariantBasePtr01.c", directory: "test/ScopDetectionDiagnostics")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}

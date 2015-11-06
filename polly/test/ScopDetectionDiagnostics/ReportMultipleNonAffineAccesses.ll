@@ -57,7 +57,7 @@
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
-define void @manyaccesses(float* noalias %A, i64 %n, float* noalias %B) {
+define void @manyaccesses(float* noalias %A, i64 %n, float* noalias %B) !dbg !4 {
 entry:
   br label %entry.split
 
@@ -117,7 +117,7 @@ for.end:                                          ; preds = %for.body
 !1 = !DIFile(filename: "/tmp/test.c", directory: "/home/grosser/Projects/polly/git/tools/polly/test")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "manyaccesses", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, function: void (float*, i64, float*)* @manyaccesses, variables: !2)
+!4 = distinct !DISubprogram(name: "manyaccesses", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "/tmp/test.c", directory: "/home/grosser/Projects/polly/git/tools/polly/test")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}

@@ -11,7 +11,7 @@
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
-define void @a(double* %A, i32 %n) #0 {
+define void @a(double* %A, i32 %n) #0 !dbg !4 {
 entry:
   %cmp1 = icmp sgt i32 %n, 0, !dbg !10
   br i1 %cmp1, label %for.body.lr.ph, label %for.end, !dbg !10
@@ -49,7 +49,7 @@ declare double @invalidCall(double*) #1
 !1 = !DIFile(filename: "ReportFuncCall.c", directory: "/home/simbuerg/Projekte/llvm/tools/polly/test/ScopDetectionDiagnostics")
 !2 = !{}
 !3 = !{!4}
-!4 = distinct !DISubprogram(name: "a", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void (double*, i32)* @a, variables: !2)
+!4 = distinct !DISubprogram(name: "a", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, variables: !2)
 !5 = !DIFile(filename: "ReportFuncCall.c", directory: "/home/simbuerg/Projekte/llvm/tools/polly/test/ScopDetectionDiagnostics")
 !6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
