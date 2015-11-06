@@ -551,9 +551,11 @@ def int_experimental_gc_statepoint : Intrinsic<[llvm_i32_ty],
                                 llvm_i32_ty, llvm_vararg_ty],
                                 [Throws]>;
 
-def int_experimental_gc_result   : Intrinsic<[llvm_any_ty], [llvm_i32_ty]>;
+def int_experimental_gc_result   : Intrinsic<[llvm_any_ty], [llvm_i32_ty],
+                                             [IntrReadMem]>;
 def int_experimental_gc_relocate : Intrinsic<[llvm_anyptr_ty],
-                                [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty]>;
+                                [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+                                [IntrReadMem]>;
 
 // Deprecated: will be removed in a couple of weeks
 def int_experimental_gc_result_int : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty]>;
