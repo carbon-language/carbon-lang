@@ -253,16 +253,17 @@ ClassDescriptorV2::method_t::Read(Process *process, lldb::addr_t addr)
     m_types_ptr  = extractor.GetAddress_unchecked(&cursor);
     m_imp_ptr    = extractor.GetAddress_unchecked(&cursor);
     
-    const size_t buffer_size = 1024;
-    size_t count;
+    process->ReadCStringFromMemory(m_name_ptr, m_name, error);
+    if (error.Fail())
+    {
+        return false;
+    }
     
-    DataBufferHeap string_buf(buffer_size, 0);
-    
-    count = process->ReadCStringFromMemory(m_name_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
-    m_name.assign((char*)string_buf.GetBytes(), count);
-    
-    count = process->ReadCStringFromMemory(m_types_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
-    m_types.assign((char*)string_buf.GetBytes(), count);
+    process->ReadCStringFromMemory(m_types_ptr, m_types, error);
+    if (error.Fail())
+    {
+        return false;
+    }
     
     return true;
 }
@@ -317,16 +318,17 @@ ClassDescriptorV2::ivar_t::Read(Process *process, lldb::addr_t addr)
     m_alignment  = extractor.GetU32_unchecked(&cursor);
     m_size       = extractor.GetU32_unchecked(&cursor);
     
-    const size_t buffer_size = 1024;
-    size_t count;
+    process->ReadCStringFromMemory(m_name_ptr, m_name, error);
+    if (error.Fail())
+    {
+        return false;
+    }
     
-    DataBufferHeap string_buf(buffer_size, 0);
-    
-    count = process->ReadCStringFromMemory(m_name_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
-    m_name.assign((char*)string_buf.GetBytes(), count);
-    
-    count = process->ReadCStringFromMemory(m_type_ptr, (char*)string_buf.GetBytes(), buffer_size, error);
-    m_type.assign((char*)string_buf.GetBytes(), count);
+    process->ReadCStringFromMemory(m_type_ptr, m_type, error);
+    if (error.Fail())
+    {
+        return false;
+    }
     
     return true;
 }
