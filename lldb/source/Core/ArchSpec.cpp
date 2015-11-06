@@ -850,8 +850,11 @@ ArchSpec::MergeFrom(const ArchSpec &other)
         GetTriple().setOS(other.GetTriple().getOS());
     if (GetTriple().getArch() == llvm::Triple::UnknownArch)
         GetTriple().setArch(other.GetTriple().getArch());
-    if (GetTriple().getEnvironment() == llvm::Triple::UnknownEnvironment)
-        GetTriple().setEnvironment(other.GetTriple().getEnvironment());
+    if (GetTriple().getEnvironment() == llvm::Triple::UnknownEnvironment && !TripleVendorWasSpecified())
+    {
+        if (other.TripleVendorWasSpecified())
+            GetTriple().setEnvironment(other.GetTriple().getEnvironment());
+    }
 }
 
 bool
@@ -876,29 +879,14 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                 if (arch_type == eArchTypeMachO)
                 {
                     m_triple.setVendor (llvm::Triple::Apple);
-                    switch (core_def->machine)
-                    {
-                        case llvm::Triple::aarch64:
-                        case llvm::Triple::arm:
-                        case llvm::Triple::thumb:
-                            m_triple.setOS (llvm::Triple::IOS);
-                            break;
-                            
-                        case llvm::Triple::x86:
-                        case llvm::Triple::x86_64:
-                            // Don't set the OS for x86_64 or for x86 as we want to leave it as an "unspecified unknown"
-                            // which means if we ask for the OS from the llvm::Triple we get back llvm::Triple::UnknownOS, but
-                            // if we ask for the string value for the OS it will come back empty (unspecified).
-                            // We do this because we now have iOS and MacOSX as the OS values for x86 and x86_64 for
-                            // normal desktop and simulator binaries. And if we compare a "x86_64-apple-ios" to a "x86_64-apple-"
-                            // triple, it will say it is compatible (because the OS is unspecified in the second one and will match
-                            // anything in the first
-                            break;
 
-                        default:
-                            m_triple.setOS (llvm::Triple::MacOSX);
-                            break;
-                    }
+                    // Don't set the OS.  It could be simulator, macosx, ios, watchos, tvos.  We could
+                    // get close with the cpu type - but we can't get it right all of the time.  Better
+                    // to leave this unset so other sections of code will set it when they have more
+                    // information.
+                    // NB: don't call m_triple.setOS (llvm::Triple::UnknownOS).  That sets the OSName to
+                    // "unknown" and the ArchSpec::TripleVendorWasSpecified() method says that any
+                    // OSName setting means it was specified.
                 }
                 else if (arch_type == eArchTypeELF)
                 {
@@ -911,6 +899,11 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                         case llvm::ELF::ELFOSABI_OPENBSD: m_triple.setOS (llvm::Triple::OSType::OpenBSD); break;
                         case llvm::ELF::ELFOSABI_SOLARIS: m_triple.setOS (llvm::Triple::OSType::Solaris); break;
                     }
+                }
+                else
+                {
+                    m_triple.setVendor (llvm::Triple::UnknownVendor);
+                    m_triple.setOS (llvm::Triple::UnknownOS);
                 }
                 // Fall back onto setting the machine type if the arch by name failed...
                 if (m_triple.getArch () == llvm::Triple::UnknownArch)
@@ -974,15 +967,12 @@ ArchSpec::IsEqualTo (const ArchSpec& rhs, bool exact_match) const
         const llvm::Triple::VendorType rhs_triple_vendor = rhs_triple.getVendor();
         if (lhs_triple_vendor != rhs_triple_vendor)
         {
-            if (exact_match)
-            {
-                const bool rhs_vendor_specified = rhs.TripleVendorWasSpecified();
-                const bool lhs_vendor_specified = TripleVendorWasSpecified();
-                // Both architectures had the vendor specified, so if they aren't
-                // equal then we return false
-                if (rhs_vendor_specified && lhs_vendor_specified)
-                    return false;
-            }
+            const bool rhs_vendor_specified = rhs.TripleVendorWasSpecified();
+            const bool lhs_vendor_specified = TripleVendorWasSpecified();
+            // Both architectures had the vendor specified, so if they aren't
+            // equal then we return false
+            if (rhs_vendor_specified && lhs_vendor_specified)
+                return false;
             
             // Only fail if both vendor types are not unknown
             if (lhs_triple_vendor != llvm::Triple::UnknownVendor &&
@@ -994,15 +984,12 @@ ArchSpec::IsEqualTo (const ArchSpec& rhs, bool exact_match) const
         const llvm::Triple::OSType rhs_triple_os = rhs_triple.getOS();
         if (lhs_triple_os != rhs_triple_os)
         {
-            if (exact_match)
-            {
-                const bool rhs_os_specified = rhs.TripleOSWasSpecified();
-                const bool lhs_os_specified = TripleOSWasSpecified();
-                // Both architectures had the OS specified, so if they aren't
-                // equal then we return false
-                if (rhs_os_specified && lhs_os_specified)
-                    return false;
-            }
+            const bool rhs_os_specified = rhs.TripleOSWasSpecified();
+            const bool lhs_os_specified = TripleOSWasSpecified();
+            // Both architectures had the OS specified, so if they aren't
+            // equal then we return false
+            if (rhs_os_specified && lhs_os_specified)
+                return false;
             
             // Only fail if both os types are not unknown
             if (lhs_triple_os != llvm::Triple::UnknownOS &&
@@ -1443,6 +1430,50 @@ ArchSpec::GetStopInfoOverrideCallback () const
     if (machine == llvm::Triple::arm)
         return StopInfoOverrideCallbackTypeARM;
     return NULL;
+}
+
+bool
+ArchSpec::IsFullySpecifiedTriple () const
+{
+    const auto& user_specified_triple = GetTriple();
+    
+    bool user_triple_fully_specified = false;
+    
+    if ((user_specified_triple.getOS() != llvm::Triple::UnknownOS) || TripleOSWasSpecified())
+    {
+        if ((user_specified_triple.getVendor() != llvm::Triple::UnknownVendor) || TripleVendorWasSpecified())
+        {
+            const unsigned unspecified = 0;
+            if (user_specified_triple.getOSMajorVersion() != unspecified)
+            {
+                user_triple_fully_specified = true;
+            }
+        }
+    }
+    
+    return user_triple_fully_specified;
+}
+
+void
+ArchSpec::PiecewiseTripleCompare (const ArchSpec &other,
+                                  bool &arch_different,
+                                  bool &vendor_different,
+                                  bool &os_different,
+                                  bool &os_version_different,
+                                  bool &env_different)
+{
+    const llvm::Triple &me(GetTriple());
+    const llvm::Triple &them(other.GetTriple());
+    
+    arch_different = (me.getArch() != them.getArch());
+    
+    vendor_different = (me.getVendor() != them.getVendor());
+    
+    os_different = (me.getOS() != them.getOS());
+    
+    os_version_different = (me.getOSMajorVersion() != them.getOSMajorVersion());
+    
+    env_different = (me.getEnvironment() != them.getEnvironment());
 }
 
 void
