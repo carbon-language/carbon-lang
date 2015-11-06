@@ -1320,6 +1320,12 @@ protected:
     GetStackFrameList ();
 
     void
+    SetTemporaryResumeState(lldb::StateType new_state)
+    {
+        m_temporary_resume_state = new_state;
+    }
+
+    void
     FunctionOptimizationWarning (lldb_private::StackFrame *frame);
 
     //------------------------------------------------------------------
