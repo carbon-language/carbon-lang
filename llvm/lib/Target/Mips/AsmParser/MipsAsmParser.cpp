@@ -3300,6 +3300,9 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(IDLoc, "source and destination must be different");
   case Match_Immz:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo), "expected '0'");
+  case Match_UImm1_0:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected 1-bit unsigned immediate");
   case Match_UImm2_0:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected 2-bit unsigned immediate");
@@ -3309,6 +3312,9 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_UImm3_0:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected 3-bit unsigned immediate");
+  case Match_UImm4_0:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected 4-bit unsigned immediate");
   }
 
   llvm_unreachable("Implement any new match types added!");

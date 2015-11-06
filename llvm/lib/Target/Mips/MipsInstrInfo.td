@@ -390,17 +390,21 @@ class ConstantUImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = [],
   let DiagnosticType = "UImm" # Bits # "_" # Offset;
 }
 
+def ConstantUImm4AsmOperandClass
+    : ConstantUImmAsmOperandClass<4, []>;
 def ConstantUImm3AsmOperandClass
-    : ConstantUImmAsmOperandClass<3, []>;
+    : ConstantUImmAsmOperandClass<3, [ConstantUImm4AsmOperandClass]>;
 def ConstantUImm2Plus1AsmOperandClass
     : ConstantUImmAsmOperandClass<2, [ConstantUImm3AsmOperandClass], 1>;
 def ConstantUImm2AsmOperandClass
     : ConstantUImmAsmOperandClass<2, [ConstantUImm3AsmOperandClass]>;
+def ConstantUImm1AsmOperandClass
+    : ConstantUImmAsmOperandClass<1, [ConstantUImm2AsmOperandClass]>;
 def ConstantImmzAsmOperandClass : AsmOperandClass {
   let Name = "ConstantImmz";
   let RenderMethod = "addConstantUImmOperands<1>";
   let PredicateMethod = "isConstantImmz";
-  let SuperClasses = [ConstantUImm2AsmOperandClass];
+  let SuperClasses = [ConstantUImm1AsmOperandClass];
   let DiagnosticType = "Immz";
 }
 
@@ -477,7 +481,7 @@ def uimmz       : Operand<i32> {
 }
 
 // Unsigned Operands
-foreach I = {2, 3} in
+foreach I = {1, 2, 3, 4} in
   def uimm # I : Operand<i32> {
     let PrintMethod = "printUnsignedImm";
     let ParserMatchClass =
