@@ -1060,6 +1060,9 @@ __kmp_dispatch_init(
         break;
     case kmp_sch_static_chunked :
     case kmp_sch_dynamic_chunked :
+        if ( pr->u.p.parm1 <= 0 ) {
+            pr->u.p.parm1 = KMP_DEFAULT_CHUNK;
+        }
         KD_TRACE(100,("__kmp_dispatch_init: T#%d kmp_sch_static_chunked/kmp_sch_dynamic_chunked cases\n", gtid));
         break;
     case kmp_sch_trapezoidal :
