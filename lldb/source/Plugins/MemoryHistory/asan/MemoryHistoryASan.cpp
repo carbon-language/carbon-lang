@@ -102,14 +102,23 @@ static void CreateHistoryThreadFromValueObject(ProcessSP process_sp, ValueObject
     std::string count_path = "." + std::string(type) + "_count";
     std::string tid_path = "." + std::string(type) + "_tid";
     std::string trace_path = "." + std::string(type) + "_trace";
+    
+    ValueObjectSP count_sp = return_value_sp->GetValueForExpressionPath(count_path.c_str());
+    ValueObjectSP tid_sp = return_value_sp->GetValueForExpressionPath(tid_path.c_str());
+    
+    if (!count_sp || !tid_sp)
+        return;
 
-    int count = return_value_sp->GetValueForExpressionPath(count_path.c_str())->GetValueAsUnsigned(0);
-    tid_t tid = return_value_sp->GetValueForExpressionPath(tid_path.c_str())->GetValueAsUnsigned(0);
+    int count = count_sp->GetValueAsUnsigned(0);
+    tid_t tid = tid_sp->GetValueAsUnsigned(0);
 
     if (count <= 0)
         return;
 
     ValueObjectSP trace_sp = return_value_sp->GetValueForExpressionPath(trace_path.c_str());
+    
+    if (!trace_sp)
+        return;
 
     std::vector<lldb::addr_t> pcs;
     for (int i = 0; i < count; i++)
