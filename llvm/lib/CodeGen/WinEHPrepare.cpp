@@ -741,7 +741,7 @@ static void updateClonedEHPadUnwindToParent(
   // slightly different rules for whether or not it fits with the given
   // location.
   auto *EHPadInst = UnwindDest->getFirstNonPHI();
-  if (auto *CEP = dyn_cast<CatchEndPadInst>(EHPadInst)) {
+  if (isa<CatchEndPadInst>(EHPadInst)) {
     auto *CloneParentCatch =
         dyn_cast<CatchPadInst>(CloneParent->getFirstNonPHI());
     if (!CloneParentCatch ||
@@ -1023,7 +1023,7 @@ void WinEHPrepare::updateTerminatorsAfterFuncletClone(
       // cleanup end pad.
       assert(FuncletBlocks[CloneFunclet].count(UnwindDest) &&
              "Unwind destination for invoke was not updated during cloning.");
-    } else if (auto *CEP = dyn_cast<CatchEndPadInst>(EHPadInst)) {
+    } else if (isa<CatchEndPadInst>(EHPadInst)) {
       auto *OrigCatch = cast<CatchPadInst>(OrigFunclet->getFirstNonPHI());
       auto *CloneCatch = cast<CatchPadInst>(CloneFunclet->getFirstNonPHI());
       if (OrigCatch->getUnwindDest() == UnwindDest) {
@@ -1295,7 +1295,7 @@ static void updateSiblingToSiblingUnwind(
         assert(UnwindDest && "Invoke unwinds to a null destination.");
         assert(UnwindDest->isEHPad() && "Invoke does not unwind to an EH pad.");
         auto *EHPadInst = UnwindDest->getFirstNonPHI();
-        if (auto *CEP = dyn_cast<CatchEndPadInst>(EHPadInst)) {
+        if (isa<CatchEndPadInst>(EHPadInst)) {
           // If the invoke unwind destination is the unwind destination for
           // the current child catch pad funclet, there is nothing to be done.
           auto *CurCatch = cast<CatchPadInst>(ChildFunclet->getFirstNonPHI());
@@ -1646,7 +1646,7 @@ void WinEHPrepare::cloneCommonBlocks(
       // resolved during the resolveFuncletAncestry processing.
       // For now, find the catchpad that unwinds to this block and assign
       // that catchpad's first parent to be the color for this block.
-      if (auto *CEP = dyn_cast<CatchEndPadInst>(BB->getFirstNonPHI())) {
+      if (isa<CatchEndPadInst>(BB->getFirstNonPHI())) {
         assert(
             FuncletCloningRequired &&
             "Found multi-colored catchendpad with no multi-parent funclets.");
