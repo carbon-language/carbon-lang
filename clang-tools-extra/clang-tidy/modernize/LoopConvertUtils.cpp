@@ -831,54 +831,7 @@ std::string VariableNamer::createIndexName() {
       return IteratorName;
   }
 
-  std::string Elem;
-  switch (Style) {
-  case NS_CamelBack:
-  case NS_LowerCase:
-    Elem = "elem";
-    break;
-  case NS_CamelCase:
-    Elem = "Elem";
-    break;
-  case NS_UpperCase:
-    Elem = "ELEM";
-  }
-  // E.g.: (auto elem : container)
-  if (!declarationExists(Elem))
-    return Elem;
-
-  IteratorName = AppendWithStyle(ContainerName, OldIndex->getName());
-  // E.g.: (auto container_i : container)
-  if (!declarationExists(IteratorName) || IteratorName == OldIndex->getName())
-    return IteratorName;
-
-  IteratorName = AppendWithStyle(ContainerName, Elem);
-  // E.g.: (auto container_elem : container)
-  if (!declarationExists(IteratorName) || IteratorName == OldIndex->getName())
-    return IteratorName;
-
-  // Someone defeated my naming scheme...
-  std::string GiveMeName;
-  switch (Style) {
-  case NS_CamelBack:
-    GiveMeName = "giveMeName";
-    break;
-  case NS_CamelCase:
-    GiveMeName = "GiveMeName";
-    break;
-  case NS_LowerCase:
-    GiveMeName = "give_me_name_";
-    break;
-  case NS_UpperCase:
-    GiveMeName = "GIVE_ME_NAME_";
-  }
-  int Attempt = 0;
-  do {
-    IteratorName = GiveMeName + std::to_string(Attempt++);
-  } while (declarationExists(IteratorName) ||
-           IteratorName == OldIndex->getName());
-
-  return IteratorName;
+  return OldIndex->getName();
 }
 
 /// \brief Determines whether or not the the name \a Symbol conflicts with
