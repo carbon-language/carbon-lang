@@ -232,6 +232,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "noredzone";
   if (hasAttribute(Attribute::NoReturn))
     return "noreturn";
+  if (hasAttribute(Attribute::NoRecurse))
+    return "norecurse";
   if (hasAttribute(Attribute::NoUnwind))
     return "nounwind";
   if (hasAttribute(Attribute::OptimizeNone))
@@ -442,6 +444,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::JumpTable:       return 1ULL << 45;
   case Attribute::Convergent:      return 1ULL << 46;
   case Attribute::SafeStack:       return 1ULL << 47;
+  case Attribute::NoRecurse:       return 1ULL << 48;
   case Attribute::Dereferenceable:
     llvm_unreachable("dereferenceable attribute not supported in raw format");
     break;

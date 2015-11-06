@@ -123,6 +123,7 @@ namespace lltok {
     kw_noduplicate,
     kw_noimplicitfloat,
     kw_noinline,
+    kw_norecurse,
     kw_nonlazybind,
     kw_nonnull,
     kw_noredzone,
