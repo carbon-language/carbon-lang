@@ -220,7 +220,7 @@ function(darwin_filter_builtin_sources output_var exclude_or_include excluded_li
     list(FIND ${excluded_list} ${_name_we} _found)
     if(_found ${filter_action} ${filter_value})
       list(REMOVE_ITEM intermediate ${_file})
-    elseif(${_file} MATCHES ".*/.*\\.S")
+    elseif(${_file} MATCHES ".*/.*\\.S" OR ${_file} MATCHES ".*/.*\\.c")
       get_filename_component(_name ${_file} NAME)
       string(REPLACE ".S" ".c" _cname "${_name}")
       list(REMOVE_ITEM intermediate ${_cname})
