@@ -12,6 +12,8 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Target/LanguageRuntime.h"
+#include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
+#include "Plugins/Language/ObjC/ObjCLanguage.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Core/PluginManager.h"
@@ -342,4 +344,24 @@ lldb::SearchFilterSP
 LanguageRuntime::CreateExceptionSearchFilter ()
 {
     return m_process->GetTarget().GetSearchFilterForModule(NULL);
+}
+
+lldb::LanguageType
+LanguageRuntime::GetLanguageForSymbolByName (Target &target, const char *symbol_name)
+{
+    // This is not the right way to do this.  Different targets could have different ways of mangling names
+    // from a given language.  So we should ask the various LanguageRuntime plugin instances for this target
+    // to recognize the name.  But right now the plugin instances depend on the process, not the target.
+    // That is unfortunate, because I want to use this for filtering breakpoints by language, and so I need to know
+    // the "language for symbol-name" prior to running.  So we'd have to make a "LanguageRuntimeTarget" and
+    // "LanguageRuntimeProcess", and direct the questions that don't need a running process to the former, and that
+    // do to the latter.
+    //
+    // That's more work than I want to do for this feature.
+    if (CPlusPlusLanguage::IsCPPMangledName (symbol_name))
+        return eLanguageTypeC_plus_plus;
+    else if (ObjCLanguage::IsPossibleObjCMethodName (symbol_name))
+        return eLanguageTypeObjC;
+    else
+        return eLanguageTypeUnknown;
 }

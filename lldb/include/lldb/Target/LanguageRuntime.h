@@ -117,6 +117,9 @@ public:
         return m_process;
     }
     
+    static lldb::LanguageType
+    GetLanguageForSymbolByName (Target &target, const char *symbol_name);
+    
     Target&
     GetTargetRef()
     {

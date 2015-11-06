@@ -582,6 +582,7 @@ BreakpointSP
 Target::CreateFuncRegexBreakpoint (const FileSpecList *containingModules, 
                                    const FileSpecList *containingSourceFiles,
                                    RegularExpression &func_regex, 
+                                   lldb::LanguageType requested_language,
                                    LazyBool skip_prologue,
                                    bool internal,
                                    bool hardware)
@@ -591,7 +592,8 @@ Target::CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
       (skip_prologue == eLazyBoolCalculate) ? GetSkipPrologue()
                                             : static_cast<bool>(skip_prologue);
     BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, 
-                                                                 func_regex, 
+                                                                 func_regex,
+                                                                 requested_language,
                                                                  skip));
 
     return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware, true);

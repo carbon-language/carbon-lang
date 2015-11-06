@@ -791,6 +791,7 @@ public:
     CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
                                const FileSpecList *containingSourceFiles,
                                RegularExpression &func_regexp,
+                               lldb::LanguageType requested_language,
                                LazyBool skip_prologue,
                                bool internal,
                                bool request_hardware);
