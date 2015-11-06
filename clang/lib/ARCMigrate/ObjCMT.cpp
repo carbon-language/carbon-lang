@@ -214,25 +214,15 @@ namespace {
   // FIXME. This duplicates one in RewriteObjCFoundationAPI.cpp
   bool subscriptOperatorNeedsParens(const Expr *FullExpr) {
     const Expr* Expr = FullExpr->IgnoreImpCasts();
-    if (isa<ArraySubscriptExpr>(Expr) ||
-        isa<CallExpr>(Expr) ||
-        isa<DeclRefExpr>(Expr) ||
-        isa<CXXNamedCastExpr>(Expr) ||
-        isa<CXXConstructExpr>(Expr) ||
-        isa<CXXThisExpr>(Expr) ||
-        isa<CXXTypeidExpr>(Expr) ||
-        isa<CXXUnresolvedConstructExpr>(Expr) ||
-        isa<ObjCMessageExpr>(Expr) ||
-        isa<ObjCPropertyRefExpr>(Expr) ||
-        isa<ObjCProtocolExpr>(Expr) ||
-        isa<MemberExpr>(Expr) ||
-        isa<ObjCIvarRefExpr>(Expr) ||
-        isa<ParenExpr>(FullExpr) ||
-        isa<ParenListExpr>(Expr) ||
-        isa<SizeOfPackExpr>(Expr))
-      return false;
-    
-    return true;
+    return !(isa<ArraySubscriptExpr>(Expr) || isa<CallExpr>(Expr) ||
+             isa<DeclRefExpr>(Expr) || isa<CXXNamedCastExpr>(Expr) ||
+             isa<CXXConstructExpr>(Expr) || isa<CXXThisExpr>(Expr) ||
+             isa<CXXTypeidExpr>(Expr) ||
+             isa<CXXUnresolvedConstructExpr>(Expr) ||
+             isa<ObjCMessageExpr>(Expr) || isa<ObjCPropertyRefExpr>(Expr) ||
+             isa<ObjCProtocolExpr>(Expr) || isa<MemberExpr>(Expr) ||
+             isa<ObjCIvarRefExpr>(Expr) || isa<ParenExpr>(FullExpr) ||
+             isa<ParenListExpr>(Expr) || isa<SizeOfPackExpr>(Expr));
   }
   
   /// \brief - Rewrite message expression for Objective-C setter and getters into
@@ -665,9 +655,7 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
         return false;
     }
   }
-  if (HasAtleastOneRequiredProperty || HasAtleastOneRequiredMethod)
-    return true;
-  return false;
+  return HasAtleastOneRequiredProperty || HasAtleastOneRequiredMethod;
 }
 
 static bool rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,

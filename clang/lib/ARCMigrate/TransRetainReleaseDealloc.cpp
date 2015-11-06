@@ -150,11 +150,8 @@ public:
       return true;
     }
 
-    if (!hasSideEffects(rec, Pass.Ctx)) {
-      if (tryRemoving(RecContainer))
-        return true;
-    }
-    Pass.TA.replace(RecContainer->getSourceRange(), RecRange);
+    if (hasSideEffects(rec, Pass.Ctx) || !tryRemoving(RecContainer))
+      Pass.TA.replace(RecContainer->getSourceRange(), RecRange);
 
     return true;
   }
@@ -174,11 +171,8 @@ private:
   ///   return var;
   ///
   bool isCommonUnusedAutorelease(ObjCMessageExpr *E) {
-    if (isPlusOneAssignBeforeOrAfterAutorelease(E))
-      return true;
-    if (isReturnedAfterAutorelease(E))
-      return true;
-    return false;
+    return isPlusOneAssignBeforeOrAfterAutorelease(E) ||
+           isReturnedAfterAutorelease(E);
   }
 
   bool isReturnedAfterAutorelease(ObjCMessageExpr *E) {
@@ -225,11 +219,7 @@ private:
     // Check for "RefD = [+1 retained object];".
 
     if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(S)) {
-      if (RefD != getReferencedDecl(Bop->getLHS()))
-        return false;
-      if (isPlusOneAssign(Bop))
-        return true;
-      return false;
+      return (RefD == getReferencedDecl(Bop->getLHS())) && isPlusOneAssign(Bop);
     }
 
     if (DeclStmt *DS = dyn_cast<DeclStmt>(S)) {

@@ -113,10 +113,7 @@ bool trans::isPlusOne(const Expr *E) {
   while (implCE && implCE->getCastKind() ==  CK_BitCast)
     implCE = dyn_cast<ImplicitCastExpr>(implCE->getSubExpr());
 
-  if (implCE && implCE->getCastKind() == CK_ARCConsumeObject)
-    return true;
-
-  return false;
+  return implCE && implCE->getCastKind() == CK_ARCConsumeObject;
 }
 
 /// \brief 'Loc' is the end of a statement range. This returns the location
