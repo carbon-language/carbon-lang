@@ -469,6 +469,12 @@ Instruction *InstCombiner::FoldPHIArgZextsIntoPHI(PHINode &Phi) {
 /// only used by the PHI, PHI together their inputs, and do the operation once,
 /// to the result of the PHI.
 Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
+  // We cannot create a new instruction after the PHI if the terminator is an
+  // EHPad because there is no valid insertion point.
+  if (TerminatorInst *TI = PN.getParent()->getTerminator())
+    if (TI->isEHPad())
+      return nullptr;
+
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
 
   if (isa<GetElementPtrInst>(FirstInst))
