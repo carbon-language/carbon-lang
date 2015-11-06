@@ -34,8 +34,12 @@ void longjmp(jmp_buf env, int val);
 
 #include_next <setjmp.h>
 
+#ifdef __cplusplus
+
 #ifndef setjmp
 #define setjmp(env) setjmp(env)
 #endif
+
+#endif // __cplusplus
 
 #endif  // _LIBCPP_SETJMP_H

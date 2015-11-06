@@ -246,6 +246,6 @@ uintmax_t wcstoumax(const wchar_t* restrict nptr, wchar_t** restrict endptr, int
 #undef imaxabs
 #undef imaxdiv
 
-#endif
+#endif // __cplusplus
 
 #endif  // _LIBCPP_INTTYPES_H

@@ -31,6 +31,8 @@ Macros:
 
 #include_next <errno.h>
 
+#ifdef __cplusplus
+
 #if !defined(EOWNERDEAD) || !defined(ENOTRECOVERABLE)
 
 #ifdef ELAST
@@ -390,5 +392,7 @@ static const int __elast2 = 105;
 #ifndef EMLINK
 #define EMLINK 9979
 #endif
+
+#endif // __cplusplus
 
 #endif  // _LIBCPP_ERRNO_H

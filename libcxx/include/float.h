@@ -68,6 +68,8 @@ Macros:
 
 #include_next <float.h>
 
+#ifdef __cplusplus
+
 #ifndef FLT_EVAL_METHOD
 #define FLT_EVAL_METHOD __FLT_EVAL_METHOD__
 #endif
@@ -75,5 +77,7 @@ Macros:
 #ifndef DECIMAL_DIG
 #define DECIMAL_DIG __DECIMAL_DIG__
 #endif
+
+#endif // __cplusplus
 
 #endif  // _LIBCPP_FLOAT_H

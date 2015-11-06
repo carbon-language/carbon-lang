@@ -11,9 +11,15 @@
 #ifndef _LIBCPP_CONFIG
 #define _LIBCPP_CONFIG
 
-#if !defined(_MSC_VER) || defined(__clang__)
+#if defined(_MSC_VER) && !defined(__clang__)
+#define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
+#endif
+
+#ifndef _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
 #pragma GCC system_header
 #endif
+
+#ifdef __cplusplus
 
 #ifdef __GNUC__
 #define _GNUC_VER (__GNUC__ * 100 + __GNUC_MINOR__)
@@ -526,7 +532,6 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #elif defined(_LIBCPP_MSVC)
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-#define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 #define _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
@@ -810,5 +815,7 @@ extern "C" void __sanitizer_annotate_contiguous_container(
      || defined(_LIBCPP_HAS_NO_THREADS)
 #define _LIBCPP_HAS_NO_ATOMIC_HEADER
 #endif
+
+#endif // __cplusplus
 
 #endif // _LIBCPP_CONFIG
