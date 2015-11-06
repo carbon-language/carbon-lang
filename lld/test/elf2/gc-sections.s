@@ -8,8 +8,8 @@
 # RUN: ld.lld2 --export-dynamic --gc-sections %t -o %t2
 # RUN: llvm-readobj -sections -symbols %t2 | FileCheck -check-prefix=GC2 %s
 
-# NOGC: Name: .text
 # NOGC: Name: .eh_frame
+# NOGC: Name: .text
 # NOGC: Name: .init
 # NOGC: Name: .fini
 # NOGC: Name: a
@@ -21,8 +21,8 @@
 # NOGC: Name: __preinit_array_end
 # NOGC: Name: d
 
-# GC1:     Name: .text
 # GC1:     Name: .eh_frame
+# GC1:     Name: .text
 # GC1:     Name: .init
 # GC1:     Name: .fini
 # GC1:     Name: a
@@ -34,8 +34,8 @@
 # GC1:     Name: __preinit_array_end
 # GC1-NOT: Name: d
 
-# GC2:     Name: .text
 # GC2:     Name: .eh_frame
+# GC2:     Name: .text
 # GC2:     Name: .init
 # GC2:     Name: .fini
 # GC2:     Name: a
@@ -86,5 +86,5 @@ y:
 .section .preinit_array,"aw",@preinit_array
   .quad 0
 
-.section .eh_frame,"aw",@progbits
+.section .eh_frame,"a",@unwind
   .quad 0
