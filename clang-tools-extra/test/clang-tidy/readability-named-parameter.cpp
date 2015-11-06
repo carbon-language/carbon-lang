@@ -127,3 +127,7 @@ typedef decltype(nullptr) nullptr_t;
 }
 
 void f(std::nullptr_t) {}
+
+typedef void (F)(int);
+F f;
+void f(int x) {}

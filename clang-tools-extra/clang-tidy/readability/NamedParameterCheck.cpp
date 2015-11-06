@@ -45,6 +45,8 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
   //       arguments in the same position.
   for (unsigned I = 0, E = Function->getNumParams(); I != E; ++I) {
     const ParmVarDecl *Parm = Function->getParamDecl(I);
+    if (Parm->isImplicit())
+      continue;
     // Look for unnamed parameters.
     if (!Parm->getName().empty())
       continue;
