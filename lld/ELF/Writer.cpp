@@ -225,6 +225,15 @@ void Writer<ELFT>::scanRelocs(
       }
     }
 
+    if (Config->EMachine == EM_MIPS && NeedsGot) {
+      // MIPS ABI has special rules to process GOT entries
+      // and doesn't require relocation entries for them.
+      // See "Global Offset Table" in Chapter 5 in the following document
+      // for detailed description:
+      // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+      Body->setUsedInDynamicReloc();
+      continue;
+    }
     bool CBP = canBePreempted(Body, NeedsGot);
     if (!CBP && (!Config->Shared || Target->isRelRelative(Type)))
       continue;
@@ -762,6 +771,10 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   // Add space for section headers.
   SectionHeaderOff = RoundUpToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
   FileSize = SectionHeaderOff + getNumSections() * sizeof(Elf_Shdr);
+
+  // Update MIPS _gp absolute symbol so that it points to the static data.
+  if (Config->EMachine == EM_MIPS)
+    DefinedAbsolute<ELFT>::MipsGp.st_value = getMipsGpAddr<ELFT>();
 }
 
 // Returns the number of PHDR entries.

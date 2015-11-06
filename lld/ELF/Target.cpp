@@ -35,6 +35,14 @@ namespace elf2 {
 
 std::unique_ptr<TargetInfo> Target;
 
+template <bool IsLE> static uint32_t read32(const uint8_t *L);
+template <> uint32_t read32<true>(const uint8_t *L) { return read32le(L); }
+template <> uint32_t read32<false>(const uint8_t *L) { return read32be(L); }
+
+template <bool IsLE> static void write32(uint8_t *L, uint32_t V);
+template <> void write32<true>(uint8_t *L, uint32_t V) { write32le(L, V); }
+template <> void write32<false>(uint8_t *L, uint32_t V) { write32be(L, V); }
+
 static void add32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) + V); }
 static void add32be(uint8_t *L, int32_t V) { write32be(L, read32be(L) + V); }
 static void or32le(uint8_t *L, int32_t V) { write32le(L, read32le(L) | V); }
@@ -108,6 +116,7 @@ public:
 template <class ELFT> class MipsTargetInfo final : public TargetInfo {
 public:
   MipsTargetInfo();
+  void writeGotHeaderEntries(uint8_t *Buf) const override;
   void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const override;
   void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                          uint64_t PltEntryAddr) const override;
@@ -154,6 +163,8 @@ unsigned TargetInfo::getPLTRefReloc(unsigned Type) const { return PCRelReloc; }
 bool TargetInfo::relocPointsToGot(uint32_t Type) const { return false; }
 
 bool TargetInfo::isRelRelative(uint32_t Type) const { return true; }
+
+void TargetInfo::writeGotHeaderEntries(uint8_t *Buf) const {}
 
 X86TargetInfo::X86TargetInfo() {
   PCRelReloc = R_386_PC32;
@@ -670,6 +681,16 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
 
 template <class ELFT> MipsTargetInfo<ELFT>::MipsTargetInfo() {
   PageSize = 65536;
+  GotRefReloc = R_MIPS_GOT16;
+  GotHeaderEntriesNum = 2;
+}
+
+template <class ELFT>
+void MipsTargetInfo<ELFT>::writeGotHeaderEntries(uint8_t *Buf) const {
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Off Elf_Off;
+  auto *P = reinterpret_cast<Elf_Off *>(Buf);
+  // Module pointer
+  P[1] = ELFT::Is64Bits ? 0x8000000000000000 : 0x80000000;
 }
 
 template <class ELFT>
@@ -684,7 +705,7 @@ void MipsTargetInfo<ELFT>::writePltEntry(uint8_t *Buf, uint64_t GotEntryAddr,
 template <class ELFT>
 bool MipsTargetInfo<ELFT>::relocNeedsGot(uint32_t Type,
                                          const SymbolBody &S) const {
-  return false;
+  return Type == R_MIPS_GOT16;
 }
 
 template <class ELFT>
@@ -702,9 +723,27 @@ void MipsTargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
   case R_MIPS_32:
     add32<IsLE>(Loc, SA);
     break;
+  case R_MIPS_GOT16: {
+    int64_t V = SA - getMipsGpAddr<ELFT>();
+    if (!isInt<16>(V))
+      error("Relocation R_MIPS_GOT16 out of range");
+    write32<IsLE>(Loc, (read32<IsLE>(Loc) & 0xffff0000) | (V & 0xffff));
+    break;
+  }
   default:
     error("unrecognized reloc " + Twine(Type));
   }
 }
+
+template <class ELFT>
+typename llvm::object::ELFFile<ELFT>::uintX_t getMipsGpAddr() {
+  const unsigned GPOffset = 0x7ff0;
+  return Out<ELFT>::Got->getVA() ? (Out<ELFT>::Got->getVA() + GPOffset) : 0;
+}
+
+template uint32_t getMipsGpAddr<ELF32LE>();
+template uint32_t getMipsGpAddr<ELF32BE>();
+template uint64_t getMipsGpAddr<ELF64LE>();
+template uint64_t getMipsGpAddr<ELF64BE>();
 }
 }

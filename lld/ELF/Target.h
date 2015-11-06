@@ -11,6 +11,7 @@
 #define LLD_ELF_TARGET_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Object/ELF.h"
 
 #include <memory>
 
@@ -31,7 +32,9 @@ public:
   unsigned getPltZeroEntrySize() const { return PltZeroEntrySize; }
   unsigned getPltEntrySize() const { return PltEntrySize; }
   bool supportsLazyRelocations() const { return LazyRelocations; }
+  unsigned getGotHeaderEntriesNum() const { return GotHeaderEntriesNum; }
   virtual unsigned getPLTRefReloc(unsigned Type) const;
+  virtual void writeGotHeaderEntries(uint8_t *Buf) const;
   virtual void writeGotPltEntry(uint8_t *Buf, uint64_t Plt) const = 0;
   virtual void writePltZeroEntry(uint8_t *Buf, uint64_t GotEntryAddr,
                                  uint64_t PltEntryAddr) const = 0;
@@ -66,10 +69,14 @@ protected:
   unsigned RelativeReloc;
   unsigned PltEntrySize = 8;
   unsigned PltZeroEntrySize = 0;
+  unsigned GotHeaderEntriesNum = 0;
   bool LazyRelocations = false;
 };
 
 uint64_t getPPC64TocBase();
+
+template <class ELFT>
+typename llvm::object::ELFFile<ELFT>::uintX_t getMipsGpAddr();
 
 extern std::unique_ptr<TargetInfo> Target;
 TargetInfo *createTarget();

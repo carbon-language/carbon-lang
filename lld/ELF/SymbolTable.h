@@ -50,6 +50,8 @@ public:
 
   SymbolBody *addUndefined(StringRef Name);
   SymbolBody *addUndefinedOpt(StringRef Name);
+  void addAbsoluteSym(StringRef Name,
+                      typename llvm::object::ELFFile<ELFT>::Elf_Sym &ESym);
   void addSyntheticSym(StringRef Name, OutputSectionBase<ELFT> &Section,
                        typename llvm::object::ELFFile<ELFT>::uintX_t Value);
   void addIgnoredSym(StringRef Name);

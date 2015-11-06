@@ -27,7 +27,7 @@ __start:
 # CHECK-NEXT:   Version: 1
 # CHECK-NEXT:   Entry: 0x20000
 # CHECK-NEXT:   ProgramHeaderOffset: 0x34
-# CHECK-NEXT:   SectionHeaderOffset: 0x20070
+# CHECK-NEXT:   SectionHeaderOffset: 0x20084
 # CHECK-NEXT:   Flags [ (0x0)
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 52
@@ -138,7 +138,7 @@ __start:
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x20000
-# CHECK-NEXT:     Size: 32
+# CHECK-NEXT:     Size: 48
 # CHECK-NEXT:     Link: 8
 # CHECK-NEXT:     Info: 1
 # CHECK-NEXT:     AddressAlignment: 4
@@ -151,7 +151,7 @@ __start:
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x20020
+# CHECK-NEXT:     Offset: 0x20030
 # CHECK-NEXT:     Size: 68
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
@@ -165,8 +165,8 @@ __start:
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x20064
-# CHECK-NEXT:     Size: 9
+# CHECK-NEXT:     Offset: 0x20074
+# CHECK-NEXT:     Size: 13
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
@@ -182,6 +182,15 @@ __start:
 # CHECK-NEXT:     Type: None (0x0)
 # CHECK-NEXT:     Other: 0
 # CHECK-NEXT:     Section: Undefined (0x0)
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: _gp
+# CHECK-NEXT:     Value: 0x0
+# CHECK-NEXT:     Size: 0
+# CHECK-NEXT:     Binding: Local (0x0)
+# CHECK-NEXT:     Type: None (0x0)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: Absolute (0xFFF1)
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name: __start

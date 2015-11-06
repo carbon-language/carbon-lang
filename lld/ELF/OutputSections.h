@@ -113,9 +113,7 @@ template <class ELFT> class GotSection final : public OutputSectionBase<ELFT> {
 
 public:
   GotSection();
-  void finalize() override {
-    this->Header.sh_size = Entries.size() * sizeof(uintX_t);
-  }
+  void finalize() override;
   void writeTo(uint8_t *Buf) override;
   void addEntry(SymbolBody *Sym);
   bool empty() const { return Entries.empty(); }

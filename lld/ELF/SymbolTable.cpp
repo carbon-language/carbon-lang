@@ -71,6 +71,12 @@ SymbolBody *SymbolTable<ELFT>::addUndefinedOpt(StringRef Name) {
 }
 
 template <class ELFT>
+void SymbolTable<ELFT>::addAbsoluteSym(StringRef Name,
+                                       typename ELFFile<ELFT>::Elf_Sym &ESym) {
+  resolve(new (Alloc) DefinedAbsolute<ELFT>(Name, ESym));
+}
+
+template <class ELFT>
 void SymbolTable<ELFT>::addSyntheticSym(StringRef Name,
                                         OutputSectionBase<ELFT> &Section,
                                         typename ELFFile<ELFT>::uintX_t Value) {
