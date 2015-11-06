@@ -159,13 +159,32 @@ void aliasing() {
   // CHECK-FIXES: for (int Alias : IntArr)
   // CHECK-FIXES-NEXT: for (unsigned J = 0; Alias; ++J)
 
-  struct IntRef { IntRef(const int& i); };
+  struct IntRef { IntRef(); IntRef(const int& i); operator int*(); };
   for (int I = 0; I < N; ++I) {
     IntRef Int(IntArr[I]);
   }
   // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
   // CHECK-FIXES: for (int I : IntArr)
   // CHECK-FIXES-NEXT: IntRef Int(I);
+
+  int *PtrArr[N];
+  for (unsigned I = 0; I < N; ++I) {
+    const int* const P = PtrArr[I];
+    printf("%d\n", *P);
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto P : PtrArr)
+  // CHECK-FIXES-NEXT: printf("%d\n", *P);
+
+  IntRef Refs[N];
+  for (unsigned I = 0; I < N; ++I) {
+    int *P = Refs[I];
+    printf("%d\n", *P);
+  }
+  // CHECK-MESSAGES: :[[@LINE-4]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & Ref : Refs)
+  // CHECK-FIXES-NEXT: int *P = Ref;
+  // CHECK-FIXES-NEXT: printf("%d\n", *P);
 
   // Ensure that removing the alias doesn't leave empty lines behind.
   for (int I = 0; I < N; ++I) {

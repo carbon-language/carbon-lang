@@ -342,21 +342,27 @@ static bool isAliasDecl(ASTContext *Context, const Decl *TheDecl,
   if (!VDecl->hasInit())
     return false;
 
-  const Expr *Init =
-      digThroughConstructors(VDecl->getInit()->IgnoreParenImpCasts());
+  bool OnlyCasts = true;
+  const Expr *Init = VDecl->getInit()->IgnoreParenImpCasts();
+  if (Init && isa<CXXConstructExpr>(Init)) {
+    Init = digThroughConstructors(Init);
+    OnlyCasts = false;
+  }
   if (!Init)
     return false;
 
   // Check that the declared type is the same as (or a reference to) the
   // container type.
-  QualType InitType = Init->getType();
-  QualType DeclarationType = VDecl->getType();
-  if (!DeclarationType.isNull() && DeclarationType->isReferenceType())
-    DeclarationType = DeclarationType.getNonReferenceType();
+  if (!OnlyCasts) {
+    QualType InitType = Init->getType();
+    QualType DeclarationType = VDecl->getType();
+    if (!DeclarationType.isNull() && DeclarationType->isReferenceType())
+      DeclarationType = DeclarationType.getNonReferenceType();
 
-  if (InitType.isNull() || DeclarationType.isNull() ||
-      !Context->hasSameUnqualifiedType(DeclarationType, InitType))
-    return false;
+    if (InitType.isNull() || DeclarationType.isNull() ||
+        !Context->hasSameUnqualifiedType(DeclarationType, InitType))
+      return false;
+  }
 
   switch (Init->getStmtClass()) {
   case Stmt::ArraySubscriptExprClass: {
@@ -384,8 +390,8 @@ static bool isAliasDecl(ASTContext *Context, const Decl *TheDecl,
     const auto *MemCall = cast<CXXMemberCallExpr>(Init);
     // This check is needed because getMethodDecl can return nullptr if the
     // callee is a member function pointer.
-    if (MemCall->getMethodDecl() &&
-        MemCall->getMethodDecl()->getName() == "at") {
+    const auto *MDecl = MemCall->getMethodDecl();
+    if (MDecl && !isa<CXXConversionDecl>(MDecl) && MDecl->getName() == "at") {
       assert(MemCall->getNumArgs() == 1);
       return isIndexInSubscriptExpr(MemCall->getArg(0), IndexVar);
     }
