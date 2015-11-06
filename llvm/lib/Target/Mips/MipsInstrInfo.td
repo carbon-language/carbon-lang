@@ -381,11 +381,24 @@ include "MipsInstrFormats.td"
 // Mips Operand, Complex Patterns and Transformations Definitions.
 //===----------------------------------------------------------------------===//
 
+class ConstantUImmAsmOperandClass<int Bits, list<AsmOperandClass> Supers = [],
+                                  int Offset = 0> : AsmOperandClass {
+  let Name = "ConstantUImm" # Bits # "_" # Offset;
+  let RenderMethod = "addConstantUImmOperands<" # Bits # ", " # Offset # ">";
+  let PredicateMethod = "isConstantUImm<" # Bits # ", " # Offset # ">";
+  let SuperClasses = Supers;
+  let DiagnosticType = "UImm" # Bits # "_" # Offset;
+}
+
+def ConstantUImm2Plus1AsmOperandClass
+    : ConstantUImmAsmOperandClass<2, [], 1>;
+def ConstantUImm2AsmOperandClass
+    : ConstantUImmAsmOperandClass<2>;
 def ConstantImmzAsmOperandClass : AsmOperandClass {
   let Name = "ConstantImmz";
   let RenderMethod = "addConstantUImmOperands<1>";
   let PredicateMethod = "isConstantImmz";
-  let SuperClasses = [];
+  let SuperClasses = [ConstantUImm2AsmOperandClass];
   let DiagnosticType = "Immz";
 }
 
@@ -461,9 +474,19 @@ def uimmz       : Operand<i32> {
   let ParserMatchClass = ConstantImmzAsmOperandClass;
 }
 
-// Unsigned Operand
-def uimm2 : Operand<i32> {
+// Unsigned Operands
+foreach I = {2} in
+  def uimm # I : Operand<i32> {
+    let PrintMethod = "printUnsignedImm";
+    let ParserMatchClass =
+        !cast<AsmOperandClass>("ConstantUImm" # I # "AsmOperandClass");
+  }
+
+def uimm2_plus1 : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
+  let EncoderMethod = "getUImmWithOffsetEncoding<2, 1>";
+  let DecoderMethod = "DecodeUImmWithOffset<2, 1>";
+  let ParserMatchClass = ConstantUImm2Plus1AsmOperandClass;
 }
 
 def uimm3 : Operand<i32> {

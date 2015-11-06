@@ -387,7 +387,6 @@ public:
 #define GET_OPERAND_DIAGNOSTIC_TYPES
 #include "MipsGenAsmMatcher.inc"
 #undef GET_OPERAND_DIAGNOSTIC_TYPES
-
   };
 
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
@@ -894,10 +893,12 @@ public:
     Inst.addOperand(MCOperand::createReg(getHWRegsReg()));
   }
 
-  template <unsigned Bits>
+  template <unsigned Bits, int Offset = 0>
   void addConstantUImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    uint64_t Imm = getConstantImm() & ((1 << Bits) - 1);
+    uint64_t Imm = getConstantImm() - Offset;
+    Imm &= (1 << Bits) - 1;
+    Imm += Offset;
     Inst.addOperand(MCOperand::createImm(Imm));
   }
 
@@ -962,6 +963,9 @@ public:
   }
   bool isConstantImmz() const {
     return isConstantImm() && getConstantImm() == 0;
+  }
+  template <unsigned Bits, int Offset = 0> bool isConstantUImm() const {
+    return isConstantImm() && isUInt<Bits>(getConstantImm() - Offset);
   }
   template <unsigned Bits> bool isUImm() const {
     return isImm() && isConstantImm() && isUInt<Bits>(getConstantImm());
@@ -3296,6 +3300,12 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(IDLoc, "source and destination must be different");
   case Match_Immz:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo), "expected '0'");
+  case Match_UImm2_0:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected 2-bit unsigned immediate");
+  case Match_UImm2_1:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected immediate in range 1 .. 4");
   }
 
   llvm_unreachable("Implement any new match types added!");

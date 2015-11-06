@@ -70,21 +70,6 @@ def immZExt6Ptr : ImmLeaf<iPTR, [{return isUInt<6>(Imm);}]>;
 
 // Operands
 
-// The immediate of an LSA instruction needs special handling
-// as the encoded value should be subtracted by one.
-def uimm2LSAAsmOperand : AsmOperandClass {
-  let Name = "LSAImm";
-  let ParserMethod = "parseLSAImm";
-  let RenderMethod = "addImmOperands";
-}
-
-def LSAImm : Operand<i32> {
-  let PrintMethod = "printUnsignedImm";
-  let EncoderMethod = "getLSAImmEncoding";
-  let DecoderMethod = "DecodeLSAImm";
-  let ParserMatchClass = uimm2LSAAsmOperand;
-}
-
 def uimm4 : Operand<i32> {
   let PrintMethod = "printUnsignedImm8";
 }
@@ -2380,7 +2365,7 @@ class LSA_DESC_BASE<string instr_asm, RegisterOperand RORD,
                     RegisterOperand RORS = RORD, RegisterOperand RORT = RORD,
                     InstrItinClass itin = NoItinerary > {
   dag OutOperandList = (outs RORD:$rd);
-  dag InOperandList = (ins RORS:$rs, RORT:$rt, LSAImm:$sa);
+  dag InOperandList = (ins RORS:$rs, RORT:$rt, uimm2_plus1:$sa);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt, $sa");
   list<dag> Pattern = [(set RORD:$rd, (add RORT:$rt,
                                                 (shl RORS:$rs,
