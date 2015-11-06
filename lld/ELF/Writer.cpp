@@ -715,10 +715,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       }
 
       if (Sec->getFlags() & SHF_TLS) {
-        if (!TlsPhdr.p_vaddr) {
+        if (!TlsPhdr.p_vaddr)
           setPhdr(&TlsPhdr, PT_TLS, PF_R, FileOff, VA, 0, Sec->getAlign());
-          Out<ELFT>::TlsInitImageVA = VA;
-        }
         if (Sec->getType() != SHT_NOBITS)
           VA = RoundUpToAlignment(VA, Sec->getAlign());
         uintX_t TVA = RoundUpToAlignment(VA + ThreadBSSOffset, Sec->getAlign());
@@ -750,9 +748,11 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   }
 
   if (TlsPhdr.p_vaddr) {
+    // The TLS pointer goes after PT_TLS. At least glibc will align it,
+    // so round up the size to make sure the offsets are correct.
+    TlsPhdr.p_memsz = RoundUpToAlignment(TlsPhdr.p_memsz, TlsPhdr.p_align);
     Phdrs[++PhdrIdx] = TlsPhdr;
-    Out<ELFT>::TlsInitImageAlignedSize =
-        RoundUpToAlignment(TlsPhdr.p_memsz, TlsPhdr.p_align);
+    Out<ELFT>::TlsPhdr = &Phdrs[PhdrIdx];
   }
 
   // Add an entry for .dynamic.

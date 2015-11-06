@@ -352,6 +352,7 @@ private:
 // until Writer is initialized.
 template <class ELFT> struct Out {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Phdr Elf_Phdr;
   static DynamicSection<ELFT> *Dynamic;
   static GnuHashTableSection<ELFT> *GnuHashTab;
   static GotPltSection<ELFT> *GotPlt;
@@ -369,8 +370,7 @@ template <class ELFT> struct Out {
   static StringTableSection<ELFT> *StrTab;
   static SymbolTableSection<ELFT> *DynSymTab;
   static SymbolTableSection<ELFT> *SymTab;
-  static uintX_t TlsInitImageVA;
-  static size_t TlsInitImageAlignedSize;
+  static Elf_Phdr *TlsPhdr;
 };
 
 template <class ELFT> DynamicSection<ELFT> *Out<ELFT>::Dynamic;
@@ -390,8 +390,7 @@ template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::ShStrTab;
 template <class ELFT> StringTableSection<ELFT> *Out<ELFT>::StrTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::DynSymTab;
 template <class ELFT> SymbolTableSection<ELFT> *Out<ELFT>::SymTab;
-template <class ELFT> typename Out<ELFT>::uintX_t Out<ELFT>::TlsInitImageVA;
-template <class ELFT> size_t Out<ELFT>::TlsInitImageAlignedSize;
+template <class ELFT> typename Out<ELFT>::Elf_Phdr *Out<ELFT>::TlsPhdr;
 
 } // namespace elf2
 } // namespace lld

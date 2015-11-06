@@ -351,7 +351,7 @@ void X86_64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd, uint32_t Type,
     write32le(Loc, SA);
     break;
   case R_X86_64_TPOFF32: {
-    uint64_t Val = SA - Out<ELF64LE>::TlsInitImageAlignedSize;
+    uint64_t Val = SA - Out<ELF64LE>::TlsPhdr->p_memsz;
     if (!isInt<32>(Val))
       error("R_X86_64_TPOFF32 out of range");
     write32le(Loc, Val);

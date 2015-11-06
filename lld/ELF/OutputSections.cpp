@@ -660,7 +660,7 @@ typename ELFFile<ELFT>::uintX_t lld::elf2::getSymVA(const SymbolBody &S) {
     InputSectionBase<ELFT> &SC = DR.Section;
     if (DR.Sym.getType() == STT_TLS)
       return SC.OutSec->getVA() + SC.getOffset(DR.Sym) -
-             Out<ELFT>::TlsInitImageVA;
+             Out<ELFT>::TlsPhdr->p_vaddr;
     return SC.OutSec->getVA() + SC.getOffset(DR.Sym);
   }
   case SymbolBody::DefinedCommonKind:
