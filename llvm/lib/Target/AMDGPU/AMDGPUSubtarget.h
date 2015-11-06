@@ -1,4 +1,4 @@
-//=====-- AMDGPUSubtarget.h - Define Subtarget for the AMDIL ---*- C++ -*-====//
+//=====-- AMDGPUSubtarget.h - Define Subtarget for AMDGPU ------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,15 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_R600_AMDGPUSUBTARGET_H
-#define LLVM_LIB_TARGET_R600_AMDGPUSUBTARGET_H
+#ifndef LLVM_LIB_TARGET_AMDGPU_AMDGPUSUBTARGET_H
+#define LLVM_LIB_TARGET_AMDGPU_AMDGPUSUBTARGET_H
 #include "AMDGPU.h"
 #include "AMDGPUFrameLowering.h"
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPUIntrinsicInfo.h"
+#include "AMDKernelCodeT.h"
 #include "AMDGPUSubtarget.h"
 #include "R600ISelLowering.h"
-#include "AMDKernelCodeT.h"
+#include "SIFrameLowering.h"
 #include "Utils/AMDGPUBaseInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
@@ -91,7 +92,7 @@ private:
   unsigned IsaVersion; 
   bool EnableHugeScratchBuffer;
 
-  AMDGPUFrameLowering FrameLowering;
+  std::unique_ptr<AMDGPUFrameLowering> FrameLowering;
   std::unique_ptr<AMDGPUTargetLowering> TLInfo;
   std::unique_ptr<AMDGPUInstrInfo> InstrInfo;
   InstrItineraryData InstrItins;
@@ -104,7 +105,7 @@ public:
                                                    StringRef GPU, StringRef FS);
 
   const AMDGPUFrameLowering *getFrameLowering() const override {
-    return &FrameLowering;
+    return FrameLowering.get();
   }
   const AMDGPUInstrInfo *getInstrInfo() const override {
     return InstrInfo.get();
