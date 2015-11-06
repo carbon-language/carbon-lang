@@ -24,7 +24,7 @@ static __attribute__((noinline)) void loop() {
     volatile char *p = (char*)malloc(1);
     p[0] = 0;
     free((void*)p);
-    pthread_yield();
+    sched_yield();
   }
 }
 

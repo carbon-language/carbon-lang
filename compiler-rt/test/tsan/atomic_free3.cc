@@ -13,7 +13,7 @@ int main() {
   pthread_t t;
   pthread_create(&t, 0, Thread, a);
   while (__atomic_load_n(a, __ATOMIC_RELAXED) == 0)
-    pthread_yield();
+    sched_yield();
   delete a;
   pthread_join(t, 0);
 }

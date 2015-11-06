@@ -59,7 +59,7 @@ void *Thread(void *seed) {
       for (;;) {
         int old = __atomic_load_n(&m->state, __ATOMIC_RELAXED);
         if (old == kStateLocked) {
-          pthread_yield();
+          sched_yield();
           continue;
         }
         int newv = old + 1;
