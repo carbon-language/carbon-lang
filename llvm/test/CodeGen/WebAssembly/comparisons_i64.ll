@@ -14,7 +14,7 @@ target triple = "wasm32-unknown-unknown"
 ; CHECK-NEXT: set_local 2, pop{{$}}
 ; CHECK-NEXT: get_local push, 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
-; CHECK-NEXT: eq push, (get_local 3), (get_local 2){{$}}
+; CHECK-NEXT: i64.eq push, (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: return (get_local 4){{$}}
 define i32 @eq_i64(i64 %x, i64 %y) {
@@ -24,7 +24,7 @@ define i32 @eq_i64(i64 %x, i64 %y) {
 }
 
 ; CHECK-LABEL: ne_i64:
-; CHECK: ne push, (get_local 3), (get_local 2){{$}}
+; CHECK: i64.ne push, (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 define i32 @ne_i64(i64 %x, i64 %y) {
   %a = icmp ne i64 %x, %y
