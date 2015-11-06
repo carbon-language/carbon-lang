@@ -1726,8 +1726,10 @@ def run_suite():
 
             if iterArchs or iterCompilers:
                 # Translate ' ' to '-' for pathname component.
-                from string import maketrans
-                tbl = maketrans(' ', '-')
+                if six.PY2:
+                    tbl = string.maketrans(' ', '-')
+                else:
+                    tbl = str.maketrans(' ', '-')
                 configPostfix = configString.translate(tbl)
 
                 # Check whether we need to split stderr/stdout into configuration
