@@ -257,6 +257,9 @@ INTERFACE_FUNCTION(__asan_memcpy);
 INTERFACE_FUNCTION(__asan_memset);
 INTERFACE_FUNCTION(__asan_memmove);
 
+INTERFACE_FUNCTION(__asan_alloca_poison);
+INTERFACE_FUNCTION(__asan_allocas_unpoison);
+
 INTERFACE_FUNCTION(__asan_register_globals)
 INTERFACE_FUNCTION(__asan_unregister_globals)
 
