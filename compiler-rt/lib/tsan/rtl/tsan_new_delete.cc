@@ -12,6 +12,7 @@
 // Interceptors for operators new and delete.
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_internal_defs.h"
+#include "interception/interception.h"
 #include "tsan_interceptors.h"
 
 using namespace __tsan;  // NOLINT
@@ -19,6 +20,13 @@ using namespace __tsan;  // NOLINT
 namespace std {
 struct nothrow_t {};
 }  // namespace std
+
+DECLARE_REAL(void *, malloc, uptr size)
+DECLARE_REAL(void, free, void *ptr)
+#if SANITIZER_MAC
+#define __libc_malloc REAL(malloc)
+#define __libc_free REAL(free)
+#endif
 
 #define OPERATOR_NEW_BODY(mangled_name) \
   if (cur_thread()->in_symbolizer) \

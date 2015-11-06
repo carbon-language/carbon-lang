@@ -92,7 +92,7 @@ if(APPLE)
     SHARED
     OS ${TSAN_SUPPORTED_OS}
     ARCHS ${TSAN_SUPPORTED_ARCH}
-    SOURCES ${TSAN_SOURCES}
+    SOURCES ${TSAN_SOURCES} ${TSAN_CXX_SOURCES}
     OBJECT_LIBS RTInterception
                 RTSanitizerCommon
                 RTSanitizerCommonLibc
