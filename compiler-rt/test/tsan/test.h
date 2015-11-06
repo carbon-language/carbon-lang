@@ -8,32 +8,29 @@
 // TSan-invisible barrier.
 // Tests use it to establish necessary execution order in a way that does not
 // interfere with tsan (does not establish synchronization between threads).
-__typeof(pthread_barrier_wait) *barrier_wait;
+// 8 lsb is thread count, the remaining are count of entered threads.
+typedef unsigned long long invisible_barrier_t;
 
-void barrier_init(pthread_barrier_t *barrier, unsigned count) {
-#if defined(__FreeBSD__)
-  static const char libpthread_name[] = "libpthread.so";
-#else
-  static const char libpthread_name[] = "libpthread.so.0";
-#endif
+void barrier_init(invisible_barrier_t *barrier, unsigned count) {
+  if (count >= (1 << 8))
+      exit(fprintf(stderr, "barrier_init: count is too large (%d)\n", count));
+  *barrier = count;
+}
 
-  if (barrier_wait == 0) {
-    void *h = dlopen(libpthread_name, RTLD_LAZY);
-    if (h == 0) {
-      fprintf(stderr, "failed to dlopen %s, exiting\n", libpthread_name);
-      exit(1);
-    }
-    barrier_wait = (__typeof(barrier_wait))dlsym(h, "pthread_barrier_wait");
-    if (barrier_wait == 0) {
-      fprintf(stderr, "failed to resolve pthread_barrier_wait, exiting\n");
-      exit(1);
-    }
+void barrier_wait(invisible_barrier_t *barrier) {
+  unsigned old = __atomic_fetch_add(barrier, 1 << 8, __ATOMIC_RELAXED);
+  unsigned old_epoch = (old >> 8) / (old & 0xff);
+  for (;;) {
+    unsigned cur = __atomic_load_n(barrier, __ATOMIC_RELAXED);
+    unsigned cur_epoch = (cur >> 8) / (cur & 0xff);
+    if (cur_epoch != old_epoch)
+      return;
+    usleep(1000);
   }
-  pthread_barrier_init(barrier, 0, count);
 }
 
 // Default instance of the barrier, but a test can declare more manually.
-pthread_barrier_t barrier;
+invisible_barrier_t barrier;
 
 void print_address(void *address) {
 // On FreeBSD, the %p conversion specifier works as 0x%x and thus does not match

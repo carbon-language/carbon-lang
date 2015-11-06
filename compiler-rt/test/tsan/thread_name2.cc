@@ -6,7 +6,7 @@
 #define pthread_setname_np pthread_set_name_np
 #endif
 
-int Global;
+long long Global;
 
 void *Thread1(void *x) {
   barrier_wait(&barrier);
