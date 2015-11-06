@@ -1074,7 +1074,8 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
         Blocks.push_back(*SI);
 
     // Remember value in case it is visible after this subregion.
-    ValueMap.insert(RegionMap.begin(), RegionMap.end());
+    if (DT.dominates(BB, R->getExit()))
+      ValueMap.insert(RegionMap.begin(), RegionMap.end());
   }
 
   // Now create a new dedicated region exit block and add it to the region map.
