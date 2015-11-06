@@ -325,6 +325,23 @@ void sameNames() {
   // CHECK-FIXES-NEXT: (void)NumsI;
 }
 
+void oldIndexConflict() {
+  for (int Num = 0; Num < N; ++Num) {
+    printf("Num: %d\n", Nums[Num]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (int Num : Nums)
+  // CHECK-FIXES-NEXT: printf("Num: %d\n", Num);
+
+  S Things;
+  for (S::iterator Thing = Things.begin(), End = Things.end(); Thing != End; ++Thing) {
+    printf("Thing: %d %d\n", Thing->X, (*Thing).X);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & Thing : Things)
+  // CHECK-FIXES-NEXT: printf("Thing: %d %d\n", Thing.X, Thing.X);
+}
+
 void macroConflict() {
   S MAXs;
   for (S::iterator It = MAXs.begin(), E = MAXs.end(); It != E; ++It) {

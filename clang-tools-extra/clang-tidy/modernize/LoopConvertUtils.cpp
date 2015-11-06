@@ -820,14 +820,14 @@ std::string VariableNamer::createIndexName() {
   if (Len > 1 && ContainerName.endswith(Style == NS_UpperCase ? "S" : "s")) {
     IteratorName = ContainerName.substr(0, Len - 1);
     // E.g.: (auto thing : things)
-    if (!declarationExists(IteratorName))
+    if (!declarationExists(IteratorName) || IteratorName == OldIndex->getName())
       return IteratorName;
   }
 
   if (Len > 2 && ContainerName.endswith(Style == NS_UpperCase ? "S_" : "s_")) {
     IteratorName = ContainerName.substr(0, Len - 2);
     // E.g.: (auto thing : things_)
-    if (!declarationExists(IteratorName))
+    if (!declarationExists(IteratorName) || IteratorName == OldIndex->getName())
       return IteratorName;
   }
 
@@ -849,12 +849,12 @@ std::string VariableNamer::createIndexName() {
 
   IteratorName = AppendWithStyle(ContainerName, OldIndex->getName());
   // E.g.: (auto container_i : container)
-  if (!declarationExists(IteratorName))
+  if (!declarationExists(IteratorName) || IteratorName == OldIndex->getName())
     return IteratorName;
 
   IteratorName = AppendWithStyle(ContainerName, Elem);
   // E.g.: (auto container_elem : container)
-  if (!declarationExists(IteratorName))
+  if (!declarationExists(IteratorName) || IteratorName == OldIndex->getName())
     return IteratorName;
 
   // Someone defeated my naming scheme...
@@ -875,7 +875,8 @@ std::string VariableNamer::createIndexName() {
   int Attempt = 0;
   do {
     IteratorName = GiveMeName + std::to_string(Attempt++);
-  } while (declarationExists(IteratorName));
+  } while (declarationExists(IteratorName) ||
+           IteratorName == OldIndex->getName());
 
   return IteratorName;
 }
