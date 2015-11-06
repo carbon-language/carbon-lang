@@ -1088,6 +1088,9 @@ namespace llvm {
     MachineBasicBlock *EmitLoweredWinAlloca(MachineInstr *MI,
                                               MachineBasicBlock *BB) const;
 
+    MachineBasicBlock *EmitLoweredCatchRet(MachineInstr *MI,
+                                           MachineBasicBlock *BB) const;
+
     MachineBasicBlock *EmitLoweredSegAlloca(MachineInstr *MI,
                                             MachineBasicBlock *BB) const;
 
