@@ -2131,7 +2131,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
     Vals.push_back(VE.getAttributeID(CI.getAttributes()));
     Vals.push_back((CI.getCallingConv() << 1) | unsigned(CI.isTailCall()) |
-                   unsigned(CI.isMustTailCall()) << 14 | 1 << 15);
+                   unsigned(CI.isMustTailCall()) << 14 | 1 << 15 |
+                   unsigned(CI.isNoTailCall()) << 16);
     Vals.push_back(VE.getTypeID(FTy));
     PushValueAndType(CI.getCalledValue(), InstID, Vals, VE);  // Callee
 

@@ -2768,6 +2768,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       Out << "musttail ";
     else if (CI->isTailCall())
       Out << "tail ";
+    else if (CI->isNoTailCall())
+      Out << "notail ";
   }
 
   // Print out the opcode...

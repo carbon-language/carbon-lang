@@ -5002,6 +5002,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
         TCK = CallInst::TCK_Tail;
       if (CCInfo & (1 << 14))
         TCK = CallInst::TCK_MustTail;
+      if (CCInfo & (1 << 16))
+        TCK = CallInst::TCK_NoTail;
       cast<CallInst>(I)->setTailCallKind(TCK);
       cast<CallInst>(I)->setAttributes(PAL);
       break;
