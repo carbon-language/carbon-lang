@@ -416,16 +416,14 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(Triple T) {
     break;
   }
 
+  EHSectionType = T.getArch() == Triple::x86_64 ? ELF::SHT_X86_64_UNWIND
+                                                : ELF::SHT_PROGBITS;
+
   // Solaris requires different flags for .eh_frame to seemingly every other
   // platform.
-  EHSectionType = ELF::SHT_PROGBITS;
   EHSectionFlags = ELF::SHF_ALLOC;
-  if (T.isOSSolaris()) {
-    if (T.getArch() == Triple::x86_64)
-      EHSectionType = ELF::SHT_X86_64_UNWIND;
-    else
-      EHSectionFlags |= ELF::SHF_WRITE;
-  }
+  if (T.isOSSolaris() && T.getArch() != Triple::x86_64)
+    EHSectionFlags |= ELF::SHF_WRITE;
 
   // ELF
   BSSSection = Ctx->getELFSection(".bss", ELF::SHT_NOBITS,
