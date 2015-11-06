@@ -381,6 +381,14 @@ include "MipsInstrFormats.td"
 // Mips Operand, Complex Patterns and Transformations Definitions.
 //===----------------------------------------------------------------------===//
 
+def ConstantImmzAsmOperandClass : AsmOperandClass {
+  let Name = "ConstantImmz";
+  let RenderMethod = "addConstantUImmOperands<1>";
+  let PredicateMethod = "isConstantImmz";
+  let SuperClasses = [];
+  let DiagnosticType = "Immz";
+}
+
 def MipsJumpTargetAsmOperand : AsmOperandClass {
   let Name = "JumpTarget";
   let ParserMethod = "parseJumpTarget";
@@ -450,6 +458,7 @@ def simm16_64   : Operand<i64> {
 // Zero
 def uimmz       : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
+  let ParserMatchClass = ConstantImmzAsmOperandClass;
 }
 
 // Unsigned Operand
