@@ -2144,7 +2144,7 @@ TSAN_INTERCEPTOR(int, vfork, int fake) {
   return WRAP(fork)(fake);
 }
 
-#if SANITIZER_LINUX
+#if !SANITIZER_MAC
 typedef int (*dl_iterate_phdr_cb_t)(__sanitizer_dl_phdr_info *info, SIZE_T size,
                                     void *data);
 struct dl_iterate_phdr_data {
