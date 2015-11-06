@@ -4083,7 +4083,10 @@ ConstantRange llvm::getConstantRangeFromMetadata(MDNode &Ranges) {
 }
 
 /// Return true if "icmp Pred LHS RHS" is always true.
-static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS) {
+static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
+                            const DataLayout &DL, unsigned Depth,
+                            AssumptionCache *AC, const Instruction *CxtI,
+                            const DominatorTree *DT) {
   if (ICmpInst::isTrueWhenEqual(Pred) && LHS == RHS)
     return true;
 
@@ -4124,24 +4127,34 @@ static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS) {
 /// Return true if "icmp Pred BLHS BRHS" is true whenever "icmp Pred
 /// ALHS ARHS" is true.
 static bool isImpliedCondOperands(CmpInst::Predicate Pred, Value *ALHS,
-                                  Value *ARHS, Value *BLHS, Value *BRHS) {
+                                  Value *ARHS, Value *BLHS, Value *BRHS,
+                                  const DataLayout &DL, unsigned Depth,
+                                  AssumptionCache *AC, const Instruction *CxtI,
+                                  const DominatorTree *DT) {
   switch (Pred) {
   default:
     return false;
 
   case CmpInst::ICMP_SLT:
   case CmpInst::ICMP_SLE:
-    return isTruePredicate(CmpInst::ICMP_SLE, BLHS, ALHS) &&
-           isTruePredicate(CmpInst::ICMP_SLE, ARHS, BRHS);
+    return isTruePredicate(CmpInst::ICMP_SLE, BLHS, ALHS, DL, Depth, AC, CxtI,
+                           DT) &&
+           isTruePredicate(CmpInst::ICMP_SLE, ARHS, BRHS, DL, Depth, AC, CxtI,
+                           DT);
 
   case CmpInst::ICMP_ULT:
   case CmpInst::ICMP_ULE:
-    return isTruePredicate(CmpInst::ICMP_ULE, BLHS, ALHS) &&
-           isTruePredicate(CmpInst::ICMP_ULE, ARHS, BRHS);
+    return isTruePredicate(CmpInst::ICMP_ULE, BLHS, ALHS, DL, Depth, AC, CxtI,
+                           DT) &&
+           isTruePredicate(CmpInst::ICMP_ULE, ARHS, BRHS, DL, Depth, AC, CxtI,
+                           DT);
   }
 }
 
-bool llvm::isImpliedCondition(Value *LHS, Value *RHS) {
+bool llvm::isImpliedCondition(Value *LHS, Value *RHS, const DataLayout &DL,
+                              unsigned Depth, AssumptionCache *AC,
+                              const Instruction *CxtI,
+                              const DominatorTree *DT) {
   assert(LHS->getType() == RHS->getType() && "mismatched type");
   Type *OpTy = LHS->getType();
   assert(OpTy->getScalarType()->isIntegerTy(1));
@@ -4163,7 +4176,8 @@ bool llvm::isImpliedCondition(Value *LHS, Value *RHS) {
     return false;
 
   if (APred == BPred)
-    return isImpliedCondOperands(APred, ALHS, ARHS, BLHS, BRHS);
+    return isImpliedCondOperands(APred, ALHS, ARHS, BLHS, BRHS, DL, Depth, AC,
+                                 CxtI, DT);
 
   return false;
 }
