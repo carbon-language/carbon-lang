@@ -14,16 +14,13 @@
 
 #ifndef LLVM_LIB_TARGET_AMDGPU_AMDGPUSUBTARGET_H
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPUSUBTARGET_H
+
 #include "AMDGPU.h"
 #include "AMDGPUFrameLowering.h"
 #include "AMDGPUInstrInfo.h"
-#include "AMDGPUIntrinsicInfo.h"
-#include "AMDKernelCodeT.h"
+#include "AMDGPUISelLowering.h"
 #include "AMDGPUSubtarget.h"
-#include "R600ISelLowering.h"
-#include "SIFrameLowering.h"
 #include "Utils/AMDGPUBaseInfo.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
@@ -89,7 +86,7 @@ private:
   bool CIInsts;
   bool FeatureDisable;
   int LDSBankCount;
-  unsigned IsaVersion; 
+  unsigned IsaVersion;
   bool EnableHugeScratchBuffer;
 
   std::unique_ptr<AMDGPUFrameLowering> FrameLowering;
