@@ -3342,9 +3342,7 @@ define <16 x i16> @insert_dup_elt1_mem_v16i16_i32(i32* %ptr) #0 {
 ;
 ; AVX2-LABEL: insert_dup_elt1_mem_v16i16_i32:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    movzwl 2(%rdi), %eax
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vpbroadcastw %xmm0, %ymm0
+; AVX2-NEXT:    vpbroadcastw 2(%rdi), %ymm0
 ; AVX2-NEXT:    retq
   %tmp = load i32, i32* %ptr, align 4
   %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0
@@ -3363,9 +3361,7 @@ define <16 x i16> @insert_dup_elt3_mem_v16i16_i32(i32* %ptr) #0 {
 ;
 ; AVX2-LABEL: insert_dup_elt3_mem_v16i16_i32:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    movzwl 2(%rdi), %eax
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vpbroadcastw %xmm0, %ymm0
+; AVX2-NEXT:    vpbroadcastw 2(%rdi), %ymm0
 ; AVX2-NEXT:    retq
   %tmp = load i32, i32* %ptr, align 4
   %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 1
