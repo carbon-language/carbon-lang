@@ -567,8 +567,7 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   }
 
   if (Opcode != -1) {
-    unsigned Align = 4;
-    FrameInfo->setObjectAlignment(FrameIndex, Align);
+    unsigned Align = FrameInfo->getObjectAlignment(FrameIndex);
     unsigned Size = FrameInfo->getObjectSize(FrameIndex);
 
     MachinePointerInfo PtrInfo
