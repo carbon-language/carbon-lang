@@ -5322,8 +5322,7 @@ bool LLParser::ParseCleanupEndPad(Instruction *&Inst, PerFunctionState &PFS) {
     if (Lex.getKind() == lltok::kw_caller) {
       Lex.Lex();
     } else {
-      return Error(Lex.getLoc(),
-                   "'to' must be followed by 'caller' in catchendpad");
+      return true;
     }
   } else {
     if (ParseTypeAndBasicBlock(UnwindBB, PFS)) {
