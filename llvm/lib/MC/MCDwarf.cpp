@@ -1523,7 +1523,6 @@ void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
   DenseMap<CIEKey, const MCSymbol *> CIEStarts;
 
   const MCSymbol *DummyDebugKey = nullptr;
-  NeedsEHFrameSection = !MOFI->getSupportsCompactUnwindWithoutEHFrame();
   bool CanOmitDwarf = MOFI->getOmitDwarfIfHaveCompactUnwind();
   for (const MCDwarfFrameInfo &Frame : FrameArray) {
     if (CanOmitDwarf && Frame.CompactUnwindEncoding !=
