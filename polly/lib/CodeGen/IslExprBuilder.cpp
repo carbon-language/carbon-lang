@@ -157,7 +157,7 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
     DimSCEV = SCEVParameterRewriter::rewrite(DimSCEV, SE, Map);
     Value *DimSize =
         expandCodeFor(S, SE, DL, "polly", DimSCEV, DimSCEV->getType(),
-                      Builder.GetInsertPoint());
+                      &*Builder.GetInsertPoint());
 
     Type *Ty = getWidestType(DimSize->getType(), IndexOp->getType());
 
@@ -495,7 +495,7 @@ IslExprBuilder::createOpBooleanConditional(__isl_take isl_ast_expr *Expr) {
 
   auto InsertBB = Builder.GetInsertBlock();
   auto InsertPoint = Builder.GetInsertPoint();
-  auto NextBB = SplitBlock(InsertBB, InsertPoint, &DT, &LI);
+  auto NextBB = SplitBlock(InsertBB, &*InsertPoint, &DT, &LI);
   BasicBlock *CondBB = BasicBlock::Create(Context, "polly.cond", F);
   LI.changeLoopFor(CondBB, LI.getLoopFor(InsertBB));
   DT.addNewBlock(CondBB, InsertBB);

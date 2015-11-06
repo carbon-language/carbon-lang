@@ -92,7 +92,7 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
     Annotator->pushLoop(NewLoop, Parallel);
 
   // ExitBB
-  ExitBB = SplitBlock(BeforeBB, Builder.GetInsertPoint()++, &DT, &LI);
+  ExitBB = SplitBlock(BeforeBB, &*Builder.GetInsertPoint(), &DT, &LI);
   ExitBB->setName("polly.loop_exit");
 
   // BeforeBB
@@ -153,7 +153,7 @@ Value *ParallelLoopGenerator::createParallelLoop(
   BasicBlock::iterator BeforeLoop = Builder.GetInsertPoint();
   Value *IV = createSubFn(Stride, Struct, UsedValues, Map, &SubFn);
   *LoopBody = Builder.GetInsertPoint();
-  Builder.SetInsertPoint(BeforeLoop);
+  Builder.SetInsertPoint(&*BeforeLoop);
 
   Value *SubFnParam = Builder.CreateBitCast(Struct, Builder.getInt8PtrTy(),
                                             "polly.par.userContext");
@@ -287,7 +287,7 @@ ParallelLoopGenerator::storeValuesIntoStruct(SetVector<Value *> &Values) {
   // in the entry block of the function and use annotations to denote the actual
   // live span (similar to clang).
   BasicBlock &EntryBB = Builder.GetInsertBlock()->getParent()->getEntryBlock();
-  Instruction *IP = EntryBB.getFirstInsertionPt();
+  Instruction *IP = &*EntryBB.getFirstInsertionPt();
   StructType *Ty = StructType::get(Builder.getContext(), Members);
   AllocaInst *Struct = new AllocaInst(Ty, 0, "polly.par.userContext", IP);
 
@@ -340,8 +340,8 @@ Value *ParallelLoopGenerator::createSubFn(Value *Stride, AllocaInst *StructData,
   Builder.SetInsertPoint(HeaderBB);
   LBPtr = Builder.CreateAlloca(LongType, 0, "polly.par.LBPtr");
   UBPtr = Builder.CreateAlloca(LongType, 0, "polly.par.UBPtr");
-  UserContext = Builder.CreateBitCast(SubFn->arg_begin(), StructData->getType(),
-                                      "polly.par.userContext");
+  UserContext = Builder.CreateBitCast(
+      &*SubFn->arg_begin(), StructData->getType(), "polly.par.userContext");
 
   extractValuesFromStruct(Data, StructData->getAllocatedType(), UserContext,
                           Map);
@@ -365,7 +365,7 @@ Value *ParallelLoopGenerator::createSubFn(Value *Stride, AllocaInst *StructData,
                          "polly.par.UBAdjusted");
 
   Builder.CreateBr(CheckNextBB);
-  Builder.SetInsertPoint(--Builder.GetInsertPoint());
+  Builder.SetInsertPoint(&*--Builder.GetInsertPoint());
   IV = createLoop(LB, UB, Stride, Builder, P, LI, DT, AfterBB,
                   ICmpInst::ICMP_SLE, nullptr, true, /* UseGuard */ false);
 
@@ -376,7 +376,7 @@ Value *ParallelLoopGenerator::createSubFn(Value *Stride, AllocaInst *StructData,
   createCallCleanupThread();
   Builder.CreateRetVoid();
 
-  Builder.SetInsertPoint(LoopBody);
+  Builder.SetInsertPoint(&*LoopBody);
   *SubFnPtr = SubFn;
 
   return IV;

@@ -224,7 +224,7 @@ void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {
   RegionInfo *RI = RIP ? &RIP->getRegionInfo() : nullptr;
 
   // splitBlock updates DT, LI and RI.
-  splitBlock(EntryBlock, I, DT, LI, RI);
+  splitBlock(EntryBlock, &*I, DT, LI, RI);
 }
 
 /// The SCEVExpander will __not__ generate any code for an existing SDiv/SRem

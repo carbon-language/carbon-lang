@@ -475,7 +475,7 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
 
   IDToValue.erase(IDToValue.find(IteratorID));
 
-  Builder.SetInsertPoint(ExitBlock->begin());
+  Builder.SetInsertPoint(&ExitBlock->front());
 
   isl_ast_node_free(For);
   isl_ast_expr_free(Iterator);
@@ -538,10 +538,10 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   // The preamble of parallel code interacts different than normal code with
   // e.g., scalar initialization. Therefore, we ensure the parallel code is
   // separated from the last basic block.
-  BasicBlock *ParBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  BasicBlock *ParBB = SplitBlock(Builder.GetInsertBlock(),
+                                 &*Builder.GetInsertPoint(), &DT, &LI);
   ParBB->setName("polly.parallel.for");
-  Builder.SetInsertPoint(ParBB->begin());
+  Builder.SetInsertPoint(&ParBB->front());
 
   Body = isl_ast_node_for_get_body(For);
   Init = isl_ast_node_for_get_init(For);
@@ -597,7 +597,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   IV = ParallelLoopGen.createParallelLoop(ValueLB, ValueUB, ValueInc,
                                           SubtreeValues, NewValues, &LoopBody);
   BasicBlock::iterator AfterLoop = Builder.GetInsertPoint();
-  Builder.SetInsertPoint(LoopBody);
+  Builder.SetInsertPoint(&*LoopBody);
 
   // Save the current values.
   auto ValueMapCopy = ValueMap;
@@ -620,7 +620,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   ValueMap = ValueMapCopy;
   IDToValue = IDToValueCopy;
 
-  Builder.SetInsertPoint(AfterLoop);
+  Builder.SetInsertPoint(&*AfterLoop);
   removeSubFuncFromDomTree((*LoopBody).getParent()->getParent(), DT);
 
   for (const Loop *L : Loops)
@@ -656,10 +656,10 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
 
-  BasicBlock *CondBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  BasicBlock *CondBB = SplitBlock(Builder.GetInsertBlock(),
+                                  &*Builder.GetInsertPoint(), &DT, &LI);
   CondBB->setName("polly.cond");
-  BasicBlock *MergeBB = SplitBlock(CondBB, CondBB->begin(), &DT, &LI);
+  BasicBlock *MergeBB = SplitBlock(CondBB, &CondBB->front(), &DT, &LI);
   MergeBB->setName("polly.merge");
   BasicBlock *ThenBB = BasicBlock::Create(Context, "polly.then", F);
   BasicBlock *ElseBB = BasicBlock::Create(Context, "polly.else", F);
@@ -683,16 +683,16 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   Builder.CreateBr(MergeBB);
   Builder.SetInsertPoint(ElseBB);
   Builder.CreateBr(MergeBB);
-  Builder.SetInsertPoint(ThenBB->begin());
+  Builder.SetInsertPoint(&ThenBB->front());
 
   create(isl_ast_node_if_get_then(If));
 
-  Builder.SetInsertPoint(ElseBB->begin());
+  Builder.SetInsertPoint(&ElseBB->front());
 
   if (isl_ast_node_if_has_else(If))
     create(isl_ast_node_if_get_else(If));
 
-  Builder.SetInsertPoint(MergeBB->begin());
+  Builder.SetInsertPoint(&MergeBB->front());
 
   isl_ast_node_free(If);
 }
@@ -885,10 +885,10 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
       Cond = Builder.CreateIsNotNull(Cond);
 
     BasicBlock *CondBB = SplitBlock(Builder.GetInsertBlock(),
-                                    Builder.GetInsertPoint(), &DT, &LI);
+                                    &*Builder.GetInsertPoint(), &DT, &LI);
     CondBB->setName("polly.preload.cond");
 
-    BasicBlock *MergeBB = SplitBlock(CondBB, CondBB->begin(), &DT, &LI);
+    BasicBlock *MergeBB = SplitBlock(CondBB, &CondBB->front(), &DT, &LI);
     MergeBB->setName("polly.preload.merge");
 
     Function *F = Builder.GetInsertBlock()->getParent();
@@ -979,7 +979,7 @@ void IslNodeBuilder::preloadInvariantEquivClass(
 
   BasicBlock *EntryBB = &Builder.GetInsertBlock()->getParent()->getEntryBlock();
   auto *Alloca = new AllocaInst(AccInstTy, AccInst->getName() + ".preload.s2a");
-  Alloca->insertBefore(EntryBB->getFirstInsertionPt());
+  Alloca->insertBefore(&*EntryBB->getFirstInsertionPt());
   Builder.CreateStore(PreloadVal, Alloca);
 
   const Region &R = S.getRegion();
@@ -1007,10 +1007,10 @@ void IslNodeBuilder::preloadInvariantLoads() {
   if (InvariantEquivClasses.empty())
     return;
 
-  BasicBlock *PreLoadBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  BasicBlock *PreLoadBB = SplitBlock(Builder.GetInsertBlock(),
+                                     &*Builder.GetInsertPoint(), &DT, &LI);
   PreLoadBB->setName("polly.preload.begin");
-  Builder.SetInsertPoint(PreLoadBB->begin());
+  Builder.SetInsertPoint(&PreLoadBB->front());
 
   for (const auto &IAClass : InvariantEquivClasses)
     preloadInvariantEquivClass(IAClass);
@@ -1046,7 +1046,7 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
 }
 
 Value *IslNodeBuilder::generateSCEV(const SCEV *Expr) {
-  Instruction *InsertLocation = --(Builder.GetInsertBlock()->end());
+  Instruction *InsertLocation = &*--(Builder.GetInsertBlock()->end());
   return expandCodeFor(S, SE, DL, "polly", Expr, Expr->getType(),
                        InsertLocation, &ValueMap);
 }

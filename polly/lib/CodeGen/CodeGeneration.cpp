@@ -153,7 +153,7 @@ public:
 
     Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
     Builder.GetInsertBlock()->getTerminator()->setOperand(0, RTC);
-    Builder.SetInsertPoint(StartBlock->begin());
+    Builder.SetInsertPoint(&StartBlock->front());
 
     NodeBuilder.create(AstRoot);
 

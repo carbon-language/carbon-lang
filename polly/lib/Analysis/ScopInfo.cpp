@@ -3593,7 +3593,7 @@ void ScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
   auto &ScopRIL = *SD->getRequiredInvariantLoads(&R);
 
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
-    Instruction *Inst = I;
+    Instruction *Inst = &*I;
 
     PHINode *PHI = dyn_cast<PHINode>(Inst);
     if (PHI)
