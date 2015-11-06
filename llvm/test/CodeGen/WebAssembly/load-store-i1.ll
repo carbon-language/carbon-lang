@@ -18,7 +18,7 @@ define i32 @load_u_i1_i32(i1* %p) {
 ; CHECK-LABEL: load_s_i1_i32:
 ; CHECK:      i32.load8_u push, (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: i32.const 31{{$}}
+; CHECK-NEXT: i32.const push, 31{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: shl push, (get_local 2), (get_local 3){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
@@ -44,7 +44,7 @@ define i64 @load_u_i1_i64(i1* %p) {
 ; CHECK-LABEL: load_s_i1_i64:
 ; CHECK:      i64.load8_u push, (get_local 1){{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: i64.const 63{{$}}
+; CHECK-NEXT: i64.const push, 63{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: shl push, (get_local 2), (get_local 3){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
@@ -58,7 +58,7 @@ define i64 @load_s_i1_i64(i1* %p) {
 }
 
 ; CHECK-LABEL: store_i32_i1:
-; CHECK:      i32.const 1{{$}}
+; CHECK:      i32.const push, 1{{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: and push, (get_local 3), (get_local 4){{$}}
 ; CHECK-NEXT: set_local 5, pop{{$}}
@@ -70,7 +70,7 @@ define void @store_i32_i1(i1* %p, i32 %v) {
 }
 
 ; CHECK-LABEL: store_i64_i1:
-; CHECK:      i64.const 1{{$}}
+; CHECK:      i64.const push, 1{{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
 ; CHECK-NEXT: and push, (get_local 3), (get_local 4){{$}}
 ; CHECK-NEXT: set_local 5, pop{{$}}

@@ -19,9 +19,9 @@ declare float @llvm.rint.f32(float)
 ; CHECK-NEXT: .param f32{{$}}
 ; CHECK-NEXT: .result f32{{$}}
 ; CHECK-NEXT: .local f32, f32, f32{{$}}
-; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: get_local push, 1{{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: get_local push, 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: add push, (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}

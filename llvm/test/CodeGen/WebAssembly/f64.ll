@@ -19,9 +19,9 @@ declare double @llvm.rint.f64(double)
 ; CHECK-NEXT: .param f64{{$}}
 ; CHECK-NEXT: .result f64{{$}}
 ; CHECK-NEXT: .local f64, f64, f64{{$}}
-; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: get_local push, 1{{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: get_local push, 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: add push, (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}

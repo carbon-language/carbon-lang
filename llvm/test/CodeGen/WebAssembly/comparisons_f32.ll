@@ -11,9 +11,9 @@ target triple = "wasm32-unknown-unknown"
 ; CHECK-NEXT: .param f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: .local f32, f32, i32, i32, i32{{$}}
-; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: get_local push, 0{{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: get_local push, 1{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: eq push, (get_local 3), (get_local 3){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
@@ -33,9 +33,9 @@ define i32 @ord_f32(float %x, float %y) {
 ; CHECK-NEXT: .param f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: .local f32, f32, i32, i32, i32{{$}}
-; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: get_local push, 0{{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: get_local push, 1{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: ne push, (get_local 3), (get_local 3){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
@@ -55,9 +55,9 @@ define i32 @uno_f32(float %x, float %y) {
 ; CHECK-NEXT: .param f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: .local f32, f32, i32{{$}}
-; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: get_local push, 1{{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: get_local push, 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: eq push, (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}
@@ -120,9 +120,9 @@ define i32 @oge_f32(float %x, float %y) {
 ; CHECK-NEXT: .param f32{{$}}
 ; CHECK-NEXT: .result i32{{$}}
 ; CHECK-NEXT: .local f32, f32, i32, i32, i32, i32, i32{{$}}
-; CHECK-NEXT: get_local 1{{$}}
+; CHECK-NEXT: get_local push, 1{{$}}
 ; CHECK-NEXT: set_local 2, pop{{$}}
-; CHECK-NEXT: get_local 0{{$}}
+; CHECK-NEXT: get_local push, 0{{$}}
 ; CHECK-NEXT: set_local 3, pop{{$}}
 ; CHECK-NEXT: eq push, (get_local 3), (get_local 2){{$}}
 ; CHECK-NEXT: set_local 4, pop{{$}}

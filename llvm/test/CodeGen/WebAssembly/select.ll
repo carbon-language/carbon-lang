@@ -7,9 +7,9 @@ target datalayout = "e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: select_i32:
-; CHECK: get_local 1
+; CHECK: get_local push, 1
 ; CHECK: set_local [[LOCAL_B:[0-9]]]
-; CHECK: get_local 0
+; CHECK: get_local push, 0
 ; CHECK: set_local [[LOCAL_A:[0-9]]]
 ; CHECK: i32.eq push, (get_local 5), (get_local 6)
 ; CHECK: set_local 7, pop
@@ -21,9 +21,9 @@ define i32 @select_i32(i32 %a, i32 %b, i32 %cond) {
 }
 
 ; CHECK-LABEL: select_i64:
-; CHECK: get_local 1
+; CHECK: get_local push, 1
 ; CHECK: set_local [[LOCAL_B:[0-9]]]
-; CHECK: get_local 0
+; CHECK: get_local push, 0
 ; CHECK: set_local [[LOCAL_A:[0-9]]]
 ; CHECK: i32.eq push, (get_local 5), (get_local 6)
 ; CHECK: set_local 7, pop
@@ -35,9 +35,9 @@ define i64 @select_i64(i64 %a, i64 %b, i32 %cond) {
 }
 
 ; CHECK-LABEL: select_f32:
-; CHECK: get_local 1
+; CHECK: get_local push, 1
 ; CHECK: set_local [[LOCAL_B:[0-9]]]
-; CHECK: get_local 0
+; CHECK: get_local push, 0
 ; CHECK: set_local [[LOCAL_A:[0-9]]]
 ; CHECK: i32.eq push, (get_local 5), (get_local 6)
 ; CHECK: set_local 7, pop
@@ -49,9 +49,9 @@ define float @select_f32(float %a, float %b, i32 %cond) {
 }
 
 ; CHECK-LABEL: select_f64:
-; CHECK: get_local 1
+; CHECK: get_local push, 1
 ; CHECK: set_local [[LOCAL_B:[0-9]]]
-; CHECK: get_local 0
+; CHECK: get_local push, 0
 ; CHECK: set_local [[LOCAL_A:[0-9]]]
 ; CHECK: i32.eq push, (get_local 5), (get_local 6)
 ; CHECK: set_local 7, pop
