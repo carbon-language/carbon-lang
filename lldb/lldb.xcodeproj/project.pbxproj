@@ -739,6 +739,8 @@
 		8CF02AE919DCC01900B14BE0 /* InstrumentationRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CF02ADF19DCBF3B00B14BE0 /* InstrumentationRuntime.cpp */; };
 		8CF02AEA19DCC02100B14BE0 /* AddressSanitizerRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CF02AE519DCBF8400B14BE0 /* AddressSanitizerRuntime.cpp */; };
 		8CF02AEF19DD16B100B14BE0 /* InstrumentationRuntimeStopInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CF02AED19DD15CF00B14BE0 /* InstrumentationRuntimeStopInfo.cpp */; };
+		9404957A1BEC497E00926025 /* NSError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940495781BEC497E00926025 /* NSError.cpp */; };
+		9404957B1BEC497E00926025 /* NSException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940495791BEC497E00926025 /* NSException.cpp */; };
 		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
 		940B02F619DC96E700AD0F52 /* SBExecutionContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */; };
 		940B04D91A8984FF0045D5F7 /* argdumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B04D81A8984FF0045D5F7 /* argdumper.cpp */; };
@@ -2485,6 +2487,8 @@
 		94005E0313F438DF001EF42D /* python-wrapper.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-wrapper.swig"; sourceTree = "<group>"; };
 		94005E0513F45A1B001EF42D /* embedded_interpreter.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = embedded_interpreter.py; path = source/Interpreter/embedded_interpreter.py; sourceTree = "<group>"; };
 		94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PriorityPointerPair.h; path = include/lldb/Utility/PriorityPointerPair.h; sourceTree = "<group>"; };
+		940495781BEC497E00926025 /* NSError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSError.cpp; path = Language/ObjC/NSError.cpp; sourceTree = "<group>"; };
+		940495791BEC497E00926025 /* NSException.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSException.cpp; path = Language/ObjC/NSException.cpp; sourceTree = "<group>"; };
 		94094C68163B6CCC0083A547 /* ValueObjectCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectCast.h; path = include/lldb/Core/ValueObjectCast.h; sourceTree = "<group>"; };
 		94094C69163B6CD90083A547 /* ValueObjectCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectCast.cpp; path = source/Core/ValueObjectCast.cpp; sourceTree = "<group>"; };
 		940B02F419DC96CB00AD0F52 /* SBExecutionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBExecutionContext.h; path = include/lldb/API/SBExecutionContext.h; sourceTree = "<group>"; };
@@ -5530,6 +5534,8 @@
 				949EEDA41BA765B5008C63CF /* NSArray.cpp */,
 				94B9E50E1BBEFDFE000A48DC /* NSDictionary.h */,
 				949EEDA51BA765B5008C63CF /* NSDictionary.cpp */,
+				940495781BEC497E00926025 /* NSError.cpp */,
+				940495791BEC497E00926025 /* NSException.cpp */,
 				949EEDA61BA765B5008C63CF /* NSIndexPath.cpp */,
 				94B9E50F1BBF0069000A48DC /* NSSet.h */,
 				949EEDA71BA765B5008C63CF /* NSSet.cpp */,
@@ -6434,6 +6440,7 @@
 				26474CAC18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp in Sources */,
 				2689001713353DDE00698AC0 /* CommandObjectDisassemble.cpp in Sources */,
 				2689001813353DDE00698AC0 /* CommandObjectExpression.cpp in Sources */,
+				9404957B1BEC497E00926025 /* NSException.cpp in Sources */,
 				2689001A13353DDE00698AC0 /* CommandObjectFrame.cpp in Sources */,
 				2689001B13353DDE00698AC0 /* CommandObjectHelp.cpp in Sources */,
 				23F4034D1926E0F60046DC9B /* NativeRegisterContextRegisterInfo.cpp in Sources */,
@@ -6478,6 +6485,7 @@
 				2689003213353E0400698AC0 /* Communication.cpp in Sources */,
 				2689003313353E0400698AC0 /* Connection.cpp in Sources */,
 				2689003513353E0400698AC0 /* ConstString.cpp in Sources */,
+				9404957A1BEC497E00926025 /* NSError.cpp in Sources */,
 				2689003613353E0400698AC0 /* DataBufferHeap.cpp in Sources */,
 				2689003713353E0400698AC0 /* DataBufferMemoryMap.cpp in Sources */,
 				2689003813353E0400698AC0 /* DataExtractor.cpp in Sources */,

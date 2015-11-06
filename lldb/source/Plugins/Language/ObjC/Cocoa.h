@@ -79,6 +79,18 @@ namespace lldb_private {
         
         bool
         RuntimeSpecificDescriptionSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
+        
+        bool
+        NSError_SummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
+        
+        bool
+        NSException_SummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
+        
+        SyntheticChildrenFrontEnd*
+        NSErrorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp);
+        
+        SyntheticChildrenFrontEnd*
+        NSExceptionSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp);
     } // namespace formatters
 } // namespace lldb_private
 

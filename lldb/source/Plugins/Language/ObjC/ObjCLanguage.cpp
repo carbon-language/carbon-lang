@@ -477,6 +477,9 @@ LoadObjCFormatters(TypeCategoryImplSP objc_category_sp)
     AddCXXSummary(objc_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "__NSOrderedSetI summary", ConstString("__NSOrderedSetI"), appkit_flags);
     AddCXXSummary(objc_category_sp, lldb_private::formatters::NSSetSummaryProvider<false>, "__NSOrderedSetM summary", ConstString("__NSOrderedSetM"), appkit_flags);
     
+    AddCXXSummary(objc_category_sp, lldb_private::formatters::NSError_SummaryProvider, "NSError summary provider", ConstString("NSError"), appkit_flags);
+    AddCXXSummary(objc_category_sp, lldb_private::formatters::NSException_SummaryProvider, "NSException summary provider", ConstString("NSException"), appkit_flags);
+    
     // AddSummary(appkit_category_sp, "${var.key%@} -> ${var.value%@}", ConstString("$_lldb_typegen_nspair"), appkit_flags);
     
     appkit_flags.SetDontShowChildren(true);
@@ -497,6 +500,9 @@ LoadObjCFormatters(TypeCategoryImplSP objc_category_sp)
     AddCXXSynthetic(objc_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("NSMutableDictionary"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(objc_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("CFDictionaryRef"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(objc_category_sp, lldb_private::formatters::NSDictionarySyntheticFrontEndCreator, "NSDictionary synthetic children", ConstString("CFMutableDictionaryRef"), ScriptedSyntheticChildren::Flags());
+    
+    AddCXXSynthetic(objc_category_sp, lldb_private::formatters::NSErrorSyntheticFrontEndCreator, "NSError synthetic children", ConstString("NSError"), ScriptedSyntheticChildren::Flags());
+    AddCXXSynthetic(objc_category_sp, lldb_private::formatters::NSExceptionSyntheticFrontEndCreator, "NSException synthetic children", ConstString("NSException"), ScriptedSyntheticChildren::Flags());
     
     AddCXXSynthetic(objc_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "NSSet synthetic children", ConstString("NSSet"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(objc_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "__NSSetI synthetic children", ConstString("__NSSetI"), ScriptedSyntheticChildren::Flags());

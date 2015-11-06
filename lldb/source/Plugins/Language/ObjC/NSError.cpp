@@ -1,0 +1,218 @@
+//===-- NSError.cpp ----------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#include "Cocoa.h"
+
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Error.h"
+#include "lldb/Core/Stream.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/DataFormatters/FormattersHelpers.h"
+#include "lldb/Host/Endian.h"
+#include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/Target.h"
+
+#include "lldb/Utility/ProcessStructReader.h"
+
+#include "clang/AST/DeclCXX.h"
+
+#include "Plugins/Language/ObjC/NSString.h"
+
+using namespace lldb;
+using namespace lldb_private;
+using namespace lldb_private::formatters;
+
+bool
+lldb_private::formatters::NSError_SummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
+{
+    ProcessSP process_sp(valobj.GetProcessSP());
+    if (!process_sp)
+        return false;
+    
+    lldb::addr_t ptr_value = LLDB_INVALID_ADDRESS;
+    
+    CompilerType valobj_type(valobj.GetCompilerType());
+    Flags type_flags(valobj_type.GetTypeInfo());
+    if (type_flags.AllClear(eTypeHasValue))
+    {
+        if (valobj.IsBaseClass() && valobj.GetParent())
+            ptr_value = valobj.GetParent()->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+    }
+    else
+        ptr_value = valobj.GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+
+    if (ptr_value == LLDB_INVALID_ADDRESS)
+        return false;
+    size_t ptr_size = process_sp->GetAddressByteSize();
+    lldb::addr_t code_location = ptr_value + 2 * ptr_size;
+    lldb::addr_t domain_location = ptr_value + 3 * ptr_size;
+    
+    Error error;
+    uint64_t code = process_sp->ReadUnsignedIntegerFromMemory(code_location, ptr_size, 0, error);
+    if (error.Fail())
+        return false;
+    
+    lldb::addr_t domain_str_value = process_sp->ReadPointerFromMemory(domain_location, error);
+    if (error.Fail() || domain_str_value == LLDB_INVALID_ADDRESS)
+        return false;
+    
+    if (!domain_str_value)
+    {
+        stream.Printf("domain: nil - code: %" PRIu64, code);
+        return true;
+    }
+    
+    InferiorSizedWord isw(domain_str_value, *process_sp);
+    
+    ValueObjectSP domain_str_sp = ValueObject::CreateValueObjectFromData("domain_str", isw.GetAsData(process_sp->GetByteOrder()), valobj.GetExecutionContextRef(), process_sp->GetTarget().GetScratchClangASTContext()->GetBasicType(lldb::eBasicTypeVoid).GetPointerType());
+    
+    if (!domain_str_sp)
+        return false;
+    
+    StreamString domain_str_summary;
+    if (NSStringSummaryProvider(*domain_str_sp, domain_str_summary, options) && !domain_str_summary.Empty())
+    {
+        stream.Printf("domain: %s - code: %" PRIu64, domain_str_summary.GetData(), code);
+        return true;
+    }
+    else
+    {
+        stream.Printf("domain: nil - code: %" PRIu64, code);
+        return true;
+    }
+}
+
+class NSErrorSyntheticFrontEnd : public SyntheticChildrenFrontEnd
+{
+public:
+    NSErrorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
+    SyntheticChildrenFrontEnd(*valobj_sp)
+    {}
+    
+    virtual size_t
+    CalculateNumChildren ()
+    {
+        if (m_child_ptr)
+            return 1;
+        if (m_child_sp)
+            return 1;
+        return 0;
+    }
+    
+    virtual lldb::ValueObjectSP
+    GetChildAtIndex (size_t idx)
+    {
+        if (idx != 0)
+            return lldb::ValueObjectSP();
+        
+        if (m_child_ptr)
+            return m_child_ptr->GetSP();
+        return m_child_sp;
+    }
+    
+    virtual bool
+    Update()
+    {
+        m_child_ptr = nullptr;
+        m_child_sp.reset();
+        
+        ProcessSP process_sp(m_backend.GetProcessSP());
+        if (!process_sp)
+            return false;
+        
+        lldb::addr_t userinfo_location = LLDB_INVALID_ADDRESS;
+        
+        CompilerType valobj_type(m_backend.GetCompilerType());
+        Flags type_flags(valobj_type.GetTypeInfo());
+        if (type_flags.AllClear(eTypeHasValue))
+        {
+            if (m_backend.IsBaseClass() && m_backend.GetParent())
+                userinfo_location = m_backend.GetParent()->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+        }
+        else
+            userinfo_location = m_backend.GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+
+        if (userinfo_location == LLDB_INVALID_ADDRESS)
+            return false;
+        
+        size_t ptr_size = process_sp->GetAddressByteSize();
+
+        userinfo_location += 4 * ptr_size;
+        Error error;
+        lldb::addr_t userinfo = process_sp->ReadPointerFromMemory(userinfo_location, error);
+        if (userinfo == LLDB_INVALID_ADDRESS || error.Fail())
+            return false;
+        InferiorSizedWord isw(userinfo,*process_sp);
+        m_child_sp = ValueObject::CreateValueObjectFromData("_userInfo",
+                                                            isw.GetAsData(process_sp->GetByteOrder()),
+                                                            m_backend.GetExecutionContextRef(),
+                                                            process_sp->GetTarget().GetScratchClangASTContext()->GetBasicType(lldb::eBasicTypeObjCID));
+        return false;
+    }
+    
+    virtual bool
+    MightHaveChildren ()
+    {
+        return true;
+    }
+    
+    virtual size_t
+    GetIndexOfChildWithName (const ConstString &name)
+    {
+        static ConstString g___userInfo("_userInfo");
+        if (name == g___userInfo)
+            return 0;
+        return UINT32_MAX;
+    }
+    
+    virtual
+    ~NSErrorSyntheticFrontEnd ()
+    {
+        // no need to delete m_child_ptr - it's kept alive by the cluster manager on our behalf
+    }
+    
+private:
+    // the child here can be "real" (i.e. an actual child of the root) or synthetized from raw memory
+    // if the former, I need to store a plain pointer to it - or else a loop of references will cause this entire hierarchy of values to leak
+    // if the latter, then I need to store a SharedPointer to it - so that it only goes away when everyone else in the cluster goes away
+    // oh joy!
+    ValueObject* m_child_ptr;
+    ValueObjectSP m_child_sp;
+};
+
+SyntheticChildrenFrontEnd*
+lldb_private::formatters::NSErrorSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP valobj_sp)
+{
+    lldb::ProcessSP process_sp (valobj_sp->GetProcessSP());
+    if (!process_sp)
+        return nullptr;
+    ObjCLanguageRuntime *runtime = (ObjCLanguageRuntime*)process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+    if (!runtime)
+        return nullptr;
+    
+    ObjCLanguageRuntime::ClassDescriptorSP descriptor(runtime->GetClassDescriptor(*valobj_sp.get()));
+    
+    if (!descriptor.get() || !descriptor->IsValid())
+        return nullptr;
+    
+    const char* class_name = descriptor->GetClassName().GetCString();
+    
+    if (!class_name || !*class_name)
+        return nullptr;
+    
+    if (!strcmp(class_name,"NSError"))
+        return (new NSErrorSyntheticFrontEnd(valobj_sp));
+    else if (!strcmp(class_name,"__NSCFError"))
+        return (new NSErrorSyntheticFrontEnd(valobj_sp));
+    
+    return nullptr;
+}
+

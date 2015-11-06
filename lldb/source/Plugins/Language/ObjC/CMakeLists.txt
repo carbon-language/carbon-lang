@@ -5,6 +5,8 @@ add_lldb_library(lldbPluginObjCLanguage
   CoreMedia.cpp
   NSArray.cpp
   NSDictionary.cpp
+  NSError.cpp
+  NSException.cpp
   NSIndexPath.cpp
   NSSet.cpp
   NSString.cpp
