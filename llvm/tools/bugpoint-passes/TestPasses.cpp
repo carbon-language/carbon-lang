@@ -76,20 +76,21 @@ static RegisterPass<DeleteCalls>
 
 namespace {
   /// CrashOnDeclFunc - This pass is used to test bugpoint.  It intentionally
-  /// crash if the module has an undefined function (ie a function that is
-  /// defined in an external module).
-  class CrashOnDeclFunc : public ModulePass {
-  public:
-    static char ID; // Pass ID, replacement for typeid
-    CrashOnDeclFunc() : ModulePass(ID) {}
-  private:
-    bool runOnModule(Module &M) override {
-      for (auto &F : M.functions()) {
-        if (F.isDeclaration())
-          abort();
-      }
-      return false;
+/// crashes if the module has an undefined function (ie a function that is
+/// defined in an external module).
+class CrashOnDeclFunc : public ModulePass {
+public:
+  static char ID; // Pass ID, replacement for typeid
+  CrashOnDeclFunc() : ModulePass(ID) {}
+
+private:
+  bool runOnModule(Module &M) override {
+    for (auto &F : M.functions()) {
+      if (F.isDeclaration())
+        abort();
     }
+    return false;
+  }
   };
 }
 
@@ -97,3 +98,29 @@ char CrashOnDeclFunc::ID = 0;
 static RegisterPass<CrashOnDeclFunc>
   Z("bugpoint-crash-decl-funcs",
     "BugPoint Test Pass - Intentionally crash on declared functions");
+
+#include <iostream>
+namespace {
+/// CrashOnOneCU - This pass is used to test bugpoint. It intentionally
+/// crashes if the Module has two or more compile units
+class CrashOnTooManyCUs : public ModulePass {
+public:
+  static char ID;
+  CrashOnTooManyCUs() : ModulePass(ID) {}
+
+private:
+  bool runOnModule(Module &M) override {
+    NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu");
+    if (!CU_Nodes)
+      return false;
+    if (CU_Nodes->getNumOperands() >= 2)
+      abort();
+    return false;
+  }
+};
+}
+
+char CrashOnTooManyCUs::ID = 0;
+static RegisterPass<CrashOnTooManyCUs>
+    A("bugpoint-crash-too-many-cus",
+      "BugPoint Test Pass - Intentionally crash on too many CUs");

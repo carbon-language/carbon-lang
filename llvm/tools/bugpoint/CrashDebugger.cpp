@@ -15,6 +15,7 @@
 #include "ListReducer.h"
 #include "ToolRunner.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -49,6 +50,10 @@ namespace {
   DontReducePassList("disable-pass-list-reduction",
                      cl::desc("Skip pass list reduction steps"),
                      cl::init(false));
+
+  cl::opt<bool> NoNamedMDRM("disable-namedmd-remove",
+                            cl::desc("Do not remove global named metadata"),
+                            cl::init(false));
 }
 
 namespace llvm {
@@ -497,6 +502,149 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
   return false;
 }
 
+namespace {
+// Reduce the list of Named Metadata nodes. We keep this as a list of
+// names to avoid having to convert back and forth every time.
+class ReduceCrashingNamedMD : public ListReducer<std::string> {
+  BugDriver &BD;
+  bool (*TestFn)(const BugDriver &, Module *);
+
+public:
+  ReduceCrashingNamedMD(BugDriver &bd,
+                        bool (*testFn)(const BugDriver &, Module *))
+      : BD(bd), TestFn(testFn) {}
+
+  TestResult doTest(std::vector<std::string> &Prefix,
+                    std::vector<std::string> &Kept,
+                    std::string &Error) override {
+    if (!Kept.empty() && TestNamedMDs(Kept))
+      return KeepSuffix;
+    if (!Prefix.empty() && TestNamedMDs(Prefix))
+      return KeepPrefix;
+    return NoFailure;
+  }
+
+  bool TestNamedMDs(std::vector<std::string> &NamedMDs);
+};
+}
+
+bool ReduceCrashingNamedMD::TestNamedMDs(std::vector<std::string> &NamedMDs) {
+
+  ValueToValueMapTy VMap;
+  Module *M = CloneModule(BD.getProgram(), VMap);
+
+  outs() << "Checking for crash with only these named metadata nodes:";
+  unsigned NumPrint = std::min<size_t>(NamedMDs.size(), 10);
+  for (unsigned i = 0, e = NumPrint; i != e; ++i)
+    outs() << " " << NamedMDs[i];
+  if (NumPrint < NamedMDs.size())
+    outs() << "... <" << NamedMDs.size() << " total>";
+  outs() << ": ";
+
+  // Make a StringMap for faster lookup
+  StringSet<> Names;
+  for (const std::string &Name : NamedMDs)
+    Names.insert(Name);
+
+  // First collect all the metadata to delete in a vector, then
+  // delete them all at once to avoid invalidating the iterator
+  std::vector<NamedMDNode *> ToDelete;
+  ToDelete.reserve(M->named_metadata_size() - Names.size());
+  for (auto &NamedMD : M->named_metadata())
+    if (!Names.count(NamedMD.getName()))
+      ToDelete.push_back(&NamedMD);
+
+  for (auto *NamedMD : ToDelete)
+    NamedMD->eraseFromParent();
+
+  // Verify that this is still valid.
+  legacy::PassManager Passes;
+  Passes.add(createVerifierPass());
+  Passes.run(*M);
+
+  // Try running on the hacked up program...
+  if (TestFn(BD, M)) {
+    BD.setNewProgram(M); // It crashed, keep the trimmed version...
+    return true;
+  }
+  delete M; // It didn't crash, try something else.
+  return false;
+}
+
+namespace {
+// Reduce the list of operands to named metadata nodes
+class ReduceCrashingNamedMDOps : public ListReducer<const MDNode *> {
+  BugDriver &BD;
+  bool (*TestFn)(const BugDriver &, Module *);
+
+public:
+  ReduceCrashingNamedMDOps(BugDriver &bd,
+                           bool (*testFn)(const BugDriver &, Module *))
+      : BD(bd), TestFn(testFn) {}
+
+  TestResult doTest(std::vector<const MDNode *> &Prefix,
+                    std::vector<const MDNode *> &Kept,
+                    std::string &Error) override {
+    if (!Kept.empty() && TestNamedMDOps(Kept))
+      return KeepSuffix;
+    if (!Prefix.empty() && TestNamedMDOps(Prefix))
+      return KeepPrefix;
+    return NoFailure;
+  }
+
+  bool TestNamedMDOps(std::vector<const MDNode *> &NamedMDOps);
+};
+}
+
+bool ReduceCrashingNamedMDOps::TestNamedMDOps(
+    std::vector<const MDNode *> &NamedMDOps) {
+  // Convert list to set for fast lookup...
+  SmallPtrSet<const MDNode *, 64> OldMDNodeOps;
+  for (unsigned i = 0, e = NamedMDOps.size(); i != e; ++i) {
+    OldMDNodeOps.insert(NamedMDOps[i]);
+  }
+
+  outs() << "Checking for crash with only " << OldMDNodeOps.size();
+  if (OldMDNodeOps.size() == 1)
+    outs() << " named metadata operand: ";
+  else
+    outs() << " named metadata operands: ";
+
+  ValueToValueMapTy VMap;
+  Module *M = CloneModule(BD.getProgram(), VMap);
+
+  // This is a little wasteful. In the future it might be good if we could have
+  // these dropped during cloning.
+  for (auto &NamedMD : BD.getProgram()->named_metadata()) {
+    // Drop the old one and create a new one
+    M->eraseNamedMetadata(M->getNamedMetadata(NamedMD.getName()));
+    NamedMDNode *NewNamedMDNode =
+        M->getOrInsertNamedMetadata(NamedMD.getName());
+    for (MDNode *op : NamedMD.operands())
+      if (OldMDNodeOps.count(op))
+        NewNamedMDNode->addOperand(cast<MDNode>(MapMetadata(op, VMap)));
+  }
+
+  // Verify that this is still valid.
+  legacy::PassManager Passes;
+  Passes.add(createVerifierPass());
+  Passes.run(*M);
+
+  // Try running on the hacked up program...
+  if (TestFn(BD, M)) {
+    // Make sure to use instruction pointers that point into the now-current
+    // module, and that they don't include any deleted blocks.
+    NamedMDOps.clear();
+    for (const MDNode *Node : OldMDNodeOps)
+      NamedMDOps.push_back(cast<MDNode>(VMap.MD()[Node].get()));
+
+    BD.setNewProgram(M); // It crashed, keep the trimmed version...
+    return true;
+  }
+  delete M; // It didn't crash, try something else.
+  return false;
+}
+
 /// DebugACrash - Given a predicate that determines whether a component crashes
 /// on a program, try to destructively reduce the program while still keeping
 /// the predicate true.
@@ -661,6 +809,31 @@ static bool DebugACrash(BugDriver &BD,
     }
 
   } while (Simplification);
+
+  if (!NoNamedMDRM) {
+    BD.EmitProgressBitcode(BD.getProgram(), "reduced-instructions");
+
+    if (!BugpointIsInterrupted) {
+      // Try to reduce the amount of global metadata (particularly debug info),
+      // by dropping global named metadata that anchors them
+      outs() << "\n*** Attempting to remove named metadata: ";
+      std::vector<std::string> NamedMDNames;
+      for (auto &NamedMD : BD.getProgram()->named_metadata())
+        NamedMDNames.push_back(NamedMD.getName().str());
+      ReduceCrashingNamedMD(BD, TestFn).reduceList(NamedMDNames, Error);
+    }
+
+    if (!BugpointIsInterrupted) {
+      // Now that we quickly dropped all the named metadata that doesn't
+      // contribute to the crash, bisect the operands of the remaining ones
+      std::vector<const MDNode *> NamedMDOps;
+      for (auto &NamedMD : BD.getProgram()->named_metadata())
+        NamedMDOps.insert(NamedMDOps.end(), NamedMD.op_begin(),
+                          NamedMD.op_end());
+      ReduceCrashingNamedMDOps(BD, TestFn).reduceList(NamedMDOps, Error);
+    }
+  }
+
 ExitLoops:
 
   // Try to clean up the testcase by running funcresolve and globaldce...
