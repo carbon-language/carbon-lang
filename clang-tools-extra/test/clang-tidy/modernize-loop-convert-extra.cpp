@@ -240,6 +240,7 @@ void refs_and_vals() {
 struct MemberNaming {
   const static int N = 10;
   int Ints[N], Ints_[N];
+  dependent<int> DInts;
   void loops() {
     for (int I = 0; I < N; ++I) {
       printf("%d\n", Ints[I]);
@@ -254,8 +255,32 @@ struct MemberNaming {
     // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
     // CHECK-FIXES: for (int Int : Ints_)
     // CHECK-FIXES-NEXT: printf("%d\n", Int);
+
+    for (int I = 0; I < DInts.size(); ++I) {
+      printf("%d\n", DInts[I]);
+    }
+    // CHECK-MESSAGES: :[[@LINE-3]]:5: warning: use range-based for loop instead
+    // CHECK-FIXES: for (int DInt : DInts)
+    // CHECK-FIXES-NEXT: printf("%d\n", DInt);
   }
+
+  void outOfLine();
 };
+void MemberNaming::outOfLine() {
+  for (int I = 0; I < N; ++I) {
+    printf("%d\n", Ints[I]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (int Int : Ints)
+  // CHECK-FIXES-NEXT: printf("%d\n", Int);
+
+  for (int I = 0; I < N; ++I) {
+    printf("%d\n", Ints_[I]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (int Int : Ints_)
+  // CHECK-FIXES-NEXT: printf("%d\n", Int);
+}
 
 } // namespace NamingAlias
 

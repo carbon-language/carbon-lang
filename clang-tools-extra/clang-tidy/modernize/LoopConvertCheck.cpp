@@ -352,12 +352,12 @@ static StringRef getStringFromRange(SourceManager &SourceMgr,
                               LangOpts);
 }
 
-/// \brief If the given expression is actually a DeclRefExpr, find and return
-/// the underlying ValueDecl; otherwise, return NULL.
+/// \brief If the given expression is actually a DeclRefExpr or a MemberExpr,
+/// find and return the underlying ValueDecl; otherwise, return NULL.
 static const ValueDecl *getReferencedVariable(const Expr *E) {
   if (const DeclRefExpr *DRE = getDeclRef(E))
     return dyn_cast<VarDecl>(DRE->getDecl());
-  if (const auto *Mem = dyn_cast<MemberExpr>(E))
+  if (const auto *Mem = dyn_cast<MemberExpr>(E->IgnoreParenImpCasts()))
     return dyn_cast<FieldDecl>(Mem->getMemberDecl());
   return nullptr;
 }
