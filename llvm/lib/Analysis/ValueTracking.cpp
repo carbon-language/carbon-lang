@@ -4109,12 +4109,12 @@ static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS) {
   case CmpInst::ICMP_ULE: {
     ConstantInt *CI;
 
-    // LHS u<  LHS +_{nuw} C   if C > 0
-    // LHS u<= LHS +_{nuw} C   if C >= 0
+    // LHS u<  LHS +_{nuw} C   if C != 0
+    // LHS u<= LHS +_{nuw} C
     if (match(RHS, m_NUWAdd(m_Specific(LHS), m_ConstantInt(CI)))) {
       if (Pred == CmpInst::ICMP_ULT)
-        return CI->getValue().isStrictlyPositive();
-      return !CI->isNegative();
+        return !CI->isZero();
+      return true;
     }
     return false;
   }
