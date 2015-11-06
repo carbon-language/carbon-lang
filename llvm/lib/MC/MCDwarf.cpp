@@ -1436,52 +1436,44 @@ void FrameEmitterImpl::EmitFDE(const MCSymbol &cieStart,
 }
 
 namespace {
-  struct CIEKey {
-    static const CIEKey getEmptyKey() {
-      return CIEKey(nullptr, 0, -1, false, false);
-    }
-    static const CIEKey getTombstoneKey() {
-      return CIEKey(nullptr, -1, 0, false, false);
-    }
+struct CIEKey {
+  static const CIEKey getEmptyKey() {
+    return CIEKey(nullptr, 0, -1, false, false);
+  }
+  static const CIEKey getTombstoneKey() {
+    return CIEKey(nullptr, -1, 0, false, false);
+  }
 
-    CIEKey(const MCSymbol *Personality_, unsigned PersonalityEncoding_,
-           unsigned LsdaEncoding_, bool IsSignalFrame_, bool IsSimple_)
-        : Personality(Personality_), PersonalityEncoding(PersonalityEncoding_),
-          LsdaEncoding(LsdaEncoding_), IsSignalFrame(IsSignalFrame_),
-          IsSimple(IsSimple_) {}
-    const MCSymbol *Personality;
-    unsigned PersonalityEncoding;
-    unsigned LsdaEncoding;
-    bool IsSignalFrame;
-    bool IsSimple;
-  };
+  CIEKey(const MCSymbol *Personality, unsigned PersonalityEncoding,
+         unsigned LsdaEncoding, bool IsSignalFrame, bool IsSimple)
+      : Personality(Personality), PersonalityEncoding(PersonalityEncoding),
+        LsdaEncoding(LsdaEncoding), IsSignalFrame(IsSignalFrame),
+        IsSimple(IsSimple) {}
+  const MCSymbol *Personality;
+  unsigned PersonalityEncoding;
+  unsigned LsdaEncoding;
+  bool IsSignalFrame;
+  bool IsSimple;
+};
 } // anonymous namespace
 
 namespace llvm {
-  template <>
-  struct DenseMapInfo<CIEKey> {
-    static CIEKey getEmptyKey() {
-      return CIEKey::getEmptyKey();
-    }
-    static CIEKey getTombstoneKey() {
-      return CIEKey::getTombstoneKey();
-    }
-    static unsigned getHashValue(const CIEKey &Key) {
-      return static_cast<unsigned>(hash_combine(Key.Personality,
-                                                Key.PersonalityEncoding,
-                                                Key.LsdaEncoding,
-                                                Key.IsSignalFrame,
-                                                Key.IsSimple));
-    }
-    static bool isEqual(const CIEKey &LHS,
-                        const CIEKey &RHS) {
-      return LHS.Personality == RHS.Personality &&
-        LHS.PersonalityEncoding == RHS.PersonalityEncoding &&
-        LHS.LsdaEncoding == RHS.LsdaEncoding &&
-        LHS.IsSignalFrame == RHS.IsSignalFrame &&
-        LHS.IsSimple == RHS.IsSimple;
-    }
-  };
+template <> struct DenseMapInfo<CIEKey> {
+  static CIEKey getEmptyKey() { return CIEKey::getEmptyKey(); }
+  static CIEKey getTombstoneKey() { return CIEKey::getTombstoneKey(); }
+  static unsigned getHashValue(const CIEKey &Key) {
+    return static_cast<unsigned>(
+        hash_combine(Key.Personality, Key.PersonalityEncoding, Key.LsdaEncoding,
+                     Key.IsSignalFrame, Key.IsSimple));
+  }
+  static bool isEqual(const CIEKey &LHS, const CIEKey &RHS) {
+    return LHS.Personality == RHS.Personality &&
+           LHS.PersonalityEncoding == RHS.PersonalityEncoding &&
+           LHS.LsdaEncoding == RHS.LsdaEncoding &&
+           LHS.IsSignalFrame == RHS.IsSignalFrame &&
+           LHS.IsSimple == RHS.IsSimple;
+  }
+};
 } // namespace llvm
 
 void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
