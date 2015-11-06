@@ -1431,9 +1431,7 @@ defm V_INTERP_MOV_F32 : VINTRP_m <
 //===----------------------------------------------------------------------===//
 
 multiclass V_CNDMASK <vop2 op, string name> {
-  defm _e32 : VOP2_m <
-      op, VOP_CNDMASK.Outs, VOP_CNDMASK.Ins32, VOP_CNDMASK.Asm32, [],
-      name, name>;
+  defm _e32 : VOP2_m <op, name, VOP_CNDMASK, [], name>;
 
   defm _e64  : VOP3_m <
       op, VOP_CNDMASK.Outs, VOP_CNDMASK.Ins64,
