@@ -828,8 +828,8 @@ static bool DebugACrash(BugDriver &BD,
       // contribute to the crash, bisect the operands of the remaining ones
       std::vector<const MDNode *> NamedMDOps;
       for (auto &NamedMD : BD.getProgram()->named_metadata())
-        NamedMDOps.insert(NamedMDOps.end(), NamedMD.op_begin(),
-                          NamedMD.op_end());
+        for (auto op : NamedMD.operands())
+          NamedMDOps.push_back(op);
       ReduceCrashingNamedMDOps(BD, TestFn).reduceList(NamedMDOps, Error);
     }
   }
