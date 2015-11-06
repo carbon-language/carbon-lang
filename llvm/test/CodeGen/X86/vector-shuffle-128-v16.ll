@@ -1482,11 +1482,16 @@ define <16 x i8> @insert_dup_elt1_mem_v16i8_i32(i32* %ptr) {
 ; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: insert_dup_elt1_mem_v16i8_i32:
-; AVX:       # BB#0:
-; AVX-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-; AVX-NEXT:    retq
+; AVX1-LABEL: insert_dup_elt1_mem_v16i8_i32:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_dup_elt1_mem_v16i8_i32:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpbroadcastb 1(%rdi), %xmm0
+; AVX2-NEXT:    retq
   %tmp = load i32, i32* %ptr, align 4
   %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0
   %tmp2 = bitcast <4 x i32> %tmp1 to <16 x i8>
@@ -1516,11 +1521,16 @@ define <16 x i8> @insert_dup_elt2_mem_v16i8_i32(i32* %ptr) {
 ; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: insert_dup_elt2_mem_v16i8_i32:
-; AVX:       # BB#0:
-; AVX-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
-; AVX-NEXT:    retq
+; AVX1-LABEL: insert_dup_elt2_mem_v16i8_i32:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_dup_elt2_mem_v16i8_i32:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpbroadcastb 2(%rdi), %xmm0
+; AVX2-NEXT:    retq
   %tmp = load i32, i32* %ptr, align 4
   %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0
   %tmp2 = bitcast <4 x i32> %tmp1 to <16 x i8>
@@ -1553,12 +1563,20 @@ define <16 x i8> @insert_dup_elt1_mem_v16i8_sext_i8(i8* %ptr) {
 ; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: insert_dup_elt1_mem_v16i8_sext_i8:
-; AVX:       # BB#0:
-; AVX-NEXT:    movsbl (%rdi), %eax
-; AVX-NEXT:    vmovd %eax, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-; AVX-NEXT:    retq
+; AVX1-LABEL: insert_dup_elt1_mem_v16i8_sext_i8:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    movsbl (%rdi), %eax
+; AVX1-NEXT:    vmovd %eax, %xmm0
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_dup_elt1_mem_v16i8_sext_i8:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    movsbl (%rdi), %eax
+; AVX2-NEXT:    shrl $8, %eax
+; AVX2-NEXT:    vmovd %eax, %xmm0
+; AVX2-NEXT:    vpbroadcastb %xmm0, %xmm0
+; AVX2-NEXT:    retq
   %tmp = load i8, i8* %ptr, align 1
   %tmp1 = sext i8 %tmp to i32
   %tmp2 = insertelement <4 x i32> zeroinitializer, i32 %tmp1, i32 0
@@ -1592,12 +1610,20 @@ define <16 x i8> @insert_dup_elt2_mem_v16i8_sext_i8(i8* %ptr) {
 ; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: insert_dup_elt2_mem_v16i8_sext_i8:
-; AVX:       # BB#0:
-; AVX-NEXT:    movsbl (%rdi), %eax
-; AVX-NEXT:    vmovd %eax, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
-; AVX-NEXT:    retq
+; AVX1-LABEL: insert_dup_elt2_mem_v16i8_sext_i8:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    movsbl (%rdi), %eax
+; AVX1-NEXT:    vmovd %eax, %xmm0
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_dup_elt2_mem_v16i8_sext_i8:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    movsbl (%rdi), %eax
+; AVX2-NEXT:    shrl $16, %eax
+; AVX2-NEXT:    vmovd %eax, %xmm0
+; AVX2-NEXT:    vpbroadcastb %xmm0, %xmm0
+; AVX2-NEXT:    retq
   %tmp = load i8, i8* %ptr, align 1
   %tmp1 = sext i8 %tmp to i32
   %tmp2 = insertelement <4 x i32> zeroinitializer, i32 %tmp1, i32 0
