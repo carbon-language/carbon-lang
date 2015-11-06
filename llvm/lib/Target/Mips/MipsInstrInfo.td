@@ -2083,6 +2083,16 @@ let AddedComplexity = 40 in {
   }
 }
 
+// Atomic load patterns.
+def : MipsPat<(atomic_load_8 addr:$a), (LB addr:$a)>;
+def : MipsPat<(atomic_load_16 addr:$a), (LH addr:$a)>;
+def : MipsPat<(atomic_load_32 addr:$a), (LW addr:$a)>;
+
+// Atomic store patterns.
+def : MipsPat<(atomic_store_8 addr:$a, GPR32:$v), (SB GPR32:$v, addr:$a)>;
+def : MipsPat<(atomic_store_16 addr:$a, GPR32:$v), (SH GPR32:$v, addr:$a)>;
+def : MipsPat<(atomic_store_32 addr:$a, GPR32:$v), (SW GPR32:$v, addr:$a)>;
+
 //===----------------------------------------------------------------------===//
 // Floating Point Support
 //===----------------------------------------------------------------------===//
