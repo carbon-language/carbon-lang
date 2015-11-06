@@ -3306,6 +3306,9 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_UImm2_1:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected immediate in range 1 .. 4");
+  case Match_UImm3_0:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected 3-bit unsigned immediate");
   }
 
   llvm_unreachable("Implement any new match types added!");
