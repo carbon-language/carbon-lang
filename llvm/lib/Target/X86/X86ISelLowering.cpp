@@ -7861,6 +7861,54 @@ static SDValue lowerVectorShuffleAsElementInsertion(
   return V2;
 }
 
+/// \brief Try to lower broadcast of a single - truncated - integer element,
+/// coming from a scalar_to_vector/build_vector node \p V0 with larger elements.
+///
+/// This assumes we have AVX2.
+static SDValue lowerVectorShuffleAsTruncBroadcast(SDLoc DL, MVT VT, SDValue V0,
+                                                  int BroadcastIdx,
+                                                  const X86Subtarget *Subtarget,
+                                                  SelectionDAG &DAG) {
+  assert(Subtarget->hasAVX2() &&
+         "We can only lower integer broadcasts with AVX2!");
+
+  EVT EltVT = VT.getVectorElementType();
+  EVT V0VT = V0.getValueType();
+
+  assert(VT.isInteger() && "Unexpected non-integer trunc broadcast!");
+  assert(V0VT.isVector() && "Unexpected non-vector vector-sized value!");
+
+  EVT V0EltVT = V0VT.getVectorElementType();
+  if (!V0EltVT.isInteger())
+    return SDValue();
+
+  const unsigned EltSize = EltVT.getSizeInBits();
+  const unsigned V0EltSize = V0EltVT.getSizeInBits();
+
+  // This is only a truncation if the original element type is larger.
+  if (V0EltSize <= EltSize)
+    return SDValue();
+
+  assert(((V0EltSize % EltSize) == 0) &&
+         "Scalar type sizes must all be powers of 2 on x86!");
+
+  const unsigned V0Opc = V0.getOpcode();
+  const unsigned Scale = V0EltSize / EltSize;
+  const unsigned V0BroadcastIdx = BroadcastIdx / Scale;
+
+  // If we're extracting non-least-significant bits, this isn't a truncation.
+  if (BroadcastIdx % Scale)
+    return SDValue();
+
+  if ((V0Opc != ISD::SCALAR_TO_VECTOR || V0BroadcastIdx != 0) &&
+      V0Opc != ISD::BUILD_VECTOR)
+    return SDValue();
+
+  SDValue Scalar = V0.getOperand(V0BroadcastIdx);
+  return DAG.getNode(X86ISD::VBROADCAST, DL, VT,
+                     DAG.getNode(ISD::TRUNCATE, DL, EltVT, Scalar));
+}
+
 /// \brief Try to lower broadcast of a single element.
 ///
 /// For convenience, this code also bundles all of the subtarget feature set
@@ -7924,18 +7972,10 @@ static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
   // First, look through bitcast: if the original value has a larger element
   // type than the shuffle, the broadcast element is in essence truncated.
   // Make that explicit to ease folding.
-  if (V.getOpcode() == ISD::BITCAST && VT.isInteger()) {
-    MVT EltVT = VT.getVectorElementType();
-    SDValue V0 = V.getOperand(0);
-    MVT V0VT = V0.getSimpleValueType();
-
-    if (V0VT.isInteger() && V0VT.getVectorElementType().bitsGT(EltVT) &&
-        ((V0.getOpcode() == ISD::BUILD_VECTOR ||
-         (V0.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)))) {
-      V = DAG.getNode(ISD::TRUNCATE, DL, EltVT, V0.getOperand(BroadcastIdx));
-      BroadcastIdx = 0;
-    }
-  }
+  if (V.getOpcode() == ISD::BITCAST && VT.isInteger())
+    if (SDValue TruncBroadcast = lowerVectorShuffleAsTruncBroadcast(
+            DL, VT, V.getOperand(0), BroadcastIdx, Subtarget, DAG))
+      return TruncBroadcast;
 
   // Also check the simpler case, where we can directly reuse the scalar.
   if (V.getOpcode() == ISD::BUILD_VECTOR ||
