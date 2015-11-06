@@ -572,7 +572,9 @@ public:
     P += Sym.size() + 1;
     memcpy(P, DLLName.data(), DLLName.size());
 
-    object::Archive::Child C(Parent, Buf, nullptr);
+    std::error_code EC;
+    object::Archive::Child C(Parent, Buf, &EC);
+    assert(!EC && "We created an invalid buffer");
     return NewArchiveIterator(C, DLLName);
   }
 
