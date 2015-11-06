@@ -1727,6 +1727,7 @@ def run_suite():
             if iterArchs or iterCompilers:
                 # Translate ' ' to '-' for pathname component.
                 if six.PY2:
+                    import string
                     tbl = string.maketrans(' ', '-')
                 else:
                     tbl = str.maketrans(' ', '-')
