@@ -80,6 +80,11 @@ OUTPUT OPTIONS
  Show more information on test failures, for example the entire test output
  instead of just the test result.
 
+.. option:: -a, --show-all
+
+ Show more information about all tests, for example the entire test
+ commandline and output.
+
 .. option:: --no-progress-bar
 
  Do not use curses based progress bar.
