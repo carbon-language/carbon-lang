@@ -328,7 +328,21 @@ struct ArgumentUsesTracker : public CaptureTracker {
     unsigned UseIndex =
         std::distance(const_cast<const Use *>(CS.arg_begin()), U);
 
-    assert(UseIndex < CS.arg_size() && "Non-argument use?");
+    assert(UseIndex < CS.data_operands_size() &&
+           "Indirect function calls should have been filtered above!");
+
+    if (UseIndex >= CS.getNumArgOperands()) {
+      // Data operand, but not a argument operand -- must be a bundle operand
+      assert(CS.hasOperandBundles() && "Must be!");
+
+      // CaptureTracking told us that we're being captured by an operand bundle
+      // use.  In this case it does not matter if the callee is within our SCC
+      // or not -- we've been captured in some unknown way, and we have to be
+      // conservative.
+      Captured = true;
+      return true;
+    }
+
     if (UseIndex >= F->arg_size()) {
       assert(F->isVarArg() && "More params than args in non-varargs call");
       Captured = true;
@@ -443,14 +457,27 @@ determinePointerReadAttrs(Argument *A,
 
       unsigned UseIndex = std::distance(CS.arg_begin(), U);
 
-      assert(UseIndex < CS.arg_size() && "Non-argument use?");
-      if (UseIndex >= F->arg_size()) {
+      assert(UseIndex < CS.data_operands_size() && "Non-argument use?");
+
+      bool IsOperandBundleUse = UseIndex >= CS.getNumArgOperands();
+
+      if (UseIndex >= F->arg_size() && !IsOperandBundleUse) {
         assert(F->isVarArg() && "More params than args in non-varargs call");
         return Attribute::None;
       }
 
       Captures &= !CS.doesNotCapture(UseIndex);
-      if (!SCCNodes.count(std::next(F->arg_begin(), UseIndex))) {
+
+      // Since the optimizer (by design) cannot see the data flow corresponding
+      // to a operand bundle use, these cannot participate in the optimistic SCC
+      // analysis.  Instead, we model the operand bundle uses as arguments in
+      // call to a function external to the SCC.
+      if (!SCCNodes.count(std::next(F->arg_begin(), UseIndex)) ||
+          IsOperandBundleUse) {
+
+        // The accessors used on CallSite here do the right thing for calls and
+        // invokes with operand bundles.
+
         if (!CS.onlyReadsMemory() && !CS.onlyReadsMemory(UseIndex))
           return Attribute::None;
         if (!CS.doesNotAccessMemory(UseIndex))
