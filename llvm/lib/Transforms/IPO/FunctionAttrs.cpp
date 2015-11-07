@@ -457,7 +457,12 @@ determinePointerReadAttrs(Argument *A,
 
       unsigned UseIndex = std::distance(CS.arg_begin(), U);
 
-      assert(UseIndex < CS.data_operands_size() && "Non-argument use?");
+      // U cannot be the callee operand use: since we're exploring the
+      // transitive uses of an Argument, having such a use be a callee would
+      // imply the CallSite is an indirect call or invoke; and we'd take the
+      // early exit above.
+      assert(UseIndex < CS.data_operands_size() &&
+             "Data operand use expected!");
 
       bool IsOperandBundleUse = UseIndex >= CS.getNumArgOperands();
 
