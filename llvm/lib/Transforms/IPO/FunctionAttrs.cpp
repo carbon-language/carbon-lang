@@ -335,7 +335,7 @@ struct ArgumentUsesTracker : public CaptureTracker {
       return true;
     }
 
-    Uses.push_back(std::next(F->arg_begin(), UseIndex));
+    Uses.push_back(&*std::next(F->arg_begin(), UseIndex));
     return false;
   }
 
