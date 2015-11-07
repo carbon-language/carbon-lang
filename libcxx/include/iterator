@@ -513,12 +513,12 @@ distance(_InputIter __first, _InputIter __last)
     return __distance(__first, __last, typename iterator_traits<_InputIter>::iterator_category());
 }
 
-template <class _ForwardIter>
+template <class _InputIter>
 inline _LIBCPP_INLINE_VISIBILITY
-_ForwardIter
-next(_ForwardIter __x,
-     typename iterator_traits<_ForwardIter>::difference_type __n = 1,
-     typename enable_if<__is_forward_iterator<_ForwardIter>::value>::type* = 0)
+_InputIter
+next(_InputIter __x,
+     typename iterator_traits<_InputIter>::difference_type __n = 1,
+     typename enable_if<__is_input_iterator<_InputIter>::value>::type* = 0)
 {
     _VSTD::advance(__x, __n);
     return __x;
