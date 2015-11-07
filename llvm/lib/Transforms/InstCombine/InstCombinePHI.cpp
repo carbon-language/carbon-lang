@@ -401,6 +401,12 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
 /// require special-casing a cast from the 'i1' type. See the comment in
 /// FoldPHIArgOpIntoPHI() about pessimizing illegal integer types.
 Instruction *InstCombiner::FoldPHIArgZextsIntoPHI(PHINode &Phi) {
+  // We cannot create a new instruction after the PHI if the terminator is an
+  // EHPad because there is no valid insertion point.
+  if (TerminatorInst *TI = Phi.getParent()->getTerminator())
+    if (TI->isEHPad())
+      return nullptr;
+
   // Early exit for the common case of a phi with two operands. These are
   // handled elsewhere. See the comment below where we check the count of zexts
   // and constants for more details.
