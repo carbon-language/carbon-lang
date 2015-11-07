@@ -204,7 +204,6 @@ ne_def = "    def __ne__(self, other): return not self.__eq__(other)"
 # Delegate to self.IsValid() if it is defined for the current lldb object.
 
 if six.PY2:
-    print("Test")
     nonzero_def = "    def __nonzero__(self): return self.IsValid()"
 else:
     nonzero_def = "    def __bool__(self): return self.IsValid()"
