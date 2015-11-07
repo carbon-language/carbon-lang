@@ -2590,12 +2590,19 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, MemoryAccessList &InvMAs) {
   for (MemoryAccess *MA : InvMAs) {
     Instruction *AccInst = MA->getAccessInstruction();
     if (SE->isSCEVable(AccInst->getType())) {
-      isl_id *ParamId = getIdForParam(SE->getSCEV(AccInst));
-      if (ParamId) {
-        int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
-        DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
+      SetVector<Value *> Values;
+      for (const SCEV *Parameter : Parameters) {
+        Values.clear();
+        findValues(Parameter, Values);
+        if (!Values.count(AccInst))
+          continue;
+
+        if (isl_id *ParamId = getIdForParam(Parameter)) {
+          int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
+          DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
+          isl_id_free(ParamId);
+        }
       }
-      isl_id_free(ParamId);
     }
   }
 
