@@ -1072,10 +1072,6 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
     for (auto SI = succ_begin(BB), SE = succ_end(BB); SI != SE; SI++)
       if (R->contains(*SI) && SeenBlocks.insert(*SI).second)
         Blocks.push_back(*SI);
-
-    // Remember value in case it is visible after this subregion.
-    if (DT.dominates(BB, R->getExit()))
-      ValueMap.insert(RegionMap.begin(), RegionMap.end());
   }
 
   // Now create a new dedicated region exit block and add it to the region map.
@@ -1085,6 +1081,12 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   BlockMap[R->getExit()] = ExitBBCopy;
 
   repairDominance(R->getExit(), ExitBBCopy);
+
+  // Remember value in case it is visible after this subregion. Only values that
+  // dominate the exit node can be visible.
+  for (auto &Pair : RegionMaps)
+    if (DT.properlyDominates(Pair.first, ExitBBCopy))
+      ValueMap.insert(Pair.second.begin(), Pair.second.end());
 
   // As the block generator doesn't handle control flow we need to add the
   // region control flow by hand after all blocks have been copied.
