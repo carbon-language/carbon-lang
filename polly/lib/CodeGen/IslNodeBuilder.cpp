@@ -815,7 +815,7 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
   llvm_unreachable("Unknown isl_ast_node type");
 }
 
-void IslNodeBuilder::materializeValue(isl_id *Id) {
+bool IslNodeBuilder::materializeValue(isl_id *Id) {
   // If the Id is already mapped, skip it.
   if (!IDToValue.count(Id)) {
     auto *ParamSCEV = (const SCEV *)isl_id_get_user(Id);
@@ -828,22 +828,28 @@ void IslNodeBuilder::materializeValue(isl_id *Id) {
     findValues(ParamSCEV, Values);
     for (auto *Val : Values)
       if (const auto *IAClass = S.lookupInvariantEquivClass(Val))
-        preloadInvariantEquivClass(*IAClass);
+        if (!preloadInvariantEquivClass(*IAClass)) {
+          isl_id_free(Id);
+          return false;
+        }
 
     auto *V = generateSCEV(ParamSCEV);
     IDToValue[Id] = V;
   }
 
   isl_id_free(Id);
+  return true;
 }
 
-void IslNodeBuilder::materializeParameters(isl_set *Set, bool All) {
+bool IslNodeBuilder::materializeParameters(isl_set *Set, bool All) {
   for (unsigned i = 0, e = isl_set_dim(Set, isl_dim_param); i < e; ++i) {
     if (!All && !isl_set_involves_dims(Set, isl_dim_param, i, 1))
       continue;
     isl_id *Id = isl_set_get_dim_id(Set, isl_dim_param, i);
-    materializeValue(Id);
+    if (!materializeValue(Id))
+      return false;
   }
+  return true;
 }
 
 Value *IslNodeBuilder::preloadUnconditionally(isl_set *AccessRange,
@@ -860,10 +866,14 @@ Value *IslNodeBuilder::preloadUnconditionally(isl_set *AccessRange,
 Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
                                             isl_set *Domain) {
 
-  auto *Build = isl_ast_build_from_context(isl_set_universe(S.getParamSpace()));
   isl_set *AccessRange = isl_map_range(MA.getAccessRelation());
-  materializeParameters(AccessRange, false);
+  if (!materializeParameters(AccessRange, false)) {
+    isl_set_free(AccessRange);
+    isl_set_free(Domain);
+    return nullptr;
+  }
 
+  auto *Build = isl_ast_build_from_context(isl_set_universe(S.getParamSpace()));
   isl_set *Universe = isl_set_universe(isl_set_get_space(Domain));
   bool AlwaysExecuted = isl_set_is_equal(Domain, Universe);
   isl_set_free(Universe);
@@ -871,58 +881,66 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
   Instruction *AccInst = MA.getAccessInstruction();
   Type *AccInstTy = AccInst->getType();
 
-  Value *PreloadVal;
+  Value *PreloadVal = nullptr;
   if (AlwaysExecuted) {
-    isl_set_free(Domain);
     PreloadVal = preloadUnconditionally(AccessRange, Build, AccInstTy);
-  } else {
-
-    materializeParameters(Domain, false);
-    isl_ast_expr *DomainCond = isl_ast_build_expr_from_set(Build, Domain);
-
-    Value *Cond = ExprBuilder.create(DomainCond);
-    if (!Cond->getType()->isIntegerTy(1))
-      Cond = Builder.CreateIsNotNull(Cond);
-
-    BasicBlock *CondBB = SplitBlock(Builder.GetInsertBlock(),
-                                    &*Builder.GetInsertPoint(), &DT, &LI);
-    CondBB->setName("polly.preload.cond");
-
-    BasicBlock *MergeBB = SplitBlock(CondBB, &CondBB->front(), &DT, &LI);
-    MergeBB->setName("polly.preload.merge");
-
-    Function *F = Builder.GetInsertBlock()->getParent();
-    LLVMContext &Context = F->getContext();
-    BasicBlock *ExecBB = BasicBlock::Create(Context, "polly.preload.exec", F);
-
-    DT.addNewBlock(ExecBB, CondBB);
-    if (Loop *L = LI.getLoopFor(CondBB))
-      L->addBasicBlockToLoop(ExecBB, LI);
-
-    auto *CondBBTerminator = CondBB->getTerminator();
-    Builder.SetInsertPoint(CondBBTerminator);
-    Builder.CreateCondBr(Cond, ExecBB, MergeBB);
-    CondBBTerminator->eraseFromParent();
-
-    Builder.SetInsertPoint(ExecBB);
-    Builder.CreateBr(MergeBB);
-
-    Builder.SetInsertPoint(ExecBB->getTerminator());
-    Value *PreAccInst = preloadUnconditionally(AccessRange, Build, AccInstTy);
-
-    Builder.SetInsertPoint(MergeBB->getTerminator());
-    auto *MergePHI = Builder.CreatePHI(
-        AccInstTy, 2, "polly.preload." + AccInst->getName() + ".merge");
-    MergePHI->addIncoming(PreAccInst, ExecBB);
-    MergePHI->addIncoming(Constant::getNullValue(AccInstTy), CondBB);
-    PreloadVal = MergePHI;
+    isl_ast_build_free(Build);
+    isl_set_free(Domain);
+    return PreloadVal;
   }
+
+  if (!materializeParameters(Domain, false)) {
+    isl_ast_build_free(Build);
+    isl_set_free(AccessRange);
+    isl_set_free(Domain);
+    return nullptr;
+  }
+
+  isl_ast_expr *DomainCond = isl_ast_build_expr_from_set(Build, Domain);
+  Domain = nullptr;
+
+  Value *Cond = ExprBuilder.create(DomainCond);
+  if (!Cond->getType()->isIntegerTy(1))
+    Cond = Builder.CreateIsNotNull(Cond);
+
+  BasicBlock *CondBB = SplitBlock(Builder.GetInsertBlock(),
+                                  &*Builder.GetInsertPoint(), &DT, &LI);
+  CondBB->setName("polly.preload.cond");
+
+  BasicBlock *MergeBB = SplitBlock(CondBB, &CondBB->front(), &DT, &LI);
+  MergeBB->setName("polly.preload.merge");
+
+  Function *F = Builder.GetInsertBlock()->getParent();
+  LLVMContext &Context = F->getContext();
+  BasicBlock *ExecBB = BasicBlock::Create(Context, "polly.preload.exec", F);
+
+  DT.addNewBlock(ExecBB, CondBB);
+  if (Loop *L = LI.getLoopFor(CondBB))
+    L->addBasicBlockToLoop(ExecBB, LI);
+
+  auto *CondBBTerminator = CondBB->getTerminator();
+  Builder.SetInsertPoint(CondBBTerminator);
+  Builder.CreateCondBr(Cond, ExecBB, MergeBB);
+  CondBBTerminator->eraseFromParent();
+
+  Builder.SetInsertPoint(ExecBB);
+  Builder.CreateBr(MergeBB);
+
+  Builder.SetInsertPoint(ExecBB->getTerminator());
+  Value *PreAccInst = preloadUnconditionally(AccessRange, Build, AccInstTy);
+
+  Builder.SetInsertPoint(MergeBB->getTerminator());
+  auto *MergePHI = Builder.CreatePHI(
+      AccInstTy, 2, "polly.preload." + AccInst->getName() + ".merge");
+  MergePHI->addIncoming(PreAccInst, ExecBB);
+  MergePHI->addIncoming(Constant::getNullValue(AccInstTy), CondBB);
+  PreloadVal = MergePHI;
 
   isl_ast_build_free(Build);
   return PreloadVal;
 }
 
-void IslNodeBuilder::preloadInvariantEquivClass(
+bool IslNodeBuilder::preloadInvariantEquivClass(
     const InvariantEquivClassTy &IAClass) {
   // For an equivalence class of invariant loads we pre-load the representing
   // element with the unified execution context. However, we have to map all
@@ -936,19 +954,29 @@ void IslNodeBuilder::preloadInvariantEquivClass(
   // If the access function was already mapped, the preload of this equivalence
   // class was triggered earlier already and doesn't need to be done again.
   if (ValueMap.count(MA->getAccessInstruction()))
-    return;
+    return true;
+
+  // Check for recurrsion which can be caused by additional constraints, e.g.,
+  // non-finitie loop contraints. In such a case we have to bail out and insert
+  // a "false" runtime check that will cause the original code to be executed.
+  if (!PreloadedPtrs.insert(std::get<0>(IAClass)).second)
+    return false;
 
   // If the base pointer of this class is dependent on another one we have to
   // make sure it was preloaded already.
   auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
   if (const auto *BaseIAClass = S.lookupInvariantEquivClass(SAI->getBasePtr()))
-    preloadInvariantEquivClass(*BaseIAClass);
+    if (!preloadInvariantEquivClass(*BaseIAClass))
+      return false;
 
   Instruction *AccInst = MA->getAccessInstruction();
   Type *AccInstTy = AccInst->getType();
 
   isl_set *Domain = isl_set_copy(std::get<2>(IAClass));
   Value *PreloadVal = preloadInvariantLoad(*MA, Domain);
+  if (!PreloadVal)
+    return false;
+
   assert(PreloadVal->getType() == AccInst->getType());
   for (const MemoryAccess *MA : MAs) {
     Instruction *MAAccInst = MA->getAccessInstruction();
@@ -999,13 +1027,15 @@ void IslNodeBuilder::preloadInvariantEquivClass(
     EscapeMap[MA->getAccessInstruction()] =
         std::make_pair(Alloca, std::move(EscapeUsers));
   }
+
+  return true;
 }
 
-void IslNodeBuilder::preloadInvariantLoads() {
+bool IslNodeBuilder::preloadInvariantLoads() {
 
   const auto &InvariantEquivClasses = S.getInvariantAccesses();
   if (InvariantEquivClasses.empty())
-    return;
+    return true;
 
   BasicBlock *PreLoadBB = SplitBlock(Builder.GetInsertBlock(),
                                      &*Builder.GetInsertPoint(), &DT, &LI);
@@ -1013,7 +1043,10 @@ void IslNodeBuilder::preloadInvariantLoads() {
   Builder.SetInsertPoint(&PreLoadBB->front());
 
   for (const auto &IAClass : InvariantEquivClasses)
-    preloadInvariantEquivClass(IAClass);
+    if (!preloadInvariantEquivClass(IAClass))
+      return false;
+
+  return true;
 }
 
 void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {

@@ -44,7 +44,7 @@ public:
   void create(__isl_take isl_ast_node *Node);
 
   /// @brief Preload all memory loads that are invariant.
-  void preloadInvariantLoads();
+  bool preloadInvariantLoads();
 
   /// @brief Finalize code generation for the SCoP @p S.
   ///
@@ -119,13 +119,17 @@ protected:
   ValueMapT ValueMap;
 
   /// @brief Materialize code for @p Id if it was not done before.
-  void materializeValue(__isl_take isl_id *Id);
+  ///
+  /// @returns False, iff a problem occured and the value was not materialized.
+  bool materializeValue(__isl_take isl_id *Id);
 
   /// @brief Materialize parameters of @p Set.
   ///
   /// @param All If not set only parameters referred to by the constraints in
   ///            @p Set will be materialized, otherwise all.
-  void materializeParameters(__isl_take isl_set *Set, bool All);
+  ///
+  /// @returns False, iff a problem occured and the value was not materialized.
+  bool materializeParameters(__isl_take isl_set *Set, bool All);
 
   // Extract the upper bound of this loop
   //
@@ -204,6 +208,9 @@ protected:
   virtual void createMark(__isl_take isl_ast_node *Marker);
   virtual void createFor(__isl_take isl_ast_node *For);
 
+  /// @brief Set to remember materialized invariant loads.
+  SmallPtrSet<const SCEV *, 16> PreloadedPtrs;
+
   /// @brief Preload the memory access at @p AccessRange with @p Build.
   ///
   /// @returns The preloaded value casted to type @p Ty
@@ -228,7 +235,9 @@ protected:
   /// This function will preload the representing load from @p IAClass and
   /// map all members of @p IAClass to that preloaded value, potentially casted
   /// to the required type.
-  void preloadInvariantEquivClass(const InvariantEquivClassTy &IAClass);
+  ///
+  /// @returns False, iff a problem occured and the load was not preloaded.
+  bool preloadInvariantEquivClass(const InvariantEquivClassTy &IAClass);
 
   void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
   void createForSequential(__isl_take isl_ast_node *For);

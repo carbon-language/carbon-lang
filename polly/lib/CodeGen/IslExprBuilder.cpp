@@ -612,6 +612,8 @@ Value *IslExprBuilder::createId(__isl_take isl_ast_expr *Expr) {
   assert(IDToValue.count(Id) && "Identifier not found");
 
   V = IDToValue[Id];
+  if (!V)
+    V = UndefValue::get(getType(Expr));
 
   assert(V && "Unknown parameter id found");
 

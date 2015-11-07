@@ -147,8 +147,15 @@ public:
     // parameters they reference. Afterwards, for the remaining parameters that
     // might reference the hoisted loads. Finally, build the runtime check
     // that might reference both hoisted loads as well as parameters.
+    // If the hoisting fails we have to bail and execute the original code.
     Builder.SetInsertPoint(SplitBlock->getTerminator());
-    NodeBuilder.preloadInvariantLoads();
+    if (!NodeBuilder.preloadInvariantLoads()) {
+      auto *FalseI1 = Builder.getFalse();
+      Builder.GetInsertBlock()->getTerminator()->setOperand(0, FalseI1);
+      isl_ast_node_free(AstRoot);
+      return true;
+    }
+
     NodeBuilder.addParameters(S.getContext());
 
     Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
