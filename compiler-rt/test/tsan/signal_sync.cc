@@ -1,4 +1,5 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
+// UNSUPPORTED: darwin
 #include "test.h"
 #include <signal.h>
 #include <sys/types.h>
