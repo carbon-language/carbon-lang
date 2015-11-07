@@ -394,7 +394,6 @@ determinePointerReadAttrs(Argument *A,
   while (!Worklist.empty()) {
     Use *U = Worklist.pop_back_val();
     Instruction *I = cast<Instruction>(U->getUser());
-    Value *V = U->get();
 
     switch (I->getOpcode()) {
     case Instruction::BitCast:
@@ -438,24 +437,26 @@ determinePointerReadAttrs(Argument *A,
         return Attribute::None;
       }
 
-      Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-      CallSite::arg_iterator B = CS.arg_begin(), E = CS.arg_end();
-      for (CallSite::arg_iterator A = B; A != E; ++A, ++AI) {
-        if (A->get() == V) {
-          if (AI == AE) {
-            assert(F->isVarArg() &&
-                   "More params than args in non-varargs call.");
-            return Attribute::None;
-          }
-          Captures &= !CS.doesNotCapture(A - B);
-          if (SCCNodes.count(&*AI))
-            continue;
-          if (!CS.onlyReadsMemory() && !CS.onlyReadsMemory(A - B))
-            return Attribute::None;
-          if (!CS.doesNotAccessMemory(A - B))
-            IsRead = true;
-        }
+      // Note: the callee and the two successor blocks *follow* the argument
+      // operands.  This means there is no need to adjust UseIndex to account
+      // for these.
+
+      unsigned UseIndex = std::distance(CS.arg_begin(), U);
+
+      assert(UseIndex < CS.arg_size() && "Non-argument use?");
+      if (UseIndex >= F->arg_size()) {
+        assert(F->isVarArg() && "More params than args in non-varargs call");
+        return Attribute::None;
       }
+
+      Captures &= !CS.doesNotCapture(UseIndex);
+      if (!SCCNodes.count(std::next(F->arg_begin(), UseIndex))) {
+        if (!CS.onlyReadsMemory() && !CS.onlyReadsMemory(UseIndex))
+          return Attribute::None;
+        if (!CS.doesNotAccessMemory(UseIndex))
+          IsRead = true;
+      }
+
       AddUsersToWorklistIfCapturing();
       break;
     }
