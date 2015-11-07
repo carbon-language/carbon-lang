@@ -2000,7 +2000,7 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
 
             lldb_private::DataBufferHeap data(operand_data_size, 0);
 
-            if (lldb::endian::InlHostByteOrder() != m_data_allocator.GetStream().GetByteOrder())
+            if (lldb_private::endian::InlHostByteOrder() != m_data_allocator.GetStream().GetByteOrder())
             {
                 uint8_t *data_bytes = data.GetBytes();
 

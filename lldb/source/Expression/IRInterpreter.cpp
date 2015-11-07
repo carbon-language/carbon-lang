@@ -365,7 +365,7 @@ public:
 
         const uint64_t *raw_data = resolved_value.getRawData();
 
-        buffer.PutRawBytes(raw_data, constant_size, lldb::endian::InlHostByteOrder());
+        buffer.PutRawBytes(raw_data, constant_size, lldb_private::endian::InlHostByteOrder());
 
         lldb_private::Error write_error;
 
