@@ -836,6 +836,7 @@ public:
     typedef __hash_local_iterator<__node_pointer>             local_iterator;
     typedef __hash_const_local_iterator<__node_pointer>       const_local_iterator;
 
+    _LIBCPP_INLINE_VISIBILITY
     __hash_table()
         _NOEXCEPT_(
             is_nothrow_default_constructible<__bucket_list>::value &&
@@ -843,6 +844,7 @@ public:
             is_nothrow_default_constructible<__node_allocator>::value &&
             is_nothrow_default_constructible<hasher>::value &&
             is_nothrow_default_constructible<key_equal>::value);
+    _LIBCPP_INLINE_VISIBILITY
     __hash_table(const hasher& __hf, const key_equal& __eql);
     __hash_table(const hasher& __hf, const key_equal& __eql,
                  const allocator_type& __a);
@@ -863,6 +865,7 @@ public:
 
     __hash_table& operator=(const __hash_table& __u);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     __hash_table& operator=(__hash_table&& __u)
         _NOEXCEPT_(
             __node_traits::propagate_on_container_move_assignment::value &&
@@ -934,9 +937,13 @@ public:
         return __bucket_list_.get_deleter().size();
     }
 
+    _LIBCPP_INLINE_VISIBILITY
     iterator       begin() _NOEXCEPT;
+    _LIBCPP_INLINE_VISIBILITY
     iterator       end() _NOEXCEPT;
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator begin() const _NOEXCEPT;
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator end() const _NOEXCEPT;
 
     template <class _Key>
@@ -965,6 +972,7 @@ public:
     __node_holder remove(const_iterator __p) _NOEXCEPT;
 
     template <class _Key>
+        _LIBCPP_INLINE_VISIBILITY
         size_type __count_unique(const _Key& __k) const;
     template <class _Key>
         size_type __count_multi(const _Key& __k) const;
@@ -1130,7 +1138,7 @@ private:
 };
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table()
     _NOEXCEPT_(
         is_nothrow_default_constructible<__bucket_list>::value &&
@@ -1143,7 +1151,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table()
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const hasher& __hf,
                                                        const key_equal& __eql)
     : __bucket_list_(nullptr, __bucket_list_deleter()),
@@ -1410,7 +1418,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __hash_table<_Tp, _Hash, _Equal, _Alloc>&
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::operator=(__hash_table&& __u)
     _NOEXCEPT_(
@@ -1495,7 +1503,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__assign_multi(_InputIterator __first,
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() _NOEXCEPT
 {
@@ -1507,7 +1515,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() _NOEXCEPT
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::end() _NOEXCEPT
 {
@@ -1519,7 +1527,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::end() _NOEXCEPT
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::const_iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() const _NOEXCEPT
 {
@@ -1531,7 +1539,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() const _NOEXCEPT
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::const_iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::end() const _NOEXCEPT
 {
@@ -2256,7 +2264,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 template <class _Key>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::size_type
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__count_unique(const _Key& __k) const
 {

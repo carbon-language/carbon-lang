@@ -308,6 +308,7 @@ public:
 
     template <class _Rep, class _Period, class _Predicate>
         bool
+        _LIBCPP_INLINE_VISIBILITY
         wait_for(unique_lock<mutex>& __lk,
                  const chrono::duration<_Rep, _Period>& __d,
                  _Predicate __pred);
@@ -392,7 +393,7 @@ condition_variable::wait_for(unique_lock<mutex>& __lk,
 }
 
 template <class _Rep, class _Period, class _Predicate>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 bool
 condition_variable::wait_for(unique_lock<mutex>& __lk,
                              const chrono::duration<_Rep, _Period>& __d,

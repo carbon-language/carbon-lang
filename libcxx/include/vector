@@ -685,9 +685,11 @@ public:
     _LIBCPP_INLINE_VISIBILITY void push_back(value_type&& __x);
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args>
+        _LIBCPP_INLINE_VISIBILITY
         void emplace_back(_Args&&... __args);
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     void pop_back();
 
     iterator insert(const_iterator __position, const_reference __x);
@@ -766,6 +768,7 @@ private:
     void deallocate() _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY size_type __recommend(size_type __new_size) const;
     void __construct_at_end(size_type __n);
+    _LIBCPP_INLINE_VISIBILITY
     void __construct_at_end(size_type __n, const_reference __x);
     template <class _ForwardIterator>
         typename enable_if
@@ -990,7 +993,7 @@ vector<_Tp, _Allocator>::__construct_at_end(size_type __n)
 //  Postcondition:  size() == old size() + __n
 //  Postcondition:  [i] == __x for all i in [size() - __n, __n)
 template <class _Tp, class _Allocator>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 vector<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x)
 {
@@ -1627,7 +1630,7 @@ vector<_Tp, _Allocator>::__emplace_back_slow_path(_Args&&... __args)
 
 template <class _Tp, class _Allocator>
 template <class... _Args>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 vector<_Tp, _Allocator>::emplace_back(_Args&&... __args)
 {
@@ -1648,7 +1651,7 @@ vector<_Tp, _Allocator>::emplace_back(_Args&&... __args)
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 vector<_Tp, _Allocator>::pop_back()
 {

@@ -318,6 +318,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     thread(thread&& __t) _NOEXCEPT : __t_(__t.__t_) {__t.__t_ = 0;}
+    _LIBCPP_INLINE_VISIBILITY
     thread& operator=(thread&& __t) _NOEXCEPT;
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -399,7 +400,7 @@ thread::thread(_Fp __f)
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 thread&
 thread::operator=(thread&& __t) _NOEXCEPT
 {

@@ -3119,6 +3119,7 @@ public:
                independent_bits_engine<_Eng, _Wp, _UI>& __x);
 
 private:
+    _LIBCPP_INLINE_VISIBILITY
     result_type __eval(false_type);
     result_type __eval(true_type);
 
@@ -3144,7 +3145,7 @@ private:
 };
 
 template<class _Engine, size_t __w, class _UIntType>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 _UIntType
 independent_bits_engine<_Engine, __w, _UIntType>::__eval(false_type)
 {
@@ -3735,7 +3736,7 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         result_type operator()(_URNG& __g)
         {return (*this)(__g, __p_);}
-    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+    template<class _URNG> _LIBCPP_INLINE_VISIBILITY result_type operator()(_URNG& __g, const param_type& __p);
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
@@ -3765,7 +3766,7 @@ public:
 
 template<class _RealType>
 template<class _URNG>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename uniform_real_distribution<_RealType>::result_type
 uniform_real_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
 {
@@ -3851,7 +3852,7 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         result_type operator()(_URNG& __g)
         {return (*this)(__g, __p_);}
-    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+    template<class _URNG> _LIBCPP_INLINE_VISIBILITY result_type operator()(_URNG& __g, const param_type& __p);
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
@@ -3878,7 +3879,7 @@ public:
 };
 
 template<class _URNG>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 bernoulli_distribution::result_type
 bernoulli_distribution::operator()(_URNG& __g, const param_type& __p)
 {
@@ -5522,7 +5523,7 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         result_type operator()(_URNG& __g)
         {return (*this)(__g, __p_);}
-    template<class _URNG> result_type operator()(_URNG& __g, const param_type& __p);
+    template<class _URNG> _LIBCPP_INLINE_VISIBILITY result_type operator()(_URNG& __g, const param_type& __p);
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
@@ -5552,7 +5553,7 @@ public:
 
 template <class _RealType>
 template<class _URNG>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 _RealType
 cauchy_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
 {

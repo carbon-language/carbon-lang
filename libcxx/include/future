@@ -576,6 +576,7 @@ public:
     void wait();
     template <class _Rep, class _Period>
         future_status
+        _LIBCPP_INLINE_VISIBILITY
         wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const;
     template <class _Clock, class _Duration>
         future_status
@@ -599,7 +600,7 @@ __assoc_sub_state::wait_until(const chrono::time_point<_Clock, _Duration>& __abs
 }
 
 template <class _Rep, class _Period>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 future_status
 __assoc_sub_state::wait_for(const chrono::duration<_Rep, _Period>& __rel_time) const
 {
@@ -851,6 +852,7 @@ class __deferred_assoc_state
 
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     explicit __deferred_assoc_state(_Fp&& __f);
 #endif
 
@@ -860,7 +862,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Rp, class _Fp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __deferred_assoc_state<_Rp, _Fp>::__deferred_assoc_state(_Fp&& __f)
     : __func_(_VSTD::forward<_Fp>(__f))
 {
@@ -897,6 +899,7 @@ class __deferred_assoc_state<void, _Fp>
 
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     explicit __deferred_assoc_state(_Fp&& __f);
 #endif
 
@@ -906,7 +909,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Fp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __deferred_assoc_state<void, _Fp>::__deferred_assoc_state(_Fp&& __f)
     : __func_(_VSTD::forward<_Fp>(__f))
 {
@@ -945,6 +948,7 @@ class __async_assoc_state
     virtual void __on_zero_shared() _NOEXCEPT;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     explicit __async_assoc_state(_Fp&& __f);
 #endif
 
@@ -954,7 +958,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Rp, class _Fp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __async_assoc_state<_Rp, _Fp>::__async_assoc_state(_Fp&& __f)
     : __func_(_VSTD::forward<_Fp>(__f))
 {
@@ -999,6 +1003,7 @@ class __async_assoc_state<void, _Fp>
     virtual void __on_zero_shared() _NOEXCEPT;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     explicit __async_assoc_state(_Fp&& __f);
 #endif
 
@@ -1008,7 +1013,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Fp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __async_assoc_state<void, _Fp>::__async_assoc_state(_Fp&& __f)
     : __func_(_VSTD::forward<_Fp>(__f))
 {
@@ -1110,6 +1115,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
+    _LIBCPP_INLINE_VISIBILITY
     shared_future<_Rp> share();
 
     // retrieving the value
@@ -1212,6 +1218,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
+    _LIBCPP_INLINE_VISIBILITY
     shared_future<_Rp&> share();
 
     // retrieving the value
@@ -1309,6 +1316,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
+    _LIBCPP_INLINE_VISIBILITY
     shared_future<void> share();
 
     // retrieving the value
@@ -1835,6 +1843,7 @@ public:
 
     void swap(__packaged_task_function&) _NOEXCEPT;
 
+    _LIBCPP_INLINE_VISIBILITY
     _Rp operator()(_ArgTypes...) const;
 };
 
@@ -1974,7 +1983,7 @@ __packaged_task_function<_Rp(_ArgTypes...)>::swap(__packaged_task_function& __f)
 }
 
 template<class _Rp, class ..._ArgTypes>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 _Rp
 __packaged_task_function<_Rp(_ArgTypes...)>::operator()(_ArgTypes... __arg) const
 {
@@ -2562,7 +2571,7 @@ swap(shared_future<_Rp>& __x, shared_future<_Rp>& __y) _NOEXCEPT
 }
 
 template <class _Rp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 shared_future<_Rp>
 future<_Rp>::share()
 {
@@ -2570,7 +2579,7 @@ future<_Rp>::share()
 }
 
 template <class _Rp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 shared_future<_Rp&>
 future<_Rp&>::share()
 {
@@ -2579,7 +2588,7 @@ future<_Rp&>::share()
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 shared_future<void>
 future<void>::share()
 {

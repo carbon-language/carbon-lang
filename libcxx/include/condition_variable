@@ -124,14 +124,18 @@ class _LIBCPP_TYPE_VIS condition_variable_any
     condition_variable __cv_;
     shared_ptr<mutex>  __mut_;
 public:
+    _LIBCPP_INLINE_VISIBILITY
     condition_variable_any();
 
+    _LIBCPP_INLINE_VISIBILITY
     void notify_one() _NOEXCEPT;
+    _LIBCPP_INLINE_VISIBILITY
     void notify_all() _NOEXCEPT;
 
     template <class _Lock>
         void wait(_Lock& __lock);
     template <class _Lock, class _Predicate>
+        _LIBCPP_INLINE_VISIBILITY
         void wait(_Lock& __lock, _Predicate __pred);
 
     template <class _Lock, class _Clock, class _Duration>
@@ -141,27 +145,30 @@ public:
 
     template <class _Lock, class _Clock, class _Duration, class _Predicate>
         bool
+        _LIBCPP_INLINE_VISIBILITY
         wait_until(_Lock& __lock,
                    const chrono::time_point<_Clock, _Duration>& __t,
                    _Predicate __pred);
 
     template <class _Lock, class _Rep, class _Period>
         cv_status
+        _LIBCPP_INLINE_VISIBILITY
         wait_for(_Lock& __lock,
                  const chrono::duration<_Rep, _Period>& __d);
 
     template <class _Lock, class _Rep, class _Period, class _Predicate>
         bool
+        _LIBCPP_INLINE_VISIBILITY
         wait_for(_Lock& __lock,
                  const chrono::duration<_Rep, _Period>& __d,
                  _Predicate __pred);
 };
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 condition_variable_any::condition_variable_any()
     : __mut_(make_shared<mutex>()) {}
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 condition_variable_any::notify_one() _NOEXCEPT
 {
@@ -169,7 +176,7 @@ condition_variable_any::notify_one() _NOEXCEPT
     __cv_.notify_one();
 }
 
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 condition_variable_any::notify_all() _NOEXCEPT
 {
@@ -196,7 +203,7 @@ condition_variable_any::wait(_Lock& __lock)
 }  // __mut_.unlock(), __lock.lock()
 
 template <class _Lock, class _Predicate>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 condition_variable_any::wait(_Lock& __lock, _Predicate __pred)
 {
@@ -218,7 +225,7 @@ condition_variable_any::wait_until(_Lock& __lock,
 }  // __mut_.unlock(), __lock.lock()
 
 template <class _Lock, class _Clock, class _Duration, class _Predicate>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 bool
 condition_variable_any::wait_until(_Lock& __lock,
                                    const chrono::time_point<_Clock, _Duration>& __t,
@@ -231,7 +238,7 @@ condition_variable_any::wait_until(_Lock& __lock,
 }
 
 template <class _Lock, class _Rep, class _Period>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 cv_status
 condition_variable_any::wait_for(_Lock& __lock,
                                  const chrono::duration<_Rep, _Period>& __d)
@@ -240,7 +247,7 @@ condition_variable_any::wait_for(_Lock& __lock,
 }
 
 template <class _Lock, class _Rep, class _Period, class _Predicate>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 bool
 condition_variable_any::wait_for(_Lock& __lock,
                                  const chrono::duration<_Rep, _Period>& __d,

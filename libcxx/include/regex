@@ -1048,6 +1048,7 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     int __regex_traits_value(char __ch, int __radix) const
         {return __regex_traits_value(static_cast<unsigned char>(__ch), __radix);}
+    _LIBCPP_INLINE_VISIBILITY
     int __regex_traits_value(wchar_t __ch, int __radix) const;
 };
 
@@ -1270,7 +1271,7 @@ regex_traits<_CharT>::__regex_traits_value(unsigned char __ch, int __radix)
 }
 
 template <class _CharT>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 int
 regex_traits<_CharT>::__regex_traits_value(wchar_t __ch, int __radix) const
 {

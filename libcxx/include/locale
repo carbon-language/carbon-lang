@@ -3776,11 +3776,14 @@ private:
     wstring_convert(const wstring_convert& __wc);
     wstring_convert& operator=(const wstring_convert& __wc);
 public:
+    _LIBCPP_ALWAYS_INLINE
     _LIBCPP_EXPLICIT_AFTER_CXX11 wstring_convert(_Codecvt* __pcvt = new _Codecvt);
+    _LIBCPP_ALWAYS_INLINE
     wstring_convert(_Codecvt* __pcvt, state_type __state);
     _LIBCPP_EXPLICIT_AFTER_CXX11 wstring_convert(const byte_string& __byte_err,
                     const wide_string& __wide_err = wide_string());
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_ALWAYS_INLINE
     wstring_convert(wstring_convert&& __wc);
 #endif
     ~wstring_convert();
@@ -3814,7 +3817,7 @@ public:
 };
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
-inline _LIBCPP_ALWAYS_INLINE
+inline
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     wstring_convert(_Codecvt* __pcvt)
         : __cvtptr_(__pcvt), __cvtstate_(), __cvtcount_(0)
@@ -3822,7 +3825,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 }
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
-inline _LIBCPP_ALWAYS_INLINE
+inline
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     wstring_convert(_Codecvt* __pcvt, state_type __state)
         : __cvtptr_(__pcvt), __cvtstate_(__state), __cvtcount_(0)
@@ -3841,7 +3844,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
-inline _LIBCPP_ALWAYS_INLINE
+inline
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     wstring_convert(wstring_convert&& __wc)
         : __byte_err_string_(_VSTD::move(__wc.__byte_err_string_)),
