@@ -79,7 +79,7 @@ int main()
 // In C++14, cv-void is is a literal type
 #if TEST_STD_VER < 14
     test_is_not_literal_type<void>();
-#else TEST_STD_VER > 14
+#elif TEST_STD_VER > 14
     test_is_literal_type<void>();
 #endif
 

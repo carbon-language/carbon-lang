@@ -16,13 +16,19 @@
 template <class T>
 void test_is_move_assignable()
 {
-    static_assert( std::is_move_assignable<T>::value, "");
+    static_assert(( std::is_move_assignable<T>::value), "");
+#if TEST_STD_VER > 14
+    static_assert(( std::is_move_assignable_v<T>), "");
+#endif
 }
 
 template <class T>
 void test_is_not_move_assignable()
 {
-    static_assert(!std::is_move_assignable<T>::value, "");
+    static_assert((!std::is_move_assignable<T>::value), "");
+#if TEST_STD_VER > 14
+    static_assert((!std::is_move_assignable_v<T>), "");
+#endif
 }
 
 class Empty

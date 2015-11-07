@@ -22,6 +22,12 @@ void test_is_trivially_destructible()
     static_assert( std::is_trivially_destructible<const T>::value, "");
     static_assert( std::is_trivially_destructible<volatile T>::value, "");
     static_assert( std::is_trivially_destructible<const volatile T>::value, "");
+#if TEST_STD_VER > 14
+    static_assert( std::is_trivially_destructible_v<T>, "");
+    static_assert( std::is_trivially_destructible_v<const T>, "");
+    static_assert( std::is_trivially_destructible_v<volatile T>, "");
+    static_assert( std::is_trivially_destructible_v<const volatile T>, "");
+#endif
 }
 
 template <class T>
@@ -31,6 +37,12 @@ void test_is_not_trivially_destructible()
     static_assert(!std::is_trivially_destructible<const T>::value, "");
     static_assert(!std::is_trivially_destructible<volatile T>::value, "");
     static_assert(!std::is_trivially_destructible<const volatile T>::value, "");
+#if TEST_STD_VER > 14
+    static_assert(!std::is_trivially_destructible_v<T>, "");
+    static_assert(!std::is_trivially_destructible_v<const T>, "");
+    static_assert(!std::is_trivially_destructible_v<volatile T>, "");
+    static_assert(!std::is_trivially_destructible_v<const volatile T>, "");
+#endif
 }
 
 struct PublicDestructor           { public:     ~PublicDestructor() {}};

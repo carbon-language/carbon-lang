@@ -17,12 +17,18 @@ template <class T>
 void test_has_nothrow_assign()
 {
     static_assert( std::is_nothrow_move_assignable<T>::value, "");
+#if TEST_STD_VER > 14
+    static_assert( std::is_nothrow_move_assignable_v<T>, "");
+#endif
 }
 
 template <class T>
 void test_has_not_nothrow_assign()
 {
     static_assert(!std::is_nothrow_move_assignable<T>::value, "");
+#if TEST_STD_VER > 14
+    static_assert( std::is_nothrow_move_assignable_v<T>, "");
+#endif
 }
 
 class Empty

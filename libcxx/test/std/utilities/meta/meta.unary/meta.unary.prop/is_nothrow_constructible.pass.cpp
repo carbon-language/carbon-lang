@@ -18,30 +18,45 @@ template <class T>
 void test_is_nothrow_constructible()
 {
     static_assert(( std::is_nothrow_constructible<T>::value), "");
+#if TEST_STD_VER > 14
+    static_assert(( std::is_nothrow_constructible_v<T>), "");
+#endif
 }
 
 template <class T, class A0>
 void test_is_nothrow_constructible()
 {
     static_assert(( std::is_nothrow_constructible<T, A0>::value), "");
+#if TEST_STD_VER > 14
+    static_assert(( std::is_nothrow_constructible_v<T, A0>), "");
+#endif
 }
 
 template <class T>
 void test_is_not_nothrow_constructible()
 {
     static_assert((!std::is_nothrow_constructible<T>::value), "");
+#if TEST_STD_VER > 14
+    static_assert((!std::is_nothrow_constructible_v<T>), "");
+#endif
 }
 
 template <class T, class A0>
 void test_is_not_nothrow_constructible()
 {
     static_assert((!std::is_nothrow_constructible<T, A0>::value), "");
+#if TEST_STD_VER > 14
+    static_assert((!std::is_nothrow_constructible_v<T, A0>), "");
+#endif
 }
 
 template <class T, class A0, class A1>
 void test_is_not_nothrow_constructible()
 {
     static_assert((!std::is_nothrow_constructible<T, A0, A1>::value), "");
+#if TEST_STD_VER > 14
+    static_assert((!std::is_nothrow_constructible_v<T, A0, A1>), "");
+#endif
 }
 
 class Empty
