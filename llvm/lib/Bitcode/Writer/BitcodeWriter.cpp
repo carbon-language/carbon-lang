@@ -1738,7 +1738,7 @@ static void WriteOperandBundles(BitstreamWriter &Stream, ImmutableCallSite CS,
   LLVMContext &C = CS.getInstruction()->getContext();
 
   for (unsigned i = 0, e = CS.getNumOperandBundles(); i != e; ++i) {
-    const auto &Bundle = CS.getOperandBundle(i);
+    const auto &Bundle = CS.getOperandBundleAt(i);
     Record.push_back(C.getOperandBundleTagID(Bundle.Tag));
 
     for (auto &Input : Bundle.Inputs)

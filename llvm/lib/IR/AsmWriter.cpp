@@ -2169,7 +2169,7 @@ void AssemblyWriter::writeOperandBundles(ImmutableCallSite CS) {
 
   bool FirstBundle = true;
   for (unsigned i = 0, e = CS.getNumOperandBundles(); i != e; ++i) {
-    OperandBundleUse BU = CS.getOperandBundle(i);
+    OperandBundleUse BU = CS.getOperandBundleAt(i);
 
     if (!FirstBundle)
       Out << ", ";
