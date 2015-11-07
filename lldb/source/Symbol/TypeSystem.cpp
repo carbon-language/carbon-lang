@@ -55,6 +55,12 @@ TypeSystem::CreateInstance (lldb::LanguageType language, Target *target)
     return lldb::TypeSystemSP();
 }
 
+bool
+TypeSystem::IsAnonymousType (lldb::opaque_compiler_type_t type)
+{
+    return false;
+}
+
 CompilerType
 TypeSystem::GetLValueReferenceType (lldb::opaque_compiler_type_t type)
 {
