@@ -136,6 +136,13 @@ private:
     return *this;
   }
 
+  /// Release storage used by CFI offsets map.
+  BinaryFunction &clearCFIOffsets() {
+    std::multimap<uint32_t, uint32_t> TempMap;
+    OffsetToCFI.swap(TempMap);
+    return *this;
+  }
+
   /// Release storage used by instructions.
   BinaryFunction &clearLabels() {
     LabelsMapType TempMap;
@@ -178,8 +185,10 @@ private:
   using InstrMapType = std::map<uint32_t, MCInst>;
   InstrMapType Instructions;
 
-  /// List of DWARF CFI instructions
-  using CFIInstrMapType = std::multimap<uint32_t, MCCFIInstruction>;
+  /// List of DWARF CFI instructions. Original CFI from the binary must be
+  /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
+  /// if needed (to fix state after reordering BBs).
+  using CFIInstrMapType = std::vector<MCCFIInstruction>;
   CFIInstrMapType FrameInstructions;
 
   /// Exception handling ranges.
@@ -191,6 +200,11 @@ private:
   };
   std::vector<CallSite> CallSites;
 
+  /// Map to discover which CFIs are attached to a given instruction offset.
+  /// Maps an instruction offset into a FrameInstructions offset.
+  /// This is only relevant to the buildCFG phase and is discarded afterwards.
+  std::multimap<uint32_t, uint32_t> OffsetToCFI;
+
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
@@ -198,6 +212,12 @@ private:
   using BasicBlockOrderType = std::vector<BinaryBasicBlock*>;
   BasicBlockListType BasicBlocks;
   BasicBlockOrderType BasicBlocksLayout;
+
+  // At each basic block entry we attach a CFI state to detect if reordering
+  // corrupts the CFI state for a block. The CFI state is simply the index in
+  // FrameInstructions for the CFI responsible for creating this state.
+  // This vector is indexed by BB index.
+  std::vector<uint32_t> BBCFIState;
 
 public:
 
@@ -366,8 +386,50 @@ public:
     Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
   }
 
-  void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
-    FrameInstructions.emplace(Offset, std::forward<MCCFIInstruction>(Inst));
+  void addCFI(uint64_t Offset, MCCFIInstruction &&Inst) {
+    assert(!Instructions.empty());
+
+    // Fix CFI instructions skipping NOPs. We need to fix this because changing
+    // CFI state after a NOP, besides being wrong and innacurate,  makes it
+    // harder for us to recover this information, since we can create empty BBs
+    // with NOPs and then reorder it away.
+    // We fix this by moving the CFI instruction just before any NOPs.
+    auto I = Instructions.lower_bound(Offset);
+    assert(I->first == Offset && "CFI pointing to unknown instruction");
+    if (I == Instructions.begin()) {
+      OffsetToCFI.emplace(Offset, FrameInstructions.size());
+      FrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
+      return;
+    }
+
+    --I;
+    while (I != Instructions.begin() && BC.MIA->isNoop(I->second)) {
+      Offset = I->first;
+      --I;
+    }
+    OffsetToCFI.emplace(Offset, FrameInstructions.size());
+    FrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
+    return;
+  }
+
+  /// Insert a CFI pseudo instruction in a basic block. This pseudo instruction
+  /// is a placeholder that refers to a real MCCFIInstruction object kept by
+  /// this function that will be emitted at that position.
+  BinaryBasicBlock::const_iterator
+  addCFIPseudo(BinaryBasicBlock *BB, BinaryBasicBlock::const_iterator Pos,
+               uint32_t Offset) {
+    MCInst CFIPseudo;
+    BC.MIA->createCFI(CFIPseudo, Offset);
+    return BB->insertPseudoInstr(Pos, CFIPseudo);
+  }
+
+  /// Retrieve the MCCFIInstruction object associated with a CFI pseudo.
+  MCCFIInstruction* getCFIFor(const MCInst &Instr) {
+    if (!BC.MIA->isCFI(Instr))
+      return nullptr;
+    uint32_t Offset = Instr.getOperand(0).getImm();
+    assert(Offset < FrameInstructions.size() && "Invalid CFI offset");
+    return &FrameInstructions[Offset];
   }
 
   BinaryFunction &setFileOffset(uint64_t Offset) {
@@ -470,6 +532,17 @@ public:
   /// Assumes the CFG has been built and edge frequency for taken branches
   /// has been filled with LBR data.
   void inferFallThroughCounts();
+
+  /// Annotate each basic block entry with its current CFI state. This is used
+  /// to detect when reordering changes the CFI state seen by a basic block and
+  /// fix this.
+  /// The CFI state is simply the index in FrameInstructions for the
+  /// MCCFIInstruction object responsible for this state.
+  void annotateCFIState();
+
+  /// After reordering, this function checks the state of CFI and fixes it if it
+  /// is corrupted. If it is unable to fix it, it returns false.
+  bool fixCFIState();
 
   /// Traverse the CFG checking branches, inverting their condition, removing or
   /// adding jumps based on a new layout order.

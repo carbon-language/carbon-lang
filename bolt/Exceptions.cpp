@@ -569,21 +569,20 @@ void CFIReader::fillCFIInfoFor(BinaryFunction &Function) const {
       Offset += CodeAlignment * int64_t(Instr.Ops[0]);
       break;
     case DW_CFA_offset_extended_sf:
-      Function.addCFIInstruction(
-          Offset,
-          MCCFIInstruction::createOffset(
-              nullptr, Instr.Ops[0], DataAlignment * int64_t(Instr.Ops[1])));
+      Function.addCFI(Offset, MCCFIInstruction::createOffset(
+                                  nullptr, Instr.Ops[0],
+                                  DataAlignment * int64_t(Instr.Ops[1])));
       break;
     case DW_CFA_offset_extended:
     case DW_CFA_offset:
-      Function.addCFIInstruction(
+      Function.addCFI(
           Offset, MCCFIInstruction::createOffset(nullptr, Instr.Ops[0],
                                                  DataAlignment * Instr.Ops[1]));
       break;
     case DW_CFA_restore_extended:
     case DW_CFA_restore:
-      Function.addCFIInstruction(
-          Offset, MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
+      Function.addCFI(Offset,
+                      MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
       break;
     case DW_CFA_set_loc:
       assert(Instr.Ops[0] < Address && "set_loc out of function bounds");
@@ -593,49 +592,44 @@ void CFIReader::fillCFIInfoFor(BinaryFunction &Function) const {
       break;
 
     case DW_CFA_undefined:
-      Function.addCFIInstruction(
-          Offset, MCCFIInstruction::createUndefined(nullptr, Instr.Ops[0]));
+      Function.addCFI(Offset,
+                      MCCFIInstruction::createUndefined(nullptr, Instr.Ops[0]));
       break;
     case DW_CFA_same_value:
-      Function.addCFIInstruction(
-          Offset, MCCFIInstruction::createSameValue(nullptr, Instr.Ops[0]));
+      Function.addCFI(Offset,
+                      MCCFIInstruction::createSameValue(nullptr, Instr.Ops[0]));
       break;
     case DW_CFA_register:
-      Function.addCFIInstruction(
-          Offset, MCCFIInstruction::createRegister(nullptr, Instr.Ops[0],
-                                                   Instr.Ops[1]));
+      Function.addCFI(Offset, MCCFIInstruction::createRegister(
+                                  nullptr, Instr.Ops[0], Instr.Ops[1]));
       break;
     case DW_CFA_remember_state:
-      Function.addCFIInstruction(
-          Offset, MCCFIInstruction::createRememberState(nullptr));
+      Function.addCFI(Offset, MCCFIInstruction::createRememberState(nullptr));
       break;
     case DW_CFA_restore_state:
-      Function.addCFIInstruction(Offset,
-                                 MCCFIInstruction::createRestoreState(nullptr));
+      Function.addCFI(Offset, MCCFIInstruction::createRestoreState(nullptr));
       break;
     case DW_CFA_def_cfa:
-      Function.addCFIInstruction(
-          Offset,
-          MCCFIInstruction::createDefCfa(nullptr, Instr.Ops[0], Instr.Ops[1]));
+      Function.addCFI(Offset, MCCFIInstruction::createDefCfa(
+                                  nullptr, Instr.Ops[0], Instr.Ops[1]));
       break;
     case DW_CFA_def_cfa_sf:
-      Function.addCFIInstruction(
-          Offset,
-          MCCFIInstruction::createDefCfa(
-              nullptr, Instr.Ops[0], DataAlignment * int64_t(Instr.Ops[1])));
+      Function.addCFI(Offset, MCCFIInstruction::createDefCfa(
+                                  nullptr, Instr.Ops[0],
+                                  DataAlignment * int64_t(Instr.Ops[1])));
       break;
     case DW_CFA_def_cfa_register:
-      Function.addCFIInstruction(Offset, MCCFIInstruction::createDefCfaRegister(
-                                             nullptr, Instr.Ops[0]));
+      Function.addCFI(Offset, MCCFIInstruction::createDefCfaRegister(
+                                  nullptr, Instr.Ops[0]));
       break;
     case DW_CFA_def_cfa_offset:
-      Function.addCFIInstruction(
+      Function.addCFI(
           Offset, MCCFIInstruction::createDefCfaOffset(nullptr, Instr.Ops[0]));
       break;
     case DW_CFA_def_cfa_offset_sf:
-      Function.addCFIInstruction(
-          Offset, MCCFIInstruction::createDefCfaOffset(
-                      nullptr, DataAlignment * int64_t(Instr.Ops[0])));
+      Function.addCFI(Offset,
+                      MCCFIInstruction::createDefCfaOffset(
+                          nullptr, DataAlignment * int64_t(Instr.Ops[0])));
       break;
     case DW_CFA_val_offset_sf:
     case DW_CFA_val_offset:

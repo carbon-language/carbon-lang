@@ -45,6 +45,9 @@ class BinaryBasicBlock {
   /// Alignment requirements for the block.
   uint64_t Alignment{1};
 
+  /// Number of pseudo instructions in this block.
+  uint32_t NumPseudos{0};
+
   /// Number of times this basic block was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
@@ -183,6 +186,14 @@ public:
   void addInstruction(MCInst &Inst) {
     Instructions.emplace_back(Inst);
   }
+
+  /// Add instruction before Pos in this basic block.
+  const_iterator insertPseudoInstr(const_iterator Pos, MCInst &Instr) {
+    ++NumPseudos;
+    return Instructions.emplace(Pos, Instr);
+  }
+
+  uint32_t getNumPseudos() const { return NumPseudos; }
 
   /// Set minimum alignment for the basic block.
   void setAlignment(uint64_t Align) {

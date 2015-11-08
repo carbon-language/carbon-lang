@@ -559,7 +559,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       continue;
 
     // Fill in CFI information for this function
-    if (EHFrame.ParseError.empty())
+    if (EHFrame.ParseError.empty() && Function.isSimple())
       DwCFIReader.fillCFIInfoFor(Function);
 
     // Parse LSDA.
@@ -655,6 +655,10 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     if (opts::PrintAll || opts::PrintEHRanges) {
       Function.print(errs(), "after updating EH ranges");
     }
+
+    // After optimizations, fix the CFI state
+    if (!Function.fixCFIState())
+      Function.setSimple(false);
   }
 
   std::error_code EC;
@@ -744,7 +748,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
           Streamer->EmitLabel(const_cast<MCSymbol *>(Label));
           continue;
         }
-        Streamer->EmitInstruction(Instr, *BC->STI);
+        if (!BC->MII->get(Instr.getOpcode()).isPseudo())
+          Streamer->EmitInstruction(Instr, *BC->STI);
       }
     }
 

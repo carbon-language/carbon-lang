@@ -76,8 +76,10 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  Section     : "   << SectionName
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  IsSimple    : "   << IsSimple
-     << "\n  BB Count    : "   << BasicBlocksLayout.size()
-     << "\n  CFI Instrs  : "   << FrameInstructions.size();
+     << "\n  BB Count    : "   << BasicBlocksLayout.size();
+  if (FrameInstructions.size()) {
+    OS << "\n  CFI Instrs  : "   << FrameInstructions.size();
+  }
   if (BasicBlocksLayout.size()) {
     OS << "\n  BB Layout   : ";
     auto Sep = "";
@@ -99,6 +101,25 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   // Offset of the instruction in function.
   uint64_t Offset{0};
 
+  auto printCFI = [&OS] (uint32_t Operation) {
+    switch(Operation) {
+    case MCCFIInstruction::OpSameValue:        OS << "OpSameValue";       break;
+    case MCCFIInstruction::OpRememberState:    OS << "OpRememberState";   break;
+    case MCCFIInstruction::OpRestoreState:     OS << "OpRestoreState";    break;
+    case MCCFIInstruction::OpOffset:           OS << "OpOffset";          break;
+    case MCCFIInstruction::OpDefCfaRegister:   OS << "OpDefCfaRegister";  break;
+    case MCCFIInstruction::OpDefCfaOffset:     OS << "OpDefCfaOffset";    break;
+    case MCCFIInstruction::OpDefCfa:           OS << "OpDefCfa";          break;
+    case MCCFIInstruction::OpRelOffset:        OS << "OpRelOffset";       break;
+    case MCCFIInstruction::OpAdjustCfaOffset:  OS << "OfAdjustCfaOffset"; break;
+    case MCCFIInstruction::OpEscape:           OS << "OpEscape";          break;
+    case MCCFIInstruction::OpRestore:          OS << "OpRestore";         break;
+    case MCCFIInstruction::OpUndefined:        OS << "OpUndefined";       break;
+    case MCCFIInstruction::OpRegister:         OS << "OpRegister";        break;
+    case MCCFIInstruction::OpWindowSave:       OS << "OpWindowSave";      break;
+    }
+  };
+
   auto printInstruction = [&](const MCInst &Instruction) {
     if (BC.MIA->isEHLabel(Instruction)) {
       OS << "  EH_LABEL: "
@@ -108,6 +129,14 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       return;
     }
     OS << format("    %08" PRIx64 ": ", Offset);
+    if (BC.MIA->isCFI(Instruction)) {
+      uint32_t Offset = Instruction.getOperand(0).getImm();
+      OS << "\t!CFI\t$" << Offset << "\t; ";
+      assert(Offset < FrameInstructions.size() && "Invalid CFI offset");
+      printCFI(FrameInstructions[Offset].getOperation());
+      OS << "\n";
+      return;
+    }
     BC.InstPrinter->printInst(&Instruction, OS, "", *BC.STI);
     if (BC.MIA->isCall(Instruction)) {
       if (BC.MIA->isTailCall(Instruction))
@@ -216,30 +245,26 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     OS << '\n';
   }
 
-  if (!FrameInstructions.empty()) {
-    OS << "DWARF CFI Instructions:\n";
-    for (auto &CFIInstr : FrameInstructions) {
-      OS << format("    %08x:   ", CFIInstr.first);
-      switch(CFIInstr.second.getOperation()) {
-      case MCCFIInstruction::OpSameValue:      OS << "OpSameValue";       break;
-      case MCCFIInstruction::OpRememberState:  OS << "OpRememberState";   break;
-      case MCCFIInstruction::OpRestoreState:   OS << "OpRestoreState";    break;
-      case MCCFIInstruction::OpOffset:         OS << "OpOffset";          break;
-      case MCCFIInstruction::OpDefCfaRegister: OS << "OpDefCfaRegister";  break;
-      case MCCFIInstruction::OpDefCfaOffset:   OS << "OpDefCfaOffset";    break;
-      case MCCFIInstruction::OpDefCfa:         OS << "OpDefCfa";          break;
-      case MCCFIInstruction::OpRelOffset:      OS << "OpRelOffset";       break;
-      case MCCFIInstruction::OpAdjustCfaOffset:OS << "OfAdjustCfaOffset"; break;
-      case MCCFIInstruction::OpEscape:         OS << "OpEscape";          break;
-      case MCCFIInstruction::OpRestore:        OS << "OpRestore";         break;
-      case MCCFIInstruction::OpUndefined:      OS << "OpUndefined";       break;
-      case MCCFIInstruction::OpRegister:       OS << "OpRegister";        break;
-      case MCCFIInstruction::OpWindowSave:     OS << "OpWindowSave";      break;
-      }
-      OS << '\n';
+  OS << "DWARF CFI Instructions:\n";
+  if (OffsetToCFI.size()) {
+    // Pre-buildCFG information
+    for (auto &Elmt : OffsetToCFI) {
+      OS << format("    %08x:\t", Elmt.first);
+      assert(Elmt.second < FrameInstructions.size() && "Incorrect CFI offset");
+      printCFI(FrameInstructions[Elmt.second].getOperation());
+      OS << "\n";
     }
-    OS << '\n';
+  } else {
+    // Post-buildCFG information
+    for (uint32_t I = 0, E = FrameInstructions.size(); I != E; ++I) {
+      const MCCFIInstruction &CFI = FrameInstructions[I];
+      OS << format("    %d:\t", I);
+      printCFI(CFI.getOperation());
+      OS << "\n";
+    }
   }
+  if (FrameInstructions.empty())
+    OS << "    <empty>\n";
 
   OS << "End of Function \"" << getName() << "\"\n\n";
 }
@@ -449,7 +474,18 @@ bool BinaryFunction::buildCFG() {
   BinaryBasicBlock *PrevBB{nullptr};
   bool IsLastInstrNop = false;
   MCInst *PrevInstr{nullptr};
-  for (auto &InstrInfo : Instructions) {
+
+  auto addCFIPlaceholders =
+      [this](uint64_t CFIOffset, BinaryBasicBlock *InsertBB) {
+        for (auto FI = OffsetToCFI.lower_bound(CFIOffset),
+                  FE = OffsetToCFI.upper_bound(CFIOffset);
+             FI != FE; ++FI) {
+          addCFIPseudo(InsertBB, InsertBB->end(), FI->second);
+        }
+      };
+
+  for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
+    auto &InstrInfo = *I;
     auto LI = Labels.find(InstrInfo.first);
     if (LI != Labels.end()) {
       // Always create new BB at branch destination.
@@ -472,7 +508,10 @@ bool BinaryFunction::buildCFG() {
                                  /* DeriveAlignment = */ IsLastInstrNop);
       }
     }
-
+    if (InstrInfo.first == 0) {
+      // Add associated CFI pseudos in the first offset (0)
+      addCFIPlaceholders(0, InsertBB);
+    }
     // Ignore nops. We use nops to derive alignment of the next basic block.
     // It will not always work, as some blocks are naturally aligned, but
     // it's just part of heuristic for block alignment.
@@ -484,6 +523,17 @@ bool BinaryFunction::buildCFG() {
     IsLastInstrNop = false;
     InsertBB->addInstruction(InstrInfo.second);
     PrevInstr = &InstrInfo.second;
+    // Add associated CFI instrs. We always add the CFI instruction that is
+    // located immediately after this instruction, since the next CFI
+    // instruction reflects the change in state caused by this instruction.
+    auto NextInstr = I;
+    ++NextInstr;
+    uint64_t CFIOffset;
+    if (NextInstr != E)
+      CFIOffset = NextInstr->first;
+    else
+      CFIOffset = getSize();
+    addCFIPlaceholders(CFIOffset, InsertBB);
 
     // How well do we detect tail calls here?
     if (MIA->isTerminator(InstrInfo.second)) {
@@ -559,14 +609,19 @@ bool BinaryFunction::buildCFG() {
       PrevBB->addSuccessor(&BB, BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE,
                            BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE);
     }
-
-    MCInst &LastInst = BB.back();
     if (BB.empty()) {
       IsPrevFT = true;
-    } else if (BB.succ_size() == 0) {
-      IsPrevFT = MIA->isTerminator(LastInst) ? false : true;
+      PrevBB = &BB;
+      continue;
+    }
+
+    auto LastInstIter = --BB.end();
+    while (MIA->isCFI(*LastInstIter) && LastInstIter != BB.begin())
+      --LastInstIter;
+    if (BB.succ_size() == 0) {
+      IsPrevFT = MIA->isTerminator(*LastInstIter) ? false : true;
     } else if (BB.succ_size() == 1) {
-      IsPrevFT =  MIA->isConditionalBranch(LastInst) ? true : false;
+      IsPrevFT =  MIA->isConditionalBranch(*LastInstIter) ? true : false;
     } else {
       // Ends with 2 branches, with an indirect jump or it is a conditional
       // branch whose frequency has been inferred from LBR
@@ -586,8 +641,12 @@ bool BinaryFunction::buildCFG() {
     inferFallThroughCounts();
   }
 
+  // Update CFI information for each BB
+  annotateCFIState();
+
   // Clean-up memory taken by instructions and labels.
   clearInstructions();
+  clearCFIOffsets();
   clearLabels();
   clearLocalBranches();
   clearFTBranches();
@@ -646,12 +705,16 @@ void BinaryFunction::inferFallThroughCounts() {
     uint64_t Inferred = 0;
     if (BBExecCount > ReportedBranches)
       Inferred = BBExecCount - ReportedBranches;
-    if (BBExecCount < ReportedBranches)
-      errs() << "FLO-WARNING: Fall-through inference is slightly inconsistent. "
-                "exec frequency is less than the outgoing edges frequency ("
-             << BBExecCount << " < " << ReportedBranches
-             << ") for  BB at offset 0x"
-             << Twine::utohexstr(getAddress() + CurBB.getOffset()) << '\n';
+
+    DEBUG({
+      if (BBExecCount < ReportedBranches)
+        dbgs()
+            << "FLO-WARNING: Fall-through inference is slightly inconsistent. "
+               "exec frequency is less than the outgoing edges frequency ("
+            << BBExecCount << " < " << ReportedBranches
+            << ") for  BB at offset 0x"
+            << Twine::utohexstr(getAddress() + CurBB.getOffset()) << '\n';
+    });
 
     // Put this information into the fall-through edge
     if (CurBB.succ_size() == 0)
@@ -667,6 +730,154 @@ void BinaryFunction::inferFallThroughCounts() {
   } // end for (CurBB : BasicBlocks)
 
   return;
+}
+
+void BinaryFunction::annotateCFIState() {
+  assert(!BasicBlocks.empty() && "basic block list should not be empty");
+
+  uint32_t State = 0;
+  uint32_t HighestState = 0;
+  std::stack<uint32_t> StateStack;
+
+  for (auto CI = BasicBlocks.begin(), CE = BasicBlocks.end(); CI != CE; ++CI) {
+    BinaryBasicBlock &CurBB = *CI;
+    // Annotate this BB entry
+    BBCFIState.emplace_back(State);
+
+    // Advance state
+    for (const auto &Instr : CurBB) {
+      MCCFIInstruction *CFI = getCFIFor(Instr);
+      if (CFI == nullptr)
+        continue;
+      ++HighestState;
+      if (CFI->getOperation() == MCCFIInstruction::OpRememberState) {
+        StateStack.push(State);
+        continue;
+      }
+      if (CFI->getOperation() == MCCFIInstruction::OpRestoreState) {
+        assert(!StateStack.empty() && "Corrupt CFI stack");
+        State = StateStack.top();
+        StateStack.pop();
+        continue;
+      }
+      State = HighestState;
+    }
+  }
+
+  // Store the state after the last BB
+  BBCFIState.emplace_back(State);
+
+  assert(StateStack.empty() && "Corrupt CFI stack");
+}
+
+bool BinaryFunction::fixCFIState() {
+  auto Sep = "";
+  DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
+  DEBUG(dbgs() << "This is the list of CFI states for each BB of " << getName()
+               << ": ");
+
+  auto replayCFIInstrs =
+      [this](uint32_t FromState, uint32_t ToState, BinaryBasicBlock *InBB,
+             BinaryBasicBlock::const_iterator InsertIt) -> bool {
+        if (FromState == ToState)
+          return true;
+        assert(FromState < ToState);
+
+        for (uint32_t CurState = FromState; CurState < ToState; ++CurState) {
+          MCCFIInstruction *Instr = &FrameInstructions[CurState];
+          if (Instr->getOperation() == MCCFIInstruction::OpRememberState ||
+              Instr->getOperation() == MCCFIInstruction::OpRestoreState) {
+            // TODO: If in replaying the CFI instructions to reach this state we
+            // have state stack instructions, we could still work out the logic
+            // to extract only the necessary instructions to reach this state
+            // without using the state stack. Not sure if it is worth the effort
+            // because this happens rarely.
+            errs() << "FLO-WARNING: CFI rewriter expected state " << ToState
+                   << " but found " << FromState << " instead (@ " << getName()
+                   << "). Giving up this function.\n";
+            return false;
+          }
+          InsertIt =
+              addCFIPseudo(InBB, InsertIt, Instr - &*FrameInstructions.begin());
+          ++InsertIt;
+        }
+
+        return true;
+      };
+
+  uint32_t State = 0;
+  BinaryBasicBlock *EntryBB = *BasicBlocksLayout.begin();
+  for (BinaryBasicBlock *BB : BasicBlocksLayout) {
+    uint32_t BBIndex = BB - &*BasicBlocks.begin();
+
+    // Check if state is what this BB expect it to be at its entry point
+    if (BBCFIState[BBIndex] != State) {
+      // Need to recover the correct state
+      if (BBCFIState[BBIndex] < State) {
+        // In this case, State is currently higher than what this BB expect it
+        // to be. To solve this, we need to insert a CFI instruction to remember
+        // the old state at function entry, then another CFI instruction to
+        // restore it at the entry of this BB and replay CFI instructions to
+        // reach the desired state.
+        uint32_t OldState = BBCFIState[BBIndex];
+        // Remember state at function entry point (our reference state).
+        BinaryBasicBlock::const_iterator InsertIt = EntryBB->begin();
+        while (InsertIt != EntryBB->end() && BC.MIA->isCFI(*InsertIt))
+          ++InsertIt;
+        addCFIPseudo(EntryBB, InsertIt, FrameInstructions.size());
+        FrameInstructions.emplace_back(
+            MCCFIInstruction::createRememberState(nullptr));
+        // Restore state
+        InsertIt = addCFIPseudo(BB, BB->begin(), FrameInstructions.size());
+        ++InsertIt;
+        FrameInstructions.emplace_back(
+            MCCFIInstruction::createRestoreState(nullptr));
+        if (!replayCFIInstrs(0, OldState, BB, InsertIt))
+          return false;
+        // Check if we messed up the stack in this process
+        int StackOffset = 0;
+        for (BinaryBasicBlock *CurBB : BasicBlocksLayout) {
+          if (CurBB == BB)
+            break;
+          for (auto &Instr : *CurBB) {
+            if (MCCFIInstruction *CFI = getCFIFor(Instr)) {
+              if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
+                ++StackOffset;
+              if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
+                --StackOffset;
+            }
+          }
+        }
+        auto Pos = BB->begin();
+        while (MCCFIInstruction *CFI = getCFIFor(*Pos++)) {
+          if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
+            ++StackOffset;
+          if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
+            --StackOffset;
+        }
+
+        if (StackOffset != 0) {
+          errs() << " FLO-WARNING: not possible to remember/recover state"
+                 << "without corrupting CFI state stack in function "
+                 << getName() << "\n";
+          return false;
+        }
+      } else {
+        // If BBCFIState[BBIndex] > State, it means we are behind in the
+        // state. Just emit all instructions to reach this state at the
+        // beginning of this BB. If this sequence of instructions involve
+        // remember state or restore state, bail out.
+        if (!replayCFIInstrs(State, BBCFIState[BBIndex], BB, BB->begin()))
+          return false;
+      }
+    }
+
+    State = BBCFIState[BBIndex + 1];
+    DEBUG(dbgs() << Sep << State);
+    DEBUG(Sep = ", ");
+  }
+  DEBUG(dbgs() << "\n");
+  return true;
 }
 
 void BinaryFunction::optimizeLayout(HeuristicPriority Priority) {
@@ -792,8 +1003,8 @@ void BinaryFunction::optimizeLayout(HeuristicPriority Priority) {
   for (uint32_t I = 1, E = Clusters.size(); I < E; ++I) {
     double Freq = 0.0;
     for (auto BB : Clusters[I]) {
-      if (!BB->empty())
-        Freq += BB->getExecutionCount() / BB->size();
+      if (!BB->empty() && BB->size() != BB->getNumPseudos())
+        Freq += BB->getExecutionCount() / (BB->size() - BB->getNumPseudos());
     }
     AvgFreq[I] = Freq;
   }
@@ -1039,10 +1250,16 @@ void BinaryFunction::fixBranches() {
     // Case 1: There are no branches in this basic block and it just falls
     // through
     if (CondBranch == nullptr && UncondBranch == nullptr) {
-      // Case 1a: Last instruction is a return, so it does *not* fall through to
-      // the next block.
-      if (!BB->empty() && MIA->isReturn(BB->back()))
-        continue;
+      // Case 1a: Last instruction, excluding pseudos, is a return, so it does
+      // *not* fall through to the next block.
+      if (!BB->empty()) {
+        auto LastInstIter = --BB->end();
+        while (BC.MII->get(LastInstIter->getOpcode()).isPseudo() &&
+               LastInstIter != BB->begin())
+          --LastInstIter;
+        if (MIA->isReturn(*LastInstIter))
+          continue;
+      }
       // Case 1b: Layout has changed and the fallthrough is not the same. Need
       // to add a new unconditional branch to jump to the old fallthrough.
       if (FT != OldFT && OldFT != nullptr) {
