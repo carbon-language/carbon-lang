@@ -5,6 +5,7 @@ add_clang_library(clangTidyCppCoreGuidelinesModule
   ProBoundsArrayToPointerDecayCheck.cpp
   ProBoundsPointerArithmeticCheck.cpp
   ProTypeConstCastCheck.cpp
+  ProTypeCstyleCastCheck.cpp
   ProTypeReinterpretCastCheck.cpp
   ProTypeStaticCastDowncastCheck.cpp
   ProTypeUnionAccessCheck.cpp

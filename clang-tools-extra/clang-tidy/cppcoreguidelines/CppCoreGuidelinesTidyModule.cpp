@@ -14,6 +14,7 @@
 #include "ProBoundsArrayToPointerDecayCheck.h"
 #include "ProBoundsPointerArithmeticCheck.h"
 #include "ProTypeConstCastCheck.h"
+#include "ProTypeCstyleCastCheck.h"
 #include "ProTypeReinterpretCastCheck.h"
 #include "ProTypeStaticCastDowncastCheck.h"
 #include "ProTypeUnionAccessCheck.h"
@@ -33,6 +34,8 @@ public:
         "cppcoreguidelines-pro-bounds-pointer-arithmetic");
     CheckFactories.registerCheck<ProTypeConstCastCheck>(
         "cppcoreguidelines-pro-type-const-cast");
+    CheckFactories.registerCheck<ProTypeCstyleCastCheck>(
+        "cppcoreguidelines-pro-type-cstyle-cast");
     CheckFactories.registerCheck<ProTypeReinterpretCastCheck>(
         "cppcoreguidelines-pro-type-reinterpret-cast");
     CheckFactories.registerCheck<ProTypeStaticCastDowncastCheck>(
