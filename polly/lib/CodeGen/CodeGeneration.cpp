@@ -152,7 +152,12 @@ public:
     if (!NodeBuilder.preloadInvariantLoads()) {
 
       auto *FalseI1 = Builder.getFalse();
-      Builder.GetInsertBlock()->getTerminator()->setOperand(0, FalseI1);
+      auto *SplitBBTerm = Builder.GetInsertBlock()->getTerminator();
+      SplitBBTerm->setOperand(0, FalseI1);
+      auto *StartBBTerm = StartBlock->getTerminator();
+      Builder.SetInsertPoint(StartBBTerm);
+      Builder.CreateUnreachable();
+      StartBBTerm->eraseFromParent();
       isl_ast_node_free(AstRoot);
 
     } else {
