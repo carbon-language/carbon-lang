@@ -31,13 +31,12 @@
 ;        timer_stop();
 ;    }
 ;
-;  The assumed context is empty because all statements are executed only
-;  if timeit != 0. This is due to the fact that they are not "reached"
-;  by the error blocks that are executed for timeit == 0.
+;  The assumed context should not be empty even though all statements are
+;  executed only if timeit != 0.
 ;
 ; CHECK:    Region: %entry.split---%if.end.20
 ; CHECK:    Assumed Context:
-; CHECK-NEXT:    [timeit, N] -> { : }
+; CHECK-NEXT:    [timeit, N] -> { : timeit = 0 }
 ; CHECK:    Statements {
 ; CHECK-NOT:  Stmt_if_then_split
 ; CHECK:      Stmt_for_body

@@ -1033,6 +1033,9 @@ private:
   /// @brief True if the underlying region has a single exiting block.
   bool HasSingleExitEdge;
 
+  /// @brief Flag to remember if the SCoP contained an error block or not.
+  bool HasErrorBlock;
+
   /// Max loop depth.
   unsigned MaxLoopDepth;
 
@@ -1516,6 +1519,9 @@ public:
 
   /// @brief Align the parameters in the statement to the scop context
   void realignParams();
+
+  /// @brief Return true if the SCoP contained at least one error block.
+  bool hasErrorBlock() const { return HasErrorBlock; }
 
   /// @brief Return true if the underlying region has a single exiting block.
   bool hasSingleExitEdge() const { return HasSingleExitEdge; }
