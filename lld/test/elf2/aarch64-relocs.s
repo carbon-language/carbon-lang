@@ -44,3 +44,16 @@ mystr:
 # CHECK: Disassembly of section .R_AARCH64_ADD_ABS_LO12_NC:
 # CHECK-NEXT: $x.4:
 # CHECK-NEXT:   1101b:       00 7c 00 91     add     x0, x0, #31
+
+.section .R_AARCH64_LDST64_ABS_LO12_NC,"ax",@progbits
+  ldr x28, [x27, :lo12:foo]
+foo:
+  .asciz "foo"
+  .size mystr, 3
+
+# S = 0x11024, A = 0x4
+# R = ((S + A) & 0xFFF) << 7 = 0x00001400
+# 0x00001400 | 0xf940177c = 0xf940177c
+# CHECK: Disassembly of section .R_AARCH64_LDST64_ABS_LO12_NC:
+# CHECK-NEXT: $x.6:
+# CHECK-NEXT:   11024:       7c 17 40 f9     ldr     x28, [x27, #40]

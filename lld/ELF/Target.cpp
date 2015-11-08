@@ -660,6 +660,10 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint8_t *BufEnd,
     updateAArch64Adr(Loc, (X >> 12) & 0x1FFFFF); // X[32:12]
     break;
   }
+  case R_AARCH64_LDST64_ABS_LO12_NC:
+    // No overflow check needed.
+    or32le(Loc, (SA & 0xFF8) << 7);
+    break;
   case R_AARCH64_PREL16:
     if (!isInt<16>(SA))
       error("Relocation R_AARCH64_PREL16 out of range");
