@@ -150,7 +150,7 @@ static const ScopArrayInfo *identifyBasePtrOriginSAI(Scop *S, Value *BasePtr) {
   if (!OriginBaseSCEVUnknown)
     return nullptr;
 
-  return S->getScopArrayInfo(OriginBaseSCEVUnknown->getValue());
+  return S->getScopArrayInfo(OriginBaseSCEVUnknown->getValue(), false);
 }
 
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
@@ -2752,7 +2752,9 @@ void Scop::hoistInvariantLoads() {
 const ScopArrayInfo *
 Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
                                ArrayRef<const SCEV *> Sizes, bool IsPHI) {
-  auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, IsPHI)];
+  bool IsScalar = Sizes.empty();
+  auto ScalarTypePair = std::make_pair(IsScalar, IsPHI);
+  auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, ScalarTypePair)];
   if (!SAI) {
     SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, IsPHI,
                                 this));
@@ -2765,8 +2767,10 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
   return SAI.get();
 }
 
-const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr, bool IsPHI) {
-  auto *SAI = ScopArrayInfoMap[std::make_pair(BasePtr, IsPHI)].get();
+const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr, bool IsScalar,
+                                            bool IsPHI) {
+  auto ScalarTypePair = std::make_pair(IsScalar, IsPHI);
+  auto *SAI = ScopArrayInfoMap[std::make_pair(BasePtr, ScalarTypePair)].get();
   assert(SAI && "No ScopArrayInfo available for this base pointer");
   return SAI;
 }

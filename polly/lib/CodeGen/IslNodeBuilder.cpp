@@ -964,7 +964,7 @@ bool IslNodeBuilder::preloadInvariantEquivClass(
 
   // If the base pointer of this class is dependent on another one we have to
   // make sure it was preloaded already.
-  auto *SAI = S.getScopArrayInfo(MA->getBaseAddr());
+  auto *SAI = S.getScopArrayInfo(MA->getBaseAddr(), false);
   if (const auto *BaseIAClass = S.lookupInvariantEquivClass(SAI->getBasePtr()))
     if (!preloadInvariantEquivClass(*BaseIAClass))
       return false;

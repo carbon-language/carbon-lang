@@ -1063,7 +1063,7 @@ private:
   /// @brief The affinator used to translate SCEVs to isl expressions.
   SCEVAffinator Affinator;
 
-  typedef MapVector<std::pair<AssertingVH<const Value>, int>,
+  typedef MapVector<std::pair<AssertingVH<const Value>, std::pair<int, int>>,
                     std::unique_ptr<ScopArrayInfo>> ArrayInfoMapTy;
   /// @brief A map to remember ScopArrayInfo objects for all base pointers.
   ///
@@ -1506,9 +1506,11 @@ public:
 
   /// @brief Return the cached ScopArrayInfo object for @p BasePtr.
   ///
-  /// @param BasePtr The base pointer the object has been stored for
-  /// @param IsPHI   Are we looking for special PHI storage.
-  const ScopArrayInfo *getScopArrayInfo(Value *BasePtr, bool IsPHI = false);
+  /// @param BasePtr  The base pointer the object has been stored for.
+  /// @param IsScalar Are we looking for a scalar or memory access location.
+  /// @param IsPHI    Are we looking for special PHI storage.
+  const ScopArrayInfo *getScopArrayInfo(Value *BasePtr, bool IsScalar,
+                                        bool IsPHI = false);
 
   void setContext(isl_set *NewContext);
 
