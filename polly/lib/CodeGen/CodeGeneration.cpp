@@ -150,22 +150,24 @@ public:
     // If the hoisting fails we have to bail and execute the original code.
     Builder.SetInsertPoint(SplitBlock->getTerminator());
     if (!NodeBuilder.preloadInvariantLoads()) {
+
       auto *FalseI1 = Builder.getFalse();
       Builder.GetInsertBlock()->getTerminator()->setOperand(0, FalseI1);
       isl_ast_node_free(AstRoot);
-      return true;
+
+    } else {
+
+      NodeBuilder.addParameters(S.getContext());
+
+      Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
+      Builder.GetInsertBlock()->getTerminator()->setOperand(0, RTC);
+      Builder.SetInsertPoint(&StartBlock->front());
+
+      NodeBuilder.create(AstRoot);
+
+      NodeBuilder.finalizeSCoP(S);
+      fixRegionInfo(EnteringBB->getParent(), R->getParent());
     }
-
-    NodeBuilder.addParameters(S.getContext());
-
-    Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
-    Builder.GetInsertBlock()->getTerminator()->setOperand(0, RTC);
-    Builder.SetInsertPoint(&StartBlock->front());
-
-    NodeBuilder.create(AstRoot);
-
-    NodeBuilder.finalizeSCoP(S);
-    fixRegionInfo(EnteringBB->getParent(), R->getParent());
 
     assert(!verifyGeneratedFunction(S, *EnteringBB->getParent()) &&
            "Verification of generated function failed");
