@@ -32,8 +32,8 @@ typedef struct __llvm_profile_data {
   const uint32_t NameSize;
   const uint32_t NumCounters;
   const uint64_t FuncHash;
-  const char *const Name;
-  uint64_t *const Counters;
+  const char *const NamePtr;
+  uint64_t *const CounterPtr;
 } __llvm_profile_data;
 
 typedef struct __llvm_profile_header {
