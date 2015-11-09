@@ -3412,6 +3412,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_meabi)) {
+    CmdArgs.push_back("-meabi");
+    CmdArgs.push_back(A->getValue());
+  }
+
   CmdArgs.push_back("-mthread-model");
   if (Arg *A = Args.getLastArg(options::OPT_mthread_model))
     CmdArgs.push_back(A->getValue());
