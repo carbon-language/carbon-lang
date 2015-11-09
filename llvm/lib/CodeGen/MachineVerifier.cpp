@@ -397,7 +397,10 @@ void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
   if (!foundErrors++) {
     if (Banner)
       errs() << "# " << Banner << '\n';
-    MF->print(errs(), Indexes);
+    if (LiveInts != nullptr)
+      LiveInts->print(errs());
+    else
+      MF->print(errs(), Indexes);
   }
   errs() << "*** Bad machine code: " << msg << " ***\n"
       << "- function:    " << MF->getName() << "\n";
