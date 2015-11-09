@@ -193,7 +193,7 @@ namespace llvm {
 
     /// \brief Returns the estimated complexity of this predicate.
     /// This is roughly measured in the number of run-time checks required.
-    virtual unsigned getComplexity() { return 1; }
+    virtual unsigned getComplexity() const { return 1; }
 
     /// \brief Returns true if the predicate is always true. This means that no
     /// assumptions were made and nothing needs to be checked at run-time.
@@ -303,7 +303,7 @@ namespace llvm {
 
     /// \brief We estimate the complexity of a union predicate as the size
     /// number of predicates in the union.
-    unsigned getComplexity() override { return Preds.size(); }
+    unsigned getComplexity() const override { return Preds.size(); }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVPredicate *P) {
