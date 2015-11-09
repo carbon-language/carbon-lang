@@ -33,6 +33,7 @@ required_libraries =
  AsmPrinter
  CodeGen
  Core
+ HexagonAsmParser
  HexagonDesc
  HexagonInfo
  MC
