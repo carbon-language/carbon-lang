@@ -198,6 +198,14 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, SDLoc DL,
   if (PartEVT == ValueVT)
     return Val;
 
+  if (PartEVT.isInteger() && ValueVT.isFloatingPoint() &&
+      ValueVT.bitsLT(PartEVT)) {
+    // For an FP value in an integer part, we need to truncate to the right
+    // width first.
+    PartEVT = EVT::getIntegerVT(*DAG.getContext(),  ValueVT.getSizeInBits());
+    Val = DAG.getNode(ISD::TRUNCATE, DL, PartEVT, Val);
+  }
+
   if (PartEVT.isInteger() && ValueVT.isInteger()) {
     if (ValueVT.bitsLT(PartEVT)) {
       // For a truncate, see if we have any information to
@@ -384,6 +392,12 @@ static void getCopyToParts(SelectionDAG &DAG, SDLoc DL,
       assert(NumParts == 1 && "Do not know what to promote to!");
       Val = DAG.getNode(ISD::FP_EXTEND, DL, PartVT, Val);
     } else {
+      if (ValueVT.isFloatingPoint()) {
+        // FP values need to be bitcast, then extended if they are being put
+        // into a larger container.
+        ValueVT = EVT::getIntegerVT(*DAG.getContext(),  ValueVT.getSizeInBits());
+        Val = DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
+      }
       assert((PartVT.isInteger() || PartVT == MVT::x86mmx) &&
              ValueVT.isInteger() &&
              "Unknown mismatch!");
