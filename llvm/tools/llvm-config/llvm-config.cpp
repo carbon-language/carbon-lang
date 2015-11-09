@@ -107,12 +107,12 @@ static void VisitComponent(StringRef Name,
 /// \param IncludeNonInstalled - Whether non-installed components should be
 /// reported.
 /// \param GetComponentNames - True if one would prefer the component names.
-static void ComputeLibsForComponents(const std::vector<StringRef> &Components,
-                                     std::vector<StringRef> &RequiredLibs,
-                                     bool IncludeNonInstalled, bool GetComponentNames,
-                                     const std::string *ActiveLibDir,
-                                     bool *HasMissing) {
-  std::set<AvailableComponent*> VisitedComponents;
+static std::vector<StringRef>
+ComputeLibsForComponents(const std::vector<StringRef> &Components,
+                         bool IncludeNonInstalled, bool GetComponentNames,
+                         const std::string *ActiveLibDir, bool *HasMissing) {
+  std::vector<StringRef> RequiredLibs;
+  std::set<AvailableComponent *> VisitedComponents;
 
   // Build a map of component names to information.
   StringMap<AvailableComponent*> ComponentMap;
@@ -141,6 +141,8 @@ static void ComputeLibsForComponents(const std::vector<StringRef> &Components,
   // The list is now ordered with leafs first, we want the libraries to printed
   // in the reverse order of dependency.
   std::reverse(RequiredLibs.begin(), RequiredLibs.end());
+
+  return RequiredLibs;
 }
 
 /* *** */
@@ -198,27 +200,23 @@ std::string GetExecutablePath(const char *Argv0) {
 std::vector<StringRef> GetAllDyLibComponents(const bool IsInDevelopmentTree,
                                              const bool GetComponentNames) {
   std::vector<StringRef> DyLibComponents;
-  {
-    StringRef DyLibComponentsStr(LLVM_DYLIB_COMPONENTS);
-    size_t Offset = 0;
-    while (true) {
-      const size_t NextOffset = DyLibComponentsStr.find(';', Offset);
-      DyLibComponents.push_back(DyLibComponentsStr.substr(Offset, NextOffset));
-      if (NextOffset == std::string::npos) {
-        break;
-      }
-      Offset = NextOffset + 1;
-    }
 
-    assert(DyLibComponents.size() > 0);
+  StringRef DyLibComponentsStr(LLVM_DYLIB_COMPONENTS);
+  size_t Offset = 0;
+  while (true) {
+    const size_t NextOffset = DyLibComponentsStr.find(';', Offset);
+    DyLibComponents.push_back(DyLibComponentsStr.substr(Offset, NextOffset));
+    if (NextOffset == std::string::npos) {
+      break;
+    }
+    Offset = NextOffset + 1;
   }
 
-  std::vector<StringRef> Components;
-  ComputeLibsForComponents(DyLibComponents, Components,
-                           /*IncludeNonInstalled=*/IsInDevelopmentTree,
-                           GetComponentNames, nullptr, nullptr);
+  assert(!DyLibComponents.empty());
 
-  return Components;
+  return ComputeLibsForComponents(DyLibComponents,
+                                  /*IncludeNonInstalled=*/IsInDevelopmentTree,
+                                  GetComponentNames, nullptr, nullptr);
 }
 
 int main(int argc, char **argv) {
@@ -529,11 +527,11 @@ int main(int argc, char **argv) {
       Components.push_back("all");
 
     // Construct the list of all the required libraries.
-    std::vector<StringRef> RequiredLibs;
     bool HasMissing = false;
-    ComputeLibsForComponents(Components, RequiredLibs,
-                             /*IncludeNonInstalled=*/IsInDevelopmentTree, false,
-                             &ActiveLibDir, &HasMissing);
+    std::vector<StringRef> RequiredLibs =
+        ComputeLibsForComponents(Components,
+                                 /*IncludeNonInstalled=*/IsInDevelopmentTree,
+                                 false, &ActiveLibDir, &HasMissing);
 
     if (PrintSharedMode) {
       std::unordered_set<std::string> FullDyLibComponents;
