@@ -112,7 +112,7 @@ class HexagonAsmParser : public MCTargetAsmParser {
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
-                               uint64_t &ErrorInfo, bool MatchingInlineAsm);
+                               uint64_t &ErrorInfo, bool MatchingInlineAsm) override;
 
   unsigned validateTargetOperandClass(MCParsedAsmOperand &Op, unsigned Kind) override;
   void OutOfRange(SMLoc IDLoc, long long Val, long long Max);
@@ -160,13 +160,14 @@ public:
   bool parseExpressionOrOperand(OperandVector &Operands);
   bool parseExpression(MCExpr const *& Expr);
   virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                                SMLoc NameLoc, OperandVector &Operands) {
+                                SMLoc NameLoc, OperandVector &Operands) override
+  {
     llvm_unreachable("Unimplemented");
   }
   virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                                AsmToken ID, OperandVector &Operands);
+                                AsmToken ID, OperandVector &Operands) override;
 
-  virtual bool ParseDirective(AsmToken DirectiveID);
+  virtual bool ParseDirective(AsmToken DirectiveID) override;
 };
 
 /// HexagonOperand - Instances of this class represent a parsed Hexagon machine
