@@ -186,18 +186,22 @@ function(darwin_lipo_libs name)
     "PARENT_TARGET;OUTPUT_DIR;INSTALL_DIR"
     "LIPO_FLAGS;DEPENDS"
     ${ARGN})
-  add_custom_command(OUTPUT ${LIB_OUTPUT_DIR}/lib${name}.a
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${LIB_OUTPUT_DIR}
-    COMMAND lipo -output
-            ${LIB_OUTPUT_DIR}/lib${name}.a
-            -create ${LIB_LIPO_FLAGS}
-    DEPENDS ${LIB_DEPENDS}
-    )
-  add_custom_target(${name}
-    DEPENDS ${LIB_OUTPUT_DIR}/lib${name}.a)
-  add_dependencies(${LIB_PARENT_TARGET} ${name})
-  install(FILES ${LIB_OUTPUT_DIR}/lib${name}.a
-    DESTINATION ${LIB_INSTALL_DIR})
+  if(ARGN_DEPENDS AND ARG_LIPO_FLAGS)
+    add_custom_command(OUTPUT ${LIB_OUTPUT_DIR}/lib${name}.a
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${LIB_OUTPUT_DIR}
+      COMMAND lipo -output
+              ${LIB_OUTPUT_DIR}/lib${name}.a
+              -create ${LIB_LIPO_FLAGS}
+      DEPENDS ${LIB_DEPENDS}
+      )
+    add_custom_target(${name}
+      DEPENDS ${LIB_OUTPUT_DIR}/lib${name}.a)
+    add_dependencies(${LIB_PARENT_TARGET} ${name})
+    install(FILES ${LIB_OUTPUT_DIR}/lib${name}.a
+      DESTINATION ${LIB_INSTALL_DIR})
+  else()
+    message(WARNING "Not generating lipo target for ${name} because no input libraries exist.")
+  endif()
 endfunction()
 
 # Filter out generic versions of routines that are re-implemented in
