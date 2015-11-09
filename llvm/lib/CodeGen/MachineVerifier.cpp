@@ -425,6 +425,7 @@ void MachineVerifier::report(const char *msg, const MachineInstr *MI) {
   if (Indexes && Indexes->hasIndex(MI))
     errs() << Indexes->getInstructionIndex(MI) << '\t';
   MI->print(errs(), /*SkipOpers=*/true);
+  errs() << '\n';
 }
 
 void MachineVerifier::report(const char *msg,
