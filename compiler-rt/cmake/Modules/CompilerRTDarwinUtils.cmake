@@ -186,7 +186,7 @@ function(darwin_lipo_libs name)
     "PARENT_TARGET;OUTPUT_DIR;INSTALL_DIR"
     "LIPO_FLAGS;DEPENDS"
     ${ARGN})
-  if(ARGN_DEPENDS AND ARG_LIPO_FLAGS)
+  if(LIB_DEPENDS AND LIB_LIPO_FLAGS)
     add_custom_command(OUTPUT ${LIB_OUTPUT_DIR}/lib${name}.a
       COMMAND ${CMAKE_COMMAND} -E make_directory ${LIB_OUTPUT_DIR}
       COMMAND lipo -output
