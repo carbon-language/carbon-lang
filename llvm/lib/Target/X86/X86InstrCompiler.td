@@ -156,12 +156,16 @@ let isTerminator = 1, hasSideEffects = 1, isBarrier = 1, hasCtrlDep = 1,
     isCodeGenOnly = 1, isReturn = 1 in {
   def CLEANUPRET : I<0, Pseudo, (outs), (ins), "# CLEANUPRET", [(cleanupret)]>;
 
-  // CATCHRET needs a custom inserter for SEH nonsense.
+  // CATCHRET needs a custom inserter for SEH.
   let usesCustomInserter = 1 in
     def CATCHRET : I<0, Pseudo, (outs), (ins brtarget32:$dst, brtarget32:$from),
                      "# CATCHRET",
                      [(catchret bb:$dst, bb:$from)]>;
 }
+
+let hasSideEffects = 1, isBarrier = 1, hasCtrlDep = 1, isCodeGenOnly = 1,
+    usesCustomInserter = 1 in
+def CATCHPAD : I<0, Pseudo, (outs), (ins), "# CATCHPAD", [(catchpad)]>;
 
 // This instruction is responsible for re-establishing stack pointers after an
 // exception has been caught and we are rejoining normal control flow in the

@@ -36,6 +36,6 @@ catchendblock:                                    ; preds = %catch.dispatch
 ; CHECK: xorl %ecx, %ecx
 ; CHECK: callq f
 
-; CHECK: # %__except
+; CHECK: # %catch.dispatch
 ; CHECK: movl %eax, %ecx
 ; CHECK-NEXT: callq f

@@ -1178,7 +1178,6 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
 void SelectionDAGBuilder::visitCatchPad(const CatchPadInst &I) {
   auto Pers = classifyEHPersonality(FuncInfo.Fn->getPersonalityFn());
   bool IsMSVCCXX = Pers == EHPersonality::MSVC_CXX;
-  bool IsSEH = isAsynchronousEHPersonality(Pers);
   bool IsCoreCLR = Pers == EHPersonality::CoreCLR;
   MachineBasicBlock *CatchPadMBB = FuncInfo.MBB;
   // In MSVC C++ and CoreCLR, catchblocks are funclets and need prologues.
@@ -1190,22 +1189,16 @@ void SelectionDAGBuilder::visitCatchPad(const CatchPadInst &I) {
   // Update machine-CFG edge.
   FuncInfo.MBB->addSuccessor(NormalDestMBB);
 
-  // CatchPads in SEH are not funclets, they are merely markers which indicate
-  // where to insert register restoration code.
-  if (IsSEH) {
-    DAG.setRoot(DAG.getNode(ISD::CATCHRET, getCurSDLoc(), MVT::Other,
-                            getControlRoot(), DAG.getBasicBlock(NormalDestMBB),
-                            DAG.getBasicBlock(&FuncInfo.MF->front())));
-    return;
-  }
+  SDValue Chain =
+      DAG.getNode(ISD::CATCHPAD, getCurSDLoc(), MVT::Other, getControlRoot());
 
   // If this is not a fall-through branch or optimizations are switched off,
   // emit the branch.
   if (NormalDestMBB != NextBlock(CatchPadMBB) ||
       TM.getOptLevel() == CodeGenOpt::None)
-    DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other,
-                            getControlRoot(),
-                            DAG.getBasicBlock(NormalDestMBB)));
+    Chain = DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other, Chain,
+                        DAG.getBasicBlock(NormalDestMBB));
+  DAG.setRoot(Chain);
 }
 
 void SelectionDAGBuilder::visitCatchRet(const CatchReturnInst &I) {
