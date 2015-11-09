@@ -1031,7 +1031,8 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   EntryBBCopy->setName("polly.stmt." + EntryBB->getName() + ".entry");
   Builder.SetInsertPoint(&EntryBBCopy->front());
 
-  generateScalarLoads(Stmt, RegionMaps[EntryBBCopy]);
+  ValueMapT &EntryBBMap = RegionMaps[EntryBBCopy];
+  generateScalarLoads(Stmt, EntryBBMap);
 
   for (auto PI = pred_begin(EntryBB), PE = pred_end(EntryBB); PI != PE; ++PI)
     if (!R->contains(*PI))
@@ -1054,11 +1055,18 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
     // In order to remap PHI nodes we store also basic block mappings.
     BlockMap[BB] = BBCopy;
 
-    // Get the mapping for this block and initialize it with the mapping
-    // available at its immediate dominator (in the new region).
-    ValueMapT &RegionMap = RegionMaps[BBCopy];
-    if (BBCopy != EntryBBCopy)
-      RegionMap = RegionMaps[BBCopyIDom];
+    // Get the mapping for this block and initialize it with either the scalar
+    // loads from the generated entering block (which dominates all blocks of
+    // this subregion) or the maps of the immediate dominator, if part of the
+    // subregion. The latter necessarily includes the former.
+    ValueMapT *InitBBMap;
+    if (BBCopyIDom) {
+      assert(RegionMaps.count(BBCopyIDom));
+      InitBBMap = &RegionMaps[BBCopyIDom];
+    } else
+      InitBBMap = &EntryBBMap;
+    auto Inserted = RegionMaps.insert(std::make_pair(BBCopy, *InitBBMap));
+    ValueMapT &RegionMap = Inserted.first->second;
 
     // Copy the block with the BlockGenerator.
     Builder.SetInsertPoint(&BBCopy->front());
