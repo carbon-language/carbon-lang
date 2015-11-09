@@ -52,6 +52,36 @@ using namespace clang::driver::tools;
 using namespace clang;
 using namespace llvm::opt;
 
+static const char *getSparcAsmModeForCPU(StringRef Name,
+                                         const llvm::Triple &Triple) {
+  if (Triple.getArch() == llvm::Triple::sparcv9) {
+    return llvm::StringSwitch<const char *>(Name)
+          .Case("niagara", "-Av9b")
+          .Case("niagara2", "-Av9b")
+          .Case("niagara3", "-Av9d")
+          .Case("niagara4", "-Av9d")
+          .Default("-Av9");
+  } else {
+    return llvm::StringSwitch<const char *>(Name)
+          .Case("v8", "-Av8")
+          .Case("supersparc", "-Av8")
+          .Case("sparclite", "-Asparclite")
+          .Case("f934", "-Asparclite")
+          .Case("hypersparc", "-Av8")
+          .Case("sparclite86x", "-Asparclite")
+          .Case("sparclet", "-Asparclet")
+          .Case("tsc701", "-Asparclet")
+          .Case("v9", "-Av8plus")
+          .Case("ultrasparc", "-Av8plus")
+          .Case("ultrasparc3", "-Av8plus")
+          .Case("niagara", "-Av8plusb")
+          .Case("niagara2", "-Av8plusb")
+          .Case("niagara3", "-Av8plusd")
+          .Case("niagara4", "-Av8plusd")
+          .Default("-Av8");
+  }
+}
+
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
@@ -7762,16 +7792,21 @@ void netbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   case llvm::Triple::sparc:
-  case llvm::Triple::sparcel:
+  case llvm::Triple::sparcel: {
     CmdArgs.push_back("-32");
+    std::string CPU = getCPUName(Args, getToolChain().getTriple());
+    CmdArgs.push_back(getSparcAsmModeForCPU(CPU, getToolChain().getTriple()));
     AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
     break;
+  }
 
-  case llvm::Triple::sparcv9:
+  case llvm::Triple::sparcv9: {
     CmdArgs.push_back("-64");
-    CmdArgs.push_back("-Av9");
+    std::string CPU = getCPUName(Args, getToolChain().getTriple());
+    CmdArgs.push_back(getSparcAsmModeForCPU(CPU, getToolChain().getTriple()));
     AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
     break;
+  }
 
   default:
     break;
