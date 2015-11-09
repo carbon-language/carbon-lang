@@ -8,11 +8,9 @@
 ;    return (a << 1) | (b >> 63);
 ;}
 
-; CHECK:             lshift1:
-; CHECK:             addq    {{.*}},{{.*}}
-; CHECK-NEXT:        shrq    $63, {{.*}}
-; CHECK-NEXT:        leaq    ({{.*}},{{.*}}), {{.*}}
-
+; CHECK-LABEL:       lshift1:
+; CHECK:             shrq    $63, %rsi
+; CHECK-NEXT:        leaq    (%rsi,%rdi,2), %rax
 
 define i64 @lshift1(i64 %a, i64 %b) nounwind readnone uwtable {
 entry:
@@ -27,10 +25,9 @@ entry:
 ;    return (a << 2) | (b >> 62);
 ;}
 
-; CHECK:             lshift2:
-; CHECK:             shlq    $2, {{.*}}
-; CHECK-NEXT:        shrq    $62, {{.*}}
-; CHECK-NEXT:        leaq    ({{.*}},{{.*}}), {{.*}}
+; CHECK-LABEL:       lshift2:
+; CHECK:             shrq    $62, %rsi
+; CHECK-NEXT:        leaq    (%rsi,%rdi,4), %rax
 
 define i64 @lshift2(i64 %a, i64 %b) nounwind readnone uwtable {
 entry:

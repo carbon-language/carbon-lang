@@ -1338,19 +1338,29 @@ bool X86DAGToDAGISel::matchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
       return false;
     break;
 
-  case ISD::OR:
-    // Handle "X | C" as "X + C" iff X is known to have C bits clear.
-    if (CurDAG->isBaseWithConstantOffset(N)) {
-      X86ISelAddressMode Backup = AM;
-      ConstantSDNode *CN = cast<ConstantSDNode>(N.getOperand(1));
+  case ISD::OR: {
+    // TODO: The bit-checking logic should be put into a helper function and
+    // used by DAGCombiner.
 
-      // Start with the LHS as an addr mode.
-      if (!matchAddressRecursively(N.getOperand(0), AM, Depth+1) &&
-          !foldOffsetIntoAddress(CN->getSExtValue(), AM))
+    // We want to look through a transform in InstCombine and DAGCombiner that
+    // turns 'add' into 'or', so we can treat this 'or' exactly like an 'add'.
+    APInt LHSZero, LHSOne;
+    APInt RHSZero, RHSOne;
+    CurDAG->computeKnownBits(N.getOperand(0), LHSZero, LHSOne);
+    CurDAG->computeKnownBits(N.getOperand(1), RHSZero, RHSOne);
+
+    // If we know that there are no common bits set by the operands of this
+    // 'or', it is equivalent to an 'add'. For example:
+    // (or (and x, 1), (shl y, 3)) --> (add (and x, 1), (shl y, 3))
+    // An 'lea' can then be used to match the shift (multiply) and add:
+    // and $1, %esi
+    // lea (%rsi, %rdi, 8), %rax
+    if ((LHSZero | RHSZero).isAllOnesValue())
+      if (!matchAdd(N, AM, Depth))
         return false;
-      AM = Backup;
-    }
+
     break;
+  }
 
   case ISD::AND: {
     // Perform some heroic transforms on an and of a constant-count shift

@@ -61,10 +61,9 @@ define i64 @rshift7(i64 %a, i64 %b) nounwind readnone uwtable {
 ;    return (a >> 63) | (b << 1);
 ;}
 
-; CHECK:             rshift63:
-; CHECK:             shrq    $63, {{.*}}
-; CHECK-NEXT:        leaq    ({{.*}},{{.*}}), {{.*}}
-; CHECK-NEXT:        orq     {{.*}}, {{.*}}
+; CHECK-LABEL:       rshift63:
+; CHECK:             shrq    $63, %rdi
+; CHECK-NEXT:        leaq    (%rdi,%rsi,2), %rax
 
 define i64 @rshift63(i64 %a, i64 %b) nounwind readnone uwtable {
   %1 = lshr i64 %a, 63
