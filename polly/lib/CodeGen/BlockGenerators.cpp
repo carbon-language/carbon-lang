@@ -514,7 +514,6 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
     if (Inst && isa<PHINode>(Inst))
       continue;
 
-    ValueMapT EmptyMap;
     Builder.CreateStore(Array->getBasePtr(),
                         getOrCreateScalarAlloca(Array->getBasePtr()));
   }
