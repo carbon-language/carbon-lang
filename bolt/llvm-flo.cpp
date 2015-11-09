@@ -219,9 +219,12 @@ public:
     DEBUG(dbgs() << "FLO: allocating data section : " << SectionName
                  << " with size " << Size << ", alignment "
                  << Alignment << "\n");
-    errs() << "FLO-WARNING: allocating data section.\n";
-    return SectionMemoryManager::allocateDataSection(Size, Alignment, SectionID,
-                                                     SectionName, IsReadOnly);
+    auto ret = SectionMemoryManager::allocateDataSection(
+        Size, Alignment, SectionID, SectionName, IsReadOnly);
+
+    SectionAddressInfo[SectionName] = {reinterpret_cast<uint64_t>(ret), Size};
+
+    return ret;
   }
 
   // Tell EE that we guarantee we don't need stubs.
@@ -466,6 +469,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   uint64_t LSDAAddress{0};
 
   // Process special sections.
+  uint64_t EHFrameAddress = 0ULL;
   for (const auto &Section : File->sections()) {
     StringRef SectionName;
     check_error(Section.getName(SectionName), "cannot get section name");
@@ -480,6 +484,9 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       readLSDA(SectionData, *BC);
       LSDAData = SectionData;
       LSDAAddress = Section.getAddress();
+    }
+    if (SectionName == ".eh_frame") {
+      EHFrameAddress = Section.getAddress();
     }
   }
 
@@ -699,6 +706,53 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
   Streamer->InitSections(false);
 
+  // Define a helper to decode and emit CFI instructions at a given point in a
+  // BB
+  auto emitCFIInstr = [&Streamer](MCCFIInstruction &CFIInstr) {
+    switch (CFIInstr.getOperation()) {
+    default:
+      llvm_unreachable("Unexpected instruction");
+    case MCCFIInstruction::OpDefCfaOffset:
+      Streamer->EmitCFIDefCfaOffset(CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpAdjustCfaOffset:
+      Streamer->EmitCFIAdjustCfaOffset(CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpDefCfa:
+      Streamer->EmitCFIDefCfa(CFIInstr.getRegister(), CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpDefCfaRegister:
+      Streamer->EmitCFIDefCfaRegister(CFIInstr.getRegister());
+      break;
+    case MCCFIInstruction::OpOffset:
+      Streamer->EmitCFIOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpRegister:
+      Streamer->EmitCFIRegister(CFIInstr.getRegister(),
+                                CFIInstr.getRegister2());
+      break;
+    case MCCFIInstruction::OpRelOffset:
+      Streamer->EmitCFIRelOffset(CFIInstr.getRegister(), CFIInstr.getOffset());
+      break;
+    case MCCFIInstruction::OpUndefined:
+      Streamer->EmitCFIUndefined(CFIInstr.getRegister());
+      break;
+    case MCCFIInstruction::OpRememberState:
+      Streamer->EmitCFIRememberState();
+      break;
+    case MCCFIInstruction::OpRestoreState:
+      Streamer->EmitCFIRestoreState();
+      break;
+    case MCCFIInstruction::OpRestore:
+      Streamer->EmitCFIRestore(CFIInstr.getRegister());
+      break;
+    case MCCFIInstruction::OpSameValue:
+      Streamer->EmitCFISameValue(CFIInstr.getRegister());
+      break;
+    }
+  };
+
+  bool HasEHFrame = false;
   // Output functions one by one.
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
@@ -733,6 +787,12 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     Streamer->EmitSymbolAttribute(FunctionSymbol, MCSA_ELF_TypeFunction);
     Streamer->EmitLabel(FunctionSymbol);
 
+    // Emit CFI start
+    if (Function.hasCFI()) {
+      HasEHFrame = true;
+      Streamer->EmitCFIStartProc(/*IsSimple=*/false);
+    }
+
     // Emit code.
     for (auto BB : Function.layout()) {
       if (BB->getAlignment() > 1)
@@ -750,8 +810,14 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
         }
         if (!BC->MII->get(Instr.getOpcode()).isPseudo())
           Streamer->EmitInstruction(Instr, *BC->STI);
+        else
+          emitCFIInstr(*Function.getCFIFor(Instr));
       }
     }
+
+    // Emit CFI end
+    if (Function.hasCFI())
+      Streamer->EmitCFIEndProc();
 
     // TODO: is there any use in emiting end of function?
     //       Perhaps once we have a support for C++ exceptions.
@@ -819,6 +885,21 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       Function.setImageSize(SAI->second.second);
     } else {
       errs() << "FLO: cannot remap function " << Function.getName() << "\n";
+    }
+  }
+  // Map .eh_frame
+  if (HasEHFrame) {
+    assert(EHFrameAddress);
+    auto SAI = EFMM->SectionAddressInfo.find(".eh_frame");
+    if (SAI != EFMM->SectionAddressInfo.end()) {
+      DEBUG(dbgs() << "FLO: mapping 0x" << Twine::utohexstr(SAI->second.first)
+                   << " to 0x" << Twine::utohexstr(EHFrameAddress)
+                   << '\n');
+      OLT.mapSectionAddress(ObjectsHandle,
+          reinterpret_cast<const void*>(SAI->second.first),
+          EHFrameAddress);
+    } else {
+      errs() << "FLO: cannot remap .eh_frame\n";
     }
   }
 

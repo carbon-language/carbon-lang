@@ -327,6 +327,11 @@ public:
     return IsSimple;
   }
 
+  /// Return true if the function has CFI instructions
+  bool hasCFI() const {
+    return !FrameInstructions.empty();
+  }
+
   /// Return true if the given address \p PC is inside the function body.
   bool containsAddress(uint64_t PC) const {
     return Address <= PC && PC < Address + Size;
