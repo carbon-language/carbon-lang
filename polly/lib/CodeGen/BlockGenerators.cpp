@@ -466,6 +466,8 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, LoopToScevMapT &LTS,
 
 void BlockGenerator::createScalarInitialization(Scop &S) {
   Region &R = S.getRegion();
+  BasicBlock *ExitBB = R.getExit();
+
   // The split block __just before__ the region and optimized region.
   BasicBlock *SplitBB = R.getEnteringBlock();
   BranchInst *SplitBBTerm = cast<BranchInst>(SplitBB->getTerminator());
@@ -509,10 +511,13 @@ void BlockGenerator::createScalarInitialization(Scop &S) {
     if (Inst && R.contains(Inst))
       continue;
 
-    // PHI nodes that are not marked as such in their SAI object are exit PHI
-    // nodes we model as common scalars but do not need to initialize.
-    if (Inst && isa<PHINode>(Inst))
-      continue;
+    // PHI nodes that are not marked as such in their SAI object are either exit
+    // PHI nodes we model as common scalars but without initialization, or
+    // incoming phi nodes that need to be initialized. Check if the first is the
+    // case for Inst and do not create and initialize memory if so.
+    if (auto *PHI = dyn_cast_or_null<PHINode>(Inst))
+      if (!S.hasSingleExitEdge() && PHI->getBasicBlockIndex(ExitBB) >= 0)
+        continue;
 
     Builder.CreateStore(Array->getBasePtr(),
                         getOrCreateScalarAlloca(Array->getBasePtr()));
