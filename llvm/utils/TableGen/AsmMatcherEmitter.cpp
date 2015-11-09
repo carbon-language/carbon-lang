@@ -958,17 +958,9 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info,
   if (AsmOperands.empty())
     PrintFatalError(TheDef->getLoc(),
                   "Instruction '" + TheDef->getName() + "' has no tokens");
-  Mnemonic = AsmOperands[0].Token;
-  if (Mnemonic.empty())
-    PrintFatalError(TheDef->getLoc(),
-                  "Missing instruction mnemonic");
-  // FIXME : Check and raise an error if it is a register.
-  if (Mnemonic[0] == '$')
-    PrintFatalError(TheDef->getLoc(),
-                    "Invalid instruction mnemonic '" + Mnemonic + "'!");
-
-  // Remove the first operand, it is tracked in the mnemonic field.
-  AsmOperands.erase(AsmOperands.begin());
+  assert(!AsmOperands[0].Token.empty());
+  if (AsmOperands[0].Token[0] != '$')
+    Mnemonic = AsmOperands[0].Token;
 }
 
 bool MatchableInfo::validate(StringRef CommentDelimiter, bool Hack) const {
@@ -1879,7 +1871,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
 
         // Add the operand entry to the instruction kind conversion row.
         ConversionRow.push_back(ID);
-        ConversionRow.push_back(OpInfo.AsmOperandNum + 1);
+        ConversionRow.push_back(OpInfo.AsmOperandNum);
 
         if (!IsNewConverter)
           break;
@@ -2602,13 +2594,17 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  uint64_t AvailableFeatures = getAvailableFeatures();\n\n";
 
   OS << "  // Get the next operand index.\n";
-  OS << "  unsigned NextOpNum = Operands.size()-1;\n";
+  OS << "  unsigned NextOpNum = Operands.size();\n";
 
   // Emit code to search the table.
   OS << "  // Search the table.\n";
   OS << "  std::pair<const OperandMatchEntry*, const OperandMatchEntry*>";
-  OS << " MnemonicRange =\n";
-  OS << "    std::equal_range(OperandMatchTable, OperandMatchTable+"
+  OS << " MnemonicRange\n";
+  OS << "       (OperandMatchTable, OperandMatchTable+";
+  OS << Info.OperandMatchInfo.size() << ");\n";
+  OS << "  if(!Mnemonic.empty())\n";
+  OS << "    MnemonicRange = std::equal_range(OperandMatchTable,";
+  OS << " OperandMatchTable+"
      << Info.OperandMatchInfo.size() << ", Mnemonic,\n"
      << "                     LessOpcodeOperand());\n\n";
 
@@ -2918,8 +2914,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "                     bool matchingInlineAsm, unsigned VariantID) {\n";
 
   OS << "  // Eliminate obvious mismatches.\n";
-  OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
-  OS << "    ErrorInfo = " << (MaxNumOperands+1) << ";\n";
+  OS << "  if (Operands.size() > " << MaxNumOperands << ") {\n";
+  OS << "    ErrorInfo = " << MaxNumOperands << ";\n";
   OS << "    return Match_InvalidOperand;\n";
   OS << "  }\n\n";
 
@@ -2928,7 +2924,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  uint64_t AvailableFeatures = getAvailableFeatures();\n\n";
 
   OS << "  // Get the instruction mnemonic, which is the first token.\n";
-  OS << "  StringRef Mnemonic = ((" << Target.getName()
+  OS << "  StringRef Mnemonic;\n";
+  OS << "  if (Operands[0]->isToken())\n";
+  OS << "    Mnemonic = ((" << Target.getName()
      << "Operand&)*Operands[0]).getToken();\n\n";
 
   if (HasMnemonicAliases) {
@@ -2959,8 +2957,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   }
   OS << "  }\n";
   OS << "  // Search the table.\n";
-  OS << "  std::pair<const MatchEntry*, const MatchEntry*> MnemonicRange =\n";
-  OS << "    std::equal_range(Start, End, Mnemonic, LessOpcode());\n\n";
+  OS << "  std::pair<const MatchEntry*, const MatchEntry*>"
+        "MnemonicRange(Start, End);\n";
+  OS << "  unsigned SIndex = Mnemonic.empty() ? 0 : 1;\n";
+  OS << "  if (!Mnemonic.empty())\n";
+  OS << "    MnemonicRange = std::equal_range(Start, End, Mnemonic.lower(), LessOpcode());\n\n";
 
   OS << "  // Return a more specific error code if no mnemonics match.\n";
   OS << "  if (MnemonicRange.first == MnemonicRange.second)\n";
@@ -2970,28 +2971,23 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "*ie = MnemonicRange.second;\n";
   OS << "       it != ie; ++it) {\n";
 
-  OS << "    // equal_range guarantees that instruction mnemonic matches.\n";
-  OS << "    assert(Mnemonic == it->getMnemonic());\n";
-
   // Emit check that the subclasses match.
   OS << "    bool OperandsValid = true;\n";
-  OS << "    for (unsigned i = 0; i != " << MaxNumOperands << "; ++i) {\n";
-  OS << "      if (i + 1 >= Operands.size()) {\n";
-  OS << "        OperandsValid = (it->Classes[i] == " <<"InvalidMatchClass);\n";
-  OS << "        if (!OperandsValid) ErrorInfo = i + 1;\n";
+  OS << "    for (unsigned i = SIndex; i != " << MaxNumOperands << "; ++i) {\n";
+  OS << "      auto Formal = static_cast<MatchClassKind>(it->Classes[i]);\n";
+  OS << "      if (i >= Operands.size()) {\n";
+  OS << "        OperandsValid = (Formal == " <<"InvalidMatchClass);\n";
+  OS << "        if (!OperandsValid) ErrorInfo = i;\n";
   OS << "        break;\n";
   OS << "      }\n";
-  OS << "      unsigned Diag = validateOperandClass(*Operands[i+1],\n";
-  OS.indent(43);
-  OS << "(MatchClassKind)it->Classes[i]);\n";
+  OS << "      MCParsedAsmOperand &Actual = *Operands[i];\n";
+  OS << "      unsigned Diag = validateOperandClass(Actual, Formal);\n";
   OS << "      if (Diag == Match_Success)\n";
   OS << "        continue;\n";
   OS << "      // If the generic handler indicates an invalid operand\n";
   OS << "      // failure, check for a special case.\n";
   OS << "      if (Diag == Match_InvalidOperand) {\n";
-  OS << "        Diag = validateTargetOperandClass(*Operands[i+1],\n";
-  OS.indent(43);
-  OS << "(MatchClassKind)it->Classes[i]);\n";
+  OS << "        Diag = validateTargetOperandClass(Actual, Formal);\n";
   OS << "        if (Diag == Match_Success)\n";
   OS << "          continue;\n";
   OS << "      }\n";
@@ -3000,8 +2996,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "      // If we already had a match that only failed due to a\n";
   OS << "      // target predicate, that diagnostic is preferred.\n";
   OS << "      if (!HadMatchOtherThanPredicate &&\n";
-  OS << "          (it == MnemonicRange.first || ErrorInfo <= i+1)) {\n";
-  OS << "        ErrorInfo = i+1;\n";
+  OS << "          (it == MnemonicRange.first || ErrorInfo <= i)) {\n";
+  OS << "        ErrorInfo = i;\n";
   OS << "        // InvalidOperand is the default. Prefer specificity.\n";
   OS << "        if (Diag != Match_InvalidOperand)\n";
   OS << "          RetCode = Diag;\n";
