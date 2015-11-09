@@ -11,8 +11,7 @@ LIBRARYNAME = LLVMHexagonCodeGen
 TARGET = Hexagon
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = HexagonGen.inc \
-                HexagonGenRegisterInfo.inc \
+BUILT_SOURCES = HexagonGenRegisterInfo.inc \
                 HexagonGenInstrInfo.inc  \
                 HexagonGenAsmMatcher.inc \
                 HexagonGenAsmWriter.inc \
