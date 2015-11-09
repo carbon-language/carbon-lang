@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-codegen -S < %s | FileCheck %s
-; XFAIL: *
+;
 ; llvm.org/PR25438
 ; After loop versioning, a dominance check of a non-affine subregion's exit node
 ; causes the dominance check to always fail any block in the scop. The
@@ -13,7 +13,7 @@
 ; CHECK:        a.phiops.reload = load i32, i32* %a.phiops
 ;
 ; CHECK-LABEL: polly.stmt.polly.merge_new_and_old.exit:
-; CHECK:         store i32 %a.phiops.reload, i32* %a.s2a
+; CHECK:         store i32 %polly.a, i32* %a.s2a
 
 define void @func() {
 entry:

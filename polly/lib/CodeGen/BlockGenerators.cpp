@@ -1012,6 +1012,8 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   assert(Stmt.isRegionStmt() &&
          "Only region statements can be copied by the region generator");
 
+  Scop *S = Stmt.getParent();
+
   // Forget all old mappings.
   BlockMap.clear();
   RegionMaps.clear();
@@ -1036,6 +1038,17 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   for (auto PI = pred_begin(EntryBB), PE = pred_end(EntryBB); PI != PE; ++PI)
     if (!R->contains(*PI))
       BlockMap[*PI] = EntryBBCopy;
+
+  // Determine the original exit block of this subregion. If it the exit block
+  // is also the scop's exit, it it has been changed to polly.merge_new_and_old.
+  // We move one block back to find the original block. This only happens if the
+  // scop required simplification.
+  // If the whole scop consists of only this non-affine region, then they share
+  // the same Region object, such that we cannot change the exit of one and not
+  // the other.
+  BasicBlock *ExitBB = R->getExit();
+  if (!S->hasSingleExitEdge() && ExitBB == S->getRegion().getExit())
+    ExitBB = *(++pred_begin(ExitBB));
 
   // Iterate over all blocks in the region in a breadth-first search.
   std::deque<BasicBlock *> Blocks;
@@ -1078,7 +1091,7 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
         Blocks.push_back(*SI);
 
     // Remember value in case it is visible after this subregion.
-    if (DT.dominates(BB, R->getExit()))
+    if (DT.dominates(BB, ExitBB))
       ValueMap.insert(RegionMap.begin(), RegionMap.end());
   }
 
@@ -1088,7 +1101,10 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, LoopToScevMapT &LTS,
   ExitBBCopy->setName("polly.stmt." + R->getExit()->getName() + ".exit");
   BlockMap[R->getExit()] = ExitBBCopy;
 
-  repairDominance(R->getExit(), ExitBBCopy);
+  if (ExitBB == R->getExit())
+    repairDominance(ExitBB, ExitBBCopy);
+  else
+    DT.changeImmediateDominator(ExitBBCopy, BlockMap.lookup(ExitBB));
 
   // As the block generator doesn't handle control flow we need to add the
   // region control flow by hand after all blocks have been copied.
