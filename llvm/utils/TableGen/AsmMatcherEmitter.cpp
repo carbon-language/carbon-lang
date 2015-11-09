@@ -294,6 +294,13 @@ public:
   }
 };
 
+class AsmVariantInfo {
+public:
+  std::string TokenizingCharacters;
+  std::string SeparatorCharacters;
+  std::string BreakCharacters;
+};
+
 /// MatchableInfo - Helper class for storing the necessary information for an
 /// instruction or alias which is capable of being matched.
 struct MatchableInfo {
@@ -484,7 +491,8 @@ struct MatchableInfo {
 
   void initialize(const AsmMatcherInfo &Info,
                   SmallPtrSetImpl<Record*> &SingletonRegisters,
-                  int AsmVariantNo, StringRef RegisterPrefix);
+                  int AsmVariantNo, StringRef RegisterPrefix,
+                  AsmVariantInfo const &Variant);
 
   /// validate - Return true if this matchable is a valid thing to match against
   /// and perform a bunch of validity checking.
@@ -584,8 +592,10 @@ struct MatchableInfo {
   void dump() const;
 
 private:
-  void tokenizeAsmString(const AsmMatcherInfo &Info);
-  void addAsmOperand(size_t Start, size_t End);
+  void tokenizeAsmString(AsmMatcherInfo const &Info,
+                         AsmVariantInfo const &Variant);
+  void addAsmOperand(size_t Start, size_t End,
+                     std::string const &SeparatorCharacters);
 };
 
 /// SubtargetFeatureInfo - Helper class for storing information on a subtarget
@@ -828,12 +838,13 @@ extractSingletonRegisterForAsmOperand(MatchableInfo::AsmOperand &Op,
 
 void MatchableInfo::initialize(const AsmMatcherInfo &Info,
                                SmallPtrSetImpl<Record*> &SingletonRegisters,
-                               int AsmVariantNo, StringRef RegisterPrefix) {
+                               int AsmVariantNo, StringRef RegisterPrefix,
+                               AsmVariantInfo const &Variant) {
   AsmVariantID = AsmVariantNo;
   AsmString =
     CodeGenInstruction::FlattenAsmStringVariants(AsmString, AsmVariantNo);
 
-  tokenizeAsmString(Info);
+  tokenizeAsmString(Info, Variant);
 
   // Compute the require features.
   for (Record *Predicate : TheDef->getValueAsListOfDefs("Predicates"))
@@ -857,9 +868,9 @@ void MatchableInfo::initialize(const AsmMatcherInfo &Info,
 }
 
 /// Append an AsmOperand for the given substring of AsmString.
-void MatchableInfo::addAsmOperand(size_t Start, size_t End) {
+void MatchableInfo::addAsmOperand(size_t Start, size_t End,
+                                  std::string const &Separators) {
   StringRef String = AsmString;
-  StringRef Separators = "[]*! \t,";
   // Look for separators before and after to figure out is this token is
   // isolated.  Accept '$$' as that's how we escape '$'.
   bool IsIsolatedToken =
@@ -870,42 +881,54 @@ void MatchableInfo::addAsmOperand(size_t Start, size_t End) {
 }
 
 /// tokenizeAsmString - Tokenize a simplified assembly string.
-void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
+void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info,
+                                      AsmVariantInfo const &Variant) {
   StringRef String = AsmString;
-  size_t Prev = 0;
-  bool InTok = true;
-  for (size_t i = 0, e = String.size(); i != e; ++i) {
-    switch (String[i]) {
-    case '[':
-    case ']':
-    case '*':
-    case '!':
-    case ' ':
-    case '\t':
-    case ',':
-      if (InTok) {
-        addAsmOperand(Prev, i);
+  unsigned Prev = 0;
+  bool InTok = false;
+  std::string Separators = Variant.TokenizingCharacters +
+                           Variant.SeparatorCharacters;
+  for (unsigned i = 0, e = String.size(); i != e; ++i) {
+    if(Variant.BreakCharacters.find(String[i]) != std::string::npos) {
+      if(InTok) {
+        addAsmOperand(Prev, i, Separators);
+        Prev = i;
+      }
+      InTok = true;
+      continue;
+    }
+    if(Variant.TokenizingCharacters.find(String[i]) != std::string::npos) {
+      if(InTok) {
+        addAsmOperand(Prev, i, Separators);
         InTok = false;
       }
-      if (!isspace(String[i]) && String[i] != ',')
-        addAsmOperand(i, i + 1);
+      addAsmOperand(i, i + 1, Separators);
       Prev = i + 1;
-      break;
-
+      continue;
+    }
+    if(Variant.SeparatorCharacters.find(String[i]) != std::string::npos) {
+      if(InTok) {
+        addAsmOperand(Prev, i, Separators);
+        InTok = false;
+      }
+      Prev = i + 1;
+      continue;
+    }
+    switch (String[i]) {
     case '\\':
       if (InTok) {
-        addAsmOperand(Prev, i);
+        addAsmOperand(Prev, i, Separators);
         InTok = false;
       }
       ++i;
       assert(i != String.size() && "Invalid quoted character");
-      addAsmOperand(i, i + 1);
+      addAsmOperand(i, i + 1, Separators);
       Prev = i + 1;
       break;
 
     case '$': {
-      if (InTok) {
-        addAsmOperand(Prev, i);
+      if (InTok && Prev != i) {
+        addAsmOperand(Prev, i, Separators);
         InTok = false;
       }
 
@@ -915,31 +938,20 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
         break;
       }
 
-      // If this is "${" find the next "}" and make an identifier like "${xxx}"
-      size_t EndPos = String.find('}', i);
-      assert(EndPos != StringRef::npos &&
-             "Missing brace in operand reference!");
-      addAsmOperand(i, EndPos+1);
+      StringRef::iterator End = std::find(String.begin() + i, String.end(),'}');
+      assert(End != String.end() && "Missing brace in operand reference!");
+      size_t EndPos = End - String.begin();
+      addAsmOperand(i, EndPos+1, Separators);
       Prev = EndPos + 1;
       i = EndPos;
       break;
     }
-
-    case '.':
-      if (!Info.AsmParser->getValueAsBit("MnemonicContainsDot")) {
-        if (InTok)
-          addAsmOperand(Prev, i);
-        Prev = i;
-      }
-      InTok = true;
-      break;
-
     default:
       InTok = true;
     }
   }
   if (InTok && Prev != String.size())
-    addAsmOperand(Prev, StringRef::npos);
+    addAsmOperand(Prev, StringRef::npos, Separators);
 
   // The first token of the instruction is the mnemonic, which must be a
   // simple string, not a $foo variable or a singleton register.
@@ -1373,6 +1385,13 @@ void AsmMatcherInfo::buildInfo() {
     std::string CommentDelimiter =
       AsmVariant->getValueAsString("CommentDelimiter");
     std::string RegisterPrefix = AsmVariant->getValueAsString("RegisterPrefix");
+    AsmVariantInfo Variant;
+    Variant.TokenizingCharacters =
+        AsmVariant->getValueAsString("TokenizingCharacters");
+    Variant.SeparatorCharacters =
+        AsmVariant->getValueAsString("SeparatorCharacters");
+    Variant.BreakCharacters =
+        AsmVariant->getValueAsString("BreakCharacters");
     int AsmVariantNo = AsmVariant->getValueAsInt("Variant");
 
     for (const CodeGenInstruction *CGI : Target.instructions()) {
@@ -1388,7 +1407,8 @@ void AsmMatcherInfo::buildInfo() {
 
       auto II = llvm::make_unique<MatchableInfo>(*CGI);
 
-      II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
+      II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix,
+                     Variant);
 
       // Ignore instructions which shouldn't be matched and diagnose invalid
       // instruction definitions with an error.
@@ -1415,7 +1435,8 @@ void AsmMatcherInfo::buildInfo() {
 
       auto II = llvm::make_unique<MatchableInfo>(std::move(Alias));
 
-      II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
+      II->initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix,
+                     Variant);
 
       // Validate the alias definitions.
       II->validate(CommentDelimiter, false);
