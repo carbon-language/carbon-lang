@@ -158,6 +158,12 @@ void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC) {
       uintptr_t ActionEntry = readULEB128(CallSitePtr);
       uint64_t RangeBase = 0;
       if (opts::PrintExceptions) {
+        errs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
+               << ", 0x" << Twine::utohexstr(RangeBase + Start + Length)
+               << "); landing pad: 0x" << Twine::utohexstr(LPStart + LandingPad)
+               << "; action entry: 0x" << Twine::utohexstr(ActionEntry) << "\n";
+      }
+      if (ActionEntry != 0) {
         auto printType = [&] (int Index, raw_ostream &OS) {
           assert(Index > 0 && "only positive indices are valid");
           assert(TTypeEncoding == DW_EH_PE_udata4 &&
@@ -174,51 +180,54 @@ void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC) {
             OS << "0x" << Twine::utohexstr(TypeAddress);
           }
         };
-        errs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
-               << ", 0x" << Twine::utohexstr(RangeBase + Start + Length)
-               << "); landing pad: 0x" << Twine::utohexstr(LPStart + LandingPad)
-               << "; action entry: 0x" << Twine::utohexstr(ActionEntry) << "\n";
-        if (ActionEntry != 0) {
+        if (opts::PrintExceptions)
           errs() << "    actions: ";
-          const uint8_t *ActionPtr = ActionTableStart + ActionEntry - 1;
-          long long ActionType;
-          long long ActionNext;
-          auto Sep = "";
-          do {
-            ActionType = readSLEB128(ActionPtr);
-            auto Self = ActionPtr;
-            ActionNext = readSLEB128(ActionPtr);
+        const uint8_t *ActionPtr = ActionTableStart + ActionEntry - 1;
+        long long ActionType;
+        long long ActionNext;
+        auto Sep = "";
+        do {
+          ActionType = readSLEB128(ActionPtr);
+          auto Self = ActionPtr;
+          ActionNext = readSLEB128(ActionPtr);
+          if (opts::PrintExceptions)
             errs() << Sep << "(" << ActionType << ", " << ActionNext << ") ";
-            if (ActionType == 0) {
+          if (ActionType == 0) {
+            if (opts::PrintExceptions)
               errs() << "cleanup";
-            } else if (ActionType > 0) {
-              // It's an index into a type table.
+          } else if (ActionType > 0) {
+            // It's an index into a type table.
+            if (opts::PrintExceptions) {
               errs() << "catch type ";
               printType(ActionType, errs());
-            } else { // ActionType < 0
+            }
+          } else { // ActionType < 0
+            if (opts::PrintExceptions)
               errs() << "filter exception types ";
-              auto TSep = "";
-              // ActionType is a negative byte offset into uleb128-encoded table
-              // of indices with base 1.
-              // E.g. -1 means offset 0, -2 is offset 1, etc. The indices are
-              // encoded using uleb128 so we cannot directly dereference them.
-              auto TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
-              while (auto Index = readULEB128(TypeIndexTablePtr)) {
+            auto TSep = "";
+            // ActionType is a negative byte offset into uleb128-encoded table
+            // of indices with base 1.
+            // E.g. -1 means offset 0, -2 is offset 1, etc. The indices are
+            // encoded using uleb128 so we cannot directly dereference them.
+            auto TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
+            while (auto Index = readULEB128(TypeIndexTablePtr)) {
+              if (opts::PrintExceptions) {
                 errs() << TSep;
                 printType(Index, errs());
                 TSep = ", ";
               }
-              MaxTypeIndexTableOffset =
-                  std::max(MaxTypeIndexTableOffset,
-                           TypeIndexTablePtr - TypeIndexTableStart);
             }
+            MaxTypeIndexTableOffset =
+                std::max(MaxTypeIndexTableOffset,
+                         TypeIndexTablePtr - TypeIndexTableStart);
+          }
 
-            Sep = "; ";
+          Sep = "; ";
 
-            ActionPtr = Self + ActionNext;
-          } while (ActionNext);
+          ActionPtr = Self + ActionNext;
+        } while (ActionNext);
+        if (opts::PrintExceptions)
           errs() << '\n';
-        }
       }
 
       if (LandingPad != 0 || ActionEntry != 0)
