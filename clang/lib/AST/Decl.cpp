@@ -1430,6 +1430,15 @@ void NamedDecl::printQualifiedName(raw_ostream &OS,
         }
       }
       OS << ')';
+    } else if (const EnumDecl *ED = dyn_cast<EnumDecl>(*I)) {
+      // C++ [dcl.enum]p10: Each enum-name and each unscoped
+      // enumerator is declared in the scope that immediately contains
+      // the enum-specifier. Each scoped enumerator is declared in the
+      // scope of the enumeration.
+      if (ED->isScoped() || ED->getIdentifier())
+        OS << *ED;
+      else
+        continue;
     } else {
       OS << *cast<NamedDecl>(*I);
     }
