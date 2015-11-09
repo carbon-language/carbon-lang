@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-codegen -S < %s | FileCheck %s
-;
+; XFAIL: *
 ; llvm.org/PR25438
 ; After loop versioning, a dominance check of a non-affine subregion's exit node
 ; causes the dominance check to always fail any block in the scop. The
