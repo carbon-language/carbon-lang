@@ -87,8 +87,6 @@ class HexagonAsmParser : public MCTargetAsmParser {
   MCAssembler *getAssembler() const { return Assembler; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
-  unsigned ArchVersion;
-
   bool equalIsAsmAssignment() override { return false; }
   bool isLabel(AsmToken &Token) override;
 
@@ -1190,7 +1188,7 @@ bool HexagonAsmParser::isLabel(AsmToken &Token) {
     return true;
   if (!MatchRegisterName(String.lower()))
     return true;
-  assert(Second.is(AsmToken::Colon));
+  assert(Second.is(AsmToken::Colon)); (void)Second;
   StringRef Raw (String.data(), Third.getString().data() - String.data() +
                  Third.getString().size());
   std::string Collapsed = Raw;
@@ -1566,7 +1564,7 @@ int HexagonAsmParser::processInstruction(MCInst &Inst,
     MCOperand &MO = Inst.getOperand(2);
     int64_t Value;
     bool Success = MO.getExpr()->evaluateAsAbsolute(Value);
-    assert(Success && "Assured by matcher");
+    assert(Success && "Assured by matcher"); (void)Success;
     if (Value == 0) {
       MCInst TmpInst;
       MCOperand &Pd = Inst.getOperand(0);
