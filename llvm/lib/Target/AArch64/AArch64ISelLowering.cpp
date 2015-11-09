@@ -6395,24 +6395,11 @@ SDValue AArch64TargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
   unsigned Val = Cst->getZExtValue();
 
   unsigned Size = Op.getValueType().getSizeInBits();
-  if (Val == 0) {
-    switch (Size) {
-    case 8:
-      return DAG.getTargetExtractSubreg(AArch64::bsub, dl, Op.getValueType(),
-                                        Op.getOperand(0));
-    case 16:
-      return DAG.getTargetExtractSubreg(AArch64::hsub, dl, Op.getValueType(),
-                                        Op.getOperand(0));
-    case 32:
-      return DAG.getTargetExtractSubreg(AArch64::ssub, dl, Op.getValueType(),
-                                        Op.getOperand(0));
-    case 64:
-      return DAG.getTargetExtractSubreg(AArch64::dsub, dl, Op.getValueType(),
-                                        Op.getOperand(0));
-    default:
-      llvm_unreachable("Unexpected vector type in extract_subvector!");
-    }
-  }
+
+  // This will get lowered to an appropriate EXTRACT_SUBREG in ISel.
+  if (Val == 0)
+    return Op;
+
   // If this is extracting the upper 64-bits of a 128-bit vector, we match
   // that directly.
   if (Size == 64 && Val * VT.getVectorElementType().getSizeInBits() == 64)

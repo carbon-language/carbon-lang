@@ -5788,6 +5788,21 @@ def : Pat<(v16i8 (bitconvert (v8f16 FPR128:$src))),
                              (v16i8 (REV16v16i8 FPR128:$src))>;
 }
 
+def : Pat<(v4i16 (extract_subvector V128:$Rn, (i64 0))),
+           (EXTRACT_SUBREG V128:$Rn, dsub)>;
+def : Pat<(v8i8 (extract_subvector V128:$Rn, (i64 0))),
+           (EXTRACT_SUBREG V128:$Rn, dsub)>;
+def : Pat<(v2f32 (extract_subvector V128:$Rn, (i64 0))),
+           (EXTRACT_SUBREG V128:$Rn, dsub)>;
+def : Pat<(v4f16 (extract_subvector V128:$Rn, (i64 0))),
+           (EXTRACT_SUBREG V128:$Rn, dsub)>;
+def : Pat<(v2i32 (extract_subvector V128:$Rn, (i64 0))),
+           (EXTRACT_SUBREG V128:$Rn, dsub)>;
+def : Pat<(v1i64 (extract_subvector V128:$Rn, (i64 0))),
+           (EXTRACT_SUBREG V128:$Rn, dsub)>;
+def : Pat<(v1f64 (extract_subvector V128:$Rn, (i64 0))),
+           (EXTRACT_SUBREG V128:$Rn, dsub)>;
+
 def : Pat<(v8i8 (extract_subvector (v16i8 FPR128:$Rn), (i64 1))),
           (EXTRACT_SUBREG (DUPv2i64lane FPR128:$Rn, 1), dsub)>;
 def : Pat<(v4i16 (extract_subvector (v8i16 FPR128:$Rn), (i64 1))),
