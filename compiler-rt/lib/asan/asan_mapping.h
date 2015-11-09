@@ -118,11 +118,7 @@ static const u64 kIosShadowOffset32 = 1ULL << 30;  // 0x40000000
 static const u64 kIosShadowOffset64 = 0x130000000;
 static const u64 kIosSimShadowOffset32 = 1ULL << 30;
 static const u64 kIosSimShadowOffset64 = kDefaultShadowOffset64;
-#if SANITIZER_AARCH64_VMA == 39
 static const u64 kAArch64_ShadowOffset64 = 1ULL << 36;
-#elif SANITIZER_AARCH64_VMA == 42
-static const u64 kAArch64_ShadowOffset64 = 1ULL << 39;
-#endif
 static const u64 kMIPS32_ShadowOffset32 = 0x0aaa0000;
 static const u64 kMIPS64_ShadowOffset64 = 1ULL << 37;
 static const u64 kPPC64_ShadowOffset64 = 1ULL << 41;

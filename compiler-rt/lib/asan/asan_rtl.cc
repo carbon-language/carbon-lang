@@ -378,8 +378,6 @@ static void AsanInitInternal() {
   // initialization steps look at flags().
   InitializeFlags();
 
-  CheckVMASize();
-
   AsanCheckIncompatibleRT();
   AsanCheckDynamicRTPrereqs();
 

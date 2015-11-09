@@ -97,7 +97,7 @@
 // For such platforms build this code with -DSANITIZER_CAN_USE_ALLOCATOR64=0 or
 // change the definition of SANITIZER_CAN_USE_ALLOCATOR64 here.
 #ifndef SANITIZER_CAN_USE_ALLOCATOR64
-# if defined(__mips64) || (defined(__aarch64__) && SANITIZER_AARCH64_VMA == 39)
+# if defined(__mips64) || defined(__aarch64__)
 #  define SANITIZER_CAN_USE_ALLOCATOR64 0
 # else
 #  define SANITIZER_CAN_USE_ALLOCATOR64 (SANITIZER_WORDSIZE == 64)
@@ -105,16 +105,9 @@
 #endif
 
 // The range of addresses which can be returned my mmap.
-// FIXME: this value should be different on different platforms,
-// e.g. on AArch64 it is most likely (1ULL << 39). Larger values will still work
-// but will consume more memory for TwoLevelByteMap.
-#if defined(__aarch64__)
-# if SANITIZER_AARCH64_VMA == 39
-#  define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 39)
-# elif SANITIZER_AARCH64_VMA == 42
-#  define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 42)
-# endif
-#elif defined(__mips__)
+// FIXME: this value should be different on different platforms.  Larger values
+// will still work but will consume more memory for TwoLevelByteMap.
+#if defined(__mips__)
 # define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 40)
 #else
 # define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 47)
