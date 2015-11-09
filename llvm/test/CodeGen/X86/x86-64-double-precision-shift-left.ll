@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=bdver1 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=bdver1 | FileCheck %s
 ; Verify that for the architectures that are known to have poor latency
 ; double precision shift instructions we generate alternative sequence 
 ; of instructions with lower latencies instead of shld instruction.
