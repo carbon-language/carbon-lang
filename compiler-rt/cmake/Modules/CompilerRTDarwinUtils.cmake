@@ -360,7 +360,19 @@ function(darwin_add_embedded_builtin_libraries)
   set(PIC_FLAG_ -fPIC)
   set(STATIC_FLAG -static)
 
-  set(DARWIN_macho_embedded_ARCHS armv6m armv7m armv7em armv7 i386 x86_64)
+  darwin_test_archs(ios
+      DARWIN_macho_embedded_ios_ARCHS
+      armv6m armv7m armv7em armv7)
+  darwin_test_archs(osx
+      DARWIN_macho_embedded_osx_ARCHS
+      i386 x86_64)
+
+  list(APPEND DARWIN_macho_embedded_ARCHS
+    ${DARWIN_macho_embedded_ios_ARCHS} ${DARWIN_macho_embedded_osx_ARCHS})
+
+  if(NOT DARWIN_macho_embedded_ARCHS)
+    return()
+  endif()
 
   set(DARWIN_macho_embedded_LIBRARY_OUTPUT_DIR
     ${COMPILER_RT_OUTPUT_DIR}/lib/macho_embedded)
