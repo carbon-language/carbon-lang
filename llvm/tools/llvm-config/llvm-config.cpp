@@ -218,7 +218,7 @@ std::vector<StringRef> GetAllDyLibComponents(const bool IsInDevelopmentTree,
                            /*IncludeNonInstalled=*/IsInDevelopmentTree,
                            GetComponentNames, nullptr, nullptr);
 
-  return std::move(Components);
+  return Components;
 }
 
 int main(int argc, char **argv) {
