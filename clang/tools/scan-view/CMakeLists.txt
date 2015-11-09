@@ -8,7 +8,10 @@ set(BinFiles
       scan-view
       startfile.py)
 
-file(GLOB ResourceFiles Resources/*)
+set(ResourceFiles
+      Resources/FileRadar.scpt
+      Resources/GetRadarVersion.scpt
+      Resources/bugcatcher.ico)
 
 if(CLANG_INSTALL_SCANVIEW)
   foreach(BinFile ${BinFiles})
@@ -26,7 +29,7 @@ if(CLANG_INSTALL_SCANVIEW)
                        COMMAND ${CMAKE_COMMAND} -E make_directory
                          ${CMAKE_BINARY_DIR}/share/scan-view
                        COMMAND ${CMAKE_COMMAND} -E copy
-                         ${ResourceFile}
+                         ${CMAKE_CURRENT_SOURCE_DIR}/${ResourceFile}
                          ${CMAKE_BINARY_DIR}/share/scan-view/)
     install(FILES ${ResourceFile} DESTINATION share/scan-view)
   endforeach()

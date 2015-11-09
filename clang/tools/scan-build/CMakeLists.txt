@@ -56,7 +56,7 @@ if(CLANG_INSTALL_SCANBUILD)
                        COMMAND ${CMAKE_COMMAND} -E copy
                          ${CMAKE_CURRENT_SOURCE_DIR}/${ManPage}
                          ${CMAKE_BINARY_DIR}/share/man/man1/)
-    install(PROGRAMS scan-build.1 DESTINATION share/man/man1)
+    install(PROGRAMS ${ManPage} DESTINATION share/man/man1)
   endforeach()
 
   foreach(ResourceFile ${ResourceFiles})
