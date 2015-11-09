@@ -2403,7 +2403,6 @@ __kmp_free_task_team( kmp_info_t *thread, kmp_task_team_t *task_team )
 
     KMP_DEBUG_ASSERT( task_team -> tt.tt_next == NULL );
     task_team -> tt.tt_next = __kmp_free_task_teams;
-    TCW_4(task_team -> tt.tt_found_tasks, FALSE);
     TCW_PTR(__kmp_free_task_teams, task_team);
 
     __kmp_release_bootstrap_lock( & __kmp_task_team_lock );
