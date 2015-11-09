@@ -361,7 +361,7 @@ function(darwin_add_embedded_builtin_libraries)
   set(SOFT_FLOAT_FLAG -mfloat-abi=soft)
   set(HARD_FLOAT_FLAG -mfloat-abi=hard)
 
-  set(PIC_FLAG_ -fPIC)
+  set(PIC_FLAG -fPIC)
   set(STATIC_FLAG -static)
 
   darwin_test_archs(ios
