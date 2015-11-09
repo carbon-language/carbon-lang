@@ -163,7 +163,7 @@ let isTerminator = 1, hasSideEffects = 1, isBarrier = 1, hasCtrlDep = 1,
                      [(catchret bb:$dst, bb:$from)]>;
 }
 
-let hasSideEffects = 1, isBarrier = 1, hasCtrlDep = 1, isCodeGenOnly = 1,
+let hasSideEffects = 1, hasCtrlDep = 1, isCodeGenOnly = 1,
     usesCustomInserter = 1 in
 def CATCHPAD : I<0, Pseudo, (outs), (ins), "# CATCHPAD", [(catchpad)]>;
 
@@ -172,7 +172,7 @@ def CATCHPAD : I<0, Pseudo, (outs), (ins), "# CATCHPAD", [(catchpad)]>;
 // parent function or funclet. It generally sets ESP and EBP, and optionally
 // ESI. It is only needed for 32-bit WinEH, as the runtime restores CSRs for us
 // elsewhere.
-let hasSideEffects = 1, isBarrier = 1, hasCtrlDep = 1, isCodeGenOnly = 1 in
+let hasSideEffects = 1, hasCtrlDep = 1, isCodeGenOnly = 1 in
 def EH_RESTORE : I<0, Pseudo, (outs), (ins), "# EH_RESTORE", []>;
 
 let hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
