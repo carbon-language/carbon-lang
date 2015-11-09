@@ -264,7 +264,7 @@ macro(darwin_add_builtin_libraries)
     set(CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE} -O3)
   endif()
 
-  set(CMAKE_C_FLAGS "-fPIC -fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
+  set(CMAKE_C_FLAGS "-fvisibility=hidden -DVISIBILITY_HIDDEN -Wall -fomit-frame-pointer")
   set(CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
   set(CMAKE_ASM_FLAGS ${CMAKE_C_FLAGS})
 
