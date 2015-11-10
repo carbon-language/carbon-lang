@@ -1371,7 +1371,10 @@ Target::ModuleUpdated (const ModuleList& module_list, const ModuleSP &old_module
 {
     // A module is replacing an already added module
     if (m_valid)
+    {
         m_breakpoint_list.UpdateBreakpointsWhenModuleIsReplaced(old_module_sp, new_module_sp);
+        m_internal_breakpoint_list.UpdateBreakpointsWhenModuleIsReplaced(old_module_sp, new_module_sp);
+    }
 }
 
 void
@@ -1380,6 +1383,7 @@ Target::ModulesDidLoad (ModuleList &module_list)
     if (m_valid && module_list.GetSize())
     {
         m_breakpoint_list.UpdateBreakpoints (module_list, true, false);
+        m_internal_breakpoint_list.UpdateBreakpoints (module_list, true, false);
         if (m_process_sp)
         {
             m_process_sp->ModulesDidLoad (module_list);
@@ -1404,6 +1408,7 @@ Target::SymbolsDidLoad (ModuleList &module_list)
         }
         
         m_breakpoint_list.UpdateBreakpoints (module_list, true, false);
+        m_internal_breakpoint_list.UpdateBreakpoints (module_list, true, false);
         BroadcastEvent (eBroadcastBitSymbolsLoaded, new TargetEventData (this->shared_from_this(), module_list));
     }
 }
@@ -1415,6 +1420,7 @@ Target::ModulesDidUnload (ModuleList &module_list, bool delete_locations)
     {
         UnloadModuleSections (module_list);
         m_breakpoint_list.UpdateBreakpoints (module_list, false, delete_locations);
+        m_internal_breakpoint_list.UpdateBreakpoints (module_list, false, delete_locations);
         BroadcastEvent (eBroadcastBitModulesUnloaded, new TargetEventData (this->shared_from_this(), module_list));
     }
 }
