@@ -626,9 +626,7 @@ void ModuleLinker::copyGVAttributes(GlobalValue *NewGV,
   // being imported as a declaration. In that case copy the attributes from the
   // base object.
   if (GA && !dyn_cast<GlobalAlias>(NewGV)) {
-    assert(isPerformingImport() &&
-           (GA->hasWeakAnyLinkage() ||
-            !doImportAsDefinition(GA->getBaseObject())));
+    assert(isPerformingImport() && !doImportAsDefinition(GA));
     NewGV->copyAttributesFrom(GA->getBaseObject());
   } else
     NewGV->copyAttributesFrom(SrcGV);
@@ -651,12 +649,19 @@ static bool isLessConstraining(GlobalValue::VisibilityTypes a,
 bool ModuleLinker::doImportAsDefinition(const GlobalValue *SGV) {
   if (!isPerformingImport())
     return false;
+  auto *GA = dyn_cast<GlobalAlias>(SGV);
+  if (GA) {
+    if (GA->hasWeakAnyLinkage())
+      return false;
+    return doImportAsDefinition(GA->getBaseObject());
+  }
   // Always import GlobalVariable definitions. The linkage changes
   // described in ModuleLinker::getLinkage ensure the correct behavior (e.g.
   // global variables with external linkage are transformed to
-  // available_externally defintions, which are ultimately turned into
-  // declaratios after the EliminateAvailableExternally pass).
-  if (dyn_cast<GlobalVariable>(SGV) && !SGV->isDeclaration())
+  // available_externally definitions, which are ultimately turned into
+  // declarations after the EliminateAvailableExternally pass).
+  if (dyn_cast<GlobalVariable>(SGV) && !SGV->isDeclaration() &&
+      !SGV->hasWeakAnyLinkage())
     return true;
   // Only import the function requested for importing.
   auto *SF = dyn_cast<Function>(SGV);
@@ -725,7 +730,7 @@ GlobalValue::LinkageTypes ModuleLinker::getLinkage(const GlobalValue *SGV) {
     // definitions upon import, so that they are available for inlining
     // and/or optimization, but are turned into declarations later
     // during the EliminateAvailableExternally pass.
-    if (doImportAsDefinition(SGV))
+    if (doImportAsDefinition(SGV) && !dyn_cast<GlobalAlias>(SGV))
       return GlobalValue::AvailableExternallyLinkage;
     // An imported external declaration stays external.
     return SGV->getLinkage();
@@ -758,7 +763,7 @@ GlobalValue::LinkageTypes ModuleLinker::getLinkage(const GlobalValue *SGV) {
     // equivalent, so the issue described above for weak_any does not exist,
     // and the definition can be imported. It can be treated similarly
     // to an imported externally visible global value.
-    if (doImportAsDefinition(SGV))
+    if (doImportAsDefinition(SGV) && !dyn_cast<GlobalAlias>(SGV))
       return GlobalValue::AvailableExternallyLinkage;
     else
       return GlobalValue::ExternalLinkage;
@@ -775,7 +780,7 @@ GlobalValue::LinkageTypes ModuleLinker::getLinkage(const GlobalValue *SGV) {
     // If we are promoting the local to global scope, it is handled
     // similarly to a normal externally visible global.
     if (doPromoteLocalToGlobal(SGV)) {
-      if (doImportAsDefinition(SGV))
+      if (doImportAsDefinition(SGV) && !dyn_cast<GlobalAlias>(SGV))
         return GlobalValue::AvailableExternallyLinkage;
       else
         return GlobalValue::ExternalLinkage;
@@ -834,8 +839,7 @@ GlobalValue *ModuleLinker::copyGlobalAliasProto(TypeMapTy &TypeMap,
   // as a declaration as well, which involves converting it to a non-alias.
   // See comments in ModuleLinker::getLinkage for why we cannot import
   // weak_any defintions.
-  if (isPerformingImport() && (SGA->hasWeakAnyLinkage() ||
-                               !doImportAsDefinition(SGA->getBaseObject()))) {
+  if (isPerformingImport() && !doImportAsDefinition(SGA)) {
     // Need to convert to declaration. All aliases must be definitions.
     const GlobalValue *GVal = SGA->getBaseObject();
     GlobalValue *NewGV;
@@ -852,8 +856,6 @@ GlobalValue *ModuleLinker::copyGlobalAliasProto(TypeMapTy &TypeMap,
       NewGV->setLinkage(GlobalValue::ExternalWeakLinkage);
     else
       NewGV->setLinkage(GlobalValue::ExternalLinkage);
-    // Don't attempt to link body, needs to be a declaration.
-    DoNotLinkFromSource.insert(SGA);
     return NewGV;
   }
   // If there is no linkage to be performed or we're linking from the source,
@@ -1427,6 +1429,9 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
     }
 
     NewGV = copyGlobalValueProto(TypeMap, SGV, DGV);
+
+    if (isPerformingImport() && !doImportAsDefinition(SGV))
+      DoNotLinkFromSource.insert(SGV);
   }
 
   NewGV->setUnnamedAddr(HasUnnamedAddr);
@@ -1890,10 +1895,6 @@ bool ModuleLinker::run() {
 
     // Skip if not linking from source.
     if (DoNotLinkFromSource.count(&SF))
-      continue;
-
-    // When importing, only materialize the function requested for import.
-    if (isPerformingImport() && &SF != ImportFunction)
       continue;
 
     if (linkGlobalValueBody(SF))
