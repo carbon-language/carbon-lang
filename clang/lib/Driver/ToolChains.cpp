@@ -324,12 +324,20 @@ void Darwin::addProfileRTLibs(const ArgList &Args,
   if (!needsProfileRT(Args)) return;
 
   // Select the appropriate runtime library for the target.
-  if (isTargetIOSBased())
+  if (isTargetWatchOSBased()) {
+    AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_watchos.a",
+                      /*AlwaysLink*/ true);
+  } else if (isTargetTvOSBased()) {
+    AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_tvos.a",
+                      /*AlwaysLink*/ true);
+  } else if (isTargetIOSBased()) {
     AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_ios.a",
                       /*AlwaysLink*/ true);
-  else
+  } else {
+    assert(isTargetMacOS() && "unexpected non MacOS platform");
     AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_osx.a",
                       /*AlwaysLink*/ true);
+  }
   return;
 }
 
