@@ -2176,7 +2176,7 @@ void AssemblyWriter::writeOperandBundles(ImmutableCallSite CS) {
     FirstBundle = false;
 
     Out << '"';
-    PrintEscapedString(BU.Tag, Out);
+    PrintEscapedString(BU.getTagName(), Out);
     Out << '"';
 
     Out << '(';
