@@ -4136,6 +4136,36 @@ static bool isTruePredicate(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
         return C->isMinValue();
       return true;
     }
+
+    // Match A to (X +_{nuw} CA) and B to (X +_{nuw} CB)
+    auto MatchNUWAddsToSameValue = [&](Value *A, Value *B, Value *&X,
+                                       const APInt *&CA, const APInt *&CB) {
+      if (match(A, m_NUWAdd(m_Value(X), m_APInt(CA))) &&
+          match(B, m_NUWAdd(m_Specific(X), m_APInt(CB))))
+        return true;
+
+      // If X & C == 0 then (X | C) == X +_{nuw} C
+      if (match(A, m_Or(m_Value(X), m_APInt(CA))) &&
+          match(B, m_Or(m_Specific(X), m_APInt(CB)))) {
+        unsigned BitWidth = CA->getBitWidth();
+        APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+        computeKnownBits(X, KnownZero, KnownOne, DL, Depth + 1, AC, CxtI, DT);
+
+        if ((KnownZero & *CA) == *CA && (KnownZero & *CB) == *CB)
+          return true;
+      }
+
+      return false;
+    };
+
+    Value *X;
+    const APInt *CLHS, *CRHS;
+    if (MatchNUWAddsToSameValue(LHS, RHS, X, CLHS, CRHS)) {
+      if (Pred == CmpInst::ICMP_ULE)
+        return CLHS->ule(*CRHS);
+      return CLHS->ult(*CRHS);
+    }
+
     return false;
   }
   }
