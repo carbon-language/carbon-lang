@@ -489,7 +489,7 @@ _mm256_shuffle_epi8(__m256i __a, __m256i __b)
 
 #define _mm256_shuffle_epi32(a, imm) __extension__ ({ \
   (__m256i)__builtin_shufflevector((__v8si)(__m256i)(a), \
-                                   (__v8si)_mm256_set1_epi32(0), \
+                                   (__v8si)_mm256_setzero_si256(), \
                                    (imm) & 0x3, ((imm) & 0xc) >> 2, \
                                    ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6, \
                                    4 + (((imm) & 0x03) >> 0), \
@@ -499,7 +499,7 @@ _mm256_shuffle_epi8(__m256i __a, __m256i __b)
 
 #define _mm256_shufflehi_epi16(a, imm) __extension__ ({ \
   (__m256i)__builtin_shufflevector((__v16hi)(__m256i)(a), \
-                                   (__v16hi)_mm256_set1_epi16(0), \
+                                   (__v16hi)_mm256_setzero_si256(), \
                                    0, 1, 2, 3, \
                                    4 + (((imm) & 0x03) >> 0), \
                                    4 + (((imm) & 0x0c) >> 2), \
@@ -513,7 +513,7 @@ _mm256_shuffle_epi8(__m256i __a, __m256i __b)
 
 #define _mm256_shufflelo_epi16(a, imm) __extension__ ({ \
   (__m256i)__builtin_shufflevector((__v16hi)(__m256i)(a), \
-                                   (__v16hi)_mm256_set1_epi16(0), \
+                                   (__v16hi)_mm256_setzero_si256(), \
                                    (imm) & 0x3,((imm) & 0xc) >> 2, \
                                    ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6, \
                                    4, 5, 6, 7, \
