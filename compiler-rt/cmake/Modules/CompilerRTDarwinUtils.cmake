@@ -161,8 +161,11 @@ macro(darwin_add_builtin_library name suffix)
     ${ARGN})
   set(libname "${name}.${suffix}_${LIB_ARCH}_${LIB_OS}")
   add_library(${libname} STATIC ${LIB_SOURCES})
+  if(DARWIN_${LIB_OS}_SYSROOT)
+    set(sysroot_flag -isysroot ${DARWIN_${LIB_OS}_SYSROOT})
+  endif()
   set_target_compile_flags(${libname}
-    -isysroot ${DARWIN_${LIB_OS}_SYSROOT}
+    ${sysroot_flag}
     ${DARWIN_${LIB_OS}_BUILTIN_MIN_VER_FLAG}
     ${LIB_CFLAGS})
   set_property(TARGET ${libname} APPEND PROPERTY
@@ -409,6 +412,7 @@ macro(darwin_add_embedded_builtin_libraries)
         set(float_flag)
         if(${arch} MATCHES "^arm")
           set(DARWIN_macho_embedded_SYSROOT ${DARWIN_ios_SYSROOT})
+          set(DARWIN_macho_embedded_BUILTIN_MIN_VER_FLAG ${DARWIN_ios_BUILTIN_MIN_VER_FLAG})
           # x86 targets are hard float by default, but the complain about the
           # float ABI flag, so don't pass it unless we're targeting arm.
           set(float_flag ${${float_type}_FLOAT_FLAG})
