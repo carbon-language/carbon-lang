@@ -214,8 +214,10 @@ isl_id *ScopArrayInfo::getBasePtrId() const { return isl_id_copy(Id); }
 void ScopArrayInfo::dump() const { print(errs()); }
 
 void ScopArrayInfo::print(raw_ostream &OS, bool SizeAsPwAff) const {
-  OS.indent(8) << *getElementType() << " " << getName() << "[*]";
-  for (unsigned u = 0; u < getNumberOfDimensions(); u++) {
+  OS.indent(8) << *getElementType() << " " << getName();
+  if (getNumberOfDimensions() > 0)
+    OS << "[*]";
+  for (unsigned u = 0; u + 1 < getNumberOfDimensions(); u++) {
     OS << "[";
 
     if (SizeAsPwAff)
@@ -225,6 +227,8 @@ void ScopArrayInfo::print(raw_ostream &OS, bool SizeAsPwAff) const {
 
     OS << "]";
   }
+
+  OS << ";";
 
   if (BasePtrOriginSAI)
     OS << " [BasePtrOrigin: " << BasePtrOriginSAI->getName() << "]";

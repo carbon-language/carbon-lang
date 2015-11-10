@@ -4,9 +4,9 @@
 ; as it is used as a memory base pointer (%0) but also as a scalar (%out.addr.0.lcssa).
 ;
 ; CHECK:         Arrays {
-; CHECK-NEXT:        float* MemRef_out[*] // Element size 0
-; CHECK-NEXT:        float* MemRef_out_addr_0_lcssa[*] // Element size 0
-; CHECK-NEXT:        float MemRef_out[*][4] // Element size 4
+; CHECK-NEXT:        float* MemRef_out; // Element size 0
+; CHECK-NEXT:        float* MemRef_out_addr_0_lcssa; // Element size 0
+; CHECK-NEXT:        float MemRef_out[*]; // Element size 4
 ; CHECK-NEXT:    }
 ;
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
