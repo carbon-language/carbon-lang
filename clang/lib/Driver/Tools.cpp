@@ -7488,14 +7488,19 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
 
   // When building 32-bit code on FreeBSD/amd64, we have to explicitly
   // instruct as in the base system to assemble 32-bit code.
-  if (getToolChain().getArch() == llvm::Triple::x86)
+  switch (getToolChain().getArch()) {
+  default:
+    break;
+  case llvm::Triple::x86:
     CmdArgs.push_back("--32");
-  else if (getToolChain().getArch() == llvm::Triple::ppc)
+    break;
+  case llvm::Triple::ppc:
     CmdArgs.push_back("-a32");
-  else if (getToolChain().getArch() == llvm::Triple::mips ||
-           getToolChain().getArch() == llvm::Triple::mipsel ||
-           getToolChain().getArch() == llvm::Triple::mips64 ||
-           getToolChain().getArch() == llvm::Triple::mips64el) {
+    break;
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el: {
     StringRef CPUName;
     StringRef ABIName;
     mips::getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
@@ -7513,10 +7518,12 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-EL");
 
     AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
-  } else if (getToolChain().getArch() == llvm::Triple::arm ||
-             getToolChain().getArch() == llvm::Triple::armeb ||
-             getToolChain().getArch() == llvm::Triple::thumb ||
-             getToolChain().getArch() == llvm::Triple::thumbeb) {
+    break;
+  }
+  case llvm::Triple::arm:
+  case llvm::Triple::armeb:
+  case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb: {
     arm::FloatABI ABI = arm::getARMFloatABI(getToolChain(), Args);
 
     if (ABI == arm::FloatABI::Hard)
@@ -7534,15 +7541,18 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     default:
       CmdArgs.push_back("-matpcs");
     }
-  } else if (getToolChain().getArch() == llvm::Triple::sparc ||
-             getToolChain().getArch() == llvm::Triple::sparcel ||
-             getToolChain().getArch() == llvm::Triple::sparcv9) {
+    break;
+  }
+  case llvm::Triple::sparc:
+  case llvm::Triple::sparcel:
+  case llvm::Triple::sparcv9:
     if (getToolChain().getArch() == llvm::Triple::sparc)
       CmdArgs.push_back("-Av8plusa");
     else
       CmdArgs.push_back("-Av9a");
 
     AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
+    break;
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA, options::OPT_Xassembler);
