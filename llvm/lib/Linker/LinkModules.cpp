@@ -655,7 +655,9 @@ bool ModuleLinker::doImportAsDefinition(const GlobalValue *SGV) {
       return false;
     return doImportAsDefinition(GA->getBaseObject());
   }
-  // Always import GlobalVariable definitions. The linkage changes
+  // Always import GlobalVariable definitions, except for the special
+  // case of WeakAny which are imported as ExternalWeak declarations
+  // (see comments in ModuleLinker::getLinkage). The linkage changes
   // described in ModuleLinker::getLinkage ensure the correct behavior (e.g.
   // global variables with external linkage are transformed to
   // available_externally definitions, which are ultimately turned into
