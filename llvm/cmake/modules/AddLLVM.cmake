@@ -193,7 +193,7 @@ endfunction(add_link_opts)
 # Note: Don't set variables CMAKE_*_OUTPUT_DIRECTORY any more,
 # or a certain builder, for eaxample, msbuild.exe, would be confused.
 function(set_output_directory target)
-  cmake_parse_arguments(ARG "" "BINARY_DIR;LIBRARY_DIR;" "" ${ARGN})
+  cmake_parse_arguments(ARG "" "BINARY_DIR;LIBRARY_DIR" "" ${ARGN})
 
   # module_dir -- corresponding to LIBRARY_OUTPUT_DIRECTORY.
   # It affects output of add_library(MODULE).
@@ -1095,7 +1095,7 @@ function(llvm_install_symlink name dest)
       break()
     endif()
   endforeach()
-  
+
   if(ARG_ALWAYS_GENERATE)
     set(component ${dest})
   else()
@@ -1159,4 +1159,3 @@ function(add_llvm_tool_symlink name dest)
     endif()
   endif()
 endfunction()
-
