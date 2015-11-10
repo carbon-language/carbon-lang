@@ -21416,7 +21416,7 @@ X86TargetLowering::EmitLoweredCatchRet(MachineInstr *MI,
   MachineBasicBlock *RestoreMBB =
       MF->CreateMachineBasicBlock(BB->getBasicBlock());
   assert(BB->succ_size() == 1);
-  MF->insert(TargetMBB->getIterator(), RestoreMBB);
+  MF->insert(std::next(BB->getIterator()), RestoreMBB);
   RestoreMBB->transferSuccessorsAndUpdatePHIs(BB);
   BB->addSuccessor(RestoreMBB);
   MI->getOperand(0).setMBB(RestoreMBB);
