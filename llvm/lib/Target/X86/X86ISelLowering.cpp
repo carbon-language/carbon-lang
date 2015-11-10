@@ -21394,12 +21394,12 @@ X86TargetLowering::EmitLoweredCatchRet(MachineInstr *MI,
                                        MachineBasicBlock *BB) const {
   MachineFunction *MF = BB->getParent();
   const Constant *PerFn = MF->getFunction()->getPersonalityFn();
-  bool IsSEH = isAsynchronousEHPersonality(classifyEHPersonality(PerFn));
   const TargetInstrInfo &TII = *Subtarget->getInstrInfo();
   MachineBasicBlock *TargetMBB = MI->getOperand(0).getMBB();
   DebugLoc DL = MI->getDebugLoc();
 
-  assert(!IsSEH && "SEH does not use catchret!");
+  assert(!isAsynchronousEHPersonality(classifyEHPersonality(PerFn)) &&
+         "SEH does not use catchret!");
 
   // Only 32-bit EH needs to worry about manually restoring stack pointers.
   if (!Subtarget->is32Bit())

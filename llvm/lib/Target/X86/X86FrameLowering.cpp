@@ -749,8 +749,8 @@ MachineInstr *X86FrameLowering::emitStackProbeInlineStub(
 
   assert(InProlog && "ChkStkStub called outside prolog!");
 
-  MachineInstrBuilder CI = BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
-                               .addExternalSymbol("__chkstk_stub");
+  BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
+      .addExternalSymbol("__chkstk_stub");
 
   return MBBI;
 }
