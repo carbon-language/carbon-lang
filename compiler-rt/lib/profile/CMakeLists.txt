@@ -11,6 +11,8 @@ set(PROFILE_SOURCES
   InstrProfilingRuntime.cc
   InstrProfilingUtil.c)
 
+include_directories("${LLVM_MAIN_INCLUDE_DIR}")
+
 if(APPLE)
   add_compiler_rt_runtime(clang_rt.profile
     STATIC
