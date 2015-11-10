@@ -4438,6 +4438,34 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
     Results.push_back(DAG.getNode(ISD::BITCAST, SL, OVT, NewVec));
     break;
   }
+  case ISD::SCALAR_TO_VECTOR: {
+    MVT EltVT = OVT.getVectorElementType();
+    MVT NewEltVT = NVT.getVectorElementType();
+
+    // Handle bitcasts to different vector type with the smae total bit size.
+    //
+    // e.g. v2i64 = scalar_to_vector x:i64
+    //   =>
+    //  concat_vectors (v2i32 bitcast x:i64), (v2i32 undef)
+    //
+
+    MVT MidVT = getPromotedVectorElementType(TLI, EltVT, NewEltVT);
+    SDValue Val = Node->getOperand(0);
+    SDLoc SL(Node);
+
+    SDValue CastVal = DAG.getNode(ISD::BITCAST, SL, MidVT, Val);
+    SDValue Undef = DAG.getUNDEF(MidVT);
+
+    SmallVector<SDValue, 8> NewElts;
+    NewElts.push_back(CastVal);
+    for (unsigned I = 1, NElts = OVT.getVectorNumElements(); I != NElts; ++I)
+      NewElts.push_back(Undef);
+
+    SDValue Concat = DAG.getNode(ISD::CONCAT_VECTORS, SL, NVT, NewElts);
+    SDValue CvtVec = DAG.getNode(ISD::BITCAST, SL, OVT, Concat);
+    Results.push_back(CvtVec);
+    break;
+  }
   }
 
   // Replace the original node with the legalized result.
