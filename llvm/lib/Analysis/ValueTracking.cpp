@@ -1077,6 +1077,22 @@ static void computeKnownBitsFromOperator(Operator *I, APInt &KnownZero,
     KnownOne &= KnownOne2;
     // Output known-0 are known to be clear if zero in either the LHS | RHS.
     KnownZero |= KnownZero2;
+
+    // and(x, add (x, -1)) is a common idiom that always clears the low bit;
+    // here we handle the more general case of adding any odd number by
+    // matching the form add(x, add(x, y)) where y is odd.
+    // TODO: This could be generalized to clearing any bit set in y where the
+    // following bit is known to be unset in y.
+    Value *Y = nullptr;
+    if (match(I->getOperand(0), m_Add(m_Specific(I->getOperand(1)),
+                                      m_Value(Y))) ||
+        match(I->getOperand(1), m_Add(m_Specific(I->getOperand(0)),
+                                      m_Value(Y)))) {
+      APInt KnownZero3(BitWidth, 0), KnownOne3(BitWidth, 0);
+      computeKnownBits(Y, KnownZero3, KnownOne3, DL, Depth + 1, Q);
+      if (KnownOne3.countTrailingOnes() > 0)
+        KnownZero |= APInt::getLowBitsSet(BitWidth, 1);
+    }
     break;
   }
   case Instruction::Or: {
