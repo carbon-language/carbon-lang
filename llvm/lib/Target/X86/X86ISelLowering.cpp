@@ -21380,15 +21380,13 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
 MachineBasicBlock *
 X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
                                         MachineBasicBlock *BB) const {
-  DebugLoc DL = MI->getDebugLoc();
-
   assert(!Subtarget->isTargetMachO());
-
-  Subtarget->getFrameLowering()->emitStackProbeCall(*BB->getParent(), *BB, MI,
-                                                    DL);
-
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
+  DebugLoc DL = MI->getDebugLoc();
+  MachineInstr *ResumeMI = Subtarget->getFrameLowering()->emitStackProbe(
+      *BB->getParent(), *BB, MI, DL, false);
+  MachineBasicBlock *ResumeBB = ResumeMI->getParent();
+  MI->eraseFromParent(); // The pseudo instruction is gone now.
+  return ResumeBB;
 }
 
 MachineBasicBlock *
