@@ -343,6 +343,26 @@ static std::unique_ptr<BinaryContext> CreateBinaryContext(
   return BC;
 }
 
+// Helper function to map a random memory address to a file offset. Returns 0 if
+// this address cannot be mapped back to the file.
+static uint64_t discoverFileOffset(ELFObjectFileBase *File, uint64_t MemAddr) {
+  for (const auto &Section : File->sections()) {
+    uint64_t SecAddress = Section.getAddress();
+    uint64_t Size = Section.getSize();
+    if (MemAddr < SecAddress ||
+        SecAddress + Size <= MemAddr)
+      continue;
+
+    StringRef SectionContents;
+    check_error(Section.getContents(SectionContents),
+                "cannot get section contents");
+    uint64_t SecFileOffset = SectionContents.data() - File->getData().data();
+    uint64_t MemAddrSecOffset = MemAddr - SecAddress;
+    return SecFileOffset + MemAddrSecOffset;
+  }
+  return 0ULL;
+}
+
 static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
   // FIXME: there should be some way to extract arch and triple information
@@ -363,6 +383,13 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   // from constructors etc.
   BinaryFunction *EntryPointFunction{nullptr};
 
+  struct BlobTy {
+    uint64_t Addr;
+    uint64_t FileOffset;
+    uint64_t Size;
+  };
+  BlobTy ExtraStorage = {0ULL, 0ULL, 0ULL};
+
   // Populate array of binary functions and file symbols
   // from file symbol table.
   //
@@ -377,6 +404,17 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     ErrorOr<StringRef> Name = Symbol.getName();
     check_error(Name.getError(), "cannot get symbol name");
+
+    if (*Name == "__flo_storage") {
+      ExtraStorage.Addr = Symbol.getValue();
+      ExtraStorage.FileOffset = discoverFileOffset(File, ExtraStorage.Addr);
+      assert(ExtraStorage.FileOffset != 0 && "Corrupt __flo_storage symbol");
+      continue;
+    }
+    if (*Name == "__flo_storage_size") {
+      ExtraStorage.Size = Symbol.getValue();
+      continue;
+    }
 
     if (Symbol.getType() == SymbolRef::ST_File) {
       // Could be used for local symbol disambiguation.
@@ -469,7 +507,8 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   uint64_t LSDAAddress{0};
 
   // Process special sections.
-  uint64_t EHFrameAddress = 0ULL;
+  uint64_t FrameHdrAddress = 0ULL;
+  StringRef FrameHdrContents;
   for (const auto &Section : File->sections()) {
     StringRef SectionName;
     check_error(Section.getName(SectionName), "cannot get section name");
@@ -485,18 +524,21 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       LSDAData = SectionData;
       LSDAAddress = Section.getAddress();
     }
-    if (SectionName == ".eh_frame") {
-      EHFrameAddress = Section.getAddress();
+    if (SectionName == ".eh_frame_hdr") {
+      FrameHdrAddress = Section.getAddress();
+      FrameHdrContents = SectionContents;
     }
   }
 
+  std::vector<char> FrameHdrCopy(FrameHdrContents.begin(),
+                                 FrameHdrContents.end());
   // Process debug sections.
   std::unique_ptr<DWARFContext> DwCtx(new DWARFContextInMemory(*File));
   const DWARFFrame &EHFrame = *DwCtx->getEHFrame();
   if (opts::DumpEHFrame) {
     EHFrame.dump(outs());
   }
-  CFIReader DwCFIReader(EHFrame);
+  CFIReaderWriter CFIRdWrt(EHFrame, FrameHdrAddress, FrameHdrCopy);
   if (!EHFrame.ParseError.empty()) {
     errs() << "FLO-WARNING: EHFrame reader failed with message \""
            << EHFrame.ParseError << "\"\n";
@@ -567,7 +609,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     // Fill in CFI information for this function
     if (EHFrame.ParseError.empty() && Function.isSimple())
-      DwCFIReader.fillCFIInfoFor(Function);
+      CFIRdWrt.fillCFIInfoFor(Function);
 
     // Parse LSDA.
     if (Function.getLSDAAddress() != 0)
@@ -753,6 +795,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
   };
 
   bool HasEHFrame = false;
+  bool NoSpaceWarning = false;
   // Output functions one by one.
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
@@ -789,8 +832,33 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
 
     // Emit CFI start
     if (Function.hasCFI()) {
-      HasEHFrame = true;
-      Streamer->EmitCFIStartProc(/*IsSimple=*/false);
+      if (ExtraStorage.Size != 0ULL) {
+        HasEHFrame = true;
+        Streamer->EmitCFIStartProc(/*IsSimple=*/false);
+        if (Function.getPersonalityFunction() != nullptr) {
+          Streamer->EmitCFIPersonality(Function.getPersonalityFunction(),
+                                       Function.getPersonalityEncoding());
+        }
+        // Emit CFI instructions relative to the CIE
+        for (auto &CFIInstr : Function.cie()) {
+          // Ignore these CIE CFI insns because LLVM will already emit this.
+          switch (CFIInstr.getOperation()) {
+          default:
+            break;
+          case MCCFIInstruction::OpDefCfa:
+            if (CFIInstr.getRegister() == 7 && CFIInstr.getOffset() == 8)
+              continue;
+            break;
+          case MCCFIInstruction::OpOffset:
+            if (CFIInstr.getRegister() == 16 && CFIInstr.getOffset() == -8)
+              continue;
+            break;
+          }
+          emitCFIInstr(CFIInstr);
+        }
+      } else {
+        NoSpaceWarning = true;
+      }
     }
 
     // Emit code.
@@ -808,15 +876,18 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
           Streamer->EmitLabel(const_cast<MCSymbol *>(Label));
           continue;
         }
-        if (!BC->MII->get(Instr.getOpcode()).isPseudo())
+        if (!BC->MIA->isCFI(Instr)) {
           Streamer->EmitInstruction(Instr, *BC->STI);
-        else
-          emitCFIInstr(*Function.getCFIFor(Instr));
+          continue;
+        }
+        if (ExtraStorage.Size == 0)
+          continue;
+        emitCFIInstr(*Function.getCFIFor(Instr));
       }
     }
 
     // Emit CFI end
-    if (Function.hasCFI())
+    if (Function.hasCFI() && ExtraStorage.Size != 0)
       Streamer->EmitCFIEndProc();
 
     // TODO: is there any use in emiting end of function?
@@ -824,6 +895,10 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
     //auto FunctionEndLabel = Ctx.createTempSymbol("func_end");
     //Streamer->EmitLabel(FunctionEndLabel);
     //Streamer->emitELFSize(FunctionSymbol, MCExpr());
+  }
+  if (NoSpaceWarning) {
+    errs() << "FLO-WARNING: missing __flo_storage in this binary. No "
+           << "extra space left to allocate the new .eh_frame\n";
   }
 
   Streamer->Finish();
@@ -866,6 +941,10 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
         std::move(Resolver));
   //OLT.takeOwnershipOfBuffers(ObjectsHandle, );
 
+  // Fow now on, keep track of functions we fail to write in the binary. We need
+  // to avoid rewriting CFI info for these functions.
+  std::vector<uint64_t> FailedAddresses;
+
   // Map every function/section current address in memory to that in
   // the output binary.
   for (auto &BFI : BinaryFunctions) {
@@ -885,19 +964,30 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       Function.setImageSize(SAI->second.second);
     } else {
       errs() << "FLO: cannot remap function " << Function.getName() << "\n";
+      FailedAddresses.emplace_back(Function.getAddress());
     }
   }
   // Map .eh_frame
+  StringRef NewEhFrameContents;
   if (HasEHFrame) {
-    assert(EHFrameAddress);
     auto SAI = EFMM->SectionAddressInfo.find(".eh_frame");
     if (SAI != EFMM->SectionAddressInfo.end()) {
       DEBUG(dbgs() << "FLO: mapping 0x" << Twine::utohexstr(SAI->second.first)
-                   << " to 0x" << Twine::utohexstr(EHFrameAddress)
+                   << " to 0x" << Twine::utohexstr(ExtraStorage.Addr)
                    << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
           reinterpret_cast<const void*>(SAI->second.first),
-          EHFrameAddress);
+          ExtraStorage.Addr);
+      NewEhFrameContents =
+          StringRef(reinterpret_cast<const char *>(SAI->second.first),
+                    SAI->second.second);
+      if (ExtraStorage.Size < SAI->second.second) {
+        errs() << format("FLO fatal error: new .eh_frame requires 0x%x bytes, "
+                         "but __flo_storage in this binary only has 0x%x extra "
+                         "bytes available.",
+                         SAI->second.second, ExtraStorage.Size);
+        exit(1);
+      }
     } else {
       errs() << "FLO: cannot remap .eh_frame\n";
     }
@@ -924,6 +1014,7 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
              << ") is larger than maximum allowed size (0x"
              << Twine::utohexstr(Function.getMaxSize())
              << ") for function " << Function.getName() << '\n';
+      FailedAddresses.emplace_back(Function.getAddress());
       continue;
     }
 
@@ -947,6 +1038,17 @@ static void OptimizeFile(ELFObjectFileBase *File, const DataReader &DR) {
       outs() << "FLO: maximum number of functions reached\n";
       break;
     }
+  }
+  if (NewEhFrameContents.size()) {
+    std::sort(FailedAddresses.begin(), FailedAddresses.end());
+    CFIRdWrt.rewriteHeaderFor(NewEhFrameContents, ExtraStorage.Addr,
+                              FailedAddresses);
+    outs() << "FLO: rewriting .eh_frame_hdr\n";
+    RealOut->os().pwrite(FrameHdrCopy.data(), FrameHdrCopy.size(),
+                         FrameHdrContents.data() - File->getData().data());
+    outs() << "FLO: writing a new .eh_frame\n";
+    RealOut->os().pwrite(NewEhFrameContents.data(), NewEhFrameContents.size(),
+                         ExtraStorage.FileOffset);
   }
 
   if (EntryPointFunction) {

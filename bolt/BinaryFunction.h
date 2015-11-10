@@ -31,6 +31,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <map>
@@ -104,6 +105,9 @@ private:
   /// False if the function is too complex to reconstruct its control
   /// flow graph and re-assemble.
   bool IsSimple{true};
+
+  MCSymbol *PersonalityFunction{nullptr};
+  uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
 
   BinaryContext &BC;
 
@@ -189,6 +193,8 @@ private:
   /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
   /// if needed (to fix state after reordering BBs).
   using CFIInstrMapType = std::vector<MCCFIInstruction>;
+  using cfi_iterator       = CFIInstrMapType::iterator;
+  using const_cfi_iterator = CFIInstrMapType::const_iterator;
   CFIInstrMapType FrameInstructions;
 
   /// Exception handling ranges.
@@ -204,6 +210,10 @@ private:
   /// Maps an instruction offset into a FrameInstructions offset.
   /// This is only relevant to the buildCFG phase and is discarded afterwards.
   std::multimap<uint32_t, uint32_t> OffsetToCFI;
+
+  /// List of CFI instructions associated with the CIE (common to more than one
+  /// function and that apply before the entry basic block).
+  CFIInstrMapType CIEFrameInstructions;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
@@ -258,6 +268,20 @@ public:
     return iterator_range<order_iterator>(BasicBlocksLayout.begin(),
                                           BasicBlocksLayout.end());
   }
+
+  cfi_iterator        cie_begin()       { return CIEFrameInstructions.begin(); }
+  const_cfi_iterator  cie_begin() const { return CIEFrameInstructions.begin(); }
+  cfi_iterator        cie_end()         { return CIEFrameInstructions.end(); }
+  const_cfi_iterator  cie_end()   const { return CIEFrameInstructions.end(); }
+  bool                cie_empty() const { return CIEFrameInstructions.empty(); }
+
+  inline iterator_range<cfi_iterator> cie() {
+    return iterator_range<cfi_iterator>(cie_begin(), cie_end());
+  }
+  inline iterator_range<const_cfi_iterator> cie() const {
+    return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
+  }
+
 
   BinaryFunction(std::string Name, SymbolRef Symbol, SectionRef Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC) :
@@ -327,9 +351,17 @@ public:
     return IsSimple;
   }
 
+  MCSymbol *getPersonalityFunction() const {
+    return PersonalityFunction;
+  }
+
+  uint8_t getPersonalityEncoding() const {
+    return PersonalityEncoding;
+  }
+
   /// Return true if the function has CFI instructions
   bool hasCFI() const {
-    return !FrameInstructions.empty();
+    return !FrameInstructions.empty() || !CIEFrameInstructions.empty();
   }
 
   /// Return true if the given address \p PC is inside the function body.
@@ -391,7 +423,7 @@ public:
     Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
   }
 
-  void addCFI(uint64_t Offset, MCCFIInstruction &&Inst) {
+  void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
     assert(!Instructions.empty());
 
     // Fix CFI instructions skipping NOPs. We need to fix this because changing
@@ -402,8 +434,7 @@ public:
     auto I = Instructions.lower_bound(Offset);
     assert(I->first == Offset && "CFI pointing to unknown instruction");
     if (I == Instructions.begin()) {
-      OffsetToCFI.emplace(Offset, FrameInstructions.size());
-      FrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
+      CIEFrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
       return;
     }
 
@@ -449,6 +480,16 @@ public:
 
   BinaryFunction &setSimple(bool Simple) {
     IsSimple = Simple;
+    return *this;
+  }
+
+  BinaryFunction &setPersonalityFunction(uint64_t Addr) {
+    PersonalityFunction = BC.getOrCreateGlobalSymbol(Addr, "FUNCat");
+    return *this;
+  }
+
+  BinaryFunction &setPersonalityEncoding(uint8_t Encoding) {
+    PersonalityEncoding = Encoding;
     return *this;
   }
 

@@ -534,7 +534,7 @@ void BinaryFunction::updateEHRanges() {
 const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
 const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
 
-void CFIReader::fillCFIInfoFor(BinaryFunction &Function) const {
+void CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
   uint64_t Address = Function.getAddress();
   auto I = FDEs.find(Address);
   if (I == FDEs.end())
@@ -554,105 +554,239 @@ void CFIReader::fillCFIInfoFor(BinaryFunction &Function) const {
   uint64_t Offset = 0;
   uint64_t CodeAlignment = CurFDE.getLinkedCIE()->getCodeAlignmentFactor();
   uint64_t DataAlignment = CurFDE.getLinkedCIE()->getDataAlignmentFactor();
+  if (CurFDE.getLinkedCIE()->getPersonalityAddress() != 0) {
+    Function.setPersonalityFunction(
+        CurFDE.getLinkedCIE()->getPersonalityAddress());
+    Function.setPersonalityEncoding(
+        CurFDE.getLinkedCIE()->getPersonalityEncoding());
+  }
+
+  auto decodeFrameInstruction =
+      [&Function, &Offset, Address, CodeAlignment, DataAlignment](
+          const FrameEntry::Instruction &Instr) {
+        uint8_t Opcode = Instr.Opcode;
+        if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
+          Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
+        switch (Instr.Opcode) {
+        case DW_CFA_nop:
+          break;
+        case DW_CFA_advance_loc4:
+        case DW_CFA_advance_loc2:
+        case DW_CFA_advance_loc1:
+        case DW_CFA_advance_loc:
+          // Advance our current address
+          Offset += CodeAlignment * int64_t(Instr.Ops[0]);
+          break;
+        case DW_CFA_offset_extended_sf:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createOffset(
+                          nullptr, Instr.Ops[0],
+                          DataAlignment * int64_t(Instr.Ops[1])));
+          break;
+        case DW_CFA_offset_extended:
+        case DW_CFA_offset:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createOffset(
+                          nullptr, Instr.Ops[0], DataAlignment * Instr.Ops[1]));
+          break;
+        case DW_CFA_restore_extended:
+        case DW_CFA_restore:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
+          break;
+        case DW_CFA_set_loc:
+          assert(Instr.Ops[0] < Address && "set_loc out of function bounds");
+          assert(Instr.Ops[0] > Address + Function.getSize() &&
+                 "set_loc out of function bounds");
+          Offset = Instr.Ops[0] - Address;
+          break;
+
+        case DW_CFA_undefined:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createUndefined(nullptr, Instr.Ops[0]));
+          break;
+        case DW_CFA_same_value:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createSameValue(nullptr, Instr.Ops[0]));
+          break;
+        case DW_CFA_register:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createRegister(nullptr, Instr.Ops[0],
+                                                       Instr.Ops[1]));
+          break;
+        case DW_CFA_remember_state:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createRememberState(nullptr));
+          break;
+        case DW_CFA_restore_state:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createRestoreState(nullptr));
+          break;
+        case DW_CFA_def_cfa:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createDefCfa(nullptr, Instr.Ops[1],
+                                                     -Instr.Ops[0]));
+          break;
+        case DW_CFA_def_cfa_sf:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createDefCfa(
+                          nullptr, Instr.Ops[1],
+                          -(DataAlignment * int64_t(Instr.Ops[0]))));
+          break;
+        case DW_CFA_def_cfa_register:
+          Function.addCFIInstruction(
+              Offset,
+              MCCFIInstruction::createDefCfaRegister(nullptr, Instr.Ops[0]));
+          break;
+        case DW_CFA_def_cfa_offset:
+          Function.addCFIInstruction(
+              Offset,
+              MCCFIInstruction::createDefCfaOffset(nullptr, -Instr.Ops[0]));
+          break;
+        case DW_CFA_def_cfa_offset_sf:
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createDefCfaOffset(
+                          nullptr, -(DataAlignment * int64_t(Instr.Ops[0]))));
+          break;
+        case DW_CFA_val_offset_sf:
+        case DW_CFA_val_offset:
+          llvm_unreachable("DWARF val_offset() unimplemented");
+          break;
+        case DW_CFA_expression:
+        case DW_CFA_def_cfa_expression:
+        case DW_CFA_val_expression:
+          llvm_unreachable("DWARF CFA expressions unimplemented");
+          break;
+          dbgs() << "DW_CFA_val_expression";
+          break;
+        case DW_CFA_MIPS_advance_loc8:
+          llvm_unreachable("DW_CFA_MIPS_advance_loc unimplemented");
+          break;
+        case DW_CFA_GNU_args_size:
+        case DW_CFA_GNU_window_save:
+        case DW_CFA_lo_user:
+        case DW_CFA_hi_user:
+          llvm_unreachable("DW_CFA_GNU_* and DW_CFA_*_use unimplemented");
+          break;
+        default:
+          llvm_unreachable("Unrecognized CFI instruction");
+        }
+      };
+
+  for (const FrameEntry::Instruction &Instr : *(CurFDE.getLinkedCIE())) {
+    decodeFrameInstruction(Instr);
+  }
+
   for (const FrameEntry::Instruction &Instr : CurFDE) {
-    uint8_t Opcode = Instr.Opcode;
-    if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
-      Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
-    switch (Instr.Opcode) {
-    case DW_CFA_nop:
-      break;
-    case DW_CFA_advance_loc4:
-    case DW_CFA_advance_loc2:
-    case DW_CFA_advance_loc1:
-    case DW_CFA_advance_loc:
-      // Advance our current address
-      Offset += CodeAlignment * int64_t(Instr.Ops[0]);
-      break;
-    case DW_CFA_offset_extended_sf:
-      Function.addCFI(Offset, MCCFIInstruction::createOffset(
-                                  nullptr, Instr.Ops[0],
-                                  DataAlignment * int64_t(Instr.Ops[1])));
-      break;
-    case DW_CFA_offset_extended:
-    case DW_CFA_offset:
-      Function.addCFI(
-          Offset, MCCFIInstruction::createOffset(nullptr, Instr.Ops[0],
-                                                 DataAlignment * Instr.Ops[1]));
-      break;
-    case DW_CFA_restore_extended:
-    case DW_CFA_restore:
-      Function.addCFI(Offset,
-                      MCCFIInstruction::createRestore(nullptr, Instr.Ops[0]));
-      break;
-    case DW_CFA_set_loc:
-      assert(Instr.Ops[0] < Address && "set_loc out of function bounds");
-      assert(Instr.Ops[0] > Address + Function.getSize() &&
-             "set_loc out of function bounds");
-      Offset = Instr.Ops[0] - Address;
+    decodeFrameInstruction(Instr);
+  }
+}
+
+void CFIReaderWriter::rewriteHeaderFor(StringRef EHFrame,
+                                       uint64_t EHFrameAddress,
+                                       ArrayRef<uint64_t> FailedAddresses) {
+  DataExtractor Data(EHFrame,
+                     /*IsLittleEndian=*/true,
+                     /*PtrSize=*/4);
+  uint32_t Offset = 0;
+  std::map<uint64_t, uint64_t> PCToFDE;
+
+  // Scans the EHFrame, parsing start addresses for each function
+  while (Data.isValidOffset(Offset)) {
+    uint32_t StartOffset = Offset;
+
+    uint64_t Length = Data.getU32(&Offset);
+
+    if (Length == 0)
       break;
 
-    case DW_CFA_undefined:
-      Function.addCFI(Offset,
-                      MCCFIInstruction::createUndefined(nullptr, Instr.Ops[0]));
-      break;
-    case DW_CFA_same_value:
-      Function.addCFI(Offset,
-                      MCCFIInstruction::createSameValue(nullptr, Instr.Ops[0]));
-      break;
-    case DW_CFA_register:
-      Function.addCFI(Offset, MCCFIInstruction::createRegister(
-                                  nullptr, Instr.Ops[0], Instr.Ops[1]));
-      break;
-    case DW_CFA_remember_state:
-      Function.addCFI(Offset, MCCFIInstruction::createRememberState(nullptr));
-      break;
-    case DW_CFA_restore_state:
-      Function.addCFI(Offset, MCCFIInstruction::createRestoreState(nullptr));
-      break;
-    case DW_CFA_def_cfa:
-      Function.addCFI(Offset, MCCFIInstruction::createDefCfa(
-                                  nullptr, Instr.Ops[0], Instr.Ops[1]));
-      break;
-    case DW_CFA_def_cfa_sf:
-      Function.addCFI(Offset, MCCFIInstruction::createDefCfa(
-                                  nullptr, Instr.Ops[0],
-                                  DataAlignment * int64_t(Instr.Ops[1])));
-      break;
-    case DW_CFA_def_cfa_register:
-      Function.addCFI(Offset, MCCFIInstruction::createDefCfaRegister(
-                                  nullptr, Instr.Ops[0]));
-      break;
-    case DW_CFA_def_cfa_offset:
-      Function.addCFI(
-          Offset, MCCFIInstruction::createDefCfaOffset(nullptr, Instr.Ops[0]));
-      break;
-    case DW_CFA_def_cfa_offset_sf:
-      Function.addCFI(Offset,
-                      MCCFIInstruction::createDefCfaOffset(
-                          nullptr, DataAlignment * int64_t(Instr.Ops[0])));
-      break;
-    case DW_CFA_val_offset_sf:
-    case DW_CFA_val_offset:
-      llvm_unreachable("DWARF val_offset() unimplemented");
-      break;
-    case DW_CFA_expression:
-    case DW_CFA_def_cfa_expression:
-    case DW_CFA_val_expression:
-      llvm_unreachable("DWARF CFA expressions unimplemented");
-      break;
-      dbgs() << "DW_CFA_val_expression";
-      break;
-    case DW_CFA_MIPS_advance_loc8:
-      llvm_unreachable("DW_CFA_MIPS_advance_loc unimplemented");
-      break;
-    case DW_CFA_GNU_args_size:
-    case DW_CFA_GNU_window_save:
-    case DW_CFA_lo_user:
-    case DW_CFA_hi_user:
-      llvm_unreachable("DW_CFA_GNU_* and DW_CFA_*_use unimplemented");
-      break;
-    default:
-      llvm_unreachable("Unrecognized CFI instruction");
+    uint32_t EndStructureOffset = Offset + static_cast<uint32_t>(Length);
+    uint64_t Id = Data.getUnsigned(&Offset, 4);
+    if (Id == 0) {
+      Offset = EndStructureOffset;
+      continue;
+    }
+
+    const uint8_t *DataStart =
+        reinterpret_cast<const uint8_t *>(Data.getData().substr(Offset).data());
+    const uint8_t *DataEnd = DataStart;
+    uint64_t FuncAddress =
+        readEncodedPointer(DataEnd, DW_EH_PE_sdata4 | DW_EH_PE_pcrel,
+                           EHFrameAddress + Offset - (uintptr_t)DataEnd);
+    Offset += DataEnd - DataStart;
+
+    auto I = std::lower_bound(FailedAddresses.begin(), FailedAddresses.end(),
+                              FuncAddress);
+    if (I != FailedAddresses.end() && *I == FuncAddress) {
+      Offset = EndStructureOffset;
+      continue;
+    }
+
+    PCToFDE[FuncAddress] = EHFrameAddress + StartOffset;
+    Offset = EndStructureOffset;
+  }
+
+  //Updates the EHFrameHdr
+  DataExtractor HDRData(
+      StringRef(FrameHdrContents.data(), FrameHdrContents.size()),
+      /*IsLittleEndian=*/true,
+      /*PtrSize=*/4);
+  Offset = 0;
+  uint8_t Version = HDRData.getU8(&Offset);
+  assert(Version == 1 &&
+         "Don't know how to handle this version of .eh_frame_hdr");
+
+  uint8_t EhFrameAddrEncoding = HDRData.getU8(&Offset);
+  uint8_t FDECntEncoding = HDRData.getU8(&Offset);
+  uint8_t TableEncoding = HDRData.getU8(&Offset);
+  const uint8_t *DataStart = reinterpret_cast<const uint8_t *>(
+      HDRData.getData().substr(Offset).data());
+  const uint8_t *DataEnd = DataStart;
+  // Advance Offset past .eh_frame addr
+  readEncodedPointer(DataEnd, EhFrameAddrEncoding);
+  Offset += DataEnd - DataStart;
+
+  DataStart = reinterpret_cast<const uint8_t *>(
+      HDRData.getData().substr(Offset).data());
+  DataEnd = DataStart;
+  uint64_t FDECount = readEncodedPointer(
+      DataEnd, FDECntEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
+      FrameHdrAddress);
+  Offset += DataEnd - DataStart;
+
+  assert(FDECount > 0 && "Empty binary search table in .eh_frame_hdr!");
+  assert(TableEncoding == (DW_EH_PE_datarel | DW_EH_PE_sdata4) &&
+         "Don't know how to handle other .eh_frame.hdr encoding!");
+
+  // Offset now points to the binary search table. Update it.
+  for (uint64_t I = 0; I != FDECount; ++I) {
+    assert(HDRData.isValidOffset(Offset) &&
+           ".eh_frame_hdr table finished earlier than we expected");
+    DataStart = reinterpret_cast<const uint8_t *>(
+        HDRData.getData().substr(Offset).data());
+    DataEnd = DataStart;
+    uint64_t InitialPC = readEncodedPointer(
+        DataEnd, TableEncoding, FrameHdrAddress + Offset - (uintptr_t)DataEnd,
+        FrameHdrAddress);
+    Offset += DataEnd - DataStart;
+
+    uint64_t FDEPtrOffset = Offset;
+    DataStart = reinterpret_cast<const uint8_t *>(
+        HDRData.getData().substr(Offset).data());
+    DataEnd = DataStart;
+    // Advance Offset past FDEPtr
+    readEncodedPointer(DataEnd, TableEncoding);
+    Offset += DataEnd - DataStart;
+
+    if (uint64_t NewPtr = PCToFDE[InitialPC]) {
+      // Patch FDEPtr
+      int64_t RealOffset = NewPtr - FrameHdrAddress;
+
+      assert(isInt<32>(RealOffset));
+      DEBUG(dbgs() << format("CFIReaderWriter: Patching .eh_frame_hdr contents "
+                             "@offset %08x with new FDE ptr %08x\n",
+                             FDEPtrOffset, NewPtr));
+      support::ulittle32_t::ref(FrameHdrContents.data() + FDEPtrOffset) = RealOffset;
     }
   }
 }

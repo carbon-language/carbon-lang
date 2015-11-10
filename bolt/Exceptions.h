@@ -26,10 +26,13 @@ class BinaryFunction;
 void readLSDA(ArrayRef<uint8_t> LSDAData, BinaryContext &BC);
 
 /// \brief Wraps up information to read all CFI instructions and feed them to a
-/// BinaryFunction.
-class CFIReader {
+/// BinaryFunction, as well as rewriting CFI sections.
+class CFIReaderWriter {
 public:
-  explicit CFIReader(const DWARFFrame &EHFrame) : EHFrame(EHFrame) {
+  explicit CFIReaderWriter(const DWARFFrame &EHFrame, uint64_t FrameHdrAddress,
+                      MutableArrayRef<char> FrameHdrContents)
+      : EHFrame(EHFrame), FrameHdrAddress(FrameHdrAddress),
+        FrameHdrContents(FrameHdrContents) {
     // Prepare FDEs for fast lookup
     for (const auto &Entry : EHFrame.Entries) {
       const dwarf::FrameEntry *FE = Entry.get();
@@ -43,8 +46,14 @@ public:
 
   void fillCFIInfoFor(BinaryFunction &Function) const;
 
+  // Include a new EHFrame, updating the .eh_frame_hdr
+  void rewriteHeaderFor(StringRef EHFrame, uint64_t EHFrameAddress,
+                        ArrayRef<uint64_t> FailedAddresses);
+
 private:
   const DWARFFrame &EHFrame;
+  uint64_t FrameHdrAddress;
+  MutableArrayRef<char> FrameHdrContents;
   FDEsMap FDEs;
 };
 
